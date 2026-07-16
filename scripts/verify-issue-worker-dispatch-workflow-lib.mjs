@@ -21,7 +21,10 @@ const REQUIRED_RETRY_WORKFLOW_SNIPPETS = [
   'Issue Worker Dispatch',
   'dispatch_run_cancelled',
   'scheduled_reconcile',
+  'dependency_closed',
   'issue-worker-retry-dispatch.mjs',
+  'on-closed',
+  'types: [closed]',
 ];
 
 /**

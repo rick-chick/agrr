@@ -13,6 +13,8 @@ on:
     workflows:
       - Issue Worker Dispatch
     types: [completed]
+  issues:
+    types: [closed]
   schedule:
     - cron: '*/15 * * * *'
   workflow_dispatch:
@@ -31,6 +33,7 @@ jobs:
     if: >-
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'issues' ||
       github.event.workflow_run.conclusion == 'cancelled'
     runs-on: ubuntu-latest
     steps:
@@ -63,6 +66,19 @@ jobs:
           set -euo pipefail
           node scripts/issue-worker-retry-dispatch.mjs reconcile \
             --retry-reason scheduled_reconcile
+
+      - name: Re-dispatch when a dependency issue closes
+        if: github.event_name == 'issues'
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          CLOSED_ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          node scripts/issue-worker-retry-dispatch.mjs on-closed \
+            --number "$CLOSED_ISSUE_NUMBER" \
+            --retry-reason dependency_closed
 
       - name: Manual retry
         if: github.event_name == 'workflow_dispatch'

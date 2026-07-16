@@ -355,6 +355,69 @@ export function selectRetryCandidate(issues, hasOpenFixPrFor) {
 }
 
 /**
+ * @param {{
+ *   issueLabels: string;
+ *   issueBody: string;
+ *   hasOpenFixPr: boolean;
+ *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
+ * }} input
+ * @returns {Promise<{ eligible: true } | { eligible: false; reason: string }>}
+ */
+export async function isDepsResolvedUnblockCandidate({
+  issueLabels,
+  issueBody,
+  hasOpenFixPr,
+  fetchIssueState,
+}) {
+  if (!hasLabel(issueLabels, 'agent-skipped')) {
+    return { eligible: false, reason: 'no agent-skipped' };
+  }
+  if (hasLabel(issueLabels, 'agent-blocked') || hasLabel(issueLabels, 'agent-in-progress')) {
+    return { eligible: false, reason: 'blocked label present' };
+  }
+  if (hasOpenFixPr) {
+    return { eligible: false, reason: 'open fix pr exists' };
+  }
+  const dependencies = parseDependencyIssueNumbers(issueBody);
+  if (dependencies.length === 0) {
+    return { eligible: false, reason: 'no dependency section refs' };
+  }
+  for (const dependencyNumber of dependencies) {
+    const state = await fetchIssueState(dependencyNumber);
+    if (state !== 'CLOSED') {
+      return {
+        eligible: false,
+        reason: `dependency #${dependencyNumber} is open`,
+      };
+    }
+  }
+  return { eligible: true };
+}
+
+/**
+ * @param {Array<{ number: number; labels: string[]; body?: string }>} issues
+ * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
+ * @param {(issueNumber: number) => Promise<string> | string} fetchIssueState
+ * @returns {Promise<{ issue: { number: number; labels: string[]; body?: string } } | null>}
+ */
+export async function selectDepsUnblockCandidate(issues, hasOpenFixPrFor, fetchIssueState) {
+  const sorted = [...issues].sort((a, b) => a.number - b.number);
+  for (const issue of sorted) {
+    const labels = issue.labels.join(',');
+    const result = await isDepsResolvedUnblockCandidate({
+      issueLabels: labels,
+      issueBody: issue.body ?? '',
+      hasOpenFixPr: hasOpenFixPrFor(issue.number),
+      fetchIssueState,
+    });
+    if (result.eligible) {
+      return { issue };
+    }
+  }
+  return null;
+}
+
+/**
  * @param {string[]} argv process.argv
  * @param {string} [defaultRepo]
  * @returns {{
@@ -415,6 +478,9 @@ export function selectOpenIssueByTitle(issues, title) {
 export function defaultRetryReasonForMode(mode) {
   if (mode === 'reconcile') {
     return 'scheduled_reconcile';
+  }
+  if (mode === 'on-closed') {
+    return 'dependency_closed';
   }
   if (mode === 'from-title') {
     return 'dispatch_run_cancelled';

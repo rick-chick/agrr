@@ -4,6 +4,7 @@
  *
  * Usage:
  *   node scripts/issue-worker-retry-dispatch.mjs reconcile [--repo OWNER/REPO]
+ *   node scripts/issue-worker-retry-dispatch.mjs on-closed --number N [--repo OWNER/REPO]
  *   node scripts/issue-worker-retry-dispatch.mjs from-title --title "..." [--repo OWNER/REPO]
  *   node scripts/issue-worker-retry-dispatch.mjs issue --number N [--repo OWNER/REPO]
  *
@@ -17,6 +18,7 @@ import {
   openFixPrSearchQuery,
   parseRetryDispatchArgs,
   resolveImplementPreDispatchGates,
+  selectDepsUnblockCandidate,
   selectOpenIssueByTitle,
   selectRetryCandidate,
 } from './issue-worker-dispatch-lib.mjs';
@@ -55,6 +57,33 @@ function listAgentReadyIssues(repo) {
     'open',
     '--label',
     'agent-ready',
+    '--limit',
+    '50',
+    '--json',
+    'number,title,url,body,labels,createdAt',
+  ]);
+  return JSON.parse(raw).map((issue) => ({
+    number: issue.number,
+    title: issue.title,
+    url: issue.url,
+    body: issue.body ?? '',
+    labels: issue.labels.map((label) => label.name),
+    createdAt: issue.createdAt,
+  }));
+}
+
+/**
+ * @param {string} repo
+ * @returns {Array<{ number: number; title: string; url: string; body: string; labels: string[]; createdAt: string }>}
+ */
+function listAgentSkippedIssues(repo) {
+  const raw = gh(repo, [
+    'issue',
+    'list',
+    '--state',
+    'open',
+    '--label',
+    'agent-skipped',
     '--limit',
     '50',
     '--json',
@@ -155,6 +184,59 @@ function postWebhook({ repo, issue, action, retryReason }) {
 }
 
 /**
+ * @param {string} repo
+ * @param {number} issueNumber
+ */
+function unblockAgentSkippedIssue(repo, issueNumber) {
+  gh(repo, [
+    'issue',
+    'edit',
+    String(issueNumber),
+    '--remove-label',
+    'agent-skipped',
+    '--add-label',
+    'agent-ready',
+  ]);
+}
+
+/**
+ * @param {string} repo
+ * @param {(issueNumber: number) => string} fetchIssueState
+ * @returns {Promise<{ issue: { number: number; title: string; url: string; body: string; labels: string[] } } | null>}
+ */
+async function selectDepsUnblockIssue(repo, fetchIssueState) {
+  const issues = listAgentSkippedIssues(repo);
+  const selected = await selectDepsUnblockCandidate(
+    issues,
+    (issueNumber) => hasOpenFixPr(repo, issueNumber),
+    fetchIssueState,
+  );
+  if (!selected) {
+    return null;
+  }
+  const issue = issues.find((entry) => entry.number === selected.issue.number);
+  return issue ? { issue } : null;
+}
+
+/**
+ * @param {{
+ *   repo: string;
+ *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
+ *   retryReason?: string;
+ * }} input
+ * @returns {Promise<boolean>}
+ */
+async function dispatchDepsUnblockedIssue({ repo, issue, retryReason }) {
+  unblockAgentSkippedIssue(repo, issue.number);
+  const refreshed = fetchIssue(repo, issue.number);
+  return dispatchIfEligible({
+    repo,
+    issue: refreshed,
+    retryReason,
+  });
+}
+
+/**
  * @param {{
  *   repo: string;
  *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
@@ -198,23 +280,64 @@ async function dispatchIfEligible({ repo, issue, retryReason }) {
 async function main() {
   const args = parseRetryDispatchArgs(process.argv);
   const repo = args.repo ?? DEFAULT_REPO;
+  const fetchIssueState = async (number) => fetchIssue(repo, number).state;
 
   if (args.mode === 'reconcile') {
     const issues = listAgentReadyIssues(repo);
     const selected = selectRetryCandidate(issues, (issueNumber) => hasOpenFixPr(repo, issueNumber));
+    if (selected) {
+      const issue = issues.find((entry) => entry.number === selected.issue.number);
+      if (!issue) {
+        console.log('Selected retry issue disappeared before dispatch.');
+        return;
+      }
+      await dispatchIfEligible({
+        repo,
+        issue,
+        retryReason: args.retryReason ?? defaultRetryReasonForMode('reconcile'),
+      });
+      return;
+    }
+
+    const unblocked = await selectDepsUnblockIssue(repo, fetchIssueState);
+    if (!unblocked) {
+      console.log('No eligible agent-ready or deps-unblocked issues for retry reconciliation.');
+      return;
+    }
+    await dispatchDepsUnblockedIssue({
+      repo,
+      issue: unblocked.issue,
+      retryReason: args.retryReason ?? 'deps_resolved_reconcile',
+    });
+    return;
+  }
+
+  if (args.mode === 'on-closed') {
+    const closedNumber = Number(args.number);
+    if (!Number.isInteger(closedNumber) || closedNumber <= 0) {
+      throw new Error('--number must be a positive integer for on-closed mode');
+    }
+    const skippedIssues = listAgentSkippedIssues(repo).filter((issue) =>
+      (issue.body ?? '').includes(`#${closedNumber}`),
+    );
+    const selected = await selectDepsUnblockCandidate(
+      skippedIssues,
+      (issueNumber) => hasOpenFixPr(repo, issueNumber),
+      fetchIssueState,
+    );
     if (!selected) {
-      console.log('No eligible agent-ready issues for retry reconciliation.');
+      console.log(`No deps-unblocked agent-skipped issues depend on #${closedNumber}.`);
       return;
     }
-    const issue = issues.find((entry) => entry.number === selected.issue.number);
+    const issue = skippedIssues.find((entry) => entry.number === selected.issue.number);
     if (!issue) {
-      console.log('Selected retry issue disappeared before dispatch.');
+      console.log('Selected deps-unblocked issue disappeared before dispatch.');
       return;
     }
-    await dispatchIfEligible({
+    await dispatchDepsUnblockedIssue({
       repo,
       issue,
-      retryReason: args.retryReason ?? defaultRetryReasonForMode('reconcile'),
+      retryReason: args.retryReason ?? 'dependency_closed',
     });
     return;
   }

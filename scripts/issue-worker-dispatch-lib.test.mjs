@@ -16,6 +16,8 @@ import {
   resolveImplementPreDispatchGates,
   selectOpenIssueByTitle,
   selectRetryCandidate,
+  selectDepsUnblockCandidate,
+  isDepsResolvedUnblockCandidate,
   formatDependencyGateComment,
 } from './issue-worker-dispatch-lib.mjs';
 
@@ -461,4 +463,73 @@ test('resolveImplementPreDispatchGates blocks open dependencies', async () => {
   });
   assert.equal(result.skip, true);
   assert.match(result.skipReason, /dependency #317 is open/);
+});
+
+test('isDepsResolvedUnblockCandidate accepts agent-skipped when all deps closed', async () => {
+  const result = await isDepsResolvedUnblockCandidate({
+    issueLabels: 'agent-skipped',
+    issueBody: '## 依存\n\n- #364\n- #365',
+    hasOpenFixPr: false,
+    fetchIssueState: async () => 'CLOSED',
+  });
+  assert.deepEqual(result, { eligible: true });
+});
+
+test('isDepsResolvedUnblockCandidate rejects when dependency still open', async () => {
+  const result = await isDepsResolvedUnblockCandidate({
+    issueLabels: 'agent-skipped',
+    issueBody: '## 依存\n\n- #364',
+    hasOpenFixPr: false,
+    fetchIssueState: async (number) => (number === 364 ? 'OPEN' : 'CLOSED'),
+  });
+  assert.deepEqual(result, {
+    eligible: false,
+    reason: 'dependency #364 is open',
+  });
+});
+
+test('isDepsResolvedUnblockCandidate rejects out_of_scope skips without deps', async () => {
+  const result = await isDepsResolvedUnblockCandidate({
+    issueLabels: 'agent-skipped',
+    issueBody: '## 依存\n\n- なし',
+    hasOpenFixPr: false,
+    fetchIssueState: async () => 'CLOSED',
+  });
+  assert.deepEqual(result, {
+    eligible: false,
+    reason: 'no dependency section refs',
+  });
+});
+
+test('isDepsResolvedUnblockCandidate rejects without agent-skipped', async () => {
+  const result = await isDepsResolvedUnblockCandidate({
+    issueLabels: 'agent-ready',
+    issueBody: '## 依存\n\n- #364',
+    hasOpenFixPr: false,
+    fetchIssueState: async () => 'CLOSED',
+  });
+  assert.deepEqual(result, {
+    eligible: false,
+    reason: 'no agent-skipped',
+  });
+});
+
+test('selectDepsUnblockCandidate picks lowest-number eligible issue', async () => {
+  const selected = await selectDepsUnblockCandidate(
+    [
+      {
+        number: 370,
+        labels: ['agent-skipped'],
+        body: '## 依存\n\n- #364',
+      },
+      {
+        number: 367,
+        labels: ['agent-skipped'],
+        body: '## 依存\n\n- #364',
+      },
+    ],
+    () => false,
+    async () => 'CLOSED',
+  );
+  assert.equal(selected?.issue.number, 367);
 });
