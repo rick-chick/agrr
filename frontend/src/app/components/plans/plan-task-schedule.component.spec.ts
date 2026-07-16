@@ -312,6 +312,11 @@ describe('PlanTaskScheduleComponent', () => {
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
+    const fromDateRouteMock = createPlanRouteMock({
+      planId: '7',
+      query: { from_date: '2026-06-01' }
+    });
+
     TestBed.overrideComponent(PlanTaskScheduleComponent, {
       set: {
         styleUrls: [],
@@ -323,14 +328,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
-            useValue: {
-              snapshot: {
-                paramMap: { get: vi.fn(() => '7') },
-                queryParamMap: {
-                  get: vi.fn((key: string) => (key === 'from_date' ? '2026-06-01' : null))
-                }
-              }
-            }
+            useValue: fromDateRouteMock
           }
         ]
       }
@@ -925,6 +923,11 @@ describe('PlanTaskScheduleComponent', () => {
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
+    const filteredRouteMock = createPlanRouteMock({
+      planId: '7',
+      query: { field_cultivation_id: '42', from_date: '2026-01-01' }
+    });
+
     TestBed.overrideComponent(PlanTaskScheduleComponent, {
       set: {
         styleUrls: [],
@@ -936,18 +939,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
-            useValue: {
-              snapshot: {
-                paramMap: { get: vi.fn(() => '7') },
-                queryParamMap: {
-                  get: vi.fn((key: string) => {
-                    if (key === 'field_cultivation_id') return '42';
-                    if (key === 'from_date') return '2026-01-01';
-                    return null;
-                  })
-                }
-              }
-            }
+            useValue: filteredRouteMock
           }
         ]
       }
