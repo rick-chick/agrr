@@ -4,6 +4,7 @@ pub mod crop_masters_crop_edit_access;
 pub mod crop_masters_nested_access;
 pub mod crop_reference_record_policy;
 pub mod crop_resolve_by_name_policy;
+pub mod crop_setup_proposal_policy;
 pub mod masters_crop_task_schedule_blueprint_create_policy;
 pub mod masters_crop_task_schedule_blueprint_duplicate_policy;
 

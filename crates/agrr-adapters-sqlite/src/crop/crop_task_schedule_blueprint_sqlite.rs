@@ -286,33 +286,7 @@ pub fn insert_blueprint(
     pool: &SqlitePool,
     rec: &CropTaskScheduleBlueprintPersistAttrs,
 ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
-    let blueprint_id = pool.with_write_box(|conn| {
-        conn.execute(
-            "INSERT INTO crop_task_schedule_blueprints (crop_id, agricultural_task_id, source_agricultural_task_id, \
-             stage_order, stage_name, gdd_trigger, gdd_tolerance, task_type, source, priority, amount, amount_unit, \
-             description, weather_dependency, time_per_sqm, name, created_at, updated_at) \
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, datetime('now'), datetime('now'))",
-            params![
-                rec.crop_id,
-                rec.agricultural_task_id,
-                rec.source_agricultural_task_id,
-                rec.stage_order,
-                rec.stage_name,
-                rec.gdd_trigger,
-                rec.gdd_tolerance,
-                rec.task_type,
-                rec.source,
-                rec.priority,
-                rec.amount,
-                rec.amount_unit,
-                rec.description,
-                rec.weather_dependency,
-                rec.time_per_sqm,
-                rec.name,
-            ],
-        )?;
-        Ok(conn.last_insert_rowid())
-    })?;
+    let blueprint_id = pool.with_write_box(|conn| insert_blueprint_row(conn, rec))?;
 
     let sql = format!(
         "SELECT {SELECT_COLS} FROM crop_task_schedule_blueprints WHERE id = ?1 AND crop_id = ?2"
@@ -321,6 +295,49 @@ pub fn insert_blueprint(
         conn.query_row(&sql, params![blueprint_id, rec.crop_id], map_blueprint_entity)
             .map_err(Into::into)
     })
+}
+
+fn insert_blueprint_row(
+    conn: &rusqlite::Connection,
+    rec: &CropTaskScheduleBlueprintPersistAttrs,
+) -> rusqlite::Result<i64> {
+    conn.execute(
+        "INSERT INTO crop_task_schedule_blueprints (crop_id, agricultural_task_id, source_agricultural_task_id, \
+         stage_order, stage_name, gdd_trigger, gdd_tolerance, task_type, source, priority, amount, amount_unit, \
+         description, weather_dependency, time_per_sqm, name, created_at, updated_at) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, datetime('now'), datetime('now'))",
+        params![
+            rec.crop_id,
+            rec.agricultural_task_id,
+            rec.source_agricultural_task_id,
+            rec.stage_order,
+            rec.stage_name,
+            rec.gdd_trigger,
+            rec.gdd_tolerance,
+            rec.task_type,
+            rec.source,
+            rec.priority,
+            rec.amount,
+            rec.amount_unit,
+            rec.description,
+            rec.weather_dependency,
+            rec.time_per_sqm,
+            rec.name,
+        ],
+    )?;
+    Ok(conn.last_insert_rowid())
+}
+
+pub fn insert_blueprint_on_conn(
+    conn: &rusqlite::Connection,
+    rec: &CropTaskScheduleBlueprintPersistAttrs,
+) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+    let blueprint_id = insert_blueprint_row(conn, rec)?;
+    let sql = format!(
+        "SELECT {SELECT_COLS} FROM crop_task_schedule_blueprints WHERE id = ?1 AND crop_id = ?2"
+    );
+    conn.query_row(&sql, params![blueprint_id, rec.crop_id], map_blueprint_entity)
+        .map_err(Into::into)
 }
 
 pub fn replace_all_blueprints_for_crop(
