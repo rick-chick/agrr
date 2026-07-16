@@ -24,6 +24,28 @@ const CONFLICT_DISPATCH_SNIPPETS = [
   'Draft PR without conflict/sync need',
 ];
 
+const RETRY_DISPATCH_SNIPPETS = [
+  'name: PR Merge Worker Retry Dispatch',
+  'PR Merge Worker Dispatch',
+  'dispatch_run_cancelled',
+  'scheduled_reconcile',
+  'pr-merge-worker-retry-dispatch.mjs',
+];
+
+const RECONCILE_LIB_SNIPPETS = [
+  'classifyReconcileCandidate',
+  'selectReconcileCandidate',
+  'prMergeWorkerNeedsSync',
+  "action: 'conflict'",
+  "action: 'stuck_retry'",
+];
+
+const DELAYED_RESCAN_SNIPPETS = [
+  'DELAYED_RESCAN_MS',
+  'delayed',
+  'immediate',
+];
+
 const DISPATCH_SCRIPT_SNIPPETS = [
   'buildConflictDispatchPayload',
   './pr-merge-worker-dispatch-payload-lib.mjs',
@@ -38,25 +60,41 @@ const PAYLOAD_LIB_SNIPPETS = ["action: 'conflict'"];
 export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   const errors = [];
   const workflowPath = join(repoRoot, '.github/workflows/pr-merge-worker-dispatch.yml');
+  const retryWorkflowPath = join(
+    repoRoot,
+    '.github/workflows/pr-merge-worker-retry-dispatch.yml',
+  );
   const needsSyncPath = join(repoRoot, 'scripts/pr-merge-worker-needs-sync.mjs');
   const dispatchScriptPath = join(
     repoRoot,
     'scripts/pr-merge-worker-dispatch-after-master-push.mjs',
   );
   const payloadLibPath = join(repoRoot, 'scripts/pr-merge-worker-dispatch-payload-lib.mjs');
+  const reconcileLibPath = join(
+    repoRoot,
+    'scripts/pr-merge-worker-retry-dispatch-lib.mjs',
+  );
 
   let workflowText = '';
+  let retryWorkflowText = '';
+  let needsSyncText = '';
   try {
     workflowText = await readFile(workflowPath, 'utf8');
   } catch {
     errors.push(`missing workflow: ${workflowPath}`);
   }
 
-  let needsSyncText = '';
+  try {
+    retryWorkflowText = await readFile(retryWorkflowPath, 'utf8');
+  } catch {
+    errors.push(`missing retry workflow: ${retryWorkflowPath}`);
+  }
+
   try {
     needsSyncText = await readFile(needsSyncPath, 'utf8');
   } catch {
     errors.push(`missing needs-sync helper: ${needsSyncPath}`);
+    needsSyncText = '';
   }
 
   let dispatchScriptText = '';
@@ -73,6 +111,13 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     errors.push(`missing payload lib: ${payloadLibPath}`);
   }
 
+  let reconcileLibText = '';
+  try {
+    reconcileLibText = await readFile(reconcileLibPath, 'utf8');
+  } catch {
+    errors.push(`missing reconcile lib: ${reconcileLibPath}`);
+  }
+
   for (const snippet of REQUIRED_WORKFLOW_SNIPPETS) {
     if (!workflowText.includes(snippet)) {
       errors.push(`workflow missing required snippet: ${snippet}`);
@@ -85,9 +130,27 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  for (const snippet of RETRY_DISPATCH_SNIPPETS) {
+    if (!retryWorkflowText.includes(snippet)) {
+      errors.push(`retry workflow missing required snippet: ${snippet}`);
+    }
+  }
+
   for (const snippet of DISPATCH_SCRIPT_SNIPPETS) {
     if (!dispatchScriptText.includes(snippet)) {
       errors.push(`dispatch script missing required snippet: ${snippet}`);
+    }
+  }
+
+  for (const snippet of DELAYED_RESCAN_SNIPPETS) {
+    if (!dispatchScriptText.includes(snippet)) {
+      errors.push(`dispatch script missing delayed re-scan snippet: ${snippet}`);
+    }
+  }
+
+  for (const snippet of RECONCILE_LIB_SNIPPETS) {
+    if (!reconcileLibText.includes(snippet)) {
+      errors.push(`reconcile lib missing required snippet: ${snippet}`);
     }
   }
 
@@ -113,6 +176,9 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   const requiredSkillSnippets = [
     'resolve-pr-merge-conflicts.sh',
     'action: conflict',
+    'action: stuck_retry',
+    'classifyReconcileCandidate',
+    'selectReconcileCandidate',
     'synchronize',
     'mergeStateStatus',
   ];
