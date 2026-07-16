@@ -50,7 +50,7 @@ Webhook ペイロードの `action`:
 - `agent-skipped` ラベル付き（再 triage する場合は人間がラベルを外す）
 - `wontfix` / `invalid` / `duplicate`
 - 本文に「ブロック中」「保留」と明記されているもの
-- **既に同一 issue を閉じるオープン PR** がある（`gh pr list --search "fixes #N"` 等で確認）
+- **既に同一 issue を閉じるオープン PR** がある（`gh pr list --search 'is:pr is:open (fixes #N OR closes #N)'` 等で確認）
 - Dependabot / Renovate 等 bot 起票（workflow 側で dispatch しない。万一届いたら `agent-skipped`）
 
 ### 手動のみ（番号未指定・レガシー）
