@@ -383,6 +383,26 @@ describe('CropStagesComponent', () => {
     expect(saveButton.disabled).toBe(false);
   });
 
+  it('sends null in panel save when cleared numeric fields were previously set', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.base_temperature = null;
+    component.stageEditDraft.required_gdd = null;
+
+    component.saveStagePanel();
+
+    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      temperaturePatch: {
+        base_temperature: null
+      },
+      thermalPatch: {
+        required_gdd: null
+      }
+    });
+  });
+
   it('saves panel fields through SaveCropStagePanelUseCase when save button is clicked', async () => {
     await loadStages([stageFixture]);
 
@@ -645,6 +665,39 @@ describe('CropStagesComponent', () => {
 
     expect(component.pendingDeleteStage?.id).toBe(1);
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends null in temperature dialog save when cleared stress thresholds were previously set', async () => {
+    await loadStages([
+      {
+        ...stageFixture,
+        temperature_requirement: {
+          ...stageFixture.temperature_requirement!,
+          low_stress_threshold: 10,
+          high_stress_threshold: 30,
+          frost_threshold: 0
+        }
+      } as CropStage
+    ]);
+
+    component.openTemperatureDialog();
+    component.temperatureDetailDraft = {
+      low_stress_threshold: null,
+      high_stress_threshold: null,
+      frost_threshold: null
+    };
+
+    component.saveTemperatureDialog();
+
+    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      temperaturePatch: {
+        low_stress_threshold: null,
+        high_stress_threshold: null,
+        frost_threshold: null
+      }
+    });
   });
 
   it('opens stress threshold dialog and saves only stress fields on explicit save', async () => {

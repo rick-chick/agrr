@@ -4,6 +4,7 @@ use super::crop_gateway::CropSqliteGateway;
 use crate::pool::SqlitePool;
 use agrr_domain::crop::dtos::{
     CropStageCreateInput, CropStageUpdateInput, TemperatureRequirementUpdateInput,
+    ThermalRequirementUpdateInput,
 };
 use agrr_domain::crop::gateways::CropGateway;
 use agrr_domain::cultivation_plan::ports::PrivatePlanCropListGateway;
@@ -193,6 +194,105 @@ fn delete_crop_stage_deletes_stage_with_temperature_requirement() {
         .unwrap();
     assert_eq!(stage_count, 0);
     assert_eq!(req_count, 0);
+}
+
+#[test]
+fn update_thermal_requirement_clears_required_gdd_when_payload_is_null() {
+    let pool = crop_test_pool();
+    let (gw, crop_id) = seed_crop(&pool);
+    let stage = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "Stage", "order": 1 }),
+        ))
+        .unwrap();
+    gw.create_temperature_requirement(
+        stage.id,
+        TemperatureRequirementUpdateInput::new(crop_id, stage.id, json!({})),
+    )
+    .ok();
+    gw.create_thermal_requirement(
+        stage.id,
+        ThermalRequirementUpdateInput::new(
+            crop_id,
+            stage.id,
+            json!({ "thermal_requirement": { "required_gdd": 120.0 } }),
+        ),
+    )
+    .unwrap();
+
+    let updated = gw
+        .update_thermal_requirement(
+            stage.id,
+            ThermalRequirementUpdateInput::new(
+                crop_id,
+                stage.id,
+                json!({ "thermal_requirement": { "required_gdd": null } }),
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(updated.required_gdd, None);
+
+    let stored: Option<f64> = pool
+        .with_read(|conn| {
+            conn.query_row(
+                "SELECT required_gdd FROM thermal_requirements WHERE crop_stage_id = ?1",
+                params![stage.id],
+                |row| row.get(0),
+            )
+        })
+        .unwrap();
+    assert_eq!(stored, None);
+}
+
+#[test]
+fn update_temperature_requirement_clears_base_temperature_when_payload_is_null() {
+    let pool = crop_test_pool();
+    let (gw, crop_id) = seed_crop(&pool);
+    let stage = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "Stage", "order": 1 }),
+        ))
+        .unwrap();
+    gw.create_temperature_requirement(
+        stage.id,
+        TemperatureRequirementUpdateInput::new(
+            crop_id,
+            stage.id,
+            json!({ "base_temperature": 10.0, "optimal_min": 15.0 }),
+        ),
+    )
+    .unwrap();
+
+    let updated = gw
+        .update_temperature_requirement(
+            stage.id,
+            TemperatureRequirementUpdateInput::new(
+                crop_id,
+                stage.id,
+                json!({ "temperature_requirement": { "base_temperature": null } }),
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(updated.base_temperature, None);
+    assert_eq!(
+        updated.optimal_min,
+        Decimal::from_f64_retain(15.0)
+    );
+
+    let stored: (Option<f64>, Option<f64>) = pool
+        .with_read(|conn| {
+            conn.query_row(
+                "SELECT base_temperature, optimal_min FROM temperature_requirements WHERE crop_stage_id = ?1",
+                params![stage.id],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+        })
+        .unwrap();
+    assert_eq!(stored, (None, Some(15.0)));
 }
 
 // Ruby: create_temperature_requirement creates a new requirement
