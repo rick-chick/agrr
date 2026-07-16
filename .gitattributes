@@ -26,6 +26,8 @@ crates/agrr-migrate/data/extracted/templates/*.json -filter -diff -merge text
 frontend/package.json -filter -diff -merge text eol=lf
 package-lock.json -filter -diff -merge text eol=lf
 frontend/package-lock.json -filter -diff -merge text eol=lf
+tools/agrr-mcp/package.json -filter -diff -merge text eol=lf
+tools/agrr-mcp/package-lock.json -filter -diff -merge text eol=lf
 frontend/angular.json -filter -diff -merge text eol=lf
 frontend/tsconfig*.json -filter -diff -merge text eol=lf
 frontend/src/assets/i18n/*.json -filter -diff -merge text eol=lf
