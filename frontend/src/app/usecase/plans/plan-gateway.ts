@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
+import { RegenerateTaskScheduleResponseDto } from './regenerate-task-schedule-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 
 export interface TaskScheduleQueryParams {
@@ -16,7 +17,7 @@ export interface PlanGateway {
   fetchPlanData(planId: number): Observable<CultivationPlanData>;
   getPublicPlanData(planId: number): Observable<CultivationPlanData>;
   getTaskSchedule(planId: number, params?: TaskScheduleQueryParams): Observable<TaskScheduleResponse>;
-  regenerateTaskSchedule(planId: number): Observable<void>;
+  regenerateTaskSchedule(planId: number): Observable<RegenerateTaskScheduleResponseDto>;
   deletePlan(planId: number): Observable<DeletionUndoResponse>;
 }
 

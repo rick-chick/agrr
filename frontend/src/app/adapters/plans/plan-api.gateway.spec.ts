@@ -269,11 +269,13 @@ describe('PlanApiGateway', () => {
   });
 
   describe('regenerateTaskSchedule', () => {
-    it('calls POST /api/v1/plans/:id/task_schedule/regenerate', async () => {
-      vi.mocked(apiClient.post).mockReturnValue(of(undefined));
+    it('calls POST /api/v1/plans/:id/task_schedule/regenerate and returns sync state', async () => {
+      const response = { success: true, task_schedule_sync_state: 'generating' };
+      vi.mocked(apiClient.post).mockReturnValue(of(response));
 
-      await firstValueFrom(gateway.regenerateTaskSchedule(7));
+      const result = await firstValueFrom(gateway.regenerateTaskSchedule(7));
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule/regenerate', {});
+      expect(result).toEqual(response);
     });
   });
 

@@ -268,12 +268,14 @@ describe('PlanTaskSchedulePresenter regenerate', () => {
     expect(view.control.regenerateError).toBeNull();
   });
 
-  it('clears regenerate error on onRegenerateSuccess', () => {
+  it('clears regenerate error and keeps regenerating when POST returns generating', () => {
     view.control = { ...view.control, regenerateError: 'previous error' };
 
-    presenter.onRegenerateSuccess();
+    presenter.onRegenerateSuccess({ success: true, task_schedule_sync_state: 'generating' });
 
     expect(view.control.regenerateError).toBeNull();
+    expect(view.control.regenerating).toBe(true);
+    expect(view.control.schedule?.plan.task_schedule_sync_state).toBe('generating');
   });
 
   it('sets regenerate error on onRegenerateError', () => {
@@ -307,12 +309,29 @@ describe('PlanTaskSchedulePresenter task schedule sync', () => {
     expect(view.control.syncReloadNonce).toBe(1);
   });
 
-  it('ignores sync messages when schedule is not loaded', () => {
+  it('queues pending sync when schedule is not loaded and merges on present', () => {
     view.control = { ...view.control, schedule: null };
 
     presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null, syncErrorCropId: null });
 
     expect(view.control.syncReloadNonce).toBe(0);
     expect(view.control.pendingSyncToastKey).toBeNull();
+
+    presenter.present({ schedule: scheduleWithFields });
+
+    expect(view.control.schedule?.plan.task_schedule_sync_state).toBe('ready');
+    expect(view.control.pendingSyncToastKey).toBe('plans.task_schedules.sync_updated');
+    expect(view.control.syncReloadNonce).toBe(1);
+  });
+
+  it('present keeps regenerating when loaded sync state is generating', () => {
+    const generatingSchedule: TaskScheduleResponse = {
+      ...scheduleWithFields,
+      plan: { ...planInfo, task_schedule_sync_state: 'generating' }
+    };
+
+    presenter.present({ schedule: generatingSchedule });
+
+    expect(view.control.regenerating).toBe(true);
   });
 });

@@ -1,4 +1,3 @@
-import { TaskScheduleSyncMessageDto } from '../../usecase/plans/subscribe-task-schedule-sync.dtos';
 import {
   syncErrorDetailTranslateKey,
   syncErrorDetailTranslateParams
@@ -29,17 +28,7 @@ export interface CropBannerEntry {
   label: string;
 }
 
-interface TaskScheduleSyncPlanFields {
-  task_schedule_sync_state: string;
-  task_schedule_sync_error: string | null;
-  task_schedule_sync_error_crop_id: number | null;
-}
-
-interface TaskScheduleSyncViewPatch {
-  regenerating: boolean;
-  toastI18nKey: string | null;
-  requestReload: boolean;
-}
+export { applySyncFieldsToPlan, taskScheduleSyncViewPatch } from '../../usecase/plans/task-schedule-sync-view-patch';
 
 export function buildCropBannerContext(
   fields: Array<{ crop_id: number; crop_name?: string | null }>
@@ -102,47 +91,6 @@ export function mergeCropBannerContext(
       crop_name: crop.crop_name
     }))
   );
-}
-
-export function applySyncFieldsToPlan<T extends TaskScheduleSyncPlanFields>(
-  plan: T,
-  message: TaskScheduleSyncMessageDto
-): T {
-  return {
-    ...plan,
-    task_schedule_sync_state: message.syncState,
-    task_schedule_sync_error: message.syncError,
-    task_schedule_sync_error_crop_id: message.syncErrorCropId
-  };
-}
-
-export function taskScheduleSyncViewPatch(syncState: string): TaskScheduleSyncViewPatch {
-  if (syncState === 'generating') {
-    return {
-      regenerating: true,
-      toastI18nKey: null,
-      requestReload: false
-    };
-  }
-  if (syncState === 'ready') {
-    return {
-      regenerating: false,
-      toastI18nKey: 'plans.task_schedules.sync_updated',
-      requestReload: true
-    };
-  }
-  if (syncState === 'failed') {
-    return {
-      regenerating: false,
-      toastI18nKey: null,
-      requestReload: true
-    };
-  }
-  return {
-    regenerating: false,
-    toastI18nKey: null,
-    requestReload: false
-  };
 }
 
 export interface TaskScheduleSyncBannerViewModel {

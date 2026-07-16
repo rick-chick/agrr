@@ -14,6 +14,7 @@ import { RegenerateTaskScheduleUseCase } from './regenerate-task-schedule.usecas
 import { SKIP_TASK_SCHEDULE_ITEM_OUTPUT_PORT } from './skip-task-schedule-item.output-port';
 import { SkipTaskScheduleItemUseCase } from './skip-task-schedule-item.usecase';
 import { SUBSCRIBE_TASK_SCHEDULE_SYNC_OUTPUT_PORT } from './subscribe-task-schedule-sync.output-port';
+import { PollTaskScheduleSyncUseCase } from './poll-task-schedule-sync.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from './subscribe-task-schedule-sync.usecase';
 import { WORK_RECORD_GATEWAY } from './work-record-gateway';
 
@@ -23,6 +24,7 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   SkipTaskScheduleItemUseCase,
   CreateWorkRecordUseCase,
   RegenerateTaskScheduleUseCase,
+  PollTaskScheduleSyncUseCase,
   SubscribeTaskScheduleSyncUseCase,
   { provide: LOAD_WORK_DAY_LIST_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: SKIP_TASK_SCHEDULE_ITEM_OUTPUT_PORT, useExisting: PlanWorkPresenter },
