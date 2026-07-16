@@ -93,6 +93,7 @@ const tableTranslations = {
       table_cumulative_gdd: 'Cumulative GDD',
       value_missing: '—',
       stage_cumulative_gdd_range: '{{start}}–{{end}} ℃·day (cumulative)',
+      stage_cumulative_gdd_missing: 'Enter required GDD to display the range',
       optimal_min: 'Optimal min',
       optimal_max: 'Optimal max',
       low_stress_threshold: 'Low stress',
@@ -253,7 +254,7 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeTruthy();
   });
 
-  it('shows em dash for missing table values', async () => {
+  it('shows em dash for missing base temperature and required GDD in table', async () => {
     await loadStages([
       {
         id: 1,
@@ -268,6 +269,25 @@ describe('CropStagesComponent', () => {
 
     const row = fixture.nativeElement.querySelector('.crop-stages-table__row');
     expect(row.textContent).toContain('—');
+    expect(row.textContent).toContain('Enter required GDD to display the range');
+  });
+
+  it('formatCumulativeGdd uses hint when required GDD is missing', async () => {
+    await loadStages([
+      {
+        id: 1,
+        name: 'Stage 1',
+        order: 1,
+        temperature_requirement: null,
+        thermal_requirement: null,
+        sunshine_requirement: null,
+        nutrient_requirement: null
+      } as CropStage
+    ]);
+
+    expect(component.formatCumulativeGdd(component.sortedStages[0])).toBe(
+      'Enter required GDD to display the range'
+    );
   });
 
   it('shows cumulative GDD range in table when required_gdd is set', async () => {
