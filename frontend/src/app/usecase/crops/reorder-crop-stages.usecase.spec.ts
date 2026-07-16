@@ -69,7 +69,7 @@ describe('ReorderCropStagesUseCase', () => {
     expect(presented).toEqual({ stages: reorderedStages });
   });
 
-  it('reports gateway errors via output port with apiErrorI18nKey', () => {
+  it('reports gateway errors via output port with cropStageReorderErrorI18nKey', () => {
     const reorderError = new HttpErrorResponse({ status: 422, statusText: 'Unprocessable Entity' });
     const cropStageGateway: CropStageGateway = {
       createCropStage: () => of({} as never),
@@ -107,6 +107,6 @@ describe('ReorderCropStagesUseCase', () => {
       entries: [{ id: 1, order: 1 }]
     });
 
-    expect(errorMessage).toBe('common.api_error.generic');
+    expect(errorMessage).toBe('crops.errors.stage_order_conflict');
   });
 });
