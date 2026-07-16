@@ -318,6 +318,21 @@ describe('CropStagesPresenter', () => {
     });
   });
 
+  describe('LoadCropForEditOutputPort onError', () => {
+    it('sets control.error and clears loading on initial load failure', () => {
+      lastControl = {
+        ...baseControlState(),
+        loading: true
+      };
+
+      presenter.onError({ message: 'common.api_error.not_found' });
+
+      expect(lastControl!.loading).toBe(false);
+      expect(lastControl!.error).toBe('common.api_error.not_found');
+      expect(lastControl!.pendingErrorFlash).toBeNull();
+    });
+  });
+
   describe('CreateCropStageOutputPort onError', () => {
     it('queues pending error flash with i18n key on onError', () => {
       lastControl = baseControlState({
