@@ -98,6 +98,32 @@ sequenceDiagram
 
 **リトライ**: `issue-worker-retry-dispatch.yml` / `pr-merge-worker-retry-dispatch.yml` が 15 分ごとに滞留を reconcile。primary dispatch が `cancelled` になった場合も再送する。
 
+#### 例外: Draft + 必須 CI 失敗（責任空白の回復）
+
+Issue Worker が Draft PR を作成したあと必須 CI が FAIL すると、Issue Worker（open PR ゲート）・pr-agent-prep（ready は CI green 必須）・従来の Merge Worker dispatch（Draft スキップ）のいずれも介入しない状態になりうる（#354）。
+
+| 層 | 回復経路 |
+|----|----------|
+| **PR Merge Worker** | `action: ci_fix` — Draft + `agent-merge` + 必須 CI FAIL + 非コンフリクト |
+| **起動** | `pr-merge-worker-dispatch`（Backend test 完了で FAIL 検知）または `pr-merge-worker-retry-dispatch`（15 分 reconcile） |
+| **Issue Worker** | open PR がある間は **再 dispatch しない**（意図的 — 二重実装防止） |
+
+```mermaid
+sequenceDiagram
+  participant IW as Issue Worker
+  participant GH as Draft PR
+  participant CI as Backend test 他
+  participant PMD as pr-merge-worker-dispatch
+  participant PMW as PR Merge Worker
+
+  IW->>GH: Draft PR + agent-merge
+  CI->>GH: 必須 CI FAIL
+  PMD->>PMW: webhook action ci_fix
+  PMW->>GH: 同一ブランチで CI 修正 push
+  CI->>GH: 必須 CI green
+  Note over GH: pr-agent-prep が ready 化 → 通常マージ経路
+```
+
 ### 2. UX キャンペーン（マージ後ループ）
 
 PR マージ後、キャンペーン対象なら **UX Campaign Loop** Automation がスキャンし、残件を issue 化。完了時は Automation 自身を無効化する。
@@ -209,7 +235,7 @@ payload の `action` フィールド例:
 | Automation | action 例 | 意味 |
 |------------|-----------|------|
 | Issue Worker | `triage` / `implement` / `close_with_reason` | 新規 issue / agent-ready / agent-close |
-| PR Merge Worker | `ci_completed` / `conflict` / `stuck_retry` | CI 後レビュー / コンフリクト解消 / 滞留再試行 |
+| PR Merge Worker | `ci_completed` / `conflict` / `ci_fix` / `stuck_retry` | CI 後レビュー / コンフリクト解消 / Draft CI 修正 / 滞留再試行 |
 | UX Campaign Loop | （`pr_number`, `merged`, `campaign_id` 等） | マージ後キャンペーンレビュー |
 
 secrets 未設定時、多くの dispatch workflow は **exit 0 でスキップ**（Issue Worker）または **exit 1 で失敗**（PR Merge Worker — 気づきやすくするため）。

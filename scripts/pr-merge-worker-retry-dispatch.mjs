@@ -9,9 +9,13 @@
  *
  * Env: WEBHOOK_URL, WEBHOOK_KEY, GH_TOKEN (optional; gh uses default auth)
  */
+import { execFileSync } from 'node:child_process';
 import { parseRetryDispatchArgs } from './issue-worker-dispatch-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
-import { buildConflictDispatchPayload } from './pr-merge-worker-dispatch-payload-lib.mjs';
+import {
+  buildCiFixDispatchPayload,
+  buildConflictDispatchPayload,
+} from './pr-merge-worker-dispatch-payload-lib.mjs';
 import {
   buildRetryDispatchPayload,
   classifyReconcileCandidate,
@@ -124,7 +128,7 @@ function postWebhook(repo, payload) {
 }
 
 /**
- * @param {'conflict' | 'stuck_retry'} action
+ * @param {'conflict' | 'stuck_retry' | 'ci_fix'} action
  * @param {string} repo
  * @param {Record<string, unknown>} pr
  * @param {string} [retryReason]
@@ -132,6 +136,9 @@ function postWebhook(repo, payload) {
 function buildReconcilePayload(action, repo, pr, retryReason) {
   if (action === 'conflict') {
     return buildConflictDispatchPayload({ repository: repo, pr });
+  }
+  if (action === 'ci_fix') {
+    return buildCiFixDispatchPayload({ repository: repo, pr });
   }
   return buildRetryDispatchPayload({
     repository: repo,
