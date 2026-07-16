@@ -76,7 +76,6 @@ const tableTranslations = {
       stages_list_heading: 'Stage list',
       stages_empty_lead: 'Stages are required.',
       add_stage: 'Add Stage',
-      stage_title: 'Stage {{order}}',
       stage_name: 'Stage Name',
       base_temperature: 'Base Temperature',
       base_temperature_placeholder: 'e.g., 5.0',
