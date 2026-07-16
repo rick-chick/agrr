@@ -20,7 +20,7 @@ const CONFLICT_DISPATCH_SNIPPETS = [
   'MERGEABLE_STATE" = "CONFLICTING"',
   'MERGE_STATE_STATUS" = "BEHIND"',
   'ACTION="conflict"',
-  'skipping CI gate for conflict resolution',
+  'skipping CI gate for ${ACTION} resolution',
   'Draft PR without conflict/sync need',
   'dispatching ci_fix',
   'ACTION="ci_fix"',
