@@ -4,7 +4,7 @@ import { ApiService } from '../../services/api.service';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
-import { PlanGateway } from '../../usecase/plans/plan-gateway';
+import { PlanGateway, TaskScheduleQueryParams } from '../../usecase/plans/plan-gateway';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 
 @Injectable()
@@ -29,8 +29,18 @@ export class PlanApiGateway implements PlanGateway {
     );
   }
 
-  getTaskSchedule(planId: number): Observable<TaskScheduleResponse> {
-    return this.apiClient.get<TaskScheduleResponse>(`/api/v1/plans/${planId}/task_schedule`);
+  getTaskSchedule(
+    planId: number,
+    params?: TaskScheduleQueryParams
+  ): Observable<TaskScheduleResponse> {
+    const query = new URLSearchParams();
+    if (params?.scope) query.set('scope', params.scope);
+    if (params?.field_cultivation_id != null) {
+      query.set('field_cultivation_id', String(params.field_cultivation_id));
+    }
+    const qs = query.toString();
+    const path = `/api/v1/plans/${planId}/task_schedule${qs ? `?${qs}` : ''}`;
+    return this.apiClient.get<TaskScheduleResponse>(path);
   }
 
   regenerateTaskSchedule(planId: number): Observable<void> {

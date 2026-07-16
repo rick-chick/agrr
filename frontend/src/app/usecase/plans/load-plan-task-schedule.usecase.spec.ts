@@ -16,7 +16,7 @@ describe('LoadPlanTaskScheduleUseCase', () => {
     minimap: { start_date: '', end_date: '', weeks: [] }
   } satisfies TaskScheduleResponse;
 
-  it('fetches task schedule by planId only and presents result', () => {
+  it('fetches task schedule with scope=plan and presents result', () => {
     const getTaskSchedule = vi.fn().mockReturnValue(of(schedule));
     const gateway = { getTaskSchedule } as unknown as PlanGateway;
     let received: PlanTaskScheduleDataDto | null = null;
@@ -30,9 +30,26 @@ describe('LoadPlanTaskScheduleUseCase', () => {
 
     useCase.execute({ planId: 7 });
 
-    expect(getTaskSchedule).toHaveBeenCalledWith(7);
+    expect(getTaskSchedule).toHaveBeenCalledWith(7, { scope: 'plan' });
     expect(received?.schedule).toEqual(schedule);
     expect(outputPort.onError).not.toHaveBeenCalled();
+  });
+
+  it('passes field_cultivation_id to gateway when provided in dto', () => {
+    const getTaskSchedule = vi.fn().mockReturnValue(of(schedule));
+    const gateway = { getTaskSchedule } as unknown as PlanGateway;
+    const outputPort: LoadPlanTaskScheduleOutputPort = {
+      present: vi.fn(),
+      onError: vi.fn()
+    };
+    const useCase = new LoadPlanTaskScheduleUseCase(outputPort, gateway);
+
+    useCase.execute({ planId: 7, fieldCultivationId: 42 });
+
+    expect(getTaskSchedule).toHaveBeenCalledWith(7, {
+      scope: 'plan',
+      field_cultivation_id: 42
+    });
   });
 
   it('notifies output port on gateway error', () => {
@@ -47,7 +64,7 @@ describe('LoadPlanTaskScheduleUseCase', () => {
 
     useCase.execute({ planId: 7 });
 
-    expect(gateway.getTaskSchedule).toHaveBeenCalledWith(7);
+    expect(gateway.getTaskSchedule).toHaveBeenCalledWith(7, { scope: 'plan' });
     expect(outputPort.onError).toHaveBeenCalled();
     expect(outputPort.present).not.toHaveBeenCalled();
   });
