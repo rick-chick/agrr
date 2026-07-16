@@ -23,6 +23,7 @@ require .cursor/skills/ux-issue-pipeline/SKILL.md
 require .cursor/skills/sequential-cleanup-review-workflow/SKILL.md
 require .cursor/skills/cloud-automation-audit/SKILL.md
 require .cursor/skills/automation-pipeline-watchdog/SKILL.md
+require .cursor/skills/automation-authoring/SKILL.md
 require .cursor/environment.json
 require .cursor/scripts/cloud-gh-auth.sh
 
