@@ -56,6 +56,7 @@ const initialControl: CropStagesViewState = {
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
   pendingReorderCropStagesSnapshot: null,
+  pendingResyncPanelDraft: false,
   blueprintReadiness: defaultBlueprintReadiness(),
   stageRequirementGaps: [],
   showBlueprintReadinessChecklist: false,
@@ -561,13 +562,17 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
   set control(value: CropStagesViewState) {
     const previousStages = this._control.formData.crop_stages;
+    const forceResyncPanelDraft = value.pendingResyncPanelDraft;
     this._control = withCropStagesDisplayState(
-      applyPendingFlashViewEffects(value, { flash: this.flashMessage })
+      applyPendingFlashViewEffects(
+        { ...value, pendingResyncPanelDraft: false },
+        { flash: this.flashMessage }
+      )
     );
     const stagesChanged = previousStages !== value.formData.crop_stages;
-    if (stagesChanged) {
+    if (stagesChanged || forceResyncPanelDraft) {
       queueMicrotask(() => {
-        this.ensureSelectedStage();
+        this.ensureSelectedStage({ forceResyncPanelDraft });
         this.cdr.markForCheck();
       });
     }
@@ -1080,7 +1085,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     };
   }
 
-  private ensureSelectedStage(): void {
+  private ensureSelectedStage(options?: { forceResyncPanelDraft?: boolean }): void {
     const stages = this.control.formData.crop_stages;
     const currentIds = new Set(stages.map((stage) => stage.id));
     const newStageIds = stages
@@ -1113,7 +1118,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     }
 
     const stage = stages.find((item) => item.id === this.selectedStageId);
-    if (stage && !this.isPanelDirty()) {
+    if (stage && (!this.isPanelDirty() || options?.forceResyncPanelDraft)) {
       this.syncDraftFromStage(stage);
     }
   }
