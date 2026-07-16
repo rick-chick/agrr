@@ -15,6 +15,7 @@ export type CropStagesViewState = {
   taskScheduleBlueprints: CropTaskScheduleBlueprint[];
   pendingErrorFlash: PendingErrorFlashRequest | null;
   pendingSuccessFlash: PendingSuccessFlashRequest | null;
+  pendingReorderCropStagesSnapshot: CropStage[] | null;
 };
 
 export interface CropStagesView {
