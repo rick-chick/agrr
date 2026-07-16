@@ -22,14 +22,10 @@ import {
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
-import {
-  parsePlanWizardReturnTab,
+import { parsePlanWizardReturnTab,
   planWizardReturnPath,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
-import {
-  defaultBlueprintReadiness
-} from '../../../domain/crops/blueprint-generation-readiness';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import { parseOptionalNumber } from '../../../domain/crops/parse-optional-number';
 import {
@@ -55,7 +51,6 @@ const initialControl: CropStagesViewState = {
   loading: true,
   error: null,
   formData: initialFormData,
-  blueprintReadiness: defaultBlueprintReadiness(),
   taskScheduleBlueprints: [],
   pendingErrorFlash: null,
   pendingSuccessFlash: null
