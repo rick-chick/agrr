@@ -29,14 +29,14 @@ export interface CreateTemperatureRequirementPayload {
 }
 
 export interface UpdateTemperatureRequirementPayload {
-  base_temperature?: number;
-  optimal_min?: number;
-  optimal_max?: number;
-  low_stress_threshold?: number;
-  high_stress_threshold?: number;
-  frost_threshold?: number;
-  sterility_risk_threshold?: number;
-  max_temperature?: number;
+  base_temperature?: number | null;
+  optimal_min?: number | null;
+  optimal_max?: number | null;
+  low_stress_threshold?: number | null;
+  high_stress_threshold?: number | null;
+  frost_threshold?: number | null;
+  sterility_risk_threshold?: number | null;
+  max_temperature?: number | null;
 }
 
 export interface CreateThermalRequirementPayload {
@@ -44,7 +44,7 @@ export interface CreateThermalRequirementPayload {
 }
 
 export interface UpdateThermalRequirementPayload {
-  required_gdd?: number;
+  required_gdd?: number | null;
 }
 
 export interface CreateSunshineRequirementPayload {
@@ -53,8 +53,8 @@ export interface CreateSunshineRequirementPayload {
 }
 
 export interface UpdateSunshineRequirementPayload {
-  minimum_sunshine_hours?: number;
-  target_sunshine_hours?: number;
+  minimum_sunshine_hours?: number | null;
+  target_sunshine_hours?: number | null;
 }
 
 export interface CreateNutrientRequirementPayload {
@@ -65,10 +65,10 @@ export interface CreateNutrientRequirementPayload {
 }
 
 export interface UpdateNutrientRequirementPayload {
-  daily_uptake_n?: number;
-  daily_uptake_p?: number;
-  daily_uptake_k?: number;
-  region?: string;
+  daily_uptake_n?: number | null;
+  daily_uptake_p?: number | null;
+  daily_uptake_k?: number | null;
+  region?: string | null;
 }
 
 export interface CropStageGateway {
