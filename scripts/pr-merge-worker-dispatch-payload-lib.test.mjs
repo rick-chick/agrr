@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { buildConflictDispatchPayload } from './pr-merge-worker-dispatch-payload-lib.mjs';
+import {
+  buildCiFixDispatchPayload,
+  buildConflictDispatchPayload,
+} from './pr-merge-worker-dispatch-payload-lib.mjs';
 
 test('buildConflictDispatchPayload maps PR fields for conflict dispatch', () => {
   const payload = buildConflictDispatchPayload({
@@ -29,6 +32,35 @@ test('buildConflictDispatchPayload maps PR fields for conflict dispatch', () => 
     author: 'cursor[bot]',
     mergeable_state: 'MERGEABLE',
     merge_state_status: 'BEHIND',
+  });
+});
+
+test('buildCiFixDispatchPayload maps PR fields for ci_fix dispatch', () => {
+  const payload = buildCiFixDispatchPayload({
+    repository: 'rick-chick/agrr',
+    pr: {
+      number: 353,
+      title: 'fix: setup proposal (#319)',
+      url: 'https://github.com/rick-chick/agrr/pull/353',
+      headRefName: 'cursor/agrr-issue-worker-workflow-abc',
+      headRefOid: 'def456',
+      author: { login: 'cursor[bot]' },
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'CLEAN',
+    },
+  });
+
+  assert.deepEqual(payload, {
+    repository: 'rick-chick/agrr',
+    pr_number: 353,
+    pr_title: 'fix: setup proposal (#319)',
+    pr_url: 'https://github.com/rick-chick/agrr/pull/353',
+    action: 'ci_fix',
+    head_ref: 'cursor/agrr-issue-worker-workflow-abc',
+    head_sha: 'def456',
+    author: 'cursor[bot]',
+    mergeable_state: 'MERGEABLE',
+    merge_state_status: 'CLEAN',
   });
 });
 

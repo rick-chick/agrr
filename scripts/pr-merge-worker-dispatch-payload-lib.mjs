@@ -28,3 +28,26 @@ export function buildConflictDispatchPayload({ repository, pr }) {
     merge_state_status: pr.mergeStateStatus ?? '',
   };
 }
+
+/**
+ * Build webhook payload for PR Merge Worker draft CI fix dispatch.
+ *
+ * @param {object} params
+ * @param {string} params.repository
+ * @param {object} params.pr
+ * @returns {object}
+ */
+export function buildCiFixDispatchPayload({ repository, pr }) {
+  return {
+    repository,
+    pr_number: pr.number,
+    pr_title: pr.title,
+    pr_url: pr.url,
+    action: 'ci_fix',
+    head_ref: pr.headRefName,
+    head_sha: pr.headRefOid,
+    author: pr.author?.login ?? '',
+    mergeable_state: pr.mergeable ?? '',
+    merge_state_status: pr.mergeStateStatus ?? '',
+  };
+}

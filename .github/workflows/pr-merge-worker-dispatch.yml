@@ -177,8 +177,24 @@ jobs:
           fi
 
           if [ "$IS_DRAFT" = "true" ] && [ "$NEEDS_SYNC" != "true" ]; then
-            echo "Draft PR without conflict/sync need; skipping."
-            exit 0
+            if echo "$LABELS" | grep -qE '(^|,)agent-merge(,|$)'; then
+              CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state)
+              REQUIRED_CI_STATE=$(CHECKS_JSON="$CHECKS_JSON" node scripts/classify-required-ci-state.mjs)
+              if [ "$REQUIRED_CI_STATE" = "incomplete" ]; then
+                echo "Draft PR with agent-merge but required CI still pending; skipping."
+                exit 0
+              fi
+              if [ "$REQUIRED_CI_STATE" = "failed" ]; then
+                ACTION="ci_fix"
+                echo "Draft PR with agent-merge and failed required CI; dispatching ci_fix."
+              else
+                echo "Draft PR without conflict/sync need; skipping."
+                exit 0
+              fi
+            else
+              echo "Draft PR without conflict/sync need; skipping."
+              exit 0
+            fi
           fi
           if [ "$HEAD_OWNER" != "$BASE_OWNER" ]; then
             echo "Fork PR (head owner $HEAD_OWNER != base owner $BASE_OWNER); skipping."
@@ -208,17 +224,24 @@ jobs:
 
           if [ "$ACTION" = "ci_completed" ]; then
             CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state)
-            for ctx in rails-test frontend-test "lint / frontend-lint"; do
-              state=$(echo "$CHECKS_JSON" | jq -r --arg ctx "$ctx" '.[] | select(.name == $ctx) | .state' | head -1)
-              if [ "$state" != "SUCCESS" ]; then
-                echo "Required check '$ctx' is not SUCCESS (${state:-missing}); skipping dispatch."
+            REQUIRED_CI_STATE=$(CHECKS_JSON="$CHECKS_JSON" node scripts/classify-required-ci-state.mjs)
+            if [ "$REQUIRED_CI_STATE" = "incomplete" ]; then
+              echo "Required checks still pending on ci_completed; skipping dispatch."
+              exit 0
+            fi
+            if [ "$REQUIRED_CI_STATE" = "failed" ]; then
+              if [ "$IS_DRAFT" = "true" ] && echo "$LABELS" | grep -qE '(^|,)agent-merge(,|$)'; then
+                ACTION="ci_fix"
+                echo "Draft agent-merge PR with failed required CI; dispatching ci_fix."
+              else
+                echo "Required check failed on ci_completed; skipping dispatch."
                 exit 0
               fi
-            done
+            fi
           fi
 
-          if [ "$ACTION" = "conflict" ]; then
-            echo "skipping CI gate for conflict resolution"
+          if [ "$ACTION" = "conflict" ] || [ "$ACTION" = "ci_fix" ]; then
+            echo "skipping CI gate for ${ACTION} resolution"
           fi
 
           payload=$(jq -n \
