@@ -85,6 +85,28 @@ test('isStuckRetryCandidate rejects draft PR', () => {
   assert.match(result.reason, /draft/i);
 });
 
+test('classifyReconcileCandidate accepts conflicting draft cursor PR without agent-merge label', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      number: 341,
+      isDraft: true,
+      labels: [],
+      mergeable: 'CONFLICTING',
+      mergeStateStatus: 'DIRTY',
+      updatedAt: '2026-07-16T09:49:12.000Z',
+    },
+    checks: [],
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'conflict',
+    removeStaleInProgressLabel: false,
+  });
+});
+
 test('isStuckRetryCandidate rejects fresh in-progress label', () => {
   const result = isStuckRetryCandidate({
     pr: {

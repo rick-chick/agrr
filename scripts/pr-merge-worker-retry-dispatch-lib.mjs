@@ -52,12 +52,14 @@ export function isInProgressStale({
  * @returns {{ eligible: true } | { eligible: false; reason: string }}
  */
 function classifyBaseEligibility({ pr, baseOwner }) {
-  if (pr.isDraft) {
+  const labels = labelNames(pr.labels ?? []);
+  const needsSync = prMergeWorkerNeedsSync(pr);
+
+  if (pr.isDraft && !needsSync) {
     return { eligible: false, reason: 'draft pr' };
   }
 
-  const labels = labelNames(pr.labels ?? []);
-  if (!labels.includes('agent-merge')) {
+  if (!needsSync && !labels.includes('agent-merge')) {
     return { eligible: false, reason: 'no agent-merge label' };
   }
   if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
