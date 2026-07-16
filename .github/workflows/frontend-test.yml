@@ -84,6 +84,12 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-pr-merge-worker-dispatch-workflow.test.mjs
 
+      - name: agrr-mcp unit tests
+        working-directory: tools/agrr-mcp
+        run: |
+          npm ci
+          npm test
+
       - name: automation script unit tests
         working-directory: ${{ github.workspace }}
         run: |
