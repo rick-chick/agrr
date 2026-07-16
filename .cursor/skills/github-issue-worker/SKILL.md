@@ -111,7 +111,7 @@ gh issue edit <N> --add-label agent-in-progress
 
 **dispatch 層で処理（§2b ではない）**: 本文 `## 依存` に open の `#N` がある issue への `implement` dispatch は [`issue-worker-dispatch.yml`](../../../.github/workflows/issue-worker-dispatch.yml) が webhook 送信前に保留する（issue コメントのみ・`agent-skipped` なし）。`[epic]` / `epic` ラベルの `implement` dispatch も同 workflow が拒否する。
 
-**禁止**: 根拠のないスキップ、duplicate / already_fixed をスキップで逃げる（該当時は §2a で close）。
+**禁止**: 根拠のないスキップ、duplicate / already_fixed をスキップで逃げる（該当時は §2a で close）。**`deps_unmet`（本文 `## 依存` に open の `#N` あり）で §2b を使わない** — `agent-skipped` を付けると reconcile が除外し依存解消後も再 dispatch されない。dispatch 層の依存ゲート（`agent-ready` 維持）または issue コメントのみで待機する。
 
 ### 必須コメント（ラベル付与前）
 
