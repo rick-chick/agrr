@@ -222,17 +222,21 @@ async function selectDepsUnblockIssue(repo, fetchIssueState) {
 /**
  * @param {{
  *   repo: string;
- *   issue: { number: number };
+ *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
  *   retryReason?: string;
  * }} input
- * @returns {boolean}
+ * @returns {Promise<boolean>}
  */
-function dispatchDepsUnblockedIssue({ repo, issue, retryReason }) {
+async function dispatchDepsUnblockedIssue({ repo, issue, retryReason }) {
+  // GITHUB_TOKEN label edits do not trigger issues:labeled workflows (GitHub docs).
+  // Retry must post the webhook directly, same as agent-ready reconcile.
   unblockAgentSkippedIssue(repo, issue.number);
-  console.log(
-    `Unblocked #${issue.number} for primary labeled dispatch (retry_reason=${retryReason ?? 'deps_unblocked'})`,
-  );
-  return true;
+  const refreshed = fetchIssue(repo, issue.number);
+  return dispatchIfEligible({
+    repo,
+    issue: refreshed,
+    retryReason,
+  });
 }
 
 /**
