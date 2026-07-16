@@ -26,6 +26,8 @@ pub(crate) mod crop_stage_list_output;
 pub(crate) mod crop_stage_output;
 pub(crate) mod crop_stage_reorder_input;
 pub(crate) mod crop_stage_update_input;
+pub(crate) mod crop_setup_proposal_input;
+pub(crate) mod crop_setup_proposal_validation;
 pub(crate) mod crop_update_input;
 pub(crate) mod http_status;
 pub(crate) mod masters_crop_task_schedule_blueprint;
@@ -86,6 +88,12 @@ pub use masters_crop_task_schedule_blueprint_failure::{
 pub use masters_crop_task_schedule_blueprint_index_input::MastersCropTaskScheduleBlueprintIndexInput;
 pub use masters_crop_task_schedule_blueprint_regenerate_input::{
     CropRegenerateTaskScheduleBlueprintsInput, MastersCropTaskScheduleBlueprintRegenerateInput,
+};
+pub use crop_setup_proposal_input::{CropSetupProposalInput, CropSetupProposalMode};
+pub use crop_setup_proposal_validation::{
+    CropSetupProposalApplyResult, CropSetupProposalAgriculturalTaskPlan,
+    CropSetupProposalBlueprintPlan, CropSetupProposalPlan, CropSetupProposalStagePlan,
+    CropSetupProposalValidationError,
 };
 pub use masters_crop_task_schedule_blueprint_update_input::MastersCropTaskScheduleBlueprintUpdateInput;
 pub use nutrient_requirement_update_input::NutrientRequirementUpdateInput;
