@@ -360,6 +360,10 @@
       "required_gdd_placeholder": "उदा., 800.0",
       "required_gdd_help": "इस चरण के लिए आवश्यक बढ़ते डिग्री दिन (Growing Degree Days) दर्ज करें।",
       "save_stage": "सहेजें",
+      "temperature_section": "तापमान शर्तें",
+      "thermal_section": "संचित तापमान",
+      "details_section": "उन्नत सेटिंग",
+      "optimal_range": "इष्टतम सीमा",
       "edit_temperature_details": "तनाव सीमा संपादित करें…",
       "edit_sunshine_nutrient": "धूप और पोषक तत्व संपादित करें…",
       "temperature_details_title": "तनाव सीमा",
@@ -1693,7 +1697,6 @@
       "sync_failed": "कार्य अनुसूची बनाने में विफल।",
       "sync_generating": "कार्य अनुसूची तैयार की जा रही है...",
       "sync_stale": "योजना में बदलाव के कारण कार्य अनुसूची पुरानी हो गई है।",
-      "sync_plan_link": "खेती योजना की समीक्षा करें",
       "sync_updated": "कार्य अनुसूची अपडेट हो गई है।",
       "sync_retry": "कार्य अनुसूची पुनः बनाएँ",
       "regenerate_confirm": "पुनः बनाने पर अधूरे स्वतः-जनित आइटम बदल दिए जाएंगे। कार्य रिकॉर्ड वाले और मैन्युअल आइटम रहेंगे। जारी रखें?",
@@ -1740,7 +1743,8 @@
         "amount": "उर्वरक मात्रा",
         "master_description": "विवरण",
         "not_applicable": "लागू नहीं"
-      }
+      },
+      "sync_plan_link": "खेती योजना की समीक्षा करें"
     },
     "work": {
       "page_title": "कार्य लॉग — {{name}}",

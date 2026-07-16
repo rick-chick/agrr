@@ -1311,7 +1311,6 @@
       "sync_failed": "Task schedule generation failed.",
       "sync_generating": "Generating task schedules...",
       "sync_stale": "Task schedules are out of date with the latest plan.",
-      "sync_plan_link": "Review cultivation plan",
       "sync_updated": "Task schedules have been updated.",
       "sync_retry": "Regenerate task schedules",
       "regenerate_confirm": "Regenerating replaces unfinished auto-generated items. Items with work records and manual entries are kept. Continue?",
@@ -1358,7 +1357,8 @@
         "amount": "Fertilizer amount",
         "master_description": "Description",
         "not_applicable": "N/A"
-      }
+      },
+      "sync_plan_link": "Review cultivation plan"
     },
     "work": {
       "page_title": "Work log — {{name}}",
@@ -2050,6 +2050,10 @@
       "required_gdd_placeholder": "e.g., 800.0",
       "required_gdd_help": "Enter the Growing Degree Days required for this stage.",
       "save_stage": "Save",
+      "temperature_section": "Temperature conditions",
+      "thermal_section": "Accumulated temperature",
+      "details_section": "Advanced settings",
+      "optimal_range": "Optimal range",
       "edit_temperature_details": "Edit stress thresholds…",
       "edit_sunshine_nutrient": "Edit sunshine & nutrients…",
       "temperature_details_title": "Stress thresholds",

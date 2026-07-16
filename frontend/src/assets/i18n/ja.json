@@ -451,6 +451,10 @@
       "required_gdd_placeholder": "例：800.0",
       "required_gdd_help": "このステージに必要な生育度日（Growing Degree Days）を入力してください。",
       "save_stage": "保存",
+      "temperature_section": "温度条件",
+      "thermal_section": "積算温度",
+      "details_section": "詳細設定",
+      "optimal_range": "最適範囲",
       "edit_temperature_details": "ストレス閾値を編集…",
       "edit_sunshine_nutrient": "日照・栄養素を編集…",
       "temperature_details_title": "ストレス閾値",
@@ -2333,7 +2337,6 @@
       "sync_failed": "作業予定の生成に失敗しました。",
       "sync_generating": "作業予定を生成しています...",
       "sync_stale": "計画の変更により作業予定が古くなっています。",
-      "sync_plan_link": "作付け計画を確認する",
       "sync_updated": "作業予定を更新しました。",
       "sync_retry": "作業予定を再生成",
       "regenerate_confirm": "作業予定を再生成すると、未完了の自動生成予定が置き換わります。実績のある予定と手動追加予定は残ります。よろしいですか？",
@@ -2380,7 +2383,8 @@
         "amount": "施肥量",
         "master_description": "作業説明",
         "not_applicable": "該当なし"
-      }
+      },
+      "sync_plan_link": "作付け計画を確認する"
     },
     "work": {
       "page_title": "{{name}}の作業記録",
