@@ -21,6 +21,7 @@ import {
   selectDepsUnblockCandidate,
   selectOpenIssueByTitle,
   selectRetryCandidate,
+  parseDependencyIssueNumbers,
 } from './issue-worker-dispatch-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
 
@@ -227,6 +228,8 @@ async function selectDepsUnblockIssue(repo, fetchIssueState) {
  * @returns {Promise<boolean>}
  */
 async function dispatchDepsUnblockedIssue({ repo, issue, retryReason }) {
+  // GITHUB_TOKEN label edits do not trigger issues:labeled workflows (GitHub docs).
+  // Retry must post the webhook directly, same as agent-ready reconcile.
   unblockAgentSkippedIssue(repo, issue.number);
   const refreshed = fetchIssue(repo, issue.number);
   return dispatchIfEligible({
@@ -318,7 +321,7 @@ async function main() {
       throw new Error('--number must be a positive integer for on-closed mode');
     }
     const skippedIssues = listAgentSkippedIssues(repo).filter((issue) =>
-      (issue.body ?? '').includes(`#${closedNumber}`),
+      parseDependencyIssueNumbers(issue.body ?? '').includes(closedNumber),
     );
     const selected = await selectDepsUnblockCandidate(
       skippedIssues,
