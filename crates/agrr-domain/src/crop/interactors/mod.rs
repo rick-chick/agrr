@@ -25,6 +25,7 @@ pub mod crop_regenerate_task_schedule_blueprints_interactor;
 pub mod crop_masters_task_schedule_blueprint_index_interactor;
 pub mod crop_masters_task_schedule_blueprint_regenerate_interactor;
 pub mod crop_masters_task_schedule_blueprint_update_interactor;
+pub mod crop_setup_proposal_interactor;
 pub mod crop_masters_task_schedule_blueprint_create_interactor;
 pub mod crop_masters_task_schedule_blueprint_destroy_interactor;
 pub mod masters_thermal_requirement_show_interactor;
