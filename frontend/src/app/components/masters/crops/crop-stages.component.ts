@@ -691,8 +691,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (this.stageEditDraft.required_gdd !== currentRequiredGdd) {
       this.updateThermalRequirement(stage.id, { required_gdd: this.stageEditDraft.required_gdd });
     }
-
-    this.syncDraftFromStage(stage);
   }
 
   openTemperatureDialog(): void {
