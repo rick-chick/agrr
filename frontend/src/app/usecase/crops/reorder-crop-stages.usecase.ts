@@ -18,7 +18,7 @@ export class ReorderCropStagesUseCase implements ReorderCropStagesInputPort {
   execute(dto: ReorderCropStagesInputDto): void {
     this.cropStageGateway.reorderCropStages(dto.cropId, dto.entries).subscribe({
       next: (stages) => this.outputPort.present({ stages }),
-      error: (err) => this.outputPort.onError({ message: cropStageReorderErrorI18nKey(err) })
+      error: (err: unknown) => this.outputPort.onError({ message: cropStageReorderErrorI18nKey(err) })
     });
   }
 }
