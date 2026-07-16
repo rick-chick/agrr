@@ -164,6 +164,10 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     errors.push('needs-sync helper missing prMergeWorkerNeedsSync export');
   }
 
+  if (!needsSyncText.includes('isOptInHeadRef')) {
+    errors.push('needs-sync helper must reuse isOptInHeadRef for cursor/* and issue/* eligibility');
+  }
+
   const skillPath = join(repoRoot, '.cursor/skills/github-pr-merge-worker/SKILL.md');
   let skillText;
   try {

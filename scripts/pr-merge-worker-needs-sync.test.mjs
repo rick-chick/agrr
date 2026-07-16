@@ -45,6 +45,13 @@ test('prMergeWorkerIsEligible accepts issue worker branch', () => {
   assert.equal(prMergeWorkerIsEligible('', 'issue/193-pr-conflict-automation'), true);
 });
 
+test('prMergeWorkerIsEligible accepts cursor agent branch', () => {
+  assert.equal(
+    prMergeWorkerIsEligible('', 'cursor/agrr-issue-worker-workflow-1950'),
+    true,
+  );
+});
+
 test('prMergeWorkerIsEligible accepts Merge-Strategy body', () => {
   assert.equal(
     prMergeWorkerIsEligible('', 'feature/foo', 'Merge-Strategy: agent'),
@@ -144,6 +151,26 @@ test('selectSyncCandidates includes draft PR when conflicting', () => {
   ]);
   assert.equal(candidates.length, 1);
   assert.equal(candidates[0].number, 9);
+});
+
+test('selectSyncCandidates includes conflicting draft cursor agent PR', () => {
+  const candidates = selectSyncCandidates([
+    {
+      number: 341,
+      title: 'fix(crop-stages): wait for API',
+      headRefName: 'cursor/agrr-issue-worker-workflow-1950',
+      labels: [],
+      body: '',
+      isDraft: true,
+      mergeable: 'CONFLICTING',
+      mergeStateStatus: 'DIRTY',
+      additions: 10,
+      deletions: 5,
+      isCrossRepository: false,
+    },
+  ]);
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0].number, 341);
 });
 
 test('selectSyncCandidates skips blocking labels', () => {

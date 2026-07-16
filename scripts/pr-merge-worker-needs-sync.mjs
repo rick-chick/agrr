@@ -1,3 +1,5 @@
+import { hasMergeStrategyAgent, isOptInHeadRef } from './pr-agent-prep-lib.mjs';
+
 /**
  * Whether an eligible PR should receive a conflict / master-sync dispatch
  * after master advances.
@@ -24,8 +26,8 @@ export function prMergeWorkerNeedsSync(pr) {
  */
 export function prMergeWorkerIsEligible(labelsCsv, headRef, body = '') {
   if (/(^|,)agent-merge(,|$)/.test(labelsCsv)) return true;
-  if (/^issue\/[0-9]+-/.test(headRef)) return true;
-  if (body.includes('Merge-Strategy: agent')) return true;
+  if (isOptInHeadRef(headRef)) return true;
+  if (hasMergeStrategyAgent(body)) return true;
   return false;
 }
 
