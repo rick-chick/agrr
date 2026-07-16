@@ -114,16 +114,30 @@ describe('PlanWorkPresenter quick complete', () => {
     expect(view.control.regenerateError).toBeNull();
   });
 
-  it('clears regenerate error on regenerate success', () => {
+  it('clears regenerate error and keeps regenerating when POST returns generating', () => {
     view.control = {
       ...view.control,
+      plan: {
+        id: 7,
+        name: 'テスト計画',
+        status: 'completed',
+        planning_start_date: '2026-01-01',
+        planning_end_date: '2026-12-31',
+        timeline_generated_at: '2026-06-01T00:00:00Z',
+        timeline_generated_at_display: '2026-06-01',
+        task_schedule_sync_state: 'stale',
+        task_schedule_sync_error: null,
+        task_schedule_sync_error_crop_id: null
+      },
       regenerating: true,
       regenerateError: 'plans.task_schedules.sync_errors.generic'
     };
 
-    presenter.onRegenerateSuccess();
+    presenter.onRegenerateSuccess({ success: true, task_schedule_sync_state: 'generating' });
 
     expect(view.control.regenerateError).toBeNull();
+    expect(view.control.regenerating).toBe(true);
+    expect(view.control.plan?.task_schedule_sync_state).toBe('generating');
   });
 });
 
@@ -224,13 +238,38 @@ describe('PlanWorkPresenter task schedule sync', () => {
     presenter.setView(view);
   });
 
-  it('ignores sync updates when plan is not loaded yet', () => {
+  it('queues pending sync when plan is not loaded and merges on present', () => {
     view.control = { ...baseControl, plan: null };
 
     presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null, syncErrorCropId: null });
 
     expect(view.control.syncReloadNonce).toBe(0);
     expect(view.control.pendingSyncToastKey).toBeNull();
+
+    presenter.present({
+      plan: {
+        id: 7,
+        name: 'テスト計画',
+        status: 'completed',
+        planning_start_date: '2026-01-01',
+        planning_end_date: '2026-12-31',
+        timeline_generated_at: '2026-06-01T00:00:00Z',
+        timeline_generated_at_display: '2026-06-01',
+        task_schedule_sync_state: 'generating',
+        task_schedule_sync_error: null,
+        task_schedule_sync_error_crop_id: null
+      },
+      fields: [],
+      overdue: [],
+      today: [],
+      upcoming: [],
+      recentAdHocRecord: null,
+      nextScheduled: null
+    });
+
+    expect(view.control.plan?.task_schedule_sync_state).toBe('ready');
+    expect(view.control.pendingSyncToastKey).toBe('plans.task_schedules.sync_updated');
+    expect(view.control.syncReloadNonce).toBe(1);
   });
 
   it('updates plan sync state and queues toast/reload when ready', () => {

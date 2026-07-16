@@ -21,10 +21,18 @@ import { localTodayIso } from '../../core/local-today';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { mapTaskScheduleResponseToDomain } from './map-task-schedule-response-to-domain';
 import {
-  applySyncFieldsToPlan,
-  mergeCropBannerContext,
-  taskScheduleSyncViewPatch
+  mergeCropBannerContext
 } from './task-schedule-sync-presenter.helpers';
+import {
+  applyTaskScheduleSyncMessage,
+  finishTaskScheduleLoad,
+  initialTaskScheduleSyncLifecycleState,
+  markRegeneratePostInFlight,
+  mergePlanWithSyncMessage,
+  taskScheduleSyncMessageFromRegenerateResponse,
+  type TaskScheduleSyncLifecycleState
+} from '../../usecase/plans/task-schedule-sync-lifecycle';
+import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 
 type DerivedViewFields = Pick<
   PlanTaskScheduleViewState,
@@ -55,6 +63,7 @@ export class PlanTaskSchedulePresenter
     SubscribeTaskScheduleSyncOutputPort
 {
   private view: PlanTaskScheduleView | null = null;
+  private syncLifecycle: TaskScheduleSyncLifecycleState = initialTaskScheduleSyncLifecycleState();
 
   setView(view: PlanTaskScheduleView): void {
     this.view = view;
@@ -84,6 +93,7 @@ export class PlanTaskSchedulePresenter
 
   onRegenerateStarted(): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    this.syncLifecycle = markRegeneratePostInFlight(this.syncLifecycle);
     this.view.control = {
       ...this.view.control,
       regenerating: true,
@@ -97,8 +107,20 @@ export class PlanTaskSchedulePresenter
     const fromDate = current.fromDate || localTodayIso();
     const fieldFilterId = current.fieldFilterId ?? null;
     const fieldCultivationFilterId = current.fieldCultivationFilterId ?? null;
+    const loadResult = finishTaskScheduleLoad(
+      this.syncLifecycle,
+      dto.schedule.plan.task_schedule_sync_state
+    );
+    this.syncLifecycle = loadResult.lifecycle;
+    let schedule = dto.schedule;
+    if (loadResult.pendingMerge) {
+      schedule = {
+        ...schedule,
+        plan: mergePlanWithSyncMessage(schedule.plan, loadResult.pendingMerge)
+      };
+    }
     const derived = this.computeDerivedFields(
-      dto.schedule,
+      schedule,
       fromDate,
       fieldFilterId,
       fieldCultivationFilterId
@@ -107,11 +129,13 @@ export class PlanTaskSchedulePresenter
       ...current,
       loading: false,
       error: null,
-      schedule: dto.schedule,
-      regenerating: false,
+      schedule,
+      regenerating: loadResult.regenerating,
       regenerateError: null,
-      pendingSyncToastKey: null,
-      syncReloadNonce: 0,
+      pendingSyncToastKey: loadResult.toastI18nKey,
+      syncReloadNonce: loadResult.requestReload
+        ? current.syncReloadNonce + 1
+        : current.syncReloadNonce,
       fromDate,
       fieldFilterId,
       fieldCultivationFilterId,
@@ -132,11 +156,14 @@ export class PlanTaskSchedulePresenter
     };
   }
 
-  onRegenerateSuccess(): void {
+  onRegenerateSuccess(dto: RegenerateTaskScheduleResponseDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const message = taskScheduleSyncMessageFromRegenerateResponse(dto);
+    const applied = this.applyTaskScheduleSync(message);
     this.view.control = {
       ...this.view.control,
-      regenerateError: null
+      regenerateError: null,
+      ...applied
     };
   }
 
@@ -151,30 +178,59 @@ export class PlanTaskSchedulePresenter
 
   onTaskScheduleSync(message: TaskScheduleSyncMessageDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    const schedule = this.view.control.schedule;
-    if (!schedule) {
+    const applied = this.applyTaskScheduleSync(message);
+    if (!applied.schedule) {
+      this.view.control = {
+        ...this.view.control,
+        ...applied
+      };
       return;
     }
 
-    const nextPlan = applySyncFieldsToPlan(schedule.plan, message);
-    const nextSchedule = { ...schedule, plan: nextPlan };
-    const patch = taskScheduleSyncViewPatch(message.syncState);
     const current = this.view.control;
     const derived = this.computeDerivedFields(
-      nextSchedule,
+      applied.schedule,
       current.fromDate,
       current.fieldFilterId,
       current.fieldCultivationFilterId
     );
     this.view.control = {
       ...current,
-      schedule: nextSchedule,
-      regenerating: patch.regenerating,
-      pendingSyncToastKey: patch.toastI18nKey,
-      syncReloadNonce: patch.requestReload
-        ? current.syncReloadNonce + 1
-        : current.syncReloadNonce,
+      ...applied,
       ...derived
+    };
+  }
+
+  private applyTaskScheduleSync(message: TaskScheduleSyncMessageDto): Partial<PlanTaskScheduleViewState> & {
+    schedule?: TaskScheduleResponse;
+  } {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const current = this.view.control;
+    const result = applyTaskScheduleSyncMessage({
+      lifecycle: this.syncLifecycle,
+      message,
+      entityLoaded: current.schedule != null,
+      currentSyncReloadNonce: current.syncReloadNonce
+    });
+    this.syncLifecycle = result.lifecycle;
+
+    if (!result.appliedToEntity || !current.schedule) {
+      return {
+        regenerating: result.regenerating,
+        pendingSyncToastKey: result.pendingSyncToastKey,
+        syncReloadNonce: result.syncReloadNonce
+      };
+    }
+
+    const nextSchedule = {
+      ...current.schedule,
+      plan: mergePlanWithSyncMessage(current.schedule.plan, result.message)
+    };
+    return {
+      schedule: nextSchedule,
+      regenerating: result.regenerating,
+      pendingSyncToastKey: result.pendingSyncToastKey,
+      syncReloadNonce: result.syncReloadNonce
     };
   }
 
