@@ -566,7 +566,10 @@
         "stages_ready": "生育ステージの最低限界温度と必要積算温度が設定されています",
         "stages_missing": "生育ステージの最低限界温度または必要積算温度が未設定です",
         "stages_action": "生育ステージを設定する",
-        "stages_edit_action": "生育ステージを編集"
+        "stages_edit_action": "生育ステージを編集",
+        "stages_page_gap_base_temperature": "{{stageName}}: 最低限界温度が未設定",
+        "stages_page_gap_required_gdd": "{{stageName}}: 必要積算温度が未設定",
+        "stages_next_step_action": "作業予定テンプレートへ"
       },
       "blueprint_errors": {
         "missing_blueprints": "作業予定が未登録のため、AIによる提案を取り込めません。",

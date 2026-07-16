@@ -2168,7 +2168,10 @@
         "stages_ready": "Growth stages have base temperature and required GDD",
         "stages_missing": "Growth stages are missing base temperature or required GDD",
         "stages_action": "Configure growth stages",
-        "stages_edit_action": "Edit growth stages"
+        "stages_edit_action": "Edit growth stages",
+        "stages_page_gap_base_temperature": "{{stageName}}: base temperature not set",
+        "stages_page_gap_required_gdd": "{{stageName}}: required GDD not set",
+        "stages_next_step_action": "Go to task schedule templates"
       },
       "blueprint_errors": {
         "missing_blueprints": "AI suggestions cannot be imported because no task plans are registered yet.",

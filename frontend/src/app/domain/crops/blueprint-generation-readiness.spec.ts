@@ -3,6 +3,7 @@ import {
   blueprintGenerationReadiness,
   stageMissingBaseTemperature,
   stageMissingRequiredGdd,
+  stageRequirementGaps,
   stageRequirementsComplete
 } from './blueprint-generation-readiness';
 import type { Crop } from './crop';
@@ -86,6 +87,64 @@ describe('stageRequirementsComplete', () => {
     };
     expect(stageMissingBaseTemperature(incompleteStage)).toBe(true);
     expect(stageMissingRequiredGdd(incompleteStage)).toBe(true);
+  });
+});
+
+describe('stageRequirementGaps', () => {
+  it('lists incomplete stages with missing fields', () => {
+    const gaps = stageRequirementGaps([
+      {
+        id: 1,
+        crop_id: 1,
+        name: 'Germination',
+        order: 1,
+        temperature_requirement: {
+          id: 1,
+          crop_stage_id: 1,
+          base_temperature: 10
+        }
+      },
+      {
+        id: 2,
+        crop_id: 1,
+        name: 'Vegetative',
+        order: 2
+      }
+    ]);
+
+    expect(gaps).toEqual([
+      {
+        stageId: 1,
+        stageName: 'Germination',
+        missingBaseTemperature: false,
+        missingRequiredGdd: true
+      },
+      {
+        stageId: 2,
+        stageName: 'Vegetative',
+        missingBaseTemperature: true,
+        missingRequiredGdd: true
+      }
+    ]);
+  });
+
+  it('returns an empty list when all stages are complete', () => {
+    expect(
+      stageRequirementGaps([
+        {
+          id: 1,
+          crop_id: 1,
+          name: 'Germination',
+          order: 1,
+          temperature_requirement: {
+            id: 1,
+            crop_stage_id: 1,
+            base_temperature: 10
+          },
+          thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
+        }
+      ])
+    ).toEqual([]);
   });
 });
 
