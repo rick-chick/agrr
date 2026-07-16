@@ -28,6 +28,7 @@ const loadedControlBase = {
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
   pendingReorderCropStagesSnapshot: null,
+  pendingResyncPanelDraft: false,
   taskScheduleBlueprints: [],
   blueprintReadiness: defaultBlueprintReadiness(),
   stageRequirementGaps: [],
@@ -357,6 +358,81 @@ describe('CropStagesComponent', () => {
         order: 2
       }
     });
+  });
+
+  it('resyncs panel draft from server after partial panel save failure', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Dirty Name';
+    component.stageEditDraft.base_temperature = 99;
+    expect(component.isPanelDirty()).toBe(true);
+
+    const serverStage: CropStage = {
+      ...stageFixture,
+      name: 'Server Name',
+      temperature_requirement: {
+        ...stageFixture.temperature_requirement!,
+        base_temperature: 10
+      }
+    };
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        name: 'Tomato',
+        crop_stages: [serverStage]
+      },
+      pendingResyncPanelDraft: true,
+      pendingErrorFlash: { type: 'error', text: 'crops.flash.stage_panel_partial_save_failed' }
+    };
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+    fixture.detectChanges();
+
+    expect(component.isPanelDirty()).toBe(false);
+    expect(component.stageEditDraft).toEqual({
+      name: 'Server Name',
+      base_temperature: 10,
+      optimal_min: null,
+      optimal_max: null,
+      max_temperature: null,
+      required_gdd: 100
+    });
+  });
+
+  it('resyncs panel draft from server after partial advanced details save failure', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.required_gdd = 999;
+    expect(component.isPanelDirty()).toBe(true);
+
+    const serverStage: CropStage = {
+      ...stageFixture,
+      thermal_requirement: {
+        ...stageFixture.thermal_requirement!,
+        required_gdd: 100
+      },
+      sunshine_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        minimum_sunshine_hours: 4,
+        target_sunshine_hours: 8
+      }
+    };
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        name: 'Tomato',
+        crop_stages: [serverStage]
+      },
+      pendingResyncPanelDraft: true,
+      pendingErrorFlash: { type: 'error', text: 'crops.flash.stage_advanced_partial_save_failed' }
+    };
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+    fixture.detectChanges();
+
+    expect(component.isPanelDirty()).toBe(false);
+    expect(component.stageEditDraft.required_gdd).toBe(100);
   });
 
   it('syncs stageEditDraft from updated crop_stages after panel save succeeds', async () => {
