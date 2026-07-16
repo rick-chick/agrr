@@ -323,13 +323,7 @@
       "add_stage": "चरण जोड़ें",
       "stage_title": "चरण {{order}}",
       "stage_name": "चरण का नाम",
-      "stage_order": "क्रम",
       "stage_order_duplicate": "डुप्लिकेट क्रम मान: {{orders}}। कृपया अद्वितीय क्रम संख्या निर्दिष्ट करें।",
-      "requirements_title": "आवश्यकताएँ",
-      "temperature_requirement": "तापमान आवश्यकताएँ",
-      "thermal_requirement": "थर्मल आवश्यकताएँ",
-      "sunshine_requirement": "सूरज की रोशनी आवश्यकताएँ",
-      "nutrient_requirement": "पोषक तत्व आवश्यकताएँ",
       "base_temperature": "न्यूनतम सीमा तापमान (°C)",
       "optimal_min": "इष्टतम तापमान (न्यूनतम) (°C)",
       "optimal_max": "इष्टतम तापमान (अधिकतम) (°C)",
@@ -353,7 +347,6 @@
       "errors": {
         "title": "{{count}} त्रुटियाँ:"
       },
-      "required_marker": "आवश्यक",
       "base_temperature_placeholder": "उदा., 5.0",
       "base_temperature_help": "इस चरण में वृद्धि शुरू होने वाला न्यूनतम सीमा तापमान दर्ज करें।",
       "required_gdd_placeholder": "उदा., 800.0",
