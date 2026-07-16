@@ -7,11 +7,16 @@ import {
   hasLabel,
   isRetryCandidate,
   openFixPrSearchQuery,
+  parseDependencyIssueNumbers,
   parseRetryDispatchArgs,
+  resolveDependencyGate,
   resolveDispatchAction,
+  resolveEpicImplementGate,
   resolveImplementDispatchGate,
+  resolveImplementPreDispatchGates,
   selectOpenIssueByTitle,
   selectRetryCandidate,
+  formatDependencyGateComment,
 } from './issue-worker-dispatch-lib.mjs';
 
 test('hasLabel matches comma-separated labels', () => {
@@ -300,4 +305,158 @@ test('resolveImplementDispatchGate skips implement when open fix pr exists', () 
     resolveImplementDispatchGate({ action: 'triage', hasOpenFixPr: true }),
     { skip: false },
   );
+});
+
+test('parseDependencyIssueNumbers extracts issue numbers from ## 依存 section', () => {
+  const body = [
+    '## 背景',
+    '',
+    'text',
+    '',
+    '## 依存',
+    '',
+    '- #317（基盤）',
+    '- #320（後続）',
+    '',
+    '## 参照',
+    '',
+    '- #999',
+  ].join('\n');
+  assert.deepEqual(parseDependencyIssueNumbers(body), [317, 320]);
+});
+
+test('parseDependencyIssueNumbers returns empty when section is なし only', () => {
+  const body = ['## 依存', '', '- なし', '', '## 参照'].join('\n');
+  assert.deepEqual(parseDependencyIssueNumbers(body), []);
+});
+
+test('parseDependencyIssueNumbers returns empty when section is missing', () => {
+  assert.deepEqual(parseDependencyIssueNumbers('## 背景\n\nno deps'), []);
+});
+
+test('resolveDependencyGate passes when all dependencies are closed', async () => {
+  const body = ['## 依存', '', '- #317'].join('\n');
+  const result = await resolveDependencyGate({
+    issueNumber: 318,
+    issueBody: body,
+    fetchIssueState: async (number) => (number === 317 ? 'CLOSED' : 'OPEN'),
+  });
+  assert.deepEqual(result, { skip: false });
+});
+
+test('resolveDependencyGate blocks when a dependency is open', async () => {
+  const body = ['## 依存', '', '- #317'].join('\n');
+  const result = await resolveDependencyGate({
+    issueNumber: 318,
+    issueBody: body,
+    fetchIssueState: async (number) => (number === 317 ? 'OPEN' : 'CLOSED'),
+  });
+  assert.deepEqual(result, {
+    skip: true,
+    skipReason: 'dependency #317 is open',
+    openDependencies: [317],
+  });
+});
+
+test('resolveDependencyGate detects circular dependency', async () => {
+  const body318 = ['## 依存', '', '- #317'].join('\n');
+  const body317 = ['## 依存', '', '- #318'].join('\n');
+  const bodies = { 317: body317, 318: body318 };
+  await assert.rejects(
+    () =>
+      resolveDependencyGate({
+        issueNumber: 318,
+        issueBody: body318,
+        fetchIssueState: async (number) => 'OPEN',
+        fetchIssueBody: async (number) => bodies[number] ?? '',
+      }),
+    /circular dependency/i,
+  );
+});
+
+test('resolveDispatchAction skips agent-ready when agent-skipped is present', () => {
+  const result = resolveDispatchAction({
+    eventAction: 'labeled',
+    labelName: 'agent-ready',
+    issueAuthor: 'rick-chick',
+    issueLabels: 'agent-ready,agent-skipped',
+  });
+  assert.deepEqual(result, {
+    skip: true,
+    skipReason: 'agent-ready with agent-skipped requires removing agent-skipped first',
+  });
+});
+
+test('resolveEpicImplementGate skips implement for epic title', () => {
+  assert.deepEqual(
+    resolveEpicImplementGate({
+      action: 'implement',
+      issueTitle: '[epic] Parent issue',
+      issueLabels: '',
+    }),
+    {
+      skip: true,
+      skipReason: 'epic issues cannot be dispatched for implement',
+    },
+  );
+});
+
+test('resolveEpicImplementGate skips implement for epic label', () => {
+  assert.deepEqual(
+    resolveEpicImplementGate({
+      action: 'implement',
+      issueTitle: 'Parent issue',
+      issueLabels: 'epic,agent-ready',
+    }),
+    {
+      skip: true,
+      skipReason: 'epic issues cannot be dispatched for implement',
+    },
+  );
+});
+
+test('resolveEpicImplementGate allows triage for epic title', () => {
+  assert.deepEqual(
+    resolveEpicImplementGate({
+      action: 'triage',
+      issueTitle: '[epic] Parent issue',
+      issueLabels: 'epic',
+    }),
+    { skip: false },
+  );
+});
+
+test('formatDependencyGateComment includes open dependency numbers', () => {
+  const comment = formatDependencyGateComment([317, 320]);
+  assert.match(comment, /#317/);
+  assert.match(comment, /#320/);
+  assert.match(comment, /dispatch 保留/);
+});
+
+test('resolveImplementPreDispatchGates blocks epic before dependency check', async () => {
+  const result = await resolveImplementPreDispatchGates({
+    issueNumber: 316,
+    issueTitle: '[epic] Parent',
+    issueBody: '## 依存\n\n- #317',
+    issueLabels: 'agent-ready,epic',
+    fetchIssueState: async () => 'OPEN',
+    fetchIssueBody: async () => '',
+  });
+  assert.deepEqual(result, {
+    skip: true,
+    skipReason: 'epic issues cannot be dispatched for implement',
+  });
+});
+
+test('resolveImplementPreDispatchGates blocks open dependencies', async () => {
+  const result = await resolveImplementPreDispatchGates({
+    issueNumber: 318,
+    issueTitle: 'Child',
+    issueBody: '## 依存\n\n- #317',
+    issueLabels: 'agent-ready',
+    fetchIssueState: async (number) => (number === 317 ? 'OPEN' : 'CLOSED'),
+    fetchIssueBody: async () => '',
+  });
+  assert.equal(result.skip, true);
+  assert.match(result.skipReason, /dependency #317 is open/);
 });
