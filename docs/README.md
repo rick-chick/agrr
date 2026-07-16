@@ -1,6 +1,8 @@
 # ドキュメント索引
 
 - **アーキテクチャ（規約本体）**: リポジトリ直下 [`ARCHITECTURE.md`](../ARCHITECTURE.md)
+- **ADR（Architecture Decision Records）**: [`adr/`](adr/)
+  - [ADR-001: 生成は外・計算は agrr デーモン（内蔵 AI 廃止方針）](adr/ADR-001-external-skill-generation-agrr-daemon-calculation.md) — 親 [#316](https://github.com/rick-chick/agrr/issues/316)
 - **設計メモ**: [`design/`](design/)
 - **作業実績分離（計画）**: [`design/work-record-separation-plan.md`](design/work-record-separation-plan.md)（BE）/ [`design/work-record-gui-plan.md`](design/work-record-gui-plan.md)（GUI）
 - **製品成長の問題点・改善案**: [`product/PRODUCT-GROWTH-ISSUES.md`](product/PRODUCT-GROWTH-ISSUES.md)
