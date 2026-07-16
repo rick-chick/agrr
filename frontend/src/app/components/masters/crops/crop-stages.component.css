@@ -1,6 +1,17 @@
 @import '../_master-layout.css';
 
-.crop-stages__page-header {
+.crop-stages__plan-wizard-gaps {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.crop-stages__plan-wizard-gaps li + li {
+  margin-top: 0.25rem;
+}
+
+.crop-stages__next-step {
   margin-bottom: 1.5rem;
 }
 
@@ -37,6 +48,15 @@
   border-radius: var(--radius-md, 0.375rem);
   background: var(--color-warning-surface, #fff8e6);
   color: var(--color-text-primary);
+}
+
+.crop-stages-order-warning__message,
+.crop-stages-order-warning__hint {
+  margin: 0 0 0.5rem;
+}
+
+.crop-stages-order-warning__renumber {
+  margin-top: 0.25rem;
 }
 
 .crop-stages-table {

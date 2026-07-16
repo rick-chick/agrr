@@ -46,7 +46,28 @@ export function stageMissingRequiredGdd(stage: CropStage): boolean {
   return stage.thermal_requirement?.required_gdd == null;
 }
 
+export interface StageRequirementGap {
+  stageId: number;
+  stageName: string;
+  missingBaseTemperature: boolean;
+  missingRequiredGdd: boolean;
+}
+
+export function stageRequirementGaps(stages: CropStage[]): StageRequirementGap[] {
+  return stages
+    .filter((stage) => !stageRequirementsComplete(stage))
+    .map((stage) => ({
+      stageId: stage.id,
+      stageName: stage.name,
+      missingBaseTemperature: stageMissingBaseTemperature(stage),
+      missingRequiredGdd: stageMissingRequiredGdd(stage)
+    }));
+}
+
 function hasCompleteStageRequirements(crop: Crop | null | undefined): boolean {
   const stages = crop?.crop_stages ?? [];
-  return stages.some(stageRequirementsComplete);
+  if (stages.length === 0) {
+    return false;
+  }
+  return stages.every(stageRequirementsComplete);
 }

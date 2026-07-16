@@ -68,6 +68,12 @@ pub struct MastersCropStagesSeed {
     pub stage_ids: Vec<i64>,
 }
 
+pub struct MastersCropStagesBlueprintSeed {
+    pub crop_id: i64,
+    pub stage_ids: Vec<i64>,
+    pub blueprint_ids: Vec<i64>,
+}
+
 pub struct MastersCropBlueprintCreateSeed {
     pub crop_id: i64,
     pub agricultural_task_id: i64,
@@ -116,6 +122,49 @@ pub fn seed_masters_crop_with_stages(user_id: i64, stage_count: i64) -> MastersC
         stage_ids.push(conn.last_insert_rowid());
     }
     MastersCropStagesSeed { crop_id, stage_ids }
+}
+
+/// Seeds a crop with two stages and one blueprint per stage order for reorder/delete linkage tests.
+pub fn seed_masters_crop_with_stages_and_blueprints(
+    user_id: i64,
+) -> MastersCropStagesBlueprintSeed {
+    let seed = seed_masters_crop_with_stages(user_id, 2);
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let mut blueprint_ids = Vec::new();
+
+    for order in 1..=2 {
+        let task_name = format!("Contract Stage Blueprint Task {order} {suffix}");
+        conn.execute(
+            "INSERT INTO agricultural_tasks (name, is_reference, user_id, task_type, created_at, updated_at)
+             VALUES (?1, 0, ?2, 'field_work', datetime('now'), datetime('now'))",
+            params![task_name, user_id],
+        )
+        .expect("insert agricultural_task");
+        let agricultural_task_id = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO crop_task_schedule_blueprints (
+                crop_id, agricultural_task_id, stage_order, stage_name, gdd_trigger, gdd_tolerance,
+                task_type, source, priority, created_at, updated_at
+             ) VALUES (?1, ?2, ?3, ?4, 0.0, 5.0, 'field_work', 'manual', 1, datetime('now'), datetime('now'))",
+            params![
+                seed.crop_id,
+                agricultural_task_id,
+                order,
+                format!("Stage {order}")
+            ],
+        )
+        .expect("insert blueprint");
+        blueprint_ids.push(conn.last_insert_rowid());
+    }
+
+    MastersCropStagesBlueprintSeed {
+        crop_id: seed.crop_id,
+        stage_ids: seed.stage_ids,
+        blueprint_ids,
+    }
 }
 
 /// Seeds crop + pending manual blueprint for blueprint create tests.
@@ -653,4 +702,54 @@ pub fn find_schedule_item<'a>(
 
 pub fn schedule_item_ids_from_response(json: &serde_json::Value) -> Vec<i64> {
     schedule_item_ids(json)
+}
+
+/// Runs upload_init → content PUT → upload_complete for one JPEG photo.
+pub fn upload_ready_work_record_photo(
+    client: &ContractClient,
+    session_id: &str,
+    plan_id: i64,
+    record_id: i64,
+) {
+    let init_path = format!(
+        "/api/v1/plans/{plan_id}/work_records/{record_id}/photos/upload_init"
+    );
+    let (init_status, init_body) = status_and_body(client.post(
+        &init_path,
+        Some(session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "photo": { "content_type": "image/jpeg" }
+        })),
+    ));
+    assert_eq!(201, init_status, "{init_body}");
+    let init_json: serde_json::Value =
+        serde_json::from_str(&init_body).expect("upload_init JSON");
+    let photo_id = init_json["photo"]["id"].as_i64().expect("photo id");
+    let upload_url = init_json["photo"]["upload_url"]
+        .as_str()
+        .expect("upload_url");
+
+    let jpeg_bytes: Vec<u8> = vec![0xFF, 0xD8, 0xFF, 0xD9];
+    let (upload_status, upload_body) = status_and_body(client.put_bytes(
+        upload_url,
+        Some(session_id),
+        &empty_headers(),
+        "image/jpeg",
+        &jpeg_bytes,
+    ));
+    assert_eq!(204, upload_status, "{upload_body}");
+
+    let complete_path = format!(
+        "/api/v1/plans/{plan_id}/work_records/{record_id}/photos/{photo_id}/upload_complete"
+    );
+    let (complete_status, complete_body) = status_and_body(client.post(
+        &complete_path,
+        Some(session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "photo": { "byte_size": jpeg_bytes.len() }
+        })),
+    ));
+    assert_eq!(200, complete_status, "{complete_body}");
 }

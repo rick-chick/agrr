@@ -9,12 +9,14 @@
  *
  * Env: WEBHOOK_URL, WEBHOOK_KEY, GH_TOKEN (optional; gh uses default auth)
  */
+import { execFileSync } from 'node:child_process';
 import {
   buildWebhookPayload,
   defaultRetryReasonForMode,
   isRetryCandidate,
   openFixPrSearchQuery,
   parseRetryDispatchArgs,
+  resolveImplementPreDispatchGates,
   selectOpenIssueByTitle,
   selectRetryCandidate,
 } from './issue-worker-dispatch-lib.mjs';
@@ -78,7 +80,7 @@ function fetchIssue(repo, issueNumber) {
     'view',
     String(issueNumber),
     '--json',
-    'number,title,url,body,labels',
+    'number,title,url,body,labels,state',
   ]);
   const issue = JSON.parse(raw);
   return {
@@ -86,6 +88,7 @@ function fetchIssue(repo, issueNumber) {
     title: issue.title,
     url: issue.url,
     body: issue.body ?? '',
+    state: issue.state,
     labels: issue.labels.map((label) => label.name),
   };
 }
@@ -157,9 +160,9 @@ function postWebhook({ repo, issue, action, retryReason }) {
  *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
  *   retryReason?: string;
  * }} input
- * @returns {boolean}
+ * @returns {Promise<boolean>}
  */
-function dispatchIfEligible({ repo, issue, retryReason }) {
+async function dispatchIfEligible({ repo, issue, retryReason }) {
   const labels = issue.labels.join(',');
   const eligibility = isRetryCandidate({
     issueLabels: labels,
@@ -169,6 +172,20 @@ function dispatchIfEligible({ repo, issue, retryReason }) {
     console.log(`Skip retry for #${issue.number}: ${eligibility.reason}`);
     return false;
   }
+
+  const preDispatch = await resolveImplementPreDispatchGates({
+    issueNumber: issue.number,
+    issueTitle: issue.title,
+    issueBody: issue.body,
+    issueLabels: labels,
+    fetchIssueState: async (number) => fetchIssue(repo, number).state,
+    fetchIssueBody: async (number) => fetchIssue(repo, number).body,
+  });
+  if (preDispatch.skip) {
+    console.log(`Skip retry for #${issue.number}: ${preDispatch.skipReason}`);
+    return false;
+  }
+
   postWebhook({
     repo,
     issue,
@@ -178,7 +195,7 @@ function dispatchIfEligible({ repo, issue, retryReason }) {
   return true;
 }
 
-function main() {
+async function main() {
   const args = parseRetryDispatchArgs(process.argv);
   const repo = args.repo ?? DEFAULT_REPO;
 
@@ -194,7 +211,7 @@ function main() {
       console.log('Selected retry issue disappeared before dispatch.');
       return;
     }
-    dispatchIfEligible({
+    await dispatchIfEligible({
       repo,
       issue,
       retryReason: args.retryReason ?? defaultRetryReasonForMode('reconcile'),
@@ -211,7 +228,7 @@ function main() {
       console.log(`No open agent-ready issue matched title: ${args.title}`);
       return;
     }
-    dispatchIfEligible({
+    await dispatchIfEligible({
       repo,
       issue,
       retryReason: args.retryReason ?? defaultRetryReasonForMode('from-title'),
@@ -225,7 +242,7 @@ function main() {
       throw new Error('--number must be a positive integer for issue mode');
     }
     const issue = fetchIssue(repo, issueNumber);
-    dispatchIfEligible({
+    await dispatchIfEligible({
       repo,
       issue,
       retryReason: args.retryReason ?? defaultRetryReasonForMode('issue'),
@@ -236,4 +253,7 @@ function main() {
   throw new Error(`Unknown mode: ${args.mode}`);
 }
 
-main();
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+});
