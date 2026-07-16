@@ -27,6 +27,7 @@ import { parsePlanWizardReturnTab,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
+import { parseOptionalNumber } from '../../../domain/crops/parse-optional-number';
 import {
   findDuplicateStageOrders,
   reorderStagesByIndex,
@@ -36,6 +37,11 @@ import type { CropStage } from '../../../domain/crops/crop';
 import { countLinkedTaskScheduleBlueprints } from '../../../domain/crops/stage-linked-blueprint-count';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+
+type PendingUnsavedAction =
+  | { kind: 'add-stage' }
+  | { kind: 'switch-stage'; stageId: number }
+  | { kind: 'delete-stage'; stageId: number };
 
 const initialFormData: CropStagesFormData = {
   name: '',
@@ -52,7 +58,7 @@ const initialControl: CropStagesViewState = {
   pendingReorderCropStagesSnapshot: null
 };
 
-export interface StageEditDraft {
+interface StageEditDraft {
   name: string;
   base_temperature: number | null;
   optimal_min: number | null;
@@ -369,13 +375,13 @@ interface TemperatureScaleModel {
       (cancel)="cancelUnsavedConfirmDialog($event)"
       (click)="onUnsavedConfirmDialogBackdropClick($event)"
     >
-      @if (pendingStageSwitchId != null || pendingAddStage) {
+      @if (pendingUnsavedAction) {
         <p class="confirm-dialog__message">{{ 'crops.edit.unsaved_confirm_message' | translate }}</p>
         <div class="confirm-dialog__actions">
           <button type="button" class="btn-secondary" (click)="cancelUnsavedConfirmDialog()">
             {{ 'common.cancel' | translate }}
           </button>
-          <button type="button" class="btn-primary" (click)="confirmDiscardAndSwitchStage()">
+          <button type="button" class="btn-primary" (click)="confirmDiscardUnsavedAction()">
             {{ 'common.confirm' | translate }}
           </button>
         </div>
@@ -517,11 +523,19 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   };
   temperatureDetailDraft: TemperatureDetailDraft | null = null;
   advancedDetailDraft: AdvancedDetailDraft | null = null;
-  pendingStageSwitchId: number | null = null;
-  pendingAddStage = false;
+  pendingUnsavedAction: PendingUnsavedAction | null = null;
+
+  private get resolvedCropId(): number | null {
+    const raw = this.route.snapshot.paramMap.get('id');
+    if (raw == null || raw === '') {
+      return null;
+    }
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
 
   get cropId(): number {
-    return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+    return this.resolvedCropId ?? 0;
   }
 
   fromPlanId: number | null = null;
@@ -573,7 +587,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     this.presenter.setView(this);
     this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
     this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
-    if (!this.cropId) {
+    if (this.resolvedCropId == null) {
       this.control = {
         ...initialControl,
         loading: false,
@@ -587,8 +601,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   addCropStage(): void {
     if (this.isPanelDirty()) {
-      this.pendingStageSwitchId = null;
-      this.pendingAddStage = true;
+      this.pendingUnsavedAction = { kind: 'add-stage' };
       this.unsavedConfirmDialogRef?.nativeElement?.showModal();
       return;
     }
@@ -612,8 +625,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       return;
     }
     if (this.isPanelDirty()) {
-      this.pendingAddStage = false;
-      this.pendingStageSwitchId = stageId;
+      this.pendingUnsavedAction = { kind: 'switch-stage', stageId };
       this.unsavedConfirmDialogRef?.nativeElement?.showModal();
       return;
     }
@@ -628,25 +640,30 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     }
   }
 
-  confirmDiscardAndSwitchStage(): void {
-    const targetId = this.pendingStageSwitchId;
-    const shouldAddStage = this.pendingAddStage;
-    this.pendingStageSwitchId = null;
-    this.pendingAddStage = false;
+  confirmDiscardUnsavedAction(): void {
+    const action = this.pendingUnsavedAction;
+    this.pendingUnsavedAction = null;
     this.unsavedConfirmDialogRef?.nativeElement?.close();
-    if (shouldAddStage) {
+    if (!action) {
+      return;
+    }
+    if (action.kind === 'add-stage') {
       this.executeAddCropStage();
       return;
     }
-    if (targetId != null) {
-      this.selectStageImmediate(targetId);
+    if (action.kind === 'switch-stage') {
+      this.selectStageImmediate(action.stageId);
+      return;
+    }
+    const stage = this.control.formData.crop_stages.find((item) => item.id === action.stageId);
+    if (stage) {
+      this.openDeleteConfirmDialog(stage);
     }
   }
 
   cancelUnsavedConfirmDialog(event?: Event): void {
     event?.preventDefault();
-    this.pendingStageSwitchId = null;
-    this.pendingAddStage = false;
+    this.pendingUnsavedAction = null;
     this.unsavedConfirmDialogRef?.nativeElement?.close();
   }
 
@@ -804,6 +821,15 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (!stage) {
       return;
     }
+    if (this.isPanelDirty()) {
+      this.pendingUnsavedAction = { kind: 'delete-stage', stageId };
+      this.unsavedConfirmDialogRef?.nativeElement?.showModal();
+      return;
+    }
+    this.openDeleteConfirmDialog(stage);
+  }
+
+  private openDeleteConfirmDialog(stage: CropStage): void {
     this.pendingDeleteStage = stage;
     this.deleteConfirmDialogRef?.nativeElement?.showModal();
   }
@@ -953,13 +979,13 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       return false;
     }
     const temp = stage.temperature_requirement;
-    const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
+    const currentRequiredGdd = parseOptionalNumber(stage.thermal_requirement?.required_gdd);
     return (
       this.stageEditDraft.name !== stage.name ||
-      this.stageEditDraft.base_temperature !== (temp?.base_temperature ?? null) ||
-      this.stageEditDraft.optimal_min !== (temp?.optimal_min ?? null) ||
-      this.stageEditDraft.optimal_max !== (temp?.optimal_max ?? null) ||
-      this.stageEditDraft.max_temperature !== (temp?.max_temperature ?? null) ||
+      this.stageEditDraft.base_temperature !== parseOptionalNumber(temp?.base_temperature) ||
+      this.stageEditDraft.optimal_min !== parseOptionalNumber(temp?.optimal_min) ||
+      this.stageEditDraft.optimal_max !== parseOptionalNumber(temp?.optimal_max) ||
+      this.stageEditDraft.max_temperature !== parseOptionalNumber(temp?.max_temperature) ||
       this.stageEditDraft.required_gdd !== currentRequiredGdd
     );
   }
@@ -967,11 +993,11 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   syncDraftFromStage(stage: CropStage): void {
     this.stageEditDraft = {
       name: stage.name,
-      base_temperature: stage.temperature_requirement?.base_temperature ?? null,
-      optimal_min: stage.temperature_requirement?.optimal_min ?? null,
-      optimal_max: stage.temperature_requirement?.optimal_max ?? null,
-      max_temperature: stage.temperature_requirement?.max_temperature ?? null,
-      required_gdd: stage.thermal_requirement?.required_gdd ?? null
+      base_temperature: parseOptionalNumber(stage.temperature_requirement?.base_temperature),
+      optimal_min: parseOptionalNumber(stage.temperature_requirement?.optimal_min),
+      optimal_max: parseOptionalNumber(stage.temperature_requirement?.optimal_max),
+      max_temperature: parseOptionalNumber(stage.temperature_requirement?.max_temperature),
+      required_gdd: parseOptionalNumber(stage.thermal_requirement?.required_gdd)
     };
   }
 
