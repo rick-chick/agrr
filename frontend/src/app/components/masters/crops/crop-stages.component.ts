@@ -82,8 +82,15 @@ interface AdvancedDetailDraft {
 }
 
 interface TemperatureScaleMarker {
-  key: 'base' | 'optimal_min' | 'optimal_max' | 'max';
-  percent: number;
+  kind: 'base' | 'optimal_min' | 'optimal_max' | 'max';
+  position: number;
+}
+
+interface TemperatureScaleModel {
+  hasValues: boolean;
+  optimalStart: number | null;
+  optimalEnd: number | null;
+  markers: TemperatureScaleMarker[];
 }
 
 @Component({
@@ -185,8 +192,10 @@ interface TemperatureScaleMarker {
 
             @if (selectedStage; as stage) {
               <div class="crop-stages-edit-panel">
-                <header class="crop-stages-edit-panel__header">
-                  <span class="crop-stages-edit-panel__badge" aria-hidden="true">{{ stage.order }}</span>
+                <div class="crop-stages-edit-panel__header">
+                  <span class="crop-stages-edit-panel__stage-badge" aria-hidden="true">
+                    {{ stage.order }}
+                  </span>
                   <label class="form-card__field crop-stages-edit-panel__name-field">
                     <span class="form-card__field-label">{{ 'crops.edit.stage_name' | translate }}</span>
                     <input
@@ -195,25 +204,37 @@ interface TemperatureScaleMarker {
                       [(ngModel)]="stageEditDraft.name"
                     />
                   </label>
-                </header>
+                </div>
 
-                <section class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--temperature">
+                <div class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--temperature">
                   <h4 class="crop-stages-edit-panel__subsection-title">
                     {{ 'crops.edit.temperature_section' | translate }}
                   </h4>
-                  @if (temperatureScaleMarkers().length > 0) {
-                    <div class="crop-stages-edit-panel__temp-scale" aria-hidden="true">
-                      <div class="crop-stages-edit-panel__temp-scale-track">
-                        @for (marker of temperatureScaleMarkers(); track marker.key) {
+                  @if (temperatureScale().hasValues) {
+                    <div
+                      class="crop-stages-edit-panel__temperature-scale"
+                      role="img"
+                      [attr.aria-label]="'crops.edit.temperature_section' | translate"
+                    >
+                      <div class="crop-stages-edit-panel__temperature-scale-track">
+                        @if (temperatureScale().optimalStart != null && temperatureScale().optimalEnd != null) {
+                          <div
+                            class="crop-stages-edit-panel__temperature-scale-optimal"
+                            [style.left.%]="temperatureScale().optimalStart"
+                            [style.width.%]="temperatureScale().optimalEnd! - temperatureScale().optimalStart!"
+                          ></div>
+                        }
+                        @for (marker of temperatureScale().markers; track marker.kind) {
                           <span
-                            class="crop-stages-edit-panel__temp-scale-marker crop-stages-edit-panel__temp-scale-marker--{{ marker.key }}"
-                            [style.left.%]="marker.percent"
+                            class="crop-stages-edit-panel__temperature-scale-marker"
+                            [class]="'crop-stages-edit-panel__temperature-scale-marker crop-stages-edit-panel__temperature-scale-marker--' + marker.kind"
+                            [style.left.%]="marker.position"
                           ></span>
                         }
                       </div>
                     </div>
                   }
-                  <div class="crop-stages-edit-panel__temp-fields">
+                  <div class="crop-stages-edit-panel__temperature-fields">
                     <label class="form-card__field form-card__field--small">
                       <span class="form-card__field-label">{{ 'crops.edit.base_temperature' | translate }}</span>
                       <input
@@ -229,7 +250,7 @@ interface TemperatureScaleMarker {
                       <span class="crop-stages-edit-panel__optimal-group-label">
                         {{ 'crops.edit.optimal_range' | translate }}
                       </span>
-                      <div class="crop-stages-edit-panel__optimal-fields">
+                      <div class="crop-stages-edit-panel__optimal-group-fields">
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.optimal_min' | translate }}</span>
                           <input
@@ -260,9 +281,9 @@ interface TemperatureScaleMarker {
                       />
                     </label>
                   </div>
-                </section>
+                </div>
 
-                <section class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--thermal">
+                <div class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--thermal">
                   <h4 class="crop-stages-edit-panel__subsection-title">
                     {{ 'crops.edit.thermal_section' | translate }}
                   </h4>
@@ -279,9 +300,9 @@ interface TemperatureScaleMarker {
                       <p class="form-hint">{{ 'crops.edit.required_gdd_help' | translate }}</p>
                     </label>
                   </div>
-                </section>
+                </div>
 
-                <section class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--details">
+                <div class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--details">
                   <h4 class="crop-stages-edit-panel__subsection-title">
                     {{ 'crops.edit.details_section' | translate }}
                   </h4>
@@ -292,6 +313,7 @@ interface TemperatureScaleMarker {
                       (click)="openTemperatureDialog()"
                     >
                       {{ 'crops.edit.edit_temperature_details' | translate }}
+                      <span class="crop-stages-edit-panel__detail-chip-chevron" aria-hidden="true">›</span>
                     </button>
                     <button
                       type="button"
@@ -299,18 +321,19 @@ interface TemperatureScaleMarker {
                       (click)="openAdvancedDialog()"
                     >
                       {{ 'crops.edit.edit_sunshine_nutrient' | translate }}
+                      <span class="crop-stages-edit-panel__detail-chip-chevron" aria-hidden="true">›</span>
                     </button>
                   </div>
-                </section>
+                </div>
 
-                <footer class="crop-stages-edit-panel__footer">
+                <div class="crop-stages-edit-panel__footer">
                   <button type="button" class="btn btn-primary" (click)="saveStagePanel()">
                     {{ 'crops.edit.save_stage' | translate }}
                   </button>
                   <button type="button" class="btn btn-danger" (click)="deleteCropStage(stage.id)">
                     {{ 'common.delete' | translate }}
                   </button>
-                </footer>
+                </div>
               </div>
             }
           }
@@ -869,30 +892,43 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     });
   }
 
-  temperatureScaleMarkers(): TemperatureScaleMarker[] {
-    const entries: Array<{ key: TemperatureScaleMarker['key']; value: number | null }> = [
-      { key: 'base', value: this.stageEditDraft.base_temperature },
-      { key: 'optimal_min', value: this.stageEditDraft.optimal_min },
-      { key: 'optimal_max', value: this.stageEditDraft.optimal_max },
-      { key: 'max', value: this.stageEditDraft.max_temperature }
-    ];
-    const defined = entries.filter(
-      (entry): entry is { key: TemperatureScaleMarker['key']; value: number } => entry.value != null
+  temperatureScale(): TemperatureScaleModel {
+    const entries = [
+      { kind: 'base' as const, value: this.stageEditDraft.base_temperature },
+      { kind: 'optimal_min' as const, value: this.stageEditDraft.optimal_min },
+      { kind: 'optimal_max' as const, value: this.stageEditDraft.optimal_max },
+      { kind: 'max' as const, value: this.stageEditDraft.max_temperature }
+    ].filter((entry): entry is { kind: TemperatureScaleMarker['kind']; value: number } =>
+      entry.value != null && Number.isFinite(entry.value)
     );
-    if (defined.length < 2) {
-      return [];
+
+    if (entries.length === 0) {
+      return { hasValues: false, optimalStart: null, optimalEnd: null, markers: [] };
     }
-    const values = defined.map((entry) => entry.value);
+
+    const values = entries.map((entry) => entry.value);
     const min = Math.min(...values);
     const max = Math.max(...values);
-    const range = max - min;
-    if (range === 0) {
-      return defined.map((entry) => ({ key: entry.key, percent: 50 }));
-    }
-    return defined.map((entry) => ({
-      key: entry.key,
-      percent: ((entry.value - min) / range) * 100
-    }));
+    const span = max - min || 1;
+    const toPosition = (value: number): number => ((value - min) / span) * 100;
+
+    const optimalMin = this.stageEditDraft.optimal_min;
+    const optimalMax = this.stageEditDraft.optimal_max;
+    const hasOptimalRange =
+      optimalMin != null &&
+      optimalMax != null &&
+      Number.isFinite(optimalMin) &&
+      Number.isFinite(optimalMax);
+
+    return {
+      hasValues: true,
+      optimalStart: hasOptimalRange ? toPosition(Math.min(optimalMin, optimalMax)) : null,
+      optimalEnd: hasOptimalRange ? toPosition(Math.max(optimalMin, optimalMax)) : null,
+      markers: entries.map((entry) => ({
+        kind: entry.kind,
+        position: toPosition(entry.value)
+      }))
+    };
   }
 
   isPanelDirty(): boolean {
