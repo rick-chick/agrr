@@ -13,6 +13,17 @@ import { TranslateModule } from '@ngx-translate/core';
       [attr.aria-label]="'plans.work.nav.aria_label' | translate"
     >
       <a
+        [routerLink]="['/plans', planId]"
+        routerLinkActive="plan-context-nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="plan-context-nav__link"
+      >{{ 'plans.show.nav.workbench' | translate }}</a>
+      <a
+        [routerLink]="['/plans', planId, 'task_schedule']"
+        routerLinkActive="plan-context-nav__link--active"
+        class="plan-context-nav__link"
+      >{{ 'plans.show.nav.task_schedule' | translate }}</a>
+      <a
         [routerLink]="['/plans', planId, 'work']"
         routerLinkActive="plan-context-nav__link--active"
         [routerLinkActiveOptions]="{ exact: true }"
