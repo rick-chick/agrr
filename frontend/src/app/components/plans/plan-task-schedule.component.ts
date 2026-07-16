@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Channel } from 'actioncable';
+import { combineLatest } from 'rxjs';
 import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
 import { PlanTaskScheduleView, PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
@@ -303,11 +305,19 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     this.destroyRef.onDestroy(() => {
       this.syncChannel?.unsubscribe();
     });
+    combineLatest([this.route.paramMap, this.route.queryParamMap])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.handleRouteChange());
+  }
+
+  private handleRouteChange(): void {
     const planId = this.planId;
     if (!planId) {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
+    this.syncChannel?.unsubscribe();
+    this.syncChannel = null;
     this.presenter.applyClientFilters(
       this.resolveFromDateFromRoute(),
       this.resolveFieldFilterFromRoute(),

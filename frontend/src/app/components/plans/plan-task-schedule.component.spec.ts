@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BehaviorSubject } from 'rxjs';
 
 import en from '../../../assets/i18n/en.json';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
@@ -106,6 +107,45 @@ function sampleGeneralTask(
   };
 }
 
+function createPlanRouteMock(initial: {
+  planId: string;
+  query?: Record<string, string | null>;
+}) {
+  let planId = initial.planId;
+  let query = initial.query ?? {};
+  const paramMapSubject = new BehaviorSubject({
+    get: (key: string) => (key === 'id' ? planId : null)
+  });
+  const queryParamMapSubject = new BehaviorSubject({
+    get: (key: string) => query[key] ?? null
+  });
+
+  return {
+    snapshot: {
+      get paramMap() {
+        return paramMapSubject.value;
+      },
+      get queryParamMap() {
+        return queryParamMapSubject.value;
+      }
+    },
+    paramMap: paramMapSubject.asObservable(),
+    queryParamMap: queryParamMapSubject.asObservable(),
+    setPlanId(id: string) {
+      planId = id;
+      paramMapSubject.next({
+        get: (key: string) => (key === 'id' ? planId : null)
+      });
+    },
+    setQuery(nextQuery: Record<string, string | null>) {
+      query = nextQuery;
+      queryParamMapSubject.next({
+        get: (key: string) => query[key] ?? null
+      });
+    }
+  };
+}
+
 function setScheduleControl(
   component: PlanTaskScheduleComponent,
   presenter: PlanTaskSchedulePresenter,
@@ -130,12 +170,7 @@ describe('PlanTaskScheduleComponent', () => {
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: PlanTaskSchedulePresenter;
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
-  let mockActivatedRoute: {
-    snapshot: {
-      paramMap: { get: ReturnType<typeof vi.fn> };
-      queryParamMap: { get: ReturnType<typeof vi.fn> };
-    };
-  };
+  let mockActivatedRoute: ReturnType<typeof createPlanRouteMock>;
 
   beforeEach(async () => {
     HTMLDialogElement.prototype.showModal = vi.fn();
@@ -145,12 +180,7 @@ describe('PlanTaskScheduleComponent', () => {
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
-    mockActivatedRoute = {
-      snapshot: {
-        paramMap: { get: vi.fn(() => '7') },
-        queryParamMap: { get: vi.fn(() => null) }
-      }
-    };
+    mockActivatedRoute = createPlanRouteMock({ planId: '7' });
 
     TestBed.overrideComponent(PlanTaskScheduleComponent, {
       set: {
@@ -282,6 +312,11 @@ describe('PlanTaskScheduleComponent', () => {
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
+    const fromDateRouteMock = createPlanRouteMock({
+      planId: '7',
+      query: { from_date: '2026-06-01' }
+    });
+
     TestBed.overrideComponent(PlanTaskScheduleComponent, {
       set: {
         styleUrls: [],
@@ -293,14 +328,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
-            useValue: {
-              snapshot: {
-                paramMap: { get: vi.fn(() => '7') },
-                queryParamMap: {
-                  get: vi.fn((key: string) => (key === 'from_date' ? '2026-06-01' : null))
-                }
-              }
-            }
+            useValue: fromDateRouteMock
           }
         ]
       }
@@ -645,6 +673,50 @@ describe('PlanTaskScheduleComponent', () => {
     expect(setViewSpy).toHaveBeenCalledWith(component);
   });
 
+  it('reloads and resubscribes when route plan id changes', () => {
+    const oldChannel = { unsubscribe: vi.fn() };
+    subscribeSyncUseCase.execute.mockImplementation(({ onSubscribed }) => {
+      onSubscribed(oldChannel);
+    });
+    const applyFiltersSpy = vi.spyOn(presenter, 'applyClientFilters');
+
+    fixture.detectChanges();
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
+    expect(subscribeSyncUseCase.execute).toHaveBeenCalledWith({
+      planId: 7,
+      onSubscribed: expect.any(Function)
+    });
+
+    loadUseCase.execute.mockClear();
+    subscribeSyncUseCase.execute.mockClear();
+    applyFiltersSpy.mockClear();
+
+    mockActivatedRoute.setPlanId('8');
+
+    expect(oldChannel.unsubscribe).toHaveBeenCalled();
+    expect(subscribeSyncUseCase.execute).toHaveBeenCalledWith({
+      planId: 8,
+      onSubscribed: expect.any(Function)
+    });
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 8 });
+    expect(applyFiltersSpy).toHaveBeenCalled();
+  });
+
+  it('reapplies field_cultivation_id filter when query param changes', () => {
+    const applyFiltersSpy = vi.spyOn(presenter, 'applyClientFilters');
+
+    fixture.detectChanges();
+    applyFiltersSpy.mockClear();
+
+    mockActivatedRoute.setQuery({ field_cultivation_id: '42' });
+
+    expect(applyFiltersSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      null,
+      42
+    );
+  });
+
   it('shows ready regenerate link in footer when sync is ready and schedule has fields', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
@@ -851,6 +923,11 @@ describe('PlanTaskScheduleComponent', () => {
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
+    const filteredRouteMock = createPlanRouteMock({
+      planId: '7',
+      query: { field_cultivation_id: '42', from_date: '2026-01-01' }
+    });
+
     TestBed.overrideComponent(PlanTaskScheduleComponent, {
       set: {
         styleUrls: [],
@@ -862,18 +939,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
-            useValue: {
-              snapshot: {
-                paramMap: { get: vi.fn(() => '7') },
-                queryParamMap: {
-                  get: vi.fn((key: string) => {
-                    if (key === 'field_cultivation_id') return '42';
-                    if (key === 'from_date') return '2026-01-01';
-                    return null;
-                  })
-                }
-              }
-            }
+            useValue: filteredRouteMock
           }
         ]
       }

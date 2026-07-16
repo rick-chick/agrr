@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { BehaviorSubject } from 'rxjs';
 import { PlanWorkRecordsComponent } from './plan-work-records.component';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
@@ -22,6 +23,13 @@ describe('PlanWorkRecordsComponent photo thumb layout', () => {
     HTMLDialogElement.prototype.showModal = vi.fn();
     HTMLDialogElement.prototype.close = vi.fn();
 
+    const paramMapSubject = new BehaviorSubject({
+      get: (key: string) => (key === 'id' ? '7' : null)
+    });
+    const queryParamMapSubject = new BehaviorSubject({
+      get: () => null
+    });
+
     TestBed.overrideComponent(PlanWorkRecordsComponent, {
       set: {
         providers: [
@@ -30,7 +38,16 @@ describe('PlanWorkRecordsComponent photo thumb layout', () => {
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
-            useValue: { snapshot: { paramMap: { get: vi.fn(() => '7') } } }
+            useValue: {
+              snapshot: {
+                get paramMap() {
+                  return paramMapSubject.value;
+                },
+                queryParamMap: { get: () => null }
+              },
+              paramMap: paramMapSubject.asObservable(),
+              queryParamMap: queryParamMapSubject.asObservable()
+            }
           }
         ]
       }
