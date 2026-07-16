@@ -9,9 +9,8 @@
  *
  * Env: WEBHOOK_URL, WEBHOOK_KEY, GH_TOKEN (optional; gh uses default auth)
  */
-import { execFileSync } from 'node:child_process';
-
 import { parseRetryDispatchArgs } from './issue-worker-dispatch-lib.mjs';
+import { gh } from './gh-repo-lib.mjs';
 import { buildConflictDispatchPayload } from './pr-merge-worker-dispatch-payload-lib.mjs';
 import {
   buildRetryDispatchPayload,
@@ -20,18 +19,6 @@ import {
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
 
 const DEFAULT_REPO = 'rick-chick/agrr';
-
-/**
- * @param {string} repo
- * @param {string[]} ghArgs
- * @returns {string}
- */
-function gh(repo, ghArgs) {
-  return execFileSync('gh', ['--repo', repo, ...ghArgs], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  }).trim();
-}
 
 /**
  * @param {string} repo
