@@ -646,6 +646,21 @@ describe('CropStagesComponent', () => {
       high_stress_threshold: 30,
       frost_threshold: 0
     };
+    mockSaveCropStagePanelUseCase.execute.mockImplementation(() => {
+      const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+      presenter.onSuccess({
+        stage: {
+          ...stageFixture,
+          temperature_requirement: {
+            ...stageFixture.temperature_requirement!,
+            low_stress_threshold: 10,
+            high_stress_threshold: 30,
+            frost_threshold: 0
+          }
+        }
+      });
+    });
+
     component.saveTemperatureDialog();
 
     expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalledWith({
@@ -658,6 +673,69 @@ describe('CropStagesComponent', () => {
       }
     });
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+    expect(component.temperatureDetailDraft).toBeNull();
+  });
+
+  it('keeps temperature dialog open and preserves draft when save API fails', async () => {
+    await loadStages([stageFixture]);
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+
+    component.openTemperatureDialog();
+    component.temperatureDetailDraft = {
+      low_stress_threshold: 10,
+      high_stress_threshold: 30,
+      frost_threshold: 0
+    };
+    vi.mocked(HTMLDialogElement.prototype.close).mockClear();
+
+    mockSaveCropStagePanelUseCase.execute.mockImplementation(() => {
+      presenter.onError({ message: 'network error' });
+    });
+
+    component.saveTemperatureDialog();
+
+    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalled();
+    expect(HTMLDialogElement.prototype.close).not.toHaveBeenCalled();
+    expect(component.temperatureDetailDraft).toEqual({
+      low_stress_threshold: 10,
+      high_stress_threshold: 30,
+      frost_threshold: 0
+    });
+  });
+
+  it('keeps temperature dialog open and preserves draft on partial save failure', async () => {
+    await loadStages([stageFixture]);
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+
+    component.openTemperatureDialog();
+    component.temperatureDetailDraft = {
+      low_stress_threshold: 10,
+      high_stress_threshold: 30,
+      frost_threshold: 0
+    };
+    vi.mocked(HTMLDialogElement.prototype.close).mockClear();
+
+    mockSaveCropStagePanelUseCase.execute.mockImplementation(() => {
+      presenter.onPanelPartialFailure({
+        crop: {
+          id: 1,
+          name: 'Tomato',
+          is_reference: false,
+          groups: [],
+          crop_stages: [stageFixture]
+        },
+        stageId: 1
+      });
+    });
+
+    component.saveTemperatureDialog();
+
+    expect(HTMLDialogElement.prototype.close).not.toHaveBeenCalled();
+    expect(component.temperatureDetailDraft).toEqual({
+      low_stress_threshold: 10,
+      high_stress_threshold: 30,
+      frost_threshold: 0
+    });
   });
 
   it('renders inline temperature fields in edit panel', async () => {
@@ -709,6 +787,33 @@ describe('CropStagesComponent', () => {
       region: 'jp',
       sterility_risk_threshold: 32
     };
+    mockSaveCropStageAdvancedDetailsUseCase.execute.mockImplementation(() => {
+      const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+      presenter.onSuccess({
+        stage: {
+          ...stageFixture,
+          sunshine_requirement: {
+            id: 1,
+            crop_stage_id: 1,
+            minimum_sunshine_hours: 4,
+            target_sunshine_hours: 8
+          },
+          nutrient_requirement: {
+            id: 1,
+            crop_stage_id: 1,
+            daily_uptake_n: 0.5,
+            daily_uptake_p: 0.2,
+            daily_uptake_k: 0.3,
+            region: 'jp'
+          },
+          temperature_requirement: {
+            ...stageFixture.temperature_requirement!,
+            sterility_risk_threshold: 32
+          }
+        }
+      });
+    });
+
     component.saveAdvancedDialog();
 
     expect(mockSaveCropStageAdvancedDetailsUseCase.execute).toHaveBeenCalledWith({
@@ -724,6 +829,42 @@ describe('CropStagesComponent', () => {
       temperaturePatch: { sterility_risk_threshold: 32 }
     });
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+    expect(component.advancedDetailDraft).toBeNull();
+  });
+
+  it('keeps advanced dialog open and preserves draft when save API fails', async () => {
+    await loadStages([stageFixture]);
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+
+    component.openAdvancedDialog();
+    component.advancedDetailDraft = {
+      minimum_sunshine_hours: 4,
+      target_sunshine_hours: 8,
+      daily_uptake_n: 0.5,
+      daily_uptake_p: 0.2,
+      daily_uptake_k: 0.3,
+      region: 'jp',
+      sterility_risk_threshold: 32
+    };
+    vi.mocked(HTMLDialogElement.prototype.close).mockClear();
+
+    mockSaveCropStageAdvancedDetailsUseCase.execute.mockImplementation(() => {
+      presenter.onError({ message: 'network error' });
+    });
+
+    component.saveAdvancedDialog();
+
+    expect(mockSaveCropStageAdvancedDetailsUseCase.execute).toHaveBeenCalled();
+    expect(HTMLDialogElement.prototype.close).not.toHaveBeenCalled();
+    expect(component.advancedDetailDraft).toEqual({
+      minimum_sunshine_hours: 4,
+      target_sunshine_hours: 8,
+      daily_uptake_n: 0.5,
+      daily_uptake_p: 0.2,
+      daily_uptake_k: 0.3,
+      region: 'jp',
+      sterility_risk_threshold: 32
+    });
   });
 
   it('saves only changed advanced dialog fields through SaveCropStageAdvancedDetailsUseCase', async () => {

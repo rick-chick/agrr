@@ -581,6 +581,8 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   private _control: CropStagesViewState = initialControl;
   private knownStageIds = new Set<number>();
+  private pendingTemperatureDialogSave = false;
+  private pendingAdvancedDialogSave = false;
 
   get control(): CropStagesViewState {
     return this._control;
@@ -594,12 +596,34 @@ export class CropStagesComponent implements CropStagesView, OnInit {
         { flash: this.flashMessage }
       )
     );
+    this.settlePendingDialogSaves(value);
     const stagesChanged = previousStages !== value.formData.crop_stages;
     if (stagesChanged || forceResyncPanelDraft) {
       queueMicrotask(() => {
         this.ensureSelectedStage({ forceResyncPanelDraft });
         this.cdr.markForCheck();
       });
+    }
+  }
+
+  private settlePendingDialogSaves(value: CropStagesViewState): void {
+    if (
+      this.pendingTemperatureDialogSave &&
+      value.pendingSuccessFlash != null &&
+      value.pendingErrorFlash == null
+    ) {
+      this.pendingTemperatureDialogSave = false;
+      this.temperatureDetailDraft = null;
+      this.temperatureDialogRef?.nativeElement?.close();
+    }
+    if (
+      this.pendingAdvancedDialogSave &&
+      value.pendingSuccessFlash != null &&
+      value.pendingErrorFlash == null
+    ) {
+      this.pendingAdvancedDialogSave = false;
+      this.advancedDetailDraft = null;
+      this.advancedDialogRef?.nativeElement?.close();
     }
   }
 
@@ -867,17 +891,23 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       temperaturePatch.frost_threshold = draft.frost_threshold ?? undefined;
     }
 
+    if (Object.keys(temperaturePatch).length === 0) {
+      this.temperatureDetailDraft = null;
+      this.temperatureDialogRef?.nativeElement?.close();
+      return;
+    }
+
+    this.pendingTemperatureDialogSave = true;
     this.saveCropStagePanelUseCase.execute({
       cropId: this.cropId,
       stageId: stage.id,
-      temperaturePatch: Object.keys(temperaturePatch).length > 0 ? temperaturePatch : undefined
+      temperaturePatch
     });
-    this.temperatureDetailDraft = null;
-    this.temperatureDialogRef?.nativeElement?.close();
   }
 
   cancelTemperatureDialog(event?: Event): void {
     event?.preventDefault();
+    this.pendingTemperatureDialogSave = false;
     this.temperatureDetailDraft = null;
     this.temperatureDialogRef?.nativeElement?.close();
   }
@@ -955,6 +985,17 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       temperaturePatch.sterility_risk_threshold = draft.sterility_risk_threshold ?? undefined;
     }
 
+    if (
+      Object.keys(sunshinePatch).length === 0 &&
+      Object.keys(nutrientPatch).length === 0 &&
+      Object.keys(temperaturePatch).length === 0
+    ) {
+      this.advancedDetailDraft = null;
+      this.advancedDialogRef?.nativeElement?.close();
+      return;
+    }
+
+    this.pendingAdvancedDialogSave = true;
     this.saveCropStageAdvancedDetailsUseCase.execute({
       cropId: this.cropId,
       stageId: stage.id,
@@ -962,13 +1003,11 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       nutrientPatch: Object.keys(nutrientPatch).length > 0 ? nutrientPatch : undefined,
       temperaturePatch: Object.keys(temperaturePatch).length > 0 ? temperaturePatch : undefined
     });
-
-    this.advancedDetailDraft = null;
-    this.advancedDialogRef?.nativeElement?.close();
   }
 
   cancelAdvancedDialog(event?: Event): void {
     event?.preventDefault();
+    this.pendingAdvancedDialogSave = false;
     this.advancedDetailDraft = null;
     this.advancedDialogRef?.nativeElement?.close();
   }
