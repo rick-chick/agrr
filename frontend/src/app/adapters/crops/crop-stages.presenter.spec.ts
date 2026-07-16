@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CropStagesPresenter } from './crop-stages.presenter';
 import { CropStagesView, CropStagesViewState } from '../../components/masters/crops/crop-stages.view';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
@@ -12,6 +13,7 @@ describe('CropStagesPresenter', () => {
   let presenter: CropStagesPresenter;
   let view: CropStagesView;
   let lastControl: CropStagesViewState | null;
+  let reloadTaskScheduleBlueprintsSpy: ReturnType<typeof vi.fn>;
 
   const emptyFormData: CropStagesViewState['formData'] = {
     name: '',
@@ -41,6 +43,7 @@ describe('CropStagesPresenter', () => {
     });
     presenter = TestBed.inject(CropStagesPresenter);
     lastControl = null;
+    reloadTaskScheduleBlueprintsSpy = vi.fn();
     view = {
       get control(): CropStagesViewState {
         return lastControl ?? {
@@ -60,7 +63,8 @@ describe('CropStagesPresenter', () => {
       },
       set control(value: CropStagesViewState) {
         lastControl = value;
-      }
+      },
+      reloadTaskScheduleBlueprints: reloadTaskScheduleBlueprintsSpy as () => void
     };
     presenter.setView(view);
   });
@@ -169,6 +173,56 @@ describe('CropStagesPresenter', () => {
       presenter.present(dto);
 
       expect(lastControl!.pendingSuccessFlash).toEqual({ type: 'success', text: 'crops.flash.stage_deleted' });
+      expect(reloadTaskScheduleBlueprintsSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('ReorderCropStagesOutputPort', () => {
+    it('reloads blueprints after a successful reorder', () => {
+      lastControl = baseControlState({
+        name: 'Test Crop',
+        crop_stages: [
+          { id: 1, crop_id: 1, name: 'Stage 1', order: 1 },
+          { id: 2, crop_id: 1, name: 'Stage 2', order: 2 }
+        ]
+      });
+
+      presenter.present({
+        stages: [
+          { id: 2, crop_id: 1, name: 'Stage 2', order: 1 },
+          { id: 1, crop_id: 1, name: 'Stage 1', order: 2 }
+        ]
+      });
+
+      expect(reloadTaskScheduleBlueprintsSpy).toHaveBeenCalled();
+    });
+
+    it('restores crop stage order on onError when reorder snapshot exists', () => {
+      const originalStages: CropStage[] = [
+        { id: 1, crop_id: 1, name: 'Stage 1', order: 1 },
+        { id: 2, crop_id: 1, name: 'Stage 2', order: 2 }
+      ];
+      const reorderedStages: CropStage[] = [
+        { id: 2, crop_id: 1, name: 'Stage 2', order: 1 },
+        { id: 1, crop_id: 1, name: 'Stage 1', order: 2 }
+      ];
+      lastControl = baseControlState({
+        name: 'Test Crop',
+        crop_stages: reorderedStages
+      });
+      lastControl = {
+        ...lastControl!,
+        pendingReorderCropStagesSnapshot: originalStages
+      };
+
+      presenter.onError({ message: 'common.api_error.network' });
+
+      expect(lastControl!.formData.crop_stages).toEqual(originalStages);
+      expect(lastControl!.pendingReorderCropStagesSnapshot).toBeNull();
+      expect(lastControl!.pendingErrorFlash).toEqual({
+        type: 'error',
+        text: 'common.api_error.network'
+      });
     });
   });
 
@@ -292,36 +346,6 @@ describe('CropStagesPresenter', () => {
       expect(lastControl!.pendingErrorFlash).toEqual({
         type: 'error',
         text: 'common.api_error.generic'
-      });
-    });
-  });
-
-  describe('ReorderCropStagesOutputPort', () => {
-    it('restores crop stage order on onError when reorder snapshot exists', () => {
-      const originalStages: CropStage[] = [
-        { id: 1, crop_id: 1, name: 'Stage 1', order: 1 },
-        { id: 2, crop_id: 1, name: 'Stage 2', order: 2 }
-      ];
-      const reorderedStages: CropStage[] = [
-        { id: 2, crop_id: 1, name: 'Stage 2', order: 1 },
-        { id: 1, crop_id: 1, name: 'Stage 1', order: 2 }
-      ];
-      lastControl = baseControlState({
-        name: 'Test Crop',
-        crop_stages: reorderedStages
-      });
-      lastControl = {
-        ...lastControl!,
-        pendingReorderCropStagesSnapshot: originalStages
-      };
-
-      presenter.onError({ message: 'common.api_error.network' });
-
-      expect(lastControl!.formData.crop_stages).toEqual(originalStages);
-      expect(lastControl!.pendingReorderCropStagesSnapshot).toBeNull();
-      expect(lastControl!.pendingErrorFlash).toEqual({
-        type: 'error',
-        text: 'common.api_error.network'
       });
     });
   });
