@@ -277,6 +277,41 @@ describe('CropStagesComponent', () => {
     expect(row.textContent).toContain('0–100');
   });
 
+  it('shows info flash and skips save when panel has no changes', async () => {
+    await loadStages([stageFixture]);
+
+    component.saveStagePanel();
+
+    expect(mockSaveCropStagePanelUseCase.execute).not.toHaveBeenCalled();
+    expect(mockFlashMessage.show).toHaveBeenCalledWith({
+      type: 'info',
+      text: 'crops.flash.stage_panel_no_changes'
+    });
+  });
+
+  it('disables save button when panel has no unsaved changes', async () => {
+    await loadStages([stageFixture]);
+
+    const saveButton = fixture.nativeElement.querySelector(
+      '.crop-stages-edit-panel__footer .btn-primary'
+    ) as HTMLButtonElement;
+
+    expect(saveButton.disabled).toBe(true);
+  });
+
+  it('enables save button when panel is dirty', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Updated Name';
+    fixture.detectChanges();
+
+    const saveButton = fixture.nativeElement.querySelector(
+      '.crop-stages-edit-panel__footer .btn-primary'
+    ) as HTMLButtonElement;
+
+    expect(saveButton.disabled).toBe(false);
+  });
+
   it('saves panel fields through SaveCropStagePanelUseCase when save button is clicked', async () => {
     await loadStages([stageFixture]);
 
