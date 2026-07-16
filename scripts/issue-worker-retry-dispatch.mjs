@@ -15,6 +15,7 @@ import {
   buildWebhookPayload,
   defaultRetryReasonForMode,
   isRetryCandidate,
+  openFixPrSearchQuery,
   parseRetryDispatchArgs,
   selectOpenIssueByTitle,
   selectRetryCandidate,
@@ -46,7 +47,7 @@ function hasOpenFixPr(repo, issueNumber) {
     '--state',
     'open',
     '--search',
-    `fixes #${issueNumber}`,
+    openFixPrSearchQuery(issueNumber),
     '--json',
     'number',
   ]);
