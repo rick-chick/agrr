@@ -29,6 +29,7 @@ const loadedControlBase = {
   error: null,
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
+  pendingReorderCropStagesSnapshot: null,
   taskScheduleBlueprints: []
 };
 
@@ -608,6 +609,39 @@ describe('CropStagesComponent', () => {
       ]
     });
     expect(mockUpdateCropStageUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('rolls back stage order and shows error flash when reorder API fails', () => {
+    fixture.detectChanges();
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+    const originalStages = [
+      { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+      { id: 2, name: 'Stage 2', order: 2 } as CropStage
+    ];
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato',
+        crop_stages: [...originalStages]
+      }
+    };
+    mockReorderCropStagesUseCase.execute.mockImplementation(() => {
+      presenter.onError({ message: 'network error' });
+    });
+
+    component.onStageDropped({
+      previousIndex: 0,
+      currentIndex: 1
+    } as CdkDragDrop<CropStage[]>);
+
+    expect(component.sortedStages.map((stage) => stage.id)).toEqual([1, 2]);
+    expect(component.control.pendingReorderCropStagesSnapshot).toBeNull();
+    expect(component.control.pendingErrorFlash).toBeNull();
+    expect(mockFlashMessage.show).toHaveBeenCalledWith({
+      type: 'error',
+      text: 'network error'
+    });
   });
 
   it('shows duplicate order warning', async () => {
