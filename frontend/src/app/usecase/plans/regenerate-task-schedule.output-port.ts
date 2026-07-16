@@ -1,9 +1,10 @@
 import { InjectionToken } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { RegenerateTaskScheduleResponseDto } from './regenerate-task-schedule-response.dtos';
 
 export interface RegenerateTaskScheduleOutputPort {
   onRegenerateStarted(): void;
-  onRegenerateSuccess(): void;
+  onRegenerateSuccess(dto: RegenerateTaskScheduleResponseDto): void;
   onRegenerateError(dto: ErrorDto): void;
 }
 
