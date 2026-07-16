@@ -253,7 +253,9 @@
       "temperature_requirement_updated": "तापमान आवश्यकता अपडेट की गई।",
       "thermal_requirement_updated": "संचयी ताप आवश्यकता अपडेट की गई।",
       "sunshine_requirement_updated": "धूप आवश्यकता अपडेट की गई।",
-      "nutrient_requirement_updated": "पोषक तत्व आवश्यकता अपडेट की गई।"
+      "nutrient_requirement_updated": "पोषक तत्व आवश्यकता अपडेट की गई।",
+      "stage_advanced_partial_save_failed": "कुछ उन्नत फ़ील्ड सहेजे नहीं जा सके। फ़ॉर्म सर्वर से रीफ़्रेश किया गया।",
+      "stage_panel_partial_save_failed": "कुछ पैनल फ़ील्ड सहेजे नहीं जा सके। फ़ॉर्म सर्वर से रीफ़्रेश किया गया।"
     },
     "form": {
       "name_label": "नाम",
@@ -377,7 +379,15 @@
       "table_base_temperature": "न्यूनतम सीमा तापमान",
       "table_required_gdd": "आवश्यक GDD",
       "table_cumulative_gdd": "संचयी GDD",
-      "value_missing": "—"
+      "value_missing": "—",
+      "nutrient_requirement": "पोषक तत्व आवश्यकताएँ",
+      "required_marker": "आवश्यक",
+      "requirements_title": "आवश्यकताएँ",
+      "stage_cumulative_gdd_missing": "सीमा दिखाने के लिए आवश्यक GDD दर्ज करें",
+      "stage_order": "क्रम",
+      "sunshine_requirement": "सूरज की रोशनी आवश्यकताएँ",
+      "temperature_requirement": "तापमान आवश्यकताएँ",
+      "thermal_requirement": "थर्मल आवश्यकताएँ"
     },
     "show": {
       "name": "नाम",
@@ -2141,7 +2151,10 @@
         "required_gdd": "आवश्यक बढ़ती डिग्री दिन (°C·day)",
         "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",
         "target_sunshine_hours": "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)",
-        "region": "क्षेत्र"
+        "region": "क्षेत्र",
+        "daily_uptake_k": "दैनिक पोटैशियम अवशोषण (kg/ha/day)",
+        "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (kg/ha/day)",
+        "daily_uptake_p": "दैनिक फास्फोरस अवशोषण (kg/ha/day)"
       }
     },
     "fertilize_ai": {
