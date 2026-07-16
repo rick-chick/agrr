@@ -81,6 +81,16 @@ describe('crop-stage-requirement-gateway-ops', () => {
     expect(gateway.createThermalRequirement).not.toHaveBeenCalled();
   });
 
+  it('upsertThermalRequirement create omits null fields from create payload', async () => {
+    const gateway = createGateway();
+    const payload = { required_gdd: null };
+
+    await firstValueFrom(upsertThermalRequirement(gateway, 1, 2, payload));
+
+    expect(gateway.createThermalRequirement).toHaveBeenCalledWith(1, 2, {});
+    expect(gateway.updateThermalRequirement).not.toHaveBeenCalled();
+  });
+
   it('upsertSunshineRequirement creates when absent', async () => {
     const gateway = createGateway();
     const payload = { minimum_sunshine_hours: 4 };
