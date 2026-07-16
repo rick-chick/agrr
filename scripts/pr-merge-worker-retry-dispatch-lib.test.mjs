@@ -11,7 +11,10 @@ import {
   selectReconcileCandidate,
   selectStuckRetryCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
-import { buildConflictDispatchPayload } from './pr-merge-worker-dispatch-payload-lib.mjs';
+import {
+  buildCiFixDispatchPayload,
+  buildConflictDispatchPayload,
+} from './pr-merge-worker-dispatch-payload-lib.mjs';
 
 const NOW = Date.parse('2026-07-15T12:00:00.000Z');
 
@@ -76,13 +79,80 @@ test('isStuckRetryCandidate accepts ready PR with green CI and quiet period', ()
 
 test('isStuckRetryCandidate rejects draft PR', () => {
   const result = isStuckRetryCandidate({
-    pr: { ...BASE_PR, isDraft: true },
+    pr: { ...BASE_PR, isDraft: true, labels: [] },
     checks: GREEN_CHECKS,
     baseOwner: 'rick-chick',
     nowMs: NOW,
   });
   assert.equal(result.eligible, false);
   assert.match(result.reason, /draft/i);
+});
+
+const FAILED_CHECKS = [
+  { name: 'rails-test', state: 'SUCCESS' },
+  { name: 'frontend-test', state: 'FAILURE' },
+  { name: 'lint / frontend-lint', state: 'SUCCESS' },
+];
+
+test('classifyReconcileCandidate accepts draft agent-merge PR with failed required CI as ci_fix', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      number: 353,
+      isDraft: true,
+      labels: [{ name: 'agent-merge' }],
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'CLEAN',
+      updatedAt: '2026-07-16T14:25:00.000Z',
+    },
+    checks: FAILED_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'ci_fix',
+    removeStaleInProgressLabel: false,
+  });
+});
+
+test('classifyReconcileCandidate rejects draft agent-merge PR while required CI is pending', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      isDraft: true,
+      labels: [{ name: 'agent-merge' }],
+    },
+    checks: [
+      { name: 'rails-test', state: 'SUCCESS' },
+      { name: 'frontend-test', state: 'PENDING' },
+      { name: 'lint / frontend-lint', state: 'SUCCESS' },
+    ],
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.equal(result.eligible, false);
+  assert.match(result.reason, /pending|incomplete/i);
+});
+
+test('classifyReconcileCandidate prefers conflict over ci_fix for conflicting draft PR', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      isDraft: true,
+      labels: [{ name: 'agent-merge' }],
+      mergeable: 'CONFLICTING',
+      mergeStateStatus: 'DIRTY',
+    },
+    checks: FAILED_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'conflict',
+    removeStaleInProgressLabel: false,
+  });
 });
 
 test('classifyReconcileCandidate accepts conflicting draft cursor PR without agent-merge label', () => {
@@ -308,4 +378,17 @@ test('buildRetryDispatchPayload maps stuck retry fields', () => {
     merge_state_status: 'CLEAN',
     retry_reason: 'scheduled_reconcile',
   });
+});
+
+test('buildCiFixDispatchPayload maps draft CI failure dispatch fields', () => {
+  const payload = buildCiFixDispatchPayload({
+    repository: 'rick-chick/agrr',
+    pr: {
+      ...BASE_PR,
+      number: 353,
+      isDraft: true,
+    },
+  });
+  assert.equal(payload.action, 'ci_fix');
+  assert.equal(payload.pr_number, 353);
 });
