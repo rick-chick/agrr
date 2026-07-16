@@ -374,7 +374,8 @@ impl CropGateway for CropSqliteGateway {
             .get("order")
             .and_then(|v| v.as_i64())
             .unwrap_or(0) as i32;
-        self.pool.with_write_box(|conn| {
+        self.pool
+            .with_write_box(|conn| {
             conn.execute(
                 "INSERT INTO crop_stages (crop_id, name, \"order\", created_at, updated_at) VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
                 params![input.crop_id, name, order],
@@ -399,6 +400,7 @@ impl CropGateway for CropSqliteGateway {
                 },
             )
         })
+            .map_err(map_crop_stage_sqlite_boxed_err)
     }
 
     fn update_crop_stage(

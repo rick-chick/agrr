@@ -1019,6 +1019,26 @@ fn put_masters_crop_stages_reorder_swaps_stage_orders() {
 }
 
 #[test]
+fn post_masters_crop_stage_conflicting_order_returns_422() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop_with_stages(user_id, 1);
+
+    let (status, body) = status_and_body(client.post(
+        &format!("/api/v1/masters/crops/{}/crop_stages", seed.crop_id),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "crop_stage": { "name": "Duplicate Order Stage", "order": 1 }
+        })),
+    ));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("error JSON");
+    assert!(json.get("errors").is_some(), "{body}");
+}
+
+#[test]
 fn patch_masters_crop_stage_conflicting_order_returns_422() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

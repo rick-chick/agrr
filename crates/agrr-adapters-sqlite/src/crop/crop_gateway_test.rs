@@ -330,6 +330,26 @@ fn reorder_crop_stages_swaps_orders_in_one_transaction() {
 }
 
 #[test]
+fn create_crop_stage_order_conflict_returns_record_invalid() {
+    let pool = crop_test_pool();
+    let (gw, crop_id) = seed_crop(&pool);
+    gw.create_crop_stage(CropStageCreateInput::new(
+        crop_id,
+        json!({ "name": "Stage A", "order": 1 }),
+    ))
+    .unwrap();
+
+    let err = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "Stage B", "order": 1 }),
+        ))
+        .unwrap_err();
+
+    assert!(err.downcast_ref::<agrr_domain::shared::exceptions::RecordInvalidError>().is_some());
+}
+
+#[test]
 fn update_crop_stage_order_conflict_returns_record_invalid() {
     let pool = crop_test_pool();
     let (gw, crop_id) = seed_crop(&pool);
