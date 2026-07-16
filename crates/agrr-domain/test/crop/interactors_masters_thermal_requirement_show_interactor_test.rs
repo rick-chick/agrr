@@ -6,7 +6,7 @@
     struct StubGw { found: bool }
     impl ThermalRequirementGateway for StubGw {
         fn find_by_crop_stage_id(&self, _: i64) -> Result<Option<ThermalRequirementEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            Ok(if self.found { Some(ThermalRequirementEntity::new(1, 9, Decimal::from(200)).unwrap()) } else { None })
+            Ok(if self.found { Some(ThermalRequirementEntity::new(1, 9, Some(Decimal::from(200))).unwrap()) } else { None })
         }
     }
     struct Spy { event: Option<&'static str> }

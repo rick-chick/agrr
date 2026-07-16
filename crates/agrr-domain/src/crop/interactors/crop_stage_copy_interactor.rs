@@ -89,7 +89,12 @@ where
                     ThermalRequirementUpdateInput::new(
                         new_crop_id,
                         target_stage.id,
-                        json!({ "required_gdd": ref_thermal.required_gdd }),
+                        json!({
+                            "required_gdd": ref_thermal
+                                .required_gdd
+                                .as_ref()
+                                .map(|d| d.to_string()),
+                        }),
                     ),
                 )?;
                 target_stage.thermal_requirement = Some(created);

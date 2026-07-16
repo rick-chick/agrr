@@ -35,7 +35,7 @@
     fn stores_nested_requirements_when_provided() {
         let mut entity = CropStageEntity::new(1, 10, "Stage", 0).unwrap();
         entity.thermal_requirement = Some(
-            ThermalRequirementEntity::new(1, 10, rust_decimal::Decimal::from(200)).unwrap(),
+            ThermalRequirementEntity::new(1, 10, Some(rust_decimal::Decimal::from(200))).unwrap(),
         );
         assert!(entity.thermal_requirement.is_some());
     }
