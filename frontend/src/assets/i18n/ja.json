@@ -2376,7 +2376,8 @@
         "crop_wizard_link": "「{{cropName}}」の登録ウィザードを開く",
         "plan_context_link": "計画のほ場・気象を確認する",
         "crop_stages_link": "「{{cropName}}」の生育ステージを確認する",
-        "generic_plan_link": "計画のほ場・作物を確認する"
+        "generic_plan_link": "計画のほ場・作物を確認する",
+        "missing_field_crop": "作付計画のほ場に作物が未設定のため、作業予定を生成できません。"
       },
       "detail": {
         "dialog_title": "{{task}} · {{crop}}",

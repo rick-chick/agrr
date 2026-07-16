@@ -1747,7 +1747,8 @@
         "crop_wizard_link": "«{{cropName}}» का पंजीकरण विज़ार्ड खोलें",
         "plan_context_link": "योजना के खेत और मौसम की जाँच करें",
         "crop_stages_link": "«{{cropName}}» के वृद्धि चरण देखें",
-        "generic_plan_link": "योजना के खेत और फसल देखें"
+        "generic_plan_link": "योजना के खेत और फसल देखें",
+        "missing_field_crop": "योजना के एक खेत में फसल निर्धारित नहीं है, इसलिए कार्य अनुसूची नहीं बनाई जा सकी।"
       },
       "detail": {
         "dialog_title": "{{task}} · {{crop}}",
