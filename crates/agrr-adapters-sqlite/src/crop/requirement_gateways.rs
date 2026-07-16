@@ -81,11 +81,10 @@ impl ThermalRequirementGateway for ThermalRequirementSqliteGateway {
                 "SELECT id, crop_stage_id, required_gdd FROM thermal_requirements WHERE crop_stage_id = ?1",
                 params![crop_stage_id],
                 |row| {
-                    let gdd: f64 = row.get(2)?;
                     ThermalRequirementEntity::new(
                         row.get(0)?,
                         row.get(1)?,
-                        Decimal::from_f64_retain(gdd).unwrap_or_default(),
+                        dec(row.get(2)?),
                     )
                     .map_err(|e| {
                         rusqlite::Error::ToSqlConversionFailure(Box::new(std::io::Error::new(

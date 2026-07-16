@@ -534,10 +534,24 @@ impl CropGateway for CropSqliteGateway {
     ) -> Result<ThermalRequirementEntity, Box<dyn std::error::Error + Send + Sync>> {
         let m = nested_req_map(&input.payload, "thermal_requirement");
         self.pool.with_write_box(|conn| {
-            let updated = conn.execute(
-                "UPDATE thermal_requirements SET required_gdd = COALESCE(?2, required_gdd), updated_at = datetime('now') WHERE crop_stage_id = ?1",
-                params![crop_stage_id, f64_field(m, "required_gdd")],
-            )?;
+            let mut sets = Vec::new();
+            let mut values = Vec::new();
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "required_gdd",
+                patch_f64(m, "required_gdd"),
+            );
+            if sets.is_empty() {
+                return load_thermal(conn, crop_stage_id).map_err(Into::into);
+            }
+            sets.push("updated_at = datetime('now')".into());
+            let sql = format!(
+                "UPDATE thermal_requirements SET {} WHERE crop_stage_id = ?",
+                sets.join(", ")
+            );
+            values.push(rusqlite::types::Value::Integer(crop_stage_id));
+            let updated = conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
             if updated == 0 {
                 return Err(rusqlite::Error::QueryReturnedNoRows);
             }
@@ -595,22 +609,66 @@ impl CropGateway for CropSqliteGateway {
     ) -> Result<TemperatureRequirementEntity, Box<dyn std::error::Error + Send + Sync>> {
         let m = nested_req_map(&input.payload, "temperature_requirement");
         self.pool.with_write_box(|conn| {
-            let updated = conn.execute(
-                "UPDATE temperature_requirements SET base_temperature = COALESCE(?2, base_temperature), optimal_min = COALESCE(?3, optimal_min), optimal_max = COALESCE(?4, optimal_max), \
-                 low_stress_threshold = COALESCE(?5, low_stress_threshold), high_stress_threshold = COALESCE(?6, high_stress_threshold), frost_threshold = COALESCE(?7, frost_threshold), \
-                 sterility_risk_threshold = COALESCE(?8, sterility_risk_threshold), max_temperature = COALESCE(?9, max_temperature), updated_at = datetime('now') WHERE crop_stage_id = ?1",
-                params![
-                    crop_stage_id,
-                    f64_field(m, "base_temperature"),
-                    f64_field(m, "optimal_min"),
-                    f64_field(m, "optimal_max"),
-                    f64_field(m, "low_stress_threshold"),
-                    f64_field(m, "high_stress_threshold"),
-                    f64_field(m, "frost_threshold"),
-                    f64_field(m, "sterility_risk_threshold"),
-                    f64_field(m, "max_temperature"),
-                ],
-            )?;
+            let mut sets = Vec::new();
+            let mut values = Vec::new();
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "base_temperature",
+                patch_f64(m, "base_temperature"),
+            );
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "optimal_min",
+                patch_f64(m, "optimal_min"),
+            );
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "optimal_max",
+                patch_f64(m, "optimal_max"),
+            );
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "low_stress_threshold",
+                patch_f64(m, "low_stress_threshold"),
+            );
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "high_stress_threshold",
+                patch_f64(m, "high_stress_threshold"),
+            );
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "frost_threshold",
+                patch_f64(m, "frost_threshold"),
+            );
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "sterility_risk_threshold",
+                patch_f64(m, "sterility_risk_threshold"),
+            );
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "max_temperature",
+                patch_f64(m, "max_temperature"),
+            );
+            if sets.is_empty() {
+                return load_temperature(conn, crop_stage_id).map_err(Into::into);
+            }
+            sets.push("updated_at = datetime('now')".into());
+            let sql = format!(
+                "UPDATE temperature_requirements SET {} WHERE crop_stage_id = ?",
+                sets.join(", ")
+            );
+            values.push(rusqlite::types::Value::Integer(crop_stage_id));
+            let updated = conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
             if updated == 0 {
                 return Err(rusqlite::Error::QueryReturnedNoRows);
             }
@@ -662,14 +720,30 @@ impl CropGateway for CropSqliteGateway {
     ) -> Result<SunshineRequirementEntity, Box<dyn std::error::Error + Send + Sync>> {
         let m = nested_req_map(&input.payload, "sunshine_requirement");
         self.pool.with_write_box(|conn| {
-            let updated = conn.execute(
-                "UPDATE sunshine_requirements SET minimum_sunshine_hours = COALESCE(?2, minimum_sunshine_hours), target_sunshine_hours = COALESCE(?3, target_sunshine_hours), updated_at = datetime('now') WHERE crop_stage_id = ?1",
-                params![
-                    crop_stage_id,
-                    f64_field(m, "minimum_sunshine_hours"),
-                    f64_field(m, "target_sunshine_hours"),
-                ],
-            )?;
+            let mut sets = Vec::new();
+            let mut values = Vec::new();
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "minimum_sunshine_hours",
+                patch_f64(m, "minimum_sunshine_hours"),
+            );
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "target_sunshine_hours",
+                patch_f64(m, "target_sunshine_hours"),
+            );
+            if sets.is_empty() {
+                return load_sunshine(conn, crop_stage_id).map_err(Into::into);
+            }
+            sets.push("updated_at = datetime('now')".into());
+            let sql = format!(
+                "UPDATE sunshine_requirements SET {} WHERE crop_stage_id = ?",
+                sets.join(", ")
+            );
+            values.push(rusqlite::types::Value::Integer(crop_stage_id));
+            let updated = conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
             if updated == 0 {
                 return Err(rusqlite::Error::QueryReturnedNoRows);
             }
@@ -723,16 +797,37 @@ impl CropGateway for CropSqliteGateway {
     ) -> Result<NutrientRequirementEntity, Box<dyn std::error::Error + Send + Sync>> {
         let m = nested_req_map(&input.payload, "nutrient_requirement");
         self.pool.with_write_box(|conn| {
-            let updated = conn.execute(
-                "UPDATE nutrient_requirements SET daily_uptake_n = COALESCE(?2, daily_uptake_n), daily_uptake_p = COALESCE(?3, daily_uptake_p), daily_uptake_k = COALESCE(?4, daily_uptake_k), region = COALESCE(?5, region), updated_at = datetime('now') WHERE crop_stage_id = ?1",
-                params![
-                    crop_stage_id,
-                    f64_field(m, "daily_uptake_n"),
-                    f64_field(m, "daily_uptake_p"),
-                    f64_field(m, "daily_uptake_k"),
-                    str_field(m, "region"),
-                ],
-            )?;
+            let mut sets = Vec::new();
+            let mut values = Vec::new();
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "daily_uptake_n",
+                patch_f64(m, "daily_uptake_n"),
+            );
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "daily_uptake_p",
+                patch_f64(m, "daily_uptake_p"),
+            );
+            push_f64_patch(
+                &mut sets,
+                &mut values,
+                "daily_uptake_k",
+                patch_f64(m, "daily_uptake_k"),
+            );
+            push_str_patch(&mut sets, &mut values, "region", patch_str(m, "region"));
+            if sets.is_empty() {
+                return load_nutrient(conn, crop_stage_id).map_err(Into::into);
+            }
+            sets.push("updated_at = datetime('now')".into());
+            let sql = format!(
+                "UPDATE nutrient_requirements SET {} WHERE crop_stage_id = ?",
+                sets.join(", ")
+            );
+            values.push(rusqlite::types::Value::Integer(crop_stage_id));
+            let updated = conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
             if updated == 0 {
                 return Err(rusqlite::Error::QueryReturnedNoRows);
             }
@@ -937,6 +1032,68 @@ fn f64_field(m: &Map<String, Value>, key: &str) -> Option<f64> {
     }
 }
 
+enum PatchField<T> {
+    Absent,
+    Set(Option<T>),
+}
+
+fn patch_f64(m: &Map<String, Value>, key: &str) -> PatchField<f64> {
+    match m.get(key) {
+        None => PatchField::Absent,
+        Some(Value::Null) => PatchField::Set(None),
+        Some(value) => f64_field_from_value(value)
+            .map(|n| PatchField::Set(Some(n)))
+            .unwrap_or(PatchField::Absent),
+    }
+}
+
+fn patch_str(m: &Map<String, Value>, key: &str) -> PatchField<String> {
+    match m.get(key) {
+        None => PatchField::Absent,
+        Some(Value::Null) => PatchField::Set(None),
+        Some(Value::String(s)) => PatchField::Set(Some(s.clone())),
+        _ => PatchField::Absent,
+    }
+}
+
+fn f64_field_from_value(value: &Value) -> Option<f64> {
+    match value {
+        Value::Number(n) => n.as_f64(),
+        Value::String(s) => s.parse().ok(),
+        _ => None,
+    }
+}
+
+fn push_f64_patch(
+    sets: &mut Vec<String>,
+    values: &mut Vec<rusqlite::types::Value>,
+    column: &str,
+    patch: PatchField<f64>,
+) {
+    if let PatchField::Set(value) = patch {
+        sets.push(format!("{column} = ?"));
+        values.push(match value {
+            Some(n) => rusqlite::types::Value::Real(n),
+            None => rusqlite::types::Value::Null,
+        });
+    }
+}
+
+fn push_str_patch(
+    sets: &mut Vec<String>,
+    values: &mut Vec<rusqlite::types::Value>,
+    column: &str,
+    patch: PatchField<String>,
+) {
+    if let PatchField::Set(value) = patch {
+        sets.push(format!("{column} = ?"));
+        values.push(match value {
+            Some(s) => rusqlite::types::Value::Text(s),
+            None => rusqlite::types::Value::Null,
+        });
+    }
+}
+
 fn str_field(m: &Map<String, Value>, key: &str) -> Option<String> {
     m.get(key).and_then(|v| v.as_str()).map(str::to_string)
 }
@@ -977,11 +1134,10 @@ fn load_thermal(
         "SELECT id, crop_stage_id, required_gdd FROM thermal_requirements WHERE crop_stage_id = ?1",
         params![crop_stage_id],
         |row| {
-            let gdd: f64 = row.get(2)?;
             ThermalRequirementEntity::new(
                 row.get(0)?,
                 row.get(1)?,
-                Decimal::from_f64_retain(gdd).unwrap_or_default(),
+                dec_opt(row.get(2)?),
             )
             .map_err(|e| {
                 rusqlite::Error::ToSqlConversionFailure(Box::new(std::io::Error::new(
