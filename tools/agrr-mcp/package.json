@@ -1,3 +1,21 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:81dbc3f721a6d47dd60a00812fb61006d6950620e2d133774f279e48d2cb5c56
-size 461
+{
+  "name": "@agrr/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Official AGRR MCP server — thin HTTP wrapper for masters crop setup_proposal",
+  "bin": {
+    "agrr-mcp": "./src/index.mjs"
+  },
+  "scripts": {
+    "start": "node src/index.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.26.0",
+    "zod": "^3.24.2"
+  }
+}
