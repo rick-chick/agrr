@@ -10,6 +10,7 @@ import { PendingSuccessFlashRequest } from '../../../core/view-effects/pending-s
 
 export type CropStagesFormData = {
   name: string;
+  is_reference: boolean;
   crop_stages: CropStage[];
 };
 

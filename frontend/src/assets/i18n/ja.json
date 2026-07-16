@@ -455,6 +455,8 @@
       "temperature_details_title": "ストレス閾値",
       "advanced_details_title": "日照・栄養素の詳細",
       "unsaved_confirm_message": "未保存の変更があります。切り替えると変更は破棄されます。続行しますか？",
+      "reference_stages_readonly": "参照作物は読み取り専用です。生育ステージの編集は管理者のみ可能です。",
+      "stage_name_required": "ステージ名を入力してください。",
       "table_order": "順序",
       "table_stage_name": "ステージ名",
       "table_base_temperature": "最低限界温度",
