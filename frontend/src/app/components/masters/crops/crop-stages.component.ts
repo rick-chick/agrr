@@ -31,7 +31,7 @@ import {
   sortStagesByOrder
 } from '../../../domain/crops/crop-stage-order';
 import type { CropStage } from '../../../domain/crops/crop';
-import { countLinkedTaskScheduleBlueprints } from '../../../domain/crops/stage-linked-blueprint-count';
+import { countLinkedTaskScheduleBlueprintsForStage } from '../../../domain/crops/stage-linked-blueprint-count';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
@@ -540,8 +540,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (!this.pendingDeleteStage) {
       return 0;
     }
-    return countLinkedTaskScheduleBlueprints(
-      this.pendingDeleteStage.order,
+    return countLinkedTaskScheduleBlueprintsForStage(
+      this.pendingDeleteStage.id,
+      this.control.formData.crop_stages,
       this.control.taskScheduleBlueprints
     );
   }
@@ -590,6 +591,13 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       return;
     }
     this.loadUseCase.execute({ cropId: this.cropId });
+    this.loadBlueprintsUseCase.execute({ cropId: this.cropId });
+  }
+
+  reloadTaskScheduleBlueprints(): void {
+    if (this.resolvedCropId == null) {
+      return;
+    }
     this.loadBlueprintsUseCase.execute({ cropId: this.cropId });
   }
 

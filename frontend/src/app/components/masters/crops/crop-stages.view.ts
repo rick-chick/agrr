@@ -21,4 +21,5 @@ export type CropStagesViewState = {
 export interface CropStagesView {
   get control(): CropStagesViewState;
   set control(value: CropStagesViewState);
+  reloadTaskScheduleBlueprints(): void;
 }

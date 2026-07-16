@@ -68,6 +68,12 @@ pub struct MastersCropStagesSeed {
     pub stage_ids: Vec<i64>,
 }
 
+pub struct MastersCropStagesBlueprintSeed {
+    pub crop_id: i64,
+    pub stage_ids: Vec<i64>,
+    pub blueprint_ids: Vec<i64>,
+}
+
 pub struct MastersCropBlueprintCreateSeed {
     pub crop_id: i64,
     pub agricultural_task_id: i64,
@@ -116,6 +122,49 @@ pub fn seed_masters_crop_with_stages(user_id: i64, stage_count: i64) -> MastersC
         stage_ids.push(conn.last_insert_rowid());
     }
     MastersCropStagesSeed { crop_id, stage_ids }
+}
+
+/// Seeds a crop with two stages and one blueprint per stage order for reorder/delete linkage tests.
+pub fn seed_masters_crop_with_stages_and_blueprints(
+    user_id: i64,
+) -> MastersCropStagesBlueprintSeed {
+    let seed = seed_masters_crop_with_stages(user_id, 2);
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let mut blueprint_ids = Vec::new();
+
+    for order in 1..=2 {
+        let task_name = format!("Contract Stage Blueprint Task {order} {suffix}");
+        conn.execute(
+            "INSERT INTO agricultural_tasks (name, is_reference, user_id, task_type, created_at, updated_at)
+             VALUES (?1, 0, ?2, 'field_work', datetime('now'), datetime('now'))",
+            params![task_name, user_id],
+        )
+        .expect("insert agricultural_task");
+        let agricultural_task_id = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO crop_task_schedule_blueprints (
+                crop_id, agricultural_task_id, stage_order, stage_name, gdd_trigger, gdd_tolerance,
+                task_type, source, priority, created_at, updated_at
+             ) VALUES (?1, ?2, ?3, ?4, 0.0, 5.0, 'field_work', 'manual', 1, datetime('now'), datetime('now'))",
+            params![
+                seed.crop_id,
+                agricultural_task_id,
+                order,
+                format!("Stage {order}")
+            ],
+        )
+        .expect("insert blueprint");
+        blueprint_ids.push(conn.last_insert_rowid());
+    }
+
+    MastersCropStagesBlueprintSeed {
+        crop_id: seed.crop_id,
+        stage_ids: seed.stage_ids,
+        blueprint_ids,
+    }
 }
 
 /// Seeds crop + pending manual blueprint for blueprint create tests.

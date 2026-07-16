@@ -8,6 +8,7 @@ use support::{
     clear_plan_task_schedules, developer_session_id, empty_headers, find_schedule_item,
     poll_task_schedule_sync_ready, schedule_item_ids_from_response, seed_masters_crop,
     seed_masters_crop_with_manual_blueprint, seed_masters_crop_with_stages,
+    seed_masters_crop_with_stages_and_blueprints,
     seed_task_schedule_regeneration_plan,
     seed_work_record_plan, set_plan_task_schedule_sync_failed,
     set_plan_task_schedule_sync_failed_raw_error, status_and_body, user_id_for_session,
@@ -979,5 +980,94 @@ fn patch_masters_crop_stage_conflicting_order_returns_422() {
     assert_eq!(422, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("error JSON");
     assert!(json.get("errors").is_some(), "{body}");
+}
+
+#[test]
+fn put_masters_crop_stages_reorder_remaps_blueprint_stage_orders() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop_with_stages_and_blueprints(user_id);
+    let [stage_a, stage_b] = seed.stage_ids.as_slice() else {
+        panic!("expected two crop stages");
+    };
+    let [blueprint_a, blueprint_b] = seed.blueprint_ids.as_slice() else {
+        panic!("expected two blueprints");
+    };
+
+    let (status, body) = status_and_body(client.put(
+        &format!(
+            "/api/v1/masters/crops/{}/crop_stages/reorder",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "crop_stages": [
+                { "id": stage_a, "order": 2 },
+                { "id": stage_b, "order": 1 }
+            ]
+        })),
+    ));
+    assert_eq!(200, status, "{body}");
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/task_schedule_blueprints",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: Vec<serde_json::Value> = serde_json::from_str(&body).expect("blueprints JSON");
+    let stage_order_for = |blueprint_id: i64| {
+        json.iter()
+            .find(|item| item["id"].as_i64() == Some(blueprint_id))
+            .and_then(|item| item["stage_order"].as_i64())
+    };
+    assert_eq!(stage_order_for(*blueprint_a), Some(2));
+    assert_eq!(stage_order_for(*blueprint_b), Some(1));
+}
+
+#[test]
+fn delete_masters_crop_stage_unassigns_linked_blueprints() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop_with_stages_and_blueprints(user_id);
+    let [stage_a, _stage_b] = seed.stage_ids.as_slice() else {
+        panic!("expected two crop stages");
+    };
+    let [blueprint_a, _blueprint_b] = seed.blueprint_ids.as_slice() else {
+        panic!("expected two blueprints");
+    };
+
+    let (status, body) = status_and_body(client.delete(
+        &format!(
+            "/api/v1/masters/crops/{}/crop_stages/{}",
+            seed.crop_id, stage_a
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(204, status, "{body}");
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/task_schedule_blueprints",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: Vec<serde_json::Value> = serde_json::from_str(&body).expect("blueprints JSON");
+    let deleted_stage_blueprint = json
+        .iter()
+        .find(|item| item["id"].as_i64() == Some(*blueprint_a))
+        .expect("blueprint for deleted stage");
+    assert!(deleted_stage_blueprint["stage_order"].is_null());
+    assert!(deleted_stage_blueprint["stage_name"].is_null());
 }
 
