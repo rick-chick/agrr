@@ -21,6 +21,7 @@ import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
 import { parsePlanWizardReturnTab,
   planWizardReturnPath,
+  cropPlanWizardQueryParams,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
@@ -34,6 +35,8 @@ import type { CropStage } from '../../../domain/crops/crop';
 import { countLinkedTaskScheduleBlueprints } from '../../../domain/crops/stage-linked-blueprint-count';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { withCropStagesDisplayState } from '../../../adapters/crops/crop-stages-display-state';
+import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 
 type PendingUnsavedAction =
   | { kind: 'add-stage' }
@@ -52,7 +55,11 @@ const initialControl: CropStagesViewState = {
   taskScheduleBlueprints: [],
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
-  pendingReorderCropStagesSnapshot: null
+  pendingReorderCropStagesSnapshot: null,
+  blueprintReadiness: defaultBlueprintReadiness(),
+  stageRequirementGaps: [],
+  showBlueprintReadinessChecklist: false,
+  showNextStepCta: false
 };
 
 interface StageEditDraft {
@@ -113,6 +120,26 @@ interface TemperatureScaleModel {
             <p class="crop-blueprints__plan-wizard-banner-lead">
               {{ 'crops.show.from_plan_stages_wizard_lead' | translate }}
             </p>
+            @if (control.stageRequirementGaps.length > 0) {
+              <ul class="crop-stages__plan-wizard-gaps" role="list">
+                @for (gap of control.stageRequirementGaps; track gap.stageId) {
+                  <li>
+                    @if (gap.missingBaseTemperature) {
+                      <span>{{
+                        'crops.show.blueprint_readiness.stages_page_gap_base_temperature'
+                          | translate: { stageName: gap.stageName }
+                      }}</span>
+                    }
+                    @if (gap.missingRequiredGdd) {
+                      <span>{{
+                        'crops.show.blueprint_readiness.stages_page_gap_required_gdd'
+                          | translate: { stageName: gap.stageName }
+                      }}</span>
+                    }
+                  </li>
+                }
+              </ul>
+            }
             <a [routerLink]="planReturnPath" class="btn-secondary crop-stages__return-to-plan">
               {{ 'crops.show.return_to_plan' | translate }}
             </a>
@@ -123,6 +150,44 @@ interface TemperatureScaleModel {
           <h1 class="page-title">{{ control.formData.name }}</h1>
           <p class="page-description">{{ 'crops.edit.stages_lead' | translate }}</p>
         </header>
+
+        @if (control.showBlueprintReadinessChecklist) {
+          <div class="blueprint-readiness" role="status">
+            <p class="blueprint-readiness__title">
+              {{ 'crops.show.blueprint_readiness.detail_title' | translate }}
+            </p>
+            <ul class="blueprint-readiness__list">
+              @for (gap of control.stageRequirementGaps; track gap.stageId) {
+                <li>
+                  @if (gap.missingBaseTemperature) {
+                    <span>{{
+                      'crops.show.blueprint_readiness.stages_page_gap_base_temperature'
+                        | translate: { stageName: gap.stageName }
+                    }}</span>
+                  }
+                  @if (gap.missingRequiredGdd) {
+                    <span>{{
+                      'crops.show.blueprint_readiness.stages_page_gap_required_gdd'
+                        | translate: { stageName: gap.stageName }
+                    }}</span>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (control.showNextStepCta) {
+          <div class="crop-stages__next-step">
+            <a
+              [routerLink]="['/crops', cropId, 'task_schedule_blueprints']"
+              [queryParams]="wizardQueryParams"
+              class="btn btn-secondary"
+            >
+              {{ 'crops.show.blueprint_readiness.stages_next_step_action' | translate }}
+            </a>
+          </div>
+        }
 
         <section class="form-card crop-stages-section" aria-labelledby="stages-heading">
           <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_list_heading' | translate }}</h2>
@@ -467,7 +532,7 @@ interface TemperatureScaleModel {
       }
     </dialog>
   `,
-  styleUrls: ['./crop-stages.component.css']
+  styleUrls: ['./crop-stages.component.css', './_crop-blueprint-shared.css']
 })
 export class CropStagesComponent implements CropStagesView, OnInit {
   @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
@@ -496,7 +561,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
   set control(value: CropStagesViewState) {
     const previousStages = this._control.formData.crop_stages;
-    this._control = applyPendingFlashViewEffects(value, { flash: this.flashMessage });
+    this._control = withCropStagesDisplayState(
+      applyPendingFlashViewEffects(value, { flash: this.flashMessage })
+    );
     const stagesChanged = previousStages !== value.formData.crop_stages;
     if (stagesChanged) {
       queueMicrotask(() => {
@@ -548,6 +615,12 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   get planReturnPath(): (string | number)[] {
     return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
+  }
+
+  get wizardQueryParams(): ReturnType<typeof cropPlanWizardQueryParams> | null {
+    return this.fromPlanId != null
+      ? cropPlanWizardQueryParams(this.fromPlanId, this.returnTab)
+      : null;
   }
 
   get contextCrumbs(): MasterContextCrumb[] {
