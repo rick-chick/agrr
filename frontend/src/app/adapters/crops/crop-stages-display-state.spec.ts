@@ -11,6 +11,7 @@ const baseControl = (
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
   pendingReorderCropStagesSnapshot: null,
+  pendingResyncPanelDraft: false,
   taskScheduleBlueprints: [],
   formData: {
     name: 'Tomato',
