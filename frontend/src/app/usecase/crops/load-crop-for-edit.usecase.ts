@@ -6,6 +6,7 @@ import {
   LOAD_CROP_FOR_EDIT_OUTPUT_PORT
 } from './load-crop-for-edit.output-port';
 import { CROP_GATEWAY, CropGateway } from './crop-gateway';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 
 @Injectable()
 export class LoadCropForEditUseCase implements LoadCropForEditInputPort {
@@ -17,8 +18,8 @@ export class LoadCropForEditUseCase implements LoadCropForEditInputPort {
   execute(dto: LoadCropForEditInputDto): void {
     this.cropGateway.show(dto.cropId).subscribe({
       next: (crop) => this.outputPort.present({ crop }),
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) =>
+        this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }
 }

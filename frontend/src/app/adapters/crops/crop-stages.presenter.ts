@@ -84,6 +84,18 @@ export class CropStagesPresenter implements
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (this.view.control.loading) {
+      this.view.control = {
+        ...this.view.control,
+        loading: false,
+        error: dto.message,
+        pendingSuccessFlash: null,
+        pendingErrorFlash: null,
+        pendingReorderCropStagesSnapshot: null
+      };
+      return;
+    }
+
     const snapshot = this.view.control.pendingReorderCropStagesSnapshot;
     this.view.control = {
       ...this.view.control,

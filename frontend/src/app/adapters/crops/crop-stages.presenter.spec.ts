@@ -251,6 +251,21 @@ describe('CropStagesPresenter', () => {
     });
   });
 
+  describe('LoadCropForEditOutputPort onError', () => {
+    it('sets control.error and clears loading on initial load failure', () => {
+      lastControl = {
+        ...baseControlState(),
+        loading: true
+      };
+
+      presenter.onError({ message: 'common.api_error.not_found' });
+
+      expect(lastControl!.loading).toBe(false);
+      expect(lastControl!.error).toBe('common.api_error.not_found');
+      expect(lastControl!.pendingErrorFlash).toBeNull();
+    });
+  });
+
   describe('ReorderCropStagesOutputPort', () => {
     it('restores crop stage order on onError when reorder snapshot exists', () => {
       const originalStages: CropStage[] = [
