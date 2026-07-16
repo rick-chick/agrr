@@ -17,11 +17,12 @@ describe('CropStagesPresenter', () => {
 
   const emptyFormData: CropStagesViewState['formData'] = {
     name: '',
+    is_reference: false,
     crop_stages: []
   };
 
   const baseControlState = (
-    formData: CropStagesViewState['formData'] = emptyFormData
+    formData: Partial<CropStagesViewState['formData']> = emptyFormData
   ): CropStagesViewState => ({
     loading: false,
     error: null,
@@ -34,7 +35,7 @@ describe('CropStagesPresenter', () => {
     stageRequirementGaps: [],
     showBlueprintReadinessChecklist: false,
     showNextStepCta: false,
-    formData
+    formData: { ...emptyFormData, ...formData }
   });
 
   beforeEach(() => {
@@ -102,7 +103,28 @@ describe('CropStagesPresenter', () => {
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.formData.name).toBe('Test Crop');
+      expect(lastControl!.formData.is_reference).toBe(false);
       expect(lastControl!.formData.crop_stages).toEqual(dto.crop.crop_stages);
+    });
+
+    it('preserves is_reference on present(dto)', () => {
+      const dto: LoadCropForEditDataDto = {
+        crop: {
+          id: 1,
+          name: 'Reference Crop',
+          variety: null,
+          area_per_unit: null,
+          revenue_per_area: null,
+          region: null,
+          groups: [],
+          is_reference: true,
+          crop_stages: []
+        }
+      };
+
+      presenter.present(dto);
+
+      expect(lastControl!.formData.is_reference).toBe(true);
     });
   });
 
@@ -337,6 +359,7 @@ describe('CropStagesPresenter', () => {
     it('queues pending error flash with i18n key on onError', () => {
       lastControl = baseControlState({
         name: 'Test Crop',
+        is_reference: false,
         crop_stages: [{ id: 1, crop_id: 1, name: 'Stage 1', order: 1 }]
       });
 
@@ -353,6 +376,7 @@ describe('CropStagesPresenter', () => {
     it('queues pending error flash with i18n key on onError', () => {
       lastControl = baseControlState({
         name: 'Test Crop',
+        is_reference: false,
         crop_stages: [{ id: 1, crop_id: 1, name: 'Stage 1', order: 1 }]
       });
 
