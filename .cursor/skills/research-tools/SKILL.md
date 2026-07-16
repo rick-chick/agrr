@@ -6,6 +6,7 @@
 
 - **sync-research-gcs.sh** — `public/research/` を GCS に同期し、sitemap を再生成して frontend バケットへアップロード
 - **inject-research-google-analytics.rb** — 静的 HTML に Google Analytics を注入
+- **inject-research-temperature-simulate-cta.mjs** — 温度要件レポートに公開プラン CTA を冪等注入（GDD CTA と同スタイル）
 
 ## Usage
 
