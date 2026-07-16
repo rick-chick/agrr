@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { DeleteCropStageInputPort } from './delete-crop-stage.input-port';
 import { DeleteCropStageOutputPort, DELETE_CROP_STAGE_OUTPUT_PORT } from './delete-crop-stage.output-port';
 import { CROP_STAGE_GATEWAY, CropStageGateway } from './crop-stage-gateway';
@@ -14,7 +15,7 @@ export class DeleteCropStageUseCase implements DeleteCropStageInputPort {
   execute(dto: DeleteCropStageInputDto): void {
     this.cropStageGateway.deleteCropStage(dto.cropId, dto.stageId).subscribe({
       next: () => this.outputPort.present({ success: true, stageId: dto.stageId }),
-      error: (err) => this.outputPort.onError({ message: err.message })
+      error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }
 }
