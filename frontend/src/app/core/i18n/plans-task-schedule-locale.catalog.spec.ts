@@ -35,6 +35,7 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.filter_from_date',
   'plans.task_schedules.list_empty',
   'plans.task_schedules.list_row_meta',
+  'plans.task_schedules.unscheduled_title',
   'plans.task_schedules.timeline_generated_at',
   'plans.task_schedules.timeline_generated_unknown',
   'plans.task_schedules.sync_never',

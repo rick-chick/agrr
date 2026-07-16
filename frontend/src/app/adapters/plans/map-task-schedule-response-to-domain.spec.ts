@@ -102,7 +102,8 @@ describe('mapTaskScheduleResponseToDomain', () => {
                 }
               }
             ],
-            fertilizer: []
+            fertilizer: [],
+            unscheduled: []
           }
         }
       ]

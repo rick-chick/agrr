@@ -39,7 +39,8 @@ function mapFieldSchedule(field: FieldSchedule): PlanFieldSchedule {
     field_cultivation_id: field.field_cultivation_id,
     schedules: {
       general: field.schedules.general.map(mapTaskScheduleItem),
-      fertilizer: field.schedules.fertilizer.map(mapTaskScheduleItem)
+      fertilizer: field.schedules.fertilizer.map(mapTaskScheduleItem),
+      unscheduled: field.schedules.unscheduled.map(mapTaskScheduleItem)
     }
   };
 }

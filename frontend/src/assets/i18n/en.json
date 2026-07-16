@@ -1307,6 +1307,7 @@
       "filter_from_date": "From date",
       "list_empty": "No tasks match the current filters.",
       "list_row_meta": "{{field}} · {{crop}}",
+      "unscheduled_title": "Unconfirmed tasks",
       "sync_never": "Task schedules have not been generated yet.",
       "sync_failed": "Task schedule generation failed.",
       "sync_generating": "Generating task schedules...",

@@ -42,7 +42,8 @@ describe('flattenCrossFarmSchedules', () => {
             field_cultivation_id: 101,
             schedules: {
               general: [mockTask({ item_id: 1, name: 'Late', scheduled_date: '2026-06-15' })],
-              fertilizer: []
+              fertilizer: [],
+              unscheduled: []
             }
           }
         ]
@@ -66,7 +67,8 @@ describe('flattenCrossFarmSchedules', () => {
                   name: 'Feed',
                   scheduled_date: '2026-06-12'
                 })
-              ]
+              ],
+              unscheduled: []
             }
           }
         ]
@@ -96,7 +98,8 @@ describe('flattenCrossFarmSchedules', () => {
             field_cultivation_id: 101,
             schedules: {
               general: [mockTask({ item_id: 1, scheduled_date: null })],
-              fertilizer: []
+              fertilizer: [],
+              unscheduled: []
             }
           }
         ]
@@ -104,5 +107,31 @@ describe('flattenCrossFarmSchedules', () => {
     ]);
 
     expect(rows).toHaveLength(0);
+  });
+
+  it('includes tasks from the unscheduled bucket without scheduled_date', () => {
+    const rows = flattenCrossFarmSchedules([
+      mockSource({
+        farmId: 1,
+        planId: 10,
+        fields: [
+          {
+            id: 1,
+            name: 'Field 1',
+            crop_name: 'Tomato',
+            field_cultivation_id: 101,
+            schedules: {
+              general: [],
+              fertilizer: [],
+              unscheduled: [mockTask({ item_id: 9, name: 'Pending prep', scheduled_date: null })]
+            }
+          }
+        ]
+      })
+    ]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.item.name).toBe('Pending prep');
+    expect(rows[0]?.fieldName).toBe('Field 1');
   });
 });

@@ -25,6 +25,7 @@ export interface CrossFarmScheduleSource {
     schedules: {
       general: ReadonlyArray<PlanTaskScheduleItem>;
       fertilizer: ReadonlyArray<PlanTaskScheduleItem>;
+      unscheduled: ReadonlyArray<PlanTaskScheduleItem>;
     };
   }>;
 }

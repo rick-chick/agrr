@@ -2342,6 +2342,7 @@
       "filter_from_date": "開始日",
       "list_empty": "条件に一致する作業予定がありません。",
       "list_row_meta": "{{field}} · {{crop}}",
+      "unscheduled_title": "未確定の作業",
       "sync_never": "作業予定がまだ生成されていません。",
       "sync_failed": "作業予定の生成に失敗しました。",
       "sync_generating": "作業予定を生成しています...",

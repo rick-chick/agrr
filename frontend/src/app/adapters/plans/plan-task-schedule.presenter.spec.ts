@@ -120,6 +120,7 @@ function createView(overrides: Partial<PlanTaskScheduleView['control']> = {}): P
       fieldFilterId: null,
       fieldCultivationFilterId: null,
       monthGroups: [],
+      unscheduledRows: [],
       fieldFilterOptions: [],
       cropIdsForBanner: [],
       cropNamesForBanner: {},
@@ -245,6 +246,35 @@ describe('PlanTaskSchedulePresenter derived fields', () => {
     });
 
     expect(view.control.regenerateRequiresConfirm).toBe(false);
+  });
+
+  it('exposes unscheduled rows and requires regenerate confirm for unscheduled-only schedules', () => {
+    presenter.present({
+      schedule: {
+        ...scheduleWithFields,
+        fields: [
+          field({
+            field_cultivation_id: 10,
+            schedules: {
+              general: [],
+              fertilizer: [],
+              unscheduled: [
+                task({
+                  item_id: 99,
+                  name: 'Pending prep',
+                  scheduled_date: null,
+                  field_cultivation_id: 10
+                })
+              ]
+            }
+          })
+        ]
+      }
+    });
+
+    expect(view.control.unscheduledRows.map((row) => row.item.name)).toEqual(['Pending prep']);
+    expect(view.control.monthGroups).toEqual([]);
+    expect(view.control.regenerateRequiresConfirm).toBe(true);
   });
 });
 

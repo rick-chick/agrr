@@ -23,7 +23,8 @@ export function flattenPlanTaskSchedule(
         field_cultivation_id: field.field_cultivation_id,
         schedules: {
           general: field.schedules.general,
-          fertilizer: field.schedules.fertilizer
+          fertilizer: field.schedules.fertilizer,
+          unscheduled: field.schedules.unscheduled
         }
       }))
     }

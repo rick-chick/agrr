@@ -10,12 +10,13 @@ import {
 import { TaskScheduleSyncMessageDto } from '../../usecase/plans/subscribe-task-schedule-sync.dtos';
 import { buildPlanTaskScheduleMonthGroupsFromRows } from '../../domain/work-schedule/build-plan-task-schedule-month-groups';
 import { flattenPlanTaskSchedule } from '../../domain/work-schedule/flatten-plan-task-schedule';
-import { buildPlanTaskScheduleFieldFilterOptions } from '../../domain/work-schedule/filter-cross-farm-schedule';
+import { buildPlanTaskScheduleFieldFilterOptions, filterPlanTaskScheduleRows } from '../../domain/work-schedule/filter-cross-farm-schedule';
 import { resolvePlanTaskScheduleDisplayStatus } from '../../domain/work-schedule/resolve-plan-task-schedule-display-status';
 import type {
   PlanTaskScheduleMonthGroupView,
   PlanTaskScheduleRowView
 } from '../../components/plans/plan-task-schedule.view';
+import type { CrossFarmScheduleRow } from '../../domain/work-schedule/cross-farm-schedule-row';
 import type { CrossFarmScheduleMonthGroup } from '../../domain/work-schedule/group-cross-farm-schedule-by-month';
 import { localTodayIso } from '../../core/local-today';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
@@ -29,6 +30,7 @@ import {
 type DerivedViewFields = Pick<
   PlanTaskScheduleViewState,
   | 'monthGroups'
+  | 'unscheduledRows'
   | 'fieldFilterOptions'
   | 'cropIdsForBanner'
   | 'cropNamesForBanner'
@@ -39,6 +41,7 @@ type DerivedViewFields = Pick<
 
 const emptyDerivedFields: DerivedViewFields = {
   monthGroups: [],
+  unscheduledRows: [],
   fieldFilterOptions: [],
   cropIdsForBanner: [],
   cropNamesForBanner: {},
@@ -191,18 +194,31 @@ export class PlanTaskSchedulePresenter
     const banner = mergeCropBannerContext(schedule.fields, schedule.plan.remediation_crops);
     const snapshot = mapTaskScheduleResponseToDomain(schedule);
     const rows = flattenPlanTaskSchedule(snapshot.plan, snapshot.fields);
+    const scheduledRows = rows.filter(
+      (row) => row.item.scheduled_date != null && row.item.scheduled_date !== ''
+    );
+    const unscheduledRows = rows.filter(
+      (row) => row.item.scheduled_date == null || row.item.scheduled_date === ''
+    );
     const monthGroups = enrichPlanTaskScheduleMonthGroups(
       buildPlanTaskScheduleMonthGroupsFromRows(
-        rows,
+        scheduledRows,
         fieldFilterId,
         fieldCultivationFilterId,
         fromDate
       )
     );
-    const { filteredFieldCount, filteredTaskCount } = countFilteredScheduleRows(monthGroups);
+    const filteredUnscheduledRows = enrichPlanTaskScheduleUnscheduledRows(
+      filterPlanTaskScheduleRows(unscheduledRows, fieldFilterId, fieldCultivationFilterId)
+    );
+    const { filteredFieldCount, filteredTaskCount } = countFilteredScheduleRows(
+      monthGroups,
+      filteredUnscheduledRows
+    );
 
     return {
       monthGroups,
+      unscheduledRows: filteredUnscheduledRows,
       fieldFilterOptions: buildPlanTaskScheduleFieldFilterOptions(rows),
       cropIdsForBanner: banner.cropIds,
       cropNamesForBanner: banner.cropNames,
@@ -211,6 +227,17 @@ export class PlanTaskSchedulePresenter
       regenerateRequiresConfirm: countScheduleTasks(schedule) > 0
     };
   }
+}
+
+function enrichPlanTaskScheduleUnscheduledRows(
+  rows: ReadonlyArray<CrossFarmScheduleRow>
+): PlanTaskScheduleRowView[] {
+  return rows.map(
+    (row): PlanTaskScheduleRowView => ({
+      ...row,
+      displayStatus: resolvePlanTaskScheduleDisplayStatus(row.item)
+    })
+  );
 }
 
 function enrichPlanTaskScheduleMonthGroups(
@@ -227,7 +254,10 @@ function enrichPlanTaskScheduleMonthGroups(
   }));
 }
 
-function countFilteredScheduleRows(monthGroups: ReadonlyArray<PlanTaskScheduleMonthGroupView>): {
+function countFilteredScheduleRows(
+  monthGroups: ReadonlyArray<PlanTaskScheduleMonthGroupView>,
+  unscheduledRows: ReadonlyArray<PlanTaskScheduleRowView>
+): {
   filteredFieldCount: number;
   filteredTaskCount: number;
 } {
@@ -241,6 +271,11 @@ function countFilteredScheduleRows(monthGroups: ReadonlyArray<PlanTaskScheduleMo
     }
   }
 
+  for (const row of unscheduledRows) {
+    fieldIds.add(row.fieldId);
+    filteredTaskCount += 1;
+  }
+
   return {
     filteredFieldCount: fieldIds.size,
     filteredTaskCount
@@ -249,7 +284,11 @@ function countFilteredScheduleRows(monthGroups: ReadonlyArray<PlanTaskScheduleMo
 
 function countScheduleTasks(schedule: TaskScheduleResponse): number {
   return schedule.fields.reduce(
-    (sum, field) => sum + field.schedules.general.length + field.schedules.fertilizer.length,
+    (sum, field) =>
+      sum +
+      field.schedules.general.length +
+      field.schedules.fertilizer.length +
+      field.schedules.unscheduled.length,
     0
   );
 }

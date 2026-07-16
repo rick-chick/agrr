@@ -57,6 +57,7 @@ const loadedState: PlanTaskScheduleViewState = {
   fieldCultivationFilterId: null,
   fieldFilterId: null,
   monthGroups: [],
+  unscheduledRows: [],
   fieldFilterOptions: [],
   cropIdsForBanner: [],
   cropNamesForBanner: {},
@@ -103,6 +104,23 @@ function sampleGeneralTask(
       history: { rescheduled_at: null, cancelled_at: null }
     },
     badge: { type: 'planned' as const }
+  };
+}
+
+function sampleUnscheduledTask(
+  overrides: {
+    item_id?: number;
+    name?: string;
+    field_cultivation_id?: number;
+  } = {}
+) {
+  return {
+    ...sampleGeneralTask({
+      item_id: overrides.item_id ?? 99,
+      name: overrides.name ?? 'Pending prep',
+      field_cultivation_id: overrides.field_cultivation_id ?? 10
+    }),
+    scheduled_date: null
   };
 }
 
@@ -194,6 +212,7 @@ describe('PlanTaskScheduleComponent', () => {
       fieldFilterId: null,
       fieldCultivationFilterId: null,
       monthGroups: [],
+      unscheduledRows: [],
       fieldFilterOptions: [],
       cropIdsForBanner: [],
       cropNamesForBanner: {},
@@ -808,6 +827,84 @@ describe('PlanTaskScheduleComponent', () => {
     link.click();
 
     expect(HTMLDialogElement.prototype.showModal).not.toHaveBeenCalled();
+  });
+
+  it('shows unscheduled section when only unscheduled tasks exist', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            id: 1,
+            name: 'Field A',
+            crop_name: 'Tomato',
+            area_sqm: 100,
+            field_cultivation_id: 10,
+            crop_id: 20,
+            task_options: [],
+            schedules: {
+              general: [],
+              fertilizer: [],
+              unscheduled: [sampleUnscheduledTask()]
+            }
+          }
+        ]
+      }
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const section = fixture.nativeElement.querySelector(
+      '.plan-task-schedule-month-list__month--unscheduled'
+    );
+    expect(section).toBeTruthy();
+    expect(section?.textContent).toContain('Unconfirmed tasks');
+    expect(section?.textContent).toContain('Pending prep');
+  });
+
+  it('opens regenerate confirm dialog when only unscheduled tasks exist', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            id: 1,
+            name: 'Field A',
+            crop_name: 'Tomato',
+            area_sqm: 100,
+            field_cultivation_id: 10,
+            crop_id: 20,
+            task_options: [],
+            schedules: {
+              general: [],
+              fertilizer: [],
+              unscheduled: [sampleUnscheduledTask()]
+            }
+          }
+        ]
+      }
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const link = fixture.nativeElement.querySelector('.plan-task-schedule__regenerate-link');
+    link.click();
+
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
   });
 
   it('shows regenerate error in footer when sync is ready', async () => {
