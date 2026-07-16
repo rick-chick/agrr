@@ -392,7 +392,12 @@ interface TemperatureScaleModel {
                 </div>
 
                 <div class="crop-stages-edit-panel__footer">
-                  <button type="button" class="btn btn-primary" (click)="saveStagePanel()">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="!isPanelDirty()"
+                    (click)="saveStagePanel()"
+                  >
                     {{ 'crops.edit.save_stage' | translate }}
                   </button>
                   <button type="button" class="btn btn-danger" (click)="deleteCropStage(stage.id)">
@@ -756,6 +761,11 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   saveStagePanel(): void {
     const stage = this.selectedStage;
     if (!stage) {
+      return;
+    }
+
+    if (!this.isPanelDirty()) {
+      this.flashMessage.show({ type: 'info', text: 'crops.flash.stage_panel_no_changes' });
       return;
     }
 
