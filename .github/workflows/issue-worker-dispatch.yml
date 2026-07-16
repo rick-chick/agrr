@@ -55,8 +55,43 @@ jobs:
             echo "labels=$ISSUE_LABELS" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Skip implement when open fix/closes PR exists
+        id: implement_gate
+        if: steps.issue.outputs.skip != 'true' && steps.issue.outputs.action == 'implement'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ACTION: ${{ steps.issue.outputs.action }}
+        run: |
+          set -euo pipefail
+          RESULT=$(node --input-type=module -e "
+            import { execFileSync } from 'node:child_process';
+            import {
+              openFixPrSearchQuery,
+              resolveImplementDispatchGate,
+            } from './scripts/issue-worker-dispatch-lib.mjs';
+            const issueNumber = Number(process.env.ISSUE_NUMBER);
+            const search = openFixPrSearchQuery(issueNumber);
+            const raw = execFileSync(
+              'gh',
+              ['pr', 'list', '--repo', '${{ github.repository }}', '--state', 'open', '--search', search, '--json', 'number'],
+              { encoding: 'utf8' },
+            );
+            const hasOpenFixPr = JSON.parse(raw).length > 0;
+            const gate = resolveImplementDispatchGate({
+              action: process.env.ACTION,
+              hasOpenFixPr,
+            });
+            process.stdout.write(JSON.stringify(gate));
+          ")
+          SKIP=$(echo "$RESULT" | jq -r '.skip')
+          echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
+          if [ "$SKIP" = "true" ]; then
+            echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason')" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Trigger Cursor Issue Worker
-        if: steps.issue.outputs.skip != 'true'
+        if: steps.issue.outputs.skip != 'true' && steps.implement_gate.outputs.skip != 'true'
         env:
           WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
           WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
@@ -86,5 +121,10 @@ jobs:
             -d "$payload"
 
       - name: Skip dispatch
-        if: steps.issue.outputs.skip == 'true'
-        run: 'echo "Skipped: ${{ steps.issue.outputs.skip_reason }}"'
+        if: steps.issue.outputs.skip == 'true' || steps.implement_gate.outputs.skip == 'true'
+        run: |
+          REASON="${{ steps.issue.outputs.skip_reason }}"
+          if [ -z "$REASON" ]; then
+            REASON="${{ steps.implement_gate.outputs.skip_reason }}"
+          fi
+          echo "Skipped: $REASON"
