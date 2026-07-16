@@ -259,3 +259,4 @@ Cloud 起動時の bootstrap: [`.cursor/environment.json`](../../.cursor/environ
 | [github-issue-worker/SKILL.md](../../.cursor/skills/github-issue-worker/SKILL.md) | Issue 実装の詳細 |
 | [github-pr-merge-worker/SKILL.md](../../.cursor/skills/github-pr-merge-worker/SKILL.md) | PR マージの詳細 |
 | [cloud-automation-audit/SKILL.md](../../.cursor/skills/cloud-automation-audit/SKILL.md) | 監査観点 |
+| [automation-authoring/SKILL.md](../../.cursor/skills/automation-authoring/SKILL.md) | 新規 Automation / dispatch 追加時の設計規約 |
