@@ -241,6 +241,26 @@ describe('PlanApiGateway', () => {
       expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule');
     });
 
+    it('passes scope=plan when params.scope is plan', async () => {
+      vi.mocked(apiClient.get).mockReturnValue(of({} as TaskScheduleResponse));
+
+      await firstValueFrom(gateway.getTaskSchedule(7, { scope: 'plan' }));
+
+      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule?scope=plan');
+    });
+
+    it('passes field_cultivation_id query when provided', async () => {
+      vi.mocked(apiClient.get).mockReturnValue(of({} as TaskScheduleResponse));
+
+      await firstValueFrom(
+        gateway.getTaskSchedule(7, { scope: 'plan', field_cultivation_id: 42 })
+      );
+
+      expect(apiClient.get).toHaveBeenCalledWith(
+        '/api/v1/plans/7/task_schedule?scope=plan&field_cultivation_id=42'
+      );
+    });
+
     it('forwards error when api fails', async () => {
       vi.mocked(apiClient.get).mockReturnValue(throwError(() => new Error('network error')));
 
