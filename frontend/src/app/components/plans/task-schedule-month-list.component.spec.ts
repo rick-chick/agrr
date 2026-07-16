@@ -64,6 +64,7 @@ describe('TaskScheduleMonthListComponent', () => {
         ...(en as TranslationObject),
         'plans.task_schedules.list_empty': 'No tasks match the current filters.',
         'plans.task_schedules.list_row_meta': '{{field}} · {{crop}}',
+        'plans.task_schedules.unscheduled_title': 'Unconfirmed tasks',
         'plans.task_schedules.status.planned': 'Planned',
         'plans.task_schedules.status.completed': 'Completed',
         'plans.task_schedules.status.skipped': 'Skipped',
@@ -236,6 +237,36 @@ describe('TaskScheduleMonthListComponent', () => {
 
     closeButton.click();
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+  });
+
+  it('renders unscheduled section when unscheduled rows are provided', async () => {
+    const unscheduledFixture = TestBed.createComponent(TaskScheduleMonthListComponent);
+    unscheduledFixture.componentInstance.monthGroups = [];
+    unscheduledFixture.componentInstance.unscheduledRows = [
+      {
+        item: domainTask({ item_id: 99, name: 'Pending prep', scheduled_date: null }),
+        farmId: 0,
+        farmName: '',
+        planId: 7,
+        planName: 'Main Plan',
+        fieldName: 'Field A',
+        fieldId: 1,
+        fieldCultivationId: 10,
+        cropName: 'Tomato',
+        displayStatus: 'planned'
+      }
+    ];
+    unscheduledFixture.detectChanges();
+    await unscheduledFixture.whenStable();
+
+    const section = unscheduledFixture.nativeElement.querySelector(
+      '.plan-task-schedule-month-list__month--unscheduled'
+    );
+    expect(section).toBeTruthy();
+    expect(section?.textContent).toContain('Unconfirmed tasks');
+    expect(section?.textContent).toContain('Pending prep');
+    expect(section?.querySelector('time.plan-task-schedule-month-list__date')).toBeFalsy();
+    unscheduledFixture.destroy();
   });
 
   it('shows empty message when no month groups are provided', async () => {
