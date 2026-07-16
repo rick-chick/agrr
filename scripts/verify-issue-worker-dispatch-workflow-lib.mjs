@@ -7,6 +7,8 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'CURSOR_ISSUE_WORKER_WEBHOOK_URL',
   'CURSOR_ISSUE_WORKER_WEBHOOK_KEY',
   'resolveDispatchAction',
+  'resolveImplementDispatchGate',
+  'openFixPrSearchQuery',
   'curl -fsS -X POST "$WEBHOOK_URL"',
 ];
 
@@ -68,6 +70,14 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
 
   if (!libText.includes('export function isRetryCandidate')) {
     errors.push('dispatch lib missing isRetryCandidate');
+  }
+
+  if (!libText.includes('export function openFixPrSearchQuery')) {
+    errors.push('dispatch lib missing openFixPrSearchQuery');
+  }
+
+  if (!libText.includes('export function resolveImplementDispatchGate')) {
+    errors.push('dispatch lib missing resolveImplementDispatchGate');
   }
 
   return { ok: errors.length === 0, errors };
