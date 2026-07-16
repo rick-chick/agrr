@@ -3,7 +3,7 @@ import { RegenerateTaskScheduleResponseDto } from './regenerate-task-schedule-re
 import {
   applySyncFieldsToPlan,
   taskScheduleSyncViewPatch
-} from '../../adapters/plans/task-schedule-sync-presenter.helpers';
+} from './task-schedule-sync-view-patch';
 
 export const TASK_SCHEDULE_SYNC_POLL_INTERVAL_MS = 250;
 export const TASK_SCHEDULE_SYNC_POLL_MAX_ATTEMPTS = 120;
