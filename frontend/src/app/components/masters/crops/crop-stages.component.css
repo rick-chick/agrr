@@ -39,6 +39,15 @@
   color: var(--color-text-primary);
 }
 
+.crop-stages-order-warning__message,
+.crop-stages-order-warning__hint {
+  margin: 0 0 0.5rem;
+}
+
+.crop-stages-order-warning__renumber {
+  margin-top: 0.25rem;
+}
+
 .crop-stages-table {
   width: 100%;
   border-collapse: collapse;

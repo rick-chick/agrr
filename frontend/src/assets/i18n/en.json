@@ -2027,6 +2027,8 @@
       "stage_title": "Stage {{order}}",
       "stage_name": "Stage Name",
       "stage_order_duplicate": "Duplicate order values: {{orders}}. Please assign unique order numbers.",
+      "stage_order_duplicate_hint": "Drag rows to reorder, or use the button below to renumber orders automatically.",
+      "stage_order_renumber": "Renumber orders",
       "base_temperature": "Base Temperature (°C)",
       "optimal_min": "Optimal Min Temperature (°C)",
       "optimal_max": "Optimal Max Temperature (°C)",
@@ -2296,7 +2298,8 @@
       }
     },
     "errors": {
-      "invalid_id": "Invalid crop ID."
+      "invalid_id": "Invalid crop ID.",
+      "stage_order_conflict": "Could not save stage order because another stage already uses that order. Use renumber or drag to fix duplicates."
     }
   },
   "pests": {

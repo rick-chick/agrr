@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyStageListReorder,
   findDuplicateStageOrders,
+  renumberStagesSequentially,
   reorderStagesByIndex,
   sortStagesByOrder
 } from './crop-stage-order';
@@ -72,5 +73,32 @@ describe('applyStageListReorder', () => {
       { id: 2, order: 1 }
     ]);
     expect(result.stages.find((s) => s.id === 3)?.order).toBe(3);
+  });
+});
+
+describe('renumberStagesSequentially', () => {
+  it('returns no updates when orders are already unique and sequential', () => {
+    const stages = [stage(1, 1), stage(2, 2), stage(3, 3)];
+    const result = renumberStagesSequentially(stages);
+
+    expect(result.updates).toEqual([]);
+    expect(result.stages.map((s) => s.order)).toEqual([1, 2, 3]);
+  });
+
+  it('assigns sequential orders from 1 when duplicates exist', () => {
+    const stages = [stage(1, 1), stage(2, 1), stage(3, 2), stage(4, 2)];
+    const result = renumberStagesSequentially(stages);
+
+    expect(result.stages.map((s) => ({ id: s.id, order: s.order }))).toEqual([
+      { id: 1, order: 1 },
+      { id: 2, order: 2 },
+      { id: 3, order: 3 },
+      { id: 4, order: 4 }
+    ]);
+    expect(result.updates).toEqual([
+      { id: 2, order: 2 },
+      { id: 3, order: 3 },
+      { id: 4, order: 4 }
+    ]);
   });
 });

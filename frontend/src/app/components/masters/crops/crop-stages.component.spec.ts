@@ -107,6 +107,8 @@ const tableTranslations = {
       region: 'Region',
       sterility_risk_threshold: 'Sterility risk',
       stage_order_duplicate: 'Duplicate order: {{orders}}',
+      stage_order_duplicate_hint: 'Drag rows to reorder or use the button below to renumber.',
+      stage_order_renumber: 'Renumber orders',
       temperature_section: 'Temperature conditions',
       thermal_section: 'Accumulated temperature',
       details_section: 'Advanced settings',
@@ -809,6 +811,54 @@ describe('CropStagesComponent', () => {
 
     const warning = fixture.nativeElement.querySelector('.crop-stages-order-warning');
     expect(warning?.textContent).toContain('1');
+  });
+
+  it('shows renumber button and hint when duplicate orders exist', async () => {
+    await loadStages([
+      { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+      { id: 2, name: 'Stage 2', order: 1 } as CropStage
+    ]);
+
+    const warning = fixture.nativeElement.querySelector('.crop-stages-order-warning');
+    expect(warning?.textContent).toContain('Drag rows to reorder');
+    const button = warning?.querySelector('.crop-stages-order-warning__renumber');
+    expect(button?.textContent).toContain('Renumber orders');
+  });
+
+  it('renumbers duplicate stage orders via button and persists via reorder use case', async () => {
+    await loadStages([
+      { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+      { id: 2, name: 'Stage 2', order: 1 } as CropStage,
+      { id: 3, name: 'Stage 3', order: 3 } as CropStage
+    ]);
+
+    component.renumberDuplicateStageOrders();
+
+    expect(component.duplicateStageOrders).toEqual([]);
+    expect(component.control.formData.crop_stages.map((stage) => stage.order)).toEqual([1, 2, 3]);
+    expect(mockReorderCropStagesUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      entries: [{ id: 2, order: 2 }]
+    });
+  });
+
+  it('hides duplicate order warning after successful renumber', async () => {
+    await loadStages([
+      { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+      { id: 2, name: 'Stage 2', order: 1 } as CropStage
+    ]);
+
+    component.renumberDuplicateStageOrders();
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+    presenter.presentReorderCropStages({
+      stages: [
+        { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+        { id: 2, name: 'Stage 2', order: 2 } as CropStage
+      ]
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.crop-stages-order-warning')).toBeNull();
   });
 
   it('renders edit panel with section headings and grouped temperature fields', async () => {
