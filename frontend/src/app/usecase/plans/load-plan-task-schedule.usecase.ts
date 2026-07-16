@@ -5,7 +5,7 @@ import {
   LoadPlanTaskScheduleOutputPort,
   LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT
 } from './load-plan-task-schedule.output-port';
-import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
+import { PLAN_GATEWAY, PlanGateway, TaskScheduleQueryParams } from './plan-gateway';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class LoadPlanTaskScheduleUseCase implements LoadPlanTaskScheduleInputPor
   ) {}
 
   execute(dto: LoadPlanTaskScheduleInputDto): void {
-    const params: { scope: string; field_cultivation_id?: number } = { scope: 'plan' };
+    const params: TaskScheduleQueryParams = { scope: 'plan' };
     if (dto.fieldCultivationId != null) {
       params.field_cultivation_id = dto.fieldCultivationId;
     }
