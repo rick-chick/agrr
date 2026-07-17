@@ -22,14 +22,13 @@ import {
   cropPlanWizardQueryParams,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
-import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import {
   findDuplicateStageOrders,
   reorderStagesByIndex,
   renumberStagesSequentially,
   sortStagesByOrder
 } from '../../../domain/crops/crop-stage-order';
-import type { CropStage } from '../../../domain/crops/crop';
+import type { CropStage, TemperatureRequirement } from '../../../domain/crops/crop';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
@@ -206,9 +205,8 @@ const initialControl: CropStagesViewState = {
                   <th class="crop-stages-table__col-drag" scope="col" aria-hidden="true"></th>
                   <th scope="col">{{ 'crops.edit.table_order' | translate }}</th>
                   <th scope="col">{{ 'crops.edit.table_stage_name' | translate }}</th>
+                  <th scope="col">{{ 'crops.edit.table_optimal_range' | translate }}</th>
                   <th scope="col">{{ 'crops.edit.table_base_temperature' | translate }}</th>
-                  <th scope="col">{{ 'crops.edit.table_required_gdd' | translate }}</th>
-                  <th scope="col">{{ 'crops.edit.table_cumulative_gdd' | translate }}</th>
                 </tr>
               </thead>
               <tbody
@@ -231,13 +229,12 @@ const initialControl: CropStagesViewState = {
                     </td>
                     <td>{{ stage.order }}</td>
                     <td>{{ stage.name }}</td>
+                    <td>{{ formatOptimalTemperatureRange(stage.temperature_requirement) }}</td>
                     <td>{{ formatOptionalNumber(stage.temperature_requirement?.base_temperature) }}</td>
-                    <td>{{ formatOptionalNumber(stage.thermal_requirement?.required_gdd) }}</td>
-                    <td>{{ formatCumulativeGdd(stage) }}</td>
                   </tr>
                 }
                 <tr class="crop-stages-table__add-row">
-                  <td colspan="6">
+                  <td colspan="5">
                     @if (canMutateStages) {
                       <button type="button" class="crop-stages-table__add-button" (click)="addCropStage()">
                         {{ 'crops.edit.add_stage' | translate }}
@@ -454,14 +451,33 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     return String(value);
   }
 
-  formatCumulativeGdd(stage: CropStage): string {
-    const range = stageCumulativeGddRange(this.control.formData.crop_stages, stage.order);
-    if (range.gddRangeMissing) {
-      return this.translate.instant('crops.edit.stage_cumulative_gdd_missing');
+  formatOptimalTemperatureRange(
+    requirement: TemperatureRequirement | null | undefined
+  ): string {
+    if (requirement == null) {
+      return this.translate.instant('crops.edit.value_missing');
     }
-    return this.translate.instant('crops.edit.stage_cumulative_gdd_range', {
-      start: range.cumulativeGddStart,
-      end: range.cumulativeGddEnd
-    });
+
+    const min = requirement.optimal_min;
+    const max = requirement.optimal_max;
+    const unit = this.translate.instant('crops.show.celsius_unit');
+    const hasMin = min != null && Number.isFinite(min);
+    const hasMax = max != null && Number.isFinite(max);
+
+    if (hasMin && hasMax) {
+      return this.translate.instant('crops.edit.optimal_temperature_range', {
+        min,
+        max,
+        unit
+      });
+    }
+    if (hasMin) {
+      return this.translate.instant('crops.edit.optimal_temperature_value', { value: min, unit });
+    }
+    if (hasMax) {
+      return this.translate.instant('crops.edit.optimal_temperature_value', { value: max, unit });
+    }
+
+    return this.translate.instant('crops.edit.value_missing');
   }
 }
