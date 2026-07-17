@@ -224,7 +224,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await assertHostHealthy(page, 'app-crop-stages');
 
     const content = page.locator(
-      'app-crop-stages .crop-stages-table, app-crop-stages .crop-stages-empty',
+      'app-crop-stages .card-list, app-crop-stages .crop-stages-empty',
     );
     await expect(content.first()).toBeVisible();
   });
@@ -242,13 +242,13 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await waitForPageStable(page, stagesRoute);
     await assertHostHealthy(page, 'app-crop-stages');
 
-    const rows = page.locator('app-crop-stages .crop-stages-table__row');
-    const rowCount = await rows.count();
+    const cards = page.locator('app-crop-stages .crop-stage-card');
+    const rowCount = await cards.count();
     if (rowCount === 0) {
       test.skip(true, 'no stages to click in dev DB');
     }
 
-    await rows.first().click();
+    await cards.first().click();
     await expect(page.locator('app-crop-stage-edit')).toBeVisible({ timeout: 30_000 });
     await assertHostHealthy(page, 'app-crop-stage-edit');
   });
@@ -266,14 +266,14 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await waitForPageStable(page, stagesRoute);
     await assertHostHealthy(page, 'app-crop-stages');
 
-    const rows = page.locator('app-crop-stages .crop-stages-table__row');
-    const rowCount = await rows.count();
+    const cards = page.locator('app-crop-stages .crop-stage-card');
+    const rowCount = await cards.count();
     if (rowCount < 2) {
       test.skip(true, 'crop needs at least 2 stages for reorder smoke');
     }
 
-    const namesBefore = await rows.evaluateAll((elements) =>
-      elements.map((row) => (row.querySelectorAll('td')[2]?.textContent ?? '').trim())
+    const namesBefore = await cards.evaluateAll((elements) =>
+      elements.map((card) => (card.querySelector('.item-card__title')?.textContent ?? '').trim())
     );
 
     const reorderResponse = page.waitForResponse(
@@ -282,10 +282,10 @@ smokeDescribe('operation smoke (key user flows)', () => {
         response.status() === 200,
       { timeout: 60_000 }
     );
-    const dragHandle = rows.nth(0).locator('.crop-stages-table__drag');
-    const targetRow = rows.nth(1);
+    const dragHandle = cards.nth(0).locator('.crop-stage-card__drag');
+    const targetCard = cards.nth(1);
     const handleBox = await dragHandle.boundingBox();
-    const targetBox = await targetRow.boundingBox();
+    const targetBox = await targetCard.boundingBox();
     if (!handleBox || !targetBox) {
       test.skip(true, 'drag targets not visible');
     }
@@ -306,12 +306,16 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await waitForPageStable(page, stagesRoute);
     await assertHostHealthy(page, 'app-crop-stages');
 
-    const reloadedRows = page.locator('app-crop-stages .crop-stages-table__row');
-    const namesAfter = await reloadedRows.evaluateAll((elements) =>
-      elements.map((row) => (row.querySelectorAll('td')[2]?.textContent ?? '').trim())
+    const reloadedCards = page.locator('app-crop-stages .crop-stage-card');
+    const namesAfter = await reloadedCards.evaluateAll((elements) =>
+      elements.map((card) => (card.querySelector('.item-card__title')?.textContent ?? '').trim())
     );
-    const ordersAfter = await reloadedRows.evaluateAll((elements) =>
-      elements.map((row) => (row.querySelectorAll('td')[1]?.textContent ?? '').trim())
+    const ordersAfter = await reloadedCards.evaluateAll((elements) =>
+      elements.map((card) => {
+        const orderMeta = card.querySelector('.crop-stage-card__order')?.textContent ?? '';
+        const match = orderMeta.match(/:\s*(\d+)/);
+        return match?.[1] ?? '';
+      })
     );
     expect(namesAfter).not.toEqual(namesBefore);
     expect(ordersAfter).toEqual(['1', '2', '3'].slice(0, ordersAfter.length));
