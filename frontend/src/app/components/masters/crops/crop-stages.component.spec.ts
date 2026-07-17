@@ -164,6 +164,7 @@ describe('CropStagesComponent', () => {
     options: { is_reference?: boolean } = {}
   ): Promise<void> {
     const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+    presenter.setView(component);
     presenter.present({
       crop: {
         id: 1,
@@ -286,6 +287,7 @@ describe('CropStagesComponent', () => {
 
   it('derives display state when presenter loads crop data', () => {
     const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+    presenter.setView(component);
     const incompleteStage: CropStage = {
       id: 2,
       name: 'Vegetative',
