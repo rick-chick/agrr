@@ -37,30 +37,18 @@ test('prMergeWorkerNeedsSync skips clean up-to-date PR', () => {
   );
 });
 
-test('prMergeWorkerIsEligible accepts agent-merge label', () => {
-  assert.equal(prMergeWorkerIsEligible('bug,agent-merge', 'feature/foo'), true);
-});
-
-test('prMergeWorkerIsEligible accepts issue worker branch', () => {
+test('prMergeWorkerIsEligible accepts any head ref by default (universal rescue)', () => {
+  assert.equal(prMergeWorkerIsEligible('bug', 'feature/foo', ''), true);
+  assert.equal(prMergeWorkerIsEligible('', 'feat/crop-stages-edit-panel-layout'), true);
   assert.equal(prMergeWorkerIsEligible('', 'issue/193-pr-conflict-automation'), true);
-});
-
-test('prMergeWorkerIsEligible accepts cursor agent branch', () => {
   assert.equal(
     prMergeWorkerIsEligible('', 'cursor/agrr-issue-worker-workflow-1950'),
     true,
   );
-});
-
-test('prMergeWorkerIsEligible accepts Merge-Strategy body', () => {
   assert.equal(
     prMergeWorkerIsEligible('', 'feature/foo', 'Merge-Strategy: agent'),
     true,
   );
-});
-
-test('prMergeWorkerIsEligible rejects unrelated PR', () => {
-  assert.equal(prMergeWorkerIsEligible('bug', 'feature/foo', ''), false);
 });
 
 test('selectSyncCandidates returns eligible behind PR', () => {
@@ -231,12 +219,12 @@ test('selectSyncCandidates skips PR with changes requested', () => {
   assert.equal(candidates.length, 0);
 });
 
-test('selectSyncCandidates skips large PR without agent-merge label', () => {
+test('selectSyncCandidates includes large behind PR without agent-merge label', () => {
   const candidates = selectSyncCandidates([
     {
       number: 7,
       title: 'fix: example',
-      headRefName: 'issue/193-pr-conflict-automation',
+      headRefName: 'feat/crop-stages-edit-panel-layout',
       labels: [],
       body: '',
       isDraft: false,
@@ -247,25 +235,26 @@ test('selectSyncCandidates skips large PR without agent-merge label', () => {
       isCrossRepository: false,
     },
   ]);
-  assert.equal(candidates.length, 0);
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0].number, 7);
 });
 
-test('selectSyncCandidates allows large behind PR with agent-merge label', () => {
+test('selectSyncCandidates includes ready feat PR behind master (no opt-in)', () => {
   const candidates = selectSyncCandidates([
     {
-      number: 8,
-      title: 'fix: example',
-      headRefName: 'feature/foo',
-      labels: [{ name: 'agent-merge' }],
+      number: 382,
+      title: 'refactor(frontend): simplify crop stage edit panel layout',
+      headRefName: 'feat/crop-stages-edit-panel-layout',
+      labels: [],
       body: '',
       isDraft: false,
       mergeable: 'MERGEABLE',
       mergeStateStatus: 'BEHIND',
-      additions: 700,
-      deletions: 200,
+      additions: 100,
+      deletions: 50,
       isCrossRepository: false,
     },
   ]);
   assert.equal(candidates.length, 1);
-  assert.equal(candidates[0].number, 8);
+  assert.equal(candidates[0].number, 382);
 });

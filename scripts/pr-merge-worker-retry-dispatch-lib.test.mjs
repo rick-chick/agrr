@@ -94,7 +94,7 @@ const FAILED_CHECKS = [
   { name: 'lint / frontend-lint', state: 'SUCCESS' },
 ];
 
-test('classifyReconcileCandidate accepts draft agent-merge PR with failed required CI as ci_fix', () => {
+test('classifyReconcileCandidate accepts draft PR with failed required CI as ci_fix', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -116,12 +116,57 @@ test('classifyReconcileCandidate accepts draft agent-merge PR with failed requir
   });
 });
 
-test('classifyReconcileCandidate rejects draft agent-merge PR while required CI is pending', () => {
+test('classifyReconcileCandidate accepts ready feat PR with failed CI and no agent-merge as ci_fix', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      number: 382,
+      title: 'refactor(frontend): simplify crop stage edit panel layout',
+      headRefName: 'feat/crop-stages-edit-panel-layout',
+      isDraft: false,
+      labels: [],
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'CLEAN',
+      updatedAt: '2026-07-16T14:25:00.000Z',
+    },
+    checks: FAILED_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'ci_fix',
+    removeStaleInProgressLabel: false,
+  });
+});
+
+test('classifyReconcileCandidate accepts ready feat PR BEHIND without agent-merge as conflict', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      number: 382,
+      headRefName: 'feat/crop-stages-edit-panel-layout',
+      labels: [],
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'BEHIND',
+    },
+    checks: FAILED_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'conflict',
+    removeStaleInProgressLabel: false,
+  });
+});
+
+test('classifyReconcileCandidate rejects draft PR while required CI is pending', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
       isDraft: true,
-      labels: [{ name: 'agent-merge' }],
+      labels: [],
     },
     checks: [
       { name: 'rails-test', state: 'SUCCESS' },
@@ -133,6 +178,25 @@ test('classifyReconcileCandidate rejects draft agent-merge PR while required CI 
   });
   assert.equal(result.eligible, false);
   assert.match(result.reason, /pending|incomplete/i);
+});
+
+test('isStuckRetryCandidate accepts ready feat PR without agent-merge after quiet period', () => {
+  const result = isStuckRetryCandidate({
+    pr: {
+      ...BASE_PR,
+      number: 382,
+      headRefName: 'feat/crop-stages-edit-panel-layout',
+      labels: [],
+      updatedAt: '2026-07-15T09:43:00.000Z',
+    },
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    removeStaleInProgressLabel: false,
+  });
 });
 
 test('classifyReconcileCandidate prefers conflict over ci_fix for conflicting draft PR', () => {

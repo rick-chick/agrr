@@ -13,13 +13,15 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'formatDependencyGateComment',
   'openFixPrSearchQuery',
   'Comment when dependency gate blocks dispatch',
-  'curl -fsS -X POST "$WEBHOOK_URL"',
+  'post-cursor-webhook.mjs',
 ];
 
 const REQUIRED_RETRY_WORKFLOW_SNIPPETS = [
   'name: Issue Worker Retry Dispatch',
   'Issue Worker Dispatch',
+  "github.event.workflow_run.conclusion == 'failure'",
   'dispatch_run_cancelled',
+  'dispatch_run_failed',
   'scheduled_reconcile',
   'dependency_closed',
   'issue-worker-retry-dispatch.mjs',

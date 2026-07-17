@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Reconcile / retry PR Merge Worker webhook dispatch for stuck ready PRs.
+ * Reconcile / retry PR Merge Worker webhook dispatch for stuck PRs (universal rescue).
  *
  * Usage:
  *   node scripts/pr-merge-worker-retry-dispatch.mjs reconcile [--repo OWNER/REPO]
@@ -21,8 +21,13 @@ import {
   classifyReconcileCandidate,
   selectReconcileCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
+import { postWebhookJson } from './webhook-post-lib.mjs';
 
 const DEFAULT_REPO = 'rick-chick/agrr';
+
+function sleepSync(ms) {
+  execFileSync('sleep', [String(Math.max(1, Math.ceil(ms / 1000)))]);
+}
 
 /**
  * @param {string} repo
@@ -36,14 +41,14 @@ function repoOwner(repo) {
  * @param {string} repo
  * @returns {Array<Record<string, unknown>>}
  */
-function listOpenAgentMergePrs(repo) {
+function listOpenMasterPrs(repo) {
   const raw = gh(repo, [
     'pr',
     'list',
     '--state',
     'open',
-    '--label',
-    'agent-merge',
+    '--base',
+    'master',
     '--json',
     'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author',
   ]);
@@ -85,7 +90,7 @@ function fetchPr(repo, prNumber) {
  * @returns {Record<string, unknown> | null}
  */
 function findOpenPrByTitle(repo, title) {
-  const prs = listOpenAgentMergePrs(repo);
+  const prs = listOpenMasterPrs(repo);
   const matches = prs.filter((pr) => pr.title === title);
   if (matches.length === 0) {
     return null;
@@ -105,22 +110,14 @@ function postWebhook(repo, payload) {
     process.exit(0);
   }
 
-  execFileSync(
-    'curl',
-    [
-      '-fsS',
-      '-X',
-      'POST',
-      webhookUrl,
-      '-H',
-      `Authorization: Bearer ${webhookKey}`,
-      '-H',
-      'Content-Type: application/json',
-      '-d',
-      JSON.stringify(payload),
-    ],
-    { stdio: ['ignore', 'inherit', 'inherit'] },
-  );
+  postWebhookJson({
+    url: webhookUrl,
+    bearerToken: webhookKey,
+    body: payload,
+    execFileSync,
+    sleepSync,
+    log: console.log,
+  });
 
   console.log(
     `Dispatched PR Merge Worker reconcile for #${payload.pr_number} (${payload.action})`,
@@ -195,13 +192,13 @@ function main() {
   const repo = args.repo ?? DEFAULT_REPO;
 
   if (args.mode === 'reconcile') {
-    const prs = listOpenAgentMergePrs(repo);
+    const prs = listOpenMasterPrs(repo);
     const checksByPrNumber = Object.fromEntries(
       prs.map((pr) => [pr.number, fetchChecks(repo, pr.number)]),
     );
     const selected = selectReconcileCandidate(prs, checksByPrNumber, repoOwner(repo));
     if (!selected) {
-      console.log('No eligible stuck agent-merge PRs for reconcile.');
+      console.log('No eligible stuck PRs for reconcile.');
       return;
     }
     dispatchIfEligible({
@@ -219,7 +216,7 @@ function main() {
     }
     const pr = findOpenPrByTitle(repo, args.title);
     if (!pr) {
-      console.log(`No open agent-merge PR matched title: ${args.title}`);
+      console.log(`No open master PR matched title: ${args.title}`);
       return;
     }
     dispatchIfEligible({

@@ -479,9 +479,6 @@ export function defaultRetryReasonForMode(mode) {
   if (mode === 'reconcile') {
     return 'scheduled_reconcile';
   }
-  if (mode === 'on-closed') {
-    return 'dependency_closed';
-  }
   if (mode === 'from-title') {
     return 'dispatch_run_cancelled';
   }

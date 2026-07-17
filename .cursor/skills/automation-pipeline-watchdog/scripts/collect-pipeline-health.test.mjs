@@ -74,6 +74,20 @@ test('detectStuckAgentReadyIssue flags long-waiting agent-ready', () => {
   assert.match(finding.summary, /2 hours/);
 });
 
+test('detectConflictReadyPr flags BEHIND without agent-merge label', () => {
+  const finding = detectConflictReadyPr({
+    number: 382,
+    title: 'feat PR',
+    isDraft: false,
+    labels: [],
+    mergeStateStatus: 'BEHIND',
+    updatedAt: new Date(NOW).toISOString(),
+  });
+  assert.ok(finding);
+  assert.equal(finding.priority, 'P1');
+  assert.match(finding.summary, /BEHIND/);
+});
+
 test('detectConflictReadyPr flags BEHIND merge state', () => {
   const finding = detectConflictReadyPr({
     number: 99,
@@ -85,6 +99,24 @@ test('detectConflictReadyPr flags BEHIND merge state', () => {
   });
   assert.ok(finding);
   assert.equal(finding.priority, 'P1');
+});
+
+test('detectCiFailingReadyPr flags failing checks without agent-merge', () => {
+  const finding = detectCiFailingReadyPr(
+    {
+      number: 382,
+      title: 'feat PR',
+      isDraft: false,
+      labels: [],
+      updatedAt: new Date(NOW).toISOString(),
+    },
+    [
+      { name: 'rails-test', state: 'SUCCESS' },
+      { name: 'frontend-test', state: 'FAILURE' },
+    ],
+  );
+  assert.ok(finding);
+  assert.deepEqual(finding.evidence.failedChecks, ['frontend-test']);
 });
 
 test('detectCiFailingReadyPr flags failing checks', () => {
@@ -103,6 +135,22 @@ test('detectCiFailingReadyPr flags failing checks', () => {
   );
   assert.ok(finding);
   assert.deepEqual(finding.evidence.failedChecks, ['frontend-test']);
+});
+
+test('detectStuckDraftPr flags any draft stuck >= 12h (no opt-in required)', () => {
+  const finding = detectStuckDraftPr(
+    {
+      number: 50,
+      title: 'feat draft',
+      isDraft: true,
+      headRefName: 'feat/foo',
+      labels: [],
+      updatedAt: new Date(NOW - 13 * 3600 * 1000).toISOString(),
+    },
+    NOW,
+  );
+  assert.ok(finding);
+  assert.equal(finding.priority, 'P1');
 });
 
 test('detectFailedDispatchWorkflow flags failed dispatch workflow', () => {
