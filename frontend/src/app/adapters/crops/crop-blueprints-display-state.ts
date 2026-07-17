@@ -185,7 +185,6 @@ export function withCropBlueprintDisplayState(
       !control.blueprintsLoading &&
       !blueprintReadiness.ready &&
       !control.blueprintsRegenerating,
-    blueprintSectionDescriptionKey: null,
     showBlueprintEmptyState: !blueprints.length && !blueprintRegenerateError,
     showBlueprintRegenerateRetry:
       blueprintReadiness.ready &&

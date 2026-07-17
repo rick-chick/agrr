@@ -86,7 +86,6 @@ const baseControl: CropTaskScheduleBlueprintsViewState = withCropBlueprintDispla
   canCreateBlueprint: false,
   blueprintStageNameForCreate: null,
   showBlueprintReadinessChecklist: false,
-  blueprintSectionDescriptionKey: null,
   showBlueprintEmptyState: true,
   showBlueprintRegenerateRetry: false
 });

@@ -74,7 +74,6 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
   canCreateBlueprint: false,
   blueprintStageNameForCreate: null,
   showBlueprintReadinessChecklist: false,
-  blueprintSectionDescriptionKey: null,
   showBlueprintEmptyState: true,
   showBlueprintRegenerateRetry: false
 };
@@ -131,7 +130,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                     <span>{{ 'crops.show.blueprint_readiness.blueprints_ready' | translate }}</span>
                   } @else {
                     <span>{{ 'crops.show.blueprint_readiness.blueprints_missing' | translate }}</span>
-                    <a href="#blueprints-heading" class="blueprint-readiness__link">
+                    <a href="#page-title" class="blueprint-readiness__link">
                       {{ 'crops.show.blueprint_readiness.blueprints_action' | translate }}
                     </a>
                   }
@@ -159,7 +158,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
               <p>{{ control.blueprintRegenerateError | translate }}</p>
               @if (!control.blueprintReadiness.blueprintsReady) {
                 <p>
-                  <a href="#blueprints-heading" class="blueprint-readiness__link">
+                  <a href="#page-title" class="blueprint-readiness__link">
                     {{ 'crops.show.blueprint_readiness.blueprints_action' | translate }}
                   </a>
                 </p>

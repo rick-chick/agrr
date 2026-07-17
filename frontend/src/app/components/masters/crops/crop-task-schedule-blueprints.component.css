@@ -77,25 +77,6 @@
   margin-bottom: 0;
 }
 
-.section-card__header-actions .section-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.section-card__description {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
-.crop-blueprints__section-lead {
-  margin-bottom: var(--space-3);
-}
-
 .crop-blueprints__template-add-hint {
   display: block;
   margin-bottom: var(--space-1);
