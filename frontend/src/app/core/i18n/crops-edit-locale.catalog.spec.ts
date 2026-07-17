@@ -40,9 +40,7 @@ const CROPS_EDIT_KEYS = [
   'crops.edit.table_cumulative_gdd',
   'crops.edit.value_missing',
   'crops.edit.temperature_section',
-  'crops.edit.thermal_section',
-  'crops.edit.details_section',
-  'crops.edit.optimal_range'
+  'crops.edit.details_section'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

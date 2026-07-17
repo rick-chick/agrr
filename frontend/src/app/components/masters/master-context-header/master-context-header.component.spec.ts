@@ -16,7 +16,8 @@ describe('MasterContextHeaderComponent', () => {
     fixture = TestBed.createComponent(MasterContextHeaderComponent);
     translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', {
-      farms: { index: { title: 'Farms' } }
+      farms: { index: { title: 'Farms' } },
+      common: { edit: 'Edit' }
     });
     translate.setDefaultLang('en');
     translate.use('en');
@@ -56,6 +57,24 @@ describe('MasterContextHeaderComponent', () => {
     expect(backLink).toBeTruthy();
     expect(backLink.textContent?.trim()).toBe('Farms');
     expect(fixture.nativeElement.querySelector('[aria-current="page"]')).toBeNull();
+  });
+
+  it('renders optional forward link in the header bar', () => {
+    fixture.componentRef.setInput('crumbs', [
+      { labelKey: 'farms.index.title', routerLink: ['/farms'] },
+      { label: 'North Farm' }
+    ]);
+    fixture.componentRef.setInput('forwardRouterLink', ['/farms', 1, 'edit']);
+    fixture.componentRef.setInput('forwardLabelKey', 'common.edit');
+    fixture.detectChanges();
+
+    const forward = fixture.nativeElement.querySelector(
+      'a.master-context-header__forward'
+    ) as HTMLAnchorElement;
+    expect(forward).toBeTruthy();
+    expect(forward.getAttribute('href')).toBe('/farms/1/edit');
+    expect(forward.textContent?.trim()).toBe('Edit');
+    expect(forward.classList.contains('btn-secondary')).toBe(false);
   });
 
   it('exposes breadcrumb navigation for assistive technologies', () => {

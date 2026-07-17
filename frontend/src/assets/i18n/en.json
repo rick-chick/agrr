@@ -1912,7 +1912,6 @@
       "order_placeholder": "0",
       "remove_button": "Remove",
       "temperature_section": "🌡️ Temperature Requirements",
-      "thermal_section": "🌡️ Thermal Requirements (GDD)",
       "sunshine_section": "☀️ Sunshine Requirements",
       "nutrient_section": "🌱 Nutrient Requirements",
       "temperature": {
@@ -2052,9 +2051,7 @@
       "required_gdd_help": "Enter the Growing Degree Days required for this stage.",
       "save_stage": "Save",
       "temperature_section": "Temperature conditions",
-      "thermal_section": "Accumulated temperature",
       "details_section": "Advanced settings",
-      "optimal_range": "Optimal range",
       "edit_temperature_details": "Edit stress thresholds…",
       "edit_sunshine_nutrient": "Edit sunshine & nutrients…",
       "temperature_details_title": "Stress thresholds",

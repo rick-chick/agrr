@@ -11,10 +11,6 @@
   margin-top: 0.25rem;
 }
 
-.crop-stages__next-step {
-  margin-bottom: 1.5rem;
-}
-
 .crop-stages-section__title {
   font-size: 1.25rem;
   font-weight: 600;
@@ -168,9 +164,30 @@ tbody .crop-stages-table__row.cdk-drag-animating {
 
 .crop-stages-edit-panel__header {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: var(--space-3);
   margin-bottom: var(--space-2);
+}
+
+.crop-stages-edit-panel__header-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.crop-stages-edit-panel__aligned-field {
+  margin-bottom: 0;
+}
+
+.crop-stages-edit-panel__header-hint,
+.crop-stages-edit-panel__temperature-hint {
+  margin: var(--space-1) 0 0;
+}
+
+.crop-stages-edit-panel__name-error {
+  margin: var(--space-1) 0 0 calc(2.25rem + var(--space-3));
 }
 
 .crop-stages-edit-panel__stage-badge {
@@ -179,19 +196,14 @@ tbody .crop-stages-table__row.cdk-drag-animating {
   justify-content: center;
   flex-shrink: 0;
   min-width: 2.25rem;
-  height: 2.25rem;
+  margin-top: 1.375rem;
   padding: 0 var(--space-2);
   border-radius: var(--radius-full);
   background: var(--color-primary-muted-bg, var(--color-background-secondary));
   color: var(--color-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-}
-
-.crop-stages-edit-panel__name-field {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin-bottom: 0;
+  line-height: 2.25rem;
 }
 
 .crop-stages-edit-panel__subsection {
@@ -207,85 +219,11 @@ tbody .crop-stages-table__row.cdk-drag-animating {
   color: var(--color-text);
 }
 
-.crop-stages-edit-panel__temperature-scale {
-  margin-bottom: var(--space-3);
-}
-
-.crop-stages-edit-panel__temperature-scale-track {
-  position: relative;
-  height: 0.5rem;
-  border-radius: var(--radius-full);
-  background: var(--color-background-secondary);
-}
-
-.crop-stages-edit-panel__temperature-scale-optimal {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  border-radius: var(--radius-full);
-  background: var(--color-info-muted-bg);
-  border: 1px solid var(--color-info-muted-border);
-}
-
-.crop-stages-edit-panel__temperature-scale-marker {
-  position: absolute;
-  top: 50%;
-  width: 0.625rem;
-  height: 0.625rem;
-  margin-left: -0.3125rem;
-  border-radius: var(--radius-full);
-  transform: translateY(-50%);
-  background: var(--color-text-secondary);
-}
-
-.crop-stages-edit-panel__temperature-scale-marker--base,
-.crop-stages-edit-panel__temperature-scale-marker--max {
-  background: var(--color-text);
-}
-
-.crop-stages-edit-panel__temperature-scale-marker--optimal_min,
-.crop-stages-edit-panel__temperature-scale-marker--optimal_max {
-  background: var(--color-primary);
-}
-
 .crop-stages-edit-panel__temperature-fields {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-3);
-  align-items: start;
-}
-
-.crop-stages-edit-panel__optimal-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-hover, var(--color-background-secondary));
-}
-
-.crop-stages-edit-panel__optimal-group-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-}
-
-.crop-stages-edit-panel__optimal-group-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
-}
-
-.crop-stages-edit-panel__gdd-block {
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--color-info-muted-bg);
-  border: 1px solid var(--color-info-muted-border);
-}
-
-.crop-stages-edit-panel__gdd-block .form-card__field {
-  margin-bottom: 0;
+  align-items: end;
 }
 
 .crop-stages-edit-panel__detail-chips {
@@ -398,8 +336,8 @@ tbody .crop-stages-table__row.cdk-drag-animating {
 }
 
 @media (max-width: 768px) {
+  .crop-stages-edit-panel__header-fields,
   .crop-stages-edit-panel__temperature-fields,
-  .crop-stages-edit-panel__optimal-group-fields,
   .crop-stages-dialog__fields {
     grid-template-columns: 1fr;
   }
