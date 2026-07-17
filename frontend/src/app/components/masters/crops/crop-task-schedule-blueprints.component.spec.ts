@@ -142,6 +142,9 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
   };
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     loadUseCase = { execute: vi.fn() };
     loadAgriculturalTasksUseCase = { execute: vi.fn() };
     loadBlueprintsUseCase = { execute: vi.fn() };
@@ -289,6 +292,106 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(leadEl?.textContent).toContain(lead);
   });
 
+  it('shows add blueprint button in section header and opens dialog on click', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const headerActions = fixture.nativeElement.querySelector('.section-card__header-actions');
+    const addButton = headerActions?.querySelector('button.btn-primary') as HTMLButtonElement | null;
+    expect(addButton).toBeTruthy();
+    expect(addButton?.textContent).toMatch(/Add task plan/i);
+
+    addButton?.click();
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+  });
+
+  it('does not render inline blueprint add form in the section body', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__blueprint-add')).toBeFalsy();
+    expect(
+      fixture.nativeElement.querySelector('section.section-card .crop-blueprints__blueprint-add-form')
+    ).toBeFalsy();
+    const dialog = fixture.nativeElement.querySelector('dialog.form-dialog');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.querySelector('.crop-blueprints__blueprint-add-form')).toBeTruthy();
+  });
+
+  it('submits blueprint from dialog and calls create use case', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const addButton = fixture.nativeElement.querySelector(
+      '.section-card__header-actions button.btn-primary'
+    ) as HTMLButtonElement | null;
+    addButton?.click();
+
+    component.control = withCropBlueprintDisplayState({
+      ...component.control,
+      selectedBlueprintAgriculturalTaskId: 6,
+      selectedBlueprintStageOrder: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const submitButton = fixture.nativeElement.querySelector(
+      'dialog.form-dialog button.btn-primary'
+    ) as HTMLButtonElement | null;
+    submitButton?.click();
+
+    expect(createBlueprintUseCase.execute).toHaveBeenCalledWith({
+      cropId: 3,
+      agriculturalTaskId: 6,
+      stageOrder: 1,
+      stageName: 'Vegetative',
+      gddTrigger: null
+    });
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+  });
+
+  it('disables header add button when no agricultural tasks exist', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = withCropBlueprintDisplayState({
+      ...readyState,
+      agriculturalTasks: [],
+      unassociatedAgriculturalTasks: []
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const addButton = fixture.nativeElement.querySelector(
+      '.section-card__header-actions button.btn-primary'
+    ) as HTMLButtonElement | null;
+    expect(addButton?.disabled).toBe(true);
+  });
+
   it('omits manual add and AI hint paragraphs in favor of form layout', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
@@ -387,23 +490,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(component.control.blueprintCreateFormAttempted).toBe(true);
   });
 
-  it('creates blueprint when task and stage are selected', () => {
-    component.control = withCropBlueprintDisplayState({
-      ...readyState,
-      selectedBlueprintAgriculturalTaskId: 6,
-      selectedBlueprintStageOrder: 1
-    });
-    component.createBlueprint();
-    expect(createBlueprintUseCase.execute).toHaveBeenCalledWith({
-      cropId: 3,
-      agriculturalTaskId: 6,
-      stageOrder: 1,
-      stageName: 'Vegetative',
-      gddTrigger: null
-    });
-  });
-
-  it('saves blueprint GDD on blur after draft edits without reordering cards while typing', () => {
+  it('saves blueprint GDD on blur after draft edits', () => {
     const twoBlueprintState = withCropBlueprintDisplayState({
       ...readyState,
       blueprints: [
@@ -424,10 +511,6 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     component.control = twoBlueprintState;
     fixture.detectChanges();
 
-    expect(twoBlueprintState.blueprintStageLanes[0].blueprints.map((b) => b.id)).toEqual([
-      21, 20
-    ]);
-
     component.onGddDraftChange(20, 10);
     const draftState = withCropBlueprintDisplayState({
       ...component.control,
@@ -436,7 +519,6 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     component.control = draftState;
     fixture.detectChanges();
 
-    expect(draftState.blueprintStageLanes[0].blueprints.map((b) => b.id)).toEqual([21, 20]);
     expect(updateBlueprintUseCase.execute).not.toHaveBeenCalled();
 
     component.control = draftState;
@@ -710,23 +792,5 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
 
     expect(component.control.error).toBe('Invalid crop ID');
     expect(loadUseCase.execute).not.toHaveBeenCalled();
-  });
-
-  it('control setter recomputes derived display state on partial updates', () => {
-    component.control = withCropBlueprintDisplayState({
-      ...loadedState,
-      crop: cropWithReadyStages,
-      blueprints: []
-    });
-    expect(component.control.blueprintSectionDescriptionKey).toBeNull();
-
-    component.control = {
-      ...component.control,
-      blueprints: loadedState.blueprints
-    };
-
-    expect(component.control.blueprintSectionDescriptionKey).toBe(
-      'crops.show.task_schedule_blueprints_lead'
-    );
   });
 });

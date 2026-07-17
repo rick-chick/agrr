@@ -70,6 +70,7 @@ const CROPS_SHOW_KEYS = [
   'crops.show.manual_blueprint_add.task_placeholder',
   'crops.show.manual_blueprint_add.gdd_label',
   'crops.show.manual_blueprint_add.submit',
+  'crops.show.manual_blueprint_add.open_button',
   'crops.show.manual_blueprint_add.ai_hint',
   'crops.show.manual_blueprint_add.no_unassociated_tasks',
   'crops.show.manual_blueprint_add.go_to_create',
