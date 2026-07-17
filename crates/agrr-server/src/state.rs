@@ -1,4 +1,5 @@
 use crate::cable::CableHub;
+use crate::masters_rate_limit::{MastersRateLimitConfig, MastersRateLimiter};
 use crate::farm_weather_fetch_locks::FarmWeatherFetchLocks;
 use crate::plan_task_schedule_regen_locks::PlanTaskScheduleRegenLocks;
 use crate::jobs::JobChainDispatcher;
@@ -40,6 +41,7 @@ pub struct AppState {
     pub farm_weather_fetch_locks: FarmWeatherFetchLocks,
     pub cable_hub: Arc<CableHub>,
     pub locale_catalog: Arc<LocaleCatalog>,
+    pub masters_rate_limit: Arc<MastersRateLimiter>,
 }
 
 /// Default matches `RAILS_MAX_THREADS` in `docs/migration/app-rust-stack/PROVISIONAL-STACK.md`.
@@ -94,6 +96,7 @@ impl AppState {
             plan_task_schedule_regen_locks: PlanTaskScheduleRegenLocks::new(),
             farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),
             cable_hub: Arc::new(CableHub::default()),
+            masters_rate_limit: Arc::new(MastersRateLimiter::new(MastersRateLimitConfig::from_env())),
         }
     }
 }

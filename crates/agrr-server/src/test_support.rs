@@ -6,6 +6,7 @@ use crate::plan_task_schedule_regen_locks::PlanTaskScheduleRegenLocks;
 use crate::jobs::JobChainDispatcher;
 use crate::state::DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS;
 use crate::locale_catalog::LocaleCatalog;
+use crate::masters_rate_limit::{MastersRateLimitConfig, MastersRateLimiter};
 use crate::state::AppState;
 use agrr_adapters_sqlite::{PredictedWeatherGatewayBundle, SqlitePool};
 use agrr_domain::weather_data::gateways::WeatherDataGateway;
@@ -255,6 +256,7 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
                 "Fetching weather",
             )],
         )),
+        masters_rate_limit: Arc::new(MastersRateLimiter::new(MastersRateLimitConfig::from_env())),
     }
 }
 

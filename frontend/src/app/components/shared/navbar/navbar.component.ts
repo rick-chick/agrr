@@ -142,12 +142,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
     { link: '/interaction_rules', labelKey: 'nav.interaction_rules' },
   ];
 
-  readonly moreItems: { link: string; labelKey: string }[] = [
+  private readonly baseMoreItems: { link: string; labelKey: string }[] = [
     { link: '/about', labelKey: 'nav.about' },
     { link: '/contact', labelKey: 'nav.contact' },
     { link: '/privacy', labelKey: 'nav.privacy' },
     { link: '/terms', labelKey: 'nav.terms' },
   ];
+
+  get moreItems(): { link: string; labelKey: string }[] {
+    if (!this.user) {
+      return this.baseMoreItems;
+    }
+    return [{ link: '/api-keys', labelKey: 'nav.api_keys' }, ...this.baseMoreItems];
+  }
 
   /** ログイン後に戻る URL（ログインページ自身では付けない）。 */
   get loginReturnQuery(): { return_to?: string } {
