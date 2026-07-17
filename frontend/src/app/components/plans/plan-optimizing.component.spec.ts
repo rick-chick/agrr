@@ -63,7 +63,7 @@ describe('PlanOptimizingComponent', () => {
         'plans.optimizing_live.status_badge': 'Optimizing',
         'plans.optimizing_live.status_badge_completed': 'Complete',
         'plans.optimizing_live.progress_label': 'Progress: {{progress}}%',
-        'models.cultivation_plan.phases.task_schedule_generating': 'Generating task schedules...'
+        'models.cultivation_plan.phases.task_schedule_generating': 'Generating task plans...'
       },
       true
     );
@@ -85,10 +85,10 @@ describe('PlanOptimizingComponent', () => {
     component.control = {
       status: 'optimizing',
       progress: 90,
-      phaseMessage: 'Generating task schedules...'
+      phaseMessage: 'Generating task plans...'
     };
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Generating task schedules...');
+    expect(fixture.nativeElement.textContent).toContain('Generating task plans...');
   });
 
   it('shows completed heading when progress reaches 100%', () => {

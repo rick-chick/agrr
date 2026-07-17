@@ -31,7 +31,7 @@ describe('PlanOptimizingPresenter', () => {
     translate.setTranslation(
       'en',
       {
-        'models.cultivation_plan.phases.task_schedule_generating': 'Generating task schedules...'
+        'models.cultivation_plan.phases.task_schedule_generating': 'Generating task plans...'
       },
       true
     );
@@ -59,7 +59,7 @@ describe('PlanOptimizingPresenter', () => {
       message_key: 'models.cultivation_plan.phases.task_schedule_generating'
     });
 
-    expect(harness.control.phaseMessage).toBe('Generating task schedules...');
+    expect(harness.control.phaseMessage).toBe('Generating task plans...');
   });
 
   it('calls onOptimizationCompleted when status becomes completed', () => {
