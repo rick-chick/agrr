@@ -32,6 +32,8 @@ export type ResolvedCaptureIds = {
     longitude: number;
   } | null;
   cropId: number | null;
+  /** 生育ステージ編集ルート用: ステージが 1 件以上ある作物の先頭ステージ */
+  cropStageEdit: { cropId: number; stageId: number } | null;
 };
 
 function stripOrigin(base: string): string {
@@ -113,6 +115,50 @@ async function fetchEntryScheduleCropIdForFarm(
   }
 }
 
+/** 生育ステージが 1 件以上ある作物と先頭ステージ id を API から探す */
+async function fetchCropStageEditTarget(
+  api: APIRequestContext,
+  base: string,
+  preferredCropId: number | undefined,
+): Promise<{ cropId: number; stageId: number } | null> {
+  const cropIds: number[] = [];
+  if (preferredCropId != null) {
+    cropIds.push(preferredCropId);
+  }
+
+  try {
+    const cropsRes = await api.get(`${base}/api/v1/masters/crops`);
+    if (cropsRes.ok()) {
+      for (const crop of parseMasterList(await cropsRes.json())) {
+        const id = crop['id'];
+        if (id == null) continue;
+        const numericId = Number(id);
+        if (!cropIds.includes(numericId)) {
+          cropIds.push(numericId);
+        }
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  for (const cropId of cropIds) {
+    try {
+      const stagesRes = await api.get(`${base}/api/v1/masters/crops/${cropId}/crop_stages`);
+      if (!stagesRes.ok()) continue;
+      const stages = parseMasterList(await stagesRes.json());
+      if (stages.length === 0) continue;
+      const stageId = stages[0]?.['id'];
+      if (stageId == null) continue;
+      return { cropId, stageId: Number(stageId) };
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
 /**
  * 開発セッション付き API で一覧を取り、マニフェストの placeholder `1` を差し替えるための id を集める。
  */
@@ -157,7 +203,9 @@ export async function buildResolvedCaptureIds(
 
   const publicPlanId = await probePublicPlanId(api, base);
 
-  return { masters, privatePlanId, publicPlanId, farmId, entryScheduleFarm, cropId };
+  const cropStageEdit = await fetchCropStageEditTarget(api, base, masters.crops);
+
+  return { masters, privatePlanId, publicPlanId, farmId, entryScheduleFarm, cropId, cropStageEdit };
 }
 
 /** 認証不要の public data が取れる cultivation_plan id を少数試行で探す */

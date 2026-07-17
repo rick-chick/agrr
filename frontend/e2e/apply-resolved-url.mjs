@@ -21,6 +21,7 @@ export const MASTER_SEGMENTS = [
  *   publicPlanId: number | null;
  *   farmId: number | null;
  *   cropId: number | null;
+ *   cropStageEdit: { cropId: number; stageId: number } | null;
  * }} ids
  * @returns {string}
  */
@@ -33,6 +34,18 @@ export function applyResolvedUrl(pattern, url, ids) {
   if (pattern === 'entry-schedule/crop/:cropId') {
     if (ids.cropId == null || ids.farmId == null) return url;
     return `/entry-schedule/crop/${ids.cropId}?farmId=${ids.farmId}`;
+  }
+
+  if (pattern === 'crops/:id/stages') {
+    const target = ids.cropStageEdit;
+    if (target == null) return url;
+    return `/crops/${target.cropId}/stages`;
+  }
+
+  if (pattern === 'crops/:id/stages/:stageId/edit') {
+    const target = ids.cropStageEdit;
+    if (target == null) return url;
+    return `/crops/${target.cropId}/stages/${target.stageId}/edit`;
   }
 
   if (pattern.startsWith('plans/')) {

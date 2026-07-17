@@ -52,6 +52,9 @@ smokeDescribe('route smoke (Angular + agrr-server session)', () => {
           test.skip(true, 'no entry schedule farm resolved');
         }
       }
+      if (r.pattern === 'crops/:id/stages/:stageId/edit' && resolvedCaptureIds?.cropStageEdit == null) {
+        test.skip(true, 'no crop with stages in dev DB');
+      }
 
       const url = resolveGotoUrl(r, resolvedCaptureIds);
       const seeded = await preparePublicPlanRoute(page, r.pattern, resolvedCaptureIds);
