@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
+import { hashDependencySection } from './issue-worker-deps-agent-lib.mjs';
 import {
   buildWebhookPayload,
   defaultRetryReasonForMode,
@@ -11,6 +13,7 @@ import {
   parseHardDependencyIssueNumbers,
   parseRetryDispatchArgs,
   resolveDependencyGate,
+  resolveDependencyGateFromAgentCache,
   resolveDispatchAction,
   resolveEpicImplementGate,
   resolveImplementDispatchGate,
@@ -21,6 +24,25 @@ import {
   isDepsResolvedUnblockCandidate,
   formatDependencyGateComment,
 } from './issue-worker-dispatch-lib.mjs';
+
+/**
+ * @param {number[]} hardDependencies
+ * @param {string} issueBody
+ * @returns {{
+ *   hard_dependencies: number[];
+ *   soft_notes: string[];
+ *   rationale: string;
+ *   body_hash: string;
+ * }}
+ */
+function agentContract(hardDependencies, issueBody) {
+  return {
+    hard_dependencies: hardDependencies,
+    soft_notes: [],
+    rationale: 'fixture',
+    body_hash: hashDependencySection(issueBody),
+  };
+}
 
 test('hasLabel matches comma-separated labels', () => {
   assert.equal(hasLabel('enhancement,agent-ready', 'agent-ready'), true);
@@ -335,6 +357,7 @@ test('resolveDependencyGate passes when all dependencies are closed', async () =
   const result = await resolveDependencyGate({
     issueNumber: 318,
     issueBody: body,
+    getAgentDepsContract: async () => agentContract([317], body),
     fetchIssueState: async (number) => (number === 317 ? 'CLOSED' : 'OPEN'),
   });
   assert.deepEqual(result, { skip: false });
@@ -345,6 +368,7 @@ test('resolveDependencyGate blocks when a dependency is open', async () => {
   const result = await resolveDependencyGate({
     issueNumber: 318,
     issueBody: body,
+    getAgentDepsContract: async () => agentContract([317], body),
     fetchIssueState: async (number) => (number === 317 ? 'OPEN' : 'CLOSED'),
   });
   assert.deepEqual(result, {
@@ -363,11 +387,78 @@ test('resolveDependencyGate detects circular dependency', async () => {
       resolveDependencyGate({
         issueNumber: 318,
         issueBody: body318,
-        fetchIssueState: async (number) => 'OPEN',
+        getAgentDepsContract: async (number, currentBody) =>
+          agentContract(number === 318 ? [317] : [318], currentBody),
+        fetchIssueState: async () => 'OPEN',
         fetchIssueBody: async (number) => bodies[number] ?? '',
       }),
     /circular dependency/i,
   );
+});
+
+test('resolveDependencyGate does not block when agent cache is missing', async () => {
+  const body = ['## 依存', '', '- #317'].join('\n');
+  const result = await resolveDependencyGate({
+    issueNumber: 318,
+    issueBody: body,
+    getAgentDepsContract: async () => null,
+    fetchIssueState: async () => 'OPEN',
+  });
+  assert.deepEqual(result, { skip: false, agentCacheMiss: true });
+});
+
+test('resolveDependencyGateFromAgentCache uses agent hard_dependencies only (#384 type)', async () => {
+  const body = [
+    '## 依存',
+    '',
+    '- なし（既存 open issue #362 epic「作業予定画面」とは独立）',
+  ].join('\n');
+  const result = await resolveDependencyGateFromAgentCache({
+    issueNumber: 384,
+    issueBody: body,
+    getAgentDepsContract: async () => agentContract([], body),
+    fetchIssueState: async () => 'OPEN',
+  });
+  assert.deepEqual(result, { skip: false });
+});
+
+test('resolveDependencyGateFromAgentCache blocks #402 type when #384 is open', async () => {
+  const body = ['## 依存', '', '- #384（タブラベル整合。open の間は着手不可）'].join('\n');
+  const result = await resolveDependencyGateFromAgentCache({
+    issueNumber: 402,
+    issueBody: body,
+    getAgentDepsContract: async () => agentContract([384], body),
+    fetchIssueState: async (number) => (number === 384 ? 'OPEN' : 'CLOSED'),
+  });
+  assert.deepEqual(result, {
+    skip: true,
+    skipReason: 'dependency #384 is open',
+    openDependencies: [384],
+  });
+});
+
+test('resolveDependencyGateFromAgentCache ignores stale body_hash', async () => {
+  const body = ['## 依存', '', '- #317'].join('\n');
+  const result = await resolveDependencyGateFromAgentCache({
+    issueNumber: 318,
+    issueBody: body,
+    getAgentDepsContract: async () => ({
+      hard_dependencies: [317],
+      soft_notes: [],
+      rationale: 'stale',
+      body_hash: 'deadbeef',
+    }),
+    fetchIssueState: async () => 'OPEN',
+  });
+  assert.deepEqual(result, { skip: false, agentCacheStale: true });
+});
+
+test('resolveDependencyGateFromAgentCache does not use parseHardDependencyIssueNumbers', async () => {
+  const source = await readFile(new URL('./issue-worker-dispatch-lib.mjs', import.meta.url), 'utf8');
+  const fnStart = source.indexOf('export async function resolveDependencyGateFromAgentCache');
+  const fnEnd = source.indexOf('export async function resolveDependencyGate', fnStart);
+  const fnBody = source.slice(fnStart, fnEnd);
+  assert.doesNotMatch(fnBody, /parseHardDependencyIssueNumbers/);
 });
 
 test('resolveDispatchAction skips agent-ready when agent-skipped is present', () => {
@@ -445,11 +536,13 @@ test('resolveImplementPreDispatchGates blocks epic before dependency check', asy
 });
 
 test('resolveImplementPreDispatchGates blocks open dependencies', async () => {
+  const body = '## 依存\n\n- #317';
   const result = await resolveImplementPreDispatchGates({
     issueNumber: 318,
     issueTitle: 'Child',
-    issueBody: '## 依存\n\n- #317',
+    issueBody: body,
     issueLabels: 'agent-ready',
+    getAgentDepsContract: async () => agentContract([317], body),
     fetchIssueState: async (number) => (number === 317 ? 'OPEN' : 'CLOSED'),
     fetchIssueBody: async () => '',
   });
@@ -458,20 +551,26 @@ test('resolveImplementPreDispatchGates blocks open dependencies', async () => {
 });
 
 test('isDepsResolvedUnblockCandidate accepts agent-skipped when all deps closed', async () => {
+  const body = '## 依存\n\n- #364\n- #365';
   const result = await isDepsResolvedUnblockCandidate({
     issueLabels: 'agent-skipped',
-    issueBody: '## 依存\n\n- #364\n- #365',
+    issueBody: body,
     hasOpenFixPr: false,
+    issueNumber: 370,
+    getAgentDepsContract: async () => agentContract([364, 365], body),
     fetchIssueState: async () => 'CLOSED',
   });
   assert.deepEqual(result, { eligible: true });
 });
 
 test('isDepsResolvedUnblockCandidate rejects when dependency still open', async () => {
+  const body = '## 依存\n\n- #364';
   const result = await isDepsResolvedUnblockCandidate({
     issueLabels: 'agent-skipped',
-    issueBody: '## 依存\n\n- #364',
+    issueBody: body,
     hasOpenFixPr: false,
+    issueNumber: 370,
+    getAgentDepsContract: async () => agentContract([364], body),
     fetchIssueState: async (number) => (number === 364 ? 'OPEN' : 'CLOSED'),
   });
   assert.deepEqual(result, {
@@ -480,16 +579,19 @@ test('isDepsResolvedUnblockCandidate rejects when dependency still open', async 
   });
 });
 
-test('isDepsResolvedUnblockCandidate rejects out_of_scope skips without deps', async () => {
+test('isDepsResolvedUnblockCandidate rejects out_of_scope skips without hard deps', async () => {
+  const body = '## 依存\n\n- なし';
   const result = await isDepsResolvedUnblockCandidate({
     issueLabels: 'agent-skipped',
-    issueBody: '## 依存\n\n- なし',
+    issueBody: body,
     hasOpenFixPr: false,
+    issueNumber: 370,
+    getAgentDepsContract: async () => agentContract([], body),
     fetchIssueState: async () => 'CLOSED',
   });
   assert.deepEqual(result, {
     eligible: false,
-    reason: 'no dependency section refs',
+    reason: 'no hard dependencies in agent cache',
   });
 });
 
@@ -507,21 +609,24 @@ test('isDepsResolvedUnblockCandidate rejects without agent-skipped', async () =>
 });
 
 test('selectDepsUnblockCandidate picks lowest-number eligible issue', async () => {
+  const body = '## 依存\n\n- #364';
+  const getAgentDepsContract = async (_number, currentBody) => agentContract([364], currentBody);
   const selected = await selectDepsUnblockCandidate(
     [
       {
         number: 370,
         labels: ['agent-skipped'],
-        body: '## 依存\n\n- #364',
+        body,
       },
       {
         number: 367,
         labels: ['agent-skipped'],
-        body: '## 依存\n\n- #364',
+        body,
       },
     ],
     () => false,
     async () => 'CLOSED',
+    getAgentDepsContract,
   );
   assert.equal(selected?.issue.number, 367);
 });
@@ -579,20 +684,6 @@ test('parseHardDependencyIssueNumbers extracts explicit hard dependencies', () =
     '- #999',
   ].join('\n');
   assert.deepEqual(parseHardDependencyIssueNumbers(body), [317, 320]);
-});
-
-test('resolveDependencyGate uses hard dependencies only for なし with reference (#384 type)', async () => {
-  const body = [
-    '## 依存',
-    '',
-    '- なし（既存 open issue #362 epic「作業予定画面」とは独立）',
-  ].join('\n');
-  const result = await resolveDependencyGate({
-    issueNumber: 384,
-    issueBody: body,
-    fetchIssueState: async () => 'OPEN',
-  });
-  assert.deepEqual(result, { skip: false });
 });
 
 test('selectDispatchableRetryCandidate skips pre-dispatch failure and picks next issue', async () => {

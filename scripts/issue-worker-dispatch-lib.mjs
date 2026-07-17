@@ -1,3 +1,8 @@
+import {
+  hashDependencySection,
+  extractDependencySection,
+} from './issue-worker-deps-agent-lib.mjs';
+
 const DEFAULT_RETRY_DISPATCH_REPO = 'rick-chick/agrr';
 
 /**
@@ -33,28 +38,6 @@ export function hasLabel(labelsCsv, name) {
     .map((label) => label.trim())
     .filter(Boolean)
     .includes(name);
-}
-
-/**
- * Extract the body of the `## 依存` section (until the next `##` heading).
- *
- * @param {string} issueBody
- * @returns {string | null}
- */
-function extractDependencySection(issueBody) {
-  const lines = issueBody.split(/\r?\n/);
-  const startIndex = lines.findIndex((line) => /^## 依存[ \t]*$/.test(line));
-  if (startIndex === -1) {
-    return null;
-  }
-  const sectionLines = [];
-  for (let i = startIndex + 1; i < lines.length; i += 1) {
-    if (/^## /.test(lines[i])) {
-      break;
-    }
-    sectionLines.push(lines[i]);
-  }
-  return sectionLines.join('\n').trimEnd();
 }
 
 /**
@@ -164,26 +147,46 @@ export function formatDependencyGateComment(openDependencies) {
 }
 
 /**
+ * @typedef {{
+ *   hard_dependencies: number[];
+ *   soft_notes: string[];
+ *   rationale: string;
+ *   body_hash: string;
+ * }} AgentDepsContract
+ */
+
+/**
+ * Resolve hard dependencies from Agent cache only. Parser / heuristic fallback is forbidden.
+ *
  * @param {{
  *   issueNumber: number;
  *   issueBody: string;
+ *   getAgentDepsContract?: (
+ *     issueNumber: number,
+ *     issueBody: string,
+ *   ) => Promise<AgentDepsContract | null> | AgentDepsContract | null;
  *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
  *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
  * }} input
  * @returns {Promise<
- *   { skip: false }
+ *   { skip: false; agentCacheMiss?: boolean; agentCacheStale?: boolean }
  *   | { skip: true; skipReason: string; openDependencies: number[] }
  * >}
  */
-export async function resolveDependencyGate({
+export async function resolveDependencyGateFromAgentCache({
   issueNumber,
   issueBody,
+  getAgentDepsContract,
   fetchIssueState,
   fetchIssueBody,
 }) {
-  const directDependencies = parseHardDependencyIssueNumbers(issueBody);
-  if (directDependencies.length === 0) {
+  const section = extractDependencySection(issueBody);
+  if (!section) {
     return { skip: false };
+  }
+
+  if (!getAgentDepsContract) {
+    return { skip: false, agentCacheMiss: true };
   }
 
   const visiting = new Set([issueNumber]);
@@ -194,7 +197,15 @@ export async function resolveDependencyGate({
    * @param {string} currentBody
    */
   async function walk(currentNumber, currentBody) {
-    const dependencies = parseHardDependencyIssueNumbers(currentBody);
+    const contract = await getAgentDepsContract(currentNumber, currentBody);
+    if (!contract) {
+      return;
+    }
+    if (contract.body_hash !== hashDependencySection(currentBody)) {
+      return;
+    }
+
+    const dependencies = [...contract.hard_dependencies].sort((a, b) => a - b);
     for (const dependencyNumber of dependencies) {
       if (visiting.has(dependencyNumber)) {
         throw new Error(
@@ -214,6 +225,14 @@ export async function resolveDependencyGate({
     }
   }
 
+  const rootContract = await getAgentDepsContract(issueNumber, issueBody);
+  if (!rootContract) {
+    return { skip: false, agentCacheMiss: true };
+  }
+  if (rootContract.body_hash !== hashDependencySection(issueBody)) {
+    return { skip: false, agentCacheStale: true };
+  }
+
   await walk(issueNumber, issueBody);
 
   if (openDependencies.size === 0) {
@@ -227,6 +246,13 @@ export async function resolveDependencyGate({
     skipReason: `dependency #${first} is open`,
     openDependencies: sorted,
   };
+}
+
+/**
+ * @param {Parameters<typeof resolveDependencyGateFromAgentCache>[0]} input
+ */
+export async function resolveDependencyGate(input) {
+  return resolveDependencyGateFromAgentCache(input);
 }
 
 /**
@@ -259,6 +285,10 @@ export function resolveEpicImplementGate({ action, issueTitle, issueLabels }) {
  *   issueTitle: string;
  *   issueBody: string;
  *   issueLabels: string;
+ *   getAgentDepsContract?: (
+ *     issueNumber: number,
+ *     issueBody: string,
+ *   ) => Promise<import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null> | import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null;
  *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
  *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
  * }} input
@@ -272,6 +302,7 @@ export async function resolveImplementPreDispatchGates({
   issueTitle,
   issueBody,
   issueLabels,
+  getAgentDepsContract,
   fetchIssueState,
   fetchIssueBody,
 }) {
@@ -285,9 +316,10 @@ export async function resolveImplementPreDispatchGates({
   }
 
   try {
-    const dependencyGate = await resolveDependencyGate({
+    const dependencyGate = await resolveDependencyGateFromAgentCache({
       issueNumber,
       issueBody,
+      getAgentDepsContract,
       fetchIssueState,
       fetchIssueBody,
     });
@@ -466,6 +498,11 @@ export async function selectDispatchableRetryCandidate(
  *   issueLabels: string;
  *   issueBody: string;
  *   hasOpenFixPr: boolean;
+ *   getAgentDepsContract?: (
+ *     issueNumber: number,
+ *     issueBody: string,
+ *   ) => Promise<AgentDepsContract | null> | AgentDepsContract | null;
+ *   issueNumber?: number;
  *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
  * }} input
  * @returns {Promise<{ eligible: true } | { eligible: false; reason: string }>}
@@ -474,6 +511,8 @@ export async function isDepsResolvedUnblockCandidate({
   issueLabels,
   issueBody,
   hasOpenFixPr,
+  getAgentDepsContract,
+  issueNumber = 0,
   fetchIssueState,
 }) {
   if (!hasLabel(issueLabels, 'agent-skipped')) {
@@ -485,9 +524,16 @@ export async function isDepsResolvedUnblockCandidate({
   if (hasOpenFixPr) {
     return { eligible: false, reason: 'open fix pr exists' };
   }
-  const dependencies = parseHardDependencyIssueNumbers(issueBody);
+  if (!getAgentDepsContract) {
+    return { eligible: false, reason: 'no agent dependency cache resolver' };
+  }
+  const contract = await getAgentDepsContract(issueNumber, issueBody);
+  if (!contract || contract.body_hash !== hashDependencySection(issueBody)) {
+    return { eligible: false, reason: 'no valid agent dependency cache' };
+  }
+  const dependencies = [...contract.hard_dependencies].sort((a, b) => a - b);
   if (dependencies.length === 0) {
-    return { eligible: false, reason: 'no dependency section refs' };
+    return { eligible: false, reason: 'no hard dependencies in agent cache' };
   }
   for (const dependencyNumber of dependencies) {
     const state = await fetchIssueState(dependencyNumber);
@@ -505,9 +551,15 @@ export async function isDepsResolvedUnblockCandidate({
  * @param {Array<{ number: number; labels: string[]; body?: string }>} issues
  * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
  * @param {(issueNumber: number) => Promise<string> | string} fetchIssueState
+ * @param {(issueNumber: number, issueBody: string) => Promise<AgentDepsContract | null> | AgentDepsContract | null} getAgentDepsContract
  * @returns {Promise<{ issue: { number: number; labels: string[]; body?: string } } | null>}
  */
-export async function selectDepsUnblockCandidate(issues, hasOpenFixPrFor, fetchIssueState) {
+export async function selectDepsUnblockCandidate(
+  issues,
+  hasOpenFixPrFor,
+  fetchIssueState,
+  getAgentDepsContract,
+) {
   const sorted = [...issues].sort((a, b) => a.number - b.number);
   for (const issue of sorted) {
     const labels = issue.labels.join(',');
@@ -515,6 +567,8 @@ export async function selectDepsUnblockCandidate(issues, hasOpenFixPrFor, fetchI
       issueLabels: labels,
       issueBody: issue.body ?? '',
       hasOpenFixPr: hasOpenFixPrFor(issue.number),
+      getAgentDepsContract,
+      issueNumber: issue.number,
       fetchIssueState,
     });
     if (result.eligible) {
