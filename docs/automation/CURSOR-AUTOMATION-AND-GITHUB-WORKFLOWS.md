@@ -211,12 +211,12 @@ issue（ux-campaign:*）→ Issue Worker → PR → PR Merge Worker
 
 | Automation | トリガ種別 | スキル | PR を開くか |
 |------------|------------|--------|-------------|
-| **Issue Worker** | Webhook（issue-worker-dispatch） | `github-issue-worker` | ✅ 実装時 |
-| **PR Merge Worker** | Git イベント（CI completed / PR opened）+ Webhook（pr-merge-worker-dispatch） | `github-pr-merge-worker` | ❌（マージのみ） |
-| **UX Campaign Loop** | Webhook（ux-campaign-review-dispatch） | `ux-campaign-loop` | ❌（issue 起票のみ） |
-| **UX Issue Audit** | Schedule（月曜 9:00 JST） | `ux-issue-pipeline` § Automation | ❌（条件付き issue） |
-| **Automation Audit** | Schedule（金曜 10:00 JST） | `cloud-automation-audit` | ✅ クリティカル修正時のみ |
-| **Pipeline Watchdog** | Schedule（毎時 0 分 JST） | `automation-pipeline-watchdog` | ❌（異常時 issue・P0 のみ最小 PR） |
+| **Issue Worker** | Webhook（issue-worker-dispatch） | `github-issue-worker` | 可（実装時） |
+| **PR Merge Worker** | Git イベント（CI completed / PR opened）+ Webhook（pr-merge-worker-dispatch） | `github-pr-merge-worker` | 不可（マージのみ） |
+| **UX Campaign Loop** | Webhook（ux-campaign-review-dispatch） | `ux-campaign-loop` | 不可（issue 起票のみ） |
+| **UX Issue Audit** | Schedule（月曜 9:00 JST） | `ux-issue-pipeline` § Automation | 不可（条件付き issue） |
+| **Automation Audit** | Schedule（金曜 10:00 JST） | `cloud-automation-audit` | 可（クリティカル修正時のみ） |
+| **Pipeline Watchdog** | Schedule（毎時 0 分 JST） | `automation-pipeline-watchdog` | 不可（異常時 issue・P0 のみ最小 PR） |
 
 **GitHub Actions のみ**（Cursor Automation ではない）: PR Agent Prep、Retry dispatch、Frontend E2E capture。
 

@@ -53,7 +53,7 @@ disable-model-invocation: <true|false>
 - 関連スキル・ARCHITECTURE.md などへのリンク
 ```
 
-## やってはいけない
+## 行わないこと
 
 - **同じリストを「## Instructions」「## References」「## 参照（階層）」に 2〜3 回書く**（読み手の認知コストを増やすだけ）。
 - **`## 参照の使い方（階層）` テーブル**（「本 SKILL = ルール、references = 詳細」）の定型ボイラープレート。情報量が無いので書かない。

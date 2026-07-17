@@ -17,7 +17,7 @@ alwaysApply: true
 
 対象例: `crates/agrr-server/**`, `crates/agrr-domain/**`, `crates/agrr-adapters-*/**`, API レスポンス形に影響する migration。
 
-## やってはいけないこと
+## 行わないこと
 
 - 再ビルドなしで「ページをリロードしてください」だけ案内する
 - `docker compose restart agrr-server` だけで済ませる（古いバイナリのまま）

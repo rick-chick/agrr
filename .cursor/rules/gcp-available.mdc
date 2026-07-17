@@ -10,4 +10,4 @@ alwaysApply: true
 
 **本番の現在状態を断定するとき**は観測するか **未確認** と明示する。一般的な仕様説明やローカル手順だけなら不要。境界の切り方は **[`agent-operational-canonical.md`](../skills/clean-architecture-violation-fix-workflow/references/agent-operational-canonical.md)**。
 
-調査では Cloud Run・Artifact Registry・Cloud Storage 等に gcloud を使う。ログが必要なときは、ユーザーに丸投げする前に可能な限り**こちらで取得・要約**する。
+調査では Cloud Run・Artifact Registry・Cloud Storage 等に gcloud を使う。ログが必要なときは、ユーザーへ手順の委譲のみとする前に可能な限り**こちらで取得・要約**する。
