@@ -89,7 +89,7 @@ where
         if blueprints.is_empty() {
             return Err(CropBlueprintRegenerateFailure::new(
                 CropBlueprintRegenerateFailureReason::MissingBlueprints,
-                "作業予定ブループリントが1件以上必要です",
+                "作業計画ブループリントが1件以上必要です",
             ));
         }
 
@@ -213,7 +213,7 @@ where
         if blueprint_rows.is_empty() {
             return Err(CropBlueprintRegenerateFailure::new(
                 CropBlueprintRegenerateFailureReason::BlueprintRegenerationFromAgrrFailed,
-                "AGRRの応答から作業予定ブループリントを生成できませんでした",
+                "AGRRの応答から作業計画ブループリントを生成できませんでした",
             ));
         }
 

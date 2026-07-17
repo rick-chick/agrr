@@ -844,16 +844,16 @@
         "fetching_weather": "Fetching weather data...",
         "predicting_weather": "Predicting weather data...",
         "weather_prediction_completed": "Weather prediction completed",
-        "optimization_completed": "Optimization finished. Generating task schedules...",
+        "optimization_completed": "Optimization finished. Generating task plans...",
         "optimizing": "Optimizing...",
-        "task_schedule_generating": "Generating task schedules...",
+        "task_schedule_generating": "Generating task plans...",
         "completed": "Optimization completed"
       },
       "phase_failed": {
         "fetching_weather": "Failed to fetch weather data",
         "predicting_weather": "Failed to predict weather data",
         "optimizing": "Optimization failed",
-        "task_schedule_generation": "Task schedule generation failed",
+        "task_schedule_generation": "Task plan generation failed",
         "default": "Process failed"
       },
       "default_plan_name": "Main Plan",
@@ -886,7 +886,7 @@
       "restart": "Please start over.",
       "create_failed": "Failed to create plan: {{errors}}",
       "not_found": "Crop plan not found.",
-      "schedule_generation_failed": "Failed to register work schedule",
+      "schedule_generation_failed": "Failed to register work plan",
       "crop_not_found": "Crop not found.",
       "no_candidates_found": "No optimal planting schedule found for this crop. Weather data range was extended but no candidates were found.",
       "prediction_data_incomplete": "Weather prediction data is incomplete. Please try again later."
@@ -967,7 +967,7 @@
           "fetching_weather": "Check your region and farm settings, then try again in a few minutes.",
           "predicting_weather": "Weather data may still be preparing. Wait a moment and try again.",
           "optimizing": "Review your selected crops and growing period, then try again.",
-          "task_schedule_generation": "Something went wrong while preparing task schedules. Please try again.",
+          "task_schedule_generation": "Something went wrong while preparing task plans. Please try again.",
           "default": "Use the buttons below to change crops or start over from the beginning."
         }
       },
@@ -1277,7 +1277,7 @@
         "tooltip_format": "yyyy-MM-dd",
         "required_cumulative_gdd": "Required cumulative GDD"
       },
-      "open_task_schedule": "Open task schedule for this field"
+      "open_task_schedule": "Open task plan for this field"
     },
     "detail": {
       "select_cultivation_hint": "Select a cultivation bar on the chart to view climate data."
@@ -1291,12 +1291,12 @@
       }
     },
     "task_schedules": {
-      "page_title": "Task schedule — {{name}}",
-      "empty_hint": "Add crops to your plan to generate task schedules. Use the Cropping plan tab above to review your plan.",
-      "empty_ready_no_fields": "Task schedules are ready, but there are no fields to display. Check fields and crops on the Cropping plan tab.",
+      "page_title": "Task plan — {{name}}",
+      "empty_hint": "Add crops to your plan to generate task plans. Use the Cropping plan tab above to review your plan.",
+      "empty_ready_no_fields": "Task plans are ready, but there are no fields to display. Check fields and crops on the Cropping plan tab.",
       "timeline_generated_at": "Generated: {{datetime}}",
       "timeline_generated_unknown": "Generated: unavailable",
-      "no_schedules": "No task schedule has been generated yet.",
+      "no_schedules": "No task plan has been generated yet.",
       "status": {
         "planned": "Planned",
         "skipped": "Skipped",
@@ -1308,49 +1308,49 @@
       "filter_from_date": "From date",
       "list_empty": "No tasks match the current filters.",
       "list_row_meta": "{{field}} · {{crop}}",
-      "sync_never": "Task schedules have not been generated yet.",
-      "sync_failed": "Task schedule generation failed.",
-      "sync_generating": "Generating task schedules...",
-      "sync_stale": "Task schedules are out of date with the latest plan.",
-      "sync_updated": "Task schedules have been updated.",
-      "sync_retry": "Regenerate task schedules",
+      "sync_never": "Task plans have not been generated yet.",
+      "sync_failed": "Task plan generation failed.",
+      "sync_generating": "Generating task plans...",
+      "sync_stale": "Task plans are out of date with the latest plan.",
+      "sync_updated": "Task plans have been updated.",
+      "sync_retry": "Regenerate task plans",
       "regenerate_confirm": "Regenerating replaces unfinished auto-generated items. Items with work records and manual entries are kept. Continue?",
       "sync_wizard_cta_hint": "Open registration wizard",
       "sync_errors": {
-        "missing_weather": "Task schedules could not be generated because weather forecast data is missing.",
-        "missing_crop_templates": "Task schedules could not be generated because crop task templates are missing.",
-        "missing_crop_templates_named": "Task schedules could not be generated because task templates for \"{{cropName}}\" are missing.",
+        "missing_weather": "Task plans could not be generated because weather forecast data is missing.",
+        "missing_crop_templates": "Task plans could not be generated because crop task templates are missing.",
+        "missing_crop_templates_named": "Task plans could not be generated because task templates for \"{{cropName}}\" are missing.",
         "missing_crop_templates_link": "Register task templates from crop list",
-        "missing_crop_blueprints": "Task schedules could not be generated because crop task schedule blueprints are missing.",
-        "missing_crop_blueprints_named": "Task schedules could not be generated because task schedule blueprints for \"{{cropName}}\" are missing.",
-        "missing_crop_blueprints_link": "Register task schedule blueprints from crop list",
-        "missing_general_templates": "Task schedules could not be generated because general work blueprints are missing.",
-        "missing_general_templates_named": "Task schedules could not be generated because general work blueprints for \"{{cropName}}\" are missing.",
+        "missing_crop_blueprints": "Task plans could not be generated because crop task plan templates are missing.",
+        "missing_crop_blueprints_named": "Task plans could not be generated because task plan templates for \"{{cropName}}\" are missing.",
+        "missing_crop_blueprints_link": "Register task plan templates from crop list",
+        "missing_general_templates": "Task plans could not be generated because general work blueprints are missing.",
+        "missing_general_templates_named": "Task plans could not be generated because general work blueprints for \"{{cropName}}\" are missing.",
         "missing_general_templates_link": "Register general work blueprints from crop list",
-        "missing_general_blueprints": "Task schedules could not be generated because general work blueprints are missing.",
-        "missing_general_blueprints_named": "Task schedules could not be generated because general work blueprints for \"{{cropName}}\" are missing.",
+        "missing_general_blueprints": "Task plans could not be generated because general work blueprints are missing.",
+        "missing_general_blueprints_named": "Task plans could not be generated because general work blueprints for \"{{cropName}}\" are missing.",
         "missing_general_blueprints_link": "Register general work blueprints from crop list",
-        "empty_gdd_progress": "Task schedules could not be generated because GDD progress is empty.",
-        "empty_gdd_progress_named": "Task schedules could not be generated for {{cropName}} because GDD progress is empty.",
-        "missing_gdd_trigger": "Task schedules could not be generated because one or more crop blueprints are missing a GDD trigger.",
-        "missing_gdd_trigger_named": "Task schedules could not be generated because {{cropName}} has blueprint rows without a GDD trigger.",
-        "missing_gdd_trigger_link": "Review task schedule blueprints from the crop list",
+        "empty_gdd_progress": "Task plans could not be generated because GDD progress is empty.",
+        "empty_gdd_progress_named": "Task plans could not be generated for {{cropName}} because GDD progress is empty.",
+        "missing_gdd_trigger": "Task plans could not be generated because one or more crop blueprints are missing a GDD trigger.",
+        "missing_gdd_trigger_named": "Task plans could not be generated because {{cropName}} has blueprint rows without a GDD trigger.",
+        "missing_gdd_trigger_link": "Review task plan templates from the crop list",
         "missing_gdd_trigger_wizard_link": "Set GDD triggers for {{cropName}}",
-        "gdd_date_not_found": "Task schedules could not be generated because a scheduled date could not be resolved from GDD progress.",
-        "gdd_date_not_found_named": "Task schedules could not be generated for {{cropName}} because a date could not be resolved for a GDD trigger. Review growth stages and GDD triggers.",
-        "gdd_date_not_found_link": "Review task schedule blueprints from the crop list",
-        "gdd_date_not_found_wizard_link": "Review task schedule blueprints for {{cropName}}",
-        "missing_start_date": "Task schedules could not be generated because the cultivation start date is missing.",
+        "gdd_date_not_found": "Task plans could not be generated because a scheduled date could not be resolved from GDD progress.",
+        "gdd_date_not_found_named": "Task plans could not be generated for {{cropName}} because a date could not be resolved for a GDD trigger. Review growth stages and GDD triggers.",
+        "gdd_date_not_found_link": "Review task plan templates from the crop list",
+        "gdd_date_not_found_wizard_link": "Review task plan templates for {{cropName}}",
+        "missing_start_date": "Task plans could not be generated because the cultivation start date is missing.",
         "agrr_unavailable": "Could not reach the AGRR processing service. Please try again later.",
-        "generic": "Task schedules could not be created.",
+        "generic": "Task plans could not be created.",
         "generic_single": "Check settings for \"{{cropName}}\", or retry if setup is already complete.",
-        "generic_multi": "Task schedules could not be created. Check the crops below, or retry if setup is already complete.",
+        "generic_multi": "Task plans could not be created. Check the crops below, or retry if setup is already complete.",
         "generic_no_plan_crops": "No crops were found on this plan. Check fields and crops on the plan.",
         "crop_wizard_link": "Open registration wizard for \"{{cropName}}\"",
         "plan_context_link": "Review plan fields and weather",
         "crop_stages_link": "Review growth stages for \"{{cropName}}\"",
         "generic_plan_link": "Open plan fields and crops",
-        "missing_field_crop": "Task schedules could not be generated because a field in this plan has no crop assigned."
+        "missing_field_crop": "Task plans could not be generated because a field in this plan has no crop assigned."
       },
       "detail": {
         "dialog_title": "{{task}} · {{crop}}",
@@ -1428,7 +1428,7 @@
         "name_required": "Task name is required"
       },
       "empty_plan_cta": "Review cropping plan",
-      "empty_task_schedule_cta": "Open task schedule"
+      "empty_task_schedule_cta": "Open task plan"
     },
     "work_records": {
       "empty": "No work records yet",
@@ -1614,7 +1614,7 @@
       "nav": {
         "aria_label": "Plan screen navigation",
         "workbench": "Cropping plan",
-        "task_schedule": "Task schedule"
+        "task_schedule": "Task plan"
       },
       "copy_plan": "Copy to Next Year",
       "delete": "Delete",
@@ -1956,8 +1956,8 @@
         "daily_uptake_k_help": "Enter daily potassium (element) uptake for this stage."
       },
       "default_name": "Stage {{order}}",
-      "delete_confirm_message": "Delete \"{{stageName}}\"?\n\nRequirements linked to this stage (temperature, GDD, etc.) will also be removed. This may affect task schedule templates and generated schedules in cultivation plans. This action cannot be undone.",
-      "delete_confirm_blueprint_warning": "This stage has {{count}} linked task schedule template(s). Deleting it may break template placement."
+      "delete_confirm_message": "Delete \"{{stageName}}\"?\n\nRequirements linked to this stage (temperature, GDD, etc.) will also be removed. This may affect task plan templates and generated task plans in cultivation plans. This action cannot be undone.",
+      "delete_confirm_blueprint_warning": "This stage has {{count}} linked task plan template(s). Deleting it may break template placement."
     },
     "flash": {
       "created": "Crop was successfully created.",
@@ -2022,9 +2022,9 @@
         "title": "{{count}} error(s):"
       },
       "stages_title": "Growth Stages",
-      "stages_lead": "Configure growth stages and environmental requirements used to estimate cultivation periods and generate work schedules in plans.",
+      "stages_lead": "Configure growth stages and environmental requirements used to estimate cultivation periods and generate work plans in plans.",
       "stages_list_heading": "Stage list",
-      "stages_empty_lead": "Growth stages are required to configure cultivation templates and task schedules.",
+      "stages_empty_lead": "Growth stages are required to configure cultivation templates and task plans.",
       "add_stage": "Add Stage",
       "stage_name": "Stage Name",
       "stage_order_duplicate": "Duplicate order values: {{orders}}. Please assign unique order numbers.",
@@ -2114,7 +2114,7 @@
       "gdd_unit": "°C·day",
       "minimum_sunshine_hours": "Minimum Sunshine Hours",
       "target_sunshine_hours": "Target Sunshine Hours",
-      "task_schedule_blueprints_title": "Task Schedule Templates",
+      "task_schedule_blueprints_title": "Task Plan Templates",
       "cultivation_template_title": "Cultivation template",
       "blueprint_summary": {
         "count": "{{count}} task plan(s)",
@@ -2124,7 +2124,7 @@
         "edit_action": "Edit task plans",
         "empty_on_detail": "No task plans yet."
       },
-      "task_schedule_blueprints_lead": "When you create a cultivation plan, work schedules are generated automatically from these templates.",
+      "task_schedule_blueprints_lead": "When you create a cultivation plan, work plans are generated automatically from these templates.",
       "task_schedule_blueprints_gdd_axis_caption": "Cumulative from crop start (not from stage start).",
       "task_schedule_blueprints_gdd_axis_label": "Cumulative GDD (total {{total}} ℃·day)",
       "no_task_schedule_blueprints": "No task plans yet. Add them one by one using the button above.",
@@ -2176,7 +2176,7 @@
         "stages_edit_action": "Edit growth stages",
         "stages_page_gap_base_temperature": "{{stageName}}: base temperature not set",
         "stages_page_gap_required_gdd": "{{stageName}}: required GDD not set",
-        "stages_next_step_action": "Go to task schedule templates"
+        "stages_next_step_action": "Go to task plan templates"
       },
       "blueprint_errors": {
         "missing_blueprints": "AI suggestions cannot be imported because no task plans are registered yet.",
@@ -2198,10 +2198,10 @@
         "board_label": "Task plans grouped by growth stage",
         "keyboard_hint": "Drag cards to change stages. Enter timing (℃·day) on each card or in the add form below."
       },
-      "from_plan_wizard_title": "Registration for this plan's task schedules",
+      "from_plan_wizard_title": "Registration for this plan's task plans",
       "from_plan_wizard_lead": "Register task plans using the form below. When finished, use the breadcrumb to return to the plan.",
       "return_to_plan": "Return to plan",
-      "from_plan_stages_wizard_lead": "Set base temperature and required GDD for each growth stage. When finished, return to the plan and regenerate task schedules.",
+      "from_plan_stages_wizard_lead": "Set base temperature and required GDD for each growth stage. When finished, return to the plan and regenerate task plans.",
       "confirm_delete": "Are you sure you want to delete this crop?",
       "form": {
         "name_label": "Name",

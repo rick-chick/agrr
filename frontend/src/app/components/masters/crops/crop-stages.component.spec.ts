@@ -72,7 +72,7 @@ const tableTranslations = {
         detail_title: 'Configuration status',
         stages_page_gap_base_temperature: '{{stageName}}: base temperature not set',
         stages_page_gap_required_gdd: '{{stageName}}: required GDD not set',
-        stages_next_step_action: 'Go to task schedule templates'
+        stages_next_step_action: 'Go to task plan templates'
       }
     },
     errors: {
