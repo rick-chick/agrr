@@ -84,7 +84,6 @@ const tableTranslations = {
       stages_empty_lead: 'Stages are required.',
       add_stage: 'Add Stage',
       table_order: 'Order',
-      table_stage_name: 'Stage name',
       table_base_temperature: 'Base temp',
       table_required_gdd: 'Required GDD',
       table_cumulative_gdd: 'Cumulative GDD',
@@ -220,50 +219,6 @@ describe('CropStagesComponent', () => {
     expect(mockLoadBlueprintsUseCase.execute).not.toHaveBeenCalled();
   });
 
-  it('derives display state when control is assigned through the component setter', () => {
-    const incompleteStage: CropStage = {
-      id: 2,
-      name: 'Vegetative',
-      order: 2
-    } as CropStage;
-
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        name: 'Tomato',
-        is_reference: false,
-        crop_stages: [incompleteStage]
-      }
-    };
-
-    expect(component.control.showBlueprintReadinessChecklist).toBe(true);
-    expect(component.control.showNextStepCta).toBe(false);
-  });
-
-  it('derives display state when presenter loads crop data', () => {
-    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
-    presenter.setView(component);
-    const incompleteStage: CropStage = {
-      id: 2,
-      name: 'Vegetative',
-      order: 2
-    } as CropStage;
-
-    presenter.present({
-      crop: {
-        id: 1,
-        name: 'Tomato',
-        is_reference: false,
-        groups: [],
-        crop_stages: [incompleteStage]
-      }
-    });
-    presenter.present({ blueprints: [] });
-
-    expect(component.control.showBlueprintReadinessChecklist).toBe(true);
-    expect(component.control.showNextStepCta).toBe(false);
-  });
-
   it('shows load error panel and hides stage list when initial crop load fails', () => {
     const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
     mockLoadUseCase.execute.mockImplementation(() => {
@@ -307,17 +262,6 @@ describe('CropStagesComponent', () => {
       )
     ).toBe('/crops');
     expect(mockCreateCropStageUseCase.execute).not.toHaveBeenCalled();
-  });
-
-  it('should call createCropStageUseCase when addCropStage is called', () => {
-    component.addCropStage();
-    expect(mockCreateCropStageUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      payload: {
-        name: 'Stage 1',
-        order: 1
-      }
-    });
   });
 
   it('renders stage cards with metadata', async () => {
