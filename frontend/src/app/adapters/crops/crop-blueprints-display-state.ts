@@ -185,12 +185,6 @@ export function withCropBlueprintDisplayState(
       !control.blueprintsLoading &&
       !blueprintReadiness.ready &&
       !control.blueprintsRegenerating,
-    blueprintSectionDescriptionKey:
-      control.fromPlanId != null
-        ? null
-        : blueprints.length
-          ? 'crops.show.task_schedule_blueprints_lead'
-          : null,
     showBlueprintEmptyState: !blueprints.length && !blueprintRegenerateError,
     showBlueprintRegenerateRetry:
       blueprintReadiness.ready &&

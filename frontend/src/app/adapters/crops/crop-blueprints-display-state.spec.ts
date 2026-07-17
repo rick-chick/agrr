@@ -87,7 +87,6 @@ const baseControl: CropTaskScheduleBlueprintsViewState = {
   canCreateBlueprint: false,
   blueprintStageNameForCreate: null,
   showBlueprintReadinessChecklist: false,
-  blueprintSectionDescriptionKey: null,
   showBlueprintEmptyState: true,
   showBlueprintRegenerateRetry: false
 };
@@ -178,31 +177,6 @@ describe('withCropBlueprintDisplayState', () => {
       cumulativeGddEnd: 500,
       gddRangeMissing: false
     });
-  });
-
-  it('omits section lead when no blueprints are registered', () => {
-    const next = withCropBlueprintDisplayState({
-      ...baseControl,
-      blueprints: []
-    });
-    expect(next.blueprintSectionDescriptionKey).toBeNull();
-  });
-
-  it('shows section lead when blueprints exist', () => {
-    const next = withCropBlueprintDisplayState({
-      ...baseControl,
-      blueprints: [blueprint({ id: 10, gdd_trigger: 50 })]
-    });
-    expect(next.blueprintSectionDescriptionKey).toBe('crops.show.task_schedule_blueprints_lead');
-  });
-
-  it('omits section lead when fromPlanId is set even if blueprints exist', () => {
-    const next = withCropBlueprintDisplayState({
-      ...baseControl,
-      fromPlanId: 7,
-      blueprints: [blueprint({ id: 10, gdd_trigger: 50 })]
-    });
-    expect(next.blueprintSectionDescriptionKey).toBeNull();
   });
 
   describe('showBlueprintEmptyState', () => {
