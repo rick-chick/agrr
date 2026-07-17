@@ -234,7 +234,7 @@ const initialControl: CropStageEditViewState = {
               </div>
             </div>
 
-            <div class="crop-stages-edit-panel__footer">
+            <div class="form-card__actions">
               @if (canMutateStages) {
                 <button
                   type="button"
@@ -242,7 +242,7 @@ const initialControl: CropStageEditViewState = {
                   [disabled]="!canSaveStagePanel()"
                   (click)="saveStagePanel()"
                 >
-                  {{ 'crops.edit.save_stage' | translate }}
+                  {{ 'crops.edit.submit_update' | translate }}
                 </button>
                 <button type="button" class="btn btn-danger" (click)="deleteCropStage(currentStage.id)">
                   {{ 'common.delete' | translate }}
@@ -270,10 +270,10 @@ const initialControl: CropStageEditViewState = {
           }}</p>
         }
         <div class="confirm-dialog__actions">
-          <button type="button" class="btn-secondary" (click)="cancelDeleteConfirmDialog()">
+          <button type="button" class="btn btn-secondary" (click)="cancelDeleteConfirmDialog()">
             {{ 'common.cancel' | translate }}
           </button>
-          <button type="button" class="btn-danger" (click)="confirmDeleteCropStage()">
+          <button type="button" class="btn btn-danger" (click)="confirmDeleteCropStage()">
             {{ 'common.delete' | translate }}
           </button>
         </div>
@@ -288,10 +288,10 @@ const initialControl: CropStageEditViewState = {
     >
       <p class="confirm-dialog__message">{{ 'crops.edit.unsaved_confirm_message' | translate }}</p>
       <div class="confirm-dialog__actions">
-        <button type="button" class="btn-secondary" (click)="cancelUnsavedConfirmDialog()">
+        <button type="button" class="btn btn-secondary" (click)="cancelUnsavedConfirmDialog()">
           {{ 'common.cancel' | translate }}
         </button>
-        <button type="button" class="btn-primary" (click)="confirmDiscardUnsavedLeave()">
+        <button type="button" class="btn btn-primary" (click)="confirmDiscardUnsavedLeave()">
           {{ 'common.confirm' | translate }}
         </button>
       </div>
@@ -299,13 +299,14 @@ const initialControl: CropStageEditViewState = {
 
     <dialog
       #temperatureDialog
-      class="confirm-dialog crop-stages__temperature-dialog"
+      class="form-dialog crop-stages__temperature-dialog"
       (cancel)="cancelTemperatureDialog($event)"
       (click)="onTemperatureDialogBackdropClick($event)"
     >
       @if (temperatureDetailDraft) {
-        <h2 class="crop-stages-dialog__title">{{ 'crops.edit.temperature_details_title' | translate }}</h2>
-        <div class="crop-stages-dialog__fields">
+        <h2 class="form-dialog__title">{{ 'crops.edit.temperature_details_title' | translate }}</h2>
+        <div class="form-card__form">
+          <div class="crop-stages-dialog__fields">
           <label class="form-card__field form-card__field--small">
             <span class="form-card__field-label">{{ 'crops.edit.low_stress_threshold' | translate }}</span>
             <input type="number" step="0.1" name="temp_low_stress" [(ngModel)]="temperatureDetailDraft.low_stress_threshold" />
@@ -318,27 +319,29 @@ const initialControl: CropStageEditViewState = {
             <span class="form-card__field-label">{{ 'crops.edit.frost_threshold' | translate }}</span>
             <input type="number" step="0.1" name="temp_frost" [(ngModel)]="temperatureDetailDraft.frost_threshold" />
           </label>
-        </div>
-        <div class="confirm-dialog__actions">
-          <button type="button" class="btn-secondary" (click)="cancelTemperatureDialog()">
+          </div>
+          <div class="form-card__actions">
+            <button type="button" class="btn btn-secondary" (click)="cancelTemperatureDialog()">
             {{ 'common.cancel' | translate }}
           </button>
-          <button type="button" class="btn-primary" (click)="saveTemperatureDialog()">
-            {{ 'crops.edit.save_stage' | translate }}
-          </button>
+            <button type="button" class="btn btn-primary" (click)="saveTemperatureDialog()">
+              {{ 'crops.edit.submit_update' | translate }}
+            </button>
+          </div>
         </div>
       }
     </dialog>
 
     <dialog
       #advancedDialog
-      class="confirm-dialog crop-stages__advanced-dialog"
+      class="form-dialog crop-stages__advanced-dialog"
       (cancel)="cancelAdvancedDialog($event)"
       (click)="onAdvancedDialogBackdropClick($event)"
     >
       @if (advancedDetailDraft) {
-        <h2 class="crop-stages-dialog__title">{{ 'crops.edit.advanced_details_title' | translate }}</h2>
-        <div class="crop-stages-dialog__fields">
+        <h2 class="form-dialog__title">{{ 'crops.edit.advanced_details_title' | translate }}</h2>
+        <div class="form-card__form">
+          <div class="crop-stages-dialog__fields">
           <label class="form-card__field form-card__field--small">
             <span class="form-card__field-label">{{ 'crops.edit.minimum_sunshine_hours' | translate }}</span>
             <input type="number" step="0.1" name="sunshine_min" [(ngModel)]="advancedDetailDraft.minimum_sunshine_hours" />
@@ -367,14 +370,15 @@ const initialControl: CropStageEditViewState = {
             <span class="form-card__field-label">{{ 'crops.edit.sterility_risk_threshold' | translate }}</span>
             <input type="number" step="0.1" name="temp_sterility" [(ngModel)]="advancedDetailDraft.sterility_risk_threshold" />
           </label>
-        </div>
-        <div class="confirm-dialog__actions">
-          <button type="button" class="btn-secondary" (click)="cancelAdvancedDialog()">
+          </div>
+          <div class="form-card__actions">
+            <button type="button" class="btn btn-secondary" (click)="cancelAdvancedDialog()">
             {{ 'common.cancel' | translate }}
           </button>
-          <button type="button" class="btn-primary" (click)="saveAdvancedDialog()">
-            {{ 'crops.edit.save_stage' | translate }}
-          </button>
+            <button type="button" class="btn btn-primary" (click)="saveAdvancedDialog()">
+              {{ 'crops.edit.submit_update' | translate }}
+            </button>
+          </div>
         </div>
       }
     </dialog>

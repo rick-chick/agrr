@@ -27,7 +27,7 @@ const CROPS_EDIT_KEYS = [
   'crops.edit.stage_order_duplicate',
   'crops.edit.stage_order_duplicate_hint',
   'crops.edit.stage_order_renumber',
-  'crops.edit.save_stage',
+  'crops.edit.submit_update',
   'crops.edit.edit_temperature_details',
   'crops.edit.edit_sunshine_nutrient',
   'crops.edit.temperature_details_title',

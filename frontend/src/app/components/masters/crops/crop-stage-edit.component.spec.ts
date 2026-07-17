@@ -66,7 +66,7 @@ const editTranslations = {
       required_gdd: 'Required GDD',
       required_gdd_placeholder: 'e.g., 800.0',
       required_gdd_help: 'Required GDD help',
-      save_stage: 'Save',
+      submit_update: 'Update Growth Stage',
       edit_temperature_details: 'Edit stress thresholds…',
       edit_sunshine_nutrient: 'Edit sunshine & nutrients…',
       temperature_details_title: 'Stress thresholds',
@@ -243,11 +243,27 @@ describe('CropStageEditComponent', () => {
     });
   });
 
+  it('places save and delete in form-card__actions with shared master button pattern', async () => {
+    await loadStage();
+
+    const actions = fixture.nativeElement.querySelector('.form-card .form-card__actions');
+    expect(actions).toBeTruthy();
+
+    const buttons = actions!.querySelectorAll('button');
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0].classList.contains('btn')).toBe(true);
+    expect(buttons[0].classList.contains('btn-primary')).toBe(true);
+    expect(buttons[1].classList.contains('btn')).toBe(true);
+    expect(buttons[1].classList.contains('btn-danger')).toBe(true);
+    expect(buttons[0].textContent?.trim()).toBe('Update Growth Stage');
+    expect(buttons[1].textContent?.trim()).toBe('Delete');
+  });
+
   it('disables save button when panel has no unsaved changes', async () => {
     await loadStage();
 
     const saveButton = fixture.nativeElement.querySelector(
-      '.crop-stages-edit-panel__footer .btn-primary'
+      '.form-card__actions .btn-primary'
     ) as HTMLButtonElement;
 
     expect(saveButton.disabled).toBe(true);
@@ -471,6 +487,31 @@ describe('CropStageEditComponent', () => {
     expect(component.advancedDetailDraft).toBeNull();
   });
 
+  it('uses form-dialog actions with btn classes in detail dialogs', async () => {
+    await loadStage();
+
+    const detailChips = fixture.nativeElement.querySelectorAll(
+      '.crop-stages-edit-panel__detail-chip'
+    ) as NodeListOf<HTMLButtonElement>;
+    detailChips[0].click();
+    fixture.detectChanges();
+
+    const temperatureActions = fixture.nativeElement.querySelector(
+      'dialog.form-dialog.crop-stages__temperature-dialog .form-card__actions'
+    );
+    expect(temperatureActions?.querySelector('button.btn.btn-secondary')).toBeTruthy();
+    expect(temperatureActions?.querySelector('button.btn.btn-primary')).toBeTruthy();
+
+    detailChips[1].click();
+    fixture.detectChanges();
+
+    const advancedActions = fixture.nativeElement.querySelector(
+      'dialog.form-dialog.crop-stages__advanced-dialog .form-card__actions'
+    );
+    expect(advancedActions?.querySelector('button.btn.btn-secondary')).toBeTruthy();
+    expect(advancedActions?.querySelector('button.btn.btn-primary')).toBeTruthy();
+  });
+
   it('opens delete confirm dialog from edit panel instead of window.confirm', async () => {
     await loadStage();
 
@@ -482,6 +523,12 @@ describe('CropStageEditComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages__delete-confirm')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Delete "Germination"?');
     expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
+
+    const deleteActions = fixture.nativeElement.querySelector(
+      '.crop-stages__delete-confirm .confirm-dialog__actions'
+    );
+    expect(deleteActions?.querySelector('button.btn.btn-secondary')).toBeTruthy();
+    expect(deleteActions?.querySelector('button.btn.btn-danger')).toBeTruthy();
   });
 
   it('shows blueprint warning when deleting a stage with linked templates', async () => {
@@ -588,7 +635,7 @@ describe('CropStageEditComponent', () => {
     expect(fixture.nativeElement.querySelector('input[name="panel_stage_name"]')?.hasAttribute('readonly')).toBe(
       true
     );
-    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer .btn-primary')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer .btn-danger')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.form-card__actions .btn-primary')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.form-card__actions .btn-danger')).toBeNull();
   });
 });
