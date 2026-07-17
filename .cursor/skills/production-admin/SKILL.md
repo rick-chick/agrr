@@ -32,4 +32,4 @@
 
 予測チェーン調査との併用: [`prediction-investigation`](../prediction-investigation/SKILL.md)、本番 DB: [`production-primary-sqlite-query`](../production-primary-sqlite-query/SKILL.md)。
 
-⚠️ 本番に直接影響する操作。実行前に意図を確認する。
+**注意**: 本番に直接影響する操作。実行前に意図を確認する。

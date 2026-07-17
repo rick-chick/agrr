@@ -26,7 +26,7 @@ alwaysApply: true
 
 ## ゲート未満のとき（調査を続ける）
 
-根拠ゲートを満たせないときの既定は **調査の継続** である。ユーザーへの**明示・確認・進捗二択の依頼**でゲートをすり替えない。
+根拠ゲートを満たせないときの既定は **調査の継続** である。ユーザーへの**明示・確認・進捗二択の依頼**でゲートを置き換えない。
 
 - 読む・検索する・実行する・テストする・ログを取る（[`test-common`](../skills/test-common/SKILL.md)、[`agent-operational-canonical.md`](../skills/clean-architecture-violation-fix-workflow/references/agent-operational-canonical.md) の本番断定手順）
 - **実装・設計に移れるまで**上記を繰り返す

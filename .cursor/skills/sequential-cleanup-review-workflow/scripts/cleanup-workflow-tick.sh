@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Single workflow tick: outer tasks (shell) + inner step pointer (one agent step).
-# Parent orchestrator calls this; NEVER jump straight to "doing A1" without tick output.
+# Parent orchestrator calls this; do not jump straight to "doing A1" without tick output.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=cleanup-inner-lib.sh

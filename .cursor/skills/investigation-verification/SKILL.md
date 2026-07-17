@@ -36,5 +36,5 @@ disable-model-invocation: true
 | 参照 | 内容 |
 |------|------|
 | [error-investigation](../error-investigation/SKILL.md) | 調査手順・調査完了の定義（ステップ 5＝RED による検証） |
-| [error-investigation references/CHECKLIST.md](../error-investigation/references/CHECKLIST.md) | RED を飛ばさない理由・抜け道の禁止 |
+| [error-investigation references/CHECKLIST.md](../error-investigation/references/CHECKLIST.md) | RED 省略の根拠にしない理由 |
 | [error-fix-red-green](../error-fix-red-green/SKILL.md) | 検証完了後に適用する修正・GREEN 確認 |

@@ -17,7 +17,7 @@ disable-model-invocation: true
 - 自動起動しない（`disable-model-invocation: true`）。ユーザーがスキル名またはトリガ語で明示したときのみ。
 - **例外**: [`github-issue-worker`](../github-issue-worker/SKILL.md) の実装経路では TDD GREEN 後 **必須**。
 
-## 起動（必須 — A1 に直行しない）
+## 起動（必須 — tick 未実行で A1 に進まない）
 
 ```bash
 .cursor/skills/sequential-cleanup-review-workflow/scripts/cleanup-workflow-tick.sh \

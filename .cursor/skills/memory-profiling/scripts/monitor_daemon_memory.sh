@@ -119,9 +119,9 @@ detect_memory_leak() {
     # Determine if there is a memory leak
     leak_status="OK"
     if (( $(echo "$growth_rate > 10" | bc -l) )); then
-        leak_status="⚠️  POTENTIAL LEAK (${growth_rate}% growth)"
+        leak_status="[WARNING] POTENTIAL LEAK (${growth_rate}% growth)"
     elif (( $(echo "$growth_rate > 5" | bc -l) )); then
-        leak_status="⚠️  WARNING (${growth_rate}% growth)"
+        leak_status="[WARNING] (${growth_rate}% growth)"
     else
         leak_status="✓ OK (${growth_rate}% growth)"
     fi

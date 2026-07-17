@@ -11,7 +11,7 @@
 
 | 状況 | やること | slug |
 |------|----------|------|
-| **今の未コミット変更**を初めて cleanup | tick のみ（**A1 に直行しない**） | 修正単位名から新規（例: `my-feature-foo`） |
+| **今の未コミット変更**を初めて cleanup | tick のみ（**tick 未実行で A1 に進まない**） | 修正単位名から新規（例: `my-feature-foo`） |
 | **別 PR / 別変更セット** | 上と同じ。**前の unit と混ぜない** | **必ず新 slug** |
 | **外側 backlog 続き**（pending 残り） | `tick --parent-slug <既存slug>` | **既存 slug をそのまま** |
 | [`github-issue-worker`](../../github-issue-worker/SKILL.md) §4 | tick のみ | `issue-<N>-<short-slug>`（ブランチ `issue/<N>-<short-slug>` から） |
