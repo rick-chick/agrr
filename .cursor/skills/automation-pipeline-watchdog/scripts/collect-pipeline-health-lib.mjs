@@ -2,6 +2,8 @@
  * Pure helpers for automation-pipeline-watchdog health collection.
  */
 
+import { prMergeWorkerNeedsSync } from '../../../../scripts/pr-merge-worker-needs-sync.mjs';
+
 export const GITHUB_REPO = 'rick-chick/agrr';
 
 /** Matches pr-merge-worker-retry-dispatch-lib IN_PROGRESS_STALE_MS */
@@ -29,6 +31,15 @@ export const DISPATCH_WORKFLOW_NAMES = [
   'PR Merge Worker Retry Dispatch',
   'UX Campaign Review Dispatch',
 ];
+
+/** Retry reconcile workflows — must run on 15-minute cron */
+export const RETRY_SCHEDULE_WORKFLOW_NAMES = [
+  'Issue Worker Retry Dispatch',
+  'PR Merge Worker Retry Dispatch',
+];
+
+/** No schedule run within this window → P0 (cron is every 15 minutes) */
+export const RETRY_SCHEDULE_STALE_MS = 30 * 60 * 1000;
 
 /**
  * @param {Array<{ name: string } | string>} labels
@@ -269,6 +280,7 @@ export function detectStaleMergeInProgressPr(pr, nowMs) {
  *   title: string;
  *   isDraft: boolean;
  *   labels: Array<{ name: string } | string>;
+ *   mergeable?: string | null;
  *   mergeStateStatus?: string;
  *   updatedAt: string;
  * }} pr
@@ -276,23 +288,31 @@ export function detectStaleMergeInProgressPr(pr, nowMs) {
  */
 export function detectConflictReadyPr(pr) {
   const labels = labelNames(pr.labels);
-  const status = pr.mergeStateStatus ?? '';
-  if (!['BEHIND', 'DIRTY', 'CONFLICTING'].includes(status)) {
+  const mergeable = pr.mergeable ?? null;
+  const mergeStateStatus = pr.mergeStateStatus ?? '';
+
+  if (!prMergeWorkerNeedsSync({ mergeable, mergeStateStatus })) {
     return null;
   }
+
+  const statusLabel = mergeable === 'CONFLICTING'
+    ? 'CONFLICTING'
+    : mergeStateStatus || mergeable || 'unknown';
+
   return {
     id: buildFindingId('pr-merge-conflict', String(pr.number)),
     category: 'pr',
     priority: 'P1',
     subjectType: 'pr',
     subjectNumber: pr.number,
-    title: `[P1][infra] PR #${pr.number} merge state ${status}`,
-    summary: `Open PR #${pr.number} mergeStateStatus is ${status} (needs sync / conflict resolution).`,
+    title: `[P1][infra] PR #${pr.number} merge state ${statusLabel}`,
+    summary: `Open PR #${pr.number} mergeable=${mergeable ?? ''} mergeStateStatus=${mergeStateStatus} (needs sync / conflict resolution).`,
     evidence: {
       prNumber: pr.number,
       prTitle: pr.title,
       labels,
-      mergeStateStatus: status,
+      mergeable,
+      mergeStateStatus,
       updatedAt: pr.updatedAt,
     },
     suggestedLabels: ['bug', 'automation-watchdog'],
@@ -372,6 +392,51 @@ export function detectFailedDispatchWorkflow(run) {
     suggestedLabels: ['bug', 'automation-watchdog'],
     agentReady: false,
   };
+}
+
+/**
+ * @param {Array<{
+ *   workflowName: string;
+ *   event: string;
+ *   createdAt: string;
+ * }>} workflowRuns
+ * @param {number} nowMs
+ * @returns {import('./collect-pipeline-health-types.mjs').PipelineFinding[]}
+ */
+export function detectStaleRetryScheduleRuns(workflowRuns, nowMs) {
+  /** @type {import('./collect-pipeline-health-types.mjs').PipelineFinding[]} */
+  const findings = [];
+
+  for (const workflowName of RETRY_SCHEDULE_WORKFLOW_NAMES) {
+    const hasRecentSchedule = workflowRuns.some(
+      (run) =>
+        run.workflowName === workflowName &&
+        run.event === 'schedule' &&
+        nowMs - Date.parse(run.createdAt) <= RETRY_SCHEDULE_STALE_MS,
+    );
+    if (hasRecentSchedule) {
+      continue;
+    }
+
+    findings.push({
+      id: buildFindingId('retry-schedule-stale', workflowName),
+      category: 'workflow',
+      priority: 'P0',
+      subjectType: 'workflow',
+      subjectNumber: 0,
+      title: `[P0][infra] Retry schedule stale for "${workflowName}"`,
+      summary: `No scheduled run for "${workflowName}" in the last ${RETRY_SCHEDULE_STALE_MS / 60_000} minutes. Reconcile cron may be stopped.`,
+      evidence: {
+        workflowName,
+        staleThresholdMinutes: RETRY_SCHEDULE_STALE_MS / 60_000,
+        checkedAt: new Date(nowMs).toISOString(),
+      },
+      suggestedLabels: ['bug', 'automation-watchdog'],
+      agentReady: false,
+    });
+  }
+
+  return findings;
 }
 
 /**

@@ -16,7 +16,7 @@ description: >-
 | **スキップ** | オプトアウト（blocking ラベル・fork・`CHANGES_REQUESTED`・`[WIP]`/`[DRAFT]`）→ コメントまたは無言終了 |
 | **ブロック** | 規約衝突・判断不能 → `agent-merge-blocked` ラベル + コメント（マージしない） |
 
-設計方針の上位原則: [`automation-authoring` PRINCIPLES.md §目的](../automation-authoring/references/PRINCIPLES.md)（**人間介在なしで完遂**。「人間の目がないから危険」は根拠にしない）。
+設計方針の上位原則: [`automation-authoring` PRINCIPLES.md §目的](../automation-authoring/references/PRINCIPLES.md)（**人間介在なしで完遂**。「人間レビューがないから不十分」は根拠にしない）。
 
 ## 設計方針（ベストプラクティス）
 
@@ -55,15 +55,15 @@ description: >-
 |------|------|
 | Cursor Automation（`Pull request opened`） | 対象 PR を選定 → CI 待ち → Agent ゲート |
 | Cursor Automation（`CI completed`） | **推奨**。対象 PR で CI 更新後に再評価 |
-| Cursor Automation（webhook） | `.github/workflows/pr-merge-worker-dispatch.yml`（**Backend test 完了時** + PR opened / `agent-merge` label / PR `synchronize` でコンフリクト検知 + **master push 後のコンフリクト / BEHIND 検知**） |
-| **Retry dispatch** | `.github/workflows/pr-merge-worker-retry-dispatch.yml`（15 分ごと + primary dispatch **キャンセル / 失敗**時。**統合 reconcile** — `BEHIND` / `DIRTY` / `CONFLICTING` は `action: conflict`、必須 CI FAIL は `action: ci_fix`（Draft/ready 問わず）、ERROR 後スタックは `action: stuck_retry`。`classifyReconcileCandidate` / `selectReconcileCandidate` で 1 件 dispatch。対象は **open + base master 全件**（オプトアウトのみ）） |
+| Cursor Automation（webhook） | `.github/workflows/pr-merge-worker-dispatch.yml`（**Backend test 完了時** + PR opened / labeled / `synchronize` / `ready_for_review` でコンフリクト・CI 失敗検知） |
+| **Retry dispatch** | `.github/workflows/pr-merge-worker-retry-dispatch.yml`（15 分ごと reconcile + primary dispatch **キャンセル / 失敗**時も **reconcile**（`from-title` は使わない）。**統合 reconcile** — `BEHIND` / `DIRTY` / `CONFLICTING` は `action: conflict`、必須 CI FAIL は `action: ci_fix`（Draft/ready 問わず）、ERROR 後スタックは `action: stuck_retry`。`classifyReconcileCandidate` / `selectReconcileCandidate` で 1 件 dispatch。対象は **open + base master 全件**（オプトアウトのみ）） |
 | 手動 | 「PR #N をマージワーカー」「#123 をマージ可能にして」 |
 
 Webhook payload フィールド: `repository`, `pr_number`, `pr_title`, `pr_url`, `action`（`opened` | `labeled` | `synchronize` | `ci_completed` | **`conflict`** | **`ci_fix`** | **`stuck_retry`**）, `head_ref`, `head_sha`, `author`, `mergeable_state`, `merge_state_status`（`conflict` / `ci_fix` 時）, `retry_reason`（`stuck_retry` 時）。
 
 ### `action: conflict`（master 更新後 / synchronize）
 
-`master` へ push されたあと、対象 PR が `BEHIND` / `DIRTY` / `CONFLICTING` のとき、または PR `synchronize` でコンフリクトが検出されたとき `.github/workflows/pr-merge-worker-dispatch.yml` が **CI 完了を待たず** dispatch する（master push 候補選定: `scripts/pr-merge-worker-needs-sync.mjs`）。
+対象 PR が `BEHIND` / `DIRTY` / `CONFLICTING` のとき、PR `synchronize` / `ready_for_review` 等で `.github/workflows/pr-merge-worker-dispatch.yml` が **CI 完了を待たず** dispatch する。**master push 直後の BEHIND/CONFLICT 救済**は `pr-merge-worker-retry-dispatch` の **reconcile**（15 分 cron + cancel/failure 時）が担う（選定: `classifyReconcileCandidate` / `scripts/pr-merge-worker-needs-sync.mjs`）。
 
 | 動作 | 説明 |
 |------|------|
@@ -113,7 +113,7 @@ gh pr view <N> --json labels,state,headRefOid
 | 条件 | 動作 |
 |------|------|
 | ラベル `agent-merge-in-progress` が付いている（Webhook も dispatch しない） | **スキップ**（重複 Agent を起動しない） |
-| ペイロード `head_sha` があり、現在の `headRefOid` と不一致（古い run） | **スキップ**（`action: conflict` は除く — master push 直後の dispatch） |
+| ペイロード `head_sha` があり、現在の `headRefOid` と不一致（古い run） | **スキップ**（`action: conflict` は除く — コンフリクト解消 run は head が進むため） |
 | 上記以外 | §1 へ |
 
 着手時は直ちに `agent-merge-in-progress` を付与（§5）。**着手直後に `headRefOid` を Memory に記録**し、修正 push 後の再 run では新 SHA で再評価する。

@@ -7,7 +7,6 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'name: PR Merge Worker Dispatch',
   'ready_for_review',
   'types: [opened, labeled, synchronize, ready_for_review]',
-  'push:',
   'branches: [master]',
   'CURSOR_PR_MERGE_WEBHOOK_URL',
   'CURSOR_PR_MERGE_WEBHOOK_KEY',
@@ -22,8 +21,6 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
 ];
 
 const CONFLICT_DISPATCH_SNIPPETS = [
-  'dispatch-after-master-push',
-  'pr-merge-worker-dispatch-after-master-push.mjs',
   'MERGEABLE_STATE" = "CONFLICTING"',
   'MERGE_STATE_STATUS" = "BEHIND"',
   'ACTION="conflict"',
@@ -41,6 +38,7 @@ const RETRY_DISPATCH_SNIPPETS = [
   'dispatch_run_cancelled',
   'dispatch_run_failed',
   'scheduled_reconcile',
+  'pr-merge-worker-retry-dispatch.mjs reconcile',
   'pr-merge-worker-retry-dispatch.mjs',
 ];
 
@@ -58,17 +56,6 @@ const RECONCILE_LIB_SNIPPETS = [
   "action: 'ci_fix'",
 ];
 
-const DELAYED_RESCAN_SNIPPETS = [
-  'DELAYED_RESCAN_MS',
-  'delayed',
-  'immediate',
-];
-
-const DISPATCH_SCRIPT_SNIPPETS = [
-  'buildConflictDispatchPayload',
-  './pr-merge-worker-dispatch-payload-lib.mjs',
-];
-
 const PAYLOAD_LIB_SNIPPETS = ["action: 'conflict'", "action: 'ci_fix'"];
 
 /**
@@ -83,10 +70,6 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     '.github/workflows/pr-merge-worker-retry-dispatch.yml',
   );
   const needsSyncPath = join(repoRoot, 'scripts/pr-merge-worker-needs-sync.mjs');
-  const dispatchScriptPath = join(
-    repoRoot,
-    'scripts/pr-merge-worker-dispatch-after-master-push.mjs',
-  );
   const payloadLibPath = join(repoRoot, 'scripts/pr-merge-worker-dispatch-payload-lib.mjs');
   const reconcileLibPath = join(
     repoRoot,
@@ -115,13 +98,6 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     needsSyncText = '';
   }
 
-  let dispatchScriptText = '';
-  try {
-    dispatchScriptText = await readFile(dispatchScriptPath, 'utf8');
-  } catch {
-    errors.push(`missing dispatch script: ${dispatchScriptPath}`);
-  }
-
   let payloadLibText = '';
   try {
     payloadLibText = await readFile(payloadLibPath, 'utf8');
@@ -142,6 +118,10 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  if (workflowText.includes('dispatch-after-master-push')) {
+    errors.push('pr-merge-worker-dispatch must not use dispatch-after-master-push job');
+  }
+
   if (workflowText.includes('function ghApi(path)')) {
     errors.push(
       'pr-merge-worker-dispatch workflow must not inline ghApi; use resolve-workflow-run-pr-from-gh.mjs',
@@ -160,6 +140,10 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  if (retryWorkflowText.includes('from-title')) {
+    errors.push('retry workflow must not use from-title mode');
+  }
+
   for (const snippet of WEBHOOK_POST_LIB_SNIPPETS) {
     const scriptPath = join(repoRoot, 'scripts', snippet);
     let scriptText = '';
@@ -171,22 +155,6 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
     if (!scriptText.includes('postWebhookJson')) {
       errors.push(`${snippet} must use postWebhookJson from webhook-post-lib.mjs`);
-    }
-  }
-
-  for (const snippet of DISPATCH_SCRIPT_SNIPPETS) {
-    if (!dispatchScriptText.includes(snippet)) {
-      errors.push(`dispatch script missing required snippet: ${snippet}`);
-    }
-  }
-
-  if (!dispatchScriptText.includes('postWebhookJson')) {
-    errors.push('dispatch-after-master-push must use postWebhookJson from webhook-post-lib.mjs');
-  }
-
-  for (const snippet of DELAYED_RESCAN_SNIPPETS) {
-    if (!dispatchScriptText.includes(snippet)) {
-      errors.push(`dispatch script missing delayed re-scan snippet: ${snippet}`);
     }
   }
 
@@ -204,14 +172,6 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   if (!needsSyncText.includes('export function prMergeWorkerNeedsSync')) {
     errors.push('needs-sync helper missing prMergeWorkerNeedsSync export');
-  }
-
-  if (!needsSyncText.includes('export function prMergeWorkerIsEligible')) {
-    errors.push('needs-sync helper missing prMergeWorkerIsEligible export');
-  }
-
-  if (!needsSyncText.includes('Universal rescue')) {
-    errors.push('needs-sync helper must document universal rescue (opt-out) eligibility');
   }
 
   const skillPath = join(repoRoot, '.cursor/skills/github-pr-merge-worker/SKILL.md');

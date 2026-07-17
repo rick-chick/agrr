@@ -423,7 +423,6 @@ export async function selectDepsUnblockCandidate(issues, hasOpenFixPrFor, fetchI
  * @returns {{
  *   mode: string;
  *   repo: string;
- *   title?: string;
  *   number?: string;
  *   retryReason?: string;
  * }}
@@ -434,11 +433,6 @@ export function parseRetryDispatchArgs(argv, defaultRepo = DEFAULT_RETRY_DISPATC
     const token = argv[i];
     if (token === '--repo') {
       parsed.repo = argv[i + 1] ?? defaultRepo;
-      i += 1;
-      continue;
-    }
-    if (token === '--title') {
-      parsed.title = argv[i + 1] ?? '';
       i += 1;
       continue;
     }
@@ -457,30 +451,12 @@ export function parseRetryDispatchArgs(argv, defaultRepo = DEFAULT_RETRY_DISPATC
 }
 
 /**
- * Pick the lowest-number open issue that exactly matches the workflow run title.
- *
- * @param {Array<{ number: number; title: string }>} issues
- * @param {string} title
- * @returns {{ number: number; title: string } | null}
- */
-export function selectOpenIssueByTitle(issues, title) {
-  const matches = issues.filter((issue) => issue.title === title);
-  if (matches.length === 0) {
-    return null;
-  }
-  return [...matches].sort((a, b) => a.number - b.number)[0];
-}
-
-/**
  * @param {string} mode
  * @returns {string}
  */
 export function defaultRetryReasonForMode(mode) {
   if (mode === 'reconcile') {
     return 'scheduled_reconcile';
-  }
-  if (mode === 'from-title') {
-    return 'dispatch_run_cancelled';
   }
   if (mode === 'issue') {
     return 'manual_retry';

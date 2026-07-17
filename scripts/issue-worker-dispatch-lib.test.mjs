@@ -14,7 +14,6 @@ import {
   resolveEpicImplementGate,
   resolveImplementDispatchGate,
   resolveImplementPreDispatchGates,
-  selectOpenIssueByTitle,
   selectRetryCandidate,
   selectDepsUnblockCandidate,
   isDepsResolvedUnblockCandidate,
@@ -121,6 +120,23 @@ test('isRetryCandidate rejects when an open fix PR exists', () => {
   });
 });
 
+test('selectRetryCandidate picks lowest agent-ready backlog issue', () => {
+  const selected = selectRetryCandidate(
+    [
+      { number: 384, labels: ['agent-ready'] },
+      { number: 380, labels: ['agent-ready'] },
+      { number: 382, labels: ['agent-ready'] },
+      { number: 381, labels: ['agent-ready'] },
+      { number: 383, labels: ['agent-ready'] },
+    ],
+    () => false,
+  );
+  assert.deepEqual(selected, {
+    issue: { number: 380, labels: ['agent-ready'] },
+    action: 'implement',
+  });
+});
+
 test('selectRetryCandidate picks the lowest eligible issue number', () => {
   const selected = selectRetryCandidate(
     [
@@ -159,21 +175,15 @@ test('parseRetryDispatchArgs parses reconcile mode with defaults', () => {
   });
 });
 
-test('parseRetryDispatchArgs parses from-title flags', () => {
+test('parseRetryDispatchArgs parses reconcile with retry-reason', () => {
   const args = parseRetryDispatchArgs([
     'node',
     'script',
-    'from-title',
-    '--title',
-    'Fix task schedule',
-    '--repo',
-    'owner/repo',
+    'reconcile',
     '--retry-reason',
     'dispatch_run_cancelled',
   ]);
-  assert.equal(args.mode, 'from-title');
-  assert.equal(args.title, 'Fix task schedule');
-  assert.equal(args.repo, 'owner/repo');
+  assert.equal(args.mode, 'reconcile');
   assert.equal(args.retryReason, 'dispatch_run_cancelled');
 });
 
@@ -184,28 +194,8 @@ test('parseRetryDispatchArgs parses issue number mode', () => {
   assert.equal(args.repo, 'rick-chick/agrr');
 });
 
-test('selectOpenIssueByTitle picks the lowest matching issue number', () => {
-  const selected = selectOpenIssueByTitle(
-    [
-      { number: 210, title: 'Same title' },
-      { number: 207, title: 'Same title' },
-      { number: 208, title: 'Other title' },
-    ],
-    'Same title',
-  );
-  assert.deepEqual(selected, { number: 207, title: 'Same title' });
-});
-
-test('selectOpenIssueByTitle returns null when no title matches', () => {
-  assert.equal(
-    selectOpenIssueByTitle([{ number: 207, title: 'A' }], 'Missing'),
-    null,
-  );
-});
-
 test('defaultRetryReasonForMode maps automation entry points', () => {
   assert.equal(defaultRetryReasonForMode('reconcile'), 'scheduled_reconcile');
-  assert.equal(defaultRetryReasonForMode('from-title'), 'dispatch_run_cancelled');
   assert.equal(defaultRetryReasonForMode('issue'), 'manual_retry');
 });
 

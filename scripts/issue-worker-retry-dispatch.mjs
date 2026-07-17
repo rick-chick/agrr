@@ -5,7 +5,6 @@
  * Usage:
  *   node scripts/issue-worker-retry-dispatch.mjs reconcile [--repo OWNER/REPO]
  *   node scripts/issue-worker-retry-dispatch.mjs on-closed --number N [--repo OWNER/REPO]
- *   node scripts/issue-worker-retry-dispatch.mjs from-title --title "..." [--repo OWNER/REPO]
  *   node scripts/issue-worker-retry-dispatch.mjs issue --number N [--repo OWNER/REPO]
  *
  * Env: WEBHOOK_URL, WEBHOOK_KEY, GH_TOKEN (optional; gh uses default auth)
@@ -19,7 +18,6 @@ import {
   parseRetryDispatchArgs,
   resolveImplementPreDispatchGates,
   selectDepsUnblockCandidate,
-  selectOpenIssueByTitle,
   selectRetryCandidate,
   parseDependencyIssueNumbers,
 } from './issue-worker-dispatch-lib.mjs';
@@ -126,20 +124,6 @@ function fetchIssue(repo, issueNumber) {
     state: issue.state,
     labels: issue.labels.map((label) => label.name),
   };
-}
-
-/**
- * @param {string} repo
- * @param {string} title
- * @returns {{ number: number; title: string; url: string; body: string; labels: string[] } | null}
- */
-function findOpenIssueByTitle(repo, title) {
-  const issues = listAgentReadyIssues(repo);
-  const issue = selectOpenIssueByTitle(issues, title);
-  if (!issue) {
-    return null;
-  }
-  return issues.find((entry) => entry.number === issue.number) ?? null;
 }
 
 /**
@@ -338,23 +322,6 @@ async function main() {
       repo,
       issue,
       retryReason: args.retryReason ?? 'dependency_closed',
-    });
-    return;
-  }
-
-  if (args.mode === 'from-title') {
-    if (!args.title) {
-      throw new Error('--title is required for from-title mode');
-    }
-    const issue = findOpenIssueByTitle(repo, args.title);
-    if (!issue) {
-      console.log(`No open agent-ready issue matched title: ${args.title}`);
-      return;
-    }
-    await dispatchIfEligible({
-      repo,
-      issue,
-      retryReason: args.retryReason ?? defaultRetryReasonForMode('from-title'),
     });
     return;
   }

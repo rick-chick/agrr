@@ -4,7 +4,6 @@
  *
  * Usage:
  *   node scripts/pr-merge-worker-retry-dispatch.mjs reconcile [--repo OWNER/REPO]
- *   node scripts/pr-merge-worker-retry-dispatch.mjs from-title --title "..." [--repo OWNER/REPO]
  *   node scripts/pr-merge-worker-retry-dispatch.mjs pr --number N [--repo OWNER/REPO]
  *
  * Env: WEBHOOK_URL, WEBHOOK_KEY, GH_TOKEN (optional; gh uses default auth)
@@ -82,20 +81,6 @@ function fetchPr(repo, prNumber) {
     'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author',
   ]);
   return JSON.parse(raw);
-}
-
-/**
- * @param {string} repo
- * @param {string} title
- * @returns {Record<string, unknown> | null}
- */
-function findOpenPrByTitle(repo, title) {
-  const prs = listOpenMasterPrs(repo);
-  const matches = prs.filter((pr) => pr.title === title);
-  if (matches.length === 0) {
-    return null;
-  }
-  return [...matches].sort((a, b) => a.number - b.number)[0];
 }
 
 /**
@@ -210,23 +195,6 @@ function main() {
     return;
   }
 
-  if (args.mode === 'from-title') {
-    if (!args.title) {
-      throw new Error('--title is required for from-title mode');
-    }
-    const pr = findOpenPrByTitle(repo, args.title);
-    if (!pr) {
-      console.log(`No open master PR matched title: ${args.title}`);
-      return;
-    }
-    dispatchIfEligible({
-      repo,
-      pr,
-      retryReason: args.retryReason ?? 'dispatch_run_cancelled',
-    });
-    return;
-  }
-
   if (args.mode === 'pr') {
     const prNumber = Number(args.number);
     if (!Number.isInteger(prNumber) || prNumber <= 0) {
@@ -241,7 +209,7 @@ function main() {
   }
 
   throw new Error(
-    `Unknown mode: ${args.mode}. Expected reconcile, from-title, or pr.`,
+    `Unknown mode: ${args.mode}. Expected reconcile or pr.`,
   );
 }
 
