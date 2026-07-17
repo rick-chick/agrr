@@ -164,10 +164,9 @@ const initialControl: CropStagesViewState = {
           </div>
         }
 
-        <section class="section-card" aria-labelledby="stages-heading">
-          <h2 id="stages-heading" class="section-title">{{ 'crops.edit.stages_list_heading' | translate }}</h2>
-
+        <section class="section-card crop-stages-section" aria-labelledby="stages-heading">
           <div class="section-card__header-actions">
+            <h2 id="stages-heading" class="section-title">{{ 'crops.edit.stages_list_heading' | translate }}</h2>
             @if (canMutateStages) {
               <button type="button" class="btn btn-primary" (click)="addCropStage()">
                 {{ 'crops.edit.add_stage' | translate }}
@@ -204,7 +203,7 @@ const initialControl: CropStagesViewState = {
             </div>
           } @else {
             <ul
-              class="card-list crop-stages-card-list"
+              class="card-list"
               role="list"
               cdkDropList
               [cdkDropListData]="sortedStages"
@@ -217,20 +216,20 @@ const initialControl: CropStagesViewState = {
                   [cdkDragDisabled]="!canMutateStages"
                   [cdkDragData]="stage"
                 >
-                  <article class="item-card crop-stages-card" (click)="navigateToStageEdit(stage.id)">
+                  <article class="item-card crop-stage-card" (click)="navigateToStageEdit(stage.id)">
                     @if (canMutateStages) {
                       <button
                         type="button"
-                        class="crop-stages-card__drag-handle"
+                        class="crop-stage-card__drag"
                         cdkDragHandle
                         (click)="$event.stopPropagation()"
                       >
-                        <span class="crop-stages-card__drag-icon" aria-hidden="true">≡</span>
+                        <span class="crop-stage-card__drag-icon" aria-hidden="true">≡</span>
                       </button>
                     }
                     <div class="item-card__body">
                       <span class="item-card__title">{{ stage.name }}</span>
-                      <span class="item-card__meta">
+                      <span class="item-card__meta crop-stage-card__order">
                         {{ 'crops.edit.table_order' | translate }}: {{ stage.order }}
                       </span>
                       <span class="item-card__meta">
@@ -242,7 +241,8 @@ const initialControl: CropStagesViewState = {
                         {{ formatOptionalNumber(stage.thermal_requirement?.required_gdd) }}
                       </span>
                       <span class="item-card__meta">
-                        {{ 'crops.edit.table_cumulative_gdd' | translate }}: {{ formatCumulativeGdd(stage) }}
+                        {{ 'crops.edit.table_cumulative_gdd' | translate }}:
+                        {{ formatCumulativeGdd(stage) }}
                       </span>
                     </div>
                   </article>

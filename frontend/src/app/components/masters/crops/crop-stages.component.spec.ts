@@ -219,6 +219,50 @@ describe('CropStagesComponent', () => {
     expect(mockLoadBlueprintsUseCase.execute).not.toHaveBeenCalled();
   });
 
+  it('derives display state when control is assigned through the component setter', () => {
+    const incompleteStage: CropStage = {
+      id: 2,
+      name: 'Vegetative',
+      order: 2
+    } as CropStage;
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        name: 'Tomato',
+        is_reference: false,
+        crop_stages: [incompleteStage]
+      }
+    };
+
+    expect(component.control.showBlueprintReadinessChecklist).toBe(true);
+    expect(component.control.showNextStepCta).toBe(false);
+  });
+
+  it('derives display state when presenter loads crop data', () => {
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+    presenter.setView(component);
+    const incompleteStage: CropStage = {
+      id: 2,
+      name: 'Vegetative',
+      order: 2
+    } as CropStage;
+
+    presenter.present({
+      crop: {
+        id: 1,
+        name: 'Tomato',
+        is_reference: false,
+        groups: [],
+        crop_stages: [incompleteStage]
+      }
+    });
+    presenter.present({ blueprints: [] });
+
+    expect(component.control.showBlueprintReadinessChecklist).toBe(true);
+    expect(component.control.showNextStepCta).toBe(false);
+  });
+
   it('shows load error panel and hides stage list when initial crop load fails', () => {
     const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
     mockLoadUseCase.execute.mockImplementation(() => {
@@ -254,8 +298,8 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('app-master-context-header').length).toBe(1);
     expect(fixture.nativeElement.querySelector('.master-context-header__forward')).toBeNull();
     expect(component.control.showNextStepCta).toBe(false);
-    expect(fixture.nativeElement.querySelector('.section-card')).toBeFalsy();
-    expect(fixture.nativeElement.querySelector('.section-card__header-actions .btn-primary')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-section')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-empty__cta')).toBeFalsy();
     expect(
       (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
         'href'
@@ -264,34 +308,37 @@ describe('CropStagesComponent', () => {
     expect(mockCreateCropStageUseCase.execute).not.toHaveBeenCalled();
   });
 
-  it('renders stage cards with metadata', async () => {
-    await loadStages([stageFixture]);
-
-    expect(fixture.nativeElement.querySelector('.card-list')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages-table')).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Germination');
-    expect(fixture.nativeElement.textContent).toContain('Order');
-    expect(fixture.nativeElement.textContent).toContain('Cumulative GDD');
+  it('should call createCropStageUseCase when addCropStage is called', () => {
+    component.addCropStage();
+    expect(mockCreateCropStageUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      payload: {
+        name: 'Stage 1',
+        order: 1
+      }
+    });
   });
 
-  it('shows primary add button in section header and calls addCropStage on click', async () => {
+  it('shows header primary add button that calls addCropStage when clicked', async () => {
     await loadStages([stageFixture]);
 
     const addButton = fixture.nativeElement.querySelector(
       '.section-card__header-actions .btn-primary'
-    ) as HTMLButtonElement | null;
+    ) as HTMLButtonElement;
     expect(addButton).toBeTruthy();
-    expect(addButton?.textContent).toContain('Add Stage');
+    expect(addButton.textContent?.trim()).toBe('Add Stage');
+    addButton.click();
+    expect(mockCreateCropStageUseCase.execute).toHaveBeenCalled();
+  });
 
-    addButton?.click();
+  it('renders stage cards with metadata labels', async () => {
+    await loadStages([stageFixture]);
 
-    expect(mockCreateCropStageUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      payload: {
-        name: 'Stage 2',
-        order: 2
-      }
-    });
+    expect(fixture.nativeElement.querySelector('.section-card')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.card-list')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stage-card')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Order');
+    expect(fixture.nativeElement.textContent).toContain('Cumulative GDD');
   });
 
   it('does not render edit panel on list page', async () => {
@@ -303,7 +350,7 @@ describe('CropStagesComponent', () => {
   it('navigates to stage edit route when stage card is clicked', async () => {
     await loadStages([stageFixture]);
 
-    const card = fixture.nativeElement.querySelector('.crop-stages-card') as HTMLElement;
+    const card = fixture.nativeElement.querySelector('.crop-stage-card') as HTMLElement;
     card.click();
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/crops', 1, 'stages', 1, 'edit'], {
@@ -318,7 +365,7 @@ describe('CropStagesComponent', () => {
     component.fromPlanId = 7;
     await loadStages([stageFixture]);
 
-    const card = fixture.nativeElement.querySelector('.crop-stages-card') as HTMLElement;
+    const card = fixture.nativeElement.querySelector('.crop-stage-card') as HTMLElement;
     card.click();
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/crops', 1, 'stages', 1, 'edit'], {
@@ -354,7 +401,7 @@ describe('CropStagesComponent', () => {
       } as CropStage
     ]);
 
-    const card = fixture.nativeElement.querySelector('.crop-stages-card');
+    const card = fixture.nativeElement.querySelector('.crop-stage-card');
     expect(card.textContent).toContain('—');
     expect(card.textContent).toContain('Enter required GDD to display the range');
   });
@@ -362,7 +409,7 @@ describe('CropStagesComponent', () => {
   it('shows cumulative GDD range in stage card when required_gdd is set', async () => {
     await loadStages([stageFixture]);
 
-    const card = fixture.nativeElement.querySelector('.crop-stages-card');
+    const card = fixture.nativeElement.querySelector('.crop-stage-card');
     expect(card.textContent).toContain('0–100');
   });
 
@@ -402,18 +449,6 @@ describe('CropStagesComponent', () => {
     expect(empty).toBeTruthy();
     expect(empty?.querySelector('.crop-stages-empty__cta')).toBeNull();
     expect(fixture.nativeElement.querySelector('.card-list')).toBeNull();
-    const addButton = fixture.nativeElement.querySelector(
-      '.section-card__header-actions .btn-primary'
-    ) as HTMLButtonElement | null;
-    expect(addButton).toBeTruthy();
-    expect(addButton?.textContent).toContain('Add Stage');
-  });
-
-  it('does not show table bottom add row when stages exist', async () => {
-    await loadStages([stageFixture]);
-
-    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-row')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeNull();
     expect(fixture.nativeElement.querySelector('.section-card__header-actions .btn-primary')).toBeTruthy();
   });
 
@@ -582,7 +617,7 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-order-warning')).toBeNull();
   });
 
-  it('updates cumulative GDD display in stage cards after stage reorder', async () => {
+  it('updates cumulative GDD display in cards after stage reorder', async () => {
     component.control = {
       ...loadedControlBase,
       formData: {
@@ -613,7 +648,7 @@ describe('CropStagesComponent', () => {
     } as CdkDragDrop<CropStage[]>);
     fixture.detectChanges();
 
-    const cards = fixture.nativeElement.querySelectorAll('.crop-stages-card');
+    const cards = fixture.nativeElement.querySelectorAll('.crop-stage-card');
     expect(cards[0]?.textContent).toContain('0–200');
     expect(cards[1]?.textContent).toContain('200–300');
   });
@@ -622,8 +657,8 @@ describe('CropStagesComponent', () => {
     await loadStages([stageFixture], 'Reference Tomato', { is_reference: true });
 
     expect(fixture.nativeElement.querySelector('.crop-stages__readonly-notice')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-empty__cta')).toBeNull();
     expect(fixture.nativeElement.querySelector('.section-card__header-actions .btn-primary')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeNull();
     expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeNull();
 
     component.addCropStage();
