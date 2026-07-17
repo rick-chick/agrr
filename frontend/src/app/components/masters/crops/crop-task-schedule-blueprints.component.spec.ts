@@ -339,15 +339,27 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     translate.use('en');
 
     fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const addButton = fixture.nativeElement.querySelector(
+      '.section-card__header-actions button.btn-primary'
+    ) as HTMLButtonElement | null;
+    addButton?.click();
+
     component.control = withCropBlueprintDisplayState({
-      ...readyState,
+      ...component.control,
       selectedBlueprintAgriculturalTaskId: 6,
       selectedBlueprintStageOrder: 1
     });
     fixture.detectChanges();
     await fixture.whenStable();
 
-    component.createBlueprint();
+    const submitButton = fixture.nativeElement.querySelector(
+      'dialog.form-dialog button.btn-primary'
+    ) as HTMLButtonElement | null;
+    submitButton?.click();
 
     expect(createBlueprintUseCase.execute).toHaveBeenCalledWith({
       cropId: 3,

@@ -119,7 +119,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
               [disabled]="control.agriculturalTasksLoading || !control.agriculturalTasks.length"
               (click)="openBlueprintAddDialog()"
             >
-              {{ 'crops.show.manual_blueprint_add.submit' | translate }}
+              {{ 'crops.show.manual_blueprint_add.open_button' | translate }}
             </button>
           </div>
           @if (control.blueprintSectionDescriptionKey) {

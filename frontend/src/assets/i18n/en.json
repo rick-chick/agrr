@@ -2162,6 +2162,7 @@
         "gdd_label": "Timing (℃·day)",
         "gdd_range_hint": "Range: {{start}}–{{end}} ℃·day",
         "submit": "Add task plan",
+        "open_button": "Add task plan",
         "ai_hint": "Use the button below only if you want AI suggestions as a starting point. It replaces all existing task plans.",
         "no_unassociated_tasks": "No tasks are available in the master list. Create a task first.",
         "go_to_create": "Create a task"
