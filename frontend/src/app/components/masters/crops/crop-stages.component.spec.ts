@@ -299,8 +299,8 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('app-master-context-header').length).toBe(1);
     expect(fixture.nativeElement.querySelector('.master-context-header__forward')).toBeNull();
     expect(component.control.showNextStepCta).toBe(false);
-    expect(fixture.nativeElement.querySelector('.crop-stages-section')).toBeFalsy();
-    expect(fixture.nativeElement.querySelector('.crop-stages-empty__cta')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.section-card')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.section-card__header-actions .btn-primary')).toBeFalsy();
     expect(
       (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
         'href'
@@ -320,12 +320,34 @@ describe('CropStagesComponent', () => {
     });
   });
 
-  it('renders stage table with columns', async () => {
+  it('renders stage cards with metadata', async () => {
     await loadStages([stageFixture]);
 
-    expect(fixture.nativeElement.querySelector('.crop-stages-table')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.card-list')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-table')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Germination');
     expect(fixture.nativeElement.textContent).toContain('Order');
     expect(fixture.nativeElement.textContent).toContain('Cumulative GDD');
+  });
+
+  it('shows primary add button in section header and calls addCropStage on click', async () => {
+    await loadStages([stageFixture]);
+
+    const addButton = fixture.nativeElement.querySelector(
+      '.section-card__header-actions .btn-primary'
+    ) as HTMLButtonElement | null;
+    expect(addButton).toBeTruthy();
+    expect(addButton?.textContent).toContain('Add Stage');
+
+    addButton?.click();
+
+    expect(mockCreateCropStageUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      payload: {
+        name: 'Stage 2',
+        order: 2
+      }
+    });
   });
 
   it('does not render edit panel on list page', async () => {
@@ -334,11 +356,11 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeNull();
   });
 
-  it('navigates to stage edit route when table row is clicked', async () => {
+  it('navigates to stage edit route when stage card is clicked', async () => {
     await loadStages([stageFixture]);
 
-    const row = fixture.nativeElement.querySelector('.crop-stages-table__row') as HTMLElement;
-    row.click();
+    const card = fixture.nativeElement.querySelector('.crop-stages-card') as HTMLElement;
+    card.click();
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/crops', 1, 'stages', 1, 'edit'], {
       queryParams: undefined
@@ -352,8 +374,8 @@ describe('CropStagesComponent', () => {
     component.fromPlanId = 7;
     await loadStages([stageFixture]);
 
-    const row = fixture.nativeElement.querySelector('.crop-stages-table__row') as HTMLElement;
-    row.click();
+    const card = fixture.nativeElement.querySelector('.crop-stages-card') as HTMLElement;
+    card.click();
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/crops', 1, 'stages', 1, 'edit'], {
       queryParams: { fromPlan: 7, returnTo: 'task_schedule' }
@@ -375,7 +397,7 @@ describe('CropStagesComponent', () => {
     });
   });
 
-  it('shows em dash for missing base temperature and required GDD in table', async () => {
+  it('shows em dash for missing base temperature and required GDD in stage card', async () => {
     await loadStages([
       {
         id: 1,
@@ -388,16 +410,16 @@ describe('CropStagesComponent', () => {
       } as CropStage
     ]);
 
-    const row = fixture.nativeElement.querySelector('.crop-stages-table__row');
-    expect(row.textContent).toContain('—');
-    expect(row.textContent).toContain('Enter required GDD to display the range');
+    const card = fixture.nativeElement.querySelector('.crop-stages-card');
+    expect(card.textContent).toContain('—');
+    expect(card.textContent).toContain('Enter required GDD to display the range');
   });
 
-  it('shows cumulative GDD range in table when required_gdd is set', async () => {
+  it('shows cumulative GDD range in stage card when required_gdd is set', async () => {
     await loadStages([stageFixture]);
 
-    const row = fixture.nativeElement.querySelector('.crop-stages-table__row');
-    expect(row.textContent).toContain('0–100');
+    const card = fixture.nativeElement.querySelector('.crop-stages-card');
+    expect(card.textContent).toContain('0–100');
   });
 
   it('should link back to crop detail via breadcrumbs', async () => {
@@ -429,20 +451,26 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
   });
 
-  it('shows empty state with description and primary CTA when no stages', async () => {
+  it('shows empty state with description and header primary add button when no stages', async () => {
     await loadStages([]);
 
     const empty = fixture.nativeElement.querySelector('.crop-stages-empty');
     expect(empty).toBeTruthy();
-    expect(empty?.querySelector('.crop-stages-empty__cta')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages-table')).toBeNull();
+    expect(empty?.querySelector('.crop-stages-empty__cta')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.card-list')).toBeNull();
+    const addButton = fixture.nativeElement.querySelector(
+      '.section-card__header-actions .btn-primary'
+    ) as HTMLButtonElement | null;
+    expect(addButton).toBeTruthy();
+    expect(addButton?.textContent).toContain('Add Stage');
   });
 
-  it('shows add row at table bottom when stages exist', async () => {
+  it('does not show table bottom add row when stages exist', async () => {
     await loadStages([stageFixture]);
 
-    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-row')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-row')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.section-card__header-actions .btn-primary')).toBeTruthy();
   });
 
   it('shows readiness checklist when stage requirements are incomplete', async () => {
@@ -610,7 +638,7 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-order-warning')).toBeNull();
   });
 
-  it('updates cumulative GDD display in table after stage reorder', async () => {
+  it('updates cumulative GDD display in stage cards after stage reorder', async () => {
     component.control = {
       ...loadedControlBase,
       formData: {
@@ -641,16 +669,16 @@ describe('CropStagesComponent', () => {
     } as CdkDragDrop<CropStage[]>);
     fixture.detectChanges();
 
-    const rows = fixture.nativeElement.querySelectorAll('.crop-stages-table__row');
-    expect(rows[0]?.textContent).toContain('0–200');
-    expect(rows[1]?.textContent).toContain('200–300');
+    const cards = fixture.nativeElement.querySelectorAll('.crop-stages-card');
+    expect(cards[0]?.textContent).toContain('0–200');
+    expect(cards[1]?.textContent).toContain('200–300');
   });
 
   it('disables mutation controls for reference crops when user is not admin', async () => {
     await loadStages([stageFixture], 'Reference Tomato', { is_reference: true });
 
     expect(fixture.nativeElement.querySelector('.crop-stages__readonly-notice')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages-empty__cta')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.section-card__header-actions .btn-primary')).toBeNull();
     expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeNull();
     expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeNull();
 
