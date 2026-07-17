@@ -2,7 +2,6 @@ import {
   BLOCKING_MERGE_LABELS,
   areRequiredChecksComplete,
   areRequiredChecksGreen,
-  isEligibleAgentPr,
 } from './pr-agent-prep-lib.mjs';
 import { prMergeWorkerNeedsSync } from './pr-merge-worker-needs-sync.mjs';
 
@@ -18,6 +17,30 @@ export const READY_QUIET_MS = 30 * 60 * 1000;
  */
 function labelNames(labels) {
   return labels.map((label) => (typeof label === 'string' ? label : label.name));
+}
+
+/**
+ * Opt-out gates only (universal rescue). No agent-merge / branch-prefix opt-in.
+ *
+ * @param {{
+ *   baseRefName: string;
+ *   headRepository?: { nameWithOwner?: string };
+ *   labels: string[];
+ * }} pr
+ * @param {string} baseOwner
+ */
+function isUniversalMergeWorkerTarget(pr, baseOwner) {
+  if (pr.baseRefName !== 'master') {
+    return false;
+  }
+  const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
+  if (headOwner !== baseOwner) {
+    return false;
+  }
+  if (pr.labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -60,25 +83,17 @@ function classifyBaseEligibility({ pr, baseOwner }) {
     return { eligible: false, reason: 'draft pr' };
   }
 
-  if (!needsSync && !labels.includes('agent-merge')) {
-    return { eligible: false, reason: 'no agent-merge label' };
-  }
-  if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
-    return { eligible: false, reason: 'blocking merge label' };
-  }
-
-  const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
-  if (
-    !isEligibleAgentPr({
-      authorLogin: '',
-      baseRefName: pr.baseRefName,
-      headRefName: pr.headRefName,
-      body: pr.body,
-      labels,
-      headOwner,
-      baseOwner,
-    })
-  ) {
+  if (!isUniversalMergeWorkerTarget({ ...pr, labels }, baseOwner)) {
+    if (pr.baseRefName !== 'master') {
+      return { eligible: false, reason: 'not eligible agent pr' };
+    }
+    const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
+    if (headOwner !== baseOwner) {
+      return { eligible: false, reason: 'not eligible agent pr' };
+    }
+    if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
+      return { eligible: false, reason: 'blocking merge label' };
+    }
     return { eligible: false, reason: 'not eligible agent pr' };
   }
 
@@ -90,7 +105,7 @@ function classifyBaseEligibility({ pr, baseOwner }) {
 }
 
 /**
- * Draft + agent-merge + required CI failure (no master sync need).
+ * Required CI failure (no master sync need). Draft or ready; no agent-merge required.
  *
  * @param {{
  *   pr: object;
@@ -100,27 +115,11 @@ function classifyBaseEligibility({ pr, baseOwner }) {
  *   labels: string[];
  * }} input
  */
-function classifyDraftCiFixCandidate({ pr, checks, baseOwner, nowMs, labels }) {
-  if (!pr.isDraft || !labels.includes('agent-merge')) {
-    return null;
-  }
-
-  if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
-    return { eligible: false, reason: 'blocking merge label' };
-  }
-
-  const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
-  if (
-    !isEligibleAgentPr({
-      authorLogin: '',
-      baseRefName: pr.baseRefName,
-      headRefName: pr.headRefName,
-      body: pr.body,
-      labels,
-      headOwner,
-      baseOwner,
-    })
-  ) {
+function classifyCiFixCandidate({ pr, checks, baseOwner, nowMs, labels }) {
+  if (!isUniversalMergeWorkerTarget({ ...pr, labels }, baseOwner)) {
+    if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
+      return { eligible: false, reason: 'blocking merge label' };
+    }
     return { eligible: false, reason: 'not eligible agent pr' };
   }
 
@@ -186,6 +185,15 @@ export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
   const updatedAtMs = Date.parse(pr.updatedAt);
 
   if (prMergeWorkerNeedsSync(pr)) {
+    if (!isUniversalMergeWorkerTarget({ ...pr, labels }, baseOwner)) {
+      if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
+        return { eligible: false, reason: 'blocking merge label' };
+      }
+      return { eligible: false, reason: 'not eligible agent pr' };
+    }
+    if (pr.reviewDecision === 'CHANGES_REQUESTED') {
+      return { eligible: false, reason: 'changes requested' };
+    }
     if (hasInProgress && !isInProgressStale({ updatedAtMs, nowMs })) {
       return { eligible: false, reason: 'agent-merge-in-progress is fresh' };
     }
@@ -197,14 +205,18 @@ export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
     };
   }
 
-  const ciFix = classifyDraftCiFixCandidate({
+  const ciFix = classifyCiFixCandidate({
     pr,
     checks,
     baseOwner,
     nowMs,
     labels,
   });
-  if (ciFix) {
+  if (ciFix.eligible) {
+    return ciFix;
+  }
+  // CI green → continue to stuck_retry. Any other ci_fix rejection is final.
+  if (ciFix.reason !== 'required ci already green') {
     return ciFix;
   }
 

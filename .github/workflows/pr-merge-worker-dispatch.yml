@@ -1,9 +1,9 @@
-# Dispatches the Cursor PR Merge Worker for eligible PRs.
+# Dispatches the Cursor PR Merge Worker for PRs targeting master (opt-out only).
 #
 # CI dispatch: Backend test workflow_run only (once per push; avoids check_suite / per-job duplicates).
-#   On ci_completed, dispatch only after ruleset required checks are all SUCCESS.
-# PR dispatch: opened (opt-in branches), labeled agent-merge, or synchronize when conflicting.
-# Conflict dispatch: push to master — eligible PRs that are BEHIND/DIRTY/CONFLICTING.
+#   On ci_completed: green → merge path; failed required CI → ci_fix (draft or ready).
+# PR dispatch: opened / labeled / synchronize / ready_for_review; conflict when BEHIND/DIRTY/CONFLICTING.
+# Conflict dispatch: push to master — PRs that are BEHIND/DIRTY/CONFLICTING (minus blockers).
 #
 # Setup: see .cursor/skills/github-pr-merge-worker/SKILL.md §8
 
@@ -110,7 +110,6 @@ jobs:
           TITLE_B64: ${{ steps.pr.outputs.title_b64 }}
         run: |
           set -euo pipefail
-          PR_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
           PR_TITLE=$(printf '%s' "$TITLE_B64" | base64 -d)
 
           if [ -z "${WEBHOOK_URL:-}" ] || [ -z "${WEBHOOK_KEY:-}" ]; then
@@ -134,25 +133,15 @@ jobs:
             exit 0
           fi
 
-          eligible=false
-          if echo "$LABELS" | grep -qE '(^|,)agent-merge(,|$)'; then eligible=true; fi
-          if echo "$HEAD_REF" | grep -qE '^cursor/'; then eligible=true; fi
-          if echo "$HEAD_REF" | grep -qE '^issue/[0-9]+-'; then eligible=true; fi
-          if echo "$PR_BODY" | grep -q 'Merge-Strategy: agent'; then eligible=true; fi
-          if [ "$eligible" != "true" ]; then
-            echo "PR is not eligible for PR Merge Worker; skipping."
-            exit 0
-          fi
+          # Universal rescue / merge: opt-out only (blocking labels above). No branch-prefix opt-in.
 
-          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepository,additions,deletions,title,mergeable,mergeStateStatus)
+          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepository,title,mergeable,mergeStateStatus)
           IS_DRAFT=$(echo "$PR_META" | jq -r '.isDraft')
           REVIEW_DECISION=$(echo "$PR_META" | jq -r '.reviewDecision // ""')
           BASE_REF=$(echo "$PR_META" | jq -r '.baseRefName')
           HEAD_OID=$(echo "$PR_META" | jq -r '.headRefOid')
           HEAD_OWNER=$(echo "$PR_META" | jq -r '.headRepository.nameWithOwner' | cut -d/ -f1)
           BASE_OWNER=$(gh repo view --json owner -q .owner.login)
-          ADDITIONS=$(echo "$PR_META" | jq -r '.additions')
-          DELETIONS=$(echo "$PR_META" | jq -r '.deletions')
           TITLE=$(echo "$PR_META" | jq -r '.title')
           MERGEABLE_STATE=$(echo "$PR_META" | jq -r '.mergeable // ""')
           MERGE_STATE_STATUS=$(echo "$PR_META" | jq -r '.mergeStateStatus // ""')
@@ -176,23 +165,17 @@ jobs:
             exit 0
           fi
 
-          if [ "$IS_DRAFT" = "true" ] && [ "$NEEDS_SYNC" != "true" ]; then
-            if echo "$LABELS" | grep -qE '(^|,)agent-merge(,|$)'; then
-              CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state)
-              REQUIRED_CI_STATE=$(CHECKS_JSON="$CHECKS_JSON" node scripts/classify-required-ci-state.mjs)
-              if [ "$REQUIRED_CI_STATE" = "incomplete" ]; then
-                echo "Draft PR with agent-merge but required CI still pending; skipping."
-                exit 0
-              fi
-              if [ "$REQUIRED_CI_STATE" = "failed" ]; then
-                ACTION="ci_fix"
-                echo "Draft PR with agent-merge and failed required CI; dispatching ci_fix."
-              else
-                echo "Draft PR without conflict/sync need; skipping."
-                exit 0
-              fi
-            else
-              echo "Draft PR without conflict/sync need; skipping."
+          if [ "$NEEDS_SYNC" != "true" ]; then
+            CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state)
+            REQUIRED_CI_STATE=$(CHECKS_JSON="$CHECKS_JSON" node scripts/classify-required-ci-state.mjs)
+            if [ "$REQUIRED_CI_STATE" = "failed" ]; then
+              ACTION="ci_fix"
+              echo "Required CI failed; dispatching ci_fix."
+            elif [ "$IS_DRAFT" = "true" ]; then
+              echo "Draft PR without conflict/sync need and CI not failed; skipping."
+              exit 0
+            elif [ "$REQUIRED_CI_STATE" = "incomplete" ] && [ "$ACTION" = "ci_completed" ]; then
+              echo "Required checks still pending on ci_completed; skipping dispatch."
               exit 0
             fi
           fi
@@ -212,32 +195,9 @@ jobs:
             echo "Title contains [WIP] or [DRAFT]; skipping."
             exit 0
           fi
-          TOTAL_LINES=$((ADDITIONS + DELETIONS))
-          if [ "$TOTAL_LINES" -gt 800 ] && ! echo "$LABELS" | grep -qE '(^|,)agent-merge(,|$)'; then
-            echo "PR exceeds 800 changed lines without agent-merge label; skipping."
-            exit 0
-          fi
           if [ "$ACTION" != "conflict" ] && [ "$HEAD_OID" != "$HEAD_SHA" ]; then
             echo "Resolved head SHA ($HEAD_SHA) != current PR head ($HEAD_OID); skipping stale dispatch."
             exit 0
-          fi
-
-          if [ "$ACTION" = "ci_completed" ]; then
-            CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state)
-            REQUIRED_CI_STATE=$(CHECKS_JSON="$CHECKS_JSON" node scripts/classify-required-ci-state.mjs)
-            if [ "$REQUIRED_CI_STATE" = "incomplete" ]; then
-              echo "Required checks still pending on ci_completed; skipping dispatch."
-              exit 0
-            fi
-            if [ "$REQUIRED_CI_STATE" = "failed" ]; then
-              if [ "$IS_DRAFT" = "true" ] && echo "$LABELS" | grep -qE '(^|,)agent-merge(,|$)'; then
-                ACTION="ci_fix"
-                echo "Draft agent-merge PR with failed required CI; dispatching ci_fix."
-              else
-                echo "Required check failed on ci_completed; skipping dispatch."
-                exit 0
-              fi
-            fi
           fi
 
           if [ "$ACTION" = "conflict" ] || [ "$ACTION" = "ci_fix" ]; then
