@@ -39,8 +39,6 @@ const CROPS_EDIT_KEYS = [
   'crops.edit.table_base_temperature',
   'crops.edit.optimal_temperature_range',
   'crops.edit.optimal_temperature_value',
-  'crops.edit.table_required_gdd',
-  'crops.edit.table_cumulative_gdd',
   'crops.edit.value_missing',
   'crops.edit.temperature_section',
   'crops.edit.details_section'

@@ -91,8 +91,6 @@ const tableTranslations = {
       optimal_temperature_range: '{{min}}–{{max}} {{unit}}',
       optimal_temperature_value: '{{value}} {{unit}}',
       value_missing: '—',
-      stage_cumulative_gdd_range: '{{start}}–{{end}} ℃·day (cumulative)',
-      stage_cumulative_gdd_missing: 'Enter required GDD to display the range',
       stage_order_duplicate: 'Duplicate order: {{orders}}',
       stage_order_duplicate_hint: 'Drag rows to reorder or use the button below to renumber.',
       stage_order_renumber: 'Renumber orders',
