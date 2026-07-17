@@ -10,6 +10,8 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'resolveImplementDispatchGate',
   'resolveEpicImplementGate',
   'resolveDependencyGate',
+  'resolveDependencyGateFromAgentCache',
+  'issue-worker-deps-resolve.mjs',
   'formatDependencyGateComment',
   'openFixPrSearchQuery',
   'Comment when dependency gate blocks dispatch',
@@ -98,8 +100,13 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
     errors.push('dispatch lib missing resolveEpicImplementGate');
   }
 
+  if (!libText.includes('export async function resolveDependencyGateFromAgentCache') &&
+      !libText.includes('export function resolveDependencyGateFromAgentCache')) {
+    errors.push('dispatch lib missing resolveDependencyGateFromAgentCache');
+  }
+
   if (!libText.includes('export function parseHardDependencyIssueNumbers')) {
-    errors.push('dispatch lib missing parseHardDependencyIssueNumbers');
+    errors.push('dispatch lib missing parseHardDependencyIssueNumbers (reference only)');
   }
 
   if (!libText.includes('export async function selectDispatchableRetryCandidate') &&

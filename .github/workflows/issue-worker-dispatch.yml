@@ -114,6 +114,20 @@ jobs:
             echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason')" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Resolve agent dependency cache
+        id: deps_resolve
+        if: steps.issue.outputs.skip != 'true' && steps.issue.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true' && steps.epic_gate.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_URL }}
+          CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_KEY }}
+        run: |
+          set -euo pipefail
+          node scripts/issue-worker-deps-resolve.mjs \
+            --repo "${{ github.repository }}" \
+            --number "${{ github.event.issue.number }}"
+
       - name: Skip implement when dependencies are open
         id: dependency_gate
         if: steps.issue.outputs.skip != 'true' && steps.issue.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true' && steps.epic_gate.outputs.skip != 'true'
@@ -125,7 +139,8 @@ jobs:
           set -euo pipefail
           RESULT=$(node --input-type=module -e "
             import { execFileSync } from 'node:child_process';
-            import { resolveDependencyGate } from './scripts/issue-worker-dispatch-lib.mjs';
+            import { resolveDependencyGateFromAgentCache } from './scripts/issue-worker-dispatch-lib.mjs';
+            import { createGetAgentDepsContractFromComments } from './scripts/issue-worker-deps-agent-lib.mjs';
 
             const repo = '${{ github.repository }}';
             const issueNumber = Number(process.env.ISSUE_NUMBER);
@@ -140,10 +155,34 @@ jobs:
               return JSON.parse(raw);
             }
 
+            function fetchIssueComments(number) {
+              const raw = execFileSync(
+                'gh',
+                [
+                  'api',
+                  \`repos/\${repo}/issues/\${number}/comments\`,
+                  '--paginate',
+                  '--jq',
+                  '.[] | {body, createdAt: .created_at}',
+                ],
+                { encoding: 'utf8' },
+              );
+              const lines = raw.trim().split('\\n').filter(Boolean);
+              if (lines.length === 0) {
+                return [];
+              }
+              return lines.map((line) => JSON.parse(line));
+            }
+
+            const getAgentDepsContract = createGetAgentDepsContractFromComments(
+              async (number) => fetchIssueComments(number),
+            );
+
             try {
-              const gate = await resolveDependencyGate({
+              const gate = await resolveDependencyGateFromAgentCache({
                 issueNumber,
                 issueBody,
+                getAgentDepsContract,
                 fetchIssueState: async (number) => ghIssueView(number).state,
                 fetchIssueBody: async (number) => ghIssueView(number).body ?? '',
               });

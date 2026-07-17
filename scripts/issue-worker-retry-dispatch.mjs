@@ -19,8 +19,8 @@ import {
   resolveImplementPreDispatchGates,
   selectDepsUnblockCandidate,
   selectDispatchableRetryCandidate,
-  parseHardDependencyIssueNumbers,
 } from './issue-worker-dispatch-lib.mjs';
+import { createGetAgentDepsContractFromComments } from './issue-worker-deps-agent-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
 
@@ -101,6 +101,36 @@ function listAgentSkippedIssues(repo) {
     labels: issue.labels.map((label) => label.name),
     createdAt: issue.createdAt,
   }));
+}
+
+/**
+ * @param {string} repo
+ * @param {number} issueNumber
+ * @returns {Array<{ body?: string; createdAt?: string }>}
+ */
+function fetchIssueComments(repo, issueNumber) {
+  const raw = gh(repo, [
+    'api',
+    `repos/${repo}/issues/${issueNumber}/comments`,
+    '--paginate',
+    '--jq',
+    '.[] | {body, createdAt: .created_at}',
+  ]);
+  const lines = raw.trim().split('\n').filter(Boolean);
+  if (lines.length === 0) {
+    return [];
+  }
+  return lines.map((line) => JSON.parse(line));
+}
+
+/**
+ * @param {string} repo
+ * @returns {(issueNumber: number, issueBody: string) => Promise<import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null>}
+ */
+function createRepoAgentDepsGetter(repo) {
+  return createGetAgentDepsContractFromComments((issueNumber) =>
+    fetchIssueComments(repo, issueNumber),
+  );
 }
 
 /**
@@ -188,10 +218,12 @@ function unblockAgentSkippedIssue(repo, issueNumber) {
  */
 async function selectDepsUnblockIssue(repo, fetchIssueState) {
   const issues = listAgentSkippedIssues(repo);
+  const getAgentDepsContract = createRepoAgentDepsGetter(repo);
   const selected = await selectDepsUnblockCandidate(
     issues,
     (issueNumber) => hasOpenFixPr(repo, issueNumber),
     fetchIssueState,
+    getAgentDepsContract,
   );
   if (!selected) {
     return null;
@@ -239,11 +271,13 @@ async function dispatchIfEligible({ repo, issue, retryReason }) {
     return false;
   }
 
+  const getAgentDepsContract = createRepoAgentDepsGetter(repo);
   const preDispatch = await resolveImplementPreDispatchGates({
     issueNumber: issue.number,
     issueTitle: issue.title,
     issueBody: issue.body,
     issueLabels: labels,
+    getAgentDepsContract,
     fetchIssueState: async (number) => fetchIssue(repo, number).state,
     fetchIssueBody: async (number) => fetchIssue(repo, number).body,
   });
@@ -268,6 +302,7 @@ async function main() {
 
   if (args.mode === 'reconcile') {
     const issues = listAgentReadyIssues(repo);
+    const getAgentDepsContract = createRepoAgentDepsGetter(repo);
     const selected = await selectDispatchableRetryCandidate(
       issues,
       (issueNumber) => hasOpenFixPr(repo, issueNumber),
@@ -277,6 +312,7 @@ async function main() {
           issueTitle: issue.title,
           issueBody: issue.body,
           issueLabels: issue.labels.join(','),
+          getAgentDepsContract,
           fetchIssueState: async (number) => fetchIssue(repo, number).state,
           fetchIssueBody: async (number) => fetchIssue(repo, number).body,
         }),
@@ -313,13 +349,19 @@ async function main() {
     if (!Number.isInteger(closedNumber) || closedNumber <= 0) {
       throw new Error('--number must be a positive integer for on-closed mode');
     }
-    const skippedIssues = listAgentSkippedIssues(repo).filter((issue) =>
-      parseHardDependencyIssueNumbers(issue.body ?? '').includes(closedNumber),
-    );
+    const getAgentDepsContract = createRepoAgentDepsGetter(repo);
+    const skippedIssues = [];
+    for (const issue of listAgentSkippedIssues(repo)) {
+      const contract = await getAgentDepsContract(issue.number, issue.body ?? '');
+      if (contract?.hard_dependencies.includes(closedNumber)) {
+        skippedIssues.push(issue);
+      }
+    }
     const selected = await selectDepsUnblockCandidate(
       skippedIssues,
       (issueNumber) => hasOpenFixPr(repo, issueNumber),
       fetchIssueState,
+      getAgentDepsContract,
     );
     if (!selected) {
       console.log(`No deps-unblocked agent-skipped issues depend on #${closedNumber}.`);
