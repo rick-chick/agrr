@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { REQUIRED_AUTOMATION_SCRIPT_UNIT_TESTS } from './automation-script-unit-tests.mjs';
+
 const REQUIRED_WORKFLOW_SNIPPETS = [
   'name: PR Merge Worker Dispatch',
   'ready_for_review',
@@ -11,7 +13,12 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'CURSOR_PR_MERGE_WEBHOOK_KEY',
   'mergeable_state',
   'mergeStateStatus',
-  'curl -fsS -X POST "$WEBHOOK_URL"',
+  'post-cursor-webhook.mjs',
+  'permissions:',
+  'pull-requests: read',
+  'workflow_run.pull_requests[0].number',
+  'headRefOid',
+  'resolve-workflow-run-pr-from-gh.mjs',
 ];
 
 const CONFLICT_DISPATCH_SNIPPETS = [
@@ -30,9 +37,16 @@ const CONFLICT_DISPATCH_SNIPPETS = [
 const RETRY_DISPATCH_SNIPPETS = [
   'name: PR Merge Worker Retry Dispatch',
   'PR Merge Worker Dispatch',
+  "github.event.workflow_run.conclusion == 'failure'",
   'dispatch_run_cancelled',
+  'dispatch_run_failed',
   'scheduled_reconcile',
   'pr-merge-worker-retry-dispatch.mjs',
+];
+
+const WEBHOOK_POST_LIB_SNIPPETS = [
+  'webhook-post-lib.mjs',
+  'post-cursor-webhook.mjs',
 ];
 
 const RECONCILE_LIB_SNIPPETS = [
@@ -128,6 +142,12 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  if (workflowText.includes('function ghApi(path)')) {
+    errors.push(
+      'pr-merge-worker-dispatch workflow must not inline ghApi; use resolve-workflow-run-pr-from-gh.mjs',
+    );
+  }
+
   for (const snippet of CONFLICT_DISPATCH_SNIPPETS) {
     if (!workflowText.includes(snippet)) {
       errors.push(`workflow missing conflict dispatch snippet: ${snippet}`);
@@ -140,10 +160,28 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  for (const snippet of WEBHOOK_POST_LIB_SNIPPETS) {
+    const scriptPath = join(repoRoot, 'scripts', snippet);
+    let scriptText = '';
+    try {
+      scriptText = await readFile(scriptPath, 'utf8');
+    } catch {
+      errors.push(`missing webhook script: ${scriptPath}`);
+      continue;
+    }
+    if (!scriptText.includes('postWebhookJson')) {
+      errors.push(`${snippet} must use postWebhookJson from webhook-post-lib.mjs`);
+    }
+  }
+
   for (const snippet of DISPATCH_SCRIPT_SNIPPETS) {
     if (!dispatchScriptText.includes(snippet)) {
       errors.push(`dispatch script missing required snippet: ${snippet}`);
     }
+  }
+
+  if (!dispatchScriptText.includes('postWebhookJson')) {
+    errors.push('dispatch-after-master-push must use postWebhookJson from webhook-post-lib.mjs');
   }
 
   for (const snippet of DELAYED_RESCAN_SNIPPETS) {
@@ -206,6 +244,26 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     await readFile(scriptPath, 'utf8');
   } catch {
     errors.push(`missing conflict resolution script: ${scriptPath}`);
+  }
+
+  const frontendTestWorkflowPath = join(repoRoot, '.github/workflows/frontend-test.yml');
+  let frontendTestWorkflowText = '';
+  try {
+    frontendTestWorkflowText = await readFile(frontendTestWorkflowPath, 'utf8');
+  } catch {
+    errors.push(`missing frontend-test workflow: ${frontendTestWorkflowPath}`);
+  }
+
+  if (frontendTestWorkflowText.includes('automation script unit tests')) {
+    for (const testPath of REQUIRED_AUTOMATION_SCRIPT_UNIT_TESTS) {
+      if (!frontendTestWorkflowText.includes(testPath)) {
+        errors.push(
+          `frontend-test.yml automation script unit tests must include: ${testPath}`,
+        );
+      }
+    }
+  } else {
+    errors.push('frontend-test.yml missing automation script unit tests step');
   }
 
   return { ok: errors.length === 0, errors };
