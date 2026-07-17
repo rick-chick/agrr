@@ -58,6 +58,79 @@ function extractDependencySection(issueBody) {
 }
 
 /**
+ * Whether a line marks an issue number as already closed (not a blocking dependency).
+ *
+ * @param {string} line
+ * @param {number} issueNumber
+ * @returns {boolean}
+ */
+function isClosedDependencyMention(line, issueNumber) {
+  const closedPattern = new RegExp(
+    `#${issueNumber}[^\\n#]*(?:クローズ|closed|CLOSED)|(?:クローズ|closed|CLOSED)[^\\n#]*#${issueNumber}`,
+    'i',
+  );
+  return closedPattern.test(line);
+}
+
+/**
+ * Whether a line expresses a soft / non-blocking reference to an issue number.
+ *
+ * @param {string} line
+ * @param {number} issueNumber
+ * @returns {boolean}
+ */
+function isSoftDependencyMention(line, issueNumber) {
+  if (new RegExp(`^[-*]\\s*#${issueNumber}\\s*[（(]`).test(line)) {
+    return false;
+  }
+  if (new RegExp(`#${issueNumber}\\s+(用語)?と整合`).test(line)) {
+    return true;
+  }
+  if (/参考|独立|epic/i.test(line) && !new RegExp(`^[-*]\\s*#${issueNumber}\\b`).test(line)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Parse hard-blocking issue numbers from the `## 依存` section.
+ * Distinguishes author intent: なし / soft alignment notes / closed refs vs hard deps.
+ *
+ * @param {string} issueBody
+ * @returns {number[]}
+ */
+export function parseHardDependencyIssueNumbers(issueBody) {
+  const section = extractDependencySection(issueBody);
+  if (!section) {
+    return [];
+  }
+
+  const hardDependencies = new Set();
+  for (const rawLine of section.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) {
+      continue;
+    }
+    if (/^[-*]\s*なし/.test(line)) {
+      continue;
+    }
+
+    const numbers = [...line.matchAll(/#(\d+)/g)].map((match) => Number(match[1]));
+    for (const issueNumber of numbers) {
+      if (isClosedDependencyMention(line, issueNumber)) {
+        continue;
+      }
+      if (isSoftDependencyMention(line, issueNumber)) {
+        continue;
+      }
+      hardDependencies.add(issueNumber);
+    }
+  }
+
+  return [...hardDependencies].sort((a, b) => a - b);
+}
+
+/**
  * Parse issue numbers referenced in the `## 依存` section.
  *
  * @param {string} issueBody
@@ -108,7 +181,7 @@ export async function resolveDependencyGate({
   fetchIssueState,
   fetchIssueBody,
 }) {
-  const directDependencies = parseDependencyIssueNumbers(issueBody);
+  const directDependencies = parseHardDependencyIssueNumbers(issueBody);
   if (directDependencies.length === 0) {
     return { skip: false };
   }
@@ -121,7 +194,7 @@ export async function resolveDependencyGate({
    * @param {string} currentBody
    */
   async function walk(currentNumber, currentBody) {
-    const dependencies = parseDependencyIssueNumbers(currentBody);
+    const dependencies = parseHardDependencyIssueNumbers(currentBody);
     for (const dependencyNumber of dependencies) {
       if (visiting.has(dependencyNumber)) {
         throw new Error(
@@ -355,6 +428,40 @@ export function selectRetryCandidate(issues, hasOpenFixPrFor) {
 }
 
 /**
+ * Select the lowest-number agent-ready issue that passes retry eligibility and pre-dispatch gates.
+ *
+ * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} issues
+ * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
+ * @param {(issue: { number: number; title: string; labels: string[]; body?: string }) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
+ * @returns {Promise<{ issue: { number: number; title: string; labels: string[]; body?: string }; action: string } | null>}
+ */
+export async function selectDispatchableRetryCandidate(
+  issues,
+  hasOpenFixPrFor,
+  evaluatePreDispatch,
+) {
+  const sorted = [...issues].sort((a, b) => a.number - b.number);
+  for (const issue of sorted) {
+    const labels = issue.labels.join(',');
+    const retryResult = isRetryCandidate({
+      issueLabels: labels,
+      hasOpenFixPr: hasOpenFixPrFor(issue.number),
+    });
+    if (!retryResult.eligible) {
+      continue;
+    }
+
+    const preDispatch = await evaluatePreDispatch(issue);
+    if (preDispatch.skip) {
+      continue;
+    }
+
+    return { issue, action: retryResult.action };
+  }
+  return null;
+}
+
+/**
  * @param {{
  *   issueLabels: string;
  *   issueBody: string;
@@ -378,7 +485,7 @@ export async function isDepsResolvedUnblockCandidate({
   if (hasOpenFixPr) {
     return { eligible: false, reason: 'open fix pr exists' };
   }
-  const dependencies = parseDependencyIssueNumbers(issueBody);
+  const dependencies = parseHardDependencyIssueNumbers(issueBody);
   if (dependencies.length === 0) {
     return { eligible: false, reason: 'no dependency section refs' };
   }

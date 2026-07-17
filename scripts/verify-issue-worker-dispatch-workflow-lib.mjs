@@ -98,5 +98,14 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
     errors.push('dispatch lib missing resolveEpicImplementGate');
   }
 
+  if (!libText.includes('export function parseHardDependencyIssueNumbers')) {
+    errors.push('dispatch lib missing parseHardDependencyIssueNumbers');
+  }
+
+  if (!libText.includes('export async function selectDispatchableRetryCandidate') &&
+      !libText.includes('export function selectDispatchableRetryCandidate')) {
+    errors.push('dispatch lib missing selectDispatchableRetryCandidate');
+  }
+
   return { ok: errors.length === 0, errors };
 }
