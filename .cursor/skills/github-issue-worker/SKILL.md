@@ -111,7 +111,7 @@ gh issue edit <N> --add-label agent-in-progress
 
 **dispatch 層で処理（§2b ではない）**: 本文 `## 依存` に open の `#N` がある issue への `implement` dispatch は [`issue-worker-dispatch.yml`](../../../.github/workflows/issue-worker-dispatch.yml) が webhook 送信前に保留する（issue コメントのみ・`agent-skipped` なし）。`[epic]` / `epic` ラベルの `implement` dispatch も同 workflow が拒否する。
 
-**禁止**: 根拠のないスキップ、duplicate / already_fixed をスキップで逃げる（該当時は §2a で close）。**`deps_unmet`（本文 `## 依存` に open の `#N` あり）で §2b を使わない** — `agent-skipped` を付けると reconcile が除外し依存解消後も再 dispatch されない。dispatch 層の依存ゲート（`agent-ready` 維持）または issue コメントのみで待機する。
+**禁止**: 根拠のないスキップ、duplicate / already_fixed をスキップで回避する（該当時は §2a で close）。**`deps_unmet`（本文 `## 依存` に open の `#N` あり）で §2b を使わない** — `agent-skipped` を付けると reconcile が除外し依存解消後も再 dispatch されない。dispatch 層の依存ゲート（`agent-ready` 維持）または issue コメントのみで待機する。
 
 ### 必須コメント（ラベル付与前）
 
@@ -146,7 +146,7 @@ gh issue edit <N> --add-label agent-skipped
 | **invalid** | 再現不能・誤報・obsolete（参照パス削除済み等） | `--reason "not planned"` + ラベル `invalid` |
 | **superseded** | 別 issue / 方針に統合された | `--reason "not planned"` + 本文に後継 `#M` を明記 |
 
-**禁止**: 根拠のない close、推測のみの close、`ARCHITECTURE.md` 衝突を「wontfix」で逃げる close。
+**禁止**: 根拠のない close、推測のみの close、`ARCHITECTURE.md` 衝突を「wontfix」で close して回避する。
 
 ### 必須コメント（クローズ前）
 
@@ -218,15 +218,15 @@ issue タイトル・本文からスキルを選ぶ（複数可）。
 
 - ブランチ: `issue/<number>-<short-slug>`（例: `issue/14-plans-task-schedules-in-json`）
 - **TDD**: RED → `test-common` で確認 → GREEN（`tdd-on-edit`）
-- スコープは issue の完了条件のみ（ついで修正禁止: `project-necessary-code-only`）
+- スコープは issue の完了条件のみ（スコープ外の修正禁止: `project-necessary-code-only`）
 - 単発の層実装は `use-skills-on-edit` に従いサブエージェント委譲可
-- **GREEN 確認後、PR を開く前に必ず §4 へ** — **tick から**（A1 直行禁止）
+- **GREEN 確認後、PR を開く前に必ず §4 へ** — **tick から**（tick 未実行で A1 に進まない）
 
 ## 4) 順次クリーンアップ・レビュー（必須・TDD 直後）
 
 1 issue = **1 修正単位** = **1 parent-slug**。Issue Worker 実行時は [`sequential-cleanup-review-workflow`](../sequential-cleanup-review-workflow/SKILL.md) の `disable-model-invocation` を**上書きして適用する**。
 
-### 入口（必須 — A1 に直行しない）
+### 入口（必須 — tick 未実行で A1 に進まない）
 
 **TDD GREEN 確認後、最初に tick を実行する。** マニフェスト確認や A1 調査を親が始めるのは **違反**。
 
@@ -246,7 +246,7 @@ while tasks:           # shell — gate exit 0 まで同一ターン継続
 | 参照 | 内容 |
 |------|------|
 | [STARTUP.md](../sequential-cleanup-review-workflow/references/STARTUP.md) | slug・tick 出力の読み方 |
-| [DUAL_LOOP.md](../sequential-cleanup-review-workflow/references/DUAL_LOOP.md) | 親 while · L1/L2/L3 · 禁止フレーズ |
+| [DUAL_LOOP.md](../sequential-cleanup-review-workflow/references/DUAL_LOOP.md) | 親 while · L1/L2/L3 · 使用しない表現 |
 | [AGENT_ORCHESTRATION.md](../sequential-cleanup-review-workflow/references/AGENT_ORCHESTRATION.md) | Step 委譲（**Task は毎回 `model: composer-2.5`**） |
 | [MECHANICAL_OUTER_LOOP.md](../sequential-cleanup-review-workflow/references/MECHANICAL_OUTER_LOOP.md) | D1 候補 **すべて** ingest · gate |
 | [STEPS_ABCD.md](../sequential-cleanup-review-workflow/references/STEPS_ABCD.md) | A/B/C/D 作業内容 |
@@ -296,7 +296,8 @@ gh pr ready
 
 - PR 本文に issue の完了条件チェックリストを写す
 - `Closes #N` を含めマージ時に自動クローズ
-- `agent-merge` で [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) がマージ候補に入る（**Draft のままでは dispatch しない** — [`pr-agent-prep.yml`](../../../.github/workflows/pr-agent-prep.yml) または `gh pr ready` 必須）
+- `agent-merge` は互換ラベル（[`pr-agent-prep.yml`](../../../.github/workflows/pr-agent-prep.yml) が付与しうる）。**Merge Worker の起動前提ではない**（全 PR 既定対象 — [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) / [automation-authoring PRINCIPLES](../automation-authoring/references/PRINCIPLES.md)）
+- Draft のままでは **マージ**しない。ready 化は pr-agent-prep または `gh pr ready`。CI 赤の Draft は Merge Worker の `ci_fix` が直す
 
 ## 7) 終了
 

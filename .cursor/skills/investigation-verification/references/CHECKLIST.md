@@ -2,7 +2,7 @@
 
 ## 検証の原則
 
-**明らかさに限らず検証する。** 原因が「はっきりしている」「ほぼ特定できている」でも、テストによる再現とテストコードの存在を確認する。理由は [error-investigation](../../error-investigation/references/CHECKLIST.md) の「抜け道の禁止」に準じる。
+**明らかさに限らず検証する。** 原因が「はっきりしている」「ほぼ特定できている」でも、テストによる再現とテストコードの存在を確認する。理由は [error-investigation](../../error-investigation/references/CHECKLIST.md) の「RED 省略の根拠にしないこと」に準じる。
 
 ## 検証チェックリスト
 
@@ -14,7 +14,7 @@
 | 2 | **テストコードが作成されているか** | 上記のテストが Rails テスト（minitest）または Angular テスト（Jest/Vitest）としてリポジトリに存在し、実行可能か。 |
 | 3 | **原因とテストが 1:1 で結びついているか** | 事象の再現（例: エンドポイントが 422 を返す）だけではなく、**その原因を断ち切れば GREEN になる**テストになっているか。 |
 | 4 | **複数原因がある場合** | 報告された原因が複数あるとき、残った原因ごとに RED が再現するテストが書かれ、RED 確認が取れているか。 |
-| 5 | **フォールバックを実装していないか** | 根本原因を無視してフォールバックを実装していないか。 |
+| 5 | **フォールバックを実装していないか** | 根本原因を確認せずにフォールバックを実装していないか。 |
 
 - 1〜5 を満たしていれば「調査完了」として妥当。不足があれば、報告者に RED テストの追加・RED 確認を依頼する。
 - 調査完了の定義（ステップ 5 まで）の詳細は [error-investigation](../../error-investigation/SKILL.md) を参照。
@@ -30,5 +30,5 @@
 | 参照 | 内容 |
 |------|------|
 | [error-investigation](../../error-investigation/SKILL.md) | 調査手順・調査完了の定義（ステップ 5＝RED による検証） |
-| [error-investigation references/CHECKLIST.md](../../error-investigation/references/CHECKLIST.md) | RED を飛ばさない理由・抜け道の禁止 |
+| [error-investigation references/CHECKLIST.md](../../error-investigation/references/CHECKLIST.md) | RED 省略の根拠にしない理由 |
 | [error-fix-red-green](../../error-fix-red-green/SKILL.md) | 検証完了後に適用する修正・GREEN 確認 |

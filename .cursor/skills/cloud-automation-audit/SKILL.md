@@ -118,7 +118,7 @@ gh api repos/rick-chick/agrr/rulesets --jq 'map(select(.name=="master CI require
 | **正常** | 対象なし・重複スキップ・意図した close 経路 | **何もしない** |
 | **改善候補** | プロンプト改善、頻度変更、コスト削減、UX 指摘の追加起票 | **レポートに 1 行記載のみ。PR・issue 化しない** |
 
-**禁止**: P0/P1 以外の「ついで修正」、スキル本文の書き換え、cron 変更、新 Automation 追加。
+**禁止**: P0/P1 以外のスコープ外修正、スキル本文の書き換え、cron 変更、新 Automation 追加。
 
 ## 3) 修正（クリティカルのみ）
 

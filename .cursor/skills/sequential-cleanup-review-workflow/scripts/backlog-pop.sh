@@ -79,7 +79,7 @@ PROMPT="$(backlog_prompt_path "$PARENT_SLUG" "$id")"
   echo "   \`.cursor/skills/sequential-cleanup-review-workflow/scripts/cleanup-agent-handoff.sh --parent-slug ${PARENT_SLUG} --id ${id}\`"
   echo "   → mark-done + 次 item を **プログラムが** dispatch（ユーザー確認・スコープ外中断禁止）"
   echo
-  echo "## 禁止（違反 = タスク未完了）"
+  echo "## 禁止（未完了条件: 以下に該当するとタスク未完了）"
   echo
   echo "- **スコープ外・deferred・別タスク・任意** を理由に本 item をスキップ・中断・ユーザー確認"
   echo "- 親が A〜D を直実施"

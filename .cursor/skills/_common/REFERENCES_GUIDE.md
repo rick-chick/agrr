@@ -1,6 +1,6 @@
 # References ファイル作成ガイド
 
-各スキルの `references/` 配下に置く補助資料の作り方。SKILL.md と references が**互いの劣化コピーにならない**ことを最優先とする。
+各スキルの `references/` 配下に置く補助資料の作り方。SKILL.md と references が**互いの重複コピーにならない**ことを最優先とする。
 
 ## 基本方針（重複排除）
 
