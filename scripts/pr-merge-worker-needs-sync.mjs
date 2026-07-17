@@ -1,5 +1,3 @@
-import { hasMergeStrategyAgent, isOptInHeadRef } from './pr-agent-prep-lib.mjs';
-
 /**
  * Whether an eligible PR should receive a conflict / master-sync dispatch
  * after master advances.
@@ -19,16 +17,16 @@ export function prMergeWorkerNeedsSync(pr) {
 }
 
 /**
- * @param {string} labelsCsv
- * @param {string} headRef
- * @param {string} body
+ * Universal rescue / merge-worker eligibility (opt-out only).
+ * Blocking labels, forks, review gates are applied by callers.
+ *
+ * @param {string} _labelsCsv
+ * @param {string} _headRef
+ * @param {string} [_body]
  * @returns {boolean}
  */
-export function prMergeWorkerIsEligible(labelsCsv, headRef, body = '') {
-  if (/(^|,)agent-merge(,|$)/.test(labelsCsv)) return true;
-  if (isOptInHeadRef(headRef)) return true;
-  if (hasMergeStrategyAgent(body)) return true;
-  return false;
+export function prMergeWorkerIsEligible(_labelsCsv, _headRef, _body = '') {
+  return true;
 }
 
 /**
@@ -71,9 +69,6 @@ export function selectSyncCandidates(prs) {
 
     if (pr.reviewDecision === 'CHANGES_REQUESTED') return false;
     if (/\[(WIP|DRAFT)\]/i.test(title)) return false;
-
-    const total = Number(pr.additions ?? 0) + Number(pr.deletions ?? 0);
-    if (total > 800 && !/(^|,)agent-merge(,|$)/.test(labels)) return false;
 
     return prMergeWorkerNeedsSync({
       mergeable: String(pr.mergeable ?? ''),

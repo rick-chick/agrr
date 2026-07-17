@@ -10,6 +10,8 @@ description: >-
 
 **Issue Worker / PR Merge Worker / dispatch workflows** の運用状態を **1 時間ごと**に機械収集し、**P0/P1 の異常**を調査して **GitHub issue** に落とす。repo 修正 PR は **最小限**（スクリプト破損など P0 のみ）。
 
+上位原則: [`automation-authoring` PRINCIPLES.md §目的](../automation-authoring/references/PRINCIPLES.md)（人間介在なしで完遂。滞留を黙って放置しない）。
+
 週次の深い監査・クリティカル PR 修正は [`cloud-automation-audit`](../cloud-automation-audit/SKILL.md) が担当。本スキルは **時間解像度の高い運用監視**に専念する。
 
 ## 起動元
@@ -30,10 +32,10 @@ description: >-
 | **Issue** | `agent-in-progress` 90 分以上滞留 | P1 |
 | **Issue** | `agent-ready` が 2 時間以上進まない（blocker なし） | P1 |
 | **Issue** | `agent-blocked` が 24 時間超 | P2（起票は任意・Memory のみ可） |
-| **PR** | Draft `cursor/*` / `agent-merge` が 12 時間以上 ready 化されない | P1 |
+| **PR** | Draft が 12 時間以上 ready 化されない（CI green なのに滞留） | P1 |
 | **PR** | `agent-merge-in-progress` 90 分以上 | P1 |
-| **PR** | `BEHIND` / `CONFLICTING` の ready PR | P1 |
-| **PR** | `agent-merge` かつ CI failure | P1 |
+| **PR** | `BEHIND` / `CONFLICTING` の open PR（ラベル不問） | P1 |
+| **PR** | 必須 CI failure の open PR（ラベル不問） | P1 |
 | **Workflow** | dispatch workflow の直近 2 時間以内の failure | P0 |
 | **Bootstrap** | `cloud-gh-auth.sh` / `verify-skill-references.sh` / 単体 test 失敗 | P0 |
 
