@@ -44,7 +44,7 @@ fn failed_phase_uses_phase_failed_message_key_not_phases_failed() {
 fn legacy_rails_only_phase_maps_to_optimizing_message_key() {
     let plan = plan_with_phase(
         "optimization_completed",
-        "最適化が完了しました。作業予定を生成しています...",
+        "最適化が完了しました。作業計画を生成しています...",
     );
     let payload = to_port_payload(&plan, 50, plan.optimization_phase_message.as_deref());
 

@@ -296,7 +296,7 @@ describe('PlanTaskScheduleComponent', () => {
     expect(footer?.querySelector('.plan-task-schedule__generated-at')?.textContent).toContain('Generated');
     expect(footer?.querySelector('.plan-task-schedule__summary')?.textContent).toContain('field');
     expect(footer?.querySelector('.plan-task-schedule__regenerate-link')?.textContent).toContain(
-      'Regenerate task schedules'
+      'Regenerate task plans'
     );
     expect(fixture.nativeElement.querySelector('app-task-schedule-month-list')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Weeding');
@@ -464,7 +464,7 @@ describe('PlanTaskScheduleComponent', () => {
     await fixture.whenStable();
 
     const hint = fixture.nativeElement.querySelector('.plan-work__empty-hint');
-    expect(hint?.textContent).toContain('Add crops to your plan to generate task schedules');
+    expect(hint?.textContent).toContain('Add crops to your plan to generate task plans');
   });
 
   it('does not show empty hint when sync failed', async () => {
@@ -505,7 +505,7 @@ describe('PlanTaskScheduleComponent', () => {
     await fixture.whenStable();
 
     const text = fixture.nativeElement.textContent;
-    expect(text).toContain('No task schedule has been generated yet.');
+    expect(text).toContain('No task plan has been generated yet.');
     expect(text).not.toContain('plans.task_schedules.no_schedules');
     expect(fixture.nativeElement.querySelector('.plan-work__empty')).toBeTruthy();
   });
@@ -535,7 +535,7 @@ describe('PlanTaskScheduleComponent', () => {
     expect(fixture.nativeElement.querySelector('.plan-work__empty-cta')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-task-schedule-sync-banner')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.task-schedule-sync-banner__retry')?.textContent).toContain(
-      'Regenerate task schedules'
+      'Regenerate task plans'
     );
   });
 
@@ -749,7 +749,7 @@ describe('PlanTaskScheduleComponent', () => {
 
     const footer = fixture.nativeElement.querySelector('.plan-task-schedule__footer');
     const link = footer?.querySelector('.plan-task-schedule__regenerate-link');
-    expect(link?.textContent).toContain('Regenerate task schedules');
+    expect(link?.textContent).toContain('Regenerate task plans');
   });
 
   it('opens regenerate confirm dialog when existing tasks would be replaced', async () => {

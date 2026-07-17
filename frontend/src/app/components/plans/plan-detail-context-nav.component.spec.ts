@@ -25,7 +25,7 @@ describe('PlanDetailContextNavComponent', () => {
     translate.setTranslation('ja', {
       'plans.show.nav.aria_label': '計画画面ナビゲーション',
       'plans.show.nav.workbench': '作付け計画',
-      'plans.show.nav.task_schedule': '作業予定表'
+      'plans.show.nav.task_schedule': '作業計画表'
     });
 
     router = TestBed.inject(Router);
@@ -42,9 +42,9 @@ describe('PlanDetailContextNavComponent', () => {
     const links = fixture.nativeElement.querySelectorAll('.plan-context-nav__link');
     expect(links.length).toBe(2);
     expect(links[0].textContent?.trim()).toBe('作付け計画');
-    expect(links[1].textContent?.trim()).toBe('作業予定表');
+    expect(links[1].textContent?.trim()).toBe('作業計画表');
     expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
-      '作業予定表'
+      '作業計画表'
     );
   });
 });

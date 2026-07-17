@@ -49,7 +49,7 @@ const editTranslations = {
   crops: {
     stage: {
       delete_confirm_message: 'Delete "{{stageName}}"?',
-      delete_confirm_blueprint_warning: 'This stage has {{count}} linked task schedule template(s).'
+      delete_confirm_blueprint_warning: 'This stage has {{count}} linked task plan template(s).'
     },
     errors: {
       invalid_id: 'Invalid crop ID.',
@@ -516,7 +516,7 @@ describe('CropStageEditComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain(
-      'This stage has 1 linked task schedule template(s).'
+      'This stage has 1 linked task plan template(s).'
     );
   });
 
