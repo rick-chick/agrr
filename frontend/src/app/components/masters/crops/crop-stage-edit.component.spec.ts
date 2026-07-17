@@ -58,7 +58,7 @@ const editTranslations = {
     edit: {
       stages_title: 'Growth Stages',
       stages_lead: 'Configure growth stages.',
-      stage_title: 'Stage {{order}}',
+      stage_order: 'Order',
       stage_name: 'Stage Name',
       base_temperature: 'Base Temperature',
       base_temperature_placeholder: 'e.g., 5.0',
@@ -215,6 +215,20 @@ describe('CropStageEditComponent', () => {
     expect(component.stageId).toBe(1);
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
     expect(mockLoadBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
+  });
+
+  it('shows stage order once beside the page title and not inside the edit card', async () => {
+    await loadStage();
+
+    const pageTitle = fixture.nativeElement.querySelector('.page-title');
+    const pageOrderBadge = fixture.nativeElement.querySelector('.crop-stage-edit__order-badge');
+    const cardStageTitle = fixture.nativeElement.querySelector('.crop-stages-section__title');
+    const cardOrderBadge = fixture.nativeElement.querySelector('.crop-stages-edit-panel__stage-badge');
+
+    expect(pageTitle?.textContent).toContain('Germination');
+    expect(pageOrderBadge?.textContent?.trim()).toBe('1');
+    expect(cardStageTitle).toBeNull();
+    expect(cardOrderBadge).toBeNull();
   });
 
   it('shows info flash and skips save when panel has no changes', async () => {
