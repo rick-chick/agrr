@@ -121,4 +121,24 @@ describe('NavbarComponent', () => {
     expect(component.isMenuOpen).toBe(false);
     expect(component.openDropdownId).toBeNull();
   });
+
+  it('includes api-keys in moreItems when user is logged in', () => {
+    component.user = {
+      id: 1,
+      name: 'Test',
+      email: 'test@example.com',
+      avatar_url: null,
+      admin: false
+    };
+    fixture.detectChanges();
+
+    expect(component.moreItems[0]).toEqual({ link: '/api-keys', labelKey: 'nav.api_keys' });
+  });
+
+  it('omits api-keys from moreItems when user is logged out', () => {
+    component.user = null;
+    fixture.detectChanges();
+
+    expect(component.moreItems.some((item) => item.link === '/api-keys')).toBe(false);
+  });
 });

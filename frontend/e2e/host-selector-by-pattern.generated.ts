@@ -7,6 +7,7 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   'agricultural_tasks/:id': 'app-agricultural-task-detail',
   'agricultural_tasks/:id/edit': 'app-agricultural-task-edit',
   'agricultural_tasks/new': 'app-agricultural-task-create',
+  'api-keys': 'app-api-keys',
   contact: 'app-contact',
   crops: 'app-crop-list',
   'crops/:id': 'app-crop-detail',

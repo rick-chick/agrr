@@ -25,6 +25,7 @@ const NAV_KEYS = [
   'nav.menu_masters',
   'nav.new_plan',
   'nav.reports',
+  'nav.api_keys',
   'nav.menu_more',
   'nav.farms',
   'nav.crops',
