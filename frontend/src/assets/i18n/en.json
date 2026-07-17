@@ -2027,7 +2027,6 @@
       "stages_empty_lead": "Growth stages are required to configure cultivation templates and task schedules.",
       "add_stage": "Add Stage",
       "stage_page_title": "{{name}} ({{order}})",
-      "stage_title": "Stage {{order}}",
       "stage_name": "Stage Name",
       "stage_order_duplicate": "Duplicate order values: {{orders}}. Please assign unique order numbers.",
       "base_temperature": "Base Temperature (°C)",
