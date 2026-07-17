@@ -89,12 +89,6 @@
   background: var(--color-background-hover, var(--color-background-secondary));
 }
 
-.crop-stages-table__row--selected {
-  background: var(--color-background-secondary);
-  outline: 2px solid var(--color-primary, #2563eb);
-  outline-offset: -2px;
-}
-
 .crop-stages-table__drag {
   width: 2.5rem;
   text-align: center;

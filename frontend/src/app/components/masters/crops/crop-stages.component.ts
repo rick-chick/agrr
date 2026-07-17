@@ -1,17 +1,13 @@
-import { Component, OnInit, inject, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { CropStagesView, CropStagesViewState, CropStagesFormData } from './crop-stages.view';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
 import { ReorderCropStagesUseCase } from '../../../usecase/crops/reorder-crop-stages.usecase';
-import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
-import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stage-panel.usecase';
-import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import {
   CropStagesPresenter,
   CROP_STAGES_PROVIDERS
@@ -20,13 +16,13 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { AuthService } from '../../../services/auth.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
-import { parsePlanWizardReturnTab,
+import {
+  parsePlanWizardReturnTab,
   planWizardReturnPath,
   cropPlanWizardQueryParams,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
-import { parseOptionalNumber } from '../../../domain/crops/parse-optional-number';
 import {
   findDuplicateStageOrders,
   reorderStagesByIndex,
@@ -34,17 +30,11 @@ import {
   sortStagesByOrder
 } from '../../../domain/crops/crop-stage-order';
 import type { CropStage } from '../../../domain/crops/crop';
-import { countLinkedTaskScheduleBlueprintsForStage } from '../../../domain/crops/stage-linked-blueprint-count';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { withCropStagesDisplayState } from '../../../adapters/crops/crop-stages-display-state';
 import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
-
-type PendingUnsavedAction =
-  | { kind: 'add-stage' }
-  | { kind: 'switch-stage'; stageId: number }
-  | { kind: 'delete-stage'; stageId: number };
 
 const initialFormData: CropStagesFormData = {
   name: '',
@@ -67,35 +57,17 @@ const initialControl: CropStagesViewState = {
   showNextStepCta: false
 };
 
-interface StageEditDraft {
-  name: string;
-  base_temperature: number | null;
-  optimal_min: number | null;
-  optimal_max: number | null;
-  max_temperature: number | null;
-  required_gdd: number | null;
-}
-
-interface TemperatureDetailDraft {
-  low_stress_threshold: number | null;
-  high_stress_threshold: number | null;
-  frost_threshold: number | null;
-}
-
-interface AdvancedDetailDraft {
-  minimum_sunshine_hours: number | null;
-  target_sunshine_hours: number | null;
-  daily_uptake_n: number | null;
-  daily_uptake_p: number | null;
-  daily_uptake_k: number | null;
-  region: string | null;
-  sterility_risk_threshold: number | null;
-}
-
 @Component({
   selector: 'app-crop-stages',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent, DragDropModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    TranslateModule,
+    MasterContextHeaderComponent,
+    MasterLoadErrorPanelComponent,
+    DragDropModule
+  ],
   providers: [...CROP_STAGES_PROVIDERS],
   template: `
     <main class="page-main">
@@ -250,8 +222,7 @@ interface AdvancedDetailDraft {
                     cdkDrag
                     [cdkDragDisabled]="!canMutateStages"
                     [cdkDragData]="stage"
-                    [class.crop-stages-table__row--selected]="selectedStageId === stage.id"
-                    (click)="selectStage(stage.id)"
+                    (click)="navigateToStageEdit(stage.id)"
                   >
                     <td class="crop-stages-table__drag" cdkDragHandle (click)="$event.stopPropagation()">
                       @if (canMutateStages) {
@@ -276,288 +247,20 @@ interface AdvancedDetailDraft {
                 </tr>
               </tbody>
             </table>
-
-            @if (selectedStage; as stage) {
-              <div class="crop-stages-edit-panel">
-                <div class="crop-stages-edit-panel__header">
-                  <span class="crop-stages-edit-panel__stage-badge" aria-hidden="true">
-                    {{ stage.order }}
-                  </span>
-                  <div class="crop-stages-edit-panel__header-fields">
-                    <label class="form-card__field form-card__field--small crop-stages-edit-panel__aligned-field">
-                      <span class="form-card__field-label">{{ 'crops.edit.stage_name' | translate }}</span>
-                      <input
-                        type="text"
-                        name="panel_stage_name"
-                        [readonly]="!canMutateStages"
-                        [(ngModel)]="stageEditDraft.name"
-                      />
-                    </label>
-                    <label class="form-card__field form-card__field--small crop-stages-edit-panel__aligned-field">
-                      <span class="form-card__field-label">{{ 'crops.edit.required_gdd' | translate }}</span>
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="panel_required_gdd"
-                        [readonly]="!canMutateStages"
-                        [placeholder]="'crops.edit.required_gdd_placeholder' | translate"
-                        [(ngModel)]="stageEditDraft.required_gdd"
-                      />
-                    </label>
-                  </div>
-                </div>
-                @if (showStageNameError()) {
-                  <p class="form-error crop-stages-edit-panel__name-error" role="alert">
-                    {{ 'crops.edit.stage_name_required' | translate }}
-                  </p>
-                }
-                <p class="form-hint crop-stages-edit-panel__header-hint">
-                  {{ 'crops.edit.required_gdd_help' | translate }}
-                </p>
-
-                <div class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--temperature">
-                  <h4 class="crop-stages-edit-panel__subsection-title">
-                    {{ 'crops.edit.temperature_section' | translate }}
-                  </h4>
-                  <div class="crop-stages-edit-panel__temperature-fields">
-                    <label class="form-card__field form-card__field--small crop-stages-edit-panel__aligned-field">
-                      <span class="form-card__field-label">{{ 'crops.edit.base_temperature' | translate }}</span>
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="panel_base_temperature"
-                        [readonly]="!canMutateStages"
-                        [placeholder]="'crops.edit.base_temperature_placeholder' | translate"
-                        [(ngModel)]="stageEditDraft.base_temperature"
-                      />
-                    </label>
-                    <label class="form-card__field form-card__field--small crop-stages-edit-panel__aligned-field">
-                      <span class="form-card__field-label">{{ 'crops.edit.optimal_min' | translate }}</span>
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="panel_optimal_min"
-                        [readonly]="!canMutateStages"
-                        [(ngModel)]="stageEditDraft.optimal_min"
-                      />
-                    </label>
-                    <label class="form-card__field form-card__field--small crop-stages-edit-panel__aligned-field">
-                      <span class="form-card__field-label">{{ 'crops.edit.optimal_max' | translate }}</span>
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="panel_optimal_max"
-                        [readonly]="!canMutateStages"
-                        [(ngModel)]="stageEditDraft.optimal_max"
-                      />
-                    </label>
-                    <label class="form-card__field form-card__field--small crop-stages-edit-panel__aligned-field">
-                      <span class="form-card__field-label">{{ 'crops.edit.max_temperature' | translate }}</span>
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="panel_max_temperature"
-                        [readonly]="!canMutateStages"
-                        [(ngModel)]="stageEditDraft.max_temperature"
-                      />
-                    </label>
-                  </div>
-                  <p class="form-hint crop-stages-edit-panel__temperature-hint">
-                    {{ 'crops.edit.base_temperature_help' | translate }}
-                  </p>
-                </div>
-
-                <div class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--details">
-                  <h4 class="crop-stages-edit-panel__subsection-title">
-                    {{ 'crops.edit.details_section' | translate }}
-                  </h4>
-                  <div class="crop-stages-edit-panel__detail-chips">
-                    <button
-                      type="button"
-                      class="crop-stages-edit-panel__detail-chip"
-                      [disabled]="!canMutateStages"
-                      (click)="openTemperatureDialog()"
-                    >
-                      {{ 'crops.edit.edit_temperature_details' | translate }}
-                      <span class="crop-stages-edit-panel__detail-chip-chevron" aria-hidden="true">›</span>
-                    </button>
-                    <button
-                      type="button"
-                      class="crop-stages-edit-panel__detail-chip"
-                      [disabled]="!canMutateStages"
-                      (click)="openAdvancedDialog()"
-                    >
-                      {{ 'crops.edit.edit_sunshine_nutrient' | translate }}
-                      <span class="crop-stages-edit-panel__detail-chip-chevron" aria-hidden="true">›</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="crop-stages-edit-panel__footer">
-                  @if (canMutateStages) {
-                    <button
-                      type="button"
-                      class="btn btn-primary"
-                      [disabled]="!canSaveStagePanel()"
-                      (click)="saveStagePanel()"
-                    >
-                      {{ 'crops.edit.save_stage' | translate }}
-                    </button>
-                    <button type="button" class="btn btn-danger" (click)="deleteCropStage(stage.id)">
-                      {{ 'common.delete' | translate }}
-                    </button>
-                  }
-                </div>
-              </div>
-            }
           }
         </section>
       }
     </main>
-
-    <dialog
-      #deleteConfirmDialog
-      class="confirm-dialog crop-stages__delete-confirm"
-      (cancel)="cancelDeleteConfirmDialog($event)"
-      (click)="onDeleteConfirmDialogBackdropClick($event)"
-    >
-      @if (pendingDeleteStage) {
-        <p class="confirm-dialog__message">{{
-          'crops.stage.delete_confirm_message' | translate:{ stageName: pendingDeleteStage.name }
-        }}</p>
-        @if (pendingDeleteBlueprintCount > 0) {
-          <p class="confirm-dialog__warning" role="alert">{{
-            'crops.stage.delete_confirm_blueprint_warning' | translate:{ count: pendingDeleteBlueprintCount }
-          }}</p>
-        }
-        <div class="confirm-dialog__actions">
-          <button type="button" class="btn-secondary" (click)="cancelDeleteConfirmDialog()">
-            {{ 'common.cancel' | translate }}
-          </button>
-          <button type="button" class="btn-danger" (click)="confirmDeleteCropStage()">
-            {{ 'common.delete' | translate }}
-          </button>
-        </div>
-      }
-    </dialog>
-
-    <dialog
-      #unsavedConfirmDialog
-      class="confirm-dialog crop-stages__unsaved-confirm"
-      (cancel)="cancelUnsavedConfirmDialog($event)"
-      (click)="onUnsavedConfirmDialogBackdropClick($event)"
-    >
-      @if (pendingUnsavedAction) {
-        <p class="confirm-dialog__message">{{ 'crops.edit.unsaved_confirm_message' | translate }}</p>
-        <div class="confirm-dialog__actions">
-          <button type="button" class="btn-secondary" (click)="cancelUnsavedConfirmDialog()">
-            {{ 'common.cancel' | translate }}
-          </button>
-          <button type="button" class="btn-primary" (click)="confirmDiscardUnsavedAction()">
-            {{ 'common.confirm' | translate }}
-          </button>
-        </div>
-      }
-    </dialog>
-
-    <dialog
-      #temperatureDialog
-      class="confirm-dialog crop-stages__temperature-dialog"
-      (cancel)="cancelTemperatureDialog($event)"
-      (click)="onTemperatureDialogBackdropClick($event)"
-    >
-      @if (temperatureDetailDraft) {
-        <h2 class="crop-stages-dialog__title">{{ 'crops.edit.temperature_details_title' | translate }}</h2>
-        <div class="crop-stages-dialog__fields">
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.low_stress_threshold' | translate }}</span>
-            <input type="number" step="0.1" name="temp_low_stress" [(ngModel)]="temperatureDetailDraft.low_stress_threshold" />
-          </label>
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.high_stress_threshold' | translate }}</span>
-            <input type="number" step="0.1" name="temp_high_stress" [(ngModel)]="temperatureDetailDraft.high_stress_threshold" />
-          </label>
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.frost_threshold' | translate }}</span>
-            <input type="number" step="0.1" name="temp_frost" [(ngModel)]="temperatureDetailDraft.frost_threshold" />
-          </label>
-        </div>
-        <div class="confirm-dialog__actions">
-          <button type="button" class="btn-secondary" (click)="cancelTemperatureDialog()">
-            {{ 'common.cancel' | translate }}
-          </button>
-          <button type="button" class="btn-primary" (click)="saveTemperatureDialog()">
-            {{ 'crops.edit.save_stage' | translate }}
-          </button>
-        </div>
-      }
-    </dialog>
-
-    <dialog
-      #advancedDialog
-      class="confirm-dialog crop-stages__advanced-dialog"
-      (cancel)="cancelAdvancedDialog($event)"
-      (click)="onAdvancedDialogBackdropClick($event)"
-    >
-      @if (advancedDetailDraft) {
-        <h2 class="crop-stages-dialog__title">{{ 'crops.edit.advanced_details_title' | translate }}</h2>
-        <div class="crop-stages-dialog__fields">
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.minimum_sunshine_hours' | translate }}</span>
-            <input type="number" step="0.1" name="sunshine_min" [(ngModel)]="advancedDetailDraft.minimum_sunshine_hours" />
-          </label>
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.target_sunshine_hours' | translate }}</span>
-            <input type="number" step="0.1" name="sunshine_target" [(ngModel)]="advancedDetailDraft.target_sunshine_hours" />
-          </label>
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_n' | translate }}</span>
-            <input type="number" step="0.01" name="nutrient_n" [(ngModel)]="advancedDetailDraft.daily_uptake_n" />
-          </label>
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_p' | translate }}</span>
-            <input type="number" step="0.01" name="nutrient_p" [(ngModel)]="advancedDetailDraft.daily_uptake_p" />
-          </label>
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_k' | translate }}</span>
-            <input type="number" step="0.01" name="nutrient_k" [(ngModel)]="advancedDetailDraft.daily_uptake_k" />
-          </label>
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.region' | translate }}</span>
-            <input type="text" name="nutrient_region" [(ngModel)]="advancedDetailDraft.region" />
-          </label>
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.sterility_risk_threshold' | translate }}</span>
-            <input type="number" step="0.1" name="temp_sterility" [(ngModel)]="advancedDetailDraft.sterility_risk_threshold" />
-          </label>
-        </div>
-        <div class="confirm-dialog__actions">
-          <button type="button" class="btn-secondary" (click)="cancelAdvancedDialog()">
-            {{ 'common.cancel' | translate }}
-          </button>
-          <button type="button" class="btn-primary" (click)="saveAdvancedDialog()">
-            {{ 'crops.edit.save_stage' | translate }}
-          </button>
-        </div>
-      }
-    </dialog>
   `,
   styleUrls: ['./crop-stages.component.css', './_crop-blueprint-shared.css']
 })
 export class CropStagesComponent implements CropStagesView, OnInit {
-  @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
-  @ViewChild('unsavedConfirmDialog') unsavedConfirmDialogRef?: ElementRef<HTMLDialogElement>;
-  @ViewChild('temperatureDialog') temperatureDialogRef?: ElementRef<HTMLDialogElement>;
-  @ViewChild('advancedDialog') advancedDialogRef?: ElementRef<HTMLDialogElement>;
-
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadCropForEditUseCase);
   private readonly loadBlueprintsUseCase = inject(LoadCropTaskScheduleBlueprintsUseCase);
   private readonly createCropStageUseCase = inject(CreateCropStageUseCase);
   private readonly reorderCropStagesUseCase = inject(ReorderCropStagesUseCase);
-  private readonly deleteCropStageUseCase = inject(DeleteCropStageUseCase);
-  private readonly saveCropStagePanelUseCase = inject(SaveCropStagePanelUseCase);
-  private readonly saveCropStageAdvancedDetailsUseCase = inject(SaveCropStageAdvancedDetailsUseCase);
   private readonly presenter = inject(CropStagesPresenter);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly auth = inject(AuthService);
@@ -566,64 +269,31 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   private _control: CropStagesViewState = initialControl;
   private knownStageIds = new Set<number>();
-  private pendingTemperatureDialogSave = false;
-  private pendingAdvancedDialogSave = false;
+  private awaitingCreateNavigation = false;
 
   get control(): CropStagesViewState {
     return this._control;
   }
   set control(value: CropStagesViewState) {
     const previousStages = this._control.formData.crop_stages;
-    const forceResyncPanelDraft = value.pendingResyncPanelDraft;
     this._control = withCropStagesDisplayState(
-      applyPendingFlashViewEffects(
-        { ...value, pendingResyncPanelDraft: false },
-        { flash: this.flashMessage }
-      )
+      applyPendingFlashViewEffects(value, { flash: this.flashMessage })
     );
-    this.settlePendingDialogSaves(value);
-    const stagesChanged = previousStages !== value.formData.crop_stages;
-    if (stagesChanged || forceResyncPanelDraft) {
-      queueMicrotask(() => {
-        this.ensureSelectedStage({ forceResyncPanelDraft });
-        this.cdr.markForCheck();
-      });
+    const stages = value.formData.crop_stages;
+    const stagesChanged = previousStages !== stages;
+    if (stagesChanged) {
+      const newStageIds = stages
+        .filter((stage) => !this.knownStageIds.has(stage.id))
+        .map((stage) => stage.id);
+      this.knownStageIds = new Set(stages.map((stage) => stage.id));
+      if (this.awaitingCreateNavigation && newStageIds.length === 1) {
+        this.awaitingCreateNavigation = false;
+        const stageId = newStageIds[0];
+        queueMicrotask(() => this.navigateToStageEdit(stageId));
+      }
     }
+    this.cdr.markForCheck();
   }
-
-  private settlePendingDialogSaves(value: CropStagesViewState): void {
-    if (
-      this.pendingTemperatureDialogSave &&
-      value.pendingSuccessFlash != null &&
-      value.pendingErrorFlash == null
-    ) {
-      this.pendingTemperatureDialogSave = false;
-      this.temperatureDetailDraft = null;
-      this.temperatureDialogRef?.nativeElement?.close();
-    }
-    if (
-      this.pendingAdvancedDialogSave &&
-      value.pendingSuccessFlash != null &&
-      value.pendingErrorFlash == null
-    ) {
-      this.pendingAdvancedDialogSave = false;
-      this.advancedDetailDraft = null;
-      this.advancedDialogRef?.nativeElement?.close();
-    }
-  }
-
-  selectedStageId: number | null = null;
-  stageEditDraft: StageEditDraft = {
-    name: '',
-    base_temperature: null,
-    optimal_min: null,
-    optimal_max: null,
-    max_temperature: null,
-    required_gdd: null
-  };
-  temperatureDetailDraft: TemperatureDetailDraft | null = null;
-  advancedDetailDraft: AdvancedDetailDraft | null = null;
-  pendingUnsavedAction: PendingUnsavedAction | null = null;
 
   private get resolvedCropId(): number | null {
     const raw = this.route.snapshot.paramMap.get('id');
@@ -640,18 +310,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   fromPlanId: number | null = null;
   returnTab: PlanWizardReturnTab = 'task_schedule';
-  pendingDeleteStage: CropStage | null = null;
-
-  get pendingDeleteBlueprintCount(): number {
-    if (!this.pendingDeleteStage) {
-      return 0;
-    }
-    return countLinkedTaskScheduleBlueprintsForStage(
-      this.pendingDeleteStage.id,
-      this.control.formData.crop_stages,
-      this.control.taskScheduleBlueprints
-    );
-  }
 
   get planReturnPath(): (string | number)[] {
     return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
@@ -683,30 +341,11 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     return findDuplicateStageOrders(this.control.formData.crop_stages);
   }
 
-  get selectedStage(): CropStage | null {
-    if (this.selectedStageId == null) {
-      return null;
-    }
-    return this.control.formData.crop_stages.find((stage) => stage.id === this.selectedStageId) ?? null;
-  }
-
   get canMutateStages(): boolean {
     if (this.control.formData.is_reference) {
       return this.auth.user()?.admin ?? false;
     }
     return true;
-  }
-
-  isStageNameValid(): boolean {
-    return this.stageEditDraft.name.trim().length > 0;
-  }
-
-  showStageNameError(): boolean {
-    return this.isPanelDirty() && !this.isStageNameValid();
-  }
-
-  canSaveStagePanel(): boolean {
-    return this.canMutateStages && this.isPanelDirty() && this.isStageNameValid();
   }
 
   ngOnInit(): void {
@@ -726,6 +365,8 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   reload(): void {
     this.control = { ...initialControl };
+    this.knownStageIds = new Set();
+    this.awaitingCreateNavigation = false;
     this.loadCrop();
   }
 
@@ -741,21 +382,19 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     this.loadBlueprintsUseCase.execute({ cropId: this.cropId });
   }
 
+  navigateToStageEdit(stageId: number): void {
+    this.router.navigate(['/crops', this.cropId, 'stages', stageId, 'edit'], {
+      queryParams: this.wizardQueryParams ?? undefined
+    });
+  }
+
   addCropStage(): void {
     if (!this.canMutateStages) {
       return;
     }
-    if (this.isPanelDirty()) {
-      this.pendingUnsavedAction = { kind: 'add-stage' };
-      this.unsavedConfirmDialogRef?.nativeElement?.showModal();
-      return;
-    }
-    this.executeAddCropStage();
-  }
-
-  private executeAddCropStage(): void {
     const nextOrder = Math.max(0, ...this.control.formData.crop_stages.map((s) => s.order)) + 1;
     const defaultStageName = this.translate.instant('crops.stage.default_name', { order: nextOrder });
+    this.awaitingCreateNavigation = true;
     this.createCropStageUseCase.execute({
       cropId: this.cropId,
       payload: {
@@ -763,322 +402,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
         order: nextOrder
       }
     });
-  }
-
-  selectStage(stageId: number): void {
-    if (this.selectedStageId === stageId) {
-      return;
-    }
-    if (this.isPanelDirty()) {
-      this.pendingUnsavedAction = { kind: 'switch-stage', stageId };
-      this.unsavedConfirmDialogRef?.nativeElement?.showModal();
-      return;
-    }
-    this.selectStageImmediate(stageId);
-  }
-
-  selectStageImmediate(stageId: number): void {
-    this.selectedStageId = stageId;
-    const stage = this.selectedStage;
-    if (stage) {
-      this.syncDraftFromStage(stage);
-    }
-  }
-
-  confirmDiscardUnsavedAction(): void {
-    const action = this.pendingUnsavedAction;
-    this.pendingUnsavedAction = null;
-    this.unsavedConfirmDialogRef?.nativeElement?.close();
-    if (!action) {
-      return;
-    }
-    if (action.kind === 'add-stage') {
-      this.executeAddCropStage();
-      return;
-    }
-    if (action.kind === 'switch-stage') {
-      this.selectStageImmediate(action.stageId);
-      return;
-    }
-    const stage = this.control.formData.crop_stages.find((item) => item.id === action.stageId);
-    if (stage) {
-      this.openDeleteConfirmDialog(stage);
-    }
-  }
-
-  cancelUnsavedConfirmDialog(event?: Event): void {
-    event?.preventDefault();
-    this.pendingUnsavedAction = null;
-    this.unsavedConfirmDialogRef?.nativeElement?.close();
-  }
-
-  onUnsavedConfirmDialogBackdropClick(event: MouseEvent): void {
-    if (event.target === this.unsavedConfirmDialogRef?.nativeElement) {
-      this.cancelUnsavedConfirmDialog();
-    }
-  }
-
-  saveStagePanel(): void {
-    const stage = this.selectedStage;
-    if (!stage || !this.canMutateStages) {
-      return;
-    }
-
-    if (!this.isStageNameValid()) {
-      return;
-    }
-
-    if (!this.isPanelDirty()) {
-      this.flashMessage.show({ type: 'info', text: 'crops.flash.stage_panel_no_changes' });
-      return;
-    }
-
-    const stagePatch =
-      this.stageEditDraft.name !== stage.name ? { name: this.stageEditDraft.name } : undefined;
-
-    const temp = stage.temperature_requirement;
-    const temperaturePatch: Record<string, number | null> = {};
-    const panelTemperatureFields = [
-      ['base_temperature', this.stageEditDraft.base_temperature],
-      ['optimal_min', this.stageEditDraft.optimal_min],
-      ['optimal_max', this.stageEditDraft.optimal_max],
-      ['max_temperature', this.stageEditDraft.max_temperature]
-    ] as const;
-    for (const [field, draftValue] of panelTemperatureFields) {
-      const currentValue = temp?.[field] ?? null;
-      if (draftValue !== currentValue) {
-        temperaturePatch[field] = draftValue;
-      }
-    }
-
-    const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
-    const thermalPatch =
-      this.stageEditDraft.required_gdd !== currentRequiredGdd
-        ? { required_gdd: this.stageEditDraft.required_gdd }
-        : undefined;
-
-    this.saveCropStagePanelUseCase.execute({
-      cropId: this.cropId,
-      stageId: stage.id,
-      stagePatch,
-      temperaturePatch: Object.keys(temperaturePatch).length > 0 ? temperaturePatch : undefined,
-      thermalPatch
-    });
-  }
-
-  openTemperatureDialog(): void {
-    if (!this.canMutateStages) {
-      return;
-    }
-    const stage = this.selectedStage;
-    if (!stage) {
-      return;
-    }
-    const temp = stage.temperature_requirement;
-    this.temperatureDetailDraft = {
-      low_stress_threshold: temp?.low_stress_threshold ?? null,
-      high_stress_threshold: temp?.high_stress_threshold ?? null,
-      frost_threshold: temp?.frost_threshold ?? null
-    };
-    this.temperatureDialogRef?.nativeElement?.showModal();
-  }
-
-  saveTemperatureDialog(): void {
-    const stage = this.selectedStage;
-    if (!stage || !this.temperatureDetailDraft) {
-      return;
-    }
-    const temp = stage.temperature_requirement;
-    const draft = this.temperatureDetailDraft;
-    const temperaturePatch: {
-      low_stress_threshold?: number | null;
-      high_stress_threshold?: number | null;
-      frost_threshold?: number | null;
-    } = {};
-    if (draft.low_stress_threshold !== (temp?.low_stress_threshold ?? null)) {
-      temperaturePatch.low_stress_threshold = draft.low_stress_threshold;
-    }
-    if (draft.high_stress_threshold !== (temp?.high_stress_threshold ?? null)) {
-      temperaturePatch.high_stress_threshold = draft.high_stress_threshold;
-    }
-    if (draft.frost_threshold !== (temp?.frost_threshold ?? null)) {
-      temperaturePatch.frost_threshold = draft.frost_threshold;
-    }
-
-    if (Object.keys(temperaturePatch).length === 0) {
-      this.temperatureDetailDraft = null;
-      this.temperatureDialogRef?.nativeElement?.close();
-      return;
-    }
-
-    this.pendingTemperatureDialogSave = true;
-    this.saveCropStagePanelUseCase.execute({
-      cropId: this.cropId,
-      stageId: stage.id,
-      temperaturePatch
-    });
-  }
-
-  cancelTemperatureDialog(event?: Event): void {
-    event?.preventDefault();
-    this.pendingTemperatureDialogSave = false;
-    this.temperatureDetailDraft = null;
-    this.temperatureDialogRef?.nativeElement?.close();
-  }
-
-  onTemperatureDialogBackdropClick(event: MouseEvent): void {
-    if (event.target === this.temperatureDialogRef?.nativeElement) {
-      this.cancelTemperatureDialog();
-    }
-  }
-
-  openAdvancedDialog(): void {
-    if (!this.canMutateStages) {
-      return;
-    }
-    const stage = this.selectedStage;
-    if (!stage) {
-      return;
-    }
-    const sunshine = stage.sunshine_requirement;
-    const nutrient = stage.nutrient_requirement;
-    const temp = stage.temperature_requirement;
-    this.advancedDetailDraft = {
-      minimum_sunshine_hours: sunshine?.minimum_sunshine_hours ?? null,
-      target_sunshine_hours: sunshine?.target_sunshine_hours ?? null,
-      daily_uptake_n: nutrient?.daily_uptake_n ?? null,
-      daily_uptake_p: nutrient?.daily_uptake_p ?? null,
-      daily_uptake_k: nutrient?.daily_uptake_k ?? null,
-      region: nutrient?.region ?? null,
-      sterility_risk_threshold: temp?.sterility_risk_threshold ?? null
-    };
-    this.advancedDialogRef?.nativeElement?.showModal();
-  }
-
-  saveAdvancedDialog(): void {
-    const stage = this.selectedStage;
-    if (!stage || !this.advancedDetailDraft) {
-      return;
-    }
-    const draft = this.advancedDetailDraft;
-    const sunshine = stage.sunshine_requirement;
-    const nutrient = stage.nutrient_requirement;
-    const temperature = stage.temperature_requirement;
-
-    const sunshinePatch: {
-      minimum_sunshine_hours?: number | null;
-      target_sunshine_hours?: number | null;
-    } = {};
-    if (draft.minimum_sunshine_hours !== (sunshine?.minimum_sunshine_hours ?? null)) {
-      sunshinePatch.minimum_sunshine_hours = draft.minimum_sunshine_hours;
-    }
-    if (draft.target_sunshine_hours !== (sunshine?.target_sunshine_hours ?? null)) {
-      sunshinePatch.target_sunshine_hours = draft.target_sunshine_hours;
-    }
-
-    const nutrientPatch: {
-      daily_uptake_n?: number | null;
-      daily_uptake_p?: number | null;
-      daily_uptake_k?: number | null;
-      region?: string | null;
-    } = {};
-    if (draft.daily_uptake_n !== (nutrient?.daily_uptake_n ?? null)) {
-      nutrientPatch.daily_uptake_n = draft.daily_uptake_n;
-    }
-    if (draft.daily_uptake_p !== (nutrient?.daily_uptake_p ?? null)) {
-      nutrientPatch.daily_uptake_p = draft.daily_uptake_p;
-    }
-    if (draft.daily_uptake_k !== (nutrient?.daily_uptake_k ?? null)) {
-      nutrientPatch.daily_uptake_k = draft.daily_uptake_k;
-    }
-    if (draft.region !== (nutrient?.region ?? null)) {
-      nutrientPatch.region = draft.region;
-    }
-
-    const temperaturePatch: {
-      sterility_risk_threshold?: number | null;
-    } = {};
-    if (draft.sterility_risk_threshold !== (temperature?.sterility_risk_threshold ?? null)) {
-      temperaturePatch.sterility_risk_threshold = draft.sterility_risk_threshold;
-    }
-
-    if (
-      Object.keys(sunshinePatch).length === 0 &&
-      Object.keys(nutrientPatch).length === 0 &&
-      Object.keys(temperaturePatch).length === 0
-    ) {
-      this.advancedDetailDraft = null;
-      this.advancedDialogRef?.nativeElement?.close();
-      return;
-    }
-
-    this.pendingAdvancedDialogSave = true;
-    this.saveCropStageAdvancedDetailsUseCase.execute({
-      cropId: this.cropId,
-      stageId: stage.id,
-      sunshinePatch: Object.keys(sunshinePatch).length > 0 ? sunshinePatch : undefined,
-      nutrientPatch: Object.keys(nutrientPatch).length > 0 ? nutrientPatch : undefined,
-      temperaturePatch: Object.keys(temperaturePatch).length > 0 ? temperaturePatch : undefined
-    });
-  }
-
-  cancelAdvancedDialog(event?: Event): void {
-    event?.preventDefault();
-    this.pendingAdvancedDialogSave = false;
-    this.advancedDetailDraft = null;
-    this.advancedDialogRef?.nativeElement?.close();
-  }
-
-  onAdvancedDialogBackdropClick(event: MouseEvent): void {
-    if (event.target === this.advancedDialogRef?.nativeElement) {
-      this.cancelAdvancedDialog();
-    }
-  }
-
-  deleteCropStage(stageId: number): void {
-    if (!this.canMutateStages) {
-      return;
-    }
-    const stage = this.control.formData.crop_stages.find((item) => item.id === stageId);
-    if (!stage) {
-      return;
-    }
-    if (this.isPanelDirty()) {
-      this.pendingUnsavedAction = { kind: 'delete-stage', stageId };
-      this.unsavedConfirmDialogRef?.nativeElement?.showModal();
-      return;
-    }
-    this.openDeleteConfirmDialog(stage);
-  }
-
-  private openDeleteConfirmDialog(stage: CropStage): void {
-    this.pendingDeleteStage = stage;
-    this.deleteConfirmDialogRef?.nativeElement?.showModal();
-  }
-
-  confirmDeleteCropStage(): void {
-    if (!this.pendingDeleteStage) {
-      return;
-    }
-    const stageId = this.pendingDeleteStage.id;
-    this.pendingDeleteStage = null;
-    this.deleteConfirmDialogRef?.nativeElement?.close();
-    this.deleteCropStageUseCase.execute({
-      cropId: this.cropId,
-      stageId
-    });
-  }
-
-  cancelDeleteConfirmDialog(event?: Event): void {
-    event?.preventDefault();
-    this.pendingDeleteStage = null;
-    this.deleteConfirmDialogRef?.nativeElement?.close();
-  }
-
-  onDeleteConfirmDialogBackdropClick(event: MouseEvent): void {
-    if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
-      this.cancelDeleteConfirmDialog();
-    }
   }
 
   onStageDropped(event: CdkDragDrop<CropStage[]>): void {
@@ -1140,71 +463,5 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       start: range.cumulativeGddStart,
       end: range.cumulativeGddEnd
     });
-  }
-
-  isPanelDirty(): boolean {
-    const stage = this.selectedStage;
-    if (!stage) {
-      return false;
-    }
-    const temp = stage.temperature_requirement;
-    const currentRequiredGdd = parseOptionalNumber(stage.thermal_requirement?.required_gdd);
-    return (
-      this.stageEditDraft.name !== stage.name ||
-      this.stageEditDraft.base_temperature !== parseOptionalNumber(temp?.base_temperature) ||
-      this.stageEditDraft.optimal_min !== parseOptionalNumber(temp?.optimal_min) ||
-      this.stageEditDraft.optimal_max !== parseOptionalNumber(temp?.optimal_max) ||
-      this.stageEditDraft.max_temperature !== parseOptionalNumber(temp?.max_temperature) ||
-      this.stageEditDraft.required_gdd !== currentRequiredGdd
-    );
-  }
-
-  syncDraftFromStage(stage: CropStage): void {
-    this.stageEditDraft = {
-      name: stage.name,
-      base_temperature: parseOptionalNumber(stage.temperature_requirement?.base_temperature),
-      optimal_min: parseOptionalNumber(stage.temperature_requirement?.optimal_min),
-      optimal_max: parseOptionalNumber(stage.temperature_requirement?.optimal_max),
-      max_temperature: parseOptionalNumber(stage.temperature_requirement?.max_temperature),
-      required_gdd: parseOptionalNumber(stage.thermal_requirement?.required_gdd)
-    };
-  }
-
-  private ensureSelectedStage(options?: { forceResyncPanelDraft?: boolean }): void {
-    const stages = this.control.formData.crop_stages;
-    const currentIds = new Set(stages.map((stage) => stage.id));
-    const newStageIds = stages
-      .filter((stage) => !this.knownStageIds.has(stage.id))
-      .map((stage) => stage.id);
-    this.knownStageIds = currentIds;
-
-    if (stages.length === 0) {
-      this.selectedStageId = null;
-      this.stageEditDraft = {
-        name: '',
-        base_temperature: null,
-        optimal_min: null,
-        optimal_max: null,
-        max_temperature: null,
-        required_gdd: null
-      };
-      return;
-    }
-
-    if (newStageIds.length === 1) {
-      this.selectStageImmediate(newStageIds[0]);
-      return;
-    }
-
-    if (this.selectedStageId == null || !currentIds.has(this.selectedStageId)) {
-      const first = sortStagesByOrder(stages)[0];
-      this.selectStageImmediate(first.id);
-      return;
-    }
-
-    const stage = stages.find((item) => item.id === this.selectedStageId);
-    if (stage && (!this.isPanelDirty() || options?.forceResyncPanelDraft)) {
-      this.syncDraftFromStage(stage);
-    }
   }
 }
