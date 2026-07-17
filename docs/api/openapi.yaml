@@ -1,0 +1,632 @@
+openapi: 3.0.3
+info:
+  title: AGRR Masters API
+  version: 1.0.0
+  description: |
+    Public subset of the AGRR Masters JSON API for crop master data, agricultural tasks,
+    task schedule blueprints, and external skill `setup_proposal` workflows.
+
+    **Scopes (documentation only; not enforced per-key yet):**
+    - `masters:read` — `GET` / `HEAD` on Masters endpoints
+    - `masters:write` — create, update, delete, `setup_proposal?mode=apply`
+
+    See [getting-started.md](./getting-started.md) for authentication and rate limits.
+
+servers:
+  - url: https://agrr.net
+    description: Production
+  - url: http://127.0.0.1:3000
+    description: Local Docker (strangler-proxy)
+
+security:
+  - bearerApiKey: []
+  - headerApiKey: []
+
+paths:
+  /api/v1/masters/crops:
+    get:
+      tags: [crops]
+      summary: List crops
+      operationId: listCrops
+      responses:
+        '200':
+          description: Crop array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Crop'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [crops]
+      summary: Create crop
+      operationId: createCrop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropCreateRequest'
+      responses:
+        '201':
+          description: Created crop
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Crop'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/masters/crops/{crop_id}:
+    parameters:
+      - $ref: '#/components/parameters/CropId'
+    get:
+      tags: [crops]
+      summary: Show crop
+      operationId: showCrop
+      responses:
+        '200':
+          description: Crop
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Crop'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [crops]
+      summary: Update crop
+      operationId: updateCrop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropUpdateRequest'
+      responses:
+        '200':
+          description: Updated crop
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [crops]
+      summary: Delete crop
+      operationId: destroyCrop
+      responses:
+        '200':
+          description: Deleted (undo token may be returned)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/masters/crops/{crop_id}/crop_stages:
+    parameters:
+      - $ref: '#/components/parameters/CropId'
+    get:
+      tags: [crop_stages]
+      summary: List crop stages
+      operationId: listCropStages
+      responses:
+        '200':
+          description: Stage array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CropStage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [crop_stages]
+      summary: Create crop stage
+      operationId: createCropStage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropStageCreateRequest'
+      responses:
+        '201':
+          description: Created stage
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/masters/crops/{crop_id}/crop_stages/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CropId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags: [crop_stages]
+      summary: Show crop stage
+      operationId: showCropStage
+      responses:
+        '200':
+          description: Stage
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [crop_stages]
+      summary: Update crop stage
+      operationId: updateCropStage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropStageUpdateRequest'
+      responses:
+        '200':
+          description: Updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [crop_stages]
+      summary: Delete crop stage
+      operationId: destroyCropStage
+      responses:
+        '200':
+          description: Deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/masters/agricultural_tasks:
+    get:
+      tags: [agricultural_tasks]
+      summary: List agricultural tasks
+      operationId: listAgriculturalTasks
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task array
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [agricultural_tasks]
+      summary: Create agricultural task
+      operationId: createAgriculturalTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgriculturalTaskCreateRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/masters/agricultural_tasks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags: [agricultural_tasks]
+      summary: Show agricultural task
+      operationId: showAgriculturalTask
+      responses:
+        '200':
+          description: Task
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [agricultural_tasks]
+      summary: Update agricultural task
+      operationId: updateAgriculturalTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgriculturalTaskUpdateRequest'
+      responses:
+        '200':
+          description: Updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [agricultural_tasks]
+      summary: Delete agricultural task
+      operationId: destroyAgriculturalTask
+      responses:
+        '200':
+          description: Deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/masters/crops/{crop_id}/task_schedule_blueprints:
+    parameters:
+      - $ref: '#/components/parameters/CropId'
+    get:
+      tags: [task_schedule_blueprints]
+      summary: List task schedule blueprints for a crop
+      operationId: listTaskScheduleBlueprints
+      responses:
+        '200':
+          description: Blueprint array
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [task_schedule_blueprints]
+      summary: Create task schedule blueprint
+      operationId: createTaskScheduleBlueprint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskScheduleBlueprintCreateRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/masters/crops/{crop_id}/task_schedule_blueprints/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CropId'
+      - $ref: '#/components/parameters/ResourceId'
+    patch:
+      tags: [task_schedule_blueprints]
+      summary: Update blueprint
+      operationId: updateTaskScheduleBlueprint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [task_schedule_blueprints]
+      summary: Delete blueprint
+      operationId: destroyTaskScheduleBlueprint
+      responses:
+        '200':
+          description: Deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/masters/crops/{crop_id}/setup_proposal:
+    parameters:
+      - $ref: '#/components/parameters/CropId'
+      - name: mode
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [dry_run, apply]
+    post:
+      tags: [setup_proposal]
+      summary: Validate or apply an external skill crop setup proposal
+      description: |
+        `dry_run` validates and returns normalized JSON without persisting.
+        `apply` persists stages, agricultural tasks, and blueprints (`masters:write`).
+        `apply` has stricter rate limits than `dry_run` or `GET`.
+      operationId: cropSetupProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropSetupProposal'
+      responses:
+        '200':
+          description: dry_run result (valid or validation errors)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CropSetupProposalDryRunResponse'
+        '201':
+          description: apply succeeded
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+components:
+  securitySchemes:
+    bearerApiKey:
+      type: http
+      scheme: bearer
+      description: User API key as Bearer token
+    headerApiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: User API key header (alternative to Bearer)
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session_id
+      description: Browser session (UI only; not for server-to-server skills)
+
+  parameters:
+    CropId:
+      name: crop_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found or not visible to the authenticated user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unprocessable:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds until the client may retry
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+
+    Crop:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        variety:
+          type: string
+        region:
+          type: string
+        is_reference:
+          type: boolean
+
+    CropCreateRequest:
+      type: object
+      required: [crop]
+      properties:
+        crop:
+          type: object
+          required: [name]
+          properties:
+            name:
+              type: string
+            variety:
+              type: string
+            region:
+              type: string
+
+    CropUpdateRequest:
+      type: object
+      required: [crop]
+      properties:
+        crop:
+          type: object
+          properties:
+            name:
+              type: string
+            variety:
+              type: string
+
+    CropStage:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        order:
+          type: integer
+
+    CropStageCreateRequest:
+      type: object
+      required: [crop_stage]
+      properties:
+        crop_stage:
+          type: object
+
+    CropStageUpdateRequest:
+      type: object
+      required: [crop_stage]
+      properties:
+        crop_stage:
+          type: object
+
+    AgriculturalTaskCreateRequest:
+      type: object
+      required: [agricultural_task]
+      properties:
+        agricultural_task:
+          type: object
+
+    AgriculturalTaskUpdateRequest:
+      type: object
+      required: [agricultural_task]
+      properties:
+        agricultural_task:
+          type: object
+
+    TaskScheduleBlueprintCreateRequest:
+      type: object
+      properties:
+        task_schedule_blueprint:
+          type: object
+
+    CropSetupProposal:
+      type: object
+      required: [stages, agricultural_tasks, task_schedule_blueprints]
+      properties:
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/CropSetupProposalStage'
+        agricultural_tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CropSetupProposalAgriculturalTask'
+        task_schedule_blueprints:
+          type: array
+          items:
+            $ref: '#/components/schemas/CropSetupProposalBlueprint'
+
+    CropSetupProposalStage:
+      type: object
+      required: [name, order, thermal_requirement]
+      properties:
+        name:
+          type: string
+        order:
+          type: integer
+        temperature_requirement:
+          type: object
+        thermal_requirement:
+          type: object
+          required: [required_gdd]
+          properties:
+            required_gdd:
+              type: string
+        sunshine_requirement:
+          type: object
+        nutrient_requirement:
+          type: object
+
+    CropSetupProposalAgriculturalTask:
+      type: object
+      required: [ref, name, task_type, region]
+      properties:
+        ref:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        time_per_sqm:
+          type: number
+        skill_level:
+          type: string
+        region:
+          type: string
+          enum: [jp, us, in]
+        task_type:
+          type: string
+          enum: [field_work, basal_fertilization, topdress_fertilization]
+
+    CropSetupProposalBlueprint:
+      type: object
+      required: [agricultural_task_ref, stage_order, gdd_trigger, task_type]
+      properties:
+        agricultural_task_ref:
+          type: string
+        stage_order:
+          type: integer
+        stage_name:
+          type: string
+        gdd_trigger:
+          type: number
+        task_type:
+          type: string
+        priority:
+          type: integer
+
+    CropSetupProposalDryRunResponse:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [dry_run]
+        valid:
+          type: boolean
+        normalized:
+          $ref: '#/components/schemas/CropSetupProposal'
+        errors:
+          type: array
+          items:
+            type: object

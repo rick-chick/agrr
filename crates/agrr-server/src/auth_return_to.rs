@@ -176,6 +176,7 @@ const AUTH_REQUIRED_PREFIXES: &[&str] = &[
     "/agricultural_tasks",
     "/interaction_rules",
     "/dashboard",
+    "/api-keys",
 ];
 
 fn requires_auth_direct_landing(path: &str) -> bool {

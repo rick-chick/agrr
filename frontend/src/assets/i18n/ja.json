@@ -2543,6 +2543,7 @@
     "terms": "利用規約",
     "login": "ログイン",
     "logout": "ログアウト",
+    "api_keys": "APIキー管理",
     "admin": "管理画面",
     "language": "言語"
   },

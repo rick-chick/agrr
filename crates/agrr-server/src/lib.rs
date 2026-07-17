@@ -32,6 +32,8 @@ pub mod field_cultivations;
 pub mod internal_farms;
 pub mod jobs;
 pub mod masters_auth;
+pub mod masters_rate_limit;
+pub mod masters_routes;
 pub mod masters_agricultural_tasks;
 pub mod masters_crop_requirements;
 pub mod masters_crop_agricultural_tasks;
@@ -129,21 +131,7 @@ pub async fn run_http_server() {
         .merge(deletion_undo::routes())
         .merge(entry_schedule::routes())
         .merge(field_cultivation_climate::climate_routes(false))
-        .merge(masters_farms::routes())
-        .merge(masters_fields::routes())
-        .merge(masters_crops::routes())
-        .merge(masters_crop_stages::routes())
-        .merge(masters_crop_pests::routes())
-        .merge(masters_crop_agricultural_tasks::routes())
-        .merge(masters_crop_task_schedule_blueprints::routes())
-        .merge(masters_crop_setup_proposal::routes())
-        .merge(masters_crop_pesticides::routes())
-        .merge(masters_crop_requirements::routes())
-        .merge(masters_pests::routes())
-        .merge(masters_fertilizes::routes())
-        .merge(masters_pesticides::routes())
-        .merge(masters_agricultural_tasks::routes())
-        .merge(masters_interaction_rules::routes())
+        .merge(masters_routes::routes(state.clone()))
         .merge(contact_messages::routes())
         .merge(api_keys::routes())
         .merge(auth_test::routes())

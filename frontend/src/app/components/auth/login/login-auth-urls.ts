@@ -31,7 +31,8 @@ const AUTH_REQUIRED_PREFIXES = [
   '/pesticides',
   '/agricultural_tasks',
   '/interaction_rules',
-  '/dashboard'
+  '/dashboard',
+  '/api-keys'
 ] as const;
 
 /** GCS SPA シェルミラーなしの認証必須パス（OAuth フルリダイレクト不可） */

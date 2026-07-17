@@ -1486,3 +1486,46 @@ fn post_masters_crop_setup_proposal_with_api_key_authenticates() {
     assert_eq!(true, json["valid"].as_bool().unwrap());
 }
 
+#[test]
+fn post_masters_crop_setup_proposal_apply_rate_limited_returns_429_with_retry_after() {
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let body = valid_setup_proposal_body();
+
+    for attempt in 0..2 {
+        let seed = seed_masters_crop(user_id);
+        let path = format!(
+            "/api/v1/masters/crops/{}/setup_proposal?mode=apply",
+            seed.crop_id
+        );
+        let (status, response_body) = status_and_body(client.post(
+            &path,
+            Some(&session_id),
+            &empty_headers(),
+            Some(body.clone()),
+        ));
+        assert_eq!(201, status, "apply attempt {attempt}: {response_body}");
+    }
+
+    let seed = seed_masters_crop(user_id);
+    let path = format!(
+        "/api/v1/masters/crops/{}/setup_proposal?mode=apply",
+        seed.crop_id
+    );
+    let response = client.post(
+        &path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(body),
+    );
+    assert_eq!(429, response.status().as_u16());
+    assert!(
+        response.headers().get("retry-after").is_some(),
+        "expected Retry-After header on 429"
+    );
+    let response_body = response.text().expect("rate limit body");
+    let json: serde_json::Value = serde_json::from_str(&response_body).expect("rate limit JSON");
+    assert_eq!("rate_limit", json["error"].as_str().unwrap());
+}
+
