@@ -19,7 +19,7 @@ const CROP_EDIT_CATALOG_KEYS = [
   'crops.edit.stages_lead',
   'crops.edit.stages_list_heading',
   'crops.edit.add_stage',
-  'crops.edit.stage_title',
+  'crops.edit.stage_page_title',
   'crops.edit.stage_name',
   'crops.edit.base_temperature',
   'crops.edit.optimal_min',

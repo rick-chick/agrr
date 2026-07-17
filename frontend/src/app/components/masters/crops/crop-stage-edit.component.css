@@ -1,12 +1,5 @@
 @import '../_master-layout.css';
 
-.crop-stages-section__title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: var(--color-text-primary);
-}
-
 .crop-stages-edit-panel {
   margin-top: 1.5rem;
   padding: 1.25rem;
@@ -40,23 +33,7 @@
 }
 
 .crop-stages-edit-panel__name-error {
-  margin: var(--space-1) 0 0 calc(2.25rem + var(--space-3));
-}
-
-.crop-stages-edit-panel__stage-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  min-width: 2.25rem;
-  margin-top: 1.375rem;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-full);
-  background: var(--color-primary-muted-bg, var(--color-background-secondary));
-  color: var(--color-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  line-height: 2.25rem;
+  margin: var(--space-1) 0 0;
 }
 
 .crop-stages-edit-panel__subsection {

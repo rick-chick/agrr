@@ -421,6 +421,7 @@
       "stages_list_heading": "ステージ一覧",
       "stages_empty_lead": "生育ステージは栽培テンプレートや作業スケジュールの設定に必要です。",
       "add_stage": "ステージ追加",
+      "stage_page_title": "{{name}} ({{order}})",
       "stage_title": "ステージ {{order}}",
       "stage_name": "ステージ名",
       "stage_order_duplicate": "順序 {{orders}} が重複しています。一意の値に修正してください。",

@@ -105,7 +105,9 @@ const initialControl: CropStageEditViewState = {
         <app-master-context-header [crumbs]="contextCrumbs" />
 
         <header class="page-header">
-          <h1 class="page-title">{{ currentStage.name }}</h1>
+          <h1 class="page-title">
+            {{ 'crops.edit.stage_page_title' | translate: { name: currentStage.name, order: currentStage.order } }}
+          </h1>
           <p class="page-description">{{ 'crops.edit.stages_lead' | translate }}</p>
         </header>
 
@@ -115,16 +117,9 @@ const initialControl: CropStageEditViewState = {
           </div>
         }
 
-        <section class="form-card crop-stages-section" aria-labelledby="stage-edit-heading">
-          <h2 id="stage-edit-heading" class="crop-stages-section__title">
-            {{ 'crops.edit.stage_title' | translate: { order: currentStage.order } }}
-          </h2>
-
+        <section class="form-card crop-stages-section">
           <div class="crop-stages-edit-panel">
             <div class="crop-stages-edit-panel__header">
-              <span class="crop-stages-edit-panel__stage-badge" aria-hidden="true">
-                {{ currentStage.order }}
-              </span>
               <div class="crop-stages-edit-panel__header-fields">
                 <label class="form-card__field form-card__field--small crop-stages-edit-panel__aligned-field">
                   <span class="form-card__field-label">{{ 'crops.edit.stage_name' | translate }}</span>

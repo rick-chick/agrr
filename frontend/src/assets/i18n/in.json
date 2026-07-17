@@ -337,6 +337,7 @@
       "stages_list_heading": "चरण सूची",
       "stages_empty_lead": "खेती टेम्पलेट और कार्य अनुसूची सेट करने के लिए वृद्धि चरण आवश्यक हैं।",
       "add_stage": "चरण जोड़ें",
+      "stage_page_title": "{{name}} ({{order}})",
       "stage_title": "चरण {{order}}",
       "stage_name": "चरण का नाम",
       "stage_order_duplicate": "डुप्लिकेट क्रम मान: {{orders}}। कृपया अद्वितीय क्रम संख्या निर्दिष्ट करें।",

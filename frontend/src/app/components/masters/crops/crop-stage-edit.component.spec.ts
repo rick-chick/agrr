@@ -58,7 +58,7 @@ const editTranslations = {
     edit: {
       stages_title: 'Growth Stages',
       stages_lead: 'Configure growth stages.',
-      stage_title: 'Stage {{order}}',
+      stage_page_title: '{{name}} ({{order}})',
       stage_name: 'Stage Name',
       base_temperature: 'Base Temperature',
       base_temperature_placeholder: 'e.g., 5.0',
@@ -215,6 +215,20 @@ describe('CropStageEditComponent', () => {
     expect(component.stageId).toBe(1);
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
     expect(mockLoadBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
+  });
+
+  it('shows stage order only in page title, not inside the edit card', async () => {
+    await loadStage({ ...stageFixture, name: 'Germination', order: 2 });
+
+    const pageTitle = fixture.nativeElement.querySelector('.page-title');
+    expect(pageTitle?.textContent?.trim()).toBe('Germination (2)');
+
+    expect(fixture.nativeElement.querySelector('.crop-stages-section__title')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__stage-badge')).toBeNull();
+
+    const cardText = fixture.nativeElement.querySelector('.crop-stages-edit-panel')?.textContent ?? '';
+    expect(cardText).not.toMatch(/Stage\s+2/);
+    expect((cardText.match(/2/g) ?? []).length).toBe(0);
   });
 
   it('shows info flash and skips save when panel has no changes', async () => {
