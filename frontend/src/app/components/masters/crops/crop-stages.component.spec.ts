@@ -125,9 +125,7 @@ const tableTranslations = {
       stage_order_duplicate_hint: 'Drag rows to reorder or use the button below to renumber.',
       stage_order_renumber: 'Renumber orders',
       temperature_section: 'Temperature conditions',
-      thermal_section: 'Accumulated temperature',
       details_section: 'Advanced settings',
-      optimal_range: 'Optimal range',
       reference_stages_readonly: 'Reference crops are read-only. Only administrators can edit growth stages.',
       stage_name_required: 'Please enter a stage name.'
     }
@@ -165,14 +163,18 @@ describe('CropStagesComponent', () => {
     cropName = 'Tomato',
     options: { is_reference?: boolean } = {}
   ): Promise<void> {
-    component.control = {
-      ...loadedControlBase,
-      formData: {
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+    presenter.setView(component);
+    presenter.present({
+      crop: {
+        id: 1,
         name: cropName,
         is_reference: options.is_reference ?? false,
+        groups: [],
         crop_stages: stages
       }
-    };
+    });
+    presenter.present({ blueprints: [] });
     fixture.detectChanges();
     await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
     fixture.detectChanges();
@@ -255,9 +257,56 @@ describe('CropStagesComponent', () => {
     fixture.detectChanges();
 
     expect(component.control.error).toBe('crops.errors.invalid_id');
+    expect(component.control.showNextStepCta).toBe(false);
     expect(fixture.nativeElement.querySelector('.master-load-error')).toBeTruthy();
+    expect(fixture.nativeElement.querySelectorAll('app-master-context-header').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.master-context-header__forward')).toBeNull();
     expect(mockLoadUseCase.execute).not.toHaveBeenCalled();
     expect(mockLoadBlueprintsUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('derives display state when control is assigned through the component setter', () => {
+    const incompleteStage: CropStage = {
+      id: 2,
+      name: 'Vegetative',
+      order: 2
+    } as CropStage;
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        name: 'Tomato',
+        is_reference: false,
+        crop_stages: [incompleteStage]
+      }
+    };
+
+    expect(component.control.showBlueprintReadinessChecklist).toBe(true);
+    expect(component.control.showNextStepCta).toBe(false);
+  });
+
+  it('derives display state when presenter loads crop data', () => {
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+    presenter.setView(component);
+    const incompleteStage: CropStage = {
+      id: 2,
+      name: 'Vegetative',
+      order: 2
+    } as CropStage;
+
+    presenter.present({
+      crop: {
+        id: 1,
+        name: 'Tomato',
+        is_reference: false,
+        groups: [],
+        crop_stages: [incompleteStage]
+      }
+    });
+    presenter.present({ blueprints: [] });
+
+    expect(component.control.showBlueprintReadinessChecklist).toBe(true);
+    expect(component.control.showNextStepCta).toBe(false);
   });
 
   it('shows load error panel and hides edit UI when initial crop load fails', () => {
@@ -292,6 +341,9 @@ describe('CropStagesComponent', () => {
 
     expect(fixture.nativeElement.querySelector('.master-load-error')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Resource not found');
+    expect(fixture.nativeElement.querySelectorAll('app-master-context-header').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.master-context-header__forward')).toBeNull();
+    expect(component.control.showNextStepCta).toBe(false);
     expect(fixture.nativeElement.querySelector('.crop-stages-section')).toBeFalsy();
     expect(fixture.nativeElement.querySelector('.crop-stages-empty__cta')).toBeFalsy();
     expect(
@@ -1020,7 +1072,6 @@ describe('CropStagesComponent', () => {
     const deleteButton = fixture.nativeElement.querySelector('.crop-stages-edit-panel .btn-danger');
     deleteButton.click();
     fixture.detectChanges();
-    fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain(
       'This stage has 1 linked task schedule template(s).'
@@ -1102,17 +1153,20 @@ describe('CropStagesComponent', () => {
     await loadStages([incompleteStage]);
 
     expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.master-context-header__forward')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Vegetative');
     expect(fixture.nativeElement.textContent).toContain('base temperature not set');
   });
 
-  it('shows next-step CTA when all stage requirements are complete', async () => {
+  it('shows next-step link in header when all stage requirements are complete', async () => {
     await loadStages([stageFixture]);
 
     expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeNull();
-    const nextStep = fixture.nativeElement.querySelector('.crop-stages__next-step a') as HTMLAnchorElement;
+    const nextStep = fixture.nativeElement.querySelector(
+      'a.master-context-header__forward'
+    ) as HTMLAnchorElement;
     expect(nextStep).toBeTruthy();
+    expect(nextStep.classList.contains('btn-secondary')).toBe(false);
     expect(nextStep.getAttribute('href')).toBe('/crops/1/task_schedule_blueprints');
   });
 
@@ -1255,21 +1309,23 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-order-warning')).toBeNull();
   });
 
-  it('renders edit panel with section headings and grouped temperature fields', async () => {
+  it('renders edit panel with section headings and aligned field rows', async () => {
     await loadStages([stageFixture]);
 
     const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
     expect(panel?.querySelector('.crop-stages-edit-panel__header')).toBeTruthy();
     expect(panel?.querySelector('.crop-stages-edit-panel__stage-badge')).toBeTruthy();
+    expect(panel?.querySelector('.crop-stages-edit-panel__header-fields')).toBeTruthy();
     expect(panel?.querySelector('.crop-stages-edit-panel__subsection--temperature')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--thermal')).toBeTruthy();
     expect(panel?.querySelector('.crop-stages-edit-panel__subsection--details')).toBeTruthy();
     expect(panel?.textContent).toContain('Temperature conditions');
-    expect(panel?.textContent).toContain('Accumulated temperature');
     expect(panel?.textContent).toContain('Advanced settings');
-    expect(panel?.querySelector('.crop-stages-edit-panel__optimal-group')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__temperature-scale')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__gdd-block')).toBeTruthy();
+    expect(panel?.querySelector('input[name="panel_stage_name"]')).toBeTruthy();
+    expect(panel?.querySelector('input[name="panel_required_gdd"]')).toBeTruthy();
+    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--thermal')).toBeNull();
+    expect(panel?.querySelector('.crop-stages-edit-panel__optimal-group')).toBeNull();
+    expect(panel?.querySelector('.crop-stages-edit-panel__temperature-scale')).toBeNull();
+    expect(panel?.querySelector('.crop-stages-edit-panel__gdd-block')).toBeNull();
   });
 
   it('renders detail settings as chip buttons instead of text links', async () => {
@@ -1353,7 +1409,7 @@ describe('CropStagesComponent', () => {
     ]);
 
     expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.master-context-header__forward')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('required GDD not set');
   });
 
