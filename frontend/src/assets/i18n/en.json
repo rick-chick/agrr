@@ -2305,6 +2305,7 @@
     },
     "errors": {
       "invalid_id": "Invalid crop ID.",
+      "stage_not_found": "Growth stage not found.",
       "stage_order_conflict": "Could not save stage order because another stage already uses that order. Use renumber or drag to fix duplicates."
     }
   },
