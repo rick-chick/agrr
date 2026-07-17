@@ -11,6 +11,7 @@ import {
   detectStaleAgentBlockedIssue,
   detectStaleAgentInProgressIssue,
   detectStaleMergeInProgressPr,
+  detectStaleRetryScheduleRuns,
   detectStuckAgentReadyIssue,
   detectStuckDraftPr,
   isLikelyDuplicateWatchdogFinding,
@@ -99,6 +100,35 @@ test('detectConflictReadyPr flags BEHIND merge state', () => {
   });
   assert.ok(finding);
   assert.equal(finding.priority, 'P1');
+});
+
+test('detectConflictReadyPr flags CONFLICTING via mergeable', () => {
+  const finding = detectConflictReadyPr({
+    number: 401,
+    title: 'conflict PR',
+    isDraft: false,
+    labels: [],
+    mergeable: 'CONFLICTING',
+    mergeStateStatus: 'CLEAN',
+    updatedAt: new Date(NOW).toISOString(),
+  });
+  assert.ok(finding);
+  assert.equal(finding.priority, 'P1');
+  assert.match(finding.summary, /CONFLICTING/);
+  assert.equal(finding.evidence.mergeable, 'CONFLICTING');
+});
+
+test('detectConflictReadyPr skips clean mergeable without sync need', () => {
+  const finding = detectConflictReadyPr({
+    number: 402,
+    title: 'clean PR',
+    isDraft: false,
+    labels: [],
+    mergeable: 'MERGEABLE',
+    mergeStateStatus: 'CLEAN',
+    updatedAt: new Date(NOW).toISOString(),
+  });
+  assert.equal(finding, null);
 });
 
 test('detectCiFailingReadyPr flags failing checks without agent-merge', () => {
@@ -294,4 +324,44 @@ test('detectStaleMergeInProgressPr flags stale merge label', () => {
     NOW,
   );
   assert.ok(finding);
+});
+
+test('detectStaleRetryScheduleRuns flags P0 when retry cron has no recent schedule run', () => {
+  const findings = detectStaleRetryScheduleRuns(
+    [
+      {
+        workflowName: 'PR Merge Worker Retry Dispatch',
+        event: 'workflow_dispatch',
+        createdAt: new Date(NOW - 5 * 60 * 1000).toISOString(),
+      },
+      {
+        workflowName: 'Issue Worker Retry Dispatch',
+        event: 'schedule',
+        createdAt: new Date(NOW - 10 * 60 * 1000).toISOString(),
+      },
+    ],
+    NOW,
+  );
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].priority, 'P0');
+  assert.match(findings[0].title, /PR Merge Worker Retry Dispatch/);
+});
+
+test('detectStaleRetryScheduleRuns ignores workflows with schedule run within 30 minutes', () => {
+  const findings = detectStaleRetryScheduleRuns(
+    [
+      {
+        workflowName: 'PR Merge Worker Retry Dispatch',
+        event: 'schedule',
+        createdAt: new Date(NOW - 20 * 60 * 1000).toISOString(),
+      },
+      {
+        workflowName: 'Issue Worker Retry Dispatch',
+        event: 'schedule',
+        createdAt: new Date(NOW - 25 * 60 * 1000).toISOString(),
+      },
+    ],
+    NOW,
+  );
+  assert.equal(findings.length, 0);
 });

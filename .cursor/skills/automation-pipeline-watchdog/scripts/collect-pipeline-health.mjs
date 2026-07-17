@@ -25,6 +25,7 @@ import {
   detectStaleAgentBlockedIssue,
   detectStaleAgentInProgressIssue,
   detectStaleMergeInProgressPr,
+  detectStaleRetryScheduleRuns,
   detectStuckAgentReadyIssue,
   detectStuckDraftPr,
   selectActionableFindings,
@@ -161,7 +162,7 @@ async function collectGithubData() {
         '--limit',
         '30',
         '--json',
-        'databaseId,workflowName,conclusion,createdAt,url',
+        'databaseId,workflowName,event,conclusion,createdAt,url',
       ]),
       ghJson([
         'issue',
@@ -239,6 +240,10 @@ async function buildFindingsFromGithub(data, nowMs) {
   }
 
   const cutoffMs = nowMs - WORKFLOW_LOOKBACK_HOURS * 60 * 60 * 1000;
+  for (const finding of detectStaleRetryScheduleRuns(data.workflowRuns, nowMs)) {
+    findings.push(finding);
+  }
+
   for (const run of data.workflowRuns) {
     if (Date.parse(run.createdAt) < cutoffMs) {
       continue;
