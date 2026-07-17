@@ -381,8 +381,6 @@
       "table_stage_name": "चरण का नाम",
       "table_optimal_range": "इष्टतम तापमान सीमा",
       "table_base_temperature": "न्यूनतम सीमा तापमान",
-      "table_required_gdd": "आवश्यक GDD",
-      "table_cumulative_gdd": "संचयी GDD",
       "optimal_temperature_range": "{{min}}–{{max}} {{unit}}",
       "optimal_temperature_value": "{{value}} {{unit}}",
       "value_missing": "—",

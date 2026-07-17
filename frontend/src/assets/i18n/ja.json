@@ -458,8 +458,6 @@
       "table_stage_name": "ステージ名",
       "table_optimal_range": "最適温度範囲",
       "table_base_temperature": "最低限界温度",
-      "table_required_gdd": "必要積算温度",
-      "table_cumulative_gdd": "累積積算温度",
       "optimal_temperature_range": "{{min}}–{{max}} {{unit}}",
       "optimal_temperature_value": "{{value}} {{unit}}",
       "value_missing": "—",
