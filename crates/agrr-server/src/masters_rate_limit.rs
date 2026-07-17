@@ -232,4 +232,20 @@ mod tests {
             .expect_err("third apply should be limited");
         assert!(retry >= 1);
     }
+
+    #[test]
+    fn write_limit_returns_retry_after() {
+        let limiter = MastersRateLimiter::new(MastersRateLimitConfig {
+            read_per_min: 10,
+            dry_run_per_min: 10,
+            write_per_min: 2,
+            apply_per_min: 10,
+        });
+        assert!(limiter.check(7, MastersRateLimitTier::Write).is_ok());
+        assert!(limiter.check(7, MastersRateLimitTier::Write).is_ok());
+        let retry = limiter
+            .check(7, MastersRateLimitTier::Write)
+            .expect_err("third write should be limited");
+        assert!(retry >= 1);
+    }
 }

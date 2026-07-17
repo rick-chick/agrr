@@ -1486,6 +1486,91 @@ fn post_masters_crop_setup_proposal_with_api_key_authenticates() {
     assert_eq!(true, json["valid"].as_bool().unwrap());
 }
 
+fn api_key_from_generate_response(body: &str) -> String {
+    serde_json::from_str::<serde_json::Value>(body)
+        .expect("api key JSON")["api_key"]
+        .as_str()
+        .expect("api_key")
+        .to_string()
+}
+
+#[test]
+fn post_api_keys_generate_is_idempotent_when_key_already_exists() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+
+    let (first_status, first_body) = status_and_body(client.post(
+        "/api/v1/api_keys/generate",
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, first_status, "{first_body}");
+    let first_key = api_key_from_generate_response(&first_body);
+
+    let (second_status, second_body) = status_and_body(client.post(
+        "/api/v1/api_keys/generate",
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, second_status, "{second_body}");
+    let second_key = api_key_from_generate_response(&second_body);
+    assert_eq!(first_key, second_key, "generate must not rotate an existing key");
+}
+
+#[test]
+fn post_api_keys_regenerate_invalidates_previous_key() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (generate_status, generate_body) = status_and_body(client.post(
+        "/api/v1/api_keys/generate",
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, generate_status, "{generate_body}");
+    let old_key = api_key_from_generate_response(&generate_body);
+
+    let mut old_headers = empty_headers();
+    old_headers.insert("Authorization".into(), format!("Bearer {old_key}"));
+    let (old_auth_status, old_auth_body) = status_and_body(client.get(
+        &format!("/api/v1/masters/crops/{}/crop_stages", seed.crop_id),
+        None,
+        &old_headers,
+    ));
+    assert_eq!(200, old_auth_status, "{old_auth_body}");
+
+    let (regenerate_status, regenerate_body) = status_and_body(client.post(
+        "/api/v1/api_keys/regenerate",
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, regenerate_status, "{regenerate_body}");
+    let new_key = api_key_from_generate_response(&regenerate_body);
+    assert_ne!(old_key, new_key, "regenerate must issue a new key");
+
+    let (revoked_status, revoked_body) = status_and_body(client.get(
+        &format!("/api/v1/masters/crops/{}/crop_stages", seed.crop_id),
+        None,
+        &old_headers,
+    ));
+    assert_eq!(401, revoked_status, "{revoked_body}");
+
+    let mut new_headers = empty_headers();
+    new_headers.insert("Authorization".into(), format!("Bearer {new_key}"));
+    let (new_auth_status, new_auth_body) = status_and_body(client.get(
+        &format!("/api/v1/masters/crops/{}/crop_stages", seed.crop_id),
+        None,
+        &new_headers,
+    ));
+    assert_eq!(200, new_auth_status, "{new_auth_body}");
+}
+
 #[test]
 fn post_masters_crop_setup_proposal_apply_rate_limited_returns_429_with_retry_after() {
     let client = ContractClient::from_env();
