@@ -85,7 +85,6 @@ const tableTranslations = {
       stages_empty_lead: 'Stages are required.',
       add_stage: 'Add Stage',
       table_order: 'Order',
-      table_stage_name: 'Stage name',
       table_optimal_range: 'Optimal temperature range',
       table_base_temperature: 'Base temp',
       optimal_temperature_range: '{{min}}–{{max}} {{unit}}',
@@ -320,18 +319,29 @@ describe('CropStagesComponent', () => {
     });
   });
 
-  it('renders stage table with optimal range and base temperature columns only', async () => {
+  it('shows header primary add button that calls addCropStage when clicked', async () => {
     await loadStages([stageFixture]);
 
-    const headers = Array.from(
-      fixture.nativeElement.querySelectorAll('.crop-stages-table thead th')
-    ).map((th: Element) => th.textContent?.trim());
-    expect(fixture.nativeElement.querySelector('.crop-stages-table')).toBeTruthy();
-    expect(headers).toContain('Order');
-    expect(headers).toContain('Optimal temperature range');
-    expect(headers).toContain('Base temp');
-    expect(headers).not.toContain('Required GDD');
-    expect(headers).not.toContain('Cumulative GDD');
+    const addButton = fixture.nativeElement.querySelector(
+      '.section-card__header-actions .btn-primary'
+    ) as HTMLButtonElement;
+    expect(addButton).toBeTruthy();
+    expect(addButton.textContent?.trim()).toBe('Add Stage');
+    addButton.click();
+    expect(mockCreateCropStageUseCase.execute).toHaveBeenCalled();
+  });
+
+  it('renders stage cards with optimal range and base temperature metadata only', async () => {
+    await loadStages([stageFixture]);
+
+    expect(fixture.nativeElement.querySelector('.section-card')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.card-list')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stage-card')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Order');
+    expect(fixture.nativeElement.textContent).toContain('Optimal temperature range');
+    expect(fixture.nativeElement.textContent).toContain('Base temp');
+    expect(fixture.nativeElement.textContent).not.toContain('Required GDD');
+    expect(fixture.nativeElement.textContent).not.toContain('Cumulative GDD');
   });
 
   it('does not render edit panel on list page', async () => {
@@ -340,11 +350,11 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeNull();
   });
 
-  it('navigates to stage edit route when table row is clicked', async () => {
+  it('navigates to stage edit route when stage card is clicked', async () => {
     await loadStages([stageFixture]);
 
-    const row = fixture.nativeElement.querySelector('.crop-stages-table__row') as HTMLElement;
-    row.click();
+    const card = fixture.nativeElement.querySelector('.crop-stage-card') as HTMLElement;
+    card.click();
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/crops', 1, 'stages', 1, 'edit'], {
       queryParams: undefined
@@ -358,8 +368,8 @@ describe('CropStagesComponent', () => {
     component.fromPlanId = 7;
     await loadStages([stageFixture]);
 
-    const row = fixture.nativeElement.querySelector('.crop-stages-table__row') as HTMLElement;
-    row.click();
+    const card = fixture.nativeElement.querySelector('.crop-stage-card') as HTMLElement;
+    card.click();
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/crops', 1, 'stages', 1, 'edit'], {
       queryParams: { fromPlan: 7, returnTo: 'task_schedule' }
@@ -381,7 +391,7 @@ describe('CropStagesComponent', () => {
     });
   });
 
-  it('shows em dash for missing optimal range and base temperature in table', async () => {
+  it('shows em dash for missing optimal range and base temperature in stage card', async () => {
     await loadStages([
       {
         id: 1,
@@ -394,9 +404,9 @@ describe('CropStagesComponent', () => {
       } as CropStage
     ]);
 
-    const row = fixture.nativeElement.querySelector('.crop-stages-table__row');
-    expect(row.textContent).toContain('—');
-    expect(row.textContent).not.toContain('Enter required GDD to display the range');
+    const card = fixture.nativeElement.querySelector('.crop-stage-card');
+    expect(card.textContent).toContain('—');
+    expect(card.textContent).not.toContain('Enter required GDD to display the range');
   });
 
   it('shows optimal temperature range when both min and max are set', async () => {
@@ -411,9 +421,9 @@ describe('CropStagesComponent', () => {
       }
     ]);
 
-    const row = fixture.nativeElement.querySelector('.crop-stages-table__row');
-    expect(row.textContent).toContain('15–25 °C');
-    expect(row.textContent).toContain('10');
+    const card = fixture.nativeElement.querySelector('.crop-stage-card');
+    expect(card.textContent).toContain('15–25 °C');
+    expect(card.textContent).toContain('10');
   });
 
   it('shows single-sided optimal temperature when only min or max is set', async () => {
@@ -441,9 +451,9 @@ describe('CropStagesComponent', () => {
       }
     ]);
 
-    const rows = fixture.nativeElement.querySelectorAll('.crop-stages-table__row');
-    expect(rows[0]?.textContent).toContain('15 °C');
-    expect(rows[1]?.textContent).toContain('25 °C');
+    const cards = fixture.nativeElement.querySelectorAll('.crop-stage-card');
+    expect(cards[0]?.textContent).toContain('15 °C');
+    expect(cards[1]?.textContent).toContain('25 °C');
   });
 
   it('should link back to crop detail via breadcrumbs', async () => {
@@ -475,20 +485,14 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
   });
 
-  it('shows empty state with description and primary CTA when no stages', async () => {
+  it('shows empty state with description and header primary add button when no stages', async () => {
     await loadStages([]);
 
     const empty = fixture.nativeElement.querySelector('.crop-stages-empty');
     expect(empty).toBeTruthy();
-    expect(empty?.querySelector('.crop-stages-empty__cta')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages-table')).toBeNull();
-  });
-
-  it('shows add row at table bottom when stages exist', async () => {
-    await loadStages([stageFixture]);
-
-    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-row')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeTruthy();
+    expect(empty?.querySelector('.crop-stages-empty__cta')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.card-list')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.section-card__header-actions .btn-primary')).toBeTruthy();
   });
 
   it('shows readiness checklist when stage requirements are incomplete', async () => {
@@ -661,7 +665,7 @@ describe('CropStagesComponent', () => {
 
     expect(fixture.nativeElement.querySelector('.crop-stages__readonly-notice')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.crop-stages-empty__cta')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.section-card__header-actions .btn-primary')).toBeNull();
     expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeNull();
 
     component.addCropStage();

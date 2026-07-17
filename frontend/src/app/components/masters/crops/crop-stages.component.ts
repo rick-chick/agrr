@@ -163,8 +163,15 @@ const initialControl: CropStagesViewState = {
           </div>
         }
 
-        <section class="form-card crop-stages-section" aria-labelledby="stages-heading">
-          <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_list_heading' | translate }}</h2>
+        <section class="section-card crop-stages-section" aria-labelledby="stages-heading">
+          <div class="section-card__header-actions">
+            <h2 id="stages-heading" class="section-title">{{ 'crops.edit.stages_list_heading' | translate }}</h2>
+            @if (canMutateStages) {
+              <button type="button" class="btn btn-primary" (click)="addCropStage()">
+                {{ 'crops.edit.add_stage' | translate }}
+              </button>
+            }
+          </div>
 
           @if (duplicateStageOrders.length > 0) {
             <div class="crop-stages-order-warning" role="alert">
@@ -192,58 +199,51 @@ const initialControl: CropStagesViewState = {
             <div class="crop-stages-empty">
               <p class="crop-stages-empty__lead">{{ 'crops.edit.stages_empty_lead' | translate }}</p>
               <p class="crop-stages-empty__description">{{ 'crops.show.no_stages_description' | translate }}</p>
-              @if (canMutateStages) {
-                <button type="button" class="btn btn-primary crop-stages-empty__cta" (click)="addCropStage()">
-                  {{ 'crops.edit.add_stage' | translate }}
-                </button>
-              }
             </div>
           } @else {
-            <table class="crop-stages-table">
-              <thead>
-                <tr>
-                  <th class="crop-stages-table__col-drag" scope="col" aria-hidden="true"></th>
-                  <th scope="col">{{ 'crops.edit.table_order' | translate }}</th>
-                  <th scope="col">{{ 'crops.edit.table_stage_name' | translate }}</th>
-                  <th scope="col">{{ 'crops.edit.table_optimal_range' | translate }}</th>
-                  <th scope="col">{{ 'crops.edit.table_base_temperature' | translate }}</th>
-                </tr>
-              </thead>
-              <tbody
-                cdkDropList
-                [cdkDropListData]="sortedStages"
-                (cdkDropListDropped)="onStageDropped($event)"
-              >
-                @for (stage of sortedStages; track stage.id) {
-                  <tr
-                    class="crop-stages-table__row"
-                    cdkDrag
-                    [cdkDragDisabled]="!canMutateStages"
-                    [cdkDragData]="stage"
-                    (click)="navigateToStageEdit(stage.id)"
-                  >
-                    <td class="crop-stages-table__drag" cdkDragHandle (click)="$event.stopPropagation()">
-                      @if (canMutateStages) {
-                        <span class="crop-stages-table__drag-icon" aria-hidden="true">≡</span>
-                      }
-                    </td>
-                    <td>{{ stage.order }}</td>
-                    <td>{{ stage.name }}</td>
-                    <td>{{ formatOptimalTemperatureRange(stage.temperature_requirement) }}</td>
-                    <td>{{ formatOptionalNumber(stage.temperature_requirement?.base_temperature) }}</td>
-                  </tr>
-                }
-                <tr class="crop-stages-table__add-row">
-                  <td colspan="5">
+            <ul
+              class="card-list"
+              role="list"
+              cdkDropList
+              [cdkDropListData]="sortedStages"
+              (cdkDropListDropped)="onStageDropped($event)"
+            >
+              @for (stage of sortedStages; track stage.id) {
+                <li
+                  class="card-list__item"
+                  cdkDrag
+                  [cdkDragDisabled]="!canMutateStages"
+                  [cdkDragData]="stage"
+                >
+                  <article class="item-card crop-stage-card" (click)="navigateToStageEdit(stage.id)">
                     @if (canMutateStages) {
-                      <button type="button" class="crop-stages-table__add-button" (click)="addCropStage()">
-                        {{ 'crops.edit.add_stage' | translate }}
+                      <button
+                        type="button"
+                        class="crop-stage-card__drag"
+                        cdkDragHandle
+                        (click)="$event.stopPropagation()"
+                      >
+                        <span class="crop-stage-card__drag-icon" aria-hidden="true">≡</span>
                       </button>
                     }
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    <div class="item-card__body">
+                      <span class="item-card__title">{{ stage.name }}</span>
+                      <span class="item-card__meta crop-stage-card__order">
+                        {{ 'crops.edit.table_order' | translate }}: {{ stage.order }}
+                      </span>
+                      <span class="item-card__meta">
+                        {{ 'crops.edit.table_optimal_range' | translate }}:
+                        {{ formatOptimalTemperatureRange(stage.temperature_requirement) }}
+                      </span>
+                      <span class="item-card__meta">
+                        {{ 'crops.edit.table_base_temperature' | translate }}:
+                        {{ formatOptionalNumber(stage.temperature_requirement?.base_temperature) }}
+                      </span>
+                    </div>
+                  </article>
+                </li>
+              }
+            </ul>
           }
         </section>
       }
