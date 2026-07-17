@@ -10,7 +10,7 @@ description: >-
 
 **Issue Worker / PR Merge Worker / dispatch workflows** の運用状態を **1 時間ごと**に機械収集し、**P0/P1 の異常**を調査して **GitHub issue** に落とす。repo 修正 PR は **最小限**（スクリプト破損など P0 のみ）。
 
-上位原則: [`automation-authoring` PRINCIPLES.md §目的](../automation-authoring/references/PRINCIPLES.md)（人間介在なしで完遂。滞留を黙って放置しない）。
+上位原則: [`automation-authoring` PRINCIPLES.md §目的](../automation-authoring/references/PRINCIPLES.md)（人間介在なしで完遂。滞留を記録・再開せず未対応のまま残さない）。
 
 週次の深い監査・クリティカル PR 修正は [`cloud-automation-audit`](../cloud-automation-audit/SKILL.md) が担当。本スキルは **時間解像度の高い運用監視**に専念する。
 
@@ -127,7 +127,7 @@ gh label create automation-watchdog --repo rick-chick/agrr \
 
 - 根拠のない issue 量産
 - `githubLookupStatus: failed` 時の起票
-- 重複 score ≥ 5 無視での起票
+- 重複 score ≥ 5 を確認せずに起票
 - `agent-ready` の自動付与（運用 issue を Issue Worker に流す）
 - 積極的リファクタ・プロンプト改善・cron 変更
 - `git checkout` / `switch` / `reset` / `restore`（ユーザー明示時以外）

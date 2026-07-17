@@ -60,9 +60,9 @@ def analyze_process(process_name, measurements):
     
     # Detect trend
     if growth_rate > 10:
-        status = "⚠️  POTENTIAL LEAK"
+        status = "[WARNING] POTENTIAL LEAK"
     elif growth_rate > 5:
-        status = "⚠️  WARNING"
+        status = "[WARNING]"
     else:
         status = "✓ OK"
     
@@ -145,7 +145,7 @@ def generate_recommendations(data):
         
         if growth_rate > 10:
             leak_detected = True
-            print(f"\n⚠️  {process_name}:")
+            print(f"\n[WARNING] {process_name}:")
             print(f"   - Memory grew by {growth_rate:.1f}% during monitoring")
             print(f"   - Starting: {early_avg:.1f} MB → Ending: {late_avg:.1f} MB")
             print(f"   - Action required:")

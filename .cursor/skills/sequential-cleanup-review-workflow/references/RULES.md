@@ -41,7 +41,7 @@
 |----------|----------------|
 | [STARTUP.md](STARTUP.md) | 初回 tick・slug |
 | [DUAL_LOOP.md](DUAL_LOOP.md) | ループ形状・L1/L2/L3・親 while |
-| [MECHANICAL_OUTER_LOOP.md](MECHANICAL_OUTER_LOOP.md) | D1 ingest・禁止フレーズ・gate |
+| [MECHANICAL_OUTER_LOOP.md](MECHANICAL_OUTER_LOOP.md) | D1 ingest・使用しない表現・gate |
 | [AGENT_ORCHESTRATION.md](AGENT_ORCHESTRATION.md) | Step 委譲プロンプト |
 | [STEPS_ABCD.md](STEPS_ABCD.md) | A〜D 作業内容 |
 | [CHECKLIST.md](CHECKLIST.md) | 進捗表・判定木 |

@@ -1,13 +1,13 @@
 # エージェントオーケストレーション（順次クリーンアップ）
 
 **二重ループ**: `while tasks`（shell）の各周で `agent A1 → A2 → … → D1 → D2`（Task 1 Step ずつ）。  
-起動時は [DUAL_LOOP.md](DUAL_LOOP.md) の **`cleanup-workflow-tick.sh`** から始める。**A1 に直行しない。**
+起動時は [DUAL_LOOP.md](DUAL_LOOP.md) の **`cleanup-workflow-tick.sh`** から始める。**tick 未実行で A1 に進まない。**
 
 手作業で一つずつやっていたときの精度を、**オーケストレーター + ステップ専用サブエージェント**で再現する。親エージェントは A〜D を自分で実装せず、**1 ステップ = 最低 1 サブエージェント起動**で進める。
 
 ## なぜ弱くなりやすいか
 
-| 手作業 | エージェントがやりがちな劣化 |
+| 手作業 | エージェントが起きやすい手順逸脱 |
 |--------|------------------------------|
 | ファイルを 1 件ずつ開いて確認 | A〜D を 1 ターンで「完了」と報告 |
 | 削除前に到達性を個別調査 | `rg` ゼロヒットだけでセーフ削除 |
@@ -194,7 +194,7 @@ Step D1 → ゲート → (C へ戻る or) D2 → マニフェスト完了
 各委譲プロンプトの末尾に必ず付ける。Task 起動時は **`model: "composer-2.5"`**（[Task 起動 — モデル](#task-起動--モデル必須)）。
 
 ```
-- あなたは sequential-cleanup-review-workflow の Step <X><n> 専用。スコープ外の改修・ついで修正は禁止（project-necessary-code-only）。
+- あなたは sequential-cleanup-review-workflow の Step <X><n> 専用。スコープ外の改修・依頼外の修正は禁止（project-necessary-code-only）。
 - 調査フェーズでは readonly。削除・移動は調査結果の表に載ったものだけ。
 - 返却は上記の必須 markdown 表形式。表なしの「問題なし」だけは不可。
 - テストは test-common 経由のみ。npm test / cargo test 直叩き禁止。

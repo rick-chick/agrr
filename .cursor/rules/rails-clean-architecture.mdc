@@ -40,11 +40,11 @@ alwaysApply: true
 | `app/views`（ERB 等テンプレート） | ActiveRecord の取得・クエリ・関連トラバース（表示用データは Interactor → Presenter 経由の DTO / 値のみ） |
 | リファクタ | domain から追い出して**太い controller / app/services**に寄せるだけ（DTO・ポート・注入なし） |
 
-## アンチパターン（言い訳）
+## アンチパターン（根拠不足で受け入れない説明）
 
-レイヤ外へ責務を逃がす・God Gateway・配線のすり替えを、「ドメインに書いてない」「インターフェースがある」「テストが通った」だけで正当化しない（該当は `ARCHITECTURE.md` の 17・18・20・22・26 など）。違反の記述は **番号と層**で行い、形容詞や「後で直す」での棚上げは `no-convenience-tech-debt.mdc` に反する。
+レイヤ外へ責務を移す・God Gateway・配線の差し替えを、「ドメインに書いてない」「インターフェースがある」「テストが通った」だけで受け入れない（該当は `ARCHITECTURE.md` の 17・18・20・22・26 など）。違反の記述は **番号と層**で行い、形容詞や「後で直す」での先送りは `no-convenience-tech-debt.mdc` に反する。
 
-`rescue ActiveRecord::RecordInvalid` の残置・二重取得・Input Port の歪み・安易な `else` 振り分けなど、**新規差分で増やした／残した**ものは **Application edge 項 3 / Interactors 項 / Rationalizations** を原文で照合する。
+`rescue ActiveRecord::RecordInvalid` の残置・二重取得・Input Port の歪み・十分な根拠のない `else` 振り分けなど、**新規差分で増やした／残した**ものは **Application edge 項 3 / Interactors 項 / Rationalizations** を原文で照合する。
 
 ## 実装後
 
