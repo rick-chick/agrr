@@ -84,7 +84,6 @@ const tableTranslations = {
       stages_empty_lead: 'Stages are required.',
       add_stage: 'Add Stage',
       table_order: 'Order',
-      table_stage_name: 'Stage name',
       table_base_temperature: 'Base temp',
       table_required_gdd: 'Required GDD',
       table_cumulative_gdd: 'Cumulative GDD',
@@ -618,7 +617,7 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-order-warning')).toBeNull();
   });
 
-  it('updates cumulative GDD display in table after stage reorder', async () => {
+  it('updates cumulative GDD display in cards after stage reorder', async () => {
     component.control = {
       ...loadedControlBase,
       formData: {
