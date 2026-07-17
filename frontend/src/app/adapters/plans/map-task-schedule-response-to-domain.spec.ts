@@ -231,4 +231,65 @@ describe('mapTaskScheduleResponseToDomain', () => {
     expect(item?.status).toBe('planned');
     expect(item?.completed).toBe(true);
   });
+
+  it('maps unscheduled bucket tasks with null scheduled_date', () => {
+    const response: TaskScheduleResponse = {
+      plan: {
+        id: 7,
+        name: 'Main Plan',
+        status: 'completed',
+        planning_start_date: '2026-01-01',
+        planning_end_date: '2026-12-31',
+        timeline_generated_at: '2026-06-01T00:00:00Z',
+        timeline_generated_at_display: '2026-06-01',
+        task_schedule_sync_state: 'ready',
+        task_schedule_sync_error: null,
+        task_schedule_sync_error_crop_id: null
+      },
+      week: { start_date: '2026-06-01', end_date: '2026-06-07', label: '2026-06-01' },
+      milestones: [],
+      fields: [
+        {
+          id: 1,
+          name: 'North',
+          crop_name: 'Tomato',
+          area_sqm: 100,
+          field_cultivation_id: 10,
+          crop_id: 20,
+          schedules: {
+            general: [],
+            fertilizer: [],
+            unscheduled: [
+              task({
+                item_id: 9,
+                name: 'Pending prep',
+                scheduled_date: null
+              })
+            ]
+          }
+        }
+      ],
+      labels: {},
+      minimap: { start_date: '', end_date: '', weeks: [] }
+    };
+
+    const snapshot = mapTaskScheduleResponseToDomain(response);
+    const unscheduled = snapshot.fields[0]?.schedules.unscheduled;
+
+    expect(unscheduled).toEqual([
+      {
+        item_id: 9,
+        name: 'Pending prep',
+        scheduled_date: null,
+        status: 'planned',
+        completed: false,
+        details: {
+          stageName: 'Stage',
+          amount: null,
+          amountUnit: null,
+          masterDescription: null
+        }
+      }
+    ]);
+  });
 });
