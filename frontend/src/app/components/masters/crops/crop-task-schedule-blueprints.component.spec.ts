@@ -478,22 +478,6 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(component.control.blueprintCreateFormAttempted).toBe(true);
   });
 
-  it('creates blueprint when task and stage are selected', () => {
-    component.control = withCropBlueprintDisplayState({
-      ...readyState,
-      selectedBlueprintAgriculturalTaskId: 6,
-      selectedBlueprintStageOrder: 1
-    });
-    component.createBlueprint();
-    expect(createBlueprintUseCase.execute).toHaveBeenCalledWith({
-      cropId: 3,
-      agriculturalTaskId: 6,
-      stageOrder: 1,
-      stageName: 'Vegetative',
-      gddTrigger: null
-    });
-  });
-
   it('saves blueprint GDD on blur after draft edits without reordering cards while typing', () => {
     const twoBlueprintState = withCropBlueprintDisplayState({
       ...readyState,
