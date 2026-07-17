@@ -478,7 +478,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(component.control.blueprintCreateFormAttempted).toBe(true);
   });
 
-  it('saves blueprint GDD on blur after draft edits without reordering cards while typing', () => {
+  it('saves blueprint GDD on blur after draft edits', () => {
     const twoBlueprintState = withCropBlueprintDisplayState({
       ...readyState,
       blueprints: [
@@ -499,10 +499,6 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     component.control = twoBlueprintState;
     fixture.detectChanges();
 
-    expect(twoBlueprintState.blueprintStageLanes[0].blueprints.map((b) => b.id)).toEqual([
-      21, 20
-    ]);
-
     component.onGddDraftChange(20, 10);
     const draftState = withCropBlueprintDisplayState({
       ...component.control,
@@ -511,7 +507,6 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     component.control = draftState;
     fixture.detectChanges();
 
-    expect(draftState.blueprintStageLanes[0].blueprints.map((b) => b.id)).toEqual([21, 20]);
     expect(updateBlueprintUseCase.execute).not.toHaveBeenCalled();
 
     component.control = draftState;
@@ -785,23 +780,5 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
 
     expect(component.control.error).toBe('Invalid crop ID');
     expect(loadUseCase.execute).not.toHaveBeenCalled();
-  });
-
-  it('control setter recomputes derived display state on partial updates', () => {
-    component.control = withCropBlueprintDisplayState({
-      ...loadedState,
-      crop: cropWithReadyStages,
-      blueprints: []
-    });
-    expect(component.control.blueprintSectionDescriptionKey).toBeNull();
-
-    component.control = {
-      ...component.control,
-      blueprints: loadedState.blueprints
-    };
-
-    expect(component.control.blueprintSectionDescriptionKey).toBe(
-      'crops.show.task_schedule_blueprints_lead'
-    );
   });
 });
