@@ -7,22 +7,10 @@ import { CreateCropStageOutputPort } from '../../usecase/crops/create-crop-stage
 import { CreateCropStageOutputDto } from '../../usecase/crops/create-crop-stage.dtos';
 import { ReorderCropStagesOutputPort } from '../../usecase/crops/reorder-crop-stages.output-port';
 import { ReorderCropStagesOutputDto } from '../../usecase/crops/reorder-crop-stages.dtos';
-import { DeleteCropStageOutputPort } from '../../usecase/crops/delete-crop-stage.output-port';
-import { DeleteCropStageOutputDto } from '../../usecase/crops/delete-crop-stage.dtos';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
 import { LoadCropTaskScheduleBlueprintsDataDto } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 import { LoadCropTaskScheduleBlueprintsOutputPort } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
-import { SaveCropStagePanelOutputPort } from '../../usecase/crops/save-crop-stage-panel.output-port';
-import {
-  SaveCropStagePanelPartialFailureDto,
-  SaveCropStagePanelSuccessDto
-} from '../../usecase/crops/save-crop-stage-panel.dtos';
-import { SaveCropStageAdvancedDetailsOutputPort } from '../../usecase/crops/save-crop-stage-advanced-details.output-port';
-import {
-  SaveCropStageAdvancedDetailsPartialFailureDto,
-  SaveCropStageAdvancedDetailsSuccessDto
-} from '../../usecase/crops/save-crop-stage-advanced-details.dtos';
 import { withCropStagesDisplayState } from './crop-stages-display-state';
 
 @Injectable()
@@ -30,10 +18,7 @@ export class CropStagesPresenter implements
   LoadCropForEditOutputPort,
   LoadCropTaskScheduleBlueprintsOutputPort,
   CreateCropStageOutputPort,
-  ReorderCropStagesOutputPort,
-  DeleteCropStageOutputPort,
-  SaveCropStagePanelOutputPort,
-  SaveCropStageAdvancedDetailsOutputPort {
+  ReorderCropStagesOutputPort {
   private view: CropStagesView | null = null;
 
   setView(view: CropStagesView): void {
@@ -47,8 +32,8 @@ export class CropStagesPresenter implements
 
   present(dto: LoadCropForEditDataDto): void;
   present(dto: LoadCropTaskScheduleBlueprintsDataDto): void;
-  present(dto: CreateCropStageOutputDto | ReorderCropStagesOutputDto | DeleteCropStageOutputDto): void;
-  present(dto: LoadCropForEditDataDto | LoadCropTaskScheduleBlueprintsDataDto | CreateCropStageOutputDto | ReorderCropStagesOutputDto | DeleteCropStageOutputDto): void {
+  present(dto: CreateCropStageOutputDto | ReorderCropStagesOutputDto): void;
+  present(dto: LoadCropForEditDataDto | LoadCropTaskScheduleBlueprintsDataDto | CreateCropStageOutputDto | ReorderCropStagesOutputDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
 
     if ('blueprints' in dto) {
@@ -82,10 +67,8 @@ export class CropStagesPresenter implements
       return;
     }
 
-    if ('stage' in dto && !('success' in dto)) {
+    if ('stage' in dto) {
       this.presentCreateCropStage(dto as CreateCropStageOutputDto);
-    } else if ('success' in dto && 'stageId' in dto) {
-      this.presentDeleteCropStage(dto as DeleteCropStageOutputDto);
     }
   }
 
@@ -149,63 +132,5 @@ export class CropStagesPresenter implements
       pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_updated')
     });
     this.view.reloadTaskScheduleBlueprints();
-  }
-
-  presentDeleteCropStage(dto: DeleteCropStageOutputDto): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    const currentStages = this.view.control.formData.crop_stages;
-    const filteredStages = currentStages.filter(stage => stage.id !== dto.stageId);
-    this.setControl({
-      ...this.view.control,
-      formData: {
-        ...this.view.control.formData,
-        crop_stages: filteredStages
-      },
-      pendingErrorFlash: null,
-      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_deleted')
-    });
-    this.view.reloadTaskScheduleBlueprints();
-  }
-
-  onSuccess(dto: SaveCropStagePanelSuccessDto | SaveCropStageAdvancedDetailsSuccessDto): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    const updatedStages = this.view.control.formData.crop_stages.map((stage) =>
-      stage.id === dto.stage.id ? dto.stage : stage
-    );
-    this.setControl({
-      ...this.view.control,
-      formData: {
-        ...this.view.control.formData,
-        crop_stages: updatedStages
-      },
-      pendingErrorFlash: null,
-      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_updated')
-    });
-  }
-
-  onPanelPartialFailure(dto: SaveCropStagePanelPartialFailureDto): void {
-    this.presentPartialSaveFailure(dto, 'crops.flash.stage_panel_partial_save_failed');
-  }
-
-  onAdvancedPartialFailure(dto: SaveCropStageAdvancedDetailsPartialFailureDto): void {
-    this.presentPartialSaveFailure(dto, 'crops.flash.stage_advanced_partial_save_failed');
-  }
-
-  private presentPartialSaveFailure(
-    dto: SaveCropStagePanelPartialFailureDto | SaveCropStageAdvancedDetailsPartialFailureDto,
-    flashKey: string
-  ): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    this.setControl({
-      ...this.view.control,
-      formData: {
-        ...this.view.control.formData,
-        name: dto.crop.name,
-        crop_stages: dto.crop.crop_stages ?? []
-      },
-      pendingSuccessFlash: null,
-      pendingResyncPanelDraft: true,
-      pendingErrorFlash: pendingErrorFlashFromError({ message: flashKey })
-    });
   }
 }

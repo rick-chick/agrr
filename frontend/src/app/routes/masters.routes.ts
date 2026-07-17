@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '../guards/auth.guard';
+import { unsavedChangesGuard } from '../guards/unsaved-changes.guard';
 
 export const mastersRoutes: Routes = [
   {
@@ -43,6 +44,15 @@ export const mastersRoutes: Routes = [
     loadComponent: () =>
       import('../components/masters/crops/crop-edit.component').then((m) => m.CropEditComponent),
     canActivate: [authGuard]
+  },
+  {
+    path: 'crops/:id/stages/:stageId/edit',
+    loadComponent: () =>
+      import('../components/masters/crops/crop-stage-edit.component').then(
+        (m) => m.CropStageEditComponent
+      ),
+    canActivate: [authGuard],
+    canDeactivate: [unsavedChangesGuard]
   },
   {
     path: 'crops/:id/stages',

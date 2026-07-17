@@ -229,6 +229,30 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(content.first()).toBeVisible();
   });
 
+  test('master crops: clicking stage row opens stage edit page', async ({ page }) => {
+    const id = resolvedCaptureIds?.masters.crops;
+    if (id == null) {
+      test.skip(true, 'no crops record in dev DB');
+    }
+
+    const stagesPattern = 'crops/:id/stages';
+    const stagesRoute = findRoute(stagesPattern);
+
+    await page.goto(`/crops/${id}/stages`);
+    await waitForPageStable(page, stagesRoute);
+    await assertHostHealthy(page, 'app-crop-stages');
+
+    const rows = page.locator('app-crop-stages .crop-stages-table__row');
+    const rowCount = await rows.count();
+    if (rowCount === 0) {
+      test.skip(true, 'no stages to click in dev DB');
+    }
+
+    await rows.first().click();
+    await expect(page.locator('app-crop-stage-edit')).toBeVisible({ timeout: 30_000 });
+    await assertHostHealthy(page, 'app-crop-stage-edit');
+  });
+
   test('master crops: drag-reorder stages persists after reload', async ({ page }) => {
     const id = await findCropIdWithMinStages(2);
     if (id == null) {

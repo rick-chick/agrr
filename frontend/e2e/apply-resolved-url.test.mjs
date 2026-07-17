@@ -10,6 +10,7 @@ const baseIds = {
   publicPlanId: 88,
   farmId: 42,
   cropId: 15,
+  cropStageEdit: { cropId: 7, stageId: 31 },
 };
 
 test('applyResolvedUrl resolves all private plan sub-routes from baseline plan id', () => {
@@ -78,6 +79,26 @@ test('applyResolvedUrl leaves entry-schedule url unchanged when ids are missing'
   assert.equal(
     applyResolvedUrl('entry-schedule/crop/:cropId', url, { ...baseIds, farmId: null }),
     url,
+  );
+});
+
+test('applyResolvedUrl resolves crop stages list and stage edit routes', () => {
+  assert.equal(
+    applyResolvedUrl('crops/:id/stages', '/crops/1/stages', baseIds),
+    '/crops/7/stages',
+  );
+  assert.equal(
+    applyResolvedUrl('crops/:id/stages/:stageId/edit', '/crops/1/stages/1/edit', baseIds),
+    '/crops/7/stages/31/edit',
+  );
+});
+
+test('applyResolvedUrl leaves crop stage routes unchanged when cropStageEdit is null', () => {
+  const ids = { ...baseIds, cropStageEdit: null };
+  assert.equal(applyResolvedUrl('crops/:id/stages', '/crops/1/stages', ids), '/crops/1/stages');
+  assert.equal(
+    applyResolvedUrl('crops/:id/stages/:stageId/edit', '/crops/1/stages/1/edit', ids),
+    '/crops/1/stages/1/edit',
   );
 });
 

@@ -17,6 +17,7 @@ import { MasterContextCrumb } from './master-context-crumb';
                 @if (crumb.routerLink != null) {
                   <a
                     [routerLink]="crumb.routerLink"
+                    [queryParams]="crumb.queryParams"
                     [class.master-context-header__back]="first"
                     [class.master-context-header__link]="!first"
                   >

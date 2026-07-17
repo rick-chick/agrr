@@ -5,7 +5,6 @@ import { CropStagesView, CropStagesViewState } from '../../components/masters/cr
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
 import { LoadCropTaskScheduleBlueprintsDataDto } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 import { CreateCropStageOutputDto } from '../../usecase/crops/create-crop-stage.dtos';
-import { DeleteCropStageOutputDto } from '../../usecase/crops/delete-crop-stage.dtos';
 import { CropStage } from '../../domain/crops/crop';
 import { defaultBlueprintReadiness } from '../../domain/crops/blueprint-generation-readiness';
 
@@ -183,22 +182,6 @@ describe('CropStagesPresenter', () => {
     });
   });
 
-  describe('DeleteCropStageOutputPort', () => {
-    it('queues pending success flash on present(dto)', () => {
-      lastControl = baseControlState({
-          name: 'Test Crop',
-          crop_stages: [{ id: 1, crop_id: 1, name: 'Stage 1', order: 1 }]
-      });
-
-      const dto: DeleteCropStageOutputDto = { success: true, stageId: 1 };
-
-      presenter.present(dto);
-
-      expect(lastControl!.pendingSuccessFlash).toEqual({ type: 'success', text: 'crops.flash.stage_deleted' });
-      expect(reloadTaskScheduleBlueprintsSpy).toHaveBeenCalled();
-    });
-  });
-
   describe('ReorderCropStagesOutputPort', () => {
     it('reloads blueprints after a successful reorder', () => {
       lastControl = baseControlState({
@@ -248,98 +231,6 @@ describe('CropStagesPresenter', () => {
     });
   });
 
-  describe('SaveCropStagePanelOutputPort', () => {
-    it('shows partial save error flash and reloads crop stages on onPanelPartialFailure', () => {
-      lastControl = baseControlState({
-        name: 'Old Crop',
-        crop_stages: [
-          {
-            id: 1,
-            crop_id: 1,
-            name: 'Dirty draft',
-            order: 1
-          }
-        ]
-      });
-
-      presenter.onPanelPartialFailure({
-        stageId: 1,
-        crop: {
-          id: 1,
-          name: 'Server Crop',
-          crop_stages: [
-            {
-              id: 1,
-              crop_id: 1,
-              name: 'Server stage',
-              order: 1
-            }
-          ]
-        } as never
-      });
-
-      expect(lastControl!.formData.name).toBe('Server Crop');
-      expect(lastControl!.formData.crop_stages[0].name).toBe('Server stage');
-      expect(lastControl!.pendingResyncPanelDraft).toBe(true);
-      expect(lastControl!.pendingSuccessFlash).toBeNull();
-      expect(lastControl!.pendingErrorFlash).toEqual({
-        type: 'error',
-        text: 'crops.flash.stage_panel_partial_save_failed'
-      });
-    });
-  });
-
-  describe('SaveCropStageAdvancedDetailsOutputPort', () => {
-    it('shows partial save error flash and reloads crop stages on onAdvancedPartialFailure', () => {
-      lastControl = baseControlState({
-        name: 'Old Crop',
-        crop_stages: [
-          {
-            id: 1,
-            crop_id: 1,
-            name: 'Stage 1',
-            order: 1
-          }
-        ]
-      });
-
-      presenter.onAdvancedPartialFailure({
-        stageId: 1,
-        crop: {
-          id: 1,
-          name: 'Server Crop',
-          crop_stages: [
-            {
-              id: 1,
-              crop_id: 1,
-              name: 'Stage 1',
-              order: 1,
-              sunshine_requirement: {
-                id: 1,
-                crop_stage_id: 1,
-                minimum_sunshine_hours: 4,
-                target_sunshine_hours: 8
-              }
-            }
-          ]
-        } as never
-      });
-
-      expect(lastControl!.formData.crop_stages[0].sunshine_requirement).toEqual({
-        id: 1,
-        crop_stage_id: 1,
-        minimum_sunshine_hours: 4,
-        target_sunshine_hours: 8
-      });
-      expect(lastControl!.pendingResyncPanelDraft).toBe(true);
-      expect(lastControl!.pendingSuccessFlash).toBeNull();
-      expect(lastControl!.pendingErrorFlash).toEqual({
-        type: 'error',
-        text: 'crops.flash.stage_advanced_partial_save_failed'
-      });
-    });
-  });
-
   describe('LoadCropForEditOutputPort onError', () => {
     it('sets control.error and clears loading on initial load failure', () => {
       lastControl = {
@@ -368,23 +259,6 @@ describe('CropStagesPresenter', () => {
       expect(lastControl!.pendingErrorFlash).toEqual({
         type: 'error',
         text: 'common.api_error.network'
-      });
-    });
-  });
-
-  describe('DeleteCropStageOutputPort onError', () => {
-    it('queues pending error flash with i18n key on onError', () => {
-      lastControl = baseControlState({
-        name: 'Test Crop',
-        is_reference: false,
-        crop_stages: [{ id: 1, crop_id: 1, name: 'Stage 1', order: 1 }]
-      });
-
-      presenter.onError({ message: 'common.api_error.generic' });
-
-      expect(lastControl!.pendingErrorFlash).toEqual({
-        type: 'error',
-        text: 'common.api_error.generic'
       });
     });
   });

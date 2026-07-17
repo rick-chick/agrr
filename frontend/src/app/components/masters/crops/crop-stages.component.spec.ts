@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -9,10 +9,7 @@ import { CropStagesPresenter } from '../../../usecase/crops/crop-stages.provider
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
 import { ReorderCropStagesUseCase } from '../../../usecase/crops/reorder-crop-stages.usecase';
-import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
-import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stage-panel.usecase';
-import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { AuthService } from '../../../services/auth.service';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -62,10 +59,9 @@ const stageFixture: CropStage = {
 const tableTranslations = {
   crops: {
     stage: {
-      default_name: 'Stage {{order}}',
-      delete_confirm_message: 'Delete "{{stageName}}"?',
-      delete_confirm_blueprint_warning: 'This stage has {{count}} linked task schedule template(s).'
+      default_name: 'Stage {{order}}'
     },
+    index: { title: 'Crops' },
     show: {
       no_stages_description: 'Add growth stages for this crop.',
       from_plan_wizard_title: 'From plan wizard',
@@ -87,19 +83,6 @@ const tableTranslations = {
       stages_list_heading: 'Stage list',
       stages_empty_lead: 'Stages are required.',
       add_stage: 'Add Stage',
-      stage_name: 'Stage Name',
-      base_temperature: 'Base Temperature',
-      base_temperature_placeholder: 'e.g., 5.0',
-      base_temperature_help: 'Base temperature help',
-      required_gdd: 'Required GDD',
-      required_gdd_placeholder: 'e.g., 800.0',
-      required_gdd_help: 'Required GDD help',
-      save_stage: 'Save',
-      edit_temperature_details: 'Edit stress thresholds…',
-      edit_sunshine_nutrient: 'Edit sunshine & nutrients…',
-      temperature_details_title: 'Stress thresholds',
-      advanced_details_title: 'Sunshine & nutrient details',
-      unsaved_confirm_message: 'You have unsaved changes. Continue?',
       table_order: 'Order',
       table_stage_name: 'Stage name',
       table_base_temperature: 'Base temp',
@@ -108,33 +91,14 @@ const tableTranslations = {
       value_missing: '—',
       stage_cumulative_gdd_range: '{{start}}–{{end}} ℃·day (cumulative)',
       stage_cumulative_gdd_missing: 'Enter required GDD to display the range',
-      optimal_min: 'Optimal min',
-      optimal_max: 'Optimal max',
-      low_stress_threshold: 'Low stress',
-      high_stress_threshold: 'High stress',
-      frost_threshold: 'Frost',
-      max_temperature: 'Max temp',
-      minimum_sunshine_hours: 'Min sunshine',
-      target_sunshine_hours: 'Target sunshine',
-      daily_uptake_n: 'N',
-      daily_uptake_p: 'P',
-      daily_uptake_k: 'K',
-      region: 'Region',
-      sterility_risk_threshold: 'Sterility risk',
       stage_order_duplicate: 'Duplicate order: {{orders}}',
       stage_order_duplicate_hint: 'Drag rows to reorder or use the button below to renumber.',
       stage_order_renumber: 'Renumber orders',
-      temperature_section: 'Temperature conditions',
-      details_section: 'Advanced settings',
-      reference_stages_readonly: 'Reference crops are read-only. Only administrators can edit growth stages.',
-      stage_name_required: 'Please enter a stage name.'
+      reference_stages_readonly: 'Reference crops are read-only. Only administrators can edit growth stages.'
     }
   },
   common: {
-    loading: 'Loading...',
-    delete: 'Delete',
-    cancel: 'Cancel',
-    confirm: 'Confirm'
+    loading: 'Loading...'
   }
 };
 
@@ -147,13 +111,11 @@ describe('CropStagesComponent', () => {
       queryParamMap: { get: ReturnType<typeof vi.fn> };
     };
   };
+  let mockRouter: Router;
   let mockLoadUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockCreateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockReorderCropStagesUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockDeleteCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockLoadBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockSaveCropStagePanelUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockSaveCropStageAdvancedDetailsUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockFlashMessage: { show: ReturnType<typeof vi.fn> };
   let mockAuthService: { user: ReturnType<typeof vi.fn> };
   let translateService: TranslateService;
@@ -181,9 +143,6 @@ describe('CropStagesComponent', () => {
   }
 
   beforeEach(async () => {
-    HTMLDialogElement.prototype.showModal = vi.fn();
-    HTMLDialogElement.prototype.close = vi.fn();
-
     mockActivatedRoute = {
       snapshot: {
         paramMap: {
@@ -198,10 +157,7 @@ describe('CropStagesComponent', () => {
     mockLoadUseCase = { execute: vi.fn() };
     mockCreateCropStageUseCase = { execute: vi.fn() };
     mockReorderCropStagesUseCase = { execute: vi.fn() };
-    mockDeleteCropStageUseCase = { execute: vi.fn() };
     mockLoadBlueprintsUseCase = { execute: vi.fn() };
-    mockSaveCropStagePanelUseCase = { execute: vi.fn() };
-    mockSaveCropStageAdvancedDetailsUseCase = { execute: vi.fn() };
     mockFlashMessage = { show: vi.fn() };
     mockAuthService = { user: vi.fn(() => ({ admin: false })) };
 
@@ -213,15 +169,13 @@ describe('CropStagesComponent', () => {
         })
       ],
       providers: [
+        provideRouter([]),
         CropStagesPresenter,
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: LoadCropForEditUseCase, useValue: mockLoadUseCase },
         { provide: CreateCropStageUseCase, useValue: mockCreateCropStageUseCase },
         { provide: ReorderCropStagesUseCase, useValue: mockReorderCropStagesUseCase },
-        { provide: DeleteCropStageUseCase, useValue: mockDeleteCropStageUseCase },
         { provide: LoadCropTaskScheduleBlueprintsUseCase, useValue: mockLoadBlueprintsUseCase },
-        { provide: SaveCropStagePanelUseCase, useValue: mockSaveCropStagePanelUseCase },
-        { provide: SaveCropStageAdvancedDetailsUseCase, useValue: mockSaveCropStageAdvancedDetailsUseCase },
         { provide: FlashMessageService, useValue: mockFlashMessage },
         { provide: AuthService, useValue: mockAuthService }
       ]
@@ -232,11 +186,12 @@ describe('CropStagesComponent', () => {
     TestBed.overrideProvider(LoadCropForEditUseCase, { useValue: mockLoadUseCase });
     TestBed.overrideProvider(CreateCropStageUseCase, { useValue: mockCreateCropStageUseCase });
     TestBed.overrideProvider(ReorderCropStagesUseCase, { useValue: mockReorderCropStagesUseCase });
-    TestBed.overrideProvider(DeleteCropStageUseCase, { useValue: mockDeleteCropStageUseCase });
     TestBed.overrideProvider(LoadCropTaskScheduleBlueprintsUseCase, { useValue: mockLoadBlueprintsUseCase });
 
     fixture = TestBed.createComponent(CropStagesComponent);
     component = fixture.componentInstance;
+    mockRouter = TestBed.inject(Router);
+    vi.spyOn(mockRouter, 'navigate').mockResolvedValue(true);
     translateService = TestBed.inject(TranslateService);
     translateService.setTranslation('en', tableTranslations, true);
     translateService.use('en');
@@ -309,7 +264,7 @@ describe('CropStagesComponent', () => {
     expect(component.control.showNextStepCta).toBe(false);
   });
 
-  it('shows load error panel and hides edit UI when initial crop load fails', () => {
+  it('shows load error panel and hides stage list when initial crop load fails', () => {
     const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
     mockLoadUseCase.execute.mockImplementation(() => {
       presenter.onError({ message: 'common.api_error.not_found' });
@@ -365,14 +320,59 @@ describe('CropStagesComponent', () => {
     });
   });
 
-  it('renders stage table with columns and auto-selects first stage', async () => {
+  it('renders stage table with columns', async () => {
     await loadStages([stageFixture]);
 
     expect(fixture.nativeElement.querySelector('.crop-stages-table')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Order');
     expect(fixture.nativeElement.textContent).toContain('Cumulative GDD');
-    expect(component.selectedStageId).toBe(1);
-    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeTruthy();
+  });
+
+  it('does not render edit panel on list page', async () => {
+    await loadStages([stageFixture]);
+
+    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeNull();
+  });
+
+  it('navigates to stage edit route when table row is clicked', async () => {
+    await loadStages([stageFixture]);
+
+    const row = fixture.nativeElement.querySelector('.crop-stages-table__row') as HTMLElement;
+    row.click();
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/crops', 1, 'stages', 1, 'edit'], {
+      queryParams: undefined
+    });
+  });
+
+  it('navigates to stage edit route with wizard query params when set', async () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) =>
+      key === 'fromPlan' ? '7' : null
+    );
+    component.fromPlanId = 7;
+    await loadStages([stageFixture]);
+
+    const row = fixture.nativeElement.querySelector('.crop-stages-table__row') as HTMLElement;
+    row.click();
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/crops', 1, 'stages', 1, 'edit'], {
+      queryParams: { fromPlan: 7, returnTo: 'task_schedule' }
+    });
+  });
+
+  it('navigates to new stage edit after create succeeds', async () => {
+    await loadStages([]);
+
+    component.addCropStage();
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+    presenter.present({
+      stage: { id: 1, name: 'Stage 1', order: 1 } as CropStage
+    });
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/crops', 1, 'stages', 1, 'edit'], {
+      queryParams: undefined
+    });
   });
 
   it('shows em dash for missing base temperature and required GDD in table', async () => {
@@ -398,705 +398,6 @@ describe('CropStagesComponent', () => {
 
     const row = fixture.nativeElement.querySelector('.crop-stages-table__row');
     expect(row.textContent).toContain('0–100');
-  });
-
-  it('shows info flash and skips save when panel has no changes', async () => {
-    await loadStages([stageFixture]);
-
-    component.saveStagePanel();
-
-    expect(mockSaveCropStagePanelUseCase.execute).not.toHaveBeenCalled();
-    expect(mockFlashMessage.show).toHaveBeenCalledWith({
-      type: 'info',
-      text: 'crops.flash.stage_panel_no_changes'
-    });
-  });
-
-  it('disables save button when panel has no unsaved changes', async () => {
-    await loadStages([stageFixture]);
-
-    const saveButton = fixture.nativeElement.querySelector(
-      '.crop-stages-edit-panel__footer .btn-primary'
-    ) as HTMLButtonElement;
-
-    expect(saveButton.disabled).toBe(true);
-  });
-
-  it('enables save button when panel is dirty', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.name = 'Updated Name';
-    fixture.detectChanges();
-
-    const saveButton = fixture.nativeElement.querySelector(
-      '.crop-stages-edit-panel__footer .btn-primary'
-    ) as HTMLButtonElement;
-
-    expect(saveButton.disabled).toBe(false);
-  });
-
-  it('sends null in panel save when cleared numeric fields were previously set', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.base_temperature = null;
-    component.stageEditDraft.required_gdd = null;
-
-    component.saveStagePanel();
-
-    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      temperaturePatch: {
-        base_temperature: null
-      },
-      thermalPatch: {
-        required_gdd: null
-      }
-    });
-  });
-
-  it('saves panel fields through SaveCropStagePanelUseCase when save button is clicked', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.name = 'Updated Name';
-    component.stageEditDraft.base_temperature = 12;
-    component.stageEditDraft.optimal_min = 15;
-    component.stageEditDraft.optimal_max = 25;
-    component.stageEditDraft.max_temperature = 35;
-    component.stageEditDraft.required_gdd = 150;
-    expect(mockSaveCropStagePanelUseCase.execute).not.toHaveBeenCalled();
-
-    component.saveStagePanel();
-
-    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      stagePatch: { name: 'Updated Name' },
-      temperaturePatch: {
-        base_temperature: 12,
-        optimal_min: 15,
-        optimal_max: 25,
-        max_temperature: 35
-      },
-      thermalPatch: { required_gdd: 150 }
-    });
-  });
-
-  it('opens unsaved confirm when addCropStage is called with dirty panel', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.name = 'Dirty edit';
-    component.addCropStage();
-
-    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
-    expect(component.pendingUnsavedAction).toEqual({ kind: 'add-stage' });
-    expect(mockCreateCropStageUseCase.execute).not.toHaveBeenCalled();
-    expect(component.stageEditDraft.name).toBe('Dirty edit');
-  });
-
-  it('cancels add stage and keeps dirty edits when unsaved confirm is dismissed', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.name = 'Dirty edit';
-    component.addCropStage();
-    component.cancelUnsavedConfirmDialog();
-
-    expect(component.pendingUnsavedAction).toBeNull();
-    expect(mockCreateCropStageUseCase.execute).not.toHaveBeenCalled();
-    expect(component.stageEditDraft.name).toBe('Dirty edit');
-    expect(component.selectedStageId).toBe(1);
-  });
-
-  it('discards dirty changes and adds stage after unsaved confirm', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.name = 'Dirty edit';
-    component.addCropStage();
-    component.confirmDiscardUnsavedAction();
-
-    expect(component.pendingUnsavedAction).toBeNull();
-    expect(mockCreateCropStageUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      payload: {
-        name: 'Stage 2',
-        order: 2
-      }
-    });
-  });
-
-  it('resyncs panel draft from server after partial panel save failure', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.name = 'Dirty Name';
-    component.stageEditDraft.base_temperature = 99;
-    expect(component.isPanelDirty()).toBe(true);
-
-    const serverStage: CropStage = {
-      ...stageFixture,
-      name: 'Server Name',
-      temperature_requirement: {
-        ...stageFixture.temperature_requirement!,
-        base_temperature: 10
-      }
-    };
-
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        name: 'Tomato',
-        is_reference: false,
-        crop_stages: [serverStage]
-      },
-      pendingResyncPanelDraft: true,
-      pendingErrorFlash: { type: 'error', text: 'crops.flash.stage_panel_partial_save_failed' }
-    };
-    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
-    fixture.detectChanges();
-
-    expect(component.isPanelDirty()).toBe(false);
-    expect(component.stageEditDraft).toEqual({
-      name: 'Server Name',
-      base_temperature: 10,
-      optimal_min: null,
-      optimal_max: null,
-      max_temperature: null,
-      required_gdd: 100
-    });
-  });
-
-  it('resyncs panel draft from server after partial advanced details save failure', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.required_gdd = 999;
-    expect(component.isPanelDirty()).toBe(true);
-
-    const serverStage: CropStage = {
-      ...stageFixture,
-      thermal_requirement: {
-        ...stageFixture.thermal_requirement!,
-        required_gdd: 100
-      },
-      sunshine_requirement: {
-        id: 1,
-        crop_stage_id: 1,
-        minimum_sunshine_hours: 4,
-        target_sunshine_hours: 8
-      }
-    };
-
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        name: 'Tomato',
-        is_reference: false,
-        crop_stages: [serverStage]
-      },
-      pendingResyncPanelDraft: true,
-      pendingErrorFlash: { type: 'error', text: 'crops.flash.stage_advanced_partial_save_failed' }
-    };
-    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
-    fixture.detectChanges();
-
-    expect(component.isPanelDirty()).toBe(false);
-    expect(component.stageEditDraft.required_gdd).toBe(100);
-  });
-
-  it('syncs stageEditDraft from updated crop_stages after panel save succeeds', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.name = 'Updated Name';
-    component.stageEditDraft.base_temperature = 12;
-    component.stageEditDraft.optimal_min = 15;
-    component.stageEditDraft.optimal_max = 25;
-    component.stageEditDraft.max_temperature = 35;
-    component.stageEditDraft.required_gdd = 150;
-
-    component.saveStagePanel();
-
-    const updatedStage: CropStage = {
-      ...stageFixture,
-      name: 'Updated Name',
-      temperature_requirement: {
-        ...stageFixture.temperature_requirement!,
-        base_temperature: 12,
-        optimal_min: 15,
-        optimal_max: 25,
-        max_temperature: 35
-      },
-      thermal_requirement: {
-        ...stageFixture.thermal_requirement!,
-        required_gdd: 150
-      }
-    } as CropStage;
-
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        name: 'Tomato',
-        is_reference: false,
-        crop_stages: [updatedStage]
-      }
-    };
-    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
-    fixture.detectChanges();
-
-    expect(component.isPanelDirty()).toBe(false);
-    expect(component.stageEditDraft).toEqual({
-      name: 'Updated Name',
-      base_temperature: 12,
-      optimal_min: 15,
-      optimal_max: 25,
-      max_temperature: 35,
-      required_gdd: 150
-    });
-  });
-
-  it('opens unsaved confirm when switching stages with dirty panel', async () => {
-    await loadStages([
-      stageFixture,
-      {
-        id: 2,
-        name: 'Stage 2',
-        order: 2,
-        temperature_requirement: null,
-        thermal_requirement: null,
-        sunshine_requirement: null,
-        nutrient_requirement: null
-      } as CropStage
-    ]);
-
-    component.stageEditDraft.name = 'Dirty edit';
-    component.selectStage(2);
-
-    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
-    expect(component.pendingUnsavedAction).toEqual({ kind: 'switch-stage', stageId: 2 });
-    expect(component.selectedStageId).toBe(1);
-  });
-
-  it('discards dirty changes and switches stage after unsaved confirm', async () => {
-    await loadStages([
-      stageFixture,
-      {
-        id: 2,
-        name: 'Stage 2',
-        order: 2,
-        temperature_requirement: null,
-        thermal_requirement: null,
-        sunshine_requirement: null,
-        nutrient_requirement: null
-      } as CropStage
-    ]);
-
-    component.stageEditDraft.name = 'Dirty edit';
-    component.selectStage(2);
-    component.confirmDiscardUnsavedAction();
-
-    expect(component.selectedStageId).toBe(2);
-    expect(component.stageEditDraft.name).toBe('Stage 2');
-  });
-
-  it('opens unsaved confirm when deleting stage with dirty panel', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.name = 'Dirty edit';
-    component.deleteCropStage(1);
-
-    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
-    expect(component.pendingUnsavedAction).toEqual({ kind: 'delete-stage', stageId: 1 });
-    expect(component.pendingDeleteStage).toBeNull();
-    expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
-  });
-
-  it('opens delete confirm after discarding dirty panel changes', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.name = 'Dirty edit';
-    component.deleteCropStage(1);
-    component.confirmDiscardUnsavedAction();
-    fixture.detectChanges();
-
-    expect(component.pendingDeleteStage?.id).toBe(1);
-    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledTimes(2);
-  });
-
-  it('sends null in temperature dialog save when cleared stress thresholds were previously set', async () => {
-    await loadStages([
-      {
-        ...stageFixture,
-        temperature_requirement: {
-          ...stageFixture.temperature_requirement!,
-          low_stress_threshold: 10,
-          high_stress_threshold: 30,
-          frost_threshold: 0
-        }
-      } as CropStage
-    ]);
-
-    component.openTemperatureDialog();
-    component.temperatureDetailDraft = {
-      low_stress_threshold: null,
-      high_stress_threshold: null,
-      frost_threshold: null
-    };
-
-    component.saveTemperatureDialog();
-
-    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      temperaturePatch: {
-        low_stress_threshold: null,
-        high_stress_threshold: null,
-        frost_threshold: null
-      }
-    });
-  });
-
-  it('opens stress threshold dialog and saves only stress fields on explicit save', async () => {
-    await loadStages([stageFixture]);
-
-    component.openTemperatureDialog();
-    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
-    expect(component.temperatureDetailDraft?.low_stress_threshold).toBeNull();
-    expect(component.temperatureDetailDraft).not.toHaveProperty('optimal_min');
-    expect(component.temperatureDetailDraft).not.toHaveProperty('max_temperature');
-
-    component.temperatureDetailDraft = {
-      low_stress_threshold: 10,
-      high_stress_threshold: 30,
-      frost_threshold: 0
-    };
-    mockSaveCropStagePanelUseCase.execute.mockImplementation(() => {
-      const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
-      presenter.onSuccess({
-        stage: {
-          ...stageFixture,
-          temperature_requirement: {
-            ...stageFixture.temperature_requirement!,
-            low_stress_threshold: 10,
-            high_stress_threshold: 30,
-            frost_threshold: 0
-          }
-        }
-      });
-    });
-
-    component.saveTemperatureDialog();
-
-    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      temperaturePatch: {
-        low_stress_threshold: 10,
-        high_stress_threshold: 30,
-        frost_threshold: 0
-      }
-    });
-    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
-    expect(component.temperatureDetailDraft).toBeNull();
-  });
-
-  it('keeps temperature dialog open and preserves draft when save API fails', async () => {
-    await loadStages([stageFixture]);
-    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
-
-    component.openTemperatureDialog();
-    component.temperatureDetailDraft = {
-      low_stress_threshold: 10,
-      high_stress_threshold: 30,
-      frost_threshold: 0
-    };
-    vi.mocked(HTMLDialogElement.prototype.close).mockClear();
-
-    mockSaveCropStagePanelUseCase.execute.mockImplementation(() => {
-      presenter.onError({ message: 'network error' });
-    });
-
-    component.saveTemperatureDialog();
-
-    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalled();
-    expect(HTMLDialogElement.prototype.close).not.toHaveBeenCalled();
-    expect(component.temperatureDetailDraft).toEqual({
-      low_stress_threshold: 10,
-      high_stress_threshold: 30,
-      frost_threshold: 0
-    });
-  });
-
-  it('keeps temperature dialog open and preserves draft on partial save failure', async () => {
-    await loadStages([stageFixture]);
-    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
-
-    component.openTemperatureDialog();
-    component.temperatureDetailDraft = {
-      low_stress_threshold: 10,
-      high_stress_threshold: 30,
-      frost_threshold: 0
-    };
-    vi.mocked(HTMLDialogElement.prototype.close).mockClear();
-
-    mockSaveCropStagePanelUseCase.execute.mockImplementation(() => {
-      presenter.onPanelPartialFailure({
-        crop: {
-          id: 1,
-          name: 'Tomato',
-          is_reference: false,
-          groups: [],
-          crop_stages: [stageFixture]
-        },
-        stageId: 1
-      });
-    });
-
-    component.saveTemperatureDialog();
-
-    expect(HTMLDialogElement.prototype.close).not.toHaveBeenCalled();
-    expect(component.temperatureDetailDraft).toEqual({
-      low_stress_threshold: 10,
-      high_stress_threshold: 30,
-      frost_threshold: 0
-    });
-  });
-
-  it('renders inline temperature fields in edit panel', async () => {
-    await loadStages([stageFixture]);
-
-    const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
-    expect(panel?.querySelector('input[name="panel_optimal_min"]')).toBeTruthy();
-    expect(panel?.querySelector('input[name="panel_optimal_max"]')).toBeTruthy();
-    expect(panel?.querySelector('input[name="panel_max_temperature"]')).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('Edit stress thresholds');
-  });
-
-  it('marks panel dirty when inline temperature fields change', async () => {
-    await loadStages([stageFixture]);
-
-    expect(component.isPanelDirty()).toBe(false);
-    component.stageEditDraft.optimal_min = 12;
-    expect(component.isPanelDirty()).toBe(true);
-  });
-
-  it('does not mark panel dirty when stage numeric fields are string equivalents', async () => {
-    await loadStages([
-      {
-        ...stageFixture,
-        temperature_requirement: {
-          ...stageFixture.temperature_requirement!,
-          optimal_min: '12' as unknown as number
-        },
-        thermal_requirement: {
-          ...stageFixture.thermal_requirement!,
-          required_gdd: '100' as unknown as number
-        }
-      }
-    ]);
-
-    expect(component.isPanelDirty()).toBe(false);
-  });
-
-  it('opens advanced dialog and saves sunshine, nutrient, and sterility fields through SaveCropStageAdvancedDetailsUseCase', async () => {
-    await loadStages([stageFixture]);
-
-    component.openAdvancedDialog();
-    component.advancedDetailDraft = {
-      minimum_sunshine_hours: 4,
-      target_sunshine_hours: 8,
-      daily_uptake_n: 0.5,
-      daily_uptake_p: 0.2,
-      daily_uptake_k: 0.3,
-      region: 'jp',
-      sterility_risk_threshold: 32
-    };
-    mockSaveCropStageAdvancedDetailsUseCase.execute.mockImplementation(() => {
-      const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
-      presenter.onSuccess({
-        stage: {
-          ...stageFixture,
-          sunshine_requirement: {
-            id: 1,
-            crop_stage_id: 1,
-            minimum_sunshine_hours: 4,
-            target_sunshine_hours: 8
-          },
-          nutrient_requirement: {
-            id: 1,
-            crop_stage_id: 1,
-            daily_uptake_n: 0.5,
-            daily_uptake_p: 0.2,
-            daily_uptake_k: 0.3,
-            region: 'jp'
-          },
-          temperature_requirement: {
-            ...stageFixture.temperature_requirement!,
-            sterility_risk_threshold: 32
-          }
-        }
-      });
-    });
-
-    component.saveAdvancedDialog();
-
-    expect(mockSaveCropStageAdvancedDetailsUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      sunshinePatch: { minimum_sunshine_hours: 4, target_sunshine_hours: 8 },
-      nutrientPatch: {
-        daily_uptake_n: 0.5,
-        daily_uptake_p: 0.2,
-        daily_uptake_k: 0.3,
-        region: 'jp'
-      },
-      temperaturePatch: { sterility_risk_threshold: 32 }
-    });
-    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
-    expect(component.advancedDetailDraft).toBeNull();
-  });
-
-  it('keeps advanced dialog open and preserves draft when save API fails', async () => {
-    await loadStages([stageFixture]);
-    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
-
-    component.openAdvancedDialog();
-    component.advancedDetailDraft = {
-      minimum_sunshine_hours: 4,
-      target_sunshine_hours: 8,
-      daily_uptake_n: 0.5,
-      daily_uptake_p: 0.2,
-      daily_uptake_k: 0.3,
-      region: 'jp',
-      sterility_risk_threshold: 32
-    };
-    vi.mocked(HTMLDialogElement.prototype.close).mockClear();
-
-    mockSaveCropStageAdvancedDetailsUseCase.execute.mockImplementation(() => {
-      presenter.onError({ message: 'network error' });
-    });
-
-    component.saveAdvancedDialog();
-
-    expect(mockSaveCropStageAdvancedDetailsUseCase.execute).toHaveBeenCalled();
-    expect(HTMLDialogElement.prototype.close).not.toHaveBeenCalled();
-    expect(component.advancedDetailDraft).toEqual({
-      minimum_sunshine_hours: 4,
-      target_sunshine_hours: 8,
-      daily_uptake_n: 0.5,
-      daily_uptake_p: 0.2,
-      daily_uptake_k: 0.3,
-      region: 'jp',
-      sterility_risk_threshold: 32
-    });
-  });
-
-  it('saves only changed advanced dialog fields through SaveCropStageAdvancedDetailsUseCase', async () => {
-    await loadStages([
-      {
-        ...stageFixture,
-        sunshine_requirement: {
-          id: 1,
-          crop_stage_id: 1,
-          minimum_sunshine_hours: 4,
-          target_sunshine_hours: 8
-        },
-        nutrient_requirement: {
-          id: 1,
-          crop_stage_id: 1,
-          daily_uptake_n: 0.5,
-          daily_uptake_p: 0.2,
-          daily_uptake_k: 0.3,
-          region: 'jp'
-        }
-      } as CropStage
-    ]);
-
-    component.openAdvancedDialog();
-    component.advancedDetailDraft = {
-      minimum_sunshine_hours: 4,
-      target_sunshine_hours: 8,
-      daily_uptake_n: 0.5,
-      daily_uptake_p: 0.2,
-      daily_uptake_k: 0.3,
-      region: 'jp',
-      sterility_risk_threshold: 32
-    };
-    component.saveAdvancedDialog();
-
-    expect(mockSaveCropStageAdvancedDetailsUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      sunshinePatch: undefined,
-      nutrientPatch: undefined,
-      temperaturePatch: { sterility_risk_threshold: 32 }
-    });
-  });
-
-  it('opens delete confirm dialog from edit panel instead of window.confirm', async () => {
-    await loadStages([stageFixture]);
-
-    const deleteButton = fixture.nativeElement.querySelector('.crop-stages-edit-panel .btn-danger');
-    deleteButton.click();
-    fixture.detectChanges();
-
-    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
-    expect(fixture.nativeElement.querySelector('.crop-stages__delete-confirm')).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('Delete "Germination"?');
-    expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
-  });
-
-  it('shows blueprint warning when deleting a stage with linked templates', async () => {
-    await loadStages([stageFixture]);
-    component.control = {
-      ...component.control,
-      taskScheduleBlueprints: [
-        {
-          id: 10,
-          crop_id: 1,
-          agricultural_task_id: 1,
-          source_agricultural_task_id: null,
-          stage_order: 1,
-          stage_name: 'Germination',
-          gdd_trigger: 0,
-          gdd_tolerance: null,
-          task_type: 'general',
-          source: 'manual',
-          priority: 1,
-          amount: null,
-          amount_unit: null,
-          description: null,
-          weather_dependency: null,
-          time_per_sqm: null
-        }
-      ]
-    };
-    fixture.detectChanges();
-
-    const deleteButton = fixture.nativeElement.querySelector('.crop-stages-edit-panel .btn-danger');
-    deleteButton.click();
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.textContent).toContain(
-      'This stage has 1 linked task schedule template(s).'
-    );
-  });
-
-  it('calls deleteCropStageUseCase when delete is confirmed in the dialog', async () => {
-    await loadStages([stageFixture]);
-    component.deleteCropStage(1);
-    component.confirmDeleteCropStage();
-
-    expect(mockDeleteCropStageUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1
-    });
-    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
-  });
-
-  it('does not call deleteCropStageUseCase when delete confirm is cancelled', async () => {
-    await loadStages([stageFixture]);
-    component.deleteCropStage(1);
-    component.cancelDeleteConfirmDialog();
-
-    expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
-    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
   it('should link back to crop detail via breadcrumbs', async () => {
@@ -1309,44 +610,6 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-order-warning')).toBeNull();
   });
 
-  it('renders edit panel with section headings and aligned field rows', async () => {
-    await loadStages([stageFixture]);
-
-    const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
-    expect(panel?.querySelector('.crop-stages-edit-panel__header')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__stage-badge')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__header-fields')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--temperature')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--details')).toBeTruthy();
-    expect(panel?.textContent).toContain('Temperature conditions');
-    expect(panel?.textContent).toContain('Advanced settings');
-    expect(panel?.querySelector('input[name="panel_stage_name"]')).toBeTruthy();
-    expect(panel?.querySelector('input[name="panel_required_gdd"]')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--thermal')).toBeNull();
-    expect(panel?.querySelector('.crop-stages-edit-panel__optimal-group')).toBeNull();
-    expect(panel?.querySelector('.crop-stages-edit-panel__temperature-scale')).toBeNull();
-    expect(panel?.querySelector('.crop-stages-edit-panel__gdd-block')).toBeNull();
-  });
-
-  it('renders detail settings as chip buttons instead of text links', async () => {
-    await loadStages([stageFixture]);
-
-    const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
-    const chips = panel?.querySelectorAll('.crop-stages-edit-panel__detail-chip');
-    expect(chips?.length).toBe(2);
-    expect(panel?.querySelector('.crop-stages-edit-panel__link')).toBeNull();
-  });
-
-  it('places save and delete actions in the panel footer', async () => {
-    await loadStages([stageFixture]);
-
-    const footer = fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer');
-    expect(footer).toBeTruthy();
-    expect(footer?.querySelector('.btn-primary')).toBeTruthy();
-    expect(footer?.querySelector('.btn-danger')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__actions')).toBeNull();
-  });
-
   it('updates cumulative GDD display in table after stage reorder', async () => {
     component.control = {
       ...loadedControlBase,
@@ -1389,12 +652,7 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages__readonly-notice')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.crop-stages-empty__cta')).toBeNull();
     expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeNull();
-    expect(fixture.nativeElement.querySelector('input[name="panel_stage_name"]')?.hasAttribute('readonly')).toBe(
-      true
-    );
-
-    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer .btn-primary')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer .btn-danger')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeNull();
 
     component.addCropStage();
     expect(mockCreateCropStageUseCase.execute).not.toHaveBeenCalled();
@@ -1411,19 +669,5 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.master-context-header__forward')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('required GDD not set');
-  });
-
-  it('disables save when stage name is empty and blocks saveStagePanel', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.name = '   ';
-    fixture.detectChanges();
-
-    const saveButton = fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer .btn-primary');
-    expect(saveButton?.disabled).toBe(true);
-
-    component.saveStagePanel();
-    expect(mockSaveCropStagePanelUseCase.execute).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__name-error')).toBeTruthy();
   });
 });
