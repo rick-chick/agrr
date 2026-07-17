@@ -153,7 +153,7 @@ ja:
     show:
       back_to_list: "← 計画一覧に戻る"
       optimize_button: "最適化"
-      view_task_schedule: "作業予定を見る"
+      view_task_schedule: "作業計画を見る"
       # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
       copy_plan: "次年度にコピー"
       delete: "削除"
@@ -194,7 +194,7 @@ ja:
           full_range: "全体"
   
     task_schedules:
-      title: "%{name}の作業予定"
+      title: "%{name}の作業計画"
       back_to_plan: "← 計画詳細に戻る"
       timeline_generated_at: "生成日時: %{datetime}"
       timeline_generated_unknown: "生成日時: 未取得"
@@ -202,7 +202,7 @@ ja:
       nav_next_week: "次の週"
       nav_today: "今週"
       week_label: "%{start} 〜 %{end}"
-      no_schedules: "作業予定がまだ生成されていません。"
+      no_schedules: "作業計画がまだ生成されていません。"
       plan_level_field: "計画全体"
       field_header:
         crop_area: "%{crop} / %{area}㎡"
@@ -211,7 +211,7 @@ ja:
       unscheduled_title: "未確定の作業"
       empty_cell: "予定なし"
       loading: "読み込み中..."
-      fetch_error: "作業予定の取得に失敗しました。時間をおいて再度お試しください。"
+      fetch_error: "作業計画の取得に失敗しました。時間をおいて再度お試しください。"
       generated_label: "生成日時"
       add_task: "予定追加"
       detail:
