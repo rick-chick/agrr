@@ -422,7 +422,7 @@
       "task_schedule_blueprints_lead": "खेती योजना बनाने पर, इन टेम्पलेट से योजना की कार्य अनुसूची स्वचालित रूप से बनती है।",
       "task_schedule_blueprints_gdd_axis_caption": "फसल शुरुआत से संचयी (चरण शुरुआत से नहीं)।",
       "task_schedule_blueprints_gdd_axis_label": "संचयी GDD (कुल {{total}} ℃·दिन)",
-      "no_task_schedule_blueprints": "अभी तक कोई कार्य योजना नहीं है। नीचे के फॉर्म से एक-एक करके जोड़ें।",
+      "no_task_schedule_blueprints": "अभी तक कोई कार्य योजना नहीं है। ऊपर के बटन से एक-एक करके जोड़ें।",
       "unnamed_blueprint": "(कार्य नाम सेट नहीं)",
       "gdd_trigger": "समय (℃·दिन)",
       "gdd_trigger_placeholder": "सेट नहीं",
@@ -444,6 +444,7 @@
         "gdd_label": "समय (℃·दिन)",
         "gdd_range_hint": "सीमा: {{start}}–{{end}} ℃·दिन",
         "submit": "कार्य योजना जोड़ें",
+        "open_button": "कार्य योजना जोड़ें",
         "ai_hint": "AI सुझाव को केवल शुरुआती ड्राफ्ट के रूप में चाहिए तो नीचे का बटन उपयोग करें। मौजूदा सभी कार्य योजनाएँ बदल दी जाएँगी।",
         "no_unassociated_tasks": "मास्टर सूची में कोई कार्य उपलब्ध नहीं है। पहले कार्य बनाएँ।",
         "go_to_create": "नया कार्य बनाएँ"

@@ -2127,7 +2127,7 @@
       "task_schedule_blueprints_lead": "When you create a cultivation plan, work schedules are generated automatically from these templates.",
       "task_schedule_blueprints_gdd_axis_caption": "Cumulative from crop start (not from stage start).",
       "task_schedule_blueprints_gdd_axis_label": "Cumulative GDD (total {{total}} ℃·day)",
-      "no_task_schedule_blueprints": "No task plans yet. Add them one by one using the form below.",
+      "no_task_schedule_blueprints": "No task plans yet. Add them one by one using the button above.",
       "unnamed_blueprint": "(Task name not set)",
       "priority_label": "Priority",
       "source_label": "Source",
@@ -2159,6 +2159,7 @@
         "gdd_label": "Timing (℃·day)",
         "gdd_range_hint": "Range: {{start}}–{{end}} ℃·day",
         "submit": "Add task plan",
+        "open_button": "Add task plan",
         "ai_hint": "Use the button below only if you want AI suggestions as a starting point. It replaces all existing task plans.",
         "no_unassociated_tasks": "No tasks are available in the master list. Create a task first.",
         "go_to_create": "Create a task"

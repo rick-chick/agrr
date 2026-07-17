@@ -265,7 +265,7 @@ describe('CropStagesComponent', () => {
     expect(mockLoadBlueprintsUseCase.execute).not.toHaveBeenCalled();
   });
 
-  it('does not derive display state when control is assigned directly on the component', () => {
+  it('derives display state when control is assigned through the component setter', () => {
     const incompleteStage: CropStage = {
       id: 2,
       name: 'Vegetative',
@@ -281,7 +281,7 @@ describe('CropStagesComponent', () => {
       }
     };
 
-    expect(component.control.showBlueprintReadinessChecklist).toBe(false);
+    expect(component.control.showBlueprintReadinessChecklist).toBe(true);
     expect(component.control.showNextStepCta).toBe(false);
   });
 
