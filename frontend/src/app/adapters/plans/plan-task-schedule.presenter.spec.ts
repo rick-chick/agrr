@@ -364,4 +364,24 @@ describe('PlanTaskSchedulePresenter task schedule sync', () => {
 
     expect(view.control.regenerating).toBe(true);
   });
+
+  it('present ignores stale schedule loads started before a newer reload', () => {
+    view.control = {
+      ...view.control,
+      schedule: scheduleWithFields,
+      regenerating: true
+    };
+    const staleSchedule: TaskScheduleResponse = {
+      ...scheduleWithFields,
+      plan: { ...planInfo, task_schedule_sync_state: 'ready' },
+      fields: []
+    };
+
+    presenter.beginScheduleLoad();
+    presenter.beginScheduleLoad();
+    presenter.present({ schedule: staleSchedule, loadGeneration: 1 });
+
+    expect(view.control.regenerating).toBe(true);
+    expect(view.control.schedule?.fields.length).toBe(2);
+  });
 });

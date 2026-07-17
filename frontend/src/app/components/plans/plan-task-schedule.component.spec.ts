@@ -683,7 +683,7 @@ describe('PlanTaskScheduleComponent', () => {
     const applyFiltersSpy = vi.spyOn(presenter, 'applyClientFilters');
 
     fixture.detectChanges();
-    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
+    expect(loadUseCase.execute).toHaveBeenCalledWith(expect.objectContaining({ planId: 7 }));
     expect(subscribeSyncUseCase.execute).toHaveBeenCalledWith({
       planId: 7,
       onSubscribed: expect.any(Function)
@@ -700,7 +700,7 @@ describe('PlanTaskScheduleComponent', () => {
       planId: 8,
       onSubscribed: expect.any(Function)
     });
-    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 8 });
+    expect(loadUseCase.execute).toHaveBeenCalledWith(expect.objectContaining({ planId: 8 }));
     expect(applyFiltersSpy).toHaveBeenCalled();
   });
 
@@ -984,6 +984,8 @@ describe('PlanTaskScheduleComponent', () => {
     expect(
       filteredFixture.nativeElement.querySelector('.plan-task-schedule__filter-nav')
     ).toBeNull();
-    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7, fieldCultivationId: 42 });
+    expect(loadUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 7, fieldCultivationId: 42 })
+    );
   });
 });

@@ -20,8 +20,10 @@ import {
 } from './task-schedule-sync-presenter.helpers';
 import {
   applyTaskScheduleSyncMessage,
+  beginScheduleLoad,
   finishTaskScheduleLoad,
   initialTaskScheduleSyncLifecycleState,
+  isStaleScheduleLoad,
   markRegeneratePostInFlight,
   mergePlanWithSyncMessage,
   taskScheduleSyncMessageFromRegenerateResponse,
@@ -48,6 +50,12 @@ export class PlanWorkPresenter
 
   setView(view: PlanWorkView): void {
     this.view = view;
+  }
+
+  beginScheduleLoad(): number {
+    const result = beginScheduleLoad(this.syncLifecycle);
+    this.syncLifecycle = result.lifecycle;
+    return result.generation;
   }
 
   onSuccess(dto?: CreateWorkRecordSuccessDto): void {
@@ -103,6 +111,12 @@ export class PlanWorkPresenter
 
   present(dto: LoadWorkDayListDataDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (
+      dto.loadGeneration != null &&
+      isStaleScheduleLoad(this.syncLifecycle, dto.loadGeneration)
+    ) {
+      return;
+    }
     const loadResult = finishTaskScheduleLoad(
       this.syncLifecycle,
       dto.plan.task_schedule_sync_state
