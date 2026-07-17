@@ -64,6 +64,7 @@ const tableTranslations = {
     index: { title: 'Crops' },
     show: {
       no_stages_description: 'Add growth stages for this crop.',
+      celsius_unit: '°C',
       from_plan_wizard_title: 'From plan wizard',
       from_plan_stages_wizard_lead: 'Configure stages',
       return_to_plan: 'Return to plan',
@@ -84,12 +85,11 @@ const tableTranslations = {
       stages_empty_lead: 'Stages are required.',
       add_stage: 'Add Stage',
       table_order: 'Order',
+      table_optimal_range: 'Optimal temperature range',
       table_base_temperature: 'Base temp',
-      table_required_gdd: 'Required GDD',
-      table_cumulative_gdd: 'Cumulative GDD',
+      optimal_temperature_range: '{{min}}–{{max}} {{unit}}',
+      optimal_temperature_value: '{{value}} {{unit}}',
       value_missing: '—',
-      stage_cumulative_gdd_range: '{{start}}–{{end}} ℃·day (cumulative)',
-      stage_cumulative_gdd_missing: 'Enter required GDD to display the range',
       stage_order_duplicate: 'Duplicate order: {{orders}}',
       stage_order_duplicate_hint: 'Drag rows to reorder or use the button below to renumber.',
       stage_order_renumber: 'Renumber orders',
@@ -331,14 +331,17 @@ describe('CropStagesComponent', () => {
     expect(mockCreateCropStageUseCase.execute).toHaveBeenCalled();
   });
 
-  it('renders stage cards with metadata labels', async () => {
+  it('renders stage cards with optimal range and base temperature metadata only', async () => {
     await loadStages([stageFixture]);
 
     expect(fixture.nativeElement.querySelector('.section-card')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.card-list')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.crop-stage-card')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Order');
-    expect(fixture.nativeElement.textContent).toContain('Cumulative GDD');
+    expect(fixture.nativeElement.textContent).toContain('Optimal temperature range');
+    expect(fixture.nativeElement.textContent).toContain('Base temp');
+    expect(fixture.nativeElement.textContent).not.toContain('Required GDD');
+    expect(fixture.nativeElement.textContent).not.toContain('Cumulative GDD');
   });
 
   it('does not render edit panel on list page', async () => {
@@ -388,7 +391,7 @@ describe('CropStagesComponent', () => {
     });
   });
 
-  it('shows em dash for missing base temperature and required GDD in stage card', async () => {
+  it('shows em dash for missing optimal range and base temperature in stage card', async () => {
     await loadStages([
       {
         id: 1,
@@ -403,14 +406,54 @@ describe('CropStagesComponent', () => {
 
     const card = fixture.nativeElement.querySelector('.crop-stage-card');
     expect(card.textContent).toContain('—');
-    expect(card.textContent).toContain('Enter required GDD to display the range');
+    expect(card.textContent).not.toContain('Enter required GDD to display the range');
   });
 
-  it('shows cumulative GDD range in stage card when required_gdd is set', async () => {
-    await loadStages([stageFixture]);
+  it('shows optimal temperature range when both min and max are set', async () => {
+    await loadStages([
+      {
+        ...stageFixture,
+        temperature_requirement: {
+          ...stageFixture.temperature_requirement!,
+          optimal_min: 15,
+          optimal_max: 25
+        }
+      }
+    ]);
 
     const card = fixture.nativeElement.querySelector('.crop-stage-card');
-    expect(card.textContent).toContain('0–100');
+    expect(card.textContent).toContain('15–25 °C');
+    expect(card.textContent).toContain('10');
+  });
+
+  it('shows single-sided optimal temperature when only min or max is set', async () => {
+    await loadStages([
+      {
+        ...stageFixture,
+        temperature_requirement: {
+          ...stageFixture.temperature_requirement!,
+          optimal_min: 15,
+          optimal_max: null
+        }
+      },
+      {
+        ...stageFixture,
+        id: 2,
+        name: 'Flowering',
+        order: 2,
+        temperature_requirement: {
+          ...stageFixture.temperature_requirement!,
+          id: 2,
+          crop_stage_id: 2,
+          optimal_min: null,
+          optimal_max: 25
+        }
+      }
+    ]);
+
+    const cards = fixture.nativeElement.querySelectorAll('.crop-stage-card');
+    expect(cards[0]?.textContent).toContain('15 °C');
+    expect(cards[1]?.textContent).toContain('25 °C');
   });
 
   it('should link back to crop detail via breadcrumbs', async () => {
@@ -615,42 +658,6 @@ describe('CropStagesComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.crop-stages-order-warning')).toBeNull();
-  });
-
-  it('updates cumulative GDD display in cards after stage reorder', async () => {
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Stage 1',
-            order: 1,
-            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
-          } as CropStage,
-          {
-            id: 2,
-            name: 'Stage 2',
-            order: 2,
-            thermal_requirement: { id: 2, crop_stage_id: 2, required_gdd: 200 }
-          } as CropStage
-        ]
-      }
-    };
-    fixture.detectChanges();
-    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
-
-    component.onStageDropped({
-      previousIndex: 0,
-      currentIndex: 1
-    } as CdkDragDrop<CropStage[]>);
-    fixture.detectChanges();
-
-    const cards = fixture.nativeElement.querySelectorAll('.crop-stage-card');
-    expect(cards[0]?.textContent).toContain('0–200');
-    expect(cards[1]?.textContent).toContain('200–300');
   });
 
   it('disables mutation controls for reference crops when user is not admin', async () => {
