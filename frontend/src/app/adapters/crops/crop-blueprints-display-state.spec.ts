@@ -180,7 +180,7 @@ describe('withCropBlueprintDisplayState', () => {
     });
   });
 
-  it('omits section lead when no blueprints are registered', () => {
+  it('omits section lead key because page description carries the lead', () => {
     const next = withCropBlueprintDisplayState({
       ...baseControl,
       blueprints: []
@@ -188,15 +188,15 @@ describe('withCropBlueprintDisplayState', () => {
     expect(next.blueprintSectionDescriptionKey).toBeNull();
   });
 
-  it('shows section lead when blueprints exist', () => {
+  it('omits section lead key when blueprints exist', () => {
     const next = withCropBlueprintDisplayState({
       ...baseControl,
       blueprints: [blueprint({ id: 10, gdd_trigger: 50 })]
     });
-    expect(next.blueprintSectionDescriptionKey).toBe('crops.show.task_schedule_blueprints_lead');
+    expect(next.blueprintSectionDescriptionKey).toBeNull();
   });
 
-  it('omits section lead when fromPlanId is set even if blueprints exist', () => {
+  it('omits section lead key when fromPlanId is set', () => {
     const next = withCropBlueprintDisplayState({
       ...baseControl,
       fromPlanId: 7,

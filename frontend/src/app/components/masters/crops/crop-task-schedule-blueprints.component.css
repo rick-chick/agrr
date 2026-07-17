@@ -65,6 +65,7 @@
 
 .crop-blueprints__blueprints-header {
   margin-bottom: 0;
+  justify-content: flex-end;
 }
 
 .section-card__header-actions {

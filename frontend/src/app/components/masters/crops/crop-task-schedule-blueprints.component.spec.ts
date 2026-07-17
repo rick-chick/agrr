@@ -233,7 +233,43 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-blueprints__return-to-plan')).toBeNull();
   });
 
-  it('hides section lead when fromPlan query param is set', async () => {
+  it('shows page description lead without duplicating page title in section heading', async () => {
+    const title = 'Task Schedule Templates';
+    const lead =
+      'When you create a cultivation plan, work schedules are generated automatically from these templates.';
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            task_schedule_blueprints_title: title,
+            task_schedule_blueprints_lead: lead
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const pageDescription = fixture.nativeElement.querySelector('.page-description');
+    expect(pageDescription?.textContent).toContain(lead);
+    expect(pageDescription?.textContent).not.toContain(title);
+    expect(fixture.nativeElement.querySelector('.section-title')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__section-lead')).toBeNull();
+
+    const pageMain = fixture.nativeElement.querySelector('.page-main');
+    const titleOccurrences = (pageMain?.textContent ?? '').split(title).length - 1;
+    expect(titleOccurrences).toBe(1);
+  });
+
+  it('hides page description lead when fromPlan query param is set', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
@@ -262,11 +298,11 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.querySelector('.crop-blueprints__section-lead')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.page-description')).toBeFalsy();
     expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
   });
 
-  it('shows section lead when blueprints exist and not from plan', async () => {
+  it('shows page description lead when blueprints exist and not from plan', async () => {
     const lead = 'Plans use these templates.';
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
@@ -288,7 +324,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const leadEl = fixture.nativeElement.querySelector('.crop-blueprints__section-lead');
+    const leadEl = fixture.nativeElement.querySelector('.page-description');
     expect(leadEl?.textContent).toContain(lead);
   });
 

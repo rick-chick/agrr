@@ -104,15 +104,14 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
         }
 
         <header class="page-header crop-blueprints__page-header">
-          <h1 class="page-title">{{ control.crop.name }}</h1>
-          <p class="page-description">{{ 'crops.show.task_schedule_blueprints_title' | translate }}</p>
+          <h1 id="page-title" class="page-title">{{ control.crop.name }}</h1>
+          @if (!control.fromPlanId) {
+            <p class="page-description">{{ 'crops.show.task_schedule_blueprints_lead' | translate }}</p>
+          }
         </header>
 
-        <section class="section-card" aria-labelledby="blueprints-heading">
+        <section class="section-card" aria-labelledby="page-title">
           <div class="section-card__header-actions crop-blueprints__blueprints-header">
-            <h2 id="blueprints-heading" class="section-title">
-              {{ 'crops.show.task_schedule_blueprints_title' | translate }}
-            </h2>
             <button
               type="button"
               class="btn btn-primary"
@@ -122,11 +121,6 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
               {{ 'crops.show.manual_blueprint_add.open_button' | translate }}
             </button>
           </div>
-          @if (control.blueprintSectionDescriptionKey) {
-            <p class="section-card__description crop-blueprints__section-lead">
-              {{ control.blueprintSectionDescriptionKey | translate }}
-            </p>
-          }
 
           @if (control.showBlueprintReadinessChecklist) {
             <div class="blueprint-readiness" role="status">
