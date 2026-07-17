@@ -29,7 +29,7 @@ describe('PlanWorkContextNavComponent', () => {
       'plans.work.nav.work': '今日の作業',
       'plans.work.nav.history': '実績履歴',
       'plans.show.nav.workbench': '作付け計画',
-      'plans.show.nav.task_schedule': '作業予定表'
+      'plans.show.nav.task_schedule': '作業計画表'
     });
 
     router = TestBed.inject(Router);
@@ -50,7 +50,7 @@ describe('PlanWorkContextNavComponent', () => {
     const links = fixture.nativeElement.querySelectorAll('.plan-context-nav__link');
     expect(links.length).toBe(4);
     expect(links[0].textContent?.trim()).toBe('作付け計画');
-    expect(links[1].textContent?.trim()).toBe('作業予定表');
+    expect(links[1].textContent?.trim()).toBe('作業計画表');
     expect(links[2].textContent?.trim()).toBe('今日の作業');
     expect(links[3].textContent?.trim()).toBe('実績履歴');
     expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
@@ -76,7 +76,7 @@ describe('PlanWorkContextNavComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
-      '作業予定表'
+      '作業計画表'
     );
   });
 
