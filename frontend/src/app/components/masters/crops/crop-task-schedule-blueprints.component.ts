@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -113,6 +113,14 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
             <h2 id="blueprints-heading" class="section-title">
               {{ 'crops.show.task_schedule_blueprints_title' | translate }}
             </h2>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="control.agriculturalTasksLoading || !control.agriculturalTasks.length"
+              (click)="openBlueprintAddDialog()"
+            >
+              {{ 'crops.show.manual_blueprint_add.submit' | translate }}
+            </button>
           </div>
           @if (control.blueprintSectionDescriptionKey) {
             <p class="section-card__description crop-blueprints__section-lead">
@@ -405,13 +413,8 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
             </ng-template>
           }
 
-          <div class="crop-blueprints__subsection crop-blueprints__blueprint-add">
-            <h3 class="crop-blueprints__subsection-title">
-              {{ 'crops.show.manual_blueprint_add.title' | translate }}
-            </h3>
-            @if (control.agriculturalTasksLoading) {
-              <p class="master-loading">{{ 'common.loading' | translate }}</p>
-            } @else if (!control.agriculturalTasks.length) {
+          <div class="crop-blueprints__blueprint-toolbar">
+            @if (!control.agriculturalTasksLoading && !control.agriculturalTasks.length) {
               <div class="crop-blueprints__template-add-empty">
                 <p class="crop-blueprints__template-add-empty-message">
                   {{ 'crops.show.manual_blueprint_add.no_unassociated_tasks' | translate }}
@@ -419,116 +422,6 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                 <a routerLink="/agricultural_tasks/new" class="btn-secondary crop-blueprints__template-add-cta">
                   {{ 'crops.show.manual_blueprint_add.go_to_create' | translate }}
                 </a>
-              </div>
-            } @else {
-              <div class="crop-blueprints__template-add-form crop-blueprints__blueprint-add-form">
-                <label class="crop-blueprints__template-add-field" for="blueprint-task-picker">
-                  <span class="crop-blueprints__template-add-label">
-                    {{ 'crops.show.manual_blueprint_add.task_label' | translate }}
-                  </span>
-                  <select
-                    id="blueprint-task-picker"
-                    name="blueprintAgriculturalTaskId"
-                    class="crop-blueprints__template-add-select"
-                    [class.crop-blueprints__select--placeholder]="control.selectedBlueprintAgriculturalTaskId == null"
-                    [ngModel]="control.selectedBlueprintAgriculturalTaskId"
-                    (ngModelChange)="onBlueprintTaskChange($event)"
-                  >
-                    <option [ngValue]="null">
-                      {{ 'crops.show.manual_blueprint_add.task_placeholder' | translate }}
-                    </option>
-                    @for (task of control.unassociatedAgriculturalTasks; track task.id) {
-                      <option [ngValue]="task.id">{{ task.name }}</option>
-                    }
-                  </select>
-                </label>
-                @if (control.crop?.crop_stages?.length) {
-                  <label class="crop-blueprints__template-add-field" for="blueprint-stage-picker">
-                    <span class="crop-blueprints__template-add-label">
-                      {{ 'crops.show.manual_blueprint_add.stage_label' | translate }}
-                    </span>
-                    <select
-                      id="blueprint-stage-picker"
-                      name="blueprintStageOrder"
-                      class="crop-blueprints__template-add-select"
-                      [class.crop-blueprints__select--placeholder]="control.selectedBlueprintStageOrder == null"
-                      [ngModel]="control.selectedBlueprintStageOrder"
-                      (ngModelChange)="onBlueprintStageChange($event)"
-                    >
-                      <option [ngValue]="null">
-                        {{ 'crops.show.manual_blueprint_add.stage_placeholder' | translate }}
-                      </option>
-                      @for (stage of control.crop?.crop_stages ?? []; track stage.id) {
-                        <option [ngValue]="stage.order">{{ stage.name }}</option>
-                      }
-                    </select>
-                  </label>
-                }
-                <label class="crop-blueprints__template-add-field" for="blueprint-gdd-input">
-                  <span class="crop-blueprints__template-add-label">
-                    {{ 'crops.show.manual_blueprint_add.gdd_label' | translate }}
-                  </span>
-                  @if (control.selectedStageGddRange && !control.selectedStageGddRange.gddRangeMissing) {
-                    <span class="crop-blueprints__template-add-hint">
-                      {{
-                        'crops.show.manual_blueprint_add.gdd_range_hint'
-                          | translate: {
-                              start: control.selectedStageGddRange.cumulativeGddStart,
-                              end: control.selectedStageGddRange.cumulativeGddEnd
-                            }
-                      }}
-                    </span>
-                  }
-                  <span class="crop-blueprints__template-add-input-wrap">
-                    <input
-                      id="blueprint-gdd-input"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      name="blueprintCreateGddTrigger"
-                      class="crop-blueprints__template-add-input"
-                      [class.blueprint-card__input--invalid]="
-                        control.blueprintCreateFormAttempted && control.blueprintCreateGddError
-                      "
-                      [ngModel]="control.blueprintCreateGddTrigger"
-                      (ngModelChange)="onBlueprintGddCreateChange($event)"
-                      [attr.placeholder]="createGddPlaceholder()"
-                      [attr.aria-invalid]="
-                        control.blueprintCreateFormAttempted && control.blueprintCreateGddError
-                          ? true
-                          : null
-                      "
-                    />
-                    <span class="crop-blueprints__template-add-input-unit" aria-hidden="true">
-                      {{ 'crops.show.gdd_unit' | translate }}
-                    </span>
-                  </span>
-                  @if (control.blueprintCreateFormAttempted && control.blueprintCreateGddError; as createGddError) {
-                    <span class="blueprint-card__field-error" role="alert">
-                      {{
-                        gddValidationMessage(
-                          createGddError,
-                          control.selectedBlueprintStageOrder
-                        )
-                      }}
-                    </span>
-                  }
-                </label>
-                <div class="crop-blueprints__template-add-actions">
-                  <button
-                    type="button"
-                    class="btn-primary"
-                    [disabled]="!control.canCreateBlueprint"
-                    (click)="createBlueprint()"
-                  >
-                    {{
-                      (control.blueprintCreating
-                        ? 'common.loading'
-                        : 'crops.show.manual_blueprint_add.submit')
-                        | translate
-                    }}
-                  </button>
-                </div>
               </div>
             }
             <div class="crop-blueprints__blueprint-ai-import">
@@ -551,6 +444,140 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
         </section>
       }
     </main>
+
+    <dialog
+      #blueprintAddDialog
+      class="form-dialog"
+      (cancel)="closeBlueprintAddDialog()"
+      (close)="closeBlueprintAddDialog()"
+    >
+      <h3 class="form-dialog__title">{{ 'crops.show.manual_blueprint_add.title' | translate }}</h3>
+      @if (control.agriculturalTasksLoading) {
+        <p class="master-loading">{{ 'common.loading' | translate }}</p>
+      } @else if (!control.agriculturalTasks.length) {
+        <div class="crop-blueprints__template-add-empty">
+          <p class="crop-blueprints__template-add-empty-message">
+            {{ 'crops.show.manual_blueprint_add.no_unassociated_tasks' | translate }}
+          </p>
+          <a routerLink="/agricultural_tasks/new" class="btn-secondary crop-blueprints__template-add-cta">
+            {{ 'crops.show.manual_blueprint_add.go_to_create' | translate }}
+          </a>
+        </div>
+      } @else {
+        <div class="crop-blueprints__template-add-form crop-blueprints__blueprint-add-form">
+          <label class="crop-blueprints__template-add-field" for="blueprint-task-picker">
+            <span class="crop-blueprints__template-add-label">
+              {{ 'crops.show.manual_blueprint_add.task_label' | translate }}
+            </span>
+            <select
+              id="blueprint-task-picker"
+              name="blueprintAgriculturalTaskId"
+              class="crop-blueprints__template-add-select"
+              [class.crop-blueprints__select--placeholder]="control.selectedBlueprintAgriculturalTaskId == null"
+              [ngModel]="control.selectedBlueprintAgriculturalTaskId"
+              (ngModelChange)="onBlueprintTaskChange($event)"
+            >
+              <option [ngValue]="null">
+                {{ 'crops.show.manual_blueprint_add.task_placeholder' | translate }}
+              </option>
+              @for (task of control.unassociatedAgriculturalTasks; track task.id) {
+                <option [ngValue]="task.id">{{ task.name }}</option>
+              }
+            </select>
+          </label>
+          @if (control.crop?.crop_stages?.length) {
+            <label class="crop-blueprints__template-add-field" for="blueprint-stage-picker">
+              <span class="crop-blueprints__template-add-label">
+                {{ 'crops.show.manual_blueprint_add.stage_label' | translate }}
+              </span>
+              <select
+                id="blueprint-stage-picker"
+                name="blueprintStageOrder"
+                class="crop-blueprints__template-add-select"
+                [class.crop-blueprints__select--placeholder]="control.selectedBlueprintStageOrder == null"
+                [ngModel]="control.selectedBlueprintStageOrder"
+                (ngModelChange)="onBlueprintStageChange($event)"
+              >
+                <option [ngValue]="null">
+                  {{ 'crops.show.manual_blueprint_add.stage_placeholder' | translate }}
+                </option>
+                @for (stage of control.crop?.crop_stages ?? []; track stage.id) {
+                  <option [ngValue]="stage.order">{{ stage.name }}</option>
+                }
+              </select>
+            </label>
+          }
+          <label class="crop-blueprints__template-add-field" for="blueprint-gdd-input">
+            <span class="crop-blueprints__template-add-label">
+              {{ 'crops.show.manual_blueprint_add.gdd_label' | translate }}
+            </span>
+            @if (control.selectedStageGddRange && !control.selectedStageGddRange.gddRangeMissing) {
+              <span class="crop-blueprints__template-add-hint">
+                {{
+                  'crops.show.manual_blueprint_add.gdd_range_hint'
+                    | translate: {
+                        start: control.selectedStageGddRange.cumulativeGddStart,
+                        end: control.selectedStageGddRange.cumulativeGddEnd
+                      }
+                }}
+              </span>
+            }
+            <span class="crop-blueprints__template-add-input-wrap">
+              <input
+                id="blueprint-gdd-input"
+                type="number"
+                step="0.01"
+                min="0"
+                name="blueprintCreateGddTrigger"
+                class="crop-blueprints__template-add-input"
+                [class.blueprint-card__input--invalid]="
+                  control.blueprintCreateFormAttempted && control.blueprintCreateGddError
+                "
+                [ngModel]="control.blueprintCreateGddTrigger"
+                (ngModelChange)="onBlueprintGddCreateChange($event)"
+                [attr.placeholder]="createGddPlaceholder()"
+                [attr.aria-invalid]="
+                  control.blueprintCreateFormAttempted && control.blueprintCreateGddError
+                    ? true
+                    : null
+                "
+              />
+              <span class="crop-blueprints__template-add-input-unit" aria-hidden="true">
+                {{ 'crops.show.gdd_unit' | translate }}
+              </span>
+            </span>
+            @if (control.blueprintCreateFormAttempted && control.blueprintCreateGddError; as createGddError) {
+              <span class="blueprint-card__field-error" role="alert">
+                {{
+                  gddValidationMessage(
+                    createGddError,
+                    control.selectedBlueprintStageOrder
+                  )
+                }}
+              </span>
+            }
+          </label>
+          <div class="form-card__actions crop-blueprints__template-add-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeBlueprintAddDialog()">
+              {{ 'common.cancel' | translate }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="!control.canCreateBlueprint"
+              (click)="createBlueprint()"
+            >
+              {{
+                (control.blueprintCreating
+                  ? 'common.loading'
+                  : 'crops.show.manual_blueprint_add.submit')
+                  | translate
+              }}
+            </button>
+          </div>
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./crop-task-schedule-blueprints.component.css']
 })
@@ -567,6 +594,8 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
+
+  @ViewChild('blueprintAddDialog') blueprintAddDialogRef!: ElementRef<HTMLDialogElement>;
 
   protected readonly gddAxisTotalGdd = gddAxisTotalGdd;
   protected readonly blueprintLaneId = blueprintLaneId;
@@ -713,6 +742,21 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
       stageName: this.control.blueprintStageNameForCreate,
       gddTrigger: gddTrigger != null && !Number.isNaN(gddTrigger) ? gddTrigger : null
     });
+    this.closeBlueprintAddDialog();
+  }
+
+  openBlueprintAddDialog(): void {
+    this.presenter.applyLocalControl({
+      blueprintCreateFormAttempted: false,
+      selectedBlueprintStageOrder: null,
+      selectedBlueprintAgriculturalTaskId: null,
+      blueprintCreateGddTrigger: null
+    });
+    this.blueprintAddDialogRef?.nativeElement?.showModal();
+  }
+
+  closeBlueprintAddDialog(): void {
+    this.blueprintAddDialogRef?.nativeElement?.close();
   }
 
   regenerateBlueprints(): void {

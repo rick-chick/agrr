@@ -2130,7 +2130,7 @@
       "task_schedule_blueprints_lead": "When you create a cultivation plan, work schedules are generated automatically from these templates.",
       "task_schedule_blueprints_gdd_axis_caption": "Cumulative from crop start (not from stage start).",
       "task_schedule_blueprints_gdd_axis_label": "Cumulative GDD (total {{total}} ℃·day)",
-      "no_task_schedule_blueprints": "No task plans yet. Add them one by one using the form below.",
+      "no_task_schedule_blueprints": "No task plans yet. Add them one by one using the button above.",
       "unnamed_blueprint": "(Task name not set)",
       "priority_label": "Priority",
       "source_label": "Source",
