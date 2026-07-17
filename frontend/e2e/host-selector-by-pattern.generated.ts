@@ -13,6 +13,7 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   'crops/:id': 'app-crop-detail',
   'crops/:id/edit': 'app-crop-edit',
   'crops/:id/stages': 'app-crop-stages',
+  'crops/:id/stages/:stageId/edit': 'app-crop-stage-edit',
   'crops/:id/task_schedule_blueprints': 'app-crop-task-schedule-blueprints',
   'crops/new': 'app-crop-create',
   dashboard: 'app-home',
