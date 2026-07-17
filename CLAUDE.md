@@ -79,7 +79,7 @@ SQLite / ActiveRecord / HTTP
 - Presenter での `find_model` / gateway 取得・副作用（ジョブ enqueue 等）
 - View（ERB）での AR 取得・関連トラバース／ビジネスルール
 - `app/controllers/concerns/` や `app/models/concerns/` への**新規** `ActiveSupport::Concern`（ドメインや use-case 共有のため）
-- 太い controller / `app/services/` / `rescue_from` への "横逃げ"（DTO・ポート・注入なしの relocation）
+- 太い controller / `app/services/` / `rescue_from` への DTO・ポート・注入なしの relocation
 
 ### 外部 agrr デーモン統合
 
@@ -114,7 +114,7 @@ cd frontend && ng serve --host 127.0.0.1
 
 ### テスト（**必ず test-common 経由**）
 
-⚠️ **直接 `npm test` を実行しない。** API テストは `scripts/run-rust-contract-tests.sh`（Ruby `rails test` は P8.6 で廃止）。
+**注:** **直接 `npm test` を実行しない。** API テストは `scripts/run-rust-contract-tests.sh`（Ruby `rails test` は P8.6 で廃止）。
 
 ```bash
 # Rails テスト（DB / SimpleCov / フルスタック込み・テスト専用 tmpfs）

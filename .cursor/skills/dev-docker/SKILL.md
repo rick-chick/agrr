@@ -28,6 +28,7 @@ disable-model-invocation: false
 | 初回 DB: `load-reference-data.sh`（Docker）または `load-reference-data-host.sh`（cargo） | `bundle exec rails db:prepare` |
 | API 開発: `up.sh` | 無 profile の `docker compose up web` |
 | **`crates/` の Rust API 変更後**: `rebuild-restart.sh`（Docker 利用時は**必須**） | 再ビルドなしで「ブラウザをリロード」とだけ案内する |
+| **フロント変更の UI 確認**: `ng serve` を起動（未起動なら）し「**ng serve しました。確認できます**」と報告 | 「ng serve してリロードすると反映されます」等、手順の委譲のみとする |
 | ローカル検証前に API が新フィールドを返すか確認する | 古いバイナリのまま UI 差分だけを見る |
 
 **なぜ再ビルドが要るか**: `agrr-server` はイメージ内の release バイナリ。`docker-compose.yml` は `lib/core` 等のみ bind mount し、`crates/` はマウントしない。API レスポンス（例: `remediation_crops`）を変えたら再ビルドしないと古い JSON のまま。
@@ -59,9 +60,11 @@ scripts/ensure-reference-fixtures.sh
 .cursor/skills/dev-docker/scripts/logs.sh
 ```
 
-Angular: `cd frontend && ng serve --host 127.0.0.1` → `http://127.0.0.1:3000`
+Angular: `cd frontend && ng serve --host 127.0.0.1` → `http://127.0.0.1:4200`（strangler-proxy 経由なら `http://127.0.0.1:3000`）
 
-**Docker + API 変更後の確認**: `rebuild-restart.sh` 完了後、ブラウザで対象ページをリロードする（フロントは HMR、API は再ビルドが必要）。
+**フロント変更後の完了報告**: エージェントが `ng serve` の起動を確認（未起動なら実行）し、ユーザーには **「ng serve しました。確認できます」** と伝える。URL が分かれば添える。不可例:「ng serve してリロードすると反映されます」— 自分で起動せず手順だけ案内しない。
+
+**Docker + API 変更後の確認**: `rebuild-restart.sh` 完了後、エージェント側で対象ページを開いて確認する（フロントは HMR、API は再ビルドが必要）。
 
 ### ホスト cargo（Docker なし）
 
@@ -101,6 +104,7 @@ Angular: `cd frontend && ng serve --host 127.0.0.1` → `http://127.0.0.1:3000`
 
 ## 関連
 
+- master 取り込み + 再起動: [`sync-master-restart`](../sync-master-restart/SKILL.md)
 - P8: [`docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](../../../docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)
 - テスト: [`test-common`](../test-common/SKILL.md)
 - GCP test: [`gcp-test-local`](../gcp-test-local/SKILL.md)

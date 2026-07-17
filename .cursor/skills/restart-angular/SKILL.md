@@ -16,7 +16,15 @@ disable-model-invocation: true
 ## Usage
 
 ```bash
-./scripts/restart-angular.sh
+.cursor/skills/sync-master-restart/scripts/restart-frontend.sh
 ```
 
-ポート変更が必要なら `PORT=4201 ./scripts/restart-angular.sh`。実装詳細は `scripts/restart-angular.sh` を参照。
+`package.json` / `package-lock.json` 更新後:
+
+```bash
+RUN_NPM_CI=1 .cursor/skills/sync-master-restart/scripts/restart-frontend.sh
+```
+
+ポート変更: `PORT=4201 .cursor/skills/sync-master-restart/scripts/restart-frontend.sh`
+
+master 取り込みと合わせる場合は [sync-master-restart](../sync-master-restart/SKILL.md) を使う。

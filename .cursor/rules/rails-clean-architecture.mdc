@@ -13,11 +13,11 @@ alwaysApply: true
 
 | 優先 | 根拠として使ってよいか |
 |------|------------------------|
-| 1. **`ARCHITECTURE.md`**（`## What we require`、`## Prohibited practices` 1–30、境界の説明） | ✅ |
-| 2. **該当テスト**（観測可能な振る舞いを表明） | ✅（1 と矛盾させない範囲） |
-| 3. 業界記事・慣習・Pragmatism 単体 | ❌ |
-| 4. 「既存もそう」 | ❌ |
-| 5. 「テストが通った」だけ | ❌ |
+| 1. **`ARCHITECTURE.md`**（`## What we require`、`## Prohibited practices` 1–30、境界の説明） | 可 |
+| 2. **該当テスト**（観測可能な振る舞いを表明） | 可（1 と矛盾させない範囲） |
+| 3. 業界記事・慣習・Pragmatism 単体 | 不可 |
+| 4. 「既存もそう」 | 不可 |
+| 5. 「テストが通った」だけ | 不可 |
 
 `lib/domain`・gateway・`CompositionRoot`・Interactor / Presenter 配線に触れる変更では、触れる層に関わる `What we require` / `Prohibited practices` を読み、違反を増やさない。ブログ的な書き方と規約が食い違ったら **規約側**。
 
@@ -30,9 +30,9 @@ alwaysApply: true
 - **配線は明示**: コンストラクタが契約。`*Port.default` / `*Gateway.default` / `CompositionRoot.*` を **presenter や interactor 内部**から呼ばない。
 - **挙動の規約**: **`ARCHITECTURE.md`・ポート/DTO・そのテスト**。「既存 Rails と同じ」だけを根拠にしない。
 
-## してはいけない（代表的なもの）
+## 行わないこと（代表的なもの）
 
-| 領域 | ❌ |
+| 領域 | 行わないこと |
 |------|----|
 | `lib/domain` | `Rails.*`、`Date.current` / `Time.current`（注入 clock または引数でない）、AR の `.where` / `includes`、具象 `Adapters::` の `new` |
 | Interactor | `params` 生形、`render` / `redirect_to`、表示順だけのロジック、`CompositionRoot` 呼び出し |
