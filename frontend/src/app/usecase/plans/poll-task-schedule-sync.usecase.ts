@@ -40,7 +40,9 @@ export class PollTaskScheduleSyncUseCase {
       .subscribe((message) => {
         if (!isTaskScheduleSyncPollable(message.syncState)) {
           this.outputPort.onTaskScheduleSync(message);
+          return;
         }
+        this.outputPort.onTaskScheduleSync({ ...message, pollExhausted: true });
       });
   }
 }

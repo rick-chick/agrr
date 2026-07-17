@@ -172,7 +172,8 @@ export class LoadWorkDayListUseCase implements LoadWorkDayListInputPort {
           fields: schedule.fields,
           ...grouped,
           recentAdHocRecord,
-          nextScheduled
+          nextScheduled,
+          loadGeneration: dto.loadGeneration
         });
       },
       error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })

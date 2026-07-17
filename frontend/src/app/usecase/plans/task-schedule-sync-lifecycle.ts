@@ -11,13 +11,32 @@ export const TASK_SCHEDULE_SYNC_POLL_MAX_ATTEMPTS = 120;
 export interface TaskScheduleSyncLifecycleState {
   pendingSyncMessage: TaskScheduleSyncMessageDto | null;
   regeneratePostInFlight: boolean;
+  scheduleLoadGeneration: number;
 }
 
 export function initialTaskScheduleSyncLifecycleState(): TaskScheduleSyncLifecycleState {
   return {
     pendingSyncMessage: null,
-    regeneratePostInFlight: false
+    regeneratePostInFlight: false,
+    scheduleLoadGeneration: 0
   };
+}
+
+export function beginScheduleLoad(
+  lifecycle: TaskScheduleSyncLifecycleState
+): { lifecycle: TaskScheduleSyncLifecycleState; generation: number } {
+  const generation = lifecycle.scheduleLoadGeneration + 1;
+  return {
+    lifecycle: { ...lifecycle, scheduleLoadGeneration: generation },
+    generation
+  };
+}
+
+export function isStaleScheduleLoad(
+  lifecycle: TaskScheduleSyncLifecycleState,
+  loadGeneration: number
+): boolean {
+  return loadGeneration < lifecycle.scheduleLoadGeneration;
 }
 
 export function resolveRegenerating(
@@ -69,7 +88,8 @@ export function receiveTaskScheduleSyncMessage(
   return {
     lifecycle: {
       pendingSyncMessage: null,
-      regeneratePostInFlight: false
+      regeneratePostInFlight: false,
+      scheduleLoadGeneration: lifecycle.scheduleLoadGeneration
     },
     deferred: false,
     viewPatch: taskScheduleSyncViewPatch(message.syncState)
@@ -89,7 +109,8 @@ export function finishTaskScheduleLoad(
   const pending = lifecycle.pendingSyncMessage;
   const nextLifecycle: TaskScheduleSyncLifecycleState = {
     pendingSyncMessage: null,
-    regeneratePostInFlight: false
+    regeneratePostInFlight: false,
+    scheduleLoadGeneration: lifecycle.scheduleLoadGeneration
   };
 
   if (pending) {
@@ -149,13 +170,16 @@ export function applyTaskScheduleSyncMessage(
   }
 
   const patch = received.viewPatch!;
+  const pollExhaustedWhileGenerating =
+    input.message.pollExhausted === true && input.message.syncState === 'generating';
   return {
     lifecycle: received.lifecycle,
-    regenerating: patch.regenerating,
+    regenerating: pollExhaustedWhileGenerating ? true : patch.regenerating,
     pendingSyncToastKey: patch.toastI18nKey,
-    syncReloadNonce: patch.requestReload
-      ? input.currentSyncReloadNonce + 1
-      : input.currentSyncReloadNonce,
+    syncReloadNonce:
+      patch.requestReload || pollExhaustedWhileGenerating
+        ? input.currentSyncReloadNonce + 1
+        : input.currentSyncReloadNonce,
     appliedToEntity: true,
     message: input.message
   };

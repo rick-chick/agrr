@@ -374,10 +374,12 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
         regenerateError: null
       };
     }
+    const loadGeneration = this.presenter.beginScheduleLoad();
     this.loadUseCase.execute({
       planId: this.planId,
       today: localTodayIso(),
-      includeSkipped: this.control.includeSkipped
+      includeSkipped: this.control.includeSkipped,
+      loadGeneration
     });
   }
 

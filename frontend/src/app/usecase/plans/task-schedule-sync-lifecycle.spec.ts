@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyTaskScheduleSyncMessage,
+  beginScheduleLoad,
   finishTaskScheduleLoad,
   initialTaskScheduleSyncLifecycleState,
+  isStaleScheduleLoad,
   markRegeneratePostInFlight,
   receiveTaskScheduleSyncMessage,
   resolveRegenerating,
@@ -37,7 +39,8 @@ describe('task-schedule-sync-lifecycle', () => {
         syncError: null,
         syncErrorCropId: null
       },
-      regeneratePostInFlight: false
+      regeneratePostInFlight: false,
+      scheduleLoadGeneration: 0
     };
 
     const result = finishTaskScheduleLoad(lifecycle, 'generating');
@@ -93,5 +96,33 @@ describe('task-schedule-sync-lifecycle', () => {
       syncError: null,
       syncErrorCropId: null
     });
+  });
+
+  it('beginScheduleLoad increments generation and isStaleScheduleLoad rejects older loads', () => {
+    const first = beginScheduleLoad(initialTaskScheduleSyncLifecycleState());
+    const second = beginScheduleLoad(first.lifecycle);
+
+    expect(first.generation).toBe(1);
+    expect(second.generation).toBe(2);
+    expect(isStaleScheduleLoad(second.lifecycle, first.generation)).toBe(true);
+    expect(isStaleScheduleLoad(second.lifecycle, second.generation)).toBe(false);
+  });
+
+  it('applyTaskScheduleSyncMessage requests reload when poll exhausts while generating', () => {
+    const result = applyTaskScheduleSyncMessage({
+      lifecycle: initialTaskScheduleSyncLifecycleState(),
+      message: {
+        syncState: 'generating',
+        syncError: null,
+        syncErrorCropId: null,
+        pollExhausted: true
+      },
+      entityLoaded: true,
+      currentSyncReloadNonce: 4
+    });
+
+    expect(result.regenerating).toBe(true);
+    expect(result.syncReloadNonce).toBe(5);
+    expect(result.appliedToEntity).toBe(true);
   });
 });

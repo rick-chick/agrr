@@ -10,4 +10,5 @@ export interface TaskScheduleSyncMessageDto {
   syncState: TaskScheduleSyncState | string;
   syncError: string | null;
   syncErrorCropId: number | null;
+  pollExhausted?: boolean;
 }

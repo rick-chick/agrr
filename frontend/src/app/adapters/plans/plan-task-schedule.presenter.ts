@@ -26,8 +26,10 @@ import {
 } from './task-schedule-sync-presenter.helpers';
 import {
   applyTaskScheduleSyncMessage,
+  beginScheduleLoad,
   finishTaskScheduleLoad,
   initialTaskScheduleSyncLifecycleState,
+  isStaleScheduleLoad,
   markRegeneratePostInFlight,
   mergePlanWithSyncMessage,
   taskScheduleSyncMessageFromRegenerateResponse,
@@ -72,6 +74,12 @@ export class PlanTaskSchedulePresenter
     this.view = view;
   }
 
+  beginScheduleLoad(): number {
+    const result = beginScheduleLoad(this.syncLifecycle);
+    this.syncLifecycle = result.lifecycle;
+    return result.generation;
+  }
+
   applyClientFilters(
     fromDate: string,
     fieldFilterId: number | null,
@@ -106,6 +114,12 @@ export class PlanTaskSchedulePresenter
 
   present(dto: PlanTaskScheduleDataDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (
+      dto.loadGeneration != null &&
+      isStaleScheduleLoad(this.syncLifecycle, dto.loadGeneration)
+    ) {
+      return;
+    }
     const current = this.view.control;
     const fromDate = current.fromDate || localTodayIso();
     const fieldFilterId = current.fieldFilterId ?? null;

@@ -11,6 +11,7 @@ export interface LoadWorkDayListInputDto {
   planId: number;
   today: string;
   includeSkipped?: boolean;
+  loadGeneration?: number;
 }
 
 export interface RecentAdHocRecordDto {
@@ -26,4 +27,5 @@ export interface LoadWorkDayListDataDto {
   upcoming: WorkDayListRowDto[];
   recentAdHocRecord: RecentAdHocRecordDto | null;
   nextScheduled: WorkDayListRowDto | null;
+  loadGeneration?: number;
 }
