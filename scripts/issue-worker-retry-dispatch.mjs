@@ -18,8 +18,8 @@ import {
   parseRetryDispatchArgs,
   resolveImplementPreDispatchGates,
   selectDepsUnblockCandidate,
-  selectRetryCandidate,
-  parseDependencyIssueNumbers,
+  selectDispatchableRetryCandidate,
+  parseHardDependencyIssueNumbers,
 } from './issue-worker-dispatch-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
@@ -268,7 +268,19 @@ async function main() {
 
   if (args.mode === 'reconcile') {
     const issues = listAgentReadyIssues(repo);
-    const selected = selectRetryCandidate(issues, (issueNumber) => hasOpenFixPr(repo, issueNumber));
+    const selected = await selectDispatchableRetryCandidate(
+      issues,
+      (issueNumber) => hasOpenFixPr(repo, issueNumber),
+      async (issue) =>
+        resolveImplementPreDispatchGates({
+          issueNumber: issue.number,
+          issueTitle: issue.title,
+          issueBody: issue.body,
+          issueLabels: issue.labels.join(','),
+          fetchIssueState: async (number) => fetchIssue(repo, number).state,
+          fetchIssueBody: async (number) => fetchIssue(repo, number).body,
+        }),
+    );
     if (selected) {
       const issue = issues.find((entry) => entry.number === selected.issue.number);
       if (!issue) {
@@ -302,7 +314,7 @@ async function main() {
       throw new Error('--number must be a positive integer for on-closed mode');
     }
     const skippedIssues = listAgentSkippedIssues(repo).filter((issue) =>
-      parseDependencyIssueNumbers(issue.body ?? '').includes(closedNumber),
+      parseHardDependencyIssueNumbers(issue.body ?? '').includes(closedNumber),
     );
     const selected = await selectDepsUnblockCandidate(
       skippedIssues,

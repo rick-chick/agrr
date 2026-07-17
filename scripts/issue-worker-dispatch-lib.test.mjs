@@ -8,6 +8,7 @@ import {
   isRetryCandidate,
   openFixPrSearchQuery,
   parseDependencyIssueNumbers,
+  parseHardDependencyIssueNumbers,
   parseRetryDispatchArgs,
   resolveDependencyGate,
   resolveDispatchAction,
@@ -15,6 +16,7 @@ import {
   resolveImplementDispatchGate,
   resolveImplementPreDispatchGates,
   selectRetryCandidate,
+  selectDispatchableRetryCandidate,
   selectDepsUnblockCandidate,
   isDepsResolvedUnblockCandidate,
   formatDependencyGateComment,
@@ -522,4 +524,117 @@ test('selectDepsUnblockCandidate picks lowest-number eligible issue', async () =
     async () => 'CLOSED',
   );
   assert.equal(selected?.issue.number, 367);
+});
+
+test('parseHardDependencyIssueNumbers ignores reference issue on なし line (#384 type)', () => {
+  const body = [
+    '## 依存',
+    '',
+    '- なし（既存 open issue #362 epic「作業予定画面」とは独立。着手ブロックしない）',
+  ].join('\n');
+  assert.deepEqual(parseHardDependencyIssueNumbers(body), []);
+});
+
+test('parseHardDependencyIssueNumbers treats soft alignment note as non-blocking (#399 type)', () => {
+  const body = [
+    '## 依存',
+    '',
+    '- なし',
+    '- #384 用語と整合（実装時に合わせる。soft）',
+  ].join('\n');
+  assert.deepEqual(parseHardDependencyIssueNumbers(body), []);
+});
+
+test('parseHardDependencyIssueNumbers keeps legitimate hard dependency (#402 type)', () => {
+  const body = [
+    '## 依存',
+    '',
+    '- #384（タブラベル整合。open の間は着手不可）',
+  ].join('\n');
+  assert.deepEqual(parseHardDependencyIssueNumbers(body), [384]);
+});
+
+test('parseHardDependencyIssueNumbers excludes closed dependency mentions (#398 type)', () => {
+  const body = [
+    '## 依存',
+    '',
+    '- #396（CLOSED・前提完了）',
+  ].join('\n');
+  assert.deepEqual(parseHardDependencyIssueNumbers(body), []);
+});
+
+test('parseHardDependencyIssueNumbers extracts explicit hard dependencies', () => {
+  const body = [
+    '## 背景',
+    '',
+    'text',
+    '',
+    '## 依存',
+    '',
+    '- #317（基盤）',
+    '- #320（後続）',
+    '',
+    '## 参照',
+    '',
+    '- #999',
+  ].join('\n');
+  assert.deepEqual(parseHardDependencyIssueNumbers(body), [317, 320]);
+});
+
+test('resolveDependencyGate uses hard dependencies only for なし with reference (#384 type)', async () => {
+  const body = [
+    '## 依存',
+    '',
+    '- なし（既存 open issue #362 epic「作業予定画面」とは独立）',
+  ].join('\n');
+  const result = await resolveDependencyGate({
+    issueNumber: 384,
+    issueBody: body,
+    fetchIssueState: async () => 'OPEN',
+  });
+  assert.deepEqual(result, { skip: false });
+});
+
+test('selectDispatchableRetryCandidate skips pre-dispatch failure and picks next issue', async () => {
+  const issues = [
+    {
+      number: 384,
+      title: 'blocked',
+      labels: ['agent-ready'],
+      body: '## 依存\n\n- #362',
+    },
+    {
+      number: 398,
+      title: 'ready',
+      labels: ['agent-ready'],
+      body: '## 依存\n\n- なし',
+    },
+  ];
+  const selected = await selectDispatchableRetryCandidate(
+    issues,
+    () => false,
+    async (issue) => {
+      if (issue.number === 384) {
+        return { skip: true, skipReason: 'dependency #362 is open' };
+      }
+      return { skip: false };
+    },
+  );
+  assert.deepEqual(selected, {
+    issue: issues[1],
+    action: 'implement',
+  });
+});
+
+test('selectDispatchableRetryCandidate returns null when no issue passes gates', async () => {
+  const issues = [
+    { number: 384, title: 'blocked', labels: ['agent-ready'], body: '' },
+    { number: 398, title: 'blocked2', labels: ['agent-ready'], body: '' },
+  ];
+  const selected = await selectDispatchableRetryCandidate(
+    issues,
+    () => false,
+    async () => ({ skip: true, skipReason: 'blocked' }),
+  );
+  assert.equal(selected, null);
 });
