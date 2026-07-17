@@ -2,6 +2,8 @@
 
 新規 dispatch / retry を足す前に、同型の **動いている実装** を読む。
 
+設計時は [PRINCIPLES.md §目的](PRINCIPLES.md)（人間介在なしで完遂・既定は対象）を先に読む。
+
 ## Issue 実装パイプライン
 
 | 読むファイル | 内容 |
@@ -19,8 +21,8 @@
 
 | 読むファイル | 内容 |
 |--------------|------|
-| `.github/workflows/pr-merge-worker-dispatch.yml` | CI / conflict / ci_fix |
-| `.github/workflows/pr-merge-worker-retry-dispatch.yml` | reconcile |
+| `.github/workflows/pr-merge-worker-dispatch.yml` | CI / conflict / ci_fix（**全 PR 既定対象・オプトアウトのみ**） |
+| `.github/workflows/pr-merge-worker-retry-dispatch.yml` | reconcile（open + base master 全件） |
 | `.github/workflows/pr-agent-prep.yml` | Draft → ready（AI 不要） |
 | `scripts/pr-merge-worker-retry-dispatch-lib.mjs` | 候補選定 |
 | `.cursor/skills/github-pr-merge-worker/SKILL.md` | Agent 側 |
@@ -38,4 +40,4 @@
 | 読むファイル | 内容 |
 |--------------|------|
 | `docs/automation/CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md` | アーキテクチャ |
-| `.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md` | cron・secrets・プロンプト |
+| `.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md` | cron / secrets |

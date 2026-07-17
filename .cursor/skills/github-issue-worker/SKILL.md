@@ -296,7 +296,8 @@ gh pr ready
 
 - PR 本文に issue の完了条件チェックリストを写す
 - `Closes #N` を含めマージ時に自動クローズ
-- `agent-merge` で [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) がマージ候補に入る（**Draft のままでは dispatch しない** — [`pr-agent-prep.yml`](../../../.github/workflows/pr-agent-prep.yml) または `gh pr ready` 必須）
+- `agent-merge` は互換ラベル（[`pr-agent-prep.yml`](../../../.github/workflows/pr-agent-prep.yml) が付与しうる）。**Merge Worker の起動前提ではない**（全 PR 既定対象 — [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) / [automation-authoring PRINCIPLES](../automation-authoring/references/PRINCIPLES.md)）
+- Draft のままでは **マージ**しない。ready 化は pr-agent-prep または `gh pr ready`。CI 赤の Draft は Merge Worker の `ci_fix` が直す
 
 ## 7) 終了
 

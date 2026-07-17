@@ -28,8 +28,8 @@ const CONFLICT_DISPATCH_SNIPPETS = [
   'MERGE_STATE_STATUS" = "BEHIND"',
   'ACTION="conflict"',
   'skipping CI gate for ${ACTION} resolution',
-  'Draft PR without conflict/sync need',
-  'dispatching ci_fix',
+  'Draft PR without conflict/sync need and CI not failed',
+  'Required CI failed; dispatching ci_fix',
   'ACTION="ci_fix"',
   'classify-required-ci-state.mjs',
 ];
@@ -206,8 +206,12 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     errors.push('needs-sync helper missing prMergeWorkerNeedsSync export');
   }
 
-  if (!needsSyncText.includes('isOptInHeadRef')) {
-    errors.push('needs-sync helper must reuse isOptInHeadRef for cursor/* and issue/* eligibility');
+  if (!needsSyncText.includes('export function prMergeWorkerIsEligible')) {
+    errors.push('needs-sync helper missing prMergeWorkerIsEligible export');
+  }
+
+  if (!needsSyncText.includes('Universal rescue')) {
+    errors.push('needs-sync helper must document universal rescue (opt-out) eligibility');
   }
 
   const skillPath = join(repoRoot, '.cursor/skills/github-pr-merge-worker/SKILL.md');

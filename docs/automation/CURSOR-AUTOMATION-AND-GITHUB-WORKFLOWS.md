@@ -2,6 +2,8 @@
 
 AGRR では **Cursor Automation（Cloud Agent）** と **GitHub Actions** を組み合わせて、issue 実装・PR マージ・UX 監査などを自動化している。本ドキュメントは両者の**役割分担・データの流れ・ワークフロー一覧**を俯瞰する。
 
+**目的**: 人間がラベルを付けたり UI で再開したりしなくても、パイプラインが **完了・再開・完遂**できること。設計原則の正本は [`.cursor/skills/automation-authoring/references/PRINCIPLES.md`](../../.cursor/skills/automation-authoring/references/PRINCIPLES.md)。
+
 **運用設定の正本**（cron・prefill URL・secrets 登録手順）は [`.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md`](../../.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md)。本資料はアーキテクチャ説明に専念し、手順の重複は避ける。
 
 ---
@@ -94,34 +96,32 @@ sequenceDiagram
 | レビュー・マージ | Cursor **PR Merge Worker** | [`github-pr-merge-worker/SKILL.md`](../../.cursor/skills/github-pr-merge-worker/SKILL.md) |
 | 起動トリガ | GitHub **pr-merge-worker-dispatch** | [`.github/workflows/pr-merge-worker-dispatch.yml`](../../.github/workflows/pr-merge-worker-dispatch.yml) |
 
-**オプトイン条件**（Merge Worker 対象 PR）: ラベル `agent-merge`、head `issue/<number>-*`、または本文 `Merge-Strategy: agent`。
+**対象**（Merge Worker）: `master` 向け同一リポジトリ PR は **既定で対象**（オプトアウト: `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`、fork、`CHANGES_REQUESTED`、タイトル `[WIP]`/`[DRAFT]`）。`agent-merge` ラベルは互換のため残すが必須ではない。
 
 **リトライ**: `issue-worker-retry-dispatch.yml` / `pr-merge-worker-retry-dispatch.yml` が 15 分ごとに滞留を reconcile。primary dispatch が `cancelled` になった場合も再送する。
 
-#### 例外: Draft + 必須 CI 失敗（責任空白の回復）
+#### 必須 CI 失敗の自動救済（`action: ci_fix`）
 
-Issue Worker が Draft PR を作成したあと必須 CI が FAIL すると、Issue Worker（open PR ゲート）・pr-agent-prep（ready は CI green 必須）・従来の Merge Worker dispatch（Draft スキップ）のいずれも介入しない状態になりうる（#354）。
+必須 CI が FAIL のまま滞留すると、ready 化・マージが進まない。Merge Worker が Draft/ready・ブランチ名を問わず `ci_fix` で同一ブランチ修正する。
 
 | 層 | 回復経路 |
 |----|----------|
-| **PR Merge Worker** | `action: ci_fix` — Draft + `agent-merge` + 必須 CI FAIL + 非コンフリクト |
+| **PR Merge Worker** | `action: ci_fix` — 必須 CI FAIL + 非コンフリクト（オプトアウトなし） |
 | **起動** | `pr-merge-worker-dispatch`（Backend test 完了で FAIL 検知）または `pr-merge-worker-retry-dispatch`（15 分 reconcile） |
 | **Issue Worker** | open PR がある間は **再 dispatch しない**（意図的 — 二重実装防止） |
 
 ```mermaid
 sequenceDiagram
-  participant IW as Issue Worker
-  participant GH as Draft PR
+  participant GH as PR (draft or ready)
   participant CI as Backend test 他
   participant PMD as pr-merge-worker-dispatch
   participant PMW as PR Merge Worker
 
-  IW->>GH: Draft PR + agent-merge
   CI->>GH: 必須 CI FAIL
   PMD->>PMW: webhook action ci_fix
   PMW->>GH: 同一ブランチで CI 修正 push
   CI->>GH: 必須 CI green
-  Note over GH: pr-agent-prep が ready 化 → 通常マージ経路
+  Note over GH: ready ならマージ経路 / Draft なら pr-agent-prep が ready 化
 ```
 
 ### 2. UX キャンペーン（マージ後ループ）

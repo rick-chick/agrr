@@ -194,13 +194,6 @@ export function detectStuckDraftPr(pr, nowMs) {
     return null;
   }
   const labels = labelNames(pr.labels);
-  const headRefName = pr.headRefName ?? '';
-  const isAgentDraft =
-    labels.includes('agent-merge') ||
-    /^(cursor\/|issue\/[0-9]+-)/.test(headRefName);
-  if (!isAgentDraft) {
-    return null;
-  }
   const updatedAtMs = Date.parse(pr.updatedAt);
   if (!isStale({ updatedAtMs, nowMs, thresholdMs: DRAFT_STUCK_MS })) {
     return null;
@@ -282,13 +275,7 @@ export function detectStaleMergeInProgressPr(pr, nowMs) {
  * @returns {import('./collect-pipeline-health-types.mjs').PipelineFinding | null}
  */
 export function detectConflictReadyPr(pr) {
-  if (pr.isDraft) {
-    return null;
-  }
   const labels = labelNames(pr.labels);
-  if (!labels.includes('agent-merge')) {
-    return null;
-  }
   const status = pr.mergeStateStatus ?? '';
   if (!['BEHIND', 'DIRTY', 'CONFLICTING'].includes(status)) {
     return null;
@@ -300,7 +287,7 @@ export function detectConflictReadyPr(pr) {
     subjectType: 'pr',
     subjectNumber: pr.number,
     title: `[P1][infra] PR #${pr.number} merge state ${status}`,
-    summary: `Ready PR #${pr.number} is agent-merge but mergeStateStatus is ${status}.`,
+    summary: `Open PR #${pr.number} mergeStateStatus is ${status} (needs sync / conflict resolution).`,
     evidence: {
       prNumber: pr.number,
       prTitle: pr.title,
@@ -325,13 +312,7 @@ export function detectConflictReadyPr(pr) {
  * @returns {import('./collect-pipeline-health-types.mjs').PipelineFinding | null}
  */
 export function detectCiFailingReadyPr(pr, checks) {
-  if (pr.isDraft) {
-    return null;
-  }
   const labels = labelNames(pr.labels);
-  if (!labels.includes('agent-merge')) {
-    return null;
-  }
   const failed = checks.filter((check) => check.state === 'FAILURE');
   if (failed.length === 0) {
     return null;
@@ -342,8 +323,8 @@ export function detectCiFailingReadyPr(pr, checks) {
     priority: 'P1',
     subjectType: 'pr',
     subjectNumber: pr.number,
-    title: `[P1][infra] PR #${pr.number} agent-merge with failing CI`,
-    summary: `PR #${pr.number} is ready for agent merge but has failing checks.`,
+    title: `[P1][infra] PR #${pr.number} with failing CI`,
+    summary: `Open PR #${pr.number} has failing required checks (ci_fix / merge path should pick up).`,
     evidence: {
       prNumber: pr.number,
       prTitle: pr.title,
