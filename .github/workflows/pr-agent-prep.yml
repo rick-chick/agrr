@@ -51,6 +51,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
           INPUT_PR: ${{ github.event.inputs.pr_number }}
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          WORKFLOW_RUN_PRS_JSON: ${{ toJson(github.event.workflow_run.pull_requests) }}
         run: |
           set -euo pipefail
           MODE="prep"
@@ -76,16 +78,14 @@ jobs:
               echo "skip=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
-            OPEN_PRS=$(gh api "repos/${{ github.repository }}/commits/$HEAD_SHA/pulls" \
-              --jq '[.[] | select(.state == "open")]')
-            OPEN_COUNT=$(echo "$OPEN_PRS" | jq 'length')
-            if [ "$OPEN_COUNT" -ne 1 ]; then
-              echo "Expected exactly one open PR for commit $HEAD_SHA (found $OPEN_COUNT); skipping."
+            RESULT=$(REPO='${{ github.repository }}' HEAD_SHA="$WORKFLOW_RUN_HEAD_SHA" node scripts/resolve-workflow-run-pr-from-gh.mjs)
+            SKIP=$(echo "$RESULT" | jq -r 'if .skip then "true" else "false" end')
+            if [ "$SKIP" = "true" ]; then
+              echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason // "unknown"')" >> "$GITHUB_OUTPUT"
               echo "skip=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-            PR_NUMBER=$(echo "$OPEN_PRS" | jq -r '.[0].number')
+            PR_NUMBER=$(echo "$RESULT" | jq -r '.number')
           fi
 
           echo "skip=false" >> "$GITHUB_OUTPUT"

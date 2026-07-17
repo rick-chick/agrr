@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { REQUIRED_AUTOMATION_SCRIPT_UNIT_TESTS } from './automation-script-unit-tests.mjs';
+
 const REQUIRED_PREP_WORKFLOW_SNIPPETS = [
   'PR Agent Prep',
   'scripts/pr-agent-prep.sh',
@@ -9,6 +11,9 @@ const REQUIRED_PREP_WORKFLOW_SNIPPETS = [
   '0 */12 * * *',
   'contents: write',
   'secrets.AGRR_GH_PAT',
+  'WORKFLOW_RUN_HEAD_SHA',
+  'WORKFLOW_RUN_PRS_JSON',
+  'resolve-workflow-run-pr-from-gh.mjs',
 ];
 
 const REQUIRED_PREP_SCRIPT_SNIPPETS = [
@@ -54,6 +59,14 @@ export async function verifyPrAgentPrepWorkflow(repoRoot) {
     }
   }
 
+  if (prepWorkflowText.includes('commits/$HEAD_SHA/pulls')) {
+    errors.push('pr-agent-prep workflow must not use fragile commits/SHA/pulls bash resolution');
+  }
+
+  if (prepWorkflowText.includes('function ghApi(path)')) {
+    errors.push('pr-agent-prep workflow must not inline ghApi; use resolve-workflow-run-pr-from-gh.mjs');
+  }
+
   const prepScriptPath = join(repoRoot, 'scripts/pr-agent-prep.sh');
   try {
     const prepScriptText = await readFile(prepScriptPath, 'utf8');
@@ -88,6 +101,26 @@ export async function verifyPrAgentPrepWorkflow(repoRoot) {
     await readFile(libPath, 'utf8');
   } catch {
     errors.push(`missing library: ${libPath}`);
+  }
+
+  const frontendTestWorkflowPath = join(repoRoot, '.github/workflows/frontend-test.yml');
+  let frontendTestWorkflowText = '';
+  try {
+    frontendTestWorkflowText = await readFile(frontendTestWorkflowPath, 'utf8');
+  } catch {
+    errors.push(`missing frontend-test workflow: ${frontendTestWorkflowPath}`);
+  }
+
+  if (frontendTestWorkflowText.includes('automation script unit tests')) {
+    for (const testPath of REQUIRED_AUTOMATION_SCRIPT_UNIT_TESTS) {
+      if (!frontendTestWorkflowText.includes(testPath)) {
+        errors.push(
+          `frontend-test.yml automation script unit tests must include: ${testPath}`,
+        );
+      }
+    }
+  } else {
+    errors.push('frontend-test.yml missing automation script unit tests step');
   }
 
   return { ok: errors.length === 0, errors };

@@ -5,10 +5,11 @@
  *
  * Runs an immediate scan and a delayed re-scan to catch GitHub merge-state lag.
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 import { buildConflictDispatchPayload } from './pr-merge-worker-dispatch-payload-lib.mjs';
 import { selectSyncCandidates } from './pr-merge-worker-needs-sync.mjs';
+import { postWebhookJson } from './webhook-post-lib.mjs';
 
 const webhookUrl = process.env.WEBHOOK_URL ?? '';
 const webhookKey = process.env.WEBHOOK_KEY ?? '';
@@ -23,11 +24,15 @@ if (!webhookUrl || !webhookKey) {
 }
 
 function ghJson(command) {
-  const output = execSync(command, {
+  const output = execFileSync('bash', ['-lc', command], {
     encoding: 'utf8',
     stdio: ['pipe', 'pipe', 'inherit'],
   });
   return JSON.parse(output);
+}
+
+function sleepSync(ms) {
+  execFileSync('sleep', [String(Math.max(1, Math.ceil(ms / 1000)))]);
 }
 
 /**
@@ -48,13 +53,14 @@ function dispatchSyncCandidates(phase) {
   for (const pr of candidates) {
     const payload = buildConflictDispatchPayload({ repository, pr });
 
-    execSync(
-      `curl -fsS -X POST "${webhookUrl}" -H "Authorization: Bearer ${webhookKey}" -H "Content-Type: application/json" -d @-`,
-      {
-        input: JSON.stringify(payload),
-        stdio: ['pipe', 'inherit', 'inherit'],
-      },
-    );
+    postWebhookJson({
+      url: webhookUrl,
+      bearerToken: webhookKey,
+      body: payload,
+      execFileSync,
+      sleepSync,
+      log: (message) => console.log(`[${phase}] ${message}`),
+    });
 
     console.log(`[${phase}] Dispatched conflict/sync for PR #${pr.number}`);
   }
@@ -62,13 +68,9 @@ function dispatchSyncCandidates(phase) {
   return candidates.length;
 }
 
-function sleep(ms) {
-  execSync(`sleep ${Math.ceil(ms / 1000)}`);
-}
-
 dispatchSyncCandidates('immediate');
 console.log(
   `Waiting ${DELAYED_RESCAN_MS / 60_000} minutes for GitHub merge state to settle before delayed re-scan...`,
 );
-sleep(DELAYED_RESCAN_MS);
+sleepSync(DELAYED_RESCAN_MS);
 dispatchSyncCandidates('delayed');

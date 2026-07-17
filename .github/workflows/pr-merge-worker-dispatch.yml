@@ -24,6 +24,10 @@ concurrency:
   group: pr-merge-dispatch-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || format('master-{0}', github.sha) }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   dispatch:
     runs-on: ubuntu-latest
@@ -41,6 +45,8 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BODY_INPUT: ${{ github.event.pull_request.body }}
           PR_TITLE_INPUT: ${{ github.event.pull_request.title }}
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          WORKFLOW_RUN_PRS_JSON: ${{ toJson(github.event.workflow_run.pull_requests) }}
         run: |
           set -euo pipefail
           if [ "$EVENT_NAME" = "pull_request" ]; then
@@ -56,28 +62,22 @@ jobs:
             PR_AUTHOR='${{ github.event.pull_request.user.login }}'
           else
             ACTION="ci_completed"
-            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
-            OPEN_PRS=$(gh api "repos/${{ github.repository }}/commits/$HEAD_SHA/pulls" \
-              --jq '[.[] | select(.state == "open")]')
-            OPEN_COUNT=$(echo "$OPEN_PRS" | jq 'length')
-            if [ "$OPEN_COUNT" -eq 0 ]; then
+            HEAD_SHA="$WORKFLOW_RUN_HEAD_SHA"
+            RESULT=$(REPO='${{ github.repository }}' HEAD_SHA="$WORKFLOW_RUN_HEAD_SHA" node scripts/resolve-workflow-run-pr-from-gh.mjs)
+            SKIP=$(echo "$RESULT" | jq -r 'if .skip then "true" else "false" end')
+            if [ "$SKIP" = "true" ]; then
               echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason // "unknown"')" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-            if [ "$OPEN_COUNT" -gt 1 ]; then
-              echo "Multiple open PRs for commit $HEAD_SHA; skipping ambiguous dispatch."
-              echo "skip=true" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            PR_JSON=$(echo "$OPEN_PRS" | jq '.[0]')
-            PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
-            HEAD_REF=$(echo "$PR_JSON" | jq -r '.head.ref')
-            PR_BODY_B64=$(echo "$PR_JSON" | jq -r '.body // ""' | base64 -w0)
-            PR_TITLE_B64=$(echo "$PR_JSON" | jq -r '.title' | base64 -w0)
+            PR_NUMBER=$(echo "$RESULT" | jq -r '.number')
+            HEAD_REF=$(echo "$RESULT" | jq -r '.headRef')
+            PR_BODY_B64=$(echo "$RESULT" | jq -r '.body' | base64 -w0)
+            PR_TITLE_B64=$(echo "$RESULT" | jq -r '.title' | base64 -w0)
             LABEL_NAME=""
-            LABELS=$(echo "$PR_JSON" | jq -r '[.labels[].name] | join(",")')
-            PR_URL=$(echo "$PR_JSON" | jq -r '.html_url')
-            PR_AUTHOR=$(echo "$PR_JSON" | jq -r '.user.login')
+            LABELS=$(echo "$RESULT" | jq -r '.labels')
+            PR_URL=$(echo "$RESULT" | jq -r '.url')
+            PR_AUTHOR=$(echo "$RESULT" | jq -r '.author')
           fi
 
           echo "skip=false" >> "$GITHUB_OUTPUT"
@@ -256,10 +256,7 @@ jobs:
             --arg mergeable_state "$MERGEABLE_STATE" \
             --arg merge_state_status "$MERGE_STATE_STATUS" \
             '{repository: $repo, pr_number: $number, pr_title: $title, pr_url: $url, action: $action, head_ref: $head_ref, head_sha: $head_sha, author: $author, mergeable_state: $mergeable_state, merge_state_status: $merge_state_status}')
-          curl -fsS -X POST "$WEBHOOK_URL" \
-            -H "Authorization: Bearer $WEBHOOK_KEY" \
-            -H "Content-Type: application/json" \
-            -d "$payload"
+          printf '%s' "$payload" | node scripts/post-cursor-webhook.mjs
 
   dispatch-after-master-push:
     runs-on: ubuntu-latest

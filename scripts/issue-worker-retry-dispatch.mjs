@@ -24,8 +24,13 @@ import {
   parseDependencyIssueNumbers,
 } from './issue-worker-dispatch-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
+import { postWebhookJson } from './webhook-post-lib.mjs';
 
 const DEFAULT_REPO = 'rick-chick/agrr';
+
+function sleepSync(ms) {
+  execFileSync('sleep', [String(Math.max(1, Math.ceil(ms / 1000)))]);
+}
 
 /**
  * @param {string} repo
@@ -164,22 +169,14 @@ function postWebhook({ repo, issue, action, retryReason }) {
     retryReason,
   });
 
-  execFileSync(
-    'curl',
-    [
-      '-fsS',
-      '-X',
-      'POST',
-      webhookUrl,
-      '-H',
-      `Authorization: Bearer ${webhookKey}`,
-      '-H',
-      'Content-Type: application/json',
-      '-d',
-      JSON.stringify(payload),
-    ],
-    { stdio: ['ignore', 'inherit', 'inherit'] },
-  );
+  postWebhookJson({
+    url: webhookUrl,
+    bearerToken: webhookKey,
+    body: payload,
+    execFileSync,
+    sleepSync,
+    log: console.log,
+  });
 
   console.log(`Dispatched Issue Worker retry for #${issue.number} (${action})`);
 }

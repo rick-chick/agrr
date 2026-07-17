@@ -11,3 +11,17 @@ test('pr-agent-prep workflow contract is satisfied', async () => {
   const result = await verifyPrAgentPrepWorkflow(REPO_ROOT);
   assert.equal(result.ok, true, result.errors.join('\n'));
 });
+
+test('verifyPrAgentPrepWorkflow requires automation script unit tests in frontend-test.yml', async () => {
+  const result = await verifyPrAgentPrepWorkflow(REPO_ROOT);
+  assert.equal(
+    result.errors.filter((error) => error.includes('resolve-workflow-run-pr-lib.test.mjs')).length,
+    0,
+    result.errors.join('\n'),
+  );
+  assert.equal(
+    result.errors.filter((error) => error.includes('automation script unit tests')).length,
+    0,
+    result.errors.join('\n'),
+  );
+});
