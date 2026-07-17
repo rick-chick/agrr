@@ -349,9 +349,11 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     if (!options?.silent) {
       this.control = { ...this.control, loading: true, error: null, regenerateError: null };
     }
+    const loadGeneration = this.presenter.beginScheduleLoad();
     this.useCase.execute({
       planId,
-      fieldCultivationId: this.fieldCultivationFilterId ?? undefined
+      fieldCultivationId: this.fieldCultivationFilterId ?? undefined,
+      loadGeneration
     });
   }
 

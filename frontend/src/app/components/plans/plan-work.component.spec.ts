@@ -147,6 +147,7 @@ describe('PlanWorkComponent mobile UX', () => {
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: {
     setView: ReturnType<typeof vi.fn>;
+    beginScheduleLoad: ReturnType<typeof vi.fn>;
   };
   let mockActivatedRoute: ReturnType<typeof createPlanRouteMock>;
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
@@ -158,7 +159,8 @@ describe('PlanWorkComponent mobile UX', () => {
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     mockPresenter = {
-      setView: vi.fn()
+      setView: vi.fn(),
+      beginScheduleLoad: vi.fn(() => 1)
     };
     cdr = { markForCheck: vi.fn() };
     mockActivatedRoute = createPlanRouteMock('7');
@@ -743,7 +745,8 @@ describe('PlanWorkComponent in locale labels', () => {
     const regenerateUseCase = { execute: vi.fn() };
     const subscribeSyncUseCase = { execute: vi.fn() };
     const mockPresenter = {
-      setView: vi.fn()
+      setView: vi.fn(),
+      beginScheduleLoad: vi.fn(() => 1)
     };
     const cdr = { markForCheck: vi.fn() };
     const localeRouteMock = createPlanRouteMock('7');

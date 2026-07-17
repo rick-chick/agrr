@@ -21,7 +21,8 @@ export class LoadPlanTaskScheduleUseCase implements LoadPlanTaskScheduleInputPor
       params.field_cultivation_id = dto.fieldCultivationId;
     }
     this.planGateway.getTaskSchedule(dto.planId, params).subscribe({
-      next: (schedule) => this.outputPort.present({ schedule }),
+      next: (schedule) =>
+        this.outputPort.present({ schedule, loadGeneration: dto.loadGeneration }),
       error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }

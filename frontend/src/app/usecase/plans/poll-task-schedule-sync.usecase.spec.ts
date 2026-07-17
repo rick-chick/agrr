@@ -4,7 +4,10 @@ import { PollTaskScheduleSyncUseCase } from './poll-task-schedule-sync.usecase';
 import { PlanGateway } from './plan-gateway';
 import { SubscribeTaskScheduleSyncOutputPort } from './subscribe-task-schedule-sync.output-port';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
-import { TASK_SCHEDULE_SYNC_POLL_INTERVAL_MS } from './task-schedule-sync-lifecycle';
+import {
+  TASK_SCHEDULE_SYNC_POLL_INTERVAL_MS,
+  TASK_SCHEDULE_SYNC_POLL_MAX_ATTEMPTS
+} from './task-schedule-sync-lifecycle';
 
 function scheduleWithSyncState(syncState: string): TaskScheduleResponse {
   return {
@@ -58,6 +61,26 @@ describe('PollTaskScheduleSyncUseCase', () => {
       syncState: 'ready',
       syncError: null,
       syncErrorCropId: null
+    });
+  });
+
+  it('notifies poll exhaustion while still generating to trigger reload', () => {
+    const getTaskSchedule = vi.fn().mockReturnValue(of(scheduleWithSyncState('generating')));
+    const gateway = { getTaskSchedule } as unknown as PlanGateway;
+    const outputPort: SubscribeTaskScheduleSyncOutputPort = {
+      onTaskScheduleSync: vi.fn()
+    };
+    const useCase = new PollTaskScheduleSyncUseCase(outputPort, gateway);
+
+    const subscription = useCase.execute({ planId: 7 });
+    vi.advanceTimersByTime(TASK_SCHEDULE_SYNC_POLL_INTERVAL_MS * TASK_SCHEDULE_SYNC_POLL_MAX_ATTEMPTS);
+    subscription.unsubscribe();
+
+    expect(outputPort.onTaskScheduleSync).toHaveBeenCalledWith({
+      syncState: 'generating',
+      syncError: null,
+      syncErrorCropId: null,
+      pollExhausted: true
     });
   });
 });
