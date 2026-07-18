@@ -17,6 +17,7 @@ import {
   openFixPrSearchQuery,
   parseRetryDispatchArgs,
   resolveImplementPreDispatchGates,
+  resolvePreDispatchGates,
   selectRetriageCandidate,
   selectDispatchableRetryCandidate,
   resolveHardDependencies,
@@ -271,13 +272,15 @@ async function dispatchRetriageIssue({ repo, issue, retryReason }) {
  *   repo: string;
  *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
  *   retryReason?: string;
+ *   action?: string;
  * }} input
  * @returns {Promise<boolean>}
  */
-async function dispatchIfEligible({ repo, issue, retryReason }) {
+async function dispatchIfEligible({ repo, issue, retryReason, action: actionOverride }) {
   const labels = issue.labels.join(',');
   const eligibility = isRetryCandidate({
     issueLabels: labels,
+    issueTitle: issue.title,
     hasOpenFixPr: hasOpenFixPr(repo, issue.number),
   });
   if (!eligibility.eligible) {
@@ -285,8 +288,10 @@ async function dispatchIfEligible({ repo, issue, retryReason }) {
     return false;
   }
 
+  const action = actionOverride ?? eligibility.action;
   const getAgentDepsContract = createRepoAgentDepsGetter(repo);
-  const preDispatch = await resolveImplementPreDispatchGates({
+  const preDispatch = await resolvePreDispatchGates({
+    action,
     issueNumber: issue.number,
     issueTitle: issue.title,
     issueBody: issue.body,
@@ -303,7 +308,7 @@ async function dispatchIfEligible({ repo, issue, retryReason }) {
   postWebhook({
     repo,
     issue,
-    action: eligibility.action,
+    action,
     retryReason,
   });
   return true;
@@ -320,8 +325,9 @@ async function main() {
     const selected = await selectDispatchableRetryCandidate(
       issues,
       (issueNumber) => hasOpenFixPr(repo, issueNumber),
-      async (issue) =>
-        resolveImplementPreDispatchGates({
+      async (issue, action) =>
+        resolvePreDispatchGates({
+          action,
           issueNumber: issue.number,
           issueTitle: issue.title,
           issueBody: issue.body,
@@ -341,6 +347,7 @@ async function main() {
         repo,
         issue,
         retryReason: args.retryReason ?? defaultRetryReasonForMode('reconcile'),
+        action: selected.action,
       });
       return;
     }

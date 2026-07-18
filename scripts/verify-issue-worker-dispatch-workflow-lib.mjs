@@ -8,7 +8,8 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'CURSOR_ISSUE_WORKER_WEBHOOK_KEY',
   'resolveDispatchAction',
   'resolveImplementDispatchGate',
-  'resolveEpicImplementGate',
+  'resolveEpicDispatchAction',
+  'resolveEpicDispatchAction',
   'resolveDependencyGate',
   'resolveDependencyGateFromAgentCache',
   'issue-worker-deps-resolve.mjs',
@@ -94,6 +95,10 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
   if (!libText.includes('export async function resolveDependencyGate') &&
       !libText.includes('export function resolveDependencyGate')) {
     errors.push('dispatch lib missing resolveDependencyGate');
+  }
+
+  if (!libText.includes('export function resolveEpicDispatchAction')) {
+    errors.push('dispatch lib missing resolveEpicDispatchAction');
   }
 
   if (!libText.includes('export function resolveEpicImplementGate')) {

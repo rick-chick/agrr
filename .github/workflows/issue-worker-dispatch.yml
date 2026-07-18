@@ -90,9 +90,9 @@ jobs:
             echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason')" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Skip epic issues on implement dispatch
-        id: epic_gate
-        if: steps.issue.outputs.skip != 'true' && steps.issue.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true'
+      - name: Resolve final dispatch action
+        id: final_action
+        if: steps.issue.outputs.skip != 'true' && steps.implement_gate.outputs.skip != 'true'
         env:
           ACTION: ${{ steps.issue.outputs.action }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
@@ -100,23 +100,19 @@ jobs:
         run: |
           set -euo pipefail
           RESULT=$(node --input-type=module -e "
-            import { resolveEpicImplementGate } from './scripts/issue-worker-dispatch-lib.mjs';
-            const gate = resolveEpicImplementGate({
+            import { resolveEpicDispatchAction } from './scripts/issue-worker-dispatch-lib.mjs';
+            const remapped = resolveEpicDispatchAction({
               action: process.env.ACTION,
               issueTitle: process.env.ISSUE_TITLE ?? '',
               issueLabels: process.env.ISSUE_LABELS ?? '',
             });
-            process.stdout.write(JSON.stringify(gate));
+            process.stdout.write(JSON.stringify(remapped));
           ")
-          SKIP=$(echo "$RESULT" | jq -r '.skip')
-          echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
-          if [ "$SKIP" = "true" ]; then
-            echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason')" >> "$GITHUB_OUTPUT"
-          fi
+          echo "action=$(echo "$RESULT" | jq -r '.action')" >> "$GITHUB_OUTPUT"
 
       - name: Resolve agent dependency cache
         id: deps_resolve
-        if: steps.issue.outputs.skip != 'true' && steps.issue.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true' && steps.epic_gate.outputs.skip != 'true'
+        if: steps.issue.outputs.skip != 'true' && steps.final_action.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -130,7 +126,7 @@ jobs:
 
       - name: Skip implement when dependencies are open
         id: dependency_gate
-        if: steps.issue.outputs.skip != 'true' && steps.issue.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true' && steps.epic_gate.outputs.skip != 'true'
+        if: steps.issue.outputs.skip != 'true' && steps.final_action.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -243,12 +239,11 @@ jobs:
         if: >-
           steps.issue.outputs.skip != 'true'
           && steps.implement_gate.outputs.skip != 'true'
-          && steps.epic_gate.outputs.skip != 'true'
           && steps.dependency_gate.outputs.skip != 'true'
         env:
           WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
           WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
-          ACTION: ${{ steps.issue.outputs.action }}
+          ACTION: ${{ steps.final_action.outputs.action }}
           BODY_B64: ${{ steps.issue.outputs.body_b64 }}
           LABELS: ${{ steps.issue.outputs.labels }}
         run: |
@@ -274,15 +269,11 @@ jobs:
         if: >-
           steps.issue.outputs.skip == 'true'
           || steps.implement_gate.outputs.skip == 'true'
-          || steps.epic_gate.outputs.skip == 'true'
           || steps.dependency_gate.outputs.skip == 'true'
         run: |
           REASON="${{ steps.issue.outputs.skip_reason }}"
           if [ -z "$REASON" ]; then
             REASON="${{ steps.implement_gate.outputs.skip_reason }}"
-          fi
-          if [ -z "$REASON" ]; then
-            REASON="${{ steps.epic_gate.outputs.skip_reason }}"
           fi
           if [ -z "$REASON" ]; then
             REASON="${{ steps.dependency_gate.outputs.skip_reason }}"

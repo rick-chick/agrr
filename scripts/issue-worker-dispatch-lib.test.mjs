@@ -13,9 +13,12 @@ import {
   resolveDependencyGate,
   resolveDependencyGateFromAgentCache,
   resolveDispatchAction,
+  isEpicIssue,
+  resolveEpicDispatchAction,
   resolveEpicImplementGate,
   resolveImplementDispatchGate,
   resolveImplementPreDispatchGates,
+  resolvePreDispatchGates,
   selectRetryCandidate,
   selectDispatchableRetryCandidate,
   selectRetriageCandidate,
@@ -473,43 +476,74 @@ test('resolveDispatchAction implements when agent-ready is present', () => {
   assert.deepEqual(result, { skip: false, action: 'implement' });
 });
 
-test('resolveEpicImplementGate skips implement for epic title', () => {
+test('isEpicIssue detects epic title and label', () => {
+  assert.equal(isEpicIssue('[epic] Parent issue', ''), true);
+  assert.equal(isEpicIssue('Parent issue', 'epic,agent-ready'), true);
+  assert.equal(isEpicIssue('Child issue', 'agent-ready'), false);
+});
+
+test('resolveEpicDispatchAction remaps implement to epic_close_check for epic title', () => {
+  assert.deepEqual(
+    resolveEpicDispatchAction({
+      action: 'implement',
+      issueTitle: '[epic] Parent issue',
+      issueLabels: '',
+    }),
+    { action: 'epic_close_check' },
+  );
+});
+
+test('resolveEpicDispatchAction remaps implement to epic_close_check for epic label', () => {
+  assert.deepEqual(
+    resolveEpicDispatchAction({
+      action: 'implement',
+      issueTitle: 'Parent issue',
+      issueLabels: 'epic,agent-ready',
+    }),
+    { action: 'epic_close_check' },
+  );
+});
+
+test('resolveEpicDispatchAction leaves non-epic implement unchanged', () => {
+  assert.deepEqual(
+    resolveEpicDispatchAction({
+      action: 'implement',
+      issueTitle: 'Child issue',
+      issueLabels: 'agent-ready',
+    }),
+    { action: 'implement' },
+  );
+});
+
+test('resolveEpicDispatchAction leaves triage unchanged for epic title', () => {
+  assert.deepEqual(
+    resolveEpicDispatchAction({
+      action: 'triage',
+      issueTitle: '[epic] Parent issue',
+      issueLabels: 'epic',
+    }),
+    { action: 'triage' },
+  );
+});
+
+test('resolveEpicImplementGate delegates to resolveEpicDispatchAction', () => {
   assert.deepEqual(
     resolveEpicImplementGate({
       action: 'implement',
       issueTitle: '[epic] Parent issue',
       issueLabels: '',
     }),
-    {
-      skip: true,
-      skipReason: 'epic issues cannot be dispatched for implement',
-    },
+    { action: 'epic_close_check' },
   );
 });
 
-test('resolveEpicImplementGate skips implement for epic label', () => {
-  assert.deepEqual(
-    resolveEpicImplementGate({
-      action: 'implement',
-      issueTitle: 'Parent issue',
-      issueLabels: 'epic,agent-ready',
-    }),
-    {
-      skip: true,
-      skipReason: 'epic issues cannot be dispatched for implement',
-    },
-  );
-});
-
-test('resolveEpicImplementGate allows triage for epic title', () => {
-  assert.deepEqual(
-    resolveEpicImplementGate({
-      action: 'triage',
-      issueTitle: '[epic] Parent issue',
-      issueLabels: 'epic',
-    }),
-    { skip: false },
-  );
+test('isRetryCandidate returns epic_close_check for epic issues', () => {
+  const result = isRetryCandidate({
+    issueLabels: 'agent-ready',
+    issueTitle: '[epic] Parent issue',
+    hasOpenFixPr: false,
+  });
+  assert.deepEqual(result, { eligible: true, action: 'epic_close_check' });
 });
 
 test('formatDependencyGateComment includes open dependency numbers', () => {
@@ -519,18 +553,46 @@ test('formatDependencyGateComment includes open dependency numbers', () => {
   assert.match(comment, /dispatch 保留/);
 });
 
-test('resolveImplementPreDispatchGates blocks epic before dependency check', async () => {
-  const result = await resolveImplementPreDispatchGates({
-    issueNumber: 316,
+test('resolvePreDispatchGates allows epic_close_check without dependency cache', async () => {
+  const result = await resolvePreDispatchGates({
+    action: 'epic_close_check',
+    issueNumber: 362,
     issueTitle: '[epic] Parent',
-    issueBody: '## 依存\n\n- #317',
-    issueLabels: 'agent-ready,epic',
+    issueBody: '## 子 Issue\n\n- #363',
+    issueLabels: 'agent-ready',
     fetchIssueState: async () => 'OPEN',
     fetchIssueBody: async () => '',
   });
-  assert.deepEqual(result, {
-    skip: true,
-    skipReason: 'epic issues cannot be dispatched for implement',
+  assert.deepEqual(result, { skip: false });
+});
+
+test('selectDispatchableRetryCandidate dispatches epic_close_check before implement', async () => {
+  const selected = await selectDispatchableRetryCandidate(
+    [
+      {
+        number: 316,
+        title: '[epic] Parent',
+        labels: ['agent-ready'],
+        body: '## 子 Issue\n\n- #323',
+      },
+      {
+        number: 323,
+        title: 'Child',
+        labels: ['agent-ready'],
+        body: '',
+      },
+    ],
+    () => false,
+    async () => ({ skip: false }),
+  );
+  assert.deepEqual(selected, {
+    issue: {
+      number: 316,
+      title: '[epic] Parent',
+      labels: ['agent-ready'],
+      body: '## 子 Issue\n\n- #323',
+    },
+    action: 'epic_close_check',
   });
 });
 
