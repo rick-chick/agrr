@@ -250,7 +250,7 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Cumulative from crop start');
     expect(fixture.nativeElement.textContent).toContain('Configuration status');
     const link = fixture.nativeElement.querySelector(
-      'a[href*="/crops/3/task_schedule_blueprints"]'
+      '.crop-detail__task-schedules-card .section-card__header-actions a[href="/crops/3/task_schedule_blueprints"]'
     ) as HTMLAnchorElement | null;
     expect(link).toBeTruthy();
     expect(link?.textContent).toContain('Edit task plans');
@@ -319,7 +319,7 @@ describe('CropDetailComponent', () => {
     expect(blueprintsLink?.textContent).toContain('Register task plans');
   });
 
-  it('renders cultivation template action buttons with equal secondary styling', async () => {
+  it('places edit actions in each cultivation subsection card header', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
@@ -328,6 +328,8 @@ describe('CropDetailComponent', () => {
           show: {
             cultivation_template_title: 'Cultivation template',
             task_schedule_blueprints_lead: 'Schedules are generated from these templates.',
+            stages_title: 'Growth Stages',
+            task_schedule_blueprints_title: 'Task Plan Templates',
             blueprint_readiness: {
               detail_title: 'Configuration status',
               stages_ready: 'Stages ready',
@@ -356,17 +358,46 @@ describe('CropDetailComponent', () => {
     translate.use('en');
 
     fixture.detectChanges();
-    component.control = loadedState;
+    component.control = {
+      ...loadedState,
+      blueprintReadiness: {
+        ...defaultBlueprintReadiness(),
+        stageRequirementsReady: true,
+        blueprintsReady: true,
+        ready: true
+      }
+    };
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const actionLinks = fixture.nativeElement.querySelectorAll(
-      '.crop-detail__cultivation-actions a'
-    ) as NodeListOf<HTMLAnchorElement>;
-    expect(actionLinks).toHaveLength(2);
-    for (const link of Array.from(actionLinks)) {
-      expect(link.classList.contains('btn-secondary')).toBe(true);
-      expect(link.classList.contains('btn-primary')).toBe(false);
+    expect(fixture.nativeElement.querySelector('.crop-detail__cultivation-actions')).toBeNull();
+
+    const stagesHeader = fixture.nativeElement.querySelector(
+      '.crop-detail__stages-card .section-card__header-actions'
+    );
+    const taskSchedulesHeader = fixture.nativeElement.querySelector(
+      '.crop-detail__task-schedules-card .section-card__header-actions'
+    );
+    expect(stagesHeader).toBeTruthy();
+    expect(taskSchedulesHeader).toBeTruthy();
+    expect(stagesHeader?.textContent).toContain('Growth Stages');
+    expect(taskSchedulesHeader?.textContent).toContain('Task Plan Templates');
+
+    const stagesLink = stagesHeader?.querySelector(
+      'a[href="/crops/3/stages"]'
+    ) as HTMLAnchorElement | null;
+    const taskSchedulesLink = taskSchedulesHeader?.querySelector(
+      'a[href="/crops/3/task_schedule_blueprints"]'
+    ) as HTMLAnchorElement | null;
+
+    expect(stagesLink).toBeTruthy();
+    expect(stagesLink?.textContent).toContain('Edit growth stages');
+    expect(taskSchedulesLink).toBeTruthy();
+    expect(taskSchedulesLink?.textContent).toContain('Edit task plans');
+
+    for (const link of [stagesLink, taskSchedulesLink]) {
+      expect(link?.classList.contains('btn-secondary')).toBe(true);
+      expect(link?.classList.contains('btn-primary')).toBe(false);
     }
   });
 
@@ -727,7 +758,7 @@ describe('CropDetailComponent', () => {
     await fixture.whenStable();
 
     const stagesLink = fixture.nativeElement.querySelector(
-      'a[href*="/crops/3/stages"]'
+      '.crop-detail__stages-card .section-card__header-actions a[href="/crops/3/stages"]'
     ) as HTMLAnchorElement | null;
     expect(stagesLink?.textContent).toContain('Edit growth stages');
   });

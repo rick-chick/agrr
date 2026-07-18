@@ -34,6 +34,20 @@
   color: var(--color-text-secondary);
 }
 
+.crop-detail__cultivation-template {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.crop-detail__stage-requirements-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: stretch;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+}
+
 .crop-detail__stage-board {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -142,11 +156,4 @@
   flex-shrink: 0;
   font-size: var(--font-size-xs, 0.75rem);
   color: var(--color-warning, var(--color-text-secondary));
-}
-
-.crop-detail__cultivation-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
 }
