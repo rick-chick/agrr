@@ -37,6 +37,8 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_PR: ${{ github.event.inputs.pr_number }}
           INPUT_CAMPAIGN: ${{ github.event.inputs.campaign_id }}
+          PR_BODY_INPUT: ${{ github.event.pull_request.body }}
+          PR_TITLE_INPUT: ${{ github.event.pull_request.title }}
         run: |
           set -euo pipefail
 
@@ -63,10 +65,9 @@ jobs:
               exit 0
             fi
             PR_NUMBER="${{ github.event.pull_request.number }}"
-            PR_TITLE="${{ github.event.pull_request.title }}"
+            PR_TITLE=$(printf '%s' "$PR_TITLE_INPUT")
             PR_URL="${{ github.event.pull_request.html_url }}"
             HEAD_REF="${{ github.event.pull_request.head.ref }}"
-            PR_BODY_INPUT="${{ github.event.pull_request.body }}"
             PR_BODY=$(printf '%s' "$PR_BODY_INPUT")
             CAMPAIGN_ID="breadcrumb"
           fi
