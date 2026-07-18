@@ -25,7 +25,7 @@ description: >-
 
 | 名前 | スキル | cron | 期待する成果 |
 |------|--------|------|--------------|
-| **Issue Worker** | `github-issue-worker` | `0 9 * * 1-5` | 実装 PR または close / blocked / 対象なし |
+| **Issue Worker** | `github-issue-worker` | `0 9 * * 1-5` | 実装 PR または close / skip記録 |
 | **PR Merge Worker** | `github-pr-merge-worker` | イベント（PR / CI） | squash マージ / 同一ブランチ修正 / skip / blocked |
 | **UX Issue Audit** | `ux-issue-pipeline` § Automation | `0 9 * * 1` | 条件付き issue 起票 or スキップ記録 |
 | **Automation Audit** | `cloud-automation-audit`（本スキル） | `0 10 * * 5` | 監査レポート。クリティカル時のみ PR |

@@ -19,7 +19,6 @@ import {
   resolveImplementDispatchGate,
   resolveImplementPreDispatchGates,
   resolvePreDispatchGates,
-  selectRetryCandidate,
   selectDispatchableRetryCandidate,
   selectDispatchableEpicCloseCheckCandidate,
   selectDispatchableOnDependencyClosed,
@@ -144,38 +143,6 @@ test('isRetryCandidate rejects when an open fix PR exists', () => {
   assert.deepEqual(result, {
     eligible: false,
     reason: 'open fix pr exists',
-  });
-});
-
-test('selectRetryCandidate picks lowest agent-ready backlog issue', () => {
-  const selected = selectRetryCandidate(
-    [
-      { number: 384, labels: ['agent-ready'] },
-      { number: 380, labels: ['agent-ready'] },
-      { number: 382, labels: ['agent-ready'] },
-      { number: 381, labels: ['agent-ready'] },
-      { number: 383, labels: ['agent-ready'] },
-    ],
-    () => false,
-  );
-  assert.deepEqual(selected, {
-    issue: { number: 380, labels: ['agent-ready'] },
-    action: 'implement',
-  });
-});
-
-test('selectRetryCandidate picks the lowest eligible issue number', () => {
-  const selected = selectRetryCandidate(
-    [
-      { number: 207, labels: ['agent-ready'] },
-      { number: 206, labels: ['agent-ready', 'agent-in-progress'] },
-      { number: 208, labels: ['agent-ready'] },
-    ],
-    (issueNumber) => issueNumber === 208,
-  );
-  assert.deepEqual(selected, {
-    issue: { number: 207, labels: ['agent-ready'] },
-    action: 'implement',
   });
 });
 

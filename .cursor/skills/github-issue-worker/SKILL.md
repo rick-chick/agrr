@@ -120,7 +120,7 @@ gh issue edit <N> --add-label agent-in-progress
 
 依存 issue が OPEN のときは **実装に着手しない**。`agent-ready` を維持し、根拠コメントのみ残して終了する。dispatch 依存ゲートと reconcile が次回以降を再判定する（[`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `formatDependencyGateComment` 参照）。
 
-**機械ゲート（dispatch / retriage）**: `## 依存` 節の本文から `#N` を **パースしない**。根拠は issue コメント内の `agent-deps:v1` キャッシュ（[`issue-worker-deps-agent-lib.mjs`](../../../scripts/issue-worker-deps-agent-lib.mjs)）のみ。キャッシュ欠落・`body_hash` 不一致は dispatch 拒否。`implement` dispatch 前に [`issue-worker-deps-resolve.mjs`](../../../scripts/issue-worker-deps-resolve.mjs) がキャッシュ未作成なら deps Agent webhook（`action: judge_dependencies`）を起動する（secrets: `CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_*`）。
+**機械ゲート（dispatch / reconcile）**: `## 依存` 節の本文から `#N` を **パースしない**。根拠は issue コメント内の `agent-deps:v1` キャッシュ（[`issue-worker-deps-agent-lib.mjs`](../../../scripts/issue-worker-deps-agent-lib.mjs)）のみ。キャッシュ欠落・`body_hash` 不一致は dispatch 拒否。`implement` dispatch 前に [`issue-worker-deps-resolve.mjs`](../../../scripts/issue-worker-deps-resolve.mjs) がキャッシュ未作成なら deps Agent webhook（`action: judge_dependencies`）を起動する（secrets: `CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_*`）。
 
 **Worker 側**: triage で依存未充足と判断したら、[`buildAgentDepsCacheComment`](../../../scripts/issue-worker-deps-agent-lib.mjs) 形式で `agent-deps:v1` コメントを残してよい（hard/soft の判定はエージェント判断。regex・ヒューリスティック禁止）。
 

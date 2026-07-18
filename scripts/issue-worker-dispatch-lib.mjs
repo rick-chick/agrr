@@ -408,27 +408,6 @@ export function isRetryCandidate({ issueLabels, issueTitle = '', hasOpenFixPr })
 }
 
 /**
- * @param {Array<{ number: number; title?: string; labels: string[] }>} issues
- * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @returns {{ issue: { number: number; title?: string; labels: string[] }; action: string } | null}
- */
-export function selectRetryCandidate(issues, hasOpenFixPrFor) {
-  const sorted = [...issues].sort((a, b) => a.number - b.number);
-  for (const issue of sorted) {
-    const labels = issue.labels.join(',');
-    const result = isRetryCandidate({
-      issueLabels: labels,
-      issueTitle: issue.title ?? '',
-      hasOpenFixPr: hasOpenFixPrFor(issue.number),
-    });
-    if (result.eligible) {
-      return { issue, action: result.action };
-    }
-  }
-  return null;
-}
-
-/**
  * Select the lowest-number agent-ready issue that passes retry eligibility and pre-dispatch gates.
  *
  * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} issues
