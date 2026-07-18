@@ -6,6 +6,7 @@ use agrr_r4_contract::http::ContractClient;
 use support::{
     agrr_regeneration_contract_available, assert_crop_task_template_api_removed,
     clear_plan_task_schedules, developer_session_id, empty_headers, farmer_session_id,
+    researcher_session_id,
     find_schedule_item, poll_task_schedule_sync_ready, schedule_item_ids_from_response,
     seed_masters_crop, seed_masters_crop_with_manual_blueprint, seed_masters_crop_with_stages,
     seed_masters_crop_with_stages_and_blueprints, seed_reference_crop_with_stage,
@@ -1497,7 +1498,9 @@ fn api_key_from_generate_response(body: &str) -> String {
 #[test]
 fn post_api_keys_generate_is_idempotent_when_key_already_exists() {
     let client = ContractClient::from_env();
-    let session_id = developer_session_id(&client);
+    // Use a dedicated mock user: parallel contract tests share one SQLite DB and
+    // developer's api_key is mutated by other tests (generate/regenerate).
+    let session_id = farmer_session_id(&client);
 
     let (first_status, first_body) = status_and_body(client.post(
         "/api/v1/api_keys/generate",
@@ -1522,7 +1525,8 @@ fn post_api_keys_generate_is_idempotent_when_key_already_exists() {
 #[test]
 fn post_api_keys_regenerate_invalidates_previous_key() {
     let client = ContractClient::from_env();
-    let session_id = developer_session_id(&client);
+    // Dedicated mock user — see post_api_keys_generate_is_idempotent_when_key_already_exists.
+    let session_id = researcher_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
     let seed = seed_masters_crop(user_id);
 
