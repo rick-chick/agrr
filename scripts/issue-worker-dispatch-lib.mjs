@@ -506,29 +506,20 @@ export async function resolveHardDependencies({
 }
 
 /**
- * @param {{
- *   issueLabels: string;
- *   issueBody: string;
- *   hasOpenFixPr: boolean;
- *   getAgentDepsContract?: (
- *     issueNumber: number,
- *     issueBody: string,
- *   ) => Promise<AgentDepsContract | null> | AgentDepsContract | null;
- *   issueNumber?: number;
- *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
- * }} input
- * @returns {Promise<{ eligible: true } | { eligible: false; reason: string }>}
+ * Epic close-check reconcile candidate. Agent-ready is not required; §1b is agent judgment.
+ *
+ * @returns {{ eligible: true; action: 'epic_close_check' } | { eligible: false; reason: string }}
  */
-export async function isRetriageEligible({
+export function isEpicCloseCheckCandidate({
+  issueTitle,
   issueLabels,
-  issueBody,
   hasOpenFixPr,
-  getAgentDepsContract,
-  issueNumber = 0,
-  fetchIssueState,
 }) {
-  if (!hasLabel(issueLabels, 'agent-ready') && !hasLabel(issueLabels, 'agent-skipped')) {
-    return { eligible: false, reason: 'not in queue' };
+  if (!isEpicIssue(issueTitle, issueLabels)) {
+    return { eligible: false, reason: 'not an epic issue' };
+  }
+  if (hasLabel(issueLabels, 'agent-closed')) {
+    return { eligible: false, reason: 'agent-closed present' };
   }
   if (hasLabel(issueLabels, 'agent-in-progress')) {
     return { eligible: false, reason: 'in progress' };
@@ -536,73 +527,82 @@ export async function isRetriageEligible({
   if (hasOpenFixPr) {
     return { eligible: false, reason: 'open fix pr exists' };
   }
-
-  const resolved = await resolveHardDependencies({
-    issueNumber,
-    issueBody,
-    getAgentDepsContract,
-  });
-
-  if (resolved.source === 'miss') {
-    return {
-      eligible: false,
-      reason: 'agent dependency cache missing or stale',
-    };
-  }
-
-  const { hardDependencies } = resolved;
-  if (hardDependencies.length === 0) {
-    return { eligible: true };
-  }
-
-  for (const dependencyNumber of hardDependencies) {
-    const state = await fetchIssueState(dependencyNumber);
-    if (state !== 'CLOSED') {
-      return {
-        eligible: false,
-        reason: `dependency #${dependencyNumber} is open`,
-      };
-    }
-  }
-  return { eligible: true };
+  return { eligible: true, action: 'epic_close_check' };
 }
 
-/** @deprecated Use isRetriageEligible */
-export const isDepsResolvedUnblockCandidate = isRetriageEligible;
-
 /**
- * @param {Array<{ number: number; labels: string[]; body?: string }>} issues
+ * @param {Array<{ number: number; title: string; labels: string[] }>} issues
  * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @param {(issueNumber: number) => Promise<string> | string} fetchIssueState
- * @param {(issueNumber: number, issueBody: string) => Promise<AgentDepsContract | null> | AgentDepsContract | null} getAgentDepsContract
- * @returns {Promise<{ issue: { number: number; labels: string[]; body?: string } } | null>}
+ * @returns {{ issue: { number: number; title: string; labels: string[] }; action: 'epic_close_check' } | null}
  */
-export async function selectRetriageCandidate(
-  issues,
-  hasOpenFixPrFor,
-  fetchIssueState,
-  getAgentDepsContract,
-) {
+export function selectDispatchableEpicCloseCheckCandidate(issues, hasOpenFixPrFor) {
   const sorted = [...issues].sort((a, b) => a.number - b.number);
   for (const issue of sorted) {
     const labels = issue.labels.join(',');
-    const result = await isRetriageEligible({
+    const result = isEpicCloseCheckCandidate({
+      issueTitle: issue.title,
       issueLabels: labels,
-      issueBody: issue.body ?? '',
       hasOpenFixPr: hasOpenFixPrFor(issue.number),
-      getAgentDepsContract,
-      issueNumber: issue.number,
-      fetchIssueState,
     });
     if (result.eligible) {
-      return { issue };
+      return { issue, action: result.action };
     }
   }
   return null;
 }
 
-/** @deprecated Use selectRetriageCandidate */
-export const selectDepsUnblockCandidate = selectRetriageCandidate;
+/**
+ * When a hard dependency closes, re-dispatch agent-ready issues the agent-deps cache links to it.
+ *
+ * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} issues
+ * @param {number} closedDependencyNumber
+ * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
+ * @param {(issueNumber: number, issueBody: string) => Promise<AgentDepsContract | null> | AgentDepsContract | null} getAgentDepsContract
+ * @param {(issue: { number: number; title: string; labels: string[]; body?: string }, action: string) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
+ * @returns {Promise<{ issue: { number: number; title: string; labels: string[]; body?: string }; action: string } | null>}
+ */
+export async function selectDispatchableOnDependencyClosed(
+  issues,
+  closedDependencyNumber,
+  hasOpenFixPrFor,
+  getAgentDepsContract,
+  evaluatePreDispatch,
+) {
+  const sorted = [...issues].sort((a, b) => a.number - b.number);
+  for (const issue of sorted) {
+    const resolved = await resolveHardDependencies({
+      issueNumber: issue.number,
+      issueBody: issue.body ?? '',
+      getAgentDepsContract,
+    });
+    if (resolved.source === 'miss') {
+      continue;
+    }
+    const hardDependencies =
+      resolved.source === 'none' ? [] : resolved.hardDependencies;
+    if (!hardDependencies.includes(closedDependencyNumber)) {
+      continue;
+    }
+
+    const labels = issue.labels.join(',');
+    const retryResult = isRetryCandidate({
+      issueLabels: labels,
+      issueTitle: issue.title,
+      hasOpenFixPr: hasOpenFixPrFor(issue.number),
+    });
+    if (!retryResult.eligible) {
+      continue;
+    }
+
+    const preDispatch = await evaluatePreDispatch(issue, retryResult.action);
+    if (preDispatch.skip) {
+      continue;
+    }
+
+    return { issue, action: retryResult.action };
+  }
+  return null;
+}
 
 /**
  * @param {string[]} argv process.argv

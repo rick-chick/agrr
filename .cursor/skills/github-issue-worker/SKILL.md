@@ -92,7 +92,7 @@ gh issue list --repo rick-chick/agrr --state open --limit 50 --json number,title
 | 状況 | 取る経路（例） |
 |------|----------------|
 | 仕様が曖昧 | issue 本文と既存製品から**合理的な解釈を決めて実装**（PR に仮定を明記） |
-| `[epic]` / 親トラッカー | **§1b Epic クローズ判定**（子がすべて CLOSED なら §2a `completed` で親をクローズ。未完了子があれば列挙し、未着手子に `agent-ready` を付与。**`agent-skipped` / `out_of_scope` は付けない**） |
+| `[epic]` / 親トラッカー | **§1b Epic クローズ判定**（子がすべて CLOSED なら §2a `completed` で親をクローズ。未完了子があれば列挙し、未着手子に `agent-ready` を付与） |
 | `ARCHITECTURE.md` 衝突 | **準拠する実装経路**を選ぶ。経路が無いときのみ §2a で close（根拠必須） |
 | スコープ外 | §2a `wontfix` で close（オープン維持しない） |
 | 権限不足（gh / GCP 等） | 取れる範囲で実装し PR に未実施を明記。**止めて待たない** |
@@ -126,6 +126,12 @@ gh issue edit <N> --add-label agent-in-progress
 
 **dispatch 層**: `[epic]` / `epic` ラベルの `implement` dispatch は [`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `resolveEpicDispatchAction` により **`epic_close_check` にリマップ**される（コード実装はしない）。エージェントは §1b でクローズ可否を判断する。
 
+**reconcile（機械層の責務）**: webhook 再送のみ。判断はエージェントに委ねる。
+1. open epic（`agent-ready` なし含む）→ `epic_close_check`
+2. `agent-ready` キュー → `implement` または `epic_close_check`（依存は `agent-deps:v1` キャッシュのみ）
+
+`agent-skipped` / `agent-blocked` は**付けない・昇格しない・スキャンしない**（legacy ラベルはエージェントが除去するだけ）。
+
 ## 1b) Epic クローズ判定（毎回必須）
 
 **主要 issue の triage が終わったら必ず実施**する（実装着手・§2a クローズ・deps_unmet のいずれの経路でも）。`action: epic_close_check` のときは **§1b が主要タスク**（§3 以降の実装には入らない）。
@@ -136,8 +142,8 @@ gh issue edit <N> --add-label agent-in-progress
 2. **すべて CLOSED** → §2a で epic をクローズする。
    - **区分**: `already_fixed`（子 issue 完了により epic の完了条件を満たした）
    - **`gh issue close --reason completed`**
-   - `agent-ready` / `agent-skipped` / `agent-in-progress` を除去し `agent-closed` を付与
-3. **OPEN の子が残る** → コメントで残り子を列挙する。未 `agent-ready` の子には `agent-ready` を付与する。epic は **OPEN 維持**（**`agent-skipped` は付けない** — 次回 reconcile で再判定される）。
+   - `agent-ready` / `agent-in-progress` を除去し `agent-closed` を付与（legacy `agent-skipped` が残っていれば除去）
+3. **OPEN の子が残る** → コメントで残り子を列挙する。未 `agent-ready` の子には `agent-ready` を付与する。epic は **OPEN 維持**（reconcile が `epic_close_check` を再 dispatch）
 
 必須コメント形式（子が残る場合）:
 
@@ -147,7 +153,7 @@ gh issue edit <N> --add-label agent-in-progress
 **理由**: 子 issue が未完了のため epic は OPEN 維持
 **未完了の子**: #N（タイトル要約）, …
 **実施**: 未着手子に `agent-ready` を付与（済みなら記載）
-**再判定**: 子がすべて CLOSED になったら reconcile が `epic_close_check` を再 dispatch
+**再判定**: reconcile が open epic（`agent-ready` なし含む）へ `epic_close_check` を再 dispatch
 ```
 
 ### B. 対象が子 issue（`implement` / `triage` / `close_with_reason` のいずれか）
@@ -158,7 +164,7 @@ gh issue edit <N> --add-label agent-in-progress
 2. 親 epic が **OPEN** かつ本文に列挙された**すべての子が CLOSED** → 親 epic を §2a **`already_fixed` / `completed`** でクローズする（§3 の PR とは別 issue への操作。同一実行内でよい）。
 3. 親が見つからない、または子が残る → 何もしない（親 epic へのコメントは任意）。
 
-**禁止**: epic を `out_of_scope` / `agent-skipped` だけ付けて放置する。子完了済み epic を OPEN のまま残す。
+**禁止**: epic を OPEN のまま放置する（子完了済みなら §2a でクローズ）。`out_of_scope` / `agent-skipped` は**付けない**。
 
 ## 2a) 対応せずクローズ（実装しない）
 

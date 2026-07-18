@@ -22,7 +22,6 @@ import {
   detectCiFailingReadyPr,
   detectConflictReadyPr,
   detectFailedDispatchWorkflow,
-  detectStaleAgentBlockedIssue,
   detectStaleAgentInProgressIssue,
   detectStaleMergeInProgressPr,
   detectStaleRetryScheduleRuns,
@@ -211,7 +210,6 @@ async function buildFindingsFromGithub(data, nowMs) {
     for (const detector of [
       detectStaleAgentInProgressIssue,
       detectStuckAgentReadyIssue,
-      detectStaleAgentBlockedIssue,
     ]) {
       const finding = detector(issue, nowMs);
       if (finding) {

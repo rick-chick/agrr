@@ -56,9 +56,8 @@ Cloud Agent 単体では取得不可。人間が [cursor.com/automations](https:
 # Issue Worker: 直近 7 日の automation 由来 PR（author は cursor または作成者アカウント）
 gh pr list --repo rick-chick/agrr --state all --limit 20 --json number,title,author,createdAt,state
 
-# agent-in-progress / legacy stop label の滞留
+# agent-in-progress の滞留
 gh issue list --repo rick-chick/agrr --label agent-in-progress --state open --json number,title,updatedAt
-gh issue list --repo rick-chick/agrr --search "is:open label:agent-skipped,agent-blocked" --json number,title,updatedAt
 
 # UX Audit: 直近 7 日の [P0]/[P1] UX/i18n/CSS 起票
 gh issue list --repo rick-chick/agrr --state all --limit 30 --search "created:>=YYYY-MM-DD label:agent-ready"
@@ -135,7 +134,6 @@ gh api repos/rick-chick/agrr/rulesets --jq 'map(select(.name=="master CI require
 - `AGRR_GH_PAT` 未設定 → Dashboard → Cloud Agents → Secrets 手順をレポートに記載
 - Webhook secret 未注入（Cursor 既知バグ）→ Schedule 利用を推奨、secret 設定手順を記載
 - Invalid trigger（6 フィールド cron）→ UI で 5 フィールドに直す手順を記載
-- agent-blocked issue の**仕様・判断待ち**
 - 起票 0 件（重複スコア ≥ 5）— UX Audit の設計どおり
 
 ### 修正時の TDD
