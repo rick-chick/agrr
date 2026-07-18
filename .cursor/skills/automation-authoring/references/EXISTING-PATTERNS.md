@@ -34,7 +34,7 @@
 | 読むファイル | 内容 |
 |--------------|------|
 | `.cursor/skills/automation-pipeline-watchdog/SKILL.md` | 毎時監視・起票 |
-| `scripts/collect-pipeline-health-lib.mjs` | 閾値・finding |
+| `.cursor/skills/automation-pipeline-watchdog/scripts/collect-pipeline-health-lib.mjs` | 閾値・finding |
 | `.cursor/skills/cloud-automation-audit/SKILL.md` | 週次監査 |
 
 ## 俯瞰・運用正本
