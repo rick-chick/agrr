@@ -31,7 +31,13 @@ function getNested(obj: JsonRecord, path: string): unknown {
 const CATALOG_KEYS = [
   'crops.index.title',
   'crops.index.description',
-  'crops.index.new_crop'
+  'crops.index.new_crop',
+  'crops.index.actions.show',
+  'crops.index.inline.stages_toggle',
+  'crops.index.inline.blueprints_toggle',
+  'crops.index.inline.collapse',
+  'crops.index.inline.stages_full_edit',
+  'crops.index.inline.blueprints_full_edit'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

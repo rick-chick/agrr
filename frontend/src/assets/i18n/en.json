@@ -1998,6 +1998,13 @@
         "delete": "Delete",
         "delete_confirm": "Are you sure you want to delete this crop?"
       },
+      "inline": {
+        "stages_toggle": "Growth stages",
+        "blueprints_toggle": "Edit task plans",
+        "collapse": "Collapse",
+        "stages_full_edit": "Edit growth stages",
+        "blueprints_full_edit": "Edit task plans"
+      },
       "empty": {
         "icon": "🌱",
         "title": "No crops registered yet",

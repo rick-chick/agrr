@@ -1,0 +1,73 @@
+.crop-list-panel {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border, #e2e8f0);
+  background: var(--color-surface-alt, #f8fafc);
+}
+
+.crop-list-panel__readonly-notice {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background: var(--color-warning-surface, #fffbeb);
+  color: var(--color-warning-text, #92400e);
+  font-size: 0.875rem;
+}
+
+.crop-list-panel__empty {
+  margin: 0;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.875rem;
+}
+
+.crop-list-panel__stage-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.crop-list-panel__stage-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.crop-list-panel__stage-item:last-child {
+  border-bottom: none;
+}
+
+.crop-list-panel__stage-name {
+  font-weight: 600;
+}
+
+.crop-list-panel__stage-meta {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.crop-list-panel__blueprint-count {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+}
+
+.crop-list-panel__blueprint-attention {
+  margin-left: 0.25rem;
+  color: var(--color-warning-text, #b45309);
+}
+
+.crop-list-panel__blueprint-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.crop-list-panel__footer {
+  margin-top: 0.75rem;
+}
+
+.btn-sm {
+  font-size: 0.8125rem;
+  padding: 0.375rem 0.75rem;
+}

@@ -1,1 +1,26 @@
 @import '../_master-layout.css';
+
+.item-card__primary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 1rem 0.75rem;
+}
+
+.item-card__primary-actions .btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-link, #2563eb);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+}
+
+.item-card__primary-actions .btn-link:hover {
+  color: var(--color-link-hover, #1d4ed8);
+}
+
+.item-card__primary-actions .btn-link[aria-expanded='true'] {
+  font-weight: 600;
+}
