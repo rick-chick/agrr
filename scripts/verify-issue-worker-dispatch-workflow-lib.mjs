@@ -118,9 +118,17 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
     errors.push('dispatch lib must not export parseDependencyIssueNumbers');
   }
 
-  if (!libText.includes('export async function selectDispatchableRetryCandidate') &&
-      !libText.includes('export function selectDispatchableRetryCandidate')) {
-    errors.push('dispatch lib missing selectDispatchableRetryCandidate');
+  if (!libText.includes('export function collectReconcileDispatchCandidates') &&
+      !libText.includes('export async function collectReconcileDispatchCandidates')) {
+    errors.push('dispatch lib missing collectReconcileDispatchCandidates');
+  }
+
+  if (!libText.includes('export function selectReconcileDispatchCandidate')) {
+    errors.push('dispatch lib missing selectReconcileDispatchCandidate');
+  }
+
+  if (!libText.includes('export function resolveOnClosedDispatch')) {
+    errors.push('dispatch lib missing resolveOnClosedDispatch');
   }
 
   return { ok: errors.length === 0, errors };

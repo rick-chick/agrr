@@ -2,6 +2,9 @@
 /**
  * Retry / reconcile Issue Worker webhook dispatch.
  *
+ * reconcile: collect eligible issues, select one (implement first, rotate), post webhook.
+ * on-closed: dependency-unblocked agent-ready issues only.
+ *
  * Usage:
  *   node scripts/issue-worker-retry-dispatch.mjs reconcile [--repo OWNER/REPO]
  *   node scripts/issue-worker-retry-dispatch.mjs on-closed --number N [--repo OWNER/REPO]
@@ -12,16 +15,18 @@
 import { execFileSync } from 'node:child_process';
 import {
   buildWebhookPayload,
+  collectReconcileDispatchCandidates,
   defaultRetryReasonForMode,
   hasLabel,
   isEpicIssue,
   isRetryCandidate,
   openFixPrSearchQuery,
+  parseDispatchedIssueNumberFromLog,
   parseRetryDispatchArgs,
+  resolveOnClosedDispatch,
   resolvePreDispatchGates,
-  selectDispatchableEpicCloseCheckCandidate,
   selectDispatchableOnDependencyClosed,
-  selectDispatchableRetryCandidate,
+  selectReconcileDispatchCandidate,
 } from './issue-worker-dispatch-lib.mjs';
 import { createGetAgentDepsContractFromComments } from './issue-worker-deps-agent-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
@@ -169,6 +174,35 @@ function fetchIssue(repo, issueNumber) {
 }
 
 /**
+ * @param {string} repo
+ * @returns {number | null}
+ */
+function fetchLastScheduledReconcileIssueNumber(repo) {
+  try {
+    const raw = gh(repo, [
+      'run',
+      'list',
+      '--workflow',
+      'issue-worker-retry-dispatch.yml',
+      '--limit',
+      '20',
+      '--json',
+      'databaseId,conclusion,event',
+    ]);
+    const runs = JSON.parse(raw).filter(
+      (run) => run.event === 'schedule' && run.conclusion === 'success',
+    );
+    if (runs.length === 0) {
+      return null;
+    }
+    const log = gh(repo, ['run', 'view', String(runs[0].databaseId), '--log']);
+    return parseDispatchedIssueNumberFromLog(log);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * @param {{
  *   repo: string;
  *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
@@ -263,48 +297,43 @@ async function main() {
 
   if (args.mode === 'reconcile') {
     const epicsWithoutAgentReady = listEpicsWithoutAgentReady(listOpenEpicIssues(repo));
-    const epicSelected = selectDispatchableEpicCloseCheckCandidate(
-      epicsWithoutAgentReady,
-      hasOpenFixPrFor,
-    );
-    if (epicSelected) {
-      await dispatchWebhook({
-        repo,
-        issue: epicSelected.issue,
-        action: epicSelected.action,
-        retryReason: args.retryReason ?? defaultRetryReasonForMode('reconcile'),
+    const agentReadyIssues = listAgentReadyIssues(repo);
+    const evaluatePreDispatch = async (issue, action) =>
+      resolvePreDispatchGates({
+        action,
+        issueNumber: issue.number,
+        issueTitle: issue.title,
+        issueBody: issue.body,
+        issueLabels: issue.labels.join(','),
+        getAgentDepsContract,
+        fetchIssueState: async (number) => fetchIssue(repo, number).state,
+        fetchIssueBody: async (number) => fetchIssue(repo, number).body,
       });
-      return;
-    }
 
-    const issues = listAgentReadyIssues(repo);
-    const selected = await selectDispatchableRetryCandidate(
-      issues,
+    const candidates = await collectReconcileDispatchCandidates(
+      epicsWithoutAgentReady,
+      agentReadyIssues,
       hasOpenFixPrFor,
-      async (issue, action) =>
-        resolvePreDispatchGates({
-          action,
-          issueNumber: issue.number,
-          issueTitle: issue.title,
-          issueBody: issue.body,
-          issueLabels: issue.labels.join(','),
-          getAgentDepsContract,
-          fetchIssueState: async (number) => fetchIssue(repo, number).state,
-          fetchIssueBody: async (number) => fetchIssue(repo, number).body,
-        }),
+      evaluatePreDispatch,
     );
+    const deprioritizeIssueNumber = fetchLastScheduledReconcileIssueNumber(repo);
+    const selected = selectReconcileDispatchCandidate(candidates, {
+      deprioritizeIssueNumber: deprioritizeIssueNumber ?? undefined,
+    });
     if (!selected) {
       console.log('No eligible agent-ready or open epic issues for retry reconciliation.');
       return;
     }
 
-    const issue = issues.find((entry) => entry.number === selected.issue.number);
+    const issue =
+      agentReadyIssues.find((entry) => entry.number === selected.issue.number) ??
+      epicsWithoutAgentReady.find((entry) => entry.number === selected.issue.number);
     if (!issue) {
-      console.log('Selected retry issue disappeared before dispatch.');
+      console.log('Selected reconcile issue disappeared before dispatch.');
       return;
     }
 
-    await dispatchWebhook({
+    postWebhook({
       repo,
       issue,
       action: selected.action,
@@ -337,36 +366,23 @@ async function main() {
           fetchIssueBody: async (number) => fetchIssue(repo, number).body,
         }),
     );
-    if (dependencySelected) {
-      const issue = agentReadyIssues.find(
-        (entry) => entry.number === dependencySelected.issue.number,
-      );
-      if (!issue) {
-        console.log('Selected dependency-unblocked issue disappeared before dispatch.');
-        return;
-      }
-      await dispatchWebhook({
-        repo,
-        issue,
-        action: dependencySelected.action,
-        retryReason: args.retryReason ?? 'dependency_closed',
-      });
+    const onClosed = resolveOnClosedDispatch(dependencySelected);
+    if (!onClosed.dispatch) {
+      console.log(`No dependency-unblocked agent-ready issues for closed #${closedNumber}.`);
       return;
     }
 
-    const epicSelected = selectDispatchableEpicCloseCheckCandidate(
-      listEpicsWithoutAgentReady(listOpenEpicIssues(repo)),
-      hasOpenFixPrFor,
+    const issue = agentReadyIssues.find(
+      (entry) => entry.number === onClosed.selected.issue.number,
     );
-    if (!epicSelected) {
-      console.log(`No agent-ready or open epic dispatch for closed #${closedNumber}.`);
+    if (!issue) {
+      console.log('Selected dependency-unblocked issue disappeared before dispatch.');
       return;
     }
-
     await dispatchWebhook({
       repo,
-      issue: epicSelected.issue,
-      action: epicSelected.action,
+      issue,
+      action: onClosed.selected.action,
       retryReason: args.retryReason ?? 'dependency_closed',
     });
     return;

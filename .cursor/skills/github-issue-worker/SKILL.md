@@ -127,8 +127,13 @@ gh issue edit <N> --add-label agent-in-progress
 **dispatch 層**: `[epic]` / `epic` ラベルの `implement` dispatch は [`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `resolveEpicDispatchAction` により **`epic_close_check` にリマップ**される（コード実装はしない）。エージェントは §1b でクローズ可否を判断する。
 
 **reconcile（機械層の責務）**: webhook 再送のみ。判断はエージェントに委ねる。
-1. open epic（`agent-ready` なし含む）→ `epic_close_check`
-2. `agent-ready` キュー → `implement` または `epic_close_check`（依存は `agent-deps:v1` キャッシュのみ）
+
+1. `agent-ready` キューと open epic（`agent-ready` なし）を**単一候補リスト**に集める（既存ゲートのみ。`agent-deps:v1` 等）
+2. **`implement` を `epic_close_check` より優先**、同順位は番号昇順
+3. 直前の schedule reconcile で dispatch した issue は、他候補があるとき**後回し**（ローテ）
+4. 1 run 1 件 dispatch
+
+**on-closed**: 閉じた依存 `#N` を hard 依存に含む `agent-ready` issue のみ再 dispatch。無関係 epic へのフォールバックはしない（親 epic は子 Agent §1b-B または reconcile ローテ）。
 
 `agent-skipped` / `agent-blocked` は**付けない・昇格しない・スキャンしない**（legacy ラベルはエージェントが除去するだけ）。
 

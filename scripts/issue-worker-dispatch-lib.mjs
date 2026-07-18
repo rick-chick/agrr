@@ -408,41 +408,6 @@ export function isRetryCandidate({ issueLabels, issueTitle = '', hasOpenFixPr })
 }
 
 /**
- * Select the lowest-number agent-ready issue that passes retry eligibility and pre-dispatch gates.
- *
- * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} issues
- * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @param {(issue: { number: number; title: string; labels: string[]; body?: string }, action: string) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
- * @returns {Promise<{ issue: { number: number; title: string; labels: string[]; body?: string }; action: string } | null>}
- */
-export async function selectDispatchableRetryCandidate(
-  issues,
-  hasOpenFixPrFor,
-  evaluatePreDispatch,
-) {
-  const sorted = [...issues].sort((a, b) => a.number - b.number);
-  for (const issue of sorted) {
-    const labels = issue.labels.join(',');
-    const retryResult = isRetryCandidate({
-      issueLabels: labels,
-      issueTitle: issue.title ?? '',
-      hasOpenFixPr: hasOpenFixPrFor(issue.number),
-    });
-    if (!retryResult.eligible) {
-      continue;
-    }
-
-    const preDispatch = await evaluatePreDispatch(issue, retryResult.action);
-    if (preDispatch.skip) {
-      continue;
-    }
-
-    return { issue, action: retryResult.action };
-  }
-  return null;
-}
-
-/**
  * Resolve hard-blocking dependency issue numbers for re-triage / unblock.
  * Agent cache only — no body parsing fallback.
  *
@@ -510,27 +475,6 @@ export function isEpicCloseCheckCandidate({
 }
 
 /**
- * @param {Array<{ number: number; title: string; labels: string[] }>} issues
- * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @returns {{ issue: { number: number; title: string; labels: string[] }; action: 'epic_close_check' } | null}
- */
-export function selectDispatchableEpicCloseCheckCandidate(issues, hasOpenFixPrFor) {
-  const sorted = [...issues].sort((a, b) => a.number - b.number);
-  for (const issue of sorted) {
-    const labels = issue.labels.join(',');
-    const result = isEpicCloseCheckCandidate({
-      issueTitle: issue.title,
-      issueLabels: labels,
-      hasOpenFixPr: hasOpenFixPrFor(issue.number),
-    });
-    if (result.eligible) {
-      return { issue, action: result.action };
-    }
-  }
-  return null;
-}
-
-/**
  * When a hard dependency closes, re-dispatch agent-ready issues the agent-deps cache links to it.
  *
  * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} issues
@@ -581,6 +525,144 @@ export async function selectDispatchableOnDependencyClosed(
     return { issue, action: retryResult.action };
   }
   return null;
+}
+
+/**
+ * @param {string} action
+ * @returns {number}
+ */
+function reconcileActionRank(action) {
+  if (action === 'implement') {
+    return 0;
+  }
+  if (action === 'epic_close_check') {
+    return 1;
+  }
+  return 2;
+}
+
+/**
+ * @param {string} logText
+ * @returns {number | null}
+ */
+export function parseDispatchedIssueNumberFromLog(logText) {
+  const matches = [...logText.matchAll(/Dispatched Issue Worker retry for #(\d+)/g)];
+  if (matches.length === 0) {
+    return null;
+  }
+  const number = Number(matches[matches.length - 1][1]);
+  return Number.isInteger(number) && number > 0 ? number : null;
+}
+
+/**
+ * Select one reconcile dispatch target: implement before epic_close_check, then issue number.
+ * When deprioritizeIssueNumber is set and other candidates exist, skip that issue.
+ *
+ * @param {Array<{ issue: { number: number; title?: string; labels?: string[]; body?: string }; action: string }>} candidates
+ * @param {{ deprioritizeIssueNumber?: number }} [options]
+ * @returns {{ issue: { number: number; title?: string; labels?: string[]; body?: string }; action: string } | null}
+ */
+export function selectReconcileDispatchCandidate(candidates, options = {}) {
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const sorted = [...candidates].sort((a, b) => {
+    const rankDiff = reconcileActionRank(a.action) - reconcileActionRank(b.action);
+    if (rankDiff !== 0) {
+      return rankDiff;
+    }
+    return a.issue.number - b.issue.number;
+  });
+
+  const { deprioritizeIssueNumber } = options;
+  if (deprioritizeIssueNumber != null && sorted.length > 1) {
+    const withoutDeprioritized = sorted.filter(
+      (candidate) => candidate.issue.number !== deprioritizeIssueNumber,
+    );
+    if (withoutDeprioritized.length > 0) {
+      return withoutDeprioritized[0];
+    }
+  }
+
+  return sorted[0];
+}
+
+/**
+ * Collect all reconcile-eligible issues from agent-ready queue and open epics without agent-ready.
+ * Eligibility gates live here only (single source for reconcile).
+ *
+ * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} epicsWithoutAgentReady
+ * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} agentReadyIssues
+ * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
+ * @param {(issue: { number: number; title: string; labels: string[]; body?: string }, action: string) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
+ * @returns {Promise<Array<{ issue: { number: number; title: string; labels: string[]; body?: string }; action: string }>>}
+ */
+export async function collectReconcileDispatchCandidates(
+  epicsWithoutAgentReady,
+  agentReadyIssues,
+  hasOpenFixPrFor,
+  evaluatePreDispatch,
+) {
+  const candidates = [];
+  const seenNumbers = new Set();
+
+  for (const issue of [...epicsWithoutAgentReady].sort((a, b) => a.number - b.number)) {
+    const labels = issue.labels.join(',');
+    const result = isEpicCloseCheckCandidate({
+      issueTitle: issue.title,
+      issueLabels: labels,
+      hasOpenFixPr: hasOpenFixPrFor(issue.number),
+    });
+    if (result.eligible) {
+      candidates.push({ issue, action: result.action });
+      seenNumbers.add(issue.number);
+    }
+  }
+
+  for (const issue of [...agentReadyIssues].sort((a, b) => a.number - b.number)) {
+    if (seenNumbers.has(issue.number)) {
+      continue;
+    }
+    const labels = issue.labels.join(',');
+    const retryResult = isRetryCandidate({
+      issueLabels: labels,
+      issueTitle: issue.title ?? '',
+      hasOpenFixPr: hasOpenFixPrFor(issue.number),
+    });
+    if (!retryResult.eligible) {
+      continue;
+    }
+
+    const preDispatch = await evaluatePreDispatch(issue, retryResult.action);
+    if (preDispatch.skip) {
+      continue;
+    }
+
+    candidates.push({ issue, action: retryResult.action });
+    seenNumbers.add(issue.number);
+  }
+
+  return candidates;
+}
+
+/**
+ * on-closed dispatch: dependency-unblocked agent-ready issue only (no unrelated epic fallback).
+ *
+ * @param {{ issue: { number: number }; action: string } | null} dependencySelected
+ * @returns {
+ *   { dispatch: true; selected: { issue: { number: number }; action: string } }
+ *   | { dispatch: false; reason: string }
+ * }
+ */
+export function resolveOnClosedDispatch(dependencySelected) {
+  if (!dependencySelected) {
+    return {
+      dispatch: false,
+      reason: 'no dependency-unblocked agent-ready issue',
+    };
+  }
+  return { dispatch: true, selected: dependencySelected };
 }
 
 /**
