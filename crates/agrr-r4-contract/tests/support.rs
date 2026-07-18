@@ -31,7 +31,7 @@ pub fn assert_builtin_generation_deprecated_headers(
         "{body}"
     );
     let json: serde_json::Value = serde_json::from_str(body).expect("deprecated JSON");
-    assert_eq!(true, json.get("deprecated").and_then(|v| v.as_bool()), "{body}");
+    assert_eq!(Some(true), json.get("deprecated").and_then(|v| v.as_bool()), "{body}");
     let alternative = json["deprecation"]["alternative"]
         .as_str()
         .unwrap_or_default();
@@ -40,12 +40,12 @@ pub fn assert_builtin_generation_deprecated_headers(
         "expected alternative to contain {expected_alternative_fragment}: {body}"
     );
     assert_eq!(
-        "/docs/api/builtin-generation-sunset.md",
+        Some("/docs/api/builtin-generation-sunset.md"),
         json["deprecation"]["migration_guide"].as_str(),
         "{body}"
     );
     assert_eq!(
-        "2026-10-18",
+        Some("2026-10-18"),
         json["deprecation"]["sunset"].as_str(),
         "{body}"
     );
