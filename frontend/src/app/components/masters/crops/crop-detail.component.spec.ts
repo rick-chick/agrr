@@ -169,8 +169,7 @@ describe('CropDetailComponent', () => {
             },
             blueprint_summary: {
               count: '{{count}} task plan(s)',
-              edit_action: 'Edit task plans',
-              create_action: 'Create task plans'
+              edit_action: 'Edit task plans'
             }
           },
           form: { region_jp: 'Japan' }
