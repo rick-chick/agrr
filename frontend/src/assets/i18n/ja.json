@@ -393,6 +393,13 @@
         "delete": "削除",
         "delete_confirm": "本当にこの作物を削除しますか？"
       },
+      "inline": {
+        "stages_toggle": "生育ステージ一覧",
+        "blueprints_toggle": "作業計画を編集",
+        "collapse": "閉じる",
+        "stages_full_edit": "生育ステージを編集",
+        "blueprints_full_edit": "作業計画を編集"
+      },
       "empty": {
         "icon": "🌱",
         "title": "まだ作物が登録されていません",

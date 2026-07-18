@@ -320,6 +320,13 @@
         "delete": "हटाएं",
         "delete_confirm": "क्या आप इस फसल को हटाना चाहते हैं?"
       },
+      "inline": {
+        "stages_toggle": "वृद्धि चरण सूची",
+        "blueprints_toggle": "कार्य योजना संपादित करें",
+        "collapse": "बंद करें",
+        "stages_full_edit": "वृद्धि चरण संपादित करें",
+        "blueprints_full_edit": "कार्य योजना संपादित करें"
+      },
       "empty": {
         "icon": "🌱",
         "title": "अभी तक कोई फसल पंजीकृत नहीं",
