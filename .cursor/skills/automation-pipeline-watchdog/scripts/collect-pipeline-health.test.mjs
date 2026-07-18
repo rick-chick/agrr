@@ -8,7 +8,6 @@ import {
   detectCiFailingReadyPr,
   detectConflictReadyPr,
   detectFailedDispatchWorkflow,
-  detectStaleAgentBlockedIssue,
   detectStaleAgentInProgressIssue,
   detectStaleMergeInProgressPr,
   detectStaleRetryScheduleRuns,
@@ -282,32 +281,6 @@ test('selectActionableFindings keeps P1 without duplicate and drops P2', () => {
   const actionable = selectActionableFindings(findings);
   assert.equal(actionable.length, 1);
   assert.equal(actionable[0].id, 'b');
-});
-
-test('detectStaleAgentBlockedIssue only after 24h', () => {
-  assert.equal(
-    detectStaleAgentBlockedIssue(
-      {
-        number: 3,
-        title: 'blocked',
-        labels: [{ name: 'agent-blocked' }],
-        updatedAt: new Date(NOW - 12 * 60 * 60 * 1000).toISOString(),
-      },
-      NOW,
-    ),
-    null,
-  );
-  assert.ok(
-    detectStaleAgentBlockedIssue(
-      {
-        number: 3,
-        title: 'blocked',
-        labels: [{ name: 'agent-blocked' }],
-        updatedAt: new Date(NOW - 25 * 60 * 60 * 1000).toISOString(),
-      },
-      NOW,
-    ),
-  );
 });
 
 test('detectStuckDraftPr flags long-waiting agent draft', () => {

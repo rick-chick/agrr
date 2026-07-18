@@ -31,7 +31,6 @@ description: >-
 |------|--------|------------|
 | **Issue** | `agent-in-progress` 90 分以上滞留 | P1 |
 | **Issue** | `agent-ready` が 2 時間以上進まない（blocker なし） | P1 |
-| **Issue** | legacy stop label（`agent-skipped` / `agent-blocked`）が 24 時間超 | P2（`agent-ready` 昇格を reconcile に委ねる） |
 | **PR** | Draft が 12 時間以上 ready 化されない（CI green なのに滞留） | P1 |
 | **PR** | `agent-merge-in-progress` 90 分以上 | P1 |
 | **PR** | `BEHIND` / `CONFLICTING` の open PR（ラベル不問） | P1 |

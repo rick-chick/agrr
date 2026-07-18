@@ -15,9 +15,6 @@ export const AGENT_READY_STUCK_MS = 2 * 60 * 60 * 1000;
 /** Draft PR waiting for pr-agent-prep (12h schedule + buffer) */
 export const DRAFT_STUCK_MS = 12 * 60 * 60 * 1000;
 
-/** Legacy Issue Worker stop labels — flag for reconcile promotion after 24h */
-export const AGENT_BLOCKED_STALE_MS = 24 * 60 * 60 * 1000;
-
 export const RETRY_BLOCK_LABELS = [
   'agent-in-progress',
 ];
@@ -146,50 +143,6 @@ export function detectStuckAgentReadyIssue(issue, nowMs) {
     agentReady: false,
   };
 }
-
-/**
- * @param {{
- *   number: number;
- *   title: string;
- *   labels: Array<{ name: string } | string>;
- *   updatedAt: string;
- * }} issue
- * @param {number} nowMs
- * @returns {import('./collect-pipeline-health-types.mjs').PipelineFinding | null}
- */
-export function detectLegacyIssueWorkerStopLabel(issue, nowMs) {
-  const labels = labelNames(issue.labels);
-  const legacy = labels.filter((name) => name === 'agent-skipped' || name === 'agent-blocked');
-  if (legacy.length === 0) {
-    return null;
-  }
-  const updatedAtMs = Date.parse(issue.updatedAt);
-  if (!isStale({ updatedAtMs, nowMs, thresholdMs: AGENT_BLOCKED_STALE_MS })) {
-    return null;
-  }
-  return {
-    id: buildFindingId('issue-legacy-stop-label', String(issue.number)),
-    category: 'issue',
-    priority: 'P2',
-    subjectType: 'issue',
-    subjectNumber: issue.number,
-    title: `[P2][infra] Issue #${issue.number} legacy stop label (${legacy.join(', ')})`,
-    summary: `Issue #${issue.number} still has deprecated stop label(s): ${legacy.join(', ')}. Issue Worker retry reconcile should promote to agent-ready.`,
-    evidence: {
-      issueNumber: issue.number,
-      issueTitle: issue.title,
-      labels,
-      legacyLabels: legacy,
-      updatedAt: issue.updatedAt,
-      staleHours: Math.floor((nowMs - updatedAtMs) / 3600000),
-    },
-    suggestedLabels: ['enhancement', 'automation-watchdog', 'agent-ready'],
-    agentReady: true,
-  };
-}
-
-/** @deprecated Use detectLegacyIssueWorkerStopLabel */
-export const detectStaleAgentBlockedIssue = detectLegacyIssueWorkerStopLabel;
 
 /**
  * @param {{

@@ -13,14 +13,15 @@ import { execFileSync } from 'node:child_process';
 import {
   buildWebhookPayload,
   defaultRetryReasonForMode,
+  hasLabel,
+  isEpicIssue,
   isRetryCandidate,
   openFixPrSearchQuery,
   parseRetryDispatchArgs,
-  resolveImplementPreDispatchGates,
   resolvePreDispatchGates,
-  selectRetriageCandidate,
+  selectDispatchableEpicCloseCheckCandidate,
+  selectDispatchableOnDependencyClosed,
   selectDispatchableRetryCandidate,
-  resolveHardDependencies,
 } from './issue-worker-dispatch-lib.mjs';
 import { createGetAgentDepsContractFromComments } from './issue-worker-deps-agent-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
@@ -79,42 +80,39 @@ function listAgentReadyIssues(repo) {
 }
 
 /**
- * Open issues carrying legacy stop labels removed from Issue Worker (pre-migration queue).
- *
  * @param {string} repo
  * @returns {Array<{ number: number; title: string; url: string; body: string; labels: string[]; createdAt: string }>}
  */
-function listIssuesByLabel(repo, label) {
+function listOpenEpicIssues(repo) {
   const raw = gh(repo, [
     'issue',
     'list',
     '--state',
     'open',
-    '--label',
-    label,
     '--limit',
-    '50',
+    '100',
     '--json',
     'number,title,url,body,labels,createdAt',
   ]);
-  return JSON.parse(raw).map((issue) => ({
-    number: issue.number,
-    title: issue.title,
-    url: issue.url,
-    body: issue.body ?? '',
-    labels: issue.labels.map((entry) => entry.name),
-    createdAt: issue.createdAt,
-  }));
+  return JSON.parse(raw)
+    .map((issue) => ({
+      number: issue.number,
+      title: issue.title,
+      url: issue.url,
+      body: issue.body ?? '',
+      labels: issue.labels.map((label) => label.name),
+      createdAt: issue.createdAt,
+    }))
+    .filter((issue) => isEpicIssue(issue.title, issue.labels.join(',')));
 }
 
-function listLegacyQueueIssues(repo) {
-  const byNumber = new Map();
-  for (const label of ['agent-skipped', 'agent-blocked']) {
-    for (const issue of listIssuesByLabel(repo, label)) {
-      byNumber.set(issue.number, issue);
-    }
-  }
-  return [...byNumber.values()];
+/**
+ * Open epics without agent-ready — agent §1b judges close; no label promotion.
+ *
+ * @param {Array<{ number: number; title: string; url: string; body: string; labels: string[] }>} epics
+ */
+function listEpicsWithoutAgentReady(epics) {
+  return epics.filter((issue) => !hasLabel(issue.labels.join(','), 'agent-ready'));
 }
 
 /**
@@ -210,99 +208,42 @@ function postWebhook({ repo, issue, action, retryReason }) {
 }
 
 /**
- * @param {string} repo
- * @param {number} issueNumber
- */
-function promoteToAgentReady(repo, issueNumber, labels) {
-  const args = ['issue', 'edit', String(issueNumber), '--add-label', 'agent-ready'];
-  if (labels.includes('agent-skipped')) {
-    args.push('--remove-label', 'agent-skipped');
-  }
-  if (labels.includes('agent-blocked')) {
-    args.push('--remove-label', 'agent-blocked');
-  }
-  gh(repo, args);
-}
-
-/**
- * @param {string} repo
- * @param {(issueNumber: number) => string} fetchIssueState
- * @returns {Promise<{ issue: { number: number; title: string; url: string; body: string; labels: string[] } } | null>}
- */
-async function selectRetriageIssue(repo, fetchIssueState) {
-  const issues = listLegacyQueueIssues(repo);
-  const getAgentDepsContract = createRepoAgentDepsGetter(repo);
-  const selected = await selectRetriageCandidate(
-    issues,
-    (issueNumber) => hasOpenFixPr(repo, issueNumber),
-    fetchIssueState,
-    getAgentDepsContract,
-  );
-  if (!selected) {
-    return null;
-  }
-  const issue = issues.find((entry) => entry.number === selected.issue.number);
-  return issue ? { issue } : null;
-}
-
-/**
  * @param {{
  *   repo: string;
  *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
  *   retryReason?: string;
+ *   action: string;
  * }} input
  * @returns {Promise<boolean>}
  */
-async function dispatchRetriageIssue({ repo, issue, retryReason }) {
-  // GITHUB_TOKEN label edits do not trigger issues:labeled workflows (GitHub docs).
-  // Retry must post the webhook directly, same as agent-ready reconcile.
-  if (issue.labels.includes('agent-skipped') || issue.labels.includes('agent-blocked')) {
-    promoteToAgentReady(repo, issue.number, issue.labels);
-  }
-  const refreshed = fetchIssue(repo, issue.number);
-  return dispatchIfEligible({
-    repo,
-    issue: refreshed,
-    retryReason,
-  });
-}
+async function dispatchWebhook({ repo, issue, retryReason, action }) {
+  if (action !== 'epic_close_check') {
+    const labels = issue.labels.join(',');
+    const eligibility = isRetryCandidate({
+      issueLabels: labels,
+      issueTitle: issue.title,
+      hasOpenFixPr: hasOpenFixPr(repo, issue.number),
+    });
+    if (!eligibility.eligible) {
+      console.log(`Skip retry for #${issue.number}: ${eligibility.reason}`);
+      return false;
+    }
 
-/**
- * @param {{
- *   repo: string;
- *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
- *   retryReason?: string;
- *   action?: string;
- * }} input
- * @returns {Promise<boolean>}
- */
-async function dispatchIfEligible({ repo, issue, retryReason, action: actionOverride }) {
-  const labels = issue.labels.join(',');
-  const eligibility = isRetryCandidate({
-    issueLabels: labels,
-    issueTitle: issue.title,
-    hasOpenFixPr: hasOpenFixPr(repo, issue.number),
-  });
-  if (!eligibility.eligible) {
-    console.log(`Skip retry for #${issue.number}: ${eligibility.reason}`);
-    return false;
-  }
-
-  const action = actionOverride ?? eligibility.action;
-  const getAgentDepsContract = createRepoAgentDepsGetter(repo);
-  const preDispatch = await resolvePreDispatchGates({
-    action,
-    issueNumber: issue.number,
-    issueTitle: issue.title,
-    issueBody: issue.body,
-    issueLabels: labels,
-    getAgentDepsContract,
-    fetchIssueState: async (number) => fetchIssue(repo, number).state,
-    fetchIssueBody: async (number) => fetchIssue(repo, number).body,
-  });
-  if (preDispatch.skip) {
-    console.log(`Skip retry for #${issue.number}: ${preDispatch.skipReason}`);
-    return false;
+    const getAgentDepsContract = createRepoAgentDepsGetter(repo);
+    const preDispatch = await resolvePreDispatchGates({
+      action,
+      issueNumber: issue.number,
+      issueTitle: issue.title,
+      issueBody: issue.body,
+      issueLabels: labels,
+      getAgentDepsContract,
+      fetchIssueState: async (number) => fetchIssue(repo, number).state,
+      fetchIssueBody: async (number) => fetchIssue(repo, number).body,
+    });
+    if (preDispatch.skip) {
+      console.log(`Skip retry for #${issue.number}: ${preDispatch.skipReason}`);
+      return false;
+    }
   }
 
   postWebhook({
@@ -317,14 +258,29 @@ async function dispatchIfEligible({ repo, issue, retryReason, action: actionOver
 async function main() {
   const args = parseRetryDispatchArgs(process.argv);
   const repo = args.repo ?? DEFAULT_REPO;
-  const fetchIssueState = async (number) => fetchIssue(repo, number).state;
+  const getAgentDepsContract = createRepoAgentDepsGetter(repo);
+  const hasOpenFixPrFor = (issueNumber) => hasOpenFixPr(repo, issueNumber);
 
   if (args.mode === 'reconcile') {
+    const epicsWithoutAgentReady = listEpicsWithoutAgentReady(listOpenEpicIssues(repo));
+    const epicSelected = selectDispatchableEpicCloseCheckCandidate(
+      epicsWithoutAgentReady,
+      hasOpenFixPrFor,
+    );
+    if (epicSelected) {
+      await dispatchWebhook({
+        repo,
+        issue: epicSelected.issue,
+        action: epicSelected.action,
+        retryReason: args.retryReason ?? defaultRetryReasonForMode('reconcile'),
+      });
+      return;
+    }
+
     const issues = listAgentReadyIssues(repo);
-    const getAgentDepsContract = createRepoAgentDepsGetter(repo);
     const selected = await selectDispatchableRetryCandidate(
       issues,
-      (issueNumber) => hasOpenFixPr(repo, issueNumber),
+      hasOpenFixPrFor,
       async (issue, action) =>
         resolvePreDispatchGates({
           action,
@@ -337,30 +293,22 @@ async function main() {
           fetchIssueBody: async (number) => fetchIssue(repo, number).body,
         }),
     );
-    if (selected) {
-      const issue = issues.find((entry) => entry.number === selected.issue.number);
-      if (!issue) {
-        console.log('Selected retry issue disappeared before dispatch.');
-        return;
-      }
-      await dispatchIfEligible({
-        repo,
-        issue,
-        retryReason: args.retryReason ?? defaultRetryReasonForMode('reconcile'),
-        action: selected.action,
-      });
+    if (!selected) {
+      console.log('No eligible agent-ready or open epic issues for retry reconciliation.');
       return;
     }
 
-    const retriage = await selectRetriageIssue(repo, fetchIssueState);
-    if (!retriage) {
-      console.log('No eligible agent-ready or retriage issues for retry reconciliation.');
+    const issue = issues.find((entry) => entry.number === selected.issue.number);
+    if (!issue) {
+      console.log('Selected retry issue disappeared before dispatch.');
       return;
     }
-    await dispatchRetriageIssue({
+
+    await dispatchWebhook({
       repo,
-      issue: retriage.issue,
-      retryReason: args.retryReason ?? 'deps_resolved_reconcile',
+      issue,
+      action: selected.action,
+      retryReason: args.retryReason ?? defaultRetryReasonForMode('reconcile'),
     });
     return;
   }
@@ -370,36 +318,55 @@ async function main() {
     if (!Number.isInteger(closedNumber) || closedNumber <= 0) {
       throw new Error('--number must be a positive integer for on-closed mode');
     }
-    const getAgentDepsContract = createRepoAgentDepsGetter(repo);
-    const skippedIssues = [];
-    for (const issue of listLegacyQueueIssues(repo)) {
-      const { hardDependencies } = await resolveHardDependencies({
-        issueNumber: issue.number,
-        issueBody: issue.body ?? '',
-        getAgentDepsContract,
-      });
-      if (hardDependencies.includes(closedNumber)) {
-        skippedIssues.push(issue);
-      }
-    }
-    const selected = await selectRetriageCandidate(
-      skippedIssues,
-      (issueNumber) => hasOpenFixPr(repo, issueNumber),
-      fetchIssueState,
+
+    const agentReadyIssues = listAgentReadyIssues(repo);
+    const dependencySelected = await selectDispatchableOnDependencyClosed(
+      agentReadyIssues,
+      closedNumber,
+      hasOpenFixPrFor,
       getAgentDepsContract,
+      async (issue, action) =>
+        resolvePreDispatchGates({
+          action,
+          issueNumber: issue.number,
+          issueTitle: issue.title,
+          issueBody: issue.body,
+          issueLabels: issue.labels.join(','),
+          getAgentDepsContract,
+          fetchIssueState: async (number) => fetchIssue(repo, number).state,
+          fetchIssueBody: async (number) => fetchIssue(repo, number).body,
+        }),
     );
-    if (!selected) {
-      console.log(`No retriage issues depend on closed #${closedNumber}.`);
+    if (dependencySelected) {
+      const issue = agentReadyIssues.find(
+        (entry) => entry.number === dependencySelected.issue.number,
+      );
+      if (!issue) {
+        console.log('Selected dependency-unblocked issue disappeared before dispatch.');
+        return;
+      }
+      await dispatchWebhook({
+        repo,
+        issue,
+        action: dependencySelected.action,
+        retryReason: args.retryReason ?? 'dependency_closed',
+      });
       return;
     }
-    const issue = skippedIssues.find((entry) => entry.number === selected.issue.number);
-    if (!issue) {
-      console.log('Selected retriage issue disappeared before dispatch.');
+
+    const epicSelected = selectDispatchableEpicCloseCheckCandidate(
+      listEpicsWithoutAgentReady(listOpenEpicIssues(repo)),
+      hasOpenFixPrFor,
+    );
+    if (!epicSelected) {
+      console.log(`No agent-ready or open epic dispatch for closed #${closedNumber}.`);
       return;
     }
-    await dispatchRetriageIssue({
+
+    await dispatchWebhook({
       repo,
-      issue,
+      issue: epicSelected.issue,
+      action: epicSelected.action,
       retryReason: args.retryReason ?? 'dependency_closed',
     });
     return;
@@ -411,9 +378,12 @@ async function main() {
       throw new Error('--number must be a positive integer for issue mode');
     }
     const issue = fetchIssue(repo, issueNumber);
-    await dispatchIfEligible({
+    const labels = issue.labels.join(',');
+    const action = isEpicIssue(issue.title, labels) ? 'epic_close_check' : 'implement';
+    await dispatchWebhook({
       repo,
       issue,
+      action,
       retryReason: args.retryReason ?? defaultRetryReasonForMode('issue'),
     });
     return;
