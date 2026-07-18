@@ -3,6 +3,7 @@
 use agrr_r4_contract::http::ContractClient;
 use rusqlite::params;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 pub fn empty_headers() -> HashMap<String, String> {
     HashMap::new()
@@ -280,14 +281,18 @@ pub fn seed_masters_crop_with_manual_blueprint(user_id: i64) -> MastersCropBluep
     }
 }
 
+static SEED_SEQ: AtomicU64 = AtomicU64::new(0);
+
 fn seed_suffix() -> String {
+    let seq = SEED_SEQ.fetch_add(1, Ordering::Relaxed);
     format!(
-        "{}_{}",
+        "{}_{}_{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
-            .as_nanos()
+            .as_nanos(),
+        seq
     )
 }
 
