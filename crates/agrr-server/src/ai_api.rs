@@ -1,6 +1,10 @@
 //! AI query endpoints (`/api/v1/crops|fertilizes|pests/*`).
 
 use crate::adapters::{NoopLogger, PassthroughTranslator};
+use crate::builtin_generation_deprecation::{
+    builtin_generation_deprecated_result, builtin_generation_deprecated_status_result,
+    BuiltinGenerationEndpoint,
+};
 use crate::session_auth::{user_id_from_session, user_id_from_session_or_anonymous};
 use crate::state::AppState;
 use agrr_adapters_agrr::{
@@ -32,6 +36,7 @@ use agrr_domain::pest::ports::PestAiCreateOutputPort;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
+    response::Response,
     routing::post,
     Json, Router,
 };
@@ -141,50 +146,51 @@ async fn crop_ai_create(
     State(state): State<AppState>,
     jar: CookieJar,
     Json(body): Json<CropAiBody>,
-) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session_or_anonymous(&state, &jar).map_err(|status| {
-        (status, Json(json!({"error": "unauthorized"})))
-    })?;
-    let pool = state.sqlite.clone();
-    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
-    let crop_ai_query = CropAiQueryDaemonGateway::from_env();
-    let persistence = CropAiUpsertSqlitePersistence::new(
-        CropSqliteGateway::new(pool.clone()),
-        user_id,
-        UserLookupSqliteGateway::new(pool.clone()),
-        PassthroughTranslator,
-    );
-    let translator = PassthroughTranslator;
-    let logger = NoopLogger;
-    let mut presenter = CropAiPresenter {
-        state: state.clone(),
-        response: None,
-    };
-    let mut interactor = CropAiCreateInteractor::new(
-        &mut presenter,
-        user_id,
-        &user_lookup,
-        &translator,
-        &logger,
-        &crop_ai_query,
-        &persistence,
-    );
-    interactor
-        .call(body.name.as_deref().unwrap_or(""), body.variety.as_deref())
-        .map_err(|_| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "internal"})),
-            )
+) -> Response {
+    let result: Result<Json<Value>, (StatusCode, Json<Value>)> = (|| {
+        let user_id = user_id_from_session_or_anonymous(&state, &jar).map_err(|status| {
+            (status, Json(json!({"error": "unauthorized"})))
         })?;
-    presenter
-        .response
-        .unwrap_or_else(|| {
+        let pool = state.sqlite.clone();
+        let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+        let crop_ai_query = CropAiQueryDaemonGateway::from_env();
+        let persistence = CropAiUpsertSqlitePersistence::new(
+            CropSqliteGateway::new(pool.clone()),
+            user_id,
+            UserLookupSqliteGateway::new(pool.clone()),
+            PassthroughTranslator,
+        );
+        let translator = PassthroughTranslator;
+        let logger = NoopLogger;
+        let mut presenter = CropAiPresenter {
+            state: state.clone(),
+            response: None,
+        };
+        let mut interactor = CropAiCreateInteractor::new(
+            &mut presenter,
+            user_id,
+            &user_lookup,
+            &translator,
+            &logger,
+            &crop_ai_query,
+            &persistence,
+        );
+        interactor
+            .call(body.name.as_deref().unwrap_or(""), body.variety.as_deref())
+            .map_err(|_| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({"error": "internal"})),
+                )
+            })?;
+        presenter.response.unwrap_or_else(|| {
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({"error": "no response"})),
             ))
         })
+    })();
+    builtin_generation_deprecated_result(result, BuiltinGenerationEndpoint::CropAiCreate)
 }
 
 struct FertilizeAiCreatePresenter {
@@ -223,46 +229,49 @@ async fn fertilize_ai_create(
     State(state): State<AppState>,
     jar: CookieJar,
     Json(body): Json<FertilizeAiBody>,
-) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session_or_anonymous(&state, &jar).map_err(|status| {
-        (status, Json(json!({"error": "unauthorized"})))
-    })?;
-    let pool = state.sqlite.clone();
-    let gateway = FertilizeSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
-    let ai_query = FertilizeAiQueryDaemonGateway::from_env();
-    let translator = PassthroughTranslator;
-    let logger = NoopLogger;
-    let create_adapter =
-        FertilizeCreateForAiAdapter::new(user_id, &gateway, &user_lookup, &translator);
-    let update_adapter =
-        FertilizeUpdateForAiAdapter::new(user_id, &gateway, &user_lookup, &translator);
-    let mut presenter = FertilizeAiCreatePresenter { response: None };
-    let mut interactor = FertilizeAiCreateInteractor::new(
-        &mut presenter,
-        user_id,
-        &user_lookup,
-        &gateway,
-        &ai_query,
-        &create_adapter,
-        &update_adapter,
-        &logger,
-        &translator,
-    );
-    interactor
-        .call(body.name.as_deref().unwrap_or(""))
-        .map_err(|_| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "internal"})),
-            )
+) -> Response {
+    let result: Result<Json<Value>, (StatusCode, Json<Value>)> = (|| {
+        let user_id = user_id_from_session_or_anonymous(&state, &jar).map_err(|status| {
+            (status, Json(json!({"error": "unauthorized"})))
         })?;
-    presenter.response.unwrap_or_else(|| {
-        Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "no response"})),
-        ))
-    })
+        let pool = state.sqlite.clone();
+        let gateway = FertilizeSqliteGateway::new(pool.clone());
+        let user_lookup = UserLookupSqliteGateway::new(pool);
+        let ai_query = FertilizeAiQueryDaemonGateway::from_env();
+        let translator = PassthroughTranslator;
+        let logger = NoopLogger;
+        let create_adapter =
+            FertilizeCreateForAiAdapter::new(user_id, &gateway, &user_lookup, &translator);
+        let update_adapter =
+            FertilizeUpdateForAiAdapter::new(user_id, &gateway, &user_lookup, &translator);
+        let mut presenter = FertilizeAiCreatePresenter { response: None };
+        let mut interactor = FertilizeAiCreateInteractor::new(
+            &mut presenter,
+            user_id,
+            &user_lookup,
+            &gateway,
+            &ai_query,
+            &create_adapter,
+            &update_adapter,
+            &logger,
+            &translator,
+        );
+        interactor
+            .call(body.name.as_deref().unwrap_or(""))
+            .map_err(|_| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({"error": "internal"})),
+                )
+            })?;
+        presenter.response.unwrap_or_else(|| {
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": "no response"})),
+            ))
+        })
+    })();
+    builtin_generation_deprecated_result(result, BuiltinGenerationEndpoint::FertilizeAiCreate)
 }
 
 async fn fertilize_ai_update(
@@ -270,39 +279,42 @@ async fn fertilize_ai_update(
     jar: CookieJar,
     Path(id): Path<i64>,
     Json(body): Json<FertilizeAiBody>,
-) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar).map_err(|status| {
-        (status, Json(json!({"error": "unauthorized"})))
-    })?;
-    let pool = state.sqlite.clone();
-    let gateway = FertilizeSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
-    let ai_query = FertilizeAiQueryDaemonGateway::from_env();
-    let translator = PassthroughTranslator;
-    let logger = NoopLogger;
-    let update_adapter =
-        FertilizeUpdateForAiAdapter::new(user_id, &gateway, &user_lookup, &translator);
-    let interactor = FertilizeAiUpdateInteractor::new(
-        user_id,
-        &user_lookup,
-        &gateway,
-        &ai_query,
-        &update_adapter,
-        &logger,
-        &translator,
-    );
-    let envelope = interactor
-        .call(id, body.name.as_deref().unwrap_or(""))
-        .map_err(|_| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "internal"})),
-            )
+) -> Response {
+    let result: Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> = (|| {
+        let user_id = user_id_from_session(&state, &jar).map_err(|status| {
+            (status, Json(json!({"error": "unauthorized"})))
         })?;
-    Ok((
-        fertilize_http_status(envelope.status),
-        Json(envelope.body),
-    ))
+        let pool = state.sqlite.clone();
+        let gateway = FertilizeSqliteGateway::new(pool.clone());
+        let user_lookup = UserLookupSqliteGateway::new(pool);
+        let ai_query = FertilizeAiQueryDaemonGateway::from_env();
+        let translator = PassthroughTranslator;
+        let logger = NoopLogger;
+        let update_adapter =
+            FertilizeUpdateForAiAdapter::new(user_id, &gateway, &user_lookup, &translator);
+        let interactor = FertilizeAiUpdateInteractor::new(
+            user_id,
+            &user_lookup,
+            &gateway,
+            &ai_query,
+            &update_adapter,
+            &logger,
+            &translator,
+        );
+        let envelope = interactor
+            .call(id, body.name.as_deref().unwrap_or(""))
+            .map_err(|_| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({"error": "internal"})),
+                )
+            })?;
+        Ok((
+            fertilize_http_status(envelope.status),
+            Json(envelope.body),
+        ))
+    })();
+    builtin_generation_deprecated_status_result(result, BuiltinGenerationEndpoint::FertilizeAiUpdate)
 }
 
 struct PestAiCreatePresenter {
@@ -345,72 +357,75 @@ async fn pest_ai_create(
     State(state): State<AppState>,
     jar: CookieJar,
     Json(body): Json<PestAiBody>,
-) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar).map_err(|status| {
-        (status, Json(json!({"error": "unauthorized"})))
-    })?;
-    let pool = state.sqlite.clone();
-    let gateway = PestSqliteGateway::new(pool.clone());
-    let crop_gateway = PestCropSqliteGateway::new(pool.clone());
-    let crop_pest_gateway = CropPestSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
-    let ai_query = PestAiQueryDaemonGateway::from_env();
-    let translator = PassthroughTranslator;
-    let logger = NoopLogger;
-    let create_adapter = PestCreateForAiAdapter::new(
-        user_id,
-        &gateway,
-        &crop_gateway,
-        &crop_pest_gateway,
-        &user_lookup,
-        &translator,
-    );
-    let update_adapter = PestUpdateForAiAdapter::new(
-        user_id,
-        &gateway,
-        &crop_gateway,
-        &crop_pest_gateway,
-        &user_lookup,
-        &translator,
-        &logger,
-    );
-    let associate = AssociateAffectedCropsAdapter::new(
-        user_id,
-        &user_lookup,
-        &gateway,
-        &crop_gateway,
-        &crop_pest_gateway,
-        &logger,
-    );
-    let mut presenter = PestAiCreatePresenter { response: None };
-    let mut interactor = PestAiCreateInteractor::new(
-        &mut presenter,
-        user_id,
-        &user_lookup,
-        &gateway,
-        &ai_query,
-        &create_adapter,
-        &update_adapter,
-        &associate,
-        &logger,
-        &translator,
-    );
-    interactor
-        .call(body.name.as_deref(), &[])
-        .map_err(|_| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "internal"})),
-            )
+) -> Response {
+    let result: Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> = (|| {
+        let user_id = user_id_from_session(&state, &jar).map_err(|status| {
+            (status, Json(json!({"error": "unauthorized"})))
         })?;
-    match presenter.response {
-        Some(Ok((status, json))) => Ok((status, json)),
-        Some(Err(e)) => Err(e),
-        None => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "no response"})),
-        )),
-    }
+        let pool = state.sqlite.clone();
+        let gateway = PestSqliteGateway::new(pool.clone());
+        let crop_gateway = PestCropSqliteGateway::new(pool.clone());
+        let crop_pest_gateway = CropPestSqliteGateway::new(pool.clone());
+        let user_lookup = UserLookupSqliteGateway::new(pool);
+        let ai_query = PestAiQueryDaemonGateway::from_env();
+        let translator = PassthroughTranslator;
+        let logger = NoopLogger;
+        let create_adapter = PestCreateForAiAdapter::new(
+            user_id,
+            &gateway,
+            &crop_gateway,
+            &crop_pest_gateway,
+            &user_lookup,
+            &translator,
+        );
+        let update_adapter = PestUpdateForAiAdapter::new(
+            user_id,
+            &gateway,
+            &crop_gateway,
+            &crop_pest_gateway,
+            &user_lookup,
+            &translator,
+            &logger,
+        );
+        let associate = AssociateAffectedCropsAdapter::new(
+            user_id,
+            &user_lookup,
+            &gateway,
+            &crop_gateway,
+            &crop_pest_gateway,
+            &logger,
+        );
+        let mut presenter = PestAiCreatePresenter { response: None };
+        let mut interactor = PestAiCreateInteractor::new(
+            &mut presenter,
+            user_id,
+            &user_lookup,
+            &gateway,
+            &ai_query,
+            &create_adapter,
+            &update_adapter,
+            &associate,
+            &logger,
+            &translator,
+        );
+        interactor
+            .call(body.name.as_deref(), &[])
+            .map_err(|_| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({"error": "internal"})),
+                )
+            })?;
+        match presenter.response {
+            Some(Ok((status, json))) => Ok((status, json)),
+            Some(Err(e)) => Err(e),
+            None => Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": "no response"})),
+            )),
+        }
+    })();
+    builtin_generation_deprecated_status_result(result, BuiltinGenerationEndpoint::PestAiCreate)
 }
 
 async fn pest_ai_update(
@@ -418,43 +433,46 @@ async fn pest_ai_update(
     jar: CookieJar,
     Path(id): Path<i64>,
     Json(body): Json<PestAiBody>,
-) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar).map_err(|status| {
-        (status, Json(json!({"error": "unauthorized"})))
-    })?;
-    let pool = state.sqlite.clone();
-    let gateway = PestSqliteGateway::new(pool.clone());
-    let crop_gateway = PestCropSqliteGateway::new(pool.clone());
-    let crop_pest_gateway = CropPestSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
-    let ai_query = PestAiQueryDaemonGateway::from_env();
-    let translator = PassthroughTranslator;
-    let logger = NoopLogger;
-    let update_adapter = PestUpdateForAiAdapter::new(
-        user_id,
-        &gateway,
-        &crop_gateway,
-        &crop_pest_gateway,
-        &user_lookup,
-        &translator,
-        &logger,
-    );
-    let interactor = PestAiUpdateInteractor::new(
-        user_id,
-        &user_lookup,
-        &gateway,
-        &ai_query,
-        &update_adapter,
-        &logger,
-        &translator,
-    );
-    let envelope = interactor
-        .call(id, body.name.as_deref().unwrap_or(""))
-        .map_err(|_| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "internal"})),
-            )
+) -> Response {
+    let result: Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> = (|| {
+        let user_id = user_id_from_session(&state, &jar).map_err(|status| {
+            (status, Json(json!({"error": "unauthorized"})))
         })?;
-    Ok((pest_http_status(envelope.status), Json(envelope.body)))
+        let pool = state.sqlite.clone();
+        let gateway = PestSqliteGateway::new(pool.clone());
+        let crop_gateway = PestCropSqliteGateway::new(pool.clone());
+        let crop_pest_gateway = CropPestSqliteGateway::new(pool.clone());
+        let user_lookup = UserLookupSqliteGateway::new(pool);
+        let ai_query = PestAiQueryDaemonGateway::from_env();
+        let translator = PassthroughTranslator;
+        let logger = NoopLogger;
+        let update_adapter = PestUpdateForAiAdapter::new(
+            user_id,
+            &gateway,
+            &crop_gateway,
+            &crop_pest_gateway,
+            &user_lookup,
+            &translator,
+            &logger,
+        );
+        let interactor = PestAiUpdateInteractor::new(
+            user_id,
+            &user_lookup,
+            &gateway,
+            &ai_query,
+            &update_adapter,
+            &logger,
+            &translator,
+        );
+        let envelope = interactor
+            .call(id, body.name.as_deref().unwrap_or(""))
+            .map_err(|_| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({"error": "internal"})),
+                )
+            })?;
+        Ok((pest_http_status(envelope.status), Json(envelope.body)))
+    })();
+    builtin_generation_deprecated_status_result(result, BuiltinGenerationEndpoint::PestAiUpdate)
 }

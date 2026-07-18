@@ -1,4 +1,3 @@
-import { blueprintRegenerateErrorShowsRetry } from '../../core/crop-blueprint-regenerate-error-i18n';
 import { blueprintGenerationReadiness } from '../../domain/crops/blueprint-generation-readiness';
 import { AgriculturalTask } from '../../domain/agricultural-tasks/agricultural-task';
 import { groupBlueprintsByStage } from '../../domain/crops/blueprint-stage-grouping';
@@ -178,17 +177,12 @@ export function withCropBlueprintDisplayState(
     selectedStageGddRange,
     unassociatedAgriculturalTasks: control.agriculturalTasks,
     blueprintReadiness,
-    canRegenerateBlueprints: blueprintReadiness.ready && !control.blueprintsRegenerating,
+    canRegenerateBlueprints: false,
     canCreateBlueprint: canCreateBlueprint(control, blueprints),
     blueprintStageNameForCreate: blueprintStageNameForCreate(control),
     showBlueprintReadinessChecklist:
-      !control.blueprintsLoading &&
-      !blueprintReadiness.ready &&
-      !control.blueprintsRegenerating,
-    showBlueprintEmptyState: !blueprints.length && !blueprintRegenerateError,
-    showBlueprintRegenerateRetry:
-      blueprintReadiness.ready &&
-      blueprintRegenerateError != null &&
-      blueprintRegenerateErrorShowsRetry(blueprintRegenerateError)
+      !control.blueprintsLoading && !blueprintReadiness.ready && !control.blueprintsRegenerating,
+    showBlueprintEmptyState: !blueprints.length,
+    showBlueprintRegenerateRetry: false,
   };
 }
