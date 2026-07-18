@@ -4,7 +4,8 @@ mod support;
 
 use agrr_r4_contract::http::ContractClient;
 use support::{
-    agrr_regeneration_contract_available, assert_crop_task_template_api_removed,
+    agrr_regeneration_contract_available, assert_builtin_generation_deprecated_headers,
+    assert_crop_task_template_api_removed,
     clear_plan_task_schedules, developer_session_id, empty_headers, farmer_session_id,
     researcher_session_id,
     find_schedule_item, poll_task_schedule_sync_ready, schedule_item_ids_from_response,
@@ -799,7 +800,7 @@ fn post_masters_crop_task_schedule_blueprints_regenerate_without_blueprints_retu
     let user_id = user_id_for_session(&client, &session_id);
     let seed = seed_masters_crop(user_id);
 
-    let (status, body) = status_and_body(client.post(
+    let response = client.post(
         &format!(
             "/api/v1/masters/crops/{}/task_schedule_blueprints/regenerate",
             seed.crop_id
@@ -807,8 +808,11 @@ fn post_masters_crop_task_schedule_blueprints_regenerate_without_blueprints_retu
         Some(&session_id),
         &empty_headers(),
         None,
-    ));
+    );
+    let headers = response.headers().clone();
+    let (status, body) = status_and_body(response);
     assert_eq!(422, status, "{body}");
+    assert_builtin_generation_deprecated_headers(&headers, &body, "setup_proposal");
     let json: serde_json::Value = serde_json::from_str(&body).expect("regenerate error JSON");
     assert_eq!(
         json.get("error_code").and_then(|v| v.as_str()),
@@ -1485,6 +1489,54 @@ fn post_masters_crop_setup_proposal_with_api_key_authenticates() {
     assert_eq!(200, status, "{response_body}");
     let json: serde_json::Value = serde_json::from_str(&response_body).expect("dry_run JSON");
     assert_eq!(true, json["valid"].as_bool().unwrap());
+}
+
+#[test]
+fn post_crops_ai_create_returns_deprecation_metadata() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let response = client.post(
+        "/api/v1/crops/ai_create",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "" })),
+    );
+    let headers = response.headers().clone();
+    let (status, body) = status_and_body(response);
+    assert_ne!(200, status, "empty crop name must not succeed: {body}");
+    assert_builtin_generation_deprecated_headers(&headers, &body, "setup_proposal");
+}
+
+#[test]
+fn post_fertilizes_ai_create_returns_deprecation_metadata() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let response = client.post(
+        "/api/v1/fertilizes/ai_create",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "" })),
+    );
+    let headers = response.headers().clone();
+    let (status, body) = status_and_body(response);
+    assert_ne!(200, status, "empty fertilize name must not succeed: {body}");
+    assert_builtin_generation_deprecated_headers(&headers, &body, "fertilizes");
+}
+
+#[test]
+fn post_pests_ai_create_returns_deprecation_metadata() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let response = client.post(
+        "/api/v1/pests/ai_create",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "" })),
+    );
+    let headers = response.headers().clone();
+    let (status, body) = status_and_body(response);
+    assert_ne!(200, status, "empty pest name must not succeed: {body}");
+    assert_builtin_generation_deprecated_headers(&headers, &body, "pests");
 }
 
 fn api_key_from_generate_response(body: &str) -> String {

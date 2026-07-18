@@ -14,6 +14,43 @@ pub fn status_and_body(response: reqwest::blocking::Response) -> (u16, String) {
     (status, body)
 }
 
+/// Asserts built-in generation endpoints return RFC 9745 deprecation metadata.
+pub fn assert_builtin_generation_deprecated_headers(
+    headers: &reqwest::header::HeaderMap,
+    body: &str,
+    expected_alternative_fragment: &str,
+) {
+    assert_eq!(
+        Some("@2026-07-18"),
+        headers.get("deprecation").and_then(|v| v.to_str().ok()),
+        "{body}"
+    );
+    assert_eq!(
+        Some("Sat, 18 Oct 2026 00:00:00 GMT"),
+        headers.get("sunset").and_then(|v| v.to_str().ok()),
+        "{body}"
+    );
+    let json: serde_json::Value = serde_json::from_str(body).expect("deprecated JSON");
+    assert_eq!(Some(true), json.get("deprecated").and_then(|v| v.as_bool()), "{body}");
+    let alternative = json["deprecation"]["alternative"]
+        .as_str()
+        .unwrap_or_default();
+    assert!(
+        alternative.contains(expected_alternative_fragment),
+        "expected alternative to contain {expected_alternative_fragment}: {body}"
+    );
+    assert_eq!(
+        Some("/docs/api/builtin-generation-sunset.md"),
+        json["deprecation"]["migration_guide"].as_str(),
+        "{body}"
+    );
+    assert_eq!(
+        Some("2026-10-18"),
+        json["deprecation"]["sunset"].as_str(),
+        "{body}"
+    );
+}
+
 /// Asserts deprecated crop agricultural_tasks API returns 410 Gone.
 pub fn assert_crop_task_template_api_removed(status: u16, body: &str) {
     assert_eq!(410, status, "{body}");

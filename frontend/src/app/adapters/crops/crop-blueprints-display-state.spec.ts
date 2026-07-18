@@ -198,73 +198,21 @@ describe('withCropBlueprintDisplayState', () => {
       expect(next.showBlueprintEmptyState).toBe(false);
     });
 
-    it('is false when a regenerate error is present even if blueprints are empty', () => {
+    it('is true when blueprints are empty even if a legacy regenerate error is present', () => {
       const next = withCropBlueprintDisplayState({
         ...baseControl,
         blueprints: [],
         blueprintRegenerateError: 'crops.show.blueprint_errors.generic'
       });
-      expect(next.showBlueprintEmptyState).toBe(false);
+      expect(next.showBlueprintEmptyState).toBe(true);
     });
   });
 
   describe('showBlueprintRegenerateRetry', () => {
-    const cropWithRequirements = {
-      ...baseControl.crop!,
-      crop_stages: [
-        {
-          id: 1,
-          crop_id: 1,
-          name: '定植期',
-          order: 1,
-          temperature_requirement: {
-            id: 1,
-            crop_stage_id: 1,
-            base_temperature: 10,
-            optimal_min: 15,
-            optimal_max: 25
-          },
-          thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 }
-        }
-      ]
-    };
-
-    it('is true when readiness is ready and regenerate error allows retry', () => {
+    it('is always false after built-in regenerate sunset', () => {
       const next = withCropBlueprintDisplayState({
         ...baseControl,
-        crop: cropWithRequirements,
-        blueprints: [blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 })],
         blueprintRegenerateError: 'crops.show.blueprint_errors.generic'
-      });
-      expect(next.showBlueprintRegenerateRetry).toBe(true);
-    });
-
-    it('is false when readiness is not ready', () => {
-      const next = withCropBlueprintDisplayState({
-        ...baseControl,
-        crop: baseControl.crop,
-        blueprints: [],
-        blueprintRegenerateError: 'crops.show.blueprint_errors.generic'
-      });
-      expect(next.showBlueprintRegenerateRetry).toBe(false);
-    });
-
-    it('is false when there is no regenerate error', () => {
-      const next = withCropBlueprintDisplayState({
-        ...baseControl,
-        crop: cropWithRequirements,
-        blueprints: [blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 })],
-        blueprintRegenerateError: null
-      });
-      expect(next.showBlueprintRegenerateRetry).toBe(false);
-    });
-
-    it('is false when regenerate error blocks retry', () => {
-      const next = withCropBlueprintDisplayState({
-        ...baseControl,
-        crop: cropWithRequirements,
-        blueprints: [blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 })],
-        blueprintRegenerateError: 'crops.show.blueprint_errors.missing_blueprints'
       });
       expect(next.showBlueprintRegenerateRetry).toBe(false);
     });
@@ -420,7 +368,7 @@ describe('withCropBlueprintDisplayState', () => {
     });
   });
 
-  it('enables canRegenerateBlueprints when readiness is ready and not regenerating', () => {
+  it('keeps canRegenerateBlueprints false after built-in regenerate sunset', () => {
     const cropWithRequirements = {
       ...baseControl.crop!,
       crop_stages: [
@@ -446,6 +394,6 @@ describe('withCropBlueprintDisplayState', () => {
       blueprints: [blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 })]
     });
     expect(next.blueprintReadiness.ready).toBe(true);
-    expect(next.canRegenerateBlueprints).toBe(true);
+    expect(next.canRegenerateBlueprints).toBe(false);
   });
 });

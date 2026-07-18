@@ -1,5 +1,8 @@
 //! Nested crop task schedule blueprints — `/api/v1/masters/crops/{crop_id}/task_schedule_blueprints`.
 
+use crate::builtin_generation_deprecation::{
+    builtin_generation_deprecated_json, BuiltinGenerationEndpoint,
+};
 use crate::masters_auth::MastersUserId;
 use crate::masters_crop_context::{auth_user, internal_error};
 use crate::state::AppState;
@@ -32,6 +35,7 @@ use agrr_domain::crop::ports::{
 use axum::{
     extract::{Path, State},
     http::StatusCode,
+    response::Response,
     routing::{get, patch, post},
     Json, Router,
 };
@@ -187,7 +191,7 @@ async fn regenerate(
     State(state): State<AppState>,
     auth: MastersUserId,
     Path(crop_id): Path<i64>,
-) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+) -> Response {
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let crop_gateway = CropSqliteGateway::new(pool.clone());
@@ -224,15 +228,34 @@ async fn regenerate(
         &crop_gateway,
         &user_lookup,
     );
-    interactor
+    if interactor
         .call(MastersCropTaskScheduleBlueprintRegenerateInput::new(
             user_id, crop_id,
         ))
-        .map_err(|_| internal_error())?;
+        .is_err()
+    {
+        return builtin_generation_deprecated_json(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            json!({"error": "internal"}),
+            BuiltinGenerationEndpoint::TaskScheduleBlueprintRegenerate,
+        );
+    }
     match port.body {
-        Some(Ok(json)) => Ok(json),
-        Some(Err(e)) => Err(e),
-        None => Err(internal_error()),
+        Some(Ok(json)) => builtin_generation_deprecated_json(
+            StatusCode::OK,
+            json.0,
+            BuiltinGenerationEndpoint::TaskScheduleBlueprintRegenerate,
+        ),
+        Some(Err((status, json))) => builtin_generation_deprecated_json(
+            status,
+            json.0,
+            BuiltinGenerationEndpoint::TaskScheduleBlueprintRegenerate,
+        ),
+        None => builtin_generation_deprecated_json(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            json!({"error": "internal"}),
+            BuiltinGenerationEndpoint::TaskScheduleBlueprintRegenerate,
+        ),
     }
 }
 
