@@ -25,7 +25,7 @@ const OPENED_TERMINAL_LABELS = [
   'duplicate',
 ];
 
-const RETRY_BLOCK_LABELS = ['agent-in-progress', 'agent-skipped', 'agent-blocked'];
+const RETRY_BLOCK_LABELS = ['agent-in-progress'];
 
 /**
  * @param {string} labelsCsv
@@ -142,7 +142,7 @@ export function formatDependencyGateComment(openDependencies) {
     '',
     `次の依存 issue が open のため Cloud Agent を起動しません: ${refs}`,
     '',
-    '依存 issue が CLOSED になったら `agent-ready` ラベルで再 dispatch されます（キュー待ちのまま、`agent-skipped` ラベルは付けません）。',
+    '依存 issue が CLOSED になったら reconcile が `agent-ready` issue を再 dispatch します。',
   ].join('\n');
 }
 
@@ -357,12 +357,6 @@ export function resolveDispatchAction({ eventAction, labelName, issueAuthor, iss
       return { skip: false, action: 'close_with_reason' };
     }
     if (labelName === 'agent-ready') {
-      if (hasLabel(issueLabels, 'agent-skipped')) {
-        return {
-          skip: true,
-          skipReason: 'agent-ready with agent-skipped requires removing agent-skipped first',
-        };
-      }
       return { skip: false, action: 'implement' };
     }
     return {
@@ -379,12 +373,6 @@ export function resolveDispatchAction({ eventAction, labelName, issueAuthor, iss
       return { skip: false, action: 'close_with_reason' };
     }
     if (hasLabel(issueLabels, 'agent-ready')) {
-      if (hasLabel(issueLabels, 'agent-skipped')) {
-        return {
-          skip: true,
-          skipReason: 'agent-ready with agent-skipped requires removing agent-skipped first',
-        };
-      }
       return { skip: false, action: 'implement' };
     }
     for (const label of OPENED_TERMINAL_LABELS) {
@@ -494,6 +482,43 @@ export async function selectDispatchableRetryCandidate(
 }
 
 /**
+ * Resolve hard-blocking dependency issue numbers for re-triage / unblock.
+ * Agent cache wins when valid; otherwise parse `## 依存` from the issue body.
+ *
+ * @param {{
+ *   issueNumber: number;
+ *   issueBody: string;
+ *   getAgentDepsContract?: (
+ *     issueNumber: number,
+ *     issueBody: string,
+ *   ) => Promise<AgentDepsContract | null> | AgentDepsContract | null;
+ * }} input
+ * @returns {Promise<{ hardDependencies: number[]; source: 'cache' | 'body' | 'none' }>}
+ */
+export async function resolveHardDependencies({
+  issueNumber,
+  issueBody,
+  getAgentDepsContract,
+}) {
+  if (getAgentDepsContract) {
+    const contract = await getAgentDepsContract(issueNumber, issueBody);
+    if (contract && contract.body_hash === hashDependencySection(issueBody)) {
+      return {
+        hardDependencies: [...contract.hard_dependencies].sort((a, b) => a - b),
+        source: 'cache',
+      };
+    }
+  }
+
+  const parsed = parseHardDependencyIssueNumbers(issueBody);
+  if (parsed.length > 0) {
+    return { hardDependencies: parsed, source: 'body' };
+  }
+
+  return { hardDependencies: [], source: 'none' };
+}
+
+/**
  * @param {{
  *   issueLabels: string;
  *   issueBody: string;
@@ -507,7 +532,7 @@ export async function selectDispatchableRetryCandidate(
  * }} input
  * @returns {Promise<{ eligible: true } | { eligible: false; reason: string }>}
  */
-export async function isDepsResolvedUnblockCandidate({
+export async function isRetriageEligible({
   issueLabels,
   issueBody,
   hasOpenFixPr,
@@ -515,27 +540,27 @@ export async function isDepsResolvedUnblockCandidate({
   issueNumber = 0,
   fetchIssueState,
 }) {
-  if (!hasLabel(issueLabels, 'agent-skipped')) {
-    return { eligible: false, reason: 'no agent-skipped' };
+  if (!hasLabel(issueLabels, 'agent-ready') && !hasLabel(issueLabels, 'agent-skipped')) {
+    return { eligible: false, reason: 'not in queue' };
   }
-  if (hasLabel(issueLabels, 'agent-blocked') || hasLabel(issueLabels, 'agent-in-progress')) {
-    return { eligible: false, reason: 'blocked label present' };
+  if (hasLabel(issueLabels, 'agent-in-progress')) {
+    return { eligible: false, reason: 'in progress' };
   }
   if (hasOpenFixPr) {
     return { eligible: false, reason: 'open fix pr exists' };
   }
-  if (!getAgentDepsContract) {
-    return { eligible: false, reason: 'no agent dependency cache resolver' };
+
+  const { hardDependencies } = await resolveHardDependencies({
+    issueNumber,
+    issueBody,
+    getAgentDepsContract,
+  });
+
+  if (hardDependencies.length === 0) {
+    return { eligible: true };
   }
-  const contract = await getAgentDepsContract(issueNumber, issueBody);
-  if (!contract || contract.body_hash !== hashDependencySection(issueBody)) {
-    return { eligible: false, reason: 'no valid agent dependency cache' };
-  }
-  const dependencies = [...contract.hard_dependencies].sort((a, b) => a - b);
-  if (dependencies.length === 0) {
-    return { eligible: false, reason: 'no hard dependencies in agent cache' };
-  }
-  for (const dependencyNumber of dependencies) {
+
+  for (const dependencyNumber of hardDependencies) {
     const state = await fetchIssueState(dependencyNumber);
     if (state !== 'CLOSED') {
       return {
@@ -547,6 +572,9 @@ export async function isDepsResolvedUnblockCandidate({
   return { eligible: true };
 }
 
+/** @deprecated Use isRetriageEligible */
+export const isDepsResolvedUnblockCandidate = isRetriageEligible;
+
 /**
  * @param {Array<{ number: number; labels: string[]; body?: string }>} issues
  * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
@@ -554,7 +582,7 @@ export async function isDepsResolvedUnblockCandidate({
  * @param {(issueNumber: number, issueBody: string) => Promise<AgentDepsContract | null> | AgentDepsContract | null} getAgentDepsContract
  * @returns {Promise<{ issue: { number: number; labels: string[]; body?: string } } | null>}
  */
-export async function selectDepsUnblockCandidate(
+export async function selectRetriageCandidate(
   issues,
   hasOpenFixPrFor,
   fetchIssueState,
@@ -563,7 +591,7 @@ export async function selectDepsUnblockCandidate(
   const sorted = [...issues].sort((a, b) => a.number - b.number);
   for (const issue of sorted) {
     const labels = issue.labels.join(',');
-    const result = await isDepsResolvedUnblockCandidate({
+    const result = await isRetriageEligible({
       issueLabels: labels,
       issueBody: issue.body ?? '',
       hasOpenFixPr: hasOpenFixPrFor(issue.number),
@@ -577,6 +605,9 @@ export async function selectDepsUnblockCandidate(
   }
   return null;
 }
+
+/** @deprecated Use selectRetriageCandidate */
+export const selectDepsUnblockCandidate = selectRetriageCandidate;
 
 /**
  * @param {string[]} argv process.argv

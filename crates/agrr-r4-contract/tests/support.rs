@@ -52,6 +52,12 @@ pub fn farmer_session_id(client: &ContractClient) -> String {
     session_id_from_mock_login_response(response, "/auth/test/mock_login_as/farmer")
 }
 
+/// Non-admin mock user (`/auth/test/mock_login_as/researcher`).
+pub fn researcher_session_id(client: &ContractClient) -> String {
+    let response = client.get("/auth/test/mock_login_as/researcher", None, &empty_headers());
+    session_id_from_mock_login_response(response, "/auth/test/mock_login_as/researcher")
+}
+
 pub fn user_id_for_session(client: &ContractClient, session_id: &str) -> i64 {
     let (status, body) = status_and_body(client.get("/api/v1/auth/me", Some(session_id), &empty_headers()));
     assert_eq!(200, status, "{body}");

@@ -17,8 +17,9 @@ import {
   openFixPrSearchQuery,
   parseRetryDispatchArgs,
   resolveImplementPreDispatchGates,
-  selectDepsUnblockCandidate,
+  selectRetriageCandidate,
   selectDispatchableRetryCandidate,
+  resolveHardDependencies,
 } from './issue-worker-dispatch-lib.mjs';
 import { createGetAgentDepsContractFromComments } from './issue-worker-deps-agent-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
@@ -77,17 +78,19 @@ function listAgentReadyIssues(repo) {
 }
 
 /**
+ * Open issues carrying legacy stop labels removed from Issue Worker (pre-migration queue).
+ *
  * @param {string} repo
  * @returns {Array<{ number: number; title: string; url: string; body: string; labels: string[]; createdAt: string }>}
  */
-function listAgentSkippedIssues(repo) {
+function listIssuesByLabel(repo, label) {
   const raw = gh(repo, [
     'issue',
     'list',
     '--state',
     'open',
     '--label',
-    'agent-skipped',
+    label,
     '--limit',
     '50',
     '--json',
@@ -98,9 +101,19 @@ function listAgentSkippedIssues(repo) {
     title: issue.title,
     url: issue.url,
     body: issue.body ?? '',
-    labels: issue.labels.map((label) => label.name),
+    labels: issue.labels.map((entry) => entry.name),
     createdAt: issue.createdAt,
   }));
+}
+
+function listLegacyQueueIssues(repo) {
+  const byNumber = new Map();
+  for (const label of ['agent-skipped', 'agent-blocked']) {
+    for (const issue of listIssuesByLabel(repo, label)) {
+      byNumber.set(issue.number, issue);
+    }
+  }
+  return [...byNumber.values()];
 }
 
 /**
@@ -199,16 +212,15 @@ function postWebhook({ repo, issue, action, retryReason }) {
  * @param {string} repo
  * @param {number} issueNumber
  */
-function unblockAgentSkippedIssue(repo, issueNumber) {
-  gh(repo, [
-    'issue',
-    'edit',
-    String(issueNumber),
-    '--remove-label',
-    'agent-skipped',
-    '--add-label',
-    'agent-ready',
-  ]);
+function promoteToAgentReady(repo, issueNumber, labels) {
+  const args = ['issue', 'edit', String(issueNumber), '--add-label', 'agent-ready'];
+  if (labels.includes('agent-skipped')) {
+    args.push('--remove-label', 'agent-skipped');
+  }
+  if (labels.includes('agent-blocked')) {
+    args.push('--remove-label', 'agent-blocked');
+  }
+  gh(repo, args);
 }
 
 /**
@@ -216,10 +228,10 @@ function unblockAgentSkippedIssue(repo, issueNumber) {
  * @param {(issueNumber: number) => string} fetchIssueState
  * @returns {Promise<{ issue: { number: number; title: string; url: string; body: string; labels: string[] } } | null>}
  */
-async function selectDepsUnblockIssue(repo, fetchIssueState) {
-  const issues = listAgentSkippedIssues(repo);
+async function selectRetriageIssue(repo, fetchIssueState) {
+  const issues = listLegacyQueueIssues(repo);
   const getAgentDepsContract = createRepoAgentDepsGetter(repo);
-  const selected = await selectDepsUnblockCandidate(
+  const selected = await selectRetriageCandidate(
     issues,
     (issueNumber) => hasOpenFixPr(repo, issueNumber),
     fetchIssueState,
@@ -240,10 +252,12 @@ async function selectDepsUnblockIssue(repo, fetchIssueState) {
  * }} input
  * @returns {Promise<boolean>}
  */
-async function dispatchDepsUnblockedIssue({ repo, issue, retryReason }) {
+async function dispatchRetriageIssue({ repo, issue, retryReason }) {
   // GITHUB_TOKEN label edits do not trigger issues:labeled workflows (GitHub docs).
   // Retry must post the webhook directly, same as agent-ready reconcile.
-  unblockAgentSkippedIssue(repo, issue.number);
+  if (issue.labels.includes('agent-skipped') || issue.labels.includes('agent-blocked')) {
+    promoteToAgentReady(repo, issue.number, issue.labels);
+  }
   const refreshed = fetchIssue(repo, issue.number);
   return dispatchIfEligible({
     repo,
@@ -331,14 +345,14 @@ async function main() {
       return;
     }
 
-    const unblocked = await selectDepsUnblockIssue(repo, fetchIssueState);
-    if (!unblocked) {
-      console.log('No eligible agent-ready or deps-unblocked issues for retry reconciliation.');
+    const retriage = await selectRetriageIssue(repo, fetchIssueState);
+    if (!retriage) {
+      console.log('No eligible agent-ready or retriage issues for retry reconciliation.');
       return;
     }
-    await dispatchDepsUnblockedIssue({
+    await dispatchRetriageIssue({
       repo,
-      issue: unblocked.issue,
+      issue: retriage.issue,
       retryReason: args.retryReason ?? 'deps_resolved_reconcile',
     });
     return;
@@ -351,28 +365,32 @@ async function main() {
     }
     const getAgentDepsContract = createRepoAgentDepsGetter(repo);
     const skippedIssues = [];
-    for (const issue of listAgentSkippedIssues(repo)) {
-      const contract = await getAgentDepsContract(issue.number, issue.body ?? '');
-      if (contract?.hard_dependencies.includes(closedNumber)) {
+    for (const issue of listLegacyQueueIssues(repo)) {
+      const { hardDependencies } = await resolveHardDependencies({
+        issueNumber: issue.number,
+        issueBody: issue.body ?? '',
+        getAgentDepsContract,
+      });
+      if (hardDependencies.includes(closedNumber)) {
         skippedIssues.push(issue);
       }
     }
-    const selected = await selectDepsUnblockCandidate(
+    const selected = await selectRetriageCandidate(
       skippedIssues,
       (issueNumber) => hasOpenFixPr(repo, issueNumber),
       fetchIssueState,
       getAgentDepsContract,
     );
     if (!selected) {
-      console.log(`No deps-unblocked agent-skipped issues depend on #${closedNumber}.`);
+      console.log(`No retriage issues depend on closed #${closedNumber}.`);
       return;
     }
     const issue = skippedIssues.find((entry) => entry.number === selected.issue.number);
     if (!issue) {
-      console.log('Selected deps-unblocked issue disappeared before dispatch.');
+      console.log('Selected retriage issue disappeared before dispatch.');
       return;
     }
-    await dispatchDepsUnblockedIssue({
+    await dispatchRetriageIssue({
       repo,
       issue,
       retryReason: args.retryReason ?? 'dependency_closed',
