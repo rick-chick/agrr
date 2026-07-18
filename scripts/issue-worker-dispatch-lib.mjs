@@ -181,25 +181,42 @@ export async function resolveDependencyGate(input) {
 }
 
 /**
+ * @param {string} issueTitle
+ * @param {string} issueLabels
+ * @returns {boolean}
+ */
+export function isEpicIssue(issueTitle, issueLabels) {
+  return /\[epic\]/i.test(issueTitle) || hasLabel(issueLabels, 'epic');
+}
+
+/**
+ * Remap implement dispatch for epic issues to close-check only (no code implementation).
+ *
  * @param {{
  *   action: string;
  *   issueTitle: string;
  *   issueLabels: string;
  * }} input
- * @returns {{ skip: true; skipReason: string } | { skip: false }}
+ * @returns {{ action: string }}
+ */
+export function resolveEpicDispatchAction({ action, issueTitle, issueLabels }) {
+  if (action === 'implement' && isEpicIssue(issueTitle, issueLabels)) {
+    return { action: 'epic_close_check' };
+  }
+  return { action };
+}
+
+/**
+ * @deprecated Use resolveEpicDispatchAction. Kept for workflow verify compatibility.
+ * @param {{
+ *   action: string;
+ *   issueTitle: string;
+ *   issueLabels: string;
+ * }} input
+ * @returns {{ action: string }}
  */
 export function resolveEpicImplementGate({ action, issueTitle, issueLabels }) {
-  if (action !== 'implement') {
-    return { skip: false };
-  }
-  const isEpicTitle = /\[epic\]/i.test(issueTitle);
-  if (isEpicTitle || hasLabel(issueLabels, 'epic')) {
-    return {
-      skip: true,
-      skipReason: 'epic issues cannot be dispatched for implement',
-    };
-  }
-  return { skip: false };
+  return resolveEpicDispatchAction({ action, issueTitle, issueLabels });
 }
 
 /**
@@ -231,15 +248,6 @@ export async function resolveImplementPreDispatchGates({
   fetchIssueState,
   fetchIssueBody,
 }) {
-  const epicGate = resolveEpicImplementGate({
-    action: 'implement',
-    issueTitle,
-    issueLabels,
-  });
-  if (epicGate.skip) {
-    return epicGate;
-  }
-
   try {
     const dependencyGate = await resolveDependencyGateFromAgentCache({
       issueNumber,
@@ -332,9 +340,55 @@ export function resolveImplementDispatchGate({ action, hasOpenFixPr }) {
 }
 
 /**
+ * Pre-dispatch gates keyed by webhook action.
+ *
+ * @param {{
+ *   action: string;
+ *   issueNumber: number;
+ *   issueTitle: string;
+ *   issueBody: string;
+ *   issueLabels: string;
+ *   getAgentDepsContract?: (
+ *     issueNumber: number,
+ *     issueBody: string,
+ *   ) => Promise<import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null> | import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null;
+ *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
+ *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
+ * }} input
+ * @returns {Promise<
+ *   { skip: false }
+ *   | { skip: true; skipReason: string; openDependencies?: number[]; circular?: boolean }
+ * >}
+ */
+export async function resolvePreDispatchGates({
+  action,
+  issueNumber,
+  issueTitle,
+  issueBody,
+  issueLabels,
+  getAgentDepsContract,
+  fetchIssueState,
+  fetchIssueBody,
+}) {
+  if (action === 'epic_close_check') {
+    return { skip: false };
+  }
+
+  return resolveImplementPreDispatchGates({
+    issueNumber,
+    issueTitle,
+    issueBody,
+    issueLabels,
+    getAgentDepsContract,
+    fetchIssueState,
+    fetchIssueBody,
+  });
+}
+
+/**
  * @returns {{ eligible: true; action: string } | { eligible: false; reason: string }}
  */
-export function isRetryCandidate({ issueLabels, hasOpenFixPr }) {
+export function isRetryCandidate({ issueLabels, issueTitle = '', hasOpenFixPr }) {
   if (!hasLabel(issueLabels, 'agent-ready')) {
     return { eligible: false, reason: 'no agent-ready' };
   }
@@ -349,13 +403,14 @@ export function isRetryCandidate({ issueLabels, hasOpenFixPr }) {
   if (hasOpenFixPr) {
     return { eligible: false, reason: 'open fix pr exists' };
   }
-  return { eligible: true, action: 'implement' };
+  const action = isEpicIssue(issueTitle, issueLabels) ? 'epic_close_check' : 'implement';
+  return { eligible: true, action };
 }
 
 /**
- * @param {Array<{ number: number; labels: string[] }>} issues
+ * @param {Array<{ number: number; title?: string; labels: string[] }>} issues
  * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @returns {{ issue: { number: number; labels: string[] }; action: string } | null}
+ * @returns {{ issue: { number: number; title?: string; labels: string[] }; action: string } | null}
  */
 export function selectRetryCandidate(issues, hasOpenFixPrFor) {
   const sorted = [...issues].sort((a, b) => a.number - b.number);
@@ -363,6 +418,7 @@ export function selectRetryCandidate(issues, hasOpenFixPrFor) {
     const labels = issue.labels.join(',');
     const result = isRetryCandidate({
       issueLabels: labels,
+      issueTitle: issue.title ?? '',
       hasOpenFixPr: hasOpenFixPrFor(issue.number),
     });
     if (result.eligible) {
@@ -377,7 +433,7 @@ export function selectRetryCandidate(issues, hasOpenFixPrFor) {
  *
  * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} issues
  * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @param {(issue: { number: number; title: string; labels: string[]; body?: string }) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
+ * @param {(issue: { number: number; title: string; labels: string[]; body?: string }, action: string) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
  * @returns {Promise<{ issue: { number: number; title: string; labels: string[]; body?: string }; action: string } | null>}
  */
 export async function selectDispatchableRetryCandidate(
@@ -390,13 +446,14 @@ export async function selectDispatchableRetryCandidate(
     const labels = issue.labels.join(',');
     const retryResult = isRetryCandidate({
       issueLabels: labels,
+      issueTitle: issue.title ?? '',
       hasOpenFixPr: hasOpenFixPrFor(issue.number),
     });
     if (!retryResult.eligible) {
       continue;
     }
 
-    const preDispatch = await evaluatePreDispatch(issue);
+    const preDispatch = await evaluatePreDispatch(issue, retryResult.action);
     if (preDispatch.skip) {
       continue;
     }
