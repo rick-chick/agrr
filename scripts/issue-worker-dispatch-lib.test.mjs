@@ -19,8 +19,6 @@ import {
   resolveImplementDispatchGate,
   resolveImplementPreDispatchGates,
   resolvePreDispatchGates,
-  selectDispatchableRetryCandidate,
-  selectDispatchableEpicCloseCheckCandidate,
   selectDispatchableOnDependencyClosed,
   isEpicCloseCheckCandidate,
   resolveHardDependencies,
@@ -539,37 +537,6 @@ test('resolvePreDispatchGates allows epic_close_check without dependency cache',
   assert.deepEqual(result, { skip: false });
 });
 
-// reconcile uses selectReconcileDispatchCandidate (implement first); not this helper.
-test('selectDispatchableRetryCandidate dispatches epic_close_check before implement', async () => {
-  const selected = await selectDispatchableRetryCandidate(
-    [
-      {
-        number: 316,
-        title: '[epic] Parent',
-        labels: ['agent-ready'],
-        body: '## 子 Issue\n\n- #323',
-      },
-      {
-        number: 323,
-        title: 'Child',
-        labels: ['agent-ready'],
-        body: '',
-      },
-    ],
-    () => false,
-    async () => ({ skip: false }),
-  );
-  assert.deepEqual(selected, {
-    issue: {
-      number: 316,
-      title: '[epic] Parent',
-      labels: ['agent-ready'],
-      body: '## 子 Issue\n\n- #323',
-    },
-    action: 'epic_close_check',
-  });
-});
-
 test('resolveImplementPreDispatchGates blocks open dependencies', async () => {
   const body = '## 依存\n\n- #317';
   const result = await resolveImplementPreDispatchGates({
@@ -591,32 +558,6 @@ test('isEpicCloseCheckCandidate does not require agent-ready', () => {
     hasOpenFixPr: false,
   });
   assert.deepEqual(result, { eligible: true, action: 'epic_close_check' });
-});
-
-test('selectDispatchableEpicCloseCheckCandidate picks lowest open epic', () => {
-  const selected = selectDispatchableEpicCloseCheckCandidate(
-    [
-      {
-        number: 362,
-        title: '[epic] Later',
-        labels: ['agent-skipped'],
-      },
-      {
-        number: 316,
-        title: '[epic] Earlier',
-        labels: [],
-      },
-    ],
-    () => false,
-  );
-  assert.deepEqual(selected, {
-    issue: {
-      number: 316,
-      title: '[epic] Earlier',
-      labels: [],
-    },
-    action: 'epic_close_check',
-  });
 });
 
 test('selectDispatchableOnDependencyClosed dispatches when agent cache links closed dependency', async () => {
@@ -689,7 +630,7 @@ test('resolveHardDependencies returns miss when cache is missing', async () => {
   assert.deepEqual(result, { source: 'miss' });
 });
 
-test('selectDispatchableRetryCandidate skips pre-dispatch failure and picks next issue', async () => {
+test('collectReconcileDispatchCandidates skips pre-dispatch failure and includes next issue', async () => {
   const issues = [
     {
       number: 384,
@@ -704,7 +645,8 @@ test('selectDispatchableRetryCandidate skips pre-dispatch failure and picks next
       body: '## 依存\n\n- なし',
     },
   ];
-  const selected = await selectDispatchableRetryCandidate(
+  const candidates = await collectReconcileDispatchCandidates(
+    [],
     issues,
     () => false,
     async (issue) => {
@@ -714,23 +656,26 @@ test('selectDispatchableRetryCandidate skips pre-dispatch failure and picks next
       return { skip: false };
     },
   );
-  assert.deepEqual(selected, {
-    issue: issues[1],
-    action: 'implement',
-  });
+  assert.deepEqual(candidates, [
+    {
+      issue: issues[1],
+      action: 'implement',
+    },
+  ]);
 });
 
-test('selectDispatchableRetryCandidate returns null when no issue passes gates', async () => {
+test('collectReconcileDispatchCandidates returns empty when no issue passes gates', async () => {
   const issues = [
     { number: 384, title: 'blocked', labels: ['agent-ready'], body: '' },
     { number: 398, title: 'blocked2', labels: ['agent-ready'], body: '' },
   ];
-  const selected = await selectDispatchableRetryCandidate(
+  const candidates = await collectReconcileDispatchCandidates(
+    [],
     issues,
     () => false,
     async () => ({ skip: true, skipReason: 'blocked' }),
   );
-  assert.equal(selected, null);
+  assert.deepEqual(candidates, []);
 });
 
 test('selectReconcileDispatchCandidate prefers implement over epic_close_check', () => {

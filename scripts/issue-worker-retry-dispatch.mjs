@@ -2,6 +2,9 @@
 /**
  * Retry / reconcile Issue Worker webhook dispatch.
  *
+ * reconcile: collect eligible issues, select one (implement first, rotate), post webhook.
+ * on-closed: dependency-unblocked agent-ready issues only.
+ *
  * Usage:
  *   node scripts/issue-worker-retry-dispatch.mjs reconcile [--repo OWNER/REPO]
  *   node scripts/issue-worker-retry-dispatch.mjs on-closed --number N [--repo OWNER/REPO]

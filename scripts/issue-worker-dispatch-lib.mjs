@@ -408,41 +408,6 @@ export function isRetryCandidate({ issueLabels, issueTitle = '', hasOpenFixPr })
 }
 
 /**
- * Select the lowest-number agent-ready issue that passes retry eligibility and pre-dispatch gates.
- *
- * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} issues
- * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @param {(issue: { number: number; title: string; labels: string[]; body?: string }, action: string) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
- * @returns {Promise<{ issue: { number: number; title: string; labels: string[]; body?: string }; action: string } | null>}
- */
-export async function selectDispatchableRetryCandidate(
-  issues,
-  hasOpenFixPrFor,
-  evaluatePreDispatch,
-) {
-  const sorted = [...issues].sort((a, b) => a.number - b.number);
-  for (const issue of sorted) {
-    const labels = issue.labels.join(',');
-    const retryResult = isRetryCandidate({
-      issueLabels: labels,
-      issueTitle: issue.title ?? '',
-      hasOpenFixPr: hasOpenFixPrFor(issue.number),
-    });
-    if (!retryResult.eligible) {
-      continue;
-    }
-
-    const preDispatch = await evaluatePreDispatch(issue, retryResult.action);
-    if (preDispatch.skip) {
-      continue;
-    }
-
-    return { issue, action: retryResult.action };
-  }
-  return null;
-}
-
-/**
  * Resolve hard-blocking dependency issue numbers for re-triage / unblock.
  * Agent cache only — no body parsing fallback.
  *
@@ -507,27 +472,6 @@ export function isEpicCloseCheckCandidate({
     return { eligible: false, reason: 'open fix pr exists' };
   }
   return { eligible: true, action: 'epic_close_check' };
-}
-
-/**
- * @param {Array<{ number: number; title: string; labels: string[] }>} issues
- * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @returns {{ issue: { number: number; title: string; labels: string[] }; action: 'epic_close_check' } | null}
- */
-export function selectDispatchableEpicCloseCheckCandidate(issues, hasOpenFixPrFor) {
-  const sorted = [...issues].sort((a, b) => a.number - b.number);
-  for (const issue of sorted) {
-    const labels = issue.labels.join(',');
-    const result = isEpicCloseCheckCandidate({
-      issueTitle: issue.title,
-      issueLabels: labels,
-      hasOpenFixPr: hasOpenFixPrFor(issue.number),
-    });
-    if (result.eligible) {
-      return { issue, action: result.action };
-    }
-  }
-  return null;
 }
 
 /**
