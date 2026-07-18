@@ -136,7 +136,12 @@ describe('CropListBlueprintsPanelPresenter', () => {
     expect(lastControl?.blueprintsLoading).toBe(false);
     expect(lastControl?.error).toBe('crops.errors.load_failed');
     expect(lastControl?.blueprintCount).toBe(0);
-    expect(lastControl?.blueprintSummary).toBeNull();
+    expect(lastControl?.blueprintSummary).toEqual({
+      lanes: [],
+      unsetTimingCount: 0,
+      issueCount: 0,
+      attentionCount: 0
+    });
     expect(lastControl?.blueprintReadiness).toEqual(defaultBlueprintReadiness());
   });
 });
