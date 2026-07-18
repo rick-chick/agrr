@@ -41,97 +41,6 @@ export function hasLabel(labelsCsv, name) {
 }
 
 /**
- * Whether a line marks an issue number as already closed (not a blocking dependency).
- *
- * @param {string} line
- * @param {number} issueNumber
- * @returns {boolean}
- */
-function isClosedDependencyMention(line, issueNumber) {
-  const closedPattern = new RegExp(
-    `#${issueNumber}[^\\n#]*(?:クローズ|closed|CLOSED)|(?:クローズ|closed|CLOSED)[^\\n#]*#${issueNumber}`,
-    'i',
-  );
-  return closedPattern.test(line);
-}
-
-/**
- * Whether a line expresses a soft / non-blocking reference to an issue number.
- *
- * @param {string} line
- * @param {number} issueNumber
- * @returns {boolean}
- */
-function isSoftDependencyMention(line, issueNumber) {
-  if (new RegExp(`^[-*]\\s*#${issueNumber}\\s*[（(]`).test(line)) {
-    return false;
-  }
-  if (new RegExp(`#${issueNumber}\\s+(用語)?と整合`).test(line)) {
-    return true;
-  }
-  if (/参考|独立|epic/i.test(line) && !new RegExp(`^[-*]\\s*#${issueNumber}\\b`).test(line)) {
-    return true;
-  }
-  return false;
-}
-
-/**
- * Parse hard-blocking issue numbers from the `## 依存` section.
- * Distinguishes author intent: なし / soft alignment notes / closed refs vs hard deps.
- *
- * @param {string} issueBody
- * @returns {number[]}
- */
-export function parseHardDependencyIssueNumbers(issueBody) {
-  const section = extractDependencySection(issueBody);
-  if (!section) {
-    return [];
-  }
-
-  const hardDependencies = new Set();
-  for (const rawLine of section.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line) {
-      continue;
-    }
-    if (/^[-*]\s*なし/.test(line)) {
-      continue;
-    }
-
-    const numbers = [...line.matchAll(/#(\d+)/g)].map((match) => Number(match[1]));
-    for (const issueNumber of numbers) {
-      if (isClosedDependencyMention(line, issueNumber)) {
-        continue;
-      }
-      if (isSoftDependencyMention(line, issueNumber)) {
-        continue;
-      }
-      hardDependencies.add(issueNumber);
-    }
-  }
-
-  return [...hardDependencies].sort((a, b) => a - b);
-}
-
-/**
- * Parse issue numbers referenced in the `## 依存` section.
- *
- * @param {string} issueBody
- * @returns {number[]}
- */
-export function parseDependencyIssueNumbers(issueBody) {
-  const section = extractDependencySection(issueBody);
-  if (!section) {
-    return [];
-  }
-  const numbers = [...section.matchAll(/#(\d+)/g)].map((match) => Number(match[1]));
-  if (numbers.length === 0) {
-    return [];
-  }
-  return [...new Set(numbers)];
-}
-
-/**
  * @param {number[]} openDependencies
  * @returns {string}
  */
@@ -169,7 +78,7 @@ export function formatDependencyGateComment(openDependencies) {
  *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
  * }} input
  * @returns {Promise<
- *   { skip: false; agentCacheMiss?: boolean; agentCacheStale?: boolean }
+ *   { skip: false }
  *   | { skip: true; skipReason: string; openDependencies: number[] }
  * >}
  */
@@ -186,22 +95,29 @@ export async function resolveDependencyGateFromAgentCache({
   }
 
   if (!getAgentDepsContract) {
-    return { skip: false, agentCacheMiss: true };
+    return {
+      skip: true,
+      skipReason: 'agent dependency cache unavailable',
+      openDependencies: [],
+    };
   }
 
   const visiting = new Set([issueNumber]);
   const openDependencies = new Set();
+  /** @type {number | null} */
+  let cacheMissIssue = null;
 
   /**
    * @param {number} currentNumber
    * @param {string} currentBody
    */
   async function walk(currentNumber, currentBody) {
-    const contract = await getAgentDepsContract(currentNumber, currentBody);
-    if (!contract) {
+    if (cacheMissIssue !== null) {
       return;
     }
-    if (contract.body_hash !== hashDependencySection(currentBody)) {
+    const contract = await getAgentDepsContract(currentNumber, currentBody);
+    if (!contract || contract.body_hash !== hashDependencySection(currentBody)) {
+      cacheMissIssue = currentNumber;
       return;
     }
 
@@ -226,14 +142,23 @@ export async function resolveDependencyGateFromAgentCache({
   }
 
   const rootContract = await getAgentDepsContract(issueNumber, issueBody);
-  if (!rootContract) {
-    return { skip: false, agentCacheMiss: true };
-  }
-  if (rootContract.body_hash !== hashDependencySection(issueBody)) {
-    return { skip: false, agentCacheStale: true };
+  if (!rootContract || rootContract.body_hash !== hashDependencySection(issueBody)) {
+    return {
+      skip: true,
+      skipReason: `agent dependency cache missing or stale for #${issueNumber}`,
+      openDependencies: [],
+    };
   }
 
   await walk(issueNumber, issueBody);
+
+  if (cacheMissIssue !== null) {
+    return {
+      skip: true,
+      skipReason: `agent dependency cache missing or stale for #${cacheMissIssue}`,
+      openDependencies: [],
+    };
+  }
 
   if (openDependencies.size === 0) {
     return { skip: false };
@@ -483,7 +408,7 @@ export async function selectDispatchableRetryCandidate(
 
 /**
  * Resolve hard-blocking dependency issue numbers for re-triage / unblock.
- * Agent cache wins when valid; otherwise parse `## 依存` from the issue body.
+ * Agent cache only — no body parsing fallback.
  *
  * @param {{
  *   issueNumber: number;
@@ -493,29 +418,34 @@ export async function selectDispatchableRetryCandidate(
  *     issueBody: string,
  *   ) => Promise<AgentDepsContract | null> | AgentDepsContract | null;
  * }} input
- * @returns {Promise<{ hardDependencies: number[]; source: 'cache' | 'body' | 'none' }>}
+ * @returns {Promise<
+ *   { hardDependencies: number[]; source: 'cache' | 'none' }
+ *   | { source: 'miss' }
+ * >}
  */
 export async function resolveHardDependencies({
   issueNumber,
   issueBody,
   getAgentDepsContract,
 }) {
-  if (getAgentDepsContract) {
-    const contract = await getAgentDepsContract(issueNumber, issueBody);
-    if (contract && contract.body_hash === hashDependencySection(issueBody)) {
-      return {
-        hardDependencies: [...contract.hard_dependencies].sort((a, b) => a - b),
-        source: 'cache',
-      };
-    }
+  const section = extractDependencySection(issueBody);
+  if (!section) {
+    return { hardDependencies: [], source: 'none' };
   }
 
-  const parsed = parseHardDependencyIssueNumbers(issueBody);
-  if (parsed.length > 0) {
-    return { hardDependencies: parsed, source: 'body' };
+  if (!getAgentDepsContract) {
+    return { source: 'miss' };
   }
 
-  return { hardDependencies: [], source: 'none' };
+  const contract = await getAgentDepsContract(issueNumber, issueBody);
+  if (!contract || contract.body_hash !== hashDependencySection(issueBody)) {
+    return { source: 'miss' };
+  }
+
+  return {
+    hardDependencies: [...contract.hard_dependencies].sort((a, b) => a - b),
+    source: 'cache',
+  };
 }
 
 /**
@@ -550,12 +480,20 @@ export async function isRetriageEligible({
     return { eligible: false, reason: 'open fix pr exists' };
   }
 
-  const { hardDependencies } = await resolveHardDependencies({
+  const resolved = await resolveHardDependencies({
     issueNumber,
     issueBody,
     getAgentDepsContract,
   });
 
+  if (resolved.source === 'miss') {
+    return {
+      eligible: false,
+      reason: 'agent dependency cache missing or stale',
+    };
+  }
+
+  const { hardDependencies } = resolved;
   if (hardDependencies.length === 0) {
     return { eligible: true };
   }

@@ -145,7 +145,9 @@ async function main() {
     bodyHash,
   });
   if (!agentResult.invoked) {
-    console.log(`Issue #${number} cache miss; dispatch will not block (agent unavailable).`);
+    console.log(
+      `Issue #${number} cache miss; dispatch and retriage will block until deps agent is configured.`,
+    );
     return;
   }
 
