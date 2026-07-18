@@ -12,7 +12,6 @@ import { LoadCropDetailUseCase } from '../../../usecase/crops/load-crop-detail.u
 import { LoadAgriculturalTaskListUseCase } from '../../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { CreateCropTaskScheduleBlueprintUseCase } from '../../../usecase/crops/create-crop-task-schedule-blueprint.usecase';
-import { RegenerateCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/regenerate-crop-task-schedule-blueprints.usecase';
 import { UpdateCropTaskScheduleBlueprintUseCase } from '../../../usecase/crops/update-crop-task-schedule-blueprint.usecase';
 import { DeleteCropTaskScheduleBlueprintUseCase } from '../../../usecase/crops/delete-crop-task-schedule-blueprint.usecase';
 import {
@@ -153,51 +152,19 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
             </div>
           }
 
-          @if (control.blueprintRegenerateError) {
-            <div class="page-alert-error blueprint-regenerate-error" role="alert">
-              <p>{{ control.blueprintRegenerateError | translate }}</p>
-              @if (!control.blueprintReadiness.blueprintsReady) {
-                <p>
-                  <a href="#page-title" class="blueprint-readiness__link">
-                    {{ 'crops.show.blueprint_readiness.blueprints_action' | translate }}
-                  </a>
-                </p>
-              }
-              @if (!control.blueprintReadiness.stageRequirementsReady) {
-                <p>
-                  <a
-                    [routerLink]="['/crops', control.crop.id, 'stages']"
-                    [queryParams]="wizardQueryParams"
-                    class="blueprint-readiness__link"
-                  >
-                    {{ 'crops.show.blueprint_readiness.stages_action' | translate }}
-                  </a>
-                </p>
-              }
-              @if (control.showBlueprintRegenerateRetry) {
-                <p>
-                  <button
-                    type="button"
-                    class="btn-secondary"
-                    [disabled]="control.blueprintsRegenerating"
-                    (click)="regenerateBlueprints()"
-                  >
-                    {{
-                      (control.blueprintsRegenerating
-                        ? 'common.loading'
-                        : 'crops.show.blueprint_errors.retry_action')
-                        | translate
-                    }}
-                  </button>
-                </p>
-              }
-            </div>
-          }
-
           @if (control.blueprintsLoading) {
             <p class="master-loading">{{ 'common.loading' | translate }}</p>
           } @else if (control.showBlueprintEmptyState) {
             <p>{{ 'crops.show.no_task_schedule_blueprints' | translate }}</p>
+            <p>
+              <a
+                [routerLink]="['/crops', control.crop.id, 'setup_proposal']"
+                [queryParams]="wizardQueryParams"
+                class="btn-secondary crop-blueprints__proposal-import"
+              >
+                {{ 'crops.setup_proposal_import.action' | translate }}
+              </a>
+            </p>
           } @else {
             @if (control.crop?.crop_stages?.length) {
               @if (control.cumulativeGddTimelineSegments.length) {
@@ -418,20 +385,14 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
               </div>
             }
             <div class="crop-blueprints__blueprint-ai-import">
-              <button
-                type="button"
+              <a
+                [routerLink]="['/crops', control.crop.id, 'setup_proposal']"
+                [queryParams]="wizardQueryParams"
                 class="btn-secondary"
-                [disabled]="!control.canRegenerateBlueprints"
                 [attr.title]="'crops.show.manual_blueprint_add.ai_hint' | translate"
-                (click)="regenerateBlueprints()"
               >
-                {{
-                  (control.blueprintsRegenerating
-                    ? 'common.loading'
-                    : 'crops.show.generate_task_schedule_blueprints_button')
-                    | translate
-                }}
-              </button>
+                {{ 'crops.setup_proposal_import.action' | translate }}
+              </a>
             </div>
           </div>
         </section>
@@ -580,7 +541,6 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
   private readonly loadAgriculturalTasksUseCase = inject(LoadAgriculturalTaskListUseCase);
   private readonly loadBlueprintsUseCase = inject(LoadCropTaskScheduleBlueprintsUseCase);
   private readonly createBlueprintUseCase = inject(CreateCropTaskScheduleBlueprintUseCase);
-  private readonly regenerateBlueprintsUseCase = inject(RegenerateCropTaskScheduleBlueprintsUseCase);
   private readonly updateBlueprintUseCase = inject(UpdateCropTaskScheduleBlueprintUseCase);
   private readonly deleteBlueprintUseCase = inject(DeleteCropTaskScheduleBlueprintUseCase);
   private readonly presenter = inject(CropTaskScheduleBlueprintsPresenter);
@@ -750,13 +710,6 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
 
   closeBlueprintAddDialog(): void {
     this.blueprintAddDialogRef?.nativeElement?.close();
-  }
-
-  regenerateBlueprints(): void {
-    const cropId = this.control.crop?.id;
-    if (!cropId) return;
-    if (!confirm(this.translate.instant('crops.show.generate_task_schedule_blueprints_confirm'))) return;
-    this.regenerateBlueprintsUseCase.execute({ cropId });
   }
 
   onBlueprintDropped(

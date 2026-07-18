@@ -9,6 +9,7 @@ pub mod adjust_weather_prediction;
 pub mod cultivation_plan_optimize;
 pub mod cultivation_plan_weather_load;
 pub mod ai_api;
+pub mod builtin_generation_deprecation;
 pub mod fertilize_ai_adapters;
 pub mod pest_ai_adapters;
 pub mod api_keys;

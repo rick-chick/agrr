@@ -13,7 +13,6 @@ import { LoadCropDetailUseCase } from '../../../usecase/crops/load-crop-detail.u
 import { LoadAgriculturalTaskListUseCase } from '../../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { CreateCropTaskScheduleBlueprintUseCase } from '../../../usecase/crops/create-crop-task-schedule-blueprint.usecase';
-import { RegenerateCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/regenerate-crop-task-schedule-blueprints.usecase';
 import { UpdateCropTaskScheduleBlueprintUseCase } from '../../../usecase/crops/update-crop-task-schedule-blueprint.usecase';
 import { DeleteCropTaskScheduleBlueprintUseCase } from '../../../usecase/crops/delete-crop-task-schedule-blueprint.usecase';
 import { withCropBlueprintDisplayState } from '../../../adapters/crops/crop-blueprints-display-state';
@@ -129,7 +128,6 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
   let loadAgriculturalTasksUseCase: { execute: ReturnType<typeof vi.fn> };
   let loadBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
   let createBlueprintUseCase: { execute: ReturnType<typeof vi.fn> };
-  let regenerateBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
   let updateBlueprintUseCase: { execute: ReturnType<typeof vi.fn>; executeDrop: ReturnType<typeof vi.fn> };
   let deleteBlueprintUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: CropTaskScheduleBlueprintsPresenter;
@@ -148,7 +146,6 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     loadAgriculturalTasksUseCase = { execute: vi.fn() };
     loadBlueprintsUseCase = { execute: vi.fn() };
     createBlueprintUseCase = { execute: vi.fn() };
-    regenerateBlueprintsUseCase = { execute: vi.fn() };
     updateBlueprintUseCase = { execute: vi.fn(), executeDrop: vi.fn() };
     deleteBlueprintUseCase = { execute: vi.fn() };
     presenter = new CropTaskScheduleBlueprintsPresenter();
@@ -166,7 +163,6 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
           { provide: LoadCropDetailUseCase, useValue: loadUseCase },
           { provide: LoadAgriculturalTaskListUseCase, useValue: loadAgriculturalTasksUseCase },
           { provide: LoadCropTaskScheduleBlueprintsUseCase, useValue: loadBlueprintsUseCase },
-          { provide: RegenerateCropTaskScheduleBlueprintsUseCase, useValue: regenerateBlueprintsUseCase },
           { provide: CreateCropTaskScheduleBlueprintUseCase, useValue: createBlueprintUseCase },
           { provide: UpdateCropTaskScheduleBlueprintUseCase, useValue: updateBlueprintUseCase },
           { provide: DeleteCropTaskScheduleBlueprintUseCase, useValue: deleteBlueprintUseCase },
@@ -442,8 +438,8 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
       '.crop-blueprints__subsection-description'
     );
     expect(subsectionDescriptions.length).toBe(0);
-    const aiButton = fixture.nativeElement.querySelector('.crop-blueprints__blueprint-ai-import button');
-    expect(aiButton?.getAttribute('title')).toContain('AI');
+    const aiLink = fixture.nativeElement.querySelector('.crop-blueprints__blueprint-ai-import a');
+    expect(aiLink?.getAttribute('title')).toContain('AI');
   });
 
   it('omits return-to-plan link when fromPlan query param is set', async () => {
@@ -480,11 +476,23 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
   });
 
-  it('regenerates blueprints after confirm when readiness is satisfied', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+  it('links blueprint import to setup_proposal instead of regenerate API', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
     component.control = readyState;
-    component.regenerateBlueprints();
-    expect(regenerateBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 3 });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const importLink = fixture.nativeElement.querySelector(
+      '.crop-blueprints__blueprint-ai-import a'
+    ) as HTMLAnchorElement | null;
+    expect(importLink).toBeTruthy();
+    expect(importLink?.getAttribute('href')).toBe('/crops/3/setup_proposal');
+    expect(importLink?.textContent?.trim()).toBe('Import proposal');
   });
 
   it('links stage readiness action to crop edit', async () => {
@@ -736,80 +744,38 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(input?.getAttribute('placeholder')).toBe('0');
   });
 
-  it('shows regenerate retry button when showBlueprintRegenerateRetry is true', async () => {
-    const retryLabel = 'Try again';
-    const errorMessage = 'Blueprint generation failed.';
-    const translate = TestBed.inject(TranslateService);
-    translate.setTranslation(
-      'en',
-      {
-        crops: {
-          show: {
-            blueprint_errors: {
-              generic: errorMessage,
-              retry_action: retryLabel
-            }
-          }
-        }
-      },
-      true
-    );
-    translate.setDefaultLang('en');
-    translate.use('en');
-
-    const retryState = withCropBlueprintDisplayState({
+  it('does not render built-in regenerate retry UI', async () => {
+    fixture.detectChanges();
+    component.control = withCropBlueprintDisplayState({
       ...readyState,
       blueprintRegenerateError: 'crops.show.blueprint_errors.generic'
     });
-    expect(retryState.showBlueprintRegenerateRetry).toBe(true);
-
-    fixture.detectChanges();
-    component.control = retryState;
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const alert = fixture.nativeElement.querySelector('.blueprint-regenerate-error');
-    expect(alert?.textContent).toContain(errorMessage);
-    const retryButton = fixture.nativeElement.querySelector(
-      '.blueprint-regenerate-error button.btn-secondary'
-    );
-    expect(retryButton).toBeTruthy();
-    expect(retryButton.textContent).toContain(retryLabel);
+    expect(fixture.nativeElement.querySelector('.blueprint-regenerate-error')).toBeNull();
   });
 
-  it('hides regenerate retry button when showBlueprintRegenerateRetry is false', async () => {
+  it('shows setup_proposal import link in empty blueprint state', async () => {
     const translate = TestBed.inject(TranslateService);
-    translate.setTranslation(
-      'en',
-      {
-        crops: {
-          show: {
-            blueprint_errors: {
-              missing_blueprints: 'Add a field-work blueprint first.',
-              retry_action: 'Try again'
-            }
-          }
-        }
-      },
-      true
-    );
+    translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
     translate.use('en');
 
-    const noRetryState = withCropBlueprintDisplayState({
-      ...readyState,
-      blueprintRegenerateError: 'crops.show.blueprint_errors.missing_blueprints'
-    });
-    expect(noRetryState.showBlueprintRegenerateRetry).toBe(false);
-
     fixture.detectChanges();
-    component.control = noRetryState;
+    component.control = withCropBlueprintDisplayState({
+      ...readyState,
+      blueprints: []
+    });
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(
-      fixture.nativeElement.querySelector('.blueprint-regenerate-error button.btn-secondary')
-    ).toBeFalsy();
+    const importLink = fixture.nativeElement.querySelector(
+      '.crop-blueprints__proposal-import'
+    ) as HTMLAnchorElement | null;
+    expect(importLink).toBeTruthy();
+    expect(importLink?.getAttribute('href')).toBe('/crops/3/setup_proposal');
+    expect(importLink?.textContent?.trim()).toBe('Import proposal');
   });
 
   it('shows invalid crop id error on init when route id is missing', () => {

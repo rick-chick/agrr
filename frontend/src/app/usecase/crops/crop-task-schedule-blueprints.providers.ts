@@ -11,7 +11,6 @@ import {
   CREATE_CROP_TASK_SCHEDULE_BLUEPRINT_OUTPUT_PORT,
   DELETE_CROP_TASK_SCHEDULE_BLUEPRINT_OUTPUT_PORT,
   LOAD_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT,
-  REGENERATE_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT,
   UPDATE_CROP_TASK_SCHEDULE_BLUEPRINT_OUTPUT_PORT
 } from './crop-task-schedule-blueprint.ports';
 import { DeleteCropTaskScheduleBlueprintUseCase } from './delete-crop-task-schedule-blueprint.usecase';
@@ -20,7 +19,6 @@ import { LOAD_AGRICULTURAL_TASK_LIST_OUTPUT_PORT } from '../agricultural-tasks/l
 import { LoadCropDetailUseCase } from './load-crop-detail.usecase';
 import { LOAD_CROP_DETAIL_OUTPUT_PORT } from './load-crop-detail.output-port';
 import { LoadCropTaskScheduleBlueprintsUseCase } from './load-crop-task-schedule-blueprints.usecase';
-import { RegenerateCropTaskScheduleBlueprintsUseCase } from './regenerate-crop-task-schedule-blueprints.usecase';
 import { UpdateCropTaskScheduleBlueprintUseCase } from './update-crop-task-schedule-blueprint.usecase';
 
 export const CROP_TASK_SCHEDULE_BLUEPRINTS_PROVIDERS: readonly Provider[] = [
@@ -28,14 +26,12 @@ export const CROP_TASK_SCHEDULE_BLUEPRINTS_PROVIDERS: readonly Provider[] = [
   LoadCropDetailUseCase,
   LoadAgriculturalTaskListUseCase,
   LoadCropTaskScheduleBlueprintsUseCase,
-  RegenerateCropTaskScheduleBlueprintsUseCase,
   UpdateCropTaskScheduleBlueprintUseCase,
   CreateCropTaskScheduleBlueprintUseCase,
   DeleteCropTaskScheduleBlueprintUseCase,
   { provide: LOAD_CROP_DETAIL_OUTPUT_PORT, useExisting: CropTaskScheduleBlueprintsPresenter },
   { provide: LOAD_AGRICULTURAL_TASK_LIST_OUTPUT_PORT, useExisting: CropTaskScheduleBlueprintsPresenter },
   { provide: LOAD_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT, useExisting: CropTaskScheduleBlueprintsPresenter },
-  { provide: REGENERATE_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT, useExisting: CropTaskScheduleBlueprintsPresenter },
   { provide: UPDATE_CROP_TASK_SCHEDULE_BLUEPRINT_OUTPUT_PORT, useExisting: CropTaskScheduleBlueprintsPresenter },
   { provide: CREATE_CROP_TASK_SCHEDULE_BLUEPRINT_OUTPUT_PORT, useExisting: CropTaskScheduleBlueprintsPresenter },
   { provide: DELETE_CROP_TASK_SCHEDULE_BLUEPRINT_OUTPUT_PORT, useExisting: CropTaskScheduleBlueprintsPresenter },
