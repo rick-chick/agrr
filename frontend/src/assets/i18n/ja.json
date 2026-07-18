@@ -706,6 +706,25 @@
         "edit": "編集"
       }
     },
+    "setup_proposal_import": {
+      "action": "提案をインポート",
+      "breadcrumb": "提案をインポート",
+      "title": "{{name}} — 提案をインポート",
+      "lead": "外部スキルが出力した JSON を貼り付けるか、ファイルを選択して検証・取り込みます。",
+      "json_label": "提案 JSON",
+      "json_placeholder": "{ \"stages\": [], \"agricultural_tasks\": [], \"task_schedule_blueprints\": [] }",
+      "choose_file": "ファイルを選択",
+      "paste_clipboard": "クリップボードから貼り付け",
+      "preview_button": "プレビュー（検証）",
+      "previewing": "検証中…",
+      "preview_title": "正規化プレビュー",
+      "validation_errors_title": "検証エラー",
+      "apply_button": "この作物に適用",
+      "applying": "適用中…",
+      "invalid_json": "JSON の形式が正しくありません。",
+      "invalid_shape": "stages・agricultural_tasks・task_schedule_blueprints を含む JSON が必要です。",
+      "clipboard_error": "クリップボードを読み取れませんでした。"
+    },
     "errors": {
       "invalid_id": "作物IDが不正です。",
       "stage_not_found": "生育ステージが見つかりません。",

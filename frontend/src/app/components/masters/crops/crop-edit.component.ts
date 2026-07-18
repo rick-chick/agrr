@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -47,7 +47,7 @@ const initialControl: CropEditViewState = {
 @Component({
   selector: 'app-crop-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent, RouterLink],
   providers: [...CROP_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
@@ -99,6 +99,9 @@ const initialControl: CropEditViewState = {
               <button type="submit" class="btn btn-primary" [disabled]="cropForm.invalid || control.saving">
                 {{ 'crops.form.submit_update' | translate }}
               </button>
+              <a [routerLink]="['/crops', cropId, 'setup_proposal']" class="btn btn-secondary">
+                {{ 'crops.setup_proposal_import.action' | translate }}
+              </a>
             </div>
           </form>
         }
@@ -145,7 +148,7 @@ export class CropEditComponent implements CropEditView, OnInit {
     return crumbs;
   }
 
-  private get cropId(): number {
+  get cropId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
   }
 

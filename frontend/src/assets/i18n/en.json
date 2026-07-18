@@ -2304,6 +2304,25 @@
         "edit": "Edit"
       }
     },
+    "setup_proposal_import": {
+      "action": "Import proposal",
+      "breadcrumb": "Import proposal",
+      "title": "Import proposal for {{name}}",
+      "lead": "Paste or upload JSON from an external skill to validate and apply it to this crop.",
+      "json_label": "Proposal JSON",
+      "json_placeholder": "{ \"stages\": [], \"agricultural_tasks\": [], \"task_schedule_blueprints\": [] }",
+      "choose_file": "Choose file",
+      "paste_clipboard": "Paste from clipboard",
+      "preview_button": "Preview (validate)",
+      "previewing": "Validating…",
+      "preview_title": "Normalized preview",
+      "validation_errors_title": "Validation errors",
+      "apply_button": "Apply to crop",
+      "applying": "Applying…",
+      "invalid_json": "Invalid JSON.",
+      "invalid_shape": "JSON must include stages, agricultural_tasks, and task_schedule_blueprints.",
+      "clipboard_error": "Could not read clipboard."
+    },
     "errors": {
       "invalid_id": "Invalid crop ID.",
       "stage_not_found": "Growth stage not found.",

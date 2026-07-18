@@ -46,6 +46,14 @@ export const mastersRoutes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'crops/:id/setup_proposal',
+    loadComponent: () =>
+      import('../components/masters/crops/crop-setup-proposal-import.component').then(
+        (m) => m.CropSetupProposalImportComponent
+      ),
+    canActivate: [authGuard]
+  },
+  {
     path: 'crops/:id/stages/:stageId/edit',
     loadComponent: () =>
       import('../components/masters/crops/crop-stage-edit.component').then(
