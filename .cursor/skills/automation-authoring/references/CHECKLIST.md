@@ -63,6 +63,6 @@ gh run view <RUN_ID> --repo rick-chick/agrr --log | rg 'Dispatched|Skip retry|Sk
 
 - [ ] `cursor-automation-schedule.md` に 1 行追加
 - [ ] `CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md` 関連表に 1 行
-- [ ] `collect-pipeline-health-lib.mjs` の `DISPATCH_WORKFLOW_NAMES`（該当時）
+- [ ] `.cursor/skills/automation-pipeline-watchdog/scripts/collect-pipeline-health-lib.mjs` の `DISPATCH_WORKFLOW_NAMES`（該当時）
 - [ ] `verify-skill-references.sh`（新スキル path）
 - [ ] Dashboard: webhook URL / secrets / cron / プロンプト
