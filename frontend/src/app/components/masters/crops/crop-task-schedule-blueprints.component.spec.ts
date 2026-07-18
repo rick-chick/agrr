@@ -438,8 +438,8 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
       '.crop-blueprints__subsection-description'
     );
     expect(subsectionDescriptions.length).toBe(0);
-    const aiButton = fixture.nativeElement.querySelector('.crop-blueprints__blueprint-ai-import button');
-    expect(aiButton?.getAttribute('title')).toContain('AI');
+    const aiLink = fixture.nativeElement.querySelector('.crop-blueprints__blueprint-ai-import a');
+    expect(aiLink?.getAttribute('title')).toContain('AI');
   });
 
   it('omits return-to-plan link when fromPlan query param is set', async () => {
@@ -478,18 +478,11 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
 
   it('links blueprint import to setup_proposal instead of regenerate API', async () => {
     const translate = TestBed.inject(TranslateService);
-    translate.setTranslation(
-      'en',
-      {
-        crops: {
-          setup_proposal_import: { action: 'Import proposal' }
-        }
-      },
-      true
-    );
+    translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
     translate.use('en');
 
+    fixture.detectChanges();
     component.control = readyState;
     fixture.detectChanges();
     await fixture.whenStable();
@@ -497,6 +490,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     const importLink = fixture.nativeElement.querySelector(
       '.crop-blueprints__blueprint-ai-import a'
     ) as HTMLAnchorElement | null;
+    expect(importLink).toBeTruthy();
     expect(importLink?.getAttribute('href')).toBe('/crops/3/setup_proposal');
     expect(importLink?.textContent?.trim()).toBe('Import proposal');
   });
@@ -764,19 +758,11 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
 
   it('shows setup_proposal import link in empty blueprint state', async () => {
     const translate = TestBed.inject(TranslateService);
-    translate.setTranslation(
-      'en',
-      {
-        crops: {
-          show: { no_task_schedule_blueprints: 'No blueprints yet.' },
-          setup_proposal_import: { action: 'Import proposal' }
-        }
-      },
-      true
-    );
+    translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
     translate.use('en');
 
+    fixture.detectChanges();
     component.control = withCropBlueprintDisplayState({
       ...readyState,
       blueprints: []
@@ -787,6 +773,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     const importLink = fixture.nativeElement.querySelector(
       '.crop-blueprints__proposal-import'
     ) as HTMLAnchorElement | null;
+    expect(importLink).toBeTruthy();
     expect(importLink?.getAttribute('href')).toBe('/crops/3/setup_proposal');
     expect(importLink?.textContent?.trim()).toBe('Import proposal');
   });
