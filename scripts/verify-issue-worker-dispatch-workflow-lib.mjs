@@ -105,8 +105,12 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
     errors.push('dispatch lib missing resolveDependencyGateFromAgentCache');
   }
 
-  if (!libText.includes('export function parseHardDependencyIssueNumbers')) {
-    errors.push('dispatch lib missing parseHardDependencyIssueNumbers (reference only)');
+  if (libText.includes('export function parseHardDependencyIssueNumbers')) {
+    errors.push('dispatch lib must not export parseHardDependencyIssueNumbers');
+  }
+
+  if (libText.includes('export function parseDependencyIssueNumbers')) {
+    errors.push('dispatch lib must not export parseDependencyIssueNumbers');
   }
 
   if (!libText.includes('export async function selectDispatchableRetryCandidate') &&
