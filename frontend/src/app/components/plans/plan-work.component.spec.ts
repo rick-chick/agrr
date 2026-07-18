@@ -216,10 +216,7 @@ describe('PlanWorkComponent mobile UX', () => {
         'plans.work.skipped_badge': 'スキップ済み',
         'plans.work.menu': 'メニュー',
         'plans.work.skip': 'スキップ',
-        'plans.work.unskip': 'スキップ解除',
-        'plans.work.nav.aria_label': '作業記録ナビゲーション',
-        'plans.work.nav.work': '今日の作業',
-        'plans.work.nav.history': '実績履歴'
+        'plans.work.unskip': 'スキップ解除'
       },
       true
     );

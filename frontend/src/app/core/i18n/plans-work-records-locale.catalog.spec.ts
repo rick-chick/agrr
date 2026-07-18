@@ -16,7 +16,6 @@ function getNested(obj: JsonRecord, path: string): unknown {
 /** Keys referenced by plan-work-records on the history screen. */
 const PLANS_WORK_RECORDS_KEYS = [
   'plans.work.page_title',
-  'plans.work.nav.aria_label',
   'plans.work.nav.work',
   'plans.work.nav.history',
   'plans.work.retry',

@@ -1611,7 +1611,6 @@
       "reoptimization_started": "पुनः अनुकूलन शुरू किया गया।"
     },
     "optimizing_live": {
-      "back_to_plan": "← योजना विवरण पर वापस",
       "heading": "अनुकूलन जारी",
       "heading_completed": "अनुकूलन पूर्ण",
       "status_badge": "अनुकूलन जारी",
@@ -1780,10 +1779,7 @@
     },
     "work": {
       "page_title": "कार्य लॉग — {{name}}",
-      "back_to_plan": "योजना विवरण",
-      "back_to_hub": "कार्य लॉग सूची",
       "nav": {
-        "aria_label": "कार्य लॉग नेविगेशन",
         "work": "आज का कार्य",
         "history": "कार्य इतिहास"
       },
@@ -2021,10 +2017,8 @@
       }
     },
     "show": {
-      "back_to_list": "योजना सूची",
       "page_title": "{{name}}",
       "optimize_button": "अनुकूलित करें",
-      "open_work": "कार्य लॉग",
       "nav": {
         "aria_label": "योजना स्क्रीन नेविगेशन",
         "workbench": "खेती योजना",

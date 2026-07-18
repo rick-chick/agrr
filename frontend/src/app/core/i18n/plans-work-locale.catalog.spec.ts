@@ -38,7 +38,6 @@ const PLANS_WORK_KEYS = [
   'plans.work.toast.record_saved_adhoc',
   'plans.work.recent_adhoc',
   'plans.work.recent_adhoc_history_link',
-  'plans.work.nav.aria_label',
   'plans.work.nav.work',
   'plans.work.nav.history',
   'plans.work.sheet.title',

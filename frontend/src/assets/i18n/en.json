@@ -1197,7 +1197,6 @@
       "reoptimization_started": "Re-optimization started."
     },
     "optimizing_live": {
-      "back_to_plan": "← Back to plan",
       "heading": "Optimizing",
       "heading_completed": "Optimization complete",
       "status_badge": "Optimizing",
@@ -1366,10 +1365,7 @@
     },
     "work": {
       "page_title": "Work log — {{name}}",
-      "back_to_plan": "Plan details",
-      "back_to_hub": "Work log list",
       "nav": {
-        "aria_label": "Work log navigation",
         "work": "Today's work",
         "history": "History"
       },
@@ -1607,10 +1603,8 @@
       }
     },
     "show": {
-      "back_to_list": "Plan list",
       "page_title": "{{name}}",
       "optimize_button": "Optimize",
-      "open_work": "Work log",
       "nav": {
         "aria_label": "Plan screen navigation",
         "workbench": "Cropping plan",
