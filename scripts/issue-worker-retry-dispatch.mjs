@@ -78,19 +78,19 @@ function listAgentReadyIssues(repo) {
 }
 
 /**
- * Open issues carrying the legacy agent-skipped label (pre-migration queue).
+ * Open issues carrying legacy stop labels removed from Issue Worker (pre-migration queue).
  *
  * @param {string} repo
  * @returns {Array<{ number: number; title: string; url: string; body: string; labels: string[]; createdAt: string }>}
  */
-function listLegacyQueueIssues(repo) {
+function listIssuesByLabel(repo, label) {
   const raw = gh(repo, [
     'issue',
     'list',
     '--state',
     'open',
     '--label',
-    'agent-skipped',
+    label,
     '--limit',
     '50',
     '--json',
@@ -101,9 +101,19 @@ function listLegacyQueueIssues(repo) {
     title: issue.title,
     url: issue.url,
     body: issue.body ?? '',
-    labels: issue.labels.map((label) => label.name),
+    labels: issue.labels.map((entry) => entry.name),
     createdAt: issue.createdAt,
   }));
+}
+
+function listLegacyQueueIssues(repo) {
+  const byNumber = new Map();
+  for (const label of ['agent-skipped', 'agent-blocked']) {
+    for (const issue of listIssuesByLabel(repo, label)) {
+      byNumber.set(issue.number, issue);
+    }
+  }
+  return [...byNumber.values()];
 }
 
 /**
@@ -202,16 +212,15 @@ function postWebhook({ repo, issue, action, retryReason }) {
  * @param {string} repo
  * @param {number} issueNumber
  */
-function promoteToAgentReady(repo, issueNumber) {
-  gh(repo, [
-    'issue',
-    'edit',
-    String(issueNumber),
-    '--remove-label',
-    'agent-skipped',
-    '--add-label',
-    'agent-ready',
-  ]);
+function promoteToAgentReady(repo, issueNumber, labels) {
+  const args = ['issue', 'edit', String(issueNumber), '--add-label', 'agent-ready'];
+  if (labels.includes('agent-skipped')) {
+    args.push('--remove-label', 'agent-skipped');
+  }
+  if (labels.includes('agent-blocked')) {
+    args.push('--remove-label', 'agent-blocked');
+  }
+  gh(repo, args);
 }
 
 /**
@@ -246,8 +255,8 @@ async function selectRetriageIssue(repo, fetchIssueState) {
 async function dispatchRetriageIssue({ repo, issue, retryReason }) {
   // GITHUB_TOKEN label edits do not trigger issues:labeled workflows (GitHub docs).
   // Retry must post the webhook directly, same as agent-ready reconcile.
-  if (issue.labels.includes('agent-skipped')) {
-    promoteToAgentReady(repo, issue.number);
+  if (issue.labels.includes('agent-skipped') || issue.labels.includes('agent-blocked')) {
+    promoteToAgentReady(repo, issue.number, issue.labels);
   }
   const refreshed = fetchIssue(repo, issue.number);
   return dispatchIfEligible({

@@ -243,13 +243,21 @@ test('isRetryCandidate allows agent-ready with legacy queue label present', () =
   assert.deepEqual(result, { eligible: true, action: 'implement' });
 });
 
-test('isRetryCandidate rejects blocked automation labels', () => {
+test('isRetryCandidate allows agent-ready with legacy stop labels present', () => {
+  const result = isRetryCandidate({
+    issueLabels: 'agent-ready,agent-blocked',
+    hasOpenFixPr: false,
+  });
+  assert.deepEqual(result, { eligible: true, action: 'implement' });
+});
+
+test('isRetryCandidate rejects only agent-in-progress among stop labels', () => {
   assert.equal(
     isRetryCandidate({
-      issueLabels: 'agent-ready,agent-blocked',
+      issueLabels: 'agent-ready,agent-in-progress',
       hasOpenFixPr: false,
     }).reason,
-    'has agent-blocked',
+    'has agent-in-progress',
   );
 });
 

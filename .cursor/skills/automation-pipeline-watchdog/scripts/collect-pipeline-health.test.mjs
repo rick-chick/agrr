@@ -48,7 +48,20 @@ test('detectStaleAgentInProgressIssue flags stale in-progress issue', () => {
   assert.equal(finding.priority, 'P1');
 });
 
-test('detectStuckAgentReadyIssue ignores blocked labels', () => {
+test('detectStuckAgentReadyIssue ignores in-progress labels', () => {
+  const finding = detectStuckAgentReadyIssue(
+    {
+      number: 7,
+      title: 'Ready task',
+      labels: [{ name: 'agent-ready' }, { name: 'agent-in-progress' }],
+      updatedAt: new Date(NOW - 3 * 60 * 60 * 1000).toISOString(),
+    },
+    NOW,
+  );
+  assert.equal(finding, null);
+});
+
+test('detectStuckAgentReadyIssue flags agent-ready with legacy stop label', () => {
   const finding = detectStuckAgentReadyIssue(
     {
       number: 7,
@@ -58,7 +71,7 @@ test('detectStuckAgentReadyIssue ignores blocked labels', () => {
     },
     NOW,
   );
-  assert.equal(finding, null);
+  assert.ok(finding);
 });
 
 test('detectStuckAgentReadyIssue flags long-waiting agent-ready', () => {

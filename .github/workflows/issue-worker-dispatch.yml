@@ -5,7 +5,7 @@
 #    .cursor/skills/github-issue-worker/SKILL.md). Remove Schedule trigger if migrating from cron.
 # 2. Add repository secret CURSOR_ISSUE_WORKER_WEBHOOK_URL (webhook URL).
 # 3. Add repository secret CURSOR_ISSUE_WORKER_WEBHOOK_KEY (webhook API key).
-# 4. Create labels: agent-ready, agent-close, agent-in-progress, agent-blocked, agent-closed
+# 4. Create labels: agent-ready, agent-close, agent-in-progress, agent-closed
 # 5. Cancelled or failed dispatches are retried by issue-worker-retry-dispatch.yml
 
 name: Issue Worker Dispatch

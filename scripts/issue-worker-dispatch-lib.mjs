@@ -25,7 +25,7 @@ const OPENED_TERMINAL_LABELS = [
   'duplicate',
 ];
 
-const RETRY_BLOCK_LABELS = ['agent-in-progress', 'agent-blocked'];
+const RETRY_BLOCK_LABELS = ['agent-in-progress'];
 
 /**
  * @param {string} labelsCsv
@@ -543,8 +543,8 @@ export async function isRetriageEligible({
   if (!hasLabel(issueLabels, 'agent-ready') && !hasLabel(issueLabels, 'agent-skipped')) {
     return { eligible: false, reason: 'not in queue' };
   }
-  if (hasLabel(issueLabels, 'agent-blocked') || hasLabel(issueLabels, 'agent-in-progress')) {
-    return { eligible: false, reason: 'blocked label present' };
+  if (hasLabel(issueLabels, 'agent-in-progress')) {
+    return { eligible: false, reason: 'in progress' };
   }
   if (hasOpenFixPr) {
     return { eligible: false, reason: 'open fix pr exists' };
