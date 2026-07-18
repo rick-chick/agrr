@@ -112,6 +112,7 @@ const initialControl: CropDetailViewState = {
           </dl>
           <div class="detail-card__actions">
             <a [routerLink]="['/crops', control.crop.id, 'edit']" class="btn btn-primary">{{ 'common.edit' | translate }}</a>
+            <a [routerLink]="['/crops', control.crop.id, 'setup_proposal']" class="btn btn-secondary">{{ 'crops.setup_proposal_import.action' | translate }}</a>
             <button type="button" class="btn btn-danger" (click)="deleteCrop()">{{ 'common.delete' | translate }}</button>
           </div>
         </section>

@@ -12,6 +12,7 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   crops: 'app-crop-list',
   'crops/:id': 'app-crop-detail',
   'crops/:id/edit': 'app-crop-edit',
+  'crops/:id/setup_proposal': 'app-crop-setup-proposal-import',
   'crops/:id/stages': 'app-crop-stages',
   'crops/:id/stages/:stageId/edit': 'app-crop-stage-edit',
   'crops/:id/task_schedule_blueprints': 'app-crop-task-schedule-blueprints',

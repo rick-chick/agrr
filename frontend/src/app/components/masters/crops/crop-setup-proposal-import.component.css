@@ -1,0 +1,47 @@
+@import '../_master-layout.css';
+
+.crop-setup-proposal-import__lead {
+  margin: 0 0 var(--space-md);
+  color: var(--color-text-secondary);
+}
+
+.crop-setup-proposal-import__input-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.crop-setup-proposal-import__json {
+  width: 100%;
+  min-height: 12rem;
+  font-family: var(--font-family-mono, monospace);
+  font-size: 0.875rem;
+}
+
+.crop-setup-proposal-import__file-input {
+  display: none;
+}
+
+.crop-setup-proposal-import__errors {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.crop-setup-proposal-import__preview {
+  margin: 0;
+  padding: var(--space-sm);
+  overflow: auto;
+  max-height: 20rem;
+  background: var(--color-surface-muted, #f5f5f5);
+  border-radius: var(--radius-sm, 4px);
+  font-family: var(--font-family-mono, monospace);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.crop-setup-proposal-import__section-title {
+  margin: var(--space-md) 0 var(--space-sm);
+  font-size: 1rem;
+}

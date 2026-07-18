@@ -142,7 +142,10 @@ describe('CropEditComponent', () => {
     translate.setTranslation(
       'en',
       {
-        crops: { index: { title: 'Crops' } },
+        crops: {
+          index: { title: 'Crops' },
+          setup_proposal_import: { action: 'Import proposal' }
+        },
         common: { edit: 'Edit' }
       },
       true
@@ -174,9 +177,11 @@ describe('CropEditComponent', () => {
     expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
       'Edit'
     );
-    expect(
-      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
-    ).toHaveLength(0);
+    const importLink = fixture.nativeElement.querySelector(
+      '.form-card__actions a.btn-secondary'
+    ) as HTMLAnchorElement;
+    expect(importLink?.getAttribute('href')).toBe('/crops/1/setup_proposal');
+    expect(importLink?.textContent?.trim()).toBe('Import proposal');
   });
 
   it('keeps list breadcrumb without entity name while loading', () => {

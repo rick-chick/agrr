@@ -172,7 +172,8 @@ describe('CropDetailComponent', () => {
               edit_action: 'Edit task plans'
             }
           },
-          form: { region_jp: 'Japan' }
+          form: { region_jp: 'Japan' },
+          setup_proposal_import: { action: 'Import proposal' }
         },
         common: { edit: 'Edit', delete: 'Delete' }
       },
@@ -194,9 +195,11 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
       'Tomato'
     );
-    expect(
-      fixture.nativeElement.querySelectorAll('.detail-card__actions a.btn-secondary')
-    ).toHaveLength(0);
+    const importLink = fixture.nativeElement.querySelector(
+      '.detail-card__actions a.btn-secondary'
+    ) as HTMLAnchorElement;
+    expect(importLink?.getAttribute('href')).toBe('/crops/3/setup_proposal');
+    expect(importLink?.textContent?.trim()).toBe('Import proposal');
   });
 
   it('renders unified cultivation template section with task link', async () => {
