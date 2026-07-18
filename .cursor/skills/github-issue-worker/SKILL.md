@@ -73,7 +73,7 @@ gh issue list --repo rick-chick/agrr --state open --limit 50 --json number,title
 ```
 実装する → §3 着手宣言へ
 対応不要で閉じられる → §2a 対応せずクローズへ（agent-in-progress を付けない）
-依存未充足 → `agent-ready` 維持・コメントのみで終了（dispatch 依存ゲートが次回再判定）
+依存未充足 → `agent-ready` 維持・コメントのみで終了（dispatch 依存ゲートが `agent-deps:v1` キャッシュのみで次回再判定。本文 `#N` はパースしない）
 ```
 
 ### 自律判断（human-in-the-loop 禁止）
@@ -118,6 +118,10 @@ gh issue edit <N> --add-label agent-in-progress
 ### 依存未充足（deps_unmet）
 
 依存 issue が OPEN のときは **実装に着手しない**。`agent-ready` を維持し、根拠コメントのみ残して終了する。dispatch 依存ゲートと reconcile が次回以降を再判定する（[`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `formatDependencyGateComment` 参照）。
+
+**機械ゲート（dispatch / retriage）**: `## 依存` 節の本文から `#N` を **パースしない**。根拠は issue コメント内の `agent-deps:v1` キャッシュ（[`issue-worker-deps-agent-lib.mjs`](../../../scripts/issue-worker-deps-agent-lib.mjs)）のみ。キャッシュ欠落・`body_hash` 不一致は dispatch 拒否。`implement` dispatch 前に [`issue-worker-deps-resolve.mjs`](../../../scripts/issue-worker-deps-resolve.mjs) がキャッシュ未作成なら deps Agent webhook（`action: judge_dependencies`）を起動する（secrets: `CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_*`）。
+
+**Worker 側**: triage で依存未充足と判断したら、[`buildAgentDepsCacheComment`](../../../scripts/issue-worker-deps-agent-lib.mjs) 形式で `agent-deps:v1` コメントを残してよい（hard/soft の判定はエージェント判断。regex・ヒューリスティック禁止）。
 
 **dispatch 層**: `[epic]` / `epic` ラベルの `implement` dispatch は [`issue-worker-dispatch.yml`](../../../.github/workflows/issue-worker-dispatch.yml) が拒否する。エピック本体ではなく子 issue を `agent-ready` にする。
 
@@ -346,10 +350,14 @@ Follow `.cursor/skills/sequential-cleanup-review-workflow/SKILL.md` and §4 refe
 |--------|------|
 | `CURSOR_ISSUE_WORKER_WEBHOOK_URL` | Automation の Webhook URL |
 | `CURSOR_ISSUE_WORKER_WEBHOOK_KEY` | Webhook API key |
+| `CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_URL` | （任意）依存判定 deps Agent の Webhook URL |
+| `CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_KEY` | （任意）上記 API key |
 
 ```bash
 gh secret set CURSOR_ISSUE_WORKER_WEBHOOK_URL --repo rick-chick/agrr
 gh secret set CURSOR_ISSUE_WORKER_WEBHOOK_KEY --repo rick-chick/agrr
+gh secret set CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_URL --repo rick-chick/agrr
+gh secret set CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_KEY --repo rick-chick/agrr
 ```
 
 3. `.github/workflows/issue-worker-dispatch.yml` が `issues: opened` と `labeled`（`agent-ready` / `agent-close`）で dispatch する

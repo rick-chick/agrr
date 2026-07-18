@@ -76,6 +76,10 @@ sequenceDiagram
   participant PMW as Cursor PR Merge Worker
 
   GH->>IWD: opened / agent-ready / agent-close
+  IWD->>IWD: agent-deps:v1 キャッシュ確認（本文 #N パースなし）
+  alt キャッシュ miss
+    IWD->>IWD: issue-worker-deps-resolve（deps Agent webhook）
+  end
   IWD->>IW: webhook（action: triage / implement / close）
   IW->>GH: Draft PR 作成（cursor/* ブランチ）
   GH->>PAP: pull_request opened
@@ -99,6 +103,8 @@ sequenceDiagram
 **対象**（Merge Worker）: `master` 向け同一リポジトリ PR は **既定で対象**（オプトアウト: `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`、fork、`CHANGES_REQUESTED`、タイトル `[WIP]`/`[DRAFT]`）。`agent-merge` ラベルは互換のため残すが必須ではない。
 
 **リトライ**: `issue-worker-retry-dispatch.yml` / `pr-merge-worker-retry-dispatch.yml` が 15 分ごとに滞留を reconcile。primary dispatch が `cancelled` になった場合も再送する。
+
+**依存ゲート**: `## 依存` 節がある issue は、dispatch / retriage が **`agent-deps:v1` コメントキャッシュ**（[`issue-worker-deps-agent-lib.mjs`](../../scripts/issue-worker-deps-agent-lib.mjs)）だけを根拠に hard 依存を判定する。本文の `#N` regex パースはしない。キャッシュ欠落時は [`issue-worker-deps-resolve.mjs`](../../scripts/issue-worker-deps-resolve.mjs) が deps Agent（`action: judge_dependencies`）を起動し、コメント作成後に再 dispatch される。
 
 #### 必須 CI 失敗の自動救済（`action: ci_fix`）
 
@@ -192,7 +198,7 @@ issue（ux-campaign:*）→ Issue Worker → PR → PR Merge Worker
 
 | Workflow | ファイル | トリガ | 起動する Automation | Secrets |
 |----------|----------|--------|---------------------|---------|
-| Issue Worker Dispatch | [`issue-worker-dispatch.yml`](../../.github/workflows/issue-worker-dispatch.yml) | issue opened / labeled | Issue Worker | `CURSOR_ISSUE_WORKER_WEBHOOK_*` |
+| Issue Worker Dispatch | [`issue-worker-dispatch.yml`](../../.github/workflows/issue-worker-dispatch.yml) | issue opened / labeled | Issue Worker | `CURSOR_ISSUE_WORKER_WEBHOOK_*`、deps 判定用 `CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_*`（任意） |
 | Issue Worker Retry | [`issue-worker-retry-dispatch.yml`](../../.github/workflows/issue-worker-retry-dispatch.yml) | 15 分 cron / cancelled retry | Issue Worker | 同上 |
 | PR Merge Worker Dispatch | [`pr-merge-worker-dispatch.yml`](../../.github/workflows/pr-merge-worker-dispatch.yml) | PR イベント / Backend test 完了 / master push | PR Merge Worker | `CURSOR_PR_MERGE_WEBHOOK_*` |
 | PR Merge Worker Retry | [`pr-merge-worker-retry-dispatch.yml`](../../.github/workflows/pr-merge-worker-retry-dispatch.yml) | 15 分 cron / cancelled retry | PR Merge Worker | 同上 |
