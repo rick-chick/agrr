@@ -94,7 +94,7 @@ unit test GREEN だけでは完了にしない。
 |--------|------|
 | [cursor-automation-schedule.md](../cloud-automation-audit/references/cursor-automation-schedule.md) | 名前・cron・スキル・期待成果・プロンプト |
 | [CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md](../../../docs/automation/CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md) | パイプライン表への 1 行 |
-| `collect-pipeline-health-lib.mjs` | dispatch workflow 名（watchdog 対象） |
+| `.cursor/skills/automation-pipeline-watchdog/scripts/collect-pipeline-health-lib.mjs` | dispatch workflow 名（watchdog 対象） |
 | `verify-skill-references.sh` | スキル path（audit bootstrap） |
 
 ## 7) 禁止
