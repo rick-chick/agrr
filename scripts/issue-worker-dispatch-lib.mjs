@@ -25,7 +25,7 @@ const OPENED_TERMINAL_LABELS = [
   'duplicate',
 ];
 
-const RETRY_BLOCK_LABELS = ['agent-in-progress', 'agent-skipped', 'agent-blocked'];
+const RETRY_BLOCK_LABELS = ['agent-in-progress', 'agent-blocked'];
 
 /**
  * @param {string} labelsCsv
@@ -357,12 +357,6 @@ export function resolveDispatchAction({ eventAction, labelName, issueAuthor, iss
       return { skip: false, action: 'close_with_reason' };
     }
     if (labelName === 'agent-ready') {
-      if (hasLabel(issueLabels, 'agent-skipped')) {
-        return {
-          skip: true,
-          skipReason: 'agent-ready with agent-skipped requires removing agent-skipped first',
-        };
-      }
       return { skip: false, action: 'implement' };
     }
     return {
@@ -379,12 +373,6 @@ export function resolveDispatchAction({ eventAction, labelName, issueAuthor, iss
       return { skip: false, action: 'close_with_reason' };
     }
     if (hasLabel(issueLabels, 'agent-ready')) {
-      if (hasLabel(issueLabels, 'agent-skipped')) {
-        return {
-          skip: true,
-          skipReason: 'agent-ready with agent-skipped requires removing agent-skipped first',
-        };
-      }
       return { skip: false, action: 'implement' };
     }
     for (const label of OPENED_TERMINAL_LABELS) {
@@ -494,6 +482,43 @@ export async function selectDispatchableRetryCandidate(
 }
 
 /**
+ * Resolve hard-blocking dependency issue numbers for re-triage / unblock.
+ * Agent cache wins when valid; otherwise parse `## 依存` from the issue body.
+ *
+ * @param {{
+ *   issueNumber: number;
+ *   issueBody: string;
+ *   getAgentDepsContract?: (
+ *     issueNumber: number,
+ *     issueBody: string,
+ *   ) => Promise<AgentDepsContract | null> | AgentDepsContract | null;
+ * }} input
+ * @returns {Promise<{ hardDependencies: number[]; source: 'cache' | 'body' | 'none' }>}
+ */
+export async function resolveHardDependencies({
+  issueNumber,
+  issueBody,
+  getAgentDepsContract,
+}) {
+  if (getAgentDepsContract) {
+    const contract = await getAgentDepsContract(issueNumber, issueBody);
+    if (contract && contract.body_hash === hashDependencySection(issueBody)) {
+      return {
+        hardDependencies: [...contract.hard_dependencies].sort((a, b) => a - b),
+        source: 'cache',
+      };
+    }
+  }
+
+  const parsed = parseHardDependencyIssueNumbers(issueBody);
+  if (parsed.length > 0) {
+    return { hardDependencies: parsed, source: 'body' };
+  }
+
+  return { hardDependencies: [], source: 'none' };
+}
+
+/**
  * @param {{
  *   issueLabels: string;
  *   issueBody: string;
@@ -524,18 +549,18 @@ export async function isDepsResolvedUnblockCandidate({
   if (hasOpenFixPr) {
     return { eligible: false, reason: 'open fix pr exists' };
   }
-  if (!getAgentDepsContract) {
-    return { eligible: false, reason: 'no agent dependency cache resolver' };
+
+  const { hardDependencies } = await resolveHardDependencies({
+    issueNumber,
+    issueBody,
+    getAgentDepsContract,
+  });
+
+  if (hardDependencies.length === 0) {
+    return { eligible: true };
   }
-  const contract = await getAgentDepsContract(issueNumber, issueBody);
-  if (!contract || contract.body_hash !== hashDependencySection(issueBody)) {
-    return { eligible: false, reason: 'no valid agent dependency cache' };
-  }
-  const dependencies = [...contract.hard_dependencies].sort((a, b) => a - b);
-  if (dependencies.length === 0) {
-    return { eligible: false, reason: 'no hard dependencies in agent cache' };
-  }
-  for (const dependencyNumber of dependencies) {
+
+  for (const dependencyNumber of hardDependencies) {
     const state = await fetchIssueState(dependencyNumber);
     if (state !== 'CLOSED') {
       return {

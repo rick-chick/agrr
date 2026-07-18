@@ -19,6 +19,7 @@ import {
   resolveImplementPreDispatchGates,
   selectDepsUnblockCandidate,
   selectDispatchableRetryCandidate,
+  resolveHardDependencies,
 } from './issue-worker-dispatch-lib.mjs';
 import { createGetAgentDepsContractFromComments } from './issue-worker-deps-agent-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
@@ -352,8 +353,12 @@ async function main() {
     const getAgentDepsContract = createRepoAgentDepsGetter(repo);
     const skippedIssues = [];
     for (const issue of listAgentSkippedIssues(repo)) {
-      const contract = await getAgentDepsContract(issue.number, issue.body ?? '');
-      if (contract?.hard_dependencies.includes(closedNumber)) {
+      const { hardDependencies } = await resolveHardDependencies({
+        issueNumber: issue.number,
+        issueBody: issue.body ?? '',
+        getAgentDepsContract,
+      });
+      if (hardDependencies.includes(closedNumber)) {
         skippedIssues.push(issue);
       }
     }

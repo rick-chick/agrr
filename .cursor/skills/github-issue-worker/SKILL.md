@@ -47,7 +47,6 @@ Webhook ペイロードの `action`:
 ### 除外
 
 - `agent-in-progress` ラベル付き
-- `agent-skipped` ラベル付き（再 triage する場合は人間がラベルを外す）
 - `wontfix` / `invalid` / `duplicate`
 - 本文に「ブロック中」「保留」と明記されているもの
 - **既に同一 issue を閉じるオープン PR** がある（`gh pr list --search 'is:pr is:open (fixes #N OR closes #N)'` 等で確認）
@@ -98,7 +97,11 @@ gh issue edit <N> --add-label agent-in-progress
 
 ## 2b) 対応しない（スキップ・オープン維持）
 
-**PR を開かず・issue を閉じず**、調査根拠を残して `agent-skipped` を付与する経路。人間が後から `agent-ready` を付ければ再 dispatch できる。
+**PR を開かず・issue を閉じず**、調査根拠を残して `agent-skipped` を付与する経路。
+
+**`agent-skipped` は再 dispatch のブロックにしない。** reconcile / 依存クローズ時に依存が解消していれば再 triage される。エージェントは着手前 triage で現状を都度判断する。
+
+**`deps_unmet`（依存未充足）では `agent-skipped` を付けない。** `agent-ready` を維持し、dispatch 依存ゲートが保留する（[`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `formatDependencyGateComment` 参照）。
 
 ### 使ってよい条件（いずれかを確認済み）
 
@@ -107,6 +110,7 @@ gh issue edit <N> --add-label agent-in-progress
 | **out_of_scope** | Issue Worker のスコープ外（運用・インフラのみ・ドキュメントのみ等） | `agent-skipped` |
 | **needs_human** | 仕様未確定だが close までは不要（質問・方針待ち） | `agent-skipped`（§7 ブロックと迷う場合はブロック優先） |
 | **automation_only** | UX 起票専用・調査のみ・実装指示なし | `agent-skipped` |
+| **deps_unmet** | 依存 issue が OPEN | **`agent-skipped` 禁止** — `agent-ready` 維持 |
 
 **dispatch 層で処理（§2b ではない）**: `[epic]` / `epic` ラベルの `implement` dispatch は [`issue-worker-dispatch.yml`](../../../.github/workflows/issue-worker-dispatch.yml) が拒否する。
 
@@ -121,7 +125,7 @@ gh issue edit <N> --add-label agent-in-progress
 **理由**（1〜3 文）: …
 **根拠**:
 - …
-**再開**: `agent-skipped` を外し `agent-ready` を付与すると再 dispatch されます。
+**再開**: 依存が解消したら reconcile が自動再 dispatch する。手動なら `agent-ready` を付与（`agent-skipped` は外さなくてよい）。
 ```
 
 ### 手順

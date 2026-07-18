@@ -22,6 +22,7 @@ import {
   selectDispatchableRetryCandidate,
   selectDepsUnblockCandidate,
   isDepsResolvedUnblockCandidate,
+  resolveHardDependencies,
   formatDependencyGateComment,
 } from './issue-worker-dispatch-lib.mjs';
 
@@ -234,14 +235,15 @@ test('isRetryCandidate rejects when agent-close is present', () => {
   });
 });
 
+test('isRetryCandidate allows agent-ready even when agent-skipped is present', () => {
+  const result = isRetryCandidate({
+    issueLabels: 'agent-ready,agent-skipped',
+    hasOpenFixPr: false,
+  });
+  assert.deepEqual(result, { eligible: true, action: 'implement' });
+});
+
 test('isRetryCandidate rejects blocked automation labels', () => {
-  assert.equal(
-    isRetryCandidate({
-      issueLabels: 'agent-ready,agent-skipped',
-      hasOpenFixPr: false,
-    }).reason,
-    'has agent-skipped',
-  );
   assert.equal(
     isRetryCandidate({
       issueLabels: 'agent-ready,agent-blocked',
@@ -461,17 +463,14 @@ test('resolveDependencyGateFromAgentCache does not use parseHardDependencyIssueN
   assert.doesNotMatch(fnBody, /parseHardDependencyIssueNumbers/);
 });
 
-test('resolveDispatchAction skips agent-ready when agent-skipped is present', () => {
+test('resolveDispatchAction implements when agent-ready and agent-skipped are both present', () => {
   const result = resolveDispatchAction({
     eventAction: 'labeled',
     labelName: 'agent-ready',
     issueAuthor: 'rick-chick',
     issueLabels: 'agent-ready,agent-skipped',
   });
-  assert.deepEqual(result, {
-    skip: true,
-    skipReason: 'agent-ready with agent-skipped requires removing agent-skipped first',
-  });
+  assert.deepEqual(result, { skip: false, action: 'implement' });
 });
 
 test('resolveEpicImplementGate skips implement for epic title', () => {
@@ -579,19 +578,53 @@ test('isDepsResolvedUnblockCandidate rejects when dependency still open', async 
   });
 });
 
-test('isDepsResolvedUnblockCandidate rejects out_of_scope skips without hard deps', async () => {
+test('isDepsResolvedUnblockCandidate accepts agent-skipped without hard deps for re-triage', async () => {
   const body = '## 依存\n\n- なし';
   const result = await isDepsResolvedUnblockCandidate({
     issueLabels: 'agent-skipped',
     issueBody: body,
     hasOpenFixPr: false,
     issueNumber: 370,
-    getAgentDepsContract: async () => agentContract([], body),
     fetchIssueState: async () => 'CLOSED',
   });
+  assert.deepEqual(result, { eligible: true });
+});
+
+test('isDepsResolvedUnblockCandidate falls back to body parsing without agent cache', async () => {
+  const body = '## 依存\n\n- #364';
+  const result = await isDepsResolvedUnblockCandidate({
+    issueLabels: 'agent-skipped',
+    issueBody: body,
+    hasOpenFixPr: false,
+    issueNumber: 370,
+    fetchIssueState: async (number) => (number === 364 ? 'CLOSED' : 'OPEN'),
+  });
+  assert.deepEqual(result, { eligible: true });
+});
+
+test('resolveHardDependencies prefers agent cache over body parsing', async () => {
+  const body = '## 依存\n\n- #364';
+  const result = await resolveHardDependencies({
+    issueNumber: 370,
+    issueBody: body,
+    getAgentDepsContract: async () => agentContract([365], body),
+  });
   assert.deepEqual(result, {
-    eligible: false,
-    reason: 'no hard dependencies in agent cache',
+    hardDependencies: [365],
+    source: 'cache',
+  });
+});
+
+test('resolveHardDependencies parses body when cache is missing', async () => {
+  const body = '## 依存\n\n- #364';
+  const result = await resolveHardDependencies({
+    issueNumber: 370,
+    issueBody: body,
+    getAgentDepsContract: async () => null,
+  });
+  assert.deepEqual(result, {
+    hardDependencies: [364],
+    source: 'body',
   });
 });
 
