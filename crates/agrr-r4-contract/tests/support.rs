@@ -51,15 +51,6 @@ pub fn assert_builtin_generation_deprecated_headers(
     );
 }
 
-/// Asserts built-in generation endpoints return RFC 9745 deprecation metadata.
-pub fn assert_builtin_generation_deprecated(
-    response: &reqwest::blocking::Response,
-    body: &str,
-    expected_alternative_fragment: &str,
-) {
-    assert_builtin_generation_deprecated_headers(response.headers(), body, expected_alternative_fragment);
-}
-
 /// Asserts deprecated crop agricultural_tasks API returns 410 Gone.
 pub fn assert_crop_task_template_api_removed(status: u16, body: &str) {
     assert_eq!(410, status, "{body}");
