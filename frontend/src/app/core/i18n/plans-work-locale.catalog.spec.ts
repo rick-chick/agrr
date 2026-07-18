@@ -13,10 +13,8 @@ function getNested(obj: JsonRecord, path: string): unknown {
   }, obj);
 }
 
-/** Keys referenced by plan-work, plan-work-header, and work-record-sheet on plans/:id/work. */
+/** Keys referenced by plan-work and work-record-sheet on plans/:id/work. */
 const PLANS_WORK_KEYS = [
-  'plans.work.back_to_plan',
-  'plans.work.back_to_hub',
   'plans.work.page_title',
   'plans.work.show_skipped',
   'plans.work.section.overdue',
@@ -40,7 +38,6 @@ const PLANS_WORK_KEYS = [
   'plans.work.toast.record_saved_adhoc',
   'plans.work.recent_adhoc',
   'plans.work.recent_adhoc_history_link',
-  'plans.work.nav.aria_label',
   'plans.work.nav.work',
   'plans.work.nav.history',
   'plans.work.sheet.title',

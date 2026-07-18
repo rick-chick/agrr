@@ -79,10 +79,10 @@ describe('PlanDetailComponent', () => {
 
     expect(fixture.nativeElement.querySelector('app-plan-plan-context-header')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.plan-detail__title')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.plan-context-header__back')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeNull();
     expect(fixture.nativeElement.querySelector('.plan-context-header__identity')).toBeTruthy();
-    const forward = fixture.nativeElement.querySelector('.plan-context-header__forward');
-    expect(forward?.getAttribute('href')).toContain('/plans/1/work');
+    expect(fixture.nativeElement.querySelector('app-plan-detail-context-nav')).toBeTruthy();
+    const navLinks = fixture.nativeElement.querySelectorAll('.plan-context-nav__link');
+    expect(navLinks.length).toBe(4);
   });
 });

@@ -1,37 +1,7 @@
-/* Unified header for plan-context (cropping plan / task schedule) and work-context screens. */
+/* Unified header for plan-context screens. */
 
 .page-header--compact.plan-context-header {
   margin-bottom: var(--space-2);
-}
-
-.plan-context-header__crumbs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-bottom: var(--space-1);
-}
-
-.plan-context-header__back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-height: 2.25rem;
-  margin: 0;
-  color: var(--color-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  line-height: 1.4;
-  text-decoration: none;
-}
-
-.plan-context-header__back::before {
-  content: '←';
-}
-
-.plan-context-header__back:hover {
-  text-decoration: underline;
 }
 
 .plan-context-header__identity {
@@ -43,26 +13,4 @@
 .plan-context-header__plan-name {
   font-weight: var(--font-weight-semibold, 600);
   color: var(--color-text);
-}
-
-.plan-context-header__forward {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-height: 2.25rem;
-  margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  line-height: 1.4;
-  color: var(--color-primary);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.plan-context-header__forward::after {
-  content: ' ›';
-}
-
-.plan-context-header__forward:hover {
-  text-decoration: underline;
 }

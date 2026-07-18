@@ -30,8 +30,7 @@ const WORK_HUB_I18N_KEYS = [
   'work.hub.start_recording',
   'work.hub.no_fields_warning',
   'work.hub.register_fields_link',
-  'work.hub.retry',
-  'plans.work.back_to_hub'
+  'work.hub.retry'
 ] as const;
 
 describe('work hub i18n catalog', () => {

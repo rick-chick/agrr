@@ -2093,7 +2093,6 @@
       "reoptimization_started": "再最適化を開始しました。"
     },
     "optimizing_live": {
-      "back_to_plan": "← 計画詳細に戻る",
       "heading": "最適化中",
       "heading_completed": "最適化が完了しました",
       "status_badge": "最適化中",
@@ -2280,10 +2279,8 @@
       }
     },
     "show": {
-      "back_to_list": "計画一覧へ",
       "page_title": "{{name}}",
       "optimize_button": "最適化",
-      "open_work": "作業記録へ",
       "nav": {
         "aria_label": "計画画面ナビゲーション",
         "workbench": "作付け計画",
@@ -2408,10 +2405,7 @@
     },
     "work": {
       "page_title": "{{name}}の作業記録",
-      "back_to_plan": "計画詳細へ",
-      "back_to_hub": "作業記録一覧へ",
       "nav": {
-        "aria_label": "作業記録ナビゲーション",
         "work": "今日の作業",
         "history": "実績履歴"
       },

@@ -237,7 +237,7 @@ describe('PlanTaskScheduleComponent', () => {
     expect(component.control).toEqual(state);
   });
 
-  it('uses the unified plan context header with back link and cross-context action', async () => {
+  it('uses the unified plan context header with four-tab navigation and no redundant crumbs', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
@@ -250,12 +250,11 @@ describe('PlanTaskScheduleComponent', () => {
 
     const header = fixture.nativeElement.querySelector('.plan-context-header');
     expect(header).toBeTruthy();
-    const crumbs = header.querySelector('.plan-context-header__crumbs');
-    expect(crumbs?.querySelector('.plan-context-header__back')?.textContent).toContain('Plan list');
-    expect(crumbs?.querySelector('.plan-context-header__forward')?.textContent).toContain('Work log');
+    expect(header.querySelector('.plan-context-header__crumbs')).toBeNull();
     expect(header.querySelector('.plan-context-header__plan-name')?.textContent).toContain('Main Plan');
-    const workbenchTab = header.querySelector('app-plan-detail-context-nav .plan-context-nav__link');
-    expect(workbenchTab?.getAttribute('href')).toContain('/plans/7');
+    const navLinks = header.querySelectorAll('app-plan-detail-context-nav .plan-context-nav__link');
+    expect(navLinks.length).toBe(4);
+    expect(navLinks[0]?.getAttribute('href')).toContain('/plans/7');
   });
 
   it('renders schedule with month list and metadata footer', async () => {
