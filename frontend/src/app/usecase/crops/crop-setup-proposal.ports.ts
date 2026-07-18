@@ -2,8 +2,7 @@ import { InjectionToken } from '@angular/core';
 import {
   CropSetupProposalApplyResponse,
   CropSetupProposalBody,
-  CropSetupProposalDryRunResponse,
-  CropSetupProposalValidationErrorItem
+  CropSetupProposalDryRunResponse
 } from '../../domain/crops/crop-setup-proposal';
 import { ErrorDto } from '../../domain/shared/error.dto';
 
@@ -44,5 +43,3 @@ export interface ApplyCropSetupProposalOutputPort {
 export const APPLY_CROP_SETUP_PROPOSAL_OUTPUT_PORT = new InjectionToken<ApplyCropSetupProposalOutputPort>(
   'APPLY_CROP_SETUP_PROPOSAL_OUTPUT_PORT'
 );
-
-export type { CropSetupProposalValidationErrorItem };

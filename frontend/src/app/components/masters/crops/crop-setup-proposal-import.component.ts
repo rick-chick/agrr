@@ -85,7 +85,6 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
               </button>
             </div>
             <input
-              #fileInput
               type="file"
               accept="application/json,.json"
               class="crop-setup-proposal-import__file-input"
