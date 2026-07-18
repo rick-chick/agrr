@@ -200,8 +200,6 @@ describe('PlanWorkComponent mobile UX', () => {
     translate.setTranslation(
       'ja',
       {
-        'plans.work.back_to_plan': '計画詳細へ',
-        'plans.work.back_to_hub': '作業記録一覧へ',
         'plans.work.page_title': '作業記録 — {{name}}',
         'plans.work.show_skipped': 'スキップを表示',
         'plans.work.section.overdue': '期限超過 ({{count}})',
@@ -237,18 +235,11 @@ describe('PlanWorkComponent mobile UX', () => {
     fixture.detectChanges();
   }
 
-  it('shows a single primary back link to the work hub in the page header', () => {
+  it('uses unified plan context header without redundant breadcrumb links', () => {
     renderLoaded();
     expect(fixture.nativeElement.querySelector('.plan-work__back-nav')).toBeNull();
-    const back = fixture.nativeElement.querySelector('.plan-context-header__back');
-    expect(back?.textContent).toContain('作業記録一覧へ');
-  });
-
-  it('shows plan detail as the forward crumb in the header toolbar', () => {
-    renderLoaded();
-    const forward = fixture.nativeElement.querySelector('.plan-context-header__forward');
-    expect(forward?.textContent).toContain('計画詳細へ');
-    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-plan-plan-context-header')).toBeTruthy();
   });
 
   it('uses compact page-header with visually hidden title and section-card shell', () => {
@@ -258,8 +249,8 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(header).toBeTruthy();
     expect(card).toBeTruthy();
     expect(card.contains(header)).toBe(false);
-    expect(header.querySelector('#plan-work-page-title.visually-hidden')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('app-plan-work-context-nav')).toBeTruthy();
+    expect(header.querySelector('#plan-context-page-title.visually-hidden')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-plan-detail-context-nav')).toBeTruthy();
   });
 
   it('keeps section-card bottom padding on plan-work shell', async () => {

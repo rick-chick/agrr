@@ -13,7 +13,7 @@ import { PLAN_WORK_PROVIDERS } from '../../usecase/plans/plan-work.providers';
 import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-schedule-item.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
-import { PlanWorkHeaderComponent } from './plan-work-header.component';
+import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import { PlanWorkView, PlanWorkViewState } from './plan-work.view';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
@@ -54,16 +54,20 @@ const initialControl: PlanWorkViewState = {
     CommonModule,
     RouterLink,
     TranslateModule,
-    PlanWorkHeaderComponent,
+    PlanPlanContextHeaderComponent,
     WorkRecordSheetComponent,
     TaskScheduleSyncBannerComponent
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
-      <app-plan-work-header [planId]="planId" [planName]="control.plan?.name ?? null" />
+      <app-plan-plan-context-header
+        [planId]="planId"
+        [planName]="control.plan?.name ?? null"
+        pageTitleKey="plans.work.page_title"
+      />
 
-      <section class="section-card plan-work" aria-labelledby="plan-work-page-title">
+      <section class="section-card plan-work" aria-labelledby="plan-context-page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {

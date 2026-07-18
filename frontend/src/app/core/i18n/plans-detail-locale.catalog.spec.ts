@@ -17,11 +17,11 @@ function getNested(obj: JsonRecord, path: string): unknown {
 const PLANS_DETAIL_KEYS = [
   'plans.detail.select_cultivation_hint',
   'plans.show.page_title',
-  'plans.show.back_to_list',
-  'plans.show.open_work',
   'plans.show.nav.aria_label',
   'plans.show.nav.workbench',
-  'plans.show.nav.task_schedule'
+  'plans.show.nav.task_schedule',
+  'plans.work.nav.work',
+  'plans.work.nav.history'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

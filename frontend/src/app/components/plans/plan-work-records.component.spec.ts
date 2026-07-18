@@ -82,8 +82,6 @@ describe('PlanWorkRecordsComponent', () => {
     translate.setTranslation(
       'en',
       {
-        'plans.work.back_to_plan': 'Plan details',
-        'plans.work.back_to_hub': 'Work log list',
         'plans.work.page_title': 'Work log — {{name}}',
         'plans.work_records.empty': 'No work records yet',
         'plans.work_records.empty_hint': 'Record unscheduled work from the Today\'s work tab',
@@ -112,20 +110,19 @@ describe('PlanWorkRecordsComponent', () => {
     expect(component.control).toEqual(state);
   });
 
-  it('shows link back to work hub', () => {
+  it('uses unified plan context header without redundant breadcrumb links', () => {
     fixture.detectChanges();
     component.control = {
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
       groups: []
-    
     };
     fixture.detectChanges();
 
-    const back = fixture.nativeElement.querySelector('.plan-context-header__back');
-    expect(back?.textContent).toContain('Work log list');
     expect(fixture.nativeElement.querySelector('.plan-work__back-nav')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-plan-plan-context-header')).toBeTruthy();
   });
 
   it('renders grouped work records when data is loaded', () => {

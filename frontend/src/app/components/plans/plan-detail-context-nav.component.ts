@@ -23,6 +23,17 @@ import { TranslateModule } from '@ngx-translate/core';
         routerLinkActive="plan-context-nav__link--active"
         class="plan-context-nav__link"
       >{{ 'plans.show.nav.task_schedule' | translate }}</a>
+      <a
+        [routerLink]="['/plans', planId, 'work']"
+        routerLinkActive="plan-context-nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="plan-context-nav__link"
+      >{{ 'plans.work.nav.work' | translate }}</a>
+      <a
+        [routerLink]="['/plans', planId, 'work_records']"
+        routerLinkActive="plan-context-nav__link--active"
+        class="plan-context-nav__link"
+      >{{ 'plans.work.nav.history' | translate }}</a>
     </nav>
   `,
   styleUrls: ['./plan-context-nav.css']

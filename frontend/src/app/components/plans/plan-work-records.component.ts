@@ -14,7 +14,7 @@ import { WorkRecordPhoto } from '../../models/plans/work-record-photo';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
 import { PLAN_WORK_RECORDS_PROVIDERS } from '../../usecase/plans/plan-work-records.providers';
-import { PlanWorkHeaderComponent } from './plan-work-header.component';
+import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanWorkRecordsView, PlanWorkRecordsViewState } from './plan-work-records.view';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
 
@@ -32,15 +32,19 @@ const initialControl: PlanWorkRecordsViewState = {
     CommonModule,
     RouterLink,
     TranslateModule,
-    PlanWorkHeaderComponent,
+    PlanPlanContextHeaderComponent,
     WorkRecordSheetComponent
   ],
   providers: [...PLAN_WORK_RECORDS_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
-      <app-plan-work-header [planId]="planId" [planName]="control.plan?.name ?? null" />
+      <app-plan-plan-context-header
+        [planId]="planId"
+        [planName]="control.plan?.name ?? null"
+        pageTitleKey="plans.work.page_title"
+      />
 
-      <section class="section-card" aria-labelledby="plan-work-page-title">
+      <section class="section-card" aria-labelledby="plan-context-page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
