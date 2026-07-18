@@ -57,7 +57,6 @@ describe('PlanOptimizingComponent', () => {
     translate.setTranslation(
       'en',
       {
-        'plans.show.back_to_list': 'Back to plans',
         'plans.optimizing_live.heading': 'Optimizing',
         'plans.optimizing_live.heading_completed': 'Optimization complete',
         'plans.optimizing_live.status_badge': 'Optimizing',
@@ -118,15 +117,11 @@ describe('PlanOptimizingComponent', () => {
     });
   });
 
-  it('renders plan context header breadcrumb instead of a raw back link', () => {
+  it('renders plan context header without redundant breadcrumb links while optimizing', () => {
     fixture.detectChanges();
 
-    const backLink = fixture.nativeElement.querySelector(
-      'a.plan-context-header__back'
-    ) as HTMLAnchorElement;
-    expect(backLink).toBeTruthy();
-    expect(backLink.getAttribute('href')).toBe('/plans');
-    expect(backLink.textContent?.trim()).toBe('Back to plans');
-    expect(fixture.nativeElement.querySelectorAll('a').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeNull();
+    expect(fixture.nativeElement.querySelector('a.plan-context-header__back')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-plan-detail-context-nav')).toBeNull();
   });
 });
