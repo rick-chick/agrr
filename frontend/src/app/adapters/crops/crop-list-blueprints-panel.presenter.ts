@@ -10,13 +10,6 @@ import {
 import { defaultBlueprintReadiness } from '../../domain/crops/blueprint-generation-readiness';
 import { withCropListBlueprintsPanelSummaryState } from './crop-list-blueprints-panel-display-state';
 
-const initialSummaryState = {
-  blueprintsLoading: true,
-  blueprintCount: 0,
-  blueprintReadiness: defaultBlueprintReadiness(),
-  blueprintSummary: null
-};
-
 @Injectable()
 export class CropListBlueprintsPanelPresenter
   implements LoadCropForEditOutputPort, LoadCropTaskScheduleBlueprintsOutputPort
@@ -61,7 +54,9 @@ export class CropListBlueprintsPanelPresenter
       blueprintsLoading: false,
       error: dto.message,
       crop: this.view.control.crop,
-      ...initialSummaryState
+      blueprintCount: 0,
+      blueprintReadiness: defaultBlueprintReadiness(),
+      blueprintSummary: null
     });
   }
 }
