@@ -133,7 +133,6 @@ export function withCropBlueprintDisplayState(
     control.agriculturalTasks
   );
   const blueprintReadiness = blueprintGenerationReadiness(control.crop, blueprints);
-  const blueprintRegenerateError = control.blueprintRegenerateError;
   const stages = control.crop?.crop_stages ?? [];
   const blueprintStageLanes = groupBlueprintsByStage(stages, blueprints);
   const allBlueprintGddErrors = blueprintGddErrorsForDrafts(
