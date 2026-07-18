@@ -17,7 +17,7 @@ import {
   openFixPrSearchQuery,
   parseRetryDispatchArgs,
   resolveImplementPreDispatchGates,
-  selectDepsUnblockCandidate,
+  selectRetriageCandidate,
   selectDispatchableRetryCandidate,
   resolveHardDependencies,
 } from './issue-worker-dispatch-lib.mjs';
@@ -78,10 +78,12 @@ function listAgentReadyIssues(repo) {
 }
 
 /**
+ * Open issues carrying the legacy agent-skipped label (pre-migration queue).
+ *
  * @param {string} repo
  * @returns {Array<{ number: number; title: string; url: string; body: string; labels: string[]; createdAt: string }>}
  */
-function listAgentSkippedIssues(repo) {
+function listLegacyQueueIssues(repo) {
   const raw = gh(repo, [
     'issue',
     'list',
@@ -200,7 +202,7 @@ function postWebhook({ repo, issue, action, retryReason }) {
  * @param {string} repo
  * @param {number} issueNumber
  */
-function unblockAgentSkippedIssue(repo, issueNumber) {
+function promoteToAgentReady(repo, issueNumber) {
   gh(repo, [
     'issue',
     'edit',
@@ -217,10 +219,10 @@ function unblockAgentSkippedIssue(repo, issueNumber) {
  * @param {(issueNumber: number) => string} fetchIssueState
  * @returns {Promise<{ issue: { number: number; title: string; url: string; body: string; labels: string[] } } | null>}
  */
-async function selectDepsUnblockIssue(repo, fetchIssueState) {
-  const issues = listAgentSkippedIssues(repo);
+async function selectRetriageIssue(repo, fetchIssueState) {
+  const issues = listLegacyQueueIssues(repo);
   const getAgentDepsContract = createRepoAgentDepsGetter(repo);
-  const selected = await selectDepsUnblockCandidate(
+  const selected = await selectRetriageCandidate(
     issues,
     (issueNumber) => hasOpenFixPr(repo, issueNumber),
     fetchIssueState,
@@ -241,10 +243,12 @@ async function selectDepsUnblockIssue(repo, fetchIssueState) {
  * }} input
  * @returns {Promise<boolean>}
  */
-async function dispatchDepsUnblockedIssue({ repo, issue, retryReason }) {
+async function dispatchRetriageIssue({ repo, issue, retryReason }) {
   // GITHUB_TOKEN label edits do not trigger issues:labeled workflows (GitHub docs).
   // Retry must post the webhook directly, same as agent-ready reconcile.
-  unblockAgentSkippedIssue(repo, issue.number);
+  if (issue.labels.includes('agent-skipped')) {
+    promoteToAgentReady(repo, issue.number);
+  }
   const refreshed = fetchIssue(repo, issue.number);
   return dispatchIfEligible({
     repo,
@@ -332,14 +336,14 @@ async function main() {
       return;
     }
 
-    const unblocked = await selectDepsUnblockIssue(repo, fetchIssueState);
-    if (!unblocked) {
-      console.log('No eligible agent-ready or deps-unblocked issues for retry reconciliation.');
+    const retriage = await selectRetriageIssue(repo, fetchIssueState);
+    if (!retriage) {
+      console.log('No eligible agent-ready or retriage issues for retry reconciliation.');
       return;
     }
-    await dispatchDepsUnblockedIssue({
+    await dispatchRetriageIssue({
       repo,
-      issue: unblocked.issue,
+      issue: retriage.issue,
       retryReason: args.retryReason ?? 'deps_resolved_reconcile',
     });
     return;
@@ -352,7 +356,7 @@ async function main() {
     }
     const getAgentDepsContract = createRepoAgentDepsGetter(repo);
     const skippedIssues = [];
-    for (const issue of listAgentSkippedIssues(repo)) {
+    for (const issue of listLegacyQueueIssues(repo)) {
       const { hardDependencies } = await resolveHardDependencies({
         issueNumber: issue.number,
         issueBody: issue.body ?? '',
@@ -362,22 +366,22 @@ async function main() {
         skippedIssues.push(issue);
       }
     }
-    const selected = await selectDepsUnblockCandidate(
+    const selected = await selectRetriageCandidate(
       skippedIssues,
       (issueNumber) => hasOpenFixPr(repo, issueNumber),
       fetchIssueState,
       getAgentDepsContract,
     );
     if (!selected) {
-      console.log(`No deps-unblocked agent-skipped issues depend on #${closedNumber}.`);
+      console.log(`No retriage issues depend on closed #${closedNumber}.`);
       return;
     }
     const issue = skippedIssues.find((entry) => entry.number === selected.issue.number);
     if (!issue) {
-      console.log('Selected deps-unblocked issue disappeared before dispatch.');
+      console.log('Selected retriage issue disappeared before dispatch.');
       return;
     }
-    await dispatchDepsUnblockedIssue({
+    await dispatchRetriageIssue({
       repo,
       issue,
       retryReason: args.retryReason ?? 'dependency_closed',

@@ -20,8 +20,8 @@ import {
   resolveImplementPreDispatchGates,
   selectRetryCandidate,
   selectDispatchableRetryCandidate,
-  selectDepsUnblockCandidate,
-  isDepsResolvedUnblockCandidate,
+  selectRetriageCandidate,
+  isRetriageEligible,
   resolveHardDependencies,
   formatDependencyGateComment,
 } from './issue-worker-dispatch-lib.mjs';
@@ -235,7 +235,7 @@ test('isRetryCandidate rejects when agent-close is present', () => {
   });
 });
 
-test('isRetryCandidate allows agent-ready even when agent-skipped is present', () => {
+test('isRetryCandidate allows agent-ready with legacy queue label present', () => {
   const result = isRetryCandidate({
     issueLabels: 'agent-ready,agent-skipped',
     hasOpenFixPr: false,
@@ -463,7 +463,7 @@ test('resolveDependencyGateFromAgentCache does not use parseHardDependencyIssueN
   assert.doesNotMatch(fnBody, /parseHardDependencyIssueNumbers/);
 });
 
-test('resolveDispatchAction implements when agent-ready and agent-skipped are both present', () => {
+test('resolveDispatchAction implements when agent-ready is present', () => {
   const result = resolveDispatchAction({
     eventAction: 'labeled',
     labelName: 'agent-ready',
@@ -549,10 +549,10 @@ test('resolveImplementPreDispatchGates blocks open dependencies', async () => {
   assert.match(result.skipReason, /dependency #317 is open/);
 });
 
-test('isDepsResolvedUnblockCandidate accepts agent-skipped when all deps closed', async () => {
+test('isRetriageEligible accepts agent-ready when all deps closed', async () => {
   const body = '## 依存\n\n- #364\n- #365';
-  const result = await isDepsResolvedUnblockCandidate({
-    issueLabels: 'agent-skipped',
+  const result = await isRetriageEligible({
+    issueLabels: 'agent-ready',
     issueBody: body,
     hasOpenFixPr: false,
     issueNumber: 370,
@@ -562,10 +562,10 @@ test('isDepsResolvedUnblockCandidate accepts agent-skipped when all deps closed'
   assert.deepEqual(result, { eligible: true });
 });
 
-test('isDepsResolvedUnblockCandidate rejects when dependency still open', async () => {
+test('isRetriageEligible rejects when dependency still open', async () => {
   const body = '## 依存\n\n- #364';
-  const result = await isDepsResolvedUnblockCandidate({
-    issueLabels: 'agent-skipped',
+  const result = await isRetriageEligible({
+    issueLabels: 'agent-ready',
     issueBody: body,
     hasOpenFixPr: false,
     issueNumber: 370,
@@ -578,10 +578,10 @@ test('isDepsResolvedUnblockCandidate rejects when dependency still open', async 
   });
 });
 
-test('isDepsResolvedUnblockCandidate accepts agent-skipped without hard deps for re-triage', async () => {
+test('isRetriageEligible accepts queue issues without hard deps', async () => {
   const body = '## 依存\n\n- なし';
-  const result = await isDepsResolvedUnblockCandidate({
-    issueLabels: 'agent-skipped',
+  const result = await isRetriageEligible({
+    issueLabels: 'agent-ready',
     issueBody: body,
     hasOpenFixPr: false,
     issueNumber: 370,
@@ -590,10 +590,10 @@ test('isDepsResolvedUnblockCandidate accepts agent-skipped without hard deps for
   assert.deepEqual(result, { eligible: true });
 });
 
-test('isDepsResolvedUnblockCandidate falls back to body parsing without agent cache', async () => {
+test('isRetriageEligible falls back to body parsing without agent cache', async () => {
   const body = '## 依存\n\n- #364';
-  const result = await isDepsResolvedUnblockCandidate({
-    issueLabels: 'agent-skipped',
+  const result = await isRetriageEligible({
+    issueLabels: 'agent-ready',
     issueBody: body,
     hasOpenFixPr: false,
     issueNumber: 370,
@@ -628,32 +628,32 @@ test('resolveHardDependencies parses body when cache is missing', async () => {
   });
 });
 
-test('isDepsResolvedUnblockCandidate rejects without agent-skipped', async () => {
-  const result = await isDepsResolvedUnblockCandidate({
-    issueLabels: 'agent-ready',
+test('isRetriageEligible rejects issues without queue labels', async () => {
+  const result = await isRetriageEligible({
+    issueLabels: 'enhancement',
     issueBody: '## 依存\n\n- #364',
     hasOpenFixPr: false,
     fetchIssueState: async () => 'CLOSED',
   });
   assert.deepEqual(result, {
     eligible: false,
-    reason: 'no agent-skipped',
+    reason: 'not in queue',
   });
 });
 
-test('selectDepsUnblockCandidate picks lowest-number eligible issue', async () => {
+test('selectRetriageCandidate picks lowest-number eligible issue', async () => {
   const body = '## 依存\n\n- #364';
   const getAgentDepsContract = async (_number, currentBody) => agentContract([364], currentBody);
-  const selected = await selectDepsUnblockCandidate(
+  const selected = await selectRetriageCandidate(
     [
       {
         number: 370,
-        labels: ['agent-skipped'],
+        labels: ['agent-ready'],
         body,
       },
       {
         number: 367,
-        labels: ['agent-skipped'],
+        labels: ['agent-ready'],
         body,
       },
     ],

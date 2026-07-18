@@ -142,7 +142,7 @@ export function formatDependencyGateComment(openDependencies) {
     '',
     `次の依存 issue が open のため Cloud Agent を起動しません: ${refs}`,
     '',
-    '依存 issue が CLOSED になったら `agent-ready` ラベルで再 dispatch されます（キュー待ちのまま、`agent-skipped` ラベルは付けません）。',
+    '依存 issue が CLOSED になったら reconcile が `agent-ready` issue を再 dispatch します。',
   ].join('\n');
 }
 
@@ -532,7 +532,7 @@ export async function resolveHardDependencies({
  * }} input
  * @returns {Promise<{ eligible: true } | { eligible: false; reason: string }>}
  */
-export async function isDepsResolvedUnblockCandidate({
+export async function isRetriageEligible({
   issueLabels,
   issueBody,
   hasOpenFixPr,
@@ -540,8 +540,8 @@ export async function isDepsResolvedUnblockCandidate({
   issueNumber = 0,
   fetchIssueState,
 }) {
-  if (!hasLabel(issueLabels, 'agent-skipped')) {
-    return { eligible: false, reason: 'no agent-skipped' };
+  if (!hasLabel(issueLabels, 'agent-ready') && !hasLabel(issueLabels, 'agent-skipped')) {
+    return { eligible: false, reason: 'not in queue' };
   }
   if (hasLabel(issueLabels, 'agent-blocked') || hasLabel(issueLabels, 'agent-in-progress')) {
     return { eligible: false, reason: 'blocked label present' };
@@ -572,6 +572,9 @@ export async function isDepsResolvedUnblockCandidate({
   return { eligible: true };
 }
 
+/** @deprecated Use isRetriageEligible */
+export const isDepsResolvedUnblockCandidate = isRetriageEligible;
+
 /**
  * @param {Array<{ number: number; labels: string[]; body?: string }>} issues
  * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
@@ -579,7 +582,7 @@ export async function isDepsResolvedUnblockCandidate({
  * @param {(issueNumber: number, issueBody: string) => Promise<AgentDepsContract | null> | AgentDepsContract | null} getAgentDepsContract
  * @returns {Promise<{ issue: { number: number; labels: string[]; body?: string } } | null>}
  */
-export async function selectDepsUnblockCandidate(
+export async function selectRetriageCandidate(
   issues,
   hasOpenFixPrFor,
   fetchIssueState,
@@ -588,7 +591,7 @@ export async function selectDepsUnblockCandidate(
   const sorted = [...issues].sort((a, b) => a.number - b.number);
   for (const issue of sorted) {
     const labels = issue.labels.join(',');
-    const result = await isDepsResolvedUnblockCandidate({
+    const result = await isRetriageEligible({
       issueLabels: labels,
       issueBody: issue.body ?? '',
       hasOpenFixPr: hasOpenFixPrFor(issue.number),
@@ -602,6 +605,9 @@ export async function selectDepsUnblockCandidate(
   }
   return null;
 }
+
+/** @deprecated Use selectRetriageCandidate */
+export const selectDepsUnblockCandidate = selectRetriageCandidate;
 
 /**
  * @param {string[]} argv process.argv

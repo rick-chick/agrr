@@ -20,7 +20,6 @@ export const AGENT_BLOCKED_STALE_MS = 24 * 60 * 60 * 1000;
 
 export const RETRY_BLOCK_LABELS = [
   'agent-in-progress',
-  'agent-skipped',
   'agent-blocked',
 ];
 

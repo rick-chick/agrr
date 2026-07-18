@@ -13,7 +13,6 @@ description: >-
 | 経路 | 結果 |
 |------|------|
 | **実装** | TDD → **順次クリーンアップ・レビュー** → PR（`Closes #N`） |
-| **対応しない（スキップ）** | 根拠コメント → ラベル `agent-skipped`（**issue はオープンのまま**・PR なし） |
 | **対応せずクローズ** | 根拠コメント → `gh issue close`（PR なし） |
 | **ブロック** | 理由コメント → **オープンのまま** `agent-blocked` |
 
@@ -30,7 +29,7 @@ Webhook ペイロードの `action`:
 
 | トリガー | `action` | 意味 |
 |----------|----------|------|
-| issue `opened` | `triage` | **新規 issue**。§1 triage で implement / skip / close / block を決定 |
+| issue `opened` | `triage` | **新規 issue**。§1 triage で implement / close / block を決定 |
 | `agent-ready` ラベル | `implement` | 実装経路を優先（ただし着手前 triage でクローズ判定可） |
 | `agent-close` ラベル | `close_with_reason` | **対応せずクローズ**経路を優先（実装しない。調査のうえ close） |
 
@@ -50,7 +49,7 @@ Webhook ペイロードの `action`:
 - `wontfix` / `invalid` / `duplicate`
 - 本文に「ブロック中」「保留」と明記されているもの
 - **既に同一 issue を閉じるオープン PR** がある（`gh pr list --search 'is:pr is:open (fixes #N OR closes #N)'` 等で確認）
-- Dependabot / Renovate 等 bot 起票（workflow 側で dispatch しない。万一届いたら `agent-skipped`）
+- Dependabot / Renovate 等 bot 起票（workflow 側で dispatch しない。万一届いたら §2a で invalid クローズ）
 
 ### 手動のみ（番号未指定・レガシー）
 
@@ -73,16 +72,18 @@ gh issue list --repo rick-chick/agrr --state open --limit 50 --json number,title
 
 ```
 実装する → §3 着手宣言へ
-対応不要（オープン維持） → §2b スキップ（agent-skipped）へ
 対応不要で閉じられる → §2a 対応せずクローズへ（agent-in-progress を付けない）
-人間の判断が要る → §7 ブロックへ
+依存未充足 → `agent-ready` 維持・コメントのみで終了（dispatch 依存ゲートが次回再判定）
+人間の判断が要る・仕様未確定・スコープ外でオープン維持 → §7 ブロックへ
 ```
+
+**都度判断**: 前回のコメントやラベルで経路を固定しない。issue 本文・`master`・依存 issue の**現状**を読んで triage する。
 
 `action: close_with_reason`（`agent-close` ラベル）のときは **§2a のみ**（実装・PR 禁止）。
 
-`action: implement`（`agent-ready`）のときも **着手前 triage は必須**（既に fixed なら §2a / スコープ外なら §2b）。
+`action: implement`（`agent-ready`）のときも **着手前 triage は必須**（既に fixed なら §2a / 依存未充足ならコメントのみ / ブロックなら §7）。
 
-`action: triage`（issue 作成）のときは上記 4 分岐のいずれかで終了する（cron 的な「対象なしで何もしない」は使わない）。
+`action: triage`（issue 作成）のときは上記分岐のいずれかで終了する（cron 的な「対象なしで何もしない」は使わない）。
 
 ### 着手宣言（実装経路のみ）
 
@@ -93,47 +94,13 @@ gh issue comment <N> --body "🤖 Issue Worker が着手します（branch: issu
 gh issue edit <N> --add-label agent-in-progress
 ```
 
-`agent-ready` / `agent-close` / `agent-in-progress` / `agent-blocked` / `agent-closed` / `agent-skipped` ラベルが無い場合は `gh label create` で作成してから付与。
+`agent-ready` / `agent-close` / `agent-in-progress` / `agent-blocked` / `agent-closed` ラベルが無い場合は `gh label create` で作成してから付与。
 
-## 2b) 対応しない（スキップ・オープン維持）
+### 依存未充足（deps_unmet）
 
-**PR を開かず・issue を閉じず**、調査根拠を残して `agent-skipped` を付与する経路。
+依存 issue が OPEN のときは **実装に着手しない**。`agent-ready` を維持し、根拠コメントのみ残して終了する。dispatch 依存ゲートと reconcile が次回以降を再判定する（[`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `formatDependencyGateComment` 参照）。
 
-**`agent-skipped` は再 dispatch のブロックにしない。** reconcile / 依存クローズ時に依存が解消していれば再 triage される。エージェントは着手前 triage で現状を都度判断する。
-
-**`deps_unmet`（依存未充足）では `agent-skipped` を付けない。** `agent-ready` を維持し、dispatch 依存ゲートが保留する（[`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `formatDependencyGateComment` 参照）。
-
-### 使ってよい条件（いずれかを確認済み）
-
-| 区分 | 条件 | ラベル |
-|------|------|--------|
-| **out_of_scope** | Issue Worker のスコープ外（運用・インフラのみ・ドキュメントのみ等） | `agent-skipped` |
-| **needs_human** | 仕様未確定だが close までは不要（質問・方針待ち） | `agent-skipped`（§7 ブロックと迷う場合はブロック優先） |
-| **automation_only** | UX 起票専用・調査のみ・実装指示なし | `agent-skipped` |
-| **deps_unmet** | 依存 issue が OPEN | **`agent-skipped` 禁止** — `agent-ready` 維持 |
-
-**dispatch 層で処理（§2b ではない）**: `[epic]` / `epic` ラベルの `implement` dispatch は [`issue-worker-dispatch.yml`](../../../.github/workflows/issue-worker-dispatch.yml) が拒否する。
-
-**禁止**: 根拠のないスキップ、duplicate / already_fixed をスキップで回避する（該当時は §2a で close）。
-
-### 必須コメント（ラベル付与前）
-
-```markdown
-## 🤖 Issue Worker: 対応スキップ
-
-**区分**: out_of_scope | needs_human | automation_only
-**理由**（1〜3 文）: …
-**根拠**:
-- …
-**再開**: 依存が解消したら reconcile が自動再 dispatch する。手動なら `agent-ready` を付与（`agent-skipped` は外さなくてよい）。
-```
-
-### 手順
-
-```bash
-gh issue comment <N> --body-file /tmp/issue-worker-skip.md
-gh issue edit <N> --add-label agent-skipped
-```
+**dispatch 層**: `[epic]` / `epic` ラベルの `implement` dispatch は [`issue-worker-dispatch.yml`](../../../.github/workflows/issue-worker-dispatch.yml) が拒否する。エピック本体ではなく子 issue を `agent-ready` にする。
 
 ## 2a) 対応せずクローズ（実装しない）
 
@@ -194,11 +161,11 @@ gh issue edit <N> --add-label wontfix   # または invalid
 
 ### ブロックとの違い
 
-| | スキップ（§2b） | 対応せずクローズ（§2a） | ブロック（§7） |
-|--|-----------------|-------------------------|----------------|
-| issue 状態 | **open** | **closed** | **open** |
-| いつ | 対応不要・後日可 | 対応不要と**確定**（重複・修正済み等） | 人間の判断・仕様決定が**未確定** |
-| ラベル | `agent-skipped` | `agent-closed` + `wontfix` 等 | `agent-blocked` |
+| | 対応せずクローズ（§2a） | ブロック（§7） |
+|--|-------------------------|----------------|
+| issue 状態 | **closed** | **open** |
+| いつ | 対応不要と**確定**（重複・修正済み・wontfix 等） | 人間の判断・仕様決定が**未確定**、またはスコープ外でオープン維持 |
+| ラベル | `agent-closed` + `wontfix` 等 | `agent-blocked` |
 
 ## 2) 実装方針のルーティング
 
@@ -347,7 +314,7 @@ Read and follow `.cursor/skills/github-issue-worker/SKILL.md` exactly.
 
 Webhook payload fields: issue_number, action (triage | implement | close_with_reason), issue_body, labels.
 
-- action triage: new issue opened — run §1 triage (implement / §2b skip / §2a close / §7 block).
+- action triage: new issue opened — run §1 triage (implement / §2a close / §7 block).
 - action implement: agent-ready label — implementation path after triage.
 - action close_with_reason: agent-close label — §2a only.
 
