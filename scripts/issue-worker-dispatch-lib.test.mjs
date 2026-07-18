@@ -25,6 +25,10 @@ import {
   isEpicCloseCheckCandidate,
   resolveHardDependencies,
   formatDependencyGateComment,
+  collectReconcileDispatchCandidates,
+  selectReconcileDispatchCandidate,
+  parseDispatchedIssueNumberFromLog,
+  resolveOnClosedDispatch,
 } from './issue-worker-dispatch-lib.mjs';
 
 /**
@@ -535,6 +539,7 @@ test('resolvePreDispatchGates allows epic_close_check without dependency cache',
   assert.deepEqual(result, { skip: false });
 });
 
+// reconcile uses selectReconcileDispatchCandidate (implement first); not this helper.
 test('selectDispatchableRetryCandidate dispatches epic_close_check before implement', async () => {
   const selected = await selectDispatchableRetryCandidate(
     [
@@ -726,4 +731,155 @@ test('selectDispatchableRetryCandidate returns null when no issue passes gates',
     async () => ({ skip: true, skipReason: 'blocked' }),
   );
   assert.equal(selected, null);
+});
+
+test('selectReconcileDispatchCandidate prefers implement over epic_close_check', () => {
+  const selected = selectReconcileDispatchCandidate([
+    {
+      issue: { number: 362, title: '[epic] Parent', labels: ['agent-skipped'] },
+      action: 'epic_close_check',
+    },
+    {
+      issue: { number: 323, title: 'Child', labels: ['agent-ready'] },
+      action: 'implement',
+    },
+  ]);
+  assert.deepEqual(selected, {
+    issue: { number: 323, title: 'Child', labels: ['agent-ready'] },
+    action: 'implement',
+  });
+});
+
+test('selectReconcileDispatchCandidate prefers implement over agent-ready epic', () => {
+  const selected = selectReconcileDispatchCandidate([
+    {
+      issue: { number: 316, title: '[epic] Parent', labels: ['agent-ready'] },
+      action: 'epic_close_check',
+    },
+    {
+      issue: { number: 323, title: 'Child', labels: ['agent-ready'] },
+      action: 'implement',
+    },
+  ]);
+  assert.deepEqual(selected, {
+    issue: { number: 323, title: 'Child', labels: ['agent-ready'] },
+    action: 'implement',
+  });
+});
+
+test('selectReconcileDispatchCandidate picks lowest implement number', () => {
+  const selected = selectReconcileDispatchCandidate([
+    { issue: { number: 355, title: 'c', labels: ['agent-ready'] }, action: 'implement' },
+    { issue: { number: 323, title: 'a', labels: ['agent-ready'] }, action: 'implement' },
+    { issue: { number: 340, title: 'b', labels: ['agent-ready'] }, action: 'implement' },
+  ]);
+  assert.equal(selected?.issue.number, 323);
+});
+
+test('selectReconcileDispatchCandidate picks lowest epic when no implement', () => {
+  const selected = selectReconcileDispatchCandidate([
+    { issue: { number: 400, title: '[epic] c', labels: [] }, action: 'epic_close_check' },
+    { issue: { number: 316, title: '[epic] a', labels: [] }, action: 'epic_close_check' },
+    { issue: { number: 362, title: '[epic] b', labels: [] }, action: 'epic_close_check' },
+  ]);
+  assert.equal(selected?.issue.number, 316);
+});
+
+test('selectReconcileDispatchCandidate deprioritizes last dispatched when alternatives exist', () => {
+  const selected = selectReconcileDispatchCandidate(
+    [
+      { issue: { number: 323, title: 'a', labels: ['agent-ready'] }, action: 'implement' },
+      { issue: { number: 340, title: 'b', labels: ['agent-ready'] }, action: 'implement' },
+    ],
+    { deprioritizeIssueNumber: 323 },
+  );
+  assert.equal(selected?.issue.number, 340);
+});
+
+test('selectReconcileDispatchCandidate keeps sole candidate when deprioritized', () => {
+  const selected = selectReconcileDispatchCandidate(
+    [{ issue: { number: 362, title: '[epic]', labels: [] }, action: 'epic_close_check' }],
+    { deprioritizeIssueNumber: 362 },
+  );
+  assert.equal(selected?.issue.number, 362);
+});
+
+test('selectReconcileDispatchCandidate returns null for empty candidates', () => {
+  assert.equal(selectReconcileDispatchCandidate([]), null);
+});
+
+test('parseDispatchedIssueNumberFromLog returns last dispatch number', () => {
+  const log = [
+    'setup',
+    'Dispatched Issue Worker retry for #316 (epic_close_check)',
+    'Dispatched Issue Worker retry for #323 (implement)',
+  ].join('\n');
+  assert.equal(parseDispatchedIssueNumberFromLog(log), 323);
+});
+
+test('parseDispatchedIssueNumberFromLog returns null when no dispatch line', () => {
+  assert.equal(parseDispatchedIssueNumberFromLog('no dispatch here'), null);
+});
+
+test('collectReconcileDispatchCandidates does not duplicate agent-ready epic', async () => {
+  const epic = {
+    number: 316,
+    title: '[epic] Parent',
+    labels: ['agent-ready'],
+    body: '## 子 Issue\n\n- #323',
+  };
+  const candidates = await collectReconcileDispatchCandidates(
+    [],
+    [epic],
+    () => false,
+    async () => ({ skip: false }),
+  );
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0].issue.number, 316);
+  assert.equal(candidates[0].action, 'epic_close_check');
+});
+
+test('collectReconcileDispatchCandidates includes epic without agent-ready and implement', async () => {
+  const candidates = await collectReconcileDispatchCandidates(
+    [
+      {
+        number: 362,
+        title: '[epic] Later',
+        labels: ['agent-skipped'],
+        body: '',
+      },
+    ],
+    [
+      {
+        number: 323,
+        title: 'Child',
+        labels: ['agent-ready'],
+        body: '',
+      },
+    ],
+    () => false,
+    async () => ({ skip: false }),
+  );
+  assert.equal(candidates.length, 2);
+  const actions = candidates.map((entry) => `${entry.issue.number}:${entry.action}`);
+  assert.deepEqual(actions, ['362:epic_close_check', '323:implement']);
+});
+
+test('resolveOnClosedDispatch skips when no dependency link', () => {
+  const result = resolveOnClosedDispatch(null);
+  assert.deepEqual(result, {
+    dispatch: false,
+    reason: 'no dependency-unblocked agent-ready issue',
+  });
+});
+
+test('resolveOnClosedDispatch dispatches dependency-selected issue', () => {
+  const selected = {
+    issue: { number: 370 },
+    action: 'implement',
+  };
+  assert.deepEqual(resolveOnClosedDispatch(selected), {
+    dispatch: true,
+    selected,
+  });
 });
