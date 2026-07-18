@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import {
   AGENT_DEPS_MARKER,
   buildAgentDepsCacheComment,
+  createGetAgentDepsContractFromComments,
   extractDependencySection,
   hashDependencySection,
   isAgentDepsCacheValid,
@@ -78,4 +79,31 @@ test('isAgentDepsCacheValid compares body_hash', () => {
   };
   assert.equal(isAgentDepsCacheValid(contract, body402), true);
   assert.equal(isAgentDepsCacheValid(contract, body384), false);
+});
+
+test('createGetAgentDepsContractFromComments returns null on cache miss or stale hash', async () => {
+  const contract = {
+    hard_dependencies: [384],
+    soft_notes: [],
+    rationale: 'blocks on #384',
+    body_hash: hashDependencySection(body402),
+  };
+  const comment = buildAgentDepsCacheComment(contract);
+  const getContract = createGetAgentDepsContractFromComments(async () => [
+    { body: comment, createdAt: '2026-01-02T00:00:00Z' },
+  ]);
+
+  assert.deepEqual(await getContract(402, body402), contract);
+  assert.equal(await getContract(402, body384), null);
+});
+
+test('createGetAgentDepsContractFromComments ignores invalid contract payloads', async () => {
+  const getContract = createGetAgentDepsContractFromComments(async () => [
+    {
+      body: `<!-- ${AGENT_DEPS_MARKER} {"hard_dependencies":[0],"soft_notes":[],"rationale":"x","body_hash":"abc"} -->`,
+      createdAt: '2026-01-02T00:00:00Z',
+    },
+  ]);
+
+  assert.equal(await getContract(1, body384), null);
 });
