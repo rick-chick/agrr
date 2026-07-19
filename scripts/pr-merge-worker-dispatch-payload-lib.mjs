@@ -15,11 +15,6 @@ export function buildConflictDispatchPayload({ repository, pr }) {
     issueNumber: resolveIssueNumberFromPrBody(pr.body),
     prTitle: pr.title,
     prUrl: pr.url,
-    headRef: pr.headRefName,
-    headSha: pr.headRefOid,
-    author: pr.author?.login ?? '',
-    mergeableState: pr.mergeable ?? '',
-    mergeStateStatus: pr.mergeStateStatus ?? '',
   });
 }
 

@@ -338,11 +338,6 @@ test('buildRetryDispatchPayload maps stuck retry fields', () => {
     issue_number: 276,
     pr_title: 'fix: crop stages (#276)',
     pr_url: 'https://github.com/rick-chick/agrr/pull/277',
-    head_ref: 'cursor/agrr-issue-worker-workflow-2db2',
-    head_sha: 'abc123',
-    author: 'cursor[bot]',
-    mergeable_state: 'MERGEABLE',
-    merge_state_status: 'CLEAN',
     retry_reason: 'scheduled_reconcile',
   });
   assert.equal('action' in payload, false);
