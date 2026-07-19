@@ -86,6 +86,22 @@ export function buildDeliveryPrPayload({
 }
 
 /**
+ * Delivery Agent webhook rejects pr_number-only payloads (HTTP 400).
+ * issue_number must be present before POST.
+ *
+ * @param {Record<string, unknown>} payload
+ * @returns {boolean}
+ */
+export function deliveryPrWebhookPayloadIsDispatchable(payload) {
+  const issueNumber = payload.issue_number;
+  return (
+    typeof issueNumber === 'number' &&
+    Number.isInteger(issueNumber) &&
+    issueNumber > 0
+  );
+}
+
+/**
  * @param {string} logText
  * @returns {number | null}
  */
