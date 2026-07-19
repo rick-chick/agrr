@@ -23,6 +23,7 @@ description: >-
 ## §0 観測と分岐（毎 run 先頭・固定順）
 
 1. **payload** — `repository`、任意の `issue_number` / `pr_number`
+   - **`body_hash` あり** → 依存判定 run のみ（§依存）。実装・PR 禁止。終了。
 2. **番号解決** — `pr_number` のみなら `gh pr view` → 本文 `Closes #N` / `fixes #N` で issue を特定
 3. **in-progress** — `agent-in-progress` または `agent-merge-in-progress` が付いていれば **即終了**（コメント不要）
 4. **open PR** — `Closes #N` / `fixes #N` の open PR を検索
@@ -56,11 +57,15 @@ description: >-
 | `pr_number` | PR / CI 起点時（`issue_number` は PR 本文から解決可） |
 | `action` | **送らない・無視** |
 
-任意: `issue_title`, `issue_url`, `issue_body`, `labels`, `pr_title`, `pr_url`, `retry_reason`
+任意: `issue_title`, `issue_url`, `issue_body`, `labels`, `pr_title`, `pr_url`, `retry_reason`, `body_hash`（依存判定 run のみ）
 
 ## 依存
 
-`## 依存` 節がある issue は **`agent-deps:v1` コメントキャッシュのみ**を根拠にする。本文 `#N` パース禁止。キャッシュ miss 時は deps 判定 run でコメント作成し終了。
+`## 依存` 節がある issue は **`agent-deps:v1` コメントキャッシュのみ**を根拠にする。本文 `#N` パース禁止。
+
+### `body_hash` 付き payload（依存判定 run）
+
+[`issue-worker-deps-resolve.mjs`](../../../scripts/issue-worker-deps-resolve.mjs) がキャッシュ miss 時に送る。**この run の唯一の仕事**は `agent-deps:v1` コメント作成。実装・PR・マージは禁止。完了したら終了（implement dispatch は reconcile が後続）。
 
 ## Automation（Cursor Dashboard）
 

@@ -189,12 +189,14 @@ issue（ux-campaign:*）→ Issue Worker → PR → PR Merge Worker
 
 | Workflow | ファイル | トリガ | 起動する Automation | Secrets |
 |----------|----------|--------|---------------------|---------|
-| Issue Worker Dispatch | [`issue-worker-dispatch.yml`](../../.github/workflows/issue-worker-dispatch.yml) | issue opened / labeled | Issue Worker | `CURSOR_ISSUE_WORKER_WEBHOOK_*`、deps 判定用 `CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_*`（任意） |
-| Issue Worker Retry | [`issue-worker-retry-dispatch.yml`](../../.github/workflows/issue-worker-retry-dispatch.yml) | 15 分 cron / cancelled retry | Issue Worker | 同上 |
-| PR Merge Worker Dispatch | [`pr-merge-worker-dispatch.yml`](../../.github/workflows/pr-merge-worker-dispatch.yml) | PR イベント / Backend test 完了 / master push | PR Merge Worker | `CURSOR_PR_MERGE_WEBHOOK_*` |
-| PR Merge Worker Retry | [`pr-merge-worker-retry-dispatch.yml`](../../.github/workflows/pr-merge-worker-retry-dispatch.yml) | 15 分 cron / cancelled retry | PR Merge Worker | 同上 |
+| Issue Worker Dispatch | [`issue-worker-dispatch.yml`](../../.github/workflows/issue-worker-dispatch.yml) | issue opened / labeled | **Delivery Agent** | `CURSOR_DELIVERY_WEBHOOK_*` |
+| Issue Worker Retry | [`issue-worker-retry-dispatch.yml`](../../.github/workflows/issue-worker-retry-dispatch.yml) | 15 分 cron / cancelled retry / issue closed | **Delivery Agent** | 同上 |
+| PR Merge Worker Dispatch | [`pr-merge-worker-dispatch.yml`](../../.github/workflows/pr-merge-worker-dispatch.yml) | PR イベント / Backend test 完了 | **Delivery Agent** | 同上 |
+| PR Merge Worker Retry | [`pr-merge-worker-retry-dispatch.yml`](../../.github/workflows/pr-merge-worker-retry-dispatch.yml) | 15 分 cron / cancelled retry | **Delivery Agent** | 同上 |
 | UX Campaign Review | [`ux-campaign-review-dispatch.yml`](../../.github/workflows/ux-campaign-review-dispatch.yml) | PR merged | UX Campaign Loop | `CURSOR_UX_CAMPAIGN_REVIEW_WEBHOOK_*` |
 | Cleanup Outer Loop | [`cleanup-outer-loop-dispatch.yml`](../../.github/workflows/cleanup-outer-loop-dispatch.yml) | workflow_dispatch / repository_dispatch | （個別 webhook） | `CLEANUP_OUTER_LOOP_WEBHOOK_*` |
+
+※ deps キャッシュ miss 時の webhook も同一 `CURSOR_DELIVERY_WEBHOOK_*`（[`issue-worker-deps-resolve.mjs`](../../scripts/issue-worker-deps-resolve.mjs)）。
 
 ### C. 機械処理のみ（Cloud Agent を起動しない）
 
@@ -208,8 +210,9 @@ issue（ux-campaign:*）→ Issue Worker → PR → PR Merge Worker
 
 | Automation | トリガ種別 | スキル | PR を開くか |
 |------------|------------|--------|-------------|
-| **Issue Worker** | Webhook（issue-worker-dispatch） | `github-issue-worker` | 可（実装時） |
-| **PR Merge Worker** | Git イベント（CI completed / PR opened）+ Webhook（pr-merge-worker-dispatch） | `github-pr-merge-worker` | 不可（マージのみ） |
+| **Delivery Agent** | Webhook（issue/PR dispatch workflows） | `delivery-agent` → 参照 `github-issue-worker` / `github-pr-merge-worker` | 可（実装時） |
+| ~~Issue Worker~~ | — | `github-issue-worker` | **廃止**（Delivery に統合） |
+| ~~PR Merge Worker~~ | — | `github-pr-merge-worker` | **廃止**（Delivery に統合） |
 | **UX Campaign Loop** | Webhook（ux-campaign-review-dispatch） | `ux-campaign-loop` | 不可（issue 起票のみ） |
 | **UX Issue Audit** | Schedule（月曜 9:00 JST） | `ux-issue-pipeline` § Automation | 不可（条件付き issue） |
 | **Automation Audit** | Schedule（金曜 10:00 JST） | `cloud-automation-audit` | 可（クリティカル修正時のみ） |
@@ -222,20 +225,24 @@ issue（ux-campaign:*）→ Issue Worker → PR → PR Merge Worker
 ## Webhook の流れ（共通パターン）
 
 1. GitHub 上でイベント発生（issue ラベル、PR CI 完了など）
-2. **Dispatch workflow** が `scripts/*-dispatch-lib.mjs` で対象・action を判定
+2. **Dispatch workflow** が `scripts/*-dispatch-lib.mjs` でゲート・選定（内部 `action` は lib 専用。**payload には載せない**）
 3. 対象外なら skip（ログのみ）
-4. 対象なら `curl POST` で Cursor Automation の webhook URL へ JSON payload を送信
-5. Cloud Agent が payload とスキルに従って実行
+4. 対象なら `post-cursor-webhook.mjs` で Delivery Agent の webhook URL へ JSON payload を送信
+5. Delivery Agent が §0 で GitHub を観測し、参照スキルに従って実行
 
-payload の `action` フィールド例:
+Delivery Agent payload（`action` **なし**）:
 
-| Automation | action 例 | 意味 |
-|------------|-----------|------|
-| Issue Worker | `triage` / `implement` / `close_with_reason` | 新規 issue / agent-ready / agent-close |
-| PR Merge Worker | `ci_completed` / `conflict` / `ci_fix` / `stuck_retry` | CI 後レビュー / コンフリクト解消 / Draft CI 修正 / 滞留再試行 |
-| UX Campaign Loop | （`pr_number`, `merged`, `campaign_id` 等） | マージ後キャンペーンレビュー |
+| フィールド | 例 | 意味 |
+|------------|-----|------|
+| `repository` | `rick-chick/agrr` | 必須 |
+| `issue_number` | `323` | issue 起点 / PR 本文の `Closes #N` |
+| `pr_number` | `427` | PR / CI 起点 |
+| `body_hash` | （deps のみ） | 依存判定 run。実装・PR 禁止 |
+| `mergeable_state` 等 | （任意） | PR 観測ヒント。Agent は GitHub を正とする |
 
-secrets 未設定時、多くの dispatch workflow は **exit 0 でスキップ**（Issue Worker）または **exit 1 で失敗**（PR Merge Worker — 気づきやすくするため）。
+UX Campaign Loop 等、Delivery 以外の Automation は従来どおり個別 payload（`pr_number`, `campaign_id` 等）。
+
+secrets 未設定時、issue dispatch は **exit 0 でスキップ**（切替後は設定漏れに注意）。PR dispatch も未設定時は exit 0。
 
 ---
 
@@ -253,7 +260,8 @@ Cloud 起動時の bootstrap: [`.cursor/environment.json`](../../.cursor/environ
 |------|------|
 | [cursor-automation-schedule.md](../../.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md) | 設定手順・prefill・secrets・トラブルシュート（**運用正本**） |
 | [Cursor Automations 公式](https://cursor.com/docs/cloud-agent/automations) | プロダクト仕様 |
-| [github-issue-worker/SKILL.md](../../.cursor/skills/github-issue-worker/SKILL.md) | Issue 実装の詳細 |
-| [github-pr-merge-worker/SKILL.md](../../.cursor/skills/github-pr-merge-worker/SKILL.md) | PR マージの詳細 |
+| [delivery-agent/SKILL.md](../../.cursor/skills/delivery-agent/SKILL.md) | Delivery Agent（観測・分岐の正本） |
+| [github-issue-worker/SKILL.md](../../.cursor/skills/github-issue-worker/SKILL.md) | Issue 実装の詳細（Delivery から参照） |
+| [github-pr-merge-worker/SKILL.md](../../.cursor/skills/github-pr-merge-worker/SKILL.md) | PR マージの詳細（Delivery から参照） |
 | [cloud-automation-audit/SKILL.md](../../.cursor/skills/cloud-automation-audit/SKILL.md) | 監査観点 |
 | [automation-authoring/SKILL.md](../../.cursor/skills/automation-authoring/SKILL.md) | 新規 Automation / dispatch 追加時の設計規約 |
