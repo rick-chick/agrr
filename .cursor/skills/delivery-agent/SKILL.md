@@ -101,10 +101,12 @@ After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow 
 ## 切替（運用）
 
 1. [Prefill](#prefill-urlフォーム事前入力) または Dashboard で **Delivery Automation** 作成（Webhook のみ）
+   - **作成済み**: [AGRR Delivery Agent (Webhook)](https://cursor.com/automations/6a5cb2d9-8317-11f1-a7d1-d6b4613131ce)（`6a5cb2d9-8317-11f1-a7d1-d6b4613131ce`）
 2. `CURSOR_DELIVERY_WEBHOOK_URL` / `KEY` を repo secrets に登録
 3. 旧 Automation を **OFF**（**workflow マージより先**）:
-   - [AGRR Issue Worker (Webhook)](https://cursor.com/automations/6ad06db2-9fea-4a66-a56b-2cf7145f102d)（現状 **enabled** の場合は必ず OFF）
-   - 旧 PR Merge Worker / Deps Automation（CI completed・PR opened トリガー付きのもの）
+   - [AGRR Issue Worker (Webhook)](https://cursor.com/automations/6ad06db2-9fea-4a66-a56b-2cf7145f102d)
+   - [AGRR GitHub Issue Worker](https://cursor.com/automations/8a78ac46-fe61-4eeb-827a-cca3a4acd742)
+   - [AGRR PR Merge Worker](https://cursor.com/automations/dd9379bd-28c3-4e4b-8143-b5decc0ecd7e)
 4. dispatch workflow マージ（本リポジトリ）
 5. 切替後検証（下記）
 
