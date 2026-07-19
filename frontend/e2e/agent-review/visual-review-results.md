@@ -7,11 +7,14 @@
 - **キャプチャ**: `npm run e2e:capture-for-agent`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。AuthTest モックログイン・`/api/v1/auth/me` 非モック。`verify-capture-complete` **150 PNG**（50 ルート × 3 言語）。キャプチャ日: 2026-06-18。
 - **前提**: development SQLite・参照データ + E2E Baseline Plan。CSS トークンは `npm run audit:css-tokens:enforce` exit 0（var 外 0 件）。本レビューでは CSS 列挙は行わない。
 
-## 追記メタ（未レビュールート キャプチャ）
+## 追記メタ（未レビュールート キャプチャ＋レビュー）
 
 - **キャプチャ日**: 2026-07-19（UTC）
-- **対象**: `route-to-png.md` **#19, #23–26**（`api-keys`, `crops/:id/setup_proposal`, `crops/:id/stages`, `crops/:id/stages/:stageId/edit`, `crops/:id/task_schedule_blueprints`）
-- **キャプチャ**: `E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`、Playwright `--grep` で 5 ルートのみ。作物 id=1（ナス）、stage id=1。15 PNG（5 ルート × ja/en/in）生成済み。ビジュアルレビューは未実施。
+- **レビュー日**: 2026-07-19（UTC）
+- **対象**: `route-to-png.md` **#19, #23–26**
+- **キャプチャ**: `E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`、Playwright `--grep` で 5 ルートのみ。15 PNG（5 ルート × ja/en/in）。
+- **URL 解決**: `#23` `#26` は `masters.crops`（id=1・ナス）。`#24` `#25` は `cropStageEdit`（ステージ保有作物・本キャプチャでは Almonds / Flowering Stage）。
+- **前提**: development SQLite・参照データ。CSS 列挙は行わない。
 
 ## 追記メタ（作業テンプレート / blueprint UI）
 
@@ -41,14 +44,14 @@
 | 16 | `agricultural_tasks/:id` | `agricultural_tasks_id.ja.png` | `agricultural_tasks_id.en.png` | `agricultural_tasks_id.in.png` | 注意 | 要確認 | i18n: `agricultural_tasks.show.hours_suffix` 生キー（3 言語） |
 | 17 | `agricultural_tasks/:id/edit` | `agricultural_tasks_id_edit.ja.png` | `agricultural_tasks_id_edit.en.png` | `agricultural_tasks_id_edit.in.png` | OK | OK | なし |
 | 18 | `agricultural_tasks/new` | `agricultural_tasks_new.ja.png` | `agricultural_tasks_new.en.png` | `agricultural_tasks_new.in.png` | OK | OK | なし |
-| 19 | `api-keys` | `api-keys.ja.png` | `api-keys.en.png` | `api-keys.in.png` | 未レビュー | 未レビュー | キャプチャ済（2026-07-19）。ビジュアルレビュー待ち |
+| 19 | `api-keys` | `api-keys.ja.png` | `api-keys.en.png` | `api-keys.in.png` | OK | 注意 | i18n: in で「使い方」「利用可能なエンドポイント」見出しとエンドポイント説明が日本語のまま |
 | 20 | `crops` | `crops.ja.png` | `crops.en.png` | `crops.in.png` | OK | 注意 | i18n: en で品種名と「Reference Crop」がスペースなしで連結 |
 | 21 | `crops/:id` | `crops_id.ja.png` | `crops_id.en.png` | `crops_id.in.png` | OK | OK | layout: 3 カード縦積み・空状態は明瞭。i18n: 作業予定セクションの用語統一・作成日/更新日のロケール表示（2026-07-03 修正） |
 | 22 | `crops/:id/edit` | `crops_id_edit.ja.png` | `crops_id_edit.en.png` | `crops_id_edit.in.png` | OK | OK | なし |
-| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | 未レビュー | 未レビュー | キャプチャ済（2026-07-19）。ビジュアルレビュー待ち |
-| 24 | `crops/:id/stages` | `crops_id_stages.ja.png` | `crops_id_stages.en.png` | `crops_id_stages.in.png` | 未レビュー | 未レビュー | キャプチャ済（2026-07-19）。ビジュアルレビュー待ち |
-| 25 | `crops/:id/stages/:stageId/edit` | `crops_id_stages_stageId_edit.ja.png` | `crops_id_stages_stageId_edit.en.png` | `crops_id_stages_stageId_edit.in.png` | 未レビュー | 未レビュー | キャプチャ済（2026-07-19）。ビジュアルレビュー待ち |
-| 26 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 未レビュー | 未レビュー | キャプチャ済（2026-07-19）。ビジュアルレビュー待ち |
+| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | OK | 要確認 | i18n: en で作物名「ナス」が日本語。in でフォーム・ボタン・説明が日本語（ナビはヒンディー） |
+| 24 | `crops/:id/stages` | `crops_id_stages.ja.png` | `crops_id_stages.en.png` | `crops_id_stages.in.png` | OK | 注意 | layout: ステージ 4 件・追加 CTA・作業テンプレ導線は良好。i18n: 作物名・ステージ名が英語（Almonds 等・参照データ／cropStageEdit 解決） |
+| 25 | `crops/:id/stages/:stageId/edit` | `crops_id_stages_stageId_edit.ja.png` | `crops_id_stages_stageId_edit.en.png` | `crops_id_stages_stageId_edit.in.png` | OK | 注意 | layout: 温度・GDD フォームは読み取りやすい。i18n: ステージ名・作物名が英語（#24 と同作物） |
+| 26 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 注意 | 注意 | layout: 14 作業が「タイミング未設定」で一覧が長い（初期状態としては意図的）。i18n: en/in で UI 言語と作物名・ステージ名・作業名（日本語）が混在 |
 | 27 | `crops/new` | `crops_new.ja.png` | `crops_new.en.png` | `crops_new.in.png` | OK | OK | なし |
 | 26 | `dashboard` | `dashboard.ja.png` | `dashboard.en.png` | `dashboard.in.png` | OK | OK | なし |
 | 27 | `farms` | `farms.ja.png` | `farms.en.png` | `farms.in.png` | OK | OK | なし |
@@ -84,8 +87,8 @@
 
 | 結果 | 件数 |
 |------|------|
-| OK | 34 |
-| 注意 | 12 |
+| OK | 37 |
+| 注意 | 14 |
 | 要確認 | 6 |
 
 ## 集計（i18n）
@@ -93,8 +96,8 @@
 | i18n | 件数 |
 |------|------|
 | OK | 29 |
-| 注意 | 13 |
-| 要確認 | 8 |
+| 注意 | 17 |
+| 要確認 | 9 |
 
 ## 指摘の詳細
 
@@ -134,6 +137,14 @@
 ### フロー（コード + #47 導線）
 
 - `missing_crop_templates` バナーは単一作物時 `/crops/:id`、複数時 `/crops` へリンク（**2026-07-03 修正**）。
+
+### 未レビュールート（#19, #23–26、2026-07-19）
+
+1. **#19 api-keys** — layout: 空状態＋生成 CTA・使用方法・エンドポイント一覧は明瞭。i18n: in でセクション見出し「使い方」「利用可能なエンドポイント」と各エンドポイント説明が日本語。
+2. **#23 crops/:id/setup_proposal** — layout: ファイル／貼り付け切替・JSON テンプレ・プレビューボタンは意図が読み取れる。i18n: en で作物名「ナス」。in で本文・ボタンが日本語（ナビのみヒンディー）。
+3. **#24 crops/:id/stages** — layout: ステージカード・追加 CTA・作業テンプレ導線は良好。キャプチャは `cropStageEdit` 解決（Almonds）。i18n: ja/in でもステージ名が英語。
+4. **#25 crops/:id/stages/:stageId/edit** — layout: GDD・温度フォーム・詳細設定リンク・更新/削除は良好。i18n: #24 と同様に英語ステージ名。
+5. **#26 crops/:id/task_schedule_blueprints** — layout: ステージ未設定 14 作業＋各ステージ枠は機能するが初期状態で縦長。i18n: en/in で UI 言語と日本語の作物名・ステージ名・作業名が混在。
 
 ### データ・キャプチャ環境（Issue 化は任意）
 
