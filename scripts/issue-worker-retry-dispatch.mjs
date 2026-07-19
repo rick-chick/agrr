@@ -28,7 +28,6 @@ import {
   selectDispatchableOnDependencyClosed,
   selectReconcileDispatchCandidate,
 } from './issue-worker-dispatch-lib.mjs';
-import { parseDispatchedIssueNumberFromLog } from './delivery-dispatch-lib.mjs';
 import { createGetAgentDepsContractFromComments } from './issue-worker-deps-agent-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
