@@ -26,8 +26,6 @@ test('buildConflictDispatchPayload maps PR fields for conflict dispatch', () => 
     repository: 'rick-chick/agrr',
     pr_number: 240,
     issue_number: 319,
-    pr_title: 'fix(automation): delegate master sync',
-    pr_url: 'https://github.com/rick-chick/agrr/pull/240',
   });
   assert.equal('action' in payload, false);
 });
@@ -52,8 +50,6 @@ test('buildCiFixDispatchPayload maps PR fields for ci_fix dispatch', () => {
     repository: 'rick-chick/agrr',
     pr_number: 353,
     issue_number: 319,
-    pr_title: 'fix: setup proposal (#319)',
-    pr_url: 'https://github.com/rick-chick/agrr/pull/353',
   });
   assert.equal('action' in payload, false);
 });
@@ -73,8 +69,6 @@ test('buildConflictDispatchPayload defaults missing optional fields', () => {
   assert.deepEqual(payload, {
     repository: 'rick-chick/agrr',
     pr_number: 1,
-    pr_title: 'test',
-    pr_url: 'https://example.com',
   });
   assert.equal('action' in payload, false);
 });

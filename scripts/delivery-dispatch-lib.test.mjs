@@ -31,7 +31,7 @@ test('buildDeliveryIssuePayload omits action field', () => {
   assert.equal('action' in payload, false);
 });
 
-test('buildDeliveryPrPayload omits undocumented Delivery Agent webhook fields', () => {
+test('buildDeliveryPrPayload keeps only documented Delivery Agent webhook fields', () => {
   const payload = buildDeliveryPrPayload({
     repository: 'rick-chick/agrr',
     prNumber: 430,
@@ -43,13 +43,15 @@ test('buildDeliveryPrPayload omits undocumented Delivery Agent webhook fields', 
     author: 'rick-chick',
     mergeableState: 'MERGEABLE',
     mergeStateStatus: 'CLEAN',
+    retryReason: 'scheduled_reconcile',
   });
   assert.deepEqual(payload, {
     repository: 'rick-chick/agrr',
     pr_number: 430,
-    pr_title: 'fix(frontend): crop list card overflow menu',
-    pr_url: 'https://github.com/rick-chick/agrr/pull/430',
   });
+  assert.equal('pr_title' in payload, false);
+  assert.equal('pr_url' in payload, false);
+  assert.equal('retry_reason' in payload, false);
   assert.equal('head_ref' in payload, false);
   assert.equal('head_sha' in payload, false);
   assert.equal('author' in payload, false);
@@ -94,7 +96,9 @@ test('buildDeliveryPrPayloadFromPr maps PR fields', () => {
   );
   assert.equal(payload.issue_number, 276);
   assert.equal(payload.pr_number, 277);
-  assert.equal(payload.retry_reason, 'scheduled_reconcile');
+  assert.equal('retry_reason' in payload, false);
+  assert.equal('pr_title' in payload, false);
+  assert.equal('pr_url' in payload, false);
   assert.equal('action' in payload, false);
 });
 

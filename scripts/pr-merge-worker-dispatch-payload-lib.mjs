@@ -13,8 +13,6 @@ export function buildConflictDispatchPayload({ repository, pr }) {
     repository,
     prNumber: pr.number,
     issueNumber: resolveIssueNumberFromPrBody(pr.body),
-    prTitle: pr.title,
-    prUrl: pr.url,
   });
 }
 
