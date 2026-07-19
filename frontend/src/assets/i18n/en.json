@@ -2008,7 +2008,10 @@
       "debug": {
         "label": "Debug:"
       },
-      "description": "Manage crop master data for your cultivation plans."
+      "description": "Manage crop master data for your cultivation plans.",
+      "menu": {
+        "more_actions": "More actions"
+      }
     },
     "new": {
       "title": "Add New Crop"
