@@ -97,26 +97,26 @@ sequenceDiagram
 
 **依存ゲート**: `## 依存` 節がある issue は、dispatch / retriage が **`agent-deps:v1` コメントキャッシュ**（[`issue-worker-deps-agent-lib.mjs`](../../scripts/issue-worker-deps-agent-lib.mjs)）だけを根拠に hard 依存を判定する。本文の `#N` regex パースはしない。キャッシュ欠落時は [`issue-worker-deps-resolve.mjs`](../../scripts/issue-worker-deps-resolve.mjs) が Delivery Agent webhook を起動し、コメント作成後に再 dispatch される。
 
-#### 必須 CI 失敗の自動救済（`action: ci_fix`）
+#### 必須 CI 失敗の自動救済（CI fix 経路）
 
-必須 CI が FAIL のまま滞留すると、ready 化・マージが進まない。Merge Worker が Draft/ready・ブランチ名を問わず `ci_fix` で同一ブランチ修正する。
+必須 CI が FAIL のまま滞留すると、ready 化・マージが進まない。Delivery Agent が PR フェーズで同一ブランチ修正する（dispatch lib が内部で `ci_fix` 経路を選定。**payload に `action` は載せない**）。
 
 | 層 | 回復経路 |
 |----|----------|
-| **PR Merge Worker** | `action: ci_fix` — 必須 CI FAIL + 非コンフリクト（オプトアウトなし） |
+| **Delivery Agent（PR フェーズ）** | 必須 CI FAIL + 非コンフリクト — [`github-pr-merge-worker`](../.cursor/skills/github-pr-merge-worker/SKILL.md) §5 |
 | **起動** | `pr-merge-worker-dispatch`（Backend test 完了で FAIL 検知）または `pr-merge-worker-retry-dispatch`（15 分 reconcile） |
-| **Issue Worker** | open PR がある間は **再 dispatch しない**（意図的 — 二重実装防止） |
+| **issue 実装** | open PR がある間は **再 dispatch しない**（二重実装防止） |
 
 ```mermaid
 sequenceDiagram
   participant GH as PR (draft or ready)
   participant CI as Backend test 他
   participant PMD as pr-merge-worker-dispatch
-  participant PMW as PR Merge Worker
+  participant DA as Delivery Agent
 
   CI->>GH: 必須 CI FAIL
-  PMD->>PMW: webhook action ci_fix
-  PMW->>GH: 同一ブランチで CI 修正 push
+  PMD->>DA: webhook（pr_number のみ）
+  DA->>GH: 同一ブランチで CI 修正 push
   CI->>GH: 必須 CI green
   Note over GH: ready ならマージ経路 / Draft なら pr-agent-prep が ready 化
 ```
@@ -126,7 +126,7 @@ sequenceDiagram
 PR マージ後、キャンペーン対象なら **UX Campaign Loop** Automation がスキャンし、残件を issue 化。完了時は Automation 自身を無効化する。
 
 ```
-issue（ux-campaign:*）→ Issue Worker → PR → PR Merge Worker
+issue（ux-campaign:*）→ Delivery Agent → PR → Delivery Agent（マージ）
   → ux-campaign-review-dispatch → UX Campaign Loop → 残件 issue（agent-ready）→ …
 ```
 

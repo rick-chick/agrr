@@ -72,6 +72,22 @@ test('buildDeliveryPrPayloadFromPr maps PR fields', () => {
   assert.equal('action' in payload, false);
 });
 
+test('buildDeliveryIssuePayload supports body_hash for deps judgment runs', () => {
+  const payload = {
+    ...buildDeliveryIssuePayload({
+      repository: 'rick-chick/agrr',
+      issueNumber: 318,
+      issueTitle: 'Child',
+      issueUrl: 'https://github.com/rick-chick/agrr/issues/318',
+      issueBody: '## 依存\n\n- #317',
+    }),
+    body_hash: 'abc123deadbeef',
+  };
+  assert.equal(payload.issue_number, 318);
+  assert.equal(payload.body_hash, 'abc123deadbeef');
+  assert.equal('action' in payload, false);
+});
+
 test('parseDispatchedIssueNumberFromLog reads Delivery Agent and legacy logs', () => {
   assert.equal(
     parseDispatchedIssueNumberFromLog('Dispatched Delivery Agent for #316 (scheduled_reconcile)'),

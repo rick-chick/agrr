@@ -392,31 +392,14 @@ gh pr edit <N> --remove-label agent-merge-in-progress
 
 ### Cursor Automation
 
-**廃止予定**: 専用 PR Merge Worker Automation は [`delivery-agent/SKILL.md`](../delivery-agent/SKILL.md) に統合。切替後は Delivery の **Webhook のみ**（CI completed / PR opened ネイティブトリガーは付けない）。
+**正本**: [`delivery-agent/SKILL.md`](../delivery-agent/SKILL.md) §Automation。PR マージ・CI 修正は Delivery Agent §0 が GitHub を観測して本 SKILL を読む（専用 PR Merge Worker Automation は廃止）。
 
-**Trigger（レガシー — 切替前のみ）**
+1. Automation 作成・secrets は `delivery-agent` と [cursor-automation-schedule.md §Delivery Agent](../cloud-automation-audit/references/cursor-automation-schedule.md) を参照
+2. `.github/workflows/pr-merge-worker-dispatch.yml` が PR / Backend test 完了時に Delivery webhook を dispatch
 
-1. **CI completed** — `rick-chick/agrr`
-2. **Webhook** — GitHub Actions（Backend test 完了 + PR opened / `agent-merge` + **`action: conflict` / master sync** — Draft でもコンフリクト解消可）
-3. **Pull request opened** — 任意（CI 待ちの早期着手用。**Webhook と併用時は §0 で重複抑止**）
+### レガシー（ロールバック時のみ）
 
-**Automation プロンプト例**:
-
-```
-You are the AGRR GitHub PR Merge Worker for repository rick-chick/agrr.
-
-Read and follow `.cursor/skills/github-pr-merge-worker/SKILL.md` exactly.
-
-One PR per run. Never merge before required CI checks pass. For bugfixes, verify test coverage and run impact analysis before merging.
-
-When webhook action is `conflict` (master sync / BEHIND / DIRTY / CONFLICTING), resolve conflicts on the PR branch even if the PR is still Draft — do not merge in that run. Merge only non-draft PRs after CI is green.
-```
-
-**Tools**: Comment on PR（Approvals ON）、PR creation OFF、Memories ON
-
-### Webhook Secrets
-
-`CURSOR_PR_MERGE_WEBHOOK_URL`, `CURSOR_PR_MERGE_WEBHOOK_KEY`
+切替前の専用 PR Merge Worker（`CURSOR_PR_MERGE_*`、Cursor UI の CI completed / PR opened トリガー）は [cursor-automation-schedule.md §PR Merge Worker — レガシー](../cloud-automation-audit/references/cursor-automation-schedule.md) を参照。新規セットアップでは使わない。
 
 ## 関連
 

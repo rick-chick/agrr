@@ -13,6 +13,7 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'resolveDependencyGate',
   'resolveDependencyGateFromAgentCache',
   'issue-worker-deps-resolve.mjs',
+  'CURSOR_DELIVERY_WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}',
   'formatDependencyGateComment',
   'openFixPrSearchQuery',
   'Comment when dependency gate blocks dispatch',

@@ -88,9 +88,19 @@ Use referenced skills for implement and merge paths.
 ## 切替（運用）
 
 1. Delivery Automation 作成（Webhook のみ）
-2. secrets 確認
-3. 旧 Issue / Merge / Deps Automation を **OFF**
+2. `CURSOR_DELIVERY_WEBHOOK_URL` / `KEY` を repo secrets に登録
+3. 旧 Issue / Merge / Deps Automation を **OFF**（**workflow マージより先**）
 4. dispatch workflow マージ（本リポジトリ）
-5. スモーク: `workflow_dispatch` on retry workflows
+5. 切替後検証（下記）
 
 ロールバック: 旧 Automation ON + secrets を旧 URL に戻す + dispatch revert。
+
+### 切替後検証（推奨）
+
+| 確認 | 手順 |
+|------|------|
+| secrets 到達 | `issue-worker-dispatch` / `pr-merge-worker-dispatch` ログに `CURSOR_DELIVERY_WEBHOOK_* is not set` が**出ない**こと（未設定時は exit 0 で静かにスキップされる） |
+| 旧 webhook 停止 | 旧 Automation OFF 後、旧 URL への POST が 0 件 |
+| retry スモーク | `workflow_dispatch` on `issue-worker-retry-dispatch` / `pr-merge-worker-retry-dispatch` |
+| E2E | `agent-ready` issue 1 件 → Draft PR → prep ready → merge まで 1 Delivery run 連鎖（同一 CI で run 重複なし） |
+| deps | `## 依存` issue でキャッシュ miss → `body_hash` payload のみ → コメント作成 → reconcile 再 dispatch |
