@@ -415,6 +415,7 @@
       "region": "क्षेत्र",
       "created_at": "बनाया गया",
       "updated_at": "अपडेट किया गया",
+      "stages_title": "वृद्धि चरण",
       "no_stages_description": "कृपया इस फसल के लिए वृद्धि चरण जोड़ें।",
       "stage_required_gdd_label": "इस चरण के लिए आवश्यक GDD",
       "gdd_unit": "°C·दिन",

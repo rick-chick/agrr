@@ -2101,6 +2101,7 @@
       "pest_order_label": "Order",
       "pest_occurrence_label": "Season",
       "stage_order": "Order",
+      "stages_title": "Growth Stages",
       "no_stages_description": "Please add growth stages for this crop.",
       "temperature_requirement": "Temperature Requirements",
       "thermal_requirement": "Thermal Requirements (GDD)",

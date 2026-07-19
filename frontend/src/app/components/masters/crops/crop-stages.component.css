@@ -48,11 +48,33 @@
   margin-top: 0.25rem;
 }
 
+.crop-stages-section .section-card__header-actions {
+  justify-content: space-between;
+}
+
+.crop-stages-section .section-card__header-actions .section-title {
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* 並べ替え可能なステージは縦1列（共通 .card-list の 2〜3 列グリッドは不適） */
+.crop-stages-section .card-list {
+  grid-template-columns: 1fr;
+}
+
 article.item-card.crop-stage-card {
   cursor: pointer;
   flex-wrap: nowrap;
   align-items: flex-start;
   gap: var(--space-2);
+  min-height: 0;
+}
+
+@media (min-width: 640px) {
+  article.item-card.crop-stage-card {
+    align-items: flex-start;
+  }
 }
 
 .crop-stage-card__drag {
