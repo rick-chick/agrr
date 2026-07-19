@@ -28,6 +28,7 @@ import {
   selectDispatchableOnDependencyClosed,
   selectReconcileDispatchCandidate,
 } from './issue-worker-dispatch-lib.mjs';
+import { parseDispatchedIssueNumberFromLog } from './delivery-dispatch-lib.mjs';
 import { createGetAgentDepsContractFromComments } from './issue-worker-deps-agent-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
@@ -206,11 +207,10 @@ function fetchLastScheduledReconcileIssueNumber(repo) {
  * @param {{
  *   repo: string;
  *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
- *   action: string;
  *   retryReason?: string;
  * }} input
  */
-function postWebhook({ repo, issue, action, retryReason }) {
+function postWebhook({ repo, issue, retryReason }) {
   const webhookUrl = process.env.WEBHOOK_URL ?? '';
   const webhookKey = process.env.WEBHOOK_KEY ?? '';
   if (!webhookUrl || !webhookKey) {
@@ -223,7 +223,6 @@ function postWebhook({ repo, issue, action, retryReason }) {
     issueNumber: issue.number,
     issueTitle: issue.title,
     issueUrl: issue.url,
-    action,
     labels: issue.labels.join(','),
     issueBody: issue.body,
     retryReason,
@@ -238,7 +237,7 @@ function postWebhook({ repo, issue, action, retryReason }) {
     log: console.log,
   });
 
-  console.log(`Dispatched Issue Worker retry for #${issue.number} (${action})`);
+  console.log(`Dispatched Delivery Agent for #${issue.number}${retryReason ? ` (${retryReason})` : ''}`);
 }
 
 /**
@@ -283,7 +282,6 @@ async function dispatchWebhook({ repo, issue, retryReason, action }) {
   postWebhook({
     repo,
     issue,
-    action,
     retryReason,
   });
   return true;
@@ -336,7 +334,6 @@ async function main() {
     postWebhook({
       repo,
       issue,
-      action: selected.action,
       retryReason: args.retryReason ?? defaultRetryReasonForMode('reconcile'),
     });
     return;

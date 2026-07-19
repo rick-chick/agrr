@@ -87,7 +87,7 @@ function fetchPr(repo, prNumber) {
  * @param {string} repo
  * @param {Record<string, unknown>} payload
  */
-function postWebhook(repo, payload) {
+function postWebhook(repo, payload, reconcileAction) {
   const webhookUrl = process.env.WEBHOOK_URL ?? '';
   const webhookKey = process.env.WEBHOOK_KEY ?? '';
   if (!webhookUrl || !webhookKey) {
@@ -104,8 +104,13 @@ function postWebhook(repo, payload) {
     log: console.log,
   });
 
+  const reasonPart = reconcileAction
+    ? ` (${reconcileAction})`
+    : payload.retry_reason
+      ? ` (${payload.retry_reason})`
+      : '';
   console.log(
-    `Dispatched PR Merge Worker reconcile for #${payload.pr_number} (${payload.action})`,
+    `Dispatched PR Merge Worker reconcile for #${payload.pr_number}${reasonPart}`,
   );
 }
 
@@ -168,7 +173,7 @@ function dispatchIfEligible({
     pr,
     retryReason,
   );
-  postWebhook(repo, payload);
+  postWebhook(repo, payload, result.action);
   return true;
 }
 

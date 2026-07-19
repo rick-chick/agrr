@@ -1,4 +1,4 @@
-# Dispatches the Cursor PR Merge Worker for PRs targeting master (opt-out only).
+# Dispatches the Delivery Agent for PRs targeting master (opt-out only).
 #
 # CI dispatch: Backend test workflow_run only (once per push; avoids check_suite / per-job duplicates).
 #   On ci_completed: green → merge path; failed required CI → ci_fix (draft or ready).
@@ -6,7 +6,7 @@
 # Conflict dispatch: PR synchronize / ready_for_review when BEHIND/DIRTY/CONFLICTING (minus blockers).
 # Master-push BEHIND/CONFLICT rescue: pr-merge-worker-retry-dispatch reconcile (15 min cron).
 #
-# Setup: see .cursor/skills/github-pr-merge-worker/SKILL.md §8
+# Setup: see .cursor/skills/delivery-agent/SKILL.md
 
 name: PR Merge Worker Dispatch
 
@@ -91,12 +91,12 @@ jobs:
           echo "label_name=$LABEL_NAME" >> "$GITHUB_OUTPUT"
           echo "body_b64=$PR_BODY_B64" >> "$GITHUB_OUTPUT"
 
-      - name: Trigger Cursor PR Merge Worker
+      - name: Trigger Delivery Agent
         if: steps.pr.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          WEBHOOK_URL: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_URL }}
-          WEBHOOK_KEY: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_KEY }}
+          WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_KEY }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
           PR_URL: ${{ steps.pr.outputs.url }}
           ACTION: ${{ steps.pr.outputs.action }}
@@ -112,8 +112,8 @@ jobs:
           PR_TITLE=$(printf '%s' "$TITLE_B64" | base64 -d)
 
           if [ -z "${WEBHOOK_URL:-}" ] || [ -z "${WEBHOOK_KEY:-}" ]; then
-            echo "CURSOR_PR_MERGE_WEBHOOK_URL or CURSOR_PR_MERGE_WEBHOOK_KEY is not set."
-            echo "Configure secrets after creating the Cursor Automation webhook."
+            echo "CURSOR_DELIVERY_WEBHOOK_URL or CURSOR_DELIVERY_WEBHOOK_KEY is not set."
+            echo "Configure secrets after creating the Delivery Agent Automation webhook."
             exit 0
           fi
 
@@ -203,16 +203,37 @@ jobs:
             echo "skipping CI gate for ${ACTION} resolution"
           fi
 
-          payload=$(jq -n \
-            --arg repo "${{ github.repository }}" \
-            --argjson number "$PR_NUMBER" \
-            --arg title "$PR_TITLE" \
-            --arg url "$PR_URL" \
-            --arg action "$ACTION" \
-            --arg head_ref "$HEAD_REF" \
-            --arg head_sha "$HEAD_SHA" \
-            --arg author "$AUTHOR" \
-            --arg mergeable_state "$MERGEABLE_STATE" \
-            --arg merge_state_status "$MERGE_STATE_STATUS" \
-            '{repository: $repo, pr_number: $number, pr_title: $title, pr_url: $url, action: $action, head_ref: $head_ref, head_sha: $head_sha, author: $author, mergeable_state: $mergeable_state, merge_state_status: $merge_state_status}')
+          PR_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
+          ISSUE_NUM=$(node --input-type=module -e "
+            import { resolveIssueNumberFromPrBody } from './scripts/delivery-dispatch-lib.mjs';
+            const n = resolveIssueNumberFromPrBody(process.argv[1]);
+            process.stdout.write(n == null ? '' : String(n));
+          " "$PR_BODY")
+
+          if [ -n "$ISSUE_NUM" ]; then
+            payload=$(jq -n \
+              --arg repo "${{ github.repository }}" \
+              --argjson number "$PR_NUMBER" \
+              --argjson issue_number "$ISSUE_NUM" \
+              --arg title "$PR_TITLE" \
+              --arg url "$PR_URL" \
+              --arg head_ref "$HEAD_REF" \
+              --arg head_sha "$HEAD_SHA" \
+              --arg author "$AUTHOR" \
+              --arg mergeable_state "$MERGEABLE_STATE" \
+              --arg merge_state_status "$MERGE_STATE_STATUS" \
+              '{repository: $repo, pr_number: $number, issue_number: $issue_number, pr_title: $title, pr_url: $url, head_ref: $head_ref, head_sha: $head_sha, author: $author, mergeable_state: $mergeable_state, merge_state_status: $merge_state_status}')
+          else
+            payload=$(jq -n \
+              --arg repo "${{ github.repository }}" \
+              --argjson number "$PR_NUMBER" \
+              --arg title "$PR_TITLE" \
+              --arg url "$PR_URL" \
+              --arg head_ref "$HEAD_REF" \
+              --arg head_sha "$HEAD_SHA" \
+              --arg author "$AUTHOR" \
+              --arg mergeable_state "$MERGEABLE_STATE" \
+              --arg merge_state_status "$MERGE_STATE_STATUS" \
+              '{repository: $repo, pr_number: $number, pr_title: $title, pr_url: $url, head_ref: $head_ref, head_sha: $head_sha, author: $author, mergeable_state: $mergeable_state, merge_state_status: $merge_state_status}')
+          fi
           printf '%s' "$payload" | node scripts/post-cursor-webhook.mjs

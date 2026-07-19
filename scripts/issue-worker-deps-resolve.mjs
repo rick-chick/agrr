@@ -6,7 +6,7 @@
  *   node scripts/issue-worker-deps-resolve.mjs --repo OWNER/REPO --number N
  *
  * Env:
- *   CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_URL / KEY (optional)
+ *   CURSOR_DELIVERY_WEBHOOK_URL / KEY (optional)
  *   GH_TOKEN (optional; gh uses default auth)
  */
 import { execFileSync } from 'node:child_process';
@@ -17,6 +17,7 @@ import {
   extractDependencySection,
   hashDependencySection,
 } from './issue-worker-deps-agent-lib.mjs';
+import { buildDeliveryIssuePayload } from './delivery-dispatch-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
 
@@ -93,10 +94,10 @@ function fetchIssue(repo, issueNumber) {
  * }} input
  */
 function requestAgentJudgment(input) {
-  const url = process.env.CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_URL ?? '';
-  const key = process.env.CURSOR_ISSUE_WORKER_DEPS_WEBHOOK_KEY ?? '';
+  const url = process.env.CURSOR_DELIVERY_WEBHOOK_URL ?? '';
+  const key = process.env.CURSOR_DELIVERY_WEBHOOK_KEY ?? '';
   if (!url || !key) {
-    console.log('Deps agent webhook not configured; skipping agent invocation.');
+    console.log('Delivery Agent webhook not configured; skipping deps agent invocation.');
     return { invoked: false };
   }
 
@@ -104,13 +105,14 @@ function requestAgentJudgment(input) {
     url,
     bearerToken: key,
     body: {
-      repository: input.repo,
-      issue_number: input.issueNumber,
-      issue_title: input.issueTitle,
-      issue_url: input.issueUrl,
-      issue_body: input.issueBody,
+      ...buildDeliveryIssuePayload({
+        repository: input.repo,
+        issueNumber: input.issueNumber,
+        issueTitle: input.issueTitle,
+        issueUrl: input.issueUrl,
+        issueBody: input.issueBody,
+      }),
       body_hash: input.bodyHash,
-      action: 'judge_dependencies',
     },
     execFileSync,
   });

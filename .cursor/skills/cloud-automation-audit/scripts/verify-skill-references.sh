@@ -17,6 +17,7 @@ require() {
 }
 
 # Automation entry skills
+require .cursor/skills/delivery-agent/SKILL.md
 require .cursor/skills/github-issue-worker/SKILL.md
 require .cursor/skills/github-pr-merge-worker/SKILL.md
 require .cursor/skills/ux-issue-pipeline/SKILL.md

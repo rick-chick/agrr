@@ -97,6 +97,7 @@ jobs:
       - name: automation script unit tests
         working-directory: ${{ github.workspace }}
         run: |
+          node --test scripts/delivery-dispatch-lib.test.mjs
           node --test scripts/gh-repo-lib.test.mjs
           node --test scripts/pr-agent-prep-lib.test.mjs
           node --test scripts/issue-worker-dispatch-lib.test.mjs
@@ -106,6 +107,7 @@ jobs:
           node --test scripts/verify-pr-agent-prep-workflow.test.mjs
           node --test scripts/verify-resolve-pr-merge-conflicts-script.test.mjs
           node --test scripts/verify-issue-worker-dispatch-workflow.test.mjs
+          node --test scripts/verify-delivery-agent-cutover-lib.test.mjs
           node --test scripts/webhook-post-lib.test.mjs
           node --test scripts/resolve-workflow-run-pr-lib.test.mjs
           node --test scripts/resolve-workflow-run-pr-from-gh.test.mjs

@@ -8,10 +8,12 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'ready_for_review',
   'types: [opened, labeled, synchronize, ready_for_review]',
   'branches: [master]',
-  'CURSOR_PR_MERGE_WEBHOOK_URL',
-  'CURSOR_PR_MERGE_WEBHOOK_KEY',
+  'CURSOR_DELIVERY_WEBHOOK_URL',
+  'CURSOR_DELIVERY_WEBHOOK_KEY',
   'mergeable_state',
   'mergeStateStatus',
+  'Trigger Delivery Agent',
+  'delivery-dispatch-lib.mjs',
   'post-cursor-webhook.mjs',
   'permissions:',
   'pull-requests: read',
@@ -56,7 +58,7 @@ const RECONCILE_LIB_SNIPPETS = [
   "action: 'ci_fix'",
 ];
 
-const PAYLOAD_LIB_SNIPPETS = ["action: 'conflict'", "action: 'ci_fix'"];
+const PAYLOAD_LIB_SNIPPETS = ['buildDeliveryPrPayload', 'resolveIssueNumberFromPrBody'];
 
 /**
  * @param {string} repoRoot
@@ -185,13 +187,14 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   const requiredSkillSnippets = [
     'resolve-pr-merge-conflicts.sh',
-    'action: conflict',
-    'action: stuck_retry',
-    'action: ci_fix',
+    '内部ゲート `conflict`',
+    '内部ゲート `stuck_retry`',
+    '内部ゲート `ci_fix`',
     'classifyReconcileCandidate',
     'selectReconcileCandidate',
     'synchronize',
     'mergeStateStatus',
+    'action` は送らない',
   ];
 
   for (const snippet of requiredSkillSnippets) {

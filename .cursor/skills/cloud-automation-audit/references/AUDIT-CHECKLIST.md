@@ -11,30 +11,29 @@
 | 3 | 自 Automation Memory | 前回監査・連続失敗カウント |
 | 4 | §1A 他 Automation run ログ | **人間のみ**（Cloud では不可） |
 
-## Issue Worker
+## Delivery Agent
 
 | # | 確認 | クリティカル条件 |
 |---|------|------------------|
-| 1 | SKILL.md が存在し Automation プロンプトのパスと一致 | ファイル欠落・パス typo |
-| 2 | sequential-cleanup-review-workflow SKILL が存在 | 同上 |
-| 2b | `verify-skill-references.sh` が exit 0 | tick / references / 参照スキル欠落（P0） |
-| 3 | 直近 7 日に `cursor` 由来 PR または blocked コメントの異常パターン | 毎週例外終了の間接証拠 |
-| 4 | `gh issue list` が Cloud Agent で成功 | 今週 fail → P1 注意。2 週連続 fail → P1 |
-| 5 | `agent-in-progress` が 7 日以上滞留 | 同一 issue で run が例外終了し続けている根拠あり |
-| 6 | issue 作成 dispatch で triage のみ（実装・close・block） | **正常** — 修正不要 |
-| 7 | Webhook dispatch: workflow YAML が valid | payload / jq 構文破損・`opened` / `labeled` 分岐 |
-| 8 | Secrets 名が doc と一致 | doc 側 typo のみ repo 修正可。未設定は Dashboard 手順 |
+| 1 | `delivery-agent/SKILL.md` が存在し Automation プロンプトのパスと一致 | ファイル欠落・パス typo |
+| 2 | `github-issue-worker` / `github-pr-merge-worker` 参照スキルが存在 | 同上 |
+| 3 | sequential-cleanup-review-workflow SKILL が存在 | 同上 |
+| 3b | `verify-skill-references.sh` が exit 0 | tick / references / 参照スキル欠落（P0） |
+| 3c | `verify-delivery-agent-cutover-lib` が pass | workflow が `CURSOR_DELIVERY_*` のみ（P0） |
+| 4 | 直近 7 日に `cursor` 由来 PR または blocked コメントの異常パターン | 毎週例外終了の間接証拠 |
+| 5 | `gh issue list` が Cloud Agent で成功 | 今週 fail → P1 注意。2 週連続 fail → P1 |
+| 6 | `agent-in-progress` が 7 日以上滞留 | 同一 issue で run が例外終了し続けている根拠あり |
+| 7 | dispatch workflow が `CURSOR_DELIVERY_WEBHOOK_*` を参照 | 旧 secrets 名の残存・payload `action` 混入 |
+| 8 | Secrets 名が doc と一致（`CURSOR_DELIVERY_WEBHOOK_*`） | doc 側 typo のみ repo 修正可。未設定は Dashboard 手順 |
 
-## PR Merge Worker
+## Issue Worker / PR Merge Worker（レガシー参照スキル）
 
 | # | 確認 | クリティカル条件 |
 |---|------|------------------|
-| 1 | SKILL.md が存在し Automation プロンプトのパスと一致 | ファイル欠落・パス typo |
-| 2 | `pr-merge-worker-dispatch.yml` が valid | payload / jq 構文破損・`ci_completed` 時は ruleset 3 context SUCCESS 後のみ dispatch |
+| 1 | 専用 Automation が **OFF**（Delivery 切替後） | 二重 webhook 起動 |
+| 2 | `pr-merge-worker-dispatch.yml` が valid | payload / jq 構文破損 |
 | 3 | ruleset **master CI required** が active | 無い / context 名不一致 → P0 |
-| 4 | Issue Worker PR に `agent-merge` 付与手順が doc にある | 連携断絶 |
-| 5 | 直近 7 日に eligible PR のマージまたは blocked コメント | 毎回失敗の間接証拠 |
-| 6 | Secrets 名が doc と一致 | 未設定は workflow **exit 1**（Actions 失敗で気づく）。Dashboard 手順をレポートに記載 |
+| 4 | Delivery Agent PR に `agent-merge` 付与手順が doc にある | 連携断絶 |
 
 ## UX Issue Audit
 

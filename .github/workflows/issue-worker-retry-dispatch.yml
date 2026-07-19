@@ -47,8 +47,8 @@ jobs:
       - name: Retry from cancelled or failed dispatch run
         if: github.event_name == 'workflow_run'
         env:
-          WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
-          WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
+          WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_KEY }}
           GH_TOKEN: ${{ github.token }}
           WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
         run: |
@@ -67,8 +67,8 @@ jobs:
       - name: Reconcile stuck agent-ready issues
         if: github.event_name == 'schedule'
         env:
-          WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
-          WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
+          WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
@@ -78,8 +78,8 @@ jobs:
       - name: Re-dispatch when a dependency issue closes
         if: github.event_name == 'issues'
         env:
-          WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
-          WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
+          WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_KEY }}
           GH_TOKEN: ${{ github.token }}
           CLOSED_ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
@@ -91,8 +91,8 @@ jobs:
       - name: Manual retry
         if: github.event_name == 'workflow_dispatch'
         env:
-          WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
-          WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
+          WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_KEY }}
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.inputs.issue_number }}
         run: |

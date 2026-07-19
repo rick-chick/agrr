@@ -15,7 +15,6 @@ import {
   resolveDispatchAction,
   isEpicIssue,
   resolveEpicDispatchAction,
-  resolveEpicImplementGate,
   resolveImplementDispatchGate,
   resolveImplementPreDispatchGates,
   resolvePreDispatchGates,
@@ -154,13 +153,13 @@ test('buildWebhookPayload includes retry metadata when provided', () => {
     issueNumber: 207,
     issueTitle: 'Example',
     issueUrl: 'https://github.com/rick-chick/agrr/issues/207',
-    action: 'implement',
     labels: 'agent-ready',
     issueBody: 'body',
     retryReason: 'dispatch_run_cancelled',
   });
   assert.equal(payload.retry_reason, 'dispatch_run_cancelled');
   assert.equal(payload.issue_number, 207);
+  assert.equal('action' in payload, false);
 });
 
 test('parseRetryDispatchArgs parses reconcile mode with defaults', () => {
@@ -497,17 +496,6 @@ test('resolveEpicDispatchAction leaves triage unchanged for epic title', () => {
   );
 });
 
-test('resolveEpicImplementGate delegates to resolveEpicDispatchAction', () => {
-  assert.deepEqual(
-    resolveEpicImplementGate({
-      action: 'implement',
-      issueTitle: '[epic] Parent issue',
-      issueLabels: '',
-    }),
-    { action: 'epic_close_check' },
-  );
-});
-
 test('isRetryCandidate returns epic_close_check for epic issues', () => {
   const result = isRetryCandidate({
     issueLabels: 'agent-ready',
@@ -756,8 +744,8 @@ test('selectReconcileDispatchCandidate returns null for empty candidates', () =>
 test('parseDispatchedIssueNumberFromLog returns last dispatch number', () => {
   const log = [
     'setup',
-    'Dispatched Issue Worker retry for #316 (epic_close_check)',
-    'Dispatched Issue Worker retry for #323 (implement)',
+    'Dispatched Delivery Agent for #316 (scheduled_reconcile)',
+    'Dispatched Delivery Agent for #323 (scheduled_reconcile)',
   ].join('\n');
   assert.equal(parseDispatchedIssueNumberFromLog(log), 323);
 });

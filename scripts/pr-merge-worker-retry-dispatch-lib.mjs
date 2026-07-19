@@ -3,6 +3,7 @@ import {
   areRequiredChecksComplete,
   areRequiredChecksGreen,
 } from './pr-agent-prep-lib.mjs';
+import { buildDeliveryPrPayloadFromPr } from './delivery-dispatch-lib.mjs';
 import { prMergeWorkerNeedsSync } from './pr-merge-worker-needs-sync.mjs';
 
 /** Fresh in-progress runs may still be active. */
@@ -256,41 +257,6 @@ export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
 }
 
 /**
- * @param {{
- *   pr: {
- *     number: number;
- *     isDraft: boolean;
- *     baseRefName: string;
- *     headRefName: string;
- *     body?: string | null;
- *     labels: Array<{ name: string } | string>;
- *     headRepository?: { nameWithOwner?: string };
- *     mergeable?: string;
- *     mergeStateStatus?: string;
- *     reviewDecision?: string;
- *     updatedAt: string;
- *   };
- *   checks: Array<{ name: string; state: string }>;
- *   baseOwner: string;
- *   nowMs: number;
- * }} input
- * @returns {{ eligible: true; removeStaleInProgressLabel: boolean } | { eligible: false; reason: string }}
- */
-export function isStuckRetryCandidate({ pr, checks, baseOwner, nowMs }) {
-  const result = classifyReconcileCandidate({ pr, checks, baseOwner, nowMs });
-  if (!result.eligible) {
-    return result;
-  }
-  if (result.action !== 'stuck_retry') {
-    return { eligible: false, reason: 'needs master sync' };
-  }
-  return {
-    eligible: true,
-    removeStaleInProgressLabel: result.removeStaleInProgressLabel,
-  };
-}
-
-/**
  * @param {Array<{
  *   number: number;
  *   isDraft: boolean;
@@ -335,41 +301,6 @@ export function selectReconcileCandidate(
 }
 
 /**
- * @param {Array<{
- *   number: number;
- *   isDraft: boolean;
- *   baseRefName: string;
- *   headRefName: string;
- *   body?: string | null;
- *   labels: Array<{ name: string } | string>;
- *   headRepository?: { nameWithOwner?: string };
- *   mergeable?: string;
- *   mergeStateStatus?: string;
- *   reviewDecision?: string;
- *   updatedAt: string;
- * }>} prs
- * @param {Record<number, Array<{ name: string; state: string }>>} checksByPrNumber
- * @param {string} baseOwner
- * @param {number} [nowMs]
- * @returns {{ pr: object; removeStaleInProgressLabel: boolean } | null}
- */
-export function selectStuckRetryCandidate(
-  prs,
-  checksByPrNumber,
-  baseOwner,
-  nowMs = Date.now(),
-) {
-  const selected = selectReconcileCandidate(prs, checksByPrNumber, baseOwner, nowMs);
-  if (!selected || selected.action !== 'stuck_retry') {
-    return null;
-  }
-  return {
-    pr: selected.pr,
-    removeStaleInProgressLabel: selected.removeStaleInProgressLabel,
-  };
-}
-
-/**
  * @param {{
  *   repository: string;
  *   pr: {
@@ -386,20 +317,5 @@ export function selectStuckRetryCandidate(
  * }} input
  */
 export function buildRetryDispatchPayload({ repository, pr, retryReason }) {
-  const payload = {
-    repository,
-    pr_number: pr.number,
-    pr_title: pr.title,
-    pr_url: pr.url,
-    action: 'stuck_retry',
-    head_ref: pr.headRefName,
-    head_sha: pr.headRefOid,
-    author: pr.author?.login ?? '',
-    mergeable_state: pr.mergeable ?? '',
-    merge_state_status: pr.mergeStateStatus ?? '',
-  };
-  if (retryReason) {
-    payload.retry_reason = retryReason;
-  }
-  return payload;
+  return buildDeliveryPrPayloadFromPr(pr, repository, retryReason);
 }
