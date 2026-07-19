@@ -7,6 +7,12 @@
 - **キャプチャ**: `npm run e2e:capture-for-agent`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。AuthTest モックログイン・`/api/v1/auth/me` 非モック。`verify-capture-complete` **150 PNG**（50 ルート × 3 言語）。キャプチャ日: 2026-06-18。
 - **前提**: development SQLite・参照データ + E2E Baseline Plan。CSS トークンは `npm run audit:css-tokens:enforce` exit 0（var 外 0 件）。本レビューでは CSS 列挙は行わない。
 
+## 追記メタ（未レビュールート キャプチャ）
+
+- **キャプチャ日**: 2026-07-19（UTC）
+- **対象**: `route-to-png.md` **#19, #23–26**（`api-keys`, `crops/:id/setup_proposal`, `crops/:id/stages`, `crops/:id/stages/:stageId/edit`, `crops/:id/task_schedule_blueprints`）
+- **キャプチャ**: `E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`、Playwright `--grep` で 5 ルートのみ。作物 id=1（ナス）、stage id=1。15 PNG（5 ルート × ja/en/in）生成済み。ビジュアルレビューは未実施。
+
 ## 追記メタ（作業テンプレート / blueprint UI）
 
 - **レビュー日**: 2026-07-03（UTC）
@@ -35,14 +41,14 @@
 | 16 | `agricultural_tasks/:id` | `agricultural_tasks_id.ja.png` | `agricultural_tasks_id.en.png` | `agricultural_tasks_id.in.png` | 注意 | 要確認 | i18n: `agricultural_tasks.show.hours_suffix` 生キー（3 言語） |
 | 17 | `agricultural_tasks/:id/edit` | `agricultural_tasks_id_edit.ja.png` | `agricultural_tasks_id_edit.en.png` | `agricultural_tasks_id_edit.in.png` | OK | OK | なし |
 | 18 | `agricultural_tasks/new` | `agricultural_tasks_new.ja.png` | `agricultural_tasks_new.en.png` | `agricultural_tasks_new.in.png` | OK | OK | なし |
-| 19 | `api-keys` | `api-keys.ja.png` | `api-keys.en.png` | `api-keys.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
+| 19 | `api-keys` | `api-keys.ja.png` | `api-keys.en.png` | `api-keys.in.png` | 未レビュー | 未レビュー | キャプチャ済（2026-07-19）。ビジュアルレビュー待ち |
 | 20 | `crops` | `crops.ja.png` | `crops.en.png` | `crops.in.png` | OK | 注意 | i18n: en で品種名と「Reference Crop」がスペースなしで連結 |
 | 21 | `crops/:id` | `crops_id.ja.png` | `crops_id.en.png` | `crops_id.in.png` | OK | OK | layout: 3 カード縦積み・空状態は明瞭。i18n: 作業予定セクションの用語統一・作成日/更新日のロケール表示（2026-07-03 修正） |
 | 22 | `crops/:id/edit` | `crops_id_edit.ja.png` | `crops_id_edit.en.png` | `crops_id_edit.in.png` | OK | OK | なし |
-| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
-| 24 | `crops/:id/stages` | `crops_id_stages.ja.png` | `crops_id_stages.en.png` | `crops_id_stages.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
-| 25 | `crops/:id/stages/:stageId/edit` | `crops_id_stages_stageId_edit.ja.png` | `crops_id_stages_stageId_edit.en.png` | `crops_id_stages_stageId_edit.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
-| 26 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
+| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | 未レビュー | 未レビュー | キャプチャ済（2026-07-19）。ビジュアルレビュー待ち |
+| 24 | `crops/:id/stages` | `crops_id_stages.ja.png` | `crops_id_stages.en.png` | `crops_id_stages.in.png` | 未レビュー | 未レビュー | キャプチャ済（2026-07-19）。ビジュアルレビュー待ち |
+| 25 | `crops/:id/stages/:stageId/edit` | `crops_id_stages_stageId_edit.ja.png` | `crops_id_stages_stageId_edit.en.png` | `crops_id_stages_stageId_edit.in.png` | 未レビュー | 未レビュー | キャプチャ済（2026-07-19）。ビジュアルレビュー待ち |
+| 26 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 未レビュー | 未レビュー | キャプチャ済（2026-07-19）。ビジュアルレビュー待ち |
 | 27 | `crops/new` | `crops_new.ja.png` | `crops_new.en.png` | `crops_new.in.png` | OK | OK | なし |
 | 26 | `dashboard` | `dashboard.ja.png` | `dashboard.en.png` | `dashboard.in.png` | OK | OK | なし |
 | 27 | `farms` | `farms.ja.png` | `farms.en.png` | `farms.in.png` | OK | OK | なし |
