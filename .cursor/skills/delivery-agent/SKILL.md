@@ -100,11 +100,15 @@ After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow 
 
 ## 切替（運用）
 
-1. Delivery Automation 作成（Webhook のみ）
+1. [Prefill](#prefill-urlフォーム事前入力) または Dashboard で **Delivery Automation** 作成（Webhook のみ）
 2. `CURSOR_DELIVERY_WEBHOOK_URL` / `KEY` を repo secrets に登録
-3. 旧 Issue / Merge / Deps Automation を **OFF**（**workflow マージより先**）
+3. 旧 Automation を **OFF**（**workflow マージより先**）:
+   - [AGRR Issue Worker (Webhook)](https://cursor.com/automations/6ad06db2-9fea-4a66-a56b-2cf7145f102d)（現状 **enabled** の場合は必ず OFF）
+   - 旧 PR Merge Worker / Deps Automation（CI completed・PR opened トリガー付きのもの）
 4. dispatch workflow マージ（本リポジトリ）
 5. 切替後検証（下記）
+
+リポジトリ側の準備確認: `node --test scripts/verify-delivery-agent-cutover-lib.test.mjs`
 
 ロールバック: 旧 Automation ON + secrets を旧 URL に戻す + dispatch revert。
 
