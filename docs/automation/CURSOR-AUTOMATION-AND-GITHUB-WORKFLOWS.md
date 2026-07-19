@@ -67,44 +67,35 @@ flowchart TB
 
 ```mermaid
 sequenceDiagram
-  participant GH as GitHub Issue
-  participant IWD as issue-worker-dispatch.yml
-  participant IW as Cursor Issue Worker
+  participant GH as GitHub Issue/PR
+  participant DISP as dispatch workflows
+  participant DA as Delivery Agent
   participant PAP as pr-agent-prep.yml
   participant CI as Backend test 他
-  participant PMD as pr-merge-worker-dispatch.yml
-  participant PMW as Cursor PR Merge Worker
 
-  GH->>IWD: opened / agent-ready / agent-close
-  IWD->>IWD: agent-deps:v1 キャッシュ確認（本文 #N パースなし）
-  alt キャッシュ miss
-    IWD->>IWD: issue-worker-deps-resolve（deps Agent webhook）
-  end
-  IWD->>IW: webhook（action: triage / implement / close）
-  IW->>GH: Draft PR 作成（cursor/* ブランチ）
+  GH->>DISP: issue / PR / CI イベント
+  DISP->>DISP: 機械ゲート・選定（lib）
+  DISP->>DA: webhook（repository + issue_number / pr_number、action なし）
+  DA->>GH: 実装 Draft PR / 修正 / squash merge
   GH->>PAP: pull_request opened
-  PAP->>GH: agent-merge ラベル付与
-  CI->>PAP: workflow_run completed
-  PAP->>GH: gh pr ready（キュー空き + CI green）
-  GH->>PMD: ready_for_review / ci_completed
-  PMD->>PMW: webhook
-  PMW->>GH: レビュー → 修正 or squash merge
+  PAP->>GH: agent-merge + gh pr ready
+  CI->>DISP: Backend test 完了
+  DISP->>DA: PR フェーズ webhook
 ```
 
 | 段階 | 実行者 | 参照 |
 |------|--------|------|
-| issue 選定・TDD 実装 | Cursor **Issue Worker** | [`github-issue-worker/SKILL.md`](../../.cursor/skills/github-issue-worker/SKILL.md) |
-| 起動トリガ | GitHub **issue-worker-dispatch** | [`.github/workflows/issue-worker-dispatch.yml`](../../.github/workflows/issue-worker-dispatch.yml) |
-| Draft → ready・直列キュー | GitHub **pr-agent-prep**（AI 不要） | [`.github/workflows/pr-agent-prep.yml`](../../.github/workflows/pr-agent-prep.yml) |
-| CI ゲート | GitHub **Backend test** / **frontend-test** / **lint** | ruleset `master CI required` |
-| レビュー・マージ | Cursor **PR Merge Worker** | [`github-pr-merge-worker/SKILL.md`](../../.cursor/skills/github-pr-merge-worker/SKILL.md) |
-| 起動トリガ | GitHub **pr-merge-worker-dispatch** | [`.github/workflows/pr-merge-worker-dispatch.yml`](../../.github/workflows/pr-merge-worker-dispatch.yml) |
+| 観測・判断・実装・マージ | Cursor **Delivery Agent** | [`delivery-agent/SKILL.md`](../../.cursor/skills/delivery-agent/SKILL.md) |
+| issue 起動トリガ | **issue-worker-dispatch** | [`.github/workflows/issue-worker-dispatch.yml`](../../.github/workflows/issue-worker-dispatch.yml) |
+| PR 起動トリガ | **pr-merge-worker-dispatch** | [`.github/workflows/pr-merge-worker-dispatch.yml`](../../.github/workflows/pr-merge-worker-dispatch.yml) |
+| Draft → ready・直列キュー | **pr-agent-prep**（AI 不要） | [`.github/workflows/pr-agent-prep.yml`](../../.github/workflows/pr-agent-prep.yml) |
+| 実装・マージ手順（参照） | `github-issue-worker` / `github-pr-merge-worker` スキル | Delivery Agent §0 が観測して読み分ける |
 
 **対象**（Merge Worker）: `master` 向け同一リポジトリ PR は **既定で対象**（オプトアウト: `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`、fork、`CHANGES_REQUESTED`、タイトル `[WIP]`/`[DRAFT]`）。`agent-merge` ラベルは互換のため残すが必須ではない。
 
 **リトライ**: `issue-worker-retry-dispatch.yml` / `pr-merge-worker-retry-dispatch.yml` が 15 分ごとに滞留を reconcile。primary dispatch が `cancelled` になった場合も再送する。
 
-**依存ゲート**: `## 依存` 節がある issue は、dispatch / retriage が **`agent-deps:v1` コメントキャッシュ**（[`issue-worker-deps-agent-lib.mjs`](../../scripts/issue-worker-deps-agent-lib.mjs)）だけを根拠に hard 依存を判定する。本文の `#N` regex パースはしない。キャッシュ欠落時は [`issue-worker-deps-resolve.mjs`](../../scripts/issue-worker-deps-resolve.mjs) が deps Agent（`action: judge_dependencies`）を起動し、コメント作成後に再 dispatch される。
+**依存ゲート**: `## 依存` 節がある issue は、dispatch / retriage が **`agent-deps:v1` コメントキャッシュ**（[`issue-worker-deps-agent-lib.mjs`](../../scripts/issue-worker-deps-agent-lib.mjs)）だけを根拠に hard 依存を判定する。本文の `#N` regex パースはしない。キャッシュ欠落時は [`issue-worker-deps-resolve.mjs`](../../scripts/issue-worker-deps-resolve.mjs) が Delivery Agent webhook を起動し、コメント作成後に再 dispatch される。
 
 #### 必須 CI 失敗の自動救済（`action: ci_fix`）
 

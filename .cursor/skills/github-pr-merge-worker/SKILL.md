@@ -392,7 +392,9 @@ gh pr edit <N> --remove-label agent-merge-in-progress
 
 ### Cursor Automation
 
-**Trigger（推奨）**
+**廃止予定**: 専用 PR Merge Worker Automation は [`delivery-agent/SKILL.md`](../delivery-agent/SKILL.md) に統合。切替後は Delivery の **Webhook のみ**（CI completed / PR opened ネイティブトリガーは付けない）。
+
+**Trigger（レガシー — 切替前のみ）**
 
 1. **CI completed** — `rick-chick/agrr`
 2. **Webhook** — GitHub Actions（Backend test 完了 + PR opened / `agent-merge` + **`action: conflict` / master sync** — Draft でもコンフリクト解消可）

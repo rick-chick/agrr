@@ -4,8 +4,8 @@ import { join } from 'node:path';
 const REQUIRED_WORKFLOW_SNIPPETS = [
   'name: Issue Worker Dispatch',
   'types: [opened, labeled]',
-  'CURSOR_ISSUE_WORKER_WEBHOOK_URL',
-  'CURSOR_ISSUE_WORKER_WEBHOOK_KEY',
+  'CURSOR_DELIVERY_WEBHOOK_URL',
+  'CURSOR_DELIVERY_WEBHOOK_KEY',
   'resolveDispatchAction',
   'resolveImplementDispatchGate',
   'resolveEpicDispatchAction',
@@ -16,6 +16,7 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'formatDependencyGateComment',
   'openFixPrSearchQuery',
   'Comment when dependency gate blocks dispatch',
+  'Trigger Delivery Agent',
   'post-cursor-webhook.mjs',
 ];
 

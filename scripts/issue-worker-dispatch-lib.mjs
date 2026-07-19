@@ -1,3 +1,4 @@
+import { buildDeliveryIssuePayload } from './delivery-dispatch-lib.mjs';
 import {
   hashDependencySection,
   extractDependencySection,
@@ -541,18 +542,7 @@ function reconcileActionRank(action) {
   return 2;
 }
 
-/**
- * @param {string} logText
- * @returns {number | null}
- */
-export function parseDispatchedIssueNumberFromLog(logText) {
-  const matches = [...logText.matchAll(/Dispatched Issue Worker retry for #(\d+)/g)];
-  if (matches.length === 0) {
-    return null;
-  }
-  const number = Number(matches[matches.length - 1][1]);
-  return Number.isInteger(number) && number > 0 ? number : null;
-}
+export { parseDispatchedIssueNumberFromLog } from './delivery-dispatch-lib.mjs';
 
 /**
  * Select one reconcile dispatch target: implement before epic_close_check, then issue number.
@@ -718,7 +708,6 @@ export function defaultRetryReasonForMode(mode) {
  *   issueNumber: number;
  *   issueTitle: string;
  *   issueUrl: string;
- *   action: string;
  *   labels: string;
  *   issueBody: string;
  *   retryReason?: string;
@@ -730,22 +719,17 @@ export function buildWebhookPayload({
   issueNumber,
   issueTitle,
   issueUrl,
-  action,
   labels,
   issueBody,
   retryReason,
 }) {
-  const payload = {
+  return buildDeliveryIssuePayload({
     repository,
-    issue_number: issueNumber,
-    issue_title: issueTitle,
-    issue_url: issueUrl,
-    action,
+    issueNumber,
+    issueTitle,
+    issueUrl,
     labels,
-    issue_body: issueBody,
-  };
-  if (retryReason) {
-    payload.retry_reason = retryReason;
-  }
-  return payload;
+    issueBody,
+    retryReason,
+  });
 }

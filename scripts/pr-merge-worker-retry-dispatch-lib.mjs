@@ -3,6 +3,7 @@ import {
   areRequiredChecksComplete,
   areRequiredChecksGreen,
 } from './pr-agent-prep-lib.mjs';
+import { buildDeliveryPrPayloadFromPr } from './delivery-dispatch-lib.mjs';
 import { prMergeWorkerNeedsSync } from './pr-merge-worker-needs-sync.mjs';
 
 /** Fresh in-progress runs may still be active. */
@@ -386,20 +387,5 @@ export function selectStuckRetryCandidate(
  * }} input
  */
 export function buildRetryDispatchPayload({ repository, pr, retryReason }) {
-  const payload = {
-    repository,
-    pr_number: pr.number,
-    pr_title: pr.title,
-    pr_url: pr.url,
-    action: 'stuck_retry',
-    head_ref: pr.headRefName,
-    head_sha: pr.headRefOid,
-    author: pr.author?.login ?? '',
-    mergeable_state: pr.mergeable ?? '',
-    merge_state_status: pr.mergeStateStatus ?? '',
-  };
-  if (retryReason) {
-    payload.retry_reason = retryReason;
-  }
-  return payload;
+  return buildDeliveryPrPayloadFromPr(pr, repository, retryReason);
 }

@@ -1,36 +1,30 @@
+import { buildDeliveryPrPayload, resolveIssueNumberFromPrBody } from './delivery-dispatch-lib.mjs';
+
 /**
- * Build webhook payload for PR Merge Worker conflict/sync dispatch.
+ * Build webhook payload for Delivery Agent PR dispatch (conflict / sync path).
  *
  * @param {object} params
  * @param {string} params.repository
  * @param {object} params.pr
- * @param {number} params.pr.number
- * @param {string} params.pr.title
- * @param {string} params.pr.url
- * @param {string} params.pr.headRefName
- * @param {string} params.pr.headRefOid
- * @param {{ login?: string } | undefined} params.pr.author
- * @param {string} [params.pr.mergeable]
- * @param {string} [params.pr.mergeStateStatus]
  * @returns {object}
  */
 export function buildConflictDispatchPayload({ repository, pr }) {
-  return {
+  return buildDeliveryPrPayload({
     repository,
-    pr_number: pr.number,
-    pr_title: pr.title,
-    pr_url: pr.url,
-    action: 'conflict',
-    head_ref: pr.headRefName,
-    head_sha: pr.headRefOid,
+    prNumber: pr.number,
+    issueNumber: resolveIssueNumberFromPrBody(pr.body),
+    prTitle: pr.title,
+    prUrl: pr.url,
+    headRef: pr.headRefName,
+    headSha: pr.headRefOid,
     author: pr.author?.login ?? '',
-    mergeable_state: pr.mergeable ?? '',
-    merge_state_status: pr.mergeStateStatus ?? '',
-  };
+    mergeableState: pr.mergeable ?? '',
+    mergeStateStatus: pr.mergeStateStatus ?? '',
+  });
 }
 
 /**
- * Build webhook payload for PR Merge Worker draft CI fix dispatch.
+ * Build webhook payload for Delivery Agent PR dispatch (CI fix path).
  *
  * @param {object} params
  * @param {string} params.repository
@@ -38,16 +32,5 @@ export function buildConflictDispatchPayload({ repository, pr }) {
  * @returns {object}
  */
 export function buildCiFixDispatchPayload({ repository, pr }) {
-  return {
-    repository,
-    pr_number: pr.number,
-    pr_title: pr.title,
-    pr_url: pr.url,
-    action: 'ci_fix',
-    head_ref: pr.headRefName,
-    head_sha: pr.headRefOid,
-    author: pr.author?.login ?? '',
-    mergeable_state: pr.mergeable ?? '',
-    merge_state_status: pr.mergeStateStatus ?? '',
-  };
+  return buildConflictDispatchPayload({ repository, pr });
 }
