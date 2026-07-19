@@ -204,36 +204,15 @@ jobs:
           fi
 
           PR_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
-          ISSUE_NUM=$(node --input-type=module -e "
-            import { resolveIssueNumberFromPrBody } from './scripts/delivery-dispatch-lib.mjs';
-            const n = resolveIssueNumberFromPrBody(process.argv[1]);
-            process.stdout.write(n == null ? '' : String(n));
+          payload=$(REPOSITORY="${{ github.repository }}" PR_NUMBER="$PR_NUMBER" PR_TITLE="$PR_TITLE" PR_URL="$PR_URL" node --input-type=module -e "
+            import { buildDeliveryPrPayload, resolveIssueNumberFromPrBody } from './scripts/delivery-dispatch-lib.mjs';
+            const payload = buildDeliveryPrPayload({
+              repository: process.env.REPOSITORY,
+              prNumber: Number(process.env.PR_NUMBER),
+              issueNumber: resolveIssueNumberFromPrBody(process.argv[1]),
+              prTitle: process.env.PR_TITLE,
+              prUrl: process.env.PR_URL,
+            });
+            process.stdout.write(JSON.stringify(payload));
           " "$PR_BODY")
-
-          if [ -n "$ISSUE_NUM" ]; then
-            payload=$(jq -n \
-              --arg repo "${{ github.repository }}" \
-              --argjson number "$PR_NUMBER" \
-              --argjson issue_number "$ISSUE_NUM" \
-              --arg title "$PR_TITLE" \
-              --arg url "$PR_URL" \
-              --arg head_ref "$HEAD_REF" \
-              --arg head_sha "$HEAD_SHA" \
-              --arg author "$AUTHOR" \
-              --arg mergeable_state "$MERGEABLE_STATE" \
-              --arg merge_state_status "$MERGE_STATE_STATUS" \
-              '{repository: $repo, pr_number: $number, issue_number: $issue_number, pr_title: $title, pr_url: $url, head_ref: $head_ref, head_sha: $head_sha, author: $author, mergeable_state: $mergeable_state, merge_state_status: $merge_state_status}')
-          else
-            payload=$(jq -n \
-              --arg repo "${{ github.repository }}" \
-              --argjson number "$PR_NUMBER" \
-              --arg title "$PR_TITLE" \
-              --arg url "$PR_URL" \
-              --arg head_ref "$HEAD_REF" \
-              --arg head_sha "$HEAD_SHA" \
-              --arg author "$AUTHOR" \
-              --arg mergeable_state "$MERGEABLE_STATE" \
-              --arg merge_state_status "$MERGE_STATE_STATUS" \
-              '{repository: $repo, pr_number: $number, pr_title: $title, pr_url: $url, head_ref: $head_ref, head_sha: $head_sha, author: $author, mergeable_state: $mergeable_state, merge_state_status: $merge_state_status}')
-          fi
           printf '%s' "$payload" | node scripts/post-cursor-webhook.mjs

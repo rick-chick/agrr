@@ -44,6 +44,32 @@ test('buildDeliveryPrPayload includes issue_number from Closes when provided', (
   assert.equal('action' in payload, false);
 });
 
+test('buildDeliveryPrPayload omits undocumented Delivery Agent webhook fields', () => {
+  const payload = buildDeliveryPrPayload({
+    repository: 'rick-chick/agrr',
+    prNumber: 430,
+    issueNumber: null,
+    prTitle: 'fix(frontend): crop list card overflow menu',
+    prUrl: 'https://github.com/rick-chick/agrr/pull/430',
+    headRef: 'fix/crop-list-overflow-menu',
+    headSha: '891f6e3d0baef1a1c1c3fad8f81a92b32e45a563',
+    author: 'rick-chick',
+    mergeableState: 'MERGEABLE',
+    mergeStateStatus: 'CLEAN',
+  });
+  assert.deepEqual(payload, {
+    repository: 'rick-chick/agrr',
+    pr_number: 430,
+    pr_title: 'fix(frontend): crop list card overflow menu',
+    pr_url: 'https://github.com/rick-chick/agrr/pull/430',
+  });
+  assert.equal('head_ref' in payload, false);
+  assert.equal('head_sha' in payload, false);
+  assert.equal('author' in payload, false);
+  assert.equal('mergeable_state' in payload, false);
+  assert.equal('merge_state_status' in payload, false);
+});
+
 test('resolveIssueNumberFromPrBody parses closes and fixes', () => {
   assert.equal(resolveIssueNumberFromPrBody('Closes #323'), 323);
   assert.equal(resolveIssueNumberFromPrBody('fixes #42'), 42);

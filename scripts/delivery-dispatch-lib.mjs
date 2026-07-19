@@ -69,11 +69,6 @@ export function resolveIssueNumberFromPrBody(body) {
  *   issueNumber?: number | null;
  *   prTitle?: string;
  *   prUrl?: string;
- *   headRef?: string;
- *   headSha?: string;
- *   author?: string;
- *   mergeableState?: string;
- *   mergeStateStatus?: string;
  *   retryReason?: string;
  * }} input
  * @returns {Record<string, unknown>}
@@ -84,11 +79,6 @@ export function buildDeliveryPrPayload({
   issueNumber,
   prTitle,
   prUrl,
-  headRef,
-  headSha,
-  author,
-  mergeableState,
-  mergeStateStatus,
   retryReason,
 }) {
   const payload = {
@@ -103,21 +93,6 @@ export function buildDeliveryPrPayload({
   }
   if (prUrl !== undefined) {
     payload.pr_url = prUrl;
-  }
-  if (headRef !== undefined) {
-    payload.head_ref = headRef;
-  }
-  if (headSha !== undefined) {
-    payload.head_sha = headSha;
-  }
-  if (author !== undefined) {
-    payload.author = author;
-  }
-  if (mergeableState !== undefined) {
-    payload.mergeable_state = mergeableState;
-  }
-  if (mergeStateStatus !== undefined) {
-    payload.merge_state_status = mergeStateStatus;
   }
   if (retryReason) {
     payload.retry_reason = retryReason;
@@ -160,11 +135,6 @@ export function buildDeliveryPrPayloadFromPr(pr, repository, retryReason) {
     issueNumber: resolveIssueNumberFromPrBody(pr.body),
     prTitle: pr.title,
     prUrl: pr.url,
-    headRef: pr.headRefName,
-    headSha: pr.headRefOid,
-    author: pr.author?.login ?? '',
-    mergeableState: pr.mergeable ?? '',
-    mergeStateStatus: pr.mergeStateStatus ?? '',
     retryReason,
   });
 }
