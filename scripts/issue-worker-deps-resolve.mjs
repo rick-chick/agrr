@@ -12,38 +12,17 @@
 import { execFileSync } from 'node:child_process';
 
 import {
-  buildAgentDepsCacheComment,
   createGetAgentDepsContractFromComments,
   extractDependencySection,
   hashDependencySection,
 } from './issue-worker-deps-agent-lib.mjs';
-import { buildDeliveryIssuePayload } from './delivery-dispatch-lib.mjs';
+import {
+  buildDepsResolveWebhookPayload,
+  parseDepsResolveArgs,
+  resolveDepsAgentWebhookEnv,
+} from './issue-worker-deps-resolve-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
-
-/**
- * @param {string[]} argv
- * @returns {{ repo: string; number: number }}
- */
-function parseArgs(argv) {
-  let repo = 'rick-chick/agrr';
-  let number = 0;
-  for (let i = 2; i < argv.length; i += 1) {
-    if (argv[i] === '--repo') {
-      repo = argv[i + 1] ?? repo;
-      i += 1;
-      continue;
-    }
-    if (argv[i] === '--number') {
-      number = Number(argv[i + 1]);
-      i += 1;
-    }
-  }
-  if (!Number.isInteger(number) || number <= 0) {
-    throw new Error('--number must be a positive integer');
-  }
-  return { repo, number };
-}
 
 /**
  * @param {string} repo
@@ -94,33 +73,23 @@ function fetchIssue(repo, issueNumber) {
  * }} input
  */
 function requestAgentJudgment(input) {
-  const url = process.env.CURSOR_DELIVERY_WEBHOOK_URL ?? '';
-  const key = process.env.CURSOR_DELIVERY_WEBHOOK_KEY ?? '';
-  if (!url || !key) {
+  const webhook = resolveDepsAgentWebhookEnv();
+  if (!webhook.configured) {
     console.log('Delivery Agent webhook not configured; skipping deps agent invocation.');
     return { invoked: false };
   }
 
   postWebhookJson({
-    url,
-    bearerToken: key,
-    body: {
-      ...buildDeliveryIssuePayload({
-        repository: input.repo,
-        issueNumber: input.issueNumber,
-        issueTitle: input.issueTitle,
-        issueUrl: input.issueUrl,
-        issueBody: input.issueBody,
-      }),
-      body_hash: input.bodyHash,
-    },
+    url: webhook.url,
+    bearerToken: webhook.key,
+    body: buildDepsResolveWebhookPayload(input),
     execFileSync,
   });
   return { invoked: true };
 }
 
 async function main() {
-  const { repo, number } = parseArgs(process.argv);
+  const { repo, number } = parseDepsResolveArgs(process.argv);
   const issue = fetchIssue(repo, number);
   const section = extractDependencySection(issue.body);
   if (!section) {
