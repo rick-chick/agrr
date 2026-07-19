@@ -204,15 +204,12 @@ jobs:
           fi
 
           PR_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
-          payload=$(REPOSITORY="${{ github.repository }}" PR_NUMBER="$PR_NUMBER" PR_TITLE="$PR_TITLE" PR_URL="$PR_URL" node --input-type=module -e "
-            import { buildDeliveryPrPayload, resolveIssueNumberFromPrBody } from './scripts/delivery-dispatch-lib.mjs';
-            const payload = buildDeliveryPrPayload({
-              repository: process.env.REPOSITORY,
-              prNumber: Number(process.env.PR_NUMBER),
-              issueNumber: resolveIssueNumberFromPrBody(process.argv[1]),
-              prTitle: process.env.PR_TITLE,
-              prUrl: process.env.PR_URL,
-            });
+          payload=$(REPOSITORY="${{ github.repository }}" PR_NUMBER="$PR_NUMBER" node --input-type=module -e "
+            import { buildDeliveryPrPayloadFromPr } from './scripts/delivery-dispatch-lib.mjs';
+            const payload = buildDeliveryPrPayloadFromPr(
+              { number: Number(process.env.PR_NUMBER), body: process.argv[1] },
+              process.env.REPOSITORY,
+            );
             process.stdout.write(JSON.stringify(payload));
           " "$PR_BODY")
           printf '%s' "$payload" | node scripts/post-cursor-webhook.mjs

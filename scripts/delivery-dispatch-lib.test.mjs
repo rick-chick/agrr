@@ -48,6 +48,7 @@ test('buildDeliveryPrPayload keeps only documented Delivery Agent webhook fields
   assert.deepEqual(payload, {
     repository: 'rick-chick/agrr',
     pr_number: 430,
+    pr_unlinked: true,
   });
   assert.equal('pr_title' in payload, false);
   assert.equal('pr_url' in payload, false);
@@ -99,7 +100,26 @@ test('buildDeliveryPrPayloadFromPr maps PR fields', () => {
   assert.equal('retry_reason' in payload, false);
   assert.equal('pr_title' in payload, false);
   assert.equal('pr_url' in payload, false);
+  assert.equal('pr_unlinked' in payload, false);
   assert.equal('action' in payload, false);
+});
+
+test('buildDeliveryPrPayloadFromPr sets pr_unlinked for PR without Closes issue', () => {
+  const payload = buildDeliveryPrPayloadFromPr(
+    {
+      number: 430,
+      title: 'fix(frontend): crop list card overflow menu',
+      url: 'https://github.com/rick-chick/agrr/pull/430',
+      body: '## Summary\n\nHuman PR without issue link.',
+    },
+    'rick-chick/agrr',
+  );
+  assert.deepEqual(payload, {
+    repository: 'rick-chick/agrr',
+    pr_number: 430,
+    pr_unlinked: true,
+  });
+  assert.equal('issue_number' in payload, false);
 });
 
 test('buildDeliveryIssuePayload supports body_hash for deps judgment runs', () => {

@@ -10,7 +10,7 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'branches: [master]',
   'CURSOR_DELIVERY_WEBHOOK_URL',
   'CURSOR_DELIVERY_WEBHOOK_KEY',
-  'buildDeliveryPrPayload',
+  'buildDeliveryPrPayloadFromPr',
   'Trigger Delivery Agent',
   'delivery-dispatch-lib.mjs',
   'post-cursor-webhook.mjs',
@@ -57,7 +57,7 @@ const RECONCILE_LIB_SNIPPETS = [
   "action: 'ci_fix'",
 ];
 
-const PAYLOAD_LIB_SNIPPETS = ['buildDeliveryPrPayload', 'resolveIssueNumberFromPrBody'];
+const PAYLOAD_LIB_SNIPPETS = ['buildDeliveryPrPayloadFromPr'];
 
 /**
  * @param {string} repoRoot

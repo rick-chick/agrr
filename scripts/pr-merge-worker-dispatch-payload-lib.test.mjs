@@ -69,6 +69,7 @@ test('buildConflictDispatchPayload defaults missing optional fields', () => {
   assert.deepEqual(payload, {
     repository: 'rick-chick/agrr',
     pr_number: 1,
+    pr_unlinked: true,
   });
   assert.equal('action' in payload, false);
 });

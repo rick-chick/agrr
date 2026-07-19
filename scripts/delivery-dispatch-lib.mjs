@@ -81,6 +81,8 @@ export function buildDeliveryPrPayload({
   };
   if (issueNumber != null && issueNumber > 0) {
     payload.issue_number = issueNumber;
+  } else {
+    payload.pr_unlinked = true;
   }
   return payload;
 }

@@ -23,11 +23,12 @@ description: >-
 
 ## §0 観測と分岐（毎 run 先頭・固定順）
 
-1. **payload** — `repository`、任意の `issue_number` / `pr_number`
+1. **payload** — `repository`、任意の `issue_number` / `pr_number` / `pr_unlinked`
    - **`body_hash` あり** → 依存判定 run のみ（§依存）。実装・PR 禁止。終了。
-2. **番号解決** — `pr_number` のみなら `gh pr view` → 本文 `Closes #N` / `fixes #N` で issue を特定
+   - **`pr_unlinked: true`**（`issue_number` なし）→ **PR フェーズ直行**（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。issue 実装・新規 PR 禁止。
+2. **番号解決** — `pr_number` のみかつ `pr_unlinked` でないとき `gh pr view` → 本文 `Closes #N` / `fixes #N` で issue を特定
 3. **in-progress** — `agent-in-progress` または `agent-merge-in-progress` が付いていれば **即終了**（コメント不要）
-4. **open PR** — `Closes #N` / `fixes #N` の open PR を検索
+4. **open PR** — `pr_unlinked` でないとき、`Closes #N` / `fixes #N` の open PR を検索
    - **あり** → PR フェーズ（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）: CI / mergeable / Draft を見て修正・merge・待ち
    - **なし** → issue フェーズ（[`github-issue-worker`](../github-issue-worker/SKILL.md)）: triage → 実装 or close or 依存待ち
 5. **epic** — `[epic]` / `epic` ラベルなら §1b（子 issue 完了確認 → close）
@@ -61,14 +62,25 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 }
 ```
 
+未リンク PR（本文に `Closes` / `fixes` なし）:
+
+```json
+{
+  "repository": "rick-chick/agrr",
+  "pr_number": 430,
+  "pr_unlinked": true
+}
+```
+
 | フィールド | 必須 |
 |-----------|------|
 | `repository` | はい |
-| `issue_number` | issue 起点時 |
-| `pr_number` | PR / CI 起点時（`issue_number` は PR 本文から解決可） |
+| `issue_number` | issue 起点時、または PR 本文の `Closes #N` / `fixes #N` があるとき |
+| `pr_number` | PR / CI 起点時 |
+| `pr_unlinked` | `issue_number` が無い PR dispatch 時（`true`）。Agent は PR フェーズのみ |
 | `action` | **送らない・無視** |
 
-任意: `issue_title`, `issue_url`, `issue_body`, `labels`, `pr_title`, `pr_url`, `retry_reason`, `body_hash`（依存判定 run のみ）
+任意: `issue_title`, `issue_url`, `issue_body`, `labels`, `body_hash`（依存判定 run のみ）
 
 ## 依存
 
