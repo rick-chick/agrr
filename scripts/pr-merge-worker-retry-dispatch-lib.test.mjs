@@ -130,6 +130,24 @@ test('classifyReconcileCandidate accepts ready feat PR BEHIND without agent-merg
   });
 });
 
+test('classifyReconcileCandidate rejects BEHIND PR without linked issue for delivery webhook', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      number: 430,
+      body: '## Summary\n\nHuman PR without Closes issue link.',
+      labels: [],
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'BEHIND',
+    },
+    checks: FAILED_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.equal(result.eligible, false);
+  assert.equal(result.reason, 'no linked issue for delivery webhook');
+});
+
 test('classifyReconcileCandidate rejects draft PR while required CI is pending', () => {
   const result = classifyReconcileCandidate({
     pr: {
