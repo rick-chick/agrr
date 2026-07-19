@@ -67,9 +67,6 @@ export function resolveIssueNumberFromPrBody(body) {
  *   repository: string;
  *   prNumber: number;
  *   issueNumber?: number | null;
- *   prTitle?: string;
- *   prUrl?: string;
- *   retryReason?: string;
  * }} input
  * @returns {Record<string, unknown>}
  */
@@ -77,9 +74,6 @@ export function buildDeliveryPrPayload({
   repository,
   prNumber,
   issueNumber,
-  prTitle,
-  prUrl,
-  retryReason,
 }) {
   const payload = {
     repository,
@@ -87,15 +81,6 @@ export function buildDeliveryPrPayload({
   };
   if (issueNumber != null && issueNumber > 0) {
     payload.issue_number = issueNumber;
-  }
-  if (prTitle !== undefined) {
-    payload.pr_title = prTitle;
-  }
-  if (prUrl !== undefined) {
-    payload.pr_url = prUrl;
-  }
-  if (retryReason) {
-    payload.retry_reason = retryReason;
   }
   return payload;
 }
@@ -128,13 +113,10 @@ export function parseDispatchedIssueNumberFromLog(logText) {
  * @param {string} [retryReason]
  * @returns {Record<string, unknown>}
  */
-export function buildDeliveryPrPayloadFromPr(pr, repository, retryReason) {
+export function buildDeliveryPrPayloadFromPr(pr, repository) {
   return buildDeliveryPrPayload({
     repository,
     prNumber: pr.number,
     issueNumber: resolveIssueNumberFromPrBody(pr.body),
-    prTitle: pr.title,
-    prUrl: pr.url,
-    retryReason,
   });
 }

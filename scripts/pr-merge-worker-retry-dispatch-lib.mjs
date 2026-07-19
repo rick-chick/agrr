@@ -316,6 +316,6 @@ export function selectReconcileCandidate(
  *   retryReason?: string;
  * }} input
  */
-export function buildRetryDispatchPayload({ repository, pr, retryReason }) {
-  return buildDeliveryPrPayloadFromPr(pr, repository, retryReason);
+export function buildRetryDispatchPayload({ repository, pr }) {
+  return buildDeliveryPrPayloadFromPr(pr, repository);
 }
