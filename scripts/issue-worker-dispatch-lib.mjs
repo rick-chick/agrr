@@ -208,19 +208,6 @@ export function resolveEpicDispatchAction({ action, issueTitle, issueLabels }) {
 }
 
 /**
- * @deprecated Use resolveEpicDispatchAction. Kept for workflow verify compatibility.
- * @param {{
- *   action: string;
- *   issueTitle: string;
- *   issueLabels: string;
- * }} input
- * @returns {{ action: string }}
- */
-export function resolveEpicImplementGate({ action, issueTitle, issueLabels }) {
-  return resolveEpicDispatchAction({ action, issueTitle, issueLabels });
-}
-
-/**
  * Combined implement-path gates (epic + dependency) for primary and retry dispatch.
  *
  * @param {{

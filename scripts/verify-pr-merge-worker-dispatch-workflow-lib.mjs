@@ -187,13 +187,14 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   const requiredSkillSnippets = [
     'resolve-pr-merge-conflicts.sh',
-    'action: conflict',
-    'action: stuck_retry',
-    'action: ci_fix',
+    '内部ゲート `conflict`',
+    '内部ゲート `stuck_retry`',
+    '内部ゲート `ci_fix`',
     'classifyReconcileCandidate',
     'selectReconcileCandidate',
     'synchronize',
     'mergeStateStatus',
+    'action` は送らない',
   ];
 
   for (const snippet of requiredSkillSnippets) {

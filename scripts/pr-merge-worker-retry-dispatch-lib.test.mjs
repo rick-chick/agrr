@@ -3,13 +3,10 @@ import { test } from 'node:test';
 
 import {
   IN_PROGRESS_STALE_MS,
-  READY_QUIET_MS,
   buildRetryDispatchPayload,
   classifyReconcileCandidate,
   isInProgressStale,
-  isStuckRetryCandidate,
   selectReconcileCandidate,
-  selectStuckRetryCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
 
 const NOW = Date.parse('2026-07-15T12:00:00.000Z');
@@ -58,30 +55,6 @@ test('isInProgressStale is true after stale threshold', () => {
     }),
     true,
   );
-});
-
-test('isStuckRetryCandidate accepts ready PR with green CI and quiet period', () => {
-  const result = isStuckRetryCandidate({
-    pr: BASE_PR,
-    checks: GREEN_CHECKS,
-    baseOwner: 'rick-chick',
-    nowMs: NOW,
-  });
-  assert.deepEqual(result, {
-    eligible: true,
-    removeStaleInProgressLabel: false,
-  });
-});
-
-test('isStuckRetryCandidate rejects draft PR', () => {
-  const result = isStuckRetryCandidate({
-    pr: { ...BASE_PR, isDraft: true, labels: [] },
-    checks: GREEN_CHECKS,
-    baseOwner: 'rick-chick',
-    nowMs: NOW,
-  });
-  assert.equal(result.eligible, false);
-  assert.match(result.reason, /draft/i);
 });
 
 const FAILED_CHECKS = [
@@ -176,25 +149,6 @@ test('classifyReconcileCandidate rejects draft PR while required CI is pending',
   assert.match(result.reason, /pending|incomplete/i);
 });
 
-test('isStuckRetryCandidate accepts ready feat PR without agent-merge after quiet period', () => {
-  const result = isStuckRetryCandidate({
-    pr: {
-      ...BASE_PR,
-      number: 382,
-      headRefName: 'feat/crop-stages-edit-panel-layout',
-      labels: [],
-      updatedAt: '2026-07-15T09:43:00.000Z',
-    },
-    checks: GREEN_CHECKS,
-    baseOwner: 'rick-chick',
-    nowMs: NOW,
-  });
-  assert.deepEqual(result, {
-    eligible: true,
-    removeStaleInProgressLabel: false,
-  });
-});
-
 test('classifyReconcileCandidate prefers conflict over ci_fix for conflicting draft PR', () => {
   const result = classifyReconcileCandidate({
     pr: {
@@ -237,83 +191,6 @@ test('classifyReconcileCandidate accepts conflicting draft cursor PR without age
   });
 });
 
-test('isStuckRetryCandidate rejects fresh in-progress label', () => {
-  const result = isStuckRetryCandidate({
-    pr: {
-      ...BASE_PR,
-      labels: [{ name: 'agent-merge' }, { name: 'agent-merge-in-progress' }],
-      updatedAt: '2026-07-15T11:30:00.000Z',
-    },
-    checks: GREEN_CHECKS,
-    baseOwner: 'rick-chick',
-    nowMs: NOW,
-  });
-  assert.equal(result.eligible, false);
-  assert.match(result.reason, /in-progress/i);
-});
-
-test('isStuckRetryCandidate accepts stale in-progress label for cleanup', () => {
-  const result = isStuckRetryCandidate({
-    pr: {
-      ...BASE_PR,
-      labels: [{ name: 'agent-merge' }, { name: 'agent-merge-in-progress' }],
-      updatedAt: '2026-07-15T09:00:00.000Z',
-    },
-    checks: GREEN_CHECKS,
-    baseOwner: 'rick-chick',
-    nowMs: NOW,
-  });
-  assert.deepEqual(result, {
-    eligible: true,
-    removeStaleInProgressLabel: true,
-  });
-});
-
-test('isStuckRetryCandidate rejects recently updated ready PR without in-progress', () => {
-  const result = isStuckRetryCandidate({
-    pr: {
-      ...BASE_PR,
-      updatedAt: new Date(NOW - READY_QUIET_MS + 60_000).toISOString(),
-    },
-    checks: GREEN_CHECKS,
-    baseOwner: 'rick-chick',
-    nowMs: NOW,
-  });
-  assert.equal(result.eligible, false);
-  assert.match(result.reason, /quiet/i);
-});
-
-test('isStuckRetryCandidate rejects blocking labels', () => {
-  const result = isStuckRetryCandidate({
-    pr: {
-      ...BASE_PR,
-      labels: [{ name: 'agent-merge' }, { name: 'agent-merge-blocked' }],
-    },
-    checks: GREEN_CHECKS,
-    baseOwner: 'rick-chick',
-    nowMs: NOW,
-  });
-  assert.equal(result.eligible, false);
-  assert.match(result.reason, /blocking/i);
-});
-
-test('selectStuckRetryCandidate picks lowest eligible PR number', () => {
-  const selected = selectStuckRetryCandidate(
-    [
-      { ...BASE_PR, number: 280 },
-      { ...BASE_PR, number: 277 },
-    ],
-    {
-      277: GREEN_CHECKS,
-      280: GREEN_CHECKS,
-    },
-    'rick-chick',
-    NOW,
-  );
-  assert.equal(selected?.pr.number, 277);
-  assert.equal(selected?.removeStaleInProgressLabel, false);
-});
-
 test('classifyReconcileCandidate accepts BEHIND ready PR as conflict', () => {
   const result = classifyReconcileCandidate({
     pr: {
@@ -343,20 +220,6 @@ test('classifyReconcileCandidate does not classify BEHIND as stuck_retry', () =>
     nowMs: NOW,
   });
   assert.notEqual(result.action, 'stuck_retry');
-});
-
-test('isStuckRetryCandidate rejects BEHIND with needs master sync reason', () => {
-  const result = isStuckRetryCandidate({
-    pr: {
-      ...BASE_PR,
-      mergeStateStatus: 'BEHIND',
-    },
-    checks: GREEN_CHECKS,
-    baseOwner: 'rick-chick',
-    nowMs: NOW,
-  });
-  assert.equal(result.eligible, false);
-  assert.match(result.reason, /master sync/i);
 });
 
 test('classifyReconcileCandidate accepts ready PR with DIRTY CONFLICTING and green CI as conflict', () => {

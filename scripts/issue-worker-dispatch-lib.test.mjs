@@ -15,7 +15,6 @@ import {
   resolveDispatchAction,
   isEpicIssue,
   resolveEpicDispatchAction,
-  resolveEpicImplementGate,
   resolveImplementDispatchGate,
   resolveImplementPreDispatchGates,
   resolvePreDispatchGates,
@@ -494,17 +493,6 @@ test('resolveEpicDispatchAction leaves triage unchanged for epic title', () => {
       issueLabels: 'epic',
     }),
     { action: 'triage' },
-  );
-});
-
-test('resolveEpicImplementGate delegates to resolveEpicDispatchAction', () => {
-  assert.deepEqual(
-    resolveEpicImplementGate({
-      action: 'implement',
-      issueTitle: '[epic] Parent issue',
-      issueLabels: '',
-    }),
-    { action: 'epic_close_check' },
   );
 });
 
