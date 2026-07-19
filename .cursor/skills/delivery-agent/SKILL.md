@@ -15,6 +15,7 @@ description: >-
 |-----------|------|
 | [`github-issue-worker/SKILL.md`](../github-issue-worker/SKILL.md) | triage・実装・close・epic |
 | [`github-pr-merge-worker/SKILL.md`](../github-pr-merge-worker/SKILL.md) | コンフリクト解消・CI 修正・merge |
+| [`sequential-cleanup-review-workflow/SKILL.md`](../sequential-cleanup-review-workflow/SKILL.md) | TDD GREEN 後の順次クリーンアップ・レビュー（§4 必須） |
 | [`tdd-on-edit/SKILL.md`](../tdd-on-edit/SKILL.md) | 改修 TDD |
 | [`test-common/SKILL.md`](../test-common/SKILL.md) | テスト実行 |
 
@@ -39,6 +40,16 @@ description: >-
 ### issue フェーズでやらないこと
 
 - squash merge（ready 化は **prep** 機械。Agent は `gh pr ready` しない）
+
+### issue 実装経路（TDD GREEN 後・PR 前）
+
+[`github-issue-worker`](../github-issue-worker/SKILL.md) §3 GREEN 確認後、**PR を開く前に必ず** [`sequential-cleanup-review-workflow`](../sequential-cleanup-review-workflow/SKILL.md) §4 を実施する。
+
+1. `cleanup-workflow-tick.sh --parent-slug issue-<N>-<short-slug>` から開始（**tick 未実行で A1 に進まない**）
+2. `WORKFLOW_COMPLETE` / gate exit 0 まで A〜D を回す
+3. 完了後に [`github-issue-worker`](../github-issue-worker/SKILL.md) §5〜§6 で PR 作成（Draft。ready は prep）
+
+PR フェーズでは sequential cleanup は行わない（上流 issue 実装 run で完了済みとみなす）。
 
 ## Webhook payload
 
@@ -81,6 +92,8 @@ Read `.cursor/skills/delivery-agent/SKILL.md` exactly.
 Payload: repository, issue_number, pr_number (optional).
 No action field — if present, ignore it. Observe GitHub state and decide.
 Use referenced skills for implement and merge paths.
+After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
+(cleanup-workflow-tick.sh) before opening a PR. Do not skip tick or open PR before gate exit 0.
 ```
 
 **Secrets**: `CURSOR_DELIVERY_WEBHOOK_URL` / `CURSOR_DELIVERY_WEBHOOK_KEY`
@@ -102,5 +115,5 @@ Use referenced skills for implement and merge paths.
 | secrets 到達 | `issue-worker-dispatch` / `pr-merge-worker-dispatch` ログに `CURSOR_DELIVERY_WEBHOOK_* is not set` が**出ない**こと（未設定時は exit 0 で静かにスキップされる） |
 | 旧 webhook 停止 | 旧 Automation OFF 後、旧 URL への POST が 0 件 |
 | retry スモーク | `workflow_dispatch` on `issue-worker-retry-dispatch` / `pr-merge-worker-retry-dispatch` |
-| E2E | `agent-ready` issue 1 件 → Draft PR → prep ready → merge まで 1 Delivery run 連鎖（同一 CI で run 重複なし） |
+| E2E | `agent-ready` issue 1 件 → TDD → **sequential cleanup（tick → gate 0）** → Draft PR → prep ready → merge |
 | deps | `## 依存` issue でキャッシュ miss → `body_hash` payload のみ → コメント作成 → reconcile 再 dispatch |
