@@ -21,6 +21,7 @@ import {
   isEpicIssue,
   isRetryCandidate,
   openFixPrSearchQuery,
+  parseDispatchedIssueNumberFromLog,
   parseRetryDispatchArgs,
   resolveOnClosedDispatch,
   resolvePreDispatchGates,
