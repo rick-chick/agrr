@@ -58,7 +58,7 @@ description: >-
 | Cursor Automation（`Pull request opened`） | 対象 PR を選定 → CI 待ち → Agent ゲート |
 | Cursor Automation（`CI completed`） | **推奨**。対象 PR で CI 更新後に再評価 |
 | Cursor Automation（webhook） | `.github/workflows/pr-merge-worker-dispatch.yml`（**Backend test 完了時** + PR opened / labeled / `synchronize` / `ready_for_review` でコンフリクト・CI 失敗検知） |
-| **Retry dispatch** | `.github/workflows/pr-merge-worker-retry-dispatch.yml`（15 分ごと reconcile + primary dispatch **キャンセル / 失敗**時も **reconcile**（`from-title` は使わない）。**統合 reconcile** — `BEHIND` / `DIRTY` / `CONFLICTING` 検知で内部ゲート `conflict`、必須 CI FAIL で内部ゲート `ci_fix`（Draft/ready 問わず）、ERROR 後スタックで内部ゲート `stuck_retry`（**いずれも dispatch lib 内部名。webhook payload には送らない**）。`classifyReconcileCandidate` / `selectReconcileCandidate` で 1 件 dispatch。対象は **open + base master 全件**（オプトアウトのみ）） |
+| **Retry dispatch** | `.github/workflows/pr-merge-worker-retry-dispatch.yml`（15 分ごと reconcile + primary dispatch **キャンセル / 失敗**時も **reconcile**（`from-title` は使わない）。**統合 reconcile** — `BEHIND` / `DIRTY` / `CONFLICTING` 検知で内部ゲート `conflict`、必須 CI FAIL で内部ゲート `ci_fix`（Draft/ready 問わず）、blocking ラベル付き open PR で内部ゲート `pr_review`（陳腐化 close は Agent）、ERROR 後スタックで内部ゲート `stuck_retry`（**いずれも dispatch lib 内部名。webhook payload には送らない**）。`classifyReconcileCandidate` / `classifyPrReviewCandidate` / `selectReconcileCandidate` で 1 件 dispatch。対象は **open + base master 全件**（オプトアウトのみ）） |
 | 手動 | 「PR #N をマージワーカー」「#123 をマージ可能にして」 |
 
 Webhook payload フィールド: `repository`, `pr_number`（任意: `pr_title`, `pr_url`, `head_ref`, `head_sha`, `author`, `mergeable_state`, `merge_state_status`, `retry_reason`）。**`action` は送らない・無視**（分岐は §0 の GitHub 観測）。
@@ -119,6 +119,34 @@ gh pr view <N> --json labels,state,headRefOid
 | 上記以外 | §1 へ |
 
 着手時は直ちに `agent-merge-in-progress` を付与（§5）。**着手直後に `headRefOid` を Memory に記録**し、修正 push 後の再 run では新 SHA で再評価する。
+
+## 0a) 陳腐化 PR（obsolete / superseded）— Agent が close
+
+機械層はタイトル一致や closing issue 重複で **自動 close しない**。retry reconcile の内部ゲート `pr_review`、または blocking ラベル付き PR への手動 dispatch で本 run が届いたとき、**コンフリクト解消・CI 修正・マージの前**に実施する。
+
+```bash
+gh pr view <N> --json title,body,state,labels,mergeable,mergeStateStatus,closingIssuesReferences
+gh pr diff <N> --name-only
+gh pr list --state merged --base master --limit 30 --json number,title,mergedAt,closingIssuesReferences
+```
+
+| 観測 | 動作 |
+|------|------|
+| 同趣旨が **最近マージ済み**（diff 重複・方針が #M に統合済み） | **close**（下記コメント） |
+| `agent-no-merge` が正しい（未リンク・意図的 opt-out）かつ差分に価値なし | **close** または無言 exit 0 |
+| まだ有効（未マージの独自修正が残る） | 通常フローへ。blocking ラベルは根拠なく外さない |
+| 判断不能 | `agent-merge-blocked` + コメント（close もマージもしない） |
+
+**close 手順**（obsolete 確定時のみ）:
+
+```bash
+gh pr close <N> --comment "## 🤖 PR Merge Worker: obsolete
+
+この PR はマージ済み #<M>（または方針変更）により陳腐化と判断したため close します。
+再開する場合は新しい PR を開いてください。"
+```
+
+`agent-merge-in-progress` が付いていれば除去する。close 後は exit 0（マージ・コンフリクト解消に進まない）。
 
 ## 1) 対象 PR（既定: すべて / オプトアウトのみ）
 

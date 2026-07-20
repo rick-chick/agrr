@@ -15,13 +15,13 @@ import { deliveryPrWebhookPayloadIsDispatchable } from './delivery-dispatch-lib.
 import {
   buildCiFixDispatchPayload,
   buildConflictDispatchPayload,
+  buildPrReviewDispatchPayload,
 } from './pr-merge-worker-dispatch-payload-lib.mjs';
 import {
   buildRetryDispatchPayload,
   classifyReconcileCandidate,
   selectReconcileCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
-import { findSupersededOpenPrs } from './pr-superseded-close-lib.mjs';
 import {
   hasBlockingMergeLabel,
   shouldReceiveAgentMergeLabel,
@@ -62,58 +62,6 @@ function listOpenMasterPrs(repo) {
 
 /**
  * @param {string} repo
- * @param {number} [limit]
- * @returns {Array<Record<string, unknown>>}
- */
-function listRecentlyMergedPrs(repo, limit = 50) {
-  const raw = gh(repo, [
-    'pr',
-    'list',
-    '--state',
-    'merged',
-    '--base',
-    'master',
-    '--limit',
-    String(limit),
-    '--json',
-    'number,title,closingIssuesReferences',
-  ]);
-  return JSON.parse(raw);
-}
-
-/**
- * @param {string} repo
- * @param {Array<{ number: number; title: string; supersededBy: number }>} superseded
- */
-function closeSupersededPrs(repo, superseded) {
-  for (const entry of superseded) {
-    const comment =
-      `Closed by PR Merge Worker retry reconcile: superseded by merged PR #${entry.supersededBy}.`;
-    console.log(`Closing superseded open PR #${entry.number} (merged #${entry.supersededBy})`);
-    gh(repo, [
-      'pr',
-      'close',
-      String(entry.number),
-      '--comment',
-      comment,
-    ]);
-  }
-}
-
-/**
- * @param {string} repo
- */
-function closeSupersededOpenPrs(repo, openPrs) {
-  const mergedPrs = listRecentlyMergedPrs(repo);
-  const superseded = findSupersededOpenPrs(openPrs, mergedPrs);
-  if (superseded.length === 0) {
-    return;
-  }
-  closeSupersededPrs(repo, superseded);
-}
-
-/**
- * @param {string} repo
  * @param {Array<Record<string, unknown>>} openPrs
  */
 function optOutUnlinkedPrsFromAutoMerge(repo, openPrs) {
@@ -145,7 +93,6 @@ function optOutUnlinkedPrsFromAutoMerge(repo, openPrs) {
 function reconcilePrep(repo) {
   const openPrs = listOpenMasterPrs(repo);
   optOutUnlinkedPrsFromAutoMerge(repo, openPrs);
-  closeSupersededOpenPrs(repo, openPrs);
 }
 
 /**
@@ -216,7 +163,7 @@ function postWebhook(repo, payload, reconcileAction) {
 }
 
 /**
- * @param {'conflict' | 'stuck_retry' | 'ci_fix'} action
+ * @param {'conflict' | 'stuck_retry' | 'ci_fix' | 'pr_review'} action
  * @param {string} repo
  * @param {Record<string, unknown>} pr
  * @param {string} [retryReason]
@@ -227,6 +174,9 @@ function buildReconcilePayload(action, repo, pr, retryReason) {
   }
   if (action === 'ci_fix') {
     return buildCiFixDispatchPayload({ repository: repo, pr });
+  }
+  if (action === 'pr_review') {
+    return buildPrReviewDispatchPayload({ repository: repo, pr });
   }
   return buildRetryDispatchPayload({
     repository: repo,

@@ -26,9 +26,8 @@
 | `.github/workflows/pr-merge-worker-retry-dispatch.yml` | reconcile（open + base master 全件） |
 | `.github/workflows/pr-agent-prep.yml` | Draft → ready（`closingIssuesReferences` あり → `agent-merge`） |
 | `scripts/delivery-dispatch-lib.mjs` | Delivery webhook payload（`closingIssuesReferences` / `pr_unlinked`） |
-| `scripts/pr-merge-worker-retry-dispatch-lib.mjs` | 候補選定 |
-| `scripts/pr-merge-worker-retry-dispatch.mjs` | reconcile・`reconcilePrep`（陳腐化 close・未リンク opt-out） |
-| `scripts/pr-superseded-close-lib.mjs` | 陳腐化 open PR 検出（タイトル or closing issue） |
+| `scripts/pr-merge-worker-retry-dispatch-lib.mjs` | 候補選定（`conflict` / `ci_fix` / `pr_review` / `stuck_retry`） |
+| `scripts/pr-merge-worker-retry-dispatch.mjs` | reconcile・`reconcilePrep`（未リンク opt-out のみ） |
 | `.cursor/skills/github-pr-merge-worker/SKILL.md` | Agent 側 |
 
 ## 監視・監査
