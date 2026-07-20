@@ -5,6 +5,7 @@ import {
   PERMANENT_HTTP_STATUS,
   RETRIABLE_HTTP_STATUS,
   WebhookPostError,
+  parseCurlWebhookResponse,
   postWebhookJson,
 } from './webhook-post-lib.mjs';
 
@@ -27,13 +28,20 @@ test('PERMANENT_HTTP_STATUS includes 401, 403, 404', () => {
   assert.equal(PERMANENT_HTTP_STATUS.has(404), true);
 });
 
+test('parseCurlWebhookResponse splits body and status code', () => {
+  assert.deepEqual(parseCurlWebhookResponse('{"ok":true}\n204'), {
+    statusCode: 204,
+    responseBody: '{"ok":true}',
+  });
+});
+
 test('postWebhookJson returns on 2xx first attempt', () => {
   let calls = 0;
   const result = postWebhookJson({
     ...BASE,
     execFileSync: () => {
       calls += 1;
-      return '204';
+      return '\n204';
     },
     sleepSync: () => {},
     log: () => {},
@@ -52,7 +60,7 @@ test('postWebhookJson retries 503 then succeeds', () => {
     ...BASE,
     execFileSync: () => {
       calls += 1;
-      return calls < 2 ? '503' : '200';
+      return calls < 2 ? '\n503' : '\n200';
     },
     sleepSync: (ms) => sleeps.push(ms),
     log: (message) => logs.push(message),
@@ -76,7 +84,7 @@ test('postWebhookJson retries 429 up to maxAttempts', () => {
         maxAttempts: 3,
         execFileSync: () => {
           calls += 1;
-          return '429';
+          return '\n429';
         },
         sleepSync: () => {},
         log: () => {},
@@ -100,7 +108,7 @@ test('postWebhookJson does not retry permanent 401', () => {
         ...BASE,
         execFileSync: () => {
           calls += 1;
-          return '401';
+          return '\n401';
         },
         sleepSync: () => {
           throw new Error('sleep should not be called');
@@ -125,7 +133,7 @@ test('postWebhookJson does not retry permanent 404', () => {
         ...BASE,
         execFileSync: () => {
           calls += 1;
-          return '404';
+          return '\n404';
         },
         sleepSync: () => {
           throw new Error('sleep should not be called');
@@ -150,7 +158,7 @@ test('postWebhookJson retries transient curl error then succeeds', () => {
         error.status = 28;
         throw error;
       }
-      return '200';
+      return '\n200';
     },
     sleepSync: (ms) => sleeps.push(ms),
     log: (message) => logs.push(message),
@@ -171,7 +179,7 @@ test('postWebhookJson retries 500 then succeeds', () => {
     ...BASE,
     execFileSync: () => {
       calls += 1;
-      return calls < 2 ? '500' : '200';
+      return calls < 2 ? '\n500' : '\n200';
     },
     sleepSync: (ms) => sleeps.push(ms),
     log: () => {},
@@ -191,7 +199,7 @@ test('postWebhookJson retries 502 then succeeds', () => {
     ...BASE,
     execFileSync: () => {
       calls += 1;
-      return calls < 2 ? '502' : '200';
+      return calls < 2 ? '\n502' : '\n200';
     },
     sleepSync: (ms) => sleeps.push(ms),
     log: () => {},
@@ -219,7 +227,7 @@ test('postWebhookJson throws WebhookPostError on non-integer HTTP status', () =>
       }),
     (error) => {
       assert.ok(error instanceof WebhookPostError);
-      assert.match(error.message, /Invalid HTTP status/);
+      assert.match(error.message, /Invalid (HTTP status|curl webhook response)/);
       return true;
     },
   );
@@ -233,7 +241,7 @@ test('postWebhookJson passes curl args with JSON body', () => {
     body: { hello: 'world' },
     execFileSync: (_cmd, argv) => {
       capturedArgv = argv;
-      return '200';
+      return '\n200';
     },
     sleepSync: () => {},
     log: () => {},
@@ -241,4 +249,25 @@ test('postWebhookJson passes curl args with JSON body', () => {
   assert.ok(capturedArgv.includes('-d'));
   const dataIndex = capturedArgv.indexOf('-d');
   assert.equal(capturedArgv[dataIndex + 1], '{"hello":"world"}');
+});
+
+test('postWebhookJson logs response body on HTTP 400', () => {
+  const logs = [];
+  assert.throws(
+    () =>
+      postWebhookJson({
+        ...BASE,
+        execFileSync: () => '{"code":"invalid"}\n400',
+        sleepSync: () => {},
+        log: (message) => logs.push(message),
+        maxAttempts: 1,
+      }),
+    (error) => {
+      assert.ok(error instanceof WebhookPostError);
+      assert.equal(error.statusCode, 400);
+      assert.equal(error.responseBody, '{"code":"invalid"}');
+      return true;
+    },
+  );
+  assert.match(logs.join('\n'), /invalid/);
 });

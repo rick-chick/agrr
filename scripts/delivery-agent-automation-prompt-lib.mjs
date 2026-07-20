@@ -3,9 +3,13 @@
  * Keep in sync with `.cursor/skills/delivery-agent/SKILL.md` § Automation.
  */
 
+/** Live Delivery Agent automation in Cursor Dashboard. */
+export const DELIVERY_AGENT_AUTOMATION_ID = '6a5cb2d9-8317-11f1-a7d1-d6b4613131ce';
+
 /** @type {string} */
 export const DELIVERY_AGENT_AUTOMATION_PROMPT = `Read \`.cursor/skills/delivery-agent/SKILL.md\` exactly.
 Payload: repository, issue_number, pr_number (optional), pr_unlinked (optional).
+pr_unlinked: true OR pr_number without issue_number means PR-phase only (no issue implement).
 No action field — if present, ignore it. Observe GitHub state and decide.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
@@ -47,6 +51,19 @@ export function buildDeliveryAgentPrefillToken() {
  */
 export function buildDeliveryAgentPrefillUrl() {
   return `https://cursor.com/automations/new?prefill=${buildDeliveryAgentPrefillToken()}`;
+}
+
+/**
+ * One-click apply URL for the live Delivery Agent automation.
+ * Opens the existing automation with canonical prompt pre-filled — user only saves.
+ *
+ * @param {string} [automationId]
+ * @returns {string}
+ */
+export function buildDeliveryAgentAutomationApplyUrl(
+  automationId = DELIVERY_AGENT_AUTOMATION_ID,
+) {
+  return `https://cursor.com/automations/${automationId}?prefill=${buildDeliveryAgentPrefillToken()}`;
 }
 
 /**

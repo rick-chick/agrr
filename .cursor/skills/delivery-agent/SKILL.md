@@ -25,7 +25,7 @@ description: >-
 ## §0 観測と分岐（毎 run 先頭・固定順）
 
 1. **payload** — `repository`、任意の `issue_number` / `pr_number` / `pr_unlinked`
-   - **`pr_unlinked: true`**（`issue_number` なし）→ **PR フェーズ直行**（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。issue 実装・新規 PR 禁止。
+   - **`pr_unlinked: true`**、または **`pr_number` のみ**（`issue_number` なし）→ **PR フェーズ直行**（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。issue 実装・新規 PR 禁止。
 2. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,labels`
    - リンク issue 番号は **`closingIssuesReferences` のみ**（機械層は本文を読まない。Agent も `gh pr view --json closingIssuesReferences` を正とする）
    - **`merged: true`** → issue 実装・再マージ**禁止**。リンク issue のラベルを `gh issue view` で確認
@@ -132,6 +132,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 ```
 Read `.cursor/skills/delivery-agent/SKILL.md` exactly.
 Payload: repository, issue_number, pr_number (optional), pr_unlinked (optional).
+pr_unlinked: true OR pr_number without issue_number means PR-phase only (no issue implement).
 No action field — if present, ignore it. Observe GitHub state and decide.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
@@ -146,7 +147,7 @@ with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent a
 
 1. [Prefill](#prefill-urlフォーム事前入力) または Dashboard で **Delivery Automation** 作成（Webhook のみ）
    - **作成済み**: [AGRR Delivery Agent (Webhook)](https://cursor.com/automations/6a5cb2d9-8317-11f1-a7d1-d6b4613131ce)（`6a5cb2d9-8317-11f1-a7d1-d6b4613131ce`）
-   - **プロンプトに `pr_unlinked (optional)` が無い場合**は [cursor-automation-schedule §既存 Automation のプロンプト更新](../cloud-automation-audit/references/cursor-automation-schedule.md#delivery-agentissue--merge-統合) を実施（reconcile の HTTP 400 解消）
+   - **プロンプトに `pr_unlinked (optional)` が無い場合**は [ワンクリック適用リンク](../cloud-automation-audit/references/cursor-automation-schedule.md#delivery-agentissue--merge-統合)を開いて **Save のみ**（reconcile の HTTP 400 解消）
 2. `CURSOR_DELIVERY_WEBHOOK_URL` / `KEY` を repo secrets に登録
 3. 旧 Automation を **OFF**（**workflow マージより先**）:
    - [AGRR Issue Worker (Webhook)](https://cursor.com/automations/6ad06db2-9fea-4a66-a56b-2cf7145f102d)

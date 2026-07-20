@@ -7,7 +7,7 @@ export const PERMANENT_HTTP_STATUS = new Set([401, 403, 404]);
 export class WebhookPostError extends Error {
   /**
    * @param {string} message
-   * @param {{ statusCode?: number; attempt?: number; retriable?: boolean }} [details]
+   * @param {{ statusCode?: number; attempt?: number; retriable?: boolean; responseBody?: string }} [details]
    */
   constructor(message, details = {}) {
     super(message);
@@ -15,6 +15,7 @@ export class WebhookPostError extends Error {
     this.statusCode = details.statusCode;
     this.attempt = details.attempt;
     this.retriable = details.retriable ?? false;
+    this.responseBody = details.responseBody;
   }
 }
 
@@ -36,6 +37,27 @@ function isTransientCurlError(error) {
   }
   const status = /** @type {{ status?: number }} */ (error).status;
   return status === 6 || status === 7 || status === 28 || status === 35 || status === 52;
+}
+
+/**
+ * @param {string} raw
+ * @returns {{ statusCode: number; responseBody: string }}
+ */
+export function parseCurlWebhookResponse(raw) {
+  const trimmed = raw.trimEnd();
+  const newlineIndex = trimmed.lastIndexOf('\n');
+  if (newlineIndex < 0) {
+    throw new WebhookPostError(`Invalid curl webhook response: ${trimmed}`);
+  }
+  const statusCodeStr = trimmed.slice(newlineIndex + 1).trim();
+  const statusCode = Number(statusCodeStr);
+  if (!Number.isInteger(statusCode)) {
+    throw new WebhookPostError(`Invalid HTTP status from curl: ${statusCodeStr}`);
+  }
+  return {
+    statusCode,
+    responseBody: trimmed.slice(0, newlineIndex),
+  };
 }
 
 /**
@@ -69,14 +91,12 @@ export function postWebhookJson({
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     log(`Webhook POST attempt ${attempt}/${maxAttempts}`);
     try {
-      const statusCodeStr = execFileSync(
+      const raw = execFileSync(
         'curl',
         [
           '-sS',
-          '-o',
-          '/dev/null',
           '-w',
-          '%{http_code}',
+          '\n%{http_code}',
           '-X',
           'POST',
           url,
@@ -88,14 +108,8 @@ export function postWebhookJson({
           payload,
         ],
         { encoding: 'utf8' },
-      ).trim();
-
-      const statusCode = Number(statusCodeStr);
-      if (!Number.isInteger(statusCode)) {
-        throw new WebhookPostError(`Invalid HTTP status from curl: ${statusCodeStr}`, {
-          attempt,
-        });
-      }
+      );
+      const { statusCode, responseBody } = parseCurlWebhookResponse(raw);
 
       if (statusCode >= 200 && statusCode < 300) {
         return { ok: true, statusCode, attempt };
@@ -106,11 +120,16 @@ export function postWebhookJson({
           statusCode,
           attempt,
           retriable: false,
+          responseBody,
         });
       }
 
       if (RETRIABLE_HTTP_STATUS.has(statusCode) && attempt < maxAttempts) {
-        log(`Webhook POST HTTP ${statusCode}; retrying after backoff`);
+        log(
+          `Webhook POST HTTP ${statusCode}; retrying after backoff${
+            responseBody ? ` (${responseBody.slice(0, 200)})` : ''
+          }`,
+        );
         sleepSync(backoffMs(attempt));
         continue;
       }
@@ -119,10 +138,14 @@ export function postWebhookJson({
         statusCode,
         attempt,
         retriable: RETRIABLE_HTTP_STATUS.has(statusCode),
+        responseBody,
       });
     } catch (error) {
       if (error instanceof WebhookPostError) {
         lastError = error;
+        if (error.responseBody) {
+          log(`Webhook response body: ${error.responseBody}`);
+        }
         if (!error.retriable || attempt >= maxAttempts) {
           throw error;
         }
