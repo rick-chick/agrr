@@ -130,7 +130,7 @@ test('classifyReconcileCandidate accepts ready feat PR BEHIND without agent-merg
   });
 });
 
-test('classifyReconcileCandidate rejects BEHIND PR without linked issue for delivery webhook', () => {
+test('classifyReconcileCandidate accepts BEHIND PR without linked issue for pr_unlinked dispatch', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -144,8 +144,11 @@ test('classifyReconcileCandidate rejects BEHIND PR without linked issue for deli
     baseOwner: 'rick-chick',
     nowMs: NOW,
   });
-  assert.equal(result.eligible, false);
-  assert.equal(result.reason, 'no linked issue for delivery webhook');
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'conflict',
+    removeStaleInProgressLabel: false,
+  });
 });
 
 test('classifyReconcileCandidate rejects draft PR while required CI is pending', () => {

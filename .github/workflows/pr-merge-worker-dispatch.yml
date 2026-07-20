@@ -214,7 +214,7 @@ jobs:
               process.env.REPOSITORY,
             );
             if (!deliveryPrWebhookPayloadIsDispatchable(payload)) {
-              console.log('PR has no linked issue for Delivery Agent webhook; skipping dispatch.');
+              console.log('PR webhook payload is not dispatchable; skipping dispatch.');
               process.exit(0);
             }
             process.stdout.write(JSON.stringify(payload));

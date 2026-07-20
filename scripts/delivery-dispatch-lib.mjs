@@ -88,19 +88,21 @@ export function buildDeliveryPrPayload({
 }
 
 /**
- * Delivery Agent webhook rejects pr_number-only payloads (HTTP 400).
- * issue_number must be present before POST.
+ * Delivery Agent accepts issue-linked PRs and pr_unlinked PR-phase dispatches.
  *
  * @param {Record<string, unknown>} payload
  * @returns {boolean}
  */
 export function deliveryPrWebhookPayloadIsDispatchable(payload) {
   const issueNumber = payload.issue_number;
-  return (
+  if (
     typeof issueNumber === 'number' &&
     Number.isInteger(issueNumber) &&
     issueNumber > 0
-  );
+  ) {
+    return true;
+  }
+  return payload.pr_unlinked === true;
 }
 
 /**

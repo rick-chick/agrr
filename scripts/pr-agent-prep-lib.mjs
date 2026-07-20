@@ -45,6 +45,19 @@ export function isCursorAuthor(authorLogin) {
 }
 
 /**
+ * Agent merge queue requires a linked issue (GitHub API) or explicit Merge-Strategy: agent.
+ *
+ * @param {{ closingIssueCount: number; body?: string | null }} input
+ * @returns {boolean}
+ */
+export function shouldReceiveAgentMergeLabel({ closingIssueCount, body }) {
+  if (closingIssueCount > 0) {
+    return true;
+  }
+  return hasMergeStrategyAgent(body);
+}
+
+/**
  * @param {{
  *   authorLogin: string;
  *   baseRefName: string;

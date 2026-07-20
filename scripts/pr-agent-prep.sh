@@ -41,7 +41,7 @@ repo_owner() {
 fetch_pr_json() {
   local pr_number="$1"
   gh pr view "$pr_number" --json \
-    number,isDraft,author,baseRefName,headRefName,body,labels,headRepository
+    number,isDraft,author,baseRefName,headRefName,body,labels,headRepository,closingIssuesReferences
 }
 
 pr_is_eligible() {
@@ -79,6 +79,16 @@ checks_are_green() {
     const checks = JSON.parse(process.env.CHECKS_JSON);
     process.stdout.write(areRequiredChecksGreen(checks) ? 'true' : 'false');
   "
+}
+
+ensure_agent_no_merge_label() {
+  local pr_number="$1"
+  local labels
+  labels="$(gh pr view "$pr_number" --json labels --jq '[.labels[].name] | join(",")')"
+  if ! echo "$labels" | grep -qE '(^|,)agent-no-merge(,|$)'; then
+    echo "Adding agent-no-merge label to PR #$pr_number (no linked issue for agent merge)"
+    gh pr edit "$pr_number" --add-label agent-no-merge
+  fi
 }
 
 ensure_agent_merge_label() {
@@ -141,13 +151,30 @@ maybe_mark_ready() {
 
 prep_pr() {
   local pr_number="$1"
-  local pr_json eligible base_owner
+  local pr_json eligible base_owner closing_issue_count should_merge
 
   base_owner="$(repo_owner)"
   pr_json="$(fetch_pr_json "$pr_number")"
   eligible="$(pr_is_eligible "$pr_json" "$base_owner")"
   if [ "$eligible" != "true" ]; then
     echo "PR #$pr_number is not eligible for agent prep; skipping"
+    return 0
+  fi
+
+  closing_issue_count="$(echo "$pr_json" | jq '.closingIssuesReferences | length')"
+  should_merge="$(PR_JSON="$pr_json" CLOSING_ISSUE_COUNT="$closing_issue_count" node_eval "
+    import { shouldReceiveAgentMergeLabel } from '$LIB';
+    const pr = JSON.parse(process.env.PR_JSON);
+    const ok = shouldReceiveAgentMergeLabel({
+      closingIssueCount: Number(process.env.CLOSING_ISSUE_COUNT),
+      body: pr.body,
+    });
+    process.stdout.write(ok ? 'true' : 'false');
+  ")"
+
+  if [ "$should_merge" != "true" ]; then
+    ensure_agent_no_merge_label "$pr_number"
+    echo "PR #$pr_number has no linked issue; skipping agent-merge prep"
     return 0
   fi
 

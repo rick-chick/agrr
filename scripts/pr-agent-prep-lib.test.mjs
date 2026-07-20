@@ -10,6 +10,7 @@ import {
   isNonFatalMarkReadyError,
   resolveGhToken,
   selectDraftPrNumberToReady,
+  shouldReceiveAgentMergeLabel,
   sortedEligibleDraftNumbers,
 } from './pr-agent-prep-lib.mjs';
 
@@ -22,6 +23,24 @@ const BASE_META = {
   headOwner: 'rick-chick',
   baseOwner: 'rick-chick',
 };
+
+test('shouldReceiveAgentMergeLabel requires closing issue or Merge-Strategy agent', () => {
+  assert.equal(
+    shouldReceiveAgentMergeLabel({ closingIssueCount: 1, body: '' }),
+    true,
+  );
+  assert.equal(
+    shouldReceiveAgentMergeLabel({
+      closingIssueCount: 0,
+      body: 'Merge-Strategy: agent',
+    }),
+    true,
+  );
+  assert.equal(
+    shouldReceiveAgentMergeLabel({ closingIssueCount: 0, body: 'docs only' }),
+    false,
+  );
+});
 
 test('isEligibleAgentPr accepts cursor/* from cursor bot', () => {
   assert.equal(isEligibleAgentPr(BASE_META), true);

@@ -74,14 +74,14 @@ test('buildDeliveryPrPayload includes issue_number from Closes when provided', (
   assert.equal('action' in payload, false);
 });
 
-test('deliveryPrWebhookPayloadIsDispatchable requires issue_number', () => {
+test('deliveryPrWebhookPayloadIsDispatchable accepts pr_unlinked for PR phase dispatch', () => {
   assert.equal(
     deliveryPrWebhookPayloadIsDispatchable({
       repository: 'rick-chick/agrr',
       pr_number: 430,
       pr_unlinked: true,
     }),
-    false,
+    true,
   );
   assert.equal(
     deliveryPrWebhookPayloadIsDispatchable({
@@ -90,6 +90,13 @@ test('deliveryPrWebhookPayloadIsDispatchable requires issue_number', () => {
       issue_number: 276,
     }),
     true,
+  );
+  assert.equal(
+    deliveryPrWebhookPayloadIsDispatchable({
+      repository: 'rick-chick/agrr',
+      pr_number: 999,
+    }),
+    false,
   );
 });
 
