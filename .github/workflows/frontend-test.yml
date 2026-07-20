@@ -84,10 +84,6 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-pr-merge-worker-dispatch-workflow.test.mjs
 
-      - name: verify-ux-campaign-review-dispatch-workflow unit tests
-        working-directory: ${{ github.workspace }}
-        run: node --test scripts/verify-ux-campaign-review-dispatch-workflow.test.mjs
-
       - name: agrr-mcp unit tests
         working-directory: tools/agrr-mcp
         run: |
@@ -98,6 +94,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           node --test scripts/delivery-dispatch-lib.test.mjs
+          node --test scripts/delivery-agent-campaign-lib.test.mjs
           node --test scripts/gh-repo-lib.test.mjs
           node --test scripts/pr-agent-prep-lib.test.mjs
           node --test scripts/issue-worker-dispatch-lib.test.mjs

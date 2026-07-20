@@ -24,7 +24,6 @@ export const DISPATCH_WORKFLOW_NAMES = [
   'Issue Worker Retry Dispatch',
   'PR Merge Worker Dispatch',
   'PR Merge Worker Retry Dispatch',
-  'UX Campaign Review Dispatch',
 ];
 
 /** Retry reconcile workflows — must run on 15-minute cron */

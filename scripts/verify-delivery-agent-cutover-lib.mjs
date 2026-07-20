@@ -7,6 +7,14 @@ export const LEGACY_AUTOMATION_IDS = [
     id: '6ad06db2-9fea-4a66-a56b-2cf7145f102d',
     name: 'AGRR Issue Worker (Webhook)',
   },
+  {
+    id: 'e3536984-7b74-11f1-ba66-0e7d0216e441',
+    name: 'AGRR UX Campaign Loop (Webhook)',
+  },
+];
+
+const FORBIDDEN_WORKFLOW_PATHS = [
+  '.github/workflows/ux-campaign-review-dispatch.yml',
 ];
 
 const DISPATCH_WORKFLOW_PATHS = [
@@ -29,8 +37,16 @@ const LEGACY_SECRET_SNIPPETS = [
 
 const REQUIRED_PATHS = [
   '.cursor/skills/delivery-agent/SKILL.md',
+  '.cursor/skills/ux-campaign-loop/SKILL.md',
   'scripts/delivery-dispatch-lib.mjs',
+  'scripts/delivery-agent-campaign-lib.mjs',
   'scripts/issue-worker-deps-resolve.mjs',
+];
+
+const DELIVERY_AGENT_SKILL_SNIPPETS = [
+  'ux-campaign-loop/SKILL.md',
+  'delivery-agent-campaign-lib.mjs',
+  'PR マージ成功後',
 ];
 
 /**
@@ -45,6 +61,30 @@ export async function verifyDeliveryAgentCutover(repoRoot) {
       await readFile(join(repoRoot, relPath), 'utf8');
     } catch {
       errors.push(`missing required path: ${relPath}`);
+    }
+  }
+
+  const deliveryAgentSkillPath = join(
+    repoRoot,
+    '.cursor/skills/delivery-agent/SKILL.md',
+  );
+  try {
+    const deliveryAgentSkill = await readFile(deliveryAgentSkillPath, 'utf8');
+    for (const snippet of DELIVERY_AGENT_SKILL_SNIPPETS) {
+      if (!deliveryAgentSkill.includes(snippet)) {
+        errors.push(`delivery-agent/SKILL.md missing required snippet: ${snippet}`);
+      }
+    }
+  } catch {
+    errors.push('missing delivery-agent/SKILL.md');
+  }
+
+  for (const relPath of FORBIDDEN_WORKFLOW_PATHS) {
+    try {
+      await readFile(join(repoRoot, relPath), 'utf8');
+      errors.push(`forbidden workflow must be removed: ${relPath}`);
+    } catch {
+      // expected: file absent
     }
   }
 

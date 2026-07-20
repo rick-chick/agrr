@@ -44,8 +44,10 @@ disable-model-invocation: false
 
 | 層 | 担当 |
 |----|------|
-| **GitHub Actions** | イベント検知・ゲート・webhook 中継・ラベル・reconcile |
-| **Cursor Automation** | スキルに従う判断・コード変更・PR |
+| **GitHub Actions** | イベント検知・**機械ゲート**・webhook 中継・ラベル・reconcile |
+| **Cursor Automation** | **エージェント判定**・スキルに従う実装・コード変更・PR |
+
+**本文のパースは禁止。** 必要な判断はエージェントが `gh` で本文を読んで行う。Actions / dispatch lib は機械ゲートのみ（[PRINCIPLES.md §機械ゲートとエージェント判定](references/PRINCIPLES.md)）。
 
 Actions から Cloud Agent を起動するときは **`postWebhook`（curl）が正**。`GITHUB_TOKEN` でラベル付与だけでは `issues: labeled` workflow は起動しない（詳細は [GITHUB-ACTIONS-CONSTRAINTS.md](references/GITHUB-ACTIONS-CONSTRAINTS.md)）。
 
