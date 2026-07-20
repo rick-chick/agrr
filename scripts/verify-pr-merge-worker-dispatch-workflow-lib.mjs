@@ -52,14 +52,16 @@ const WEBHOOK_POST_LIB_SNIPPETS = [
 
 const RECONCILE_LIB_SNIPPETS = [
   'classifyReconcileCandidate',
+  'classifyPrReviewCandidate',
   'selectReconcileCandidate',
   'prMergeWorkerNeedsSync',
   "action: 'conflict'",
   "action: 'stuck_retry'",
   "action: 'ci_fix'",
+  "action: 'pr_review'",
 ];
 
-const PAYLOAD_LIB_SNIPPETS = ['buildDeliveryPrPayloadFromPr'];
+const PAYLOAD_LIB_SNIPPETS = ['buildDeliveryPrPayloadFromPr', 'buildPrReviewDispatchPayload'];
 
 /**
  * @param {string} repoRoot
@@ -215,6 +217,29 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  const retryDispatchScriptPath = join(
+    repoRoot,
+    'scripts/pr-merge-worker-retry-dispatch.mjs',
+  );
+  let retryDispatchScriptText = '';
+  try {
+    retryDispatchScriptText = await readFile(retryDispatchScriptPath, 'utf8');
+  } catch {
+    errors.push(`missing retry dispatch script: ${retryDispatchScriptPath}`);
+  }
+
+  if (retryDispatchScriptText.includes('pr-superseded-close-lib')) {
+    errors.push(
+      'pr-merge-worker-retry-dispatch.mjs must not mechanically close superseded PRs',
+    );
+  }
+
+  if (retryDispatchScriptText.includes('findSupersededOpenPrs')) {
+    errors.push(
+      'pr-merge-worker-retry-dispatch.mjs must not use findSupersededOpenPrs; Agent decides obsolete PRs',
+    );
+  }
+
   for (const snippet of PAYLOAD_LIB_SNIPPETS) {
     if (!payloadLibText.includes(snippet)) {
       errors.push(`payload lib missing required snippet: ${snippet}`);
@@ -239,11 +264,14 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     '内部ゲート `conflict`',
     '内部ゲート `stuck_retry`',
     '内部ゲート `ci_fix`',
+    '内部ゲート `pr_review`',
     'classifyReconcileCandidate',
+    'classifyPrReviewCandidate',
     'selectReconcileCandidate',
     'synchronize',
     'mergeStateStatus',
     'action` は送らない',
+    'gh pr close',
   ];
 
   for (const snippet of requiredSkillSnippets) {

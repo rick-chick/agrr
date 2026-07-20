@@ -38,6 +38,17 @@ description: >-
    - **なし** → issue フェーズ（[`github-issue-worker`](../github-issue-worker/SKILL.md)）: triage → 実装 or close or 依存待ち
 5. **epic** — `[epic]` / `epic` ラベルなら §1b（子 issue 完了確認 → close）
 
+### PR フェーズ: 陳腐化（obsolete / superseded）判定
+
+機械層はタイトル一致や closing issue の機械 close を**しない**。blocking ラベル（`agent-no-merge` 等）付き PR は retry reconcile の内部ゲート `pr_review` で本 Agent に届く。着手前に必ず観測する:
+
+1. `gh pr view <N> --json title,body,state,labels,mergeable,mergeStateStatus,closingIssuesReferences,files`
+2. `gh pr diff <N> --name-only` と最近マージ済み PR（`gh pr list --state merged --limit 30`）の diff / タイトルを比較
+3. **obsolete と判断**（別 PR で同趣旨がマージ済み・方針変更で差分が無意味・`agent-no-merge` が正しい opt-out）→ [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) §0a で close
+4. **まだ有効** → blocking ラベルを外す根拠がなければ維持して exit 0。修正・マージが妥当なら §0 の通常 PR フェーズへ（`agent-no-merge` はマージ前に外さない）
+
+タイトル正規化や `#N` 参照の regex は **Agent 判断内のみ**（dispatch / reconcile スクリプトに書かない）。
+
 ### PR フェーズでやらないこと
 
 - 新規 issue 実装

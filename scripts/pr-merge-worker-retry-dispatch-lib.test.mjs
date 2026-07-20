@@ -3,7 +3,9 @@ import { test } from 'node:test';
 
 import {
   IN_PROGRESS_STALE_MS,
+  READY_QUIET_MS,
   buildRetryDispatchPayload,
+  classifyPrReviewCandidate,
   classifyReconcileCandidate,
   isInProgressStale,
   selectReconcileCandidate,
@@ -345,6 +347,126 @@ test('selectReconcileCandidate prefers lower conflict PR over higher stuck_retry
   );
   assert.equal(selected?.pr.number, 277);
   assert.equal(selected?.action, 'conflict');
+});
+
+test('classifyPrReviewCandidate accepts open PR with agent-no-merge after quiet period', () => {
+  const result = classifyPrReviewCandidate({
+    pr: {
+      ...BASE_PR,
+      number: 441,
+      closingIssuesReferences: [],
+      labels: [{ name: 'agent-merge' }, { name: 'agent-no-merge' }],
+      mergeable: 'CONFLICTING',
+      mergeStateStatus: 'DIRTY',
+      updatedAt: '2026-07-15T11:00:00.000Z',
+    },
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'pr_review',
+    removeStaleInProgressLabel: false,
+  });
+});
+
+test('classifyPrReviewCandidate rejects PR without blocking merge label', () => {
+  const result = classifyPrReviewCandidate({
+    pr: {
+      ...BASE_PR,
+      labels: [{ name: 'agent-merge' }],
+    },
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.equal(result.eligible, false);
+  assert.match(result.reason, /blocking merge label/i);
+});
+
+test('classifyPrReviewCandidate rejects fresh agent-merge-in-progress', () => {
+  const result = classifyPrReviewCandidate({
+    pr: {
+      ...BASE_PR,
+      labels: [{ name: 'agent-no-merge' }, { name: 'agent-merge-in-progress' }],
+      updatedAt: new Date(NOW - IN_PROGRESS_STALE_MS + 60_000).toISOString(),
+    },
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.equal(result.eligible, false);
+  assert.match(result.reason, /agent-merge-in-progress is fresh/i);
+});
+
+test('classifyPrReviewCandidate rejects PR within ready quiet period', () => {
+  const result = classifyPrReviewCandidate({
+    pr: {
+      ...BASE_PR,
+      labels: [{ name: 'agent-no-merge' }],
+      updatedAt: new Date(NOW - READY_QUIET_MS + 60_000).toISOString(),
+    },
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.equal(result.eligible, false);
+  assert.match(result.reason, /ready quiet period/i);
+});
+
+test('selectReconcileCandidate prefers conflict over pr_review even with lower pr_review number', () => {
+  const selected = selectReconcileCandidate(
+    [
+      {
+        ...BASE_PR,
+        number: 277,
+        labels: [{ name: 'agent-no-merge' }],
+        mergeable: 'MERGEABLE',
+        mergeStateStatus: 'CLEAN',
+        updatedAt: '2026-07-15T09:00:00.000Z',
+      },
+      {
+        ...BASE_PR,
+        number: 280,
+        mergeStateStatus: 'BEHIND',
+      },
+    ],
+    {
+      277: GREEN_CHECKS,
+      280: GREEN_CHECKS,
+    },
+    'rick-chick',
+    NOW,
+  );
+  assert.equal(selected?.pr.number, 280);
+  assert.equal(selected?.action, 'conflict');
+});
+
+test('selectReconcileCandidate prefers pr_review over stuck_retry', () => {
+  const selected = selectReconcileCandidate(
+    [
+      {
+        ...BASE_PR,
+        number: 280,
+        mergeStateStatus: 'CLEAN',
+        updatedAt: '2026-07-15T09:00:00.000Z',
+      },
+      {
+        ...BASE_PR,
+        number: 441,
+        closingIssuesReferences: [],
+        labels: [{ name: 'agent-no-merge' }],
+        mergeable: 'CONFLICTING',
+        mergeStateStatus: 'DIRTY',
+        updatedAt: '2026-07-15T09:00:00.000Z',
+      },
+    ],
+    {
+      280: GREEN_CHECKS,
+      441: GREEN_CHECKS,
+    },
+    'rick-chick',
+    NOW,
+  );
+  assert.equal(selected?.pr.number, 441);
+  assert.equal(selected?.action, 'pr_review');
 });
 
 test('buildRetryDispatchPayload maps stuck retry fields', () => {

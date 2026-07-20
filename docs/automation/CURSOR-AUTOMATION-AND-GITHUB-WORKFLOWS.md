@@ -98,7 +98,7 @@ sequenceDiagram
 **PR Merge Worker retry の reconcile 前処理**（[`pr-merge-worker-retry-dispatch.mjs`](../../scripts/pr-merge-worker-retry-dispatch.mjs) の `reconcilePrep`）:
 
 - 未リンク PR（`closingIssuesReferences` 空）→ `agent-no-merge` 付与（誤 `agent-merge` を是正）
-- マージ済み PR と **同一タイトル** または **同一 closing issue** の open PR → 自動 close（[`pr-superseded-close-lib.mjs`](../../scripts/pr-superseded-close-lib.mjs)）
+- **陳腐化 open PR の close は機械層で行わない**。`agent-no-merge` 等 blocking ラベル付き PR は reconcile 内部ゲート `pr_review` で Agent に dispatch し、diff・最近マージ済み PR・方針変更を読んで close / 維持 / ラベル修正を決める（[`github-pr-merge-worker`](../.cursor/skills/github-pr-merge-worker/SKILL.md) §0a）
 
 **機械層の本文パース禁止**・思想優先: [`.cursor/rules/automation-philosophy-priority.mdc`](../../.cursor/rules/automation-philosophy-priority.mdc)（正本 [PRINCIPLES.md](../../.cursor/skills/automation-authoring/references/PRINCIPLES.md)）。
 

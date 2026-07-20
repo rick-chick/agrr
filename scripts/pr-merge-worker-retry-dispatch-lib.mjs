@@ -14,6 +14,14 @@ export const IN_PROGRESS_STALE_MS = 90 * 60 * 1000;
 /** Avoid racing a just-dispatched primary merge worker. */
 export const READY_QUIET_MS = 30 * 60 * 1000;
 
+/** Lower value = higher reconcile priority. */
+export const RECONCILE_ACTION_PRIORITY = {
+  conflict: 0,
+  ci_fix: 1,
+  pr_review: 2,
+  stuck_retry: 3,
+};
+
 /**
  * @param {Array<{ name: string } | string>} labels
  * @returns {string[]}
@@ -259,6 +267,82 @@ export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
 }
 
 /**
+ * Blocking-label PRs need Agent review (obsolete close, label correction, etc.).
+ * Structure gates only — no title/body parse.
+ *
+ * @param {{
+ *   pr: {
+ *     number: number;
+ *     baseRefName: string;
+ *     labels: Array<{ name: string } | string>;
+ *     headRepository?: { nameWithOwner?: string };
+ *     updatedAt: string;
+ *   };
+ *   baseOwner: string;
+ *   nowMs: number;
+ * }} input
+ * @returns {{
+ *   eligible: true;
+ *   action: 'pr_review';
+ *   removeStaleInProgressLabel: boolean;
+ * } | { eligible: false; reason: string }}
+ */
+export function classifyPrReviewCandidate({ pr, baseOwner, nowMs }) {
+  const labels = labelNames(pr.labels ?? []);
+  const hasInProgress = labels.includes('agent-merge-in-progress');
+  const updatedAtMs = Date.parse(pr.updatedAt);
+
+  if (pr.baseRefName !== 'master') {
+    return { eligible: false, reason: 'not master' };
+  }
+
+  const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
+  if (headOwner !== baseOwner) {
+    return { eligible: false, reason: 'fork pr' };
+  }
+
+  if (!labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
+    return { eligible: false, reason: 'no blocking merge label' };
+  }
+
+  if (hasInProgress && !isInProgressStale({ updatedAtMs, nowMs })) {
+    return { eligible: false, reason: 'agent-merge-in-progress is fresh' };
+  }
+
+  if (nowMs - updatedAtMs < READY_QUIET_MS) {
+    return { eligible: false, reason: 'ready quiet period' };
+  }
+
+  return {
+    eligible: true,
+    action: 'pr_review',
+    removeStaleInProgressLabel:
+      hasInProgress && isInProgressStale({ updatedAtMs, nowMs }),
+  };
+}
+
+/**
+ * @param {{
+ *   pr: object;
+ *   checks: Array<{ name: string; state: string }>;
+ *   baseOwner: string;
+ *   nowMs: number;
+ * }} input
+ * @returns {{
+ *   eligible: true;
+ *   action: 'conflict' | 'stuck_retry' | 'ci_fix' | 'pr_review';
+ *   removeStaleInProgressLabel: boolean;
+ * } | { eligible: false; reason: string } | null}
+ */
+function classifyAnyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
+  const reconcile = classifyReconcileCandidate({ pr, checks, baseOwner, nowMs });
+  if (reconcile.eligible) {
+    return reconcile;
+  }
+  return classifyPrReviewCandidate({ pr, baseOwner, nowMs });
+}
+
+/**
  * @param {Array<{
  *   number: number;
  *   isDraft: boolean;
@@ -277,7 +361,7 @@ export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
  * @param {number} [nowMs]
  * @returns {{
  *   pr: object;
- *   action: 'conflict' | 'stuck_retry' | 'ci_fix';
+ *   action: 'conflict' | 'stuck_retry' | 'ci_fix' | 'pr_review';
  *   removeStaleInProgressLabel: boolean;
  * } | null}
  */
@@ -288,18 +372,40 @@ export function selectReconcileCandidate(
   nowMs = Date.now(),
 ) {
   const sorted = [...prs].sort((a, b) => a.number - b.number);
+  /** @type {Array<{ pr: object; action: 'conflict' | 'stuck_retry' | 'ci_fix' | 'pr_review'; removeStaleInProgressLabel: boolean }>} */
+  const candidates = [];
+
   for (const pr of sorted) {
     const checks = checksByPrNumber[pr.number] ?? [];
-    const result = classifyReconcileCandidate({ pr, checks, baseOwner, nowMs });
-    if (result.eligible) {
-      return {
+    const result = classifyAnyReconcileCandidate({
+      pr,
+      checks,
+      baseOwner,
+      nowMs,
+    });
+    if (result?.eligible) {
+      candidates.push({
         pr,
         action: result.action,
         removeStaleInProgressLabel: result.removeStaleInProgressLabel,
-      };
+      });
     }
   }
-  return null;
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  candidates.sort((a, b) => {
+    const priorityDelta =
+      RECONCILE_ACTION_PRIORITY[a.action] - RECONCILE_ACTION_PRIORITY[b.action];
+    if (priorityDelta !== 0) {
+      return priorityDelta;
+    }
+    return a.pr.number - b.pr.number;
+  });
+
+  return candidates[0];
 }
 
 /**
