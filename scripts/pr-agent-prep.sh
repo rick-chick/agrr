@@ -41,7 +41,7 @@ repo_owner() {
 fetch_pr_json() {
   local pr_number="$1"
   gh pr view "$pr_number" --json \
-    number,isDraft,author,baseRefName,headRefName,body,labels,headRepository,closingIssuesReferences
+    number,isDraft,author,baseRefName,headRefName,labels,headRepository,closingIssuesReferences
 }
 
 pr_is_eligible() {
@@ -189,7 +189,7 @@ advance_queue() {
     return 0
   fi
 
-  drafts_json="$(gh pr list --state open --label agent-merge --json number,isDraft,author,baseRefName,headRefName,body,labels,headRepository)"
+  drafts_json="$(gh pr list --state open --label agent-merge --json number,isDraft,author,baseRefName,headRefName,labels,headRepository)"
   candidates_json="$(DRAFTS_JSON="$drafts_json" OPEN_READY="$open_ready" BASE_OWNER="$base_owner" node_eval "
     import { isEligibleAgentPr, sortedEligibleDraftNumbers } from '$LIB';
     const drafts = JSON.parse(process.env.DRAFTS_JSON).map((pr) => {

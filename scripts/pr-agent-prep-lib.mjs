@@ -7,8 +7,6 @@ export const BLOCKING_MERGE_LABELS = [
   'agent-merge-blocked',
 ];
 
-export const CURSOR_AUTHOR_LOGINS = new Set(['cursor[bot]', 'app/cursor']);
-
 export const REQUIRED_CI_CONTEXTS = [
   'rails-test',
   'frontend-test',
@@ -28,13 +26,6 @@ export function hasBlockingMergeLabel(labels) {
  */
 export function isOptInHeadRef(headRefName) {
   return /^(cursor\/|issue\/[0-9]+-)/.test(headRefName);
-}
-
-/**
- * @param {string} authorLogin
- */
-export function isCursorAuthor(authorLogin) {
-  return CURSOR_AUTHOR_LOGINS.has(authorLogin);
 }
 
 /**

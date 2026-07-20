@@ -55,7 +55,7 @@ function listOpenMasterPrs(repo) {
     '--base',
     'master',
     '--json',
-    'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author,closingIssuesReferences',
+    'number,title,url,headRefName,headRefOid,labels,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author,closingIssuesReferences',
   ]);
   return JSON.parse(raw);
 }
@@ -76,7 +76,7 @@ function listRecentlyMergedPrs(repo, limit = 50) {
     '--limit',
     String(limit),
     '--json',
-    'number,title',
+    'number,title,closingIssuesReferences',
   ]);
   return JSON.parse(raw);
 }
@@ -88,7 +88,7 @@ function listRecentlyMergedPrs(repo, limit = 50) {
 function closeSupersededPrs(repo, superseded) {
   for (const entry of superseded) {
     const comment =
-      `Closed by PR Merge Worker retry reconcile: superseded by merged PR #${entry.supersededBy} (same title).`;
+      `Closed by PR Merge Worker retry reconcile: superseded by merged PR #${entry.supersededBy}.`;
     console.log(`Closing superseded open PR #${entry.number} (merged #${entry.supersededBy})`);
     gh(repo, [
       'pr',
@@ -172,7 +172,7 @@ function fetchPr(repo, prNumber) {
     'view',
     String(prNumber),
     '--json',
-    'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author,closingIssuesReferences',
+    'number,title,url,headRefName,headRefOid,labels,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author,closingIssuesReferences',
   ]);
   return JSON.parse(raw);
 }

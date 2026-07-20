@@ -32,6 +32,32 @@ test('findSupersededOpenPrs flags open PR when merged PR has same title', () => 
   ]);
 });
 
+test('findSupersededOpenPrs flags open PR when merged PR closed same issue', () => {
+  const superseded = findSupersededOpenPrs(
+    [
+      {
+        number: 436,
+        title: 'feat: different title on parallel branch',
+        closingIssuesReferences: [{ number: 320 }],
+      },
+    ],
+    [
+      {
+        number: 439,
+        title: 'fix: merged under another title',
+        closingIssuesReferences: [{ number: 320 }],
+      },
+    ],
+  );
+  assert.deepEqual(superseded, [
+    {
+      number: 436,
+      title: 'feat: different title on parallel branch',
+      supersededBy: 439,
+    },
+  ]);
+});
+
 test('findSupersededOpenPrs ignores open PR with unique title', () => {
   const superseded = findSupersededOpenPrs(
     [{ number: 437, title: 'docs(agent-review): capture' }],
