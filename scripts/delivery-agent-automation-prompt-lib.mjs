@@ -1,0 +1,66 @@
+/**
+ * Canonical Delivery Agent Automation prompt and prefill URL builder.
+ * Keep in sync with `.cursor/skills/delivery-agent/SKILL.md` § Automation.
+ */
+
+/** @type {string} */
+export const DELIVERY_AGENT_AUTOMATION_PROMPT = `Read \`.cursor/skills/delivery-agent/SKILL.md\` exactly.
+Payload: repository, issue_number, pr_number (optional), pr_unlinked (optional).
+No action field — if present, ignore it. Observe GitHub state and decide.
+Use referenced skills for implement and merge paths.
+After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
+(cleanup-workflow-tick.sh) before opening a PR. Do not skip tick or open PR before gate exit 0.
+After gh pr merge succeeds, if a linked issue has ux-campaign:breadcrumb, continue the same run
+with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent automation.`;
+
+const DELIVERY_AGENT_PREFILL_BASE = {
+  name: 'AGRR Delivery Agent (Webhook)',
+  description:
+    'rick-chick/agrr issue/PR を Delivery Agent — webhook のみ、action なし payload',
+  workflow: {
+    triggers: [{ webhook: {} }],
+    prompts: [{ prompt: DELIVERY_AGENT_AUTOMATION_PROMPT }],
+  },
+  gitConfig: {
+    repo: 'https://github.com/rick-chick/agrr',
+    repos: ['https://github.com/rick-chick/agrr'],
+    branch: 'master',
+  },
+  memoryEnabled: true,
+  agentOptions: { openPullRequest: true },
+};
+
+/**
+ * @returns {string}
+ */
+export function buildDeliveryAgentPrefillToken() {
+  const json = JSON.stringify(DELIVERY_AGENT_PREFILL_BASE);
+  return Buffer.from(json, 'utf8')
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+/**
+ * @returns {string}
+ */
+export function buildDeliveryAgentPrefillUrl() {
+  return `https://cursor.com/automations/new?prefill=${buildDeliveryAgentPrefillToken()}`;
+}
+
+/**
+ * @param {string} prefillToken
+ * @returns {{ prompt: string }}
+ */
+export function decodeDeliveryAgentPrefillToken(prefillToken) {
+  const normalized = prefillToken.replace(/-/g, '+').replace(/_/g, '/');
+  const padding = '='.repeat((4 - (normalized.length % 4)) % 4);
+  const json = Buffer.from(normalized + padding, 'base64').toString('utf8');
+  const data = JSON.parse(json);
+  const prompt = data?.workflow?.prompts?.[0]?.prompt;
+  if (typeof prompt !== 'string') {
+    throw new Error('delivery agent prefill missing workflow.prompts[0].prompt');
+  }
+  return { prompt };
+}
