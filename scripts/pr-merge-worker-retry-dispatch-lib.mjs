@@ -334,7 +334,7 @@ export function classifyPrReviewCandidate({ pr, baseOwner, nowMs }) {
  *   removeStaleInProgressLabel: boolean;
  * } | { eligible: false; reason: string } | null}
  */
-function classifyAnyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
+export function classifyReconcileDispatchCandidate({ pr, checks, baseOwner, nowMs }) {
   const reconcile = classifyReconcileCandidate({ pr, checks, baseOwner, nowMs });
   if (reconcile.eligible) {
     return reconcile;
@@ -377,7 +377,7 @@ export function selectReconcileCandidate(
 
   for (const pr of sorted) {
     const checks = checksByPrNumber[pr.number] ?? [];
-    const result = classifyAnyReconcileCandidate({
+    const result = classifyReconcileDispatchCandidate({
       pr,
       checks,
       baseOwner,

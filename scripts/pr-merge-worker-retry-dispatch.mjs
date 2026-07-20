@@ -19,13 +19,10 @@ import {
 } from './pr-merge-worker-dispatch-payload-lib.mjs';
 import {
   buildRetryDispatchPayload,
-  classifyReconcileCandidate,
+  classifyReconcileDispatchCandidate,
   selectReconcileCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
-import {
-  hasBlockingMergeLabel,
-  shouldReceiveAgentMergeLabel,
-} from './pr-agent-prep-lib.mjs';
+import { resolveUnlinkedPrOptOut } from './pr-merge-worker-reconcile-prep-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
 
 const DEFAULT_REPO = 'rick-chick/agrr';
@@ -66,21 +63,12 @@ function listOpenMasterPrs(repo) {
  */
 function optOutUnlinkedPrsFromAutoMerge(repo, openPrs) {
   for (const pr of openPrs) {
-    const labels = (pr.labels ?? []).map((label) =>
-      typeof label === 'string' ? label : label.name,
-    );
-    if (hasBlockingMergeLabel(labels)) {
-      continue;
-    }
-    const closingIssues = /** @type {Array<unknown>} */ (pr.closingIssuesReferences ?? []);
-    const shouldMerge = shouldReceiveAgentMergeLabel({
-      closingIssueCount: closingIssues.length,
-    });
-    if (shouldMerge) {
+    const decision = resolveUnlinkedPrOptOut(pr);
+    if (!decision.optOut) {
       continue;
     }
     console.log(`Opting out PR #${pr.number} from auto-merge (no linked issue)`);
-    if (labels.includes('agent-merge')) {
+    if (decision.removeAgentMerge) {
       gh(repo, ['pr', 'edit', String(pr.number), '--remove-label', 'agent-merge']);
     }
     gh(repo, ['pr', 'edit', String(pr.number), '--add-label', 'agent-no-merge']);
@@ -202,7 +190,7 @@ function dispatchIfEligible({
 }) {
   const baseOwner = repoOwner(repo);
   const checks = fetchChecks(repo, pr.number);
-  const result = classifyReconcileCandidate({
+  const result = classifyReconcileDispatchCandidate({
     pr,
     checks,
     baseOwner,

@@ -7,6 +7,7 @@ import {
   buildRetryDispatchPayload,
   classifyPrReviewCandidate,
   classifyReconcileCandidate,
+  classifyReconcileDispatchCandidate,
   isInProgressStale,
   selectReconcileCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
@@ -381,6 +382,60 @@ test('classifyPrReviewCandidate rejects PR without blocking merge label', () => 
   });
   assert.equal(result.eligible, false);
   assert.match(result.reason, /blocking merge label/i);
+});
+
+test('classifyReconcileDispatchCandidate routes blocking-label PR to pr_review', () => {
+  const pr = {
+    ...BASE_PR,
+    number: 441,
+    closingIssuesReferences: [],
+    labels: [{ name: 'agent-no-merge' }],
+    mergeable: 'CONFLICTING',
+    mergeStateStatus: 'DIRTY',
+    updatedAt: '2026-07-15T09:00:00.000Z',
+  };
+  const reconcileOnly = classifyReconcileCandidate({
+    pr,
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.equal(reconcileOnly.eligible, false);
+
+  const dispatch = classifyReconcileDispatchCandidate({
+    pr,
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(dispatch, {
+    eligible: true,
+    action: 'pr_review',
+    removeStaleInProgressLabel: false,
+  });
+});
+
+test('selectReconcileCandidate pr_review selection stays dispatchable', () => {
+  const pr = {
+    ...BASE_PR,
+    number: 441,
+    closingIssuesReferences: [],
+    labels: [{ name: 'agent-no-merge' }],
+    mergeable: 'CONFLICTING',
+    mergeStateStatus: 'DIRTY',
+    updatedAt: '2026-07-15T09:00:00.000Z',
+  };
+  const selected = selectReconcileCandidate([pr], { 441: GREEN_CHECKS }, 'rick-chick', NOW);
+  assert.equal(selected?.action, 'pr_review');
+
+  const dispatch = classifyReconcileDispatchCandidate({
+    pr: selected.pr,
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.equal(dispatch.eligible, true);
+  assert.equal(dispatch.action, 'pr_review');
 });
 
 test('classifyPrReviewCandidate rejects fresh agent-merge-in-progress', () => {

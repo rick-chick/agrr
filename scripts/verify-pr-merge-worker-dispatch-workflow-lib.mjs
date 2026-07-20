@@ -52,6 +52,7 @@ const WEBHOOK_POST_LIB_SNIPPETS = [
 
 const RECONCILE_LIB_SNIPPETS = [
   'classifyReconcileCandidate',
+  'classifyReconcileDispatchCandidate',
   'classifyPrReviewCandidate',
   'selectReconcileCandidate',
   'prMergeWorkerNeedsSync',
@@ -237,6 +238,34 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   if (retryDispatchScriptText.includes('findSupersededOpenPrs')) {
     errors.push(
       'pr-merge-worker-retry-dispatch.mjs must not use findSupersededOpenPrs; Agent decides obsolete PRs',
+    );
+  }
+
+  if (!retryDispatchScriptText.includes('classifyReconcileDispatchCandidate')) {
+    errors.push(
+      'pr-merge-worker-retry-dispatch.mjs must classify dispatch via classifyReconcileDispatchCandidate (includes pr_review)',
+    );
+  }
+
+  if (retryDispatchScriptText.includes('classifyReconcileCandidate(')) {
+    errors.push(
+      'pr-merge-worker-retry-dispatch.mjs must not call classifyReconcileCandidate directly; use classifyReconcileDispatchCandidate',
+    );
+  }
+
+  const reconcilePrepLibPath = join(
+    repoRoot,
+    'scripts/pr-merge-worker-reconcile-prep-lib.mjs',
+  );
+  try {
+    await readFile(reconcilePrepLibPath, 'utf8');
+  } catch {
+    errors.push(`missing reconcile prep lib: ${reconcilePrepLibPath}`);
+  }
+
+  if (!retryDispatchScriptText.includes('resolveUnlinkedPrOptOut')) {
+    errors.push(
+      'pr-merge-worker-retry-dispatch.mjs must use resolveUnlinkedPrOptOut from reconcile prep lib',
     );
   }
 

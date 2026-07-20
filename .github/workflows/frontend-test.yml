@@ -100,6 +100,7 @@ jobs:
           node --test scripts/issue-worker-dispatch-lib.test.mjs
           node --test scripts/pr-merge-worker-needs-sync.test.mjs
           node --test scripts/pr-merge-worker-primary-dispatch-lib.test.mjs
+          node --test scripts/pr-merge-worker-reconcile-prep-lib.test.mjs
           node --test scripts/pr-merge-worker-dispatch-payload-lib.test.mjs
           node --test scripts/pr-merge-worker-retry-dispatch-lib.test.mjs
           node --test scripts/verify-pr-agent-prep-workflow.test.mjs
