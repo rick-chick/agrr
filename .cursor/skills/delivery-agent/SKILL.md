@@ -146,6 +146,7 @@ with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent a
 
 1. [Prefill](#prefill-urlフォーム事前入力) または Dashboard で **Delivery Automation** 作成（Webhook のみ）
    - **作成済み**: [AGRR Delivery Agent (Webhook)](https://cursor.com/automations/6a5cb2d9-8317-11f1-a7d1-d6b4613131ce)（`6a5cb2d9-8317-11f1-a7d1-d6b4613131ce`）
+   - **プロンプトに `pr_unlinked (optional)` が無い場合**は [cursor-automation-schedule §既存 Automation のプロンプト更新](../cloud-automation-audit/references/cursor-automation-schedule.md#delivery-agentissue--merge-統合) を実施（reconcile の HTTP 400 解消）
 2. `CURSOR_DELIVERY_WEBHOOK_URL` / `KEY` を repo secrets に登録
 3. 旧 Automation を **OFF**（**workflow マージより先**）:
    - [AGRR Issue Worker (Webhook)](https://cursor.com/automations/6ad06db2-9fea-4a66-a56b-2cf7145f102d)
