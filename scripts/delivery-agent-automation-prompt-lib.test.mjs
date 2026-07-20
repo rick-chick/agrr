@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
 import {
+  DELIVERY_AGENT_AUTOMATION_ID,
   DELIVERY_AGENT_AUTOMATION_PROMPT,
+  buildDeliveryAgentAutomationApplyUrl,
   buildDeliveryAgentPrefillToken,
   buildDeliveryAgentPrefillUrl,
   decodeDeliveryAgentPrefillToken,
@@ -53,5 +55,35 @@ test('buildDeliveryAgentPrefillUrl is stable', () => {
   assert.equal(
     buildDeliveryAgentPrefillUrl(),
     `https://cursor.com/automations/new?prefill=${buildDeliveryAgentPrefillToken()}`,
+  );
+});
+
+test('buildDeliveryAgentAutomationApplyUrl targets live automation with canonical prefill', () => {
+  assert.equal(
+    DELIVERY_AGENT_AUTOMATION_ID,
+    '6a5cb2d9-8317-11f1-a7d1-d6b4613131ce',
+  );
+  const url = buildDeliveryAgentAutomationApplyUrl();
+  assert.equal(
+    url,
+    `https://cursor.com/automations/${DELIVERY_AGENT_AUTOMATION_ID}?prefill=${buildDeliveryAgentPrefillToken()}`,
+  );
+  const token = new URL(url).searchParams.get('prefill');
+  assert.ok(token);
+  const { prompt } = decodeDeliveryAgentPrefillToken(token);
+  assert.equal(prompt, DELIVERY_AGENT_AUTOMATION_PROMPT);
+});
+
+test('cursor-automation-schedule embeds one-click apply URL for live Delivery Agent', async () => {
+  const schedulePath = join(
+    REPO_ROOT,
+    '.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md',
+  );
+  const text = await readFile(schedulePath, 'utf8');
+  const applyUrl = buildDeliveryAgentAutomationApplyUrl();
+  assert.match(
+    text,
+    new RegExp(applyUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+    'schedule must include live Delivery Agent apply URL',
   );
 });
