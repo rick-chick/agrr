@@ -11,6 +11,7 @@
 import { execFileSync } from 'node:child_process';
 import { parseRetryDispatchArgs } from './issue-worker-dispatch-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
+import { deliveryPrWebhookPayloadIsDispatchable } from './delivery-dispatch-lib.mjs';
 import {
   buildCiFixDispatchPayload,
   buildConflictDispatchPayload,
@@ -93,6 +94,13 @@ function postWebhook(repo, payload, reconcileAction) {
   if (!webhookUrl || !webhookKey) {
     console.log('WEBHOOK_URL or WEBHOOK_KEY is not set; skipping reconcile dispatch.');
     process.exit(0);
+  }
+
+  if (!deliveryPrWebhookPayloadIsDispatchable(payload)) {
+    console.log(
+      `PR #${payload.pr_number} has no linked issue for Delivery Agent webhook; skipping reconcile dispatch.`,
+    );
+    return;
   }
 
   postWebhookJson({

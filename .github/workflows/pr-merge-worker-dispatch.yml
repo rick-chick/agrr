@@ -205,11 +205,21 @@ jobs:
 
           PR_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
           payload=$(REPOSITORY="${{ github.repository }}" PR_NUMBER="$PR_NUMBER" node --input-type=module -e "
-            import { buildDeliveryPrPayloadFromPr } from './scripts/delivery-dispatch-lib.mjs';
+            import {
+              buildDeliveryPrPayloadFromPr,
+              deliveryPrWebhookPayloadIsDispatchable,
+            } from './scripts/delivery-dispatch-lib.mjs';
             const payload = buildDeliveryPrPayloadFromPr(
               { number: Number(process.env.PR_NUMBER), body: process.argv[1] },
               process.env.REPOSITORY,
             );
+            if (!deliveryPrWebhookPayloadIsDispatchable(payload)) {
+              console.log('PR has no linked issue for Delivery Agent webhook; skipping dispatch.');
+              process.exit(0);
+            }
             process.stdout.write(JSON.stringify(payload));
           " "$PR_BODY")
+          if [ -z "$payload" ]; then
+            exit 0
+          fi
           printf '%s' "$payload" | node scripts/post-cursor-webhook.mjs

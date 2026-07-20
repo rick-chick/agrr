@@ -5,6 +5,7 @@ import {
   buildDeliveryIssuePayload,
   buildDeliveryPrPayload,
   buildDeliveryPrPayloadFromPr,
+  deliveryPrWebhookPayloadIsDispatchable,
   parseDispatchedIssueNumberFromLog,
   resolveIssueNumberFromPrBody,
 } from './delivery-dispatch-lib.mjs';
@@ -71,6 +72,25 @@ test('buildDeliveryPrPayload includes issue_number from Closes when provided', (
   assert.equal(payload.pr_number, 427);
   assert.equal(payload.issue_number, 323);
   assert.equal('action' in payload, false);
+});
+
+test('deliveryPrWebhookPayloadIsDispatchable requires issue_number', () => {
+  assert.equal(
+    deliveryPrWebhookPayloadIsDispatchable({
+      repository: 'rick-chick/agrr',
+      pr_number: 430,
+      pr_unlinked: true,
+    }),
+    false,
+  );
+  assert.equal(
+    deliveryPrWebhookPayloadIsDispatchable({
+      repository: 'rick-chick/agrr',
+      pr_number: 277,
+      issue_number: 276,
+    }),
+    true,
+  );
 });
 
 test('resolveIssueNumberFromPrBody parses closes and fixes', () => {
