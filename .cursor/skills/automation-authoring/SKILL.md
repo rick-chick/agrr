@@ -8,13 +8,11 @@ disable-model-invocation: false
 
 # Automation Authoring（AGRR）
 
-**目的**: 人間がラベル付与や UI 再開をしなくても、Automation が **完了・再開・完遂**できる閉ループを作る。場合分けで止まらせず **全部拾う**。詳細は [PRINCIPLES.md §目的 / §全部拾う](references/PRINCIPLES.md)。
+**目的**: 人間のラベル付与・UI 再開なしで **完了・再開・完遂**する閉ループ。場合分けで止めず **全部拾う**（[PRINCIPLES.md](references/PRINCIPLES.md)）。
 
-**GitHub 機械層（Actions + scripts）** と **Cursor Cloud Agent（スキル + webhook）** の閉ループを、壊れず・重複なく・観測可能に追加する。
+**GitHub 機械層** と **Cursor Cloud Agent** の閉ループを、壊れず・重複なく・観測可能に追加する。本スキルは**新規・変更・修正**時の設計ゲートに専念する。
 
-本スキルは既存 Automation の**通常実行手順を置き換えない**。**新規・変更・修正**時の設計ゲートと手順に専念する。
-
-**思想優先**: 最小パッチより [PRINCIPLES.md](references/PRINCIPLES.md) と [automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc) を優先。提示する案は思想に沿ったものとする。
+**思想優先**: [PRINCIPLES.md](references/PRINCIPLES.md) と [automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc) を最小パッチより優先。
 
 ## 適用
 
@@ -45,10 +43,7 @@ disable-model-invocation: false
 
 ### 修正・レビュー時の追加ゲート
 
-1. 提示案が PRINCIPLES の **目的・全部拾う・二層分離**に説明できるか
-2. 差分・触れる近傍に **本文パース**が残っていないか（発見したら同一変更で除去）
-3. **エージェント起動**で済む判断を機械層に置いていないか
-4. コスト低減案が **本文パース・例外ラベル・dispatch 省略**に依存していないか（[PRINCIPLES.md §機械ゲート](references/PRINCIPLES.md)、[automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc)）
+[automation-philosophy-priority.mdc §着手前チェック](../../rules/automation-philosophy-priority.mdc) を満たすこと。
 
 ## 1) 責任分界を固定する
 
@@ -57,7 +52,7 @@ disable-model-invocation: false
 | **GitHub Actions** | イベント検知・**機械ゲート**・webhook 中継・ラベル・reconcile |
 | **Cursor Automation** | **エージェント判定**・スキルに従う実装・コード変更・PR |
 
-**本文のパースは禁止。** 必要な判断はエージェントが `gh` で本文を読んで行う。Actions / dispatch lib は機械ゲートのみ（[PRINCIPLES.md §機械ゲートとエージェント判定](references/PRINCIPLES.md)）。
+**本文パースは禁止。** 判断はエージェントが `gh` で行う。Actions / dispatch lib は機械ゲートのみ（[PRINCIPLES.md §機械ゲート](references/PRINCIPLES.md)）。
 
 Actions から Cloud Agent を起動するときは **`postWebhook`（curl）が正**。`GITHUB_TOKEN` でラベル付与だけでは `issues: labeled` workflow は起動しない（詳細は [GITHUB-ACTIONS-CONSTRAINTS.md](references/GITHUB-ACTIONS-CONSTRAINTS.md)）。
 
@@ -111,20 +106,13 @@ unit test GREEN だけでは完了にしない。
 
 ## 7) 禁止
 
-- 根拠なしの経路変更（「たぶん labeled が飛ぶ」等）
-- `GITHUB_TOKEN` ラベル付与だけで Agent 起動を期待する設計
-- dispatch lib と SKILL で別ロジックのゲート
-- retry なしの新規 webhook パイプライン
-- **人間のラベル付与・UI 再開を本筋の前提にする**
-- **人間レビューを安全ゲートにする**（「レビューがないと不十分だからオプトイン／承認必須」— 本リポジトリでは誤り）
-- **事細かな場合分けで起動をスキップし、止まって人間待ちになる設計**（狭い例外を足すより全部拾う — [PRINCIPLES.md §全部拾う](references/PRINCIPLES.md)）
-- 1 イベントで複数 Agent を fan-out
-- SKILL だけ書いて workflow / test を省略
-- 監査・watchdog 登録の省略
-- **機械層への本文パース**（新規・残置・既存の温存。「動いている」は理由にならない）
-- **思想違反の最小パッチ**（症状だけ直し、パースや責任空白を残す）
-- **本文パース・ラベル省略でエージェント起動を避ける**（総コスト比較でエージェント起動を優先 — [PRINCIPLES.md §機械ゲート](references/PRINCIPLES.md)）
-- **パース・例外ラベルでエージェントコストを下げる設計**（総コストが増える傾向 — [automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc) §エージェントコストの低減）
+- 根拠なしの経路変更、`GITHUB_TOKEN` ラベルだけで Agent 起動を期待する設計
+- dispatch lib と SKILL で別ロジックのゲート、retry なしの新規 webhook パイプライン
+- **人間のラベル付与・UI 再開・人間レビューを本筋の前提にする**
+- **場合分けで起動をスキップし人間待ちになる設計**（[PRINCIPLES.md §全部拾う](references/PRINCIPLES.md)）
+- 1 イベントで複数 Agent fan-out、SKILL だけで workflow / test 省略、watchdog 登録省略
+- **機械層への本文パース**（新規・残置・温存）、**思想違反の最小パッチ**
+- **パース・例外ラベルでエージェント起動を避ける設計**（[automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc)）
 
 ## 関連
 

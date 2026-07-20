@@ -1,80 +1,79 @@
 ---
 description: >-
-  オートメーション修正は思想（PRINCIPLES）優先。機械層の本文パース禁止。
-  エージェント起動はパース・例外ラベル省略より総コストで優先。コスト低減は別手段で行う。
+  オートメーション修正は PRINCIPLES 優先。機械層の本文パース禁止。
+  判断はエージェント起動。コスト低減はパース・例外ラベル・dispatch 省略以外。
 alwaysApply: true
 ---
 
 # オートメーション思想優先
 
-正本: [`.cursor/skills/automation-authoring/references/PRINCIPLES.md`](../skills/automation-authoring/references/PRINCIPLES.md)。手順・チェックリスト: [`automation-authoring` スキル](../skills/automation-authoring/SKILL.md)。
+正本: [PRINCIPLES.md](../skills/automation-authoring/references/PRINCIPLES.md)。手順: [`automation-authoring` スキル](../skills/automation-authoring/SKILL.md)。
 
 ## 適用
 
 | 対象 | 例 |
 |------|-----|
-| Cursor Automation / dispatch / retry / reconcile の**新規・変更・レビュー** | workflow、`*-dispatch-lib.mjs`、`pr-agent-prep*`、webhook payload |
+| Automation / dispatch / retry / reconcile の**新規・変更・レビュー** | workflow、`*-dispatch-lib.mjs`、`pr-agent-prep*` |
 | オートメーション経路の**バグ修正・最小パッチ** | 症状 1 行直しでも本ルールが先 |
 
-**`implementation-consistency-with-existing.mdc` より本ルールが上**（オートメーション機械層）。既存の本文パースや狭いゲートを「近傍に合わせて」写さない。
+**`implementation-consistency-with-existing.mdc` より本ルールが上**（機械層）。既存の本文パースや狭いゲートを「近傍に合わせて」写さない。
 
-## 思想優先（最小パッチより上）
+## 思想優先
 
-オートメーションの修正・提案・PR は、**動く最小差分**より **PRINCIPLES に沿った完成形**を先に示す。
+修正・提案・PR は **PRINCIPLES に沿った完成形**を最小差分より先に示す。
 
 | 許可 | 禁止 |
 |------|------|
-| 思想に沿う修正案（本文パース除去・エージェント判定への委譲・reconcile 経路の整合） | 「今回だけ」「後で」「既存もそう」で思想違反を残す |
-| 同一変更内で触れた機械層のパース負債を解消 | 症状だけ直し、パースや二重ゲートを増やす |
-| 着手前に [`automation-authoring` §0](../skills/automation-authoring/SKILL.md) の 5 項目を満たす | unit GREEN のみで E2E・思想整合を省略 |
+| パース除去・エージェント判定への委譲・reconcile 整合 | 「今回だけ」「後で」「既存もそう」 |
+| 触れた機械層のパース負債を同一変更で解消 | 症状だけ直し、パースや二重ゲートを増やす |
+| [`automation-authoring` §0](../skills/automation-authoring/SKILL.md) 着手前 5 項目 | unit GREEN のみで E2E・思想整合を省略 |
 
-[`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc) と同趣旨。オートメーション機械層では **本ルールと PRINCIPLES が具体化**。
+[`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc) と同趣旨。機械層では **本ルールが具体化**。
 
 ## 本文パース禁止（機械層）
 
-GitHub Actions / `scripts/*-dispatch*.mjs` / workflow bash / reconcile lib に **issue・PR 本文の解釈を置かない**。
+Actions / `scripts/*-dispatch*.mjs` / workflow bash / reconcile lib に **issue・PR 本文の解釈を置かない**。
 
-- **禁止の例**: `Closes #N` / `fixes #N` の regex、`Merge-Strategy:` の本文 grep、依存 `#N` の本文抽出、タイトル・キーワードだけの triage
-- **機械層の入力**: GitHub API の構造フィールド（`closingIssuesReferences`、`labels`、`mergeable`、`mergeStateStatus`、checks 等）と、**エージェントが先に書いた契約**（`agent-deps:v1`、Memory、ラベル）
-- **本文の読解**: Delivery Agent / Worker SKILL が `gh issue view` / `gh pr view` で行う。機械層で代用しない
+- **禁止例**: `Closes #N` regex、`Merge-Strategy:` grep、依存 `#N` 抽出、タイトル・キーワード triage
+- **入力**: GitHub API 構造フィールド（`closingIssuesReferences`、`labels`、`mergeable` 等）とエージェント契約（`agent-deps:v1`、Memory、ラベル）
+- **読解**: Worker SKILL が `gh issue view` / `gh pr view` で行う
 
-**既存コードにパースがあって動いていても技術負債。** オートメーション経路を触る変更では、**同一 PR で除去**する。別 PR に送るのは [`agent-conventions.mdc`](agent-conventions.mdc) の規約上の障害（スコープ衝突等）のみ。
+既存パースも技術負債。**触る変更では同一 PR で除去**（別 PR は規約上の障害時のみ）。
 
 ## エージェント起動 vs 機械省略
 
-**総コスト（改修・滞留・人間介入・負債解消を含む）の比較では、判断が要る場面ではエージェント起動を優先する。** 本文パースや状態ラベル追加だけで dispatch を省略する設計は、長期的な総コストが大きくなる傾向がある。
+判断が要るときは **webhook で Agent を起動**。機械層で「ラベル不足」「本文不一致」を skip しない（責任空白・人間待ち）。
 
-機械層で「ラベルが無いから送らない」「本文に無いから skip」は、責任空白と人間待ちを生む。判断が要るときは **webhook で Agent を起動**し、SKILL に従わせる。結果はラベル・コメント・Memory に残し、次回の機械ゲートが読める形にする。
+パース・例外ラベルで dispatch を減らす設計は用いない。総コストではエージェント起動の方が小さい傾向がある（改修履歴で確認済み）。結果はラベル・コメント・Memory に残す。
 
-**パースや例外目的の追加ラベルでエージェント起動を減らす設計は用いない。** エージェントで解ける判断を機械層に移すと、総コストがエージェント起動のみの経路より大きくなることが、本リポジトリの改修履歴で繰り返し確認されている。
+## コスト低減（許可手段）
 
-## エージェントコストの低減（許可される手段）
+**パース・例外ラベル・dispatch 省略以外**で行う。
 
-エージェント起動回数・不要な run を減らすときは、**本文パース・例外ラベル・dispatch 省略以外**で行う。
+| 許可 | 禁止 |
+|------|------|
+| API 構造フィールドのみの機械ゲート | 本文 regex で「送らない」 |
+| primary / retry で **同じ dispatch lib** | 機械層補完のラベル乱立 |
+| reconcile **1 回 1 件・番号昇順** | 「ラベル待ち」「永久 skip」 |
+| SKILL 明確化、watchdog・契約テスト・E2E | triage の workflow bash 複製 |
+| concurrency・backoff・stale 検知 | 起動コストのみを理由にした機械省略 |
 
-| 許可 | 禁止（総コストが増える傾向） |
-|------|------------------------------|
-| 機械ゲートを **GitHub API 構造フィールドのみ**に絞る（重複 dispatch 防止、in-progress、merge 可否） | 本文 regex / キーワード / `Closes #N` 抽出で「送らない」 |
-| primary / retry で **同じ dispatch lib**（二重実装・分岐の増殖を防ぐ） | ラベル不足を機械層で補うための **ラベルの過剰な追加** |
-| reconcile の **1 回 1 件・番号昇順**（不要な並列起動を避ける） | 「ラベルが付くまで待つ」「本文に無いから永久 skip」 |
-| SKILL の明確化（Agent が exit 0 / 実装 / close を一貫して選べる） | エージェントが読むべき triage を workflow bash に複製 |
-| watchdog / 契約テスト / E2E で **再改修コスト**を下げる | fan-out・二重 webhook・本筋を狭くして救済に押し付ける |
-| concurrency・backoff・stale 検知で **重複・無駄打ち**を減らす | エージェント起動コストのみを理由にした機械省略 |
+**判断**: 省略がパース・例外ラベル・責任空白を生むなら採用しない。
 
-**コスト低減の設計判断**: 「この省略でエージェント run は減るが、パース・例外ラベル・責任空白を生むか？」→ **生むなら採用しない。**
+## 着手前チェック
 
-## 着手前チェック（オートメーション変更）
+[`automation-authoring` §0](../skills/automation-authoring/SKILL.md) の 5 項目に加え:
 
-1. 提示する案は PRINCIPLES の **目的・全部拾う・二層分離**に一言で説明できるか
-2. 差分に **本文パース**（新規・残置）がないか — `rg` で `body\.match|Closes #|fixes #|Merge-Strategy` 等を確認
-3. **滞留時の回復経路**は人間再開なしで閉じるか（[`automation-authoring` §0](../skills/automation-authoring/SKILL.md)）
-4. unit 以外に **E2E / Actions 副作用**の確認手順があるか（修正の規模に応じて）
+1. 案が **目的・全部拾う・二層分離**に説明できるか
+2. `rg 'body\.match|Closes #|fixes #|Merge-Strategy'` で本文パース残置がないか
+3. 滞留回復が人間再開なしで閉じるか
+4. 規模に応じた E2E / Actions 確認手順があるか
 
 ## 参照
 
 | 主題 | 所在 |
 |------|------|
-| 設計原則正本 | [`PRINCIPLES.md`](../skills/automation-authoring/references/PRINCIPLES.md) |
-| 新規・変更手順 | [`automation-authoring/SKILL.md`](../skills/automation-authoring/SKILL.md) |
-| 技術負債残置禁止 | [`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc) |
-| 担当所在表 | [`agent-conventions.mdc`](agent-conventions.mdc) |
+| 設計原則 | [PRINCIPLES.md](../skills/automation-authoring/references/PRINCIPLES.md) |
+| 手順 | [automation-authoring/SKILL.md](../skills/automation-authoring/SKILL.md) |
+| 技術負債 | [no-convenience-tech-debt.mdc](no-convenience-tech-debt.mdc) |
+| 担当表 | [agent-conventions.mdc](agent-conventions.mdc) |

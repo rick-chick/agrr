@@ -31,7 +31,7 @@ alwaysApply: true
 | **設計・実装の根拠ゲート**（確実に説明できる／再現できるのいずれか未満では着手しない・未満なら調査継続・仮説段階で設計・実装しない） | [`evidence-before-design-and-implementation.mdc`](evidence-before-design-and-implementation.mdc) |
 | **プロジェクトに必要な成果物のみ**（コード・ドキュメント・スクリプト。依頼・根拠・規約に直結しない追加は禁止） | [`project-necessary-code-only.mdc`](project-necessary-code-only.mdc) |
 | **Automation / dispatch 新規追加・変更の設計規約** | [`automation-authoring` スキル](../skills/automation-authoring/SKILL.md) |
-| **オートメーション思想優先・機械層の本文パース禁止** | [`automation-philosophy-priority.mdc`](automation-philosophy-priority.mdc)（正本の補足は [`PRINCIPLES.md`](../skills/automation-authoring/references/PRINCIPLES.md)） |
+| **オートメーション思想優先** | [`automation-philosophy-priority.mdc`](automation-philosophy-priority.mdc)（正本: [`PRINCIPLES.md`](../skills/automation-authoring/references/PRINCIPLES.md)） |
 
 他の alwaysApply ルールに同趣旨があるときは、上表を指すに留め、新しい禁止条項だけを足す。
 
