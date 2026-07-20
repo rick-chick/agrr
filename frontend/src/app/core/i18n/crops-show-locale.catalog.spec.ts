@@ -48,6 +48,7 @@ const CROPS_SHOW_KEYS = [
   'crops.show.task_schedule_blueprints_gdd_axis_caption',
   'crops.show.task_schedule_blueprints_gdd_axis_label',
   'crops.show.no_task_schedule_blueprints',
+  'crops.show.no_stages_description',
   'crops.show.gdd_trigger',
   'crops.show.gdd_trigger_placeholder',
   'crops.show.blueprint_gdd_unset',
