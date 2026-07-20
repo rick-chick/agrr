@@ -1,0 +1,30 @@
+# Smoke-test Delivery Agent webhook payloads against live Cursor Automation.
+#
+# Triggers:
+# - workflow_dispatch (manual or automation)
+# - push to master when delivery webhook / prompt contract files change
+#
+# Secrets: CURSOR_DELIVERY_WEBHOOK_URL, CURSOR_DELIVERY_WEBHOOK_KEY
+
+name: Delivery Webhook Smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Smoke-test Delivery webhook payloads
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$WEBHOOK_URL" ] || [ -z "$WEBHOOK_KEY" ]; then
+            echo "CURSOR_DELIVERY_WEBHOOK_* secrets are not set; skipping smoke."
+            exit 0
+          fi
+          node scripts/verify-delivery-webhook-smoke.mjs

@@ -25,7 +25,7 @@ description: >-
 ## §0 観測と分岐（毎 run 先頭・固定順）
 
 1. **payload** — `repository`、任意の `issue_number` / `pr_number` / `pr_unlinked`
-   - **`pr_unlinked: true`**（`issue_number` なし）→ **PR フェーズ直行**（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。issue 実装・新規 PR 禁止。
+   - **`pr_unlinked: true`**、または **`pr_number` のみ**（`issue_number` なし）→ **PR フェーズ直行**（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。issue 実装・新規 PR 禁止。
 2. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,labels`
    - リンク issue 番号は **`closingIssuesReferences` のみ**（機械層は本文を読まない。Agent も `gh pr view --json closingIssuesReferences` を正とする）
    - **`merged: true`** → issue 実装・再マージ**禁止**。リンク issue のラベルを `gh issue view` で確認
@@ -132,6 +132,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 ```
 Read `.cursor/skills/delivery-agent/SKILL.md` exactly.
 Payload: repository, issue_number, pr_number (optional), pr_unlinked (optional).
+pr_unlinked: true OR pr_number without issue_number means PR-phase only (no issue implement).
 No action field — if present, ignore it. Observe GitHub state and decide.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
