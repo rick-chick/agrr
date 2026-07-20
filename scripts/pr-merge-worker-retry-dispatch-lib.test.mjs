@@ -130,6 +130,24 @@ test('classifyReconcileCandidate accepts ready feat PR BEHIND without agent-merg
   });
 });
 
+test('classifyReconcileCandidate rejects BEHIND PR without linked issue for delivery webhook', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      number: 430,
+      body: '## Summary\n\nHuman PR without Closes issue link.',
+      labels: [],
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'BEHIND',
+    },
+    checks: FAILED_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.equal(result.eligible, false);
+  assert.equal(result.reason, 'no linked issue for delivery webhook');
+});
+
 test('classifyReconcileCandidate rejects draft PR while required CI is pending', () => {
   const result = classifyReconcileCandidate({
     pr: {
@@ -336,14 +354,6 @@ test('buildRetryDispatchPayload maps stuck retry fields', () => {
     repository: 'rick-chick/agrr',
     pr_number: 277,
     issue_number: 276,
-    pr_title: 'fix: crop stages (#276)',
-    pr_url: 'https://github.com/rick-chick/agrr/pull/277',
-    head_ref: 'cursor/agrr-issue-worker-workflow-2db2',
-    head_sha: 'abc123',
-    author: 'cursor[bot]',
-    mergeable_state: 'MERGEABLE',
-    merge_state_status: 'CLEAN',
-    retry_reason: 'scheduled_reconcile',
   });
   assert.equal('action' in payload, false);
 });

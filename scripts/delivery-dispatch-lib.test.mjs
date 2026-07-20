@@ -5,6 +5,7 @@ import {
   buildDeliveryIssuePayload,
   buildDeliveryPrPayload,
   buildDeliveryPrPayloadFromPr,
+  deliveryPrWebhookPayloadIsDispatchable,
   parseDispatchedIssueNumberFromLog,
   resolveIssueNumberFromPrBody,
 } from './delivery-dispatch-lib.mjs';
@@ -31,6 +32,35 @@ test('buildDeliveryIssuePayload omits action field', () => {
   assert.equal('action' in payload, false);
 });
 
+test('buildDeliveryPrPayload keeps only documented Delivery Agent webhook fields', () => {
+  const payload = buildDeliveryPrPayload({
+    repository: 'rick-chick/agrr',
+    prNumber: 430,
+    issueNumber: null,
+    prTitle: 'fix(frontend): crop list card overflow menu',
+    prUrl: 'https://github.com/rick-chick/agrr/pull/430',
+    headRef: 'fix/crop-list-overflow-menu',
+    headSha: '891f6e3d0baef1a1c1c3fad8f81a92b32e45a563',
+    author: 'rick-chick',
+    mergeableState: 'MERGEABLE',
+    mergeStateStatus: 'CLEAN',
+    retryReason: 'scheduled_reconcile',
+  });
+  assert.deepEqual(payload, {
+    repository: 'rick-chick/agrr',
+    pr_number: 430,
+    pr_unlinked: true,
+  });
+  assert.equal('pr_title' in payload, false);
+  assert.equal('pr_url' in payload, false);
+  assert.equal('retry_reason' in payload, false);
+  assert.equal('head_ref' in payload, false);
+  assert.equal('head_sha' in payload, false);
+  assert.equal('author' in payload, false);
+  assert.equal('mergeable_state' in payload, false);
+  assert.equal('merge_state_status' in payload, false);
+});
+
 test('buildDeliveryPrPayload includes issue_number from Closes when provided', () => {
   const payload = buildDeliveryPrPayload({
     repository: 'rick-chick/agrr',
@@ -42,6 +72,25 @@ test('buildDeliveryPrPayload includes issue_number from Closes when provided', (
   assert.equal(payload.pr_number, 427);
   assert.equal(payload.issue_number, 323);
   assert.equal('action' in payload, false);
+});
+
+test('deliveryPrWebhookPayloadIsDispatchable requires issue_number', () => {
+  assert.equal(
+    deliveryPrWebhookPayloadIsDispatchable({
+      repository: 'rick-chick/agrr',
+      pr_number: 430,
+      pr_unlinked: true,
+    }),
+    false,
+  );
+  assert.equal(
+    deliveryPrWebhookPayloadIsDispatchable({
+      repository: 'rick-chick/agrr',
+      pr_number: 277,
+      issue_number: 276,
+    }),
+    true,
+  );
 });
 
 test('resolveIssueNumberFromPrBody parses closes and fixes', () => {
@@ -68,8 +117,29 @@ test('buildDeliveryPrPayloadFromPr maps PR fields', () => {
   );
   assert.equal(payload.issue_number, 276);
   assert.equal(payload.pr_number, 277);
-  assert.equal(payload.retry_reason, 'scheduled_reconcile');
+  assert.equal('retry_reason' in payload, false);
+  assert.equal('pr_title' in payload, false);
+  assert.equal('pr_url' in payload, false);
+  assert.equal('pr_unlinked' in payload, false);
   assert.equal('action' in payload, false);
+});
+
+test('buildDeliveryPrPayloadFromPr sets pr_unlinked for PR without Closes issue', () => {
+  const payload = buildDeliveryPrPayloadFromPr(
+    {
+      number: 430,
+      title: 'fix(frontend): crop list card overflow menu',
+      url: 'https://github.com/rick-chick/agrr/pull/430',
+      body: '## Summary\n\nHuman PR without issue link.',
+    },
+    'rick-chick/agrr',
+  );
+  assert.deepEqual(payload, {
+    repository: 'rick-chick/agrr',
+    pr_number: 430,
+    pr_unlinked: true,
+  });
+  assert.equal('issue_number' in payload, false);
 });
 
 test('buildDeliveryIssuePayload supports body_hash for deps judgment runs', () => {

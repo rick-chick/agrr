@@ -26,13 +26,6 @@ test('buildConflictDispatchPayload maps PR fields for conflict dispatch', () => 
     repository: 'rick-chick/agrr',
     pr_number: 240,
     issue_number: 319,
-    pr_title: 'fix(automation): delegate master sync',
-    pr_url: 'https://github.com/rick-chick/agrr/pull/240',
-    head_ref: 'cursor/missing-test-coverage-da67',
-    head_sha: 'abc123',
-    author: 'cursor[bot]',
-    mergeable_state: 'MERGEABLE',
-    merge_state_status: 'BEHIND',
   });
   assert.equal('action' in payload, false);
 });
@@ -57,13 +50,6 @@ test('buildCiFixDispatchPayload maps PR fields for ci_fix dispatch', () => {
     repository: 'rick-chick/agrr',
     pr_number: 353,
     issue_number: 319,
-    pr_title: 'fix: setup proposal (#319)',
-    pr_url: 'https://github.com/rick-chick/agrr/pull/353',
-    head_ref: 'cursor/agrr-issue-worker-workflow-abc',
-    head_sha: 'def456',
-    author: 'cursor[bot]',
-    mergeable_state: 'MERGEABLE',
-    merge_state_status: 'CLEAN',
   });
   assert.equal('action' in payload, false);
 });
@@ -80,8 +66,10 @@ test('buildConflictDispatchPayload defaults missing optional fields', () => {
     },
   });
 
-  assert.equal(payload.author, '');
-  assert.equal(payload.mergeable_state, '');
-  assert.equal(payload.merge_state_status, '');
+  assert.deepEqual(payload, {
+    repository: 'rick-chick/agrr',
+    pr_number: 1,
+    pr_unlinked: true,
+  });
   assert.equal('action' in payload, false);
 });

@@ -1,4 +1,4 @@
-import { buildDeliveryPrPayload, resolveIssueNumberFromPrBody } from './delivery-dispatch-lib.mjs';
+import { buildDeliveryPrPayloadFromPr } from './delivery-dispatch-lib.mjs';
 
 /**
  * Build webhook payload for Delivery Agent PR dispatch (conflict / sync path).
@@ -9,18 +9,7 @@ import { buildDeliveryPrPayload, resolveIssueNumberFromPrBody } from './delivery
  * @returns {object}
  */
 export function buildConflictDispatchPayload({ repository, pr }) {
-  return buildDeliveryPrPayload({
-    repository,
-    prNumber: pr.number,
-    issueNumber: resolveIssueNumberFromPrBody(pr.body),
-    prTitle: pr.title,
-    prUrl: pr.url,
-    headRef: pr.headRefName,
-    headSha: pr.headRefOid,
-    author: pr.author?.login ?? '',
-    mergeableState: pr.mergeable ?? '',
-    mergeStateStatus: pr.mergeStateStatus ?? '',
-  });
+  return buildDeliveryPrPayloadFromPr(pr, repository);
 }
 
 /**

@@ -67,14 +67,6 @@ export function resolveIssueNumberFromPrBody(body) {
  *   repository: string;
  *   prNumber: number;
  *   issueNumber?: number | null;
- *   prTitle?: string;
- *   prUrl?: string;
- *   headRef?: string;
- *   headSha?: string;
- *   author?: string;
- *   mergeableState?: string;
- *   mergeStateStatus?: string;
- *   retryReason?: string;
  * }} input
  * @returns {Record<string, unknown>}
  */
@@ -82,14 +74,6 @@ export function buildDeliveryPrPayload({
   repository,
   prNumber,
   issueNumber,
-  prTitle,
-  prUrl,
-  headRef,
-  headSha,
-  author,
-  mergeableState,
-  mergeStateStatus,
-  retryReason,
 }) {
   const payload = {
     repository,
@@ -97,32 +81,26 @@ export function buildDeliveryPrPayload({
   };
   if (issueNumber != null && issueNumber > 0) {
     payload.issue_number = issueNumber;
-  }
-  if (prTitle !== undefined) {
-    payload.pr_title = prTitle;
-  }
-  if (prUrl !== undefined) {
-    payload.pr_url = prUrl;
-  }
-  if (headRef !== undefined) {
-    payload.head_ref = headRef;
-  }
-  if (headSha !== undefined) {
-    payload.head_sha = headSha;
-  }
-  if (author !== undefined) {
-    payload.author = author;
-  }
-  if (mergeableState !== undefined) {
-    payload.mergeable_state = mergeableState;
-  }
-  if (mergeStateStatus !== undefined) {
-    payload.merge_state_status = mergeStateStatus;
-  }
-  if (retryReason) {
-    payload.retry_reason = retryReason;
+  } else {
+    payload.pr_unlinked = true;
   }
   return payload;
+}
+
+/**
+ * Delivery Agent webhook rejects pr_number-only payloads (HTTP 400).
+ * issue_number must be present before POST.
+ *
+ * @param {Record<string, unknown>} payload
+ * @returns {boolean}
+ */
+export function deliveryPrWebhookPayloadIsDispatchable(payload) {
+  const issueNumber = payload.issue_number;
+  return (
+    typeof issueNumber === 'number' &&
+    Number.isInteger(issueNumber) &&
+    issueNumber > 0
+  );
 }
 
 /**
@@ -153,18 +131,10 @@ export function parseDispatchedIssueNumberFromLog(logText) {
  * @param {string} [retryReason]
  * @returns {Record<string, unknown>}
  */
-export function buildDeliveryPrPayloadFromPr(pr, repository, retryReason) {
+export function buildDeliveryPrPayloadFromPr(pr, repository) {
   return buildDeliveryPrPayload({
     repository,
     prNumber: pr.number,
     issueNumber: resolveIssueNumberFromPrBody(pr.body),
-    prTitle: pr.title,
-    prUrl: pr.url,
-    headRef: pr.headRefName,
-    headSha: pr.headRefOid,
-    author: pr.author?.login ?? '',
-    mergeableState: pr.mergeable ?? '',
-    mergeStateStatus: pr.mergeStateStatus ?? '',
-    retryReason,
   });
 }
