@@ -1,5 +1,9 @@
 import { buildDeliveryIssuePayload } from './delivery-dispatch-lib.mjs';
-import { hashIssueBody } from './issue-worker-deps-agent-lib.mjs';
+import {
+  agentDepsWaitLabel,
+  hasAgentDepsReadyLabel,
+  parseAgentDepsWaitIssueNumbers,
+} from './issue-worker-deps-agent-lib.mjs';
 
 const DEFAULT_RETRY_DISPATCH_REPO = 'rick-chick/agrr';
 
@@ -90,40 +94,28 @@ export function formatDependencyGateBlockComment({
 }
 
 /**
- * @typedef {{
- *   hard_dependencies: number[];
- *   soft_notes: string[];
- *   rationale: string;
- *   body_hash: string;
- * }} AgentDepsContract
- */
-
-/**
- * Resolve hard dependencies from Agent cache only. Parser / heuristic fallback is forbidden.
+ * Resolve hard dependencies from agent-deps labels only. Comment/body parse is forbidden.
  *
  * @param {{
  *   issueNumber: number;
- *   issueBody: string;
- *   getAgentDepsContract?: (
+ *   issueLabels: string | string[];
+ *   fetchIssueLabels?: (
  *     issueNumber: number,
- *     issueBody: string,
- *   ) => Promise<AgentDepsContract | null> | AgentDepsContract | null;
+ *   ) => Promise<string | string[]> | string | string[];
  *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
- *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
  * }} input
  * @returns {Promise<
  *   { skip: false }
  *   | { skip: true; skipReason: string; openDependencies: number[] }
  * >}
  */
-export async function resolveDependencyGateFromAgentCache({
+export async function resolveDependencyGateFromLabels({
   issueNumber,
-  issueBody,
-  getAgentDepsContract,
+  issueLabels,
+  fetchIssueLabels,
   fetchIssueState,
-  fetchIssueBody,
 }) {
-  if (!getAgentDepsContract) {
+  if (!fetchIssueLabels) {
     return {
       skip: true,
       skipReason: 'agent dependency cache unavailable',
@@ -138,19 +130,18 @@ export async function resolveDependencyGateFromAgentCache({
 
   /**
    * @param {number} currentNumber
-   * @param {string} currentBody
+   * @param {string | string[]} currentLabels
    */
-  async function walk(currentNumber, currentBody) {
+  async function walk(currentNumber, currentLabels) {
     if (cacheMissIssue !== null) {
       return;
     }
-    const contract = await getAgentDepsContract(currentNumber, currentBody);
-    if (!contract || contract.body_hash !== hashIssueBody(currentBody)) {
+    if (!hasAgentDepsReadyLabel(currentLabels)) {
       cacheMissIssue = currentNumber;
       return;
     }
 
-    const dependencies = [...contract.hard_dependencies].sort((a, b) => a - b);
+    const dependencies = parseAgentDepsWaitIssueNumbers(currentLabels);
     for (const dependencyNumber of dependencies) {
       if (visiting.has(dependencyNumber)) {
         throw new Error(
@@ -162,29 +153,26 @@ export async function resolveDependencyGateFromAgentCache({
       if (state !== 'CLOSED') {
         openDependencies.add(dependencyNumber);
       }
-      if (fetchIssueBody) {
-        const dependencyBody = await fetchIssueBody(dependencyNumber);
-        await walk(dependencyNumber, dependencyBody);
-      }
+      const dependencyLabels = await fetchIssueLabels(dependencyNumber);
+      await walk(dependencyNumber, dependencyLabels);
       visiting.delete(dependencyNumber);
     }
   }
 
-  const rootContract = await getAgentDepsContract(issueNumber, issueBody);
-  if (!rootContract || rootContract.body_hash !== hashIssueBody(issueBody)) {
+  if (!hasAgentDepsReadyLabel(issueLabels)) {
     return {
       skip: true,
-      skipReason: `agent dependency cache missing or stale for #${issueNumber}`,
+      skipReason: `agent dependency labels missing for #${issueNumber}`,
       openDependencies: [],
     };
   }
 
-  await walk(issueNumber, issueBody);
+  await walk(issueNumber, issueLabels);
 
   if (cacheMissIssue !== null) {
     return {
       skip: true,
-      skipReason: `agent dependency cache missing or stale for #${cacheMissIssue}`,
+      skipReason: `agent dependency labels missing for #${cacheMissIssue}`,
       openDependencies: [],
     };
   }
@@ -203,10 +191,10 @@ export async function resolveDependencyGateFromAgentCache({
 }
 
 /**
- * @param {Parameters<typeof resolveDependencyGateFromAgentCache>[0]} input
+ * @param {Parameters<typeof resolveDependencyGateFromLabels>[0]} input
  */
 export async function resolveDependencyGate(input) {
-  return resolveDependencyGateFromAgentCache(input);
+  return resolveDependencyGateFromLabels(input);
 }
 
 /**
@@ -240,15 +228,11 @@ export function resolveEpicDispatchAction({ action, issueTitle, issueLabels }) {
  *
  * @param {{
  *   issueNumber: number;
- *   issueTitle: string;
- *   issueBody: string;
- *   issueLabels: string;
- *   getAgentDepsContract?: (
+ *   issueLabels: string | string[];
+ *   fetchIssueLabels?: (
  *     issueNumber: number,
- *     issueBody: string,
- *   ) => Promise<import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null> | import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null;
+ *   ) => Promise<string | string[]> | string | string[];
  *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
- *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
  * }} input
  * @returns {Promise<
  *   { skip: false }
@@ -257,20 +241,16 @@ export function resolveEpicDispatchAction({ action, issueTitle, issueLabels }) {
  */
 export async function resolveImplementPreDispatchGates({
   issueNumber,
-  issueTitle,
-  issueBody,
   issueLabels,
-  getAgentDepsContract,
+  fetchIssueLabels,
   fetchIssueState,
-  fetchIssueBody,
 }) {
   try {
-    const dependencyGate = await resolveDependencyGateFromAgentCache({
+    const dependencyGate = await resolveDependencyGateFromLabels({
       issueNumber,
-      issueBody,
-      getAgentDepsContract,
+      issueLabels,
+      fetchIssueLabels,
       fetchIssueState,
-      fetchIssueBody,
     });
     if (dependencyGate.skip) {
       return dependencyGate;
@@ -361,15 +341,11 @@ export function resolveImplementDispatchGate({ action, hasOpenFixPr }) {
  * @param {{
  *   action: string;
  *   issueNumber: number;
- *   issueTitle: string;
- *   issueBody: string;
- *   issueLabels: string;
- *   getAgentDepsContract?: (
+ *   issueLabels: string | string[];
+ *   fetchIssueLabels?: (
  *     issueNumber: number,
- *     issueBody: string,
- *   ) => Promise<import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null> | import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null;
+ *   ) => Promise<string | string[]> | string | string[];
  *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
- *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
  * }} input
  * @returns {Promise<
  *   { skip: false }
@@ -379,12 +355,9 @@ export function resolveImplementDispatchGate({ action, hasOpenFixPr }) {
 export async function resolvePreDispatchGates({
   action,
   issueNumber,
-  issueTitle,
-  issueBody,
   issueLabels,
-  getAgentDepsContract,
+  fetchIssueLabels,
   fetchIssueState,
-  fetchIssueBody,
 }) {
   if (action === 'epic_close_check') {
     return { skip: false };
@@ -392,12 +365,9 @@ export async function resolvePreDispatchGates({
 
   return resolveImplementPreDispatchGates({
     issueNumber,
-    issueTitle,
-    issueBody,
     issueLabels,
-    getAgentDepsContract,
+    fetchIssueLabels,
     fetchIssueState,
-    fetchIssueBody,
   });
 }
 
@@ -424,39 +394,19 @@ export function isRetryCandidate({ issueLabels, issueTitle = '', hasOpenFixPr })
 }
 
 /**
- * Resolve hard-blocking dependency issue numbers for re-triage / unblock.
- * Agent cache only — no body parsing fallback.
+ * Resolve hard-blocking dependency issue numbers from agent-deps wait labels.
  *
- * @param {{
- *   issueNumber: number;
- *   issueBody: string;
- *   getAgentDepsContract?: (
- *     issueNumber: number,
- *     issueBody: string,
- *   ) => Promise<AgentDepsContract | null> | AgentDepsContract | null;
- * }} input
- * @returns {Promise<
- *   { hardDependencies: number[]; source: 'cache' | 'none' }
- *   | { source: 'miss' }
- * >}
+ * @param {{ issueLabels: string | string[] }} input
+ * @returns {{ hardDependencies: number[]; source: 'labels' } | { source: 'miss' }}
  */
-export async function resolveHardDependencies({
-  issueNumber,
-  issueBody,
-  getAgentDepsContract,
-}) {
-  if (!getAgentDepsContract) {
-    return { source: 'miss' };
-  }
-
-  const contract = await getAgentDepsContract(issueNumber, issueBody);
-  if (!contract || contract.body_hash !== hashIssueBody(issueBody)) {
+export function resolveHardDependenciesFromLabels({ issueLabels }) {
+  if (!hasAgentDepsReadyLabel(issueLabels)) {
     return { source: 'miss' };
   }
 
   return {
-    hardDependencies: [...contract.hard_dependencies].sort((a, b) => a - b),
-    source: 'cache',
+    hardDependencies: parseAgentDepsWaitIssueNumbers(issueLabels),
+    source: 'labels',
   };
 }
 
@@ -486,35 +436,24 @@ export function isEpicCloseCheckCandidate({
 }
 
 /**
- * When a hard dependency closes, re-dispatch agent-ready issues the agent-deps cache links to it.
+ * When a hard dependency closes, re-dispatch agent-ready issues with agent-deps-wait-N.
  *
- * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} issues
+ * @param {Array<{ number: number; title: string; labels: string[] }>} issues
  * @param {number} closedDependencyNumber
  * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @param {(issueNumber: number, issueBody: string) => Promise<AgentDepsContract | null> | AgentDepsContract | null} getAgentDepsContract
- * @param {(issue: { number: number; title: string; labels: string[]; body?: string }, action: string) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
- * @returns {Promise<{ issue: { number: number; title: string; labels: string[]; body?: string }; action: string } | null>}
+ * @param {(issue: { number: number; title: string; labels: string[] }, action: string) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
+ * @returns {Promise<{ issue: { number: number; title: string; labels: string[] }; action: string } | null>}
  */
 export async function selectDispatchableOnDependencyClosed(
   issues,
   closedDependencyNumber,
   hasOpenFixPrFor,
-  getAgentDepsContract,
   evaluatePreDispatch,
 ) {
+  const waitLabel = agentDepsWaitLabel(closedDependencyNumber);
   const sorted = [...issues].sort((a, b) => a.number - b.number);
   for (const issue of sorted) {
-    const resolved = await resolveHardDependencies({
-      issueNumber: issue.number,
-      issueBody: issue.body ?? '',
-      getAgentDepsContract,
-    });
-    if (resolved.source === 'miss') {
-      continue;
-    }
-    const hardDependencies =
-      resolved.source === 'none' ? [] : resolved.hardDependencies;
-    if (!hardDependencies.includes(closedDependencyNumber)) {
+    if (!issue.labels.includes(waitLabel)) {
       continue;
     }
 

@@ -25,27 +25,23 @@ export function parseDepsResolveArgs(argv) {
 }
 
 /**
- * Delivery Agent deps-only run: repository + issue fields + body_hash (no action).
+ * Delivery Agent deps-only run: repository + issue fields (no action, no body_hash).
  *
  * @param {{
  *   repo: string;
  *   issueNumber: number;
  *   issueTitle: string;
  *   issueUrl: string;
- *   bodyHash: string;
  * }} input
  * @returns {Record<string, unknown>}
  */
 export function buildDepsResolveWebhookPayload(input) {
-  return {
-    ...buildDeliveryIssuePayload({
-      repository: input.repo,
-      issueNumber: input.issueNumber,
-      issueTitle: input.issueTitle,
-      issueUrl: input.issueUrl,
-    }),
-    body_hash: input.bodyHash,
-  };
+  return buildDeliveryIssuePayload({
+    repository: input.repo,
+    issueNumber: input.issueNumber,
+    issueTitle: input.issueTitle,
+    issueUrl: input.issueUrl,
+  });
 }
 
 /**

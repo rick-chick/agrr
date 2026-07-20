@@ -30,12 +30,12 @@ alwaysApply: true
 
 [`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc) と同趣旨。機械層では **本ルールが具体化**。
 
-## 本文パース禁止（機械層）
+## 本文・コメントパース禁止（機械層）
 
-Actions / `scripts/*-dispatch*.mjs` / workflow bash / reconcile lib に **issue・PR 本文の解釈を置かない**。
+Actions / `scripts/*-dispatch*.mjs` / workflow bash / reconcile lib に **issue・PR の本文やコメント本文の解釈を置かない**。
 
-- **禁止例**: `Closes #N` regex、`Merge-Strategy:` grep、依存 `#N` 抽出、タイトル・キーワード triage
-- **入力**: GitHub API 構造フィールド（`closingIssuesReferences`、`labels`、`mergeable` 等）とエージェント契約（`agent-deps:v1`、Memory、ラベル）
+- **禁止例**: `Closes #N` regex、`Merge-Strategy:` grep、依存 `#N` 抽出、タイトル・キーワード triage、**`agent-deps:v1` 等のコメント JSON 抽出**
+- **入力**: GitHub API 構造フィールド（`closingIssuesReferences`、`labels`、`mergeable` 等）と **ラベル契約**（`agent-deps-ready`、`agent-deps-wait-<N>`、Memory）
 - **読解**: Worker SKILL が `gh issue view` / `gh pr view` で行う
 
 既存パースも技術負債。**触る変更では同一 PR で除去**（別 PR は規約上の障害時のみ）。

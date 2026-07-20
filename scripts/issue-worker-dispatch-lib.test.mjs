@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
-import { hashIssueBody } from './issue-worker-deps-agent-lib.mjs';
+import {
+  agentDepsWaitLabel,
+  AGENT_DEPS_READY_LABEL,
+} from './issue-worker-deps-agent-lib.mjs';
 import {
   buildWebhookPayload,
   defaultRetryReasonForMode,
@@ -11,7 +14,7 @@ import {
   openFixPrSearchQuery,
   parseRetryDispatchArgs,
   resolveDependencyGate,
-  resolveDependencyGateFromAgentCache,
+  resolveDependencyGateFromLabels,
   resolveDispatchAction,
   isEpicIssue,
   resolveEpicDispatchAction,
@@ -20,7 +23,7 @@ import {
   resolvePreDispatchGates,
   selectDispatchableOnDependencyClosed,
   isEpicCloseCheckCandidate,
-  resolveHardDependencies,
+  resolveHardDependenciesFromLabels,
   formatDependencyGateComment,
   formatDependencyGateBlockComment,
   collectReconcileDispatchCandidates,
@@ -29,22 +32,19 @@ import {
 } from './issue-worker-dispatch-lib.mjs';
 
 /**
- * @param {number[]} hardDependencies
- * @param {string} issueBody
- * @returns {{
- *   hard_dependencies: number[];
- *   soft_notes: string[];
- *   rationale: string;
- *   body_hash: string;
- * }}
+ * @param {number[]} waitNumbers
+ * @param {boolean} [ready]
+ * @returns {string[]}
  */
-function agentContract(hardDependencies, issueBody) {
-  return {
-    hard_dependencies: hardDependencies,
-    soft_notes: [],
-    rationale: 'fixture',
-    body_hash: hashIssueBody(issueBody),
-  };
+function agentDepsLabels(waitNumbers = [], ready = true) {
+  const labels = [];
+  if (ready) {
+    labels.push(AGENT_DEPS_READY_LABEL);
+  }
+  for (const issueNumber of waitNumbers) {
+    labels.push(agentDepsWaitLabel(issueNumber));
+  }
+  return labels;
 }
 
 test('hasLabel matches comma-separated labels', () => {
@@ -306,22 +306,22 @@ test('resolveImplementDispatchGate skips implement when open fix pr exists', () 
 });
 
 test('resolveDependencyGate passes when all dependencies are closed', async () => {
-  const body = ['## 依存', '', '- #317'].join('\n');
+  const labels = agentDepsLabels([317]);
   const result = await resolveDependencyGate({
     issueNumber: 318,
-    issueBody: body,
-    getAgentDepsContract: async () => agentContract([317], body),
+    issueLabels: labels,
+    fetchIssueLabels: async () => agentDepsLabels([]),
     fetchIssueState: async (number) => (number === 317 ? 'CLOSED' : 'OPEN'),
   });
   assert.deepEqual(result, { skip: false });
 });
 
 test('resolveDependencyGate blocks when a dependency is open', async () => {
-  const body = ['## 依存', '', '- #317'].join('\n');
+  const labels = agentDepsLabels([317]);
   const result = await resolveDependencyGate({
     issueNumber: 318,
-    issueBody: body,
-    getAgentDepsContract: async () => agentContract([317], body),
+    issueLabels: labels,
+    fetchIssueLabels: async () => agentDepsLabels([]),
     fetchIssueState: async (number) => (number === 317 ? 'OPEN' : 'CLOSED'),
   });
   assert.deepEqual(result, {
@@ -332,43 +332,40 @@ test('resolveDependencyGate blocks when a dependency is open', async () => {
 });
 
 test('resolveDependencyGate detects circular dependency', async () => {
-  const body318 = ['## 依存', '', '- #317'].join('\n');
-  const body317 = ['## 依存', '', '- #318'].join('\n');
-  const bodies = { 317: body317, 318: body318 };
+  const labelStore = {
+    317: agentDepsLabels([318]),
+    318: agentDepsLabels([317]),
+  };
   await assert.rejects(
     () =>
       resolveDependencyGate({
         issueNumber: 318,
-        issueBody: body318,
-        getAgentDepsContract: async (number, currentBody) =>
-          agentContract(number === 318 ? [317] : [318], currentBody),
+        issueLabels: labelStore[318],
+        fetchIssueLabels: async (number) => labelStore[number] ?? agentDepsLabels([]),
         fetchIssueState: async () => 'OPEN',
-        fetchIssueBody: async (number) => bodies[number] ?? '',
       }),
     /circular dependency/i,
   );
 });
 
-test('resolveDependencyGate blocks when agent cache is missing', async () => {
-  const body = ['## 依存', '', '- #317'].join('\n');
+test('resolveDependencyGate blocks when agent dependency labels are missing', async () => {
   const result = await resolveDependencyGate({
     issueNumber: 318,
-    issueBody: body,
-    getAgentDepsContract: async () => null,
+    issueLabels: ['agent-ready'],
+    fetchIssueLabels: async () => agentDepsLabels([]),
     fetchIssueState: async () => 'OPEN',
   });
   assert.deepEqual(result, {
     skip: true,
-    skipReason: 'agent dependency cache missing or stale for #318',
+    skipReason: 'agent dependency labels missing for #318',
     openDependencies: [],
   });
 });
 
-test('resolveDependencyGate blocks when agent cache getter is unavailable', async () => {
-  const body = ['## 依存', '', '- #317'].join('\n');
+test('resolveDependencyGate blocks when label fetcher is unavailable', async () => {
   const result = await resolveDependencyGate({
     issueNumber: 318,
-    issueBody: body,
+    issueLabels: agentDepsLabels([317]),
     fetchIssueState: async () => 'OPEN',
   });
   assert.deepEqual(result, {
@@ -378,27 +375,21 @@ test('resolveDependencyGate blocks when agent cache getter is unavailable', asyn
   });
 });
 
-test('resolveDependencyGateFromAgentCache uses agent hard_dependencies only (#384 type)', async () => {
-  const body = [
-    '## 依存',
-    '',
-    '- なし（既存 open issue #362 epic「作業予定画面」とは独立）',
-  ].join('\n');
-  const result = await resolveDependencyGateFromAgentCache({
+test('resolveDependencyGateFromLabels uses wait labels only (#384 type)', async () => {
+  const result = await resolveDependencyGateFromLabels({
     issueNumber: 384,
-    issueBody: body,
-    getAgentDepsContract: async () => agentContract([], body),
+    issueLabels: agentDepsLabels([]),
+    fetchIssueLabels: async () => agentDepsLabels([]),
     fetchIssueState: async () => 'OPEN',
   });
   assert.deepEqual(result, { skip: false });
 });
 
-test('resolveDependencyGateFromAgentCache blocks #402 type when #384 is open', async () => {
-  const body = ['## 依存', '', '- #384（タブラベル整合。open の間は着手不可）'].join('\n');
-  const result = await resolveDependencyGateFromAgentCache({
+test('resolveDependencyGateFromLabels blocks #402 type when #384 is open', async () => {
+  const result = await resolveDependencyGateFromLabels({
     issueNumber: 402,
-    issueBody: body,
-    getAgentDepsContract: async () => agentContract([384], body),
+    issueLabels: agentDepsLabels([384]),
+    fetchIssueLabels: async () => agentDepsLabels([]),
     fetchIssueState: async (number) => (number === 384 ? 'OPEN' : 'CLOSED'),
   });
   assert.deepEqual(result, {
@@ -408,22 +399,16 @@ test('resolveDependencyGateFromAgentCache blocks #402 type when #384 is open', a
   });
 });
 
-test('resolveDependencyGateFromAgentCache blocks stale body_hash', async () => {
-  const body = ['## 依存', '', '- #317'].join('\n');
-  const result = await resolveDependencyGateFromAgentCache({
+test('resolveDependencyGateFromLabels blocks when transitive labels are missing', async () => {
+  const result = await resolveDependencyGateFromLabels({
     issueNumber: 318,
-    issueBody: body,
-    getAgentDepsContract: async () => ({
-      hard_dependencies: [317],
-      soft_notes: [],
-      rationale: 'stale',
-      body_hash: 'deadbeef',
-    }),
+    issueLabels: agentDepsLabels([317]),
+    fetchIssueLabels: async () => ['agent-ready'],
     fetchIssueState: async () => 'OPEN',
   });
   assert.deepEqual(result, {
     skip: true,
-    skipReason: 'agent dependency cache missing or stale for #318',
+    skipReason: 'agent dependency labels missing for #317',
     openDependencies: [],
   });
 });
@@ -513,7 +498,7 @@ test('formatDependencyGateComment includes open dependency numbers', () => {
 
 test('formatDependencyGateBlockComment uses cache message when open deps empty', () => {
   const comment = formatDependencyGateBlockComment({
-    skipReason: 'agent dependency cache missing or stale for #318',
+    skipReason: 'agent dependency labels missing for #318',
     openDependencies: [],
   });
   assert.match(comment, /agent-deps/);
@@ -529,27 +514,22 @@ test('formatDependencyGateBlockComment delegates to open-deps comment', () => {
   assert.match(comment, /依存未充足/);
 });
 
-test('resolvePreDispatchGates allows epic_close_check without dependency cache', async () => {
+test('resolvePreDispatchGates allows epic_close_check without dependency labels', async () => {
   const result = await resolvePreDispatchGates({
     action: 'epic_close_check',
     issueNumber: 362,
-    issueTitle: '[epic] Parent',
-    issueBody: '## 子 Issue\n\n- #363',
     issueLabels: 'agent-ready',
+    fetchIssueLabels: async () => agentDepsLabels([]),
     fetchIssueState: async () => 'OPEN',
-    fetchIssueBody: async () => '',
   });
   assert.deepEqual(result, { skip: false });
 });
 
 test('resolveImplementPreDispatchGates blocks open dependencies', async () => {
-  const body = '## 依存\n\n- #317';
   const result = await resolveImplementPreDispatchGates({
     issueNumber: 318,
-    issueTitle: 'Child',
-    issueBody: body,
-    issueLabels: 'agent-ready',
-    getAgentDepsContract: async () => agentContract([317], body),
+    issueLabels: agentDepsLabels([317]),
+    fetchIssueLabels: async () => agentDepsLabels([]),
     fetchIssueState: async (number) => (number === 317 ? 'OPEN' : 'CLOSED'),
   });
   assert.equal(result.skip, true);
@@ -565,72 +545,58 @@ test('isEpicCloseCheckCandidate does not require agent-ready', () => {
   assert.deepEqual(result, { eligible: true, action: 'epic_close_check' });
 });
 
-test('selectDispatchableOnDependencyClosed dispatches when agent cache links closed dependency', async () => {
-  const body = '## 依存\n\n- #364';
-  const getAgentDepsContract = async (_number, currentBody) => agentContract([364], currentBody);
+test('selectDispatchableOnDependencyClosed dispatches when wait label matches closed dependency', async () => {
   const selected = await selectDispatchableOnDependencyClosed(
     [
       {
         number: 370,
         title: 'Child',
-        labels: ['agent-ready'],
-        body,
+        labels: ['agent-ready', agentDepsWaitLabel(364)],
       },
     ],
     364,
     () => false,
-    getAgentDepsContract,
     async () => ({ skip: false }),
   );
   assert.deepEqual(selected, {
     issue: {
       number: 370,
       title: 'Child',
-      labels: ['agent-ready'],
-      body,
+      labels: ['agent-ready', agentDepsWaitLabel(364)],
     },
     action: 'implement',
   });
 });
 
-test('selectDispatchableOnDependencyClosed skips when dependency is not in agent cache', async () => {
-  const body = '## 依存\n\n- #364';
+test('selectDispatchableOnDependencyClosed skips when wait label is absent', async () => {
   const selected = await selectDispatchableOnDependencyClosed(
     [
       {
         number: 370,
         title: 'Child',
         labels: ['agent-ready'],
-        body,
       },
     ],
     364,
     () => false,
-    async () => null,
     async () => ({ skip: false }),
   );
   assert.equal(selected, null);
 });
 
-test('resolveHardDependencies reads agent cache only', async () => {
-  const body = '## 依存\n\n- #364';
-  const result = await resolveHardDependencies({
-    issueNumber: 370,
-    issueBody: body,
-    getAgentDepsContract: async () => agentContract([365], body),
+test('resolveHardDependenciesFromLabels reads wait labels only', () => {
+  const result = resolveHardDependenciesFromLabels({
+    issueLabels: agentDepsLabels([365]),
   });
   assert.deepEqual(result, {
     hardDependencies: [365],
-    source: 'cache',
+    source: 'labels',
   });
 });
 
-test('resolveHardDependencies returns miss when cache is missing', async () => {
-  const body = '## 依存\n\n- #364';
-  const result = await resolveHardDependencies({
-    issueNumber: 370,
-    issueBody: body,
-    getAgentDepsContract: async () => null,
+test('resolveHardDependenciesFromLabels returns miss when ready label is missing', () => {
+  const result = resolveHardDependenciesFromLabels({
+    issueLabels: [agentDepsWaitLabel(365)],
   });
   assert.deepEqual(result, { source: 'miss' });
 });

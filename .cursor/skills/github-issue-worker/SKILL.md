@@ -89,7 +89,7 @@ gh issue list --repo rick-chick/agrr --state open --limit 50 --json number,title
 ```
 実装する → §3 着手宣言へ
 対応不要で閉じられる → §2a 対応せずクローズへ（agent-in-progress を付けない）
-依存未充足 → `agent-ready` 維持・コメントのみで終了（dispatch 依存ゲートが `agent-deps:v1` キャッシュのみで次回再判定。本文 `#N` はパースしない）
+依存未充足 → `agent-ready` 維持・コメントのみで終了（dispatch 依存ゲートは **ラベル契約** `agent-deps-ready` / `agent-deps-wait-<N>` のみで再判定。本文・コメントはパースしない）
 ```
 
 ### 自律判断（human-in-the-loop 禁止）
@@ -135,9 +135,9 @@ gh issue edit <N> --add-label agent-in-progress
 
 依存 issue が OPEN のときは **実装に着手しない**。`agent-ready` を維持し、根拠コメントのみ残して終了する。dispatch 依存ゲートと reconcile が次回以降を再判定する（[`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `formatDependencyGateComment` 参照）。
 
-**機械ゲート（dispatch / reconcile）**: 本文から `#N` を **パースしない**。根拠は issue コメント内の `agent-deps:v1` キャッシュ（[`issue-worker-deps-agent-lib.mjs`](../../../scripts/issue-worker-deps-agent-lib.mjs)）のみ。キャッシュ欠落・`body_hash` 不一致は dispatch 拒否。`implement` dispatch 前に [`issue-worker-deps-resolve.mjs`](../../../scripts/issue-worker-deps-resolve.mjs) がキャッシュ未作成なら **Delivery Agent** webhook（`body_hash` のみ・依存判定 run）を起動する（secrets: `CURSOR_DELIVERY_WEBHOOK_*`）。詳細は [`delivery-agent/SKILL.md`](../delivery-agent/SKILL.md) §依存。
+**機械ゲート（dispatch / reconcile）**: 本文・コメントから `#N` を **パースしない**。根拠は **ラベル契約**（`agent-deps-ready` / `agent-deps-wait-<N>`、[`issue-worker-deps-agent-lib.mjs`](../../../scripts/issue-worker-deps-agent-lib.mjs)）のみ。`agent-deps-ready` 欠落は dispatch 拒否。`implement` dispatch 前に [`issue-worker-deps-resolve.mjs`](../../../scripts/issue-worker-deps-resolve.mjs) がラベル未作成なら **Delivery Agent** webhook を起動する（secrets: `CURSOR_DELIVERY_WEBHOOK_*`）。詳細は [`delivery-agent/SKILL.md`](../delivery-agent/SKILL.md) §依存。
 
-**Worker 側**: triage で依存未充足と判断したら、[`buildAgentDepsCacheComment`](../../../scripts/issue-worker-deps-agent-lib.mjs) 形式で `agent-deps:v1` コメントを残してよい（hard/soft の判定はエージェント判断。regex・ヒューリスティック禁止）。
+**Worker 側（deps 判定 run）**: `gh issue view` で本文を読み、hard 依存を判断したら **`gh label` で機械契約ラベルを付与**する（`agent-deps-ready`、open 依存ごとに `agent-deps-wait-<N>`、解消時は除去）。人間向けコメントは任意（機械層は読まない）。
 
 **dispatch 層**: `[epic]` / `epic` ラベルの `implement` dispatch は [`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `resolveEpicDispatchAction` により **`epic_close_check` にリマップ**される（コード実装はしない）。エージェントは §1b でクローズ可否を判断する。
 

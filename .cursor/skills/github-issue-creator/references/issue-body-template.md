@@ -29,7 +29,7 @@
 
 - なし
 
-（人間・deps Agent 向けの説明。dispatch / retriage は本文の `#N` をパースせず、`agent-deps:v1` コメントキャッシュのみで判定する。）
+（人間・deps Agent 向けの説明。dispatch / retriage は本文・コメントの `#N` をパースせず、ラベル契約のみで判定する。）
 
 ## 参照
 

@@ -25,7 +25,7 @@ description: >-
 ## §0 観測と分岐（毎 run 先頭・固定順）
 
 1. **payload** — `repository`、任意の `issue_number` / `pr_number` / `pr_unlinked`
-   - **`body_hash` あり** → 依存判定 run のみ（§依存）。実装・PR 禁止。終了。
+   - **deps-resolve webhook**（`issue-worker-deps-resolve` が `agent-deps-ready` 欠落時に送る）→ 依存判定 run のみ（§依存）。実装・PR 禁止。終了。
    - **`pr_unlinked: true`**（`issue_number` なし）→ **PR フェーズ直行**（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。issue 実装・新規 PR 禁止。
 2. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,labels`
    - リンク issue 番号は **`closingIssuesReferences` のみ**（機械層は本文を読まない。Agent も `gh pr view --json closingIssuesReferences` を正とする）
@@ -97,15 +97,24 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 | `pr_unlinked` | `issue_number` が無い PR dispatch 時（`true`）。Agent は PR フェーズのみ |
 | `action` | **送らない・無視** |
 
-任意: `issue_title`, `issue_url`, `labels`, `retry_reason`, `body_hash`（依存判定 run のみ）。**`issue_body` は機械層から送らない**（Agent は `gh issue view` で読む）。
+任意: `issue_title`, `issue_url`, `labels`, `retry_reason`。**`issue_body` / `body_hash` は機械層から送らない**（Agent は `gh issue view` で読む）。
 
 ## 依存
 
-`agent-deps:v1` コメントキャッシュのみを根拠にする。本文 `#N` パース禁止。キャッシュ欠落時は deps-resolve が Agent を起動（`body_hash` のみ webhook）。
+機械ゲートは **ラベル契約**（`agent-deps-ready` / `agent-deps-wait-<N>`）のみ。本文・コメントパース禁止。
 
-### `body_hash` 付き payload（依存判定 run）
+### 依存判定 run（deps-resolve webhook）
 
-[`issue-worker-deps-resolve.mjs`](../../../scripts/issue-worker-deps-resolve.mjs) がキャッシュ miss 時に送る。**この run の唯一の仕事**は `agent-deps:v1` コメント作成。実装・PR・マージは禁止。完了したら終了（implement dispatch は reconcile が後続）。
+[`issue-worker-deps-resolve.mjs`](../../../scripts/issue-worker-deps-resolve.mjs) が `agent-deps-ready` 欠落時に送る。**この run の唯一の仕事**は `gh issue view` で依存を読み、**ラベル契約を `gh label` で更新**すること。実装・PR・マージは禁止。完了したら終了（implement dispatch は reconcile が後続）。
+
+手順（必須）:
+
+1. `gh issue view <N> --json body,labels` で本文と現行ラベルを読む
+2. hard 依存を判断（regex・ヒューリスティックは SKILL 判断内のみ。機械層に委譲しない）
+3. 既存の `agent-deps-ready` / `agent-deps-wait-*` を除去し、現状に合わせて付け直す
+   - 着手可: `agent-deps-ready` のみ（wait ラベルなし）
+   - ブロック: `agent-deps-ready` + 各 open 依存に `agent-deps-wait-<N>`
+4. 任意で人間向けコメント（機械層は読まない）
 
 ## Automation（Cursor Dashboard）
 
@@ -154,4 +163,4 @@ with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent a
 | 旧 webhook 停止 | 旧 Automation OFF 後、旧 URL への POST が 0 件 |
 | retry スモーク | `workflow_dispatch` on `issue-worker-retry-dispatch` / `pr-merge-worker-retry-dispatch` |
 | E2E | `agent-ready` issue 1 件 → TDD → **sequential cleanup（tick → gate 0）** → Draft PR → prep ready → merge |
-| deps | `## 依存` issue でキャッシュ miss → `body_hash` payload のみ → コメント作成 → reconcile 再 dispatch |
+| deps | `## 依存` issue で `agent-deps-ready` 欠落 → deps webhook → Agent がラベル付与 → reconcile 再 dispatch |

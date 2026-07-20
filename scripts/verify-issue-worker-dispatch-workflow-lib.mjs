@@ -101,9 +101,14 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
     errors.push('dispatch lib missing resolveEpicDispatchAction');
   }
 
-  if (!libText.includes('export async function resolveDependencyGateFromAgentCache') &&
-      !libText.includes('export function resolveDependencyGateFromAgentCache')) {
-    errors.push('dispatch lib missing resolveDependencyGateFromAgentCache');
+  if (!libText.includes('export async function resolveDependencyGateFromLabels') &&
+      !libText.includes('export function resolveDependencyGateFromLabels')) {
+    errors.push('dispatch lib missing resolveDependencyGateFromLabels');
+  }
+
+  if (libText.includes('export async function resolveDependencyGateFromAgentCache') ||
+      libText.includes('export function resolveDependencyGateFromAgentCache')) {
+    errors.push('dispatch lib must not export resolveDependencyGateFromAgentCache');
   }
 
   if (libText.includes('export function parseHardDependencyIssueNumbers')) {
@@ -139,6 +144,30 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
 
   if (libText.includes('extractDependencySection')) {
     errors.push('dispatch lib must not import extractDependencySection');
+  }
+
+  const gateScriptPath = join(repoRoot, 'scripts/run-issue-worker-dependency-gate.mjs');
+  let gateScriptText = '';
+  try {
+    gateScriptText = await readFile(gateScriptPath, 'utf8');
+  } catch {
+    errors.push(`missing script: ${gateScriptPath}`);
+  }
+
+  if (gateScriptText.includes('/comments') || gateScriptText.includes('issue.body')) {
+    errors.push('dependency gate script must not fetch issue comments or body');
+  }
+
+  const depsAgentLibPath = join(repoRoot, 'scripts/issue-worker-deps-agent-lib.mjs');
+  let depsAgentLibText = '';
+  try {
+    depsAgentLibText = await readFile(depsAgentLibPath, 'utf8');
+  } catch {
+    errors.push(`missing script: ${depsAgentLibPath}`);
+  }
+
+  if (depsAgentLibText.includes('parseAgentDepsFromCommentBody')) {
+    errors.push('deps agent lib must not parse issue comments');
   }
 
   if (!libText.includes('export function collectReconcileDispatchCandidates') &&

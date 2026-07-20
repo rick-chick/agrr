@@ -28,7 +28,6 @@ import {
   selectDispatchableOnDependencyClosed,
   selectReconcileDispatchCandidate,
 } from './issue-worker-dispatch-lib.mjs';
-import { createGetAgentDepsContractFromComments } from './issue-worker-deps-agent-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
 
@@ -123,36 +122,6 @@ function listEpicsWithoutAgentReady(epics) {
 /**
  * @param {string} repo
  * @param {number} issueNumber
- * @returns {Array<{ body?: string; createdAt?: string }>}
- */
-function fetchIssueComments(repo, issueNumber) {
-  const raw = gh(repo, [
-    'api',
-    `repos/${repo}/issues/${issueNumber}/comments`,
-    '--paginate',
-    '--jq',
-    '.[] | {body, createdAt: .created_at}',
-  ]);
-  const lines = raw.trim().split('\n').filter(Boolean);
-  if (lines.length === 0) {
-    return [];
-  }
-  return lines.map((line) => JSON.parse(line));
-}
-
-/**
- * @param {string} repo
- * @returns {(issueNumber: number, issueBody: string) => Promise<import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null>}
- */
-function createRepoAgentDepsGetter(repo) {
-  return createGetAgentDepsContractFromComments((issueNumber) =>
-    fetchIssueComments(repo, issueNumber),
-  );
-}
-
-/**
- * @param {string} repo
- * @param {number} issueNumber
  */
 function fetchIssue(repo, issueNumber) {
   const raw = gh(repo, [
@@ -160,14 +129,13 @@ function fetchIssue(repo, issueNumber) {
     'view',
     String(issueNumber),
     '--json',
-    'number,title,url,body,labels,state',
+    'number,title,url,labels,state',
   ]);
   const issue = JSON.parse(raw);
   return {
     number: issue.number,
     title: issue.title,
     url: issue.url,
-    body: issue.body ?? '',
     state: issue.state,
     labels: issue.labels.map((label) => label.name),
   };
@@ -205,7 +173,7 @@ function fetchLastScheduledReconcileIssueNumber(repo) {
 /**
  * @param {{
  *   repo: string;
- *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
+ *   issue: { number: number; title: string; url: string; labels: string[] };
  *   retryReason?: string;
  * }} input
  */
@@ -241,7 +209,7 @@ function postWebhook({ repo, issue, retryReason }) {
 /**
  * @param {{
  *   repo: string;
- *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
+ *   issue: { number: number; title: string; url: string; labels: string[] };
  *   retryReason?: string;
  *   action: string;
  * }} input
@@ -260,16 +228,12 @@ async function dispatchWebhook({ repo, issue, retryReason, action }) {
       return false;
     }
 
-    const getAgentDepsContract = createRepoAgentDepsGetter(repo);
     const preDispatch = await resolvePreDispatchGates({
       action,
       issueNumber: issue.number,
-      issueTitle: issue.title,
-      issueBody: issue.body,
-      issueLabels: labels,
-      getAgentDepsContract,
+      issueLabels: issue.labels,
+      fetchIssueLabels: async (number) => fetchIssue(repo, number).labels,
       fetchIssueState: async (number) => fetchIssue(repo, number).state,
-      fetchIssueBody: async (number) => fetchIssue(repo, number).body,
     });
     if (preDispatch.skip) {
       console.log(`Skip retry for #${issue.number}: ${preDispatch.skipReason}`);
@@ -288,24 +252,19 @@ async function dispatchWebhook({ repo, issue, retryReason, action }) {
 async function main() {
   const args = parseRetryDispatchArgs(process.argv);
   const repo = args.repo ?? DEFAULT_REPO;
-  const getAgentDepsContract = createRepoAgentDepsGetter(repo);
   const hasOpenFixPrFor = (issueNumber) => hasOpenFixPr(repo, issueNumber);
+  const evaluatePreDispatch = async (issue, action) =>
+    resolvePreDispatchGates({
+      action,
+      issueNumber: issue.number,
+      issueLabels: issue.labels,
+      fetchIssueLabels: async (number) => fetchIssue(repo, number).labels,
+      fetchIssueState: async (number) => fetchIssue(repo, number).state,
+    });
 
   if (args.mode === 'reconcile') {
     const epicsWithoutAgentReady = listEpicsWithoutAgentReady(listOpenEpicIssues(repo));
     const agentReadyIssues = listAgentReadyIssues(repo);
-    const evaluatePreDispatch = async (issue, action) =>
-      resolvePreDispatchGates({
-        action,
-        issueNumber: issue.number,
-        issueTitle: issue.title,
-        issueBody: issue.body,
-        issueLabels: issue.labels.join(','),
-        getAgentDepsContract,
-        fetchIssueState: async (number) => fetchIssue(repo, number).state,
-        fetchIssueBody: async (number) => fetchIssue(repo, number).body,
-      });
-
     const candidates = await collectReconcileDispatchCandidates(
       epicsWithoutAgentReady,
       agentReadyIssues,
@@ -348,18 +307,7 @@ async function main() {
       agentReadyIssues,
       closedNumber,
       hasOpenFixPrFor,
-      getAgentDepsContract,
-      async (issue, action) =>
-        resolvePreDispatchGates({
-          action,
-          issueNumber: issue.number,
-          issueTitle: issue.title,
-          issueBody: issue.body,
-          issueLabels: issue.labels.join(','),
-          getAgentDepsContract,
-          fetchIssueState: async (number) => fetchIssue(repo, number).state,
-          fetchIssueBody: async (number) => fetchIssue(repo, number).body,
-        }),
+      evaluatePreDispatch,
     );
     const onClosed = resolveOnClosedDispatch(dependencySelected);
     if (!onClosed.dispatch) {

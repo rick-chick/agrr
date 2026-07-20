@@ -102,7 +102,7 @@ sequenceDiagram
 
 **機械層の本文パース禁止**・思想優先: [`.cursor/rules/automation-philosophy-priority.mdc`](../../.cursor/rules/automation-philosophy-priority.mdc)（正本 [PRINCIPLES.md](../../.cursor/skills/automation-authoring/references/PRINCIPLES.md)）。
 
-**依存ゲート**: `implement` 経路は **`agent-deps:v1` コメントキャッシュ**（[`issue-worker-deps-agent-lib.mjs`](../../scripts/issue-worker-deps-agent-lib.mjs)）のみを根拠に hard 依存を判定する（本文 `#N` regex パース禁止）。キャッシュ欠落・`body_hash` 不一致時は [`issue-worker-deps-resolve.mjs`](../../scripts/issue-worker-deps-resolve.mjs) が Delivery Agent webhook（`body_hash` のみ）を起動し、コメント作成後に reconcile が再 dispatch する。
+**依存ゲート**: `implement` 経路は **ラベル契約**（[`issue-worker-deps-agent-lib.mjs`](../../scripts/issue-worker-deps-agent-lib.mjs) の `agent-deps-ready` / `agent-deps-wait-<N>`）のみを根拠に hard 依存を判定する（本文・コメントパース禁止）。`agent-deps-ready` 欠落時は [`issue-worker-deps-resolve.mjs`](../../scripts/issue-worker-deps-resolve.mjs) が Delivery Agent webhook を起動し、Agent がラベル更新後に reconcile が再 dispatch する。
 
 #### 必須 CI 失敗の自動救済（CI fix 経路）
 
@@ -242,7 +242,6 @@ Delivery Agent payload（`action` **なし**）:
 | `issue_number` | `323` | issue 起点 / PR の `closingIssuesReferences` |
 | `pr_number` | `427` | PR / CI 起点 |
 | `pr_unlinked` | `true` | `closingIssuesReferences` が空。`issue_number` なしで PR フェーズ dispatch（Agent は PR フェーズのみ） |
-| `body_hash` | （deps のみ） | 依存判定 run。実装・PR 禁止 |
 | `mergeable_state` 等 | （任意） | PR 観測ヒント。Agent は GitHub を正とする |
 
 UX Campaign Loop 等、Delivery 以外の Automation は従来どおり個別 payload（`pr_number`, `campaign_id` 等）。
