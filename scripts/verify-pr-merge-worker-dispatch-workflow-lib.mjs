@@ -22,14 +22,16 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
 ];
 
 const CONFLICT_DISPATCH_SNIPPETS = [
-  'MERGEABLE_STATE" = "CONFLICTING"',
-  'MERGE_STATE_STATUS" = "BEHIND"',
-  'ACTION="conflict"',
-  'skipping CI gate for ${ACTION} resolution',
-  'Draft PR without conflict/sync need and CI not failed',
-  'Required CI failed; dispatching ci_fix',
-  'ACTION="ci_fix"',
+  'classify-primary-pr-merge-dispatch.mjs',
   'classify-required-ci-state.mjs',
+  'skipping CI gate for ${DISPATCH_KIND} resolution',
+  'Required CI failed; dispatching ci_fix',
+  'dispatching conflict resolution',
+];
+
+const PRIMARY_DISPATCH_LIB_SNIPPETS = [
+  'export function classifyPrimaryPrMergeDispatch',
+  'export function parseCommaSeparatedLabels',
 ];
 
 const RETRY_DISPATCH_SNIPPETS = [
@@ -71,6 +73,14 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     '.github/workflows/pr-merge-worker-retry-dispatch.yml',
   );
   const needsSyncPath = join(repoRoot, 'scripts/pr-merge-worker-needs-sync.mjs');
+  const primaryDispatchLibPath = join(
+    repoRoot,
+    'scripts/pr-merge-worker-primary-dispatch-lib.mjs',
+  );
+  const classifyPrimaryScriptPath = join(
+    repoRoot,
+    'scripts/classify-primary-pr-merge-dispatch.mjs',
+  );
   const payloadLibPath = join(repoRoot, 'scripts/pr-merge-worker-dispatch-payload-lib.mjs');
   const reconcileLibPath = join(
     repoRoot,
@@ -80,6 +90,8 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   let workflowText = '';
   let retryWorkflowText = '';
   let needsSyncText = '';
+  let primaryDispatchLibText = '';
+  let classifyPrimaryScriptText = '';
   try {
     workflowText = await readFile(workflowPath, 'utf8');
   } catch {
@@ -97,6 +109,18 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   } catch {
     errors.push(`missing needs-sync helper: ${needsSyncPath}`);
     needsSyncText = '';
+  }
+
+  try {
+    primaryDispatchLibText = await readFile(primaryDispatchLibPath, 'utf8');
+  } catch {
+    errors.push(`missing primary dispatch lib: ${primaryDispatchLibPath}`);
+  }
+
+  try {
+    classifyPrimaryScriptText = await readFile(classifyPrimaryScriptPath, 'utf8');
+  } catch {
+    errors.push(`missing classify primary script: ${classifyPrimaryScriptPath}`);
   }
 
   let payloadLibText = '';
@@ -129,10 +153,36 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     );
   }
 
+  if (workflowText.includes('[WIP]') || workflowText.includes('[DRAFT]')) {
+    errors.push(
+      'pr-merge-worker-dispatch workflow must not grep PR title for [WIP]/[DRAFT]; use wip label opt-out',
+    );
+  }
+
+  if (workflowText.includes('body_b64') || workflowText.includes('BODY_B64')) {
+    errors.push('pr-merge-worker-dispatch workflow must not fetch or pass PR body');
+  }
+
   for (const snippet of CONFLICT_DISPATCH_SNIPPETS) {
     if (!workflowText.includes(snippet)) {
       errors.push(`workflow missing conflict dispatch snippet: ${snippet}`);
     }
+  }
+
+  for (const snippet of PRIMARY_DISPATCH_LIB_SNIPPETS) {
+    if (!primaryDispatchLibText.includes(snippet)) {
+      errors.push(`primary dispatch lib missing required snippet: ${snippet}`);
+    }
+  }
+
+  if (
+    !classifyPrimaryScriptText.includes(
+      "from './pr-merge-worker-primary-dispatch-lib.mjs'",
+    )
+  ) {
+    errors.push(
+      'classify-primary-pr-merge-dispatch.mjs must import pr-merge-worker-primary-dispatch-lib.mjs',
+    );
   }
 
   for (const snippet of RETRY_DISPATCH_SNIPPETS) {

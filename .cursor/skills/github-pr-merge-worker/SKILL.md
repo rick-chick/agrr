@@ -13,7 +13,7 @@ description: >-
 |------|------|
 | **マージ** | CI green → Agent ゲート（ARCHITECTURE 等）通過 → 必要なら同一ブランチ修正 → `gh pr merge --squash` |
 | **修正のみ** | CI / Agent レビュー不備を同一ブランチで修正し push。**マージは次回 run（CI completed）に委譲** |
-| **スキップ** | オプトアウト（blocking ラベル・fork・`CHANGES_REQUESTED`・`[WIP]`/`[DRAFT]`）→ コメントまたは無言終了 |
+| **スキップ** | オプトアウト（blocking ラベル・fork・`CHANGES_REQUESTED`・`wip` ラベル）→ コメントまたは無言終了 |
 | **ブロック** | 規約衝突・判断不能 → `agent-merge-blocked` ラベル + コメント（マージしない） |
 
 設計方針の上位原則: [`automation-authoring` PRINCIPLES.md §目的](../automation-authoring/references/PRINCIPLES.md)（**人間介在なしで完遂**。「人間レビューがないから不十分」は根拠にしない）。
@@ -34,7 +34,7 @@ description: >-
 - PR open 直後にマージしない。**CI が green になるまで待つ**（`gh pr checks` ポーリング、または `CI completed` / Backend test `workflow_run` Webhook）。
 - **既定は全 PR 自動救済・完遂**（master 同期・CI 修正・stuck retry・条件充足時の squash）。人間のレビュー待ちや `agent-merge` 付与は前提にしない。止まって人間再開を待つ経路を作らない。
 - **場合分けで起動を切らない**。Draft/ready・ブランチ名・ラベルの細かい条件でスキップするより、拾ってから `conflict` / `ci_fix` / マージに振り分ける（[automation-authoring §全部拾う](../automation-authoring/references/PRINCIPLES.md)）。
-- **オプトアウト**: `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`、fork、`CHANGES_REQUESTED`、タイトル `[WIP]`/`[DRAFT]` のみ除外。
+- **オプトアウト**: `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`、fork、`CHANGES_REQUESTED` のみ除外。
 - マージは **GitHub native auto-merge に依存しない**。Agent が `gh pr merge --squash` を実行。
 - 大規模変更・仕様判断・ARCHITECTURE 衝突は **マージせず** `agent-merge-blocked` + コメントでエスカレーション（それ以外でパイプラインを切らない）。
 - **babysit 相当**（§5）: コメント triage、コンフリクト解消、**PR スコープ内** の CI 修正。
@@ -131,7 +131,6 @@ gh pr view <N> --json labels,state,headRefOid
 - ラベル `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`
 - `changes requested` の未解消レビューがある
 - ベースブランチが `master` 以外
-- タイトルに `[WIP]` / `[DRAFT]`
 
 ```bash
 gh pr view <N> --json isDraft,mergeable,reviewDecision,labels,headRefName,baseRefName,author,additions,deletions

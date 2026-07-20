@@ -91,7 +91,7 @@ sequenceDiagram
 | Draft → ready・直列キュー | **pr-agent-prep**（AI 不要） | [`.github/workflows/pr-agent-prep.yml`](../../.github/workflows/pr-agent-prep.yml) |
 | 実装・マージ手順（参照） | `github-issue-worker` / `github-pr-merge-worker` スキル | Delivery Agent §0 が観測して読み分ける |
 
-**対象**（Merge Worker）: `master` 向け同一リポジトリ PR は **既定で対象**（オプトアウト: `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`、fork、`CHANGES_REQUESTED`、タイトル `[WIP]`/`[DRAFT]`）。`agent-merge` ラベルは互換のため残すが必須ではない。
+**対象**（Merge Worker）: `master` 向け同一リポジトリ PR は **既定で対象**（オプトアウト: `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`、fork、`CHANGES_REQUESTED`）。`agent-merge` ラベルは互換のため残すが必須ではない。
 
 **リトライ**: `issue-worker-retry-dispatch.yml` / `pr-merge-worker-retry-dispatch.yml` が 15 分ごとに滞留を reconcile。primary dispatch が `cancelled` になった場合も再送する。
 

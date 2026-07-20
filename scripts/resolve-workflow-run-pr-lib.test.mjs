@@ -157,7 +157,6 @@ test('mapWorkflowRunPrFields maps REST-shaped PR object', () => {
   assert.deepEqual(mapped, {
     number: 42,
     headRef: 'feature/foo',
-    body: 'PR body',
     title: 'Fix bug',
     labels: 'bug,agent-ready',
     url: 'https://github.com/org/repo/pull/42',
@@ -179,7 +178,6 @@ test('mapWorkflowRunPrFields maps GraphQL-shaped PR object', () => {
   assert.deepEqual(mapped, {
     number: 99,
     headRef: 'cursor/issue-1',
-    body: '',
     title: 'GraphQL PR',
     labels: 'agent-merge,ready',
     url: 'https://github.com/org/repo/pull/99',

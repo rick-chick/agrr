@@ -88,7 +88,6 @@ export function resolveWorkflowRunPr(input) {
  * @returns {{
  *   number: number;
  *   headRef: string;
- *   body: string;
  *   title: string;
  *   labels: string;
  *   url: string;
@@ -129,7 +128,6 @@ export function mapWorkflowRunPrFields(pr) {
   return {
     number: Number(pr.number),
     headRef,
-    body: typeof pr.body === 'string' ? pr.body : '',
     title: typeof pr.title === 'string' ? pr.title : '',
     labels: labels.join(','),
     url: typeof pr.html_url === 'string' ? pr.html_url : typeof pr.url === 'string' ? pr.url : '',
