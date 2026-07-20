@@ -3,32 +3,18 @@ import { createHash } from 'node:crypto';
 export const AGENT_DEPS_MARKER = 'agent-deps:v1';
 
 /**
- * @param {string} issueBody
- * @returns {string | null}
- */
-export function extractDependencySection(issueBody) {
-  const lines = issueBody.split(/\r?\n/);
-  const startIndex = lines.findIndex((line) => /^## 依存[ \t]*$/.test(line));
-  if (startIndex === -1) {
-    return null;
-  }
-  const sectionLines = [];
-  for (let i = startIndex + 1; i < lines.length; i += 1) {
-    if (/^## /.test(lines[i])) {
-      break;
-    }
-    sectionLines.push(lines[i]);
-  }
-  return sectionLines.join('\n').trimEnd();
-}
-
-/**
+ * SHA-256 of full issue body for agent-deps:v1 cache staleness (no section regex).
+ *
  * @param {string} issueBody
  * @returns {string}
  */
+export function hashIssueBody(issueBody) {
+  return createHash('sha256').update(issueBody ?? '').digest('hex');
+}
+
+/** @deprecated Use hashIssueBody */
 export function hashDependencySection(issueBody) {
-  const section = extractDependencySection(issueBody);
-  return createHash('sha256').update(section ?? '').digest('hex');
+  return hashIssueBody(issueBody);
 }
 
 /**
@@ -148,7 +134,7 @@ export function buildAgentDepsCacheComment(contract) {
  * @returns {boolean}
  */
 export function isAgentDepsCacheValid(contract, issueBody) {
-  return contract.body_hash === hashDependencySection(issueBody);
+  return contract.body_hash === hashIssueBody(issueBody);
 }
 
 /**

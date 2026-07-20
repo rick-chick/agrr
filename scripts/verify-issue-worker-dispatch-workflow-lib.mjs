@@ -9,15 +9,14 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'resolveDispatchAction',
   'resolveImplementDispatchGate',
   'resolveEpicDispatchAction',
-  'resolveDependencyGate',
-  'resolveDependencyGateFromAgentCache',
+  'run-issue-worker-dependency-gate.mjs',
   'issue-worker-deps-resolve.mjs',
   'CURSOR_DELIVERY_WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}',
   'formatDependencyGateComment',
   'openFixPrSearchQuery',
   'Comment when dependency gate blocks dispatch',
   'Trigger Delivery Agent',
-  'post-cursor-webhook.mjs',
+  'post-issue-worker-dispatch.mjs',
 ];
 
 const REQUIRED_RETRY_WORKFLOW_SNIPPETS = [
@@ -113,6 +112,26 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
 
   if (libText.includes('export function parseDependencyIssueNumbers')) {
     errors.push('dispatch lib must not export parseDependencyIssueNumbers');
+  }
+
+  if (workflowText.includes('body_b64') || workflowText.includes('BODY_B64')) {
+    errors.push('issue-worker-dispatch workflow must not pass issue body via base64');
+  }
+
+  if (workflowText.includes('issue_body')) {
+    errors.push('issue-worker-dispatch workflow must not include issue_body in webhook payload');
+  }
+
+  if (!workflowText.includes('post-issue-worker-dispatch.mjs')) {
+    errors.push('issue-worker-dispatch workflow must use post-issue-worker-dispatch.mjs');
+  }
+
+  if (!workflowText.includes('run-issue-worker-dependency-gate.mjs')) {
+    errors.push('issue-worker-dispatch workflow must use run-issue-worker-dependency-gate.mjs');
+  }
+
+  if (libText.includes('extractDependencySection')) {
+    errors.push('dispatch lib must not import extractDependencySection');
   }
 
   if (!libText.includes('export function collectReconcileDispatchCandidates') &&

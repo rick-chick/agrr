@@ -1,8 +1,5 @@
 import { buildDeliveryIssuePayload } from './delivery-dispatch-lib.mjs';
-import {
-  hashDependencySection,
-  extractDependencySection,
-} from './issue-worker-deps-agent-lib.mjs';
+import { hashIssueBody } from './issue-worker-deps-agent-lib.mjs';
 
 const DEFAULT_RETRY_DISPATCH_REPO = 'rick-chick/agrr';
 
@@ -90,11 +87,6 @@ export async function resolveDependencyGateFromAgentCache({
   fetchIssueState,
   fetchIssueBody,
 }) {
-  const section = extractDependencySection(issueBody);
-  if (!section) {
-    return { skip: false };
-  }
-
   if (!getAgentDepsContract) {
     return {
       skip: true,
@@ -117,7 +109,7 @@ export async function resolveDependencyGateFromAgentCache({
       return;
     }
     const contract = await getAgentDepsContract(currentNumber, currentBody);
-    if (!contract || contract.body_hash !== hashDependencySection(currentBody)) {
+    if (!contract || contract.body_hash !== hashIssueBody(currentBody)) {
       cacheMissIssue = currentNumber;
       return;
     }
@@ -143,7 +135,7 @@ export async function resolveDependencyGateFromAgentCache({
   }
 
   const rootContract = await getAgentDepsContract(issueNumber, issueBody);
-  if (!rootContract || rootContract.body_hash !== hashDependencySection(issueBody)) {
+  if (!rootContract || rootContract.body_hash !== hashIssueBody(issueBody)) {
     return {
       skip: true,
       skipReason: `agent dependency cache missing or stale for #${issueNumber}`,
@@ -417,17 +409,12 @@ export async function resolveHardDependencies({
   issueBody,
   getAgentDepsContract,
 }) {
-  const section = extractDependencySection(issueBody);
-  if (!section) {
-    return { hardDependencies: [], source: 'none' };
-  }
-
   if (!getAgentDepsContract) {
     return { source: 'miss' };
   }
 
   const contract = await getAgentDepsContract(issueNumber, issueBody);
-  if (!contract || contract.body_hash !== hashDependencySection(issueBody)) {
+  if (!contract || contract.body_hash !== hashIssueBody(issueBody)) {
     return { source: 'miss' };
   }
 

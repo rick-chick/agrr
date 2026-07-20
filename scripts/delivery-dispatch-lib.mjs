@@ -12,6 +12,9 @@ import { extractClosingIssueNumbers } from './delivery-agent-campaign-lib.mjs';
  *   issueTitle?: string;
  *   issueUrl?: string;
  *   labels?: string;
+ *   issueTitle?: string;
+ *   issueUrl?: string;
+ *   labels?: string;
  *   issueBody?: string;
  *   retryReason?: string;
  * }} input

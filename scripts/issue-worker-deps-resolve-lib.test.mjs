@@ -36,21 +36,20 @@ test('parseDepsResolveArgs rejects missing or invalid --number', () => {
   );
 });
 
-test('buildDepsResolveWebhookPayload includes body_hash and omits action', () => {
+test('buildDepsResolveWebhookPayload includes body_hash and omits issue_body', () => {
   const payload = buildDepsResolveWebhookPayload({
     repo: 'rick-chick/agrr',
     issueNumber: 318,
     issueTitle: 'Child issue',
     issueUrl: 'https://github.com/rick-chick/agrr/issues/318',
-    issueBody: '## 依存\n\n- #317',
     bodyHash: 'abc123deadbeef',
   });
   assert.equal(payload.repository, 'rick-chick/agrr');
   assert.equal(payload.issue_number, 318);
   assert.equal(payload.issue_title, 'Child issue');
   assert.equal(payload.issue_url, 'https://github.com/rick-chick/agrr/issues/318');
-  assert.equal(payload.issue_body, '## 依存\n\n- #317');
   assert.equal(payload.body_hash, 'abc123deadbeef');
+  assert.equal('issue_body' in payload, false);
   assert.equal('action' in payload, false);
 });
 

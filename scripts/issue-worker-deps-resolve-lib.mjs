@@ -32,7 +32,6 @@ export function parseDepsResolveArgs(argv) {
  *   issueNumber: number;
  *   issueTitle: string;
  *   issueUrl: string;
- *   issueBody: string;
  *   bodyHash: string;
  * }} input
  * @returns {Record<string, unknown>}
@@ -44,7 +43,6 @@ export function buildDepsResolveWebhookPayload(input) {
       issueNumber: input.issueNumber,
       issueTitle: input.issueTitle,
       issueUrl: input.issueUrl,
-      issueBody: input.issueBody,
     }),
     body_hash: input.bodyHash,
   };

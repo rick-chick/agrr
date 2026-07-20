@@ -5,8 +5,7 @@ import {
   AGENT_DEPS_MARKER,
   buildAgentDepsCacheComment,
   createGetAgentDepsContractFromComments,
-  extractDependencySection,
-  hashDependencySection,
+  hashIssueBody,
   isAgentDepsCacheValid,
   parseAgentDepsFromCommentBody,
   parseAgentDepsFromComments,
@@ -24,16 +23,11 @@ const body402 = [
   '- #384（タブラベル整合。open の間は着手不可）',
 ].join('\n');
 
-test('hashDependencySection is stable for ## 依存 content', () => {
-  const hash1 = hashDependencySection(body384);
-  const hash2 = hashDependencySection(body384);
+test('hashIssueBody is stable for full issue body', () => {
+  const hash1 = hashIssueBody(body384);
+  const hash2 = hashIssueBody(body384);
   assert.equal(hash1, hash2);
   assert.match(hash1, /^[a-f0-9]{64}$/);
-});
-
-test('extractDependencySection stops at next heading', () => {
-  const body = ['## 依存', '', '- #317', '', '## 参照', '', '- #999'].join('\n');
-  assert.equal(extractDependencySection(body), '\n- #317');
 });
 
 test('parseAgentDepsFromCommentBody reads embedded JSON contract', () => {
@@ -41,7 +35,7 @@ test('parseAgentDepsFromCommentBody reads embedded JSON contract', () => {
     hard_dependencies: [],
     soft_notes: ['#362 は独立'],
     rationale: 'なし行のみ。参照 issue は hard に含めない。',
-    body_hash: hashDependencySection(body384),
+    body_hash: hashIssueBody(body384),
   };
   const comment = buildAgentDepsCacheComment(contract);
   assert.match(comment, new RegExp(AGENT_DEPS_MARKER));
@@ -60,7 +54,7 @@ test('parseAgentDepsFromComments picks newest valid comment', () => {
     hard_dependencies: [],
     soft_notes: [],
     rationale: 'current',
-    body_hash: hashDependencySection(body384),
+    body_hash: hashIssueBody(body384),
   });
   const parsed = parseAgentDepsFromComments([
     { body: older, createdAt: '2026-01-01T00:00:00Z' },
@@ -75,7 +69,7 @@ test('isAgentDepsCacheValid compares body_hash', () => {
     hard_dependencies: [384],
     soft_notes: [],
     rationale: 'blocks on #384',
-    body_hash: hashDependencySection(body402),
+    body_hash: hashIssueBody(body402),
   };
   assert.equal(isAgentDepsCacheValid(contract, body402), true);
   assert.equal(isAgentDepsCacheValid(contract, body384), false);
@@ -86,7 +80,7 @@ test('createGetAgentDepsContractFromComments returns null on cache miss or stale
     hard_dependencies: [384],
     soft_notes: [],
     rationale: 'blocks on #384',
-    body_hash: hashDependencySection(body402),
+    body_hash: hashIssueBody(body402),
   };
   const comment = buildAgentDepsCacheComment(contract);
   const getContract = createGetAgentDepsContractFromComments(async () => [

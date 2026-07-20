@@ -223,7 +223,6 @@ function postWebhook({ repo, issue, retryReason }) {
     issueTitle: issue.title,
     issueUrl: issue.url,
     labels: issue.labels.join(','),
-    issueBody: issue.body,
     retryReason,
   });
 

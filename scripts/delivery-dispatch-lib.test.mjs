@@ -10,7 +10,28 @@ import {
   resolvePrimaryClosingIssueNumber,
 } from './delivery-dispatch-lib.mjs';
 
-test('buildDeliveryIssuePayload omits action field', () => {
+test('buildDeliveryIssuePayload omits issue_body when not provided', () => {
+  const payload = buildDeliveryIssuePayload({
+    repository: 'rick-chick/agrr',
+    issueNumber: 323,
+    issueTitle: 'Example',
+    issueUrl: 'https://github.com/rick-chick/agrr/issues/323',
+    labels: 'agent-ready',
+    retryReason: 'scheduled_reconcile',
+  });
+  assert.deepEqual(payload, {
+    repository: 'rick-chick/agrr',
+    issue_number: 323,
+    issue_title: 'Example',
+    issue_url: 'https://github.com/rick-chick/agrr/issues/323',
+    labels: 'agent-ready',
+    retry_reason: 'scheduled_reconcile',
+  });
+  assert.equal('issue_body' in payload, false);
+  assert.equal('action' in payload, false);
+});
+
+test('buildDeliveryIssuePayload may include issue_body when explicitly passed', () => {
   const payload = buildDeliveryIssuePayload({
     repository: 'rick-chick/agrr',
     issueNumber: 323,

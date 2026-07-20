@@ -13,8 +13,7 @@ import { execFileSync } from 'node:child_process';
 
 import {
   createGetAgentDepsContractFromComments,
-  extractDependencySection,
-  hashDependencySection,
+  hashIssueBody,
 } from './issue-worker-deps-agent-lib.mjs';
 import {
   buildDepsResolveWebhookPayload,
@@ -68,7 +67,6 @@ function fetchIssue(repo, issueNumber) {
  *   issueNumber: number;
  *   issueTitle: string;
  *   issueUrl: string;
- *   issueBody: string;
  *   bodyHash: string;
  * }} input
  */
@@ -91,13 +89,7 @@ function requestAgentJudgment(input) {
 async function main() {
   const { repo, number } = parseDepsResolveArgs(process.argv);
   const issue = fetchIssue(repo, number);
-  const section = extractDependencySection(issue.body);
-  if (!section) {
-    console.log(`Issue #${number} has no ## 依存 section; nothing to resolve.`);
-    return;
-  }
-
-  const bodyHash = hashDependencySection(issue.body);
+  const bodyHash = hashIssueBody(issue.body);
   const getAgentDepsContract = createGetAgentDepsContractFromComments((issueNumber) =>
     fetchIssueComments(repo, issueNumber),
   );
@@ -112,7 +104,6 @@ async function main() {
     issueNumber: number,
     issueTitle: issue.title,
     issueUrl: issue.url,
-    issueBody: issue.body,
     bodyHash,
   });
   if (!agentResult.invoked) {

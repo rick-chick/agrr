@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
-import { hashDependencySection } from './issue-worker-deps-agent-lib.mjs';
+import { hashIssueBody } from './issue-worker-deps-agent-lib.mjs';
 import {
   buildWebhookPayload,
   defaultRetryReasonForMode,
@@ -43,7 +43,7 @@ function agentContract(hardDependencies, issueBody) {
     hard_dependencies: hardDependencies,
     soft_notes: [],
     rationale: 'fixture',
-    body_hash: hashDependencySection(issueBody),
+    body_hash: hashIssueBody(issueBody),
   };
 }
 

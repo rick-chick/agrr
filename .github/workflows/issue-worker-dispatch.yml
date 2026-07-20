@@ -31,7 +31,6 @@ jobs:
           LABEL_NAME: ${{ github.event.label.name }}
           ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
           ISSUE_LABELS: ${{ join(github.event.issue.labels.*.name, ',') }}
-          ISSUE_BODY_INPUT: ${{ github.event.issue.body }}
         run: |
           set -euo pipefail
           RESULT=$(node --input-type=module -e "
@@ -50,8 +49,6 @@ jobs:
             echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason')" >> "$GITHUB_OUTPUT"
           else
             echo "action=$(echo "$RESULT" | jq -r '.action')" >> "$GITHUB_OUTPUT"
-            BODY_B64=$(printf '%s' "$ISSUE_BODY_INPUT" | base64 -w0)
-            echo "body_b64=$BODY_B64" >> "$GITHUB_OUTPUT"
             echo "labels=$ISSUE_LABELS" >> "$GITHUB_OUTPUT"
           fi
 
@@ -128,78 +125,15 @@ jobs:
         id: dependency_gate
         if: steps.issue.outputs.skip != 'true' && steps.final_action.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_BODY_INPUT: ${{ github.event.issue.body }}
         run: |
           set -euo pipefail
-          RESULT=$(node --input-type=module -e "
-            import { execFileSync } from 'node:child_process';
-            import { resolveDependencyGateFromAgentCache } from './scripts/issue-worker-dispatch-lib.mjs';
-            import { createGetAgentDepsContractFromComments } from './scripts/issue-worker-deps-agent-lib.mjs';
-
-            const repo = '${{ github.repository }}';
-            const issueNumber = Number(process.env.ISSUE_NUMBER);
-            const issueBody = process.env.ISSUE_BODY_INPUT ?? '';
-
-            function ghIssueView(number) {
-              const raw = execFileSync(
-                'gh',
-                ['issue', 'view', String(number), '--repo', repo, '--json', 'state,body'],
-                { encoding: 'utf8' },
-              );
-              return JSON.parse(raw);
-            }
-
-            function fetchIssueComments(number) {
-              const raw = execFileSync(
-                'gh',
-                [
-                  'api',
-                  \`repos/\${repo}/issues/\${number}/comments\`,
-                  '--paginate',
-                  '--jq',
-                  '.[] | {body, createdAt: .created_at}',
-                ],
-                { encoding: 'utf8' },
-              );
-              const lines = raw.trim().split('\\n').filter(Boolean);
-              if (lines.length === 0) {
-                return [];
-              }
-              return lines.map((line) => JSON.parse(line));
-            }
-
-            const getAgentDepsContract = createGetAgentDepsContractFromComments(
-              async (number) => fetchIssueComments(number),
-            );
-
-            try {
-              const gate = await resolveDependencyGateFromAgentCache({
-                issueNumber,
-                issueBody,
-                getAgentDepsContract,
-                fetchIssueState: async (number) => ghIssueView(number).state,
-                fetchIssueBody: async (number) => ghIssueView(number).body ?? '',
-              });
-              process.stdout.write(JSON.stringify(gate));
-            } catch (error) {
-              const message = error instanceof Error ? error.message : String(error);
-              if (!/circular dependency/i.test(message)) {
-                throw error;
-              }
-              process.stdout.write(JSON.stringify({
-                skip: true,
-                skipReason: message,
-                openDependencies: [],
-                circular: true,
-              }));
-            }
-          ")
+          RESULT=$(node scripts/run-issue-worker-dependency-gate.mjs)
           SKIP=$(echo "$RESULT" | jq -r '.skip')
           echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
           if [ "$SKIP" = "true" ]; then
-            echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason')" >> "$GITHUB_OUTPUT"
+            echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason // "unknown"')" >> "$GITHUB_OUTPUT"
             OPEN_DEPS=$(echo "$RESULT" | jq -c '.openDependencies // []')
             echo "open_dependencies=$OPEN_DEPS" >> "$GITHUB_OUTPUT"
             CIRCULAR=$(echo "$RESULT" | jq -r '.circular // false')
@@ -243,25 +177,12 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}
           WEBHOOK_KEY: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_KEY }}
-          BODY_B64: ${{ steps.issue.outputs.body_b64 }}
+          REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
           LABELS: ${{ steps.issue.outputs.labels }}
-        run: |
-          set -euo pipefail
-          if [ -z "${WEBHOOK_URL:-}" ] || [ -z "${WEBHOOK_KEY:-}" ]; then
-            echo "CURSOR_DELIVERY_WEBHOOK_URL or CURSOR_DELIVERY_WEBHOOK_KEY is not set."
-            echo "Configure secrets after creating the Delivery Agent Automation webhook."
-            exit 0
-          fi
-          ISSUE_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
-          payload=$(jq -n \
-            --arg repo "${{ github.repository }}" \
-            --argjson number "${{ github.event.issue.number }}" \
-            --arg title "${{ github.event.issue.title }}" \
-            --arg url "${{ github.event.issue.html_url }}" \
-            --arg labels "$LABELS" \
-            --arg body "$ISSUE_BODY" \
-            '{repository: $repo, issue_number: $number, issue_title: $title, issue_url: $url, labels: $labels, issue_body: $body}')
-          printf '%s' "$payload" | node scripts/post-cursor-webhook.mjs
+        run: node scripts/post-issue-worker-dispatch.mjs
 
       - name: Skip dispatch
         if: >-
