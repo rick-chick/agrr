@@ -12,10 +12,6 @@ import { extractClosingIssueNumbers } from './delivery-agent-campaign-lib.mjs';
  *   issueTitle?: string;
  *   issueUrl?: string;
  *   labels?: string;
- *   issueTitle?: string;
- *   issueUrl?: string;
- *   labels?: string;
- *   issueBody?: string;
  *   retryReason?: string;
  * }} input
  * @returns {Record<string, unknown>}
@@ -26,7 +22,6 @@ export function buildDeliveryIssuePayload({
   issueTitle,
   issueUrl,
   labels,
-  issueBody,
   retryReason,
 }) {
   const payload = {
@@ -41,9 +36,6 @@ export function buildDeliveryIssuePayload({
   }
   if (labels !== undefined) {
     payload.labels = labels;
-  }
-  if (issueBody !== undefined) {
-    payload.issue_body = issueBody;
   }
   if (retryReason) {
     payload.retry_reason = retryReason;

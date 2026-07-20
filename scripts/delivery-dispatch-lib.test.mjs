@@ -31,28 +31,6 @@ test('buildDeliveryIssuePayload omits issue_body when not provided', () => {
   assert.equal('action' in payload, false);
 });
 
-test('buildDeliveryIssuePayload may include issue_body when explicitly passed', () => {
-  const payload = buildDeliveryIssuePayload({
-    repository: 'rick-chick/agrr',
-    issueNumber: 323,
-    issueTitle: 'Example',
-    issueUrl: 'https://github.com/rick-chick/agrr/issues/323',
-    labels: 'agent-ready',
-    issueBody: 'body',
-    retryReason: 'scheduled_reconcile',
-  });
-  assert.deepEqual(payload, {
-    repository: 'rick-chick/agrr',
-    issue_number: 323,
-    issue_title: 'Example',
-    issue_url: 'https://github.com/rick-chick/agrr/issues/323',
-    labels: 'agent-ready',
-    issue_body: 'body',
-    retry_reason: 'scheduled_reconcile',
-  });
-  assert.equal('action' in payload, false);
-});
-
 test('buildDeliveryPrPayload keeps only documented Delivery Agent webhook fields', () => {
   const payload = buildDeliveryPrPayload({
     repository: 'rick-chick/agrr',
@@ -173,22 +151,6 @@ test('buildDeliveryPrPayloadFromPr sets pr_unlinked without closingIssuesReferen
   assert.equal('issue_number' in payload, false);
 });
 
-test('buildDeliveryIssuePayload supports body_hash for deps judgment runs', () => {
-  const payload = {
-    ...buildDeliveryIssuePayload({
-      repository: 'rick-chick/agrr',
-      issueNumber: 318,
-      issueTitle: 'Child',
-      issueUrl: 'https://github.com/rick-chick/agrr/issues/318',
-      issueBody: '## 依存\n\n- #317',
-    }),
-    body_hash: 'abc123deadbeef',
-  };
-  assert.equal(payload.issue_number, 318);
-  assert.equal(payload.body_hash, 'abc123deadbeef');
-  assert.equal('action' in payload, false);
-});
-
 test('parseDispatchedIssueNumberFromLog reads Delivery Agent and legacy logs', () => {
   assert.equal(
     parseDispatchedIssueNumberFromLog('Dispatched Delivery Agent for #316 (scheduled_reconcile)'),
@@ -199,4 +161,13 @@ test('parseDispatchedIssueNumberFromLog reads Delivery Agent and legacy logs', (
     323,
   );
   assert.equal(parseDispatchedIssueNumberFromLog('no dispatch'), null);
+});
+
+test('parseDispatchedIssueNumberFromLog returns last dispatch number', () => {
+  const log = [
+    'setup',
+    'Dispatched Delivery Agent for #316 (scheduled_reconcile)',
+    'Dispatched Delivery Agent for #323 (scheduled_reconcile)',
+  ].join('\n');
+  assert.equal(parseDispatchedIssueNumberFromLog(log), 323);
 });

@@ -719,7 +719,6 @@ export function defaultRetryReasonForMode(mode) {
  *   issueTitle: string;
  *   issueUrl: string;
  *   labels: string;
- *   issueBody: string;
  *   retryReason?: string;
  * }} input
  * @returns {Record<string, unknown>}
@@ -730,7 +729,6 @@ export function buildWebhookPayload({
   issueTitle,
   issueUrl,
   labels,
-  issueBody,
   retryReason,
 }) {
   return buildDeliveryIssuePayload({
@@ -739,7 +737,6 @@ export function buildWebhookPayload({
     issueTitle,
     issueUrl,
     labels,
-    issueBody,
     retryReason,
   });
 }

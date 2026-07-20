@@ -25,7 +25,6 @@ import {
   formatDependencyGateBlockComment,
   collectReconcileDispatchCandidates,
   selectReconcileDispatchCandidate,
-  parseDispatchedIssueNumberFromLog,
   resolveOnClosedDispatch,
 } from './issue-worker-dispatch-lib.mjs';
 
@@ -155,7 +154,6 @@ test('buildWebhookPayload includes retry metadata when provided', () => {
     issueTitle: 'Example',
     issueUrl: 'https://github.com/rick-chick/agrr/issues/207',
     labels: 'agent-ready',
-    issueBody: 'body',
     retryReason: 'dispatch_run_cancelled',
   });
   assert.equal(payload.retry_reason, 'dispatch_run_cancelled');
@@ -758,19 +756,6 @@ test('selectReconcileDispatchCandidate keeps sole candidate when deprioritized',
 
 test('selectReconcileDispatchCandidate returns null for empty candidates', () => {
   assert.equal(selectReconcileDispatchCandidate([]), null);
-});
-
-test('parseDispatchedIssueNumberFromLog returns last dispatch number', () => {
-  const log = [
-    'setup',
-    'Dispatched Delivery Agent for #316 (scheduled_reconcile)',
-    'Dispatched Delivery Agent for #323 (scheduled_reconcile)',
-  ].join('\n');
-  assert.equal(parseDispatchedIssueNumberFromLog(log), 323);
-});
-
-test('parseDispatchedIssueNumberFromLog returns null when no dispatch line', () => {
-  assert.equal(parseDispatchedIssueNumberFromLog('no dispatch here'), null);
 });
 
 test('collectReconcileDispatchCandidates does not duplicate agent-ready epic', async () => {

@@ -12,11 +12,6 @@ export function hashIssueBody(issueBody) {
   return createHash('sha256').update(issueBody ?? '').digest('hex');
 }
 
-/** @deprecated Use hashIssueBody */
-export function hashDependencySection(issueBody) {
-  return hashIssueBody(issueBody);
-}
-
 /**
  * @param {unknown} value
  * @returns {value is {
