@@ -232,9 +232,9 @@ Delivery Agent payload（`action` **なし**）:
 | フィールド | 例 | 意味 |
 |------------|-----|------|
 | `repository` | `rick-chick/agrr` | 必須 |
-| `issue_number` | `323` | issue 起点 / PR 本文の `Closes #N` |
+| `issue_number` | `323` | issue 起点 / PR の `closingIssuesReferences` |
 | `pr_number` | `427` | PR / CI 起点 |
-| `pr_unlinked` | `true` | 本文に `Closes` / `fixes` なし。Agent は PR フェーズのみ |
+| `pr_unlinked` | `true` | `closingIssuesReferences` が空。Agent は PR フェーズのみ |
 | `body_hash` | （deps のみ） | 依存判定 run。実装・PR 禁止 |
 | `mergeable_state` 等 | （任意） | PR 観測ヒント。Agent は GitHub を正とする |
 

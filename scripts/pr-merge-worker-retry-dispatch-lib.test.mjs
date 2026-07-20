@@ -20,7 +20,7 @@ const BASE_PR = {
   author: { login: 'cursor[bot]' },
   isDraft: false,
   baseRefName: 'master',
-  body: 'Closes #276',
+  closingIssuesReferences: [{ number: 276 }],
   labels: [{ name: 'agent-merge' }],
   headRepository: { nameWithOwner: 'rick-chick/agrr' },
   mergeable: 'MERGEABLE',
@@ -135,7 +135,7 @@ test('classifyReconcileCandidate accepts BEHIND PR without linked issue for pr_u
     pr: {
       ...BASE_PR,
       number: 430,
-      body: '## Summary\n\nHuman PR without Closes issue link.',
+      closingIssuesReferences: [],
       labels: [],
       mergeable: 'MERGEABLE',
       mergeStateStatus: 'BEHIND',

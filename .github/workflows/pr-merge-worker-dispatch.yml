@@ -134,7 +134,7 @@ jobs:
 
           # Universal rescue / merge: opt-out only (blocking labels above). No branch-prefix opt-in.
 
-          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepository,title,mergeable,mergeStateStatus)
+          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepository,title,mergeable,mergeStateStatus,closingIssuesReferences)
           IS_DRAFT=$(echo "$PR_META" | jq -r '.isDraft')
           REVIEW_DECISION=$(echo "$PR_META" | jq -r '.reviewDecision // ""')
           BASE_REF=$(echo "$PR_META" | jq -r '.baseRefName')
@@ -203,14 +203,15 @@ jobs:
             echo "skipping CI gate for ${ACTION} resolution"
           fi
 
-          PR_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
-          payload=$(REPOSITORY="${{ github.repository }}" PR_NUMBER="$PR_NUMBER" node --input-type=module -e "
+          CLOSING_ISSUES_JSON=$(echo "$PR_META" | jq -c '.closingIssuesReferences')
+          payload=$(REPOSITORY="${{ github.repository }}" PR_NUMBER="$PR_NUMBER" CLOSING_ISSUES_JSON="$CLOSING_ISSUES_JSON" node --input-type=module -e "
             import {
               buildDeliveryPrPayloadFromPr,
               deliveryPrWebhookPayloadIsDispatchable,
             } from './scripts/delivery-dispatch-lib.mjs';
+            const closingIssuesReferences = JSON.parse(process.env.CLOSING_ISSUES_JSON || '[]');
             const payload = buildDeliveryPrPayloadFromPr(
-              { number: Number(process.env.PR_NUMBER), body: process.argv[1] },
+              { number: Number(process.env.PR_NUMBER), closingIssuesReferences },
               process.env.REPOSITORY,
             );
             if (!deliveryPrWebhookPayloadIsDispatchable(payload)) {
@@ -218,7 +219,7 @@ jobs:
               process.exit(0);
             }
             process.stdout.write(JSON.stringify(payload));
-          " "$PR_BODY")
+          ")
           if [ -z "$payload" ]; then
             exit 0
           fi

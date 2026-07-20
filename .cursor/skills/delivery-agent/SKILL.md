@@ -79,7 +79,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 }
 ```
 
-未リンク PR（本文に `Closes` / `fixes` なし）:
+未リンク PR（`closingIssuesReferences` が空）:
 
 ```json
 {
@@ -92,7 +92,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 | フィールド | 必須 |
 |-----------|------|
 | `repository` | はい |
-| `issue_number` | issue 起点時、または PR 本文の `Closes #N` / `fixes #N` があるとき |
+| `issue_number` | issue 起点時、または PR の `closingIssuesReferences` にリンク issue があるとき |
 | `pr_number` | PR / CI 起点時 |
 | `pr_unlinked` | `issue_number` が無い PR dispatch 時（`true`）。Agent は PR フェーズのみ |
 | `action` | **送らない・無視** |

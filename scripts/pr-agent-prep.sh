@@ -56,7 +56,6 @@ pr_is_eligible() {
       authorLogin: pr.author.login,
       baseRefName: pr.baseRefName,
       headRefName: pr.headRefName,
-      body: pr.body,
       labels,
       headOwner,
       baseOwner: process.env.BASE_OWNER,
@@ -162,12 +161,10 @@ prep_pr() {
   fi
 
   closing_issue_count="$(echo "$pr_json" | jq '.closingIssuesReferences | length')"
-  should_merge="$(PR_JSON="$pr_json" CLOSING_ISSUE_COUNT="$closing_issue_count" node_eval "
+  should_merge="$(CLOSING_ISSUE_COUNT="$closing_issue_count" node_eval "
     import { shouldReceiveAgentMergeLabel } from '$LIB';
-    const pr = JSON.parse(process.env.PR_JSON);
     const ok = shouldReceiveAgentMergeLabel({
       closingIssueCount: Number(process.env.CLOSING_ISSUE_COUNT),
-      body: pr.body,
     });
     process.stdout.write(ok ? 'true' : 'false');
   ")"
@@ -205,7 +202,6 @@ advance_queue() {
           authorLogin: pr.author.login,
           baseRefName: pr.baseRefName,
           headRefName: pr.headRefName,
-          body: pr.body,
           labels,
           headOwner,
           baseOwner: process.env.BASE_OWNER,

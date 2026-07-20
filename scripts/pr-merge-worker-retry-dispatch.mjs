@@ -127,7 +127,6 @@ function optOutUnlinkedPrsFromAutoMerge(repo, openPrs) {
     const closingIssues = /** @type {Array<unknown>} */ (pr.closingIssuesReferences ?? []);
     const shouldMerge = shouldReceiveAgentMergeLabel({
       closingIssueCount: closingIssues.length,
-      body: /** @type {string | null | undefined} */ (pr.body),
     });
     if (shouldMerge) {
       continue;

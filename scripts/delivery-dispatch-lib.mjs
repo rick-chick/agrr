@@ -3,6 +3,8 @@
  * Gates and reconcile selection remain in issue-worker-dispatch-lib / pr-merge-worker-retry-dispatch-lib.
  */
 
+import { extractClosingIssueNumbers } from './delivery-agent-campaign-lib.mjs';
+
 /**
  * @param {{
  *   repository: string;
@@ -47,19 +49,12 @@ export function buildDeliveryIssuePayload({
 }
 
 /**
- * @param {string | null | undefined} body
+ * @param {Array<{ number?: number }> | null | undefined} closingIssuesReferences
  * @returns {number | null}
  */
-export function resolveIssueNumberFromPrBody(body) {
-  if (!body) {
-    return null;
-  }
-  const match = body.match(/\b(?:closes|fixes)\s+#(\d+)/i);
-  if (!match) {
-    return null;
-  }
-  const number = Number(match[1]);
-  return Number.isInteger(number) && number > 0 ? number : null;
+export function resolvePrimaryClosingIssueNumber(closingIssuesReferences) {
+  const numbers = extractClosingIssueNumbers(closingIssuesReferences);
+  return numbers[0] ?? null;
 }
 
 /**
@@ -137,6 +132,6 @@ export function buildDeliveryPrPayloadFromPr(pr, repository) {
   return buildDeliveryPrPayload({
     repository,
     prNumber: pr.number,
-    issueNumber: resolveIssueNumberFromPrBody(pr.body),
+    issueNumber: resolvePrimaryClosingIssueNumber(pr.closingIssuesReferences),
   });
 }

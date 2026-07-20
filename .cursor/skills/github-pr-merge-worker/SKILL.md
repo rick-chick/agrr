@@ -79,7 +79,7 @@ Cursor Automation が作成する **Draft PR** は [`.github/workflows/pr-agent-
 
 | 処理 | 担当 |
 |------|------|
-| `agent-merge` 付与 | `pr-agent-prep`（`cursor/*`・`issue/*`・`Merge-Strategy: agent`） |
+| `agent-merge` 付与 | `pr-agent-prep`（`cursor/*`・`issue/*` かつ `closingIssuesReferences` あり） |
 | 直列キュー（同時 ready は 1 件） | `pr-agent-prep` |
 | `gh pr ready`（CI green 後） | `pr-agent-prep` |
 | master 同期（`BEHIND` / `DIRTY` / `CONFLICTING`） | **本 Worker**（`resolve-pr-merge-conflicts.sh`） |

@@ -7,7 +7,7 @@ import {
   buildDeliveryPrPayloadFromPr,
   deliveryPrWebhookPayloadIsDispatchable,
   parseDispatchedIssueNumberFromLog,
-  resolveIssueNumberFromPrBody,
+  resolvePrimaryClosingIssueNumber,
 } from './delivery-dispatch-lib.mjs';
 
 test('buildDeliveryIssuePayload omits action field', () => {
@@ -61,7 +61,7 @@ test('buildDeliveryPrPayload keeps only documented Delivery Agent webhook fields
   assert.equal('merge_state_status' in payload, false);
 });
 
-test('buildDeliveryPrPayload includes issue_number from Closes when provided', () => {
+test('buildDeliveryPrPayload includes issue_number when provided', () => {
   const payload = buildDeliveryPrPayload({
     repository: 'rick-chick/agrr',
     prNumber: 427,
@@ -100,13 +100,16 @@ test('deliveryPrWebhookPayloadIsDispatchable accepts pr_unlinked for PR phase di
   );
 });
 
-test('resolveIssueNumberFromPrBody parses closes and fixes', () => {
-  assert.equal(resolveIssueNumberFromPrBody('Closes #323'), 323);
-  assert.equal(resolveIssueNumberFromPrBody('fixes #42'), 42);
-  assert.equal(resolveIssueNumberFromPrBody('no ref'), null);
+test('resolvePrimaryClosingIssueNumber uses closingIssuesReferences only', () => {
+  assert.equal(
+    resolvePrimaryClosingIssueNumber([{ number: 323 }, { number: 42 }]),
+    323,
+  );
+  assert.equal(resolvePrimaryClosingIssueNumber([]), null);
+  assert.equal(resolvePrimaryClosingIssueNumber(null), null);
 });
 
-test('buildDeliveryPrPayloadFromPr maps PR fields', () => {
+test('buildDeliveryPrPayloadFromPr maps closingIssuesReferences', () => {
   const payload = buildDeliveryPrPayloadFromPr(
     {
       number: 277,
@@ -115,7 +118,7 @@ test('buildDeliveryPrPayloadFromPr maps PR fields', () => {
       headRefName: 'cursor/foo',
       headRefOid: 'abc',
       author: { login: 'cursor[bot]' },
-      body: 'Closes #276',
+      closingIssuesReferences: [{ number: 276 }],
       mergeable: 'MERGEABLE',
       mergeStateStatus: 'CLEAN',
     },
@@ -131,13 +134,13 @@ test('buildDeliveryPrPayloadFromPr maps PR fields', () => {
   assert.equal('action' in payload, false);
 });
 
-test('buildDeliveryPrPayloadFromPr sets pr_unlinked for PR without Closes issue', () => {
+test('buildDeliveryPrPayloadFromPr sets pr_unlinked without closingIssuesReferences', () => {
   const payload = buildDeliveryPrPayloadFromPr(
     {
       number: 430,
       title: 'fix(frontend): crop list card overflow menu',
       url: 'https://github.com/rick-chick/agrr/pull/430',
-      body: '## Summary\n\nHuman PR without issue link.',
+      closingIssuesReferences: [],
     },
     'rick-chick/agrr',
   );

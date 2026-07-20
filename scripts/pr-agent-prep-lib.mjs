@@ -31,13 +31,6 @@ export function isOptInHeadRef(headRefName) {
 }
 
 /**
- * @param {string | null | undefined} body
- */
-export function hasMergeStrategyAgent(body) {
-  return /Merge-Strategy:\s*agent/.test(body ?? '');
-}
-
-/**
  * @param {string} authorLogin
  */
 export function isCursorAuthor(authorLogin) {
@@ -45,16 +38,13 @@ export function isCursorAuthor(authorLogin) {
 }
 
 /**
- * Agent merge queue requires a linked issue (GitHub API) or explicit Merge-Strategy: agent.
+ * Agent merge queue requires a linked issue (`closingIssuesReferences` via GitHub API).
  *
- * @param {{ closingIssueCount: number; body?: string | null }} input
+ * @param {{ closingIssueCount: number }} input
  * @returns {boolean}
  */
-export function shouldReceiveAgentMergeLabel({ closingIssueCount, body }) {
-  if (closingIssueCount > 0) {
-    return true;
-  }
-  return hasMergeStrategyAgent(body);
+export function shouldReceiveAgentMergeLabel({ closingIssueCount }) {
+  return closingIssueCount > 0;
 }
 
 /**
@@ -62,7 +52,6 @@ export function shouldReceiveAgentMergeLabel({ closingIssueCount, body }) {
  *   authorLogin: string;
  *   baseRefName: string;
  *   headRefName: string;
- *   body?: string | null;
  *   labels: Array<string | PrLabel>;
  *   headOwner: string;
  *   baseOwner: string;
@@ -77,9 +66,6 @@ export function isEligibleAgentPr(meta) {
   }
   if (hasBlockingMergeLabel(meta.labels)) {
     return false;
-  }
-  if (hasMergeStrategyAgent(meta.body)) {
-    return true;
   }
   return isOptInHeadRef(meta.headRefName);
 }
