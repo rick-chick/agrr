@@ -7,7 +7,7 @@
 - [ ] **二重起動** — 同一 issue/PR へ webhook が 2 経路から飛ばないか（[GITHUB-ACTIONS-CONSTRAINTS.md](GITHUB-ACTIONS-CONSTRAINTS.md)）
 - [ ] **RETRY_BLOCK_LABELS** — 新ラベル・新状態が reconcile を塞がないか
 - [ ] **Watchdog** — `detectStuckAgentReadyIssue` 等の対象外にならないか
-- [ ] **pr-agent-prep** — Draft → ready 直列キューと競合しないか
+- [ ] **pr-agent-prep** — Draft → ready 直列キューと競合しないか。`agent-merge` は `closingIssuesReferences` 必須であることと矛盾しないか
 - [ ] **責任空白** — どの Worker も動かず人間再開待ちになるギャップを増やしていないか（正本: [PRINCIPLES.md §目的](PRINCIPLES.md)）
 - [ ] **人間レビューゲート** — 「レビュー／承認がないと不十分」を理由にオプトインや人間待ちを足していないか（[PRINCIPLES.md §このリポジトリ固有](PRINCIPLES.md)）
 - [ ] **場合分けの過剰** — 「この場合だけ起動」を増やして止まる組み合わせを作っていないか（[PRINCIPLES.md §全部拾う](PRINCIPLES.md)）。狭い例外より対象を広げた方がよいか

@@ -28,7 +28,7 @@ description: >-
    - **`body_hash` あり** → 依存判定 run のみ（§依存）。実装・PR 禁止。終了。
    - **`pr_unlinked: true`**（`issue_number` なし）→ **PR フェーズ直行**（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。issue 実装・新規 PR 禁止。
 2. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,labels`
-   - リンク issue 番号は **`closingIssuesReferences` のみ**（本文の `Closes #N` regex は補助に留め、機械層では使わない）
+   - リンク issue 番号は **`closingIssuesReferences` のみ**（機械層は本文を読まない。Agent も `gh pr view --json closingIssuesReferences` を正とする）
    - **`merged: true`** → issue 実装・再マージ**禁止**。リンク issue のラベルを `gh issue view` で確認
      - いずれかに `ux-campaign:breadcrumb` → [`ux-campaign-loop`](../ux-campaign-loop/SKILL.md) §1〜§2（post-merge）のみ。終了
      - なければ exit 0

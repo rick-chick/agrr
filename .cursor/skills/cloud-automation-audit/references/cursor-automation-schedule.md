@@ -105,7 +105,7 @@ CURSOR_DELIVERY_WEBHOOK_URL='…' CURSOR_DELIVERY_WEBHOOK_KEY='…' \
 
 ## PR Agent Prep（Draft → ready）
 
-**目的**: Cursor Automation の Draft PR を Merge Worker が処理できる状態にする（`agent-merge` + 直列 `gh pr ready`）。
+**目的**: Cursor Automation の Draft PR を Merge Worker が処理できる状態にする。`cursor/*` または `issue/*` かつ **`closingIssuesReferences` あり** → `agent-merge` + 直列 `gh pr ready`。未リンクは `agent-no-merge`（[`pr-agent-prep.sh`](../../../scripts/pr-agent-prep.sh)）。
 
 **Trigger（GitHub Actions）**
 

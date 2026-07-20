@@ -219,7 +219,7 @@ P0 例: Interactor 以外での永続化、Presenter / Gateway 境界違反 → 
 head が `issue/<number>-*` のとき:
 
 - 上流 [`github-issue-worker`](../github-issue-worker/SKILL.md) が TDD + [`sequential-cleanup-review-workflow`](../sequential-cleanup-review-workflow/SKILL.md) 済みとみなす
-- PR 本文に `Closes #N` が無ければ **コメントで指摘**（単独ではブロックしない）
+- `closingIssuesReferences` が空なら **コメントで指摘**（単独ではブロックしない）。本文の `Closes #N` 有無では判定しない
 - 「順次クリーンアップ・レビュー（A〜D）完了」チェック未完了は **リスクとして認識**するが、**CI green + §3c 問題なし**ならマージ可
 - diff **1200 行超**でも自動マージを止めない。判断不能・P0 のみ `agent-merge-blocked`（人間確認待ちを既定にしない — [automation-authoring PRINCIPLES](../automation-authoring/references/PRINCIPLES.md)）
 
