@@ -34,7 +34,11 @@ const FORBIDDEN_PREP_SCRIPT_SNIPPETS = [
 
 const REQUIRED_MERGE_DISPATCH_SNIPPETS = [
   'ready_for_review',
-  'Draft PR without conflict/sync need',
+  'classify-primary-pr-merge-dispatch.mjs',
+];
+
+const REQUIRED_PRIMARY_DISPATCH_LIB_SNIPPETS = [
+  'draft without conflict or ci failure',
 ];
 
 /**
@@ -85,6 +89,10 @@ export async function verifyPrAgentPrepWorkflow(repoRoot) {
   }
 
   const mergeDispatchPath = join(repoRoot, '.github/workflows/pr-merge-worker-dispatch.yml');
+  const primaryDispatchLibPath = join(
+    repoRoot,
+    'scripts/pr-merge-worker-primary-dispatch-lib.mjs',
+  );
   try {
     const mergeDispatchText = await readFile(mergeDispatchPath, 'utf8');
     for (const snippet of REQUIRED_MERGE_DISPATCH_SNIPPETS) {
@@ -94,6 +102,17 @@ export async function verifyPrAgentPrepWorkflow(repoRoot) {
     }
   } catch {
     errors.push(`missing workflow: ${mergeDispatchPath}`);
+  }
+
+  try {
+    const primaryDispatchLibText = await readFile(primaryDispatchLibPath, 'utf8');
+    for (const snippet of REQUIRED_PRIMARY_DISPATCH_LIB_SNIPPETS) {
+      if (!primaryDispatchLibText.includes(snippet)) {
+        errors.push(`primary dispatch lib missing required snippet: ${snippet}`);
+      }
+    }
+  } catch {
+    errors.push(`missing library: ${primaryDispatchLibPath}`);
   }
 
   const libPath = join(repoRoot, 'scripts/pr-agent-prep-lib.mjs');
