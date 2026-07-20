@@ -191,9 +191,9 @@ export { parseDispatchedIssueNumberFromLog } from './delivery-dispatch-lib.mjs';
  * Select one reconcile dispatch target: implement before epic_close_check, then issue number.
  * When deprioritizeIssueNumber is set and other candidates exist, skip that issue.
  *
- * @param {Array<{ issue: { number: number; title?: string; labels?: string[]; body?: string }; action: string }>} candidates
+ * @param {Array<{ issue: { number: number; title?: string; labels?: string[] }; action: string }>} candidates
  * @param {{ deprioritizeIssueNumber?: number }} [options]
- * @returns {{ issue: { number: number; title?: string; labels?: string[]; body?: string }; action: string } | null}
+ * @returns {{ issue: { number: number; title?: string; labels?: string[] }; action: string } | null}
  */
 export function selectReconcileDispatchCandidate(candidates, options = {}) {
   if (candidates.length === 0) {
@@ -225,10 +225,10 @@ export function selectReconcileDispatchCandidate(candidates, options = {}) {
  * Collect all reconcile-eligible issues from agent-ready queue and open epics without agent-ready.
  * Structural gates only — dependency judgment is Agent-only (no body/comment/label deps parsing).
  *
- * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} epicsWithoutAgentReady
- * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} agentReadyIssues
+ * @param {Array<{ number: number; title: string; labels: string[] }>} epicsWithoutAgentReady
+ * @param {Array<{ number: number; title: string; labels: string[] }>} agentReadyIssues
  * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @returns {Array<{ issue: { number: number; title: string; labels: string[]; body?: string }; action: string }>}
+ * @returns {Array<{ issue: { number: number; title: string; labels: string[] }; action: string }>}
  */
 export function collectReconcileDispatchCandidates(
   epicsWithoutAgentReady,

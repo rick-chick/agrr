@@ -20,7 +20,6 @@ const BASE = {
   mergeable: 'MERGEABLE',
   mergeStateStatus: 'CLEAN',
   requiredCiState: 'green',
-  title: 'fix: example',
 };
 
 test('parseCommaSeparatedLabels splits comma-separated names', () => {
@@ -109,14 +108,6 @@ test('classifyPrimaryPrMergeDispatch skips ci_completed while checks incomplete'
     eligible: false,
     reason: 'required ci incomplete',
   });
-});
-
-test('classifyPrimaryPrMergeDispatch does not skip [WIP] title keyword', () => {
-  const result = classifyPrimaryPrMergeDispatch({
-    ...BASE,
-    title: '[WIP] fix: example',
-  });
-  assert.deepEqual(result, { eligible: true, dispatchKind: 'default' });
 });
 
 test('classifyPrimaryPrMergeDispatch rejects stale head sha on non-conflict path', () => {

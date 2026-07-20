@@ -42,7 +42,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
-          PR_TITLE_INPUT: ${{ github.event.pull_request.title }}
           WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           WORKFLOW_RUN_PRS_JSON: ${{ toJson(github.event.workflow_run.pull_requests) }}
         run: |
@@ -52,7 +51,6 @@ jobs:
             ACTION="${{ github.event.action }}"
             HEAD_REF="${{ github.event.pull_request.head.ref }}"
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-            PR_TITLE_B64=$(printf '%s' "$PR_TITLE_INPUT" | base64 -w0)
             LABEL_NAME="${{ github.event.label.name }}"
             LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
             PR_URL='${{ github.event.pull_request.html_url }}'
@@ -69,7 +67,6 @@ jobs:
             fi
             PR_NUMBER=$(echo "$RESULT" | jq -r '.number')
             HEAD_REF=$(echo "$RESULT" | jq -r '.headRef')
-            PR_TITLE_B64=$(echo "$RESULT" | jq -r '.title' | base64 -w0)
             LABEL_NAME=""
             LABELS=$(echo "$RESULT" | jq -r '.labels')
             PR_URL=$(echo "$RESULT" | jq -r '.url')
@@ -78,7 +75,6 @@ jobs:
 
           echo "skip=false" >> "$GITHUB_OUTPUT"
           echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "title_b64=$PR_TITLE_B64" >> "$GITHUB_OUTPUT"
           echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
           echo "action=$ACTION" >> "$GITHUB_OUTPUT"
           echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
@@ -101,10 +97,8 @@ jobs:
           AUTHOR: ${{ steps.pr.outputs.author }}
           LABELS: ${{ steps.pr.outputs.labels }}
           LABEL_NAME: ${{ steps.pr.outputs.label_name }}
-          TITLE_B64: ${{ steps.pr.outputs.title_b64 }}
         run: |
           set -euo pipefail
-          PR_TITLE=$(printf '%s' "$TITLE_B64" | base64 -d)
 
           if [ -z "${WEBHOOK_URL:-}" ] || [ -z "${WEBHOOK_KEY:-}" ]; then
             echo "CURSOR_DELIVERY_WEBHOOK_URL or CURSOR_DELIVERY_WEBHOOK_KEY is not set."
@@ -112,7 +106,7 @@ jobs:
             exit 0
           fi
 
-          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepository,title,mergeable,mergeStateStatus,closingIssuesReferences)
+          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepository,mergeable,mergeStateStatus,closingIssuesReferences)
           IS_DRAFT=$(echo "$PR_META" | jq -r '.isDraft')
           REVIEW_DECISION=$(echo "$PR_META" | jq -r '.reviewDecision // ""')
           BASE_REF=$(echo "$PR_META" | jq -r '.baseRefName')
@@ -148,7 +142,6 @@ jobs:
             --arg mergeable "$MERGEABLE_STATE" \
             --arg mergeStateStatus "$MERGE_STATE_STATUS" \
             --arg requiredCiState "$REQUIRED_CI_STATE" \
-            --arg title "$PR_TITLE" \
             '{
               labels: $labels,
               eventAction: $eventAction,
@@ -162,8 +155,7 @@ jobs:
               eventHeadSha: $eventHeadSha,
               mergeable: $mergeable,
               mergeStateStatus: $mergeStateStatus,
-              requiredCiState: $requiredCiState,
-              title: $title
+              requiredCiState: $requiredCiState
             }')
 
           RESULT=$(INPUT_JSON="$CLASSIFY_INPUT" node scripts/classify-primary-pr-merge-dispatch.mjs)

@@ -53,7 +53,7 @@ function hasOpenFixPr(repo, issueNumber) {
 
 /**
  * @param {string} repo
- * @returns {Array<{ number: number; title: string; url: string; body: string; labels: string[]; createdAt: string }>}
+ * @returns {Array<{ number: number; title: string; url: string; labels: string[] }>}
  */
 function listAgentReadyIssues(repo) {
   const raw = gh(repo, [
@@ -66,21 +66,19 @@ function listAgentReadyIssues(repo) {
     '--limit',
     '50',
     '--json',
-    'number,title,url,body,labels,createdAt',
+    'number,title,url,labels',
   ]);
   return JSON.parse(raw).map((issue) => ({
     number: issue.number,
     title: issue.title,
     url: issue.url,
-    body: issue.body ?? '',
     labels: issue.labels.map((label) => label.name),
-    createdAt: issue.createdAt,
   }));
 }
 
 /**
  * @param {string} repo
- * @returns {Array<{ number: number; title: string; url: string; body: string; labels: string[]; createdAt: string }>}
+ * @returns {Array<{ number: number; title: string; url: string; labels: string[] }>}
  */
 function listOpenEpicIssues(repo) {
   const raw = gh(repo, [
@@ -91,16 +89,14 @@ function listOpenEpicIssues(repo) {
     '--limit',
     '100',
     '--json',
-    'number,title,url,body,labels,createdAt',
+    'number,title,url,labels',
   ]);
   return JSON.parse(raw)
     .map((issue) => ({
       number: issue.number,
       title: issue.title,
       url: issue.url,
-      body: issue.body ?? '',
       labels: issue.labels.map((label) => label.name),
-      createdAt: issue.createdAt,
     }))
     .filter((issue) => isEpicIssue(issue.title, issue.labels.join(',')));
 }
@@ -108,7 +104,7 @@ function listOpenEpicIssues(repo) {
 /**
  * Open epics without agent-ready — agent §1b judges close; no label promotion.
  *
- * @param {Array<{ number: number; title: string; url: string; body: string; labels: string[] }>} epics
+ * @param {Array<{ number: number; title: string; url: string; labels: string[] }>} epics
  */
 function listEpicsWithoutAgentReady(epics) {
   return epics.filter((issue) => !hasLabel(issue.labels.join(','), 'agent-ready'));

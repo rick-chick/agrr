@@ -39,8 +39,8 @@
 # 例: 候補選定の dry-run（issue 番号・ラベルを実際の対象に合わせる）
 gh issue view <N> --repo rick-chick/agrr --json number,state,labels,body
 node --input-type=module -e "
-  import { isDepsResolvedUnblockCandidate } from './scripts/issue-worker-dispatch-lib.mjs';
-  // または追加した選定関数
+  import { selectReconcileDispatchCandidate } from './scripts/issue-worker-dispatch-lib.mjs';
+  // または collectReconcileDispatchCandidates 等の選定関数
 "
 ```
 

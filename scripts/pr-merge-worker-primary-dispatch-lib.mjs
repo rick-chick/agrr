@@ -37,7 +37,6 @@ export function parseCommaSeparatedLabels(labels) {
  *   mergeable?: string | null;
  *   mergeStateStatus?: string | null;
  *   requiredCiState: 'incomplete' | 'failed' | 'green';
- *   title?: string;
  * }} input
  * @returns {
  *   { eligible: true; dispatchKind: 'conflict' | 'ci_fix' | 'default' }
