@@ -40,7 +40,6 @@ const REQUIRED_PATHS = [
   '.cursor/skills/ux-campaign-loop/SKILL.md',
   'scripts/delivery-dispatch-lib.mjs',
   'scripts/delivery-agent-campaign-lib.mjs',
-  'scripts/issue-worker-deps-resolve.mjs',
 ];
 
 const DELIVERY_AGENT_SKILL_SNIPPETS = [
@@ -129,12 +128,10 @@ export async function verifyDeliveryAgentCutover(repoRoot) {
 
   const depsResolvePath = join(repoRoot, 'scripts/issue-worker-deps-resolve.mjs');
   try {
-    const depsText = await readFile(depsResolvePath, 'utf8');
-    if (!depsText.includes('CURSOR_DELIVERY_WEBHOOK_URL')) {
-      errors.push('issue-worker-deps-resolve.mjs must use CURSOR_DELIVERY_WEBHOOK_URL');
-    }
+    await readFile(depsResolvePath, 'utf8');
+    errors.push('issue-worker-deps-resolve.mjs must be removed (dependency judgment is Agent-only)');
   } catch {
-    errors.push('missing issue-worker-deps-resolve.mjs');
+    // expected absent
   }
 
   return { ok: errors.length === 0, errors };

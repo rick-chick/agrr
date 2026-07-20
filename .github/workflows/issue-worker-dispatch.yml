@@ -107,67 +107,10 @@ jobs:
           ")
           echo "action=$(echo "$RESULT" | jq -r '.action')" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve agent dependency cache
-        id: deps_resolve
-        if: steps.issue.outputs.skip != 'true' && steps.final_action.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          CURSOR_DELIVERY_WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}
-          CURSOR_DELIVERY_WEBHOOK_KEY: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_KEY }}
-        run: |
-          set -euo pipefail
-          node scripts/issue-worker-deps-resolve.mjs \
-            --repo "${{ github.repository }}" \
-            --number "${{ github.event.issue.number }}"
-
-      - name: Skip implement when dependencies are open
-        id: dependency_gate
-        if: steps.issue.outputs.skip != 'true' && steps.final_action.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-        run: |
-          set -euo pipefail
-          RESULT=$(node scripts/run-issue-worker-dependency-gate.mjs)
-          SKIP=$(echo "$RESULT" | jq -r '.skip')
-          echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
-          if [ "$SKIP" = "true" ]; then
-            echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason // "unknown"')" >> "$GITHUB_OUTPUT"
-            OPEN_DEPS=$(echo "$RESULT" | jq -c '.openDependencies // []')
-            echo "open_dependencies=$OPEN_DEPS" >> "$GITHUB_OUTPUT"
-            CIRCULAR=$(echo "$RESULT" | jq -r '.circular // false')
-            echo "circular=$CIRCULAR" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Comment when dependency gate blocks dispatch
-        if: steps.dependency_gate.outputs.skip == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          OPEN_DEPENDENCIES: ${{ steps.dependency_gate.outputs.open_dependencies }}
-          SKIP_REASON: ${{ steps.dependency_gate.outputs.skip_reason }}
-          CIRCULAR: ${{ steps.dependency_gate.outputs.circular }}
-        run: |
-          set -euo pipefail
-          COMMENT=$(node --input-type=module -e "
-            import { formatDependencyGateBlockComment } from './scripts/issue-worker-dispatch-lib.mjs';
-            const openDependencies = JSON.parse(process.env.OPEN_DEPENDENCIES ?? '[]');
-            process.stdout.write(formatDependencyGateBlockComment({
-              skipReason: process.env.SKIP_REASON ?? '',
-              openDependencies,
-              circular: process.env.CIRCULAR === 'true',
-            }));
-          ")
-          gh issue comment "${{ github.event.issue.number }}" \
-            --repo "${{ github.repository }}" \
-            --body "$COMMENT"
-
       - name: Trigger Delivery Agent
         if: >-
           steps.issue.outputs.skip != 'true'
           && steps.implement_gate.outputs.skip != 'true'
-          && steps.dependency_gate.outputs.skip != 'true'
         env:
           WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}
           WEBHOOK_KEY: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_KEY }}
@@ -182,13 +125,9 @@ jobs:
         if: >-
           steps.issue.outputs.skip == 'true'
           || steps.implement_gate.outputs.skip == 'true'
-          || steps.dependency_gate.outputs.skip == 'true'
         run: |
           REASON="${{ steps.issue.outputs.skip_reason }}"
           if [ -z "$REASON" ]; then
             REASON="${{ steps.implement_gate.outputs.skip_reason }}"
-          fi
-          if [ -z "$REASON" ]; then
-            REASON="${{ steps.dependency_gate.outputs.skip_reason }}"
           fi
           echo "Skipped: $REASON"

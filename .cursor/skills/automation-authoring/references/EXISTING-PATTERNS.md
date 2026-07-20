@@ -11,8 +11,7 @@
 | `.github/workflows/issue-worker-dispatch.yml` | primary dispatch・ゲート・webhook |
 | `.github/workflows/issue-worker-retry-dispatch.yml` | cancelled / cron / closed retry |
 | `scripts/issue-worker-dispatch-lib.mjs` | ゲート・候補選定（pure） |
-| `scripts/issue-worker-deps-agent-lib.mjs` | 依存ラベル契約（`agent-deps-ready` / `agent-deps-wait-<N>`。本文・コメントパースなし） |
-| `scripts/issue-worker-deps-resolve.mjs` | キャッシュ miss 時の deps Agent webhook |
+| `scripts/issue-worker-dispatch-lib.mjs` | Issue Worker 構造ゲート・reconcile 選定（依存判断なし） |
 | `scripts/issue-worker-retry-dispatch.mjs` | reconcile・`postWebhook` |
 | `scripts/verify-issue-worker-dispatch-workflow-lib.mjs` | workflow 契約 |
 | `.cursor/skills/github-issue-worker/SKILL.md` | Agent 側手順 |

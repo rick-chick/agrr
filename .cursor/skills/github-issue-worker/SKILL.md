@@ -89,7 +89,7 @@ gh issue list --repo rick-chick/agrr --state open --limit 50 --json number,title
 ```
 実装する → §3 着手宣言へ
 対応不要で閉じられる → §2a 対応せずクローズへ（agent-in-progress を付けない）
-依存未充足 → `agent-ready` 維持・コメントのみで終了（dispatch 依存ゲートは **ラベル契約** `agent-deps-ready` / `agent-deps-wait-<N>` のみで再判定。本文・コメントはパースしない）
+依存未充足 → `agent-ready` 維持・コメントのみで終了（依存判断は Agent のみ。機械層は dispatch を止めない）
 ```
 
 ### 自律判断（human-in-the-loop 禁止）
@@ -133,22 +133,22 @@ gh issue edit <N> --add-label agent-in-progress
 
 ### 依存未充足（deps_unmet）
 
-依存 issue が OPEN のときは **実装に着手しない**。`agent-ready` を維持し、根拠コメントのみ残して終了する。dispatch 依存ゲートと reconcile が次回以降を再判定する（[`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `formatDependencyGateComment` 参照）。
+依存 issue が OPEN のときは **実装に着手しない**。`agent-ready` を維持し、根拠コメントのみ残して終了する。15 分 reconcile が同 issue を再 dispatch する（機械層は依存を判定しない）。
 
-**機械ゲート（dispatch / reconcile）**: 本文・コメントから `#N` を **パースしない**。根拠は **ラベル契約**（`agent-deps-ready` / `agent-deps-wait-<N>`、[`issue-worker-deps-agent-lib.mjs`](../../../scripts/issue-worker-deps-agent-lib.mjs)）のみ。`agent-deps-ready` 欠落は dispatch 拒否。`implement` dispatch 前に [`issue-worker-deps-resolve.mjs`](../../../scripts/issue-worker-deps-resolve.mjs) がラベル未作成なら **Delivery Agent** webhook を起動する（secrets: `CURSOR_DELIVERY_WEBHOOK_*`）。詳細は [`delivery-agent/SKILL.md`](../delivery-agent/SKILL.md) §依存。
+**機械ゲート（dispatch / reconcile）**: 本文・コメントから `#N` を **パースしない**。依存ラベル契約も **使わない**。構造ゲート（`agent-in-progress`、open fix PR、bot 等）のみ。詳細は [`delivery-agent/SKILL.md`](../delivery-agent/SKILL.md) §依存。
 
-**Worker 側（deps 判定 run）**: `gh issue view` で本文を読み、hard 依存を判断したら **`gh label` で機械契約ラベルを付与**する（`agent-deps-ready`、open 依存ごとに `agent-deps-wait-<N>`、解消時は除去）。人間向けコメントは任意（機械層は読まない）。
+**Worker 側**: `gh issue view` で本文を読み、hard 依存を判断する。未充足ならコメントのみ（`agent-in-progress` は付けない）。
 
 **dispatch 層**: `[epic]` / `epic` ラベルの `implement` dispatch は [`issue-worker-dispatch-lib.mjs`](../../../scripts/issue-worker-dispatch-lib.mjs) の `resolveEpicDispatchAction` により **`epic_close_check` にリマップ**される（コード実装はしない）。エージェントは §1b でクローズ可否を判断する。
 
 **reconcile（機械層の責務）**: webhook 再送のみ。判断はエージェントに委ねる。
 
-1. `agent-ready` キューと open epic（`agent-ready` なし）を**単一候補リスト**に集める（既存ゲートのみ。`agent-deps:v1` 等）
+1. `agent-ready` キューと open epic（`agent-ready` なし）を**単一候補リスト**に集める（構造ゲートのみ）
 2. **`implement` を `epic_close_check` より優先**、同順位は番号昇順
 3. 直前の schedule reconcile で dispatch した issue は、他候補があるとき**後回し**（ローテ）
 4. 1 run 1 件 dispatch
 
-**on-closed**: 閉じた依存 `#N` を hard 依存に含む `agent-ready` issue のみ再 dispatch。無関係 epic へのフォールバックはしない（親 epic は子 Agent §1b-B または reconcile ローテ）。
+**issue closed**: reconcile を 1 回走らせる（依存の機械マッチングはしない）。
 
 `agent-skipped` / `agent-blocked` は**付けない・昇格しない・スキャンしない**（legacy ラベルはエージェントが除去するだけ）。
 
