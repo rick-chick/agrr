@@ -9,6 +9,8 @@ alwaysApply: false
 
 **`ARCHITECTURE.md` とレイヤ規約**が最上位。統一感は **規約に適合する範囲**での話であり、既存の逸脱を写す・増やす根拠にはならない（[`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc)）。
 
+**オートメーション機械層**（dispatch / workflow / reconcile）では [`automation-philosophy-priority.mdc`](automation-philosophy-priority.mdc) が本節より上。既存の本文パースに「近傍合わせ」しない。
+
 ## 実装前
 
 - **触るディレクトリ・同一ユースケース筋**の近傍ファイルを読み、命名・引数の渡し方・エラー/結果の表現・テストの置き方を合わせる。

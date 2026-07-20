@@ -1,8 +1,8 @@
 ---
 name: automation-authoring
 description: >-
-  AGRR に Cursor Automation と GitHub Actions dispatch / retry を新規追加・変更するときの設計規約と手順。
-  オートメーション作成、dispatch workflow 追加、webhook 配線、retry reconcile 設計で適用。
+  AGRR に Cursor Automation と GitHub Actions dispatch / retry を新規追加・変更・修正するときの設計規約と手順。
+  オートメーション作成、dispatch 修正、webhook 配線、retry reconcile 設計で適用。
 disable-model-invocation: false
 ---
 
@@ -12,15 +12,18 @@ disable-model-invocation: false
 
 **GitHub 機械層（Actions + scripts）** と **Cursor Cloud Agent（スキル + webhook）** の閉ループを、壊れず・重複なく・観測可能に追加する。
 
-本スキルは既存 Automation の**実行手順を置き換えない**。新規追加・変更時の設計ゲートと手順に専念する。
+本スキルは既存 Automation の**通常実行手順を置き換えない**。**新規・変更・修正**時の設計ゲートと手順に専念する。
+
+**思想優先**: 最小パッチより [PRINCIPLES.md](references/PRINCIPLES.md) と [automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc) を優先。提示する案は思想に沿ったものとする。
 
 ## 適用
 
 | 経路 | 例 |
 |------|-----|
 | 新規 Automation | Issue Worker 型の webhook パイプライン追加 |
-| dispatch / retry 変更 | ゲート追加、`issues: closed` トリガー、reconcile 拡張 |
+| dispatch / retry **変更・修正** | ゲート追加、バグ修正、payload 整合、reconcile 拡張 |
 | スキル + workflow 同時追加 | UX Campaign Loop 型 |
+| オートメーション経路の**レビュー・監査** | 本文パース発見時は同一タスクで除去案を出す |
 
 **適用外**: 既存 Automation の通常実行（各 Worker スキル）、週次監査（`cloud-automation-audit`）、毎時監視（`automation-pipeline-watchdog`）。
 
@@ -36,9 +39,16 @@ disable-model-invocation: false
 4. 終了条件（PR / close / block / Memory）
 5. 滞留時の回復経路（retry reconcile / watchdog — **人間再開を前提にしない**）
 
-**既存の同型経路を先に読む**（[references/EXISTING-PATTERNS.md](references/EXISTING-PATTERNS.md)）。同型があるのに別経路を発明しない。
+**既存の同型経路を先に読む**（[references/EXISTING-PATTERNS.md](references/EXISTING-PATTERNS.md)）。同型があるのに別経路を発明しない。**既存の本文パースは写さない**（[automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc)）。
 
 設計原則の正本: [references/PRINCIPLES.md](references/PRINCIPLES.md)。
+
+### 修正・レビュー時の追加ゲート
+
+1. 提示案が PRINCIPLES の **目的・全部拾う・二層分離**に説明できるか
+2. 差分・触れる近傍に **本文パース**が残っていないか（発見したら同一変更で除去）
+3. **エージェント起動**で済む判断を機械層に置いていないか
+4. コスト低減案が **本文パース・例外ラベル・dispatch 省略**に依存していないか（[PRINCIPLES.md §機械ゲート](references/PRINCIPLES.md)、[automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc)）
 
 ## 1) 責任分界を固定する
 
@@ -111,6 +121,10 @@ unit test GREEN だけでは完了にしない。
 - 1 イベントで複数 Agent を fan-out
 - SKILL だけ書いて workflow / test を省略
 - 監査・watchdog 登録の省略
+- **機械層への本文パース**（新規・残置・既存の温存。「動いている」は理由にならない）
+- **思想違反の最小パッチ**（症状だけ直し、パースや責任空白を残す）
+- **本文パース・ラベル省略でエージェント起動を避ける**（総コスト比較でエージェント起動を優先 — [PRINCIPLES.md §機械ゲート](references/PRINCIPLES.md)）
+- **パース・例外ラベルでエージェントコストを下げる設計**（総コストが増える傾向 — [automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc) §エージェントコストの低減）
 
 ## 関連
 
