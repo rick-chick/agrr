@@ -123,17 +123,15 @@ sequenceDiagram
 
 ### 2. UX キャンペーン（マージ後ループ）
 
-PR マージ後、キャンペーン対象なら **UX Campaign Loop** Automation がスキャンし、残件を issue 化。完了時は Automation 自身を無効化する。
+PR マージ成功後、**Delivery Agent の同一 run** がリンク issue の `ux-campaign:breadcrumb` を見て post-merge（scan・残件起票）を実行する。
 
 ```
-issue（ux-campaign:*）→ Delivery Agent → PR → Delivery Agent（マージ）
-  → ux-campaign-review-dispatch → UX Campaign Loop → 残件 issue（agent-ready）→ …
+issue（ux-campaign:*）→ Delivery Agent（実装）→ PR → Delivery Agent（マージ + post-merge）→ 残件 issue（agent-ready）→ …
 ```
 
 | 段階 | 実行者 | 参照 |
 |------|--------|------|
-| マージ検知 | **ux-campaign-review-dispatch** | [`.github/workflows/ux-campaign-review-dispatch.yml`](../../.github/workflows/ux-campaign-review-dispatch.yml) |
-| スキャン・起票 | Cursor **UX Campaign Loop** | [`ux-campaign-loop/SKILL.md`](../../.cursor/skills/ux-campaign-loop/SKILL.md) |
+| マージ + post-merge | Cursor **Delivery Agent** | [`delivery-agent/SKILL.md`](../../.cursor/skills/delivery-agent/SKILL.md) / [`ux-campaign-loop/SKILL.md`](../../.cursor/skills/ux-campaign-loop/SKILL.md) |
 
 ### 3. UX Issue Audit（週次・条件付き起票）
 
@@ -193,7 +191,6 @@ issue（ux-campaign:*）→ Delivery Agent → PR → Delivery Agent（マージ
 | Issue Worker Retry | [`issue-worker-retry-dispatch.yml`](../../.github/workflows/issue-worker-retry-dispatch.yml) | 15 分 cron / cancelled retry / issue closed | **Delivery Agent** | 同上 |
 | PR Merge Worker Dispatch | [`pr-merge-worker-dispatch.yml`](../../.github/workflows/pr-merge-worker-dispatch.yml) | PR イベント / Backend test 完了 | **Delivery Agent** | 同上 |
 | PR Merge Worker Retry | [`pr-merge-worker-retry-dispatch.yml`](../../.github/workflows/pr-merge-worker-retry-dispatch.yml) | 15 分 cron / cancelled retry | **Delivery Agent** | 同上 |
-| UX Campaign Review | [`ux-campaign-review-dispatch.yml`](../../.github/workflows/ux-campaign-review-dispatch.yml) | PR merged | UX Campaign Loop | `CURSOR_UX_CAMPAIGN_REVIEW_WEBHOOK_*` |
 | Cleanup Outer Loop | [`cleanup-outer-loop-dispatch.yml`](../../.github/workflows/cleanup-outer-loop-dispatch.yml) | workflow_dispatch / repository_dispatch | （個別 webhook） | `CLEANUP_OUTER_LOOP_WEBHOOK_*` |
 
 ※ deps キャッシュ miss 時の webhook も同一 `CURSOR_DELIVERY_WEBHOOK_*`（[`issue-worker-deps-resolve.mjs`](../../scripts/issue-worker-deps-resolve.mjs)）。
@@ -210,10 +207,10 @@ issue（ux-campaign:*）→ Delivery Agent → PR → Delivery Agent（マージ
 
 | Automation | トリガ種別 | スキル | PR を開くか |
 |------------|------------|--------|-------------|
-| **Delivery Agent** | Webhook（issue/PR dispatch workflows） | `delivery-agent` → 参照 `github-issue-worker` / `github-pr-merge-worker` | 可（実装時） |
+| **Delivery Agent** | Webhook（issue/PR dispatch workflows） | `delivery-agent` → 参照 `github-issue-worker` / `github-pr-merge-worker` / `ux-campaign-loop` | 可（実装時） |
 | ~~Issue Worker~~ | — | `github-issue-worker` | **廃止**（Delivery に統合） |
 | ~~PR Merge Worker~~ | — | `github-pr-merge-worker` | **廃止**（Delivery に統合） |
-| **UX Campaign Loop** | Webhook（ux-campaign-review-dispatch） | `ux-campaign-loop` | 不可（issue 起票のみ） |
+| ~~UX Campaign Loop~~ | — | `ux-campaign-loop`（参照スキル） | **廃止**（Delivery post-merge に統合） |
 | **UX Issue Audit** | Schedule（月曜 9:00 JST） | `ux-issue-pipeline` § Automation | 不可（条件付き issue） |
 | **Automation Audit** | Schedule（金曜 10:00 JST） | `cloud-automation-audit` | 可（クリティカル修正時のみ） |
 | **Pipeline Watchdog** | Schedule（毎時 0 分 JST） | `automation-pipeline-watchdog` | 不可（異常時 issue・P0 のみ最小 PR） |

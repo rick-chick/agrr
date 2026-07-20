@@ -249,6 +249,7 @@ gh pr merge <N> --squash --delete-branch
 
 - ラベル `agent-merge` / `agent-merge-in-progress` を除去
 - Memory に `PR #N merged YYYY-MM-DD` を記録
+- リンク issue に `ux-campaign:breadcrumb` があれば **同一 run で続行**し [`delivery-agent`](../delivery-agent/SKILL.md) §PR マージ成功後 → [`ux-campaign-loop`](../ux-campaign-loop/SKILL.md) §1〜§2
 
 ## 5) 修正ループ（マージ前・同一ブランチ）
 
