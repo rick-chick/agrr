@@ -1,0 +1,79 @@
+---
+description: >-
+  オートメーション修正は PRINCIPLES 優先。機械層の本文パース禁止。
+  判断はエージェント起動。コスト低減はパース・例外ラベル・dispatch 省略以外。
+alwaysApply: true
+---
+
+# オートメーション思想優先
+
+正本: [PRINCIPLES.md](../skills/automation-authoring/references/PRINCIPLES.md)。手順: [`automation-authoring` スキル](../skills/automation-authoring/SKILL.md)。
+
+## 適用
+
+| 対象 | 例 |
+|------|-----|
+| Automation / dispatch / retry / reconcile の**新規・変更・レビュー** | workflow、`*-dispatch-lib.mjs`、`pr-agent-prep*` |
+| オートメーション経路の**バグ修正・最小パッチ** | 症状 1 行直しでも本ルールが先 |
+
+**`implementation-consistency-with-existing.mdc` より本ルールが上**（機械層）。既存の本文パースや狭いゲートを「近傍に合わせて」写さない。
+
+## 思想優先
+
+修正・提案・PR は **PRINCIPLES に沿った完成形**を最小差分より先に示す。
+
+| 許可 | 禁止 |
+|------|------|
+| パース除去・エージェント判定への委譲・reconcile 整合 | 「今回だけ」「後で」「既存もそう」 |
+| 触れた機械層のパース負債を同一変更で解消 | 症状だけ直し、パースや二重ゲートを増やす |
+| [`automation-authoring` §0](../skills/automation-authoring/SKILL.md) 着手前 5 項目 | unit GREEN のみで E2E・思想整合を省略 |
+
+[`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc) と同趣旨。機械層では **本ルールが具体化**。
+
+## 本文・コメントパース禁止（機械層）
+
+Actions / `scripts/*-dispatch*.mjs` / workflow bash / reconcile lib に **issue・PR の本文やコメント本文の解釈を置かない**。
+
+- **禁止例**: `Closes #N` regex、`Merge-Strategy:` grep、依存 `#N` 抽出、タイトル・キーワード triage、**`agent-deps:v1` 等のコメント JSON 抽出**、**`agent-deps-ready` / `agent-deps-wait-<N>` による依存ゲート**
+- **入力**: GitHub API 構造フィールド（`closingIssuesReferences`、`labels` のイベント契約、`mergeable` 等）
+- **読解**: Worker SKILL が `gh issue view` / `gh pr view` で行う
+
+既存パースも技術負債。**触る変更では同一 PR で除去**（別 PR は規約上の障害時のみ）。
+
+## エージェント起動 vs 機械省略
+
+判断が要るときは **webhook で Agent を起動**。機械層で「ラベル不足」「本文不一致」を skip しない（責任空白・人間待ち）。
+
+パース・例外ラベルで dispatch を減らす設計は用いない。総コストではエージェント起動の方が小さい傾向がある（改修履歴で確認済み）。結果はラベル・コメント・Memory に残す。
+
+## コスト低減（許可手段）
+
+**パース・例外ラベル・dispatch 省略以外**で行う。
+
+| 許可 | 禁止 |
+|------|------|
+| API 構造フィールドのみの機械ゲート | 本文 regex で「送らない」 |
+| primary / retry で **同じ dispatch lib** | 機械層補完のラベル乱立 |
+| reconcile **1 回 1 件・番号昇順** | 「ラベル待ち」「永久 skip」 |
+| SKILL 明確化、watchdog・契約テスト・E2E | triage の workflow bash 複製 |
+| concurrency・backoff・stale 検知 | 起動コストのみを理由にした機械省略 |
+
+**判断**: 省略がパース・例外ラベル・責任空白を生むなら採用しない。
+
+## 着手前チェック
+
+[`automation-authoring` §0](../skills/automation-authoring/SKILL.md) の 5 項目に加え:
+
+1. 案が **目的・全部拾う・二層分離**に説明できるか
+2. `rg 'body\.match|Closes #|fixes #|Merge-Strategy'` で本文パース残置がないか
+3. 滞留回復が人間再開なしで閉じるか
+4. 規模に応じた E2E / Actions 確認手順があるか
+
+## 参照
+
+| 主題 | 所在 |
+|------|------|
+| 設計原則 | [PRINCIPLES.md](../skills/automation-authoring/references/PRINCIPLES.md) |
+| 手順 | [automation-authoring/SKILL.md](../skills/automation-authoring/SKILL.md) |
+| 技術負債 | [no-convenience-tech-debt.mdc](no-convenience-tech-debt.mdc) |
+| 担当表 | [agent-conventions.mdc](agent-conventions.mdc) |

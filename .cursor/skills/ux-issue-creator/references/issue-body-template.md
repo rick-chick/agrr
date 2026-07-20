@@ -24,7 +24,7 @@
 - なし
 - または #N（理由・人間向けメモ）
 
-（dispatch / retriage は本文の `#N` をパースしない。機械ゲートは `agent-deps:v1` コメントキャッシュのみ。）
+（dispatch / retriage は本文・コメントの `#N` をパースしない。依存判断は Agent のみ。）
 
 ## 参照
 

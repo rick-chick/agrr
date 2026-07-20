@@ -3,6 +3,8 @@
  * Gates and reconcile selection remain in issue-worker-dispatch-lib / pr-merge-worker-retry-dispatch-lib.
  */
 
+import { extractClosingIssueNumbers } from './delivery-agent-campaign-lib.mjs';
+
 /**
  * @param {{
  *   repository: string;
@@ -10,7 +12,6 @@
  *   issueTitle?: string;
  *   issueUrl?: string;
  *   labels?: string;
- *   issueBody?: string;
  *   retryReason?: string;
  * }} input
  * @returns {Record<string, unknown>}
@@ -21,7 +22,6 @@ export function buildDeliveryIssuePayload({
   issueTitle,
   issueUrl,
   labels,
-  issueBody,
   retryReason,
 }) {
   const payload = {
@@ -37,9 +37,6 @@ export function buildDeliveryIssuePayload({
   if (labels !== undefined) {
     payload.labels = labels;
   }
-  if (issueBody !== undefined) {
-    payload.issue_body = issueBody;
-  }
   if (retryReason) {
     payload.retry_reason = retryReason;
   }
@@ -47,19 +44,12 @@ export function buildDeliveryIssuePayload({
 }
 
 /**
- * @param {string | null | undefined} body
+ * @param {Array<{ number?: number }> | null | undefined} closingIssuesReferences
  * @returns {number | null}
  */
-export function resolveIssueNumberFromPrBody(body) {
-  if (!body) {
-    return null;
-  }
-  const match = body.match(/\b(?:closes|fixes)\s+#(\d+)/i);
-  if (!match) {
-    return null;
-  }
-  const number = Number(match[1]);
-  return Number.isInteger(number) && number > 0 ? number : null;
+export function resolvePrimaryClosingIssueNumber(closingIssuesReferences) {
+  const numbers = extractClosingIssueNumbers(closingIssuesReferences);
+  return numbers[0] ?? null;
 }
 
 /**
@@ -88,19 +78,21 @@ export function buildDeliveryPrPayload({
 }
 
 /**
- * Delivery Agent webhook rejects pr_number-only payloads (HTTP 400).
- * issue_number must be present before POST.
+ * Delivery Agent accepts issue-linked PRs and pr_unlinked PR-phase dispatches.
  *
  * @param {Record<string, unknown>} payload
  * @returns {boolean}
  */
 export function deliveryPrWebhookPayloadIsDispatchable(payload) {
   const issueNumber = payload.issue_number;
-  return (
+  if (
     typeof issueNumber === 'number' &&
     Number.isInteger(issueNumber) &&
     issueNumber > 0
-  );
+  ) {
+    return true;
+  }
+  return payload.pr_unlinked === true;
 }
 
 /**
@@ -135,6 +127,6 @@ export function buildDeliveryPrPayloadFromPr(pr, repository) {
   return buildDeliveryPrPayload({
     repository,
     prNumber: pr.number,
-    issueNumber: resolveIssueNumberFromPrBody(pr.body),
+    issueNumber: resolvePrimaryClosingIssueNumber(pr.closingIssuesReferences),
   });
 }

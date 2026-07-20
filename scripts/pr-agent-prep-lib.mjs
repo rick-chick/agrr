@@ -7,8 +7,6 @@ export const BLOCKING_MERGE_LABELS = [
   'agent-merge-blocked',
 ];
 
-export const CURSOR_AUTHOR_LOGINS = new Set(['cursor[bot]', 'app/cursor']);
-
 export const REQUIRED_CI_CONTEXTS = [
   'rails-test',
   'frontend-test',
@@ -31,17 +29,13 @@ export function isOptInHeadRef(headRefName) {
 }
 
 /**
- * @param {string | null | undefined} body
+ * Agent merge queue requires a linked issue (`closingIssuesReferences` via GitHub API).
+ *
+ * @param {{ closingIssueCount: number }} input
+ * @returns {boolean}
  */
-export function hasMergeStrategyAgent(body) {
-  return /Merge-Strategy:\s*agent/.test(body ?? '');
-}
-
-/**
- * @param {string} authorLogin
- */
-export function isCursorAuthor(authorLogin) {
-  return CURSOR_AUTHOR_LOGINS.has(authorLogin);
+export function shouldReceiveAgentMergeLabel({ closingIssueCount }) {
+  return closingIssueCount > 0;
 }
 
 /**
@@ -49,7 +43,6 @@ export function isCursorAuthor(authorLogin) {
  *   authorLogin: string;
  *   baseRefName: string;
  *   headRefName: string;
- *   body?: string | null;
  *   labels: Array<string | PrLabel>;
  *   headOwner: string;
  *   baseOwner: string;
@@ -64,9 +57,6 @@ export function isEligibleAgentPr(meta) {
   }
   if (hasBlockingMergeLabel(meta.labels)) {
     return false;
-  }
-  if (hasMergeStrategyAgent(meta.body)) {
-    return true;
   }
   return isOptInHeadRef(meta.headRefName);
 }

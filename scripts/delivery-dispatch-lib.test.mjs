@@ -7,17 +7,16 @@ import {
   buildDeliveryPrPayloadFromPr,
   deliveryPrWebhookPayloadIsDispatchable,
   parseDispatchedIssueNumberFromLog,
-  resolveIssueNumberFromPrBody,
+  resolvePrimaryClosingIssueNumber,
 } from './delivery-dispatch-lib.mjs';
 
-test('buildDeliveryIssuePayload omits action field', () => {
+test('buildDeliveryIssuePayload omits issue_body when not provided', () => {
   const payload = buildDeliveryIssuePayload({
     repository: 'rick-chick/agrr',
     issueNumber: 323,
     issueTitle: 'Example',
     issueUrl: 'https://github.com/rick-chick/agrr/issues/323',
     labels: 'agent-ready',
-    issueBody: 'body',
     retryReason: 'scheduled_reconcile',
   });
   assert.deepEqual(payload, {
@@ -26,9 +25,9 @@ test('buildDeliveryIssuePayload omits action field', () => {
     issue_title: 'Example',
     issue_url: 'https://github.com/rick-chick/agrr/issues/323',
     labels: 'agent-ready',
-    issue_body: 'body',
     retry_reason: 'scheduled_reconcile',
   });
+  assert.equal('issue_body' in payload, false);
   assert.equal('action' in payload, false);
 });
 
@@ -61,7 +60,7 @@ test('buildDeliveryPrPayload keeps only documented Delivery Agent webhook fields
   assert.equal('merge_state_status' in payload, false);
 });
 
-test('buildDeliveryPrPayload includes issue_number from Closes when provided', () => {
+test('buildDeliveryPrPayload includes issue_number when provided', () => {
   const payload = buildDeliveryPrPayload({
     repository: 'rick-chick/agrr',
     prNumber: 427,
@@ -74,14 +73,14 @@ test('buildDeliveryPrPayload includes issue_number from Closes when provided', (
   assert.equal('action' in payload, false);
 });
 
-test('deliveryPrWebhookPayloadIsDispatchable requires issue_number', () => {
+test('deliveryPrWebhookPayloadIsDispatchable accepts pr_unlinked for PR phase dispatch', () => {
   assert.equal(
     deliveryPrWebhookPayloadIsDispatchable({
       repository: 'rick-chick/agrr',
       pr_number: 430,
       pr_unlinked: true,
     }),
-    false,
+    true,
   );
   assert.equal(
     deliveryPrWebhookPayloadIsDispatchable({
@@ -91,15 +90,25 @@ test('deliveryPrWebhookPayloadIsDispatchable requires issue_number', () => {
     }),
     true,
   );
+  assert.equal(
+    deliveryPrWebhookPayloadIsDispatchable({
+      repository: 'rick-chick/agrr',
+      pr_number: 999,
+    }),
+    false,
+  );
 });
 
-test('resolveIssueNumberFromPrBody parses closes and fixes', () => {
-  assert.equal(resolveIssueNumberFromPrBody('Closes #323'), 323);
-  assert.equal(resolveIssueNumberFromPrBody('fixes #42'), 42);
-  assert.equal(resolveIssueNumberFromPrBody('no ref'), null);
+test('resolvePrimaryClosingIssueNumber uses closingIssuesReferences only', () => {
+  assert.equal(
+    resolvePrimaryClosingIssueNumber([{ number: 323 }, { number: 42 }]),
+    323,
+  );
+  assert.equal(resolvePrimaryClosingIssueNumber([]), null);
+  assert.equal(resolvePrimaryClosingIssueNumber(null), null);
 });
 
-test('buildDeliveryPrPayloadFromPr maps PR fields', () => {
+test('buildDeliveryPrPayloadFromPr maps closingIssuesReferences', () => {
   const payload = buildDeliveryPrPayloadFromPr(
     {
       number: 277,
@@ -108,7 +117,7 @@ test('buildDeliveryPrPayloadFromPr maps PR fields', () => {
       headRefName: 'cursor/foo',
       headRefOid: 'abc',
       author: { login: 'cursor[bot]' },
-      body: 'Closes #276',
+      closingIssuesReferences: [{ number: 276 }],
       mergeable: 'MERGEABLE',
       mergeStateStatus: 'CLEAN',
     },
@@ -124,13 +133,13 @@ test('buildDeliveryPrPayloadFromPr maps PR fields', () => {
   assert.equal('action' in payload, false);
 });
 
-test('buildDeliveryPrPayloadFromPr sets pr_unlinked for PR without Closes issue', () => {
+test('buildDeliveryPrPayloadFromPr sets pr_unlinked without closingIssuesReferences', () => {
   const payload = buildDeliveryPrPayloadFromPr(
     {
       number: 430,
       title: 'fix(frontend): crop list card overflow menu',
       url: 'https://github.com/rick-chick/agrr/pull/430',
-      body: '## Summary\n\nHuman PR without issue link.',
+      closingIssuesReferences: [],
     },
     'rick-chick/agrr',
   );
@@ -140,22 +149,6 @@ test('buildDeliveryPrPayloadFromPr sets pr_unlinked for PR without Closes issue'
     pr_unlinked: true,
   });
   assert.equal('issue_number' in payload, false);
-});
-
-test('buildDeliveryIssuePayload supports body_hash for deps judgment runs', () => {
-  const payload = {
-    ...buildDeliveryIssuePayload({
-      repository: 'rick-chick/agrr',
-      issueNumber: 318,
-      issueTitle: 'Child',
-      issueUrl: 'https://github.com/rick-chick/agrr/issues/318',
-      issueBody: '## 依存\n\n- #317',
-    }),
-    body_hash: 'abc123deadbeef',
-  };
-  assert.equal(payload.issue_number, 318);
-  assert.equal(payload.body_hash, 'abc123deadbeef');
-  assert.equal('action' in payload, false);
 });
 
 test('parseDispatchedIssueNumberFromLog reads Delivery Agent and legacy logs', () => {
@@ -168,4 +161,13 @@ test('parseDispatchedIssueNumberFromLog reads Delivery Agent and legacy logs', (
     323,
   );
   assert.equal(parseDispatchedIssueNumberFromLog('no dispatch'), null);
+});
+
+test('parseDispatchedIssueNumberFromLog returns last dispatch number', () => {
+  const log = [
+    'setup',
+    'Dispatched Delivery Agent for #316 (scheduled_reconcile)',
+    'Dispatched Delivery Agent for #323 (scheduled_reconcile)',
+  ].join('\n');
+  assert.equal(parseDispatchedIssueNumberFromLog(log), 323);
 });

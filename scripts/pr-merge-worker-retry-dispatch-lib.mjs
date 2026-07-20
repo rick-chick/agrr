@@ -5,7 +5,6 @@ import {
 } from './pr-agent-prep-lib.mjs';
 import {
   buildDeliveryPrPayloadFromPr,
-  resolveIssueNumberFromPrBody,
 } from './delivery-dispatch-lib.mjs';
 import { prMergeWorkerNeedsSync } from './pr-merge-worker-needs-sync.mjs';
 
@@ -14,29 +13,6 @@ export const IN_PROGRESS_STALE_MS = 90 * 60 * 1000;
 
 /** Avoid racing a just-dispatched primary merge worker. */
 export const READY_QUIET_MS = 30 * 60 * 1000;
-
-export const DELIVERY_WEBHOOK_LINKED_ISSUE_REQUIRED =
-  'no linked issue for delivery webhook';
-
-/**
- * @param {{
- *   body?: string | null;
- * }} pr
- * @param {{
- *   eligible: true;
- *   action: 'conflict' | 'stuck_retry' | 'ci_fix';
- *   removeStaleInProgressLabel: boolean;
- * } | { eligible: false; reason: string }} result
- */
-function finalizeReconcileEligibility(pr, result) {
-  if (result.eligible && resolveIssueNumberFromPrBody(pr.body) == null) {
-    return {
-      eligible: false,
-      reason: DELIVERY_WEBHOOK_LINKED_ISSUE_REQUIRED,
-    };
-  }
-  return result;
-}
 
 /**
  * @param {Array<{ name: string } | string>} labels
@@ -224,12 +200,12 @@ export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
     if (hasInProgress && !isInProgressStale({ updatedAtMs, nowMs })) {
       return { eligible: false, reason: 'agent-merge-in-progress is fresh' };
     }
-    return finalizeReconcileEligibility(pr, {
+    return {
       eligible: true,
       action: 'conflict',
       removeStaleInProgressLabel:
         hasInProgress && isInProgressStale({ updatedAtMs, nowMs }),
-    });
+    };
   }
 
   const ciFix = classifyCiFixCandidate({
@@ -240,7 +216,7 @@ export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
     labels,
   });
   if (ciFix.eligible) {
-    return finalizeReconcileEligibility(pr, ciFix);
+    return ciFix;
   }
   // CI green → continue to stuck_retry. Any other ci_fix rejection is final.
   if (ciFix.reason !== 'required ci already green') {
@@ -264,22 +240,22 @@ export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
     if (!isInProgressStale({ updatedAtMs, nowMs })) {
       return { eligible: false, reason: 'agent-merge-in-progress is fresh' };
     }
-    return finalizeReconcileEligibility(pr, {
+    return {
       eligible: true,
       action: 'stuck_retry',
       removeStaleInProgressLabel: true,
-    });
+    };
   }
 
   if (nowMs - updatedAtMs < READY_QUIET_MS) {
     return { eligible: false, reason: 'ready quiet period' };
   }
 
-  return finalizeReconcileEligibility(pr, {
+  return {
     eligible: true,
     action: 'stuck_retry',
     removeStaleInProgressLabel: false,
-  });
+  };
 }
 
 /**

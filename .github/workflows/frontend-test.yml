@@ -98,9 +98,8 @@ jobs:
           node --test scripts/gh-repo-lib.test.mjs
           node --test scripts/pr-agent-prep-lib.test.mjs
           node --test scripts/issue-worker-dispatch-lib.test.mjs
-          node --test scripts/issue-worker-deps-resolve-lib.test.mjs
-          node --test scripts/issue-worker-deps-agent-lib.test.mjs
           node --test scripts/pr-merge-worker-needs-sync.test.mjs
+          node --test scripts/pr-merge-worker-primary-dispatch-lib.test.mjs
           node --test scripts/pr-merge-worker-dispatch-payload-lib.test.mjs
           node --test scripts/pr-merge-worker-retry-dispatch-lib.test.mjs
           node --test scripts/verify-pr-agent-prep-workflow.test.mjs

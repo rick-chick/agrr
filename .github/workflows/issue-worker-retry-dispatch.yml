@@ -75,18 +75,16 @@ jobs:
           node scripts/issue-worker-retry-dispatch.mjs reconcile \
             --retry-reason scheduled_reconcile
 
-      - name: Re-dispatch when a dependency issue closes
+      - name: Reconcile after issue closed
         if: github.event_name == 'issues'
         env:
           WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}
           WEBHOOK_KEY: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_KEY }}
           GH_TOKEN: ${{ github.token }}
-          CLOSED_ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           set -euo pipefail
-          node scripts/issue-worker-retry-dispatch.mjs on-closed \
-            --number "$CLOSED_ISSUE_NUMBER" \
-            --retry-reason dependency_closed
+          node scripts/issue-worker-retry-dispatch.mjs reconcile \
+            --retry-reason issue_closed_reconcile
 
       - name: Manual retry
         if: github.event_name == 'workflow_dispatch'

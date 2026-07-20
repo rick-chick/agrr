@@ -1,8 +1,4 @@
 import { buildDeliveryIssuePayload } from './delivery-dispatch-lib.mjs';
-import {
-  hashDependencySection,
-  extractDependencySection,
-} from './issue-worker-deps-agent-lib.mjs';
 
 const DEFAULT_RETRY_DISPATCH_REPO = 'rick-chick/agrr';
 
@@ -42,146 +38,6 @@ export function hasLabel(labelsCsv, name) {
 }
 
 /**
- * @param {number[]} openDependencies
- * @returns {string}
- */
-export function formatDependencyGateComment(openDependencies) {
-  const refs = openDependencies.map((number) => `#${number}`).join(', ');
-  return [
-    '## 🤖 Issue Worker: dispatch 保留（依存未充足）',
-    '',
-    `次の依存 issue が open のため Cloud Agent を起動しません: ${refs}`,
-    '',
-    '依存 issue が CLOSED になったら reconcile が `agent-ready` issue を再 dispatch します。',
-  ].join('\n');
-}
-
-/**
- * @typedef {{
- *   hard_dependencies: number[];
- *   soft_notes: string[];
- *   rationale: string;
- *   body_hash: string;
- * }} AgentDepsContract
- */
-
-/**
- * Resolve hard dependencies from Agent cache only. Parser / heuristic fallback is forbidden.
- *
- * @param {{
- *   issueNumber: number;
- *   issueBody: string;
- *   getAgentDepsContract?: (
- *     issueNumber: number,
- *     issueBody: string,
- *   ) => Promise<AgentDepsContract | null> | AgentDepsContract | null;
- *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
- *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
- * }} input
- * @returns {Promise<
- *   { skip: false }
- *   | { skip: true; skipReason: string; openDependencies: number[] }
- * >}
- */
-export async function resolveDependencyGateFromAgentCache({
-  issueNumber,
-  issueBody,
-  getAgentDepsContract,
-  fetchIssueState,
-  fetchIssueBody,
-}) {
-  const section = extractDependencySection(issueBody);
-  if (!section) {
-    return { skip: false };
-  }
-
-  if (!getAgentDepsContract) {
-    return {
-      skip: true,
-      skipReason: 'agent dependency cache unavailable',
-      openDependencies: [],
-    };
-  }
-
-  const visiting = new Set([issueNumber]);
-  const openDependencies = new Set();
-  /** @type {number | null} */
-  let cacheMissIssue = null;
-
-  /**
-   * @param {number} currentNumber
-   * @param {string} currentBody
-   */
-  async function walk(currentNumber, currentBody) {
-    if (cacheMissIssue !== null) {
-      return;
-    }
-    const contract = await getAgentDepsContract(currentNumber, currentBody);
-    if (!contract || contract.body_hash !== hashDependencySection(currentBody)) {
-      cacheMissIssue = currentNumber;
-      return;
-    }
-
-    const dependencies = [...contract.hard_dependencies].sort((a, b) => a - b);
-    for (const dependencyNumber of dependencies) {
-      if (visiting.has(dependencyNumber)) {
-        throw new Error(
-          `circular dependency detected involving #${dependencyNumber}`,
-        );
-      }
-      visiting.add(dependencyNumber);
-      const state = await fetchIssueState(dependencyNumber);
-      if (state !== 'CLOSED') {
-        openDependencies.add(dependencyNumber);
-      }
-      if (fetchIssueBody) {
-        const dependencyBody = await fetchIssueBody(dependencyNumber);
-        await walk(dependencyNumber, dependencyBody);
-      }
-      visiting.delete(dependencyNumber);
-    }
-  }
-
-  const rootContract = await getAgentDepsContract(issueNumber, issueBody);
-  if (!rootContract || rootContract.body_hash !== hashDependencySection(issueBody)) {
-    return {
-      skip: true,
-      skipReason: `agent dependency cache missing or stale for #${issueNumber}`,
-      openDependencies: [],
-    };
-  }
-
-  await walk(issueNumber, issueBody);
-
-  if (cacheMissIssue !== null) {
-    return {
-      skip: true,
-      skipReason: `agent dependency cache missing or stale for #${cacheMissIssue}`,
-      openDependencies: [],
-    };
-  }
-
-  if (openDependencies.size === 0) {
-    return { skip: false };
-  }
-
-  const sorted = [...openDependencies].sort((a, b) => a - b);
-  const first = sorted[0];
-  return {
-    skip: true,
-    skipReason: `dependency #${first} is open`,
-    openDependencies: sorted,
-  };
-}
-
-/**
- * @param {Parameters<typeof resolveDependencyGateFromAgentCache>[0]} input
- */
-export async function resolveDependencyGate(input) {
-  return resolveDependencyGateFromAgentCache(input);
-}
-
-/**
  * @param {string} issueTitle
  * @param {string} issueLabels
  * @returns {boolean}
@@ -205,62 +61,6 @@ export function resolveEpicDispatchAction({ action, issueTitle, issueLabels }) {
     return { action: 'epic_close_check' };
   }
   return { action };
-}
-
-/**
- * Combined implement-path gates (epic + dependency) for primary and retry dispatch.
- *
- * @param {{
- *   issueNumber: number;
- *   issueTitle: string;
- *   issueBody: string;
- *   issueLabels: string;
- *   getAgentDepsContract?: (
- *     issueNumber: number,
- *     issueBody: string,
- *   ) => Promise<import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null> | import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null;
- *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
- *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
- * }} input
- * @returns {Promise<
- *   { skip: false }
- *   | { skip: true; skipReason: string; openDependencies?: number[]; circular?: boolean }
- * >}
- */
-export async function resolveImplementPreDispatchGates({
-  issueNumber,
-  issueTitle,
-  issueBody,
-  issueLabels,
-  getAgentDepsContract,
-  fetchIssueState,
-  fetchIssueBody,
-}) {
-  try {
-    const dependencyGate = await resolveDependencyGateFromAgentCache({
-      issueNumber,
-      issueBody,
-      getAgentDepsContract,
-      fetchIssueState,
-      fetchIssueBody,
-    });
-    if (dependencyGate.skip) {
-      return dependencyGate;
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (/circular dependency/i.test(message)) {
-      return {
-        skip: true,
-        skipReason: message,
-        openDependencies: [],
-        circular: true,
-      };
-    }
-    throw error;
-  }
-
-  return { skip: false };
 }
 
 /**
@@ -328,116 +128,6 @@ export function resolveImplementDispatchGate({ action, hasOpenFixPr }) {
 }
 
 /**
- * Pre-dispatch gates keyed by webhook action.
- *
- * @param {{
- *   action: string;
- *   issueNumber: number;
- *   issueTitle: string;
- *   issueBody: string;
- *   issueLabels: string;
- *   getAgentDepsContract?: (
- *     issueNumber: number,
- *     issueBody: string,
- *   ) => Promise<import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null> | import('./issue-worker-deps-agent-lib.mjs').AgentDepsContract | null;
- *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
- *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
- * }} input
- * @returns {Promise<
- *   { skip: false }
- *   | { skip: true; skipReason: string; openDependencies?: number[]; circular?: boolean }
- * >}
- */
-export async function resolvePreDispatchGates({
-  action,
-  issueNumber,
-  issueTitle,
-  issueBody,
-  issueLabels,
-  getAgentDepsContract,
-  fetchIssueState,
-  fetchIssueBody,
-}) {
-  if (action === 'epic_close_check') {
-    return { skip: false };
-  }
-
-  return resolveImplementPreDispatchGates({
-    issueNumber,
-    issueTitle,
-    issueBody,
-    issueLabels,
-    getAgentDepsContract,
-    fetchIssueState,
-    fetchIssueBody,
-  });
-}
-
-/**
- * @returns {{ eligible: true; action: string } | { eligible: false; reason: string }}
- */
-export function isRetryCandidate({ issueLabels, issueTitle = '', hasOpenFixPr }) {
-  if (!hasLabel(issueLabels, 'agent-ready')) {
-    return { eligible: false, reason: 'no agent-ready' };
-  }
-  if (hasLabel(issueLabels, 'agent-close')) {
-    return { eligible: false, reason: 'agent-close present' };
-  }
-  for (const label of RETRY_BLOCK_LABELS) {
-    if (hasLabel(issueLabels, label)) {
-      return { eligible: false, reason: `has ${label}` };
-    }
-  }
-  if (hasOpenFixPr) {
-    return { eligible: false, reason: 'open fix pr exists' };
-  }
-  const action = isEpicIssue(issueTitle, issueLabels) ? 'epic_close_check' : 'implement';
-  return { eligible: true, action };
-}
-
-/**
- * Resolve hard-blocking dependency issue numbers for re-triage / unblock.
- * Agent cache only — no body parsing fallback.
- *
- * @param {{
- *   issueNumber: number;
- *   issueBody: string;
- *   getAgentDepsContract?: (
- *     issueNumber: number,
- *     issueBody: string,
- *   ) => Promise<AgentDepsContract | null> | AgentDepsContract | null;
- * }} input
- * @returns {Promise<
- *   { hardDependencies: number[]; source: 'cache' | 'none' }
- *   | { source: 'miss' }
- * >}
- */
-export async function resolveHardDependencies({
-  issueNumber,
-  issueBody,
-  getAgentDepsContract,
-}) {
-  const section = extractDependencySection(issueBody);
-  if (!section) {
-    return { hardDependencies: [], source: 'none' };
-  }
-
-  if (!getAgentDepsContract) {
-    return { source: 'miss' };
-  }
-
-  const contract = await getAgentDepsContract(issueNumber, issueBody);
-  if (!contract || contract.body_hash !== hashDependencySection(issueBody)) {
-    return { source: 'miss' };
-  }
-
-  return {
-    hardDependencies: [...contract.hard_dependencies].sort((a, b) => a - b),
-    source: 'cache',
-  };
-}
-
-/**
  * Epic close-check reconcile candidate. Agent-ready is not required; §1b is agent judgment.
  *
  * @returns {{ eligible: true; action: 'epic_close_check' } | { eligible: false; reason: string }}
@@ -462,57 +152,23 @@ export function isEpicCloseCheckCandidate({
   return { eligible: true, action: 'epic_close_check' };
 }
 
-/**
- * When a hard dependency closes, re-dispatch agent-ready issues the agent-deps cache links to it.
- *
- * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} issues
- * @param {number} closedDependencyNumber
- * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @param {(issueNumber: number, issueBody: string) => Promise<AgentDepsContract | null> | AgentDepsContract | null} getAgentDepsContract
- * @param {(issue: { number: number; title: string; labels: string[]; body?: string }, action: string) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
- * @returns {Promise<{ issue: { number: number; title: string; labels: string[]; body?: string }; action: string } | null>}
- */
-export async function selectDispatchableOnDependencyClosed(
-  issues,
-  closedDependencyNumber,
-  hasOpenFixPrFor,
-  getAgentDepsContract,
-  evaluatePreDispatch,
-) {
-  const sorted = [...issues].sort((a, b) => a.number - b.number);
-  for (const issue of sorted) {
-    const resolved = await resolveHardDependencies({
-      issueNumber: issue.number,
-      issueBody: issue.body ?? '',
-      getAgentDepsContract,
-    });
-    if (resolved.source === 'miss') {
-      continue;
-    }
-    const hardDependencies =
-      resolved.source === 'none' ? [] : resolved.hardDependencies;
-    if (!hardDependencies.includes(closedDependencyNumber)) {
-      continue;
-    }
-
-    const labels = issue.labels.join(',');
-    const retryResult = isRetryCandidate({
-      issueLabels: labels,
-      issueTitle: issue.title,
-      hasOpenFixPr: hasOpenFixPrFor(issue.number),
-    });
-    if (!retryResult.eligible) {
-      continue;
-    }
-
-    const preDispatch = await evaluatePreDispatch(issue, retryResult.action);
-    if (preDispatch.skip) {
-      continue;
-    }
-
-    return { issue, action: retryResult.action };
+export function isRetryCandidate({ issueLabels, issueTitle = '', hasOpenFixPr }) {
+  if (!hasLabel(issueLabels, 'agent-ready')) {
+    return { eligible: false, reason: 'no agent-ready' };
   }
-  return null;
+  if (hasLabel(issueLabels, 'agent-close')) {
+    return { eligible: false, reason: 'agent-close present' };
+  }
+  for (const label of RETRY_BLOCK_LABELS) {
+    if (hasLabel(issueLabels, label)) {
+      return { eligible: false, reason: `has ${label}` };
+    }
+  }
+  if (hasOpenFixPr) {
+    return { eligible: false, reason: 'open fix pr exists' };
+  }
+  const action = isEpicIssue(issueTitle, issueLabels) ? 'epic_close_check' : 'implement';
+  return { eligible: true, action };
 }
 
 /**
@@ -535,9 +191,9 @@ export { parseDispatchedIssueNumberFromLog } from './delivery-dispatch-lib.mjs';
  * Select one reconcile dispatch target: implement before epic_close_check, then issue number.
  * When deprioritizeIssueNumber is set and other candidates exist, skip that issue.
  *
- * @param {Array<{ issue: { number: number; title?: string; labels?: string[]; body?: string }; action: string }>} candidates
+ * @param {Array<{ issue: { number: number; title?: string; labels?: string[] }; action: string }>} candidates
  * @param {{ deprioritizeIssueNumber?: number }} [options]
- * @returns {{ issue: { number: number; title?: string; labels?: string[]; body?: string }; action: string } | null}
+ * @returns {{ issue: { number: number; title?: string; labels?: string[] }; action: string } | null}
  */
 export function selectReconcileDispatchCandidate(candidates, options = {}) {
   if (candidates.length === 0) {
@@ -567,19 +223,17 @@ export function selectReconcileDispatchCandidate(candidates, options = {}) {
 
 /**
  * Collect all reconcile-eligible issues from agent-ready queue and open epics without agent-ready.
- * Eligibility gates live here only (single source for reconcile).
+ * Structural gates only — dependency judgment is Agent-only (no body/comment/label deps parsing).
  *
- * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} epicsWithoutAgentReady
- * @param {Array<{ number: number; title: string; labels: string[]; body?: string }>} agentReadyIssues
+ * @param {Array<{ number: number; title: string; labels: string[] }>} epicsWithoutAgentReady
+ * @param {Array<{ number: number; title: string; labels: string[] }>} agentReadyIssues
  * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
- * @param {(issue: { number: number; title: string; labels: string[]; body?: string }, action: string) => Promise<{ skip: false } | { skip: true; skipReason: string }>} evaluatePreDispatch
- * @returns {Promise<Array<{ issue: { number: number; title: string; labels: string[]; body?: string }; action: string }>>}
+ * @returns {Array<{ issue: { number: number; title: string; labels: string[] }; action: string }>}
  */
-export async function collectReconcileDispatchCandidates(
+export function collectReconcileDispatchCandidates(
   epicsWithoutAgentReady,
   agentReadyIssues,
   hasOpenFixPrFor,
-  evaluatePreDispatch,
 ) {
   const candidates = [];
   const seenNumbers = new Set();
@@ -611,35 +265,11 @@ export async function collectReconcileDispatchCandidates(
       continue;
     }
 
-    const preDispatch = await evaluatePreDispatch(issue, retryResult.action);
-    if (preDispatch.skip) {
-      continue;
-    }
-
     candidates.push({ issue, action: retryResult.action });
     seenNumbers.add(issue.number);
   }
 
   return candidates;
-}
-
-/**
- * on-closed dispatch: dependency-unblocked agent-ready issue only (no unrelated epic fallback).
- *
- * @param {{ issue: { number: number }; action: string } | null} dependencySelected
- * @returns {
- *   { dispatch: true; selected: { issue: { number: number }; action: string } }
- *   | { dispatch: false; reason: string }
- * }
- */
-export function resolveOnClosedDispatch(dependencySelected) {
-  if (!dependencySelected) {
-    return {
-      dispatch: false,
-      reason: 'no dependency-unblocked agent-ready issue',
-    };
-  }
-  return { dispatch: true, selected: dependencySelected };
 }
 
 /**
@@ -696,7 +326,6 @@ export function defaultRetryReasonForMode(mode) {
  *   issueTitle: string;
  *   issueUrl: string;
  *   labels: string;
- *   issueBody: string;
  *   retryReason?: string;
  * }} input
  * @returns {Record<string, unknown>}
@@ -707,7 +336,6 @@ export function buildWebhookPayload({
   issueTitle,
   issueUrl,
   labels,
-  issueBody,
   retryReason,
 }) {
   return buildDeliveryIssuePayload({
@@ -716,7 +344,6 @@ export function buildWebhookPayload({
     issueTitle,
     issueUrl,
     labels,
-    issueBody,
     retryReason,
   });
 }

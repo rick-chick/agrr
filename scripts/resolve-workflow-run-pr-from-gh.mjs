@@ -20,7 +20,7 @@ import {
  *   workflowRunPullRequests?: Array<{ number?: number }>;
  *   execFileSync?: typeof import('node:child_process').execFileSync;
  * }} input
- * @returns {{ skip: true; skipReason: string } | { skip: false; number: number; headRef: string; body: string; title: string; labels: string; url: string; author: string }}
+ * @returns {{ skip: true; skipReason: string } | { skip: false; number: number; headRef: string; title: string; labels: string; url: string; author: string }}
  */
 export function resolveWorkflowRunPrFromGh({
   repo,
@@ -51,7 +51,7 @@ export function resolveWorkflowRunPrFromGh({
         '--repo',
         repo,
         '--json',
-        'number,title,url,body,headRefName,labels,user,state',
+        'number,title,url,headRefName,labels,user,state',
       ],
       { encoding: 'utf8' },
     );
@@ -73,7 +73,7 @@ export function resolveWorkflowRunPrFromGh({
         '--state',
         'open',
         '--json',
-        'number,title,url,body,headRefName,headRefOid,labels,user,state',
+        'number,title,url,headRefName,headRefOid,labels,user,state',
       ],
       { encoding: 'utf8' },
     );

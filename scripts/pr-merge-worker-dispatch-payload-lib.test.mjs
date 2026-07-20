@@ -18,7 +18,7 @@ test('buildConflictDispatchPayload maps PR fields for conflict dispatch', () => 
       author: { login: 'cursor[bot]' },
       mergeable: 'MERGEABLE',
       mergeStateStatus: 'BEHIND',
-      body: 'Closes #319',
+      closingIssuesReferences: [{ number: 319 }],
     },
   });
 
@@ -42,7 +42,7 @@ test('buildCiFixDispatchPayload maps PR fields for ci_fix dispatch', () => {
       author: { login: 'cursor[bot]' },
       mergeable: 'MERGEABLE',
       mergeStateStatus: 'CLEAN',
-      body: 'fixes #319',
+      closingIssuesReferences: [{ number: 319 }],
     },
   });
 

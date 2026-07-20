@@ -9,15 +9,21 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'resolveDispatchAction',
   'resolveImplementDispatchGate',
   'resolveEpicDispatchAction',
-  'resolveDependencyGate',
-  'resolveDependencyGateFromAgentCache',
-  'issue-worker-deps-resolve.mjs',
-  'CURSOR_DELIVERY_WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}',
-  'formatDependencyGateComment',
   'openFixPrSearchQuery',
-  'Comment when dependency gate blocks dispatch',
   'Trigger Delivery Agent',
-  'post-cursor-webhook.mjs',
+  'post-issue-worker-dispatch.mjs',
+];
+
+const FORBIDDEN_WORKFLOW_SNIPPETS = [
+  'run-issue-worker-dependency-gate.mjs',
+  'issue-worker-deps-resolve.mjs',
+  'dependency_gate',
+  'formatDependencyGateBlockComment',
+  'agent-deps-ready',
+  'agent-deps-wait-',
+  'issue_body',
+  'body_b64',
+  'BODY_B64',
 ];
 
 const REQUIRED_RETRY_WORKFLOW_SNIPPETS = [
@@ -27,10 +33,15 @@ const REQUIRED_RETRY_WORKFLOW_SNIPPETS = [
   'dispatch_run_cancelled',
   'dispatch_run_failed',
   'scheduled_reconcile',
-  'dependency_closed',
+  'issue_closed_reconcile',
   'issue-worker-retry-dispatch.mjs',
-  'on-closed',
   'types: [closed]',
+];
+
+const FORBIDDEN_RETRY_WORKFLOW_SNIPPETS = [
+  'on-closed',
+  'dependency_closed',
+  'issue-worker-deps-resolve',
 ];
 
 /**
@@ -71,9 +82,21 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  for (const snippet of FORBIDDEN_WORKFLOW_SNIPPETS) {
+    if (workflowText.includes(snippet)) {
+      errors.push(`workflow must not include: ${snippet}`);
+    }
+  }
+
   for (const snippet of REQUIRED_RETRY_WORKFLOW_SNIPPETS) {
     if (!retryWorkflowText.includes(snippet)) {
       errors.push(`retry workflow missing required snippet: ${snippet}`);
+    }
+  }
+
+  for (const snippet of FORBIDDEN_RETRY_WORKFLOW_SNIPPETS) {
+    if (retryWorkflowText.includes(snippet)) {
+      errors.push(`retry workflow must not include: ${snippet}`);
     }
   }
 
@@ -93,18 +116,23 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
     errors.push('dispatch lib missing resolveImplementDispatchGate');
   }
 
-  if (!libText.includes('export async function resolveDependencyGate') &&
-      !libText.includes('export function resolveDependencyGate')) {
-    errors.push('dispatch lib missing resolveDependencyGate');
-  }
-
   if (!libText.includes('export function resolveEpicDispatchAction')) {
     errors.push('dispatch lib missing resolveEpicDispatchAction');
   }
 
-  if (!libText.includes('export async function resolveDependencyGateFromAgentCache') &&
-      !libText.includes('export function resolveDependencyGateFromAgentCache')) {
-    errors.push('dispatch lib missing resolveDependencyGateFromAgentCache');
+  if (libText.includes('export async function resolveDependencyGate') ||
+      libText.includes('export function resolveDependencyGate')) {
+    errors.push('dispatch lib must not export resolveDependencyGate');
+  }
+
+  if (libText.includes('export async function resolveDependencyGateFromLabels') ||
+      libText.includes('export function resolveDependencyGateFromLabels')) {
+    errors.push('dispatch lib must not export resolveDependencyGateFromLabels');
+  }
+
+  if (libText.includes('export async function resolveDependencyGateFromAgentCache') ||
+      libText.includes('export function resolveDependencyGateFromAgentCache')) {
+    errors.push('dispatch lib must not export resolveDependencyGateFromAgentCache');
   }
 
   if (libText.includes('export function parseHardDependencyIssueNumbers')) {
@@ -113,6 +141,14 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
 
   if (libText.includes('export function parseDependencyIssueNumbers')) {
     errors.push('dispatch lib must not export parseDependencyIssueNumbers');
+  }
+
+  if (libText.includes('agent-deps-ready') || libText.includes('agent-deps-wait-')) {
+    errors.push('dispatch lib must not reference agent-deps label contract');
+  }
+
+  if (libText.includes('extractDependencySection')) {
+    errors.push('dispatch lib must not import extractDependencySection');
   }
 
   if (!libText.includes('export function collectReconcileDispatchCandidates') &&
@@ -124,8 +160,19 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
     errors.push('dispatch lib missing selectReconcileDispatchCandidate');
   }
 
-  if (!libText.includes('export function resolveOnClosedDispatch')) {
-    errors.push('dispatch lib missing resolveOnClosedDispatch');
+  const forbiddenScripts = [
+    'scripts/run-issue-worker-dependency-gate.mjs',
+    'scripts/issue-worker-deps-resolve.mjs',
+    'scripts/issue-worker-deps-resolve-lib.mjs',
+    'scripts/issue-worker-deps-agent-lib.mjs',
+  ];
+  for (const relPath of forbiddenScripts) {
+    try {
+      await readFile(join(repoRoot, relPath), 'utf8');
+      errors.push(`forbidden script must be removed: ${relPath}`);
+    } catch {
+      // expected absent
+    }
   }
 
   return { ok: errors.length === 0, errors };

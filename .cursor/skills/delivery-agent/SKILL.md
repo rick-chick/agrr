@@ -25,10 +25,9 @@ description: >-
 ## §0 観測と分岐（毎 run 先頭・固定順）
 
 1. **payload** — `repository`、任意の `issue_number` / `pr_number` / `pr_unlinked`
-   - **`body_hash` あり** → 依存判定 run のみ（§依存）。実装・PR 禁止。終了。
    - **`pr_unlinked: true`**（`issue_number` なし）→ **PR フェーズ直行**（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。issue 実装・新規 PR 禁止。
 2. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,labels`
-   - リンク issue 番号は **`closingIssuesReferences` のみ**（本文の `Closes #N` regex は補助に留め、機械層では使わない）
+   - リンク issue 番号は **`closingIssuesReferences` のみ**（機械層は本文を読まない。Agent も `gh pr view --json closingIssuesReferences` を正とする）
    - **`merged: true`** → issue 実装・再マージ**禁止**。リンク issue のラベルを `gh issue view` で確認
      - いずれかに `ux-campaign:breadcrumb` → [`ux-campaign-loop`](../ux-campaign-loop/SKILL.md) §1〜§2（post-merge）のみ。終了
      - なければ exit 0
@@ -79,7 +78,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 }
 ```
 
-未リンク PR（本文に `Closes` / `fixes` なし）:
+未リンク PR（`closingIssuesReferences` が空）:
 
 ```json
 {
@@ -92,20 +91,23 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 | フィールド | 必須 |
 |-----------|------|
 | `repository` | はい |
-| `issue_number` | issue 起点時、または PR 本文の `Closes #N` / `fixes #N` があるとき |
+| `issue_number` | issue 起点時、または PR の `closingIssuesReferences` にリンク issue があるとき |
 | `pr_number` | PR / CI 起点時 |
 | `pr_unlinked` | `issue_number` が無い PR dispatch 時（`true`）。Agent は PR フェーズのみ |
 | `action` | **送らない・無視** |
 
-任意: `issue_title`, `issue_url`, `issue_body`, `labels`, `body_hash`（依存判定 run のみ）
+任意: `issue_title`, `issue_url`, `labels`, `retry_reason`。**`issue_body` / `body_hash` は機械層から送らない**（Agent は `gh issue view` で読む）。
 
 ## 依存
 
-`## 依存` 節がある issue は **`agent-deps:v1` コメントキャッシュのみ**を根拠にする。本文 `#N` パース禁止。
+**機械層は依存を判定しない**（本文・コメント・依存ラベルのパース禁止）。`agent-ready` で webhook が届いたら Agent が `gh issue view` で本文を読み、hard 依存が OPEN なら **実装に着手せず** `agent-ready` を維持してコメントのみ残して終了する。依存が解消されたら通常どおり実装へ。
 
-### `body_hash` 付き payload（依存判定 run）
+手順（Agent のみ）:
 
-[`issue-worker-deps-resolve.mjs`](../../../scripts/issue-worker-deps-resolve.mjs) がキャッシュ miss 時に送る。**この run の唯一の仕事**は `agent-deps:v1` コメント作成。実装・PR・マージは禁止。完了したら終了（implement dispatch は reconcile が後続）。
+1. `gh issue view <N> --json body,labels` で本文と現行ラベルを読む
+2. hard 依存を判断（regex・ヒューリスティックは SKILL 判断内のみ）
+3. 依存未充足 → コメントで待機理由を残し exit 0（`agent-in-progress` は付けない）
+4. 依存充足 → §3 着手宣言へ
 
 ## Automation（Cursor Dashboard）
 
@@ -154,4 +156,4 @@ with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent a
 | 旧 webhook 停止 | 旧 Automation OFF 後、旧 URL への POST が 0 件 |
 | retry スモーク | `workflow_dispatch` on `issue-worker-retry-dispatch` / `pr-merge-worker-retry-dispatch` |
 | E2E | `agent-ready` issue 1 件 → TDD → **sequential cleanup（tick → gate 0）** → Draft PR → prep ready → merge |
-| deps | `## 依存` issue でキャッシュ miss → `body_hash` payload のみ → コメント作成 → reconcile 再 dispatch |
+| deps | `## 依存` issue で Agent が依存未充足と判断 → コメントのみで終了。15 分 reconcile が再 dispatch |

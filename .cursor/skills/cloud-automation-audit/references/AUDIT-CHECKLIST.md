@@ -33,7 +33,7 @@
 | 1 | 専用 Automation が **OFF**（Delivery 切替後） | 二重 webhook 起動 |
 | 2 | `pr-merge-worker-dispatch.yml` が valid | payload / jq 構文破損 |
 | 3 | ruleset **master CI required** が active | 無い / context 名不一致 → P0 |
-| 4 | Delivery Agent PR に `agent-merge` 付与手順が doc にある | 連携断絶 |
+| 4 | pr-agent-prep が `closingIssuesReferences` あり PR に `agent-merge` を付与する手順が doc にある | 連携断絶 |
 
 ## UX Issue Audit
 

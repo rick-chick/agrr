@@ -1,6 +1,6 @@
 # Prepares agent-opt-in PRs for PR Merge Worker after Cursor Automation creates Draft PRs.
 #
-# - Adds agent-merge label when eligible (cursor/*, issue/*, or Merge-Strategy: agent)
+# - Adds agent-merge label when eligible (cursor/* or issue/* with closingIssuesReferences)
 # - Serial queue: only one non-draft agent-merge PR at a time
 # - gh pr ready when CI is green and queue is clear (needs contents: write; optional secrets.AGRR_GH_PAT)
 # - master sync (BEHIND / DIRTY / CONFLICTING) is handled by PR Merge Worker (including Draft PRs), not prep

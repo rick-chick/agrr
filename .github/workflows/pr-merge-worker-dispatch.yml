@@ -42,8 +42,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
-          PR_BODY_INPUT: ${{ github.event.pull_request.body }}
-          PR_TITLE_INPUT: ${{ github.event.pull_request.title }}
           WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           WORKFLOW_RUN_PRS_JSON: ${{ toJson(github.event.workflow_run.pull_requests) }}
         run: |
@@ -53,8 +51,6 @@ jobs:
             ACTION="${{ github.event.action }}"
             HEAD_REF="${{ github.event.pull_request.head.ref }}"
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-            PR_BODY_B64=$(printf '%s' "$PR_BODY_INPUT" | base64 -w0)
-            PR_TITLE_B64=$(printf '%s' "$PR_TITLE_INPUT" | base64 -w0)
             LABEL_NAME="${{ github.event.label.name }}"
             LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
             PR_URL='${{ github.event.pull_request.html_url }}'
@@ -71,8 +67,6 @@ jobs:
             fi
             PR_NUMBER=$(echo "$RESULT" | jq -r '.number')
             HEAD_REF=$(echo "$RESULT" | jq -r '.headRef')
-            PR_BODY_B64=$(echo "$RESULT" | jq -r '.body' | base64 -w0)
-            PR_TITLE_B64=$(echo "$RESULT" | jq -r '.title' | base64 -w0)
             LABEL_NAME=""
             LABELS=$(echo "$RESULT" | jq -r '.labels')
             PR_URL=$(echo "$RESULT" | jq -r '.url')
@@ -81,7 +75,6 @@ jobs:
 
           echo "skip=false" >> "$GITHUB_OUTPUT"
           echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "title_b64=$PR_TITLE_B64" >> "$GITHUB_OUTPUT"
           echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
           echo "action=$ACTION" >> "$GITHUB_OUTPUT"
           echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
@@ -89,7 +82,6 @@ jobs:
           echo "author=$PR_AUTHOR" >> "$GITHUB_OUTPUT"
           echo "labels=$LABELS" >> "$GITHUB_OUTPUT"
           echo "label_name=$LABEL_NAME" >> "$GITHUB_OUTPUT"
-          echo "body_b64=$PR_BODY_B64" >> "$GITHUB_OUTPUT"
 
       - name: Trigger Delivery Agent
         if: steps.pr.outputs.skip != 'true'
@@ -105,11 +97,8 @@ jobs:
           AUTHOR: ${{ steps.pr.outputs.author }}
           LABELS: ${{ steps.pr.outputs.labels }}
           LABEL_NAME: ${{ steps.pr.outputs.label_name }}
-          BODY_B64: ${{ steps.pr.outputs.body_b64 }}
-          TITLE_B64: ${{ steps.pr.outputs.title_b64 }}
         run: |
           set -euo pipefail
-          PR_TITLE=$(printf '%s' "$TITLE_B64" | base64 -d)
 
           if [ -z "${WEBHOOK_URL:-}" ] || [ -z "${WEBHOOK_KEY:-}" ]; then
             echo "CURSOR_DELIVERY_WEBHOOK_URL or CURSOR_DELIVERY_WEBHOOK_KEY is not set."
@@ -117,31 +106,13 @@ jobs:
             exit 0
           fi
 
-          if echo "$LABELS" | grep -qE '(^|,)agent-no-merge(,|$)|(^|,)do-not-merge(,|$)|(^|,)wip(,|$)|(^|,)agent-merge-blocked(,|$)'; then
-            echo "PR has a merge-blocking label; skipping."
-            exit 0
-          fi
-
-          if echo "$LABELS" | grep -qE '(^|,)agent-merge-in-progress(,|$)'; then
-            echo "agent-merge-in-progress; skipping duplicate dispatch."
-            exit 0
-          fi
-
-          if [ "$ACTION" = "labeled" ] && [ "$LABEL_NAME" != "agent-merge" ]; then
-            echo "labeled event is not agent-merge; skipping."
-            exit 0
-          fi
-
-          # Universal rescue / merge: opt-out only (blocking labels above). No branch-prefix opt-in.
-
-          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepository,title,mergeable,mergeStateStatus)
+          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepository,mergeable,mergeStateStatus,closingIssuesReferences)
           IS_DRAFT=$(echo "$PR_META" | jq -r '.isDraft')
           REVIEW_DECISION=$(echo "$PR_META" | jq -r '.reviewDecision // ""')
           BASE_REF=$(echo "$PR_META" | jq -r '.baseRefName')
           HEAD_OID=$(echo "$PR_META" | jq -r '.headRefOid')
           HEAD_OWNER=$(echo "$PR_META" | jq -r '.headRepository.nameWithOwner' | cut -d/ -f1)
           BASE_OWNER=$(gh repo view --json owner -q .owner.login)
-          TITLE=$(echo "$PR_META" | jq -r '.title')
           MERGEABLE_STATE=$(echo "$PR_META" | jq -r '.mergeable // ""')
           MERGE_STATE_STATUS=$(echo "$PR_META" | jq -r '.mergeStateStatus // ""')
 
@@ -154,71 +125,74 @@ jobs:
             MERGE_STATE_STATUS=$(gh pr view "$PR_NUMBER" --json mergeStateStatus -q .mergeStateStatus)
           fi
 
-          NEEDS_SYNC=false
-          if [ "$MERGEABLE_STATE" = "CONFLICTING" ] || [ "$MERGE_STATE_STATUS" = "DIRTY" ] || [ "$MERGE_STATE_STATUS" = "BEHIND" ]; then
-            NEEDS_SYNC=true
-            ACTION="conflict"
+          CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state)
+          REQUIRED_CI_STATE=$(CHECKS_JSON="$CHECKS_JSON" node scripts/classify-required-ci-state.mjs)
+
+          CLASSIFY_INPUT=$(jq -n \
+            --arg labels "$LABELS" \
+            --arg eventAction "$ACTION" \
+            --arg labelName "$LABEL_NAME" \
+            --argjson isDraft "$IS_DRAFT" \
+            --arg reviewDecision "$REVIEW_DECISION" \
+            --arg baseRefName "$BASE_REF" \
+            --arg headOwner "$HEAD_OWNER" \
+            --arg baseOwner "$BASE_OWNER" \
+            --arg headOid "$HEAD_OID" \
+            --arg eventHeadSha "$HEAD_SHA" \
+            --arg mergeable "$MERGEABLE_STATE" \
+            --arg mergeStateStatus "$MERGE_STATE_STATUS" \
+            --arg requiredCiState "$REQUIRED_CI_STATE" \
+            '{
+              labels: $labels,
+              eventAction: $eventAction,
+              labelName: $labelName,
+              isDraft: $isDraft,
+              reviewDecision: $reviewDecision,
+              baseRefName: $baseRefName,
+              headOwner: $headOwner,
+              baseOwner: $baseOwner,
+              headOid: $headOid,
+              eventHeadSha: $eventHeadSha,
+              mergeable: $mergeable,
+              mergeStateStatus: $mergeStateStatus,
+              requiredCiState: $requiredCiState
+            }')
+
+          RESULT=$(INPUT_JSON="$CLASSIFY_INPUT" node scripts/classify-primary-pr-merge-dispatch.mjs)
+          ELIGIBLE=$(echo "$RESULT" | jq -r '.eligible')
+          if [ "$ELIGIBLE" != "true" ]; then
+            echo "Skip: $(echo "$RESULT" | jq -r '.reason // "unknown"')"
+            exit 0
+          fi
+
+          DISPATCH_KIND=$(echo "$RESULT" | jq -r '.dispatchKind')
+          if [ "$DISPATCH_KIND" = "conflict" ]; then
             echo "PR needs master sync (mergeable=$MERGEABLE_STATE mergeStateStatus=$MERGE_STATE_STATUS); dispatching conflict resolution."
-          elif [ "$ACTION" = "synchronize" ]; then
-            echo "synchronize event without merge conflicts; skipping (CI completed will dispatch)."
-            exit 0
+          elif [ "$DISPATCH_KIND" = "ci_fix" ]; then
+            echo "Required CI failed; dispatching ci_fix."
           fi
 
-          if [ "$NEEDS_SYNC" != "true" ]; then
-            CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state)
-            REQUIRED_CI_STATE=$(CHECKS_JSON="$CHECKS_JSON" node scripts/classify-required-ci-state.mjs)
-            if [ "$REQUIRED_CI_STATE" = "failed" ]; then
-              ACTION="ci_fix"
-              echo "Required CI failed; dispatching ci_fix."
-            elif [ "$IS_DRAFT" = "true" ]; then
-              echo "Draft PR without conflict/sync need and CI not failed; skipping."
-              exit 0
-            elif [ "$REQUIRED_CI_STATE" = "incomplete" ] && [ "$ACTION" = "ci_completed" ]; then
-              echo "Required checks still pending on ci_completed; skipping dispatch."
-              exit 0
-            fi
-          fi
-          if [ "$HEAD_OWNER" != "$BASE_OWNER" ]; then
-            echo "Fork PR (head owner $HEAD_OWNER != base owner $BASE_OWNER); skipping."
-            exit 0
-          fi
-          if [ "$REVIEW_DECISION" = "CHANGES_REQUESTED" ]; then
-            echo "Changes requested review; skipping."
-            exit 0
-          fi
-          if [ "$BASE_REF" != "master" ]; then
-            echo "Base branch is not master; skipping."
-            exit 0
-          fi
-          if echo "$TITLE" | grep -qiE '\[(WIP|DRAFT)\]'; then
-            echo "Title contains [WIP] or [DRAFT]; skipping."
-            exit 0
-          fi
-          if [ "$ACTION" != "conflict" ] && [ "$HEAD_OID" != "$HEAD_SHA" ]; then
-            echo "Resolved head SHA ($HEAD_SHA) != current PR head ($HEAD_OID); skipping stale dispatch."
-            exit 0
+          if [ "$DISPATCH_KIND" = "conflict" ] || [ "$DISPATCH_KIND" = "ci_fix" ]; then
+            echo "skipping CI gate for ${DISPATCH_KIND} resolution"
           fi
 
-          if [ "$ACTION" = "conflict" ] || [ "$ACTION" = "ci_fix" ]; then
-            echo "skipping CI gate for ${ACTION} resolution"
-          fi
-
-          PR_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
-          payload=$(REPOSITORY="${{ github.repository }}" PR_NUMBER="$PR_NUMBER" node --input-type=module -e "
+          CLOSING_ISSUES_JSON=$(echo "$PR_META" | jq -c '.closingIssuesReferences')
+          payload=$(REPOSITORY="${{ github.repository }}" PR_NUMBER="$PR_NUMBER" CLOSING_ISSUES_JSON="$CLOSING_ISSUES_JSON" node --input-type=module -e "
             import {
               buildDeliveryPrPayloadFromPr,
               deliveryPrWebhookPayloadIsDispatchable,
             } from './scripts/delivery-dispatch-lib.mjs';
+            const closingIssuesReferences = JSON.parse(process.env.CLOSING_ISSUES_JSON || '[]');
             const payload = buildDeliveryPrPayloadFromPr(
-              { number: Number(process.env.PR_NUMBER), body: process.argv[1] },
+              { number: Number(process.env.PR_NUMBER), closingIssuesReferences },
               process.env.REPOSITORY,
             );
             if (!deliveryPrWebhookPayloadIsDispatchable(payload)) {
-              console.log('PR has no linked issue for Delivery Agent webhook; skipping dispatch.');
+              console.log('PR webhook payload is not dispatchable; skipping dispatch.');
               process.exit(0);
             }
             process.stdout.write(JSON.stringify(payload));
-          " "$PR_BODY")
+          ")
           if [ -z "$payload" ]; then
             exit 0
           fi

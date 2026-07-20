@@ -10,6 +10,7 @@ import {
   isNonFatalMarkReadyError,
   resolveGhToken,
   selectDraftPrNumberToReady,
+  shouldReceiveAgentMergeLabel,
   sortedEligibleDraftNumbers,
 } from './pr-agent-prep-lib.mjs';
 
@@ -17,11 +18,15 @@ const BASE_META = {
   authorLogin: 'cursor[bot]',
   baseRefName: 'master',
   headRefName: 'cursor/issue-worker-abc',
-  body: '',
   labels: [],
   headOwner: 'rick-chick',
   baseOwner: 'rick-chick',
 };
+
+test('shouldReceiveAgentMergeLabel requires closingIssuesReferences via API count', () => {
+  assert.equal(shouldReceiveAgentMergeLabel({ closingIssueCount: 1 }), true);
+  assert.equal(shouldReceiveAgentMergeLabel({ closingIssueCount: 0 }), false);
+});
 
 test('isEligibleAgentPr accepts cursor/* from cursor bot', () => {
   assert.equal(isEligibleAgentPr(BASE_META), true);
@@ -34,15 +39,14 @@ test('isEligibleAgentPr accepts issue/* from cursor bot', () => {
   );
 });
 
-test('isEligibleAgentPr accepts Merge-Strategy: agent for any author', () => {
+test('isEligibleAgentPr rejects non-opt-in branch even with agent author', () => {
   assert.equal(
     isEligibleAgentPr({
       ...BASE_META,
       authorLogin: 'rick-chick',
       headRefName: 'feature/manual',
-      body: 'Merge-Strategy: agent',
     }),
-    true,
+    false,
   );
 });
 

@@ -21,6 +21,11 @@ import {
   classifyReconcileCandidate,
   selectReconcileCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
+import { findSupersededOpenPrs } from './pr-superseded-close-lib.mjs';
+import {
+  hasBlockingMergeLabel,
+  shouldReceiveAgentMergeLabel,
+} from './pr-agent-prep-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
 
 const DEFAULT_REPO = 'rick-chick/agrr';
@@ -50,9 +55,97 @@ function listOpenMasterPrs(repo) {
     '--base',
     'master',
     '--json',
-    'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author',
+    'number,title,url,headRefName,headRefOid,labels,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author,closingIssuesReferences',
   ]);
   return JSON.parse(raw);
+}
+
+/**
+ * @param {string} repo
+ * @param {number} [limit]
+ * @returns {Array<Record<string, unknown>>}
+ */
+function listRecentlyMergedPrs(repo, limit = 50) {
+  const raw = gh(repo, [
+    'pr',
+    'list',
+    '--state',
+    'merged',
+    '--base',
+    'master',
+    '--limit',
+    String(limit),
+    '--json',
+    'number,title,closingIssuesReferences',
+  ]);
+  return JSON.parse(raw);
+}
+
+/**
+ * @param {string} repo
+ * @param {Array<{ number: number; title: string; supersededBy: number }>} superseded
+ */
+function closeSupersededPrs(repo, superseded) {
+  for (const entry of superseded) {
+    const comment =
+      `Closed by PR Merge Worker retry reconcile: superseded by merged PR #${entry.supersededBy}.`;
+    console.log(`Closing superseded open PR #${entry.number} (merged #${entry.supersededBy})`);
+    gh(repo, [
+      'pr',
+      'close',
+      String(entry.number),
+      '--comment',
+      comment,
+    ]);
+  }
+}
+
+/**
+ * @param {string} repo
+ */
+function closeSupersededOpenPrs(repo, openPrs) {
+  const mergedPrs = listRecentlyMergedPrs(repo);
+  const superseded = findSupersededOpenPrs(openPrs, mergedPrs);
+  if (superseded.length === 0) {
+    return;
+  }
+  closeSupersededPrs(repo, superseded);
+}
+
+/**
+ * @param {string} repo
+ * @param {Array<Record<string, unknown>>} openPrs
+ */
+function optOutUnlinkedPrsFromAutoMerge(repo, openPrs) {
+  for (const pr of openPrs) {
+    const labels = (pr.labels ?? []).map((label) =>
+      typeof label === 'string' ? label : label.name,
+    );
+    if (hasBlockingMergeLabel(labels)) {
+      continue;
+    }
+    const closingIssues = /** @type {Array<unknown>} */ (pr.closingIssuesReferences ?? []);
+    const shouldMerge = shouldReceiveAgentMergeLabel({
+      closingIssueCount: closingIssues.length,
+    });
+    if (shouldMerge) {
+      continue;
+    }
+    console.log(`Opting out PR #${pr.number} from auto-merge (no linked issue)`);
+    if (labels.includes('agent-merge')) {
+      gh(repo, ['pr', 'edit', String(pr.number), '--remove-label', 'agent-merge']);
+    }
+    gh(repo, ['pr', 'edit', String(pr.number), '--add-label', 'agent-no-merge']);
+  }
+}
+
+/**
+ * @param {string} repo
+ */
+function reconcilePrep(repo) {
+  const openPrs = listOpenMasterPrs(repo);
+  optOutUnlinkedPrsFromAutoMerge(repo, openPrs);
+  closeSupersededOpenPrs(repo, openPrs);
 }
 
 /**
@@ -79,7 +172,7 @@ function fetchPr(repo, prNumber) {
     'view',
     String(prNumber),
     '--json',
-    'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author',
+    'number,title,url,headRefName,headRefOid,labels,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author,closingIssuesReferences',
   ]);
   return JSON.parse(raw);
 }
@@ -98,7 +191,7 @@ function postWebhook(repo, payload, reconcileAction) {
 
   if (!deliveryPrWebhookPayloadIsDispatchable(payload)) {
     console.log(
-      `PR #${payload.pr_number} has no linked issue for Delivery Agent webhook; skipping reconcile dispatch.`,
+      `PR #${payload.pr_number} payload is not dispatchable; skipping reconcile dispatch.`,
     );
     return;
   }
@@ -190,6 +283,7 @@ function main() {
   const repo = args.repo ?? DEFAULT_REPO;
 
   if (args.mode === 'reconcile') {
+    reconcilePrep(repo);
     const prs = listOpenMasterPrs(repo);
     const checksByPrNumber = Object.fromEntries(
       prs.map((pr) => [pr.number, fetchChecks(repo, pr.number)]),

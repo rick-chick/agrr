@@ -20,7 +20,7 @@ const BASE_PR = {
   author: { login: 'cursor[bot]' },
   isDraft: false,
   baseRefName: 'master',
-  body: 'Closes #276',
+  closingIssuesReferences: [{ number: 276 }],
   labels: [{ name: 'agent-merge' }],
   headRepository: { nameWithOwner: 'rick-chick/agrr' },
   mergeable: 'MERGEABLE',
@@ -130,12 +130,12 @@ test('classifyReconcileCandidate accepts ready feat PR BEHIND without agent-merg
   });
 });
 
-test('classifyReconcileCandidate rejects BEHIND PR without linked issue for delivery webhook', () => {
+test('classifyReconcileCandidate accepts BEHIND PR without linked issue for pr_unlinked dispatch', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
       number: 430,
-      body: '## Summary\n\nHuman PR without Closes issue link.',
+      closingIssuesReferences: [],
       labels: [],
       mergeable: 'MERGEABLE',
       mergeStateStatus: 'BEHIND',
@@ -144,8 +144,11 @@ test('classifyReconcileCandidate rejects BEHIND PR without linked issue for deli
     baseOwner: 'rick-chick',
     nowMs: NOW,
   });
-  assert.equal(result.eligible, false);
-  assert.equal(result.reason, 'no linked issue for delivery webhook');
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'conflict',
+    removeStaleInProgressLabel: false,
+  });
 });
 
 test('classifyReconcileCandidate rejects draft PR while required CI is pending', () => {
