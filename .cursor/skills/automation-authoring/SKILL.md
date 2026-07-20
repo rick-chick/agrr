@@ -48,7 +48,7 @@ disable-model-invocation: false
 1. 提示案が PRINCIPLES の **目的・全部拾う・二層分離**に説明できるか
 2. 差分・触れる近傍に **本文パース**が残っていないか（発見したら同一変更で除去）
 3. **エージェント起動**で済む判断を機械層に置いていないか
-4. コスト低減案が **本文パース・ラベル穴・dispatch 省略**に依存していないか（[PRINCIPLES.md §機械ゲート](references/PRINCIPLES.md)、[automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc)）
+4. コスト低減案が **本文パース・例外ラベル・dispatch 省略**に依存していないか（[PRINCIPLES.md §機械ゲート](references/PRINCIPLES.md)、[automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc)）
 
 ## 1) 責任分界を固定する
 
@@ -123,8 +123,8 @@ unit test GREEN だけでは完了にしない。
 - 監査・watchdog 登録の省略
 - **機械層への本文パース**（新規・残置・既存の温存。「動いている」は理由にならない）
 - **思想違反の最小パッチ**（症状だけ直し、パースや責任空白を残す）
-- **本文パース・ラベル省略でエージェント起動を避ける**（起動コストの方が価値がある — [PRINCIPLES.md §機械ゲート](references/PRINCIPLES.md)）
-- **パース・ラベル穴でエージェントコストを「低減」する設計**（総コストを増やす — [automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc) §エージェントコストの低減）
+- **本文パース・ラベル省略でエージェント起動を避ける**（総コスト比較でエージェント起動を優先 — [PRINCIPLES.md §機械ゲート](references/PRINCIPLES.md)）
+- **パース・例外ラベルでエージェントコストを下げる設計**（総コストが増える傾向 — [automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc) §エージェントコストの低減）
 
 ## 関連
 
