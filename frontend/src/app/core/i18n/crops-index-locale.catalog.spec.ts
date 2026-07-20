@@ -32,12 +32,9 @@ const CATALOG_KEYS = [
   'crops.index.title',
   'crops.index.description',
   'crops.index.new_crop',
-  'crops.index.actions.show',
+  'crops.index.menu.more_actions',
   'crops.index.inline.stages_toggle',
-  'crops.index.inline.blueprints_toggle',
-  'crops.index.inline.collapse',
-  'crops.index.inline.stages_full_edit',
-  'crops.index.inline.blueprints_full_edit'
+  'crops.index.inline.blueprints_toggle'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

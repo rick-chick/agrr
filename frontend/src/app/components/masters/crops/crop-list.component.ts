@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -16,10 +16,6 @@ import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
-import { CropListStagesPanelComponent } from './crop-list-stages-panel.component';
-import { CropListBlueprintsPanelComponent } from './crop-list-blueprints-panel.component';
-
-type CropListExpandPanel = 'stages' | 'blueprints';
 
 const initialControl: CropListViewState = {
   loading: true,
@@ -32,13 +28,7 @@ const initialControl: CropListViewState = {
 @Component({
   selector: 'app-crop-list',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    TranslateModule,
-    CropListStagesPanelComponent,
-    CropListBlueprintsPanelComponent
-  ],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [...CROP_LIST_PROVIDERS],
   template: `
     <main class="page-main">
@@ -57,7 +47,7 @@ const initialControl: CropListViewState = {
             @for (crop of control.crops; track crop.id) {
               <li class="card-list__item">
                 <article class="item-card">
-                  <div class="item-card__body">
+                  <a [routerLink]="['/crops', crop.id]" class="item-card__body">
                     <span class="item-card__title">{{ crop.name }}</span>
                     @if (crop.variety) {
                       <span class="item-card__meta">{{ crop.variety }}</span>
@@ -65,59 +55,63 @@ const initialControl: CropListViewState = {
                     @if (auth.user()?.admin && crop.is_reference) {
                       <span class="item-card__badge">{{ 'crops.show.reference_crop' | translate }}</span>
                     }
-                  </div>
-                  <div class="item-card__primary-actions">
-                    <a
-                      [routerLink]="['/crops', crop.id]"
-                      class="btn btn-secondary btn-sm"
-                      data-testid="crop-detail-link"
-                    >
-                      {{ 'crops.index.actions.show' | translate }}
-                    </a>
-                    <button
-                      type="button"
-                      class="btn-link"
-                      data-testid="crop-stages-toggle"
-                      [attr.aria-expanded]="isPanelExpanded(crop.id, 'stages')"
-                      [attr.aria-controls]="stagesPanelId(crop.id)"
-                      (click)="togglePanel(crop.id, 'stages')"
-                    >
-                      {{
-                        isPanelExpanded(crop.id, 'stages')
-                          ? ('crops.index.inline.collapse' | translate)
-                          : ('crops.index.inline.stages_toggle' | translate)
-                      }}
-                    </button>
-                    <button
-                      type="button"
-                      class="btn-link"
-                      data-testid="crop-blueprints-toggle"
-                      [attr.aria-expanded]="isPanelExpanded(crop.id, 'blueprints')"
-                      [attr.aria-controls]="blueprintsPanelId(crop.id)"
-                      (click)="togglePanel(crop.id, 'blueprints')"
-                    >
-                      {{
-                        isPanelExpanded(crop.id, 'blueprints')
-                          ? ('crops.index.inline.collapse' | translate)
-                          : ('crops.index.inline.blueprints_toggle' | translate)
-                      }}
-                    </button>
-                  </div>
-                  @if (isPanelExpanded(crop.id, 'stages')) {
-                    <div [id]="stagesPanelId(crop.id)">
-                      <app-crop-list-stages-panel [cropId]="crop.id" />
-                    </div>
-                  }
-                  @if (isPanelExpanded(crop.id, 'blueprints')) {
-                    <div [id]="blueprintsPanelId(crop.id)">
-                      <app-crop-list-blueprints-panel [cropId]="crop.id" />
-                    </div>
-                  }
+                  </a>
                   <div class="item-card__actions">
                     <a [routerLink]="['/crops', crop.id, 'edit']" class="btn btn-secondary">{{ 'common.edit' | translate }}</a>
-                    <button type="button" class="btn btn-danger" (click)="deleteCrop(crop.id)" [attr.aria-label]="'common.delete' | translate">
+                    <button
+                      type="button"
+                      class="btn btn-danger"
+                      (click)="deleteCrop(crop.id)"
+                      [attr.aria-label]="'common.delete' | translate"
+                    >
                       {{ 'common.delete' | translate }}
                     </button>
+                    <div class="crop-overflow-menu" data-testid="crop-overflow-menu">
+                      <button
+                        type="button"
+                        class="btn btn-secondary btn-sm crop-overflow-menu__trigger"
+                        data-testid="crop-overflow-menu-trigger"
+                        [attr.aria-expanded]="openMenuCropId === crop.id"
+                        [attr.aria-controls]="overflowMenuPanelId(crop.id)"
+                        aria-haspopup="menu"
+                        [attr.aria-label]="'crops.index.menu.more_actions' | translate"
+                        (click)="toggleOverflowMenu(crop.id, $event)"
+                      >
+                        <svg class="crop-overflow-menu__icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            fill="currentColor"
+                            d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
+                          />
+                        </svg>
+                      </button>
+                      @if (openMenuCropId === crop.id) {
+                        <div
+                          class="crop-overflow-menu__panel"
+                          [id]="overflowMenuPanelId(crop.id)"
+                          role="menu"
+                          data-testid="crop-overflow-menu-panel"
+                        >
+                          <a
+                            class="crop-overflow-menu__item"
+                            [routerLink]="['/crops', crop.id, 'stages']"
+                            role="menuitem"
+                            data-testid="crop-stages-link"
+                            (click)="closeOverflowMenu()"
+                          >
+                            {{ 'crops.index.inline.stages_toggle' | translate }}
+                          </a>
+                          <a
+                            class="crop-overflow-menu__item"
+                            [routerLink]="['/crops', crop.id, 'task_schedule_blueprints']"
+                            role="menuitem"
+                            data-testid="crop-blueprints-link"
+                            (click)="closeOverflowMenu()"
+                          >
+                            {{ 'crops.index.inline.blueprints_toggle' | translate }}
+                          </a>
+                        </div>
+                      }
+                    </div>
                   </div>
                 </article>
               </li>
@@ -140,7 +134,7 @@ export class CropListComponent implements CropListView, OnInit, OnDestroy {
   private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
 
-  readonly expandedPanel = signal<Map<number, CropListExpandPanel>>(new Map());
+  openMenuCropId: number | null = null;
 
   private _control: CropListViewState = initialControl;
   get control(): CropListViewState {
@@ -179,25 +173,40 @@ export class CropListComponent implements CropListView, OnInit, OnDestroy {
     this.deleteUseCase.execute({ cropId, onAfterUndo: () => this.refreshAfterUndo() });
   }
 
-  togglePanel(cropId: number, panel: CropListExpandPanel): void {
-    const next = new Map(this.expandedPanel());
-    if (next.get(cropId) === panel) {
-      next.delete(cropId);
-    } else {
-      next.set(cropId, panel);
+  toggleOverflowMenu(cropId: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openMenuCropId = this.openMenuCropId === cropId ? null : cropId;
+  }
+
+  closeOverflowMenu(): void {
+    this.openMenuCropId = null;
+  }
+
+  overflowMenuPanelId(cropId: number): string {
+    return `crop-overflow-menu-panel-${cropId}`;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    this.dismissOverflowMenuIfOutside(event.target);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (this.openMenuCropId === null || event.key !== 'Escape') {
+      return;
     }
-    this.expandedPanel.set(next);
+    event.preventDefault();
+    this.closeOverflowMenu();
   }
 
-  isPanelExpanded(cropId: number, panel: CropListExpandPanel): boolean {
-    return this.expandedPanel().get(cropId) === panel;
-  }
-
-  stagesPanelId(cropId: number): string {
-    return `crop-list-stages-panel-${cropId}`;
-  }
-
-  blueprintsPanelId(cropId: number): string {
-    return `crop-list-blueprints-panel-${cropId}`;
+  private dismissOverflowMenuIfOutside(target: EventTarget | null): void {
+    if (this.openMenuCropId === null) {
+      return;
+    }
+    if (target instanceof Element && target.closest('[data-testid="crop-overflow-menu"]')) {
+      return;
+    }
+    this.closeOverflowMenu();
   }
 }

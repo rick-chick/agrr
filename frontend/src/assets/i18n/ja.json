@@ -409,7 +409,10 @@
       "debug": {
         "label": "デバッグ:"
       },
-      "description": "作付け計画で使う作物マスタの登録・管理を行います。"
+      "description": "作付け計画で使う作物マスタの登録・管理を行います。",
+      "menu": {
+        "more_actions": "その他の操作"
+      }
     },
     "new": {
       "title": "新しい作物を追加"
@@ -499,6 +502,7 @@
       "pest_order_label": "目",
       "pest_occurrence_label": "発生時期",
       "stage_order": "順序",
+      "stages_title": "生育ステージ",
       "no_stages_description": "この作物の生育ステージを追加してください。",
       "temperature_requirement": "温度要件",
       "thermal_requirement": "熱要件（GDD）",
