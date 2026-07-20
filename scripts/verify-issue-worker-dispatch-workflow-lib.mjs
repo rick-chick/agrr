@@ -12,7 +12,7 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'run-issue-worker-dependency-gate.mjs',
   'issue-worker-deps-resolve.mjs',
   'CURSOR_DELIVERY_WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}',
-  'formatDependencyGateComment',
+  'formatDependencyGateBlockComment',
   'openFixPrSearchQuery',
   'Comment when dependency gate blocks dispatch',
   'Trigger Delivery Agent',
@@ -128,6 +128,13 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
 
   if (!workflowText.includes('run-issue-worker-dependency-gate.mjs')) {
     errors.push('issue-worker-dispatch workflow must use run-issue-worker-dependency-gate.mjs');
+  }
+
+  if (
+    workflowText.includes('run-issue-worker-dependency-gate.mjs') &&
+    !workflowText.includes('GH_TOKEN: ${{ github.token }}')
+  ) {
+    errors.push('issue-worker-dispatch dependency gate must set GH_TOKEN for gh API');
   }
 
   if (libText.includes('extractDependencySection')) {

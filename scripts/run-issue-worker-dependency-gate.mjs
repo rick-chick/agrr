@@ -19,15 +19,6 @@ if (!repo || !Number.isInteger(issueNumber) || issueNumber <= 0) {
 }
 
 /**
- * @param {string} path
- * @returns {unknown}
- */
-function ghApi(path) {
-  const raw = execFileSync('gh', ['api', path, '--jq', '.'], { encoding: 'utf8' });
-  return JSON.parse(raw);
-}
-
-/**
  * @param {number} number
  * @returns {{ state: string; body: string }}
  */

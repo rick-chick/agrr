@@ -97,11 +97,11 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 | `pr_unlinked` | `issue_number` が無い PR dispatch 時（`true`）。Agent は PR フェーズのみ |
 | `action` | **送らない・無視** |
 
-任意: `issue_title`, `issue_url`, `issue_body`, `labels`, `body_hash`（依存判定 run のみ）
+任意: `issue_title`, `issue_url`, `labels`, `retry_reason`, `body_hash`（依存判定 run のみ）。**`issue_body` は機械層から送らない**（Agent は `gh issue view` で読む）。
 
 ## 依存
 
-`## 依存` 節がある issue は **`agent-deps:v1` コメントキャッシュのみ**を根拠にする。本文 `#N` パース禁止。
+`agent-deps:v1` コメントキャッシュのみを根拠にする。本文 `#N` パース禁止。キャッシュ欠落時は deps-resolve が Agent を起動（`body_hash` のみ webhook）。
 
 ### `body_hash` 付き payload（依存判定 run）
 

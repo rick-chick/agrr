@@ -102,7 +102,7 @@ sequenceDiagram
 
 **機械層の本文パース禁止**・思想優先: [`.cursor/rules/automation-philosophy-priority.mdc`](../../.cursor/rules/automation-philosophy-priority.mdc)（正本 [PRINCIPLES.md](../../.cursor/skills/automation-authoring/references/PRINCIPLES.md)）。
 
-**依存ゲート**: `## 依存` 節がある issue は、dispatch / retriage が **`agent-deps:v1` コメントキャッシュ**（[`issue-worker-deps-agent-lib.mjs`](../../scripts/issue-worker-deps-agent-lib.mjs)）だけを根拠に hard 依存を判定する。本文の `#N` regex パースはしない。キャッシュ欠落時は [`issue-worker-deps-resolve.mjs`](../../scripts/issue-worker-deps-resolve.mjs) が Delivery Agent webhook を起動し、コメント作成後に再 dispatch される。
+**依存ゲート**: `implement` 経路は **`agent-deps:v1` コメントキャッシュ**（[`issue-worker-deps-agent-lib.mjs`](../../scripts/issue-worker-deps-agent-lib.mjs)）のみを根拠に hard 依存を判定する（本文 `#N` regex パース禁止）。キャッシュ欠落・`body_hash` 不一致時は [`issue-worker-deps-resolve.mjs`](../../scripts/issue-worker-deps-resolve.mjs) が Delivery Agent webhook（`body_hash` のみ）を起動し、コメント作成後に reconcile が再 dispatch する。
 
 #### 必須 CI 失敗の自動救済（CI fix 経路）
 

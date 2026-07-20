@@ -54,6 +54,42 @@ export function formatDependencyGateComment(openDependencies) {
 }
 
 /**
+ * @param {{
+ *   skipReason?: string;
+ *   openDependencies?: number[];
+ *   circular?: boolean;
+ * }} input
+ * @returns {string}
+ */
+export function formatDependencyGateBlockComment({
+  skipReason = '',
+  openDependencies = [],
+  circular = false,
+}) {
+  if (circular) {
+    return [
+      '## 🤖 Issue Worker: dispatch 保留（依存の循環参照）',
+      '',
+      skipReason || 'circular dependency detected',
+      '',
+      '依存関係を修正してから `agent-ready` を付け直してください。',
+    ].join('\n');
+  }
+
+  if (openDependencies.length > 0) {
+    return formatDependencyGateComment(openDependencies);
+  }
+
+  return [
+    '## 🤖 Issue Worker: dispatch 保留（agent-deps）',
+    '',
+    skipReason || 'agent dependency cache missing or stale',
+    '',
+    '依存判定完了後に reconcile が再 dispatch します。',
+  ].join('\n');
+}
+
+/**
  * @typedef {{
  *   hard_dependencies: number[];
  *   soft_notes: string[];

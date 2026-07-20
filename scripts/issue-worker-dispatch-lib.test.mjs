@@ -22,6 +22,7 @@ import {
   isEpicCloseCheckCandidate,
   resolveHardDependencies,
   formatDependencyGateComment,
+  formatDependencyGateBlockComment,
   collectReconcileDispatchCandidates,
   selectReconcileDispatchCandidate,
   parseDispatchedIssueNumberFromLog,
@@ -510,6 +511,24 @@ test('formatDependencyGateComment includes open dependency numbers', () => {
   assert.match(comment, /#317/);
   assert.match(comment, /#320/);
   assert.match(comment, /dispatch 保留/);
+});
+
+test('formatDependencyGateBlockComment uses cache message when open deps empty', () => {
+  const comment = formatDependencyGateBlockComment({
+    skipReason: 'agent dependency cache missing or stale for #318',
+    openDependencies: [],
+  });
+  assert.match(comment, /agent-deps/);
+  assert.match(comment, /#318/);
+  assert.match(comment, /reconcile/);
+});
+
+test('formatDependencyGateBlockComment delegates to open-deps comment', () => {
+  const comment = formatDependencyGateBlockComment({
+    openDependencies: [317],
+  });
+  assert.match(comment, /#317/);
+  assert.match(comment, /依存未充足/);
 });
 
 test('resolvePreDispatchGates allows epic_close_check without dependency cache', async () => {

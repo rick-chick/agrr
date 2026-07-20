@@ -125,6 +125,7 @@ jobs:
         id: dependency_gate
         if: steps.issue.outputs.skip != 'true' && steps.final_action.outputs.action == 'implement' && steps.implement_gate.outputs.skip != 'true'
         env:
+          GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
@@ -150,20 +151,13 @@ jobs:
         run: |
           set -euo pipefail
           COMMENT=$(node --input-type=module -e "
-            import { formatDependencyGateComment } from './scripts/issue-worker-dispatch-lib.mjs';
-            const circular = process.env.CIRCULAR === 'true';
-            if (circular) {
-              process.stdout.write([
-                '## 🤖 Issue Worker: dispatch 保留（依存の循環参照）',
-                '',
-                process.env.SKIP_REASON ?? 'circular dependency detected',
-                '',
-                '依存関係を修正してから \`agent-ready\` を付け直してください。',
-              ].join('\\n'));
-            } else {
-              const openDependencies = JSON.parse(process.env.OPEN_DEPENDENCIES ?? '[]');
-              process.stdout.write(formatDependencyGateComment(openDependencies));
-            }
+            import { formatDependencyGateBlockComment } from './scripts/issue-worker-dispatch-lib.mjs';
+            const openDependencies = JSON.parse(process.env.OPEN_DEPENDENCIES ?? '[]');
+            process.stdout.write(formatDependencyGateBlockComment({
+              skipReason: process.env.SKIP_REASON ?? '',
+              openDependencies,
+              circular: process.env.CIRCULAR === 'true',
+            }));
           ")
           gh issue comment "${{ github.event.issue.number }}" \
             --repo "${{ github.repository }}" \
