@@ -11,6 +11,7 @@ use support::{
     find_schedule_item, poll_task_schedule_sync_ready, schedule_item_ids_from_response,
     seed_masters_crop, seed_masters_crop_with_manual_blueprint, seed_masters_crop_with_stages,
     seed_masters_crop_with_stages_and_blueprints, seed_reference_crop_with_stage,
+    seed_farm_temperature_chart_farm,
     seed_task_schedule_regeneration_plan,
     seed_work_record_plan, set_plan_task_schedule_sync_failed,
     set_plan_task_schedule_sync_failed_raw_error, status_and_body,
@@ -1668,5 +1669,81 @@ fn post_masters_crop_setup_proposal_apply_rate_limited_returns_429_with_retry_af
     let response_body = response.text().expect("rate limit body");
     let json: serde_json::Value = serde_json::from_str(&response_body).expect("rate limit JSON");
     assert_eq!("rate_limit", json["error"].as_str().unwrap());
+}
+
+#[test]
+fn get_masters_farm_temperature_chart_unauthenticated_returns_401() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.get(
+        "/api/v1/masters/farms/1/temperature_chart",
+        None,
+        &empty_headers(),
+    ));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
+fn get_masters_farm_temperature_chart_completed_returns_200() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_farm_temperature_chart_farm(user_id, "completed", true);
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/farms/{}/temperature_chart?period=90d",
+            seed.farm_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("temperature chart JSON");
+    assert_eq!(seed.farm_id, json["farm_id"].as_i64().unwrap());
+    assert_eq!("90d", json["period"].as_str().unwrap());
+    assert_eq!(true, json["observed_only"].as_bool().unwrap());
+    let points = json["points"].as_array().expect("points array");
+    assert!(!points.is_empty(), "{body}");
+    assert!(points.len() <= 90, "{body}");
+}
+
+#[test]
+fn get_masters_farm_temperature_chart_fetching_returns_409() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_farm_temperature_chart_farm(user_id, "fetching", false);
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/farms/{}/temperature_chart",
+            seed.farm_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(409, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("409 JSON");
+    assert_eq!("weather_data_not_ready", json["error"].as_str().unwrap());
+    assert_eq!("fetching", json["weather_data_status"].as_str().unwrap());
+}
+
+#[test]
+fn get_masters_farm_temperature_chart_other_user_farm_returns_404() {
+    let client = ContractClient::from_env();
+    let developer_session = developer_session_id(&client);
+    let farmer_session = farmer_session_id(&client);
+    let developer_id = user_id_for_session(&client, &developer_session);
+    let seed = seed_farm_temperature_chart_farm(developer_id, "completed", true);
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/farms/{}/temperature_chart",
+            seed.farm_id
+        ),
+        Some(&farmer_session),
+        &empty_headers(),
+    ));
+    assert_eq!(404, status, "{body}");
 }
 

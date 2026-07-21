@@ -46,6 +46,7 @@ pub mod masters_crop_setup_proposal;
 pub mod masters_crop_stages;
 pub mod masters_crops;
 pub mod masters_farms;
+pub mod masters_farm_temperature_chart;
 pub mod masters_fields;
 pub mod masters_fertilizes;
 pub mod masters_interaction_rules;

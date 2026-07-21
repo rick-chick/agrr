@@ -842,3 +842,53 @@ pub fn upload_ready_work_record_photo(
     ));
     assert_eq!(200, complete_status, "{complete_body}");
 }
+
+pub struct FarmTemperatureChartSeed {
+    pub farm_id: i64,
+    pub weather_location_id: i64,
+}
+
+/// Seeds a user-owned farm with weather status and optional daily weather rows.
+pub fn seed_farm_temperature_chart_farm(
+    user_id: i64,
+    weather_data_status: &str,
+    with_weather_rows: bool,
+) -> FarmTemperatureChartSeed {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let farm_name = format!("Contract Temperature Chart Farm {suffix}");
+
+    conn.execute(
+        "INSERT INTO weather_locations (latitude, longitude, elevation, timezone, created_at, updated_at)
+         VALUES (35.0, 139.0, NULL, 'Asia/Tokyo', datetime('now'), datetime('now'))",
+        [],
+    )
+    .expect("insert weather_location");
+    let weather_location_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO farms (user_id, name, latitude, longitude, created_at, updated_at, is_reference,
+         weather_data_status, weather_data_fetched_years, weather_data_total_years, weather_location_id)
+         VALUES (?1, ?2, 35.0, 139.0, datetime('now'), datetime('now'), 0,
+         ?3, 20, 20, ?4)",
+        rusqlite::params![user_id, farm_name, weather_data_status, weather_location_id],
+    )
+    .expect("insert farm");
+    let farm_id = conn.last_insert_rowid();
+
+    if with_weather_rows {
+        conn.execute(
+            "INSERT INTO weather_data (weather_location_id, date, temperature_max, temperature_min, temperature_mean, created_at, updated_at)
+             VALUES (?1, date('now', '-1 day'), 21.0, 8.0, 14.5, datetime('now'), datetime('now'))",
+            rusqlite::params![weather_location_id],
+        )
+        .expect("insert weather_data");
+    }
+
+    FarmTemperatureChartSeed {
+        farm_id,
+        weather_location_id,
+    }
+}

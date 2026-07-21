@@ -5,6 +5,8 @@ pub(crate) mod farm_delete_usage_snapshot;
 pub(crate) mod farm_destroy_output;
 pub(crate) mod farm_detail_output;
 pub(crate) mod farm_list_input;
+pub(crate) mod farm_temperature_chart_input;
+pub(crate) mod farm_temperature_chart_output;
 pub(crate) mod farm_update_input;
 pub(crate) mod mark_farm_weather_data_failed_input;
 pub(crate) mod record_farm_weather_block_completed_input;
@@ -16,6 +18,10 @@ pub use farm_delete_usage::FarmDeleteUsage;
 pub use farm_delete_usage_snapshot::FarmDeleteUsageSnapshot;
 pub use farm_destroy_output::FarmDestroyOutput;
 pub use farm_detail_output::FarmDetailOutput;
+pub use farm_temperature_chart_input::FarmTemperatureChartInput;
+pub use farm_temperature_chart_output::{
+    FarmTemperatureChartDataQuality, FarmTemperatureChartOutput, FarmTemperatureChartPoint,
+};
 pub use farm_list_input::FarmListInput;
 pub use farm_update_input::FarmUpdateInput;
 pub use mark_farm_weather_data_failed_input::MarkFarmWeatherDataFailedInput;

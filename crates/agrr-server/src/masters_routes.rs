@@ -7,6 +7,7 @@ use axum::{middleware, Router};
 pub fn routes(state: AppState) -> Router<AppState> {
     Router::new()
         .merge(crate::masters_farms::routes())
+        .merge(crate::masters_farm_temperature_chart::routes())
         .merge(crate::masters_fields::routes())
         .merge(crate::masters_crops::routes())
         .merge(crate::masters_crop_stages::routes())
