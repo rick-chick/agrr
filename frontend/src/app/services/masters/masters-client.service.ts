@@ -31,10 +31,16 @@ export class MastersClientService {
    * Masters API は APIキー または セッション認証 をサポート。
    * APIキーがなくても、Webログイン済みならセッションCookieで認証される。
    */
-  get<T>(path: string): Observable<T> {
+  get<T>(path: string, params?: Record<string, string>): Observable<T> {
     return defer(() => {
       const headers = this.getHeaders();
-      const options = headers.keys().length > 0 ? { headers } : {};
+      const options: { headers?: HttpHeaders; params?: Record<string, string> } = {};
+      if (headers.keys().length > 0) {
+        options.headers = headers;
+      }
+      if (params && Object.keys(params).length > 0) {
+        options.params = params;
+      }
       return this.apiClient.get<T>(`/api/v1/masters${path}`, options);
     });
   }

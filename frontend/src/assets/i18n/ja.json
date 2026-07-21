@@ -1135,7 +1135,13 @@
       "chart_temp_min": "最低気温 (°C)",
       "chart_date_label": "日付",
       "chart_temp_axis": "温度 (°C)",
-      "prediction_job_started": "天気予測をバックグラウンドで実行中です。完了までしばらくお待ちください。"
+      "prediction_job_started": "天気予測をバックグラウンドで実行中です。完了までしばらくお待ちください。",
+      "observed_subtitle": "実測データ（{{period}}）",
+      "plan_chart_hint": "作物ごとの栽培期間・積算温度（GDD）・予測は、各作付け計画の気候チャートで確認できます。",
+      "data_gap_notice": "この期間に {{count}} 日分の気象データがありません。欠損日はグラフ上で途切れて表示されます。",
+      "chart_loading": "気温データを読み込んでいます…",
+      "chart_load_failed": "気温データの読み込みに失敗しました。",
+      "retry_load": "再読み込み"
     },
     "weather_data": {
       "no_weather_data": "この農場の天気データがまだ取得されていません。",

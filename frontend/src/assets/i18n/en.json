@@ -2715,7 +2715,13 @@
       "chart_temp_min": "Min Temperature (°C)",
       "chart_date_label": "Date",
       "chart_temp_axis": "Temperature (°C)",
-      "prediction_job_started": "Weather prediction is running in the background. Please wait for completion."
+      "prediction_job_started": "Weather prediction is running in the background. Please wait for completion.",
+      "observed_subtitle": "Observed data ({{period}})",
+      "plan_chart_hint": "Crop-specific growing periods, cumulative temperature (GDD), and forecasts are available in each cultivation plan's climate chart.",
+      "data_gap_notice": "{{count}} day(s) of weather data are missing in this period. Missing days appear as gaps in the chart.",
+      "chart_loading": "Loading temperature data…",
+      "chart_load_failed": "Failed to load temperature data.",
+      "retry_load": "Reload"
     },
     "weather_data": {
       "no_weather_data": "Weather data for this farm has not been retrieved yet.",

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { FarmMapComponent } from './farm-map.component';
+import { FarmTemperatureChartComponent } from './farm-temperature-chart.component';
 import { FarmDetailView, FarmDetailViewState } from './farm-detail.view';
 import { Field } from '../../../domain/farms/field';
 import { AuthService } from '../../../services/auth.service';
@@ -47,6 +48,7 @@ const initialControl: FarmDetailViewState = {
     CommonModule,
     RouterLink,
     FarmMapComponent,
+    FarmTemperatureChartComponent,
     TranslateModule,
     FormsModule,
     RegionSelectComponent,
@@ -102,6 +104,12 @@ const initialControl: FarmDetailViewState = {
             [name]="control.farm.name"
           />
         </section>
+
+        <app-farm-temperature-chart
+          [farmId]="control.farm.id"
+          [weatherDataStatus]="control.farm.weather_data_status"
+          [weatherDataProgress]="control.farm.weather_data_progress ?? 0"
+        />
 
         <section class="section-card" aria-labelledby="fields-heading">
           <div class="section-card__header-actions">
