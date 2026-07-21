@@ -31,6 +31,18 @@ test('prefill token round-trips canonical prompt', () => {
   assert.equal(prompt, DELIVERY_AGENT_AUTOMATION_PROMPT);
 });
 
+test('decodeDeliveryAgentPrefillToken rejects tokens without prompt', () => {
+  const token = Buffer.from(JSON.stringify({ workflow: { prompts: [{}] } }), 'utf8')
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+  assert.throws(
+    () => decodeDeliveryAgentPrefillToken(token),
+    /missing workflow\.prompts\[0\]\.prompt/,
+  );
+});
+
 test('cursor-automation-schedule embeds pr_unlinked in Delivery Agent prefill', async () => {
   const schedulePath = join(
     REPO_ROOT,

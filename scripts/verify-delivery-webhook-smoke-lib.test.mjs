@@ -44,3 +44,31 @@ test('formatWebhookSmokeFailure includes response body when present', () => {
   assert.match(message, /HTTP 400/);
   assert.match(message, /invalid/);
 });
+
+test('formatWebhookSmokeFailure stringifies generic errors', () => {
+  assert.equal(formatWebhookSmokeFailure(new Error('network down')), 'network down');
+  assert.equal(formatWebhookSmokeFailure('plain failure'), 'plain failure');
+});
+
+test('runDeliveryWebhookSmoke requires url and bearer token', () => {
+  assert.throws(
+    () =>
+      runDeliveryWebhookSmoke({
+        url: '',
+        bearerToken: 'secret',
+        execFileSync: () => '\n200',
+        log: () => {},
+      }),
+    /WEBHOOK_URL and WEBHOOK_KEY are required/,
+  );
+  assert.throws(
+    () =>
+      runDeliveryWebhookSmoke({
+        url: 'https://example.com/webhook',
+        bearerToken: '',
+        execFileSync: () => '\n200',
+        log: () => {},
+      }),
+    /WEBHOOK_URL and WEBHOOK_KEY are required/,
+  );
+});

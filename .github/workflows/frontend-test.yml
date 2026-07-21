@@ -94,6 +94,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           node --test scripts/delivery-dispatch-lib.test.mjs
+          node --test scripts/delivery-agent-automation-prompt-lib.test.mjs
           node --test scripts/delivery-agent-campaign-lib.test.mjs
           node --test scripts/gh-repo-lib.test.mjs
           node --test scripts/pr-agent-prep-lib.test.mjs
@@ -107,6 +108,7 @@ jobs:
           node --test scripts/verify-resolve-pr-merge-conflicts-script.test.mjs
           node --test scripts/verify-issue-worker-dispatch-workflow.test.mjs
           node --test scripts/verify-delivery-agent-cutover-lib.test.mjs
+          node --test scripts/verify-delivery-webhook-smoke-lib.test.mjs
           node --test scripts/webhook-post-lib.test.mjs
           node --test scripts/resolve-workflow-run-pr-lib.test.mjs
           node --test scripts/resolve-workflow-run-pr-from-gh.test.mjs

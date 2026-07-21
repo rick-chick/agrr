@@ -413,18 +413,31 @@ test('collectReconcileDispatchCandidates includes epic without agent-ready and i
   assert.deepEqual(actions, ['362:epic_close_check', '323:implement']);
 });
 
-test('parseRetryDispatchArgs parses repo and number', () => {
+test('parseRetryDispatchArgs parses repo, number, and retry reason', () => {
   assert.deepEqual(
     parseRetryDispatchArgs(['node', 'script', 'issue', '--repo', 'o/r', '--number', '42']),
     { mode: 'issue', repo: 'o/r', number: '42' },
   );
+  assert.deepEqual(
+    parseRetryDispatchArgs([
+      'node',
+      'script',
+      'reconcile',
+      '--repo',
+      'o/r',
+      '--retry-reason',
+      'issue_closed_reconcile',
+    ]),
+    { mode: 'reconcile', repo: 'o/r', retryReason: 'issue_closed_reconcile' },
+  );
 });
 
-test('defaultRetryReasonForMode maps reconcile', () => {
+test('defaultRetryReasonForMode maps reconcile and issue modes', () => {
   assert.equal(defaultRetryReasonForMode('reconcile'), 'scheduled_reconcile');
+  assert.equal(defaultRetryReasonForMode('issue'), 'manual_retry');
 });
 
-test('buildWebhookPayload includes issue number', () => {
+test('buildWebhookPayload includes issue number and retry_reason', () => {
   const payload = buildWebhookPayload({
     repository: 'rick-chick/agrr',
     issueNumber: 42,
@@ -435,4 +448,17 @@ test('buildWebhookPayload includes issue number', () => {
   });
   assert.equal(payload.issue_number, 42);
   assert.equal(payload.retry_reason, 'scheduled_reconcile');
+  assert.equal('issue_body' in payload, false);
+});
+
+test('buildWebhookPayload forwards issue_closed_reconcile retry reason', () => {
+  const payload = buildWebhookPayload({
+    repository: 'rick-chick/agrr',
+    issueNumber: 99,
+    issueTitle: 'title',
+    issueUrl: 'https://github.com/rick-chick/agrr/issues/99',
+    labels: 'agent-ready',
+    retryReason: 'issue_closed_reconcile',
+  });
+  assert.equal(payload.retry_reason, 'issue_closed_reconcile');
 });

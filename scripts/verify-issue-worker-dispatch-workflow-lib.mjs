@@ -175,5 +175,19 @@ export async function verifyIssueWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  const postDispatchPath = join(repoRoot, 'scripts/post-issue-worker-dispatch.mjs');
+  try {
+    const postDispatchText = await readFile(postDispatchPath, 'utf8');
+    const postDispatchCode = postDispatchText.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+    if (/\bissue_body\b/.test(postDispatchCode) || /\bissueBody\b/.test(postDispatchCode)) {
+      errors.push('post-issue-worker-dispatch.mjs must not send issue_body in payload');
+    }
+    if (!postDispatchText.includes('buildDeliveryIssuePayload')) {
+      errors.push('post-issue-worker-dispatch.mjs must build payload via buildDeliveryIssuePayload');
+    }
+  } catch {
+    errors.push(`missing dispatch script: ${postDispatchPath}`);
+  }
+
   return { ok: errors.length === 0, errors };
 }
