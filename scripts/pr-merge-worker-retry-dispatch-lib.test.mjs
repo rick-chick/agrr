@@ -438,6 +438,23 @@ test('selectReconcileCandidate pr_review selection stays dispatchable', () => {
   assert.equal(dispatch.action, 'pr_review');
 });
 
+test('classifyPrReviewCandidate removes stale agent-merge-in-progress label', () => {
+  const result = classifyPrReviewCandidate({
+    pr: {
+      ...BASE_PR,
+      labels: [{ name: 'agent-no-merge' }, { name: 'agent-merge-in-progress' }],
+      updatedAt: new Date(NOW - IN_PROGRESS_STALE_MS - 60_000).toISOString(),
+    },
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'pr_review',
+    removeStaleInProgressLabel: true,
+  });
+});
+
 test('classifyPrReviewCandidate rejects fresh agent-merge-in-progress', () => {
   const result = classifyPrReviewCandidate({
     pr: {

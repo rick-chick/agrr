@@ -8,6 +8,15 @@ import {
 } from './verify-delivery-webhook-smoke-lib.mjs';
 import { WebhookPostError } from './webhook-post-lib.mjs';
 
+test('DELIVERY_WEBHOOK_SMOKE_CASES includes issue-linked contract payload', () => {
+  const issueLinked = DELIVERY_WEBHOOK_SMOKE_CASES.find((item) => item.name === 'issue_linked');
+  assert.ok(issueLinked);
+  assert.equal(issueLinked.payload.repository, 'rick-chick/agrr');
+  assert.equal(issueLinked.payload.pr_number, 427);
+  assert.equal(issueLinked.payload.issue_number, 323);
+  assert.equal('pr_unlinked' in issueLinked.payload, false);
+});
+
 test('DELIVERY_WEBHOOK_SMOKE_CASES includes pr_unlinked contract payload', () => {
   const prUnlinked = DELIVERY_WEBHOOK_SMOKE_CASES.find((item) => item.name === 'pr_unlinked');
   assert.ok(prUnlinked);
@@ -15,6 +24,29 @@ test('DELIVERY_WEBHOOK_SMOKE_CASES includes pr_unlinked contract payload', () =>
   assert.equal(prUnlinked.payload.pr_number, 431);
   assert.equal(prUnlinked.payload.pr_unlinked, true);
   assert.equal('issue_number' in prUnlinked.payload, false);
+});
+
+test('runDeliveryWebhookSmoke requires url and bearerToken', () => {
+  assert.throws(
+    () =>
+      runDeliveryWebhookSmoke({
+        url: '',
+        bearerToken: 'secret',
+        execFileSync: () => '\n200',
+        log: () => {},
+      }),
+    /WEBHOOK_URL and WEBHOOK_KEY are required/,
+  );
+  assert.throws(
+    () =>
+      runDeliveryWebhookSmoke({
+        url: 'https://example.com/webhook',
+        bearerToken: '',
+        execFileSync: () => '\n200',
+        log: () => {},
+      }),
+    /WEBHOOK_URL and WEBHOOK_KEY are required/,
+  );
 });
 
 test('runDeliveryWebhookSmoke posts each case once', () => {

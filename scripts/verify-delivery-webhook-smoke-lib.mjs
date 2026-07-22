@@ -6,6 +6,14 @@ import { postWebhookJson, WebhookPostError } from './webhook-post-lib.mjs';
 /** @type {WebhookSmokeCase[]} */
 export const DELIVERY_WEBHOOK_SMOKE_CASES = [
   {
+    name: 'issue_linked',
+    payload: buildDeliveryPrPayload({
+      repository: 'rick-chick/agrr',
+      prNumber: 427,
+      issueNumber: 323,
+    }),
+  },
+  {
     name: 'pr_unlinked',
     payload: buildDeliveryPrPayload({
       repository: 'rick-chick/agrr',
