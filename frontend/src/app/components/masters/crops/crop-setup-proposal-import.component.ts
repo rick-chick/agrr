@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -95,6 +96,7 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
               name="proposalJson"
               class="crop-setup-proposal-import__json"
               [(ngModel)]="control.jsonInput"
+              (ngModelChange)="onJsonInputChange()"
               [placeholder]="'crops.setup_proposal_import.json_placeholder' | translate"
               [disabled]="control.submitting || control.applying"
             ></textarea>
@@ -168,6 +170,7 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
   private readonly applyUseCase = inject(ApplyCropSetupProposalUseCase);
   private readonly presenter = inject(CropSetupProposalImportPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly translate = inject(TranslateService);
 
   private _control: CropSetupProposalImportViewState = initialControl;
@@ -199,6 +202,13 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.handleCropRouteChange();
+    });
+  }
+
+  private handleCropRouteChange(): void {
+    this.control = { ...initialControl };
     if (!this.cropId) {
       this.control = {
         ...initialControl,
@@ -208,6 +218,19 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
       return;
     }
     this.loadUseCase.execute({ cropId: this.cropId });
+  }
+
+  onJsonInputChange(): void {
+    if (this.control.phase === 'input' && !this.control.parsedProposal) {
+      return;
+    }
+    this.control = {
+      ...this.control,
+      phase: 'input',
+      validationErrors: [],
+      normalizedPreview: null,
+      parsedProposal: null
+    };
   }
 
   triggerFileSelect(): void {
@@ -256,7 +279,7 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
   }
 
   applyProposal(): void {
-    const proposal = this.control.parsedProposal;
+    const proposal = this.parseProposalInput();
     if (!proposal) return;
     this.applyUseCase.execute({
       cropId: this.cropId,

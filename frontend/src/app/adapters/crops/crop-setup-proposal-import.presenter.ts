@@ -72,8 +72,19 @@ export class CropSetupProposalImportPresenter
     };
   }
 
-  onApplySuccess(_dto: CropSetupProposalApplyResponse): void {
+  onApplySuccess(dto: CropSetupProposalApplyResponse): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (dto.valid === false) {
+      this.view.control = {
+        ...this.view.control,
+        applying: false,
+        phase: 'validation_errors',
+        validationErrors: dto.errors,
+        normalizedPreview: null
+      };
+      return;
+    }
+
     this.view.control = {
       ...this.view.control,
       applying: false
