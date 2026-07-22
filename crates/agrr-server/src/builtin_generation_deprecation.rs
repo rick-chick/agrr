@@ -146,4 +146,62 @@ mod tests {
             headers.get("sunset").unwrap().to_str().unwrap()
         );
     }
+
+    #[test]
+    fn alternative_messages_reference_migration_paths() {
+        assert!(BuiltinGenerationEndpoint::CropAiCreate
+            .alternative()
+            .contains("setup_proposal"));
+        assert!(BuiltinGenerationEndpoint::FertilizeAiCreate
+            .alternative()
+            .contains("fertilizes"));
+        assert!(BuiltinGenerationEndpoint::FertilizeAiUpdate
+            .alternative()
+            .contains("fertilizes"));
+        assert!(BuiltinGenerationEndpoint::PestAiCreate
+            .alternative()
+            .contains("pests"));
+        assert!(BuiltinGenerationEndpoint::PestAiUpdate
+            .alternative()
+            .contains("pests"));
+        assert!(BuiltinGenerationEndpoint::TaskScheduleBlueprintRegenerate
+            .alternative()
+            .contains("setup_proposal"));
+    }
+
+    #[test]
+    fn builtin_generation_deprecated_result_wraps_ok_and_err() {
+        let ok = builtin_generation_deprecated_result(
+            Ok(Json(json!({"success": true}))),
+            BuiltinGenerationEndpoint::CropAiCreate,
+        );
+        assert_eq!(ok.status(), StatusCode::OK);
+        assert_eq!(
+            ok.headers().get("deprecation").unwrap().to_str().unwrap(),
+            BUILTIN_GENERATION_DEPRECATION_FIELD
+        );
+
+        let err = builtin_generation_deprecated_result(
+            Err((StatusCode::UNPROCESSABLE_ENTITY, Json(json!({"error": "invalid"})))),
+            BuiltinGenerationEndpoint::PestAiUpdate,
+        );
+        assert_eq!(err.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            err.headers().get("sunset").unwrap().to_str().unwrap(),
+            BUILTIN_GENERATION_SUNSET_HTTP_DATE
+        );
+    }
+
+    #[test]
+    fn builtin_generation_deprecated_status_result_preserves_status_code() {
+        let created = builtin_generation_deprecated_status_result(
+            Ok((StatusCode::CREATED, Json(json!({"id": 1})))),
+            BuiltinGenerationEndpoint::FertilizeAiCreate,
+        );
+        assert_eq!(created.status(), StatusCode::CREATED);
+        assert_eq!(
+            created.headers().get("deprecation").unwrap().to_str().unwrap(),
+            BUILTIN_GENERATION_DEPRECATION_FIELD
+        );
+    }
 }

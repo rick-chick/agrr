@@ -1539,6 +1539,38 @@ fn post_pests_ai_create_returns_deprecation_metadata() {
     assert_builtin_generation_deprecated_headers(&headers, &body, "pests");
 }
 
+#[test]
+fn post_fertilizes_ai_update_returns_deprecation_metadata() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let response = client.post(
+        "/api/v1/fertilizes/999999999/ai_update",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "test" })),
+    );
+    let headers = response.headers().clone();
+    let (status, body) = status_and_body(response);
+    assert_ne!(200, status, "missing fertilize must not succeed: {body}");
+    assert_builtin_generation_deprecated_headers(&headers, &body, "fertilizes");
+}
+
+#[test]
+fn post_pests_ai_update_returns_deprecation_metadata() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let response = client.post(
+        "/api/v1/pests/999999999/ai_update",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "test" })),
+    );
+    let headers = response.headers().clone();
+    let (status, body) = status_and_body(response);
+    assert_ne!(200, status, "missing pest must not succeed: {body}");
+    assert_builtin_generation_deprecated_headers(&headers, &body, "pests");
+}
+
 fn api_key_from_generate_response(body: &str) -> String {
     serde_json::from_str::<serde_json::Value>(body)
         .expect("api key JSON")["api_key"]
