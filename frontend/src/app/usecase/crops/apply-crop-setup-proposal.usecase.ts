@@ -24,7 +24,9 @@ export class ApplyCropSetupProposalUseCase implements ApplyCropSetupProposalInpu
     this.gateway.apply(dto.cropId, dto.proposal).subscribe({
       next: (response) => {
         this.outputPort.onApplySuccess(response);
-        dto.onSuccess?.();
+        if (response.valid === true) {
+          dto.onSuccess?.();
+        }
       },
       error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });

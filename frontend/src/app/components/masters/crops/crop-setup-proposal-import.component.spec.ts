@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { of } from 'rxjs';
 
 import { CropSetupProposalImportComponent } from './crop-setup-proposal-import.component';
 import { CropSetupProposalImportPresenter } from '../../../usecase/crops/crop-setup-proposal-import.providers';
@@ -77,7 +78,10 @@ describe('CropSetupProposalImportComponent', () => {
         provideRouter([]),
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: { get: () => '42' } } }
+          useValue: {
+            snapshot: { paramMap: convertToParamMap({ id: '42' }) },
+            paramMap: of(convertToParamMap({ id: '42' }))
+          }
         },
         { provide: LoadCropForEditUseCase, useValue: mockLoadUseCase },
         { provide: DryRunCropSetupProposalUseCase, useValue: mockDryRunUseCase },
@@ -157,6 +161,55 @@ describe('CropSetupProposalImportComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('is required');
   });
 
+  it('apply validation failure does not navigate to crop stages', () => {
+    component.control = {
+      ...component.control,
+      loading: false,
+      cropName: 'Tomato',
+      jsonInput: JSON.stringify(validProposal),
+      phase: 'preview',
+      normalizedPreview: validProposal,
+      parsedProposal: validProposal
+    };
+    fixture.detectChanges();
+
+    component.applyProposal();
+
+    presenter.onApplySuccess({
+      mode: 'apply',
+      valid: false,
+      errors: [{ path: 'stages[0].order', message: 'conflicts with an existing crop stage order' }]
+    });
+    fixture.detectChanges();
+
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(component.control.phase).toBe('validation_errors');
+    expect(component.control.validationErrors[0]?.path).toBe('stages[0].order');
+  });
+
+  it('apply uses current textarea JSON instead of stale parsedProposal', () => {
+    const updatedProposal = {
+      ...validProposal,
+      stages: [{ name: '定植', order: 2, thermal_requirement: { required_gdd: '200' } }]
+    };
+    component.control = {
+      ...component.control,
+      loading: false,
+      cropName: 'Tomato',
+      jsonInput: JSON.stringify(updatedProposal),
+      phase: 'preview',
+      normalizedPreview: validProposal,
+      parsedProposal: validProposal
+    };
+    fixture.detectChanges();
+
+    component.applyProposal();
+
+    expect(mockApplyUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ cropId: 42, proposal: updatedProposal })
+    );
+  });
+
   it('apply success navigates to crop stages', () => {
     component.control = {
       ...component.control,
@@ -176,6 +229,12 @@ describe('CropSetupProposalImportComponent', () => {
     );
 
     const onSuccess = mockApplyUseCase.execute.mock.calls[0][0].onSuccess as () => void;
+    presenter.onApplySuccess({
+      mode: 'apply',
+      valid: true,
+      normalized: validProposal,
+      result: { stage_ids: [1], agricultural_task_ids: [2], blueprint_ids: [3] }
+    });
     onSuccess();
     expect(router.navigate).toHaveBeenCalledWith(['/crops', 42, 'stages']);
   });

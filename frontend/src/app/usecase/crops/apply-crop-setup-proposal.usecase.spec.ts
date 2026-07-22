@@ -57,6 +57,21 @@ describe('ApplyCropSetupProposalUseCase', () => {
     expect(onSuccess).toHaveBeenCalled();
   });
 
+  it('does not invoke onSuccess when apply returns valid false', () => {
+    const response = {
+      mode: 'apply' as const,
+      valid: false as const,
+      errors: [{ path: 'stages[0].order', message: 'conflicts with an existing crop stage order' }]
+    };
+    gateway.apply.mockReturnValue(of(response));
+    const onSuccess = vi.fn();
+
+    useCase.execute({ cropId: 42, proposal, onSuccess });
+
+    expect(outputPort.onApplySuccess).toHaveBeenCalledWith(response);
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
   it('maps HTTP errors to api error i18n keys without invoking onSuccess', () => {
     gateway.apply.mockReturnValue(
       throwError(

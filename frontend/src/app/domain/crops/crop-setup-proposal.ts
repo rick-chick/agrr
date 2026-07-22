@@ -16,13 +16,19 @@ export interface CropSetupProposalDryRunResponse {
   errors?: CropSetupProposalValidationErrorItem[];
 }
 
-export interface CropSetupProposalApplyResponse {
-  mode: 'apply';
-  valid: true;
-  normalized: CropSetupProposalBody;
-  result: {
-    stage_ids: number[];
-    agricultural_task_ids: number[];
-    blueprint_ids: number[];
-  };
-}
+export type CropSetupProposalApplyResponse =
+  | {
+      mode: 'apply';
+      valid: true;
+      normalized: CropSetupProposalBody;
+      result: {
+        stage_ids: number[];
+        agricultural_task_ids: number[];
+        blueprint_ids: number[];
+      };
+    }
+  | {
+      mode: 'apply';
+      valid: false;
+      errors: CropSetupProposalValidationErrorItem[];
+    };
