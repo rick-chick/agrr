@@ -124,3 +124,16 @@ test('classifyPrimaryPrMergeDispatch accepts default path when CI green', () => 
     dispatchKind: 'default',
   });
 });
+
+test('classifyPrimaryPrMergeDispatch still dispatches when agent-merge-blocked', () => {
+  assert.deepEqual(
+    classifyPrimaryPrMergeDispatch({
+      ...BASE,
+      labels: 'agent-merge-blocked',
+    }),
+    {
+      eligible: true,
+      dispatchKind: 'default',
+    },
+  );
+});

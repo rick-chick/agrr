@@ -64,9 +64,14 @@ pr_is_eligible() {
   "
 }
 
-count_open_ready_agent_merge() {
-  gh pr list --state open --label agent-merge --json isDraft \
-    --jq '[.[] | select(.isDraft == false)] | length'
+count_queue_blocking_ready_prs() {
+  local ready_json
+  ready_json="$(gh pr list --state open --label agent-merge --json isDraft,labels,reviewDecision)"
+  READY_JSON="$ready_json" node_eval "
+    import { countQueueBlockingReadyPrs } from '$LIB';
+    const prs = JSON.parse(process.env.READY_JSON);
+    process.stdout.write(String(countQueueBlockingReadyPrs(prs)));
+  "
 }
 
 checks_are_green() {
@@ -111,20 +116,20 @@ maybe_mark_ready() {
     return 0
   fi
 
-  open_ready="$(count_open_ready_agent_merge)"
+  open_ready="$(count_queue_blocking_ready_prs)"
   checks_green="$(checks_are_green "$pr_number")"
   can_ready="$(PR_NUMBER="$pr_number" IS_DRAFT="$is_draft" OPEN_READY="$open_ready" CHECKS_GREEN="$checks_green" node_eval "
     import { canMarkReady } from '$LIB';
     const ok = canMarkReady({
       isDraft: process.env.IS_DRAFT === 'true',
-      openReadyAgentMergeCount: Number(process.env.OPEN_READY),
+      openReadyQueueBlockingCount: Number(process.env.OPEN_READY),
       requiredChecksGreen: process.env.CHECKS_GREEN === 'true',
     });
     process.stdout.write(ok ? 'true' : 'false');
   ")"
 
   if [ "$can_ready" != "true" ]; then
-    echo "PR #$pr_number not ready to mark ready (open_ready=$open_ready checks_green=$checks_green)"
+    echo "PR #$pr_number not ready to mark ready (queue_blocking_ready=$open_ready checks_green=$checks_green)"
     return 0
   fi
 
@@ -183,9 +188,9 @@ advance_queue() {
   local open_ready drafts_json candidates_json base_owner pr_number is_draft
 
   base_owner="$(repo_owner)"
-  open_ready="$(count_open_ready_agent_merge)"
+  open_ready="$(count_queue_blocking_ready_prs)"
   if [ "$open_ready" -gt 0 ]; then
-    echo "Merge queue blocked by $open_ready ready agent-merge PR(s); skipping advance"
+    echo "Merge queue blocked by $open_ready queue-active ready PR(s); skipping advance"
     return 0
   fi
 

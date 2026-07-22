@@ -233,6 +233,26 @@ test('classifyReconcileCandidate accepts BEHIND ready PR as conflict', () => {
   });
 });
 
+test('classifyReconcileCandidate accepts agent-merge-blocked ready PR for stuck_retry', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      isDraft: false,
+      labels: [{ name: 'agent-merge-blocked' }],
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'CLEAN',
+    },
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW + READY_QUIET_MS + 1,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'stuck_retry',
+    removeStaleInProgressLabel: false,
+  });
+});
+
 test('classifyReconcileCandidate does not classify BEHIND as stuck_retry', () => {
   const result = classifyReconcileCandidate({
     pr: {

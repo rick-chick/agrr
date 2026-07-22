@@ -1,5 +1,5 @@
 import {
-  BLOCKING_MERGE_LABELS,
+  DISPATCH_SKIP_LABELS,
   areRequiredChecksComplete,
   areRequiredChecksGreen,
 } from './pr-agent-prep-lib.mjs';
@@ -48,7 +48,7 @@ function isUniversalMergeWorkerTarget(pr, baseOwner) {
   if (headOwner !== baseOwner) {
     return false;
   }
-  if (pr.labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
+  if (pr.labels.some((name) => DISPATCH_SKIP_LABELS.includes(name))) {
     return false;
   }
   return true;
@@ -102,7 +102,7 @@ function classifyBaseEligibility({ pr, baseOwner }) {
     if (headOwner !== baseOwner) {
       return { eligible: false, reason: 'not eligible agent pr' };
     }
-    if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
+    if (labels.some((name) => DISPATCH_SKIP_LABELS.includes(name))) {
       return { eligible: false, reason: 'blocking merge label' };
     }
     return { eligible: false, reason: 'not eligible agent pr' };
@@ -128,7 +128,7 @@ function classifyBaseEligibility({ pr, baseOwner }) {
  */
 function classifyCiFixCandidate({ pr, checks, baseOwner, nowMs, labels }) {
   if (!isUniversalMergeWorkerTarget({ ...pr, labels }, baseOwner)) {
-    if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
+    if (labels.some((name) => DISPATCH_SKIP_LABELS.includes(name))) {
       return { eligible: false, reason: 'blocking merge label' };
     }
     return { eligible: false, reason: 'not eligible agent pr' };
@@ -197,7 +197,7 @@ export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
 
   if (prMergeWorkerNeedsSync(pr)) {
     if (!isUniversalMergeWorkerTarget({ ...pr, labels }, baseOwner)) {
-      if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
+      if (labels.some((name) => DISPATCH_SKIP_LABELS.includes(name))) {
         return { eligible: false, reason: 'blocking merge label' };
       }
       return { eligible: false, reason: 'not eligible agent pr' };
@@ -301,7 +301,7 @@ export function classifyPrReviewCandidate({ pr, baseOwner, nowMs }) {
     return { eligible: false, reason: 'fork pr' };
   }
 
-  if (!labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
+  if (!labels.some((name) => DISPATCH_SKIP_LABELS.includes(name))) {
     return { eligible: false, reason: 'no blocking merge label' };
   }
 

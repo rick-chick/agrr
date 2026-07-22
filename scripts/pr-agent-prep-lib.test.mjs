@@ -6,8 +6,11 @@ import {
   areRequiredChecksGreen,
   classifyRequiredCiState,
   canMarkReady,
+  countQueueBlockingReadyPrs,
+  hasDispatchSkipLabel,
   isEligibleAgentPr,
   isNonFatalMarkReadyError,
+  isReadyPrBlockingMergeQueue,
   resolveGhToken,
   selectDraftPrNumberToReady,
   shouldReceiveAgentMergeLabel,
@@ -82,11 +85,61 @@ test('isEligibleAgentPr rejects blocking labels', () => {
   );
 });
 
+test('hasDispatchSkipLabel ignores agent-merge-blocked', () => {
+  assert.equal(hasDispatchSkipLabel(['agent-merge-blocked']), false);
+  assert.equal(hasDispatchSkipLabel(['agent-no-merge']), true);
+});
+
+test('isReadyPrBlockingMergeQueue ignores stalled ready PRs at queue head', () => {
+  assert.equal(
+    isReadyPrBlockingMergeQueue({
+      isDraft: false,
+      labels: [{ name: 'agent-merge-blocked' }],
+      reviewDecision: '',
+    }),
+    false,
+  );
+  assert.equal(
+    isReadyPrBlockingMergeQueue({
+      isDraft: false,
+      labels: [],
+      reviewDecision: 'CHANGES_REQUESTED',
+    }),
+    false,
+  );
+  assert.equal(
+    isReadyPrBlockingMergeQueue({
+      isDraft: false,
+      labels: [{ name: 'agent-merge' }],
+      reviewDecision: 'APPROVED',
+    }),
+    true,
+  );
+});
+
+test('countQueueBlockingReadyPrs excludes stalled heads', () => {
+  assert.equal(
+    countQueueBlockingReadyPrs([
+      {
+        isDraft: false,
+        labels: [{ name: 'agent-merge-blocked' }],
+        reviewDecision: '',
+      },
+      {
+        isDraft: false,
+        labels: [{ name: 'agent-merge' }],
+        reviewDecision: '',
+      },
+    ]),
+    1,
+  );
+});
+
 test('canMarkReady requires draft, empty queue, and green CI', () => {
   assert.equal(
     canMarkReady({
       isDraft: true,
-      openReadyAgentMergeCount: 0,
+      openReadyQueueBlockingCount: 0,
       requiredChecksGreen: true,
     }),
     true,
@@ -94,7 +147,7 @@ test('canMarkReady requires draft, empty queue, and green CI', () => {
   assert.equal(
     canMarkReady({
       isDraft: true,
-      openReadyAgentMergeCount: 1,
+      openReadyQueueBlockingCount: 1,
       requiredChecksGreen: true,
     }),
     false,
@@ -102,7 +155,7 @@ test('canMarkReady requires draft, empty queue, and green CI', () => {
   assert.equal(
     canMarkReady({
       isDraft: false,
-      openReadyAgentMergeCount: 0,
+      openReadyQueueBlockingCount: 0,
       requiredChecksGreen: true,
     }),
     false,

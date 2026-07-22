@@ -21,7 +21,7 @@ const REQUIRED_PREP_SCRIPT_SNIPPETS = [
   'agent-merge',
   'gh pr ready',
   'advance-queue',
-  'count_open_ready_agent_merge',
+  'count_queue_blocking_ready_prs',
   'configure_gh_auth',
   'resolveGhToken',
   'maybe_mark_ready',
