@@ -95,6 +95,8 @@ jobs:
         run: |
           node --test scripts/delivery-dispatch-lib.test.mjs
           node --test scripts/delivery-agent-campaign-lib.test.mjs
+          node --test scripts/delivery-agent-automation-prompt-lib.test.mjs
+          node --test scripts/verify-delivery-webhook-smoke-lib.test.mjs
           node --test scripts/gh-repo-lib.test.mjs
           node --test scripts/pr-agent-prep-lib.test.mjs
           node --test scripts/issue-worker-dispatch-lib.test.mjs

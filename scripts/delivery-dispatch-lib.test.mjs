@@ -97,6 +97,22 @@ test('deliveryPrWebhookPayloadIsDispatchable accepts pr_unlinked for PR phase di
     }),
     false,
   );
+  assert.equal(
+    deliveryPrWebhookPayloadIsDispatchable({
+      repository: 'rick-chick/agrr',
+      pr_number: 999,
+      issue_number: 0,
+    }),
+    false,
+  );
+  assert.equal(
+    deliveryPrWebhookPayloadIsDispatchable({
+      repository: 'rick-chick/agrr',
+      pr_number: 999,
+      pr_unlinked: false,
+    }),
+    false,
+  );
 });
 
 test('resolvePrimaryClosingIssueNumber uses closingIssuesReferences only', () => {
