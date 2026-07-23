@@ -27,6 +27,8 @@ require .cursor/skills/automation-pipeline-watchdog/SKILL.md
 require .cursor/skills/automation-authoring/SKILL.md
 require .cursor/environment.json
 require .cursor/scripts/cloud-gh-auth.sh
+require .cursor/scripts/cloud-gh-path.sh
+require .cursor/bin/gh
 
 # Issue Worker §2 routing (core)
 for skill in tdd-on-edit error-investigation error-fix-red-green test-common test-slow-detection \
