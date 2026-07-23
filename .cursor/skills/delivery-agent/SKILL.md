@@ -31,6 +31,7 @@ description: >-
 0. **in-progress** — `agent-in-progress` または `agent-merge-in-progress` が付いていれば **即終了**（重複抑止。コメント不要）
 1. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,state,mergeable,mergeStateStatus,labels`
    - **`merged: true`** → 再マージ禁止。リンク issue に `ux-campaign:breadcrumb` があれば post-merge のみ
+   - 判定補助: [`delivery-agent-campaign-lib.mjs`](../../../scripts/delivery-agent-campaign-lib.mjs)
    - **リンク issue あり** → PR フェーズ（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）へ
    - **リンク issue なし**（未リンク PR）→ PR フェーズ §0a（陳腐化観測）から。マージ経路には入らない
 2. **open PR** — issue 起点でリンク issue の open PR を検索（`closingIssuesReferences`）
