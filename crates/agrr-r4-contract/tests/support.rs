@@ -847,6 +847,43 @@ pub struct FarmTemperatureChartSeed {
     pub farm_id: i64,
 }
 
+/// Writes observed weather rows to the GCS local mirror (contract tests use `WEATHER_DATA_STORAGE=gcs`).
+fn write_observed_weather_gcs_mirror(
+    conn: &rusqlite::Connection,
+    weather_location_id: i64,
+    day_count: i64,
+) {
+    let local_root = std::env::var("WEATHER_DATA_LOCAL_ROOT")
+        .unwrap_or_else(|_| "/tmp/agrr-weather-contract".to_string());
+    let mut by_year: std::collections::BTreeMap<i32, Vec<String>> =
+        std::collections::BTreeMap::new();
+
+    for offset in 0..day_count {
+        let date: String = conn
+            .query_row(
+                "SELECT date('now', '-' || ?1 || ' days')",
+                params![offset],
+                |row| row.get(0),
+            )
+            .expect("compute seed date");
+        let year: i32 = date[..4].parse().expect("year from date");
+        let entry = format!(
+            r#""{date}": {{"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0, "precipitation": 0.0, "sunshine_hours": 6.0, "wind_speed": 3.0, "weather_code": 0}}"#
+        );
+        by_year.entry(year).or_default().push(entry);
+    }
+
+    for (year, entries) in by_year {
+        let object_path =
+            format!("{local_root}/weather_data/{weather_location_id}/{year}.json");
+        if let Some(parent) = std::path::Path::new(&object_path).parent() {
+            std::fs::create_dir_all(parent).expect("create weather mirror dir");
+        }
+        let content = format!("{{{}}}", entries.join(", "));
+        std::fs::write(&object_path, content).expect("write observed weather gcs mirror");
+    }
+}
+
 /// Seeds a private farm with completed weather data for temperature chart contract tests.
 pub fn seed_farm_temperature_chart_completed(user_id: i64) -> FarmTemperatureChartSeed {
     let path =
@@ -877,17 +914,7 @@ pub fn seed_farm_temperature_chart_completed(user_id: i64) -> FarmTemperatureCha
     .expect("insert farm");
     let farm_id = conn.last_insert_rowid();
 
-    for day in 1..=5 {
-        let date = format!("2026-07-{day:02}");
-        conn.execute(
-            "INSERT INTO weather_data (
-               weather_location_id, date, temperature_max, temperature_min, temperature_mean,
-               created_at, updated_at
-             ) VALUES (?1, ?2, 21.0, 8.0, 14.0, datetime('now'), datetime('now'))",
-            params![weather_location_id, date],
-        )
-        .expect("insert weather_data row");
-    }
+    write_observed_weather_gcs_mirror(&conn, weather_location_id, 5);
 
     FarmTemperatureChartSeed { farm_id }
 }
