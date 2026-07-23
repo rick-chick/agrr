@@ -12,6 +12,7 @@ GENERATE_SITEMAP="${ROOT_DIR}/.cursor/skills/deploy-frontend/scripts/generate-si
 echo "[INFO] Syncing Research Assets to GCS bucket gs://${BUCKET}"
 
 ruby "${SCRIPT_DIR}/inject-research-google-analytics.rb"
+node "${SCRIPT_DIR}/inject-research-simulate-cta-script.mjs"
 
 gsutil -m rsync -r -d "${ROOT_DIR}/public/research" "gs://${BUCKET}/"
 
