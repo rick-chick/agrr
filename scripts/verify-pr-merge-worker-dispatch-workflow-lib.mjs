@@ -309,6 +309,33 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  if (!skillText.includes('payload `pr_unlinked: true`') || !skillText.includes('§0a へ')) {
+    errors.push('skill must route pr_unlinked dispatch to §0a before §1');
+  }
+
+  if (/- ラベル `agent-no-merge` \//.test(skillText)) {
+    errors.push('skill §1 must not exclude agent-no-merge (machine routing label only)');
+  }
+
+  if (!skillText.includes('agent-no-merge` は機械')) {
+    errors.push('skill must document agent-no-merge as machine routing, not agent skip');
+  }
+
+  const deliverySkillPath = join(repoRoot, '.cursor/skills/delivery-agent/SKILL.md');
+  let deliverySkillText = '';
+  try {
+    deliverySkillText = await readFile(deliverySkillPath, 'utf8');
+  } catch {
+    errors.push(`missing skill: ${deliverySkillPath}`);
+  }
+
+  if (
+    deliverySkillText &&
+    !deliverySkillText.includes('agent-no-merge` は機械層のルーティング印')
+  ) {
+    errors.push('delivery-agent skill must treat agent-no-merge as machine routing only');
+  }
+
   const scriptPath = join(
     repoRoot,
     '.cursor/skills/github-pr-merge-worker/scripts/resolve-pr-merge-conflicts.sh',

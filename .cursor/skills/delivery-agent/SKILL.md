@@ -40,13 +40,13 @@ description: >-
 
 ### PR フェーズ: 陳腐化（obsolete / superseded）判定
 
-機械層はタイトル一致や closing issue の機械 close を**しない**。blocking ラベル（`agent-no-merge` 等）付き PR は retry reconcile の内部ゲート `pr_review` で本 Agent に届く。着手前に必ず観測する:
+`pr_unlinked` dispatch（reconcile 内部ゲート `pr_review`）では **必ず** [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) §0a を先に実施する。`agent-no-merge` は機械層のルーティング印（未リンク PR）であり **Agent の判断根拠にしない**。ラベルが付いていても §0a をスキップしない。
 
 1. `gh pr view <N> --json title,body,state,labels,mergeable,mergeStateStatus,closingIssuesReferences,files`
 2. `gh pr diff <N> --name-only` と最近マージ済み PR（`gh pr list --state merged --limit 30`）の diff / タイトルを比較
-3. **obsolete と判断**（別 PR で同趣旨がマージ済み・方針変更で差分が無意味・`agent-no-merge` が正しい opt-out）→ [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) §0a で close
-4. **まだ有効** → blocking ラベルを外す根拠がなければ維持して exit 0。修正・マージが妥当なら §0 の通常 PR フェーズへ（`agent-no-merge` はマージ前に外さない）
-5. **判断不能** → §0a 同様。`agent-merge-blocked` は付けない（コメント + Memory のみ。15 分 reconcile の `pr_review` で再観測）
+3. **obsolete**（別 PR で同趣旨がマージ済み・方針変更で差分が無意味）→ §0a で close
+4. **まだ有効** → exit 0（マージ・コンフリクト解消・CI 修正はしない。blocking ラベルは外さない）
+5. **判断不能** → コメント + Memory のみで exit 0（`agent-merge-blocked` は付けない）
 
 タイトル正規化や `#N` 参照の regex は **Agent 判断内のみ**（dispatch / reconcile スクリプトに書かない）。
 
@@ -134,6 +134,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 Read `.cursor/skills/delivery-agent/SKILL.md` exactly.
 Payload: repository, issue_number, pr_number (optional), pr_unlinked (optional).
 pr_unlinked: true OR pr_number without issue_number means PR-phase only (no issue implement).
+pr_unlinked dispatch: run github-pr-merge-worker §0a first. agent-no-merge is machine routing only — never skip or exit because of that label.
 No action field — if present, ignore it. Observe GitHub state and decide.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4

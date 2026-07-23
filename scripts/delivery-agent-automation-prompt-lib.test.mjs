@@ -26,6 +26,17 @@ test('delivery agent automation prompt documents pr_unlinked webhook field', () 
   );
 });
 
+test('delivery agent automation prompt forbids skipping pr_unlinked review for agent-no-merge', () => {
+  assert.match(
+    DELIVERY_AGENT_AUTOMATION_PROMPT,
+    /agent-no-merge.*machine routing/i,
+  );
+  assert.match(
+    DELIVERY_AGENT_AUTOMATION_PROMPT,
+    /§0a/,
+  );
+});
+
 test('prefill token round-trips canonical prompt', () => {
   const { prompt } = decodeDeliveryAgentPrefillToken(buildDeliveryAgentPrefillToken());
   assert.equal(prompt, DELIVERY_AGENT_AUTOMATION_PROMPT);
@@ -86,4 +97,20 @@ test('cursor-automation-schedule embeds one-click apply URL for live Delivery Ag
     new RegExp(applyUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
     'schedule must include live Delivery Agent apply URL',
   );
+  assert.doesNotMatch(text, /cursor\.com\/https:\/\//);
+});
+
+test('cursor-automation-schedule keeps UX Issue Audit prefill separate from Delivery Agent', async () => {
+  const schedulePath = join(
+    REPO_ROOT,
+    '.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md',
+  );
+  const text = await readFile(schedulePath, 'utf8');
+  const uxMatch = text.match(
+    /- \*\*UX Issue Audit（月曜 9:00）\*\*:[^\n]*prefill=([A-Za-z0-9_-]+)/,
+  );
+  assert.ok(uxMatch, 'schedule must include UX Issue Audit prefill URL');
+  const { prompt } = decodeDeliveryAgentPrefillToken(uxMatch[1]);
+  assert.match(prompt, /UX Issue Audit/i);
+  assert.doesNotMatch(prompt, /delivery-agent\/SKILL\.md/i);
 });

@@ -34,7 +34,7 @@ description: >-
 - PR open 直後にマージしない。**CI が green になるまで待つ**（`gh pr checks` ポーリング、または `CI completed` / Backend test `workflow_run` Webhook）。
 - **既定は全 PR 自動救済・完遂**（master 同期・CI 修正・stuck retry・条件充足時の squash）。人間のレビュー待ちや `agent-merge` 付与は前提にしない。止まって人間再開を待つ経路を作らない。
 - **場合分けで起動を切らない**。Draft/ready・ブランチ名・ラベルの細かい条件でスキップするより、拾ってから `conflict` / `ci_fix` / マージに振り分ける（[automation-authoring §全部拾う](../automation-authoring/references/PRINCIPLES.md)）。
-- **オプトアウト**: `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`、fork、`CHANGES_REQUESTED` のみ除外。
+- **オプトアウト**（Agent が §1 で除外）: `do-not-merge` / `wip` / `agent-merge-blocked`、fork、`CHANGES_REQUESTED` のみ。`agent-no-merge` は機械層のルーティング印（未リンク PR）— **§1 除外に使わない**（`pr_unlinked` / `pr_review` では §0a を先に実施）。
 - マージは **GitHub native auto-merge に依存しない**。Agent が `gh pr merge --squash` を実行。
 - 大規模変更・仕様判断・ARCHITECTURE 衝突は **マージせず** `agent-merge-blocked` + コメントでエスカレーション（それ以外でパイプラインを切らない）。
 - **babysit 相当**（§5）: コメント triage、コンフリクト解消、**PR スコープ内** の CI 修正。
@@ -116,6 +116,7 @@ gh pr view <N> --json labels,state,headRefOid
 |------|------|
 | ラベル `agent-merge-in-progress` が付いている（Webhook も dispatch しない） | **スキップ**（重複 Agent を起動しない） |
 | ペイロード `head_sha` があり、現在の `headRefOid` と不一致（古い run） | **スキップ**（コンフリクト解消経路は除く — コンフリクト解消 run は head が進むため） |
+| payload `pr_unlinked: true`（または `issue_number` なしの PR dispatch） | **§0a へ**（陳腐化観測。`agent-no-merge` はスキップ理由にしない） |
 | 上記以外 | §1 へ |
 
 着手時は直ちに `agent-merge-in-progress` を付与（§5）。**着手直後に `headRefOid` を Memory に記録**し、修正 push 後の再 run では新 SHA で再評価する。
@@ -133,8 +134,7 @@ gh pr list --state merged --base master --limit 30 --json number,title,mergedAt,
 | 観測 | 動作 |
 |------|------|
 | 同趣旨が **最近マージ済み**（diff 重複・方針が #M に統合済み） | **close**（下記コメント） |
-| `agent-no-merge` が正しい（未リンク・意図的 opt-out）かつ差分に価値なし | **close** または無言 exit 0 |
-| まだ有効（未マージの独自修正が残る） | 通常フローへ。blocking ラベルは根拠なく外さない |
+| まだ有効（未マージの独自修正が残る） | exit 0（マージ・コンフリクト解消・CI 修正はしない） |
 | 判断不能 | コメント + Memory のみで exit 0（**`agent-merge-blocked` は付けない**。15 分 reconcile の `pr_review` で再観測） |
 
 **close 手順**（obsolete 確定時のみ）:
@@ -156,7 +156,7 @@ gh pr close <N> --comment "## 🤖 PR Merge Worker: obsolete
 
 - **Draft**（`mergeable` / `mergeStateStatus` が `CONFLICTING` / `DIRTY` / `BEHIND` のとき、および必須 CI FAIL かつコンフリクトなし（内部ゲート `ci_fix`）は **除外しない**）
 - **Fork 由来**（Cursor は fork PR を実行できない — スキップして Memory に記録）
-- ラベル `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`
+- ラベル `do-not-merge` / `wip` / `agent-merge-blocked`（**`agent-no-merge` は機械ルーティング。§0a 経路では除外に使わない**）
 - `changes requested` の未解消レビューがある
 - ベースブランチが `master` 以外
 
