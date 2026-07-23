@@ -29,12 +29,12 @@ test('parseCommaSeparatedLabels splits comma-separated names', () => {
   ]);
 });
 
-test('classifyPrimaryPrMergeDispatch rejects blocking labels', () => {
+test('classifyPrimaryPrMergeDispatch ignores merge-prohibition labels', () => {
   const result = classifyPrimaryPrMergeDispatch({
     ...BASE,
-    labels: 'agent-no-merge',
+    labels: 'agent-no-merge,do-not-merge,wip',
   });
-  assert.deepEqual(result, { eligible: false, reason: 'blocking merge label' });
+  assert.deepEqual(result, { eligible: true, dispatchKind: 'default' });
 });
 
 test('classifyPrimaryPrMergeDispatch rejects agent-merge-in-progress', () => {

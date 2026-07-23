@@ -23,15 +23,3 @@ export function buildConflictDispatchPayload({ repository, pr }) {
 export function buildCiFixDispatchPayload({ repository, pr }) {
   return buildConflictDispatchPayload({ repository, pr });
 }
-
-/**
- * Build webhook payload for Delivery Agent PR review (blocking-label / obsolete path).
- *
- * @param {object} params
- * @param {string} params.repository
- * @param {object} params.pr
- * @returns {object}
- */
-export function buildPrReviewDispatchPayload({ repository, pr }) {
-  return buildConflictDispatchPayload({ repository, pr });
-}

@@ -4,7 +4,6 @@ import { test } from 'node:test';
 import {
   buildCiFixDispatchPayload,
   buildConflictDispatchPayload,
-  buildPrReviewDispatchPayload,
 } from './pr-merge-worker-dispatch-payload-lib.mjs';
 
 test('buildConflictDispatchPayload maps PR fields for conflict dispatch', () => {
@@ -51,30 +50,6 @@ test('buildCiFixDispatchPayload maps PR fields for ci_fix dispatch', () => {
     repository: 'rick-chick/agrr',
     pr_number: 353,
     issue_number: 319,
-  });
-  assert.equal('action' in payload, false);
-});
-
-test('buildPrReviewDispatchPayload maps PR fields for pr_review dispatch', () => {
-  const payload = buildPrReviewDispatchPayload({
-    repository: 'rick-chick/agrr',
-    pr: {
-      number: 441,
-      title: 'chore: obsolete PR',
-      url: 'https://github.com/rick-chick/agrr/pull/441',
-      headRefName: 'cursor/obsolete',
-      headRefOid: 'abc123',
-      author: { login: 'cursor[bot]' },
-      mergeable: 'CONFLICTING',
-      mergeStateStatus: 'DIRTY',
-      closingIssuesReferences: [],
-    },
-  });
-
-  assert.deepEqual(payload, {
-    repository: 'rick-chick/agrr',
-    pr_number: 441,
-    pr_unlinked: true,
   });
   assert.equal('action' in payload, false);
 });

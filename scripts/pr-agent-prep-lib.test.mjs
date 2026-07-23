@@ -75,10 +75,10 @@ test('isEligibleAgentPr rejects fork PR', () => {
   );
 });
 
-test('isEligibleAgentPr rejects blocking labels', () => {
+test('isEligibleAgentPr ignores merge-prohibition labels', () => {
   assert.equal(
-    isEligibleAgentPr({ ...BASE_META, labels: ['agent-no-merge'] }),
-    false,
+    isEligibleAgentPr({ ...BASE_META, labels: ['agent-no-merge', 'do-not-merge', 'wip'] }),
+    true,
   );
 });
 

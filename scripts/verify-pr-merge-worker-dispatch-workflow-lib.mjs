@@ -53,16 +53,14 @@ const WEBHOOK_POST_LIB_SNIPPETS = [
 const RECONCILE_LIB_SNIPPETS = [
   'classifyReconcileCandidate',
   'classifyReconcileDispatchCandidate',
-  'classifyPrReviewCandidate',
   'selectReconcileCandidate',
   'prMergeWorkerNeedsSync',
   "action: 'conflict'",
   "action: 'stuck_retry'",
   "action: 'ci_fix'",
-  "action: 'pr_review'",
 ];
 
-const PAYLOAD_LIB_SNIPPETS = ['buildDeliveryPrPayloadFromPr', 'buildPrReviewDispatchPayload'];
+const PAYLOAD_LIB_SNIPPETS = ['buildDeliveryPrPayloadFromPr'];
 
 /**
  * @param {string} repoRoot
@@ -158,7 +156,7 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   if (workflowText.includes('[WIP]') || workflowText.includes('[DRAFT]')) {
     errors.push(
-      'pr-merge-worker-dispatch workflow must not grep PR title for [WIP]/[DRAFT]; use wip label opt-out',
+      'pr-merge-worker-dispatch workflow must not grep PR title for [WIP]/[DRAFT]; Agent observes PR state',
     );
   }
 
@@ -243,7 +241,7 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   if (!retryDispatchScriptText.includes('classifyReconcileDispatchCandidate')) {
     errors.push(
-      'pr-merge-worker-retry-dispatch.mjs must classify dispatch via classifyReconcileDispatchCandidate (includes pr_review)',
+      'pr-merge-worker-retry-dispatch.mjs must classify dispatch via classifyReconcileDispatchCandidate',
     );
   }
 
@@ -253,19 +251,18 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     );
   }
 
-  const reconcilePrepLibPath = join(
-    repoRoot,
-    'scripts/pr-merge-worker-reconcile-prep-lib.mjs',
-  );
-  try {
-    await readFile(reconcilePrepLibPath, 'utf8');
-  } catch {
-    errors.push(`missing reconcile prep lib: ${reconcilePrepLibPath}`);
+  if (retryDispatchScriptText.includes('resolveUnlinkedPrOptOut')) {
+    errors.push(
+      'pr-merge-worker-retry-dispatch.mjs must not use resolveUnlinkedPrOptOut',
+    );
   }
 
-  if (!retryDispatchScriptText.includes('resolveUnlinkedPrOptOut')) {
+  if (
+    retryDispatchScriptText.includes('agent-no-merge') ||
+    retryDispatchScriptText.includes('--add-label')
+  ) {
     errors.push(
-      'pr-merge-worker-retry-dispatch.mjs must use resolveUnlinkedPrOptOut from reconcile prep lib',
+      'pr-merge-worker-retry-dispatch.mjs must not add agent-no-merge or mutate opt-out labels',
     );
   }
 
@@ -333,10 +330,6 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     errors.push('delivery-agent skill must link to JUDGMENT-CRITERIA.md');
   }
 
-  if (deliverySkillText && !deliverySkillText.includes('pr_unlinked` | いいえ（レガシー optional）')) {
-    errors.push('delivery-agent skill must document pr_unlinked as legacy optional (do not trust)');
-  }
-
   const judgmentCriteriaPath = join(
     repoRoot,
     '.cursor/skills/automation-authoring/references/JUDGMENT-CRITERIA.md',
@@ -345,8 +338,6 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     const judgmentText = await readFile(judgmentCriteriaPath, 'utf8');
     for (const snippet of [
       '## 1. 二層の役割',
-      'agent-no-merge',
-      'pr_unlinked',
       'reconcile',
     ]) {
       if (!judgmentText.includes(snippet)) {

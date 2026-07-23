@@ -1,4 +1,3 @@
-import { hasBlockingMergeLabel } from './pr-agent-prep-lib.mjs';
 import { prMergeWorkerNeedsSync } from './pr-merge-worker-needs-sync.mjs';
 
 /**
@@ -45,10 +44,6 @@ export function parseCommaSeparatedLabels(labels) {
  */
 export function classifyPrimaryPrMergeDispatch(input) {
   const labelNames = parseCommaSeparatedLabels(input.labels);
-
-  if (hasBlockingMergeLabel(labelNames)) {
-    return { eligible: false, reason: 'blocking merge label' };
-  }
 
   if (labelNames.includes('agent-merge-in-progress')) {
     return { eligible: false, reason: 'agent-merge-in-progress' };

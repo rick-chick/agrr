@@ -15,14 +15,12 @@ import { deliveryPrWebhookPayloadIsDispatchable } from './delivery-dispatch-lib.
 import {
   buildCiFixDispatchPayload,
   buildConflictDispatchPayload,
-  buildPrReviewDispatchPayload,
 } from './pr-merge-worker-dispatch-payload-lib.mjs';
 import {
   buildRetryDispatchPayload,
   classifyReconcileDispatchCandidate,
   selectReconcileCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
-import { resolveUnlinkedPrOptOut } from './pr-merge-worker-reconcile-prep-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
 
 const DEFAULT_REPO = 'rick-chick/agrr';
@@ -55,32 +53,6 @@ function listOpenMasterPrs(repo) {
     'number,title,url,headRefName,headRefOid,labels,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author,closingIssuesReferences',
   ]);
   return JSON.parse(raw);
-}
-
-/**
- * @param {string} repo
- * @param {Array<Record<string, unknown>>} openPrs
- */
-function optOutUnlinkedPrsFromAutoMerge(repo, openPrs) {
-  for (const pr of openPrs) {
-    const decision = resolveUnlinkedPrOptOut(pr);
-    if (!decision.optOut) {
-      continue;
-    }
-    console.log(`Opting out PR #${pr.number} from auto-merge (no linked issue)`);
-    if (decision.removeAgentMerge) {
-      gh(repo, ['pr', 'edit', String(pr.number), '--remove-label', 'agent-merge']);
-    }
-    gh(repo, ['pr', 'edit', String(pr.number), '--add-label', 'agent-no-merge']);
-  }
-}
-
-/**
- * @param {string} repo
- */
-function reconcilePrep(repo) {
-  const openPrs = listOpenMasterPrs(repo);
-  optOutUnlinkedPrsFromAutoMerge(repo, openPrs);
 }
 
 /**
@@ -151,7 +123,7 @@ function postWebhook(repo, payload, reconcileAction) {
 }
 
 /**
- * @param {'conflict' | 'stuck_retry' | 'ci_fix' | 'pr_review'} action
+ * @param {'conflict' | 'stuck_retry' | 'ci_fix'} action
  * @param {string} repo
  * @param {Record<string, unknown>} pr
  * @param {string} [retryReason]
@@ -162,9 +134,6 @@ function buildReconcilePayload(action, repo, pr, retryReason) {
   }
   if (action === 'ci_fix') {
     return buildCiFixDispatchPayload({ repository: repo, pr });
-  }
-  if (action === 'pr_review') {
-    return buildPrReviewDispatchPayload({ repository: repo, pr });
   }
   return buildRetryDispatchPayload({
     repository: repo,
@@ -221,7 +190,6 @@ function main() {
   const repo = args.repo ?? DEFAULT_REPO;
 
   if (args.mode === 'reconcile') {
-    reconcilePrep(repo);
     const prs = listOpenMasterPrs(repo);
     const checksByPrNumber = Object.fromEntries(
       prs.map((pr) => [pr.number, fetchChecks(repo, pr.number)]),
