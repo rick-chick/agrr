@@ -3,9 +3,14 @@
     use crate::farm::entities::FarmEntity;
     use crate::farm::gateways::FarmGateway;
     use crate::farm::ports::{CreateFailure, FarmCreateOutputPort};
-    use crate::shared::attr::AttrMap;
+    use crate::shared::attr::{AttrMap, AttrValue};
+    use crate::shared::dtos::WeatherFetchDateBlock;
     use crate::shared::gateways::UserLookupGateway;
     use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+    use crate::shared::ports::{ClockPort, FetchWeatherDataEnqueuePort};
+    use std::sync::Mutex;
+    use time::macros::date;
+    use time::{Date, OffsetDateTime};
 
     use crate::farm::dtos::{FarmDeleteUsage, FarmDetailOutput};
     use crate::shared::user::User;
@@ -14,6 +19,35 @@
     impl UserLookupGateway for StubLookup {
         fn find(&self, _: i64) -> User {
             self.0
+        }
+    }
+
+    struct FakeClock;
+    impl ClockPort for FakeClock {
+        fn today(&self) -> Date {
+            date!(2026 - 07 - 23)
+        }
+        fn now(&self) -> OffsetDateTime {
+            OffsetDateTime::UNIX_EPOCH
+        }
+    }
+
+    struct SpyEnqueue {
+        calls: Mutex<Vec<(i64, f64, f64, usize)>>,
+    }
+
+    impl FetchWeatherDataEnqueuePort for SpyEnqueue {
+        fn enqueue_farm_weather_fetch(
+            &self,
+            farm_id: i64,
+            latitude: f64,
+            longitude: f64,
+            blocks: &[WeatherFetchDateBlock],
+        ) {
+            self.calls
+                .lock()
+                .unwrap()
+                .push((farm_id, latitude, longitude, blocks.len()));
         }
     }
 
@@ -64,6 +98,7 @@
     struct UnderLimitGateway {
         count: i32,
         entity: FarmEntity,
+        updated_attrs: Mutex<Option<AttrMap>>,
     }
 
     struct AtLimitGateway;
@@ -91,17 +126,29 @@
 
         fn find_by_id(
             &self,
-            _: i64,
+            farm_id: i64,
         ) -> Result<FarmEntity, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            assert_eq!(farm_id, self.entity.id);
+            let mut farm = self.entity.clone();
+            if let Some(attrs) = self.updated_attrs.lock().unwrap().clone() {
+                if let Some(AttrValue::Str(status)) = attrs.get("weather_data_status") {
+                    farm.weather_data_status = Some(status.clone());
+                }
+                if let Some(AttrValue::Int(total)) = attrs.get("weather_data_total_years") {
+                    farm.weather_data_total_years = Some(*total as i32);
+                }
+            }
+            Ok(farm)
         }
 
         fn update_weather_progress(
             &self,
-            _: i64,
-            _: AttrMap,
+            farm_id: i64,
+            attrs: AttrMap,
         ) -> Result<FarmEntity, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            assert_eq!(farm_id, self.entity.id);
+            *self.updated_attrs.lock().unwrap() = Some(attrs);
+            self.find_by_id(farm_id)
         }
 
         fn list_reference_farms_for_region(
@@ -265,18 +312,24 @@
         let gateway = UnderLimitGateway {
             count: 3,
             entity: entity.clone(),
+            updated_attrs: Mutex::new(None),
         };
         let mut output = SpyOutput {
             success: None,
             failure: None,
         };
         let user_lookup = StubLookup(User::new(10, false));
+        let enqueue = SpyEnqueue {
+            calls: Mutex::new(Vec::new()),
+        };
         let mut interactor = FarmCreateInteractor::new(
             &mut output,
             10,
             &gateway,
             &StubTranslator,
             &user_lookup,
+            &enqueue,
+            &FakeClock,
         );
         interactor
             .call(FarmCreateInput::new(
@@ -298,12 +351,17 @@
             failure: None,
         };
         let user_lookup = StubLookup(User::new(10, false));
+        let enqueue = SpyEnqueue {
+            calls: Mutex::new(Vec::new()),
+        };
         let mut interactor = FarmCreateInteractor::new(
             &mut output,
             10,
             &gateway,
             &StubTranslator,
             &user_lookup,
+            &enqueue,
+            &FakeClock,
         );
         interactor
             .call(FarmCreateInput::new(
@@ -322,4 +380,51 @@
             }
             other => panic!("expected LimitExceeded failure, got {other:?}"),
         }
+    }
+
+    // Issue #462: farm create with coordinates starts weather fetch enqueue
+    #[test]
+    fn starts_weather_fetch_after_successful_create_with_coordinates() {
+        let entity = sample_farm();
+        let gateway = UnderLimitGateway {
+            count: 3,
+            entity: entity.clone(),
+            updated_attrs: Mutex::new(None),
+        };
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let user_lookup = StubLookup(User::new(10, false));
+        let enqueue = SpyEnqueue {
+            calls: Mutex::new(Vec::new()),
+        };
+        let mut interactor = FarmCreateInteractor::new(
+            &mut output,
+            10,
+            &gateway,
+            &StubTranslator,
+            &user_lookup,
+            &enqueue,
+            &FakeClock,
+        );
+        interactor
+            .call(FarmCreateInput::new(
+                "新規農場",
+                None,
+                Some(35.0),
+                Some(135.0),
+            ))
+            .unwrap();
+
+        let success = output.success.expect("expected success");
+        assert_eq!(Some("fetching"), success.weather_data_status.as_deref());
+        assert!(success.weather_data_total_years.unwrap_or(0) > 0);
+
+        let calls = enqueue.calls.lock().unwrap();
+        assert_eq!(1, calls.len());
+        assert_eq!(99, calls[0].0);
+        assert_eq!(35.0, calls[0].1);
+        assert_eq!(135.0, calls[0].2);
+        assert!(calls[0].3 > 0);
     }

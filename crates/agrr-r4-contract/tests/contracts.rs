@@ -1793,6 +1793,52 @@ fn get_farm_temperature_chart_fetching_returns_409() {
 }
 
 #[test]
+fn post_masters_farm_create_starts_weather_fetch() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("clock")
+        .as_nanos();
+    let farm_name = format!("Contract Weather Fetch Farm {suffix}");
+
+    let (create_status, create_body) = status_and_body(client.post(
+        "/api/v1/masters/farms",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "farm": {
+                "name": farm_name,
+                "region": "jp",
+                "latitude": 35.6895,
+                "longitude": 139.6917
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("farm create JSON");
+    let farm_id = create_json["id"].as_i64().expect("farm id");
+    assert_eq!(
+        "fetching",
+        create_json["weather_data_status"].as_str().unwrap()
+    );
+    assert!(create_json["weather_data_total_years"].as_i64().unwrap_or(0) > 0);
+
+    let show_path = format!("/api/v1/masters/farms/{farm_id}");
+    let (show_status, show_body) =
+        status_and_body(client.get(&show_path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, show_status, "{show_body}");
+    let show_json: serde_json::Value = serde_json::from_str(&show_body).expect("farm show JSON");
+    assert_eq!(
+        "fetching",
+        show_json["weather_data_status"].as_str().unwrap()
+    );
+    assert!(show_json["weather_data_total_years"].as_i64().unwrap_or(0) > 0);
+}
+
+#[test]
 fn get_farm_temperature_chart_other_user_returns_404() {
     let client = ContractClient::from_env();
     let owner_session = developer_session_id(&client);

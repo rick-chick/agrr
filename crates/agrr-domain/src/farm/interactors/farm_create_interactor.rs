@@ -1,7 +1,9 @@
 //! Ruby: `Domain::Farm::Interactors::FarmCreateInteractor`
 
-use crate::farm::dtos::{FarmCreateInput, FarmCreateLimitExceededFailure};
+use crate::farm::dtos::{FarmCreateInput, FarmCreateLimitExceededFailure, StartFarmWeatherDataFetchInput};
+use crate::farm::entities::FarmEntity;
 use crate::farm::gateways::FarmGateway;
+use crate::farm::interactors::StartFarmWeatherDataFetchInteractor;
 use crate::farm::policies::{FarmCoordinateNormalizationPolicy, FarmCreateLimitPolicy};
 use crate::farm::ports::{CreateFailure, FarmCreateOutputPort};
 use crate::shared::attr::{attr_map_from_pairs, AttrValue};
@@ -10,21 +12,26 @@ use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::farm_policy;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+use crate::shared::ports::{ClockPort, FetchWeatherDataEnqueuePort};
 
-pub struct FarmCreateInteractor<'a, G, O, U, T> {
+pub struct FarmCreateInteractor<'a, G, O, U, T, E, C> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     translator: &'a T,
     user_lookup: &'a U,
+    weather_fetch_enqueue: &'a E,
+    clock: &'a C,
 }
 
-impl<'a, G, O, U, T> FarmCreateInteractor<'a, G, O, U, T>
+impl<'a, G, O, U, T, E, C> FarmCreateInteractor<'a, G, O, U, T, E, C>
 where
     G: FarmGateway,
     O: FarmCreateOutputPort,
     U: UserLookupGateway,
     T: TranslatorPort,
+    E: FetchWeatherDataEnqueuePort,
+    C: ClockPort,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -32,6 +39,8 @@ where
         gateway: &'a G,
         translator: &'a T,
         user_lookup: &'a U,
+        weather_fetch_enqueue: &'a E,
+        clock: &'a C,
     ) -> Self {
         Self {
             output_port,
@@ -39,6 +48,8 @@ where
             user_id,
             translator,
             user_lookup,
+            weather_fetch_enqueue,
+            clock,
         }
     }
 
@@ -105,10 +116,34 @@ where
 
         match self.gateway.create_for_user(&user, attrs) {
             Ok(entity) => {
-                self.output_port.on_success(entity);
+                let response_entity =
+                    Self::start_weather_fetch_if_applicable(self.gateway, self.weather_fetch_enqueue, self.clock, entity)?;
+                self.output_port.on_success(response_entity);
                 Ok(())
             }
             Err(err) => Self::handle_gateway_error(&mut self.output_port, err),
+        }
+    }
+
+    fn start_weather_fetch_if_applicable(
+        gateway: &G,
+        weather_fetch_enqueue: &E,
+        clock: &C,
+        entity: FarmEntity,
+    ) -> Result<FarmEntity, Box<dyn std::error::Error + Send + Sync>> {
+        if entity.is_reference || !entity.has_coordinates() {
+            return Ok(entity);
+        }
+
+        let interactor =
+            StartFarmWeatherDataFetchInteractor::new(gateway, weather_fetch_enqueue);
+        let input = StartFarmWeatherDataFetchInput {
+            farm_id: entity.id,
+            as_of: clock.today(),
+        };
+        match interactor.call(input)? {
+            Some(_) => gateway.find_by_id(entity.id),
+            None => Ok(entity),
         }
     }
 
