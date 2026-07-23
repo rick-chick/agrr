@@ -393,18 +393,43 @@ mod cable_snapshot_tests {
 
     #[test]
     fn farm_snapshot_includes_weather_fields() {
-        let db = test_pool_with_plan(1);
-        let gateway = FarmSqliteGateway::new(db.pool.clone());
-        db.pool
-            .with_connection(|conn| {
-                conn.execute(
-                    "INSERT INTO farms (id, name, latitude, longitude, is_reference, weather_data_status,
-                     weather_data_fetched_years, weather_data_total_years, created_at, updated_at)
-                     VALUES (99, 'Cable Farm', 35.0, 139.0, 0, 'fetching', 2, 5, datetime('now'), datetime('now'))",
-                    [],
-                )
-            })
-            .expect("insert farm");
+        use agrr_adapters_sqlite::SqlitePool;
+        use tempfile::NamedTempFile;
+
+        let file = NamedTempFile::new().expect("temp db");
+        let path = file.path().to_str().expect("utf8 path");
+        let pool = SqlitePool::new(path);
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "CREATE TABLE farms (
+                   id INTEGER PRIMARY KEY,
+                   name TEXT,
+                   latitude REAL,
+                   longitude REAL,
+                   region TEXT,
+                   user_id INTEGER,
+                   is_reference INTEGER NOT NULL DEFAULT 0,
+                   created_at TEXT,
+                   updated_at TEXT,
+                   weather_data_status TEXT,
+                   weather_data_fetched_years INTEGER,
+                   weather_data_total_years INTEGER,
+                   weather_data_last_error TEXT,
+                   weather_location_id INTEGER,
+                   last_broadcast_at REAL
+                 );",
+            )?;
+            conn.execute(
+                "INSERT INTO farms (
+                   id, name, latitude, longitude, is_reference, weather_data_status,
+                   weather_data_fetched_years, weather_data_total_years
+                 ) VALUES (99, 'Cable Farm', 35.0, 139.0, 0, 'fetching', 2, 5)",
+                [],
+            )?;
+            Ok(())
+        })
+        .expect("seed farm");
+        let gateway = FarmSqliteGateway::new(pool);
         let payload = farm_snapshot_payload(&gateway, 99).expect("farm snapshot");
         assert_eq!(99, payload["id"].as_i64().unwrap());
         assert_eq!("fetching", payload["weather_data_status"].as_str().unwrap());
