@@ -53,11 +53,6 @@ function injectSnippet(content) {
   return content.replace(/<\/head>/i, `${SNIPPET}\n</head>`);
 }
 
-if (!RESEARCH_DIR) {
-  console.warn('[inject-research-simulate-cta-script] skip: research dir missing');
-  process.exit(0);
-}
-
 let updated = 0;
 const failures = [];
 

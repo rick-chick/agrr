@@ -99,7 +99,7 @@ export function buildSidebarCtaCopy(lang, slug, pageType) {
         : `${cropLabel}のGDDを、あなたの地域の気象でシミュレーションできます。`;
   const button = lang === 'en' ? 'Simulate →' : 'シミュレート →';
 
-  return { title, body, button, cropLabel };
+  return { title, body, button };
 }
 
 export function buildMobileCtaCopy(lang, slug) {
@@ -113,7 +113,7 @@ export function buildMobileCtaCopy(lang, slug) {
     lang === 'en' ? `Try ${cropLabel} in your region` : `${cropLabel}をあなたの地域で試す`;
   const button = lang === 'en' ? 'Simulate →' : 'シミュレート →';
 
-  return { label, button, cropLabel };
+  return { label, button };
 }
 
 export function buildResearchCtaScriptSnippet(scriptPath = RESEARCH_CTA_SCRIPT_PATH) {
@@ -137,9 +137,6 @@ export function verifyResearchCtaScriptInContent(content) {
   }
   if (!content.includes(RESEARCH_CTA_SCRIPT_PATH)) {
     errors.push('missing research CTA script path');
-  }
-  if (!content.includes(SIDEBAR_CTA_CLASS) && !content.includes('agrr-research-sidebar-cta')) {
-    // script file check uses class constant name as string in JS source
   }
   return errors;
 }
