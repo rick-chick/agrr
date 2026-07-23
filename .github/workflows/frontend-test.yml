@@ -93,6 +93,7 @@ jobs:
       - name: automation script unit tests
         working-directory: ${{ github.workspace }}
         run: |
+          node --test scripts/cloud-gh-auth-lib.test.mjs
           node --test scripts/delivery-dispatch-lib.test.mjs
           node --test scripts/delivery-agent-campaign-lib.test.mjs
           node --test scripts/delivery-agent-automation-prompt-lib.test.mjs
