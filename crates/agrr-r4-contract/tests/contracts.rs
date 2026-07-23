@@ -1704,6 +1704,58 @@ fn post_masters_crop_setup_proposal_apply_rate_limited_returns_429_with_retry_af
 }
 
 #[test]
+fn get_masters_farm_show_includes_weather_fields() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_farm_temperature_chart_completed(user_id);
+
+    let path = format!("/api/v1/masters/farms/{}", seed.farm_id);
+    let (status, body) = status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("farm show JSON");
+    assert_eq!("completed", json["weather_data_status"].as_str().unwrap());
+    assert_eq!(100, json["weather_data_progress"].as_i64().unwrap());
+    assert_eq!(5, json["weather_data_fetched_years"].as_i64().unwrap());
+    assert_eq!(5, json["weather_data_total_years"].as_i64().unwrap());
+}
+
+#[test]
+fn get_masters_farms_list_includes_weather_fields() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_farm_temperature_chart_completed(user_id);
+
+    let (status, body) = status_and_body(client.get("/api/v1/masters/farms", Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let farms: Vec<serde_json::Value> = serde_json::from_str(&body).expect("farm list JSON");
+    let farm = farms
+        .iter()
+        .find(|f| f["id"].as_i64() == Some(seed.farm_id))
+        .expect("seeded farm in list");
+    assert_eq!("completed", farm["weather_data_status"].as_str().unwrap());
+    assert_eq!(100, farm["weather_data_progress"].as_i64().unwrap());
+    assert_eq!(5, farm["weather_data_fetched_years"].as_i64().unwrap());
+    assert_eq!(5, farm["weather_data_total_years"].as_i64().unwrap());
+}
+
+#[test]
+fn get_masters_farm_show_fetching_includes_weather_fields() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let farm_id = seed_farm_temperature_chart_fetching(user_id);
+
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+    let (status, body) = status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("farm show JSON");
+    assert_eq!("fetching", json["weather_data_status"].as_str().unwrap());
+    assert!(json["weather_data_progress"].as_i64().is_some());
+}
+
+#[test]
 fn get_farm_temperature_chart_completed_returns_observed_points() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

@@ -16,7 +16,53 @@ pub fn farm_to_json(entity: &FarmEntity) -> Value {
         "created_at": entity.created_at,
         "updated_at": entity.updated_at,
         "is_reference": entity.is_reference,
+        "weather_data_status": entity.weather_data_status,
+        "weather_data_progress": entity.weather_data_progress(),
+        "weather_data_fetched_years": entity.weather_data_fetched_years,
+        "weather_data_total_years": entity.weather_data_total_years,
     })
+}
+
+#[cfg(test)]
+mod farm_to_json_tests {
+    use super::*;
+    use agrr_domain::farm::entities::FarmEntity;
+
+    fn sample_farm(status: Option<&str>, fetched: Option<i32>, total: Option<i32>) -> FarmEntity {
+        FarmEntity {
+            id: 1,
+            name: "Test Farm".into(),
+            latitude: Some(35.0),
+            longitude: Some(139.0),
+            region: Some("jp".into()),
+            user_id: Some(10),
+            created_at: None,
+            updated_at: None,
+            is_reference: false,
+            weather_data_status: status.map(str::to_string),
+            weather_data_fetched_years: fetched,
+            weather_data_total_years: total,
+            weather_data_last_error: None,
+            weather_location_id: None,
+            last_broadcast_at: None,
+        }
+    }
+
+    #[test]
+    fn includes_weather_fields_for_completed_farm() {
+        let json = farm_to_json(&sample_farm(Some("completed"), Some(5), Some(5)));
+        assert_eq!("completed", json["weather_data_status"].as_str().unwrap());
+        assert_eq!(100, json["weather_data_progress"].as_i64().unwrap());
+        assert_eq!(5, json["weather_data_fetched_years"].as_i64().unwrap());
+        assert_eq!(5, json["weather_data_total_years"].as_i64().unwrap());
+    }
+
+    #[test]
+    fn includes_weather_fields_for_fetching_farm() {
+        let json = farm_to_json(&sample_farm(Some("fetching"), Some(1), Some(5)));
+        assert_eq!("fetching", json["weather_data_status"].as_str().unwrap());
+        assert_eq!(20, json["weather_data_progress"].as_i64().unwrap());
+    }
 }
 
 pub fn farm_field_to_json(entity: &FarmFieldEntity) -> Value {
