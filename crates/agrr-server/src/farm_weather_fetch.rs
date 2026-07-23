@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::adapters::SystemClock;
+use crate::cable::CableFarmRefreshBroadcast;
 use crate::jobs::JobStep;
 use crate::state::AppState;
 use agrr_adapters_agrr::WeatherDaemonGateway;
@@ -102,12 +103,6 @@ impl FetchWeatherDataJobPresenterPort for FarmFetchPresenter {
     }
 }
 
-struct NoopFarmBroadcast;
-
-impl agrr_domain::shared::ports::FarmRefreshBroadcastPort for NoopFarmBroadcast {
-    fn broadcast_farm_weather_progress(&self, _farm_id: i64, _payload: &serde_json::Value) {}
-}
-
 struct NoopAdvancePhase;
 
 impl FetchWeatherAdvancePhasePort for NoopAdvancePhase {
@@ -116,6 +111,16 @@ impl FetchWeatherAdvancePhasePort for NoopAdvancePhase {
 
 struct RecordBlockAdapter<'a> {
     farm_gateway: &'a FarmSqliteGateway,
+    broadcast: CableFarmRefreshBroadcast,
+}
+
+impl<'a> RecordBlockAdapter<'a> {
+    fn new(farm_gateway: &'a FarmSqliteGateway, broadcast: CableFarmRefreshBroadcast) -> Self {
+        Self {
+            farm_gateway,
+            broadcast,
+        }
+    }
 }
 
 impl RecordFarmWeatherBlockCompletedPort for RecordBlockAdapter<'_> {
@@ -124,8 +129,8 @@ impl RecordFarmWeatherBlockCompletedPort for RecordBlockAdapter<'_> {
         farm_id: i64,
         current_time: OffsetDateTime,
     ) -> Option<agrr_domain::weather_data::dtos::FarmWeatherProgressSnapshot> {
-        let interactor: RecordFarmWeatherBlockCompletedInteractor<'_, FarmSqliteGateway, NoopFarmBroadcast> =
-            RecordFarmWeatherBlockCompletedInteractor::new(self.farm_gateway, None);
+        let interactor: RecordFarmWeatherBlockCompletedInteractor<'_, FarmSqliteGateway, CableFarmRefreshBroadcast> =
+            RecordFarmWeatherBlockCompletedInteractor::new(self.farm_gateway, Some(&self.broadcast));
         let ts = current_time.unix_timestamp() as f64;
         let updated = interactor
             .call(RecordFarmWeatherBlockCompletedInput {
@@ -163,9 +168,10 @@ pub async fn run_farm_weather_fetch_block(
     let agrr = WeatherDaemonGateway::from_env();
     let presenter = FarmFetchPresenter;
     let advance = NoopAdvancePhase;
-    let record = RecordBlockAdapter {
-        farm_gateway: &farm_gateway,
-    };
+    let record = RecordBlockAdapter::new(
+        &farm_gateway,
+        CableFarmRefreshBroadcast::new(state.cable_hub.clone()),
+    );
     let interactor = FetchWeatherDataPerformInteractor::new(
         &weather_data,
         &farm_weather,
