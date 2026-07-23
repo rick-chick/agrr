@@ -24,6 +24,7 @@ description: >-
 
 ## §0 観測と分岐（毎 run 先頭・固定順）
 
+0. **in-progress** — `agent-in-progress` または `agent-merge-in-progress` が付いていれば **即終了**（コメント不要）
 1. **payload** — `repository`、任意の `issue_number` / `pr_number` / `pr_unlinked`
    - **`pr_unlinked: true`**、または **`pr_number` のみ**（`issue_number` なし）→ **PR フェーズ直行**（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。issue 実装・新規 PR 禁止。
 2. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,labels`
@@ -32,11 +33,10 @@ description: >-
      - いずれかに `ux-campaign:breadcrumb` → [`ux-campaign-loop`](../ux-campaign-loop/SKILL.md) §1〜§2（post-merge）のみ。終了
      - なければ exit 0
    - 判定補助: [`delivery-agent-campaign-lib.mjs`](../../../scripts/delivery-agent-campaign-lib.mjs)
-3. **in-progress** — `agent-in-progress` または `agent-merge-in-progress` が付いていれば **即終了**（コメント不要）
-4. **open PR** — `pr_unlinked` でないとき、リンク issue の open PR を検索（`closingIssuesReferences` 基準）
+3. **open PR** — `pr_unlinked` でないとき、リンク issue の open PR を検索（`closingIssuesReferences` 基準）
    - **あり** → PR フェーズ（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）: CI / mergeable / Draft を見て修正・merge・待ち
    - **なし** → issue フェーズ（[`github-issue-worker`](../github-issue-worker/SKILL.md)）: triage → 実装 or close or 依存待ち
-5. **epic** — `[epic]` / `epic` ラベルなら §1b（子 issue 完了確認 → close）
+4. **epic** — `[epic]` / `epic` ラベルなら §1b（子 issue 完了確認 → close）
 
 ### PR フェーズ: 陳腐化（obsolete / superseded）判定
 
@@ -46,6 +46,7 @@ description: >-
 2. `gh pr diff <N> --name-only` と最近マージ済み PR（`gh pr list --state merged --limit 30`）の diff / タイトルを比較
 3. **obsolete と判断**（別 PR で同趣旨がマージ済み・方針変更で差分が無意味・`agent-no-merge` が正しい opt-out）→ [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) §0a で close
 4. **まだ有効** → blocking ラベルを外す根拠がなければ維持して exit 0。修正・マージが妥当なら §0 の通常 PR フェーズへ（`agent-no-merge` はマージ前に外さない）
+5. **判断不能** → §0a 同様。`agent-merge-blocked` は付けない（コメント + Memory のみ。15 分 reconcile の `pr_review` で再観測）
 
 タイトル正規化や `#N` 参照の regex は **Agent 判断内のみ**（dispatch / reconcile スクリプトに書かない）。
 

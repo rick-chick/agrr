@@ -3,6 +3,7 @@
  */
 
 import { prMergeWorkerNeedsSync } from '../../../../scripts/pr-merge-worker-needs-sync.mjs';
+import { hasBlockingMergeLabel } from '../../../../scripts/pr-agent-prep-lib.mjs';
 
 export const GITHUB_REPO = 'rick-chick/agrr';
 
@@ -247,6 +248,10 @@ export function detectConflictReadyPr(pr) {
   const mergeStateStatus = pr.mergeStateStatus ?? '';
 
   if (!prMergeWorkerNeedsSync({ mergeable, mergeStateStatus })) {
+    return null;
+  }
+
+  if (hasBlockingMergeLabel(labels)) {
     return null;
   }
 

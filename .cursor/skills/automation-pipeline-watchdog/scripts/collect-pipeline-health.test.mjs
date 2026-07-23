@@ -130,6 +130,19 @@ test('detectConflictReadyPr flags CONFLICTING via mergeable', () => {
   assert.equal(finding.evidence.mergeable, 'CONFLICTING');
 });
 
+test('detectConflictReadyPr skips blocking-label PR (pr_review reconcile handles)', () => {
+  const finding = detectConflictReadyPr({
+    number: 431,
+    title: 'unlinked conflict PR',
+    isDraft: false,
+    labels: [{ name: 'agent-no-merge' }],
+    mergeable: 'CONFLICTING',
+    mergeStateStatus: 'DIRTY',
+    updatedAt: new Date(NOW).toISOString(),
+  });
+  assert.equal(finding, null);
+});
+
 test('detectConflictReadyPr skips clean mergeable without sync need', () => {
   const finding = detectConflictReadyPr({
     number: 402,

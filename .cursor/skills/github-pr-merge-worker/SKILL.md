@@ -122,7 +122,7 @@ gh pr view <N> --json labels,state,headRefOid
 
 ## 0a) 陳腐化 PR（obsolete / superseded）— Agent が close
 
-機械層はタイトル一致や closing issue 重複で **自動 close しない**。retry reconcile の内部ゲート `pr_review`、または blocking ラベル付き PR への手動 dispatch で本 run が届いたとき、**コンフリクト解消・CI 修正・マージの前**に実施する。
+機械層はタイトル一致や closing issue 重複で **自動 close しない**。retry reconcile の内部ゲート `pr_review`、または blocking ラベル付き PR への手動 dispatch で本 run が届いたとき、**コンフリクト解消・CI 修正・マージの前**に実施する。`agent-merge-in-progress` が付いていれば §0 と同様に即終了する。
 
 ```bash
 gh pr view <N> --json title,body,state,labels,mergeable,mergeStateStatus,closingIssuesReferences
@@ -135,7 +135,7 @@ gh pr list --state merged --base master --limit 30 --json number,title,mergedAt,
 | 同趣旨が **最近マージ済み**（diff 重複・方針が #M に統合済み） | **close**（下記コメント） |
 | `agent-no-merge` が正しい（未リンク・意図的 opt-out）かつ差分に価値なし | **close** または無言 exit 0 |
 | まだ有効（未マージの独自修正が残る） | 通常フローへ。blocking ラベルは根拠なく外さない |
-| 判断不能 | `agent-merge-blocked` + コメント（close もマージもしない） |
+| 判断不能 | コメント + Memory のみで exit 0（**`agent-merge-blocked` は付けない**。15 分 reconcile の `pr_review` で再観測） |
 
 **close 手順**（obsolete 確定時のみ）:
 
