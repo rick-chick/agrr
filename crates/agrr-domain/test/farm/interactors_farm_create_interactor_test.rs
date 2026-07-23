@@ -335,11 +335,12 @@
             .call(FarmCreateInput::new(
                 "新規農場",
                 None,
-                Some(35.0),
-                Some(135.0),
+                None,
+                None,
             ))
             .unwrap();
         assert_eq!(output.success, Some(entity));
+        assert!(enqueue.calls.lock().unwrap().is_empty());
     }
 
     // Ruby: test "calls on_failure with limit exceeded dto when at farm limit"
