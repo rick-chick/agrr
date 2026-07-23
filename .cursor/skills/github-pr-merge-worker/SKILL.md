@@ -79,7 +79,7 @@ Cursor Automation が作成する **Draft PR** は [`.github/workflows/pr-agent-
 | master 同期（`BEHIND` / `DIRTY` / `CONFLICTING`） | **本 Worker**（`resolve-pr-merge-conflicts.sh`） |
 | マージ判定・squash | **本 Worker** |
 
-本 Worker は **ready 済み**の PR を **マージ** する（Draft はマージしない）。**例外**: `mergeable_state` が `BEHIND` / `DIRTY` / `CONFLICTING` では **Draft でも着手**（コンフリクト解消のみ）。**例外**: 必須 CI FAIL かつコンフリクトなしでは **Draft/ready 問わず** 着手（§5 修正ループのみ。マージはしない）。
+本 Worker は **ready 済み**の PR を **マージ** する。リンク issue の Draft ready は prep。**未リンク Draft** は Agent が `gh pr ready` してから §2〜§4。**例外**: `BEHIND` / `DIRTY` / `CONFLICTING` では Draft でも着手（コンフリクト解消のみ）。**例外**: 必須 CI FAIL かつコンフリクトなしでは Draft/ready 問わず着手（§5 修正のみ）。
 
 ### 必須 CI 失敗経路（全 PR）
 
@@ -115,9 +115,9 @@ gh pr view <N> --json labels,state,headRefOid
 
 着手時は直ちに `agent-merge-in-progress` を付与（§5）。**着手直後に `headRefOid` を Memory に記録**し、修正 push 後の再 run では新 SHA で再評価する。
 
-## 0a) 陳腐化 PR（obsolete）— Agent が close
+## 0a) PR 妥当性 — obsolete と行き先
 
-**毎 run、未リンク PR または観測で陳腐化が疑われるとき**に実施。コンフリクト解消・CI 修正・マージの前。
+コンフリクト解消・CI 修正・マージの前に実施。
 
 ```bash
 gh pr view <N> --json title,body,state,mergeable,mergeStateStatus,closingIssuesReferences
@@ -128,7 +128,8 @@ gh pr list --state merged --base master --limit 30 --json number,title,mergedAt
 | 観測 | 動作 |
 |------|------|
 | 同趣旨が **最近マージ済み** | **close** |
-| まだ有効 | exit 0（マージしない） |
+| 不要・方針外 | **close**（理由コメント） |
+| 有効 | **§1 へ**（merge / 修正。オープン放置禁止） |
 | 判断不能 | コメント + exit 0 |
 
 **close 手順**（obsolete 確定時のみ）:
@@ -148,11 +149,12 @@ gh pr close <N> --comment "## 🤖 PR Merge Worker: obsolete
 
 ### 着手しない（観測結果）
 
-- **未リンク PR**（`closingIssuesReferences` 空）— §0a のみ。マージ経路に入らない
 - **Fork 由来**
 - **`reviewDecision` が `CHANGES_REQUESTED`**
 - ベースが `master` 以外
-- **Draft**（コンフリクト解消・CI 修正が必要なときは除く）
+- **Draft**（リンク issue あり — prep 待ち。コンフリクト解消・CI 修正・未リンク merge 着手を除く）
+
+未リンク PR（`closingIssuesReferences` 空）は prep 対象外。§0a 後は §1〜§4 と同じ。
 
 ```bash
 gh pr view <N> --json isDraft,mergeable,reviewDecision,labels,headRefName,baseRefName,author,additions,deletions

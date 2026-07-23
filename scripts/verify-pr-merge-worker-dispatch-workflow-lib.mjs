@@ -330,6 +330,18 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     errors.push('skill must document unlinked PR handling via closingIssuesReferences observation');
   }
 
+  if (skillText.includes('exit 0（マージしない）')) {
+    errors.push('skill §0a must not leave valid open PRs without merge/close decision');
+  }
+
+  if (skillText.includes('マージ経路に入らない')) {
+    errors.push('skill must not forbid merge path for unlinked PRs');
+  }
+
+  if (!skillText.includes('オープン放置禁止')) {
+    errors.push('skill must document open PR abandonment prohibition');
+  }
+
   if (/- ラベル `(agent-no-merge|do-not-merge|wip)`/.test(skillText)) {
     errors.push('skill §1 must not exclude PRs by merge-prohibition labels');
   }
@@ -351,6 +363,18 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   if (deliverySkillText && !deliverySkillText.includes('JUDGMENT-CRITERIA.md')) {
     errors.push('delivery-agent skill must link to JUDGMENT-CRITERIA.md');
+  }
+
+  if (deliverySkillText && deliverySkillText.includes('exit 0（マージしない）')) {
+    errors.push('delivery-agent skill must not leave valid open PRs without merge/close decision');
+  }
+
+  if (deliverySkillText && deliverySkillText.includes('マージ経路に入らない')) {
+    errors.push('delivery-agent skill must not forbid merge path for unlinked PRs');
+  }
+
+  if (deliverySkillText && !deliverySkillText.includes('オープン放置禁止')) {
+    errors.push('delivery-agent skill must document open PR abandonment prohibition');
   }
 
   const judgmentCriteriaPath = join(

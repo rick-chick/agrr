@@ -308,7 +308,23 @@
     // Ruby: test "calls on_success when under farm limit"
     #[test]
     fn calls_on_success_when_under_farm_limit() {
-        let entity = sample_farm();
+        let entity = FarmEntity {
+            id: 99,
+            name: "新規農場".into(),
+            latitude: None,
+            longitude: None,
+            region: None,
+            user_id: Some(10),
+            created_at: None,
+            updated_at: None,
+            is_reference: false,
+            weather_data_status: None,
+            weather_data_fetched_years: None,
+            weather_data_total_years: None,
+            weather_data_last_error: None,
+            weather_location_id: None,
+            last_broadcast_at: None,
+        };
         let gateway = UnderLimitGateway {
             count: 3,
             entity: entity.clone(),
