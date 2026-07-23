@@ -33,7 +33,8 @@ description: >-
 | **Issue** | `agent-ready` が 2 時間以上進まない（blocker なし） | P1 |
 | **PR** | Draft が 12 時間以上 ready 化されない（CI green なのに滞留） | P1 |
 | **PR** | `agent-merge-in-progress` 90 分以上 | P1 |
-| **PR** | `BEHIND` / `CONFLICTING` の open PR（ラベル不問） | P1 |
+| **PR** | `BEHIND` / `CONFLICTING` の open PR（blocking ラベルなし） | P1 |
+| **PR** | `BEHIND` / `CONFLICTING` + blocking ラベル（`pr_review` reconcile 待ち） | 起票しない |
 | **PR** | 必須 CI failure の open PR（ラベル不問） | P1 |
 | **Workflow** | dispatch workflow の直近 2 時間以内の failure | P0 |
 | **Bootstrap** | `cloud-gh-auth.sh` / `verify-skill-references.sh` / 単体 test 失敗 | P0 |
