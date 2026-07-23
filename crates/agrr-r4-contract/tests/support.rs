@@ -842,3 +842,104 @@ pub fn upload_ready_work_record_photo(
     ));
     assert_eq!(200, complete_status, "{complete_body}");
 }
+
+fn write_contract_observed_weather_gcs_fixture(weather_location_id: i64) {
+    let local_root = std::env::var("WEATHER_DATA_LOCAL_ROOT")
+        .unwrap_or_else(|_| "/tmp/agrr-weather-contract".to_string());
+    let object_path = format!("{local_root}/weather_data/{weather_location_id}/2026.json");
+    if let Some(parent) = std::path::Path::new(&object_path).parent() {
+        std::fs::create_dir_all(parent).expect("create weather gcs mirror dir");
+    }
+    let payload = r#"{
+      "2026-07-01": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
+      "2026-07-02": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
+      "2026-07-03": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
+      "2026-07-04": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
+      "2026-07-05": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0}
+    }"#;
+    std::fs::write(&object_path, payload).expect("write observed weather gcs fixture");
+}
+
+pub struct FarmTemperatureChartSeed {
+    pub farm_id: i64,
+}
+
+/// Seeds a private farm with completed weather data for temperature chart contract tests.
+pub fn seed_farm_temperature_chart_completed(user_id: i64) -> FarmTemperatureChartSeed {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let farm_name = format!("Contract Temp Chart Farm {suffix}");
+
+    conn.execute(
+        "INSERT INTO weather_locations (latitude, longitude, elevation, timezone, created_at, updated_at)
+         VALUES (35.1, 139.2, 40.0, 'Asia/Tokyo', datetime('now'), datetime('now'))",
+        [],
+    )
+    .expect("insert weather_location");
+    let weather_location_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO farms (
+           user_id, name, latitude, longitude, created_at, updated_at, is_reference,
+           weather_data_status, weather_data_fetched_years, weather_data_total_years,
+           weather_location_id
+         ) VALUES (
+           ?1, ?2, 35.0, 139.0, datetime('now'), datetime('now'), 0,
+           'completed', 5, 5, ?3
+         )",
+        params![user_id, farm_name, weather_location_id],
+    )
+    .expect("insert farm");
+    let farm_id = conn.last_insert_rowid();
+
+    for day in 1..=5 {
+        let date = format!("2026-07-{day:02}");
+        conn.execute(
+            "INSERT INTO weather_data (
+               weather_location_id, date, temperature_max, temperature_min, temperature_mean,
+               created_at, updated_at
+             ) VALUES (?1, ?2, 21.0, 8.0, 14.0, datetime('now'), datetime('now'))",
+            params![weather_location_id, date],
+        )
+        .expect("insert weather_data row");
+    }
+
+    write_contract_observed_weather_gcs_fixture(weather_location_id);
+
+    FarmTemperatureChartSeed { farm_id }
+}
+
+/// Seeds a private farm with fetching weather status (chart should return 409).
+pub fn seed_farm_temperature_chart_fetching(user_id: i64) -> i64 {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let farm_name = format!("Contract Temp Chart Fetching {suffix}");
+
+    conn.execute(
+        "INSERT INTO weather_locations (latitude, longitude, created_at, updated_at)
+         VALUES (35.1, 139.2, datetime('now'), datetime('now'))",
+        [],
+    )
+    .expect("insert weather_location");
+    let weather_location_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO farms (
+           user_id, name, latitude, longitude, created_at, updated_at, is_reference,
+           weather_data_status, weather_data_fetched_years, weather_data_total_years,
+           weather_location_id
+         ) VALUES (
+           ?1, ?2, 35.0, 139.0, datetime('now'), datetime('now'), 0,
+           'fetching', 2, 5, ?3
+         )",
+        params![user_id, farm_name, weather_location_id],
+    )
+    .expect("insert farm");
+
+    conn.last_insert_rowid()
+}
+

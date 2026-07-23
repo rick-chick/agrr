@@ -1,0 +1,73 @@
+.farm-temperature-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.farm-temperature-chart__subtitle {
+  margin: 0;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.farm-temperature-chart__periods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.farm-temperature-chart__period-btn {
+  border: 1px solid var(--color-border, #cbd5e1);
+  background: var(--color-surface, #fff);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+}
+
+.farm-temperature-chart__period-btn--active {
+  border-color: var(--color-primary, #2563eb);
+  background: var(--color-primary-soft, #dbeafe);
+  font-weight: 600;
+}
+
+.farm-temperature-chart__status {
+  margin: 0;
+  color: var(--color-text-muted, #64748b);
+}
+
+.farm-temperature-chart__error {
+  margin: 0;
+  color: var(--color-danger, #dc2626);
+}
+
+.farm-temperature-chart__canvas-wrap {
+  position: relative;
+  min-height: 220px;
+}
+
+@media (min-width: 768px) {
+  .farm-temperature-chart__canvas-wrap {
+    min-height: 280px;
+  }
+}
+
+.farm-temperature-chart__canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.farm-temperature-chart__gap-notice {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.farm-temperature-chart__hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.farm-temperature-chart__retry {
+  align-self: flex-start;
+}

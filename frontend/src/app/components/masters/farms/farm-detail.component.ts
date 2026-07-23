@@ -30,6 +30,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { FarmTemperatureChartComponent } from './farm-temperature-chart.component';
 
 const initialControl: FarmDetailViewState = {
   loading: true,
@@ -50,7 +51,8 @@ const initialControl: FarmDetailViewState = {
     TranslateModule,
     FormsModule,
     RegionSelectComponent,
-    MasterContextHeaderComponent
+    MasterContextHeaderComponent,
+    FarmTemperatureChartComponent
   ],
   providers: [...FARM_DETAIL_PROVIDERS],
   template: `
@@ -102,6 +104,12 @@ const initialControl: FarmDetailViewState = {
             [name]="control.farm.name"
           />
         </section>
+
+        <app-farm-temperature-chart
+          [farmId]="control.farm.id"
+          [weatherStatus]="control.farm.weather_data_status"
+          [weatherProgress]="control.farm.weather_data_progress"
+        />
 
         <section class="section-card" aria-labelledby="fields-heading">
           <div class="section-card__header-actions">
