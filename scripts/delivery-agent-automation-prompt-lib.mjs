@@ -10,6 +10,7 @@ export const DELIVERY_AGENT_AUTOMATION_ID = '6a5cb2d9-8317-11f1-a7d1-d6b4613131c
 export const DELIVERY_AGENT_AUTOMATION_PROMPT = `Read \`.cursor/skills/delivery-agent/SKILL.md\` exactly.
 Payload: repository, issue_number, pr_number (optional). Optional: pr_unlinked — do not trust; observe GitHub with gh and decide.
 No action field — if present, ignore it. Never skip because of merge-prohibition labels.
+Open PR: decide merge or close; do not leave open without action.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
 (cleanup-workflow-tick.sh) before opening a PR. Do not skip tick or open PR before gate exit 0.
