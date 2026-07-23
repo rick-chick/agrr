@@ -16,6 +16,7 @@ use support::{
     set_plan_task_schedule_sync_failed_raw_error, status_and_body,
     upload_ready_work_record_photo, user_id_for_session,
     seed_farm_temperature_chart_completed, seed_farm_temperature_chart_fetching,
+    ensure_farm_create_capacity_via_api,
 };
 
 #[test]
@@ -1811,7 +1812,8 @@ fn get_farm_temperature_chart_other_user_returns_404() {
 #[test]
 fn post_masters_farm_create_starts_weather_fetch() {
     let client = ContractClient::from_env();
-    let session_id = developer_session_id(&client);
+    let session_id = farmer_session_id(&client);
+    ensure_farm_create_capacity_via_api(&client, &session_id);
 
     let (create_status, create_body) = status_and_body(client.post(
         "/api/v1/masters/farms",
