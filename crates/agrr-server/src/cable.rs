@@ -3,10 +3,12 @@
 //! Ruby: `ApplicationCable`, `OptimizationChannel`, `PlansOptimizationChannel`, `FarmChannel`
 
 use crate::state::AppState;
-use agrr_adapters_sqlite::CultivationPlanSqliteGateway;
+use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, FarmSqliteGateway};
 use agrr_domain::cultivation_plan::calculators::cultivation_plan_optimization_progress_calculator;
 use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
 use agrr_domain::cultivation_plan::mappers::to_port_payload;
+use agrr_domain::farm::gateways::FarmGateway;
+use agrr_domain::shared::ports::FarmRefreshBroadcastPort;
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -26,10 +28,12 @@ pub fn routes() -> Router<AppState> {
 }
 
 type PlanStreams = Arc<RwLock<HashMap<i64, broadcast::Sender<String>>>>;
+type FarmStreams = Arc<RwLock<HashMap<i64, broadcast::Sender<String>>>>;
 
 #[derive(Clone, Default)]
 pub struct CableHub {
     plan_streams: PlanStreams,
+    farm_streams: FarmStreams,
 }
 
 impl CableHub {
@@ -54,6 +58,41 @@ impl CableHub {
     /// Alias for ActionCable optimization payloads (`status`, `progress`, `phase`, …).
     pub fn broadcast_plan_message(&self, plan_id: i64, message: Value) {
         self.broadcast_plan(plan_id, message);
+    }
+
+    pub async fn subscribe_farm(&self, farm_id: i64) -> broadcast::Receiver<String> {
+        let mut guard = self.farm_streams.write().await;
+        let sender = guard.entry(farm_id).or_insert_with(|| {
+            let (tx, _) = broadcast::channel(64);
+            tx
+        });
+        sender.subscribe()
+    }
+
+    pub fn broadcast_farm(&self, farm_id: i64, message: Value) {
+        let body = message.to_string();
+        if let Ok(guard) = self.farm_streams.try_read() {
+            if let Some(tx) = guard.get(&farm_id) {
+                let _ = tx.send(body);
+            }
+        }
+    }
+}
+
+/// ActionCable `FarmChannel` broadcast adapter for domain `FarmRefreshBroadcastPort`.
+pub struct CableFarmRefreshBroadcast {
+    hub: Arc<CableHub>,
+}
+
+impl CableFarmRefreshBroadcast {
+    pub fn new(hub: Arc<CableHub>) -> Self {
+        Self { hub }
+    }
+}
+
+impl FarmRefreshBroadcastPort for CableFarmRefreshBroadcast {
+    fn broadcast_farm_weather_progress(&self, farm_id: i64, payload: &Value) {
+        self.hub.broadcast_farm(farm_id, payload.clone());
     }
 }
 
@@ -138,15 +177,44 @@ fn parse_plan_id_from_identifier(id_json: &Value) -> Option<i64> {
         .or_else(|| raw.as_f64().map(|f| f as i64))
 }
 
-async fn transmit_snapshot(
-    socket: &mut WebSocket,
-    identifier: &str,
-    plan_gateway: &CultivationPlanSqliteGateway,
-    plan_id: i64,
-) -> bool {
-    let Some(payload) = optimization_snapshot_payload(plan_gateway, plan_id) else {
-        return true;
-    };
+fn parse_farm_id_from_identifier(id_json: &Value) -> Option<i64> {
+    let raw = id_json.get("farm_id")?;
+    raw.as_i64()
+        .or_else(|| raw.as_str().and_then(|s| s.parse().ok()))
+        .or_else(|| raw.as_f64().map(|f| f as i64))
+}
+
+fn farm_snapshot_payload(farm_gateway: &FarmSqliteGateway, farm_id: i64) -> Option<Value> {
+    let farm = farm_gateway.find_by_id(farm_id).ok()?;
+    Some(json!({
+        "id": farm.id,
+        "weather_data_status": farm.weather_data_status,
+        "weather_data_progress": farm.weather_data_progress(),
+        "weather_data_fetched_years": farm.weather_data_fetched_years,
+        "weather_data_total_years": farm.weather_data_total_years,
+    }))
+}
+
+async fn reject_subscription(socket: &mut WebSocket, identifier: &str) {
+    let reject = json!({
+        "type": "reject_subscription",
+        "identifier": identifier
+    });
+    let _ = socket.send(Message::Text(reject.to_string().into())).await;
+}
+
+async fn confirm_subscription(socket: &mut WebSocket, identifier: &str) -> bool {
+    let confirm = json!({
+        "type": "confirm_subscription",
+        "identifier": identifier
+    });
+    socket
+        .send(Message::Text(confirm.to_string().into()))
+        .await
+        .is_ok()
+}
+
+async fn transmit_message(socket: &mut WebSocket, identifier: &str, payload: Value) -> bool {
     let message = json!({
         "identifier": identifier,
         "message": payload
@@ -155,6 +223,59 @@ async fn transmit_snapshot(
         .send(Message::Text(message.to_string().into()))
         .await
         .is_ok()
+}
+
+async fn transmit_plan_snapshot(
+    socket: &mut WebSocket,
+    identifier: &str,
+    plan_gateway: &CultivationPlanSqliteGateway,
+    plan_id: i64,
+) -> bool {
+    let Some(payload) = optimization_snapshot_payload(plan_gateway, plan_id) else {
+        return true;
+    };
+    transmit_message(socket, identifier, payload).await
+}
+
+async fn relay_subscription(
+    socket: &mut WebSocket,
+    identifier: &str,
+    mut rx: broadcast::Receiver<String>,
+) {
+    loop {
+        tokio::select! {
+            incoming = socket.recv() => {
+                match incoming {
+                    None | Some(Err(_)) => return,
+                    Some(Ok(Message::Close(_))) => return,
+                    Some(Ok(Message::Text(text))) => {
+                        if let Ok(frame) = serde_json::from_str::<Value>(&text) {
+                            if frame.get("type").and_then(|t| t.as_str()) == Some("ping") {
+                                if !send_pong(socket).await {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            payload = rx.recv() => {
+                match payload {
+                    Ok(body) => {
+                        let message = json!({
+                            "identifier": identifier,
+                            "message": serde_json::from_str::<Value>(&body).unwrap_or(json!({}))
+                        });
+                        if socket.send(Message::Text(message.to_string().into())).await.is_err() {
+                            return;
+                        }
+                    }
+                    Err(_) => return,
+                }
+            }
+        }
+    }
 }
 
 async fn cable_ws(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl IntoResponse {
@@ -176,6 +297,7 @@ async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppStat
     }
 
     let plan_gateway = CultivationPlanSqliteGateway::new(state.sqlite.clone());
+    let farm_gateway = FarmSqliteGateway::new(state.sqlite.clone());
     while let Some(Ok(msg)) = socket.recv().await {
         let Message::Text(text) = msg else {
             continue;
@@ -203,71 +325,49 @@ async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppStat
             continue;
         };
         let channel = id_json.get("channel").and_then(|c| c.as_str()).unwrap_or("");
-        let plan_id = parse_plan_id_from_identifier(&id_json);
+        if channel == "FarmChannel" {
+            let Some(farm_id) = parse_farm_id_from_identifier(&id_json) else {
+                reject_subscription(&mut socket, identifier).await;
+                continue;
+            };
+            if farm_gateway.find_by_id(farm_id).is_err() {
+                reject_subscription(&mut socket, identifier).await;
+                continue;
+            }
+            if !confirm_subscription(&mut socket, identifier).await {
+                return;
+            }
+            if let Some(payload) = farm_snapshot_payload(&farm_gateway, farm_id) {
+                if !transmit_message(&mut socket, identifier, payload).await {
+                    return;
+                }
+            }
+            let rx = hub.subscribe_farm(farm_id).await;
+            relay_subscription(&mut socket, identifier, rx).await;
+            return;
+        }
+
         if channel != "OptimizationChannel" && channel != "PlansOptimizationChannel" {
             continue;
         }
+        let plan_id = parse_plan_id_from_identifier(&id_json);
         let Some(plan_id) = plan_id else {
-            let reject = json!({
-                "type": "reject_subscription",
-                "identifier": identifier
-            });
-            let _ = socket.send(Message::Text(reject.to_string().into())).await;
+            reject_subscription(&mut socket, identifier).await;
             continue;
         };
         if plan_gateway.find_by_id(plan_id).is_err() {
-            let reject = json!({
-                "type": "reject_subscription",
-                "identifier": identifier
-            });
-            let _ = socket.send(Message::Text(reject.to_string().into())).await;
+            reject_subscription(&mut socket, identifier).await;
             continue;
-        }
-        let confirm = json!({
-            "type": "confirm_subscription",
-            "identifier": identifier
-        });
-        if socket.send(Message::Text(confirm.to_string().into())).await.is_err() {
+        };
+        if !confirm_subscription(&mut socket, identifier).await {
             return;
         }
-        if !transmit_snapshot(&mut socket, identifier, &plan_gateway, plan_id).await {
+        if !transmit_plan_snapshot(&mut socket, identifier, &plan_gateway, plan_id).await {
             return;
         }
-        let mut rx = hub.subscribe_plan(plan_id).await;
-        loop {
-            tokio::select! {
-                incoming = socket.recv() => {
-                    match incoming {
-                        None | Some(Err(_)) => return,
-                        Some(Ok(Message::Close(_))) => return,
-                        Some(Ok(Message::Text(text))) => {
-                            if let Ok(frame) = serde_json::from_str::<Value>(&text) {
-                                if frame.get("type").and_then(|t| t.as_str()) == Some("ping") {
-                                    if !send_pong(&mut socket).await {
-                                        return;
-                                    }
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                payload = rx.recv() => {
-                    match payload {
-                        Ok(body) => {
-                            let message = json!({
-                                "identifier": identifier,
-                                "message": serde_json::from_str::<Value>(&body).unwrap_or(json!({}))
-                            });
-                            if socket.send(Message::Text(message.to_string().into())).await.is_err() {
-                                return;
-                            }
-                        }
-                        Err(_) => return,
-                    }
-                }
-            }
-        }
+        let rx = hub.subscribe_plan(plan_id).await;
+        relay_subscription(&mut socket, identifier, rx).await;
+        return;
     }
 }
 
@@ -275,6 +375,7 @@ async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppStat
 mod cable_snapshot_tests {
     use super::*;
     use crate::test_support::test_pool_with_plan;
+    use agrr_adapters_sqlite::FarmSqliteGateway;
 
     #[test]
     fn pending_plan_returns_scheduling_snapshot() {
@@ -288,5 +389,27 @@ mod cable_snapshot_tests {
             payload["message_key"],
             "models.cultivation_plan.phases.initializing"
         );
+    }
+
+    #[test]
+    fn farm_snapshot_includes_weather_fields() {
+        let db = test_pool_with_plan(1);
+        let gateway = FarmSqliteGateway::new(db.pool.clone());
+        db.pool
+            .with_connection(|conn| {
+                conn.execute(
+                    "INSERT INTO farms (id, name, latitude, longitude, is_reference, weather_data_status,
+                     weather_data_fetched_years, weather_data_total_years, created_at, updated_at)
+                     VALUES (99, 'Cable Farm', 35.0, 139.0, 0, 'fetching', 2, 5, datetime('now'), datetime('now'))",
+                    [],
+                )
+            })
+            .expect("insert farm");
+        let payload = farm_snapshot_payload(&gateway, 99).expect("farm snapshot");
+        assert_eq!(99, payload["id"].as_i64().unwrap());
+        assert_eq!("fetching", payload["weather_data_status"].as_str().unwrap());
+        assert_eq!(40, payload["weather_data_progress"].as_i64().unwrap());
+        assert_eq!(2, payload["weather_data_fetched_years"].as_i64().unwrap());
+        assert_eq!(5, payload["weather_data_total_years"].as_i64().unwrap());
     }
 }
