@@ -1,5 +1,5 @@
 /**
- * Whether an eligible PR should receive a conflict / master-sync dispatch
+ * Whether an eligible PR should receive a master-sync reconcile dispatch
  * after master advances.
  *
  * @param {{ mergeable?: string | null; mergeStateStatus?: string | null }} pr

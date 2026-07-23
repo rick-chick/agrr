@@ -39,7 +39,7 @@ disable-model-invocation: false
 
 **既存の同型経路を先に読む**（[references/EXISTING-PATTERNS.md](references/EXISTING-PATTERNS.md)）。同型があるのに別経路を発明しない。**既存の本文パースは写さない**（[automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc)）。
 
-設計原則の正本: [references/PRINCIPLES.md](references/PRINCIPLES.md)。
+設計原則の正本: [references/PRINCIPLES.md](references/PRINCIPLES.md)。**判断基準（即決用）**: [references/JUDGMENT-CRITERIA.md](references/JUDGMENT-CRITERIA.md)。
 
 ### 修正・レビュー時の追加ゲート
 

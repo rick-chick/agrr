@@ -38,7 +38,7 @@ const REQUIRED_MERGE_DISPATCH_SNIPPETS = [
 ];
 
 const REQUIRED_PRIMARY_DISPATCH_LIB_SNIPPETS = [
-  'draft without conflict or ci failure',
+  'draft without sync need or ci failure',
 ];
 
 /**

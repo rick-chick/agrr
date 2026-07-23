@@ -1,9 +1,9 @@
 # Dispatches the Delivery Agent for PRs targeting master (opt-out only).
 #
 # CI dispatch: Backend test workflow_run only (once per push; avoids check_suite / per-job duplicates).
-#   On ci_completed: green → merge path; failed required CI → ci_fix (draft or ready).
-# PR dispatch: opened / labeled / synchronize / ready_for_review; conflict when BEHIND/DIRTY/CONFLICTING.
-# Conflict dispatch: PR synchronize / ready_for_review when BEHIND/DIRTY/CONFLICTING (minus blockers).
+#   On ci_completed: green or failed required CI can resend the Delivery Agent webhook.
+# PR dispatch: opened / labeled / synchronize / ready_for_review when structurally eligible.
+# Sync rescue: PR synchronize / ready_for_review when BEHIND/DIRTY/CONFLICTING.
 # Master-push BEHIND/CONFLICT rescue: pr-merge-worker-retry-dispatch reconcile (15 min cron).
 #
 # Setup: see .cursor/skills/delivery-agent/SKILL.md
@@ -165,15 +165,10 @@ jobs:
             exit 0
           fi
 
-          DISPATCH_KIND=$(echo "$RESULT" | jq -r '.dispatchKind')
-          if [ "$DISPATCH_KIND" = "conflict" ]; then
-            echo "PR needs master sync (mergeable=$MERGEABLE_STATE mergeStateStatus=$MERGE_STATE_STATUS); dispatching conflict resolution."
-          elif [ "$DISPATCH_KIND" = "ci_fix" ]; then
-            echo "Required CI failed; dispatching ci_fix."
-          fi
-
-          if [ "$DISPATCH_KIND" = "conflict" ] || [ "$DISPATCH_KIND" = "ci_fix" ]; then
-            echo "skipping CI gate for ${DISPATCH_KIND} resolution"
+          if [ "$REQUIRED_CI_STATE" = "failed" ]; then
+            echo "Required CI failed; dispatching Delivery Agent webhook."
+          elif [ "$MERGE_STATE_STATUS" = "BEHIND" ] || [ "$MERGE_STATE_STATUS" = "DIRTY" ] || [ "$MERGEABLE_STATE" = "CONFLICTING" ]; then
+            echo "PR needs sync (mergeable=$MERGEABLE_STATE mergeStateStatus=$MERGE_STATE_STATUS); dispatching Delivery Agent webhook."
           fi
 
           CLOSING_ISSUES_JSON=$(echo "$PR_META" | jq -c '.closingIssuesReferences')

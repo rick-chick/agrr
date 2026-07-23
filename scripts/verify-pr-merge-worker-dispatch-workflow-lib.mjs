@@ -21,12 +21,11 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'resolve-workflow-run-pr-from-gh.mjs',
 ];
 
-const CONFLICT_DISPATCH_SNIPPETS = [
+const PRIMARY_DELIVERY_DISPATCH_SNIPPETS = [
   'classify-primary-pr-merge-dispatch.mjs',
   'classify-required-ci-state.mjs',
-  'skipping CI gate for ${DISPATCH_KIND} resolution',
-  'Required CI failed; dispatching ci_fix',
-  'dispatching conflict resolution',
+  'Required CI failed; dispatching Delivery Agent webhook',
+  'dispatching Delivery Agent webhook',
 ];
 
 const PRIMARY_DISPATCH_LIB_SNIPPETS = [
@@ -53,16 +52,18 @@ const WEBHOOK_POST_LIB_SNIPPETS = [
 const RECONCILE_LIB_SNIPPETS = [
   'classifyReconcileCandidate',
   'classifyReconcileDispatchCandidate',
-  'classifyPrReviewCandidate',
   'selectReconcileCandidate',
   'prMergeWorkerNeedsSync',
+];
+
+const FORBIDDEN_RECONCILE_LIB_SNIPPETS = [
   "action: 'conflict'",
   "action: 'stuck_retry'",
   "action: 'ci_fix'",
   "action: 'pr_review'",
 ];
 
-const PAYLOAD_LIB_SNIPPETS = ['buildDeliveryPrPayloadFromPr', 'buildPrReviewDispatchPayload'];
+const PAYLOAD_LIB_SNIPPETS = ['buildDeliveryPrPayloadFromPr'];
 
 /**
  * @param {string} repoRoot
@@ -158,7 +159,7 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   if (workflowText.includes('[WIP]') || workflowText.includes('[DRAFT]')) {
     errors.push(
-      'pr-merge-worker-dispatch workflow must not grep PR title for [WIP]/[DRAFT]; use wip label opt-out',
+      'pr-merge-worker-dispatch workflow must not grep PR title for [WIP]/[DRAFT]; Agent observes PR state',
     );
   }
 
@@ -166,10 +167,14 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     errors.push('pr-merge-worker-dispatch workflow must not fetch or pass PR body');
   }
 
-  for (const snippet of CONFLICT_DISPATCH_SNIPPETS) {
+  for (const snippet of PRIMARY_DELIVERY_DISPATCH_SNIPPETS) {
     if (!workflowText.includes(snippet)) {
-      errors.push(`workflow missing conflict dispatch snippet: ${snippet}`);
+      errors.push(`workflow missing primary dispatch snippet: ${snippet}`);
     }
+  }
+
+  if (workflowText.includes('DISPATCH_KIND')) {
+    errors.push('pr-merge-worker-dispatch workflow must not emit DISPATCH_KIND route names');
   }
 
   for (const snippet of PRIMARY_DISPATCH_LIB_SNIPPETS) {
@@ -218,6 +223,16 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  for (const snippet of FORBIDDEN_RECONCILE_LIB_SNIPPETS) {
+    if (reconcileLibText.includes(snippet)) {
+      errors.push(`reconcile lib must not contain named action routing snippet: ${snippet}`);
+    }
+  }
+
+  if (primaryDispatchLibText.includes('dispatchKind')) {
+    errors.push('primary dispatch lib must not return dispatchKind route names');
+  }
+
   const retryDispatchScriptPath = join(
     repoRoot,
     'scripts/pr-merge-worker-retry-dispatch.mjs',
@@ -243,7 +258,7 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   if (!retryDispatchScriptText.includes('classifyReconcileDispatchCandidate')) {
     errors.push(
-      'pr-merge-worker-retry-dispatch.mjs must classify dispatch via classifyReconcileDispatchCandidate (includes pr_review)',
+      'pr-merge-worker-retry-dispatch.mjs must classify dispatch via classifyReconcileDispatchCandidate',
     );
   }
 
@@ -253,19 +268,24 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     );
   }
 
-  const reconcilePrepLibPath = join(
-    repoRoot,
-    'scripts/pr-merge-worker-reconcile-prep-lib.mjs',
-  );
-  try {
-    await readFile(reconcilePrepLibPath, 'utf8');
-  } catch {
-    errors.push(`missing reconcile prep lib: ${reconcilePrepLibPath}`);
+  if (retryDispatchScriptText.includes('resolveUnlinkedPrOptOut')) {
+    errors.push(
+      'pr-merge-worker-retry-dispatch.mjs must not use resolveUnlinkedPrOptOut',
+    );
   }
 
-  if (!retryDispatchScriptText.includes('resolveUnlinkedPrOptOut')) {
+  if (retryDispatchScriptText.includes('classifyPrReviewCandidate')) {
     errors.push(
-      'pr-merge-worker-retry-dispatch.mjs must use resolveUnlinkedPrOptOut from reconcile prep lib',
+      'pr-merge-worker-retry-dispatch.mjs must not use classifyPrReviewCandidate',
+    );
+  }
+
+  if (
+    retryDispatchScriptText.includes('agent-no-merge') ||
+    retryDispatchScriptText.includes('--add-label')
+  ) {
+    errors.push(
+      'pr-merge-worker-retry-dispatch.mjs must not add agent-no-merge or mutate opt-out labels',
     );
   }
 
@@ -290,23 +310,70 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   const requiredSkillSnippets = [
     'resolve-pr-merge-conflicts.sh',
-    '内部ゲート `conflict`',
-    '内部ゲート `stuck_retry`',
-    '内部ゲート `ci_fix`',
-    '内部ゲート `pr_review`',
-    'classifyReconcileCandidate',
-    'classifyPrReviewCandidate',
-    'selectReconcileCandidate',
+    '観測優先',
+    'JUDGMENT-CRITERIA.md',
     'synchronize',
     'mergeStateStatus',
     'action` は送らない',
     'gh pr close',
+    'ラベル名で skip しない',
+    '信用しない',
   ];
 
   for (const snippet of requiredSkillSnippets) {
     if (!skillText.includes(snippet)) {
       errors.push(`skill missing required snippet: ${snippet}`);
     }
+  }
+
+  if (!skillText.includes('closingIssuesReferences` 空')) {
+    errors.push('skill must document unlinked PR handling via closingIssuesReferences observation');
+  }
+
+  if (/- ラベル `(agent-no-merge|do-not-merge|wip)`/.test(skillText)) {
+    errors.push('skill §1 must not exclude PRs by merge-prohibition labels');
+  }
+
+  const deliverySkillPath = join(repoRoot, '.cursor/skills/delivery-agent/SKILL.md');
+  let deliverySkillText = '';
+  try {
+    deliverySkillText = await readFile(deliverySkillPath, 'utf8');
+  } catch {
+    errors.push(`missing skill: ${deliverySkillPath}`);
+  }
+
+  if (
+    deliverySkillText &&
+    !deliverySkillText.includes('merge 禁止を決めない')
+  ) {
+    errors.push('delivery-agent skill must forbid merge-prohibition labels as agent input');
+  }
+
+  if (deliverySkillText && !deliverySkillText.includes('JUDGMENT-CRITERIA.md')) {
+    errors.push('delivery-agent skill must link to JUDGMENT-CRITERIA.md');
+  }
+
+  const judgmentCriteriaPath = join(
+    repoRoot,
+    '.cursor/skills/automation-authoring/references/JUDGMENT-CRITERIA.md',
+  );
+  try {
+    const judgmentText = await readFile(judgmentCriteriaPath, 'utf8');
+    for (const snippet of [
+      '## 1. 二層の役割',
+      'reconcile',
+      'No-Go',
+      'agent-no-merge',
+    ]) {
+      if (!judgmentText.includes(snippet)) {
+        errors.push(`JUDGMENT-CRITERIA.md missing: ${snippet}`);
+      }
+    }
+    if (judgmentText.includes('コードに残存・廃止予定')) {
+      errors.push('JUDGMENT-CRITERIA.md must not keep legacy residual section');
+    }
+  } catch {
+    errors.push(`missing judgment criteria: ${judgmentCriteriaPath}`);
   }
 
   const scriptPath = join(
