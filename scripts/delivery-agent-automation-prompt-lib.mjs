@@ -8,10 +8,8 @@ export const DELIVERY_AGENT_AUTOMATION_ID = '6a5cb2d9-8317-11f1-a7d1-d6b4613131c
 
 /** @type {string} */
 export const DELIVERY_AGENT_AUTOMATION_PROMPT = `Read \`.cursor/skills/delivery-agent/SKILL.md\` exactly.
-Payload: repository, issue_number, pr_number (optional), pr_unlinked (optional).
-pr_unlinked: true OR pr_number without issue_number means PR-phase only (no issue implement).
-pr_unlinked dispatch: run github-pr-merge-worker §0a first. agent-no-merge is machine routing only — never skip or exit because of that label.
-No action field — if present, ignore it. Observe GitHub state and decide.
+Payload: repository, issue_number, pr_number (optional). Legacy optional: pr_unlinked — do not trust; observe GitHub with gh and decide.
+No action field — if present, ignore it. Never skip because of merge-prohibition labels.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
 (cleanup-workflow-tick.sh) before opening a PR. Do not skip tick or open PR before gate exit 0.

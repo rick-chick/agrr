@@ -22,12 +22,12 @@
 
 | 読むファイル | 内容 |
 |--------------|------|
-| `.github/workflows/pr-merge-worker-dispatch.yml` | CI / conflict / ci_fix（**全 PR 既定対象・オプトアウトのみ**） |
-| `.github/workflows/pr-merge-worker-retry-dispatch.yml` | reconcile（open + base master 全件） |
+| `.github/workflows/pr-merge-worker-dispatch.yml` | CI 完了・コンフリクト検知 → webhook 中継（**全 PR 既定対象・オプトアウトのみ**） |
+| `.github/workflows/pr-merge-worker-retry-dispatch.yml` | reconcile（open + base master への webhook 再送） |
 | `.github/workflows/pr-agent-prep.yml` | Draft → ready（`closingIssuesReferences` あり → `agent-merge`） |
-| `scripts/delivery-dispatch-lib.mjs` | Delivery webhook payload（`closingIssuesReferences` / `pr_unlinked`） |
-| `scripts/pr-merge-worker-retry-dispatch-lib.mjs` | 候補選定（`conflict` / `ci_fix` / `pr_review` / `stuck_retry`） |
-| `scripts/pr-merge-worker-retry-dispatch.mjs` | reconcile・`reconcilePrep`（未リンク opt-out のみ） |
+| `scripts/delivery-dispatch-lib.mjs` | Delivery webhook payload（`pr_unlinked` はレガシー optional） |
+| `scripts/pr-merge-worker-retry-dispatch-lib.mjs` | 候補選定（**レガシー**内部ゲート名 `conflict` / `ci_fix` / `pr_review` / `stuck_retry` — 廃止予定、[PRINCIPLES §二層分離](PRINCIPLES.md#二層分離正本)） |
+| `scripts/pr-merge-worker-retry-dispatch.mjs` | reconcile・webhook 再送（`reconcilePrep` の label 整理は廃止予定） |
 | `.cursor/skills/github-pr-merge-worker/SKILL.md` | Agent 側 |
 
 ## 監視・監査

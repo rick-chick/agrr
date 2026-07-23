@@ -18,7 +18,7 @@ const REPO_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 test('delivery agent automation prompt documents pr_unlinked webhook field', () => {
   assert.match(
     DELIVERY_AGENT_AUTOMATION_PROMPT,
-    /pr_unlinked \(optional\)/,
+    /Legacy optional: pr_unlinked/,
   );
   assert.match(
     DELIVERY_AGENT_AUTOMATION_PROMPT,
@@ -26,14 +26,14 @@ test('delivery agent automation prompt documents pr_unlinked webhook field', () 
   );
 });
 
-test('delivery agent automation prompt forbids skipping pr_unlinked review for agent-no-merge', () => {
+test('delivery agent automation prompt forbids merge-prohibition labels as agent input', () => {
   assert.match(
     DELIVERY_AGENT_AUTOMATION_PROMPT,
-    /agent-no-merge.*machine routing/i,
+    /merge-prohibition labels/i,
   );
   assert.match(
     DELIVERY_AGENT_AUTOMATION_PROMPT,
-    /§0a/,
+    /observe GitHub with gh/i,
   );
 });
 
@@ -51,7 +51,7 @@ test('cursor-automation-schedule embeds pr_unlinked in Delivery Agent prefill', 
   const match = text.match(/automations\/new\?prefill=([A-Za-z0-9_-]+)/);
   assert.ok(match, 'schedule must include Delivery Agent prefill URL');
   const { prompt } = decodeDeliveryAgentPrefillToken(match[1]);
-  assert.match(prompt, /pr_unlinked \(optional\)/);
+  assert.match(prompt, /Legacy optional: pr_unlinked/);
 });
 
 test('delivery-agent SKILL automation block matches canonical prompt', async () => {

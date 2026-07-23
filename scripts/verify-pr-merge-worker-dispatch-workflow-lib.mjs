@@ -290,17 +290,14 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   const requiredSkillSnippets = [
     'resolve-pr-merge-conflicts.sh',
-    '内部ゲート `conflict`',
-    '内部ゲート `stuck_retry`',
-    '内部ゲート `ci_fix`',
-    '内部ゲート `pr_review`',
-    'classifyReconcileCandidate',
-    'classifyPrReviewCandidate',
-    'selectReconcileCandidate',
+    '観測優先',
+    'JUDGMENT-CRITERIA.md',
     'synchronize',
     'mergeStateStatus',
     'action` は送らない',
     'gh pr close',
+    'ラベル名で skip しない',
+    '信用しない',
   ];
 
   for (const snippet of requiredSkillSnippets) {
@@ -309,16 +306,12 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
-  if (!skillText.includes('payload `pr_unlinked: true`') || !skillText.includes('§0a へ')) {
-    errors.push('skill must route pr_unlinked dispatch to §0a before §1');
+  if (!skillText.includes('closingIssuesReferences` 空')) {
+    errors.push('skill must document unlinked PR handling via closingIssuesReferences observation');
   }
 
-  if (/- ラベル `agent-no-merge` \//.test(skillText)) {
-    errors.push('skill §1 must not exclude agent-no-merge (machine routing label only)');
-  }
-
-  if (!skillText.includes('agent-no-merge` は機械')) {
-    errors.push('skill must document agent-no-merge as machine routing, not agent skip');
+  if (/- ラベル `(agent-no-merge|do-not-merge|wip)`/.test(skillText)) {
+    errors.push('skill §1 must not exclude PRs by merge-prohibition labels');
   }
 
   const deliverySkillPath = join(repoRoot, '.cursor/skills/delivery-agent/SKILL.md');
@@ -331,9 +324,33 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   if (
     deliverySkillText &&
-    !deliverySkillText.includes('agent-no-merge` は機械層のルーティング印')
+    !deliverySkillText.includes('merge 禁止を決めない')
   ) {
-    errors.push('delivery-agent skill must treat agent-no-merge as machine routing only');
+    errors.push('delivery-agent skill must forbid merge-prohibition labels as agent input');
+  }
+
+  if (deliverySkillText && !deliverySkillText.includes('JUDGMENT-CRITERIA.md')) {
+    errors.push('delivery-agent skill must link to JUDGMENT-CRITERIA.md');
+  }
+
+  const judgmentCriteriaPath = join(
+    repoRoot,
+    '.cursor/skills/automation-authoring/references/JUDGMENT-CRITERIA.md',
+  );
+  try {
+    const judgmentText = await readFile(judgmentCriteriaPath, 'utf8');
+    for (const snippet of [
+      '## 1. 二層の役割',
+      'agent-no-merge',
+      'pr_unlinked',
+      'reconcile',
+    ]) {
+      if (!judgmentText.includes(snippet)) {
+        errors.push(`JUDGMENT-CRITERIA.md missing: ${snippet}`);
+      }
+    }
+  } catch {
+    errors.push(`missing judgment criteria: ${judgmentCriteriaPath}`);
   }
 
   const scriptPath = join(
