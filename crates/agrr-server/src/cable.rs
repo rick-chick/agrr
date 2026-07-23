@@ -437,4 +437,30 @@ mod cable_snapshot_tests {
         assert_eq!(2, payload["weather_data_fetched_years"].as_i64().unwrap());
         assert_eq!(5, payload["weather_data_total_years"].as_i64().unwrap());
     }
+
+    #[test]
+    fn parse_farm_id_accepts_numeric_json_forms() {
+        assert_eq!(Some(7), parse_farm_id_from_identifier(&json!({ "farm_id": 7 })));
+        assert_eq!(Some(7), parse_farm_id_from_identifier(&json!({ "farm_id": "7" })));
+        assert_eq!(Some(7), parse_farm_id_from_identifier(&json!({ "farm_id": 7.0 })));
+        assert_eq!(None, parse_farm_id_from_identifier(&json!({ "farm_id": "bad" })));
+        assert_eq!(None, parse_farm_id_from_identifier(&json!({})));
+    }
+
+    #[tokio::test]
+    async fn cable_farm_refresh_broadcast_relays_to_subscriber() {
+        let hub = Arc::new(CableHub::default());
+        let mut rx = hub.subscribe_farm(42).await;
+        let broadcast = CableFarmRefreshBroadcast::new(hub);
+        let payload = json!({
+            "id": 42,
+            "weather_data_status": "fetching",
+            "weather_data_progress": 40
+        });
+        broadcast.broadcast_farm_weather_progress(42, &payload);
+        let body = rx.recv().await.expect("broadcast payload");
+        let parsed: Value = serde_json::from_str(&body).expect("json body");
+        assert_eq!("fetching", parsed["weather_data_status"].as_str().unwrap());
+        assert_eq!(40, parsed["weather_data_progress"].as_i64().unwrap());
+    }
 }
