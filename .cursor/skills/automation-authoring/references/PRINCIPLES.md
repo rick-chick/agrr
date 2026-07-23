@@ -29,7 +29,7 @@ Automation の目的は、**人間がラベルを付けたり UI で再開した
 |------|------|
 | **1. 全部拾う** | open 対象を広く列挙し、滞留（CI 赤 / BEHIND / キャンセル / stale）は **同じ reconcile が webhook 再送** |
 | **2. 少ないオプトアウト** | 機械の重複起動抑止のみ（`agent-in-progress` / `agent-merge-in-progress` 等）。**merge・close・obsolete の事前判断は機械がしない** |
-| **3. レガシー内部ゲート名** | `conflict` / `ci_fix` / `stuck_retry` 等は **実装の残債**（[JUDGMENT-CRITERIA §6](JUDGMENT-CRITERIA.md#6-レガシーコードに残存廃止予定)）。新規設計では経路分岐に使わない |
+| **3. 場合分けで止めない** | 「このラベルのときだけ起動」「この経路名のときだけ送る」を増やして責任空白を作らない |
 
 **禁止**: 「この場合はスキップ・あの場合は人間確認」を追加して対処済みとみなすこと。未対応の穴は減らず、停止条件だけが増える。
 
@@ -69,8 +69,6 @@ GitHub イベント
 ```
 
 **reconcile** は滞留 open issue / PR への **webhook 再送**まで。何をするか（merge / close / 修正）は **Agent が観測して決める**。
-
-**レガシー実装**: `*-dispatch-lib.mjs` の内部ゲート名（`conflict` / `ci_fix` / `pr_review` / `stuck_retry`）、`agent-no-merge` / `do-not-merge` / `pr_unlinked` payload 分岐は **機械判断の残債・廃止予定**。ドキュメントの正は上表。実装除去は別タスク。
 
 ## 機械ゲートとエージェント判定
 

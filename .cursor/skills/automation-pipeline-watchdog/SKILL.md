@@ -10,7 +10,7 @@ description: >-
 
 **Issue Worker / PR Merge Worker / dispatch workflows** の運用状態を **1 時間ごと**に機械収集し、**P0/P1 の異常**を調査して **GitHub issue** に落とす。repo 修正 PR は **最小限**（スクリプト破損など P0 のみ）。
 
-上位原則: [`automation-authoring` PRINCIPLES.md §目的](../automation-authoring/references/PRINCIPLES.md)（人間介在なしで完遂。滞留を記録・再開せず未対応のまま残さない）。
+上位原則: [JUDGMENT-CRITERIA.md](../automation-authoring/references/JUDGMENT-CRITERIA.md)、[`automation-authoring` PRINCIPLES.md §目的](../automation-authoring/references/PRINCIPLES.md)（人間介在なしで完遂。滞留を記録・再開せず未対応のまま残さない）。
 
 週次の深い監査・クリティカル PR 修正は [`cloud-automation-audit`](../cloud-automation-audit/SKILL.md) が担当。本スキルは **時間解像度の高い運用監視**に専念する。
 

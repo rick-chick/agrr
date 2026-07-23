@@ -59,7 +59,7 @@ Webhook payload フィールド: `repository`, `pr_number`（任意: `pr_title`,
 
 ### コンフリクト解消経路（`mergeable_state` が `BEHIND` / `DIRTY` / `CONFLICTING`）
 
-対象 PR が `BEHIND` / `DIRTY` / `CONFLICTING` のとき、PR `synchronize` / `ready_for_review` 等で `.github/workflows/pr-merge-worker-dispatch.yml` が webhook を dispatch する。**master push 直後の BEHIND/CONFLICT 救済**は `pr-merge-worker-retry-dispatch` の **reconcile**（15 分 cron + cancel/failure 時）が webhook を再送する（選定ロジックは `scripts/pr-merge-worker-needs-sync.mjs` — **レガシー実装名** `conflict`、[PRINCIPLES §二層分離](../automation-authoring/references/PRINCIPLES.md#二層分離正本)）。
+対象 PR が `BEHIND` / `DIRTY` / `CONFLICTING` のとき、PR `synchronize` / `ready_for_review` 等で `.github/workflows/pr-merge-worker-dispatch.yml` が webhook を dispatch する。**master push 直後の BEHIND/CONFLICT 救済**は `pr-merge-worker-retry-dispatch` の **reconcile**（15 分 cron + cancel/failure 時）が webhook を再送する（選定: `scripts/pr-merge-worker-needs-sync.mjs`）。
 
 | 動作 | 説明 |
 |------|------|
@@ -110,7 +110,7 @@ gh pr view <N> --json labels,state,headRefOid
 |------|------|
 | ラベル `agent-merge-in-progress` が付いている（Webhook も dispatch しない） | **スキップ**（重複 Agent を起動しない） |
 | ペイロード `head_sha` があり、現在の `headRefOid` と不一致（古い run） | **スキップ**（コンフリクト解消経路は除く — コンフリクト解消 run は head が進むため） |
-| payload `pr_unlinked`（レガシー） | **信用しない** — `gh pr view` で `closingIssuesReferences` を見て §0a か通常経路かを決める |
+| payload `pr_unlinked`（optional） | **信用しない** — `gh pr view` で `closingIssuesReferences` を見て §0a か通常経路かを決める |
 | 上記以外 | §1 へ（観測後） |
 
 着手時は直ちに `agent-merge-in-progress` を付与（§5）。**着手直後に `headRefOid` を Memory に記録**し、修正 push 後の再 run では新 SHA で再評価する。
@@ -412,7 +412,7 @@ gh pr edit <N> --remove-label agent-merge-in-progress
 
 確認: `gh api repos/rick-chick/agrr/rulesets --jq '.[] | select(.name=="master CI required")'`
 
-ラベル: `agent-merge-in-progress`（重複抑止のみ）。**`agent-no-merge` / `do-not-merge` / `wip` は廃止予定 — Agent は判断に使わない**（[PRINCIPLES.md §二層分離](../automation-authoring/references/PRINCIPLES.md#二層分離正本)）。
+ラベル: `agent-merge-in-progress`（重複抑止のみ）。判断印ラベルで skip しない（[JUDGMENT-CRITERIA.md](../automation-authoring/references/JUDGMENT-CRITERIA.md)）。
 
 ### Cursor Automation
 

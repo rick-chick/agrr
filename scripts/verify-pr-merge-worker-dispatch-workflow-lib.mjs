@@ -362,10 +362,15 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     for (const snippet of [
       '## 1. 二層の役割',
       'reconcile',
+      'No-Go',
+      'agent-no-merge',
     ]) {
       if (!judgmentText.includes(snippet)) {
         errors.push(`JUDGMENT-CRITERIA.md missing: ${snippet}`);
       }
+    }
+    if (judgmentText.includes('コードに残存・廃止予定')) {
+      errors.push('JUDGMENT-CRITERIA.md must not keep legacy residual section');
     }
   } catch {
     errors.push(`missing judgment criteria: ${judgmentCriteriaPath}`);

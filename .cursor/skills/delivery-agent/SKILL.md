@@ -22,11 +22,11 @@ description: >-
 | [`tdd-on-edit/SKILL.md`](../tdd-on-edit/SKILL.md) | 改修 TDD |
 | [`test-common/SKILL.md`](../test-common/SKILL.md) | テスト実行 |
 
-参照スキル内の **`action` 条件はレガシー**。§0 の観測結果が常に優先する。payload に `action` があっても**無視**する。
+参照スキル内の **`action` 条件は無視**。§0 の観測結果が常に優先する。payload に `action` があっても**無視**する。
 
 ## §0 観測と分岐（毎 run 先頭・固定順）
 
-**payload は起動ヒントのみ。** `repository` + 任意の `issue_number` / `pr_number`（レガシー: `pr_unlinked`）。**ラベル名・payload フィールドで skip / merge 禁止を決めない。** 毎 run 先頭で `gh` 観測する。
+**payload は起動ヒントのみ。** `repository` + 任意の `issue_number` / `pr_number`（optional: `pr_unlinked`）。**ラベル名・payload フィールドで skip / merge 禁止を決めない。** 毎 run 先頭で `gh` 観測する。
 
 0. **in-progress** — `agent-in-progress` または `agent-merge-in-progress` が付いていれば **即終了**（重複抑止。コメント不要）
 1. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,state,mergeable,mergeStateStatus,labels`
@@ -104,7 +104,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 | `repository` | はい |
 | `issue_number` | issue 起点時、または PR の `closingIssuesReferences` にリンク issue があるとき |
 | `pr_number` | PR / CI 起点時 |
-| `pr_unlinked` | いいえ（レガシー optional）。機械が `true` を送ることがある。**Agent は信用しない** — `gh pr view` の `closingIssuesReferences` で未リンクか観測 |
+| `pr_unlinked` | いいえ（optional）。機械が `true` を送ることがある。**Agent は信用しない** — `gh pr view` の `closingIssuesReferences` で未リンクか観測 |
 | `action` | **送らない・無視** |
 
 任意: `issue_title`, `issue_url`, `labels`, `retry_reason`。**`issue_body` / `body_hash` は機械層から送らない**（Agent は `gh issue view` で読む）。
@@ -131,7 +131,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 
 ```
 Read `.cursor/skills/delivery-agent/SKILL.md` exactly.
-Payload: repository, issue_number, pr_number (optional). Legacy optional: pr_unlinked — do not trust; observe GitHub with gh and decide.
+Payload: repository, issue_number, pr_number (optional). Optional: pr_unlinked — do not trust; observe GitHub with gh and decide.
 No action field — if present, ignore it. Never skip because of merge-prohibition labels.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
