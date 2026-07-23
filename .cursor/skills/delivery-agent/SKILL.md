@@ -29,26 +29,17 @@ description: >-
 **payload は起動ヒントのみ。** `repository` + 任意の `issue_number` / `pr_number`（optional: `pr_unlinked`）。**ラベル名・payload フィールドで skip / merge 禁止を決めない。** 毎 run 先頭で `gh` 観測する。
 
 0. **in-progress** — `agent-in-progress` または `agent-merge-in-progress` が付いていれば **即終了**（重複抑止。コメント不要）
-1. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,state,mergeable,mergeStateStatus,labels`
-   - **`merged: true`** → 再マージ禁止。リンク issue に `ux-campaign:breadcrumb` があれば post-merge のみ
-   - 判定補助: [`delivery-agent-campaign-lib.mjs`](../../../scripts/delivery-agent-campaign-lib.mjs)
-   - **リンク issue あり** → PR フェーズ（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）へ
-   - **リンク issue なし**（未リンク PR）→ PR フェーズ §0a（陳腐化観測）から。マージ経路には入らない
+1. **番号解決** — `pr_number` ありなら `gh pr view --json mergedAt,closingIssuesReferences,state,mergeable,mergeStateStatus`
+   - **`mergedAt` あり** → 再マージ禁止。リンク issue に `ux-campaign:breadcrumb` があれば post-merge（[`delivery-agent-campaign-lib.mjs`](../../../scripts/delivery-agent-campaign-lib.mjs)）
+   - **それ以外** → PR フェーズ（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。未リンクは prep 対象外のみ（merge / close は Agent が決める）
 2. **open PR** — issue 起点でリンク issue の open PR を検索（`closingIssuesReferences`）
    - **あり** → PR フェーズ
    - **なし** → issue フェーズ（[`github-issue-worker`](../github-issue-worker/SKILL.md)）
 3. **epic** — `[epic]` / `epic` ラベルなら §1b
 
-### PR フェーズ: 陳腐化（obsolete）— Agent 判断
+### PR フェーズ
 
-未リンク PR、または観測で陳腐化が疑われるとき [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) §0a を実施。
-
-1. `gh pr diff` + 最近マージ済み PR と比較
-2. obsolete → close
-3. まだ有効 → exit 0（マージしない）
-4. 判断不能 → コメント + exit 0
-
-タイトル正規化や `#N` 参照の regex は **Agent 判断内のみ**（dispatch / reconcile スクリプトに書かない）。
+[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) に従う。**open PR は merge / close / 修正のいずれかで終える（オープン放置禁止）。** `agent-no-merge` 等は無視（[JUDGMENT-CRITERIA §4](../automation-authoring/references/JUDGMENT-CRITERIA.md)）。
 
 ### PR フェーズでやらないこと
 
@@ -57,7 +48,7 @@ description: >-
 
 ### issue フェーズでやらないこと
 
-- squash merge（ready 化は **prep** 機械。Agent は `gh pr ready` しない）
+- squash merge（リンク issue の Draft ready は **prep**。未リンク PR の ready は PR フェーズで Agent）
 
 ### issue 実装経路（TDD GREEN 後・PR 前）
 
@@ -134,6 +125,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 Read `.cursor/skills/delivery-agent/SKILL.md` exactly.
 Payload: repository, issue_number, pr_number (optional). Optional: pr_unlinked — do not trust; observe GitHub with gh and decide.
 No action field — if present, ignore it. Never skip because of merge-prohibition labels.
+Open PR: decide merge or close; do not leave open without action.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
 (cleanup-workflow-tick.sh) before opening a PR. Do not skip tick or open PR before gate exit 0.
