@@ -14,7 +14,7 @@
 import { execFile } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
 import {
@@ -86,7 +86,7 @@ async function fetchGithubIssues() {
 /**
  * @param {Array<Record<string, unknown>>} findings
  */
-function renderMarkdownDraft(findings) {
+export function renderMarkdownDraft(findings) {
   const lines = [
     '# UX/UI Issue 草案（自動生成）',
     '',
@@ -133,13 +133,10 @@ function renderMarkdownDraft(findings) {
         : `layout=${f.layoutResult || '—'}, i18n=${f.i18nResult || '—'}`;
       lines.push('## 背景', '');
       lines.push(`${f.summary}（${rowRef}, ${layoutNote}）。`, '');
-      lines.push('## 対応', '');
-      lines.push('- 再キャプチャで現象を確認');
-      if (f.category === 'i18n') {
-        lines.push('- `ja` / `en` / `in` の翻訳キー・catalog spec で RED→修正');
-      } else {
-        lines.push('- コンポーネント / presenter spec で状態・表示をテスト');
-      }
+      lines.push('## 再現手順', '');
+      if (f.pattern) lines.push(`- ルート: ${f.pattern}`);
+      if (f.png?.length) lines.push(`- PNG: ${f.png.join(', ')}`);
+      lines.push('- 上記画面で指摘どおりの表示・操作を確認（起票前に実施済み）');
       lines.push('', '## 完了条件', '');
       lines.push('- [ ] 3 言語キャプチャで指摘が解消');
       lines.push('- [ ] 関連テスト GREEN', '', '## 依存', '', 'なし', '', '## 参照', '');
@@ -147,9 +144,9 @@ function renderMarkdownDraft(findings) {
       lines.push(`- PNG: ${(f.png || []).join(', ')}`);
     } else {
       lines.push('## 背景', '');
-      lines.push(`${f.summary}。`, '', '## 対応', '');
-      lines.push('1. 生色指定を既存 CSS トークン（`var(--color-*)`）に置換');
-      lines.push('2. `npm run audit:css-tokens:enforce` が通ることを確認', '', '## 完了条件', '');
+      lines.push(`${f.summary}。`, '', '## 再現手順', '');
+      lines.push('- `cd frontend && npm run audit:css-tokens` で var 外違反を確認（起票前に実施済み）');
+      lines.push('', '## 完了条件', '');
       lines.push('- [ ] audit:css-tokens:enforce exit 0');
       lines.push('- [ ] 表示のビジュアル回帰なし', '', '## 依存', '', 'なし', '', '## 参照', '');
       lines.push('- `npm run audit:css-tokens`');
@@ -226,7 +223,9 @@ async function main() {
   console.log(`  → ${MD_OUT}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

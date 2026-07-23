@@ -96,6 +96,8 @@ Issue 本文の型は [references/issue-body-template.md](references/issue-body-
 
 ## 4) ドライラン（必須）
 
+起票前に該当ルート・PNG で現象を確認する。本文は再現手順と完了条件を主契約とする（修正方針は書かない）。
+
 `gh issue create` の**前**に、チャットまたは `ux-issue-drafts.md` へ次を出力する。
 
 - 起票予定一覧（タイトル・優先度・統合理由）
@@ -118,7 +120,7 @@ gh issue create --repo rick-chick/agrr \
   --body-file /tmp/ux-issue-body.md
 ```
 
-- 本文は `issue-body-template.md` の必須セクションを満たす
+- 本文は `issue-body-template.md` のテンプレートを満たす
 - バッチ起票時は **1 finding = 1 issue**（統合した場合は 1 統合 issue）
 - 起票後、一覧を issue コメントまたは Memory に記録
 
@@ -153,6 +155,7 @@ gh issue edit <N> --remove-label agent-ready
 - `visual-review-results.md` 未更新のまま起票
 - 重複確認なしの大量 `gh issue create`
 - 完了条件・参照なしの issue
+- 修正方針のみ・再現手順なしの issue
 - 方針未確定・議論中の issue に `agent-ready` を付与
 - 実装（PR）まで踏み込む（それは `github-issue-worker`）
 

@@ -48,10 +48,13 @@ body:
     validations:
       required: true
   - type: textarea
-    id: approach
+    id: reproduction
     attributes:
-      label: 対応方針
-      description: 具体的な修正・テスト方針
+      label: 再現手順
+      description: 画面・操作。起票前に PNG で確認済み
+      placeholder: |
+        1. /plans/:id/optimizing を開く
+        2. 進捗 100% 後も見出しが「最適化中」のまま
     validations:
       required: true
   - type: textarea
