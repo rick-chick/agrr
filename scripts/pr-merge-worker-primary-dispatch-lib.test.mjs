@@ -34,7 +34,7 @@ test('classifyPrimaryPrMergeDispatch ignores merge-prohibition labels', () => {
     ...BASE,
     labels: 'agent-no-merge,do-not-merge,wip',
   });
-  assert.deepEqual(result, { eligible: true, dispatchKind: 'default' });
+  assert.deepEqual(result, { eligible: true });
 });
 
 test('classifyPrimaryPrMergeDispatch rejects agent-merge-in-progress', () => {
@@ -57,14 +57,14 @@ test('classifyPrimaryPrMergeDispatch rejects labeled events that are not agent-m
   assert.deepEqual(result, { eligible: false, reason: 'labeled not agent-merge' });
 });
 
-test('classifyPrimaryPrMergeDispatch dispatches conflict when BEHIND', () => {
+test('classifyPrimaryPrMergeDispatch dispatches when PR needs sync', () => {
   const result = classifyPrimaryPrMergeDispatch({
     ...BASE,
     mergeStateStatus: 'BEHIND',
     isDraft: true,
     requiredCiState: 'failed',
   });
-  assert.deepEqual(result, { eligible: true, dispatchKind: 'conflict' });
+  assert.deepEqual(result, { eligible: true });
 });
 
 test('classifyPrimaryPrMergeDispatch skips synchronize without sync need', () => {
@@ -74,27 +74,27 @@ test('classifyPrimaryPrMergeDispatch skips synchronize without sync need', () =>
   });
   assert.deepEqual(result, {
     eligible: false,
-    reason: 'synchronize without conflict',
+    reason: 'synchronize without sync need',
   });
 });
 
-test('classifyPrimaryPrMergeDispatch dispatches ci_fix when required CI failed', () => {
+test('classifyPrimaryPrMergeDispatch dispatches when required CI failed', () => {
   const result = classifyPrimaryPrMergeDispatch({
     ...BASE,
     requiredCiState: 'failed',
     isDraft: true,
   });
-  assert.deepEqual(result, { eligible: true, dispatchKind: 'ci_fix' });
+  assert.deepEqual(result, { eligible: true });
 });
 
-test('classifyPrimaryPrMergeDispatch skips draft without conflict or ci failure', () => {
+test('classifyPrimaryPrMergeDispatch skips draft without sync need or ci failure', () => {
   const result = classifyPrimaryPrMergeDispatch({
     ...BASE,
     isDraft: true,
   });
   assert.deepEqual(result, {
     eligible: false,
-    reason: 'draft without conflict or ci failure',
+    reason: 'draft without sync need or ci failure',
   });
 });
 
@@ -110,7 +110,7 @@ test('classifyPrimaryPrMergeDispatch skips ci_completed while checks incomplete'
   });
 });
 
-test('classifyPrimaryPrMergeDispatch rejects stale head sha on non-conflict path', () => {
+test('classifyPrimaryPrMergeDispatch rejects stale head sha when PR does not need sync', () => {
   const result = classifyPrimaryPrMergeDispatch({
     ...BASE,
     eventHeadSha: 'old',
@@ -119,8 +119,5 @@ test('classifyPrimaryPrMergeDispatch rejects stale head sha on non-conflict path
 });
 
 test('classifyPrimaryPrMergeDispatch accepts default path when CI green', () => {
-  assert.deepEqual(classifyPrimaryPrMergeDispatch(BASE), {
-    eligible: true,
-    dispatchKind: 'default',
-  });
+  assert.deepEqual(classifyPrimaryPrMergeDispatch(BASE), { eligible: true });
 });

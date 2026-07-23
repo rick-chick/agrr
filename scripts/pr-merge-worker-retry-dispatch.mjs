@@ -11,13 +11,11 @@
 import { execFileSync } from 'node:child_process';
 import { parseRetryDispatchArgs } from './issue-worker-dispatch-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
-import { deliveryPrWebhookPayloadIsDispatchable } from './delivery-dispatch-lib.mjs';
 import {
-  buildCiFixDispatchPayload,
-  buildConflictDispatchPayload,
-} from './pr-merge-worker-dispatch-payload-lib.mjs';
+  buildDeliveryPrPayloadFromPr,
+  deliveryPrWebhookPayloadIsDispatchable,
+} from './delivery-dispatch-lib.mjs';
 import {
-  buildRetryDispatchPayload,
   classifyReconcileDispatchCandidate,
   selectReconcileCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
@@ -88,7 +86,7 @@ function fetchPr(repo, prNumber) {
  * @param {string} repo
  * @param {Record<string, unknown>} payload
  */
-function postWebhook(repo, payload, reconcileAction) {
+function postWebhook(repo, payload) {
   const webhookUrl = process.env.WEBHOOK_URL ?? '';
   const webhookKey = process.env.WEBHOOK_KEY ?? '';
   if (!webhookUrl || !webhookKey) {
@@ -112,41 +110,13 @@ function postWebhook(repo, payload, reconcileAction) {
     log: console.log,
   });
 
-  const reasonPart = reconcileAction
-    ? ` (${reconcileAction})`
-    : payload.retry_reason
-      ? ` (${payload.retry_reason})`
-      : '';
-  console.log(
-    `Dispatched PR Merge Worker reconcile for #${payload.pr_number}${reasonPart}`,
-  );
-}
-
-/**
- * @param {'conflict' | 'stuck_retry' | 'ci_fix'} action
- * @param {string} repo
- * @param {Record<string, unknown>} pr
- * @param {string} [retryReason]
- */
-function buildReconcilePayload(action, repo, pr, retryReason) {
-  if (action === 'conflict') {
-    return buildConflictDispatchPayload({ repository: repo, pr });
-  }
-  if (action === 'ci_fix') {
-    return buildCiFixDispatchPayload({ repository: repo, pr });
-  }
-  return buildRetryDispatchPayload({
-    repository: repo,
-    pr,
-    retryReason,
-  });
+  console.log(`Dispatched PR Merge Worker reconcile for #${payload.pr_number}`);
 }
 
 /**
  * @param {{
  *   repo: string;
  *   pr: Record<string, unknown>;
- *   retryReason?: string;
  *   removeStaleInProgressLabel?: boolean;
  * }} input
  * @returns {boolean}
@@ -154,7 +124,6 @@ function buildReconcilePayload(action, repo, pr, retryReason) {
 function dispatchIfEligible({
   repo,
   pr,
-  retryReason,
   removeStaleInProgressLabel = false,
 }) {
   const baseOwner = repoOwner(repo);
@@ -175,13 +144,8 @@ function dispatchIfEligible({
     gh(repo, ['pr', 'edit', String(pr.number), '--remove-label', 'agent-merge-in-progress']);
   }
 
-  const payload = buildReconcilePayload(
-    result.action,
-    repo,
-    pr,
-    retryReason,
-  );
-  postWebhook(repo, payload, result.action);
+  const payload = buildDeliveryPrPayloadFromPr(pr, repo);
+  postWebhook(repo, payload);
   return true;
 }
 
@@ -202,7 +166,6 @@ function main() {
     dispatchIfEligible({
       repo,
       pr: selected.pr,
-      retryReason: args.retryReason ?? 'scheduled_reconcile',
       removeStaleInProgressLabel: selected.removeStaleInProgressLabel,
     });
     return;
@@ -216,7 +179,6 @@ function main() {
     dispatchIfEligible({
       repo,
       pr: fetchPr(repo, prNumber),
-      retryReason: args.retryReason ?? 'manual_retry',
     });
     return;
   }

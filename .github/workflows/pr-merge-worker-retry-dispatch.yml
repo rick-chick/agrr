@@ -1,8 +1,8 @@
 # Reconcile PR Merge Worker dispatch for stuck open master PRs
-# (BEHIND/CONFLICT, CI fail, stuck_retry, or primary dispatch cancelled/failed).
+# (sync needed, CI fail, stale in-progress, quiet open PR, or primary dispatch cancelled/failed).
 #
 # Triggers:
-# - schedule: every 15 minutes (reconcile one eligible PR: conflict or stuck_retry)
+# - schedule: every 15 minutes (reconcile one eligible PR)
 # - workflow_run: PR Merge Worker Dispatch completed with conclusion cancelled or failure (reconcile)
 # - workflow_dispatch: manual reconcile for one PR
 
@@ -61,7 +61,7 @@ jobs:
           node scripts/pr-merge-worker-retry-dispatch.mjs reconcile \
             --retry-reason "$RETRY_REASON"
 
-      - name: Reconcile stuck agent-merge PRs (conflict or stuck_retry)
+      - name: Reconcile stuck PRs
         if: github.event_name == 'schedule'
         env:
           WEBHOOK_URL: ${{ secrets.CURSOR_DELIVERY_WEBHOOK_URL }}

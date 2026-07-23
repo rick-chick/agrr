@@ -2,12 +2,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
-  buildCiFixDispatchPayload,
-  buildConflictDispatchPayload,
+  buildPrMergeWorkerDispatchPayload,
 } from './pr-merge-worker-dispatch-payload-lib.mjs';
 
-test('buildConflictDispatchPayload maps PR fields for conflict dispatch', () => {
-  const payload = buildConflictDispatchPayload({
+test('buildPrMergeWorkerDispatchPayload maps linked PR fields', () => {
+  const payload = buildPrMergeWorkerDispatchPayload({
     repository: 'rick-chick/agrr',
     pr: {
       number: 240,
@@ -30,32 +29,8 @@ test('buildConflictDispatchPayload maps PR fields for conflict dispatch', () => 
   assert.equal('action' in payload, false);
 });
 
-test('buildCiFixDispatchPayload maps PR fields for ci_fix dispatch', () => {
-  const payload = buildCiFixDispatchPayload({
-    repository: 'rick-chick/agrr',
-    pr: {
-      number: 353,
-      title: 'fix: setup proposal (#319)',
-      url: 'https://github.com/rick-chick/agrr/pull/353',
-      headRefName: 'cursor/agrr-issue-worker-workflow-abc',
-      headRefOid: 'def456',
-      author: { login: 'cursor[bot]' },
-      mergeable: 'MERGEABLE',
-      mergeStateStatus: 'CLEAN',
-      closingIssuesReferences: [{ number: 319 }],
-    },
-  });
-
-  assert.deepEqual(payload, {
-    repository: 'rick-chick/agrr',
-    pr_number: 353,
-    issue_number: 319,
-  });
-  assert.equal('action' in payload, false);
-});
-
-test('buildConflictDispatchPayload defaults missing optional fields', () => {
-  const payload = buildConflictDispatchPayload({
+test('buildPrMergeWorkerDispatchPayload defaults missing optional fields', () => {
+  const payload = buildPrMergeWorkerDispatchPayload({
     repository: 'rick-chick/agrr',
     pr: {
       number: 1,

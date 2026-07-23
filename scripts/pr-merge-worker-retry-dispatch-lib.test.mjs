@@ -65,7 +65,7 @@ const FAILED_CHECKS = [
   { name: 'lint / frontend-lint', state: 'SUCCESS' },
 ];
 
-test('classifyReconcileCandidate accepts draft PR with failed required CI as ci_fix', () => {
+test('classifyReconcileCandidate accepts draft PR with failed required CI', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -82,12 +82,11 @@ test('classifyReconcileCandidate accepts draft PR with failed required CI as ci_
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'ci_fix',
     removeStaleInProgressLabel: false,
   });
 });
 
-test('classifyReconcileCandidate accepts ready feat PR with failed CI and no agent-merge as ci_fix', () => {
+test('classifyReconcileCandidate accepts ready feat PR with failed CI and no agent-merge', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -106,12 +105,11 @@ test('classifyReconcileCandidate accepts ready feat PR with failed CI and no age
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'ci_fix',
     removeStaleInProgressLabel: false,
   });
 });
 
-test('classifyReconcileCandidate accepts ready feat PR BEHIND without agent-merge as conflict', () => {
+test('classifyReconcileCandidate accepts ready feat PR BEHIND without agent-merge', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -127,7 +125,6 @@ test('classifyReconcileCandidate accepts ready feat PR BEHIND without agent-merg
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'conflict',
     removeStaleInProgressLabel: false,
   });
 });
@@ -148,7 +145,6 @@ test('classifyReconcileCandidate accepts BEHIND PR without linked issue for pr_u
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'conflict',
     removeStaleInProgressLabel: false,
   });
 });
@@ -172,7 +168,7 @@ test('classifyReconcileCandidate rejects draft PR while required CI is pending',
   assert.match(result.reason, /pending|incomplete/i);
 });
 
-test('classifyReconcileCandidate prefers conflict over ci_fix for conflicting draft PR', () => {
+test('classifyReconcileCandidate accepts draft PR that needs sync before considering CI failure', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -187,12 +183,11 @@ test('classifyReconcileCandidate prefers conflict over ci_fix for conflicting dr
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'conflict',
     removeStaleInProgressLabel: false,
   });
 });
 
-test('classifyReconcileCandidate accepts conflicting draft cursor PR without agent-merge label', () => {
+test('classifyReconcileCandidate accepts DIRTY draft cursor PR without agent-merge label', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -209,12 +204,11 @@ test('classifyReconcileCandidate accepts conflicting draft cursor PR without age
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'conflict',
     removeStaleInProgressLabel: false,
   });
 });
 
-test('classifyReconcileCandidate accepts BEHIND ready PR as conflict', () => {
+test('classifyReconcileCandidate accepts BEHIND ready PR', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -227,12 +221,11 @@ test('classifyReconcileCandidate accepts BEHIND ready PR as conflict', () => {
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'conflict',
     removeStaleInProgressLabel: false,
   });
 });
 
-test('classifyReconcileCandidate does not classify BEHIND as stuck_retry', () => {
+test('classifyReconcileCandidate does not expose an action for BEHIND PRs', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -242,10 +235,11 @@ test('classifyReconcileCandidate does not classify BEHIND as stuck_retry', () =>
     baseOwner: 'rick-chick',
     nowMs: NOW,
   });
-  assert.notEqual(result.action, 'stuck_retry');
+  assert.equal(result.eligible, true);
+  assert.equal('action' in result, false);
 });
 
-test('classifyReconcileCandidate accepts ready PR with DIRTY CONFLICTING and green CI as conflict', () => {
+test('classifyReconcileCandidate accepts ready PR with DIRTY CONFLICTING and green CI', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -264,12 +258,11 @@ test('classifyReconcileCandidate accepts ready PR with DIRTY CONFLICTING and gre
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'conflict',
     removeStaleInProgressLabel: false,
   });
 });
 
-test('selectReconcileCandidate picks lower-number BEHIND PR before higher DIRTY conflict', () => {
+test('selectReconcileCandidate picks lower-number BEHIND PR before higher DIRTY PR', () => {
   const selected = selectReconcileCandidate(
     [
       {
@@ -298,7 +291,7 @@ test('selectReconcileCandidate picks lower-number BEHIND PR before higher DIRTY 
     NOW,
   );
   assert.equal(selected?.pr.number, 382);
-  assert.equal(selected?.action, 'conflict');
+  assert.equal('action' in selected, false);
 });
 
 test('selectReconcileCandidate picks lowest eligible PR number', () => {
@@ -319,11 +312,11 @@ test('selectReconcileCandidate picks lowest eligible PR number', () => {
     NOW,
   );
   assert.equal(selected?.pr.number, 277);
-  assert.equal(selected?.action, 'conflict');
+  assert.equal('action' in selected, false);
   assert.equal(selected?.removeStaleInProgressLabel, false);
 });
 
-test('selectReconcileCandidate prefers lower conflict PR over higher stuck_retry', () => {
+test('selectReconcileCandidate prefers lower sync-needed PR over higher quiet eligible PR', () => {
   const selected = selectReconcileCandidate(
     [
       {
@@ -346,10 +339,10 @@ test('selectReconcileCandidate prefers lower conflict PR over higher stuck_retry
     NOW,
   );
   assert.equal(selected?.pr.number, 277);
-  assert.equal(selected?.action, 'conflict');
+  assert.equal('action' in selected, false);
 });
 
-test('classifyReconcileCandidate treats merge-prohibition labels as ordinary conflict input', () => {
+test('classifyReconcileCandidate treats merge-prohibition labels as ordinary sync input', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -366,12 +359,11 @@ test('classifyReconcileCandidate treats merge-prohibition labels as ordinary con
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'conflict',
     removeStaleInProgressLabel: false,
   });
 });
 
-test('classifyReconcileCandidate accepts unlinked open PR after quiet period as stuck_retry', () => {
+test('classifyReconcileCandidate accepts unlinked open PR after quiet period', () => {
   const result = classifyReconcileCandidate({
     pr: {
       ...BASE_PR,
@@ -388,7 +380,6 @@ test('classifyReconcileCandidate accepts unlinked open PR after quiet period as 
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'stuck_retry',
     removeStaleInProgressLabel: false,
   });
 });
@@ -419,7 +410,7 @@ test('classifyReconcileDispatchCandidate matches classifyReconcileCandidate', ()
   assert.deepEqual(dispatch, reconcileOnly);
 });
 
-test('selectReconcileCandidate dispatches unlinked merge-prohibition PR through generic action', () => {
+test('selectReconcileCandidate dispatches unlinked merge-prohibition PR through generic reconcile', () => {
   const pr = {
     ...BASE_PR,
     number: 441,
@@ -430,7 +421,7 @@ test('selectReconcileCandidate dispatches unlinked merge-prohibition PR through 
     updatedAt: '2026-07-15T09:00:00.000Z',
   };
   const selected = selectReconcileCandidate([pr], { 441: GREEN_CHECKS }, 'rick-chick', NOW);
-  assert.equal(selected?.action, 'conflict');
+  assert.equal('action' in selected, false);
 
   const dispatch = classifyReconcileDispatchCandidate({
     pr: selected.pr,
@@ -439,7 +430,7 @@ test('selectReconcileCandidate dispatches unlinked merge-prohibition PR through 
     nowMs: NOW,
   });
   assert.equal(dispatch.eligible, true);
-  assert.equal(dispatch.action, 'conflict');
+  assert.equal('action' in dispatch, false);
 });
 
 test('classifyReconcileCandidate removes stale agent-merge-in-progress label', () => {
@@ -457,7 +448,6 @@ test('classifyReconcileCandidate removes stale agent-merge-in-progress label', (
   });
   assert.deepEqual(result, {
     eligible: true,
-    action: 'stuck_retry',
     removeStaleInProgressLabel: true,
   });
 });
@@ -477,6 +467,24 @@ test('classifyReconcileCandidate rejects fresh agent-merge-in-progress', () => {
   assert.match(result.reason, /agent-merge-in-progress is fresh/i);
 });
 
+test('classifyReconcileCandidate rejects fresh agent-merge-in-progress when PR needs sync', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      labels: [{ name: 'agent-merge-in-progress' }],
+      mergeStateStatus: 'BEHIND',
+      updatedAt: new Date(NOW - IN_PROGRESS_STALE_MS + 60_000).toISOString(),
+    },
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: false,
+    reason: 'agent-merge-in-progress is fresh',
+  });
+});
+
 test('classifyReconcileCandidate rejects PR within ready quiet period', () => {
   const result = classifyReconcileCandidate({
     pr: {
@@ -494,7 +502,7 @@ test('classifyReconcileCandidate rejects PR within ready quiet period', () => {
   assert.match(result.reason, /ready quiet period/i);
 });
 
-test('selectReconcileCandidate still prefers conflict over lower-number stuck_retry', () => {
+test('selectReconcileCandidate still prefers sync-needed PR over lower-number quiet eligible PR', () => {
   const selected = selectReconcileCandidate(
     [
       {
@@ -519,10 +527,10 @@ test('selectReconcileCandidate still prefers conflict over lower-number stuck_re
     NOW,
   );
   assert.equal(selected?.pr.number, 280);
-  assert.equal(selected?.action, 'conflict');
+  assert.equal('action' in selected, false);
 });
 
-test('selectReconcileCandidate treats unlinked merge-prohibition conflict as conflict', () => {
+test('selectReconcileCandidate prioritizes unlinked merge-prohibition PR that needs sync', () => {
   const selected = selectReconcileCandidate(
     [
       {
@@ -549,10 +557,10 @@ test('selectReconcileCandidate treats unlinked merge-prohibition conflict as con
     NOW,
   );
   assert.equal(selected?.pr.number, 441);
-  assert.equal(selected?.action, 'conflict');
+  assert.equal('action' in selected, false);
 });
 
-test('buildRetryDispatchPayload maps stuck retry fields', () => {
+test('buildRetryDispatchPayload maps reconcile fields', () => {
   const payload = buildRetryDispatchPayload({
     repository: 'rick-chick/agrr',
     pr: BASE_PR,

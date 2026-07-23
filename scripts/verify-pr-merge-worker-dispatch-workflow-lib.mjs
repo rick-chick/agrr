@@ -21,12 +21,11 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'resolve-workflow-run-pr-from-gh.mjs',
 ];
 
-const CONFLICT_DISPATCH_SNIPPETS = [
+const PRIMARY_DELIVERY_DISPATCH_SNIPPETS = [
   'classify-primary-pr-merge-dispatch.mjs',
   'classify-required-ci-state.mjs',
-  'skipping CI gate for ${DISPATCH_KIND} resolution',
-  'Required CI failed; dispatching ci_fix',
-  'dispatching conflict resolution',
+  'Required CI failed; dispatching Delivery Agent webhook',
+  'dispatching Delivery Agent webhook',
 ];
 
 const PRIMARY_DISPATCH_LIB_SNIPPETS = [
@@ -55,9 +54,13 @@ const RECONCILE_LIB_SNIPPETS = [
   'classifyReconcileDispatchCandidate',
   'selectReconcileCandidate',
   'prMergeWorkerNeedsSync',
+];
+
+const FORBIDDEN_RECONCILE_LIB_SNIPPETS = [
   "action: 'conflict'",
   "action: 'stuck_retry'",
   "action: 'ci_fix'",
+  "action: 'pr_review'",
 ];
 
 const PAYLOAD_LIB_SNIPPETS = ['buildDeliveryPrPayloadFromPr'];
@@ -164,10 +167,14 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     errors.push('pr-merge-worker-dispatch workflow must not fetch or pass PR body');
   }
 
-  for (const snippet of CONFLICT_DISPATCH_SNIPPETS) {
+  for (const snippet of PRIMARY_DELIVERY_DISPATCH_SNIPPETS) {
     if (!workflowText.includes(snippet)) {
-      errors.push(`workflow missing conflict dispatch snippet: ${snippet}`);
+      errors.push(`workflow missing primary dispatch snippet: ${snippet}`);
     }
+  }
+
+  if (workflowText.includes('DISPATCH_KIND')) {
+    errors.push('pr-merge-worker-dispatch workflow must not emit DISPATCH_KIND route names');
   }
 
   for (const snippet of PRIMARY_DISPATCH_LIB_SNIPPETS) {
@@ -216,6 +223,16 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     }
   }
 
+  for (const snippet of FORBIDDEN_RECONCILE_LIB_SNIPPETS) {
+    if (reconcileLibText.includes(snippet)) {
+      errors.push(`reconcile lib must not contain named action routing snippet: ${snippet}`);
+    }
+  }
+
+  if (primaryDispatchLibText.includes('dispatchKind')) {
+    errors.push('primary dispatch lib must not return dispatchKind route names');
+  }
+
   const retryDispatchScriptPath = join(
     repoRoot,
     'scripts/pr-merge-worker-retry-dispatch.mjs',
@@ -254,6 +271,12 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   if (retryDispatchScriptText.includes('resolveUnlinkedPrOptOut')) {
     errors.push(
       'pr-merge-worker-retry-dispatch.mjs must not use resolveUnlinkedPrOptOut',
+    );
+  }
+
+  if (retryDispatchScriptText.includes('classifyPrReviewCandidate')) {
+    errors.push(
+      'pr-merge-worker-retry-dispatch.mjs must not use classifyPrReviewCandidate',
     );
   }
 
