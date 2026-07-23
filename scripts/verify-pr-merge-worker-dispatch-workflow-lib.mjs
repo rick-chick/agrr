@@ -333,6 +333,10 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     errors.push('delivery-agent skill must link to JUDGMENT-CRITERIA.md');
   }
 
+  if (deliverySkillText && !deliverySkillText.includes('pr_unlinked` | いいえ（レガシー optional）')) {
+    errors.push('delivery-agent skill must document pr_unlinked as legacy optional (do not trust)');
+  }
+
   const judgmentCriteriaPath = join(
     repoRoot,
     '.cursor/skills/automation-authoring/references/JUDGMENT-CRITERIA.md',

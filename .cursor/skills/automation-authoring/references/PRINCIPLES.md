@@ -27,9 +27,9 @@ Automation の目的は、**人間がラベルを付けたり UI で再開した
 
 | 優先 | 意味 |
 |------|------|
-| **1. 全部拾う** | open 対象を広く列挙し、滞留理由（CI 赤 / BEHIND / キャンセル / stale）は **同じ reconcile が振り分ける** |
+| **1. 全部拾う** | open 対象を広く列挙し、滞留（CI 赤 / BEHIND / キャンセル / stale）は **同じ reconcile が webhook 再送** |
 | **2. 少ないオプトアウト** | 機械の重複起動抑止のみ（`agent-in-progress` / `agent-merge-in-progress` 等）。**merge・close・obsolete の事前判断は機械がしない** |
-| **3. 場合分けは振り分け用** | `conflict` / `ci_fix` / `stuck_retry` は **起動しない理由にしない**。拾ったあと何をするかの分岐だけ |
+| **3. レガシー内部ゲート名** | `conflict` / `ci_fix` / `stuck_retry` 等は **実装の残債**（[JUDGMENT-CRITERIA §6](JUDGMENT-CRITERIA.md#6-レガシーコードに残存廃止予定)）。新規設計では経路分岐に使わない |
 
 **禁止**: 「この場合はスキップ・あの場合は人間確認」を追加して対処済みとみなすこと。未対応の穴は減らず、停止条件だけが増える。
 
@@ -40,18 +40,6 @@ Automation の目的は、**人間がラベルを付けたり UI で再開した
 修正・レビュー・提案は **本書の原則に沿った案**を最小差分より先に示す。詳細は [`automation-philosophy-priority.mdc`](../../../rules/automation-philosophy-priority.mdc)。
 
 触る変更では、範囲内の**既存本文パースも同一変更で除去**する（別 PR は規約上の障害時のみ）。
-
-## 二層分離
-
-```
-GitHub イベント
-  → Actions（ゲート・ラベル・reconcile）
-  → webhook
-  → Cursor Cloud Agent（スキル・判断・PR）
-    → GitHub 副作用
-```
-
-Cloud Agent はリポジトリを clone してスキルを読む。**ローカル Docker / ng serve は使えない**。
 
 ## ラベル契約
 

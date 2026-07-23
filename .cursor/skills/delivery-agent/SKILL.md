@@ -104,7 +104,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 | `repository` | はい |
 | `issue_number` | issue 起点時、または PR の `closingIssuesReferences` にリンク issue があるとき |
 | `pr_number` | PR / CI 起点時 |
-| `pr_unlinked` | `issue_number` が無い PR dispatch 時（`true`）。Agent は PR フェーズのみ |
+| `pr_unlinked` | いいえ（レガシー optional）。機械が `true` を送ることがある。**Agent は信用しない** — `gh pr view` の `closingIssuesReferences` で未リンクか観測 |
 | `action` | **送らない・無視** |
 
 任意: `issue_title`, `issue_url`, `labels`, `retry_reason`。**`issue_body` / `body_hash` は機械層から送らない**（Agent は `gh issue view` で読む）。
