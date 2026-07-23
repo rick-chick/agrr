@@ -845,7 +845,6 @@ pub fn upload_ready_work_record_photo(
 
 pub struct FarmTemperatureChartSeed {
     pub farm_id: i64,
-    pub weather_location_id: i64,
 }
 
 /// Seeds a private farm with completed weather data for temperature chart contract tests.
@@ -890,10 +889,7 @@ pub fn seed_farm_temperature_chart_completed(user_id: i64) -> FarmTemperatureCha
         .expect("insert weather_data row");
     }
 
-    FarmTemperatureChartSeed {
-        farm_id,
-        weather_location_id,
-    }
+    FarmTemperatureChartSeed { farm_id }
 }
 
 /// Seeds a private farm with fetching weather status (chart should return 409).
