@@ -3,7 +3,7 @@
  * Classify primary PR merge dispatch eligibility from JSON input.
  *
  * Env: INPUT_JSON — fields for classifyPrimaryPrMergeDispatch
- * stdout: { eligible, reason? | dispatchKind? }
+ * stdout: { eligible, reason? }
  */
 import { classifyPrimaryPrMergeDispatch } from './pr-merge-worker-primary-dispatch-lib.mjs';
 

@@ -1,5 +1,4 @@
 import {
-  BLOCKING_MERGE_LABELS,
   areRequiredChecksComplete,
   areRequiredChecksGreen,
 } from './pr-agent-prep-lib.mjs';
@@ -14,12 +13,11 @@ export const IN_PROGRESS_STALE_MS = 90 * 60 * 1000;
 /** Avoid racing a just-dispatched primary merge worker. */
 export const READY_QUIET_MS = 30 * 60 * 1000;
 
-/** Lower value = higher reconcile priority. */
-export const RECONCILE_ACTION_PRIORITY = {
-  conflict: 0,
-  ci_fix: 1,
-  pr_review: 2,
-  stuck_retry: 3,
+/** Lower value = higher reconcile priority; internal only. */
+const RECONCILE_PRIORITY = {
+  NEEDS_SYNC: 0,
+  REQUIRED_CI_FAILED: 1,
+  READY_OR_STALE: 2,
 };
 
 /**
@@ -31,12 +29,11 @@ function labelNames(labels) {
 }
 
 /**
- * Opt-out gates only (universal rescue). No agent-merge / branch-prefix opt-in.
+ * Structural gates only (universal rescue). No agent-merge / branch-prefix opt-in.
  *
  * @param {{
  *   baseRefName: string;
  *   headRepository?: { nameWithOwner?: string };
- *   labels: string[];
  * }} pr
  * @param {string} baseOwner
  */
@@ -46,9 +43,6 @@ function isUniversalMergeWorkerTarget(pr, baseOwner) {
   }
   const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
   if (headOwner !== baseOwner) {
-    return false;
-  }
-  if (pr.labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
     return false;
   }
   return true;
@@ -94,16 +88,13 @@ function classifyBaseEligibility({ pr, baseOwner }) {
     return { eligible: false, reason: 'draft pr' };
   }
 
-  if (!isUniversalMergeWorkerTarget({ ...pr, labels }, baseOwner)) {
+  if (!isUniversalMergeWorkerTarget(pr, baseOwner)) {
     if (pr.baseRefName !== 'master') {
       return { eligible: false, reason: 'not eligible agent pr' };
     }
     const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
     if (headOwner !== baseOwner) {
       return { eligible: false, reason: 'not eligible agent pr' };
-    }
-    if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
-      return { eligible: false, reason: 'blocking merge label' };
     }
     return { eligible: false, reason: 'not eligible agent pr' };
   }
@@ -126,11 +117,8 @@ function classifyBaseEligibility({ pr, baseOwner }) {
  *   labels: string[];
  * }} input
  */
-function classifyCiFixCandidate({ pr, checks, baseOwner, nowMs, labels }) {
-  if (!isUniversalMergeWorkerTarget({ ...pr, labels }, baseOwner)) {
-    if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
-      return { eligible: false, reason: 'blocking merge label' };
-    }
+function classifyRequiredCiFailureCandidate({ pr, checks, baseOwner, nowMs, labels }) {
+  if (!isUniversalMergeWorkerTarget(pr, baseOwner)) {
     return { eligible: false, reason: 'not eligible agent pr' };
   }
 
@@ -159,7 +147,6 @@ function classifyCiFixCandidate({ pr, checks, baseOwner, nowMs, labels }) {
 
   return {
     eligible: true,
-    action: 'ci_fix',
     removeStaleInProgressLabel:
       hasInProgress && isInProgressStale({ updatedAtMs, nowMs }),
   };
@@ -185,140 +172,103 @@ function classifyCiFixCandidate({ pr, checks, baseOwner, nowMs, labels }) {
  *   nowMs: number;
  * }} input
  * @returns {{
- *   eligible: true;
- *   action: 'conflict' | 'stuck_retry' | 'ci_fix';
- *   removeStaleInProgressLabel: boolean;
- * } | { eligible: false; reason: string }}
+ *   result: {{ eligible: true; removeStaleInProgressLabel: boolean } | { eligible: false; reason: string }};
+ *   priority?: number;
+ * }}
  */
-export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
+function classifyReconcileCandidateWithPriority({ pr, checks, baseOwner, nowMs }) {
   const labels = labelNames(pr.labels ?? []);
   const hasInProgress = labels.includes('agent-merge-in-progress');
   const updatedAtMs = Date.parse(pr.updatedAt);
 
   if (prMergeWorkerNeedsSync(pr)) {
-    if (!isUniversalMergeWorkerTarget({ ...pr, labels }, baseOwner)) {
-      if (labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
-        return { eligible: false, reason: 'blocking merge label' };
-      }
-      return { eligible: false, reason: 'not eligible agent pr' };
+    if (!isUniversalMergeWorkerTarget(pr, baseOwner)) {
+      return { result: { eligible: false, reason: 'not eligible agent pr' } };
     }
     if (pr.reviewDecision === 'CHANGES_REQUESTED') {
-      return { eligible: false, reason: 'changes requested' };
+      return { result: { eligible: false, reason: 'changes requested' } };
     }
     if (hasInProgress && !isInProgressStale({ updatedAtMs, nowMs })) {
-      return { eligible: false, reason: 'agent-merge-in-progress is fresh' };
+      return {
+        result: { eligible: false, reason: 'agent-merge-in-progress is fresh' },
+      };
     }
     return {
-      eligible: true,
-      action: 'conflict',
-      removeStaleInProgressLabel:
-        hasInProgress && isInProgressStale({ updatedAtMs, nowMs }),
+      result: {
+        eligible: true,
+        removeStaleInProgressLabel:
+          hasInProgress && isInProgressStale({ updatedAtMs, nowMs }),
+      },
+      priority: RECONCILE_PRIORITY.NEEDS_SYNC,
     };
   }
 
-  const ciFix = classifyCiFixCandidate({
+  const requiredCiFailure = classifyRequiredCiFailureCandidate({
     pr,
     checks,
     baseOwner,
     nowMs,
     labels,
   });
-  if (ciFix.eligible) {
-    return ciFix;
+  if (requiredCiFailure.eligible) {
+    return {
+      result: requiredCiFailure,
+      priority: RECONCILE_PRIORITY.REQUIRED_CI_FAILED,
+    };
   }
-  // CI green → continue to stuck_retry. Any other ci_fix rejection is final.
-  if (ciFix.reason !== 'required ci already green') {
-    return ciFix;
+  // CI green can continue to generic quiet/stale reconcile. Other CI rejection is final.
+  if (requiredCiFailure.reason !== 'required ci already green') {
+    return { result: requiredCiFailure };
   }
 
   const base = classifyBaseEligibility({ pr, baseOwner });
   if (!base.eligible) {
-    return base;
+    return { result: base };
   }
 
   if (pr.mergeable !== 'MERGEABLE') {
-    return { eligible: false, reason: 'not mergeable' };
+    return { result: { eligible: false, reason: 'not mergeable' } };
   }
 
   if (!areRequiredChecksGreen(checks)) {
-    return { eligible: false, reason: 'required ci not green' };
+    return { result: { eligible: false, reason: 'required ci not green' } };
   }
 
   if (hasInProgress) {
     if (!isInProgressStale({ updatedAtMs, nowMs })) {
-      return { eligible: false, reason: 'agent-merge-in-progress is fresh' };
+      return {
+        result: { eligible: false, reason: 'agent-merge-in-progress is fresh' },
+      };
     }
     return {
-      eligible: true,
-      action: 'stuck_retry',
-      removeStaleInProgressLabel: true,
+      result: {
+        eligible: true,
+        removeStaleInProgressLabel: true,
+      },
+      priority: RECONCILE_PRIORITY.READY_OR_STALE,
     };
   }
 
   if (nowMs - updatedAtMs < READY_QUIET_MS) {
-    return { eligible: false, reason: 'ready quiet period' };
+    return { result: { eligible: false, reason: 'ready quiet period' } };
   }
 
   return {
-    eligible: true,
-    action: 'stuck_retry',
-    removeStaleInProgressLabel: false,
+    result: {
+      eligible: true,
+      removeStaleInProgressLabel: false,
+    },
+    priority: RECONCILE_PRIORITY.READY_OR_STALE,
   };
 }
 
-/**
- * Blocking-label PRs need Agent review (obsolete close, label correction, etc.).
- * Structure gates only — no title/body parse.
- *
- * @param {{
- *   pr: {
- *     number: number;
- *     baseRefName: string;
- *     labels: Array<{ name: string } | string>;
- *     headRepository?: { nameWithOwner?: string };
- *     updatedAt: string;
- *   };
- *   baseOwner: string;
- *   nowMs: number;
- * }} input
- * @returns {{
- *   eligible: true;
- *   action: 'pr_review';
- *   removeStaleInProgressLabel: boolean;
- * } | { eligible: false; reason: string }}
- */
-export function classifyPrReviewCandidate({ pr, baseOwner, nowMs }) {
-  const labels = labelNames(pr.labels ?? []);
-  const hasInProgress = labels.includes('agent-merge-in-progress');
-  const updatedAtMs = Date.parse(pr.updatedAt);
-
-  if (pr.baseRefName !== 'master') {
-    return { eligible: false, reason: 'not master' };
-  }
-
-  const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
-  if (headOwner !== baseOwner) {
-    return { eligible: false, reason: 'fork pr' };
-  }
-
-  if (!labels.some((name) => BLOCKING_MERGE_LABELS.includes(name))) {
-    return { eligible: false, reason: 'no blocking merge label' };
-  }
-
-  if (hasInProgress && !isInProgressStale({ updatedAtMs, nowMs })) {
-    return { eligible: false, reason: 'agent-merge-in-progress is fresh' };
-  }
-
-  if (nowMs - updatedAtMs < READY_QUIET_MS) {
-    return { eligible: false, reason: 'ready quiet period' };
-  }
-
-  return {
-    eligible: true,
-    action: 'pr_review',
-    removeStaleInProgressLabel:
-      hasInProgress && isInProgressStale({ updatedAtMs, nowMs }),
-  };
+export function classifyReconcileCandidate({ pr, checks, baseOwner, nowMs }) {
+  return classifyReconcileCandidateWithPriority({
+    pr,
+    checks,
+    baseOwner,
+    nowMs,
+  }).result;
 }
 
 /**
@@ -328,18 +278,10 @@ export function classifyPrReviewCandidate({ pr, baseOwner, nowMs }) {
  *   baseOwner: string;
  *   nowMs: number;
  * }} input
- * @returns {{
- *   eligible: true;
- *   action: 'conflict' | 'stuck_retry' | 'ci_fix' | 'pr_review';
- *   removeStaleInProgressLabel: boolean;
- * } | { eligible: false; reason: string } | null}
+ * @returns {{ eligible: true; removeStaleInProgressLabel: boolean } | { eligible: false; reason: string } | null}
  */
 export function classifyReconcileDispatchCandidate({ pr, checks, baseOwner, nowMs }) {
-  const reconcile = classifyReconcileCandidate({ pr, checks, baseOwner, nowMs });
-  if (reconcile.eligible) {
-    return reconcile;
-  }
-  return classifyPrReviewCandidate({ pr, baseOwner, nowMs });
+  return classifyReconcileCandidate({ pr, checks, baseOwner, nowMs });
 }
 
 /**
@@ -359,11 +301,7 @@ export function classifyReconcileDispatchCandidate({ pr, checks, baseOwner, nowM
  * @param {Record<number, Array<{ name: string; state: string }>>} checksByPrNumber
  * @param {string} baseOwner
  * @param {number} [nowMs]
- * @returns {{
- *   pr: object;
- *   action: 'conflict' | 'stuck_retry' | 'ci_fix' | 'pr_review';
- *   removeStaleInProgressLabel: boolean;
- * } | null}
+ * @returns {{ pr: object; removeStaleInProgressLabel: boolean } | null}
  */
 export function selectReconcileCandidate(
   prs,
@@ -372,22 +310,23 @@ export function selectReconcileCandidate(
   nowMs = Date.now(),
 ) {
   const sorted = [...prs].sort((a, b) => a.number - b.number);
-  /** @type {Array<{ pr: object; action: 'conflict' | 'stuck_retry' | 'ci_fix' | 'pr_review'; removeStaleInProgressLabel: boolean }>} */
+  /** @type {Array<{ pr: object; priority: number; removeStaleInProgressLabel: boolean }>} */
   const candidates = [];
 
   for (const pr of sorted) {
     const checks = checksByPrNumber[pr.number] ?? [];
-    const result = classifyReconcileDispatchCandidate({
+    const classification = classifyReconcileCandidateWithPriority({
       pr,
       checks,
       baseOwner,
       nowMs,
     });
-    if (result?.eligible) {
+    if (classification.result?.eligible) {
       candidates.push({
         pr,
-        action: result.action,
-        removeStaleInProgressLabel: result.removeStaleInProgressLabel,
+        priority: classification.priority,
+        removeStaleInProgressLabel:
+          classification.result.removeStaleInProgressLabel,
       });
     }
   }
@@ -397,8 +336,7 @@ export function selectReconcileCandidate(
   }
 
   candidates.sort((a, b) => {
-    const priorityDelta =
-      RECONCILE_ACTION_PRIORITY[a.action] - RECONCILE_ACTION_PRIORITY[b.action];
+    const priorityDelta = a.priority - b.priority;
     if (priorityDelta !== 0) {
       return priorityDelta;
     }

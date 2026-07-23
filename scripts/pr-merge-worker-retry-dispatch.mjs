@@ -11,18 +11,14 @@
 import { execFileSync } from 'node:child_process';
 import { parseRetryDispatchArgs } from './issue-worker-dispatch-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
-import { deliveryPrWebhookPayloadIsDispatchable } from './delivery-dispatch-lib.mjs';
 import {
-  buildCiFixDispatchPayload,
-  buildConflictDispatchPayload,
-  buildPrReviewDispatchPayload,
-} from './pr-merge-worker-dispatch-payload-lib.mjs';
+  buildDeliveryPrPayloadFromPr,
+  deliveryPrWebhookPayloadIsDispatchable,
+} from './delivery-dispatch-lib.mjs';
 import {
-  buildRetryDispatchPayload,
   classifyReconcileDispatchCandidate,
   selectReconcileCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
-import { resolveUnlinkedPrOptOut } from './pr-merge-worker-reconcile-prep-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
 
 const DEFAULT_REPO = 'rick-chick/agrr';
@@ -59,32 +55,6 @@ function listOpenMasterPrs(repo) {
 
 /**
  * @param {string} repo
- * @param {Array<Record<string, unknown>>} openPrs
- */
-function optOutUnlinkedPrsFromAutoMerge(repo, openPrs) {
-  for (const pr of openPrs) {
-    const decision = resolveUnlinkedPrOptOut(pr);
-    if (!decision.optOut) {
-      continue;
-    }
-    console.log(`Opting out PR #${pr.number} from auto-merge (no linked issue)`);
-    if (decision.removeAgentMerge) {
-      gh(repo, ['pr', 'edit', String(pr.number), '--remove-label', 'agent-merge']);
-    }
-    gh(repo, ['pr', 'edit', String(pr.number), '--add-label', 'agent-no-merge']);
-  }
-}
-
-/**
- * @param {string} repo
- */
-function reconcilePrep(repo) {
-  const openPrs = listOpenMasterPrs(repo);
-  optOutUnlinkedPrsFromAutoMerge(repo, openPrs);
-}
-
-/**
- * @param {string} repo
  * @param {number} prNumber
  * @returns {Array<{ name: string; state: string }>}
  */
@@ -116,7 +86,7 @@ function fetchPr(repo, prNumber) {
  * @param {string} repo
  * @param {Record<string, unknown>} payload
  */
-function postWebhook(repo, payload, reconcileAction) {
+function postWebhook(repo, payload) {
   const webhookUrl = process.env.WEBHOOK_URL ?? '';
   const webhookKey = process.env.WEBHOOK_KEY ?? '';
   if (!webhookUrl || !webhookKey) {
@@ -140,44 +110,13 @@ function postWebhook(repo, payload, reconcileAction) {
     log: console.log,
   });
 
-  const reasonPart = reconcileAction
-    ? ` (${reconcileAction})`
-    : payload.retry_reason
-      ? ` (${payload.retry_reason})`
-      : '';
-  console.log(
-    `Dispatched PR Merge Worker reconcile for #${payload.pr_number}${reasonPart}`,
-  );
-}
-
-/**
- * @param {'conflict' | 'stuck_retry' | 'ci_fix' | 'pr_review'} action
- * @param {string} repo
- * @param {Record<string, unknown>} pr
- * @param {string} [retryReason]
- */
-function buildReconcilePayload(action, repo, pr, retryReason) {
-  if (action === 'conflict') {
-    return buildConflictDispatchPayload({ repository: repo, pr });
-  }
-  if (action === 'ci_fix') {
-    return buildCiFixDispatchPayload({ repository: repo, pr });
-  }
-  if (action === 'pr_review') {
-    return buildPrReviewDispatchPayload({ repository: repo, pr });
-  }
-  return buildRetryDispatchPayload({
-    repository: repo,
-    pr,
-    retryReason,
-  });
+  console.log(`Dispatched PR Merge Worker reconcile for #${payload.pr_number}`);
 }
 
 /**
  * @param {{
  *   repo: string;
  *   pr: Record<string, unknown>;
- *   retryReason?: string;
  *   removeStaleInProgressLabel?: boolean;
  * }} input
  * @returns {boolean}
@@ -185,7 +124,6 @@ function buildReconcilePayload(action, repo, pr, retryReason) {
 function dispatchIfEligible({
   repo,
   pr,
-  retryReason,
   removeStaleInProgressLabel = false,
 }) {
   const baseOwner = repoOwner(repo);
@@ -206,13 +144,8 @@ function dispatchIfEligible({
     gh(repo, ['pr', 'edit', String(pr.number), '--remove-label', 'agent-merge-in-progress']);
   }
 
-  const payload = buildReconcilePayload(
-    result.action,
-    repo,
-    pr,
-    retryReason,
-  );
-  postWebhook(repo, payload, result.action);
+  const payload = buildDeliveryPrPayloadFromPr(pr, repo);
+  postWebhook(repo, payload);
   return true;
 }
 
@@ -221,7 +154,6 @@ function main() {
   const repo = args.repo ?? DEFAULT_REPO;
 
   if (args.mode === 'reconcile') {
-    reconcilePrep(repo);
     const prs = listOpenMasterPrs(repo);
     const checksByPrNumber = Object.fromEntries(
       prs.map((pr) => [pr.number, fetchChecks(repo, pr.number)]),
@@ -234,7 +166,6 @@ function main() {
     dispatchIfEligible({
       repo,
       pr: selected.pr,
-      retryReason: args.retryReason ?? 'scheduled_reconcile',
       removeStaleInProgressLabel: selected.removeStaleInProgressLabel,
     });
     return;
@@ -248,7 +179,6 @@ function main() {
     dispatchIfEligible({
       repo,
       pr: fetchPr(repo, prNumber),
-      retryReason: args.retryReason ?? 'manual_retry',
     });
     return;
   }

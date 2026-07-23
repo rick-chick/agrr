@@ -18,11 +18,22 @@ const REPO_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 test('delivery agent automation prompt documents pr_unlinked webhook field', () => {
   assert.match(
     DELIVERY_AGENT_AUTOMATION_PROMPT,
-    /pr_unlinked \(optional\)/,
+    /Optional: pr_unlinked/,
   );
   assert.match(
     DELIVERY_AGENT_AUTOMATION_PROMPT,
     /ux-campaign-loop/,
+  );
+});
+
+test('delivery agent automation prompt forbids merge-prohibition labels as agent input', () => {
+  assert.match(
+    DELIVERY_AGENT_AUTOMATION_PROMPT,
+    /merge-prohibition labels/i,
+  );
+  assert.match(
+    DELIVERY_AGENT_AUTOMATION_PROMPT,
+    /observe GitHub with gh/i,
   );
 });
 
@@ -40,7 +51,7 @@ test('cursor-automation-schedule embeds pr_unlinked in Delivery Agent prefill', 
   const match = text.match(/automations\/new\?prefill=([A-Za-z0-9_-]+)/);
   assert.ok(match, 'schedule must include Delivery Agent prefill URL');
   const { prompt } = decodeDeliveryAgentPrefillToken(match[1]);
-  assert.match(prompt, /pr_unlinked \(optional\)/);
+  assert.match(prompt, /Optional: pr_unlinked/);
 });
 
 test('delivery-agent SKILL automation block matches canonical prompt', async () => {
@@ -86,4 +97,20 @@ test('cursor-automation-schedule embeds one-click apply URL for live Delivery Ag
     new RegExp(applyUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
     'schedule must include live Delivery Agent apply URL',
   );
+  assert.doesNotMatch(text, /cursor\.com\/https:\/\//);
+});
+
+test('cursor-automation-schedule keeps UX Issue Audit prefill separate from Delivery Agent', async () => {
+  const schedulePath = join(
+    REPO_ROOT,
+    '.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md',
+  );
+  const text = await readFile(schedulePath, 'utf8');
+  const uxMatch = text.match(
+    /- \*\*UX Issue Audit（月曜 9:00）\*\*:[^\n]*prefill=([A-Za-z0-9_-]+)/,
+  );
+  assert.ok(uxMatch, 'schedule must include UX Issue Audit prefill URL');
+  const { prompt } = decodeDeliveryAgentPrefillToken(uxMatch[1]);
+  assert.match(prompt, /UX Issue Audit/i);
+  assert.doesNotMatch(prompt, /delivery-agent\/SKILL\.md/i);
 });

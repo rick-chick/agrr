@@ -80,16 +80,6 @@ checks_are_green() {
   "
 }
 
-ensure_agent_no_merge_label() {
-  local pr_number="$1"
-  local labels
-  labels="$(gh pr view "$pr_number" --json labels --jq '[.labels[].name] | join(",")')"
-  if ! echo "$labels" | grep -qE '(^|,)agent-no-merge(,|$)'; then
-    echo "Adding agent-no-merge label to PR #$pr_number (no linked issue for agent merge)"
-    gh pr edit "$pr_number" --add-label agent-no-merge
-  fi
-}
-
 ensure_agent_merge_label() {
   local pr_number="$1"
   local labels
@@ -170,7 +160,6 @@ prep_pr() {
   ")"
 
   if [ "$should_merge" != "true" ]; then
-    ensure_agent_no_merge_label "$pr_number"
     echo "PR #$pr_number has no linked issue; skipping agent-merge prep"
     return 0
   fi

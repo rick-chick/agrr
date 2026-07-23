@@ -1,4 +1,3 @@
-import { hasBlockingMergeLabel } from './pr-agent-prep-lib.mjs';
 import { prMergeWorkerNeedsSync } from './pr-merge-worker-needs-sync.mjs';
 
 /**
@@ -38,17 +37,10 @@ export function parseCommaSeparatedLabels(labels) {
  *   mergeStateStatus?: string | null;
  *   requiredCiState: 'incomplete' | 'failed' | 'green';
  * }} input
- * @returns {
- *   { eligible: true; dispatchKind: 'conflict' | 'ci_fix' | 'default' }
- *   | { eligible: false; reason: string }
- * }
+ * @returns {{ eligible: true } | { eligible: false; reason: string }}
  */
 export function classifyPrimaryPrMergeDispatch(input) {
   const labelNames = parseCommaSeparatedLabels(input.labels);
-
-  if (hasBlockingMergeLabel(labelNames)) {
-    return { eligible: false, reason: 'blocking merge label' };
-  }
 
   if (labelNames.includes('agent-merge-in-progress')) {
     return { eligible: false, reason: 'agent-merge-in-progress' };
@@ -63,16 +55,12 @@ export function classifyPrimaryPrMergeDispatch(input) {
     mergeStateStatus: input.mergeStateStatus,
   });
 
-  let dispatchKind = 'default';
-
-  if (needsSync) {
-    dispatchKind = 'conflict';
-  } else if (input.eventAction === 'synchronize') {
-    return { eligible: false, reason: 'synchronize without conflict' };
+  if (!needsSync && input.eventAction === 'synchronize') {
+    return { eligible: false, reason: 'synchronize without sync need' };
   } else if (input.requiredCiState === 'failed') {
-    dispatchKind = 'ci_fix';
+    // Failed required CI is enough to re-run the Delivery Agent; the Agent observes the PR.
   } else if (input.isDraft) {
-    return { eligible: false, reason: 'draft without conflict or ci failure' };
+    return { eligible: false, reason: 'draft without sync need or ci failure' };
   } else if (
     input.requiredCiState === 'incomplete' &&
     input.eventAction === 'ci_completed'
@@ -92,9 +80,9 @@ export function classifyPrimaryPrMergeDispatch(input) {
     return { eligible: false, reason: 'not master base' };
   }
 
-  if (dispatchKind !== 'conflict' && input.headOid !== input.eventHeadSha) {
+  if (!needsSync && input.headOid !== input.eventHeadSha) {
     return { eligible: false, reason: 'stale head sha' };
   }
 
-  return { eligible: true, dispatchKind };
+  return { eligible: true };
 }

@@ -1,25 +1,10 @@
 /** @typedef {{ name: string }} PrLabel */
 
-export const BLOCKING_MERGE_LABELS = [
-  'agent-no-merge',
-  'do-not-merge',
-  'wip',
-  'agent-merge-blocked',
-];
-
 export const REQUIRED_CI_CONTEXTS = [
   'rails-test',
   'frontend-test',
   'lint / frontend-lint',
 ];
-
-/**
- * @param {Array<string | PrLabel>} labels
- */
-export function hasBlockingMergeLabel(labels) {
-  const names = labels.map((label) => (typeof label === 'string' ? label : label.name));
-  return names.some((name) => BLOCKING_MERGE_LABELS.includes(name));
-}
 
 /**
  * @param {string} headRefName
@@ -53,9 +38,6 @@ export function isEligibleAgentPr(meta) {
     return false;
   }
   if (meta.headOwner !== meta.baseOwner) {
-    return false;
-  }
-  if (hasBlockingMergeLabel(meta.labels)) {
     return false;
   }
   return isOptInHeadRef(meta.headRefName);

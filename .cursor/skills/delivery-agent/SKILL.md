@@ -9,6 +9,8 @@ description: >-
 
 **1 run = 1 件**（issue または PR）。**例外**: 同一 run 内の UX キャンペーン post-merge（§PR マージ成功後）のみ、マージした PR に続けて実施する。
 
+**判断基準（正本）**: [JUDGMENT-CRITERIA.md](../automation-authoring/references/JUDGMENT-CRITERIA.md) — 迷ったら先に読む。
+
 正本の手順は本 SKILL の **§0 観測と分岐**。実装・マージの詳細は参照スキルを読む。
 
 | 参照スキル | 用途 |
@@ -20,33 +22,31 @@ description: >-
 | [`tdd-on-edit/SKILL.md`](../tdd-on-edit/SKILL.md) | 改修 TDD |
 | [`test-common/SKILL.md`](../test-common/SKILL.md) | テスト実行 |
 
-参照スキル内の **`action` 条件はレガシー**。§0 の観測結果が常に優先する。payload に `action` があっても**無視**する。
+参照スキル内の **`action` 条件は無視**。§0 の観測結果が常に優先する。payload に `action` があっても**無視**する。
 
 ## §0 観測と分岐（毎 run 先頭・固定順）
 
-0. **in-progress** — `agent-in-progress` または `agent-merge-in-progress` が付いていれば **即終了**（コメント不要）
-1. **payload** — `repository`、任意の `issue_number` / `pr_number` / `pr_unlinked`
-   - **`pr_unlinked: true`**、または **`pr_number` のみ**（`issue_number` なし）→ **PR フェーズ直行**（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。issue 実装・新規 PR 禁止。
-2. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,labels`
-   - リンク issue 番号は **`closingIssuesReferences` のみ**（機械層は本文を読まない。Agent も `gh pr view --json closingIssuesReferences` を正とする）
-   - **`merged: true`** → issue 実装・再マージ**禁止**。リンク issue のラベルを `gh issue view` で確認
-     - いずれかに `ux-campaign:breadcrumb` → [`ux-campaign-loop`](../ux-campaign-loop/SKILL.md) §1〜§2（post-merge）のみ。終了
-     - なければ exit 0
+**payload は起動ヒントのみ。** `repository` + 任意の `issue_number` / `pr_number`（optional: `pr_unlinked`）。**ラベル名・payload フィールドで skip / merge 禁止を決めない。** 毎 run 先頭で `gh` 観測する。
+
+0. **in-progress** — `agent-in-progress` または `agent-merge-in-progress` が付いていれば **即終了**（重複抑止。コメント不要）
+1. **番号解決** — `pr_number` ありなら `gh pr view --json merged,closingIssuesReferences,state,mergeable,mergeStateStatus,labels`
+   - **`merged: true`** → 再マージ禁止。リンク issue に `ux-campaign:breadcrumb` があれば post-merge のみ
    - 判定補助: [`delivery-agent-campaign-lib.mjs`](../../../scripts/delivery-agent-campaign-lib.mjs)
-3. **open PR** — `pr_unlinked` でないとき、リンク issue の open PR を検索（`closingIssuesReferences` 基準）
-   - **あり** → PR フェーズ（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）: CI / mergeable / Draft を見て修正・merge・待ち
-   - **なし** → issue フェーズ（[`github-issue-worker`](../github-issue-worker/SKILL.md)）: triage → 実装 or close or 依存待ち
-4. **epic** — `[epic]` / `epic` ラベルなら §1b（子 issue 完了確認 → close）
+   - **リンク issue あり** → PR フェーズ（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）へ
+   - **リンク issue なし**（未リンク PR）→ PR フェーズ §0a（陳腐化観測）から。マージ経路には入らない
+2. **open PR** — issue 起点でリンク issue の open PR を検索（`closingIssuesReferences`）
+   - **あり** → PR フェーズ
+   - **なし** → issue フェーズ（[`github-issue-worker`](../github-issue-worker/SKILL.md)）
+3. **epic** — `[epic]` / `epic` ラベルなら §1b
 
-### PR フェーズ: 陳腐化（obsolete / superseded）判定
+### PR フェーズ: 陳腐化（obsolete）— Agent 判断
 
-機械層はタイトル一致や closing issue の機械 close を**しない**。blocking ラベル（`agent-no-merge` 等）付き PR は retry reconcile の内部ゲート `pr_review` で本 Agent に届く。着手前に必ず観測する:
+未リンク PR、または観測で陳腐化が疑われるとき [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) §0a を実施。
 
-1. `gh pr view <N> --json title,body,state,labels,mergeable,mergeStateStatus,closingIssuesReferences,files`
-2. `gh pr diff <N> --name-only` と最近マージ済み PR（`gh pr list --state merged --limit 30`）の diff / タイトルを比較
-3. **obsolete と判断**（別 PR で同趣旨がマージ済み・方針変更で差分が無意味・`agent-no-merge` が正しい opt-out）→ [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) §0a で close
-4. **まだ有効** → blocking ラベルを外す根拠がなければ維持して exit 0。修正・マージが妥当なら §0 の通常 PR フェーズへ（`agent-no-merge` はマージ前に外さない）
-5. **判断不能** → §0a 同様。`agent-merge-blocked` は付けない（コメント + Memory のみ。15 分 reconcile の `pr_review` で再観測）
+1. `gh pr diff` + 最近マージ済み PR と比較
+2. obsolete → close
+3. まだ有効 → exit 0（マージしない）
+4. 判断不能 → コメント + exit 0
 
 タイトル正規化や `#N` 参照の regex は **Agent 判断内のみ**（dispatch / reconcile スクリプトに書かない）。
 
@@ -105,7 +105,7 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 | `repository` | はい |
 | `issue_number` | issue 起点時、または PR の `closingIssuesReferences` にリンク issue があるとき |
 | `pr_number` | PR / CI 起点時 |
-| `pr_unlinked` | `issue_number` が無い PR dispatch 時（`true`）。Agent は PR フェーズのみ |
+| `pr_unlinked` | いいえ（optional）。機械が `true` を送ることがある。**Agent は信用しない** — `gh pr view` の `closingIssuesReferences` で未リンクか観測 |
 | `action` | **送らない・無視** |
 
 任意: `issue_title`, `issue_url`, `labels`, `retry_reason`。**`issue_body` / `body_hash` は機械層から送らない**（Agent は `gh issue view` で読む）。
@@ -132,9 +132,8 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 
 ```
 Read `.cursor/skills/delivery-agent/SKILL.md` exactly.
-Payload: repository, issue_number, pr_number (optional), pr_unlinked (optional).
-pr_unlinked: true OR pr_number without issue_number means PR-phase only (no issue implement).
-No action field — if present, ignore it. Observe GitHub state and decide.
+Payload: repository, issue_number, pr_number (optional). Optional: pr_unlinked — do not trust; observe GitHub with gh and decide.
+No action field — if present, ignore it. Never skip because of merge-prohibition labels.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
 (cleanup-workflow-tick.sh) before opening a PR. Do not skip tick or open PR before gate exit 0.
@@ -148,7 +147,7 @@ with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent a
 
 1. [Prefill](#prefill-urlフォーム事前入力) または Dashboard で **Delivery Automation** 作成（Webhook のみ）
    - **作成済み**: [AGRR Delivery Agent (Webhook)](https://cursor.com/automations/6a5cb2d9-8317-11f1-a7d1-d6b4613131ce)（`6a5cb2d9-8317-11f1-a7d1-d6b4613131ce`）
-   - **プロンプトに `pr_unlinked (optional)` が無い場合**は [ワンクリック適用リンク](../cloud-automation-audit/references/cursor-automation-schedule.md#delivery-agentissue--merge-統合)を開いて **Save のみ**（reconcile の HTTP 400 解消）
+   - **プロンプトが古い場合**は [ワンクリック適用リンク](../cloud-automation-audit/references/cursor-automation-schedule.md#delivery-agentissue--merge-統合)を開いて **Save のみ**
 2. `CURSOR_DELIVERY_WEBHOOK_URL` / `KEY` を repo secrets に登録
 3. 旧 Automation を **OFF**（**workflow マージより先**）:
    - [AGRR Issue Worker (Webhook)](https://cursor.com/automations/6ad06db2-9fea-4a66-a56b-2cf7145f102d)
