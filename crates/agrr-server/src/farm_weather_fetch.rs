@@ -9,8 +9,10 @@ use crate::jobs::JobStep;
 use crate::state::AppState;
 use agrr_adapters_agrr::WeatherDaemonGateway;
 use agrr_adapters_sqlite::{
-    FarmSqliteGateway, WeatherDataFarmSqliteGateway, WeatherDataGatewayBundle,
+    FarmSqliteGateway, PendingFarmWeatherBackfillSqliteGateway, WeatherDataFarmSqliteGateway,
+    WeatherDataGatewayBundle,
 };
+use agrr_domain::farm::interactors::PendingFarmWeatherBackfillInteractor;
 use agrr_domain::farm::calculators::FarmWeatherProgressCalculator;
 use agrr_domain::farm::dtos::{
     MarkFarmWeatherDataFailedInput, RecordFarmWeatherBlockCompletedInput,
@@ -256,6 +258,26 @@ impl StartFarmWeatherDataFetchPort for StartFarmWeatherFetchAdapter {
                 tracing::warn!(farm_id, error = %e, "start farm weather fetch failed");
                 None
             }
+        }
+    }
+}
+
+/// Backfill initial weather fetch for user farms left at `pending` (pre-#464).
+pub fn run_pending_farm_weather_backfill(state: &AppState) {
+    let pool = state.sqlite.clone();
+    let list_gateway = PendingFarmWeatherBackfillSqliteGateway::new(pool);
+    let start_fetch = StartFarmWeatherFetchAdapter::new(state.clone());
+    let clock = SystemClock;
+    let interactor =
+        PendingFarmWeatherBackfillInteractor::new(&list_gateway, &start_fetch, &clock);
+    match interactor.call() {
+        Ok(started) => {
+            if started > 0 {
+                tracing::info!(started, "pending farm weather backfill enqueued");
+            }
+        }
+        Err(message) => {
+            tracing::warn!(error = %message, "pending farm weather backfill failed");
         }
     }
 }
