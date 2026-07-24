@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# gh wrapper for Cloud Agent: prefer AGRR_GH_PAT over Cursor integration GITHUB_TOKEN.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REAL_GH_FILE="${SCRIPT_DIR}/.gh-real"
+
+if [[ -f "$REAL_GH_FILE" ]]; then
+  REAL_GH="$(<"$REAL_GH_FILE")"
+else
+  REAL_GH="$(command -v gh)"
+fi
+
+unset GITHUB_TOKEN GH_TOKEN 2>/dev/null || true
+
+if [[ -n "${AGRR_GH_PAT:-}" ]]; then
+  export GH_TOKEN="$AGRR_GH_PAT"
+fi
+
+exec "$REAL_GH" "$@"
