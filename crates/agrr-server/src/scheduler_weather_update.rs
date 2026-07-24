@@ -119,6 +119,8 @@ impl WeatherUpdateJobsEnqueueInProcessGateway {
 
 impl WeatherUpdateJobsEnqueueGateway for WeatherUpdateJobsEnqueueInProcessGateway {
     fn enqueue_weather_update_jobs(&self) -> EnqueueWeatherUpdateJobsResult {
+        crate::farm_weather_fetch::run_pending_farm_weather_backfill(&self.state);
+
         let pool = self.state.sqlite.clone();
         let weather_bundle = match WeatherDataGatewayBundle::resolve(pool.clone()) {
             Ok(bundle) => bundle,

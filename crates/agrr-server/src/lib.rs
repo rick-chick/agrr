@@ -98,6 +98,11 @@ pub async fn run_http_server() {
 
     let state = AppState::from_env();
 
+    let startup_state = state.clone();
+    tokio::spawn(async move {
+        farm_weather_fetch::run_pending_farm_weather_backfill(&startup_state);
+    });
+
     let cors = CorsLayer::new()
         .allow_credentials(true)
         .allow_methods([

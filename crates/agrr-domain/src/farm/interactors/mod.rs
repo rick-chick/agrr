@@ -8,6 +8,7 @@ pub(crate) mod farm_list_reference_for_region_interactor;
 pub(crate) mod farm_temperature_chart_interactor;
 pub(crate) mod farm_update_interactor;
 pub(crate) mod mark_farm_weather_data_failed_interactor;
+pub(crate) mod pending_farm_weather_backfill_interactor;
 pub(crate) mod record_farm_weather_block_completed_interactor;
 pub(crate) mod start_farm_weather_data_fetch_interactor;
 
@@ -19,5 +20,6 @@ pub use farm_list_reference_for_region_interactor::FarmListReferenceForRegionInt
 pub use farm_temperature_chart_interactor::FarmTemperatureChartInteractor;
 pub use farm_update_interactor::FarmUpdateInteractor;
 pub use mark_farm_weather_data_failed_interactor::MarkFarmWeatherDataFailedInteractor;
+pub use pending_farm_weather_backfill_interactor::PendingFarmWeatherBackfillInteractor;
 pub use record_farm_weather_block_completed_interactor::RecordFarmWeatherBlockCompletedInteractor;
 pub use start_farm_weather_data_fetch_interactor::StartFarmWeatherDataFetchInteractor;
