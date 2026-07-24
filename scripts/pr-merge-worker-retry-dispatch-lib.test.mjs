@@ -363,6 +363,50 @@ test('classifyReconcileCandidate treats merge-prohibition labels as ordinary syn
   });
 });
 
+test('classifyReconcileCandidate accepts unlinked draft after quiet period', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      number: 481,
+      isDraft: true,
+      closingIssuesReferences: [],
+      labels: [],
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'CLEAN',
+      updatedAt: '2026-07-15T09:00:00.000Z',
+    },
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    removeStaleInProgressLabel: false,
+  });
+});
+
+test('classifyReconcileCandidate skips linked draft waiting for prep', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      number: 482,
+      isDraft: true,
+      closingIssuesReferences: [{ number: 474 }],
+      labels: [],
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'CLEAN',
+      updatedAt: '2026-07-15T09:00:00.000Z',
+    },
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: false,
+    reason: 'linked draft waiting for prep',
+  });
+});
+
 test('classifyReconcileCandidate accepts unlinked open PR after quiet period', () => {
   const result = classifyReconcileCandidate({
     pr: {

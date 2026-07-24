@@ -38,7 +38,8 @@ const REQUIRED_MERGE_DISPATCH_SNIPPETS = [
 ];
 
 const REQUIRED_PRIMARY_DISPATCH_LIB_SNIPPETS = [
-  'draft without sync need or ci failure',
+  'linked draft waiting for prep',
+  'closingIssueCount',
 ];
 
 /**
