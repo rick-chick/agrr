@@ -746,6 +746,39 @@ pub fn ensure_agrr_daemon_for_contract() {
     std::thread::sleep(std::time::Duration::from_secs(2));
 }
 
+/// Polls farm show until weather fetch reaches `completed` or fails.
+pub fn poll_farm_weather_fetch_completed(
+    client: &ContractClient,
+    session_id: &str,
+    farm_id: i64,
+) -> serde_json::Value {
+    ensure_agrr_daemon_for_contract();
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+
+    for _ in 0..240 {
+        let (status, body) = status_and_body(client.get(&path, Some(session_id), &empty_headers()));
+        assert_eq!(200, status, "{body}");
+        let json: serde_json::Value = serde_json::from_str(&body).expect("farm show JSON");
+        let weather_status = json["weather_data_status"].as_str().unwrap_or_default();
+        if weather_status == "completed" {
+            assert_eq!(100, json["weather_data_progress"].as_i64().unwrap_or(-1));
+            return json;
+        }
+        if weather_status == "failed" {
+            panic!("farm weather fetch failed: {body}");
+        }
+        if weather_status == "fetching" {
+            let progress = json["weather_data_progress"].as_i64().unwrap_or(0);
+            assert!(
+                progress >= 0,
+                "fetching farm should report non-negative progress: {body}"
+            );
+        }
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+    panic!("farm weather fetch did not reach completed within timeout (farm_id={farm_id})");
+}
+
 pub fn poll_task_schedule_sync_ready(
     client: &ContractClient,
     session_id: &str,

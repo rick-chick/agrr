@@ -8,7 +8,8 @@ use support::{
     assert_crop_task_template_api_removed,
     clear_plan_task_schedules, developer_session_id, empty_headers, farmer_session_id,
     researcher_session_id,
-    find_schedule_item, poll_task_schedule_sync_ready, schedule_item_ids_from_response,
+    find_schedule_item, poll_farm_weather_fetch_completed, poll_task_schedule_sync_ready,
+    schedule_item_ids_from_response,
     seed_masters_crop, seed_masters_crop_with_manual_blueprint, seed_masters_crop_with_stages,
     seed_masters_crop_with_stages_and_blueprints, seed_reference_crop_with_stage,
     seed_task_schedule_regeneration_plan,
@@ -1841,5 +1842,48 @@ fn post_masters_farm_create_starts_weather_fetch() {
     let show_json: serde_json::Value = serde_json::from_str(&show_body).expect("farm show JSON");
     assert_eq!("fetching", show_json["weather_data_status"].as_str().unwrap());
     assert!(show_json["weather_data_total_years"].as_i64().unwrap() > 0);
+}
+
+#[test]
+fn post_masters_farm_create_weather_fetch_reaches_completed_and_temperature_chart() {
+    if !agrr_regeneration_contract_available() {
+        eprintln!("skip: agrr binary unavailable for farm weather completion contract test");
+        return;
+    }
+
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+    ensure_farm_create_capacity_via_api(&client, &session_id);
+
+    let (create_status, create_body) = status_and_body(client.post(
+        "/api/v1/masters/farms",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "farm": {
+                "name": "Contract Weather Completion Farm",
+                "region": "jp",
+                "latitude": 35.6895,
+                "longitude": 139.6917
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create farm JSON");
+    let farm_id = create_json["id"].as_i64().expect("farm id");
+    assert_eq!("fetching", create_json["weather_data_status"].as_str().unwrap());
+
+    let completed_json = poll_farm_weather_fetch_completed(&client, &session_id, farm_id);
+    assert_eq!("completed", completed_json["weather_data_status"].as_str().unwrap());
+    assert!(completed_json["weather_data_total_years"].as_i64().unwrap() > 0);
+
+    let chart_path = format!("/api/v1/masters/farms/{farm_id}/temperature_chart?period=90d");
+    let (chart_status, chart_body) =
+        status_and_body(client.get(&chart_path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, chart_status, "{chart_body}");
+    let chart_json: serde_json::Value =
+        serde_json::from_str(&chart_body).expect("temperature chart JSON");
+    assert!(chart_json["points"].as_array().is_some(), "{chart_body}");
 }
 
