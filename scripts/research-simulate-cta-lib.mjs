@@ -162,6 +162,9 @@ export function verifyResearchCtaAsset(assetContent) {
   if (!assetContent.includes('temperature_requirements')) {
     errors.push('missing temperature_requirements page support');
   }
+  if (!assetContent.includes('target="_blank"')) {
+    errors.push('missing target="_blank" on sidebar/mobile CTA links');
+  }
   return errors;
 }
 
