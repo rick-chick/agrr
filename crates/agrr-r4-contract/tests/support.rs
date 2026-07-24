@@ -968,3 +968,35 @@ pub fn seed_farm_temperature_chart_fetching(user_id: i64) -> i64 {
     conn.last_insert_rowid()
 }
 
+/// Seeds a user farm stuck at `pending` with coordinates (pre-#464 backfill scenario).
+pub fn seed_farm_pending_weather(user_id: i64) -> i64 {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let farm_name = format!("Contract Pending Weather Farm {suffix}");
+
+    conn.execute(
+        "INSERT INTO farms (
+           user_id, name, latitude, longitude, created_at, updated_at, is_reference,
+           weather_data_status, weather_data_fetched_years, weather_data_total_years,
+           weather_location_id
+         ) VALUES (
+           ?1, ?2, 35.6895, 139.6917, datetime('now'), datetime('now'), 0,
+           'pending', 0, 0, NULL
+         )",
+        params![user_id, farm_name],
+    )
+    .expect("insert pending farm");
+
+    conn.last_insert_rowid()
+}
+
+pub fn scheduler_auth_headers() -> HashMap<String, String> {
+    let token = std::env::var("SCHEDULER_AUTH_TOKEN")
+        .unwrap_or_else(|_| "test_scheduler_token_contract".into());
+    let mut headers = HashMap::new();
+    headers.insert("X-Scheduler-Token".into(), token);
+    headers
+}
+
