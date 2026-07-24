@@ -56,7 +56,7 @@ description: >-
 
 1. `cleanup-workflow-tick.sh --parent-slug issue-<N>-<short-slug>` から開始（**tick 未実行で A1 に進まない**）
 2. `WORKFLOW_COMPLETE` / gate exit 0 まで A〜D を回す
-3. 完了後に [`github-issue-worker`](../github-issue-worker/SKILL.md) §5（完了条件とテスト照合）〜§6 で PR 作成（Draft。ready は prep）
+3. 完了後に [`github-issue-worker`](../github-issue-worker/SKILL.md) §5（完了条件とテスト照合。本番確認は Automation 対象外）〜§6 で PR 作成（Draft。ready は prep）
 
 PR フェーズでは sequential cleanup は行わない（上流 issue 実装 run で完了済みとみなす）。
 

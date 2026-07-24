@@ -62,6 +62,8 @@ payload の `issue_number` / `pr_number` は**起動ヒント**。観測結果�
 - `git diff` や会話だけで「たぶん」と設計・実装に入る
 - `agent-no-merge` 等の判断印を機械が付ける設計
 - Agent 向けに `conflict` / `ci_fix` / `pr_review` 等の経路名を payload や契約として載せる設計
+- **受け入れ条件・完了条件に本番確認を書く**（`agrr.net` 確認、本番デプロイ後の目視、本番 DB / gcloud 観測など — [PRINCIPLES §受け入れ条件](PRINCIPLES.md#受け入れ条件automation-スコープ)）
+- **本番未確認を理由にマージ拒否・follow-up 起票・親 issue 未クローズ**とする（Automation では本番確認は実施不能）
 
 ## 6. 参照先
 

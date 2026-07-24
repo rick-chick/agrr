@@ -303,12 +303,14 @@ while tasks:           # shell — gate exit 0 まで同一ターン継続
 3. 完了条件を PR 本文に写し、各行に確認根拠を付ける:
    - 確認方法に **テスト名・contract・CI** とある条件 → 該当テストをリポジトリで特定し、`本 PR GREEN` / `既存（path::test名）` / `未カバー` を記載する
    - **手動・E2E** とある条件 → 実施結果、または `手動未実施` を記載する
+   - **本番確認**（`agrr.net`、本番デプロイ後の目視、本番 DB / gcloud 観測など）→ **`Automation 対象外（本番確認）`** と明記。**follow-up 起票・`手動未実施`・マージブロックの理由にしない**（[automation-authoring PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）
    - 根拠なしで `[x]` にしない
 4. issue 本文の**必須**セクションに列挙された完了条件について、`[ ]`・`未カバー`・`手動未実施` が残る → **follow-up issue を起票**（下記 §5a）し、PR は **`Part of #N` のみ**（`Closes` / `Fixes` は禁止）
+   - **除外**: 上記の本番確認のみの条件は follow-up 対象外
 
 ### §5a) 未達条件の follow-up（必須）
 
-本 PR で満たせない必須完了条件（`[ ]`・`未カバー`・`手動未実施`・「別観測」「非同期依存」）は、**コメント一行で済ませない**。PR を開く前に:
+本 PR で満たせない必須完了条件（`[ ]`・`未カバー`・`手動未実施`・「別観測」「非同期依存」）は、**コメント一行で済ませない**。**本番確認のみの条件は follow-up 対象外**（§5 参照）。PR を開く前に:
 
 1. follow-up issue を起票（本文先頭に `Parent: #<親>` と `Criteria: C3–C5` 等）
 2. ラベル `acceptance-follow-up` と `agent-ready` を付与
@@ -378,6 +380,7 @@ issue コメントに PR URL。`agent-in-progress` を外し、付いていれ�
 - **`Closes #N` / `Fixes #N` の使用**（`Part of #N` のみ。親クローズは Merge Worker）
 - **未達条件を follow-up issue なしで PR に載せる**（§5a 違反）
 - **確認方法がテストと書かれた完了条件を、テスト特定なしで `[x]` にする**
+- **本番確認を受け入れ条件に追加する**、または本番未確認を follow-up / マージ拒否の理由にする（[automation-authoring PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）
 
 ## 関連
 
