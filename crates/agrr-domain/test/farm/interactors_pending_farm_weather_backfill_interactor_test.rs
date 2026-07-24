@@ -67,6 +67,40 @@ fn starts_fetch_for_each_pending_farm_id() {
     assert_eq!(vec![101, 202], *start.calls.lock().unwrap());
 }
 
+struct PartialStartFetch {
+    calls: Mutex<Vec<i64>>,
+}
+
+impl StartFarmWeatherDataFetchPort for PartialStartFetch {
+    fn call(&self, farm_id: i64, _as_of: Date) -> Option<StartedFarmWeatherFetchSnapshot> {
+        self.calls.lock().unwrap().push(farm_id);
+        if farm_id == 202 {
+            return None;
+        }
+        Some(StartedFarmWeatherFetchSnapshot {
+            weather_data_status: "fetching".into(),
+            weather_data_total_years: 5,
+        })
+    }
+}
+
+#[test]
+fn counts_only_successful_starts() {
+    let list = StubListGateway {
+        farm_ids: vec![101, 202, 303],
+    };
+    let start = PartialStartFetch {
+        calls: Mutex::new(Vec::new()),
+    };
+    let as_of = Date::from_calendar_date(2026, Month::July, 24).unwrap();
+    let clock = FixedClock(as_of);
+    let interactor = PendingFarmWeatherBackfillInteractor::new(&list, &start, &clock);
+
+    let started = interactor.call().expect("backfill");
+    assert_eq!(2, started);
+    assert_eq!(vec![101, 202, 303], *start.calls.lock().unwrap());
+}
+
 #[test]
 fn returns_zero_when_no_pending_farms() {
     let list = StubListGateway { farm_ids: vec![] };
