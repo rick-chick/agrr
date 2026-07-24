@@ -6,6 +6,12 @@
     use crate::shared::attr::AttrMap;
     use crate::shared::gateways::UserLookupGateway;
     use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+    use crate::shared::ports::ClockPort;
+    use crate::weather_data::gateways::{
+        StartFarmWeatherDataFetchPort, StartedFarmWeatherFetchSnapshot,
+    };
+    use std::sync::Mutex;
+    use time::{Date, Month, OffsetDateTime};
 
     use crate::farm::dtos::{FarmDeleteUsage, FarmDetailOutput};
     use crate::shared::user::User;
@@ -24,6 +30,37 @@
         }
         fn localize(&self, _: time::Date, _: Option<&str>, _: &TranslateOptions) -> String {
             String::new()
+        }
+    }
+
+    struct FixedClock;
+    impl ClockPort for FixedClock {
+        fn today(&self) -> Date {
+            Date::from_calendar_date(2026, Month::July, 23).unwrap()
+        }
+        fn now(&self) -> OffsetDateTime {
+            OffsetDateTime::now_utc()
+        }
+    }
+
+    struct NoopStartWeatherFetch;
+    impl StartFarmWeatherDataFetchPort for NoopStartWeatherFetch {
+        fn call(&self, _: i64, _: Date) -> Option<StartedFarmWeatherFetchSnapshot> {
+            None
+        }
+    }
+
+    struct SpyStartWeatherFetch {
+        calls: Mutex<Vec<i64>>,
+    }
+
+    impl StartFarmWeatherDataFetchPort for SpyStartWeatherFetch {
+        fn call(&self, farm_id: i64, _: Date) -> Option<StartedFarmWeatherFetchSnapshot> {
+            self.calls.lock().unwrap().push(farm_id);
+            Some(StartedFarmWeatherFetchSnapshot {
+                weather_data_status: "fetching".into(),
+                weather_data_total_years: 6,
+            })
         }
     }
 
@@ -271,12 +308,16 @@
             failure: None,
         };
         let user_lookup = StubLookup(User::new(10, false));
+        let weather_fetch = NoopStartWeatherFetch;
+        let clock = FixedClock;
         let mut interactor = FarmCreateInteractor::new(
             &mut output,
             10,
             &gateway,
             &StubTranslator,
             &user_lookup,
+            &weather_fetch,
+            &clock,
         );
         interactor
             .call(FarmCreateInput::new(
@@ -289,6 +330,46 @@
         assert_eq!(output.success, Some(entity));
     }
 
+    #[test]
+    fn starts_weather_fetch_after_create_with_coordinates() {
+        let entity = sample_farm();
+        let gateway = UnderLimitGateway {
+            count: 3,
+            entity: entity.clone(),
+        };
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let user_lookup = StubLookup(User::new(10, false));
+        let weather_fetch = SpyStartWeatherFetch {
+            calls: Mutex::new(Vec::new()),
+        };
+        let clock = FixedClock;
+        let mut interactor = FarmCreateInteractor::new(
+            &mut output,
+            10,
+            &gateway,
+            &StubTranslator,
+            &user_lookup,
+            &weather_fetch,
+            &clock,
+        );
+        interactor
+            .call(FarmCreateInput::new(
+                "新規農場",
+                None,
+                Some(35.0),
+                Some(135.0),
+            ))
+            .unwrap();
+        assert_eq!(weather_fetch.calls.lock().unwrap().as_slice(), &[99]);
+        let success = output.success.expect("success");
+        assert_eq!(success.weather_data_status.as_deref(), Some("fetching"));
+        assert_eq!(success.weather_data_total_years, Some(6));
+        assert_eq!(success.weather_data_fetched_years, Some(0));
+    }
+
     // Ruby: test "calls on_failure with limit exceeded dto when at farm limit"
     #[test]
     fn calls_on_failure_with_limit_exceeded_when_at_farm_limit() {
@@ -298,12 +379,16 @@
             failure: None,
         };
         let user_lookup = StubLookup(User::new(10, false));
+        let weather_fetch = NoopStartWeatherFetch;
+        let clock = FixedClock;
         let mut interactor = FarmCreateInteractor::new(
             &mut output,
             10,
             &gateway,
             &StubTranslator,
             &user_lookup,
+            &weather_fetch,
+            &clock,
         );
         interactor
             .call(FarmCreateInput::new(
