@@ -245,3 +245,23 @@ test('attachIssueCandidates: 既存 issue をスコア付きで提案', () => {
   assert.equal(withCandidates.existingIssueCandidates[0].number, 16);
   assert.ok(matchIssueScore(findings[0], issues[0]) >= 3);
 });
+
+test('renderMarkdownDraft: visual finding に ## 再現手順 を出力', async () => {
+  const { renderMarkdownDraft } = await import('./collect-ux-findings.mjs');
+  const md = renderMarkdownDraft([
+    {
+      id: 'vr-3',
+      source: 'visual-review',
+      priority: 'P1',
+      category: 'UX',
+      pattern: 'about',
+      suggestedTitle: '[P1][UX] about: 見出し',
+      summary: '見出しが欠落',
+      visualReviewRow: 3,
+      png: ['about.ja.png'],
+      existingIssueCandidates: [],
+    },
+  ]);
+  assert.match(md, /## 再現手順/);
+  assert.doesNotMatch(md, /## 対応/);
+});

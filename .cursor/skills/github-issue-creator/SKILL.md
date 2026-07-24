@@ -20,15 +20,11 @@ disable-model-invocation: true
 | visual-review / CSS 監査の一括起票 | **`ux-issue-creator`** |
 | 要件の深掘りのみ（起票前） | **`requirements-analysis`**（必要時） |
 
-## 1) 依頼の理解と事実確認
+## 1) 事実確認
 
-起票前に次を一文ずつ言えるようにする（[`user-request-project-alignment.mdc`](../../rules/user-request-project-alignment.mdc)）。
-
-1. **何を issue 化するか**（対象・期待する振る舞い）
-2. **根拠**（コード path、失敗テスト、再現手順、`ARCHITECTURE.md` 条項のいずれか）
-3. **スコープの境界**（含めないもの）
-
-根拠が取れない場合は **起票せず調査を続ける**（[`evidence-before-design-and-implementation.mdc`](../../rules/evidence-before-design-and-implementation.mdc)）。推測だけで issue を書かない。
+- **バグ**: 起票前に再現する。未再現は調査 issue のみ（`agent-ready` 不可）
+- 起票前に言えること: (1) 対象と期待する振る舞い (2) 根拠—再現手順・失敗テスト・コード path・規約条項のいずれか (3) スコープの境界
+- 根拠が取れない → 起票せず調査を続ける（[`evidence-before-design-and-implementation.mdc`](../../rules/evidence-before-design-and-implementation.mdc)）
 
 ## 2) 議論ゲート（issue 前・必須）
 
@@ -68,7 +64,7 @@ gh issue list --repo rick-chick/agrr --state all \
 
 ## 4) 草案（ドライラン・必須）
 
-`gh issue create` の**前**にチャットへ次を出力する（本文は [references/issue-body-template.md](references/issue-body-template.md) の必須セクションを満たす）。
+`gh issue create` の**前**にチャットへ次を出力する（本文は [references/issue-body-template.md](references/issue-body-template.md) のテンプレートを満たす）。
 
 - **タイトル**（優先度付き）
 - **本文**（全文）
@@ -112,7 +108,7 @@ gh issue edit <N> --repo rick-chick/agrr --add-label agent-ready
 | ユーザーが「バックログのみ」「agent-ready は付けない」と指定 | 人間確認待ち |
 | §2 の未解決項目が残っている | 仕様・方針未確定 |
 | 依存 issue が未完了で実装不可 | 先に依存を閉じるか `agent-ready` を付けない（Agent が `gh` で判断。機械層は本文をパースしない） |
-| 調査のみ・再現不能・再現手順なし | 完了条件を満たせない |
+| バグ未再現・再現手順なし | 完了条件を満たせない |
 | 実装スコープ外（運用・インフラ判断のみ等） | `out_of_scope` 想定 |
 | 重複の可能性が残っている | 人間の最終確認待ち |
 
@@ -127,19 +123,21 @@ gh issue edit <N> --repo rick-chick/agrr --add-label agent-ready
 - [ ] 起票した issue 番号・URL を報告
 - [ ] `agent-ready` の有無と理由を報告
 
-## 8) ベストプラクティス（起票品質）
+## 8) 起票品質
 
-1. **1 issue = 1 修正単位** — Issue Worker は 1 実行 1 issue・1 PR
-2. **観測可能な完了条件** — 「改善する」ではなく「〇〇のテストが GREEN」「△△画面で□□と表示」
-3. **TDD を明示** — 完了条件に `test-common` を入れる
-4. **参照 path** — 調査済みファイルを `参照` に列挙（worker の着手前 triage 用）
-5. **優先度はタイトル先頭** — `[P0]` > `[P1]` > `[P2]` で worker が選定しやすい
-6. **実装はしない** — 起票・ラベル付与まで。コード変更は `github-issue-worker`
-7. **bot 起票に倣わない** — Dependabot 等と同様、根拠のないテンプレ量産をしない
+1. **契約**: 再現手順（または観測事実）と完了条件。修正方法は書かない
+2. **1 issue = 1 修正単位**
+3. **完了条件は観測可能** — テスト GREEN、画面表示など具体値
+4. **参照 path** — 調査済みファイルを列挙
+5. **タイトル先頭に優先度** — `[P0]` > `[P1]` > `[P2]`
+6. **実装はしない** — 起票・ラベル付与まで（`github-issue-worker` へ委譲）
 
 ## 9) 禁止
 
 - 根拠・完了条件のない issue 起票
+- 未再現バグへの `agent-ready`
+- issue 本文への修正方法・処方箋
+- 根拠のないテンプレ量産（Dependabot 等と同様）
 - 重複確認なしの起票
 - §2 を飛ばした起票（曖昧なまま `gh issue create`）
 - ユーザー確認なしの `gh issue create`（§4 例外を除く）
