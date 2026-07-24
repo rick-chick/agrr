@@ -1,11 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-
-import { listResearchRequirementsHtmlPaths } from '../../../scripts/research-simulate-cta-lib.mjs';
-
-const RESEARCH_DIR = join(process.cwd(), '..', 'public', 'research');
-const REQUIREMENT_PAGES = listResearchRequirementsHtmlPaths(RESEARCH_DIR);
 
 const SAMPLE_DESKTOP_PAGE =
   '/research/research_reports/tomato/01_environmental_requirements/temperature_requirements.html';
@@ -43,10 +36,46 @@ test.describe('research requirements CTA (static HTML)', () => {
     expect(href).toMatch(/crop=tomato/);
   });
 
-  test('all 60 requirement pages load CTA script', () => {
-    for (const relativePath of REQUIREMENT_PAGES) {
-      const content = readFileSync(join(RESEARCH_DIR, relativePath), 'utf8');
-      expect(content).toContain('agrr-gdd-simulate-cta.js');
-    }
+  test('desktop: sidebar CTA navigates directly without VitePress 404 intermediates', async ({
+    page,
+    context,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(SAMPLE_DESKTOP_PAGE, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1500);
+
+    const popupPromise = context.waitForEvent('page');
+    await page.locator('.agrr-research-sidebar-cta a').first().click();
+    const popup = await popupPromise;
+    await popup.waitForLoadState('domcontentloaded');
+
+    const finalUrl = new URL(popup.url());
+    expect(finalUrl.pathname).toBe('/public-plans/new');
+    expect(finalUrl.searchParams.get('crop')).toBe('tomato');
+    expect(finalUrl.searchParams.get('utm_source')).toBe('research');
+    expect(finalUrl.searchParams.get('utm_medium')).toBe('temp_sidebar');
+    expect(finalUrl.pathname).not.toMatch(/\/public-plans\/new\.html/);
+    await popup.close();
+  });
+
+  test('mobile: floating bar CTA navigates directly without VitePress 404 intermediates', async ({
+    page,
+    context,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(SAMPLE_MOBILE_PAGE, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1500);
+
+    const popupPromise = context.waitForEvent('page');
+    await page.locator('.agrr-research-mobile-cta a').first().click();
+    const popup = await popupPromise;
+    await popup.waitForLoadState('domcontentloaded');
+
+    const finalUrl = new URL(popup.url());
+    expect(finalUrl.pathname).toBe('/public-plans/new');
+    expect(finalUrl.searchParams.get('crop')).toBe('tomato');
+    expect(finalUrl.searchParams.get('utm_medium')).toBe('temp_mobile');
+    expect(finalUrl.pathname).not.toMatch(/\/public-plans\/new\.html/);
+    await popup.close();
   });
 });

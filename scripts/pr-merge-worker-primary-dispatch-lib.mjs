@@ -1,6 +1,34 @@
 import { prMergeWorkerNeedsSync } from './pr-merge-worker-needs-sync.mjs';
 
 /**
+ * @param {Array<{ number?: number }> | null | undefined} closingIssuesReferences
+ * @returns {number}
+ */
+export function closingIssueCountFromReferences(closingIssuesReferences) {
+  if (!Array.isArray(closingIssuesReferences)) {
+    return 0;
+  }
+  return closingIssuesReferences.filter((ref) => ref?.number != null).length;
+}
+
+/**
+ * Linked Draft PRs wait for pr-agent-prep. Unlinked Drafts need Delivery Agent.
+ *
+ * @param {{
+ *   isDraft: boolean;
+ *   closingIssueCount: number;
+ *   needsSync: boolean;
+ *   requiredCiState: 'incomplete' | 'failed' | 'green';
+ * }} input
+ */
+export function isLinkedDraftWaitingForPrep(input) {
+  if (!input.isDraft || input.needsSync || input.requiredCiState === 'failed') {
+    return false;
+  }
+  return input.closingIssueCount > 0;
+}
+
+/**
  * @param {string | Array<string | { name?: string }>} labels
  * @returns {string[]}
  */
@@ -36,6 +64,7 @@ export function parseCommaSeparatedLabels(labels) {
  *   mergeable?: string | null;
  *   mergeStateStatus?: string | null;
  *   requiredCiState: 'incomplete' | 'failed' | 'green';
+ *   closingIssueCount?: number;
  * }} input
  * @returns {{ eligible: true } | { eligible: false; reason: string }}
  */
@@ -59,8 +88,15 @@ export function classifyPrimaryPrMergeDispatch(input) {
     return { eligible: false, reason: 'synchronize without sync need' };
   } else if (input.requiredCiState === 'failed') {
     // Failed required CI is enough to re-run the Delivery Agent; the Agent observes the PR.
-  } else if (input.isDraft) {
-    return { eligible: false, reason: 'draft without sync need or ci failure' };
+  } else if (
+    isLinkedDraftWaitingForPrep({
+      isDraft: input.isDraft,
+      closingIssueCount: input.closingIssueCount ?? 0,
+      needsSync,
+      requiredCiState: input.requiredCiState,
+    })
+  ) {
+    return { eligible: false, reason: 'linked draft waiting for prep' };
   } else if (
     input.requiredCiState === 'incomplete' &&
     input.eventAction === 'ci_completed'

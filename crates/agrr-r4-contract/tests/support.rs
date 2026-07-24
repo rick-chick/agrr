@@ -995,48 +995,35 @@ pub fn poll_farm_weather_completed(
     unreachable!()
 }
 
-/// Seeds a user farm stuck in `pending` without `weather_location_id` (pre-#464 backfill scenario).
-pub fn seed_pending_user_farm_with_coordinates(user_id: i64) -> i64 {
-    let conn = rusqlite::Connection::open(
-        std::env::var("AGRR_SQLITE_PATH").unwrap_or_else(|_| "storage/test.sqlite3".to_string()),
-    )
-    .expect("open sqlite for seed");
-    static SUFFIX: AtomicU64 = AtomicU64::new(1);
-    let suffix = format!(
-        "{}-{}",
-        SUFFIX.fetch_add(1, Ordering::Relaxed),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    );
-    let farm_name = format!("Contract Pending Farm {suffix}");
+/// Seeds a user farm stuck at `pending` with coordinates (pre-#464 backfill scenario).
+pub fn seed_farm_pending_weather(user_id: i64) -> i64 {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let farm_name = format!("Contract Pending Weather Farm {suffix}");
+
     conn.execute(
         "INSERT INTO farms (
            user_id, name, latitude, longitude, created_at, updated_at, is_reference,
            weather_data_status, weather_data_fetched_years, weather_data_total_years,
            weather_location_id
          ) VALUES (
-           ?1, ?2, 35.0, 139.0, datetime('now'), datetime('now'), 0,
+           ?1, ?2, 35.6895, 139.6917, datetime('now'), datetime('now'), 0,
            'pending', 0, 0, NULL
          )",
         params![user_id, farm_name],
     )
     .expect("insert pending farm");
+
     conn.last_insert_rowid()
 }
 
-/// POST internal scheduler weather update (backfill pending farms).
-pub fn trigger_weather_update_via_api(client: &ContractClient) {
-    let token = std::env::var("SCHEDULER_AUTH_TOKEN").unwrap_or_else(|_| "test_scheduler_token_contract".to_string());
-    let mut headers = empty_headers();
-    headers.insert("Authorization".to_string(), format!("Bearer {token}"));
-    let (status, body) = status_and_body(client.post(
-        "/api/v1/internal/jobs/trigger_weather_update",
-        None,
-        &headers,
-        None,
-    ));
-    assert_eq!(200, status, "{body}");
+pub fn scheduler_auth_headers() -> HashMap<String, String> {
+    let token = std::env::var("SCHEDULER_AUTH_TOKEN")
+        .unwrap_or_else(|_| "test_scheduler_token_contract".into());
+    let mut headers = HashMap::new();
+    headers.insert("X-Scheduler-Token".into(), token);
+    headers
 }
 

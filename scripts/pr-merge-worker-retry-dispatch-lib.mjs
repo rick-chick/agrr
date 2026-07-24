@@ -5,6 +5,10 @@ import {
 import {
   buildDeliveryPrPayloadFromPr,
 } from './delivery-dispatch-lib.mjs';
+import {
+  closingIssueCountFromReferences,
+  isLinkedDraftWaitingForPrep,
+} from './pr-merge-worker-primary-dispatch-lib.mjs';
 import { prMergeWorkerNeedsSync } from './pr-merge-worker-needs-sync.mjs';
 
 /** Fresh in-progress runs may still be active. */
@@ -84,8 +88,15 @@ function classifyBaseEligibility({ pr, baseOwner }) {
   const labels = labelNames(pr.labels ?? []);
   const needsSync = prMergeWorkerNeedsSync(pr);
 
-  if (pr.isDraft && !needsSync) {
-    return { eligible: false, reason: 'draft pr' };
+  if (
+    isLinkedDraftWaitingForPrep({
+      isDraft: pr.isDraft,
+      closingIssueCount: closingIssueCountFromReferences(pr.closingIssuesReferences),
+      needsSync,
+      requiredCiState: 'green',
+    })
+  ) {
+    return { eligible: false, reason: 'linked draft waiting for prep' };
   }
 
   if (!isUniversalMergeWorkerTarget(pr, baseOwner)) {
