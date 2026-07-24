@@ -126,6 +126,7 @@ use serde_json::json;
     struct MockFarmGateway {
         region: Option<String>,
         find_raises: bool,
+        location_updates: Arc<Mutex<Vec<(i64, i64)>>>,
     }
 
     impl WeatherDataFarmGateway for MockFarmGateway {
@@ -156,9 +157,13 @@ use serde_json::json;
 
         fn update_weather_location_id(
             &self,
-            _: i64,
-            _: i64,
+            farm_id: i64,
+            weather_location_id: i64,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            self.location_updates
+                .lock()
+                .expect("lock")
+                .push((farm_id, weather_location_id));
             Ok(())
         }
     }
@@ -217,6 +222,7 @@ use serde_json::json;
         record: MockRecordBlock,
         agrr: MockAgrrGateway,
         presenter: MockPresenter,
+        location_updates: Arc<Mutex<Vec<(i64, i64)>>>,
     }
 
     impl PerformHarness {
@@ -250,6 +256,7 @@ use serde_json::json;
             count_fails: bool,
             upsert_fails: bool,
         ) -> Self {
+            let location_updates = Arc::new(Mutex::new(Vec::new()));
             Self {
                 weather: MockWeatherGateway {
                     find_coords,
@@ -261,6 +268,7 @@ use serde_json::json;
                 farm: MockFarmGateway {
                     region,
                     find_raises,
+                    location_updates: location_updates.clone(),
                 },
                 advance: MockAdvance {
                     calls: Arc::new(Mutex::new(0)),
@@ -272,6 +280,7 @@ use serde_json::json;
                 presenter: MockPresenter {
                     errors: Arc::new(Mutex::new(vec![])),
                 },
+                location_updates,
             }
         }
 
@@ -310,6 +319,8 @@ use serde_json::json;
             None,
         );
         harness.interactor().call(sample_input()).expect("ok");
+        let updates = harness.location_updates.lock().expect("lock");
+        assert_eq!(vec![(1, 1)], *updates);
     }
 
     #[test]

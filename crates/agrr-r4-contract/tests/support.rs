@@ -780,6 +780,40 @@ pub fn poll_task_schedule_sync_ready(
     panic!("task schedule regeneration did not reach ready state within timeout");
 }
 
+/// Polls farm show until `weather_data_status` is `completed` (C3/C6 contract).
+pub fn poll_farm_weather_completed(
+    client: &ContractClient,
+    session_id: &str,
+    farm_id: i64,
+) -> serde_json::Value {
+    ensure_agrr_daemon_for_contract();
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+    let mut last_progress = 0i64;
+    for _ in 0..240 {
+        let (status, body) = status_and_body(client.get(&path, Some(session_id), &empty_headers()));
+        assert_eq!(200, status, "{body}");
+        let json: serde_json::Value = serde_json::from_str(&body).expect("farm show JSON");
+        let weather_status = json["weather_data_status"].as_str().unwrap_or_default();
+        if weather_status == "completed" {
+            assert_eq!(100, json["weather_data_progress"].as_i64().unwrap_or(0));
+            return json;
+        }
+        if weather_status == "failed" {
+            panic!("farm weather fetch failed: {body}");
+        }
+        if weather_status == "fetching" {
+            let progress = json["weather_data_progress"].as_i64().unwrap_or(0);
+            assert!(
+                progress >= last_progress,
+                "weather_data_progress should not decrease (was {last_progress}, now {progress})"
+            );
+            last_progress = progress;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+    panic!("farm weather fetch did not reach completed within timeout");
+}
+
 fn schedule_item_ids(json: &serde_json::Value) -> Vec<i64> {
     json["fields"]
         .as_array()
@@ -966,6 +1000,113 @@ pub fn seed_farm_temperature_chart_fetching(user_id: i64) -> i64 {
     .expect("insert farm");
 
     conn.last_insert_rowid()
+}
+
+/// Unique coordinates with pre-seeded GCS bulk metadata so farm-create weather fetch
+/// completes via cache hits (no live agrr JMA fetch required in CI).
+pub struct FarmCreateWeatherCacheSeed {
+    pub latitude: f64,
+    pub longitude: f64,
+}
+
+fn days_in_year(year: i32) -> u32 {
+    if (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0) {
+        366
+    } else {
+        365
+    }
+}
+
+fn write_contract_weather_gcs_year(weather_location_id: i64, year: i32, payload: &str) {
+    let local_root = std::env::var("WEATHER_DATA_LOCAL_ROOT")
+        .unwrap_or_else(|_| "/tmp/agrr-weather-contract".to_string());
+    let object_path = format!("{local_root}/weather_data/{weather_location_id}/{year}.json");
+    if let Some(parent) = std::path::Path::new(&object_path).parent() {
+        std::fs::create_dir_all(parent).expect("create weather gcs mirror dir");
+    }
+    std::fs::write(&object_path, payload).expect("write weather gcs year fixture");
+}
+
+pub fn seed_weather_cache_for_farm_create_completion() -> FarmCreateWeatherCacheSeed {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let seq = SEED_SEQ.fetch_add(1, Ordering::Relaxed);
+    let latitude = 36.0 + (seq % 900) as f64 / 10_000.0;
+    let longitude = 140.0 + (seq % 900) as f64 / 10_000.0;
+
+    conn.execute(
+        "INSERT INTO weather_locations (latitude, longitude, elevation, timezone, created_at, updated_at)
+         VALUES (?1, ?2, 40.0, 'Asia/Tokyo', datetime('now'), datetime('now'))",
+        params![latitude, longitude],
+    )
+    .expect("insert weather_location");
+    let weather_location_id = conn.last_insert_rowid();
+
+    let mut years = serde_json::Map::new();
+    for year in 2000..=2026 {
+        let day_count = if year == 2026 {
+            205
+        } else {
+            days_in_year(year)
+        };
+        let last_date = if year == 2026 {
+            "2026-07-24".to_string()
+        } else {
+            format!("{year}-12-31")
+        };
+        years.insert(
+            year.to_string(),
+            serde_json::json!({
+                "count": day_count,
+                "historical_count": day_count,
+                "first_date": format!("{year}-01-01"),
+                "last_date": last_date,
+            }),
+        );
+    }
+    let bulk_stats = serde_json::json!({
+        "earliest_date": "2000-01-01",
+        "latest_date": "2026-07-24",
+        "years": years,
+    });
+    conn.execute(
+        "UPDATE weather_locations
+         SET bulk_earliest_date = '2000-01-01',
+             bulk_latest_date = '2026-07-24',
+             bulk_year_stats = ?1,
+             updated_at = datetime('now')
+         WHERE id = ?2",
+        params![bulk_stats.to_string(), weather_location_id],
+    )
+    .expect("update weather location bulk metadata");
+
+    let mut chart_days = serde_json::Map::new();
+    for (month, start_day, end_day) in [(4, 26, 30), (5, 1, 31), (6, 1, 30), (7, 1, 24)] {
+        for day in start_day..=end_day {
+            let date = format!("2026-{month:02}-{day:02}");
+            chart_days.insert(
+                date,
+                serde_json::json!({
+                    "temperature_max": 21.0,
+                    "temperature_min": 8.0,
+                    "temperature_mean": 14.0,
+                }),
+            );
+        }
+    }
+    write_contract_weather_gcs_year(
+        weather_location_id,
+        2026,
+        &serde_json::to_string(&chart_days).expect("chart gcs json"),
+    );
+
+    eprintln!("seeded weather cache for farm create completion: {suffix} @ {latitude},{longitude}");
+    FarmCreateWeatherCacheSeed {
+        latitude,
+        longitude,
+    }
 }
 
 /// Seeds a user farm stuck at `pending` with coordinates (pre-#464 backfill scenario).

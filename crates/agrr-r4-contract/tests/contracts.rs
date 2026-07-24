@@ -17,7 +17,8 @@ use support::{
     upload_ready_work_record_photo, user_id_for_session,
     seed_farm_temperature_chart_completed, seed_farm_temperature_chart_fetching,
     seed_farm_pending_weather, scheduler_auth_headers,
-    ensure_farm_create_capacity_via_api,
+    ensure_farm_create_capacity_via_api, poll_farm_weather_completed,
+    seed_weather_cache_for_farm_create_completion,
 };
 
 #[test]
@@ -1842,6 +1843,46 @@ fn post_masters_farm_create_starts_weather_fetch() {
     let show_json: serde_json::Value = serde_json::from_str(&show_body).expect("farm show JSON");
     assert_eq!("fetching", show_json["weather_data_status"].as_str().unwrap());
     assert!(show_json["weather_data_total_years"].as_i64().unwrap() > 0);
+}
+
+#[test]
+fn post_masters_farm_create_weather_fetch_reaches_completed() {
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+    ensure_farm_create_capacity_via_api(&client, &session_id);
+    let cache = seed_weather_cache_for_farm_create_completion();
+
+    let (create_status, create_body) = status_and_body(client.post(
+        "/api/v1/masters/farms",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "farm": {
+                "name": "Contract Weather Complete Farm",
+                "region": "jp",
+                "latitude": cache.latitude,
+                "longitude": cache.longitude
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create farm JSON");
+    let farm_id = create_json["id"].as_i64().expect("farm id");
+    assert_eq!("fetching", create_json["weather_data_status"].as_str().unwrap());
+
+    poll_farm_weather_completed(&client, &session_id, farm_id);
+
+    let chart_path = format!("/api/v1/masters/farms/{farm_id}/temperature_chart?period=90d");
+    let (chart_status, chart_body) =
+        status_and_body(client.get(&chart_path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, chart_status, "{chart_body}");
+    let chart_json: serde_json::Value =
+        serde_json::from_str(&chart_body).expect("temperature chart JSON");
+    assert_eq!(farm_id, chart_json["farm_id"].as_i64().unwrap());
+    assert_eq!("90d", chart_json["period"].as_str().unwrap());
+    let points = chart_json["points"].as_array().expect("points array");
+    assert!(!points.is_empty());
 }
 
 #[test]

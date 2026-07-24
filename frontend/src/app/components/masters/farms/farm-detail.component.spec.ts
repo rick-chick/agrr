@@ -335,6 +335,54 @@ describe('FarmDetailComponent', () => {
     });
   });
 
+  it('polls farm detail while weather fetch is in progress', () => {
+    vi.useFakeTimers();
+    try {
+      component.control = {
+        loading: false,
+        error: null,
+        farm: {
+          id: 123,
+          name: 'Test Farm',
+          region: 'jp',
+          latitude: 35.0,
+          longitude: 139.0,
+          weather_data_status: 'fetching',
+          weather_data_progress: 10
+        },
+        fields: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+      loadUseCase.execute.mockClear();
+
+      vi.advanceTimersByTime(3000);
+      expect(loadUseCase.execute).toHaveBeenCalledWith({ farmId: 123 });
+
+      loadUseCase.execute.mockClear();
+      vi.advanceTimersByTime(3000 * 39);
+      expect(loadUseCase.execute).toHaveBeenCalledTimes(38);
+
+      loadUseCase.execute.mockClear();
+      vi.advanceTimersByTime(3000);
+      expect(loadUseCase.execute).not.toHaveBeenCalled();
+
+      component.control = {
+        ...component.control,
+        farm: {
+          ...component.control.farm!,
+          weather_data_status: 'completed',
+          weather_data_progress: 100
+        }
+      };
+      loadUseCase.execute.mockClear();
+      vi.advanceTimersByTime(6000);
+      expect(loadUseCase.execute).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('ngOnInit sets views on presenters and calls load with route param', () => {
     component.ngOnInit();
     expect(presenter.setView).toHaveBeenCalledWith(component);
