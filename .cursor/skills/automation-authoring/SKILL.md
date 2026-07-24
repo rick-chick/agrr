@@ -48,7 +48,7 @@ disable-model-invocation: false
 1. トリガー（GitHub イベント）
 2. 起動条件（**既定は対象・オプトアウトで除外**。ラベル欠落で本筋が止まらないこと）
 3. 起動手段（webhook 直接か、labeled 経由か — [§制約](references/GITHUB-ACTIONS-CONSTRAINTS.md)）
-4. 終了条件（PR / close / block / Memory）
+4. 終了条件（PR / close / block / Memory）— **受け入れ条件に本番確認を含めない**（[PRINCIPLES §受け入れ条件](references/PRINCIPLES.md#受け入れ条件automation-スコープ)）
 5. 滞留時の回復経路（retry reconcile / watchdog — **人間再開を前提にしない**）
 
 **既存の同型経路を先に読む**（[EXISTING-PATTERNS.md](references/EXISTING-PATTERNS.md)）。同型があるのに別経路を発明しない。**既存の本文パースは写さない**（[automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc)）。
@@ -148,6 +148,7 @@ unit test GREEN と独立レビュー Go のあとに実施する。
 - **機械層への本文パース**（新規・残置・温存）、**思想違反の最小パッチ**
 - **パース・例外ラベルでエージェント起動を避ける設計**（[automation-philosophy-priority.mdc](../../rules/automation-philosophy-priority.mdc)）
 - **Phase 3 独立レビュー省略**、実装担当のみの自己レビューでマージ Go とする
+- **受け入れ条件・完了条件への本番確認**（`agrr.net`、本番デプロイ後の目視、本番 DB / gcloud 観測 — Automation では実施不能。[PRINCIPLES §受け入れ条件](references/PRINCIPLES.md#受け入れ条件automation-スコープ)）
 
 ## 関連
 

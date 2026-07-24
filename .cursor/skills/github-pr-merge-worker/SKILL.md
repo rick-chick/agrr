@@ -269,7 +269,7 @@ import { auditLinkedPrAcceptance } from './scripts/audit-pr-acceptance-lib.mjs';
 
 **禁止**: PR 本文の `Closes` / `Fixes`（GitHub 自動クローズの経路を使わない）。Issue Worker は常に `Part of #N`。
 
-**本番確認**: issue 完了条件に本番確認が含まれても、受け入れ監査の `mergeAllowed` / `closeParentAllowed` を **本番未確認だけで false にしない**。PR 本文で `Automation 対象外（本番確認）` と明記した行は未達扱いにしない（[automation-authoring PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）。
+**本番確認**: issue 完了条件に本番確認が含まれても、受け入れ監査の `mergeAllowed` / `closeParentAllowed` を **本番未確認だけで false にしない**。PR 本文で `Automation 対象外（本番確認）` と明記した行、または `agrr.net` / 本番デプロイ等の本番確認行は `audit-pr-acceptance-lib` が監査対象外として扱う（[automation-authoring PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）。
 
 ライブラリ: [`scripts/audit-pr-acceptance-lib.mjs`](../../../scripts/audit-pr-acceptance-lib.mjs)（Agent 専用。dispatch / workflow からは呼ばない）
 

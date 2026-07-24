@@ -8,6 +8,35 @@ const FOLLOW_UP_PATTERN = /(?:follow-up|Follow-up):\s*#(\d+)/gi;
 const INCOMPLETE_MARKERS = /未カバー|手動未実施/;
 const UNCHECKED_BOX = /-\s*\[\s*\]/;
 const CHECKED_BOX = /-\s*\[x\]/i;
+const PRODUCTION_OUT_OF_SCOPE =
+  /本番確認|agrr\.net|本番デプロイ|本番\s*DB|本番\s*LB|本番\s*Cloud\s*Run|Cloud\s*Run\s*本番|本番\s*GCS|GCS\s*本番|本番で確認|gcloud\s*観測|Litestream|本番.*curl|curl.*本番/i;
+const PRODUCTION_POLICY_NEGATION =
+  /本番確認.*(含めない|書かない|禁止)|(含めない|書かない|禁止).*本番確認/;
+
+/**
+ * @param {string} line
+ */
+export function completionLineIsAutomationOutOfScope(line) {
+  const text = line ?? '';
+  if (/Automation\s*対象外（本番確認）/.test(text)) {
+    return true;
+  }
+  if (PRODUCTION_POLICY_NEGATION.test(text)) {
+    return false;
+  }
+  return PRODUCTION_OUT_OF_SCOPE.test(text);
+}
+
+/**
+ * @param {string} text
+ */
+export function filterAutomationScopedCheckboxLines(text) {
+  return (text ?? '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('-'))
+    .filter((line) => !completionLineIsAutomationOutOfScope(line));
+}
 
 /**
  * @param {string} text
@@ -50,6 +79,9 @@ export function parsePrCompletionSection(prBody) {
  * @param {string} line
  */
 export function completionLineIsIncomplete(line) {
+  if (completionLineIsAutomationOutOfScope(line)) {
+    return false;
+  }
   return UNCHECKED_BOX.test(line) || INCOMPLETE_MARKERS.test(line);
 }
 
@@ -65,7 +97,9 @@ export function completionLineIsSatisfied(line) {
  * @returns {number}
  */
 export function countUncheckedRequiredCheckboxes(issueBody) {
-  return [...(issueBody ?? '').matchAll(/-\s*\[\s*\]/g)].length;
+  return filterAutomationScopedCheckboxLines(issueBody).filter((line) =>
+    UNCHECKED_BOX.test(line),
+  ).length;
 }
 
 /**
@@ -93,7 +127,8 @@ export function auditLinkedPrAcceptance(input) {
   }
 
   const { lines } = parsePrCompletionSection(prBody);
-  const incompleteLines = lines.filter(completionLineIsIncomplete);
+  const scopedLines = lines.filter((line) => !completionLineIsAutomationOutOfScope(line));
+  const incompleteLines = scopedLines.filter(completionLineIsIncomplete);
   const followUpNumbers = extractFollowUpIssueNumbers(prBody);
   const openFollowUps = followUpIssues.filter((issue) => issue.state === 'OPEN');
 
@@ -112,7 +147,7 @@ export function auditLinkedPrAcceptance(input) {
   }
 
   const allListedSatisfied =
-    lines.length > 0 && lines.every(completionLineIsSatisfied);
+    scopedLines.length > 0 && scopedLines.every(completionLineIsSatisfied);
   const trackedFollowUps = followUpIssues.length > 0 ? followUpIssues : [];
   const allFollowUpsClosed =
     trackedFollowUps.length === 0 ||

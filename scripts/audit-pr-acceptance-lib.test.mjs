@@ -6,6 +6,7 @@ import {
   auditParentIssueCloseEligibility,
   completionLineIsIncomplete,
   completionLineIsSatisfied,
+  completionLineIsAutomationOutOfScope,
   countUncheckedRequiredCheckboxes,
   extractFollowUpIssueNumbers,
   extractParentIssueNumber,
@@ -102,6 +103,34 @@ test('auditLinkedPrAcceptance allows partial merge with follow-up', () => {
   assert.equal(result.closeParentAllowed, false);
 });
 
+test('auditLinkedPrAcceptance ignores production verification out-of-scope lines', () => {
+  const result = auditLinkedPrAcceptance({
+    prBody: `Part of #462
+
+## 完了条件（issue より）
+- [x] C1: contract GREEN
+- [ ] C2: agrr.net で動作確認 — Automation 対象外（本番確認）
+`,
+    followUpIssues: [],
+  });
+  assert.equal(result.mergeAllowed, true);
+  assert.equal(result.closeParentAllowed, true);
+});
+
+test('auditLinkedPrAcceptance blocks unchecked non-production lines without follow-up', () => {
+  const result = auditLinkedPrAcceptance({
+    prBody: `Part of #462
+
+## 完了条件（issue より）
+- [x] C1: contract GREEN
+- [ ] C2: chart — 未カバー
+- [ ] C3: agrr.net 確認
+`,
+    followUpIssues: [],
+  });
+  assert.equal(result.mergeAllowed, false);
+});
+
 test('auditLinkedPrAcceptance allows parent close when complete', () => {
   const result = auditLinkedPrAcceptance({
     prBody: COMPLETE_PR,
@@ -134,4 +163,28 @@ test('auditParentIssueCloseEligibility closes when follow-ups done', () => {
     ],
   });
   assert.equal(result.closeAllowed, true);
+});
+
+test('auditParentIssueCloseEligibility ignores production-only unchecked boxes', () => {
+  const result = auditParentIssueCloseEligibility({
+    parentBody: `- [x] C1: contract
+- [ ] C2: 本番デプロイ後に agrr.net で確認`,
+    followUpIssues: [],
+  });
+  assert.equal(result.closeAllowed, true);
+});
+
+test('completionLineIsAutomationOutOfScope covers PRINCIPLES examples', () => {
+  assert.equal(
+    completionLineIsAutomationOutOfScope('- [ ] C2: 本番 Cloud Run で確認'),
+    true,
+  );
+  assert.equal(
+    completionLineIsAutomationOutOfScope('- [ ] C3: GCS バケットを本番で確認'),
+    true,
+  );
+  assert.equal(
+    completionLineIsAutomationOutOfScope('- [ ] C4: 起票時に本番確認を含めないこと'),
+    false,
+  );
 });
