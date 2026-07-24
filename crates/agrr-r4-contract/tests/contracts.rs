@@ -16,7 +16,9 @@ use support::{
     set_plan_task_schedule_sync_failed_raw_error, status_and_body,
     upload_ready_work_record_photo, user_id_for_session,
     seed_farm_temperature_chart_completed, seed_farm_temperature_chart_fetching,
+    seed_farm_pending_weather, scheduler_auth_headers,
     ensure_farm_create_capacity_via_api, poll_farm_weather_completed,
+    seed_weather_cache_for_farm_create_completion,
 };
 
 #[test]
@@ -1848,6 +1850,7 @@ fn post_masters_farm_create_weather_fetch_reaches_completed() {
     let client = ContractClient::from_env();
     let session_id = farmer_session_id(&client);
     ensure_farm_create_capacity_via_api(&client, &session_id);
+    let cache = seed_weather_cache_for_farm_create_completion();
 
     let (create_status, create_body) = status_and_body(client.post(
         "/api/v1/masters/farms",
@@ -1857,8 +1860,8 @@ fn post_masters_farm_create_weather_fetch_reaches_completed() {
             "farm": {
                 "name": "Contract Weather Complete Farm",
                 "region": "jp",
-                "latitude": 35.6895,
-                "longitude": 139.6917
+                "latitude": cache.latitude,
+                "longitude": cache.longitude
             }
         })),
     ));
@@ -1880,5 +1883,39 @@ fn post_masters_farm_create_weather_fetch_reaches_completed() {
     assert_eq!("90d", chart_json["period"].as_str().unwrap());
     let points = chart_json["points"].as_array().expect("points array");
     assert!(!points.is_empty());
+}
+
+#[test]
+fn trigger_weather_update_backfills_pending_farm_weather_fetch() {
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let farm_id = seed_farm_pending_weather(user_id);
+
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+    let (pending_status, pending_body) =
+        status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, pending_status, "{pending_body}");
+    let pending_json: serde_json::Value =
+        serde_json::from_str(&pending_body).expect("farm show JSON");
+    assert_eq!(
+        "pending",
+        pending_json["weather_data_status"].as_str().unwrap()
+    );
+
+    let (trigger_status, trigger_body) = status_and_body(client.post(
+        "/api/v1/internal/jobs/trigger_weather_update",
+        None,
+        &scheduler_auth_headers(),
+        None,
+    ));
+    assert_eq!(200, trigger_status, "{trigger_body}");
+
+    let (show_status, show_body) =
+        status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, show_status, "{show_body}");
+    let show_json: serde_json::Value = serde_json::from_str(&show_body).expect("farm show JSON");
+    assert_eq!("fetching", show_json["weather_data_status"].as_str().unwrap());
+    assert!(show_json["weather_data_total_years"].as_i64().unwrap() > 0);
 }
 
