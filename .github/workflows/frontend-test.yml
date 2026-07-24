@@ -99,6 +99,7 @@ jobs:
           node --test scripts/verify-delivery-webhook-smoke-lib.test.mjs
           node --test scripts/gh-repo-lib.test.mjs
           node --test scripts/pr-agent-prep-lib.test.mjs
+          node --test scripts/audit-pr-acceptance-lib.test.mjs
           node --test scripts/issue-worker-dispatch-lib.test.mjs
           node --test scripts/pr-merge-worker-needs-sync.test.mjs
           node --test scripts/pr-merge-worker-primary-dispatch-lib.test.mjs

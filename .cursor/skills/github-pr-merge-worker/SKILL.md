@@ -242,10 +242,34 @@ P0 例: Interactor 以外での永続化、Presenter / Gateway 境界違反 → 
 head が `issue/<number>-*` のとき:
 
 - 上流 [`github-issue-worker`](../github-issue-worker/SKILL.md) が TDD + [`sequential-cleanup-review-workflow`](../sequential-cleanup-review-workflow/SKILL.md) 済みとみなす
-- `closingIssuesReferences` が空なら **コメントで指摘**（単独ではブロックしない）。本文の `Closes #N` 有無では判定しない
-- `closingIssuesReferences` ありで PR 本文「完了条件」に、issue 必須セクション由来の `[ ]`・`未カバー`・`手動未実施` が残る → **マージしない**（[`github-issue-worker`](../github-issue-worker/SKILL.md) §5 不足をコメント）
-- 「順次クリーンアップ・レビュー（A〜D）完了」チェック未完了は **リスクとして認識**するが、**CI green + §3c 問題なし**ならマージ可
+- `closingIssuesReferences` が空なら **コメントで指摘**（単独ではブロックしない）
+- **§3e 受け入れ監査を §4 マージの直前に必ず実施**（本節の旧「本文 `[ ]` でマージしない」は §3e に集約）
+- 「順次クリーンアップ・レビュー（A〜D）完了」チェック未完了は **リスクとして認識**するが、**CI green + §3c + §3e 問題なし**ならマージ可
 - diff **1200 行超**でも自動マージを止めない。判断不能・P0 のみ `agent-merge-blocked`（人間確認待ちを既定にしない — [automation-authoring PRINCIPLES](../automation-authoring/references/PRINCIPLES.md)）
+
+### 3e) 受け入れ監査（§4 直前・必須）
+
+リンク issue がある PR は、**ARCHITECTURE ゲート（§3c）の後・マージの前**に毎回実施する。
+
+```bash
+gh issue view <issue> --json body,labels,state
+gh pr view <N> --json body
+# follow-up 番号は PR 本文の Follow-up: #N から。各 follow-up の state を gh issue view で取得
+node --input-type=module -e "
+import { auditLinkedPrAcceptance } from './scripts/audit-pr-acceptance-lib.mjs';
+// PR body と followUpIssues を渡して mergeAllowed / closeParentAllowed を確認
+"
+```
+
+| 監査結果 | 動作 |
+|----------|------|
+| `mergeAllowed: false` | **マージしない**。PR コメントで理由（`Closes` 禁止 / follow-up 不足）→ exit 0 |
+| `mergeAllowed: true` かつ `closeParentAllowed: false` | §4 でマージ。**親 issue は open のまま**（部分完了） |
+| `closeParentAllowed: true` | §4 でマージ → **§4.1 で親を `gh issue close`** |
+
+**禁止**: PR 本文の `Closes` / `Fixes`（GitHub 自動クローズの経路を使わない）。Issue Worker は常に `Part of #N`。
+
+ライブラリ: [`scripts/audit-pr-acceptance-lib.mjs`](../../../scripts/audit-pr-acceptance-lib.mjs)（Agent 専用。dispatch / workflow からは呼ばない）
 
 ## 4) マージ
 
@@ -264,6 +288,7 @@ gh pr merge <N> --squash --delete-branch
 
 **分類**: bugfix | automation | i18n | feature
 **CI**: 全必須チェック pass
+**受け入れ監査**: PASS（§3e）— 部分完了 / 親クローズ可
 **レビュー**: ARCHITECTURE 問題なし / 該当なし
 **テスト**: 関連 spec / CI GREEN
 **補足修正**: なし | 同一ブランチで N コミット（概要）
@@ -274,6 +299,21 @@ gh pr merge <N> --squash --delete-branch
 - ラベル `agent-merge` / `agent-merge-in-progress` を除去
 - Memory に `PR #N merged YYYY-MM-DD` を記録
 - リンク issue に `ux-campaign:breadcrumb` があれば **同一 run で続行**し [`delivery-agent`](../delivery-agent/SKILL.md) §PR マージ成功後 → [`ux-campaign-loop`](../ux-campaign-loop/SKILL.md) §1〜§2
+- **それ以外** → §4.1（親 issue / follow-up のクローズ判定）へ（Delivery Agent が同一 run で続行）
+
+### 4.1) 親 issue のクローズ（マージ直後・同一 run）
+
+§3e で `closeParentAllowed: true` のときのみ:
+
+```bash
+gh issue close <parent> --comment "## 🤖 受け入れ完了
+
+PR #<N> と follow-up が完了条件を満たしたためクローズします。"
+```
+
+`closeParentAllowed: false` のときは **親を閉じない**。PR コメントまたは親 issue コメントに「部分完了。Follow-up 完了後に再監査」と残す。
+
+**follow-up issue（`acceptance-follow-up`）をマージした run** では、[`delivery-agent`](../delivery-agent/SKILL.md) §PR マージ成功後 が親の再監査を担当する。
 
 ## 5) 修正ループ（マージ前・同一ブランチ）
 

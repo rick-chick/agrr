@@ -49,6 +49,7 @@ Automation の目的は、**人間がラベルを付けたり UI で再開した
 | 対応不要（確定） | §2a クローズ（`agent-closed` + `wontfix` 等） |
 | 仕様曖昧・スコープ外 | エージェントが自律判断して **実装** または **close**（オープン放置禁止） |
 | 着手中 | `agent-in-progress` |
+| 受け入れの残件（親 issue の未達条件） | follow-up issue + `acceptance-follow-up` + `agent-ready`（親は open。子完了後に Agent が親を再監査して close） |
 
 `RETRY_BLOCK_LABELS` は **`agent-in-progress` のみ**（Issue Worker）。停止ラベルでキューから外さない。
 
