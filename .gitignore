@@ -159,6 +159,8 @@ tmp/
 !.cursor/references/**
 !.cursor/scripts/
 !.cursor/scripts/**
+!.cursor/bin/
+!.cursor/bin/gh
 !.cursor/skills/
 !.cursor/skills/**
 !.cursor/rules/
@@ -170,6 +172,7 @@ tmp/
 .cursor/puppeteer-*.js
 .cursor/worktrees.json
 .cursor/skills_link
+.cursor/bin/.gh-real
 
 .dockerignore
 lib/core/agrr
