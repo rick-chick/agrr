@@ -190,6 +190,8 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
 
   private channel: Channel | null = null;
+  private weatherPollTimer: ReturnType<typeof setInterval> | null = null;
+  private static readonly WEATHER_POLL_INTERVAL_MS = 3000;
 
   @ViewChild('fieldFormDialog') fieldFormDialogRef!: ElementRef<HTMLDialogElement>;
 
@@ -226,6 +228,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     );
     this._control = next;
     this.cdr.markForCheck();
+    this.syncWeatherPolling();
   }
 
   ngOnInit(): void {
@@ -243,6 +246,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.channel?.unsubscribe();
+    this.stopWeatherPolling();
   }
 
   load(farmId: number): void {
@@ -258,6 +262,27 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   reload(): void {
     const farmId = Number(this.route.snapshot.paramMap.get('id'));
     if (farmId) this.load(farmId);
+  }
+
+  private syncWeatherPolling(): void {
+    const farm = this._control.farm;
+    const status = farm?.weather_data_status;
+    if (farm && (status === 'fetching' || status === 'pending')) {
+      if (!this.weatherPollTimer) {
+        const farmId = farm.id;
+        this.weatherPollTimer = setInterval(() => {
+          this.loadUseCase.execute({ farmId });
+        }, FarmDetailComponent.WEATHER_POLL_INTERVAL_MS);
+      }
+      return;
+    }
+    this.stopWeatherPolling();
+  }
+
+  private stopWeatherPolling(): void {
+    if (!this.weatherPollTimer) return;
+    clearInterval(this.weatherPollTimer);
+    this.weatherPollTimer = null;
   }
 
   deleteFarm(): void {

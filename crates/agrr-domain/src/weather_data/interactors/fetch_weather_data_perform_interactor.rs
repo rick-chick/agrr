@@ -109,6 +109,9 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
 
             if existing_count >= threshold_days {
                 if let Some(farm_id) = input.farm_id {
+                    let _ = self
+                        .farm_gateway
+                        .update_weather_location_id(farm_id, location.id);
                     let _ = self.record_block_completed.call(farm_id, input.current_time);
                 }
                 return Ok(());
