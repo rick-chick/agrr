@@ -968,3 +968,30 @@ pub fn seed_farm_temperature_chart_fetching(user_id: i64) -> i64 {
     conn.last_insert_rowid()
 }
 
+/// Polls farm show until `weather_data_status` reaches `completed` (requires agrr daemon).
+pub fn poll_farm_weather_completed(
+    client: &ContractClient,
+    session_id: &str,
+    farm_id: i64,
+) -> serde_json::Value {
+    ensure_agrr_daemon_for_contract();
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+    for attempt in 0..120 {
+        let (status, body) = status_and_body(client.get(&path, Some(session_id), &empty_headers()));
+        assert_eq!(200, status, "{body}");
+        let json: serde_json::Value = serde_json::from_str(&body).expect("farm show JSON");
+        let weather_status = json["weather_data_status"].as_str().unwrap_or_default();
+        if weather_status == "completed" {
+            return json;
+        }
+        if weather_status == "failed" {
+            panic!("farm weather fetch failed: {body}");
+        }
+        if attempt == 119 {
+            panic!("farm weather did not reach completed within timeout: {body}");
+        }
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+    unreachable!()
+}
+
