@@ -10,6 +10,7 @@ import {
   cropSlugFromResearchPath,
   isEnglishResearchPath,
   isResearchRequirementsPage,
+  listResearchRequirementsHtmlPaths,
   pageTypeFromResearchPath,
   verifyAllResearchRequirementsCtaScripts
 } from './research-simulate-cta-lib.mjs';
@@ -115,6 +116,23 @@ describe('isEnglishResearchPath', () => {
         '/research/research_reports/tomato/01_environmental_requirements/gdd_requirements.html'
       ),
       false
+    );
+  });
+});
+
+describe('listResearchRequirementsHtmlPaths', () => {
+  it('lists all 60 temperature and gdd requirement pages (15 crops x JA/EN x 2 types)', () => {
+    const paths = listResearchRequirementsHtmlPaths(RESEARCH_DIR);
+    assert.equal(paths.length, 60);
+    assert.ok(
+      paths.includes(
+        'research_reports/tomato/01_environmental_requirements/temperature_requirements.html'
+      )
+    );
+    assert.ok(
+      paths.includes(
+        'en/research_reports/tomato/01_environmental_requirements/gdd_requirements.html'
+      )
     );
   });
 });

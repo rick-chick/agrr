@@ -18,6 +18,7 @@
     "test:e2e:smoke": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/",
     "test:e2e:smoke:route": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/route-smoke.spec.ts",
     "test:e2e:smoke:locale-i18n": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/locale-i18n-smoke.spec.ts",
+    "test:e2e:research-cta": "playwright test --config=playwright.research.config.ts",
     "test:e2e:ui": "playwright test --ui",
     "e2e:capture-for-agent": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/visual/route-manifest-visual.spec.ts e2e/visual/login-capture-for-agent.spec.ts && node e2e/agent-review/verify-capture-complete.mjs",
     "audit:css-tokens": "node scripts/audit-component-css-tokens.mjs",

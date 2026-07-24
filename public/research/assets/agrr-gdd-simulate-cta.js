@@ -146,7 +146,7 @@
   }
 
   function findSidebar() {
-    return document.querySelector('.VPSidebar');
+    return document.querySelector('.VPDocAside') || document.querySelector('.VPSidebar');
   }
 
   function injectSidebarCta(slug, pageType) {
