@@ -937,6 +937,36 @@ pub fn seed_farm_temperature_chart_completed(user_id: i64) -> FarmTemperatureCha
 }
 
 /// Seeds a private farm with fetching weather status (chart should return 409).
+/// Polls farm show until `weather_data_status` is `completed` or `failed` (timeout panics).
+pub fn poll_farm_weather_completed(
+    client: &agrr_r4_contract::http::ContractClient,
+    session_id: &str,
+    farm_id: i64,
+) -> serde_json::Value {
+    ensure_agrr_daemon_for_contract();
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+    for attempt in 0..480 {
+        let (status, body) = status_and_body(client.get(&path, Some(session_id), &empty_headers()));
+        assert_eq!(200, status, "{body}");
+        let json: serde_json::Value = serde_json::from_str(&body).expect("farm show JSON");
+        let weather_status = json["weather_data_status"].as_str().unwrap_or_default();
+        if weather_status == "completed" {
+            return json;
+        }
+        if weather_status == "failed" {
+            panic!("farm weather fetch failed: {body}");
+        }
+        if attempt % 20 == 0 && attempt > 0 {
+            eprintln!(
+                "poll_farm_weather_completed: farm_id={farm_id} status={weather_status} progress={}",
+                json["weather_data_progress"].as_i64().unwrap_or(0)
+            );
+        }
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+    panic!("farm weather fetch did not reach completed within timeout (farm_id={farm_id})");
+}
+
 pub fn seed_farm_temperature_chart_fetching(user_id: i64) -> i64 {
     let path =
         std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
