@@ -1795,7 +1795,8 @@ fn get_farm_temperature_chart_fetching_returns_409() {
 #[test]
 fn post_masters_farm_create_starts_weather_fetch() {
     let client = ContractClient::from_env();
-    let session_id = developer_session_id(&client);
+    // Use farmer (not developer) so parallel contract seeds on developer do not hit farm limit (4).
+    let session_id = farmer_session_id(&client);
 
     let suffix = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
