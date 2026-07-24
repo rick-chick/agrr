@@ -105,6 +105,31 @@ pub fn user_id_for_session(client: &ContractClient, session_id: &str) -> i64 {
         .expect("user id in /api/v1/auth/me response")
 }
 
+/// Frees a farm-create slot when earlier contract seeds filled the per-user non-reference limit.
+pub fn ensure_farm_create_capacity_via_api(client: &ContractClient, session_id: &str) {
+    const MAX_NON_REFERENCE_FARMS_PER_USER: usize = 4;
+
+    loop {
+        let (status, body) =
+            status_and_body(client.get("/api/v1/masters/farms", Some(session_id), &empty_headers()));
+        assert_eq!(200, status, "{body}");
+        let farms: Vec<serde_json::Value> = serde_json::from_str(&body).expect("farm list JSON");
+        let non_reference: Vec<i64> = farms
+            .iter()
+            .filter(|farm| farm["is_reference"].as_bool() == Some(false))
+            .filter_map(|farm| farm["id"].as_i64())
+            .collect();
+        if non_reference.len() < MAX_NON_REFERENCE_FARMS_PER_USER {
+            break;
+        }
+        let farm_id = *non_reference.iter().min().expect("farm id to delete");
+        let path = format!("/api/v1/masters/farms/{farm_id}");
+        let (delete_status, delete_body) =
+            status_and_body(client.delete(&path, Some(session_id), &empty_headers()));
+        assert_eq!(200, delete_status, "{delete_body}");
+    }
+}
+
 pub struct WorkRecordPlanSeed {
     pub plan_id: i64,
     pub farm_id: i64,

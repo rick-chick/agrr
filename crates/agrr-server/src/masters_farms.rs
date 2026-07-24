@@ -1,6 +1,8 @@
 //! Masters farms API — `/api/v1/masters/farms`
 
 use crate::adapters::PassthroughTranslator;
+use crate::adapters::SystemClock;
+use crate::farm_weather_fetch::StartFarmWeatherFetchAdapter;
 use crate::masters_json::{farm_field_to_json, farm_to_json, masters_destroy_undo_json};
 use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
@@ -128,6 +130,8 @@ async fn create_farm(
     let gateway = FarmSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
+    let weather_fetch = StartFarmWeatherFetchAdapter::new(state.clone());
+    let clock = SystemClock;
     let mut presenter = CreatePresenter { body: None };
     let mut interactor = FarmCreateInteractor::new(
         &mut presenter,
@@ -135,6 +139,8 @@ async fn create_farm(
         &gateway,
         &translator,
         &user_lookup,
+        &weather_fetch,
+        &clock,
     );
     let input = FarmCreateInput::new(
         attrs.name.clone().unwrap(),
@@ -162,6 +168,8 @@ async fn update_farm(
     let gateway = FarmSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
+    let weather_fetch = StartFarmWeatherFetchAdapter::new(state.clone());
+    let clock = SystemClock;
     let mut presenter = UpdatePresenter { body: None };
     let mut interactor = FarmUpdateInteractor::new(
         &mut presenter,
@@ -169,6 +177,8 @@ async fn update_farm(
         &gateway,
         &translator,
         &user_lookup,
+        &weather_fetch,
+        &clock,
     );
     let input = FarmUpdateInput {
         farm_id: id,

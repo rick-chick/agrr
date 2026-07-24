@@ -1,6 +1,7 @@
 //! Ruby: `Domain::Farm::Interactors::FarmCreateInteractor`
 
 use crate::farm::dtos::{FarmCreateInput, FarmCreateLimitExceededFailure};
+use crate::farm::entities::FarmEntity;
 use crate::farm::gateways::FarmGateway;
 use crate::farm::policies::{FarmCoordinateNormalizationPolicy, FarmCreateLimitPolicy};
 use crate::farm::ports::{CreateFailure, FarmCreateOutputPort};
@@ -10,21 +11,27 @@ use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::farm_policy;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+use crate::shared::ports::ClockPort;
+use crate::weather_data::gateways::StartFarmWeatherDataFetchPort;
 
-pub struct FarmCreateInteractor<'a, G, O, U, T> {
+pub struct FarmCreateInteractor<'a, G, O, U, T, W, C> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     translator: &'a T,
     user_lookup: &'a U,
+    start_weather_fetch: &'a W,
+    clock: &'a C,
 }
 
-impl<'a, G, O, U, T> FarmCreateInteractor<'a, G, O, U, T>
+impl<'a, G, O, U, T, W, C> FarmCreateInteractor<'a, G, O, U, T, W, C>
 where
     G: FarmGateway,
     O: FarmCreateOutputPort,
     U: UserLookupGateway,
     T: TranslatorPort,
+    W: StartFarmWeatherDataFetchPort,
+    C: ClockPort,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -32,6 +39,8 @@ where
         gateway: &'a G,
         translator: &'a T,
         user_lookup: &'a U,
+        start_weather_fetch: &'a W,
+        clock: &'a C,
     ) -> Self {
         Self {
             output_port,
@@ -39,6 +48,8 @@ where
             user_id,
             translator,
             user_lookup,
+            start_weather_fetch,
+            clock,
         }
     }
 
@@ -104,7 +115,12 @@ where
         }
 
         match self.gateway.create_for_user(&user, attrs) {
-            Ok(entity) => {
+            Ok(mut entity) => {
+                apply_weather_fetch_start(
+                    self.start_weather_fetch,
+                    self.clock,
+                    &mut entity,
+                );
                 self.output_port.on_success(entity);
                 Ok(())
             }
@@ -123,6 +139,24 @@ where
             return Ok(());
         }
         Err(err)
+    }
+}
+
+pub(crate) fn apply_weather_fetch_start<WF, CK>(
+    start_weather_fetch: &WF,
+    clock: &CK,
+    entity: &mut FarmEntity,
+) where
+    WF: StartFarmWeatherDataFetchPort,
+    CK: ClockPort,
+{
+    if !entity.has_coordinates() {
+        return;
+    }
+    if let Some(snapshot) = start_weather_fetch.call(entity.id, clock.today()) {
+        entity.weather_data_status = Some(snapshot.weather_data_status);
+        entity.weather_data_total_years = Some(snapshot.weather_data_total_years);
+        entity.weather_data_fetched_years = Some(0);
     }
 }
 
