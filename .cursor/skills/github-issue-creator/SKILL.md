@@ -127,7 +127,7 @@ gh issue edit <N> --repo rick-chick/agrr --add-label agent-ready
 
 1. **契約**: 再現手順（または観測事実）と完了条件。修正方法は書かない
 2. **1 issue = 1 修正単位**
-3. **完了条件は観測可能** — テスト GREEN、画面表示など具体値
+3. **完了条件は観測可能** — テスト GREEN、画面表示など具体値。**本番確認（`agrr.net`、本番デプロイ後の目視、本番 DB / gcloud 観測）は書かない**（Automation では実施不能 — [automation-authoring PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）
 4. **参照 path** — 調査済みファイルを列挙
 5. **タイトル先頭に優先度** — `[P0]` > `[P1]` > `[P2]`
 6. **実装はしない** — 起票・ラベル付与まで（`github-issue-worker` へ委譲）
@@ -144,6 +144,7 @@ gh issue edit <N> --repo rick-chick/agrr --add-label agent-ready
 - ブロッカーありで `agent-ready` を付与
 - 本スキルで PR 作成・実装着手
 - UX 監査一括を本スキルで代替（`ux-issue-creator` を使う）
+- **完了条件・受け入れ条件への本番確認の記載**（`agrr.net` 確認、本番デプロイ後の手動確認、本番 DB / gcloud 観測など）
 
 ## 関連
 
