@@ -114,6 +114,28 @@ impl SchedulerWeatherFarmListGateway for SchedulerWeatherFarmListSqliteGateway<'
         }
         Ok(out)
     }
+
+    fn list_user_farms_pending_initial_weather_fetch(&self) -> Result<Vec<i64>, String> {
+        self.pool
+            .with_read(|conn| {
+                let mut stmt = conn.prepare(
+                    "SELECT f.id FROM farms f \
+                     WHERE f.is_reference = 0 \
+                       AND f.latitude IS NOT NULL \
+                       AND f.longitude IS NOT NULL \
+                       AND f.weather_location_id IS NULL \
+                       AND f.weather_data_status = 'pending' \
+                     ORDER BY f.id",
+                )?;
+                let rows = stmt.query_map([], |row| row.get::<_, i64>(0))?;
+                let mut out = Vec::new();
+                for row in rows {
+                    out.push(row?);
+                }
+                Ok(out)
+            })
+            .map_err(|e| e.to_string())
+    }
 }
 
 #[cfg(test)]
@@ -254,5 +276,37 @@ mod scheduler_weather_farm_list_gateway_test {
                 Some(Date::from_calendar_date(2026, time::Month::April, 28).unwrap())
             );
         });
+    }
+
+    #[test]
+    fn lists_pending_user_farms_awaiting_initial_weather_fetch() {
+        let pool = test_pool();
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "ALTER TABLE farms ADD COLUMN weather_data_status TEXT DEFAULT 'pending';",
+            )?;
+            conn.execute(
+                "INSERT INTO farms (id, name, latitude, longitude, is_reference, weather_location_id, user_id, weather_data_status)
+                 VALUES (20, 'pending-user', 35.0, 139.0, 0, NULL, 1, 'pending')",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO farms (id, name, latitude, longitude, is_reference, weather_location_id, user_id, weather_data_status)
+                 VALUES (21, 'fetching-user', 35.1, 139.1, 0, NULL, 1, 'fetching')",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO farms (id, name, latitude, longitude, is_reference, weather_location_id, user_id, weather_data_status)
+                 VALUES (22, 'has-wl', 35.2, 139.2, 0, 5, 1, 'pending')",
+                [],
+            )?;
+            Ok(())
+        })
+        .unwrap();
+
+        let weather = WeatherDataSqliteGateway::new(pool.clone());
+        let gw = SchedulerWeatherFarmListSqliteGateway::new(pool, &weather);
+        let pending = gw.list_user_farms_pending_initial_weather_fetch().unwrap();
+        assert_eq!(vec![20], pending);
     }
 }

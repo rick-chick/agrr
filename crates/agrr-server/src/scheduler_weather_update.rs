@@ -3,6 +3,7 @@
 use std::sync::{Arc, Mutex};
 
 use crate::adapters::SystemClock;
+use crate::farm_weather_fetch::StartFarmWeatherFetchAdapter;
 use crate::farm_weather_fetch::run_farm_weather_fetch_block;
 use crate::jobs::JobStep;
 use crate::state::AppState;
@@ -129,9 +130,14 @@ impl WeatherUpdateJobsEnqueueGateway for WeatherUpdateJobsEnqueueInProcessGatewa
         let list_gateway =
             SchedulerWeatherFarmListSqliteGateway::new(pool, &weather_bundle);
         let schedule = SchedulerWeatherFetchScheduleAdapter::new(self.state.clone());
+        let start_fetch = StartFarmWeatherFetchAdapter::new(self.state.clone());
         let clock = SystemClock;
-        let interactor =
-            SchedulerWeatherBatchEnqueueInteractor::new(&list_gateway, &schedule, &clock);
+        let interactor = SchedulerWeatherBatchEnqueueInteractor::new(
+            &list_gateway,
+            &schedule,
+            &start_fetch,
+            &clock,
+        );
         match interactor.call() {
             Ok(()) => EnqueueWeatherUpdateJobsResult::success(),
             Err(message) => EnqueueWeatherUpdateJobsResult::failure(message),

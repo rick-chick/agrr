@@ -7,6 +7,7 @@ use crate::internal_jobs::gateways::SchedulerWeatherFarmListGateway;
 use crate::internal_jobs::interactors::SchedulerWeatherBatchEnqueueInteractor;
 use crate::internal_jobs::ports::SchedulerWeatherFetchSchedulePort;
 use crate::shared::ports::ClockPort;
+use crate::weather_data::gateways::{StartFarmWeatherDataFetchPort, StartedFarmWeatherFetchSnapshot};
 use time::{Date, Month, OffsetDateTime, Time};
 
 struct FakeClock {
@@ -26,6 +27,7 @@ impl ClockPort for FakeClock {
 struct FakeListGateway {
     reference: Vec<SchedulerWeatherFarmRow>,
     user: Vec<SchedulerWeatherFarmRow>,
+    pending_initial: Vec<i64>,
 }
 
 impl SchedulerWeatherFarmListGateway for FakeListGateway {
@@ -37,6 +39,36 @@ impl SchedulerWeatherFarmListGateway for FakeListGateway {
 
     fn list_user_farms_for_weather_update(&self) -> Result<Vec<SchedulerWeatherFarmRow>, String> {
         Ok(self.user.clone())
+    }
+
+    fn list_user_farms_pending_initial_weather_fetch(&self) -> Result<Vec<i64>, String> {
+        Ok(self.pending_initial.clone())
+    }
+}
+
+struct RecordingStartWeatherFetchPort {
+    calls: Mutex<Vec<i64>>,
+}
+
+impl RecordingStartWeatherFetchPort {
+    fn new() -> Self {
+        Self {
+            calls: Mutex::new(Vec::new()),
+        }
+    }
+}
+
+impl StartFarmWeatherDataFetchPort for RecordingStartWeatherFetchPort {
+    fn call(
+        &self,
+        farm_id: i64,
+        _as_of: Date,
+    ) -> Option<StartedFarmWeatherFetchSnapshot> {
+        self.calls.lock().expect("lock").push(farm_id);
+        Some(StartedFarmWeatherFetchSnapshot {
+            weather_data_status: "fetching".to_string(),
+            weather_data_total_years: 5,
+        })
     }
 }
 
@@ -105,9 +137,12 @@ fn batch_enqueue_schedules_reference_and_user_farms_with_stagger_index() {
                 Date::from_calendar_date(2026, Month::April, 28).expect("valid"),
             ),
         }],
+        pending_initial: vec![],
     };
     let schedule = RecordingSchedulePort::new();
-    let interactor = SchedulerWeatherBatchEnqueueInteractor::new(&list, &schedule, &clock);
+    let start_fetch = RecordingStartWeatherFetchPort::new();
+    let interactor =
+        SchedulerWeatherBatchEnqueueInteractor::new(&list, &schedule, &start_fetch, &clock);
     interactor.call().expect("ok");
 
     let calls = schedule.calls.lock().expect("lock");
@@ -134,9 +169,34 @@ fn batch_enqueue_skips_farm_when_gap_fill_policy_returns_none() {
             longitude: 140.0,
             latest_weather_date: Some(clock.today),
         }],
+        pending_initial: vec![],
     };
     let schedule = RecordingSchedulePort::new();
-    let interactor = SchedulerWeatherBatchEnqueueInteractor::new(&list, &schedule, &clock);
+    let start_fetch = RecordingStartWeatherFetchPort::new();
+    let interactor =
+        SchedulerWeatherBatchEnqueueInteractor::new(&list, &schedule, &start_fetch, &clock);
     interactor.call().expect("ok");
     assert!(schedule.calls.lock().expect("lock").is_empty());
+}
+
+#[test]
+fn batch_enqueue_starts_initial_fetch_for_pending_user_farms() {
+    let clock = FakeClock {
+        today: Date::from_calendar_date(2026, Month::May, 1).expect("valid"),
+    };
+    let list = FakeListGateway {
+        reference: vec![],
+        user: vec![],
+        pending_initial: vec![42, 99],
+    };
+    let schedule = RecordingSchedulePort::new();
+    let start_fetch = RecordingStartWeatherFetchPort::new();
+    let interactor =
+        SchedulerWeatherBatchEnqueueInteractor::new(&list, &schedule, &start_fetch, &clock);
+    interactor.call().expect("ok");
+
+    let started = start_fetch.calls.lock().expect("lock");
+    assert_eq!(vec![42, 99], *started);
+    assert!(schedule.calls.lock().expect("lock").is_empty());
+    assert!(*schedule.flushed.lock().expect("lock"));
 }

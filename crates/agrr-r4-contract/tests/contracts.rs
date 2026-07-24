@@ -17,6 +17,7 @@ use support::{
     upload_ready_work_record_photo, user_id_for_session,
     seed_farm_temperature_chart_completed, seed_farm_temperature_chart_fetching,
     ensure_farm_create_capacity_via_api, poll_farm_weather_completed,
+    seed_pending_user_farm_with_coordinates, trigger_weather_update_via_api,
 };
 
 #[test]
@@ -1883,5 +1884,35 @@ fn post_masters_farm_create_weather_reaches_completed_and_chart() {
         serde_json::from_str(&chart_body).expect("temperature chart JSON");
     assert_eq!(farm_id, chart_json["farm_id"].as_i64().unwrap());
     assert!(chart_json["points"].as_array().map(|p| !p.is_empty()).unwrap_or(false));
+}
+
+#[test]
+fn trigger_weather_update_starts_fetch_for_pending_user_farm() {
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let farm_id = seed_pending_user_farm_with_coordinates(user_id);
+
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+    let (before_status, before_body) =
+        status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, before_status, "{before_body}");
+    let before_json: serde_json::Value = serde_json::from_str(&before_body).expect("farm show JSON");
+    assert_eq!("pending", before_json["weather_data_status"].as_str().unwrap());
+
+    trigger_weather_update_via_api(&client);
+
+    let (status, body) = status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("farm show JSON");
+    let weather_status = json["weather_data_status"].as_str().unwrap_or_default();
+    assert_ne!(
+        "pending", weather_status,
+        "scheduler must start initial weather fetch for pending farm: {body}"
+    );
+    assert!(
+        json["weather_data_total_years"].as_i64().unwrap_or(0) > 0,
+        "expected total_years after backfill start: {body}"
+    );
 }
 
