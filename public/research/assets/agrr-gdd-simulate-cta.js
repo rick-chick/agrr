@@ -145,28 +145,8 @@
     return bar;
   }
 
-  function attachPublicPlanNavigation(root) {
-    if (!root || root.getAttribute('data-agrr-public-plan-nav') === '1') return;
-    root.setAttribute('data-agrr-public-plan-nav', '1');
-  }
-
-  function handlePublicPlanClick(event) {
-    var link = event.target.closest('a[href^="/public-plans/new"]');
-    if (!link) return;
-    if (
-      !link.closest('.' + SIDEBAR_CTA_CLASS) &&
-      !link.closest('.' + MOBILE_CTA_CLASS)
-    ) {
-      return;
-    }
-    if (link.getAttribute('target') === '_blank') return;
-    event.preventDefault();
-    event.stopPropagation();
-    window.location.assign(link.getAttribute('href'));
-  }
-
   function findSidebar() {
-    return document.querySelector('.VPDocAside') || document.querySelector('.VPSidebar');
+    return document.querySelector('.VPDocAside');
   }
 
   function injectSidebarCta(slug, pageType) {
@@ -174,7 +154,6 @@
     if (!sidebar || sidebar.querySelector('.' + SIDEBAR_CTA_CLASS)) return;
     var cta = buildSidebarCta(slug, pageType);
     if (!cta) return;
-    attachPublicPlanNavigation(cta);
     sidebar.appendChild(cta);
   }
 
@@ -182,7 +161,6 @@
     if (document.querySelector('.' + MOBILE_CTA_CLASS)) return;
     var cta = buildMobileCta(slug);
     if (!cta) return;
-    attachPublicPlanNavigation(cta);
     document.body.appendChild(cta);
   }
 
@@ -283,7 +261,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    document.addEventListener('click', handlePublicPlanClick, true);
     scheduleInject();
     observeSidebar();
   });

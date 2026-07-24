@@ -162,14 +162,8 @@ export function verifyResearchCtaAsset(assetContent) {
   if (!assetContent.includes('temperature_requirements')) {
     errors.push('missing temperature_requirements page support');
   }
-  if (!assetContent.includes('attachPublicPlanNavigation')) {
-    errors.push('missing attachPublicPlanNavigation for VitePress bypass');
-  }
   if (!assetContent.includes('target="_blank"')) {
     errors.push('missing target="_blank" on sidebar/mobile CTA links');
-  }
-  if (!assetContent.includes('handlePublicPlanClick')) {
-    errors.push('missing handlePublicPlanClick fallback for VitePress bypass');
   }
   return errors;
 }

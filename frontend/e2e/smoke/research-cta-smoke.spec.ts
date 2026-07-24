@@ -1,11 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-
-import { listResearchRequirementsHtmlPaths } from '../../../scripts/research-simulate-cta-lib.mjs';
-
-const RESEARCH_DIR = join(process.cwd(), '..', 'public', 'research');
-const REQUIREMENT_PAGES = listResearchRequirementsHtmlPaths(RESEARCH_DIR);
 
 const SAMPLE_DESKTOP_PAGE =
   '/research/research_reports/tomato/01_environmental_requirements/temperature_requirements.html';
@@ -41,13 +34,6 @@ test.describe('research requirements CTA (static HTML)', () => {
 
     const href = await mobileCta.locator('a').first().getAttribute('href');
     expect(href).toMatch(/crop=tomato/);
-  });
-
-  test('all 60 requirement pages load CTA script', () => {
-    for (const relativePath of REQUIREMENT_PAGES) {
-      const content = readFileSync(join(RESEARCH_DIR, relativePath), 'utf8');
-      expect(content).toContain('agrr-gdd-simulate-cta.js');
-    }
   });
 
   test('desktop: sidebar CTA navigates directly without VitePress 404 intermediates', async ({

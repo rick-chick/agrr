@@ -147,11 +147,3 @@ describe('research requirements pages', () => {
     );
   });
 });
-
-describe('verifyResearchCtaAsset navigation bypass', () => {
-  it('requires capture-phase public-plan navigation to bypass VitePress router', () => {
-    const failures = verifyAllResearchRequirementsCtaScripts(RESEARCH_DIR);
-    const assetFailure = failures.find((f) => f.path === 'assets/agrr-gdd-simulate-cta.js');
-    assert.equal(assetFailure, undefined, assetFailure?.errors.join(', '));
-  });
-});
