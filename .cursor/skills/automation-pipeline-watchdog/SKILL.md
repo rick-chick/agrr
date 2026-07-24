@@ -93,9 +93,9 @@ gh label create automation-watchdog --repo rick-chick/agrr \
 - 収集時刻: `<generatedAt>`
 - 機械サマリ: `<summary>`
 
-## 調査結果
+## 再現手順
 
-<根因の説明。ログ URL、workflow run、label 状態>
+<同 finding を機械収集で再現する手順。ログ URL、workflow run、label 状態>
 
 ## 完了条件
 

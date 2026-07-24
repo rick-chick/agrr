@@ -27,5 +27,5 @@ body:
     attributes:
       label: 完了条件
       value: |
-        - [ ] 再現テスト（RED）→ 修正（GREEN）
+        - [ ] 再現手順どおりの不具合が解消
         - [ ] test-common GREEN
