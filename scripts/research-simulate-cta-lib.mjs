@@ -12,6 +12,8 @@ export const RESEARCH_CTA_SCRIPT_PATH = '/research/assets/agrr-gdd-simulate-cta.
 export const SIDEBAR_CTA_CLASS = 'agrr-research-sidebar-cta';
 export const MOBILE_CTA_CLASS = 'agrr-research-mobile-cta';
 export const MOBILE_BREAKPOINT_PX = 960;
+/** VitePress static build mounts doc outline in `.VPDocAside` (not `.VPSidebar`). */
+export const DESKTOP_CTA_MOUNT_SELECTOR = '.VPDocAside';
 
 export const CROP_LABELS = {
   tomato: { ja: 'トマト', en: 'Tomato' },
@@ -124,7 +126,7 @@ ${RESEARCH_CTA_SCRIPT_MARKER_END}`;
 
 export function listResearchRequirementsHtmlPaths(researchDir) {
   return walkFiles(researchDir, (fullPath) =>
-    /_(temperature|gdd)_requirements\.html$/.test(fullPath)
+    /(temperature|gdd)_requirements\.html$/.test(fullPath)
   )
     .map((fullPath) => fullPath.slice(researchDir.length + 1).split('\\').join('/'))
     .sort();
@@ -151,8 +153,8 @@ export function verifyResearchCtaAsset(assetContent) {
   if (!assetContent.includes('crop=')) {
     errors.push('missing crop query param builder');
   }
-  if (!assetContent.includes('VPSidebar')) {
-    errors.push('missing VPSidebar selector');
+  if (!assetContent.includes(DESKTOP_CTA_MOUNT_SELECTOR.slice(1))) {
+    errors.push(`missing ${DESKTOP_CTA_MOUNT_SELECTOR} selector`);
   }
   if (!assetContent.includes(String(MOBILE_BREAKPOINT_PX))) {
     errors.push('missing mobile breakpoint');
