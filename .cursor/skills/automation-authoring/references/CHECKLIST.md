@@ -31,6 +31,17 @@
 - [ ] retry / reconcile を設計（または「不要」の根拠を一文で）
 - [ ] SKILL.md は [`skill-authoring.mdc`](../../rules/skill-authoring.mdc) 準拠（詳細は references/）
 
+## §独立レビュー — Phase 3〜4（省略禁止）
+
+正本: [REVIEW-PERSPECTIVES.md](REVIEW-PERSPECTIVES.md)。手順: [SKILL.md §Phase 3〜4](../SKILL.md)。
+
+- [ ] Phase 0 の 5 項目をレビュー依頼文に含めた
+- [ ] **サブエージェント委譲**（`generalPurpose`）で実装担当と別視点のレビューを実施した
+- [ ] 観点 [A〜H](REVIEW-PERSPECTIVES.md) ごとに Pass/Fail/N/A を記録した
+- [ ] 責任空白（webhook がどの経路でも届かない組み合わせ）を列挙し、増やしていない
+- [ ] P0/P1 Fail を修正し、差分のみ再委譲して **マージ Go** を得た
+- [ ] unit GREEN のみで「完了」と報告していない（E2E は §E2E で実施）
+
 ## §E2E — マージ前
 
 1. **実データ**
