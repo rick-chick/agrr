@@ -70,7 +70,7 @@ pub use cultivation_plan::{
     TaskScheduleItemMutationSqliteGateway, TaskScheduleSqliteGateway,
     TaskScheduleSyncStateSqliteGateway,
 };
-pub use farm::{FarmSqliteGateway, FarmTemperatureChartWeatherFromStorageGateway};
+pub use farm::{FarmSqliteGateway, FarmTemperatureChartWeatherFromStorageGateway, PendingFarmWeatherBackfillSqliteGateway};
 pub use internal_jobs::SchedulerWeatherFarmListSqliteGateway;
 pub use field::FieldSqliteGateway;
 pub use public_plan::{
