@@ -1845,6 +1845,10 @@ fn post_masters_farm_create_starts_weather_fetch() {
 
 #[test]
 fn post_masters_farm_create_weather_fetch_reaches_completed() {
+    if !agrr_regeneration_contract_available() {
+        eprintln!("skip: agrr binary unavailable for weather fetch completion contract test");
+        return;
+    }
     let client = ContractClient::from_env();
     let session_id = farmer_session_id(&client);
     ensure_farm_create_capacity_via_api(&client, &session_id);
