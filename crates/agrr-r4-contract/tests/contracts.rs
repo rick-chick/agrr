@@ -16,7 +16,6 @@ use support::{
     set_plan_task_schedule_sync_failed_raw_error, status_and_body,
     upload_ready_work_record_photo, user_id_for_session,
     seed_farm_temperature_chart_completed, seed_farm_temperature_chart_fetching,
-    ensure_farm_create_capacity_via_api,
 };
 
 #[test]
@@ -1807,39 +1806,5 @@ fn get_farm_temperature_chart_other_user_returns_404() {
     );
     let (status, body) = status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
     assert_eq!(404, status, "{body}");
-}
-
-#[test]
-fn post_masters_farm_create_starts_weather_fetch() {
-    let client = ContractClient::from_env();
-    let session_id = farmer_session_id(&client);
-    ensure_farm_create_capacity_via_api(&client, &session_id);
-
-    let (create_status, create_body) = status_and_body(client.post(
-        "/api/v1/masters/farms",
-        Some(&session_id),
-        &empty_headers(),
-        Some(serde_json::json!({
-            "farm": {
-                "name": "Contract Weather Fetch Farm",
-                "region": "jp",
-                "latitude": 35.6895,
-                "longitude": 139.6917
-            }
-        })),
-    ));
-    assert_eq!(201, create_status, "{create_body}");
-    let create_json: serde_json::Value =
-        serde_json::from_str(&create_body).expect("create farm JSON");
-    let farm_id = create_json["id"].as_i64().expect("farm id");
-    assert_eq!("fetching", create_json["weather_data_status"].as_str().unwrap());
-    assert!(create_json["weather_data_total_years"].as_i64().unwrap() > 0);
-
-    let path = format!("/api/v1/masters/farms/{farm_id}");
-    let (show_status, show_body) = status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
-    assert_eq!(200, show_status, "{show_body}");
-    let show_json: serde_json::Value = serde_json::from_str(&show_body).expect("farm show JSON");
-    assert_eq!("fetching", show_json["weather_data_status"].as_str().unwrap());
-    assert!(show_json["weather_data_total_years"].as_i64().unwrap() > 0);
 }
 

@@ -6,45 +6,8 @@
     use crate::shared::attr::AttrMap;
     use crate::shared::gateways::UserLookupGateway;
     use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
-    use crate::shared::ports::ClockPort;
-    use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
-    use crate::weather_data::gateways::{
-        StartFarmWeatherDataFetchPort, StartedFarmWeatherFetchSnapshot,
-    };
-    use std::sync::Mutex;
-    use time::{Date, Month, OffsetDateTime};
+
     use crate::shared::user::User;
-
-    struct FixedClock;
-    impl ClockPort for FixedClock {
-        fn today(&self) -> Date {
-            Date::from_calendar_date(2026, Month::July, 23).unwrap()
-        }
-        fn now(&self) -> OffsetDateTime {
-            OffsetDateTime::now_utc()
-        }
-    }
-
-    struct NoopStartWeatherFetch;
-    impl StartFarmWeatherDataFetchPort for NoopStartWeatherFetch {
-        fn call(&self, _: i64, _: Date) -> Option<StartedFarmWeatherFetchSnapshot> {
-            None
-        }
-    }
-
-    struct SpyStartWeatherFetch {
-        calls: Mutex<Vec<i64>>,
-    }
-
-    impl StartFarmWeatherDataFetchPort for SpyStartWeatherFetch {
-        fn call(&self, farm_id: i64, _: Date) -> Option<StartedFarmWeatherFetchSnapshot> {
-            self.calls.lock().unwrap().push(farm_id);
-            Some(StartedFarmWeatherFetchSnapshot {
-                weather_data_status: "fetching".into(),
-                weather_data_total_years: 6,
-            })
-        }
-    }
 
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup {
@@ -222,16 +185,12 @@
             failure: None,
         };
         let user_lookup = StubLookup(User::new(10, false));
-        let weather_fetch = NoopStartWeatherFetch;
-        let clock = FixedClock;
         let mut interactor = FarmUpdateInteractor::new(
             &mut output,
             10,
             &gateway,
             &StubTranslator,
             &user_lookup,
-            &weather_fetch,
-            &clock,
         );
         interactor
             .call(FarmUpdateInput {
@@ -245,99 +204,6 @@
         assert_eq!(output.success, Some(updated));
     }
 
-    #[test]
-    fn starts_weather_fetch_after_coordinate_change() {
-        let current = current_farm(10);
-        let updated = FarmEntity {
-            latitude: Some(36.0),
-            longitude: Some(140.0),
-            ..current.clone()
-        };
-        let gateway = StubGateway {
-            behavior: MockBehavior::Success {
-                current,
-                updated: updated.clone(),
-            },
-        };
-        let mut output = SpyOutput {
-            success: None,
-            failure: None,
-        };
-        let weather_fetch = SpyStartWeatherFetch {
-            calls: Mutex::new(Vec::new()),
-        };
-        let user_lookup = StubLookup(User::new(10, false));
-        let clock = FixedClock;
-        let mut interactor = FarmUpdateInteractor::new(
-            &mut output,
-            10,
-            &gateway,
-            &StubTranslator,
-            &user_lookup,
-            &weather_fetch,
-            &clock,
-        );
-        interactor
-            .call(FarmUpdateInput {
-                farm_id: 5,
-                name: None,
-                region: None,
-                latitude: Some(36.0),
-                longitude: Some(140.0),
-            })
-            .expect("handled");
-        assert_eq!(weather_fetch.calls.lock().unwrap().as_slice(), &[5]);
-        let success = output.success.expect("success");
-        assert_eq!(success.weather_data_status.as_deref(), Some("fetching"));
-    }
-
-    #[test]
-    fn starts_weather_fetch_after_failed_farm_edit() {
-        let current = FarmEntity {
-            weather_data_status: Some("failed".into()),
-            ..current_farm(10)
-        };
-        let updated = FarmEntity {
-            name: "Retry".into(),
-            weather_data_status: Some("failed".into()),
-            ..current.clone()
-        };
-        let gateway = StubGateway {
-            behavior: MockBehavior::Success {
-                current,
-                updated: updated.clone(),
-            },
-        };
-        let mut output = SpyOutput {
-            success: None,
-            failure: None,
-        };
-        let weather_fetch = SpyStartWeatherFetch {
-            calls: Mutex::new(Vec::new()),
-        };
-        let user_lookup = StubLookup(User::new(10, false));
-        let clock = FixedClock;
-        let mut interactor = FarmUpdateInteractor::new(
-            &mut output,
-            10,
-            &gateway,
-            &StubTranslator,
-            &user_lookup,
-            &weather_fetch,
-            &clock,
-        );
-        interactor
-            .call(FarmUpdateInput {
-                farm_id: 5,
-                name: Some("Retry".into()),
-                region: None,
-                latitude: None,
-                longitude: None,
-            })
-            .expect("handled");
-        assert_eq!(weather_fetch.calls.lock().unwrap().as_slice(), &[5]);
-    }
-
     // Ruby: test "calls on_failure with policy exception when permission denied"
     #[test]
     fn calls_on_failure_with_policy_when_permission_denied() {
@@ -349,16 +215,12 @@
             failure: None,
         };
         let user_lookup = StubLookup(User::new(10, false));
-        let weather_fetch = NoopStartWeatherFetch;
-        let clock = FixedClock;
         let mut interactor = FarmUpdateInteractor::new(
             &mut output,
             10,
             &gateway,
             &StubTranslator,
             &user_lookup,
-            &weather_fetch,
-            &clock,
         );
         interactor
             .call(FarmUpdateInput {

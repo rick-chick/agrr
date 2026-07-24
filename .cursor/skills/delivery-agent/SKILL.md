@@ -52,11 +52,11 @@ description: >-
 
 ### issue 実装経路（TDD GREEN 後・PR 前）
 
-[`github-issue-worker`](../github-issue-worker/SKILL.md) §3 GREEN 確認後、**PR を開く前に必ず** [`sequential-cleanup-review-workflow`](../sequential-cleanup-review-workflow/SKILL.md) §4 を実施する。
+[`github-issue-worker`](../github-issue-worker/SKILL.md) §3 GREEN 確認後、**PR を開く前に必ず** [`github-issue-worker`](../github-issue-worker/SKILL.md) §4（[`sequential-cleanup-review-workflow`](../sequential-cleanup-review-workflow/SKILL.md)）を実施する。
 
 1. `cleanup-workflow-tick.sh --parent-slug issue-<N>-<short-slug>` から開始（**tick 未実行で A1 に進まない**）
 2. `WORKFLOW_COMPLETE` / gate exit 0 まで A〜D を回す
-3. 完了後に [`github-issue-worker`](../github-issue-worker/SKILL.md) §5〜§6 で PR 作成（Draft。ready は prep）
+3. 完了後に [`github-issue-worker`](../github-issue-worker/SKILL.md) §5（完了条件とテスト照合）〜§6 で PR 作成（Draft。ready は prep）
 
 PR フェーズでは sequential cleanup は行わない（上流 issue 実装 run で完了済みとみなす）。
 

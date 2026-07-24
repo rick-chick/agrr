@@ -3,7 +3,6 @@
 use crate::farm::calculators::FarmWeatherProgressCalculator;
 use crate::farm::dtos::FarmUpdateInput;
 use crate::farm::gateways::FarmGateway;
-use crate::farm::interactors::farm_create_interactor::apply_weather_fetch_start;
 use crate::farm::policies::{FarmCoordinateNormalizationPolicy, FarmReferenceOwnershipPolicy};
 use crate::farm::ports::{FarmUpdateOutputPort, UpdateFailure};
 use crate::shared::attr::{AttrMap, AttrValue};
@@ -14,29 +13,23 @@ use crate::shared::hash::present_attr;
 use crate::shared::policies::farm_policy;
 use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
-use crate::shared::ports::ClockPort;
 use crate::shared::reference_record_authorization;
 use crate::shared::type_converters::cast_boolean_attr;
-use crate::weather_data::gateways::StartFarmWeatherDataFetchPort;
 
-pub struct FarmUpdateInteractor<'a, G, O, U, T, W, C> {
+pub struct FarmUpdateInteractor<'a, G, O, U, T> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     translator: &'a T,
     user_lookup: &'a U,
-    start_weather_fetch: &'a W,
-    clock: &'a C,
 }
 
-impl<'a, G, O, U, T, W, C> FarmUpdateInteractor<'a, G, O, U, T, W, C>
+impl<'a, G, O, U, T> FarmUpdateInteractor<'a, G, O, U, T>
 where
     G: FarmGateway,
     O: FarmUpdateOutputPort,
     U: UserLookupGateway,
     T: TranslatorPort,
-    W: StartFarmWeatherDataFetchPort,
-    C: ClockPort,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -44,8 +37,6 @@ where
         gateway: &'a G,
         translator: &'a T,
         user_lookup: &'a U,
-        start_weather_fetch: &'a W,
-        clock: &'a C,
     ) -> Self {
         Self {
             output_port,
@@ -53,8 +44,6 @@ where
             user_id,
             translator,
             user_lookup,
-            start_weather_fetch,
-            clock,
         }
     }
 
@@ -125,7 +114,6 @@ where
 
         let lat_changed = input.latitude.is_some();
         let lon_changed = input.longitude.is_some();
-        let mut coordinate_changed = false;
         if lat_changed || lon_changed {
             let lat = input
                 .latitude
@@ -136,27 +124,17 @@ where
                 .or(current.longitude)
                 .unwrap_or(0.0);
             if lat != current.latitude.unwrap_or(0.0) || lon != current.longitude.unwrap_or(0.0) {
-                coordinate_changed = true;
                 for (k, v) in FarmWeatherProgressCalculator::reset_for_coordinate_change_attrs() {
                     normalized.insert(k, v);
                 }
             }
         }
-        let was_failed = current.weather_data_status.as_deref() == Some("failed");
-        let should_start_weather_fetch = coordinate_changed || was_failed;
 
         match self
             .gateway
             .update_for_user(&user, input.farm_id, normalized)
         {
-            Ok(mut entity) => {
-                if should_start_weather_fetch {
-                    apply_weather_fetch_start(
-                        self.start_weather_fetch,
-                        self.clock,
-                        &mut entity,
-                    );
-                }
+            Ok(entity) => {
                 self.output_port.on_success(entity);
                 Ok(())
             }

@@ -243,6 +243,7 @@ head が `issue/<number>-*` のとき:
 
 - 上流 [`github-issue-worker`](../github-issue-worker/SKILL.md) が TDD + [`sequential-cleanup-review-workflow`](../sequential-cleanup-review-workflow/SKILL.md) 済みとみなす
 - `closingIssuesReferences` が空なら **コメントで指摘**（単独ではブロックしない）。本文の `Closes #N` 有無では判定しない
+- `closingIssuesReferences` ありで PR 本文「完了条件」に、issue 必須セクション由来の `[ ]`・`未カバー`・`手動未実施` が残る → **マージしない**（[`github-issue-worker`](../github-issue-worker/SKILL.md) §5 不足をコメント）
 - 「順次クリーンアップ・レビュー（A〜D）完了」チェック未完了は **リスクとして認識**するが、**CI green + §3c 問題なし**ならマージ可
 - diff **1200 行超**でも自動マージを止めない。判断不能・P0 のみ `agent-merge-blocked`（人間確認待ちを既定にしない — [automation-authoring PRINCIPLES](../automation-authoring/references/PRINCIPLES.md)）
 
