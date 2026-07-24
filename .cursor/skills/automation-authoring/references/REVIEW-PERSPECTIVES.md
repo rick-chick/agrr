@@ -21,7 +21,7 @@
 | E | **コスト・効率** | 起動コスト・効率化を理由に dispatch / reconcile を省略していないか | [automation-philosophy-priority.mdc §エージェント起動 vs 機械省略](../../rules/automation-philosophy-priority.mdc)、[JUDGMENT-CRITERIA.md §5 No-Go](JUDGMENT-CRITERIA.md) |
 | F | **primary / retry 整合** | ゲートロジックが `*-dispatch-lib.mjs` に一箇所か。primary と reconcile が同じ pure function を共有しているか | [SKILL.md §3](../SKILL.md)、[EXISTING-PATTERNS.md](EXISTING-PATTERNS.md) |
 | G | **回帰テスト** | 以前止まっていた形（責任空白）を unit で固定しているか。workflow 契約テストがあるか | [PRINCIPLES.md §責任空白の回帰テスト](PRINCIPLES.md)、[CHECKLIST.md §実装](CHECKLIST.md) |
-| H | **下流整合** | SKILL・`pr-agent-prep`・watchdog・Delivery payload と矛盾しないか。二重起動・fan-out がないか | [CHECKLIST.md §影響](CHECKLIST.md)、[CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md](../../../../docs/automation/CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md)、[github-pr-merge-worker/SKILL.md](../../github-pr-merge-worker/SKILL.md) |
+| H | **下流整合** | SKILL・`pr-agent-prep`・watchdog・Delivery payload と矛盾しないか。二重起動・fan-out がないか。受け入れ条件に本番確認がないか | [CHECKLIST.md §影響](CHECKLIST.md)、[CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md](../../../../docs/automation/CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md)、[github-pr-merge-worker/SKILL.md](../../github-pr-merge-worker/SKILL.md)、[PRINCIPLES.md §受け入れ条件](PRINCIPLES.md#受け入れ条件automation-スコープ) |
 
 ### 観点別の典型 Fail 例
 
@@ -35,6 +35,7 @@
 | F | `classifyPrimary*` と `classifyReconcile*` で別ロジックの `isDraft` 判定 |
 | G | 未リンク Draft + CI green のテストがない |
 | H | SKILL は「未リンク Draft は Agent が ready」と書くが dispatch が起動しない |
+| H | 受け入れ条件に本番確認が残り、マージ／親クローズがブロックされる設計 |
 
 ---
 
