@@ -1,3 +1,4 @@
 {
-  "install": "bash .cursor/scripts/cloud-gh-auth.sh"
+  "install": "bash .cursor/scripts/cloud-gh-auth.sh",
+  "start": "bash .cursor/scripts/cloud-gh-auth.sh"
 }
