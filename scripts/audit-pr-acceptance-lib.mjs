@@ -9,13 +9,22 @@ const INCOMPLETE_MARKERS = /未カバー|手動未実施/;
 const UNCHECKED_BOX = /-\s*\[\s*\]/;
 const CHECKED_BOX = /-\s*\[x\]/i;
 const PRODUCTION_OUT_OF_SCOPE =
-  /Automation\s*対象外（本番確認）|本番確認|agrr\.net|本番デプロイ|本番\s*DB|本番\s*LB|gcloud\s*観測|Litestream/i;
+  /本番確認|agrr\.net|本番デプロイ|本番\s*DB|本番\s*LB|本番\s*Cloud\s*Run|Cloud\s*Run\s*本番|本番\s*GCS|GCS\s*本番|本番で確認|gcloud\s*観測|Litestream|本番.*curl|curl.*本番/i;
+const PRODUCTION_POLICY_NEGATION =
+  /本番確認.*(含めない|書かない|禁止)|(含めない|書かない|禁止).*本番確認/;
 
 /**
  * @param {string} line
  */
 export function completionLineIsAutomationOutOfScope(line) {
-  return PRODUCTION_OUT_OF_SCOPE.test(line ?? '');
+  const text = line ?? '';
+  if (/Automation\s*対象外（本番確認）/.test(text)) {
+    return true;
+  }
+  if (PRODUCTION_POLICY_NEGATION.test(text)) {
+    return false;
+  }
+  return PRODUCTION_OUT_OF_SCOPE.test(text);
 }
 
 /**

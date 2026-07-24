@@ -6,6 +6,7 @@ import {
   auditParentIssueCloseEligibility,
   completionLineIsIncomplete,
   completionLineIsSatisfied,
+  completionLineIsAutomationOutOfScope,
   countUncheckedRequiredCheckboxes,
   extractFollowUpIssueNumbers,
   extractParentIssueNumber,
@@ -171,4 +172,19 @@ test('auditParentIssueCloseEligibility ignores production-only unchecked boxes',
     followUpIssues: [],
   });
   assert.equal(result.closeAllowed, true);
+});
+
+test('completionLineIsAutomationOutOfScope covers PRINCIPLES examples', () => {
+  assert.equal(
+    completionLineIsAutomationOutOfScope('- [ ] C2: 本番 Cloud Run で確認'),
+    true,
+  );
+  assert.equal(
+    completionLineIsAutomationOutOfScope('- [ ] C3: GCS バケットを本番で確認'),
+    true,
+  );
+  assert.equal(
+    completionLineIsAutomationOutOfScope('- [ ] C4: 起票時に本番確認を含めないこと'),
+    false,
+  );
 });
