@@ -74,7 +74,7 @@ describe('FarmTemperatureChartPresenter', () => {
   });
 
   it('throws when view is not set', () => {
-    const unbound = TestBed.inject(FarmTemperatureChartPresenter);
+    const unbound = new FarmTemperatureChartPresenter();
     expect(() => unbound.present(sampleData)).toThrow('Presenter: view not set');
   });
 });
