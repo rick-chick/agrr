@@ -780,6 +780,40 @@ pub fn poll_task_schedule_sync_ready(
     panic!("task schedule regeneration did not reach ready state within timeout");
 }
 
+/// Polls farm show until `weather_data_status` is `completed` (C3/C6 contract).
+pub fn poll_farm_weather_completed(
+    client: &ContractClient,
+    session_id: &str,
+    farm_id: i64,
+) -> serde_json::Value {
+    ensure_agrr_daemon_for_contract();
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+    let mut last_progress = 0i64;
+    for _ in 0..240 {
+        let (status, body) = status_and_body(client.get(&path, Some(session_id), &empty_headers()));
+        assert_eq!(200, status, "{body}");
+        let json: serde_json::Value = serde_json::from_str(&body).expect("farm show JSON");
+        let weather_status = json["weather_data_status"].as_str().unwrap_or_default();
+        if weather_status == "completed" {
+            assert_eq!(100, json["weather_data_progress"].as_i64().unwrap_or(0));
+            return json;
+        }
+        if weather_status == "failed" {
+            panic!("farm weather fetch failed: {body}");
+        }
+        if weather_status == "fetching" {
+            let progress = json["weather_data_progress"].as_i64().unwrap_or(0);
+            assert!(
+                progress >= last_progress,
+                "weather_data_progress should not decrease (was {last_progress}, now {progress})"
+            );
+            last_progress = progress;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+    panic!("farm weather fetch did not reach completed within timeout");
+}
+
 fn schedule_item_ids(json: &serde_json::Value) -> Vec<i64> {
     json["fields"]
         .as_array()
