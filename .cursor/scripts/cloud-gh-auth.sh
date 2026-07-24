@@ -53,6 +53,10 @@ fi
 # Cursor が GITHUB_TOKEN=ghs_* を注入すると gh が統合トークンを優先する
 unset GITHUB_TOKEN GH_TOKEN 2>/dev/null || true
 
-echo "$AGRR_GH_PAT" | gh auth login --with-token
-gh auth setup-git
-gh auth status >&2 || true
+# PATH 上の gh ラッパーは AGRR_GH_PAT を GH_TOKEN に載せるため、
+# auth login --with-token は実体 gh を直接使う（#470）。
+REAL_GH="$(<"${BIN_DIR}/.gh-real")"
+
+echo "$AGRR_GH_PAT" | "$REAL_GH" auth login --with-token
+"$REAL_GH" auth setup-git
+"$REAL_GH" auth status >&2 || true
