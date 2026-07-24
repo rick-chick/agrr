@@ -246,6 +246,54 @@
     }
 
     #[test]
+    fn does_not_start_weather_fetch_on_name_only_update() {
+        let current = FarmEntity {
+            weather_data_status: Some("completed".into()),
+            ..current_farm(10)
+        };
+        let updated = FarmEntity {
+            name: "Renamed".into(),
+            weather_data_status: Some("completed".into()),
+            ..current.clone()
+        };
+        let gateway = StubGateway {
+            behavior: MockBehavior::Success {
+                current,
+                updated: updated.clone(),
+            },
+        };
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let weather_fetch = SpyStartWeatherFetch {
+            calls: Mutex::new(Vec::new()),
+        };
+        let user_lookup = StubLookup(User::new(10, false));
+        let clock = FixedClock;
+        let mut interactor = FarmUpdateInteractor::new(
+            &mut output,
+            10,
+            &gateway,
+            &StubTranslator,
+            &user_lookup,
+            &weather_fetch,
+            &clock,
+        );
+        interactor
+            .call(FarmUpdateInput {
+                farm_id: 5,
+                name: Some("Renamed".into()),
+                region: None,
+                latitude: None,
+                longitude: None,
+            })
+            .expect("handled");
+        assert!(weather_fetch.calls.lock().unwrap().is_empty());
+        assert_eq!(output.success, Some(updated));
+    }
+
+    #[test]
     fn starts_weather_fetch_after_coordinate_change() {
         let current = current_farm(10);
         let updated = FarmEntity {

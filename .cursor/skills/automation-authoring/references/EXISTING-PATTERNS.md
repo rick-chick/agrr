@@ -44,3 +44,4 @@
 |--------------|------|
 | `docs/automation/CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md` | アーキテクチャ |
 | `.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md` | cron / secrets |
+| `.cursor/skills/automation-authoring/references/REVIEW-PERSPECTIVES.md` | レビュー観点 A〜H・サブエージェント委譲・修正ループ |

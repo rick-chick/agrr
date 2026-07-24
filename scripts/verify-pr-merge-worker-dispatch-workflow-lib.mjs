@@ -19,6 +19,7 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'workflow_run.pull_requests[0].number',
   'headRefOid',
   'resolve-workflow-run-pr-from-gh.mjs',
+  'closingIssueCount',
 ];
 
 const PRIMARY_DELIVERY_DISPATCH_SNIPPETS = [
@@ -31,6 +32,8 @@ const PRIMARY_DELIVERY_DISPATCH_SNIPPETS = [
 const PRIMARY_DISPATCH_LIB_SNIPPETS = [
   'export function classifyPrimaryPrMergeDispatch',
   'export function parseCommaSeparatedLabels',
+  'export function isLinkedDraftWaitingForPrep',
+  'export function closingIssueCountFromReferences',
 ];
 
 const RETRY_DISPATCH_SNIPPETS = [
@@ -54,6 +57,7 @@ const RECONCILE_LIB_SNIPPETS = [
   'classifyReconcileDispatchCandidate',
   'selectReconcileCandidate',
   'prMergeWorkerNeedsSync',
+  'isLinkedDraftWaitingForPrep',
 ];
 
 const FORBIDDEN_RECONCILE_LIB_SNIPPETS = [

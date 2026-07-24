@@ -25,6 +25,9 @@ require .cursor/skills/sequential-cleanup-review-workflow/SKILL.md
 require .cursor/skills/cloud-automation-audit/SKILL.md
 require .cursor/skills/automation-pipeline-watchdog/SKILL.md
 require .cursor/skills/automation-authoring/SKILL.md
+require .cursor/skills/automation-authoring/references/REVIEW-PERSPECTIVES.md
+require .cursor/skills/automation-authoring/references/JUDGMENT-CRITERIA.md
+require .cursor/skills/automation-authoring/references/PRINCIPLES.md
 require .cursor/environment.json
 require .cursor/scripts/cloud-gh-auth.sh
 require .cursor/scripts/cloud-gh-path.sh

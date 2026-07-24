@@ -6,8 +6,10 @@ import {
   auditParentIssueCloseEligibility,
   completionLineIsIncomplete,
   completionLineIsSatisfied,
+  countUncheckedRequiredCheckboxes,
   extractFollowUpIssueNumbers,
   extractParentIssueNumber,
+  parsePrCompletionSection,
   prBodyClaimsClosesIssue,
 } from './audit-pr-acceptance-lib.mjs';
 
@@ -27,6 +29,31 @@ Part of #462
 - [x] C1: pending → fetching — contract GREEN
 - [x] C3: completed — e2e GREEN
 `;
+
+test('parsePrCompletionSection extracts checkbox lines from completion section', () => {
+  const { lines, hasSection } = parsePrCompletionSection(`
+## Issue
+Part of #462
+
+## 完了条件（issue より）
+- [x] C1: pending → fetching
+- [ ] C3: chart — 未カバー
+
+## テスト
+- [x] contract GREEN
+`);
+  assert.equal(hasSection, true);
+  assert.equal(lines.length, 2);
+  assert.match(lines[0], /C1/);
+});
+
+test('countUncheckedRequiredCheckboxes counts open boxes in parent body', () => {
+  assert.equal(
+    countUncheckedRequiredCheckboxes('- [ ] C3\n- [x] C1\n- [ ] C4'),
+    2,
+  );
+  assert.equal(countUncheckedRequiredCheckboxes('- [x] all done'), 0);
+});
 
 test('prBodyClaimsClosesIssue detects Closes and Fixes', () => {
   assert.equal(prBodyClaimsClosesIssue('Closes #462'), true);

@@ -128,11 +128,14 @@ jobs:
           CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state)
           REQUIRED_CI_STATE=$(CHECKS_JSON="$CHECKS_JSON" node scripts/classify-required-ci-state.mjs)
 
+          CLOSING_ISSUE_COUNT=$(echo "$PR_META" | jq '.closingIssuesReferences | length')
+
           CLASSIFY_INPUT=$(jq -n \
             --arg labels "$LABELS" \
             --arg eventAction "$ACTION" \
             --arg labelName "$LABEL_NAME" \
             --argjson isDraft "$IS_DRAFT" \
+            --argjson closingIssueCount "$CLOSING_ISSUE_COUNT" \
             --arg reviewDecision "$REVIEW_DECISION" \
             --arg baseRefName "$BASE_REF" \
             --arg headOwner "$HEAD_OWNER" \
@@ -147,6 +150,7 @@ jobs:
               eventAction: $eventAction,
               labelName: $labelName,
               isDraft: $isDraft,
+              closingIssueCount: $closingIssueCount,
               reviewDecision: $reviewDecision,
               baseRefName: $baseRefName,
               headOwner: $headOwner,

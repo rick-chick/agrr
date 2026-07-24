@@ -331,6 +331,44 @@
     }
 
     #[test]
+    fn does_not_start_weather_fetch_without_coordinates() {
+        let entity = FarmEntity {
+            latitude: None,
+            longitude: None,
+            ..sample_farm()
+        };
+        let gateway = UnderLimitGateway {
+            count: 3,
+            entity: entity.clone(),
+        };
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let user_lookup = StubLookup(User::new(10, false));
+        let weather_fetch = SpyStartWeatherFetch {
+            calls: Mutex::new(Vec::new()),
+        };
+        let clock = FixedClock;
+        let mut interactor = FarmCreateInteractor::new(
+            &mut output,
+            10,
+            &gateway,
+            &StubTranslator,
+            &user_lookup,
+            &weather_fetch,
+            &clock,
+        );
+        interactor
+            .call(FarmCreateInput::new("座標なし農場", None, None, None))
+            .unwrap();
+        assert!(weather_fetch.calls.lock().unwrap().is_empty());
+        let success = output.success.expect("success");
+        assert!(success.weather_data_status.is_none());
+        assert!(success.weather_data_total_years.is_none());
+    }
+
+    #[test]
     fn starts_weather_fetch_after_create_with_coordinates() {
         let entity = sample_farm();
         let gateway = UnderLimitGateway {

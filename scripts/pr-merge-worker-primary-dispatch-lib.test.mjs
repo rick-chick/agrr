@@ -3,6 +3,8 @@ import { test } from 'node:test';
 
 import {
   classifyPrimaryPrMergeDispatch,
+  closingIssueCountFromReferences,
+  isLinkedDraftWaitingForPrep,
   parseCommaSeparatedLabels,
 } from './pr-merge-worker-primary-dispatch-lib.mjs';
 
@@ -87,15 +89,55 @@ test('classifyPrimaryPrMergeDispatch dispatches when required CI failed', () => 
   assert.deepEqual(result, { eligible: true });
 });
 
-test('classifyPrimaryPrMergeDispatch skips draft without sync need or ci failure', () => {
+test('closingIssueCountFromReferences counts GitHub API shape only', () => {
+  assert.equal(closingIssueCountFromReferences([]), 0);
+  assert.equal(
+    closingIssueCountFromReferences([{ number: 474 }, { number: 475 }]),
+    2,
+  );
+  assert.equal(closingIssueCountFromReferences(null), 0);
+});
+
+test('isLinkedDraftWaitingForPrep is true only for linked draft waiting on prep', () => {
+  assert.equal(
+    isLinkedDraftWaitingForPrep({
+      isDraft: true,
+      closingIssueCount: 1,
+      needsSync: false,
+      requiredCiState: 'green',
+    }),
+    true,
+  );
+  assert.equal(
+    isLinkedDraftWaitingForPrep({
+      isDraft: true,
+      closingIssueCount: 0,
+      needsSync: false,
+      requiredCiState: 'green',
+    }),
+    false,
+  );
+});
+
+test('classifyPrimaryPrMergeDispatch skips linked draft waiting for prep', () => {
   const result = classifyPrimaryPrMergeDispatch({
     ...BASE,
     isDraft: true,
+    closingIssueCount: 1,
   });
   assert.deepEqual(result, {
     eligible: false,
-    reason: 'draft without sync need or ci failure',
+    reason: 'linked draft waiting for prep',
   });
+});
+
+test('classifyPrimaryPrMergeDispatch dispatches unlinked draft when CI green', () => {
+  const result = classifyPrimaryPrMergeDispatch({
+    ...BASE,
+    isDraft: true,
+    closingIssueCount: 0,
+  });
+  assert.deepEqual(result, { eligible: true });
 });
 
 test('classifyPrimaryPrMergeDispatch skips ci_completed while checks incomplete', () => {

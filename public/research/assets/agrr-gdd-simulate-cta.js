@@ -116,7 +116,7 @@
       SIDEBAR_CTA_CLASS +
       '__link" href="' +
       href +
-      '">' +
+      '" target="_blank" rel="noopener noreferrer">' +
       copy.button +
       '</a>';
     return box;
@@ -139,14 +139,14 @@
       MOBILE_CTA_CLASS +
       '__link" href="' +
       href +
-      '">' +
+      '" target="_blank" rel="noopener noreferrer">' +
       copy.button +
       '</a>';
     return bar;
   }
 
   function findSidebar() {
-    return document.querySelector('.VPDocAside') || document.querySelector('.VPSidebar');
+    return document.querySelector('.VPDocAside');
   }
 
   function injectSidebarCta(slug, pageType) {
