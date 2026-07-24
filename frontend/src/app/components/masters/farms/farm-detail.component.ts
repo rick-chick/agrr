@@ -191,7 +191,9 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
 
   private channel: Channel | null = null;
   private weatherPollTimer: ReturnType<typeof setInterval> | null = null;
+  private weatherPollAttempts = 0;
   private static readonly WEATHER_POLL_INTERVAL_MS = 3000;
+  private static readonly WEATHER_POLL_MAX_ATTEMPTS = 40;
 
   @ViewChild('fieldFormDialog') fieldFormDialogRef!: ElementRef<HTMLDialogElement>;
 
@@ -270,7 +272,13 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     if (farm && (status === 'fetching' || status === 'pending')) {
       if (!this.weatherPollTimer) {
         const farmId = farm.id;
+        this.weatherPollAttempts = 0;
         this.weatherPollTimer = setInterval(() => {
+          this.weatherPollAttempts += 1;
+          if (this.weatherPollAttempts >= FarmDetailComponent.WEATHER_POLL_MAX_ATTEMPTS) {
+            this.stopWeatherPolling();
+            return;
+          }
           this.loadUseCase.execute({ farmId });
         }, FarmDetailComponent.WEATHER_POLL_INTERVAL_MS);
       }
@@ -283,6 +291,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     if (!this.weatherPollTimer) return;
     clearInterval(this.weatherPollTimer);
     this.weatherPollTimer = null;
+    this.weatherPollAttempts = 0;
   }
 
   deleteFarm(): void {

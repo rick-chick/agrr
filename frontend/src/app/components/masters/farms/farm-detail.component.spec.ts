@@ -359,6 +359,14 @@ describe('FarmDetailComponent', () => {
       vi.advanceTimersByTime(3000);
       expect(loadUseCase.execute).toHaveBeenCalledWith({ farmId: 123 });
 
+      loadUseCase.execute.mockClear();
+      vi.advanceTimersByTime(3000 * 39);
+      expect(loadUseCase.execute).toHaveBeenCalledTimes(38);
+
+      loadUseCase.execute.mockClear();
+      vi.advanceTimersByTime(3000);
+      expect(loadUseCase.execute).not.toHaveBeenCalled();
+
       component.control = {
         ...component.control,
         farm: {
