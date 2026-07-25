@@ -18,17 +18,23 @@ export function verifyDbBootstrapRestoreContract(repoRoot) {
     'utf8',
   );
 
-  if (/run_db_bootstrap\s*&/.test(startScript)) {
-    errors.push('start_agrr_server.sh must not background run_db_bootstrap');
+  if (!/run_db_restore_phase/.test(startScript)) {
+    errors.push('start_agrr_server.sh must synchronously run_db_restore_phase before exec agrr-server');
   }
-  if (!/run_db_bootstrap/.test(startScript)) {
-    errors.push('start_agrr_server.sh must call run_db_bootstrap before exec agrr-server');
+  if (!/run_db_bootstrap_post_restore\s*&/.test(startScript)) {
+    errors.push('start_agrr_server.sh must background run_db_bootstrap_post_restore (not full bootstrap)');
+  }
+  if (/run_db_bootstrap\s*&/.test(startScript) || /^\s*run_db_bootstrap\s*$/m.test(startScript)) {
+    errors.push('start_agrr_server.sh must not run full run_db_bootstrap (blocks HTTP until migrate/replicate)');
   }
   if (!/exec agrr-server/.test(startScript)) {
-    errors.push('start_agrr_server.sh must exec agrr-server after bootstrap');
+    errors.push('start_agrr_server.sh must exec agrr-server after restore phase');
   }
   if (!/Removing stale .* database file before restore/.test(bootstrapScript)) {
     errors.push('restore_db must remove stale db file before litestream restore');
+  }
+  if (!/litestream-restore\.tmp/.test(bootstrapScript)) {
+    errors.push('restore_db must restore to a temp file then rename (avoids parallel boot race)');
   }
   if (!/AGRR_ENV.*production/.test(bootstrapScript)) {
     errors.push('restore_db must treat production restore failure as fatal');
@@ -66,6 +72,17 @@ export function runRestoreDbHarness(opts = {}) {
     litestreamPath,
     `#!/bin/bash
 echo "litestream $*" >> "${litestreamLog}"
+out=""
+args=("$@")
+for ((i=0; i<\${#args[@]}; i++)); do
+  if [[ "\${args[$i]}" == "-o" && $((i+1)) -lt \${#args[@]} ]]; then
+    out="\${args[$((i+1))]}"
+    break
+  fi
+done
+if [[ ${litestreamExit} -eq 0 && -n "$out" ]]; then
+  echo "restored" > "$out"
+fi
 exit ${litestreamExit}
 `,
   );

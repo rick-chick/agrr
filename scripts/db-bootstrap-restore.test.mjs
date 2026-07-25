@@ -25,6 +25,7 @@ test('restore_db removes stale file before litestream restore', () => {
   assert.match(stdout, /Removing stale primary database file before restore/);
   const log = readFileSync(litestreamLog, 'utf8');
   assert.match(log, /litestream restore/);
+  assert.match(log, /\.litestream-restore\.tmp/);
 });
 
 test('restore_db fails in production when litestream restore fails', () => {

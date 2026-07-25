@@ -144,7 +144,7 @@ _agrr_server_deploy() {
   if [ "$mode" = "production" ]; then
     deploy_args+=(
       --min-instances 0
-      --startup-probe=initialDelaySeconds=15,timeoutSeconds=5,periodSeconds=5,failureThreshold=24,httpGet.path=/up,httpGet.port=8080
+      --startup-probe=initialDelaySeconds=10,timeoutSeconds=5,periodSeconds=5,failureThreshold=12,httpGet.path=/up,httpGet.port=8080
     )
     deploy_args+=(--set-secrets "SCHEDULER_AUTH_TOKEN=scheduler-auth-token:latest")
   fi
