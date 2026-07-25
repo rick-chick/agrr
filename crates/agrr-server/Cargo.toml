@@ -44,3 +44,6 @@ url = "2"
 base64 = "0.22"
 tempfile = "3"
 saphyr = "0.0.6"
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
