@@ -31,6 +31,7 @@ import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pe
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { FarmTemperatureChartComponent } from './farm-temperature-chart.component';
+import { FarmTemperatureChartPeriod } from '../../../domain/farms/farm-temperature-chart';
 
 const initialControl: FarmDetailViewState = {
   loading: true,
@@ -109,6 +110,7 @@ const initialControl: FarmDetailViewState = {
           [farmId]="control.farm.id"
           [weatherStatus]="control.farm.weather_data_status"
           [weatherProgress]="control.farm.weather_data_progress"
+          [(selectedPeriod)]="chartSelectedPeriod"
         />
 
         <section class="section-card" aria-labelledby="fields-heading">
@@ -198,6 +200,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   @ViewChild('fieldFormDialog') fieldFormDialogRef!: ElementRef<HTMLDialogElement>;
 
   editingField: Field | null = null;
+  chartSelectedPeriod: FarmTemperatureChartPeriod = '90d';
   fieldFormModel = {
     name: '',
     area: null as number | null,
