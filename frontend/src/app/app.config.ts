@@ -1,4 +1,5 @@
 import { ApplicationConfig, importProvidersFrom, provideAppInitializer } from '@angular/core';
+import { provideClientHydration } from '@angular/platform-browser';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import {
@@ -17,6 +18,7 @@ import { EntryScheduleApiGateway } from './adapters/entry-schedule/entry-schedul
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideClientHydration(),
     provideHttpClient(),
     { provide: ENTRY_SCHEDULE_GATEWAY, useExisting: EntryScheduleApiGateway },
     provideRouter(routes),
