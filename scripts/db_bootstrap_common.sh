@@ -1,5 +1,6 @@
 # Shared Litestream restore, refinery schema migrate, PRAGMA, replicate (+ optional agrr daemon).
-# Sourced by scripts/start_agrr_server.sh (agrr-server Cloud Run entrypoint).
+# Sourced by scripts/start_agrr_server.sh (agrr-server Cloud Run entrypoint),
+# scripts/production-primary-restore-inner.sh, and scripts/production-data-migrate-inner.sh.
 #
 # Environment:
 #   SKIP_CABLE_DB=true  — skip cable SQLite (Rust: in-process WebSocket, no Solid Cable)

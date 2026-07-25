@@ -2,7 +2,7 @@
 # Restore production primary SQLite from GCS (Litestream replica) and run sqlite3.
 # Requires: curl, sqlite3, gcloud ADC (e.g. gcloud auth application-default login).
 #
-# Litestream version must match Dockerfile.production (currently 0.3.13) — replica type "gcs".
+# Litestream version must match Dockerfile.agrr-server (currently 0.3.13) — replica type "gcs".
 #
 # Usage (from repository root):
 #   ./.cursor/skills/production-primary-sqlite-query/scripts/query_production_primary_sqlite.sh
@@ -12,6 +12,7 @@
 #   GCS_BUCKET          default: agrr-production-db
 #   LITESTREAM_REPLICA  default: production/primary.sqlite3
 #   LITESTREAM_BIN      path to litestream binary (optional)
+#   KEEP_DB             if set, print path to restored DB and skip deletion
 #   LITESTREAM_RESTORE_GENERATION  optional pinned generation (e.g. 9922dd4be4b68775)
 
 set -euo pipefail
