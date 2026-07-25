@@ -73,6 +73,24 @@ gcloud run services logs read agrr-production --region asia-northeast1 --project
 | サービス名 | `agrr-production` |
 | LB backend | `rust-backend`（[`scripts/agrr-frontend-url-map-simple.yaml`](../../../scripts/agrr-frontend-url-map-simple.yaml)） |
 
+## 緊急復旧（本番 primary の Litestream 世代から復元）
+
+本番プライマリ SQLite を **固定 Litestream 世代**から復元するときは、通常デプロイではなく次を使う。
+
+```bash
+.cursor/skills/deploy-server/scripts/run-production-primary-restore.sh
+# イメージ再ビルドを省略:
+.cursor/skills/deploy-server/scripts/run-production-primary-restore.sh --skip-build
+```
+
+| 環境変数 | 既定 | 意味 |
+|----------|------|------|
+| `LITESTREAM_RESTORE_GENERATION` | `9922dd4be4b68775` | 復元元の Litestream 世代 |
+| `MIN_RESTORED_USERS` | `30` | 事前検証の最低ユーザー数 |
+| `DRAIN_SECONDS` | `90` | トラフィック切替前のドレイン待ち |
+
+流れ: 復元用リビジョンを `--no-traffic` でデプロイ → 100% トラフィック切替（Litestream ライター単一化）→ `PRODUCTION_PRIMARY_RESTORE_COMPLETE` 待ち → 通常エントリポイント（`start_agrr_server.sh`）へ再デプロイ。事前・事後の件数確認は [production-primary-sqlite-query](../production-primary-sqlite-query/SKILL.md) の `query_production_primary_sqlite.sh` を使用。
+
 ## 参照
 
 - [P7-MIGRATION-RUNBOOK.md](../../../docs/migration/app-rust-stack/P7-MIGRATION-RUNBOOK.md) — refinery / 手動 `data apply`

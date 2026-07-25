@@ -1,5 +1,6 @@
 # Shared Litestream restore, refinery schema migrate, PRAGMA, replicate (+ optional agrr daemon).
-# Sourced by scripts/start_agrr_server.sh (agrr-server Cloud Run entrypoint).
+# Sourced by scripts/start_agrr_server.sh (agrr-server Cloud Run entrypoint),
+# scripts/production-primary-restore-inner.sh, and scripts/production-data-migrate-inner.sh.
 #
 # Environment:
 #   SKIP_CABLE_DB=true  — skip cable SQLite (Rust: in-process WebSocket, no Solid Cable)
@@ -30,20 +31,156 @@ db_bootstrap_scripts_dir() {
   cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
 }
 
+bootstrap_strict_restore() {
+  [ "${AGRR_ENV:-}" = "production" ] && [ -n "${GCS_BUCKET:-}" ]
+}
+
 restore_db() {
   local db_path=$1
   local db_name=$2
+  local generation="${LITESTREAM_RESTORE_GENERATION:-}"
+  local restore_out="${db_path}.litestream-restore.tmp"
+  local -a restore_args=(
+    litestream restore -if-replica-exists -config /etc/litestream.yml
+    -o "$restore_out"
+  )
+  if [ -n "$generation" ]; then
+    restore_args+=(-generation "$generation")
+  fi
+  restore_args+=("$db_path")
+
+  rm -f "$restore_out" "${restore_out}-wal" "${restore_out}-shm"
+  if [ -f "$db_path" ]; then
+    echo "  Removing stale ${db_name} database file before restore: $db_path"
+    rm -f "$db_path" "${db_path}-wal" "${db_path}-shm"
+  fi
+
   echo "  Restoring ${db_name} database from GCS..."
   local restore_start=$(date +%s)
-  if litestream restore -if-replica-exists -config /etc/litestream.yml "$db_path"; then
+  if "${restore_args[@]}"; then
+    rm -f "$db_path" "${db_path}-wal" "${db_path}-shm"
+    mv "$restore_out" "$db_path"
+    if [ -f "${restore_out}-wal" ]; then
+      mv "${restore_out}-wal" "${db_path}-wal"
+    fi
+    if [ -f "${restore_out}-shm" ]; then
+      mv "${restore_out}-shm" "${db_path}-shm"
+    fi
     local restore_end=$(date +%s)
     echo "  ✓ ${db_name} database restored from GCS (took $((restore_end - restore_start))s)"
     return 0
-  else
-    local restore_end=$(date +%s)
-    echo "  ⚠ No ${db_name} database replica found, starting fresh (took $((restore_end - restore_start))s)"
-    return 0
   fi
+
+  rm -f "$restore_out" "${restore_out}-wal" "${restore_out}-shm"
+  local restore_end=$(date +%s)
+  if bootstrap_strict_restore; then
+    echo "  ERROR: ${db_name} database restore failed (took $((restore_end - restore_start))s); refusing fresh start in production"
+    return 1
+  fi
+  echo "  ⚠ No ${db_name} database replica found, starting fresh (took $((restore_end - restore_start))s)"
+  return 0
+}
+
+run_db_restore_phase() {
+  local primary="${AGRR_SQLITE_PATH:-/tmp/production.sqlite3}"
+  local cache="${AGRR_CACHE_SQLITE_PATH:-/tmp/production_cache.sqlite3}"
+  local restore_start restore_end
+  restore_start=$(date +%s)
+  echo "DB restore phase started (PID: $$)"
+
+  echo "Restoring databases in parallel..."
+  local restore_failed=0
+  restore_db "$primary" "primary" &
+  local pids=($!)
+  restore_db "$cache" "cache" &
+  pids+=($!)
+
+  if [ "${SKIP_CABLE_DB:-}" != "true" ]; then
+    restore_db "/tmp/production_cable.sqlite3" "cable" &
+    pids+=($!)
+  else
+    echo "  (Skipping cable DB restore — SKIP_CABLE_DB=true)"
+  fi
+
+  for pid in "${pids[@]}"; do
+    wait "$pid" || restore_failed=1
+  done
+  if [ "$restore_failed" -eq 1 ]; then
+    echo "ERROR: Database restore failed"
+    return 1
+  fi
+
+  restore_end=$(date +%s)
+  echo "DB restore phase finished (took $((restore_end - restore_start))s)"
+}
+
+run_db_bootstrap_post_restore() {
+  local bootstrap_start
+  bootstrap_start=$(date +%s)
+  echo "DB post-restore bootstrap started (PID: $$)"
+
+  local primary="${AGRR_SQLITE_PATH:-/tmp/production.sqlite3}"
+  local cache="${AGRR_CACHE_SQLITE_PATH:-/tmp/production_cache.sqlite3}"
+
+  local phase1_start phase1_end
+  phase1_start=$(date +%s)
+  echo "Phase 1: Database migration..."
+
+  echo "Step 1.5: Migrate all databases"
+  if schema_up_to_date; then
+    echo "  ✓ Schema up to date, skipping migration"
+  else
+    migrate_all || return 1
+  fi
+
+  echo "Step 1.6: Weather bulk metadata backfill (GCS mode)"
+  backfill_weather_bulk_metadata_if_needed
+
+  phase1_end=$(date +%s)
+  echo "Phase 1 completed in $((phase1_end - phase1_start)) seconds"
+
+  local phase2_start phase2_end
+  phase2_start=$(date +%s)
+  echo "Phase 2: Database configuration (PRAGMA settings)..."
+  apply_pragmas "$primary" "primary"
+  apply_pragmas "$cache" "cache"
+  if [ "${SKIP_CABLE_DB:-}" != "true" ]; then
+    apply_pragmas "/tmp/production_cable.sqlite3" "cable"
+  fi
+  phase2_end=$(date +%s)
+  echo "Phase 2 completed in $((phase2_end - phase2_start)) seconds"
+
+  local phase3_start phase3_end
+  phase3_start=$(date +%s)
+  echo "Phase 3: Starting services..."
+
+  echo "Step 3.1: Starting Litestream replication..."
+  litestream replicate -config /etc/litestream.yml &
+  LITESTREAM_PID=$!
+  echo "  ✓ Litestream started (PID: ${LITESTREAM_PID})"
+
+  if [ "${USE_AGRR_DAEMON}" = "true" ]; then
+    echo "Step 3.2: Starting agrr daemon (background, no readiness wait — HTTP binds in parallel)..."
+    local agrr_bin="${AGRR_BIN_PATH:-/usr/local/bin/agrr}"
+    local socket_path="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
+    if [ -x "$agrr_bin" ]; then
+      "$agrr_bin" daemon stop 2>/dev/null || true
+      if [ -e "$socket_path" ] || [ -L "$socket_path" ]; then
+        rm -f "$socket_path"
+        echo "  ✓ removed stale agrr socket at $socket_path (prior instance; boot does not wait for daemon)"
+      fi
+      "$agrr_bin" daemon start &
+      echo "  ✓ agrr daemon start initiated (readiness deferred to request-time connect retries in agrr-server)"
+    else
+      echo "  ⚠ agrr binary not found at $agrr_bin, skipping daemon"
+    fi
+  fi
+
+  phase3_end=$(date +%s)
+  local bootstrap_end
+  bootstrap_end=$(date +%s)
+  echo "Phase 3 completed in $((phase3_end - phase3_start)) seconds"
+  echo "DB post-restore bootstrap finished (took $((bootstrap_end - bootstrap_start))s total)"
 }
 
 migrate_all() {
@@ -121,92 +258,6 @@ SQL
 }
 
 run_db_bootstrap() {
-  local bootstrap_start
-  bootstrap_start=$(date +%s)
-  echo "DB bootstrap started (PID: $$)"
-
-  local primary="${AGRR_SQLITE_PATH:-/tmp/production.sqlite3}"
-  local cache="${AGRR_CACHE_SQLITE_PATH:-/tmp/production_cache.sqlite3}"
-
-  local phase1_start phase1_end
-  phase1_start=$(date +%s)
-  echo "Phase 1: Database restore and migration..."
-
-  echo "Step 1.1: Restoring databases in parallel..."
-  local restore_failed=0
-  restore_db "$primary" "primary" &
-  local pids=($!)
-  restore_db "$cache" "cache" &
-  pids+=($!)
-
-  if [ "${SKIP_CABLE_DB:-}" != "true" ]; then
-    restore_db "/tmp/production_cable.sqlite3" "cable" &
-    pids+=($!)
-  else
-    echo "  (Skipping cable DB restore — SKIP_CABLE_DB=true)"
-  fi
-
-  for pid in "${pids[@]}"; do
-    wait "$pid" || restore_failed=1
-  done
-  if [ "$restore_failed" -eq 1 ]; then
-    echo "ERROR: Database restore failed"
-    return 1
-  fi
-
-  echo "Step 1.5: Migrate all databases"
-  if schema_up_to_date; then
-    echo "  ✓ Schema up to date, skipping migration"
-  else
-    migrate_all || return 1
-  fi
-
-  echo "Step 1.6: Weather bulk metadata backfill (GCS mode)"
-  backfill_weather_bulk_metadata_if_needed
-
-  phase1_end=$(date +%s)
-  echo "Phase 1 completed in $((phase1_end - phase1_start)) seconds"
-
-  local phase2_start phase2_end
-  phase2_start=$(date +%s)
-  echo "Phase 2: Database configuration (PRAGMA settings)..."
-  apply_pragmas "$primary" "primary"
-  apply_pragmas "$cache" "cache"
-  if [ "${SKIP_CABLE_DB:-}" != "true" ]; then
-    apply_pragmas "/tmp/production_cable.sqlite3" "cable"
-  fi
-  phase2_end=$(date +%s)
-  echo "Phase 2 completed in $((phase2_end - phase2_start)) seconds"
-
-  local phase3_start phase3_end
-  phase3_start=$(date +%s)
-  echo "Phase 3: Starting services..."
-
-  echo "Step 3.1: Starting Litestream replication..."
-  litestream replicate -config /etc/litestream.yml &
-  LITESTREAM_PID=$!
-  echo "  ✓ Litestream started (PID: ${LITESTREAM_PID})"
-
-  if [ "${USE_AGRR_DAEMON}" = "true" ]; then
-    echo "Step 3.2: Starting agrr daemon (background, no readiness wait — HTTP binds in parallel)..."
-    local agrr_bin="${AGRR_BIN_PATH:-/usr/local/bin/agrr}"
-    local socket_path="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
-    if [ -x "$agrr_bin" ]; then
-      "$agrr_bin" daemon stop 2>/dev/null || true
-      if [ -e "$socket_path" ] || [ -L "$socket_path" ]; then
-        rm -f "$socket_path"
-        echo "  ✓ removed stale agrr socket at $socket_path (prior instance; boot does not wait for daemon)"
-      fi
-      "$agrr_bin" daemon start &
-      echo "  ✓ agrr daemon start initiated (readiness deferred to request-time connect retries in agrr-server)"
-    else
-      echo "  ⚠ agrr binary not found at $agrr_bin, skipping daemon"
-    fi
-  fi
-
-  phase3_end=$(date +%s)
-  local bootstrap_end
-  bootstrap_end=$(date +%s)
-  echo "Phase 3 completed in $((phase3_end - phase3_start)) seconds"
-  echo "DB bootstrap finished (took $((bootstrap_end - bootstrap_start))s total)"
+  run_db_restore_phase || return 1
+  run_db_bootstrap_post_restore
 }

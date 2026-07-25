@@ -2,7 +2,8 @@
 # Cloud Run entrypoint for agrr-server (Dockerfile.agrr-server).
 # Litestream restore + agrr-migrate schema run + PRAGMA (no Solid Cable DB).
 #
-# USE_AGRR_DAEMON: daemon start is fire-and-forget so /up can succeed without waiting.
+# Restore from GCS is synchronous (~2s) before HTTP bind; migrate/replicate/daemon run in background.
+# USE_AGRR_DAEMON: daemon start is fire-and-forget after DB bootstrap; HTTP does not wait for socket.
 # Stale socket removal and request-time connect retries are handled in db_bootstrap_common.sh
 # and AgrrDaemonClient — do not add boot-time daemon readiness waits here.
 
@@ -20,9 +21,9 @@ export AGRR_SCRIPTS_DIR="$SCRIPT_DIR"
 source "${SCRIPT_DIR}/db_bootstrap_common.sh"
 
 if [ "${USE_AGRR_DAEMON}" = "true" ]; then
-  echo "=== Starting agrr-server with Litestream + agrr daemon (DB bootstrap in background) ==="
+  echo "=== Starting agrr-server with Litestream + agrr daemon (restore sync, post-restore in background) ==="
 else
-  echo "=== Starting agrr-server with Litestream (DB bootstrap in background) ==="
+  echo "=== Starting agrr-server with Litestream (restore sync, post-restore in background) ==="
 fi
 
 echo "Port: $PORT"
@@ -57,10 +58,12 @@ cleanup() {
 
 trap 'status=$?; cleanup "$status"' SIGTERM SIGINT SIGHUP EXIT
 
-echo "Starting DB bootstrap in background (agrr-server will bind in parallel)..."
-run_db_bootstrap &
+echo "Restoring databases (sync before HTTP bind)..."
+run_db_restore_phase
+echo "Starting post-restore bootstrap in background..."
+run_db_bootstrap_post_restore &
 BOOTSTRAP_PID=$!
-echo "DB bootstrap PID: $BOOTSTRAP_PID"
+echo "Post-restore bootstrap PID: $BOOTSTRAP_PID"
 echo "=== Starting agrr-server (foreground process for Cloud Run) ==="
 
 trap - SIGTERM SIGINT SIGHUP EXIT

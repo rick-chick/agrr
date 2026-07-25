@@ -11,7 +11,7 @@ description: Restores the production primary SQLite database from the GCS Litest
 
 - GCP 認証: Application Default Credentials（例: `gcloud auth application-default login`）。`gsutil ls gs://agrr-production-db/...` が通ること。
 - 依存: `curl`, `sqlite3`, `dpkg-deb`（Litestream の deb 展開用）。
-- **Litestream のメジャーは `Dockerfile.production` と一致させる**（現在 v0.3.13）。`type: gcs` を使う。スクリプト [scripts/query_production_primary_sqlite.sh](scripts/query_production_primary_sqlite.sh) は deb から同じバージョンをキャッシュする。
+- **Litestream のメジャーは `Dockerfile.agrr-server` と一致させる**（現在 v0.3.13）。`type: gcs` を使う。スクリプト [scripts/query_production_primary_sqlite.sh](scripts/query_production_primary_sqlite.sh) は deb から同じバージョンをキャッシュする。
 
 ## 手順（エージェント）
 

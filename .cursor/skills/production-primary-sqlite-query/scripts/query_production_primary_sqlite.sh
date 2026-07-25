@@ -2,7 +2,7 @@
 # Restore production primary SQLite from GCS (Litestream replica) and run sqlite3.
 # Requires: curl, sqlite3, gcloud ADC (e.g. gcloud auth application-default login).
 #
-# Litestream version must match Dockerfile.production (currently 0.3.13) — replica type "gcs".
+# Litestream version must match Dockerfile.agrr-server (currently 0.3.13) — replica type "gcs".
 #
 # Usage (from repository root):
 #   ./.cursor/skills/production-primary-sqlite-query/scripts/query_production_primary_sqlite.sh
@@ -13,6 +13,7 @@
 #   LITESTREAM_REPLICA  default: production/primary.sqlite3
 #   LITESTREAM_BIN      path to litestream binary (optional)
 #   KEEP_DB             if set, print path to restored DB and skip deletion
+#   LITESTREAM_RESTORE_GENERATION  optional pinned generation (e.g. 9922dd4be4b68775)
 
 set -euo pipefail
 
@@ -70,8 +71,13 @@ dbs:
 EOF
 
 echo "Restoring gs://${GCS_BUCKET}/${LITESTREAM_REPLICA} (Litestream v${LITESTREAM_VERSION})..." >&2
+restore_args=(-config "$CONFIG" -o "$OUT_DB" "$FAKE_DB")
+if [[ -n "${LITESTREAM_RESTORE_GENERATION:-}" ]]; then
+  restore_args=(-config "$CONFIG" -generation "${LITESTREAM_RESTORE_GENERATION}" -o "$OUT_DB" "$FAKE_DB")
+  echo "Pinned generation: ${LITESTREAM_RESTORE_GENERATION}" >&2
+fi
 # Litestream logs to stdout; redirect so KEEP_DB=$(...) captures only the DB path.
-"$LITESTREAM_BIN" restore -config "$CONFIG" -o "$OUT_DB" "$FAKE_DB" >&2
+"$LITESTREAM_BIN" restore "${restore_args[@]}" >&2
 
 if [[ -n "${KEEP_DB:-}" ]]; then
   echo "$OUT_DB" >&1
