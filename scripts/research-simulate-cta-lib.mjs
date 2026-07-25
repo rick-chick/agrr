@@ -132,6 +132,15 @@ ${buildResearchCtaInlineBypassScript()}
 ${RESEARCH_CTA_SCRIPT_MARKER_END}`;
 }
 
+export function listAllResearchCtaHtmlPaths(researchDir) {
+  return walkFiles(researchDir, (fullPath) => fullPath.endsWith('.html'))
+    .filter((fullPath) =>
+      readFileSync(fullPath, 'utf8').includes(RESEARCH_CTA_SCRIPT_MARKER_START)
+    )
+    .map((fullPath) => fullPath.slice(researchDir.length + 1).split('\\').join('/'))
+    .sort();
+}
+
 export function listResearchRequirementsHtmlPaths(researchDir) {
   return walkFiles(researchDir, (fullPath) =>
     /(temperature|gdd)_requirements\.html$/.test(fullPath)
@@ -176,6 +185,9 @@ export function verifyResearchCtaAsset(assetContent) {
   if (!assetContent.includes('target="_blank"')) {
     errors.push('missing target="_blank" on sidebar/mobile CTA links');
   }
+  if (assetContent.includes('attachPublicPlanNavigation')) {
+    errors.push('still contains attachPublicPlanNavigation (stale pre-#484 asset)');
+  }
   return errors;
 }
 
@@ -187,7 +199,7 @@ export function verifyAllResearchRequirementsCtaScripts(researchDir) {
     failures.push({ path: 'assets/agrr-gdd-simulate-cta.js', errors: assetErrors });
   }
 
-  for (const relativePath of listResearchRequirementsHtmlPaths(researchDir)) {
+  for (const relativePath of listAllResearchCtaHtmlPaths(researchDir)) {
     const content = readFileSync(join(researchDir, relativePath), 'utf8');
     const errors = verifyResearchCtaScriptInContent(content);
     if (errors.length > 0) {

@@ -3,6 +3,11 @@
  * Primary: inline capture script in no-cache HTML (works even when immutable JS is stale).
  * Secondary: external JS should not contain pre-#484 attachPublicPlanNavigation.
  */
+import {
+  verifyResearchCtaAsset,
+  verifyResearchCtaScriptInContent
+} from './research-simulate-cta-lib.mjs';
+
 const PRODUCTION_HTML_URL =
   'https://agrr.net/research/research_reports/tomato/01_environmental_requirements/temperature_requirements.html';
 const PRODUCTION_CTA_URL = 'https://agrr.net/research/assets/agrr-gdd-simulate-cta.js';
@@ -30,23 +35,10 @@ if (!jsResponse.ok) {
 
 const html = await htmlResponse.text();
 const js = await jsResponse.text();
-const errors = [];
-
-if (!html.includes('stopImmediatePropagation')) {
-  errors.push('HTML missing inline CTA navigation bypass (capture-phase script)');
-}
-
-if (!html.includes('agrr-research-cta:start')) {
-  errors.push('HTML missing research CTA script marker');
-}
-
-if (js.includes('attachPublicPlanNavigation')) {
-  errors.push('JS still contains attachPublicPlanNavigation (stale pre-#484 asset)');
-}
-
-if (!js.includes('target="_blank"')) {
-  errors.push('JS missing target="_blank" on sidebar/mobile CTA links');
-}
+const errors = [
+  ...verifyResearchCtaScriptInContent(html),
+  ...verifyResearchCtaAsset(js)
+];
 
 if (errors.length > 0) {
   console.error('[verify-research-cta-production] production check failed:');
