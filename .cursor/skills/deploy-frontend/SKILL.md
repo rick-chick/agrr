@@ -57,8 +57,9 @@ git status --short
 5. `index.html` に `window.API_BASE_URL` を注入
 6. 公開 SPA ルート用に `index.html` ミラー（`about` 等）を配置
 7. GCS バケット (`agrr-frontend-prod`) に `gsutil rsync` で同期（`robots.txt` / `sitemap.xml` / `404.html` はバケット root）
-8. Cache-Control ヘッダーを設定
-9. Cloud CDN キャッシュ無効化 (`URL_MAP_NAME` 指定時)
+8. **production のみ**: `public/research/` を `agrr-research-backend` へ同期（既存の `gcloud` 認証を使用。`GCP_SA_KEY` 不要）
+9. Cache-Control ヘッダーを設定
+10. Cloud CDN キャッシュ無効化 (`URL_MAP_NAME` 指定時)
 
 **注意**: `gsutil web set -e index.html` は実行しない（SPA が HTTP 404 になる）。
 

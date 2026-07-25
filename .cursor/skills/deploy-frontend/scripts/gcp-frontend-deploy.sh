@@ -287,6 +287,29 @@ if [ "$PUBLIC_READ" = "1" ]; then
   run gsutil iam ch allUsers:objectViewer "$GCS_TARGET" || true
 fi
 
+# Research static site (agrr-research-backend) — same gcloud ADC as frontend deploy.
+# SYNC_RESEARCH=0 to skip. Default: on for production only.
+SYNC_RESEARCH="${SYNC_RESEARCH:-}"
+if [ -z "$SYNC_RESEARCH" ]; then
+  if [ "$ENV" = "production" ]; then
+    SYNC_RESEARCH=1
+  else
+    SYNC_RESEARCH=0
+  fi
+fi
+if [ "$SYNC_RESEARCH" = "1" ]; then
+  RESEARCH_SYNC_SCRIPT="$ROOT_DIR/.cursor/skills/research-tools/scripts/sync-research-gcs.sh"
+  if [ ! -x "$RESEARCH_SYNC_SCRIPT" ]; then
+    die "Research sync script not found or not executable: $RESEARCH_SYNC_SCRIPT"
+  fi
+  info "Syncing research assets (public/research → agrr-research-backend)"
+  if [ "${DRY_RUN}" = "1" ]; then
+    info "[DRY-RUN] PROJECT_ID=$PROJECT_ID FRONTEND_BUCKET=$BUCKET_NAME $RESEARCH_SYNC_SCRIPT"
+  else
+    PROJECT_ID="$PROJECT_ID" FRONTEND_BUCKET="$BUCKET_NAME" "$RESEARCH_SYNC_SCRIPT"
+  fi
+fi
+
 # CDN invalidation
 if [ -n "${URL_MAP_NAME:-}" ]; then
   info "Invalidating CDN cache via URL map: $URL_MAP_NAME"
