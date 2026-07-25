@@ -46,7 +46,9 @@ if (errors.length > 0) {
     console.error(`  - ${error}`);
   }
   console.error(
-    '\nRun .cursor/skills/research-tools/scripts/sync-research-gcs.sh or the Research deploy workflow.'
+    '\nRun .cursor/skills/research-tools/scripts/sync-research-gcs.sh',
+    'or .cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh deploy production',
+    '(uses existing gcloud auth; GCP_SA_KEY not required).'
   );
   process.exit(1);
 }

@@ -17,7 +17,12 @@
 プロジェクトルートから:
 
 ```bash
+# 単体（既存の gcloud 認証のみ。GCP_SA_KEY 不要）
 .cursor/skills/research-tools/scripts/sync-research-gcs.sh
+
+# フロント production デプロイに同梱（既定で research も同期）
+.cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh deploy production
+# research だけスキップする場合: SYNC_RESEARCH=0 gcp-frontend-deploy.sh deploy production
 ```
 
 ## Context
