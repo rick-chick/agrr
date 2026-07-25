@@ -3,12 +3,16 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  EventEmitter,
+  Injector,
   Input,
   OnChanges,
   OnDestroy,
   OnInit,
+  Output,
   SimpleChanges,
   ViewChild,
+  afterNextRender,
   inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -47,7 +51,7 @@ const INITIAL_STATE: FarmTemperatureChartViewState = {
         {{ 'farms.weather_section.temperature_chart_title' | translate }}
       </h2>
 
-      @if (weatherStatus !== 'completed') {
+      @if (!weatherChartEnabled) {
         <p class="farm-temperature-chart__status">
           @if (weatherStatus === 'fetching' || weatherStatus === 'pending') {
             {{
@@ -78,7 +82,7 @@ const INITIAL_STATE: FarmTemperatureChartViewState = {
           }
         </div>
 
-        @if (control.loading) {
+        @if (control.loading && !control.chartData) {
           <p class="farm-temperature-chart__status">
             {{ 'farms.weather_section.chart_loading' | translate }}
           </p>
@@ -89,6 +93,11 @@ const INITIAL_STATE: FarmTemperatureChartViewState = {
           </button>
         } @else if (control.chartData) {
           <div class="farm-temperature-chart__canvas-wrap">
+            @if (control.loading) {
+              <p class="farm-temperature-chart__loading-overlay" aria-live="polite">
+                {{ 'farms.weather_section.chart_loading' | translate }}
+              </p>
+            }
             <canvas #temperatureCanvas aria-hidden="true"></canvas>
           </div>
           @if (control.chartData.data_quality.missing_days > 0) {
@@ -114,28 +123,41 @@ export class FarmTemperatureChartComponent
   @Input({ required: true }) farmId!: number;
   @Input() weatherStatus: Farm['weather_data_status'] | undefined;
   @Input() weatherProgress: number | undefined;
+  @Input() selectedPeriod: FarmTemperatureChartPeriod = '90d';
+  @Output() selectedPeriodChange = new EventEmitter<FarmTemperatureChartPeriod>();
 
   readonly periods = PERIODS;
-  selectedPeriod: FarmTemperatureChartPeriod = '90d';
+  weatherChartEnabled = false;
 
   private readonly loadUseCase = inject(LoadFarmTemperatureChartUseCase);
   private readonly presenter = inject(FarmTemperatureChartPresenter);
   private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly injector = inject(Injector);
 
   @ViewChild('temperatureCanvas') temperatureCanvasRef?: ElementRef<HTMLCanvasElement>;
 
   private chart: Chart<'line'> | null = null;
   private viewReady = false;
+  private pendingLoadPeriod: FarmTemperatureChartPeriod | null = null;
 
   private _control: FarmTemperatureChartViewState = INITIAL_STATE;
   get control(): FarmTemperatureChartViewState {
     return this._control;
   }
   set control(value: FarmTemperatureChartViewState) {
+    if (
+      value.chartData &&
+      !value.loading &&
+      value.chartData.period !== this.selectedPeriod
+    ) {
+      return;
+    }
+
     this._control = value;
     this.cdr.markForCheck();
-    if (value.chartData) {
+    if (value.chartData && !value.loading) {
+      this.pendingLoadPeriod = null;
       this.scheduleChartRefresh();
     }
   }
@@ -150,11 +172,24 @@ export class FarmTemperatureChartComponent
 
   ngOnInit(): void {
     this.presenter.setView(this);
-    this.maybeLoadChart();
+    this.syncWeatherChartEnabled();
+    if (this.weatherChartEnabled) {
+      this.maybeLoadChart();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['weatherStatus'] && this.weatherStatus === 'completed') {
+    if (changes['weatherStatus']) {
+      this.syncWeatherChartEnabled();
+    }
+
+    const statusChange = changes['weatherStatus'];
+    if (!statusChange) return;
+    if (
+      statusChange.currentValue === 'completed' &&
+      statusChange.previousValue !== undefined &&
+      statusChange.previousValue !== 'completed'
+    ) {
       this.maybeLoadChart();
     }
   }
@@ -187,32 +222,40 @@ export class FarmTemperatureChartComponent
   selectPeriod(period: FarmTemperatureChartPeriod): void {
     if (this.selectedPeriod === period) return;
     this.selectedPeriod = period;
+    this.selectedPeriodChange.emit(period);
     this.reload();
   }
 
   reload(): void {
-    if (this.weatherStatus !== 'completed') return;
+    if (!this.weatherChartEnabled) return;
+    this.pendingLoadPeriod = this.selectedPeriod;
     this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ farmId: this.farmId, period: this.selectedPeriod });
   }
 
+  private syncWeatherChartEnabled(): void {
+    if (this.weatherStatus === 'completed' || this.control.chartData) {
+      this.weatherChartEnabled = true;
+    }
+  }
+
   private maybeLoadChart(): void {
-    if (this.weatherStatus !== 'completed') return;
-    if (this.control.chartData && this.control.chartData.period === this.selectedPeriod) return;
+    if (!this.weatherChartEnabled) return;
+    if (this.control.loading) return;
+    if (this.pendingLoadPeriod === this.selectedPeriod) return;
+    if (this.control.chartData?.period === this.selectedPeriod) return;
     this.reload();
   }
 
   private scheduleChartRefresh(): void {
     if (!this.viewReady) return;
-    Promise.resolve().then(() => this.refreshChart());
+    afterNextRender(() => this.refreshChart(), { injector: this.injector });
   }
 
   private refreshChart(): void {
     const canvas = this.temperatureCanvasRef?.nativeElement;
     const points = this.control.chartData?.points ?? [];
     if (!canvas || points.length === 0) {
-      this.chart?.destroy();
-      this.chart = null;
       return;
     }
 
