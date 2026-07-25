@@ -484,6 +484,31 @@ describe('FarmDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
   });
 
+  it('passes chartSelectedPeriod to temperature chart as selectedPeriod input', () => {
+    component.chartSelectedPeriod = '180d';
+    component.control = {
+      loading: false,
+      error: null,
+      farm: {
+        id: 123,
+        name: 'Test Farm',
+        region: 'jp',
+        latitude: 35,
+        longitude: 139,
+        weather_data_status: 'completed',
+        weather_data_progress: 100
+      },
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const chart = fixture.debugElement.query(By.directive(FarmTemperatureChartComponent))
+      .componentInstance as FarmTemperatureChartComponent;
+    expect(chart.selectedPeriod).toBe('180d');
+  });
+
   it('syncs chartSelectedPeriod when temperature chart period changes', () => {
     component.control = {
       loading: false,

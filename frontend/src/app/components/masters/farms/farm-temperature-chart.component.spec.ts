@@ -72,6 +72,14 @@ describe('FarmTemperatureChartComponent', () => {
     expect(loadSpy.execute).toHaveBeenCalledWith({ farmId: 1, period: '90d' });
   });
 
+  it('loads chart with parent-selected period input instead of default 90d', () => {
+    fixture.componentRef.setInput('selectedPeriod', '30d');
+    fixture.componentRef.setInput('weatherStatus', 'completed');
+    fixture.detectChanges();
+
+    expect(loadSpy.execute).toHaveBeenCalledWith({ farmId: 1, period: '30d' });
+  });
+
   it('reloads chart when period changes', () => {
     fixture.componentRef.setInput('weatherStatus', 'completed');
     fixture.detectChanges();
