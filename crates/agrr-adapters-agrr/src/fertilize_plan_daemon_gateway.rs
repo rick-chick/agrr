@@ -65,8 +65,17 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    fn restore_env(key: &str, prev: Option<String>) {
+        match prev {
+            Some(value) => std::env::set_var(key, value),
+            None => std::env::remove_var(key),
+        }
+    }
+
     #[test]
     fn fetch_fertilize_plan_fails_when_daemon_socket_missing() {
+        let prev_retries = std::env::var("AGRR_DAEMON_REQUEST_RETRIES").ok();
+        std::env::set_var("AGRR_DAEMON_REQUEST_RETRIES", "1");
         let client = AgrrDaemonClient::new(format!(
             "/tmp/agrr_fertilize_plan_test_{}.sock",
             std::process::id()
@@ -77,5 +86,6 @@ mod tests {
             .unwrap_err();
         assert_eq!(err.http_status, HttpStatus::ServiceUnavailable);
         assert!(err.message.contains("not running"));
+        restore_env("AGRR_DAEMON_REQUEST_RETRIES", prev_retries);
     }
 }

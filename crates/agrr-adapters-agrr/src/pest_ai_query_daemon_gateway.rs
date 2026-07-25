@@ -58,8 +58,17 @@ impl PestAiQueryGateway for PestAiQueryDaemonGateway {
 mod tests {
     use super::*;
 
+    fn restore_env(key: &str, prev: Option<String>) {
+        match prev {
+            Some(value) => std::env::set_var(key, value),
+            None => std::env::remove_var(key),
+        }
+    }
+
     #[test]
     fn fetch_pest_json_returns_daemon_not_running_payload() {
+        let prev_retries = std::env::var("AGRR_DAEMON_REQUEST_RETRIES").ok();
+        std::env::set_var("AGRR_DAEMON_REQUEST_RETRIES", "1");
         let client = AgrrDaemonClient::new(format!(
             "/tmp/agrr_pest_ai_test_{}.sock",
             std::process::id()
@@ -68,5 +77,6 @@ mod tests {
         let value = gw.fetch_pest_json("aphid", &[]).unwrap();
         assert_eq!(value.get("success"), Some(&json!(false)));
         assert_eq!(value.get("code"), Some(&json!("daemon_not_running")));
+        restore_env("AGRR_DAEMON_REQUEST_RETRIES", prev_retries);
     }
 }

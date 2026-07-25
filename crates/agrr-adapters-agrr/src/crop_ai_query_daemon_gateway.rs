@@ -61,8 +61,17 @@ fn map_agrr_error(err: AgrrDaemonError) -> CropAiCreateFailure {
 mod tests {
     use super::*;
 
+    fn restore_env(key: &str, prev: Option<String>) {
+        match prev {
+            Some(value) => std::env::set_var(key, value),
+            None => std::env::remove_var(key),
+        }
+    }
+
     #[test]
     fn fetch_crop_json_fails_when_daemon_socket_missing() {
+        let prev_retries = std::env::var("AGRR_DAEMON_REQUEST_RETRIES").ok();
+        std::env::set_var("AGRR_DAEMON_REQUEST_RETRIES", "1");
         let client = AgrrDaemonClient::new(format!(
             "/tmp/agrr_crop_ai_test_{}.sock",
             std::process::id()
@@ -71,5 +80,6 @@ mod tests {
         let err = gw.fetch_crop_json("tomato").unwrap_err();
         assert_eq!(err.http_status, HttpStatus::ServiceUnavailable);
         assert!(err.message.contains("not running"));
+        restore_env("AGRR_DAEMON_REQUEST_RETRIES", prev_retries);
     }
 }
