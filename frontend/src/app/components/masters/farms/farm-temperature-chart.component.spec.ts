@@ -134,4 +134,48 @@ describe('FarmTemperatureChartComponent', () => {
     expect(fixture.componentInstance.weatherChartEnabled).toBe(true);
     expect(fixture.nativeElement.querySelector('canvas')).not.toBeNull();
   });
+
+  it('shows error and retries load when presenter reports failure', () => {
+    fixture.componentRef.setInput('weatherStatus', 'completed');
+    fixture.detectChanges();
+
+    presenter.onError({ message: 'farms.weather_section.load_failed' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.farm-temperature-chart__error')).toBeTruthy();
+    const retry = fixture.nativeElement.querySelector(
+      '.farm-temperature-chart__retry'
+    ) as HTMLButtonElement;
+    expect(retry).toBeTruthy();
+    loadSpy.execute.mockClear();
+
+    retry.click();
+    fixture.detectChanges();
+
+    expect(loadSpy.execute).toHaveBeenCalledWith({ farmId: 1, period: '90d' });
+  });
+
+  it('marks the selected period button as active', () => {
+    fixture.componentRef.setInput('weatherStatus', 'completed');
+    fixture.detectChanges();
+
+    presenter.present(sampleChartData('90d'));
+    fixture.detectChanges();
+
+    const buttons = () =>
+      Array.from(
+        fixture.nativeElement.querySelectorAll('.farm-temperature-chart__period-btn')
+      ) as HTMLButtonElement[];
+
+    expect(buttons()[1].classList.contains('farm-temperature-chart__period-btn--active')).toBe(
+      true
+    );
+
+    fixture.componentInstance.selectPeriod('30d');
+    fixture.detectChanges();
+
+    expect(buttons()[0].classList.contains('farm-temperature-chart__period-btn--active')).toBe(
+      true
+    );
+  });
 });
