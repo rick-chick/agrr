@@ -6,6 +6,7 @@ import {
   RESEARCH_CROPS,
   buildMobileCtaCopy,
   buildPublicPlanHref,
+  buildResearchCtaInlineBypassScript,
   buildSidebarCtaCopy,
   cropSlugFromResearchPath,
   isEnglishResearchPath,
@@ -49,6 +50,16 @@ describe('cropSlugFromResearchPath', () => {
       ),
       'bell_pepper'
     );
+  });
+});
+
+describe('buildResearchCtaInlineBypassScript', () => {
+  it('includes capture-phase stopImmediatePropagation for public-plans links', () => {
+    const script = buildResearchCtaInlineBypassScript();
+    assert.match(script, /stopImmediatePropagation/);
+    assert.match(script, /\/public-plans\/new/);
+    assert.match(script, /agrr-research-sidebar-cta/);
+    assert.match(script, /agrr-gdd-simulate-cta/);
   });
 });
 

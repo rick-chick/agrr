@@ -29,6 +29,10 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "::error::GCP_SA_KEY secret is not configured; research deploy cannot run."
+              exit 1
+            fi
             echo "GCP deploy secrets are not configured; skipping research deploy."
           fi
 

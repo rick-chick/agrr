@@ -118,8 +118,16 @@ export function buildMobileCtaCopy(lang, slug) {
   return { label, button };
 }
 
+/** Inline capture handler: HTML is no-cache on GCS; bypasses stale immutable JS + VitePress router. */
+export function buildResearchCtaInlineBypassScript() {
+  return `<script>
+(function(){var s='.agrr-research-sidebar-cta a,.agrr-research-mobile-cta a,.agrr-gdd-simulate-cta a';document.addEventListener('click',function(e){if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;var a=e.target.closest('a');if(!a||!a.matches(s))return;var h=a.getAttribute('href')||'';if(h.indexOf('/public-plans/new')===-1&&h.indexOf('agrr.net/public-plans/new')===-1)return;e.preventDefault();e.stopImmediatePropagation();window.open(a.href,'_blank','noopener,noreferrer');},true);})();
+</script>`;
+}
+
 export function buildResearchCtaScriptSnippet(scriptPath = RESEARCH_CTA_SCRIPT_PATH) {
   return `${RESEARCH_CTA_SCRIPT_MARKER_START}
+${buildResearchCtaInlineBypassScript()}
 <script defer src="${scriptPath}"></script>
 ${RESEARCH_CTA_SCRIPT_MARKER_END}`;
 }
@@ -139,6 +147,9 @@ export function verifyResearchCtaScriptInContent(content) {
   }
   if (!content.includes(RESEARCH_CTA_SCRIPT_PATH)) {
     errors.push('missing research CTA script path');
+  }
+  if (!content.includes('stopImmediatePropagation')) {
+    errors.push('missing inline CTA navigation bypass script');
   }
   return errors;
 }
