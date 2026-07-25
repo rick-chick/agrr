@@ -37,13 +37,12 @@ const initialControl: PublicPlanCreateViewState = {
   providers: [...PUBLIC_PLAN_CREATE_PROVIDERS],
   template: `
     <main class="page-main public-plans-wrapper">
-      <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
         <app-public-plan-context-header [crumbs]="contextCrumbs" />
         <div class="compact-header-card">
           <div class="compact-header-title">
             <span class="title-icon" aria-hidden="true">🌱</span>
-            <span class="title-text">{{ 'public_plans.title' | translate }}</span>
+            <h1 class="title-text">{{ 'public_plans.title' | translate }}</h1>
           </div>
           <div class="compact-progress">
             <div class="compact-step active">

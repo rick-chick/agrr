@@ -8,9 +8,11 @@ import { environment } from '../../environments/environment';
  * - それ以外（Rails から配信される本番ビルド等）は '' を使用（同一オリジン）
  */
 export function getApiBaseUrl(): string {
-  const env = (window as { API_BASE_URL?: string }).API_BASE_URL;
-  if (env !== undefined && env !== '') {
-    return env;
+  if (typeof window !== 'undefined') {
+    const env = (window as { API_BASE_URL?: string }).API_BASE_URL;
+    if (env !== undefined && env !== '') {
+      return env;
+    }
   }
   if ('proxySameOriginApi' in environment && environment.proxySameOriginApi) {
     return '';
