@@ -6,10 +6,12 @@ import {
   RESEARCH_CROPS,
   buildMobileCtaCopy,
   buildPublicPlanHref,
+  buildResearchCtaInlineBypassScript,
   buildSidebarCtaCopy,
   cropSlugFromResearchPath,
   isEnglishResearchPath,
   isResearchRequirementsPage,
+  listAllResearchCtaHtmlPaths,
   listResearchRequirementsHtmlPaths,
   pageTypeFromResearchPath,
   verifyAllResearchRequirementsCtaScripts
@@ -49,6 +51,16 @@ describe('cropSlugFromResearchPath', () => {
       ),
       'bell_pepper'
     );
+  });
+});
+
+describe('buildResearchCtaInlineBypassScript', () => {
+  it('includes capture-phase stopImmediatePropagation for public-plans links', () => {
+    const script = buildResearchCtaInlineBypassScript();
+    assert.match(script, /stopImmediatePropagation/);
+    assert.match(script, /\/public-plans\/new/);
+    assert.match(script, /agrr-research-sidebar-cta/);
+    assert.match(script, /agrr-gdd-simulate-cta/);
   });
 });
 
@@ -116,6 +128,19 @@ describe('isEnglishResearchPath', () => {
         '/research/research_reports/tomato/01_environmental_requirements/gdd_requirements.html'
       ),
       false
+    );
+  });
+});
+
+describe('listAllResearchCtaHtmlPaths', () => {
+  it('lists all HTML pages with research CTA script marker', () => {
+    const paths = listAllResearchCtaHtmlPaths(RESEARCH_DIR);
+    assert.ok(paths.length >= 122);
+    assert.ok(paths.includes('404.html'));
+    assert.ok(
+      paths.includes(
+        'research_reports/tomato/01_environmental_requirements/temperature_requirements.html'
+      )
     );
   });
 });
