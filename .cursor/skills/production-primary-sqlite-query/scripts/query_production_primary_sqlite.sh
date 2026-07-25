@@ -12,7 +12,7 @@
 #   GCS_BUCKET          default: agrr-production-db
 #   LITESTREAM_REPLICA  default: production/primary.sqlite3
 #   LITESTREAM_BIN      path to litestream binary (optional)
-#   KEEP_DB             if set, print path to restored DB and skip deletion
+#   LITESTREAM_RESTORE_GENERATION  optional pinned generation (e.g. 9922dd4be4b68775)
 
 set -euo pipefail
 
@@ -70,8 +70,13 @@ dbs:
 EOF
 
 echo "Restoring gs://${GCS_BUCKET}/${LITESTREAM_REPLICA} (Litestream v${LITESTREAM_VERSION})..." >&2
+restore_args=(-config "$CONFIG" -o "$OUT_DB" "$FAKE_DB")
+if [[ -n "${LITESTREAM_RESTORE_GENERATION:-}" ]]; then
+  restore_args=(-config "$CONFIG" -generation "${LITESTREAM_RESTORE_GENERATION}" -o "$OUT_DB" "$FAKE_DB")
+  echo "Pinned generation: ${LITESTREAM_RESTORE_GENERATION}" >&2
+fi
 # Litestream logs to stdout; redirect so KEEP_DB=$(...) captures only the DB path.
-"$LITESTREAM_BIN" restore -config "$CONFIG" -o "$OUT_DB" "$FAKE_DB" >&2
+"$LITESTREAM_BIN" restore "${restore_args[@]}" >&2
 
 if [[ -n "${KEEP_DB:-}" ]]; then
   echo "$OUT_DB" >&1

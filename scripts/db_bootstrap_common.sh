@@ -30,20 +30,42 @@ db_bootstrap_scripts_dir() {
   cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
 }
 
+bootstrap_strict_restore() {
+  [ "${AGRR_ENV:-}" = "production" ] && [ -n "${GCS_BUCKET:-}" ]
+}
+
 restore_db() {
   local db_path=$1
   local db_name=$2
+  local generation="${LITESTREAM_RESTORE_GENERATION:-}"
+  local -a restore_args=(
+    litestream restore -if-replica-exists -config /etc/litestream.yml
+  )
+  if [ -n "$generation" ]; then
+    restore_args+=(-generation "$generation")
+  fi
+  restore_args+=("$db_path")
+
+  if [ -f "$db_path" ]; then
+    echo "  Removing stale ${db_name} database file before restore: $db_path"
+    rm -f "$db_path" "${db_path}-wal" "${db_path}-shm"
+  fi
+
   echo "  Restoring ${db_name} database from GCS..."
   local restore_start=$(date +%s)
-  if litestream restore -if-replica-exists -config /etc/litestream.yml "$db_path"; then
+  if "${restore_args[@]}"; then
     local restore_end=$(date +%s)
     echo "  ✓ ${db_name} database restored from GCS (took $((restore_end - restore_start))s)"
     return 0
-  else
-    local restore_end=$(date +%s)
-    echo "  ⚠ No ${db_name} database replica found, starting fresh (took $((restore_end - restore_start))s)"
-    return 0
   fi
+
+  local restore_end=$(date +%s)
+  if bootstrap_strict_restore; then
+    echo "  ERROR: ${db_name} database restore failed (took $((restore_end - restore_start))s); refusing fresh start in production"
+    return 1
+  fi
+  echo "  ⚠ No ${db_name} database replica found, starting fresh (took $((restore_end - restore_start))s)"
+  return 0
 }
 
 migrate_all() {

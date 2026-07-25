@@ -2,7 +2,8 @@
 # Cloud Run entrypoint for agrr-server (Dockerfile.agrr-server).
 # Litestream restore + agrr-migrate schema run + PRAGMA (no Solid Cable DB).
 #
-# USE_AGRR_DAEMON: daemon start is fire-and-forget so /up can succeed without waiting.
+# Litestream restore + migrate complete before agrr-server binds (avoids boot race on /tmp/*.sqlite3).
+# USE_AGRR_DAEMON: daemon start is fire-and-forget after DB bootstrap; HTTP does not wait for socket.
 # Stale socket removal and request-time connect retries are handled in db_bootstrap_common.sh
 # and AgrrDaemonClient — do not add boot-time daemon readiness waits here.
 
@@ -20,9 +21,9 @@ export AGRR_SCRIPTS_DIR="$SCRIPT_DIR"
 source "${SCRIPT_DIR}/db_bootstrap_common.sh"
 
 if [ "${USE_AGRR_DAEMON}" = "true" ]; then
-  echo "=== Starting agrr-server with Litestream + agrr daemon (DB bootstrap in background) ==="
+  echo "=== Starting agrr-server with Litestream + agrr daemon ==="
 else
-  echo "=== Starting agrr-server with Litestream (DB bootstrap in background) ==="
+  echo "=== Starting agrr-server with Litestream ==="
 fi
 
 echo "Port: $PORT"
@@ -34,11 +35,6 @@ echo "Startup started at: $START_TIME_ISO"
 cleanup() {
   local exit_code=${1:-$?}
   echo "Shutting down services..."
-
-  if [ -n "${BOOTSTRAP_PID:-}" ]; then
-    kill -TERM "$BOOTSTRAP_PID" 2>/dev/null || true
-    wait "$BOOTSTRAP_PID" 2>/dev/null || true
-  fi
 
   if [ -n "${LITESTREAM_PID:-}" ]; then
     kill -TERM "$LITESTREAM_PID" 2>/dev/null || true
@@ -57,10 +53,8 @@ cleanup() {
 
 trap 'status=$?; cleanup "$status"' SIGTERM SIGINT SIGHUP EXIT
 
-echo "Starting DB bootstrap in background (agrr-server will bind in parallel)..."
-run_db_bootstrap &
-BOOTSTRAP_PID=$!
-echo "DB bootstrap PID: $BOOTSTRAP_PID"
+echo "Running DB bootstrap before agrr-server..."
+run_db_bootstrap
 echo "=== Starting agrr-server (foreground process for Cloud Run) ==="
 
 trap - SIGTERM SIGINT SIGHUP EXIT
