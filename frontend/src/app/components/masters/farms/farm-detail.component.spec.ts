@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 import { FarmDetailComponent } from './farm-detail.component';
+import { FarmTemperatureChartComponent } from './farm-temperature-chart.component';
 import { LoadFarmDetailUseCase } from '../../../usecase/farms/load-farm-detail.usecase';
 import { SubscribeFarmWeatherUseCase } from '../../../usecase/farms/subscribe-farm-weather.usecase';
 import { DeleteFarmUseCase } from '../../../usecase/farms/delete-farm.usecase';
@@ -480,5 +482,32 @@ describe('FarmDetailComponent', () => {
     };
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
+  });
+
+  it('syncs chartSelectedPeriod when temperature chart period changes', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farm: {
+        id: 123,
+        name: 'Test Farm',
+        region: 'jp',
+        latitude: 35,
+        longitude: 139,
+        weather_data_status: 'completed',
+        weather_data_progress: 100
+      },
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const chart = fixture.debugElement.query(By.directive(FarmTemperatureChartComponent))
+      .componentInstance as FarmTemperatureChartComponent;
+    chart.selectPeriod('30d');
+    fixture.detectChanges();
+
+    expect(component.chartSelectedPeriod).toBe('30d');
   });
 });

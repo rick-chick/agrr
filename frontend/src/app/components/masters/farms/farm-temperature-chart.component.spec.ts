@@ -95,6 +95,7 @@ describe('FarmTemperatureChartComponent', () => {
 
     expect(fixture.componentInstance.control.loading).toBe(true);
     expect(fixture.nativeElement.querySelector('canvas')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.farm-temperature-chart__loading-overlay')).not.toBeNull();
   });
 
   it('ignores stale chart responses after period changes', () => {
