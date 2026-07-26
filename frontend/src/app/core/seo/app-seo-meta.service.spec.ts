@@ -40,4 +40,17 @@ describe('AppSeoMetaService', () => {
     expect(title.getTitle()).toBe('AGRR タイトル');
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
   });
+
+  it('injects Organization JSON-LD on refreshDefaultMeta', () => {
+    service.refreshDefaultMeta();
+    const script = document.head.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const structured = JSON.parse(script?.textContent ?? '{}');
+    const graph = structured['@graph'] as Array<Record<string, unknown>>;
+    const organization = graph.find((node) => node['@type'] === 'Organization');
+    expect(organization).toMatchObject({
+      name: 'AGRR',
+      email: 'support@agrr.net'
+    });
+  });
 });
