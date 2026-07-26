@@ -245,6 +245,7 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
             Some(DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS),
         )),
         task_schedule_regen_dispatcher: Arc::new(JobChainDispatcher::new()),
+        task_schedule_regen_debounce: std::time::Duration::from_millis(50),
         task_schedule_regen_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
         plan_task_schedule_regen_locks: PlanTaskScheduleRegenLocks::new(),
         farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),
