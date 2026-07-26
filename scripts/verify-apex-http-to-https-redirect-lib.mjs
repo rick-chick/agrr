@@ -3,13 +3,14 @@ import { join } from 'node:path';
 
 const REQUIRED_MANIFEST_KEYS = [
   'project:',
-  'globalAddress:',
+  'httpsUrlMap:',
   'urlMap:',
   'targetHttpProxy:',
   'forwardingRule:',
 ];
 
 const REQUIRED_URL_MAP_KEYS = [
+  'name: agrr-http-to-https-redirect',
   'defaultUrlRedirect:',
   'httpsRedirect: true',
   'redirectResponseCode: MOVED_PERMANENTLY_DEFAULT',
@@ -31,6 +32,9 @@ export function verifyApexHttpToHttpsRedirectContract(repoRoot) {
       if (!manifest.includes(key)) {
         errors.push(`scripts/agrr-http-to-https-redirect-manifest.yaml missing ${key.trim()}`);
       }
+    }
+    if (!manifest.includes('agrr-frontend-url-map-simple')) {
+      errors.push('manifest must reference primary https url map agrr-frontend-url-map-simple');
     }
   }
 
@@ -57,6 +61,7 @@ export function verifyApexHttpToHttpsRedirectContract(repoRoot) {
       'url-maps validate',
       'url-maps import',
       'target-http-proxies',
+      'target-https-proxies',
       'forwarding-rules',
       '--ports=',
     ];

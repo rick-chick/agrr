@@ -1,5 +1,4 @@
-# Minimal URL map: all HTTP requests redirect to HTTPS (301).
-# Import with scripts/apply-apex-http-to-https-redirect.sh
+kind: compute#urlMap
 name: agrr-http-to-https-redirect
 defaultUrlRedirect:
   httpsRedirect: true

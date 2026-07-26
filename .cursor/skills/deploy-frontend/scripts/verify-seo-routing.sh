@@ -63,7 +63,14 @@ check_status "research-internal-tomato-commands" "$BASE_URL/research/research_re
 check_status "research-internal-terminology-survey" "$BASE_URL/research/research_reports/%E7%94%A8%E8%AA%9E%E7%B5%B1%E4%B8%80%E8%BF%BD%E5%8A%A0%E8%AA%BF%E6%9F%BB%E7%B5%90%E6%9E%9C2.html" "HTTP/2 404"
 check_status "research-internal-readability-list" "$BASE_URL/research/research_reports/%E8%AA%AD%E3%81%BF%E3%81%AB%E3%81%8F%E3%81%84%E3%83%BB%E7%B5%B1%E4%B8%80%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%81%AA%E3%81%84%E7%AE%87%E6%89%80%E3%83%AA%E3%82%B9%E3%83%88.html" "HTTP/2 404"
 
-check_status "http-apex-redirect" "http://agrr.net/" "HTTP/1.1 301"
+# Apex HTTP port 80 must 301 to HTTPS (not empty reply).
+apex_http_status="$(normalize_status "$(curl -sI http://agrr.net/ | head -1)")"
+if [[ "$apex_http_status" != "HTTP/1.1 301" && "$apex_http_status" != "HTTP/2 301" ]]; then
+  echo "FAIL http-apex-redirect: expected HTTP 301, got '$apex_http_status' (http://agrr.net/)"
+  failures=$((failures + 1))
+else
+  echo "OK   http-apex-redirect"
+fi
 check_redirect_location "http-apex-redirect-location" "http://agrr.net/" "https://agrr.net/"
 
 check_status "www-redirect" "https://www.agrr.net/" "HTTP/2 301"
