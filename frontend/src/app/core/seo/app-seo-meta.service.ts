@@ -49,7 +49,8 @@ export class AppSeoMetaService {
       document.documentElement.lang = documentHtmlLang(angularLang);
     }
 
-    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+    const path =
+      typeof window !== 'undefined' ? (window.location.pathname || '/') : '/';
     const routeKeys = resolveRouteMetaKeys(path);
 
     const title = routeKeys
