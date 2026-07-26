@@ -11,9 +11,10 @@ import {
   AfterViewInit,
   OnDestroy,
   inject,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  PLATFORM_ID
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CultivationPlanData, CultivationData, AvailableCropData } from '../../domain/plans/cultivation-plan-data';
 import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
@@ -524,6 +525,8 @@ export class GanttChartComponent
     this.cdr.markForCheck();
   }
 
+  private readonly platformId = inject(PLATFORM_ID);
+
   constructor(private translate: TranslateService) {}
 
   ngOnInit(): void {
@@ -549,6 +552,9 @@ export class GanttChartComponent
   }
 
   ngAfterViewInit(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
     setTimeout(() => {
       this.updateDimensions();
       if (this.needsUpdate) {
@@ -567,6 +573,10 @@ export class GanttChartComponent
   }
 
   ngOnDestroy(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      this.isDestroyed = true;
+      return;
+    }
     window.removeEventListener('resize', this.onResize);
     this.mobileMediaQuery?.removeEventListener('change', this.onMobileLayoutChange);
     this.unbindSvgTouchStartGuard();
@@ -615,7 +625,11 @@ export class GanttChartComponent
   private updateDimensions() {
     this.applyLayoutMargins();
     if (this.container) {
-      const width = this.container.nativeElement.getBoundingClientRect().width;
+      const rect = this.container.nativeElement.getBoundingClientRect?.();
+      if (!rect) {
+        return;
+      }
+      const width = rect.width;
       // 横スクロールなしにするため、コンテナ幅に合わせて調整
       // 最小幅を400pxに設定（非常に狭い画面でも動作するように）
       this.config.width = clampGanttChartWidth(width);

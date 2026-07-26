@@ -1,0 +1,9 @@
+# GCP backend resources that receive scripts/agrr-security-response-headers.yaml headers.
+# Applied via scripts/apply-lb-security-response-headers.sh (production LB).
+project: agrr-475323
+backends:
+  backendBuckets:
+    - agrr-frontend-backend
+    - agrr-research-backend
+  backendServices:
+    - rust-backend
