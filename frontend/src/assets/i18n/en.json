@@ -2995,7 +2995,8 @@
       "title": "AGRR (Agriculture Resource and Rotation planner) - Agricultural Planning Support System",
       "description": "AGRR is an agricultural crop planning and crop rotation support system using weather data and AI. Official site agrr.net. Field management, crop data, and cultivation planning for sustainable farming.",
       "keywords": "agriculture,crop planning,field management,weather data,AI,agricultural DX,cultivation planning,crop rotation,farming support",
-      "og_description": "Agricultural crop planning support system powered by weather data and AI"
+      "og_description": "Agricultural crop planning support system powered by weather data and AI",
+      "og_image_alt": "AGRR agricultural planning support system"
     }
   },
   "pages": {
