@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isIndexableResearchHtml } from '../../deploy-frontend/scripts/generate-sitemap-lib.mjs';
+import { isIndexableResearchHtml } from '../../../../scripts/research-indexable-html-lib.mjs';
 import {
   alternateLocaleRelativePath,
   buildResearchHreflangSnippet,

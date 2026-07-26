@@ -4,7 +4,7 @@
 
 export const HREFLANG_MARKER_START = '<!-- agrr-research-hreflang:start -->';
 export const HREFLANG_MARKER_END = '<!-- agrr-research-hreflang:end -->';
-export const DEFAULT_BASE_URL = 'https://agrr.net';
+const DEFAULT_BASE_URL = 'https://agrr.net';
 
 /**
  * @param {string} relativePath - Path relative to public/research/ (POSIX slashes).
@@ -56,7 +56,7 @@ export function alternateLocaleRelativePath(relativePath) {
  * @param {string} urlPath
  * @returns {string}
  */
-export function toAbsoluteUrl(baseUrl, urlPath) {
+function toAbsoluteUrl(baseUrl, urlPath) {
   return `${baseUrl.replace(/\/$/, '')}${urlPath}`;
 }
 

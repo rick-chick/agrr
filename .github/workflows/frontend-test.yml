@@ -130,8 +130,8 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           node --test scripts/research-hreflang-lib.test.mjs
+          node --test scripts/research-indexable-html-lib.test.mjs
           node --test scripts/agrr-frontend-url-map-redirects.test.mjs
-          node --test .cursor/skills/research-tools/scripts/inject-research-hreflang.test.mjs
 
       - name: research CTA browser tests
         working-directory: frontend
