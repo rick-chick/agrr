@@ -8,6 +8,7 @@
 - **patch-research-vitepress-links.mjs** — VitePress `__VP_SITE_DATA__` の nav/sidebar リンクに `.html` を付与（リロード 404 回避）
 - **inject-research-extensionless-redirect.mjs** — `404.html` に extensionless URL → `.html` リダイレクトを注入
 - **inject-research-base-path-guard.mjs** — VitePress が落とす `/research` プレフィックスをクライアントで復元
+- **inject-research-canonical.mjs** — 静的 HTML に `rel=canonical`（正規 URL `/research/...`）を冪等注入
 - **serve-research-local.py** — ローカル静的サーバ（`/research_reports/*` エイリアス付き）
 - **inject-research-google-analytics.rb** — 静的 HTML に Google Analytics を注入
 - **inject-research-temperature-simulate-cta.mjs** — 温度要件レポートに公開プラン CTA を冪等注入（GDD CTA と同スタイル）
