@@ -17,6 +17,9 @@ function isResolvedTranslation(value: string, keyPrefix: string): boolean {
   return Boolean(value) && !value.startsWith(keyPrefix);
 }
 
+/** Default OGP image served from `frontend/public/` (1200×630). */
+export const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
+
 @Injectable({ providedIn: 'root' })
 export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
@@ -50,10 +53,8 @@ export class AppSeoMetaService {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const path = typeof window !== 'undefined' ? window.location.pathname : '/';
     const ogUrl = origin ? `${origin}${path.split('?')[0]}` : '';
-
-    this.meta.removeTag('property="og:image"');
-    this.meta.removeTag('name="twitter:image"');
-    this.meta.removeTag('name="twitter:image:alt"');
+    const ogImageUrl = origin ? `${origin}${DEFAULT_OGP_IMAGE_PATH}` : '';
+    const ogImageAlt = this.translate.instant('meta.default.og_image_alt');
 
     if (isResolvedTranslation(title, 'meta.default.')) {
       this.meta.updateTag({ property: 'og:title', content: title });
@@ -69,6 +70,18 @@ export class AppSeoMetaService {
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
     this.meta.updateTag({ property: 'og:site_name', content: 'AGRR' });
-    this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+    if (ogImageUrl) {
+      this.meta.updateTag({ property: 'og:image', content: ogImageUrl });
+      this.meta.updateTag({ name: 'twitter:image', content: ogImageUrl });
+      if (isResolvedTranslation(ogImageAlt, 'meta.default.')) {
+        this.meta.updateTag({ name: 'twitter:image:alt', content: ogImageAlt });
+      }
+      this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    } else {
+      this.meta.removeTag('property="og:image"');
+      this.meta.removeTag('name="twitter:image"');
+      this.meta.removeTag('name="twitter:image:alt"');
+      this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+    }
   }
 }
