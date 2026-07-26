@@ -20,4 +20,10 @@ describe('getApiBaseUrl', () => {
     const { getApiBaseUrl } = await import('./api-base-url');
     expect(getApiBaseUrl()).toBe('https://api.example.test');
   });
+
+  it('returns empty string when window is undefined (SSR prerender)', async () => {
+    vi.stubGlobal('window', undefined);
+    const { getApiBaseUrl } = await import('./api-base-url');
+    expect(getApiBaseUrl()).toBe('');
+  });
 });
