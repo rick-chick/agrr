@@ -53,6 +53,9 @@ pub const DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS: usize = 5;
 /// Debounce window before task schedule regen runs after rapid plan mutations.
 pub const DEFAULT_TASK_SCHEDULE_REGEN_DEBOUNCE: Duration = Duration::from_secs(3);
 
+/// Shorter debounce for unit tests (keeps debounced_regen tests under slow-test threshold).
+pub const TEST_TASK_SCHEDULE_REGEN_DEBOUNCE: Duration = Duration::from_millis(50);
+
 fn optimization_max_concurrent_chains_from_env() -> usize {
     std::env::var("OPTIMIZATION_MAX_CONCURRENT_CHAINS")
         .ok()

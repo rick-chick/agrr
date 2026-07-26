@@ -4,10 +4,9 @@ use crate::cable::CableHub;
 use crate::farm_weather_fetch_locks::FarmWeatherFetchLocks;
 use crate::plan_task_schedule_regen_locks::PlanTaskScheduleRegenLocks;
 use crate::jobs::JobChainDispatcher;
-use crate::state::DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS;
+use crate::state::{AppState, DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS, TEST_TASK_SCHEDULE_REGEN_DEBOUNCE};
 use crate::locale_catalog::LocaleCatalog;
 use crate::masters_rate_limit::{MastersRateLimitConfig, MastersRateLimiter};
-use crate::state::AppState;
 use agrr_adapters_sqlite::{PredictedWeatherGatewayBundle, SqlitePool};
 use agrr_domain::weather_data::gateways::WeatherDataGateway;
 use std::sync::Arc;
@@ -245,7 +244,7 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
             Some(DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS),
         )),
         task_schedule_regen_dispatcher: Arc::new(JobChainDispatcher::new()),
-        task_schedule_regen_debounce: std::time::Duration::from_millis(50),
+        task_schedule_regen_debounce: TEST_TASK_SCHEDULE_REGEN_DEBOUNCE,
         task_schedule_regen_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
         plan_task_schedule_regen_locks: PlanTaskScheduleRegenLocks::new(),
         farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),
