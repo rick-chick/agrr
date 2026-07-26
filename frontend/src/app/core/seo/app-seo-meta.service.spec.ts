@@ -40,7 +40,8 @@ describe('AppSeoMetaService', () => {
             title: 'AGRR タイトル',
             description: '説明文',
             keywords: '農業,計画',
-            og_description: 'OG説明'
+            og_description: 'OG説明',
+            og_image_alt: 'AGRR 農業計画支援システムの OGP 画像'
           }
         },
         pages: {
@@ -98,5 +99,41 @@ describe('AppSeoMetaService', () => {
       buildSelfCanonicalUrl('https://agrr.net', '/public-plans/results')
     ).toBe('https://agrr.net/public-plans/results');
     expect(buildSelfCanonicalUrl('', '/about')).toBe('');
+  });
+
+  it('sets default OGP image tags with absolute URL and large Twitter card', () => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        origin: 'https://agrr.net',
+        pathname: '/entry-schedule'
+      }
+    });
+
+    service.refreshDefaultMeta();
+
+    expect(meta.getTag('property="og:image"')?.content).toBe('https://agrr.net/og-default.png');
+    expect(meta.getTag('name="twitter:image"')?.content).toBe('https://agrr.net/og-default.png');
+    expect(meta.getTag('name="twitter:image:alt"')?.content).toBe(
+      'AGRR 農業計画支援システムの OGP 画像'
+    );
+    expect(meta.getTag('name="twitter:card"')?.content).toBe('summary_large_image');
+  });
+
+  it('omits OGP image tags when origin is unavailable', () => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        origin: '',
+        pathname: '/'
+      }
+    });
+
+    service.refreshDefaultMeta();
+
+    expect(meta.getTag('property="og:image"')).toBeNull();
+    expect(meta.getTag('name="twitter:image"')).toBeNull();
+    expect(meta.getTag('name="twitter:image:alt"')).toBeNull();
+    expect(meta.getTag('name="twitter:card"')?.content).toBe('summary');
   });
 });
