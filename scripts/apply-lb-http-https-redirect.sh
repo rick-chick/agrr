@@ -26,13 +26,6 @@ command -v gcloud >/dev/null 2>&1 || die "gcloud not found in PATH"
 [[ -f "$RESOURCES_FILE" ]] || die "missing $RESOURCES_FILE"
 [[ -f "$URL_MAP_FILE" ]] || die "missing $URL_MAP_FILE"
 
-read_yaml_value() {
-  local key="$1"
-  awk -v key="$key" '
-    $1 == key ":" { print $2; exit }
-  ' "$RESOURCES_FILE"
-}
-
 URL_MAP_NAME="$(awk '/^urlMap:/{getline; if ($1 == "name:") print $2}' "$RESOURCES_FILE")"
 HTTPS_URL_MAP="$(awk '/^httpsUrlMap:/{getline; if ($1 == "name:") print $2}' "$RESOURCES_FILE")"
 PROXY_NAME="$(awk '/^targetHttpProxy:/{getline; if ($1 == "name:") print $2}' "$RESOURCES_FILE")"
