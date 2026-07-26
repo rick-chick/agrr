@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { AppSeoMetaService } from './app-seo-meta.service';
+import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service';
 
 const TEST_ORIGIN = 'http://localhost';
 
@@ -92,6 +92,13 @@ describe('AppSeoMetaService', () => {
     service.refreshDefaultMeta();
     expect(title.getTitle()).toBe('AGRR タイトル');
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
+  });
+
+  it('buildSelfCanonicalUrl strips query from pathname and joins origin', () => {
+    expect(
+      buildSelfCanonicalUrl('https://agrr.net', '/public-plans/results')
+    ).toBe('https://agrr.net/public-plans/results');
+    expect(buildSelfCanonicalUrl('', '/about')).toBe('');
   });
 
   it('sets default OGP image tags with absolute URL and large Twitter card', () => {

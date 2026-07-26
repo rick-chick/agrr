@@ -8,6 +8,14 @@ function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
 }
 
+/** @internal exported for unit tests */
+export function buildSelfCanonicalUrl(origin: string, pathname: string): string {
+  if (!origin) {
+    return '';
+  }
+  return `${origin}${pathname.split('?')[0]}`;
+}
+
 function ogLocale(angularLang: AppLang): string {
   if (angularLang === 'ja') return 'ja_JP';
   if (angularLang === 'en') return 'en_US';
@@ -55,7 +63,7 @@ export class AppSeoMetaService {
     }
 
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const ogUrl = origin ? `${origin}${path.split('?')[0]}` : '';
+    const ogUrl = buildSelfCanonicalUrl(origin, path);
     const ogImageUrl = origin ? `${origin}${DEFAULT_OGP_IMAGE_PATH}` : '';
     const ogImageAlt = this.translate.instant('meta.default.og_image_alt');
 
@@ -69,6 +77,7 @@ export class AppSeoMetaService {
     }
     if (ogUrl) {
       this.meta.updateTag({ property: 'og:url', content: ogUrl });
+      this.meta.updateTag({ rel: 'canonical', href: ogUrl });
     }
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
