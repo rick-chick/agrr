@@ -84,6 +84,18 @@ pathMatchers:
       redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
       stripQuery: false
   - paths:
+    - /in/privacy
+    urlRedirect:
+      pathRedirect: /privacy
+      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
+      stripQuery: false
+  - paths:
+    - /in/terms
+    urlRedirect:
+      pathRedirect: /terms
+      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
+      stripQuery: false
+  - paths:
     - /in/contact
     urlRedirect:
       pathRedirect: /contact
