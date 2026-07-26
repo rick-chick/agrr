@@ -122,6 +122,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/research-simulate-cta.test.mjs
 
+      - name: research vitepress link patch unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test .cursor/skills/research-tools/scripts/patch-research-vitepress-links.test.mjs
+
       - name: research CTA browser tests
         working-directory: frontend
         run: |

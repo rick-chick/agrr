@@ -109,6 +109,14 @@ pathMatchers:
         pathPrefixRewrite: /
     service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-research-backend
   - paths:
+    - /research_reports
+    - /research_reports/*
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-research-backend
+  - paths:
+    - /en/research_reports
+    - /en/research_reports/*
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-research-backend
+  - paths:
     - /assets/i18n
     - /assets/i18n/*
     service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend

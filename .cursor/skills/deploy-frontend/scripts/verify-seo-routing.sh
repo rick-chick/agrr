@@ -54,6 +54,7 @@ check_status "robots.txt" "$BASE_URL/robots.txt" "HTTP/2 200"
 check_status "sitemap.xml" "$BASE_URL/sitemap.xml" "HTTP/2 200"
 check_status "research-index" "$BASE_URL/research/" "HTTP/2 200"
 check_status "research-html" "$BASE_URL/research/research_reports/radish/03_pest_disease/major_pests.html" "HTTP/2 200"
+check_status "research-base-stripped-html" "$BASE_URL/research_reports/radish/03_pest_disease/major_pests.html" "HTTP/2 200"
 check_status "research-extensionless-404" "$BASE_URL/research/research_reports/radish/03_pest_disease/major_pests" "HTTP/2 404"
 
 # Internal work files must not be publicly reachable (H3).
