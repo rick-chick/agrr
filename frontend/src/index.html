@@ -6,9 +6,54 @@
   <!-- Static fallbacks for crawlers: Japanese default matches app defaultLang -->
   <title>AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム</title>
   <meta name="description" content="AGRRは気象データとAIを活用した農業作付け・輪作計画支援システムです。公式 agrr.net。圃場管理、作物情報管理、栽培計画の最適化で、持続可能な農業を実現します。">
+  <meta property="og:title" content="AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム">
+  <meta property="og:description" content="AGRRは気象データとAIを活用した農業作付け・輪作計画支援システムです。公式 agrr.net。圃場管理、作物情報管理、栽培計画の最適化で、持続可能な農業を実現します。">
+  <meta property="og:image" content="https://agrr.net/og-default.png">
+  <meta property="og:url" content="https://agrr.net/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AGRR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム">
+  <meta name="twitter:description" content="AGRRは気象データとAIを活用した農業作付け・輪作計画支援システムです。公式 agrr.net。圃場管理、作物情報管理、栽培計画の最適化で、持続可能な農業を実現します。">
+  <meta name="twitter:image" content="https://agrr.net/og-default.png">
+  <meta name="twitter:image:alt" content="AGRR 農業計画支援システムの OGP 画像">
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://agrr.net/#organization",
+          "name": "AGRR",
+          "url": "https://agrr.net/",
+          "email": "support@agrr.net",
+          "address": { "@type": "PostalAddress", "addressCountry": "JP" },
+          "sameAs": ["https://github.com/rick-chick/agrr"]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://agrr.net/#website",
+          "name": "AGRR",
+          "alternateName": "AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム",
+          "url": "https://agrr.net/",
+          "description": "気象データとAIを活用した農業作付け計画支援システム",
+          "publisher": { "@id": "https://agrr.net/#organization" }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "AGRR",
+          "alternateName": "AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "url": "https://agrr.net/",
+          "description": "気象データとAIを活用した農業作付け計画支援システム"
+        }
+      ]
+    }
+  </script>
 
   <!-- Google Analytics is initialized by the app when the environment enables it -->
 </head>

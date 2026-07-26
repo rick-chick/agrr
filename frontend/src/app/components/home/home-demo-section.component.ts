@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { NgComponentOutlet } from '@angular/common';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, Type, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import {
   HOME_DEMO_HINT_I18N_KEYS,
@@ -16,11 +16,13 @@ import {
   HomeDemoSectionPresenter
 } from '../../usecase/plans/home-demo-section.providers';
 import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-demo-plan.usecase';
+import { LOAD_HOME_DEMO_GANTT_SHELL } from './home-demo-gantt-shell.loader';
+import type { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
 
 @Component({
   selector: 'app-home-demo-section',
   standalone: true,
-  imports: [TranslateModule, PlanGanttClimateShellComponent],
+  imports: [TranslateModule, NgComponentOutlet],
   providers: [...HOME_DEMO_SECTION_PROVIDERS],
   template: `
     <section
@@ -34,7 +36,18 @@ import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-dem
         }
       </ul>
       <div class="home-demo-gantt plan-detail-surface">
-        <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
+        @if (ganttShellType && demoPlanData) {
+          <ng-container
+            *ngComponentOutlet="
+              ganttShellType;
+              inputs: { data: demoPlanData, planType: 'demo' }
+            "
+          />
+        } @else {
+          <p class="home-demo-gantt__loading" aria-busy="true">
+            {{ demoUi.loadingGantt | translate }}
+          </p>
+        }
       </div>
       <div class="home-demo-section__actions">
         <button type="button" class="primary-button large" (click)="navigateToPlan()">
@@ -49,8 +62,12 @@ export class HomeDemoSectionComponent implements OnInit, OnDestroy, HomeDemoSect
   readonly demoUi = HOME_INDEX_DEMO_UI_I18N_KEYS;
   readonly demoHintKeys = HOME_DEMO_HINT_I18N_KEYS;
 
+  ganttShellType: Type<PlanGanttClimateShellComponent> | null = null;
+
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly loadGanttShellFn = inject(LOAD_HOME_DEMO_GANTT_SHELL);
   private readonly homeDemoPresenter = inject(HomeDemoSectionPresenter);
   private readonly syncLandingDemoPlanUseCase = inject(SyncLandingDemoPlanUseCase);
   private langChangeSub: Subscription | null = null;
@@ -61,6 +78,7 @@ export class HomeDemoSectionComponent implements OnInit, OnDestroy, HomeDemoSect
     this.homeDemoPresenter.setView(this);
     this.syncLocalizedDemoPlan();
     this.langChangeSub = this.translate.onLangChange.subscribe(() => this.syncLocalizedDemoPlan());
+    void this.loadGanttShell();
   }
 
   ngOnDestroy(): void {
@@ -73,6 +91,11 @@ export class HomeDemoSectionComponent implements OnInit, OnDestroy, HomeDemoSect
 
   navigateToPlan(): void {
     void this.router.navigate(PUBLIC_PLAN_CREATE_ROUTE);
+  }
+
+  private async loadGanttShell(): Promise<void> {
+    this.ganttShellType = await this.loadGanttShellFn();
+    this.cdr.markForCheck();
   }
 
   private syncLocalizedDemoPlan(): void {

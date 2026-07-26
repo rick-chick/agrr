@@ -5,6 +5,7 @@ use crate::plan_task_schedule_regen_locks::PlanTaskScheduleRegenLocks;
 use crate::jobs::JobChainDispatcher;
 use std::collections::HashMap;
 use std::sync::Mutex;
+use std::time::Duration;
 use crate::locale_catalog::{locales_dir_from_env, LocaleCatalog};
 use crate::locale_translator::LocaleTranslator;
 use crate::request_locale::locale_from_headers;
@@ -33,6 +34,8 @@ pub struct AppState {
     pub optimization_chain_dispatcher: Arc<JobChainDispatcher>,
     /// Debounced task schedule regen after adjust / add_crop / remove (separate from optimization).
     pub task_schedule_regen_dispatcher: Arc<JobChainDispatcher>,
+    /// Debounce duration for [`crate::task_schedule_generation::enqueue_task_schedule_regen_debounced`].
+    pub task_schedule_regen_debounce: Duration,
     /// Per-plan generation counter for debounce (last enqueue wins).
     pub task_schedule_regen_tokens: Arc<Mutex<HashMap<i64, u64>>>,
     /// Serializes task schedule regen jobs per `plan_id`.
@@ -46,6 +49,12 @@ pub struct AppState {
 
 /// Default matches `RAILS_MAX_THREADS` in `docs/migration/app-rust-stack/PROVISIONAL-STACK.md`.
 pub const DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS: usize = 5;
+
+/// Debounce window before task schedule regen runs after rapid plan mutations.
+pub const DEFAULT_TASK_SCHEDULE_REGEN_DEBOUNCE: Duration = Duration::from_secs(3);
+
+/// Shorter debounce for unit tests (keeps debounced_regen tests under slow-test threshold).
+pub const TEST_TASK_SCHEDULE_REGEN_DEBOUNCE: Duration = Duration::from_millis(50);
 
 fn optimization_max_concurrent_chains_from_env() -> usize {
     std::env::var("OPTIMIZATION_MAX_CONCURRENT_CHAINS")
@@ -92,6 +101,7 @@ impl AppState {
                 Some(optimization_max_concurrent_chains_from_env()),
             )),
             task_schedule_regen_dispatcher: Arc::new(JobChainDispatcher::new()),
+            task_schedule_regen_debounce: DEFAULT_TASK_SCHEDULE_REGEN_DEBOUNCE,
             task_schedule_regen_tokens: Arc::new(Mutex::new(HashMap::new())),
             plan_task_schedule_regen_locks: PlanTaskScheduleRegenLocks::new(),
             farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),

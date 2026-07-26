@@ -157,7 +157,7 @@ mod tests {
         let fast_chain_done = Arc::new(AtomicBool::new(false));
 
         dispatcher.enqueue_chain(vec![
-            sleep_step("slow_plan_fetch", 500),
+            sleep_step("slow_plan_fetch", 250),
             flag_step("slow_plan_done", slow_chain_done.clone()),
         ]);
         dispatcher.enqueue_chain(vec![flag_step("fast_plan_fetch", fast_chain_done.clone())]);

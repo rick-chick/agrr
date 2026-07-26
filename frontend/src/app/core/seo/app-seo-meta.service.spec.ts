@@ -40,7 +40,8 @@ describe('AppSeoMetaService', () => {
             title: 'AGRR タイトル',
             description: '説明文',
             keywords: '農業,計画',
-            og_description: 'OG説明'
+            og_description: 'OG説明',
+            og_image_alt: 'AGRR 農業計画支援システムの OGP 画像'
           }
         },
         pages: {
@@ -93,10 +94,79 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
   });
 
+  it('skips JSON-LD injection when document is unavailable (SSR/prerender)', () => {
+    setWindowPath('/');
+    const scriptsBefore = document.head.querySelectorAll('script[type="application/ld+json"]').length;
+    const doc = globalThis.document;
+    Object.defineProperty(globalThis, 'document', { value: undefined, configurable: true });
+    Object.defineProperty(window, 'document', { value: undefined, configurable: true });
+    try {
+      (
+        service as unknown as {
+          refreshJsonLd: (siteTitle: string, siteDescription: string, keyPrefix: string) => void;
+        }
+      ).refreshJsonLd('AGRR タイトル', '説明文', 'meta.default');
+    } finally {
+      Object.defineProperty(globalThis, 'document', { value: doc, configurable: true });
+      Object.defineProperty(window, 'document', { value: doc, configurable: true });
+    }
+    const scriptsAfter = document.head.querySelectorAll('script[type="application/ld+json"]').length;
+    expect(scriptsAfter).toBe(scriptsBefore);
+  });
+
+  it('injects Organization JSON-LD on refreshDefaultMeta', () => {
+    service.refreshDefaultMeta();
+    const script = document.head.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const structured = JSON.parse(script?.textContent ?? '{}');
+    const graph = structured['@graph'] as Array<Record<string, unknown>>;
+    const organization = graph.find((node) => node['@type'] === 'Organization');
+    expect(organization).toMatchObject({
+      name: 'AGRR',
+      email: 'support@agrr.net'
+    });
+  });
+
   it('buildSelfCanonicalUrl strips query from pathname and joins origin', () => {
     expect(
       buildSelfCanonicalUrl('https://agrr.net', '/public-plans/results')
     ).toBe('https://agrr.net/public-plans/results');
     expect(buildSelfCanonicalUrl('', '/about')).toBe('');
+  });
+
+  it('sets default OGP image tags with absolute URL and large Twitter card', () => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        origin: 'https://agrr.net',
+        pathname: '/entry-schedule'
+      }
+    });
+
+    service.refreshDefaultMeta();
+
+    expect(meta.getTag('property="og:image"')?.content).toBe('https://agrr.net/og-default.png');
+    expect(meta.getTag('name="twitter:image"')?.content).toBe('https://agrr.net/og-default.png');
+    expect(meta.getTag('name="twitter:image:alt"')?.content).toBe(
+      'AGRR 農業計画支援システムの OGP 画像'
+    );
+    expect(meta.getTag('name="twitter:card"')?.content).toBe('summary_large_image');
+  });
+
+  it('omits OGP image tags when origin is unavailable', () => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        origin: '',
+        pathname: '/'
+      }
+    });
+
+    service.refreshDefaultMeta();
+
+    expect(meta.getTag('property="og:image"')).toBeNull();
+    expect(meta.getTag('name="twitter:image"')).toBeNull();
+    expect(meta.getTag('name="twitter:image:alt"')).toBeNull();
+    expect(meta.getTag('name="twitter:card"')?.content).toBe('summary');
   });
 });

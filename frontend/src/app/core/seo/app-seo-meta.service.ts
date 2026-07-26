@@ -3,6 +3,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
+import { buildSiteStructuredDataDocument } from './site-structured-data';
 
 function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
@@ -26,11 +27,15 @@ function isResolvedTranslation(value: string, keyPrefix: string): boolean {
   return Boolean(value) && !value.startsWith(keyPrefix);
 }
 
+/** Default OGP image served from `frontend/public/` (1200×630). */
+export const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
+
 @Injectable({ providedIn: 'root' })
 export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private jsonLdScript: HTMLScriptElement | null = null;
 
   refreshDefaultMeta(): void {
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
@@ -61,10 +66,8 @@ export class AppSeoMetaService {
 
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const ogUrl = buildSelfCanonicalUrl(origin, path);
-
-    this.meta.removeTag('property="og:image"');
-    this.meta.removeTag('name="twitter:image"');
-    this.meta.removeTag('name="twitter:image:alt"');
+    const ogImageUrl = origin ? `${origin}${DEFAULT_OGP_IMAGE_PATH}` : '';
+    const ogImageAlt = this.translate.instant('meta.default.og_image_alt');
 
     if (isResolvedTranslation(title, `${keyPrefix}.`)) {
       this.meta.updateTag({ property: 'og:title', content: title });
@@ -81,6 +84,56 @@ export class AppSeoMetaService {
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
     this.meta.updateTag({ property: 'og:site_name', content: 'AGRR' });
-    this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+    if (ogImageUrl) {
+      this.meta.updateTag({ property: 'og:image', content: ogImageUrl });
+      this.meta.updateTag({ name: 'twitter:image', content: ogImageUrl });
+      if (isResolvedTranslation(ogImageAlt, 'meta.default.')) {
+        this.meta.updateTag({ name: 'twitter:image:alt', content: ogImageAlt });
+      }
+      this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    } else {
+      this.meta.removeTag('property="og:image"');
+      this.meta.removeTag('name="twitter:image"');
+      this.meta.removeTag('name="twitter:image:alt"');
+      this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+    }
+    this.refreshJsonLd(title, ogDescription, keyPrefix);
+  }
+
+  private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    this.detachJsonLd();
+    if (
+      !isResolvedTranslation(siteTitle, `${keyPrefix}.`) ||
+      !isResolvedTranslation(siteDescription, `${keyPrefix}.`)
+    ) {
+      return;
+    }
+
+    const baseUrl =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://agrr.net';
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = buildSiteStructuredDataDocument({
+      baseUrl,
+      siteTitle,
+      siteDescription
+    });
+    document.head.appendChild(script);
+    this.jsonLdScript = script;
+  }
+
+  private detachJsonLd(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    if (this.jsonLdScript?.parentNode) {
+      this.jsonLdScript.parentNode.removeChild(this.jsonLdScript);
+    }
+    this.jsonLdScript = null;
   }
 }
