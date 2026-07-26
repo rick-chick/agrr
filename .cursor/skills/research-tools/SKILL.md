@@ -6,6 +6,7 @@
 
 - **sync-research-gcs.sh** — `public/research/` を GCS に同期し、sitemap を再生成して frontend バケットへアップロード
 - **patch-research-vitepress-links.mjs** — VitePress `__VP_SITE_DATA__` の nav/sidebar リンクに `.html` を付与（リロード 404 回避）
+- **inject-research-hreflang.mjs** — indexable research HTML に canonical + hreflang（ja/en/x-default）を注入
 - **inject-research-extensionless-redirect.mjs** — `404.html` に extensionless URL → `.html` リダイレクトを注入
 - **inject-research-base-path-guard.mjs** — VitePress が落とす `/research` プレフィックスをクライアントで復元
 - **serve-research-local.py** — ローカル静的サーバ（`/research_reports/*` エイリアス付き）
