@@ -41,7 +41,7 @@ fi
 
 manifest_candidates=0
 if [[ -f "$MANIFEST" ]]; then
-  manifest_candidates="$(grep -ciE '候補|要修正|残課題|改善|fragment|helper|fromPlan' "$MANIFEST" 2>/dev/null | head -1 || true)"
+  manifest_candidates="$( (grep -ciE '候補|要修正|残課題|改善|fragment|helper|fromPlan' "$MANIFEST" 2>/dev/null || true) | head -1)"
   manifest_candidates="${manifest_candidates:-0}"
 fi
 
