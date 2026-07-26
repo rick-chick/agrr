@@ -295,6 +295,7 @@
           "add": "Add crops"
         },
         "cta_create": "Select region and crops to plan",
+        "loading_gantt": "Loading demo…",
         "fixture": {
           "plan_name": "Sample crop plan (demo)",
           "farm_name": "Sample community garden (demo)",
