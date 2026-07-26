@@ -220,10 +220,16 @@ docker compose --profile test run --rm \
     export WEATHER_DATA_LOCAL_ROOT="${WEATHER_DATA_LOCAL_ROOT:-/tmp/agrr-weather-contract}"
     mkdir -p "$WEATHER_DATA_LOCAL_ROOT"
     AGRR_BIN="${AGRR_BIN_PATH:-/app/lib/core/agrr}"
+    AGRR_SOCKET_PATH="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
     if [ -x "$AGRR_BIN" ]; then
       echo "==> Starting agrr daemon for contract regeneration tests"
       "$AGRR_BIN" daemon start || true
-      sleep 2
+      for _ in $(seq 1 100); do
+        if [ -S "$AGRR_SOCKET_PATH" ] || [ -e "$AGRR_SOCKET_PATH" ]; then
+          break
+        fi
+        sleep 0.05
+      done
     fi
     agrr-server >/tmp/agrr-server-contract.log 2>&1 &
     SERVER_PID=$!
@@ -241,5 +247,13 @@ docker compose --profile test run --rm \
       exit 1
     fi
     echo "==> R4 contract (agrr-r4-contract)"
-    RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests
+    R4_LOG=/tmp/agrr-r4-contract-tests.log
+    set +e
+    RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests --report-time 2>&1 | tee "$R4_LOG"
+    R4_EXIT=${PIPESTATUS[0]}
+    set -e
+    if [ "$R4_EXIT" -ne 0 ]; then
+      exit "$R4_EXIT"
+    fi
+    node /app/scripts/check-slow-libtest-output-cli.mjs "$R4_LOG"
   '

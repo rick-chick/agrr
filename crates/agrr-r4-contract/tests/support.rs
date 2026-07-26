@@ -1,6 +1,7 @@
 //! Contract test helpers (session login + SQLite seed for work_record scenarios).
 
 use agrr_r4_contract::http::ContractClient;
+use agrr_r4_contract::contract_wait::ensure_agrr_daemon_for_contract as ensure_daemon_once;
 use rusqlite::params;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -735,15 +736,9 @@ pub fn agrr_regeneration_contract_available() -> bool {
 }
 
 pub fn ensure_agrr_daemon_for_contract() {
-    if !agrr_regeneration_contract_available() {
-        return;
-    }
     let agrr_bin =
         std::env::var("AGRR_BIN_PATH").unwrap_or_else(|_| "/app/lib/core/agrr".to_string());
-    let _ = std::process::Command::new(&agrr_bin)
-        .args(["daemon", "start"])
-        .status();
-    std::thread::sleep(std::time::Duration::from_secs(2));
+    ensure_daemon_once(&agrr_bin, agrr_regeneration_contract_available());
 }
 
 pub fn poll_task_schedule_sync_ready(
@@ -775,7 +770,7 @@ pub fn poll_task_schedule_sync_ready(
         if sync_state == "failed" {
             panic!("task schedule regeneration failed: {body}");
         }
-        std::thread::sleep(std::time::Duration::from_millis(250));
+        std::thread::sleep(std::time::Duration::from_millis(50));
     }
     panic!("task schedule regeneration did not reach ready state within timeout");
 }
@@ -809,7 +804,7 @@ pub fn poll_farm_weather_completed(
             );
             last_progress = progress;
         }
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        std::thread::sleep(std::time::Duration::from_millis(100));
     }
     panic!("farm weather fetch did not reach completed within timeout");
 }
