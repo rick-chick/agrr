@@ -40,4 +40,32 @@ describe('AppSeoMetaService', () => {
     expect(title.getTitle()).toBe('AGRR タイトル');
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
   });
+
+  it('injects Organization JSON-LD with WebSite.publisher reference', () => {
+    service.refreshDefaultMeta();
+
+    const script = document.head.querySelector(
+      'script[type="application/ld+json"]'
+    ) as HTMLScriptElement | null;
+    expect(script).not.toBeNull();
+
+    const structured = JSON.parse(script?.text ?? '{}') as {
+      '@graph': Array<Record<string, unknown>>;
+    };
+    const organization = structured['@graph'].find(
+      (node) => node['@type'] === 'Organization'
+    );
+    const website = structured['@graph'].find((node) => node['@type'] === 'WebSite');
+
+    expect(organization).toMatchObject({
+      name: 'AGRR',
+      email: 'support@agrr.net',
+      sameAs: ['https://github.com/rick-chick/agrr']
+    });
+    expect(website).toMatchObject({
+      name: 'AGRR',
+      alternateName: 'Agriculture Resource and Rotation planner',
+      publisher: { '@id': 'https://agrr.net/#organization' }
+    });
+  });
 });

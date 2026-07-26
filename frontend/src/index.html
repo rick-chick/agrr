@@ -10,6 +10,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://agrr.net/#organization",
+        "name": "AGRR",
+        "url": "https://agrr.net/",
+        "email": "support@agrr.net",
+        "sameAs": ["https://github.com/rick-chick/agrr"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://agrr.net/#website",
+        "name": "AGRR",
+        "alternateName": "Agriculture Resource and Rotation planner",
+        "url": "https://agrr.net/",
+        "description": "AGRR supports crop planning and rotation with weather data and AI. https://agrr.net",
+        "publisher": { "@id": "https://agrr.net/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "AGRR",
+        "alternateName": "Agriculture Resource and Rotation planner",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "url": "https://agrr.net/",
+        "description": "AGRR supports crop planning and rotation with weather data and AI. https://agrr.net"
+      }
+    ]
+  }
+  </script>
+
   <!-- Google Analytics is initialized by the app when the environment enables it -->
 </head>
 <body>

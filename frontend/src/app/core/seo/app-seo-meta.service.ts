@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
+import { buildAgrrJsonLdDocument } from './site-json-ld';
 
 function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
@@ -22,6 +23,7 @@ export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private jsonLdScript: HTMLScriptElement | null = null;
 
   refreshDefaultMeta(): void {
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
@@ -70,5 +72,31 @@ export class AppSeoMetaService {
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
     this.meta.updateTag({ property: 'og:site_name', content: 'AGRR' });
     this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+
+    this.refreshJsonLd(
+      isResolvedTranslation(description, 'meta.default.') ? description : ogDescription
+    );
+  }
+
+  private refreshJsonLd(siteDescription: string): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    if (!isResolvedTranslation(siteDescription, 'meta.default.')) {
+      return;
+    }
+
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://agrr.net';
+    const structured = buildAgrrJsonLdDocument({
+      baseUrl: origin || 'https://agrr.net',
+      siteDescription
+    });
+
+    if (!this.jsonLdScript) {
+      this.jsonLdScript = document.createElement('script');
+      this.jsonLdScript.type = 'application/ld+json';
+      document.head.appendChild(this.jsonLdScript);
+    }
+    this.jsonLdScript.text = JSON.stringify(structured);
   }
 }
