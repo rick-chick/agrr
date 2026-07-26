@@ -17,6 +17,8 @@ function isResolvedTranslation(value: string, keyPrefix: string): boolean {
   return Boolean(value) && !value.startsWith(keyPrefix);
 }
 
+const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
+
 @Injectable({ providedIn: 'root' })
 export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
@@ -33,8 +35,12 @@ export class AppSeoMetaService {
     const description = this.translate.instant('meta.default.description');
     const keywords = this.translate.instant('meta.default.keywords');
     let ogDescription = this.translate.instant('meta.default.og_description');
+    let ogImageAlt = this.translate.instant('meta.default.og_image_alt');
     if (!isResolvedTranslation(ogDescription, 'meta.default.')) {
       ogDescription = description;
+    }
+    if (!isResolvedTranslation(ogImageAlt, 'meta.default.')) {
+      ogImageAlt = title;
     }
 
     if (isResolvedTranslation(title, 'meta.default.')) {
@@ -50,10 +56,7 @@ export class AppSeoMetaService {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const path = typeof window !== 'undefined' ? window.location.pathname : '/';
     const ogUrl = origin ? `${origin}${path.split('?')[0]}` : '';
-
-    this.meta.removeTag('property="og:image"');
-    this.meta.removeTag('name="twitter:image"');
-    this.meta.removeTag('name="twitter:image:alt"');
+    const ogImageUrl = origin ? `${origin}${DEFAULT_OGP_IMAGE_PATH}` : '';
 
     if (isResolvedTranslation(title, 'meta.default.')) {
       this.meta.updateTag({ property: 'og:title', content: title });
@@ -66,9 +69,18 @@ export class AppSeoMetaService {
     if (ogUrl) {
       this.meta.updateTag({ property: 'og:url', content: ogUrl });
     }
+    if (ogImageUrl && isResolvedTranslation(ogImageAlt, 'meta.default.')) {
+      this.meta.updateTag({ property: 'og:image', content: ogImageUrl });
+      this.meta.updateTag({ name: 'twitter:image', content: ogImageUrl });
+      this.meta.updateTag({ name: 'twitter:image:alt', content: ogImageAlt });
+    } else {
+      this.meta.removeTag('property="og:image"');
+      this.meta.removeTag('name="twitter:image"');
+      this.meta.removeTag('name="twitter:image:alt"');
+    }
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
     this.meta.updateTag({ property: 'og:site_name', content: 'AGRR' });
-    this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
   }
 }
