@@ -57,7 +57,9 @@ export class PublicPlanStore implements PublicPlanSessionPort {
 
   reset(): void {
     this.updateState(INITIAL_STATE);
-    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    }
   }
 
   private updateState(patch: Partial<PublicPlanState>): void {
@@ -67,6 +69,9 @@ export class PublicPlanStore implements PublicPlanSessionPort {
   }
 
   private saveToSession(state: PublicPlanState): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
     try {
       sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
@@ -75,6 +80,9 @@ export class PublicPlanStore implements PublicPlanSessionPort {
   }
 
   private loadFromSession(): PublicPlanState {
+    if (typeof sessionStorage === 'undefined') {
+      return INITIAL_STATE;
+    }
     try {
       const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (stored) {
