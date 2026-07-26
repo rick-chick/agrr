@@ -45,6 +45,9 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Prerender output verification
+        run: npm run verify:prerender-output
+
       - name: ng serve proxy contract
         run: npm run check:proxy-conf
 
@@ -101,6 +104,7 @@ jobs:
           node --test scripts/pr-agent-prep-lib.test.mjs
           node --test scripts/audit-pr-acceptance-lib.test.mjs
           node --test scripts/db-bootstrap-restore.test.mjs
+          node --test scripts/verify-security-response-headers.test.mjs
           node --test scripts/issue-worker-dispatch-lib.test.mjs
           node --test scripts/pr-merge-worker-needs-sync.test.mjs
           node --test scripts/pr-merge-worker-primary-dispatch-lib.test.mjs
