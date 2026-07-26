@@ -223,22 +223,70 @@ awk -v snippet="$INJECT_SNIPPET" 'BEGIN{added=0}
 
 run mv "$TMP_INDEX" "$INDEX_HTML"
 
-# Classic EXTERNAL LB does not return HTTP 200 for urlRewrite SPA fallback alone.
-# Mirror index.html at public client-route object paths so GCS serves 200 directly.
-# Public / login routes that survive full-page load (OAuth, bookmarks). Auth-required paths use /?_post_login=.
-SPA_SHELL_PATHS=(
+inject_runtime_into_html() {
+  local target_html="$1"
+  if [ ! -f "$target_html" ]; then
+    return 0
+  fi
+  local tmp_inject
+  tmp_inject="$(mktemp)"
+  awk -v snippet="$INJECT_SNIPPET" 'BEGIN{added=0}
+    tolower($0) ~ /<\/head>/ && !added {
+      print snippet
+      added=1
+    }
+    { print }
+    END { if(!added) { print snippet } }' "$target_html" > "$tmp_inject"
+  run mv "$tmp_inject" "$target_html"
+}
+
+CSR_SHELL_HTML="$BUILD_OUTPUT_DIR/index.csr.html"
+if [ ! -f "$CSR_SHELL_HTML" ]; then
+  CSR_SHELL_HTML="$INDEX_HTML"
+else
+  inject_runtime_into_html "$CSR_SHELL_HTML"
+fi
+
+PRERENDER_SHELL_PATHS=(
   about contact privacy terms
-  login
   "public-plans/new"
+)
+CSR_ONLY_SHELL_PATHS=(
+  login
   "public-plans/select-crop"
   "public-plans/optimizing"
   "public-plans/results"
 )
-for shell_path in "${SPA_SHELL_PATHS[@]}"; do
+
+for shell_path in "${PRERENDER_SHELL_PATHS[@]}"; do
+  prerender_file="$BUILD_OUTPUT_DIR/$shell_path/index.html"
+  if [ -f "$prerender_file" ]; then
+    inject_runtime_into_html "$prerender_file"
+  fi
+done
+
+# Classic EXTERNAL LB does not return HTTP 200 for urlRewrite SPA fallback alone.
+# Mirror HTML at public client-route object paths so GCS serves 200 directly.
+# Prerendered public routes use build-time SSG HTML; CSR-only routes use index.csr.html.
+for shell_path in "${PRERENDER_SHELL_PATHS[@]}"; do
+  shell_target="$BUILD_OUTPUT_DIR/$shell_path"
+  prerender_file="$BUILD_OUTPUT_DIR/$shell_path/index.html"
+  run mkdir -p "$(dirname "$shell_target")"
+  if [ -f "$prerender_file" ]; then
+    run cp "$prerender_file" "$shell_target"
+  else
+    info "Prerender missing for /$shell_path — falling back to CSR shell"
+    run cp "$CSR_SHELL_HTML" "$shell_target"
+  fi
+done
+
+for shell_path in "${CSR_ONLY_SHELL_PATHS[@]}"; do
   shell_target="$BUILD_OUTPUT_DIR/$shell_path"
   run mkdir -p "$(dirname "$shell_target")"
-  run cp "$INDEX_HTML" "$shell_target"
+  run cp "$CSR_SHELL_HTML" "$shell_target"
 done
+
+SPA_SHELL_PATHS=( "${PRERENDER_SHELL_PATHS[@]}" "${CSR_ONLY_SHELL_PATHS[@]}" )
 
 # Sync to GCS bucket
 GCS_TARGET="gs://$BUCKET_NAME"
