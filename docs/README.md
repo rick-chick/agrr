@@ -15,6 +15,12 @@
 - **ローカル Compose 開発**: [`.cursor/skills/dev-docker/SKILL.md`](../.cursor/skills/dev-docker/SKILL.md)
 - **Cursor Automation × GitHub Workflows（全体俯瞰）**: [`automation/CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md`](automation/CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md)（運用設定の正本は [`.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md`](../.cursor/skills/cloud-automation-audit/references/cursor-automation-schedule.md)）
 - **テスト運用**: [`testing/`](testing/)
+<<<<<<< HEAD
 - **SEO 運用（GSC / CrUX / ルーティング）**: [`seo/gsc-crux-operations-runbook.md`](seo/gsc-crux-operations-runbook.md)（デプロイ後検証・定期監視。関連: [`seo/vitepress-rebuild-checklist.md`](seo/vitepress-rebuild-checklist.md)）
+=======
+- **SEO**: [`seo/`](seo/)
+  - [SEO 改善レビュー観点（一般ベストプラクティス）](seo/seo-review-perspectives.md)
+  - [VitePress research rebuild checklist](seo/vitepress-rebuild-checklist.md)
+>>>>>>> origin/master
 
 API・ドメインの振る舞いの正は **`ARCHITECTURE.md`**、**`crates/agrr-server`**、**`crates/agrr-domain`**、**R4**（`run-rust-contract-tests.sh`）。Ruby 契約は P8.6 で削除済み（[`P8-RAILS-SHELL-REMOVAL.md`](migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)）。

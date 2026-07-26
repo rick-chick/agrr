@@ -1,6 +1,7 @@
 # GSC / CrUX / SEO ルーティング運用ランブック
 
 **目的**: フロントエンド本番デプロイ後および定期運用で、Google Search Console（GSC）・Chrome UX Report（CrUX）・HTTP ルーティングを一貫して確認する手順をまとめる。  
+**レビュー観点（チェックリスト）**: [`seo-review-perspectives.md`](./seo-review-perspectives.md) §13（計測・継続モニタリング）  
 **正本スクリプト**: [`.cursor/skills/deploy-frontend/scripts/`](../../.cursor/skills/deploy-frontend/scripts/)（新規スクリプトは作らない）  
 **関連 ADR**: [ADR-strangler-lb-url-map.md § SEO / クロール](../migration/app-rust-stack/ADR-strangler-lb-url-map.md#seo--クロール2026-06-09-追記)  
 **デプロイ手順**: [deploy-frontend スキル](../../.cursor/skills/deploy-frontend/SKILL.md)
@@ -168,6 +169,7 @@ CrUX は**実ユーザーの 28 日集計**のため、デプロイ効果は数�
 
 | リソース | パス |
 |----------|------|
+| SEO レビュー観点（§13 モニタリング） | [seo-review-perspectives.md](./seo-review-perspectives.md) |
 | デプロイ・SEO スクリプト一覧 | [deploy-frontend/SKILL.md](../../.cursor/skills/deploy-frontend/SKILL.md) |
 | Research 再ビルド | [vitepress-rebuild-checklist.md](./vitepress-rebuild-checklist.md) |
 | LB / SEO ADR | [ADR-strangler-lb-url-map.md](../migration/app-rust-stack/ADR-strangler-lb-url-map.md) |
