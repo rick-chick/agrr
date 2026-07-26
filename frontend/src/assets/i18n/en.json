@@ -3091,6 +3091,10 @@
       ],
       "footer_message": "We look forward to your feedback and requests for service improvement."
     },
+    "public_plans_new": {
+      "title": "Create a Free Crop Plan",
+      "description": "Select your region and crops to create a free crop plan with AGRR. Weather data and AI suggest an optimal cultivation schedule."
+    },
     "notFound": {
       "title": "Page not found",
       "message": "The page you are looking for does not exist or may have been moved.",
