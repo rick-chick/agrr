@@ -295,7 +295,6 @@
           "add": "Add crops"
         },
         "cta_create": "Select region and crops to plan",
-        "loading_gantt": "Loading demo…",
         "fixture": {
           "plan_name": "Sample crop plan (demo)",
           "farm_name": "Sample community garden (demo)",
@@ -313,7 +312,8 @@
           "stage_harvest": "Harvest",
           "gdd_stage_growing": "Vegetative",
           "gdd_stage_pre_harvest": "Pre-harvest"
-        }
+        },
+        "loading_gantt": "Loading demo…"
       },
       "features": {
         "title": "AGRR Features",
@@ -3090,6 +3090,10 @@
         "Weather data not displaying → Please check if field location information is set correctly"
       ],
       "footer_message": "We look forward to your feedback and requests for service improvement."
+    },
+    "public_plans_new": {
+      "title": "Create a Free Crop Plan",
+      "description": "Select your region and crops to create a free crop plan with AGRR. Weather data and AI suggest an optimal cultivation schedule."
     },
     "notFound": {
       "title": "Page not found",

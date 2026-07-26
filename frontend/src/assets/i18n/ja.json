@@ -2602,7 +2602,6 @@
           "add": "作物を追加"
         },
         "cta_create": "地域と作物を選んで計画を作る",
-        "loading_gantt": "デモを読み込み中…",
         "fixture": {
           "plan_name": "サンプル作付け計画（デモ）",
           "farm_name": "サンプル市民農園（デモ）",
@@ -2620,7 +2619,8 @@
           "stage_harvest": "収穫",
           "gdd_stage_growing": "生育期",
           "gdd_stage_pre_harvest": "収穫前"
-        }
+        },
+        "loading_gantt": "デモを読み込み中…"
       },
       "features": {
         "title": "AGRRの特徴",
@@ -3132,6 +3132,10 @@
         "気象データが表示されない → 圃場の位置情報が正しく設定されているかご確認ください"
       ],
       "footer_message": "サービスの改善に向けて、皆様のご意見・ご要望をお待ちしております。"
+    },
+    "public_plans_new": {
+      "title": "無料作付け計画を作成",
+      "description": "地域と作物を選んで、AGRRの無料作付け計画を作成できます。気象データとAIにより最適な栽培スケジュールを提案します。"
     },
     "notFound": {
       "title": "ページが見つかりません",
