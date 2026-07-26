@@ -461,7 +461,7 @@ use serde_json::json;
         );
 
         harness
-            .interactor_no_sleep_skip()
+            .interactor()
             .call(sample_input())
             .expect("gap-fill skip when agrr has no output file");
 
@@ -498,7 +498,7 @@ use serde_json::json;
         };
 
         harness
-            .interactor_no_sleep_skip()
+            .interactor()
             .call(input)
             .expect("reference farm gap-fill skip when JMA has not published requested days");
 
