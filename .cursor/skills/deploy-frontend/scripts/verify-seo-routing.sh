@@ -44,6 +44,27 @@ check_redirect_location() {
   fi
 }
 
+extract_canonical_href() {
+  local body="$1"
+  echo "$body" | tr '\n' ' ' | sed -n 's/.*<link rel="canonical" href="\([^"]*\)".*/\1/p' | head -1
+}
+
+check_canonical_href() {
+  local label="$1"
+  local url="$2"
+  local expected="$3"
+  local body
+  body="$(curl -s "$url")"
+  local actual
+  actual="$(extract_canonical_href "$body")"
+  if [[ "$actual" != "$expected" ]]; then
+    echo "FAIL $label: expected canonical '$expected', got '$actual' ($url)"
+    failures=$((failures + 1))
+  else
+    echo "OK   $label"
+  fi
+}
+
 check_status "root" "$BASE_URL/" "HTTP/2 200"
 check_status "about" "$BASE_URL/about" "HTTP/2 200"
 check_status "public-plans-new" "$BASE_URL/public-plans/new" "HTTP/2 200"
@@ -53,8 +74,15 @@ check_status "public-plans-optimizing" "$BASE_URL/public-plans/optimizing?planId
 check_status "robots.txt" "$BASE_URL/robots.txt" "HTTP/2 200"
 check_status "sitemap.xml" "$BASE_URL/sitemap.xml" "HTTP/2 200"
 check_status "research-index" "$BASE_URL/research/" "HTTP/2 200"
-check_status "research-html" "$BASE_URL/research/research_reports/radish/03_pest_disease/major_pests.html" "HTTP/2 200"
-check_status "research-base-stripped-html" "$BASE_URL/research_reports/radish/03_pest_disease/major_pests.html" "HTTP/2 200"
+check_status "research-index-no-slash" "$BASE_URL/research" "HTTP/2 200"
+check_canonical_href "research-index-canonical" "$BASE_URL/research/" "$BASE_URL/research/"
+check_canonical_href "research-index-no-slash-canonical" "$BASE_URL/research" "$BASE_URL/research/"
+RESEARCH_CANONICAL_SAMPLE="$BASE_URL/research/research_reports/radish/03_pest_disease/major_pests.html"
+LEGACY_RESEARCH_SAMPLE="$BASE_URL/research_reports/radish/03_pest_disease/major_pests.html"
+check_status "research-html" "$RESEARCH_CANONICAL_SAMPLE" "HTTP/2 200"
+check_canonical_href "research-html-canonical" "$RESEARCH_CANONICAL_SAMPLE" "$RESEARCH_CANONICAL_SAMPLE"
+check_status "research-base-stripped-html" "$LEGACY_RESEARCH_SAMPLE" "HTTP/2 200"
+check_canonical_href "legacy-research-canonical" "$LEGACY_RESEARCH_SAMPLE" "$RESEARCH_CANONICAL_SAMPLE"
 check_status "research-extensionless-404" "$BASE_URL/research/research_reports/radish/03_pest_disease/major_pests" "HTTP/2 404"
 
 # Internal work files must not be publicly reachable (H3).
@@ -72,9 +100,10 @@ check_redirect_location "legacy-public-plans-location" "$BASE_URL/public_plans" 
 check_status "legacy-us-about" "$BASE_URL/us/about" "HTTP/2 301"
 check_redirect_location "legacy-us-about-location" "$BASE_URL/us/about" "$BASE_URL/about"
 
-legacy_research_status="$(normalize_status "$(curl -sI "$BASE_URL/research_reports/radish/03_pest_disease/major_pests.html" | head -1)")"
-if [[ "$legacy_research_status" != "HTTP/2 301" && "$legacy_research_status" != "HTTP/2 404" ]]; then
-  echo "FAIL legacy-research-prefix: expected HTTP/2 301 or 404, got '$legacy_research_status'"
+# Legacy /research_reports/* may return 200 on classic EXTERNAL LB; canonical must point to /research/... .
+legacy_research_status="$(normalize_status "$(curl -sI "$LEGACY_RESEARCH_SAMPLE" | head -1)")"
+if [[ "$legacy_research_status" != "HTTP/2 200" && "$legacy_research_status" != "HTTP/2 301" && "$legacy_research_status" != "HTTP/2 404" ]]; then
+  echo "FAIL legacy-research-prefix: expected HTTP/2 200, 301, or 404, got '$legacy_research_status'"
   failures=$((failures + 1))
 else
   echo "OK   legacy-research-prefix ($legacy_research_status)"

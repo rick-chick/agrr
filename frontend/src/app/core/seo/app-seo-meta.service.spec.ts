@@ -40,4 +40,14 @@ describe('AppSeoMetaService', () => {
     expect(title.getTitle()).toBe('AGRR タイトル');
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
   });
+
+  it('sets rel=canonical matching og:url without query parameters', () => {
+    service.refreshDefaultMeta();
+
+    const canonical = meta.getTag('rel="canonical"')?.getAttribute('href');
+    const ogUrl = meta.getTag('property="og:url"')?.content;
+    expect(canonical).toBeTruthy();
+    expect(canonical).toBe(ogUrl);
+    expect(canonical).not.toContain('?');
+  });
 });
