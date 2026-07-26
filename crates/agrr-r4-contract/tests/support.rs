@@ -15,6 +15,43 @@ pub fn status_and_body(response: reqwest::blocking::Response) -> (u16, String) {
     (status, body)
 }
 
+/// Asserts baseline security headers on agrr-server responses.
+pub fn assert_security_response_headers(headers: &reqwest::header::HeaderMap) {
+    assert_eq!(
+        Some("max-age=31536000; includeSubDomains"),
+        headers
+            .get("strict-transport-security")
+            .and_then(|v| v.to_str().ok()),
+        "missing Strict-Transport-Security"
+    );
+    assert_eq!(
+        Some("nosniff"),
+        headers
+            .get("x-content-type-options")
+            .and_then(|v| v.to_str().ok()),
+        "missing X-Content-Type-Options"
+    );
+    assert_eq!(
+        Some("strict-origin-when-cross-origin"),
+        headers
+            .get("referrer-policy")
+            .and_then(|v| v.to_str().ok()),
+        "missing Referrer-Policy"
+    );
+    assert_eq!(
+        Some("DENY"),
+        headers.get("x-frame-options").and_then(|v| v.to_str().ok()),
+        "missing X-Frame-Options"
+    );
+    assert!(
+        headers
+            .get("content-security-policy-report-only")
+            .and_then(|v| v.to_str().ok())
+            .is_some(),
+        "missing Content-Security-Policy-Report-Only"
+    );
+}
+
 /// Asserts built-in generation endpoints return RFC 9745 deprecation metadata.
 pub fn assert_builtin_generation_deprecated_headers(
     headers: &reqwest::header::HeaderMap,

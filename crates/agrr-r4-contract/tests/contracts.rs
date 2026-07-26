@@ -5,6 +5,7 @@ mod support;
 use agrr_r4_contract::http::ContractClient;
 use support::{
     agrr_regeneration_contract_available, assert_builtin_generation_deprecated_headers,
+    assert_security_response_headers,
     assert_crop_task_template_api_removed,
     clear_plan_task_schedules, developer_session_id, empty_headers, farmer_session_id,
     researcher_session_id,
@@ -24,8 +25,11 @@ use support::{
 #[test]
 fn get_api_v1_health_returns_ok_payload() {
     let client = ContractClient::from_env();
-    let (status, body) = status_and_body(client.get("/api/v1/health", None, &empty_headers()));
+    let response = client.get("/api/v1/health", None, &empty_headers());
+    let headers = response.headers().clone();
+    let (status, body) = status_and_body(response);
     assert_eq!(200, status, "{body}");
+    assert_security_response_headers(&headers);
     let json: serde_json::Value = serde_json::from_str(&body).expect("health JSON");
     assert_eq!("ok", json["status"].as_str().unwrap());
     assert_eq!("sqlite3", json["database"].as_str().unwrap());

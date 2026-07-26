@@ -67,6 +67,7 @@ pub mod public_plans;
 pub mod routes;
 pub mod scheduler_weather_update;
 pub mod runtime_env;
+pub mod security_headers;
 pub mod session_auth;
 pub mod state;
 pub mod task_schedule_generation;
@@ -79,7 +80,7 @@ pub mod weather_prediction_anchors;
 pub mod workbench_payload;
 
 use axum::http::{HeaderValue, Method};
-use axum::{routing::get, Router};
+use axum::{middleware, routing::get, Router};
 use state::AppState;
 use std::net::SocketAddr;
 use tower_http::cors::{AllowHeaders, CorsLayer};
@@ -147,6 +148,7 @@ pub async fn run_http_server() {
         .merge(ai_api::routes())
         .merge(backdoor::routes::routes())
         .fallback(fallback::api_not_migrated)
+        .layer(middleware::from_fn(security_headers::middleware))
         .layer(cors)
         .with_state(state);
 
