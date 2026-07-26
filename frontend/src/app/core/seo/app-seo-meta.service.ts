@@ -76,6 +76,9 @@ export class AppSeoMetaService {
   }
 
   private refreshJsonLd(siteTitle: string, siteDescription: string): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
     this.detachJsonLd();
     if (
       !isResolvedTranslation(siteTitle, 'meta.default.') ||
@@ -100,6 +103,9 @@ export class AppSeoMetaService {
   }
 
   private detachJsonLd(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
     if (this.jsonLdScript?.parentNode) {
       this.jsonLdScript.parentNode.removeChild(this.jsonLdScript);
     }

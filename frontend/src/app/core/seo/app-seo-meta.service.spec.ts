@@ -41,6 +41,16 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
   });
 
+  it('skips JSON-LD injection when document is unavailable (SSR/prerender)', () => {
+    const doc = globalThis.document;
+    Object.defineProperty(globalThis, 'document', { value: undefined, configurable: true });
+    try {
+      expect(() => service.refreshDefaultMeta()).not.toThrow();
+    } finally {
+      Object.defineProperty(globalThis, 'document', { value: doc, configurable: true });
+    }
+  });
+
   it('injects Organization JSON-LD on refreshDefaultMeta', () => {
     service.refreshDefaultMeta();
     const script = document.head.querySelector('script[type="application/ld+json"]');
