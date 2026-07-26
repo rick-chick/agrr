@@ -1,7 +1,6 @@
 //! Task schedule generation orchestration (optimization chain + debounced regen).
 
 use std::sync::Arc;
-use std::time::Duration;
 
 use crate::adapters::SystemClock;
 use crate::cable::CableHub;
@@ -27,8 +26,6 @@ use agrr_domain::agricultural_task::ports::TaskScheduleSyncBroadcastPort;
 use agrr_domain::cultivation_plan::dtos::CultivationPlanPhaseName;
 use serde_json::json;
 use tracing::info;
-
-const REGEN_DEBOUNCE_SECS: u64 = 3;
 
 struct CableTaskScheduleSyncBroadcast {
     hub: Arc<CableHub>,
@@ -245,6 +242,7 @@ pub fn enqueue_task_schedule_regen_debounced(state: &AppState, plan_id: i64) {
 
     let generation = bump_regen_token(state, plan_id);
 
+    let debounce = state.task_schedule_regen_debounce;
     let state_clone = state.clone();
     let dispatcher = state.task_schedule_regen_dispatcher.clone();
     dispatcher.enqueue_chain(vec![JobStep {
@@ -252,7 +250,7 @@ pub fn enqueue_task_schedule_regen_debounced(state: &AppState, plan_id: i64) {
         run: Arc::new(move || {
             let state = state_clone.clone();
             Box::pin(async move {
-                tokio::time::sleep(Duration::from_secs(REGEN_DEBOUNCE_SECS)).await;
+                tokio::time::sleep(debounce).await;
                 let _ = run_task_schedule_regen_if_current(&state, plan_id, generation);
                 clear_regen_token_if_current(&state, plan_id, generation);
                 true
@@ -377,7 +375,7 @@ mod tests {
         enqueue_task_schedule_regen_debounced(&state, 7);
         assert_eq!(sync_state(&db.pool, 7), sync_state::STALE);
         assert!(
-            wait_until(Duration::from_secs(6), || {
+            wait_until(Duration::from_secs(2), || {
                 let s = sync_state(&db.pool, 7);
                 s == sync_state::READY || s == sync_state::FAILED
             }),
@@ -469,7 +467,7 @@ mod tests {
         let state = test_app_state(db.pool.clone());
         enqueue_task_schedule_regen_debounced(&state, 7);
         assert!(
-            wait_until(Duration::from_secs(6), || {
+            wait_until(Duration::from_secs(2), || {
                 let s = sync_state(&db.pool, 7);
                 s == sync_state::READY || s == sync_state::FAILED
             }),
