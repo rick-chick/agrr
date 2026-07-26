@@ -17,8 +17,11 @@ Fix extensionless internal nav links (`/research_reports/...` without `.html`) f
    - `tomato/commands.md` (or any path outside `{crop}/{NN}_{category}/` report structure)
    - Move these to a non-published directory (e.g. `_internal/`) in the VitePress source repo.
 3. Rebuild and copy output into `agrr/public/research/`.
-4. Verify with LB rewrite `/research/*` → strip prefix to research bucket root.
-5. Run `.cursor/skills/research-tools/scripts/sync-research-gcs.sh` from agrr repo.
+4. In agrr repo, run research sync prep (or full `sync-research-gcs.sh`) so post-build patches apply:
+   - `patch-research-vitepress-links.mjs` (nav/sidebar `.html` suffixes)
+   - `patch-research-meta-descriptions.mjs` (per-page unique `meta description` from title + crop/category path)
+5. Verify with LB rewrite `/research/*` → strip prefix to research bucket root.
+6. Run `.cursor/skills/research-tools/scripts/sync-research-gcs.sh` from agrr repo.
 
 Sitemap generation (`generate-sitemap-lib.mjs`) only indexes canonical crop report paths; non-conforming HTML is skipped even if present in `public/research/`.
 
