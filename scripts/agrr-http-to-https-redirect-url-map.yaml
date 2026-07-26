@@ -1,0 +1,6 @@
+kind: compute#urlMap
+name: agrr-http-to-https-redirect
+defaultUrlRedirect:
+  httpsRedirect: true
+  redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
+  stripQuery: false
