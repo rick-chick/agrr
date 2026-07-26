@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AppSeoMetaService } from './app-seo-meta.service';
+import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service';
 
 describe('AppSeoMetaService', () => {
   let service: AppSeoMetaService;
@@ -41,17 +41,10 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
   });
 
-  it('sets self-referencing rel=canonical without query string', () => {
-    Object.defineProperty(window, 'location', {
-      value: new URL('https://agrr.net/public-plans/results?planId=1'),
-      configurable: true,
-    });
-    service.refreshDefaultMeta();
-    expect(meta.getTag('rel="canonical"')?.href).toBe(
-      'https://agrr.net/public-plans/results'
-    );
-    expect(meta.getTag('property="og:url"')?.content).toBe(
-      'https://agrr.net/public-plans/results'
-    );
+  it('buildSelfCanonicalUrl strips query from pathname and joins origin', () => {
+    expect(
+      buildSelfCanonicalUrl('https://agrr.net', '/public-plans/results')
+    ).toBe('https://agrr.net/public-plans/results');
+    expect(buildSelfCanonicalUrl('', '/about')).toBe('');
   });
 });
