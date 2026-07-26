@@ -118,25 +118,16 @@ mod tests {
         assert_eq!(f.get("k"), Some(&json!(3.0)));
     }
 
-    fn restore_env(key: &str, prev: Option<String>) {
-        match prev {
-            Some(value) => std::env::set_var(key, value),
-            None => std::env::remove_var(key),
-        }
-    }
-
     #[test]
     fn fetch_for_create_returns_daemon_not_running_when_socket_missing() {
-        let prev_retries = std::env::var("AGRR_DAEMON_REQUEST_RETRIES").ok();
-        std::env::set_var("AGRR_DAEMON_REQUEST_RETRIES", "1");
         let client = AgrrDaemonClient::new(format!(
             "/tmp/agrr_fert_ai_test_{}.sock",
             std::process::id()
-        ));
+        ))
+            .with_request_retries(1);
         let gw = FertilizeAiQueryDaemonGateway::new(client);
         let value = gw.fetch_for_create("尿素").unwrap();
         assert_eq!(value.get("success"), Some(&json!(false)));
         assert_eq!(value.get("code"), Some(&json!("daemon_not_running")));
-        restore_env("AGRR_DAEMON_REQUEST_RETRIES", prev_retries);
     }
 }
