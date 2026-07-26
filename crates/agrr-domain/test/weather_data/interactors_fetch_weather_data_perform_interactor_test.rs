@@ -296,7 +296,7 @@ use serde_json::json;
             .with_skip_api_sleep()
         }
 
-        fn interactor_no_sleep_skip(&self) -> FetchWeatherDataPerformInteractor<'_> {
+        fn interactor_with_api_sleep(&self) -> FetchWeatherDataPerformInteractor<'_> {
             FetchWeatherDataPerformInteractor::new(
                 &self.weather,
                 &self.farm,
@@ -360,7 +360,7 @@ use serde_json::json;
             None,
         );
         assert_eq!(
-            harness.interactor_no_sleep_skip().determine_data_source(Some(1), 35.0, 139.0),
+            harness.interactor_with_api_sleep().determine_data_source(Some(1), 35.0, 139.0),
             "jma"
         );
     }
@@ -377,7 +377,7 @@ use serde_json::json;
         );
         assert_eq!(
             harness
-                .interactor_no_sleep_skip()
+                .interactor_with_api_sleep()
                 .determine_data_source(Some(1), 40.0, -74.0),
             "noaa"
         );
@@ -395,7 +395,7 @@ use serde_json::json;
         );
         assert_eq!(
             harness
-                .interactor_no_sleep_skip()
+                .interactor_with_api_sleep()
                 .determine_data_source(Some(1), 28.6, 77.2),
             "nasa-power"
         );
@@ -412,7 +412,7 @@ use serde_json::json;
             None,
         );
         assert_eq!(
-            harness.interactor_no_sleep_skip().determine_data_source(None, 35.0, 139.0),
+            harness.interactor_with_api_sleep().determine_data_source(None, 35.0, 139.0),
             "jma"
         );
     }
@@ -428,7 +428,7 @@ use serde_json::json;
             None,
         );
         assert_eq!(
-            harness.interactor_no_sleep_skip().determine_data_source(None, 37.0, 127.0),
+            harness.interactor_with_api_sleep().determine_data_source(None, 37.0, 127.0),
             "noaa"
         );
     }
@@ -443,7 +443,7 @@ use serde_json::json;
             true,
             None,
         );
-        let interactor = harness.interactor_no_sleep_skip();
+        let interactor = harness.interactor_with_api_sleep();
         assert_eq!(interactor.determine_data_source(Some(1), 35.0, 139.0), "jma");
         assert_eq!(interactor.determine_data_source(Some(1), 37.0, 127.0), "noaa");
     }
