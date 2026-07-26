@@ -34,9 +34,9 @@ describe('AppSeoMetaService', () => {
             title: 'AGRRについて',
             description: 'About説明'
           },
-          contact: {
-            title: 'お問い合わせ',
-            description: 'Contact説明'
+          public_plans_new: {
+            title: '無料作付け計画を作成',
+            description: 'Public plans説明'
           }
         }
       },
@@ -63,6 +63,13 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="description"')?.content).toBe('About説明');
     expect(meta.getTag('property="og:title"')?.content).toBe('AGRRについて');
     expect(meta.getTag('property="og:description"')?.content).toBe('About説明');
+  });
+
+  it('sets route-specific title and description for /public-plans/new', () => {
+    window.history.replaceState({}, '', '/public-plans/new');
+    service.refreshDefaultMeta();
+    expect(title.getTitle()).toBe('無料作付け計画を作成');
+    expect(meta.getTag('name="description"')?.content).toBe('Public plans説明');
   });
 
   it('falls back to meta.default for undefined routes', () => {
