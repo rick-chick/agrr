@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { isIndexableResearchHtml } from './generate-sitemap-lib.mjs';
+import { buildSitemapHreflangAlternates } from '../../../../scripts/research-hreflang-lib.mjs';
 
 describe('isIndexableResearchHtml', () => {
   it('allows locale index pages', () => {
@@ -40,5 +41,20 @@ describe('isIndexableResearchHtml', () => {
   it('rejects 404 and README pages', () => {
     assert.equal(isIndexableResearchHtml('404.html'), false);
     assert.equal(isIndexableResearchHtml('research_reports/README.html'), false);
+  });
+});
+
+describe('buildSitemapHreflangAlternates', () => {
+  it('includes ja, en, and x-default pointing to JA URL', () => {
+    const alternates = buildSitemapHreflangAlternates({
+      jaUrl: 'https://agrr.net/research/',
+      enUrl: 'https://agrr.net/research/en/',
+    });
+
+    assert.deepEqual(alternates, [
+      { hreflang: 'ja', href: 'https://agrr.net/research/' },
+      { hreflang: 'en', href: 'https://agrr.net/research/en/' },
+      { hreflang: 'x-default', href: 'https://agrr.net/research/' },
+    ]);
   });
 });
