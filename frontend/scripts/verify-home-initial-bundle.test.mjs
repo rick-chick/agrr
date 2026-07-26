@@ -37,3 +37,10 @@ test('app.config.ts does not globally import chartjs-adapter-date-fns', () => {
 test('home demo defers PlanGanttClimateShell out of the initial chunk', () => {
   assert.deepEqual(findHomeDemoGanttLazyLoadViolations(homeDemoSource), []);
 });
+
+test('verify-home-initial-bundle-from-build-log accepts build log under budget', () => {
+  const sample = `Initial total                           | 487.95 kB |               130.59 kB`;
+  const rawKb = parseInitialBundleRawKb(sample);
+  assert.deepEqual(findInitialBundleBudgetViolations(rawKb), []);
+  assert.ok(rawKb !== null && rawKb < 700);
+});

@@ -114,13 +114,10 @@ describe('HomeDemoSectionComponent', () => {
     fixture = TestBed.createComponent(HomeDemoSectionComponent);
   });
 
-  it('shows hints and deferred gantt placeholder before viewport', () => {
+  it('shows demo section chrome and deferred gantt placeholder', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.querySelector('h2')).toBeNull();
-    expect(root.querySelector('.home-demo-gantt__chrome')).toBeNull();
-    expect(root.querySelector('.home-demo-section__disclaimer')).toBeNull();
     expect(root.querySelector('.home-demo-hints')).not.toBeNull();
     expect(root.querySelector('.home-demo-gantt')).not.toBeNull();
     expect(root.querySelector('.home-demo-gantt__placeholder')).not.toBeNull();

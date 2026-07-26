@@ -43,7 +43,10 @@ jobs:
         run: npm test -- --watch=false
 
       - name: Production build
-        run: npm run build
+        run: npm run build 2>&1 | tee /tmp/frontend-production-build.log
+
+      - name: verify home initial bundle budget
+        run: node scripts/verify-home-initial-bundle-from-build-log.mjs /tmp/frontend-production-build.log
 
       - name: ng serve proxy contract
         run: npm run check:proxy-conf
