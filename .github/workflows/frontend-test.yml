@@ -45,6 +45,9 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Prerender output verification
+        run: npm run verify:prerender-output
+
       - name: ng serve proxy contract
         run: npm run check:proxy-conf
 
