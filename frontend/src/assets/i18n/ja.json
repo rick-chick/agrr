@@ -3108,6 +3108,10 @@
       },
       "copyright": "© 2025 AGRR. All rights reserved."
     },
+    "public_plans": {
+      "title": "無料作付け計画",
+      "description": "栽培地域と作物を選んで、無料で作付け計画を作成できます。気象データとAIを活用したAGRRのパブリック計画機能です。"
+    },
     "contact": {
       "title": "お問い合わせ",
       "description": "AGRRへのお問い合わせはこちらから。サービスに関するご質問、ご要望、技術的なサポートなど、お気軽にご連絡ください。",

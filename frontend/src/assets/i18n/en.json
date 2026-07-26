@@ -3066,6 +3066,10 @@
       },
       "copyright": "© 2025 AGRR. All rights reserved."
     },
+    "public_plans": {
+      "title": "Free Crop Plans",
+      "description": "Select a region and crops to create a free crop plan. AGRR's public planning feature powered by weather data and AI."
+    },
     "contact": {
       "title": "Contact Us",
       "description": "Contact AGRR here. Feel free to reach out with questions about the service, requests, technical support, and more.",

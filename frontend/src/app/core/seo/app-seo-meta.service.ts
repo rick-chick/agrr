@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
+import { resolveRouteMetaKeys } from './app-seo-route-meta';
 
 function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
@@ -17,6 +18,25 @@ function isResolvedTranslation(value: string, keyPrefix: string): boolean {
   return Boolean(value) && !value.startsWith(keyPrefix);
 }
 
+function resolveMetaField(
+  translate: TranslateService,
+  primaryKey: string,
+  fallbackKey: string
+): string {
+  const primaryPrefix = primaryKey.slice(0, primaryKey.lastIndexOf('.') + 1);
+  const primary = translate.instant(primaryKey);
+  if (isResolvedTranslation(primary, primaryPrefix)) {
+    return primary;
+  }
+  const fallbackPrefix = fallbackKey.slice(0, fallbackKey.lastIndexOf('.') + 1);
+  const fallback = translate.instant(fallbackKey);
+  return isResolvedTranslation(fallback, fallbackPrefix) ? fallback : '';
+}
+
+function isUsableMetaValue(value: string): boolean {
+  return Boolean(value) && !value.startsWith('meta.default.') && !value.startsWith('pages.');
+}
+
 @Injectable({ providedIn: 'root' })
 export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
@@ -29,18 +49,27 @@ export class AppSeoMetaService {
       document.documentElement.lang = documentHtmlLang(angularLang);
     }
 
-    const title = this.translate.instant('meta.default.title');
-    const description = this.translate.instant('meta.default.description');
+    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+    const routeKeys = resolveRouteMetaKeys(path);
+
+    const title = routeKeys
+      ? resolveMetaField(this.translate, routeKeys.titleKey, 'meta.default.title')
+      : this.translate.instant('meta.default.title');
+    const description = routeKeys
+      ? resolveMetaField(this.translate, routeKeys.descriptionKey, 'meta.default.description')
+      : this.translate.instant('meta.default.description');
     const keywords = this.translate.instant('meta.default.keywords');
-    let ogDescription = this.translate.instant('meta.default.og_description');
+    let ogDescription = routeKeys
+      ? description
+      : this.translate.instant('meta.default.og_description');
     if (!isResolvedTranslation(ogDescription, 'meta.default.')) {
       ogDescription = description;
     }
 
-    if (isResolvedTranslation(title, 'meta.default.')) {
+    if (isUsableMetaValue(title)) {
       this.title.setTitle(title);
     }
-    if (isResolvedTranslation(description, 'meta.default.')) {
+    if (isUsableMetaValue(description)) {
       this.meta.updateTag({ name: 'description', content: description });
     }
     if (isResolvedTranslation(keywords, 'meta.default.')) {
@@ -48,18 +77,18 @@ export class AppSeoMetaService {
     }
 
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
-    const ogUrl = origin ? `${origin}${path.split('?')[0]}` : '';
+    const ogPath = path.split('?')[0];
+    const ogUrl = origin ? `${origin}${ogPath}` : '';
 
     this.meta.removeTag('property="og:image"');
     this.meta.removeTag('name="twitter:image"');
     this.meta.removeTag('name="twitter:image:alt"');
 
-    if (isResolvedTranslation(title, 'meta.default.')) {
+    if (isUsableMetaValue(title)) {
       this.meta.updateTag({ property: 'og:title', content: title });
       this.meta.updateTag({ name: 'twitter:title', content: title });
     }
-    if (isResolvedTranslation(ogDescription, 'meta.default.')) {
+    if (isUsableMetaValue(ogDescription)) {
       this.meta.updateTag({ property: 'og:description', content: ogDescription });
       this.meta.updateTag({ name: 'twitter:description', content: ogDescription });
     }
