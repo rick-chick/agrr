@@ -43,12 +43,15 @@ export function findHomeDemoGanttLazyLoadViolations(homeDemoSource) {
   return violations;
 }
 
+const ANSI_ESCAPE = /\x1b\[[0-9;]*m/g;
+
 /**
  * @param {string} buildLog
  * @returns {number | null}
  */
 export function parseInitialBundleRawKb(buildLog) {
-  const match = buildLog.match(/Initial total\s*\|\s*([\d.]+)\s*kB/i);
+  const plain = buildLog.replace(ANSI_ESCAPE, '');
+  const match = plain.match(/Initial total\s*\|\s*([\d.]+)\s*kB/i);
   return match ? Number.parseFloat(match[1]) : null;
 }
 

@@ -23,6 +23,12 @@ test('parseInitialBundleRawKb reads Angular build summary', () => {
   assert.equal(parseInitialBundleRawKb(sample), 612.34);
 });
 
+test('parseInitialBundleRawKb strips ANSI color codes from ng build tee output', () => {
+  const sample =
+    '\x1b[1m \x1b[22m                  \x1b[2m | \x1b[22m\x1b[1mInitial total\x1b[22m                          \x1b[2m | \x1b[22m\x1b[1m488.41 kB\x1b[22m\x1b[2m | \x1b[22m              \x1b[1m130.73 kB\x1b[22m';
+  assert.equal(parseInitialBundleRawKb(sample), 488.41);
+});
+
 test('findInitialBundleBudgetViolations fails when initial bundle exceeds 700 kB', () => {
   assert.deepEqual(findInitialBundleBudgetViolations(845.49), [
     'initial bundle 845.49 kB exceeds 700 kB warning budget'
