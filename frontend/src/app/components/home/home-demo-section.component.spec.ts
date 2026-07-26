@@ -10,11 +10,7 @@ import { LANDING_DEMO_LABELS_FIXTURE } from '../../domain/plans/landing-demo-i18
 import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-demo-plan.usecase';
 import { HomeDemoSectionPresenter } from '../../adapters/plans/home-demo-section.presenter';
 
-function mockViewportIntersectionObserver(): {
-  triggerViewport: () => void;
-} {
-  let triggerViewport = (): void => undefined;
-
+function mockViewportIntersectionObserver(): void {
   class MockIntersectionObserver implements IntersectionObserver {
     readonly root: Element | Document | null = null;
     readonly rootMargin = '';
@@ -24,14 +20,7 @@ function mockViewportIntersectionObserver(): {
     disconnect = vi.fn();
     unobserve = vi.fn();
 
-    constructor(private readonly callback: IntersectionObserverCallback) {
-      triggerViewport = () => {
-        this.callback(
-          [{ isIntersecting: true } as IntersectionObserverEntry],
-          this as unknown as IntersectionObserver
-        );
-      };
-    }
+    constructor(_callback: IntersectionObserverCallback) {}
 
     takeRecords(): IntersectionObserverEntry[] {
       return [];
@@ -39,7 +28,6 @@ function mockViewportIntersectionObserver(): {
   }
 
   vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
-  return { triggerViewport: () => triggerViewport() };
 }
 
 @Component({
@@ -57,10 +45,9 @@ describe('HomeDemoSectionComponent', () => {
   let mockRouter: { navigate: ReturnType<typeof vi.fn> };
   let mockSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
-  let viewport: { triggerViewport: () => void };
 
   beforeEach(async () => {
-    viewport = mockViewportIntersectionObserver();
+    mockViewportIntersectionObserver();
     mockRouter = { navigate: vi.fn() };
     mockSyncUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
