@@ -2281,7 +2281,8 @@
           "stage_harvest": "कटाई",
           "gdd_stage_growing": "वृद्धि अवस्था",
           "gdd_stage_pre_harvest": "कटाई से पहले"
-        }
+        },
+        "loading_gantt": "डेमो लोड हो रहा है…"
       },
       "features": {
         "title": "AGRR की विशेषताएं",

@@ -312,7 +312,8 @@
           "stage_harvest": "Harvest",
           "gdd_stage_growing": "Vegetative",
           "gdd_stage_pre_harvest": "Pre-harvest"
-        }
+        },
+        "loading_gantt": "Loading demo…"
       },
       "features": {
         "title": "AGRR Features",

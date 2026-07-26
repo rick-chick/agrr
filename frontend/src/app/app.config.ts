@@ -8,7 +8,6 @@ import {
   provideTranslateParser
 } from '@ngx-translate/core';
 import { AgrrTranslateParser } from './core/i18n/agrr-translate.parser';
-import 'chartjs-adapter-date-fns';
 
 import { routes } from './app.routes';
 import { createTranslateLoader } from './core/i18n/translate-loader';

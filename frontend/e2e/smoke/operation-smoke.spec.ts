@@ -52,6 +52,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
   test('home CTA opens public plan wizard', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('app-home')).toBeVisible();
+    await expect(page.locator('app-plan-gantt-climate-shell')).toBeVisible({ timeout: 15_000 });
     await page.locator('app-home .primary-button').first().click();
     await expect(page).toHaveURL(/\/public-plans\/new/);
     await expect(page.locator('app-public-plan-create')).toBeVisible();
