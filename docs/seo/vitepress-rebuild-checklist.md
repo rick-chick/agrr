@@ -18,7 +18,9 @@ Fix extensionless internal nav links (`/research_reports/...` without `.html`) f
    - Move these to a non-published directory (e.g. `_internal/`) in the VitePress source repo.
 3. Rebuild and copy output into `agrr/public/research/`.
 4. Verify with LB rewrite `/research/*` → strip prefix to research bucket root.
-5. Run `.cursor/skills/research-tools/scripts/sync-research-gcs.sh` from agrr repo.
+5. Run `.cursor/skills/research-tools/scripts/sync-research-gcs.sh` from agrr repo (includes `patch-research-meta-descriptions.mjs` for per-page meta descriptions).
+
+Per-page `meta description` is patched in agrr at deploy time from each HTML `<title>` and crop/category path. VitePress source changes are optional; if you add `description` frontmatter per page in source, re-copy output and confirm `patch-research-meta-descriptions.mjs` still produces unique descriptions.
 
 Sitemap generation (`generate-sitemap-lib.mjs`) only indexes canonical crop report paths; non-conforming HTML is skipped even if present in `public/research/`.
 
