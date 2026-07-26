@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { AppSeoMetaService } from './app-seo-meta.service';
+import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service';
 
 const TEST_ORIGIN = 'http://localhost';
 
@@ -114,5 +114,12 @@ describe('AppSeoMetaService', () => {
       name: 'AGRR',
       email: 'support@agrr.net'
     });
+  });
+
+  it('buildSelfCanonicalUrl strips query from pathname and joins origin', () => {
+    expect(
+      buildSelfCanonicalUrl('https://agrr.net', '/public-plans/results')
+    ).toBe('https://agrr.net/public-plans/results');
+    expect(buildSelfCanonicalUrl('', '/about')).toBe('');
   });
 });

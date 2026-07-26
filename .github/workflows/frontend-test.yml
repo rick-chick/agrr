@@ -126,6 +126,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/research-simulate-cta.test.mjs
 
+      - name: apex HTTP to HTTPS redirect contract unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-apex-http-to-https-redirect.test.mjs
+
       - name: research vitepress link patch unit tests
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/research-tools/scripts/patch-research-vitepress-links.test.mjs
