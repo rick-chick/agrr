@@ -65,6 +65,7 @@ export class AppSeoMetaService {
     }
     if (ogUrl) {
       this.meta.updateTag({ property: 'og:url', content: ogUrl });
+      this.meta.updateTag({ rel: 'canonical', href: ogUrl });
     }
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });

@@ -40,4 +40,18 @@ describe('AppSeoMetaService', () => {
     expect(title.getTitle()).toBe('AGRR タイトル');
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
   });
+
+  it('sets self-referencing rel=canonical without query string', () => {
+    Object.defineProperty(window, 'location', {
+      value: new URL('https://agrr.net/public-plans/results?planId=1'),
+      configurable: true,
+    });
+    service.refreshDefaultMeta();
+    expect(meta.getTag('rel="canonical"')?.href).toBe(
+      'https://agrr.net/public-plans/results'
+    );
+    expect(meta.getTag('property="og:url"')?.content).toBe(
+      'https://agrr.net/public-plans/results'
+    );
+  });
 });

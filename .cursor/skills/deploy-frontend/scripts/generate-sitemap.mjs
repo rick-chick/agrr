@@ -6,7 +6,7 @@
 import { readdir, stat, writeFile, mkdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isIndexableResearchHtml } from './generate-sitemap-lib.mjs';
+import { isIndexableResearchHtml, toResearchCanonicalPath } from './generate-sitemap-lib.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '../../../..');
@@ -34,20 +34,7 @@ function escapeXml(value) {
 }
 
 function toUrlPath(relativeHtmlPath) {
-  const posix = relativeHtmlPath.split('\\').join('/');
-  if (posix === 'index.html') {
-    return '/research/';
-  }
-  if (posix === 'en/index.html') {
-    return '/research/en/';
-  }
-  if (posix.endsWith('/index.html')) {
-    return `/research/${posix.slice(0, -'/index.html'.length)}/`;
-  }
-  if (posix.endsWith('.html')) {
-    return `/research/${posix}`;
-  }
-  return null;
+  return toResearchCanonicalPath(relativeHtmlPath);
 }
 
 async function collectResearchHtml(dir, files = []) {

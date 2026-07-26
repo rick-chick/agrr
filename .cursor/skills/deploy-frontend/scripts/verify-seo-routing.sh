@@ -57,6 +57,37 @@ check_status "research-html" "$BASE_URL/research/research_reports/radish/03_pest
 check_status "research-base-stripped-html" "$BASE_URL/research_reports/radish/03_pest_disease/major_pests.html" "HTTP/2 200"
 check_status "research-extensionless-404" "$BASE_URL/research/research_reports/radish/03_pest_disease/major_pests" "HTTP/2 404"
 
+CANONICAL_REPORT_URL="$BASE_URL/research/research_reports/radish/03_pest_disease/major_pests.html"
+CANONICAL_INDEX_URL="$BASE_URL/research/"
+
+check_canonical_href() {
+  local label="$1"
+  local url="$2"
+  local expected="$3"
+  local body href
+  body="$(curl -sL "$url")"
+  href="$(node "${SCRIPT_DIR}/verify-seo-canonical-cli.mjs" extract "$body" 2>/dev/null || true)"
+  expected="$(echo "$expected" | xargs)"
+  href="$(echo "$href" | xargs)"
+  href="${href/:443/}"
+  expected="${expected/:443/}"
+  if [[ "$href" != "$expected" ]]; then
+    echo "FAIL $label: expected canonical '$expected', got '$href' ($url)"
+    failures=$((failures + 1))
+  else
+    echo "OK   $label"
+  fi
+}
+
+check_canonical_href "research-html-canonical" \
+  "$BASE_URL/research/research_reports/radish/03_pest_disease/major_pests.html" \
+  "$CANONICAL_REPORT_URL"
+check_canonical_href "research-legacy-prefix-canonical" \
+  "$BASE_URL/research_reports/radish/03_pest_disease/major_pests.html" \
+  "$CANONICAL_REPORT_URL"
+check_canonical_href "research-index-canonical" "$BASE_URL/research/" "$CANONICAL_INDEX_URL"
+check_canonical_href "research-no-trailing-slash-canonical" "$BASE_URL/research" "$CANONICAL_INDEX_URL"
+
 # Internal work files must not be publicly reachable (H3).
 check_status "research-internal-commands-template" "$BASE_URL/research/research_reports/commands_template.html" "HTTP/2 404"
 check_status "research-internal-tomato-commands" "$BASE_URL/research/research_reports/tomato/commands.html" "HTTP/2 404"
@@ -73,11 +104,23 @@ check_status "legacy-us-about" "$BASE_URL/us/about" "HTTP/2 301"
 check_redirect_location "legacy-us-about-location" "$BASE_URL/us/about" "$BASE_URL/about"
 
 legacy_research_status="$(normalize_status "$(curl -sI "$BASE_URL/research_reports/radish/03_pest_disease/major_pests.html" | head -1)")"
-if [[ "$legacy_research_status" != "HTTP/2 301" && "$legacy_research_status" != "HTTP/2 404" ]]; then
-  echo "FAIL legacy-research-prefix: expected HTTP/2 301 or 404, got '$legacy_research_status'"
-  failures=$((failures + 1))
-else
+if [[ "$legacy_research_status" == "HTTP/2 301" ]]; then
   echo "OK   legacy-research-prefix ($legacy_research_status)"
+elif [[ "$legacy_research_status" == "HTTP/2 200" ]]; then
+  legacy_body="$(curl -sL "$BASE_URL/research_reports/radish/03_pest_disease/major_pests.html")"
+  legacy_canonical="$(node "${SCRIPT_DIR}/verify-seo-canonical-cli.mjs" extract "$legacy_body" 2>/dev/null || true)"
+  legacy_canonical="${legacy_canonical/:443/}"
+  if [[ "$legacy_canonical" == "$CANONICAL_REPORT_URL" ]]; then
+    echo "OK   legacy-research-prefix (HTTP/2 200 with canonical to $CANONICAL_REPORT_URL)"
+  else
+    echo "FAIL legacy-research-prefix: HTTP/2 200 without canonical to $CANONICAL_REPORT_URL (got '$legacy_canonical')"
+    failures=$((failures + 1))
+  fi
+elif [[ "$legacy_research_status" == "HTTP/2 404" ]]; then
+  echo "OK   legacy-research-prefix ($legacy_research_status)"
+else
+  echo "FAIL legacy-research-prefix: expected HTTP/2 301, 404, or 200 with canonical, got '$legacy_research_status'"
+  failures=$((failures + 1))
 fi
 
 robots_type="$(curl -sI "$BASE_URL/robots.txt" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print tolower($2); exit}')"
