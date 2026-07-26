@@ -17,6 +17,7 @@
 - **テスト運用**: [`testing/`](testing/)
 - **SEO**: [`seo/`](seo/)
   - [SEO 改善レビュー観点（一般ベストプラクティス）](seo/seo-review-perspectives.md)
+  - [SEO 運用（GSC / CrUX / ルーティング）](seo/gsc-crux-operations-runbook.md)（デプロイ後検証・定期監視）
   - [VitePress research rebuild checklist](seo/vitepress-rebuild-checklist.md)
 
 API・ドメインの振る舞いの正は **`ARCHITECTURE.md`**、**`crates/agrr-server`**、**`crates/agrr-domain`**、**R4**（`run-rust-contract-tests.sh`）。Ruby 契約は P8.6 で削除済み（[`P8-RAILS-SHELL-REMOVAL.md`](migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)）。
