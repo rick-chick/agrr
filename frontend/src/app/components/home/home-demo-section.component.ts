@@ -1,5 +1,5 @@
 import { NgComponentOutlet } from '@angular/common';
-import { Component, OnDestroy, OnInit, Type, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, Type, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
@@ -16,7 +16,7 @@ import {
   HomeDemoSectionPresenter
 } from '../../usecase/plans/home-demo-section.providers';
 import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-demo-plan.usecase';
-import { loadHomeDemoGanttShell } from './home-demo-gantt-shell.loader';
+import { LOAD_HOME_DEMO_GANTT_SHELL } from './home-demo-gantt-shell.loader';
 import type { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
 
 @Component({
@@ -66,6 +66,8 @@ export class HomeDemoSectionComponent implements OnInit, OnDestroy, HomeDemoSect
 
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly loadGanttShellFn = inject(LOAD_HOME_DEMO_GANTT_SHELL);
   private readonly homeDemoPresenter = inject(HomeDemoSectionPresenter);
   private readonly syncLandingDemoPlanUseCase = inject(SyncLandingDemoPlanUseCase);
   private langChangeSub: Subscription | null = null;
@@ -92,7 +94,8 @@ export class HomeDemoSectionComponent implements OnInit, OnDestroy, HomeDemoSect
   }
 
   private async loadGanttShell(): Promise<void> {
-    this.ganttShellType = await loadHomeDemoGanttShell();
+    this.ganttShellType = await this.loadGanttShellFn();
+    this.cdr.markForCheck();
   }
 
   private syncLocalizedDemoPlan(): void {

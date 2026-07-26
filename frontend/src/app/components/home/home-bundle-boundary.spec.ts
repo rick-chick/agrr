@@ -7,6 +7,7 @@ const homeDir = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(homeDir, '../..');
 
 const homeDemoSource = readFileSync(join(homeDir, 'home-demo-section.component.ts'), 'utf8');
+const loaderSource = readFileSync(join(homeDir, 'home-demo-gantt-shell.loader.ts'), 'utf8');
 const appConfigSource = readFileSync(join(appRoot, 'app.config.ts'), 'utf8');
 
 describe('home bundle boundaries', () => {
@@ -14,7 +15,11 @@ describe('home bundle boundaries', () => {
     expect(homeDemoSource).not.toMatch(
       /import\s*\{[^}]*PlanGanttClimateShellComponent[^}]*\}\s*from\s*['"]\.\.\/plans\/plan-gantt-climate-shell\.component['"]/
     );
-    expect(homeDemoSource).toMatch(/loadHomeDemoGanttShell/);
+    expect(homeDemoSource).toMatch(/LOAD_HOME_DEMO_GANTT_SHELL/);
+  });
+
+  it('lazy-loads PlanGanttClimateShell via dynamic import in loader', () => {
+    expect(loaderSource).toMatch(/import\s*\(\s*['"]\.\.\/plans\/plan-gantt-climate-shell\.component['"]\s*\)/);
   });
 
   it('does not register chartjs-adapter-date-fns globally in app.config.ts', () => {

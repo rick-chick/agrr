@@ -1,15 +1,14 @@
-import { Component, Input, Type } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HomeDemoSectionComponent } from './home-demo-section.component';
-import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { buildLandingDemoPlanFixture } from '../../domain/plans/landing-demo-plan.fixture';
 import { LANDING_DEMO_LABELS_FIXTURE } from '../../domain/plans/landing-demo-i18n.keys';
 import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-demo-plan.usecase';
 import { HomeDemoSectionPresenter } from '../../adapters/plans/home-demo-section.presenter';
-import * as ganttShellLoader from './home-demo-gantt-shell.loader';
+import { LOAD_HOME_DEMO_GANTT_SHELL } from './home-demo-gantt-shell.loader';
 
 @Component({
   selector: 'app-plan-gantt-climate-shell',
@@ -17,7 +16,7 @@ import * as ganttShellLoader from './home-demo-gantt-shell.loader';
   template: ''
 })
 class StubPlanGanttClimateShellComponent {
-  @Input() data: CultivationPlanData | null = null;
+  @Input() data: unknown;
   @Input() planType: 'private' | 'public' | 'demo' = 'demo';
 }
 
@@ -31,20 +30,23 @@ describe('HomeDemoSectionComponent', () => {
     mockRouter = { navigate: vi.fn() };
     mockSyncUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
-    vi.spyOn(ganttShellLoader, 'loadHomeDemoGanttShell').mockResolvedValue(
-      StubPlanGanttClimateShellComponent as Type<unknown> as Awaited<
-        ReturnType<typeof ganttShellLoader.loadHomeDemoGanttShell>
-      >
-    );
 
     await TestBed.configureTestingModule({
       imports: [HomeDemoSectionComponent, TranslateModule.forRoot()],
       providers: [
         { provide: Router, useValue: mockRouter },
         { provide: SyncLandingDemoPlanUseCase, useValue: mockSyncUseCase },
-        { provide: HomeDemoSectionPresenter, useValue: mockPresenter }
+        { provide: HomeDemoSectionPresenter, useValue: mockPresenter },
+        {
+          provide: LOAD_HOME_DEMO_GANTT_SHELL,
+          useValue: () => Promise.resolve(StubPlanGanttClimateShellComponent)
+        }
       ]
-    }).compileComponents();
+    })
+      .overrideComponent(HomeDemoSectionComponent, {
+        set: { providers: [] }
+      })
+      .compileComponents();
 
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
@@ -94,14 +96,6 @@ describe('HomeDemoSectionComponent', () => {
     });
 
     fixture = TestBed.createComponent(HomeDemoSectionComponent);
-  });
-
-  it('lazy-loads the gantt shell instead of static import', async () => {
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(ganttShellLoader.loadHomeDemoGanttShell).toHaveBeenCalledTimes(1);
   });
 
   it('shows hints and gantt without preview chrome', async () => {
