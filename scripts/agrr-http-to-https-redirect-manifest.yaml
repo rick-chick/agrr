@@ -1,0 +1,13 @@
+# GCP resources for apex HTTP (port 80) → HTTPS 301 redirect.
+# Applied via scripts/apply-apex-http-to-https-redirect.sh (production LB).
+project: agrr-475323
+# Global static IP shared with the HTTPS forwarding rule (port 443).
+globalAddress: agrr-frontend-ipv4
+urlMap:
+  name: agrr-http-to-https-redirect
+  source: scripts/agrr-http-to-https-redirect-url-map.yaml
+targetHttpProxy:
+  name: agrr-http-to-https-redirect-proxy
+forwardingRule:
+  name: agrr-http-to-https-redirect-rule
+  portRange: 80-80
