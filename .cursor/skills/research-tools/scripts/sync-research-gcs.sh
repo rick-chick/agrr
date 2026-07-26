@@ -17,6 +17,7 @@ node "${SCRIPT_DIR}/inject-research-canonical.mjs"
 node "${SCRIPT_DIR}/inject-research-simulate-cta-script.mjs"
 node "${SCRIPT_DIR}/patch-research-vitepress-links.mjs"
 node "${SCRIPT_DIR}/patch-research-meta-descriptions.mjs"
+node "${SCRIPT_DIR}/patch-research-footer-brand.mjs"
 node "${SCRIPT_DIR}/inject-research-extensionless-redirect.mjs"
 node "${SCRIPT_DIR}/inject-research-base-path-guard.mjs"
 

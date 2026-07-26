@@ -20,6 +20,40 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://agrr.net/#organization",
+          "name": "AGRR",
+          "url": "https://agrr.net/",
+          "email": "support@agrr.net",
+          "address": { "@type": "PostalAddress", "addressCountry": "JP" },
+          "sameAs": ["https://github.com/rick-chick/agrr"]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://agrr.net/#website",
+          "name": "AGRR",
+          "alternateName": "AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム",
+          "url": "https://agrr.net/",
+          "description": "気象データとAIを活用した農業作付け計画支援システム",
+          "publisher": { "@id": "https://agrr.net/#organization" }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "AGRR",
+          "alternateName": "AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "url": "https://agrr.net/",
+          "description": "気象データとAIを活用した農業作付け計画支援システム"
+        }
+      ]
+    }
+  </script>
 
   <!-- Google Analytics is initialized by the app when the environment enables it -->
 </head>

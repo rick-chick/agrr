@@ -3,6 +3,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
+import { buildSiteStructuredDataDocument } from './site-structured-data';
 
 function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
@@ -34,6 +35,7 @@ export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private jsonLdScript: HTMLScriptElement | null = null;
 
   refreshDefaultMeta(): void {
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
@@ -95,5 +97,43 @@ export class AppSeoMetaService {
       this.meta.removeTag('name="twitter:image:alt"');
       this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
     }
+    this.refreshJsonLd(title, ogDescription, keyPrefix);
+  }
+
+  private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    this.detachJsonLd();
+    if (
+      !isResolvedTranslation(siteTitle, `${keyPrefix}.`) ||
+      !isResolvedTranslation(siteDescription, `${keyPrefix}.`)
+    ) {
+      return;
+    }
+
+    const baseUrl =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://agrr.net';
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = buildSiteStructuredDataDocument({
+      baseUrl,
+      siteTitle,
+      siteDescription
+    });
+    document.head.appendChild(script);
+    this.jsonLdScript = script;
+  }
+
+  private detachJsonLd(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    if (this.jsonLdScript?.parentNode) {
+      this.jsonLdScript.parentNode.removeChild(this.jsonLdScript);
+    }
+    this.jsonLdScript = null;
   }
 }

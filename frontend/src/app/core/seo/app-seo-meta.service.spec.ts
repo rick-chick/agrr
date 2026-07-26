@@ -94,6 +94,39 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
   });
 
+  it('skips JSON-LD injection when document is unavailable (SSR/prerender)', () => {
+    setWindowPath('/');
+    const scriptsBefore = document.head.querySelectorAll('script[type="application/ld+json"]').length;
+    const doc = globalThis.document;
+    Object.defineProperty(globalThis, 'document', { value: undefined, configurable: true });
+    Object.defineProperty(window, 'document', { value: undefined, configurable: true });
+    try {
+      (
+        service as unknown as {
+          refreshJsonLd: (siteTitle: string, siteDescription: string, keyPrefix: string) => void;
+        }
+      ).refreshJsonLd('AGRR タイトル', '説明文', 'meta.default');
+    } finally {
+      Object.defineProperty(globalThis, 'document', { value: doc, configurable: true });
+      Object.defineProperty(window, 'document', { value: doc, configurable: true });
+    }
+    const scriptsAfter = document.head.querySelectorAll('script[type="application/ld+json"]').length;
+    expect(scriptsAfter).toBe(scriptsBefore);
+  });
+
+  it('injects Organization JSON-LD on refreshDefaultMeta', () => {
+    service.refreshDefaultMeta();
+    const script = document.head.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const structured = JSON.parse(script?.textContent ?? '{}');
+    const graph = structured['@graph'] as Array<Record<string, unknown>>;
+    const organization = graph.find((node) => node['@type'] === 'Organization');
+    expect(organization).toMatchObject({
+      name: 'AGRR',
+      email: 'support@agrr.net'
+    });
+  });
+
   it('buildSelfCanonicalUrl strips query from pathname and joins origin', () => {
     expect(
       buildSelfCanonicalUrl('https://agrr.net', '/public-plans/results')
