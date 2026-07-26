@@ -13,6 +13,9 @@ echo "[INFO] Syncing Research Assets to GCS bucket gs://${BUCKET}"
 
 ruby "${SCRIPT_DIR}/inject-research-google-analytics.rb"
 node "${SCRIPT_DIR}/inject-research-simulate-cta-script.mjs"
+node "${SCRIPT_DIR}/patch-research-vitepress-links.mjs"
+node "${SCRIPT_DIR}/inject-research-extensionless-redirect.mjs"
+node "${SCRIPT_DIR}/inject-research-base-path-guard.mjs"
 
 gsutil -m rsync -r -d "${ROOT_DIR}/public/research" "gs://${BUCKET}/"
 

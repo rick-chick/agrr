@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Static research HTML under public/ — no ng serve or API required.
- * Serves from repo public/ on :8765 (matches issue #457 repro steps).
+ * Serves from repo public/ via serve-research-local.py on :8775.
  */
 export default defineConfig({
   testDir: './e2e/smoke',
@@ -13,16 +13,16 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? [['line']] : 'list',
   use: {
-    baseURL: 'http://127.0.0.1:8765',
+    baseURL: 'http://127.0.0.1:8775',
     locale: 'ja-JP',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'python3 -m http.server 8765',
-    cwd: '../public',
-    url: 'http://127.0.0.1:8765',
+    command: 'python3 .cursor/skills/research-tools/scripts/serve-research-local.py --port 8775',
+    cwd: '..',
+    url: 'http://127.0.0.1:8775/research/',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },
