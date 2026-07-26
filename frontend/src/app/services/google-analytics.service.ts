@@ -30,7 +30,7 @@ export class GoogleAnalyticsService {
   private initialized = false;
 
   constructor() {
-    if (this.isEnabled) {
+    if (this.isEnabled && typeof window !== 'undefined') {
       this.initialize();
     }
   }
@@ -152,7 +152,11 @@ export class GoogleAnalyticsService {
 
     this.safeInvoke('consent', 'update', consentPayload);
 
-    if (granted && typeof window.loadAdSense === 'function') {
+    if (
+      granted &&
+      typeof window !== 'undefined' &&
+      typeof window.loadAdSense === 'function'
+    ) {
       window.loadAdSense();
     }
   }
