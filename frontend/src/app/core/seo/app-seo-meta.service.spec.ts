@@ -4,6 +4,20 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { AppSeoMetaService } from './app-seo-meta.service';
 
+const TEST_ORIGIN = 'http://localhost';
+
+function setWindowPath(pathname: string): void {
+  Object.defineProperty(window, 'location', {
+    value: {
+      pathname,
+      href: `${TEST_ORIGIN}${pathname}`,
+      origin: TEST_ORIGIN
+    },
+    writable: true,
+    configurable: true
+  });
+}
+
 describe('AppSeoMetaService', () => {
   let service: AppSeoMetaService;
   let title: Title;
@@ -46,18 +60,18 @@ describe('AppSeoMetaService', () => {
   });
 
   afterEach(() => {
-    window.history.replaceState({}, '', '/');
+    setWindowPath('/');
   });
 
   it('sets document title and description from default meta keys on home', () => {
-    window.history.replaceState({}, '', '/');
+    setWindowPath('/');
     service.refreshDefaultMeta();
     expect(title.getTitle()).toBe('AGRR タイトル');
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
   });
 
   it('sets route-specific title and description for /about', () => {
-    window.history.replaceState({}, '', '/about');
+    setWindowPath('/about');
     service.refreshDefaultMeta();
     expect(title.getTitle()).toBe('AGRRについて');
     expect(meta.getTag('name="description"')?.content).toBe('About説明');
@@ -66,14 +80,14 @@ describe('AppSeoMetaService', () => {
   });
 
   it('sets route-specific title and description for /public-plans/new', () => {
-    window.history.replaceState({}, '', '/public-plans/new');
+    setWindowPath('/public-plans/new');
     service.refreshDefaultMeta();
     expect(title.getTitle()).toBe('無料作付け計画を作成');
     expect(meta.getTag('name="description"')?.content).toBe('Public plans説明');
   });
 
   it('falls back to meta.default for undefined routes', () => {
-    window.history.replaceState({}, '', '/plans');
+    setWindowPath('/plans');
     service.refreshDefaultMeta();
     expect(title.getTitle()).toBe('AGRR タイトル');
     expect(meta.getTag('name="description"')?.content).toBe('説明文');

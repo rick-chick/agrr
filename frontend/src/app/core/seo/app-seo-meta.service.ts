@@ -30,7 +30,7 @@ export class AppSeoMetaService {
       document.documentElement.lang = documentHtmlLang(angularLang);
     }
 
-    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+    const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
     const keyPrefix = resolveSeoKeyPrefix(path);
 
     const title = this.translate.instant(`${keyPrefix}.title`);

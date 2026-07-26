@@ -8,8 +8,8 @@ export const ROUTE_SEO_KEY_MAP: Readonly<Record<string, string>> = {
   '/public-plans/new': 'pages.public_plans_new',
 };
 
-export function normalizeSeoPath(pathname: string): string {
-  const withoutQuery = pathname.split('?')[0];
+export function normalizeSeoPath(pathname: string | undefined | null): string {
+  const withoutQuery = (pathname ?? '/').split('?')[0];
   if (!withoutQuery || withoutQuery === '/') {
     return '/';
   }
