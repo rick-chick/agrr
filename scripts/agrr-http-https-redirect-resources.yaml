@@ -1,0 +1,11 @@
+project: agrr-475323
+httpsUrlMap:
+  name: agrr-frontend-url-map-simple
+urlMap:
+  name: agrr-http-https-redirect-url-map
+  source: scripts/agrr-http-https-redirect-url-map.yaml
+targetHttpProxy:
+  name: agrr-http-https-redirect-proxy
+forwardingRule:
+  name: agrr-http-https-redirect-forwarding-rule
+  portRange: "80"

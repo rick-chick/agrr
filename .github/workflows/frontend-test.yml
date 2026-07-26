@@ -118,6 +118,10 @@ jobs:
           node --test scripts/cloud-gh-wrapper.integration.test.mjs
           node --test scripts/cloud-gh-auth.integration.test.mjs
 
+      - name: HTTP HTTPS redirect contract unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-http-https-redirect.test.mjs
+
       - name: research simulate CTA unit tests
         working-directory: ${{ github.workspace }}
         run: node --test scripts/research-simulate-cta.test.mjs

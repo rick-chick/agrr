@@ -66,6 +66,16 @@ check_status "research-internal-readability-list" "$BASE_URL/research/research_r
 check_status "www-redirect" "https://www.agrr.net/" "HTTP/2 301"
 check_redirect_location "www-redirect-location" "https://www.agrr.net/" "https://agrr.net/"
 
+# Apex HTTP port 80 must 301 to HTTPS (not empty reply).
+apex_http_status="$(normalize_status "$(curl -sI http://agrr.net/ | head -1)")"
+if [[ "$apex_http_status" != "HTTP/1.1 301" && "$apex_http_status" != "HTTP/2 301" ]]; then
+  echo "FAIL apex-http-redirect: expected HTTP 301, got '$apex_http_status' (http://agrr.net/)"
+  failures=$((failures + 1))
+else
+  echo "OK   apex-http-redirect"
+fi
+check_redirect_location "apex-http-redirect-location" "http://agrr.net/" "https://agrr.net/"
+
 check_status "legacy-public-plans" "$BASE_URL/public_plans" "HTTP/2 301"
 check_redirect_location "legacy-public-plans-location" "$BASE_URL/public_plans" "$BASE_URL/public-plans/new"
 

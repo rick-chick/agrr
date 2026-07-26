@@ -1,0 +1,5 @@
+kind: compute#urlMap
+name: agrr-http-https-redirect-url-map
+defaultUrlRedirect:
+  httpsRedirect: true
+  redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
