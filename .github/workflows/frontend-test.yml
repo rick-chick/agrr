@@ -126,6 +126,14 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/research-tools/scripts/patch-research-vitepress-links.test.mjs
 
+      - name: research hreflang injection unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test .cursor/skills/research-tools/scripts/inject-research-hreflang.test.mjs
+
+      - name: legacy /in/* url-map redirect unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/agrr-frontend-url-map-legacy-in-redirects.test.mjs
+
       - name: research CTA browser tests
         working-directory: frontend
         run: |
