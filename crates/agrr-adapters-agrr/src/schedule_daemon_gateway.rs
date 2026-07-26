@@ -73,7 +73,8 @@ mod tests {
         let client = AgrrDaemonClient::new(format!(
             "/tmp/agrr_schedule_test_{}.sock",
             std::process::id()
-        ));
+        ))
+            .with_request_retries(1);
         let gw = CropScheduleAiQueryDaemonGateway::new(client);
         let err = gw
             .generate_schedule("tomato", "general", &json!([]), &json!([]))

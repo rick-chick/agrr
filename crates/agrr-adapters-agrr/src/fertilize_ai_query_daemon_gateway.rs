@@ -123,7 +123,8 @@ mod tests {
         let client = AgrrDaemonClient::new(format!(
             "/tmp/agrr_fert_ai_test_{}.sock",
             std::process::id()
-        ));
+        ))
+            .with_request_retries(1);
         let gw = FertilizeAiQueryDaemonGateway::new(client);
         let value = gw.fetch_for_create("尿素").unwrap();
         assert_eq!(value.get("success"), Some(&json!(false)));

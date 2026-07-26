@@ -66,7 +66,8 @@ mod tests {
         let client = AgrrDaemonClient::new(format!(
             "/tmp/agrr_crop_ai_test_{}.sock",
             std::process::id()
-        ));
+        ))
+            .with_request_retries(1);
         let gw = CropAiQueryDaemonGateway::new(client);
         let err = gw.fetch_crop_json("tomato").unwrap_err();
         assert_eq!(err.http_status, HttpStatus::ServiceUnavailable);
