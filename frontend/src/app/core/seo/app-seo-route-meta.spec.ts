@@ -28,4 +28,11 @@ describe('resolveRouteMetaKeys', () => {
     expect(resolveRouteMetaKeys('/farms')).toBeNull();
     expect(resolveRouteMetaKeys('/login')).toBeNull();
   });
+
+  it('treats undefined pathname as home', () => {
+    expect(resolveRouteMetaKeys(undefined)).toEqual({
+      titleKey: 'meta.default.title',
+      descriptionKey: 'meta.default.description'
+    });
+  });
 });

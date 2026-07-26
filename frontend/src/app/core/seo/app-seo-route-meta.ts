@@ -15,7 +15,7 @@ const SITEMAP_ROUTE_META: Record<string, RouteMetaKeys> = {
   }
 };
 
-export function resolveRouteMetaKeys(pathname: string): RouteMetaKeys | null {
-  const normalized = pathname.split('?')[0].replace(/\/+$/, '') || '/';
+export function resolveRouteMetaKeys(pathname: string | undefined | null): RouteMetaKeys | null {
+  const normalized = (pathname ?? '/').split('?')[0].replace(/\/+$/, '') || '/';
   return SITEMAP_ROUTE_META[normalized] ?? null;
 }
