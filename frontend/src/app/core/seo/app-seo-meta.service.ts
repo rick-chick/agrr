@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
+import { resolveSeoKeyPrefix } from './route-seo-meta.config';
 import { buildSiteStructuredDataDocument } from './site-structured-data';
 
 function documentHtmlLang(angularLang: AppLang): string {
@@ -31,18 +32,21 @@ export class AppSeoMetaService {
       document.documentElement.lang = documentHtmlLang(angularLang);
     }
 
-    const title = this.translate.instant('meta.default.title');
-    const description = this.translate.instant('meta.default.description');
+    const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
+    const keyPrefix = resolveSeoKeyPrefix(path);
+
+    const title = this.translate.instant(`${keyPrefix}.title`);
+    const description = this.translate.instant(`${keyPrefix}.description`);
     const keywords = this.translate.instant('meta.default.keywords');
-    let ogDescription = this.translate.instant('meta.default.og_description');
-    if (!isResolvedTranslation(ogDescription, 'meta.default.')) {
+    let ogDescription = this.translate.instant(`${keyPrefix}.og_description`);
+    if (!isResolvedTranslation(ogDescription, `${keyPrefix}.`)) {
       ogDescription = description;
     }
 
-    if (isResolvedTranslation(title, 'meta.default.')) {
+    if (isResolvedTranslation(title, `${keyPrefix}.`)) {
       this.title.setTitle(title);
     }
-    if (isResolvedTranslation(description, 'meta.default.')) {
+    if (isResolvedTranslation(description, `${keyPrefix}.`)) {
       this.meta.updateTag({ name: 'description', content: description });
     }
     if (isResolvedTranslation(keywords, 'meta.default.')) {
@@ -50,18 +54,17 @@ export class AppSeoMetaService {
     }
 
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
     const ogUrl = origin ? `${origin}${path.split('?')[0]}` : '';
 
     this.meta.removeTag('property="og:image"');
     this.meta.removeTag('name="twitter:image"');
     this.meta.removeTag('name="twitter:image:alt"');
 
-    if (isResolvedTranslation(title, 'meta.default.')) {
+    if (isResolvedTranslation(title, `${keyPrefix}.`)) {
       this.meta.updateTag({ property: 'og:title', content: title });
       this.meta.updateTag({ name: 'twitter:title', content: title });
     }
-    if (isResolvedTranslation(ogDescription, 'meta.default.')) {
+    if (isResolvedTranslation(ogDescription, `${keyPrefix}.`)) {
       this.meta.updateTag({ property: 'og:description', content: ogDescription });
       this.meta.updateTag({ name: 'twitter:description', content: ogDescription });
     }
@@ -72,17 +75,17 @@ export class AppSeoMetaService {
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
     this.meta.updateTag({ property: 'og:site_name', content: 'AGRR' });
     this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
-    this.refreshJsonLd(title, ogDescription);
+    this.refreshJsonLd(title, ogDescription, keyPrefix);
   }
 
-  private refreshJsonLd(siteTitle: string, siteDescription: string): void {
+  private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {
     if (typeof document === 'undefined') {
       return;
     }
     this.detachJsonLd();
     if (
-      !isResolvedTranslation(siteTitle, 'meta.default.') ||
-      !isResolvedTranslation(siteDescription, 'meta.default.')
+      !isResolvedTranslation(siteTitle, `${keyPrefix}.`) ||
+      !isResolvedTranslation(siteDescription, `${keyPrefix}.`)
     ) {
       return;
     }
