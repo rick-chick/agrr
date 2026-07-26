@@ -34,7 +34,11 @@ import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-dem
         }
       </ul>
       <div class="home-demo-gantt plan-detail-surface">
-        <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
+        @defer (on viewport) {
+          <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
+        } @placeholder (minimum 300ms) {
+          <div class="home-demo-gantt__placeholder" aria-hidden="true"></div>
+        }
       </div>
       <div class="home-demo-section__actions">
         <button type="button" class="primary-button large" (click)="navigateToPlan()">

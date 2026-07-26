@@ -28,6 +28,29 @@
   margin-bottom: var(--space-5);
 }
 
+.home-demo-gantt__placeholder {
+  min-height: 420px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    90deg,
+    var(--color-background) 0%,
+    var(--color-border) 50%,
+    var(--color-background) 100%
+  );
+  background-size: 200% 100%;
+  animation: home-demo-gantt-placeholder-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes home-demo-gantt-placeholder-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .home-demo-section__actions {
   display: flex;
   justify-content: center;

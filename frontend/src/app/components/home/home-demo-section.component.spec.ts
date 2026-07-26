@@ -10,6 +10,38 @@ import { LANDING_DEMO_LABELS_FIXTURE } from '../../domain/plans/landing-demo-i18
 import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-demo-plan.usecase';
 import { HomeDemoSectionPresenter } from '../../adapters/plans/home-demo-section.presenter';
 
+function mockViewportIntersectionObserver(): {
+  triggerViewport: () => void;
+} {
+  let triggerViewport = (): void => undefined;
+
+  class MockIntersectionObserver implements IntersectionObserver {
+    readonly root: Element | Document | null = null;
+    readonly rootMargin = '';
+    readonly thresholds: readonly number[] = [];
+
+    observe = vi.fn();
+    disconnect = vi.fn();
+    unobserve = vi.fn();
+
+    constructor(private readonly callback: IntersectionObserverCallback) {
+      triggerViewport = () => {
+        this.callback(
+          [{ isIntersecting: true } as IntersectionObserverEntry],
+          this as unknown as IntersectionObserver
+        );
+      };
+    }
+
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+  }
+
+  vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
+  return { triggerViewport: () => triggerViewport() };
+}
+
 @Component({
   selector: 'app-plan-gantt-climate-shell',
   standalone: true,
@@ -25,8 +57,10 @@ describe('HomeDemoSectionComponent', () => {
   let mockRouter: { navigate: ReturnType<typeof vi.fn> };
   let mockSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
+  let viewport: { triggerViewport: () => void };
 
   beforeEach(async () => {
+    viewport = mockViewportIntersectionObserver();
     mockRouter = { navigate: vi.fn() };
     mockSyncUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
@@ -93,7 +127,7 @@ describe('HomeDemoSectionComponent', () => {
     fixture = TestBed.createComponent(HomeDemoSectionComponent);
   });
 
-  it('shows hints and gantt without preview chrome', () => {
+  it('shows hints and deferred gantt placeholder before viewport', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
@@ -102,7 +136,7 @@ describe('HomeDemoSectionComponent', () => {
     expect(root.querySelector('.home-demo-section__disclaimer')).toBeNull();
     expect(root.querySelector('.home-demo-hints')).not.toBeNull();
     expect(root.querySelector('.home-demo-gantt')).not.toBeNull();
-    expect(root.querySelector('app-plan-gantt-climate-shell')).not.toBeNull();
+    expect(root.querySelector('.home-demo-gantt__placeholder')).not.toBeNull();
     expect(root.querySelector('button.primary-button')?.textContent?.trim()).toBe(
       '地域と作物を選んで計画を作る'
     );

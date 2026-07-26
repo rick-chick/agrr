@@ -56,6 +56,10 @@ jobs:
         working-directory: frontend
         run: node --test scripts/check-hardcoded-i18n.test.mjs
 
+      - name: verify-home-initial-bundle unit tests
+        working-directory: frontend
+        run: node --test scripts/verify-home-initial-bundle.test.mjs
+
       - name: generate-e2e-route-manifest unit tests
         working-directory: frontend
         run: node --test scripts/generate-e2e-route-manifest.test.mjs
