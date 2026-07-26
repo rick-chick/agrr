@@ -4,11 +4,11 @@ import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HomeDemoSectionComponent } from './home-demo-section.component';
-import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { buildLandingDemoPlanFixture } from '../../domain/plans/landing-demo-plan.fixture';
 import { LANDING_DEMO_LABELS_FIXTURE } from '../../domain/plans/landing-demo-i18n.keys';
 import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-demo-plan.usecase';
 import { HomeDemoSectionPresenter } from '../../adapters/plans/home-demo-section.presenter';
+import { LOAD_HOME_DEMO_GANTT_SHELL } from './home-demo-gantt-shell.loader';
 
 @Component({
   selector: 'app-plan-gantt-climate-shell',
@@ -16,7 +16,7 @@ import { HomeDemoSectionPresenter } from '../../adapters/plans/home-demo-section
   template: ''
 })
 class StubPlanGanttClimateShellComponent {
-  @Input() data: CultivationPlanData | null = null;
+  @Input() data: unknown;
   @Input() planType: 'private' | 'public' | 'demo' = 'demo';
 }
 
@@ -36,11 +36,15 @@ describe('HomeDemoSectionComponent', () => {
       providers: [
         { provide: Router, useValue: mockRouter },
         { provide: SyncLandingDemoPlanUseCase, useValue: mockSyncUseCase },
-        { provide: HomeDemoSectionPresenter, useValue: mockPresenter }
+        { provide: HomeDemoSectionPresenter, useValue: mockPresenter },
+        {
+          provide: LOAD_HOME_DEMO_GANTT_SHELL,
+          useValue: () => Promise.resolve(StubPlanGanttClimateShellComponent)
+        }
       ]
     })
       .overrideComponent(HomeDemoSectionComponent, {
-        set: { imports: [TranslateModule, StubPlanGanttClimateShellComponent], providers: [] }
+        set: { providers: [] }
       })
       .compileComponents();
 
@@ -58,6 +62,7 @@ describe('HomeDemoSectionComponent', () => {
                 add: '作物を追加'
               },
               cta_create: '地域と作物を選んで計画を作る',
+              loading_gantt: 'デモを読み込み中…',
               fixture: {
                 plan_name: 'デモ計画',
                 farm_name: 'デモ農場',
@@ -93,7 +98,9 @@ describe('HomeDemoSectionComponent', () => {
     fixture = TestBed.createComponent(HomeDemoSectionComponent);
   });
 
-  it('shows hints and gantt without preview chrome', () => {
+  it('shows hints and gantt without preview chrome', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
@@ -108,7 +115,9 @@ describe('HomeDemoSectionComponent', () => {
     );
   });
 
-  it('navigates to public plan creation', () => {
+  it('navigates to public plan creation', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     fixture.nativeElement.querySelector('button.primary-button')?.click();
@@ -116,8 +125,9 @@ describe('HomeDemoSectionComponent', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/public-plans/new'] as const);
   });
 
-  it('syncs localized demo plan when locale changes', () => {
+  it('syncs localized demo plan when locale changes', async () => {
     fixture.detectChanges();
+    await fixture.whenStable();
     expect(mockSyncUseCase.execute).toHaveBeenCalledTimes(1);
     expect(mockPresenter.setView).toHaveBeenCalledWith(fixture.componentInstance);
 

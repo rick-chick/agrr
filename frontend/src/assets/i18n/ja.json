@@ -2619,7 +2619,8 @@
           "stage_harvest": "収穫",
           "gdd_stage_growing": "生育期",
           "gdd_stage_pre_harvest": "収穫前"
-        }
+        },
+        "loading_gantt": "デモを読み込み中…"
       },
       "features": {
         "title": "AGRRの特徴",
