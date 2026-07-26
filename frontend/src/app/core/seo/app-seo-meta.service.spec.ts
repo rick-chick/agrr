@@ -94,13 +94,23 @@ describe('AppSeoMetaService', () => {
   });
 
   it('skips JSON-LD injection when document is unavailable (SSR/prerender)', () => {
+    setWindowPath('/');
+    const scriptsBefore = document.head.querySelectorAll('script[type="application/ld+json"]').length;
     const doc = globalThis.document;
     Object.defineProperty(globalThis, 'document', { value: undefined, configurable: true });
+    Object.defineProperty(window, 'document', { value: undefined, configurable: true });
     try {
-      expect(() => service.refreshDefaultMeta()).not.toThrow();
+      (
+        service as unknown as {
+          refreshJsonLd: (siteTitle: string, siteDescription: string, keyPrefix: string) => void;
+        }
+      ).refreshJsonLd('AGRR タイトル', '説明文', 'meta.default');
     } finally {
       Object.defineProperty(globalThis, 'document', { value: doc, configurable: true });
+      Object.defineProperty(window, 'document', { value: doc, configurable: true });
     }
+    const scriptsAfter = document.head.querySelectorAll('script[type="application/ld+json"]').length;
+    expect(scriptsAfter).toBe(scriptsBefore);
   });
 
   it('injects Organization JSON-LD on refreshDefaultMeta', () => {
