@@ -65,6 +65,7 @@ pub mod plans;
 pub mod public_plan_save;
 pub mod public_plans;
 pub mod routes;
+pub mod security_headers;
 pub mod scheduler_weather_update;
 pub mod runtime_env;
 pub mod session_auth;
@@ -149,6 +150,7 @@ pub async fn run_http_server() {
         .fallback(fallback::api_not_migrated)
         .layer(cors)
         .with_state(state);
+    let app = security_headers::apply_security_headers_layer(app);
 
     let port: u16 = std::env::var("PORT")
         .ok()
