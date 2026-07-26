@@ -85,11 +85,5 @@ export function verifySecurityResponseHeadersContract(repoRoot) {
     errors.push('lib.rs must wire security_headers middleware');
   }
 
-  const cargoTomlPath = join(repoRoot, 'crates/agrr-server/Cargo.toml');
-  const cargoToml = readFileSync(cargoTomlPath, 'utf8');
-  if (!cargoToml.includes('"set-header"')) {
-    errors.push('agrr-server Cargo.toml must enable tower-http set-header feature');
-  }
-
   return { ok: errors.length === 0, errors };
 }

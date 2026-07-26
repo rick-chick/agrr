@@ -9,7 +9,8 @@ info() { echo "INFO: $*"; }
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 HEADERS_FILE="$ROOT_DIR/scripts/agrr-security-response-headers.yaml"
 BACKENDS_FILE="$ROOT_DIR/scripts/agrr-lb-backend-security-headers.yaml"
-PROJECT="${GCP_PROJECT:-agrr-475323}"
+PROJECT="${GCP_PROJECT:-$(awk '/^project:/{print $2}' "$BACKENDS_FILE")}"
+PROJECT="${PROJECT:-agrr-475323}"
 DRY_RUN=0
 
 if [[ "${1:-}" == "--dry-run" ]]; then
