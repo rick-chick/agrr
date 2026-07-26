@@ -22,6 +22,9 @@ mod plan_allocation_candidates_gateway;
 mod prediction_daemon_gateway;
 mod weather_daemon_gateway;
 
+#[cfg(test)]
+mod test_env;
+
 pub use crop_ai_query_daemon_gateway::CropAiQueryDaemonGateway;
 pub use daemon_client::{AgrrDaemonClient, AgrrDaemonError};
 pub use fertilize_ai_query_daemon_gateway::FertilizeAiQueryDaemonGateway;

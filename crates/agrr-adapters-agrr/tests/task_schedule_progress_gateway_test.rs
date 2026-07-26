@@ -1,5 +1,7 @@
 //! Progress gateway parity for task schedule generation.
 
+mod common;
+
 use std::io::{Read, Write};
 use std::sync::Arc;
 use std::thread;
@@ -79,34 +81,30 @@ impl TaskScheduleGenerationReadGateway for StubReadGateway {
 
 #[test]
 fn progress_gateway_reports_daemon_unavailable_when_daemon_not_running() {
-    let socket_path = "/tmp/agrr_task_schedule_progress_missing.sock";
-    let prev_retries = std::env::var("AGRR_DAEMON_REQUEST_RETRIES").ok();
-    let prev_socket = std::env::var("AGRR_SOCKET_PATH").ok();
-    std::env::set_var("AGRR_DAEMON_REQUEST_RETRIES", "1");
-    std::env::set_var("AGRR_SOCKET_PATH", socket_path);
-    let climate = FieldCultivationClimateAgrrGateway::from_env();
-    let gateway = TaskScheduleProgressAgrrGateway::new(
-        climate,
-        Arc::new(StubReadGateway) as Arc<dyn TaskScheduleGenerationReadGateway>,
-    );
-    let crop = TaskScheduleCrop {
-        id: 1,
-        name: "stub".into(),
-        crop_task_schedule_blueprints: vec![],
-    };
-    let err = gateway
-        .calculate_progress(
-            &crop,
-            Some(time::macros::date!(2026 - 04 - 01)),
-            &json!({ "data": [] }),
-        )
-        .expect_err("daemon unavailable");
-    assert_eq!(
-        agrr_domain::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
-        agrr_domain::agricultural_task::task_schedule_sync_error_keys::AGRR_UNAVAILABLE.to_string()
-    );
-    restore_env("AGRR_DAEMON_REQUEST_RETRIES", prev_retries);
-    restore_env("AGRR_SOCKET_PATH", prev_socket);
+    common::with_daemon_env("1", "/tmp/agrr_task_schedule_progress_missing.sock", || {
+        let climate = FieldCultivationClimateAgrrGateway::from_env();
+        let gateway = TaskScheduleProgressAgrrGateway::new(
+            climate,
+            Arc::new(StubReadGateway) as Arc<dyn TaskScheduleGenerationReadGateway>,
+        );
+        let crop = TaskScheduleCrop {
+            id: 1,
+            name: "stub".into(),
+            crop_task_schedule_blueprints: vec![],
+        };
+        let err = gateway
+            .calculate_progress(
+                &crop,
+                Some(time::macros::date!(2026 - 04 - 01)),
+                &json!({ "data": [] }),
+            )
+            .expect_err("daemon unavailable");
+        assert_eq!(
+            agrr_domain::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            agrr_domain::agricultural_task::task_schedule_sync_error_keys::AGRR_UNAVAILABLE
+                .to_string()
+        );
+    });
 }
 
 #[test]
@@ -125,42 +123,31 @@ fn progress_gateway_reports_unavailable_when_daemon_command_fails() {
         }
     });
 
-    let prev_retries = std::env::var("AGRR_DAEMON_REQUEST_RETRIES").ok();
-    let prev_socket = std::env::var("AGRR_SOCKET_PATH").ok();
-    std::env::set_var("AGRR_DAEMON_REQUEST_RETRIES", "1");
-    std::env::set_var("AGRR_SOCKET_PATH", socket_path.to_string_lossy().as_ref());
-
-    let climate = FieldCultivationClimateAgrrGateway::from_env();
-    let gateway = TaskScheduleProgressAgrrGateway::new(
-        climate,
-        Arc::new(StubReadGateway) as Arc<dyn TaskScheduleGenerationReadGateway>,
-    );
-    let crop = TaskScheduleCrop {
-        id: 1,
-        name: "stub".into(),
-        crop_task_schedule_blueprints: vec![],
-    };
-    let err = gateway
-        .calculate_progress(
-            &crop,
-            Some(time::macros::date!(2026 - 04 - 01)),
-            &json!({ "data": [] }),
-        )
-        .expect_err("daemon command failure");
-    assert_eq!(
-        agrr_domain::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
-        agrr_domain::agricultural_task::task_schedule_sync_error_keys::AGRR_UNAVAILABLE.to_string()
-    );
-
-    restore_env("AGRR_DAEMON_REQUEST_RETRIES", prev_retries);
-    restore_env("AGRR_SOCKET_PATH", prev_socket);
-}
-
-fn restore_env(key: &str, prev: Option<String>) {
-    match prev {
-        Some(value) => std::env::set_var(key, value),
-        None => std::env::remove_var(key),
-    }
+    let socket_str = socket_path.to_string_lossy().to_string();
+    common::with_daemon_env("1", &socket_str, || {
+        let climate = FieldCultivationClimateAgrrGateway::from_env();
+        let gateway = TaskScheduleProgressAgrrGateway::new(
+            climate,
+            Arc::new(StubReadGateway) as Arc<dyn TaskScheduleGenerationReadGateway>,
+        );
+        let crop = TaskScheduleCrop {
+            id: 1,
+            name: "stub".into(),
+            crop_task_schedule_blueprints: vec![],
+        };
+        let err = gateway
+            .calculate_progress(
+                &crop,
+                Some(time::macros::date!(2026 - 04 - 01)),
+                &json!({ "data": [] }),
+            )
+            .expect_err("daemon command failure");
+        assert_eq!(
+            agrr_domain::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            agrr_domain::agricultural_task::task_schedule_sync_error_keys::AGRR_UNAVAILABLE
+                .to_string()
+        );
+    });
 }
 
 #[test]

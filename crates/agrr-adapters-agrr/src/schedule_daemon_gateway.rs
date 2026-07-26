@@ -70,15 +70,17 @@ mod tests {
 
     #[test]
     fn generate_schedule_fails_when_daemon_socket_missing() {
-        let client = AgrrDaemonClient::new(format!(
-            "/tmp/agrr_schedule_test_{}.sock",
-            std::process::id()
-        ));
-        let gw = CropScheduleAiQueryDaemonGateway::new(client);
-        let err = gw
-            .generate_schedule("tomato", "general", &json!([]), &json!([]))
-            .unwrap_err();
-        assert_eq!(err.http_status, HttpStatus::ServiceUnavailable);
-        assert!(err.message.contains("not running"));
+        crate::test_env::with_single_daemon_request_retry(|| {
+            let client = AgrrDaemonClient::new(format!(
+                "/tmp/agrr_schedule_test_{}.sock",
+                std::process::id()
+            ));
+            let gw = CropScheduleAiQueryDaemonGateway::new(client);
+            let err = gw
+                .generate_schedule("tomato", "general", &json!([]), &json!([]))
+                .unwrap_err();
+            assert_eq!(err.http_status, HttpStatus::ServiceUnavailable);
+            assert!(err.message.contains("not running"));
+        });
     }
 }

@@ -60,13 +60,15 @@ mod tests {
 
     #[test]
     fn fetch_pest_json_returns_daemon_not_running_payload() {
-        let client = AgrrDaemonClient::new(format!(
-            "/tmp/agrr_pest_ai_test_{}.sock",
-            std::process::id()
-        ));
-        let gw = PestAiQueryDaemonGateway::new(client);
-        let value = gw.fetch_pest_json("aphid", &[]).unwrap();
-        assert_eq!(value.get("success"), Some(&json!(false)));
-        assert_eq!(value.get("code"), Some(&json!("daemon_not_running")));
+        crate::test_env::with_single_daemon_request_retry(|| {
+            let client = AgrrDaemonClient::new(format!(
+                "/tmp/agrr_pest_ai_test_{}.sock",
+                std::process::id()
+            ));
+            let gw = PestAiQueryDaemonGateway::new(client);
+            let value = gw.fetch_pest_json("aphid", &[]).unwrap();
+            assert_eq!(value.get("success"), Some(&json!(false)));
+            assert_eq!(value.get("code"), Some(&json!("daemon_not_running")));
+        });
     }
 }

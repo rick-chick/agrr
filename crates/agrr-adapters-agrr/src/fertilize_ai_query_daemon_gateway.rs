@@ -120,13 +120,15 @@ mod tests {
 
     #[test]
     fn fetch_for_create_returns_daemon_not_running_when_socket_missing() {
-        let client = AgrrDaemonClient::new(format!(
-            "/tmp/agrr_fert_ai_test_{}.sock",
-            std::process::id()
-        ));
-        let gw = FertilizeAiQueryDaemonGateway::new(client);
-        let value = gw.fetch_for_create("尿素").unwrap();
-        assert_eq!(value.get("success"), Some(&json!(false)));
-        assert_eq!(value.get("code"), Some(&json!("daemon_not_running")));
+        crate::test_env::with_single_daemon_request_retry(|| {
+            let client = AgrrDaemonClient::new(format!(
+                "/tmp/agrr_fert_ai_test_{}.sock",
+                std::process::id()
+            ));
+            let gw = FertilizeAiQueryDaemonGateway::new(client);
+            let value = gw.fetch_for_create("尿素").unwrap();
+            assert_eq!(value.get("success"), Some(&json!(false)));
+            assert_eq!(value.get("code"), Some(&json!("daemon_not_running")));
+        });
     }
 }

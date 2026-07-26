@@ -63,13 +63,15 @@ mod tests {
 
     #[test]
     fn fetch_crop_json_fails_when_daemon_socket_missing() {
-        let client = AgrrDaemonClient::new(format!(
-            "/tmp/agrr_crop_ai_test_{}.sock",
-            std::process::id()
-        ));
-        let gw = CropAiQueryDaemonGateway::new(client);
-        let err = gw.fetch_crop_json("tomato").unwrap_err();
-        assert_eq!(err.http_status, HttpStatus::ServiceUnavailable);
-        assert!(err.message.contains("not running"));
+        crate::test_env::with_single_daemon_request_retry(|| {
+            let client = AgrrDaemonClient::new(format!(
+                "/tmp/agrr_crop_ai_test_{}.sock",
+                std::process::id()
+            ));
+            let gw = CropAiQueryDaemonGateway::new(client);
+            let err = gw.fetch_crop_json("tomato").unwrap_err();
+            assert_eq!(err.http_status, HttpStatus::ServiceUnavailable);
+            assert!(err.message.contains("not running"));
+        });
     }
 }
