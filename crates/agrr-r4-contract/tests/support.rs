@@ -804,7 +804,7 @@ pub fn poll_farm_weather_completed(
             );
             last_progress = progress;
         }
-        std::thread::sleep(std::time::Duration::from_millis(200));
+        std::thread::sleep(std::time::Duration::from_millis(500));
     }
     panic!("farm weather fetch did not reach completed within timeout");
 }
