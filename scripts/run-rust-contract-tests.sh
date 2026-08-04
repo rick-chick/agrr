@@ -164,12 +164,12 @@ ensure_agrr_r4_contract_tests_binary() {
   local host_built=""
 
   if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
-    echo "==> Building agrr-r4-contract tests in rust:1-bookworm (nightly; --report-time harness)"
+    echo "==> Building agrr-r4-contract tests in rust:nightly-bookworm (--report-time harness)"
     docker run --rm \
       -v "${ROOT}:/app" \
       -w /app \
-      rust:1-bookworm \
-      bash -lc 'rustup toolchain install nightly --profile minimal && cargo +nightly build --tests -p agrr-r4-contract'
+      rust:nightly-bookworm \
+      cargo build --tests -p agrr-r4-contract
     host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
     if [[ -n "$host_built" && -x "$host_built" ]]; then
       cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
