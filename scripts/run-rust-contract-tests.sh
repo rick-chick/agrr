@@ -37,6 +37,27 @@ needs_contract_binary_rebuild() {
   contract_rust_sources_newer_than "$binary" "$@"
 }
 
+# libtest --report-time requires a nightly-built test harness (stable rejects the flag).
+ensure_r4_contract_nightly_toolchain() {
+  if ! command -v rustup >/dev/null 2>&1; then
+    echo "rustup is required to install nightly for R4 contract --report-time" >&2
+    exit 1
+  fi
+  if ! rustup toolchain list | grep -q '^nightly'; then
+    echo "==> Installing nightly toolchain for R4 contract slow-test gate"
+    rustup toolchain install nightly --profile minimal
+  fi
+  if ! rustup run nightly cargo --version >/dev/null 2>&1; then
+    echo "nightly cargo is unavailable after install" >&2
+    exit 1
+  fi
+}
+
+r4_contract_cargo() {
+  ensure_r4_contract_nightly_toolchain
+  rustup run nightly cargo "$@"
+}
+
 ensure_agrr_server_binary() {
   local host_debug="${ROOT}/target/debug/agrr-server"
   local host_release="${ROOT}/target/release/agrr-server"
@@ -143,12 +164,12 @@ ensure_agrr_r4_contract_tests_binary() {
   local host_built=""
 
   if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
-    echo "==> Building agrr-r4-contract tests in rust:1-bookworm (AGRR_SERVER_CONTRACT_DOCKER_BUILD=1)"
+    echo "==> Building agrr-r4-contract tests in rust:1-bookworm (nightly; --report-time harness)"
     docker run --rm \
       -v "${ROOT}:/app" \
       -w /app \
       rust:1-bookworm \
-      cargo build --tests -p agrr-r4-contract
+      bash -lc 'rustup toolchain install nightly --profile minimal && cargo +nightly build --tests -p agrr-r4-contract'
     host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
     if [[ -n "$host_built" && -x "$host_built" ]]; then
       cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
@@ -169,8 +190,8 @@ ensure_agrr_r4_contract_tests_binary() {
   if command -v cargo >/dev/null 2>&1; then
     # shellcheck source=/dev/null
     [[ -f "${HOME}/.cargo/env" ]] && source "${HOME}/.cargo/env"
-    echo "==> Building agrr-r4-contract tests on host (cargo build --tests -p agrr-r4-contract)"
-    if cargo build --tests -p agrr-r4-contract; then
+    echo "==> Building agrr-r4-contract tests on host (cargo +nightly build --tests -p agrr-r4-contract)"
+    if r4_contract_cargo build --tests -p agrr-r4-contract; then
       host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
       if [[ -n "$host_built" && -x "$host_built" ]]; then
         cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
