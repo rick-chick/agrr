@@ -15,7 +15,8 @@ export const HOME_INDEX_FEATURES_HEADING_I18N_KEYS = {
 /** Demo section chrome strings (HomeDemoSectionComponent). */
 export const HOME_INDEX_DEMO_UI_I18N_KEYS = {
   hintsAria: 'home.index.demo.hints_aria',
-  ctaCreate: 'home.index.demo.cta_create'
+  ctaCreate: 'home.index.demo.cta_create',
+  loadingGantt: 'home.index.demo.loading_gantt'
 } as const;
 
 export const HOME_DEMO_HINT_I18N_KEYS = [

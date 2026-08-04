@@ -2619,7 +2619,8 @@
           "stage_harvest": "収穫",
           "gdd_stage_growing": "生育期",
           "gdd_stage_pre_harvest": "収穫前"
-        }
+        },
+        "loading_gantt": "デモを読み込み中…"
       },
       "features": {
         "title": "AGRRの特徴",
@@ -3037,7 +3038,8 @@
       "title": "AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム",
       "description": "AGRRは気象データとAIを活用した農業作付け・輪作計画支援システムです。公式 agrr.net。圃場管理、作物情報管理、栽培計画の最適化で、持続可能な農業を実現します。",
       "keywords": "農業,作付け計画,圃場管理,気象データ,AI,農業DX,栽培計画,連作障害,農業支援",
-      "og_description": "気象データとAIを活用した農業作付け計画支援システム"
+      "og_description": "気象データとAIを活用した農業作付け計画支援システム",
+      "og_image_alt": "AGRR 農業作付け計画支援システム"
     }
   },
   "pages": {
@@ -3131,6 +3133,10 @@
         "気象データが表示されない → 圃場の位置情報が正しく設定されているかご確認ください"
       ],
       "footer_message": "サービスの改善に向けて、皆様のご意見・ご要望をお待ちしております。"
+    },
+    "public_plans_new": {
+      "title": "無料作付け計画を作成",
+      "description": "地域と作物を選んで、AGRRの無料作付け計画を作成できます。気象データとAIにより最適な栽培スケジュールを提案します。"
     },
     "notFound": {
       "title": "ページが見つかりません",

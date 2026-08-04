@@ -17,6 +17,8 @@ pub enum AgrrDaemonError {
 /// Minimal Unix-socket client matching Ruby `DaemonClient` surface for P6.
 pub struct AgrrDaemonClient {
     socket_path: PathBuf,
+    /// When set, overrides `AGRR_DAEMON_REQUEST_RETRIES` for this client (tests / injection).
+    request_retries_override: Option<u32>,
 }
 
 impl AgrrDaemonClient {
@@ -24,13 +26,23 @@ impl AgrrDaemonClient {
         let socket_path = std::env::var("AGRR_SOCKET_PATH")
             .map(PathBuf::from)
             .unwrap_or_else(|_| PathBuf::from("/tmp/agrr.sock"));
-        Self { socket_path }
+        Self {
+            socket_path,
+            request_retries_override: None,
+        }
     }
 
     pub fn new(socket_path: impl AsRef<Path>) -> Self {
         Self {
             socket_path: socket_path.as_ref().to_path_buf(),
+            request_retries_override: None,
         }
+    }
+
+    /// Override connect retries for this client only (parallel-safe for unit tests).
+    pub fn with_request_retries(mut self, retries: u32) -> Self {
+        self.request_retries_override = Some(retries);
+        self
     }
 
     /// True only when the Unix socket accepts a connection (not merely when the path exists).
@@ -46,7 +58,9 @@ impl AgrrDaemonClient {
     /// Retries on connect/`NotRunning` at request time only. Boot intentionally does not wait
     /// for daemon readiness so HTTP can bind in parallel; brief retries here absorb that gap.
     pub fn execute_daemon_args(&self, args: &[String]) -> Result<Value, AgrrDaemonError> {
-        let request_retries = request_connect_retries();
+        let request_retries = self
+            .request_retries_override
+            .unwrap_or_else(request_connect_retries);
         const REQUEST_RETRY_MS: u64 = 100;
 
         let request = serde_json::json!({ "args": args });

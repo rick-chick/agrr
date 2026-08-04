@@ -70,7 +70,8 @@ mod tests {
         let client = AgrrDaemonClient::new(format!(
             "/tmp/agrr_fertilize_plan_test_{}.sock",
             std::process::id()
-        ));
+        ))
+            .with_request_retries(1);
         let gw = CropFertilizePlanAiQueryDaemonGateway::new(client);
         let err = gw
             .fetch_fertilize_plan(&json!({"crop": {"name": "tomato"}}), true, 2)

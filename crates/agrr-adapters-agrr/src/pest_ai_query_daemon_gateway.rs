@@ -63,7 +63,8 @@ mod tests {
         let client = AgrrDaemonClient::new(format!(
             "/tmp/agrr_pest_ai_test_{}.sock",
             std::process::id()
-        ));
+        ))
+            .with_request_retries(1);
         let gw = PestAiQueryDaemonGateway::new(client);
         let value = gw.fetch_pest_json("aphid", &[]).unwrap();
         assert_eq!(value.get("success"), Some(&json!(false)));

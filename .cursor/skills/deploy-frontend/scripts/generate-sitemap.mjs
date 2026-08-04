@@ -3,10 +3,17 @@
  * Generate sitemap.xml for agrr.net (SPA public routes + static research HTML).
  * Output: frontend/public/sitemap.xml
  */
-import { readdir, stat, writeFile, mkdir } from 'node:fs/promises';
+import { readdir, stat, writeFile, mkdir, access } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { constants } from 'node:fs';
 import { isIndexableResearchHtml } from './generate-sitemap-lib.mjs';
+import {
+  alternateLocaleRelativePath,
+  buildSitemapHreflangAlternates,
+  researchRelativePathToUrlPath,
+  resolveResearchHreflangUrls,
+} from '../../../../scripts/research-hreflang-lib.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '../../../..');
@@ -34,20 +41,20 @@ function escapeXml(value) {
 }
 
 function toUrlPath(relativeHtmlPath) {
-  const posix = relativeHtmlPath.split('\\').join('/');
-  if (posix === 'index.html') {
-    return '/research/';
+  return researchRelativePathToUrlPath(relativeHtmlPath);
+}
+
+async function alternateExists(relativePath) {
+  const alternateRelative = alternateLocaleRelativePath(relativePath);
+  if (!alternateRelative) {
+    return false;
   }
-  if (posix === 'en/index.html') {
-    return '/research/en/';
+  try {
+    await access(join(RESEARCH_DIR, alternateRelative), constants.F_OK);
+    return true;
+  } catch {
+    return false;
   }
-  if (posix.endsWith('/index.html')) {
-    return `/research/${posix.slice(0, -'/index.html'.length)}/`;
-  }
-  if (posix.endsWith('.html')) {
-    return `/research/${posix}`;
-  }
-  return null;
 }
 
 async function collectResearchHtml(dir, files = []) {
@@ -90,7 +97,21 @@ async function main() {
     }
     const st = await stat(filePath);
     const lastmod = st.mtime.toISOString().slice(0, 10);
-    entries.push({ loc: `${BASE_URL}${urlPath}`, lastmod });
+    const entry = { loc: `${BASE_URL}${urlPath}`, lastmod };
+
+    const hreflang = resolveResearchHreflangUrls({
+      relativePath: rel,
+      alternateExists: await alternateExists(rel),
+      baseUrl: BASE_URL,
+    });
+    if (hreflang) {
+      entry.alternates = buildSitemapHreflangAlternates({
+        jaUrl: hreflang.jaUrl,
+        enUrl: hreflang.enUrl,
+      });
+    }
+
+    entries.push(entry);
   }
 
   const unique = new Map();
@@ -100,13 +121,21 @@ async function main() {
 
   const urls = [...unique.values()].sort((a, b) => a.loc.localeCompare(b.loc));
   const body = urls
-    .map(
-      (entry) =>
-        `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>\n    <lastmod>${entry.lastmod}</lastmod>\n  </url>`
-    )
+    .map((entry) => {
+      const lines = [`  <url>`, `    <loc>${escapeXml(entry.loc)}</loc>`];
+      if (entry.alternates?.length) {
+        for (const alternate of entry.alternates) {
+          lines.push(
+            `    <xhtml:link rel="alternate" hreflang="${escapeXml(alternate.hreflang)}" href="${escapeXml(alternate.href)}"/>`
+          );
+        }
+      }
+      lines.push(`    <lastmod>${entry.lastmod}</lastmod>`, `  </url>`);
+      return lines.join('\n');
+    })
     .join('\n');
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${body}\n</urlset>\n`;
 
   await mkdir(OUT_DIR, { recursive: true });
   await writeFile(OUT_FILE, xml, 'utf8');

@@ -126,9 +126,24 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/research-simulate-cta.test.mjs
 
+      - name: apex HTTP to HTTPS redirect contract unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-apex-http-to-https-redirect.test.mjs
+
       - name: research vitepress link patch unit tests
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/research-tools/scripts/patch-research-vitepress-links.test.mjs
+
+      - name: research footer brand patch unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test .cursor/skills/research-tools/scripts/patch-research-footer-brand.test.mjs
+
+      - name: research hreflang unit tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          node --test scripts/research-hreflang-lib.test.mjs
+          node --test scripts/research-indexable-html-lib.test.mjs
+          node --test scripts/agrr-frontend-url-map-redirects.test.mjs
 
       - name: research CTA browser tests
         working-directory: frontend
