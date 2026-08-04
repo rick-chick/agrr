@@ -159,26 +159,26 @@ ensure_agrr_migrate_binary() {
 
 ensure_agrr_migrate_binary
 
+copy_r4_contract_test_binary_from_deps() {
+  local host_built
+  host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
+  if [[ -n "$host_built" && -x "$host_built" ]]; then
+    cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
+    chmod +x "$R4_CONTRACT_TESTS_BIN"
+    return 0
+  fi
+  return 1
+}
+
+build_r4_contract_tests_on_host() {
+  # shellcheck source=/dev/null
+  [[ -f "${HOME}/.cargo/env" ]] && source "${HOME}/.cargo/env"
+  echo "==> Building agrr-r4-contract tests on host (cargo +nightly build --tests -p agrr-r4-contract)"
+  r4_contract_cargo build --tests -p agrr-r4-contract
+}
+
 ensure_agrr_r4_contract_tests_binary() {
   local -a source_dirs=("${ROOT}/crates/agrr-r4-contract")
-  local host_built=""
-
-  if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
-    echo "==> Building agrr-r4-contract tests in rust:nightly-bookworm (--report-time harness)"
-    docker run --rm \
-      -v "${ROOT}:/app" \
-      -w /app \
-      rust:nightly-bookworm \
-      cargo build --tests -p agrr-r4-contract
-    host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
-    if [[ -n "$host_built" && -x "$host_built" ]]; then
-      cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
-      chmod +x "$R4_CONTRACT_TESTS_BIN"
-      return
-    fi
-    echo "==> agrr-r4-contract docker build did not produce a test binary"
-    exit 1
-  fi
 
   if [[ -x "$R4_CONTRACT_TESTS_BIN" ]] && ! needs_contract_binary_rebuild "$R4_CONTRACT_TESTS_BIN" AGRR_R4_CONTRACT_REBUILD "${source_dirs[@]}"; then
     return
@@ -188,21 +188,26 @@ ensure_agrr_r4_contract_tests_binary() {
   fi
 
   if command -v cargo >/dev/null 2>&1; then
-    # shellcheck source=/dev/null
-    [[ -f "${HOME}/.cargo/env" ]] && source "${HOME}/.cargo/env"
-    echo "==> Building agrr-r4-contract tests on host (cargo +nightly build --tests -p agrr-r4-contract)"
-    if r4_contract_cargo build --tests -p agrr-r4-contract; then
-      host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
-      if [[ -n "$host_built" && -x "$host_built" ]]; then
-        cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
-        chmod +x "$R4_CONTRACT_TESTS_BIN"
-        return
-      fi
-    elif [[ -x "$R4_CONTRACT_TESTS_BIN" ]]; then
+    if build_r4_contract_tests_on_host && copy_r4_contract_test_binary_from_deps; then
+      return
+    fi
+    if [[ -x "$R4_CONTRACT_TESTS_BIN" ]]; then
       echo "==> Host cargo build failed; reusing existing agrr-r4-contract test binary"
       return
     fi
-    echo "==> agrr-r4-contract build failed and no cached test binary"
+  fi
+
+  if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
+    echo "==> Building agrr-r4-contract tests in rustlang/rust:nightly-bookworm (--report-time harness)"
+    docker run --rm \
+      -v "${ROOT}:/app" \
+      -w /app \
+      rustlang/rust:nightly-bookworm \
+      cargo build --tests -p agrr-r4-contract
+    if copy_r4_contract_test_binary_from_deps; then
+      return
+    fi
+    echo "==> agrr-r4-contract docker build did not produce a test binary"
     exit 1
   fi
 
@@ -210,6 +215,8 @@ ensure_agrr_r4_contract_tests_binary() {
     echo "==> cargo not found and no agrr-r4-contract test binary at $R4_CONTRACT_TESTS_BIN"
     exit 1
   fi
+  echo "==> agrr-r4-contract build failed and no cached test binary"
+  exit 1
 }
 
 ensure_agrr_r4_contract_tests_binary
