@@ -251,27 +251,31 @@ head が `issue/<number>-*` のとき:
 
 リンク issue がある PR は、**ARCHITECTURE ゲート（§3c）の後・マージの前**に毎回実施する。
 
+**二層**（[automation-authoring PRINCIPLES §機械ゲート](../automation-authoring/references/PRINCIPLES.md#機械ゲートとエージェント判定)）:
+
+1. **Agent 観測**（`gh`）— issue / PR 本文を読み判断する。`Closes` / `Fixes` 禁止、本番確認・メタ条件（「デプロイ後に確認してクローズ」等）は **無視**、未達の実装条件は follow-up 起票済みか確認。**本文の正規表現パースライブラリは使わない。**
+2. **構造のみ** — `acceptance-follow-up` ラベル付き issue の `state` を [`audit-pr-acceptance-lib.mjs`](../../../scripts/audit-pr-acceptance-lib.mjs) に渡す（dispatch / workflow からは呼ばない）。
+
 ```bash
 gh issue view <issue> --json body,labels,state
 gh pr view <N> --json body
-# follow-up 番号は PR 本文の Follow-up: #N から。各 follow-up の state を gh issue view で取得
+gh issue list --label acceptance-follow-up --state all --json number,state,labels
+# 親に紐づく follow-up は Agent が gh 本文観測で特定（ライブラリは本文を読まない）
 node --input-type=module -e "
 import { auditLinkedPrAcceptance } from './scripts/audit-pr-acceptance-lib.mjs';
-// PR body と followUpIssues を渡して mergeAllowed / closeParentAllowed を確認
+// followUpIssues（構造フィールドのみ）を渡して closeParentAllowed を確認
 "
 ```
 
 | 監査結果 | 動作 |
 |----------|------|
-| `mergeAllowed: false` | **マージしない**。PR コメントで理由（`Closes` 禁止 / follow-up 不足）→ exit 0 |
-| `mergeAllowed: true` かつ `closeParentAllowed: false` | §4 でマージ。**親 issue は open のまま**（部分完了） |
-| `closeParentAllowed: true` | §4 でマージ → **§4.1 で親を `gh issue close`** |
+| Agent: `Closes` / 未達かつ follow-up 未起票 | **マージしない**（Agent 判断。ライブラリはブロックしない） |
+| `mergeAllowed: true` かつ `closeParentAllowed: false` | §4 でマージ。**親 issue は open のまま**（open `acceptance-follow-up` あり） |
+| `closeParentAllowed: true` | §4 でマージ → **§4.1 で親を `gh issue close`**（Agent が本文観測で完了と判断したうえで） |
 
 **禁止**: PR 本文の `Closes` / `Fixes`（GitHub 自動クローズの経路を使わない）。Issue Worker は常に `Part of #N`。
 
-**本番確認**: issue 完了条件に本番確認が含まれても、受け入れ監査の `mergeAllowed` / `closeParentAllowed` を **本番未確認だけで false にしない**。PR 本文で `Automation 対象外（本番確認）` と明記した行、または `agrr.net` / 本番デプロイ等の本番確認行は `audit-pr-acceptance-lib` が監査対象外として扱う（[automation-authoring PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）。
-
-ライブラリ: [`scripts/audit-pr-acceptance-lib.mjs`](../../../scripts/audit-pr-acceptance-lib.mjs)（Agent 専用。dispatch / workflow からは呼ばない）
+**本番確認**: issue 完了条件に本番確認が含まれても、Agent の `gh` 観測では **未達・follow-up・マージブロックの理由にしない**（[PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）。
 
 ## 4) マージ
 

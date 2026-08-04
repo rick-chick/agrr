@@ -74,13 +74,13 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 
 follow-up issue（`acceptance-follow-up`）の PR をマージした run で実施:
 
-1. `gh issue view <follow-up> --json body,labels,state` — 本文の `Parent: #<親>` を読む
-2. `gh issue list --label acceptance-follow-up --state open` で同一親の open follow-up が残るか確認（親番号は Agent が issue 本文・コメントから特定）
-3. [`audit-pr-acceptance-lib.mjs`](../../../scripts/audit-pr-acceptance-lib.mjs) の `auditParentIssueCloseEligibility` を実行
-4. `closeAllowed: true` → `gh issue close <親>` + コメント（全 follow-up 完了）
-5. `closeAllowed: false` → 親は **open 維持**。親にコメントで残件を列挙 → exit 0（次の follow-up または reconcile が拾う）
+1. `gh issue view <follow-up> --json body,labels,state` — 本文の `Parent: #<親>` を **Agent が gh 観測で読む**（ライブラリは本文をパースしない）
+2. `gh issue list --label acceptance-follow-up --state open` で同一親の open follow-up が残るか **Agent が gh 観測で確認**
+3. 親に紐づく follow-up の **構造**（`number` / `state` / `labels`）を [`audit-pr-acceptance-lib.mjs`](../../../scripts/audit-pr-acceptance-lib.mjs) の `auditParentIssueCloseEligibility` に渡す
+4. `closeAllowed: true` かつ Agent が本文観測で親の完了と判断 → `gh issue close <親>` + コメント
+5. `closeAllowed: false` または Agent が未完了と判断 → 親は **open 維持**。親にコメントで残件を列挙 → exit 0
 
-**親 open のままのあと**: follow-up は `agent-ready` で Delivery Agent が実装 → マージ → 上記 §4.1 を繰り返す。open follow-up がゼロかつ親の必須条件が満たされたときだけ親を閉じる。
+**親 open のままのあと**: follow-up は `agent-ready` で Delivery Agent が実装 → マージ → 上記 §4.1 を繰り返す。open `acceptance-follow-up` がゼロかつ Agent が `gh` 観測で親の必須条件が満たされたと判断したときだけ親を閉じる（本文チェックボックスの正規表現照合はしない）。
 
 キャンペーン issue かどうかは **issue ラベル**で判断する。workflow や dispatch lib で本文をパースしない。
 

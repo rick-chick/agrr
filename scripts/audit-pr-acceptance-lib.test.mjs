@@ -4,150 +4,44 @@ import { test } from 'node:test';
 import {
   auditLinkedPrAcceptance,
   auditParentIssueCloseEligibility,
-  completionLineIsIncomplete,
-  completionLineIsSatisfied,
-  completionLineIsAutomationOutOfScope,
-  countUncheckedRequiredCheckboxes,
-  extractFollowUpIssueNumbers,
-  extractParentIssueNumber,
-  parsePrCompletionSection,
-  prBodyClaimsClosesIssue,
 } from './audit-pr-acceptance-lib.mjs';
 
-const PARTIAL_PR = `## Issue
-Part of #462
-
-## 完了条件（issue より）
-- [x] C1: pending → fetching — contract GREEN
-- [ ] C3–C5: 取得完了・UI・チャート — 未カバー
-Follow-up: #500
-`;
-
-const COMPLETE_PR = `## Issue
-Part of #462
-
-## 完了条件（issue より）
-- [x] C1: pending → fetching — contract GREEN
-- [x] C3: completed — e2e GREEN
-`;
-
-test('parsePrCompletionSection extracts checkbox lines from completion section', () => {
-  const { lines, hasSection } = parsePrCompletionSection(`
-## Issue
-Part of #462
-
-## 完了条件（issue より）
-- [x] C1: pending → fetching
-- [ ] C3: chart — 未カバー
-
-## テスト
-- [x] contract GREEN
-`);
-  assert.equal(hasSection, true);
-  assert.equal(lines.length, 2);
-  assert.match(lines[0], /C1/);
-});
-
-test('countUncheckedRequiredCheckboxes counts open boxes in parent body', () => {
-  assert.equal(
-    countUncheckedRequiredCheckboxes('- [ ] C3\n- [x] C1\n- [ ] C4'),
-    2,
-  );
-  assert.equal(countUncheckedRequiredCheckboxes('- [x] all done'), 0);
-});
-
-test('prBodyClaimsClosesIssue detects Closes and Fixes', () => {
-  assert.equal(prBodyClaimsClosesIssue('Closes #462'), true);
-  assert.equal(prBodyClaimsClosesIssue('Fixes #462'), true);
-  assert.equal(prBodyClaimsClosesIssue('Part of #462'), false);
-});
-
-test('extractFollowUpIssueNumbers parses Follow-up lines', () => {
-  assert.deepEqual(extractFollowUpIssueNumbers(PARTIAL_PR), [500]);
-  assert.deepEqual(extractFollowUpIssueNumbers('follow-up: #12\nFollow-up: #34'), [
-    12, 34,
-  ]);
-});
-
-test('completion line helpers', () => {
-  assert.equal(
-    completionLineIsSatisfied('- [x] C1: ok — test GREEN'),
-    true,
-  );
-  assert.equal(
-    completionLineIsIncomplete('- [ ] C3: 未カバー'),
-    true,
-  );
-});
-
-test('auditLinkedPrAcceptance blocks Closes in PR body', () => {
+test('auditLinkedPrAcceptance keeps parent open when follow-up is open', () => {
   const result = auditLinkedPrAcceptance({
-    prBody: 'Closes #462\n\n## 完了条件\n- [x] all',
-  });
-  assert.equal(result.mergeAllowed, false);
-});
-
-test('auditLinkedPrAcceptance blocks incomplete without follow-up', () => {
-  const result = auditLinkedPrAcceptance({
-    prBody: `Part of #462\n\n## 完了条件\n- [ ] C3 — 未カバー`,
-  });
-  assert.equal(result.mergeAllowed, false);
-});
-
-test('auditLinkedPrAcceptance allows partial merge with follow-up', () => {
-  const result = auditLinkedPrAcceptance({
-    prBody: PARTIAL_PR,
-    followUpIssues: [{ number: 500, state: 'OPEN' }],
+    followUpIssues: [
+      { number: 500, state: 'OPEN', labels: ['acceptance-follow-up'] },
+    ],
   });
   assert.equal(result.mergeAllowed, true);
   assert.equal(result.closeParentAllowed, false);
+  assert.match(result.reasons[0], /#500/);
 });
 
-test('auditLinkedPrAcceptance ignores production verification out-of-scope lines', () => {
+test('auditLinkedPrAcceptance allows parent close when follow-ups closed', () => {
   const result = auditLinkedPrAcceptance({
-    prBody: `Part of #462
-
-## 完了条件（issue より）
-- [x] C1: contract GREEN
-- [ ] C2: agrr.net で動作確認 — Automation 対象外（本番確認）
-`,
-    followUpIssues: [],
+    followUpIssues: [
+      { number: 500, state: 'CLOSED', labels: ['acceptance-follow-up'] },
+    ],
   });
   assert.equal(result.mergeAllowed, true);
   assert.equal(result.closeParentAllowed, true);
 });
 
-test('auditLinkedPrAcceptance blocks unchecked non-production lines without follow-up', () => {
-  const result = auditLinkedPrAcceptance({
-    prBody: `Part of #462
-
-## 完了条件（issue より）
-- [x] C1: contract GREEN
-- [ ] C2: chart — 未カバー
-- [ ] C3: agrr.net 確認
-`,
-    followUpIssues: [],
-  });
-  assert.equal(result.mergeAllowed, false);
-});
-
-test('auditLinkedPrAcceptance allows parent close when complete', () => {
-  const result = auditLinkedPrAcceptance({
-    prBody: COMPLETE_PR,
-    followUpIssues: [],
-  });
+test('auditLinkedPrAcceptance allows close when no follow-up tracking', () => {
+  const result = auditLinkedPrAcceptance({ followUpIssues: [] });
   assert.equal(result.mergeAllowed, true);
   assert.equal(result.closeParentAllowed, true);
 });
 
-test('extractParentIssueNumber reads Parent header', () => {
-  assert.equal(extractParentIssueNumber('Parent: #462\n\nCriteria: C3'), 462);
-  assert.equal(extractParentIssueNumber('no parent'), null);
+test('auditLinkedPrAcceptance ignores issues without acceptance-follow-up label', () => {
+  const result = auditLinkedPrAcceptance({
+    followUpIssues: [{ number: 501, state: 'OPEN', labels: ['agent-ready'] }],
+  });
+  assert.equal(result.closeParentAllowed, true);
 });
 
 test('auditParentIssueCloseEligibility waits for open follow-ups', () => {
   const result = auditParentIssueCloseEligibility({
-    parentBody: '- [ ] C3\n- [ ] C4',
     followUpIssues: [
       { number: 500, state: 'OPEN', labels: ['acceptance-follow-up'] },
     ],
@@ -157,7 +51,6 @@ test('auditParentIssueCloseEligibility waits for open follow-ups', () => {
 
 test('auditParentIssueCloseEligibility closes when follow-ups done', () => {
   const result = auditParentIssueCloseEligibility({
-    parentBody: '- [ ] C3\n- [ ] C4',
     followUpIssues: [
       { number: 500, state: 'CLOSED', labels: ['acceptance-follow-up'] },
     ],
@@ -165,69 +58,14 @@ test('auditParentIssueCloseEligibility closes when follow-ups done', () => {
   assert.equal(result.closeAllowed, true);
 });
 
-test('auditParentIssueCloseEligibility ignores production-only unchecked boxes', () => {
+test('auditParentIssueCloseEligibility allows close without follow-up label issues', () => {
   const result = auditParentIssueCloseEligibility({
-    parentBody: `- [x] C1: contract
-- [ ] C2: 本番デプロイ後に agrr.net で確認`,
-    followUpIssues: [],
+    followUpIssues: [{ number: 500, state: 'OPEN', labels: ['agent-ready'] }],
   });
   assert.equal(result.closeAllowed, true);
 });
 
-test('completionLineIsAutomationOutOfScope covers PRINCIPLES examples', () => {
-  assert.equal(
-    completionLineIsAutomationOutOfScope('- [ ] C2: 本番 Cloud Run で確認'),
-    true,
-  );
-  assert.equal(
-    completionLineIsAutomationOutOfScope('- [ ] C3: GCS バケットを本番で確認'),
-    true,
-  );
-  assert.equal(
-    completionLineIsAutomationOutOfScope('- [ ] C4: 起票時に本番確認を含めないこと'),
-    false,
-  );
-});
-
-test('completionLineIsAutomationOutOfScope ignores deploy-verify-close meta criteria', () => {
-  const deployClose =
-    '- [ ] 本番デプロイ後に C3 を確認し、問題なければ issue をクローズしてください';
-  assert.equal(completionLineIsAutomationOutOfScope(deployClose), true);
-  assert.equal(
-    completionLineIsAutomationOutOfScope(
-      '- [ ] デプロイ後に C3 を確認し、問題なければ issue をクローズ',
-    ),
-    true,
-  );
-  assert.equal(
-    completionLineIsAutomationOutOfScope('- [ ] C3: デプロイ後に確認'),
-    true,
-  );
-  assert.equal(
-    completionLineIsAutomationOutOfScope('- [ ] C3: 本番で動作確認'),
-    true,
-  );
-});
-
-test('auditParentIssueCloseEligibility ignores deploy-verify-close checkbox alone', () => {
-  const result = auditParentIssueCloseEligibility({
-    parentBody: `- [x] C1: contract GREEN
-- [ ] 本番デプロイ後に C3 を確認し、問題なければ issue をクローズしてください`,
-    followUpIssues: [],
-  });
+test('auditParentIssueCloseEligibility allows close when no follow-ups tracked', () => {
+  const result = auditParentIssueCloseEligibility({ followUpIssues: [] });
   assert.equal(result.closeAllowed, true);
-});
-
-test('auditLinkedPrAcceptance allows merge when only deploy-verify-close remains unchecked', () => {
-  const result = auditLinkedPrAcceptance({
-    prBody: `Part of #462
-
-## 完了条件（issue より）
-- [x] C1: contract GREEN
-- [ ] デプロイ後に C3 を確認し、問題なければ issue をクローズ
-`,
-    followUpIssues: [],
-  });
-  assert.equal(result.mergeAllowed, true);
-  assert.equal(result.closeParentAllowed, true);
 });
