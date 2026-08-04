@@ -138,6 +138,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/research-tools/scripts/patch-research-footer-brand.test.mjs
 
+      - name: research base path guard unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test .cursor/skills/research-tools/scripts/research-base-path-guard-lib.test.mjs
+
       - name: research hreflang unit tests
         working-directory: ${{ github.workspace }}
         run: |

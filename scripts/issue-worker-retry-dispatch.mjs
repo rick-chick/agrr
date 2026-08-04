@@ -22,7 +22,9 @@ import {
   openFixPrSearchQuery,
   parseDispatchedIssueNumberFromLog,
   parseRetryDispatchArgs,
+  resolveIssueRetryDispatchAction,
   selectReconcileDispatchCandidate,
+  shouldBypassRetryCandidateGate,
 } from './issue-worker-dispatch-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
 import { postWebhookJson } from './webhook-post-lib.mjs';
@@ -252,7 +254,7 @@ function postWebhook({ repo, issue, retryReason }) {
  * @returns {boolean}
  */
 function dispatchWebhook({ repo, issue, retryReason, action }) {
-  if (action !== 'epic_close_check' && action !== 'post_merge_close_check') {
+  if (!shouldBypassRetryCandidateGate(action)) {
     const labels = issue.labels.join(',');
     const eligibility = isRetryCandidate({
       issueLabels: labels,
@@ -330,12 +332,12 @@ async function main() {
     }
     const issue = fetchIssue(repo, issueNumber);
     const labels = issue.labels.join(',');
-    let action = 'implement';
-    if (isEpicIssue(issue.title, labels)) {
-      action = 'epic_close_check';
-    } else if (hasMergedPr(repo, issueNumber) && !hasOpenFixPr(repo, issueNumber)) {
-      action = 'post_merge_close_check';
-    }
+    const { action } = resolveIssueRetryDispatchAction({
+      issueTitle: issue.title,
+      issueLabels: labels,
+      hasMergedPr: hasMergedPr(repo, issueNumber),
+      hasOpenFixPr: hasOpenFixPr(repo, issueNumber),
+    });
     dispatchWebhook({
       repo,
       issue,

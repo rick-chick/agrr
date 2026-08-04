@@ -75,6 +75,40 @@ export function resolveEpicDispatchAction({ action, issueTitle, issueLabels }) {
 }
 
 /**
+ * Issue-mode retry dispatch action from structural PR state (title search + open fix PR).
+ *
+ * @param {{
+ *   issueTitle: string;
+ *   issueLabels: string;
+ *   hasMergedPr: boolean;
+ *   hasOpenFixPr: boolean;
+ * }} input
+ * @returns {{ action: 'implement' | 'epic_close_check' | 'post_merge_close_check' }}
+ */
+export function resolveIssueRetryDispatchAction({
+  issueTitle,
+  issueLabels,
+  hasMergedPr,
+  hasOpenFixPr,
+}) {
+  if (isEpicIssue(issueTitle, issueLabels)) {
+    return { action: 'epic_close_check' };
+  }
+  if (hasMergedPr && !hasOpenFixPr) {
+    return { action: 'post_merge_close_check' };
+  }
+  return { action: 'implement' };
+}
+
+/**
+ * @param {string} action
+ * @returns {boolean}
+ */
+export function shouldBypassRetryCandidateGate(action) {
+  return action === 'epic_close_check' || action === 'post_merge_close_check';
+}
+
+/**
  * @param {{
  *   eventAction: string;
  *   labelName: string;

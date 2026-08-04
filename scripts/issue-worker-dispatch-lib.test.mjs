@@ -15,6 +15,8 @@ import {
   isEpicIssue,
   resolveEpicDispatchAction,
   resolveImplementDispatchGate,
+  resolveIssueRetryDispatchAction,
+  shouldBypassRetryCandidateGate,
   isEpicCloseCheckCandidate,
   collectReconcileDispatchCandidates,
   selectReconcileDispatchCandidate,
@@ -521,4 +523,50 @@ test('buildWebhookPayload includes issue number', () => {
   });
   assert.equal(payload.issue_number, 42);
   assert.equal(payload.retry_reason, 'scheduled_reconcile');
+});
+
+test('resolveIssueRetryDispatchAction prefers epic_close_check over post_merge', () => {
+  const result = resolveIssueRetryDispatchAction({
+    issueTitle: '[epic] Parent',
+    issueLabels: 'enhancement',
+    hasMergedPr: true,
+    hasOpenFixPr: false,
+  });
+  assert.deepEqual(result, { action: 'epic_close_check' });
+});
+
+test('resolveIssueRetryDispatchAction routes merged zombie to post_merge_close_check', () => {
+  const result = resolveIssueRetryDispatchAction({
+    issueTitle: 'SEO canonical',
+    issueLabels: 'enhancement',
+    hasMergedPr: true,
+    hasOpenFixPr: false,
+  });
+  assert.deepEqual(result, { action: 'post_merge_close_check' });
+});
+
+test('resolveIssueRetryDispatchAction keeps implement when merged pr has open fix', () => {
+  const result = resolveIssueRetryDispatchAction({
+    issueTitle: 'Bug fix',
+    issueLabels: 'agent-ready',
+    hasMergedPr: true,
+    hasOpenFixPr: true,
+  });
+  assert.deepEqual(result, { action: 'implement' });
+});
+
+test('resolveIssueRetryDispatchAction defaults to implement', () => {
+  const result = resolveIssueRetryDispatchAction({
+    issueTitle: 'New feature',
+    issueLabels: 'agent-ready',
+    hasMergedPr: false,
+    hasOpenFixPr: false,
+  });
+  assert.deepEqual(result, { action: 'implement' });
+});
+
+test('shouldBypassRetryCandidateGate allows epic and post_merge actions', () => {
+  assert.equal(shouldBypassRetryCandidateGate('epic_close_check'), true);
+  assert.equal(shouldBypassRetryCandidateGate('post_merge_close_check'), true);
+  assert.equal(shouldBypassRetryCandidateGate('implement'), false);
 });
