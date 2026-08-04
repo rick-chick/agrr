@@ -270,12 +270,12 @@ import { auditLinkedPrAcceptance } from './scripts/audit-pr-acceptance-lib.mjs';
 | 監査結果 | 動作 |
 |----------|------|
 | Agent: `Closes` / 未達かつ follow-up 未起票 | **マージしない**（Agent 判断。ライブラリはブロックしない） |
-| `mergeAllowed: true` かつ `closeParentAllowed: false` | §4 でマージ。**親 issue は open のまま**（open `acceptance-follow-up` あり） |
-| `closeParentAllowed: true` | §4 でマージ → **§4.1 で親を `gh issue close`**（Agent が本文観測で完了と判断したうえで） |
+| `closeParentAllowed: false` | §4 でマージ可。**親 open 維持は open `acceptance-follow-up` があるときのみ** |
+| `closeParentAllowed: true` | §4 でマージ → **§4.1 で必ず `gh issue close`** |
 
 **禁止**: PR 本文の `Closes` / `Fixes`（GitHub 自動クローズの経路を使わない）。Issue Worker は常に `Part of #N`。
 
-**本番確認**: issue 完了条件に本番確認が含まれても、Agent の `gh` 観測では **未達・follow-up・マージブロックの理由にしない**（[PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）。
+**本番確認**: issue / PR 本文に書かれていても **未達・follow-up・マージ拒否・マージ後 open 維持の理由にしない**（あっても無視 — [PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）。
 
 ## 4) マージ
 
@@ -307,19 +307,31 @@ gh pr merge <N> --squash --delete-branch
 - リンク issue に `ux-campaign:breadcrumb` があれば **同一 run で続行**し [`delivery-agent`](../delivery-agent/SKILL.md) §PR マージ成功後 → [`ux-campaign-loop`](../ux-campaign-loop/SKILL.md) §1〜§2
 - **それ以外** → §4.1（親 issue / follow-up のクローズ判定）へ（Delivery Agent が同一 run で続行）
 
-### 4.1) 親 issue のクローズ（マージ直後・同一 run）
+### 4.1) 親 issue のクローズ（マージ直後・同一 run・必須）
 
-§3e で `closeParentAllowed: true` のときのみ:
+[`delivery-agent`](../delivery-agent/SKILL.md) §PR マージ成功後 と同一。マージ成功 run では **必ず**実施する。
+
+1. 親 issue を PR 本文 `Part of #N` / タイトル `(#N)` または `closingIssuesReferences` から **gh 観測で特定**（構造リンクが空でもスキップしない）
+2. open `acceptance-follow-up` を列挙 → `auditParentIssueCloseEligibility`
+3. `closeAllowed: true` → **`gh issue close <parent>`**（本番確認・本文 `[ ]` は無視）
 
 ```bash
 gh issue close <parent> --comment "## 🤖 受け入れ完了
 
-PR #<N> と follow-up が完了条件を満たしたためクローズします。"
+PR #<N> がマージされ、open acceptance-follow-up がないためクローズします。"
 ```
 
-`closeParentAllowed: false` のときは **親を閉じない**。PR コメントまたは親 issue コメントに「部分完了。Follow-up 完了後に再監査」と残す。
+**親を open に残してよい唯一の理由**: 同一親に open かつ `acceptance-follow-up` の子が残っていること。
 
-**follow-up issue（`acceptance-follow-up`）をマージした run** では、[`delivery-agent`](../delivery-agent/SKILL.md) §PR マージ成功後 が親の再監査を担当する。
+**禁止**（マージ直後）:
+
+- 「部分完了」「本番確認後にクローズ」「手動でクローズ」コメントで親を open 維持
+- 本番確認・デプロイ後 curl だけを残件として列挙
+- `closeParentAllowed: false` を本番未確認や issue 本文の未チェックだけで判断する
+
+`closeAllowed: false` のときは親を閉じない。PR / 親コメントには **open follow-up 番号のみ**（本番確認は書かない）。
+
+**follow-up issue の PR をマージした run** も同手順。親の再監査は [`delivery-agent`](../delivery-agent/SKILL.md) §4.1 が担当。
 
 ## 5) 修正ループ（マージ前・同一ブランチ）
 

@@ -64,23 +64,32 @@ PR フェーズでは sequential cleanup は行わない（上流 issue 実装 r
 
 [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) §4 で `gh pr merge` 成功直後、**この run を続行**する（別 webhook 不要。マージは常に本 Agent が行う）:
 
-1. `gh pr view <N> --json closingIssuesReferences` でリンク issue を取得
-2. 各 issue のラベルを `gh issue view --json labels,body` で確認
-3. いずれかに `ux-campaign:breadcrumb` → [`ux-campaign-loop`](../ux-campaign-loop/SKILL.md) §1〜§2（scan → 残件起票 or 完了）。**実装 PR 禁止**
-4. リンク issue に `acceptance-follow-up` がある → **§4.1 親 issue 再監査**（下記）
-5. 上記以外 → exit 0
+1. `gh pr view <N> --json body,title,closingIssuesReferences` で PR を読む
+2. **親 issue 番号を解決** — `closingIssuesReferences` が空でも、PR 本文の `Part of #N` またはタイトルの `(#N)` を **gh 観測で読む**（`Part of #N` 設計では GitHub 構造リンクは空のまま）
+3. 親 issue に `ux-campaign:breadcrumb` → [`ux-campaign-loop`](../ux-campaign-loop/SKILL.md) §1〜§2（scan → 残件起票 or 完了）。**実装 PR 禁止**
+4. **§4.1 親 issue クローズ**（下記）— **マージ成功 run では常に実施**（follow-up PR に限らない）
+5. exit 0
 
-#### §4.1 親 issue 再監査（follow-up マージ後）
+#### §4.1 親 issue クローズ（マージ直後・必須）
 
-follow-up issue（`acceptance-follow-up`）の PR をマージした run で実施:
+**マージ成功直後は必ず本節を実行する。** open `acceptance-follow-up` がゼロなら **親を閉じる**。本番確認は理由にしない。
 
-1. `gh issue view <follow-up> --json body,labels,state` — 本文の `Parent: #<親>` を **Agent が gh 観測で読む**（ライブラリは本文をパースしない）
-2. `gh issue list --label acceptance-follow-up --state open` で同一親の open follow-up が残るか **Agent が gh 観測で確認**
-3. 親に紐づく follow-up の **構造**（`number` / `state` / `labels`）を [`audit-pr-acceptance-lib.mjs`](../../../scripts/audit-pr-acceptance-lib.mjs) の `auditParentIssueCloseEligibility` に渡す
-4. `closeAllowed: true` かつ Agent が本文観測で親の完了と判断 → `gh issue close <親>` + コメント
-5. `closeAllowed: false` または Agent が未完了と判断 → 親は **open 維持**。親にコメントで残件を列挙 → exit 0
+1. `gh issue view <親> --json body,labels,state`（本文の本番確認・未チェック `[ ]` は **無視**）
+2. `gh issue list --label acceptance-follow-up --state all --json number,state,labels` — 同一親の follow-up を **gh 観測で特定**
+3. [`audit-pr-acceptance-lib.mjs`](../../../scripts/audit-pr-acceptance-lib.mjs) の `auditParentIssueCloseEligibility` に follow-up の構造のみ渡す
+4. `closeAllowed: true` → **`gh issue close <親>` + コメント**（実装 PR マージ済み・open follow-up なし）
+5. `closeAllowed: false`（open `acceptance-follow-up` あり）→ 親は open 維持。残件は **follow-up 番号のみ**列挙 → exit 0
 
-**親 open のままのあと**: follow-up は `agent-ready` で Delivery Agent が実装 → マージ → 上記 §4.1 を繰り返す。open `acceptance-follow-up` がゼロかつ Agent が `gh` 観測で親の必須条件が満たされたと判断したときだけ親を閉じる（本文チェックボックスの正規表現照合はしない）。
+**§4.1 で親を open に残してよい唯一の理由**: 同一親に **open かつ `acceptance-follow-up`** の子 issue が残っていること。
+
+**禁止**（マージ直後コメント・親 issue 状態）:
+
+- 本番確認・本番デプロイ後・`agrr.net`・`curl` 本番を **残件・部分完了の理由にする**
+- 「本番確認後に issue をクローズしてください」「手動でクローズ」と依頼する
+- issue 本文の本番確認行・メタ条件（「デプロイ後に確認してクローズ」）を **未達として扱う**
+- `closingIssuesReferences` が空だから **§4.1 をスキップして exit 0** する
+
+本番の運用確認は [`production-admin`](../../production-admin/SKILL.md) 等の別経路。Automation の受け入れに含めない。
 
 キャンペーン issue かどうかは **issue ラベル**で判断する。workflow や dispatch lib で本文をパースしない。
 
@@ -142,8 +151,9 @@ Open PR: decide merge or close; do not leave open without action.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
 (cleanup-workflow-tick.sh) before opening a PR. Do not skip tick or open PR before gate exit 0.
-After gh pr merge succeeds, if a linked issue has ux-campaign:breadcrumb, continue the same run
-with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent automation.
+After gh pr merge succeeds: always run §4.1 parent issue close in the same run (Part of #N from PR body/title if closingIssuesReferences is empty).
+Close the parent when no open acceptance-follow-up; never keep open for production verification or unchecked production-only criteria in issue body.
+If a linked issue has ux-campaign:breadcrumb, continue with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent automation.
 ```
 
 **Secrets**: `CURSOR_DELIVERY_WEBHOOK_URL` / `CURSOR_DELIVERY_WEBHOOK_KEY`

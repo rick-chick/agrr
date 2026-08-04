@@ -64,7 +64,7 @@ Automation の目的は、**人間がラベルを付けたり UI で再開した
 | 「本番で動作すること」のみの完了条件 | 観測可能な振る舞い + テスト名・contract へのマッピング |
 | **メタ条件**（例: 「本番デプロイ後に C3 を確認し、問題なければ issue をクローズ」） | 書かない。クローズは Merge Worker / Delivery Agent の受け入れ監査が担当 |
 
-**既存 issue に本番確認が含まれる場合**: Agent は `gh` で本文を読み、本番確認を **未達・follow-up の対象にしない**（**入っていても監査・クローズ判断では無視する**）。マージ・親クローズを本番未確認だけでブロックしない。機械的な本文パース（正規表現ライブラリ）は使わない — 判断は Agent の `gh` 観測のみ。構造的な follow-up 状態の確認だけ [`audit-pr-acceptance-lib.mjs`](../../../scripts/audit-pr-acceptance-lib.mjs) が担う（`acceptance-follow-up` の open/closed）。
+**既存 issue に本番確認が含まれる場合**: Agent は `gh` で本文を読み、本番確認を **未達・follow-up・マージブロック・マージ後 open 維持の理由にしない**（**あっても無視**）。マージ成功かつ open `acceptance-follow-up` がゼロなら **§4.1 で親を閉じる**。機械的な本文パースは使わない。構造のみ [`audit-pr-acceptance-lib.mjs`](../../../scripts/audit-pr-acceptance-lib.mjs)（`acceptance-follow-up` の open/closed）。
 
 本番の運用・調査は [`production-admin`](../../production-admin/SKILL.md) 等の**人間または別経路**。Delivery Agent の受け入れ監査の入力に含めない。
 

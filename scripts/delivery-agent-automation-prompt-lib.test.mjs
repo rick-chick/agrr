@@ -26,6 +26,14 @@ test('delivery agent automation prompt documents pr_unlinked webhook field', () 
   );
 });
 
+test('delivery agent automation prompt requires post-merge parent close without production gate', () => {
+  assert.match(DELIVERY_AGENT_AUTOMATION_PROMPT, /§4\.1 parent issue close/i);
+  assert.match(
+    DELIVERY_AGENT_AUTOMATION_PROMPT,
+    /never keep open for production verification/i,
+  );
+});
+
 test('delivery agent automation prompt forbids merge-prohibition labels as agent input', () => {
   assert.match(
     DELIVERY_AGENT_AUTOMATION_PROMPT,

@@ -14,8 +14,9 @@ Open PR: decide merge or close; do not leave open without action.
 Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
 (cleanup-workflow-tick.sh) before opening a PR. Do not skip tick or open PR before gate exit 0.
-After gh pr merge succeeds, if a linked issue has ux-campaign:breadcrumb, continue the same run
-with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent automation.`;
+After gh pr merge succeeds: always run §4.1 parent issue close in the same run (Part of #N from PR body/title if closingIssuesReferences is empty).
+Close the parent when no open acceptance-follow-up; never keep open for production verification or unchecked production-only criteria in issue body.
+If a linked issue has ux-campaign:breadcrumb, continue with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent automation.`;
 
 const DELIVERY_AGENT_PREFILL_BASE = {
   name: 'AGRR Delivery Agent (Webhook)',
