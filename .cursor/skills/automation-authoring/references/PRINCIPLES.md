@@ -62,8 +62,9 @@ Automation の目的は、**人間がラベルを付けたり UI で再開した
 | 本番デプロイ後の手動確認、`agrr.net` / 本番 LB への curl | `test-common`（contract / frontend）、該当テスト名の GREEN |
 | 本番 Cloud Run / GCS / Litestream の観測・本番 DB 照会 | ローカル Docker（`dev-docker`）、`agrr-test`（`gcp-test-local`）、再現テスト |
 | 「本番で動作すること」のみの完了条件 | 観測可能な振る舞い + テスト名・contract へのマッピング |
+| **メタ条件**（例: 「本番デプロイ後に C3 を確認し、問題なければ issue をクローズ」） | 書かない。クローズは Merge Worker / Delivery Agent の受け入れ監査が担当 |
 
-**既存 issue に本番確認が含まれる場合**: Agent は本番確認を **未達・follow-up の対象にしない**。PR 本文では `Automation 対象外（本番確認）` と明記し、代替根拠（テスト GREEN 等）で満たせる条件のみ照合する。マージ・親クローズを本番未確認だけでブロックしない。
+**既存 issue に本番確認が含まれる場合**: Agent は本番確認を **未達・follow-up の対象にしない**（**入っていても監査・クローズ判断では無視する**）。PR 本文では `Automation 対象外（本番確認）` と明記し、代替根拠（テスト GREEN 等）で満たせる条件のみ照合する。マージ・親クローズを本番未確認だけでブロックしない。`audit-pr-acceptance-lib` は `デプロイ後`・`問題なければ issue をクローズ` 等のメタ行も対象外として扱う。
 
 本番の運用・調査は [`production-admin`](../../production-admin/SKILL.md) 等の**人間または別経路**。Delivery Agent の受け入れ監査の入力に含めない。
 

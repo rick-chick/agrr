@@ -188,3 +188,46 @@ test('completionLineIsAutomationOutOfScope covers PRINCIPLES examples', () => {
     false,
   );
 });
+
+test('completionLineIsAutomationOutOfScope ignores deploy-verify-close meta criteria', () => {
+  const deployClose =
+    '- [ ] 本番デプロイ後に C3 を確認し、問題なければ issue をクローズしてください';
+  assert.equal(completionLineIsAutomationOutOfScope(deployClose), true);
+  assert.equal(
+    completionLineIsAutomationOutOfScope(
+      '- [ ] デプロイ後に C3 を確認し、問題なければ issue をクローズ',
+    ),
+    true,
+  );
+  assert.equal(
+    completionLineIsAutomationOutOfScope('- [ ] C3: デプロイ後に確認'),
+    true,
+  );
+  assert.equal(
+    completionLineIsAutomationOutOfScope('- [ ] C3: 本番で動作確認'),
+    true,
+  );
+});
+
+test('auditParentIssueCloseEligibility ignores deploy-verify-close checkbox alone', () => {
+  const result = auditParentIssueCloseEligibility({
+    parentBody: `- [x] C1: contract GREEN
+- [ ] 本番デプロイ後に C3 を確認し、問題なければ issue をクローズしてください`,
+    followUpIssues: [],
+  });
+  assert.equal(result.closeAllowed, true);
+});
+
+test('auditLinkedPrAcceptance allows merge when only deploy-verify-close remains unchecked', () => {
+  const result = auditLinkedPrAcceptance({
+    prBody: `Part of #462
+
+## 完了条件（issue より）
+- [x] C1: contract GREEN
+- [ ] デプロイ後に C3 を確認し、問題なければ issue をクローズ
+`,
+    followUpIssues: [],
+  });
+  assert.equal(result.mergeAllowed, true);
+  assert.equal(result.closeParentAllowed, true);
+});
