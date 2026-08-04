@@ -804,7 +804,7 @@ pub fn poll_farm_weather_completed(
             );
             last_progress = progress;
         }
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        std::thread::sleep(std::time::Duration::from_millis(200));
     }
     panic!("farm weather fetch did not reach completed within timeout");
 }
@@ -905,11 +905,10 @@ fn write_contract_observed_weather_gcs_fixture(weather_location_id: i64) {
         std::fs::create_dir_all(parent).expect("create weather gcs mirror dir");
     }
     let payload = r#"{
-      "2026-07-01": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-07-02": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-07-03": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-07-04": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-07-05": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0}
+      "2026-08-01": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
+      "2026-08-02": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
+      "2026-08-03": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
+      "2026-08-04": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0}
     }"#;
     std::fs::write(&object_path, payload).expect("write observed weather gcs fixture");
 }
@@ -948,14 +947,16 @@ pub fn seed_farm_temperature_chart_completed(user_id: i64) -> FarmTemperatureCha
     .expect("insert farm");
     let farm_id = conn.last_insert_rowid();
 
-    for day in 1..=5 {
-        let date = format!("2026-07-{day:02}");
+    for offset in 0..4 {
         conn.execute(
             "INSERT INTO weather_data (
                weather_location_id, date, temperature_max, temperature_min, temperature_mean,
                created_at, updated_at
-             ) VALUES (?1, ?2, 21.0, 8.0, 14.0, datetime('now'), datetime('now'))",
-            params![weather_location_id, date],
+             ) VALUES (
+               ?1, date('now', printf('-%d days', ?2)),
+               21.0, 8.0, 14.0, datetime('now'), datetime('now')
+             )",
+            params![weather_location_id, offset],
         )
         .expect("insert weather_data row");
     }
