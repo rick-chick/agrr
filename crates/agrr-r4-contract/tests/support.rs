@@ -1,6 +1,7 @@
 //! Contract test helpers (session login + SQLite seed for work_record scenarios).
 
 use agrr_r4_contract::http::ContractClient;
+use agrr_r4_contract::contract_wait::ensure_agrr_daemon_for_contract as ensure_daemon_once;
 use rusqlite::params;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -735,15 +736,9 @@ pub fn agrr_regeneration_contract_available() -> bool {
 }
 
 pub fn ensure_agrr_daemon_for_contract() {
-    if !agrr_regeneration_contract_available() {
-        return;
-    }
     let agrr_bin =
         std::env::var("AGRR_BIN_PATH").unwrap_or_else(|_| "/app/lib/core/agrr".to_string());
-    let _ = std::process::Command::new(&agrr_bin)
-        .args(["daemon", "start"])
-        .status();
-    std::thread::sleep(std::time::Duration::from_secs(2));
+    ensure_daemon_once(&agrr_bin, agrr_regeneration_contract_available());
 }
 
 pub fn poll_task_schedule_sync_ready(
@@ -775,7 +770,7 @@ pub fn poll_task_schedule_sync_ready(
         if sync_state == "failed" {
             panic!("task schedule regeneration failed: {body}");
         }
-        std::thread::sleep(std::time::Duration::from_millis(250));
+        std::thread::sleep(std::time::Duration::from_millis(50));
     }
     panic!("task schedule regeneration did not reach ready state within timeout");
 }
@@ -809,7 +804,7 @@ pub fn poll_farm_weather_completed(
             );
             last_progress = progress;
         }
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        std::thread::sleep(std::time::Duration::from_millis(50));
     }
     panic!("farm weather fetch did not reach completed within timeout");
 }
@@ -910,11 +905,10 @@ fn write_contract_observed_weather_gcs_fixture(weather_location_id: i64) {
         std::fs::create_dir_all(parent).expect("create weather gcs mirror dir");
     }
     let payload = r#"{
-      "2026-07-01": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-07-02": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-07-03": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-07-04": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-07-05": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0}
+      "2026-08-01": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
+      "2026-08-02": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
+      "2026-08-03": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
+      "2026-08-04": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0}
     }"#;
     std::fs::write(&object_path, payload).expect("write observed weather gcs fixture");
 }
@@ -953,14 +947,16 @@ pub fn seed_farm_temperature_chart_completed(user_id: i64) -> FarmTemperatureCha
     .expect("insert farm");
     let farm_id = conn.last_insert_rowid();
 
-    for day in 1..=5 {
-        let date = format!("2026-07-{day:02}");
+    for offset in 0..4 {
         conn.execute(
             "INSERT INTO weather_data (
                weather_location_id, date, temperature_max, temperature_min, temperature_mean,
                created_at, updated_at
-             ) VALUES (?1, ?2, 21.0, 8.0, 14.0, datetime('now'), datetime('now'))",
-            params![weather_location_id, date],
+             ) VALUES (
+               ?1, date('now', printf('-%d days', ?2)),
+               21.0, 8.0, 14.0, datetime('now'), datetime('now')
+             )",
+            params![weather_location_id, offset],
         )
         .expect("insert weather_data row");
     }
@@ -1017,6 +1013,56 @@ fn days_in_year(year: i32) -> u32 {
     }
 }
 
+fn contract_sqlite_today(conn: &rusqlite::Connection) -> String {
+    conn.query_row("SELECT date('now')", [], |row| row.get(0))
+        .expect("sqlite today")
+}
+
+fn contract_sqlite_dates_inclusive(
+    conn: &rusqlite::Connection,
+    start: &str,
+    end: &str,
+) -> Vec<String> {
+    let mut stmt = conn
+        .prepare(
+            "WITH RECURSIVE days(d) AS (
+               SELECT ?1
+               UNION ALL
+               SELECT date(d, '+1 day') FROM days WHERE d < ?2
+             )
+             SELECT d FROM days",
+        )
+        .expect("recursive date query");
+    stmt.query_map(params![start, end], |row| row.get(0))
+        .expect("date rows")
+        .collect::<Result<Vec<_>, _>>()
+        .expect("date list")
+}
+
+fn contract_weather_day_json() -> serde_json::Value {
+    serde_json::json!({
+        "temperature_max": 21.0,
+        "temperature_min": 8.0,
+        "temperature_mean": 14.0,
+    })
+}
+
+fn write_contract_weather_gcs_days(
+    weather_location_id: i64,
+    year: i32,
+    dates: &[String],
+) {
+    let mut days = serde_json::Map::new();
+    for date in dates {
+        days.insert(date.clone(), contract_weather_day_json());
+    }
+    write_contract_weather_gcs_year(
+        weather_location_id,
+        year,
+        &serde_json::to_string(&days).expect("gcs days json"),
+    );
+}
+
 fn write_contract_weather_gcs_year(weather_location_id: i64, year: i32, payload: &str) {
     let local_root = std::env::var("WEATHER_DATA_LOCAL_ROOT")
         .unwrap_or_else(|_| "/tmp/agrr-weather-contract".to_string());
@@ -1035,6 +1081,8 @@ pub fn seed_weather_cache_for_farm_create_completion() -> FarmCreateWeatherCache
     let seq = SEED_SEQ.fetch_add(1, Ordering::Relaxed);
     let latitude = 36.0 + (seq % 900) as f64 / 10_000.0;
     let longitude = 140.0 + (seq % 900) as f64 / 10_000.0;
+    let today = contract_sqlite_today(&conn);
+    let current_year: i32 = today[..4].parse().expect("year from today");
 
     conn.execute(
         "INSERT INTO weather_locations (latitude, longitude, elevation, timezone, created_at, updated_at)
@@ -1044,17 +1092,16 @@ pub fn seed_weather_cache_for_farm_create_completion() -> FarmCreateWeatherCache
     .expect("insert weather_location");
     let weather_location_id = conn.last_insert_rowid();
 
+    let current_year_start = format!("{current_year}-01-01");
+    let current_year_days = contract_sqlite_dates_inclusive(&conn, &current_year_start, &today);
+    let current_year_day_count = current_year_days.len() as i64;
+
     let mut years = serde_json::Map::new();
-    for year in 2000..=2026 {
-        let day_count = if year == 2026 {
-            205
+    for year in 2000..=current_year {
+        let (day_count, last_date) = if year == current_year {
+            (current_year_day_count, today.clone())
         } else {
-            days_in_year(year)
-        };
-        let last_date = if year == 2026 {
-            "2026-07-24".to_string()
-        } else {
-            format!("{year}-12-31")
+            (days_in_year(year) as i64, format!("{year}-12-31"))
         };
         years.insert(
             year.to_string(),
@@ -1068,39 +1115,21 @@ pub fn seed_weather_cache_for_farm_create_completion() -> FarmCreateWeatherCache
     }
     let bulk_stats = serde_json::json!({
         "earliest_date": "2000-01-01",
-        "latest_date": "2026-07-24",
+        "latest_date": today,
         "years": years,
     });
     conn.execute(
         "UPDATE weather_locations
          SET bulk_earliest_date = '2000-01-01',
-             bulk_latest_date = '2026-07-24',
-             bulk_year_stats = ?1,
+             bulk_latest_date = ?1,
+             bulk_year_stats = ?2,
              updated_at = datetime('now')
-         WHERE id = ?2",
-        params![bulk_stats.to_string(), weather_location_id],
+         WHERE id = ?3",
+        params![today, bulk_stats.to_string(), weather_location_id],
     )
     .expect("update weather location bulk metadata");
 
-    let mut chart_days = serde_json::Map::new();
-    for (month, start_day, end_day) in [(4, 26, 30), (5, 1, 31), (6, 1, 30), (7, 1, 24)] {
-        for day in start_day..=end_day {
-            let date = format!("2026-{month:02}-{day:02}");
-            chart_days.insert(
-                date,
-                serde_json::json!({
-                    "temperature_max": 21.0,
-                    "temperature_min": 8.0,
-                    "temperature_mean": 14.0,
-                }),
-            );
-        }
-    }
-    write_contract_weather_gcs_year(
-        weather_location_id,
-        2026,
-        &serde_json::to_string(&chart_days).expect("chart gcs json"),
-    );
+    write_contract_weather_gcs_days(weather_location_id, current_year, &current_year_days);
 
     eprintln!("seeded weather cache for farm create completion: {suffix} @ {latitude},{longitude}");
     FarmCreateWeatherCacheSeed {

@@ -37,6 +37,27 @@ needs_contract_binary_rebuild() {
   contract_rust_sources_newer_than "$binary" "$@"
 }
 
+# libtest --report-time requires a nightly-built test harness (stable rejects the flag).
+ensure_r4_contract_nightly_toolchain() {
+  if ! command -v rustup >/dev/null 2>&1; then
+    echo "rustup is required to install nightly for R4 contract --report-time" >&2
+    exit 1
+  fi
+  if ! rustup toolchain list | grep -q '^nightly'; then
+    echo "==> Installing nightly toolchain for R4 contract slow-test gate"
+    rustup toolchain install nightly --profile minimal
+  fi
+  if ! rustup run nightly cargo --version >/dev/null 2>&1; then
+    echo "nightly cargo is unavailable after install" >&2
+    exit 1
+  fi
+}
+
+r4_contract_cargo() {
+  ensure_r4_contract_nightly_toolchain
+  rustup run nightly cargo "$@"
+}
+
 ensure_agrr_server_binary() {
   local host_debug="${ROOT}/target/debug/agrr-server"
   local host_release="${ROOT}/target/release/agrr-server"
@@ -138,26 +159,29 @@ ensure_agrr_migrate_binary() {
 
 ensure_agrr_migrate_binary
 
+copy_r4_contract_test_binary_from_deps() {
+  local host_built
+  host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
+  if [[ -z "$host_built" ]]; then
+    host_built="$(find "${ROOT}/target/debug/build/agrr-r4-contract" -path '*/out/contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
+  fi
+  if [[ -n "$host_built" && -x "$host_built" ]]; then
+    cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
+    chmod +x "$R4_CONTRACT_TESTS_BIN"
+    return 0
+  fi
+  return 1
+}
+
+build_r4_contract_tests_on_host() {
+  # shellcheck source=/dev/null
+  [[ -f "${HOME}/.cargo/env" ]] && source "${HOME}/.cargo/env"
+  echo "==> Building agrr-r4-contract tests on host (cargo +nightly test -Z unstable-options --no-run)"
+  r4_contract_cargo test -Z unstable-options -p agrr-r4-contract --test contracts --no-run
+}
+
 ensure_agrr_r4_contract_tests_binary() {
   local -a source_dirs=("${ROOT}/crates/agrr-r4-contract")
-  local host_built=""
-
-  if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
-    echo "==> Building agrr-r4-contract tests in rust:1-bookworm (AGRR_SERVER_CONTRACT_DOCKER_BUILD=1)"
-    docker run --rm \
-      -v "${ROOT}:/app" \
-      -w /app \
-      rust:1-bookworm \
-      cargo build --tests -p agrr-r4-contract
-    host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
-    if [[ -n "$host_built" && -x "$host_built" ]]; then
-      cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
-      chmod +x "$R4_CONTRACT_TESTS_BIN"
-      return
-    fi
-    echo "==> agrr-r4-contract docker build did not produce a test binary"
-    exit 1
-  fi
 
   if [[ -x "$R4_CONTRACT_TESTS_BIN" ]] && ! needs_contract_binary_rebuild "$R4_CONTRACT_TESTS_BIN" AGRR_R4_CONTRACT_REBUILD "${source_dirs[@]}"; then
     return
@@ -166,29 +190,38 @@ ensure_agrr_r4_contract_tests_binary() {
     echo "==> agrr-r4-contract sources newer than contract test binary; rebuilding"
   fi
 
+  # CI (AGRR_SERVER_CONTRACT_DOCKER_BUILD=1): build in bookworm-compatible container so the
+  # binary matches the Debian test image glibc (host Ubuntu builds need GLIBC_2.39+).
+  if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
+    echo "==> Building agrr-r4-contract tests in rustlang/rust:nightly-bookworm (--report-time harness)"
+    docker run --rm \
+      -v "${ROOT}:/app" \
+      -w /app \
+      rustlang/rust:nightly-bookworm \
+      cargo +nightly test -Z unstable-options -p agrr-r4-contract --test contracts --no-run
+    if copy_r4_contract_test_binary_from_deps; then
+      return
+    fi
+    echo "==> agrr-r4-contract docker build did not produce a test binary"
+    exit 1
+  fi
+
   if command -v cargo >/dev/null 2>&1; then
-    # shellcheck source=/dev/null
-    [[ -f "${HOME}/.cargo/env" ]] && source "${HOME}/.cargo/env"
-    echo "==> Building agrr-r4-contract tests on host (cargo build --tests -p agrr-r4-contract)"
-    if cargo build --tests -p agrr-r4-contract; then
-      host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
-      if [[ -n "$host_built" && -x "$host_built" ]]; then
-        cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
-        chmod +x "$R4_CONTRACT_TESTS_BIN"
-        return
-      fi
-    elif [[ -x "$R4_CONTRACT_TESTS_BIN" ]]; then
+    if build_r4_contract_tests_on_host && copy_r4_contract_test_binary_from_deps; then
+      return
+    fi
+    if [[ -x "$R4_CONTRACT_TESTS_BIN" ]]; then
       echo "==> Host cargo build failed; reusing existing agrr-r4-contract test binary"
       return
     fi
-    echo "==> agrr-r4-contract build failed and no cached test binary"
-    exit 1
   fi
 
   if [[ ! -x "$R4_CONTRACT_TESTS_BIN" ]]; then
     echo "==> cargo not found and no agrr-r4-contract test binary at $R4_CONTRACT_TESTS_BIN"
     exit 1
   fi
+  echo "==> agrr-r4-contract build failed and no cached test binary"
+  exit 1
 }
 
 ensure_agrr_r4_contract_tests_binary
@@ -197,6 +230,10 @@ echo "==> ensure-reference-fixtures (shell contract)"
 bash "${ROOT}/scripts/ensure-reference-fixtures-test.sh"
 
 echo "==> R4 contract (CONTRACT_RUNTIME=rust, shared test.sqlite3)"
+R4_LOG_DIR="${ROOT}/tmp/agrr-r4-contract-logs"
+R4_LOG="${R4_LOG_DIR}/agrr-r4-contract-tests.log"
+mkdir -p "$R4_LOG_DIR"
+: >"$R4_LOG"
 docker compose --profile test run --rm \
   -e AGRR_TEST_SCRIPT=1 \
   -e "COVERAGE=${COVERAGE:-false}" \
@@ -205,6 +242,7 @@ docker compose --profile test run --rm \
   -v "${BINARY}:/usr/local/bin/agrr-server:ro" \
   -v "${MIGRATE_BINARY}:/usr/local/bin/agrr-migrate:ro" \
   -v "${R4_CONTRACT_TESTS_BIN}:/usr/local/bin/agrr-r4-contract-tests:ro" \
+  -v "${R4_LOG_DIR}:/contract-logs:rw" \
   test bash -c '
     set -euo pipefail
     export AGRR_APP_ROOT=/app
@@ -220,10 +258,16 @@ docker compose --profile test run --rm \
     export WEATHER_DATA_LOCAL_ROOT="${WEATHER_DATA_LOCAL_ROOT:-/tmp/agrr-weather-contract}"
     mkdir -p "$WEATHER_DATA_LOCAL_ROOT"
     AGRR_BIN="${AGRR_BIN_PATH:-/app/lib/core/agrr}"
+    AGRR_SOCKET_PATH="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
     if [ -x "$AGRR_BIN" ]; then
       echo "==> Starting agrr daemon for contract regeneration tests"
       "$AGRR_BIN" daemon start || true
-      sleep 2
+      for _ in $(seq 1 100); do
+        if [ -S "$AGRR_SOCKET_PATH" ] || [ -e "$AGRR_SOCKET_PATH" ]; then
+          break
+        fi
+        sleep 0.05
+      done
     fi
     agrr-server >/tmp/agrr-server-contract.log 2>&1 &
     SERVER_PID=$!
@@ -241,5 +285,16 @@ docker compose --profile test run --rm \
       exit 1
     fi
     echo "==> R4 contract (agrr-r4-contract)"
-    RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests
+    R4_LOG=/contract-logs/agrr-r4-contract-tests.log
+    set +e
+    RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests -Z unstable-options --report-time 2>&1 | tee "$R4_LOG"
+    R4_EXIT=${PIPESTATUS[0]}
+    set -e
+    exit "$R4_EXIT"
   '
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "node is required to run R4 contract slow-test gate (check-slow-libtest-output-cli.mjs)" >&2
+  exit 1
+fi
+node "${ROOT}/scripts/check-slow-libtest-output-cli.mjs" "$R4_LOG"
