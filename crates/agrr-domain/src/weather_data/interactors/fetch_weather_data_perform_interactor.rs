@@ -71,7 +71,7 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
         }
     }
 
-    #[cfg(test)]
+    /// Skips the pre-API throttle sleep (contract tests / `AGRR_TEST_SCRIPT=1` server path).
     pub fn with_skip_api_sleep(mut self) -> Self {
         self.skip_api_sleep = true;
         self

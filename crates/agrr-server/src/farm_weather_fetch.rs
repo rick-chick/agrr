@@ -42,6 +42,14 @@ pub struct FetchWeatherDataJobEnqueue {
     state: AppState,
 }
 
+fn weather_fetch_block_delay_secs(block_index: usize) -> u64 {
+    if std::env::var("AGRR_TEST_SCRIPT").ok().as_deref() == Some("1") {
+        0
+    } else {
+        block_index as u64
+    }
+}
+
 impl FetchWeatherDataJobEnqueue {
     pub fn new(state: AppState) -> Self {
         Self { state }
@@ -61,7 +69,7 @@ impl FetchWeatherDataEnqueuePort for FetchWeatherDataJobEnqueue {
             let state = self.state.clone();
             let start_date = block.start_date;
             let end_date = block.end_date;
-            let delay_secs = index as u64;
+            let delay_secs = weather_fetch_block_delay_secs(index);
             steps.push(JobStep {
                 name: "fetch_farm_weather_data",
                 run: Arc::new(move || {
@@ -174,14 +182,21 @@ pub async fn run_farm_weather_fetch_block(
         &farm_gateway,
         CableFarmRefreshBroadcast::new(state.cable_hub.clone()),
     );
-    let interactor = FetchWeatherDataPerformInteractor::new(
-        &weather_data,
-        &farm_weather,
-        &advance,
-        &record,
-        &agrr,
-        &presenter,
-    );
+    let interactor = {
+        let base = FetchWeatherDataPerformInteractor::new(
+            &weather_data,
+            &farm_weather,
+            &advance,
+            &record,
+            &agrr,
+            &presenter,
+        );
+        if std::env::var("AGRR_TEST_SCRIPT").ok().as_deref() == Some("1") {
+            base.with_skip_api_sleep()
+        } else {
+            base
+        }
+    };
     let clock = SystemClock;
     let now = clock.now();
     let input = FetchWeatherDataPerformInput {
@@ -278,6 +293,23 @@ pub fn run_pending_farm_weather_backfill(state: &AppState) {
         }
         Err(message) => {
             tracing::warn!(error = %message, "pending farm weather backfill failed");
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::weather_fetch_block_delay_secs;
+
+    #[test]
+    fn weather_fetch_block_delay_secs_respects_agrr_test_script() {
+        let previous = std::env::var("AGRR_TEST_SCRIPT").ok();
+        std::env::set_var("AGRR_TEST_SCRIPT", "1");
+        assert_eq!(0, weather_fetch_block_delay_secs(5));
+        std::env::remove_var("AGRR_TEST_SCRIPT");
+        assert_eq!(3, weather_fetch_block_delay_secs(3));
+        if let Some(value) = previous {
+            std::env::set_var("AGRR_TEST_SCRIPT", value);
         }
     }
 }
