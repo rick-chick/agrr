@@ -190,16 +190,8 @@ ensure_agrr_r4_contract_tests_binary() {
     echo "==> agrr-r4-contract sources newer than contract test binary; rebuilding"
   fi
 
-  if command -v cargo >/dev/null 2>&1; then
-    if build_r4_contract_tests_on_host && copy_r4_contract_test_binary_from_deps; then
-      return
-    fi
-    if [[ -x "$R4_CONTRACT_TESTS_BIN" ]]; then
-      echo "==> Host cargo build failed; reusing existing agrr-r4-contract test binary"
-      return
-    fi
-  fi
-
+  # CI (AGRR_SERVER_CONTRACT_DOCKER_BUILD=1): build in bookworm-compatible container so the
+  # binary matches the Debian test image glibc (host Ubuntu builds need GLIBC_2.39+).
   if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
     echo "==> Building agrr-r4-contract tests in rustlang/rust:nightly-bookworm (--report-time harness)"
     docker run --rm \
@@ -212,6 +204,16 @@ ensure_agrr_r4_contract_tests_binary() {
     fi
     echo "==> agrr-r4-contract docker build did not produce a test binary"
     exit 1
+  fi
+
+  if command -v cargo >/dev/null 2>&1; then
+    if build_r4_contract_tests_on_host && copy_r4_contract_test_binary_from_deps; then
+      return
+    fi
+    if [[ -x "$R4_CONTRACT_TESTS_BIN" ]]; then
+      echo "==> Host cargo build failed; reusing existing agrr-r4-contract test binary"
+      return
+    fi
   fi
 
   if [[ ! -x "$R4_CONTRACT_TESTS_BIN" ]]; then
