@@ -56,6 +56,7 @@ issue `opened`（新規作成）のときは **自動選定しない**。ペイ�
 - `agent-in-progress` ラベル付き
 - `wontfix` / `invalid` / `duplicate`
 - **既に同一 issue を閉じるオープン PR** がある（`gh pr list --search 'is:pr is:open (fixes #N OR closes #N)'` 等で確認）
+- **マージ済み PR がタイトル参照で存在**し open fix PR がない → §3 実装禁止。[`delivery-agent`](../delivery-agent/SKILL.md) §4.1 でクローズ判定のみ
 - Dependabot / Renovate 等 bot 起票（workflow 側で dispatch しない。万一届いたら §2a で invalid クローズ）
 
 ### 手動のみ（番号未指定・レガシー）
@@ -98,6 +99,7 @@ gh issue list --repo rick-chick/agrr --state open --limit 50 --json number,title
 
 | 状況 | 取る経路（例） |
 |------|----------------|
+| マージ済み PR あり（タイトル `in:title` 検索）・open fix PR なし | **[`delivery-agent`](../delivery-agent/SKILL.md) §4.1** で親クローズのみ（§3 実装禁止） |
 | 仕様が曖昧 | issue 本文と既存製品から**合理的な解釈を決めて実装**（PR に仮定を明記） |
 | `[epic]` / 親トラッカー | **§1b Epic クローズ判定**（子がすべて CLOSED なら §2a `completed` で親をクローズ。未完了子があれば列挙し、未着手子に `agent-ready` を付与） |
 | `ARCHITECTURE.md` 衝突 | **準拠する実装経路**を選ぶ。経路が無いときのみ §2a で close（根拠必須） |
@@ -303,7 +305,7 @@ while tasks:           # shell — gate exit 0 まで同一ターン継続
 3. 完了条件を PR 本文に写し、各行に確認根拠を付ける:
    - 確認方法に **テスト名・contract・CI** とある条件 → 該当テストをリポジトリで特定し、`本 PR GREEN` / `既存（path::test名）` / `未カバー` を記載する
    - **手動・E2E** とある条件 → 実施結果、または `手動未実施` を記載する
-   - **本番確認**（`agrr.net`、本番デプロイ後の目視、本番 DB / gcloud 観測、**「デプロイ後に確認して issue をクローズ」等のメタ条件**）→ **`Automation 対象外（本番確認）`** と明記。**follow-up 起票・`手動未実施`・マージブロックの理由にしない**（入っていても監査では無視 — [automation-authoring PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）
+   - **本番確認**（`agrr.net`、本番デプロイ後の目視、本番 DB / gcloud 観測、**「デプロイ後に確認して issue をクローズ」等のメタ条件**）→ PR 本文では `Automation 対象外（本番確認）` と明記可。**follow-up 起票・マージブロック・マージ後 open 維持の理由にしない**（あっても無視 — [automation-authoring PRINCIPLES §受け入れ条件](../automation-authoring/references/PRINCIPLES.md#受け入れ条件automation-スコープ)）
    - 根拠なしで `[x]` にしない
 4. issue 本文の**必須**セクションに列挙された完了条件について、`[ ]`・`未カバー`・`手動未実施` が残る → **follow-up issue を起票**（下記 §5a）し、PR は **`Part of #N` のみ**（`Closes` / `Fixes` は禁止）
    - **除外**: 上記の本番確認のみの条件は follow-up 対象外

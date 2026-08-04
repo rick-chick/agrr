@@ -12,6 +12,17 @@ export function openFixPrSearchQuery(issueNumber) {
   return `is:pr is:open (fixes #${issueNumber} OR closes #${issueNumber})`;
 }
 
+/**
+ * GitHub search for merged PRs referencing an issue in the title (e.g. Part of #N / (#N)).
+ * Structural title search — not issue/PR body parsing.
+ *
+ * @param {number} issueNumber
+ * @returns {string}
+ */
+export function mergedPrTitleSearchQuery(issueNumber) {
+  return `is:pr is:merged ${issueNumber} in:title`;
+}
+
 const BOT_AUTHORS = new Set(['dependabot[bot]', 'renovate[bot]', 'github-actions[bot]']);
 
 const OPENED_TERMINAL_LABELS = [
@@ -152,6 +163,34 @@ export function isEpicCloseCheckCandidate({
   return { eligible: true, action: 'epic_close_check' };
 }
 
+/**
+ * Post-merge parent close — merged PR exists (GitHub title search), issue still open.
+ * Does not require agent-ready. Agent runs Delivery §4.1 only (no re-implement).
+ *
+ * @param {{
+ *   issueLabels: string;
+ *   hasOpenFixPr: boolean;
+ * }} input
+ * @returns {{ eligible: true; action: 'post_merge_close_check' } | { eligible: false; reason: string }}
+ */
+export function isPostMergeCloseCandidate({ issueLabels, hasOpenFixPr }) {
+  if (hasLabel(issueLabels, 'agent-in-progress')) {
+    return { eligible: false, reason: 'in progress' };
+  }
+  if (hasLabel(issueLabels, 'agent-close')) {
+    return { eligible: false, reason: 'agent-close present' };
+  }
+  for (const label of OPENED_TERMINAL_LABELS) {
+    if (hasLabel(issueLabels, label)) {
+      return { eligible: false, reason: `has ${label}` };
+    }
+  }
+  if (hasOpenFixPr) {
+    return { eligible: false, reason: 'open fix pr exists' };
+  }
+  return { eligible: true, action: 'post_merge_close_check' };
+}
+
 export function isRetryCandidate({ issueLabels, issueTitle = '', hasOpenFixPr }) {
   if (!hasLabel(issueLabels, 'agent-ready')) {
     return { eligible: false, reason: 'no agent-ready' };
@@ -179,10 +218,13 @@ function reconcileActionRank(action) {
   if (action === 'implement') {
     return 0;
   }
-  if (action === 'epic_close_check') {
+  if (action === 'post_merge_close_check') {
     return 1;
   }
-  return 2;
+  if (action === 'epic_close_check') {
+    return 2;
+  }
+  return 3;
 }
 
 export { parseDispatchedIssueNumberFromLog } from './delivery-dispatch-lib.mjs';
@@ -228,13 +270,20 @@ export function selectReconcileDispatchCandidate(candidates, options = {}) {
  * @param {Array<{ number: number; title: string; labels: string[] }>} epicsWithoutAgentReady
  * @param {Array<{ number: number; title: string; labels: string[] }>} agentReadyIssues
  * @param {(issueNumber: number) => boolean} hasOpenFixPrFor
+ * @param {{
+ *   issues?: Array<{ number: number; title: string; labels: string[] }>;
+ *   hasMergedPrFor?: (issueNumber: number) => boolean;
+ * }} [postMergeCloseScan]
  * @returns {Array<{ issue: { number: number; title: string; labels: string[] }; action: string }>}
  */
 export function collectReconcileDispatchCandidates(
   epicsWithoutAgentReady,
   agentReadyIssues,
   hasOpenFixPrFor,
+  postMergeCloseScan = {},
 ) {
+  const { issues: postMergeIssues = [], hasMergedPrFor = () => false } =
+    postMergeCloseScan;
   const candidates = [];
   const seenNumbers = new Set();
 
@@ -266,6 +315,25 @@ export function collectReconcileDispatchCandidates(
     }
 
     candidates.push({ issue, action: retryResult.action });
+    seenNumbers.add(issue.number);
+  }
+
+  for (const issue of [...postMergeIssues].sort((a, b) => a.number - b.number)) {
+    if (seenNumbers.has(issue.number)) {
+      continue;
+    }
+    if (!hasMergedPrFor(issue.number)) {
+      continue;
+    }
+    const labels = issue.labels.join(',');
+    const postMergeResult = isPostMergeCloseCandidate({
+      issueLabels: labels,
+      hasOpenFixPr: hasOpenFixPrFor(issue.number),
+    });
+    if (!postMergeResult.eligible) {
+      continue;
+    }
+    candidates.push({ issue, action: postMergeResult.action });
     seenNumbers.add(issue.number);
   }
 

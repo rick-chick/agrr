@@ -7,6 +7,8 @@ import {
   defaultRetryReasonForMode,
   hasLabel,
   isRetryCandidate,
+  isPostMergeCloseCandidate,
+  mergedPrTitleSearchQuery,
   openFixPrSearchQuery,
   parseRetryDispatchArgs,
   resolveDispatchAction,
@@ -411,6 +413,90 @@ test('collectReconcileDispatchCandidates includes epic without agent-ready and i
   assert.equal(candidates.length, 2);
   const actions = candidates.map((entry) => `${entry.issue.number}:${entry.action}`);
   assert.deepEqual(actions, ['362:epic_close_check', '323:implement']);
+});
+
+test('mergedPrTitleSearchQuery uses title search without body parse', () => {
+  assert.equal(mergedPrTitleSearchQuery(497), 'is:pr is:merged 497 in:title');
+});
+
+test('isPostMergeCloseCandidate allows open issue without agent-ready', () => {
+  const result = isPostMergeCloseCandidate({
+    issueLabels: 'enhancement',
+    hasOpenFixPr: false,
+  });
+  assert.deepEqual(result, { eligible: true, action: 'post_merge_close_check' });
+});
+
+test('isPostMergeCloseCandidate rejects in progress', () => {
+  const result = isPostMergeCloseCandidate({
+    issueLabels: 'agent-in-progress',
+    hasOpenFixPr: false,
+  });
+  assert.deepEqual(result, { eligible: false, reason: 'in progress' });
+});
+
+test('isPostMergeCloseCandidate rejects open fix pr', () => {
+  const result = isPostMergeCloseCandidate({
+    issueLabels: 'enhancement',
+    hasOpenFixPr: true,
+  });
+  assert.deepEqual(result, { eligible: false, reason: 'open fix pr exists' });
+});
+
+test('collectReconcileDispatchCandidates includes post-merge zombie without agent-ready', () => {
+  const zombie = {
+    number: 497,
+    title: 'SEO title',
+    labels: ['enhancement'],
+  };
+  const candidates = collectReconcileDispatchCandidates([], [], () => false, {
+    issues: [zombie],
+    hasMergedPrFor: (n) => n === 497,
+  });
+  assert.deepEqual(candidates, [{ issue: zombie, action: 'post_merge_close_check' }]);
+});
+
+test('selectReconcileDispatchCandidate prefers implement over post_merge_close_check', () => {
+  const selected = selectReconcileDispatchCandidate([
+    {
+      issue: { number: 497, title: 'zombie', labels: [] },
+      action: 'post_merge_close_check',
+    },
+    {
+      issue: { number: 323, title: 'ready', labels: ['agent-ready'] },
+      action: 'implement',
+    },
+  ]);
+  assert.deepEqual(selected, {
+    issue: { number: 323, title: 'ready', labels: ['agent-ready'] },
+    action: 'implement',
+  });
+});
+
+test('selectReconcileDispatchCandidate prefers post_merge over epic_close_check', () => {
+  const selected = selectReconcileDispatchCandidate([
+    {
+      issue: { number: 362, title: '[epic] Parent', labels: [] },
+      action: 'epic_close_check',
+    },
+    {
+      issue: { number: 497, title: 'zombie', labels: [] },
+      action: 'post_merge_close_check',
+    },
+  ]);
+  assert.deepEqual(selected, {
+    issue: { number: 497, title: 'zombie', labels: [] },
+    action: 'post_merge_close_check',
+  });
+});
+
+test('collectReconcileDispatchCandidates skips post-merge when no merged pr', () => {
+  const issue = { number: 497, title: 'open', labels: [] };
+  const candidates = collectReconcileDispatchCandidates([], [], () => false, {
+    issues: [issue],
+    hasMergedPrFor: () => false,
+  });
+  assert.deepEqual(candidates, []);
 });
 
 test('parseRetryDispatchArgs parses repo and number', () => {
