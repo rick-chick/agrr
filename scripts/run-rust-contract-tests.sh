@@ -198,7 +198,7 @@ ensure_agrr_r4_contract_tests_binary() {
       -v "${ROOT}:/app" \
       -w /app \
       rustlang/rust:nightly-bookworm \
-      cargo test -Z unstable-options -p agrr-r4-contract --test contracts --no-run
+      cargo +nightly test -Z unstable-options -p agrr-r4-contract --test contracts --no-run
     if copy_r4_contract_test_binary_from_deps; then
       return
     fi
