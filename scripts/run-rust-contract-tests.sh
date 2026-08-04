@@ -230,6 +230,10 @@ echo "==> ensure-reference-fixtures (shell contract)"
 bash "${ROOT}/scripts/ensure-reference-fixtures-test.sh"
 
 echo "==> R4 contract (CONTRACT_RUNTIME=rust, shared test.sqlite3)"
+R4_LOG_DIR="${ROOT}/tmp/agrr-r4-contract-logs"
+R4_LOG="${R4_LOG_DIR}/agrr-r4-contract-tests.log"
+mkdir -p "$R4_LOG_DIR"
+: >"$R4_LOG"
 docker compose --profile test run --rm \
   -e AGRR_TEST_SCRIPT=1 \
   -e "COVERAGE=${COVERAGE:-false}" \
@@ -238,6 +242,7 @@ docker compose --profile test run --rm \
   -v "${BINARY}:/usr/local/bin/agrr-server:ro" \
   -v "${MIGRATE_BINARY}:/usr/local/bin/agrr-migrate:ro" \
   -v "${R4_CONTRACT_TESTS_BIN}:/usr/local/bin/agrr-r4-contract-tests:ro" \
+  -v "${R4_LOG_DIR}:/contract-logs:rw" \
   test bash -c '
     set -euo pipefail
     export AGRR_APP_ROOT=/app
@@ -280,13 +285,16 @@ docker compose --profile test run --rm \
       exit 1
     fi
     echo "==> R4 contract (agrr-r4-contract)"
-    R4_LOG=/tmp/agrr-r4-contract-tests.log
+    R4_LOG=/contract-logs/agrr-r4-contract-tests.log
     set +e
     RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests -Z unstable-options --report-time 2>&1 | tee "$R4_LOG"
     R4_EXIT=${PIPESTATUS[0]}
     set -e
-    if [ "$R4_EXIT" -ne 0 ]; then
-      exit "$R4_EXIT"
-    fi
-    node /app/scripts/check-slow-libtest-output-cli.mjs "$R4_LOG"
+    exit "$R4_EXIT"
   '
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "node is required to run R4 contract slow-test gate (check-slow-libtest-output-cli.mjs)" >&2
+  exit 1
+fi
+node "${ROOT}/scripts/check-slow-libtest-output-cli.mjs" "$R4_LOG"
