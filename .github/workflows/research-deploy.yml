@@ -72,3 +72,14 @@ jobs:
 
       - name: Verify production CTA asset
         run: node scripts/verify-research-cta-production-asset.mjs
+
+      - name: Verify SEO routing (canonical / hreflang)
+        run: |
+          chmod +x ./.cursor/skills/deploy-frontend/scripts/verify-seo-routing.sh
+          ./.cursor/skills/deploy-frontend/scripts/verify-seo-routing.sh
+
+      - name: Submit sitemap to Google Search Console
+        continue-on-error: true
+        run: |
+          chmod +x ./.cursor/skills/deploy-frontend/scripts/submit-sitemap-gsc.sh
+          ./.cursor/skills/deploy-frontend/scripts/submit-sitemap-gsc.sh
