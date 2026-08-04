@@ -34,7 +34,9 @@ description: >-
    - **それ以外** → PR フェーズ（[`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md)）。未リンクは prep 対象外のみ（merge / close は Agent が決める）
 2. **open PR** — issue 起点でリンク issue の open PR を検索（`closingIssuesReferences`）
    - **あり** → PR フェーズ
-   - **なし** → issue フェーズ（[`github-issue-worker`](../github-issue-worker/SKILL.md)）
+   - **なし** → **merged PR** — `gh pr list --search "is:pr is:merged <N> in:title" --state merged`（タイトル参照。本文パース禁止）
+     - **あり** → **§4.1 親クローズのみ**（再実装・2 つ目の PR 禁止）→ exit 0
+     - **なし** → issue フェーズ（[`github-issue-worker`](../github-issue-worker/SKILL.md)）
 3. **epic** — `[epic]` / `epic` ラベルなら §1b
 
 ### PR フェーズ
@@ -152,6 +154,7 @@ Use referenced skills for implement and merge paths.
 After TDD GREEN on issue implement path, run sequential-cleanup-review-workflow §4
 (cleanup-workflow-tick.sh) before opening a PR. Do not skip tick or open PR before gate exit 0.
 After gh pr merge succeeds: always run §4.1 parent issue close in the same run (Part of #N from PR body/title if closingIssuesReferences is empty).
+If issue is open with merged PR (is:merged <N> in:title search) and no open fix PR: run §4.1 only — do not re-implement or open a second PR.
 Close the parent when no open acceptance-follow-up; never keep open for production verification or unchecked production-only criteria in issue body.
 If a linked issue has ux-campaign:breadcrumb, continue with ux-campaign-loop §1–§2 (post-merge). Never disable the Delivery Agent automation.
 ```

@@ -56,6 +56,7 @@ issue `opened`（新規作成）のときは **自動選定しない**。ペイ�
 - `agent-in-progress` ラベル付き
 - `wontfix` / `invalid` / `duplicate`
 - **既に同一 issue を閉じるオープン PR** がある（`gh pr list --search 'is:pr is:open (fixes #N OR closes #N)'` 等で確認）
+- **マージ済み PR がタイトル参照で存在**し open fix PR がない → §3 実装禁止。[`delivery-agent`](../delivery-agent/SKILL.md) §4.1 でクローズ判定のみ
 - Dependabot / Renovate 等 bot 起票（workflow 側で dispatch しない。万一届いたら §2a で invalid クローズ）
 
 ### 手動のみ（番号未指定・レガシー）
@@ -98,6 +99,7 @@ gh issue list --repo rick-chick/agrr --state open --limit 50 --json number,title
 
 | 状況 | 取る経路（例） |
 |------|----------------|
+| マージ済み PR あり（タイトル `in:title` 検索）・open fix PR なし | **[`delivery-agent`](../delivery-agent/SKILL.md) §4.1** で親クローズのみ（§3 実装禁止） |
 | 仕様が曖昧 | issue 本文と既存製品から**合理的な解釈を決めて実装**（PR に仮定を明記） |
 | `[epic]` / 親トラッカー | **§1b Epic クローズ判定**（子がすべて CLOSED なら §2a `completed` で親をクローズ。未完了子があれば列挙し、未着手子に `agent-ready` を付与） |
 | `ARCHITECTURE.md` 衝突 | **準拠する実装経路**を選ぶ。経路が無いときのみ §2a で close（根拠必須） |

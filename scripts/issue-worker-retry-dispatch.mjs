@@ -18,6 +18,7 @@ import {
   hasLabel,
   isEpicIssue,
   isRetryCandidate,
+  mergedPrTitleSearchQuery,
   openFixPrSearchQuery,
   parseDispatchedIssueNumberFromLog,
   parseRetryDispatchArgs,
@@ -49,6 +50,50 @@ function hasOpenFixPr(repo, issueNumber) {
     'number',
   ]);
   return JSON.parse(raw).length > 0;
+}
+
+/**
+ * @param {string} repo
+ * @param {number} issueNumber
+ * @returns {boolean}
+ */
+function hasMergedPr(repo, issueNumber) {
+  const raw = gh(repo, [
+    'pr',
+    'list',
+    '--state',
+    'merged',
+    '--search',
+    mergedPrTitleSearchQuery(issueNumber),
+    '--json',
+    'number',
+    '--limit',
+    '1',
+  ]);
+  return JSON.parse(raw).length > 0;
+}
+
+/**
+ * @param {string} repo
+ * @returns {Array<{ number: number; title: string; url: string; labels: string[] }>}
+ */
+function listOpenIssues(repo) {
+  const raw = gh(repo, [
+    'issue',
+    'list',
+    '--state',
+    'open',
+    '--limit',
+    '100',
+    '--json',
+    'number,title,url,labels',
+  ]);
+  return JSON.parse(raw).map((issue) => ({
+    number: issue.number,
+    title: issue.title,
+    url: issue.url,
+    labels: issue.labels.map((label) => label.name),
+  }));
 }
 
 /**
@@ -207,7 +252,7 @@ function postWebhook({ repo, issue, retryReason }) {
  * @returns {boolean}
  */
 function dispatchWebhook({ repo, issue, retryReason, action }) {
-  if (action !== 'epic_close_check') {
+  if (action !== 'epic_close_check' && action !== 'post_merge_close_check') {
     const labels = issue.labels.join(',');
     const eligibility = isRetryCandidate({
       issueLabels: labels,
@@ -231,31 +276,43 @@ function dispatchWebhook({ repo, issue, retryReason, action }) {
 async function main() {
   const args = parseRetryDispatchArgs(process.argv);
   const repo = args.repo ?? DEFAULT_REPO;
-  const hasOpenFixPrFor = (issueNumber) => hasOpenFixPr(repo, issueNumber);
 
   if (args.mode === 'reconcile') {
+    const openIssues = listOpenIssues(repo);
     const epicsWithoutAgentReady = listEpicsWithoutAgentReady(listOpenEpicIssues(repo));
     const agentReadyIssues = listAgentReadyIssues(repo);
+    const hasOpenFixPrFor = (issueNumber) => hasOpenFixPr(repo, issueNumber);
     const candidates = collectReconcileDispatchCandidates(
       epicsWithoutAgentReady,
       agentReadyIssues,
       hasOpenFixPrFor,
+      {
+        issues: openIssues,
+        hasMergedPrFor: (issueNumber) => hasMergedPr(repo, issueNumber),
+      },
     );
     const deprioritizeIssueNumber = fetchLastScheduledReconcileIssueNumber(repo);
     const selected = selectReconcileDispatchCandidate(candidates, {
       deprioritizeIssueNumber: deprioritizeIssueNumber ?? undefined,
     });
     if (!selected) {
-      console.log('No eligible agent-ready or open epic issues for retry reconciliation.');
+      console.log('No eligible agent-ready, epic, or post-merge close issues for retry reconciliation.');
       return;
     }
 
     const issue =
       agentReadyIssues.find((entry) => entry.number === selected.issue.number) ??
-      epicsWithoutAgentReady.find((entry) => entry.number === selected.issue.number);
+      epicsWithoutAgentReady.find((entry) => entry.number === selected.issue.number) ??
+      openIssues.find((entry) => entry.number === selected.issue.number);
     if (!issue) {
       console.log('Selected reconcile issue disappeared before dispatch.');
       return;
+    }
+
+    if (selected.action === 'post_merge_close_check' || selected.action === 'epic_close_check') {
+      console.log(
+        `issue-worker-retry: dispatch ${selected.action} for #${issue.number}`,
+      );
     }
 
     postWebhook({
@@ -273,7 +330,12 @@ async function main() {
     }
     const issue = fetchIssue(repo, issueNumber);
     const labels = issue.labels.join(',');
-    const action = isEpicIssue(issue.title, labels) ? 'epic_close_check' : 'implement';
+    let action = 'implement';
+    if (isEpicIssue(issue.title, labels)) {
+      action = 'epic_close_check';
+    } else if (hasMergedPr(repo, issueNumber) && !hasOpenFixPr(repo, issueNumber)) {
+      action = 'post_merge_close_check';
+    }
     dispatchWebhook({
       repo,
       issue,
