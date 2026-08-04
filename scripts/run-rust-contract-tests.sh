@@ -162,6 +162,9 @@ ensure_agrr_migrate_binary
 copy_r4_contract_test_binary_from_deps() {
   local host_built
   host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
+  if [[ -z "$host_built" ]]; then
+    host_built="$(find "${ROOT}/target/debug/build/agrr-r4-contract" -path '*/out/contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
+  fi
   if [[ -n "$host_built" && -x "$host_built" ]]; then
     cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
     chmod +x "$R4_CONTRACT_TESTS_BIN"
@@ -173,8 +176,8 @@ copy_r4_contract_test_binary_from_deps() {
 build_r4_contract_tests_on_host() {
   # shellcheck source=/dev/null
   [[ -f "${HOME}/.cargo/env" ]] && source "${HOME}/.cargo/env"
-  echo "==> Building agrr-r4-contract tests on host (cargo +nightly build --tests -p agrr-r4-contract)"
-  r4_contract_cargo build --tests -p agrr-r4-contract
+  echo "==> Building agrr-r4-contract tests on host (cargo +nightly test -Z unstable-options --no-run)"
+  r4_contract_cargo test -Z unstable-options -p agrr-r4-contract --test contracts --no-run
 }
 
 ensure_agrr_r4_contract_tests_binary() {
@@ -203,7 +206,7 @@ ensure_agrr_r4_contract_tests_binary() {
       -v "${ROOT}:/app" \
       -w /app \
       rustlang/rust:nightly-bookworm \
-      cargo build --tests -p agrr-r4-contract
+      cargo test -Z unstable-options -p agrr-r4-contract --test contracts --no-run
     if copy_r4_contract_test_binary_from_deps; then
       return
     fi
@@ -277,7 +280,7 @@ docker compose --profile test run --rm \
     echo "==> R4 contract (agrr-r4-contract)"
     R4_LOG=/tmp/agrr-r4-contract-tests.log
     set +e
-    RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests --report-time 2>&1 | tee "$R4_LOG"
+    RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests -Z unstable-options --report-time 2>&1 | tee "$R4_LOG"
     R4_EXIT=${PIPESTATUS[0]}
     set -e
     if [ "$R4_EXIT" -ne 0 ]; then
