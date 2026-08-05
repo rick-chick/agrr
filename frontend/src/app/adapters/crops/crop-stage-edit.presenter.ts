@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import {
   CropStageEditView,
   CropStageEditViewState
@@ -93,7 +94,7 @@ export class CropStageEditPresenter
       this.view.control = {
         ...this.view.control,
         loading: false,
-        error: dto.message,
+        error: errorDtoI18nKey(dto),
         pendingSuccessFlash: null,
         pendingErrorFlash: null,
         pendingNavigateToList: false
@@ -106,7 +107,7 @@ export class CropStageEditPresenter
       loading: false,
       error: null,
       pendingSuccessFlash: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto),
+      pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) }),
       pendingNavigateToList: false
     });
   }
