@@ -134,6 +134,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-frontend-deploy-seo-routing.test.mjs
 
+      - name: prerender shell paths sync contract unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-prerender-shell-paths-sync.test.mjs
+
       - name: verify-seo-routing contract unit tests
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/deploy-frontend/scripts/verify-seo-routing-contract.test.mjs

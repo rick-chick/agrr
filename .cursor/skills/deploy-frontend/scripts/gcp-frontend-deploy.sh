@@ -260,6 +260,7 @@ fi
 PRERENDER_SHELL_PATHS=(
   about contact privacy terms
   "public-plans/new"
+  entry-schedule
   en
   "en/about"
   "en/contact"
