@@ -127,6 +127,10 @@ function createView(overrides: Partial<PlanTaskScheduleView['control']> = {}): P
       filteredFieldCount: 0,
       filteredTaskCount: 0,
       regenerateRequiresConfirm: false,
+      totalFieldCount: 0,
+      fieldsWithTasksCount: 0,
+      fieldsWithoutTasksCount: 0,
+      allFieldsLackTasks: false,
       ...overrides
     }
   };
