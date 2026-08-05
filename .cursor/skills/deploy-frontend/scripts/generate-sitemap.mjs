@@ -8,6 +8,7 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { constants } from 'node:fs';
 import { isIndexableResearchHtml } from './generate-sitemap-lib.mjs';
+import { entryScheduleCropSitemapPaths } from '../../../../frontend/scripts/entry-schedule-prerender-catalog.mjs';
 import {
   alternateLocaleRelativePath,
   buildSitemapHreflangAlternates,
@@ -27,7 +28,10 @@ const OUT_DIR = join(ROOT, 'frontend', 'public');
 const OUT_FILE = join(OUT_DIR, 'sitemap.xml');
 const BASE_URL = (process.env.SITEMAP_BASE_URL || 'https://agrr.net').replace(/\/$/, '');
 
-const SPA_SINGLE_LOCALE_PATHS = ['/entry-schedule'];
+const SPA_SINGLE_LOCALE_PATHS = [
+  '/entry-schedule',
+  ...entryScheduleCropSitemapPaths(),
+];
 
 function escapeXml(value) {
   return value
