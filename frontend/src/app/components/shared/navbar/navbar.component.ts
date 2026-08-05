@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } fro
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { filter, Subscription } from 'rxjs';
-import { loginReturnQueryForLocation } from '../../auth/login/login-auth-urls';
+import { loginReturnQueryForLocation } from '../../../core/auth/login-auth-urls';
 import { type CurrentUser } from '../../../services/api.service';
 import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
 
