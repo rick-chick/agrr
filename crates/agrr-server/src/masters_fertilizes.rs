@@ -173,10 +173,20 @@ struct FertilizeAttrs {
     is_reference: Option<bool>,
 }
 
-struct CreatePort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
+struct CreatePort {
+    user_id: i64,
+    out: Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>,
+}
 impl FertilizeCreateOutputPort for CreatePort {
     fn on_success(&mut self, entity: FertilizeEntity) {
-        *self.0.lock().unwrap() = Some(Ok((
+        crate::security_audit_log::log_if_reference_master(
+            self.user_id,
+            "fertilize",
+            "create",
+            entity.is_reference,
+            entity.id,
+        );
+        *self.out.lock().unwrap() = Some(Ok((
             StatusCode::CREATED,
             Json(fertilize_json(&entity)),
         )));
@@ -186,7 +196,7 @@ impl FertilizeCreateOutputPort for CreatePort {
             CreateFailure::Error(e) => e.message,
             CreateFailure::Policy(_) => "forbidden".into(),
         };
-        *self.0.lock().unwrap() = Some(Err((
+        *self.out.lock().unwrap() = Some(Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({"errors": [msg]})),
         )));
@@ -219,7 +229,7 @@ async fn create(
     let gateway = FertilizeSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
-    let mut port = CreatePort(out.clone());
+    let mut port = CreatePort { user_id, out: out.clone() };
     let mut interactor = FertilizeCreateInteractor::new(
         &mut port,
         user_id,
@@ -233,10 +243,20 @@ async fn create(
     take_response(&out)
 }
 
-struct UpdatePort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
+struct UpdatePort {
+    user_id: i64,
+    out: Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>,
+}
 impl FertilizeUpdateOutputPort for UpdatePort {
     fn on_success(&mut self, entity: FertilizeEntity) {
-        *self.0.lock().unwrap() =
+        crate::security_audit_log::log_if_reference_master(
+            self.user_id,
+            "fertilize",
+            "update",
+            entity.is_reference,
+            entity.id,
+        );
+        *self.out.lock().unwrap() =
             Some(Ok((StatusCode::OK, Json(fertilize_json(&entity)))));
     }
     fn on_failure(&mut self, failure: UpdateFailure) {
@@ -244,7 +264,7 @@ impl FertilizeUpdateOutputPort for UpdatePort {
             UpdateFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
             UpdateFailure::Fertilize(f) => (StatusCode::UNPROCESSABLE_ENTITY, f.message),
         };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        *self.out.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
     }
 }
 
@@ -272,7 +292,7 @@ async fn update(
     let gateway = FertilizeSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
-    let mut port = UpdatePort(out.clone());
+    let mut port = UpdatePort { user_id, out: out.clone() };
     let mut interactor = FertilizeUpdateInteractor::new(
         &mut port,
         user_id,

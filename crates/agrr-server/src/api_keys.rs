@@ -75,8 +75,15 @@ async fn rotate(
     let mut interactor = UserApiKeyRotateInteractor::new(Box::new(presenter), gateway);
     interactor.call(user_id, regenerate);
     let mut guard = body.lock().unwrap();
-    guard.take().ok_or((
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(serde_json::json!({"error": "internal"})),
-    ))
+    match guard.take() {
+        Some((status, json)) if status == StatusCode::OK => {
+            crate::security_audit_log::log_api_key_event(user_id, regenerate);
+            Ok((status, json))
+        }
+        Some((status, json)) => Err((status, json)),
+        None => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error": "internal"})),
+        )),
+    }
 }

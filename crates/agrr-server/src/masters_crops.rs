@@ -135,7 +135,16 @@ async fn create_crop(
     interactor.call(input).map_err(internal)?;
 
     match presenter.body {
-        Some(Ok(entity)) => Ok((StatusCode::CREATED, Json(crop_to_json(&entity, &[])))),
+        Some(Ok(entity)) => {
+            crate::security_audit_log::log_if_reference_master(
+                user_id,
+                "crop",
+                "create",
+                entity.is_reference,
+                Some(entity.id),
+            );
+            Ok((StatusCode::CREATED, Json(crop_to_json(&entity, &[]))))
+        }
         Some(Err((status, body))) => Err((status, Json(body))),
         None => Err(internal_error()),
     }
@@ -171,7 +180,16 @@ async fn update_crop(
     interactor.call(input).map_err(internal)?;
 
     match presenter.body {
-        Some(Ok(entity)) => Ok(Json(crop_to_json(&entity, &[]))),
+        Some(Ok(entity)) => {
+            crate::security_audit_log::log_if_reference_master(
+                user_id,
+                "crop",
+                "update",
+                entity.is_reference,
+                Some(entity.id),
+            );
+            Ok(Json(crop_to_json(&entity, &[])))
+        }
         Some(Err((status, body))) => Err((status, Json(body))),
         None => Err(internal_error()),
     }

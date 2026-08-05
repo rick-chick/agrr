@@ -159,10 +159,20 @@ struct PestAttrs {
     is_reference: Option<bool>,
 }
 
-struct CreatePort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
+struct CreatePort {
+    user_id: i64,
+    out: Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>,
+}
 impl PestCreateOutputPort for CreatePort {
     fn on_success(&mut self, entity: PestEntity) {
-        *self.0.lock().unwrap() = Some(Ok((
+        crate::security_audit_log::log_if_reference_master(
+            self.user_id,
+            "pest",
+            "create",
+            entity.is_reference,
+            Some(entity.id),
+        );
+        *self.out.lock().unwrap() = Some(Ok((
             StatusCode::CREATED,
             Json(pest_entity_json(&entity)),
         )));
@@ -171,7 +181,7 @@ impl PestCreateOutputPort for CreatePort {
         let msg = match failure {
             CreateFailure::Error(e) => e.message,
         };
-        *self.0.lock().unwrap() = Some(Err((
+        *self.out.lock().unwrap() = Some(Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({"errors": [msg]})),
         )));
@@ -205,7 +215,10 @@ async fn create(
     let crop_pest_gw = agrr_adapters_sqlite::CropPestSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
-    let mut port = CreatePort(out.clone());
+    let mut port = CreatePort {
+        user_id,
+        out: out.clone(),
+    };
     let mut interactor = PestCreateInteractor::new(
         &mut port,
         user_id,
@@ -221,10 +234,20 @@ async fn create(
     take_response(&out)
 }
 
-struct UpdatePort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
+struct UpdatePort {
+    user_id: i64,
+    out: Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>,
+}
 impl PestUpdateOutputPort for UpdatePort {
     fn on_success(&mut self, entity: PestEntity) {
-        *self.0.lock().unwrap() =
+        crate::security_audit_log::log_if_reference_master(
+            self.user_id,
+            "pest",
+            "update",
+            entity.is_reference,
+            Some(entity.id),
+        );
+        *self.out.lock().unwrap() =
             Some(Ok((StatusCode::OK, Json(pest_entity_json(&entity)))));
     }
     fn on_failure(&mut self, failure: UpdateFailure) {
@@ -236,7 +259,7 @@ impl PestUpdateOutputPort for UpdatePort {
                 "reference flag change denied".into(),
             ),
         };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        *self.out.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
     }
 }
 
@@ -270,7 +293,10 @@ async fn update(
     let user_lookup = UserLookupSqliteGateway::new(state.sqlite.clone());
     let translator = PassthroughTranslator;
     let logger = NoopLogger;
-    let mut port = UpdatePort(out.clone());
+    let mut port = UpdatePort {
+        user_id,
+        out: out.clone(),
+    };
     let mut interactor = PestUpdateInteractor::new(
         &mut port,
         user_id,

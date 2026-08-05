@@ -131,6 +131,10 @@ async fn google_callback(
         return Ok(Redirect::temporary(&spa_login_redirect_url(None)).into_response());
     }
 
+    if let Some(user_id) = result.user_id {
+        crate::security_audit_log::log_login_success(user_id);
+    }
+
     let mut cookie = Cookie::new("session_id", result.session_id.unwrap_or_default());
     cookie.set_http_only(true);
     cookie.set_same_site(SameSite::Lax);
@@ -170,6 +174,7 @@ async fn logout(State(state): State<AppState>, jar: CookieJar) -> impl IntoRespo
         if let Ok(Some(record)) = SessionLookupSqliteGateway::new(state.sqlite.clone())
             .find_active_by_session_id(session_cookie.value())
         {
+            crate::security_audit_log::log_logout(record.user_id);
             agrr_adapters_sqlite::UserSessionRevocationSqliteGateway::new(state.sqlite.clone())
                 .delete_all_sessions_for_user(record.user_id);
         }

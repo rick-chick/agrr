@@ -158,13 +158,23 @@ struct RuleAttrs {
     is_reference: Option<bool>,
 }
 
-struct CreatePort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
+struct CreatePort {
+    user_id: i64,
+    out: Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>,
+}
 impl InteractionRuleCreateOutputPort for CreatePort {
     fn on_success(&mut self, entity: InteractionRuleEntity) {
-        *self.0.lock().unwrap() = Some(Ok((StatusCode::CREATED, Json(rule_json(&entity)))));
+        crate::security_audit_log::log_if_reference_master(
+            self.user_id,
+            "interaction_rule",
+            "create",
+            entity.is_reference,
+            entity.id,
+        );
+        *self.out.lock().unwrap() = Some(Ok((StatusCode::CREATED, Json(rule_json(&entity)))));
     }
     fn on_failure(&mut self, error: Error) {
-        *self.0.lock().unwrap() = Some(Err((
+        *self.out.lock().unwrap() = Some(Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({"errors": [error.message]})),
         )));
@@ -193,7 +203,7 @@ async fn create(
     let gateway = InteractionRuleSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
-    let mut port = CreatePort(out.clone());
+    let mut port = CreatePort { user_id, out: out.clone() };
     let mut interactor = InteractionRuleCreateInteractor::new(
         &mut port,
         user_id,
@@ -207,10 +217,20 @@ async fn create(
     take_response(&out)
 }
 
-struct UpdatePort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
+struct UpdatePort {
+    user_id: i64,
+    out: Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>,
+}
 impl InteractionRuleUpdateOutputPort for UpdatePort {
     fn on_success(&mut self, entity: InteractionRuleEntity) {
-        *self.0.lock().unwrap() = Some(Ok((StatusCode::OK, Json(rule_json(&entity)))));
+        crate::security_audit_log::log_if_reference_master(
+            self.user_id,
+            "interaction_rule",
+            "update",
+            entity.is_reference,
+            entity.id,
+        );
+        *self.out.lock().unwrap() = Some(Ok((StatusCode::OK, Json(rule_json(&entity)))));
     }
     fn on_failure(&mut self, failure: UpdateFailure) {
         let msg = match failure {
@@ -218,7 +238,7 @@ impl InteractionRuleUpdateOutputPort for UpdatePort {
             UpdateFailure::Policy(_) => "forbidden".into(),
             UpdateFailure::ReferenceFlag(_) => "reference flag change denied".into(),
         };
-        *self.0.lock().unwrap() = Some(Err((
+        *self.out.lock().unwrap() = Some(Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({"errors": [msg]})),
         )));
@@ -249,7 +269,7 @@ async fn update(
     let gateway = InteractionRuleSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
-    let mut port = UpdatePort(out.clone());
+    let mut port = UpdatePort { user_id, out: out.clone() };
     let mut interactor = InteractionRuleUpdateInteractor::new(
         &mut port,
         user_id,

@@ -173,13 +173,23 @@ struct TaskAttrs {
     is_reference: Option<bool>,
 }
 
-struct CreatePort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
+struct CreatePort {
+    user_id: i64,
+    out: Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>,
+}
 impl AgriculturalTaskCreateOutputPort for CreatePort {
     fn on_success(&mut self, entity: AgriculturalTaskEntity) {
-        *self.0.lock().unwrap() = Some(Ok((StatusCode::CREATED, Json(task_json(&entity)))));
+        crate::security_audit_log::log_if_reference_master(
+            self.user_id,
+            "agricultural_task",
+            "create",
+            entity.is_reference,
+            entity.id,
+        );
+        *self.out.lock().unwrap() = Some(Ok((StatusCode::CREATED, Json(task_json(&entity)))));
     }
     fn on_failure(&mut self, error: Error) {
-        *self.0.lock().unwrap() = Some(Err((
+        *self.out.lock().unwrap() = Some(Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({"errors": [error.message]})),
         )));
@@ -206,7 +216,7 @@ async fn create(
     let gateway = AgriculturalTaskSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
-    let mut port = CreatePort(out.clone());
+    let mut port = CreatePort { user_id, out: out.clone() };
     let mut interactor = AgriculturalTaskCreateInteractor::new(
         &mut port,
         user_id,
@@ -220,10 +230,20 @@ async fn create(
     take_response(&out)
 }
 
-struct UpdatePort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
+struct UpdatePort {
+    user_id: i64,
+    out: Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>,
+}
 impl AgriculturalTaskUpdateOutputPort for UpdatePort {
     fn on_success(&mut self, entity: AgriculturalTaskEntity) {
-        *self.0.lock().unwrap() = Some(Ok((StatusCode::OK, Json(task_json(&entity)))));
+        crate::security_audit_log::log_if_reference_master(
+            self.user_id,
+            "agricultural_task",
+            "update",
+            entity.is_reference,
+            entity.id,
+        );
+        *self.out.lock().unwrap() = Some(Ok((StatusCode::OK, Json(task_json(&entity)))));
     }
     fn on_failure(&mut self, failure: UpdateFailure) {
         let msg = match failure {
@@ -231,7 +251,7 @@ impl AgriculturalTaskUpdateOutputPort for UpdatePort {
             UpdateFailure::Policy(_) => "forbidden".into(),
             UpdateFailure::ReferenceFlag(_) => "reference flag change denied".into(),
         };
-        *self.0.lock().unwrap() = Some(Err((
+        *self.out.lock().unwrap() = Some(Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({"errors": [msg]})),
         )));
@@ -264,7 +284,7 @@ async fn update(
     let gateway = AgriculturalTaskSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
-    let mut port = UpdatePort(out.clone());
+    let mut port = UpdatePort { user_id, out: out.clone() };
     let mut interactor = AgriculturalTaskUpdateInteractor::new(
         &mut port,
         user_id,

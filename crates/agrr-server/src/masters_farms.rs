@@ -151,7 +151,16 @@ async fn create_farm(
     interactor.call(input).map_err(internal)?;
 
     match presenter.body {
-        Some(Ok(entity)) => Ok((StatusCode::CREATED, Json(farm_to_json(&entity)))),
+        Some(Ok(entity)) => {
+            crate::security_audit_log::log_if_reference_master(
+                user_id,
+                "farm",
+                "create",
+                entity.is_reference,
+                Some(entity.id),
+            );
+            Ok((StatusCode::CREATED, Json(farm_to_json(&entity))))
+        }
         Some(Err((status, body))) => Err((status, Json(body))),
         None => Err(internal_error()),
     }
@@ -190,7 +199,16 @@ async fn update_farm(
     interactor.call(input).map_err(internal)?;
 
     match presenter.body {
-        Some(Ok(entity)) => Ok(Json(farm_to_json(&entity))),
+        Some(Ok(entity)) => {
+            crate::security_audit_log::log_if_reference_master(
+                user_id,
+                "farm",
+                "update",
+                entity.is_reference,
+                Some(entity.id),
+            );
+            Ok(Json(farm_to_json(&entity)))
+        }
         Some(Err((status, body))) => Err((status, Json(body))),
         None => Err(internal_error()),
     }
