@@ -71,7 +71,10 @@ describe('PublicPlanOptimizingComponent', () => {
         'public_plans.optimizing.error.hints.predicting_weather':
           '気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。',
         'public_plans.optimizing.error.hints.default':
-          '下のボタンから作物を変更するか、最初からやり直してください。'
+          '下のボタンから作物を変更するか、最初からやり直してください。',
+        'models.cultivation_plan.phase_failed.timeout': '処理がタイムアウトしました',
+        'public_plans.optimizing.error.hints.timeout':
+          '処理に時間がかかりすぎました。しばらく待ってから再度お試しください。'
       },
       true
     );
@@ -109,6 +112,36 @@ describe('PublicPlanOptimizingComponent', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('作物を変更してもう一度試す');
     expect(text).toContain('最初からやり直す');
+  });
+
+  it('shows timeout category detail and hint when optimization times out', () => {
+    component.control = {
+      status: 'failed',
+      progress: 0,
+      phaseMessage: '処理がタイムアウトしました',
+      failureHint: '処理に時間がかかりすぎました。しばらく待ってから再度お試しください。'
+    };
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('計画作成に失敗しました');
+    expect(text).toContain('処理がタイムアウトしました');
+    expect(text).toContain('処理に時間がかかりすぎました。しばらく待ってから再度お試しください。');
+    expect(text).not.toContain('worker timeout');
+  });
+
+  it('does not show technical error strings in failure UI', () => {
+    component.control = {
+      status: 'failed',
+      progress: 0,
+      phaseMessage: '処理に失敗しました',
+      failureHint: '下のボタンから作物を変更するか、最初からやり直してください。'
+    };
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).not.toContain('InvalidWeatherApiResponse');
+    expect(text).not.toContain('fetch_weather_data');
   });
 
   it('shows fallback hint when failure detail is generic', () => {

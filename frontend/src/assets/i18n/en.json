@@ -855,6 +855,7 @@
         "predicting_weather": "Failed to predict weather data",
         "optimizing": "Optimization failed",
         "task_schedule_generation": "Task plan generation failed",
+        "timeout": "The process timed out",
         "default": "Process failed"
       },
       "default_plan_name": "Main Plan",
@@ -969,6 +970,7 @@
           "predicting_weather": "Weather data may still be preparing. Wait a moment and try again.",
           "optimizing": "Review your selected crops and growing period, then try again.",
           "task_schedule_generation": "Something went wrong while preparing task plans. Please try again.",
+          "timeout": "The process took too long. Wait a moment and try again.",
           "default": "Use the buttons below to change crops or start over from the beginning."
         }
       },

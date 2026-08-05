@@ -18,8 +18,18 @@ const PUBLIC_PLANS_OPTIMIZING_KEYS = [
   'public_plans.optimizing.status_badge_failed',
   'public_plans.optimizing.error.title',
   'public_plans.optimizing.error.hints.default',
+  'public_plans.optimizing.error.hints.fetching_weather',
+  'public_plans.optimizing.error.hints.predicting_weather',
+  'public_plans.optimizing.error.hints.optimizing',
+  'public_plans.optimizing.error.hints.task_schedule_generation',
+  'public_plans.optimizing.error.hints.timeout',
   'models.cultivation_plan.phases.completed',
-  'models.cultivation_plan.phase_failed.default'
+  'models.cultivation_plan.phase_failed.default',
+  'models.cultivation_plan.phase_failed.fetching_weather',
+  'models.cultivation_plan.phase_failed.predicting_weather',
+  'models.cultivation_plan.phase_failed.optimizing',
+  'models.cultivation_plan.phase_failed.task_schedule_generation',
+  'models.cultivation_plan.phase_failed.timeout'
 ] as const;
 
 describe('public-plans optimizing locale catalog (#19)', () => {
