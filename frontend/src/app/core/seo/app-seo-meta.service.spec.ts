@@ -169,4 +169,25 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="twitter:image:alt"')).toBeNull();
     expect(meta.getTag('name="twitter:card"')?.content).toBe('summary');
   });
+
+  it('applyNotFoundMeta sets robots noindex', () => {
+    service.applyNotFoundMeta();
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex');
+  });
+
+  it('refreshDefaultMeta removes robots noindex after not-found', () => {
+    service.applyNotFoundMeta();
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex');
+
+    setWindowPath('/about');
+    service.refreshDefaultMeta();
+
+    expect(meta.getTag('name="robots"')).toBeNull();
+  });
+
+  it('refreshDefaultMeta does not set robots noindex on public routes', () => {
+    setWindowPath('/about');
+    service.refreshDefaultMeta();
+    expect(meta.getTag('name="robots"')).toBeNull();
+  });
 });

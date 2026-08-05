@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AppSeoMetaService } from '../../../core/seo/app-seo-meta.service';
 
 @Component({
   selector: 'app-not-found',
@@ -27,4 +28,10 @@ import { TranslateModule } from '@ngx-translate/core';
     `
   ]
 })
-export class NotFoundComponent {}
+export class NotFoundComponent implements OnInit {
+  private readonly seoMeta = inject(AppSeoMetaService);
+
+  ngOnInit(): void {
+    this.seoMeta.applyNotFoundMeta();
+  }
+}

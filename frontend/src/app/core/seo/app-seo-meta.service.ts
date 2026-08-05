@@ -38,6 +38,8 @@ export class AppSeoMetaService {
   private jsonLdScript: HTMLScriptElement | null = null;
 
   refreshDefaultMeta(): void {
+    this.meta.removeTag('name="robots"');
+
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
     if (typeof document !== 'undefined') {
       document.documentElement.lang = documentHtmlLang(angularLang);
@@ -135,5 +137,9 @@ export class AppSeoMetaService {
       this.jsonLdScript.parentNode.removeChild(this.jsonLdScript);
     }
     this.jsonLdScript = null;
+  }
+
+  applyNotFoundMeta(): void {
+    this.meta.updateTag({ name: 'robots', content: 'noindex' });
   }
 }
