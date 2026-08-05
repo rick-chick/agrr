@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { FarmListView, FarmListViewState } from './farm-list.view';
@@ -28,7 +27,7 @@ const initialControl: FarmListViewState = {
 @Component({
   selector: 'app-farm-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, SkeletonComponent],
+  imports: [RouterLink, TranslateModule, SkeletonComponent],
   providers: [...FARM_LIST_PROVIDERS],
   template: `
     <main class="page-main">

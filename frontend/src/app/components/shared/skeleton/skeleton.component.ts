@@ -7,7 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
   imports: [TranslateModule],
   template: `
     <ul
-      class="card-list skeleton-card-list"
+      class="skeleton-card-list"
       role="status"
       aria-busy="true"
       [attr.aria-label]="'common.loading' | translate"

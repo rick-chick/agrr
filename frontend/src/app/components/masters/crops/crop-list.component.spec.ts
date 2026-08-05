@@ -26,22 +26,7 @@ const referenceCrop: Crop = {
   name: 'Rice',
   variety: null,
   is_reference: true,
-  groups: [],
-  crop_stages: [
-    {
-      id: 1,
-      crop_id: 20,
-      name: 'Seedling',
-      order: 1,
-      temperature_requirement: {
-        id: 1,
-        crop_stage_id: 1,
-        base_temperature: 10,
-        optimal_min: 15,
-        optimal_max: 25
-      }
-    }
-  ]
+  groups: []
 };
 
 const translations = {
@@ -54,16 +39,12 @@ const translations = {
         stages_toggle: 'Growth stages',
         blueprints_toggle: 'Edit task plans'
       }
-    },
-    show: {
-      reference_crop: 'Reference crop'
     }
   },
   common: {
     loading: 'Loading…',
     edit: 'Edit',
-    delete: 'Delete',
-    actions: 'Actions'
+    delete: 'Delete'
   }
 };
 

@@ -38,7 +38,7 @@ describe('SkeletonComponent', () => {
   });
 
   it('uses card-list grid layout matching item-card structure', () => {
-    const list = fixture.nativeElement.querySelector('.card-list.skeleton-card-list');
+    const list = fixture.nativeElement.querySelector('.skeleton-card-list');
     expect(list).toBeTruthy();
 
     const titleLine = fixture.nativeElement.querySelector('.skeleton-line--title');

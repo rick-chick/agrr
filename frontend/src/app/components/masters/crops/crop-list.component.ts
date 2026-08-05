@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
@@ -29,7 +28,7 @@ const initialControl: CropListViewState = {
 @Component({
   selector: 'app-crop-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, SkeletonComponent],
+  imports: [RouterLink, TranslateModule, SkeletonComponent],
   providers: [...CROP_LIST_PROVIDERS],
   template: `
     <main class="page-main">

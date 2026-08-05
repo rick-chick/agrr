@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
@@ -24,7 +23,7 @@ const initialControl: PlanListViewState = {
 @Component({
   selector: 'app-plan-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, PlanDisplayNamePipe, SkeletonComponent],
+  imports: [RouterLink, TranslateModule, PlanDisplayNamePipe, SkeletonComponent],
   providers: [...PLAN_LIST_PROVIDERS],
   template: `
     <main class="page-main">

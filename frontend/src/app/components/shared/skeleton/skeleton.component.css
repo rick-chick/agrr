@@ -1,4 +1,33 @@
-@import '../../masters/_master-layout.css';
+.skeleton-card-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  align-items: start;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .skeleton-card-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .skeleton-card-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.skeleton-card-list > .card-list__item {
+  margin: 0;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
 
 .skeleton-card {
   display: flex;
@@ -40,7 +69,6 @@
 .skeleton-line {
   height: 1rem;
   border-radius: var(--radius-sm);
-  background: var(--skeleton-base);
 }
 
 .skeleton-line--title {
@@ -57,7 +85,6 @@
   width: 4.5rem;
   height: 2.25rem;
   border-radius: var(--radius-md);
-  background: var(--skeleton-base);
 }
 
 .skeleton-shimmer {
