@@ -6,7 +6,7 @@
 **関連 ADR**: [ADR-strangler-lb-url-map.md § SEO / クロール](../migration/app-rust-stack/ADR-strangler-lb-url-map.md#seo--クロール2026-06-09-追記)  
 **デプロイ手順**: [deploy-frontend スキル](../../.cursor/skills/deploy-frontend/SKILL.md)
 
-`sitemap.xml` はデプロイ時に `generate-sitemap.mjs` で自動生成される。GSC 再送信は**手動**（本 issue スコープ外で CI 自動化は任意 follow-up）。HTTP ルーティング検証は `frontend-deploy` workflow（master push の本番デプロイ成功後）で自動実行される（§2 参照）。
+`sitemap.xml` はデプロイ時に `generate-sitemap.mjs` で自動生成される。GSC 再送信は**手動**（§3 参照）。HTTP ルーティング検証は `frontend-deploy` workflow（master push の本番デプロイ成功後）で自動実行される（§2 参照）。
 
 ---
 

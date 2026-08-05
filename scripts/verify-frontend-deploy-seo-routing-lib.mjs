@@ -52,6 +52,9 @@ export function verifyFrontendDeploySeoRoutingContract(repoRoot) {
     if (!verifyJob.includes('needs: build-and-deploy')) {
       errors.push('verify-seo-routing job must need build-and-deploy');
     }
+    if (!verifyJob.includes('timeout-minutes:')) {
+      errors.push('verify-seo-routing job must set timeout-minutes');
+    }
     for (const snippet of FORBIDDEN_FRONTEND_DEPLOY_SNIPPETS) {
       if (verifyJob.includes(snippet)) {
         errors.push(`verify-seo-routing job must not include: ${snippet}`);
