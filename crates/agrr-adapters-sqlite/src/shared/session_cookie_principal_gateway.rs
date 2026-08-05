@@ -53,6 +53,7 @@ impl SessionCookiePrincipalSqliteGateway {
                             name: row.get(2)?,
                             admin: row.get::<_, i64>(3)? != 0,
                             anonymous: true,
+                            api_key_scopes: None,
                         })
                     },
                 )
