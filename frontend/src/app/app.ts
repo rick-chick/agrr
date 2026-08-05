@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { Router, RouterOutlet, NavigationEnd, ActivatedRouteSnapshot } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Subscription, take } from 'rxjs';
 import { getGoogleAdsLoginConversionSendTo } from './core/google-ads-runtime-config';
@@ -73,8 +73,16 @@ export class App implements OnInit, OnDestroy {
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
         this.googleAnalytics.trackPageView(event.urlAfterRedirects);
-        this.seoMeta.refreshDefaultMeta();
+        this.seoMeta.refreshForNavigation(this.isNotFoundRoute());
       });
+  }
+
+  private isNotFoundRoute(): boolean {
+    let route: ActivatedRouteSnapshot | null = this.router.routerState.snapshot.root;
+    while (route?.firstChild) {
+      route = route.firstChild;
+    }
+    return route?.routeConfig?.path === '**';
   }
 
   ngOnDestroy(): void {

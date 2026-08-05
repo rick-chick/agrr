@@ -190,4 +190,19 @@ describe('AppSeoMetaService', () => {
     service.refreshDefaultMeta();
     expect(meta.getTag('name="robots"')).toBeNull();
   });
+
+  it('refreshForNavigation applies noindex after refreshDefaultMeta on not-found', () => {
+    setWindowPath('/__nonexistent__');
+    service.refreshForNavigation(true);
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex');
+  });
+
+  it('refreshForNavigation clears noindex when leaving not-found', () => {
+    service.refreshForNavigation(true);
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex');
+
+    setWindowPath('/about');
+    service.refreshForNavigation(false);
+    expect(meta.getTag('name="robots"')).toBeNull();
+  });
 });

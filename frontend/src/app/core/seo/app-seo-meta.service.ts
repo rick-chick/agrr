@@ -142,4 +142,11 @@ export class AppSeoMetaService {
   applyNotFoundMeta(): void {
     this.meta.updateTag({ name: 'robots', content: 'noindex' });
   }
+
+  refreshForNavigation(isNotFound: boolean): void {
+    this.refreshDefaultMeta();
+    if (isNotFound) {
+      this.applyNotFoundMeta();
+    }
+  }
 }
