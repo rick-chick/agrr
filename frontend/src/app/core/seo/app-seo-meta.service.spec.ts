@@ -3,6 +3,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service';
+import { SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 
 const TEST_ORIGIN = 'http://localhost';
 
@@ -62,7 +63,22 @@ describe('AppSeoMetaService', () => {
 
   afterEach(() => {
     setWindowPath('/');
+    document.head
+      .querySelectorAll('script[type="application/ld+json"]')
+      .forEach((node) => node.remove());
   });
+
+  function insertStaticJsonLdScript(): HTMLScriptElement {
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = SITE_STRUCTURED_DATA_SCRIPT_ID;
+    script.text = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [{ '@type': 'Organization', name: 'AGRR' }]
+    });
+    document.head.appendChild(script);
+    return script;
+  }
 
   it('sets document title and description from default meta keys on home', () => {
     setWindowPath('/');
@@ -124,6 +140,30 @@ describe('AppSeoMetaService', () => {
     expect(organization).toMatchObject({
       name: 'AGRR',
       email: 'support@agrr.net'
+    });
+  });
+
+  it('updates static index.html JSON-LD in place without duplicating scripts', () => {
+    const staticScript = insertStaticJsonLdScript();
+    setWindowPath('/');
+
+    service.refreshDefaultMeta();
+    let scripts = document.head.querySelectorAll('script[type="application/ld+json"]');
+    expect(scripts.length).toBe(1);
+    expect(scripts[0]).toBe(staticScript);
+
+    service.refreshDefaultMeta();
+    scripts = document.head.querySelectorAll('script[type="application/ld+json"]');
+    expect(scripts.length).toBe(1);
+    expect(scripts[0]).toBe(staticScript);
+
+    const structured = JSON.parse(staticScript.textContent ?? '{}');
+    const website = (structured['@graph'] as Array<Record<string, unknown>>).find(
+      (node) => node['@type'] === 'WebSite'
+    );
+    expect(website).toMatchObject({
+      name: 'AGRR',
+      description: 'OG説明'
     });
   });
 
