@@ -13,6 +13,15 @@ function getNested(obj: JsonRecord, path: string): unknown {
   }, obj);
 }
 
+const ENTRY_SCHEDULE_PAGE_KEYS = [
+  'pages.entry_schedule.title',
+  'pages.entry_schedule.description',
+  'pages.entry_schedule.og_description',
+  'pages.entry_schedule_detail.title',
+  'pages.entry_schedule_detail.description',
+  'pages.entry_schedule_detail.og_description'
+] as const;
+
 const ENTRY_SCHEDULE_UI_KEYS = [
   'entrySchedule.title',
   'entrySchedule.detailTitle',
@@ -95,7 +104,11 @@ const locales: { name: string; catalog: JsonRecord }[] = [
 describe('entry schedule i18n catalog', () => {
   for (const { name, catalog } of locales) {
     describe(name, () => {
-      for (const key of [...ENTRY_SCHEDULE_UI_KEYS, ...ENTRY_SCHEDULE_API_KEYS]) {
+      for (const key of [
+        ...ENTRY_SCHEDULE_UI_KEYS,
+        ...ENTRY_SCHEDULE_API_KEYS,
+        ...ENTRY_SCHEDULE_PAGE_KEYS
+      ]) {
         it(`defines ${key} as human-readable text`, () => {
           const value = getNested(catalog, key);
           expect(typeof value).toBe('string');

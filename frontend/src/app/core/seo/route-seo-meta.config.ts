@@ -6,6 +6,7 @@ export const ROUTE_SEO_KEY_MAP: Readonly<Record<string, string>> = {
   '/privacy': 'pages.privacy',
   '/terms': 'pages.terms',
   '/public-plans/new': 'pages.public_plans_new',
+  '/entry-schedule': 'pages.entry_schedule',
 };
 
 export function normalizeSeoPath(pathname: string | undefined | null): string {
@@ -18,5 +19,8 @@ export function normalizeSeoPath(pathname: string | undefined | null): string {
 
 export function resolveSeoKeyPrefix(pathname: string): string {
   const path = normalizeSeoPath(pathname);
+  if (path.startsWith('/entry-schedule/crop/')) {
+    return 'pages.entry_schedule_detail';
+  }
   return ROUTE_SEO_KEY_MAP[path] ?? 'meta.default';
 }

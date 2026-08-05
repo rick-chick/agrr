@@ -52,6 +52,16 @@ describe('AppSeoMetaService', () => {
           public_plans_new: {
             title: '無料作付け計画を作成',
             description: 'Public plans説明'
+          },
+          entry_schedule: {
+            title: '作付け時期の目安',
+            description: 'Entry schedule list説明',
+            og_description: 'Entry schedule OG説明'
+          },
+          entry_schedule_detail: {
+            title: '作物別の作付け時期',
+            description: 'Entry schedule detail説明',
+            og_description: 'Entry schedule detail OG説明'
           }
         }
       },
@@ -85,6 +95,22 @@ describe('AppSeoMetaService', () => {
     service.refreshDefaultMeta();
     expect(title.getTitle()).toBe('無料作付け計画を作成');
     expect(meta.getTag('name="description"')?.content).toBe('Public plans説明');
+  });
+
+  it('sets route-specific title and description for /entry-schedule', () => {
+    setWindowPath('/entry-schedule');
+    service.refreshDefaultMeta();
+    expect(title.getTitle()).toBe('作付け時期の目安');
+    expect(meta.getTag('name="description"')?.content).toBe('Entry schedule list説明');
+    expect(meta.getTag('property="og:description"')?.content).toBe('Entry schedule OG説明');
+  });
+
+  it('sets route-specific title and description for /entry-schedule/crop/:cropId', () => {
+    setWindowPath('/entry-schedule/crop/42');
+    service.refreshDefaultMeta();
+    expect(title.getTitle()).toBe('作物別の作付け時期');
+    expect(meta.getTag('name="description"')?.content).toBe('Entry schedule detail説明');
+    expect(meta.getTag('property="og:description"')?.content).toBe('Entry schedule detail OG説明');
   });
 
   it('falls back to meta.default for undefined routes', () => {

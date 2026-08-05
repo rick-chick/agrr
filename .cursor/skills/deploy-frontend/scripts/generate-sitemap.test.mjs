@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import {
   isIndexableResearchHtml,
   toResearchCanonicalPath,
@@ -53,5 +54,12 @@ describe('generate-sitemap-lib re-export', () => {
     const lib = await import('./generate-sitemap-lib.mjs');
     const shared = await import('../../../../scripts/research-indexable-html-lib.mjs');
     assert.equal(lib.isIndexableResearchHtml, shared.isIndexableResearchHtml);
+  });
+});
+
+describe('generate-sitemap SPA paths', () => {
+  it('includes /entry-schedule in SPA_PATHS', async () => {
+    const source = await readFile(new URL('./generate-sitemap.mjs', import.meta.url), 'utf8');
+    assert.match(source, /'\/entry-schedule'/);
   });
 });

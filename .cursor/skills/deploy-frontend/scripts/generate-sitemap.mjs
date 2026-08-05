@@ -29,6 +29,7 @@ const SPA_PATHS = [
   '/privacy',
   '/terms',
   '/public-plans/new',
+  '/entry-schedule',
 ];
 
 function escapeXml(value) {

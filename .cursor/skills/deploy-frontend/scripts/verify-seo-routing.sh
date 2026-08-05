@@ -47,6 +47,7 @@ check_redirect_location() {
 check_status "root" "$BASE_URL/" "HTTP/2 200"
 check_status "about" "$BASE_URL/about" "HTTP/2 200"
 check_status "public-plans-new" "$BASE_URL/public-plans/new" "HTTP/2 200"
+check_status "entry-schedule" "$BASE_URL/entry-schedule" "HTTP/2 200"
 check_status "login" "$BASE_URL/login" "HTTP/2 200"
 check_status "public-plans-results" "$BASE_URL/public-plans/results?planId=1" "HTTP/2 200"
 check_status "public-plans-optimizing" "$BASE_URL/public-plans/optimizing?planId=1" "HTTP/2 200"
@@ -148,6 +149,13 @@ if [[ "$sitemap_urls" -lt 100 ]]; then
   failures=$((failures + 1))
 else
   echo "OK   sitemap url count ($sitemap_urls)"
+fi
+
+if ! echo "$sitemap_body" | grep -q '<loc>https://agrr.net/entry-schedule</loc>'; then
+  echo "FAIL sitemap missing /entry-schedule"
+  failures=$((failures + 1))
+else
+  echo "OK   sitemap includes entry-schedule"
 fi
 
 sitemap_forbidden_patterns=(
