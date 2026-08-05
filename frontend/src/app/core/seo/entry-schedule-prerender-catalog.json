@@ -1,3 +1,21 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:7ea375d3f90b1ceba8b0e4743a313d7a1ec47463dcb672985d6aa00f18d35586
-size 733
+{
+  "defaultFarmId": 16,
+  "region": "jp",
+  "crops": [
+    { "cropId": 1, "name": "トマト" },
+    { "cropId": 2, "name": "ジャガイモ" },
+    { "cropId": 3, "name": "玉ねぎ" },
+    { "cropId": 4, "name": "キャベツ" },
+    { "cropId": 5, "name": "ニンジン" },
+    { "cropId": 6, "name": "レタス" },
+    { "cropId": 7, "name": "ほうれん草" },
+    { "cropId": 8, "name": "ナス" },
+    { "cropId": 9, "name": "キュウリ" },
+    { "cropId": 10, "name": "ピーマン" },
+    { "cropId": 11, "name": "大根" },
+    { "cropId": 12, "name": "ブロッコリー" },
+    { "cropId": 13, "name": "白菜" },
+    { "cropId": 14, "name": "とうもろこし" },
+    { "cropId": 15, "name": "かぼちゃ" }
+  ]
+}
