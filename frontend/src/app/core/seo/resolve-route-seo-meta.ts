@@ -1,4 +1,4 @@
-import { buildSelfCanonicalUrl, DEFAULT_OGP_IMAGE_PATH } from './app-seo-meta.service';
+import { buildSelfCanonicalUrl, DEFAULT_OGP_IMAGE_PATH } from './seo-url';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
 import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 

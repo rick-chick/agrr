@@ -4,7 +4,8 @@ import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
-import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service';
+import { AppSeoMetaService } from './app-seo-meta.service';
+import { buildSelfCanonicalUrl } from './seo-url';
 import { SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 
 const TEST_ORIGIN = 'http://localhost';

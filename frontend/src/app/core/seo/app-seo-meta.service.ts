@@ -13,17 +13,10 @@ import {
 } from './public-plan-results-seo-meta';
 import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 import { resolveRouteSeoMetaWithTranslator } from './resolve-route-seo-meta';
+import { buildSelfCanonicalUrl, DEFAULT_OGP_IMAGE_PATH } from './seo-url';
 
 function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
-}
-
-/** @internal exported for unit tests */
-export function buildSelfCanonicalUrl(origin: string, pathname: string): string {
-  if (!origin) {
-    return '';
-  }
-  return `${origin}${pathname.split('?')[0]}`;
 }
 
 function ogLocale(angularLang: AppLang): string {
@@ -37,7 +30,7 @@ function isResolvedTranslation(value: string, keyPrefix: string): boolean {
 }
 
 /** Default OGP image served from `frontend/public/` (1200×630). */
-export const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
+export { DEFAULT_OGP_IMAGE_PATH, buildSelfCanonicalUrl } from './seo-url';
 
 @Injectable({ providedIn: 'root' })
 export class AppSeoMetaService {
@@ -223,7 +216,7 @@ export class AppSeoMetaService {
     const baseUrl =
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
-        : 'https://agrr.net';
+        : PRODUCTION_SITE_ORIGIN;
     const jsonLd = buildSiteStructuredDataDocument({
       baseUrl,
       siteTitle,
