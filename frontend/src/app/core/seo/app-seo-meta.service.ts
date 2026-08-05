@@ -120,7 +120,7 @@ export class AppSeoMetaService {
       if (typeof window !== 'undefined' && window.location) {
         return window.location.origin ?? '';
       }
-      return '';
+      return PRODUCTION_SITE_ORIGIN;
     }
     const requestUrl = this.readRequestUrl();
     if (requestUrl) {
