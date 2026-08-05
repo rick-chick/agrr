@@ -102,6 +102,20 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('property="og:description"')?.content).toBe('About説明');
   });
 
+  it('sets ja/en/x-default hreflang alternates on public prerender routes', () => {
+    setWindowPath('/about');
+    service.refreshDefaultMeta();
+    expect(meta.getTag('rel="alternate" hreflang="ja"')?.href).toBe(
+      'http://localhost/about'
+    );
+    expect(meta.getTag('rel="alternate" hreflang="en"')?.href).toBe(
+      'http://localhost/en/about'
+    );
+    expect(meta.getTag('rel="alternate" hreflang="x-default"')?.href).toBe(
+      'http://localhost/about'
+    );
+  });
+
   it('sets route-specific title and description for /public-plans/new', () => {
     setWindowPath('/public-plans/new');
     service.refreshDefaultMeta();

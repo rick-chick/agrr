@@ -34,3 +34,21 @@ export function canonicalMatches(href, expected) {
   }
   return href.replace(/:443/g, '') === expected.replace(/:443/g, '');
 }
+
+/**
+ * @param {string} html
+ * @returns {{ hreflang: string, href: string }[]}
+ */
+export function extractHreflangLinks(html) {
+  const links = [];
+  const pattern = /<link[^>]*\srel=["']alternate["'][^>]*>/gi;
+  for (const match of html.matchAll(pattern)) {
+    const tag = match[0];
+    const hreflangMatch = tag.match(/\shreflang=["']([^"']+)["']/i);
+    const hrefMatch = tag.match(/\shref=["']([^"']+)["']/i);
+    if (hreflangMatch && hrefMatch) {
+      links.push({ hreflang: hreflangMatch[1], href: hrefMatch[1] });
+    }
+  }
+  return links;
+}

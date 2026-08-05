@@ -14,6 +14,11 @@ import {
   researchRelativePathToUrlPath,
   resolveResearchHreflangUrls,
 } from '../../../../scripts/research-hreflang-lib.mjs';
+import {
+  buildSitemapHreflangAlternates as buildSpaSitemapHreflangAlternates,
+  resolveSpaHreflangUrls,
+  SPA_PUBLIC_HREFLANG_ROUTE_PATHS,
+} from '../../../../scripts/spa-hreflang-lib.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '../../../..');
@@ -22,15 +27,7 @@ const OUT_DIR = join(ROOT, 'frontend', 'public');
 const OUT_FILE = join(OUT_DIR, 'sitemap.xml');
 const BASE_URL = (process.env.SITEMAP_BASE_URL || 'https://agrr.net').replace(/\/$/, '');
 
-const SPA_PATHS = [
-  '/',
-  '/about',
-  '/contact',
-  '/privacy',
-  '/terms',
-  '/public-plans/new',
-  '/entry-schedule',
-];
+const SPA_SINGLE_LOCALE_PATHS = ['/entry-schedule'];
 
 function escapeXml(value) {
   return value
@@ -86,7 +83,21 @@ async function main() {
   const entries = [];
 
   const buildDate = new Date().toISOString().slice(0, 10);
-  for (const path of SPA_PATHS) {
+
+  for (const routePath of SPA_PUBLIC_HREFLANG_ROUTE_PATHS) {
+    const hreflang = resolveSpaHreflangUrls({ routePath, baseUrl: BASE_URL });
+    if (!hreflang) {
+      continue;
+    }
+    const alternates = buildSpaSitemapHreflangAlternates({
+      jaUrl: hreflang.jaUrl,
+      enUrl: hreflang.enUrl,
+    });
+    entries.push({ loc: hreflang.jaUrl, lastmod: buildDate, alternates });
+    entries.push({ loc: hreflang.enUrl, lastmod: buildDate, alternates });
+  }
+
+  for (const path of SPA_SINGLE_LOCALE_PATHS) {
     entries.push({ loc: `${BASE_URL}${path}`, lastmod: buildDate });
   }
 

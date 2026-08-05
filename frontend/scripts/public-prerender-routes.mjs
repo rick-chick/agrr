@@ -3,20 +3,48 @@
  * Keep in sync with app.routes.server.ts and deploy SPA shell handling.
  */
 export const PUBLIC_PRERENDER_ROUTES = [
-  { path: '', file: 'index.html', expectHeading: 'AGRR' },
-  { path: 'about', file: 'about/index.html', expectHeading: 'AGRRについて' },
-  { path: 'contact', file: 'contact/index.html', expectHeading: 'お問い合わせ' },
-  { path: 'privacy', file: 'privacy/index.html', expectHeading: 'プライバシーポリシー' },
-  { path: 'terms', file: 'terms/index.html', expectHeading: '利用規約' },
+  { path: '', file: 'index.html', expectHeading: 'AGRR', locale: 'ja' },
+  { path: 'about', file: 'about/index.html', expectHeading: 'AGRRについて', locale: 'ja' },
+  { path: 'contact', file: 'contact/index.html', expectHeading: 'お問い合わせ', locale: 'ja' },
+  { path: 'privacy', file: 'privacy/index.html', expectHeading: 'プライバシーポリシー', locale: 'ja' },
+  { path: 'terms', file: 'terms/index.html', expectHeading: '利用規約', locale: 'ja' },
   {
     path: 'public-plans/new',
     file: 'public-plans/new/index.html',
     expectHeading: '計画',
+    locale: 'ja',
   },
   {
     path: 'entry-schedule',
     file: 'entry-schedule/index.html',
     expectHeading: '作付け時期の目安',
+    locale: 'ja',
+  },
+  { path: 'en', file: 'en/index.html', expectHeading: 'AGRR', locale: 'en' },
+  { path: 'en/about', file: 'en/about/index.html', expectHeading: 'About AGRR', locale: 'en' },
+  {
+    path: 'en/contact',
+    file: 'en/contact/index.html',
+    expectHeading: 'Contact Us',
+    locale: 'en',
+  },
+  {
+    path: 'en/privacy',
+    file: 'en/privacy/index.html',
+    expectHeading: 'Privacy Policy',
+    locale: 'en',
+  },
+  {
+    path: 'en/terms',
+    file: 'en/terms/index.html',
+    expectHeading: 'Terms of Service',
+    locale: 'en',
+  },
+  {
+    path: 'en/public-plans/new',
+    file: 'en/public-plans/new/index.html',
+    expectHeading: 'Plan',
+    locale: 'en',
   },
 ];
 

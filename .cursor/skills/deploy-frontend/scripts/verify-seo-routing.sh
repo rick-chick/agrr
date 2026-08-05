@@ -94,6 +94,25 @@ check_canonical_href "spa-about-canonical" "$BASE_URL/about" "$BASE_URL/about"
 check_canonical_href "spa-contact-canonical" "$BASE_URL/contact" "$BASE_URL/contact"
 check_canonical_href "spa-public-plans-new-canonical" "$BASE_URL/public-plans/new" "$BASE_URL/public-plans/new"
 
+check_hreflang() {
+  local label="$1"
+  local url="$2"
+  local expected_ja="$3"
+  local expected_en="$4"
+  local body output
+  body="$(curl -sL "$url")"
+  output="$(node "${SCRIPT_DIR}/verify-seo-hreflang-cli.mjs" check "$body" "$expected_ja" "$expected_en" 2>/dev/null || true)"
+  if [[ "$output" != "OK" ]]; then
+    echo "FAIL $label: $output ($url)"
+    failures=$((failures + 1))
+  else
+    echo "OK   $label"
+  fi
+}
+
+# SPA prerender routes: ja/en hreflang alternates (issue #563).
+check_hreflang "spa-about-hreflang" "$BASE_URL/about" "$BASE_URL/about" "$BASE_URL/en/about"
+
 # Internal work files must not be publicly reachable (H3).
 check_status "research-internal-commands-template" "$BASE_URL/research/research_reports/commands_template.html" "HTTP/2 404"
 check_status "research-internal-tomato-commands" "$BASE_URL/research/research_reports/tomato/commands.html" "HTTP/2 404"

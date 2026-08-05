@@ -36,6 +36,16 @@ export function verifySeoRoutingContract(repoRoot) {
     }
   }
 
+  if (!script.includes('check_hreflang')) {
+    errors.push('verify-seo-routing.sh must define check_hreflang');
+  }
+  if (!script.includes('spa-about-hreflang')) {
+    errors.push('verify-seo-routing.sh must include spa-about-hreflang check');
+  }
+  if (!script.includes('verify-seo-hreflang-cli.mjs')) {
+    errors.push('verify-seo-routing.sh must use verify-seo-hreflang-cli.mjs');
+  }
+
   const runbookPath = join(repoRoot, 'docs/seo/gsc-crux-operations-runbook.md');
   if (!existsSync(runbookPath)) {
     errors.push(`missing ${runbookPath}`);

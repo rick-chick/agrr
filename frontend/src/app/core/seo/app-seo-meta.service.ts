@@ -5,6 +5,7 @@ import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
 import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
+import { resolveSpaHreflangUrls } from './spa-hreflang';
 import {
   buildPublicPlanResultsShareUrl,
   extractPublicPlanResultsSeoLabels
@@ -59,8 +60,11 @@ export class AppSeoMetaService {
     }
 
     const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
+    const origin = this.readOrigin();
     const keyPrefix = resolveSeoKeyPrefix(path);
-    this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
+    const hreflang = resolveSpaHreflangUrls(origin, path);
+    const canonical = hreflang?.canonicalUrl ?? buildSelfCanonicalUrl(origin, path);
+    this.applySeoFromKeyPrefix(keyPrefix, canonical);
   }
 
   refreshPublicPlanResultsMeta(planId: number | null, planData: CultivationPlanData | null): void {
@@ -153,6 +157,7 @@ export class AppSeoMetaService {
       this.meta.updateTag({ property: 'og:url', content: ogUrl });
       this.meta.updateTag({ rel: 'canonical', href: ogUrl }, 'rel="canonical"');
     }
+    this.refreshHreflangLinks(ogUrl);
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
@@ -176,6 +181,40 @@ export class AppSeoMetaService {
       this.meta.removeTag('name="robots"');
     }
     this.refreshJsonLd(title, ogDescription, keyPrefix);
+  }
+
+  private refreshHreflangLinks(canonicalUrl: string): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const path = window.location?.pathname ?? '/';
+    const hreflang = resolveSpaHreflangUrls(this.readOrigin(), path);
+    if (!hreflang) {
+      this.meta.removeTag('rel="alternate" hreflang="ja"');
+      this.meta.removeTag('rel="alternate" hreflang="en"');
+      this.meta.removeTag('rel="alternate" hreflang="x-default"');
+      return;
+    }
+
+    this.meta.updateTag(
+      { rel: 'alternate', hreflang: 'ja', href: hreflang.jaUrl },
+      'rel="alternate" hreflang="ja"'
+    );
+    this.meta.updateTag(
+      { rel: 'alternate', hreflang: 'en', href: hreflang.enUrl },
+      'rel="alternate" hreflang="en"'
+    );
+    this.meta.updateTag(
+      { rel: 'alternate', hreflang: 'x-default', href: hreflang.jaUrl },
+      'rel="alternate" hreflang="x-default"'
+    );
+    if (canonicalUrl !== hreflang.canonicalUrl) {
+      this.meta.updateTag(
+        { rel: 'canonical', href: hreflang.canonicalUrl },
+        'rel="canonical"'
+      );
+      this.meta.updateTag({ property: 'og:url', content: hreflang.canonicalUrl });
+    }
   }
 
   private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {
