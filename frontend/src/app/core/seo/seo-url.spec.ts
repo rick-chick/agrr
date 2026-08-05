@@ -7,5 +7,7 @@ describe('seo-url', () => {
     expect(buildSelfCanonicalUrl('https://agrr.net', '/public-plans/results?planId=7')).toBe(
       'https://agrr.net/public-plans/results'
     );
+    expect(buildSelfCanonicalUrl('https://agrr.net', '/en/about')).toBe('https://agrr.net/en/about');
+    expect(buildSelfCanonicalUrl('https://agrr.net', '/en')).toBe('https://agrr.net/en');
   });
 });
