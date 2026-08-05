@@ -159,6 +159,7 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="twitter:card"')?.content).toBe('summary_large_image');
   });
 
+<<<<<<< HEAD
   const samplePlanData: CultivationPlanData = {
     success: true,
     data: {
@@ -222,6 +223,31 @@ describe('AppSeoMetaService', () => {
 
     expect(title.getTitle()).toBe('無料作付け計画を作成');
     expect(meta.getTag('property="og:url"')?.content).toBe('https://agrr.net/public-plans/results');
+=======
+  it('sets robots noindex via applyNoIndexMeta', () => {
+    service.applyNoIndexMeta();
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex');
+  });
+
+  it('removes robots noindex via removeNoIndexMeta', () => {
+    service.applyNoIndexMeta();
+    service.removeNoIndexMeta();
+    expect(meta.getTag('name="robots"')).toBeNull();
+  });
+
+  it('re-applies noindex after refreshDefaultMeta when noIndexActive', () => {
+    service.applyNoIndexMeta();
+    setWindowPath('/about');
+    service.refreshDefaultMeta();
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex');
+    expect(title.getTitle()).toBe('AGRRについて');
+  });
+
+  it('does not set noindex on refreshDefaultMeta for normal routes', () => {
+    setWindowPath('/about');
+    service.refreshDefaultMeta();
+    expect(meta.getTag('name="robots"')).toBeNull();
+>>>>>>> origin/master
   });
 
   it('omits OGP image tags when origin is unavailable', () => {

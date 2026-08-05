@@ -41,6 +41,17 @@ export class AppSeoMetaService {
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private jsonLdScript: HTMLScriptElement | null = null;
+  private noIndexActive = false;
+
+  applyNoIndexMeta(): void {
+    this.meta.updateTag({ name: 'robots', content: 'noindex' });
+    this.noIndexActive = true;
+  }
+
+  removeNoIndexMeta(): void {
+    this.meta.removeTag('name="robots"');
+    this.noIndexActive = false;
+  }
 
   refreshDefaultMeta(): void {
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
@@ -159,6 +170,11 @@ export class AppSeoMetaService {
       this.meta.removeTag('name="twitter:image"');
       this.meta.removeTag('name="twitter:image:alt"');
       this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+    }
+    if (this.noIndexActive) {
+      this.meta.updateTag({ name: 'robots', content: 'noindex' });
+    } else {
+      this.meta.removeTag('name="robots"');
     }
     this.refreshJsonLd(title, ogDescription, keyPrefix);
   }
