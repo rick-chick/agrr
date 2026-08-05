@@ -105,15 +105,15 @@ describe('AppSeoMetaService', () => {
   it('sets ja/en/x-default hreflang alternates on public prerender routes', () => {
     setWindowPath('/about');
     service.refreshDefaultMeta();
-    expect(meta.getTag('rel="alternate" hreflang="ja"')?.href).toBe(
+    expect(document.head.querySelector('link[rel="alternate"][hreflang="ja"]')?.getAttribute('href')).toBe(
       'http://localhost/about'
     );
-    expect(meta.getTag('rel="alternate" hreflang="en"')?.href).toBe(
+    expect(document.head.querySelector('link[rel="alternate"][hreflang="en"]')?.getAttribute('href')).toBe(
       'http://localhost/en/about'
     );
-    expect(meta.getTag('rel="alternate" hreflang="x-default"')?.href).toBe(
-      'http://localhost/about'
-    );
+    expect(
+      document.head.querySelector('link[rel="alternate"][hreflang="x-default"]')?.getAttribute('href')
+    ).toBe('http://localhost/about');
   });
 
   it('sets route-specific title and description for /public-plans/new', () => {

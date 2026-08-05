@@ -184,30 +184,24 @@ export class AppSeoMetaService {
   }
 
   private refreshHreflangLinks(canonicalUrl: string): void {
-    if (typeof window === 'undefined') {
+    if (typeof document === 'undefined') {
       return;
     }
     const path = window.location?.pathname ?? '/';
-    const hreflang = resolveSpaHreflangUrls(this.readOrigin(), path);
+    const origin = this.readOrigin();
+    if (!origin) {
+      this.clearHreflangLinks();
+      return;
+    }
+    const hreflang = resolveSpaHreflangUrls(origin, path);
     if (!hreflang) {
-      this.meta.removeTag('rel="alternate" hreflang="ja"');
-      this.meta.removeTag('rel="alternate" hreflang="en"');
-      this.meta.removeTag('rel="alternate" hreflang="x-default"');
+      this.clearHreflangLinks();
       return;
     }
 
-    this.meta.updateTag(
-      { rel: 'alternate', hreflang: 'ja', href: hreflang.jaUrl },
-      'rel="alternate" hreflang="ja"'
-    );
-    this.meta.updateTag(
-      { rel: 'alternate', hreflang: 'en', href: hreflang.enUrl },
-      'rel="alternate" hreflang="en"'
-    );
-    this.meta.updateTag(
-      { rel: 'alternate', hreflang: 'x-default', href: hreflang.jaUrl },
-      'rel="alternate" hreflang="x-default"'
-    );
+    this.upsertHreflangLink('ja', hreflang.jaUrl);
+    this.upsertHreflangLink('en', hreflang.enUrl);
+    this.upsertHreflangLink('x-default', hreflang.jaUrl);
     if (canonicalUrl !== hreflang.canonicalUrl) {
       this.meta.updateTag(
         { rel: 'canonical', href: hreflang.canonicalUrl },
@@ -215,6 +209,24 @@ export class AppSeoMetaService {
       );
       this.meta.updateTag({ property: 'og:url', content: hreflang.canonicalUrl });
     }
+  }
+
+  private upsertHreflangLink(hreflang: string, href: string): void {
+    const selector = `link[rel="alternate"][hreflang="${hreflang}"]`;
+    const existing = document.head.querySelector(selector);
+    const link = existing instanceof HTMLLinkElement ? existing : document.createElement('link');
+    if (link !== existing) {
+      link.rel = 'alternate';
+      link.hreflang = hreflang;
+      document.head.appendChild(link);
+    }
+    link.href = href;
+  }
+
+  private clearHreflangLinks(): void {
+    document.head.querySelectorAll('link[rel="alternate"][hreflang]').forEach((node) => {
+      node.remove();
+    });
   }
 
   private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {

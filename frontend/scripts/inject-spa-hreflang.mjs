@@ -9,10 +9,23 @@ import {
   buildSpaHreflangSnippet,
   injectSpaHreflangIntoHtml,
   resolveSpaHreflangUrls,
-} from '../../../scripts/spa-hreflang-lib.mjs';
+} from '../../scripts/spa-hreflang-lib.mjs';
 
 const distDir = process.argv[2] || join(process.cwd(), 'dist/frontend/browser');
 const baseUrl = (process.env.SITEMAP_BASE_URL || 'https://agrr.net').replace(/\/$/, '');
+
+/** @param {string} html @param {string} lang */
+function setHtmlLang(html, lang) {
+  if (/<html[^>]*\slang=/i.test(html)) {
+    return html.replace(/(<html[^>]*\s)lang=["'][^"']*["']/i, `$1lang="${lang}"`);
+  }
+  return html.replace(/<html/i, `<html lang="${lang}"`);
+}
+
+/** @param {string} routePath */
+function isEnRoutePath(routePath) {
+  return routePath === 'en' || routePath.startsWith('en/');
+}
 
 /** @param {string} routePath */
 function routePathToHtmlFile(routePath) {
@@ -44,7 +57,10 @@ for (const routePath of routePaths) {
   }
 
   const snippet = buildSpaHreflangSnippet(resolved);
-  const next = injectSpaHreflangIntoHtml(html, snippet);
+  let next = injectSpaHreflangIntoHtml(html, snippet);
+  if (isEnRoutePath(routePath)) {
+    next = setHtmlLang(next, 'en');
+  }
   if (next !== html) {
     writeFileSync(filePath, next, 'utf8');
     updated += 1;

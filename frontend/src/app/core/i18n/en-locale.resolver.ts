@@ -5,8 +5,11 @@ import { firstValueFrom } from 'rxjs';
 import { applyAppLang } from '../app-locale';
 
 /** Switches ngx-translate to English before EN prerender / navigation. */
-export const enLocaleResolver: ResolveFn<void> = () => {
+export const enLocaleResolver: ResolveFn<void> = async () => {
   const translate = inject(TranslateService);
   applyAppLang(translate, 'en', { persist: false });
-  return firstValueFrom(translate.use('en'));
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = 'en';
+  }
+  await firstValueFrom(translate.use('en'));
 };

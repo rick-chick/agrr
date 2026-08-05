@@ -106,6 +106,18 @@ describe('resolveSpaHreflangUrls', () => {
     );
   });
 
+  it('resolves paired EN index URLs', () => {
+    assert.deepEqual(
+      resolveSpaHreflangUrls({ routePath: 'en', baseUrl: 'https://agrr.net' }),
+      {
+        locale: 'en',
+        canonicalUrl: 'https://agrr.net/en/',
+        jaUrl: 'https://agrr.net/',
+        enUrl: 'https://agrr.net/en/',
+      }
+    );
+  });
+
   it('returns null for routes outside hreflang set', () => {
     assert.equal(resolveSpaHreflangUrls({ routePath: 'login', baseUrl: 'https://agrr.net' }), null);
   });

@@ -20,7 +20,7 @@ export const PUBLIC_PRERENDER_ROUTES = [
     expectHeading: '作付け時期の目安',
     locale: 'ja',
   },
-  { path: 'en', file: 'en/index.html', expectHeading: 'AGRR', locale: 'en' },
+  { path: 'en', file: 'en/index.html', expectHeading: 'Make Agriculture Smarter', locale: 'en' },
   { path: 'en/about', file: 'en/about/index.html', expectHeading: 'About AGRR', locale: 'en' },
   {
     path: 'en/contact',

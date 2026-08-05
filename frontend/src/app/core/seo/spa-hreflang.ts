@@ -75,6 +75,9 @@ export function alternateLocaleRoutePath(routePath: string): string | null {
 }
 
 export function resolveSpaHreflangUrls(origin: string, pathname: string): SpaHreflangUrls | null {
+  if (!origin) {
+    return null;
+  }
   const routePath = pathnameToSpaRoutePath(pathname);
   if (!isHreflangRoutePath(routePath)) {
     return null;
@@ -82,7 +85,8 @@ export function resolveSpaHreflangUrls(origin: string, pathname: string): SpaHre
 
   const alternatePath = alternateLocaleRoutePath(routePath);
   const selfPath = spaRoutePathToUrlPath(routePath);
-  const alternateUrlPath = alternatePath ? spaRoutePathToUrlPath(alternatePath) : null;
+  const alternateUrlPath =
+    alternatePath !== null ? spaRoutePathToUrlPath(alternatePath) : null;
   if (!alternateUrlPath) {
     return null;
   }

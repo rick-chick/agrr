@@ -95,7 +95,8 @@ export function resolveSpaHreflangUrls({ routePath, baseUrl = DEFAULT_BASE_URL }
 
   const alternatePath = alternateLocaleRoutePath(routePath);
   const selfPath = spaRoutePathToUrlPath(routePath);
-  const alternateUrlPath = alternatePath ? spaRoutePathToUrlPath(alternatePath) : null;
+  const alternateUrlPath =
+    alternatePath !== null ? spaRoutePathToUrlPath(alternatePath) : null;
   if (!selfPath || !alternateUrlPath) {
     return null;
   }
