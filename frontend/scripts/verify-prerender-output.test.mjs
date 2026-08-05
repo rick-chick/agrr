@@ -7,8 +7,9 @@ import {
   PUBLIC_PRERENDER_ROUTES,
   assertMeaningfulPrerenderedBody,
   assertNoAuthRoutePrerenderLeak,
-  assertPrerenderCanonical,
+  assertPrerenderedSeoMeta,
 } from './public-prerender-routes.mjs';
+import { resolveExpectedPrerenderSeo } from './seo-prerender-expectations.mjs';
 
 describe('assertMeaningfulPrerenderedBody', () => {
   it('rejects CSR shell HTML without rendered headings', () => {
@@ -46,7 +47,10 @@ describe('production build prerender output', () => {
       }
 
       if (route.canonicalPath) {
-        assertPrerenderCanonical(html, route.canonicalPath);
+        assertPrerenderedSeoMeta(
+          html,
+          resolveExpectedPrerenderSeo(route.canonicalPath, route.locale ?? 'ja'),
+        );
       }
 
       const isHreflangRoute =

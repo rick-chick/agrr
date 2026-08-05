@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID, REQUEST } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
@@ -32,7 +33,7 @@ describe('AppSeoMetaService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot()],
-      providers: [AppSeoMetaService]
+      providers: [AppSeoMetaService, provideRouter([])]
     });
     service = TestBed.inject(AppSeoMetaService);
     title = TestBed.inject(Title);
@@ -117,6 +118,9 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="description"')?.content).toBe('About説明');
     expect(meta.getTag('property="og:title"')?.content).toBe('AGRRについて');
     expect(meta.getTag('property="og:description"')?.content).toBe('About説明');
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+      'http://localhost/about'
+    );
   });
 
   it('sets ja/en/x-default hreflang alternates on public prerender routes', () => {

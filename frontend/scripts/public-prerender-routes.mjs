@@ -75,6 +75,7 @@ export const PUBLIC_PRERENDER_ROUTES = [
 export const PRERENDER_CANONICAL_ORIGIN = 'https://agrr.net';
 
 export const AUTH_CSR_ONLY_ROUTE_FRAGMENTS = [
+  'dashboard',
   'api-keys',
   'farms',
   'crops',
@@ -171,6 +172,108 @@ export function assertNoAuthRoutePrerenderLeak(html) {
       throw new Error(`Auth or private route fragment leaked into prerender output: ${fragment}`);
     }
   }
+}
+
+/**
+ * @param {string} html
+ * @param {{
+ *   title: string;
+ *   description: string;
+ *   ogDescription: string;
+ *   canonicalUrl: string;
+ *   ogImageUrl: string;
+ * }} expected
+ */
+export function assertPrerenderedSeoMeta(html, expected) {
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const title = stripTags(titleMatch?.[1] ?? '').trim();
+  if (title !== expected.title) {
+    throw new Error(`Expected <title> "${expected.title}" but got "${title}"`);
+  }
+
+  const description = readMetaContent(html, 'name', 'description');
+  if (description !== expected.description) {
+    throw new Error(
+      `Expected meta description "${expected.description}" but got "${description}"`
+    );
+  }
+
+  const ogTitle = readMetaContent(html, 'property', 'og:title');
+  if (ogTitle !== expected.title) {
+    throw new Error(`Expected og:title "${expected.title}" but got "${ogTitle}"`);
+  }
+
+  const ogDescription = readMetaContent(html, 'property', 'og:description');
+  if (ogDescription !== expected.ogDescription) {
+    throw new Error(
+      `Expected og:description "${expected.ogDescription}" but got "${ogDescription}"`
+    );
+  }
+
+  const ogUrl = readMetaContent(html, 'property', 'og:url');
+  if (ogUrl !== expected.canonicalUrl) {
+    throw new Error(`Expected og:url "${expected.canonicalUrl}" but got "${ogUrl}"`);
+  }
+
+  const canonical = readLinkHref(html, 'canonical');
+  if (canonical !== expected.canonicalUrl) {
+    throw new Error(`Expected canonical "${expected.canonicalUrl}" but got "${canonical}"`);
+  }
+
+  const ogImage = readMetaContent(html, 'property', 'og:image');
+  if (ogImage !== expected.ogImageUrl) {
+    throw new Error(`Expected og:image "${expected.ogImageUrl}" but got "${ogImage}"`);
+  }
+}
+
+/**
+ * @param {string} html
+ * @param {string} attrName
+ * @param {string} attrValue
+ */
+function readMetaContent(html, attrName, attrValue) {
+  const tagPattern = new RegExp(
+    `<meta[^>]*${attrName}=["']${attrValue}["'][^>]*>`,
+    'i'
+  );
+  const tagMatch = html.match(tagPattern);
+  if (!tagMatch) {
+    const reversedPattern = new RegExp(
+      `<meta[^>]*content=(["'])([\\s\\S]*?)\\1[^>]*${attrName}=["']${attrValue}["'][^>]*>`,
+      'i'
+    );
+    const reversedMatch = html.match(reversedPattern);
+    return reversedMatch?.[2] ?? '';
+  }
+  return readAttributeValue(tagMatch[0], 'content');
+}
+
+/**
+ * @param {string} tag
+ * @param {string} attribute
+ */
+function readAttributeValue(tag, attribute) {
+  const pattern = new RegExp(`${attribute}\\s*=\\s*(["'])([\\s\\S]*?)\\1`, 'i');
+  const match = tag.match(pattern);
+  return match?.[2] ?? '';
+}
+
+/**
+ * @param {string} html
+ * @param {string} rel
+ */
+function readLinkHref(html, rel) {
+  const tagPattern = new RegExp(`<link[^>]*rel=["']${rel}["'][^>]*>`, 'i');
+  const tagMatch = html.match(tagPattern);
+  if (!tagMatch) {
+    const reversedPattern = new RegExp(
+      `<link[^>]*href=(["'])([\\s\\S]*?)\\1[^>]*rel=["']${rel}["'][^>]*>`,
+      'i'
+    );
+    const reversedMatch = html.match(reversedPattern);
+    return reversedMatch?.[2] ?? '';
+  }
+  return readAttributeValue(tagMatch[0], 'href');
 }
 
 /**

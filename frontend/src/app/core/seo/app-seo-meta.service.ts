@@ -1,11 +1,12 @@
-import { Injectable, inject, DOCUMENT, PLATFORM_ID, REQUEST } from '@angular/core';
-import { isPlatformServer } from '@angular/common';
+import { DOCUMENT, isPlatformServer } from '@angular/common';
+import { Injectable, inject, PLATFORM_ID, REQUEST } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
-import { Router } from '@angular/router';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
+import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 import { resolveSpaHreflangUrls } from './spa-hreflang';
 import {
@@ -43,7 +44,7 @@ function isResolvedTranslation(value: string, keyPrefix: string): boolean {
 }
 
 /** Default OGP image served from `frontend/public/` (1200×630). */
-export const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
+const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
 
 @Injectable({ providedIn: 'root' })
 export class AppSeoMetaService {
@@ -333,7 +334,7 @@ export class AppSeoMetaService {
     const baseUrl =
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
-        : 'https://agrr.net';
+        : PRODUCTION_SITE_ORIGIN;
     const jsonLd = buildSiteStructuredDataDocument({
       baseUrl,
       siteTitle,
