@@ -9,45 +9,11 @@ import {
   ENTRY_SCHEDULE_PRERENDER_CATALOG,
   ENTRY_SCHEDULE_SEO_SAMPLE_CROP,
 } from './entry-schedule-prerender-catalog.mjs';
+import { resolveSeoKeyPrefix } from './route-seo-meta-lib.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PRODUCTION_SITE_ORIGIN = 'https://agrr.net';
 const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
-
-const ROUTE_SEO_KEY_MAP = {
-  '/': 'meta.default',
-  '/about': 'pages.about',
-  '/contact': 'pages.contact',
-  '/privacy': 'pages.privacy',
-  '/terms': 'pages.terms',
-  '/public-plans/new': 'pages.public_plans_new',
-  '/public-plans/results': 'pages.public_plans_new',
-  '/entry-schedule': 'pages.entry_schedule',
-};
-
-function normalizeSeoPath(pathname) {
-  if (!pathname) return '/';
-  const withoutQuery = pathname.split('?')[0];
-  let path =
-    withoutQuery.endsWith('/') && withoutQuery.length > 1
-      ? withoutQuery.slice(0, -1)
-      : withoutQuery;
-  if (path === '/en') {
-    return '/';
-  }
-  if (path.startsWith('/en/')) {
-    path = path.slice('/en'.length);
-  }
-  return path;
-}
-
-function resolveSeoKeyPrefix(pathname) {
-  const path = normalizeSeoPath(pathname);
-  if (path.startsWith('/entry-schedule/crop/')) {
-    return 'pages.entry_schedule_detail';
-  }
-  return ROUTE_SEO_KEY_MAP[path] ?? 'meta.default';
-}
 
 function readTranslation(translations, key) {
   const parts = key.split('.');
