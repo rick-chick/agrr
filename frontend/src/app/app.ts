@@ -10,7 +10,7 @@ import { FlashMessageComponent } from './components/shared/flash-message/flash-m
 import { UndoToastComponent } from './components/shared/undo-toast/undo-toast.component';
 import { CookieConsentBannerComponent } from './components/shared/cookie-consent-banner/cookie-consent-banner.component';
 import { GoogleAnalyticsService } from './services/google-analytics.service';
-import { POST_LOGIN_QUERY_PARAM } from './components/auth/login/login-auth-urls';
+import { POST_LOGIN_QUERY_PARAM } from './core/auth/login-auth-urls';
 import { AuthService } from './services/auth.service';
 import { UndoToastService } from './services/undo-toast.service';
 
