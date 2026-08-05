@@ -1200,9 +1200,7 @@
     "optimizing_live": {
       "heading": "Optimizing",
       "heading_completed": "Optimization complete",
-      "status_badge": "Optimizing",
       "status_badge_completed": "Complete",
-      "status_badge_failed": "Failed",
       "progress_label": "Progress: {{progress}}%",
       "duration_hint": "This will take approximately 1 minute",
       "default_message": "Preparing optimization...",

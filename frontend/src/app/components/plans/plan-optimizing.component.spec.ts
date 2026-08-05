@@ -59,9 +59,7 @@ describe('PlanOptimizingComponent', () => {
       {
         'plans.optimizing_live.heading': 'Optimizing',
         'plans.optimizing_live.heading_completed': 'Optimization complete',
-        'plans.optimizing_live.status_badge': 'Optimizing',
         'plans.optimizing_live.status_badge_completed': 'Complete',
-        'plans.optimizing_live.status_badge_failed': 'Failed',
         'plans.optimizing_live.progress_label': 'Progress: {{progress}}%',
         'plans.optimizing_live.duration_hint': 'Takes approximately 1 minute',
         'plans.optimizing_live.default_message': 'Preparing optimization...',
@@ -103,7 +101,6 @@ describe('PlanOptimizingComponent', () => {
       'ja',
       {
         'plans.optimizing_live.heading': '最適化中',
-        'plans.optimizing_live.status_badge': '最適化中',
         'plans.optimizing_live.progress_label': '進捗: {{progress}}%',
         'plans.optimizing_live.duration_hint': '約1分程度かかります',
         'plans.optimizing_live.default_message': '最適化を準備しています...'

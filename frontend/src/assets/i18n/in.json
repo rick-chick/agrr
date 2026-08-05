@@ -1623,9 +1623,7 @@
     "optimizing_live": {
       "heading": "अनुकूलन जारी",
       "heading_completed": "अनुकूलन पूर्ण",
-      "status_badge": "अनुकूलन जारी",
       "status_badge_completed": "पूर्ण",
-      "status_badge_failed": "विफल",
       "progress_label": "प्रगति: {{progress}}%",
       "duration_hint": "इसमें लगभग 1 मिनट लगेगा",
       "default_message": "अनुकूलन की तैयारी हो रही है...",

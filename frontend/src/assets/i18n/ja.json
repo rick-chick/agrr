@@ -2124,9 +2124,7 @@
     "optimizing_live": {
       "heading": "最適化中",
       "heading_completed": "最適化が完了しました",
-      "status_badge": "最適化中",
       "status_badge_completed": "完了",
-      "status_badge_failed": "失敗",
       "progress_label": "進捗: {{progress}}%",
       "duration_hint": "約1分程度かかります",
       "default_message": "最適化を準備しています...",
