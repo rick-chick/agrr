@@ -22,7 +22,6 @@ function needsMasterLoadingSpinProbe(pattern: string): boolean {
   }
   if (
     pattern === 'entry-schedule' ||
-    pattern === 'dashboard' ||
     pattern === 'plans/new'
   ) {
     return true;

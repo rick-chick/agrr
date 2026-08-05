@@ -1,7 +1,7 @@
 import { ApplicationConfig, importProvidersFrom, provideAppInitializer } from '@angular/core';
 import { provideClientHydration } from '@angular/platform-browser';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import {
   TranslateLoader,
   TranslateModule,
@@ -20,7 +20,13 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(),
     provideHttpClient(),
     { provide: ENTRY_SCHEDULE_GATEWAY, useExisting: EntryScheduleApiGateway },
-    provideRouter(routes),
+    provideRouter(
+      routes,
+      withInMemoryScrolling({
+        scrollPositionRestoration: 'enabled',
+        anchorScrolling: 'enabled'
+      })
+    ),
     importProvidersFrom(
       TranslateModule.forRoot({
         loader: {

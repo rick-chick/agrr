@@ -22,7 +22,6 @@ export const PUBLIC_PRERENDER_ROUTES = [
 
 /** Auth-required or dynamic routes that must not ship prerendered body content. */
 export const AUTH_CSR_ONLY_ROUTE_FRAGMENTS = [
-  'dashboard',
   'api-keys',
   'farms',
   'crops',

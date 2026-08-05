@@ -57,7 +57,6 @@ test('buildHostSelectorData maps direct component routes', async () => {
   const { map } = await buildHostSelectorData(FRONTEND);
   assert.equal(map[''], 'app-home');
   assert.equal(map.login, 'app-login');
-  assert.equal(map.dashboard, 'app-home');
 });
 
 test('buildHostSelectorData applies redirect-only overrides', async () => {

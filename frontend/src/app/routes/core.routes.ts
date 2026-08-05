@@ -8,6 +8,6 @@ export const coreRoutes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'auth/login', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'dashboard', component: HomeComponent, canActivate: [authGuard] },
+  { path: 'dashboard', redirectTo: '/', pathMatch: 'full' },
   { path: 'api-keys', component: ApiKeysComponent, canActivate: [authGuard] }
 ];
