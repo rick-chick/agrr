@@ -1500,8 +1500,8 @@
         "predicting_weather": "気象データの予測に失敗しました",
         "optimizing": "最適化に失敗しました",
         "task_schedule_generation": "作業計画の生成に失敗しました",
-        "timeout": "処理がタイムアウトしました",
-        "default": "処理に失敗しました"
+        "default": "処理に失敗しました",
+        "timeout": "処理がタイムアウトしました"
       },
       "default_plan_name": "メイン計画",
       "public_plan_name": "無料作付け計画"
@@ -1880,8 +1880,8 @@
           "predicting_weather": "気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。",
           "optimizing": "選択した作物や栽培期間を見直し、再度お試しください。",
           "task_schedule_generation": "最適化結果の処理中に問題が発生しました。再度お試しください。",
-          "timeout": "処理に時間がかかりすぎました。しばらく待ってから再度お試しください。",
-          "default": "下のボタンから作物を変更するか、最初からやり直してください。"
+          "default": "下のボタンから作物を変更するか、最初からやり直してください。",
+          "timeout": "処理に時間がかかりすぎました。しばらく待ってから再度お試しください。"
         }
       },
       "status_badge_failed": "作成失敗"
@@ -2364,6 +2364,8 @@
       "page_title": "{{name}}の作業計画表",
       "empty_hint": "作物を追加すると作業計画が生成されます。上の「作付け計画」タブで計画の内容を確認してください。",
       "empty_ready_no_fields": "作業計画の生成は完了していますが、表示する圃場がありません。「作付け計画」タブで圃場と作物を確認してください。",
+      "empty_fields_summary": "{{total}}圃場中 {{empty}}圃場は作業予定未設定",
+      "empty_fields_no_tasks_hint": "作業予定がまだありません。「作付け計画」タブで圃場と作物を確認するか、上の登録ウィザードをご利用ください。",
       "timeline_generated_at": "生成日時: {{datetime}}",
       "timeline_generated_unknown": "生成日時: 未取得",
       "no_schedules": "作業計画がまだ生成されていません。",
