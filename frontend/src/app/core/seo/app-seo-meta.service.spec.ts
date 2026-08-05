@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service';
 import { SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 
@@ -54,10 +55,10 @@ describe('AppSeoMetaService', () => {
             title: '無料作付け計画を作成',
             description: 'Public plans説明'
           },
-          entry_schedule: {
-            title: '作付け時期の目安',
-            description: '地域の気象予測に基づく作物別の播種・定植の目安時期を確認できます。',
-            og_description: '気象予測に基づく作物の播種・定植の目安時期'
+          public_plans_results: {
+            title: '{{planLabel}} — 作付け計画',
+            description: '{{cropLabels}}（{{planYear}}年・{{totalArea}}㎡）',
+            og_description: '{{planLabel}}の栽培スケジュール（{{cropLabels}}）'
           }
         }
       },
@@ -106,18 +107,6 @@ describe('AppSeoMetaService', () => {
     service.refreshDefaultMeta();
     expect(title.getTitle()).toBe('無料作付け計画を作成');
     expect(meta.getTag('name="description"')?.content).toBe('Public plans説明');
-  });
-
-  it('sets route-specific title and description for /entry-schedule', () => {
-    setWindowPath('/entry-schedule');
-    service.refreshDefaultMeta();
-    expect(title.getTitle()).toBe('作付け時期の目安');
-    expect(meta.getTag('name="description"')?.content).toBe(
-      '地域の気象予測に基づく作物別の播種・定植の目安時期を確認できます。'
-    );
-    expect(meta.getTag('property="og:description"')?.content).toBe(
-      '気象予測に基づく作物の播種・定植の目安時期'
-    );
   });
 
   it('falls back to meta.default for undefined routes', () => {
@@ -233,6 +222,71 @@ describe('AppSeoMetaService', () => {
     setWindowPath('/about');
     service.refreshDefaultMeta();
     expect(meta.getTag('name="robots"')).toBeNull();
+  });
+
+  const samplePlanData: CultivationPlanData = {
+    success: true,
+    data: {
+      id: 7,
+      plan_year: 2026,
+      plan_name: '関東',
+      status: 'completed',
+      total_area: 1200,
+      planning_start_date: '2026-01-01',
+      planning_end_date: '2026-12-31',
+      fields: [],
+      crops: [{ id: 1, name: 'トマト', area_per_unit: 1, revenue_per_area: 10 }],
+      cultivations: []
+    },
+    total_profit: 0,
+    total_revenue: 0,
+    total_cost: 0
+  };
+
+  it('refreshPublicPlanResultsMeta sets plan-specific OGP with planId in canonical URL', () => {
+    setWindowPath('/public-plans/results');
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        origin: 'https://agrr.net',
+        pathname: '/public-plans/results',
+        href: 'https://agrr.net/public-plans/results?planId=7',
+        search: '?planId=7'
+      }
+    });
+
+    service.refreshPublicPlanResultsMeta(7, samplePlanData);
+
+    expect(title.getTitle()).toBe('関東 — 作付け計画');
+    expect(meta.getTag('property="og:title"')?.content).toBe('関東 — 作付け計画');
+    expect(meta.getTag('property="og:description"')?.content).toBe(
+      '関東の栽培スケジュール（トマト）'
+    );
+    expect(meta.getTag('property="og:url"')?.content).toBe(
+      'https://agrr.net/public-plans/results?planId=7'
+    );
+    expect(meta.getTag('rel="canonical"')?.getAttribute('href')).toBe(
+      'https://agrr.net/public-plans/results?planId=7'
+    );
+    expect(meta.getTag('property="og:image"')?.content).toBe('https://agrr.net/og-default.png');
+  });
+
+  it('refreshPublicPlanResultsMeta falls back to public_plans_new when plan data is null', () => {
+    setWindowPath('/public-plans/results');
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        origin: 'https://agrr.net',
+        pathname: '/public-plans/results',
+        href: 'https://agrr.net/public-plans/results',
+        search: ''
+      }
+    });
+
+    service.refreshPublicPlanResultsMeta(null, null);
+
+    expect(title.getTitle()).toBe('無料作付け計画を作成');
+    expect(meta.getTag('property="og:url"')?.content).toBe('https://agrr.net/public-plans/results');
   });
 
   it('omits OGP image tags when origin is unavailable', () => {

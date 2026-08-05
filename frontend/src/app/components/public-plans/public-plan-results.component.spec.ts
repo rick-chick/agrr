@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
+import { of, type Observable } from 'rxjs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PublicPlanResultsComponent } from './public-plan-results.component';
 import { SavePublicPlanUseCase } from '../../usecase/public-plans/save-public-plan.usecase';
@@ -24,7 +24,10 @@ describe('PublicPlanResultsComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
   let flashMessage: { show: ReturnType<typeof vi.fn> };
-  let mockTranslate: { instant: ReturnType<typeof vi.fn> };
+  let mockTranslate: {
+    instant: ReturnType<typeof vi.fn>;
+    onLangChange: Observable<unknown>;
+  };
 
   beforeEach(() => {
     saveUseCase = { execute: vi.fn(() => of(undefined)) };
@@ -46,7 +49,8 @@ describe('PublicPlanResultsComponent', () => {
           return 'Please start over.';
         }
         return key;
-      })
+      }),
+      onLangChange: of({ lang: 'ja', translations: {} })
     };
 
     TestBed.resetTestingModule();

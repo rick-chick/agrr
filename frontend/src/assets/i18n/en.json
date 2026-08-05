@@ -3238,6 +3238,11 @@
         "contact_link_text": "Contact Page"
       },
       "effective_date": "Effective date: October 17, 2025"
+    },
+    "public_plans_results": {
+      "title": "{{planLabel}} — Crop Plan | AGRR",
+      "description": "Cultivation schedule for {{cropLabels}} ({{planYear}}, {{totalArea}} m²). Free crop plan by AGRR.",
+      "og_description": "{{planLabel}} cultivation schedule ({{cropLabels}})"
     }
   },
   "shared": {

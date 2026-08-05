@@ -2967,6 +2967,11 @@
         "contact_link_text": "संपर्क पृष्ठ"
       },
       "effective_date": "प्रभावी तिथि: 17 अक्टूबर 2025"
+    },
+    "public_plans_results": {
+      "title": "{{planLabel}} — फसल योजना | AGRR",
+      "description": "{{cropLabels}} की खेती अनुसूची ({{planYear}}, {{totalArea}} m²)। AGRR की मुफ्त फसल योजना।",
+      "og_description": "{{planLabel}} की खेती अनुसूची ({{cropLabels}})"
     }
   },
   "shared": {
