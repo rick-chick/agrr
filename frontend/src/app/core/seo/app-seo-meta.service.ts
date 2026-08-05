@@ -233,7 +233,7 @@ export class AppSeoMetaService {
     if (typeof document === 'undefined') {
       return;
     }
-    const path = window.location?.pathname ?? '/';
+    const path = this.readPathname();
     const origin = this.readOrigin();
     if (!origin) {
       this.clearHreflangLinks();
