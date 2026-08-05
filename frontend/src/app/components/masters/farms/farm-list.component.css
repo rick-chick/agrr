@@ -1,1 +1,15 @@
 @import '../_master-layout.css';
+
+.list-loading-text {
+  display: none;
+}
+
+@media (max-width: 20rem) {
+  .list-loading-skeleton {
+    display: none;
+  }
+
+  .list-loading-text {
+    display: block;
+  }
+}
