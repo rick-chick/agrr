@@ -7,7 +7,7 @@ use support::{
     agrr_regeneration_contract_available, assert_builtin_generation_deprecated_headers,
     assert_crop_task_template_api_removed,
     clear_plan_task_schedules, developer_session_id, empty_headers, farmer_session_id,
-    researcher_session_id,
+    api_scope_defaults_session_id, researcher_session_id,
     find_schedule_item, poll_task_schedule_sync_ready, schedule_item_ids_from_response,
     seed_masters_crop, seed_masters_crop_with_manual_blueprint, seed_masters_crop_with_stages,
     seed_masters_crop_with_stages_and_blueprints, seed_reference_crop_with_stage,
@@ -1712,7 +1712,9 @@ fn regenerate_api_key_with_scopes(
 #[test]
 fn post_api_keys_generate_defaults_to_read_scope() {
     let client = ContractClient::from_env();
-    let session_id = researcher_session_id(&client);
+    // Dedicated mock user — parallel contract tests share one SQLite DB and
+    // researcher's api_key is mutated by write-scope tests.
+    let session_id = api_scope_defaults_session_id(&client);
 
     let (_, scopes) = generate_api_key_with_scopes(&client, &session_id, None);
     assert_eq!(vec!["masters:read".to_string()], scopes);
