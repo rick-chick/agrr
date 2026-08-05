@@ -1,9 +1,10 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { take } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { getApiBaseUrl } from '../../../core/api-base-url';
+import { AppSeoMetaService } from '../../../core/seo/app-seo-meta.service';
 import { AuthService } from '../../../services/auth.service';
 import {
   buildGoogleOAuthStartUrl,
@@ -57,10 +58,11 @@ const DEV_MOCK_LOGIN_CSS: Record<DevMockLoginUser, string> = {
   `,
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly seoMeta = inject(AppSeoMetaService);
 
   protected readonly showDevMockLogin = environment.enableDevMockLogin;
   protected readonly devMockLoginUsers = DEV_MOCK_LOGIN_USERS;
@@ -69,6 +71,8 @@ export class LoginComponent implements OnInit {
   protected readonly googleOAuthStartUrl = this.buildGoogleOAuthStartUrl();
 
   ngOnInit(): void {
+    this.seoMeta.applyNoIndexMeta();
+
     this.authService
       .loadCurrentUser()
       .pipe(take(1))
@@ -81,6 +85,10 @@ export class LoginComponent implements OnInit {
           void this.router.navigateByUrl(target ?? '/', { replaceUrl: true });
         }
       });
+  }
+
+  ngOnDestroy(): void {
+    this.seoMeta.removeNoIndexMeta();
   }
 
   protected mockLoginUrl(user: DevMockLoginUser): string {
