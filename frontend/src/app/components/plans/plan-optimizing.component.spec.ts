@@ -61,14 +61,20 @@ describe('PlanOptimizingComponent', () => {
         'plans.optimizing_live.heading_completed': 'Optimization complete',
         'plans.optimizing_live.status_badge': 'Optimizing',
         'plans.optimizing_live.status_badge_completed': 'Complete',
+        'plans.optimizing_live.status_badge_failed': 'Failed',
         'plans.optimizing_live.progress_label': 'Progress: {{progress}}%',
-        'models.cultivation_plan.phases.task_schedule_generating': 'Generating task plans...'
+        'plans.optimizing_live.duration_hint': 'Takes approximately 1 minute',
+        'plans.optimizing_live.default_message': 'Preparing optimization...',
+        'plans.optimizing_live.error.retry': 'Reload',
+        'plans.optimizing_live.error.back_to_plan': 'Back to plan',
+        'models.cultivation_plan.phases.task_schedule_generating': 'Generating task plans...',
+        'models.cultivation_plan.phase_failed.default': 'Process failed'
       },
       true
     );
   });
 
-  it('renders progress without showing the redundant status label', () => {
+  it('renders progress without duplicating optimizing heading and status badge', () => {
     const state: PlanOptimizingViewState = { status: 'optimizing', progress: 73, phaseMessage: '' };
     component.control = state;
     fixture.detectChanges();
@@ -76,8 +82,63 @@ describe('PlanOptimizingComponent', () => {
     const textContent = fixture.nativeElement.textContent;
     expect(textContent).toContain('Progress: 73%');
     expect(textContent).not.toContain('Status:');
-    expect(textContent).toContain('Optimizing');
+    expect((textContent.match(/Optimizing/g) ?? []).length).toBe(1);
     expect(textContent).not.toContain('Optimization complete');
+    expect(fixture.nativeElement.querySelector('.status-badge')).toBeNull();
+  });
+
+  it('shows duration hint and default message while optimizing', () => {
+    component.control = { status: 'optimizing', progress: 0, phaseMessage: '' };
+    fixture.detectChanges();
+
+    const textContent = fixture.nativeElement.textContent;
+    expect(textContent).toContain('Takes approximately 1 minute');
+    expect(textContent).toContain('Preparing optimization...');
+  });
+
+  it('does not duplicate optimizing text in ja locale', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.use('ja');
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.optimizing_live.heading': '最適化中',
+        'plans.optimizing_live.status_badge': '最適化中',
+        'plans.optimizing_live.progress_label': '進捗: {{progress}}%',
+        'plans.optimizing_live.duration_hint': '約1分程度かかります',
+        'plans.optimizing_live.default_message': '最適化を準備しています...'
+      },
+      true
+    );
+
+    component.control = { status: 'optimizing', progress: 12, phaseMessage: '' };
+    fixture.detectChanges();
+
+    const textContent = fixture.nativeElement.textContent;
+    expect((textContent.match(/最適化中/g) ?? []).length).toBe(1);
+    expect(textContent).toContain('約1分程度かかります');
+  });
+
+  it('shows error alert with retry and back-to-plan actions on failure', () => {
+    component.control = {
+      status: 'failed',
+      progress: 40,
+      phaseMessage: 'Process failed'
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('.page-alert-error');
+    expect(alert).not.toBeNull();
+    expect(alert.textContent).toContain('Process failed');
+
+    const retry = fixture.nativeElement.querySelector('.plan-optimizing__retry');
+    expect(retry).not.toBeNull();
+    expect(retry.textContent).toContain('Reload');
+
+    const backLink = fixture.nativeElement.querySelector('a.plan-optimizing__back');
+    expect(backLink).not.toBeNull();
+    expect(backLink.getAttribute('href')).toBe('/plans/13');
+    expect(backLink.textContent).toContain('Back to plan');
   });
 
   it('shows phase message from cable when present', () => {

@@ -8,5 +8,6 @@ export interface SubscribePlanOptimizationInputDto {
 export interface PlanOptimizationMessageDto {
   status?: string;
   progress?: number;
+  phase_message?: string;
   message_key?: string;
 }

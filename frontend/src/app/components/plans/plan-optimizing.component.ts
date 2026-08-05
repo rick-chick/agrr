@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { PlanOptimizingView, PlanOptimizingViewState } from './plan-optimizing.view';
@@ -17,7 +17,7 @@ const initialControl: PlanOptimizingViewState = {
 @Component({
   selector: 'app-plan-optimizing',
   standalone: true,
-  imports: [CommonModule, TranslateModule, PlanPlanContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, PlanPlanContextHeaderComponent],
   providers: [...PLAN_OPTIMIZING_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
@@ -27,23 +27,46 @@ const initialControl: PlanOptimizingViewState = {
         pageTitleKey="plans.optimizing_live.heading"
       />
       <section class="page">
-        <h2>
-          <span>{{
-            (isCompleted
-              ? 'plans.optimizing_live.heading_completed'
-              : 'plans.optimizing_live.heading'
-            ) | translate
-          }}</span>
-          <span class="status-badge" [class.status-badge--completed]="isCompleted">{{
-            (isCompleted
-              ? 'plans.optimizing_live.status_badge_completed'
-              : 'plans.optimizing_live.status_badge'
-            ) | translate
-          }}</span>
-        </h2>
-        <p>{{ 'plans.optimizing_live.progress_label' | translate: { progress: control.progress } }}</p>
-        @if (control.phaseMessage) {
-          <p class="plan-optimizing__phase-message">{{ control.phaseMessage }}</p>
+        @if (isFailed) {
+          <div class="page-alert-error plan-optimizing__error" role="alert">
+            <p>{{ control.phaseMessage }}</p>
+            @if (control.failureHint) {
+              <p class="plan-optimizing__failure-hint">{{ control.failureHint }}</p>
+            }
+            <div class="plan-optimizing__error-actions">
+              <button type="button" class="btn-secondary plan-optimizing__retry" (click)="reload()">
+                {{ 'plans.optimizing_live.error.retry' | translate }}
+              </button>
+              <a [routerLink]="['/plans', planId]" class="btn-secondary plan-optimizing__back">
+                {{ 'plans.optimizing_live.error.back_to_plan' | translate }}
+              </a>
+            </div>
+          </div>
+        } @else {
+          <h2>
+            <span>{{
+              (isCompleted
+                ? 'plans.optimizing_live.heading_completed'
+                : 'plans.optimizing_live.heading'
+              ) | translate
+            }}</span>
+            @if (isCompleted) {
+              <span class="status-badge status-badge--completed">{{
+                'plans.optimizing_live.status_badge_completed' | translate
+              }}</span>
+            }
+          </h2>
+          <p>{{ 'plans.optimizing_live.progress_label' | translate: { progress: control.progress } }}</p>
+          @if (!isCompleted) {
+            <p class="plan-optimizing__phase-message">{{
+              control.phaseMessage || ('plans.optimizing_live.default_message' | translate)
+            }}</p>
+            <p class="plan-optimizing__duration-hint">{{
+              'plans.optimizing_live.duration_hint' | translate
+            }}</p>
+          } @else if (control.phaseMessage) {
+            <p class="plan-optimizing__phase-message">{{ control.phaseMessage }}</p>
+          }
         }
       </section>
     </main>
@@ -67,6 +90,10 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     return this.control.status === 'completed' || this.control.progress >= 100;
   }
 
+  get isFailed(): boolean {
+    return this.control.status === 'failed';
+  }
+
   private _control: PlanOptimizingViewState = initialControl;
   get control(): PlanOptimizingViewState {
     return this._control;
@@ -83,12 +110,18 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
       this.control = { status: 'invalid_plan_id', progress: 0, phaseMessage: '' };
       return;
     }
-    this.useCase.execute({
-      planId,
-      onSubscribed: (ch) => {
-        this.channel = ch;
-      }
-    });
+    this.subscribeOptimization(planId);
+  }
+
+  reload(): void {
+    const planId = this.planId;
+    if (!planId) {
+      return;
+    }
+    this.channel?.unsubscribe();
+    this.channel = null;
+    this.control = { status: 'pending', progress: 0, phaseMessage: '' };
+    this.subscribeOptimization(planId);
   }
 
   onOptimizationCompleted(): void {
@@ -97,5 +130,14 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
 
   ngOnDestroy(): void {
     this.channel?.unsubscribe();
+  }
+
+  private subscribeOptimization(planId: number): void {
+    this.useCase.execute({
+      planId,
+      onSubscribed: (ch) => {
+        this.channel = ch;
+      }
+    });
   }
 }

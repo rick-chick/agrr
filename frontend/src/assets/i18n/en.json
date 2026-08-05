@@ -1202,7 +1202,22 @@
       "heading_completed": "Optimization complete",
       "status_badge": "Optimizing",
       "status_badge_completed": "Complete",
-      "progress_label": "Progress: {{progress}}%"
+      "status_badge_failed": "Failed",
+      "progress_label": "Progress: {{progress}}%",
+      "duration_hint": "This will take approximately 1 minute",
+      "default_message": "Preparing optimization...",
+      "error": {
+        "title": "Optimization failed",
+        "retry": "Reload",
+        "back_to_plan": "Back to plan",
+        "hints": {
+          "fetching_weather": "Check your farm settings and try again in a moment.",
+          "predicting_weather": "Weather data may still be preparing. Wait a moment and try again.",
+          "optimizing": "Review your crops and cultivation periods, then try again.",
+          "task_schedule_generation": "Something went wrong while processing results. Try again.",
+          "default": "Reload the page or return to the plan hub using the buttons below."
+        }
+      }
     },
     "title": "Cultivation Plans",
     "default_plan_name": "Main Plan",
