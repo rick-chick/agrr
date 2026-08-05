@@ -134,6 +134,14 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-frontend-deploy-seo-ci-workflow.test.mjs
 
+      - name: verify-seo-routing contract unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test .cursor/skills/deploy-frontend/scripts/verify-seo-routing-contract.test.mjs
+
+      - name: verify-seo-canonical helper unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test .cursor/skills/deploy-frontend/scripts/verify-seo-canonical-lib.test.mjs
+
       - name: research vitepress link patch unit tests
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/research-tools/scripts/patch-research-vitepress-links.test.mjs
