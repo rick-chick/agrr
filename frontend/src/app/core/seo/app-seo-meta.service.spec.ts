@@ -3,6 +3,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service';
+import { SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 
 const TEST_ORIGIN = 'http://localhost';
 
@@ -67,7 +68,22 @@ describe('AppSeoMetaService', () => {
 
   afterEach(() => {
     setWindowPath('/');
+    document.head
+      .querySelectorAll('script[type="application/ld+json"]')
+      .forEach((node) => node.remove());
   });
+
+  function insertStaticJsonLdScript(): HTMLScriptElement {
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = SITE_STRUCTURED_DATA_SCRIPT_ID;
+    script.text = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [{ '@type': 'Organization', name: 'AGRR' }]
+    });
+    document.head.appendChild(script);
+    return script;
+  }
 
   it('sets document title and description from default meta keys on home', () => {
     setWindowPath('/');
@@ -144,6 +160,30 @@ describe('AppSeoMetaService', () => {
     });
   });
 
+  it('updates static index.html JSON-LD in place without duplicating scripts', () => {
+    const staticScript = insertStaticJsonLdScript();
+    setWindowPath('/');
+
+    service.refreshDefaultMeta();
+    let scripts = document.head.querySelectorAll('script[type="application/ld+json"]');
+    expect(scripts.length).toBe(1);
+    expect(scripts[0]).toBe(staticScript);
+
+    service.refreshDefaultMeta();
+    scripts = document.head.querySelectorAll('script[type="application/ld+json"]');
+    expect(scripts.length).toBe(1);
+    expect(scripts[0]).toBe(staticScript);
+
+    const structured = JSON.parse(staticScript.textContent ?? '{}');
+    const website = (structured['@graph'] as Array<Record<string, unknown>>).find(
+      (node) => node['@type'] === 'WebSite'
+    );
+    expect(website).toMatchObject({
+      name: 'AGRR',
+      description: 'OG説明'
+    });
+  });
+
   it('buildSelfCanonicalUrl strips query from pathname and joins origin', () => {
     expect(
       buildSelfCanonicalUrl('https://agrr.net', '/public-plans/results')
@@ -168,6 +208,31 @@ describe('AppSeoMetaService', () => {
       'AGRR 農業計画支援システムの OGP 画像'
     );
     expect(meta.getTag('name="twitter:card"')?.content).toBe('summary_large_image');
+  });
+
+  it('sets robots noindex via applyNoIndexMeta', () => {
+    service.applyNoIndexMeta();
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex');
+  });
+
+  it('removes robots noindex via removeNoIndexMeta', () => {
+    service.applyNoIndexMeta();
+    service.removeNoIndexMeta();
+    expect(meta.getTag('name="robots"')).toBeNull();
+  });
+
+  it('re-applies noindex after refreshDefaultMeta when noIndexActive', () => {
+    service.applyNoIndexMeta();
+    setWindowPath('/about');
+    service.refreshDefaultMeta();
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex');
+    expect(title.getTitle()).toBe('AGRRについて');
+  });
+
+  it('does not set noindex on refreshDefaultMeta for normal routes', () => {
+    setWindowPath('/about');
+    service.refreshDefaultMeta();
+    expect(meta.getTag('name="robots"')).toBeNull();
   });
 
   it('omits OGP image tags when origin is unavailable', () => {
