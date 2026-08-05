@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
@@ -7,6 +8,10 @@ import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service
 import { SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 
 const TEST_ORIGIN = 'http://localhost';
+
+function canonicalHref(): string | null {
+  return document.head.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? null;
+}
 
 function setWindowPath(pathname: string): void {
   Object.defineProperty(window, 'location', {
@@ -28,7 +33,10 @@ describe('AppSeoMetaService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot()],
-      providers: [AppSeoMetaService]
+      providers: [
+        AppSeoMetaService,
+        { provide: Router, useValue: { url: '/' } },
+      ],
     });
     service = TestBed.inject(AppSeoMetaService);
     title = TestBed.inject(Title);
@@ -69,6 +77,7 @@ describe('AppSeoMetaService', () => {
 
   afterEach(() => {
     setWindowPath('/');
+    document.head.querySelector('link[rel="canonical"]')?.remove();
     document.head
       .querySelectorAll('script[type="application/ld+json"]')
       .forEach((node) => node.remove());
@@ -114,6 +123,24 @@ describe('AppSeoMetaService', () => {
     service.refreshDefaultMeta();
     expect(title.getTitle()).toBe('AGRR タイトル');
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
+  });
+
+  it('uses router URL and production origin when window is unavailable (SSR prerender)', () => {
+    const router = TestBed.inject(Router);
+    Object.defineProperty(router, 'url', { value: '/about', configurable: true });
+    const savedWindow = globalThis.window;
+    Reflect.deleteProperty(globalThis, 'window');
+
+    try {
+      service.refreshDefaultMeta();
+
+      expect(title.getTitle()).toBe('AGRRについて');
+      expect(meta.getTag('property="og:url"')?.content).toBe('https://agrr.net/about');
+      expect(canonicalHref()).toBe('https://agrr.net/about');
+      expect(meta.getTag('property="og:image"')?.content).toBe('https://agrr.net/og-default.png');
+    } finally {
+      globalThis.window = savedWindow;
+    }
   });
 
   it('skips JSON-LD injection when document is unavailable (SSR/prerender)', () => {
@@ -265,7 +292,7 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('property="og:url"')?.content).toBe(
       'https://agrr.net/public-plans/results?planId=7'
     );
-    expect(meta.getTag('rel="canonical"')?.getAttribute('href')).toBe(
+    expect(canonicalHref()).toBe(
       'https://agrr.net/public-plans/results?planId=7'
     );
     expect(meta.getTag('property="og:image"')?.content).toBe('https://agrr.net/og-default.png');

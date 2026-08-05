@@ -7,6 +7,10 @@ import {
   assertMeaningfulPrerenderedBody,
   assertNoAuthRoutePrerenderLeak,
 } from './public-prerender-routes.mjs';
+import {
+  assertPrerenderedHeadSeo,
+  expectedPrerenderSeoForRoute,
+} from './prerender-seo-meta.mjs';
 
 describe('assertMeaningfulPrerenderedBody', () => {
   it('rejects CSR shell HTML without rendered headings', () => {
@@ -38,6 +42,8 @@ describe('production build prerender output', () => {
       const html = await readFile(filePath, 'utf8');
       assertMeaningfulPrerenderedBody(html, { expectHeading: route.expectHeading });
       assertNoAuthRoutePrerenderLeak(html);
+      const expectedSeo = await expectedPrerenderSeoForRoute(route.path);
+      assertPrerenderedHeadSeo(html, expectedSeo);
     });
   }
 });

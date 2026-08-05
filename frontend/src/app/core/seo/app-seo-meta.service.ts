@@ -1,14 +1,17 @@
 import { Injectable, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
-import { resolveSeoKeyPrefix } from './route-seo-meta.config';
+import { normalizeSeoPath, resolveSeoKeyPrefix } from './route-seo-meta.config';
 import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 import {
   buildPublicPlanResultsShareUrl,
   extractPublicPlanResultsSeoLabels
 } from './public-plan-results-seo-meta';
+import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 
 function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
@@ -40,6 +43,8 @@ export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router, { optional: true });
   private noIndexActive = false;
 
   applyNoIndexMeta(): void {
@@ -58,7 +63,7 @@ export class AppSeoMetaService {
       document.documentElement.lang = documentHtmlLang(angularLang);
     }
 
-    const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
+    const path = this.readPath();
     const keyPrefix = resolveSeoKeyPrefix(path);
     this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
   }
@@ -70,7 +75,7 @@ export class AppSeoMetaService {
     }
 
     if (!planId || !planData?.success) {
-      const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
+      const path = this.readPath();
       const keyPrefix = resolveSeoKeyPrefix(path);
       this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
       return;
@@ -96,7 +101,31 @@ export class AppSeoMetaService {
   }
 
   private readOrigin(): string {
-    return typeof window !== 'undefined' ? window.location.origin : '';
+    if (typeof window !== 'undefined') {
+      return window.location?.origin ?? '';
+    }
+    return PRODUCTION_SITE_ORIGIN;
+  }
+
+  private readPath(): string {
+    if (typeof window !== 'undefined' && window.location?.pathname) {
+      return window.location.pathname;
+    }
+    return normalizeSeoPath(this.router?.url ?? '/');
+  }
+
+  private updateCanonicalLink(href: string): void {
+    if (typeof this.document === 'undefined' || !this.document.head) {
+      return;
+    }
+
+    let link = this.document.head.querySelector('link[rel="canonical"]');
+    if (!(link instanceof HTMLLinkElement)) {
+      link = this.document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      this.document.head.appendChild(link);
+    }
+    link.setAttribute('href', href);
   }
 
   private applySeoFromKeyPrefix(keyPrefix: string, ogUrl: string): void {
@@ -151,7 +180,7 @@ export class AppSeoMetaService {
     }
     if (ogUrl) {
       this.meta.updateTag({ property: 'og:url', content: ogUrl });
-      this.meta.updateTag({ rel: 'canonical', href: ogUrl }, 'rel="canonical"');
+      this.updateCanonicalLink(ogUrl);
     }
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
