@@ -10,6 +10,7 @@
             name: "User".into(),
             admin: false,
             anonymous: !authenticated,
+            api_key_scopes: None,
         }
     }
 

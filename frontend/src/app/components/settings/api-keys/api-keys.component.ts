@@ -21,6 +21,18 @@ import { FlashMessageService } from '../../../services/flash-message.service';
       <div class="info-box">
         <p class="info-box-content">{{ 'api_keys.warning' | translate }}</p>
 
+        <div class="form-group">
+          <label class="api-key-scope-option">
+            <input
+              type="checkbox"
+              [checked]="includeWriteScope"
+              (change)="includeWriteScope = !includeWriteScope"
+            >
+            {{ 'api_keys.scopes.write' | translate }}
+          </label>
+          <p class="api-key-scope-hint">{{ 'api_keys.scopes.read_default_hint' | translate }}</p>
+        </div>
+
         @if (apiKey) {
           <div class="form-group">
             <label class="form-group-label" for="api-key-value">{{ 'api_keys.label' | translate }}</label>
@@ -120,6 +132,7 @@ export class ApiKeysComponent implements OnInit {
 
   loading = true;
   generating = false;
+  includeWriteScope = false;
   apiKey = '';
   errorMessage: string | null = null;
   copyButtonLabel = '';
@@ -133,7 +146,7 @@ export class ApiKeysComponent implements OnInit {
     if (this.generating) return;
     this.generating = true;
     this.errorMessage = null;
-    this.management.generateKey().subscribe({
+    this.management.generateKey(this.includeWriteScope).subscribe({
       next: (apiKey) => {
         this.apiKey = apiKey;
         this.generating = false;
@@ -155,7 +168,7 @@ export class ApiKeysComponent implements OnInit {
 
     this.generating = true;
     this.errorMessage = null;
-    this.management.regenerateKey().subscribe({
+    this.management.regenerateKey(this.includeWriteScope).subscribe({
       next: (apiKey) => {
         this.apiKey = apiKey;
         this.generating = false;

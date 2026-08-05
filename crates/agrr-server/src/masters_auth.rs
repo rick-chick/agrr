@@ -4,10 +4,11 @@ use crate::state::AppState;
 use agrr_adapters_sqlite::{ApiKeyPrincipalSqliteGateway, SessionCookiePrincipalSqliteGateway};
 use agrr_domain::shared::dtos::{MastersApiCredentialsResolveInput, SessionPrincipal};
 use agrr_domain::shared::interactors::MastersApiCredentialsResolveInteractor;
+use agrr_domain::shared::policies::masters_api_scope_policy::{MastersApiAccess, MastersApiScopePolicy};
 use agrr_domain::shared::ports::MastersApiCredentialsResolveOutputPort;
 use axum::{
     extract::{FromRef, FromRequestParts},
-    http::{request::Parts, HeaderMap, StatusCode},
+    http::{request::Parts, HeaderMap, Method, StatusCode},
 };
 use axum_extra::extract::cookie::CookieJar;
 
@@ -16,14 +17,14 @@ use axum_extra::extract::cookie::CookieJar;
 pub struct MastersUserId(pub i64);
 
 struct ResolvePort {
-    user_id: Option<i64>,
+    principal: Option<SessionPrincipal>,
     denied: bool,
 }
 
 impl MastersApiCredentialsResolveOutputPort for ResolvePort {
     fn on_success(&mut self, principal: SessionPrincipal) {
         if principal.authenticated() {
-            self.user_id = Some(principal.id);
+            self.principal = Some(principal);
         } else {
             self.denied = true;
         }
@@ -69,18 +70,60 @@ pub fn resolve_masters_user_id(
     headers: &HeaderMap,
     query_api_key: Option<&str>,
 ) -> Result<i64, StatusCode> {
+    let principal = resolve_masters_principal(state, jar, headers, query_api_key)?;
+    Ok(principal.id)
+}
+
+pub fn resolve_masters_principal(
+    state: &AppState,
+    jar: &CookieJar,
+    headers: &HeaderMap,
+    query_api_key: Option<&str>,
+) -> Result<SessionPrincipal, StatusCode> {
     let session_id = jar.get("session_id").map(|c| c.value().to_string());
     let input = MastersApiCredentialsResolveInput::new(extract_api_key(headers, query_api_key), session_id);
     let api_gw = ApiKeyPrincipalSqliteGateway::new(state.sqlite.clone());
     let session_gw = SessionCookiePrincipalSqliteGateway::new(state.sqlite.clone());
     let mut port = ResolvePort {
-        user_id: None,
+        principal: None,
         denied: false,
     };
     let mut interactor =
         MastersApiCredentialsResolveInteractor::new(&mut port, &api_gw, &session_gw);
     interactor.call(&input);
-    port.user_id.ok_or(StatusCode::UNAUTHORIZED)
+    port.principal.ok_or(StatusCode::UNAUTHORIZED)
+}
+
+fn required_masters_access(parts: &Parts) -> MastersApiAccess {
+    match parts.method {
+        Method::GET | Method::HEAD => MastersApiAccess::Read,
+        Method::POST | Method::PUT | Method::PATCH | Method::DELETE => {
+            if parts.uri.path().ends_with("/setup_proposal") {
+                let mode = parts
+                    .uri
+                    .query()
+                    .and_then(|q| {
+                        q.split('&').find_map(|pair| {
+                            let (k, v) = pair.split_once('=')?;
+                            if k == "mode" {
+                                Some(v)
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                    .unwrap_or("");
+                if mode == "apply" {
+                    MastersApiAccess::SetupProposalApply
+                } else {
+                    MastersApiAccess::SetupProposalDryRun
+                }
+            } else {
+                MastersApiAccess::Write
+            }
+        }
+        _ => MastersApiAccess::Read,
+    }
 }
 
 impl<S> FromRequestParts<S> for MastersUserId
@@ -108,9 +151,13 @@ where
                     }
                 })
             });
-        let user_id = resolve_masters_user_id(&app_state, &jar, &parts.headers, query_key)
+        let principal = resolve_masters_principal(&app_state, &jar, &parts.headers, query_key)
             .map_err(|_| unauthorized())?;
-        Ok(MastersUserId(user_id))
+        let access = required_masters_access(parts);
+        if !MastersApiScopePolicy::allows(&principal, access) {
+            return Err(forbidden());
+        }
+        Ok(MastersUserId(principal.id))
     }
 }
 
@@ -118,5 +165,12 @@ fn unauthorized() -> (StatusCode, axum::Json<serde_json::Value>) {
     (
         StatusCode::UNAUTHORIZED,
         axum::Json(serde_json::json!({"error": "unauthorized"})),
+    )
+}
+
+fn forbidden() -> (StatusCode, axum::Json<serde_json::Value>) {
+    (
+        StatusCode::FORBIDDEN,
+        axum::Json(serde_json::json!({"error": "forbidden", "error_code": "insufficient_scope"})),
     )
 }

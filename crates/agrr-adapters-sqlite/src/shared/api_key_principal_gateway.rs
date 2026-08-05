@@ -21,16 +21,27 @@ impl ApiKeyPrincipalGateway for ApiKeyPrincipalSqliteGateway {
             .with_read(|conn| {
                 conn.query_row(
                     "SELECT id, COALESCE(email, ''), COALESCE(name, ''), \
-                     COALESCE(admin, 0), COALESCE(is_anonymous, 0) \
+                     COALESCE(admin, 0), COALESCE(is_anonymous, 0), api_key_scopes \
                      FROM users WHERE api_key = ?1 LIMIT 1",
                     params![api_key],
                     |row| {
+                        let scopes_raw: Option<String> = row.get(5)?;
+                        let scopes = match scopes_raw.as_deref().map(str::trim) {
+                            None | Some("") => {
+                                agrr_domain::shared::policies::masters_api_scope_policy::full_api_key_scopes()
+                            }
+                            Some(raw) => agrr_domain::shared::policies::masters_api_scope_policy::parse_api_key_scopes_json(Some(raw))
+                                .unwrap_or_else(|| {
+                                    agrr_domain::shared::policies::masters_api_scope_policy::full_api_key_scopes()
+                                }),
+                        };
                         Ok(SessionPrincipal {
                             id: row.get(0)?,
                             email: row.get(1)?,
                             name: row.get(2)?,
                             admin: row.get::<_, i64>(3)? != 0,
                             anonymous: row.get::<_, i64>(4)? != 0,
+                            api_key_scopes: Some(scopes),
                         })
                     },
                 )

@@ -2984,6 +2984,10 @@
       "regenerate": "APIキーを再生成",
       "regenerate_confirm": "APIキーを再生成すると、現在のキーは無効になります。続行しますか？"
     },
+    "scopes": {
+      "write": "書き込み権限（masters:write）を付与する",
+      "read_default_hint": "未チェック時は読み取り専用（masters:read）のキーが発行されます。"
+    },
     "notices": {
       "missing": "APIキーが設定されていません。以下のボタンをクリックしてAPIキーを生成してください。"
     },

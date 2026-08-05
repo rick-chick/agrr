@@ -2634,6 +2634,10 @@
       "regenerate": "API Key पुनः生成",
       "regenerate_confirm": "पुनः生成 करने पर वर्तमान Key無効 हो जाएगी। जारी रखें?"
     },
+    "scopes": {
+      "write": "लेखन अनुमति (masters:write) दें",
+      "read_default_hint": "अनचेक होने पर केवल पढ़ने की Key (masters:read) जारी होगी।"
+    },
     "notices": {
       "missing": "API Key सेट नहीं है। नीचेのボタンで生成してください।"
     },

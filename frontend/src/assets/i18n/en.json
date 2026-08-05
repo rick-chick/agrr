@@ -2948,6 +2948,10 @@
       "regenerate": "Regenerate API Key",
       "regenerate_confirm": "Regenerating will invalidate the current key. Continue?"
     },
+    "scopes": {
+      "write": "Grant write access (masters:write)",
+      "read_default_hint": "When unchecked, the key is read-only (masters:read)."
+    },
     "notices": {
       "missing": "No API key is set. Click the button below to generate one."
     },

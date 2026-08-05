@@ -1663,6 +1663,162 @@ fn post_api_keys_regenerate_invalidates_previous_key() {
     assert_eq!(200, new_auth_status, "{new_auth_body}");
 }
 
+fn scopes_from_generate_response(body: &str) -> Vec<String> {
+    serde_json::from_str::<serde_json::Value>(body)
+        .expect("api key JSON")["scopes"]
+        .as_array()
+        .expect("scopes array")
+        .iter()
+        .map(|v| v.as_str().expect("scope string").to_string())
+        .collect()
+}
+
+fn generate_api_key_with_scopes(
+    client: &ContractClient,
+    session_id: &str,
+    scopes: Option<Vec<String>>,
+) -> (String, Vec<String>) {
+    let payload = scopes.map(|scopes| serde_json::json!({ "scopes": scopes }));
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/api_keys/generate",
+        Some(session_id),
+        &empty_headers(),
+        payload,
+    ));
+    assert_eq!(200, status, "{body}");
+    let api_key = api_key_from_generate_response(&body);
+    let scopes = scopes_from_generate_response(&body);
+    (api_key, scopes)
+}
+
+fn regenerate_api_key_with_scopes(
+    client: &ContractClient,
+    session_id: &str,
+    scopes: Option<Vec<String>>,
+) -> (String, Vec<String>) {
+    let payload = scopes.map(|scopes| serde_json::json!({ "scopes": scopes }));
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/api_keys/regenerate",
+        Some(session_id),
+        &empty_headers(),
+        payload,
+    ));
+    assert_eq!(200, status, "{body}");
+    let api_key = api_key_from_generate_response(&body);
+    let scopes = scopes_from_generate_response(&body);
+    (api_key, scopes)
+}
+
+#[test]
+fn post_api_keys_generate_defaults_to_read_scope() {
+    let client = ContractClient::from_env();
+    let session_id = researcher_session_id(&client);
+
+    let (_, scopes) = generate_api_key_with_scopes(&client, &session_id, None);
+    assert_eq!(vec!["masters:read".to_string()], scopes);
+}
+
+#[test]
+fn masters_api_key_read_scope_allows_get_denies_write() {
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (api_key, _) = generate_api_key_with_scopes(&client, &session_id, None);
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {api_key}"));
+
+    let (get_status, get_body) = status_and_body(client.get(
+        &format!("/api/v1/masters/crops/{}/crop_stages", seed.crop_id),
+        None,
+        &headers,
+    ));
+    assert_eq!(200, get_status, "{get_body}");
+
+    let (post_status, post_body) = status_and_body(client.post(
+        &format!("/api/v1/masters/crops/{}/crop_stages", seed.crop_id),
+        None,
+        &headers,
+        Some(serde_json::json!({
+            "crop_stage": { "name": "Read Scope Stage", "order": 1 }
+        })),
+    ));
+    assert_eq!(403, post_status, "{post_body}");
+    let json: serde_json::Value = serde_json::from_str(&post_body).expect("forbidden JSON");
+    assert_eq!(
+        json.get("error_code").and_then(|v| v.as_str()),
+        Some("insufficient_scope"),
+        "{post_body}"
+    );
+}
+
+#[test]
+fn masters_api_key_read_scope_allows_dry_run_denies_apply() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (api_key, _) = generate_api_key_with_scopes(&client, &session_id, None);
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {api_key}"));
+
+    let (dry_status, dry_body) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/setup_proposal?mode=dry_run",
+            seed.crop_id
+        ),
+        None,
+        &headers,
+        Some(valid_setup_proposal_body()),
+    ));
+    assert_eq!(200, dry_status, "{dry_body}");
+
+    let apply_seed = seed_masters_crop(user_id);
+    let (apply_status, apply_body) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/setup_proposal?mode=apply",
+            apply_seed.crop_id
+        ),
+        None,
+        &headers,
+        Some(valid_setup_proposal_body()),
+    ));
+    assert_eq!(403, apply_status, "{apply_body}");
+}
+
+#[test]
+fn masters_api_key_write_scope_allows_write_operations() {
+    let client = ContractClient::from_env();
+    let session_id = researcher_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (api_key, scopes) = regenerate_api_key_with_scopes(
+        &client,
+        &session_id,
+        Some(vec!["masters:write".into()]),
+    );
+    assert!(
+        scopes.iter().any(|s| s == "masters:write"),
+        "expected write scope in {scopes:?}"
+    );
+
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {api_key}"));
+
+    let (post_status, post_body) = status_and_body(client.post(
+        &format!("/api/v1/masters/crops/{}/crop_stages", seed.crop_id),
+        None,
+        &headers,
+        Some(serde_json::json!({
+            "crop_stage": { "name": "Write Scope Stage", "order": 1 }
+        })),
+    ));
+    assert_ne!(403, post_status, "write scope must not be forbidden: {post_body}");
+}
+
 #[test]
 fn post_masters_crop_setup_proposal_apply_rate_limited_returns_429_with_retry_after() {
     let client = ContractClient::from_env();

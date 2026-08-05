@@ -9,6 +9,7 @@ export const API_DOCS_URL =
 
 type ApiKeyRotateResponse = {
   api_key: string;
+  scopes?: string[];
 };
 
 @Injectable({ providedIn: 'root' })
@@ -26,16 +27,17 @@ export class ApiKeyManagementService {
     );
   }
 
-  generateKey(): Observable<string> {
-    return this.rotateKey('/api/v1/api_keys/generate');
+  generateKey(includeWriteScope = false): Observable<string> {
+    return this.rotateKey('/api/v1/api_keys/generate', includeWriteScope);
   }
 
-  regenerateKey(): Observable<string> {
-    return this.rotateKey('/api/v1/api_keys/regenerate');
+  regenerateKey(includeWriteScope = false): Observable<string> {
+    return this.rotateKey('/api/v1/api_keys/regenerate', includeWriteScope);
   }
 
-  private rotateKey(path: string): Observable<string> {
-    return this.api.post<ApiKeyRotateResponse>(path, {}).pipe(
+  private rotateKey(path: string, includeWriteScope: boolean): Observable<string> {
+    const body = includeWriteScope ? { scopes: ['masters:write'] } : {};
+    return this.api.post<ApiKeyRotateResponse>(path, body).pipe(
       map((response) => response.api_key),
       tap((apiKey) => this.apiKeyService.setApiKey(apiKey))
     );

@@ -6,6 +6,7 @@
         let output = UserApiKeyRotationOutput::new(
             false,
             None,
+            None,
             Some(UserApiKeyRotationError::NotFound),
         );
         assert!(output.not_found());
@@ -13,6 +14,6 @@
 
     #[test]
     fn not_found_predicate_false_without_error() {
-        let output = UserApiKeyRotationOutput::new(true, Some("k".into()), None);
+        let output = UserApiKeyRotationOutput::new(true, Some("k".into()), None, None);
         assert!(!output.not_found());
     }

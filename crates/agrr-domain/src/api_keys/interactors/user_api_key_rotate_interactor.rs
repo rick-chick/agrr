@@ -15,8 +15,8 @@ impl<G: UserApiKeyRotationGateway> UserApiKeyRotateInteractor<G> {
         }
     }
 
-    pub fn call(&mut self, user_id: i64, regenerate: bool) {
-        let result = self.gateway.rotate(user_id, regenerate);
+    pub fn call(&mut self, user_id: i64, regenerate: bool, scopes: Option<Vec<String>>) {
+        let result = self.gateway.rotate(user_id, regenerate, scopes);
         if result.not_found() {
             self.output_port
                 .on_failure("User not found".to_string());
@@ -24,7 +24,10 @@ impl<G: UserApiKeyRotationGateway> UserApiKeyRotateInteractor<G> {
         }
 
         if result.ok {
-            self.output_port.on_success(result.api_key.unwrap_or_default());
+            self.output_port.on_success(
+                result.api_key.unwrap_or_default(),
+                result.scopes.unwrap_or_default(),
+            );
         } else {
             let message = if regenerate {
                 "Failed to regenerate API key"

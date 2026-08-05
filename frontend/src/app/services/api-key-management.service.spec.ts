@@ -65,6 +65,16 @@ describe('ApiKeyManagementService', () => {
     expect(apiKeyService.setApiKey).toHaveBeenCalledWith('new-key');
   });
 
+  it('requests write scope when generating with includeWriteScope', async () => {
+    apiService.post.mockReturnValue(of({ api_key: 'write-key', scopes: ['masters:read', 'masters:write'] }));
+
+    await expect(firstValueFrom(service.generateKey(true))).resolves.toBe('write-key');
+
+    expect(apiService.post).toHaveBeenCalledWith('/api/v1/api_keys/generate', {
+      scopes: ['masters:write']
+    });
+  });
+
   it('regenerates a key via POST /api/v1/api_keys/regenerate and stores it', async () => {
     apiService.post.mockReturnValue(of({ api_key: 'rotated-key' }));
 

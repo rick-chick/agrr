@@ -6,6 +6,8 @@ pub struct SessionPrincipal {
     pub name: String,
     pub admin: bool,
     pub anonymous: bool,
+    /// `None` = session cookie auth (full Masters access). `Some` = API key scopes.
+    pub api_key_scopes: Option<Vec<String>>,
 }
 
 impl SessionPrincipal {

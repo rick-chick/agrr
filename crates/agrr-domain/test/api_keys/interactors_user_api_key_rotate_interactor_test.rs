@@ -12,7 +12,7 @@
     struct RecordingPort(Arc<Mutex<RecordingState>>);
 
     impl UserApiKeyRotateOutputPort for RecordingPort {
-        fn on_success(&mut self, api_key: String) {
+        fn on_success(&mut self, api_key: String, _scopes: Vec<String>) {
             let mut state = self.0.lock().unwrap();
             state.success_api_key = Some(api_key);
             state.failure_message = None;
@@ -27,12 +27,17 @@
 
     struct StubGateway {
         result: UserApiKeyRotationOutput,
-        calls: Arc<Mutex<Vec<(i64, bool)>>>,
+        calls: Arc<Mutex<Vec<(i64, bool, Option<Vec<String>>)>>>,
     }
 
     impl UserApiKeyRotationGateway for StubGateway {
-        fn rotate(&self, user_id: i64, regenerate: bool) -> UserApiKeyRotationOutput {
-            self.calls.lock().unwrap().push((user_id, regenerate));
+        fn rotate(
+            &self,
+            user_id: i64,
+            regenerate: bool,
+            scopes: Option<Vec<String>>,
+        ) -> UserApiKeyRotationOutput {
+            self.calls.lock().unwrap().push((user_id, regenerate, scopes));
             self.result.clone()
         }
     }
@@ -41,7 +46,8 @@
         result: UserApiKeyRotationOutput,
         user_id: i64,
         regenerate: bool,
-    ) -> (RecordingState, Vec<(i64, bool)>) {
+        scopes: Option<Vec<String>>,
+    ) -> (RecordingState, Vec<(i64, bool, Option<Vec<String>>)>) {
         let state = Arc::new(Mutex::new(RecordingState::default()));
         let calls = Arc::new(Mutex::new(Vec::new()));
         let mut interactor = UserApiKeyRotateInteractor::new(
@@ -51,7 +57,7 @@
                 calls: Arc::clone(&calls),
             },
         );
-        interactor.call(user_id, regenerate);
+        interactor.call(user_id, regenerate, scopes);
         let recorded_state = state.lock().unwrap().clone();
         let recorded_calls = calls.lock().unwrap().clone();
         (recorded_state, recorded_calls)
@@ -60,11 +66,12 @@
     #[test]
     fn forwards_user_id_and_regenerate_to_gateway() {
         let (_, calls) = run(
-            UserApiKeyRotationOutput::new(true, Some("k".into()), None),
+            UserApiKeyRotationOutput::new(true, Some("k".into()), Some(vec!["masters:read".into()]), None),
             42,
             true,
+            None,
         );
-        assert_eq!(calls, vec![(42, true)]);
+        assert_eq!(calls, vec![(42, true, None)]);
     }
 
     #[test]
@@ -73,10 +80,12 @@
             UserApiKeyRotationOutput::new(
                 false,
                 None,
+                None,
                 Some(UserApiKeyRotationError::NotFound),
             ),
             1,
             false,
+            None,
         );
         assert_eq!(state.failure_message.as_deref(), Some("User not found"));
         assert!(state.success_api_key.is_none());
@@ -85,9 +94,10 @@
     #[test]
     fn ok_true_emits_success_with_api_key() {
         let (state, _) = run(
-            UserApiKeyRotationOutput::new(true, Some("new-secret".into()), None),
+            UserApiKeyRotationOutput::new(true, Some("new-secret".into()), Some(vec!["masters:read".into()]), None),
             9,
             false,
+            None,
         );
         assert_eq!(state.success_api_key.as_deref(), Some("new-secret"));
         assert!(state.failure_message.is_none());
@@ -96,9 +106,10 @@
     #[test]
     fn ok_false_generate_emits_generate_failure_message() {
         let (state, _) = run(
-            UserApiKeyRotationOutput::new(false, None, None),
+            UserApiKeyRotationOutput::new(false, None, None, None),
             1,
             false,
+            None,
         );
         assert_eq!(
             state.failure_message.as_deref(),
@@ -109,9 +120,10 @@
     #[test]
     fn ok_false_regenerate_emits_regenerate_failure_message() {
         let (state, _) = run(
-            UserApiKeyRotationOutput::new(false, None, None),
+            UserApiKeyRotationOutput::new(false, None, None, None),
             1,
             true,
+            None,
         );
         assert_eq!(
             state.failure_message.as_deref(),
@@ -125,10 +137,12 @@
             UserApiKeyRotationOutput::new(
                 false,
                 None,
+                None,
                 Some(UserApiKeyRotationError::NotFound),
             ),
             1,
             true,
+            None,
         );
         assert_eq!(state.failure_message.as_deref(), Some("User not found"));
     }
