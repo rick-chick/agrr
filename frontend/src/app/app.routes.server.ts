@@ -1,7 +1,12 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
-import { PUBLIC_PRERENDER_PATHS } from './core/seo/public-prerender-routes';
+import {
+  PUBLIC_PRERENDER_EN_PATHS,
+  PUBLIC_PRERENDER_PATHS,
+} from './core/seo/public-prerender-routes';
 
-const prerenderRoutes: ServerRoute[] = PUBLIC_PRERENDER_PATHS.map((path) => ({
+const prerenderPaths = [...PUBLIC_PRERENDER_PATHS, ...PUBLIC_PRERENDER_EN_PATHS];
+
+const prerenderRoutes: ServerRoute[] = prerenderPaths.map((path) => ({
   path,
   renderMode: RenderMode.Prerender,
 }));

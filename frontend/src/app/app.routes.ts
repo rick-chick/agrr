@@ -6,8 +6,10 @@ import { publicPlansRoutes } from './routes/public-plans.routes';
 import { entryScheduleRoutes } from './routes/entry-schedule.routes';
 import { workRoutes } from './routes/work.routes';
 import { pagesRoutes } from './routes/pages.routes';
+import { enPublicRoutes } from './routes/en-public.routes';
 
 export const routes: Routes = [
+  ...enPublicRoutes,
   ...coreRoutes,
   ...mastersRoutes,
   ...plansRoutes,

@@ -8,6 +8,14 @@ export const SPA_CANONICAL_ROUTES = [
   { path: '/public-plans/new', label: 'spa-public-plans-new-canonical' },
 ];
 
+/** Representative SPA route for hreflang verification (issue #563). */
+export const SPA_HREFLANG_ROUTE = {
+  path: '/about',
+  label: 'spa-about-hreflang',
+  jaUrl: '/about',
+  enUrl: '/en/about',
+};
+
 /**
  * @param {string} repoRoot
  * @returns {{ ok: boolean, errors: string[] }}
@@ -34,6 +42,14 @@ export function verifySeoRoutingContract(repoRoot) {
     if (!script.includes(`"$BASE_URL${path}"`)) {
       errors.push(`verify-seo-routing.sh must check canonical for ${path}`);
     }
+  }
+
+  const { label: hreflangLabel, jaUrl, enUrl } = SPA_HREFLANG_ROUTE;
+  if (!script.includes(hreflangLabel)) {
+    errors.push(`verify-seo-routing.sh must include ${hreflangLabel} check`);
+  }
+  if (!script.includes(`"$BASE_URL${jaUrl}"`) || !script.includes(`"$BASE_URL${enUrl}"`)) {
+    errors.push('verify-seo-routing.sh must verify SPA hreflang ja/en URLs');
   }
 
   const runbookPath = join(repoRoot, 'docs/seo/gsc-crux-operations-runbook.md');

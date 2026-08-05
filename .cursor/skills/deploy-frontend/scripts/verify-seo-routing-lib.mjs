@@ -8,6 +8,14 @@ export const SPA_PRERENDER_CANONICAL_PATHS = [
   '/public-plans/new',
 ];
 
+/** Representative SPA route for hreflang verification (issue #563). */
+export const SPA_PRERENDER_HREFLANG_ROUTE = {
+  path: '/about',
+  label: 'spa-about-hreflang',
+  jaUrl: '/about',
+  enUrl: '/en/about',
+};
+
 /**
  * @param {string} repoRoot
  * @returns {{ ok: boolean, errors: string[] }}
@@ -40,6 +48,17 @@ export function verifySpaPrerenderCanonicalContract(repoRoot) {
         `verify-seo-routing.sh must check canonical for SPA route ${path} (self-referencing $BASE_URL${path})`,
       );
     }
+  }
+
+  const { label, jaUrl, enUrl } = SPA_PRERENDER_HREFLANG_ROUTE;
+  if (!script.includes(label)) {
+    errors.push(`verify-seo-routing.sh must include ${label} hreflang check`);
+  }
+  if (!script.includes(`"$BASE_URL${jaUrl}"`) || !script.includes(`"$BASE_URL${enUrl}"`)) {
+    errors.push('verify-seo-routing.sh must verify SPA ja/en hreflang URLs');
+  }
+  if (!script.includes('check_spa_hreflang')) {
+    errors.push('verify-seo-routing.sh must define check_spa_hreflang');
   }
 
   return { ok: errors.length === 0, errors };

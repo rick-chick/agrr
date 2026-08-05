@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import {
-  PUBLIC_PRERENDER_ROUTES,
+  PUBLIC_PRERENDER_ALL_ROUTES,
   assertMeaningfulPrerenderedBody,
   assertNoAuthRoutePrerenderLeak,
 } from './public-prerender-routes.mjs';
@@ -32,7 +32,7 @@ describe('assertMeaningfulPrerenderedBody', () => {
 describe('production build prerender output', () => {
   const distDir = process.env.PRERENDER_DIST_DIR || join(process.cwd(), 'dist/frontend/browser');
 
-  for (const route of PUBLIC_PRERENDER_ROUTES) {
+  for (const route of PUBLIC_PRERENDER_ALL_ROUTES) {
     it(`prerenders ${route.path || '/'} with meaningful body`, async () => {
       const filePath = join(distDir, route.file);
       const html = await readFile(filePath, 'utf8');

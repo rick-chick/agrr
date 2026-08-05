@@ -149,6 +149,11 @@ if [ ! -f "$BUILD_OUTPUT_DIR/index.html" ]; then
   fi
 fi
 
+if [ "${DRY_RUN}" != "1" ]; then
+  info "Injecting SPA hreflang into prerender HTML..."
+  SPA_DIST_DIR="$BUILD_OUTPUT_DIR" run node "$ROOT_DIR/.cursor/skills/deploy-frontend/scripts/inject-spa-hreflang.mjs"
+fi
+
 # After build we want static assets behind $STATIC_PATH_PREFIX/
 STATIC_OUTPUT_DIR="$BUILD_OUTPUT_DIR/$STATIC_PATH_PREFIX"
 info "Build output directory: $BUILD_OUTPUT_DIR (static assets under /$STATIC_PATH_PREFIX/)"
@@ -255,6 +260,11 @@ fi
 PRERENDER_SHELL_PATHS=(
   about contact privacy terms
   "public-plans/new"
+  "entry-schedule"
+  en
+  en/about en/contact en/privacy en/terms
+  "en/public-plans/new"
+  "en/entry-schedule"
 )
 CSR_ONLY_SHELL_PATHS=(
   login

@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
-import { extractCanonicalHref } from './verify-seo-canonical-lib.mjs';
+import {
+  extractCanonicalHref,
+  extractHreflangAlternates,
+  hreflangAlternateMatches,
+} from './verify-seo-canonical-lib.mjs';
 
 const [command, ...rest] = process.argv.slice(2);
 
@@ -21,6 +25,24 @@ if (command === 'extract-file') {
   process.exit(0);
 }
 
-console.error('Usage: verify-seo-canonical-lib.mjs extract <html>');
-console.error('       verify-seo-canonical-lib.mjs extract-file <path>');
+if (command === 'extract-hreflang') {
+  const html = rest[0] ?? '';
+  process.stdout.write(JSON.stringify(extractHreflangAlternates(html)));
+  process.exit(0);
+}
+
+if (command === 'verify-hreflang') {
+  const [html, jaUrl, enUrl] = rest;
+  const alternates = extractHreflangAlternates(html ?? '');
+  const ok =
+    hreflangAlternateMatches(alternates, 'ja', jaUrl) &&
+    hreflangAlternateMatches(alternates, 'en', enUrl) &&
+    hreflangAlternateMatches(alternates, 'x-default', jaUrl);
+  process.exit(ok ? 0 : 1);
+}
+
+console.error('Usage: verify-seo-canonical-cli.mjs extract <html>');
+console.error('       verify-seo-canonical-cli.mjs extract-file <path>');
+console.error('       verify-seo-canonical-cli.mjs extract-hreflang <html>');
+console.error('       verify-seo-canonical-cli.mjs verify-hreflang <html> <jaUrl> <enUrl>');
 process.exit(1);
