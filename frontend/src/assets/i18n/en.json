@@ -2902,7 +2902,13 @@
       "cancel": "Cancel",
       "errors": {
         "title": "{{count}} errors occurred:"
-      }
+      },
+      "region_label": "Region",
+      "region_jp": "Japan",
+      "region_us": "United States",
+      "region_in": "India",
+      "region_blank": "Please select",
+      "region_help": "Select the region where this rule applies"
     },
     "show": {
       "title": "Rule Details",
