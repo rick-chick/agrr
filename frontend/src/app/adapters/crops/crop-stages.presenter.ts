@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { CropStagesView, CropStagesViewState } from '../../components/masters/crops/crop-stages.view';
 import { LoadCropForEditOutputPort } from '../../usecase/crops/load-crop-for-edit.output-port';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
@@ -78,7 +79,7 @@ export class CropStagesPresenter implements
       this.view.control = {
         ...this.view.control,
         loading: false,
-        error: dto.message,
+        error: errorDtoI18nKey(dto),
         pendingSuccessFlash: null,
         pendingErrorFlash: null,
         pendingReorderCropStagesSnapshot: null
@@ -92,7 +93,7 @@ export class CropStagesPresenter implements
       loading: false,
       error: null,
       pendingSuccessFlash: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto),
+      pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) }),
       pendingReorderCropStagesSnapshot: null,
       formData: snapshot
         ? {

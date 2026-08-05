@@ -175,7 +175,6 @@ const AUTH_REQUIRED_PREFIXES: &[&str] = &[
     "/pesticides",
     "/agricultural_tasks",
     "/interaction_rules",
-    "/dashboard",
     "/api-keys",
 ];
 
@@ -329,6 +328,12 @@ mod tests {
     #[test]
     fn normalize_oauth_return_to_keeps_public_plan_results() {
         let url = "https://agrr.net/public-plans/results?planId=756";
+        assert_eq!(normalize_oauth_return_to(url), url);
+    }
+
+    #[test]
+    fn normalize_oauth_return_to_keeps_legacy_dashboard_redirect() {
+        let url = "https://agrr.net/dashboard";
         assert_eq!(normalize_oauth_return_to(url), url);
     }
 

@@ -31,7 +31,6 @@ const AUTH_REQUIRED_PREFIXES = [
   '/pesticides',
   '/agricultural_tasks',
   '/interaction_rules',
-  '/dashboard',
   '/api-keys'
 ] as const;
 

@@ -9,6 +9,7 @@ export const SPA_PRERENDER_CANONICAL_PATHS = [
   '/terms',
   '/public-plans/new',
   '/entry-schedule',
+  '/entry-schedule/crop/1',
 ];
 
 /**

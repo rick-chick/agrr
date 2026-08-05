@@ -64,6 +64,7 @@ describe('login-auth-urls', () => {
 
   it('does not treat removed orphan routes as auth-required', () => {
     expect(requiresAuthForDirectLanding('/weather')).toBe(false);
+    expect(requiresAuthForDirectLanding('/dashboard')).toBe(false);
   });
 
   it('requires auth for /api-keys', () => {

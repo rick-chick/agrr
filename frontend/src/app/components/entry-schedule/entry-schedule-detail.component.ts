@@ -1,5 +1,5 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, DestroyRef, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { CommonModule, isPlatformServer } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -13,6 +13,12 @@ import {
 import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeline.util';
 import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
+import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
+import {
+  ENTRY_SCHEDULE_PRERENDER_CATALOG,
+  findEntrySchedulePrerenderCrop,
+} from '../../core/seo/entry-schedule-prerender-catalog';
+import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedule-prerender-snapshot';
 
 @Component({
   selector: 'app-entry-schedule-detail',
@@ -250,6 +256,8 @@ export class EntryScheduleDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly seo = inject(AppSeoMetaService);
 
   readonly monthTicks = [...MONTH_NUMBERS];
 
@@ -350,16 +358,35 @@ export class EntryScheduleDetailComponent implements OnInit {
   private fetchFromRoute(): void {
     const cropId = this.route.snapshot.paramMap.get('cropId');
     const farmIdRaw = this.route.snapshot.queryParamMap.get('farmId');
-    if (!cropId || !farmIdRaw) {
+    if (!cropId) {
       void this.router.navigate(['/entry-schedule']);
       return;
     }
-    const farmId = Number.parseInt(farmIdRaw, 10);
     const cId = Number.parseInt(cropId, 10);
-    if (Number.isNaN(farmId) || Number.isNaN(cId)) {
+    if (Number.isNaN(cId)) {
       void this.router.navigate(['/entry-schedule']);
       return;
     }
+
+    const catalogCrop = findEntrySchedulePrerenderCrop(cId);
+    let farmId = farmIdRaw ? Number.parseInt(farmIdRaw, 10) : Number.NaN;
+    if (Number.isNaN(farmId)) {
+      if (catalogCrop) {
+        farmId = ENTRY_SCHEDULE_PRERENDER_CATALOG.defaultFarmId;
+      } else {
+        void this.router.navigate(['/entry-schedule']);
+        return;
+      }
+    }
+
+    if (catalogCrop && isPlatformServer(this.platformId)) {
+      this.loading.set(false);
+      this.errorKey.set(null);
+      this.data.set(buildEntrySchedulePrerenderSnapshot(catalogCrop));
+      this.seo.refreshEntryScheduleDetailMeta(cId, catalogCrop.name);
+      return;
+    }
+
     this.loading.set(true);
     this.errorKey.set(null);
     this.data.set(null);
@@ -368,10 +395,12 @@ export class EntryScheduleDetailComponent implements OnInit {
       next: (res) => {
         this.data.set(res);
         this.loading.set(false);
+        this.seo.refreshEntryScheduleDetailMeta(cId, res.crop.name);
       },
       error: () => {
         this.errorKey.set('entrySchedule.error');
         this.loading.set(false);
+        this.seo.refreshEntryScheduleDetailMeta(null, null);
       }
     });
   }

@@ -12,6 +12,10 @@ import {
   buildPublicPlanResultsShareUrl,
   extractPublicPlanResultsSeoLabels
 } from './public-plan-results-seo-meta';
+import {
+  buildEntryScheduleDetailCanonicalUrl,
+  buildEntryScheduleDetailSeoLabels
+} from './entry-schedule-detail-seo-meta';
 
 function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
@@ -46,10 +50,10 @@ export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private readonly doc = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly request = inject(REQUEST, { optional: true });
   private readonly router = inject(Router, { optional: true });
-  private readonly document = inject(DOCUMENT);
   private noIndexActive = false;
 
   applyNoIndexMeta(): void {
@@ -71,6 +75,35 @@ export class AppSeoMetaService {
     const path = this.readPathname();
     const keyPrefix = resolveSeoKeyPrefix(path);
     this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
+  }
+
+  refreshEntryScheduleDetailMeta(cropId: number | null, cropName: string | null): void {
+    const angularLang = (this.translate.currentLang || 'ja') as AppLang;
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = documentHtmlLang(angularLang);
+    }
+
+    if (!cropId || !cropName?.trim()) {
+      const path = this.readPathname();
+      const keyPrefix = path.startsWith('/entry-schedule/crop/')
+        ? 'pages.entry_schedule'
+        : resolveSeoKeyPrefix(path);
+      this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
+      return;
+    }
+
+    const labels = buildEntryScheduleDetailSeoLabels(cropName);
+    const params = { cropName: labels.cropName };
+    const keyPrefix = 'pages.entry_schedule_detail';
+    const title = this.translate.instant(`${keyPrefix}.title`, params);
+    const description = this.translate.instant(`${keyPrefix}.description`, params);
+    let ogDescription = this.translate.instant(`${keyPrefix}.og_description`, params);
+    if (!isResolvedTranslation(ogDescription, `${keyPrefix}.`)) {
+      ogDescription = description;
+    }
+
+    const ogUrl = buildEntryScheduleDetailCanonicalUrl(this.readOrigin(), cropId);
+    this.applyResolvedSeo({ title, description, ogDescription, ogUrl, keyPrefix });
   }
 
   refreshPublicPlanResultsMeta(planId: number | null, planData: CultivationPlanData | null): void {
@@ -227,18 +260,16 @@ export class AppSeoMetaService {
   }
 
   private updateCanonicalLink(href: string): void {
-    const head = this.document.head;
-    if (!head || !href) {
+    if (!href) {
       return;
     }
-
-    let link = this.document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    let link = this.doc.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!link) {
-      link = this.document.createElement('link');
-      link.rel = 'canonical';
-      head.appendChild(link);
+      link = this.doc.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      this.doc.head.appendChild(link);
     }
-    link.href = href;
+    link.setAttribute('href', href);
   }
 
   private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {

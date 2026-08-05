@@ -3148,9 +3148,9 @@
       "og_description": "気象予測に基づく作物の播種・定植の目安時期を確認"
     },
     "entry_schedule_detail": {
-      "title": "作物別の作付け時期",
-      "description": "作物ごとの播種・育苗・定植・収穫の適期帯を、予測気象データに基づいて表示します。",
-      "og_description": "作物ごとの播種・定植の適期帯を予測気象で表示"
+      "title": "{{cropName}}の作付け時期 | AGRR",
+      "description": "{{cropName}}の播種・育苗・定植・収穫の適期帯を、予測気象データに基づいて表示します。",
+      "og_description": "{{cropName}}の播種・定植の適期帯を予測気象で表示"
     },
     "notFound": {
       "title": "ページが見つかりません",

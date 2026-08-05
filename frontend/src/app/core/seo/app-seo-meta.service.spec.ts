@@ -64,6 +64,16 @@ describe('AppSeoMetaService', () => {
             title: '{{planLabel}} — 作付け計画',
             description: '{{cropLabels}}（{{planYear}}年・{{totalArea}}㎡）',
             og_description: '{{planLabel}}の栽培スケジュール（{{cropLabels}}）'
+          },
+          entry_schedule: {
+            title: '作付け時期の目安',
+            description: 'Entry schedule list description',
+            og_description: 'Entry schedule list og'
+          },
+          entry_schedule_detail: {
+            title: '{{cropName}}の作付け時期 | AGRR',
+            description: '{{cropName}}の播種・育苗・定植・収穫の適期帯を、予測気象データに基づいて表示します。',
+            og_description: '{{cropName}}の播種・定植の適期帯を予測気象で表示'
           }
         }
       },
@@ -78,6 +88,7 @@ describe('AppSeoMetaService', () => {
       document.head
         .querySelectorAll('script[type="application/ld+json"]')
         .forEach((node) => node.remove());
+      document.head.querySelectorAll('link[rel="canonical"]').forEach((node) => node.remove());
     }
   });
 
@@ -217,7 +228,7 @@ describe('AppSeoMetaService', () => {
 
     expect(ssrTitle.getTitle()).toBe('AGRRについて');
     expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
-      'https://agrr.net/about'
+      'https://agrr.net/about',
     );
   });
 
@@ -283,6 +294,37 @@ describe('AppSeoMetaService', () => {
     total_revenue: 0,
     total_cost: 0
   };
+
+  it('refreshEntryScheduleDetailMeta sets crop-specific title and self-referencing canonical', () => {
+    setWindowPath('/entry-schedule/crop/1');
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        origin: 'https://agrr.net',
+        pathname: '/entry-schedule/crop/1',
+        href: 'https://agrr.net/entry-schedule/crop/1',
+        search: ''
+      }
+    });
+
+    service.refreshEntryScheduleDetailMeta(1, 'トマト');
+
+    expect(title.getTitle()).toBe('トマトの作付け時期 | AGRR');
+    expect(meta.getTag('property="og:title"')?.content).toBe('トマトの作付け時期 | AGRR');
+    expect(meta.getTag('property="og:description"')?.content).toContain('トマト');
+    expect(meta.getTag('property="og:url"')?.content).toBe(
+      'https://agrr.net/entry-schedule/crop/1'
+    );
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+      'https://agrr.net/entry-schedule/crop/1'
+    );
+  });
+
+  it('refreshEntryScheduleDetailMeta falls back to default meta when crop is missing', () => {
+    setWindowPath('/entry-schedule/crop/1');
+    service.refreshEntryScheduleDetailMeta(null, null);
+    expect(title.getTitle()).toBe('作付け時期の目安');
+  });
 
   it('refreshPublicPlanResultsMeta sets plan-specific OGP with planId in canonical URL', () => {
     setWindowPath('/public-plans/results');
