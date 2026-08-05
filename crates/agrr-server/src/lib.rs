@@ -12,6 +12,7 @@ pub mod ai_api;
 pub mod builtin_generation_deprecation;
 pub mod fertilize_ai_adapters;
 pub mod pest_ai_adapters;
+pub mod account;
 pub mod api_keys;
 pub mod auth;
 pub mod backdoor;
@@ -142,6 +143,7 @@ pub async fn run_http_server() {
         .merge(masters_routes::routes(state.clone()))
         .merge(contact_messages::routes())
         .merge(api_keys::routes())
+        .merge(account::routes())
         .merge(auth_test::routes())
         .merge(routes::api_routes())
         .merge(internal_farms::routes())
