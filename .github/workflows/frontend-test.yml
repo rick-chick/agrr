@@ -142,6 +142,12 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/deploy-frontend/scripts/verify-seo-routing-contract.test.mjs
 
+      - name: deploy shell mirror and SPA canonical contract unit tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          node --test .cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy-shell-mirror-lib.test.mjs
+          node --test .cursor/skills/deploy-frontend/scripts/verify-seo-routing-lib.test.mjs
+
       - name: gcp-frontend-deploy shell paths contract unit tests
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy-shell-paths-lib.test.mjs

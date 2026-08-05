@@ -301,7 +301,7 @@ NOINDEX_CSR_SHELL_PATHS=(
 )
 
 for shell_path in "${PRERENDER_SHELL_PATHS[@]}"; do
-  prerender_file="$BUILD_OUTPUT_DIR/$shell_path/index.html"
+  prerender_file="$BUILD_OUTPUT_DIR/$STATIC_PATH_PREFIX/$shell_path/index.html"
   if [ -f "$prerender_file" ]; then
     inject_runtime_into_html "$prerender_file"
   fi
@@ -312,7 +312,7 @@ done
 # Prerendered public routes use build-time SSG HTML; CSR-only routes use index.csr.html.
 for shell_path in "${PRERENDER_SHELL_PATHS[@]}"; do
   shell_target="$BUILD_OUTPUT_DIR/$shell_path"
-  prerender_file="$BUILD_OUTPUT_DIR/$shell_path/index.html"
+  prerender_file="$BUILD_OUTPUT_DIR/$STATIC_PATH_PREFIX/$shell_path/index.html"
   run mkdir -p "$(dirname "$shell_target")"
   if [ -f "$prerender_file" ]; then
     run cp "$prerender_file" "$shell_target"
