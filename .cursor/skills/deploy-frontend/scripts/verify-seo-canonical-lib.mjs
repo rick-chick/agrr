@@ -7,20 +7,36 @@
  * @returns {string | null}
  */
 export function extractCanonicalHref(html) {
-  const match = html.match(
-    /<link[^>]*\srel=["']canonical["'][^>]*>/i
-  );
-  if (!match) {
-    const reversed = html.match(
-      /<link[^>]*\shref=["']([^"']+)["'][^>]*\srel=["']canonical["'][^>]*>/i
-    );
-    if (!reversed) {
-      return null;
+  const linkMatch = html.match(/<link[^>]*\srel=["']canonical["'][^>]*>/i);
+  if (linkMatch) {
+    const hrefMatch = linkMatch[0].match(/\shref=["']([^"']+)["']/i);
+    if (hrefMatch) {
+      return hrefMatch[1];
     }
-    return reversed[1];
   }
-  const hrefMatch = match[0].match(/\shref=["']([^"']+)["']/i);
-  return hrefMatch ? hrefMatch[1] : null;
+
+  const reversedLink = html.match(
+    /<link[^>]*\shref=["']([^"']+)["'][^>]*\srel=["']canonical["'][^>]*>/i,
+  );
+  if (reversedLink) {
+    return reversedLink[1];
+  }
+
+  const metaMatch = html.match(
+    /<meta[^>]*\srel=["']canonical["'][^>]*\shref=["']([^"']+)["'][^>]*>/i,
+  );
+  if (metaMatch) {
+    return metaMatch[1];
+  }
+
+  const reversedMeta = html.match(
+    /<meta[^>]*\shref=["']([^"']+)["'][^>]*\srel=["']canonical["'][^>]*>/i,
+  );
+  if (reversedMeta) {
+    return reversedMeta[1];
+  }
+
+  return null;
 }
 
 /**
