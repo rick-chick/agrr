@@ -52,6 +52,11 @@ describe('AppSeoMetaService', () => {
           public_plans_new: {
             title: '無料作付け計画を作成',
             description: 'Public plans説明'
+          },
+          entry_schedule: {
+            title: '作付け時期の目安',
+            description: '地域の気象予測に基づく作物別の播種・定植の目安時期を確認できます。',
+            og_description: '気象予測に基づく作物の播種・定植の目安時期'
           }
         }
       },
@@ -85,6 +90,18 @@ describe('AppSeoMetaService', () => {
     service.refreshDefaultMeta();
     expect(title.getTitle()).toBe('無料作付け計画を作成');
     expect(meta.getTag('name="description"')?.content).toBe('Public plans説明');
+  });
+
+  it('sets route-specific title and description for /entry-schedule', () => {
+    setWindowPath('/entry-schedule');
+    service.refreshDefaultMeta();
+    expect(title.getTitle()).toBe('作付け時期の目安');
+    expect(meta.getTag('name="description"')?.content).toBe(
+      '地域の気象予測に基づく作物別の播種・定植の目安時期を確認できます。'
+    );
+    expect(meta.getTag('property="og:description"')?.content).toBe(
+      '気象予測に基づく作物の播種・定植の目安時期'
+    );
   });
 
   it('falls back to meta.default for undefined routes', () => {

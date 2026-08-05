@@ -3096,6 +3096,16 @@
       "title": "Create a Free Crop Plan",
       "description": "Select your region and crops to create a free crop plan with AGRR. Weather data and AI suggest an optimal cultivation schedule."
     },
+    "entry_schedule": {
+      "title": "Entry schedule guide",
+      "description": "Check guide sowing and transplant windows by crop based on regional weather forecasts. AGRR's entry schedule guide.",
+      "og_description": "Guide sowing and transplant windows by crop from weather forecasts"
+    },
+    "entry_schedule_detail": {
+      "title": "Crop entry schedule",
+      "description": "View sowing, nursery, transplant, and harvest windows per crop from forecast weather data.",
+      "og_description": "Per-crop sowing and transplant windows from forecast weather"
+    },
     "notFound": {
       "title": "Page not found",
       "message": "The page you are looking for does not exist or may have been moved.",
