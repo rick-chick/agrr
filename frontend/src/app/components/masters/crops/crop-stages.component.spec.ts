@@ -598,7 +598,7 @@ describe('CropStagesComponent', () => {
     expect(component.control.pendingErrorFlash).toBeNull();
     expect(mockFlashMessage.show).toHaveBeenCalledWith({
       type: 'error',
-      text: 'network error'
+      text: 'common.api_error.generic'
     });
   });
 

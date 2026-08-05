@@ -125,11 +125,15 @@ describe('CropDetailComponent', () => {
     expect(loadBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 3 });
   });
 
-  it('shows error message when control has error and no crop', async () => {
+  it('shows master load error panel with back link and retry when control has error and no crop', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
-      { crops: { errors: { invalid_id: 'Invalid crop ID' } } },
+      {
+        crops: { index: { title: 'Crops' }, errors: { invalid_id: 'Invalid crop ID' } },
+        'common.api_error.not_found': 'Resource not found',
+        'masters.load_error.retry': 'Reload'
+      },
       true
     );
     translate.setDefaultLang('en');
@@ -139,15 +143,43 @@ describe('CropDetailComponent', () => {
     component.control = {
       ...loadedState,
       loading: false,
-      error: 'Invalid crop ID',
+      error: 'common.api_error.not_found',
       crop: null,
       blueprintsLoading: false
     };
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.querySelector('.master-error')?.textContent).toContain('Invalid crop ID');
-    expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
+    const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.textContent).toContain('Resource not found');
+    expect(alert?.textContent).not.toContain('Http failure');
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/crops');
+    expect(fixture.nativeElement.querySelector('.master-load-error__retry')?.textContent?.trim()).toBe(
+      'Reload'
+    );
+  });
+
+  it('reloads detail when retry is clicked after load error', () => {
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      loading: false,
+      error: 'common.api_error.generic',
+      crop: null,
+      blueprintsLoading: false
+    };
+    fixture.detectChanges();
+
+    loadUseCase.execute.mockClear();
+    loadBlueprintsUseCase.execute.mockClear();
+    fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ cropId: 3 });
+    expect(loadBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 3 });
   });
 
   it('shows master context header and omits back button from detail-card__actions', async () => {
