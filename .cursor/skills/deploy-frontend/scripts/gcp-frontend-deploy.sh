@@ -250,6 +250,28 @@ inject_runtime_into_html() {
   run mv "$tmp_inject" "$target_html"
 }
 
+NOINDEX_META_SNIPPET='<meta name="robots" content="noindex">'
+NOINDEX_INJECT_AWK='BEGIN { added = 0 }
+  !added && tolower($0) ~ /<head[^>]*>/ {
+    print
+    print snippet
+    added = 1
+    next
+  }
+  { print }
+  END { if (!added) { print snippet } }'
+
+inject_noindex_into_html() {
+  local target_html="$1"
+  if [ ! -f "$target_html" ]; then
+    return 0
+  fi
+  local tmp_inject
+  tmp_inject="$(mktemp)"
+  awk -v snippet="$NOINDEX_META_SNIPPET" "$NOINDEX_INJECT_AWK" "$target_html" > "$tmp_inject"
+  run mv "$tmp_inject" "$target_html"
+}
+
 CSR_SHELL_HTML="$BUILD_OUTPUT_DIR/index.csr.html"
 if [ ! -f "$CSR_SHELL_HTML" ]; then
   CSR_SHELL_HTML="$INDEX_HTML"
@@ -273,6 +295,9 @@ CSR_ONLY_SHELL_PATHS=(
   "public-plans/select-crop"
   "public-plans/optimizing"
   "public-plans/results"
+)
+NOINDEX_CSR_SHELL_PATHS=(
+  login
 )
 
 for shell_path in "${PRERENDER_SHELL_PATHS[@]}"; do
@@ -301,6 +326,12 @@ for shell_path in "${CSR_ONLY_SHELL_PATHS[@]}"; do
   shell_target="$BUILD_OUTPUT_DIR/$shell_path"
   run mkdir -p "$(dirname "$shell_target")"
   run cp "$CSR_SHELL_HTML" "$shell_target"
+  for noindex_path in "${NOINDEX_CSR_SHELL_PATHS[@]}"; do
+    if [ "$shell_path" = "$noindex_path" ]; then
+      inject_noindex_into_html "$shell_target"
+      break
+    fi
+  done
 done
 
 SPA_SHELL_PATHS=( "${PRERENDER_SHELL_PATHS[@]}" "${CSR_ONLY_SHELL_PATHS[@]}" )
