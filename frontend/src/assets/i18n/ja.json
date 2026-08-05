@@ -2126,9 +2126,22 @@
     "optimizing_live": {
       "heading": "最適化中",
       "heading_completed": "最適化が完了しました",
-      "status_badge": "最適化中",
       "status_badge_completed": "完了",
-      "progress_label": "進捗: {{progress}}%"
+      "progress_label": "進捗: {{progress}}%",
+      "duration_hint": "約1分程度かかります",
+      "default_message": "最適化を準備しています...",
+      "error": {
+        "title": "最適化に失敗しました",
+        "retry": "再読み込み",
+        "back_to_plan": "計画ハブへ戻る",
+        "hints": {
+          "fetching_weather": "農場の設定を確認し、しばらく時間をおいてから再度お試しください。",
+          "predicting_weather": "気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。",
+          "optimizing": "選択した作物や栽培期間を見直し、再度お試しください。",
+          "task_schedule_generation": "最適化結果の処理中に問題が発生しました。再度お試しください。",
+          "default": "下のボタンから再読み込みするか、計画ハブへ戻ってください。"
+        }
+      }
     },
     "title": "個人計画",
     "default_plan_name": "メイン計画",
@@ -2364,8 +2377,6 @@
       "page_title": "{{name}}の作業計画表",
       "empty_hint": "作物を追加すると作業計画が生成されます。上の「作付け計画」タブで計画の内容を確認してください。",
       "empty_ready_no_fields": "作業計画の生成は完了していますが、表示する圃場がありません。「作付け計画」タブで圃場と作物を確認してください。",
-      "empty_fields_summary": "{{total}}圃場中 {{empty}}圃場は作業予定未設定",
-      "empty_fields_no_tasks_hint": "作業予定がまだありません。「作付け計画」タブで圃場と作物を確認するか、上の登録ウィザードをご利用ください。",
       "timeline_generated_at": "生成日時: {{datetime}}",
       "timeline_generated_unknown": "生成日時: 未取得",
       "no_schedules": "作業計画がまだ生成されていません。",
@@ -2434,7 +2445,9 @@
       },
       "empty_cta": "作付け計画を確認",
       "sync_plan_link": "作付け計画を確認する",
-      "unscheduled_title": "未確定の作業"
+      "unscheduled_title": "未確定の作業",
+      "empty_fields_summary": "{{total}}圃場中 {{empty}}圃場は作業予定未設定",
+      "empty_fields_no_tasks_hint": "作業予定がまだありません。「作付け計画」タブで圃場と作物を確認するか、上の登録ウィザードをご利用ください。"
     },
     "work": {
       "page_title": "{{name}}の作業記録",
