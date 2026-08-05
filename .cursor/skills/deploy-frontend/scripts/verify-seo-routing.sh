@@ -92,6 +92,8 @@ check_canonical_href "research-no-trailing-slash-canonical" "$BASE_URL/research"
 # SPA prerender routes: self-referencing canonical (AppSeoMetaService at runtime).
 check_canonical_href "spa-about-canonical" "$BASE_URL/about" "$BASE_URL/about"
 check_canonical_href "spa-contact-canonical" "$BASE_URL/contact" "$BASE_URL/contact"
+check_canonical_href "spa-privacy-canonical" "$BASE_URL/privacy" "$BASE_URL/privacy"
+check_canonical_href "spa-terms-canonical" "$BASE_URL/terms" "$BASE_URL/terms"
 check_canonical_href "spa-public-plans-new-canonical" "$BASE_URL/public-plans/new" "$BASE_URL/public-plans/new"
 
 # Internal work files must not be publicly reachable (H3).

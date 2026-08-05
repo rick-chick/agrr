@@ -5,6 +5,8 @@ import { join } from 'node:path';
 export const SPA_CANONICAL_ROUTES = [
   { path: '/about', label: 'spa-about-canonical' },
   { path: '/contact', label: 'spa-contact-canonical' },
+  { path: '/privacy', label: 'spa-privacy-canonical' },
+  { path: '/terms', label: 'spa-terms-canonical' },
   { path: '/public-plans/new', label: 'spa-public-plans-new-canonical' },
 ];
 
