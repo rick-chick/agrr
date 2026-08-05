@@ -255,6 +255,7 @@ fi
 PRERENDER_SHELL_PATHS=(
   about contact privacy terms
   "public-plans/new"
+  entry-schedule
 )
 CSR_ONLY_SHELL_PATHS=(
   login
