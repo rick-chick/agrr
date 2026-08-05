@@ -1036,18 +1036,18 @@
       "description_placeholder": "इस नियम के लिए विवरण दर्ज करें",
       "is_reference_label": "सिस्टम मानक नियम के रूप में सेट करें",
       "is_reference_help": "जब चेक किया जाता है, तो यह सभी उपयोगकर्ताओं पर स्वचालित रूप से लागू होने वाला मानक नियम बन जाता है",
-      "region_label": "क्षेत्र",
-      "region_jp": "जापान",
-      "region_us": "संयुक्त राज्य अमेरिका",
-      "region_in": "भारत",
-      "region_blank": "कृपया चुनें",
-      "region_help": "वह क्षेत्र चुनें जहां यह नियम लागू होता है",
       "submit_create": "नियम बनाएं",
       "submit_update": "नियम अपडेट करें",
       "cancel": "रद्द करें",
       "errors": {
         "title": "{{count}} त्रुटियां हुईं:"
-      }
+      },
+      "region_label": "क्षेत्र",
+      "region_jp": "जापान",
+      "region_us": "संयुक्त राज्य अमेरिका",
+      "region_in": "भारत",
+      "region_blank": "कृपया चुनें",
+      "region_help": "वह क्षेत्र चुनें जहां यह नियम लागू होता है"
     },
     "show": {
       "title": "नियम विवरण",
@@ -1630,9 +1630,22 @@
     "optimizing_live": {
       "heading": "अनुकूलन जारी",
       "heading_completed": "अनुकूलन पूर्ण",
-      "status_badge": "अनुकूलन जारी",
       "status_badge_completed": "पूर्ण",
-      "progress_label": "प्रगति: {{progress}}%"
+      "progress_label": "प्रगति: {{progress}}%",
+      "duration_hint": "इसमें लगभग 1 मिनट लगेगा",
+      "default_message": "अनुकूलन की तैयारी हो रही है...",
+      "error": {
+        "title": "अनुकूलन विफल",
+        "retry": "पुनः लोड करें",
+        "back_to_plan": "योजना हब पर वापस जाएँ",
+        "hints": {
+          "fetching_weather": "खेत की सेटिंग जाँचें और थोड़ी देर बाद पुनः प्रयास करें।",
+          "predicting_weather": "मौसम डेटा तैयार हो रहा हो सकता है। प्रतीक्षा करें और पुनः प्रयास करें।",
+          "optimizing": "फसलों और अवधि की समीक्षा करें, फिर पुनः प्रयास करें।",
+          "task_schedule_generation": "परिणाम संसाधित करते समय समस्या हुई। पुनः प्रयास करें।",
+          "default": "नीचे दिए बटन से पुनः लोड करें या योजना हब पर वापस जाएँ।"
+        }
+      }
     },
     "title": "खेती योजना",
     "default_plan_name": "मुख्य योजना",
