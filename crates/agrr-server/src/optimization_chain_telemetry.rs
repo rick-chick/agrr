@@ -19,20 +19,26 @@ fn format_step_log(
     gcs_writes: u64,
     outcome: StepOutcome,
     error: Option<&str>,
+    trace_id: Option<&str>,
 ) -> String {
     let outcome_str = match outcome {
         StepOutcome::Ok => "ok",
         StepOutcome::Failed => "failed",
     };
+    let trace_suffix = trace_id
+        .filter(|id| !id.is_empty())
+        .map(|id| format!(" trace_id={id}"))
+        .unwrap_or_default();
     match error {
         Some(err) => format!(
             "optimization_chain step={step} plan_id={plan_id} duration_ms={duration_ms} \
              gcs_reads={gcs_reads} gcs_lists={gcs_lists} gcs_writes={gcs_writes} \
-             outcome={outcome_str} error={err}"
+             outcome={outcome_str}{trace_suffix} error={err}"
         ),
         None => format!(
             "optimization_chain step={step} plan_id={plan_id} duration_ms={duration_ms} \
-             gcs_reads={gcs_reads} gcs_lists={gcs_lists} gcs_writes={gcs_writes} outcome={outcome_str}"
+             gcs_reads={gcs_reads} gcs_lists={gcs_lists} gcs_writes={gcs_writes} \
+             outcome={outcome_str}{trace_suffix}"
         ),
     }
 }
@@ -66,6 +72,7 @@ impl StepTimer {
     pub fn log(self, outcome: StepOutcome, error: Option<&str>) {
         let duration_ms = self.started.elapsed().as_millis();
         let (gcs_reads, gcs_lists, gcs_writes) = self.gcs_before.delta_since();
+        let trace_id = crate::telemetry::current_trace_id_hex();
         let message = format_step_log(
             self.step,
             self.plan_id,
@@ -75,6 +82,7 @@ impl StepTimer {
             gcs_writes,
             outcome,
             error,
+            trace_id.as_deref(),
         );
         // Cloud Run surfaces stderr as textPayload; tracing::info alone is not grep-friendly in production.
         eprintln!("{message}");
@@ -103,6 +111,7 @@ mod tests {
             0,
             StepOutcome::Ok,
             None,
+            None,
         );
         assert!(line.starts_with("optimization_chain step=fetch_weather_data"));
         assert!(line.contains("plan_id=729"));
@@ -125,6 +134,7 @@ mod tests {
             0,
             StepOutcome::Failed,
             Some("Expected 206 days from 2026-06-09 to 2026-12-31, but received 205 days."),
+            None,
         );
         assert!(line.starts_with("optimization_chain step=weather_prediction"));
         assert!(line.contains("plan_id=732"));
@@ -143,6 +153,39 @@ mod tests {
             );
         }
         assert_eq!(gcs_read_log_suffix_snapshot(), None);
+    }
+
+    #[test]
+    fn format_step_log_includes_trace_id_when_provided() {
+        let line = format_step_log(
+            "bootstrap",
+            42,
+            100,
+            0,
+            0,
+            0,
+            StepOutcome::Ok,
+            None,
+            Some("abc123def4567890abcdef1234567890"),
+        );
+        assert!(line.contains("trace_id=abc123def4567890abcdef1234567890"));
+        assert!(line.contains("outcome=ok"));
+    }
+
+    #[test]
+    fn format_step_log_omits_trace_id_when_absent() {
+        let line = format_step_log(
+            "bootstrap",
+            42,
+            100,
+            0,
+            0,
+            0,
+            StepOutcome::Ok,
+            None,
+            None,
+        );
+        assert!(!line.contains("trace_id="));
     }
 
     #[test]

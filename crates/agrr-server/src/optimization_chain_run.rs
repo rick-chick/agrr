@@ -83,6 +83,7 @@ pub async fn run_bootstrap_step(
     slot: &BootstrapSlot,
 ) -> bool {
     let timer = StepTimer::start(plan_id, "bootstrap");
+    let _step_span = crate::telemetry::optimization_step_span(plan_id, "bootstrap").entered();
     let result: Result<BootstrapData, String> = (|| {
         let pool = state.sqlite.clone();
         let snap = load_chain_plan_snapshot(&pool, plan_id)?
