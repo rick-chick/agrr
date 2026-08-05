@@ -11,6 +11,7 @@ export const E2E_EXCLUDE_MANIFEST_PATTERNS = new Set(['auth/login']);
  * 新規ルート追加時は通常ここへの追記は不要（loadComponent / component から自動導出）。
  */
 export const HOST_SELECTOR_OVERRIDES = {
+  en: 'app-home',
   'public-plans/select-farm-size': 'app-public-plan-create',
 };
 

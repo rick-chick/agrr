@@ -18,6 +18,7 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   'crops/:id/task_schedule_blueprints': 'app-crop-task-schedule-blueprints',
   'crops/new': 'app-crop-create',
   dashboard: 'app-home',
+  en: 'app-home',
   'entry-schedule': 'app-entry-schedule-list',
   'entry-schedule/crop/:cropId': 'app-entry-schedule-detail',
   farms: 'app-farm-list',
