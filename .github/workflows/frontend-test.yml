@@ -172,6 +172,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           node --test scripts/research-hreflang-lib.test.mjs
+          node --test scripts/spa-hreflang-lib.test.mjs
           node --test scripts/research-indexable-html-lib.test.mjs
           node --test scripts/agrr-frontend-url-map-redirects.test.mjs
 
