@@ -198,6 +198,19 @@ Ruby の [`lib/composition_root.rb`](../../../lib/composition_root.rb) と同型
 | 契約・統合 | **R4** — `scripts/run-rust-contract-tests.sh`（`agrr-r4-contract` スモーク） |
 | 本番 | Cloud Run + **Rust 単体** [`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server)（[`start_agrr_server.sh`](../../../scripts/start_agrr_server.sh)） |
 
+### OpenTelemetry（agrr-server）
+
+| 変数 | 既定 | 用途 |
+|------|------|------|
+| `AGRR_OTEL_ENABLED` | 未設定（off） | `1` / `true` で OTLP エクスポートを有効化 |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | 未設定 | 設定時もエクスポート有効（Cloud Trace collector 等） |
+| `OTEL_SERVICE_NAME` | `agrr-server` | サービス名 |
+| `OTEL_SDK_DISABLED` | 未設定 | `true` でエクスポート無効（ローカル Docker / 契約テスト） |
+
+ローカル Docker と R4 契約テストでは OTel エクスポートは **no-op**（外部 collector 不要）。HTTP `TraceLayer` と `optimization_chain` ログの `trace_id` は有効。
+
+本番 Cloud Run では `AGRR_OTEL_ENABLED=1` と `OTEL_EXPORTER_OTLP_ENDPOINT`（例: Google Cloud の OTLP エンドポイント）を設定する。
+
 ### R4 契約テスト（現行 — P8 以降）
 
 **正**: [`P8-RAILS-SHELL-REMOVAL.md`](./P8-RAILS-SHELL-REMOVAL.md)、[`../lib-domain-rust/TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md)。

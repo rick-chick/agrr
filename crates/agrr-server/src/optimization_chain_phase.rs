@@ -53,6 +53,7 @@ pub(crate) fn run_guarded_optimization_step(
         return false;
     }
     let timer = StepTimer::start(plan_id, step_name);
+    let _step_span = crate::telemetry::optimization_step_span(plan_id, step_name).entered();
     match step() {
         Ok(()) => {
             timer.log(StepOutcome::Ok, None);

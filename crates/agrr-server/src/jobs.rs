@@ -10,6 +10,7 @@ use std::sync::Arc;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::Semaphore;
 use tracing::info;
+use tracing::Instrument;
 
 /// `true` = continue chain; `false` = abort remaining steps (plan failed or already terminal).
 pub type JobFuture = Pin<Box<dyn Future<Output = bool> + Send>>;
@@ -53,27 +54,33 @@ impl JobChainDispatcher {
     }
 
     pub fn enqueue_chain(&self, steps: Vec<JobStep>) {
+        self.enqueue_chain_in_span(steps, tracing::Span::current());
+    }
+
+    pub fn enqueue_chain_in_span(&self, steps: Vec<JobStep>, parent_span: tracing::Span) {
         let handle = self.handle.clone();
         let chain_semaphore = self.chain_semaphore.clone();
-        handle.spawn(async move {
-            let _permit = match chain_semaphore {
-                Some(sem) => Some(
-                    sem.acquire_owned()
-                        .await
-                        .expect("job chain concurrency semaphore closed"),
-                ),
-                None => None,
-            };
-            for step in steps {
-                info!(step = step.name, "job chain step start");
-                let continue_chain = (step.run)().await;
-                info!(step = step.name, continue = continue_chain, "job chain step done");
-                if !continue_chain {
-                    // Remaining steps for this plan would no-op via plan_still_optimizing anyway.
-                    break;
+        handle.spawn(
+            async move {
+                let _permit = match chain_semaphore {
+                    Some(sem) => Some(
+                        sem.acquire_owned()
+                            .await
+                            .expect("job chain concurrency semaphore closed"),
+                    ),
+                    None => None,
+                };
+                for step in steps {
+                    info!(step = step.name, "job chain step start");
+                    let continue_chain = (step.run)().await;
+                    info!(step = step.name, continue = continue_chain, "job chain step done");
+                    if !continue_chain {
+                        break;
+                    }
                 }
             }
-        });
+            .instrument(parent_span),
+        );
     }
 }
 
