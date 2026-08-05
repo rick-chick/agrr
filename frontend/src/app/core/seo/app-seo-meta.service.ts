@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, DOCUMENT } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
@@ -44,6 +44,7 @@ export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private readonly doc = inject(DOCUMENT);
   private noIndexActive = false;
 
   applyNoIndexMeta(): void {
@@ -74,7 +75,11 @@ export class AppSeoMetaService {
     }
 
     if (!cropId || !cropName?.trim()) {
-      this.refreshDefaultMeta();
+      const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
+      const keyPrefix = path.startsWith('/entry-schedule/crop/')
+        ? 'pages.entry_schedule'
+        : resolveSeoKeyPrefix(path);
+      this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
       return;
     }
 
@@ -125,7 +130,10 @@ export class AppSeoMetaService {
   }
 
   private readOrigin(): string {
-    return typeof window !== 'undefined' ? window.location.origin : '';
+    if (typeof window === 'undefined') {
+      return 'https://agrr.net';
+    }
+    return window.location?.origin ?? '';
   }
 
   private applySeoFromKeyPrefix(keyPrefix: string, ogUrl: string): void {
@@ -180,7 +188,7 @@ export class AppSeoMetaService {
     }
     if (ogUrl) {
       this.meta.updateTag({ property: 'og:url', content: ogUrl });
-      this.meta.updateTag({ rel: 'canonical', href: ogUrl }, 'rel="canonical"');
+      this.updateCanonicalLink(ogUrl);
     }
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
@@ -205,6 +213,19 @@ export class AppSeoMetaService {
       this.meta.removeTag('name="robots"');
     }
     this.refreshJsonLd(title, ogDescription, keyPrefix);
+  }
+
+  private updateCanonicalLink(href: string): void {
+    if (!href) {
+      return;
+    }
+    let link = this.doc.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!link) {
+      link = this.doc.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      this.doc.head.appendChild(link);
+    }
+    link.setAttribute('href', href);
   }
 
   private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {

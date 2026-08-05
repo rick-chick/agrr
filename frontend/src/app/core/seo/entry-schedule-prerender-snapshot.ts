@@ -34,6 +34,8 @@ export function buildEntrySchedulePrerenderSnapshot(
       sowing_windows: [],
       transplant_windows: [],
       reason_parts: {},
+      sowing_stage_id: null,
+      transplant_stage_id: null,
       crop_stages: [],
       entry_disclaimer:
         '表示内容は予測気象に基づく目安です。実際の作付けは地域の気候・栽培条件に合わせて判断してください。',
