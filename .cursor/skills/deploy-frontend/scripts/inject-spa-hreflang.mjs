@@ -12,10 +12,10 @@ import {
   injectSpaHreflangIntoHtml,
   isSpaPrerenderRelativePath,
   resolveSpaHreflangUrls,
-} from '../../../scripts/spa-hreflang-lib.mjs';
+} from '../../../../scripts/spa-hreflang-lib.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
-const ROOT = join(__dirname, '../../..');
+const ROOT = join(__dirname, '../../../..');
 const DEFAULT_DIST = join(ROOT, 'frontend', 'dist', 'frontend', 'browser');
 const BASE_URL = (process.env.SITEMAP_BASE_URL || 'https://agrr.net').replace(/\/$/, '');
 
