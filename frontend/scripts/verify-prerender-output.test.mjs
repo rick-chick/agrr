@@ -7,6 +7,7 @@ import {
   PUBLIC_PRERENDER_ROUTES,
   assertMeaningfulPrerenderedBody,
   assertNoAuthRoutePrerenderLeak,
+  assertPrerenderCanonical,
 } from './public-prerender-routes.mjs';
 
 describe('assertMeaningfulPrerenderedBody', () => {
@@ -42,6 +43,10 @@ describe('production build prerender output', () => {
 
       if (route.locale === 'en') {
         assert.match(html, /<html[^>]*\slang=["']en["']/i);
+      }
+
+      if (route.canonicalPath) {
+        assertPrerenderCanonical(html, route.canonicalPath);
       }
 
       const isHreflangRoute =

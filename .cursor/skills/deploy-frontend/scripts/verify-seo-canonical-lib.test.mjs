@@ -22,6 +22,12 @@ describe('extractCanonicalHref', () => {
   it('returns null when canonical is missing', () => {
     assert.equal(extractCanonicalHref('<html><head></head></html>'), null);
   });
+
+  it('extracts href from meta rel=canonical (Angular Meta output)', () => {
+    const html =
+      '<html><head><meta rel="canonical" href="https://agrr.net/about"></head></html>';
+    assert.equal(extractCanonicalHref(html), 'https://agrr.net/about');
+  });
 });
 
 describe('canonicalMatches', () => {
