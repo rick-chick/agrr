@@ -192,7 +192,8 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     }
 
     info!(plan_id, steps = steps.len(), "optimization chain enqueued");
-    dispatcher.enqueue_chain(steps);
+    let chain_span = crate::telemetry::optimization_chain_span(plan_id, &channel);
+    dispatcher.enqueue_chain_in_span(steps, chain_span);
     true
 }
 
@@ -293,7 +294,8 @@ pub fn enqueue_private_plan_weather_prep_chain(
     }
 
     info!(plan_id, steps = steps.len(), "weather prep chain enqueued");
-    dispatcher.enqueue_chain(steps);
+    let chain_span = crate::telemetry::optimization_chain_span(plan_id, &channel);
+    dispatcher.enqueue_chain_in_span(steps, chain_span);
     true
 }
 
