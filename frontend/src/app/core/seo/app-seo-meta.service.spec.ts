@@ -208,7 +208,6 @@ describe('AppSeoMetaService', () => {
       ],
     });
     const ssrService = TestBed.inject(AppSeoMetaService);
-    const ssrMeta = TestBed.inject(Meta);
     const ssrTitle = TestBed.inject(Title);
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
@@ -224,7 +223,9 @@ describe('AppSeoMetaService', () => {
     ssrService.refreshDefaultMeta();
 
     expect(ssrTitle.getTitle()).toBe('AGRRについて');
-    expect(ssrMeta.getTag('rel="canonical"')?.getAttribute('href')).toBe('https://agrr.net/about');
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+      'https://agrr.net/about',
+    );
   });
 
   it('sets default OGP image tags with absolute URL and large Twitter card', () => {
