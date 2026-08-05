@@ -1,12 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service';
 import { SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
-import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 
 const TEST_ORIGIN = 'http://localhost';
 
