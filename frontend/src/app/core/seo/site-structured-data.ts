@@ -1,3 +1,6 @@
+/** Matches `id` on the static JSON-LD script in `index.html` (prerender / no-JS crawlers). */
+export const SITE_STRUCTURED_DATA_SCRIPT_ID = 'site-structured-data';
+
 export type SiteStructuredDataInput = {
   baseUrl: string;
   siteTitle: string;
