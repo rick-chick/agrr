@@ -89,11 +89,10 @@ check_canonical_href "research-legacy-prefix-canonical" \
 check_canonical_href "research-index-canonical" "$BASE_URL/research/" "$CANONICAL_INDEX_URL"
 check_canonical_href "research-no-trailing-slash-canonical" "$BASE_URL/research" "$CANONICAL_INDEX_URL"
 
+# SPA prerender routes: self-referencing canonical (AppSeoMetaService at runtime).
 check_canonical_href "spa-about-canonical" "$BASE_URL/about" "$BASE_URL/about"
 check_canonical_href "spa-contact-canonical" "$BASE_URL/contact" "$BASE_URL/contact"
-check_canonical_href "spa-public-plans-new-canonical" \
-  "$BASE_URL/public-plans/new" \
-  "$BASE_URL/public-plans/new"
+check_canonical_href "spa-public-plans-new-canonical" "$BASE_URL/public-plans/new" "$BASE_URL/public-plans/new"
 
 # Internal work files must not be publicly reachable (H3).
 check_status "research-internal-commands-template" "$BASE_URL/research/research_reports/commands_template.html" "HTTP/2 404"
