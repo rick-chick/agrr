@@ -64,7 +64,11 @@ const loadedState: PlanTaskScheduleViewState = {
   cropNamesForBanner: {},
   filteredFieldCount: 0,
   filteredTaskCount: 0,
-  regenerateRequiresConfirm: false
+  regenerateRequiresConfirm: false,
+  totalFieldCount: 0,
+  fieldsWithTasksCount: 0,
+  fieldsWithoutTasksCount: 0,
+  allFieldsLackTasks: false
 };
 
 function sampleGeneralTask(
@@ -163,6 +167,23 @@ function setScheduleControl(
   }
 }
 
+function emptyFieldSchedule(
+  id: number,
+  name: string,
+  cropName = 'Tomato'
+): TaskScheduleResponse['fields'][number] {
+  return {
+    id,
+    name,
+    crop_name: cropName,
+    area_sqm: 100,
+    field_cultivation_id: id * 10,
+    crop_id: id * 20,
+    task_options: [],
+    schedules: { general: [], fertilizer: [], unscheduled: [] }
+  };
+}
+
 describe('PlanTaskScheduleComponent', () => {
   let component: PlanTaskScheduleComponent;
   let fixture: ComponentFixture<PlanTaskScheduleComponent>;
@@ -231,10 +252,81 @@ describe('PlanTaskScheduleComponent', () => {
       cropNamesForBanner: {},
       filteredFieldCount: 0,
       filteredTaskCount: 0,
-      regenerateRequiresConfirm: false
+      regenerateRequiresConfirm: false,
+      totalFieldCount: 0,
+      fieldsWithTasksCount: 0,
+      fieldsWithoutTasksCount: 0,
+      allFieldsLackTasks: false
     };
     component.control = state;
     expect(component.control).toEqual(state);
+  });
+
+  it('summarizes all fields without tasks instead of filter and month list noise', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          emptyFieldSchedule(1, 'Field A'),
+          emptyFieldSchedule(2, 'Field B'),
+          emptyFieldSchedule(3, 'Field C')
+        ]
+      }
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const summary = fixture.nativeElement.querySelector('.plan-task-schedule__empty-fields-summary');
+    expect(summary?.textContent).toContain('3 fields');
+    expect(summary?.textContent).toContain('3 without task plans');
+    expect(fixture.nativeElement.querySelector('.plan-task-schedule__filters')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-task-schedule-month-list')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.plan-work__empty-cta-link')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-task-schedule-sync-banner')).toBeTruthy();
+  });
+
+  it('shows month list for fields with tasks and summary for fields without tasks', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    const today = localTodayIso();
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            ...emptyFieldSchedule(1, 'Field A'),
+            schedules: {
+              general: [sampleGeneralTask({ scheduled_date: today })],
+              fertilizer: [],
+              unscheduled: []
+            }
+          },
+          emptyFieldSchedule(2, 'Field B'),
+          emptyFieldSchedule(3, 'Field C')
+        ]
+      }
+    }, { fromDate: today });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const summary = fixture.nativeElement.querySelector('.plan-task-schedule__empty-fields-summary');
+    expect(summary?.textContent).toContain('3 fields');
+    expect(summary?.textContent).toContain('2 without task plans');
+    expect(fixture.nativeElement.querySelector('.plan-task-schedule__filters')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-task-schedule-month-list')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Weeding');
   });
 
   it('uses the unified plan context header with four-tab navigation and no redundant crumbs', async () => {

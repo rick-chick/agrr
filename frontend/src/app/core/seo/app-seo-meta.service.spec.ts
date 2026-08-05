@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { PLATFORM_ID, REQUEST } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -10,6 +11,9 @@ import { SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 const TEST_ORIGIN = 'http://localhost';
 
 function setWindowPath(pathname: string): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
   Object.defineProperty(window, 'location', {
     value: {
       pathname,
@@ -69,10 +73,12 @@ describe('AppSeoMetaService', () => {
   });
 
   afterEach(() => {
-    setWindowPath('/');
-    document.head
-      .querySelectorAll('script[type="application/ld+json"]')
-      .forEach((node) => node.remove());
+    if (typeof window !== 'undefined') {
+      setWindowPath('/');
+      document.head
+        .querySelectorAll('script[type="application/ld+json"]')
+        .forEach((node) => node.remove());
+    }
   });
 
   function insertStaticJsonLdScript(): HTMLScriptElement {
@@ -182,6 +188,37 @@ describe('AppSeoMetaService', () => {
       buildSelfCanonicalUrl('https://agrr.net', '/public-plans/results')
     ).toBe('https://agrr.net/public-plans/results');
     expect(buildSelfCanonicalUrl('', '/about')).toBe('');
+  });
+
+  it('sets route-specific title and canonical during SSR/prerender via REQUEST', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [TranslateModule.forRoot()],
+      providers: [
+        AppSeoMetaService,
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: REQUEST, useValue: new Request('https://agrr.net/about') },
+      ],
+    });
+    const ssrService = TestBed.inject(AppSeoMetaService);
+    const ssrTitle = TestBed.inject(Title);
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'ja',
+      {
+        meta: { default: { title: 'AGRR タイトル', description: '説明', keywords: 'k' } },
+        pages: { about: { title: 'AGRRについて', description: 'About説明' } },
+      },
+      true,
+    );
+    translate.use('ja');
+
+    ssrService.refreshDefaultMeta();
+
+    expect(ssrTitle.getTitle()).toBe('AGRRについて');
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+      'https://agrr.net/about'
+    );
   });
 
   it('sets default OGP image tags with absolute URL and large Twitter card', () => {

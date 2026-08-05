@@ -40,7 +40,7 @@ describe('production build prerender output', () => {
       const html = await readFile(filePath, 'utf8');
       assertMeaningfulPrerenderedBody(html, { expectHeading: route.expectHeading });
       assertNoAuthRoutePrerenderLeak(html);
-      const seoPath = route.path ? `/${route.path}` : '/';
+      const seoPath = route.canonicalPath ?? (route.path ? `/${route.path}` : '/');
       assertPrerenderedSeoMeta(html, resolveExpectedPrerenderSeo(seoPath));
     });
   }

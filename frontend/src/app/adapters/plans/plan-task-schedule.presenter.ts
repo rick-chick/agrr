@@ -18,6 +18,7 @@ import type {
 } from '../../components/plans/plan-task-schedule.view';
 import type { CrossFarmScheduleRow } from '../../domain/work-schedule/cross-farm-schedule-row';
 import type { CrossFarmScheduleMonthGroup } from '../../domain/work-schedule/group-cross-farm-schedule-by-month';
+import { summarizePlanTaskScheduleFieldCoverage } from '../../domain/work-schedule/summarize-plan-task-schedule-field-coverage';
 import { localTodayIso } from '../../core/local-today';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { mapTaskScheduleResponseToDomain } from './map-task-schedule-response-to-domain';
@@ -47,6 +48,10 @@ type DerivedViewFields = Pick<
   | 'filteredFieldCount'
   | 'filteredTaskCount'
   | 'regenerateRequiresConfirm'
+  | 'totalFieldCount'
+  | 'fieldsWithTasksCount'
+  | 'fieldsWithoutTasksCount'
+  | 'allFieldsLackTasks'
 >;
 
 const emptyDerivedFields: DerivedViewFields = {
@@ -57,7 +62,11 @@ const emptyDerivedFields: DerivedViewFields = {
   cropNamesForBanner: {},
   filteredFieldCount: 0,
   filteredTaskCount: 0,
-  regenerateRequiresConfirm: false
+  regenerateRequiresConfirm: false,
+  totalFieldCount: 0,
+  fieldsWithTasksCount: 0,
+  fieldsWithoutTasksCount: 0,
+  allFieldsLackTasks: false
 };
 
 @Injectable()
@@ -286,6 +295,8 @@ export class PlanTaskSchedulePresenter
       filteredUnscheduledRows
     );
 
+    const fieldCoverage = summarizePlanTaskScheduleFieldCoverage(schedule.fields);
+
     return {
       monthGroups,
       unscheduledRows: filteredUnscheduledRows,
@@ -294,7 +305,8 @@ export class PlanTaskSchedulePresenter
       cropNamesForBanner: banner.cropNames,
       filteredFieldCount,
       filteredTaskCount,
-      regenerateRequiresConfirm: countScheduleTasks(schedule) > 0
+      regenerateRequiresConfirm: countScheduleTasks(schedule) > 0,
+      ...fieldCoverage
     };
   }
 }

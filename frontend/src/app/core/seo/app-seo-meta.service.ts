@@ -1,12 +1,11 @@
-import { DOCUMENT } from '@angular/common';
-import { Injectable, inject } from '@angular/core';
+import { DOCUMENT, isPlatformServer } from '@angular/common';
+import { Injectable, inject, PLATFORM_ID, REQUEST } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
-import { resolveSeoRequestContext } from './seo-request-context';
 import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 import {
@@ -26,6 +25,9 @@ export function buildSelfCanonicalUrl(origin: string, pathname: string): string 
   return `${origin}${pathname.split('?')[0]}`;
 }
 
+/** Production origin for build-time prerender canonical / OGP URLs. */
+export const PRERENDER_CANONICAL_ORIGIN = 'https://agrr.net';
+
 function ogLocale(angularLang: AppLang): string {
   if (angularLang === 'ja') return 'ja_JP';
   if (angularLang === 'en') return 'en_US';
@@ -44,7 +46,9 @@ export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
-  private readonly router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly request = inject(REQUEST, { optional: true });
+  private readonly router = inject(Router, { optional: true });
   private readonly document = inject(DOCUMENT);
   private noIndexActive = false;
 
@@ -64,9 +68,9 @@ export class AppSeoMetaService {
       document.documentElement.lang = documentHtmlLang(angularLang);
     }
 
-    const { path, origin } = this.readSeoContext();
+    const path = this.readPathname();
     const keyPrefix = resolveSeoKeyPrefix(path);
-    this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(origin, path));
+    this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
   }
 
   refreshPublicPlanResultsMeta(planId: number | null, planData: CultivationPlanData | null): void {
@@ -76,9 +80,9 @@ export class AppSeoMetaService {
     }
 
     if (!planId || !planData?.success) {
-      const { path, origin } = this.readSeoContext();
+      const path = this.readPathname();
       const keyPrefix = resolveSeoKeyPrefix(path);
-      this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(origin, path));
+      this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
       return;
     }
 
@@ -101,14 +105,46 @@ export class AppSeoMetaService {
     this.applyResolvedSeo({ title, description, ogDescription, ogUrl, keyPrefix });
   }
 
-  private readSeoContext(): { path: string; origin: string } {
-    const windowLocation =
-      typeof window !== 'undefined' ? window.location : undefined;
-    return resolveSeoRequestContext(windowLocation, this.router.url);
+  private readPathname(): string {
+    if (!isPlatformServer(this.platformId) && typeof window !== 'undefined' && window.location?.pathname) {
+      return window.location.pathname;
+    }
+    const requestUrl = this.readRequestUrl();
+    if (requestUrl) {
+      try {
+        return new URL(requestUrl).pathname;
+      } catch {
+        return '/';
+      }
+    }
+    const routerPath = this.router?.url?.split('?')[0];
+    if (routerPath) {
+      return routerPath.startsWith('/') ? routerPath : `/${routerPath}`;
+    }
+    return '/';
   }
 
   private readOrigin(): string {
-    return this.readSeoContext().origin;
+    if (!isPlatformServer(this.platformId)) {
+      if (typeof window !== 'undefined' && window.location) {
+        return window.location.origin ?? '';
+      }
+      return '';
+    }
+    const requestUrl = this.readRequestUrl();
+    if (requestUrl) {
+      try {
+        return new URL(requestUrl).origin;
+      } catch {
+        return PRERENDER_CANONICAL_ORIGIN;
+      }
+    }
+    return PRERENDER_CANONICAL_ORIGIN;
+  }
+
+  private readRequestUrl(): string | undefined {
+    const request = this.request as Request | null | undefined;
+    return request?.url;
   }
 
   private applySeoFromKeyPrefix(keyPrefix: string, ogUrl: string): void {
