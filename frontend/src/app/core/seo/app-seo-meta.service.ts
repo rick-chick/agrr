@@ -1,9 +1,13 @@
+import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
+import { resolveSeoRequestContext } from './seo-request-context';
+import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 import {
   buildPublicPlanResultsShareUrl,
@@ -40,6 +44,8 @@ export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
   private noIndexActive = false;
 
   applyNoIndexMeta(): void {
@@ -58,9 +64,9 @@ export class AppSeoMetaService {
       document.documentElement.lang = documentHtmlLang(angularLang);
     }
 
-    const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
+    const { path, origin } = this.readSeoContext();
     const keyPrefix = resolveSeoKeyPrefix(path);
-    this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
+    this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(origin, path));
   }
 
   refreshPublicPlanResultsMeta(planId: number | null, planData: CultivationPlanData | null): void {
@@ -70,9 +76,9 @@ export class AppSeoMetaService {
     }
 
     if (!planId || !planData?.success) {
-      const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
+      const { path, origin } = this.readSeoContext();
       const keyPrefix = resolveSeoKeyPrefix(path);
-      this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
+      this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(origin, path));
       return;
     }
 
@@ -95,8 +101,14 @@ export class AppSeoMetaService {
     this.applyResolvedSeo({ title, description, ogDescription, ogUrl, keyPrefix });
   }
 
+  private readSeoContext(): { path: string; origin: string } {
+    const windowLocation =
+      typeof window !== 'undefined' ? window.location : undefined;
+    return resolveSeoRequestContext(windowLocation, this.router.url);
+  }
+
   private readOrigin(): string {
-    return typeof window !== 'undefined' ? window.location.origin : '';
+    return this.readSeoContext().origin;
   }
 
   private applySeoFromKeyPrefix(keyPrefix: string, ogUrl: string): void {
@@ -151,7 +163,7 @@ export class AppSeoMetaService {
     }
     if (ogUrl) {
       this.meta.updateTag({ property: 'og:url', content: ogUrl });
-      this.meta.updateTag({ rel: 'canonical', href: ogUrl }, 'rel="canonical"');
+      this.updateCanonicalLink(ogUrl);
     }
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
@@ -178,6 +190,21 @@ export class AppSeoMetaService {
     this.refreshJsonLd(title, ogDescription, keyPrefix);
   }
 
+  private updateCanonicalLink(href: string): void {
+    const head = this.document.head;
+    if (!head || !href) {
+      return;
+    }
+
+    let link = this.document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!link) {
+      link = this.document.createElement('link');
+      link.rel = 'canonical';
+      head.appendChild(link);
+    }
+    link.href = href;
+  }
+
   private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {
     if (typeof document === 'undefined') {
       return;
@@ -192,7 +219,7 @@ export class AppSeoMetaService {
     const baseUrl =
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
-        : 'https://agrr.net';
+        : PRODUCTION_SITE_ORIGIN;
     const jsonLd = buildSiteStructuredDataDocument({
       baseUrl,
       siteTitle,

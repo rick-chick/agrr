@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
+import { provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service';
 import { SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
+import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 
 const TEST_ORIGIN = 'http://localhost';
 
@@ -28,7 +30,7 @@ describe('AppSeoMetaService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot()],
-      providers: [AppSeoMetaService]
+      providers: [AppSeoMetaService, provideRouter([])]
     });
     service = TestBed.inject(AppSeoMetaService);
     title = TestBed.inject(Title);
@@ -100,6 +102,9 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="description"')?.content).toBe('About説明');
     expect(meta.getTag('property="og:title"')?.content).toBe('AGRRについて');
     expect(meta.getTag('property="og:description"')?.content).toBe('About説明');
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+      'http://localhost/about'
+    );
   });
 
   it('sets route-specific title and description for /public-plans/new', () => {
@@ -265,7 +270,7 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('property="og:url"')?.content).toBe(
       'https://agrr.net/public-plans/results?planId=7'
     );
-    expect(meta.getTag('rel="canonical"')?.getAttribute('href')).toBe(
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
       'https://agrr.net/public-plans/results?planId=7'
     );
     expect(meta.getTag('property="og:image"')?.content).toBe('https://agrr.net/og-default.png');
