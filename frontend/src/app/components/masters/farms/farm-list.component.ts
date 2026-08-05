@@ -15,6 +15,7 @@ import { UndoToastService } from '../../../services/undo-toast.service';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+import { CardListSkeletonComponent } from '../../shared/skeleton/card-list-skeleton.component';
 
 const initialControl: FarmListViewState = {
   loading: true,
@@ -27,7 +28,7 @@ const initialControl: FarmListViewState = {
 @Component({
   selector: 'app-farm-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, CardListSkeletonComponent],
   providers: [...FARM_LIST_PROVIDERS],
   template: `
     <main class="page-main">
@@ -37,7 +38,8 @@ const initialControl: FarmListViewState = {
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
-          <p class="master-loading">{{ 'common.loading' | translate }}</p>
+          <app-card-list-skeleton class="list-loading-skeleton" />
+          <p class="master-loading list-loading-text">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
             <a routerLink="/farms/new" class="btn btn-primary">{{ 'farms.index.new_farm' | translate }}</a>

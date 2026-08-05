@@ -198,4 +198,18 @@ describe('FarmListComponent', () => {
       expect(el.classList.contains('btn')).toBe(true);
     }
   });
+
+  it('shows card-list skeleton while loading', () => {
+    component.control = {
+      loading: true,
+      error: null,
+      farms: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.master-loading:not(.list-loading-text)')).toBeNull();
+  });
 });
