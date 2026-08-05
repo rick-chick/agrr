@@ -187,4 +187,18 @@ describe('CropListComponent card actions', () => {
 
     expect(fixture.nativeElement.querySelector('[data-testid="crop-overflow-menu-panel"]')).toBeNull();
   });
+
+  it('shows card-list skeleton while loading', () => {
+    fixture.componentInstance.control = {
+      loading: true,
+      error: null,
+      crops: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.master-loading:not(.list-loading-text)')).toBeNull();
+  });
 });

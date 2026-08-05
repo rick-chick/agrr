@@ -11,6 +11,7 @@ import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingUndoToastViewEffects } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { applyPendingErrorFlashViewEffects } from '../../core/view-effects/pending-error-flash-view.effects';
+import { CardListSkeletonComponent } from '../shared/skeleton/card-list-skeleton.component';
 
 const initialControl: PlanListViewState = {
   loading: true,
@@ -23,7 +24,7 @@ const initialControl: PlanListViewState = {
 @Component({
   selector: 'app-plan-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, PlanDisplayNamePipe],
+  imports: [CommonModule, RouterLink, TranslateModule, PlanDisplayNamePipe, CardListSkeletonComponent],
   providers: [...PLAN_LIST_PROVIDERS],
   template: `
     <main class="page-main">
@@ -33,7 +34,8 @@ const initialControl: PlanListViewState = {
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
-          <p class="master-loading">{{ 'common.loading' | translate }}</p>
+          <app-card-list-skeleton class="list-loading-skeleton" />
+          <p class="master-loading list-loading-text">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
           <p class="plan-list-error">{{ control.error }}</p>
         } @else if (control.plans.length === 0) {

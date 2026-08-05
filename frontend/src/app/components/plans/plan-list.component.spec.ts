@@ -226,4 +226,44 @@ describe('PlanListComponent', () => {
     expect(nativeElement.querySelector('.plan-list__work-link')).toBeNull();
     expect(nativeElement.querySelector('a[href*="/work"]')).toBeNull();
   });
+
+  it('shows card-list skeleton while loading instead of text-only spinner', async () => {
+    const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
+    try {
+      component.control = {
+        loading: true,
+        error: null,
+        plans: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.master-loading:not(.list-loading-text)')).toBeNull();
+    } finally {
+      loadSpy.mockRestore();
+    }
+  });
+
+  it('keeps text loading for error state', async () => {
+    const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
+    try {
+      component.control = {
+        loading: false,
+        error: 'Failed to load',
+        plans: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(fixture.nativeElement.querySelector('.plan-list-error')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeNull();
+    } finally {
+      loadSpy.mockRestore();
+    }
+  });
 });
