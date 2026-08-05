@@ -232,12 +232,30 @@ export function assertPrerenderedSeoMeta(html, expected) {
  * @param {string} attrValue
  */
 function readMetaContent(html, attrName, attrValue) {
-  const pattern = new RegExp(
-    `<meta[^>]*${attrName}=["']${attrValue}["'][^>]*content=["']([^"']*)["']|<meta[^>]*content=["']([^"']*)["'][^>]*${attrName}=["']${attrValue}["']`,
+  const tagPattern = new RegExp(
+    `<meta[^>]*${attrName}=["']${attrValue}["'][^>]*>`,
     'i'
   );
-  const match = html.match(pattern);
-  return match?.[1] ?? match?.[2] ?? '';
+  const tagMatch = html.match(tagPattern);
+  if (!tagMatch) {
+    const reversedPattern = new RegExp(
+      `<meta[^>]*content=(["'])([\\s\\S]*?)\\1[^>]*${attrName}=["']${attrValue}["'][^>]*>`,
+      'i'
+    );
+    const reversedMatch = html.match(reversedPattern);
+    return reversedMatch?.[2] ?? '';
+  }
+  return readAttributeValue(tagMatch[0], 'content');
+}
+
+/**
+ * @param {string} tag
+ * @param {string} attribute
+ */
+function readAttributeValue(tag, attribute) {
+  const pattern = new RegExp(`${attribute}\\s*=\\s*(["'])([\\s\\S]*?)\\1`, 'i');
+  const match = tag.match(pattern);
+  return match?.[2] ?? '';
 }
 
 /**
@@ -245,12 +263,17 @@ function readMetaContent(html, attrName, attrValue) {
  * @param {string} rel
  */
 function readLinkHref(html, rel) {
-  const pattern = new RegExp(
-    `<link[^>]*rel=["']${rel}["'][^>]*href=["']([^"']*)["']|<link[^>]*href=["']([^"']*)["'][^>]*rel=["']${rel}["']`,
-    'i'
-  );
-  const match = html.match(pattern);
-  return match?.[1] ?? match?.[2] ?? '';
+  const tagPattern = new RegExp(`<link[^>]*rel=["']${rel}["'][^>]*>`, 'i');
+  const tagMatch = html.match(tagPattern);
+  if (!tagMatch) {
+    const reversedPattern = new RegExp(
+      `<link[^>]*href=(["'])([\\s\\S]*?)\\1[^>]*rel=["']${rel}["'][^>]*>`,
+      'i'
+    );
+    const reversedMatch = html.match(reversedPattern);
+    return reversedMatch?.[2] ?? '';
+  }
+  return readAttributeValue(tagMatch[0], 'href');
 }
 
 /**
