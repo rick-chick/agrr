@@ -39,7 +39,11 @@ const initialControl: PlanTaskScheduleViewState = {
   cropNamesForBanner: {},
   filteredFieldCount: 0,
   filteredTaskCount: 0,
-  regenerateRequiresConfirm: false
+  regenerateRequiresConfirm: false,
+  totalFieldCount: 0,
+  fieldsWithTasksCount: 0,
+  fieldsWithoutTasksCount: 0,
+  allFieldsLackTasks: false
 };
 
 @Component({
@@ -123,6 +127,65 @@ const initialControl: PlanTaskScheduleViewState = {
               [regenerateError]="control.regenerateError"
               (retry)="regenerateTaskSchedule()"
             />
+            @if (control.allFieldsLackTasks) {
+              <p class="plan-task-schedule__empty-fields-summary" role="status">
+                {{
+                  'plans.task_schedules.empty_fields_summary'
+                    | translate
+                      : {
+                          total: control.totalFieldCount,
+                          empty: control.fieldsWithoutTasksCount
+                        }
+                }}
+              </p>
+              <div class="plan-work__empty">
+                @if (allFieldsLackTasksHintKey) {
+                  <p class="plan-work__empty-hint">{{ allFieldsLackTasksHintKey | translate }}</p>
+                }
+                <a
+                  class="plan-work__empty-cta-link plan-work__cta--constrained"
+                  [routerLink]="['/plans', planId]"
+                >{{ 'plans.task_schedules.empty_cta' | translate }}</a>
+              </div>
+              <footer class="plan-task-schedule__footer">
+                <p class="plan-task-schedule__generated-at">{{ timelineGeneratedAtLabel }}</p>
+                <p class="plan-task-schedule__summary">{{
+                  'plans.task_schedules.summary'
+                    | translate: { fields: control.filteredFieldCount, tasks: control.filteredTaskCount }
+                }}</p>
+                @if (syncState === 'ready') {
+                  <button
+                    type="button"
+                    class="plan-task-schedule__regenerate-link"
+                    [disabled]="control.regenerating"
+                    (click)="requestRegenerateTaskSchedule()"
+                  >
+                    {{
+                      (control.regenerating
+                        ? 'common.loading'
+                        : 'plans.task_schedules.sync_retry') | translate
+                    }}
+                  </button>
+                  @if (control.regenerateError) {
+                    <p class="plan-task-schedule__regenerate-error" role="alert">
+                      {{ control.regenerateError | translate }}
+                    </p>
+                  }
+                }
+              </footer>
+            } @else {
+              @if (control.fieldsWithoutTasksCount > 0) {
+                <p class="plan-task-schedule__empty-fields-summary" role="status">
+                  {{
+                    'plans.task_schedules.empty_fields_summary'
+                      | translate
+                        : {
+                            total: control.totalFieldCount,
+                            empty: control.fieldsWithoutTasksCount
+                          }
+                  }}
+                </p>
+              }
             <div class="plan-task-schedule__filters">
               <label class="plan-task-schedule__filter">
                 <span class="plan-task-schedule__filter-label">{{
@@ -184,6 +247,7 @@ const initialControl: PlanTaskScheduleViewState = {
                 }
               }
             </footer>
+            }
           }
         }
       </section>
@@ -272,6 +336,16 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     }
     if (this.syncState === 'ready') {
       return 'plans.task_schedules.empty_ready_no_fields';
+    }
+    return 'plans.task_schedules.empty_hint';
+  }
+
+  get allFieldsLackTasksHintKey(): string | null {
+    if (this.syncState === 'generating' || this.syncState === 'failed') {
+      return null;
+    }
+    if (this.syncState === 'ready') {
+      return 'plans.task_schedules.empty_fields_no_tasks_hint';
     }
     return 'plans.task_schedules.empty_hint';
   }

@@ -33,6 +33,10 @@ export type PlanTaskScheduleViewState = {
   filteredFieldCount: number;
   filteredTaskCount: number;
   regenerateRequiresConfirm: boolean;
+  totalFieldCount: number;
+  fieldsWithTasksCount: number;
+  fieldsWithoutTasksCount: number;
+  allFieldsLackTasks: boolean;
 };
 
 export interface PlanTaskScheduleView {
