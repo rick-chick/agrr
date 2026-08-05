@@ -6,6 +6,7 @@ import {
   PUBLIC_PRERENDER_ROUTES,
   assertMeaningfulPrerenderedBody,
   assertNoAuthRoutePrerenderLeak,
+  assertPrerenderCanonical,
 } from './public-prerender-routes.mjs';
 
 describe('assertMeaningfulPrerenderedBody', () => {
@@ -38,6 +39,9 @@ describe('production build prerender output', () => {
       const html = await readFile(filePath, 'utf8');
       assertMeaningfulPrerenderedBody(html, { expectHeading: route.expectHeading });
       assertNoAuthRoutePrerenderLeak(html);
+      if (route.canonicalPath) {
+        assertPrerenderCanonical(html, route.canonicalPath);
+      }
     });
   }
 });
