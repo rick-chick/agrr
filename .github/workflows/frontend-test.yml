@@ -141,6 +141,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-frontend-deploy-seo-routing.test.mjs
 
+      - name: core API optimization SLI-SLO doc contract unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-core-api-optimization-sli-slo-doc-lib.test.mjs
+
       - name: prerender shell paths sync contract unit tests
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-prerender-shell-paths-sync.test.mjs
