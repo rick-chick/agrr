@@ -80,3 +80,11 @@ jobs:
           else
             ./.cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh deploy production
           fi
+
+      - name: Verify SEO routing (canonical / hreflang)
+        if: github.event_name == 'push'
+        env:
+          BASE_URL: https://agrr.net
+        run: |
+          chmod +x ./.cursor/skills/deploy-frontend/scripts/verify-seo-routing.sh
+          ./.cursor/skills/deploy-frontend/scripts/verify-seo-routing.sh

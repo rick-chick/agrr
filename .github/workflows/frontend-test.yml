@@ -130,6 +130,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-apex-http-to-https-redirect.test.mjs
 
+      - name: frontend-deploy SEO CI workflow unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-frontend-deploy-seo-ci-workflow.test.mjs
+
       - name: research vitepress link patch unit tests
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/research-tools/scripts/patch-research-vitepress-links.test.mjs
