@@ -304,9 +304,20 @@ for shell_path in "${PRERENDER_SHELL_PATHS[@]}"; do
   prerender_file="$BUILD_OUTPUT_DIR/$STATIC_PATH_PREFIX/$shell_path/index.html"
   run mkdir -p "$(dirname "$shell_target")"
   if [ -f "$prerender_file" ]; then
-    run cp "$prerender_file" "$shell_target"
+    if [ -d "$shell_target" ]; then
+      tmp_prerender="$(mktemp)"
+      run cp "$prerender_file" "$tmp_prerender"
+      run rm -rf "$shell_target"
+      run cp "$tmp_prerender" "$shell_target"
+      run rm -f "$tmp_prerender"
+    else
+      run cp "$prerender_file" "$shell_target"
+    fi
   else
     info "Prerender missing for /$shell_path — falling back to CSR shell"
+    if [ -d "$shell_target" ]; then
+      run rm -rf "$shell_target"
+    fi
     run cp "$CSR_SHELL_HTML" "$shell_target"
   fi
 done
@@ -314,6 +325,9 @@ done
 for shell_path in "${CSR_ONLY_SHELL_PATHS[@]}"; do
   shell_target="$BUILD_OUTPUT_DIR/$shell_path"
   run mkdir -p "$(dirname "$shell_target")"
+  if [ -d "$shell_target" ]; then
+    run rm -rf "$shell_target"
+  fi
   run cp "$CSR_SHELL_HTML" "$shell_target"
   for noindex_path in "${NOINDEX_CSR_SHELL_PATHS[@]}"; do
     if [ "$shell_path" = "$noindex_path" ]; then
