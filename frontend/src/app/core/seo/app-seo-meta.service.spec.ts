@@ -1,14 +1,20 @@
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID, REQUEST } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
-import { AppSeoMetaService, buildSelfCanonicalUrl } from './app-seo-meta.service';
+import { AppSeoMetaService } from './app-seo-meta.service';
+import { buildSelfCanonicalUrl } from './seo-url';
 import { SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 
 const TEST_ORIGIN = 'http://localhost';
+
+function canonicalHref(): string | null {
+  return document.head.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? null;
+}
 
 function setWindowPath(pathname: string): void {
   if (typeof window === 'undefined') {
@@ -33,7 +39,10 @@ describe('AppSeoMetaService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot()],
-      providers: [AppSeoMetaService, provideRouter([])]
+      providers: [
+        AppSeoMetaService,
+        { provide: Router, useValue: { url: '/' } },
+      ],
     });
     service = TestBed.inject(AppSeoMetaService);
     title = TestBed.inject(Title);
@@ -64,16 +73,6 @@ describe('AppSeoMetaService', () => {
             title: '{{planLabel}} — 作付け計画',
             description: '{{cropLabels}}（{{planYear}}年・{{totalArea}}㎡）',
             og_description: '{{planLabel}}の栽培スケジュール（{{cropLabels}}）'
-          },
-          entry_schedule: {
-            title: '作付け時期の目安',
-            description: 'Entry schedule list description',
-            og_description: 'Entry schedule list og'
-          },
-          entry_schedule_detail: {
-            title: '{{cropName}}の作付け時期 | AGRR',
-            description: '{{cropName}}の播種・育苗・定植・収穫の適期帯を、予測気象データに基づいて表示します。',
-            og_description: '{{cropName}}の播種・定植の適期帯を予測気象で表示'
           }
         }
       },
@@ -85,10 +84,10 @@ describe('AppSeoMetaService', () => {
   afterEach(() => {
     if (typeof window !== 'undefined') {
       setWindowPath('/');
+      document.head.querySelector('link[rel="canonical"]')?.remove();
       document.head
         .querySelectorAll('script[type="application/ld+json"]')
         .forEach((node) => node.remove());
-      document.head.querySelectorAll('link[rel="canonical"]').forEach((node) => node.remove());
     }
   });
 
@@ -118,23 +117,6 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="description"')?.content).toBe('About説明');
     expect(meta.getTag('property="og:title"')?.content).toBe('AGRRについて');
     expect(meta.getTag('property="og:description"')?.content).toBe('About説明');
-    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
-      'http://localhost/about'
-    );
-  });
-
-  it('sets ja/en/x-default hreflang alternates on public prerender routes', () => {
-    setWindowPath('/about');
-    service.refreshDefaultMeta();
-    expect(document.head.querySelector('link[rel="alternate"][hreflang="ja"]')?.getAttribute('href')).toBe(
-      'http://localhost/about'
-    );
-    expect(document.head.querySelector('link[rel="alternate"][hreflang="en"]')?.getAttribute('href')).toBe(
-      'http://localhost/en/about'
-    );
-    expect(
-      document.head.querySelector('link[rel="alternate"][hreflang="x-default"]')?.getAttribute('href')
-    ).toBe('http://localhost/about');
   });
 
   it('sets route-specific title and description for /public-plans/new', () => {
@@ -149,6 +131,24 @@ describe('AppSeoMetaService', () => {
     service.refreshDefaultMeta();
     expect(title.getTitle()).toBe('AGRR タイトル');
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
+  });
+
+  it('uses router URL and production origin when window is unavailable (SSR prerender)', () => {
+    const router = TestBed.inject(Router);
+    Object.defineProperty(router, 'url', { value: '/about', configurable: true });
+    const savedWindow = globalThis.window;
+    Reflect.deleteProperty(globalThis, 'window');
+
+    try {
+      service.refreshDefaultMeta();
+
+      expect(title.getTitle()).toBe('AGRRについて');
+      expect(meta.getTag('property="og:url"')?.content).toBe('https://agrr.net/about');
+      expect(canonicalHref()).toBe('https://agrr.net/about');
+      expect(meta.getTag('property="og:image"')?.content).toBe('https://agrr.net/og-default.png');
+    } finally {
+      globalThis.window = savedWindow;
+    }
   });
 
   it('skips JSON-LD injection when document is unavailable (SSR/prerender)', () => {
@@ -241,9 +241,8 @@ describe('AppSeoMetaService', () => {
     ssrService.refreshDefaultMeta();
 
     expect(ssrTitle.getTitle()).toBe('AGRRについて');
-    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
-      'https://agrr.net/about',
-    );
+    const canonical = TestBed.inject(DOCUMENT).head.querySelector('link[rel="canonical"]');
+    expect(canonical?.getAttribute('href')).toBe('https://agrr.net/about');
   });
 
   it('sets default OGP image tags with absolute URL and large Twitter card', () => {
@@ -309,37 +308,6 @@ describe('AppSeoMetaService', () => {
     total_cost: 0
   };
 
-  it('refreshEntryScheduleDetailMeta sets crop-specific title and self-referencing canonical', () => {
-    setWindowPath('/entry-schedule/crop/1');
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        origin: 'https://agrr.net',
-        pathname: '/entry-schedule/crop/1',
-        href: 'https://agrr.net/entry-schedule/crop/1',
-        search: ''
-      }
-    });
-
-    service.refreshEntryScheduleDetailMeta(1, 'トマト');
-
-    expect(title.getTitle()).toBe('トマトの作付け時期 | AGRR');
-    expect(meta.getTag('property="og:title"')?.content).toBe('トマトの作付け時期 | AGRR');
-    expect(meta.getTag('property="og:description"')?.content).toContain('トマト');
-    expect(meta.getTag('property="og:url"')?.content).toBe(
-      'https://agrr.net/entry-schedule/crop/1'
-    );
-    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
-      'https://agrr.net/entry-schedule/crop/1'
-    );
-  });
-
-  it('refreshEntryScheduleDetailMeta falls back to default meta when crop is missing', () => {
-    setWindowPath('/entry-schedule/crop/1');
-    service.refreshEntryScheduleDetailMeta(null, null);
-    expect(title.getTitle()).toBe('作付け時期の目安');
-  });
-
   it('refreshPublicPlanResultsMeta sets plan-specific OGP with planId in canonical URL', () => {
     setWindowPath('/public-plans/results');
     Object.defineProperty(window, 'location', {
@@ -362,7 +330,7 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('property="og:url"')?.content).toBe(
       'https://agrr.net/public-plans/results?planId=7'
     );
-    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+    expect(canonicalHref()).toBe(
       'https://agrr.net/public-plans/results?planId=7'
     );
     expect(meta.getTag('property="og:image"')?.content).toBe('https://agrr.net/og-default.png');

@@ -1,14 +1,12 @@
-import { DOCUMENT, isPlatformServer } from '@angular/common';
 import { Injectable, inject, PLATFORM_ID, REQUEST } from '@angular/core';
+import { DOCUMENT, isPlatformServer } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
-import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
-import { resolveSpaHreflangUrls } from './spa-hreflang';
 import {
   buildPublicPlanResultsShareUrl,
   extractPublicPlanResultsSeoLabels
@@ -17,21 +15,13 @@ import {
   buildEntryScheduleDetailCanonicalUrl,
   buildEntryScheduleDetailSeoLabels
 } from './entry-schedule-detail-seo-meta';
+import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
+import { resolveRouteSeoMetaWithTranslator } from './resolve-route-seo-meta';
+import { buildSelfCanonicalUrl, DEFAULT_OGP_IMAGE_PATH } from './seo-url';
 
 function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
 }
-
-/** @internal exported for unit tests */
-export function buildSelfCanonicalUrl(origin: string, pathname: string): string {
-  if (!origin) {
-    return '';
-  }
-  return `${origin}${pathname.split('?')[0]}`;
-}
-
-/** Production origin for build-time prerender canonical / OGP URLs. */
-export const PRERENDER_CANONICAL_ORIGIN = 'https://agrr.net';
 
 function ogLocale(angularLang: AppLang): string {
   if (angularLang === 'ja') return 'ja_JP';
@@ -44,14 +34,14 @@ function isResolvedTranslation(value: string, keyPrefix: string): boolean {
 }
 
 /** Default OGP image served from `frontend/public/` (1200×630). */
-const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
+export { DEFAULT_OGP_IMAGE_PATH, buildSelfCanonicalUrl } from './seo-url';
 
 @Injectable({ providedIn: 'root' })
 export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
-  private readonly doc = inject(DOCUMENT);
+  private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly request = inject(REQUEST, { optional: true });
   private readonly router = inject(Router, { optional: true });
@@ -74,11 +64,8 @@ export class AppSeoMetaService {
     }
 
     const path = this.readPathname();
-    const origin = this.readOrigin();
     const keyPrefix = resolveSeoKeyPrefix(path);
-    const hreflang = resolveSpaHreflangUrls(origin, path);
-    const canonical = hreflang?.canonicalUrl ?? buildSelfCanonicalUrl(origin, path);
-    this.applySeoFromKeyPrefix(keyPrefix, canonical);
+    this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
   }
 
   refreshEntryScheduleDetailMeta(cropId: number | null, cropName: string | null): void {
@@ -166,17 +153,17 @@ export class AppSeoMetaService {
       if (typeof window !== 'undefined' && window.location) {
         return window.location.origin ?? '';
       }
-      return '';
+      return PRODUCTION_SITE_ORIGIN;
     }
     const requestUrl = this.readRequestUrl();
     if (requestUrl) {
       try {
         return new URL(requestUrl).origin;
       } catch {
-        return PRERENDER_CANONICAL_ORIGIN;
+        return PRODUCTION_SITE_ORIGIN;
       }
     }
-    return PRERENDER_CANONICAL_ORIGIN;
+    return PRODUCTION_SITE_ORIGIN;
   }
 
   private readRequestUrl(): string | undefined {
@@ -184,20 +171,35 @@ export class AppSeoMetaService {
     return request?.url;
   }
 
-  private applySeoFromKeyPrefix(keyPrefix: string, ogUrl: string): void {
-    const title = this.translate.instant(`${keyPrefix}.title`);
-    const description = this.translate.instant(`${keyPrefix}.description`);
-    const keywords = this.translate.instant('meta.default.keywords');
-    let ogDescription = this.translate.instant(`${keyPrefix}.og_description`);
-    if (!isResolvedTranslation(ogDescription, `${keyPrefix}.`)) {
-      ogDescription = description;
+  private updateCanonicalLink(href: string): void {
+    if (typeof this.document === 'undefined' || !this.document.head) {
+      return;
     }
 
+    let link = this.document.head.querySelector('link[rel="canonical"]');
+    if (!(link instanceof HTMLLinkElement)) {
+      link = this.document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      this.document.head.appendChild(link);
+    }
+    link.setAttribute('href', href);
+  }
+
+  private applySeoFromKeyPrefix(keyPrefix: string, ogUrl: string): void {
+    const path = this.readPathname();
+    const origin = this.readOrigin() || PRODUCTION_SITE_ORIGIN;
+    const resolved = resolveRouteSeoMetaWithTranslator(
+      path,
+      (key) => this.translate.instant(key),
+      origin
+    );
+    const keywords = this.translate.instant('meta.default.keywords');
+
     this.applyResolvedSeo({
-      title: isResolvedTranslation(title, `${keyPrefix}.`) ? title : '',
-      description: isResolvedTranslation(description, `${keyPrefix}.`) ? description : '',
-      ogDescription: isResolvedTranslation(ogDescription, `${keyPrefix}.`) ? ogDescription : '',
-      ogUrl,
+      title: resolved.title,
+      description: resolved.description,
+      ogDescription: resolved.ogDescription,
+      ogUrl: resolved.canonicalUrl || ogUrl,
       keyPrefix,
       keywords: isResolvedTranslation(keywords, 'meta.default.') ? keywords : undefined
     });
@@ -238,7 +240,6 @@ export class AppSeoMetaService {
       this.meta.updateTag({ property: 'og:url', content: ogUrl });
       this.updateCanonicalLink(ogUrl);
     }
-    this.refreshHreflangLinks(ogUrl);
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
@@ -262,62 +263,6 @@ export class AppSeoMetaService {
       this.meta.removeTag('name="robots"');
     }
     this.refreshJsonLd(title, ogDescription, keyPrefix);
-  }
-
-  private refreshHreflangLinks(canonicalUrl: string): void {
-    if (typeof document === 'undefined') {
-      return;
-    }
-    const path = this.readPathname();
-    const origin = this.readOrigin();
-    if (!origin) {
-      this.clearHreflangLinks();
-      return;
-    }
-    const hreflang = resolveSpaHreflangUrls(origin, path);
-    if (!hreflang) {
-      this.clearHreflangLinks();
-      return;
-    }
-
-    this.upsertHreflangLink('ja', hreflang.jaUrl);
-    this.upsertHreflangLink('en', hreflang.enUrl);
-    this.upsertHreflangLink('x-default', hreflang.jaUrl);
-    if (canonicalUrl !== hreflang.canonicalUrl) {
-      this.updateCanonicalLink(hreflang.canonicalUrl);
-      this.meta.updateTag({ property: 'og:url', content: hreflang.canonicalUrl });
-    }
-  }
-
-  private upsertHreflangLink(hreflang: string, href: string): void {
-    const selector = `link[rel="alternate"][hreflang="${hreflang}"]`;
-    const existing = document.head.querySelector(selector);
-    const link = existing instanceof HTMLLinkElement ? existing : document.createElement('link');
-    if (link !== existing) {
-      link.rel = 'alternate';
-      link.hreflang = hreflang;
-      document.head.appendChild(link);
-    }
-    link.href = href;
-  }
-
-  private clearHreflangLinks(): void {
-    document.head.querySelectorAll('link[rel="alternate"][hreflang]').forEach((node) => {
-      node.remove();
-    });
-  }
-
-  private updateCanonicalLink(href: string): void {
-    if (!href) {
-      return;
-    }
-    let link = this.doc.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!link) {
-      link = this.doc.createElement('link');
-      link.setAttribute('rel', 'canonical');
-      this.doc.head.appendChild(link);
-    }
-    link.setAttribute('href', href);
   }
 
   private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {

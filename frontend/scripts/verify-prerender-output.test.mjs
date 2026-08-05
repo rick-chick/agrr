@@ -2,14 +2,16 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
-import { HREFLANG_MARKER_START } from '../../scripts/spa-hreflang-lib.mjs';
 import {
   PUBLIC_PRERENDER_ROUTES,
   assertMeaningfulPrerenderedBody,
   assertNoAuthRoutePrerenderLeak,
-  assertPrerenderedSeoMeta,
+  assertPrerenderCanonical,
 } from './public-prerender-routes.mjs';
-import { resolveExpectedPrerenderSeo } from './seo-prerender-expectations.mjs';
+import {
+  assertPrerenderedHeadSeo,
+  expectedPrerenderSeoForRoute,
+} from './prerender-seo-meta.mjs';
 
 describe('assertMeaningfulPrerenderedBody', () => {
   it('rejects CSR shell HTML without rendered headings', () => {
@@ -41,26 +43,10 @@ describe('production build prerender output', () => {
       const html = await readFile(filePath, 'utf8');
       assertMeaningfulPrerenderedBody(html, { expectHeading: route.expectHeading });
       assertNoAuthRoutePrerenderLeak(html);
-
-      if (route.locale === 'en') {
-        assert.match(html, /<html[^>]*\slang=["']en["']/i);
-      }
-
+      const expectedSeo = await expectedPrerenderSeoForRoute(route);
+      assertPrerenderedHeadSeo(html, expectedSeo);
       if (route.canonicalPath) {
-        assertPrerenderedSeoMeta(
-          html,
-          resolveExpectedPrerenderSeo(route.canonicalPath, route.locale ?? 'ja'),
-        );
-      }
-
-      const isHreflangRoute =
-        route.locale === 'en' ||
-        ['', 'about', 'contact', 'privacy', 'terms', 'public-plans/new'].includes(route.path);
-      if (isHreflangRoute) {
-        assert.ok(html.includes(HREFLANG_MARKER_START), `missing hreflang markers for ${route.path || '/'}`);
-        assert.match(html, /hreflang="ja"/);
-        assert.match(html, /hreflang="en"/);
-        assert.match(html, /hreflang="x-default"/);
+        assertPrerenderCanonical(html, route.canonicalPath);
       }
     });
   }
