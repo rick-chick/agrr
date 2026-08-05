@@ -28,6 +28,7 @@ const PAGE_LIMIT = 20;
             <span class="title-icon" aria-hidden="true">📅</span>
             <span class="title-text">{{ 'entrySchedule.title' | translate }}</span>
           </h1>
+          <p class="page-intro muted">{{ 'pages.entry_schedule.description' | translate }}</p>
         </div>
 
         <section class="content-card" aria-labelledby="entry-schedule-heading">

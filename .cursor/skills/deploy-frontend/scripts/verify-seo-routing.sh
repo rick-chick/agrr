@@ -47,6 +47,7 @@ check_redirect_location() {
 check_status "root" "$BASE_URL/" "HTTP/2 200"
 check_status "about" "$BASE_URL/about" "HTTP/2 200"
 check_status "public-plans-new" "$BASE_URL/public-plans/new" "HTTP/2 200"
+check_status "entry-schedule" "$BASE_URL/entry-schedule" "HTTP/2 200"
 check_status "login" "$BASE_URL/login" "HTTP/2 200"
 check_status "public-plans-results" "$BASE_URL/public-plans/results?planId=1" "HTTP/2 200"
 check_status "public-plans-optimizing" "$BASE_URL/public-plans/optimizing?planId=1" "HTTP/2 200"
