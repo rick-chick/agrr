@@ -1671,7 +1671,7 @@ fn masters_api_key_read_scope_allows_get_and_denies_post() {
     let seed = seed_masters_crop(user_id);
 
     let (generate_status, generate_body) = status_and_body(client.post(
-        "/api/v1/api_keys/regenerate",
+        "/api/v1/api_keys/generate",
         Some(&session_id),
         &empty_headers(),
         None,
@@ -1694,7 +1694,7 @@ fn masters_api_key_read_scope_allows_get_and_denies_post() {
         "/api/v1/masters/crops",
         None,
         &headers,
-        Some(serde_json::json!({ "name": "scope-test-crop" })),
+        Some(serde_json::json!({ "crop": { "name": "scope-test-crop" } })),
     ));
     assert_eq!(403, post_status, "{post_body}");
     let post_json: serde_json::Value = serde_json::from_str(&post_body).expect("forbidden JSON");
@@ -1708,11 +1708,11 @@ fn masters_api_key_read_scope_allows_get_and_denies_post() {
 #[test]
 fn masters_api_key_write_scope_allows_post() {
     let client = ContractClient::from_env();
-    let session_id = researcher_session_id(&client);
+    let session_id = farmer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
 
     let (generate_status, generate_body) = status_and_body(client.post(
-        "/api/v1/api_keys/regenerate",
+        "/api/v1/api_keys/generate",
         Some(&session_id),
         &empty_headers(),
         None,
@@ -1728,7 +1728,7 @@ fn masters_api_key_write_scope_allows_post() {
         "/api/v1/masters/crops",
         None,
         &headers,
-        Some(serde_json::json!({ "name": "scope-write-crop" })),
+        Some(serde_json::json!({ "crop": { "name": "scope-write-crop" } })),
     ));
     assert_eq!(201, post_status, "{post_body}");
 }
@@ -1736,12 +1736,12 @@ fn masters_api_key_write_scope_allows_post() {
 #[test]
 fn masters_api_key_read_scope_denies_setup_proposal_apply() {
     let client = ContractClient::from_env();
-    let session_id = researcher_session_id(&client);
+    let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
     let seed = seed_masters_crop(user_id);
 
     let (generate_status, generate_body) = status_and_body(client.post(
-        "/api/v1/api_keys/regenerate",
+        "/api/v1/api_keys/generate",
         Some(&session_id),
         &empty_headers(),
         None,
@@ -1768,7 +1768,7 @@ fn masters_api_key_read_scope_denies_setup_proposal_apply() {
 #[test]
 fn post_api_keys_generate_defaults_to_read_only_scopes() {
     let client = ContractClient::from_env();
-    let session_id = farmer_session_id(&client);
+    let session_id = researcher_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
 
     let (status, body) = status_and_body(client.post(
