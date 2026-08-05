@@ -8,5 +8,3 @@ export const PUBLIC_PRERENDER_PATHS = [
   'public-plans/new',
   'entry-schedule',
 ] as const;
-
-export type PublicPrerenderPath = (typeof PUBLIC_PRERENDER_PATHS)[number];

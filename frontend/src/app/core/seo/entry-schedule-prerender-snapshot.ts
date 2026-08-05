@@ -5,7 +5,7 @@ import {
 } from './entry-schedule-prerender-catalog';
 
 /** Static body copy for build-time prerender when the public API is unavailable. */
-export function entrySchedulePrerenderReasonSummary(cropName: string): string {
+function entrySchedulePrerenderReasonSummary(cropName: string): string {
   return `${cropName}の播種・定植・収穫の適期帯を、地域の予測気象データに基づいて確認できます。`;
 }
 
