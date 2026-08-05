@@ -112,9 +112,10 @@ GCS 静的のみ（`agrr-test.net` + LB がある場合）: `.env.gcp.frontend.t
 
 ## CI/CD (GitHub Actions)
 
-`main` ブランチへの push/PR で自動デプロイ (`.github/workflows/frontend-deploy.yml`):
-- PR → テスト環境
-- push (マージ) → プロダクション環境
+`master` ブランチへの push/PR で自動デプロイ (`.github/workflows/frontend-deploy.yml`):
+- PR → テスト環境（`agrr-test.net` 向け bucket）
+- push (マージ) → プロダクション環境（`agrr.net`）
+- **push 本番デプロイ成功後**: `verify-seo-routing` ジョブが `verify-seo-routing.sh` を `BASE_URL=https://agrr.net` で自動実行（失敗時は workflow 失敗）。PR デプロイでは実行しない。
 
 ## トラブルシューティング
 
