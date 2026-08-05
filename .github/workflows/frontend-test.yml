@@ -63,6 +63,13 @@ jobs:
         working-directory: frontend
         run: node --test scripts/generate-e2e-route-manifest.test.mjs
 
+      - name: prerender SEO meta unit tests
+        working-directory: frontend
+        run: |
+          node --test scripts/route-seo-meta-lib.test.mjs
+          node --test scripts/prerender-seo-meta.test.mjs
+          node --test scripts/seo-prerender-expectations.test.mjs
+
       - name: verify-visual-review-fresh unit tests
         working-directory: frontend
         run: node --test e2e/agent-review/verify-visual-review-fresh.test.mjs
