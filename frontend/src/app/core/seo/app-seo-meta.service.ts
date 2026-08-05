@@ -7,6 +7,7 @@ import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-da
 import { Router } from '@angular/router';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
 import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
+import { resolveSpaHreflangUrls } from './spa-hreflang';
 import {
   buildPublicPlanResultsShareUrl,
   extractPublicPlanResultsSeoLabels
@@ -72,8 +73,11 @@ export class AppSeoMetaService {
     }
 
     const path = this.readPathname();
+    const origin = this.readOrigin();
     const keyPrefix = resolveSeoKeyPrefix(path);
-    this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
+    const hreflang = resolveSpaHreflangUrls(origin, path);
+    const canonical = hreflang?.canonicalUrl ?? buildSelfCanonicalUrl(origin, path);
+    this.applySeoFromKeyPrefix(keyPrefix, canonical);
   }
 
   refreshEntryScheduleDetailMeta(cropId: number | null, cropName: string | null): void {
@@ -233,6 +237,7 @@ export class AppSeoMetaService {
       this.meta.updateTag({ property: 'og:url', content: ogUrl });
       this.updateCanonicalLink(ogUrl);
     }
+    this.refreshHreflangLinks(ogUrl);
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
@@ -256,6 +261,49 @@ export class AppSeoMetaService {
       this.meta.removeTag('name="robots"');
     }
     this.refreshJsonLd(title, ogDescription, keyPrefix);
+  }
+
+  private refreshHreflangLinks(canonicalUrl: string): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    const path = this.readPathname();
+    const origin = this.readOrigin();
+    if (!origin) {
+      this.clearHreflangLinks();
+      return;
+    }
+    const hreflang = resolveSpaHreflangUrls(origin, path);
+    if (!hreflang) {
+      this.clearHreflangLinks();
+      return;
+    }
+
+    this.upsertHreflangLink('ja', hreflang.jaUrl);
+    this.upsertHreflangLink('en', hreflang.enUrl);
+    this.upsertHreflangLink('x-default', hreflang.jaUrl);
+    if (canonicalUrl !== hreflang.canonicalUrl) {
+      this.updateCanonicalLink(hreflang.canonicalUrl);
+      this.meta.updateTag({ property: 'og:url', content: hreflang.canonicalUrl });
+    }
+  }
+
+  private upsertHreflangLink(hreflang: string, href: string): void {
+    const selector = `link[rel="alternate"][hreflang="${hreflang}"]`;
+    const existing = document.head.querySelector(selector);
+    const link = existing instanceof HTMLLinkElement ? existing : document.createElement('link');
+    if (link !== existing) {
+      link.rel = 'alternate';
+      link.hreflang = hreflang;
+      document.head.appendChild(link);
+    }
+    link.href = href;
+  }
+
+  private clearHreflangLinks(): void {
+    document.head.querySelectorAll('link[rel="alternate"][hreflang]').forEach((node) => {
+      node.remove();
+    });
   }
 
   private updateCanonicalLink(href: string): void {

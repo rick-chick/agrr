@@ -8,6 +8,12 @@ describe('route-seo-meta.config', () => {
     expect(normalizeSeoPath(null)).toBe('/');
   });
 
+  it('strips /en prefix for SEO key resolution', () => {
+    expect(normalizeSeoPath('/en')).toBe('/');
+    expect(normalizeSeoPath('/en/about')).toBe('/about');
+    expect(resolveSeoKeyPrefix('/en/about')).toBe('pages.about');
+  });
+
   it('resolves known route prefixes', () => {
     expect(resolveSeoKeyPrefix('/')).toBe('meta.default');
     expect(resolveSeoKeyPrefix('/about')).toBe('pages.about');
