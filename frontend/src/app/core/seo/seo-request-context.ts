@@ -1,7 +1,7 @@
 import { normalizeSeoPath } from './route-seo-meta.config';
 import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 
-export interface SeoRequestContext {
+interface SeoRequestContext {
   path: string;
   origin: string;
 }

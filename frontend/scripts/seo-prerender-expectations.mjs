@@ -1,8 +1,8 @@
 import ja from '../src/assets/i18n/ja.json' with { type: 'json' };
 import { normalizeSeoPath, resolveSeoKeyPrefix } from './route-seo-meta-lib.mjs';
 
-export const PRODUCTION_SITE_ORIGIN = 'https://agrr.net';
-export const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
+const PRODUCTION_SITE_ORIGIN = 'https://agrr.net';
+const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
 
 /**
  * @param {string} keyPrefix e.g. pages.about
@@ -41,6 +41,5 @@ export function resolveExpectedPrerenderSeo(pathname) {
     ogDescription,
     canonicalUrl,
     ogImageUrl,
-    keyPrefix,
   };
 }

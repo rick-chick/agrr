@@ -1,7 +1,7 @@
 /**
  * Keep in sync with `src/app/core/seo/route-seo-meta.config.ts`.
  */
-export const ROUTE_SEO_KEY_MAP = {
+const ROUTE_SEO_KEY_MAP = {
   '/': 'meta.default',
   '/about': 'pages.about',
   '/contact': 'pages.contact',

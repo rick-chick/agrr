@@ -37,7 +37,7 @@ function isResolvedTranslation(value: string, keyPrefix: string): boolean {
 }
 
 /** Default OGP image served from `frontend/public/` (1200×630). */
-export const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
+const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
 
 @Injectable({ providedIn: 'root' })
 export class AppSeoMetaService {
