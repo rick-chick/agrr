@@ -3096,10 +3096,15 @@
       "title": "Create a Free Crop Plan",
       "description": "Select your region and crops to create a free crop plan with AGRR. Weather data and AI suggest an optimal cultivation schedule."
     },
-    "public_plans_results": {
-      "title": "{{planLabel}} — Crop Plan | AGRR",
-      "description": "Cultivation schedule for {{cropLabels}} ({{planYear}}, {{totalArea}} m²). Free crop plan by AGRR.",
-      "og_description": "{{planLabel}} cultivation schedule ({{cropLabels}})"
+    "entry_schedule": {
+      "title": "Entry schedule guide",
+      "description": "Check guide sowing and transplant windows by crop based on regional weather forecasts. AGRR's entry schedule guide.",
+      "og_description": "Guide sowing and transplant windows by crop from weather forecasts"
+    },
+    "entry_schedule_detail": {
+      "title": "Crop entry schedule",
+      "description": "View sowing, nursery, transplant, and harvest windows per crop from forecast weather data.",
+      "og_description": "Per-crop sowing and transplant windows from forecast weather"
     },
     "notFound": {
       "title": "Page not found",
@@ -3233,6 +3238,11 @@
         "contact_link_text": "Contact Page"
       },
       "effective_date": "Effective date: October 17, 2025"
+    },
+    "public_plans_results": {
+      "title": "{{planLabel}} — Crop Plan | AGRR",
+      "description": "Cultivation schedule for {{cropLabels}} ({{planYear}}, {{totalArea}} m²). Free crop plan by AGRR.",
+      "og_description": "{{planLabel}} cultivation schedule ({{cropLabels}})"
     }
   },
   "shared": {

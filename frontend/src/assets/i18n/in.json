@@ -2825,10 +2825,15 @@
       "title": "मुफ्त फसल योजना बनाएं",
       "description": "अपना क्षेत्र और फसलें चुनकर AGRR के साथ मुफ्त फसल योजना बनाएं। मौसम डेटा और AI इष्टतम खेती अनुसूची का सुझाव देते हैं।"
     },
-    "public_plans_results": {
-      "title": "{{planLabel}} — फसल योजना | AGRR",
-      "description": "{{cropLabels}} की खेती अनुसूची ({{planYear}}, {{totalArea}} m²)। AGRR की मुफ्त फसल योजना।",
-      "og_description": "{{planLabel}} की खेती अनुसूची ({{cropLabels}})"
+    "entry_schedule": {
+      "title": "प्रवेश अनुसूची मार्गदर्शिका",
+      "description": "क्षेत्रीय मौसम पूर्वानुमान के आधार पर फसलवार बुवाई और रोपाई की मार्गदर्शिका अवधि देखें। AGRR की प्रवेश अनुसूची मार्गदर्शिका।",
+      "og_description": "मौसम पूर्वानुमान से फसलवार बुवाई और रोपाई की मार्गदर्शिका अवधि"
+    },
+    "entry_schedule_detail": {
+      "title": "फसल प्रवेश अनुसूची",
+      "description": "पूर्वानुमानित मौसम डेटा के आधार पर प्रति फसल बुवाई, नर्सरी, रोपाई और कटाई की उपयुक्त अवधि देखें।",
+      "og_description": "पूर्वानुमानित मौसम से फसलवार बुवाई और रोपाई की उपयुक्त अवधि"
     },
     "notFound": {
       "title": "पृष्ठ नहीं मिला",
@@ -2962,6 +2967,11 @@
         "contact_link_text": "संपर्क पृष्ठ"
       },
       "effective_date": "प्रभावी तिथि: 17 अक्टूबर 2025"
+    },
+    "public_plans_results": {
+      "title": "{{planLabel}} — फसल योजना | AGRR",
+      "description": "{{cropLabels}} की खेती अनुसूची ({{planYear}}, {{totalArea}} m²)। AGRR की मुफ्त फसल योजना।",
+      "og_description": "{{planLabel}} की खेती अनुसूची ({{cropLabels}})"
     }
   },
   "shared": {

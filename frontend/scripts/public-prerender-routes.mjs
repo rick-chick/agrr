@@ -13,6 +13,11 @@ export const PUBLIC_PRERENDER_ROUTES = [
     file: 'public-plans/new/index.html',
     expectHeading: '計画',
   },
+  {
+    path: 'entry-schedule',
+    file: 'entry-schedule/index.html',
+    expectHeading: '作付け時期の目安',
+  },
 ];
 
 /** Auth-required or dynamic routes that must not ship prerendered body content. */

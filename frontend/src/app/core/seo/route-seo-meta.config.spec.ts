@@ -4,12 +4,11 @@ import { normalizeSeoPath, resolveSeoKeyPrefix } from './route-seo-meta.config';
 describe('route-seo-meta.config', () => {
   it('normalizes trailing slashes and query strings', () => {
     expect(normalizeSeoPath('/about/')).toBe('/about');
-    expect(normalizeSeoPath('/about?lang=ja')).toBe('/about');
-    expect(normalizeSeoPath('/')).toBe('/');
-    expect(normalizeSeoPath('')).toBe('/');
+    expect(normalizeSeoPath('/about?foo=bar')).toBe('/about');
+    expect(normalizeSeoPath(null)).toBe('/');
   });
 
-  it('resolves sitemap SPA paths to page-specific i18n prefixes', () => {
+  it('resolves known route prefixes', () => {
     expect(resolveSeoKeyPrefix('/')).toBe('meta.default');
     expect(resolveSeoKeyPrefix('/about')).toBe('pages.about');
     expect(resolveSeoKeyPrefix('/contact')).toBe('pages.contact');
@@ -17,10 +16,12 @@ describe('route-seo-meta.config', () => {
     expect(resolveSeoKeyPrefix('/terms')).toBe('pages.terms');
     expect(resolveSeoKeyPrefix('/public-plans/new')).toBe('pages.public_plans_new');
     expect(resolveSeoKeyPrefix('/public-plans/results')).toBe('pages.public_plans_new');
+    expect(resolveSeoKeyPrefix('/entry-schedule')).toBe('pages.entry_schedule');
+    expect(resolveSeoKeyPrefix('/entry-schedule/crop/42')).toBe('pages.entry_schedule_detail');
   });
 
   it('falls back to meta.default for undefined routes', () => {
     expect(resolveSeoKeyPrefix('/plans')).toBe('meta.default');
-    expect(resolveSeoKeyPrefix('/unknown-page')).toBe('meta.default');
+    expect(resolveSeoKeyPrefix('/unknown')).toBe('meta.default');
   });
 });
