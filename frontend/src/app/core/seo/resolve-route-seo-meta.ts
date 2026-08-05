@@ -26,19 +26,15 @@ function isResolvedTranslation(value: string, keyPrefix: string): boolean {
   return Boolean(value) && !value.startsWith(keyPrefix);
 }
 
-/**
- * Resolves route SEO fields from i18n translations and pathname.
- * Shared by runtime AppSeoMetaService and build-time prerender verification.
- */
-export function resolveRouteSeoMeta(
+function resolveFromKeyPrefix(
+  keyPrefix: string,
   pathname: string,
-  translations: Record<string, unknown>,
-  origin: string = PRODUCTION_SITE_ORIGIN
+  readKey: (key: string) => string,
+  origin: string
 ): ResolvedRouteSeoMeta {
-  const keyPrefix = resolveSeoKeyPrefix(pathname);
-  const title = readTranslation(translations, `${keyPrefix}.title`);
-  const description = readTranslation(translations, `${keyPrefix}.description`);
-  let ogDescription = readTranslation(translations, `${keyPrefix}.og_description`);
+  const title = readKey(`${keyPrefix}.title`);
+  const description = readKey(`${keyPrefix}.description`);
+  let ogDescription = readKey(`${keyPrefix}.og_description`);
   if (!isResolvedTranslation(ogDescription, `${keyPrefix}.`)) {
     ogDescription = description;
   }
@@ -53,4 +49,27 @@ export function resolveRouteSeoMeta(
     canonicalUrl,
     ogImageUrl,
   };
+}
+
+/**
+ * Resolves route SEO fields from i18n translations and pathname.
+ * Shared by runtime AppSeoMetaService and build-time prerender verification.
+ */
+export function resolveRouteSeoMeta(
+  pathname: string,
+  translations: Record<string, unknown>,
+  origin: string = PRODUCTION_SITE_ORIGIN
+): ResolvedRouteSeoMeta {
+  const keyPrefix = resolveSeoKeyPrefix(pathname);
+  return resolveFromKeyPrefix(keyPrefix, pathname, (key) => readTranslation(translations, key), origin);
+}
+
+/** Runtime resolver using TranslateService.instant or equivalent. */
+export function resolveRouteSeoMetaWithTranslator(
+  pathname: string,
+  translate: (key: string) => string,
+  origin: string = PRODUCTION_SITE_ORIGIN
+): ResolvedRouteSeoMeta {
+  const keyPrefix = resolveSeoKeyPrefix(pathname);
+  return resolveFromKeyPrefix(keyPrefix, pathname, translate, origin);
 }

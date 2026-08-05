@@ -12,6 +12,7 @@ import {
   extractPublicPlanResultsSeoLabels
 } from './public-plan-results-seo-meta';
 import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
+import { resolveRouteSeoMetaWithTranslator } from './resolve-route-seo-meta';
 
 function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
@@ -129,19 +130,20 @@ export class AppSeoMetaService {
   }
 
   private applySeoFromKeyPrefix(keyPrefix: string, ogUrl: string): void {
-    const title = this.translate.instant(`${keyPrefix}.title`);
-    const description = this.translate.instant(`${keyPrefix}.description`);
+    const path = this.readPath();
+    const origin = this.readOrigin() || PRODUCTION_SITE_ORIGIN;
+    const resolved = resolveRouteSeoMetaWithTranslator(
+      path,
+      (key) => this.translate.instant(key),
+      origin
+    );
     const keywords = this.translate.instant('meta.default.keywords');
-    let ogDescription = this.translate.instant(`${keyPrefix}.og_description`);
-    if (!isResolvedTranslation(ogDescription, `${keyPrefix}.`)) {
-      ogDescription = description;
-    }
 
     this.applyResolvedSeo({
-      title: isResolvedTranslation(title, `${keyPrefix}.`) ? title : '',
-      description: isResolvedTranslation(description, `${keyPrefix}.`) ? description : '',
-      ogDescription: isResolvedTranslation(ogDescription, `${keyPrefix}.`) ? ogDescription : '',
-      ogUrl,
+      title: resolved.title,
+      description: resolved.description,
+      ogDescription: resolved.ogDescription,
+      ogUrl: resolved.canonicalUrl || ogUrl,
       keyPrefix,
       keywords: isResolvedTranslation(keywords, 'meta.default.') ? keywords : undefined
     });
