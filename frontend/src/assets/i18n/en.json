@@ -1296,8 +1296,6 @@
       "page_title": "Task plan — {{name}}",
       "empty_hint": "Add crops to your plan to generate task plans. Use the Cropping plan tab above to review your plan.",
       "empty_ready_no_fields": "Task plans are ready, but there are no fields to display. Check fields and crops on the Cropping plan tab.",
-      "empty_fields_summary": "{{total}} fields · {{empty}} without task plans",
-      "empty_fields_no_tasks_hint": "No task plans are scheduled yet. Review fields and crops on the Cropping plan tab, or use the registration wizard above.",
       "timeline_generated_at": "Generated: {{datetime}}",
       "timeline_generated_unknown": "Generated: unavailable",
       "no_schedules": "No task plan has been generated yet.",
@@ -1366,7 +1364,9 @@
       },
       "empty_cta": "Open cropping plan",
       "sync_plan_link": "Review cultivation plan",
-      "unscheduled_title": "Unconfirmed tasks"
+      "unscheduled_title": "Unconfirmed tasks",
+      "empty_fields_summary": "{{total}} fields · {{empty}} without task plans",
+      "empty_fields_no_tasks_hint": "No task plans are scheduled yet. Review fields and crops on the Cropping plan tab, or use the registration wizard above."
     },
     "work": {
       "page_title": "Work log — {{name}}",
@@ -2884,6 +2884,12 @@
       "description_placeholder": "Enter description for this rule",
       "is_reference_label": "Set as system standard rule",
       "is_reference_help": "When checked, this becomes a standard rule automatically applied to all users",
+      "region_label": "Region",
+      "region_jp": "Japan",
+      "region_us": "United States",
+      "region_in": "India",
+      "region_blank": "Please select",
+      "region_help": "Select the region where this rule applies",
       "submit_create": "Create Rule",
       "submit_update": "Update Rule",
       "cancel": "Cancel",
