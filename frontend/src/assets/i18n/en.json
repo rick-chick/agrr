@@ -3096,6 +3096,11 @@
       "title": "Create a Free Crop Plan",
       "description": "Select your region and crops to create a free crop plan with AGRR. Weather data and AI suggest an optimal cultivation schedule."
     },
+    "public_plans_results": {
+      "title": "{{planLabel}} — Crop Plan | AGRR",
+      "description": "Cultivation schedule for {{cropLabels}} ({{planYear}}, {{totalArea}} m²). Free crop plan by AGRR.",
+      "og_description": "{{planLabel}} cultivation schedule ({{cropLabels}})"
+    },
     "notFound": {
       "title": "Page not found",
       "message": "The page you are looking for does not exist or may have been moved.",

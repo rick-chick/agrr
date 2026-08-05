@@ -2825,6 +2825,11 @@
       "title": "मुफ्त फसल योजना बनाएं",
       "description": "अपना क्षेत्र और फसलें चुनकर AGRR के साथ मुफ्त फसल योजना बनाएं। मौसम डेटा और AI इष्टतम खेती अनुसूची का सुझाव देते हैं।"
     },
+    "public_plans_results": {
+      "title": "{{planLabel}} — फसल योजना | AGRR",
+      "description": "{{cropLabels}} की खेती अनुसूची ({{planYear}}, {{totalArea}} m²)। AGRR की मुफ्त फसल योजना।",
+      "og_description": "{{planLabel}} की खेती अनुसूची ({{cropLabels}})"
+    },
     "notFound": {
       "title": "पृष्ठ नहीं मिला",
       "message": "आप जिस पृष्ठ की तलाश कर रहे हैं वह मौजूद नहीं है या स्थानांतरित हो गया हो सकता है।",

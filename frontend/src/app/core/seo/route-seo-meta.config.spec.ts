@@ -16,6 +16,7 @@ describe('route-seo-meta.config', () => {
     expect(resolveSeoKeyPrefix('/privacy')).toBe('pages.privacy');
     expect(resolveSeoKeyPrefix('/terms')).toBe('pages.terms');
     expect(resolveSeoKeyPrefix('/public-plans/new')).toBe('pages.public_plans_new');
+    expect(resolveSeoKeyPrefix('/public-plans/results')).toBe('pages.public_plans_new');
   });
 
   it('falls back to meta.default for undefined routes', () => {

@@ -3138,6 +3138,11 @@
       "title": "無料作付け計画を作成",
       "description": "地域と作物を選んで、AGRRの無料作付け計画を作成できます。気象データとAIにより最適な栽培スケジュールを提案します。"
     },
+    "public_plans_results": {
+      "title": "{{planLabel}} — 作付け計画 | AGRR",
+      "description": "{{cropLabels}}の栽培スケジュール（{{planYear}}年・{{totalArea}}㎡）。AGRRの無料作付け計画です。",
+      "og_description": "{{planLabel}}の栽培スケジュール（{{cropLabels}}）"
+    },
     "notFound": {
       "title": "ページが見つかりません",
       "message": "お探しのページは存在しないか、移動した可能性があります。",

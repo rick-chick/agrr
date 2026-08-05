@@ -6,6 +6,7 @@ export const ROUTE_SEO_KEY_MAP: Readonly<Record<string, string>> = {
   '/privacy': 'pages.privacy',
   '/terms': 'pages.terms',
   '/public-plans/new': 'pages.public_plans_new',
+  '/public-plans/results': 'pages.public_plans_new',
 };
 
 export function normalizeSeoPath(pathname: string | undefined | null): string {
