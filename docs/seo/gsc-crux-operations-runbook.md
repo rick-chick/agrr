@@ -6,7 +6,7 @@
 **関連 ADR**: [ADR-strangler-lb-url-map.md § SEO / クロール](../migration/app-rust-stack/ADR-strangler-lb-url-map.md#seo--クロール2026-06-09-追記)  
 **デプロイ手順**: [deploy-frontend スキル](../../.cursor/skills/deploy-frontend/SKILL.md)
 
-`sitemap.xml` はデプロイ時に `generate-sitemap.mjs` で自動生成される。GSC 再送信と HTTP 検証は**手動**（本 issue スコープ外で CI 自動化は任意 follow-up）。
+`sitemap.xml` はデプロイ時に `generate-sitemap.mjs` で自動生成される。GSC 再送信は**手動**（本 issue スコープ外で CI 自動化は任意 follow-up）。HTTP ルーティング検証は `frontend-deploy` workflow（master push の本番デプロイ成功後）で自動実行される（§2 参照）。
 
 ---
 
@@ -23,7 +23,9 @@
 
 ## 2. デプロイ直後 — HTTP / ルーティング検証
 
-プロジェクトルートで実行（デフォルト `BASE_URL=https://agrr.net`）:
+**CI（推奨）**: master への push で `frontend-deploy` workflow が本番デプロイ成功後に自動実行する（`BASE_URL=https://agrr.net`）。失敗時は workflow が失敗する。
+
+**手動**（ローカル・再検証）: プロジェクトルートで実行（デフォルト `BASE_URL=https://agrr.net`）:
 
 ```bash
 .cursor/skills/deploy-frontend/scripts/verify-seo-routing.sh
@@ -72,7 +74,7 @@ gcloud auth application-default set-quota-project agrr-475323
 |------|------------|------------|
 | sitemap 生成 | `gcp-frontend-deploy.sh` 内（ビルド前） | `generate-sitemap.mjs` |
 | GCS 同期・CDN 無効化 | 同上 | `gcp-frontend-deploy.sh` |
-| HTTP 検証 | **手動**（デプロイ後） | `verify-seo-routing.sh` |
+| HTTP 検証 | **frontend-deploy CI**（master push 本番デプロイ後）+ 手動再検証可 | `verify-seo-routing.sh` |
 | GSC 再送信 | **手動**（検証成功後） | `submit-sitemap-gsc.sh` |
 
 本番デプロイコマンド:
@@ -157,7 +159,6 @@ CrUX は**実ユーザーの 28 日集計**のため、デプロイ効果は数�
 
 ## 8. スコープ外（任意 follow-up）
 
-- CI / GitHub Actions への `verify-seo-routing.sh` 組み込み
 - CrUX API による自動取得スクリプト
 - GSC アラートの Slack 通知
 
