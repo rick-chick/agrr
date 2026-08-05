@@ -21,7 +21,7 @@ const SAMPLE_HTML = `<!DOCTYPE html>
 describe('spaRoutePathToUrlPath', () => {
   it('maps JA and EN index routes', () => {
     assert.equal(spaRoutePathToUrlPath(''), '/');
-    assert.equal(spaRoutePathToUrlPath('en'), '/en/');
+    assert.equal(spaRoutePathToUrlPath('en'), '/en');
   });
 
   it('maps nested public routes', () => {
@@ -111,9 +111,9 @@ describe('resolveSpaHreflangUrls', () => {
       resolveSpaHreflangUrls({ routePath: 'en', baseUrl: 'https://agrr.net' }),
       {
         locale: 'en',
-        canonicalUrl: 'https://agrr.net/en/',
+        canonicalUrl: 'https://agrr.net/en',
         jaUrl: 'https://agrr.net/',
-        enUrl: 'https://agrr.net/en/',
+        enUrl: 'https://agrr.net/en',
       }
     );
   });

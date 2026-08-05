@@ -38,7 +38,7 @@ export function spaRoutePathToUrlPath(routePath: string): string {
     return '/';
   }
   if (routePath === 'en') {
-    return '/en/';
+    return '/en';
   }
   if (routePath.startsWith('en/')) {
     return `/${routePath}`;

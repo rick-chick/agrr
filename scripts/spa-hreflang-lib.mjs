@@ -29,7 +29,7 @@ export function spaRoutePathToUrlPath(routePath) {
     return '/';
   }
   if (posix === 'en') {
-    return '/en/';
+    return '/en';
   }
   if (posix.startsWith('en/')) {
     return `/${posix}`;
