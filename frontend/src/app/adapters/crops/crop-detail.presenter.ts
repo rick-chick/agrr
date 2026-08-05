@@ -9,6 +9,7 @@ import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import { masterLoadErrorI18nKey } from '../../core/master-load-error-i18n-key';
 import {
   LoadCropTaskScheduleBlueprintsDataDto,
   LoadCropTaskScheduleBlueprintsOutputPort
@@ -57,12 +58,24 @@ export class CropDetailPresenter
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const errorKey = masterLoadErrorI18nKey(dto);
+    if (this.view.control.loading) {
+      this.view.control = withCropDetailSummaryState({
+        ...this.view.control,
+        loading: false,
+        blueprintsLoading: false,
+        error: errorKey,
+        pendingErrorFlash: null
+      });
+      return;
+    }
+
     this.view.control = withCropDetailSummaryState({
       ...this.view.control,
       loading: false,
       blueprintsLoading: false,
       error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      pendingErrorFlash: pendingErrorFlashFromError({ message: errorKey })
     });
   }
 

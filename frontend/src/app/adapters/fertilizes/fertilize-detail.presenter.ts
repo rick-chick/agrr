@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { masterLoadErrorI18nKey } from '../../core/master-load-error-i18n-key';
 import { FertilizeDetailView } from '../../components/masters/fertilizes/fertilize-detail.view';
 import { LoadFertilizeDetailOutputPort } from '../../usecase/fertilizes/load-fertilize-detail.output-port';
 import { FertilizeDetailDataDto } from '../../usecase/fertilizes/load-fertilize-detail.dtos';
@@ -27,7 +28,7 @@ export class FertilizeDetailPresenter implements LoadFertilizeDetailOutputPort {
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: dto.message,
+      error: masterLoadErrorI18nKey(dto),
       pendingErrorFlash: null
     };
   }

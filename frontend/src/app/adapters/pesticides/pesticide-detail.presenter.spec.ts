@@ -69,6 +69,18 @@ describe('PesticideDetailPresenter', () => {
     expect(lastControl!.loading).toBe(false);
   });
 
+  it('maps raw HTTP failure message to i18n key on onError(dto)', () => {
+    lastControl = { loading: true, error: null, pesticide: null, pendingUndoToast: null, pendingErrorFlash: null };
+    const dto: ErrorDto = {
+      message: 'Http failure response for https://example.com/api/pesticides/999: 404 Not Found'
+    };
+
+    presenter.onError(dto);
+
+    expect(lastControl!.error).toBe('common.api_error.not_found');
+    expect(lastControl!.error).not.toContain('Http failure');
+  });
+
   describe('DeletePesticideOutputPort', () => {
     it('queues pending undo toast with list refresh callback on onSuccess(dto)', () => {
       lastControl = {

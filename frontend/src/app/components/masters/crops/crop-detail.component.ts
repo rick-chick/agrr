@@ -31,6 +31,7 @@ import {
 } from '../../../domain/crops/cumulative-gdd-timeline';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 
 const initialControl: CropDetailViewState = {
   loading: true,
@@ -50,7 +51,7 @@ const initialControl: CropDetailViewState = {
 @Component({
   selector: 'app-crop-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...CROP_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
@@ -58,7 +59,12 @@ const initialControl: CropDetailViewState = {
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
-        <p class="master-loading master-error">{{ control.error }}</p>
+        <app-master-load-error-panel
+          [errorKey]="control.error"
+          [listLink]="['/crops']"
+          backLabelKey="crops.index.title"
+          (retry)="reload()"
+        />
       } @else if (control.crop) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.crop.name }}</h1>
@@ -453,7 +459,7 @@ export class CropDetailComponent implements CropDetailView, OnInit {
         ...initialControl,
         loading: false,
         blueprintsLoading: false,
-        error: this.translate.instant('crops.errors.invalid_id')
+        error: 'crops.errors.invalid_id'
       };
       return;
     }
@@ -461,7 +467,7 @@ export class CropDetailComponent implements CropDetailView, OnInit {
   }
 
   load(cropId: number): void {
-    this.control = { ...this.control, loading: true, blueprintsLoading: true };
+    this.control = { ...this.control, loading: true, blueprintsLoading: true, error: null };
     this.useCase.execute({ cropId });
     this.loadBlueprintsUseCase.execute({ cropId });
   }

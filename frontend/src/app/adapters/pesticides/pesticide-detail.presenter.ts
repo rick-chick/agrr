@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { masterLoadErrorI18nKey } from '../../core/master-load-error-i18n-key';
 import { PesticideDetailView } from '../../components/masters/pesticides/pesticide-detail.view';
 import { LoadPesticideDetailOutputPort } from '../../usecase/pesticides/load-pesticide-detail.output-port';
 import { PesticideDetailDataDto } from '../../usecase/pesticides/load-pesticide-detail.dtos';
@@ -34,7 +35,7 @@ export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, 
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: dto.message,
+      error: masterLoadErrorI18nKey(dto),
       pendingErrorFlash: null
     };
   }

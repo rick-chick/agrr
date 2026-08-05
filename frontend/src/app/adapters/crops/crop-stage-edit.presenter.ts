@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { masterLoadErrorI18nKey } from '../../core/master-load-error-i18n-key';
 import {
   CropStageEditView,
   CropStageEditViewState
@@ -93,7 +94,7 @@ export class CropStageEditPresenter
       this.view.control = {
         ...this.view.control,
         loading: false,
-        error: dto.message,
+        error: masterLoadErrorI18nKey(dto),
         pendingSuccessFlash: null,
         pendingErrorFlash: null,
         pendingNavigateToList: false

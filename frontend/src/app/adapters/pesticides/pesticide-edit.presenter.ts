@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { masterLoadErrorI18nKey } from '../../core/master-load-error-i18n-key';
 import { PesticideEditView } from '../../components/masters/pesticides/pesticide-edit.view';
 import { LoadPesticideForEditOutputPort } from '../../usecase/pesticides/load-pesticide-for-edit.output-port';
 import { LoadPesticideForEditDataDto } from '../../usecase/pesticides/load-pesticide-for-edit.dtos';
@@ -40,7 +41,7 @@ export class PesticideEditPresenter implements LoadPesticideForEditOutputPort, U
       ...this.view.control,
       loading: false,
       saving: false,
-      error: dto.message,
+      error: masterLoadErrorI18nKey(dto),
       pendingErrorFlash: null
     };
   }

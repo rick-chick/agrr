@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { masterLoadErrorI18nKey } from '../../core/master-load-error-i18n-key';
 import { FertilizeEditView } from '../../components/masters/fertilizes/fertilize-edit.view';
 import { LoadFertilizeForEditOutputPort } from '../../usecase/fertilizes/load-fertilize-for-edit.output-port';
 import { LoadFertilizeForEditDataDto } from '../../usecase/fertilizes/load-fertilize-for-edit.dtos';
@@ -43,7 +44,7 @@ export class FertilizeEditPresenter
       ...this.view.control,
       loading: false,
       saving: false,
-      error: dto.message,
+      error: masterLoadErrorI18nKey(dto),
       pendingErrorFlash: null
     };
   }
