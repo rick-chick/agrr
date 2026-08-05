@@ -32,11 +32,6 @@ export function verifySpaPrerenderCanonicalContract(repoRoot) {
 
   for (const path of SPA_PRERENDER_CANONICAL_PATHS) {
     const escaped = path.replace(/\//g, '\\/');
-    const urlPattern = new RegExp(`\\$BASE_URL${escaped}`);
-    if (!urlPattern.test(script)) {
-      errors.push(`verify-seo-routing.sh must reference $BASE_URL${path}`);
-    }
-
     const canonicalCallPattern = new RegExp(
       `check_canonical_href[^\\n]*\\$BASE_URL${escaped}[^\\n]*\\$BASE_URL${escaped}`,
     );
