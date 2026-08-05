@@ -2,6 +2,7 @@
 
 use crate::adapters::{NoopLogger, PassthroughTranslator};
 use crate::masters_auth::MastersUserId;
+use crate::security_audit_log::log_reference_master_admin_change;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{PestSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::pest::dtos::{PestCreateInput, PestDestroyOutput, PestUpdateInput};
@@ -61,6 +62,15 @@ fn take_response(
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"error": "internal"})),
         )),
+    }
+}
+
+fn maybe_log_pest_reference_master_change(user_id: i64, body: &Value, action: &str) {
+    if body.get("is_reference").and_then(|v| v.as_bool()) != Some(true) {
+        return;
+    }
+    if let Some(id) = body.get("id").and_then(|v| v.as_i64()) {
+        log_reference_master_admin_change(user_id, "pest", id, action);
     }
 }
 
@@ -218,7 +228,13 @@ async fn create(
     interactor
         .call(input)
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
-    take_response(&out)
+    match take_response(&out) {
+        Ok((status, body)) => {
+            maybe_log_pest_reference_master_change(user_id, &body, "create");
+            Ok((status, body))
+        }
+        Err(e) => Err(e),
+    }
 }
 
 struct UpdatePort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
@@ -284,7 +300,13 @@ async fn update(
     interactor
         .call(input)
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
-    take_response(&out)
+    match take_response(&out) {
+        Ok((status, body)) => {
+            maybe_log_pest_reference_master_change(user_id, &body, "update");
+            Ok((status, body))
+        }
+        Err(e) => Err(e),
+    }
 }
 
 struct DestroyPort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
