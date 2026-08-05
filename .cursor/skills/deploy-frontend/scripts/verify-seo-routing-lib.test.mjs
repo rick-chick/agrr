@@ -10,10 +10,12 @@ import {
 const repoRoot = join(fileURLToPath(new URL('.', import.meta.url)), '../../../..');
 
 describe('SPA_PRERENDER_CANONICAL_PATHS', () => {
-  it('includes required issue #543 routes', () => {
+  it('includes required SPA prerender routes', () => {
     assert.deepEqual(SPA_PRERENDER_CANONICAL_PATHS, [
       '/about',
       '/contact',
+      '/privacy',
+      '/terms',
       '/public-plans/new',
       '/entry-schedule',
       '/entry-schedule/crop/1',
