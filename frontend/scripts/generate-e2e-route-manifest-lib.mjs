@@ -13,6 +13,8 @@ export const E2E_EXCLUDE_MANIFEST_PATTERNS = new Set(['auth/login']);
 export const HOST_SELECTOR_OVERRIDES = {
   en: 'app-home',
   'public-plans/select-farm-size': 'app-public-plan-create',
+  /** locale-en.routes.ts: parent `en` has resolver-only children; home is child path '' */
+  en: 'app-home',
 };
 
 const HOST_SELECTOR_OUT = 'e2e/host-selector-by-pattern.generated.ts';
