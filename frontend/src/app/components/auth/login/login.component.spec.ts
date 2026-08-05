@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
@@ -13,6 +14,7 @@ describe('LoginComponent', () => {
   let router: { navigateByUrl: ReturnType<typeof vi.fn> };
   let queryParamMap: { get: ReturnType<typeof vi.fn> };
   let fixture: ComponentFixture<LoginComponent>;
+  let meta: Meta;
 
   beforeEach(async () => {
     authService = {
@@ -40,6 +42,8 @@ describe('LoginComponent', () => {
         }
       ]
     }).compileComponents();
+
+    meta = TestBed.inject(Meta);
   });
 
   afterEach(() => {
@@ -65,5 +69,18 @@ describe('LoginComponent', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/public-plans/results?planId=1', {
       replaceUrl: true
     });
+  });
+
+  it('sets robots noindex meta while displayed for unauthenticated users', () => {
+    authService.loadCurrentUser.mockReturnValue(of(null));
+    createAndInit();
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex');
+  });
+
+  it('removes robots noindex on destroy', () => {
+    authService.loadCurrentUser.mockReturnValue(of(null));
+    createAndInit();
+    fixture.destroy();
+    expect(meta.getTag('name="robots"')).toBeNull();
   });
 });
