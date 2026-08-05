@@ -289,6 +289,9 @@ for shell_path in "${CSR_ONLY_SHELL_PATHS[@]}"; do
   shell_target="$BUILD_OUTPUT_DIR/$shell_path"
   run mkdir -p "$(dirname "$shell_target")"
   run cp "$CSR_SHELL_HTML" "$shell_target"
+  if [ "$shell_path" = "login" ]; then
+    node "${SCRIPT_DIR}/inject-shell-noindex-cli.mjs" "$shell_target"
+  fi
 done
 
 SPA_SHELL_PATHS=( "${PRERENDER_SHELL_PATHS[@]}" "${CSR_ONLY_SHELL_PATHS[@]}" )

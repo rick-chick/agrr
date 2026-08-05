@@ -80,6 +80,19 @@ check_canonical_href() {
   fi
 }
 
+check_robots_noindex() {
+  local label="$1"
+  local url="$2"
+  local body
+  body="$(curl -sL "$url")"
+  if echo "$body" | grep -q '<meta name="robots" content="noindex">'; then
+    echo "OK   $label"
+  else
+    echo "FAIL $label: missing robots noindex meta ($url)"
+    failures=$((failures + 1))
+  fi
+}
+
 check_canonical_href "research-html-canonical" \
   "$BASE_URL/research/research_reports/radish/03_pest_disease/major_pests.html" \
   "$CANONICAL_REPORT_URL"
@@ -93,6 +106,9 @@ check_canonical_href "research-no-trailing-slash-canonical" "$BASE_URL/research"
 check_canonical_href "spa-about-canonical" "$BASE_URL/about" "$BASE_URL/about"
 check_canonical_href "spa-contact-canonical" "$BASE_URL/contact" "$BASE_URL/contact"
 check_canonical_href "spa-public-plans-new-canonical" "$BASE_URL/public-plans/new" "$BASE_URL/public-plans/new"
+
+# CSR routes that must not be indexed (login shell + runtime AppSeoMetaService).
+check_robots_noindex "login-noindex" "$BASE_URL/login"
 
 # Internal work files must not be publicly reachable (H3).
 check_status "research-internal-commands-template" "$BASE_URL/research/research_reports/commands_template.html" "HTTP/2 404"

@@ -8,6 +8,9 @@ export const SPA_CANONICAL_ROUTES = [
   { path: '/public-plans/new', label: 'spa-public-plans-new-canonical' },
 ];
 
+/** CSR routes whose initial HTML must include robots noindex. */
+export const CSR_NOINDEX_ROUTES = [{ path: '/login', label: 'login-noindex' }];
+
 /**
  * @param {string} repoRoot
  * @returns {{ ok: boolean, errors: string[] }}
@@ -33,6 +36,20 @@ export function verifySeoRoutingContract(repoRoot) {
     }
     if (!script.includes(`"$BASE_URL${path}"`)) {
       errors.push(`verify-seo-routing.sh must check canonical for ${path}`);
+    }
+  }
+
+  if (!script.includes('check_robots_noindex')) {
+    errors.push('verify-seo-routing.sh must define check_robots_noindex');
+  }
+
+  for (const { path, label } of CSR_NOINDEX_ROUTES) {
+    if (!script.includes(label)) {
+      errors.push(`verify-seo-routing.sh must include ${label} check`);
+      continue;
+    }
+    if (!script.includes(`"$BASE_URL${path}"`)) {
+      errors.push(`verify-seo-routing.sh must check robots noindex for ${path}`);
     }
   }
 
