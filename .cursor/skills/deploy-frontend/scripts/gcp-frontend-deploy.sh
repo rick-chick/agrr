@@ -255,7 +255,12 @@ fi
 PRERENDER_SHELL_PATHS=(
   about contact privacy terms
   "public-plans/new"
+  entry-schedule
 )
+readarray -t ENTRY_SCHEDULE_CROP_SHELL_PATHS < <(
+  node --input-type=module -e "import { entryScheduleCropPrerenderPaths } from './frontend/scripts/entry-schedule-prerender-catalog.mjs'; console.log(entryScheduleCropPrerenderPaths().join('\n'))"
+)
+PRERENDER_SHELL_PATHS+=( "${ENTRY_SCHEDULE_CROP_SHELL_PATHS[@]}" )
 CSR_ONLY_SHELL_PATHS=(
   login
   "public-plans/select-crop"

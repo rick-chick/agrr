@@ -6,6 +6,7 @@ export const SPA_CANONICAL_ROUTES = [
   { path: '/about', label: 'spa-about-canonical' },
   { path: '/contact', label: 'spa-contact-canonical' },
   { path: '/public-plans/new', label: 'spa-public-plans-new-canonical' },
+  { path: '/entry-schedule/crop/1', label: 'spa-entry-schedule-crop-canonical' },
 ];
 
 /**

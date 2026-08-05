@@ -2,6 +2,12 @@
  * Public SPA routes that receive build-time prerender (SSG).
  * Keep in sync with app.routes.server.ts and deploy SPA shell handling.
  */
+import {
+  ENTRY_SCHEDULE_PRERENDER_CATALOG,
+  ENTRY_SCHEDULE_SEO_SAMPLE_CROP,
+  entryScheduleCropPrerenderPaths,
+} from './entry-schedule-prerender-catalog.mjs';
+
 export const PUBLIC_PRERENDER_ROUTES = [
   { path: '', file: 'index.html', expectHeading: 'AGRR' },
   { path: 'about', file: 'about/index.html', expectHeading: 'AGRRについて' },
@@ -18,6 +24,17 @@ export const PUBLIC_PRERENDER_ROUTES = [
     file: 'entry-schedule/index.html',
     expectHeading: '作付け時期の目安',
   },
+  ...entryScheduleCropPrerenderPaths().map((path) => {
+    const cropId = Number(path.split('/').pop());
+    const crop =
+      ENTRY_SCHEDULE_PRERENDER_CATALOG.crops.find((entry) => entry.cropId === cropId) ??
+      ENTRY_SCHEDULE_SEO_SAMPLE_CROP;
+    return {
+      path,
+      file: `${path}/index.html`,
+      expectHeading: crop.name,
+    };
+  }),
 ];
 
 /** Auth-required or dynamic routes that must not ship prerendered body content. */
