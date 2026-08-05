@@ -5,6 +5,8 @@ import { join } from 'node:path';
 export const SPA_PRERENDER_CANONICAL_PATHS = [
   '/about',
   '/contact',
+  '/privacy',
+  '/terms',
   '/public-plans/new',
   '/entry-schedule',
 ];
