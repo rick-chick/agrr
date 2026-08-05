@@ -135,9 +135,15 @@ else
   fi
 fi
 
-# Some build systems create an extra directory (e.g. dist/frontend). Prefer one that contains index.html.
+# @angular/build:application outputs to <dist>/<project>/browser/ (prerender routes add nested index.html).
+if [ -f "$BUILD_OUTPUT_DIR/browser/index.html" ]; then
+  BUILD_OUTPUT_DIR="$BUILD_OUTPUT_DIR/browser"
+fi
+
+# Fallback: pick the shallowest index.html (never a prerender route like contact/index.html).
 if [ ! -f "$BUILD_OUTPUT_DIR/index.html" ]; then
-  INDEX_FILE="$(find "$DIST_DIR" -name index.html -print -quit 2>/dev/null || true)"
+  INDEX_FILE="$(find "$DIST_DIR" -name index.html -print 2>/dev/null \
+    | awk -F/ '{ print NF, $0 }' | sort -n | head -1 | cut -d' ' -f2-)"
   if [ -n "$INDEX_FILE" ]; then
     BUILD_OUTPUT_DIR="$(dirname "$INDEX_FILE")"
   fi
@@ -211,15 +217,20 @@ fi
 
 INJECT_SNIPPET="<script>window.API_BASE_URL = $API_JSON; window.STATIC_PATH_PREFIX = $STATIC_JSON; ${ADS_ASSIGN}</script>"
 
-# Insert snippet before first </head> or before first </body> if head not present
-TMP_INDEX="$(mktemp)"
-awk -v snippet="$INJECT_SNIPPET" 'BEGIN{added=0}
-  tolower($0) ~ /<\/head>/ && !added {
+# Insert snippet immediately after <head> so prerendered inline <style> blocks cannot swallow it.
+RUNTIME_INJECT_AWK='BEGIN { added = 0 }
+  !added && tolower($0) ~ /<head[^>]*>/ {
+    print
     print snippet
-    added=1
+    added = 1
+    next
   }
   { print }
-  END { if(!added) { print snippet } }' "$INDEX_HTML" > "$TMP_INDEX"
+  END { if (!added) { print snippet } }'
+
+# Insert snippet into index.html
+TMP_INDEX="$(mktemp)"
+awk -v snippet="$INJECT_SNIPPET" "$RUNTIME_INJECT_AWK" "$INDEX_HTML" > "$TMP_INDEX"
 
 run mv "$TMP_INDEX" "$INDEX_HTML"
 
@@ -230,13 +241,7 @@ inject_runtime_into_html() {
   fi
   local tmp_inject
   tmp_inject="$(mktemp)"
-  awk -v snippet="$INJECT_SNIPPET" 'BEGIN{added=0}
-    tolower($0) ~ /<\/head>/ && !added {
-      print snippet
-      added=1
-    }
-    { print }
-    END { if(!added) { print snippet } }' "$target_html" > "$tmp_inject"
+  awk -v snippet="$INJECT_SNIPPET" "$RUNTIME_INJECT_AWK" "$target_html" > "$tmp_inject"
   run mv "$tmp_inject" "$target_html"
 }
 
