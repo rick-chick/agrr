@@ -1,8 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID, REQUEST } from '@angular/core';
+import { isPlatformServer } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
+import { Router } from '@angular/router';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
 import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 import {
@@ -22,6 +24,9 @@ export function buildSelfCanonicalUrl(origin: string, pathname: string): string 
   return `${origin}${pathname.split('?')[0]}`;
 }
 
+/** Production origin for build-time prerender canonical / OGP URLs. */
+export const PRERENDER_CANONICAL_ORIGIN = 'https://agrr.net';
+
 function ogLocale(angularLang: AppLang): string {
   if (angularLang === 'ja') return 'ja_JP';
   if (angularLang === 'en') return 'en_US';
@@ -40,6 +45,9 @@ export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly request = inject(REQUEST, { optional: true });
+  private readonly router = inject(Router, { optional: true });
   private noIndexActive = false;
 
   applyNoIndexMeta(): void {
@@ -58,7 +66,7 @@ export class AppSeoMetaService {
       document.documentElement.lang = documentHtmlLang(angularLang);
     }
 
-    const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
+    const path = this.readPathname();
     const keyPrefix = resolveSeoKeyPrefix(path);
     this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
   }
@@ -70,7 +78,7 @@ export class AppSeoMetaService {
     }
 
     if (!planId || !planData?.success) {
-      const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
+      const path = this.readPathname();
       const keyPrefix = resolveSeoKeyPrefix(path);
       this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
       return;
@@ -95,8 +103,46 @@ export class AppSeoMetaService {
     this.applyResolvedSeo({ title, description, ogDescription, ogUrl, keyPrefix });
   }
 
+  private readPathname(): string {
+    if (!isPlatformServer(this.platformId) && typeof window !== 'undefined' && window.location?.pathname) {
+      return window.location.pathname;
+    }
+    const requestUrl = this.readRequestUrl();
+    if (requestUrl) {
+      try {
+        return new URL(requestUrl).pathname;
+      } catch {
+        return '/';
+      }
+    }
+    const routerPath = this.router?.url?.split('?')[0];
+    if (routerPath) {
+      return routerPath.startsWith('/') ? routerPath : `/${routerPath}`;
+    }
+    return '/';
+  }
+
   private readOrigin(): string {
-    return typeof window !== 'undefined' ? window.location.origin : '';
+    if (!isPlatformServer(this.platformId)) {
+      if (typeof window !== 'undefined' && window.location) {
+        return window.location.origin ?? '';
+      }
+      return '';
+    }
+    const requestUrl = this.readRequestUrl();
+    if (requestUrl) {
+      try {
+        return new URL(requestUrl).origin;
+      } catch {
+        return PRERENDER_CANONICAL_ORIGIN;
+      }
+    }
+    return PRERENDER_CANONICAL_ORIGIN;
+  }
+
+  private readRequestUrl(): string | undefined {
+    const request = this.request as Request | null | undefined;
+    return request?.url;
   }
 
   private applySeoFromKeyPrefix(keyPrefix: string, ogUrl: string): void {
