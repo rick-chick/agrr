@@ -6,9 +6,11 @@ info:
     Public subset of the AGRR Masters JSON API for crop master data, agricultural tasks,
     task schedule blueprints, and external skill `setup_proposal` workflows.
 
-    **Scopes (documentation only; not enforced per-key yet):**
-    - `masters:read` — `GET` / `HEAD` on Masters endpoints
+    **Scopes (enforced per API key):**
+    - `masters:read` — `GET` / `HEAD` on Masters endpoints, and `setup_proposal?mode=dry_run`
     - `masters:write` — create, update, delete, `setup_proposal?mode=apply`
+
+    Session cookie authentication has full Masters access. API keys default to `masters:read` only on generate/regenerate.
 
     See [getting-started.md](./getting-started.md) for authentication and rate limits.
 
@@ -385,12 +387,15 @@ components:
     bearerApiKey:
       type: http
       scheme: bearer
-      description: User API key as Bearer token
+      description: |
+        User API key as Bearer token. Scopes are stored on the key (`masters:read`, `masters:write`).
+        New keys default to `masters:read` only.
     headerApiKey:
       type: apiKey
       in: header
       name: x-api-key
-      description: User API key header (alternative to Bearer)
+      description: |
+        User API key header (alternative to Bearer). Same scope rules as bearerApiKey.
     sessionCookie:
       type: apiKey
       in: cookie

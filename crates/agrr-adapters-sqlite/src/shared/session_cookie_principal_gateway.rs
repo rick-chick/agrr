@@ -30,6 +30,7 @@ impl SessionCookiePrincipalSqliteGateway {
                             name: row.get(2)?,
                             admin: row.get::<_, i64>(3)? != 0,
                             anonymous: row.get::<_, i64>(4)? != 0,
+                            api_key_scopes: None,
                         })
                     },
                 )
@@ -62,6 +63,7 @@ impl SessionCookiePrincipalSqliteGateway {
                 name: String::new(),
                 admin: false,
                 anonymous: true,
+                api_key_scopes: None,
             })
     }
 }
@@ -73,6 +75,7 @@ fn anonymous_principal() -> SessionPrincipal {
         name: String::new(),
         admin: false,
         anonymous: true,
+        api_key_scopes: None,
     }
 }
 
