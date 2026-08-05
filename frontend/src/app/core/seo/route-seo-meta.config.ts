@@ -14,9 +14,17 @@ export function normalizeSeoPath(pathname: string | undefined | null): string {
     return '/';
   }
   const withoutQuery = pathname.split('?')[0];
-  return withoutQuery.endsWith('/') && withoutQuery.length > 1
-    ? withoutQuery.slice(0, -1)
-    : withoutQuery;
+  let path =
+    withoutQuery.endsWith('/') && withoutQuery.length > 1
+      ? withoutQuery.slice(0, -1)
+      : withoutQuery;
+  if (path === '/en') {
+    return '/';
+  }
+  if (path.startsWith('/en/')) {
+    path = path.slice('/en'.length);
+  }
+  return path;
 }
 
 export function resolveSeoKeyPrefix(pathname: string): string {
