@@ -7,6 +7,10 @@ export const PUBLIC_PRERENDER_PATHS = [
   'terms',
   'public-plans/new',
   'entry-schedule',
+  'en',
+  'en/about',
+  'en/contact',
+  'en/privacy',
+  'en/terms',
+  'en/public-plans/new',
 ] as const;
-
-export type PublicPrerenderPath = (typeof PUBLIC_PRERENDER_PATHS)[number];

@@ -16,6 +16,7 @@ import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+import { CardListSkeletonComponent } from '../../shared/skeleton/card-list-skeleton.component';
 
 const initialControl: CropListViewState = {
   loading: true,
@@ -28,7 +29,7 @@ const initialControl: CropListViewState = {
 @Component({
   selector: 'app-crop-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, CardListSkeletonComponent],
   providers: [...CROP_LIST_PROVIDERS],
   template: `
     <main class="page-main">
@@ -38,7 +39,8 @@ const initialControl: CropListViewState = {
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
-          <p class="master-loading">{{ 'common.loading' | translate }}</p>
+          <app-card-list-skeleton class="list-loading-skeleton" />
+          <p class="master-loading list-loading-text">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
             <a [routerLink]="['/crops', 'new']" class="btn btn-primary">{{ 'crops.index.new_crop' | translate }}</a>

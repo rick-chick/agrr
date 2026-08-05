@@ -1500,7 +1500,8 @@
         "predicting_weather": "気象データの予測に失敗しました",
         "optimizing": "最適化に失敗しました",
         "task_schedule_generation": "作業計画の生成に失敗しました",
-        "default": "処理に失敗しました"
+        "default": "処理に失敗しました",
+        "timeout": "処理がタイムアウトしました"
       },
       "default_plan_name": "メイン計画",
       "public_plan_name": "無料作付け計画"
@@ -1879,7 +1880,8 @@
           "predicting_weather": "気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。",
           "optimizing": "選択した作物や栽培期間を見直し、再度お試しください。",
           "task_schedule_generation": "最適化結果の処理中に問題が発生しました。再度お試しください。",
-          "default": "下のボタンから作物を変更するか、最初からやり直してください。"
+          "default": "下のボタンから作物を変更するか、最初からやり直してください。",
+          "timeout": "処理に時間がかかりすぎました。しばらく待ってから再度お試しください。"
         }
       },
       "status_badge_failed": "作成失敗"
@@ -3146,9 +3148,9 @@
       "og_description": "気象予測に基づく作物の播種・定植の目安時期を確認"
     },
     "entry_schedule_detail": {
-      "title": "作物別の作付け時期",
-      "description": "作物ごとの播種・育苗・定植・収穫の適期帯を、予測気象データに基づいて表示します。",
-      "og_description": "作物ごとの播種・定植の適期帯を予測気象で表示"
+      "title": "{{cropName}}の作付け時期 | AGRR",
+      "description": "{{cropName}}の播種・育苗・定植・収穫の適期帯を、予測気象データに基づいて表示します。",
+      "og_description": "{{cropName}}の播種・定植の適期帯を予測気象で表示"
     },
     "notFound": {
       "title": "ページが見つかりません",

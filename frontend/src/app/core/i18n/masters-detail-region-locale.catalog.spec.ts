@@ -32,6 +32,47 @@ const FERTILIZE_DETAIL_REGION_KEYS = [
   'fertilizes.form.region_in'
 ] as const;
 
+/** Region label + value keys for interaction-rule-detail. */
+const INTERACTION_RULE_DETAIL_REGION_KEYS = [
+  'interaction_rules.show.region',
+  'interaction_rules.form.region_jp',
+  'interaction_rules.form.region_us',
+  'interaction_rules.form.region_in'
+] as const;
+
+/** Region label + value keys for pest-detail. */
+const PEST_DETAIL_REGION_KEYS = [
+  'pests.show.region',
+  'pests.form.region_jp',
+  'pests.form.region_us',
+  'pests.form.region_in'
+] as const;
+
+/** Region label + value keys for pesticide-detail. */
+const PESTICIDE_DETAIL_REGION_KEYS = [
+  'pesticides.form.region_label',
+  'pesticides.form.region_jp',
+  'pesticides.form.region_us',
+  'pesticides.form.region_in'
+] as const;
+
+/** Region label + value keys for farm-detail. */
+const FARM_DETAIL_REGION_KEYS = [
+  'farms.form.region_jp',
+  'farms.form.region_us',
+  'farms.form.region_in',
+  'farms.form.region_blank'
+] as const;
+
+const ALL_MASTER_DETAIL_REGION_KEYS = [
+  ...AGRICULTURAL_TASK_DETAIL_REGION_KEYS,
+  ...FERTILIZE_DETAIL_REGION_KEYS,
+  ...INTERACTION_RULE_DETAIL_REGION_KEYS,
+  ...PEST_DETAIL_REGION_KEYS,
+  ...PESTICIDE_DETAIL_REGION_KEYS,
+  ...FARM_DETAIL_REGION_KEYS
+] as const;
+
 const locales: { name: string; catalog: JsonRecord }[] = [
   { name: 'ja', catalog: ja as JsonRecord },
   { name: 'en', catalog: en as JsonRecord },
@@ -41,7 +82,7 @@ const locales: { name: string; catalog: JsonRecord }[] = [
 describe('masters detail region i18n catalog', () => {
   for (const { name, catalog } of locales) {
     describe(name, () => {
-      for (const key of [...AGRICULTURAL_TASK_DETAIL_REGION_KEYS, ...FERTILIZE_DETAIL_REGION_KEYS]) {
+      for (const key of ALL_MASTER_DETAIL_REGION_KEYS) {
         it(`defines ${key}`, () => {
           const value = getNested(catalog, key);
           expect(value, `${name}: missing ${key}`).toBeTruthy();
@@ -53,16 +94,18 @@ describe('masters detail region i18n catalog', () => {
   }
 
   it('uses English region labels and values in en locale', () => {
-    for (const key of [...AGRICULTURAL_TASK_DETAIL_REGION_KEYS, ...FERTILIZE_DETAIL_REGION_KEYS]) {
+    for (const key of ALL_MASTER_DETAIL_REGION_KEYS) {
       const value = getNested(en as JsonRecord, key);
       expect(value, `unexpected Japanese in en.json: ${key}=${value}`).not.toMatch(JAPANESE_UI);
     }
     expect(getNested(en as JsonRecord, 'agricultural_tasks.show.region')).toBe('Region');
     expect(getNested(en as JsonRecord, 'agricultural_tasks.form.region_jp')).toBe('Japan');
+    expect(getNested(en as JsonRecord, 'interaction_rules.form.region_jp')).toBe('Japan');
+    expect(getNested(en as JsonRecord, 'pests.form.region_us')).toBe('United States');
   });
 
   it('uses Hindi (not Japanese) for in master detail region strings', () => {
-    for (const key of [...AGRICULTURAL_TASK_DETAIL_REGION_KEYS, ...FERTILIZE_DETAIL_REGION_KEYS]) {
+    for (const key of ALL_MASTER_DETAIL_REGION_KEYS) {
       const value = getNested(inLocale as JsonRecord, key);
       expect(value, `unexpected Japanese in in.json: ${key}=${value}`).not.toMatch(JAPANESE_UI);
     }

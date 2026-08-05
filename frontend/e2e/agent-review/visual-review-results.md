@@ -21,7 +21,8 @@
 | 2 | `**` | `not-found.ja.png` | `not-found.en.png` | `not-found.in.png` | OK | OK | なし |
 | 3 | `about` | `about.ja.png` | `about.en.png` | `about.in.png` | OK | OK | なし |
 | 4 | `contact` | `contact.ja.png` | `contact.en.png` | `contact.in.png` | OK | OK | なし |
-| 5 | `entry-schedule` | `entry-schedule.ja.png` | `entry-schedule.en.png` | `entry-schedule.in.png` | OK | 注意 | i18n: in の農場ドロップダウン値「Punjab」が英字のまま |
+| 5 | `en` | `en.ja.png` | `en.en.png` | `en.in.png` | 未レビュー | 未レビュー | 新規ルート `/en`（#563 hreflang）— キャプチャ未実施 |
+| 6 | `entry-schedule` | `entry-schedule.ja.png` | `entry-schedule.en.png` | `entry-schedule.in.png` | OK | 注意 | i18n: in の農場ドロップダウン値「Punjab」が英字のまま |
 | 6 | `entry-schedule/crop/:cropId` | `entry-schedule_crop_cropId.ja.png` | `entry-schedule_crop_cropId.en.png` | `entry-schedule_crop_cropId.in.png` | 注意 | 要確認 | layout: ja 成長段階リストが「1. 1.」の二重番号。i18n: en/in に作物名・成長段階・免責文など日本語が残存 |
 | 7 | `login` | `login.ja.png` | `login.en.png` | `login.in.png` | OK | OK | なし |
 | 8 | `privacy` | `privacy.ja.png` | `privacy.en.png` | `privacy.in.png` | OK | OK | なし |
@@ -44,7 +45,6 @@
 | 25 | `crops/:id/stages/:stageId/edit` | `crops_id_stages_stageId_edit.ja.png` | `crops_id_stages_stageId_edit.en.png` | `crops_id_stages_stageId_edit.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
 | 26 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
 | 27 | `crops/new` | `crops_new.ja.png` | `crops_new.en.png` | `crops_new.in.png` | OK | OK | なし |
-| 26 | `dashboard` | `dashboard.ja.png` | `dashboard.en.png` | `dashboard.in.png` | OK | OK | なし |
 | 27 | `farms` | `farms.ja.png` | `farms.en.png` | `farms.in.png` | OK | OK | なし |
 | 28 | `farms/:id` | `farms_id.ja.png` | `farms_id.en.png` | `farms_id.in.png` | OK | 注意 | i18n: 地域がコード `jp` のまま（ja/en/in 共通） |
 | 29 | `farms/:id/edit` | `farms_id_edit.ja.png` | `farms_id_edit.en.png` | `farms_id_edit.in.png` | OK | OK | なし |

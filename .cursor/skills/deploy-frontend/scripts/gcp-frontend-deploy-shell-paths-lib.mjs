@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { PUBLIC_PRERENDER_ROUTES } from '../../../../frontend/scripts/public-prerender-routes.mjs';
+import { entryScheduleCropPrerenderPaths } from '../../../../frontend/scripts/entry-schedule-prerender-catalog.mjs';
 
 /** Public prerender paths that must receive extensionless GCS shell copies (excludes root). */
 export const EXPECTED_PRERENDER_SHELL_PATHS = PUBLIC_PRERENDER_ROUTES.map(
@@ -27,6 +28,11 @@ export function parsePrerenderShellPaths(deployScript) {
       paths.push(value);
     }
   }
+
+  if (deployScript.includes('entryScheduleCropPrerenderPaths')) {
+    paths.push(...entryScheduleCropPrerenderPaths());
+  }
+
   return paths;
 }
 

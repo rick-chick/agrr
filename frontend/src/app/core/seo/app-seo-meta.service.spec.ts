@@ -226,7 +226,6 @@ describe('AppSeoMetaService', () => {
       ],
     });
     const ssrService = TestBed.inject(AppSeoMetaService);
-    const ssrMeta = TestBed.inject(Meta);
     const ssrTitle = TestBed.inject(Title);
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(

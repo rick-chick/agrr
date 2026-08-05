@@ -855,7 +855,8 @@
         "predicting_weather": "Failed to predict weather data",
         "optimizing": "Optimization failed",
         "task_schedule_generation": "Task plan generation failed",
-        "default": "Process failed"
+        "default": "Process failed",
+        "timeout": "The process timed out"
       },
       "default_plan_name": "Main Plan",
       "public_plan_name": "Free Cultivation Plan"
@@ -969,7 +970,8 @@
           "predicting_weather": "Weather data may still be preparing. Wait a moment and try again.",
           "optimizing": "Review your selected crops and growing period, then try again.",
           "task_schedule_generation": "Something went wrong while preparing task plans. Please try again.",
-          "default": "Use the buttons below to change crops or start over from the beginning."
+          "default": "Use the buttons below to change crops or start over from the beginning.",
+          "timeout": "The process took too long. Wait a moment and try again."
         }
       },
       "status_badge_failed": "Failed"
@@ -1294,8 +1296,6 @@
       "page_title": "Task plan — {{name}}",
       "empty_hint": "Add crops to your plan to generate task plans. Use the Cropping plan tab above to review your plan.",
       "empty_ready_no_fields": "Task plans are ready, but there are no fields to display. Check fields and crops on the Cropping plan tab.",
-      "empty_fields_summary": "{{total}} fields · {{empty}} without task plans",
-      "empty_fields_no_tasks_hint": "No task plans are scheduled yet. Review fields and crops on the Cropping plan tab, or use the registration wizard above.",
       "timeline_generated_at": "Generated: {{datetime}}",
       "timeline_generated_unknown": "Generated: unavailable",
       "no_schedules": "No task plan has been generated yet.",
@@ -1364,7 +1364,9 @@
       },
       "empty_cta": "Open cropping plan",
       "sync_plan_link": "Review cultivation plan",
-      "unscheduled_title": "Unconfirmed tasks"
+      "unscheduled_title": "Unconfirmed tasks",
+      "empty_fields_summary": "{{total}} fields · {{empty}} without task plans",
+      "empty_fields_no_tasks_hint": "No task plans are scheduled yet. Review fields and crops on the Cropping plan tab, or use the registration wizard above."
     },
     "work": {
       "page_title": "Work log — {{name}}",
@@ -2882,6 +2884,12 @@
       "description_placeholder": "Enter description for this rule",
       "is_reference_label": "Set as system standard rule",
       "is_reference_help": "When checked, this becomes a standard rule automatically applied to all users",
+      "region_label": "Region",
+      "region_jp": "Japan",
+      "region_us": "United States",
+      "region_in": "India",
+      "region_blank": "Please select",
+      "region_help": "Select the region where this rule applies",
       "submit_create": "Create Rule",
       "submit_update": "Update Rule",
       "cancel": "Cancel",
@@ -3104,9 +3112,9 @@
       "og_description": "Guide sowing and transplant windows by crop from weather forecasts"
     },
     "entry_schedule_detail": {
-      "title": "Crop entry schedule",
-      "description": "View sowing, nursery, transplant, and harvest windows per crop from forecast weather data.",
-      "og_description": "Per-crop sowing and transplant windows from forecast weather"
+      "title": "{{cropName}} planting schedule | AGRR",
+      "description": "View sowing, nursery, transplant, and harvest windows for {{cropName}} from forecast weather data.",
+      "og_description": "Sowing and transplant windows for {{cropName}} from forecast weather"
     },
     "notFound": {
       "title": "Page not found",

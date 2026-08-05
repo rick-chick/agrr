@@ -9,6 +9,7 @@ export const SPA_CANONICAL_ROUTES = [
   { path: '/terms', label: 'spa-terms-canonical' },
   { path: '/public-plans/new', label: 'spa-public-plans-new-canonical' },
   { path: '/entry-schedule', label: 'spa-entry-schedule-canonical' },
+  { path: '/entry-schedule/crop/1', label: 'spa-entry-schedule-crop-canonical' },
 ];
 
 /**
@@ -37,6 +38,16 @@ export function verifySeoRoutingContract(repoRoot) {
     if (!script.includes(`"$BASE_URL${path}"`)) {
       errors.push(`verify-seo-routing.sh must check canonical for ${path}`);
     }
+  }
+
+  if (!script.includes('check_hreflang')) {
+    errors.push('verify-seo-routing.sh must define check_hreflang');
+  }
+  if (!script.includes('spa-about-hreflang')) {
+    errors.push('verify-seo-routing.sh must include spa-about-hreflang check');
+  }
+  if (!script.includes('verify-seo-hreflang-cli.mjs')) {
+    errors.push('verify-seo-routing.sh must use verify-seo-hreflang-cli.mjs');
   }
 
   const runbookPath = join(repoRoot, 'docs/seo/gsc-crux-operations-runbook.md');

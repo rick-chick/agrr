@@ -13,7 +13,7 @@ import {
   navigateTargetFromReturnTo,
   oauthLocationForLogin,
   type DevMockLoginUser
-} from './login-auth-urls';
+} from '../../../core/auth/login-auth-urls';
 
 const DEV_MOCK_LOGIN_I18N: Record<DevMockLoginUser, string> = {
   developer: 'auth.login.dev_login_as_developer',

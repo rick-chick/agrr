@@ -78,6 +78,45 @@ describe('PestDetailComponent', () => {
     ).toHaveLength(0);
   });
 
+  it('renders translated region value instead of raw region code', () => {
+    translate.setTranslation('en', {
+      pests: {
+        index: { title: 'Pests' },
+        show: {
+          name: 'Name',
+          region: 'Region',
+          edit: 'Edit',
+          delete: 'Delete'
+        },
+        form: {
+          region_jp: 'Japan',
+          region_us: 'United States',
+          region_in: 'India'
+        }
+      }
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pest: {
+        id: 1,
+        name: 'Aphid',
+        region: 'us',
+        is_reference: false
+      },
+      pendingUndoToast: null
+    };
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Region');
+    expect(el.textContent).toContain('United States');
+    expect(el.textContent).not.toContain('region_us');
+    expect(el.textContent).not.toMatch(/\bus\b/);
+  });
+
   it('keeps list breadcrumb link while loading', () => {
     fixture.detectChanges();
     fixture.componentInstance.control = {
