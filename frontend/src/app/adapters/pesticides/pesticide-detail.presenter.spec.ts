@@ -69,6 +69,17 @@ describe('PesticideDetailPresenter', () => {
     expect(lastControl!.loading).toBe(false);
   });
 
+  it('maps raw HTTP error text to i18n key on onError(dto)', () => {
+    lastControl = { loading: true, error: null, pesticide: null, pendingUndoToast: null, pendingErrorFlash: null };
+
+    presenter.onError({
+      message: 'Http failure response for https://agrr.local/api/v1/masters/pesticides/999: 404 Not Found'
+    });
+
+    expect(lastControl!.error).toBe('common.api_error.not_found');
+    expect(lastControl!.error).not.toContain('Http failure');
+  });
+
   describe('DeletePesticideOutputPort', () => {
     it('queues pending undo toast with list refresh callback on onSuccess(dto)', () => {
       lastControl = {
