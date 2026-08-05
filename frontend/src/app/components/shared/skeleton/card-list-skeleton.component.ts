@@ -8,7 +8,7 @@ import { SkeletonComponent } from './skeleton.component';
   imports: [SkeletonComponent, TranslateModule],
   template: `
     <ul
-      class="card-list skeleton-list"
+      class="card-list"
       role="list"
       aria-busy="true"
       [attr.aria-label]="'common.loading' | translate"
