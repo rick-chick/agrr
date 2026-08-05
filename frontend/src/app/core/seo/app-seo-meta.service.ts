@@ -35,7 +35,6 @@ export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
-  private jsonLdScript: HTMLScriptElement | null = null;
 
   refreshDefaultMeta(): void {
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
@@ -124,7 +123,6 @@ export class AppSeoMetaService {
       siteDescription
     });
     document.head.appendChild(script);
-    this.jsonLdScript = script;
   }
 
   private removeAllJsonLdScripts(): void {
@@ -134,6 +132,5 @@ export class AppSeoMetaService {
     document.head.querySelectorAll('script[type="application/ld+json"]').forEach((script) => {
       script.remove();
     });
-    this.jsonLdScript = null;
   }
 }
