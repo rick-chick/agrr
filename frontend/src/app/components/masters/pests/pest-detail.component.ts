@@ -72,7 +72,7 @@ const initialControl: PestDetailViewState = {
             @if (control.pest.region) {
               <div class="detail-row">
                 <dt class="detail-row__term">{{ 'pests.show.region' | translate }}</dt>
-                <dd class="detail-row__value">{{ control.pest.region }}</dd>
+                <dd class="detail-row__value">{{ 'pests.form.region_' + control.pest.region | translate }}</dd>
               </div>
             }
           </dl>

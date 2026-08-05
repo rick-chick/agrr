@@ -69,7 +69,7 @@ const initialControl: InteractionRuleDetailViewState = {
             @if (control.rule.region) {
               <div class="detail-row">
                 <dt class="detail-row__term">{{ 'interaction_rules.show.region' | translate }}</dt>
-                <dd class="detail-row__value">{{ control.rule.region }}</dd>
+                <dd class="detail-row__value">{{ 'interaction_rules.form.region_' + control.rule.region | translate }}</dd>
               </div>
             }
           </dl>
