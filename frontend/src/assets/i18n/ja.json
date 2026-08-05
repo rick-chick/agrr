@@ -2443,7 +2443,9 @@
       },
       "empty_cta": "作付け計画を確認",
       "sync_plan_link": "作付け計画を確認する",
-      "unscheduled_title": "未確定の作業"
+      "unscheduled_title": "未確定の作業",
+      "empty_fields_summary": "{{total}}圃場中 {{empty}}圃場は作業予定未設定",
+      "empty_fields_no_tasks_hint": "作業予定がまだありません。「作付け計画」タブで圃場と作物を確認するか、上の登録ウィザードをご利用ください。"
     },
     "work": {
       "page_title": "{{name}}の作業記録",
