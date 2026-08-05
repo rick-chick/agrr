@@ -3106,9 +3106,9 @@
       "og_description": "Guide sowing and transplant windows by crop from weather forecasts"
     },
     "entry_schedule_detail": {
-      "title": "Crop entry schedule",
-      "description": "View sowing, nursery, transplant, and harvest windows per crop from forecast weather data.",
-      "og_description": "Per-crop sowing and transplant windows from forecast weather"
+      "title": "{{cropName}} planting schedule | AGRR",
+      "description": "View sowing, nursery, transplant, and harvest windows for {{cropName}} from forecast weather data.",
+      "og_description": "Sowing and transplant windows for {{cropName}} from forecast weather"
     },
     "notFound": {
       "title": "Page not found",
