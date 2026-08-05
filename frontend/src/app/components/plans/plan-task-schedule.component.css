@@ -73,6 +73,13 @@
   justify-content: flex-end;
 }
 
+.plan-task-schedule__empty-fields-summary {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
 .plan-task-schedule__filters {
   display: flex;
   flex-wrap: wrap;

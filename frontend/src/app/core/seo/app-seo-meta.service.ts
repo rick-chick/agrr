@@ -1,11 +1,11 @@
-import { Injectable, inject } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { Injectable, inject, PLATFORM_ID, REQUEST } from '@angular/core';
+import { DOCUMENT, isPlatformServer } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
-import { normalizeSeoPath, resolveSeoKeyPrefix } from './route-seo-meta.config';
+import { resolveSeoKeyPrefix } from './route-seo-meta.config';
 import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 import {
   buildPublicPlanResultsShareUrl,
@@ -38,6 +38,8 @@ export class AppSeoMetaService {
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private readonly document = inject(DOCUMENT);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly request = inject(REQUEST, { optional: true });
   private readonly router = inject(Router, { optional: true });
   private noIndexActive = false;
 
@@ -57,7 +59,7 @@ export class AppSeoMetaService {
       document.documentElement.lang = documentHtmlLang(angularLang);
     }
 
-    const path = this.readPath();
+    const path = this.readPathname();
     const keyPrefix = resolveSeoKeyPrefix(path);
     this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
   }
@@ -69,7 +71,7 @@ export class AppSeoMetaService {
     }
 
     if (!planId || !planData?.success) {
-      const path = this.readPath();
+      const path = this.readPathname();
       const keyPrefix = resolveSeoKeyPrefix(path);
       this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
       return;
@@ -94,18 +96,46 @@ export class AppSeoMetaService {
     this.applyResolvedSeo({ title, description, ogDescription, ogUrl, keyPrefix });
   }
 
+  private readPathname(): string {
+    if (!isPlatformServer(this.platformId) && typeof window !== 'undefined' && window.location?.pathname) {
+      return window.location.pathname;
+    }
+    const requestUrl = this.readRequestUrl();
+    if (requestUrl) {
+      try {
+        return new URL(requestUrl).pathname;
+      } catch {
+        return '/';
+      }
+    }
+    const routerPath = this.router?.url?.split('?')[0];
+    if (routerPath) {
+      return routerPath.startsWith('/') ? routerPath : `/${routerPath}`;
+    }
+    return '/';
+  }
+
   private readOrigin(): string {
-    if (typeof window !== 'undefined') {
-      return window.location?.origin ?? '';
+    if (!isPlatformServer(this.platformId)) {
+      if (typeof window !== 'undefined' && window.location) {
+        return window.location.origin ?? '';
+      }
+      return '';
+    }
+    const requestUrl = this.readRequestUrl();
+    if (requestUrl) {
+      try {
+        return new URL(requestUrl).origin;
+      } catch {
+        return PRODUCTION_SITE_ORIGIN;
+      }
     }
     return PRODUCTION_SITE_ORIGIN;
   }
 
-  private readPath(): string {
-    if (typeof window !== 'undefined' && window.location?.pathname) {
-      return window.location.pathname;
-    }
-    return normalizeSeoPath(this.router?.url ?? '/');
+  private readRequestUrl(): string | undefined {
+    const request = this.request as Request | null | undefined;
+    return request?.url;
   }
 
   private updateCanonicalLink(href: string): void {
@@ -123,7 +153,7 @@ export class AppSeoMetaService {
   }
 
   private applySeoFromKeyPrefix(keyPrefix: string, ogUrl: string): void {
-    const path = this.readPath();
+    const path = this.readPathname();
     const origin = this.readOrigin() || PRODUCTION_SITE_ORIGIN;
     const resolved = resolveRouteSeoMetaWithTranslator(
       path,

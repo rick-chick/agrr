@@ -6,6 +6,7 @@ import {
   PUBLIC_PRERENDER_ROUTES,
   assertMeaningfulPrerenderedBody,
   assertNoAuthRoutePrerenderLeak,
+  assertPrerenderCanonical,
 } from './public-prerender-routes.mjs';
 import {
   assertPrerenderedHeadSeo,
@@ -44,6 +45,9 @@ describe('production build prerender output', () => {
       assertNoAuthRoutePrerenderLeak(html);
       const expectedSeo = await expectedPrerenderSeoForRoute(route.path);
       assertPrerenderedHeadSeo(html, expectedSeo);
+      if (route.canonicalPath) {
+        assertPrerenderCanonical(html, route.canonicalPath);
+      }
     });
   }
 });
