@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadCropDetailInputDto } from './load-crop-detail.dtos';
 import { LoadCropDetailInputPort } from './load-crop-detail.input-port';
 import {
@@ -17,8 +18,8 @@ export class LoadCropDetailUseCase implements LoadCropDetailInputPort {
   execute(dto: LoadCropDetailInputDto): void {
     this.cropGateway.show(dto.cropId).subscribe({
       next: (crop) => this.outputPort.present({ crop }),
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) =>
+        this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }
 }

@@ -83,13 +83,38 @@ describe('CropDetailPresenter', () => {
     expect(lastControl.blueprintCount).toBe(1);
   });
 
-  it('uses flash for errors', () => {
+  it('shows inline load error when loading fails', () => {
+    lastControl = { ...baseControl, loading: true, blueprintsLoading: true };
+
+    presenter.onError({ message: 'common.api_error.not_found' });
+
+    expect(lastControl.error).toBe('common.api_error.not_found');
+    expect(lastControl.pendingErrorFlash).toBeNull();
+    expect(lastControl.loading).toBe(false);
+    expect(lastControl.blueprintsLoading).toBe(false);
+  });
+
+  it('maps raw HTTP 404 text to i18n key on initial load failure', () => {
+    lastControl = { ...baseControl, loading: true, blueprintsLoading: true };
+
+    presenter.onError({
+      message: 'Http failure response for https://agrr.local/api/v1/masters/crops/999: 404 Not Found'
+    });
+
+    expect(lastControl.error).toBe('common.api_error.not_found');
+    expect(lastControl.error).not.toContain('Http failure');
+  });
+
+  it('uses flash for errors after load completes', () => {
+    lastControl = { ...baseControl, loading: false, blueprintsLoading: false };
+
     presenter.onError({ message: 'common.api_error.generic' });
 
     expect(lastControl.pendingErrorFlash).toEqual({
       type: 'error',
       text: 'common.api_error.generic'
     });
+    expect(lastControl.error).toBeNull();
     expect(lastControl.loading).toBe(false);
     expect(lastControl.blueprintsLoading).toBe(false);
   });

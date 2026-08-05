@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { CropDetailView } from '../../components/masters/crops/crop-detail.view';
 import { LoadCropDetailOutputPort } from '../../usecase/crops/load-crop-detail.output-port';
 import { CropDetailDataDto } from '../../usecase/crops/load-crop-detail.dtos';
@@ -57,12 +58,24 @@ export class CropDetailPresenter
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const errorKey = errorDtoI18nKey(dto);
+    if (this.view.control.loading) {
+      this.view.control = withCropDetailSummaryState({
+        ...this.view.control,
+        loading: false,
+        blueprintsLoading: false,
+        error: errorKey,
+        pendingErrorFlash: null
+      });
+      return;
+    }
+
     this.view.control = withCropDetailSummaryState({
       ...this.view.control,
       loading: false,
       blueprintsLoading: false,
       error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      pendingErrorFlash: pendingErrorFlashFromError({ message: errorKey })
     });
   }
 
