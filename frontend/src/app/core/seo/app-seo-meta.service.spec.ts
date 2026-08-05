@@ -123,6 +123,20 @@ describe('AppSeoMetaService', () => {
     );
   });
 
+  it('sets ja/en/x-default hreflang alternates on public prerender routes', () => {
+    setWindowPath('/about');
+    service.refreshDefaultMeta();
+    expect(document.head.querySelector('link[rel="alternate"][hreflang="ja"]')?.getAttribute('href')).toBe(
+      'http://localhost/about'
+    );
+    expect(document.head.querySelector('link[rel="alternate"][hreflang="en"]')?.getAttribute('href')).toBe(
+      'http://localhost/en/about'
+    );
+    expect(
+      document.head.querySelector('link[rel="alternate"][hreflang="x-default"]')?.getAttribute('href')
+    ).toBe('http://localhost/about');
+  });
+
   it('sets route-specific title and description for /public-plans/new', () => {
     setWindowPath('/public-plans/new');
     service.refreshDefaultMeta();
