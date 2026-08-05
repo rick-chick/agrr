@@ -101,7 +101,7 @@ export class AccountComponent implements OnInit {
         anchor.download = `agrr-export-${data.user.id}.json`;
         anchor.click();
         URL.revokeObjectURL(url);
-        this.flash.success(this.translate.instant('account.export.success'));
+        this.flash.show({ type: 'success', text: 'account.export.success' });
         this.exporting = false;
         this.cdr.markForCheck();
       },
@@ -127,7 +127,7 @@ export class AccountComponent implements OnInit {
       .deleteAccount(true, this.emailConfirm || undefined)
       .subscribe({
         next: () => {
-          this.flash.success(this.translate.instant('account.delete.success'));
+          this.flash.show({ type: 'success', text: 'account.delete.success' });
           void this.router.navigate(['/login']);
         },
         error: (err) => {
