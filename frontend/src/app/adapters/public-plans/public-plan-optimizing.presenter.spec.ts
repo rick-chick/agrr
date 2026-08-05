@@ -14,11 +14,24 @@ const translationMap = new Map<string, string>([
     'models.cultivation_plan.phase_failed.predicting_weather',
     '気象データの予測に失敗しました'
   ],
+  [
+    'models.cultivation_plan.phase_failed.fetching_weather',
+    '気象データの取得に失敗しました'
+  ],
   ['models.cultivation_plan.phase_failed.default', '処理に失敗しました'],
+  ['models.cultivation_plan.phase_failed.timeout', '処理がタイムアウトしました'],
   ['public_plans.optimizing.error.title', '計画作成に失敗しました'],
   [
     'public_plans.optimizing.error.hints.predicting_weather',
     '気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。'
+  ],
+  [
+    'public_plans.optimizing.error.hints.fetching_weather',
+    '地域や農場の設定を確認し、しばらく時間をおいてから再度お試しください。'
+  ],
+  [
+    'public_plans.optimizing.error.hints.timeout',
+    '処理に時間がかかりすぎました。しばらく待ってから再度お試しください。'
   ],
   [
     'public_plans.optimizing.error.hints.default',
@@ -126,7 +139,7 @@ describe('PublicPlanOptimizingPresenter', () => {
     expect(lastControl.phaseMessage).not.toMatch(/^models\./);
   });
 
-  it('prefers human-readable phase_message over generic default message_key', () => {
+  it('uses i18n default category instead of raw phase_message text', () => {
     presenter.present({
       status: 'failed',
       progress: 0,
@@ -134,9 +147,52 @@ describe('PublicPlanOptimizingPresenter', () => {
       phase_message: '気象データの予測に失敗しました'
     });
 
-    expect(lastControl.phaseMessage).toBe('気象データの予測に失敗しました');
+    expect(lastControl.phaseMessage).toBe('処理に失敗しました');
+    expect(lastControl.phaseMessage).not.toBe('気象データの予測に失敗しました');
     expect(lastControl.failureHint).toBe(
       '下のボタンから作物を変更するか、最初からやり直してください。'
+    );
+  });
+
+  it('does not surface technical phase_message as primary failure text', () => {
+    presenter.present({
+      status: 'failed',
+      progress: 0,
+      message_key: 'models.cultivation_plan.phase_failed.default',
+      phase_message: 'fetch_weather_data failed: InvalidWeatherApiResponse'
+    });
+
+    expect(lastControl.phaseMessage).toBe('気象データの取得に失敗しました');
+    expect(lastControl.phaseMessage).not.toContain('InvalidWeatherApiResponse');
+    expect(lastControl.failureHint).toBe(
+      '地域や農場の設定を確認し、しばらく時間をおいてから再度お試しください。'
+    );
+  });
+
+  it('resolves timeout category from message_key', () => {
+    presenter.present({
+      status: 'failed',
+      progress: 0,
+      message_key: 'models.cultivation_plan.phase_failed.timeout'
+    });
+
+    expect(lastControl.phaseMessage).toBe('処理がタイムアウトしました');
+    expect(lastControl.failureHint).toBe(
+      '処理に時間がかかりすぎました。しばらく待ってから再度お試しください。'
+    );
+  });
+
+  it('infers timeout category from technical phase_message', () => {
+    presenter.present({
+      status: 'failed',
+      progress: 0,
+      message_key: 'models.cultivation_plan.phase_failed.default',
+      phase_message: 'worker timeout after 120s'
+    });
+
+    expect(lastControl.phaseMessage).toBe('処理がタイムアウトしました');
+    expect(lastControl.failureHint).toBe(
+      '処理に時間がかかりすぎました。しばらく待ってから再度お試しください。'
     );
   });
 

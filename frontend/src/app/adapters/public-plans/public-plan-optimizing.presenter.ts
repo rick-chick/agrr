@@ -61,6 +61,16 @@ export class PublicPlanOptimizingPresenter
     phaseMessage: string | undefined,
     prevMessage: string
   ): string {
+    const inferredCategory = this.inferFailureCategoryFromTechnicalMessage(phaseMessage);
+    if (inferredCategory) {
+      const inferredKey = `${PHASE_FAILED_PREFIX}${inferredCategory}`;
+      const translated = this.translateKey(inferredKey);
+      if (translated) {
+        this.logSuppressedTechnicalPhaseMessage(phaseMessage, inferredKey);
+        return translated;
+      }
+    }
+
     const specificKey = this.resolveSpecificFailureKey(key, phaseMessage);
     if (specificKey) {
       const translated = this.translateKey(specificKey);
@@ -72,13 +82,12 @@ export class PublicPlanOptimizingPresenter
     if (key?.startsWith('models.cultivation_plan.phases.')) {
       const translated = this.translateKey(PHASE_FAILED_DEFAULT_KEY);
       if (translated) {
+        this.logSuppressedTechnicalPhaseMessage(phaseMessage, PHASE_FAILED_DEFAULT_KEY);
         return translated;
       }
     }
 
-    if (phaseMessage && !phaseMessage.startsWith('models.')) {
-      return phaseMessage;
-    }
+    this.logSuppressedTechnicalPhaseMessage(phaseMessage, PHASE_FAILED_DEFAULT_KEY);
 
     return (
       this.translateKey(PHASE_FAILED_DEFAULT_KEY) ??
@@ -87,11 +96,52 @@ export class PublicPlanOptimizingPresenter
     );
   }
 
+  private logSuppressedTechnicalPhaseMessage(
+    phaseMessage: string | undefined,
+    resolvedKey: string
+  ): void {
+    if (!phaseMessage || phaseMessage.startsWith('models.')) {
+      return;
+    }
+    console.debug('[PublicPlanOptimizingPresenter] suppressed technical phase_message', {
+      phaseMessage,
+      resolvedKey
+    });
+  }
+
+  private inferFailureCategoryFromTechnicalMessage(
+    phaseMessage: string | undefined
+  ): string | undefined {
+    if (!phaseMessage || phaseMessage.startsWith('models.')) {
+      return undefined;
+    }
+    const normalized = phaseMessage.toLowerCase();
+    if (normalized.includes('timeout') || normalized.includes('timed out')) {
+      return 'timeout';
+    }
+    if (normalized.includes('fetch_weather') || normalized.includes('fetching_weather')) {
+      return 'fetching_weather';
+    }
+    if (normalized.includes('predict') || normalized.includes('forecast')) {
+      return 'predicting_weather';
+    }
+    if (normalized.includes('task_schedule')) {
+      return 'task_schedule_generation';
+    }
+    if (normalized.includes('optimiz')) {
+      return 'optimizing';
+    }
+    return undefined;
+  }
+
   private resolveFailureHint(
     key: string | undefined,
     phaseMessage: string | undefined
   ): string {
-    const category = this.extractFailureCategory(key, phaseMessage);
+    const category =
+      this.extractFailureCategory(key, phaseMessage) ??
+      this.inferFailureCategoryFromTechnicalMessage(phaseMessage) ??
+      'default';
     const hintKey = `public_plans.optimizing.error.hints.${category}`;
     return (
       this.translateKey(hintKey) ??
@@ -119,7 +169,7 @@ export class PublicPlanOptimizingPresenter
   private extractFailureCategory(
     key: string | undefined,
     phaseMessage: string | undefined
-  ): string {
+  ): string | undefined {
     for (const candidate of [key, phaseMessage]) {
       if (!candidate?.startsWith(PHASE_FAILED_PREFIX)) {
         continue;
@@ -129,7 +179,7 @@ export class PublicPlanOptimizingPresenter
         return suffix;
       }
     }
-    return 'default';
+    return undefined;
   }
 
   present(dto: PublicPlanOptimizationMessageDto): void {
