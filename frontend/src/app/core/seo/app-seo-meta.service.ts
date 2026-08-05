@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
-import { buildSiteStructuredDataDocument } from './site-structured-data';
+import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
 import {
   buildPublicPlanResultsShareUrl,
   extractPublicPlanResultsSeoLabels
@@ -40,7 +40,6 @@ export class AppSeoMetaService {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
-  private jsonLdScript: HTMLScriptElement | null = null;
   private noIndexActive = false;
 
   applyNoIndexMeta(): void {
@@ -183,7 +182,6 @@ export class AppSeoMetaService {
     if (typeof document === 'undefined') {
       return;
     }
-    this.detachJsonLd();
     if (
       !isResolvedTranslation(siteTitle, `${keyPrefix}.`) ||
       !isResolvedTranslation(siteDescription, `${keyPrefix}.`)
@@ -195,24 +193,39 @@ export class AppSeoMetaService {
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
         : 'https://agrr.net';
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.text = buildSiteStructuredDataDocument({
+    const jsonLd = buildSiteStructuredDataDocument({
       baseUrl,
       siteTitle,
       siteDescription
     });
-    document.head.appendChild(script);
-    this.jsonLdScript = script;
+
+    const script = this.resolveJsonLdScript();
+    script.text = jsonLd;
+    this.removeDuplicateJsonLdScripts(script);
   }
 
-  private detachJsonLd(): void {
-    if (typeof document === 'undefined') {
-      return;
+  private resolveJsonLdScript(): HTMLScriptElement {
+    const existing =
+      document.getElementById(SITE_STRUCTURED_DATA_SCRIPT_ID) ??
+      document.head.querySelector('script[type="application/ld+json"]');
+    if (existing instanceof HTMLScriptElement) {
+      existing.id = SITE_STRUCTURED_DATA_SCRIPT_ID;
+      existing.type = 'application/ld+json';
+      return existing;
     }
-    if (this.jsonLdScript?.parentNode) {
-      this.jsonLdScript.parentNode.removeChild(this.jsonLdScript);
-    }
-    this.jsonLdScript = null;
+
+    const script = document.createElement('script');
+    script.id = SITE_STRUCTURED_DATA_SCRIPT_ID;
+    script.type = 'application/ld+json';
+    document.head.appendChild(script);
+    return script;
+  }
+
+  private removeDuplicateJsonLdScripts(keep: HTMLScriptElement): void {
+    document.head.querySelectorAll('script[type="application/ld+json"]').forEach((node) => {
+      if (node !== keep) {
+        node.remove();
+      }
+    });
   }
 }
