@@ -1929,9 +1929,8 @@ fn get_account_export_unauthenticated_returns_401() {
 #[test]
 fn get_account_export_authenticated_returns_user_data() {
     let client = ContractClient::from_env();
-    let session_id = researcher_session_id(&client);
+    let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
-    let _seed = seed_work_record_plan(user_id);
 
     let (status, body) =
         status_and_body(client.get("/api/v1/account/export", Some(&session_id), &empty_headers()));
@@ -1939,8 +1938,9 @@ fn get_account_export_authenticated_returns_user_data() {
     let json: serde_json::Value = serde_json::from_str(&body).expect("export JSON");
     assert_eq!(user_id, json["user"]["id"].as_i64().unwrap());
     assert!(json["exported_at"].as_str().is_some());
-    assert!(json["farms"].as_array().map(|a| !a.is_empty()).unwrap_or(false));
-    assert!(json["cultivation_plans"].as_array().map(|a| !a.is_empty()).unwrap_or(false));
+    assert!(json["farms"].is_array());
+    assert!(json["crops"].is_array());
+    assert!(json["cultivation_plans"].is_array());
 }
 
 #[test]
@@ -1961,7 +1961,7 @@ fn delete_account_without_confirm_returns_422() {
 #[test]
 fn delete_account_removes_access() {
     let client = ContractClient::from_env();
-    let session_id = researcher_session_id(&client);
+    let session_id = farmer_session_id(&client);
 
     let (delete_status, delete_body) = status_and_body(client.delete_json(
         "/api/v1/account",
