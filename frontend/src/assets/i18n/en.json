@@ -1294,6 +1294,8 @@
       "page_title": "Task plan — {{name}}",
       "empty_hint": "Add crops to your plan to generate task plans. Use the Cropping plan tab above to review your plan.",
       "empty_ready_no_fields": "Task plans are ready, but there are no fields to display. Check fields and crops on the Cropping plan tab.",
+      "empty_fields_summary": "{{total}} fields · {{empty}} without task plans",
+      "empty_fields_no_tasks_hint": "No task plans are scheduled yet. Review fields and crops on the Cropping plan tab, or use the registration wizard above.",
       "timeline_generated_at": "Generated: {{datetime}}",
       "timeline_generated_unknown": "Generated: unavailable",
       "no_schedules": "No task plan has been generated yet.",
