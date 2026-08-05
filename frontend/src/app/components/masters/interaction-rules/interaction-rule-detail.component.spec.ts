@@ -152,7 +152,7 @@ describe('InteractionRuleDetailComponent', () => {
     ).toHaveLength(0);
   });
 
-  it('renders translated region label when rule has region', () => {
+  it('renders translated region value instead of raw region code', () => {
     translate.setTranslation('en', {
       common: { true: 'Yes', false: 'No' },
       interaction_rules: {
@@ -167,7 +167,10 @@ describe('InteractionRuleDetailComponent', () => {
         form: {
           rule_type_codes: {
             continuous_cultivation: 'Continuous cultivation inhibition'
-          }
+          },
+          region_jp: 'Japan',
+          region_us: 'United States',
+          region_in: 'India'
         }
       }
     });
@@ -192,6 +195,8 @@ describe('InteractionRuleDetailComponent', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     expect(el.textContent).toContain('Region');
-    expect(el.textContent).not.toContain('interaction_rules.show.region');
+    expect(el.textContent).toContain('Japan');
+    expect(el.textContent).not.toContain('region_jp');
+    expect(el.textContent).not.toMatch(/\bjp\b/);
   });
 });

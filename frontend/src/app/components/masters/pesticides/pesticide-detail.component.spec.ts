@@ -52,6 +52,50 @@ describe('PesticideDetailComponent', () => {
     translate.use('en');
   });
 
+  it('renders translated region value instead of raw region code', () => {
+    translate.setTranslation('en', {
+      pesticides: {
+        show: {
+          crop: 'Crop',
+          pest: 'Pest'
+        },
+        form: {
+          region_label: 'Region',
+          region_jp: 'Japan',
+          region_us: 'United States',
+          region_in: 'India'
+        },
+        fallback: {
+          crop: 'Crop (ID:{{id}})',
+          pest: 'Pest (ID:{{id}})'
+        }
+      }
+    });
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pesticide: {
+        id: 1,
+        name: 'Spray A',
+        crop_id: 51,
+        pest_id: 54,
+        region: 'in',
+        is_reference: false,
+        crop_name: 'Tomato',
+        pest_name: 'Aphid'
+      },
+      pendingUndoToast: null
+    };
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Region');
+    expect(el.textContent).toContain('India');
+    expect(el.textContent).not.toContain('region_in');
+  });
+
   it('displays API crop_name and pest_name when present', () => {
     fixture.detectChanges();
     component.control = {
