@@ -4,7 +4,7 @@ import { join, basename, dirname, resolve } from 'node:path';
 import { CAPTURE_LOCALES, agentPngFilename } from '../e2e/capture-locales.mjs';
 
 /** SPA 内リダイレクトのみ。ログイン UI は `/login` で E2E する */
-export const E2E_EXCLUDE_MANIFEST_PATTERNS = new Set(['auth/login']);
+export const E2E_EXCLUDE_MANIFEST_PATTERNS = new Set(['auth/login', 'dashboard']);
 
 /**
  * コンポーネントを持たないリダイレクト専用 pattern のホストセレクタ上書き。
