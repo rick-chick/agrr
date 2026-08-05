@@ -47,7 +47,10 @@ describe('production build prerender output', () => {
       }
 
       if (route.canonicalPath) {
-        assertPrerenderedSeoMeta(html, resolveExpectedPrerenderSeo(route.canonicalPath));
+        assertPrerenderedSeoMeta(
+          html,
+          resolveExpectedPrerenderSeo(route.canonicalPath, route.locale ?? 'ja'),
+        );
       }
 
       const isHreflangRoute =
