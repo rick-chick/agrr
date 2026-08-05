@@ -32,5 +32,7 @@ frontend/angular.json -filter -diff -merge text eol=lf
 frontend/tsconfig*.json -filter -diff -merge text eol=lf
 frontend/src/assets/i18n/*.json -filter -diff -merge text eol=lf
 frontend/e2e/route-manifest.json -filter -diff -merge text eol=lf
+# Angular build imports this catalog at compile time (LFS pointer breaks frontend-test CI)
+frontend/src/app/core/seo/entry-schedule-prerender-catalog.json -filter -diff -merge text eol=lf
 # Cloud Agent は environment.json を実体 JSON として読む（LFS ポインタ不可）
 .cursor/environment.json -filter -diff -merge text eol=lf

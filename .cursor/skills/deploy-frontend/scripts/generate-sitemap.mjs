@@ -8,6 +8,7 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { constants } from 'node:fs';
 import { isIndexableResearchHtml } from './generate-sitemap-lib.mjs';
+import { entryScheduleCropSitemapPaths } from '../../../../frontend/scripts/entry-schedule-prerender-catalog.mjs';
 import {
   alternateLocaleRelativePath,
   buildSitemapHreflangAlternates,
@@ -30,6 +31,7 @@ const SPA_PATHS = [
   '/terms',
   '/public-plans/new',
   '/entry-schedule',
+  ...entryScheduleCropSitemapPaths(),
 ];
 
 function escapeXml(value) {

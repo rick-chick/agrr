@@ -48,6 +48,7 @@ check_status "root" "$BASE_URL/" "HTTP/2 200"
 check_status "about" "$BASE_URL/about" "HTTP/2 200"
 check_status "public-plans-new" "$BASE_URL/public-plans/new" "HTTP/2 200"
 check_status "entry-schedule" "$BASE_URL/entry-schedule" "HTTP/2 200"
+check_status "entry-schedule-crop-detail" "$BASE_URL/entry-schedule/crop/1" "HTTP/2 200"
 check_status "login" "$BASE_URL/login" "HTTP/2 200"
 check_status "public-plans-results" "$BASE_URL/public-plans/results?planId=1" "HTTP/2 200"
 check_status "public-plans-optimizing" "$BASE_URL/public-plans/optimizing?planId=1" "HTTP/2 200"
@@ -96,6 +97,7 @@ check_canonical_href "spa-privacy-canonical" "$BASE_URL/privacy" "$BASE_URL/priv
 check_canonical_href "spa-terms-canonical" "$BASE_URL/terms" "$BASE_URL/terms"
 check_canonical_href "spa-public-plans-new-canonical" "$BASE_URL/public-plans/new" "$BASE_URL/public-plans/new"
 check_canonical_href "spa-entry-schedule-canonical" "$BASE_URL/entry-schedule" "$BASE_URL/entry-schedule"
+check_canonical_href "spa-entry-schedule-crop-canonical" "$BASE_URL/entry-schedule/crop/1" "$BASE_URL/entry-schedule/crop/1"
 
 # Internal work files must not be publicly reachable (H3).
 check_status "research-internal-commands-template" "$BASE_URL/research/research_reports/commands_template.html" "HTTP/2 404"
