@@ -187,4 +187,19 @@ describe('CropListComponent card actions', () => {
 
     expect(fixture.nativeElement.querySelector('[data-testid="crop-overflow-menu-panel"]')).toBeNull();
   });
+
+  it('shows skeleton placeholder while loading instead of text-only loading', () => {
+    fixture.componentInstance.control = {
+      loading: true,
+      error: null,
+      crops: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.master-loading')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-skeleton')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.skeleton-card-list')).toBeTruthy();
+  });
 });

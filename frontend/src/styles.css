@@ -30,6 +30,10 @@
 
   --color-white: #ffffff;
 
+  /* スケルトン（ローディングプレースホルダ） */
+  --skeleton-base: var(--color-gray-200);
+  --skeleton-highlight: var(--color-gray-100);
+
   /* app.css のブランドトークン（Composition・リンクで参照） */
   --color-success-dark: #2f855a;
 

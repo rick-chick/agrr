@@ -226,4 +226,26 @@ describe('PlanListComponent', () => {
     expect(nativeElement.querySelector('.plan-list__work-link')).toBeNull();
     expect(nativeElement.querySelector('a[href*="/work"]')).toBeNull();
   });
+
+  it('shows skeleton placeholder while loading instead of text-only loading', async () => {
+    const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
+    try {
+      component.control = {
+        loading: true,
+        error: null,
+        plans: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const nativeElement = fixture.nativeElement;
+      expect(nativeElement.querySelector('.master-loading')).toBeNull();
+      expect(nativeElement.querySelector('app-skeleton')).toBeTruthy();
+      expect(nativeElement.querySelector('.skeleton-card-list')).toBeTruthy();
+    } finally {
+      loadSpy.mockRestore();
+    }
+  });
 });

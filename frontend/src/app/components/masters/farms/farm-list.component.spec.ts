@@ -198,4 +198,19 @@ describe('FarmListComponent', () => {
       expect(el.classList.contains('btn')).toBe(true);
     }
   });
+
+  it('shows skeleton placeholder while loading instead of text-only loading', () => {
+    component.control = {
+      loading: true,
+      error: null,
+      farms: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.master-loading')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-skeleton')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.skeleton-card-list')).toBeTruthy();
+  });
 });
