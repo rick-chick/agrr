@@ -62,3 +62,17 @@
   color: var(--color-primary);
   outline: none;
 }
+
+.list-loading-text {
+  display: none;
+}
+
+@media (max-width: 20rem) {
+  .list-loading-skeleton {
+    display: none;
+  }
+
+  .list-loading-text {
+    display: block;
+  }
+}
