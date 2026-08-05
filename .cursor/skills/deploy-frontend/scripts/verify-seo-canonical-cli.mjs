@@ -25,12 +25,6 @@ if (command === 'extract-file') {
   process.exit(0);
 }
 
-if (command === 'extract-hreflang') {
-  const html = rest[0] ?? '';
-  process.stdout.write(JSON.stringify(extractHreflangAlternates(html)));
-  process.exit(0);
-}
-
 if (command === 'verify-hreflang') {
   const [html, jaUrl, enUrl] = rest;
   const alternates = extractHreflangAlternates(html ?? '');
@@ -43,6 +37,5 @@ if (command === 'verify-hreflang') {
 
 console.error('Usage: verify-seo-canonical-cli.mjs extract <html>');
 console.error('       verify-seo-canonical-cli.mjs extract-file <path>');
-console.error('       verify-seo-canonical-cli.mjs extract-hreflang <html>');
 console.error('       verify-seo-canonical-cli.mjs verify-hreflang <html> <jaUrl> <enUrl>');
 process.exit(1);
