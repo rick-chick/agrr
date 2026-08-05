@@ -10,6 +10,7 @@ import {
 import { AgrrTranslateParser } from './core/i18n/agrr-translate.parser';
 
 import { routes } from './app.routes';
+import { appRouterFeatures } from './app-router-features';
 import { createTranslateLoader } from './core/i18n/translate-loader';
 import { provideInitialI18nBootstrap } from './core/i18n/initial-i18n-bootstrap';
 import { ENTRY_SCHEDULE_GATEWAY } from './usecase/entry-schedule/entry-schedule-gateway';
@@ -20,7 +21,7 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(),
     provideHttpClient(),
     { provide: ENTRY_SCHEDULE_GATEWAY, useExisting: EntryScheduleApiGateway },
-    provideRouter(routes),
+    provideRouter(routes, ...appRouterFeatures),
     importProvidersFrom(
       TranslateModule.forRoot({
         loader: {

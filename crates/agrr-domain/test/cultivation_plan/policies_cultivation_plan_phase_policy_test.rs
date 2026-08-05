@@ -64,6 +64,16 @@ fn build_phase_failed_defaults_message_key_when_subphase_unknown() {
     );
 }
 
+#[test]
+fn build_phase_failed_uses_timeout_subphase_message_key() {
+    let built = build(CultivationPlanPhaseName::PhaseFailed, Some("timeout"));
+
+    assert_eq!(
+        built.message_key.as_deref(),
+        Some("models.cultivation_plan.phase_failed.timeout")
+    );
+}
+
 // Ruby: test "build accepts string phase name" — completed variant on enum
 #[test]
 fn build_phase_completed_with_message_key_and_broadcast() {

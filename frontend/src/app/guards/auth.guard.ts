@@ -4,7 +4,7 @@ import { map } from 'rxjs';
 import {
   locationLikeFromRouterUrl,
   loginReturnQueryForLocation
-} from '../components/auth/login/login-auth-urls';
+} from '../core/auth/login-auth-urls';
 import { AuthService } from '../services/auth.service';
 
 export const authGuard: CanActivateFn = (_route, state: RouterStateSnapshot) => {

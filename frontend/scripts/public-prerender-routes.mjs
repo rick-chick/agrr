@@ -43,7 +43,6 @@ export const PUBLIC_PRERENDER_ROUTES = [
 export const PRERENDER_CANONICAL_ORIGIN = 'https://agrr.net';
 
 export const AUTH_CSR_ONLY_ROUTE_FRAGMENTS = [
-  'dashboard',
   'api-keys',
   'farms',
   'crops',
