@@ -95,6 +95,7 @@ check_canonical_href "spa-contact-canonical" "$BASE_URL/contact" "$BASE_URL/cont
 check_canonical_href "spa-privacy-canonical" "$BASE_URL/privacy" "$BASE_URL/privacy"
 check_canonical_href "spa-terms-canonical" "$BASE_URL/terms" "$BASE_URL/terms"
 check_canonical_href "spa-public-plans-new-canonical" "$BASE_URL/public-plans/new" "$BASE_URL/public-plans/new"
+check_canonical_href "spa-entry-schedule-canonical" "$BASE_URL/entry-schedule" "$BASE_URL/entry-schedule"
 
 # Internal work files must not be publicly reachable (H3).
 check_status "research-internal-commands-template" "$BASE_URL/research/research_reports/commands_template.html" "HTTP/2 404"

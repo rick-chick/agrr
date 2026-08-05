@@ -17,6 +17,7 @@ describe('SPA_PRERENDER_CANONICAL_PATHS', () => {
       '/privacy',
       '/terms',
       '/public-plans/new',
+      '/entry-schedule',
     ]);
   });
 });
