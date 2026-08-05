@@ -3280,6 +3280,11 @@
         "contact_link_text": "お問い合わせページ"
       },
       "effective_date": "制定日: 2025年10月17日"
+    },
+    "public_plans_results": {
+      "title": "{{planLabel}} — 作付け計画 | AGRR",
+      "description": "{{cropLabels}}の栽培スケジュール（{{planYear}}年・{{totalArea}}㎡）。AGRRの無料作付け計画です。",
+      "og_description": "{{planLabel}}の栽培スケジュール（{{cropLabels}}）"
     }
   },
   "shared": {

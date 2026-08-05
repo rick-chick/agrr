@@ -1,8 +1,8 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { take } from 'rxjs';
+import { Subscription, take } from 'rxjs';
 import { PublicPlanResultsView, PublicPlanResultsViewState } from './public-plan-results.view';
 import { LoadPublicPlanResultsUseCase } from '../../usecase/public-plans/load-public-plan-results.usecase';
 import { SavePublicPlanUseCase } from '../../usecase/public-plans/save-public-plan.usecase';
@@ -22,6 +22,8 @@ import {
 } from '../../services/public-plans/pending-public-plan-save';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
 import { applyPendingFlashAndNavigationViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
+import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
+import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 
@@ -78,7 +80,7 @@ const initialControl: PublicPlanResultsViewState = {
   `,
   styleUrls: ['./public-plan-results.component.css', './public-plan.component.css']
 })
-export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit {
+export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadPublicPlanResultsUseCase);
@@ -88,6 +90,11 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly translate = inject(TranslateService);
+  private readonly seoMeta = inject(AppSeoMetaService);
+
+  private langChangeSubscription?: Subscription;
+  private seoPlanId: number | null = null;
+  private seoPlanData: CultivationPlanData | null = null;
 
   protected readonly auth = inject(AuthService);
 
@@ -111,17 +118,45 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
       flash: this.flashMessage,
       router: this.router
     });
+    this.syncSeoFromControl(value);
     this.cdr.markForCheck();
+  }
+
+  ngOnDestroy(): void {
+    this.langChangeSubscription?.unsubscribe();
+  }
+
+  private syncSeoFromControl(value: PublicPlanResultsViewState): void {
+    const planId = this.resolvePlanId();
+    if (value.data) {
+      this.seoPlanId = planId;
+      this.seoPlanData = value.data;
+      this.seoMeta.refreshPublicPlanResultsMeta(planId, value.data);
+      return;
+    }
+    if (!value.loading) {
+      this.seoPlanId = planId > 0 ? planId : null;
+      this.seoPlanData = null;
+      this.seoMeta.refreshPublicPlanResultsMeta(this.seoPlanId, null);
+    }
+  }
+
+  private syncSeoFromStoredState(): void {
+    this.seoMeta.refreshPublicPlanResultsMeta(this.seoPlanId, this.seoPlanData);
   }
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.langChangeSubscription = this.translate.onLangChange.subscribe(() => {
+      this.syncSeoFromStoredState();
+    });
     const lang = mapFarmRegionToAppLang(this.publicPlanStore.state.farm?.region);
     if (lang) {
       applyAppLang(this.translate, lang, { persist: false });
     }
     const planId = this.resolvePlanId();
     if (!planId) {
+      this.seoMeta.refreshPublicPlanResultsMeta(null, null);
       this.control = {
         ...this.control,
         loading: false,

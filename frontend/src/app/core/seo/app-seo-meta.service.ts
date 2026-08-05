@@ -2,8 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
+import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
 import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
+import {
+  buildPublicPlanResultsShareUrl,
+  extractPublicPlanResultsSeoLabels
+} from './public-plan-results-seo-meta';
 
 function documentHtmlLang(angularLang: AppLang): string {
   return angularLang === 'in' ? 'hi' : angularLang;
@@ -55,7 +60,46 @@ export class AppSeoMetaService {
 
     const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
     const keyPrefix = resolveSeoKeyPrefix(path);
+    this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
+  }
 
+  refreshPublicPlanResultsMeta(planId: number | null, planData: CultivationPlanData | null): void {
+    const angularLang = (this.translate.currentLang || 'ja') as AppLang;
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = documentHtmlLang(angularLang);
+    }
+
+    if (!planId || !planData?.success) {
+      const path = typeof window !== 'undefined' ? (window.location?.pathname ?? '/') : '/';
+      const keyPrefix = resolveSeoKeyPrefix(path);
+      this.applySeoFromKeyPrefix(keyPrefix, buildSelfCanonicalUrl(this.readOrigin(), path));
+      return;
+    }
+
+    const labels = extractPublicPlanResultsSeoLabels(planData);
+    const params = {
+      planLabel: labels.planLabel,
+      cropLabels: labels.cropLabels,
+      planYear: labels.planYear,
+      totalArea: labels.totalArea
+    };
+    const keyPrefix = 'pages.public_plans_results';
+    const title = this.translate.instant(`${keyPrefix}.title`, params);
+    const description = this.translate.instant(`${keyPrefix}.description`, params);
+    let ogDescription = this.translate.instant(`${keyPrefix}.og_description`, params);
+    if (!isResolvedTranslation(ogDescription, `${keyPrefix}.`)) {
+      ogDescription = description;
+    }
+
+    const ogUrl = buildPublicPlanResultsShareUrl(this.readOrigin(), planId);
+    this.applyResolvedSeo({ title, description, ogDescription, ogUrl, keyPrefix });
+  }
+
+  private readOrigin(): string {
+    return typeof window !== 'undefined' ? window.location.origin : '';
+  }
+
+  private applySeoFromKeyPrefix(keyPrefix: string, ogUrl: string): void {
     const title = this.translate.instant(`${keyPrefix}.title`);
     const description = this.translate.instant(`${keyPrefix}.description`);
     const keywords = this.translate.instant('meta.default.keywords');
@@ -64,34 +108,53 @@ export class AppSeoMetaService {
       ogDescription = description;
     }
 
-    if (isResolvedTranslation(title, `${keyPrefix}.`)) {
+    this.applyResolvedSeo({
+      title: isResolvedTranslation(title, `${keyPrefix}.`) ? title : '',
+      description: isResolvedTranslation(description, `${keyPrefix}.`) ? description : '',
+      ogDescription: isResolvedTranslation(ogDescription, `${keyPrefix}.`) ? ogDescription : '',
+      ogUrl,
+      keyPrefix,
+      keywords: isResolvedTranslation(keywords, 'meta.default.') ? keywords : undefined
+    });
+  }
+
+  private applyResolvedSeo(options: {
+    title: string;
+    description: string;
+    ogDescription: string;
+    ogUrl: string;
+    keyPrefix: string;
+    keywords?: string;
+  }): void {
+    const { title, description, ogDescription, ogUrl, keyPrefix, keywords } = options;
+
+    if (title) {
       this.title.setTitle(title);
     }
-    if (isResolvedTranslation(description, `${keyPrefix}.`)) {
+    if (description) {
       this.meta.updateTag({ name: 'description', content: description });
     }
-    if (isResolvedTranslation(keywords, 'meta.default.')) {
+    if (keywords) {
       this.meta.updateTag({ name: 'keywords', content: keywords });
     }
 
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const ogUrl = buildSelfCanonicalUrl(origin, path);
-    const ogImageUrl = origin ? `${origin}${DEFAULT_OGP_IMAGE_PATH}` : '';
+    const ogImageUrl = this.readOrigin() ? `${this.readOrigin()}${DEFAULT_OGP_IMAGE_PATH}` : '';
     const ogImageAlt = this.translate.instant('meta.default.og_image_alt');
 
-    if (isResolvedTranslation(title, `${keyPrefix}.`)) {
+    if (title) {
       this.meta.updateTag({ property: 'og:title', content: title });
       this.meta.updateTag({ name: 'twitter:title', content: title });
     }
-    if (isResolvedTranslation(ogDescription, `${keyPrefix}.`)) {
+    if (ogDescription) {
       this.meta.updateTag({ property: 'og:description', content: ogDescription });
       this.meta.updateTag({ name: 'twitter:description', content: ogDescription });
     }
     if (ogUrl) {
       this.meta.updateTag({ property: 'og:url', content: ogUrl });
-      this.meta.updateTag({ rel: 'canonical', href: ogUrl });
+      this.meta.updateTag({ rel: 'canonical', href: ogUrl }, 'rel="canonical"');
     }
     this.meta.updateTag({ property: 'og:type', content: 'website' });
+    const angularLang = (this.translate.currentLang || 'ja') as AppLang;
     this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
     this.meta.updateTag({ property: 'og:site_name', content: 'AGRR' });
     if (ogImageUrl) {
