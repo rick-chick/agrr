@@ -5,6 +5,10 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  ENTRY_SCHEDULE_PRERENDER_CATALOG,
+  ENTRY_SCHEDULE_SEO_SAMPLE_CROP,
+} from './entry-schedule-prerender-catalog.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PRODUCTION_SITE_ORIGIN = 'https://agrr.net';
@@ -24,9 +28,17 @@ const ROUTE_SEO_KEY_MAP = {
 function normalizeSeoPath(pathname) {
   if (!pathname) return '/';
   const withoutQuery = pathname.split('?')[0];
-  return withoutQuery.endsWith('/') && withoutQuery.length > 1
-    ? withoutQuery.slice(0, -1)
-    : withoutQuery;
+  let path =
+    withoutQuery.endsWith('/') && withoutQuery.length > 1
+      ? withoutQuery.slice(0, -1)
+      : withoutQuery;
+  if (path === '/en') {
+    return '/';
+  }
+  if (path.startsWith('/en/')) {
+    path = path.slice('/en'.length);
+  }
+  return path;
 }
 
 function resolveSeoKeyPrefix(pathname) {
@@ -53,29 +65,66 @@ function isResolvedTranslation(value, keyPrefix) {
 
 function buildSelfCanonicalUrl(origin, pathname) {
   if (!origin) return '';
-  return `${origin}${normalizeSeoPath(pathname)}`;
+  const withoutQuery = pathname.split('?')[0];
+  const path =
+    withoutQuery.endsWith('/') && withoutQuery.length > 1
+      ? withoutQuery.slice(0, -1)
+      : withoutQuery;
+  return `${origin}${path || '/'}`;
 }
 
-let jaTranslationsPromise;
+function interpolate(template, params) {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => params[key] ?? '');
+}
 
-async function loadJaTranslations() {
-  if (!jaTranslationsPromise) {
-    const path = join(__dirname, '../src/assets/i18n/ja.json');
-    jaTranslationsPromise = readFile(path, 'utf8').then((raw) => JSON.parse(raw));
+function resolveCropForPath(pathname) {
+  const match = pathname.match(/^\/entry-schedule\/crop\/(\d+)/);
+  if (!match) {
+    return null;
   }
-  return jaTranslationsPromise;
+  const cropId = Number(match[1]);
+  return (
+    ENTRY_SCHEDULE_PRERENDER_CATALOG.crops.find((entry) => entry.cropId === cropId) ??
+    ENTRY_SCHEDULE_SEO_SAMPLE_CROP
+  );
+}
+
+const translationPromises = new Map();
+
+async function loadTranslations(locale) {
+  const lang = locale === 'en' ? 'en' : 'ja';
+  if (!translationPromises.has(lang)) {
+    const path = join(__dirname, `../src/assets/i18n/${lang}.json`);
+    translationPromises.set(
+      lang,
+      readFile(path, 'utf8').then((raw) => JSON.parse(raw)),
+    );
+  }
+  return translationPromises.get(lang);
 }
 
 /**
- * @param {string} routePath PUBLIC_PRERENDER_ROUTES path ('' for home)
+ * @param {{ path: string, locale?: string }} route PUBLIC_PRERENDER_ROUTES entry
  */
-export async function expectedPrerenderSeoForRoute(routePath) {
-  const translations = await loadJaTranslations();
+export async function expectedPrerenderSeoForRoute(route) {
+  const routePath = typeof route === 'string' ? route : route.path;
+  const locale = typeof route === 'string' ? 'ja' : route.locale ?? 'ja';
+  const translations = await loadTranslations(locale);
   const pathname = routePath ? `/${routePath}` : '/';
   const keyPrefix = resolveSeoKeyPrefix(pathname);
-  const title = readTranslation(translations, `${keyPrefix}.title`);
-  const description = readTranslation(translations, `${keyPrefix}.description`);
+  const crop = resolveCropForPath(pathname);
+  const params = crop ? { cropName: crop.name } : {};
+
+  let title = readTranslation(translations, `${keyPrefix}.title`);
+  let description = readTranslation(translations, `${keyPrefix}.description`);
   let ogDescription = readTranslation(translations, `${keyPrefix}.og_description`);
+
+  if (crop) {
+    title = interpolate(title, params);
+    description = interpolate(description, params);
+    ogDescription = interpolate(ogDescription, params);
+  }
+
   if (!isResolvedTranslation(ogDescription, `${keyPrefix}.`)) {
     ogDescription = description;
   }

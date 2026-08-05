@@ -43,7 +43,7 @@ describe('production build prerender output', () => {
       const html = await readFile(filePath, 'utf8');
       assertMeaningfulPrerenderedBody(html, { expectHeading: route.expectHeading });
       assertNoAuthRoutePrerenderLeak(html);
-      const expectedSeo = await expectedPrerenderSeoForRoute(route.path);
+      const expectedSeo = await expectedPrerenderSeoForRoute(route);
       assertPrerenderedHeadSeo(html, expectedSeo);
       if (route.canonicalPath) {
         assertPrerenderCanonical(html, route.canonicalPath);
