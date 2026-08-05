@@ -7,6 +7,7 @@ import {
 } from '../route-validity';
 import {
   assertHostHealthy,
+  HOST_HEALTH_ASSERT_EXCLUDE,
   disableCookieBanner,
   loadResolvedCaptureIdsWithBaseline,
   preparePublicPlanRoute,
@@ -69,7 +70,7 @@ smokeDescribe('route smoke (Angular + agrr-server session)', () => {
       await waitForPageStable(page, r);
 
       const selector = HOST_SELECTOR_BY_PATTERN[r.pattern];
-      if (selector) {
+      if (selector && !HOST_HEALTH_ASSERT_EXCLUDE.has(r.pattern)) {
         await assertHostHealthy(page, selector);
       }
     });

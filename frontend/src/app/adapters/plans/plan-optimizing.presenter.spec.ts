@@ -80,6 +80,30 @@ describe('PlanOptimizingPresenter', () => {
     expect(onOptimizationCompleted).toHaveBeenCalledTimes(1);
   });
 
+  it('sets failureHint when status is failed', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'models.cultivation_plan.phase_failed.default': 'Process failed',
+        'plans.optimizing_live.error.hints.default': 'Try reloading.'
+      },
+      true
+    );
+    const harness = createView({ status: 'optimizing', progress: 40, phaseMessage: '' });
+    presenter.setView(harness.view);
+
+    presenter.present({
+      status: 'failed',
+      progress: 40,
+      message_key: 'models.cultivation_plan.phase_failed.default'
+    });
+
+    expect(harness.control.status).toBe('failed');
+    expect(harness.control.phaseMessage).toBe('Process failed');
+    expect(harness.control.failureHint).toBe('Try reloading.');
+  });
+
   it('does not call onOptimizationCompleted while still in progress', () => {
     const { view, onOptimizationCompleted } = createView({ status: 'optimizing', progress: 0, phaseMessage: '' });
     presenter.setView(view);

@@ -4,6 +4,10 @@ import { PlanOptimizingView } from '../../components/plans/plan-optimizing.view'
 import { SubscribePlanOptimizationOutputPort } from '../../usecase/plans/subscribe-plan-optimization.output-port';
 import { PlanOptimizationMessageDto } from '../../usecase/plans/subscribe-plan-optimization.dtos';
 
+const PHASE_FAILED_PREFIX = 'models.cultivation_plan.phase_failed.';
+const PHASE_FAILED_DEFAULT_KEY = `${PHASE_FAILED_PREFIX}default`;
+const PHASES_COMPLETED_KEY = 'models.cultivation_plan.phases.completed';
+
 @Injectable()
 export class PlanOptimizingPresenter implements SubscribePlanOptimizationOutputPort {
   private view: PlanOptimizingView | null = null;
@@ -19,15 +23,110 @@ export class PlanOptimizingPresenter implements SubscribePlanOptimizationOutputP
     return translated !== key ? translated : null;
   }
 
-  private resolvePhaseMessage(dto: PlanOptimizationMessageDto, prevMessage: string): string {
-    const key = dto.message_key;
+  private resolvePhaseMessage(
+    dto: PlanOptimizationMessageDto,
+    prevMessage: string,
+    status: string
+  ): string {
+    const key =
+      dto.message_key ??
+      (dto.phase_message?.startsWith('models.') ? dto.phase_message : undefined);
+
+    if (status === 'failed') {
+      return this.resolveFailedPhaseMessage(key, dto.phase_message, prevMessage);
+    }
+
     if (key) {
       const translated = this.translateKey(key);
       if (translated) {
         return translated;
       }
     }
-    return prevMessage;
+    if (status === 'completed') {
+      return (
+        this.translateKey(PHASES_COMPLETED_KEY) ??
+        (dto.phase_message && !dto.phase_message.startsWith('models.')
+          ? dto.phase_message
+          : prevMessage)
+      );
+    }
+    return dto.phase_message ?? prevMessage;
+  }
+
+  private resolveFailedPhaseMessage(
+    key: string | undefined,
+    phaseMessage: string | undefined,
+    prevMessage: string
+  ): string {
+    const specificKey = this.resolveSpecificFailureKey(key, phaseMessage);
+    if (specificKey) {
+      const translated = this.translateKey(specificKey);
+      if (translated) {
+        return translated;
+      }
+    }
+
+    if (key?.startsWith('models.cultivation_plan.phases.')) {
+      const translated = this.translateKey(PHASE_FAILED_DEFAULT_KEY);
+      if (translated) {
+        return translated;
+      }
+    }
+
+    if (phaseMessage && !phaseMessage.startsWith('models.')) {
+      return phaseMessage;
+    }
+
+    return (
+      this.translateKey(PHASE_FAILED_DEFAULT_KEY) ??
+      this.translateKey('plans.optimizing_live.error.title') ??
+      prevMessage
+    );
+  }
+
+  private resolveFailureHint(
+    key: string | undefined,
+    phaseMessage: string | undefined
+  ): string {
+    const category = this.extractFailureCategory(key, phaseMessage);
+    const hintKey = `plans.optimizing_live.error.hints.${category}`;
+    return (
+      this.translateKey(hintKey) ??
+      this.translateKey('plans.optimizing_live.error.hints.default') ??
+      ''
+    );
+  }
+
+  private resolveSpecificFailureKey(
+    key: string | undefined,
+    phaseMessage: string | undefined
+  ): string | undefined {
+    if (key?.startsWith(PHASE_FAILED_PREFIX) && key !== PHASE_FAILED_DEFAULT_KEY) {
+      return key;
+    }
+    if (
+      phaseMessage?.startsWith(PHASE_FAILED_PREFIX) &&
+      phaseMessage !== PHASE_FAILED_DEFAULT_KEY
+    ) {
+      return phaseMessage;
+    }
+    return undefined;
+  }
+
+  private extractFailureCategory(
+    key: string | undefined,
+    phaseMessage: string | undefined
+  ): string {
+    for (const candidate of [key, phaseMessage]) {
+      if (!candidate?.startsWith(PHASE_FAILED_PREFIX)) {
+        continue;
+      }
+      const suffix = candidate.slice(PHASE_FAILED_PREFIX.length);
+      if (suffix && suffix !== 'default') {
+        return suffix;
+      }
+    }
+    return 'default';
   }
 
   present(dto: PlanOptimizationMessageDto): void {
@@ -35,11 +134,16 @@ export class PlanOptimizingPresenter implements SubscribePlanOptimizationOutputP
     const prev = this.view.control;
     const nextStatus = dto.status ?? prev.status;
     const nextProgress = typeof dto.progress === 'number' ? dto.progress : prev.progress;
-    const nextPhaseMessage = this.resolvePhaseMessage(dto, prev.phaseMessage);
+    const nextPhaseMessage = this.resolvePhaseMessage(dto, prev.phaseMessage, nextStatus);
+    const failureHint =
+      nextStatus === 'failed'
+        ? this.resolveFailureHint(dto.message_key, dto.phase_message)
+        : undefined;
     this.view.control = {
       status: nextStatus,
       progress: nextProgress,
-      phaseMessage: nextPhaseMessage
+      phaseMessage: nextPhaseMessage,
+      failureHint
     };
     if (nextStatus === 'completed' || nextProgress >= 100) {
       this.view.onOptimizationCompleted?.();
