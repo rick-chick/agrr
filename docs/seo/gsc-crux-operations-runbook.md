@@ -34,7 +34,7 @@
 | カテゴリ | 例 |
 |----------|-----|
 | SPA 公開ルート | `/`, `/about`, `/login`, `/public-plans/new`, results / optimizing（クエリ付き） |
-| SPA canonical（プリレンダ） | `/about`, `/contact`, `/public-plans/new` — `rel=canonical` が `https://agrr.net<path>` と一致 |
+| SPA canonical（プリレンダ） | `/about`, `/contact`, `/public-plans/new` の `rel=canonical` が `https://agrr.net<path>` と一致 |
 | 静的 SEO | `robots.txt`, `sitemap.xml`（件数 ≥ 100、内部作業用パス非含有） |
 | Research 静的 HTML | `/research/`、代表 `.html`、拡張子なし 404、内部テンプレート 404 |
 | リダイレクト | `www` → apex、`/public_plans` → `/public-plans/new`、legacy `/us/about` 等 |
