@@ -22,7 +22,7 @@ export const PUBLIC_PRERENDER_ROUTES = [
     locale: 'ja',
     canonicalPath: '/entry-schedule',
   },
-  { path: 'en', file: 'en/index.html', expectHeading: 'Make Agriculture Smarter', locale: 'en', canonicalPath: '/en' },
+  { path: 'en', file: 'en/index.html', expectHeading: 'Make Agriculture Smarter', locale: 'en', canonicalPath: '/en/' },
   { path: 'en/about', file: 'en/about/index.html', expectHeading: 'About AGRR', locale: 'en', canonicalPath: '/en/about' },
   {
     path: 'en/contact',
