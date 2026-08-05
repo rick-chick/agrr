@@ -62,6 +62,9 @@ describe('AppSeoMetaService', () => {
 
   afterEach(() => {
     setWindowPath('/');
+    document.head.querySelectorAll('script[type="application/ld+json"]').forEach((script) => {
+      script.remove();
+    });
   });
 
   it('sets document title and description from default meta keys on home', () => {
@@ -124,6 +127,43 @@ describe('AppSeoMetaService', () => {
     expect(organization).toMatchObject({
       name: 'AGRR',
       email: 'support@agrr.net'
+    });
+  });
+
+  it('replaces static index.html JSON-LD with a single runtime script on refreshDefaultMeta', () => {
+    setWindowPath('/');
+    const staticScript = document.createElement('script');
+    staticScript.type = 'application/ld+json';
+    staticScript.text = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [{ '@type': 'Organization', name: 'AGRR', url: 'https://agrr.net/' }]
+    });
+    document.head.appendChild(staticScript);
+
+    service.refreshDefaultMeta();
+
+    const scripts = document.head.querySelectorAll('script[type="application/ld+json"]');
+    expect(scripts.length).toBe(1);
+    const structured = JSON.parse(scripts[0]?.textContent ?? '{}');
+    const graph = structured['@graph'] as Array<Record<string, unknown>>;
+    expect(graph.map((node) => node['@type'])).toEqual([
+      'Organization',
+      'WebSite',
+      'SoftwareApplication'
+    ]);
+    const organization = graph.find((node) => node['@type'] === 'Organization');
+    const website = graph.find((node) => node['@type'] === 'WebSite');
+    const software = graph.find((node) => node['@type'] === 'SoftwareApplication');
+    expect(organization).toMatchObject({ name: 'AGRR', url: `${TEST_ORIGIN}/` });
+    expect(website).toMatchObject({
+      name: 'AGRR',
+      url: `${TEST_ORIGIN}/`,
+      description: 'OG説明'
+    });
+    expect(software).toMatchObject({
+      name: 'AGRR',
+      url: `${TEST_ORIGIN}/`,
+      description: 'OG説明'
     });
   });
 

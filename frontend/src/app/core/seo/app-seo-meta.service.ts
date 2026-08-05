@@ -104,7 +104,7 @@ export class AppSeoMetaService {
     if (typeof document === 'undefined') {
       return;
     }
-    this.detachJsonLd();
+    this.removeAllJsonLdScripts();
     if (
       !isResolvedTranslation(siteTitle, `${keyPrefix}.`) ||
       !isResolvedTranslation(siteDescription, `${keyPrefix}.`)
@@ -127,13 +127,13 @@ export class AppSeoMetaService {
     this.jsonLdScript = script;
   }
 
-  private detachJsonLd(): void {
+  private removeAllJsonLdScripts(): void {
     if (typeof document === 'undefined') {
       return;
     }
-    if (this.jsonLdScript?.parentNode) {
-      this.jsonLdScript.parentNode.removeChild(this.jsonLdScript);
-    }
+    document.head.querySelectorAll('script[type="application/ld+json"]').forEach((script) => {
+      script.remove();
+    });
     this.jsonLdScript = null;
   }
 }
