@@ -17,6 +17,7 @@ pub mod field_cultivation;
 pub mod fertilize;
 pub mod interaction_rule;
 pub mod pest;
+pub mod organization;
 pub mod pesticide;
 pub mod public_plan;
 pub mod shared;
