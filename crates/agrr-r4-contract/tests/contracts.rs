@@ -21,6 +21,7 @@ use support::{
     ensure_farm_create_capacity_via_api, poll_farm_weather_completed,
     seed_weather_cache_for_farm_create_completion,
     seed_user_organization,
+    seed_organization_membership,
 };
 
 #[test]
@@ -2460,5 +2461,227 @@ fn get_organizations_cross_user_denied() {
     let path = format!("/api/v1/organizations/{}", seed.organization_id);
 
     let (status, body) = status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn get_organization_memberships_lists_members() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Membership List Org {suffix}"),
+        &format!("membership-list-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+
+    let path = format!("/api/v1/organizations/{}/memberships", seed.organization_id);
+    let (status, body) =
+        status_and_body(client.get(&path, Some(&owner_session), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let memberships: Vec<serde_json::Value> =
+        serde_json::from_str(&body).expect("memberships list JSON");
+    assert!(
+        memberships.iter().any(|m| m["user_id"].as_i64() == Some(owner_id)),
+        "owner membership missing: {body}"
+    );
+    assert!(
+        memberships.iter().any(|m| m["user_id"].as_i64() == Some(member_id)),
+        "member membership missing: {body}"
+    );
+}
+
+#[test]
+fn post_organization_memberships_adds_member() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let invitee_session = researcher_session_id(&client);
+    let invitee_id = user_id_for_session(&client, &invitee_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Membership Add Org {suffix}"),
+        &format!("membership-add-org-{suffix}"),
+        false,
+    );
+
+    let path = format!("/api/v1/organizations/{}/memberships", seed.organization_id);
+    let payload = serde_json::json!({
+        "membership": { "user_id": invitee_id, "role": "admin" }
+    });
+    let (status, body) = status_and_body(
+        client.post(&path, Some(&owner_session), &empty_headers(), Some(payload)),
+    );
+    assert_eq!(201, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("create membership JSON");
+    assert_eq!(invitee_id, json["user_id"].as_i64().unwrap());
+    assert_eq!("admin", json["role"].as_str().unwrap());
+}
+
+#[test]
+fn patch_organization_memberships_updates_role() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Membership Patch Org {suffix}"),
+        &format!("membership-patch-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+
+    let path = format!(
+        "/api/v1/organizations/{}/memberships/{}",
+        seed.organization_id,
+        member_id
+    );
+    let payload = serde_json::json!({ "membership": { "role": "admin" } });
+    let (status, body) = status_and_body(
+        client.patch(&path, Some(&owner_session), &empty_headers(), Some(payload)),
+    );
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("update membership JSON");
+    assert_eq!("admin", json["role"].as_str().unwrap());
+}
+
+#[test]
+fn delete_organization_memberships_removes_member() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Membership Delete Org {suffix}"),
+        &format!("membership-delete-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+
+    let path = format!(
+        "/api/v1/organizations/{}/memberships/{}",
+        seed.organization_id,
+        member_id
+    );
+    let (status, body) =
+        status_and_body(client.delete(&path, Some(&owner_session), &empty_headers()));
+    assert_eq!(204, status, "{body}");
+
+    let list_path = format!("/api/v1/organizations/{}/memberships", seed.organization_id);
+    let (list_status, list_body) =
+        status_and_body(client.get(&list_path, Some(&owner_session), &empty_headers()));
+    assert_eq!(200, list_status, "{list_body}");
+    let memberships: Vec<serde_json::Value> =
+        serde_json::from_str(&list_body).expect("memberships after delete JSON");
+    assert!(
+        !memberships.iter().any(|m| m["user_id"].as_i64() == Some(member_id)),
+        "member should be removed: {list_body}"
+    );
+}
+
+#[test]
+fn post_organization_memberships_member_role_forbidden() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let invitee_session = researcher_session_id(&client);
+    let invitee_id = user_id_for_session(&client, &invitee_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Membership Member Forbidden {suffix}"),
+        &format!("membership-member-forbidden-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+
+    let path = format!("/api/v1/organizations/{}/memberships", seed.organization_id);
+    let payload = serde_json::json!({
+        "membership": { "user_id": invitee_id, "role": "member" }
+    });
+    let (status, body) = status_and_body(
+        client.post(&path, Some(&member_session), &empty_headers(), Some(payload)),
+    );
+    assert_eq!(403, status, "{body}");
+}
+
+#[test]
+fn delete_organization_memberships_admin_cannot_remove_owner() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let admin_session = farmer_session_id(&client);
+    let admin_id = user_id_for_session(&client, &admin_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Membership Admin Owner {suffix}"),
+        &format!("membership-admin-owner-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, admin_id, "admin");
+
+    let path = format!(
+        "/api/v1/organizations/{}/memberships/{}",
+        seed.organization_id,
+        owner_id
+    );
+    let (status, body) =
+        status_and_body(client.delete(&path, Some(&admin_session), &empty_headers()));
+    assert_eq!(403, status, "{body}");
+}
+
+#[test]
+fn get_organization_memberships_cross_user_denied() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let other_session = researcher_session_id(&client);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Membership Private {suffix}"),
+        &format!("membership-private-{suffix}"),
+        false,
+    );
+    let path = format!("/api/v1/organizations/{}/memberships", seed.organization_id);
+
+    let (status, body) =
+        status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
     assert_cross_user_access_denied(status, &body);
 }

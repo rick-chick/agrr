@@ -2,10 +2,18 @@ mod organization_create_interactor;
 mod organization_delete_interactor;
 mod organization_find_interactor;
 mod organization_list_interactor;
+mod organization_membership_create_interactor;
+mod organization_membership_delete_interactor;
+mod organization_membership_list_interactor;
+mod organization_membership_update_interactor;
 mod organization_update_interactor;
 
 pub use organization_create_interactor::OrganizationCreateInteractor;
 pub use organization_delete_interactor::OrganizationDeleteInteractor;
 pub use organization_find_interactor::OrganizationFindInteractor;
 pub use organization_list_interactor::OrganizationListInteractor;
+pub use organization_membership_create_interactor::OrganizationMembershipCreateInteractor;
+pub use organization_membership_delete_interactor::OrganizationMembershipDeleteInteractor;
+pub use organization_membership_list_interactor::OrganizationMembershipListInteractor;
+pub use organization_membership_update_interactor::OrganizationMembershipUpdateInteractor;
 pub use organization_update_interactor::OrganizationUpdateInteractor;

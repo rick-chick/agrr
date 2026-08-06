@@ -1211,6 +1211,17 @@ pub fn seed_user_organization(user_id: i64, name: &str, slug: &str, is_personal:
     }
 }
 
+/// Adds a membership row for contract tests (org must already exist).
+pub fn seed_organization_membership(organization_id: i64, user_id: i64, role: &str) {
+    let conn = contract_sqlite_conn();
+    conn.execute(
+        "INSERT INTO organization_memberships (organization_id, user_id, role, created_at, updated_at)
+         VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+        params![organization_id, user_id, role],
+    )
+    .expect("insert organization membership");
+}
+
 pub fn scheduler_auth_headers() -> HashMap<String, String> {
     let token = std::env::var("SCHEDULER_AUTH_TOKEN")
         .unwrap_or_else(|_| "test_scheduler_token_contract".into());

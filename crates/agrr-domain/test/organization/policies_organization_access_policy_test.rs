@@ -3,8 +3,9 @@
 use crate::organization::dtos::OrganizationRole;
 use crate::organization::entities::OrganizationMembershipEntity;
 use crate::organization::policies::{
-    delete_organization_allowed, manage_members_allowed, member_access_allowed,
-    resource_access_allowed, system_admin_access, update_organization_allowed,
+    create_membership_allowed, delete_organization_allowed, manage_members_allowed,
+    manage_target_member_allowed, member_access_allowed, resource_access_allowed,
+    system_admin_access, update_member_role_allowed, update_organization_allowed,
 };
 use crate::shared::user::User;
 
@@ -61,4 +62,38 @@ fn delete_organization_allowed_for_owner_of_non_personal_only() {
     assert!(!delete_organization_allowed(OrganizationRole::Owner, true));
     assert!(!delete_organization_allowed(OrganizationRole::Admin, false));
     assert!(!delete_organization_allowed(OrganizationRole::Member, false));
+}
+
+#[test]
+fn manage_target_member_owner_requires_owner_actor() {
+    assert!(manage_target_member_allowed(OrganizationRole::Owner, OrganizationRole::Owner));
+    assert!(!manage_target_member_allowed(OrganizationRole::Admin, OrganizationRole::Owner));
+    assert!(manage_target_member_allowed(OrganizationRole::Admin, OrganizationRole::Member));
+}
+
+#[test]
+fn create_membership_allowed_owner_role_requires_owner_actor() {
+    assert!(create_membership_allowed(OrganizationRole::Owner, OrganizationRole::Member));
+    assert!(create_membership_allowed(OrganizationRole::Owner, OrganizationRole::Owner));
+    assert!(!create_membership_allowed(OrganizationRole::Admin, OrganizationRole::Owner));
+    assert!(!create_membership_allowed(OrganizationRole::Member, OrganizationRole::Admin));
+}
+
+#[test]
+fn update_member_role_allowed_admin_cannot_touch_owner() {
+    assert!(update_member_role_allowed(
+        OrganizationRole::Owner,
+        OrganizationRole::Member,
+        OrganizationRole::Admin,
+    ));
+    assert!(!update_member_role_allowed(
+        OrganizationRole::Admin,
+        OrganizationRole::Owner,
+        OrganizationRole::Admin,
+    ));
+    assert!(!update_member_role_allowed(
+        OrganizationRole::Admin,
+        OrganizationRole::Member,
+        OrganizationRole::Owner,
+    ));
 }

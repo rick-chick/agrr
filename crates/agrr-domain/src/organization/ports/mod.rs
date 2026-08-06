@@ -2,10 +2,18 @@ mod organization_create_output_port;
 mod organization_delete_output_port;
 mod organization_find_output_port;
 mod organization_list_output_port;
+mod organization_membership_create_output_port;
+mod organization_membership_delete_output_port;
+mod organization_membership_list_output_port;
+mod organization_membership_update_output_port;
 mod organization_update_output_port;
 
 pub use organization_create_output_port::{CreateFailure, OrganizationCreateOutputPort};
 pub use organization_delete_output_port::OrganizationDeleteOutputPort;
 pub use organization_find_output_port::OrganizationFindOutputPort;
 pub use organization_list_output_port::OrganizationListOutputPort;
+pub use organization_membership_create_output_port::OrganizationMembershipCreateOutputPort;
+pub use organization_membership_delete_output_port::OrganizationMembershipDeleteOutputPort;
+pub use organization_membership_list_output_port::OrganizationMembershipListOutputPort;
+pub use organization_membership_update_output_port::OrganizationMembershipUpdateOutputPort;
 pub use organization_update_output_port::{OrganizationUpdateOutputPort, UpdateFailure};
