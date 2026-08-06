@@ -45,7 +45,8 @@ where
         crop_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
+        let org_ids = crate::shared::org_scope::member_organization_ids(self.scope_gateway, user.id)?;
+        let access_filter = crop_policy::record_access_filter(user, org_ids);
 
         let crop_detail = match self.gateway.find_crop_show_detail(crop_id) {
             Ok(detail) => detail,

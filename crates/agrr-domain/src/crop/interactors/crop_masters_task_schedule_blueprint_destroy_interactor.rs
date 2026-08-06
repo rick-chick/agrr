@@ -45,7 +45,8 @@ where
         input: MastersCropTaskScheduleBlueprintDestroyInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(input.user_id);
-        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
+        let org_ids = crate::shared::org_scope::member_organization_ids(self.scope_gateway, user.id)?;
+        let access_filter = crop_policy::record_access_filter(user, org_ids);
         let crop_entity = match self.crop_gateway.find_by_id(input.crop_id) {
             Ok(e) => e,
             Err(e) if e.downcast_ref::<RecordNotFoundError>().is_some() => {

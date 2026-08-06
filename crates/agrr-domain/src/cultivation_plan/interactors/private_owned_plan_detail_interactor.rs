@@ -78,7 +78,8 @@ where
             return Err(Box::new(RecordNotFoundError));
         }
 
-        let filter = crop_policy::index_list_filter_for_user(self.scope_gateway, &user)?;
+        let org_ids = crate::shared::org_scope::member_organization_ids(self.scope_gateway, user.id)?;
+        let filter = crop_policy::index_list_filter(&user, &org_ids);
         let mut palette_crop_entities = self.crop_gateway.list_index_for_filter(&filter)?;
         palette_crop_entities.sort_by(|a, b| a.name.cmp(&b.name));
 

@@ -28,7 +28,8 @@ where
 
     pub fn call(&mut self, input: CropLoadAuthorizedInput) -> Result<Option<AuthorizedCropLoaded>, Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
+        let org_ids = crate::shared::org_scope::member_organization_ids(self.scope_gateway, user.id)?;
+        let access_filter = crop_policy::record_access_filter(user, org_ids);
         let crop_entity = match self.gateway.find_by_id(input.crop_id) {
             Ok(e) => e,
             Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {

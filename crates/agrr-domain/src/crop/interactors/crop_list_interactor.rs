@@ -41,7 +41,8 @@ where
 
     pub fn call(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let filter = crop_policy::index_list_filter_for_user(self.scope_gateway, &user)?;
+        let org_ids = crate::shared::org_scope::member_organization_ids(self.scope_gateway, user.id)?;
+        let filter = crop_policy::index_list_filter(&user, &org_ids);
         match self.gateway.list_index_for_filter(&filter) {
             Ok(crops) => {
                 let rows = map_records(&user, crops);

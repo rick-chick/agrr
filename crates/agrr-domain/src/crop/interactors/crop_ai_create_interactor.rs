@@ -87,7 +87,8 @@ where
             }
         };
 
-        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
+        let org_ids = crate::shared::org_scope::member_organization_ids(self.scope_gateway, user.id)?;
+        let access_filter = crop_policy::record_access_filter(user, org_ids);
         match self.persistence.upsert(&user, cn, v, crop_info, access_filter) {
             Ok(output) => {
                 self.logger.info(&format!("✅ [AI Crop] Saved crop#{}", output.crop.id));
