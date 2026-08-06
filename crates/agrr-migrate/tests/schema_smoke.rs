@@ -120,7 +120,7 @@ fn schema_run_preserves_indexes_and_drops_predicted_weather_data() {
 }
 
 #[test]
-fn schema_run_includes_v15_organizations_tables_and_tier1_organization_id() {
+fn schema_run_includes_v16_organizations_tables_and_tier1_organization_id() {
     let dir = tempdir().unwrap();
     let primary = dir.path().join("primary.sqlite3");
     let cache = dir.path().join("cache.sqlite3");
@@ -204,8 +204,8 @@ fn schema_run_includes_v15_organizations_tables_and_tier1_organization_id() {
     }
 
     assert!(
-        schema::embedded_primary_latest_version() >= 15,
-        "embedded primary schema should be at least v15"
+        schema::embedded_primary_latest_version() >= 16,
+        "embedded primary schema should be at least v16"
     );
 }
 
