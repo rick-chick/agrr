@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-08-05)
+Accepted (2026-08-06)
 
 親エピック: [#604](https://github.com/rick-chick/agrr/issues/604)（Organization モデル — B2B 法人・チーム共有の土台）。
 
