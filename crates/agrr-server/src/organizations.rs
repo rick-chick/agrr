@@ -7,24 +7,31 @@ use agrr_adapters_sqlite::{
 };
 use agrr_domain::organization::dtos::{
     OrganizationCreateInput, OrganizationDeleteFailure, OrganizationFindFailure,
-    OrganizationListFailure, OrganizationUpdateInput,
+    OrganizationListFailure, OrganizationMembershipCreateFailure,
+    OrganizationMembershipCreateInput, OrganizationMembershipDeleteFailure,
+    OrganizationMembershipListFailure, OrganizationMembershipUpdateFailure,
+    OrganizationMembershipUpdateInput, OrganizationRole, OrganizationUpdateInput,
 };
-use agrr_domain::organization::entities::OrganizationEntity;
+use agrr_domain::organization::entities::{OrganizationEntity, OrganizationMembershipEntity};
 use agrr_domain::organization::interactors::{
     OrganizationCreateInteractor, OrganizationDeleteInteractor, OrganizationFindInteractor,
-    OrganizationListInteractor, OrganizationUpdateInteractor,
+    OrganizationListInteractor, OrganizationMembershipCreateInteractor,
+    OrganizationMembershipDeleteInteractor, OrganizationMembershipListInteractor,
+    OrganizationMembershipUpdateInteractor, OrganizationUpdateInteractor,
 };
 use agrr_domain::organization::ports::{
     CreateFailure, OrganizationCreateOutputPort, OrganizationDeleteOutputPort,
-    OrganizationFindOutputPort, OrganizationListOutputPort, OrganizationUpdateOutputPort,
-    UpdateFailure,
+    OrganizationFindOutputPort, OrganizationListOutputPort,
+    OrganizationMembershipCreateOutputPort, OrganizationMembershipDeleteOutputPort,
+    OrganizationMembershipListOutputPort, OrganizationMembershipUpdateOutputPort,
+    OrganizationUpdateOutputPort, UpdateFailure,
 };
 use agrr_domain::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    routing::get,
+    routing::{get, patch},
     Json, Router,
 };
 use axum_extra::extract::cookie::CookieJar;
@@ -42,6 +49,14 @@ pub fn routes() -> Router<AppState> {
             get(show_organization)
                 .patch(update_organization)
                 .delete(delete_organization),
+        )
+        .route(
+            "/api/v1/organizations/{id}/memberships",
+            get(list_memberships).post(create_membership),
+        )
+        .route(
+            "/api/v1/organizations/{id}/memberships/{user_id}",
+            patch(update_membership).delete(delete_membership),
         )
 }
 
@@ -65,6 +80,32 @@ fn organization_to_json(entity: &OrganizationEntity) -> Value {
         "created_at": entity.created_at,
         "updated_at": entity.updated_at,
     })
+}
+
+fn membership_to_json(entity: &OrganizationMembershipEntity) -> Value {
+    json!({
+        "id": entity.id,
+        "organization_id": entity.organization_id,
+        "user_id": entity.user_id,
+        "role": entity.role.as_str(),
+        "created_at": entity.created_at,
+        "updated_at": entity.updated_at,
+    })
+}
+
+#[derive(Deserialize)]
+struct MembershipBody {
+    membership: MembershipAttrs,
+}
+
+#[derive(Deserialize)]
+struct MembershipAttrs {
+    user_id: Option<i64>,
+    role: Option<String>,
+}
+
+fn parse_role(value: &str) -> Option<OrganizationRole> {
+    OrganizationRole::parse(value.trim())
 }
 
 async fn list_organizations(
@@ -214,6 +255,159 @@ async fn delete_organization(
     }
 }
 
+async fn list_memberships(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(id): Path<i64>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let user_id = session_user_id(&state, &jar)?;
+    let pool = state.sqlite.clone();
+    let gateway = OrganizationSqliteGateway::new(pool.clone());
+    let membership_gateway = OrganizationMembershipSqliteGateway::new(pool.clone());
+    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let mut presenter = MembershipListPresenter { body: None };
+    let mut interactor = OrganizationMembershipListInteractor::new(
+        &mut presenter,
+        &gateway,
+        &membership_gateway,
+        &user_lookup,
+        user_id,
+        id,
+    );
+    interactor.call().map_err(internal)?;
+
+    match presenter.body {
+        Some(Ok(memberships)) => Ok(Json(json!(
+            memberships.iter().map(membership_to_json).collect::<Vec<_>>()
+        ))),
+        Some(Err((status, body))) => Err((status, Json(body))),
+        None => Err(internal_error()),
+    }
+}
+
+async fn create_membership(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(id): Path<i64>,
+    Json(payload): Json<MembershipBody>,
+) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
+    let target_user_id = payload.membership.user_id.unwrap_or(0);
+    let role_str = payload.membership.role.unwrap_or_default();
+    if target_user_id <= 0 {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"error": "user_id is required"})),
+        ));
+    }
+    let role = if role_str.trim().is_empty() {
+        OrganizationRole::Member
+    } else {
+        match parse_role(&role_str) {
+            Some(r) => r,
+            None => {
+                return Err((
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({"error": "invalid role"})),
+                ));
+            }
+        }
+    };
+    let user_id = session_user_id(&state, &jar)?;
+    let pool = state.sqlite.clone();
+    let gateway = OrganizationSqliteGateway::new(pool.clone());
+    let membership_gateway = OrganizationMembershipSqliteGateway::new(pool.clone());
+    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let mut presenter = MembershipCreatePresenter { body: None };
+    let mut interactor = OrganizationMembershipCreateInteractor::new(
+        &mut presenter,
+        &gateway,
+        &membership_gateway,
+        &user_lookup,
+        user_id,
+        id,
+    );
+    let input = OrganizationMembershipCreateInput {
+        user_id: target_user_id,
+        role,
+    };
+    interactor.call(input).map_err(internal)?;
+
+    match presenter.body {
+        Some(Ok(entity)) => Ok((StatusCode::CREATED, Json(membership_to_json(&entity)))),
+        Some(Err((status, body))) => Err((status, Json(body))),
+        None => Err(internal_error()),
+    }
+}
+
+async fn update_membership(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path((id, target_user_id)): Path<(i64, i64)>,
+    Json(payload): Json<MembershipBody>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let role_str = payload
+        .membership
+        .role
+        .unwrap_or_default();
+    let role = match parse_role(&role_str) {
+        Some(r) => r,
+        None => {
+            return Err((
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(json!({"error": "invalid role"})),
+            ));
+        }
+    };
+    let user_id = session_user_id(&state, &jar)?;
+    let pool = state.sqlite.clone();
+    let membership_gateway = OrganizationMembershipSqliteGateway::new(pool.clone());
+    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let mut presenter = MembershipUpdatePresenter { body: None };
+    let mut interactor = OrganizationMembershipUpdateInteractor::new(
+        &mut presenter,
+        &membership_gateway,
+        &user_lookup,
+        user_id,
+        id,
+        target_user_id,
+    );
+    let input = OrganizationMembershipUpdateInput { role };
+    interactor.call(input).map_err(internal)?;
+
+    match presenter.body {
+        Some(Ok(entity)) => Ok(Json(membership_to_json(&entity))),
+        Some(Err((status, body))) => Err((status, Json(body))),
+        None => Err(internal_error()),
+    }
+}
+
+async fn delete_membership(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path((id, target_user_id)): Path<(i64, i64)>,
+) -> Result<impl IntoResponse, (StatusCode, Json<Value>)> {
+    let user_id = session_user_id(&state, &jar)?;
+    let pool = state.sqlite.clone();
+    let membership_gateway = OrganizationMembershipSqliteGateway::new(pool.clone());
+    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let mut presenter = MembershipDeletePresenter { body: None };
+    let mut interactor = OrganizationMembershipDeleteInteractor::new(
+        &mut presenter,
+        &membership_gateway,
+        &user_lookup,
+        user_id,
+        id,
+        target_user_id,
+    );
+    interactor.call().map_err(internal)?;
+
+    match presenter.body {
+        Some(Ok(())) => Ok(StatusCode::NO_CONTENT),
+        Some(Err((status, body))) => Err((status, Json(body))),
+        None => Err(internal_error()),
+    }
+}
+
 fn session_user_id(state: &AppState, jar: &CookieJar) -> Result<i64, (StatusCode, Json<Value>)> {
     user_id_from_session(state, jar).map_err(|status| {
         (
@@ -290,6 +484,62 @@ impl OrganizationDeleteOutputPort for DeletePresenter {
 
     fn on_failure(&mut self, failure: OrganizationDeleteFailure) {
         self.body = Some(Err(delete_failure(failure)));
+    }
+}
+
+struct MembershipListPresenter {
+    body: Option<Result<Vec<OrganizationMembershipEntity>, (StatusCode, Value)>>,
+}
+
+impl OrganizationMembershipListOutputPort for MembershipListPresenter {
+    fn on_success(&mut self, memberships: Vec<OrganizationMembershipEntity>) {
+        self.body = Some(Ok(memberships));
+    }
+
+    fn on_failure(&mut self, failure: OrganizationMembershipListFailure) {
+        self.body = Some(Err(membership_list_failure(failure)));
+    }
+}
+
+struct MembershipCreatePresenter {
+    body: Option<Result<OrganizationMembershipEntity, (StatusCode, Value)>>,
+}
+
+impl OrganizationMembershipCreateOutputPort for MembershipCreatePresenter {
+    fn on_success(&mut self, membership: OrganizationMembershipEntity) {
+        self.body = Some(Ok(membership));
+    }
+
+    fn on_failure(&mut self, failure: OrganizationMembershipCreateFailure) {
+        self.body = Some(Err(membership_create_failure(failure)));
+    }
+}
+
+struct MembershipUpdatePresenter {
+    body: Option<Result<OrganizationMembershipEntity, (StatusCode, Value)>>,
+}
+
+impl OrganizationMembershipUpdateOutputPort for MembershipUpdatePresenter {
+    fn on_success(&mut self, membership: OrganizationMembershipEntity) {
+        self.body = Some(Ok(membership));
+    }
+
+    fn on_failure(&mut self, failure: OrganizationMembershipUpdateFailure) {
+        self.body = Some(Err(membership_update_failure(failure)));
+    }
+}
+
+struct MembershipDeletePresenter {
+    body: Option<Result<(), (StatusCode, Value)>>,
+}
+
+impl OrganizationMembershipDeleteOutputPort for MembershipDeletePresenter {
+    fn on_success(&mut self) {
+        self.body = Some(Ok(()));
+    }
+
+    fn on_failure(&mut self, failure: OrganizationMembershipDeleteFailure) {
+        self.body = Some(Err(membership_delete_failure(failure)));
     }
 }
 
@@ -379,6 +629,86 @@ fn delete_failure(error: OrganizationDeleteFailure) -> (StatusCode, Value) {
             json!({"error": "organizations.flash.no_permission"}),
         ),
         OrganizationDeleteFailure::Error(e) => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({"error": e.message}),
+        ),
+    }
+}
+
+fn membership_list_failure(error: OrganizationMembershipListFailure) -> (StatusCode, Value) {
+    match error {
+        OrganizationMembershipListFailure::NotFound => (
+            StatusCode::NOT_FOUND,
+            json!({"error": "organization not found"}),
+        ),
+        OrganizationMembershipListFailure::Policy(PolicyPermissionDenied) => (
+            StatusCode::FORBIDDEN,
+            json!({"error": "organizations.flash.no_permission"}),
+        ),
+        OrganizationMembershipListFailure::Error(e) => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({"error": e.message}),
+        ),
+    }
+}
+
+fn membership_create_failure(error: OrganizationMembershipCreateFailure) -> (StatusCode, Value) {
+    match error {
+        OrganizationMembershipCreateFailure::AlreadyMember => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({"error": "organizations.memberships.already_member"}),
+        ),
+        OrganizationMembershipCreateFailure::NotFound => (
+            StatusCode::NOT_FOUND,
+            json!({"error": "user or organization not found"}),
+        ),
+        OrganizationMembershipCreateFailure::Policy(PolicyPermissionDenied) => (
+            StatusCode::FORBIDDEN,
+            json!({"error": "organizations.flash.no_permission"}),
+        ),
+        OrganizationMembershipCreateFailure::Error(e) => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({"error": e.message}),
+        ),
+    }
+}
+
+fn membership_update_failure(error: OrganizationMembershipUpdateFailure) -> (StatusCode, Value) {
+    match error {
+        OrganizationMembershipUpdateFailure::LastOwnerForbidden => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({"error": "organizations.memberships.last_owner_forbidden"}),
+        ),
+        OrganizationMembershipUpdateFailure::NotFound => (
+            StatusCode::NOT_FOUND,
+            json!({"error": "membership not found"}),
+        ),
+        OrganizationMembershipUpdateFailure::Policy(PolicyPermissionDenied) => (
+            StatusCode::FORBIDDEN,
+            json!({"error": "organizations.flash.no_permission"}),
+        ),
+        OrganizationMembershipUpdateFailure::Error(e) => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({"error": e.message}),
+        ),
+    }
+}
+
+fn membership_delete_failure(error: OrganizationMembershipDeleteFailure) -> (StatusCode, Value) {
+    match error {
+        OrganizationMembershipDeleteFailure::LastOwnerForbidden => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({"error": "organizations.memberships.last_owner_forbidden"}),
+        ),
+        OrganizationMembershipDeleteFailure::NotFound => (
+            StatusCode::NOT_FOUND,
+            json!({"error": "membership not found"}),
+        ),
+        OrganizationMembershipDeleteFailure::Policy(PolicyPermissionDenied) => (
+            StatusCode::FORBIDDEN,
+            json!({"error": "organizations.flash.no_permission"}),
+        ),
+        OrganizationMembershipDeleteFailure::Error(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
             json!({"error": e.message}),
         ),

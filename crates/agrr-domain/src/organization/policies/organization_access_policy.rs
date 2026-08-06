@@ -39,6 +39,44 @@ pub fn manage_members_allowed(role: OrganizationRole) -> bool {
     matches!(role, OrganizationRole::Owner | OrganizationRole::Admin)
 }
 
+/// Actor may manage a membership row with `target_role` (remove or role change).
+/// `owner` memberships require an `owner` actor; `admin` cannot touch `owner` rows.
+pub fn manage_target_member_allowed(
+    actor_role: OrganizationRole,
+    target_role: OrganizationRole,
+) -> bool {
+    if target_role == OrganizationRole::Owner {
+        return actor_role == OrganizationRole::Owner;
+    }
+    manage_members_allowed(actor_role)
+}
+
+/// Actor may create a membership with `new_role`.
+pub fn create_membership_allowed(actor_role: OrganizationRole, new_role: OrganizationRole) -> bool {
+    if !manage_members_allowed(actor_role) {
+        return false;
+    }
+    if new_role == OrganizationRole::Owner {
+        return actor_role == OrganizationRole::Owner;
+    }
+    true
+}
+
+/// Actor may change `target_current_role` to `new_role`.
+pub fn update_member_role_allowed(
+    actor_role: OrganizationRole,
+    target_current_role: OrganizationRole,
+    new_role: OrganizationRole,
+) -> bool {
+    if !manage_target_member_allowed(actor_role, target_current_role) {
+        return false;
+    }
+    if new_role == OrganizationRole::Owner && actor_role != OrganizationRole::Owner {
+        return false;
+    }
+    true
+}
+
 /// Only `owner` may update org settings; `member` is read-only for org metadata.
 pub fn update_organization_allowed(role: OrganizationRole) -> bool {
     matches!(role, OrganizationRole::Owner | OrganizationRole::Admin)
