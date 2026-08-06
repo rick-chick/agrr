@@ -218,6 +218,22 @@ fn delete_user_account_data(conn: &Connection, user_id: i64) -> Result<(), rusql
         "DELETE FROM deletion_undo_events WHERE deleted_by_id = ?1",
         params![user_id],
     )?;
+
+    let personal_org_ids: Vec<i64> = collect_ids(
+        conn,
+        "SELECT o.id FROM organizations o \
+         INNER JOIN organization_memberships om ON om.organization_id = o.id \
+         WHERE om.user_id = ?1 AND COALESCE(o.is_personal, 0) = 1",
+        params![user_id],
+    )?;
+    conn.execute(
+        "DELETE FROM organization_memberships WHERE user_id = ?1",
+        params![user_id],
+    )?;
+    for org_id in personal_org_ids {
+        conn.execute("DELETE FROM organizations WHERE id = ?1", params![org_id])?;
+    }
+
     conn.execute("DELETE FROM sessions WHERE user_id = ?1", params![user_id])?;
     conn.execute("DELETE FROM users WHERE id = ?1", params![user_id])?;
     Ok(())
@@ -417,6 +433,17 @@ mod tests {
             CREATE TABLE IF NOT EXISTS interaction_rules (id INTEGER PRIMARY KEY, user_id INTEGER, is_reference INTEGER DEFAULT 0);
             CREATE TABLE IF NOT EXISTS deletion_undo_events (id TEXT PRIMARY KEY, deleted_by_id INTEGER);
             CREATE TABLE IF NOT EXISTS sessions (id INTEGER PRIMARY KEY, user_id INTEGER, session_id TEXT);
+            CREATE TABLE IF NOT EXISTS organizations (
+              id INTEGER PRIMARY KEY, name TEXT, slug TEXT, is_personal INTEGER DEFAULT 0,
+              created_at TEXT, updated_at TEXT
+            );
+            CREATE TABLE IF NOT EXISTS organization_memberships (
+              id INTEGER PRIMARY KEY, organization_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
+              role TEXT NOT NULL, created_at TEXT, updated_at TEXT,
+              FOREIGN KEY (organization_id) REFERENCES organizations (id),
+              FOREIGN KEY (user_id) REFERENCES users (id)
+            );
+            PRAGMA foreign_keys = ON;
         "#,
         )
         .unwrap();
@@ -501,6 +528,23 @@ mod tests {
         assert_eq!(keys, vec!["work_record_photos/1/1/photo.jpg".to_string()]);
     }
 
+    fn seed_personal_organization(conn: &Connection, user_id: i64) -> i64 {
+        conn.execute(
+            "INSERT INTO organizations (name, slug, is_personal, created_at, updated_at) \
+             VALUES ('Personal', 'personal-user', 1, '2026-01-01', '2026-01-01')",
+            [],
+        )
+        .unwrap();
+        let org_id = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO organization_memberships (organization_id, user_id, role, created_at, updated_at) \
+             VALUES (?1, ?2, 'owner', '2026-01-01', '2026-01-01')",
+            params![org_id, user_id],
+        )
+        .unwrap();
+        org_id
+    }
+
     #[test]
     fn delete_account_removes_user_data_and_sessions() {
         let path = test_db_path("delete");
@@ -525,5 +569,28 @@ mod tests {
             .with_read(|c| c.query_row("SELECT COUNT(*) FROM sessions", [], |r| r.get(0)))
             .unwrap();
         assert_eq!(session_count, 0);
+    }
+
+    #[test]
+    fn delete_account_removes_personal_organization() {
+        let path = test_db_path("delete_personal_org");
+        let conn = Connection::open(&path).unwrap();
+        in_memory_schema(&conn);
+        let user_id = seed(&conn);
+        let org_id = seed_personal_organization(&conn, user_id);
+        drop(conn);
+
+        let gateway = UserAccountSqliteGateway::new(SqlitePool::new(&path));
+        gateway.delete_account(user_id).unwrap();
+
+        let pool = SqlitePool::new(&path);
+        let org_count: i64 = pool
+            .with_read(|c| c.query_row("SELECT COUNT(*) FROM organizations WHERE id = ?1", params![org_id], |r| r.get(0)))
+            .unwrap();
+        assert_eq!(org_count, 0);
+        let membership_count: i64 = pool
+            .with_read(|c| c.query_row("SELECT COUNT(*) FROM organization_memberships WHERE user_id = ?1", params![user_id], |r| r.get(0)))
+            .unwrap();
+        assert_eq!(membership_count, 0);
     }
 }
