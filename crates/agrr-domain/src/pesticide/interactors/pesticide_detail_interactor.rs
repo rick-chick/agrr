@@ -41,7 +41,7 @@ where
         pesticide_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = pesticide_policy::record_access_filter(user);
+        let access_filter = pesticide_policy::record_access_filter(user, vec![]);
 
         let dto = match self.gateway.find_pesticide_show_detail(pesticide_id) {
             Ok(d) => d,

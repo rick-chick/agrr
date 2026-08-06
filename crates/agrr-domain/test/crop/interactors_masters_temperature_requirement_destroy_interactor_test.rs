@@ -1,5 +1,15 @@
 // Tests for `interactors/masters_temperature_requirement_destroy_interactor.rs` (Ruby parity under test/domain/crop/).
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct CropGw {
         not_found: bool,
     }
@@ -21,6 +31,14 @@
         fn find_crop_show_detail(&self, _: i64) -> Result<crate::crop::dtos::CropShowDetail, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn find_crop_record_with_stages(&self, _: i64) -> Result<crate::crop::entities::CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn count_user_owned_non_reference_crops(&self, _: i64) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(&self, _: &crate::shared::user::User, _: crate::shared::attr::AttrMap) -> Result<crate::crop::entities::CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn update_for_user(&self, _: &crate::shared::user::User, _: i64, _: crate::shared::attr::AttrMap) -> Result<crate::crop::entities::CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn find_delete_usage(&self, _: i64) -> Result<crate::crop::dtos::CropDeleteUsage, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }

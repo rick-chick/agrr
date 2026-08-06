@@ -1,6 +1,16 @@
 // Tests for `interactors/crop_load_user_non_reference_for_masters_interactor.rs` (Ruby parity under test/domain/crop/).
 
     use crate::shared::user::User;
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct L(User); impl UserLookupGateway for L { fn find(&self, _: i64) -> User { self.0 } }
     struct O { ok: bool, nf: bool }
     impl CropLoadUserNonReferenceForMastersOutputPort for O {
@@ -8,7 +18,7 @@
         fn on_not_found(&mut self) { self.nf = true; }
     }
     fn c(uid: i64) -> CropEntity {
-        CropEntity { id: 42, user_id: Some(uid), name: "C".into(), variety: None, is_reference: false, area_per_unit: None, revenue_per_area: None, region: None, groups: vec![], created_at: None, updated_at: None }
+        CropEntity { id: 42, user_id: Some(uid), organization_id: None, name: "C".into(), variety: None, is_reference: false, area_per_unit: None, revenue_per_area: None, region: None, groups: vec![], created_at: None, updated_at: None }
     }
     struct G { crop: CropEntity, missing: bool }
     impl CropGateway for G {
@@ -28,6 +38,14 @@
         fn find_crop_show_detail(&self, _: i64) -> Result<crate::crop::dtos::CropShowDetail, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn find_crop_record_with_stages(&self, _: i64) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn count_user_owned_non_reference_crops(&self, _: i64) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(&self, _: &User, _: crate::shared::attr::AttrMap) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn update_for_user(&self, _: &User, _: i64, _: crate::shared::attr::AttrMap) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn find_delete_usage(&self, _: i64) -> Result<crate::crop::dtos::CropDeleteUsage, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }

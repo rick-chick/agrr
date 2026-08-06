@@ -7,6 +7,16 @@
     use crate::shared::user::User;
     use serde_json::json;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct SpyOutput {
         success: Option<CropAiCreateOutput>,
         failure: Option<CropAiCreateFailure>,
@@ -95,6 +105,7 @@
             &NoopLogger,
             &NoopQuery,
             &NoopPersistence,
+            &EmptyScopeGateway,
         );
         i.call("トマト", None).unwrap();
         assert!(out.success.is_none());
@@ -123,6 +134,7 @@
             &NoopLogger,
             &NoopQuery,
             &NoopPersistence,
+            &EmptyScopeGateway,
         );
         i.call("  ", None).unwrap();
         assert!(out.success.is_none());

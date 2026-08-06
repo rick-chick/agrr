@@ -2,6 +2,16 @@
 
     use time::macros::date;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     #[test]
     fn maps_crop_stages_into_context() {
         let source = FieldCultivationClimateSourceSnapshot {

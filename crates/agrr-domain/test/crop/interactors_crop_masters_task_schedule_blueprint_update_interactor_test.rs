@@ -12,6 +12,16 @@ use crate::shared::user::User;
 use rust_decimal::Decimal;
 use serde_json::json;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 struct StubLookup(User);
 
 impl UserLookupGateway for StubLookup {
@@ -39,7 +49,8 @@ fn crop() -> CropEntity {
     CropEntity {
         id: 2,
         user_id: Some(1),
-        name: "Foo".into(),
+        organization_id: None,
+name: "Foo".into(),
         variety: None,
         is_reference: false,
         area_per_unit: None,
@@ -370,7 +381,16 @@ impl CropGateway for SuccessCropGw {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
+
+    fn count_non_reference_crops_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(0)
+    }
+
 }
+
 
 #[test]
 fn update_fails_when_merged_attributes_duplicate_another_blueprint() {
@@ -390,6 +410,7 @@ fn update_fails_when_merged_attributes_duplicate_another_blueprint() {
         &SuccessCropGw,
         &blueprint_gateway,
         &user_lookup,
+            &EmptyScopeGateway,
     );
     interactor
         .call(MastersCropTaskScheduleBlueprintUpdateInput {
@@ -424,6 +445,7 @@ fn update_succeeds_when_gdd_remains_unique_within_stage() {
         &SuccessCropGw,
         &blueprint_gateway,
         &user_lookup,
+            &EmptyScopeGateway,
     );
     interactor
         .call(MastersCropTaskScheduleBlueprintUpdateInput {

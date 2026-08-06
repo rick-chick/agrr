@@ -1,4 +1,6 @@
 use crate::shared::attr::AttrMap;
+use crate::shared::gateways::UserOrganizationScopeGateway;
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::policies::referencable_resource_policy::{
     normalize_referencable_attrs_for_create, normalize_referencable_attrs_for_update,
 };
@@ -24,8 +26,23 @@ impl RecordAccessPolicy for CropRecordAccessPolicy {
     }
 }
 
-pub fn record_access_filter(user: User) -> ReferenceRecordAccessFilter<CropRecordAccessPolicy> {
-    ReferenceRecordAccessFilter::new(user)
+pub fn record_access_filter(
+    user: User,
+    member_organization_ids: Vec<i64>,
+) -> ReferenceRecordAccessFilter<CropRecordAccessPolicy> {
+    ReferenceRecordAccessFilter::new(user, member_organization_ids)
+}
+
+pub fn record_access_filter_for_user<G: UserOrganizationScopeGateway>(
+    scope_gateway: &G,
+    user: User,
+) -> Result<ReferenceRecordAccessFilter<CropRecordAccessPolicy>, Box<dyn std::error::Error + Send + Sync>>
+{
+    let user_id = user.id;
+    Ok(record_access_filter(
+        user,
+        member_organization_ids(scope_gateway, user_id)?,
+    ))
 }
 
 /// Ruby: `Domain::Shared::Policies::CropPolicy`
@@ -37,13 +54,23 @@ pub fn edit_allowed(user: &User, is_reference: bool, record_user_id: Option<i64>
     user.admin || (!is_reference && record_user_id == Some(user.id))
 }
 
-pub fn index_list_filter(user: &User) -> ReferenceIndexListFilter {
+pub fn index_list_filter(user: &User, member_organization_ids: &[i64]) -> ReferenceIndexListFilter {
     let mode = if user.admin {
         ReferenceIndexListMode::ReferenceOrOwned
     } else {
         ReferenceIndexListMode::OwnedNonReference
     };
-    ReferenceIndexListFilter::new(mode, user.id)
+    ReferenceIndexListFilter::new(mode, user.id, member_organization_ids.to_vec())
+}
+
+pub fn index_list_filter_for_user<G: UserOrganizationScopeGateway>(
+    scope_gateway: &G,
+    user: &User,
+) -> Result<ReferenceIndexListFilter, Box<dyn std::error::Error + Send + Sync>> {
+    Ok(index_list_filter(
+        user,
+        &member_organization_ids(scope_gateway, user.id)?,
+    ))
 }
 
 pub fn normalize_attrs_for_create(user: &User, attrs: AttrMap) -> AttrMap {

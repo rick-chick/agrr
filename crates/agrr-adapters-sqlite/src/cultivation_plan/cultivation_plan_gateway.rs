@@ -194,7 +194,7 @@ impl PrivatePlanExistingPlanGateway for CultivationPlanSqliteGateway {
     ) -> Result<Option<CultivationPlanEntity>, Box<dyn std::error::Error + Send + Sync>> {
         self.pool.with_read_box(|conn| {
             let mut stmt = conn.prepare(
-                "SELECT cp.id, cp.farm_id, COALESCE(cp.user_id, 0), COALESCE(cp.total_area, 0), \
+                "SELECT cp.id, cp.farm_id, COALESCE(cp.user_id, 0), cp.organization_id, COALESCE(cp.total_area, 0), \
                  cp.plan_type, cp.plan_year, cp.plan_name, cp.planning_start_date, cp.planning_end_date, \
                  cp.status, cp.session_id, \
                  (SELECT COUNT(*) FROM cultivation_plan_crops cpc WHERE cpc.cultivation_plan_id = cp.id), \
@@ -209,21 +209,22 @@ impl PrivatePlanExistingPlanGateway for CultivationPlanSqliteGateway {
                         id: row.get(0)?,
                         farm_id: row.get(1)?,
                         user_id: row.get(2)?,
-                        total_area: row.get(3)?,
-                        plan_type: row.get(4)?,
-                        plan_year: row.get(5)?,
-                        plan_name: row.get(6)?,
-                        planning_start_date: row.get(7)?,
-                        planning_end_date: row.get(8)?,
-                        status: row.get(9)?,
-                        session_id: row.get(10)?,
+                        organization_id: row.get(3)?,
+                        total_area: row.get(4)?,
+                        plan_type: row.get(5)?,
+                        plan_year: row.get(6)?,
+                        plan_name: row.get(7)?,
+                        planning_start_date: row.get(8)?,
+                        planning_end_date: row.get(9)?,
+                        status: row.get(10)?,
+                        session_id: row.get(11)?,
                         display_name: None,
                         optimization_phase: None,
                         optimization_phase_message: None,
-                        cultivation_plan_crops_count: row.get(11)?,
-                        cultivation_plan_fields_count: row.get(12)?,
-                        created_at: row.get(13)?,
-                        updated_at: row.get(14)?,
+                        cultivation_plan_crops_count: row.get(12)?,
+                        cultivation_plan_fields_count: row.get(13)?,
+                        created_at: row.get(14)?,
+                        updated_at: row.get(15)?,
                     })
                 })
                 .optional()?;
@@ -234,7 +235,7 @@ impl PrivatePlanExistingPlanGateway for CultivationPlanSqliteGateway {
 
 fn load_plan_entity(conn: &rusqlite::Connection, plan_id: i64) -> rusqlite::Result<CultivationPlanEntity> {
     let mut stmt = conn.prepare(
-        "SELECT cp.id, cp.farm_id, COALESCE(cp.user_id, 0), COALESCE(cp.total_area, 0), \
+        "SELECT cp.id, cp.farm_id, COALESCE(cp.user_id, 0), cp.organization_id, COALESCE(cp.total_area, 0), \
          cp.plan_type, cp.plan_year, cp.plan_name, cp.planning_start_date, cp.planning_end_date, \
          cp.status, cp.session_id, cp.optimization_phase, cp.optimization_phase_message, \
          (SELECT COUNT(*) FROM cultivation_plan_crops cpc WHERE cpc.cultivation_plan_id = cp.id), \
@@ -247,21 +248,22 @@ fn load_plan_entity(conn: &rusqlite::Connection, plan_id: i64) -> rusqlite::Resu
             id: row.get(0)?,
             farm_id: row.get(1)?,
             user_id: row.get(2)?,
-            total_area: row.get(3)?,
-            plan_type: row.get(4)?,
-            plan_year: row.get(5)?,
-            plan_name: row.get(6)?,
-            planning_start_date: row.get(7)?,
-            planning_end_date: row.get(8)?,
-            status: row.get(9)?,
-            session_id: row.get(10)?,
+            organization_id: row.get(3)?,
+            total_area: row.get(4)?,
+            plan_type: row.get(5)?,
+            plan_year: row.get(6)?,
+            plan_name: row.get(7)?,
+            planning_start_date: row.get(8)?,
+            planning_end_date: row.get(9)?,
+            status: row.get(10)?,
+            session_id: row.get(11)?,
             display_name: None,
-            optimization_phase: row.get(11)?,
-            optimization_phase_message: row.get(12)?,
-            cultivation_plan_crops_count: row.get(13)?,
-            cultivation_plan_fields_count: row.get(14)?,
-            created_at: row.get(15)?,
-            updated_at: row.get(16)?,
+            optimization_phase: row.get(12)?,
+            optimization_phase_message: row.get(13)?,
+            cultivation_plan_crops_count: row.get(14)?,
+            cultivation_plan_fields_count: row.get(15)?,
+            created_at: row.get(16)?,
+            updated_at: row.get(17)?,
         })
     })
 }

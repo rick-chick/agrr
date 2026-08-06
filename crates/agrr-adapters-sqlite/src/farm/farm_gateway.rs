@@ -89,7 +89,7 @@ fn parse_unix_timestamp_from_text(text: &str) -> Option<f64> {
 }
 
 fn map_farm_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<FarmEntity> {
-    let is_reference: i64 = row.get(6)?;
+    let is_reference: i64 = row.get(7)?;
     Ok(FarmEntity {
         id: row.get(0)?,
         name: row.get(1)?,
@@ -97,21 +97,35 @@ fn map_farm_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<FarmEntity> {
         longitude: row.get(3)?,
         region: row.get(4)?,
         user_id: row.get(5)?,
-        created_at: row.get(7)?,
-        updated_at: row.get(8)?,
+        organization_id: row.get(6)?,
+        created_at: row.get(8)?,
+        updated_at: row.get(9)?,
         is_reference: is_reference != 0,
-        weather_data_status: row.get(9)?,
-        weather_data_fetched_years: row.get(10)?,
-        weather_data_total_years: row.get(11)?,
-        weather_data_last_error: row.get(12)?,
-        weather_location_id: row.get(13)?,
-        last_broadcast_at: optional_unix_timestamp_from_row(row, 14)?,
+        weather_data_status: row.get(10)?,
+        weather_data_fetched_years: row.get(11)?,
+        weather_data_total_years: row.get(12)?,
+        weather_data_last_error: row.get(13)?,
+        weather_location_id: row.get(14)?,
+        last_broadcast_at: optional_unix_timestamp_from_row(row, 15)?,
     })
 }
 
-const FARM_SELECT: &str = "SELECT id, name, latitude, longitude, region, user_id, is_reference, created_at, updated_at, \
+const FARM_SELECT: &str = "SELECT id, name, latitude, longitude, region, user_id, organization_id, is_reference, created_at, updated_at, \
     weather_data_status, weather_data_fetched_years, weather_data_total_years, weather_data_last_error, \
     weather_location_id, last_broadcast_at FROM farms";
+
+fn org_in_clause(org_ids: &[i64], start_index: usize) -> (String, Vec<i64>) {
+    if org_ids.is_empty() {
+        return (String::new(), vec![]);
+    }
+    let placeholders: Vec<String> = (start_index..start_index + org_ids.len())
+        .map(|i| format!("?{i}"))
+        .collect();
+    (
+        format!("organization_id IN ({})", placeholders.join(", ")),
+        org_ids.to_vec(),
+    )
+}
 
 impl FarmGateway for FarmSqliteGateway {
     fn list_user_owned_farms(
@@ -280,6 +294,70 @@ impl FarmGateway for FarmSqliteGateway {
         })
     }
 
+    fn count_non_reference_farms_for_organization(
+        &self,
+        organization_id: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_read_box(|conn| {
+            let count: i64 = conn.query_row(
+                "SELECT COUNT(*) FROM farms WHERE organization_id = ?1 AND is_reference = 0",
+                params![organization_id],
+                |row| row.get(0),
+            )?;
+            Ok(count as i32)
+        })
+    }
+
+    fn list_organization_scoped_farms(
+        &self,
+        organization_ids: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        if organization_ids.is_empty() {
+            return Ok(vec![]);
+        }
+        let (org_sql, params) = org_in_clause(organization_ids, 1);
+        let sql = format!(
+            "{FARM_SELECT} WHERE is_reference = 0 AND ({org_sql}) ORDER BY name"
+        );
+        self.pool.with_read_box(|conn| {
+            let mut stmt = conn.prepare(&sql)?;
+            let rows = stmt.query_map(rusqlite::params_from_iter(params.iter()), map_farm_row)?;
+            let mut out = Vec::new();
+            for row in rows {
+                out.push(row?);
+            }
+            Ok(out)
+        })
+    }
+
+    fn list_organization_scoped_and_reference_farms(
+        &self,
+        organization_ids: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        let sql = if organization_ids.is_empty() {
+            format!("{FARM_SELECT} WHERE is_reference = 1 ORDER BY name")
+        } else {
+            let (org_sql, _) = org_in_clause(organization_ids, 1);
+            format!(
+                "{FARM_SELECT} WHERE is_reference = 1 OR ({org_sql}) ORDER BY name"
+            )
+        };
+        self.pool.with_read_box(|conn| {
+            let mut stmt = conn.prepare(&sql)?;
+            let rows = if organization_ids.is_empty() {
+                stmt.query_map([], map_farm_row)?
+            } else {
+                let (_, params) = org_in_clause(organization_ids, 1);
+                stmt.query_map(rusqlite::params_from_iter(params.iter()), map_farm_row)?
+            };
+            let mut out = Vec::new();
+            for row in rows {
+                out.push(row?);
+            }
+            Ok(out)
+        })
+    }
+
     fn create_for_user(
         &self,
         user: &User,
@@ -296,14 +374,16 @@ impl FarmGateway for FarmSqliteGateway {
                 _ => None,
             })
             .unwrap_or(false);
+        let organization_id = attrs.get("organization_id").and_then(attr_as_i64);
 
         let new_id = self.pool.with_write_box(|conn| {
             conn.execute(
-                "INSERT INTO farms (user_id, name, latitude, longitude, region, is_reference, \
+                "INSERT INTO farms (user_id, organization_id, name, latitude, longitude, region, is_reference, \
                  weather_data_status, weather_data_fetched_years, weather_data_total_years, created_at, updated_at) \
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'pending', 0, 0, datetime('now'), datetime('now'))",
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'pending', 0, 0, datetime('now'), datetime('now'))",
                 params![
                     user.id,
+                    organization_id,
                     name,
                     latitude,
                     longitude,

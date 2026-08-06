@@ -10,6 +10,16 @@
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubTranslator;
     impl TranslatorPort for StubTranslator {
         fn translate(&self, key: &str, _: &TranslateOptions) -> String {
@@ -100,7 +110,8 @@
             id: 1,
             farm_id: 1,
             user_id: 1,
-            total_area: 100.0,
+        organization_id: None,
+total_area: 100.0,
             plan_type: "public".into(),
             plan_year: None,
             plan_name: None,

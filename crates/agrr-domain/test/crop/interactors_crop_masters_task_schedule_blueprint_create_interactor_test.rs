@@ -18,6 +18,16 @@ use crate::shared::gateways::UserLookupGateway;
 use crate::shared::user::User;
 use rust_decimal::Decimal;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 struct StubLookup(User);
 
 impl UserLookupGateway for StubLookup {
@@ -45,7 +55,8 @@ fn crop() -> CropEntity {
     CropEntity {
         id: 2,
         user_id: Some(1),
-        name: "Foo".into(),
+        organization_id: None,
+name: "Foo".into(),
         variety: None,
         is_reference: false,
         area_per_unit: None,
@@ -365,7 +376,16 @@ impl CropGateway for SuccessGw {
 
 
 
+
+    fn count_non_reference_crops_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(0)
+    }
+
 }
+
 
 struct FoundAgriculturalTaskGw;
 
@@ -680,6 +700,7 @@ fn should_create_blueprint_successfully_when_agricultural_task_exists_and_input_
         &FoundAgriculturalTaskGw,
         &SuccessBlueprintGw,
         &user_lookup,
+            &EmptyScopeGateway,
     );
     interactor.call(valid_input()).unwrap();
     assert!(out.success);
@@ -699,6 +720,7 @@ fn should_create_blueprint_without_gdd_and_stage_when_omitted() {
         &FoundAgriculturalTaskGw,
         &SuccessBlueprintGw,
         &user_lookup,
+            &EmptyScopeGateway,
     );
     let mut input = valid_input();
     input.stage_order = None;
@@ -721,6 +743,7 @@ fn should_return_failure_when_agricultural_task_not_found() {
         &MissingAgriculturalTaskGw,
         &SuccessBlueprintGw,
         &user_lookup,
+            &EmptyScopeGateway,
     );
     interactor.call(valid_input()).unwrap();
     assert!(!out.success);
@@ -743,6 +766,7 @@ fn should_succeed_when_same_stage_and_task_but_different_gdd() {
         &FoundAgriculturalTaskGw,
         &DifferentGddBlueprintGw,
         &user_lookup,
+            &EmptyScopeGateway,
     );
     interactor.call(valid_input()).unwrap();
     assert!(out.success);
@@ -824,6 +848,7 @@ fn should_return_failure_when_duplicate_stage_order_task_and_gdd_exist() {
         &FoundAgriculturalTaskGw,
         &DuplicateBlueprintGw,
         &user_lookup,
+            &EmptyScopeGateway,
     );
     interactor.call(valid_input()).unwrap();
     assert!(!out.success);

@@ -2,6 +2,16 @@
 
     use crate::field_cultivation::dtos::ClimateCropEntity;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     fn crop(is_reference: bool, user_id: Option<i64>) -> ClimateCropEntity {
         ClimateCropEntity {
             id: 1,

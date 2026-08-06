@@ -5,29 +5,38 @@ use crate::crop::gateways::CropGateway;
 use crate::crop::ports::{CropDetailOutputPort, DetailFailure};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 use crate::shared::reference_record_authorization;
 
-pub struct CropDetailInteractor<'a, G, O, U> {
+pub struct CropDetailInteractor<'a, G, O, U, S> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, O, U> CropDetailInteractor<'a, G, O, U>
+impl<'a, G, O, U, S> CropDetailInteractor<'a, G, O, U, S>
 where
     G: CropGateway,
     O: CropDetailOutputPort,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
 {
-    pub fn new(output_port: &'a mut O, user_id: i64, gateway: &'a G, user_lookup: &'a U) -> Self {
+    pub fn new(
+        output_port: &'a mut O,
+        user_id: i64,
+        gateway: &'a G,
+        user_lookup: &'a U,
+        scope_gateway: &'a S,
+    ) -> Self {
         Self {
             output_port,
             gateway,
             user_id,
             user_lookup,
+            scope_gateway,
         }
     }
 
@@ -36,7 +45,7 @@ where
         crop_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = crop_policy::record_access_filter(user);
+        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
 
         let crop_detail = match self.gateway.find_crop_show_detail(crop_id) {
             Ok(detail) => detail,

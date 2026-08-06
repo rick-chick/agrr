@@ -70,14 +70,15 @@ impl PesticideGateway for PesticideSqliteGateway {
         &self,
         filter: &ReferenceIndexListFilter,
     ) -> Result<Vec<PesticideEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        let (where_sql, user_id) = where_clause(filter);
+        let clause = where_clause(filter);
         let sql = format!(
-            "SELECT {} FROM pesticides WHERE {where_sql} ORDER BY name",
-            Self::SELECT_COLS
+            "SELECT {} FROM pesticides WHERE {} ORDER BY name",
+            Self::SELECT_COLS,
+            clause.sql
         );
         self.pool.with_read_box(|conn| {
             let mut stmt = conn.prepare(&sql)?;
-            let rows = stmt.query_map(params![user_id], Self::row_to_entity)?;
+            let rows = stmt.query_map(rusqlite::params_from_iter(clause.params.iter()), Self::row_to_entity)?;
             let mut out = Vec::new();
             for row in rows {
                 out.push(row?);
@@ -276,16 +277,18 @@ impl PesticideGateway for PesticideSqliteGateway {
         crop_id: i64,
         filter: &ReferenceIndexListFilter,
     ) -> Result<Vec<PesticideEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        let (where_sql, user_id) = where_clause(filter);
-        // `where_sql` uses `?1` for user_id; crop_id already binds as `?1`.
-        let filter_sql = where_sql.replace("?1", "?2");
+        let clause = where_clause(filter);
+        let crop_param_index = clause.params.len() + 1;
         let sql = format!(
-            "SELECT {} FROM pesticides WHERE crop_id = ?1 AND {filter_sql} ORDER BY created_at DESC",
-            Self::SELECT_COLS
+            "SELECT {} FROM pesticides WHERE {} AND crop_id = ?{crop_param_index} ORDER BY created_at DESC",
+            Self::SELECT_COLS,
+            clause.sql
         );
+        let mut params = clause.params;
+        params.push(crop_id);
         self.pool.with_read_box(|conn| {
             let mut stmt = conn.prepare(&sql)?;
-            let rows = stmt.query_map(params![crop_id, user_id], Self::row_to_entity)?;
+            let rows = stmt.query_map(rusqlite::params_from_iter(params.iter()), Self::row_to_entity)?;
             let mut out = Vec::new();
             for row in rows {
                 out.push(row?);

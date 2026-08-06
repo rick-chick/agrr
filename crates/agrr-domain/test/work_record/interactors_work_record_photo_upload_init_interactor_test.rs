@@ -14,6 +14,16 @@ use std::sync::{Arc, Mutex};
 use time::macros::{date, datetime};
 use time::{Date, OffsetDateTime};
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 struct FakeClock {
     today_val: Date,
     now_val: OffsetDateTime,
@@ -271,7 +281,8 @@ fn owned_plan(user_id: i64) -> CultivationPlanEntity {
         id: 1,
         farm_id: 10,
         user_id,
-        total_area: 0.0,
+        organization_id: None,
+total_area: 0.0,
         plan_type: "private".into(),
         plan_year: None,
         plan_name: None,

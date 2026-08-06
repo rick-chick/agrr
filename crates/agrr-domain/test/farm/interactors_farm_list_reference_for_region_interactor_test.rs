@@ -10,6 +10,16 @@
     use crate::shared::exceptions::RecordInvalidError;
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct SpyOutput {
         success: Option<Vec<FarmEntity>>,
         failure: Option<Error>,
@@ -84,6 +94,28 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_farms_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
+        fn list_organization_scoped_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+
+        fn list_organization_scoped_and_reference_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -217,7 +249,30 @@
         > {
             unimplemented!()
         }
+    
+    fn count_non_reference_farms_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(0)
     }
+
+    fn list_organization_scoped_farms(
+        &self,
+        _: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+
+    fn list_organization_scoped_and_reference_farms(
+        &self,
+        _: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+
+}
+
 
     fn sample_farm(id: i64) -> FarmEntity {
         FarmEntity {
@@ -227,6 +282,7 @@
             longitude: None,
             region: Some("jp".into()),
             user_id: None,
+            organization_id: None,
             created_at: None,
             updated_at: None,
             is_reference: true,

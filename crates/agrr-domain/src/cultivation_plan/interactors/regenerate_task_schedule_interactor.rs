@@ -36,9 +36,8 @@ where
         input: RegenerateTaskScheduleInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if !task_schedule_private_plan_access::access_allowed(
-            self.plan_gateway,
-            input.plan_id,
-            input.user_id,
+            self.plan_gateway, input.plan_id, input.user_id,
+            &[],
         ) {
             self.output_port.on_not_found();
             return Ok(());

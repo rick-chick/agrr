@@ -11,34 +11,37 @@ use crate::crop::policies::{
 };
 use crate::crop::ports::CropMastersTaskScheduleBlueprintUpdateOutputPort;
 use crate::shared::exceptions::RecordNotFoundError;
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 
-pub struct CropMastersTaskScheduleBlueprintUpdateInteractor<'a, G, BG, O, U> {
+pub struct CropMastersTaskScheduleBlueprintUpdateInteractor<'a, G, BG, O, U, S> {
     output_port: &'a mut O,
     crop_gateway: &'a G,
     blueprint_gateway: &'a BG,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, BG, O, U> CropMastersTaskScheduleBlueprintUpdateInteractor<'a, G, BG, O, U>
+impl<'a, G, BG, O, U, S> CropMastersTaskScheduleBlueprintUpdateInteractor<'a, G, BG, O, U, S>
 where
     G: CropGateway,
     BG: CropMastersTaskScheduleBlueprintGateway,
     O: CropMastersTaskScheduleBlueprintUpdateOutputPort,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
         crop_gateway: &'a G,
         blueprint_gateway: &'a BG,
         user_lookup: &'a U,
-    ) -> Self {
+        scope_gateway: &'a S) -> Self {
         Self {
             output_port,
             crop_gateway,
             blueprint_gateway,
             user_lookup,
+            scope_gateway,
         }
     }
 
@@ -47,7 +50,7 @@ where
         input: MastersCropTaskScheduleBlueprintUpdateInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(input.user_id);
-        let access_filter = crop_policy::record_access_filter(user);
+        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
         let crop_entity = match self.crop_gateway.find_by_id(input.crop_id) {
             Ok(e) => e,
             Err(e) if e.downcast_ref::<RecordNotFoundError>().is_some() => {

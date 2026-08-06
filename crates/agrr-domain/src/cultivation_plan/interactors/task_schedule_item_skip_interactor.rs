@@ -41,7 +41,7 @@ where
         plan_id: i64,
         item_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !task_schedule_private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id) {
+        if !task_schedule_private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &[]) {
             self.output_port.on_not_found();
             return Ok(());
         }
@@ -59,7 +59,7 @@ where
         plan_id: i64,
         item_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !task_schedule_private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id) {
+        if !task_schedule_private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &[]) {
             self.output_port.on_not_found();
             return Ok(());
         }

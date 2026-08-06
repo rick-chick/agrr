@@ -6,6 +6,7 @@ pub mod interactors;
 pub mod hash;
 pub mod helpers;
 pub mod mappers;
+pub mod org_scope;
 pub mod policies;
 pub mod ports;
 pub mod record_ref;

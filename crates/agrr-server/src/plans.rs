@@ -8,6 +8,7 @@ use agrr_adapters_sqlite::{
     CropSqliteGateway, CultivationPlanFieldMutationSqliteGateway,
     CultivationPlanPrivateReadSqliteGateway, CultivationPlanPrivateSnapshotReadSqliteGateway,
     CultivationPlanSqliteGateway, FarmSqliteGateway, FieldSqliteGateway, UserLookupSqliteGateway,
+    UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::shared::gateways::UserLookupGateway;
 use agrr_domain::cultivation_plan::dtos::{
@@ -175,7 +176,8 @@ async fn show_plan(
     let snapshot_gateway = CultivationPlanPrivateSnapshotReadSqliteGateway::new(pool.clone());
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let crop_gateway = CropSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
     let logger = NoopLogger;
     let mut presenter = ShowPresenter { body: None };
@@ -189,6 +191,7 @@ async fn show_plan(
         &translator,
         &logger,
         &user_lookup,
+        &scope_gateway,
     );
     interactor.call_catch_all(id).map_err(|_| {
         (
@@ -450,7 +453,8 @@ async fn destroy_plan(
         .map_err(|status| (status, Json(json!({"error": "unauthorized"}))))?;
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let translator = state.locale_translator(&headers);
     let mut presenter = DestroyPresenter { body: None };
     let mut interactor = CultivationPlanDestroyInteractor::new(
@@ -459,6 +463,7 @@ async fn destroy_plan(
         &plan_gateway,
         &translator,
         &user_lookup,
+        &scope_gateway,
     );
     interactor.call(id).map_err(|e| {
         (

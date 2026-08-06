@@ -12,7 +12,7 @@ use agrr_adapters_agrr::{
 };
 use agrr_adapters_sqlite::{
     CropAiUpsertSqlitePersistence, CropSqliteGateway, FertilizeSqliteGateway, PestSqliteGateway,
-    UserLookupSqliteGateway,
+    UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::crop::dtos::{CropAiCreateFailure, CropAiCreateOutput, HttpStatus as CropHttpStatus};
 use agrr_domain::crop::interactors::crop_ai_create_interactor::CropAiCreateInteractor;
@@ -160,6 +160,7 @@ async fn crop_ai_create(
             UserLookupSqliteGateway::new(pool.clone()),
             PassthroughTranslator,
         );
+        let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
         let translator = PassthroughTranslator;
         let logger = NoopLogger;
         let mut presenter = CropAiPresenter {
@@ -174,6 +175,7 @@ async fn crop_ai_create(
             &logger,
             &crop_ai_query,
             &persistence,
+            &scope_gateway,
         );
         interactor
             .call(body.name.as_deref().unwrap_or(""), body.variety.as_deref())

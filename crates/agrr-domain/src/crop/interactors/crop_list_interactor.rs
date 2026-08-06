@@ -4,35 +4,44 @@ use crate::crop::gateways::CropGateway;
 use crate::crop::ports::{CropListOutputPort, ListFailure};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::mappers::referencable_list_row_mapper::map_records;
 use crate::shared::policies::crop_policy;
 
-pub struct CropListInteractor<'a, G, O, U> {
+pub struct CropListInteractor<'a, G, O, U, S> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, O, U> CropListInteractor<'a, G, O, U>
+impl<'a, G, O, U, S> CropListInteractor<'a, G, O, U, S>
 where
     G: CropGateway,
     O: CropListOutputPort,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
 {
-    pub fn new(output_port: &'a mut O, user_id: i64, gateway: &'a G, user_lookup: &'a U) -> Self {
+    pub fn new(
+        output_port: &'a mut O,
+        user_id: i64,
+        gateway: &'a G,
+        user_lookup: &'a U,
+        scope_gateway: &'a S,
+    ) -> Self {
         Self {
             output_port,
             gateway,
             user_id,
             user_lookup,
+            scope_gateway,
         }
     }
 
     pub fn call(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let filter = crop_policy::index_list_filter(&user);
+        let filter = crop_policy::index_list_filter_for_user(self.scope_gateway, &user)?;
         match self.gateway.list_index_for_filter(&filter) {
             Ok(crops) => {
                 let rows = map_records(&user, crops);

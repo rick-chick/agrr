@@ -11,11 +11,19 @@ pub fn referencable_user_id<R: RecordRef>(record: &R) -> Option<i64> {
     record.user_id()
 }
 
+pub fn referencable_organization_id<R: RecordRef>(record: &R) -> Option<i64> {
+    record.organization_id()
+}
+
 pub fn assert_view_allowed<P: RecordAccessPolicy, R: RecordRef>(
     access_filter: &ReferenceRecordAccessFilter<P>,
     record: &R,
 ) -> Result<(), PolicyPermissionDenied> {
-    if access_filter.view_allows(record.is_reference(), record.user_id()) {
+    if access_filter.view_allows(
+        record.is_reference(),
+        record.user_id(),
+        record.organization_id(),
+    ) {
         Ok(())
     } else {
         Err(PolicyPermissionDenied)
@@ -26,7 +34,11 @@ pub fn assert_edit_allowed<P: RecordAccessPolicy, R: RecordRef>(
     access_filter: &ReferenceRecordAccessFilter<P>,
     record: &R,
 ) -> Result<(), PolicyPermissionDenied> {
-    if access_filter.edit_allows(record.is_reference(), record.user_id()) {
+    if access_filter.edit_allows(
+        record.is_reference(),
+        record.user_id(),
+        record.organization_id(),
+    ) {
         Ok(())
     } else {
         Err(PolicyPermissionDenied)

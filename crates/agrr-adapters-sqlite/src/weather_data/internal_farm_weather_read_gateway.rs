@@ -104,6 +104,7 @@ fn farm_entity_progress(farm: &crate::shared::internal_api_farm_lookup::Internal
         longitude: farm.longitude,
         region: None,
         user_id: None,
+        organization_id: None,
         created_at: None,
         updated_at: None,
         is_reference: farm.is_reference,

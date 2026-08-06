@@ -5,7 +5,7 @@ use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
     FarmSqliteGateway, FarmTemperatureChartWeatherFromStorageGateway, UserLookupSqliteGateway,
-    WeatherDataGatewayBundle,
+    UserOrganizationScopeSqliteGateway, WeatherDataGatewayBundle,
 };
 use agrr_domain::farm::dtos::{
     FarmTemperatureChartInput, FarmTemperatureChartOutput, FarmTemperatureChartPoint,
@@ -48,7 +48,8 @@ async fn show_farm_temperature_chart(
     let weather_bundle = WeatherDataGatewayBundle::resolve(pool.clone())
         .map_err(|_| internal_error())?;
     let weather_gateway = FarmTemperatureChartWeatherFromStorageGateway::new(&weather_bundle);
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let clock = SystemClock;
 
     let mut presenter = TemperatureChartPresenter { body: None };
@@ -59,6 +60,7 @@ async fn show_farm_temperature_chart(
         &weather_gateway,
         &clock,
         &user_lookup,
+        &scope_gateway,
     );
 
     interactor

@@ -6,7 +6,7 @@ use crate::crop::ports::{CropUpdateOutputPort, UpdateFailure};
 use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
 use crate::shared::dtos::{Error, ReferenceFlagChangeDeniedFailure};
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 use crate::shared::policies::referencable_resource_policy::{
     reference_flag_change_allowed, reference_record_user_id_valid,
@@ -15,28 +15,30 @@ use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use crate::shared::reference_record_authorization;
 use crate::shared::type_converters::cast_boolean_attr;
 
-pub struct CropUpdateInteractor<'a, G, O, U, T> {
+pub struct CropUpdateInteractor<'a, G, O, U, T, S> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     translator: &'a T,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, O, U, T> CropUpdateInteractor<'a, G, O, U, T>
+impl<'a, G, O, U, T, S> CropUpdateInteractor<'a, G, O, U, T, S>
 where
     G: CropGateway,
     O: CropUpdateOutputPort,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
     T: TranslatorPort,
 {
-    pub fn new(output_port: &'a mut O, user_id: i64, gateway: &'a G, translator: &'a T, user_lookup: &'a U) -> Self {
-        Self { output_port, gateway, user_id, translator, user_lookup }
+    pub fn new(output_port: &'a mut O, user_id: i64, gateway: &'a G, translator: &'a T, user_lookup: &'a U, scope_gateway: &'a S) -> Self {
+        Self { output_port, gateway, user_id, translator, user_lookup, scope_gateway }
     }
 
     pub fn call(&mut self, input: CropUpdateInput) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = crop_policy::record_access_filter(user);
+        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
         let opts = TranslateOptions::default();
 
         let current = match self.gateway.find_by_id(input.crop_id) {

@@ -4,6 +4,16 @@
     use crate::crop::entities::CropStageEntity;
     use crate::shared::exceptions::RecordInvalidError;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct SpyOutput {
         success: Option<CropStageListOutput>,
         failure: Option<CropStageReorderFailure>,
@@ -78,6 +88,14 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(
             &self,
             _: &crate::shared::user::User,

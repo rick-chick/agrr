@@ -4,6 +4,16 @@
     use crate::cultivation_plan::entities::CultivationPlanEntity;
     use std::sync::{Arc, Mutex};
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct FakeLogger;
     impl LoggerPort for FakeLogger {
         fn info(&self, _: &str) {}
@@ -35,7 +45,8 @@
                 id,
                 farm_id: 1,
                 user_id: 0,
-                total_area: 100.0,
+        organization_id: None,
+total_area: 100.0,
                 plan_type: "public".into(),
                 plan_year: None,
                 plan_name: None,

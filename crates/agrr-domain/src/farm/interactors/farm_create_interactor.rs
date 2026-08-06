@@ -5,16 +5,18 @@ use crate::farm::entities::FarmEntity;
 use crate::farm::gateways::FarmGateway;
 use crate::farm::policies::{FarmCoordinateNormalizationPolicy, FarmCreateLimitPolicy};
 use crate::farm::ports::{CreateFailure, FarmCreateOutputPort};
+use crate::organization::gateways::PersonalOrganizationGateway;
 use crate::shared::attr::{attr_map_from_pairs, AttrValue};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::policies::farm_policy;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use crate::shared::ports::ClockPort;
 use crate::weather_data::gateways::StartFarmWeatherDataFetchPort;
 
-pub struct FarmCreateInteractor<'a, G, O, U, T, W, C> {
+pub struct FarmCreateInteractor<'a, G, O, U, T, W, C, S, P> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
@@ -22,9 +24,11 @@ pub struct FarmCreateInteractor<'a, G, O, U, T, W, C> {
     user_lookup: &'a U,
     start_weather_fetch: &'a W,
     clock: &'a C,
+    scope_gateway: &'a S,
+    personal_org_gateway: &'a P,
 }
 
-impl<'a, G, O, U, T, W, C> FarmCreateInteractor<'a, G, O, U, T, W, C>
+impl<'a, G, O, U, T, W, C, S, P> FarmCreateInteractor<'a, G, O, U, T, W, C, S, P>
 where
     G: FarmGateway,
     O: FarmCreateOutputPort,
@@ -32,6 +36,8 @@ where
     T: TranslatorPort,
     W: StartFarmWeatherDataFetchPort,
     C: ClockPort,
+    S: UserOrganizationScopeGateway,
+    P: PersonalOrganizationGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -41,6 +47,8 @@ where
         user_lookup: &'a U,
         start_weather_fetch: &'a W,
         clock: &'a C,
+        scope_gateway: &'a S,
+        personal_org_gateway: &'a P,
     ) -> Self {
         Self {
             output_port,
@@ -50,6 +58,8 @@ where
             user_lookup,
             start_weather_fetch,
             clock,
+            scope_gateway,
+            personal_org_gateway,
         }
     }
 
@@ -58,6 +68,13 @@ where
         input: FarmCreateInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
+        let org_ids = member_organization_ids(self.scope_gateway, user.id)?;
+        let organization_id = if let Some(&id) = org_ids.first() {
+            id
+        } else {
+            self.personal_org_gateway
+                .ensure_personal_organization(user.id, "", "")?
+        };
         let mut attrs = farm_policy::normalize_attrs_for_create(
             &user,
             attr_map_from_pairs([
@@ -79,6 +96,7 @@ where
                     optional_float_attr(input.longitude),
                 ),
             ]),
+            organization_id,
         );
 
         if let Some(AttrValue::Str(lon)) = attrs.get("longitude").cloned() {
@@ -101,7 +119,9 @@ where
             );
         }
 
-        let existing_count = self.gateway.count_user_owned_non_reference_farms(user.id)?;
+        let existing_count = self
+            .gateway
+            .count_non_reference_farms_for_organization(organization_id)?;
         if FarmCreateLimitPolicy::limit_exceeded(existing_count) {
             let opts = TranslateOptions::default();
             let message = self.translator.t(

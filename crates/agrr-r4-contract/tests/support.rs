@@ -1257,6 +1257,32 @@ pub fn seed_user_farm_without_organization(user_id: i64) -> i64 {
     conn.last_insert_rowid()
 }
 
+/// Seeds a farm scoped to an organization for org-member authorization contract tests.
+pub fn seed_org_scoped_farm(organization_id: i64, user_id: i64) -> i64 {
+    let conn = contract_sqlite_conn();
+    let suffix = seed_suffix();
+    conn.execute(
+        "INSERT INTO farms (user_id, organization_id, name, latitude, longitude, region, created_at, updated_at, is_reference)
+         VALUES (?1, ?2, ?3, 35.0, 139.0, 'jp', datetime('now'), datetime('now'), 0)",
+        params![user_id, organization_id, format!("Org Scoped Farm {suffix}")],
+    )
+    .expect("insert org-scoped farm");
+    conn.last_insert_rowid()
+}
+
+/// Seeds a crop scoped to an organization for org-member authorization contract tests.
+pub fn seed_org_scoped_crop(organization_id: i64, user_id: i64) -> i64 {
+    let conn = contract_sqlite_conn();
+    let suffix = seed_suffix();
+    conn.execute(
+        "INSERT INTO crops (user_id, organization_id, name, variety, is_reference, created_at, updated_at)
+         VALUES (?1, ?2, ?3, 'V1', 0, datetime('now'), datetime('now'))",
+        params![user_id, organization_id, format!("Org Scoped Crop {suffix}")],
+    )
+    .expect("insert org-scoped crop");
+    conn.last_insert_rowid()
+}
+
 pub fn scheduler_auth_headers() -> HashMap<String, String> {
     let token = std::env::var("SCHEDULER_AUTH_TOKEN")
         .unwrap_or_else(|_| "test_scheduler_token_contract".into());

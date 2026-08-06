@@ -18,7 +18,7 @@ pub fn assert_field_edit_on_farm_allowed(
     user: &User,
     farm: &FarmRecord,
 ) -> Result<(), PolicyPermissionDenied> {
-    let access_filter = farm_policy::record_access_filter(*user);
+    let access_filter = farm_policy::record_access_filter(*user, vec![]);
     reference_record_authorization::assert_edit_allowed(&access_filter, farm)
 }
 

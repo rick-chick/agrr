@@ -8,26 +8,29 @@ use crate::shared::dtos::Error;
 use crate::shared::exceptions::{
     AssociationInUseError, RecordInvalidError, RecordNotFoundError,
 };
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::policies::farm_policy;
 use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use crate::shared::reference_record_authorization;
 
-pub struct FarmDestroyInteractor<'a, G, O, U, T> {
+pub struct FarmDestroyInteractor<'a, G, O, U, T, S> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     translator: &'a T,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, O, U, T> FarmDestroyInteractor<'a, G, O, U, T>
+impl<'a, G, O, U, T, S> FarmDestroyInteractor<'a, G, O, U, T, S>
 where
     G: FarmGateway,
     O: FarmDestroyOutputPort,
     U: UserLookupGateway,
     T: TranslatorPort,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -35,6 +38,7 @@ where
         gateway: &'a G,
         translator: &'a T,
         user_lookup: &'a U,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
@@ -42,6 +46,7 @@ where
             user_id,
             translator,
             user_lookup,
+            scope_gateway,
         }
     }
 
@@ -50,7 +55,8 @@ where
         farm_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = farm_policy::record_access_filter(user);
+        let org_ids = member_organization_ids(self.scope_gateway, user.id)?;
+        let access_filter = farm_policy::record_access_filter(user, org_ids);
         let opts = TranslateOptions::default();
 
         let farm_entity = match self.gateway.find_by_id(farm_id) {

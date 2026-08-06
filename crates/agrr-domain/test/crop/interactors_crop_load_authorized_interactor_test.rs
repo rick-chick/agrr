@@ -3,6 +3,16 @@
     use crate::crop::entities::CropEntity;
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup { fn find(&self, _: i64) -> User { self.0 } }
     struct NoFail;
@@ -16,7 +26,7 @@
         fn on_not_found(&mut self) { self.not_found.set(true); }
     }
     fn crop(user_id: i64) -> CropEntity {
-        CropEntity { id: 42, user_id: Some(user_id), name: "Foo".into(), variety: None, is_reference: false, area_per_unit: None, revenue_per_area: None, region: None, groups: vec![], created_at: None, updated_at: None }
+        CropEntity { id: 42, user_id: Some(user_id), organization_id: None, name: "Foo".into(), variety: None, is_reference: false, area_per_unit: None, revenue_per_area: None, region: None, groups: vec![], created_at: None, updated_at: None }
     }
     struct Gw(CropEntity);
     impl CropGateway for Gw {
@@ -33,6 +43,14 @@
         fn find_crop_show_detail(&self, _: i64) -> Result<crate::crop::dtos::CropShowDetail, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn find_crop_record_with_stages(&self, _: i64) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn count_user_owned_non_reference_crops(&self, _: i64) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(&self, _: &User, _: crate::shared::attr::AttrMap) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn update_for_user(&self, _: &User, _: i64, _: crate::shared::attr::AttrMap) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn find_delete_usage(&self, _: i64) -> Result<crate::crop::dtos::CropDeleteUsage, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
@@ -63,7 +81,7 @@
         let gw = Gw(entity.clone());
         let mut fp = NoFail;
         let lookup = StubLookup(User::new(1, false));
-        let mut i = CropLoadAuthorizedInteractor::new(&mut fp, 9, &gw, &lookup);
+        let mut i = CropLoadAuthorizedInteractor::new(&mut fp, 9, &gw, &lookup, &EmptyScopeGateway);
         let out = i.call(CropLoadAuthorizedInput::new(42, false)).unwrap().unwrap();
         assert_eq!(out.crop_entity, entity);
     }
@@ -74,7 +92,7 @@
         let gw = Gw(crop(99));
         let mut fp = DenyFail { denied: std::cell::Cell::new(false), not_found: std::cell::Cell::new(false) };
         let lookup = StubLookup(User::new(1, false));
-        let mut i = CropLoadAuthorizedInteractor::new(&mut fp, 9, &gw, &lookup);
+        let mut i = CropLoadAuthorizedInteractor::new(&mut fp, 9, &gw, &lookup, &EmptyScopeGateway);
         assert!(i.call(CropLoadAuthorizedInput::new(42, false)).unwrap().is_none());
         assert!(fp.denied.get());
     }
@@ -98,7 +116,15 @@
             fn find_crop_show_detail(&self, _: i64) -> Result<crate::crop::dtos::CropShowDetail, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
             fn find_crop_record_with_stages(&self, _: i64) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
             fn count_user_owned_non_reference_crops(&self, _: i64) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
-            fn create_for_user(&self, _: &User, _: crate::shared::attr::AttrMap) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
+    
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
+        fn create_for_user(&self, _: &User, _: crate::shared::attr::AttrMap) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
             fn update_for_user(&self, _: &User, _: i64, _: crate::shared::attr::AttrMap) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
             fn find_delete_usage(&self, _: i64) -> Result<crate::crop::dtos::CropDeleteUsage, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
             fn soft_delete_with_undo(&self, _: &User, _: i64, _: i64, _: &str) -> Result<crate::crop::gateways::SoftDeleteWithUndoOutcome, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
@@ -122,7 +148,7 @@
         }
         let mut fp = DenyFail { denied: std::cell::Cell::new(false), not_found: std::cell::Cell::new(false) };
         let lookup = StubLookup(User::new(1, false));
-        let mut i = CropLoadAuthorizedInteractor::new(&mut fp, 9, &MissingGw, &lookup);
+        let mut i = CropLoadAuthorizedInteractor::new(&mut fp, 9, &MissingGw, &lookup, &EmptyScopeGateway);
         assert!(i.call(CropLoadAuthorizedInput::new(42, false)).unwrap().is_none());
         assert!(fp.not_found.get());
     }

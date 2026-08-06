@@ -14,28 +14,31 @@ use crate::farm::policies::farm_temperature_chart_period_policy::{
 use crate::farm::ports::{FarmTemperatureChartOutputPort, TemperatureChartFailure};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::policies::farm_policy;
 use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::ClockPort;
 use crate::shared::reference_record_authorization;
 
-pub struct FarmTemperatureChartInteractor<'a, G, W, O, U, C> {
+pub struct FarmTemperatureChartInteractor<'a, G, W, O, U, C, S> {
     output_port: &'a mut O,
     farm_gateway: &'a G,
     weather_gateway: &'a W,
     clock: &'a C,
     user_id: i64,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, W, O, U, C> FarmTemperatureChartInteractor<'a, G, W, O, U, C>
+impl<'a, G, W, O, U, C, S> FarmTemperatureChartInteractor<'a, G, W, O, U, C, S>
 where
     G: FarmGateway,
     W: FarmTemperatureChartWeatherGateway,
     O: FarmTemperatureChartOutputPort,
     U: UserLookupGateway,
     C: ClockPort,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -44,6 +47,7 @@ where
         weather_gateway: &'a W,
         clock: &'a C,
         user_lookup: &'a U,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
@@ -52,6 +56,7 @@ where
             clock,
             user_id,
             user_lookup,
+            scope_gateway,
         }
     }
 
@@ -60,7 +65,8 @@ where
         input: FarmTemperatureChartInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = farm_policy::record_access_filter(user);
+        let org_ids = member_organization_ids(self.scope_gateway, user.id)?;
+        let access_filter = farm_policy::record_access_filter(user, org_ids);
 
         let farm_entity = match self.farm_gateway.find_by_id(input.farm_id) {
             Ok(entity) => entity,

@@ -13,6 +13,16 @@
     use time::macros::datetime;
     use time::OffsetDateTime;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct FakeClock {
         now_val: OffsetDateTime,
     }
@@ -218,7 +228,8 @@
             id: 2,
             farm_id: 1,
             user_id,
-            total_area: 0.0,
+        organization_id: None,
+total_area: 0.0,
             plan_type: "private".into(),
             plan_year: None,
             plan_name: None,
@@ -317,8 +328,7 @@
     fn dispatches_not_found_when_private_plan_access_denied() {
         let events = Arc::new(Mutex::new(Vec::new()));
         let mut output = SpyOutput {
-            events: Arc::clone(&events),
-            payload: Arc::new(Mutex::new(None)),
+            events: Arc::clone(&events), payload: Arc::new(Mutex::new(None)),
         };
         let gateway = StubMutationGateway {
             skip_payload: Value::Null,

@@ -9,7 +9,8 @@ use crate::farm::ports::{FarmUpdateOutputPort, UpdateFailure};
 use crate::shared::attr::{AttrMap, AttrValue};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::hash::present_attr;
 use crate::shared::policies::farm_policy;
 use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
@@ -19,7 +20,7 @@ use crate::shared::reference_record_authorization;
 use crate::shared::type_converters::cast_boolean_attr;
 use crate::weather_data::gateways::StartFarmWeatherDataFetchPort;
 
-pub struct FarmUpdateInteractor<'a, G, O, U, T, W, C> {
+pub struct FarmUpdateInteractor<'a, G, O, U, T, W, C, S> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
@@ -27,9 +28,10 @@ pub struct FarmUpdateInteractor<'a, G, O, U, T, W, C> {
     user_lookup: &'a U,
     start_weather_fetch: &'a W,
     clock: &'a C,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, O, U, T, W, C> FarmUpdateInteractor<'a, G, O, U, T, W, C>
+impl<'a, G, O, U, T, W, C, S> FarmUpdateInteractor<'a, G, O, U, T, W, C, S>
 where
     G: FarmGateway,
     O: FarmUpdateOutputPort,
@@ -37,6 +39,7 @@ where
     T: TranslatorPort,
     W: StartFarmWeatherDataFetchPort,
     C: ClockPort,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -46,6 +49,7 @@ where
         user_lookup: &'a U,
         start_weather_fetch: &'a W,
         clock: &'a C,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
@@ -55,6 +59,7 @@ where
             user_lookup,
             start_weather_fetch,
             clock,
+            scope_gateway,
         }
     }
 
@@ -86,7 +91,8 @@ where
 
         let mut normalized =
             farm_policy::normalize_attrs_for_update(&user, AttrMap::new(), requested.clone());
-        let access_filter = farm_policy::record_access_filter(user);
+        let org_ids = member_organization_ids(self.scope_gateway, user.id)?;
+        let access_filter = farm_policy::record_access_filter(user, org_ids);
 
         let current = self.gateway.find_by_id(input.farm_id)?;
         if let Err(policy) =

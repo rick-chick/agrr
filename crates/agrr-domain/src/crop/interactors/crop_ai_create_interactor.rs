@@ -2,12 +2,12 @@
 
 use crate::crop::dtos::{CropAiCreateFailure, HttpStatus};
 use crate::crop::ports::{CropAiCreateOutputPort, CropAiQueryGateway, CropAiUpsertPersistencePort};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 use crate::shared::ports::logger_port::LoggerPort;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 
-pub struct CropAiCreateInteractor<'a, O, U, AQ, P, L, T> {
+pub struct CropAiCreateInteractor<'a, O, U, AQ, P, L, T, S> {
     output_port: &'a mut O,
     user_id: i64,
     user_lookup: &'a U,
@@ -15,12 +15,14 @@ pub struct CropAiCreateInteractor<'a, O, U, AQ, P, L, T> {
     logger: &'a L,
     crop_ai_query_gateway: &'a AQ,
     persistence: &'a P,
+    scope_gateway: &'a S,
 }
 
-impl<'a, O, U, AQ, P, L, T> CropAiCreateInteractor<'a, O, U, AQ, P, L, T>
+impl<'a, O, U, AQ, P, L, T, S> CropAiCreateInteractor<'a, O, U, AQ, P, L, T, S>
 where
     O: CropAiCreateOutputPort,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
     AQ: CropAiQueryGateway,
     P: CropAiUpsertPersistencePort,
     L: LoggerPort,
@@ -34,6 +36,7 @@ where
         logger: &'a L,
         crop_ai_query_gateway: &'a AQ,
         persistence: &'a P,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
@@ -43,6 +46,7 @@ where
             logger,
             crop_ai_query_gateway,
             persistence,
+            scope_gateway,
         }
     }
 
@@ -83,7 +87,7 @@ where
             }
         };
 
-        let access_filter = crop_policy::record_access_filter(user);
+        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
         match self.persistence.upsert(&user, cn, v, crop_info, access_filter) {
             Ok(output) => {
                 self.logger.info(&format!("✅ [AI Crop] Saved crop#{}", output.crop.id));

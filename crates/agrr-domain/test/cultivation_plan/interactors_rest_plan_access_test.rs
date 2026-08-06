@@ -2,12 +2,23 @@
 
     use crate::cultivation_plan::entities::CultivationPlanEntity;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     fn plan_entity(id: i64, user_id: i64, plan_type: &str) -> CultivationPlanEntity {
         CultivationPlanEntity {
             id,
             farm_id: 1,
             user_id,
-            total_area: 0.0,
+        organization_id: None,
+total_area: 0.0,
             plan_type: plan_type.into(),
             plan_year: None,
             plan_name: None,

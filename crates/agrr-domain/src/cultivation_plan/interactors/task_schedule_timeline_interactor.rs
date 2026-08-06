@@ -61,9 +61,8 @@ where
         let user = self.user_lookup.find(self.user_id);
 
         if !task_schedule_private_plan_access::access_allowed(
-            self.cultivation_plan_gateway,
-            self.plan_id,
-            user.id,
+            self.cultivation_plan_gateway, self.plan_id, user.id,
+            &[],
         ) {
             return Err(Box::new(RecordNotFoundError));
         }

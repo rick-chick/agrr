@@ -2,6 +2,7 @@
 
 use agrr_adapters_sqlite::{
     CropSourceCropLookupSqliteGateway, CropSqliteGateway, UserLookupSqliteGateway,
+    UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::crop::dtos::AddCropCropSnapshot;
 use agrr_domain::crop::entities::CropEntity;
@@ -28,6 +29,7 @@ pub struct AddCropCropResolvePrivate<'a> {
     source_crop_lookup: CropSourceCropLookupSqliteGateway,
     user_id: i64,
     user_lookup: &'a UserLookupSqliteGateway,
+    scope_gateway: UserOrganizationScopeSqliteGateway,
     logger: StderrLogger,
 }
 
@@ -40,9 +42,10 @@ impl<'a> AddCropCropResolvePrivate<'a> {
     ) -> Self {
         Self {
             crop_gateway,
-            source_crop_lookup: CropSourceCropLookupSqliteGateway::new(pool),
+            source_crop_lookup: CropSourceCropLookupSqliteGateway::new(pool.clone()),
             user_id,
             user_lookup,
+            scope_gateway: UserOrganizationScopeSqliteGateway::new(pool),
             logger: StderrLogger,
         }
     }
@@ -120,6 +123,7 @@ impl AddCropCropResolveInputPort for AddCropCropResolvePrivate<'_> {
             self.crop_gateway,
             self.user_lookup,
             &self.logger,
+            &self.scope_gateway,
         );
         interactor.call(crop_id).ok()?;
         let crop = collector.crop.as_ref()?;

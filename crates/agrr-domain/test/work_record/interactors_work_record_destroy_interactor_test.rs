@@ -15,6 +15,16 @@ use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 use time::{Date, OffsetDateTime};
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 struct StubTranslator;
 impl TranslatorPort for StubTranslator {
     fn translate(&self, key: &str, _: &TranslateOptions) -> String {
@@ -215,7 +225,8 @@ fn private_plan(user_id: i64) -> CultivationPlanEntity {
         id: 2,
         farm_id: 1,
         user_id,
-        total_area: 0.0,
+        organization_id: None,
+total_area: 0.0,
         plan_type: "private".into(),
         plan_year: None,
         plan_name: None,

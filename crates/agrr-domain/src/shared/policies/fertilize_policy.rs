@@ -24,8 +24,11 @@ impl RecordAccessPolicy for FertilizeRecordAccessPolicy {
     }
 }
 
-pub fn record_access_filter(user: User) -> ReferenceRecordAccessFilter<FertilizeRecordAccessPolicy> {
-    ReferenceRecordAccessFilter::new(user)
+pub fn record_access_filter(
+    user: User,
+    member_organization_ids: Vec<i64>,
+) -> ReferenceRecordAccessFilter<FertilizeRecordAccessPolicy> {
+    ReferenceRecordAccessFilter::new(user, member_organization_ids)
 }
 
 /// Ruby: `Domain::Shared::Policies::FertilizePolicy`
@@ -40,13 +43,13 @@ pub fn edit_allowed(user: &User, is_reference: bool, user_id: Option<i64>) -> bo
     user.admin || (!is_reference && user_id == Some(user.id))
 }
 
-pub fn index_list_filter(user: &User) -> ReferenceIndexListFilter {
+pub fn index_list_filter(user: &User, member_organization_ids: &[i64]) -> ReferenceIndexListFilter {
     let mode = if user.admin {
         ReferenceIndexListMode::ReferenceOrOwned
     } else {
         ReferenceIndexListMode::OwnedNonReference
     };
-    ReferenceIndexListFilter::new(mode, user.id)
+    ReferenceIndexListFilter::new(mode, user.id, member_organization_ids.to_vec())
 }
 
 pub fn normalize_attrs_for_create(user: &User, attrs: AttrMap) -> AttrMap {

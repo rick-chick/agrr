@@ -45,7 +45,7 @@ where
         create_input: FieldCreateInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let farm_access_filter = farm_policy::record_access_filter(user);
+        let farm_access_filter = farm_policy::record_access_filter(user, vec![]);
         match self.gateway.farm_fields_list(create_input.farm_id) {
             Ok(list) => {
                 if let Err(policy) = assert_field_edit_on_farm_allowed(&user, &list.farm) {

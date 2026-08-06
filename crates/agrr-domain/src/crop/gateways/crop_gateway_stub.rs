@@ -46,6 +46,12 @@ impl CropGateway for CropGatewayStub {
     ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
+    fn count_non_reference_crops_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
     fn create_for_user(
         &self,
         _: &User,

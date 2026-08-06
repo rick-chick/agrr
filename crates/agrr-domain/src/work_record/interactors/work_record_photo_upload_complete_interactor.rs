@@ -58,7 +58,7 @@ where
         photo_id: i64,
         byte_size: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id) {
+        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &[]) {
             self.output_port.on_not_found();
             return Ok(());
         }

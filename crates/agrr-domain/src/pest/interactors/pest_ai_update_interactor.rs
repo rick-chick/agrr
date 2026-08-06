@@ -147,7 +147,7 @@ where
     }
 
     fn load_authorized_pest_entity(&self, user: &crate::shared::user::User, pest_id: i64) -> Option<PestEntity> {
-        let access_filter = pest_policy::record_access_filter(*user);
+        let access_filter = pest_policy::record_access_filter(*user, vec![]);
         let entity = self.pest_gateway.find_by_id(pest_id).ok()?;
         reference_record_authorization::assert_edit_allowed(&access_filter, &entity).ok()?;
         Some(entity)

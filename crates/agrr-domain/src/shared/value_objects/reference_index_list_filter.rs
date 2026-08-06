@@ -23,17 +23,26 @@ impl ReferenceIndexListMode {
 pub struct ReferenceIndexListFilter {
     pub mode: ReferenceIndexListMode,
     pub user_id: i64,
+    pub organization_ids: Vec<i64>,
 }
 
 impl ReferenceIndexListFilter {
-    pub fn new(mode: ReferenceIndexListMode, user_id: i64) -> Self {
-        Self { mode, user_id }
+    pub fn new(mode: ReferenceIndexListMode, user_id: i64, organization_ids: Vec<i64>) -> Self {
+        Self {
+            mode,
+            user_id,
+            organization_ids,
+        }
     }
 
-    pub fn try_new(mode: &str, user_id: i64) -> Result<Self, InvalidReferenceIndexListMode> {
+    pub fn try_new(
+        mode: &str,
+        user_id: i64,
+        organization_ids: Vec<i64>,
+    ) -> Result<Self, InvalidReferenceIndexListMode> {
         let mode = ReferenceIndexListMode::from_str(mode)
             .ok_or(InvalidReferenceIndexListMode(mode.to_string()))?;
-        Ok(Self::new(mode, user_id))
+        Ok(Self::new(mode, user_id, organization_ids))
     }
 }
 
@@ -41,6 +50,7 @@ impl Hash for ReferenceIndexListFilter {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.mode.hash(state);
         self.user_id.hash(state);
+        self.organization_ids.hash(state);
     }
 }
 

@@ -13,6 +13,16 @@
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct SpyOutput {
         events: Arc<Mutex<Vec<String>>>,
     }
@@ -108,7 +118,8 @@
             id: plan_id,
             farm_id: 1,
             user_id,
-            total_area: 0.0,
+        organization_id: None,
+total_area: 0.0,
             plan_type: "private".into(),
             plan_year: None,
             plan_name: None,

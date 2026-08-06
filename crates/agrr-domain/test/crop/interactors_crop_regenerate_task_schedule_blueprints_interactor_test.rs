@@ -17,6 +17,16 @@ use serde_json::json;
 use std::str::FromStr;
 use std::sync::Mutex;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 struct TestHarness {
     crop_gw: CropGw,
     blueprint_gw: BlueprintGw,
@@ -252,7 +262,16 @@ impl CropGateway for CropGw {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Err("unsupported".into())
     }
+
+    fn count_non_reference_crops_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(0)
+    }
+
 }
+
 
 struct BlueprintGw {
     blueprints: Vec<MastersCropTaskScheduleBlueprint>,
@@ -450,7 +469,8 @@ fn sample_crop() -> CropEntity {
     CropEntity {
         id: 1,
         user_id: Some(1),
-        name: "トマト".into(),
+        organization_id: None,
+name: "トマト".into(),
         variety: Some("general".into()),
         is_reference: false,
         area_per_unit: None,

@@ -53,7 +53,7 @@ where
         update_input: AgriculturalTaskUpdateInput,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = agricultural_task_policy::record_access_filter(user);
+        let access_filter = agricultural_task_policy::record_access_filter(user, vec![]);
         let opts = TranslateOptions::default();
 
         let current = match self.gateway.find_by_id(update_input.id) {

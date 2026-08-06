@@ -9,6 +9,16 @@
 
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup {
         fn find(&self, _: i64) -> User {
@@ -44,7 +54,8 @@
         CropEntity {
             id: 99,
             user_id: Some(10),
-            name: "新規作物".into(),
+        organization_id: None,
+name: "新規作物".into(),
             variety: Some("品種".into()),
             is_reference: false,
             area_per_unit: None,
@@ -100,6 +111,14 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             Ok(0)
         }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -316,6 +335,14 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             Ok(20)
         }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -538,6 +565,14 @@
             *self.count_called.lock().unwrap() = true;
             Ok(100)
         }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(
             &self,
             _: &User,

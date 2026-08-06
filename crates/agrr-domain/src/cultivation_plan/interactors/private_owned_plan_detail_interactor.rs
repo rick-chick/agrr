@@ -9,12 +9,13 @@ use crate::cultivation_plan::policies::private_cultivation_plan_access_policy;
 use crate::cultivation_plan::ports::PrivateOwnedPlanDetailOutputPort;
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{PersistenceFailedError, RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::policies::crop_policy;
 use crate::shared::ports::translator_port::TranslatorPort;
 use crate::shared::ports::LoggerPort;
 
-pub struct PrivateOwnedPlanDetailInteractor<'a, O, PR, CP, CG, U, T, L> {
+pub struct PrivateOwnedPlanDetailInteractor<'a, O, PR, CP, CG, U, T, L, S> {
     output_port: &'a mut O,
     user_id: i64,
     private_read_gateway: &'a PR,
@@ -23,9 +24,10 @@ pub struct PrivateOwnedPlanDetailInteractor<'a, O, PR, CP, CG, U, T, L> {
     _translator: &'a T,
     logger: &'a L,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, O, PR, CP, CG, U, T, L> PrivateOwnedPlanDetailInteractor<'a, O, PR, CP, CG, U, T, L>
+impl<'a, O, PR, CP, CG, U, T, L, S> PrivateOwnedPlanDetailInteractor<'a, O, PR, CP, CG, U, T, L, S>
 where
     O: PrivateOwnedPlanDetailOutputPort,
     PR: CultivationPlanPrivateSnapshotReadGateway,
@@ -34,6 +36,7 @@ where
     U: UserLookupGateway,
     T: TranslatorPort,
     L: LoggerPort,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -44,6 +47,7 @@ where
         _translator: &'a T,
         logger: &'a L,
         user_lookup: &'a U,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
@@ -54,6 +58,7 @@ where
             _translator,
             logger,
             user_lookup,
+            scope_gateway,
         }
     }
 
@@ -67,11 +72,13 @@ where
             .find_plan_read_snapshot_by_plan_id(plan_id)?;
         let plan = self.cultivation_plan_gateway.find_by_id(plan_id)?;
 
-        if private_cultivation_plan_access_policy::access_denied(&plan, user.id) {
+        let org_ids = member_organization_ids(self.scope_gateway, user.id)?;
+
+        if private_cultivation_plan_access_policy::access_denied(&plan, user.id, &org_ids) {
             return Err(Box::new(RecordNotFoundError));
         }
 
-        let filter = crop_policy::index_list_filter(&user);
+        let filter = crop_policy::index_list_filter_for_user(self.scope_gateway, &user)?;
         let mut palette_crop_entities = self.crop_gateway.list_index_for_filter(&filter)?;
         palette_crop_entities.sort_by(|a, b| a.name.cmp(&b.name));
 

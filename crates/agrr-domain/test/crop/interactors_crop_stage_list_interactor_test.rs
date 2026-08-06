@@ -2,6 +2,16 @@
 
     use crate::crop::entities::CropStageEntity;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct Spy {
         success: Option<CropStageListOutput>,
         failure: Option<CropStageListFailure>,
@@ -79,6 +89,14 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(
             &self,
             _: &crate::shared::user::User,

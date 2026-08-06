@@ -4,7 +4,9 @@ use crate::adapters::PassthroughTranslator;
 use crate::masters_json::{crop_to_json, masters_destroy_undo_json};
 use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
-use agrr_adapters_sqlite::{CropSqliteGateway, UserLookupSqliteGateway};
+use agrr_adapters_sqlite::{
+    CropSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
+};
 use agrr_domain::crop::dtos::{CropCreateInput, CropDetailOutput, CropUpdateInput};
 use agrr_domain::crop::entities::CropEntity;
 use agrr_domain::crop::gateways::CropGateway;
@@ -63,10 +65,16 @@ async fn list_crops(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let mut presenter = ListPresenter { body: None };
-    let mut interactor =
-        CropListInteractor::new(&mut presenter, user_id, &gateway, &user_lookup);
+    let mut interactor = CropListInteractor::new(
+        &mut presenter,
+        user_id,
+        &gateway,
+        &user_lookup,
+        &scope_gateway,
+    );
     interactor.call().map_err(internal)?;
 
     match presenter.body {
@@ -86,10 +94,16 @@ async fn show_crop(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let mut presenter = DetailPresenter { body: None };
-    let mut interactor =
-        CropDetailInteractor::new(&mut presenter, user_id, &gateway, &user_lookup);
+    let mut interactor = CropDetailInteractor::new(
+        &mut presenter,
+        user_id,
+        &gateway,
+        &user_lookup,
+        &scope_gateway,
+    );
     interactor.call(id).map_err(internal)?;
 
     let stages = gateway.list_by_crop_id(id).unwrap_or_default();
@@ -150,7 +164,8 @@ async fn update_crop(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
     let mut presenter = UpdatePresenter { body: None };
     let mut interactor = CropUpdateInteractor::new(
@@ -159,6 +174,7 @@ async fn update_crop(
         &gateway,
         &translator,
         &user_lookup,
+        &scope_gateway,
     );
     let mut input = CropUpdateInput::new(id);
     input.name = payload.crop.name.clone();
@@ -190,7 +206,8 @@ async fn destroy_crop(
         .find_by_id(id)
         .map(|c| c.name)
         .unwrap_or_else(|_| "crop".into());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let translator = state.locale_translator(&headers);
     let mut presenter = DestroyPresenter { body: None };
     let mut interactor = CropDestroyInteractor::new(
@@ -199,6 +216,7 @@ async fn destroy_crop(
         &gateway,
         &translator,
         &user_lookup,
+        &scope_gateway,
     );
     interactor.call(id).map_err(internal)?;
 

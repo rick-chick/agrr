@@ -37,7 +37,7 @@ where
         crop_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let filter = pest_policy::selectable_list_filter(&user);
+        let filter = pest_policy::selectable_list_filter(&user, &[]);
         let accessible_pest_ids: Vec<i64> = self
             .pest_gateway
             .list_index_for_filter(&filter)?

@@ -5,6 +5,7 @@ pub struct CultivationPlanEntity {
     pub id: i64,
     pub farm_id: i64,
     pub user_id: i64,
+    pub organization_id: Option<i64>,
     pub total_area: f64,
     pub plan_type: String,
     pub plan_year: Option<i32>,

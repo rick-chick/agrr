@@ -9,6 +9,6 @@ pub fn assert_edit_allowed_for_masters<R: RecordRef>(
     user: User,
     crop_entity: &R,
 ) -> Result<(), PolicyPermissionDenied> {
-    let access_filter = crop_policy::record_access_filter(user);
+    let access_filter = crop_policy::record_access_filter(user, vec![]);
     reference_record_authorization::assert_edit_allowed(&access_filter, crop_entity)
 }

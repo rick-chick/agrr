@@ -46,7 +46,7 @@ where
         pest_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = pest_policy::record_access_filter(user);
+        let access_filter = pest_policy::record_access_filter(user, vec![]);
         let opts = TranslateOptions::default();
 
         let detail = match self.gateway.find_pest_show_detail(pest_id) {

@@ -5,6 +5,16 @@
     use crate::shared::exceptions::RecordInvalidError;
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct SpyOutput {
         success: Option<Vec<CropEntity>>,
         failure: Option<Error>,
@@ -66,6 +76,14 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -280,6 +298,14 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -458,6 +484,7 @@
             revenue_per_area: None,
             region: Some("jp".into()),
             user_id: None,
+            organization_id: None,
             created_at: None,
             updated_at: None,
             is_reference: true,

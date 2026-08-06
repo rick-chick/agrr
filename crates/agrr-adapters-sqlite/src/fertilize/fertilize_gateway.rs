@@ -66,14 +66,15 @@ impl FertilizeGateway for FertilizeSqliteGateway {
         &self,
         filter: &ReferenceIndexListFilter,
     ) -> Result<Vec<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        let (where_sql, user_id) = where_clause(filter);
+        let clause = where_clause(filter);
         let sql = format!(
             "SELECT id, user_id, name, n, p, k, description, package_size, is_reference, region, created_at, updated_at \
-             FROM fertilizes WHERE {where_sql} AND name IS NOT NULL AND name != '' ORDER BY name"
+             FROM fertilizes WHERE {} AND name IS NOT NULL AND name != '' ORDER BY name",
+            clause.sql
         );
         self.pool.with_read_box(|conn| {
             let mut stmt = conn.prepare(&sql)?;
-            let rows = stmt.query_map(params![user_id], Self::row_to_entity)?;
+            let rows = stmt.query_map(rusqlite::params_from_iter(clause.params.iter()), Self::row_to_entity)?;
             let mut out = Vec::new();
             for row in rows {
                 out.push(row?);

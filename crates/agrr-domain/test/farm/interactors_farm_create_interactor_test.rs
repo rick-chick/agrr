@@ -16,6 +16,34 @@
     use crate::farm::dtos::{FarmDeleteUsage, FarmDetailOutput};
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
+
+    struct StubPersonalOrgGateway;
+    impl crate::organization::gateways::PersonalOrganizationGateway for StubPersonalOrgGateway {
+        fn ensure_personal_organization(
+            &self,
+            _: i64,
+            _: &str,
+            _: &str,
+        ) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(1)
+        }
+
+        fn list_users_needing_personal_organization(
+            &self,
+        ) -> Result<Vec<crate::organization::gateways::PersonalOrganizationUserRow>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup {
         fn find(&self, _: i64) -> User {
@@ -86,7 +114,8 @@
             longitude: Some(135.0),
             region: None,
             user_id: Some(10),
-            created_at: None,
+        organization_id: None,
+created_at: None,
             updated_at: None,
             is_reference: false,
             weather_data_status: None,
@@ -153,6 +182,28 @@
             _: i64,
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             Ok(self.count)
+        }
+
+
+        fn count_non_reference_farms_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self.count)
+        }
+
+        fn list_organization_scoped_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+
+        fn list_organization_scoped_and_reference_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
         }
 
         fn create_for_user(
@@ -293,7 +344,30 @@
         > {
             unimplemented!()
         }
+    
+    fn count_non_reference_farms_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(4)
     }
+
+    fn list_organization_scoped_farms(
+        &self,
+        _: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+
+    fn list_organization_scoped_and_reference_farms(
+        &self,
+        _: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+
+}
+
 
     // Ruby: test "calls on_success when under farm limit"
     #[test]
@@ -318,6 +392,8 @@
             &user_lookup,
             &weather_fetch,
             &clock,
+            &EmptyScopeGateway,
+            &StubPersonalOrgGateway,
         );
         interactor
             .call(FarmCreateInput::new(
@@ -358,6 +434,8 @@
             &user_lookup,
             &weather_fetch,
             &clock,
+            &EmptyScopeGateway,
+            &StubPersonalOrgGateway,
         );
         interactor
             .call(FarmCreateInput::new("座標なし農場", None, None, None))
@@ -392,6 +470,8 @@
             &user_lookup,
             &weather_fetch,
             &clock,
+            &EmptyScopeGateway,
+            &StubPersonalOrgGateway,
         );
         interactor
             .call(FarmCreateInput::new(
@@ -427,6 +507,8 @@
             &user_lookup,
             &weather_fetch,
             &clock,
+            &EmptyScopeGateway,
+            &StubPersonalOrgGateway,
         );
         interactor
             .call(FarmCreateInput::new(
