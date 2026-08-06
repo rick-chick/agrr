@@ -16,6 +16,7 @@ pub mod farm;
 pub mod fertilize;
 pub mod pesticide;
 pub mod interaction_rule;
+pub mod organization;
 pub mod internal_jobs;
 pub mod agricultural_task;
 pub mod field;
@@ -86,6 +87,9 @@ pub use field_cultivation::{
     FieldCultivationClimateSourceSqliteGateway, FieldCultivationCropSqliteGateway,
     FieldCultivationPlanPredictedWeatherSqliteGateway, FieldCultivationSyncPlanReadSqliteGateway,
     FieldCultivationSyncSqliteGateway, FieldCultivationWeatherDataFromStorageGateway,
+};
+pub use organization::{
+    OrganizationMembershipSqliteGateway, OrganizationSqliteGateway,
 };
 pub use pool::SqlitePool;
 pub use user_account::UserAccountSqliteGateway;
