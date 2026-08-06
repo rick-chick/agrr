@@ -10,6 +10,7 @@
             name: "User".into(),
             admin: false,
             anonymous: !authenticated,
+            api_key_scopes: None,
         }
     }
 
@@ -37,7 +38,10 @@
     impl ApiKeyPrincipalGateway for FakeApiKeyGateway {
         fn principal_for_api_key(&self, api_key: &str) -> Option<SessionPrincipal> {
             self.calls.lock().unwrap().push(api_key.to_string());
-            self.principal.clone()
+            self.principal.clone().map(|mut p| {
+                p.api_key_scopes = Some(vec!["masters:read".into(), "masters:write".into()]);
+                p
+            })
         }
     }
 

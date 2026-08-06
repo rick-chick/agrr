@@ -2,6 +2,7 @@
 
 pub mod error;
 pub mod masters_api_credentials_resolve_input;
+pub mod masters_api_scope;
 pub mod pest_crop_accessible_crops_filter;
 pub mod reference_flag_change_denied_failure;
 pub mod referencable_list_row;
@@ -10,6 +11,10 @@ pub mod weather_fetch_date_block;
 
 pub use error::Error;
 pub use masters_api_credentials_resolve_input::MastersApiCredentialsResolveInput;
+pub use masters_api_scope::{
+    default_api_key_scopes_json, masters_api_scope_allows, parse_api_key_scopes_json,
+    MastersApiAccessRequirement, MASTERS_READ, MASTERS_WRITE,
+};
 pub use pest_crop_accessible_crops_filter::PestCropAccessibleCropsFilter;
 pub use reference_flag_change_denied_failure::ReferenceFlagChangeDeniedFailure;
 pub use referencable_list_row::ReferencableListRow;

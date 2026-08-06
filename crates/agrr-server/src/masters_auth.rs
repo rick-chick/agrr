@@ -2,12 +2,15 @@
 
 use crate::state::AppState;
 use agrr_adapters_sqlite::{ApiKeyPrincipalSqliteGateway, SessionCookiePrincipalSqliteGateway};
-use agrr_domain::shared::dtos::{MastersApiCredentialsResolveInput, SessionPrincipal};
+use agrr_domain::shared::dtos::{
+    masters_api_scope_allows, MastersApiAccessRequirement, MastersApiCredentialsResolveInput,
+    SessionPrincipal,
+};
 use agrr_domain::shared::interactors::MastersApiCredentialsResolveInteractor;
 use agrr_domain::shared::ports::MastersApiCredentialsResolveOutputPort;
 use axum::{
     extract::{FromRef, FromRequestParts},
-    http::{request::Parts, HeaderMap, StatusCode},
+    http::{request::Parts, HeaderMap, Method, StatusCode},
 };
 use axum_extra::extract::cookie::CookieJar;
 
@@ -16,14 +19,14 @@ use axum_extra::extract::cookie::CookieJar;
 pub struct MastersUserId(pub i64);
 
 struct ResolvePort {
-    user_id: Option<i64>,
+    principal: Option<SessionPrincipal>,
     denied: bool,
 }
 
 impl MastersApiCredentialsResolveOutputPort for ResolvePort {
     fn on_success(&mut self, principal: SessionPrincipal) {
         if principal.authenticated() {
-            self.user_id = Some(principal.id);
+            self.principal = Some(principal);
         } else {
             self.denied = true;
         }
@@ -63,24 +66,80 @@ pub fn extract_api_key(headers: &HeaderMap, query: Option<&str>) -> Option<Strin
     None
 }
 
+fn query_api_key_param(query: Option<&str>) -> Option<&str> {
+    query.and_then(|q| {
+        q.split('&').find_map(|pair| {
+            let (k, v) = pair.split_once('=')?;
+            if k == "api_key" { Some(v) } else { None }
+        })
+    })
+}
+
+pub fn resolve_masters_principal(
+    state: &AppState,
+    jar: &CookieJar,
+    headers: &HeaderMap,
+    query_api_key: Option<&str>,
+) -> Result<SessionPrincipal, StatusCode> {
+    let session_id = jar.get("session_id").map(|c| c.value().to_string());
+    let input = MastersApiCredentialsResolveInput::new(extract_api_key(headers, query_api_key), session_id);
+    let api_gw = ApiKeyPrincipalSqliteGateway::new(state.sqlite.clone());
+    let session_gw = SessionCookiePrincipalSqliteGateway::new(state.sqlite.clone());
+    let mut port = ResolvePort {
+        principal: None,
+        denied: false,
+    };
+    let mut interactor =
+        MastersApiCredentialsResolveInteractor::new(&mut port, &api_gw, &session_gw);
+    interactor.call(&input);
+    if port.denied {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+    port.principal.ok_or(StatusCode::UNAUTHORIZED)
+}
+
 pub fn resolve_masters_user_id(
     state: &AppState,
     jar: &CookieJar,
     headers: &HeaderMap,
     query_api_key: Option<&str>,
 ) -> Result<i64, StatusCode> {
-    let session_id = jar.get("session_id").map(|c| c.value().to_string());
-    let input = MastersApiCredentialsResolveInput::new(extract_api_key(headers, query_api_key), session_id);
-    let api_gw = ApiKeyPrincipalSqliteGateway::new(state.sqlite.clone());
-    let session_gw = SessionCookiePrincipalSqliteGateway::new(state.sqlite.clone());
-    let mut port = ResolvePort {
-        user_id: None,
-        denied: false,
+    resolve_masters_principal(state, jar, headers, query_api_key).map(|p| p.id)
+}
+
+fn scope_denied() -> (StatusCode, axum::Json<serde_json::Value>) {
+    (
+        StatusCode::FORBIDDEN,
+        axum::Json(serde_json::json!({"error": "forbidden", "error_code": "insufficient_scope"})),
+    )
+}
+
+fn unauthorized() -> (StatusCode, axum::Json<serde_json::Value>) {
+    (
+        StatusCode::UNAUTHORIZED,
+        axum::Json(serde_json::json!({"error": "unauthorized"})),
+    )
+}
+
+fn enforce_api_key_scopes(
+    principal: &SessionPrincipal,
+    method: &Method,
+    path: &str,
+    query: Option<&str>,
+) -> Result<(), (StatusCode, axum::Json<serde_json::Value>)> {
+    let Some(scopes) = principal.api_key_scopes.as_ref() else {
+        return Ok(());
     };
-    let mut interactor =
-        MastersApiCredentialsResolveInteractor::new(&mut port, &api_gw, &session_gw);
-    interactor.call(&input);
-    port.user_id.ok_or(StatusCode::UNAUTHORIZED)
+    let Some(requirement) =
+        MastersApiAccessRequirement::from_http(method.as_str(), path, query)
+    else {
+        return Ok(());
+    };
+    if masters_api_scope_allows(scopes, requirement) {
+        Ok(())
+    } else {
+        Err(scope_denied())
+    }
 }
 
 impl<S> FromRequestParts<S> for MastersUserId
@@ -95,28 +154,65 @@ where
         let jar = CookieJar::from_request_parts(parts, state)
             .await
             .map_err(|_| unauthorized())?;
-        let query_key = parts
-            .uri
-            .query()
-            .and_then(|q| {
-                q.split('&').find_map(|pair| {
-                    let (k, v) = pair.split_once('=')?;
-                    if k == "api_key" {
-                        Some(v)
-                    } else {
-                        None
-                    }
-                })
-            });
-        let user_id = resolve_masters_user_id(&app_state, &jar, &parts.headers, query_key)
+        let query_key = query_api_key_param(parts.uri.query());
+        let principal = resolve_masters_principal(&app_state, &jar, &parts.headers, query_key)
             .map_err(|_| unauthorized())?;
-        Ok(MastersUserId(user_id))
+        enforce_api_key_scopes(
+            &principal,
+            &parts.method,
+            parts.uri.path(),
+            parts.uri.query(),
+        )?;
+        Ok(MastersUserId(principal.id))
     }
 }
 
-fn unauthorized() -> (StatusCode, axum::Json<serde_json::Value>) {
-    (
-        StatusCode::UNAUTHORIZED,
-        axum::Json(serde_json::json!({"error": "unauthorized"})),
-    )
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn enforce_api_key_scopes_allows_session_principal() {
+        let principal = SessionPrincipal {
+            id: 1,
+            email: String::new(),
+            name: String::new(),
+            admin: false,
+            anonymous: false,
+            api_key_scopes: None,
+        };
+        assert!(enforce_api_key_scopes(
+            &principal,
+            &Method::POST,
+            "/api/v1/masters/crops",
+            None
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn enforce_api_key_scopes_denies_write_without_write_scope() {
+        let principal = SessionPrincipal {
+            id: 1,
+            email: String::new(),
+            name: String::new(),
+            admin: false,
+            anonymous: false,
+            api_key_scopes: Some(vec!["masters:read".into()]),
+        };
+        assert!(enforce_api_key_scopes(
+            &principal,
+            &Method::GET,
+            "/api/v1/masters/crops",
+            None
+        )
+        .is_ok());
+        assert!(enforce_api_key_scopes(
+            &principal,
+            &Method::POST,
+            "/api/v1/masters/crops",
+            None
+        )
+        .is_err());
+    }
 }
