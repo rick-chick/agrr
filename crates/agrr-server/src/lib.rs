@@ -66,6 +66,7 @@ pub mod plans;
 pub mod public_plan_save;
 pub mod public_plans;
 pub mod routes;
+pub mod security_audit_log;
 pub mod security_headers;
 pub mod telemetry;
 pub mod scheduler_weather_update;
