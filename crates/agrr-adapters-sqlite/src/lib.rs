@@ -25,6 +25,7 @@ pub mod pool;
 pub mod public_plan;
 pub mod shared;
 pub mod soft_delete;
+pub mod user_account;
 pub mod weather_data;
 pub mod work_record;
 
@@ -87,6 +88,7 @@ pub use field_cultivation::{
     FieldCultivationSyncSqliteGateway, FieldCultivationWeatherDataFromStorageGateway,
 };
 pub use pool::SqlitePool;
+pub use user_account::UserAccountSqliteGateway;
 pub use weather_data::{
     validate_weather_storage_config, InternalFarmWeatherReadSqliteGateway,
     InternalWeatherFetchStartSqliteGateway, PredictedWeatherGatewayBundle,
