@@ -3,12 +3,23 @@
 use crate::cultivation_plan::entities::CultivationPlanEntity;
 use crate::cultivation_plan::mappers::to_port_payload;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 fn plan_with_phase(phase: &str, message: &str) -> CultivationPlanEntity {
     CultivationPlanEntity {
         id: 1,
         farm_id: 1,
         user_id: 1,
-        total_area: 0.0,
+        organization_id: None,
+total_area: 0.0,
         plan_type: "public".into(),
         plan_year: None,
         plan_name: None,

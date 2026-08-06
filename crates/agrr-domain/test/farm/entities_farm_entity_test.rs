@@ -1,6 +1,16 @@
 // Tests for `entities/farm_entity.rs` (Ruby parity under test/domain/farm/).
 
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     fn sample_entity() -> FarmEntity {
         FarmEntity {
             id: 1,
@@ -9,7 +19,8 @@
             longitude: Some(135.0),
             region: Some("Kyoto".into()),
             user_id: Some(1),
-            created_at: Some("2026-01-01T00:00:00Z".into()),
+        organization_id: None,
+created_at: Some("2026-01-01T00:00:00Z".into()),
             updated_at: Some("2026-01-01T00:00:00Z".into()),
             is_reference: false,
             weather_data_status: None,

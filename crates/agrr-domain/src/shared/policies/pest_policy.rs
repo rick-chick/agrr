@@ -23,22 +23,29 @@ impl RecordAccessPolicy for PestRecordAccessPolicy {
     }
 }
 
-pub fn record_access_filter(user: User) -> ReferenceRecordAccessFilter<PestRecordAccessPolicy> {
-    ReferenceRecordAccessFilter::new(user)
+pub fn record_access_filter(
+    user: User,
+    member_organization_ids: Vec<i64>,
+) -> ReferenceRecordAccessFilter<PestRecordAccessPolicy> {
+    ReferenceRecordAccessFilter::new(user, member_organization_ids)
 }
 
 /// Ruby: `Domain::Shared::Policies::PestPolicy`
-pub fn index_list_filter(user: &User) -> ReferenceIndexListFilter {
+pub fn index_list_filter(user: &User, member_organization_ids: &[i64]) -> ReferenceIndexListFilter {
     let mode = if user.admin {
         ReferenceIndexListMode::ReferenceOrOwned
     } else {
         ReferenceIndexListMode::OwnedNonReference
     };
-    ReferenceIndexListFilter::new(mode, user.id)
+    ReferenceIndexListFilter::new(mode, user.id, member_organization_ids.to_vec())
 }
 
-pub fn selectable_list_filter(user: &User) -> ReferenceIndexListFilter {
-    ReferenceIndexListFilter::new(ReferenceIndexListMode::ReferenceOrOwned, user.id)
+pub fn selectable_list_filter(user: &User, member_organization_ids: &[i64]) -> ReferenceIndexListFilter {
+    ReferenceIndexListFilter::new(
+        ReferenceIndexListMode::ReferenceOrOwned,
+        user.id,
+        member_organization_ids.to_vec(),
+    )
 }
 
 pub fn selectable_for_user(user: &User, is_reference: bool, user_id: Option<i64>) -> bool {

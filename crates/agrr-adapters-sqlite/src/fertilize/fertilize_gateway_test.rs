@@ -164,7 +164,7 @@ fn list_index_for_filter_returns_only_named_user_owned_non_reference_for_regular
     })
     .unwrap();
 
-    let filter = fertilize_policy::index_list_filter(&user);
+    let filter = fertilize_policy::index_list_filter(&user, &[]);
     let mut ids: Vec<i64> = gw
         .list_index_for_filter(&filter)
         .unwrap()
@@ -203,7 +203,7 @@ fn list_index_for_filter_for_admin_includes_reference_and_own_rows() {
         )
         .unwrap();
 
-    let filter = fertilize_policy::index_list_filter(&admin);
+    let filter = fertilize_policy::index_list_filter(&admin, &[]);
     let ids: Vec<i64> = gw
         .list_index_for_filter(&filter)
         .unwrap()

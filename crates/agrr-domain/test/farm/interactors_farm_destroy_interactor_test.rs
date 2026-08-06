@@ -10,6 +10,16 @@
     use crate::farm::dtos::FarmDeleteUsage;
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup {
         fn find(&self, _: i64) -> User {
@@ -61,7 +71,8 @@
             longitude: None,
             region: None,
             user_id: Some(user_id),
-            created_at: None,
+        organization_id: None,
+created_at: None,
             updated_at: None,
             is_reference: false,
             weather_data_status: None,
@@ -129,6 +140,28 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_farms_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
+        fn list_organization_scoped_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+
+        fn list_organization_scoped_and_reference_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -201,6 +234,7 @@
             &gateway,
             &StubTranslator,
             &user_lookup,
+            &EmptyScopeGateway,
         );
         interactor.call(5).unwrap();
         assert!(output.success.is_some());
@@ -225,6 +259,7 @@
             &gateway,
             &StubTranslator,
             &user_lookup,
+            &EmptyScopeGateway,
         );
         interactor.call(1).unwrap();
         match output.failure {
@@ -251,6 +286,7 @@
             &gateway,
             &StubTranslator,
             &user_lookup,
+            &EmptyScopeGateway,
         );
         interactor.call(1).unwrap();
         assert!(matches!(

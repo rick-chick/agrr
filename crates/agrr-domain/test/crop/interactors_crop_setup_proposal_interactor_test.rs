@@ -10,6 +10,16 @@ use crate::crop::interactors::crop_setup_proposal_interactor::CropSetupProposalI
 use crate::crop::ports::CropSetupProposalOutputPort;
 use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 struct TestCropGateway {
     crop: CropEntity,
     stages: Vec<CropStageEntity>,
@@ -216,7 +226,16 @@ impl CropGateway for TestCropGateway {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
+
+    fn count_non_reference_crops_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(0)
+    }
+
 }
+
 
 struct TestBlueprintGateway;
 
@@ -439,6 +458,7 @@ fn dry_run_returns_success_without_apply_gateway() {
         &agricultural_task_gateway,
         &proposal_gateway,
         &user_lookup,
+            &EmptyScopeGateway,
     );
 
     let body = json!({

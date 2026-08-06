@@ -182,7 +182,7 @@ where
         user: &crate::shared::user::User,
         fertilize_id: i64,
     ) -> Option<crate::fertilize::entities::FertilizeEntity> {
-        let access_filter = fertilize_policy::record_access_filter(*user);
+        let access_filter = fertilize_policy::record_access_filter(*user, vec![]);
         let entity = self.fertilize_gateway.find_by_id(fertilize_id).ok()?;
         reference_record_authorization::assert_edit_allowed(&access_filter, &entity).ok()?;
         Some(entity)

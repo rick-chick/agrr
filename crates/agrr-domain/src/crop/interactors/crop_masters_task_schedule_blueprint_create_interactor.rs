@@ -12,24 +12,26 @@ use crate::crop::policies::{
 };
 use crate::crop::ports::CropMastersTaskScheduleBlueprintCreateOutputPort;
 use crate::shared::exceptions::RecordNotFoundError;
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 
-pub struct CropMastersTaskScheduleBlueprintCreateInteractor<'a, G, AG, BG, O, U> {
+pub struct CropMastersTaskScheduleBlueprintCreateInteractor<'a, G, AG, BG, O, U, S> {
     output_port: &'a mut O,
     crop_gateway: &'a G,
     agricultural_task_gateway: &'a AG,
     blueprint_gateway: &'a BG,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, AG, BG, O, U> CropMastersTaskScheduleBlueprintCreateInteractor<'a, G, AG, BG, O, U>
+impl<'a, G, AG, BG, O, U, S> CropMastersTaskScheduleBlueprintCreateInteractor<'a, G, AG, BG, O, U, S>
 where
     G: CropGateway,
     AG: AgriculturalTaskGateway,
     BG: CropMastersTaskScheduleBlueprintGateway,
     O: CropMastersTaskScheduleBlueprintCreateOutputPort,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -37,13 +39,14 @@ where
         agricultural_task_gateway: &'a AG,
         blueprint_gateway: &'a BG,
         user_lookup: &'a U,
-    ) -> Self {
+        scope_gateway: &'a S) -> Self {
         Self {
             output_port,
             crop_gateway,
             agricultural_task_gateway,
             blueprint_gateway,
             user_lookup,
+            scope_gateway,
         }
     }
 
@@ -82,7 +85,7 @@ where
         };
 
         let user = self.user_lookup.find(input.user_id);
-        let access_filter = crop_policy::record_access_filter(user);
+        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
         let crop_failure = MastersCropTaskScheduleBlueprintCreateFailure::new(
             MastersCropTaskScheduleBlueprintCreateFailureReason::CropNotFound,
         );

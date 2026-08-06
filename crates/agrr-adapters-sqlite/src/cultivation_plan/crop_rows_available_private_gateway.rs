@@ -40,6 +40,7 @@ impl CropRowsAvailableGateway for CropRowsAvailablePrivateSqliteGateway {
         let filter = ReferenceIndexListFilter {
             mode: ReferenceIndexListMode::OwnedNonReference,
             user_id,
+            organization_ids: parsed.member_organization_ids.clone(),
         };
         let mut crops = self.crop_gateway.list_index_for_filter(&filter)?;
         crops.retain(|crop| region_matches(farm_region, crop.region.as_deref()));

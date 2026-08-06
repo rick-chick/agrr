@@ -1,5 +1,15 @@
 // Tests for `interactors/crop_find_private_plan_add_crop_record_interactor.rs`
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 struct Noop;
 impl LoggerPort for Noop {
     fn info(&self, _: &str) {}
@@ -25,7 +35,8 @@ fn crop(id: i64, user_id: Option<i64>, is_ref: bool) -> CropEntity {
     CropEntity {
         id,
         user_id,
-        name: "C".into(),
+        organization_id: None,
+name: "C".into(),
         variety: None,
         is_reference: is_ref,
         area_per_unit: None,
@@ -241,7 +252,16 @@ impl CropGateway for G {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
+
+    fn count_non_reference_crops_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(0)
+    }
+
 }
+
 
 #[test]
 fn accepts_reference_crop_like_public_plan_add_crop() {
@@ -254,7 +274,7 @@ fn accepts_reference_crop_like_public_plan_add_crop() {
         nf: false,
     };
     let u = UserGw;
-    let mut i = CropFindPrivatePlanAddCropRecordInteractor::new(&mut o, 2, &g, &u, &Noop);
+    let mut i = CropFindPrivatePlanAddCropRecordInteractor::new(&mut o, 2, &g, &u, &Noop, &EmptyScopeGateway);
     i.call(10).unwrap();
     assert!(o.ok);
     assert!(!o.fail);
@@ -271,7 +291,7 @@ fn accepts_user_owned_non_reference_crop() {
         nf: false,
     };
     let u = UserGw;
-    let mut i = CropFindPrivatePlanAddCropRecordInteractor::new(&mut o, 2, &g, &u, &Noop);
+    let mut i = CropFindPrivatePlanAddCropRecordInteractor::new(&mut o, 2, &g, &u, &Noop, &EmptyScopeGateway);
     i.call(53).unwrap();
     assert!(o.ok);
 }
@@ -287,7 +307,7 @@ fn rejects_other_users_crop() {
         nf: false,
     };
     let u = UserGw;
-    let mut i = CropFindPrivatePlanAddCropRecordInteractor::new(&mut o, 2, &g, &u, &Noop);
+    let mut i = CropFindPrivatePlanAddCropRecordInteractor::new(&mut o, 2, &g, &u, &Noop, &EmptyScopeGateway);
     i.call(99).unwrap();
     assert!(o.fail);
 }

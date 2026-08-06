@@ -3,11 +3,22 @@
     use crate::shared::policies::crop_policy;
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     fn crop(user_id: i64) -> CropEntity {
         CropEntity {
             id: 1,
             user_id: Some(user_id),
-            name: "Tomato".into(),
+        organization_id: None,
+name: "Tomato".into(),
             variety: None,
             is_reference: false,
             area_per_unit: None,
@@ -23,7 +34,7 @@
     #[test]
     fn assert_edit_passes_for_owner() {
         let user = User::new(1, false);
-        let filter = crop_policy::record_access_filter(user);
+        let filter = crop_policy::record_access_filter(user, vec![]);
         assert!(assert_edit(&filter, &crop(1)).is_ok());
     }
 
@@ -31,7 +42,7 @@
     #[test]
     fn assert_edit_or_on_failure_calls_on_failure_when_denied() {
         let user = User::new(1, false);
-        let filter = crop_policy::record_access_filter(user);
+        let filter = crop_policy::record_access_filter(user, vec![]);
         let mut called = false;
         let ok = assert_edit_or_on_failure(&filter, &crop(99), || called = true);
         assert!(!ok);

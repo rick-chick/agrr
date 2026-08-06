@@ -12,6 +12,16 @@ use std::sync::{Arc, Mutex};
 use time::macros::date;
 use time::OffsetDateTime;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 struct SpyListOutput {
     events: Arc<Mutex<Vec<String>>>,
     records: Arc<Mutex<Option<Vec<WorkRecordRead>>>>,
@@ -160,7 +170,8 @@ fn private_plan(user_id: i64) -> CultivationPlanEntity {
         id: 2,
         farm_id: 1,
         user_id,
-        total_area: 0.0,
+        organization_id: None,
+total_area: 0.0,
         plan_type: "private".into(),
         plan_year: None,
         plan_name: None,
@@ -196,7 +207,7 @@ fn lists_records_with_date_range_filter() {
         plan: private_plan(1),
     };
     let mut interactor =
-        WorkRecordListInteractor::new(&mut output, &plan_gateway, &gateway);
+        WorkRecordListInteractor::new(&mut output, &plan_gateway, &gateway, &EmptyScopeGateway);
 
     let mut query = BTreeMap::new();
     query.insert("from".into(), "2026-06-01".into());
@@ -219,8 +230,7 @@ fn lists_records_with_date_range_filter() {
 fn dispatches_not_found_when_private_plan_access_denied() {
     let events = Arc::new(Mutex::new(Vec::new()));
     let mut output = SpyListOutput {
-        events: Arc::clone(&events),
-        records: Arc::new(Mutex::new(None)),
+        events: Arc::clone(&events), records: Arc::new(Mutex::new(None)),
         errors: Arc::new(Mutex::new(None)),
     };
     let list_calls = Arc::new(Mutex::new(Vec::new()));
@@ -232,7 +242,7 @@ fn dispatches_not_found_when_private_plan_access_denied() {
         plan: private_plan(99),
     };
     let mut interactor =
-        WorkRecordListInteractor::new(&mut output, &plan_gateway, &gateway);
+        WorkRecordListInteractor::new(&mut output, &plan_gateway, &gateway, &EmptyScopeGateway);
 
     interactor.call_rescuing(1, 2, &BTreeMap::new()).unwrap();
 

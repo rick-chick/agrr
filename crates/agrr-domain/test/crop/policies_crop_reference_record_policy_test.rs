@@ -3,17 +3,29 @@
     use crate::crop::entities::CropEntity;
     use crate::shared::record_ref::RecordStub;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     // Ruby: test "visible_for_public_plan_add_crop? requires reference crop"
     #[test]
     fn visible_for_public_plan_requires_reference() {
         let reference = RecordStub {
             is_reference: true,
             user_id: None,
-        };
+        organization_id: None,
+};
         let owned = RecordStub {
             is_reference: false,
             user_id: Some(1),
-        };
+        organization_id: None,
+};
         assert!(visible_for_public_plan_add_crop(&reference));
         assert!(!visible_for_public_plan_add_crop(&owned));
     }
@@ -24,7 +36,8 @@
         let crop = CropEntity {
             id: 1,
             user_id: None,
-            name: "Tomato".into(),
+        organization_id: None,
+name: "Tomato".into(),
             variety: None,
             is_reference: true,
             area_per_unit: None,

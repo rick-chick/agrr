@@ -11,6 +11,16 @@
         ReferenceIndexListFilter, ReferenceIndexListMode,
     };
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup {
         fn find(&self, _: i64) -> User {
@@ -71,6 +81,14 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -255,7 +273,8 @@
         CropEntity {
             id,
             user_id: Some(user_id),
-            name: "C".into(),
+        organization_id: None,
+name: "C".into(),
             variety: None,
             is_reference: false,
             area_per_unit: None,
@@ -283,7 +302,7 @@
         };
         let user_lookup_1 = StubLookup(User::new(42, false));
         let mut interactor =
-            CropListInteractor::new(&mut output, 42, &gateway, &user_lookup_1);
+            CropListInteractor::new(&mut output, 42, &gateway, &user_lookup_1, &EmptyScopeGateway);
         interactor.call().unwrap();
         let rows = output.success.unwrap();
         assert_eq!(rows.len(), 2);
@@ -305,7 +324,7 @@
         };
         let user_lookup_2 = StubLookup(User::new(99, true));
         let mut interactor =
-            CropListInteractor::new(&mut output, 99, &gateway, &user_lookup_2);
+            CropListInteractor::new(&mut output, 99, &gateway, &user_lookup_2, &EmptyScopeGateway);
         interactor.call().unwrap();
         assert_eq!(output.success, Some(vec![]));
     }
@@ -325,7 +344,7 @@
         };
         let user_lookup_3 = StubLookup(User::new(1, false));
         let mut interactor =
-            CropListInteractor::new(&mut output, 1, &gateway, &user_lookup_3);
+            CropListInteractor::new(&mut output, 1, &gateway, &user_lookup_3, &EmptyScopeGateway);
         interactor.call().unwrap();
         match output.failure {
             Some(ListFailure::Error(e)) => assert!(e.message.contains("record not found")),

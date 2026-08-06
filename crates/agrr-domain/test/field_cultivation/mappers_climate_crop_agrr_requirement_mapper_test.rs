@@ -2,6 +2,16 @@
 
 use serde_json::json;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 #[test]
 fn builds_rails_crop_requirement_shape() {
     let entity = ClimateCropEntity {

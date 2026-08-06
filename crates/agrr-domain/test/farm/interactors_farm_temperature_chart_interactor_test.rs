@@ -16,6 +16,16 @@ use crate::weather_data::dtos::WeatherData;
 use crate::weather_data::gateways::WeatherDataStorageError;
 use time::{Date, Month, OffsetDateTime};
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 struct FixedClock(Date);
 
 impl ClockPort for FixedClock {
@@ -59,7 +69,8 @@ fn completed_farm(user_id: i64) -> FarmEntity {
         longitude: Some(139.0),
         region: None,
         user_id: Some(user_id),
-        created_at: None,
+        organization_id: None,
+created_at: None,
         updated_at: None,
         is_reference: false,
         weather_data_status: Some("completed".into()),
@@ -178,7 +189,30 @@ impl FarmGateway for StubFarmGateway {
     > {
         unimplemented!()
     }
+
+    fn count_non_reference_farms_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(0)
+    }
+
+    fn list_organization_scoped_farms(
+        &self,
+        _: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+
+    fn list_organization_scoped_and_reference_farms(
+        &self,
+        _: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+
 }
+
 
 struct StubWeatherGateway {
     rows: Vec<WeatherData>,
@@ -215,6 +249,7 @@ fn returns_weather_not_ready_when_status_is_fetching() {
         &weather_gateway,
         &clock,
         &lookup,
+            &EmptyScopeGateway,
     );
 
     interactor
@@ -264,6 +299,7 @@ fn returns_chart_points_for_completed_farm_with_default_period() {
         &weather_gateway,
         &clock,
         &lookup,
+            &EmptyScopeGateway,
     );
 
     interactor

@@ -4,8 +4,8 @@ use crate::crop::entities::CropEntity;
 use crate::crop::gateways::CropGateway;
 use crate::crop::policies::crop_reference_record_policy;
 use crate::shared::dtos::Error;
-use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::exceptions::RecordNotFoundError;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 use crate::shared::ports::logger_port::LoggerPort;
 use crate::shared::reference_record_authorization;
@@ -15,19 +15,21 @@ pub trait CropFindPrivatePlanAddCropRecordOutputPort {
     fn on_failure(&mut self, error: Error);
 }
 
-pub struct CropFindPrivatePlanAddCropRecordInteractor<'a, O, G, U, L> {
+pub struct CropFindPrivatePlanAddCropRecordInteractor<'a, O, G, U, L, S> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     user_lookup: &'a U,
     logger: &'a L,
+    scope_gateway: &'a S,
 }
 
-impl<'a, O, G, U, L> CropFindPrivatePlanAddCropRecordInteractor<'a, O, G, U, L>
+impl<'a, O, G, U, L, S> CropFindPrivatePlanAddCropRecordInteractor<'a, O, G, U, L, S>
 where
     O: CropFindPrivatePlanAddCropRecordOutputPort,
     G: CropGateway,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
     L: LoggerPort,
 {
     pub fn new(
@@ -36,6 +38,7 @@ where
         gateway: &'a G,
         user_lookup: &'a U,
         logger: &'a L,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
@@ -43,6 +46,7 @@ where
             user_id,
             user_lookup,
             logger,
+            scope_gateway,
         }
     }
 
@@ -71,7 +75,7 @@ where
         }
 
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = crop_policy::record_access_filter(user);
+        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
         if reference_record_authorization::assert_edit_allowed(&access_filter, &crop).is_err() {
             self.logger.warn(
                 "[CropFindPrivatePlanAddCropRecordInteractor] policy permission denied",

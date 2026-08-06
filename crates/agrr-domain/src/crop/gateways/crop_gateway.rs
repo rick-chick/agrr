@@ -15,6 +15,7 @@ pub trait CropGateway: Send + Sync {
     fn find_crop_show_detail(&self, crop_id: i64) -> Result<CropShowDetail, Box<dyn std::error::Error + Send + Sync>>;
     fn find_crop_record_with_stages(&self, crop_id: i64) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>>;
     fn count_user_owned_non_reference_crops(&self, user_id: i64) -> Result<i32, Box<dyn std::error::Error + Send + Sync>>;
+    fn count_non_reference_crops_for_organization(&self, organization_id: i64) -> Result<i32, Box<dyn std::error::Error + Send + Sync>>;
     fn create_for_user(&self, user: &User, attrs: AttrMap) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>>;
     fn update_for_user(&self, user: &User, crop_id: i64, attrs: AttrMap) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>>;
     fn find_delete_usage(&self, crop_id: i64) -> Result<CropDeleteUsage, Box<dyn std::error::Error + Send + Sync>>;

@@ -9,6 +9,16 @@
 
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup { fn find(&self, _: i64) -> User { self.0 } }
     struct StubTranslator;
@@ -22,7 +32,7 @@
         fn on_failure(&mut self, e: UpdateFailure) { self.failure = Some(e); }
     }
     fn crop(user_id: i64) -> CropEntity {
-        CropEntity { id: 5, user_id: Some(user_id), name: "n".into(), variety: None, is_reference: false, area_per_unit: None, revenue_per_area: None, region: None, groups: vec![], created_at: None, updated_at: None }
+        CropEntity { id: 5, user_id: Some(user_id), organization_id: None, name: "n".into(), variety: None, is_reference: false, area_per_unit: None, revenue_per_area: None, region: None, groups: vec![], created_at: None, updated_at: None }
     }
     struct UpdateGw { current: CropEntity, updated: CropEntity, deny_edit: bool }
     impl CropGateway for UpdateGw {
@@ -45,6 +55,14 @@
         fn find_crop_show_detail(&self, _: i64) -> Result<crate::crop::dtos::CropShowDetail, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn find_crop_record_with_stages(&self, _: i64) -> Result<crate::crop::entities::CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn count_user_owned_non_reference_crops(&self, _: i64) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(&self, _: &crate::shared::user::User, _: crate::shared::attr::AttrMap) -> Result<crate::crop::entities::CropEntity, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn find_delete_usage(&self, _: i64) -> Result<crate::crop::dtos::CropDeleteUsage, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn soft_delete_with_undo(&self, _: &crate::shared::user::User, _: i64, _: i64, _: &str) -> Result<crate::crop::gateways::SoftDeleteWithUndoOutcome, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
@@ -75,7 +93,7 @@
         let gw = UpdateGw { current: crop(10), updated: updated.clone(), deny_edit: false };
         let mut out = SpyOutput { success: None, failure: None };
         let user_lookup = StubLookup(User::new(10, false));
-        let mut i = CropUpdateInteractor::new(&mut out, 10, &gw, &StubTranslator, &user_lookup);
+        let mut i = CropUpdateInteractor::new(&mut out, 10, &gw, &StubTranslator, &user_lookup, &EmptyScopeGateway);
         let mut input = CropUpdateInput::new(5);
         input.name = Some("更新された名前".into());
         i.call(input).unwrap();
@@ -88,7 +106,7 @@
         let gw = UpdateGw { current: crop(99), updated: crop(10), deny_edit: true };
         let mut out = SpyOutput { success: None, failure: None };
         let user_lookup = StubLookup(User::new(10, false));
-        let mut i = CropUpdateInteractor::new(&mut out, 10, &gw, &StubTranslator, &user_lookup);
+        let mut i = CropUpdateInteractor::new(&mut out, 10, &gw, &StubTranslator, &user_lookup, &EmptyScopeGateway);
         i.call(CropUpdateInput::new(5)).unwrap();
         assert!(matches!(out.failure, Some(UpdateFailure::Policy(_))));
     }
@@ -99,7 +117,7 @@
         let gw = UpdateGw { current: crop(10), updated: crop(10), deny_edit: false };
         let mut out = SpyOutput { success: None, failure: None };
         let user_lookup = StubLookup(User::new(10, false));
-        let mut i = CropUpdateInteractor::new(&mut out, 10, &gw, &StubTranslator, &user_lookup);
+        let mut i = CropUpdateInteractor::new(&mut out, 10, &gw, &StubTranslator, &user_lookup, &EmptyScopeGateway);
         let mut input = CropUpdateInput::new(5);
         input.is_reference = Some(true);
         i.call(input).unwrap();

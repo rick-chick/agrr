@@ -7,6 +7,16 @@ use rust_decimal::Decimal;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
 struct Noop;
 impl LoggerPort for Noop {
     fn info(&self, _: &str) {}
@@ -19,7 +29,8 @@ fn crop(id: i64, is_ref: bool) -> CropEntity {
     CropEntity {
         id,
         user_id: if is_ref { None } else { Some(2) },
-        name: "C".into(),
+        organization_id: None,
+name: "C".into(),
         variety: None,
         is_reference: is_ref,
         area_per_unit: None,
@@ -251,7 +262,16 @@ impl CropGateway for CopyGw {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
+
+    fn count_non_reference_crops_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(0)
+    }
+
 }
+
 
 #[test]
 fn skips_reference_crop() {

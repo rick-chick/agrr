@@ -63,7 +63,7 @@ where
             return Ok(());
         }
 
-        let filter = pesticide_policy::masters_crop_pesticides_index_filter(&user);
+        let filter = pesticide_policy::masters_crop_pesticides_index_filter(&user, &[]);
         let pesticides = self
             .pesticide_gateway
             .list_by_crop_id_for_filter(crop_entity.id, &filter)?;

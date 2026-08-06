@@ -24,6 +24,8 @@ use support::{
     seed_organization_membership,
     run_personal_organization_ensure_for_user,
     seed_user_farm_without_organization,
+    seed_org_scoped_farm,
+    seed_org_scoped_crop,
 };
 
 #[test]
@@ -2736,6 +2738,175 @@ fn get_organization_memberships_cross_user_denied() {
     );
     let path = format!("/api/v1/organizations/{}/memberships", seed.organization_id);
 
+    let (status, body) =
+        status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn org_member_can_view_team_farm() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Farm Org {suffix}"),
+        &format!("team-farm-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+    let farm_id = seed_org_scoped_farm(seed.organization_id, owner_id);
+
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+    let (owner_status, owner_body) =
+        status_and_body(client.get(&path, Some(&owner_session), &empty_headers()));
+    assert_eq!(200, owner_status, "{owner_body}");
+
+    let (member_status, member_body) =
+        status_and_body(client.get(&path, Some(&member_session), &empty_headers()));
+    assert_eq!(200, member_status, "{member_body}");
+}
+
+#[test]
+fn org_member_can_update_team_farm() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Farm Update Org {suffix}"),
+        &format!("team-farm-update-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+    let farm_id = seed_org_scoped_farm(seed.organization_id, owner_id);
+
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+    let payload = serde_json::json!({
+        "farm": {
+            "name": format!("Updated by member {suffix}"),
+            "region": "jp",
+            "latitude": 35.0,
+            "longitude": 139.0
+        }
+    });
+    let (status, body) = status_and_body(
+        client.patch(&path, Some(&member_session), &empty_headers(), Some(payload)),
+    );
+    assert_eq!(200, status, "{body}");
+}
+
+#[test]
+fn org_non_member_denied_team_farm() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let other_session = researcher_session_id(&client);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Farm Deny Org {suffix}"),
+        &format!("team-farm-deny-org-{suffix}"),
+        false,
+    );
+    let farm_id = seed_org_scoped_farm(seed.organization_id, owner_id);
+
+    let path = format!("/api/v1/masters/farms/{farm_id}");
+    let (status, body) =
+        status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn org_member_can_view_team_crop() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Crop Org {suffix}"),
+        &format!("team-crop-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+    let crop_id = seed_org_scoped_crop(seed.organization_id, owner_id);
+
+    let path = format!("/api/v1/masters/crops/{crop_id}");
+    let (member_status, member_body) =
+        status_and_body(client.get(&path, Some(&member_session), &empty_headers()));
+    assert_eq!(200, member_status, "{member_body}");
+}
+
+#[test]
+fn org_member_can_update_team_crop() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Crop Update Org {suffix}"),
+        &format!("team-crop-update-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+    let crop_id = seed_org_scoped_crop(seed.organization_id, owner_id);
+
+    let path = format!("/api/v1/masters/crops/{crop_id}");
+    let payload = serde_json::json!({
+        "crop": { "name": format!("Updated Crop {suffix}") }
+    });
+    let (status, body) = status_and_body(
+        client.patch(&path, Some(&member_session), &empty_headers(), Some(payload)),
+    );
+    assert_eq!(200, status, "{body}");
+}
+
+#[test]
+fn org_non_member_denied_team_crop() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let other_session = researcher_session_id(&client);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Crop Deny Org {suffix}"),
+        &format!("team-crop-deny-org-{suffix}"),
+        false,
+    );
+    let crop_id = seed_org_scoped_crop(seed.organization_id, owner_id);
+
+    let path = format!("/api/v1/masters/crops/{crop_id}");
     let (status, body) =
         status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
     assert_cross_user_access_denied(status, &body);

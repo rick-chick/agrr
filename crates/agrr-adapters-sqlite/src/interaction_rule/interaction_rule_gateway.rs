@@ -83,14 +83,15 @@ impl InteractionRuleGateway for InteractionRuleSqliteGateway {
         &self,
         filter: &ReferenceIndexListFilter,
     ) -> Result<Vec<InteractionRuleEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        let (where_sql, user_id) = where_clause(filter);
+        let clause = where_clause(filter);
         let sql = format!(
             "SELECT id, user_id, rule_type, source_group, target_group, impact_ratio, is_directional, description, region, is_reference, created_at, updated_at \
-             FROM interaction_rules WHERE {where_sql} ORDER BY rule_type, source_group"
+             FROM interaction_rules WHERE {} ORDER BY rule_type, source_group",
+            clause.sql
         );
         self.pool.with_read_box(|conn| {
             let mut stmt = conn.prepare(&sql)?;
-            let rows = stmt.query_map(params![user_id], Self::row_to_entity)?;
+            let rows = stmt.query_map(rusqlite::params_from_iter(clause.params.iter()), Self::row_to_entity)?;
             let mut out = Vec::new();
             for row in rows {
                 out.push(row?);

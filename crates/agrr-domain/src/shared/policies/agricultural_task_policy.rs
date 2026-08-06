@@ -21,8 +21,11 @@ impl RecordAccessPolicy for AgriculturalTaskRecordAccessPolicy {
     }
 }
 
-pub fn record_access_filter(user: User) -> ReferenceRecordAccessFilter<AgriculturalTaskRecordAccessPolicy> {
-    ReferenceRecordAccessFilter::new(user)
+pub fn record_access_filter(
+    user: User,
+    member_organization_ids: Vec<i64>,
+) -> ReferenceRecordAccessFilter<AgriculturalTaskRecordAccessPolicy> {
+    ReferenceRecordAccessFilter::new(user, member_organization_ids)
 }
 
 /// Ruby: `Domain::Shared::Policies::AgriculturalTaskPolicy`

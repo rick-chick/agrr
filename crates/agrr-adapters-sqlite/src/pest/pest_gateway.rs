@@ -141,15 +141,15 @@ impl PestGateway for PestSqliteGateway {
         &self,
         filter: &ReferenceIndexListFilter,
     ) -> Result<Vec<PestEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        let (where_sql, user_id) = where_clause(filter);
+        let clause = where_clause(filter);
         let sql = format!(
             "SELECT {} FROM pests WHERE {} ORDER BY name",
             Self::SELECT_COLS,
-            where_sql
+            clause.sql
         );
         self.pool.with_read_box(|conn| {
             let mut stmt = conn.prepare(&sql)?;
-            let rows = stmt.query_map(params![user_id], Self::row_to_entity)?;
+            let rows = stmt.query_map(rusqlite::params_from_iter(clause.params.iter()), Self::row_to_entity)?;
             let mut out = Vec::new();
             for row in rows {
                 out.push(row?);

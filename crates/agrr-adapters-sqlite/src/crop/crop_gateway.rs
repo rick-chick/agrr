@@ -2,6 +2,7 @@
 
 use crate::deletion_undo::schedule_destroy;
 use crate::pool::SqlitePool;
+use crate::shared::reference_index::where_clause;
 use agrr_domain::cultivation_plan::ports::PrivatePlanCropListGateway;
 use agrr_domain::crop::dtos::{
     CropDeleteUsage, CropShowDetail, CropStageCreateInput, CropStageUpdateInput,
@@ -18,9 +19,7 @@ use agrr_domain::shared::attr::{AttrMap, AttrValue};
 use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use agrr_domain::shared::user::User;
-use agrr_domain::shared::value_objects::reference_index_list_filter::{
-    ReferenceIndexListFilter, ReferenceIndexListMode,
-};
+use agrr_domain::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter;
 use rusqlite::params;
 use rust_decimal::Decimal;
 use serde_json::{Map, Value};
@@ -53,22 +52,25 @@ fn map_crop_stage_sqlite_boxed_err(
 }
 
 fn map_crop_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CropEntity> {
-    let is_reference: i64 = row.get(4)?;
-    let groups_text: Option<String> = row.get(8)?;
+    let is_reference: i64 = row.get(5)?;
+    let groups_text: Option<String> = row.get(9)?;
     Ok(CropEntity {
         id: row.get(0)?,
         user_id: row.get(1)?,
-        name: row.get(2)?,
-        variety: row.get(3)?,
+        organization_id: row.get(2)?,
+        name: row.get(3)?,
+        variety: row.get(4)?,
         is_reference: is_reference != 0,
-        area_per_unit: row.get(5)?,
-        revenue_per_area: row.get(6)?,
-        region: row.get(7)?,
+        area_per_unit: row.get(6)?,
+        revenue_per_area: row.get(7)?,
+        region: row.get(8)?,
         groups: parse_groups(groups_text),
-        created_at: row.get(9)?,
-        updated_at: row.get(10)?,
+        created_at: row.get(10)?,
+        updated_at: row.get(11)?,
     })
 }
+
+const CROP_SELECT: &str = "SELECT id, user_id, organization_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at";
 
 fn parse_groups(raw: Option<String>) -> Vec<String> {
     raw.and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok())
@@ -80,21 +82,11 @@ impl CropGateway for CropSqliteGateway {
         &self,
         filter: &ReferenceIndexListFilter,
     ) -> Result<Vec<CropEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        let (sql, user_id) = match filter.mode {
-            ReferenceIndexListMode::ReferenceOrOwned => (
-                "SELECT id, user_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at \
-                 FROM crops WHERE is_reference = 1 OR user_id = ?1 ORDER BY name",
-                filter.user_id,
-            ),
-            ReferenceIndexListMode::OwnedNonReference => (
-                "SELECT id, user_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at \
-                 FROM crops WHERE user_id = ?1 AND is_reference = 0 ORDER BY name",
-                filter.user_id,
-            ),
-        };
+        let clause = where_clause(filter);
+        let sql = format!("{CROP_SELECT} FROM crops WHERE {} ORDER BY name", clause.sql);
         self.pool.with_read_box(|conn| {
-            let mut stmt = conn.prepare(sql)?;
-            let rows = stmt.query_map(params![user_id], map_crop_row)?;
+            let mut stmt = conn.prepare(&sql)?;
+            let rows = stmt.query_map(rusqlite::params_from_iter(clause.params.iter()), map_crop_row)?;
             let mut out = Vec::new();
             for row in rows {
                 out.push(row?);
@@ -105,10 +97,7 @@ impl CropGateway for CropSqliteGateway {
 
     fn find_by_id(&self, crop_id: i64) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> {
         self.pool.with_read_box(|conn| {
-            let mut stmt = conn.prepare(
-                "SELECT id, user_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at \
-                 FROM crops WHERE id = ?1 LIMIT 1",
-            )?;
+            let mut stmt = conn.prepare(&format!("{CROP_SELECT} FROM crops WHERE id = ?1 LIMIT 1"))?;
             stmt.query_row(params![crop_id], map_crop_row)
         })
     }
@@ -136,6 +125,20 @@ impl CropGateway for CropSqliteGateway {
             let count: i64 = conn.query_row(
                 "SELECT COUNT(*) FROM crops WHERE user_id = ?1 AND is_reference = 0",
                 params![user_id],
+                |row| row.get(0),
+            )?;
+            Ok(count as i32)
+        })
+    }
+
+    fn count_non_reference_crops_for_organization(
+        &self,
+        organization_id: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_read_box(|conn| {
+            let count: i64 = conn.query_row(
+                "SELECT COUNT(*) FROM crops WHERE organization_id = ?1 AND is_reference = 0",
+                params![organization_id],
                 |row| row.get(0),
             )?;
             Ok(count as i32)
@@ -181,13 +184,18 @@ impl CropGateway for CropSqliteGateway {
                 _ => None,
             })
             .unwrap_or(false);
+        let organization_id = attrs.get("organization_id").and_then(|v| match v {
+            AttrValue::Int(id) => Some(*id),
+            _ => None,
+        });
 
         let new_id = self.pool.with_write_box(|conn| {
             conn.execute(
-                "INSERT INTO crops (user_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at) \
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, datetime('now'), datetime('now'))",
+                "INSERT INTO crops (user_id, organization_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, datetime('now'), datetime('now'))",
                 params![
                     user.id,
+                    organization_id,
                     name,
                     variety,
                     if is_reference { 1 } else { 0 },
@@ -330,19 +338,17 @@ impl CropGateway for CropSqliteGateway {
     ) -> Result<Vec<CropEntity>, Box<dyn std::error::Error + Send + Sync>> {
         self.pool.with_read_box(|conn| {
             let ref_flag = if is_reference { 1 } else { 0 };
-            let sql_with_region = "SELECT id, user_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at \
-                     FROM crops WHERE is_reference = ?1 AND region = ?2 ORDER BY name";
-            let sql_all = "SELECT id, user_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at \
-                     FROM crops WHERE is_reference = ?1 ORDER BY name";
+            let sql_with_region = format!("{CROP_SELECT} FROM crops WHERE is_reference = ?1 AND region = ?2 ORDER BY name");
+            let sql_all = format!("{CROP_SELECT} FROM crops WHERE is_reference = ?1 ORDER BY name");
             let mut out = Vec::new();
             if let Some(region) = region.filter(|r| !r.is_empty()) {
-                let mut stmt = conn.prepare(sql_with_region)?;
+                let mut stmt = conn.prepare(&sql_with_region)?;
                 let rows = stmt.query_map(params![ref_flag, region], map_crop_row)?;
                 for row in rows {
                     out.push(row?);
                 }
             } else {
-                let mut stmt = conn.prepare(sql_all)?;
+                let mut stmt = conn.prepare(&sql_all)?;
                 let rows = stmt.query_map(params![ref_flag], map_crop_row)?;
                 for row in rows {
                     out.push(row?);
@@ -878,8 +884,7 @@ impl PrivatePlanCropListGateway for CropSqliteGateway {
             .collect::<Vec<_>>()
             .join(", ");
         let sql = format!(
-            "SELECT id, user_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at \
-             FROM crops WHERE id IN ({placeholders})"
+            "{CROP_SELECT} FROM crops WHERE id IN ({placeholders})"
         );
         self.pool.with_read_box(|conn| {
             let mut stmt = conn.prepare(&sql)?;

@@ -4,6 +4,16 @@
     use crate::pest::gateways::CropRecord;
     use crate::shared::exceptions::RecordNotFoundError;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     fn crop(id: i64) -> CropRecord {
         CropRecord {
             id,

@@ -41,6 +41,21 @@ pub trait FarmGateway: Send + Sync {
         user_id: i64,
     ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>>;
 
+    fn count_non_reference_farms_for_organization(
+        &self,
+        organization_id: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn list_organization_scoped_farms(
+        &self,
+        organization_ids: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn list_organization_scoped_and_reference_farms(
+        &self,
+        organization_ids: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>>;
+
     fn create_for_user(
         &self,
         user: &User,

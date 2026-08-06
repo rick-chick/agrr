@@ -7,24 +7,27 @@ use crate::cultivation_plan::ports::CultivationPlanDestroyOutputPort;
 use crate::deletion_undo::exceptions::DeletionUndoError;
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{AssociationInUseError, RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 
-pub struct CultivationPlanDestroyInteractor<'a, G, O, U, T> {
+pub struct CultivationPlanDestroyInteractor<'a, G, O, U, T, S> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     translator: &'a T,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, O, U, T> CultivationPlanDestroyInteractor<'a, G, O, U, T>
+impl<'a, G, O, U, T, S> CultivationPlanDestroyInteractor<'a, G, O, U, T, S>
 where
     G: CultivationPlanGateway,
     O: CultivationPlanDestroyOutputPort,
     U: UserLookupGateway,
     T: TranslatorPort,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -32,6 +35,7 @@ where
         gateway: &'a G,
         translator: &'a T,
         user_lookup: &'a U,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
@@ -39,6 +43,7 @@ where
             user_id,
             translator,
             user_lookup,
+            scope_gateway,
         }
     }
 
@@ -58,8 +63,10 @@ where
             Err(err) => return Err(err),
         };
 
+        let org_ids = member_organization_ids(self.scope_gateway, user.id)?;
+
         if let Err(PolicyPermissionDenied) =
-            private_cultivation_plan_access_policy::assert_private_owned(&user, &plan)
+            private_cultivation_plan_access_policy::assert_private_owned(&user, &plan, &org_ids)
         {
             self.handle_failure(self.translator.t("plans.errors.not_found", &opts));
             return Ok(());

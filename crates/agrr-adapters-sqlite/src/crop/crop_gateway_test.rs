@@ -31,7 +31,7 @@ fn crop_test_pool() -> SqlitePool {
     pool.with_write(|conn| {
         conn.execute_batch(
             "CREATE TABLE crops (
-              id INTEGER PRIMARY KEY, user_id INTEGER, name TEXT NOT NULL, variety TEXT,
+              id INTEGER PRIMARY KEY, user_id INTEGER, organization_id INTEGER, name TEXT NOT NULL, variety TEXT,
               is_reference INTEGER NOT NULL DEFAULT 0, area_per_unit REAL, revenue_per_area REAL,
               region TEXT, groups TEXT, created_at TEXT, updated_at TEXT
             );
@@ -336,7 +336,7 @@ fn list_index_for_filter_owned_non_reference_returns_only_users_non_reference_cr
     insert_crop(&pool, 0, "Ref", true);
     insert_crop(&pool, other.id, "Other", false);
 
-    let filter = ReferenceIndexListFilter::new(ReferenceIndexListMode::OwnedNonReference, user.id);
+    let filter = ReferenceIndexListFilter::new(ReferenceIndexListMode::OwnedNonReference, user.id, vec![]);
     let ids: Vec<i64> = gw
         .list_index_for_filter(&filter)
         .unwrap()
@@ -358,7 +358,7 @@ fn list_index_for_filter_reference_or_owned_includes_reference_and_owned_rows() 
     let own = insert_crop(&pool, admin.id, "Admin own", false);
     let other_crop = insert_crop(&pool, other.id, "Other", false);
 
-    let filter = ReferenceIndexListFilter::new(ReferenceIndexListMode::ReferenceOrOwned, admin.id);
+    let filter = ReferenceIndexListFilter::new(ReferenceIndexListMode::ReferenceOrOwned, admin.id, vec![]);
     let ids: Vec<i64> = gw
         .list_index_for_filter(&filter)
         .unwrap()

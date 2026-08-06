@@ -44,7 +44,7 @@ where
 
     pub fn call(&mut self, rule_id: i64) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = interaction_rule_policy::record_access_filter(user);
+        let access_filter = interaction_rule_policy::record_access_filter(user, vec![]);
         let opts = TranslateOptions::default();
 
         let current = match self.gateway.find_by_id(rule_id) {

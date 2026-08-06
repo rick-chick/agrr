@@ -10,8 +10,10 @@ use agrr_domain::crop::gateways::CropGateway;
 use agrr_domain::crop::interactors::crop_create_interactor::CropCreateInteractor;
 use agrr_domain::crop::policies::crop_create_limit_policy;
 use agrr_domain::crop::ports::{CreateFailure, CropAiUpsertPersistencePort, CropCreateOutputPort};
+use agrr_domain::organization::gateways::PersonalOrganizationGateway;
 use agrr_domain::shared::attr::{attr_map_from_pairs, AttrValue};
-use agrr_domain::shared::gateways::UserLookupGateway;
+use agrr_domain::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
+use agrr_domain::shared::org_scope::member_organization_ids;
 use agrr_domain::shared::policies::crop_policy;
 use agrr_domain::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use agrr_domain::shared::reference_record_access_filter::ReferenceRecordAccessFilter;
@@ -19,29 +21,42 @@ use agrr_domain::shared::reference_record_authorization;
 use agrr_domain::shared::user::User;
 use serde_json::{json, Map, Value};
 
-pub struct CropAiUpsertSqlitePersistence<G, U, T> {
+pub struct CropAiUpsertSqlitePersistence<G, U, T, S, P> {
     crop_gateway: G,
     user_id: i64,
     user_lookup: U,
     translator: T,
+    scope_gateway: S,
+    personal_org_gateway: P,
 }
 
-impl<G, U, T> CropAiUpsertSqlitePersistence<G, U, T> {
-    pub fn new(crop_gateway: G, user_id: i64, user_lookup: U, translator: T) -> Self {
+impl<G, U, T, S, P> CropAiUpsertSqlitePersistence<G, U, T, S, P> {
+    pub fn new(
+        crop_gateway: G,
+        user_id: i64,
+        user_lookup: U,
+        translator: T,
+        scope_gateway: S,
+        personal_org_gateway: P,
+    ) -> Self {
         Self {
             crop_gateway,
             user_id,
             user_lookup,
             translator,
+            scope_gateway,
+            personal_org_gateway,
         }
     }
 }
 
-impl<G, U, T> CropAiUpsertPersistencePort for CropAiUpsertSqlitePersistence<G, U, T>
+impl<G, U, T, S, P> CropAiUpsertPersistencePort for CropAiUpsertSqlitePersistence<G, U, T, S, P>
 where
     G: CropGateway,
     U: UserLookupGateway,
     T: TranslatorPort,
+    S: UserOrganizationScopeGateway,
+    P: PersonalOrganizationGateway,
 {
     fn upsert(
         &self,
@@ -53,7 +68,14 @@ where
     ) -> Result<CropAiCreateOutput, CropAiCreateFailure> {
         let opts = TranslateOptions::default();
 
-        if let Err(msg) = preflight_user_crop_limit(&self.crop_gateway, user, &self.translator, &opts)
+        if let Err(msg) = preflight_crop_limit(
+            &self.crop_gateway,
+            &self.scope_gateway,
+            &self.personal_org_gateway,
+            user,
+            &self.translator,
+            &opts,
+        )
         {
             return Err(CropAiCreateFailure::new(
                 HttpStatus::UnprocessableEntity,
@@ -113,6 +135,8 @@ where
                 self.user_id,
                 &self.user_lookup,
                 &self.translator,
+                &self.scope_gateway,
+                &self.personal_org_gateway,
                 user,
                 crop_name,
                 crop_data,
@@ -125,14 +149,30 @@ where
     }
 }
 
-fn preflight_user_crop_limit<G: CropGateway, T: TranslatorPort>(
+fn preflight_crop_limit<G, S, P, T>(
     gateway: &G,
+    scope_gateway: &S,
+    personal_org_gateway: &P,
     user: &User,
     translator: &T,
     opts: &TranslateOptions,
-) -> Result<(), String> {
+) -> Result<(), String>
+where
+    G: CropGateway,
+    S: UserOrganizationScopeGateway,
+    P: PersonalOrganizationGateway,
+    T: TranslatorPort,
+{
+    let org_ids = member_organization_ids(scope_gateway, user.id).map_err(|e| e.to_string())?;
+    let organization_id = if let Some(&id) = org_ids.first() {
+        id
+    } else {
+        personal_org_gateway
+            .ensure_personal_organization(user.id, "", "")
+            .map_err(|e| e.to_string())?
+    };
     let count = gateway
-        .count_user_owned_non_reference_crops(user.id)
+        .count_non_reference_crops_for_organization(organization_id)
         .map_err(|e| e.to_string())?;
     if crop_create_limit_policy::limit_exceeded(count, false) {
         return Err(translator.t(
@@ -192,11 +232,13 @@ fn update_existing_crop<G: CropGateway>(
     gateway.find_by_id(crop_id)
 }
 
-fn create_new_crop<G, U, T>(
+fn create_new_crop<G, U, T, S, P>(
     gateway: &G,
     user_id: i64,
     user_lookup: &U,
     translator: &T,
+    scope_gateway: &S,
+    personal_org_gateway: &P,
     user: &User,
     crop_name: &str,
     crop_data: &Value,
@@ -207,6 +249,8 @@ where
     G: CropGateway,
     U: UserLookupGateway,
     T: TranslatorPort,
+    S: UserOrganizationScopeGateway,
+    P: PersonalOrganizationGateway,
 {
     let variety_value = resolve_variety(variety, crop_data.get("variety"), None);
     let base_attrs = attr_map_from_pairs([
@@ -234,6 +278,8 @@ where
         gateway,
         translator,
         user_lookup,
+        scope_gateway,
+        personal_org_gateway,
     );
     let input = CropCreateInput {
         name: crop_name.to_string(),
@@ -487,6 +533,37 @@ mod tests {
         }
     }
 
+    struct EmptyScopeGateway;
+    impl UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
+
+    struct StubPersonalOrgGateway;
+    impl PersonalOrganizationGateway for StubPersonalOrgGateway {
+        fn ensure_personal_organization(
+            &self,
+            _: i64,
+            _: &str,
+            _: &str,
+        ) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(1)
+        }
+
+        fn list_users_needing_personal_organization(
+            &self,
+        ) -> Result<
+            Vec<agrr_domain::organization::gateways::PersonalOrganizationUserRow>,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            Ok(vec![])
+        }
+    }
+
     fn temp_crop_pool() -> SqlitePool {
         let dir = std::env::temp_dir().join(format!("agrr_crop_ai_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
@@ -558,6 +635,8 @@ mod tests {
             7,
             FixedUserLookup(user.clone()),
             PassthroughTranslator,
+            EmptyScopeGateway,
+            StubPersonalOrgGateway,
         );
         let crop_info = json!({
             "success": true,
@@ -571,7 +650,7 @@ mod tests {
             },
             "stage_requirements": []
         });
-        let filter = crop_policy::record_access_filter(user.clone());
+        let filter = crop_policy::record_access_filter(user.clone(), vec![]);
         let out = persistence
             .upsert(&user, "ブロッコリー", Some("スプラウト"), crop_info, filter)
             .unwrap();
@@ -590,9 +669,11 @@ mod tests {
             7,
             FixedUserLookup(user.clone()),
             PassthroughTranslator,
+            EmptyScopeGateway,
+            StubPersonalOrgGateway,
         );
         let crop_info = json!({ "success": false, "error": "not found" });
-        let filter = crop_policy::record_access_filter(user.clone());
+        let filter = crop_policy::record_access_filter(user.clone(), vec![]);
         let err = persistence
             .upsert(&user, "x", None, crop_info, filter)
             .unwrap_err();

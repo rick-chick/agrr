@@ -6,7 +6,10 @@ use crate::farm_weather_fetch::StartFarmWeatherFetchAdapter;
 use crate::masters_json::{farm_field_to_json, farm_to_json, masters_destroy_undo_json};
 use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
-use agrr_adapters_sqlite::{FarmSqliteGateway, UserLookupSqliteGateway};
+use agrr_adapters_sqlite::{
+    FarmSqliteGateway, PersonalOrganizationSqliteGateway, UserLookupSqliteGateway,
+    UserOrganizationScopeSqliteGateway,
+};
 use agrr_domain::shared::gateways::UserLookupGateway;
 use agrr_domain::farm::dtos::{FarmCreateInput, FarmListInput, FarmUpdateInput};
 use agrr_domain::farm::entities::FarmEntity;
@@ -63,11 +66,12 @@ async fn list_farms(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = FarmSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let user = user_lookup.find(user_id);
     let mut presenter = ListPresenter { body: None };
     let mut interactor =
-        FarmListInteractor::new(&mut presenter, user_id, &gateway);
+        FarmListInteractor::new(&mut presenter, user_id, &gateway, &scope_gateway);
     interactor
         .call(Some(FarmListInput::new(user.admin)))
         .map_err(internal)?;
@@ -87,10 +91,16 @@ async fn show_farm(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = FarmSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let mut presenter = DetailPresenter { body: None };
-    let mut interactor =
-        FarmDetailInteractor::new(&mut presenter, user_id, &gateway, &user_lookup);
+    let mut interactor = FarmDetailInteractor::new(
+        &mut presenter,
+        user_id,
+        &gateway,
+        &user_lookup,
+        &scope_gateway,
+    );
     interactor.call(id).map_err(internal)?;
 
     match presenter.body {
@@ -128,7 +138,9 @@ async fn create_farm(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = FarmSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
+    let personal_org_gateway = PersonalOrganizationSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
     let weather_fetch = StartFarmWeatherFetchAdapter::new(state.clone());
     let clock = SystemClock;
@@ -141,6 +153,8 @@ async fn create_farm(
         &user_lookup,
         &weather_fetch,
         &clock,
+        &scope_gateway,
+        &personal_org_gateway,
     );
     let input = FarmCreateInput::new(
         attrs.name.clone().unwrap(),
@@ -166,7 +180,8 @@ async fn update_farm(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = FarmSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
     let weather_fetch = StartFarmWeatherFetchAdapter::new(state.clone());
     let clock = SystemClock;
@@ -179,6 +194,7 @@ async fn update_farm(
         &user_lookup,
         &weather_fetch,
         &clock,
+        &scope_gateway,
     );
     let input = FarmUpdateInput {
         farm_id: id,
@@ -205,7 +221,8 @@ async fn destroy_farm(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = FarmSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let translator = state.locale_translator(&headers);
     let mut presenter = DestroyPresenter { body: None };
     let mut interactor = FarmDestroyInteractor::new(
@@ -214,6 +231,7 @@ async fn destroy_farm(
         &gateway,
         &translator,
         &user_lookup,
+        &scope_gateway,
     );
     interactor.call(id).map_err(internal)?;
 

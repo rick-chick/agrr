@@ -5,6 +5,16 @@
     use crate::shared::user::User;
     use std::sync::Mutex;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct SpyGateway {
         farm: FarmEntity,
         updated_attrs: Mutex<Option<AttrMap>>,
@@ -59,6 +69,28 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_farms_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
+        fn list_organization_scoped_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+
+        fn list_organization_scoped_and_reference_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -123,7 +155,8 @@
             longitude: Some(139.0),
             region: Some("jp".into()),
             user_id: Some(1),
-            created_at: None,
+        organization_id: None,
+created_at: None,
             updated_at: None,
             is_reference: false,
             weather_data_fetched_years: Some(fetched),

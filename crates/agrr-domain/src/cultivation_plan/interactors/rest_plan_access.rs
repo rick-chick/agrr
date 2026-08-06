@@ -10,7 +10,11 @@ pub fn access_denied(plan: &CultivationPlanEntity, auth: &CultivationPlanRestAut
     match auth.mode {
         CultivationPlanRestAuthMode::Private => {
             let user_id = auth.user_id.unwrap_or(-1);
-            private_cultivation_plan_access_policy::access_denied(plan, user_id)
+            private_cultivation_plan_access_policy::access_denied(
+                plan,
+                user_id,
+                &auth.member_organization_ids,
+            )
         }
         CultivationPlanRestAuthMode::Public => !plan_read_authorization::public_plan(&plan.plan_type),
     }

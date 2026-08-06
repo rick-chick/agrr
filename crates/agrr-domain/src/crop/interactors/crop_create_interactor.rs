@@ -4,27 +4,33 @@ use crate::crop::dtos::{CropCreateInput, CropCreateLimitExceededFailure};
 use crate::crop::gateways::CropGateway;
 use crate::crop::policies::crop_create_limit_policy;
 use crate::crop::ports::{CreateFailure, CropCreateOutputPort};
+use crate::organization::gateways::PersonalOrganizationGateway;
 use crate::shared::attr::{attr_map_from_pairs, AttrValue};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::policies::{crop_policy, referencable_resource_policy};
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 
-pub struct CropCreateInteractor<'a, G, O, U, T> {
+pub struct CropCreateInteractor<'a, G, O, U, T, S, P> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     translator: &'a T,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
+    personal_org_gateway: &'a P,
 }
 
-impl<'a, G, O, U, T> CropCreateInteractor<'a, G, O, U, T>
+impl<'a, G, O, U, T, S, P> CropCreateInteractor<'a, G, O, U, T, S, P>
 where
     G: CropGateway,
     O: CropCreateOutputPort,
     U: UserLookupGateway,
     T: TranslatorPort,
+    S: UserOrganizationScopeGateway,
+    P: PersonalOrganizationGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -32,6 +38,8 @@ where
         gateway: &'a G,
         translator: &'a T,
         user_lookup: &'a U,
+        scope_gateway: &'a S,
+        personal_org_gateway: &'a P,
     ) -> Self {
         Self {
             output_port,
@@ -39,6 +47,8 @@ where
             user_id,
             translator,
             user_lookup,
+            scope_gateway,
+            personal_org_gateway,
         }
     }
 
@@ -47,6 +57,13 @@ where
         input: CropCreateInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
+        let org_ids = member_organization_ids(self.scope_gateway, user.id)?;
+        let organization_id = if let Some(&id) = org_ids.first() {
+            id
+        } else {
+            self.personal_org_gateway
+                .ensure_personal_organization(user.id, "", "")?
+        };
         let opts = TranslateOptions::default();
 
         if !referencable_resource_policy::reference_assignment_allowed(&user, input.is_reference)
@@ -56,7 +73,7 @@ where
             return Ok(());
         }
 
-        let attrs = crop_policy::normalize_attrs_for_create(
+        let mut attrs = crop_policy::normalize_attrs_for_create(
             &user,
             attr_map_from_pairs([
                 ("name", AttrValue::from(input.name.as_str())),
@@ -119,9 +136,10 @@ where
         }
 
         if !is_reference {
+            attrs.insert("organization_id".into(), AttrValue::Int(organization_id));
             let existing_count = self
                 .gateway
-                .count_user_owned_non_reference_crops(user.id)?;
+                .count_non_reference_crops_for_organization(organization_id)?;
             if crop_create_limit_policy::limit_exceeded(existing_count, is_reference) {
                 let message = self.translator.t(
                     "activerecord.errors.models.crop.attributes.user.crop_limit_exceeded",

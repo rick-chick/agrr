@@ -4,6 +4,16 @@
     use crate::shared::user::User;
     use crate::shared::value_objects::reference_index_list_filter::ReferenceIndexListMode;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     fn user(id: i64, admin: bool) -> User {
         User::new(id, admin)
     }
@@ -35,7 +45,7 @@
     #[test]
     fn selectable_list_filter_is_reference_or_owned_for_regular_user() {
         let regular = user(9, false);
-        let filter = selectable_list_filter(&regular);
+        let filter = selectable_list_filter(&regular, &[]);
         assert_eq!(filter.mode, ReferenceIndexListMode::ReferenceOrOwned);
         assert_eq!(filter.user_id, 9);
     }

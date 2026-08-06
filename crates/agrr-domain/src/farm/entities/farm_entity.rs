@@ -10,6 +10,7 @@ pub struct FarmEntity {
     pub longitude: Option<f64>,
     pub region: Option<String>,
     pub user_id: Option<i64>,
+    pub organization_id: Option<i64>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
     pub is_reference: bool,
@@ -57,6 +58,10 @@ impl RecordRef for FarmEntity {
 
     fn user_id(&self) -> Option<i64> {
         self.user_id
+    }
+
+    fn organization_id(&self) -> Option<i64> {
+        self.organization_id
     }
 }
 

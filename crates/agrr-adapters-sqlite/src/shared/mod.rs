@@ -5,6 +5,7 @@ pub mod reference_index;
 mod session_cookie_principal_gateway;
 mod session_user_read;
 mod user_lookup;
+mod user_organization_scope_sqlite_gateway;
 
 pub use api_key_principal_gateway::ApiKeyPrincipalSqliteGateway;
 pub use internal_api_farm_lookup::{
@@ -13,3 +14,4 @@ pub use internal_api_farm_lookup::{
 pub use session_cookie_principal_gateway::SessionCookiePrincipalSqliteGateway;
 pub use session_user_read::{SessionUserReadSqliteGateway, SessionUserRow};
 pub use user_lookup::UserLookupSqliteGateway;
+pub use user_organization_scope_sqlite_gateway::UserOrganizationScopeSqliteGateway;

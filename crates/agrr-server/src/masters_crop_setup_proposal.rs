@@ -6,6 +6,7 @@ use crate::state::AppState;
 use agrr_adapters_sqlite::{
     AgriculturalTaskSqliteGateway, CropMastersTaskScheduleBlueprintSqliteGateway,
     CropSetupProposalSqliteGateway, CropSqliteGateway, UserLookupSqliteGateway,
+    UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::crop::dtos::{
     CropSetupProposalApplyResult, CropSetupProposalInput, CropSetupProposalMode,
@@ -60,7 +61,8 @@ async fn setup_proposal(
     let blueprint_gateway = CropMastersTaskScheduleBlueprintSqliteGateway::new(pool.clone());
     let agricultural_task_gateway = AgriculturalTaskSqliteGateway::new(pool.clone());
     let proposal_gateway = CropSetupProposalSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
 
     struct Port {
         mode: CropSetupProposalMode,
@@ -129,6 +131,7 @@ async fn setup_proposal(
         &agricultural_task_gateway,
         &proposal_gateway,
         &user_lookup,
+        &scope_gateway,
     );
 
     interactor

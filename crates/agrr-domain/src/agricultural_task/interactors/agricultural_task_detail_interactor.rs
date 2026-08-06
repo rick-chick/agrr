@@ -29,7 +29,7 @@ where
 
     pub fn call(&mut self, task_id: i64) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = agricultural_task_policy::record_access_filter(user);
+        let access_filter = agricultural_task_policy::record_access_filter(user, vec![]);
         match self.gateway.find_agricultural_task_show_detail(task_id) {
             Ok(detail) => {
                 if let Err(policy) =

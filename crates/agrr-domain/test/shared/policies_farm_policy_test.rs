@@ -3,6 +3,16 @@
     use crate::shared::attr::attr_map_from_pairs;
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     fn user(id: i64, admin: bool) -> User {
         User::new(id, admin)
     }
@@ -17,6 +27,7 @@
                 ("name", AttrValue::from("F")),
                 ("region", AttrValue::from("jp")),
             ]),
+            1,
         );
         assert_eq!(h.get("user_id"), Some(&AttrValue::Int(9)));
         assert_eq!(h.get("is_reference"), Some(&AttrValue::Bool(false)));
@@ -54,6 +65,7 @@
                 ("name", AttrValue::from("F")),
                 ("region", AttrValue::from("us")),
             ]),
+            1,
         );
         assert_eq!(h.get("region"), Some(&AttrValue::from("us")));
     }
@@ -68,6 +80,7 @@
                 ("name", AttrValue::from("F")),
                 ("region", AttrValue::from("us")),
             ]),
+            1,
         );
         assert!(!h.contains_key("region"));
     }

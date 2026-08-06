@@ -4,25 +4,27 @@ use crate::crop::dtos::{AuthorizedCropStageInCropContext, CropLoadAuthorizedCrop
 use crate::crop::gateways::{CropGateway, CropStageGateway};
 use crate::crop::ports::CropLoadedAuthorizationFailurePort;
 use crate::shared::exceptions::RecordNotFoundError;
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 use crate::shared::reference_record_authorization;
 
-pub struct CropLoadAuthorizedCropStageInteractor<'a, FP, CG, SG, U> {
+pub struct CropLoadAuthorizedCropStageInteractor<'a, FP, CG, SG, U, OS> {
     failure_presenter: &'a mut FP,
     user_id: i64,
     crop_gateway: &'a CG,
     crop_stage_gateway: &'a SG,
     user_lookup: &'a U,
+    scope_gateway: &'a OS,
     for_edit: bool,
 }
 
-impl<'a, FP, CG, SG, U> CropLoadAuthorizedCropStageInteractor<'a, FP, CG, SG, U>
+impl<'a, FP, CG, SG, U, OS> CropLoadAuthorizedCropStageInteractor<'a, FP, CG, SG, U, OS>
 where
     FP: CropLoadedAuthorizationFailurePort,
     CG: CropGateway,
     SG: CropStageGateway,
     U: UserLookupGateway,
+    OS: UserOrganizationScopeGateway,
 {
     pub fn new(
         failure_presenter: &'a mut FP,
@@ -30,6 +32,7 @@ where
         crop_gateway: &'a CG,
         crop_stage_gateway: &'a SG,
         user_lookup: &'a U,
+        scope_gateway: &'a OS,
         for_edit: bool,
     ) -> Self {
         Self {
@@ -38,6 +41,7 @@ where
             crop_gateway,
             crop_stage_gateway,
             user_lookup,
+            scope_gateway,
             for_edit,
         }
     }
@@ -48,7 +52,7 @@ where
     ) -> Result<Option<AuthorizedCropStageInCropContext>, Box<dyn std::error::Error + Send + Sync>>
     {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = crop_policy::record_access_filter(user);
+        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
 
         let crop_entity = match self.crop_gateway.find_by_id(input.crop_id) {
             Ok(e) => e,

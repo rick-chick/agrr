@@ -4,6 +4,16 @@
     use crate::crop::entities::CropEntity;
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup {
         fn find(&self, _: i64) -> User {
@@ -29,7 +39,8 @@
         CropEntity {
             id: 5,
             user_id: Some(user_id),
-            name: "Tomato".into(),
+        organization_id: None,
+name: "Tomato".into(),
             variety: None,
             is_reference: false,
             area_per_unit: None,
@@ -87,6 +98,14 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -266,7 +285,7 @@
         };
         let user_lookup_1 = StubLookup(User::new(10, false));
         let mut interactor =
-            CropDetailInteractor::new(&mut output, 10, &gateway, &user_lookup_1);
+            CropDetailInteractor::new(&mut output, 10, &gateway, &user_lookup_1, &EmptyScopeGateway);
         interactor.call(5).unwrap();
         assert_eq!(output.success, Some(CropDetailOutput::new(entity)));
     }
@@ -281,7 +300,7 @@
         };
         let user_lookup_1 = StubLookup(User::new(10, false));
         let mut interactor =
-            CropDetailInteractor::new(&mut output, 10, &gateway, &user_lookup_1);
+            CropDetailInteractor::new(&mut output, 10, &gateway, &user_lookup_1, &EmptyScopeGateway);
         interactor.call(5).unwrap();
         assert!(matches!(
             output.failure,

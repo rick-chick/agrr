@@ -5,6 +5,7 @@ use crate::shared::record_ref::RecordRef;
 pub struct CropEntity {
     pub id: i64,
     pub user_id: Option<i64>,
+    pub organization_id: Option<i64>,
     pub name: String,
     pub variety: Option<String>,
     pub is_reference: bool,
@@ -30,6 +31,7 @@ impl CropEntity {
         Ok(Self {
             id,
             user_id,
+            organization_id: None,
             name,
             variety: None,
             is_reference,
@@ -61,5 +63,9 @@ impl RecordRef for CropEntity {
 
     fn user_id(&self) -> Option<i64> {
         self.user_id
+    }
+
+    fn organization_id(&self) -> Option<i64> {
+        self.organization_id
     }
 }

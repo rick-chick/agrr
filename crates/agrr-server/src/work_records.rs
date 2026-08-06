@@ -6,7 +6,7 @@ use crate::adapters::SystemClock;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use crate::work_record_photos::load_photos_json_for_records;
-use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, TaskScheduleItemLookupSqliteGateway, WorkRecordPhotoSqliteGateway, WorkRecordSqliteGateway};
+use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, TaskScheduleItemLookupSqliteGateway, UserOrganizationScopeSqliteGateway, WorkRecordPhotoSqliteGateway, WorkRecordSqliteGateway};
 use agrr_domain::work_record::dtos::{WorkRecordDestroyOutput, WorkRecordRead};
 use agrr_domain::work_record::interactors::{
     WorkRecordCreateInteractor, WorkRecordDestroyInteractor, WorkRecordListInteractor,
@@ -264,7 +264,8 @@ async fn create_work_record(
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let work_record_gateway = WorkRecordSqliteGateway::new(pool.clone());
-    let item_lookup = TaskScheduleItemLookupSqliteGateway::new(pool);
+    let item_lookup = TaskScheduleItemLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let clock = SystemClock;
     let mut presenter = CreatePresenter { body: None };
 
@@ -274,6 +275,7 @@ async fn create_work_record(
         &work_record_gateway,
         &item_lookup,
         &clock,
+        &scope_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, &body.work_record)
@@ -295,11 +297,12 @@ async fn list_work_records(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
-    let work_record_gateway = WorkRecordSqliteGateway::new(pool);
+    let work_record_gateway = WorkRecordSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let mut presenter = ListPresenter { body: None };
 
     let mut interactor =
-        WorkRecordListInteractor::new(&mut presenter, &plan_gateway, &work_record_gateway);
+        WorkRecordListInteractor::new(&mut presenter, &plan_gateway, &work_record_gateway, &scope_gateway);
     interactor
         .call_rescuing(user_id, plan_id, &query)
         .map_err(|_| internal_error())?;
@@ -338,7 +341,8 @@ async fn update_work_record(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
-    let work_record_gateway = WorkRecordSqliteGateway::new(pool);
+    let work_record_gateway = WorkRecordSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let clock = SystemClock;
     let mut presenter = UpdatePresenter { body: None };
 
@@ -347,6 +351,7 @@ async fn update_work_record(
         &plan_gateway,
         &work_record_gateway,
         &clock,
+        &scope_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, record_id, &body.work_record)
@@ -377,7 +382,8 @@ async fn destroy_work_record(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
-    let work_record_gateway = WorkRecordSqliteGateway::new(pool);
+    let work_record_gateway = WorkRecordSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let translator = state.locale_translator(&headers);
     let mut presenter = DestroyPresenter { body: None };
 
@@ -386,6 +392,7 @@ async fn destroy_work_record(
         &plan_gateway,
         &work_record_gateway,
         &translator,
+        &scope_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, record_id)

@@ -7,19 +7,20 @@ use crate::crop::policies::crop_masters_crop_edit_access;
 use crate::crop::policies::crop_setup_proposal_policy;
 use crate::crop::ports::CropSetupProposalOutputPort;
 use crate::shared::exceptions::RecordNotFoundError;
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 
-pub struct CropSetupProposalInteractor<'a, CG, BG, AG, PG, O, U> {
+pub struct CropSetupProposalInteractor<'a, CG, BG, AG, PG, O, U, S> {
     output_port: &'a mut O,
     crop_gateway: &'a CG,
     blueprint_gateway: &'a BG,
     agricultural_task_gateway: &'a AG,
     proposal_gateway: &'a PG,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, CG, BG, AG, PG, O, U> CropSetupProposalInteractor<'a, CG, BG, AG, PG, O, U>
+impl<'a, CG, BG, AG, PG, O, U, S> CropSetupProposalInteractor<'a, CG, BG, AG, PG, O, U, S>
 where
     CG: CropGateway,
     BG: CropMastersTaskScheduleBlueprintGateway,
@@ -27,6 +28,7 @@ where
     PG: CropSetupProposalGateway,
     O: CropSetupProposalOutputPort,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -35,7 +37,7 @@ where
         agricultural_task_gateway: &'a AG,
         proposal_gateway: &'a PG,
         user_lookup: &'a U,
-    ) -> Self {
+        scope_gateway: &'a S) -> Self {
         Self {
             output_port,
             crop_gateway,
@@ -43,6 +45,7 @@ where
             agricultural_task_gateway,
             proposal_gateway,
             user_lookup,
+            scope_gateway,
         }
     }
 
@@ -51,7 +54,7 @@ where
         input: CropSetupProposalInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(input.user_id);
-        let access_filter = crop_policy::record_access_filter(user);
+        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
 
         let crop_entity = match self.crop_gateway.find_by_id(input.crop_id) {
             Ok(entity) => entity,

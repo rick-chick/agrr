@@ -4,29 +4,39 @@ use std::collections::BTreeMap;
 
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::gateways::UserOrganizationScopeGateway;
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::validation::{from_errors, ErrorsInput};
 use crate::work_record::dtos::WorkRecordListInput;
 use crate::work_record::gateways::WorkRecordGateway;
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::WorkRecordListOutputPort;
 
-pub struct WorkRecordListInteractor<'a, O, P, G> {
+pub struct WorkRecordListInteractor<'a, O, P, G, S> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
+    scope_gateway: &'a S,
 }
 
-impl<'a, O, P, G> WorkRecordListInteractor<'a, O, P, G>
+impl<'a, O, P, G, S> WorkRecordListInteractor<'a, O, P, G, S>
 where
     O: WorkRecordListOutputPort,
     P: CultivationPlanGateway,
     G: WorkRecordGateway,
+    S: UserOrganizationScopeGateway,
 {
-    pub fn new(output_port: &'a mut O, plan_gateway: &'a P, gateway: &'a G) -> Self {
+    pub fn new(
+        output_port: &'a mut O,
+        plan_gateway: &'a P,
+        gateway: &'a G,
+        scope_gateway: &'a S,
+    ) -> Self {
         Self {
             output_port,
             plan_gateway,
             gateway,
+            scope_gateway,
         }
     }
 
@@ -36,7 +46,8 @@ where
         plan_id: i64,
         query: &BTreeMap<String, String>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id) {
+        let org_ids = member_organization_ids(self.scope_gateway, user_id)?;
+        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &org_ids) {
             self.output_port.on_not_found();
             return Ok(());
         }

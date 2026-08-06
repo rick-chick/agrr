@@ -38,7 +38,7 @@ where
 
     pub fn call(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let filter = interaction_rule_policy::index_list_filter(&user);
+        let filter = interaction_rule_policy::index_list_filter(&user, &[]);
         match self.gateway.list_index_for_filter(&filter) {
             Ok(rules) => {
                 self.output_port.on_success(rules);

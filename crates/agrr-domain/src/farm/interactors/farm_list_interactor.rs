@@ -5,24 +5,34 @@ use crate::farm::gateways::FarmGateway;
 use crate::farm::ports::{FarmListOutputPort, FarmListSuccess, ListFailure};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::RecordInvalidError;
+use crate::shared::gateways::UserOrganizationScopeGateway;
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 
-pub struct FarmListInteractor<'a, G, O> {
+pub struct FarmListInteractor<'a, G, O, S> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, O> FarmListInteractor<'a, G, O>
+impl<'a, G, O, S> FarmListInteractor<'a, G, O, S>
 where
     G: FarmGateway,
     O: FarmListOutputPort,
+    S: UserOrganizationScopeGateway,
 {
-    pub fn new(output_port: &'a mut O, user_id: i64, gateway: &'a G) -> Self {
+    pub fn new(
+        output_port: &'a mut O,
+        user_id: i64,
+        gateway: &'a G,
+        scope_gateway: &'a S,
+    ) -> Self {
         Self {
             output_port,
             gateway,
             user_id,
+            scope_gateway,
         }
     }
 
@@ -31,9 +41,11 @@ where
         input: Option<FarmListInput>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let input = input.unwrap_or_default();
+        let org_ids = member_organization_ids(self.scope_gateway, self.user_id)?;
         let result = if input.is_admin {
             match (
-                self.gateway.list_user_and_reference_farms(self.user_id),
+                self.gateway
+                    .list_organization_scoped_and_reference_farms(&org_ids),
                 self.gateway.list_reference_farms(),
             ) {
                 (Ok(farms), Ok(reference_farms)) => FarmListSuccess {
@@ -45,7 +57,7 @@ where
                 }
             }
         } else {
-            match self.gateway.list_user_owned_farms(self.user_id) {
+            match self.gateway.list_organization_scoped_farms(&org_ids) {
                 Ok(farms) => FarmListSuccess {
                     farms,
                     reference_farms: vec![],

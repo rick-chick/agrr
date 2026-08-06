@@ -11,6 +11,16 @@
     use crate::shared::attr::AttrMap;
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup {
         fn find(&self, _: i64) -> User {
@@ -40,7 +50,8 @@
             longitude: None,
             region: None,
             user_id: Some(user_id),
-            created_at: None,
+        organization_id: None,
+created_at: None,
             updated_at: None,
             is_reference: false,
             weather_data_status: None,
@@ -126,6 +137,28 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_farms_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
+        fn list_organization_scoped_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+
+        fn list_organization_scoped_and_reference_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -184,7 +217,7 @@
         };
         let user_lookup = StubLookup(User::new(10, false));
         let mut interactor =
-            FarmDetailInteractor::new(&mut output, 10, &gateway, &user_lookup);
+            FarmDetailInteractor::new(&mut output, 10, &gateway, &user_lookup, &EmptyScopeGateway);
         interactor.call(3).expect("handled");
         let detail = output.success.expect("success");
         assert_eq!(detail.farm.id, 3);
@@ -203,7 +236,7 @@
         };
         let user_lookup = StubLookup(User::new(10, false));
         let mut interactor =
-            FarmDetailInteractor::new(&mut output, 10, &gateway, &user_lookup);
+            FarmDetailInteractor::new(&mut output, 10, &gateway, &user_lookup, &EmptyScopeGateway);
         interactor.call(3).expect("handled");
         assert!(matches!(
             output.failure,

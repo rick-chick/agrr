@@ -7,7 +7,8 @@ use crate::adapters::SystemClock;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use agrr_adapters_gcs::WorkRecordPhotoGcsStore;
-use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, WorkRecordPhotoSqliteGateway};
+use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, UserOrganizationScopeSqliteGateway, WorkRecordPhotoSqliteGateway};
+use agrr_domain::shared::org_scope::member_organization_ids;
 use agrr_domain::shared::ports::ClockPort;
 use agrr_domain::work_record::dtos::WorkRecordPhotoRead;
 use agrr_domain::work_record::gateways::{photo_row_to_read, WorkRecordPhotoGateway, WorkRecordPhotoObjectStoreGateway};
@@ -267,6 +268,7 @@ async fn upload_init(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
     if let Ok(store) = photo_store() {
         cleanup_stale_pending_photos(&photo_gateway, store.as_ref(), plan_id, record_id);
@@ -283,6 +285,7 @@ async fn upload_init(
         &photo_gateway,
         &clock,
         &upload_url_builder,
+        &scope_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, record_id, &content_type)
@@ -323,8 +326,16 @@ async fn upload_content(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
-    if !agrr_domain::work_record::plan_access_allowed(&plan_gateway, plan_id, user_id) {
+    let member_org_ids =
+        member_organization_ids(&scope_gateway, user_id).map_err(|_| internal_error())?;
+    if !agrr_domain::work_record::plan_access_allowed(
+        &plan_gateway,
+        plan_id,
+        user_id,
+        &member_org_ids,
+    ) {
         return Err(not_found());
     }
 
@@ -371,6 +382,7 @@ async fn upload_complete(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
     let clock = SystemClock;
     let store = photo_store()?;
@@ -385,6 +397,7 @@ async fn upload_complete(
         store.as_ref(),
         &clock,
         &read_url_builder,
+        &scope_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, record_id, photo_id, byte_size)
@@ -407,8 +420,16 @@ async fn download_content(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
-    if !agrr_domain::work_record::plan_access_allowed(&plan_gateway, plan_id, user_id) {
+    let member_org_ids =
+        member_organization_ids(&scope_gateway, user_id).map_err(|_| internal_error())?;
+    if !agrr_domain::work_record::plan_access_allowed(
+        &plan_gateway,
+        plan_id,
+        user_id,
+        &member_org_ids,
+    ) {
         return Err(not_found());
     }
 
@@ -446,6 +467,7 @@ async fn destroy_photo(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
     let store = photo_store()?;
     let mut presenter = DestroyPresenter { body: None };
@@ -455,6 +477,7 @@ async fn destroy_photo(
         &plan_gateway,
         &photo_gateway,
         store.as_ref(),
+        &scope_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, record_id, photo_id)

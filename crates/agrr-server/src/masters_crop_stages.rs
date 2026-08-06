@@ -4,7 +4,7 @@ use crate::masters_json::crop_stage_to_json;
 use crate::masters_auth::MastersUserId;
 use crate::masters_crop_context::load_user_non_reference_crop;
 use crate::state::AppState;
-use agrr_adapters_sqlite::{CropSqliteGateway, CropStageSqliteGateway, UserLookupSqliteGateway};
+use agrr_adapters_sqlite::{CropSqliteGateway, CropStageSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway};
 use agrr_domain::crop::dtos::{
     AuthorizedCropStageInCropContext, CropLoadAuthorizedCropStageInput, CropStageCreateInput,
     CropStageDeleteInput, CropStageListInput, CropStageReorderEntry, CropStageReorderInput,
@@ -67,9 +67,10 @@ pub(crate) async fn ensure_crop_visible(
     }
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let mut p = P { ok: false };
-    let mut interactor = CropDetailInteractor::new(&mut p, user_id, &gateway, &user_lookup);
+    let mut interactor = CropDetailInteractor::new(&mut p, user_id, &gateway, &user_lookup, &scope_gateway);
     if interactor.call(crop_id).is_err() || !p.ok {
         return Err((StatusCode::NOT_FOUND, Json(json!({"error": "not found"}))));
     }
@@ -98,7 +99,8 @@ pub(crate) async fn ensure_authorized_crop_stage(
     let pool = state.sqlite.clone();
     let crop_gateway = CropSqliteGateway::new(pool.clone());
     let stage_gateway = CropStageSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let mut failure_port = FailurePort { failed: false };
     let mut interactor = CropLoadAuthorizedCropStageInteractor::new(
         &mut failure_port,
@@ -106,6 +108,7 @@ pub(crate) async fn ensure_authorized_crop_stage(
         &crop_gateway,
         &stage_gateway,
         &user_lookup,
+        &scope_gateway,
         for_edit,
     );
     let context = interactor

@@ -58,6 +58,28 @@ impl FarmGateway for FarmGatewayStub {
         unimplemented!()
     }
 
+
+    fn count_non_reference_farms_for_organization(
+        &self,
+        _: i64,
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(0)
+    }
+
+    fn list_organization_scoped_farms(
+        &self,
+        _: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+
+    fn list_organization_scoped_and_reference_farms(
+        &self,
+        _: &[i64],
+    ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+
     fn create_for_user(
         &self,
         _: &User,

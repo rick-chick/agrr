@@ -3,30 +3,32 @@ use crate::crop::dtos::{AuthorizedCropLoaded, CropLoadAuthorizedInput};
 use crate::crop::gateways::CropGateway;
 use crate::crop::ports::CropLoadedAuthorizationFailurePort;
 use crate::shared::exceptions::RecordNotFoundError;
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 use crate::shared::reference_record_authorization;
 
-pub struct CropLoadAuthorizedInteractor<'a, FP, G, U> {
+pub struct CropLoadAuthorizedInteractor<'a, FP, G, U, S> {
     failure_presenter: &'a mut FP,
     user_id: i64,
     gateway: &'a G,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, FP, G, U> CropLoadAuthorizedInteractor<'a, FP, G, U>
+impl<'a, FP, G, U, S> CropLoadAuthorizedInteractor<'a, FP, G, U, S>
 where
     FP: CropLoadedAuthorizationFailurePort,
     G: CropGateway,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
 {
-    pub fn new(failure_presenter: &'a mut FP, user_id: i64, gateway: &'a G, user_lookup: &'a U) -> Self {
-        Self { failure_presenter, user_id, gateway, user_lookup }
+    pub fn new(failure_presenter: &'a mut FP, user_id: i64, gateway: &'a G, user_lookup: &'a U, scope_gateway: &'a S) -> Self {
+        Self { failure_presenter, user_id, gateway, user_lookup, scope_gateway }
     }
 
     pub fn call(&mut self, input: CropLoadAuthorizedInput) -> Result<Option<AuthorizedCropLoaded>, Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = crop_policy::record_access_filter(user);
+        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
         let crop_entity = match self.gateway.find_by_id(input.crop_id) {
             Ok(e) => e,
             Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {

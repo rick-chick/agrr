@@ -4,7 +4,7 @@ use crate::crop::entities::CropEntity;
 use crate::crop::gateways::CropGateway;
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 use crate::shared::ports::logger_port::LoggerPort;
 use crate::shared::reference_record_authorization;
@@ -14,19 +14,21 @@ pub trait CropFindUserNonReferenceRecordOutputPort {
     fn on_failure(&mut self, error: Error);
 }
 
-pub struct CropFindUserNonReferenceRecordInteractor<'a, G, O, U, L> {
+pub struct CropFindUserNonReferenceRecordInteractor<'a, G, O, U, L, S> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     logger: &'a L,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, O, U, L> CropFindUserNonReferenceRecordInteractor<'a, G, O, U, L>
+impl<'a, G, O, U, L, S> CropFindUserNonReferenceRecordInteractor<'a, G, O, U, L, S>
 where
     G: CropGateway,
     O: CropFindUserNonReferenceRecordOutputPort,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
     L: LoggerPort,
 {
     pub fn new(
@@ -35,13 +37,14 @@ where
         gateway: &'a G,
         logger: &'a L,
         user_lookup: &'a U,
-    ) -> Self {
+        scope_gateway: &'a S) -> Self {
         Self {
             output_port,
             gateway,
             user_id,
             logger,
             user_lookup,
+            scope_gateway,
         }
     }
 
@@ -50,7 +53,7 @@ where
         crop_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = crop_policy::record_access_filter(user);
+        let access_filter = crop_policy::record_access_filter_for_user(self.scope_gateway, user)?;
 
         let crop_entity = match self.gateway.find_by_id(crop_id) {
             Ok(entity) => entity,

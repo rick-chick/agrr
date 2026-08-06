@@ -82,6 +82,7 @@ pub use shared::{
     find_farm as internal_api_find_farm, ApiKeyPrincipalSqliteGateway,
     InternalApiFarmLookupResult, InternalApiFarmRow, SessionCookiePrincipalSqliteGateway,
     SessionUserReadSqliteGateway, SessionUserRow, UserLookupSqliteGateway,
+    UserOrganizationScopeSqliteGateway,
 };
 pub use field_cultivation::{
     FieldCultivationClimateSourceSqliteGateway, FieldCultivationCropSqliteGateway,
@@ -90,6 +91,7 @@ pub use field_cultivation::{
 };
 pub use organization::{
     OrganizationMembershipSqliteGateway, OrganizationSqliteGateway,
+    PersonalOrganizationSqliteGateway,
 };
 pub use pool::SqlitePool;
 pub use user_account::UserAccountSqliteGateway;

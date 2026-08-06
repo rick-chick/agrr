@@ -8,6 +8,16 @@
     use serde_json::Value;
     use std::collections::HashMap;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubGateway {
         plan: Result<CultivationPlanEntity, Box<dyn std::error::Error + Send + Sync>>,
     }
@@ -79,7 +89,8 @@
             id: 2,
             farm_id: 1,
             user_id,
-            total_area: 0.0,
+        organization_id: None,
+total_area: 0.0,
             plan_type: "private".into(),
             plan_year: None,
             plan_name: None,
@@ -103,7 +114,7 @@
         let gateway = StubGateway {
             plan: Ok(private_plan(1)),
         };
-        assert!(access_allowed(&gateway, 2, 1));
+        assert!(access_allowed(&gateway, 2, 1, &[]));
     }
 
     // Ruby: test "access_allowed? is false for another users private plan"
@@ -112,5 +123,5 @@
         let gateway = StubGateway {
             plan: Ok(private_plan(99)),
         };
-        assert!(!access_allowed(&gateway, 2, 1));
+        assert!(!access_allowed(&gateway, 2, 1, &[]));
     }

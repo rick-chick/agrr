@@ -10,6 +10,16 @@
     use std::sync::{Arc, Mutex};
     use time::macros::date;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct FakeTranslator;
     impl TranslatorPort for FakeTranslator {
         fn translate(&self, key: &str, _: &TranslateOptions) -> String {
@@ -195,7 +205,8 @@
             longitude: Some(139.0),
             region: Some("jp".into()),
             user_id: Some(user_id),
-            is_reference: false,
+        organization_id: None,
+is_reference: false,
             created_at: None,
             updated_at: None,
             weather_data_status: None,
@@ -227,7 +238,8 @@
             id,
             farm_id: 1,
             user_id,
-            total_area: 1.0,
+        organization_id: None,
+total_area: 1.0,
             plan_type: "private".into(),
             plan_year: None,
             plan_name: Some("P".into()),

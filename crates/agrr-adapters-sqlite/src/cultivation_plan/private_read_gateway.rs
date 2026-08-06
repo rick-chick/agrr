@@ -28,7 +28,10 @@ impl CultivationPlanPrivateReadGateway for CultivationPlanPrivateReadSqliteGatew
                  (SELECT COUNT(*) FROM cultivation_plan_fields cpf WHERE cpf.cultivation_plan_id = cp.id) \
                  FROM cultivation_plans cp \
                  LEFT JOIN farms f ON f.id = cp.farm_id \
-                 WHERE cp.user_id = ?1 AND cp.plan_type = 'private' \
+                 WHERE cp.plan_type = 'private' \
+                 AND (cp.user_id = ?1 OR cp.organization_id IN ( \
+                   SELECT organization_id FROM organization_memberships WHERE user_id = ?1 \
+                 )) \
                  ORDER BY cp.updated_at DESC",
             )?;
             let rows = stmt.query_map(params![user_id], |row| {

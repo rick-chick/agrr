@@ -10,6 +10,7 @@ use agrr_adapters_agrr::{CropFertilizePlanAiQueryDaemonGateway, CropScheduleAiQu
 use agrr_adapters_sqlite::{
     AgriculturalTaskSqliteGateway, CropAgrrRequirementSqliteGateway,
     CropMastersTaskScheduleBlueprintSqliteGateway, CropSqliteGateway, UserLookupSqliteGateway,
+    UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::crop::dtos::{
     CropBlueprintRegenerateFailureReason, MastersCropTaskScheduleBlueprint,
@@ -96,7 +97,8 @@ async fn index(
     let pool = state.sqlite.clone();
     let crop_gateway = CropSqliteGateway::new(pool.clone());
     let blueprint_gateway = CropMastersTaskScheduleBlueprintSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     struct Port {
         body: Option<Result<Json<Value>, (StatusCode, Json<Value>)>>,
     }
@@ -118,6 +120,7 @@ async fn index(
         &crop_gateway,
         &blueprint_gateway,
         &user_lookup,
+        &scope_gateway,
     );
     interactor
         .call(MastersCropTaskScheduleBlueprintIndexInput::new(user_id, crop_id))
@@ -151,7 +154,8 @@ async fn create(
     let crop_gateway = CropSqliteGateway::new(pool.clone());
     let agricultural_task_gateway = AgriculturalTaskSqliteGateway::new(pool.clone());
     let blueprint_gateway = CropMastersTaskScheduleBlueprintSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     struct Port {
         resp: Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>,
     }
@@ -170,6 +174,7 @@ async fn create(
         &agricultural_task_gateway,
         &blueprint_gateway,
         &user_lookup,
+        &scope_gateway,
     );
     interactor
         .call(MastersCropTaskScheduleBlueprintCreateInput {
@@ -198,7 +203,8 @@ async fn regenerate(
     let agricultural_task_gateway = AgriculturalTaskSqliteGateway::new(pool.clone());
     let blueprint_gateway = CropMastersTaskScheduleBlueprintSqliteGateway::new(pool.clone());
     let agrr_req_gateway = CropAgrrRequirementSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let schedule_gateway = CropScheduleAiQueryDaemonGateway::from_env();
     let fertilize_gateway = CropFertilizePlanAiQueryDaemonGateway::from_env();
     let regenerate_core = CropRegenerateTaskScheduleBlueprintsInteractor::new(
@@ -227,6 +233,7 @@ async fn regenerate(
         regenerate_core,
         &crop_gateway,
         &user_lookup,
+        &scope_gateway,
     );
     if interactor
         .call(MastersCropTaskScheduleBlueprintRegenerateInput::new(
@@ -297,7 +304,8 @@ async fn update(
     let pool = state.sqlite.clone();
     let crop_gateway = CropSqliteGateway::new(pool.clone());
     let blueprint_gateway = CropMastersTaskScheduleBlueprintSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     struct Port {
         body: Option<Result<Json<Value>, (StatusCode, Json<Value>)>>,
     }
@@ -315,6 +323,7 @@ async fn update(
         &crop_gateway,
         &blueprint_gateway,
         &user_lookup,
+        &scope_gateway,
     );
     interactor
         .call(MastersCropTaskScheduleBlueprintUpdateInput {
@@ -340,7 +349,8 @@ async fn destroy(
     let pool = state.sqlite.clone();
     let crop_gateway = CropSqliteGateway::new(pool.clone());
     let blueprint_gateway = CropMastersTaskScheduleBlueprintSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     struct Port {
         status: Option<Result<StatusCode, (StatusCode, Json<Value>)>>,
     }
@@ -358,6 +368,7 @@ async fn destroy(
         &crop_gateway,
         &blueprint_gateway,
         &user_lookup,
+        &scope_gateway,
     );
     interactor
         .call(MastersCropTaskScheduleBlueprintDestroyInput {

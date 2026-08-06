@@ -19,8 +19,11 @@ impl RecordAccessPolicy for FarmRecordAccessPolicy {
     }
 }
 
-pub fn record_access_filter(user: User) -> ReferenceRecordAccessFilter<FarmRecordAccessPolicy> {
-    ReferenceRecordAccessFilter::new(user)
+pub fn record_access_filter(
+    user: User,
+    member_organization_ids: Vec<i64>,
+) -> ReferenceRecordAccessFilter<FarmRecordAccessPolicy> {
+    ReferenceRecordAccessFilter::new(user, member_organization_ids)
 }
 
 /// Ruby: `Domain::Shared::Policies::FarmPolicy`
@@ -37,12 +40,13 @@ pub fn edit_allowed(user: &User, is_reference: bool, user_id: Option<i64>) -> bo
     user.admin || (!is_reference && user_id == Some(user.id))
 }
 
-pub fn normalize_attrs_for_create(user: &User, attrs: AttrMap) -> AttrMap {
+pub fn normalize_attrs_for_create(user: &User, attrs: AttrMap, organization_id: i64) -> AttrMap {
     let mut h = attrs;
     if !user.admin {
         h.remove("region");
     }
     h.insert("user_id".into(), AttrValue::Int(user.id));
+    h.insert("organization_id".into(), AttrValue::Int(organization_id));
     h.insert("is_reference".into(), AttrValue::Bool(false));
     h
 }

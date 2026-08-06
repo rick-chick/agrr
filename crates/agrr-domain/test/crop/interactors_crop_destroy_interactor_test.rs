@@ -9,6 +9,16 @@
     use crate::crop::dtos::CropDeleteUsage;
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup {
         fn find(&self, _: i64) -> User {
@@ -44,7 +54,8 @@
         CropEntity {
             id: 22,
             user_id: Some(user_id),
-            name: "C".into(),
+        organization_id: None,
+name: "C".into(),
             variety: None,
             is_reference: false,
             area_per_unit: None,
@@ -121,6 +132,14 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -288,6 +307,7 @@
             &gw,
             &StubTranslator,
             &user_lookup_1,
+            &EmptyScopeGateway,
         );
         i.call(22).unwrap();
         assert_eq!(out.success, Some(CropDestroyOutput::new(undo)));
@@ -313,6 +333,7 @@
             &gw,
             &StubTranslator,
             &user_lookup,
+            &EmptyScopeGateway,
         );
         i.call(22).unwrap();
         assert!(matches!(
@@ -341,6 +362,7 @@
             &gw,
             &StubTranslator,
             &user_lookup,
+            &EmptyScopeGateway,
         );
         i.call(22).unwrap();
         match out.failure {

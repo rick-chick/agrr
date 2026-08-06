@@ -9,6 +9,16 @@
     use crate::shared::attr::AttrMap;
     use crate::shared::user::User;
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct SpyOutput {
         success: Option<FarmListSuccess>,
         failure: Option<ListFailure>,
@@ -31,6 +41,7 @@
             longitude: None,
             region: None,
             user_id: Some(1),
+            organization_id: None,
             created_at: None,
             updated_at: None,
             is_reference: false,
@@ -111,6 +122,35 @@
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
+
+        fn count_non_reference_farms_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+
+        fn list_organization_scoped_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            match &self.behavior {
+                MockBehavior::Regular(farms) => Ok(farms.clone()),
+                MockBehavior::PolicyDenied => Err(Box::new(PolicyPermissionDenied)),
+                MockBehavior::Admin { .. } => unimplemented!(),
+            }
+        }
+
+        fn list_organization_scoped_and_reference_farms(
+            &self,
+            _: &[i64],
+        ) -> Result<Vec<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            match &self.behavior {
+                MockBehavior::Admin { list, .. } => Ok(list.clone()),
+                _ => unimplemented!(),
+            }
+        }
+
         fn create_for_user(
             &self,
             _: &User,
@@ -165,7 +205,7 @@
             success: None,
             failure: None,
         };
-        let mut interactor = FarmListInteractor::new(&mut output, 1, &gateway);
+        let mut interactor = FarmListInteractor::new(&mut output, 1, &gateway, &EmptyScopeGateway);
         interactor
             .call(Some(FarmListInput::regular_user()))
             .expect("handled");
@@ -189,7 +229,7 @@
             success: None,
             failure: None,
         };
-        let mut interactor = FarmListInteractor::new(&mut output, 2, &gateway);
+        let mut interactor = FarmListInteractor::new(&mut output, 2, &gateway, &EmptyScopeGateway);
         interactor
             .call(Some(FarmListInput::new(true)))
             .expect("handled");
@@ -208,7 +248,7 @@
             success: None,
             failure: None,
         };
-        let mut interactor = FarmListInteractor::new(&mut output, 1, &gateway);
+        let mut interactor = FarmListInteractor::new(&mut output, 1, &gateway, &EmptyScopeGateway);
         interactor
             .call(Some(FarmListInput::regular_user()))
             .expect("handled");

@@ -8,6 +8,16 @@
     use serde_json::json;
     use std::sync::{Arc, Mutex};
 
+
+    struct EmptyScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
+    }
     struct FakeTranslator;
     impl TranslatorPort for FakeTranslator {
         fn translate(&self, key: &str, options: &TranslateOptions) -> String {
@@ -132,7 +142,8 @@
             id,
             farm_id: 1,
             user_id,
-            total_area: 0.0,
+        organization_id: None,
+total_area: 0.0,
             plan_type: "private".into(),
             plan_year: None,
             plan_name: None,
@@ -173,6 +184,7 @@
             &gateway,
             &FakeTranslator,
             &user_lookup,
+            &EmptyScopeGateway,
         );
         interactor.call(1).unwrap();
         assert!(success.lock().unwrap().is_some());
@@ -202,6 +214,7 @@
             &gateway,
             &FakeTranslator,
             &user_lookup,
+            &EmptyScopeGateway,
         );
         interactor.call(1).unwrap();
         assert!(success.lock().unwrap().is_none());
@@ -234,6 +247,7 @@
             &gateway,
             &FakeTranslator,
             &user_lookup,
+            &EmptyScopeGateway,
         );
         interactor.call(1).unwrap();
         assert_eq!(
@@ -265,6 +279,7 @@
             &gateway,
             &FakeTranslator,
             &user_lookup,
+            &EmptyScopeGateway,
         );
         interactor.call(1).unwrap();
         assert_eq!(
@@ -353,6 +368,7 @@
             &gateway,
             &FakeTranslator,
             &user_lookup,
+            &EmptyScopeGateway,
         );
         let err = interactor.call(1).unwrap_err();
         assert_eq!(err.to_string(), "Unexpected error");

@@ -124,7 +124,7 @@ fn list_index_for_filter_owned_non_reference_returns_only_users_non_reference_pe
     let pest_r = insert_pest(&pool, None, "Pest R", true);
     insert_pesticide(&pool, None, crop_r, pest_r, "Ref", true);
 
-    let filter = pesticide_policy::index_list_filter(&user);
+    let filter = pesticide_policy::index_list_filter(&user, &[]);
     let ids: Vec<i64> = gw
         .list_index_for_filter(&filter)
         .unwrap()
@@ -152,7 +152,7 @@ fn list_by_crop_id_for_filter_scopes_by_crop_and_filter_mode() {
     let pest_r = insert_pest(&pool, None, "Pest R", true);
     insert_pesticide(&pool, None, crop_r, pest_r, "Ref", true);
 
-    let filter = pesticide_policy::index_list_filter(&user);
+    let filter = pesticide_policy::index_list_filter(&user, &[]);
     let ids: Vec<i64> = gw
         .list_by_crop_id_for_filter(crop_u, &filter)
         .unwrap()
@@ -183,7 +183,7 @@ fn list_index_for_filter_reference_or_owned_includes_reference_and_admin_owned_r
     let other_pesticide =
         insert_pesticide(&pool, Some(other.id), crop_o, pest_o, "Other", false);
 
-    let filter = ReferenceIndexListFilter::new(ReferenceIndexListMode::ReferenceOrOwned, admin.id);
+    let filter = ReferenceIndexListFilter::new(ReferenceIndexListMode::ReferenceOrOwned, admin.id, vec![]);
     let ids: Vec<i64> = gw
         .list_index_for_filter(&filter)
         .unwrap()

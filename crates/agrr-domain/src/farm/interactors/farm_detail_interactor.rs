@@ -4,35 +4,40 @@ use crate::farm::gateways::FarmGateway;
 use crate::farm::ports::{DetailFailure, FarmDetailOutputPort};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::policies::farm_policy;
 use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::reference_record_authorization;
 
-pub struct FarmDetailInteractor<'a, G, O, U> {
+pub struct FarmDetailInteractor<'a, G, O, U, S> {
     output_port: &'a mut O,
     gateway: &'a G,
     user_id: i64,
     user_lookup: &'a U,
+    scope_gateway: &'a S,
 }
 
-impl<'a, G, O, U> FarmDetailInteractor<'a, G, O, U>
+impl<'a, G, O, U, S> FarmDetailInteractor<'a, G, O, U, S>
 where
     G: FarmGateway,
     O: FarmDetailOutputPort,
     U: UserLookupGateway,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
         user_id: i64,
         gateway: &'a G,
         user_lookup: &'a U,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
             gateway,
             user_id,
             user_lookup,
+            scope_gateway,
         }
     }
 
@@ -41,7 +46,8 @@ where
         farm_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let access_filter = farm_policy::record_access_filter(user);
+        let org_ids = member_organization_ids(self.scope_gateway, user.id)?;
+        let access_filter = farm_policy::record_access_filter(user, org_ids);
 
         let farm_entity = self.gateway.find_by_id(farm_id)?;
         if let Err(policy) =

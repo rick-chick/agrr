@@ -6,6 +6,8 @@ use serde_json::Value;
 
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::gateways::UserOrganizationScopeGateway;
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::ports::ClockPort;
 use crate::shared::validation::{from_errors, ErrorsInput};
 use crate::work_record::dtos::WorkRecordUpdateInput;
@@ -13,31 +15,35 @@ use crate::work_record::gateways::WorkRecordGateway;
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::WorkRecordUpdateOutputPort;
 
-pub struct WorkRecordUpdateInteractor<'a, O, P, G, C> {
+pub struct WorkRecordUpdateInteractor<'a, O, P, G, C, S> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
     clock: &'a C,
+    scope_gateway: &'a S,
 }
 
-impl<'a, O, P, G, C> WorkRecordUpdateInteractor<'a, O, P, G, C>
+impl<'a, O, P, G, C, S> WorkRecordUpdateInteractor<'a, O, P, G, C, S>
 where
     O: WorkRecordUpdateOutputPort,
     P: CultivationPlanGateway,
     G: WorkRecordGateway,
     C: ClockPort,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
         plan_gateway: &'a P,
         gateway: &'a G,
         clock: &'a C,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
             plan_gateway,
             gateway,
             clock,
+            scope_gateway,
         }
     }
 
@@ -48,7 +54,8 @@ where
         record_id: i64,
         params: &BTreeMap<String, Value>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id) {
+        let org_ids = member_organization_ids(self.scope_gateway, user_id)?;
+        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &org_ids) {
             self.output_port.on_not_found();
             return Ok(());
         }
