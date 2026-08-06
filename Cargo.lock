@@ -80,6 +80,8 @@ dependencies = [
 name = "agrr-r4-contract"
 version = "0.1.0"
 dependencies = [
+ "agrr-adapters-sqlite",
+ "agrr-domain",
  "reqwest 0.12.28",
  "rusqlite",
  "serde",

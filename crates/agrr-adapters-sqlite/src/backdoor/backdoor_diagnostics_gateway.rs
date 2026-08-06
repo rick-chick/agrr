@@ -1,6 +1,8 @@
 //! Ruby: `Adapters::Backdoor::Gateways::BackdoorDiagnosticsActiveRecordGateway`
 
+use crate::organization::PersonalOrganizationSqliteGateway;
 use crate::pool::SqlitePool;
+use agrr_domain::organization::gateways::PersonalOrganizationGateway;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
 
@@ -166,6 +168,8 @@ impl BackdoorDiagnosticsSqliteGateway {
                 });
             }
             let id = conn.last_insert_rowid();
+            let personal_org = PersonalOrganizationSqliteGateway::new(self.pool.clone());
+            let _ = personal_org.ensure_personal_organization(id, &email, &name);
             fetch_user_detail(conn, id).map(|user| BackdoorCreateUserResult::Ok { user })
         })
     }

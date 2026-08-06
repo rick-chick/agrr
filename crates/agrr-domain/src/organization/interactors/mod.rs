@@ -1,4 +1,5 @@
 mod organization_create_interactor;
+mod personal_organization_backfill_interactor;
 mod organization_delete_interactor;
 mod organization_find_interactor;
 mod organization_list_interactor;
@@ -9,6 +10,7 @@ mod organization_membership_update_interactor;
 mod organization_update_interactor;
 
 pub use organization_create_interactor::OrganizationCreateInteractor;
+pub use personal_organization_backfill_interactor::PersonalOrganizationBackfillInteractor;
 pub use organization_delete_interactor::OrganizationDeleteInteractor;
 pub use organization_find_interactor::OrganizationFindInteractor;
 pub use organization_list_interactor::OrganizationListInteractor;

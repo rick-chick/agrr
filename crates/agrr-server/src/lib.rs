@@ -61,6 +61,7 @@ pub mod optimization_job_chain;
 pub mod organizations;
 #[cfg(test)]
 mod test_support;
+pub mod personal_organization;
 pub mod plan_allocation_adjust_debug_dump;
 pub mod plan_allocation_candidates;
 pub mod plans;
@@ -105,6 +106,11 @@ pub async fn run_http_server() {
     let startup_state = state.clone();
     tokio::spawn(async move {
         farm_weather_fetch::run_pending_farm_weather_backfill(&startup_state);
+    });
+
+    let org_backfill_state = state.clone();
+    tokio::spawn(async move {
+        personal_organization::run_personal_organization_backfill(&org_backfill_state);
     });
 
     let cors = CorsLayer::new()

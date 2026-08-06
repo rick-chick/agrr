@@ -1,11 +1,13 @@
 //! Ruby: `Adapters::Shared::Gateways::AuthTestLoginActiveRecordGateway`
 
 use crate::auth::session_lookup::SessionLookupSqliteGateway;
+use crate::organization::PersonalOrganizationSqliteGateway;
 use crate::pool::SqlitePool;
 use agrr_domain::auth::dtos::{
     AuthTestMockLoginInput, AuthTestMockLoginPersistResult,
 };
 use agrr_domain::auth::gateways::AuthTestLoginGateway;
+use agrr_domain::organization::gateways::PersonalOrganizationGateway;
 use rusqlite::params;
 
 pub struct AuthTestLoginSqliteGateway {
@@ -49,6 +51,12 @@ impl AuthTestLoginGateway for AuthTestLoginSqliteGateway {
                 )
             });
         }
+        let personal_org = PersonalOrganizationSqliteGateway::new(self.pool.clone());
+        let _ = personal_org.ensure_personal_organization(
+            user_id,
+            &input_dto.email,
+            &input_dto.name,
+        );
         let sessions = SessionLookupSqliteGateway::new(self.pool.clone());
         match sessions.create_for_user(user_id) {
             Ok(record) => {

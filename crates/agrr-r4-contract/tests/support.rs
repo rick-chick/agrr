@@ -1222,6 +1222,41 @@ pub fn seed_organization_membership(organization_id: i64, user_id: i64, role: &s
     .expect("insert organization membership");
 }
 
+/// Runs personal org ensure + Tier 1 backfill for an existing user (issue #611).
+pub fn run_personal_organization_ensure_for_user(user_id: i64) -> i64 {
+    use agrr_adapters_sqlite::organization::PersonalOrganizationSqliteGateway;
+    use agrr_adapters_sqlite::pool::SqlitePool;
+    use agrr_domain::organization::gateways::PersonalOrganizationGateway;
+
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let pool = SqlitePool::new(&path);
+    let conn = contract_sqlite_conn();
+    let (email, name): (String, String) = conn
+        .query_row(
+            "SELECT COALESCE(email, ''), COALESCE(name, '') FROM users WHERE id = ?1",
+            params![user_id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .expect("user row for personal org ensure");
+    let gw = PersonalOrganizationSqliteGateway::new(pool);
+    gw.ensure_personal_organization(user_id, &email, &name)
+        .expect("ensure personal organization")
+}
+
+/// Seeds a user-owned farm without `organization_id` (pre-backfill scenario).
+pub fn seed_user_farm_without_organization(user_id: i64) -> i64 {
+    let conn = contract_sqlite_conn();
+    let suffix = seed_suffix();
+    conn.execute(
+        "INSERT INTO farms (user_id, name, latitude, longitude, created_at, updated_at, is_reference)
+         VALUES (?1, ?2, 35.0, 139.0, datetime('now'), datetime('now'), 0)",
+        params![user_id, format!("Pre-backfill Farm {suffix}")],
+    )
+    .expect("insert farm without organization_id");
+    conn.last_insert_rowid()
+}
+
 pub fn scheduler_auth_headers() -> HashMap<String, String> {
     let token = std::env::var("SCHEDULER_AUTH_TOKEN")
         .unwrap_or_else(|_| "test_scheduler_token_contract".into());

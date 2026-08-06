@@ -1,5 +1,7 @@
 use crate::auth::session_lookup::SessionLookupSqliteGateway;
+use crate::organization::PersonalOrganizationSqliteGateway;
 use crate::pool::SqlitePool;
+use agrr_domain::organization::gateways::PersonalOrganizationGateway;
 use rusqlite::params;
 
 #[derive(Debug, Clone)]
@@ -60,6 +62,14 @@ impl AuthOmniauthSessionSqliteGateway {
                 };
             }
         };
+
+        let personal_org = PersonalOrganizationSqliteGateway::new(self.pool.clone());
+        if personal_org
+            .ensure_personal_organization(user_id, &info.email, &info.name)
+            .is_err()
+        {
+            tracing::warn!(user_id, "failed to ensure personal organization after OAuth");
+        }
 
         let sessions = SessionLookupSqliteGateway::new(self.pool.clone());
         match sessions.create_for_user(user_id) {

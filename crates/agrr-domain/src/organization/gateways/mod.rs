@@ -1,5 +1,7 @@
 mod organization_gateway;
 mod organization_membership_gateway;
+mod personal_organization_gateway;
 
 pub use organization_gateway::OrganizationGateway;
 pub use organization_membership_gateway::OrganizationMembershipGateway;
+pub use personal_organization_gateway::{PersonalOrganizationGateway, PersonalOrganizationUserRow};

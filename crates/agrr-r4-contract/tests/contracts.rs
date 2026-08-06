@@ -22,6 +22,8 @@ use support::{
     seed_weather_cache_for_farm_create_completion,
     seed_user_organization,
     seed_organization_membership,
+    run_personal_organization_ensure_for_user,
+    seed_user_farm_without_organization,
 };
 
 #[test]
@@ -2324,6 +2326,59 @@ fn get_organizations_list_returns_member_orgs() {
     assert_eq!(seed.name, found["name"].as_str().unwrap());
     assert_eq!(seed.slug, found["slug"].as_str().unwrap());
     assert_eq!(false, found["is_personal"].as_bool().unwrap());
+}
+
+#[test]
+fn mock_login_ensures_personal_organization() {
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+
+    let (status, body) =
+        status_and_body(client.get("/api/v1/organizations", Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let orgs: Vec<serde_json::Value> = serde_json::from_str(&body).expect("organizations list JSON");
+    let personal = orgs
+        .iter()
+        .find(|o| o["is_personal"].as_bool() == Some(true))
+        .expect("personal organization in list after mock login");
+    assert_eq!(
+        format!("user-{user_id}"),
+        personal["slug"].as_str().unwrap()
+    );
+    assert_eq!(true, personal["is_personal"].as_bool().unwrap());
+}
+
+#[test]
+fn personal_org_backfill_sets_tier1_organization_id() {
+    let client = ContractClient::from_env();
+    let session_id = researcher_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let farm_id = seed_user_farm_without_organization(user_id);
+
+    let org_id = run_personal_organization_ensure_for_user(user_id);
+
+    let conn = rusqlite::Connection::open(
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH"),
+    )
+    .expect("open contract sqlite");
+    let farm_org: i64 = conn
+        .query_row(
+            "SELECT organization_id FROM farms WHERE id = ?1",
+            rusqlite::params![farm_id],
+            |row| row.get(0),
+        )
+        .expect("farm organization_id");
+    assert_eq!(org_id, farm_org);
+
+    let (status, body) =
+        status_and_body(client.get("/api/v1/organizations", Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let orgs: Vec<serde_json::Value> = serde_json::from_str(&body).expect("organizations list JSON");
+    assert!(
+        orgs.iter().any(|o| o["id"].as_i64() == Some(org_id) && o["is_personal"].as_bool() == Some(true)),
+        "personal org visible to user: {body}"
+    );
 }
 
 #[test]
