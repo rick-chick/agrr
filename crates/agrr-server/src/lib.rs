@@ -67,6 +67,7 @@ pub mod public_plan_save;
 pub mod public_plans;
 pub mod routes;
 pub mod security_headers;
+pub mod telemetry;
 pub mod scheduler_weather_update;
 pub mod runtime_env;
 pub mod session_auth;
@@ -85,14 +86,13 @@ use axum::{routing::get, Router};
 use state::AppState;
 use std::net::SocketAddr;
 use tower_http::cors::{AllowHeaders, CorsLayer};
-use tracing_subscriber::EnvFilter;
+use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
+use tracing::Level;
 
 pub async fn run_http_server() {
     runtime_env::ensure_default_runtime_env();
 
-    tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env())
-        .init();
+    telemetry::init();
 
     if let Err(message) = agrr_adapters_sqlite::validate_weather_storage_config() {
         panic!("weather storage configuration invalid: {message}");
@@ -150,6 +150,11 @@ pub async fn run_http_server() {
         .merge(ai_api::routes())
         .merge(backdoor::routes::routes())
         .fallback(fallback::api_not_migrated)
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO)),
+        )
         .layer(cors)
         .with_state(state);
     let app = security_headers::apply_security_headers_layer(app);
