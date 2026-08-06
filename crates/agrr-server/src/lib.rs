@@ -58,6 +58,7 @@ pub mod optimization_chain_phase;
 pub mod optimization_chain_run;
 mod optimization_chain_telemetry;
 pub mod optimization_job_chain;
+pub mod organizations;
 #[cfg(test)]
 mod test_support;
 pub mod plan_allocation_adjust_debug_dump;
@@ -145,6 +146,7 @@ pub async fn run_http_server() {
         .merge(contact_messages::routes())
         .merge(api_keys::routes())
         .merge(account::routes())
+        .merge(organizations::routes())
         .merge(auth_test::routes())
         .merge(routes::api_routes())
         .merge(internal_farms::routes())

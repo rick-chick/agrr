@@ -1180,6 +1180,37 @@ pub fn seed_farm_pending_weather(user_id: i64) -> i64 {
     conn.last_insert_rowid()
 }
 
+pub struct OrganizationSeed {
+    pub organization_id: i64,
+    pub name: String,
+    pub slug: String,
+    pub is_personal: bool,
+}
+
+/// Seeds an organization and owner membership for contract tests.
+pub fn seed_user_organization(user_id: i64, name: &str, slug: &str, is_personal: bool) -> OrganizationSeed {
+    let conn = contract_sqlite_conn();
+    conn.execute(
+        "INSERT INTO organizations (name, slug, is_personal, created_at, updated_at)
+         VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+        params![name, slug, if is_personal { 1 } else { 0 }],
+    )
+    .expect("insert organization");
+    let organization_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO organization_memberships (organization_id, user_id, role, created_at, updated_at)
+         VALUES (?1, ?2, 'owner', datetime('now'), datetime('now'))",
+        params![organization_id, user_id],
+    )
+    .expect("insert organization membership");
+    OrganizationSeed {
+        organization_id,
+        name: name.to_string(),
+        slug: slug.to_string(),
+        is_personal,
+    }
+}
+
 pub fn scheduler_auth_headers() -> HashMap<String, String> {
     let token = std::env::var("SCHEDULER_AUTH_TOKEN")
         .unwrap_or_else(|_| "test_scheduler_token_contract".into());
