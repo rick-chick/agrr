@@ -20,12 +20,21 @@ fn private_read_test_pool() -> SqlitePool {
     pool.with_write(|conn| {
         conn.execute_batch(
             "CREATE TABLE farms (
-              id INTEGER PRIMARY KEY, user_id INTEGER, name TEXT NOT NULL,
+              id INTEGER PRIMARY KEY, user_id INTEGER, organization_id INTEGER, name TEXT NOT NULL,
               latitude REAL, longitude REAL, region TEXT, is_reference INTEGER NOT NULL DEFAULT 0,
               created_at TEXT, updated_at TEXT
             );
+            CREATE TABLE organization_memberships (
+              id INTEGER PRIMARY KEY,
+              organization_id INTEGER NOT NULL,
+              user_id INTEGER NOT NULL,
+              role TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              UNIQUE(organization_id, user_id)
+            );
             CREATE TABLE cultivation_plans (
-              id INTEGER PRIMARY KEY, farm_id INTEGER, user_id INTEGER,
+              id INTEGER PRIMARY KEY, farm_id INTEGER, user_id INTEGER, organization_id INTEGER,
               total_area REAL, plan_type TEXT, plan_name TEXT, status TEXT,
               created_at TEXT, updated_at TEXT
             );

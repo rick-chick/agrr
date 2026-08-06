@@ -20,7 +20,7 @@ fn field_test_pool() -> SqlitePool {
     pool.with_write(|conn| {
         conn.execute_batch(
             "CREATE TABLE farms (
-              id INTEGER PRIMARY KEY, user_id INTEGER, name TEXT NOT NULL,
+              id INTEGER PRIMARY KEY, user_id INTEGER, organization_id INTEGER, name TEXT NOT NULL,
               latitude REAL, longitude REAL, region TEXT, is_reference INTEGER NOT NULL DEFAULT 0,
               created_at TEXT, updated_at TEXT, weather_data_status TEXT,
               weather_data_fetched_years INTEGER, weather_data_total_years INTEGER,

@@ -31,7 +31,7 @@ fn crop_test_pool() -> SqlitePool {
     pool.with_write(|conn| {
         conn.execute_batch(
             "CREATE TABLE crops (
-              id INTEGER PRIMARY KEY, user_id INTEGER, name TEXT NOT NULL, variety TEXT,
+              id INTEGER PRIMARY KEY, user_id INTEGER, organization_id INTEGER, name TEXT NOT NULL, variety TEXT,
               is_reference INTEGER NOT NULL DEFAULT 0, area_per_unit REAL, revenue_per_area REAL,
               region TEXT, groups TEXT, created_at TEXT, updated_at TEXT
             );
