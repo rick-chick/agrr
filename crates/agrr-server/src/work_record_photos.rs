@@ -268,6 +268,7 @@ async fn upload_init(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
     if let Ok(store) = photo_store() {
         cleanup_stale_pending_photos(&photo_gateway, store.as_ref(), plan_id, record_id);
@@ -284,6 +285,7 @@ async fn upload_init(
         &photo_gateway,
         &clock,
         &upload_url_builder,
+        &scope_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, record_id, &content_type)
@@ -380,6 +382,7 @@ async fn upload_complete(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
     let clock = SystemClock;
     let store = photo_store()?;
@@ -394,6 +397,7 @@ async fn upload_complete(
         store.as_ref(),
         &clock,
         &read_url_builder,
+        &scope_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, record_id, photo_id, byte_size)
@@ -463,6 +467,7 @@ async fn destroy_photo(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
     let store = photo_store()?;
     let mut presenter = DestroyPresenter { body: None };
@@ -472,6 +477,7 @@ async fn destroy_photo(
         &plan_gateway,
         &photo_gateway,
         store.as_ref(),
+        &scope_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, record_id, photo_id)

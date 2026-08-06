@@ -1,4 +1,3 @@
-use rust_decimal::Decimal;
 use serde_json::Value;
 
 use crate::crop::dtos::{

@@ -2,6 +2,8 @@
 
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::gateways::UserOrganizationScopeGateway;
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use crate::shared::validation::{from_errors, ErrorsInput};
 use crate::work_record::dtos::WorkRecordDestroyOutput;
@@ -9,31 +11,35 @@ use crate::work_record::gateways::{WorkRecordDestroyGatewayOutcome, WorkRecordGa
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::{DestroyFailure, WorkRecordDestroyOutputPort};
 
-pub struct WorkRecordDestroyInteractor<'a, O, P, G, T> {
+pub struct WorkRecordDestroyInteractor<'a, O, P, G, T, S> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
     translator: &'a T,
+    scope_gateway: &'a S,
 }
 
-impl<'a, O, P, G, T> WorkRecordDestroyInteractor<'a, O, P, G, T>
+impl<'a, O, P, G, T, S> WorkRecordDestroyInteractor<'a, O, P, G, T, S>
 where
     O: WorkRecordDestroyOutputPort,
     P: CultivationPlanGateway,
     G: WorkRecordGateway,
     T: TranslatorPort,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
         plan_gateway: &'a P,
         gateway: &'a G,
         translator: &'a T,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
             plan_gateway,
             gateway,
             translator,
+            scope_gateway,
         }
     }
 
@@ -43,7 +49,8 @@ where
         plan_id: i64,
         record_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &[]) {
+        let org_ids = member_organization_ids(self.scope_gateway, user_id)?;
+        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &org_ids) {
             self.output_port.on_not_found();
             return Ok(());
         }

@@ -11,8 +11,9 @@ use agrr_adapters_agrr::{
     CropAiQueryDaemonGateway, FertilizeAiQueryDaemonGateway, PestAiQueryDaemonGateway,
 };
 use agrr_adapters_sqlite::{
-    CropAiUpsertSqlitePersistence, CropSqliteGateway, FertilizeSqliteGateway, PestSqliteGateway,
-    UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
+    CropAiUpsertSqlitePersistence, CropSqliteGateway, FertilizeSqliteGateway,
+    PersonalOrganizationSqliteGateway, PestSqliteGateway, UserLookupSqliteGateway,
+    UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::crop::dtos::{CropAiCreateFailure, CropAiCreateOutput, HttpStatus as CropHttpStatus};
 use agrr_domain::crop::interactors::crop_ai_create_interactor::CropAiCreateInteractor;
@@ -159,6 +160,8 @@ async fn crop_ai_create(
             user_id,
             UserLookupSqliteGateway::new(pool.clone()),
             PassthroughTranslator,
+            UserOrganizationScopeSqliteGateway::new(pool.clone()),
+            PersonalOrganizationSqliteGateway::new(pool.clone()),
         );
         let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
         let translator = PassthroughTranslator;

@@ -207,7 +207,7 @@ fn lists_records_with_date_range_filter() {
         plan: private_plan(1),
     };
     let mut interactor =
-        WorkRecordListInteractor::new(&mut output, &plan_gateway, &gateway);
+        WorkRecordListInteractor::new(&mut output, &plan_gateway, &gateway, &EmptyScopeGateway);
 
     let mut query = BTreeMap::new();
     query.insert("from".into(), "2026-06-01".into());
@@ -242,7 +242,7 @@ fn dispatches_not_found_when_private_plan_access_denied() {
         plan: private_plan(99),
     };
     let mut interactor =
-        WorkRecordListInteractor::new(&mut output, &plan_gateway, &gateway);
+        WorkRecordListInteractor::new(&mut output, &plan_gateway, &gateway, &EmptyScopeGateway);
 
     interactor.call_rescuing(1, 2, &BTreeMap::new()).unwrap();
 

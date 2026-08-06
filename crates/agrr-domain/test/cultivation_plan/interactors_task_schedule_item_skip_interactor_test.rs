@@ -275,7 +275,7 @@ total_area: 0.0,
             plan: private_plan(1),
         };
         let mut interactor =
-            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
+            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock, &EmptyScopeGateway);
 
         interactor.call_skip_rescuing(1, 2, 9).unwrap();
 
@@ -314,7 +314,7 @@ total_area: 0.0,
             plan: private_plan(1),
         };
         let mut interactor =
-            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
+            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock, &EmptyScopeGateway);
 
         interactor.call_unskip_rescuing(1, 2, 9).unwrap();
 
@@ -345,7 +345,7 @@ total_area: 0.0,
             plan: private_plan(99),
         };
         let mut interactor =
-            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
+            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock, &EmptyScopeGateway);
 
         interactor.call_skip_rescuing(1, 2, 9).unwrap();
 
@@ -375,7 +375,7 @@ total_area: 0.0,
             plan: private_plan(1),
         };
         let mut interactor =
-            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
+            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock, &EmptyScopeGateway);
 
         interactor.call_skip_rescuing(1, 2, 9).unwrap();
 

@@ -6,6 +6,8 @@ use serde_json::Value;
 
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::gateways::UserOrganizationScopeGateway;
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::ports::ClockPort;
 use crate::shared::validation::{from_errors, ErrorsInput};
 use crate::work_record::dtos::work_record_create_input::record_invalid_field;
@@ -17,21 +19,23 @@ use crate::work_record::gateways::{
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::WorkRecordCreateOutputPort;
 
-pub struct WorkRecordCreateInteractor<'a, O, P, G, L, C> {
+pub struct WorkRecordCreateInteractor<'a, O, P, G, L, C, S> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
     item_lookup_gateway: &'a L,
     clock: &'a C,
+    scope_gateway: &'a S,
 }
 
-impl<'a, O, P, G, L, C> WorkRecordCreateInteractor<'a, O, P, G, L, C>
+impl<'a, O, P, G, L, C, S> WorkRecordCreateInteractor<'a, O, P, G, L, C, S>
 where
     O: WorkRecordCreateOutputPort,
     P: CultivationPlanGateway,
     G: WorkRecordGateway,
     L: TaskScheduleItemLookupGateway,
     C: ClockPort,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -39,6 +43,7 @@ where
         gateway: &'a G,
         item_lookup_gateway: &'a L,
         clock: &'a C,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
@@ -46,6 +51,7 @@ where
             gateway,
             item_lookup_gateway,
             clock,
+            scope_gateway,
         }
     }
 
@@ -55,7 +61,8 @@ where
         plan_id: i64,
         params: &BTreeMap<String, Value>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &[]) {
+        let org_ids = member_organization_ids(self.scope_gateway, user_id)?;
+        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &org_ids) {
             self.output_port.on_not_found();
             return Ok(());
         }

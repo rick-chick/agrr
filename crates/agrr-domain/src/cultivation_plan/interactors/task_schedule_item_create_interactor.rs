@@ -7,25 +7,35 @@ use crate::cultivation_plan::policies::task_schedule_item_create_policy;
 use crate::cultivation_plan::ports::TaskScheduleItemMutationOutputPort;
 use crate::shared::attr::AttrMap;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::gateways::UserOrganizationScopeGateway;
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::validation::{from_errors, ErrorsInput};
 
-pub struct TaskScheduleItemCreateInteractor<'a, O, P, G> {
+pub struct TaskScheduleItemCreateInteractor<'a, O, P, G, S> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
+    scope_gateway: &'a S,
 }
 
-impl<'a, O, P, G> TaskScheduleItemCreateInteractor<'a, O, P, G>
+impl<'a, O, P, G, S> TaskScheduleItemCreateInteractor<'a, O, P, G, S>
 where
     O: TaskScheduleItemMutationOutputPort,
     P: CultivationPlanGateway,
     G: TaskScheduleItemMutationGateway,
+    S: UserOrganizationScopeGateway,
 {
-    pub fn new(output_port: &'a mut O, plan_gateway: &'a P, gateway: &'a G) -> Self {
+    pub fn new(
+        output_port: &'a mut O,
+        plan_gateway: &'a P,
+        gateway: &'a G,
+        scope_gateway: &'a S,
+    ) -> Self {
         Self {
             output_port,
             plan_gateway,
             gateway,
+            scope_gateway,
         }
     }
 
@@ -35,7 +45,8 @@ where
         plan_id: i64,
         attributes: AttrMap,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !task_schedule_private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &[]) {
+        let org_ids = member_organization_ids(self.scope_gateway, user_id)?;
+        if !task_schedule_private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &org_ids) {
             self.output_port.on_not_found();
             return Ok(());
         }

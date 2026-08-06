@@ -19,9 +19,7 @@ use agrr_domain::shared::attr::{AttrMap, AttrValue};
 use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use agrr_domain::shared::user::User;
-use agrr_domain::shared::value_objects::reference_index_list_filter::{
-    ReferenceIndexListFilter, ReferenceIndexListMode,
-};
+use agrr_domain::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter;
 use rusqlite::params;
 use rust_decimal::Decimal;
 use serde_json::{Map, Value};

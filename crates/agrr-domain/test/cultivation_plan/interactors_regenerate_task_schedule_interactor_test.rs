@@ -154,6 +154,7 @@ total_area: 0.0,
             &mut output,
             &plan_gateway,
             &enqueue,
+            &EmptyScopeGateway,
         );
 
         interactor
@@ -184,6 +185,7 @@ total_area: 0.0,
             &mut output,
             &plan_gateway,
             &enqueue,
+            &EmptyScopeGateway,
         );
 
         interactor

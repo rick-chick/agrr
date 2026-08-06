@@ -5,7 +5,8 @@ use crate::masters_json::{crop_to_json, masters_destroy_undo_json};
 use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
-    CropSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
+    CropSqliteGateway, PersonalOrganizationSqliteGateway, UserLookupSqliteGateway,
+    UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::crop::dtos::{CropCreateInput, CropDetailOutput, CropUpdateInput};
 use agrr_domain::crop::entities::CropEntity;
@@ -129,7 +130,9 @@ async fn create_crop(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
+    let personal_org_gateway = PersonalOrganizationSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
     let mut presenter = CreatePresenter { body: None };
     let mut interactor = CropCreateInteractor::new(
@@ -138,6 +141,8 @@ async fn create_crop(
         &gateway,
         &translator,
         &user_lookup,
+        &scope_gateway,
+        &personal_org_gateway,
     );
     let mut input = CropCreateInput::new(payload.crop.name.clone().unwrap());
     input.variety = payload.crop.variety.clone();

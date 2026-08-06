@@ -329,6 +329,7 @@ fn upload_init_rejects_when_photo_limit_exceeded() {
         &photo_gateway,
         &clock,
         &upload_url_builder,
+        &EmptyScopeGateway,
     );
     interactor
         .call_rescuing(7, 1, 42, "image/jpeg")
@@ -368,6 +369,7 @@ fn upload_init_success_returns_upload_metadata() {
         &photo_gateway,
         &clock,
         &upload_url_builder,
+        &EmptyScopeGateway,
     );
     interactor
         .call_rescuing(7, 1, 42, "image/png")

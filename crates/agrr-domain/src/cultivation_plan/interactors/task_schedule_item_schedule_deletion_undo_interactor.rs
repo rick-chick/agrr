@@ -6,23 +6,27 @@ use crate::cultivation_plan::ports::TaskScheduleItemMutationOutputPort;
 use crate::deletion_undo::dtos::DeletionUndoScheduleInput;
 use crate::cultivation_plan::ports::DeletionUndoSchedulePort;
 use crate::shared::exceptions::RecordNotFoundError;
+use crate::shared::gateways::UserOrganizationScopeGateway;
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::ports::TranslatorPort;
 
-pub struct TaskScheduleItemScheduleDeletionUndoInteractor<'a, O, P, G, D, T> {
+pub struct TaskScheduleItemScheduleDeletionUndoInteractor<'a, O, P, G, D, T, S> {
     mutation_output_port: &'a mut O,
     plan_gateway: &'a P,
     mutation_gateway: &'a G,
     deletion_undo_interactor: &'a D,
     translator: &'a T,
+    scope_gateway: &'a S,
 }
 
-impl<'a, O, P, G, D, T> TaskScheduleItemScheduleDeletionUndoInteractor<'a, O, P, G, D, T>
+impl<'a, O, P, G, D, T, S> TaskScheduleItemScheduleDeletionUndoInteractor<'a, O, P, G, D, T, S>
 where
     O: TaskScheduleItemMutationOutputPort,
     P: CultivationPlanGateway,
     G: TaskScheduleItemMutationGateway,
     D: DeletionUndoSchedulePort,
     T: TranslatorPort,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         mutation_output_port: &'a mut O,
@@ -30,6 +34,7 @@ where
         mutation_gateway: &'a G,
         deletion_undo_interactor: &'a D,
         translator: &'a T,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             mutation_output_port,
@@ -37,6 +42,7 @@ where
             mutation_gateway,
             deletion_undo_interactor,
             translator,
+            scope_gateway,
         }
     }
 
@@ -46,7 +52,8 @@ where
         plan_id: i64,
         item_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !task_schedule_private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &[]) {
+        let org_ids = member_organization_ids(self.scope_gateway, user_id)?;
+        if !task_schedule_private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &org_ids) {
             self.mutation_output_port.on_not_found();
             return Ok(());
         }

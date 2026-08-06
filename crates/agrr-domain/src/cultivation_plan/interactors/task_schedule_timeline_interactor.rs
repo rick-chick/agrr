@@ -8,10 +8,11 @@ use crate::cultivation_plan::ports::TaskScheduleTimelineOutputPort;
 use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
-use crate::shared::gateways::UserLookupGateway;
+use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::ports::{ClockPort, LoggerPort, TranslatorPort};
 
-pub struct TaskScheduleTimelineInteractor<'a, O, G, R, U, L, T, C> {
+pub struct TaskScheduleTimelineInteractor<'a, O, G, R, U, L, T, C, S> {
     output_port: &'a mut O,
     user_id: i64,
     plan_id: i64,
@@ -21,9 +22,10 @@ pub struct TaskScheduleTimelineInteractor<'a, O, G, R, U, L, T, C> {
     logger: &'a L,
     user_lookup: &'a U,
     clock: &'a C,
+    scope_gateway: &'a S,
 }
 
-impl<'a, O, G, R, U, L, T, C> TaskScheduleTimelineInteractor<'a, O, G, R, U, L, T, C>
+impl<'a, O, G, R, U, L, T, C, S> TaskScheduleTimelineInteractor<'a, O, G, R, U, L, T, C, S>
 where
     O: TaskScheduleTimelineOutputPort,
     G: CultivationPlanGateway,
@@ -32,6 +34,7 @@ where
     L: LoggerPort,
     T: TranslatorPort,
     C: ClockPort,
+    S: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -43,6 +46,7 @@ where
         logger: &'a L,
         user_lookup: &'a U,
         clock: &'a C,
+        scope_gateway: &'a S,
     ) -> Self {
         Self {
             output_port,
@@ -54,15 +58,17 @@ where
             logger,
             user_lookup,
             clock,
+            scope_gateway,
         }
     }
 
     pub fn call(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
+        let org_ids = member_organization_ids(self.scope_gateway, user.id)?;
 
         if !task_schedule_private_plan_access::access_allowed(
             self.cultivation_plan_gateway, self.plan_id, user.id,
-            &[],
+            &org_ids,
         ) {
             return Err(Box::new(RecordNotFoundError));
         }

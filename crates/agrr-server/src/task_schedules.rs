@@ -9,6 +9,7 @@ use crate::task_schedule_timeline_json::{to_json_body, TaskScheduleQuery};
 use agrr_adapters_sqlite::{
     CultivationPlanPrivateSnapshotReadSqliteGateway, CultivationPlanSqliteGateway,
     TaskScheduleItemMutationSqliteGateway, UserLookupSqliteGateway,
+    UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::agricultural_task::constants::task_schedule_sync_states;
 use agrr_domain::cultivation_plan::dtos::TaskScheduleTimeline;
@@ -95,6 +96,7 @@ async fn show_task_schedule(
     let pool = state.sqlite.clone();
     let private_read = CultivationPlanPrivateSnapshotReadSqliteGateway::new(pool.clone());
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
     let logger = NoopLogger;
@@ -111,6 +113,7 @@ async fn show_task_schedule(
         &logger,
         &user_lookup,
         &clock,
+        &scope_gateway,
     );
     if let Err(err) = interactor.call() {
         if err.downcast_ref::<RecordNotFoundError>().is_some() {
@@ -210,6 +213,7 @@ async fn run_skip_mutation(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let mutation_gateway = TaskScheduleItemMutationSqliteGateway::new(pool);
     let clock = SystemClock;
     let mut presenter = MutationPresenter { body: None };
@@ -219,6 +223,7 @@ async fn run_skip_mutation(
         &plan_gateway,
         &mutation_gateway,
         &clock,
+        &scope_gateway,
     );
 
     let result = if skipping {
@@ -270,7 +275,8 @@ async fn regenerate_task_schedule(
     })?;
 
     let pool = state.sqlite.clone();
-    let plan_gateway = CultivationPlanSqliteGateway::new(pool);
+    let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let enqueue = TaskScheduleRegenEnqueueAdapter {
         state: state.clone(),
     };
@@ -280,6 +286,7 @@ async fn regenerate_task_schedule(
         &mut presenter,
         &plan_gateway,
         &enqueue,
+        &scope_gateway,
     );
 
     if let Err(_) = interactor.call(RegenerateTaskScheduleInput { user_id, plan_id }) {

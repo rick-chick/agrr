@@ -4,7 +4,7 @@ use crate::crop::entities::CropEntity;
 use crate::crop::gateways::CropGateway;
 use crate::crop::policies::crop_reference_record_policy;
 use crate::shared::dtos::Error;
-use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::policies::crop_policy;
 use crate::shared::ports::logger_port::LoggerPort;

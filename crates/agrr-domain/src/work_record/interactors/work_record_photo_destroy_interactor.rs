@@ -1,9 +1,9 @@
 //! Ruby: `Domain::WorkRecord::Interactors::WorkRecordPhotoDestroyInteractor`
 
-use std::collections::BTreeMap;
-
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::gateways::UserOrganizationScopeGateway;
+use crate::shared::org_scope::member_organization_ids;
 use crate::shared::validation::{from_errors, ErrorsInput};
 use crate::work_record::gateways::{
     WorkRecordPhotoGateway, WorkRecordPhotoObjectStoreGateway, WorkRecordPhotoStatus,
@@ -11,31 +11,35 @@ use crate::work_record::gateways::{
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::WorkRecordPhotoDestroyOutputPort;
 
-pub struct WorkRecordPhotoDestroyInteractor<'a, O, P, G, S: ?Sized> {
+pub struct WorkRecordPhotoDestroyInteractor<'a, O, P, G, S: ?Sized, SG> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     photo_gateway: &'a G,
     object_store: &'a S,
+    scope_gateway: &'a SG,
 }
 
-impl<'a, O, P, G, S> WorkRecordPhotoDestroyInteractor<'a, O, P, G, S>
+impl<'a, O, P, G, S, SG> WorkRecordPhotoDestroyInteractor<'a, O, P, G, S, SG>
 where
     O: WorkRecordPhotoDestroyOutputPort,
     P: CultivationPlanGateway,
     G: WorkRecordPhotoGateway,
     S: WorkRecordPhotoObjectStoreGateway + ?Sized,
+    SG: UserOrganizationScopeGateway,
 {
     pub fn new(
         output_port: &'a mut O,
         plan_gateway: &'a P,
         photo_gateway: &'a G,
         object_store: &'a S,
+        scope_gateway: &'a SG,
     ) -> Self {
         Self {
             output_port,
             plan_gateway,
             photo_gateway,
             object_store,
+            scope_gateway,
         }
     }
 
@@ -46,7 +50,8 @@ where
         work_record_id: i64,
         photo_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &[]) {
+        let org_ids = member_organization_ids(self.scope_gateway, user_id)?;
+        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id, &org_ids) {
             self.output_port.on_not_found();
             return Ok(());
         }

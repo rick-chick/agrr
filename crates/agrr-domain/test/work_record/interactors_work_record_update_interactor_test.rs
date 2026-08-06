@@ -216,6 +216,7 @@ fn dispatches_record_invalid_when_task_schedule_item_id_is_submitted() {
         &plan_gateway,
         &StubWorkRecordGateway,
         &clock,
+        &EmptyScopeGateway,
     );
 
     let mut params = BTreeMap::new();
@@ -255,6 +256,7 @@ fn dispatches_not_found_when_private_plan_access_denied() {
         &plan_gateway,
         &StubWorkRecordGateway,
         &clock,
+        &EmptyScopeGateway,
     );
 
     interactor

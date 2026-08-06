@@ -291,6 +291,7 @@ fn creates_scheduled_record_with_item_prefill() {
         &gateway,
         &item_lookup,
         &clock,
+        &EmptyScopeGateway,
     );
 
     let mut params = BTreeMap::new();
@@ -357,6 +358,7 @@ fn dispatches_record_invalid_when_item_belongs_to_other_plan() {
         &gateway,
         &item_lookup,
         &clock,
+        &EmptyScopeGateway,
     );
 
     let mut params = BTreeMap::new();
@@ -405,6 +407,7 @@ fn dispatches_record_invalid_when_ad_hoc_name_missing() {
         &gateway,
         &item_lookup,
         &clock,
+        &EmptyScopeGateway,
     );
 
     let mut params = BTreeMap::new();
@@ -452,6 +455,7 @@ fn dispatches_not_found_when_private_plan_access_denied() {
         &gateway,
         &item_lookup,
         &clock,
+        &EmptyScopeGateway,
     );
 
     interactor.call_rescuing(1, 2, &BTreeMap::new()).unwrap();

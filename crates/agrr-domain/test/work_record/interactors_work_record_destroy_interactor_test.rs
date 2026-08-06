@@ -267,6 +267,7 @@ fn destroys_record_after_private_plan_access_check() {
         &plan_gateway,
         &gateway,
         &StubTranslator,
+        &EmptyScopeGateway,
     );
 
     interactor.call_rescuing(1, 2, 10).unwrap();
@@ -296,6 +297,7 @@ fn dispatches_not_found_when_record_missing() {
         &plan_gateway,
         &gateway,
         &StubTranslator,
+        &EmptyScopeGateway,
     );
 
     interactor.call_rescuing(1, 2, 10).unwrap();
@@ -323,6 +325,7 @@ fn dispatches_failure_when_soft_delete_returns_modeled_failure() {
         &plan_gateway,
         &gateway,
         &StubTranslator,
+        &EmptyScopeGateway,
     );
 
     interactor.call_rescuing(1, 2, 10).unwrap();
