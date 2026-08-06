@@ -135,7 +135,7 @@ fn list_index_for_filter_returns_pests_with_names() {
     )
     .unwrap();
 
-    let filter = agrr_domain::shared::policies::pest_policy::index_list_filter(&user);
+    let filter = agrr_domain::shared::policies::pest_policy::index_list_filter(&user, &[]);
     let rows = gw.list_index_for_filter(&filter).unwrap();
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0].name, "ハダニ");
@@ -176,7 +176,7 @@ fn list_index_for_filter_owned_non_reference_returns_only_users_non_reference_pe
     )
     .unwrap();
 
-    let filter = ReferenceIndexListFilter::new(ReferenceIndexListMode::OwnedNonReference, user.id);
+    let filter = ReferenceIndexListFilter::new(ReferenceIndexListMode::OwnedNonReference, user.id, vec![]);
     let ids: Vec<i64> = gw
         .list_index_for_filter(&filter)
         .unwrap()
@@ -222,7 +222,7 @@ fn list_index_for_filter_reference_or_owned_includes_reference_and_owned_rows() 
         )
         .unwrap();
 
-    let filter = ReferenceIndexListFilter::new(ReferenceIndexListMode::ReferenceOrOwned, admin.id);
+    let filter = ReferenceIndexListFilter::new(ReferenceIndexListMode::ReferenceOrOwned, admin.id, vec![]);
     let ids: Vec<i64> = gw
         .list_index_for_filter(&filter)
         .unwrap()
