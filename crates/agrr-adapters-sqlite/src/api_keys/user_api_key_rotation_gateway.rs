@@ -2,6 +2,7 @@
 
 use crate::pool::SqlitePool;
 use agrr_domain::api_keys::dtos::{UserApiKeyRotationError, UserApiKeyRotationOutput};
+use agrr_domain::shared::dtos::default_api_key_scopes_json;
 use agrr_domain::api_keys::gateways::UserApiKeyRotationGateway;
 use getrandom::getrandom;
 use rusqlite::params;
@@ -38,14 +39,15 @@ impl UserApiKeyRotationGateway for UserApiKeyRotationSqliteGateway {
         if !regenerate && existing.as_ref().is_some_and(|k| !k.is_empty()) {
             return UserApiKeyRotationOutput::new(true, existing, None);
         }
+        let default_scopes = default_api_key_scopes_json();
         for _ in 0..10 {
             let key = Self::random_key();
             let updated = self
                 .pool
                 .with_write(|conn| {
                     conn.execute(
-                        "UPDATE users SET api_key = ?1, updated_at = datetime('now') WHERE id = ?2",
-                        params![key, user_id],
+                        "UPDATE users SET api_key = ?1, api_key_scopes = ?2, updated_at = datetime('now') WHERE id = ?3",
+                        params![key, default_scopes, user_id],
                     )
                 })
                 .unwrap_or(0);

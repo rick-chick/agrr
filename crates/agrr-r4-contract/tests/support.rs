@@ -114,6 +114,16 @@ pub fn user_id_for_session(client: &ContractClient, session_id: &str) -> i64 {
         .expect("user id in /api/v1/auth/me response")
 }
 
+/// Set `users.api_key_scopes` JSON for contract tests (scope enforcement).
+pub fn set_user_api_key_scopes(user_id: i64, scopes_json: &str) {
+    let conn = contract_sqlite_conn();
+    conn.execute(
+        "UPDATE users SET api_key_scopes = ?1 WHERE id = ?2",
+        params![scopes_json, user_id],
+    )
+    .expect("set api_key_scopes");
+}
+
 /// Frees a farm-create slot when earlier contract seeds filled the per-user non-reference limit.
 pub fn ensure_farm_create_capacity_via_api(client: &ContractClient, session_id: &str) {
     const MAX_NON_REFERENCE_FARMS_PER_USER: usize = 4;
