@@ -109,6 +109,16 @@ impl ContractClient {
         self.request(reqwest::Method::DELETE, path, session_id, headers, None)
     }
 
+    pub fn delete_json(
+        &self,
+        path: &str,
+        session_id: Option<&str>,
+        headers: &HashMap<String, String>,
+        body: serde_json::Value,
+    ) -> Response {
+        self.request(reqwest::Method::DELETE, path, session_id, headers, Some(body))
+    }
+
     fn request(
         &self,
         method: reqwest::Method,

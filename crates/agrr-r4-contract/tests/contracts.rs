@@ -2079,6 +2079,63 @@ fn trigger_weather_update_backfills_pending_farm_weather_fetch() {
 }
 
 #[test]
+fn get_account_export_unauthenticated_returns_401() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.get("/api/v1/account/export", None, &empty_headers()));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
+fn get_account_export_authenticated_returns_user_data() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+
+    let (status, body) =
+        status_and_body(client.get("/api/v1/account/export", Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("export JSON");
+    assert_eq!(user_id, json["user"]["id"].as_i64().unwrap());
+    assert!(json["exported_at"].as_str().is_some());
+    assert!(json["farms"].is_array());
+    assert!(json["crops"].is_array());
+    assert!(json["cultivation_plans"].is_array());
+}
+
+#[test]
+fn delete_account_without_confirm_returns_422() {
+    let client = ContractClient::from_env();
+    let session_id = researcher_session_id(&client);
+    let (status, body) = status_and_body(client.delete_json(
+        "/api/v1/account",
+        Some(&session_id),
+        &empty_headers(),
+        serde_json::json!({ "confirm": false }),
+    ));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("delete JSON");
+    assert_eq!("confirmation_required", json["error"].as_str().unwrap());
+}
+
+#[test]
+fn delete_account_removes_access() {
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+
+    let (delete_status, delete_body) = status_and_body(client.delete_json(
+        "/api/v1/account",
+        Some(&session_id),
+        &empty_headers(),
+        serde_json::json!({ "confirm": true }),
+    ));
+    assert_eq!(200, delete_status, "{delete_body}");
+
+    let (me_status, me_body) =
+        status_and_body(client.get("/api/v1/auth/me", Some(&session_id), &empty_headers()));
+    assert_eq!(401, me_status, "{me_body}");
+}
+
+#[test]
 fn get_private_plan_show_other_user_returns_not_found() {
     let client = ContractClient::from_env();
     let owner_session = developer_session_id(&client);

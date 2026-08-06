@@ -270,7 +270,8 @@
     "logout": "Logout",
     "api_keys": "API Keys",
     "admin": "Admin",
-    "language": "Language"
+    "language": "Language",
+    "account": "Account & Data"
   },
   "footer": {
     "about": "About AGRR",
@@ -3365,5 +3366,26 @@
     "nextTask": "Next task",
     "nextTaskPlaceholder": "No next task candidate yet.",
     "stages": "Growth stages"
+  },
+  "account": {
+    "title": "Account & Personal Data",
+    "description": "Export your personal data or permanently delete your account.",
+    "export": {
+      "heading": "Export your data",
+      "description": "Download a JSON file containing your profile, farms, crops, and cultivation plans.",
+      "action": "Download export",
+      "success": "Your data export has started downloading.",
+      "failure": "Failed to export data. Please try again."
+    },
+    "delete": {
+      "heading": "Delete account",
+      "description": "Permanently delete your account and all associated private data. This action cannot be undone.",
+      "email_label": "Confirm your email address",
+      "confirm_checkbox": "I understand that my account and private data will be permanently deleted.",
+      "confirm_dialog": "Are you sure you want to delete your account? This cannot be undone.",
+      "action": "Delete my account",
+      "success": "Your account has been deleted.",
+      "failure": "Failed to delete account. Please try again."
+    }
   }
 }

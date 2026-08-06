@@ -1,5 +1,6 @@
 //! `POST /api/v1/api_keys/generate` and `/regenerate`.
 
+use crate::security_audit_log::{log_api_key_generate, log_api_key_regenerate};
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use agrr_adapters_sqlite::UserApiKeyRotationSqliteGateway;
@@ -85,8 +86,16 @@ async fn rotate(
     let mut interactor = UserApiKeyRotateInteractor::new(Box::new(presenter), gateway);
     interactor.call(user_id, regenerate, scopes);
     let mut guard = body_store.lock().unwrap();
-    guard.take().ok_or((
+    let response = guard.take().ok_or((
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(serde_json::json!({"error": "internal"})),
-    ))
+    ))?;
+    if response.0 == StatusCode::OK {
+        if regenerate {
+            log_api_key_regenerate(user_id);
+        } else {
+            log_api_key_generate(user_id);
+        }
+    }
+    Ok(response)
 }
