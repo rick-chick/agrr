@@ -20,6 +20,7 @@ use support::{
     seed_farm_pending_weather, scheduler_auth_headers,
     ensure_farm_create_capacity_via_api, poll_farm_weather_completed,
     seed_weather_cache_for_farm_create_completion,
+    seed_user_organization,
 };
 
 #[test]
@@ -2293,4 +2294,171 @@ fn delete_work_record_other_user_returns_not_found() {
         records.iter().any(|r| r["id"].as_i64() == Some(record_id)),
         "owner record must remain after cross-user delete attempt: {owner_list_body}"
     );
+}
+
+#[test]
+fn get_organizations_list_returns_member_orgs() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        user_id,
+        &format!("Contract Org {suffix}"),
+        &format!("contract-org-{suffix}"),
+        false,
+    );
+
+    let (status, body) =
+        status_and_body(client.get("/api/v1/organizations", Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let orgs: Vec<serde_json::Value> = serde_json::from_str(&body).expect("organizations list JSON");
+    let found = orgs
+        .iter()
+        .find(|o| o["id"].as_i64() == Some(seed.organization_id))
+        .expect("seeded organization in list");
+    assert_eq!(seed.name, found["name"].as_str().unwrap());
+    assert_eq!(seed.slug, found["slug"].as_str().unwrap());
+    assert_eq!(false, found["is_personal"].as_bool().unwrap());
+}
+
+#[test]
+fn post_organizations_creates_org_and_membership() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let name = format!("Created Org {suffix}");
+    let slug = format!("created-org-{suffix}");
+    let payload = serde_json::json!({
+        "organization": { "name": name, "slug": slug }
+    });
+
+    let (status, body) = status_and_body(
+        client.post(
+            "/api/v1/organizations",
+            Some(&session_id),
+            &empty_headers(),
+            Some(payload),
+        ),
+    );
+    assert_eq!(201, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("create organization JSON");
+    assert_eq!(name, json["name"].as_str().unwrap());
+    assert_eq!(slug, json["slug"].as_str().unwrap());
+    assert_eq!(false, json["is_personal"].as_bool().unwrap());
+    let org_id = json["id"].as_i64().expect("organization id");
+
+    let path = format!("/api/v1/organizations/{org_id}");
+    let (show_status, show_body) =
+        status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, show_status, "{show_body}");
+}
+
+#[test]
+fn patch_organizations_updates_org() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        user_id,
+        &format!("Patch Org {suffix}"),
+        &format!("patch-org-{suffix}"),
+        false,
+    );
+    let updated_name = format!("Updated Org {suffix}");
+    let updated_slug = format!("updated-org-{suffix}");
+    let path = format!("/api/v1/organizations/{}", seed.organization_id);
+    let payload = serde_json::json!({
+        "organization": { "name": updated_name, "slug": updated_slug }
+    });
+
+    let (status, body) = status_and_body(
+        client.patch(&path, Some(&session_id), &empty_headers(), Some(payload)),
+    );
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("update organization JSON");
+    assert_eq!(updated_name, json["name"].as_str().unwrap());
+    assert_eq!(updated_slug, json["slug"].as_str().unwrap());
+}
+
+#[test]
+fn delete_organizations_deletes_team_org() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        user_id,
+        &format!("Delete Org {suffix}"),
+        &format!("delete-org-{suffix}"),
+        false,
+    );
+    let path = format!("/api/v1/organizations/{}", seed.organization_id);
+
+    let (status, body) =
+        status_and_body(client.delete(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(204, status, "{body}");
+
+    let (show_status, show_body) =
+        status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(404, show_status, "{show_body}");
+}
+
+#[test]
+fn delete_organizations_personal_org_forbidden() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        user_id,
+        &format!("Personal Org {suffix}"),
+        &format!("personal-org-{suffix}"),
+        true,
+    );
+    let path = format!("/api/v1/organizations/{}", seed.organization_id);
+
+    let (status, body) =
+        status_and_body(client.delete(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("personal delete JSON");
+    assert!(json.get("error").is_some(), "{body}");
+}
+
+#[test]
+fn get_organizations_cross_user_denied() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let other_session = farmer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Private Org {suffix}"),
+        &format!("private-org-{suffix}"),
+        false,
+    );
+    let path = format!("/api/v1/organizations/{}", seed.organization_id);
+
+    let (status, body) = status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
+    assert_cross_user_access_denied(status, &body);
 }
