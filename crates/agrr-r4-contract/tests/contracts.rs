@@ -4,7 +4,8 @@ mod support;
 
 use agrr_r4_contract::http::ContractClient;
 use support::{
-    agrr_regeneration_contract_available, assert_builtin_generation_deprecated_headers,
+    agrr_regeneration_contract_available,     assert_builtin_generation_deprecated_headers,
+    assert_cross_user_access_denied,
     assert_crop_task_template_api_removed,
     clear_plan_task_schedules, developer_session_id, empty_headers, farmer_session_id,
     researcher_session_id,
@@ -1919,3 +1920,190 @@ fn trigger_weather_update_backfills_pending_farm_weather_fetch() {
     assert!(show_json["weather_data_total_years"].as_i64().unwrap() > 0);
 }
 
+#[test]
+fn get_private_plan_show_other_user_returns_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let seed = seed_work_record_plan(owner_id);
+
+    let path = format!("/api/v1/plans/{}", seed.plan_id);
+    let (owner_status, owner_body) =
+        status_and_body(client.get(&path, Some(&owner_session), &empty_headers()));
+    assert_eq!(200, owner_status, "{owner_body}");
+
+    let other_session = farmer_session_id(&client);
+    let (status, body) = status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn get_masters_farm_show_other_user_returns_forbidden_or_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let seed = seed_farm_temperature_chart_completed(owner_id);
+
+    let path = format!("/api/v1/masters/farms/{}", seed.farm_id);
+    let (owner_status, owner_body) =
+        status_and_body(client.get(&path, Some(&owner_session), &empty_headers()));
+    assert_eq!(200, owner_status, "{owner_body}");
+
+    let other_session = farmer_session_id(&client);
+    let (status, body) = status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn get_masters_crop_show_other_user_returns_forbidden_or_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let seed = seed_masters_crop(owner_id);
+
+    let path = format!("/api/v1/masters/crops/{}", seed.crop_id);
+    let (owner_status, owner_body) =
+        status_and_body(client.get(&path, Some(&owner_session), &empty_headers()));
+    assert_eq!(200, owner_status, "{owner_body}");
+
+    let other_session = farmer_session_id(&client);
+    let (status, body) = status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn get_work_records_list_other_user_returns_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let seed = seed_work_record_plan(owner_id);
+
+    let list_path = format!("/api/v1/plans/{}/work_records", seed.plan_id);
+    let (owner_status, owner_body) = status_and_body(
+        client.get(&list_path, Some(&owner_session), &empty_headers()),
+    );
+    assert_eq!(200, owner_status, "{owner_body}");
+
+    let other_session = farmer_session_id(&client);
+    let (status, body) = status_and_body(client.get(&list_path, Some(&other_session), &empty_headers()));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn post_work_record_other_user_returns_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let seed = seed_work_record_plan(owner_id);
+
+    let other_session = farmer_session_id(&client);
+    let path = format!("/api/v1/plans/{}/work_records", seed.plan_id);
+    let (status, body) = status_and_body(client.post(
+        &path,
+        Some(&other_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": seed.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "cross-user create attempt"
+            }
+        })),
+    ));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn patch_work_record_other_user_returns_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let seed = seed_work_record_plan(owner_id);
+
+    let create_path = format!("/api/v1/plans/{}/work_records", seed.plan_id);
+    let (create_status, create_body) = status_and_body(client.post(
+        &create_path,
+        Some(&owner_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": seed.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "owner record for patch cross-user test"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create work_record JSON");
+    let record_id = create_json["work_record"]["id"]
+        .as_i64()
+        .expect("work_record id");
+
+    let other_session = farmer_session_id(&client);
+    let patch_path = format!(
+        "/api/v1/plans/{}/work_records/{}",
+        seed.plan_id, record_id
+    );
+    let (status, body) = status_and_body(client.patch(
+        &patch_path,
+        Some(&other_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": { "notes": "cross-user patch attempt" }
+        })),
+    ));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn delete_work_record_other_user_returns_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let seed = seed_work_record_plan(owner_id);
+
+    let create_path = format!("/api/v1/plans/{}/work_records", seed.plan_id);
+    let (create_status, create_body) = status_and_body(client.post(
+        &create_path,
+        Some(&owner_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": seed.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "owner record for delete cross-user test"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create work_record JSON");
+    let record_id = create_json["work_record"]["id"]
+        .as_i64()
+        .expect("work_record id");
+
+    let other_session = farmer_session_id(&client);
+    let delete_path = format!(
+        "/api/v1/plans/{}/work_records/{}",
+        seed.plan_id, record_id
+    );
+    let (status, body) = status_and_body(client.delete(
+        &delete_path,
+        Some(&other_session),
+        &empty_headers(),
+    ));
+    assert_cross_user_access_denied(status, &body);
+
+    let (owner_list_status, owner_list_body) = status_and_body(
+        client.get(&create_path, Some(&owner_session), &empty_headers()),
+    );
+    assert_eq!(200, owner_list_status, "{owner_list_body}");
+    let list_json: serde_json::Value =
+        serde_json::from_str(&owner_list_body).expect("work_records list JSON");
+    let records = list_json["work_records"].as_array().expect("work_records");
+    assert!(
+        records.iter().any(|r| r["id"].as_i64() == Some(record_id)),
+        "owner record must remain after cross-user delete attempt: {owner_list_body}"
+    );
+}

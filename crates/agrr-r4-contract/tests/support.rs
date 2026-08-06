@@ -16,6 +16,14 @@ pub fn status_and_body(response: reqwest::blocking::Response) -> (u16, String) {
     (status, body)
 }
 
+/// Cross-user private resource access must not leak data (404 or 403).
+pub fn assert_cross_user_access_denied(status: u16, body: &str) {
+    assert!(
+        status == 404 || status == 403,
+        "expected 404 or 403 for cross-user access, got {status}: {body}"
+    );
+}
+
 /// Asserts built-in generation endpoints return RFC 9745 deprecation metadata.
 pub fn assert_builtin_generation_deprecated_headers(
     headers: &reqwest::header::HeaderMap,
