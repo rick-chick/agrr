@@ -43,9 +43,8 @@ impl PersonalOrganizationGateway for PersonalOrganizationSqliteGateway {
         &self,
         user_id: i64,
         email: &str,
-        name: &str,
+        _name: &str,
     ) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
-        let _ = name;
         let now = now_rails_datetime();
         self.pool.with_write_box(|conn| {
             let existing_org_id: Option<i64> = conn
