@@ -20,5 +20,6 @@ pub mod pest;
 pub mod pesticide;
 pub mod public_plan;
 pub mod shared;
+pub mod user_account;
 pub mod weather_data;
 pub mod work_record;

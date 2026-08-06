@@ -3,6 +3,7 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   '': 'app-home',
   '**': 'app-not-found',
   about: 'app-about',
+  account: 'app-account',
   agricultural_tasks: 'app-agricultural-task-list',
   'agricultural_tasks/:id': 'app-agricultural-task-detail',
   'agricultural_tasks/:id/edit': 'app-agricultural-task-edit',

@@ -153,7 +153,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (!this.user) {
       return this.baseMoreItems;
     }
-    return [{ link: '/api-keys', labelKey: 'nav.api_keys' }, ...this.baseMoreItems];
+    return [
+      { link: '/account', labelKey: 'nav.account' },
+      { link: '/api-keys', labelKey: 'nav.api_keys' },
+      ...this.baseMoreItems
+    ];
   }
 
   /** ログイン後に戻る URL（ログインページ自身では付けない）。 */

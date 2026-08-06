@@ -32,6 +32,7 @@
 | 12 | `public-plans/select-crop` | `public-plans_select-crop.ja.png` | `public-plans_select-crop.en.png` | `public-plans_select-crop.in.png` | 要確認 | 要確認 | layout: 作物選択(step 2)ではなく地域選択(step 1)が表示。i18n: ja 農場名文字化け。in「Punjab」英字 |
 | 13 | `public-plans/select-farm-size` | `public-plans_select-farm-size.ja.png` | `public-plans_select-farm-size.en.png` | `public-plans_select-farm-size.in.png` | OK | 要確認 | i18n: ja 農場名カードが文字化け。in カードラベル「Punjab」が英字 |
 | 14 | `terms` | `terms.ja.png` | `terms.en.png` | `terms.in.png` | OK | OK | なし |
+| 14a | `account` | `account.ja.png` | `account.en.png` | `account.in.png` | 未レビュー | 未レビュー | 新規ルート `/account`（#603）— キャプチャ未実施 |
 | 15 | `agricultural_tasks` | `agricultural_tasks.ja.png` | `agricultural_tasks.en.png` | `agricultural_tasks.in.png` | OK | OK | なし |
 | 16 | `agricultural_tasks/:id` | `agricultural_tasks_id.ja.png` | `agricultural_tasks_id.en.png` | `agricultural_tasks_id.in.png` | 注意 | 要確認 | i18n: `agricultural_tasks.show.hours_suffix` 生キー（3 言語） |
 | 17 | `agricultural_tasks/:id/edit` | `agricultural_tasks_id_edit.ja.png` | `agricultural_tasks_id_edit.en.png` | `agricultural_tasks_id_edit.in.png` | OK | OK | なし |

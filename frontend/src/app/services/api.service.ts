@@ -112,4 +112,18 @@ export class ApiService {
       withCredentials: true
     });
   }
+
+  deleteWithBody<T>(path: string, body: unknown, options: RequestOptions = {}): Observable<T> {
+    let headers =
+      options.headers instanceof HttpHeaders ? options.headers : new HttpHeaders(options.headers);
+
+    headers = headers.set('Accept', 'application/json');
+
+    return this.http.request<T>('DELETE', `${this.baseUrl}${path}`, {
+      ...options,
+      headers,
+      body,
+      withCredentials: true
+    });
+  }
 }

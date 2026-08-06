@@ -122,7 +122,7 @@ describe('NavbarComponent', () => {
     expect(component.openDropdownId).toBeNull();
   });
 
-  it('includes api-keys in moreItems when user is logged in', () => {
+  it('includes account and api-keys in moreItems when user is logged in', () => {
     component.user = {
       id: 1,
       name: 'Test',
@@ -132,13 +132,15 @@ describe('NavbarComponent', () => {
     };
     fixture.detectChanges();
 
-    expect(component.moreItems[0]).toEqual({ link: '/api-keys', labelKey: 'nav.api_keys' });
+    expect(component.moreItems[0]).toEqual({ link: '/account', labelKey: 'nav.account' });
+    expect(component.moreItems[1]).toEqual({ link: '/api-keys', labelKey: 'nav.api_keys' });
   });
 
-  it('omits api-keys from moreItems when user is logged out', () => {
+  it('omits account and api-keys from moreItems when user is logged out', () => {
     component.user = null;
     fixture.detectChanges();
 
+    expect(component.moreItems.some((item) => item.link === '/account')).toBe(false);
     expect(component.moreItems.some((item) => item.link === '/api-keys')).toBe(false);
   });
 });
