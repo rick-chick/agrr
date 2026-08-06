@@ -1283,6 +1283,30 @@ pub fn seed_org_scoped_crop(organization_id: i64, user_id: i64) -> i64 {
     conn.last_insert_rowid()
 }
 
+/// Seeds a private cultivation plan scoped to an organization for org-member authorization contract tests.
+pub fn seed_org_scoped_plan(organization_id: i64, user_id: i64) -> i64 {
+    let farm_id = seed_org_scoped_farm(organization_id, user_id);
+    let conn = contract_sqlite_conn();
+    let suffix = seed_suffix();
+    conn.execute(
+        "INSERT INTO cultivation_plans (
+           farm_id, user_id, organization_id, total_area, plan_type, plan_year, plan_name,
+           planning_start_date, planning_end_date, status, created_at, updated_at
+         ) VALUES (
+           ?1, ?2, ?3, 50.0, 'private', 2026, ?4,
+           '2026-01-01', '2026-12-31', 'completed', datetime('now'), datetime('now')
+         )",
+        params![
+            farm_id,
+            user_id,
+            organization_id,
+            format!("Org Scoped Plan {suffix}")
+        ],
+    )
+    .expect("insert org-scoped cultivation_plan");
+    conn.last_insert_rowid()
+}
+
 pub fn scheduler_auth_headers() -> HashMap<String, String> {
     let token = std::env::var("SCHEDULER_AUTH_TOKEN")
         .unwrap_or_else(|_| "test_scheduler_token_contract".into());

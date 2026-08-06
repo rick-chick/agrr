@@ -322,3 +322,61 @@ fn list_reference_farms_for_region_reads_rails_datetime_last_broadcast_at() {
         .expect("last_broadcast_at parsed from TEXT");
     assert!(ts > 1_700_000_000.0);
 }
+
+fn insert_org_scoped_farm(
+    pool: &SqlitePool,
+    user_id: i64,
+    organization_id: i64,
+    name: &str,
+) -> i64 {
+    pool.with_write(|conn| {
+        conn.execute(
+            "INSERT INTO farms (user_id, organization_id, name, latitude, longitude, region, is_reference, \
+             weather_data_status, weather_data_fetched_years, weather_data_total_years, created_at, updated_at) \
+             VALUES (?1, ?2, ?3, 35.0, 139.0, 'jp', 0, 'pending', 0, 0, datetime('now'), datetime('now'))",
+            params![user_id, organization_id, name],
+        )?;
+        Ok(conn.last_insert_rowid())
+    })
+    .unwrap()
+}
+
+#[test]
+fn list_organization_scoped_farms_returns_only_matching_orgs() {
+    let pool = farm_test_pool();
+    let gw = FarmSqliteGateway::new(pool.clone());
+    let org_farm = insert_org_scoped_farm(&pool, 1, 10, "Org farm");
+    let other_org_farm = insert_org_scoped_farm(&pool, 2, 20, "Other org farm");
+    let user_farm = insert_farm(&pool, 1, "Legacy user farm", false, 35.0, 139.0, "jp");
+
+    let farm_ids: Vec<i64> = gw
+        .list_organization_scoped_farms(&[10])
+        .unwrap()
+        .into_iter()
+        .map(|f| f.id)
+        .collect();
+
+    assert!(farm_ids.contains(&org_farm));
+    assert!(!farm_ids.contains(&other_org_farm));
+    assert!(!farm_ids.contains(&user_farm));
+}
+
+#[test]
+fn list_organization_scoped_and_reference_farms_includes_reference_and_org_rows() {
+    let pool = farm_test_pool();
+    let gw = FarmSqliteGateway::new(pool.clone());
+    let org_farm = insert_org_scoped_farm(&pool, 1, 10, "Org farm");
+    let reference_farm = insert_farm(&pool, 0, "Ref farm", true, 36.0, 140.0, "jp");
+    let other_org_farm = insert_org_scoped_farm(&pool, 2, 20, "Other org farm");
+
+    let farm_ids: Vec<i64> = gw
+        .list_organization_scoped_and_reference_farms(&[10])
+        .unwrap()
+        .into_iter()
+        .map(|f| f.id)
+        .collect();
+
+    assert!(farm_ids.contains(&org_farm));
+    assert!(farm_ids.contains(&reference_farm));
+    assert!(!farm_ids.contains(&other_org_farm));
+}

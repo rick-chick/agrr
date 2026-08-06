@@ -26,6 +26,7 @@ use support::{
     seed_user_farm_without_organization,
     seed_org_scoped_farm,
     seed_org_scoped_crop,
+    seed_org_scoped_plan,
 };
 
 #[test]
@@ -2907,6 +2908,56 @@ fn org_non_member_denied_team_crop() {
     let crop_id = seed_org_scoped_crop(seed.organization_id, owner_id);
 
     let path = format!("/api/v1/masters/crops/{crop_id}");
+    let (status, body) =
+        status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn org_member_can_view_team_plan() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Plan Org {suffix}"),
+        &format!("team-plan-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+    let plan_id = seed_org_scoped_plan(seed.organization_id, owner_id);
+
+    let path = format!("/api/v1/plans/{plan_id}");
+    let (member_status, member_body) =
+        status_and_body(client.get(&path, Some(&member_session), &empty_headers()));
+    assert_eq!(200, member_status, "{member_body}");
+}
+
+#[test]
+fn org_non_member_denied_team_plan() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let other_session = researcher_session_id(&client);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Plan Deny Org {suffix}"),
+        &format!("team-plan-deny-org-{suffix}"),
+        false,
+    );
+    let plan_id = seed_org_scoped_plan(seed.organization_id, owner_id);
+
+    let path = format!("/api/v1/plans/{plan_id}");
     let (status, body) =
         status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
     assert_cross_user_access_denied(status, &body);
