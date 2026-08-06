@@ -650,7 +650,7 @@ mod tests {
             },
             "stage_requirements": []
         });
-        let filter = crop_policy::record_access_filter(user.clone());
+        let filter = crop_policy::record_access_filter(user.clone(), vec![]);
         let out = persistence
             .upsert(&user, "ブロッコリー", Some("スプラウト"), crop_info, filter)
             .unwrap();
@@ -673,7 +673,7 @@ mod tests {
             StubPersonalOrgGateway,
         );
         let crop_info = json!({ "success": false, "error": "not found" });
-        let filter = crop_policy::record_access_filter(user.clone());
+        let filter = crop_policy::record_access_filter(user.clone(), vec![]);
         let err = persistence
             .upsert(&user, "x", None, crop_info, filter)
             .unwrap_err();

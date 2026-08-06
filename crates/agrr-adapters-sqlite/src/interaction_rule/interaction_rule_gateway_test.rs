@@ -191,7 +191,7 @@ fn list_index_for_filter_for_admin_returns_all_reference_rows() {
     let record1 = insert_reference_rule(&pool, "continuous_cultivation", "jp");
     let record2 = insert_reference_rule(&pool, "continuous_cultivation", "us");
 
-    let filter = interaction_rule_policy::index_list_filter(&admin);
+    let filter = interaction_rule_policy::index_list_filter(&admin, &[]);
     let ids: Vec<i64> = gw
         .list_index_for_filter(&filter)
         .unwrap()
@@ -213,7 +213,7 @@ fn list_index_for_filter_can_be_scoped_to_region_in_test() {
     let record1 = insert_reference_rule(&pool, "continuous_cultivation", "jp");
     insert_reference_rule(&pool, "continuous_cultivation", "us");
 
-    let filter = interaction_rule_policy::index_list_filter(&admin);
+    let filter = interaction_rule_policy::index_list_filter(&admin, &[]);
     let jp_entities: Vec<_> = gw
         .list_index_for_filter(&filter)
         .unwrap()
@@ -246,7 +246,7 @@ fn list_index_for_filter_returns_scoped_entities_for_non_admin() {
         )
         .unwrap();
 
-    let filter = interaction_rule_policy::index_list_filter(&user);
+    let filter = interaction_rule_policy::index_list_filter(&user, &[]);
     let entities = gw.list_index_for_filter(&filter).unwrap();
     assert_eq!(entities.len(), 1);
     assert_eq!(entities[0].id, my_rule.id);
@@ -286,7 +286,7 @@ fn list_index_for_filter_for_admin_includes_reference_and_own_rows() {
     )
     .unwrap();
 
-    let filter = interaction_rule_policy::index_list_filter(&admin);
+    let filter = interaction_rule_policy::index_list_filter(&admin, &[]);
     let ids: Vec<i64> = gw
         .list_index_for_filter(&filter)
         .unwrap()
