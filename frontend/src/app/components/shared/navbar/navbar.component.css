@@ -117,14 +117,18 @@
 .menu-toggle {
   display: none;
   flex-direction: column;
-  justify-content: space-around;
-  width: 32px;
-  height: 32px;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
   background: transparent;
   border: none;
   cursor: pointer;
   padding: 0;
   z-index: 10;
+  box-sizing: border-box;
 }
 
 .menu-toggle-icon {
