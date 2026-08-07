@@ -16,6 +16,8 @@
     "check:btn-base-class": "node scripts/check-btn-base-class.mjs",
     "check:btn-base-class:enforce": "node scripts/check-btn-base-class.mjs --enforce",
     "verify:primary-color-tokens": "node --test scripts/check-primary-color-tokens.test.mjs",
+    "verify:fluid-typography-tokens": "node --test scripts/check-fluid-typography-tokens.test.mjs",
+    "verify:package-deps": "node --test scripts/check-package-deps.test.mjs",
     "test:e2e": "playwright test",
     "test:route-manifest-coverage": "playwright test e2e/route-manifest-coverage.spec.ts --config=playwright.manifest.config.ts",
     "test:e2e:smoke": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/",
@@ -31,8 +33,7 @@
     "e2e:manifest:check": "node scripts/generate-e2e-route-manifest.mjs --check",
     "e2e:visual-review:check": "node e2e/agent-review/verify-visual-review-fresh.mjs",
     "e2e:visual-review:check:enforce": "node e2e/agent-review/verify-visual-review-fresh.mjs --enforce",
-    "lighthouse:ci": "lhci autorun --config=lighthouserc.js",
-    "verify:fluid-typography-tokens": "node --test scripts/check-fluid-typography-tokens.test.mjs"
+    "lighthouse:ci": "lhci autorun --config=lighthouserc.js"
   },
   "prettier": {
     "printWidth": 100,
@@ -54,7 +55,6 @@
     "@angular/compiler": "^21.2.11",
     "@angular/core": "^21.2.11",
     "@angular/forms": "^21.2.11",
-    "@angular/material": "^21.2.9",
     "@angular/platform-browser": "^21.2.11",
     "@angular/router": "^21.2.11",
     "@bluehalo/ngx-leaflet": "^21.0.0",
