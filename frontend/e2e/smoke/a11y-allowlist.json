@@ -1,0 +1,33 @@
+{
+  "description": "Known axe violations per route. Do not add new entries without justification; shrink over time.",
+  "routes": {
+    "plans": [
+      {
+        "ruleId": "landmark-unique",
+        "reason": "Authenticated shell uses nested main landmarks (app-main + page-main); pre-existing layout."
+      },
+      {
+        "ruleId": "landmark-main-is-top-level",
+        "reason": "Nested page-main inside app-main on authenticated routes; pre-existing layout."
+      },
+      {
+        "ruleId": "landmark-no-duplicate-main",
+        "reason": "Nested page-main inside app-main on authenticated routes; pre-existing layout."
+      }
+    ],
+    "crops": [
+      {
+        "ruleId": "landmark-unique",
+        "reason": "Authenticated shell uses nested main landmarks (app-main + page-main); pre-existing layout."
+      },
+      {
+        "ruleId": "landmark-main-is-top-level",
+        "reason": "Nested page-main inside app-main on authenticated routes; pre-existing layout."
+      },
+      {
+        "ruleId": "landmark-no-duplicate-main",
+        "reason": "Nested page-main inside app-main on authenticated routes; pre-existing layout."
+      }
+    ]
+  }
+}
