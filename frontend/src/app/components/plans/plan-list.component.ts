@@ -37,7 +37,12 @@ const initialControl: PlanListViewState = {
           <app-card-list-skeleton class="list-loading-skeleton" />
           <p class="master-loading list-loading-text">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
-          <p class="plan-list-error">{{ control.error }}</p>
+          <div class="page-alert-error plan-list__error" role="alert">
+            <p>{{ control.error | translate }}</p>
+            <button type="button" class="btn btn-secondary plan-list__retry" (click)="load()">
+              {{ 'plans.index.retry' | translate }}
+            </button>
+          </div>
         } @else if (control.plans.length === 0) {
           <div class="plan-list-empty">
             <p>{{ 'plans.index.no_plans' | translate }}</p>

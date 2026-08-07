@@ -175,6 +175,26 @@ describe('PlanOptimizingComponent', () => {
     });
   });
 
+  it('reloads optimization subscription when retry is clicked', () => {
+    component.control = {
+      status: 'failed',
+      progress: 40,
+      phaseMessage: 'Process failed'
+    };
+    fixture.detectChanges();
+
+    mockUseCase.execute.mockClear();
+    const retry = fixture.nativeElement.querySelector('.plan-optimizing__retry');
+    retry?.click();
+
+    expect(mockUseCase.execute).toHaveBeenCalledWith({
+      planId: 13,
+      onSubscribed: expect.any(Function)
+    });
+    expect(component.control.status).toBe('pending');
+    expect(component.control.progress).toBe(0);
+  });
+
   it('renders plan context header without redundant breadcrumb links while optimizing', () => {
     fixture.detectChanges();
 
