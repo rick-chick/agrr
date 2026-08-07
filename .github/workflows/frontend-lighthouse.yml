@@ -1,0 +1,72 @@
+# Lighthouse CI gate for public prerender routes (lab scores, warn-only thresholds)
+name: Frontend Lighthouse CI
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-lighthouse.yml'
+      - 'scripts/run-lighthouse-ci.sh'
+      - 'scripts/verify-lighthouse-ci-workflow-lib.mjs'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/frontend-lighthouse.yml'
+      - 'scripts/run-lighthouse-ci.sh'
+
+concurrency:
+  group: frontend-lighthouse-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Lighthouse CI workflow contract
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-lighthouse-ci-workflow.test.mjs
+
+      - name: Run Lighthouse CI
+        working-directory: ${{ github.workspace }}
+        run: bash scripts/run-lighthouse-ci.sh
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-ci-reports
+          path: frontend/.lighthouseci/
+          if-no-files-found: ignore
+
+      - name: Log reproduction URLs on threshold warnings
+        if: failure()
+        working-directory: ${{ github.workspace }}
+        run: |
+          echo "Re-run locally: bash scripts/run-lighthouse-ci.sh"
+          echo "Reports artifact: lighthouse-ci-reports (frontend/.lighthouseci/)"
+          node -e "
+            const routes = require('./frontend/scripts/lighthouse-ci-routes.mjs').LIGHTHOUSE_CI_ROUTES;
+            for (const r of routes) {
+              console.log('URL (static prerender):', r.path);
+            }
+          "
