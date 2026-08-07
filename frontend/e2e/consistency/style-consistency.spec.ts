@@ -41,7 +41,7 @@ test.describe('style consistency (computed)', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     const widePx = await h1.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
 
-    expect(narrowPx).toBeGreaterThanOrEqual(16);
+    expect(narrowPx).toBeGreaterThanOrEqual(30); /* --font-size-5xl clamp min (1.875rem) */
     expect(widePx).toBeGreaterThan(narrowPx);
     expect(widePx).toBeLessThanOrEqual(48);
   });
