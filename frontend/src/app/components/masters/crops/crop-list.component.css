@@ -8,7 +8,7 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
-  background: var(--color-surface-alt, #f1f5f9);
+  background: var(--color-surface-alt);
   border: 1px solid var(--color-border);
 }
 
@@ -58,7 +58,7 @@
 
 .crop-overflow-menu__item:hover,
 .crop-overflow-menu__item:focus-visible {
-  background: var(--color-surface-alt, #f8fafc);
+  background: var(--color-surface-alt);
   color: var(--color-primary);
   outline: none;
 }

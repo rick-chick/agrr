@@ -19,7 +19,7 @@
 }
 
 .blueprint-readiness__item--ok {
-  color: var(--color-success, var(--color-text));
+  color: var(--color-success);
 }
 
 .blueprint-readiness__link {
