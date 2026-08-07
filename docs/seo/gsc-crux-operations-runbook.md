@@ -15,7 +15,7 @@
 | 頻度 | 対象 | 主な作業 |
 |------|------|----------|
 | **デプロイ直後**（必須） | 本番 `agrr.net` | §2 機械検証 → §3 GSC sitemap 再送信 |
-| **週次** | GSC | §4.1 カバレッジ・インデックス異常・アラート確認 |
+| **PR（継続）** | 公開ルート Lighthouse（ラボ） | §4.3 Lighthouse CI（[`frontend-lighthouse`](../../.github/workflows/frontend-lighthouse.yml) workflow） |
 | **月次** | Core Web Vitals（CWV） | §4.2 GSC CWV レポート + §5 PSI フィールドデータ（代表 URL） |
 | **四半期** | フル監査 | §2〜§5 一式 + §6 チェックリスト + research 再ビルド要否（[vitepress-rebuild-checklist.md](./vitepress-rebuild-checklist.md)） |
 
