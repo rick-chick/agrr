@@ -61,6 +61,14 @@ describe('AppSeoMetaService', () => {
           }
         },
         pages: {
+          contact: {
+            title: 'お問い合わせ',
+            description: 'Contact説明',
+            faq_items: [
+              { question: 'ログインできない', answer: 'Google認証の設定をご確認ください' },
+              { question: 'データが保存されない', answer: 'ブラウザのCookieが有効かご確認ください' }
+            ]
+          },
           about: {
             title: 'AGRRについて',
             description: 'About説明'
@@ -352,6 +360,38 @@ describe('AppSeoMetaService', () => {
 
     expect(title.getTitle()).toBe('無料作付け計画を作成');
     expect(meta.getTag('property="og:url"')?.content).toBe('https://agrr.net/public-plans/results');
+  });
+
+  it('injects FAQPage JSON-LD on /contact', () => {
+    setWindowPath('/contact');
+    service.refreshDefaultMeta();
+
+    const script = document.head.querySelector('script[type="application/ld+json"]');
+    const structured = JSON.parse(script?.textContent ?? '{}');
+    const graph = structured['@graph'] as Array<Record<string, unknown>>;
+    const faqPage = graph.find((node) => node['@type'] === 'FAQPage') as {
+      mainEntity: Array<Record<string, unknown>>;
+    };
+    expect(faqPage).toBeDefined();
+    expect(faqPage.mainEntity).toHaveLength(2);
+    expect(faqPage.mainEntity[0]).toMatchObject({
+      '@type': 'Question',
+      name: 'ログインできない',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Google認証の設定をご確認ください'
+      }
+    });
+  });
+
+  it('does not inject FAQPage JSON-LD on non-contact routes', () => {
+    setWindowPath('/about');
+    service.refreshDefaultMeta();
+
+    const script = document.head.querySelector('script[type="application/ld+json"]');
+    const structured = JSON.parse(script?.textContent ?? '{}');
+    const graph = structured['@graph'] as Array<Record<string, unknown>>;
+    expect(graph.some((node) => node['@type'] === 'FAQPage')).toBe(false);
   });
 
   it('omits OGP image tags when origin is unavailable', () => {

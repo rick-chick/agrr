@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { resolveSeoKeyPrefix } from './route-seo-meta.config';
-import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
+import { buildSiteStructuredDataDocumentWithOptionalFaq, SITE_STRUCTURED_DATA_SCRIPT_ID, type ContactFaqItem } from './site-structured-data';
 import {
   buildPublicPlanResultsShareUrl,
   extractPublicPlanResultsSeoLabels
@@ -280,11 +280,15 @@ export class AppSeoMetaService {
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
         : PRODUCTION_SITE_ORIGIN;
-    const jsonLd = buildSiteStructuredDataDocument({
-      baseUrl,
-      siteTitle,
-      siteDescription
-    });
+    const faqItems = this.resolveContactFaqItems(keyPrefix);
+    const jsonLd = buildSiteStructuredDataDocumentWithOptionalFaq(
+      {
+        baseUrl,
+        siteTitle,
+        siteDescription
+      },
+      faqItems
+    );
 
     const script = this.resolveJsonLdScript();
     script.text = jsonLd;
@@ -314,5 +318,35 @@ export class AppSeoMetaService {
         node.remove();
       }
     });
+  }
+
+  private resolveContactFaqItems(keyPrefix: string): ContactFaqItem[] | undefined {
+    if (keyPrefix !== 'pages.contact') {
+      return undefined;
+    }
+
+    const raw = this.translate.instant('pages.contact.faq_items');
+    if (!Array.isArray(raw)) {
+      return undefined;
+    }
+
+    const faqItems = raw
+      .map((item) => {
+        if (item == null || typeof item !== 'object') {
+          return null;
+        }
+        const question = (item as { question?: unknown }).question;
+        const answer = (item as { answer?: unknown }).answer;
+        if (typeof question !== 'string' || typeof answer !== 'string') {
+          return null;
+        }
+        if (!question.trim() || !answer.trim()) {
+          return null;
+        }
+        return { question, answer };
+      })
+      .filter((item): item is ContactFaqItem => item !== null);
+
+    return faqItems.length ? faqItems : undefined;
   }
 }

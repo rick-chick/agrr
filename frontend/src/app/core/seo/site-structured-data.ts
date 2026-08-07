@@ -7,6 +7,11 @@ export type SiteStructuredDataInput = {
   siteDescription: string;
 };
 
+export type ContactFaqItem = {
+  question: string;
+  answer: string;
+};
+
 type StructuredDataNode = Record<string, unknown>;
 
 const ORGANIZATION_ID_SUFFIX = '#organization';
@@ -53,9 +58,51 @@ export function buildSiteStructuredDataGraph(
   ];
 }
 
+export function buildContactFaqPageNode(
+  faqItems: ContactFaqItem[]
+): StructuredDataNode | null {
+  if (!faqItems.length) {
+    return null;
+  }
+
+  return {
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer
+      }
+    }))
+  };
+}
+
+export function buildSiteStructuredDataGraphWithOptionalFaq(
+  input: SiteStructuredDataInput,
+  faqItems?: ContactFaqItem[]
+): StructuredDataNode[] {
+  const graph = buildSiteStructuredDataGraph(input);
+  const faqNode = faqItems?.length ? buildContactFaqPageNode(faqItems) : null;
+  if (faqNode) {
+    graph.push(faqNode);
+  }
+  return graph;
+}
+
 export function buildSiteStructuredDataDocument(input: SiteStructuredDataInput): string {
   return JSON.stringify({
     '@context': 'https://schema.org',
     '@graph': buildSiteStructuredDataGraph(input)
+  });
+}
+
+export function buildSiteStructuredDataDocumentWithOptionalFaq(
+  input: SiteStructuredDataInput,
+  faqItems?: ContactFaqItem[]
+): string {
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': buildSiteStructuredDataGraphWithOptionalFaq(input, faqItems)
   });
 }

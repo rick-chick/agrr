@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSiteStructuredDataGraph } from './site-structured-data';
+import {
+  buildContactFaqPageNode,
+  buildSiteStructuredDataGraph,
+  buildSiteStructuredDataGraphWithOptionalFaq
+} from './site-structured-data';
 
 describe('buildSiteStructuredDataGraph', () => {
   it('includes Organization with email and sameAs', () => {
@@ -41,5 +45,56 @@ describe('buildSiteStructuredDataGraph', () => {
       alternateName:
         'AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム'
     });
+  });
+});
+
+describe('buildContactFaqPageNode', () => {
+  it('builds FAQPage mainEntity from question/answer pairs', () => {
+    const node = buildContactFaqPageNode([
+      { question: 'ログインできない', answer: 'Google認証の設定をご確認ください' },
+      { question: 'データが保存されない', answer: 'ブラウザのCookieが有効かご確認ください' }
+    ]);
+
+    expect(node).toMatchObject({
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: 'ログインできない',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Google認証の設定をご確認ください'
+          }
+        },
+        {
+          '@type': 'Question',
+          name: 'データが保存されない',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'ブラウザのCookieが有効かご確認ください'
+          }
+        }
+      ]
+    });
+  });
+
+  it('returns null when faq items are empty', () => {
+    expect(buildContactFaqPageNode([])).toBeNull();
+  });
+});
+
+describe('buildSiteStructuredDataGraphWithOptionalFaq', () => {
+  it('appends FAQPage node when faq items are provided', () => {
+    const graph = buildSiteStructuredDataGraphWithOptionalFaq(
+      {
+        baseUrl: 'https://agrr.net',
+        siteTitle: 'AGRR タイトル',
+        siteDescription: '説明文'
+      },
+      [{ question: 'Q1', answer: 'A1' }]
+    );
+
+    expect(graph.some((node) => node['@type'] === 'FAQPage')).toBe(true);
+    expect(graph).toHaveLength(4);
   });
 });
