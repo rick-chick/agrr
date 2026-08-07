@@ -1510,8 +1510,8 @@
     },
     "new": {
       "breadcrumb": "New plan",
-      "title": "📅 Select Year and Farm",
-      "subtitle": "Choose the year and farm for your cultivation plan",
+      "title": "📅 Select a Farm",
+      "subtitle": "Select the farm for your cultivation plan",
       "plan_name_label": "Plan Name",
       "plan_name_placeholder": "e.g. Main Plan",
       "farm_label": "Farm",
@@ -1520,14 +1520,12 @@
       "no_farms": "No farms available",
       "no_farms_hint": "Please create a farm first",
       "create_farm_link": "Create Farm",
-      "next_button": "Next: Select Crops",
       "create_button": "Create",
       "farm_option_with_fields": "{{name}} ({{count}} fields · {{area}} m²)",
       "farm_option_no_fields": "{{name}} (no fields)",
       "no_fields_warning": "This farm has no registered fields.",
       "some_farms_no_fields_hint": "Farms without registered fields cannot be selected for planning.",
-      "register_fields_link": "Register fields",
-      "empty_message": "Currently, no farms are available."
+      "register_fields_link": "Register fields"
     },
     "select_crop": {
       "title": "🌾 Select Crops to Grow",
