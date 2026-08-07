@@ -48,7 +48,11 @@ const initialControl: FertilizeEditViewState = {
       <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">
-          {{ 'fertilizes.edit.title' | translate:{ name: control.formData.name } }}
+          @if (control.formData.name) {
+            {{ 'fertilizes.edit.title' | translate:{ name: control.formData.name } }}
+          } @else {
+            {{ 'fertilizes.edit.title_default' | translate }}
+          }
         </h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
