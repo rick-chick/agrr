@@ -188,6 +188,13 @@ describe('CropListComponent card actions', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="crop-overflow-menu-panel"]')).toBeNull();
   });
 
+  it('uses div.page-main instead of nested main landmark', () => {
+    expect(fixture.nativeElement.querySelector('main')).toBeNull();
+    const pageMain = fixture.nativeElement.querySelector('.page-main');
+    expect(pageMain).toBeTruthy();
+    expect(pageMain?.tagName).toBe('DIV');
+  });
+
   it('shows card-list skeleton while loading', () => {
     fixture.componentInstance.control = {
       loading: true,

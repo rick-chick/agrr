@@ -80,6 +80,14 @@ describe('PlanListComponent', () => {
     expect(component.control).toEqual(state);
   });
 
+  it('uses div.page-main instead of nested main landmark', async () => {
+    await renderPlans([]);
+    expect(fixture.nativeElement.querySelector('main')).toBeNull();
+    const pageMain = fixture.nativeElement.querySelector('.page-main');
+    expect(pageMain).toBeTruthy();
+    expect(pageMain?.tagName).toBe('DIV');
+  });
+
   it('calls markForCheck when control is updated', () => {
     const state: PlanListViewState = {
       loading: false,
