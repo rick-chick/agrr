@@ -99,8 +99,8 @@ export class CookieConsentBannerComponent implements OnInit, OnDestroy {
   }
 
   private buildDescription(): SafeHtml {
-    const description = this.translate.instant('cookie_consent.description_html');
-    const linkText = this.translate.instant('cookie_consent.privacy_link_text');
+    const description = this.translate.instant('shared.cookie_consent.description_html');
+    const linkText = this.translate.instant('shared.cookie_consent.privacy_link_text');
     const link = `<a class="cookie-consent-link" href="/privacy" target="_blank" rel="noopener">${linkText}</a>`;
     const formatted = description.includes('%{privacy_link}')
       ? description.replace('%{privacy_link}', link)

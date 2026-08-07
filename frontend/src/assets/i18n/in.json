@@ -101,7 +101,8 @@
       "title": "नया कीटनाशक जोड़ें"
     },
     "edit": {
-      "title": "{{name}} संपादित करें"
+      "title": "{{name}} संपादित करें",
+      "title_default": "कीटनाशक"
     },
     "show": {
       "reference_pesticide": "संदर्भ कीटनाशक",
@@ -128,6 +129,10 @@
       "edit": "संपादित करें",
       "delete": "हटाएं",
       "confirm_delete": "क्या आप वाकई इस कीटनाशक को हटाना चाहते हैं?"
+    },
+    "fallback": {
+      "crop": "फसल #{{id}}",
+      "pest": "कीट #{{id}}"
     }
   },
   "agricultural_tasks": {
@@ -178,7 +183,8 @@
       "title": "नया कार्य जोड़ें"
     },
     "edit": {
-      "title": "{{name}} संपादित करें"
+      "title": "{{name}} संपादित करें",
+      "title_default": "कार्य"
     },
     "form": {
       "name_label": "कार्य का नाम",
@@ -228,7 +234,11 @@
       "no_crops_associated": "कोई फसल संबद्ध नहीं।",
       "edit": "संपादित करें",
       "delete": "हटाएं",
-      "confirm_delete": "क्या आप इस कार्य को हटाना चाहते हैं?"
+      "confirm_delete": "क्या आप इस कार्य को हटाना चाहते हैं?",
+      "task_type": "कार्य प्रकार"
+    },
+    "errors": {
+      "invalid_id": "अमान्य कार्य ID।"
     }
   },
   "crops": {
@@ -499,7 +509,27 @@
       "from_plan_wizard_lead": "नीचे के फॉर्म से कार्य योजना पंजीकृत करें। समाप्त होने पर ब्रेडक्रंब से योजना पर वापस जाएँ।",
       "return_to_plan": "योजना पर वापस जाएँ",
       "from_plan_stages_wizard_lead": "प्रत्येक वृद्धि चरण के लिए न्यूनतम सीमा तापमान और आवश्यक GDD सेट करें। समाप्त होने पर योजना पर लौटकर कार्य योजना पुनः बनाएँ।",
-      "base_temperature": "न्यूनतम सीमा तापमान"
+      "base_temperature": "न्यूनतम सीमा तापमान",
+      "reference_crop": "संदर्भ फसल"
+    },
+    "setup_proposal_import": {
+      "action": "प्रस्ताव आयात करें",
+      "breadcrumb": "प्रस्ताव आयात करें",
+      "title": "{{name}} — प्रस्ताव आयात करें",
+      "lead": "बाहरी स्किल से JSON पेस्ट करें या फ़ाइल चुनें, फिर सत्यापित और लागू करें।",
+      "json_label": "प्रस्ताव JSON",
+      "json_placeholder": "{ \"stages\": [], \"agricultural_tasks\": [], \"task_schedule_blueprints\": [] }",
+      "choose_file": "फ़ाइल चुनें",
+      "paste_clipboard": "क्लिपबोर्ड से पेस्ट करें",
+      "preview_button": "पूर्वावलोकन (सत्यापन)",
+      "previewing": "सत्यापन हो रहा है…",
+      "preview_title": "सामान्यीकृत पूर्वावलोकन",
+      "validation_errors_title": "सत्यापन त्रुटियाँ",
+      "apply_button": "इस फसल पर लागू करें",
+      "applying": "लागू हो रहा है…",
+      "invalid_json": "JSON का प्रारूप अमान्य है।",
+      "invalid_shape": "JSON में stages, agricultural_tasks और task_schedule_blueprints होना चाहिए।",
+      "clipboard_error": "क्लिपबोर्ड पढ़ा नहीं जा सका।"
     }
   },
   "pests": {
@@ -781,7 +811,8 @@
           "loading": "नक्शा लोड हो रहा है..."
         },
         "submit": "खेत बनाएं",
-        "cancel": "रद्द करें"
+        "cancel": "रद्द करें",
+        "coordinates_validation_error": "अमान्य अक्षांश या देशांतर। वैध सीमा के भीतर संख्यात्मक मान दर्ज करें।"
       },
       "errors": {
         "title": "{{count}} त्रुटियां हुईं:"
@@ -885,6 +916,9 @@
       "insufficient_historical_data": "पूर्वानुमान के लिए अपर्याप्त ऐतिहासिक डेटा।",
       "job_queue_failed": "पूर्वानुमान जॉब कतारबद्ध करने में विफल: {{error}}",
       "farm_not_found": "खेत नहीं मिला।"
+    },
+    "map": {
+      "default_name": "नया खेत"
     }
   },
   "fields": {
@@ -1069,6 +1103,9 @@
       "edit": "संपादित करें",
       "delete": "हटाएं",
       "confirm_delete": "क्या आप इस नियम को हटाना चाहते हैं?"
+    },
+    "errors": {
+      "invalid_id": "अमान्य नियम ID।"
     }
   },
   "controllers": {
@@ -1182,7 +1219,10 @@
       "not_migrated": "यह सुविधा अभी उपलब्ध नहीं है",
       "service_unavailable": "सर्वर से कनेक्ट नहीं हो सका",
       "generic": "एक त्रुटि हुई"
-    }
+    },
+    "creating": "बनाया जा रहा है...",
+    "sending": "भेजा जा रहा है...",
+    "updating": "अपडेट किया जा रहा है..."
   },
   "masters": {
     "load_error": {
@@ -1586,7 +1626,9 @@
       "in_10p7905_78p7047": "तिरुचिरापल्ली, तमिल नाडु",
       "in_11p6643_78p1460": "सेलम, तमिल नाडु",
       "in_9p9312_76p2673": "कोच्चि, केरल"
-    }
+    },
+    "create_failed": "योजना बनाने में विफल: {{errors}}",
+    "invalid_farm_id": "अमान्य खेत ID।"
   },
   "plans": {
     "errors": {
@@ -1910,6 +1952,7 @@
       "try_public_plans": "मुफ्त योजनाओं से शुरू करें",
       "no_plans": "अभी तक कोई योजना नहीं",
       "no_plans_hint": "खेती अनुसूची को अनुकूलित करने के लिए एक नई योजना बनाएं।",
+      "retry": "पुनः लोड करें",
       "year_label": "वर्ष {{year}}",
       "status": {
         "pending": "लंबित",

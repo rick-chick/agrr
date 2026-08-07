@@ -90,7 +90,7 @@ describe('CookieConsentBannerComponent', () => {
     expect(dialog?.getAttribute('role')).toBe('dialog');
     expect(dialog?.getAttribute('aria-modal')).toBe('true');
     expect(dialog?.getAttribute('aria-labelledby')).toBe('cookie-consent-title');
-    expect(dialog?.getAttribute('aria-label')).toBe('cookie_consent.aria_label');
+    expect(dialog?.getAttribute('aria-label')).toBe('shared.cookie_consent.aria_label');
 
     const title = fixture.nativeElement.querySelector('#cookie-consent-title');
     expect(title).toBeTruthy();

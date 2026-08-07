@@ -4,15 +4,15 @@
   role="dialog"
   aria-live="polite"
   aria-modal="true"
-  [attr.aria-label]="'cookie_consent.aria_label' | translate"
+  [attr.aria-label]="'shared.cookie_consent.aria_label' | translate"
   aria-labelledby="cookie-consent-title"
 >
   <div class="cookie-consent-card">
-    <h2 id="cookie-consent-title" class="cookie-consent-title">{{ 'cookie_consent.title' | translate }}</h2>
+    <h2 id="cookie-consent-title" class="cookie-consent-title">{{ 'shared.cookie_consent.title' | translate }}</h2>
     <p class="cookie-consent-text" *ngIf="descriptionHtml" [innerHTML]="descriptionHtml"></p>
     <div class="cookie-consent-actions">
-      <button class="btn btn-primary" type="button" (click)="accept()">{{ 'cookie_consent.accept' | translate }}</button>
-      <button class="btn btn-secondary" type="button" (click)="reject()">{{ 'cookie_consent.reject' | translate }}</button>
+      <button class="btn btn-primary" type="button" (click)="accept()">{{ 'shared.cookie_consent.accept' | translate }}</button>
+      <button class="btn btn-secondary" type="button" (click)="reject()">{{ 'shared.cookie_consent.reject' | translate }}</button>
     </div>
   </div>
 </div>
