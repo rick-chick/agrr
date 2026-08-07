@@ -1,3 +1,12 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:5e4f30fd6f98ec90cd5a7cb3b93101f9d748a1981d73e6bf56b7ff74b9f45805
-size 289
+{
+  "routes": [
+    { "path": "/", "url": "/" },
+    { "path": "/about", "url": "/about/" },
+    { "path": "/contact", "url": "/contact/" },
+    { "path": "/public-plans/new", "url": "/public-plans/new/" }
+  ],
+  "thresholds": {
+    "performanceMinScore": 0.85,
+    "lcpMaxMs": 2500
+  }
+}
