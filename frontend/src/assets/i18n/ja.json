@@ -2620,7 +2620,10 @@
     "api_keys": "APIキー管理",
     "account": "アカウントとデータ",
     "admin": "管理画面",
-    "language": "言語"
+    "language": "言語",
+    "lang_ja": "日本語",
+    "lang_en": "English",
+    "lang_in": "हिन्दी"
   },
   "footer": {
     "about": "AGRRについて",
