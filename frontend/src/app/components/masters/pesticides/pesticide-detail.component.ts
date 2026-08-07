@@ -32,7 +32,7 @@ const initialControl: PesticideDetailViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...PESTICIDE_DETAIL_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
@@ -84,7 +84,7 @@ const initialControl: PesticideDetailViewState = {
           </div>
         </section>
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./pesticide-detail.component.css']
 })

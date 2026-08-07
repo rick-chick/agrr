@@ -34,7 +34,7 @@ const initialControl: PublicPlanOptimizingViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, PublicPlanContextHeaderComponent],
   providers: [...PUBLIC_PLAN_OPTIMIZING_PROVIDERS],
   template: `
-    <main class="page-main public-plans-wrapper pb-0">
+    <div class="page-main public-plans-wrapper pb-0">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
         <app-public-plan-context-header [crumbs]="contextCrumbs" />
@@ -55,7 +55,7 @@ const initialControl: PublicPlanOptimizingViewState = {
 
         <div class="spacer-for-fixed-bar"></div>
       </div>
-    </main>
+    </div>
 
     <div class="fixed-progress-bar">
       <div class="fixed-progress-container">
