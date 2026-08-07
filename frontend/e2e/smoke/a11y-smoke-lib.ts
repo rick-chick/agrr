@@ -3,10 +3,7 @@
  * Keep prerender paths aligned with scripts/public-prerender-routes.mjs.
  */
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { join } from 'node:path';
 
 /** Static public prerender paths (see src/app/core/seo/public-prerender-routes.ts). */
 export const A11Y_STATIC_PRERENDER_PATHS = [
@@ -25,18 +22,30 @@ export const A11Y_STATIC_PRERENDER_PATHS = [
   'en/public-plans/new',
 ];
 
+export type A11yRoute = {
+  pattern: string;
+  url: string;
+  requiresAuth: boolean;
+};
+
+type ManifestRoute = {
+  pattern: string;
+  url: string;
+  requiresAuth: boolean;
+};
+
 /**
  * Prerender paths for axe smoke. Reads catalog JSON directly so Playwright specs
  * do not import scripts/public-prerender-routes.mjs (ESM/CJS interop in bundler).
- * @returns {string[]}
  */
-export function loadA11yPrerenderPaths() {
+export function loadA11yPrerenderPaths(): string[] {
   const catalogPath = join(
-    __dirname,
-    '../../src/app/core/seo/entry-schedule-prerender-catalog.json',
+    process.cwd(),
+    'src/app/core/seo/entry-schedule-prerender-catalog.json',
   );
-  /** @type {{ crops: Array<{ cropId: number }> }} */
-  const catalog = JSON.parse(readFileSync(catalogPath, 'utf8'));
+  const catalog = JSON.parse(readFileSync(catalogPath, 'utf8')) as {
+    crops: Array<{ cropId: number }>;
+  };
   const cropPaths = catalog.crops.map((crop) => `entry-schedule/crop/${crop.cropId}`);
   return [...A11Y_STATIC_PRERENDER_PATHS, ...cropPaths];
 }
@@ -48,23 +57,16 @@ export const A11Y_SMOKE_EXCLUDED_PATTERNS = new Set(['**', 'login']);
  * Authenticated shell samples until nested-main landmark issue (#668) closes.
  * Landmark allowlist entries remain in a11y-allowlist.json for these patterns.
  */
-export const A11Y_AUTH_SAMPLE_ROUTES = [
+export const A11Y_AUTH_SAMPLE_ROUTES: A11yRoute[] = [
   { pattern: 'plans', url: '/plans', requiresAuth: true },
   { pattern: 'crops', url: '/crops', requiresAuth: true },
 ];
 
-/**
- * @typedef {{ pattern: string; url: string; requiresAuth: boolean }} A11yRoute
- */
-
-/**
- * @param {{ routes: Array<{ pattern: string; url: string; requiresAuth: boolean }> }} manifest
- * @param {string[]} prerenderPaths
- * @returns {A11yRoute[]}
- */
-export function buildA11ySmokeRoutes(manifest, prerenderPaths) {
-  /** @type {Map<string, A11yRoute>} */
-  const byPattern = new Map();
+export function buildA11ySmokeRoutes(
+  manifest: { routes: ManifestRoute[] },
+  prerenderPaths: string[],
+): A11yRoute[] {
+  const byPattern = new Map<string, A11yRoute>();
 
   for (const row of manifest.routes) {
     if (row.requiresAuth || A11Y_SMOKE_EXCLUDED_PATTERNS.has(row.pattern)) {
@@ -92,11 +94,7 @@ export function buildA11ySmokeRoutes(manifest, prerenderPaths) {
   return [...byPattern.values()].sort(compareA11yRoutes);
 }
 
-/**
- * @param {A11yRoute} a
- * @param {A11yRoute} b
- */
-function compareA11yRoutes(a, b) {
+function compareA11yRoutes(a: A11yRoute, b: A11yRoute): number {
   if (a.requiresAuth !== b.requiresAuth) {
     return a.requiresAuth ? 1 : -1;
   }

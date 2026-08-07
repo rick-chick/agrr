@@ -3,20 +3,10 @@ import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { expect } from '@playwright/test';
-import { buildA11ySmokeRoutes, loadA11yPrerenderPaths } from './a11y-smoke-lib.mjs';
-import { smokeManifest } from './smoke-helpers';
 
-export type A11yRoute = {
-  pattern: string;
-  url: string;
-  requiresAuth: boolean;
-};
+import type { A11yRoute } from './a11y-smoke-lib';
 
-/** Public prerender + manifest public routes + authenticated shell samples (see a11y-smoke-lib.mjs). */
-export const a11ySmokeRoutes: A11yRoute[] = buildA11ySmokeRoutes(
-  smokeManifest,
-  loadA11yPrerenderPaths(),
-);
+export type { A11yRoute };
 
 type AllowlistFile = {
   /** Known axe rule IDs allowed per route pattern (see a11y-allowlist.json). */

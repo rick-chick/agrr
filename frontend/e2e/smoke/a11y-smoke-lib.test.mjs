@@ -9,7 +9,7 @@ import {
   A11Y_SMOKE_EXCLUDED_PATTERNS,
   buildA11ySmokeRoutes,
   loadA11yPrerenderPaths,
-} from './a11y-smoke-lib.mjs';
+} from './a11y-smoke-lib.ts';
 
 const manifest = JSON.parse(
   readFileSync(join(process.cwd(), 'e2e/route-manifest.json'), 'utf8'),

@@ -1,17 +1,19 @@
 import { test } from '@playwright/test';
 import { waitForPageStable } from '../page-stable';
 import { expectedPathnameFromResolvedGoto } from '../route-validity';
-import {
-  a11ySmokeRoutes,
-  assertNoNewAxeViolations,
-} from './a11y-smoke-helpers';
+import { buildA11ySmokeRoutes, loadA11yPrerenderPaths } from './a11y-smoke-lib';
+import { assertNoNewAxeViolations } from './a11y-smoke-helpers';
 import {
   disableCookieBanner,
   loadResolvedCaptureIdsWithBaseline,
   preparePublicPlanRoute,
   resolveGotoUrl,
   smokeDescribe,
+  smokeManifest,
 } from './smoke-helpers';
+
+/** Public prerender + manifest public routes + authenticated shell samples (see a11y-smoke-lib.ts). */
+const a11ySmokeRoutes = buildA11ySmokeRoutes(smokeManifest, loadA11yPrerenderPaths());
 import type { RouteRow } from '../route-validity';
 import type { ResolvedCaptureIds } from '../resolve-capture-urls';
 
