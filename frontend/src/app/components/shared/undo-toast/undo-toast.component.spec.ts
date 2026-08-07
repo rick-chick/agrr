@@ -52,4 +52,17 @@ describe('UndoToastComponent', () => {
     expect(toast.getAttribute('role')).toBe('status');
     expect(toast.getAttribute('aria-live')).toBe('polite');
   });
+
+  it('emits undo when undo button is clicked', () => {
+    const undoSpy = vi.spyOn(fixture.componentInstance.undo, 'emit');
+    const buttons = fixture.nativeElement.querySelectorAll('button');
+    buttons[0]?.click();
+    expect(undoSpy).toHaveBeenCalled();
+  });
+
+  it('calls hide when close button is clicked', () => {
+    const buttons = fixture.nativeElement.querySelectorAll('button');
+    buttons[1]?.click();
+    expect(mockToastService.hide).toHaveBeenCalled();
+  });
 });
