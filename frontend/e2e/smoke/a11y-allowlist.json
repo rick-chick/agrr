@@ -1,4 +1,135 @@
 {
   "description": "Known axe violations per route. Do not add new entries without justification; shrink over time.",
-  "routes": {}
+  "routes": {
+    "about": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Pre-existing highlight-box success tokens on marketing about page (#681 baseline)."
+      }
+    ],
+    "en/about": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Pre-existing highlight-box success tokens on marketing about page (#681 baseline)."
+      }
+    ],
+    "public-plans/new": [
+      {
+        "ruleId": "landmark-unique",
+        "reason": "Public plan create form exposes sibling region landmarks before farm list loads (#681 baseline)."
+      }
+    ],
+    "en/public-plans/new": [
+      {
+        "ruleId": "landmark-unique",
+        "reason": "Public plan create form exposes sibling region landmarks before farm list loads (#681 baseline)."
+      }
+    ],
+    "public-plans/select-farm-size": [
+      {
+        "ruleId": "landmark-unique",
+        "reason": "Public plan farm selection reuses region landmark pattern from create flow (#681 baseline)."
+      }
+    ],
+    "public-plans/optimizing": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Optimizing progress UI uses brand success colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/1": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/2": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/3": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/4": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/5": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/6": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/7": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/8": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/9": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/10": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/11": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/12": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/13": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/14": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ],
+    "entry-schedule/crop/15": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      }
+    ]
+  }
 }
