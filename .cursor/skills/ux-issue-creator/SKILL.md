@@ -23,6 +23,15 @@ description: >-
 
 **前提**: `visual-review-results.md` が最新であること。無い・古い場合は先に **`ux-issue-pipeline`** のステップ 1–2 を実行する。
 
+**証拠鎖（必須）**: 視覚指摘を Issue にする場合は [`frontend/e2e/agent-review/EVIDENCE-CHAIN.md`](../../../frontend/e2e/agent-review/EVIDENCE-CHAIN.md) に従う。
+
+1. `npm run e2e:capture-for-agent` → `agent-review-bundle.json` 生成
+2. ビジュアルレビュー更新後 `npm run e2e:agent-review:stamp-review`
+3. `npm run e2e:agent-review:evidence:check:enforce` GREEN
+4. `collect-ux-findings.mjs`（証拠鎖ゲート内蔵）
+
+古い PNG や古いレビュー md **単体**を根拠に起票しない。
+
 ## 1) 指摘の収集
 
 ```bash
@@ -74,6 +83,7 @@ gh issue list --repo rick-chick/agrr --state all --search "in:title <pattern の
 | 判定 | 動作 |
 |------|------|
 | `existingIssueCandidates` に **OPEN** あり（score ≥ 5） | **起票しない**（コメントで visual-review 行番号を追記可） |
+| `existingIssueCandidates` に **CLOSED** あり（score ≥ 5） | **新規起票しない**（`gh issue view` で受け入れ条件確認。未完了なら **reopen** または follow-up） |
 | score 3–4 のみ | ドライランで人間確認 |
 | 部分重複 | **1 issue に統合**（本文に複数 #N を列挙） |
 | i18n 系が複数画面で同根因（例: region_select） | **1 issue**（`mergeGroups` 参照。例: #17–18, #30–31） |
@@ -96,13 +106,15 @@ Issue 本文の型は [references/issue-body-template.md](references/issue-body-
 
 ## 4) ドライラン（必須）
 
-起票前に該当ルート・PNG で現象を確認する。本文は再現手順と完了条件を主契約とする（修正方針は書かない）。
+`gh issue create` の**前**に:
 
-`gh issue create` の**前**に、チャットまたは `ux-issue-drafts.md` へ次を出力する。
+1. `cd frontend && npm run e2e:agent-review:evidence:check:enforce` が GREEN
+2. `collect-ux-findings.mjs` が exit 0（証拠鎖ゲート通過）
+3. チャットまたは `ux-issue-drafts.md` へ起票予定・スキップ一覧を出力
 
-- 起票予定一覧（タイトル・優先度・統合理由）
-- スキップ一覧（重複・対象外・理由）
-- 付与予定ラベル（`enhancement` / `bug` / `agent-ready`）
+視覚指摘は **bundle.runId と一致する captureRunId** が visual-review メタにあること。PNG 実体は `out/` に存在し bundle の sha256 と一致すること（`verify-agent-review-evidence` が検証）。
+
+**禁止**: 「起票前に PNG で確認済み」等の手動確認済み記述だけで起票する。
 
 **ユーザーが「起票して」と明示するまで `gh issue create` しない。**
 
@@ -144,7 +156,8 @@ gh issue edit <N> --remove-label agent-ready
 
 ## 6) 終了条件
 
-- [ ] `collect-ux-findings.mjs` 実行済み
+- [ ] `collect-ux-findings.mjs` 実行済み（**証拠鎖ゲート exit 0**）
+- [ ] `e2e:agent-review:evidence:check:enforce` GREEN
 - [ ] 重複確認済み（スキップ理由を記録）
 - [ ] ドライラン提示済み
 - [ ] 起票した issue 番号一覧を報告
@@ -154,6 +167,7 @@ gh issue edit <N> --remove-label agent-ready
 
 - `visual-review-results.md` 未更新のまま起票
 - 重複確認なしの大量 `gh issue create`
+- **証拠鎖未通過**での起票（bundle / captureRunId / PNG 不整合）
 - 完了条件・参照なしの issue
 - 修正方針のみ・再現手順なしの issue
 - 方針未確定・議論中の issue に `agent-ready` を付与

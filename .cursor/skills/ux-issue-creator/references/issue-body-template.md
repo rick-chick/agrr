@@ -3,11 +3,16 @@
 ```markdown
 ## 背景
 
-<観測事実。visual-review #N / file:line / PNG>
+<観測事実。visual-review #N / captureRunId / file:line / spec 名>
 
 ## 再現手順
 
-<画面・操作。起票前に PNG で確認済み>
+<画面・操作。視覚指摘は captureRunId 紐づけ PNG。機械指摘は spec / audit コマンド>
+
+## 根拠
+
+- captureRunId: `<agent-review-bundle.json の runId>`（視覚指摘のみ）
+- または: `<spec ファイル / audit コマンド>`
 
 ## 完了条件
 
