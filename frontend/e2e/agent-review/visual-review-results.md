@@ -20,6 +20,13 @@
 - **キャプチャ**: `playwright test route-manifest-visual.spec.ts --grep "plans/:id/optimizing"`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。`plans_id_optimizing.{ja,en,in}.png` を再取得。agrr-server 開発 DB・AuthTest モックログイン。
 - **備考**: agrr デーモン未起動のためキャプチャは気象取得失敗 UI（再試行・`back_to_hub` 導線）。見出し二重は解消。0% 待機説明（`duration_hint`）は `plan-optimizing.component.spec.ts` で確認。
 
+## 追記メタ（#635 / #660 ガント en 圃場ラベル）
+
+- **レビュー日**: 2026-08-07（UTC）
+- **対象**: `route-to-png.md` **#48** `plans/:id`（ja / en / in）、follow-up **#660**（親 **#635** PR #647 マージ後）
+- **キャプチャ**: `playwright test route-manifest-visual.spec.ts --grep "capture-for-agent: plans/:id$"`（`E2E_CAPTURE_DEV_SESSION=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。`plans_id.{ja,en,in}.png` を再取得。
+- **確認**: en で圃場ラベル（`text-anchor: end`・clipPath）が縦線（divider x=70）より左（label anchor x=62）— 重なり解消。**修正済**: #635 / PR #647。回帰: `gantt-chart.component.spec.ts`「anchors field labels before the row divider without overlap」GREEN。
+
 ## サマリ表
 
 | # | pattern | ja | en | in | 結果 | i18n | 指摘 |
@@ -74,7 +81,7 @@
 | 45 | `pests/:id/edit` | `pests_id_edit.ja.png` | `pests_id_edit.en.png` | `pests_id_edit.in.png` | OK | 注意 | i18n: 説明・発生季節フィールドが ja/in でも英語 |
 | 46 | `pests/new` | `pests_new.ja.png` | `pests_new.en.png` | `pests_new.in.png` | OK | OK | なし |
 | 47 | `plans` | `plans.ja.png` | `plans.en.png` | `plans.in.png` | OK | OK | 計画名「E2E Baseline Plan」はテストデータ |
-| 48 | `plans/:id` | `plans_id.ja.png` | `plans_id.en.png` | `plans_id.in.png` | 注意 | OK | layout: en でガント左端縦線が「Baseline Field」と重なる |
+| 48 | `plans/:id` | `plans_id.ja.png` | `plans_id.en.png` | `plans_id.in.png` | OK | OK | **修正済** (#635/#660): en 圃場ラベルと縦線の重なり解消（2026-08-07 再キャプチャ） |
 | 49 | `plans/:id/optimizing` | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` | OK | OK | **#640 再キャプチャ**: 見出し二重解消。失敗時「再読み込み」・`back_to_hub` 導線を 3 言語で確認。0% 待機説明は spec 確認 |
 | 50 | `plans/:id/task_schedule` | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` | OK | OK | layout: `back_to_hub` 導線・ナビ非 active は意図どおり。**修正済**: ステータス i18n・エラー再試行 |
 | 51 | `plans/:id/work` | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` | OK | OK | **修正済**: 記録ボタンをリスト下静的配置・エラー再試行。`back_to_hub`・ナビ active は OK |
