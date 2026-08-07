@@ -299,7 +299,8 @@ export class AppSeoMetaService {
   }
 
   private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {
-    if (typeof document === 'undefined') {
+    const doc = this.document;
+    if (!doc?.head) {
       return;
     }
     if (
@@ -309,10 +310,7 @@ export class AppSeoMetaService {
       return;
     }
 
-    const baseUrl =
-      typeof window !== 'undefined' && window.location?.origin
-        ? window.location.origin
-        : PRODUCTION_SITE_ORIGIN;
+    const baseUrl = this.readOrigin() || PRODUCTION_SITE_ORIGIN;
     const pathname = this.readPathname();
     const pageUrl = buildSelfCanonicalUrl(baseUrl, pathname);
     const faqItems = this.isContactRoute(pathname) ? this.readContactFaqItems() : undefined;
@@ -330,24 +328,25 @@ export class AppSeoMetaService {
   }
 
   private resolveJsonLdScript(): HTMLScriptElement {
+    const doc = this.document;
     const existing =
-      document.getElementById(SITE_STRUCTURED_DATA_SCRIPT_ID) ??
-      document.head.querySelector('script[type="application/ld+json"]');
+      doc.getElementById(SITE_STRUCTURED_DATA_SCRIPT_ID) ??
+      doc.head.querySelector('script[type="application/ld+json"]');
     if (existing instanceof HTMLScriptElement) {
       existing.id = SITE_STRUCTURED_DATA_SCRIPT_ID;
       existing.type = 'application/ld+json';
       return existing;
     }
 
-    const script = document.createElement('script');
+    const script = doc.createElement('script');
     script.id = SITE_STRUCTURED_DATA_SCRIPT_ID;
     script.type = 'application/ld+json';
-    document.head.appendChild(script);
+    doc.head.appendChild(script);
     return script;
   }
 
   private removeDuplicateJsonLdScripts(keep: HTMLScriptElement): void {
-    document.head.querySelectorAll('script[type="application/ld+json"]').forEach((node) => {
+    this.document.head.querySelectorAll('script[type="application/ld+json"]').forEach((node) => {
       if (node !== keep) {
         node.remove();
       }
