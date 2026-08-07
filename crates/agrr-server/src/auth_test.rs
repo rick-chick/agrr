@@ -60,6 +60,12 @@ async fn mock_login_as(
         "developer" => ("dev_user_001", "developer@agrr.dev", "開発者", true),
         "farmer" => ("farmer_user_001", "farmer@agrr.dev", "農家", false),
         "researcher" => ("researcher_user_001", "researcher@agrr.dev", "研究者", false),
+        "contract_api" => (
+            "contract_api_user_001",
+            "contract-api@agrr.dev",
+            "Contract API",
+            false,
+        ),
         _ => return Ok(Redirect::to("/").into_response()),
     };
     mock_login_impl(
