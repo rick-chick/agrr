@@ -81,13 +81,13 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
       const url =
         resolvedCaptureIds != null ? applyResolvedUrl(r.pattern, r.url, resolvedCaptureIds) : r.url;
       const pathnameExpect = expectedPathnameFromResolvedGoto(url);
-      const seeded = await preparePublicPlanRoute(page, r.pattern, resolvedCaptureIds);
-      if (!seeded) {
-        test.skip(true, 'public plan session seed unavailable');
-      }
 
       for (const locale of CAPTURE_LOCALES) {
         await installCaptureLocale(page, locale);
+        const seeded = await preparePublicPlanRoute(page, r.pattern, resolvedCaptureIds);
+        if (!seeded) {
+          test.skip(true, 'public plan session seed unavailable');
+        }
         await page.goto(url);
         await assertPageValidity(page, r, pathnameExpect);
         await waitForCaptureLocaleReady(page, locale);

@@ -29,7 +29,7 @@
 | 9 | `public-plans/new` | `public-plans_new.ja.png` | `public-plans_new.en.png` | `public-plans_new.in.png` | OK | 要確認 | i18n: ja 農場名カードが文字化け（mojibake）。in カードラベル「Punjab」が英字 |
 | 10 | `public-plans/optimizing` | `public-plans_optimizing.ja.png` | `public-plans_optimizing.en.png` | `public-plans_optimizing.in.png` | 注意 | OK | layout: 最適化進行ではなく気象データ取得失敗のエラー画面 |
 | 11 | `public-plans/results` | `public-plans_results.ja.png` | `public-plans_results.en.png` | `public-plans_results.in.png` | 要確認 | 要確認 | layout: 同一 HTTP 404 エラーが二重表示・本文未描画。i18n: ja/in でも生の英語 HTTP エラー文字列 |
-| 12 | `public-plans/select-crop` | `public-plans_select-crop.ja.png` | `public-plans_select-crop.en.png` | `public-plans_select-crop.in.png` | 要確認 | 要確認 | layout: 作物選択(step 2)ではなく地域選択(step 1)が表示。i18n: ja 農場名文字化け。in「Punjab」英字 |
+| 12 | `public-plans/select-crop` | `public-plans_select-crop.ja.png` | `public-plans_select-crop.en.png` | `public-plans_select-crop.in.png` | OK | OK | layout: step2 作物選択 UI（2026-08-07 再キャプチャ・`route-manifest-visual` step2 assertion GREEN）。i18n: ja 農場名「北海道」表示 |
 | 13 | `public-plans/select-farm-size` | `public-plans_select-farm-size.ja.png` | `public-plans_select-farm-size.en.png` | `public-plans_select-farm-size.in.png` | OK | 要確認 | i18n: ja 農場名カードが文字化け。in カードラベル「Punjab」が英字 |
 | 14 | `terms` | `terms.ja.png` | `terms.en.png` | `terms.in.png` | OK | OK | なし |
 | 14a | `account` | `account.ja.png` | `account.en.png` | `account.in.png` | 未レビュー | 未レビュー | 新規ルート `/account`（#603）— キャプチャ未実施 |

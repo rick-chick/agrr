@@ -38,4 +38,25 @@ describe('PublicPlanStore pendingCropSlug', () => {
     expect(store.state.pendingCropSlug).toBeNull();
     expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBeNull();
   });
+
+  it('syncFromSessionStorageIfFarmMissing restores farm seeded after construction', () => {
+    const store = new PublicPlanStore();
+    expect(store.state.farm).toBeNull();
+
+    sessionStorage.setItem(
+      SESSION_STORAGE_KEY,
+      JSON.stringify({
+        farm: { id: 2, name: '東京', region: 'jp', latitude: 35.6, longitude: 139.7 },
+        farmSize: { id: '300', area_sqm: 300, name: '300㎡', description: '' },
+        selectedCrops: [],
+        planId: null,
+        pendingCropSlug: null,
+      }),
+    );
+
+    store.syncFromSessionStorageIfFarmMissing();
+
+    expect(store.state.farm?.id).toBe(2);
+    expect(store.state.farm?.name).toBe('東京');
+  });
 });

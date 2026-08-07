@@ -38,6 +38,9 @@ export async function waitForPageStable(page: Page, r: RouteRow): Promise<void> 
     await page
       .locator('app-public-plan-select-crop .loading-state')
       .waitFor({ state: 'hidden', timeout: 60_000 });
+    await expect(
+      page.locator('app-public-plan-select-crop .enhanced-grid .crop-item').first(),
+    ).toBeVisible({ timeout: 60_000 });
     return;
   }
 
