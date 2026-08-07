@@ -37,7 +37,6 @@ import {
   applyGanttCultivationMove,
   normalizePlanBounds,
   formatGanttFieldRowIndexLabel,
-  getGanttFieldLabelCenterX,
   getGanttFieldLabelSeparatorX,
   getGanttFieldLabelX,
   getGanttFieldLabelTextAnchor,
@@ -442,7 +441,6 @@ export class GanttChartComponent
   implements OnInit, OnChanges, AfterViewInit, OnDestroy, GanttChartView
 {
   readonly formatGanttFieldRowIndexLabel = formatGanttFieldRowIndexLabel;
-  readonly getGanttFieldLabelCenterX = getGanttFieldLabelCenterX;
   readonly getGanttFieldLabelSeparatorX = getGanttFieldLabelSeparatorX;
   readonly getGanttFieldLabelX = getGanttFieldLabelX;
   readonly getGanttFieldLabelTextAnchor = getGanttFieldLabelTextAnchor;
