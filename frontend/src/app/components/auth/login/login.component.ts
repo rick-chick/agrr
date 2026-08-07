@@ -32,6 +32,7 @@ const DEV_MOCK_LOGIN_CSS: Record<DevMockLoginUser, string> = {
   standalone: true,
   imports: [TranslateModule],
   template: `
+    <main class="page-main">
     <section class="login">
       <h1>{{ 'auth.login.title' | translate }}</h1>
       <p>{{ 'auth.login.subtitle' | translate }}</p>
@@ -55,6 +56,7 @@ const DEV_MOCK_LOGIN_CSS: Record<DevMockLoginUser, string> = {
         </div>
       }
     </section>
+    </main>
   `,
   styleUrls: ['./login.component.css']
 })

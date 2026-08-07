@@ -7,7 +7,7 @@ import { ContactFormComponent } from '../../contact-form/contact-form.component'
   standalone: true,
   imports: [TranslateModule, ContactFormComponent],
   template: `
-    <div class="page-content-container">
+    <main class="page-content-container">
       <h1 class="page-header">{{ 'pages.contact.heading' | translate }}</h1>
       
       <div class="page-content">
@@ -43,7 +43,7 @@ import { ContactFormComponent } from '../../contact-form/contact-form.component'
 
         <p class="page-footer-text">{{ 'pages.contact.footer_message' | translate }}</p>
       </div>
-    </div>
+    </main>
   `,
   styleUrls: ['./contact.component.css']
 })

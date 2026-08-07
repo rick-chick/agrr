@@ -15,6 +15,7 @@ import { HomeDemoSectionComponent } from './home-demo-section.component';
   standalone: true,
   imports: [TranslateModule, HomeDemoSectionComponent],
   template: `
+    <main class="page-main">
     <section class="hero-section">
       <h1>{{ hero.title | translate }}</h1>
       <p [innerHTML]="hero.subtitleHtml | translate"></p>
@@ -46,6 +47,7 @@ import { HomeDemoSectionComponent } from './home-demo-section.component';
         {{ hero.ctaFooterLink | translate }}
       </button>
     </section>
+    </main>
   `,
   styleUrls: ['./home.component.css']
 })
