@@ -20,7 +20,7 @@ const initialControl: PlanOptimizingViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, PlanPlanContextHeaderComponent],
   providers: [...PLAN_OPTIMIZING_PROVIDERS],
   template: `
-    <main class="page-main page-main--fit">
+    <div class="page-main page-main--fit">
       <app-plan-plan-context-header
         [planId]="planId"
         [planName]="null"
@@ -69,7 +69,7 @@ const initialControl: PlanOptimizingViewState = {
           }
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./plan-optimizing.component.css']
 })

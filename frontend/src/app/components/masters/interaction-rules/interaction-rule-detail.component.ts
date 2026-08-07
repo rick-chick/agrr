@@ -39,7 +39,7 @@ const initialControl: InteractionRuleDetailViewState = {
   ],
   providers: [...INTERACTION_RULE_DETAIL_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <app-detail-skeleton class="detail-loading-skeleton" />
@@ -96,7 +96,7 @@ const initialControl: InteractionRuleDetailViewState = {
           </div>
         </section>
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./interaction-rule-detail.component.css']
 })
