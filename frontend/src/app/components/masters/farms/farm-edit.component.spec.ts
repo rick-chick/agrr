@@ -56,6 +56,8 @@ describe('FarmEditComponent', () => {
 
     // Replace ChangeDetectorRef with mock
     Object.defineProperty(component, 'cdr', { value: cdr });
+    fixture.detectChanges();
+    loadUseCase.execute.mockClear();
   });
 
   it('implements View control getter/setter', () => {
