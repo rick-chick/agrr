@@ -16,7 +16,9 @@ import { localTodayIso } from '../../core/local-today';
 import { getApiBaseUrl } from '../../core/api-base-url';
 import {
   MAX_WORK_RECORD_PHOTOS,
-  WORK_RECORD_PHOTO_ACCEPT
+  WORK_RECORD_PHOTO_ACCEPT,
+  WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET,
+  WORK_RECORD_PHOTO_THUMB_WIDTH_PX_SHEET
 } from '../../domain/plans/work-record-photo.constants';
 import { FieldSchedule } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
@@ -260,7 +262,14 @@ const initialControl: WorkRecordSheetViewState = {
             <div class="work-record-sheet__photo-grid" role="list" aria-labelledby="wr-photos-label">
               @for (photo of visibleExistingPhotos(); track photo.id) {
                 <div class="work-record-sheet__photo-thumb" role="listitem">
-                  <img [src]="photo.url" alt="" loading="lazy" />
+                  <img
+                    [src]="photo.url"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    [attr.width]="thumbWidthPx"
+                    [attr.height]="thumbHeightPx"
+                  />
                   <button
                     type="button"
                     class="work-record-sheet__photo-remove"
@@ -273,7 +282,14 @@ const initialControl: WorkRecordSheetViewState = {
               }
               @for (pending of control.pendingPhotos; track pending.clientId) {
                 <div class="work-record-sheet__photo-thumb" role="listitem">
-                  <img [src]="pending.previewUrl" alt="" />
+                  <img
+                    [src]="pending.previewUrl"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    [attr.width]="thumbWidthPx"
+                    [attr.height]="thumbHeightPx"
+                  />
                   <button
                     type="button"
                     class="work-record-sheet__photo-remove"
@@ -341,6 +357,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   private readonly loadTaskListUseCase = inject(LoadAgriculturalTaskListUseCase);
   private readonly presenter = inject(WorkRecordSheetPresenter);
   readonly photoAccept = WORK_RECORD_PHOTO_ACCEPT;
+  readonly thumbWidthPx = WORK_RECORD_PHOTO_THUMB_WIDTH_PX_SHEET;
+  readonly thumbHeightPx = WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET;
 
   private readonly apiBaseUrl = getApiBaseUrl();
   private readonly cdr = inject(ChangeDetectorRef);
