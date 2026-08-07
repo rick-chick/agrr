@@ -11,14 +11,18 @@ description: >-
 監査から GitHub Issue 起票までを **1 ワークフロー**でつなぐ。
 
 ```
-e2e:capture-for-agent
+e2e:capture-for-agent → agent-review-bundle.json
+  → stamp-review（captureRunId）
+  → verify-agent-review-evidence:enforce
   → frontend-agent-visual-review（visual-review-results.md）
   → ux-cognitive-guidance-review（cognitive-guidance-review.md）
   → audit:css-tokens
-  → collect-ux-findings.mjs
+  → collect-ux-findings.mjs（証拠鎖ゲート）
   → ux-issue-creator（重複確認・起票）
   → agent-ready → github-issue-worker
 ```
+
+正本: [`frontend/e2e/agent-review/EVIDENCE-CHAIN.md`](../../../frontend/e2e/agent-review/EVIDENCE-CHAIN.md)
 
 ## いつ使うか
 
@@ -38,7 +42,7 @@ e2e:capture-for-agent
 | 5 | Issue 起票 | `ux-issue-creator` | GitHub issues |
 | 6 | 実装（別実行） | `github-issue-worker` | PR |
 
-**フェーズ 1–4 は起票の前提。フェーズ 5 だけ単体実行可**（レビュー成果物が最新のとき）。
+**フェーズ 1–4 は起票の前提。フェーズ 5 だけ単体実行不可**（証拠鎖 + レビュー成果物が揃っているときのみ）。
 
 ---
 
@@ -86,8 +90,11 @@ cd frontend && npm run audit:css-tokens
 ## フェーズ 4 — 指摘収集
 
 ```bash
+cd frontend && npm run e2e:agent-review:evidence:check:enforce
 node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs
 ```
+
+- 証拠鎖ゲート未通過なら **collect は exit 1**（起票中止）
 
 - フェーズ 2・3 の成果物を機械可読 JSON + Markdown 草案に変換
 - **複合指摘は mergeGroups に統合**（例: privacy/terms、region_select 系）

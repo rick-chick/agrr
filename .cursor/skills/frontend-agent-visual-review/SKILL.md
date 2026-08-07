@@ -53,7 +53,7 @@ description: >-
 
 次を **`frontend/e2e/agent-review/visual-review-results.md`** に書く（パス固定。ユーザーが別名を指示したときだけ従う）。
 
-1. **メタ**: レビュー日（可能なら UTC）、対象が `route-to-png.md` の何行目〜何行目か（全件なら「#1–52」）、**キャプチャ** が **`npm run e2e:capture-for-agent`**（実セッション・`/me` 非モック）であることと前提の一言。
+1. **メタ**: レビュー日（可能なら UTC）、対象が `route-to-png.md` の何行目〜何行目か（全件なら「#1–52」）、**キャプチャ** が **`npm run e2e:capture-for-agent`** であることと前提の一言。**`captureRunId`**（`npm run e2e:agent-review:stamp-review` で bundle.runId を刻む。未設定のレビューは Issue 起票不可）。
 2. **サマリ表**: 各行（**pattern 単位**）について必ず 1 行。列は少なくとも  
    `| # | pattern | ja | en | in | 結果 | i18n | 指摘 |`  
    - **ja / en / in** は `route-to-png.md` のファイル名（例: `home.ja.png`）。
@@ -69,7 +69,8 @@ description: >-
 ## 実施しないこと
 
 - CSS 当て漏れを PNG だけで列挙する。
-- **`e2e:capture-for-agent`** を実行しておらず、`verify-capture-complete.mjs` を通していない `out/` で「全件レビュー済み」とする。
+- **`e2e:capture-for-agent`** を実行しておらず、`verify-capture-complete` / **bundle 生成**を通していない `out/` で「全件レビュー済み」とする。
+- **captureRunId なし**で visual-review を確定し Issue 起票に使う（古い md を根拠にしない）。
 - ユーザーに「どのページを見るか」を聞いてレビュー範囲を先送りする。
 
 ## 関連
