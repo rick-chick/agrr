@@ -70,7 +70,7 @@ describe('PestEditComponent', () => {
     translate.use('en');
     mockActivatedRoute.snapshot.paramMap.get = () => null;
     component.ngOnInit();
-    expect(component.control.error).toBe(translate.instant('pests.errors.invalid_id'));
+    expect(component.control.error).toBe('pests.errors.invalid_id');
   });
 
   it('shows three-level breadcrumb with detail link and omits back from form-card__actions', () => {

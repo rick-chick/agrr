@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { PestDetailView } from '../../components/masters/pests/pest-detail.view';
 import { LoadPestDetailOutputPort } from '../../usecase/pests/load-pest-detail.output-port';
 import { PestDetailDataDto } from '../../usecase/pests/load-pest-detail.dtos';
@@ -32,11 +33,20 @@ export class PestDetailPresenter implements LoadPestDetailOutputPort, DeletePest
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (this.view.control.loading) {
+      this.view.control = {
+        ...this.view.control,
+        loading: false,
+        error: errorDtoI18nKey(dto),
+        pendingErrorFlash: null
+      };
+      return;
+    }
     this.view.control = {
       ...this.view.control,
       loading: false,
       error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) })
     };
   }
 
