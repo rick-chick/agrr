@@ -13,6 +13,13 @@
 - **対象**: `route-to-png.md` **#20** `crops/:id`（ja / en / in）、コードレビュー補足 **#47** 導線
 - **キャプチャ**: `playwright test route-manifest-visual.spec.ts --grep "crops/:id"`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1`）。`crops_id.{ja,en,in}.png` を再取得（実装後 UI を反映）。
 
+## 追記メタ（plans optimizing #49、#640）
+
+- **レビュー日**: 2026-08-07（UTC）
+- **対象**: `route-to-png.md` **#49** `plans/:id/optimizing`（ja / en / in）
+- **キャプチャ**: `playwright test route-manifest-visual.spec.ts --grep "plans/:id/optimizing"`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。`plans_id_optimizing.{ja,en,in}.png` を再取得。agrr-server 開発 DB・AuthTest モックログイン。
+- **備考**: agrr デーモン未起動のためキャプチャは気象取得失敗 UI（再試行・`back_to_hub` 導線）。見出し二重は解消。0% 待機説明（`duration_hint`）は `plan-optimizing.component.spec.ts` で確認。
+
 ## 追記メタ（#635 / #660 ガント en 圃場ラベル）
 
 - **レビュー日**: 2026-08-07（UTC）
@@ -75,7 +82,7 @@
 | 46 | `pests/new` | `pests_new.ja.png` | `pests_new.en.png` | `pests_new.in.png` | OK | OK | なし |
 | 47 | `plans` | `plans.ja.png` | `plans.en.png` | `plans.in.png` | OK | OK | 計画名「E2E Baseline Plan」はテストデータ |
 | 48 | `plans/:id` | `plans_id.ja.png` | `plans_id.en.png` | `plans_id.in.png` | OK | OK | **修正済** (#635/#660): en 圃場ラベルと縦線の重なり解消（2026-08-07 再キャプチャ） |
-| 49 | `plans/:id/optimizing` | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` | 注意 | 注意 | layout: 進捗 0% 待機。i18n: 見出しが二重（例: ja「最適化中 最適化中」） |
+| 49 | `plans/:id/optimizing` | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` | OK | OK | **#640 再キャプチャ**: 見出し二重解消。失敗時「再読み込み」・`back_to_hub` 導線を 3 言語で確認。0% 待機説明は spec 確認 |
 | 50 | `plans/:id/task_schedule` | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` | OK | OK | layout: `back_to_hub` 導線・ナビ非 active は意図どおり。**修正済**: ステータス i18n・エラー再試行 |
 | 51 | `plans/:id/work` | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` | OK | OK | **修正済**: 記録ボタンをリスト下静的配置・エラー再試行。`back_to_hub`・ナビ active は OK |
 | 52 | `plans/:id/work_records` | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` | OK | OK | **修正済**: エラー再試行追加。`back_to_hub`・ナビ active は OK。**#234**: サムネイル横並び（案 A）確定・4:3 横長（履歴 4rem / シート 4.5rem 幅）。PNG 再キャプチャは写真付きデータ要 |
@@ -86,16 +93,16 @@
 
 | 結果 | 件数 |
 |------|------|
-| OK | 38 |
-| 注意 | 10 |
+| OK | 39 |
+| 注意 | 9 |
 | 要確認 | 4 |
 
 ## 集計（i18n）
 
 | i18n | 件数 |
 |------|------|
-| OK | 33 |
-| 注意 | 11 |
+| OK | 34 |
+| 注意 | 10 |
 | 要確認 | 6 |
 
 ## 指摘の詳細
@@ -118,7 +125,7 @@
 6. **#29–30 fertilizes/:id** — **#658 解消**: E2E Baseline 正常表示。エラー回復 UI は spec 検証済み。
 7. **#33 interaction_rules/:id** — `interaction_rules.show.region` 生キー。
 8. **#37–38 pesticides/:id** — **#658 解消**: E2E Baseline 正常表示。`title_default` 生キー解消。
-9. **#46 plans/:id/optimizing** — 見出し二重表示（バッジ + タイトル）。
+9. **#49 plans/:id/optimizing** — **2026-08-07 解消**（#640）: 見出し二重解消・失敗時再試行・3 言語 i18n OK。0% 待機説明は spec で確認。
 10. **#50 plans/new** — 3 言語で見出し文言の意味不一致（年の有無）。
 11. **#51 work** — キャプチャ時 `GET /api/v1/work/hub` が 501 のため農場カード未表示。エラー＋「再読み込み」UI・ナビ active は意図どおり。API 応答後の農場一覧は別途再キャプチャ推奨。
 
