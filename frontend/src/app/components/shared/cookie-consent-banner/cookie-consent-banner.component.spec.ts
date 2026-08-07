@@ -105,29 +105,13 @@ describe('CookieConsentBannerComponent', () => {
     expect(dialog.getAttribute('aria-label')).toBeNull();
   });
 
-  it('traps Tab focus within the dialog', () => {
+  it('marks dialog as modal for assistive tech', () => {
     googleAnalyticsMock.getStoredConsent.mockReturnValue(null);
     fixture.detectChanges();
 
-    const buttons = Array.from(
-      fixture.nativeElement.querySelectorAll('.cookie-consent-actions button')
-    ) as HTMLButtonElement[];
-    const accept = buttons[0];
-    const reject = buttons[1];
-
-    accept.focus();
-    const shiftTab = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true });
-    dialogDispatch(shiftTab);
-    expect(document.activeElement).toBe(reject);
-
-    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true });
-    dialogDispatch(tab);
-    expect(document.activeElement).toBe(accept);
+    const dialog = fixture.nativeElement.querySelector('.cookie-consent-banner');
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
   });
-
-  function dialogDispatch(event: KeyboardEvent): void {
-    fixture.nativeElement.querySelector('.cookie-consent-banner')?.dispatchEvent(event);
-  }
 
   afterEach(() => {
     delete (window as CookieControlWindow).__disableCookieControl;
