@@ -135,4 +135,30 @@ describe('PestDetailComponent', () => {
       fixture.nativeElement.querySelector('.master-loading:not(.detail-loading-text)')
     ).toBeNull();
   });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    translate.setTranslation('en', {
+      pests: { index: { title: 'Pests' } },
+      'common.api_error.not_found': 'Resource not found',
+      'masters.load_error.retry': 'Reload'
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      pendingErrorFlash: null,
+      pest: null,
+      pendingUndoToast: null
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.getAttribute('role')).toBe('alert');
+    expect(alert?.textContent).toContain('Resource not found');
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/pests');
+  });
 });
