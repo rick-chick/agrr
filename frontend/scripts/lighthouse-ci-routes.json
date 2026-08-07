@@ -1,0 +1,12 @@
+{
+  "routes": [
+    { "path": "/", "url": "/" },
+    { "path": "/about", "url": "/about/" },
+    { "path": "/contact", "url": "/contact/" },
+    { "path": "/public-plans/new", "url": "/public-plans/new/" }
+  ],
+  "thresholds": {
+    "performanceMinScore": 0.85,
+    "lcpMaxMs": 2500
+  }
+}

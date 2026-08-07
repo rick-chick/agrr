@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -17,6 +17,12 @@ import {
 } from '../../../usecase/crops/crop-edit.providers';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
+import {
+  formCardAriaDescribedbyForRequired,
+  formCardAriaInvalidForRequired,
+  formCardFieldErrorId,
+  formCardShowsRequiredError
+} from '../../../core/form-card-field-a11y';
 
 const initialFormData: CropEditFormData = {
   name: '',
@@ -69,10 +75,23 @@ const initialControl: CropEditViewState = {
             (retry)="reload()"
           />
         } @else {
-          <form (ngSubmit)="updateCrop()" #cropForm="ngForm" class="form-card__form">
+          <form (ngSubmit)="updateCrop(cropForm)" #cropForm="ngForm" class="form-card__form">
             <label for="crop-name" class="form-card__field">
               <span class="form-card__field-label">{{ 'crops.form.name_label' | translate }}</span>
-              <input id="crop-name" name="name" [(ngModel)]="control.formData.name" required />
+              <input
+                id="crop-name"
+                name="name"
+                [(ngModel)]="control.formData.name"
+                required
+                [class.form-card__input--invalid]="showsRequiredError(formSubmitted, control.formData.name)"
+                [attr.aria-invalid]="ariaInvalidForRequired(formSubmitted, control.formData.name)"
+                [attr.aria-describedby]="ariaDescribedbyForRequired('crop-name', formSubmitted, control.formData.name)"
+              />
+              @if (showsRequiredError(formSubmitted, control.formData.name)) {
+                <span [id]="fieldErrorId('crop-name')" class="form-card__field-error" role="alert">
+                  {{ 'common.form.required_field' | translate }}
+                </span>
+              }
             </label>
             <label for="crop-variety" class="form-card__field">
               <span class="form-card__field-label">{{ 'crops.form.variety_label' | translate }}</span>
@@ -104,7 +123,7 @@ const initialControl: CropEditViewState = {
               </label>
             }
             <div class="form-card__actions">
-              <button type="submit" class="btn btn-primary" [disabled]="cropForm.invalid || control.saving">
+              <button type="submit" class="btn btn-primary" [disabled]="control.saving">
                 {{ 'crops.form.submit_update' | translate }}
               </button>
               <a [routerLink]="['/crops', cropId, 'setup_proposal']" class="btn btn-secondary">
@@ -127,6 +146,13 @@ export class CropEditComponent implements CropEditView, OnInit {
   private readonly presenter = inject(CropEditPresenter);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  formSubmitted = false;
+
+  readonly fieldErrorId = formCardFieldErrorId;
+  readonly showsRequiredError = formCardShowsRequiredError;
+  readonly ariaInvalidForRequired = formCardAriaInvalidForRequired;
+  readonly ariaDescribedbyForRequired = formCardAriaDescribedbyForRequired;
 
   private _control: CropEditViewState = initialControl;
   get control(): CropEditViewState {
@@ -175,8 +201,16 @@ export class CropEditComponent implements CropEditView, OnInit {
     this.loadUseCase.execute({ cropId: this.cropId });
   }
 
-  updateCrop(): void {
-    if (this.control.saving) return;
+  updateCrop(form?: NgForm): void {
+    this.formSubmitted = true;
+    if (form?.invalid || this.control.saving) {
+      if (form?.invalid) {
+        for (const control of Object.values(form.controls)) {
+          control.markAsTouched();
+        }
+      }
+      return;
+    }
     this.control = { ...this.control, saving: true, error: null };
     const fd = this.control.formData;
     const region = this.resolveRegionForSubmit();
