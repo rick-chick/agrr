@@ -10,8 +10,11 @@ import {
   buildTitle,
   buildVisualFindings,
   extractVarOutsideSection,
+  isActionableReviewRow,
   isLikelyDuplicateFinding,
+  isLikelyResolvedFinding,
   isReferenceDataExclusion,
+  isUnreviewedResultToken,
   matchIssueScore,
   parseCssAuditLog,
   parseDetailRowNumbers,
@@ -178,6 +181,33 @@ test('isLikelyDuplicateFinding: OPEN かつ score >= 5 のみ', () => {
   assert.equal(
     isLikelyDuplicateFinding({
       existingIssueCandidates: [{ state: 'CLOSED', score: 10 }],
+    }),
+    false,
+  );
+});
+
+test('isUnreviewedResultToken', () => {
+  assert.equal(isUnreviewedResultToken('未レビュー'), true);
+  assert.equal(isUnreviewedResultToken('OK'), false);
+});
+
+test('isActionableReviewRow skips 未レビュー', () => {
+  assert.equal(
+    isActionableReviewRow({ layout: '未レビュー', i18n: 'OK', note: 'なし' }),
+    false,
+  );
+});
+
+test('isLikelyResolvedFinding: CLOSED かつ score >= 5', () => {
+  assert.equal(
+    isLikelyResolvedFinding({
+      existingIssueCandidates: [{ state: 'CLOSED', score: 5 }],
+    }),
+    true,
+  );
+  assert.equal(
+    isLikelyResolvedFinding({
+      existingIssueCandidates: [{ state: 'CLOSED', score: 4 }],
     }),
     false,
   );
