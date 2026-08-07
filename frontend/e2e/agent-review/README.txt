@@ -5,8 +5,9 @@ Agent レビュー用スクリーンショット（`e2e/agent-review/out/`）
 1. **必読**: `route-to-png.md`（`npm run e2e:manifest` で `route-manifest.json` と同時更新）
    - 各 `pattern` の E2E URL と **`out/{ベース}.{ja|en|in}.png`** が対応表になっている。Agent はユーザーに URL を聞かずここを正とする。
 2. **キャプチャ** … **`npm run e2e:capture-for-agent`** のみ。**development** の `AuthTestController` モックログインで `127.0.0.1:3000` にセッションを付与し、Angular は `127.0.0.1:4200`。`/api/v1/auth/me` はモックしない。DB・Rails 起動が必要。`e2e/.auth/dev-session.json` は Playwright globalSetup が自動生成（gitignore）。**実行時**に `e2e/resolve-capture-urls.ts` が一覧 API から **実在 id** を取り、マニフェストの placeholder `1` を差し替える（`route-to-png.md` の URL 列は代表値のまま）。**`login` は未ログイン storageState の `login-capture-for-agent.spec.ts` が別途撮影**（`auth/login` は SPA リダイレクトのためマニフェスト対象外）（dev-session 付き spec では skip）。**Playwright は `E2E_CAPTURE_DEV_SESSION=1` のときワーカー数 1**（ホーム等の `fullPage` スクリーンショットの Chrome プロトコルエラー回避）。
-3. コマンド終了時に **件数検証**（`verify-capture-complete.mjs`）に通らないと失敗で終了する。
-4. **手動 OAuth** で保存したい場合は **`e2e/.auth/README.txt`**（`state.json`）を参照。
+3. コマンド終了時に **件数検証**（`verify-capture-complete.mjs`）と **Capture Run ボンドル**（`agent-review-bundle.json`）生成に通らないと失敗で終了する。
+4. ビジュアルレビュー後は **`npm run e2e:agent-review:stamp-review`** で `visual-review-results.md` に captureRunId を刻む。
+5. **手動 OAuth** で保存したい場合は **`e2e/.auth/README.txt`**（`state.json`）を参照。
 
 ## 生成
 
@@ -69,9 +70,10 @@ Cloud Agent のビジュアルレビューは artifact 取得後に `frontend-ag
 
 ## Issue 起票パイプライン
 
-1. 本 README のキャプチャ → `frontend-agent-visual-review`（visual-review-results.md）
+1. 本 README のキャプチャ → `stamp-review` → `frontend-agent-visual-review`（visual-review-results.md）
 2. `npm run audit:css-tokens`
-3. `node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs`
-4. `.cursor/skills/ux-issue-creator`（重複確認・gh issue create）
+3. `npm run e2e:agent-review:evidence:check:enforce`
+4. `node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs`
+5. `.cursor/skills/ux-issue-creator`（重複確認・gh issue create）
 
-詳細: `.cursor/skills/ux-issue-pipeline/SKILL.md`
+詳細: `EVIDENCE-CHAIN.md`、`.cursor/skills/ux-issue-pipeline/SKILL.md`
