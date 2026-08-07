@@ -113,6 +113,50 @@ describe('CookieConsentBannerComponent', () => {
     expect(dialog.getAttribute('aria-modal')).toBe('true');
   });
 
+  it('focuses accept button when banner becomes visible', () => {
+    googleAnalyticsMock.getStoredConsent.mockReturnValue(null);
+    fixture.detectChanges();
+
+    const accept = fixture.nativeElement.querySelector('.btn-primary') as HTMLButtonElement;
+    expect(document.activeElement).toBe(accept);
+  });
+
+  it('wraps Tab focus from last focusable back to first', () => {
+    googleAnalyticsMock.getStoredConsent.mockReturnValue(null);
+    fixture.detectChanges();
+
+    const dialog = fixture.nativeElement.querySelector('.cookie-consent-banner') as HTMLElement;
+    const privacyLink = dialog.querySelector('.cookie-consent-link') as HTMLAnchorElement;
+    const reject = dialog.querySelector('.btn-secondary') as HTMLButtonElement;
+    reject.focus();
+
+    const tabEvent = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true });
+    Object.defineProperty(tabEvent, 'currentTarget', { value: dialog });
+    component.onDialogKeydown(tabEvent);
+
+    expect(document.activeElement).toBe(privacyLink);
+  });
+
+  it('wraps Shift+Tab focus from first focusable back to last', () => {
+    googleAnalyticsMock.getStoredConsent.mockReturnValue(null);
+    fixture.detectChanges();
+
+    const dialog = fixture.nativeElement.querySelector('.cookie-consent-banner') as HTMLElement;
+    const privacyLink = dialog.querySelector('.cookie-consent-link') as HTMLAnchorElement;
+    const reject = dialog.querySelector('.btn-secondary') as HTMLButtonElement;
+    privacyLink.focus();
+
+    const shiftTabEvent = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true
+    });
+    Object.defineProperty(shiftTabEvent, 'currentTarget', { value: dialog });
+    component.onDialogKeydown(shiftTabEvent);
+
+    expect(document.activeElement).toBe(reject);
+  });
+
   afterEach(() => {
     delete (window as CookieControlWindow).__disableCookieControl;
   });
