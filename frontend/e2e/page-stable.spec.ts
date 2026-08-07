@@ -16,6 +16,13 @@ const optimizingRoute: RouteRow = {
   source: 'test',
 };
 
+const selectCropRoute: RouteRow = {
+  pattern: 'public-plans/select-crop',
+  url: '/public-plans/select-crop',
+  requiresAuth: false,
+  source: 'test',
+};
+
 test.describe('waitForPageStable spin probe', () => {
   test('skips long spin probe when stable content is already visible', async ({ page }) => {
     await page.setContent(`
@@ -101,5 +108,25 @@ test.describe('waitForPageStable spin probe', () => {
 
     await waitForPageStable(page, farmsRoute);
     await expect(page.locator('app-farm-list .card-list')).toBeVisible();
+  });
+});
+
+test.describe('waitForPageStable public-plans/select-crop', () => {
+  test('resolves when step2 grid is empty (no crop-item)', async ({ page }) => {
+    await page.setContent(`
+      <app-public-plan-select-crop>
+        <div class="compact-step active"><div class="step-number">2</div></div>
+        <section class="content-card">
+          <div class="enhanced-grid" hidden></div>
+        </section>
+      </app-public-plan-select-crop>
+    `);
+
+    const start = Date.now();
+    await waitForPageStable(page, selectCropRoute);
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeLessThan(5_000);
+    await expect(page.locator('app-public-plan-select-crop .enhanced-grid')).toBeVisible();
   });
 });

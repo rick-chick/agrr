@@ -8,6 +8,7 @@ import {
   expectedPathnameFromResolvedGoto,
 } from '../route-validity';
 import { applyResolvedUrl, type ResolvedCaptureIds } from '../resolve-capture-urls';
+import { assertPublicPlanSelectCropStep2 } from '../assert-public-plan-select-crop-step2';
 import { loadResolvedCaptureIdsWithBaseline, preparePublicPlanRoute } from '../smoke/smoke-helpers';
 import {
   CAPTURE_LOCALES,
@@ -80,17 +81,20 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
       const url =
         resolvedCaptureIds != null ? applyResolvedUrl(r.pattern, r.url, resolvedCaptureIds) : r.url;
       const pathnameExpect = expectedPathnameFromResolvedGoto(url);
-      const seeded = await preparePublicPlanRoute(page, r.pattern, resolvedCaptureIds);
-      if (!seeded) {
-        test.skip(true, 'public plan session seed unavailable');
-      }
 
       for (const locale of CAPTURE_LOCALES) {
         await installCaptureLocale(page, locale);
+        const seeded = await preparePublicPlanRoute(page, r.pattern, resolvedCaptureIds);
+        if (!seeded) {
+          test.skip(true, 'public plan session seed unavailable');
+        }
         await page.goto(url);
         await assertPageValidity(page, r, pathnameExpect);
         await waitForCaptureLocaleReady(page, locale);
         await waitForPageStable(page, r);
+        if (r.pattern === 'public-plans/select-crop') {
+          await assertPublicPlanSelectCropStep2(page);
+        }
         await captureForAgent(page, r, locale);
       }
     });
