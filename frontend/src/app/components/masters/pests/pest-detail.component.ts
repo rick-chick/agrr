@@ -36,7 +36,7 @@ const initialControl: PestDetailViewState = {
   ],
   providers: [...PEST_DETAIL_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <app-detail-skeleton class="detail-loading-skeleton" />
@@ -103,7 +103,7 @@ const initialControl: PestDetailViewState = {
           </div>
         </section>
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./pest-detail.component.css']
 })
