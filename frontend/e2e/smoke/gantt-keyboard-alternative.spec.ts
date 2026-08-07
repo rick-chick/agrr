@@ -11,14 +11,16 @@ function findRoute(pattern: string) {
   return { pattern, url: pattern === 'plans/:id' ? '/plans/1' : `/${pattern}` };
 }
 
+test.use({
+  ...devices['iPhone 13'],
+});
+
 /**
  * WCAG 2.5.7 Dragging Movements: gantt cultivation drag has click/keyboard alternatives
  * via the mobile actions menu (crop palette + field legend) on narrow viewports.
  */
 smokeDescribe('gantt keyboard/click alternative (WCAG 2.5.7)', () => {
   let resolvedCaptureIds: ResolvedCaptureIds | null = null;
-
-  test.use({ ...devices['iPhone 13'] });
 
   test.beforeAll(async () => {
     resolvedCaptureIds = await loadResolvedCaptureIdsWithBaseline();
