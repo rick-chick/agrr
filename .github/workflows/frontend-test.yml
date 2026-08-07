@@ -90,6 +90,10 @@ jobs:
         working-directory: frontend
         run: node --test e2e/resolve-capture-urls-scope.test.mjs
 
+      - name: verify-lighthouse-ci-workflow unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-lighthouse-ci-workflow.test.mjs
+
       - name: verify-frontend-test-ci-workflow unit tests
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-frontend-test-ci-workflow.test.mjs

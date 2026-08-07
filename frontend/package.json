@@ -35,7 +35,8 @@
     "e2e:visual-review:check:enforce": "node e2e/agent-review/verify-visual-review-fresh.mjs --enforce",
     "e2e:agent-review:stamp-review": "node e2e/agent-review/stamp-visual-review-capture-run.mjs",
     "e2e:agent-review:evidence:check": "node e2e/agent-review/verify-agent-review-evidence.mjs",
-    "e2e:agent-review:evidence:check:enforce": "node e2e/agent-review/verify-agent-review-evidence.mjs --enforce"
+    "e2e:agent-review:evidence:check:enforce": "node e2e/agent-review/verify-agent-review-evidence.mjs --enforce",
+    "lighthouse:ci": "lhci autorun --config=lighthouserc.js"
   },
   "prettier": {
     "printWidth": 100,
