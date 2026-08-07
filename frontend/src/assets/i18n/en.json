@@ -275,7 +275,10 @@
     "api_keys": "API Keys",
     "account": "Account & Data",
     "admin": "Admin",
-    "language": "Language"
+    "language": "Language",
+    "lang_ja": "日本語",
+    "lang_en": "English",
+    "lang_in": "हिन्दी"
   },
   "footer": {
     "about": "About AGRR",
