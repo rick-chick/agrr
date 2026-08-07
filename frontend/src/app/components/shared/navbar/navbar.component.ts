@@ -5,12 +5,13 @@ import { filter, Subscription } from 'rxjs';
 import { loginReturnQueryForLocation } from '../../../core/auth/login-auth-urls';
 import { type CurrentUser } from '../../../services/api.service';
 import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 
 /** 画面完結のドロップダウンは app-nav-dropdown に委譲。ここは認証・リンク構成だけ。 */
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, TranslateModule, NavDropdownComponent],
+  imports: [RouterLink, RouterLinkActive, TranslateModule, NavDropdownComponent, LanguageSwitcherComponent],
   template: `
     <nav class="app-nav" [attr.aria-label]="'nav.main' | translate" [attr.data-menu-open]="isMenuOpen">
       <a class="brand" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">AGRR</a>
@@ -53,6 +54,7 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
         </li>
       </ul>
       <div class="auth">
+        <app-language-switcher />
         @if (loading) {
           <span class="status">{{ 'status.checking' | translate }}</span>
         } @else if (user) {
