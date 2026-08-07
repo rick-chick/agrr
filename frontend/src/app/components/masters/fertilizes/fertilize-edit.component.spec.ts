@@ -148,4 +148,37 @@ describe('FertilizeEditComponent', () => {
 
     expect(loadExecute).toHaveBeenCalledWith({ fertilizeId: 5 });
   });
+
+  it('shows translated edit title fallback instead of raw i18n key on load error', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      fertilizes: {
+        index: { title: 'Fertilizers' },
+        edit: { title: 'Edit {{name}}', title_default: 'Edit fertilizer' }
+      },
+      'common.api_error.not_found': 'Resource not found',
+      'masters.load_error.retry': 'Reload'
+    });
+    translate.use('en');
+    component.control = {
+      loading: false,
+      saving: false,
+      error: 'common.api_error.not_found',
+      pendingErrorFlash: null,
+      formData: {
+        name: '',
+        n: null,
+        p: null,
+        k: null,
+        description: null,
+        package_size: null,
+        region: null
+      }
+    };
+    fixture.detectChanges();
+
+    const heading = fixture.nativeElement.querySelector('#form-heading');
+    expect(heading?.textContent?.trim()).toBe('Edit fertilizer');
+    expect(heading?.textContent).not.toContain('title_default');
+  });
 });
