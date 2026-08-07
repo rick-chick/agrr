@@ -179,8 +179,9 @@
   --font-size-sm: 14px;
   --font-size-base: 16px;
   --font-size-md: 16px;
-  --font-size-lg: 18px;
-  --font-size-xl: 20px;
+  /* タイポグラフィ — lg 以上は 320px〜1280px で流体スケール（clamp） */
+  --font-size-lg: clamp(1rem, calc(1rem + (1.125rem - 1rem) * ((100vw - 320px) / 960)), 1.125rem);
+  --font-size-xl: clamp(1.125rem, calc(1.125rem + (1.25rem - 1.125rem) * ((100vw - 320px) / 960)), 1.25rem);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
@@ -212,10 +213,10 @@
   /* カード1枚あたりの最小幅（320px 級のスマホ想定） */
   --card-fill-min-mobile: 20rem; /* 320px */
 
-  /* タイポグラフィ（追加） */
-  --font-size-2xl: 24px;
-  --font-size-3xl: 30px;
-  --font-size-5xl: 3rem; /* 48px - Rails 同様 */
+  /* タイポグラフィ（追加 — clamp 流体） */
+  --font-size-2xl: clamp(1.25rem, calc(1.25rem + (1.5rem - 1.25rem) * ((100vw - 320px) / 960)), 1.5rem);
+  --font-size-3xl: clamp(1.5rem, calc(1.5rem + (1.875rem - 1.5rem) * ((100vw - 320px) / 960)), 1.875rem);
+  --font-size-5xl: clamp(1.875rem, calc(1.875rem + (3rem - 1.875rem) * ((100vw - 320px) / 960)), 3rem);
   --font-weight-semibold: 600;
   --line-height-loose: 1.75;
 
