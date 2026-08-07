@@ -32,6 +32,7 @@ import {
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
+import { DetailSkeletonComponent } from '../../shared/skeleton/detail-skeleton.component';
 
 const initialControl: CropDetailViewState = {
   loading: true,
@@ -51,13 +52,21 @@ const initialControl: CropDetailViewState = {
 @Component({
   selector: 'app-crop-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    TranslateModule,
+    MasterContextHeaderComponent,
+    MasterLoadErrorPanelComponent,
+    DetailSkeletonComponent
+  ],
   providers: [...CROP_DETAIL_PROVIDERS],
   template: `
     <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
-        <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        <app-detail-skeleton class="detail-loading-skeleton" />
+        <p class="master-loading detail-loading-text">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <app-master-load-error-panel
           [errorKey]="control.error"
