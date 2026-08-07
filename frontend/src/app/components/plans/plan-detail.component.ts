@@ -32,7 +32,7 @@ const initialControl: PlanDetailViewState = {
     ...PLAN_FIELD_CLIMATE_API_PROVIDERS
   ],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-plan-plan-context-header
         [planId]="planId"
         [planName]="control.plan?.name ?? null"
@@ -55,7 +55,7 @@ const initialControl: PlanDetailViewState = {
           </div>
         }
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./plan-detail.component.css']
 })
