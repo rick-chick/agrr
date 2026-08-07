@@ -2236,6 +2236,7 @@
       "try_public_plans": "無料プランから始める",
       "no_plans": "まだ計画がありません",
       "no_plans_hint": "新しい計画を作成して栽培スケジュールを最適化しましょう。",
+      "retry": "再読み込み",
       "year_label": "{{year}}年度",
       "status": {
         "pending": "作成待ち",

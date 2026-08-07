@@ -1483,6 +1483,7 @@
       "try_public_plans": "Try Free Plans",
       "no_plans": "No plans yet",
       "no_plans_hint": "Create a new plan to optimize your cultivation schedule.",
+      "retry": "Reload",
       "year_label": "Year {{year}}",
       "status": {
         "pending": "Pending",
