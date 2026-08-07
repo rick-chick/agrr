@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { CommonModule, isPlatformServer } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { combineLatest } from 'rxjs';
 import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
@@ -195,7 +195,7 @@ import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedu
             <h3 class="subsection-title">{{ 'entrySchedule.stages' | translate }}</h3>
             <ol class="stage-list">
               @for (s of data()!.crop.crop_stages; track s.id) {
-                <li>{{ s.order }}. {{ s.name }}</li>
+                <li>{{ s.name }}</li>
               }
             </ol>
           </section>
@@ -258,6 +258,7 @@ export class EntryScheduleDetailComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly seo = inject(AppSeoMetaService);
+  private readonly translate = inject(TranslateService);
 
   readonly monthTicks = [...MONTH_NUMBERS];
 
@@ -382,7 +383,12 @@ export class EntryScheduleDetailComponent implements OnInit {
     if (catalogCrop && isPlatformServer(this.platformId)) {
       this.loading.set(false);
       this.errorKey.set(null);
-      this.data.set(buildEntrySchedulePrerenderSnapshot(catalogCrop));
+      this.data.set(
+        buildEntrySchedulePrerenderSnapshot(
+          catalogCrop,
+          this.translate.currentLang || this.translate.defaultLang || undefined
+        )
+      );
       this.seo.refreshEntryScheduleDetailMeta(cId, catalogCrop.name);
       return;
     }

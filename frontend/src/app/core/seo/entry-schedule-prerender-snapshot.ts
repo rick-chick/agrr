@@ -1,17 +1,53 @@
+import en from '../../../assets/i18n/en.json';
+import inLocale from '../../../assets/i18n/in.json';
+import ja from '../../../assets/i18n/ja.json';
 import type { EntryScheduleCropShowResponse } from '../../domain/entry-schedule/entry-schedule';
 import {
   ENTRY_SCHEDULE_PRERENDER_CATALOG,
   type EntrySchedulePrerenderCrop,
 } from './entry-schedule-prerender-catalog';
 
-/** Static body copy for build-time prerender when the public API is unavailable. */
-function entrySchedulePrerenderReasonSummary(cropName: string): string {
-  return `${cropName}の播種・定植・収穫の適期帯を、地域の予測気象データに基づいて確認できます。`;
+type JsonRecord = Record<string, unknown>;
+type EntryScheduleLocale = 'ja' | 'en' | 'in';
+
+const LOCALE_CATALOGS: Record<EntryScheduleLocale, JsonRecord> = {
+  ja: ja as JsonRecord,
+  en: en as JsonRecord,
+  in: inLocale as JsonRecord,
+};
+
+function getNested(obj: JsonRecord, path: string): string {
+  const value = path.split('.').reduce<unknown>((current, key) => {
+    if (current == null || typeof current !== 'object') return undefined;
+    return (current as JsonRecord)[key];
+  }, obj);
+  return typeof value === 'string' ? value : '';
 }
 
+function interpolate(template: string, params: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => params[key] ?? '');
+}
+
+function resolveLocale(locale?: string): EntryScheduleLocale {
+  if (locale === 'en' || locale === 'in' || locale === 'ja') {
+    return locale;
+  }
+  return 'ja';
+}
+
+/** Static body copy for build-time prerender when the public API is unavailable. */
 export function buildEntrySchedulePrerenderSnapshot(
-  crop: EntrySchedulePrerenderCrop
+  crop: EntrySchedulePrerenderCrop,
+  locale?: string
 ): EntryScheduleCropShowResponse {
+  const lang = resolveLocale(locale);
+  const catalog = LOCALE_CATALOGS[lang];
+
+  const reasonSummary = interpolate(
+    getNested(catalog, 'pages.entry_schedule_detail.description'),
+    { cropName: crop.name }
+  );
+
   return {
     farm: {
       id: ENTRY_SCHEDULE_PRERENDER_CATALOG.defaultFarmId,
@@ -29,16 +65,18 @@ export function buildEntrySchedulePrerenderSnapshot(
       eligible: true,
       sowing_summary: null,
       transplant_summary: null,
-      reason_summary: entrySchedulePrerenderReasonSummary(crop.name),
-      labels: { sowing: '播種', transplanting: '定植' },
+      reason_summary: reasonSummary,
+      labels: {
+        sowing: getNested(catalog, 'api.entry_schedule.label.sowing'),
+        transplanting: getNested(catalog, 'api.entry_schedule.label.transplanting'),
+      },
       sowing_windows: [],
       transplant_windows: [],
       reason_parts: {},
       sowing_stage_id: null,
       transplant_stage_id: null,
       crop_stages: [],
-      entry_disclaimer:
-        '表示内容は予測気象に基づく目安です。実際の作付けは地域の気候・栽培条件に合わせて判断してください。',
+      entry_disclaimer: getNested(catalog, 'api.entry_schedule.disclaimer.short'),
     },
   };
 }
