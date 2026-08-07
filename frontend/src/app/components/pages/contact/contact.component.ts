@@ -35,8 +35,8 @@ import { ContactFormComponent } from '../../contact-form/contact-form.component'
           <h3 class="warning-box-title">{{ 'pages.contact.faq_title' | translate }}</h3>
           <p class="warning-box-content">{{ 'pages.contact.faq_intro' | translate }}</p>
           <ul class="warning-box-list">
-            @for (item of ('pages.contact.faq_items' | translate); track item) {
-              <li>{{ item }}</li>
+            @for (item of ('pages.contact.faq_items' | translate); track item.question) {
+              <li>{{ item.question }} → {{ item.answer }}</li>
             }
           </ul>
         </div>
