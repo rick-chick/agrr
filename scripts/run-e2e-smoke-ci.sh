@@ -99,4 +99,7 @@ npm run test:e2e:smoke:route
 echo "==> Running a11y smoke (axe-core + gantt keyboard alternative)"
 npm run test:e2e:smoke:a11y
 
-echo "==> route-smoke + a11y smoke GREEN"
+echo "==> Running style consistency (computed typography)"
+npm run test:e2e:smoke:consistency
+
+echo "==> route-smoke + a11y + style-consistency smoke GREEN"
