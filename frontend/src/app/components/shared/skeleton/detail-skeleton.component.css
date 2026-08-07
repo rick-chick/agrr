@@ -1,0 +1,32 @@
+.detail-skeleton {
+  pointer-events: none;
+}
+
+.detail-skeleton__title {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.detail-skeleton__term {
+  flex: 0 0 120px;
+}
+
+.detail-skeleton__term .skeleton--meta {
+  width: 80%;
+}
+
+.detail-skeleton__value {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-skeleton__value .skeleton {
+  width: 55%;
+  height: 1rem;
+}
+
+.detail-skeleton__actions {
+  display: flex;
+  gap: var(--space-2);
+}
