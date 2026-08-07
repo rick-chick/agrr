@@ -1,3 +1,4 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:6de0c608292991e88d14814ff14b667e41b1b734c10715b644fc14effb52e3ff
-size 150
+{
+  "description": "Known axe violations on core routes. Do not add new entries without justification; fix violations instead.",
+  "violations": []
+}
