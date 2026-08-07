@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PestEditView, PestEditViewState, PestEditFormData } from './pest-edit.view';
 import { LoadPestForEditUseCase } from '../../../usecase/pests/load-pest-for-edit.usecase';
@@ -37,10 +38,10 @@ const initialControl: PestEditViewState = {
 @Component({
   selector: 'app-pest-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...PEST_EDIT_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">
@@ -48,6 +49,13 @@ const initialControl: PestEditViewState = {
         </h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <app-master-load-error-panel
+            [errorKey]="control.error"
+            [listLink]="['/pests']"
+            backLabelKey="pests.index.title"
+            (retry)="reload()"
+          />
         } @else {
           <form (ngSubmit)="updatePest()" #pestForm="ngForm" class="form-card__form">
             <label class="form-card__field" for="name">
@@ -88,13 +96,12 @@ const initialControl: PestEditViewState = {
           </form>
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./pest-edit.component.css']
 })
 export class PestEditComponent implements PestEditView, OnInit {
   readonly auth = inject(AuthService);
-  private readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadPestForEditUseCase);
@@ -141,16 +148,17 @@ export class PestEditComponent implements PestEditView, OnInit {
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('pests.errors.invalid_id')
+        error: 'pests.errors.invalid_id'
       };
       return;
     }
-    this.load(pestId);
+    this.reload();
   }
 
-  load(pestId: number): void {
-    this.control = { ...this.control, loading: true };
-    this.loadUseCase.execute({ pestId });
+  reload(): void {
+    if (!this.pestId) return;
+    this.control = { ...this.control, loading: true, error: null };
+    this.loadUseCase.execute({ pestId: this.pestId });
   }
 
   updatePest(): void {

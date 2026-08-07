@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import {
   AgriculturalTaskDetailView,
   AgriculturalTaskDetailViewState
@@ -18,6 +18,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 
 const initialControl: AgriculturalTaskDetailViewState = {
   loading: true,
@@ -30,13 +31,20 @@ const initialControl: AgriculturalTaskDetailViewState = {
 @Component({
   selector: 'app-agricultural-task-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...AGRICULTURAL_TASK_DETAIL_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
+      } @else if (control.error) {
+        <app-master-load-error-panel
+          [errorKey]="control.error"
+          [listLink]="['/agricultural_tasks']"
+          backLabelKey="agricultural_tasks.index.title"
+          (retry)="reload()"
+        />
       } @else if (control.agriculturalTask) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.agriculturalTask.name }}</h1>
@@ -98,14 +106,13 @@ const initialControl: AgriculturalTaskDetailViewState = {
           </div>
         </section>
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./agricultural-task-detail.component.css']
 })
 export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly translate = inject(TranslateService);
   private readonly useCase = inject(LoadAgriculturalTaskDetailUseCase);
   private readonly deleteUseCase = inject(DeleteAgriculturalTaskUseCase);
   private readonly presenter = inject(AgriculturalTaskDetailPresenter);
@@ -143,7 +150,7 @@ export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailVi
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('agricultural_tasks.errors.invalid_id')
+        error: 'agricultural_tasks.errors.invalid_id'
       };
       return;
     }
@@ -151,7 +158,7 @@ export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailVi
   }
 
   load(agriculturalTaskId: number): void {
-    this.control = { ...this.control, loading: true };
+    this.control = { ...this.control, loading: true, error: null };
     this.useCase.execute({ agriculturalTaskId });
   }
 

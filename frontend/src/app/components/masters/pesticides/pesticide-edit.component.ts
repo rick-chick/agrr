@@ -47,7 +47,7 @@ const initialControl: PesticideEditViewState = {
   imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...PESTICIDE_EDIT_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">
@@ -105,7 +105,7 @@ const initialControl: PesticideEditViewState = {
           </form>
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./pesticide-edit.component.css']
 })

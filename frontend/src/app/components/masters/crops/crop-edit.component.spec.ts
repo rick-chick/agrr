@@ -81,6 +81,7 @@ describe('CropEditComponent', () => {
       }
     }, true);
     translateService.use('ja');
+    fixture.detectChanges();
   });
 
   it('should create', () => {
@@ -89,7 +90,6 @@ describe('CropEditComponent', () => {
 
   it('should load crop on init', () => {
     expect(component['cropId']).toBe(1);
-    fixture.detectChanges();
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
   });
 
