@@ -342,6 +342,95 @@ describe('PublicPlanSelectCropComponent (template)', () => {
     expect(fixture.nativeElement.querySelector('a.back-button')).toBeNull();
   });
 
+  it('shows step 2 crop selection UI when farm is in session', async () => {
+    const { TestBed } = await import('@angular/core/testing');
+    const { provideRouter } = await import('@angular/router');
+    const { TranslateModule, TranslateService } = await import('@ngx-translate/core');
+    const { PublicPlanSelectCropComponent } = await import('./public-plan-select-crop.component');
+    const { LoadPublicPlanCropsUseCase } = await import(
+      '../../usecase/public-plans/load-public-plan-crops.usecase'
+    );
+    const { CreatePublicPlanUseCase } = await import(
+      '../../usecase/public-plans/create-public-plan.usecase'
+    );
+    const { ResetPublicPlanCreationStateUseCase } = await import(
+      '../../usecase/public-plans/reset-public-plan-creation-state.usecase'
+    );
+    const { PublicPlanSelectCropPresenter } = await import(
+      '../../usecase/public-plans/public-plan-select-crop.providers'
+    );
+    const { PublicPlanStore } = await import('../../services/public-plans/public-plan-store.service');
+
+    await TestBed.configureTestingModule({
+      imports: [PublicPlanSelectCropComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    })
+      .overrideComponent(PublicPlanSelectCropComponent, {
+        set: {
+          providers: [
+            { provide: LoadPublicPlanCropsUseCase, useValue: { execute: vi.fn() } },
+            { provide: CreatePublicPlanUseCase, useValue: { execute: vi.fn() } },
+            { provide: ResetPublicPlanCreationStateUseCase, useValue: { execute: vi.fn() } },
+            { provide: PublicPlanSelectCropPresenter, useValue: { setView: vi.fn() } },
+            {
+              provide: PublicPlanStore,
+              useValue: {
+                state: {
+                  farm: {
+                    id: 1,
+                    name: 'Tokyo',
+                    region: 'jp',
+                    latitude: 35.6762,
+                    longitude: 139.6503
+                  },
+                  selectedCrops: [],
+                  planId: null,
+                  pendingCropSlug: null
+                },
+                setSelectedCrops: vi.fn(),
+                setPlanId: vi.fn(),
+                setFarm: vi.fn(),
+                setPendingCropSlug: vi.fn()
+              }
+            }
+          ]
+        }
+      })
+      .compileComponents();
+
+    const fixture = TestBed.createComponent(PublicPlanSelectCropComponent);
+    const instance = fixture.componentInstance;
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', {
+      'public_plans.breadcrumb_root': '無料作付け計画',
+      'public_plans.steps.crop': '作物',
+      'public_plans.title': '計画',
+      'public_plans.steps.region': '地域',
+      'public_plans.select_crop.summary.region': '地域',
+      'public_plans.reference_farms.jp_35p6762_139p6503': '東京',
+      'public_plans.select_crop.bottom_bar.selected_label': '選択済み',
+      'public_plans.select_crop.bottom_bar.selected_unit': '種類',
+      'public_plans.select_crop.bottom_bar.submit_button': '作成',
+      'public_plans.select_crop.bottom_bar.hint': '選択してください'
+    });
+    translate.setDefaultLang('ja');
+    translate.use('ja');
+
+    instance.control = {
+      loading: false,
+      error: null,
+      crops: [{ id: 1, name: 'トマト', is_reference: false, groups: [] }],
+      saving: false
+    };
+    fixture.detectChanges();
+
+    const activeStep = fixture.nativeElement.querySelector('.compact-step.active .step-label');
+    expect(activeStep?.textContent?.trim()).toBe('作物');
+    expect(fixture.nativeElement.querySelector('.enhanced-grid .crop-item')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.enhanced-selection-card')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('東京');
+  });
+
   it('applies btn-gradient brand styles to the fixed footer submit button', async () => {
     const { TestBed } = await import('@angular/core/testing');
     const { provideRouter } = await import('@angular/router');

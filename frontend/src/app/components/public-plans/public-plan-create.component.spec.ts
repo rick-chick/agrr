@@ -154,4 +154,25 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     }
   });
 
+  it('localizes reference farm card labels via displayFarmName', () => {
+    const translate = {
+      instant: vi.fn((key: string) => {
+        if (key === 'public_plans.reference_farms.jp_35p6762_139p6503') {
+          return '東京';
+        }
+        return key;
+      })
+    };
+    component.translate = translate;
+
+    const label = PublicPlanCreateComponent.prototype.displayFarmName.call(component, {
+      id: 1,
+      name: 'mojibake',
+      region: 'jp',
+      latitude: 35.6762,
+      longitude: 139.6503
+    });
+
+    expect(label).toBe('東京');
+  });
 });
