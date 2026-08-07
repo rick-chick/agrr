@@ -30,7 +30,7 @@ const initialControl: PesticideListViewState = {
   imports: [CommonModule, RouterLink, TranslateModule],
   providers: [...PESTICIDE_LIST_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'pesticides.index.title' | translate }}</h1>
         <p class="page-description">{{ 'pesticides.index.description' | translate }}</p>
@@ -69,7 +69,7 @@ const initialControl: PesticideListViewState = {
           </ul>
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./pesticide-list.component.css']
 })

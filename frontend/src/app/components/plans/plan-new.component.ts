@@ -32,7 +32,7 @@ const initialControl: PlanNewViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, FormsModule, MasterContextHeaderComponent],
   providers: [...PLAN_NEW_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'plans.new.title' | translate }}</h1>
@@ -128,7 +128,7 @@ const initialControl: PlanNewViewState = {
           </form>
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./plan-new.component.css']
 })

@@ -27,14 +27,14 @@ test.describe('waitForPageStable spin probe', () => {
   test('skips long spin probe when stable content is already visible', async ({ page }) => {
     await page.setContent(`
       <app-farm-list>
-        <main class="page-main">
+        <div class="page-main">
           <section class="section-card">
             <div class="section-card__header-actions"><a class="btn-primary">New</a></div>
             <ul class="card-list">
               <li class="card-list__item"><article class="item-card">Farm</article></li>
             </ul>
           </section>
-        </main>
+        </div>
       </app-farm-list>
     `);
 
@@ -71,7 +71,7 @@ test.describe('waitForPageStable spin probe', () => {
   test('skips master-loading spin probe on plans/:id/optimizing', async ({ page }) => {
     await page.setContent(`
       <app-plan-optimizing>
-        <main class="page-main"></main>
+        <div class="page-main"></div>
       </app-plan-optimizing>
     `);
 
@@ -85,13 +85,13 @@ test.describe('waitForPageStable spin probe', () => {
   test('catches a spinner that appears shortly after initial render', async ({ page }) => {
     await page.setContent(`
       <app-farm-list>
-        <main class="page-main"></main>
+        <div class="page-main"></div>
       </app-farm-list>
     `);
 
     await page.evaluate(() => {
       setTimeout(() => {
-        const host = document.querySelector('app-farm-list main');
+        const host = document.querySelector('app-farm-list .page-main');
         if (!host) return;
         host.innerHTML = '<p class="master-loading">Loading...</p>';
       }, 150);

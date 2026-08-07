@@ -34,7 +34,7 @@ const initialControl: AgriculturalTaskDetailViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...AGRICULTURAL_TASK_DETAIL_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
@@ -106,7 +106,7 @@ const initialControl: AgriculturalTaskDetailViewState = {
           </div>
         </section>
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./agricultural-task-detail.component.css']
 })

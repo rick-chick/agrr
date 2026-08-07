@@ -51,7 +51,7 @@ const initialControl: FarmCreateViewState = {
   imports: [CommonModule, FormsModule, FarmMapComponent, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...FARM_CREATE_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'farms.new.title' | translate }}</h2>
@@ -146,7 +146,7 @@ const initialControl: FarmCreateViewState = {
           </div>
         </form>
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./farm-create.component.css']
 })

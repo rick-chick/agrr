@@ -60,7 +60,7 @@ const initialControl: PlanWorkViewState = {
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
-    <main class="page-main page-main--fit">
+    <div class="page-main page-main--fit">
       <app-plan-plan-context-header
         [planId]="planId"
         [planName]="control.plan?.name ?? null"
@@ -211,7 +211,7 @@ const initialControl: PlanWorkViewState = {
           }
         }
       </section>
-    </main>
+    </div>
 
     <ng-template #rowTpl let-row let-overdue="overdue">
       <li
