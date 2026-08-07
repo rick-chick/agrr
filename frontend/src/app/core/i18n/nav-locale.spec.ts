@@ -40,6 +40,10 @@ const NAV_KEYS = [
   'nav.terms',
   'nav.login',
   'nav.logout',
+  'nav.language',
+  'nav.lang_ja',
+  'nav.lang_en',
+  'nav.lang_in',
   'status.checking',
   'footer.about',
   'footer.terms',
@@ -67,8 +71,12 @@ describe('nav i18n catalog', () => {
     });
   }
 
+/** Keys that intentionally use native script regardless of UI locale. */
+const NATIVE_SCRIPT_KEYS = new Set(['nav.lang_ja', 'nav.lang_en', 'nav.lang_in']);
+
   it('uses English (not Japanese) for en locale nav strings', () => {
     for (const key of NAV_KEYS) {
+      if (NATIVE_SCRIPT_KEYS.has(key)) continue;
       const value = getNested(en as JsonRecord, key) as string;
       expect(value, `unexpected Japanese in en.json ${key}: ${value}`).not.toMatch(JAPANESE_UI);
     }
@@ -76,6 +84,7 @@ describe('nav i18n catalog', () => {
 
   it('uses Hindi (not Japanese) for in locale nav strings', () => {
     for (const key of NAV_KEYS) {
+      if (NATIVE_SCRIPT_KEYS.has(key)) continue;
       const value = getNested(inLocale as JsonRecord, key) as string;
       expect(value, `unexpected Japanese in in.json ${key}: ${value}`).not.toMatch(JAPANESE_UI);
     }

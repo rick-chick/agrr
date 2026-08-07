@@ -980,9 +980,6 @@
     "validation": {
       "required_fields": "農場名、地域、緯度、経度は必須です。"
     },
-    "errors": {
-      "invalid_id": "農場IDが不正です。"
-    },
     "flash": {
       "created": "農場が正常に作成されました。",
       "updated": "農場が正常に更新されました。",
@@ -1166,6 +1163,9 @@
     },
     "map": {
       "default_name": "新しい農場"
+    },
+    "errors": {
+      "invalid_id": "農場IDが不正です。"
     }
   },
   "fields": {
@@ -2620,7 +2620,10 @@
     "api_keys": "APIキー管理",
     "account": "アカウントとデータ",
     "admin": "管理画面",
-    "language": "言語"
+    "language": "言語",
+    "lang_ja": "日本語",
+    "lang_en": "English",
+    "lang_in": "हिन्दी"
   },
   "footer": {
     "about": "AGRRについて",

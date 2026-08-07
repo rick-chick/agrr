@@ -274,7 +274,10 @@
     "api_keys": "API Keys",
     "account": "Account & Data",
     "admin": "Admin",
-    "language": "Language"
+    "language": "Language",
+    "lang_ja": "日本語",
+    "lang_en": "English",
+    "lang_in": "हिन्दी"
   },
   "footer": {
     "about": "About AGRR",
@@ -2601,9 +2604,6 @@
     "validation": {
       "required_fields": "Farm name, region, latitude, and longitude are required."
     },
-    "errors": {
-      "invalid_id": "Invalid farm ID."
-    },
     "flash": {
       "created": "Farm was successfully created.",
       "updated": "Farm was successfully updated.",
@@ -2769,6 +2769,9 @@
     },
     "map": {
       "default_name": "New farm"
+    },
+    "errors": {
+      "invalid_id": "Invalid farm ID."
     }
   },
   "fields": {

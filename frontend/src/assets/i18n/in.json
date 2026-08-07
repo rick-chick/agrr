@@ -755,9 +755,6 @@
     "validation": {
       "required_fields": "खेत का नाम, क्षेत्र, अक्षांश और देशांतर आवश्यक हैं।"
     },
-    "errors": {
-      "invalid_id": "अमान्य खेत ID।"
-    },
     "flash": {
       "created": "खेत सफलतापूर्वक बनाया गया।",
       "updated": "खेत सफलतापूर्वक अपडेट किया गया।",
@@ -923,6 +920,9 @@
     },
     "map": {
       "default_name": "नया खेत"
+    },
+    "errors": {
+      "invalid_id": "अमान्य खेत ID।"
     }
   },
   "fields": {
@@ -2307,7 +2307,10 @@
     "api_keys": "API कुंजी प्रबंधन",
     "account": "खाता और डेटा",
     "admin": "व्यवस्थापक",
-    "language": "भाषा"
+    "language": "भाषा",
+    "lang_ja": "日本語",
+    "lang_en": "English",
+    "lang_in": "हिन्दी"
   },
   "footer": {
     "about": "AGRR के बारे में",
