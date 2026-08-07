@@ -13,13 +13,32 @@ import { PlanFieldClimateComponent } from './plan-field-climate.component';
 import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 
 vi.mock('chart.js/auto', () => ({
-  default: class ChartMock {
-    data = { labels: [] as string[], datasets: [] as unknown[] };
-    update = vi.fn();
-    destroy = vi.fn();
-    resize = vi.fn();
-  }
+  default: vi.fn().mockImplementation(() => ({
+    data: { labels: [] as string[], datasets: [] as unknown[] },
+    update: vi.fn(),
+    destroy: vi.fn(),
+    resize: vi.fn()
+  }))
 }));
+
+async function flushChartMicrotasks(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+  await new Promise<void>(resolve => setTimeout(resolve, 0));
+}
+
+function stubChartLifecycle(component: PlanFieldClimateComponent): void {
+  const chartBacked = component as unknown as {
+    initializeCharts: () => void;
+    scheduleChartRefresh: () => void;
+    temperatureChart: { destroy: () => void } | null;
+    gddChart: { destroy: () => void } | null;
+  };
+  chartBacked.initializeCharts = vi.fn();
+  chartBacked.scheduleChartRefresh = vi.fn();
+  chartBacked.temperatureChart = null;
+  chartBacked.gddChart = null;
+}
 
 describe('PlanFieldClimateComponent', () => {
   let mockPresenter: Pick<PlanFieldClimatePresenter, 'setView' | 'present' | 'onError'>;
@@ -195,13 +214,21 @@ describe('PlanFieldClimateComponent (template)', () => {
 
     fixture = TestBed.createComponent(PlanFieldClimateComponent);
     component = fixture.componentInstance;
+    stubChartLifecycle(component);
     component.fieldCultivationId = 1;
     fixture.detectChanges();
   });
 
-  it('renders chart-first layout markers and mobile chart tabs when climate data is shown', () => {
+  afterEach(async () => {
+    await flushChartMicrotasks();
+    stubChartLifecycle(component);
+    fixture?.destroy();
+  });
+
+  it('renders chart-first layout markers and mobile chart tabs when climate data is shown', async () => {
     component.control = { loading: false, error: null, climateData: sampleData };
     fixture.detectChanges();
+    await flushChartMicrotasks();
 
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('.plan-field-climate__content--chart-first')).toBeTruthy();
@@ -209,12 +236,13 @@ describe('PlanFieldClimateComponent (template)', () => {
     expect(root.querySelector('.plan-field-climate__charts--tab-temperature')).toBeTruthy();
   });
 
-  it('applies gdd tab modifier class when gdd tab is selected', () => {
+  it('applies gdd tab modifier class when gdd tab is selected', async () => {
     component.control = { loading: false, error: null, climateData: sampleData };
     fixture.detectChanges();
 
     component.selectChartTab('gdd');
     fixture.detectChanges();
+    await flushChartMicrotasks();
 
     const charts = (fixture.nativeElement as HTMLElement).querySelector('.plan-field-climate__charts');
     expect(charts?.classList.contains('plan-field-climate__charts--tab-gdd')).toBe(true);
@@ -226,6 +254,7 @@ describe('PlanFieldClimateComponent (template)', () => {
     component.control = { loading: false, error: null, climateData: sampleData };
     fixture.detectChanges();
     await fixture.whenStable();
+    await flushChartMicrotasks();
 
     const link = fixture.nativeElement.querySelector('.plan-field-climate__task-schedule-link');
     expect(link).toBeTruthy();
@@ -233,11 +262,12 @@ describe('PlanFieldClimateComponent (template)', () => {
     expect(link.getAttribute('href')).toContain('field_cultivation_id=42');
   });
 
-  it('does not render task schedule link without planId', () => {
+  it('does not render task schedule link without planId', async () => {
     component.planId = null;
     component.fieldCultivationId = 42;
     component.control = { loading: false, error: null, climateData: sampleData };
     fixture.detectChanges();
+    await flushChartMicrotasks();
 
     expect(fixture.nativeElement.querySelector('.plan-field-climate__task-schedule-link')).toBeNull();
   });

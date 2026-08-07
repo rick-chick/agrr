@@ -160,7 +160,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
       this.control = {
         ...this.control,
         loading: false,
-        error: 'Missing planId.',
+        error: 'public_plans.errors.restart',
         data: null
       };
       return;
