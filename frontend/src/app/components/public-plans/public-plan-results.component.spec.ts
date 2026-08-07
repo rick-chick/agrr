@@ -12,6 +12,7 @@ import { PublicPlanResultsViewState } from './public-plan-results.view';
 import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
 
 describe('PublicPlanResultsComponent', () => {
   let component: PublicPlanResultsComponent;
@@ -66,7 +67,11 @@ describe('PublicPlanResultsComponent', () => {
         { provide: SavePublicPlanUseCase, useValue: saveUseCase },
         { provide: PublicPlanResultsPresenter, useValue: mockPresenter },
         { provide: ChangeDetectorRef, useValue: cdr },
-        { provide: TranslateService, useValue: mockTranslate }
+        { provide: TranslateService, useValue: mockTranslate },
+        {
+          provide: AppSeoMetaService,
+          useValue: { refreshPublicPlanResultsMeta: vi.fn() }
+        }
       ]
     });
 
@@ -179,5 +184,92 @@ describe('PublicPlanResultsComponent', () => {
 
       expect(saveUseCase.execute).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('uses i18n restart key when planId is missing on init', () => {
+    activatedRoute.snapshot.queryParamMap.get.mockReturnValue(null);
+    publicPlanStore.state.planId = null;
+
+    component.ngOnInit();
+
+    expect(component.control.error).toBe('public_plans.errors.restart');
+    expect(component.control.loading).toBe(false);
+  });
+});
+
+describe('PublicPlanResultsComponent (template)', () => {
+  it('shows a single translated error message on load failure', async () => {
+    const { TestBed } = await import('@angular/core/testing');
+    const { provideRouter } = await import('@angular/router');
+    const { TranslateModule, TranslateService } = await import('@ngx-translate/core');
+    const { PublicPlanResultsComponent } = await import('./public-plan-results.component');
+    const { LoadPublicPlanResultsUseCase } = await import(
+      '../../usecase/public-plans/load-public-plan-results.usecase'
+    );
+    const { SavePublicPlanUseCase } = await import('../../usecase/public-plans/save-public-plan.usecase');
+    const { PublicPlanResultsPresenter } = await import(
+      '../../usecase/public-plans/public-plan-results.providers'
+    );
+    const { PublicPlanStore } = await import('../../services/public-plans/public-plan-store.service');
+    const { FlashMessageService } = await import('../../services/flash-message.service');
+    const { AuthService } = await import('../../services/auth.service');
+    const { AppSeoMetaService } = await import('../../core/seo/app-seo-meta.service');
+    const { ActivatedRoute } = await import('@angular/router');
+    const { of } = await import('rxjs');
+    const { vi } = await import('vitest');
+
+    await TestBed.configureTestingModule({
+      imports: [PublicPlanResultsComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        { provide: LoadPublicPlanResultsUseCase, useValue: { execute: vi.fn() } },
+        { provide: SavePublicPlanUseCase, useValue: { execute: vi.fn() } },
+        { provide: PublicPlanResultsPresenter, useValue: { setView: vi.fn() } },
+        {
+          provide: PublicPlanStore,
+          useValue: { state: { planId: 1, farm: { name: 'Test Farm', region: 'jp' } } }
+        },
+        { provide: FlashMessageService, useValue: { show: vi.fn() } },
+        {
+          provide: AuthService,
+          useValue: { user: vi.fn(), loadCurrentUser: vi.fn(() => of(null)) }
+        },
+        {
+          provide: AppSeoMetaService,
+          useValue: { refreshPublicPlanResultsMeta: vi.fn() }
+        },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: { get: vi.fn().mockReturnValue('1') } } }
+        }
+      ]
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(PublicPlanResultsComponent);
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', {
+      'public_plans.title': '計画',
+      'public_plans.breadcrumb_root': '無料作付け計画',
+      'public_plans.results.breadcrumb': '結果',
+      'common.api_error.not_found': 'リソースが見つかりません'
+    });
+    translate.setDefaultLang('ja');
+    translate.use('ja');
+
+    fixture.componentInstance.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      data: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
+    };
+    fixture.detectChanges();
+
+    const errors = fixture.nativeElement.querySelectorAll('.error-message');
+    expect(errors.length).toBe(1);
+    expect(errors[0].textContent).toContain('リソースが見つかりません');
+    expect(fixture.nativeElement.textContent).not.toContain('404');
+    expect(fixture.nativeElement.textContent).not.toContain('Http failure');
   });
 });
