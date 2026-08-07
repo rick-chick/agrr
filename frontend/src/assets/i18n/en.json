@@ -196,7 +196,8 @@
     "updating": "Updating...",
     "form": {
       "required_field": "This field is required."
-    }
+    },
+    "breadcrumb_label": "Breadcrumb"
   },
   "masters": {
     "load_error": {
