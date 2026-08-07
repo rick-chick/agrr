@@ -199,4 +199,45 @@ describe('InteractionRuleDetailComponent', () => {
     expect(el.textContent).not.toContain('region_jp');
     expect(el.textContent).not.toMatch(/\bjp\b/);
   });
+
+  it('does not expose interaction_rules.show.region as raw i18n key in DOM', () => {
+    translate.setTranslation('en', {
+      common: { true: 'Yes', false: 'No' },
+      interaction_rules: {
+        show: {
+          rule_type: 'Rule type',
+          source_group: 'Source',
+          target_group: 'Target',
+          impact_ratio: 'Impact',
+          direction: 'Direction',
+          region: 'Region'
+        },
+        form: {
+          rule_type_codes: { continuous_cultivation: 'Continuous cultivation inhibition' },
+          region_jp: 'Japan'
+        }
+      }
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: null,
+      rule: {
+        id: 1,
+        rule_type: 'continuous_cultivation',
+        source_group: 'A',
+        target_group: 'B',
+        impact_ratio: 1,
+        is_directional: true,
+        is_reference: false,
+        region: 'jp'
+      },
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const html = (fixture.nativeElement as HTMLElement).innerHTML;
+    expect(html).not.toContain('interaction_rules.show.region');
+  });
 });
