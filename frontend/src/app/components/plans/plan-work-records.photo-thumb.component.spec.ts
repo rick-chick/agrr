@@ -9,7 +9,9 @@ import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
 import {
   WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO,
-  WORK_RECORD_PHOTO_THUMB_WIDTH_HISTORY
+  WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_HISTORY,
+  WORK_RECORD_PHOTO_THUMB_WIDTH_HISTORY,
+  WORK_RECORD_PHOTO_THUMB_WIDTH_PX_HISTORY
 } from '../../domain/plans/work-record-photo.constants';
 
 describe('PlanWorkRecordsComponent photo thumb layout', () => {
@@ -123,6 +125,12 @@ describe('PlanWorkRecordsComponent photo thumb layout', () => {
       '.plan-work-records__photo-thumb'
     ) as HTMLElement;
     expect(thumb).toBeTruthy();
+    const img = thumb.querySelector('img') as HTMLImageElement;
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('loading')).toBe('lazy');
+    expect(img.getAttribute('decoding')).toBe('async');
+    expect(img.getAttribute('width')).toBe(String(WORK_RECORD_PHOTO_THUMB_WIDTH_PX_HISTORY));
+    expect(img.getAttribute('height')).toBe(String(WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_HISTORY));
     expect(getComputedStyle(thumb).aspectRatio).toBe(WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO);
     expect(getComputedStyle(thumb).width).toBe(WORK_RECORD_PHOTO_THUMB_WIDTH_HISTORY);
   });

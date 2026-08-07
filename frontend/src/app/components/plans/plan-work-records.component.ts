@@ -11,6 +11,10 @@ import {
 } from '../../domain/plans/work-record-photo-preview';
 import { WorkRecord } from '../../models/plans/work-record';
 import { WorkRecordPhoto } from '../../models/plans/work-record-photo';
+import {
+  WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_HISTORY,
+  WORK_RECORD_PHOTO_THUMB_WIDTH_PX_HISTORY
+} from '../../domain/plans/work-record-photo.constants';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
 import { PLAN_WORK_RECORDS_PROVIDERS } from '../../usecase/plans/plan-work-records.providers';
@@ -111,6 +115,9 @@ const initialControl: PlanWorkRecordsViewState = {
                                 [src]="photo.url"
                                 alt=""
                                 loading="lazy"
+                                decoding="async"
+                                [attr.width]="thumbWidthPx"
+                                [attr.height]="thumbHeightPx"
                                 (error)="onPhotoUrlError()"
                               />
                             </button>
@@ -165,6 +172,8 @@ const initialControl: PlanWorkRecordsViewState = {
             class="plan-work-records__lightbox-image"
             [src]="lightboxPhotos[lightboxIndex].url"
             alt=""
+            loading="eager"
+            decoding="async"
             (error)="onPhotoUrlError()"
           />
         </div>
@@ -186,6 +195,8 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
 
   lightboxPhotos: WorkRecordPhoto[] = [];
   lightboxIndex = 0;
+  readonly thumbWidthPx = WORK_RECORD_PHOTO_THUMB_WIDTH_PX_HISTORY;
+  readonly thumbHeightPx = WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_HISTORY;
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
