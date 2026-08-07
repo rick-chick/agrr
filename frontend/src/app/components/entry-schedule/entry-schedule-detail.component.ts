@@ -238,16 +238,6 @@ import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedu
         font-size: 0.85rem;
         margin: 0.5rem 0 0;
       }
-      .phase-list,
-      .timeline-list {
-        margin-left: 1.25rem;
-      }
-      .empty-reason {
-        color: var(--color-text-muted, #666);
-      }
-      .ml-2 {
-        margin-left: 0.5rem;
-      }
     `
   ]
 })

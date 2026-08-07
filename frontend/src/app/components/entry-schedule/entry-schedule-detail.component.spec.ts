@@ -52,8 +52,7 @@ describe('EntryScheduleDetailComponent', () => {
     translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', {
       'entrySchedule.title': 'Entry schedule',
-      'entrySchedule.detailTitle': 'Crop schedule',
-      'entrySchedule.back': 'Back to list'
+      'entrySchedule.detailTitle': 'Crop schedule'
     });
     translate.setDefaultLang('en');
     translate.use('en');
