@@ -212,7 +212,7 @@ import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedu
         margin-bottom: 0.5rem;
       }
       .reason-summary {
-        color: var(--color-text-muted, #555);
+        color: var(--color-text-muted);
         font-size: 0.95rem;
         margin-top: 0.5rem;
       }
@@ -229,7 +229,7 @@ import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedu
       }
       .disclaimer-banner {
         padding: 0.75rem 1rem;
-        background: var(--color-surface-alt, #f5f5f5);
+        background: var(--color-surface-alt);
         border-radius: 8px;
         font-size: 0.9rem;
       }
@@ -237,6 +237,16 @@ import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedu
         white-space: pre-wrap;
         font-size: 0.85rem;
         margin: 0.5rem 0 0;
+      }
+      .phase-list,
+      .timeline-list {
+        margin-left: 1.25rem;
+      }
+      .empty-reason {
+        color: var(--color-text-muted);
+      }
+      .ml-2 {
+        margin-left: 0.5rem;
       }
     `
   ]
