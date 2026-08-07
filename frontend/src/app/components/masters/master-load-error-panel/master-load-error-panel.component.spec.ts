@@ -61,4 +61,10 @@ describe('MasterLoadErrorPanelComponent', () => {
 
     expect(retry).toHaveBeenCalledTimes(1);
   });
+
+  it('exposes role=alert on the error panel', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeTruthy();
+  });
 });

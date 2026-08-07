@@ -101,7 +101,8 @@
       "title": "नया कीटनाशक जोड़ें"
     },
     "edit": {
-      "title": "{{name}} संपादित करें"
+      "title": "{{name}} संपादित करें",
+      "title_default": "कीटनाशक संपादित करें"
     },
     "show": {
       "reference_pesticide": "संदर्भ कीटनाशक",
@@ -699,7 +700,8 @@
       "title": "नया उर्वरक जोड़ें"
     },
     "edit": {
-      "title": "{{name}} संपादित करें"
+      "title": "{{name}} संपादित करें",
+      "title_default": "उर्वरक संपादित करें"
     },
     "show": {
       "reference_fertilize": "संदर्भ उर्वरक",

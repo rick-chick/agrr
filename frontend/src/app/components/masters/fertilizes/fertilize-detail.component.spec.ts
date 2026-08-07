@@ -124,6 +124,7 @@ describe('FertilizeDetailComponent', () => {
     fixture.detectChanges();
 
     const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.getAttribute('role')).toBe('alert');
     expect(alert?.textContent).toContain('Resource not found');
     expect(alert?.textContent).not.toContain('Http failure');
     expect(
