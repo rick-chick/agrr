@@ -10,7 +10,7 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
 
 const REQUIRED_SCRIPT_SNIPPETS = [
   'lhci autorun',
-  'lighthouserc.mjs',
+  'lighthouserc.js',
   'dist/frontend/browser',
   '.lighthouseci',
   'npm run build',
@@ -58,19 +58,19 @@ export async function verifyLighthouseCiWorkflow(repoRoot) {
     errors.push(`missing script: ${scriptPath}`);
   }
 
-  const lighthouseRcPath = join(repoRoot, 'frontend/lighthouserc.mjs');
+  const lighthouseRcPath = join(repoRoot, 'frontend/lighthouserc.js');
   try {
     const rcText = await readFile(lighthouseRcPath, 'utf8');
     for (const snippet of REQUIRED_LIGHTHOUSE_RC_SNIPPETS) {
       if (!rcText.includes(snippet)) {
-        errors.push(`lighthouserc.mjs missing required snippet: ${snippet}`);
+        errors.push(`lighthouserc.js missing required snippet: ${snippet}`);
       }
     }
   } catch {
     errors.push(`missing config: ${lighthouseRcPath}`);
   }
 
-  const routesPath = join(repoRoot, 'frontend/scripts/lighthouse-ci-routes.mjs');
+  const routesPath = join(repoRoot, 'frontend/scripts/lighthouse-ci-routes.json');
   try {
     await readFile(routesPath, 'utf8');
   } catch {

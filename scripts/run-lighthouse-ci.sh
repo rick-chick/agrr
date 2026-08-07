@@ -15,7 +15,7 @@ REPORT_DIR=".lighthouseci"
 if [[ "${1:-}" == "--dry-run" ]]; then
   test -f "${ROOT}/.github/workflows/frontend-lighthouse.yml"
   test -f "${ROOT}/scripts/run-lighthouse-ci.sh"
-  test -f lighthouserc.mjs
+  test -f lighthouserc.js
   test -f scripts/lighthouse-ci-routes.mjs
   exit 0
 fi
@@ -30,6 +30,6 @@ fi
 
 echo "==> Lighthouse CI (warn-only thresholds: Performance >= 85, LCP <= 2.5s lab)"
 echo "==> Reports: frontend/${REPORT_DIR}/"
-npx lhci autorun --config=lighthouserc.mjs
+npx lhci autorun --config=lighthouserc.js
 
 echo "==> Lighthouse CI complete. HTML reports under frontend/${REPORT_DIR}/"

@@ -1,16 +1,9 @@
-/**
- * Public prerender routes measured by Lighthouse CI (lab scores).
- * Subset of PUBLIC_PRERENDER_ROUTES — keep paths in sync with app.routes.server.ts.
- */
-export const LIGHTHOUSE_CI_ROUTES = [
-  { path: '/', url: '/' },
-  { path: '/about', url: '/about/' },
-  { path: '/contact', url: '/contact/' },
-  { path: '/public-plans/new', url: '/public-plans/new/' },
-];
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
-/** Thresholds documented in PR / workflow (warn-only on first rollout). */
-export const LIGHTHOUSE_CI_THRESHOLDS = {
-  performanceMinScore: 0.85,
-  lcpMaxMs: 2500,
-};
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const config = JSON.parse(readFileSync(join(__dirname, 'lighthouse-ci-routes.json'), 'utf8'));
+
+export const LIGHTHOUSE_CI_ROUTES = config.routes;
+export const LIGHTHOUSE_CI_THRESHOLDS = config.thresholds;
