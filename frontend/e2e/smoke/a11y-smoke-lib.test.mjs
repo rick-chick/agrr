@@ -8,13 +8,20 @@ import {
   A11Y_AUTH_SAMPLE_ROUTES,
   A11Y_SMOKE_EXCLUDED_PATTERNS,
   buildA11ySmokeRoutes,
+  loadA11yPrerenderPaths,
 } from './a11y-smoke-lib.mjs';
 
 const manifest = JSON.parse(
   readFileSync(join(process.cwd(), 'e2e/route-manifest.json'), 'utf8'),
 );
 
-const prerenderPaths = PUBLIC_PRERENDER_ROUTES.map((route) => route.path);
+const prerenderPaths = loadA11yPrerenderPaths();
+
+test('loadA11yPrerenderPaths matches scripts/public-prerender-routes.mjs paths', () => {
+  const fromScript = PUBLIC_PRERENDER_ROUTES.map((route) => route.path).sort();
+  const fromLib = [...loadA11yPrerenderPaths()].sort();
+  assert.deepEqual(fromLib, fromScript);
+});
 
 test('buildA11ySmokeRoutes includes every manifest public route except excluded patterns', () => {
   const routes = buildA11ySmokeRoutes(manifest, prerenderPaths);
