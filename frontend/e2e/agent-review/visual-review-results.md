@@ -6,6 +6,7 @@
 - **対象**: `route-to-png.md` **#1–50**（全ルート・**ja / en / in** 各 1 枚）
 - **キャプチャ**: `npm run e2e:capture-for-agent`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。AuthTest モックログイン・`/api/v1/auth/me` 非モック。`verify-capture-complete` **150 PNG**（50 ルート × 3 言語）。キャプチャ日: 2026-06-18。
 - **前提**: development SQLite・参照データ + E2E Baseline Plan。CSS トークンは `npm run audit:css-tokens:enforce` exit 0（var 外 0 件）。本レビューでは CSS 列挙は行わない。
+- **captureRunId**: （未設定 — `npm run e2e:capture-for-agent` 後に `npm run e2e:agent-review:stamp-review` で `agent-review-bundle.json` の runId を刻む。Issue 起票は証拠鎖ゲート必須）
 
 ## 追記メタ（作業テンプレート / blueprint UI）
 
