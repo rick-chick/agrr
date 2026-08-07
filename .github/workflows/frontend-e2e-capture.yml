@@ -76,7 +76,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: agent-review-pngs-${{ github.run_number }}
-          path: frontend/e2e/agent-review/out/*.png
+          path: |
+            frontend/e2e/agent-review/out/*.png
+            frontend/e2e/agent-review/agent-review-bundle.json
           retention-days: 14
           if-no-files-found: error
 

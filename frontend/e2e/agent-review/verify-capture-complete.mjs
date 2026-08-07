@@ -6,6 +6,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { CAPTURE_LOCALES, agentPngFilename } from '../capture-locales.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -52,3 +53,13 @@ if (missing.length > 0) {
 console.log(
   `verify-capture-complete: OK ${expectedCount} PNGs (${routesToVerify.length} routes × ${CAPTURE_LOCALES.join(', ')}; skip ${[...SKIP_PATTERNS].join(', ')}) under ${outDir}`,
 );
+
+// Capture Run ボンドル（証拠鎖の正本）
+const bundleScript = join(__dirname, 'generate-capture-bundle.mjs');
+const bundleResult = spawnSync(process.execPath, [bundleScript], {
+  cwd: FRONTEND,
+  stdio: 'inherit',
+});
+if (bundleResult.status !== 0) {
+  process.exit(bundleResult.status ?? 1);
+}

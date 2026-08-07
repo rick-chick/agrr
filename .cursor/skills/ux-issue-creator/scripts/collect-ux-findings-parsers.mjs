@@ -278,12 +278,7 @@ export function buildVisualFindings(tableRows, detailedItems) {
     const rowNum = Number(row.num);
     if (rowsInMerge.has(rowNum)) continue;
 
-    const actionable =
-      row.layout === '注意' ||
-      row.layout === '要確認' ||
-      row.i18n === '注意' ||
-      row.i18n === '要確認';
-    if (!actionable) continue;
+    if (!isActionableReviewRow(row)) continue;
 
     const detail = rowToDetail.get(rowNum);
     const note = row.note === 'なし' ? '' : row.note;
@@ -418,11 +413,48 @@ export function matchIssueScore(finding, issue) {
 }
 
 /**
+ * @param {Record<string, string>} row
+ */
+export function isActionableReviewRow(row) {
+  if (
+    isUnreviewedResultToken(row.layout) ||
+    isUnreviewedResultToken(row.i18n) ||
+    isUnreviewedResultToken(row.note)
+  ) {
+    return false;
+  }
+  return (
+    row.layout === '注意' ||
+    row.layout === '要確認' ||
+    row.i18n === '注意' ||
+    row.i18n === '要確認'
+  );
+}
+
+/**
+ * @param {string} value
+ */
+export function isUnreviewedResultToken(value) {
+  const v = String(value || '').trim();
+  return v === '未レビュー' || v === '未キャプチャ';
+}
+
+/**
  * @param {Record<string, unknown>} finding
  */
 export function isLikelyDuplicateFinding(finding) {
   return (finding.existingIssueCandidates || []).some(
     (c) => c.state === 'OPEN' && c.score >= 5,
+  );
+}
+
+/**
+ * CLOSED かつ score 高 — 新規起票せず完了確認または reopen。
+ * @param {Record<string, unknown>} finding
+ */
+export function isLikelyResolvedFinding(finding) {
+  return (finding.existingIssueCandidates || []).some(
+    (c) => c.state === 'CLOSED' && c.score >= 5,
   );
 }
 
