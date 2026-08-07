@@ -15,6 +15,7 @@ function getNested(obj: JsonRecord, path: string): unknown {
 
 /** Keys referenced by plan-detail, plan-plan-context-header, and climate placeholder. */
 const PLANS_DETAIL_KEYS = [
+  'plans.index.title',
   'plans.detail.select_cultivation_hint',
   'plans.show.page_title',
   'plans.show.nav.aria_label',
