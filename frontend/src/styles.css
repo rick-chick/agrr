@@ -30,12 +30,15 @@
 
   --color-white: #ffffff;
 
-  /* app.css のブランドトークン（Composition・リンクで参照） */
-  --color-success-dark: #2f855a;
-
-  /* 色: インタラクション */
+  /* 色: インタラクション（--color-primary は本ファイルが単一ソース） */
   --color-primary: #2563eb;
   --color-primary-hover: #1d4ed8;
+
+  /* ブランド（農業グリーン・アプリシェル用。--color-primary と混同しない） */
+  --color-brand-primary: #2d5016;
+  --color-brand-primary-light: #4a7c23;
+  --color-brand-primary-dark: #1a3009;
+  --color-success-dark: #2f855a;
   --color-accent: #64748b;
   --color-warning: #f59e0b;
   --color-warning-bg: #fffbeb;

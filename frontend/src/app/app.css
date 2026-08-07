@@ -4,12 +4,9 @@
 
 :root {
   /*
-   * アプリシェル用ブランド（緑プライマリ・グラデボタン等）。
-   * Gray scale・--shadow-md・--shadow-primary・--color-white は styles.css の単一ソースを参照。
+   * アプリシェル用スタイル。デザイントークンは styles.css が単一ソース。
+   * ブランド緑は --color-brand-primary* を参照。
    */
-  --color-primary: #2d5016;
-  --color-primary-light: #4a7c23;
-  --color-primary-dark: #1a3009;
   --color-secondary: #667eea;
   --color-secondary-light: #8b9dff;
   --color-secondary-dark: #4a5fc5;
@@ -94,9 +91,13 @@ a.btn:focus-visible {
 }
 
 .btn-primary {
-  background: var(--gradient-primary);
-  color: white;
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
   box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
 }
 
 .btn-secondary {
@@ -231,7 +232,7 @@ a.btn:focus-visible {
 }
 
 .btn-gradient {
-  background: var(--color-success);
+  background: var(--color-brand-primary);
   color: var(--color-text-on-primary);
   border: none;
   border-radius: var(--radius-lg);
