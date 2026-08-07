@@ -15,7 +15,7 @@
 .crop-setup-proposal-import__json {
   width: 100%;
   min-height: 12rem;
-  font-family: var(--font-family-mono, monospace);
+  font-family: var(--font-family-mono);
   font-size: 0.875rem;
 }
 
@@ -33,9 +33,9 @@
   padding: var(--space-sm);
   overflow: auto;
   max-height: 20rem;
-  background: var(--color-surface-muted, #f5f5f5);
-  border-radius: var(--radius-sm, 4px);
-  font-family: var(--font-family-mono, monospace);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-mono);
   font-size: 0.8125rem;
   white-space: pre-wrap;
   word-break: break-word;
