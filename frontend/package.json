@@ -32,7 +32,8 @@
     "e2e:visual-review:check": "node e2e/agent-review/verify-visual-review-fresh.mjs",
     "e2e:visual-review:check:enforce": "node e2e/agent-review/verify-visual-review-fresh.mjs --enforce",
     "lighthouse:ci": "lhci autorun --config=lighthouserc.js",
-    "verify:fluid-typography-tokens": "node --test scripts/check-fluid-typography-tokens.test.mjs"
+    "verify:fluid-typography-tokens": "node --test scripts/check-fluid-typography-tokens.test.mjs",
+    "verify:package-deps": "node --test scripts/check-package-deps.test.mjs"
   },
   "prettier": {
     "printWidth": 100,
