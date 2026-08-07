@@ -376,7 +376,7 @@ export class EntryScheduleDetailComponent implements OnInit {
       this.data.set(
         buildEntrySchedulePrerenderSnapshot(
           catalogCrop,
-          this.translate.currentLang || this.translate.defaultLang
+          this.translate.currentLang || this.translate.defaultLang || undefined
         )
       );
       this.seo.refreshEntryScheduleDetailMeta(cId, catalogCrop.name);
