@@ -27,7 +27,7 @@ const initialControl: PestListViewState = {
   imports: [CommonModule, RouterLink, TranslateModule],
   providers: [...PEST_LIST_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'pests.index.title' | translate }}</h1>
         <p class="page-description">{{ 'pests.index.description' | translate }}</p>
@@ -68,7 +68,7 @@ const initialControl: PestListViewState = {
           </ul>
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./pest-list.component.css']
 })

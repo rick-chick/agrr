@@ -25,7 +25,7 @@ import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedu
   standalone: true,
   imports: [CommonModule, TranslateModule, MasterContextHeaderComponent],
   template: `
-    <main class="page-main public-plans-wrapper">
+    <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
         <app-master-context-header [crumbs]="contextCrumbs" />
         <div class="compact-header-card">
@@ -201,7 +201,7 @@ import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedu
           </section>
         }
       </div>
-    </main>
+    </div>
   `,
   styleUrls: ['../public-plans/public-plan.component.css', './entry-schedule-visual.css'],
   styles: [
