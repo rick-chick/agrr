@@ -130,5 +130,9 @@ describe('PestDetailComponent', () => {
 
     expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[aria-current="page"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-detail-skeleton')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('.master-loading:not(.detail-loading-text)')
+    ).toBeNull();
   });
 });

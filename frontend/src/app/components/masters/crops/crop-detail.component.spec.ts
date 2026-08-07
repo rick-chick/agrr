@@ -842,4 +842,28 @@ describe('CropDetailComponent', () => {
 
     expect(fixture.nativeElement.textContent).toContain('2026年6月25日 9:03');
   });
+
+  it('shows detail skeleton while loading', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: true,
+      error: null,
+      crop: null,
+      pendingUndoToast: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      blueprintsLoading: true,
+      blueprintCount: 0,
+      blueprintReadiness: defaultBlueprintReadiness(),
+      blueprintSummary: null,
+      stageBoardColumns: [],
+      cumulativeGddTimelineSegments: []
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-detail-skeleton')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('.master-loading:not(.detail-loading-text)')
+    ).toBeNull();
+  });
 });

@@ -15,6 +15,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { DetailSkeletonComponent } from '../../shared/skeleton/detail-skeleton.component';
 
 const initialControl: InteractionRuleDetailViewState = {
   loading: true,
@@ -27,13 +28,14 @@ const initialControl: InteractionRuleDetailViewState = {
 @Component({
   selector: 'app-interaction-rule-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, DetailSkeletonComponent],
   providers: [...INTERACTION_RULE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
-        <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        <app-detail-skeleton class="detail-loading-skeleton" />
+        <p class="master-loading detail-loading-text">{{ 'common.loading' | translate }}</p>
       } @else if (control.rule) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.rule.source_group }} → {{ control.rule.target_group }}</h1>
