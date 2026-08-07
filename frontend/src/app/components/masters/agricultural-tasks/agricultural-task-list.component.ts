@@ -33,7 +33,7 @@ const initialControl: AgriculturalTaskListViewState = {
   imports: [CommonModule, RouterLink, TranslateModule],
   providers: [...AGRICULTURAL_TASK_LIST_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'agricultural_tasks.index.title' | translate }}</h1>
         <p class="page-description">{{ 'agricultural_tasks.index.description' | translate }}</p>
@@ -79,7 +79,7 @@ const initialControl: AgriculturalTaskListViewState = {
           </ul>
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./agricultural-task-list.component.css']
 })

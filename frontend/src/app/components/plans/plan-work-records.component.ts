@@ -37,7 +37,7 @@ const initialControl: PlanWorkRecordsViewState = {
   ],
   providers: [...PLAN_WORK_RECORDS_PROVIDERS],
   template: `
-    <main class="page-main page-main--fit">
+    <div class="page-main page-main--fit">
       <app-plan-plan-context-header
         [planId]="planId"
         [planName]="control.plan?.name ?? null"
@@ -125,7 +125,7 @@ const initialControl: PlanWorkRecordsViewState = {
           }
         }
       </section>
-    </main>
+    </div>
 
     <app-work-record-sheet
       [planId]="planId"
