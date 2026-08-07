@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PestEditView, PestEditViewState, PestEditFormData } from './pest-edit.view';
 import { LoadPestForEditUseCase } from '../../../usecase/pests/load-pest-for-edit.usecase';
@@ -102,7 +102,6 @@ const initialControl: PestEditViewState = {
 })
 export class PestEditComponent implements PestEditView, OnInit {
   readonly auth = inject(AuthService);
-  private readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadPestForEditUseCase);
@@ -160,11 +159,6 @@ export class PestEditComponent implements PestEditView, OnInit {
     if (!this.pestId) return;
     this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ pestId: this.pestId });
-  }
-
-  load(pestId: number): void {
-    this.control = { ...this.control, loading: true, error: null };
-    this.loadUseCase.execute({ pestId });
   }
 
   updatePest(): void {

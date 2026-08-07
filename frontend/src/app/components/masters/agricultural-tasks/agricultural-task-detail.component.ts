@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import {
   AgriculturalTaskDetailView,
   AgriculturalTaskDetailViewState
@@ -113,7 +113,6 @@ const initialControl: AgriculturalTaskDetailViewState = {
 export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly translate = inject(TranslateService);
   private readonly useCase = inject(LoadAgriculturalTaskDetailUseCase);
   private readonly deleteUseCase = inject(DeleteAgriculturalTaskUseCase);
   private readonly presenter = inject(AgriculturalTaskDetailPresenter);

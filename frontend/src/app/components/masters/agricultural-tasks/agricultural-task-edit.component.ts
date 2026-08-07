@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import {
   AgriculturalTaskEditView,
@@ -135,7 +135,6 @@ export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, 
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly translate = inject(TranslateService);
   private readonly loadUseCase = inject(LoadAgriculturalTaskForEditUseCase);
   private readonly updateUseCase = inject(UpdateAgriculturalTaskUseCase);
   private readonly presenter = inject(AgriculturalTaskEditPresenter);
