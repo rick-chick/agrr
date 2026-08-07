@@ -2267,14 +2267,12 @@
       "no_farms": "農場がありません",
       "no_farms_hint": "まず農場を作成してください",
       "create_farm_link": "農場を作成する",
-      "next_button": "次へ: 作物選択",
       "create_button": "作成",
       "farm_option_with_fields": "{{name}}（圃場{{count}}・{{area}}㎡）",
       "farm_option_no_fields": "{{name}}（圃場未登録）",
       "no_fields_warning": "この農場には圃場が登録されていません。",
       "some_farms_no_fields_hint": "圃場が未登録の農場は計画作成の対象に選べません。",
-      "register_fields_link": "圃場を登録する",
-      "empty_message": "現在、利用可能な農場がありません。"
+      "register_fields_link": "圃場を登録する"
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
