@@ -3,7 +3,7 @@
  * @typedef {'ja' | 'en' | 'in'} CaptureLocale
  */
 
-import { documentHtmlLang } from '../../scripts/document-html-lang.mjs';
+import { documentHtmlLang } from '../scripts/document-html-lang.mjs';
 
 /** @type {readonly CaptureLocale[]} */
 export const CAPTURE_LOCALES = ['ja', 'en', 'in'];
