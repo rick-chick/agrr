@@ -39,6 +39,10 @@
     "errors": {
       "invalid_id": "農薬IDが不正です。"
     },
+    "fallback": {
+      "crop": "作物 #{{id}}",
+      "pest": "害虫 #{{id}}"
+    },
     "undo": {
       "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
@@ -127,7 +131,7 @@
     },
     "edit": {
       "title": "{{name}}を編集",
-      "title_default": "農薬編集"
+      "title_default": "農薬"
     },
     "show": {
       "reference_pesticide": "参照農薬",
@@ -154,10 +158,6 @@
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "この農薬を削除しますか？"
-    },
-    "fallback": {
-      "crop": "作物 #{{id}}",
-      "pest": "害虫 #{{id}}"
     }
   },
   "agricultural_tasks": {
@@ -174,6 +174,9 @@
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
       "not_found": "指定された作業が見つかりません。"
+    },
+    "errors": {
+      "invalid_id": "作業IDが不正です。"
     },
     "index": {
       "title": "作業一覧",
@@ -209,7 +212,7 @@
     },
     "edit": {
       "title": "{{name}}を編集",
-      "title_default": "作業編集"
+      "title_default": "作業"
     },
     "form": {
       "name_label": "作業名",
@@ -242,6 +245,7 @@
       "description": "説明",
       "time_per_sqm": "作業時間",
       "hours_suffix": "時間/㎡",
+      "task_type": "作業種別",
       "weather_dependency": "天候依存度",
       "weather_dependency_low": "低",
       "weather_dependency_medium": "中",
@@ -259,11 +263,7 @@
       "no_crops_associated": "この作業に紐づく作物はありません。",
       "edit": "編集",
       "delete": "削除",
-      "confirm_delete": "この作業を削除しますか？",
-      "task_type": "作業種別"
-    },
-    "errors": {
-      "invalid_id": "作業IDが不正です。"
+      "confirm_delete": "この作業を削除しますか？"
     }
   },
   "crops": {
@@ -979,6 +979,9 @@
     "validation": {
       "required_fields": "農場名、地域、緯度、経度は必須です。"
     },
+    "map": {
+      "default_name": "新しい農場"
+    },
     "flash": {
       "created": "農場が正常に作成されました。",
       "updated": "農場が正常に更新されました。",
@@ -1049,7 +1052,7 @@
         },
         "submit": "農場を作成",
         "cancel": "キャンセル",
-        "coordinates_validation_error": "緯度・経度の値が不正です。"
+        "coordinates_validation_error": "緯度または経度の値が無効です。正しい範囲内の数値を入力してください。"
       },
       "errors": {
         "title": "{{count}}件のエラーがあります："
@@ -1159,9 +1162,6 @@
       "insufficient_historical_data": "予測に必要な履歴データが不足しています。",
       "job_queue_failed": "予測ジョブのキューイングに失敗しました: {{error}}",
       "farm_not_found": "指定された農場が見つかりません。"
-    },
-    "map": {
-      "default_name": "農場"
     }
   },
   "fields": {
@@ -1268,6 +1268,9 @@
       "no_permission": "権限がありません。",
       "not_found": "指定されたルールが見つかりません。"
     },
+    "errors": {
+      "invalid_id": "ルールIDが不正です。"
+    },
     "index": {
       "title": "連作ルール一覧",
       "description": "作付け計画で使う連作ルールの登録・管理を行います。",
@@ -1361,9 +1364,6 @@
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "このルールを削除しますか？"
-    },
-    "errors": {
-      "invalid_id": "ルールIDが不正です。"
     }
   },
   "time": {
@@ -1446,6 +1446,9 @@
     "submit": "送信",
     "close": "閉じる",
     "loading": "読み込み中...",
+    "creating": "作成中...",
+    "sending": "送信中...",
+    "updating": "更新中...",
     "true": "はい",
     "false": "いいえ",
     "api_error": {
@@ -1456,10 +1459,7 @@
       "not_migrated": "この機能はまだ利用できません",
       "service_unavailable": "サーバーに接続できませんでした",
       "generic": "エラーが発生しました"
-    },
-    "creating": "作成中...",
-    "sending": "送信中...",
-    "updating": "更新中..."
+    }
   },
   "masters": {
     "load_error": {
@@ -1808,6 +1808,8 @@
     }
   },
   "public_plans": {
+    "create_failed": "計画作成に失敗しました: {{errors}}",
+    "invalid_farm_id": "農場IDが不正です。",
     "errors": {
       "field_not_found": "圃場が見つかりません",
       "cannot_remove_field_with_cultivations": "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。",
@@ -2101,9 +2103,7 @@
       "in_10p7905_78p7047": "Tiruchirappalli, Tamil Nadu",
       "in_11p6643_78p1460": "Salem, Tamil Nadu",
       "in_9p9312_76p2673": "Kochi, Kerala"
-    },
-    "create_failed": "計画作成に失敗しました: {{errors}}",
-    "invalid_farm_id": "農場IDが不正です。"
+    }
   },
   "plans": {
     "errors": {
@@ -3441,12 +3441,5 @@
     "nextTask": "次の作業",
     "nextTaskPlaceholder": "次の作業候補はまだありません。",
     "stages": "成長段階"
-  },
-  "cookie_consent": {
-    "title": "Cookieの利用について",
-    "description_html": "本サイトでは、広告配信とアクセス解析のためにCookieを利用します。設定はいつでも変更できます。詳細は{{privacy_link}}をご確認ください。",
-    "privacy_link_text": "プライバシーポリシー",
-    "accept": "同意する",
-    "reject": "拒否する"
   }
 }

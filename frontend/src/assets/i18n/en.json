@@ -180,6 +180,9 @@
     "submit": "Submit",
     "close": "Close",
     "loading": "Loading...",
+    "creating": "Creating...",
+    "sending": "Sending...",
+    "updating": "Updating...",
     "true": "Yes",
     "false": "No",
     "api_error": {
@@ -190,10 +193,7 @@
       "not_migrated": "This feature is not available yet",
       "service_unavailable": "Could not connect to the server",
       "generic": "An error occurred"
-    },
-    "creating": "Creating...",
-    "sending": "Sending...",
-    "updating": "Updating..."
+    }
   },
   "masters": {
     "load_error": {
@@ -874,6 +874,8 @@
     }
   },
   "public_plans": {
+    "create_failed": "Failed to create plan: {{errors}}",
+    "invalid_farm_id": "Invalid farm ID.",
     "show": {
       "detail": {
         "title": "Plan Details",
@@ -1162,9 +1164,7 @@
       "in_10p7905_78p7047": "Tiruchirappalli, Tamil Nadu",
       "in_11p6643_78p1460": "Salem, Tamil Nadu",
       "in_9p9312_76p2673": "Kochi, Kerala"
-    },
-    "create_failed": "Failed to create plan: {{errors}}",
-    "invalid_farm_id": "Invalid farm ID."
+    }
   },
   "plans": {
     "errors": {
@@ -1669,6 +1669,10 @@
     "errors": {
       "invalid_id": "Invalid pesticide ID."
     },
+    "fallback": {
+      "crop": "Crop #{{id}}",
+      "pest": "Pest #{{id}}"
+    },
     "undo": {
       "toast": "{{name}} was deleted. You can undo this action."
     },
@@ -1757,7 +1761,7 @@
     },
     "edit": {
       "title": "Edit {{name}}",
-      "title_default": "Edit pesticide"
+      "title_default": "Pesticide"
     },
     "show": {
       "reference_pesticide": "Reference Pesticide",
@@ -1784,10 +1788,6 @@
       "edit": "Edit",
       "delete": "Delete",
       "confirm_delete": "Are you sure you want to delete this pesticide?"
-    },
-    "fallback": {
-      "crop": "Crop #{{id}}",
-      "pest": "Pest #{{id}}"
     }
   },
   "agricultural_tasks": {
@@ -1804,6 +1804,9 @@
       "reference_flag_admin_only": "Only admins can change the reference flag.",
       "no_permission": "You do not have permission.",
       "not_found": "Task not found."
+    },
+    "errors": {
+      "invalid_id": "Invalid task ID."
     },
     "index": {
       "title": "Tasks",
@@ -1839,7 +1842,7 @@
     },
     "edit": {
       "title": "Edit {{name}}",
-      "title_default": "Edit task"
+      "title_default": "Task"
     },
     "form": {
       "name_label": "Task Name",
@@ -1872,6 +1875,7 @@
       "description": "Description",
       "time_per_sqm": "Time per ㎡",
       "hours_suffix": "hours/㎡",
+      "task_type": "Task Type",
       "weather_dependency": "Weather Dependency",
       "weather_dependency_low": "Low",
       "weather_dependency_medium": "Medium",
@@ -1889,11 +1893,7 @@
       "no_crops_associated": "No crops associated.",
       "edit": "Edit",
       "delete": "Delete",
-      "confirm_delete": "Delete this task?",
-      "task_type": "Task type"
-    },
-    "errors": {
-      "invalid_id": "Invalid task ID."
+      "confirm_delete": "Delete this task?"
     }
   },
   "crops": {
@@ -2601,6 +2601,9 @@
     "validation": {
       "required_fields": "Farm name, region, latitude, and longitude are required."
     },
+    "map": {
+      "default_name": "New farm"
+    },
     "flash": {
       "created": "Farm was successfully created.",
       "updated": "Farm was successfully updated.",
@@ -2659,7 +2662,7 @@
         },
         "submit": "Create Farm",
         "cancel": "Cancel",
-        "coordinates_validation_error": "Invalid latitude or longitude."
+        "coordinates_validation_error": "Invalid latitude or longitude. Enter numeric values within the valid range."
       },
       "errors": {
         "title": "{{count}} errors occurred:"
@@ -2763,9 +2766,6 @@
       "insufficient_historical_data": "Insufficient historical data for prediction.",
       "job_queue_failed": "Failed to queue prediction job: {{error}}",
       "farm_not_found": "Farm not found."
-    },
-    "map": {
-      "default_name": "Farm"
     }
   },
   "fields": {
@@ -2856,6 +2856,9 @@
       "reference_flag_admin_only": "Only administrators can change the reference flag.",
       "no_permission": "Permission denied.",
       "not_found": "Rule not found."
+    },
+    "errors": {
+      "invalid_id": "Invalid rule ID."
     },
     "index": {
       "title": "Crop Rotation Rules",
@@ -2950,9 +2953,6 @@
       "edit": "Edit",
       "delete": "Delete",
       "confirm_delete": "Are you sure you want to delete this rule?"
-    },
-    "errors": {
-      "invalid_id": "Invalid rule ID."
     }
   },
   "api_keys": {
@@ -3405,12 +3405,5 @@
     "nextTask": "Next task",
     "nextTaskPlaceholder": "No next task candidate yet.",
     "stages": "Growth stages"
-  },
-  "cookie_consent": {
-    "title": "Cookie usage",
-    "description_html": "We use cookies for ads delivery and analytics. You can change your choice anytime. See {{privacy_link}} for details.",
-    "privacy_link_text": "Privacy Policy",
-    "accept": "Accept",
-    "reject": "Reject"
   }
 }

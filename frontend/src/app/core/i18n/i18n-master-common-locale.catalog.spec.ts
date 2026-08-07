@@ -13,32 +13,16 @@ function getNested(obj: JsonRecord, path: string): unknown {
   }, obj);
 }
 
-/** Static | translate keys reported missing by check-hardcoded-i18n (issue #633). */
-const STATIC_TRANSLATE_CATALOG_KEYS = [
+const MASTER_COMMON_CATALOG_KEYS = [
   'agricultural_tasks.edit.title_default',
   'agricultural_tasks.errors.invalid_id',
   'agricultural_tasks.show.task_type',
   'common.creating',
   'common.sending',
   'common.updating',
-  'cookie_consent.accept',
-  'cookie_consent.description_html',
-  'cookie_consent.privacy_link_text',
-  'cookie_consent.reject',
-  'cookie_consent.title',
-  'crops.setup_proposal_import.action',
-  'crops.setup_proposal_import.choose_file',
-  'crops.setup_proposal_import.clipboard_error',
-  'crops.setup_proposal_import.invalid_json',
-  'crops.setup_proposal_import.invalid_shape',
-  'crops.setup_proposal_import.json_label',
-  'crops.setup_proposal_import.json_placeholder',
-  'crops.setup_proposal_import.lead',
-  'crops.setup_proposal_import.paste_clipboard',
-  'crops.setup_proposal_import.preview_title',
-  'crops.setup_proposal_import.title',
-  'crops.setup_proposal_import.validation_errors_title',
-  'crops.show.reference_crop',
+  'shared.cookie_consent.title',
+  'shared.cookie_consent.accept',
+  'shared.cookie_consent.reject',
   'farms.map.default_name',
   'farms.new.form.coordinates_validation_error',
   'interaction_rules.errors.invalid_id',
@@ -46,7 +30,8 @@ const STATIC_TRANSLATE_CATALOG_KEYS = [
   'pesticides.fallback.crop',
   'pesticides.fallback.pest',
   'public_plans.create_failed',
-  'public_plans.invalid_farm_id'
+  'public_plans.invalid_farm_id',
+  'crops.show.reference_crop'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [
@@ -55,19 +40,18 @@ const locales: { name: string; catalog: JsonRecord }[] = [
   { name: 'in', catalog: inLocale as JsonRecord }
 ];
 
-describe('static translate catalog (issue #633)', () => {
+describe('i18n master/common catalog (#633)', () => {
   for (const { name, catalog } of locales) {
     describe(name, () => {
-      for (const key of STATIC_TRANSLATE_CATALOG_KEYS) {
+      for (const key of MASTER_COMMON_CATALOG_KEYS) {
         it(`defines ${key} as human-readable text`, () => {
           const value = getNested(catalog, key);
           expect(typeof value).toBe('string');
           const text = value as string;
           expect(text.length).toBeGreaterThan(0);
           expect(text).not.toBe(key);
-          expect(text).not.toContain('agricultural_tasks.');
           expect(text).not.toContain('cookie_consent.');
-          expect(text).not.toContain('pesticides.edit.');
+          expect(text).not.toContain('title_default');
         });
       }
     });

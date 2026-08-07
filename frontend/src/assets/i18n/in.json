@@ -14,6 +14,10 @@
     "errors": {
       "invalid_id": "अमान्य कीटनाशक ID।"
     },
+    "fallback": {
+      "crop": "फसल #{{id}}",
+      "pest": "कीट #{{id}}"
+    },
     "undo": {
       "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
@@ -102,7 +106,7 @@
     },
     "edit": {
       "title": "{{name}} संपादित करें",
-      "title_default": "कीटनाशक संपादित करें"
+      "title_default": "कीटनाशक"
     },
     "show": {
       "reference_pesticide": "संदर्भ कीटनाशक",
@@ -129,10 +133,6 @@
       "edit": "संपादित करें",
       "delete": "हटाएं",
       "confirm_delete": "क्या आप वाकई इस कीटनाशक को हटाना चाहते हैं?"
-    },
-    "fallback": {
-      "crop": "फसल #{{id}}",
-      "pest": "कीट #{{id}}"
     }
   },
   "agricultural_tasks": {
@@ -149,6 +149,9 @@
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
       "not_found": "指定された作業が見つかりません。"
+    },
+    "errors": {
+      "invalid_id": "अमान्य कार्य ID।"
     },
     "index": {
       "title": "कार्य सूची",
@@ -184,7 +187,7 @@
     },
     "edit": {
       "title": "{{name}} संपादित करें",
-      "title_default": "कार्य संपादित करें"
+      "title_default": "कार्य"
     },
     "form": {
       "name_label": "कार्य का नाम",
@@ -217,6 +220,7 @@
       "description": "विवरण",
       "time_per_sqm": "प्रति वर्ग मीटर समय",
       "hours_suffix": "घंटे/㎡",
+      "task_type": "कार्य प्रकार",
       "weather_dependency": "मौसम निर्भरता",
       "weather_dependency_low": "कम",
       "weather_dependency_medium": "मध्यम",
@@ -234,11 +238,7 @@
       "no_crops_associated": "कोई फसल संबद्ध नहीं।",
       "edit": "संपादित करें",
       "delete": "हटाएं",
-      "confirm_delete": "क्या आप इस कार्य को हटाना चाहते हैं?",
-      "task_type": "कार्य प्रकार"
-    },
-    "errors": {
-      "invalid_id": "अमान्य कार्य ID।"
+      "confirm_delete": "क्या आप इस कार्य को हटाना चाहते हैं?"
     }
   },
   "crops": {
@@ -311,6 +311,25 @@
         "daily_uptake_k_placeholder": "उदाहरण: 0.8",
         "daily_uptake_k_help": "इस चरण के लिए दैनिक पोटैशियम (तत्व) अवशोषण दर्ज करें।"
       }
+    },
+    "setup_proposal_import": {
+      "action": "प्रस्ताव आयात करें",
+      "breadcrumb": "प्रस्ताव आयात करें",
+      "title": "{{name}} — प्रस्ताव आयात करें",
+      "lead": "बाहरी स्किल से JSON पेस्ट करें या फ़ाइल चुनें, फिर सत्यापित और लागू करें।",
+      "json_label": "प्रस्ताव JSON",
+      "json_placeholder": "{ \"stages\": [], \"agricultural_tasks\": [], \"task_schedule_blueprints\": [] }",
+      "choose_file": "फ़ाइल चुनें",
+      "paste_clipboard": "क्लिपबोर्ड से पेस्ट करें",
+      "preview_button": "पूर्वावलोकन (सत्यापन)",
+      "previewing": "सत्यापन हो रहा है…",
+      "preview_title": "सामान्यीकृत पूर्वावलोकन",
+      "validation_errors_title": "सत्यापन त्रुटियाँ",
+      "apply_button": "इस फसल पर लागू करें",
+      "applying": "लागू हो रहा है…",
+      "invalid_json": "JSON का प्रारूप अमान्य है।",
+      "invalid_shape": "JSON में stages, agricultural_tasks और task_schedule_blueprints होना चाहिए।",
+      "clipboard_error": "क्लिपबोर्ड पढ़ा नहीं जा सका।"
     },
     "errors": {
       "invalid_id": "अमान्य फसल ID।",
@@ -415,6 +434,7 @@
       "stage_order_renumber": "क्रम पुनः नंबर करें"
     },
     "show": {
+      "reference_crop": "संदर्भ फसल",
       "name": "नाम",
       "variety": "किस्म",
       "area_per_unit": "प्रति इकाई क्षेत्र",
@@ -509,23 +529,7 @@
       "from_plan_wizard_lead": "नीचे के फॉर्म से कार्य योजना पंजीकृत करें। समाप्त होने पर ब्रेडक्रंब से योजना पर वापस जाएँ।",
       "return_to_plan": "योजना पर वापस जाएँ",
       "from_plan_stages_wizard_lead": "प्रत्येक वृद्धि चरण के लिए न्यूनतम सीमा तापमान और आवश्यक GDD सेट करें। समाप्त होने पर योजना पर लौटकर कार्य योजना पुनः बनाएँ।",
-      "base_temperature": "न्यूनतम सीमा तापमान",
-      "reference_crop": "संदर्भ फसल"
-    },
-    "setup_proposal_import": {
-      "action": "प्रस्ताव आयात करें",
-      "breadcrumb": "प्रस्ताव आयात करें",
-      "title": "{{name}} — प्रस्ताव आयात करें",
-      "lead": "बाहरी स्किल द्वारा उत्पन्न JSON चिपकाएँ या फ़ाइल चुनकर सत्यापित और लागू करें।",
-      "json_label": "प्रस्ताव JSON",
-      "json_placeholder": "{ \"stages\": [], \"agricultural_tasks\": [], \"task_schedule_blueprints\": [] }",
-      "choose_file": "फ़ाइल चुनें",
-      "paste_clipboard": "क्लिपबोर्ड से चिपकाएँ",
-      "preview_title": "सामान्यीकृत पूर्वावलोकन",
-      "validation_errors_title": "सत्यापन त्रुटियाँ",
-      "invalid_json": "JSON का प्रारूप अमान्य है।",
-      "invalid_shape": "JSON में stages, agricultural_tasks और task_schedule_blueprints शामिल होने चाहिए।",
-      "clipboard_error": "क्लिपबोर्ड पढ़ा नहीं जा सका।"
+      "base_temperature": "न्यूनतम सीमा तापमान"
     }
   },
   "pests": {
@@ -750,6 +754,9 @@
     "validation": {
       "required_fields": "खेत का नाम, क्षेत्र, अक्षांश और देशांतर आवश्यक हैं।"
     },
+    "map": {
+      "default_name": "नया खेत"
+    },
     "flash": {
       "created": "खेत सफलतापूर्वक बनाया गया।",
       "updated": "खेत सफलतापूर्वक अपडेट किया गया।",
@@ -808,7 +815,7 @@
         },
         "submit": "खेत बनाएं",
         "cancel": "रद्द करें",
-        "coordinates_validation_error": "अक्षांश या देशांतर अमान्य है।"
+        "coordinates_validation_error": "अमान्य अक्षांश या देशांतर। वैध सीमा के भीतर संख्यात्मक मान दर्ज करें।"
       },
       "errors": {
         "title": "{{count}} त्रुटियां हुईं:"
@@ -912,9 +919,6 @@
       "insufficient_historical_data": "पूर्वानुमान के लिए अपर्याप्त ऐतिहासिक डेटा।",
       "job_queue_failed": "पूर्वानुमान जॉब कतारबद्ध करने में विफल: {{error}}",
       "farm_not_found": "खेत नहीं मिला।"
-    },
-    "map": {
-      "default_name": "खेत"
     }
   },
   "fields": {
@@ -1005,6 +1009,9 @@
       "reference_flag_admin_only": "केवल व्यवस्थापक संदर्भ ध्वज बदल सकते हैं।",
       "no_permission": "अनुमति अस्वीकृत।",
       "not_found": "नियम नहीं मिला।"
+    },
+    "errors": {
+      "invalid_id": "अमान्य नियम ID।"
     },
     "index": {
       "title": "निरंतर खेती नियम सूची",
@@ -1099,9 +1106,6 @@
       "edit": "संपादित करें",
       "delete": "हटाएं",
       "confirm_delete": "क्या आप इस नियम को हटाना चाहते हैं?"
-    },
-    "errors": {
-      "invalid_id": "अमान्य नियम ID।"
     }
   },
   "controllers": {
@@ -1205,6 +1209,9 @@
     "submit": "जमा करें",
     "close": "बंद करें",
     "loading": "लोड हो रहा है...",
+    "creating": "बनाया जा रहा है...",
+    "sending": "भेजा जा रहा है...",
+    "updating": "अपडेट किया जा रहा है...",
     "true": "हां",
     "false": "नहीं",
     "api_error": {
@@ -1215,10 +1222,7 @@
       "not_migrated": "यह सुविधा अभी उपलब्ध नहीं है",
       "service_unavailable": "सर्वर से कनेक्ट नहीं हो सका",
       "generic": "एक त्रुटि हुई"
-    },
-    "creating": "बना रहे हैं...",
-    "sending": "भेज रहे हैं...",
-    "updating": "अपडेट कर रहे हैं..."
+    }
   },
   "masters": {
     "load_error": {
@@ -1339,6 +1343,8 @@
     }
   },
   "public_plans": {
+    "create_failed": "योजना बनाने में विफल: {{errors}}",
+    "invalid_farm_id": "अमान्य खेत ID।",
     "errors": {
       "field_not_found": "फ़ील्ड नहीं मिला",
       "cannot_remove_field_with_cultivations": "इस फ़ील्ड में खेती अनुसूची है। कृपया पहले फसलें हटाएं।",
@@ -1622,9 +1628,7 @@
       "in_10p7905_78p7047": "तिरुचिरापल्ली, तमिल नाडु",
       "in_11p6643_78p1460": "सेलम, तमिल नाडु",
       "in_9p9312_76p2673": "कोच्चि, केरल"
-    },
-    "create_failed": "योजना बनाने में विफल: {{errors}}",
-    "invalid_farm_id": "अमान्य खेत ID।"
+    }
   },
   "plans": {
     "errors": {
@@ -3150,12 +3154,5 @@
     "nextTask": "अगला कार्य",
     "nextTaskPlaceholder": "अभी कोई अगला कार्य उम्मीदवार नहीं है।",
     "stages": "विकास अवस्थाएँ"
-  },
-  "cookie_consent": {
-    "title": "कुकी उपयोग",
-    "description_html": "हम विज्ञापन और विश्लेषण के लिए कुकीज़ का उपयोग करते हैं। आप कभी भी अपनी पसंद बदल सकते हैं। विवरण के लिए {{privacy_link}} देखें।",
-    "privacy_link_text": "गोपनीयता नीति",
-    "accept": "स्वीकार करें",
-    "reject": "अस्वीकार करें"
   }
 }
