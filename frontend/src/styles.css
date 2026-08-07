@@ -16,6 +16,26 @@
   --color-text-secondary: #4a5568;
   --color-text-disabled: #94a3b8;
   --color-text-on-primary: #ffffff;
+  --color-text-muted: var(--color-accent);
+  --color-link: #1a5fb4;
+
+  /* コンポーネント向けエイリアス（フォールバック直書きを廃止） */
+  --color-danger: var(--color-error);
+  --color-danger-bg: var(--color-error-muted-bg);
+  --color-danger-border: var(--color-error-muted-border);
+  --color-error-bg-soft: var(--color-error-bg);
+  --color-warning-surface: var(--color-warning-bg);
+  --color-warning-border: #f0ad4e;
+  --color-warning-bg-soft: var(--color-warning-bg);
+  --color-primary-border-soft: #bfdbfe;
+  --color-primary-bg-soft: var(--color-home-secondary-hover-bg);
+  --color-primary-soft: #dbeafe;
+  --color-surface-alt: var(--color-surface-hover);
+  --color-surface-muted: var(--color-gray-50);
+  --color-surface-subtle: #f9fafb;
+  --color-border-subtle: #d1d5db;
+  --color-background-secondary: var(--color-background);
+  --color-secondary: #9c27b0;
 
   /* Gray scale（コンポーネント共通・app.css と同一値で単一ソース化） */
   --color-gray-50: #f8f9fa;
@@ -78,6 +98,7 @@
   --color-home-secondary-hover-bg: #eff6ff;
 
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.18);
 
   --color-overlay-strong: rgba(0, 0, 0, 0.5);
@@ -131,7 +152,7 @@
   --color-error-muted-bg: #fff1f2;
   --color-error-muted-border: #fecdd3;
 
-  --color-dialog-backdrop: rgba(0, 0, 0, 0.4);
+  --color-dialog-backdrop: rgb(0 0 0 / 0.45);
 
   /* 色: 境界・区切り */
   --color-border: #e2e8f0;
@@ -167,6 +188,7 @@
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.75;
   --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* フォーカス（a11y: outline 消しっぱなし禁止） */
   --focus-outline: 2px solid var(--color-primary);

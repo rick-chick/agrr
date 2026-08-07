@@ -228,7 +228,7 @@ const PAGE_LIMIT = 20;
       .flow-detail-expanded {
         margin-top: 0.75rem;
         padding: 0.75rem;
-        background: var(--color-surface-alt, #f8fafc);
+        background: var(--color-surface-alt);
         border-radius: 10px;
         font-size: 0.88rem;
       }
@@ -251,7 +251,7 @@ const PAGE_LIMIT = 20;
       }
       .placeholder-block {
         padding: 1.5rem;
-        border: 1px dashed var(--color-border, #ccc);
+        border: 1px dashed var(--color-border);
         border-radius: 8px;
         text-align: center;
       }
@@ -265,7 +265,7 @@ const PAGE_LIMIT = 20;
       .btn-link {
         background: none;
         border: none;
-        color: var(--color-link, #1a5fb4);
+        color: var(--color-link);
         cursor: pointer;
         text-decoration: underline;
         padding: 0;

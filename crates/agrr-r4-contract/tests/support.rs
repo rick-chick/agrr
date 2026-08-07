@@ -937,6 +937,7 @@ pub struct FarmTemperatureChartSeed {
 
 /// Seeds a private farm with completed weather data for temperature chart contract tests.
 pub fn seed_farm_temperature_chart_completed(user_id: i64) -> FarmTemperatureChartSeed {
+    let organization_id = run_personal_organization_ensure_for_user(user_id);
     let path =
         std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
     let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
@@ -953,14 +954,14 @@ pub fn seed_farm_temperature_chart_completed(user_id: i64) -> FarmTemperatureCha
 
     conn.execute(
         "INSERT INTO farms (
-           user_id, name, latitude, longitude, created_at, updated_at, is_reference,
+           user_id, organization_id, name, latitude, longitude, created_at, updated_at, is_reference,
            weather_data_status, weather_data_fetched_years, weather_data_total_years,
            weather_location_id
          ) VALUES (
-           ?1, ?2, 35.0, 139.0, datetime('now'), datetime('now'), 0,
-           'completed', 5, 5, ?3
+           ?1, ?2, ?3, 35.0, 139.0, datetime('now'), datetime('now'), 0,
+           'completed', 5, 5, ?4
          )",
-        params![user_id, farm_name, weather_location_id],
+        params![user_id, organization_id, farm_name, weather_location_id],
     )
     .expect("insert farm");
     let farm_id = conn.last_insert_rowid();
@@ -986,6 +987,7 @@ pub fn seed_farm_temperature_chart_completed(user_id: i64) -> FarmTemperatureCha
 
 /// Seeds a private farm with fetching weather status (chart should return 409).
 pub fn seed_farm_temperature_chart_fetching(user_id: i64) -> i64 {
+    let organization_id = run_personal_organization_ensure_for_user(user_id);
     let path =
         std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
     let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
@@ -1002,14 +1004,14 @@ pub fn seed_farm_temperature_chart_fetching(user_id: i64) -> i64 {
 
     conn.execute(
         "INSERT INTO farms (
-           user_id, name, latitude, longitude, created_at, updated_at, is_reference,
+           user_id, organization_id, name, latitude, longitude, created_at, updated_at, is_reference,
            weather_data_status, weather_data_fetched_years, weather_data_total_years,
            weather_location_id
          ) VALUES (
-           ?1, ?2, 35.0, 139.0, datetime('now'), datetime('now'), 0,
-           'fetching', 2, 5, ?3
+           ?1, ?2, ?3, 35.0, 139.0, datetime('now'), datetime('now'), 0,
+           'fetching', 2, 5, ?4
          )",
-        params![user_id, farm_name, weather_location_id],
+        params![user_id, organization_id, farm_name, weather_location_id],
     )
     .expect("insert farm");
 
