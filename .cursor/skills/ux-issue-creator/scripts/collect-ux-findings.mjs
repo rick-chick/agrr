@@ -22,10 +22,15 @@ import {
   buildCssFindings,
   buildVisualFindings,
   isLikelyDuplicateFinding,
+  isLikelyResolvedFinding,
   parseCssAuditLog,
   parseDetailedFindings,
   parseVisualReviewTable,
 } from './collect-ux-findings-parsers.mjs';
+import {
+  filterFindingsByEvidence,
+  loadAgentReviewEvidence,
+} from './collect-evidence-gate.mjs';
 
 const execFileAsync = promisify(execFile);
 
@@ -134,9 +139,13 @@ export function renderMarkdownDraft(findings) {
       lines.push('## 背景', '');
       lines.push(`${f.summary}（${rowRef}, ${layoutNote}）。`, '');
       lines.push('## 再現手順', '');
-      if (f.pattern) lines.push(`- ルート: ${f.pattern}`);
-      if (f.png?.length) lines.push(`- PNG: ${f.png.join(', ')}`);
-      lines.push('- 上記画面で指摘どおりの表示・操作を確認（起票前に実施済み）');
+      lines.push('- ルート: ' + (f.pattern || (f.patterns || []).join(', ')));
+      if (f.png?.length) {
+        lines.push(`- PNG（captureRunId 紐づけ）: ${f.png.join(', ')}`);
+      }
+      lines.push(
+        '- 根拠: visual-review + agent-review-bundle.json（collect 時に証拠鎖ゲート通過）',
+      );
       lines.push('', '## 完了条件', '');
       lines.push('- [ ] 3 言語キャプチャで指摘が解消');
       lines.push('- [ ] 関連テスト GREEN', '', '## 依存', '', 'なし', '', '## 参照', '');
@@ -162,7 +171,19 @@ export function renderMarkdownDraft(findings) {
 }
 
 async function main() {
-  const visualMarkdown = await readFile(VISUAL_REVIEW_PATH, 'utf8');
+  const evidence = await loadAgentReviewEvidence(REPO_ROOT);
+  if (!evidence.chain.ok) {
+    console.error('collect-ux-findings: 証拠鎖ゲート FAILED — Issue 起票中止');
+    for (const err of evidence.chain.errors) {
+      console.error(`  - ${err}`);
+    }
+    console.error(
+      '  手順: npm run e2e:capture-for-agent → frontend-agent-visual-review → npm run e2e:agent-review:stamp-review',
+    );
+    process.exit(1);
+  }
+
+  const visualMarkdown = evidence.reviewMarkdown;
   const tableRows = parseVisualReviewTable(visualMarkdown);
   const detailedItems = parseDetailedFindings(visualMarkdown);
   const visualFindings = buildVisualFindings(tableRows, detailedItems);
@@ -177,16 +198,19 @@ async function main() {
   const cssFindings = buildCssFindings(cssViolations);
 
   const rawFindings = [...visualFindings, ...cssFindings];
+  const evidenceFiltered = filterFindingsByEvidence(rawFindings, evidence.bundle);
   const { issues, status: githubLookupStatus } = await fetchGithubIssues();
-  const findings = attachIssueCandidates(rawFindings, issues);
+  const findings = attachIssueCandidates(evidenceFiltered, issues);
 
   const mergeGroups = findings.filter((f) => f.mergeGroup === true);
-  const skippable = findings.filter(isLikelyDuplicateFinding);
+  const skippableOpen = findings.filter(isLikelyDuplicateFinding);
+  const skippableResolved = findings.filter(isLikelyResolvedFinding);
 
   const payload = {
     generatedAt: new Date().toISOString(),
     sources: {
       visualReview: 'frontend/e2e/agent-review/visual-review-results.md',
+      captureRunId: evidence.bundle?.runId ?? null,
       cssAudit: CSS_LOG_PATH || 'npm run audit:css-tokens (frontend/)',
       githubIssues: SKIP_GH ? 'skipped' : `gh issue list --repo ${GITHUB_REPO}`,
       githubLookupStatus,
@@ -196,7 +220,9 @@ async function main() {
       css: cssFindings.length,
       mergeGroups: mergeGroups.length,
       total: findings.length,
-      likelyDuplicateOpen: skippable.length,
+      rawBeforeEvidenceFilter: rawFindings.length,
+      likelyDuplicateOpen: skippableOpen.length,
+      likelyResolvedClosed: skippableResolved.length,
     },
     mergeGroups: mergeGroups.map((g) => ({
       id: g.id,
@@ -214,7 +240,9 @@ async function main() {
 
   console.log(`collect-ux-findings: ${findings.length} 件`);
   console.log(`  visual: ${visualFindings.length}, css: ${cssFindings.length}, merge: ${mergeGroups.length}`);
-  console.log(`  likely duplicate (open): ${skippable.length}`);
+  console.log(`  likely duplicate (open): ${skippableOpen.length}`);
+  console.log(`  likely resolved (closed): ${skippableResolved.length}`);
+  console.log(`  captureRunId: ${evidence.bundle?.runId ?? '—'}`);
   console.log(`  github lookup: ${githubLookupStatus}`);
   if (githubLookupStatus === 'failed') {
     console.warn('collect-ux-findings: githubLookupStatus=failed — 起票前に gh 認証・重複確認を再実行すること');

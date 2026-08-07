@@ -80,7 +80,7 @@ jobs:
 
       - name: verify-visual-review-fresh unit tests
         working-directory: frontend
-        run: node --test e2e/agent-review/verify-visual-review-fresh.test.mjs
+        run: node --test e2e/agent-review/verify-visual-review-fresh.test.mjs e2e/agent-review/agent-review-bundle.test.mjs
 
       - name: apply-resolved-url unit tests
         working-directory: frontend
