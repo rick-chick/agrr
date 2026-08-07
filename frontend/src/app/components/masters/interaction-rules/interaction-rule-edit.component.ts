@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -40,7 +41,7 @@ const initialControl: InteractionRuleEditViewState = {
 @Component({
   selector: 'app-interaction-rule-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...INTERACTION_RULE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
@@ -49,6 +50,13 @@ const initialControl: InteractionRuleEditViewState = {
         <h2 id="form-heading" class="form-card__title">{{ 'interaction_rules.edit.title' | translate }}</h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <app-master-load-error-panel
+            [errorKey]="control.error"
+            [listLink]="['/interaction_rules']"
+            backLabelKey="interaction_rules.index.title"
+            (retry)="reload()"
+          />
         } @else {
           <form (ngSubmit)="updateInteractionRule()" #interactionRuleForm="ngForm" class="form-card__form">
             <label class="form-card__field" for="rule_type">
@@ -142,10 +150,16 @@ export class InteractionRuleEditComponent implements InteractionRuleEditView, On
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('interaction_rules.errors.invalid_id')
+        error: 'interaction_rules.errors.invalid_id'
       };
       return;
     }
+    this.reload();
+  }
+
+  reload(): void {
+    if (!this.interactionRuleId) return;
+    this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ interactionRuleId: this.interactionRuleId });
   }
 

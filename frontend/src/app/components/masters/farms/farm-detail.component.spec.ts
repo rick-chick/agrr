@@ -109,6 +109,8 @@ describe('FarmDetailComponent', () => {
     });
     translate.use('ja');
 
+    vi.spyOn(component, 'load').mockImplementation(() => {});
+
     // Replace ChangeDetectorRef with mock
     Object.defineProperty(component, 'cdr', { value: cdr });
   });
@@ -140,6 +142,7 @@ describe('FarmDetailComponent', () => {
   });
 
   it('calls useCases.execute on load', () => {
+    vi.mocked(component.load).mockRestore();
     const farmId = 123;
     component.load(farmId);
     expect(loadUseCase.execute).toHaveBeenCalledWith({ farmId });
@@ -386,6 +389,7 @@ describe('FarmDetailComponent', () => {
   });
 
   it('ngOnInit sets views on presenters and calls load with route param', () => {
+    vi.mocked(component.load).mockRestore();
     component.ngOnInit();
     expect(presenter.setView).toHaveBeenCalledWith(component);
     expect(createFieldPresenter.setView).toHaveBeenCalledWith(component);
@@ -474,7 +478,7 @@ describe('FarmDetailComponent', () => {
     });
     component.control = {
       loading: false,
-      error: 'Not found',
+      error: 'common.api_error.not_found',
       farm: null,
       fields: [],
       pendingUndoToast: null,
@@ -482,6 +486,55 @@ describe('FarmDetailComponent', () => {
     };
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
+  });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    translate.setTranslation('ja', {
+      farms: { index: { title: '農場一覧' } },
+      'common.api_error.not_found': 'リソースが見つかりません',
+      'masters.load_error.retry': '再読み込み'
+    });
+    component.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      farm: null,
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.getAttribute('role')).toBe('alert');
+    expect(alert?.textContent).toContain('リソースが見つかりません');
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/farms');
+    expect(fixture.nativeElement.querySelector('.master-load-error__retry')?.textContent?.trim()).toBe(
+      '再読み込み'
+    );
+  });
+
+  it('reloads detail when reload is called after load error', () => {
+    fixture.detectChanges();
+    vi.mocked(component.load).mockRestore();
+    component.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      farm: null,
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+
+    loadUseCase.execute.mockClear();
+    subscribeWeatherUseCase.execute.mockClear();
+    component.reload();
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ farmId: 123 });
+    expect(subscribeWeatherUseCase.execute).toHaveBeenCalled();
   });
 
   it('passes chartSelectedPeriod to temperature chart as selectedPeriod input', () => {

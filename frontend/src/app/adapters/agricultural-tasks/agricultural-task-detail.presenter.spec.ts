@@ -42,7 +42,7 @@ describe('AgriculturalTaskDetailPresenter', () => {
   });
 
   describe('LoadAgriculturalTaskDetailOutputPort', () => {
-    it('queues pending error flash and updates view.control on onError(dto)', () => {
+    it('sets i18n error key on view.control when loading fails', () => {
       const initialControl: AgriculturalTaskDetailViewState = {
         loading: true,
         error: null,
@@ -56,10 +56,33 @@ describe('AgriculturalTaskDetailPresenter', () => {
 
       presenter.onError(dto);
 
-      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Not found' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
+      expect(lastControl!.error).toBe('common.api_error.not_found');
+      expect(lastControl!.pendingErrorFlash).toBeNull();
+    });
+
+    it('queues pending error flash when error occurs after load', () => {
+      lastControl = {
+        loading: false,
+        error: null,
+        agriculturalTask: {
+          id: 1,
+          name: 'Task A',
+          required_tools: [],
+          is_reference: false
+        },
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+
+      presenter.onError({ message: 'Not found' });
+
       expect(lastControl!.error).toBeNull();
+      expect(lastControl!.pendingErrorFlash).toEqual({
+        type: 'error',
+        text: 'common.api_error.not_found'
+      });
     });
   });
 

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { FarmEditView, FarmEditViewState, FarmEditFormData } from './farm-edit.view';
 import { LoadFarmForEditUseCase } from '../../../usecase/farms/load-farm-for-edit.usecase';
 import { UpdateFarmUseCase } from '../../../usecase/farms/update-farm.usecase';
@@ -38,7 +39,7 @@ const initialControl: FarmEditViewState = {
 @Component({
   selector: 'app-farm-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, FarmMapComponent, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, FarmMapComponent, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...FARM_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
@@ -47,6 +48,13 @@ const initialControl: FarmEditViewState = {
         <h2 id="form-heading" class="form-card__title">{{ 'farms.edit.title' | translate }}</h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <app-master-load-error-panel
+            [errorKey]="control.error"
+            [listLink]="['/farms']"
+            backLabelKey="farms.index.title"
+            (retry)="reload()"
+          />
         } @else {
           <form (ngSubmit)="updateFarm()" #farmForm="ngForm" class="form-card__form">
             <label class="form-card__field" for="name">
@@ -156,9 +164,15 @@ export class FarmEditComponent implements FarmEditView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     if (!this.farmId) {
-      // Presenter will handle invalid farm id error
+      this.control = { ...initialControl, loading: false, error: 'common.api_error.not_found' };
       return;
     }
+    this.reload();
+  }
+
+  reload(): void {
+    if (!this.farmId) return;
+    this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ farmId: this.farmId });
   }
 

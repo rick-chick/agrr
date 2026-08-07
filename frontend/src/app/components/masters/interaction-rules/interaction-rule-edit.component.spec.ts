@@ -66,6 +66,7 @@ describe('InteractionRuleEditComponent', () => {
 
     fixture = TestBed.createComponent(InteractionRuleEditComponent);
     component = fixture.componentInstance;
+    vi.spyOn(component, 'reload').mockImplementation(() => {});
 
     // Configure TranslateService with minimal translations for template pipes
     const translate = TestBed.inject(TranslateService);
@@ -88,6 +89,7 @@ describe('InteractionRuleEditComponent', () => {
   });
 
   it('loads interaction rule on init', () => {
+    vi.mocked(component.reload).mockRestore();
     component.ngOnInit();
     expect(mockPresenter.setView).toHaveBeenCalledWith(component);
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ interactionRuleId: 1 });
@@ -97,7 +99,7 @@ describe('InteractionRuleEditComponent', () => {
     const translate = TestBed.inject(TranslateService);
     mockActivatedRoute.snapshot.paramMap.get = () => null;
     component.ngOnInit();
-    expect(component.control.error).toBe(translate.instant('interaction_rules.errors.invalid_id'));
+    expect(component.control.error).toBe('interaction_rules.errors.invalid_id');
   });
 
   it('uses form region for admin submit', () => {

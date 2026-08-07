@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { CropEditView } from '../../components/masters/crops/crop-edit.view';
 import { LoadCropForEditOutputPort } from '../../usecase/crops/load-crop-for-edit.output-port';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
 import { UpdateCropOutputPort } from '../../usecase/crops/update-crop.output-port';
 import { UpdateCropSuccessDto } from '../../usecase/crops/update-crop.dtos';
-import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
 
 @Injectable()
@@ -44,9 +44,9 @@ export class CropEditPresenter implements LoadCropForEditOutputPort, UpdateCropO
       ...this.view.control,
       loading: false,
       saving: false,
-      error: null,
+      error: errorDtoI18nKey(dto),
       pendingSuccessFlash: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      pendingErrorFlash: null
     };
   }
 

@@ -55,6 +55,7 @@ describe('AgriculturalTaskEditComponent', () => {
 
     fixture = TestBed.createComponent(AgriculturalTaskEditComponent);
     component = fixture.componentInstance;
+    vi.spyOn(component, 'reload').mockImplementation(() => {});
     fixture.detectChanges();
   });
 
@@ -74,7 +75,7 @@ describe('AgriculturalTaskEditComponent', () => {
     translate.use('en');
     mockActivatedRoute.snapshot.paramMap.get = () => null;
     component.ngOnInit();
-    expect(component.control.error).toBe(translate.instant('agricultural_tasks.errors.invalid_id'));
+    expect(component.control.error).toBe('agricultural_tasks.errors.invalid_id');
   });
 
   it('should call updateUseCase when updateAgriculturalTask is called', () => {

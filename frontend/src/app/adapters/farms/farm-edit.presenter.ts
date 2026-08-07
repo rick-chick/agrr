@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { FarmEditView } from '../../components/masters/farms/farm-edit.view';
 import { LoadFarmForEditOutputPort } from '../../usecase/farms/load-farm-for-edit.output-port';
 import { LoadFarmForEditDataDto } from '../../usecase/farms/load-farm-for-edit.dtos';
 import { UpdateFarmOutputPort } from '../../usecase/farms/update-farm.output-port';
 import { UpdateFarmSuccessDto } from '../../usecase/farms/update-farm.dtos';
-import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class FarmEditPresenter implements LoadFarmForEditOutputPort, UpdateFarmOutputPort {
@@ -38,8 +38,8 @@ export class FarmEditPresenter implements LoadFarmForEditOutputPort, UpdateFarmO
       ...this.view.control,
       loading: false,
       saving: false,
-      error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      error: errorDtoI18nKey(dto),
+      pendingErrorFlash: null
     };
   }
 

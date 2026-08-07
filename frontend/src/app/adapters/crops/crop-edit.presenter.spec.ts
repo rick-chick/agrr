@@ -119,7 +119,7 @@ describe('CropEditPresenter', () => {
       expect(lastControl!.pendingSuccessFlash).toEqual({ type: 'success', text: 'crops.flash.updated' });
     });
 
-    it('queues pending error flash and updates view.control on onError(dto)', () => {
+    it('sets i18n error key on view.control on onError(dto)', () => {
       const initialControl: CropEditViewState = {
         loading: false,
         saving: true,
@@ -143,10 +143,10 @@ describe('CropEditPresenter', () => {
 
       presenter.onError(dto);
 
-      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Validation error' });
+      expect(lastControl!.pendingErrorFlash).toBeNull();
       expect(lastControl!.pendingSuccessFlash).toBeNull();
       expect(lastControl!.saving).toBe(false);
-      expect(lastControl!.error).toBeNull();
+      expect(lastControl!.error).toBe('common.api_error.generic');
     });
   });
 });

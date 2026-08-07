@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { PestEditView } from '../../components/masters/pests/pest-edit.view';
 import { LoadPestForEditOutputPort } from '../../usecase/pests/load-pest-for-edit.output-port';
 import { LoadPestForEditDataDto } from '../../usecase/pests/load-pest-for-edit.dtos';
 import { UpdatePestOutputPort } from '../../usecase/pests/update-pest.output-port';
 import { UpdatePestSuccessDto } from '../../usecase/pests/update-pest.dtos';
-import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class PestEditPresenter implements LoadPestForEditOutputPort, UpdatePestOutputPort {
@@ -42,8 +42,8 @@ export class PestEditPresenter implements LoadPestForEditOutputPort, UpdatePestO
       ...this.view.control,
       loading: false,
       saving: false,
-      error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      error: errorDtoI18nKey(dto),
+      pendingErrorFlash: null
     };
   }
 

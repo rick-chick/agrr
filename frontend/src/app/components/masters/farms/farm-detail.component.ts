@@ -30,6 +30,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { FarmTemperatureChartComponent } from './farm-temperature-chart.component';
 import { FarmTemperatureChartPeriod } from '../../../domain/farms/farm-temperature-chart';
 
@@ -53,7 +54,8 @@ const initialControl: FarmDetailViewState = {
     FormsModule,
     RegionSelectComponent,
     MasterContextHeaderComponent,
-    FarmTemperatureChartComponent
+    FarmTemperatureChartComponent,
+    MasterLoadErrorPanelComponent
   ],
   providers: [...FARM_DETAIL_PROVIDERS],
   template: `
@@ -62,7 +64,12 @@ const initialControl: FarmDetailViewState = {
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
-        <p class="master-loading master-error">{{ control.error }}</p>
+        <app-master-load-error-panel
+          [errorKey]="control.error"
+          [listLink]="['/farms']"
+          backLabelKey="farms.index.title"
+          (retry)="reload()"
+        />
       } @else if (control.farm) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.farm.name }}</h1>
@@ -255,6 +262,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   }
 
   load(farmId: number): void {
+    this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ farmId });
     this.subscribeWeatherUseCase.execute({
       farmId,

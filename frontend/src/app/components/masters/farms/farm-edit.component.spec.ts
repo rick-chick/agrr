@@ -53,6 +53,7 @@ describe('FarmEditComponent', () => {
 
     fixture = TestBed.createComponent(FarmEditComponent);
     component = fixture.componentInstance;
+    vi.spyOn(component, 'reload').mockImplementation(() => {});
 
     // Replace ChangeDetectorRef with mock
     Object.defineProperty(component, 'cdr', { value: cdr });
@@ -171,6 +172,7 @@ describe('FarmEditComponent', () => {
   });
 
   it('ngOnInit sets view on presenter and calls loadUseCase with farmId', () => {
+    vi.mocked(component.reload).mockRestore();
     component.ngOnInit();
     expect(presenter.setView).toHaveBeenCalledWith(component);
     expect(loadUseCase.execute).toHaveBeenCalledWith({ farmId: 123 });

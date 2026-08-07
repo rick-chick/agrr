@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { InteractionRuleEditView } from '../../components/masters/interaction-rules/interaction-rule-edit.view';
 import { LoadInteractionRuleForEditOutputPort } from '../../usecase/interaction-rules/load-interaction-rule-for-edit.output-port';
 import { LoadInteractionRuleForEditDataDto } from '../../usecase/interaction-rules/load-interaction-rule-for-edit.dtos';
 import { UpdateInteractionRuleOutputPort } from '../../usecase/interaction-rules/update-interaction-rule.output-port';
 import { UpdateInteractionRuleSuccessDto } from '../../usecase/interaction-rules/update-interaction-rule.dtos';
-import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class InteractionRuleEditPresenter implements LoadInteractionRuleForEditOutputPort, UpdateInteractionRuleOutputPort {
@@ -42,8 +42,8 @@ export class InteractionRuleEditPresenter implements LoadInteractionRuleForEditO
       ...this.view.control,
       loading: false,
       saving: false,
-      error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      error: errorDtoI18nKey(dto),
+      pendingErrorFlash: null
     };
   }
 

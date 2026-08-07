@@ -10,8 +10,10 @@ import { PestDetailPresenter } from '../../../usecase/pests/pest-detail.provider
 describe('PestDetailComponent', () => {
   let fixture: ComponentFixture<PestDetailComponent>;
   let translate: TranslateService;
+  let loadExecute: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    loadExecute = vi.fn();
     await TestBed.configureTestingModule({
       imports: [PestDetailComponent, TranslateModule.forRoot()],
       providers: [
@@ -21,14 +23,14 @@ describe('PestDetailComponent', () => {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: { get: () => '1' } } }
         },
-        { provide: LoadPestDetailUseCase, useValue: { execute: vi.fn() } },
+        { provide: LoadPestDetailUseCase, useValue: { execute: loadExecute } },
         { provide: DeletePestUseCase, useValue: { execute: vi.fn() } }
       ]
     })
       .overrideComponent(PestDetailComponent, {
         set: {
           providers: [
-            { provide: LoadPestDetailUseCase, useValue: { execute: vi.fn() } },
+            { provide: LoadPestDetailUseCase, useValue: { execute: loadExecute } },
             { provide: DeletePestUseCase, useValue: { execute: vi.fn() } }
           ]
         }
@@ -130,5 +132,51 @@ describe('PestDetailComponent', () => {
 
     expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[aria-current="page"]')).toBeNull();
+  });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    translate.setTranslation('en', {
+      pests: { index: { title: 'Pests' } },
+      'common.api_error.not_found': 'Resource not found',
+      'masters.load_error.retry': 'Reload'
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      pendingErrorFlash: null,
+      pest: null,
+      pendingUndoToast: null
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.getAttribute('role')).toBe('alert');
+    expect(alert?.textContent).toContain('Resource not found');
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/pests');
+    expect(fixture.nativeElement.querySelector('.master-load-error__retry')?.textContent?.trim()).toBe(
+      'Reload'
+    );
+  });
+
+  it('reloads detail when retry is clicked after load error', () => {
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      pendingErrorFlash: null,
+      pest: null,
+      pendingUndoToast: null
+    };
+    fixture.detectChanges();
+
+    loadExecute.mockClear();
+    fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
+
+    expect(loadExecute).toHaveBeenCalledWith({ pestId: 1 });
   });
 });

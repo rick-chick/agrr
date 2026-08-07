@@ -12,6 +12,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 
 const initialControl: PestDetailViewState = {
   loading: true,
@@ -24,13 +25,20 @@ const initialControl: PestDetailViewState = {
 @Component({
   selector: 'app-pest-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...PEST_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
+      } @else if (control.error) {
+        <app-master-load-error-panel
+          [errorKey]="control.error"
+          [listLink]="['/pests']"
+          backLabelKey="pests.index.title"
+          (retry)="reload()"
+        />
       } @else if (control.pest) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.pest.name }}</h1>
@@ -127,14 +135,14 @@ export class PestDetailComponent implements PestDetailView, OnInit {
     this.presenter.setView(this);
     const pestId = Number(this.route.snapshot.paramMap.get('id'));
     if (!pestId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid pest id.' };
+      this.control = { ...initialControl, loading: false, error: 'pests.errors.invalid_id' };
       return;
     }
     this.load(pestId);
   }
 
   load(pestId: number): void {
-    this.control = { ...this.control, loading: true };
+    this.control = { ...this.control, loading: true, error: null };
     this.useCase.execute({ pestId });
   }
 

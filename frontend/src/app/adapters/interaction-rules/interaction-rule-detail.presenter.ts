@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { InteractionRuleDetailView } from '../../components/masters/interaction-rules/interaction-rule-detail.view';
 import { LoadInteractionRuleDetailOutputPort } from '../../usecase/interaction-rules/load-interaction-rule-detail.output-port';
 import { InteractionRuleDetailDataDto } from '../../usecase/interaction-rules/load-interaction-rule-detail.dtos';
@@ -32,11 +33,21 @@ export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetail
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const errorKey = errorDtoI18nKey(dto);
+    if (this.view.control.loading) {
+      this.view.control = {
+        ...this.view.control,
+        loading: false,
+        error: errorKey,
+        pendingErrorFlash: null
+      };
+      return;
+    }
     this.view.control = {
       ...this.view.control,
       loading: false,
       error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      pendingErrorFlash: pendingErrorFlashFromError({ message: errorKey })
     };
   }
 

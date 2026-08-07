@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { AgriculturalTaskEditView } from '../../components/masters/agricultural-tasks/agricultural-task-edit.view';
 import { LoadAgriculturalTaskForEditOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-for-edit.output-port';
 import { LoadAgriculturalTaskForEditDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-for-edit.dtos';
 import { UpdateAgriculturalTaskOutputPort } from '../../usecase/agricultural-tasks/update-agricultural-task.output-port';
 import { UpdateAgriculturalTaskSuccessDto } from '../../usecase/agricultural-tasks/update-agricultural-task.dtos';
-import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class AgriculturalTaskEditPresenter implements LoadAgriculturalTaskForEditOutputPort, UpdateAgriculturalTaskOutputPort {
@@ -43,8 +43,8 @@ export class AgriculturalTaskEditPresenter implements LoadAgriculturalTaskForEdi
       ...this.view.control,
       loading: false,
       saving: false,
-      error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      error: errorDtoI18nKey(dto),
+      pendingErrorFlash: null
     };
   }
 

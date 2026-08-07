@@ -67,6 +67,7 @@ describe('CropEditComponent', () => {
 
     fixture = TestBed.createComponent(CropEditComponent);
     component = fixture.componentInstance;
+    vi.spyOn(component, 'reload').mockImplementation(() => {});
 
     const translateService = TestBed.inject(TranslateService);
     translateService.setTranslation('ja', {
@@ -88,6 +89,7 @@ describe('CropEditComponent', () => {
   });
 
   it('should load crop on init', () => {
+    vi.mocked(component.reload).mockRestore();
     expect(component['cropId']).toBe(1);
     fixture.detectChanges();
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });

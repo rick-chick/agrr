@@ -68,7 +68,7 @@ describe('FarmDetailPresenter', () => {
       expect(lastControl!.pendingUndoToast).toBeNull();
     });
 
-    it('queues pending error flash and updates view.control on onError(dto)', () => {
+    it('sets i18n error key on view.control when loading fails', () => {
       const initialControl: FarmDetailViewState = { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
       lastControl = initialControl;
 
@@ -76,10 +76,30 @@ describe('FarmDetailPresenter', () => {
 
       presenter.onError(dto);
 
-      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Not found' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
+      expect(lastControl!.error).toBe('common.api_error.not_found');
+      expect(lastControl!.pendingErrorFlash).toBeNull();
+    });
+
+    it('queues pending error flash when error occurs after load', () => {
+      const initialControl: FarmDetailViewState = {
+        loading: false,
+        error: null,
+        farm: { id: 1, name: 'Farm A', region: 'jp', latitude: 35, longitude: 135 },
+        fields: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+      lastControl = initialControl;
+
+      presenter.onError({ message: 'Not found' });
+
       expect(lastControl!.error).toBeNull();
+      expect(lastControl!.pendingErrorFlash).toEqual({
+        type: 'error',
+        text: 'common.api_error.not_found'
+      });
     });
   });
 

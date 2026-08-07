@@ -200,4 +200,30 @@ describe('InteractionRuleDetailComponent', () => {
     expect(el.textContent).not.toMatch(/\bjp\b/);
     expect(el.innerHTML).not.toContain('interaction_rules.show.region');
   });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    translate.setTranslation('en', {
+      interaction_rules: { index: { title: 'Rotation rules' } },
+      'common.api_error.not_found': 'Resource not found',
+      'masters.load_error.retry': 'Reload'
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      rule: null,
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.getAttribute('role')).toBe('alert');
+    expect(alert?.textContent).toContain('Resource not found');
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/interaction_rules');
+  });
 });
