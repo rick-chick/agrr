@@ -83,4 +83,18 @@ describe('LoginComponent', () => {
     fixture.destroy();
     expect(meta.getTag('name="robots"')).toBeNull();
   });
+
+  it('styles dev mock login buttons with dark backgrounds for text contrast', () => {
+    authService.loadCurrentUser.mockReturnValue(of(null));
+    createAndInit();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.mock-btn-developer')).toBeTruthy();
+    expect(root.querySelector('.mock-btn-farmer')).toBeTruthy();
+    expect(root.querySelector('.mock-btn-researcher')).toBeTruthy();
+    const styles = getComputedStyle(root.querySelector('.mock-btn-developer')!);
+    expect(styles.backgroundColor).not.toBe('rgb(66, 153, 225)');
+    expect(getComputedStyle(root.querySelector('.mock-btn-farmer')!).backgroundColor).not.toBe(
+      'rgb(16, 185, 129)'
+    );
+  });
 });

@@ -65,15 +65,15 @@
 }
 
 .mock-btn-developer {
-  background: var(--color-info, #2196f3);
+  background: var(--color-info-dark, #2b6cb0);
 }
 
 .mock-btn-farmer {
-  background: var(--color-success, #4caf50);
+  background: var(--color-success-dark, #2f855a);
 }
 
 .mock-btn-researcher {
-  background: var(--color-secondary, #9c27b0);
+  background: #6b21a8;
 }
 
 .dev-note {

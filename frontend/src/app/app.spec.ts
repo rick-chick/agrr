@@ -38,4 +38,12 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-navbar')).toBeTruthy();
   });
+
+  it('uses a div shell so routed page-main is the sole main landmark', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('main.app-main')).toBeNull();
+    expect(compiled.querySelector('div.app-main')).toBeTruthy();
+  });
 });
