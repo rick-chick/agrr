@@ -38,6 +38,9 @@ import {
   normalizePlanBounds,
   formatGanttFieldRowIndexLabel,
   getGanttFieldLabelCenterX,
+  getGanttFieldLabelAnchorX,
+  getGanttFieldDividerX,
+  getGanttFieldLabelClipWidth,
   getGanttMarginLeft,
   resolveGanttDragCommit,
   pickGanttActiveTouchIndex,
@@ -334,26 +337,46 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
             <!-- Field Rows -->
             @for (group of fieldGroups; track group.fieldId; let i = $index) {
               <g class="field-row" [attr.transform]="'translate(0, ' + (config.margin.top + i * config.rowHeight) + ')'">
+                @if (!isMobileLayout) {
+                  <clipPath [attr.id]="'field-label-clip-' + i">
+                    <rect
+                      x="0"
+                      y="0"
+                      [attr.width]="getGanttFieldLabelClipWidth(config.margin.left)"
+                      [attr.height]="config.rowHeight" />
+                  </clipPath>
+                }
                 <text
-                  [attr.x]="getGanttFieldLabelCenterX(config.margin.left)"
+                  [attr.x]="isMobileLayout ? getGanttFieldLabelCenterX(config.margin.left) : getGanttFieldLabelAnchorX(config.margin.left)"
                   [attr.y]="config.rowHeight / 2 + 5"
                   class="field-label"
-                  text-anchor="middle"
+                  [attr.text-anchor]="isMobileLayout ? 'middle' : 'end'"
+                  [attr.clip-path]="!isMobileLayout ? 'url(#field-label-clip-' + i + ')' : null"
                   font-size="14"
                   font-weight="600"
                   fill="#374151">
+                  @if (!isMobileLayout) {
+                    <title>{{ group.fieldName }}</title>
+                  }
                   @if (isMobileLayout) {
                     {{ formatGanttFieldRowIndexLabel(i) }}
                   } @else {
                     {{ group.fieldName }}
                   }
                 </text>
-                <line [attr.x1]="config.margin.left - 10" y1="0" [attr.x2]="config.margin.left - 10" [attr.y2]="config.rowHeight" stroke="#D1D5DB" stroke-width="2" />
+                <line
+                  [attr.x1]="getGanttFieldDividerX(config.margin.left)"
+                  y1="0"
+                  [attr.x2]="getGanttFieldDividerX(config.margin.left)"
+                  [attr.y2]="config.rowHeight"
+                  stroke="#D1D5DB"
+                  stroke-width="2" />
                 @if (group.cultivations.length === 0 && !isMobileLayout) {
                   <text
                     class="field-delete-icon"
-                    [attr.x]="config.margin.left - 40"
+                    x="12"
                     [attr.y]="config.rowHeight / 2 + 5"
+                    text-anchor="middle"
                     font-size="14"
                     fill="#ef4444"
                     (click)="confirmRemoveField(group); $event.stopPropagation()">
@@ -424,6 +447,9 @@ export class GanttChartComponent
 {
   readonly formatGanttFieldRowIndexLabel = formatGanttFieldRowIndexLabel;
   readonly getGanttFieldLabelCenterX = getGanttFieldLabelCenterX;
+  readonly getGanttFieldLabelAnchorX = getGanttFieldLabelAnchorX;
+  readonly getGanttFieldDividerX = getGanttFieldDividerX;
+  readonly getGanttFieldLabelClipWidth = getGanttFieldLabelClipWidth;
   readonly ganttCropFillColor = ganttCropFillColor;
   readonly ganttCropStrokeColor = ganttCropStrokeColor;
   @Input() data: CultivationPlanData | null = null;

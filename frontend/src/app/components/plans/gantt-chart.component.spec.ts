@@ -295,6 +295,58 @@ describe('GanttChartComponent', () => {
     });
   });
 
+  describe('field label layout (desktop)', () => {
+    beforeEach(() => {
+      mobileLayoutMatches = false;
+      component.isMobileLayout = false;
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, name: 'Baseline Field' }],
+          cultivations: [{
+            id: 14,
+            field_id: 1,
+            field_name: 'Baseline Field',
+            crop_name: 'Rice',
+            start_date: '2026-01-01',
+            completion_date: '2026-01-31'
+          }]
+        }
+      } as any;
+
+      const mockContainer = document.createElement('div');
+      mockContainer.style.width = '800px';
+      component['container'] = { nativeElement: mockContainer } as any;
+      component['updateChart']();
+      fixture.detectChanges();
+    });
+
+    it('anchors field labels before the row divider without overlap', () => {
+      const fieldLabel = fixture.nativeElement.querySelector('.field-label');
+      expect(fieldLabel).toBeTruthy();
+      expect(fieldLabel.getAttribute('text-anchor')).toBe('end');
+
+      const labelX = Number(fieldLabel.getAttribute('x'));
+      const divider = fixture.nativeElement.querySelector('.field-row line');
+      expect(divider).toBeTruthy();
+      const dividerX = Number(divider.getAttribute('x1'));
+      expect(labelX).toBeLessThan(dividerX);
+
+      const visibleLabel = Array.from(fieldLabel.childNodes)
+        .filter((node: ChildNode) => node.nodeType === Node.TEXT_NODE)
+        .map((node: ChildNode) => node.textContent?.trim() ?? '')
+        .join('');
+      expect(visibleLabel).toBe('Baseline Field');
+    });
+
+    it('exposes full field name for assistive technologies', () => {
+      const title = fixture.nativeElement.querySelector('.field-label title');
+      expect(title?.textContent?.trim()).toBe('Baseline Field');
+    });
+  });
+
   describe('action bar', () => {
     describe('visible range controls', () => {
       it('shows month labels on desktop', () => {

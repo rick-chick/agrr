@@ -189,7 +189,7 @@
 
 .plan-field-climate__chart-tab--active {
   border-color: var(--color-primary);
-  background: var(--color-primary-muted-bg, var(--color-background));
+  background: var(--color-primary-muted-bg);
   color: var(--color-primary);
   font-weight: var(--font-weight-semibold);
 }
