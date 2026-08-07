@@ -205,4 +205,45 @@ describe('CropEditComponent', () => {
       'Edit'
     );
   });
+
+  it('sets aria-invalid and aria-describedby on required name field after invalid submit', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        common: { form: { required_field: 'This field is required.' } },
+        crops: {
+          index: { title: 'Crops' },
+          edit: { title: 'Edit {{name}}' },
+          form: { name_label: 'Name', submit_update: 'Update' },
+          setup_proposal_import: { action: 'Import' }
+        }
+      },
+      true
+    );
+    translate.use('en');
+
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      formData: { ...initialFormData, name: '' }
+    };
+    fixture.detectChanges();
+
+    const submitButton = fixture.nativeElement.querySelector(
+      'button[type="submit"]'
+    ) as HTMLButtonElement;
+    submitButton.click();
+    fixture.detectChanges();
+
+    const nameInput = fixture.nativeElement.querySelector('#crop-name') as HTMLInputElement;
+    expect(nameInput.getAttribute('aria-invalid')).toBe('true');
+    expect(nameInput.getAttribute('aria-describedby')).toBe('crop-name-error');
+    expect(fixture.nativeElement.querySelector('#crop-name-error')?.getAttribute('role')).toBe(
+      'alert'
+    );
+  });
 });
