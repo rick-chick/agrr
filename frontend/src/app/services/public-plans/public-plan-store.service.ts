@@ -62,6 +62,19 @@ export class PublicPlanStore implements PublicPlanSessionPort {
     }
   }
 
+  /** E2E シード等で sessionStorage が後から入ったとき、farm 未設定なら再読込する */
+  syncFromSessionStorageIfFarmMissing(): void {
+    const currentFarm = this.state.farm;
+    if (currentFarm && typeof currentFarm.id === 'number' && currentFarm.id > 0) {
+      return;
+    }
+    const fromSession = this.loadFromSession();
+    if (!fromSession.farm || typeof fromSession.farm.id !== 'number' || fromSession.farm.id <= 0) {
+      return;
+    }
+    this.stateSubject.next({ ...this.state, ...fromSession });
+  }
+
   private updateState(patch: Partial<PublicPlanState>): void {
     const newState = { ...this.state, ...patch };
     this.stateSubject.next(newState);

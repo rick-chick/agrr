@@ -185,6 +185,7 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   }
 
   ngOnInit(): void {
+    this.publicPlanStore.syncFromSessionStorageIfFarmMissing();
     const farm = this.farm;
     if (!farm) {
       void this.router.navigate(['/public-plans/new'], {

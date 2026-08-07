@@ -32,6 +32,7 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     setPlanId: ReturnType<typeof vi.fn>;
     setFarm: ReturnType<typeof vi.fn>;
     setPendingCropSlug: ReturnType<typeof vi.fn>;
+    syncFromSessionStorageIfFarmMissing: ReturnType<typeof vi.fn>;
   };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
@@ -52,7 +53,8 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
       setSelectedCrops: vi.fn(),
       setPlanId: vi.fn(),
       setFarm: vi.fn(),
-      setPendingCropSlug: vi.fn()
+      setPendingCropSlug: vi.fn(),
+      syncFromSessionStorageIfFarmMissing: vi.fn(),
     };
     router = { navigate: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -298,7 +300,8 @@ describe('PublicPlanSelectCropComponent (template)', () => {
                 setSelectedCrops: vi.fn(),
                 setPlanId: vi.fn(),
                 setFarm: vi.fn(),
-                setPendingCropSlug: vi.fn()
+                setPendingCropSlug: vi.fn(),
+                syncFromSessionStorageIfFarmMissing: vi.fn(),
               }
             }
           ]
@@ -387,7 +390,8 @@ describe('PublicPlanSelectCropComponent (template)', () => {
                 setSelectedCrops: vi.fn(),
                 setPlanId: vi.fn(),
                 setFarm: vi.fn(),
-                setPendingCropSlug: vi.fn()
+                setPendingCropSlug: vi.fn(),
+                syncFromSessionStorageIfFarmMissing: vi.fn(),
               }
             }
           ]
@@ -472,7 +476,8 @@ describe('PublicPlanSelectCropComponent (template)', () => {
                 setSelectedCrops: vi.fn(),
                 setPlanId: vi.fn(),
                 setFarm: vi.fn(),
-                setPendingCropSlug: vi.fn()
+                setPendingCropSlug: vi.fn(),
+                syncFromSessionStorageIfFarmMissing: vi.fn(),
               }
             }
           ]
