@@ -298,7 +298,7 @@ describe('PesticideEditComponent', () => {
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ pesticideId: 123 });
   });
 
-it('shows translated edit title fallback instead of raw i18n key on load error', () => {
+  it('shows translated edit title fallback instead of raw i18n key on load error', () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', {
       pesticides: {
