@@ -126,7 +126,8 @@
       "title": "新しい農薬を追加"
     },
     "edit": {
-      "title": "{{name}}を編集"
+      "title": "{{name}}を編集",
+      "title_default": "農薬"
     },
     "show": {
       "reference_pesticide": "参照農薬",
@@ -153,6 +154,10 @@
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "この農薬を削除しますか？"
+    },
+    "fallback": {
+      "crop": "作物 #{{id}}",
+      "pest": "害虫 #{{id}}"
     }
   },
   "agricultural_tasks": {
@@ -203,7 +208,8 @@
       "title": "新しい作業を追加"
     },
     "edit": {
-      "title": "{{name}}を編集"
+      "title": "{{name}}を編集",
+      "title_default": "作業"
     },
     "form": {
       "name_label": "作業名",
@@ -253,7 +259,11 @@
       "no_crops_associated": "この作業に紐づく作物はありません。",
       "edit": "編集",
       "delete": "削除",
-      "confirm_delete": "この作業を削除しますか？"
+      "confirm_delete": "この作業を削除しますか？",
+      "task_type": "作業種別"
+    },
+    "errors": {
+      "invalid_id": "作業IDが不正です。"
     }
   },
   "crops": {
@@ -1038,7 +1048,8 @@
           "loading": "地図を読み込み中..."
         },
         "submit": "農場を作成",
-        "cancel": "キャンセル"
+        "cancel": "キャンセル",
+        "coordinates_validation_error": "緯度または経度の値が無効です。正しい範囲内の数値を入力してください。"
       },
       "errors": {
         "title": "{{count}}件のエラーがあります："
@@ -1148,6 +1159,9 @@
       "insufficient_historical_data": "予測に必要な履歴データが不足しています。",
       "job_queue_failed": "予測ジョブのキューイングに失敗しました: {{error}}",
       "farm_not_found": "指定された農場が見つかりません。"
+    },
+    "map": {
+      "default_name": "新しい農場"
     }
   },
   "fields": {
@@ -1347,6 +1361,9 @@
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "このルールを削除しますか？"
+    },
+    "errors": {
+      "invalid_id": "ルールIDが不正です。"
     }
   },
   "time": {
@@ -1439,7 +1456,10 @@
       "not_migrated": "この機能はまだ利用できません",
       "service_unavailable": "サーバーに接続できませんでした",
       "generic": "エラーが発生しました"
-    }
+    },
+    "creating": "作成中...",
+    "sending": "送信中...",
+    "updating": "更新中..."
   },
   "masters": {
     "load_error": {
@@ -2081,7 +2101,9 @@
       "in_10p7905_78p7047": "Tiruchirappalli, Tamil Nadu",
       "in_11p6643_78p1460": "Salem, Tamil Nadu",
       "in_9p9312_76p2673": "Kochi, Kerala"
-    }
+    },
+    "create_failed": "計画作成に失敗しました: {{errors}}",
+    "invalid_farm_id": "農場IDが不正です。"
   },
   "plans": {
     "errors": {

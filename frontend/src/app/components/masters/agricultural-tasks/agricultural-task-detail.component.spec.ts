@@ -69,6 +69,38 @@ describe('AgriculturalTaskDetailComponent', () => {
     expect(el.textContent).not.toContain('region_jp');
   });
 
+  it('renders translated hours suffix instead of raw i18n key', () => {
+    translate.setTranslation('en', {
+      agricultural_tasks: {
+        show: {
+          time_per_sqm: 'Time per ㎡',
+          hours_suffix: 'hours/㎡',
+          edit: 'Edit',
+          delete: 'Delete'
+        }
+      }
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      agriculturalTask: {
+        id: 1,
+        name: 'Tilling',
+        time_per_sqm: 2,
+        is_reference: false,
+        required_tools: []
+      },
+      pendingUndoToast: null
+    };
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('hours/㎡');
+    expect(el.textContent).not.toContain('hours_suffix');
+  });
+
   it('shows master context header and omits back button from detail-card__actions', () => {
     translate.setTranslation('en', {
       agricultural_tasks: {
@@ -104,5 +136,36 @@ describe('AgriculturalTaskDetailComponent', () => {
     expect(
       fixture.nativeElement.querySelectorAll('.detail-card__actions a.btn-secondary')
     ).toHaveLength(0);
+  });
+
+  it('renders translated hours suffix instead of raw i18n key', () => {
+    translate.setTranslation('en', {
+      agricultural_tasks: {
+        show: {
+          time_per_sqm: 'Work time',
+          hours_suffix: 'hours/㎡'
+        }
+      }
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      agriculturalTask: {
+        id: 1,
+        name: 'Tilling',
+        time_per_sqm: 2,
+        region: null,
+        is_reference: false,
+        required_tools: []
+      },
+      pendingUndoToast: null
+    };
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('hours/㎡');
+    expect(text).not.toContain('agricultural_tasks.show.hours_suffix');
   });
 });
