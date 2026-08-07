@@ -69,7 +69,7 @@ const initialControl: CropStagesViewState = {
   ],
   providers: [...CROP_STAGES_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
@@ -247,7 +247,7 @@ const initialControl: CropStagesViewState = {
           }
         </section>
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./crop-stages.component.css', './_crop-blueprint-shared.css']
 })

@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -107,6 +110,33 @@ describe('NavbarComponent', () => {
     fixture.detectChanges();
     expect(component.isPlanNavActive()).toBe(true);
     expect(component.isWorkLogNavActive()).toBe(false);
+  });
+
+  it('menu toggle CSS uses minimum touch target token', () => {
+    const cssPath = join(dirname(fileURLToPath(import.meta.url)), 'navbar.component.css');
+    const css = readFileSync(cssPath, 'utf8');
+    const menuToggleBlock = css.match(/\.menu-toggle\s*\{[^}]+\}/s)?.[0] ?? '';
+    expect(menuToggleBlock).toContain('width: var(--touch-target-min)');
+    expect(menuToggleBlock).toContain('height: var(--touch-target-min)');
+    expect(menuToggleBlock).not.toContain('width: 32px');
+    expect(menuToggleBlock).not.toContain('height: 32px');
+  });
+
+  it('menu toggle preserves a11y attributes', () => {
+    fixture.detectChanges();
+    const menuToggle = fixture.nativeElement.querySelector('.menu-toggle') as HTMLButtonElement;
+    expect(menuToggle).toBeTruthy();
+    expect(menuToggle.getAttribute('aria-expanded')).toBe('false');
+    expect(menuToggle.getAttribute('aria-label')).toBeTruthy();
+  });
+
+  it('toggles mobile menu via hamburger button', () => {
+    fixture.detectChanges();
+    const menuToggle = fixture.nativeElement.querySelector('.menu-toggle') as HTMLButtonElement;
+    menuToggle.click();
+    fixture.detectChanges();
+    expect(component.isMenuOpen).toBe(true);
+    expect(menuToggle.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('closes mobile menu after route navigation', async () => {

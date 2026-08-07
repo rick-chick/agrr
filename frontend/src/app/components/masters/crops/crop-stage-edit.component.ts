@@ -90,7 +90,7 @@ const initialControl: CropStageEditViewState = {
   ],
   providers: [...CROP_STAGE_EDIT_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
@@ -252,7 +252,7 @@ const initialControl: CropStageEditViewState = {
           </div>
         </section>
       }
-    </main>
+    </div>
 
     <dialog
       #deleteConfirmDialog

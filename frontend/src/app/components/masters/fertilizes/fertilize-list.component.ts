@@ -29,7 +29,7 @@ const initialControl: FertilizeListViewState = {
   imports: [CommonModule, RouterLink, TranslateModule],
   providers: [...FERTILIZE_LIST_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'fertilizes.index.title' | translate }}</h1>
         <p class="page-description">{{ 'fertilizes.index.description' | translate }}</p>
@@ -75,7 +75,7 @@ const initialControl: FertilizeListViewState = {
           }
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./fertilize-list.component.css']
 })

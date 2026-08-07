@@ -60,7 +60,7 @@ const initialControl: PlanTaskScheduleViewState = {
   ],
   providers: [...PLAN_TASK_SCHEDULE_PROVIDERS],
   template: `
-    <main class="page-main page-main--fit">
+    <div class="page-main page-main--fit">
       <app-plan-plan-context-header
         [planId]="planId"
         [planName]="control.schedule?.plan?.name ?? null"
@@ -251,7 +251,7 @@ const initialControl: PlanTaskScheduleViewState = {
           }
         }
       </section>
-    </main>
+    </div>
 
     <dialog
       #regenerateConfirmDialog

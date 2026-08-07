@@ -21,7 +21,7 @@ const PAGE_LIMIT = 20;
   standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule, RouterLink],
   template: `
-    <main class="page-main public-plans-wrapper">
+    <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
         <div class="compact-header-card">
           <h1 class="compact-header-title">
@@ -210,7 +210,7 @@ const PAGE_LIMIT = 20;
           }
         </section>
       </div>
-    </main>
+    </div>
   `,
   styleUrls: ['../public-plans/public-plan.component.css', './entry-schedule-visual.css'],
   styles: [
