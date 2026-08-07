@@ -1463,7 +1463,8 @@
     "updating": "更新中...",
     "form": {
       "required_field": "この項目は必須です。"
-    }
+    },
+    "breadcrumb_label": "パンくずリスト"
   },
   "masters": {
     "load_error": {
