@@ -23,6 +23,7 @@ async function assertNoUnexpectedAxeViolations(
   page: import('@playwright/test').Page,
   label: string
 ): Promise<void> {
+  await expect(page.locator('main.app-main')).toBeVisible({ timeout: 15_000 });
   const results = await new AxeBuilder({ page }).analyze();
   const unexpected = filterAxeViolations(results.violations, allowlist);
   expect(unexpected, `axe violations on ${label}`).toEqual([]);
