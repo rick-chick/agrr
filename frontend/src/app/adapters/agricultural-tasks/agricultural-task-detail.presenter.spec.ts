@@ -5,7 +5,6 @@ import {
   AgriculturalTaskDetailView,
   AgriculturalTaskDetailViewState
 } from '../../components/masters/agricultural-tasks/agricultural-task-detail.view';
-import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeleteAgriculturalTaskSuccessDto } from '../../usecase/agricultural-tasks/delete-agricultural-task.dtos';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
