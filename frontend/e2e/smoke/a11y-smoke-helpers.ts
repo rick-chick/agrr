@@ -19,6 +19,7 @@ export const a11yCoreRoutes: A11yRoute[] = [
 ];
 
 type AllowlistFile = {
+  /** Known axe rule IDs allowed per route pattern (see a11y-allowlist.json). */
   routes: Record<string, { ruleId: string; reason: string }[]>;
 };
 
