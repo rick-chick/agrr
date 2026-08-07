@@ -27,6 +27,13 @@
 - **キャプチャ**: `playwright test route-manifest-visual.spec.ts --grep "capture-for-agent: plans/:id$"`（`E2E_CAPTURE_DEV_SESSION=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。`plans_id.{ja,en,in}.png` を再取得。
 - **確認**: en で圃場ラベル（`text-anchor: end`・clipPath）が縦線（divider x=70）より左（label anchor x=62）— 重なり解消。**修正済**: #635 / PR #647。回帰: `gantt-chart.component.spec.ts`「anchors field labels before the row divider without overlap」GREEN。
 
+## 追記メタ（#648 entry-schedule visual-review #6）
+
+- **レビュー日**: 2026-08-07（UTC）
+- **対象**: `route-to-png.md` **#6** `entry-schedule`・`entry-schedule/crop/:cropId`（ja / en / in）、follow-up **#648**（親 **#632** PR #649 マージ後）
+- **キャプチャ**: `playwright test route-manifest-visual.spec.ts --grep "entry-schedule"`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。`entry-schedule*.{ja,en,in}.png` を再取得。agrr-server 開発 DB・AuthTest モックログイン。
+- **確認**: ja 成長段階リストの二重番号（「1. 1.」）解消。en/in の UI ラベル・免責文は各言語で表示（作物名・成長段階名は API マスタ由来）。回帰: `entry-schedule-detail.component.spec.ts`「renders growth stages without duplicate list numbering」GREEN、`entry-schedule-locale.catalog.spec.ts` GREEN。
+
 ## サマリ表
 
 | # | pattern | ja | en | in | 結果 | i18n | 指摘 |
@@ -36,8 +43,8 @@
 | 3 | `about` | `about.ja.png` | `about.en.png` | `about.in.png` | OK | OK | なし |
 | 4 | `contact` | `contact.ja.png` | `contact.en.png` | `contact.in.png` | OK | OK | なし |
 | 5 | `en` | `en.ja.png` | `en.en.png` | `en.in.png` | 未レビュー | 未レビュー | 新規ルート `/en`（#563 hreflang）— キャプチャ未実施 |
-| 6 | `entry-schedule` | `entry-schedule.ja.png` | `entry-schedule.en.png` | `entry-schedule.in.png` | OK | 注意 | i18n: in の農場ドロップダウン値「Punjab」が英字のまま |
-| 6 | `entry-schedule/crop/:cropId` | `entry-schedule_crop_cropId.ja.png` | `entry-schedule_crop_cropId.en.png` | `entry-schedule_crop_cropId.in.png` | 注意 | 要確認 | layout: ja 成長段階リストが「1. 1.」の二重番号。i18n: en/in に作物名・成長段階・免責文など日本語が残存 |
+| 6 | `entry-schedule` | `entry-schedule.ja.png` | `entry-schedule.en.png` | `entry-schedule.in.png` | OK | OK | **#648 再キャプチャ**: 3 言語 UI OK。in 農場名「Punjab」は地名（マスタデータ） |
+| 6 | `entry-schedule/crop/:cropId` | `entry-schedule_crop_cropId.ja.png` | `entry-schedule_crop_cropId.en.png` | `entry-schedule_crop_cropId.in.png` | OK | OK | **#648 再キャプチャ**: #632/PR #649 後。ja 二重番号解消。en/in UI ラベル各言語（作物名・段階名は API 由来） |
 | 7 | `login` | `login.ja.png` | `login.en.png` | `login.in.png` | OK | OK | なし |
 | 8 | `privacy` | `privacy.ja.png` | `privacy.en.png` | `privacy.in.png` | OK | OK | なし |
 | 9 | `public-plans/new` | `public-plans_new.ja.png` | `public-plans_new.en.png` | `public-plans_new.in.png` | OK | 要確認 | i18n: ja 農場名カードが文字化け（mojibake）。in カードラベル「Punjab」が英字 |
@@ -117,7 +124,7 @@
 
 ### 新規・残存の i18n / レイアウト
 
-1. **#6 entry-schedule/crop/:cropId** — en/in に日本語コンテンツ混在。ja 成長段階の二重番号。
+1. **#6 entry-schedule** — **2026-08-07 解消**（#648）: ja 二重番号解消・en/in UI ラベル各言語。作物名・成長段階は API マスタ由来。
 2. **#9–13 public-plans** — ja 農場名 mojibake。in「Punjab」英字。results は 404 二重表示。
 3. **#10 public-plans/optimizing** — 気象取得失敗エラー（planId=1 のデータ/API 要因）。
 4. **#16 agricultural_tasks/:id** — `agricultural_tasks.show.hours_suffix` 生キー。
