@@ -390,7 +390,8 @@ describe('PublicPlanSelectCropComponent (template)', () => {
                 setSelectedCrops: vi.fn(),
                 setPlanId: vi.fn(),
                 setFarm: vi.fn(),
-                setPendingCropSlug: vi.fn()
+                setPendingCropSlug: vi.fn(),
+                syncFromSessionStorageIfFarmMissing: vi.fn(),
               }
             }
           ]
