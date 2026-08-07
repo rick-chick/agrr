@@ -31,7 +31,7 @@ const initialControl: FarmListViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, CardListSkeletonComponent],
   providers: [...FARM_LIST_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'farms.index.title' | translate }}</h1>
         <p class="page-description">{{ 'farms.index.description' | translate }}</p>
@@ -78,7 +78,7 @@ const initialControl: FarmListViewState = {
           </ul>
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./farm-list.component.css']
 })
