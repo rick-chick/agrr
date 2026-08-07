@@ -55,7 +55,7 @@ cd .. && bash scripts/run-e2e-smoke-ci.sh
 | `locale-i18n-smoke.spec.ts` | `route-manifest.json` 全ルート × `ja` / `en` / `in`: 可視 DOM テキストに生キー・`%{...}` 残り・locale 不適切な文字列がないか（`locale-i18n-smoke-lib.mjs`） |
 | `operation-smoke.spec.ts` | ホーム CTA、ナビ、公開 wizard（farm-size → select-crop）、問い合わせ、**farms UI CRUD**、マスタ list/new/detail/edit、ガント UI、作業目安一覧→詳細、API キー、天気、作業予定 D&D など |
 | `gantt-mobile-drag.spec.ts` | **モバイル viewport** + **CDP touch** でガント作付バーを水平ドラッグ: しきい値未満では `adjust` しない、ホールド中のバー追従、指を離すまで POST しない、離したあと **4 日以上**の日付移動を commit（タッチジェスチャの振る舞いはここ。`gantt-chart.component.spec.ts` は配線・テンプレート・デスクトップ `pointercancel` / ゴミ箱のみ） |
-| `a11y-smoke.spec.ts` | コアルート（home, login, plans, crops, contact）で **axe-core** スキャン（既知違反は `a11y-allowlist.json`） |
+| `a11y-smoke.spec.ts` | **公開 prerender + manifest public ルート** と認証サンプル（plans, crops）で **axe-core** スキャン（既知違反は `a11y-allowlist.json`） |
 | `gantt-keyboard-alternative.spec.ts` | **モバイル viewport** でガントのクリック代替（作物パレット・圃場凡例メニュー）を検証（WCAG 2.5.7） |
 
 `E2E_CAPTURE_DEV_SESSION` 未設定時は smoke は skip（`route-manifest-coverage` 等は `npm run test:e2e` で実行可）。未ログイン向けに `login` / 404 のみ別 describe で実行。
