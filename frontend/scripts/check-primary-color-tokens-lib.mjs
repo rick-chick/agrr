@@ -17,14 +17,6 @@ export function countPrimaryDefinitions(css) {
  * @param {string} appCss
  * @returns {boolean}
  */
-export function appCssUsesPrimaryToken(appCss) {
-  return /--color-primary\b/.test(appCss) && !PRIMARY_DEF_RE.test(appCss.split('\n').find((l) => /--color-primary\b/.test(l)) ?? '');
-}
-
-/**
- * @param {string} appCss
- * @returns {boolean}
- */
 export function btnPrimaryUsesColorPrimary(appCss) {
   const block = appCss.match(/\.btn-primary\s*\{[^}]*\}/s);
   if (!block) return false;
@@ -49,9 +41,14 @@ export function stylesDefinesBrandTokens(stylesCss) {
 export async function auditPrimaryColorTokens(frontendRoot) {
   const stylesPath = join(frontendRoot, 'src/styles.css');
   const appPath = join(frontendRoot, 'src/app/app.css');
-  const [stylesCss, appCss] = await Promise.all([
+  const buttonPrimitivesPath = join(
+    frontendRoot,
+    'src/app/components/shared/_button-primitives.css',
+  );
+  const [stylesCss, appCss, buttonPrimitivesCss] = await Promise.all([
     readFile(stylesPath, 'utf8'),
     readFile(appPath, 'utf8'),
+    readFile(buttonPrimitivesPath, 'utf8'),
   ]);
 
   const violations = [];
@@ -78,7 +75,7 @@ export async function auditPrimaryColorTokens(frontendRoot) {
     });
   }
 
-  if (!btnPrimaryUsesColorPrimary(appCss)) {
+  if (!btnPrimaryUsesColorPrimary(buttonPrimitivesCss)) {
     violations.push({
       rule: 'btn-primary-uses-primary',
       message: '.btn-primary must use --color-primary (not --gradient-primary)',

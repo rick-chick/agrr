@@ -1,6 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import './app/components/shared/form-dialog-shared.css';
+@import './app/components/shared/_button-primitives.css';
 
 /* ===== デザイントークン（一貫性担保・ハードコード禁止） ===== */
 :root {
@@ -49,6 +50,7 @@
   --color-error-border-soft: #fecaca;
 
   --color-success: #10b981;
+  --color-success-light: #9ae6b4;
   --color-success-muted-bg: #ecfdf3;
   --color-success-muted-border: #bbf7d0;
 
@@ -84,6 +86,8 @@
 
   /* 情報・公開計画フロー（ステップ・アクティブ） */
   --color-info: #4299e1;
+  --color-info-dark: #2b6cb0;
+  --color-info-surface: #ebf8ff;
   --color-info-strong-text: #2b6cb0;
   --color-info-soft-bg: #90cdf4;
 
