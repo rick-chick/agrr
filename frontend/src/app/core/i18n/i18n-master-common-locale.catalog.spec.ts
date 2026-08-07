@@ -18,6 +18,7 @@ const MASTER_COMMON_CATALOG_KEYS = [
   'agricultural_tasks.errors.invalid_id',
   'agricultural_tasks.show.task_type',
   'common.creating',
+  'common.breadcrumb_label',
   'common.sending',
   'common.updating',
   'shared.cookie_consent.title',

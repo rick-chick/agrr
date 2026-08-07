@@ -10,7 +10,7 @@ import { MasterContextCrumb } from './master-context-crumb';
   template: `
     <header class="page-header page-header--compact master-context-header">
       <div class="master-context-header__bar">
-        <nav class="master-context-header__nav" aria-label="Breadcrumb">
+        <nav class="master-context-header__nav" [attr.aria-label]="'common.breadcrumb_label' | translate">
           <ol class="master-context-header__crumbs">
             @for (crumb of crumbs; track $index; let first = $first) {
               <li class="master-context-header__crumb">

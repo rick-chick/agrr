@@ -180,6 +180,7 @@
     "submit": "Submit",
     "close": "Close",
     "loading": "Loading...",
+    "breadcrumb_label": "Breadcrumb",
     "true": "Yes",
     "false": "No",
     "api_error": {

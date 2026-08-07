@@ -17,7 +17,15 @@ describe('MasterContextHeaderComponent', () => {
     translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', {
       farms: { index: { title: 'Farms' } },
-      common: { edit: 'Edit' }
+      common: { edit: 'Edit', breadcrumb_label: 'Breadcrumb' }
+    });
+    translate.setTranslation('ja', {
+      farms: { index: { title: '農場' } },
+      common: { edit: '編集', breadcrumb_label: 'パンくずリスト' }
+    });
+    translate.setTranslation('in', {
+      farms: { index: { title: 'खेत' } },
+      common: { edit: 'संपादित करें', breadcrumb_label: 'ब्रेडक्रम्ब नेविगेशन' }
     });
     translate.setDefaultLang('en');
     translate.use('en');
@@ -77,7 +85,12 @@ describe('MasterContextHeaderComponent', () => {
     expect(forward.classList.contains('btn-secondary')).toBe(false);
   });
 
-  it('exposes breadcrumb navigation for assistive technologies', () => {
+  it.each([
+    { lang: 'en', expected: 'Breadcrumb' },
+    { lang: 'ja', expected: 'パンくずリスト' },
+    { lang: 'in', expected: 'ब्रेडक्रम्ब नेविगेशन' }
+  ])('exposes localized breadcrumb aria-label for $lang', async ({ lang, expected }) => {
+    await translate.use(lang).toPromise();
     fixture.componentRef.setInput('crumbs', [
       { labelKey: 'farms.index.title', routerLink: ['/farms'] },
       { label: 'North Farm' }
@@ -86,6 +99,6 @@ describe('MasterContextHeaderComponent', () => {
 
     const nav = fixture.nativeElement.querySelector('nav.master-context-header__nav');
     expect(nav).toBeTruthy();
-    expect(nav.getAttribute('aria-label')).toBeTruthy();
+    expect(nav.getAttribute('aria-label')).toBe(expected);
   });
 });

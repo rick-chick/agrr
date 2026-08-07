@@ -17,7 +17,8 @@ describe('PublicPlanContextHeaderComponent', () => {
     translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', {
       'public_plans.breadcrumb_root': 'Free crop plan',
-      'public_plans.steps.crop': 'Crop'
+      'public_plans.steps.crop': 'Crop',
+      'common.breadcrumb_label': 'Breadcrumb'
     });
     translate.setDefaultLang('en');
     translate.use('en');
@@ -39,5 +40,16 @@ describe('PublicPlanContextHeaderComponent', () => {
 
     const current = fixture.nativeElement.querySelector('[aria-current="page"]');
     expect(current?.textContent?.trim()).toBe('Crop');
+  });
+
+  it('inherits localized breadcrumb aria-label from master context header', () => {
+    fixture.componentRef.setInput('crumbs', [
+      { labelKey: 'public_plans.breadcrumb_root', routerLink: ['/public-plans/new'] },
+      { labelKey: 'public_plans.steps.crop' }
+    ]);
+    fixture.detectChanges();
+
+    const nav = fixture.nativeElement.querySelector('nav.master-context-header__nav');
+    expect(nav?.getAttribute('aria-label')).toBe('Breadcrumb');
   });
 });
