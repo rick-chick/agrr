@@ -76,4 +76,50 @@ describe('EntryScheduleDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('a.link-inline')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('Back to list');
   });
+
+  it('renders growth stages without duplicate list numbering', async () => {
+    const gateway = TestBed.inject(ENTRY_SCHEDULE_GATEWAY);
+    vi.mocked(gateway.getEntryScheduleCrop).mockReturnValue(
+      of({
+        farm: { id: 3, name: 'Farm', latitude: 0, longitude: 0, region: 'jp' },
+        crop: {
+          id: 7,
+          name: 'Tomato',
+          eligible: true,
+          sowing_summary: null,
+          transplant_summary: null,
+          entry_disclaimer: 'Disclaimer',
+          reason_summary: 'Summary',
+          labels: { sowing: 'Sow', transplanting: 'Transplant' },
+          sowing_windows: [],
+          transplant_windows: [],
+          reason_parts: {},
+          sowing_stage_id: null,
+          transplant_stage_id: null,
+          crop_stages: [
+            { id: 1, name: 'Germination', order: 1 },
+            { id: 2, name: 'Vegetative growth', order: 2 }
+          ]
+        },
+        prediction: {}
+      })
+    );
+
+    fixture = TestBed.createComponent(EntryScheduleDetailComponent);
+    translate.setTranslation('en', {
+      'entrySchedule.title': 'Entry schedule',
+      'entrySchedule.detailTitle': 'Crop schedule',
+      'entrySchedule.stages': 'Growth stages'
+    });
+    translate.use('en');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const items = fixture.nativeElement.querySelectorAll('.stage-list li');
+    expect(items.length).toBe(2);
+    expect(items[0].textContent?.trim()).toBe('Germination');
+    expect(items[1].textContent?.trim()).toBe('Vegetative growth');
+    expect(fixture.nativeElement.textContent).not.toMatch(/\b1\.\s+1\./);
+  });
 });
