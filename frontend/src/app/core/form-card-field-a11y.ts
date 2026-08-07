@@ -26,3 +26,19 @@ export function formCardRequiredValueInvalid(value: unknown): boolean {
   if (typeof value === 'number') return Number.isNaN(value);
   return false;
 }
+
+export function formCardShowsRequiredError(formSubmitted: boolean, value: unknown): boolean {
+  return formCardFieldShowsError(formSubmitted, formCardRequiredValueInvalid(value));
+}
+
+export function formCardAriaInvalidForRequired(formSubmitted: boolean, value: unknown): true | null {
+  return formCardAriaInvalid(formSubmitted, formCardRequiredValueInvalid(value));
+}
+
+export function formCardAriaDescribedbyForRequired(
+  fieldId: string,
+  formSubmitted: boolean,
+  value: unknown
+): string | null {
+  return formCardAriaDescribedby(fieldId, formSubmitted, formCardRequiredValueInvalid(value));
+}

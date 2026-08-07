@@ -17,11 +17,10 @@ import {
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
 import {
-  formCardAriaDescribedby,
-  formCardAriaInvalid,
+  formCardAriaDescribedbyForRequired,
+  formCardAriaInvalidForRequired,
   formCardFieldErrorId,
-  formCardFieldShowsError,
-  formCardRequiredValueInvalid
+  formCardShowsRequiredError
 } from '../../../core/form-card-field-a11y';
 
 const initialFormData: CropEditFormData = {
@@ -76,11 +75,11 @@ const initialControl: CropEditViewState = {
                 name="name"
                 [(ngModel)]="control.formData.name"
                 required
-                [class.form-card__input--invalid]="showsRequiredError(control.formData.name)"
-                [attr.aria-invalid]="ariaInvalidForRequired(control.formData.name)"
-                [attr.aria-describedby]="ariaDescribedbyForRequired('crop-name', control.formData.name)"
+                [class.form-card__input--invalid]="showsRequiredError(formSubmitted, control.formData.name)"
+                [attr.aria-invalid]="ariaInvalidForRequired(formSubmitted, control.formData.name)"
+                [attr.aria-describedby]="ariaDescribedbyForRequired('crop-name', formSubmitted, control.formData.name)"
               />
-              @if (showsRequiredError(control.formData.name)) {
+              @if (showsRequiredError(formSubmitted, control.formData.name)) {
                 <span [id]="fieldErrorId('crop-name')" class="form-card__field-error" role="alert">
                   {{ 'common.form.required_field' | translate }}
                 </span>
@@ -143,6 +142,11 @@ export class CropEditComponent implements CropEditView, OnInit {
 
   formSubmitted = false;
 
+  readonly fieldErrorId = formCardFieldErrorId;
+  readonly showsRequiredError = formCardShowsRequiredError;
+  readonly ariaInvalidForRequired = formCardAriaInvalidForRequired;
+  readonly ariaDescribedbyForRequired = formCardAriaDescribedbyForRequired;
+
   private _control: CropEditViewState = initialControl;
   get control(): CropEditViewState {
     return this._control;
@@ -172,22 +176,6 @@ export class CropEditComponent implements CropEditView, OnInit {
 
   get cropId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
-  }
-
-  fieldErrorId(fieldId: string): string {
-    return formCardFieldErrorId(fieldId);
-  }
-
-  showsRequiredError(value: unknown): boolean {
-    return formCardFieldShowsError(this.formSubmitted, formCardRequiredValueInvalid(value));
-  }
-
-  ariaInvalidForRequired(value: unknown): true | null {
-    return formCardAriaInvalid(this.formSubmitted, formCardRequiredValueInvalid(value));
-  }
-
-  ariaDescribedbyForRequired(fieldId: string, value: unknown): string | null {
-    return formCardAriaDescribedby(fieldId, this.formSubmitted, formCardRequiredValueInvalid(value));
   }
 
   ngOnInit(): void {
