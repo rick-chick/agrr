@@ -96,7 +96,6 @@ describe('InteractionRuleEditComponent', () => {
   });
 
   it('sets error when interaction rule id is missing', () => {
-    const translate = TestBed.inject(TranslateService);
     mockActivatedRoute.snapshot.paramMap.get = () => null;
     component.ngOnInit();
     expect(component.control.error).toBe('interaction_rules.errors.invalid_id');
