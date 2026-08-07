@@ -111,6 +111,12 @@ describe('FarmDetailComponent', () => {
 
     // Replace ChangeDetectorRef with mock
     Object.defineProperty(component, 'cdr', { value: cdr });
+    fixture.detectChanges();
+    component.fieldFormDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as unknown as typeof component.fieldFormDialogRef;
+    loadUseCase.execute.mockClear();
+    subscribeWeatherUseCase.execute.mockClear();
   });
 
   it('implements View control getter/setter', () => {
@@ -470,11 +476,13 @@ describe('FarmDetailComponent', () => {
 
   it('keeps list breadcrumb link on error', () => {
     translate.setTranslation('ja', {
-      farms: { index: { title: '農場一覧' } }
+      farms: { index: { title: '農場一覧' } },
+      'common.api_error.not_found': '見つかりません',
+      'masters.load_error.retry': '再読み込み'
     });
     component.control = {
       loading: false,
-      error: 'Not found',
+      error: 'common.api_error.not_found',
       farm: null,
       fields: [],
       pendingUndoToast: null,
@@ -482,6 +490,52 @@ describe('FarmDetailComponent', () => {
     };
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.master-load-error')).toBeTruthy();
+  });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    translate.setTranslation('ja', {
+      farms: { index: { title: '農場一覧' } },
+      'common.api_error.not_found': '見つかりません',
+      'masters.load_error.retry': '再読み込み'
+    });
+    component.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      farm: null,
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.getAttribute('role')).toBe('alert');
+    expect(alert?.textContent).toContain('見つかりません');
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/farms');
+  });
+
+  it('reloads detail when retry is clicked after load error', () => {
+    component.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      farm: null,
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    loadUseCase.execute.mockClear();
+    subscribeWeatherUseCase.execute.mockClear();
+    fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ farmId: 123 });
+    expect(subscribeWeatherUseCase.execute).toHaveBeenCalled();
   });
 
   it('passes chartSelectedPeriod to temperature chart as selectedPeriod input', () => {

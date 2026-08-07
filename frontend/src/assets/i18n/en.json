@@ -2601,6 +2601,9 @@
     "validation": {
       "required_fields": "Farm name, region, latitude, and longitude are required."
     },
+    "errors": {
+      "invalid_id": "Invalid farm ID."
+    },
     "flash": {
       "created": "Farm was successfully created.",
       "updated": "Farm was successfully updated.",

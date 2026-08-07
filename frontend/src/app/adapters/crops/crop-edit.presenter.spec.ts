@@ -143,7 +143,7 @@ describe('CropEditPresenter', () => {
 
       presenter.onError(dto);
 
-      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Validation error' });
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'common.api_error.generic' });
       expect(lastControl!.pendingSuccessFlash).toBeNull();
       expect(lastControl!.saving).toBe(false);
       expect(lastControl!.error).toBeNull();

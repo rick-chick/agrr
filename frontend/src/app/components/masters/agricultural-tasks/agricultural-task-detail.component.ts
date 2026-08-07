@@ -18,6 +18,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 
 const initialControl: AgriculturalTaskDetailViewState = {
   loading: true,
@@ -30,13 +31,20 @@ const initialControl: AgriculturalTaskDetailViewState = {
 @Component({
   selector: 'app-agricultural-task-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...AGRICULTURAL_TASK_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
+      } @else if (control.error) {
+        <app-master-load-error-panel
+          [errorKey]="control.error"
+          [listLink]="['/agricultural_tasks']"
+          backLabelKey="agricultural_tasks.index.title"
+          (retry)="reload()"
+        />
       } @else if (control.agriculturalTask) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.agriculturalTask.name }}</h1>
@@ -143,7 +151,7 @@ export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailVi
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('agricultural_tasks.errors.invalid_id')
+        error: 'agricultural_tasks.errors.invalid_id'
       };
       return;
     }
@@ -151,7 +159,7 @@ export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailVi
   }
 
   load(agriculturalTaskId: number): void {
-    this.control = { ...this.control, loading: true };
+    this.control = { ...this.control, loading: true, error: null };
     this.useCase.execute({ agriculturalTaskId });
   }
 

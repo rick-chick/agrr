@@ -980,6 +980,9 @@
     "validation": {
       "required_fields": "農場名、地域、緯度、経度は必須です。"
     },
+    "errors": {
+      "invalid_id": "農場IDが不正です。"
+    },
     "flash": {
       "created": "農場が正常に作成されました。",
       "updated": "農場が正常に更新されました。",

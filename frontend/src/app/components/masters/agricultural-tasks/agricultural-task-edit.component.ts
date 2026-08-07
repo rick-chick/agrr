@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import {
@@ -45,7 +46,7 @@ const initialControl: AgriculturalTaskEditViewState = {
 @Component({
   selector: 'app-agricultural-task-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...AGRICULTURAL_TASK_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
@@ -59,6 +60,13 @@ const initialControl: AgriculturalTaskEditViewState = {
         </h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <app-master-load-error-panel
+            [errorKey]="control.error"
+            [listLink]="['/agricultural_tasks']"
+            backLabelKey="agricultural_tasks.index.title"
+            (retry)="reload()"
+          />
         } @else {
           <form (ngSubmit)="updateAgriculturalTask()" #taskForm="ngForm" class="form-card__form">
             <label for="name" class="form-card__field">
@@ -171,10 +179,16 @@ export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, 
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('agricultural_tasks.errors.invalid_id')
+        error: 'agricultural_tasks.errors.invalid_id'
       };
       return;
     }
+    this.reload();
+  }
+
+  reload(): void {
+    if (!this.agriculturalTaskId) return;
+    this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ agriculturalTaskId: this.agriculturalTaskId });
   }
 

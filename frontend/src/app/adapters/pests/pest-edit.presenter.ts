@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { PestEditView } from '../../components/masters/pests/pest-edit.view';
 import { LoadPestForEditOutputPort } from '../../usecase/pests/load-pest-for-edit.output-port';
 import { LoadPestForEditDataDto } from '../../usecase/pests/load-pest-for-edit.dtos';
@@ -38,12 +39,22 @@ export class PestEditPresenter implements LoadPestForEditOutputPort, UpdatePestO
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (this.view.control.loading) {
+      this.view.control = {
+        ...this.view.control,
+        loading: false,
+        saving: false,
+        error: errorDtoI18nKey(dto),
+        pendingErrorFlash: null
+      };
+      return;
+    }
     this.view.control = {
       ...this.view.control,
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) })
     };
   }
 

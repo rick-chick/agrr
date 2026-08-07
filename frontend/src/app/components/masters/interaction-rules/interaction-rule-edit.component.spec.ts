@@ -85,6 +85,8 @@ describe('InteractionRuleEditComponent', () => {
       'common.edit': 'Edit'
     });
     translate.use('en');
+    fixture.detectChanges();
+    mockLoadUseCase.execute.mockClear();
   });
 
   it('loads interaction rule on init', () => {
@@ -97,7 +99,7 @@ describe('InteractionRuleEditComponent', () => {
     const translate = TestBed.inject(TranslateService);
     mockActivatedRoute.snapshot.paramMap.get = () => null;
     component.ngOnInit();
-    expect(component.control.error).toBe(translate.instant('interaction_rules.errors.invalid_id'));
+    expect(component.control.error).toBe('interaction_rules.errors.invalid_id');
   });
 
   it('uses form region for admin submit', () => {

@@ -15,6 +15,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 
 const initialControl: InteractionRuleDetailViewState = {
   loading: true,
@@ -27,13 +28,20 @@ const initialControl: InteractionRuleDetailViewState = {
 @Component({
   selector: 'app-interaction-rule-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...INTERACTION_RULE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
+      } @else if (control.error) {
+        <app-master-load-error-panel
+          [errorKey]="control.error"
+          [listLink]="['/interaction_rules']"
+          backLabelKey="interaction_rules.index.title"
+          (retry)="reload()"
+        />
       } @else if (control.rule) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.rule.source_group }} → {{ control.rule.target_group }}</h1>
@@ -126,7 +134,7 @@ export class InteractionRuleDetailComponent implements InteractionRuleDetailView
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('interaction_rules.errors.invalid_id')
+        error: 'interaction_rules.errors.invalid_id'
       };
       return;
     }
@@ -134,7 +142,7 @@ export class InteractionRuleDetailComponent implements InteractionRuleDetailView
   }
 
   load(interactionRuleId: number): void {
-    this.control = { ...this.control, loading: true };
+    this.control = { ...this.control, loading: true, error: null };
     this.useCase.execute({ interactionRuleId });
   }
 

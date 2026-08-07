@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -47,7 +48,7 @@ const initialControl: CropEditViewState = {
 @Component({
   selector: 'app-crop-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent, RouterLink],
+  imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent, RouterLink, MasterLoadErrorPanelComponent],
   providers: [...CROP_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
@@ -60,6 +61,13 @@ const initialControl: CropEditViewState = {
         }
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <app-master-load-error-panel
+            [errorKey]="control.error"
+            [listLink]="['/crops']"
+            backLabelKey="crops.index.title"
+            (retry)="reload()"
+          />
         } @else {
           <form (ngSubmit)="updateCrop()" #cropForm="ngForm" class="form-card__form">
             <label for="crop-name" class="form-card__field">
@@ -156,9 +164,15 @@ export class CropEditComponent implements CropEditView, OnInit {
     this.presenter.setView(this);
     this.syncRegionWithCurrentUser();
     if (!this.cropId) {
-      this.control = { ...initialControl, loading: false, error: this.translate.instant('crops.errors.invalid_id') };
+      this.control = { ...initialControl, loading: false, error: 'crops.errors.invalid_id' };
       return;
     }
+    this.reload();
+  }
+
+  reload(): void {
+    if (!this.cropId) return;
+    this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ cropId: this.cropId });
   }
 
