@@ -45,4 +45,11 @@ describe('UndoToastComponent', () => {
     expect(buttons[0]?.textContent?.trim()).toBe('Undo');
     expect(buttons[1]?.textContent?.trim()).toBe('Close');
   });
+
+  it('exposes role=status and aria-live=polite on the toast root for screen readers', () => {
+    const toast = fixture.nativeElement.querySelector('.undo-toast');
+    expect(toast).toBeTruthy();
+    expect(toast.getAttribute('role')).toBe('status');
+    expect(toast.getAttribute('aria-live')).toBe('polite');
+  });
 });
