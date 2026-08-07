@@ -16,6 +16,7 @@ describe('PlanPlanContextHeaderComponent', () => {
     fixture = TestBed.createComponent(PlanPlanContextHeaderComponent);
     translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', {
+      'plans.index.title': 'Cultivation Plans',
       'plans.show.title': '{{name}} plan',
       'plans.work.page_title': 'Work log — {{name}}'
     });
@@ -33,14 +34,25 @@ describe('PlanPlanContextHeaderComponent', () => {
     expect(fixture.nativeElement.querySelector('app-plan-detail-context-nav')).toBeNull();
   });
 
-  it('renders plan identity and unified context nav without redundant crumbs', () => {
+  it('renders plan list L2 breadcrumb, identity, and unified context nav', () => {
     fixture.componentRef.setInput('planId', 42);
     fixture.componentRef.setInput('pageTitleKey', 'plans.show.title');
     fixture.componentRef.setInput('planName', 'Tomato 2026');
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeNull();
+    const crumbs = fixture.nativeElement.querySelector('.plan-context-header__crumbs');
+    expect(crumbs).toBeTruthy();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.plan-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink).toBeTruthy();
+    expect(backLink.textContent?.trim()).toBe('Cultivation Plans');
+    expect(backLink.getAttribute('href')).toBe('/plans');
+
+    const current = fixture.nativeElement.querySelector('[aria-current="page"]');
+    expect(current?.textContent?.trim()).toBe('Tomato 2026');
+
     expect(fixture.nativeElement.querySelector('app-plan-detail-context-nav')).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('Tomato 2026');
   });
 });

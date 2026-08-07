@@ -232,10 +232,11 @@ describe('PlanWorkComponent mobile UX', () => {
     fixture.detectChanges();
   }
 
-  it('uses unified plan context header without redundant breadcrumb links', () => {
+  it('uses unified plan context header with plan list L2 breadcrumb', () => {
     renderLoaded();
     expect(fixture.nativeElement.querySelector('.plan-work__back-nav')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('a.plan-context-header__back')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('app-plan-plan-context-header')).toBeTruthy();
   });
 

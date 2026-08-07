@@ -329,7 +329,7 @@ describe('PlanTaskScheduleComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Weeding');
   });
 
-  it('uses the unified plan context header with four-tab navigation and no redundant crumbs', async () => {
+  it('uses the unified plan context header with four-tab navigation and plan list L2 breadcrumb', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
@@ -342,8 +342,9 @@ describe('PlanTaskScheduleComponent', () => {
 
     const header = fixture.nativeElement.querySelector('.plan-context-header');
     expect(header).toBeTruthy();
-    expect(header.querySelector('.plan-context-header__crumbs')).toBeNull();
-    expect(header.querySelector('.plan-context-header__plan-name')?.textContent).toContain('Main Plan');
+    expect(header.querySelector('.plan-context-header__crumbs')).toBeTruthy();
+    expect(header.querySelector('a.plan-context-header__back')).toBeTruthy();
+    expect(header.querySelector('.plan-context-header__current')?.textContent).toContain('Main Plan');
     const navLinks = header.querySelectorAll('app-plan-detail-context-nav .plan-context-nav__link');
     expect(navLinks.length).toBe(4);
     expect(navLinks[0]?.getAttribute('href')).toContain('/plans/7');
@@ -644,7 +645,7 @@ describe('PlanTaskScheduleComponent', () => {
     const pageTitle = fixture.nativeElement.querySelector('#plan-context-page-title');
     expect(pageTitle).toBeTruthy();
     expect(pageTitle?.classList.contains('visually-hidden')).toBe(true);
-    expect(fixture.nativeElement.querySelector('.plan-context-header__identity')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.plan-context-header__current')).toBeTruthy();
   });
 
   it('renders empty-state link to cropping plan when sync is ready and fields are empty', async () => {
