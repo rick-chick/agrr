@@ -1460,7 +1460,10 @@
     },
     "creating": "作成中...",
     "sending": "送信中...",
-    "updating": "更新中..."
+    "updating": "更新中...",
+    "form": {
+      "required_field": "この項目は必須です。"
+    }
   },
   "masters": {
     "load_error": {

@@ -193,7 +193,10 @@
     },
     "creating": "Creating...",
     "sending": "Sending...",
-    "updating": "Updating..."
+    "updating": "Updating...",
+    "form": {
+      "required_field": "This field is required."
+    }
   },
   "masters": {
     "load_error": {

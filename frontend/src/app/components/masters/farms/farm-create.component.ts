@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -16,6 +16,13 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { CurrentUser } from '../../../services/api.service';
 import { detectBrowserRegion } from '../../../core/browser-region';
+import {
+  formCardAriaDescribedby,
+  formCardAriaInvalid,
+  formCardFieldErrorId,
+  formCardFieldShowsError,
+  formCardRequiredValueInvalid
+} from '../../../core/form-card-field-a11y';
 
 const DEFAULT_LAT = 35.6812;
 const DEFAULT_LNG = 139.7671;
@@ -48,16 +55,31 @@ const initialControl: FarmCreateViewState = {
       <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'farms.new.title' | translate }}</h2>
-        <form (ngSubmit)="createFarm()" #farmForm="ngForm" class="form-card__form">
+        <form (ngSubmit)="createFarm(farmForm)" #farmForm="ngForm" class="form-card__form">
           <label class="form-card__field" for="name">
             <span class="form-card__field-label">{{ 'farms.new.form.name_label' | translate }}</span>
-            <input id="name" name="name" [(ngModel)]="control.formData.name" required />
+            <input
+              id="name"
+              name="name"
+              [(ngModel)]="control.formData.name"
+              required
+              [class.form-card__input--invalid]="showsRequiredError(control.formData.name)"
+              [attr.aria-invalid]="ariaInvalidForRequired(control.formData.name)"
+              [attr.aria-describedby]="ariaDescribedbyForRequired('name', control.formData.name)"
+            />
+            @if (showsRequiredError(control.formData.name)) {
+              <span [id]="fieldErrorId('name')" class="form-card__field-error" role="alert">
+                {{ 'common.form.required_field' | translate }}
+              </span>
+            }
           </label>
           @if (auth.user()?.admin) {
             <app-region-select
               id="region"
               [region]="control.formData.region"
               [required]="true"
+              [formSubmitted]="formSubmitted"
+              [invalid]="formCardRequiredValueInvalid(control.formData.region)"
               (regionChange)="control.formData.region = $event || ''"
             ></app-region-select>
           }
@@ -83,7 +105,15 @@ const initialControl: FarmCreateViewState = {
                   [placeholder]="'farms.new.form.latitude_placeholder' | translate"
                   [(ngModel)]="control.formData.latitude"
                   required
+                  [class.form-card__input--invalid]="showsRequiredError(control.formData.latitude)"
+                  [attr.aria-invalid]="ariaInvalidForRequired(control.formData.latitude)"
+                  [attr.aria-describedby]="ariaDescribedbyForRequired('latitude', control.formData.latitude)"
                 />
+                @if (showsRequiredError(control.formData.latitude)) {
+                  <span [id]="fieldErrorId('latitude')" class="form-card__field-error" role="alert">
+                    {{ 'common.form.required_field' | translate }}
+                  </span>
+                }
               </label>
               <label class="form-card__field" for="longitude">
                 <span class="form-card__field-label">{{ 'farms.new.form.longitude_label' | translate }}</span>
@@ -97,12 +127,20 @@ const initialControl: FarmCreateViewState = {
                   [placeholder]="'farms.new.form.longitude_placeholder' | translate"
                   [(ngModel)]="control.formData.longitude"
                   required
+                  [class.form-card__input--invalid]="showsRequiredError(control.formData.longitude)"
+                  [attr.aria-invalid]="ariaInvalidForRequired(control.formData.longitude)"
+                  [attr.aria-describedby]="ariaDescribedbyForRequired('longitude', control.formData.longitude)"
                 />
+                @if (showsRequiredError(control.formData.longitude)) {
+                  <span [id]="fieldErrorId('longitude')" class="form-card__field-error" role="alert">
+                    {{ 'common.form.required_field' | translate }}
+                  </span>
+                }
               </label>
             </div>
           </div>
           <div class="form-card__actions">
-            <button type="submit" class="btn btn-primary" [disabled]="farmForm.invalid || control.saving">
+            <button type="submit" class="btn btn-primary" [disabled]="control.saving">
               {{ 'farms.new.form.submit' | translate }}
             </button>
           </div>
@@ -121,6 +159,8 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
 
+  formSubmitted = false;
+
   private _control: FarmCreateViewState = initialControl;
   get control(): FarmCreateViewState {
     return this._control;
@@ -135,6 +175,22 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
       { labelKey: 'farms.index.title', routerLink: ['/farms'] },
       { labelKey: 'farms.new.title' }
     ];
+  }
+
+  fieldErrorId(fieldId: string): string {
+    return formCardFieldErrorId(fieldId);
+  }
+
+  showsRequiredError(value: unknown): boolean {
+    return formCardFieldShowsError(this.formSubmitted, formCardRequiredValueInvalid(value));
+  }
+
+  ariaInvalidForRequired(value: unknown): true | null {
+    return formCardAriaInvalid(this.formSubmitted, formCardRequiredValueInvalid(value));
+  }
+
+  ariaDescribedbyForRequired(fieldId: string, value: unknown): string | null {
+    return formCardAriaDescribedby(fieldId, this.formSubmitted, formCardRequiredValueInvalid(value));
   }
 
   ngOnInit(): void {
@@ -154,7 +210,14 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
     };
   }
 
-  createFarm(): void {
+  createFarm(form?: NgForm): void {
+    this.formSubmitted = true;
+    if (form?.invalid) {
+      for (const control of Object.values(form.controls)) {
+        control.markAsTouched();
+      }
+      return;
+    }
     const region = this.ensureRegionForSubmit(this.auth.user());
     const { latitude, longitude } = this.control.formData;
     if (
