@@ -33,6 +33,7 @@ import { MasterContextCrumb } from '../master-context-header/master-context-crum
 import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { FarmTemperatureChartComponent } from './farm-temperature-chart.component';
 import { FarmTemperatureChartPeriod } from '../../../domain/farms/farm-temperature-chart';
+import { DetailSkeletonComponent } from '../../shared/skeleton/detail-skeleton.component';
 
 const initialControl: FarmDetailViewState = {
   loading: true,
@@ -55,14 +56,16 @@ const initialControl: FarmDetailViewState = {
     RegionSelectComponent,
     MasterContextHeaderComponent,
     FarmTemperatureChartComponent,
-    MasterLoadErrorPanelComponent
+    MasterLoadErrorPanelComponent,
+    DetailSkeletonComponent
   ],
   providers: [...FARM_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
-        <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        <app-detail-skeleton class="detail-loading-skeleton" />
+        <p class="master-loading detail-loading-text">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <app-master-load-error-panel
           [errorKey]="control.error"

@@ -16,6 +16,7 @@ import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pe
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
+import { DetailSkeletonComponent } from '../../shared/skeleton/detail-skeleton.component';
 
 const initialControl: InteractionRuleDetailViewState = {
   loading: true,
@@ -28,13 +29,14 @@ const initialControl: InteractionRuleDetailViewState = {
 @Component({
   selector: 'app-interaction-rule-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent, DetailSkeletonComponent],
   providers: [...INTERACTION_RULE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
-        <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        <app-detail-skeleton class="detail-loading-skeleton" />
+        <p class="master-loading detail-loading-text">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <app-master-load-error-panel
           [errorKey]="control.error"

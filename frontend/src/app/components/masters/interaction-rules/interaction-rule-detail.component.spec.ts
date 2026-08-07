@@ -201,6 +201,23 @@ describe('InteractionRuleDetailComponent', () => {
     expect(el.innerHTML).not.toContain('interaction_rules.show.region');
   });
 
+  it('shows detail skeleton while loading', () => {
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: true,
+      error: null,
+      rule: null,
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-detail-skeleton')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('.master-loading:not(.detail-loading-text)')
+    ).toBeNull();
+  });
+
   it('shows i18n load error panel with back link and retry on API failure', () => {
     translate.setTranslation('en', {
       interaction_rules: { index: { title: 'Rotation rules' } },
