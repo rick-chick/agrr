@@ -25,15 +25,19 @@ smokeDescribe('cookie consent focus trap (WCAG 2.4.11)', () => {
 
     const accept = dialog.locator('.btn-primary');
     const reject = dialog.locator('.btn-secondary');
+    const privacyLink = dialog.locator('.cookie-consent-link');
     await expect(accept).toBeFocused();
 
     await page.keyboard.press('Tab');
     await expect(reject).toBeFocused();
+
+    await page.keyboard.press('Tab');
+    await expect(privacyLink).toBeFocused();
 
     await page.keyboard.press('Tab');
     await expect(accept).toBeFocused();
 
     await page.keyboard.press('Shift+Tab');
-    await expect(reject).toBeFocused();
+    await expect(privacyLink).toBeFocused();
   });
 });

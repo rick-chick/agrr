@@ -12,7 +12,7 @@ function findRoute(pattern: string) {
 }
 
 test.use({
-  ...devices['iPhone 13'],
+  ...devices['Pixel 5'],
 });
 
 /**

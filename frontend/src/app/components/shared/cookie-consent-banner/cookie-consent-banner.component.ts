@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -30,10 +30,11 @@ const isCookieControlHardDisabled = (): boolean => {
   templateUrl: './cookie-consent-banner.component.html',
   styleUrls: ['./cookie-consent-banner.component.css']
 })
-export class CookieConsentBannerComponent implements OnInit {
+export class CookieConsentBannerComponent implements OnInit, AfterViewInit {
   readonly dialogTitleId = 'cookie-consent-dialog-title';
   descriptionHtml: SafeHtml | null = null;
   visible = false;
+  private focusAcceptOnView = false;
 
   @ViewChild('acceptButton') private acceptButton?: ElementRef<HTMLButtonElement>;
 
@@ -54,9 +55,15 @@ export class CookieConsentBannerComponent implements OnInit {
       this.googleAnalytics.applyStoredConsent();
     } else {
       this.visible = true;
-      queueMicrotask(() => this.focusInitialControl());
+      this.focusAcceptOnView = true;
     }
     this.descriptionHtml = this.buildDescription();
+  }
+
+  ngAfterViewInit(): void {
+    if (this.focusAcceptOnView) {
+      this.focusInitialControl();
+    }
   }
 
   onDialogKeydown(event: KeyboardEvent): void {
