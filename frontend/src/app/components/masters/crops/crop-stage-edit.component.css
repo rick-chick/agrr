@@ -146,7 +146,7 @@ dialog.form-dialog.crop-stages__advanced-dialog {
 }
 
 .confirm-dialog::backdrop {
-  background: rgb(0 0 0 / 0.45);
+  background: var(--color-dialog-backdrop);
 }
 
 .confirm-dialog__message {
