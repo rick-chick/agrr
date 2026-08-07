@@ -8,7 +8,7 @@ import { UndoToastService } from '../../../services/undo-toast.service';
   standalone: true,
   imports: [CommonModule, TranslateModule],
   template: `
-    <div class="undo-toast" *ngIf="toastService.state().visible">
+    <div class="undo-toast" *ngIf="toastService.state().visible" role="status" aria-live="polite">
       <span>{{ toastService.state().message }}</span>
       <div class="actions">
         <button type="button" (click)="undo.emit()">{{ 'deletion_undo.undo_button' | translate }}</button>
