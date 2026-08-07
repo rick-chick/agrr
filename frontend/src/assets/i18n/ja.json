@@ -39,6 +39,10 @@
     "errors": {
       "invalid_id": "農薬IDが不正です。"
     },
+    "fallback": {
+      "crop": "作物 #{{id}}",
+      "pest": "害虫 #{{id}}"
+    },
     "undo": {
       "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
@@ -126,7 +130,8 @@
       "title": "新しい農薬を追加"
     },
     "edit": {
-      "title": "{{name}}を編集"
+      "title": "{{name}}を編集",
+      "title_default": "農薬"
     },
     "show": {
       "reference_pesticide": "参照農薬",
@@ -170,6 +175,9 @@
       "no_permission": "権限がありません。",
       "not_found": "指定された作業が見つかりません。"
     },
+    "errors": {
+      "invalid_id": "作業IDが不正です。"
+    },
     "index": {
       "title": "作業一覧",
       "description": "作付け計画で使う作業マスタの登録・管理を行います。",
@@ -203,7 +211,8 @@
       "title": "新しい作業を追加"
     },
     "edit": {
-      "title": "{{name}}を編集"
+      "title": "{{name}}を編集",
+      "title_default": "作業"
     },
     "form": {
       "name_label": "作業名",
@@ -236,6 +245,7 @@
       "description": "説明",
       "time_per_sqm": "作業時間",
       "hours_suffix": "時間/㎡",
+      "task_type": "作業種別",
       "weather_dependency": "天候依存度",
       "weather_dependency_low": "低",
       "weather_dependency_medium": "中",
@@ -969,6 +979,9 @@
     "validation": {
       "required_fields": "農場名、地域、緯度、経度は必須です。"
     },
+    "map": {
+      "default_name": "新しい農場"
+    },
     "flash": {
       "created": "農場が正常に作成されました。",
       "updated": "農場が正常に更新されました。",
@@ -1038,7 +1051,8 @@
           "loading": "地図を読み込み中..."
         },
         "submit": "農場を作成",
-        "cancel": "キャンセル"
+        "cancel": "キャンセル",
+        "coordinates_validation_error": "緯度または経度の値が無効です。正しい範囲内の数値を入力してください。"
       },
       "errors": {
         "title": "{{count}}件のエラーがあります："
@@ -1254,6 +1268,9 @@
       "no_permission": "権限がありません。",
       "not_found": "指定されたルールが見つかりません。"
     },
+    "errors": {
+      "invalid_id": "ルールIDが不正です。"
+    },
     "index": {
       "title": "連作ルール一覧",
       "description": "作付け計画で使う連作ルールの登録・管理を行います。",
@@ -1429,6 +1446,9 @@
     "submit": "送信",
     "close": "閉じる",
     "loading": "読み込み中...",
+    "creating": "作成中...",
+    "sending": "送信中...",
+    "updating": "更新中...",
     "true": "はい",
     "false": "いいえ",
     "api_error": {
@@ -1788,6 +1808,8 @@
     }
   },
   "public_plans": {
+    "create_failed": "計画作成に失敗しました: {{errors}}",
+    "invalid_farm_id": "農場IDが不正です。",
     "errors": {
       "field_not_found": "圃場が見つかりません",
       "cannot_remove_field_with_cultivations": "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。",

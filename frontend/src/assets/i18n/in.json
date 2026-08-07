@@ -14,6 +14,10 @@
     "errors": {
       "invalid_id": "अमान्य कीटनाशक ID।"
     },
+    "fallback": {
+      "crop": "फसल #{{id}}",
+      "pest": "कीट #{{id}}"
+    },
     "undo": {
       "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
@@ -101,7 +105,8 @@
       "title": "नया कीटनाशक जोड़ें"
     },
     "edit": {
-      "title": "{{name}} संपादित करें"
+      "title": "{{name}} संपादित करें",
+      "title_default": "कीटनाशक"
     },
     "show": {
       "reference_pesticide": "संदर्भ कीटनाशक",
@@ -145,6 +150,9 @@
       "no_permission": "権限がありません。",
       "not_found": "指定された作業が見つかりません。"
     },
+    "errors": {
+      "invalid_id": "अमान्य कार्य ID।"
+    },
     "index": {
       "title": "कार्य सूची",
       "new_agricultural_task": "नया कार्य जोड़ें",
@@ -178,7 +186,8 @@
       "title": "नया कार्य जोड़ें"
     },
     "edit": {
-      "title": "{{name}} संपादित करें"
+      "title": "{{name}} संपादित करें",
+      "title_default": "कार्य"
     },
     "form": {
       "name_label": "कार्य का नाम",
@@ -211,6 +220,7 @@
       "description": "विवरण",
       "time_per_sqm": "प्रति वर्ग मीटर समय",
       "hours_suffix": "घंटे/㎡",
+      "task_type": "कार्य प्रकार",
       "weather_dependency": "मौसम निर्भरता",
       "weather_dependency_low": "कम",
       "weather_dependency_medium": "मध्यम",
@@ -301,6 +311,25 @@
         "daily_uptake_k_placeholder": "उदाहरण: 0.8",
         "daily_uptake_k_help": "इस चरण के लिए दैनिक पोटैशियम (तत्व) अवशोषण दर्ज करें।"
       }
+    },
+    "setup_proposal_import": {
+      "action": "प्रस्ताव आयात करें",
+      "breadcrumb": "प्रस्ताव आयात करें",
+      "title": "{{name}} — प्रस्ताव आयात करें",
+      "lead": "बाहरी स्किल से JSON पेस्ट करें या फ़ाइल चुनें, फिर सत्यापित और लागू करें।",
+      "json_label": "प्रस्ताव JSON",
+      "json_placeholder": "{ \"stages\": [], \"agricultural_tasks\": [], \"task_schedule_blueprints\": [] }",
+      "choose_file": "फ़ाइल चुनें",
+      "paste_clipboard": "क्लिपबोर्ड से पेस्ट करें",
+      "preview_button": "पूर्वावलोकन (सत्यापन)",
+      "previewing": "सत्यापन हो रहा है…",
+      "preview_title": "सामान्यीकृत पूर्वावलोकन",
+      "validation_errors_title": "सत्यापन त्रुटियाँ",
+      "apply_button": "इस फसल पर लागू करें",
+      "applying": "लागू हो रहा है…",
+      "invalid_json": "JSON का प्रारूप अमान्य है।",
+      "invalid_shape": "JSON में stages, agricultural_tasks और task_schedule_blueprints होना चाहिए।",
+      "clipboard_error": "क्लिपबोर्ड पढ़ा नहीं जा सका।"
     },
     "errors": {
       "invalid_id": "अमान्य फसल ID।",
@@ -405,6 +434,7 @@
       "stage_order_renumber": "क्रम पुनः नंबर करें"
     },
     "show": {
+      "reference_crop": "संदर्भ फसल",
       "name": "नाम",
       "variety": "किस्म",
       "area_per_unit": "प्रति इकाई क्षेत्र",
@@ -724,6 +754,9 @@
     "validation": {
       "required_fields": "खेत का नाम, क्षेत्र, अक्षांश और देशांतर आवश्यक हैं।"
     },
+    "map": {
+      "default_name": "नया खेत"
+    },
     "flash": {
       "created": "खेत सफलतापूर्वक बनाया गया।",
       "updated": "खेत सफलतापूर्वक अपडेट किया गया।",
@@ -781,7 +814,8 @@
           "loading": "नक्शा लोड हो रहा है..."
         },
         "submit": "खेत बनाएं",
-        "cancel": "रद्द करें"
+        "cancel": "रद्द करें",
+        "coordinates_validation_error": "अमान्य अक्षांश या देशांतर। वैध सीमा के भीतर संख्यात्मक मान दर्ज करें।"
       },
       "errors": {
         "title": "{{count}} त्रुटियां हुईं:"
@@ -975,6 +1009,9 @@
       "reference_flag_admin_only": "केवल व्यवस्थापक संदर्भ ध्वज बदल सकते हैं।",
       "no_permission": "अनुमति अस्वीकृत।",
       "not_found": "नियम नहीं मिला।"
+    },
+    "errors": {
+      "invalid_id": "अमान्य नियम ID।"
     },
     "index": {
       "title": "निरंतर खेती नियम सूची",
@@ -1172,6 +1209,9 @@
     "submit": "जमा करें",
     "close": "बंद करें",
     "loading": "लोड हो रहा है...",
+    "creating": "बनाया जा रहा है...",
+    "sending": "भेजा जा रहा है...",
+    "updating": "अपडेट किया जा रहा है...",
     "true": "हां",
     "false": "नहीं",
     "api_error": {
@@ -1303,6 +1343,8 @@
     }
   },
   "public_plans": {
+    "create_failed": "योजना बनाने में विफल: {{errors}}",
+    "invalid_farm_id": "अमान्य खेत ID।",
     "errors": {
       "field_not_found": "फ़ील्ड नहीं मिला",
       "cannot_remove_field_with_cultivations": "इस फ़ील्ड में खेती अनुसूची है। कृपया पहले फसलें हटाएं।",
