@@ -5,7 +5,7 @@ import { smokeDescribe } from './smoke-helpers';
 smokeDescribe('cookie consent focus trap (WCAG 2.4.11)', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.removeItem('agrr_cookie_consent');
+      localStorage.removeItem('cookieConsentStatus');
       const w = window as Window & { __disableCookieControl?: boolean };
       w.__disableCookieControl = false;
     });
