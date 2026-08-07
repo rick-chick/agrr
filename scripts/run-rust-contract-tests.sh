@@ -287,7 +287,7 @@ docker compose --profile test run --rm \
     echo "==> R4 contract (agrr-r4-contract)"
     R4_LOG=/contract-logs/agrr-r4-contract-tests.log
     set +e
-    RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests -Z unstable-options --report-time 2>&1 | tee "$R4_LOG"
+    RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests -Z unstable-options --report-time --test-threads=1 2>&1 | tee "$R4_LOG"
     R4_EXIT=${PIPESTATUS[0]}
     set -e
     exit "$R4_EXIT"

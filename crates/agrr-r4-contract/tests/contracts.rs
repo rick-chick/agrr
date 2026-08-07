@@ -7,8 +7,8 @@ use support::{
     agrr_regeneration_contract_available,     assert_builtin_generation_deprecated_headers,
     assert_cross_user_access_denied,
     assert_crop_task_template_api_removed,
-    clear_plan_task_schedules, developer_session_id, empty_headers, farmer_session_id,
-    researcher_session_id,
+    clear_plan_task_schedules, contract_api_session_id, developer_session_id, empty_headers,
+    farmer_session_id, researcher_session_id,
     find_schedule_item, poll_task_schedule_sync_ready, schedule_item_ids_from_response,
     seed_masters_crop, seed_masters_crop_with_manual_blueprint, seed_masters_crop_with_stages,
     seed_masters_crop_with_stages_and_blueprints, seed_reference_crop_with_stage,
@@ -1621,8 +1621,8 @@ fn post_api_keys_generate_is_idempotent_when_key_already_exists() {
 #[test]
 fn post_api_keys_regenerate_invalidates_previous_key() {
     let client = ContractClient::from_env();
-    // Dedicated mock user — see post_api_keys_generate_is_idempotent_when_key_already_exists.
-    let session_id = researcher_session_id(&client);
+    // Dedicated mock user — parallel contract tests must not share api_key mutations.
+    let session_id = contract_api_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
     let seed = seed_masters_crop(user_id);
 

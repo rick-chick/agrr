@@ -4,6 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
+import { documentHtmlLang, ogLocaleForAppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { normalizeSeoPath, resolveSeoKeyPrefix } from './route-seo-meta.config';
 import {
@@ -22,16 +23,6 @@ import {
 import { PRODUCTION_SITE_ORIGIN } from './seo-site-origin';
 import { resolveRouteSeoMetaWithTranslator } from './resolve-route-seo-meta';
 import { buildSelfCanonicalUrl, DEFAULT_OGP_IMAGE_PATH } from './seo-url';
-
-function documentHtmlLang(angularLang: AppLang): string {
-  return angularLang === 'in' ? 'hi' : angularLang;
-}
-
-function ogLocale(angularLang: AppLang): string {
-  if (angularLang === 'ja') return 'ja_JP';
-  if (angularLang === 'en') return 'en_US';
-  return 'hi_IN';
-}
 
 function isResolvedTranslation(value: string, keyPrefix: string): boolean {
   return Boolean(value) && !value.startsWith(keyPrefix);
@@ -246,7 +237,7 @@ export class AppSeoMetaService {
     }
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     const angularLang = (this.translate.currentLang || 'ja') as AppLang;
-    this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
+    this.meta.updateTag({ property: 'og:locale', content: ogLocaleForAppLang(angularLang) });
     this.meta.updateTag({ property: 'og:site_name', content: 'AGRR' });
     if (ogImageUrl) {
       this.meta.updateTag({ property: 'og:image', content: ogImageUrl });

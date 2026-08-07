@@ -3,6 +3,8 @@
  * @typedef {'ja' | 'en' | 'in'} CaptureLocale
  */
 
+import { documentHtmlLang } from '../scripts/document-html-lang.mjs';
+
 /** @type {readonly CaptureLocale[]} */
 export const CAPTURE_LOCALES = ['ja', 'en', 'in'];
 
@@ -21,10 +23,7 @@ export function agentPngFilename(pattern, locale) {
   return `${pngBasename(pattern)}.${locale}.png`;
 }
 
-/** @param {CaptureLocale} locale */
-export function documentHtmlLang(locale) {
-  return locale === 'in' ? 'hi' : locale;
-}
+export { documentHtmlLang };
 
 /** @param {CaptureLocale} locale */
 export function navigatorLanguageTag(locale) {

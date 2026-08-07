@@ -125,6 +125,15 @@ describe('AppSeoMetaService', () => {
     expect(meta.getTag('name="description"')?.content).toBe('説明文');
   });
 
+  it('sets document.documentElement.lang to hi when ngx-translate locale is in', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.use('in');
+    setWindowPath('/');
+    service.refreshDefaultMeta();
+    expect(document.documentElement.lang).toBe('hi');
+    expect(meta.getTag('property="og:locale"')?.content).toBe('hi_IN');
+  });
+
   it('sets route-specific title and description for /about', () => {
     setWindowPath('/about');
     service.refreshDefaultMeta();
