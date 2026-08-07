@@ -9,6 +9,9 @@ export const GANTT_DRAG_ACTIVATION_THRESHOLD_PX = 3;
 export const GANTT_DRAG_ACTIVATION_THRESHOLD_MOBILE_PX = 12;
 export const GANTT_MARGIN_LEFT_DESKTOP = 80;
 export const GANTT_MARGIN_LEFT_MOBILE = 36;
+export const GANTT_FIELD_DIVIDER_OFFSET = 10;
+export const GANTT_FIELD_LABEL_GAP = 8;
+export const GANTT_FIELD_LABEL_CLIP_PADDING = 4;
 
 export function getGanttMarginLeft(isMobileLayout: boolean): number {
   return isMobileLayout ? GANTT_MARGIN_LEFT_MOBILE : GANTT_MARGIN_LEFT_DESKTOP;
@@ -18,8 +21,23 @@ export function formatGanttFieldRowIndexLabel(rowIndex: number): string {
   return String(rowIndex + 1);
 }
 
+export function getGanttFieldDividerX(marginLeft: number): number {
+  return marginLeft - GANTT_FIELD_DIVIDER_OFFSET;
+}
+
+export function getGanttFieldLabelAnchorX(marginLeft: number): number {
+  return getGanttFieldDividerX(marginLeft) - GANTT_FIELD_LABEL_GAP;
+}
+
 export function getGanttFieldLabelCenterX(marginLeft: number): number {
   return marginLeft / 2;
+}
+
+export function getGanttFieldLabelClipWidth(marginLeft: number): number {
+  return Math.max(
+    0,
+    getGanttFieldDividerX(marginLeft) - GANTT_FIELD_LABEL_CLIP_PADDING
+  );
 }
 
 export function resolveGanttDragFieldContext(input: {

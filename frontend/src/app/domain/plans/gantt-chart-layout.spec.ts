@@ -23,6 +23,9 @@ import {
   getGanttMarginLeft,
   formatGanttFieldRowIndexLabel,
   getGanttFieldLabelCenterX,
+  getGanttFieldLabelAnchorX,
+  getGanttFieldDividerX,
+  GANTT_FIELD_LABEL_GAP,
   resolveGanttDragFieldContext,
   GANTT_MARGIN_LEFT_DESKTOP,
   GANTT_MARGIN_LEFT_MOBILE,
@@ -254,6 +257,22 @@ describe('gantt-chart-layout', () => {
     expect(formatGanttFieldRowIndexLabel(4)).toBe('5');
     expect(getGanttFieldLabelCenterX(80)).toBe(40);
     expect(getGanttFieldLabelCenterX(36)).toBe(18);
+  });
+
+  it('keeps desktop field label anchor left of the row divider with a fixed gap', () => {
+    const marginLeft = GANTT_MARGIN_LEFT_DESKTOP;
+    const dividerX = getGanttFieldDividerX(marginLeft);
+    const anchorX = getGanttFieldLabelAnchorX(marginLeft);
+    expect(dividerX).toBe(marginLeft - 10);
+    expect(anchorX).toBe(dividerX - GANTT_FIELD_LABEL_GAP);
+    expect(anchorX + GANTT_FIELD_LABEL_GAP).toBeLessThanOrEqual(dividerX);
+  });
+
+  it('keeps mobile field label anchor left of the row divider with a fixed gap', () => {
+    const marginLeft = GANTT_MARGIN_LEFT_MOBILE;
+    const dividerX = getGanttFieldDividerX(marginLeft);
+    const anchorX = getGanttFieldLabelAnchorX(marginLeft);
+    expect(anchorX + GANTT_FIELD_LABEL_GAP).toBeLessThanOrEqual(dividerX);
   });
 
   it('resolveGanttDragFieldContext returns row index and name or null', () => {
