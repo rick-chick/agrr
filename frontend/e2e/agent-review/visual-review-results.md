@@ -51,16 +51,16 @@
 | 29 | `farms/:id/edit` | `farms_id_edit.ja.png` | `farms_id_edit.en.png` | `farms_id_edit.in.png` | OK | OK | なし |
 | 30 | `farms/new` | `farms_new.ja.png` | `farms_new.en.png` | `farms_new.in.png` | OK | OK | なし |
 | 31 | `fertilizes` | `fertilizes.ja.png` | `fertilizes.en.png` | `fertilizes.in.png` | OK | OK | なし |
-| 32 | `fertilizes/:id` | `fertilizes_id.ja.png` | `fertilizes_id.en.png` | `fertilizes_id.in.png` | 要確認 | 注意 | layout: API 404 で本文未表示。i18n: エラー文言が英語の生 HTTP メッセージ |
-| 33 | `fertilizes/:id/edit` | `fertilizes_id_edit.ja.png` | `fertilizes_id_edit.en.png` | `fertilizes_id_edit.in.png` | 要確認 | 注意 | layout: 404 でフォーム空。i18n: 見出し欠落・エラー英語 |
+| 32 | `fertilizes/:id` | `fertilizes_id.ja.png` | `fertilizes_id.en.png` | `fertilizes_id.in.png` | OK | OK | **#658 再キャプチャ**: E2E Baseline 正常表示。エラー回復 UI（MasterLoadErrorPanel + i18n）は component/presenter spec で検証済み |
+| 33 | `fertilizes/:id/edit` | `fertilizes_id_edit.ja.png` | `fertilizes_id_edit.en.png` | `fertilizes_id_edit.in.png` | OK | OK | **#658 再キャプチャ**: 編集フォーム正常表示。`title_default` 生キー解消（PR #659） |
 | 34 | `fertilizes/new` | `fertilizes_new.ja.png` | `fertilizes_new.en.png` | `fertilizes_new.in.png` | OK | OK | なし |
 | 35 | `interaction_rules` | `interaction_rules.ja.png` | `interaction_rules.en.png` | `interaction_rules.in.png` | OK | OK | なし |
 | 36 | `interaction_rules/:id` | `interaction_rules_id.ja.png` | `interaction_rules_id.en.png` | `interaction_rules_id.in.png` | OK | 要確認 | i18n: `interaction_rules.show.region` 生キー（3 言語） |
 | 37 | `interaction_rules/:id/edit` | `interaction_rules_id_edit.ja.png` | `interaction_rules_id_edit.en.png` | `interaction_rules_id_edit.in.png` | OK | OK | なし |
 | 38 | `interaction_rules/new` | `interaction_rules_new.ja.png` | `interaction_rules_new.en.png` | `interaction_rules_new.in.png` | OK | OK | なし |
 | 39 | `pesticides` | `pesticides.ja.png` | `pesticides.en.png` | `pesticides.in.png` | OK | OK | なし |
-| 40 | `pesticides/:id` | `pesticides_id.ja.png` | `pesticides_id.en.png` | `pesticides_id.in.png` | 要確認 | 注意 | layout: API 500 で本文未表示。i18n: エラー文言が英語の生 HTTP メッセージ |
-| 41 | `pesticides/:id/edit` | `pesticides_id_edit.ja.png` | `pesticides_id_edit.en.png` | `pesticides_id_edit.in.png` | 要確認 | 要確認 | layout: 500 でフォーム空。i18n: `pesticides.edit.title_default` 生キー（3 言語） |
+| 40 | `pesticides/:id` | `pesticides_id.ja.png` | `pesticides_id.en.png` | `pesticides_id.in.png` | OK | OK | **#658 再キャプチャ**: E2E Baseline 正常表示。エラー回復 UI は component/presenter spec で検証済み |
+| 41 | `pesticides/:id/edit` | `pesticides_id_edit.ja.png` | `pesticides_id_edit.en.png` | `pesticides_id_edit.in.png` | OK | OK | **#658 再キャプチャ**: 編集フォーム正常表示。`title_default` 生キー解消（PR #659） |
 | 42 | `pesticides/new` | `pesticides_new.ja.png` | `pesticides_new.en.png` | `pesticides_new.in.png` | OK | OK | なし |
 | 43 | `pests` | `pests.ja.png` | `pests.en.png` | `pests.in.png` | OK | OK | マスタ害虫名の多言語混在はデータ由来 |
 | 44 | `pests/:id` | `pests_id.ja.png` | `pests_id.en.png` | `pests_id.in.png` | OK | 注意 | i18n: Region が `us` コード。説明・発生季節は英語データのまま |
@@ -79,17 +79,17 @@
 
 | 結果 | 件数 |
 |------|------|
-| OK | 34 |
-| 注意 | 12 |
-| 要確認 | 6 |
+| OK | 38 |
+| 注意 | 10 |
+| 要確認 | 4 |
 
 ## 集計（i18n）
 
 | i18n | 件数 |
 |------|------|
-| OK | 29 |
-| 注意 | 13 |
-| 要確認 | 8 |
+| OK | 33 |
+| 注意 | 11 |
+| 要確認 | 6 |
 
 ## 指摘の詳細
 
@@ -99,7 +99,7 @@
 - **#8 privacy / #14 terms** — `{{contact_link}}` 未展開は **解消**（OK）。
 - **#47 plans/:id/task_schedule** — `plans.task_schedules.*` 生キーは **解消**（OK）。
 - **#17–22 crops / agricultural_tasks en ラベル** — フォーム・一覧の日本語混在は **概ね解消**（残: #16 hours_suffix、#19 Reference Crop 連結）。
-- **#37 pesticides/:id** — 関連名表示はキャプチャ不能（API 500）。別途データ/API 要因。
+- **#37 pesticides/:id** — **#658 解消**: E2E Baseline 正常表示。エラー回復 UI は spec 検証済み。
 
 ### 新規・残存の i18n / レイアウト
 
@@ -108,9 +108,9 @@
 3. **#10 public-plans/optimizing** — 気象取得失敗エラー（planId=1 のデータ/API 要因）。
 4. **#16 agricultural_tasks/:id** — `agricultural_tasks.show.hours_suffix` 生キー。
 5. **#25 farms/:id** — 地域コード `jp` 表示（編集画面は翻訳済み）。
-6. **#29–30 fertilizes/:id** — マスタ id=1 が 404（キャプチャ URL リゾルブ要確認）。
+6. **#29–30 fertilizes/:id** — **#658 解消**: E2E Baseline 正常表示。エラー回復 UI は spec 検証済み。
 7. **#33 interaction_rules/:id** — `interaction_rules.show.region` 生キー。
-8. **#37–38 pesticides/:id** — API 500 + `pesticides.edit.title_default` 生キー。
+8. **#37–38 pesticides/:id** — **#658 解消**: E2E Baseline 正常表示。`title_default` 生キー解消。
 9. **#46 plans/:id/optimizing** — 見出し二重表示（バッジ + タイトル）。
 10. **#50 plans/new** — 3 言語で見出し文言の意味不一致（年の有無）。
 11. **#51 work** — キャプチャ時 `GET /api/v1/work/hub` が 501 のため農場カード未表示。エラー＋「再読み込み」UI・ナビ active は意図どおり。API 応答後の農場一覧は別途再キャプチャ推奨。
@@ -144,6 +144,6 @@
 
 **ビジュアル**: 作業ハブ周辺（#47–51）は導線・ナビ active の改善が確認できた一方、#48 の記録ボタン配置と #49/#51 のエラー時リトライ統一が残課題。農場カード UI は API 再デプロイ後の再キャプチャが必要。
 
-**i18n**: P0/P1 系（about・privacy/terms・task_schedule・マスタ en ラベル）は **大幅改善**。残件は生キー（hours_suffix・interaction_rules.show.region・pesticides.edit.title_default）、public-plans 農場名 mojibake、HTTP エラー英語露出、地域コード表示など。**i18n 要確認 8 件** — 新規 Issue 化を推奨（`ux-issue-creator` パイプライン）。
+**i18n**: P0/P1 系（about・privacy/terms・task_schedule・マスタ en ラベル）は **大幅改善**。**#658**: fertilizes/pesticides detail+edit の HTTP エラー英語露出・`title_default` 生キーは **解消**。残件は生キー（hours_suffix・interaction_rules.show.region）、public-plans 農場名 mojibake、地域コード表示など。**i18n 要確認 6 件** — 新規 Issue 化を推奨（`ux-issue-creator` パイプライン）。
 
 成果物: `frontend/e2e/agent-review/visual-review-results.md`（本ファイル）。PNG は `frontend/e2e/agent-review/out/`（gitignore）。
