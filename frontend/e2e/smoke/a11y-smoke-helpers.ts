@@ -3,6 +3,9 @@ import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { expect } from '@playwright/test';
+import { PUBLIC_PRERENDER_ROUTES } from '../../scripts/public-prerender-routes.mjs';
+import { buildA11ySmokeRoutes } from './a11y-smoke-lib.mjs';
+import { smokeManifest } from './smoke-helpers';
 
 export type A11yRoute = {
   pattern: string;
@@ -10,13 +13,13 @@ export type A11yRoute = {
   requiresAuth: boolean;
 };
 
-export const a11yCoreRoutes: A11yRoute[] = [
-  { pattern: '', url: '/', requiresAuth: false },
-  { pattern: 'login', url: '/login', requiresAuth: false },
-  { pattern: 'plans', url: '/plans', requiresAuth: true },
-  { pattern: 'crops', url: '/crops', requiresAuth: true },
-  { pattern: 'contact', url: '/contact', requiresAuth: false },
-];
+const prerenderPaths = PUBLIC_PRERENDER_ROUTES.map((route) => route.path);
+
+/** Public prerender + manifest public routes + authenticated shell samples (see a11y-smoke-lib.mjs). */
+export const a11ySmokeRoutes: A11yRoute[] = buildA11ySmokeRoutes(smokeManifest, prerenderPaths);
+
+/** @deprecated Use a11ySmokeRoutes */
+export const a11yCoreRoutes = a11ySmokeRoutes;
 
 type AllowlistFile = {
   /** Known axe rule IDs allowed per route pattern (see a11y-allowlist.json). */
