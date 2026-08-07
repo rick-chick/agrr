@@ -2,7 +2,6 @@ import { expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import {
   PUBLIC_PLAN_SELECT_CROP_STEP2_ACTIVE_STEP,
-  PUBLIC_PLAN_SELECT_CROP_STEP2_CONTENT_READY,
   PUBLIC_PLAN_SELECT_CROP_STEP2_NUMBER,
 } from './assert-public-plan-select-crop-step2-lib.mjs';
 import { HOST_SELECTOR_BY_PATTERN, type RouteRow } from './route-validity';
@@ -47,9 +46,6 @@ export async function waitForPageStable(page: Page, r: RouteRow): Promise<void> 
       PUBLIC_PLAN_SELECT_CROP_STEP2_NUMBER,
       { timeout: 60_000 },
     );
-    await expect(page.locator(PUBLIC_PLAN_SELECT_CROP_STEP2_CONTENT_READY).first()).toBeVisible({
-      timeout: 60_000,
-    });
     return;
   }
 

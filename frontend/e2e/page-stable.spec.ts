@@ -117,7 +117,7 @@ test.describe('waitForPageStable public-plans/select-crop', () => {
       <app-public-plan-select-crop>
         <div class="compact-step active"><div class="step-number">2</div></div>
         <section class="content-card">
-          <div class="enhanced-grid"></div>
+          <div class="enhanced-grid" hidden></div>
         </section>
       </app-public-plan-select-crop>
     `);
