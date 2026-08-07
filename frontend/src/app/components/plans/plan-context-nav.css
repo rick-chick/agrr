@@ -43,7 +43,7 @@
 
 .plan-context-nav__link--active {
   color: var(--color-primary);
-  font-weight: var(--font-weight-semibold, 600);
+  font-weight: var(--font-weight-semibold);
   border-bottom-color: var(--color-primary);
   background: transparent;
   box-shadow: none;

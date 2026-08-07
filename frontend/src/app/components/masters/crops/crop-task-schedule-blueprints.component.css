@@ -9,14 +9,14 @@
   margin-bottom: var(--space-4);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--color-primary-border-soft, #bfdbfe);
-  background: var(--color-primary-bg-soft, #eff6ff);
+  border: 1px solid var(--color-primary-border-soft);
+  background: var(--color-primary-bg-soft);
 }
 
 .crop-blueprints__plan-wizard-banner-title {
   margin: 0;
   font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold, 600);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text);
 }
 
@@ -119,7 +119,7 @@
   box-sizing: border-box;
   display: block;
   width: 100%;
-  min-height: var(--touch-target-min, 2.75rem);
+  min-height: var(--touch-target-min);
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -316,7 +316,7 @@ article.item-card.blueprint-card {
 }
 
 .blueprint-card__remove:hover {
-  background: var(--color-error-bg-soft, #fef2f2);
+  background: var(--color-error-bg-soft);
   border-color: transparent;
 }
 
@@ -382,8 +382,8 @@ article.item-card.blueprint-card {
   margin-bottom: var(--space-1);
   padding: 0 var(--space-2);
   border-radius: var(--radius-sm);
-  background: var(--color-warning-bg-soft, #fffbeb);
-  color: var(--color-warning-text, #b45309);
+  background: var(--color-warning-bg-soft);
+  color: var(--color-warning-text);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
 }
@@ -442,13 +442,13 @@ article.item-card.blueprint-card {
 }
 
 .blueprint-stage-lane__gdd-range--warn {
-  color: var(--color-warning-text, #b45309);
+  color: var(--color-warning-text);
 }
 
 .blueprint-stage-lane__lane-warning {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  color: var(--color-warning-text, #b45309);
+  color: var(--color-warning-text);
   line-height: 1.4;
 }
 
@@ -460,9 +460,9 @@ article.item-card.blueprint-card {
   gap: var(--space-2);
   min-height: 3rem;
   padding: var(--space-2);
-  border: 1px dashed var(--color-border-subtle, #d1d5db);
-  border-radius: var(--radius-md, 0.5rem);
-  background: var(--color-surface-subtle, #f9fafb);
+  border: 1px dashed var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
   overflow-x: auto;
 }
 
@@ -483,7 +483,7 @@ article.item-card.blueprint-card {
 }
 
 .blueprint-stage-lane__cards .blueprint-card.cdk-drag-preview {
-  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.12));
+  box-shadow: var(--shadow-md);
 }
 
 .blueprint-stage-lane__cards .blueprint-card.cdk-drag-placeholder {

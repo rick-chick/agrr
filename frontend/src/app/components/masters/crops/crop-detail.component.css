@@ -25,7 +25,7 @@
 }
 
 .crop-detail__blueprint-summary-attention {
-  color: var(--color-warning, var(--color-text-secondary));
+  color: var(--color-warning);
 }
 
 .crop-detail__blueprint-summary-hint {
@@ -79,7 +79,7 @@
 }
 
 .crop-detail__stage-cumulative-range--warn {
-  color: var(--color-warning, var(--color-text-secondary));
+  color: var(--color-warning);
 }
 
 .crop-detail__stage-lane-warning {
@@ -140,8 +140,8 @@
 
 .crop-detail__stage-task-badge-status {
   flex-shrink: 0;
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-warning, var(--color-text-secondary));
+  font-size: var(--font-size-xs);
+  color: var(--color-warning);
 }
 
 .crop-detail__cultivation-actions {
