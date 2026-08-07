@@ -79,7 +79,7 @@ const initialControl: FarmCreateViewState = {
               [region]="control.formData.region"
               [required]="true"
               [formSubmitted]="formSubmitted"
-              [invalid]="formCardRequiredValueInvalid(control.formData.region)"
+              [invalid]="requiredValueInvalid(control.formData.region)"
               (regionChange)="control.formData.region = $event || ''"
             ></app-region-select>
           }
@@ -160,6 +160,8 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
   private readonly translate = inject(TranslateService);
 
   formSubmitted = false;
+
+  readonly requiredValueInvalid = formCardRequiredValueInvalid;
 
   private _control: FarmCreateViewState = initialControl;
   get control(): FarmCreateViewState {
