@@ -30,7 +30,7 @@ const initialControl: InteractionRuleDetailViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
   providers: [...INTERACTION_RULE_DETAIL_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
@@ -79,7 +79,7 @@ const initialControl: InteractionRuleDetailViewState = {
           </div>
         </section>
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./interaction-rule-detail.component.css']
 })

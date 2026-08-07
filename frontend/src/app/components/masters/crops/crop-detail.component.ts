@@ -54,7 +54,7 @@ const initialControl: CropDetailViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...CROP_DETAIL_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
@@ -374,7 +374,7 @@ const initialControl: CropDetailViewState = {
           </div>
         </section>
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./crop-detail.component.css']
 })

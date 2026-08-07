@@ -27,7 +27,7 @@ const initialControl: PestDetailViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
   providers: [...PEST_DETAIL_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
@@ -86,7 +86,7 @@ const initialControl: PestDetailViewState = {
           </div>
         </section>
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./pest-detail.component.css']
 })

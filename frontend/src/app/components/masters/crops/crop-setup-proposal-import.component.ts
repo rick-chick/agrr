@@ -47,7 +47,7 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
   imports: [CommonModule, FormsModule, TranslateModule, MasterContextHeaderComponent],
   providers: [...CROP_SETUP_PROPOSAL_IMPORT_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="import-heading">
         @if (control.loading) {
@@ -158,7 +158,7 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
           }
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./crop-setup-proposal-import.component.css']
 })

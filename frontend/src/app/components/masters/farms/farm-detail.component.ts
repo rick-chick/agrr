@@ -57,7 +57,7 @@ const initialControl: FarmDetailViewState = {
   ],
   providers: [...FARM_DETAIL_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
@@ -140,7 +140,7 @@ const initialControl: FarmDetailViewState = {
           }
         </section>
       }
-    </main>
+    </div>
 
     <dialog #fieldFormDialog class="form-dialog" (cancel)="closeFieldForm()" (close)="closeFieldForm()">
       <h3 class="form-dialog__title">{{ (editingField ? 'farms.show.field_form.edit_title' : 'farms.show.field_form.add_title') | translate }}</h3>

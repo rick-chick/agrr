@@ -50,7 +50,7 @@ const initialControl: CropEditViewState = {
   imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent, RouterLink],
   providers: [...CROP_EDIT_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         @if (!control.loading) {
@@ -106,7 +106,7 @@ const initialControl: CropEditViewState = {
           </form>
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./crop-edit.component.css']
 })

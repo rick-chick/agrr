@@ -48,7 +48,7 @@ const initialControl: AgriculturalTaskEditViewState = {
   imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...AGRICULTURAL_TASK_EDIT_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">
@@ -119,7 +119,7 @@ const initialControl: AgriculturalTaskEditViewState = {
           </form>
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./agricultural-task-edit.component.css']
 })
