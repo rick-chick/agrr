@@ -65,6 +65,20 @@ describe('AppSeoMetaService', () => {
             title: 'AGRRについて',
             description: 'About説明'
           },
+          contact: {
+            title: 'お問い合わせ',
+            description: 'Contact説明',
+            faq_items: [
+              {
+                question: 'ログインできない',
+                answer: 'Google認証の設定をご確認ください'
+              },
+              {
+                question: 'データが保存されない',
+                answer: 'ブラウザのCookieが有効になっているかご確認ください'
+              }
+            ]
+          },
           public_plans_new: {
             title: '無料作付け計画を作成',
             description: 'Public plans説明'
@@ -182,6 +196,42 @@ describe('AppSeoMetaService', () => {
       name: 'AGRR',
       email: 'support@agrr.net'
     });
+  });
+
+  it('injects FAQPage JSON-LD on /contact with i18n FAQ items', () => {
+    setWindowPath('/contact');
+    service.refreshDefaultMeta();
+    const script = document.head.querySelector('script[type="application/ld+json"]');
+    const structured = JSON.parse(script?.textContent ?? '{}');
+    const graph = structured['@graph'] as Array<Record<string, unknown>>;
+    const faqPage = graph.find((node) => node['@type'] === 'FAQPage');
+    expect(faqPage).toMatchObject({
+      '@id': 'http://localhost/contact#faq',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: 'ログインできない',
+          acceptedAnswer: { '@type': 'Answer', text: 'Google認証の設定をご確認ください' }
+        },
+        {
+          '@type': 'Question',
+          name: 'データが保存されない',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'ブラウザのCookieが有効になっているかご確認ください'
+          }
+        }
+      ]
+    });
+  });
+
+  it('omits FAQPage JSON-LD on non-contact routes', () => {
+    setWindowPath('/about');
+    service.refreshDefaultMeta();
+    const script = document.head.querySelector('script[type="application/ld+json"]');
+    const structured = JSON.parse(script?.textContent ?? '{}');
+    const graph = structured['@graph'] as Array<Record<string, unknown>>;
+    expect(graph.find((node) => node['@type'] === 'FAQPage')).toBeUndefined();
   });
 
   it('updates static index.html JSON-LD in place without duplicating scripts', () => {

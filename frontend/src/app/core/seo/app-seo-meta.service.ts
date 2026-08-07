@@ -5,8 +5,12 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import type { AppLang } from '../app-locale';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
-import { resolveSeoKeyPrefix } from './route-seo-meta.config';
-import { buildSiteStructuredDataDocument, SITE_STRUCTURED_DATA_SCRIPT_ID } from './site-structured-data';
+import { normalizeSeoPath, resolveSeoKeyPrefix } from './route-seo-meta.config';
+import {
+  buildSiteStructuredDataDocument,
+  type ContactFaqItem,
+  SITE_STRUCTURED_DATA_SCRIPT_ID
+} from './site-structured-data';
 import {
   buildPublicPlanResultsShareUrl,
   extractPublicPlanResultsSeoLabels
@@ -265,6 +269,35 @@ export class AppSeoMetaService {
     this.refreshJsonLd(title, ogDescription, keyPrefix);
   }
 
+  private isContactRoute(pathname: string): boolean {
+    const path = normalizeSeoPath(pathname);
+    return path === '/contact';
+  }
+
+  private readContactFaqItems(): ContactFaqItem[] {
+    const raw = this.translate.instant('pages.contact.faq_items');
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+
+    return raw
+      .map((item) => {
+        if (!item || typeof item !== 'object') {
+          return null;
+        }
+        const question = (item as ContactFaqItem).question;
+        const answer = (item as ContactFaqItem).answer;
+        if (typeof question !== 'string' || typeof answer !== 'string') {
+          return null;
+        }
+        if (!question.trim() || !answer.trim()) {
+          return null;
+        }
+        return { question, answer };
+      })
+      .filter((item): item is ContactFaqItem => item !== null);
+  }
+
   private refreshJsonLd(siteTitle: string, siteDescription: string, keyPrefix: string): void {
     if (typeof document === 'undefined') {
       return;
@@ -280,10 +313,15 @@ export class AppSeoMetaService {
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
         : PRODUCTION_SITE_ORIGIN;
+    const pathname = this.readPathname();
+    const pageUrl = buildSelfCanonicalUrl(baseUrl, pathname);
+    const faqItems = this.isContactRoute(pathname) ? this.readContactFaqItems() : undefined;
     const jsonLd = buildSiteStructuredDataDocument({
       baseUrl,
       siteTitle,
-      siteDescription
+      siteDescription,
+      pageUrl: faqItems?.length ? pageUrl : undefined,
+      faqItems
     });
 
     const script = this.resolveJsonLdScript();
