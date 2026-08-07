@@ -43,9 +43,6 @@ function shouldSkipA11yRoute(
   if (pattern === 'public-plans/select-crop' && resolvedCaptureIds?.entryScheduleFarm == null) {
     return 'no entry schedule farm resolved';
   }
-  if (pattern.startsWith('entry-schedule/crop/')) {
-    return null;
-  }
   return null;
 }
 

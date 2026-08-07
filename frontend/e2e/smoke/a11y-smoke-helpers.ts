@@ -18,9 +18,6 @@ const prerenderPaths = PUBLIC_PRERENDER_ROUTES.map((route) => route.path);
 /** Public prerender + manifest public routes + authenticated shell samples (see a11y-smoke-lib.mjs). */
 export const a11ySmokeRoutes: A11yRoute[] = buildA11ySmokeRoutes(smokeManifest, prerenderPaths);
 
-/** @deprecated Use a11ySmokeRoutes */
-export const a11yCoreRoutes = a11ySmokeRoutes;
-
 type AllowlistFile = {
   /** Known axe rule IDs allowed per route pattern (see a11y-allowlist.json). */
   routes: Record<string, { ruleId: string; reason: string }[]>;
