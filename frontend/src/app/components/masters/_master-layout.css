@@ -562,6 +562,20 @@ article.item-card:hover {
 }
 
 /* ローディング表示 */
+.detail-loading-text {
+  display: none;
+}
+
+@media (max-width: 20rem) {
+  .detail-loading-skeleton {
+    display: none;
+  }
+
+  .detail-loading-text {
+    display: block;
+  }
+}
+
 .master-loading {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);

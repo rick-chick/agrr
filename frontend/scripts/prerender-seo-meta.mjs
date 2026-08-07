@@ -15,6 +15,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PRODUCTION_SITE_ORIGIN = 'https://agrr.net';
 const DEFAULT_OGP_IMAGE_PATH = '/og-default.png';
 
+function readTranslationArray(translations, key) {
+  const parts = key.split('.');
+  let current = translations;
+  for (const part of parts) {
+    if (current == null || typeof current !== 'object') return [];
+    current = current[part];
+  }
+  return Array.isArray(current) ? current : [];
+}
+
 function readTranslation(translations, key) {
   const parts = key.split('.');
   let current = translations;
@@ -23,6 +33,28 @@ function readTranslation(translations, key) {
     current = current[part];
   }
   return typeof current === 'string' ? current : '';
+}
+
+function readContactFaqItems(translations) {
+  return readTranslationArray(translations, 'pages.contact.faq_items')
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const question = item.question;
+      const answer = item.answer;
+      if (typeof question !== 'string' || typeof answer !== 'string') return null;
+      if (!question.trim() || !answer.trim()) return null;
+      return { question, answer };
+    })
+    .filter(Boolean);
+}
+
+function isContactRoute(pathname) {
+  const path = pathname.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+  if (path === '/en') return false;
+  if (path.startsWith('/en/')) {
+    return path.slice('/en'.length) === '/contact';
+  }
+  return path === '/contact';
 }
 
 function isResolvedTranslation(value, keyPrefix) {
@@ -101,6 +133,7 @@ export async function expectedPrerenderSeoForRoute(route) {
     ogDescription: isResolvedTranslation(ogDescription, `${keyPrefix}.`) ? ogDescription : '',
     canonicalUrl: buildSelfCanonicalUrl(PRODUCTION_SITE_ORIGIN, pathname),
     ogImageUrl: `${PRODUCTION_SITE_ORIGIN}${DEFAULT_OGP_IMAGE_PATH}`,
+    faqItems: isContactRoute(pathname) ? readContactFaqItems(translations) : [],
   };
 }
 
@@ -129,5 +162,64 @@ export function assertPrerenderedHeadSeo(html, expected) {
   }
   if (!html.includes(`<meta property="og:image" content="${expected.ogImageUrl}">`)) {
     throw new Error(`Expected og:image "${expected.ogImageUrl}" in prerendered HTML`);
+  }
+  if (expected.faqItems?.length) {
+    assertPrerenderedFaqPageJsonLd(html, expected.canonicalUrl, expected.faqItems);
+  }
+}
+
+/**
+ * @param {string} html
+ * @param {string} pageUrl
+ * @param {Array<{ question: string, answer: string }>} faqItems
+ */
+export function assertPrerenderedFaqPageJsonLd(html, pageUrl, faqItems) {
+  const scriptMatch = html.match(
+    /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i
+  );
+  if (!scriptMatch) {
+    throw new Error('Expected application/ld+json script in prerendered HTML for contact FAQ');
+  }
+
+  let structured;
+  try {
+    structured = JSON.parse(scriptMatch[1]);
+  } catch {
+    throw new Error('Expected valid JSON-LD in prerendered HTML');
+  }
+
+  const graph = structured['@graph'];
+  if (!Array.isArray(graph)) {
+    throw new Error('Expected @graph array in prerendered JSON-LD');
+  }
+
+  const faqPage = graph.find((node) => node['@type'] === 'FAQPage');
+  if (!faqPage) {
+    throw new Error('Expected FAQPage node in prerendered JSON-LD');
+  }
+
+  const expectedId = `${pageUrl.replace(/\/$/, '')}#faq`;
+  if (faqPage['@id'] !== expectedId) {
+    throw new Error(`Expected FAQPage @id "${expectedId}", got "${faqPage['@id']}"`);
+  }
+
+  const mainEntity = faqPage.mainEntity;
+  if (!Array.isArray(mainEntity) || mainEntity.length !== faqItems.length) {
+    throw new Error(`Expected ${faqItems.length} FAQ questions in prerendered JSON-LD`);
+  }
+
+  for (let index = 0; index < faqItems.length; index += 1) {
+    const expected = faqItems[index];
+    const actual = mainEntity[index];
+    if (actual?.name !== expected.question) {
+      throw new Error(
+        `Expected FAQ question "${expected.question}", got "${actual?.name ?? ''}"`
+      );
+    }
+    if (actual?.acceptedAnswer?.text !== expected.answer) {
+      throw new Error(
+        `Expected FAQ answer "${expected.answer}", got "${actual?.acceptedAnswer?.text ?? ''}"`
+      );
+    }
   }
 }
