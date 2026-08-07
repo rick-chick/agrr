@@ -1974,8 +1974,8 @@
     },
     "new": {
       "breadcrumb": "नई योजना",
-      "title": "📅 वर्ष और खेत चुनें",
-      "subtitle": "अपनी खेती योजना के लिए वर्ष और खेत चुनें",
+      "title": "📅 खेत चुनें",
+      "subtitle": "अपनी खेती योजना बनाने के लिए खेत चुनें",
       "plan_name_label": "योजना नाम",
       "plan_name_placeholder": "उदाहरण: मुख्य योजना",
       "farm_label": "खेत",
@@ -1984,14 +1984,12 @@
       "no_farms": "कोई खेत उपलब्ध नहीं",
       "no_farms_hint": "कृपया पहले एक खेत बनाएं",
       "create_farm_link": "खेत बनाएं",
-      "next_button": "अगला: फसल चुनें",
       "create_button": "बनाएं",
       "farm_option_with_fields": "{{name}} ({{count}} खेत क्षेत्र · {{area}} वर्ग मी)",
       "farm_option_no_fields": "{{name}} (कोई खेत क्षेत्र नहीं)",
       "no_fields_warning": "इस खेत पर कोई पंजीकृत खेत क्षेत्र नहीं है।",
       "some_farms_no_fields_hint": "बिना पंजीकृत खेत क्षेत्र वाले खेतों को योजना बनाने के लिए चुना नहीं जा सकता।",
-      "register_fields_link": "खेत क्षेत्र पंजीकृत करें",
-      "empty_message": "वर्तमान में कोई खेत उपलब्ध नहीं है।"
+      "register_fields_link": "खेत क्षेत्र पंजीकृत करें"
     },
     "select_crop": {
       "title": "🌾 उगाने के लिए फसलें चुनें",
