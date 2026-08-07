@@ -51,6 +51,42 @@ describe('errorDtoI18nKey', () => {
     ).toBe('common.api_error.network');
   });
 
+  it('maps raw 401 HTTP text to unauthorized key', () => {
+    expect(errorDtoI18nKey({ message: 'HTTP 401 Unauthorized' })).toBe(
+      'common.api_error.unauthorized'
+    );
+    expect(
+      errorDtoI18nKey({
+        message: 'Http failure response for https://agrr.local/api/v1/masters/crops/1: 401 Unauthorized'
+      })
+    ).toBe('common.api_error.unauthorized');
+  });
+
+  it('maps raw 403 HTTP text to forbidden key', () => {
+    expect(errorDtoI18nKey({ message: 'HTTP 403 Forbidden' })).toBe('common.api_error.forbidden');
+    expect(
+      errorDtoI18nKey({
+        message: 'Http failure response for https://agrr.local/api/v1/masters/crops/1: 403 Forbidden'
+      })
+    ).toBe('common.api_error.forbidden');
+  });
+
+  it('maps raw 502/503 HTTP text to service_unavailable key', () => {
+    expect(
+      errorDtoI18nKey({
+        message: 'Http failure response for https://agrr.local/api/v1/masters/crops/1: 502 Bad Gateway'
+      })
+    ).toBe('common.api_error.service_unavailable');
+    expect(
+      errorDtoI18nKey({
+        message: 'Http failure response for https://agrr.local/api/v1/masters/crops/1: 503 Service Unavailable'
+      })
+    ).toBe('common.api_error.service_unavailable');
+    expect(errorDtoI18nKey({ message: 'Service Unavailable' })).toBe(
+      'common.api_error.service_unavailable'
+    );
+  });
+
   it('maps unknown raw text to generic key', () => {
     expect(errorDtoI18nKey({ message: 'Something went wrong' })).toBe('common.api_error.generic');
   });

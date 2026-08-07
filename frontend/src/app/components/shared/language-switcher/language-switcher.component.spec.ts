@@ -63,6 +63,20 @@ describe('LanguageSwitcherComponent', () => {
     expect(document.documentElement.lang).toBe('en');
   });
 
+  it('closes panel on Escape key', () => {
+    const trigger = fixture.nativeElement.querySelector('.language-switcher-trigger') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.language-switcher-panel')).toBeTruthy();
+
+    const root = fixture.nativeElement.querySelector('.language-switcher') as HTMLElement;
+    root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.language-switcher-panel')).toBeFalsy();
+    expect(fixture.componentInstance.isOpen).toBe(false);
+  });
+
   it('sets document.documentElement.lang to hi when in is selected', () => {
     const trigger = fixture.nativeElement.querySelector('.language-switcher-trigger') as HTMLButtonElement;
     trigger.click();
