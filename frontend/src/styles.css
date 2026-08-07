@@ -310,3 +310,19 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* a11y: shorten or disable motion when user prefers reduced motion (skeleton keeps its own override) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .btn:hover:not(:disabled) {
+    transform: none;
+  }
+}

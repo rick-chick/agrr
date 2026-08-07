@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -30,7 +30,7 @@ const isCookieControlHardDisabled = (): boolean => {
   templateUrl: './cookie-consent-banner.component.html',
   styleUrls: ['./cookie-consent-banner.component.css']
 })
-export class CookieConsentBannerComponent implements OnInit {
+export class CookieConsentBannerComponent implements OnInit, OnDestroy {
   descriptionHtml: SafeHtml | null = null;
   visible = false;
 
@@ -53,6 +53,12 @@ export class CookieConsentBannerComponent implements OnInit {
       this.visible = true;
     }
     this.descriptionHtml = this.buildDescription();
+    this.syncPageInert();
+  }
+
+  ngOnDestroy(): void {
+    this.visible = false;
+    this.syncPageInert();
   }
 
   accept(): void {
@@ -67,6 +73,29 @@ export class CookieConsentBannerComponent implements OnInit {
 
   private hide(): void {
     this.visible = false;
+    this.syncPageInert();
+  }
+
+  private syncPageInert(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const root = document.querySelector('app-root');
+    if (!root) {
+      return;
+    }
+
+    for (const child of root.children) {
+      if (child.tagName.toLowerCase() === 'app-cookie-consent-banner') {
+        continue;
+      }
+      if (this.visible) {
+        child.setAttribute('inert', '');
+      } else {
+        child.removeAttribute('inert');
+      }
+    }
   }
 
   private buildDescription(): SafeHtml {

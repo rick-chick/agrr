@@ -3,10 +3,12 @@
   class="cookie-consent-banner"
   role="dialog"
   aria-live="polite"
-  aria-label="cookie consent"
+  aria-modal="true"
+  [attr.aria-label]="'cookie_consent.aria_label' | translate"
+  aria-labelledby="cookie-consent-title"
 >
   <div class="cookie-consent-card">
-    <h2 class="cookie-consent-title">{{ 'cookie_consent.title' | translate }}</h2>
+    <h2 id="cookie-consent-title" class="cookie-consent-title">{{ 'cookie_consent.title' | translate }}</h2>
     <p class="cookie-consent-text" *ngIf="descriptionHtml" [innerHTML]="descriptionHtml"></p>
     <div class="cookie-consent-actions">
       <button class="btn btn-primary" type="button" (click)="accept()">{{ 'cookie_consent.accept' | translate }}</button>

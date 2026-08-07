@@ -365,6 +365,23 @@ describe('GanttChartComponent', () => {
         expect(bar.querySelector('.gantt-action-bar__crop-primary')).toBeTruthy();
         expect(bar.querySelector('app-gantt-mobile-actions-menu')).toBeTruthy();
       });
+
+      /**
+       * WCAG 2.5.7: cultivation bar repositioning uses pointer drag on desktop/mobile.
+       * Click-based field management is available via the mobile actions menu (no drag required).
+       */
+      it('documents drag limitation and exposes click-based mobile menu alternative', () => {
+        mobileLayoutMatches = true;
+        component.isMobileLayout = true;
+        fixture.detectChanges();
+
+        const menuTrigger = fixture.nativeElement.querySelector(
+          '.gantt-mobile-actions-menu__trigger'
+        );
+        expect(menuTrigger).toBeTruthy();
+        expect(menuTrigger.getAttribute('aria-haspopup')).toBe('menu');
+        expect(menuTrigger.getAttribute('aria-expanded')).toBe('false');
+      });
     });
   });
 

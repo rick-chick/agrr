@@ -81,6 +81,21 @@ describe('CookieConsentBannerComponent', () => {
     expect(googleAnalyticsMock.updateConsent).toHaveBeenCalledWith(false);
     expect(component.visible).toBe(false);
   });
+
+  it('exposes dialog semantics with i18n aria-label and labelled title', () => {
+    googleAnalyticsMock.getStoredConsent.mockReturnValue(null);
+    fixture.detectChanges();
+
+    const dialog = fixture.nativeElement.querySelector('.cookie-consent-banner');
+    expect(dialog?.getAttribute('role')).toBe('dialog');
+    expect(dialog?.getAttribute('aria-modal')).toBe('true');
+    expect(dialog?.getAttribute('aria-labelledby')).toBe('cookie-consent-title');
+    expect(dialog?.getAttribute('aria-label')).toBe('cookie_consent.aria_label');
+
+    const title = fixture.nativeElement.querySelector('#cookie-consent-title');
+    expect(title).toBeTruthy();
+  });
+
   afterEach(() => {
     delete (window as CookieControlWindow).__disableCookieControl;
   });

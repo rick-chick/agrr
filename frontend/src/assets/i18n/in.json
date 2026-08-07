@@ -3055,6 +3055,7 @@
     },
     "cookie_consent": {
       "title": "Cookie usage",
+      "aria_label": "Cookie consent",
       "description_html": "We use cookies for ads delivery and analytics. You can change your choice at any time. See {{privacy_link}} for details.",
       "privacy_link_text": "Privacy Policy",
       "accept": "Accept",

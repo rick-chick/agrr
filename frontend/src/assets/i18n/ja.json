@@ -3362,6 +3362,7 @@
     },
     "cookie_consent": {
       "title": "Cookieの利用について",
+      "aria_label": "Cookie同意",
       "description_html": "本サイトでは、広告配信とアクセス解析のためにCookieを利用します。設定はいつでも変更できます。詳細は{{privacy_link}}をご確認ください。",
       "privacy_link_text": "プライバシーポリシー",
       "accept": "同意する",
