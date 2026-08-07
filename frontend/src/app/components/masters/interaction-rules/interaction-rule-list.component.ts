@@ -33,7 +33,7 @@ const initialControl: InteractionRuleListViewState = {
   imports: [CommonModule, RouterLink, TranslateModule],
   providers: [...INTERACTION_RULE_LIST_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'interaction_rules.index.title' | translate }}</h1>
         <p class="page-description">{{ 'interaction_rules.index.description' | translate }}</p>
@@ -65,7 +65,7 @@ const initialControl: InteractionRuleListViewState = {
           </ul>
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./interaction-rule-list.component.css']
 })

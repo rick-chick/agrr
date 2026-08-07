@@ -83,7 +83,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, DragDropModule, MasterContextHeaderComponent],
   providers: [...CROP_TASK_SCHEDULE_BLUEPRINTS_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
@@ -397,7 +397,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
           </div>
         </section>
       }
-    </main>
+    </div>
 
     <dialog
       #blueprintAddDialog

@@ -27,7 +27,7 @@ const initialControl: PlanListViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, PlanDisplayNamePipe, CardListSkeletonComponent],
   providers: [...PLAN_LIST_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'plans.index.title' | translate }}</h1>
         <p class="page-description">{{ 'plans.index.description' | translate }}</p>
@@ -82,7 +82,7 @@ const initialControl: PlanListViewState = {
           </ul>
         }
       </section>
-    </main>
+    </div>
 
   `,
   styleUrls: ['./plan-list.component.css']

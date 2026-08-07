@@ -1163,6 +1163,9 @@
     },
     "map": {
       "default_name": "新しい農場"
+    },
+    "errors": {
+      "invalid_id": "農場IDが不正です。"
     }
   },
   "fields": {

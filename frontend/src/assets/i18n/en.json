@@ -2769,6 +2769,9 @@
     },
     "map": {
       "default_name": "New farm"
+    },
+    "errors": {
+      "invalid_id": "Invalid farm ID."
     }
   },
   "fields": {

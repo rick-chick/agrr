@@ -920,6 +920,9 @@
     },
     "map": {
       "default_name": "नया खेत"
+    },
+    "errors": {
+      "invalid_id": "अमान्य खेत ID।"
     }
   },
   "fields": {

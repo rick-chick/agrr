@@ -36,7 +36,7 @@ const initialControl: PublicPlanCreateViewState = {
   imports: [CommonModule, FormsModule, TranslateModule, PublicPlanContextHeaderComponent],
   providers: [...PUBLIC_PLAN_CREATE_PROVIDERS],
   template: `
-    <main class="page-main public-plans-wrapper">
+    <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
         <app-public-plan-context-header [crumbs]="contextCrumbs" />
         <div class="compact-header-card">
@@ -89,7 +89,7 @@ const initialControl: PublicPlanCreateViewState = {
           }
         </section>
       </div>
-    </main>
+    </div>
   `,
   // Use shared public-plan stylesheet
   styleUrls: ['./public-plan.component.css']

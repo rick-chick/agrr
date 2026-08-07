@@ -30,8 +30,10 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { FarmTemperatureChartComponent } from './farm-temperature-chart.component';
 import { FarmTemperatureChartPeriod } from '../../../domain/farms/farm-temperature-chart';
+import { DetailSkeletonComponent } from '../../shared/skeleton/detail-skeleton.component';
 
 const initialControl: FarmDetailViewState = {
   loading: true,
@@ -53,16 +55,24 @@ const initialControl: FarmDetailViewState = {
     FormsModule,
     RegionSelectComponent,
     MasterContextHeaderComponent,
-    FarmTemperatureChartComponent
+    MasterLoadErrorPanelComponent,
+    FarmTemperatureChartComponent,
+    DetailSkeletonComponent
   ],
   providers: [...FARM_DETAIL_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
-        <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        <app-detail-skeleton class="detail-loading-skeleton" />
+        <p class="master-loading detail-loading-text">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
-        <p class="master-loading master-error">{{ control.error }}</p>
+        <app-master-load-error-panel
+          [errorKey]="control.error"
+          [listLink]="['/farms']"
+          backLabelKey="farms.index.title"
+          (retry)="reload()"
+        />
       } @else if (control.farm) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.farm.name }}</h1>
@@ -140,7 +150,7 @@ const initialControl: FarmDetailViewState = {
           }
         </section>
       }
-    </main>
+    </div>
 
     <dialog #fieldFormDialog class="form-dialog" (cancel)="closeFieldForm()" (close)="closeFieldForm()">
       <h3 class="form-dialog__title">{{ (editingField ? 'farms.show.field_form.edit_title' : 'farms.show.field_form.add_title') | translate }}</h3>
@@ -243,7 +253,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     this.deleteFieldPresenter.setView(this);
     const farmId = Number(this.route.snapshot.paramMap.get('id'));
     if (!farmId) {
-      // Presenter will handle invalid farm id error
+      this.control = { ...initialControl, loading: false, error: 'farms.errors.invalid_id' };
       return;
     }
     this.load(farmId);
@@ -255,6 +265,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   }
 
   load(farmId: number): void {
+    this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ farmId });
     this.subscribeWeatherUseCase.execute({
       farmId,
