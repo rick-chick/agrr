@@ -23,6 +23,10 @@ import {
   getGanttMarginLeft,
   formatGanttFieldRowIndexLabel,
   getGanttFieldLabelCenterX,
+  getGanttFieldLabelSeparatorX,
+  getGanttFieldLabelX,
+  getGanttFieldLabelTextAnchor,
+  getGanttFieldLabelClipWidth,
   resolveGanttDragFieldContext,
   GANTT_MARGIN_LEFT_DESKTOP,
   GANTT_MARGIN_LEFT_MOBILE,
@@ -243,17 +247,36 @@ describe('gantt-chart-layout', () => {
   });
 
   it('exposes desktop and mobile left margins', () => {
-    expect(GANTT_MARGIN_LEFT_DESKTOP).toBe(80);
+    expect(GANTT_MARGIN_LEFT_DESKTOP).toBe(112);
     expect(GANTT_MARGIN_LEFT_MOBILE).toBe(36);
-    expect(getGanttMarginLeft(false)).toBe(80);
+    expect(getGanttMarginLeft(false)).toBe(112);
     expect(getGanttMarginLeft(true)).toBe(36);
   });
 
   it('formats field row index labels as 1-based strings', () => {
     expect(formatGanttFieldRowIndexLabel(0)).toBe('1');
     expect(formatGanttFieldRowIndexLabel(4)).toBe('5');
-    expect(getGanttFieldLabelCenterX(80)).toBe(40);
+    expect(getGanttFieldLabelCenterX(112)).toBe(56);
     expect(getGanttFieldLabelCenterX(36)).toBe(18);
+  });
+
+  it('positions desktop field labels before the timeline separator', () => {
+    const marginLeft = GANTT_MARGIN_LEFT_DESKTOP;
+    const separatorX = getGanttFieldLabelSeparatorX(marginLeft);
+    const labelX = getGanttFieldLabelX(marginLeft, false);
+
+    expect(separatorX).toBe(marginLeft - 10);
+    expect(labelX).toBeLessThan(separatorX);
+    expect(getGanttFieldLabelTextAnchor(false)).toBe('end');
+    expect(getGanttFieldLabelClipWidth(marginLeft)).toBe(labelX);
+  });
+
+  it('keeps mobile index labels centered in the narrow column', () => {
+    const marginLeft = GANTT_MARGIN_LEFT_MOBILE;
+
+    expect(getGanttFieldLabelX(marginLeft, true)).toBe(18);
+    expect(getGanttFieldLabelTextAnchor(true)).toBe('middle');
+    expect(getGanttFieldLabelClipWidth(marginLeft)).toBe(getGanttFieldLabelX(marginLeft, false));
   });
 
   it('resolveGanttDragFieldContext returns row index and name or null', () => {

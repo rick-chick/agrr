@@ -38,6 +38,10 @@ import {
   normalizePlanBounds,
   formatGanttFieldRowIndexLabel,
   getGanttFieldLabelCenterX,
+  getGanttFieldLabelSeparatorX,
+  getGanttFieldLabelX,
+  getGanttFieldLabelTextAnchor,
+  getGanttFieldLabelClipWidth,
   getGanttMarginLeft,
   resolveGanttDragCommit,
   pickGanttActiveTouchIndex,
@@ -288,6 +292,13 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
                 <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
                 <stop offset="100%" style="stop-color:#f9fafb;stop-opacity:1" />
               </linearGradient>
+              <clipPath id="gantt-field-label-clip">
+                <rect
+                  x="0"
+                  y="0"
+                  [attr.width]="getGanttFieldLabelClipWidth(config.margin.left)"
+                  [attr.height]="config.height" />
+              </clipPath>
             </defs>
             
             <!-- Background -->
@@ -303,10 +314,11 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
             <!-- Timeline Header -->
             <g class="timeline-header">
               <text
-                [attr.x]="getGanttFieldLabelCenterX(config.margin.left)"
+                [attr.x]="getGanttFieldLabelX(config.margin.left, isMobileLayout)"
                 y="30"
                 class="header-label"
-                text-anchor="middle"
+                [attr.text-anchor]="getGanttFieldLabelTextAnchor(isMobileLayout)"
+                clip-path="url(#gantt-field-label-clip)"
                 font-size="14"
                 font-weight="bold"
                 fill="#374151">
@@ -335,10 +347,11 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
             @for (group of fieldGroups; track group.fieldId; let i = $index) {
               <g class="field-row" [attr.transform]="'translate(0, ' + (config.margin.top + i * config.rowHeight) + ')'">
                 <text
-                  [attr.x]="getGanttFieldLabelCenterX(config.margin.left)"
+                  [attr.x]="getGanttFieldLabelX(config.margin.left, isMobileLayout)"
                   [attr.y]="config.rowHeight / 2 + 5"
                   class="field-label"
-                  text-anchor="middle"
+                  [attr.text-anchor]="getGanttFieldLabelTextAnchor(isMobileLayout)"
+                  clip-path="url(#gantt-field-label-clip)"
                   font-size="14"
                   font-weight="600"
                   fill="#374151">
@@ -348,7 +361,13 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
                     {{ group.fieldName }}
                   }
                 </text>
-                <line [attr.x1]="config.margin.left - 10" y1="0" [attr.x2]="config.margin.left - 10" [attr.y2]="config.rowHeight" stroke="#D1D5DB" stroke-width="2" />
+                <line
+                  [attr.x1]="getGanttFieldLabelSeparatorX(config.margin.left)"
+                  y1="0"
+                  [attr.x2]="getGanttFieldLabelSeparatorX(config.margin.left)"
+                  [attr.y2]="config.rowHeight"
+                  stroke="#D1D5DB"
+                  stroke-width="2" />
                 @if (group.cultivations.length === 0 && !isMobileLayout) {
                   <text
                     class="field-delete-icon"
@@ -424,6 +443,10 @@ export class GanttChartComponent
 {
   readonly formatGanttFieldRowIndexLabel = formatGanttFieldRowIndexLabel;
   readonly getGanttFieldLabelCenterX = getGanttFieldLabelCenterX;
+  readonly getGanttFieldLabelSeparatorX = getGanttFieldLabelSeparatorX;
+  readonly getGanttFieldLabelX = getGanttFieldLabelX;
+  readonly getGanttFieldLabelTextAnchor = getGanttFieldLabelTextAnchor;
+  readonly getGanttFieldLabelClipWidth = getGanttFieldLabelClipWidth;
   readonly ganttCropFillColor = ganttCropFillColor;
   readonly ganttCropStrokeColor = ganttCropStrokeColor;
   @Input() data: CultivationPlanData | null = null;

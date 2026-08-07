@@ -7,8 +7,10 @@ export const GANTT_MAX_VISIBLE_RANGE_MONTHS = 24;
 export const GANTT_MIN_CHART_WIDTH = 400;
 export const GANTT_DRAG_ACTIVATION_THRESHOLD_PX = 3;
 export const GANTT_DRAG_ACTIVATION_THRESHOLD_MOBILE_PX = 12;
-export const GANTT_MARGIN_LEFT_DESKTOP = 80;
+export const GANTT_MARGIN_LEFT_DESKTOP = 112;
 export const GANTT_MARGIN_LEFT_MOBILE = 36;
+export const GANTT_FIELD_LABEL_SEPARATOR_OFFSET = 10;
+export const GANTT_FIELD_LABEL_END_PADDING = 4;
 
 export function getGanttMarginLeft(isMobileLayout: boolean): number {
   return isMobileLayout ? GANTT_MARGIN_LEFT_MOBILE : GANTT_MARGIN_LEFT_DESKTOP;
@@ -20,6 +22,25 @@ export function formatGanttFieldRowIndexLabel(rowIndex: number): string {
 
 export function getGanttFieldLabelCenterX(marginLeft: number): number {
   return marginLeft / 2;
+}
+
+export function getGanttFieldLabelSeparatorX(marginLeft: number): number {
+  return marginLeft - GANTT_FIELD_LABEL_SEPARATOR_OFFSET;
+}
+
+export function getGanttFieldLabelX(marginLeft: number, isMobileIndexLabel: boolean): number {
+  if (isMobileIndexLabel) {
+    return getGanttFieldLabelCenterX(marginLeft);
+  }
+  return getGanttFieldLabelSeparatorX(marginLeft) - GANTT_FIELD_LABEL_END_PADDING;
+}
+
+export function getGanttFieldLabelTextAnchor(isMobileIndexLabel: boolean): 'middle' | 'end' {
+  return isMobileIndexLabel ? 'middle' : 'end';
+}
+
+export function getGanttFieldLabelClipWidth(marginLeft: number): number {
+  return getGanttFieldLabelSeparatorX(marginLeft) - GANTT_FIELD_LABEL_END_PADDING;
 }
 
 export function resolveGanttDragFieldContext(input: {

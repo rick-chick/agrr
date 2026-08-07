@@ -368,4 +368,59 @@ describe('GanttChartComponent', () => {
     });
   });
 
+  describe('field label layout', () => {
+  const baselineFieldData = {
+    data: {
+      id: 7,
+      planning_start_date: '2026-01-01',
+      planning_end_date: '2026-12-31',
+      fields: [{ id: 1, name: 'Baseline Field' }],
+      cultivations: [{
+        id: 14,
+        field_id: 1,
+        field_name: 'Baseline Field',
+        crop_name: 'Rice',
+        start_date: '2026-01-01',
+        completion_date: '2026-01-31'
+      }]
+    }
+  } as any;
+
+  beforeEach(() => {
+    mobileLayoutMatches = false;
+    component.isMobileLayout = false;
+    component.data = baselineFieldData;
+
+    const mockContainer = document.createElement('div');
+    mockContainer.style.width = '800px';
+    component['container'] = { nativeElement: mockContainer } as any;
+    component['updateChart']();
+    fixture.detectChanges();
+  });
+
+  it('anchors desktop field labels before the timeline separator', () => {
+    const fieldLabel = fixture.nativeElement.querySelector('.field-label');
+    const separator = fixture.nativeElement.querySelector('.field-row line');
+
+    expect(fieldLabel).toBeTruthy();
+    expect(separator).toBeTruthy();
+    expect(fieldLabel.getAttribute('text-anchor')).toBe('end');
+    expect(fieldLabel.textContent?.trim()).toBe('Baseline Field');
+
+    const labelX = Number(fieldLabel.getAttribute('x'));
+    const separatorX = Number(separator.getAttribute('x1'));
+    expect(labelX).toBeLessThan(separatorX);
+    expect(separatorX - labelX).toBeGreaterThanOrEqual(4);
+  });
+
+  it('clips desktop field labels within the label column', () => {
+    const clipPath = fixture.nativeElement.querySelector('#gantt-field-label-clip rect');
+    const fieldLabel = fixture.nativeElement.querySelector('.field-label');
+
+    expect(clipPath).toBeTruthy();
+    expect(fieldLabel.getAttribute('clip-path')).toBe('url(#gantt-field-label-clip)');
+    expect(Number(clipPath.getAttribute('width'))).toBe(Number(fieldLabel.getAttribute('x')));
+  });
+});
+
 });
