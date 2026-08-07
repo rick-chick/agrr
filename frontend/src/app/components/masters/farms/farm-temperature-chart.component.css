@@ -25,8 +25,8 @@
 }
 
 .farm-temperature-chart__period-btn--active {
-  border-color: var(--color-primary, #2563eb);
-  background: var(--color-primary-soft, #dbeafe);
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
   font-weight: 600;
 }
 

@@ -49,7 +49,7 @@
 }
 
 .work-hub__cta {
-  color: var(--color-primary, #2f6f3e);
+  color: var(--color-primary);
   font-weight: 600;
 }
 

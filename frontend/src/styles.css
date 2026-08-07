@@ -33,9 +33,17 @@
   /* app.css のブランドトークン（Composition・リンクで参照） */
   --color-success-dark: #2f855a;
 
+  /* 色: プライマリ（ブランド緑・単一ソース） */
+  --color-primary: #2d5016;
+  --color-primary-hover: #1a3009;
+  --color-primary-light: #4a7c23;
+  --color-primary-dark: #1a3009;
+  --color-primary-bg-soft: #f0fdf4;
+  --color-primary-border-soft: #bbf7d0;
+  --color-primary-muted-bg: #ecfdf3;
+  --color-primary-soft: #dcfce7;
+
   /* 色: インタラクション */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
   --color-accent: #64748b;
   --color-warning: #f59e0b;
   --color-warning-bg: #fffbeb;
@@ -68,16 +76,16 @@
   --gradient-home-hero: linear-gradient(135deg, var(--color-background) 0%, var(--color-border) 100%);
   --shadow-home-feature: 0 4px 20px rgba(0, 0, 0, 0.08);
   --shadow-home-feature-hover: 0 12px 40px rgba(0, 0, 0, 0.12);
-  --shadow-home-primary: 0 4px 12px rgba(59, 130, 246, 0.3);
-  --shadow-home-primary-hover: 0 8px 20px rgba(59, 130, 246, 0.4);
-  --color-home-secondary-hover-bg: #eff6ff;
+  --shadow-home-primary: 0 4px 12px rgba(45, 80, 22, 0.3);
+  --shadow-home-primary-hover: 0 8px 20px rgba(45, 80, 22, 0.4);
+  --color-home-secondary-hover-bg: #f0fdf4;
 
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.18);
 
   --color-overlay-strong: rgba(0, 0, 0, 0.5);
   --color-gantt-highlight: #ffeb3b;
-  --shadow-focus-ring-primary: 0 0 0 1px rgba(59, 130, 246, 0.5);
+  --shadow-focus-ring-primary: 0 0 0 1px rgba(45, 80, 22, 0.5);
 
   /* 情報・公開計画フロー（ステップ・アクティブ） */
   --color-info: #4299e1;
@@ -88,7 +96,7 @@
   --color-white-alpha-20: rgba(255, 255, 255, 0.2);
   --color-white-alpha-10: rgba(255, 255, 255, 0.1);
 
-  --shadow-panel-primary-glow: 0 10px 28px rgba(37, 99, 235, 0.18);
+  --shadow-panel-primary-glow: 0 10px 28px rgba(45, 80, 22, 0.18);
 
   /* 作付エントリースケジュール（ドメイン配色・:host の --es-* はこれを参照） */
   --color-schedule-sow: #2d6a4f;
@@ -221,7 +229,7 @@
   --form-textarea-min-height: 80px;
   --color-input-focus: var(--color-primary);
   --color-input-hover: #94a3b8;
-  --shadow-input-focus: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  --shadow-input-focus: 0 0 0 2px rgba(45, 80, 22, 0.2);
   --color-input-arrow: var(--color-text-secondary);
 }
 

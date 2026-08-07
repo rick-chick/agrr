@@ -39,7 +39,7 @@
 }
 
 .plan-work-records__row:hover {
-  border-color: var(--color-primary, #2d6a4f);
+  border-color: var(--color-primary);
 }
 
 .plan-work-records__date {

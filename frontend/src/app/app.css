@@ -4,12 +4,10 @@
 
 :root {
   /*
-   * アプリシェル用ブランド（緑プライマリ・グラデボタン等）。
-   * Gray scale・--shadow-md・--shadow-primary・--color-white は styles.css の単一ソースを参照。
+   * アプリシェル用トークン（グラデボタン・セカンダリ等）。
+   * --color-primary* は styles.css の単一ソースを参照。
+   * Gray scale・--shadow-md・--shadow-primary・--color-white も styles.css を参照。
    */
-  --color-primary: #2d5016;
-  --color-primary-light: #4a7c23;
-  --color-primary-dark: #1a3009;
   --color-secondary: #667eea;
   --color-secondary-light: #8b9dff;
   --color-secondary-dark: #4a5fc5;
