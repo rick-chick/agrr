@@ -1226,7 +1226,8 @@
     "updating": "अपडेट किया जा रहा है...",
     "form": {
       "required_field": "यह फ़ील्ड आवश्यक है।"
-    }
+    },
+    "breadcrumb_label": "ब्रेडक्रंब नेविगेशन"
   },
   "masters": {
     "load_error": {
