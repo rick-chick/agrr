@@ -71,4 +71,22 @@ test.describe('style consistency (computed)', () => {
       }
     });
   });
+
+  test('home: hero h1 font-size scales up on wider viewports (fluid clamp)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.goto('/');
+    const h1 = page.locator('app-home .hero-section h1');
+    await expect(h1).toBeVisible();
+    const narrow = await h1.evaluate((el) => getComputedStyle(el).fontSize);
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const wide = await h1.evaluate((el) => getComputedStyle(el).fontSize);
+
+    const narrowPx = parseFloat(narrow);
+    const widePx = parseFloat(wide);
+    expect(widePx, `wide=${wide} narrow=${narrow}`).toBeGreaterThan(narrowPx);
+    expect(narrowPx, 'minimum readable 16px on 320px viewport').toBeGreaterThanOrEqual(16);
+  });
 });
