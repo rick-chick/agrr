@@ -198,5 +198,6 @@ describe('InteractionRuleDetailComponent', () => {
     expect(el.textContent).toContain('Japan');
     expect(el.textContent).not.toContain('region_jp');
     expect(el.textContent).not.toMatch(/\bjp\b/);
+    expect(el.innerHTML).not.toContain('interaction_rules.show.region');
   });
 });
