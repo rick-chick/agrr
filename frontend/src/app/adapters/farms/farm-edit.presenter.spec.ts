@@ -55,18 +55,27 @@ describe('FarmEditPresenter', () => {
       });
     });
 
-    it('queues pending error flash and updates view.control on onError(dto)', () => {
+    it('sets i18n load error on onError(dto) while loading', () => {
       const initialControl: FarmEditViewState = { loading: true, saving: false, error: null, formData: { name: '', region: '', latitude: 0, longitude: 0 }, pendingErrorFlash: null };
+      lastControl = initialControl;
+
+      presenter.onError({ message: 'Not found' });
+
+      expect(lastControl!.error).toBe('common.api_error.not_found');
+      expect(lastControl!.pendingErrorFlash).toBeNull();
+      expect(lastControl!.loading).toBe(false);
+      expect(lastControl!.saving).toBe(false);
+    });
+
+    it('queues pending error flash on onError(dto) when not loading', () => {
+      const initialControl: FarmEditViewState = { loading: false, saving: true, error: null, formData: { name: 'Farm', region: 'jp', latitude: 0, longitude: 0 }, pendingErrorFlash: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Not found' };
 
       presenter.onError(dto);
 
-      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Not found' });
-      expect(lastControl).not.toBeNull();
-      expect(lastControl!.loading).toBe(false);
-      expect(lastControl!.saving).toBe(false);
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'common.api_error.not_found' });
       expect(lastControl!.error).toBeNull();
     });
   });
