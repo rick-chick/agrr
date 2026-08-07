@@ -17,7 +17,7 @@ describe('MasterContextHeaderComponent', () => {
     translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', {
       farms: { index: { title: 'Farms' } },
-      common: { edit: 'Edit' }
+      common: { edit: 'Edit', breadcrumb_label: 'Breadcrumb' }
     });
     translate.setDefaultLang('en');
     translate.use('en');
@@ -77,7 +77,7 @@ describe('MasterContextHeaderComponent', () => {
     expect(forward.classList.contains('btn-secondary')).toBe(false);
   });
 
-  it('exposes breadcrumb navigation for assistive technologies', () => {
+  it('exposes localized breadcrumb navigation landmark for assistive technologies', () => {
     fixture.componentRef.setInput('crumbs', [
       { labelKey: 'farms.index.title', routerLink: ['/farms'] },
       { label: 'North Farm' }
@@ -86,6 +86,6 @@ describe('MasterContextHeaderComponent', () => {
 
     const nav = fixture.nativeElement.querySelector('nav.master-context-header__nav');
     expect(nav).toBeTruthy();
-    expect(nav.getAttribute('aria-label')).toBeTruthy();
+    expect(nav.getAttribute('aria-label')).toBe('Breadcrumb');
   });
 });
