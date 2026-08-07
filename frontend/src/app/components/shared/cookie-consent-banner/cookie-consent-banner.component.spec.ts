@@ -126,7 +126,7 @@ describe('CookieConsentBannerComponent', () => {
     fixture.detectChanges();
 
     const dialog = fixture.nativeElement.querySelector('.cookie-consent-banner') as HTMLElement;
-    const accept = dialog.querySelector('.btn-primary') as HTMLButtonElement;
+    const privacyLink = dialog.querySelector('.cookie-consent-link') as HTMLAnchorElement;
     const reject = dialog.querySelector('.btn-secondary') as HTMLButtonElement;
     reject.focus();
 
@@ -134,7 +134,7 @@ describe('CookieConsentBannerComponent', () => {
     Object.defineProperty(tabEvent, 'currentTarget', { value: dialog });
     component.onDialogKeydown(tabEvent);
 
-    expect(document.activeElement).toBe(accept);
+    expect(document.activeElement).toBe(privacyLink);
   });
 
   it('wraps Shift+Tab focus from first focusable back to last', () => {
@@ -142,9 +142,9 @@ describe('CookieConsentBannerComponent', () => {
     fixture.detectChanges();
 
     const dialog = fixture.nativeElement.querySelector('.cookie-consent-banner') as HTMLElement;
-    const accept = dialog.querySelector('.btn-primary') as HTMLButtonElement;
+    const privacyLink = dialog.querySelector('.cookie-consent-link') as HTMLAnchorElement;
     const reject = dialog.querySelector('.btn-secondary') as HTMLButtonElement;
-    accept.focus();
+    privacyLink.focus();
 
     const shiftTabEvent = new KeyboardEvent('keydown', {
       key: 'Tab',
