@@ -179,6 +179,7 @@
     "actions": "Actions",
     "submit": "Submit",
     "close": "Close",
+    "breadcrumb_label": "Breadcrumb",
     "loading": "Loading...",
     "true": "Yes",
     "false": "No",
