@@ -63,6 +63,10 @@ jobs:
         working-directory: frontend
         run: npm run check-hardcoded-i18n:enforce
 
+      - name: verify fluid typography tokens
+        working-directory: frontend
+        run: npm run verify:fluid-typography-tokens
+
       - name: generate-e2e-route-manifest unit tests
         working-directory: frontend
         run: node --test scripts/generate-e2e-route-manifest.test.mjs
