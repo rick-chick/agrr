@@ -267,4 +267,34 @@ describe('PesticideEditComponent', () => {
 
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ pesticideId: 123 });
   });
+
+  it('renders translated edit title when name is empty instead of raw title_default key', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pesticides: {
+        index: { title: 'Pesticides' },
+        edit: { title: 'Edit {{name}}', title_default: 'Pesticide' }
+      }
+    });
+    translate.use('en');
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      pendingErrorFlash: null,
+      formData: {
+        name: '',
+        active_ingredient: null,
+        description: null,
+        crop_id: 1,
+        pest_id: 1,
+        region: null
+      }
+    };
+    fixture.detectChanges();
+
+    const heading = fixture.nativeElement.querySelector('#form-heading');
+    expect(heading?.textContent?.trim()).toBe('Edit Pesticide');
+    expect(fixture.nativeElement.textContent).not.toContain('title_default');
+  });
 });
