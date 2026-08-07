@@ -1,4 +1,17 @@
 {
   "description": "Known axe violations per route. Do not add new entries without justification; shrink over time.",
-  "routes": {}
+  "routes": {
+    "plans": [
+      {
+        "ruleId": "landmark-unique",
+        "reason": "Authenticated shell uses nested main landmarks (app-main + page-main); pre-existing layout."
+      }
+    ],
+    "crops": [
+      {
+        "ruleId": "landmark-unique",
+        "reason": "Authenticated shell uses nested main landmarks (app-main + page-main); pre-existing layout."
+      }
+    ]
+  }
 }
