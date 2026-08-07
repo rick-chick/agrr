@@ -10,9 +10,20 @@ interface CookieControlWindow extends Window {
   __disableCookieControl?: boolean;
 }
 
+const translations = {
+  cookie_consent: {
+    title: 'Cookie usage',
+    description_html: 'Description',
+    privacy_link_text: 'Privacy',
+    accept: 'Accept',
+    reject: 'Reject',
+    aria_label: 'Cookie consent dialog'
+  }
+};
+
 class DummyLoader implements TranslateLoader {
   getTranslation() {
-    return of({});
+    return of(translations);
   }
 }
 
@@ -81,6 +92,43 @@ describe('CookieConsentBannerComponent', () => {
     expect(googleAnalyticsMock.updateConsent).toHaveBeenCalledWith(false);
     expect(component.visible).toBe(false);
   });
+
+  it('labels dialog with aria-labelledby pointing at the title', () => {
+    googleAnalyticsMock.getStoredConsent.mockReturnValue(null);
+    fixture.detectChanges();
+
+    const dialog = fixture.nativeElement.querySelector('.cookie-consent-banner');
+    const title = fixture.nativeElement.querySelector('.cookie-consent-title');
+
+    expect(dialog.getAttribute('aria-labelledby')).toBe('cookie-consent-dialog-title');
+    expect(title?.id).toBe('cookie-consent-dialog-title');
+    expect(dialog.getAttribute('aria-label')).toBeNull();
+  });
+
+  it('traps Tab focus within the dialog', () => {
+    googleAnalyticsMock.getStoredConsent.mockReturnValue(null);
+    fixture.detectChanges();
+
+    const buttons = Array.from(
+      fixture.nativeElement.querySelectorAll('.cookie-consent-actions button')
+    ) as HTMLButtonElement[];
+    const accept = buttons[0];
+    const reject = buttons[1];
+
+    accept.focus();
+    const shiftTab = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true });
+    dialogDispatch(shiftTab);
+    expect(document.activeElement).toBe(reject);
+
+    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true });
+    dialogDispatch(tab);
+    expect(document.activeElement).toBe(accept);
+  });
+
+  function dialogDispatch(event: KeyboardEvent): void {
+    fixture.nativeElement.querySelector('.cookie-consent-banner')?.dispatchEvent(event);
+  }
+
   afterEach(() => {
     delete (window as CookieControlWindow).__disableCookieControl;
   });

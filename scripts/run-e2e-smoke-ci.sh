@@ -96,4 +96,7 @@ export E2E_CAPTURE_DEV_SESSION=1
 export E2E_STRANGLER=1
 npm run test:e2e:smoke:route
 
-echo "==> route-smoke GREEN"
+echo "==> Running a11y smoke (axe-core + gantt keyboard alternative)"
+npm run test:e2e:smoke:a11y
+
+echo "==> route-smoke + a11y smoke GREEN"
