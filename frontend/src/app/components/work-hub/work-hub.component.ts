@@ -26,7 +26,7 @@ const initialControl: WorkHubViewState = {
   imports: [CommonModule, RouterLink, TranslateModule],
   providers: [...WORK_HUB_PROVIDERS],
   template: `
-    <main class="page-main">
+    <div class="page-main">
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'work.hub.title' | translate }}</h1>
         @if (control.error) {
@@ -105,7 +105,7 @@ const initialControl: WorkHubViewState = {
           }
         }
       </section>
-    </main>
+    </div>
   `,
   styleUrls: ['./work-hub.component.css']
 })

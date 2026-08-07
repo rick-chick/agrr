@@ -35,7 +35,7 @@ const initialControl: PublicPlanSelectCropViewState = {
   imports: [CommonModule, RouterLink, TranslateModule, PublicPlanContextHeaderComponent],
   providers: [...PUBLIC_PLAN_SELECT_CROP_PROVIDERS],
   template: `
-    <main class="page-main public-plans-wrapper">
+    <div class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
         <app-public-plan-context-header [crumbs]="contextCrumbs" />
@@ -134,7 +134,7 @@ const initialControl: PublicPlanSelectCropViewState = {
           </div>
         </div>
       }
-    </main>
+    </div>
   `,
   styleUrls: ['./public-plan.component.css']
 })

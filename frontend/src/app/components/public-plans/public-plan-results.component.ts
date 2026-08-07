@@ -46,7 +46,7 @@ const initialControl: PublicPlanResultsViewState = {
     ...PLAN_FIELD_CLIMATE_API_PROVIDERS
   ],
   template: `
-    <main class="page-main public-plans-wrapper">
+    <div class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
         <app-public-plan-context-header [crumbs]="contextCrumbs" />
@@ -76,7 +76,7 @@ const initialControl: PublicPlanResultsViewState = {
           </div>
         }
       </div>
-    </main>
+    </div>
   `,
   styleUrls: ['./public-plan-results.component.css', './public-plan.component.css']
 })
