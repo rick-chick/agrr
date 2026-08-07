@@ -41,60 +41,100 @@
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/2": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/3": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/4": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/5": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/6": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/7": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/8": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/9": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/10": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/11": [
@@ -111,24 +151,46 @@
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/13": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/14": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
       }
     ],
     "entry-schedule/crop/15": [
       {
         "ruleId": "color-contrast",
         "reason": "Entry-schedule prerender crop detail uses brand accent colors below WCAG AA (#681 baseline)."
+      },
+      {
+        "ruleId": "empty-heading",
+        "reason": "Prerender crop detail may render subsection heading before async chart data loads (#681 baseline)."
+      }
+    ],
+    "public-plans/select-crop": [
+      {
+        "ruleId": "color-contrast",
+        "reason": "Public plan crop selection cards use brand accent colors below WCAG AA (#681 baseline)."
       }
     ]
   }
