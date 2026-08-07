@@ -1,7 +1,42 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyAppLang, mapFarmRegionToAppLang, resolveInitialAppLang } from './app-locale';
+import {
+  applyAppLang,
+  documentHtmlLang,
+  mapFarmRegionToAppLang,
+  ogLocaleForAppLang,
+  resolveInitialAppLang
+} from './app-locale';
 
 describe('app-locale', () => {
+  it('documentHtmlLang maps Angular locale in to HTML lang hi (Hindi BCP 47)', () => {
+    expect(documentHtmlLang('in')).toBe('hi');
+    expect(documentHtmlLang('ja')).toBe('ja');
+    expect(documentHtmlLang('en')).toBe('en');
+  });
+
+  it('ogLocaleForAppLang maps in to hi_IN for Open Graph', () => {
+    expect(ogLocaleForAppLang('ja')).toBe('ja_JP');
+    expect(ogLocaleForAppLang('en')).toBe('en_US');
+    expect(ogLocaleForAppLang('in')).toBe('hi_IN');
+  });
+
+  it('applyAppLang sets document.documentElement.lang via documentHtmlLang', () => {
+    const translate = {
+      currentLang: 'ja',
+      use: (lang: string) => {
+        (translate as { currentLang: string }).currentLang = lang;
+      }
+    };
+    const html = document.createElement('html');
+    vi.stubGlobal('document', { documentElement: html });
+
+    try {
+      applyAppLang(translate as never, 'in');
+      expect(html.lang).toBe('hi');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
   it('maps farm region to Angular app language', () => {
     expect(mapFarmRegionToAppLang('jp')).toBe('ja');
     expect(mapFarmRegionToAppLang('us')).toBe('en');

@@ -7,6 +7,25 @@ import {
 
 export type { AppLang };
 
+/**
+ * HTML document `lang` (BCP 47) for each Angular app locale.
+ *
+ * Policy: keep ngx-translate / capture locale id `in` (India farm region, `assets/i18n/in.json`,
+ * `*.in.png`) but set `document.documentElement.lang` to `hi` because the UI strings are Hindi.
+ * Screen readers, SEO, and hyphenation require the page lang to match displayed language, not the
+ * internal bundle key. UI language switch (#671) must use the same mapping via `applyAppLang`.
+ */
+export function documentHtmlLang(lang: AppLang): string {
+  return lang === 'in' ? 'hi' : lang;
+}
+
+/** Open Graph `og:locale` for each Angular app locale (`in` → Hindi India). */
+export function ogLocaleForAppLang(lang: AppLang): string {
+  if (lang === 'ja') return 'ja_JP';
+  if (lang === 'en') return 'en_US';
+  return 'hi_IN';
+}
+
 const STORAGE_KEY = 'agrr.app.lang';
 
 export function mapFarmRegionToAppLang(region?: string | null): AppLang | undefined {
@@ -68,6 +87,6 @@ export function applyAppLang(
     localStorage.setItem(STORAGE_KEY, lang);
   }
   if (typeof document !== 'undefined') {
-    document.documentElement.lang = lang === 'in' ? 'hi' : lang;
+    document.documentElement.lang = documentHtmlLang(lang);
   }
 }
