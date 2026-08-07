@@ -1,6 +1,6 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -16,6 +16,13 @@ import {
 } from '../../../usecase/crops/crop-edit.providers';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
+import {
+  FormCardNgControl,
+  formCardFieldAriaDescribedby,
+  formCardFieldAriaInvalid,
+  formCardFieldErrorId,
+  formCardFieldShowError
+} from '../../../core/form-card-field-a11y';
 
 const initialFormData: CropEditFormData = {
   name: '',
@@ -61,10 +68,24 @@ const initialControl: CropEditViewState = {
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
-          <form (ngSubmit)="updateCrop()" #cropForm="ngForm" class="form-card__form">
+          <form (ngSubmit)="updateCrop()" #cropForm="ngForm" class="form-card__form" novalidate>
             <label for="crop-name" class="form-card__field">
               <span class="form-card__field-label">{{ 'crops.form.name_label' | translate }}</span>
-              <input id="crop-name" name="name" [(ngModel)]="control.formData.name" required />
+              <input
+                id="crop-name"
+                name="name"
+                [(ngModel)]="control.formData.name"
+                required
+                #nameField="ngModel"
+                [attr.aria-invalid]="fieldAriaInvalid(nameField)"
+                [attr.aria-describedby]="fieldAriaDescribedby(nameField, 'crop-name')"
+                [class.form-card__field-input--invalid]="fieldShowError(nameField)"
+              />
+              @if (fieldShowError(nameField)) {
+                <span [id]="fieldErrorId('crop-name')" class="form-card__field-error" role="alert">
+                  {{ fieldErrorMessage(nameField) | translate }}
+                </span>
+              }
             </label>
             <label for="crop-variety" class="form-card__field">
               <span class="form-card__field-label">{{ 'crops.form.variety_label' | translate }}</span>
@@ -96,7 +117,7 @@ const initialControl: CropEditViewState = {
               </label>
             }
             <div class="form-card__actions">
-              <button type="submit" class="btn btn-primary" [disabled]="cropForm.invalid || control.saving">
+              <button type="submit" class="btn btn-primary" [disabled]="control.saving">
                 {{ 'crops.form.submit_update' | translate }}
               </button>
               <a [routerLink]="['/crops', cropId, 'setup_proposal']" class="btn btn-secondary">
@@ -111,6 +132,8 @@ const initialControl: CropEditViewState = {
   styleUrls: ['./crop-edit.component.css']
 })
 export class CropEditComponent implements CropEditView, OnInit {
+  @ViewChild('cropForm') cropForm?: NgForm;
+
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -120,6 +143,10 @@ export class CropEditComponent implements CropEditView, OnInit {
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
+
+  formSubmitted = false;
+
+  readonly fieldErrorId = formCardFieldErrorId;
 
   private _control: CropEditViewState = initialControl;
   get control(): CropEditViewState {
@@ -163,7 +190,11 @@ export class CropEditComponent implements CropEditView, OnInit {
   }
 
   updateCrop(): void {
-    if (this.control.saving) return;
+    this.formSubmitted = true;
+    this.cdr.markForCheck();
+    if (this.cropForm?.invalid || this.control.saving) {
+      return;
+    }
     this.control = { ...this.control, saving: true, error: null };
     const fd = this.control.formData;
     const region = this.resolveRegionForSubmit();
@@ -201,5 +232,37 @@ export class CropEditComponent implements CropEditView, OnInit {
         region
       }
     };
+  }
+
+  fieldShowError(
+    control: FormCardNgControl,
+    customError?: string | null,
+    submitted = this.formSubmitted
+  ): boolean {
+    return formCardFieldShowError(control, { submitted, customError });
+  }
+
+  fieldAriaInvalid(
+    control: FormCardNgControl,
+    customError?: string | null,
+    submitted = this.formSubmitted
+  ): true | null {
+    return formCardFieldAriaInvalid(this.fieldShowError(control, customError, submitted));
+  }
+
+  fieldAriaDescribedby(
+    control: FormCardNgControl,
+    fieldId: string,
+    customError?: string | null,
+    submitted = this.formSubmitted
+  ): string | null {
+    return formCardFieldAriaDescribedby(
+      this.fieldShowError(control, customError, submitted),
+      fieldId
+    );
+  }
+
+  fieldErrorMessage(_control: FormCardNgControl): string {
+    return 'common.form_field.required';
   }
 }

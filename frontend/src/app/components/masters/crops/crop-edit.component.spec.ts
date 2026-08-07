@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { NgModel } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { CropEditComponent } from './crop-edit.component';
@@ -203,6 +205,58 @@ describe('CropEditComponent', () => {
     expect(fixture.nativeElement.querySelector('a.master-context-header__link')).toBeNull();
     expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
       'Edit'
+    );
+  });
+
+  it('exposes aria-invalid and aria-describedby when required name is empty on submit', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        common: { form_field: { required: 'This field is required.' }, edit: 'Edit' },
+        crops: {
+          index: { title: 'Crops' },
+          form: {
+            name_label: 'Name',
+            variety_label: 'Variety',
+            area_per_unit_label: 'Area',
+            revenue_per_area_label: 'Revenue',
+            groups_label: 'Groups',
+            groups_placeholder: 'Group A',
+            submit_update: 'Update'
+          },
+          setup_proposal_import: { action: 'Import proposal' }
+        }
+      },
+      true
+    );
+    translate.use('en');
+
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      formData: {
+        ...initialFormData,
+        name: ''
+      }
+    };
+    fixture.detectChanges();
+
+    const nameModel = fixture.debugElement
+      .query(By.css('#crop-name'))
+      .injector.get(NgModel);
+    nameModel.control.setErrors({ required: true });
+    component.formSubmitted = true;
+    fixture.detectChanges();
+
+    const nameInput = fixture.nativeElement.querySelector('#crop-name') as HTMLInputElement;
+    expect(nameInput.getAttribute('aria-invalid')).toBe('true');
+    expect(nameInput.getAttribute('aria-describedby')).toBe('crop-name-error');
+    expect(fixture.nativeElement.querySelector('#crop-name-error')?.textContent?.trim()).toBe(
+      'This field is required.'
     );
   });
 });

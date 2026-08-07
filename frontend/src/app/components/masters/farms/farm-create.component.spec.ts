@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { NgModel } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { FarmCreateComponent } from './farm-create.component';
@@ -191,5 +193,93 @@ describe('FarmCreateComponent', () => {
     expect(
       fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
     ).toHaveLength(0);
+  });
+
+  it('exposes aria-invalid and aria-describedby when required name is empty on submit', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        common: { form_field: { required: 'This field is required.' } },
+        farms: {
+          index: { title: 'Farms' },
+          new: {
+            title: 'Add New Farm',
+            form: {
+              name_label: 'Name',
+              location_label: 'Location',
+              latitude_label: 'Latitude',
+              longitude_label: 'Longitude',
+              latitude_placeholder: '35.0',
+              longitude_placeholder: '135.0',
+              submit: 'Create'
+            }
+          },
+          map: { default_name: 'Farm' }
+        }
+      },
+      true
+    );
+    translate.use('en');
+    fixture.detectChanges();
+
+    const nameModel = fixture.debugElement
+      .query(By.css('#name'))
+      .injector.get(NgModel);
+    nameModel.control.setErrors({ required: true });
+    component.formSubmitted = true;
+    fixture.detectChanges();
+
+    const nameInput = fixture.nativeElement.querySelector('#name') as HTMLInputElement;
+    expect(nameInput.getAttribute('aria-invalid')).toBe('true');
+    expect(nameInput.getAttribute('aria-describedby')).toBe('name-error');
+    expect(fixture.nativeElement.querySelector('#name-error')?.textContent?.trim()).toBe(
+      'This field is required.'
+    );
+  });
+
+  it('exposes aria-invalid and aria-describedby for invalid coordinates', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        common: { form_field: { required: 'This field is required.' } },
+        farms: {
+          index: { title: 'Farms' },
+          new: {
+            title: 'Add New Farm',
+            form: {
+              name_label: 'Name',
+              location_label: 'Location',
+              latitude_label: 'Latitude',
+              longitude_label: 'Longitude',
+              latitude_placeholder: '35.0',
+              longitude_placeholder: '135.0',
+              submit: 'Create',
+              coordinates_validation_error: 'Invalid coordinates.'
+            }
+          },
+          map: { default_name: 'Farm' }
+        }
+      },
+      true
+    );
+    translate.use('en');
+    auth.user.mockReturnValue({ admin: false, region: 'us' });
+    component.fieldErrors = {
+      latitude: 'farms.new.form.coordinates_validation_error',
+      longitude: 'farms.new.form.coordinates_validation_error'
+    };
+    fixture.detectChanges();
+
+    const latitudeInput = fixture.nativeElement.querySelector('#latitude') as HTMLInputElement;
+    const longitudeInput = fixture.nativeElement.querySelector('#longitude') as HTMLInputElement;
+    expect(latitudeInput.getAttribute('aria-invalid')).toBe('true');
+    expect(latitudeInput.getAttribute('aria-describedby')).toBe('latitude-error');
+    expect(longitudeInput.getAttribute('aria-invalid')).toBe('true');
+    expect(longitudeInput.getAttribute('aria-describedby')).toBe('longitude-error');
+    expect(fixture.nativeElement.querySelector('#latitude-error')?.textContent?.trim()).toBe(
+      'Invalid coordinates.'
+    );
   });
 });
