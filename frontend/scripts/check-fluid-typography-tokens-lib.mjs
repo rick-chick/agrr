@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 /** @type {readonly string[]} */
-export const FLUID_FONT_SIZE_TOKENS = [
+const FLUID_FONT_SIZE_TOKENS = [
   '--font-size-lg',
   '--font-size-xl',
   '--font-size-2xl',
@@ -11,14 +11,6 @@ export const FLUID_FONT_SIZE_TOKENS = [
 ];
 
 const CLAMP_RE = /clamp\s*\(/;
-
-/**
- * @param {string} line
- * @returns {boolean}
- */
-export function lineUsesClamp(line) {
-  return CLAMP_RE.test(line);
-}
 
 /**
  * @param {string} css

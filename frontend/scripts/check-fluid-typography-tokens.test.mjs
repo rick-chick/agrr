@@ -6,13 +6,7 @@ import {
   findNonFluidTokens,
   findTokenDefinition,
   isFluidClampValue,
-  lineUsesClamp,
 } from './check-fluid-typography-tokens-lib.mjs';
-
-test('lineUsesClamp detects clamp() in CSS value', () => {
-  assert.equal(lineUsesClamp('clamp(1rem, 0.9rem + 0.5vw, 1.125rem)'), true);
-  assert.equal(lineUsesClamp('18px'), false);
-});
 
 test('isFluidClampValue requires clamp()', () => {
   assert.equal(isFluidClampValue('clamp(1rem, 1rem + 0.5vw, 1.25rem)'), true);
