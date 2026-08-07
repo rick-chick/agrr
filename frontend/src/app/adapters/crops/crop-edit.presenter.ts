@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { CropEditView } from '../../components/masters/crops/crop-edit.view';
 import { LoadCropForEditOutputPort } from '../../usecase/crops/load-crop-for-edit.output-port';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
@@ -40,13 +41,24 @@ export class CropEditPresenter implements LoadCropForEditOutputPort, UpdateCropO
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (this.view.control.loading) {
+      this.view.control = {
+        ...this.view.control,
+        loading: false,
+        saving: false,
+        error: errorDtoI18nKey(dto),
+        pendingSuccessFlash: null,
+        pendingErrorFlash: null
+      };
+      return;
+    }
     this.view.control = {
       ...this.view.control,
       loading: false,
       saving: false,
       error: null,
       pendingSuccessFlash: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) })
     };
   }
 

@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { FarmDetailView } from '../../components/masters/farms/farm-detail.view';
 import { LoadFarmDetailOutputPort } from '../../usecase/farms/load-farm-detail.output-port';
 import { FarmDetailDataDto } from '../../usecase/farms/load-farm-detail.dtos';
@@ -37,11 +38,20 @@ export class FarmDetailPresenter
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (this.view.control.loading) {
+      this.view.control = {
+        ...this.view.control,
+        loading: false,
+        error: errorDtoI18nKey(dto),
+        pendingErrorFlash: null
+      };
+      return;
+    }
     this.view.control = {
       ...this.view.control,
       loading: false,
       error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) })
     };
   }
 
