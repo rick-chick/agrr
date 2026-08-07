@@ -267,6 +267,22 @@
   border: 0;
 }
 
+/* アクセシビリティ: アニメーション・モーション軽減（WCAG 2.3.3） */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .btn:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
 /* ===== 静的ページ共通（feature-card・section-card 系トークン） ===== */
 .feature-grid {
   display: grid;
