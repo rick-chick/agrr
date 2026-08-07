@@ -10,6 +10,8 @@ import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
 import {
   WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO,
+  WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET,
+  WORK_RECORD_PHOTO_THUMB_WIDTH_PX_SHEET,
   WORK_RECORD_PHOTO_THUMB_WIDTH_SHEET
 } from '../../domain/plans/work-record-photo.constants';
 
@@ -139,7 +141,36 @@ describe('WorkRecordSheetComponent', () => {
       '.work-record-sheet__photo-thumb'
     ) as HTMLElement;
     expect(thumb).toBeTruthy();
+    const img = thumb.querySelector('img') as HTMLImageElement;
+    expect(img.getAttribute('loading')).toBe('lazy');
+    expect(img.getAttribute('decoding')).toBe('async');
+    expect(img.getAttribute('width')).toBe(String(WORK_RECORD_PHOTO_THUMB_WIDTH_PX_SHEET));
+    expect(img.getAttribute('height')).toBe(String(WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET));
     expect(getComputedStyle(thumb).aspectRatio).toBe(WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO);
     expect(getComputedStyle(thumb).width).toBe(WORK_RECORD_PHOTO_THUMB_WIDTH_SHEET);
+  });
+
+  it('renders pending photo thumbnails with lazy loading and intrinsic dimensions', () => {
+    component.openAdHoc([]);
+    component.control = {
+      ...component.control,
+      pendingPhotos: [
+        {
+          clientId: 'pending-1',
+          previewUrl: 'blob:http://localhost/pending-1',
+          file: new File(['x'], 'photo.jpg', { type: 'image/jpeg' })
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const img = fixture.nativeElement.querySelector(
+      '.work-record-sheet__photo-thumb img'
+    ) as HTMLImageElement;
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('loading')).toBe('lazy');
+    expect(img.getAttribute('decoding')).toBe('async');
+    expect(img.getAttribute('width')).toBe(String(WORK_RECORD_PHOTO_THUMB_WIDTH_PX_SHEET));
+    expect(img.getAttribute('height')).toBe(String(WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET));
   });
 });
