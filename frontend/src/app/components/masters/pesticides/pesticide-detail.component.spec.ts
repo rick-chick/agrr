@@ -209,6 +209,7 @@ describe('PesticideDetailComponent', () => {
     fixture.detectChanges();
 
     const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.getAttribute('role')).toBe('alert');
     expect(alert?.textContent).toContain('An error occurred');
     expect(alert?.textContent).not.toContain('Http failure');
     expect(
