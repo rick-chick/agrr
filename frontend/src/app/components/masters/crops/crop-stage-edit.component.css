@@ -15,7 +15,7 @@
   min-width: 2.25rem;
   padding: 0 var(--space-2);
   border-radius: var(--radius-full);
-  background: var(--color-primary-muted-bg, var(--color-background-secondary));
+  background: var(--color-primary-muted-bg);
   color: var(--color-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
@@ -101,7 +101,7 @@
 
 .crop-stages-edit-panel__detail-chip:hover {
   border-color: var(--color-primary);
-  background: var(--color-primary-muted-bg, var(--color-background-secondary));
+  background: var(--color-primary-muted-bg);
   color: var(--color-primary);
 }
 
@@ -127,7 +127,7 @@
 
 .form-hint {
   margin: 0.25rem 0 0;
-  font-size: var(--font-size-xs, 0.75rem);
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   line-height: 1.4;
 }
@@ -146,7 +146,7 @@ dialog.form-dialog.crop-stages__advanced-dialog {
 }
 
 .confirm-dialog::backdrop {
-  background: rgb(0 0 0 / 0.45);
+  background: var(--color-dialog-backdrop);
 }
 
 .confirm-dialog__message {
@@ -159,8 +159,8 @@ dialog.form-dialog.crop-stages__advanced-dialog {
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
-  background: var(--color-warning-surface, #fff8e6);
-  color: var(--color-warning-text, #8a5b00);
+  background: var(--color-warning-surface);
+  color: var(--color-warning-text);
   line-height: 1.5;
 }
 

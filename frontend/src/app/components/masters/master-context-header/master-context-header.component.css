@@ -66,14 +66,14 @@
 .master-context-header__link:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
-  border-radius: var(--radius-sm, 2px);
+  border-radius: var(--radius-sm);
 }
 
 .master-context-header__current {
   margin: 0;
   color: var(--color-text);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold, 600);
+  font-weight: var(--font-weight-semibold);
   line-height: 1.4;
 }
 
@@ -102,5 +102,5 @@
 .master-context-header__forward:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
-  border-radius: var(--radius-sm, 2px);
+  border-radius: var(--radius-sm);
 }
