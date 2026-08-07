@@ -29,6 +29,23 @@ test.describe('style consistency (computed)', () => {
     expect(families.size, `font-family が食い違い`).toBe(1);
   });
 
+  test('home: hero h1 font-size scales fluidly between narrow and wide viewports', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto('/');
+    const h1 = page.locator('app-home .hero-section h1');
+    await expect(h1).toBeVisible();
+    const narrowPx = await h1.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const widePx = await h1.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+
+    expect(narrowPx).toBeGreaterThanOrEqual(16);
+    expect(widePx).toBeGreaterThan(narrowPx);
+    expect(widePx).toBeLessThanOrEqual(48);
+  });
+
   test('home: 同じクラス集合の primary-button は見た目計算値が一致', async ({ page }) => {
     await page.goto('/');
     const buttons = page.locator('app-home button.primary-button');
