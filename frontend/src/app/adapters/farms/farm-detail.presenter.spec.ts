@@ -68,18 +68,29 @@ describe('FarmDetailPresenter', () => {
       expect(lastControl!.pendingUndoToast).toBeNull();
     });
 
-    it('queues pending error flash and updates view.control on onError(dto)', () => {
-      const initialControl: FarmDetailViewState = { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
+    it('queues pending error flash and updates view.control on onError(dto) when not loading', () => {
+      const initialControl: FarmDetailViewState = { loading: false, error: null, farm: { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0 }, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Not found' };
 
       presenter.onError(dto);
 
-      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Not found' });
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'common.api_error.not_found' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.error).toBeNull();
+    });
+
+    it('sets i18n load error on onError(dto) while loading', () => {
+      const initialControl: FarmDetailViewState = { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
+      lastControl = initialControl;
+
+      presenter.onError({ message: 'Http failure response for http://localhost:3000/api/v1/farms/999: 404 Not Found' });
+
+      expect(lastControl!.error).toBe('common.api_error.not_found');
+      expect(lastControl!.pendingErrorFlash).toBeNull();
+      expect(lastControl!.loading).toBe(false);
     });
   });
 
