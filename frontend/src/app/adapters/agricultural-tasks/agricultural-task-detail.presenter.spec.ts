@@ -5,7 +5,6 @@ import {
   AgriculturalTaskDetailView,
   AgriculturalTaskDetailViewState
 } from '../../components/masters/agricultural-tasks/agricultural-task-detail.view';
-import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeleteAgriculturalTaskSuccessDto } from '../../usecase/agricultural-tasks/delete-agricultural-task.dtos';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
@@ -42,7 +41,7 @@ describe('AgriculturalTaskDetailPresenter', () => {
   });
 
   describe('LoadAgriculturalTaskDetailOutputPort', () => {
-    it('queues pending error flash and updates view.control on onError(dto)', () => {
+    it('sets i18n load error on onError(dto) while loading', () => {
       const initialControl: AgriculturalTaskDetailViewState = {
         loading: true,
         error: null,
@@ -52,13 +51,26 @@ describe('AgriculturalTaskDetailPresenter', () => {
       };
       lastControl = initialControl;
 
-      const dto: ErrorDto = { message: 'Not found' };
+      presenter.onError({ message: 'Not found' });
 
-      presenter.onError(dto);
-
-      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Not found' });
-      expect(lastControl).not.toBeNull();
+      expect(lastControl!.error).toBe('common.api_error.not_found');
+      expect(lastControl!.pendingErrorFlash).toBeNull();
       expect(lastControl!.loading).toBe(false);
+    });
+
+    it('queues pending error flash on onError(dto) when not loading', () => {
+      const initialControl: AgriculturalTaskDetailViewState = {
+        loading: false,
+        error: null,
+        agriculturalTask: { id: 1, name: 'Task', required_tools: [], is_reference: false },
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+      lastControl = initialControl;
+
+      presenter.onError({ message: 'Not found' });
+
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'common.api_error.not_found' });
       expect(lastControl!.error).toBeNull();
     });
   });
