@@ -59,6 +59,10 @@ jobs:
         working-directory: frontend
         run: node --test scripts/check-hardcoded-i18n.test.mjs
 
+      - name: check-package-deps unit tests
+        working-directory: frontend
+        run: npm run verify:package-deps
+
       - name: check-hardcoded-i18n enforce gate
         working-directory: frontend
         run: npm run check-hardcoded-i18n:enforce
