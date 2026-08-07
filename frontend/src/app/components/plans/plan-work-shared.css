@@ -59,7 +59,7 @@
   box-sizing: border-box;
   min-height: 3rem;
   font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold, 600);
+  font-weight: var(--font-weight-semibold);
 }
 
 .plan-work__cta--constrained {
@@ -84,7 +84,7 @@
   background: var(--color-surface);
   color: var(--color-primary);
   font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold, 600);
+  font-weight: var(--font-weight-semibold);
   text-decoration: none;
 }
 
