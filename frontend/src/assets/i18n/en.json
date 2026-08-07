@@ -1510,8 +1510,8 @@
     },
     "new": {
       "breadcrumb": "New plan",
-      "title": "📅 Select Year and Farm",
-      "subtitle": "Choose the year and farm for your cultivation plan",
+      "title": "📅 Select a Farm",
+      "subtitle": "Select the farm for your cultivation plan",
       "plan_name_label": "Plan Name",
       "plan_name_placeholder": "e.g. Main Plan",
       "farm_label": "Farm",
