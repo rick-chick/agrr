@@ -247,12 +247,12 @@ describe('PlanListComponent', () => {
     }
   });
 
-  it('keeps text loading for error state', async () => {
+  it('shows error alert with retry button that reloads the plan list', async () => {
     const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
     try {
       component.control = {
         loading: false,
-        error: 'Failed to load',
+        error: 'common.api_error.generic',
         plans: [],
         pendingUndoToast: null,
         pendingErrorFlash: null
@@ -260,8 +260,18 @@ describe('PlanListComponent', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      expect(fixture.nativeElement.querySelector('.plan-list-error')).toBeTruthy();
+      const alert = fixture.nativeElement.querySelector('.page-alert-error[role="alert"]');
+      expect(alert).toBeTruthy();
+      expect(alert.textContent).toContain('common.api_error.generic');
       expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeNull();
+
+      const retryBtn = fixture.nativeElement.querySelector('.plan-list__retry');
+      expect(retryBtn).toBeTruthy();
+
+      loadSpy.mockRestore();
+      loadUseCase.execute.mockClear();
+      retryBtn.click();
+      expect(loadUseCase.execute).toHaveBeenCalled();
     } finally {
       loadSpy.mockRestore();
     }
