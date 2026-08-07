@@ -1209,7 +1209,6 @@
     "actions": "कार्रवाई",
     "submit": "जमा करें",
     "close": "बंद करें",
-    "breadcrumb_label": "ब्रेडक्रंब नेविगेशन",
     "loading": "लोड हो रहा है...",
     "true": "हां",
     "false": "नहीं",
@@ -1224,7 +1223,8 @@
     },
     "creating": "बनाया जा रहा है...",
     "sending": "भेजा जा रहा है...",
-    "updating": "अपडेट किया जा रहा है..."
+    "updating": "अपडेट किया जा रहा है...",
+    "breadcrumb_label": "ब्रेडक्रंब नेविगेशन"
   },
   "masters": {
     "load_error": {
@@ -2305,7 +2305,10 @@
     "api_keys": "API कुंजी प्रबंधन",
     "account": "खाता और डेटा",
     "admin": "व्यवस्थापक",
-    "language": "भाषा"
+    "language": "भाषा",
+    "lang_ja": "日本語",
+    "lang_en": "English",
+    "lang_in": "हिन्दी"
   },
   "footer": {
     "about": "AGRR के बारे में",

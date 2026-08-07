@@ -179,7 +179,6 @@
     "actions": "Actions",
     "submit": "Submit",
     "close": "Close",
-    "breadcrumb_label": "Breadcrumb",
     "loading": "Loading...",
     "true": "Yes",
     "false": "No",
@@ -194,7 +193,8 @@
     },
     "creating": "Creating...",
     "sending": "Sending...",
-    "updating": "Updating..."
+    "updating": "Updating...",
+    "breadcrumb_label": "Breadcrumb"
   },
   "masters": {
     "load_error": {
@@ -275,7 +275,10 @@
     "api_keys": "API Keys",
     "account": "Account & Data",
     "admin": "Admin",
-    "language": "Language"
+    "language": "Language",
+    "lang_ja": "日本語",
+    "lang_en": "English",
+    "lang_in": "हिन्दी"
   },
   "footer": {
     "about": "About AGRR",
