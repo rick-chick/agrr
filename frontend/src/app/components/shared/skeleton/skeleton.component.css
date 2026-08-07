@@ -1,6 +1,6 @@
 .skeleton {
   display: block;
-  border-radius: var(--radius-sm, 4px);
+  border-radius: var(--radius-sm);
   background-color: var(--color-gray-200);
 }
 
@@ -12,13 +12,13 @@
 .skeleton--meta {
   width: 35%;
   height: 0.875rem;
-  margin-top: var(--space-2, 0.5rem);
+  margin-top: var(--space-2);
 }
 
 .skeleton--button {
   width: 4.5rem;
   height: 2.25rem;
-  border-radius: var(--radius-md, 6px);
+  border-radius: var(--radius-md);
 }
 
 .skeleton--shimmer {

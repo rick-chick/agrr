@@ -8,7 +8,7 @@
 
 .work-hub-empty-hint {
   margin-block: 0.75rem;
-  color: var(--color-text-muted, #666);
+  color: var(--color-text-muted);
 }
 
 .work-hub__submitting {
@@ -49,7 +49,7 @@
 }
 
 .work-hub__cta {
-  color: var(--color-primary, #2f6f3e);
+  color: var(--color-primary);
   font-weight: 600;
 }
 
