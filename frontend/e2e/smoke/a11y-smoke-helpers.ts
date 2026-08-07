@@ -4,19 +4,9 @@ import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { expect } from '@playwright/test';
 
-export type A11yRoute = {
-  pattern: string;
-  url: string;
-  requiresAuth: boolean;
-};
+import type { A11yRoute } from './a11y-smoke-lib';
 
-export const a11yCoreRoutes: A11yRoute[] = [
-  { pattern: '', url: '/', requiresAuth: false },
-  { pattern: 'login', url: '/login', requiresAuth: false },
-  { pattern: 'plans', url: '/plans', requiresAuth: true },
-  { pattern: 'crops', url: '/crops', requiresAuth: true },
-  { pattern: 'contact', url: '/contact', requiresAuth: false },
-];
+export type { A11yRoute };
 
 type AllowlistFile = {
   /** Known axe rule IDs allowed per route pattern (see a11y-allowlist.json). */
