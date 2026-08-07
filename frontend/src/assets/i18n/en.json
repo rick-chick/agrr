@@ -1756,7 +1756,7 @@
     },
     "edit": {
       "title": "Edit {{name}}",
-      "title_default": "Pesticide"
+      "title_default": "Edit pesticide"
     },
     "show": {
       "reference_pesticide": "Reference Pesticide",
@@ -2575,7 +2575,8 @@
       "title": "Add New Fertilizer"
     },
     "edit": {
-      "title": "Edit {{name}}"
+      "title": "Edit {{name}}",
+      "title_default": "Edit fertilizer"
     },
     "show": {
       "reference_fertilize": "Reference Fertilizer",
