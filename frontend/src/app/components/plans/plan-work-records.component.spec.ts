@@ -8,6 +8,12 @@ import { PlanWorkRecordsComponent } from './plan-work-records.component';
 import { PlanWorkRecordsViewState } from './plan-work-records.view';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
+import {
+  WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO,
+  WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_HISTORY,
+  WORK_RECORD_PHOTO_THUMB_WIDTH_HISTORY,
+  WORK_RECORD_PHOTO_THUMB_WIDTH_PX_HISTORY
+} from '../../domain/plans/work-record-photo.constants';
 
 function createPlanRouteMock(planId: string) {
   let currentPlanId = planId;
@@ -458,6 +464,64 @@ describe('PlanWorkRecordsComponent', () => {
     const thumbs = fixture.nativeElement.querySelectorAll('.plan-work-records__photo-thumb');
     expect(thumbs.length).toBe(3);
     expect(thumbs[0].querySelector('img')?.getAttribute('src')).toBe('/photos/1.jpg');
+  });
+
+  it('renders history photo thumbnails with landscape 4:3 aspect ratio and lazy loading', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: null,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: null,
+              photos: [
+                {
+                  id: 1,
+                  work_record_id: 1,
+                  position: 0,
+                  content_type: 'image/jpeg',
+                  byte_size: 100,
+                  url: '/photos/1.jpg',
+                  created_at: '2026-06-12'
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const thumb = fixture.nativeElement.querySelector(
+      '.plan-work-records__photo-thumb'
+    ) as HTMLElement;
+    expect(thumb).toBeTruthy();
+    const img = thumb.querySelector('img') as HTMLImageElement;
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('loading')).toBe('lazy');
+    expect(img.getAttribute('decoding')).toBe('async');
+    expect(img.getAttribute('width')).toBe(String(WORK_RECORD_PHOTO_THUMB_WIDTH_PX_HISTORY));
+    expect(img.getAttribute('height')).toBe(String(WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_HISTORY));
+    expect(getComputedStyle(thumb).aspectRatio).toBe(WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO);
+    expect(getComputedStyle(thumb).width).toBe(WORK_RECORD_PHOTO_THUMB_WIDTH_HISTORY);
   });
 
   it('does not render photo thumbnails when record has no photos', () => {
