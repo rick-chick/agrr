@@ -193,7 +193,10 @@
     },
     "creating": "Creating...",
     "sending": "Sending...",
-    "updating": "Updating..."
+    "updating": "Updating...",
+    "form": {
+      "required_field": "This field is required."
+    }
   },
   "masters": {
     "load_error": {
@@ -2769,9 +2772,6 @@
     },
     "map": {
       "default_name": "New farm"
-    },
-    "errors": {
-      "invalid_id": "Invalid farm ID."
     }
   },
   "fields": {
@@ -3159,9 +3159,18 @@
       "faq_title": "Frequently Asked Questions",
       "faq_intro": "Before contacting us, please check the following FAQ:",
       "faq_items": [
-        "Cannot log in → Please check your Google authentication settings",
-        "Data not saving → Please check if browser cookies are enabled",
-        "Weather data not displaying → Please check if field location information is set correctly"
+        {
+          "question": "Cannot log in",
+          "answer": "Please check your Google authentication settings"
+        },
+        {
+          "question": "Data not saving",
+          "answer": "Please check if browser cookies are enabled"
+        },
+        {
+          "question": "Weather data not displaying",
+          "answer": "Please check if field location information is set correctly"
+        }
       ],
       "footer_message": "We look forward to your feedback and requests for service improvement."
     },
