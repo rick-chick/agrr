@@ -284,7 +284,6 @@
     --color-primary-border-soft: #1e3a8a;
     --color-primary-bg-soft: #172554;
     --color-primary-soft: #1e3a8a;
-    --color-surface-alt: var(--color-surface-hover);
     --color-surface-muted: #1e293b;
     --color-surface-subtle: #1e293b;
     --color-border-subtle: #475569;
@@ -335,7 +334,6 @@
     --color-inverse-bg-soft: #e2e8f0;
     --shadow-toast: 0 10px 24px rgba(0, 0, 0, 0.45);
 
-    --gradient-home-hero: linear-gradient(135deg, var(--color-background) 0%, var(--color-border) 100%);
     --shadow-home-feature: 0 4px 20px rgba(0, 0, 0, 0.35);
     --shadow-home-feature-hover: 0 12px 40px rgba(0, 0, 0, 0.45);
     --shadow-home-primary: 0 4px 12px rgba(59, 130, 246, 0.35);
@@ -387,7 +385,6 @@
     --shadow-step-active: 0 4px 12px rgba(96, 165, 250, 0.4);
     --shadow-success: 0 4px 12px rgba(52, 211, 153, 0.35);
 
-    --focus-outline: 2px solid var(--color-primary);
     --shadow-input-focus: 0 0 0 2px rgba(59, 130, 246, 0.35);
     --color-input-hover: #64748b;
   }

@@ -8,13 +8,10 @@
    * ブランド緑は --color-brand-primary* を参照。
    */
   --color-secondary: #667eea;
-  --color-secondary-dark: #4a5fc5;
 
   --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 
   /* Spacing / radius / shadow: styles.css を参照（重複定義しない） */
-  /* Typography（--font-family-base は styles.css の単一ソース） */
-  --font-size-base: 1rem;
 }
 
 :host {

@@ -21,7 +21,6 @@ describe('styles.css dark theme (prefers-color-scheme)', () => {
     expect(darkBlock).toContain('--color-border:');
     expect(darkBlock).toContain('--color-error-muted-bg:');
     expect(darkBlock).toContain('--color-status-complete-bg:');
-    expect(darkBlock).toContain('--focus-outline:');
   });
 
   it('uses darker surfaces than text in dark theme tokens', () => {
