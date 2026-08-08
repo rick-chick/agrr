@@ -108,6 +108,18 @@ fi
 
 echo "==> Lighthouse CI (warn-only thresholds: Performance >= 85, LCP <= 2.5s lab)"
 echo "==> Reports: frontend/${REPORT_DIR}/"
-npx lhci autorun --config=lighthouserc.js
+
+run_lhci() {
+  local config_file="$1"
+  echo "==> lhci autorun --config=${config_file}"
+  npx lhci autorun --config="${config_file}"
+}
+
+run_lhci lighthouserc.public-desktop.js
+run_lhci lighthouserc.public-mobile.js
+
+if [[ -f scripts/lighthouse-ci-auth-urls.json ]]; then
+  run_lhci lighthouserc.auth.js
+fi
 
 echo "==> Lighthouse CI complete. HTML reports under frontend/${REPORT_DIR}/"

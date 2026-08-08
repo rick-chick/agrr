@@ -12,7 +12,9 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
 
 const REQUIRED_SCRIPT_SNIPPETS = [
   'lhci autorun',
-  'lighthouserc.js',
+  'lighthouserc.public-desktop.js',
+  'lighthouserc.public-mobile.js',
+  'lighthouserc.auth.js',
   'dist/frontend/browser',
   '.lighthouseci',
   'npm run build',
@@ -69,16 +71,32 @@ export async function verifyLighthouseCiWorkflow(repoRoot) {
     errors.push(`missing script: ${scriptPath}`);
   }
 
-  const lighthouseRcPath = join(repoRoot, 'frontend/lighthouserc.js');
+  const lighthouseLibPath = join(repoRoot, 'frontend/scripts/lighthouse-ci-lighthouserc-lib.cjs');
   try {
-    const rcText = await readFile(lighthouseRcPath, 'utf8');
+    const libText = await readFile(lighthouseLibPath, 'utf8');
     for (const snippet of REQUIRED_LIGHTHOUSE_RC_SNIPPETS) {
-      if (!rcText.includes(snippet)) {
-        errors.push(`lighthouserc.js missing required snippet: ${snippet}`);
+      if (!libText.includes(snippet)) {
+        errors.push(`lighthouse-ci-lighthouserc-lib.cjs missing required snippet: ${snippet}`);
       }
     }
   } catch {
+    errors.push(`missing config lib: ${lighthouseLibPath}`);
+  }
+
+  const lighthouseRcPath = join(repoRoot, 'frontend/lighthouserc.js');
+  try {
+    await readFile(lighthouseRcPath, 'utf8');
+  } catch {
     errors.push(`missing config: ${lighthouseRcPath}`);
+  }
+
+  for (const rcFile of ['lighthouserc.public-desktop.js', 'lighthouserc.public-mobile.js', 'lighthouserc.auth.js']) {
+    const rcPath = join(repoRoot, 'frontend', rcFile);
+    try {
+      await readFile(rcPath, 'utf8');
+    } catch {
+      errors.push(`missing config: ${rcPath}`);
+    }
   }
 
   const routesPath = join(repoRoot, 'frontend/scripts/lighthouse-ci-routes.json');
