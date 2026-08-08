@@ -14,7 +14,7 @@
 | ジョブ | 関連 # | 結果 | 迷い種類 | 導線層 | 指摘 |
 |--------|--------|------|----------|--------|------|
 | J1 初めて私有計画 | 26, 29, 46, 52 | 注意 | A,D | L1–L2 | 計画一覧は CTA 良好。`plans/new` は農場あり時に圃場 0 の導線がドロップダウン内のみ |
-| J2 公開プラン | 9–13, 7 | 要確認 | C,D,F | L1 | optimizing 失敗時の原因が汎用。results は現キャプチャは成功表示だが過去レビューで 404 事例 |
+| J2 公開プラン | 9–13, 7 | 注意 | C,D | L1 | optimizing 失敗時の原因が汎用。results は現キャプチャは成功表示だが過去レビューで 404 事例 |
 | J3 最適化失敗復帰 | 10, 48 | 注意 | C,D | L1 | 公開プラン失敗にやり直し 2 リンクあり。技術原因の説明不足 |
 | J4 作業記録開始 | 53, 50 | OK | D | L1–L2 | work ハブは圃場 0 警告＋登録リンク。エラー時再読み込みあり |
 | J5 作物マスタ整備 | 19–20 | OK | A,B | L0–L1 | `crops/:id` の設定状況ボックス＋2 CTA は模範的 |
@@ -31,7 +31,7 @@
 | 9 | `public-plans/new` | 地域選択 step1 | — | L0 | なし | OK | ステップ構造は読み取れる |
 | 10 | `public-plans/optimizing` | **failed**（気象） | C,D | L1 | Q3 | 注意 | 「処理に失敗しました」のみ。やり直しリンク 2 つは L1 良好 |
 | 11 | `public-plans/results` | ガント表示（現 PNG） | B | L0 | Q7 | 注意 | 初見向け操作説明が 1 行のみ。気候データの見方は L0 不足 |
-| 12 | `public-plans/select-crop` | キャプチャずれ | F | — | Q1 | 要確認 | URL は step2 だが step1 表示（キャプチャ/状態不整合） |
+| 12 | `public-plans/select-crop` | step2 作物選択 | — | L0 | なし | OK | #740: E2E シード + `assertPublicPlanSelectCropStep2` で URL/表示整合。`public-plans_select-crop.ja.png` 再キャプチャ済み |
 | 13 | `public-plans/select-farm-size` | 通常 | — | L0 | なし | OK | サイズ選択の目的は画面内で分かる |
 | 19 | `crops` | 一覧あり | — | L1 | なし | OK | 新規作成リンクあり |
 | 20 | `crops/:id` | テンプレ未完了 | A,B | L0–L1 | なし | OK | 設定状況列挙＋「生育ステージを設定」「作業予定を編集」 |
@@ -52,9 +52,9 @@
 
 | 結果 | 件数 |
 |------|------|
-| OK | 12 |
+| OK | 13 |
 | 注意 | 8 |
-| 要確認 | 5 |
+| 要確認 | 4 |
 
 ## 指摘の詳細
 
@@ -70,7 +70,7 @@
 
 3. **#39–40 pesticides/:id, :id/edit — API 500** — 迷い: C,D / 導線: なし / 提案: 同上。フォーム空＋技術エラーのみは Q10 に近い。**Follow-up: #741**
 
-4. **#12 public-plans/select-crop — キャプチャずれ** — 迷い: F / 導線: — / 提案: E2E 状態シードまたはガードの見直し。ユーザーは step2 に着いたつもりが step1 だと J2 全体が破綻。**Follow-up: #740**
+~~4. **#12 public-plans/select-crop — キャプチャずれ**~~ — **解消（#740）**: `seedPublicPlanFarmSession` + `syncFromSessionStorageIfFarmMissing` + `assertPublicPlanSelectCropStep2` / `public-plan-select-crop-step2-smoke.spec.ts`。
 
 ### P2
 
