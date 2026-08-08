@@ -56,7 +56,7 @@ const initialControl: FarmListViewState = {
                       }
                     </span>
                     @if (farm.region) {
-                      <span class="item-card__meta">{{ farm.region }}</span>
+                      <span class="item-card__meta">{{ 'farms.form.region_' + farm.region | translate }}</span>
                     }
                   </a>
                   <div class="item-card__actions">
