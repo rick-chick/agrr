@@ -25,6 +25,20 @@ export function agentPngFilename(pattern, locale) {
 
 export { documentHtmlLang };
 
+/**
+ * `/en` は enLocaleResolver が常に document lang を `en` に固定する（#563）。
+ * 他ルートは ngx-translate の app locale に従う。
+ *
+ * @param {string} pattern route-manifest pattern
+ * @param {CaptureLocale} locale
+ */
+export function expectedCaptureDocumentLang(pattern, locale) {
+  if (pattern === 'en') {
+    return 'en';
+  }
+  return documentHtmlLang(locale);
+}
+
 /** @param {CaptureLocale} locale */
 export function navigatorLanguageTag(locale) {
   if (locale === 'en') return 'en-US';

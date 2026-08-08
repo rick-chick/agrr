@@ -5,6 +5,7 @@ import {
   expectedPathname,
   expectedPathnameFromResolvedGoto,
   normalizePathname,
+  resolveCaptureValidity,
 } from './route-validity-lib.mjs';
 
 test('expectedPathname strips query and trailing slash', () => {
@@ -26,4 +27,15 @@ test('normalizePathname treats root slash as /', () => {
 test('expectedPathnameFromResolvedGoto normalizes relative href', () => {
   assert.equal(expectedPathnameFromResolvedGoto('plans/77/work'), '/plans/77/work');
   assert.equal(expectedPathnameFromResolvedGoto('/plans/77/work/'), '/plans/77/work');
+});
+
+test('resolveCaptureValidity accepts work hub redirect to plan work', () => {
+  const hosts = { work: 'app-work-hub', 'plans/:id/work': 'app-plan-work' };
+  const redirected = resolveCaptureValidity('work', '/plans/1/work', '/work', hosts);
+  assert.equal(redirected.pathname, '/plans/1/work');
+  assert.equal(redirected.host, 'app-plan-work');
+
+  const hub = resolveCaptureValidity('work', '/work', '/work', hosts);
+  assert.equal(hub.pathname, '/work');
+  assert.equal(hub.host, 'app-work-hub');
 });

@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import {
   CAPTURE_LOCALES,
-  documentHtmlLang,
+  expectedCaptureDocumentLang,
   navigatorLanguageTag,
   railsLocaleCookieValue,
 } from './capture-locales.mjs';
@@ -41,8 +41,12 @@ export async function installCaptureLocale(page: Page, locale: CaptureLocale): P
 }
 
 /** ngx-translate の読み込みと html lang が期待どおりになるまで待つ */
-export async function waitForCaptureLocaleReady(page: Page, locale: CaptureLocale): Promise<void> {
-  const expectedLang = documentHtmlLang(locale);
+export async function waitForCaptureLocaleReady(
+  page: Page,
+  locale: CaptureLocale,
+  pattern = '',
+): Promise<void> {
+  const expectedLang = expectedCaptureDocumentLang(pattern, locale);
   const i18nPath = `/assets/i18n/${locale}.json`;
 
   try {

@@ -15,3 +15,20 @@ export function expectedPathnameFromResolvedGoto(href) {
   const pathOnly = raw.split('?')[0] ?? raw;
   return normalizePathname(pathOnly);
 }
+
+/**
+ * `/work` は単一農場・有効圃場・既存計画があると plan work へ自動遷移する（work-hub-init）。
+ * キャプチャ検証では実際の pathname / ホストを返す。
+ *
+ * @param {string} pattern route-manifest pattern
+ * @param {string} currentPathname ブラウザの pathname（正規化前可）
+ * @param {string} pathnameExpect リゾルブ後の期待 pathname（work 以外）
+ * @param {Record<string, string>} hostByPattern HOST_SELECTOR_BY_PATTERN
+ */
+export function resolveCaptureValidity(pattern, currentPathname, pathnameExpect, hostByPattern) {
+  const pathname = normalizePathname(currentPathname);
+  if (pattern === 'work' && /^\/plans\/\d+\/work$/.test(pathname)) {
+    return { pathname, host: hostByPattern['plans/:id/work'] ?? 'app-plan-work' };
+  }
+  return { pathname: pathnameExpect, host: hostByPattern[pattern] };
+}

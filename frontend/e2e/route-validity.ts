@@ -53,3 +53,23 @@ export async function assertPageValidity(
 
   await expect(page.locator(host)).toBeVisible({ timeout: 30_000 });
 }
+
+/** Agent キャプチャ用: `/work` の単一農場リダイレクトを許容する */
+export async function assertCapturePageValidity(
+  page: Page,
+  r: RouteRow,
+  pathnameExpect?: string,
+): Promise<void> {
+  const want =
+    pathnameExpect !== undefined ? normalizePathname(pathnameExpect) : normalizePathname(expectedPathname(r));
+
+  if (r.pattern === 'work') {
+    await expect
+      .poll(() => normalizePathname(new URL(page.url()).pathname), { timeout: 30_000 })
+      .toMatch(new RegExp(`^(${want.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|/plans/\\d+/work)$`));
+    await expect(page.locator('app-work-hub, app-plan-work').first()).toBeVisible({ timeout: 30_000 });
+    return;
+  }
+
+  await assertPageValidity(page, r, pathnameExpect);
+}

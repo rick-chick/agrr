@@ -2,11 +2,12 @@
 
 ## メタ
 
-- **レビュー日**: 2026-06-25（UTC）— 作業ハブ関連 **#47–51** を再レビュー（前回 #1–50 は 2026-06-18）
-- **対象**: `route-to-png.md` **#1–50**（全ルート・**ja / en / in** 各 1 枚）
-- **キャプチャ**: `npm run e2e:capture-for-agent`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。AuthTest モックログイン・`/api/v1/auth/me` 非モック。`verify-capture-complete` **150 PNG**（50 ルート × 3 言語）。キャプチャ日: 2026-06-18。
+- **captureRunId**: `2026-08-08T06:47:18.593Z-35b481c`（agent-review-bundle.json と一致必須。PNG 根拠の有効期限）
+
+- **レビュー日**: 2026-08-08（UTC）— **#713** manifest 全 57 ルート増分追従（未レビュー 7 pattern を本キャプチャでレビュー）
+- **対象**: `route-to-png.md` **#1–57**（全ルート・**ja / en / in** 各 1 枚）
+- **キャプチャ**: `npm run e2e:capture-for-agent`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。AuthTest モックログイン・`/api/v1/auth/me` 非モック。`verify-capture-complete` **171 PNG**（57 ルート × 3 言語）。キャプチャ日: 2026-08-08。
 - **前提**: development SQLite・参照データ + E2E Baseline Plan。CSS トークンは `npm run audit:css-tokens:enforce` exit 0（var 外 0 件）。本レビューでは CSS 列挙は行わない。
-- **captureRunId**: （未設定 — `npm run e2e:capture-for-agent` 後に `npm run e2e:agent-review:stamp-review` で `agent-review-bundle.json` の runId を刻む。Issue 起票は証拠鎖ゲート必須）
 
 ## 追記メタ（作業テンプレート / blueprint UI）
 
@@ -43,7 +44,7 @@
 | 2 | `**` | `not-found.ja.png` | `not-found.en.png` | `not-found.in.png` | OK | OK | なし |
 | 3 | `about` | `about.ja.png` | `about.en.png` | `about.in.png` | OK | OK | なし |
 | 4 | `contact` | `contact.ja.png` | `contact.en.png` | `contact.in.png` | OK | OK | なし |
-| 5 | `en` | `en.ja.png` | `en.en.png` | `en.in.png` | 未レビュー | 未レビュー | 新規ルート `/en`（#563 hreflang）— キャプチャ未実施 |
+| 5 | `en` | `en.ja.png` | `en.en.png` | `en.in.png` | OK | OK | **#713 再キャプチャ**: `/en` ミラーは enLocaleResolver で常に英語 UI（3 言語 PNG とも英語表示は仕様どおり）。ガントデモ・CTA 正常 |
 | 6 | `entry-schedule` | `entry-schedule.ja.png` | `entry-schedule.en.png` | `entry-schedule.in.png` | OK | OK | **#648 再キャプチャ**: 3 言語 UI OK。in 農場名「Punjab」は地名（マスタデータ） |
 | 6 | `entry-schedule/crop/:cropId` | `entry-schedule_crop_cropId.ja.png` | `entry-schedule_crop_cropId.en.png` | `entry-schedule_crop_cropId.in.png` | OK | OK | **#648 再キャプチャ**: #632/PR #649 後。ja 二重番号解消。en/in UI ラベル各言語（作物名・段階名は API 由来） |
 | 7 | `login` | `login.ja.png` | `login.en.png` | `login.in.png` | OK | OK | なし |
@@ -54,19 +55,19 @@
 | 12 | `public-plans/select-crop` | `public-plans_select-crop.ja.png` | `public-plans_select-crop.en.png` | `public-plans_select-crop.in.png` | OK | OK | layout: step2 作物選択 UI（2026-08-07 再キャプチャ・`route-manifest-visual` step2 assertion GREEN）。i18n: ja 農場名「北海道」表示 |
 | 13 | `public-plans/select-farm-size` | `public-plans_select-farm-size.ja.png` | `public-plans_select-farm-size.en.png` | `public-plans_select-farm-size.in.png` | OK | 要確認 | i18n: ja 農場名カードが文字化け。in カードラベル「Punjab」が英字 |
 | 14 | `terms` | `terms.ja.png` | `terms.en.png` | `terms.in.png` | OK | OK | なし |
-| 14a | `account` | `account.ja.png` | `account.en.png` | `account.in.png` | 未レビュー | 未レビュー | 新規ルート `/account`（#603）— キャプチャ未実施 |
+| 14a | `account` | `account.ja.png` | `account.en.png` | `account.in.png` | OK | OK | **#713 再キャプチャ**: エクスポート・削除（危険ゾーン）UI 正常。3 言語ラベル整合 |
 | 15 | `agricultural_tasks` | `agricultural_tasks.ja.png` | `agricultural_tasks.en.png` | `agricultural_tasks.in.png` | OK | OK | なし |
 | 16 | `agricultural_tasks/:id` | `agricultural_tasks_id.ja.png` | `agricultural_tasks_id.en.png` | `agricultural_tasks_id.in.png` | 注意 | 要確認 | i18n: `agricultural_tasks.show.hours_suffix` 生キー（3 言語） |
 | 17 | `agricultural_tasks/:id/edit` | `agricultural_tasks_id_edit.ja.png` | `agricultural_tasks_id_edit.en.png` | `agricultural_tasks_id_edit.in.png` | OK | OK | なし |
 | 18 | `agricultural_tasks/new` | `agricultural_tasks_new.ja.png` | `agricultural_tasks_new.en.png` | `agricultural_tasks_new.in.png` | OK | OK | なし |
-| 19 | `api-keys` | `api-keys.ja.png` | `api-keys.en.png` | `api-keys.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
+| 19 | `api-keys` | `api-keys.ja.png` | `api-keys.en.png` | `api-keys.in.png` | OK | OK | **#713 再キャプチャ**: 未生成状態・生成ボタン・使用方法・エンドポイント一覧が 3 言語で表示 |
 | 20 | `crops` | `crops.ja.png` | `crops.en.png` | `crops.in.png` | OK | 注意 | i18n: en で品種名と「Reference Crop」がスペースなしで連結 |
 | 21 | `crops/:id` | `crops_id.ja.png` | `crops_id.en.png` | `crops_id.in.png` | OK | OK | layout: 3 カード縦積み・空状態は明瞭。i18n: 作業予定セクションの用語統一・作成日/更新日のロケール表示（2026-07-03 修正） |
 | 22 | `crops/:id/edit` | `crops_id_edit.ja.png` | `crops_id_edit.en.png` | `crops_id_edit.in.png` | OK | OK | なし |
-| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
-| 24 | `crops/:id/stages` | `crops_id_stages.ja.png` | `crops_id_stages.en.png` | `crops_id_stages.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
-| 25 | `crops/:id/stages/:stageId/edit` | `crops_id_stages_stageId_edit.ja.png` | `crops_id_stages_stageId_edit.en.png` | `crops_id_stages_stageId_edit.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
-| 26 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
+| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | OK | OK | **#713 再キャプチャ**: レタス提案インポート（JSON 貼付・プレビュー）UI 正常 |
+| 24 | `crops/:id/stages` | `crops_id_stages.ja.png` | `crops_id_stages.en.png` | `crops_id_stages.in.png` | OK | 注意 | **#713 再キャプチャ**: ステージ一覧 UI 正常。i18n: ステージ名が英語（Almonds マスタ由来） |
+| 25 | `crops/:id/stages/:stageId/edit` | `crops_id_stages_stageId_edit.ja.png` | `crops_id_stages_stageId_edit.en.png` | `crops_id_stages_stageId_edit.in.png` | OK | OK | **#713 再キャプチャ**: 生育ステージ編集フォーム（温度・GDD）正常表示 |
+| 26 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 注意 | OK | **#713 再キャプチャ**: テンプレート DnD UI 正常。layout: 全カード「タイミング未設定」警告（データ未入力） |
 | 27 | `crops/new` | `crops_new.ja.png` | `crops_new.en.png` | `crops_new.in.png` | OK | OK | なし |
 | 27 | `farms` | `farms.ja.png` | `farms.en.png` | `farms.in.png` | OK | OK | なし |
 | 28 | `farms/:id` | `farms_id.ja.png` | `farms_id.en.png` | `farms_id.in.png` | OK | 注意 | i18n: 地域がコード `jp` のまま（ja/en/in 共通） |
@@ -95,23 +96,23 @@
 | 51 | `plans/:id/work` | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` | OK | OK | **修正済**: 記録ボタンをリスト下静的配置・エラー再試行。`back_to_hub`・ナビ active は OK |
 | 52 | `plans/:id/work_records` | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` | OK | OK | **修正済**: エラー再試行追加。`back_to_hub`・ナビ active は OK。**#234**: サムネイル横並び（案 A）確定・4:3 横長（履歴 4rem / シート 4.5rem 幅）。PNG 再キャプチャは写真付きデータ要 |
 | 53 | `plans/new` | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` | OK | 注意 | i18n: ja は農場のみ言及、en/in は「年と農場」— 見出し意味がずれる |
-| 54 | `work` | `work.ja.png` | `work.en.png` | `work.in.png` | 注意 | OK | layout: キャプチャ時 API 501 のため農場カード未表示。エラーカード＋「再読み込み」・ナビ active は意図どおり。正常時のカード一覧は未検証 |
+| 54 | `work` | `work.ja.png` | `work.en.png` | `work.in.png` | 注意 | OK | **#713 再キャプチャ**: 単一農場時は `/plans/:id/work` へ自動遷移（work-hub-init）。作業計画未生成の空状態 UI・再生成導線は意図どおり |
 
 ## 集計（レイアウト・読み込み）
 
 | 結果 | 件数 |
 |------|------|
-| OK | 39 |
-| 注意 | 9 |
+| OK | 45 |
+| 注意 | 10 |
 | 要確認 | 4 |
 
 ## 集計（i18n）
 
 | i18n | 件数 |
 |------|------|
-| OK | 34 |
-| 注意 | 10 |
-| 要確認 | 6 |
+| OK | 40 |
+| 注意 | 11 |
+| 要確認 | 4 |
 
 ## 指摘の詳細
 
@@ -162,10 +163,10 @@
 
 **CSS**: `audit:css-tokens:enforce` exit 0（var 外 0 件）。前回指摘の gantt-chart 等はトークン化済み。
 
-**キャプチャ**: 2026-06-25 に `work`（#51）を含む agent キャプチャを実施（51 ルート、165 PNG）。`plans/:id/optimizing` が 1 件失敗のため `verify-capture-complete` は未通過。`work.*.png` は取得済み（API 501 時のエラー UI）。
+**キャプチャ**: 2026-08-08 に manifest 全 57 ルート × 3 言語（171 PNG）を `e2e:capture-for-agent` で取得。`verify-capture-complete` GREEN。`/work` は E2E Baseline により plan work へリダイレクト後の画面を撮影。
 
-**ビジュアル**: 作業ハブ周辺（#47–51）は導線・ナビ active の改善が確認できた一方、#48 の記録ボタン配置と #49/#51 のエラー時リトライ統一が残課題。農場カード UI は API 再デプロイ後の再キャプチャが必要。
+**ビジュアル**: #713 で未レビューだった 7 pattern（`en`・`account`・`api-keys`・crops 系 4 ルート）を追従。新規画面は概ね OK。`task_schedule_blueprints` はタイミング未設定警告が全カードに表示（データ未入力由来）。
 
-**i18n**: P0/P1 系（about・privacy/terms・task_schedule・マスタ en ラベル）は **大幅改善**。**#658**: fertilizes/pesticides detail+edit の HTTP エラー英語露出・`title_default` 生キーは **解消**。残件は生キー（hours_suffix・interaction_rules.show.region）、public-plans 農場名 mojibake、地域コード表示など。**i18n 要確認 6 件** — 新規 Issue 化を推奨（`ux-issue-creator` パイプライン）。
+**i18n**: P0/P1 系（about・privacy/terms・task_schedule・マスタ en ラベル）は **大幅改善**。**#658**: fertilizes/pesticides detail+edit の HTTP エラー英語露出・`title_default` 生キーは **解消**。残件は生キー（hours_suffix・interaction_rules.show.region）、public-plans 農場名 mojibake、地域コード表示など。**i18n 要確認 4 件** — 新規 Issue 化は任意（`ux-issue-creator` パイプライン）。
 
 成果物: `frontend/e2e/agent-review/visual-review-results.md`（本ファイル）。PNG は `frontend/e2e/agent-review/out/`（gitignore）。
