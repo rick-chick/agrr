@@ -1740,6 +1740,11 @@
         "field_legend_item": "{{index}}. {{fieldName}}",
         "field_legend_delete": "हटाएं",
         "drag_target_field": "स्थानांतरित करें: {{index}} — {{fieldName}}"
+      },
+      "a11y": {
+        "chart": "खेती अनुसूची गैंट चार्ट",
+        "field_row": "खेत {{index}}: {{fieldName}}",
+        "cultivation_bar": "{{cropName}}, {{fieldName}}, {{startDate}} से {{endDate}}"
       }
     },
     "field_climate": {
@@ -1767,7 +1772,11 @@
         "tooltip_format": "dd/MM/yyyy",
         "required_cumulative_gdd": "आवश्यक संचयी तापमान"
       },
-      "open_task_schedule": "इस खेत के लिए कार्य योजना खोलें"
+      "open_task_schedule": "इस खेत के लिए कार्य योजना खोलें",
+      "a11y": {
+        "temperature_chart": "{{cropName}}, अवधि {{period}}, वर्तमान चरण {{stage}}, न्यूनतम सीमा तापमान {{baseTemp}} ℃ दैनिक तापमान चार्ट",
+        "gdd_chart": "{{cropName}}, अवधि {{period}}, वर्तमान चरण {{stage}} संचयी तापमान चार्ट"
+      }
     },
     "detail": {
       "select_cultivation_hint": "जलवायु डेटा देखने के लिए चार्ट पर खेती बार चुनें।"

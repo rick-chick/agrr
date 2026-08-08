@@ -175,7 +175,11 @@ type StageTemperatureBand = {
               <header class="plan-field-climate__chart-card-heading">
                 <h4>{{ 'plans.field_climate.daily_temperature' | translate }}</h4>
               </header>
-              <div class="plan-field-climate__chart-wrapper">
+              <div
+                class="plan-field-climate__chart-wrapper"
+                role="img"
+                [attr.aria-label]="getClimateChartAriaLabel('temperature')"
+              >
                 <canvas #temperatureCanvas></canvas>
               </div>
             </article>
@@ -183,7 +187,11 @@ type StageTemperatureBand = {
               <header class="plan-field-climate__chart-card-heading">
                 <h4>{{ 'plans.field_climate.gdd_progress' | translate }}</h4>
               </header>
-              <div class="plan-field-climate__chart-wrapper">
+              <div
+                class="plan-field-climate__chart-wrapper"
+                role="img"
+                [attr.aria-label]="getClimateChartAriaLabel('gdd')"
+              >
                 <canvas #gddCanvas></canvas>
               </div>
             </article>
@@ -319,6 +327,30 @@ export class PlanFieldClimateComponent
     const range = this.control.climateData?.crop_requirements.optimal_temperature_range;
     if (!range) return null;
     return `${range.min}℃ – ${range.max}℃`;
+  }
+
+  getClimateChartAriaLabel(chart: 'temperature' | 'gdd'): string {
+    const cropName =
+      this.control.climateData?.field_cultivation?.crop_name ??
+      this.translate.instant('plans.field_climate.header_title_fallback');
+    const period = this.headerPeriod;
+    const stage = this.currentStage;
+    const baseTemp = this.control.climateData?.crop_requirements.base_temperature;
+
+    if (chart === 'temperature') {
+      return this.translate.instant('plans.field_climate.a11y.temperature_chart', {
+        cropName,
+        period,
+        stage,
+        baseTemp
+      });
+    }
+
+    return this.translate.instant('plans.field_climate.a11y.gdd_chart', {
+      cropName,
+      period,
+      stage
+    });
   }
 
   retry(): void {

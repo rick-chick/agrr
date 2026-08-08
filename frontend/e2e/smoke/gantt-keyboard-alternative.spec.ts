@@ -62,5 +62,16 @@ smokeDescribe('gantt keyboard/click alternative (WCAG 2.5.7)', () => {
 
     await menuItems.nth(1).click();
     await expect(gantt.locator('.gantt-field-legend')).toBeVisible();
+
+    const ganttSvg = gantt.locator('svg.custom-gantt-chart');
+    await expect(ganttSvg).toHaveAttribute('aria-label', /.+/);
+    const fieldRow = gantt.locator('.field-row').first();
+    if ((await fieldRow.count()) > 0) {
+      await expect(fieldRow).toHaveAttribute('aria-label', /.+/);
+    }
+    const cultivationBar = gantt.locator('.cultivation-bar').first();
+    if ((await cultivationBar.count()) > 0) {
+      await expect(cultivationBar).toHaveAttribute('aria-label', /.+/);
+    }
   });
 });

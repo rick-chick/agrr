@@ -2216,6 +2216,11 @@
         "field_legend_item": "{{index}}. {{fieldName}}",
         "field_legend_delete": "削除",
         "drag_target_field": "移動先: {{index}} — {{fieldName}}"
+      },
+      "a11y": {
+        "chart": "栽培スケジュール ガントチャート",
+        "field_row": "圃場 {{index}}: {{fieldName}}",
+        "cultivation_bar": "{{cropName}}、{{fieldName}}、{{startDate}}〜{{endDate}}"
       }
     },
     "field_climate": {
@@ -2243,7 +2248,11 @@
         "tooltip_format": "yyyy/MM/dd",
         "required_cumulative_gdd": "必要積算温度"
       },
-      "open_task_schedule": "この圃場の作業計画を見る"
+      "open_task_schedule": "この圃場の作業計画を見る",
+      "a11y": {
+        "temperature_chart": "{{cropName}}、期間 {{period}}、現在ステージ {{stage}}、最低限界温度 {{baseTemp}}℃の日別気温チャート",
+        "gdd_chart": "{{cropName}}、期間 {{period}}、現在ステージ {{stage}} の積算温度チャート"
+      }
     },
     "detail": {
       "select_cultivation_hint": "ガントチャートの栽培バーを選択すると、気候データが表示されます。"

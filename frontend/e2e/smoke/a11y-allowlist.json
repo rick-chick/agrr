@@ -1,5 +1,5 @@
 {
-  "description": "Known axe violations per route. Do not add new entries without justification; shrink over time.",
+  "description": "Known axe violations per route. Do not add new entries without justification; shrink over time. Authenticated /plans and /crops are scanned via a11y-smoke-lib A11Y_AUTH_SAMPLE_ROUTES without allowlist entries (#732).",
   "routes": {
     "about": [
       {
