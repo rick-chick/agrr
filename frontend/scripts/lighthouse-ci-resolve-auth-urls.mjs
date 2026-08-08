@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { LIGHTHOUSE_CI_AUTH_ROUTE_TEMPLATES } from './lighthouse-ci-routes.mjs';
 import {
   buildAuthLighthouseUrls,
+  ensureBaselinePlanForLighthouse,
   parsePlansList,
   pickPlanIdFromPlansPayload,
 } from './lighthouse-ci-auth-urls-lib.mjs';
@@ -101,6 +102,7 @@ async function fetchPlanId(apiOrigin, sessionId) {
 async function main() {
   const { apiOrigin, out } = parseArgs(process.argv);
   const sessionId = await fetchDeveloperSessionId(apiOrigin);
+  await ensureBaselinePlanForLighthouse(apiOrigin, sessionId);
   const planId = await fetchPlanId(apiOrigin, sessionId);
   const routes = buildAuthLighthouseUrls(LIGHTHOUSE_CI_AUTH_ROUTE_TEMPLATES, planId);
   const payload = {
