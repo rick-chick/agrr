@@ -1281,6 +1281,11 @@
         "field_legend_item": "{{index}}. {{fieldName}}",
         "field_legend_delete": "Remove",
         "drag_target_field": "Move to: {{index}} — {{fieldName}}"
+      },
+      "a11y": {
+        "field_row": "{{index}}. {{fieldName}} ({{cropCount}} cultivations)",
+        "cultivation_bar": "{{cropName}} in {{fieldName}} ({{startDate}} – {{endDate}})",
+        "chart_summary": "Cultivation schedule. {{fieldCount}} fields, {{cultivationCount}} cultivations"
       }
     },
     "field_climate": {
@@ -1308,7 +1313,12 @@
         "tooltip_format": "yyyy-MM-dd",
         "required_cumulative_gdd": "Required cumulative GDD"
       },
-      "open_task_schedule": "Open task plan for this field"
+      "open_task_schedule": "Open task plan for this field",
+      "a11y": {
+        "temperature_chart": "Daily temperature chart for {{cropName}} in {{fieldName}}. Period {{period}}. Base temperature {{baseTemp}} ℃. Current stage {{currentStage}}.",
+        "gdd_chart": "GDD progress chart for {{cropName}} in {{fieldName}}. Period {{period}}. Current stage {{currentStage}}.",
+        "skip_to_data_table": "Skip to numeric data table"
+      }
     },
     "detail": {
       "select_cultivation_hint": "Select a cultivation bar on the chart to view climate data."

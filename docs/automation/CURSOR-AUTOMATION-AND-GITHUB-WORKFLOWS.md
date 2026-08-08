@@ -155,7 +155,7 @@ issue（ux-campaign:*）→ Delivery Agent（実装）→ PR → Delivery Agent�
 
 ### 3. UX Issue Audit（週次・条件付き起票）
 
-月曜 9:00 JST の **Cursor cron** で起動。リポジトリ上の `visual-review-results.md` を前提に CSS 監査・草案作成。**条件を満たすときだけ** issue 起票（実装 PR は Issue Worker 経由）。
+月曜 9:00 JST の **Cursor cron** で起動。CI artifact またはローカルキャプチャの**証拠鎖**（bundle + captureRunId 付き visual-review）を前提に CSS 監査・草案作成。**コミット済みの古いレビュー md は正本にしない**。条件を満たすときだけ issue 起票（実装 PR は Issue Worker 経由）。
 
 | 段階 | 実行者 | 参照 |
 |------|--------|------|

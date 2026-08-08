@@ -1,5 +1,5 @@
 {
-  "description": "Known axe violations per route. Do not add new entries without justification; shrink over time.",
+  "description": "Known axe violations per route. Do not add new entries without justification; shrink over time. Entry-schedule crop prerender pages (color-contrast, empty-heading) and public-plan marketing flows remain allowlisted until brand accent tokens meet WCAG AA (#681 baseline; reduction blocked on design-token work, not missing tests). Authenticated /plans and /crops are scanned without allowlist when smoke passes.",
   "routes": {
     "about": [
       {

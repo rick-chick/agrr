@@ -10,6 +10,7 @@ import {
   parseAgentReviewBundleContent,
   validateAgentReviewEvidenceChain,
 } from '../../../../frontend/e2e/agent-review/agent-review-bundle-lib.mjs';
+import { visualReviewPath } from '../../../../frontend/e2e/agent-review/agent-review-paths.mjs';
 
 /**
  * @param {string} repoRoot
@@ -19,10 +20,14 @@ export async function loadAgentReviewEvidence(repoRoot) {
   const manifest = JSON.parse(
     await readFile(join(frontendRoot, 'e2e/route-manifest.json'), 'utf8'),
   );
-  const reviewMarkdown = await readFile(
-    join(frontendRoot, 'e2e/agent-review/visual-review-results.md'),
-    'utf8',
-  );
+
+  /** @type {object | null} */
+  let review = null;
+  try {
+    review = JSON.parse(await readFile(visualReviewPath(frontendRoot), 'utf8'));
+  } catch {
+    review = null;
+  }
 
   /** @type {object | null} */
   let bundle = null;
@@ -38,7 +43,7 @@ export async function loadAgentReviewEvidence(repoRoot) {
 
   const chain = validateAgentReviewEvidenceChain({
     bundle,
-    reviewMarkdown,
+    review,
     manifestRouteCount: manifest.routes.length,
   });
   if (bundleParseErrors.length > 0) {
@@ -46,7 +51,7 @@ export async function loadAgentReviewEvidence(repoRoot) {
     chain.ok = false;
   }
 
-  return { bundle, chain, reviewMarkdown, manifest };
+  return { bundle, chain, review, manifest };
 }
 
 /**

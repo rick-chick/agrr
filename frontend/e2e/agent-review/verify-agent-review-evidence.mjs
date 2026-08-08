@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Capture Run ボンドル・visual-review・PNG の証拠鎖を検証する。
+ * Capture Run ボンドル・visual-review.json・PNG の証拠鎖を検証する。
  *
  *   node e2e/agent-review/verify-agent-review-evidence.mjs
  *   node e2e/agent-review/verify-agent-review-evidence.mjs --enforce
@@ -11,6 +11,9 @@ import { fileURLToPath } from 'node:url';
 
 import {
   bundlePath,
+  visualReviewPath,
+} from './agent-review-paths.mjs';
+import {
   parseAgentReviewBundleContent,
   validateAgentReviewEvidenceChain,
   verifyBundleArtifactsOnDisk,
@@ -21,10 +24,8 @@ const FRONTEND = join(__dirname, '..', '..');
 const ENFORCE = process.argv.includes('--enforce');
 
 const manifestPath = join(FRONTEND, 'e2e/route-manifest.json');
-const reviewPath = join(FRONTEND, 'e2e/agent-review/visual-review-results.md');
 
 const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
-const reviewMarkdown = await readFile(reviewPath, 'utf8');
 
 /** @type {object | null} */
 let bundle = null;
@@ -38,9 +39,17 @@ try {
   bundle = null;
 }
 
+/** @type {object | null} */
+let review = null;
+try {
+  review = JSON.parse(await readFile(visualReviewPath(FRONTEND), 'utf8'));
+} catch {
+  review = null;
+}
+
 const chain = validateAgentReviewEvidenceChain({
   bundle,
-  reviewMarkdown,
+  review,
   manifestRouteCount: manifest.routes.length,
 });
 if (bundleParseErrors.length > 0) {

@@ -19,6 +19,7 @@ import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-da
 class StubGanttChartComponent {
   @Input({ required: true }) data!: CultivationPlanData;
   @Input() planType: 'private' | 'public' | 'demo' = 'private';
+  @Input() selectedCultivationId: number | null = null;
 }
 
 @Component({
