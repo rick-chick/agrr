@@ -8,11 +8,29 @@ import {
   buildRunId,
   bundleCoversPngs,
   isActionableReviewRow,
+  isGitLfsPointer,
   isUnreviewedResultToken,
+  parseAgentReviewBundleContent,
   parseVisualReviewCaptureRunId,
   stampVisualReviewCaptureRunId,
   validateAgentReviewEvidenceChain,
 } from './agent-review-bundle-lib.mjs';
+
+test('parseAgentReviewBundleContent rejects LFS pointer', () => {
+  const { bundle, errors } = parseAgentReviewBundleContent(
+    'version https://git-lfs.github.com/spec/v1\noid sha256:abc\nsize 1\n',
+  );
+  assert.equal(bundle, null);
+  assert.match(errors[0], /LFS ポインタ/);
+});
+
+test('isGitLfsPointer detects LFS pointer text', () => {
+  assert.equal(
+    isGitLfsPointer('version https://git-lfs.github.com/spec/v1\noid sha256:abc\nsize 1\n'),
+    true,
+  );
+  assert.equal(isGitLfsPointer('{"bundleVersion":1}\n'), false);
+});
 
 test('parseVisualReviewCaptureRunId reads meta stamp', () => {
   const md = `
