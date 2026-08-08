@@ -26,6 +26,7 @@ export type CultivationSelectionEvent = {
         <app-gantt-chart
           [data]="data"
           [planType]="planType"
+          [selectedCultivationId]="selectedCultivationId"
           (cultivationSelected)="handleCultivationSelection($event)"
           (visibleRangeChange)="handleVisibleRangeUpdate($event)"
         >

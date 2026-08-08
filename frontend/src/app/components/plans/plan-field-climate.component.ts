@@ -111,7 +111,7 @@ type StageTemperatureBand = {
         *ngIf="control.climateData"
         class="plan-field-climate__content plan-field-climate__content--chart-first"
       >
-        <div class="plan-field-climate__metadata">
+        <div class="plan-field-climate__metadata" id="plan-field-climate-metadata">
           <dl class="plan-field-climate__stats">
             <div>
               <dt>{{ 'plans.field_climate.base_temperature' | translate }}</dt>
@@ -141,6 +141,9 @@ type StageTemperatureBand = {
         </div>
 
         <div class="plan-field-climate__charts-area">
+          <a class="visually-hidden-focusable" href="#plan-field-climate-metadata">
+            {{ 'plans.field_climate.a11y.skip_to_data_table' | translate }}
+          </a>
           <div class="plan-field-climate__chart-tabs" role="tablist">
             <button
               type="button"
@@ -175,16 +178,24 @@ type StageTemperatureBand = {
               <header class="plan-field-climate__chart-card-heading">
                 <h4>{{ 'plans.field_climate.daily_temperature' | translate }}</h4>
               </header>
-              <div class="plan-field-climate__chart-wrapper">
-                <canvas #temperatureCanvas></canvas>
+              <div
+                class="plan-field-climate__chart-wrapper"
+                role="img"
+                [attr.aria-label]="temperatureChartAriaLabel()"
+              >
+                <canvas #temperatureCanvas aria-hidden="true"></canvas>
               </div>
             </article>
             <article class="plan-field-climate__chart-card plan-field-climate__chart-card--gdd">
               <header class="plan-field-climate__chart-card-heading">
                 <h4>{{ 'plans.field_climate.gdd_progress' | translate }}</h4>
               </header>
-              <div class="plan-field-climate__chart-wrapper">
-                <canvas #gddCanvas></canvas>
+              <div
+                class="plan-field-climate__chart-wrapper"
+                role="img"
+                [attr.aria-label]="gddChartAriaLabel()"
+              >
+                <canvas #gddCanvas aria-hidden="true"></canvas>
               </div>
             </article>
           </div>
@@ -319,6 +330,29 @@ export class PlanFieldClimateComponent
     const range = this.control.climateData?.crop_requirements.optimal_temperature_range;
     if (!range) return null;
     return `${range.min}℃ – ${range.max}℃`;
+  }
+
+  temperatureChartAriaLabel(): string {
+    const climate = this.control.climateData;
+    if (!climate) return '';
+    return this.translate.instant('plans.field_climate.a11y.temperature_chart', {
+      cropName: climate.field_cultivation.crop_name,
+      fieldName: climate.field_cultivation.field_name,
+      period: this.headerPeriod,
+      baseTemp: climate.crop_requirements.base_temperature,
+      currentStage: this.currentStage
+    });
+  }
+
+  gddChartAriaLabel(): string {
+    const climate = this.control.climateData;
+    if (!climate) return '';
+    return this.translate.instant('plans.field_climate.a11y.gdd_chart', {
+      cropName: climate.field_cultivation.crop_name,
+      fieldName: climate.field_cultivation.field_name,
+      period: this.headerPeriod,
+      currentStage: this.currentStage
+    });
   }
 
   retry(): void {
