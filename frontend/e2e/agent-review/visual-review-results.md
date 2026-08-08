@@ -2,11 +2,12 @@
 
 ## メタ
 
+- **captureRunId**: `2026-08-08T06:43:15.096Z-35b481c`（agent-review-bundle.json と一致必須。PNG 根拠の有効期限）
+
 - **レビュー日**: 2026-08-08（UTC）
 - **対象**: `route-to-png.md` **#1–57**（全ルート・**ja / en / in** 各 1 枚）
 - **キャプチャ**: `npm run e2e:capture-for-agent`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。AuthTest モックログイン・`/api/v1/auth/me` 非モック。**171 PNG**（57 ルート × 3 言語）。キャプチャ日: 2026-08-08。
 - **前提**: development SQLite・参照データ + E2E Baseline Plan。CSS トークンは `npm run audit:css-tokens:enforce` exit 0（var 外 0 件）。本レビューでは CSS 列挙は行わない。
-- **captureRunId**: 未設定
 
 ## サマリ表
 

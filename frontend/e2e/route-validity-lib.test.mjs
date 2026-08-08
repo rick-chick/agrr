@@ -4,7 +4,9 @@ import { test } from 'node:test';
 import {
   expectedPathname,
   expectedPathnameFromResolvedGoto,
+  hostSelectorForWorkCapture,
   normalizePathname,
+  workCapturePathnameOk,
 } from './route-validity-lib.mjs';
 
 test('expectedPathname strips query and trailing slash', () => {
@@ -26,4 +28,12 @@ test('normalizePathname treats root slash as /', () => {
 test('expectedPathnameFromResolvedGoto normalizes relative href', () => {
   assert.equal(expectedPathnameFromResolvedGoto('plans/77/work'), '/plans/77/work');
   assert.equal(expectedPathnameFromResolvedGoto('/plans/77/work/'), '/plans/77/work');
+});
+
+test('workCapturePathnameOk accepts hub and single-farm auto-redirect', () => {
+  assert.equal(workCapturePathnameOk('/work'), true);
+  assert.equal(workCapturePathnameOk('/plans/1/work'), true);
+  assert.equal(workCapturePathnameOk('/plans/'), false);
+  assert.equal(hostSelectorForWorkCapture('/work'), 'app-work-hub');
+  assert.equal(hostSelectorForWorkCapture('/plans/3/work'), 'app-plan-work');
 });

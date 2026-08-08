@@ -15,3 +15,16 @@ export function expectedPathnameFromResolvedGoto(href) {
   const pathOnly = raw.split('?')[0] ?? raw;
   return normalizePathname(pathOnly);
 }
+
+/** `/work` — 単一農場かつ圃場ありのとき WorkHubInit が `/plans/:id/work` へ自動遷移する */
+export function workCapturePathnameOk(pathname) {
+  const n = normalizePathname(pathname);
+  return n === '/work' || /^\/plans\/\d+\/work$/.test(n);
+}
+
+/** @param {string} pathname 正規化済み pathname */
+export function hostSelectorForWorkCapture(pathname) {
+  const n = normalizePathname(pathname);
+  if (/^\/plans\/\d+\/work$/.test(n)) return 'app-plan-work';
+  return 'app-work-hub';
+}

@@ -25,6 +25,17 @@ export function agentPngFilename(pattern, locale) {
 
 export { documentHtmlLang };
 
+/**
+ * Agent PNG キャプチャ時の期待 `document.documentElement.lang`。
+ * `/en` は enLocaleResolver が常に `en` を設定する（#563 hreflang ミラー）。
+ * @param {string} pattern route-manifest の pattern
+ * @param {CaptureLocale} locale
+ */
+export function expectedDocumentHtmlLangForCapture(pattern, locale) {
+  if (pattern === 'en') return 'en';
+  return documentHtmlLang(locale);
+}
+
 /** @param {CaptureLocale} locale */
 export function navigatorLanguageTag(locale) {
   if (locale === 'en') return 'en-US';
