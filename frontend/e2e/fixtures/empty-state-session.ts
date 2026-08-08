@@ -1,9 +1,8 @@
-import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { request, type APIRequestContext } from '@playwright/test';
 import {
   E2E_EMPTY_MOCK_USER,
-  assertMockLoginRedirect,
+  writeEmptyStateSession,
 } from './empty-state-session-lib.mjs';
 import {
   ensureFarmWithoutFields,
@@ -27,23 +26,14 @@ function baseUrl(): string {
   return (process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4200').replace(/\/$/, '');
 }
 
-/** mock_login_as/e2e_empty で storage state を生成する（globalSetup とは別ファイル）。 */
+/** mock_login_as/e2e_empty で storage state を生成する（globalSetup でも同ファイルを書く）。 */
 export async function ensureEmptyStateSession(): Promise<string> {
   const authDir = join(process.cwd(), 'e2e', '.auth');
-  const statePath = emptyStateSessionPath();
-  mkdirSync(authDir, { recursive: true });
-
-  const origin = apiOrigin();
-  const returnTo = `${baseUrl()}/`;
-  const api = await request.newContext({ baseURL: origin });
-  try {
-    const loginPath = `/auth/test/mock_login_as/${E2E_EMPTY_MOCK_USER}?return_to=${encodeURIComponent(returnTo)}`;
-    await assertMockLoginRedirect(api, loginPath);
-    await api.storageState({ path: statePath });
-  } finally {
-    await api.dispose();
-  }
-  return statePath;
+  return writeEmptyStateSession({
+    apiOrigin: apiOrigin(),
+    returnTo: `${baseUrl()}/`,
+    authDir,
+  });
 }
 
 export async function createEmptyStateApiContext(): Promise<APIRequestContext> {
