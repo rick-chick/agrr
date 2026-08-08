@@ -6,6 +6,7 @@ import {
   expectedPathname as expectedPathnameLib,
   expectedPathnameFromResolvedGoto as expectedPathnameFromResolvedGotoLib,
   normalizePathname as normalizePathnameLib,
+  workCapturePathnameOk,
 } from './route-validity-lib.mjs';
 
 /** route-manifest.json の `pattern` をキーに、ルータ到達後に表示されるホストコンポーネントのルートセレクタ */
@@ -46,6 +47,18 @@ export async function assertPageValidity(
 
   const want =
     pathnameExpect !== undefined ? normalizePathname(pathnameExpect) : normalizePathname(expectedPathname(r));
+
+  if (r.pattern === 'work') {
+    await expect
+      .poll(() => workCapturePathnameOk(normalizePathname(new URL(page.url()).pathname)), {
+        timeout: 30_000,
+      })
+      .toBe(true);
+    await expect(page.locator('app-work-hub').or(page.locator('app-plan-work'))).toBeVisible({
+      timeout: 30_000,
+    });
+    return;
+  }
 
   await expect
     .poll(() => normalizePathname(new URL(page.url()).pathname), { timeout: 30_000 })

@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import {
   CAPTURE_LOCALES,
-  expectedCaptureDocumentLang,
+  expectedDocumentHtmlLangForCapture,
   navigatorLanguageTag,
   railsLocaleCookieValue,
 } from './capture-locales.mjs';
@@ -46,7 +46,7 @@ export async function waitForCaptureLocaleReady(
   locale: CaptureLocale,
   pattern = '',
 ): Promise<void> {
-  const expectedLang = expectedCaptureDocumentLang(pattern, locale);
+  const expectedLang = expectedDocumentHtmlLangForCapture(pattern, locale);
   const i18nPath = `/assets/i18n/${locale}.json`;
 
   try {

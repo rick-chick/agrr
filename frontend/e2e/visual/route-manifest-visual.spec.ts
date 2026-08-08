@@ -44,7 +44,7 @@ function routeLabel(r: RouteRow): string {
 }
 
 async function captureForAgent(
-  page: Parameters<typeof assertPageValidity>[0],
+  page: Parameters<typeof assertCapturePageValidity>[0],
   r: RouteRow,
   locale: CaptureLocale,
 ): Promise<void> {

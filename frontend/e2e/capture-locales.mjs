@@ -9,7 +9,7 @@ import { documentHtmlLang } from '../scripts/document-html-lang.mjs';
 export const CAPTURE_LOCALES = ['ja', 'en', 'in'];
 
 /** @param {string} pattern route-manifest の pattern */
-export function pngBasename(pattern) {
+function pngBasename(pattern) {
   if (pattern === '') return 'home';
   if (pattern === '**') return 'not-found';
   return pattern.replace(/[^\w.-]+/g, '_');
@@ -24,16 +24,13 @@ export function agentPngFilename(pattern, locale) {
 }
 
 /**
- * `/en` は enLocaleResolver が常に document lang を `en` に固定する（#563）。
- * 他ルートは ngx-translate の app locale に従う。
- *
- * @param {string} pattern route-manifest pattern
+ * Agent PNG キャプチャ時の期待 `document.documentElement.lang`。
+ * `/en` は enLocaleResolver が常に `en` を設定する（#563 hreflang ミラー）。
+ * @param {string} pattern route-manifest の pattern
  * @param {CaptureLocale} locale
  */
-export function expectedCaptureDocumentLang(pattern, locale) {
-  if (pattern === 'en') {
-    return 'en';
-  }
+export function expectedDocumentHtmlLangForCapture(pattern, locale) {
+  if (pattern === 'en') return 'en';
   return documentHtmlLang(locale);
 }
 
