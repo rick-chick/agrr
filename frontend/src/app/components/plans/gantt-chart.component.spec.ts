@@ -199,6 +199,7 @@ describe('GanttChartComponent', () => {
     it('exposes aria-label on field rows and cultivation bars', () => {
       const fieldRow = fixture.nativeElement.querySelector('.field-row');
       expect(fieldRow?.getAttribute('aria-label')).toContain('Field 1');
+      expect(fieldRow?.getAttribute('role')).toBe('group');
 
       const bar = fixture.nativeElement.querySelector('.cultivation-bar');
       expect(bar?.getAttribute('aria-label')).toContain('Rice');

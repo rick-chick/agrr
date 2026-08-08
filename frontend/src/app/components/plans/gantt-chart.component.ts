@@ -349,7 +349,7 @@ type GanttPendingDeleteAction =
             @for (group of fieldGroups; track group.fieldId; let i = $index) {
               <g
                 class="field-row"
-                role="row"
+                role="group"
                 [attr.aria-label]="fieldRowAriaLabel(group, i)"
                 [attr.transform]="'translate(0, ' + (config.margin.top + i * config.rowHeight) + ')'">
                 @if (!isMobileLayout) {
