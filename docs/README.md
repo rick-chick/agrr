@@ -1,6 +1,6 @@
 # ドキュメント索引
 
-- **アーキテクチャ（規約本体）**: リポジトリ直下 [`ARCHITECTURE.md`](../ARCHITECTURE.md)
+- **アーキテクチャ（規約本体）**: ルート [`ARCHITECTURE.md`](../ARCHITECTURE.md)（L1）・[`architecture/LAYER-RULES.md`](architecture/LAYER-RULES.md)（L2 詳細）
 - **ADR（Architecture Decision Records）**: [`adr/`](adr/)
   - [ADR-001: 生成は外・計算は agrr デーモン（内蔵 AI 廃止方針）](adr/ADR-001-external-skill-generation-agrr-daemon-calculation.md) — 親 [#316](https://github.com/rick-chick/agrr/issues/316)
   - [ADR-002: Organization モデル（B2B マルチテナンシー土台）](adr/ADR-002-organization-multi-tenancy.md) — 親 [#604](https://github.com/rick-chick/agrr/issues/604)
@@ -12,7 +12,7 @@
 - **本番ベンチ・ログ調査手順**: [`product/PRODUCTION-BENCHMARK-INVESTIGATION.md`](product/PRODUCTION-BENCHMARK-INVESTIGATION.md)
 - **コア API / 最適化 SLI・SLO・アラート**: [`ops/core-api-optimization-sli-slo.md`](ops/core-api-optimization-sli-slo.md)
 - **マイグレーション・データ移行**: [`migration/`](migration/)
-- **lib/domain → Rust（完了）**: [`migration/lib-domain-rust/`](migration/lib-domain-rust/)（[`TRACKING.yaml`](migration/lib-domain-rust/TRACKING.yaml)）
+- **Ruby→Rust ドメイン移行（完了）**: [`migration/lib-domain-rust/`](migration/lib-domain-rust/)（[`TRACKING.yaml`](migration/lib-domain-rust/TRACKING.yaml)）
 - **アプリ RUST 化（完了）**: [`migration/app-rust-stack/`](migration/app-rust-stack/)（本番: [`PRODUCTION-CUTOVER-STATUS.md`](migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)、P8: [`P8-RAILS-SHELL-REMOVAL.md`](migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)）
 - **移行履歴（参照のみ）**: [`migration/archive/`](migration/archive/)
 - **ローカル Compose 開発**: [`.cursor/skills/dev-docker/SKILL.md`](../.cursor/skills/dev-docker/SKILL.md)

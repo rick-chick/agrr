@@ -11,7 +11,7 @@ alwaysApply: true
 
 | 主題 | 担当ファイル |
 |---|---|
-| アーキ境界・禁止事項の定義 | [`ARCHITECTURE.md`](../../ARCHITECTURE.md) |
+| アーキ境界・禁止事項の定義 | [`ARCHITECTURE.md`](../../ARCHITECTURE.md)（L1）、[`docs/architecture/LAYER-RULES.md`](../../docs/architecture/LAYER-RULES.md)（L2 詳細） |
 | 便宜で逸脱しない・文書追記だけを根拠にしない | [`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc)、層別最小チェックは [`rails-clean-architecture.mdc`](rails-clean-architecture.mdc) |
 | 既存実装との統一感（近傍に合わせる・規約より下位・逸脱の写し増しは禁止） | [`implementation-consistency-with-existing.mdc`](implementation-consistency-with-existing.mdc) |
 | CA 違反修正の手順（セクション0〜6） | [`clean-architecture-violation-fix-workflow/SKILL.md`](../skills/clean-architecture-violation-fix-workflow/SKILL.md) |
