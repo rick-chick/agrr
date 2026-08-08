@@ -62,9 +62,7 @@ describe('FarmListComponent', () => {
           reference_badge: 'Reference'
         },
         form: {
-          region_jp: 'Japan',
-          region_us: 'United States',
-          region_in: 'India'
+          region_jp: 'Japan'
         }
       }
     });
