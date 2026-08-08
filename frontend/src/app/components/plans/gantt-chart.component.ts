@@ -342,7 +342,6 @@ type GanttPendingDeleteAction =
             @for (group of fieldGroups; track group.fieldId; let i = $index) {
               <g
                 class="field-row"
-                role="row"
                 [attr.aria-label]="getFieldRowAriaLabel(group, i)"
                 [attr.transform]="'translate(0, ' + (config.margin.top + i * config.rowHeight) + ')'">
                 @if (!isMobileLayout) {
@@ -397,7 +396,6 @@ type GanttPendingDeleteAction =
                   @if (getBarParams(cultivation); as params) {
                     <g
                       class="cultivation-bar"
-                      role="option"
                       [attr.aria-label]="getCultivationBarAriaLabel(cultivation)"
                       [attr.aria-selected]="isCultivationBarSelected(cultivation) ? 'true' : 'false'"
                       (pointerdown)="onPointerDown($event, cultivation)"
