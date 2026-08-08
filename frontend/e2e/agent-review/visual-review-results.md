@@ -54,6 +54,13 @@
 - **キャプチャ**: `playwright test route-manifest-visual.spec.ts --grep "entry-schedule"`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。`entry-schedule*.{ja,en,in}.png` を再取得。agrr-server 開発 DB・AuthTest モックログイン。
 - **確認**: ja 成長段階リストの二重番号（「1. 1.」）解消。en/in の UI ラベル・免責文は各言語で表示（作物名・成長段階名は API マスタ由来）。回帰: `entry-schedule-detail.component.spec.ts`「renders growth stages without duplicate list numbering」GREEN、`entry-schedule-locale.catalog.spec.ts` GREEN。
 
+## 追記メタ（#758 setup_proposal L0 UX 再キャプチャ）
+
+- **レビュー日**: 2026-08-08（UTC）
+- **対象**: `route-to-png.md` **#23** `crops/:id/setup_proposal`（ja / en / in）、follow-up **#758**（親 **#733** PR #759）
+- **キャプチャ**: `playwright test route-manifest-visual.spec.ts --grep "capture-for-agent: crops/:id/setup_proposal"`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。`crops_id_setup_proposal.{ja,en,in}.png` を再取得。agrr-server 開発 DB・AuthTest モックログイン。
+- **確認**: #733 L0 透明性 3 要素リスト（外部 AI/MCP・dry-run 確認・上書き警告）が 3 言語で表示。JSON 貼付・プレビューボタン UI 正常。回帰: `crop-setup-proposal-import.component.spec.ts` GREEN。
+
 ## サマリ表
 
 | # | pattern | ja | en | in | 結果 | i18n | 指摘 |
@@ -82,7 +89,7 @@
 | 20 | `crops` | `crops.ja.png` | `crops.en.png` | `crops.in.png` | OK | 注意 | i18n: en で品種名と「Reference Crop」がスペースなしで連結 |
 | 21 | `crops/:id` | `crops_id.ja.png` | `crops_id.en.png` | `crops_id.in.png` | OK | OK | layout: 3 カード縦積み・空状態は明瞭。i18n: 作業予定セクションの用語統一・作成日/更新日のロケール表示（2026-07-03 修正） |
 | 22 | `crops/:id/edit` | `crops_id_edit.ja.png` | `crops_id_edit.en.png` | `crops_id_edit.in.png` | OK | OK | なし |
-| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | OK | OK | **#713 再キャプチャ**: レタス提案インポート（JSON 貼付・プレビュー）UI 正常 |
+| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | OK | OK | **#758 再キャプチャ**（#733 L0 追加分込み）: L0 AI 透明性 3 要素リスト（外部 AI/MCP・dry-run 確認・上書き警告）が ja/en/in で表示。JSON 貼付・プレビュー UI 正常 |
 | 24 | `crops/:id/stages` | `crops_id_stages.ja.png` | `crops_id_stages.en.png` | `crops_id_stages.in.png` | OK | 注意 | **#713 再キャプチャ**: ステージ一覧 UI 正常。i18n: ステージ名が英語（Almonds マスタ由来） |
 | 25 | `crops/:id/stages/:stageId/edit` | `crops_id_stages_stageId_edit.ja.png` | `crops_id_stages_stageId_edit.en.png` | `crops_id_stages_stageId_edit.in.png` | OK | OK | **#713 再キャプチャ**: 生育ステージ編集フォーム（温度・GDD）正常表示 |
 | 26 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 注意 | OK | **#713 再キャプチャ**: テンプレート DnD UI 正常。layout: 全カード「タイミング未設定」警告（データ未入力） |
