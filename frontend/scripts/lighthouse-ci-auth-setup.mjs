@@ -3,6 +3,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LIGHTHOUSE_CI_AUTH_ROUTES } from './lighthouse-ci-routes.mjs';
 
+import { buildSegmentPostBody } from '../e2e/fixtures/ensure-e2e-baseline-bodies.mjs';
+import { pickBaselineIdFromList } from '../e2e/shared/baseline-ids-lib.mjs';
 import { pickBaselinePlanId } from '../e2e/shared/baseline-ids-lib.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -99,6 +101,137 @@ export async function fetchPlanId(apiOrigin, cookies) {
 }
 
 /**
+ * @param {string} base
+ * @param {Array<{ name: string; value: string }>} cookies
+ * @param {string} path
+ * @param {RequestInit} [init]
+ */
+async function authedFetch(base, cookies, path, init = {}) {
+  const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+  return fetch(`${base}${path}`, {
+    ...init,
+    headers: {
+      Cookie: cookieHeader,
+      Accept: 'application/json',
+      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      ...init.headers,
+    },
+  });
+}
+
+/**
+ * @param {Response} resp
+ * @returns {Promise<Array<Record<string, unknown>>>}
+ */
+async function parseJsonList(resp) {
+  if (!resp.ok) return [];
+  try {
+    const data = await resp.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Idempotent baseline farm/crop/plan for Lighthouse auth routes (same intent as ensureE2eBaseline).
+ *
+ * @param {string} apiOrigin
+ * @param {Array<{ name: string; value: string }>} cookies
+ */
+export async function ensureLighthouseAuthBaseline(apiOrigin, cookies) {
+  const base = apiOrigin.replace(/\/$/, '');
+  const plans = await parseJsonList(await authedFetch(base, cookies, '/api/v1/plans'));
+  if (plans.length > 0) return;
+
+  let farmId = pickBaselineIdFromList(
+    await parseJsonList(await authedFetch(base, cookies, '/api/v1/masters/farms')),
+    'farms'
+  );
+  if (farmId == null) {
+    const farmRes = await authedFetch(base, cookies, '/api/v1/masters/farms', {
+      method: 'POST',
+      body: JSON.stringify(buildSegmentPostBody('farms', { cropId: null, pestId: null })),
+    });
+    if (farmRes.ok) {
+      try {
+        const created = await farmRes.json();
+        if (created?.id != null) farmId = Number(created.id);
+      } catch {
+        /* fall through */
+      }
+    }
+    if (farmId == null) {
+      farmId = pickBaselineIdFromList(
+        await parseJsonList(await authedFetch(base, cookies, '/api/v1/masters/farms')),
+        'farms'
+      );
+    }
+  }
+
+  let cropId = pickBaselineIdFromList(
+    await parseJsonList(await authedFetch(base, cookies, '/api/v1/masters/crops')),
+    'crops'
+  );
+  if (cropId == null) {
+    const cropRes = await authedFetch(base, cookies, '/api/v1/masters/crops', {
+      method: 'POST',
+      body: JSON.stringify(buildSegmentPostBody('crops', { cropId: null, pestId: null })),
+    });
+    if (cropRes.ok) {
+      try {
+        const created = await cropRes.json();
+        if (created?.id != null) cropId = Number(created.id);
+      } catch {
+        /* fall through */
+      }
+    }
+    if (cropId == null) {
+      cropId = pickBaselineIdFromList(
+        await parseJsonList(await authedFetch(base, cookies, '/api/v1/masters/crops')),
+        'crops'
+      );
+    }
+  }
+
+  if (farmId == null || cropId == null) {
+    throw new Error('ensureLighthouseAuthBaseline: missing farm_id or crop_id for plan POST');
+  }
+
+  const fields = await parseJsonList(
+    await authedFetch(base, cookies, `/api/v1/masters/farms/${farmId}/fields`)
+  );
+  const hasArea = fields.some((row) => typeof row.area === 'number' && row.area > 0);
+  if (!hasArea) {
+    await authedFetch(base, cookies, `/api/v1/masters/farms/${farmId}/fields`, {
+      method: 'POST',
+      body: JSON.stringify({
+        field: {
+          name: `${E2E_BASELINE_PREFIX} Field`,
+          area: 100,
+          daily_fixed_cost: 500,
+        },
+      }),
+    });
+  }
+
+  const planRes = await authedFetch(base, cookies, '/api/v1/plans', {
+    method: 'POST',
+    body: JSON.stringify({
+      plan: {
+        farm_id: farmId,
+        crop_ids: [cropId],
+        plan_name: `${E2E_BASELINE_PREFIX} Plan`,
+      },
+    }),
+  });
+  if (!planRes.ok) {
+    const text = await planRes.text();
+    throw new Error(`POST /api/v1/plans failed: ${planRes.status} ${text.slice(0, 300)}`);
+  }
+}
+
+/**
  * Writes puppeteer cookie file and resolved auth URLs for LHCI.
  *
  * @param {object} [options]
@@ -112,7 +245,11 @@ export async function prepareLighthouseAuthArtifacts(options = {}) {
   const outputDir = options.outputDir ?? __dirname;
 
   const cookies = await fetchAuthCookies(apiOrigin, frontendOrigin);
+  await ensureLighthouseAuthBaseline(apiOrigin, cookies);
   const planId = await fetchPlanId(apiOrigin, cookies);
+  if (planId == null) {
+    throw new Error('could not resolve planId for Lighthouse auth routes after baseline ensure');
+  }
   const urls = buildAuthUrls(LIGHTHOUSE_CI_AUTH_ROUTES, planId);
 
   const cookiesPath = join(outputDir, '.lighthouse-auth-cookies.json');
