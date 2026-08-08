@@ -34,10 +34,10 @@ const initialControl: PlanOptimizingViewState = {
               <p class="plan-optimizing__failure-hint">{{ control.failureHint }}</p>
             }
             <div class="plan-optimizing__error-actions">
-              <button type="button" class="btn-secondary plan-optimizing__retry" (click)="reload()">
+              <button type="button" class="btn btn-secondary plan-optimizing__retry" (click)="reload()">
                 {{ 'plans.optimizing_live.error.retry' | translate }}
               </button>
-              <a [routerLink]="['/plans', planId]" class="btn-secondary plan-optimizing__back">
+              <a [routerLink]="['/plans', planId]" class="btn btn-secondary plan-optimizing__back">
                 {{ 'plans.optimizing_live.error.back_to_plan' | translate }}
               </a>
             </div>

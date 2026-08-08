@@ -32,7 +32,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
                 [value]="apiKey"
                 readonly
               >
-              <button type="button" class="btn-secondary" (click)="copyToClipboard()">
+              <button type="button" class="btn btn-secondary" (click)="copyToClipboard()">
                 {{ copyButtonLabel }}
               </button>
             </div>
@@ -41,7 +41,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
           <div class="api-key-actions">
             <button
               type="button"
-              class="btn-primary"
+              class="btn btn-primary"
               (click)="regenerate()"
               [disabled]="generating"
             >
@@ -55,7 +55,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 
           <button
             type="button"
-            class="btn-primary"
+            class="btn btn-primary"
             (click)="generate()"
             [disabled]="generating"
           >
@@ -123,10 +123,10 @@ import { FlashMessageService } from '../../../services/flash-message.service';
         {{ 'api_keys.actions.regenerate_confirm' | translate }}
       </p>
       <div class="confirm-dialog__actions">
-        <button type="button" class="btn-secondary" (click)="cancelRegenerateConfirmDialog()">
+        <button type="button" class="btn btn-secondary" (click)="cancelRegenerateConfirmDialog()">
           {{ 'common.cancel' | translate }}
         </button>
-        <button type="button" class="btn-primary" (click)="confirmRegenerate()">
+        <button type="button" class="btn btn-primary" (click)="confirmRegenerate()">
           {{ 'common.confirm' | translate }}
         </button>
       </div>

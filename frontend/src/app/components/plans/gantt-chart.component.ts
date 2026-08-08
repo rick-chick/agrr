@@ -460,10 +460,10 @@ type GanttPendingDeleteAction =
           {{ deleteConfirmMessage }}
         </p>
         <div class="confirm-dialog__actions">
-          <button type="button" class="btn-secondary" (click)="cancelDeleteConfirmDialog()">
+          <button type="button" class="btn btn-secondary" (click)="cancelDeleteConfirmDialog()">
             {{ 'common.cancel' | translate }}
           </button>
-          <button type="button" class="btn-danger" (click)="confirmDeleteAction()">
+          <button type="button" class="btn btn-danger" (click)="confirmDeleteAction()">
             {{ 'common.delete' | translate }}
           </button>
         </div>

@@ -160,7 +160,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
               <a
                 [routerLink]="['/crops', control.crop.id, 'setup_proposal']"
                 [queryParams]="wizardQueryParams"
-                class="btn-secondary crop-blueprints__proposal-import"
+                class="btn btn-secondary crop-blueprints__proposal-import"
               >
                 {{ 'crops.setup_proposal_import.action' | translate }}
               </a>
@@ -379,7 +379,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                 <p class="crop-blueprints__template-add-empty-message">
                   {{ 'crops.show.manual_blueprint_add.no_unassociated_tasks' | translate }}
                 </p>
-                <a routerLink="/agricultural_tasks/new" class="btn-secondary crop-blueprints__template-add-cta">
+                <a routerLink="/agricultural_tasks/new" class="btn btn-secondary crop-blueprints__template-add-cta">
                   {{ 'crops.show.manual_blueprint_add.go_to_create' | translate }}
                 </a>
               </div>
@@ -388,7 +388,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
               <a
                 [routerLink]="['/crops', control.crop.id, 'setup_proposal']"
                 [queryParams]="wizardQueryParams"
-                class="btn-secondary"
+                class="btn btn-secondary"
                 [attr.title]="'crops.show.manual_blueprint_add.ai_hint' | translate"
               >
                 {{ 'crops.setup_proposal_import.action' | translate }}
@@ -413,7 +413,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
           <p class="crop-blueprints__template-add-empty-message">
             {{ 'crops.show.manual_blueprint_add.no_unassociated_tasks' | translate }}
           </p>
-          <a routerLink="/agricultural_tasks/new" class="btn-secondary crop-blueprints__template-add-cta">
+          <a routerLink="/agricultural_tasks/new" class="btn btn-secondary crop-blueprints__template-add-cta">
             {{ 'crops.show.manual_blueprint_add.go_to_create' | translate }}
           </a>
         </div>
