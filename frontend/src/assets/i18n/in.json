@@ -1721,6 +1721,11 @@
       "no_data": "प्रदर्शित करने के लिए कोई डेटा नहीं।",
       "adjust_failed": "समायोजन विफल।",
       "trash_drop_label": "खेती हटाएं",
+      "a11y": {
+        "field_row": "{{index}}. {{fieldName}} ({{cropCount}} खेती)",
+        "cultivation_bar": "{{fieldName}} में {{cropName}} ({{startDate}} – {{endDate}})",
+        "chart_summary": "खेती अनुसूची। {{fieldCount}} खेत, {{cultivationCount}} खेती"
+      },
       "range": {
         "prev_month": "पिछला महीना",
         "next_month": "अगला महीना"
@@ -1767,7 +1772,12 @@
         "tooltip_format": "dd/MM/yyyy",
         "required_cumulative_gdd": "आवश्यक संचयी तापमान"
       },
-      "open_task_schedule": "इस खेत के लिए कार्य योजना खोलें"
+      "open_task_schedule": "इस खेत के लिए कार्य योजना खोलें",
+      "a11y": {
+        "temperature_chart": "{{fieldName}} में {{cropName}} के लिए दैनिक तापमान चार्ट। अवधि {{period}}। आधार तापमान {{baseTemp}} ℃। वर्तमान चरण {{currentStage}}।",
+        "gdd_chart": "{{fieldName}} में {{cropName}} के लिए GDD प्रगति चार्ट। अवधि {{period}}। वर्तमान चरण {{currentStage}}।",
+        "skip_to_data_table": "संख्यात्मक डेटा तालिका पर जाएं"
+      }
     },
     "detail": {
       "select_cultivation_hint": "जलवायु डेटा देखने के लिए चार्ट पर खेती बार चुनें।"

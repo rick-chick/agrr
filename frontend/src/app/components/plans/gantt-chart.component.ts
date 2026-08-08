@@ -63,6 +63,7 @@ import {
   isPointInsideClientRect
 } from '../../domain/plans/gantt-chart-layout';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { GANTT_I18N_KEYS } from '../../core/i18n/gantt-locale.keys';
 import { GanttAddCropRequest } from '../../usecase/plans/gantt-plan-mutation.dtos';
 import { GanttChartView, GanttChartViewControl } from './gantt-chart.view';
 import { GanttMobileActionsMenuComponent } from './gantt-mobile-actions-menu.component';
@@ -289,7 +290,13 @@ type GanttPendingDeleteAction =
             </div>
           }
           <div class="gantt-scroll-area">
-            <svg #svg class="custom-gantt-chart" [attr.width]="config.width" [attr.height]="config.height">
+            <svg
+              #svg
+              class="custom-gantt-chart"
+              role="img"
+              [attr.aria-label]="ganttChartSummaryAriaLabel()"
+              [attr.width]="config.width"
+              [attr.height]="config.height">
             <defs>
               <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
@@ -340,7 +347,11 @@ type GanttPendingDeleteAction =
 
             <!-- Field Rows -->
             @for (group of fieldGroups; track group.fieldId; let i = $index) {
-              <g class="field-row" [attr.transform]="'translate(0, ' + (config.margin.top + i * config.rowHeight) + ')'">
+              <g
+                class="field-row"
+                role="row"
+                [attr.aria-label]="fieldRowAriaLabel(group, i)"
+                [attr.transform]="'translate(0, ' + (config.margin.top + i * config.rowHeight) + ')'">
                 @if (!isMobileLayout) {
                   <clipPath [attr.id]="'field-label-clip-' + i">
                     <rect
@@ -392,6 +403,9 @@ type GanttPendingDeleteAction =
                 @for (cultivation of group.cultivations; track cultivation.id) {
                   @if (getBarParams(cultivation); as params) {
                     <g class="cultivation-bar" 
+                       role="button"
+                       [attr.aria-label]="cultivationBarAriaLabel(cultivation)"
+                       [attr.aria-selected]="cultivationAriaSelected(cultivation.id)"
                        (pointerdown)="onPointerDown($event, cultivation)"
                        [class.dragging]="draggedCultivation?.id === cultivation.id"
                        [attr.data-id]="cultivation.id"
@@ -484,6 +498,7 @@ export class GanttChartComponent
   readonly ganttCropStrokeColor = ganttCropStrokeColor;
   @Input() data: CultivationPlanData | null = null;
   @Input() planType: CultivationPlanContextType = 'private';
+  @Input() selectedCultivationId: number | null = null;
   @Output() cultivationSelected = new EventEmitter<{
     cultivationId: number;
     planType: CultivationPlanContextType;
@@ -1675,5 +1690,38 @@ export class GanttChartComponent
 
   setFieldFormLoading(loading: boolean): void {
     this.isFieldFormLoading = loading;
+  }
+
+  ganttChartSummaryAriaLabel(): string {
+    const fieldCount = this.fieldGroups.length;
+    const cultivationCount = this.fieldGroups.reduce(
+      (total, group) => total + group.cultivations.length,
+      0
+    );
+    return this.translate.instant(GANTT_I18N_KEYS.a11y.chartSummary, {
+      fieldCount,
+      cultivationCount
+    });
+  }
+
+  fieldRowAriaLabel(group: GanttFieldGroup, index: number): string {
+    return this.translate.instant(GANTT_I18N_KEYS.a11y.fieldRow, {
+      index: formatGanttFieldRowIndexLabel(index),
+      fieldName: group.fieldName,
+      cropCount: group.cultivations.length
+    });
+  }
+
+  cultivationBarAriaLabel(cultivation: CultivationData): string {
+    return this.translate.instant(GANTT_I18N_KEYS.a11y.cultivationBar, {
+      cropName: cultivation.crop_name,
+      fieldName: cultivation.field_name,
+      startDate: cultivation.start_date,
+      endDate: cultivation.completion_date
+    });
+  }
+
+  cultivationAriaSelected(cultivationId: number): 'true' | null {
+    return this.selectedCultivationId === cultivationId ? 'true' : null;
   }
 }

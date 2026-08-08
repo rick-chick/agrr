@@ -10,6 +10,11 @@ export const GANTT_I18N_KEYS = {
   noData: 'plans.gantt.no_data',
   adjustFailed: 'plans.gantt.adjust_failed',
   trashDropLabel: 'plans.gantt.trash_drop_label',
+  a11y: {
+    fieldRow: 'plans.gantt.a11y.field_row',
+    cultivationBar: 'plans.gantt.a11y.cultivation_bar',
+    chartSummary: 'plans.gantt.a11y.chart_summary'
+  },
   labels: {
     year: 'plans.gantt.labels.year',
     month: 'plans.gantt.labels.month',
@@ -58,6 +63,9 @@ export const GANTT_I18N_KEY_PATHS: readonly string[] = [
   GANTT_I18N_KEYS.noData,
   GANTT_I18N_KEYS.adjustFailed,
   GANTT_I18N_KEYS.trashDropLabel,
+  GANTT_I18N_KEYS.a11y.fieldRow,
+  GANTT_I18N_KEYS.a11y.cultivationBar,
+  GANTT_I18N_KEYS.a11y.chartSummary,
   GANTT_I18N_KEYS.labels.year,
   GANTT_I18N_KEYS.labels.month,
   GANTT_I18N_KEYS.labels.day,
