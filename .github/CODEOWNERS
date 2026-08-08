@@ -1,0 +1,6 @@
+# Doc ownership — architecture and agent entry points
+
+/ARCHITECTURE.md @rick-chick/akishige
+/docs/architecture/ @rick-chick/akishige
+/CLAUDE.md @rick-chick/akishige
+/.cursor/rules/rails-clean-architecture.mdc @rick-chick/akishige
