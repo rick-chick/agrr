@@ -18,6 +18,7 @@ import {
   type Manifest,
 } from './smoke-helpers';
 import type { ResolvedCaptureIds } from '../resolve-capture-urls';
+import { assertPublicPlanSelectCropStep2Layout } from '../assert-public-plan-select-crop-step2';
 
 function routeLabel(r: Manifest['routes'][number]): string {
   return r.pattern === '' ? '(home)' : r.pattern;
@@ -68,6 +69,10 @@ smokeDescribe('route smoke (Angular + agrr-server session)', () => {
 
       await assertPageValidity(page, r, pathnameExpect);
       await waitForPageStable(page, r);
+
+      if (r.pattern === 'public-plans/select-crop') {
+        await assertPublicPlanSelectCropStep2Layout(page);
+      }
 
       const selector = HOST_SELECTOR_BY_PATTERN[r.pattern];
       if (selector && !HOST_HEALTH_ASSERT_EXCLUDE.has(r.pattern)) {
