@@ -2,7 +2,7 @@
 
 ## メタ
 
-- **captureRunId**: `2026-08-08T06:47:18.593Z-35b481c`（agent-review-bundle.json と一致必須。PNG 根拠の有効期限）
+- **captureRunId**: `2026-08-08T06:43:15.096Z-35b481c`（agent-review-bundle.json と一致必須。PNG 根拠の有効期限）
 
 - **レビュー日**: 2026-08-08（UTC）— **#713** manifest 全 57 ルート増分追従（未レビュー 7 pattern を本キャプチャでレビュー）
 - **対象**: `route-to-png.md` **#1–57**（全ルート・**ja / en / in** 各 1 枚）
