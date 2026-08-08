@@ -2,7 +2,7 @@
 
 ## メタ
 
-- **captureRunId**: `2026-08-08T06:47:18.593Z-35b481c`（agent-review-bundle.json と一致必須。PNG 根拠の有効期限）
+- **captureRunId**: `2026-08-08T21:08:46.129Z-6c96016`（agent-review-bundle.json と一致必須。PNG 根拠の有効期限）
 
 - **レビュー日**: 2026-08-08（UTC）— **#713** manifest 全 57 ルート増分追従（未レビュー 7 pattern を本キャプチャでレビュー）
 - **対象**: `route-to-png.md` **#1–57**（全ルート・**ja / en / in** 各 1 枚）
@@ -64,7 +64,7 @@
 | 20 | `crops` | `crops.ja.png` | `crops.en.png` | `crops.in.png` | OK | 注意 | i18n: en で品種名と「Reference Crop」がスペースなしで連結 |
 | 21 | `crops/:id` | `crops_id.ja.png` | `crops_id.en.png` | `crops_id.in.png` | OK | OK | layout: 3 カード縦積み・空状態は明瞭。i18n: 作業予定セクションの用語統一・作成日/更新日のロケール表示（2026-07-03 修正） |
 | 22 | `crops/:id/edit` | `crops_id_edit.ja.png` | `crops_id_edit.en.png` | `crops_id_edit.in.png` | OK | OK | なし |
-| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | OK | OK | **#733**: L0 AI 透明性（3 要素リスト）・検証エラー i18n・復帰ヒント・適用成功 CTA を追加（component spec GREEN）。PNG は #713 キャプチャのため L0 追加分の再キャプチャは follow-up |
+| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | OK | OK | **#758 再キャプチャ**（#733 L0 UX）: 冒頭 3 要素透明性リスト（AI/MCP 由来・dry-run 推奨・上書き警告）が ja/en/in で表示。JSON 貼付・プレビューボタン UI 正常 |
 | 24 | `crops/:id/stages` | `crops_id_stages.ja.png` | `crops_id_stages.en.png` | `crops_id_stages.in.png` | OK | 注意 | **#713 再キャプチャ**: ステージ一覧 UI 正常。i18n: ステージ名が英語（Almonds マスタ由来） |
 | 25 | `crops/:id/stages/:stageId/edit` | `crops_id_stages_stageId_edit.ja.png` | `crops_id_stages_stageId_edit.en.png` | `crops_id_stages_stageId_edit.in.png` | OK | OK | **#713 再キャプチャ**: 生育ステージ編集フォーム（温度・GDD）正常表示 |
 | 26 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 注意 | OK | **#713 再キャプチャ**: テンプレート DnD UI 正常。layout: 全カード「タイミング未設定」警告（データ未入力） |
@@ -163,7 +163,7 @@
 
 **CSS**: `audit:css-tokens:enforce` exit 0（var 外 0 件）。前回指摘の gantt-chart 等はトークン化済み。
 
-**キャプチャ**: 2026-08-08 に manifest 全 57 ルート × 3 言語（171 PNG）を `e2e:capture-for-agent` で取得。`verify-capture-complete` GREEN。`/work` は E2E Baseline により plan work へリダイレクト後の画面を撮影。
+**キャプチャ**: 2026-08-08 に manifest 全 57 ルート × 3 言語（171 PNG）を `e2e:capture-for-agent` で取得。`verify-capture-complete` GREEN。`/work` は E2E Baseline により plan work へリダイレクト後の画面を撮影。**#758**: `crops/:id/setup_proposal` を #733 L0 透明性リスト反映後に再キャプチャ（captureRunId `2026-08-08T21:08:46.129Z-6c96016`）。
 
 **ビジュアル**: #713 で未レビューだった 7 pattern（`en`・`account`・`api-keys`・crops 系 4 ルート）を追従。新規画面は概ね OK。`task_schedule_blueprints` はタイミング未設定警告が全カードに表示（データ未入力由来）。
 
