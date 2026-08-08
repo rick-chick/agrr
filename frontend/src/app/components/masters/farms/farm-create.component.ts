@@ -12,17 +12,12 @@ import {
 } from '../../../usecase/farms/farm-create.providers';
 import { FarmMapComponent } from './farm-map.component';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
+import { FormFieldComponent } from '../../shared/form-field/form-field.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { CurrentUser } from '../../../services/api.service';
 import { detectBrowserRegion } from '../../../core/browser-region';
-import {
-  formCardAriaDescribedbyForRequired,
-  formCardAriaInvalidForRequired,
-  formCardFieldErrorId,
-  formCardRequiredValueInvalid,
-  formCardShowsRequiredError
-} from '../../../core/form-card-field-a11y';
+import { formCardRequiredValueInvalid } from '../../../core/form-card-field-a11y';
 
 const DEFAULT_LAT = 35.6812;
 const DEFAULT_LNG = 139.7671;
@@ -48,7 +43,7 @@ const initialControl: FarmCreateViewState = {
 @Component({
   selector: 'app-farm-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, FarmMapComponent, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, FarmMapComponent, RegionSelectComponent, FormFieldComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...FARM_CREATE_PROVIDERS],
   template: `
     <div class="page-main">
@@ -56,23 +51,14 @@ const initialControl: FarmCreateViewState = {
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'farms.new.title' | translate }}</h2>
         <form (ngSubmit)="createFarm(farmForm)" #farmForm="ngForm" class="form-card__form">
-          <label class="form-card__field" for="name">
-            <span class="form-card__field-label">{{ 'farms.new.form.name_label' | translate }}</span>
-            <input
-              id="name"
-              name="name"
-              [(ngModel)]="control.formData.name"
-              required
-              [class.form-card__input--invalid]="showsRequiredError(formSubmitted, control.formData.name)"
-              [attr.aria-invalid]="ariaInvalidForRequired(formSubmitted, control.formData.name)"
-              [attr.aria-describedby]="ariaDescribedbyForRequired('name', formSubmitted, control.formData.name)"
-            />
-            @if (showsRequiredError(formSubmitted, control.formData.name)) {
-              <span [id]="fieldErrorId('name')" class="form-card__field-error" role="alert">
-                {{ 'common.form.required_field' | translate }}
-              </span>
-            }
-          </label>
+          <app-form-field
+            inputId="name"
+            name="name"
+            labelKey="farms.new.form.name_label"
+            [required]="true"
+            [formSubmitted]="formSubmitted"
+            [(value)]="control.formData.name"
+          />
           @if (auth.user()?.admin) {
             <app-region-select
               id="region"
@@ -93,50 +79,32 @@ const initialControl: FarmCreateViewState = {
               (coordinatesChange)="onCoordinatesChange($event)"
             />
             <div class="coordinates-input">
-              <label class="form-card__field" for="latitude">
-                <span class="form-card__field-label">{{ 'farms.new.form.latitude_label' | translate }}</span>
-                <input
-                  id="latitude"
-                  name="latitude"
-                  type="number"
-                  step="0.000001"
-                  min="-90"
-                  max="90"
-                  [placeholder]="'farms.new.form.latitude_placeholder' | translate"
-                  [(ngModel)]="control.formData.latitude"
-                  required
-                  [class.form-card__input--invalid]="showsRequiredError(formSubmitted, control.formData.latitude)"
-                  [attr.aria-invalid]="ariaInvalidForRequired(formSubmitted, control.formData.latitude)"
-                  [attr.aria-describedby]="ariaDescribedbyForRequired('latitude', formSubmitted, control.formData.latitude)"
-                />
-                @if (showsRequiredError(formSubmitted, control.formData.latitude)) {
-                  <span [id]="fieldErrorId('latitude')" class="form-card__field-error" role="alert">
-                    {{ 'common.form.required_field' | translate }}
-                  </span>
-                }
-              </label>
-              <label class="form-card__field" for="longitude">
-                <span class="form-card__field-label">{{ 'farms.new.form.longitude_label' | translate }}</span>
-                <input
-                  id="longitude"
-                  name="longitude"
-                  type="number"
-                  step="0.000001"
-                  min="-180"
-                  max="180"
-                  [placeholder]="'farms.new.form.longitude_placeholder' | translate"
-                  [(ngModel)]="control.formData.longitude"
-                  required
-                  [class.form-card__input--invalid]="showsRequiredError(formSubmitted, control.formData.longitude)"
-                  [attr.aria-invalid]="ariaInvalidForRequired(formSubmitted, control.formData.longitude)"
-                  [attr.aria-describedby]="ariaDescribedbyForRequired('longitude', formSubmitted, control.formData.longitude)"
-                />
-                @if (showsRequiredError(formSubmitted, control.formData.longitude)) {
-                  <span [id]="fieldErrorId('longitude')" class="form-card__field-error" role="alert">
-                    {{ 'common.form.required_field' | translate }}
-                  </span>
-                }
-              </label>
+              <app-form-field
+                inputId="latitude"
+                name="latitude"
+                type="number"
+                labelKey="farms.new.form.latitude_label"
+                [placeholder]="'farms.new.form.latitude_placeholder' | translate"
+                step="0.000001"
+                [min]="-90"
+                [max]="90"
+                [required]="true"
+                [formSubmitted]="formSubmitted"
+                [(value)]="control.formData.latitude"
+              />
+              <app-form-field
+                inputId="longitude"
+                name="longitude"
+                type="number"
+                labelKey="farms.new.form.longitude_label"
+                [placeholder]="'farms.new.form.longitude_placeholder' | translate"
+                step="0.000001"
+                [min]="-180"
+                [max]="180"
+                [required]="true"
+                [formSubmitted]="formSubmitted"
+                [(value)]="control.formData.longitude"
+              />
             </div>
           </div>
           <div class="form-card__actions">
@@ -161,11 +129,7 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
 
   formSubmitted = false;
 
-  readonly fieldErrorId = formCardFieldErrorId;
   readonly requiredValueInvalid = formCardRequiredValueInvalid;
-  readonly showsRequiredError = formCardShowsRequiredError;
-  readonly ariaInvalidForRequired = formCardAriaInvalidForRequired;
-  readonly ariaDescribedbyForRequired = formCardAriaDescribedbyForRequired;
 
   private _control: FarmCreateViewState = initialControl;
   get control(): FarmCreateViewState {
