@@ -5,6 +5,8 @@
 
 /* ===== デザイントークン（一貫性担保・ハードコード禁止） ===== */
 :root {
+  color-scheme: light dark;
+
   /* 色: 背景・表面 */
   --color-surface: #ffffff;
   --color-background: #f8fafc;
@@ -253,6 +255,142 @@
   --color-input-hover: #94a3b8;
   --shadow-input-focus: 0 0 0 2px rgba(37, 99, 235, 0.2);
   --color-input-arrow: var(--color-text-secondary);
+}
+
+/*
+ * ダークテーマ: OS の prefers-color-scheme に自動追従（方針 A）。
+ * セマンティックトークンのみ上書きし、コンポーネント直書き色は増やさない。
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 色: 背景・表面 */
+    --color-surface: #1e293b;
+    --color-background: #0f172a;
+    --color-surface-hover: #334155;
+    --color-surface-selected: #475569;
+
+    /* 色: テキスト */
+    --color-text: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-disabled: #64748b;
+    --color-link: #93c5fd;
+
+    --color-danger-bg: #450a0a;
+    --color-danger-border: #7f1d1d;
+    --color-error-bg-soft: #450a0a;
+    --color-warning-surface: #422006;
+    --color-warning-border: #b45309;
+    --color-warning-bg-soft: #422006;
+    --color-primary-border-soft: #1e3a8a;
+    --color-primary-bg-soft: #172554;
+    --color-primary-soft: #1e3a8a;
+    --color-surface-alt: var(--color-surface-hover);
+    --color-surface-muted: #1e293b;
+    --color-surface-subtle: #1e293b;
+    --color-border-subtle: #475569;
+
+    --color-gray-50: #0f172a;
+    --color-gray-100: #1e293b;
+    --color-gray-200: #334155;
+    --color-gray-300: #475569;
+    --color-gray-400: #64748b;
+    --color-gray-500: #94a3b8;
+    --color-gray-600: #cbd5e1;
+    --color-gray-700: #e2e8f0;
+    --color-gray-800: #f1f5f9;
+    --color-gray-900: #f8fafc;
+
+    --color-primary: #3b82f6;
+    --color-primary-hover: #60a5fa;
+
+    --color-brand-primary: #4a7c23;
+    --color-brand-primary-light: #65a30d;
+    --color-brand-primary-dark: #365314;
+    --color-success-dark: #34d399;
+    --color-accent: #94a3b8;
+    --color-warning: #fbbf24;
+    --color-warning-bg: #422006;
+    --color-warning-text: #fde68a;
+    --color-error: #f87171;
+    --color-error-dark: #fca5a5;
+    --color-error-bg: #450a0a;
+    --color-error-border-soft: #7f1d1d;
+
+    --color-success: #34d399;
+    --color-success-light: #6ee7b7;
+    --color-success-muted-bg: #064e3b;
+    --color-success-muted-border: #047857;
+
+    --color-info-muted-bg: #1e3a5f;
+    --color-info-muted-border: #1e40af;
+
+    --color-warning-border-soft: #92400e;
+
+    --color-overlay-scrim: rgba(2, 6, 23, 0.88);
+    --color-surface-elevated: rgba(30, 41, 59, 0.97);
+    --color-border-alpha: rgba(248, 250, 252, 0.12);
+    --shadow-overlay-lg: 0 12px 35px rgba(0, 0, 0, 0.55);
+
+    --color-inverse-bg: #f8fafc;
+    --color-inverse-bg-soft: #e2e8f0;
+    --shadow-toast: 0 10px 24px rgba(0, 0, 0, 0.45);
+
+    --gradient-home-hero: linear-gradient(135deg, var(--color-background) 0%, var(--color-border) 100%);
+    --shadow-home-feature: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shadow-home-feature-hover: 0 12px 40px rgba(0, 0, 0, 0.45);
+    --shadow-home-primary: 0 4px 12px rgba(59, 130, 246, 0.35);
+    --shadow-home-primary-hover: 0 8px 20px rgba(59, 130, 246, 0.45);
+    --color-home-secondary-hover-bg: #172554;
+
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.35);
+    --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+
+    --color-overlay-strong: rgba(0, 0, 0, 0.65);
+    --shadow-focus-ring-primary: 0 0 0 1px rgba(96, 165, 250, 0.6);
+
+    --color-info: #60a5fa;
+    --color-info-dark: #93c5fd;
+    --color-info-surface: #172554;
+    --color-info-strong-text: #93c5fd;
+    --color-info-soft-bg: #1d4ed8;
+
+    --color-surface-alpha-strong: rgba(30, 41, 59, 0.85);
+    --shadow-panel-primary-glow: 0 10px 28px rgba(59, 130, 246, 0.25);
+
+    --color-schedule-track: #334155;
+    --color-schedule-track-gradient-end: #1e293b;
+    --color-schedule-card-border: rgba(248, 250, 252, 0.1);
+    --color-schedule-line-muted: rgba(248, 250, 252, 0.1);
+    --color-schedule-border-subtle: rgba(248, 250, 252, 0.08);
+    --shadow-schedule-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shadow-schedule-card-hover: 0 8px 28px rgba(0, 0, 0, 0.45);
+
+    --color-status-complete-bg: #064e3b;
+    --color-status-complete-text: #6ee7b7;
+    --color-status-pending-bg: #422006;
+    --color-status-pending-text: #fde68a;
+
+    --color-error-muted-bg: #450a0a;
+    --color-error-muted-border: #7f1d1d;
+
+    --color-dialog-backdrop: rgb(2 6 23 / 0.72);
+
+    --color-border: #334155;
+    --color-divider: #334155;
+
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.45);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-primary: 0 4px 15px rgba(59, 130, 246, 0.35);
+    --shadow-bottom-bar: 0 -4px 20px rgba(0, 0, 0, 0.45);
+    --shadow-step-active: 0 4px 12px rgba(96, 165, 250, 0.4);
+    --shadow-success: 0 4px 12px rgba(52, 211, 153, 0.35);
+
+    --focus-outline: 2px solid var(--color-primary);
+    --shadow-input-focus: 0 0 0 2px rgba(59, 130, 246, 0.35);
+    --color-input-hover: #64748b;
+  }
 }
 
 /* アクセシビリティ: スクリーンリーダー用に表示（視覚的には非表示） */

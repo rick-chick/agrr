@@ -20,8 +20,8 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: var(--color-gray-50);
-  color: var(--color-gray-800);
+  background: var(--color-background);
+  color: var(--color-text);
   font-family: var(--font-family-base);
 }
 
