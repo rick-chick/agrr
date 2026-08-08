@@ -23,8 +23,6 @@ export function agentPngFilename(pattern, locale) {
   return `${pngBasename(pattern)}.${locale}.png`;
 }
 
-export { documentHtmlLang };
-
 /**
  * `/en` は enLocaleResolver が常に document lang を `en` に固定する（#563）。
  * 他ルートは ngx-translate の app locale に従う。
