@@ -20,6 +20,8 @@ npm run e2e:capture-for-agent
 
 出力: `out/{ベース}.ja.png` / `{ベース}.en.png` / `{ベース}.in.png`（各ルート 3 言語・.gitignore・再実行で上書き）
 
+**空状態（#714）**: `empty-state-capture-for-agent.spec.ts` が `e2e_empty` ユーザーで 4 シナリオの ja PNG（`empty-state_farms-zero.ja.png` 等）を追加出力する。verify は `verify-empty-state-capture.mjs`。
+
 ## Cursor でのレビュー（正規ルート）
 
 **スキル**: **`frontend-agent-visual-review`**（必須出力: `e2e/agent-review/visual-review-results.md` … サマリ表で pattern ごとに ja/en/in の 3 枚を見てレイアウトと **i18n** を指摘）

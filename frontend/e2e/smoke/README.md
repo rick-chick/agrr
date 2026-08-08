@@ -27,6 +27,23 @@ GitHub Actions workflow **`.github/workflows/frontend-e2e-smoke.yml`** が PR �
 
 `ensureE2eBaseline()` は dev セッション付き smoke と同様、`route-smoke` の `beforeAll` から呼ばれる。CI でも idempotent に `E2E Baseline` マスタ行を確保する。
 
+## 空状態 E2E（issue #714）
+
+`e2e_empty` mock ユーザー（`/auth/test/mock_login_as/e2e_empty`）と [`../fixtures/empty-state-session.ts`](../fixtures/empty-state-session.ts) で次の 4 状態を再現する:
+
+| シナリオ | ルート | 期待 UI |
+|----------|--------|---------|
+| `farms-zero` | `/farms` | ユーザー農場 0 件（`.card-list__item` なし） |
+| `plans-zero` | `/plans` | `.plan-list-empty` |
+| `crops-zero` | `/crops` | ユーザー作物 0 件 |
+| `farm-no-fields` | `/plans/new` | `.plan-new-warning` + 圃場なし農場 |
+
+```bash
+npm run test:e2e:smoke:empty-state
+```
+
+Agent 用 PNG（ja のみ）: `npm run e2e:capture-for-agent` 内の `empty-state-capture-for-agent.spec.ts` が `e2e/agent-review/out/empty-state_*.ja.png` を出力する。
+
 ローカルで CI と同条件を試す場合（Docker 必須）:
 
 ```bash
@@ -57,6 +74,7 @@ cd .. && bash scripts/run-e2e-smoke-ci.sh
 | `gantt-mobile-drag.spec.ts` | **モバイル viewport** + **CDP touch** でガント作付バーを水平ドラッグ: しきい値未満では `adjust` しない、ホールド中のバー追従、指を離すまで POST しない、離したあと **4 日以上**の日付移動を commit（タッチジェスチャの振る舞いはここ。`gantt-chart.component.spec.ts` は配線・テンプレート・デスクトップ `pointercancel` / ゴミ箱のみ） |
 | `a11y-smoke.spec.ts` | **公開 prerender + manifest public ルート** と認証サンプル（plans, crops）で **axe-core** スキャン（既知違反は `a11y-allowlist.json`） |
 | `gantt-keyboard-alternative.spec.ts` | **モバイル viewport** でガントのクリック代替（作物パレット・圃場凡例メニュー）を検証（WCAG 2.5.7） |
+| `empty-state-smoke.spec.ts` | **e2e_empty** ユーザーで農場 0・計画 0・作物 0・圃場 0 ブロック（`plans/new`）を検証（#714） |
 
 `E2E_CAPTURE_DEV_SESSION` 未設定時は smoke は skip（`route-manifest-coverage` 等は `npm run test:e2e` で実行可）。未ログイン向けに `login` / 404 のみ別 describe で実行。
 

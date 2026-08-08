@@ -3,6 +3,9 @@
 # Compiled output
 /dist
 /.lighthouseci
+/.lighthouseci-mobile-public
+/.lighthouseci-auth
+/scripts/lighthouse-ci-auth-urls.generated.json
 /tmp
 /out-tsc
 /bazel-out

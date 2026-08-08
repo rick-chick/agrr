@@ -1,11 +1,15 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { request, type FullConfig } from '@playwright/test';
+import { writeEmptyStateSession } from './fixtures/empty-state-session-lib.mjs';
 
 /**
  * E2E_CAPTURE_DEV_SESSION=1 のときのみ実行。
  * agrr-server（Rust）の `/auth/test/mock_login_as/{user}` で session cookie を付与し、
  * 全テストで共有する storage state を書き出す（既定: ng serve :4200 proxy → :3000 → :8080）。
+ *
+ * 空状態 spec は `test.use({ storageState })` が beforeAll より先に評価されるため、
+ * `e2e-empty-session.json` も globalSetup で事前生成する。
  *
  * ブラウザでフロントへリダイレクト完了まで待たない（Angular 未起動でも Cookie は同一レスポンスで付く）。
  * 事前起動: dev-docker `up.sh` または `host-rust-stack.sh` + Playwright `E2E_STRANGLER=1`。
@@ -35,4 +39,6 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
   } finally {
     await apiRequest.dispose();
   }
+
+  await writeEmptyStateSession({ apiOrigin, returnTo, authDir });
 }

@@ -1,14 +1,15 @@
-const { publicRoutes, thresholds } = require('./scripts/lighthouse-ci-routes.json');
+const { mobilePublicRoute, thresholds } = require('./scripts/lighthouse-ci-routes.json');
+const { collectSettingsForPreset } = require('./scripts/lighthouse-ci-lhci-settings-lib.mjs');
 
 /** @type {import('@lhci/cli/src/index').LHCI.ServerCommand.Options} */
 module.exports = {
   ci: {
     collect: {
       staticDistDir: './dist/frontend/browser',
-      url: publicRoutes.map((route) => route.url),
+      url: [mobilePublicRoute.url],
       numberOfRuns: 1,
       settings: {
-        preset: 'desktop',
+        ...collectSettingsForPreset(mobilePublicRoute.preset),
         chromeFlags: '--no-sandbox --disable-dev-shm-usage',
       },
     },
@@ -20,7 +21,7 @@ module.exports = {
     },
     upload: {
       target: 'filesystem',
-      outputDir: '.lighthouseci',
+      outputDir: '.lighthouseci-mobile-public',
     },
   },
 };
