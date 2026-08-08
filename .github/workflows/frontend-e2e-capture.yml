@@ -72,21 +72,13 @@ jobs:
           E2E_CI_HEALTH_WAIT_SECS: "240"
         run: bash scripts/run-e2e-capture-ci.sh
 
-      - name: Stamp visual-review captureRunId
-        working-directory: frontend
-        run: npm run e2e:agent-review:stamp-review
-
-      - name: Verify agent-review evidence chain
-        working-directory: frontend
-        run: npm run e2e:agent-review:evidence:check:enforce
-
       - name: Upload agent-review PNG artifact
         uses: actions/upload-artifact@v4
         with:
           name: agent-review-pngs-${{ github.run_number }}
           path: |
             frontend/e2e/agent-review/out/*.png
-            frontend/e2e/agent-review/agent-review-bundle.json
+            frontend/tmp/agent-review/agent-review-bundle.json
           retention-days: 14
           if-no-files-found: error
 

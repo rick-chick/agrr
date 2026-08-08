@@ -16,7 +16,7 @@ description: >-
 |------|------|
 | **トークン直書きなど CSS の当て漏れを機械的に列挙** | `cd frontend && npm run audit:css-tokens`（CI 厳格: `audit:css-tokens:enforce`） |
 | **全ルート PNG（Rails + ログイン済みセッション）** | `npm run e2e:capture-for-agent` … `E2E_CAPTURE_DEV_SESSION=1`、`127.0.0.1:3000`＋`dev-session.json` |
-| **画面の定性レビュー（成果物としての完了）** | **`frontend-agent-visual-review`** スキル … `visual-review-results.md` 等の必須表 |
+| **画面の定性レビュー（成果物としての完了）** | **`frontend-agent-visual-review`** スキル … `tmp/agent-review/visual-review.json` |
 
 **ピクセル差分回帰は前提に含めない。**
 
@@ -43,7 +43,7 @@ description: >-
 
 ### 3. ビジュアルレビューを依頼するとき
 
-- **`frontend-agent-visual-review`** を読み、**`e2e/agent-review/visual-review-results.md`**（またはスキル記載の必須フォーマット）へ出力させる。
+- **`frontend-agent-visual-review`** を読み、**`tmp/agent-review/visual-review.json`**（スキル記載の必須フォーマット）へ出力させる。
 - 参照: `@frontend/e2e/agent-review/out` ＋ `@frontend/e2e/agent-review/route-to-png.md`
 
 ---

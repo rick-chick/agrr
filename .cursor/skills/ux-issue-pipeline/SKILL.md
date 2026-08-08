@@ -11,11 +11,10 @@ description: >-
 監査から GitHub Issue 起票までを **1 ワークフロー**でつなぐ。
 
 ```
-e2e:capture-for-agent → agent-review-bundle.json
-  → stamp-review（captureRunId）
+e2e:capture-for-agent → tmp/agent-review/agent-review-bundle.json
+  → frontend-agent-visual-review（visual-review.json、captureRunId = bundle.runId）
   → verify-agent-review-evidence:enforce
-  → frontend-agent-visual-review（visual-review-results.md）
-  → ux-cognitive-guidance-review（cognitive-guidance-review.md）
+  → ux-cognitive-guidance-review（cognitive-guidance-review.json）
   → audit:css-tokens
   → collect-ux-findings.mjs（証拠鎖ゲート）
   → ux-issue-creator（重複確認・起票）
@@ -28,17 +27,16 @@ e2e:capture-for-agent → agent-review-bundle.json
 
 - 全画面の UX/UI 改善 backlog を GitHub Issue 化したい
 - キャプチャ・レビュー後に「気になる点を issue にして」と依頼された
-- `PRODUCT-GROWTH-ISSUES.md` の P0/P1 UX 項目をトラッキング可能にしたい
 
 ## フェーズ一覧
 
 | # | フェーズ | スキル / コマンド | 成果物 |
 |---|----------|-------------------|--------|
 | 1 | キャプチャ | `frontend-css-route-audit` | `out/*.{ja,en,in}.png`（verify 通過） |
-| 2 | ビジュアルレビュー | `frontend-agent-visual-review` | `visual-review-results.md` |
-| 2b | 認知・導線レビュー | `ux-cognitive-guidance-review` | `cognitive-guidance-review.md` |
+| 2 | ビジュアルレビュー | `frontend-agent-visual-review` | `tmp/agent-review/visual-review.json` |
+| 2b | 認知・導線レビュー | `ux-cognitive-guidance-review` | `tmp/agent-review/cognitive-guidance-review.json` |
 | 3 | CSS 監査 | `cd frontend && npm run audit:css-tokens` | コンソールレポート |
-| 4 | 指摘収集 | `collect-ux-findings.mjs` | `ux-findings-draft.json`, `ux-issue-drafts.md` |
+| 4 | 指摘収集 | `collect-ux-findings.mjs` | `tmp/agent-review/ux-findings-draft.json`, `ux-issue-drafts.md` |
 | 5 | Issue 起票 | `ux-issue-creator` | GitHub issues |
 | 6 | 実装（別実行） | `github-issue-worker` | PR |
 
@@ -63,9 +61,9 @@ cd frontend && npm run e2e:capture-for-agent
 **スキル**: `frontend-agent-visual-review`
 
 - `route-to-png.md` を **10–15 行ずつ**バッチレビューし、**1 ファイル**にマージ
-- 出力: `frontend/e2e/agent-review/visual-review-results.md`
-- サマリ表: `| # | pattern | ja | en | in | 結果 | i18n | 指摘 |`
-- 「指摘の詳細」に P0/P1/P2 を整理（`ux-issue-creator` が参照）
+- 出力: `frontend/tmp/agent-review/visual-review.json`
+- summary 配列: pattern ごとに ja/en/in PNG と layout/i18n/note
+- details 配列: P0/P1/P2 補足（`ux-issue-creator` が参照）
 
 全件一括レビューをユーザーが明示した場合は `#1–N` まとめて可。
 
@@ -74,7 +72,7 @@ cd frontend && npm run e2e:capture-for-agent
 **スキル**: `ux-cognitive-guidance-review`
 
 - ジョブシナリオ J1–J8（[references/job-scenarios.md](../ux-cognitive-guidance-review/references/job-scenarios.md)）を軸に、「わからない」種類（A–G）と導線層（L0–L4）を評価
-- 出力: `frontend/e2e/agent-review/cognitive-guidance-review.md`
+- 出力: `frontend/tmp/agent-review/cognitive-guidance-review.json`
 - サマリ表: ジョブ表 + `| # | pattern | 状態 | 迷い | 導線 | Q失敗 | 結果 | 指摘 |`
 - パイロットは J1–J6 関連 pattern のみでも可。全 # 走査は 2 回目以降
 
@@ -147,14 +145,14 @@ node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs
 ## 関連ドキュメント
 
 - `frontend/e2e/agent-review/README.txt`
-- `docs/product/PRODUCT-GROWTH-ISSUES.md`（製品優先度の参考。Issue 起票時に矛盾する場合は製品 doc を優先度調整の入力とする）
+- `frontend/e2e/agent-review/EVIDENCE-CHAIN.md`（証拠鎖・起票ゲート）
 - **Cursor Automation 設定**: [cloud-automation-audit/references/cursor-automation-schedule.md](../cloud-automation-audit/references/cursor-automation-schedule.md)
 
 ---
 
 ## Automation（スケジュール）
 
-Cloud Agent 向け。**フェーズ 1–2（キャプチャ・PNG レビュー）はローカル Docker が無い場合は CI artifact を利用**する（`.github/workflows/frontend-e2e-capture.yml` 週次・routes/manifest 変更時）。artifact 未取得時はリポジトリに commit 済みの `visual-review-results.md` を正とする。
+Cloud Agent 向け。**フェーズ 1–2（キャプチャ・PNG レビュー）はローカル Docker が無い場合は CI artifact を利用**する（`.github/workflows/frontend-e2e-capture.yml` 週次・routes/manifest 変更時）。レビュー成果物は **tmp のみ**（リポジトリに置かない）。artifact 未取得時は UX 起票フェーズをスキップする（証拠鎖ゲート未満）。
 
 ### トリガー例
 
@@ -176,7 +174,7 @@ Cloud Agent 向け。**フェーズ 1–2（キャプチャ・PNG レビュー�
    - 上記以外で **P0/P1** の新規 finding のみ → `gh issue create` 可（1 実行あたり **最大 3 件**、`agent-ready` 付き）
    - `counts.likelyDuplicateOpen === counts.total` → **起票 0 件**で終了し Memory に記録
 5. **PR を開かない**（実装は `github-issue-worker`）
-6. `visual-review-results.md` を変更した場合のみ、docs 用 PR を検討（通常は変更しない）
+6. レビュー成果物は **リポジトリに commit しない**（CI artifact またはローカル生成のみ）
 
 ### Automation 用プロンプト（コピペ）
 

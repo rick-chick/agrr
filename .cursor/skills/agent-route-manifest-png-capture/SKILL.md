@@ -22,7 +22,7 @@ disable-model-invocation: true
 ## ビジュアルレビューを伴う依頼の流れ
 
 1. 本スキル（または `frontend-css-route-audit`）でキャプチャを取る。
-2. レビュー成果物の型は [`frontend-agent-visual-review`](../frontend-agent-visual-review/SKILL.md) に従い、`frontend/e2e/agent-review/visual-review-results.md` 等に書き出す。
+2. レビュー成果物の型は [`frontend-agent-visual-review`](../frontend-agent-visual-review/SKILL.md) に従い、`frontend/tmp/agent-review/visual-review.json` に書き出す。
 3. CSS トークン当て漏れの列挙は **PNG ではなく `npm run audit:css-tokens`** で行う（[`frontend-css-route-audit`](../frontend-css-route-audit/SKILL.md) の役割分担表）。
 
 ## 参照

@@ -154,11 +154,11 @@ Pipeline Watchdog の `DISPATCH_WORKFLOW_NAMES` 対象外（手動起動のみ�
 
 ## UX Issue Audit（監査・起票準備）
 
-**目的**: リポジトリ上の `visual-review-results.md` を前提に、CSS 監査 + 草案 + 条件付き起票。**キャプチャはローカル手動**。
+**目的**: CI artifact またはローカルキャプチャで得た **証拠鎖**（bundle + captureRunId 付き visual-review.json）を前提に、CSS 監査 + 草案 + 条件付き起票。レビュー成果物は **tmp のみ**（リポジトリに置かない）。
 
 詳細: [ux-issue-pipeline/SKILL.md](../../ux-issue-pipeline/SKILL.md) § Automation
 
-フルキャプチャ後に `visual-review-results.md` を commit してから週次 Audit が意味を持つ。
+フルキャプチャ → visual-review.json 生成後に週次 Audit が意味を持つ。
 
 ## Pipeline Watchdog（毎時監視・issue 化）
 

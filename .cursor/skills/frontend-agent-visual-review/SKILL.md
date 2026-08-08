@@ -2,7 +2,7 @@
 name: frontend-agent-visual-review
 description: >-
   AGRR Angular の route-manifest 由来 PNG（e2e/agent-review/out）を、route-to-png.md 1 行ずつ
-  ビジュアルレビューし、必須フォーマットの成果物（例: visual-review-results.md）に書き出す。
+  ビジュアルレビューし、tmp/agent-review/visual-review.json に書き出す。
   CSS トークン列挙は含めない（npm run audit:css-tokens を正とする）。
   Agent 用キャプチャ後の全画面レビュー・気になる点リスト作成で適用する。
 ---
@@ -16,6 +16,7 @@ description: >-
 | 画面と PNG ファイル名の対応表 | `frontend/e2e/agent-review/route-to-png.md` |
 | 機械可読なルート一覧 | `frontend/e2e/route-manifest.json` |
 | スクリーンショット | `frontend/e2e/agent-review/out/*.{ja,en,in}.png` |
+| Capture Run ボンドル | `frontend/tmp/agent-review/agent-review-bundle.json` |
 
 キャプチャ手順は `frontend/e2e/agent-review/README.txt`。**先に** `cd frontend && npm run e2e:capture-for-agent` が成功していること（**ルート数 × 3 言語**の PNG・verify 通過。`ja` / `en` / `in` サフィックス）。**ユーザーに URL やページ指定を求めない。**
 
@@ -30,7 +31,7 @@ description: >-
 
 ## 言語・i18n（必須・AI 指摘）
 
-各 `pattern` について **`route-to-png.md` の ja / en / in の 3 枚**をセットで見る。機械検出の正は `npm run check-hardcoded-i18n` だが、PNG レビューでも次を**指摘列に必ず反映**する（問題なしは「i18n: なし」と明示）。
+各 `pattern` について **`route-to-png.md` の ja / en / in の 3 枚**をセットで見る。機械検出の正は `npm run check-hardcoded-i18n` だが、PNG レビューでも次を**指摘列に必ず反映**する（問題なしは `note: "なし"` と明示）。
 
 | 観点 | `.ja.png` | `.en.png` | `.in.png`（ヒンディー） |
 |------|-----------|-----------|-------------------------|
@@ -39,43 +40,71 @@ description: >-
 | 補間 | `%{count}` 等の **プレースホルダが字面のまま**残っていないか | 同左 | 同左 |
 | 3 言語の整合 | 同一画面で **ja だけ別言語・in/en だけキー表示**など、言語間で意味が明らかにずれていないか | | |
 
-- **結果列**: レイアウト用の `OK`/`注意`/`要確認` に加え、サマリ表に **`i18n` 列**（`OK` / `注意` / `要確認`）を足すか、**指摘**内に `i18n:` プレフィックスで書く（どちらか一方に統一）。
-- **バッチ**: 1 バッチあたり 10〜15 **行（pattern）** × 3 言語。全件時は `#1–N` と 3 言語セットであることをメタに書く。
+- **layout / i18n** 列: それぞれ `OK` / `注意` / `要確認`（上記「言語・i18n」節に従う）。
+- **バッチ**: 1 バッチあたり 10〜15 **行（pattern）** × 3 言語。全件時は `routeToPngRange: { start: 1, end: N }` と 3 言語セットであることを明記。
 
 ## バッチ運用
 
 - 1 ターンで全枚を極細部まで読むことを前提にしない。
 - `route-to-png.md` の表を **10〜15 行ずつ**。各バッチで **対象行番号範囲** と **対応 `out/*.png` 名**を明示してからレビューする。
-- **ユーザーが全件の表の再生成・一括レビューを明示した場合**は、上記に縛られず **1 ターンで `#1–52` まとめて**よい。
-- 全バッチ終了後、**1 つの成果物ファイル**にマージする（追記または再生成でよい）。
+- **ユーザーが全件の再生成・一括レビューを明示した場合**は、上記に縛られず **1 ターンで全 pattern まとめて**よい。
+- 全バッチ終了後、**1 つの JSON ファイル**にマージする（追記または再生成でよい）。
 
 ## 必須アウトプット（成果物ベースの「完了」定義）
 
-次を **`frontend/e2e/agent-review/visual-review-results.md`** に書く（パス固定。ユーザーが別名を指示したときだけ従う）。
+次を **`frontend/tmp/agent-review/visual-review.json`** に書く（パス固定。ユーザーが別名を指示したときだけ従う）。**リポジトリ内の md は作らない。**
 
-1. **メタ**: レビュー日（可能なら UTC）、対象が `route-to-png.md` の何行目〜何行目か（全件なら「#1–52」）、**キャプチャ** が **`npm run e2e:capture-for-agent`** であることと前提の一言。**`captureRunId`**（`npm run e2e:agent-review:stamp-review` で bundle.runId を刻む。未設定のレビューは Issue 起票不可）。
-2. **サマリ表**: 各行（**pattern 単位**）について必ず 1 行。列は少なくとも  
-   `| # | pattern | ja | en | in | 結果 | i18n | 指摘 |`  
-   - **ja / en / in** は `route-to-png.md` のファイル名（例: `home.ja.png`）。
-   - **結果**はレイアウト・読み込み状態の `OK` / `注意` / `要確認`（**行を省略してはならない**）。
-   - **i18n** も `OK` / `注意` / `要確認`（上記「言語・i18n」節に従う。問題なしは `OK`）。
-   - **指摘**は「なし」または箇条書き（短文）。レイアウトと i18n を分けるときは `layout:` / `i18n:` を付けてよい。**OK でも「なし」と明示する。**
-3. **集計表**（任意）: `OK` / `注意` / `要確認` の件数。必須ではない。
-4. **指摘の詳細**（任意）: `注意` / `要確認` がある行だけ、見出しを付けて補足してよい。`collect-ux-findings` がパースする行は **`1. **#N pattern** — 説明`** 形式とする（区切りは **全角 em dash `—`**。ハイフン `-` だけだと詳細セクションが無視される）。
-5. **禁止**: 表を出さず **総評だけ**（例: 「ほぼ OK」「だいたい問題なし」）で締める。総評段落は**表の後**に付けてよい。
+```json
+{
+  "reviewVersion": 1,
+  "captureRunId": "<agent-review-bundle.json の runId>",
+  "reviewedAt": "2026-08-08T12:00:00.000Z",
+  "routeToPngRange": { "start": 1, "end": 52 },
+  "captureCommand": "npm run e2e:capture-for-agent",
+  "captureNotes": "development + dev-session、/me 非モック",
+  "summary": [
+    {
+      "num": 1,
+      "pattern": "(home)",
+      "ja": "home.ja.png",
+      "en": "home.en.png",
+      "in": "home.in.png",
+      "layout": "OK",
+      "i18n": "OK",
+      "note": "なし"
+    }
+  ],
+  "details": [
+    {
+      "priority": "P1",
+      "rows": [8, 14],
+      "patternLabel": "privacy / terms",
+      "text": "contact_link 未展開"
+    }
+  ]
+}
+```
 
-**レビュー完了の目安**: サマリ表が揃い、メタに **キャプチャ種別** が書かれていること。参照した `out/*.png` は **`e2e:capture-for-agent` で verify 済み**の集合と一致させる。
+必須フィールド:
+
+1. **captureRunId**: bundle.runId と一致。**未設定のレビューは Issue 起票不可**。
+2. **summary**: 各行（**pattern 単位**）について必ず 1 要素。**行を省略してはならない**。
+3. **details**（任意）: `注意` / `要確認` がある行の補足。`collect-ux-findings` が参照。
+4. **禁止**: summary なしで総評だけ書く。`e2e/agent-review/` 配下に成果物を置く。
+
+**レビュー完了の目安**: summary が揃い、**captureRunId** が bundle と一致していること。参照した `out/*.png` は **`e2e:capture-for-agent` で verify 済み**の集合と一致させる。
 
 ## 実施しないこと
 
 - CSS 当て漏れを PNG だけで列挙する。
 - **`e2e:capture-for-agent`** を実行しておらず、`verify-capture-complete` / **bundle 生成**を通していない `out/` で「全件レビュー済み」とする。
-- **captureRunId なし**で visual-review を確定し Issue 起票に使う（古い md を根拠にしない）。
+- **captureRunId なし**で visual-review を確定し Issue 起票に使う。
 - ユーザーに「どのページを見るか」を聞いてレビュー範囲を先送りする。
+- レビュー成果物を git にコミットする。
 
 ## 関連
 
 - キャプチャ・マニフェスト: **`frontend-css-route-audit`**（CSS とキャプチャ）、本スキルは **レビュー成果物の型**に特化。
 - 機械監査: `cd frontend && npm run audit:css-tokens`
-- **Issue 起票パイプライン**: 本ファイル更新後 → **`ux-issue-pipeline`**（フェーズ 2b 認知導線 → 4–5: `collect-ux-findings.mjs` → **`ux-issue-creator`**）
+- **Issue 起票パイプライン**: 本ファイル生成後 → **`ux-issue-pipeline`**（フェーズ 2b 認知導線 → 4–5: `collect-ux-findings.mjs` → **`ux-issue-creator`**）
 - **認知・導線レビュー**: **`ux-cognitive-guidance-review`**（わからないときの救済。レイアウト/i18n の重複指摘は避ける）
