@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -384,6 +384,25 @@ const initialControl: CropDetailViewState = {
         </section>
       }
     </div>
+
+    <dialog
+      #deleteConfirmDialog
+      class="confirm-dialog crop-detail__delete-confirm"
+      (cancel)="cancelDeleteConfirmDialog($event)"
+      (click)="onDeleteConfirmDialogBackdropClick($event)"
+    >
+      @if (pendingDeleteCrop) {
+        <p class="confirm-dialog__message">{{ 'crops.show.delete_confirm_message' | translate }}</p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelDeleteConfirmDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDeleteCrop()">
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./crop-detail.component.css']
 })
@@ -408,6 +427,10 @@ export class CropDetailComponent implements CropDetailView, OnInit {
     }
     return crumbs;
   }
+
+  @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
+  pendingDeleteCrop = false;
 
   private _control: CropDetailViewState = initialControl;
   get control(): CropDetailViewState {
@@ -490,9 +513,30 @@ export class CropDetailComponent implements CropDetailView, OnInit {
 
   deleteCrop(): void {
     if (!this.control.crop) return;
+    this.pendingDeleteCrop = true;
+    this.deleteConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  confirmDeleteCrop(): void {
+    if (!this.control.crop) return;
+    const cropId = this.control.crop.id;
+    this.pendingDeleteCrop = false;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
     this.deleteUseCase.execute({
-      cropId: this.control.crop.id,
+      cropId,
       onSuccess: () => this.router.navigate(['/crops'])
     });
+  }
+
+  cancelDeleteConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.pendingDeleteCrop = false;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+  }
+
+  onDeleteConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
+      this.cancelDeleteConfirmDialog();
+    }
   }
 }
