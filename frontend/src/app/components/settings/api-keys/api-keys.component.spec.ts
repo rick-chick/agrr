@@ -17,8 +17,6 @@ describe('ApiKeysComponent', () => {
     regenerateKey: ReturnType<typeof vi.fn>;
   };
   let flash: { show: ReturnType<typeof vi.fn> };
-  let confirmSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(async () => {
     management = {
       getCurrentKey: vi.fn(() => of(null)),
@@ -26,7 +24,8 @@ describe('ApiKeysComponent', () => {
       regenerateKey: vi.fn(() => of('regenerated-key'))
     };
     flash = { show: vi.fn() };
-    confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
 
     await TestBed.configureTestingModule({
       imports: [ApiKeysComponent, TranslateModule.forRoot()],
@@ -103,30 +102,55 @@ describe('ApiKeysComponent', () => {
     });
   });
 
-  it('uses TranslateService for regenerate confirmation', async () => {
+  it('opens regenerate confirm dialog instead of window.confirm', async () => {
     management.getCurrentKey.mockReturnValue(of('existing-key'));
     component.ngOnInit();
     fixture.detectChanges();
     await fixture.whenStable();
 
-    component.regenerate();
+    const regenerateButton = fixture.nativeElement.querySelector(
+      '.api-key-actions button.btn-primary'
+    ) as HTMLButtonElement;
+    regenerateButton.click();
+    fixture.detectChanges();
 
-    expect(confirmSpy).toHaveBeenCalledWith(
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.api-keys__regenerate-confirm')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain(
       'Regenerating invalidates the current key. Continue?'
     );
-    expect(management.regenerateKey).toHaveBeenCalled();
+    expect(management.regenerateKey).not.toHaveBeenCalled();
   });
 
-  it('skips regenerate when confirmation is declined', async () => {
-    confirmSpy.mockReturnValue(false);
+  it('skips regenerate when confirm dialog is cancelled', async () => {
     management.getCurrentKey.mockReturnValue(of('existing-key'));
     component.ngOnInit();
     fixture.detectChanges();
     await fixture.whenStable();
 
-    component.regenerate();
+    component.openRegenerateConfirmDialog();
+    fixture.detectChanges();
+    component.cancelRegenerateConfirmDialog();
+    fixture.detectChanges();
 
     expect(management.regenerateKey).not.toHaveBeenCalled();
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+  });
+
+  it('regenerates key when confirm dialog is accepted', async () => {
+    management.getCurrentKey.mockReturnValue(of('existing-key'));
+    component.ngOnInit();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    component.openRegenerateConfirmDialog();
+    fixture.detectChanges();
+    component.confirmRegenerate();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(management.regenerateKey).toHaveBeenCalled();
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
   it('shows failure flash when generate fails', async () => {
