@@ -20,6 +20,9 @@ describe('FarmListComponent', () => {
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     loadUseCase = { execute: vi.fn() };
     deleteUseCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
@@ -59,9 +62,12 @@ describe('FarmListComponent', () => {
     translateService.setTranslation('en', {
       farms: {
         index: {
-          reference_badge: 'Reference'
+          reference_badge: 'Reference',
+          delete_confirm_message:
+            'Delete this farm? Registered fields and cultivation plans will be affected. You can undo shortly after deleting.'
         }
-      }
+      },
+      common: { cancel: 'Cancel', delete: 'Delete' }
     });
     translateService.use('en');
 
@@ -98,13 +104,48 @@ describe('FarmListComponent', () => {
     expect(loadUseCase.execute).toHaveBeenCalled();
   });
 
-  it('calls deleteUseCase.execute with farmId on deleteFarm', () => {
+  it('opens delete confirm dialog before calling deleteUseCase', () => {
     const farmId = 123;
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [
+        {
+          id: farmId,
+          name: 'User Farm',
+          region: 'jp',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          weather_data_status: 'completed' as const,
+          is_reference: false
+        }
+      ],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    component.deleteConfirmDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as never;
+
     component.deleteFarm(farmId);
+
+    expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
+    expect(deleteUseCase.execute).not.toHaveBeenCalled();
+
+    component.confirmDeleteFarm();
     expect(deleteUseCase.execute).toHaveBeenCalledWith({
       farmId,
       onAfterUndo: expect.any(Function)
     });
+  });
+
+  it('delete confirm dialog shows impact scope message', () => {
+    component.pendingDeleteFarmId = 123;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Registered fields and cultivation plans');
   });
 
   it('ngOnInit sets view on presenter and calls load', () => {
