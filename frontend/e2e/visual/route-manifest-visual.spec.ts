@@ -90,7 +90,7 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
         }
         await page.goto(url);
         await assertPageValidity(page, r, pathnameExpect);
-        await waitForCaptureLocaleReady(page, locale);
+        await waitForCaptureLocaleReady(page, locale, r.pattern);
         await waitForPageStable(page, r);
         if (r.pattern === 'public-plans/select-crop') {
           await assertPublicPlanSelectCropStep2(page);
