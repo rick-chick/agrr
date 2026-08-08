@@ -82,4 +82,22 @@ describe('farms index i18n catalog (farm-list)', () => {
       expect(value, `unexpected Japanese in in.json: ${value}`).not.toMatch(JAPANESE_UI);
     }
   });
+
+  it('ja description explains reference farm meaning and editability (L0)', () => {
+    const description = farmsIndex(ja as JsonRecord).description ?? '';
+    expect(description).toMatch(/参照農場/);
+    expect(description).toMatch(/編集|削除/);
+  });
+
+  it('en description explains reference farm meaning and editability (L0)', () => {
+    const description = farmsIndex(en as JsonRecord).description ?? '';
+    expect(description.toLowerCase()).toMatch(/reference/);
+    expect(description.toLowerCase()).toMatch(/edit|delete/);
+  });
+
+  it('in description explains reference farm meaning and editability (L0)', () => {
+    const description = farmsIndex(inLocale as JsonRecord).description ?? '';
+    expect(description).toMatch(/संदर्भ/);
+    expect(description).toMatch(/संपादित|हटा/);
+  });
 });

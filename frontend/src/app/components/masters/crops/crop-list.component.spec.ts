@@ -188,6 +188,39 @@ describe('CropListComponent card actions', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="crop-overflow-menu-panel"]')).toBeNull();
   });
 
+  it('shows L0 reference crop explanation in page description', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        ...translations,
+        crops: {
+          ...translations.crops,
+          index: {
+            ...translations.crops.index,
+            description:
+              'Manage crops. Reference crops are shared master data and cannot be edited.'
+          }
+        }
+      },
+      true
+    );
+    translate.use('en');
+
+    fixture.componentInstance.control = {
+      loading: false,
+      error: null,
+      crops: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const description = fixture.nativeElement.querySelector('.page-description');
+    expect(description?.textContent).toContain('Reference crops');
+    expect(description?.textContent?.toLowerCase()).toContain('edit');
+  });
+
   it('uses div.page-main instead of nested main landmark', () => {
     expect(fixture.nativeElement.querySelector('main')).toBeNull();
     const pageMain = fixture.nativeElement.querySelector('.page-main');

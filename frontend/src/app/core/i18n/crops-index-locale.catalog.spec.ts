@@ -71,4 +71,22 @@ describe('crops index i18n catalog (crop-list)', () => {
       expect(value, `unexpected Japanese in in.json: ${value}`).not.toMatch(JAPANESE_UI);
     }
   });
+
+  it('ja description explains reference crop meaning and editability (L0)', () => {
+    const description = cropsIndex(ja as JsonRecord).description ?? '';
+    expect(description).toMatch(/参照作物/);
+    expect(description).toMatch(/編集/);
+  });
+
+  it('en description explains reference crop meaning and editability (L0)', () => {
+    const description = cropsIndex(en as JsonRecord).description ?? '';
+    expect(description.toLowerCase()).toMatch(/reference/);
+    expect(description.toLowerCase()).toMatch(/edit/);
+  });
+
+  it('in description explains reference crop meaning and editability (L0)', () => {
+    const description = cropsIndex(inLocale as JsonRecord).description ?? '';
+    expect(description).toMatch(/संदर्भ/);
+    expect(description).toMatch(/संपादित/);
+  });
 });

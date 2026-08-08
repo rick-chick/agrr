@@ -199,6 +199,35 @@ describe('FarmListComponent', () => {
     }
   });
 
+  it('shows L0 reference farm explanation in page description', () => {
+    const translateService = TestBed.inject(TranslateService);
+    translateService.setTranslation('en', {
+      farms: {
+        index: {
+          title: 'Farms',
+          description:
+            'Register and manage farms. Reference farms are shared regional data and cannot be edited or deleted.',
+          new_farm: 'Add farm',
+          reference_badge: 'Reference'
+        }
+      }
+    });
+    translateService.use('en');
+
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const description = fixture.nativeElement.querySelector('.page-description');
+    expect(description?.textContent).toContain('Reference farms');
+    expect(description?.textContent?.toLowerCase()).toMatch(/edit|delete/);
+  });
+
   it('shows card-list skeleton while loading', () => {
     component.control = {
       loading: true,

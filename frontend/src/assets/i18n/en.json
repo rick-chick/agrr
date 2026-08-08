@@ -2051,7 +2051,7 @@
       "debug": {
         "label": "Debug:"
       },
-      "description": "Manage crop master data for your cultivation plans.",
+      "description": "Manage crops for your cultivation plans. Reference crops are shared master data and cannot be edited. Your own crops can be edited anytime.",
       "menu": {
         "more_actions": "More actions"
       }
@@ -2621,7 +2621,7 @@
     },
     "index": {
       "title": "Farms",
-      "description": "Register and manage farm master data for your cultivation plans.",
+      "description": "Register and manage farms for your cultivation plans. Reference farms are shared regional data and cannot be edited or deleted. Your own farms can be edited anytime.",
       "new_farm": "Add New Farm",
       "reference_badge": "Reference",
       "reference_farms": "Reference Farms (Growing Regions)",
