@@ -1,9 +1,14 @@
 {
   "routes": [
-    { "path": "/", "url": "/" },
-    { "path": "/about", "url": "/about/" },
-    { "path": "/contact", "url": "/contact/" },
-    { "path": "/public-plans/new", "url": "/public-plans/new/" }
+    { "path": "/", "url": "/", "preset": "desktop" },
+    { "path": "/about", "url": "/about/", "preset": "mobile" },
+    { "path": "/contact", "url": "/contact/", "preset": "desktop" },
+    { "path": "/public-plans/new", "url": "/public-plans/new/", "preset": "desktop" }
+  ],
+  "authRoutes": [
+    { "path": "/plans", "url": "/plans", "preset": "desktop" },
+    { "path": "/plans/:id", "urlPattern": "/plans/{planId}", "preset": "desktop", "resolvePlanId": true },
+    { "path": "/work", "url": "/work", "preset": "desktop" }
   ],
   "thresholds": {
     "performanceMinScore": 0.85,

@@ -6,6 +6,8 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'run-lighthouse-ci.sh',
   'lighthouse-ci-reports',
   'lfs: false',
+  'docker-compose.e2e-ci.yml',
+  'e2e-dev-db-',
 ];
 
 const REQUIRED_SCRIPT_SNIPPETS = [
@@ -14,6 +16,8 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'dist/frontend/browser',
   '.lighthouseci',
   'npm run build',
+  'lighthouse-ci-auth-setup.mjs',
+  'mock_login_as',
 ];
 
 const REQUIRED_LIGHTHOUSE_RC_SNIPPETS = [
@@ -21,7 +25,11 @@ const REQUIRED_LIGHTHOUSE_RC_SNIPPETS = [
   'categories:performance',
   'largest-contentful-paint',
   "'warn'",
+  'puppeteerScript',
+  'preset',
 ];
+
+const REQUIRED_ROUTES_SNIPPETS = ['authRoutes', '"preset": "mobile"'];
 
 const REQUIRED_PACKAGE_SCRIPTS = ['lighthouse:ci'];
 
@@ -72,9 +80,28 @@ export async function verifyLighthouseCiWorkflow(repoRoot) {
 
   const routesPath = join(repoRoot, 'frontend/scripts/lighthouse-ci-routes.json');
   try {
-    await readFile(routesPath, 'utf8');
+    const routesText = await readFile(routesPath, 'utf8');
+    for (const snippet of REQUIRED_ROUTES_SNIPPETS) {
+      if (!routesText.includes(snippet)) {
+        errors.push(`lighthouse-ci-routes.json missing required snippet: ${snippet}`);
+      }
+    }
   } catch {
     errors.push(`missing routes module: ${routesPath}`);
+  }
+
+  const authSetupPath = join(repoRoot, 'frontend/scripts/lighthouse-ci-auth-setup.mjs');
+  try {
+    await readFile(authSetupPath, 'utf8');
+  } catch {
+    errors.push(`missing auth setup: ${authSetupPath}`);
+  }
+
+  const authPuppeteerPath = join(repoRoot, 'frontend/scripts/lighthouse-ci-auth-puppeteer.cjs');
+  try {
+    await readFile(authPuppeteerPath, 'utf8');
+  } catch {
+    errors.push(`missing auth puppeteer script: ${authPuppeteerPath}`);
   }
 
   const packagePath = join(repoRoot, 'frontend/package.json');

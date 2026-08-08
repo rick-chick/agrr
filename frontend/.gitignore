@@ -50,6 +50,10 @@ __screenshots__/
 /e2e/.auth/state.json
 /e2e/.auth/dev-session.json
 
+# Lighthouse CI auth artifacts (session cookies — do not commit)
+/scripts/.lighthouse-auth-cookies.json
+/scripts/lighthouse-ci-auth-urls.json
+
 # Agent 向けに再生成する PNG（Cursor に添付してレビュー）
 /e2e/agent-review/out/
 # UX issue パイプラインの自動生成草案（collect-ux-findings.mjs）

@@ -1,4 +1,4 @@
-# Lighthouse CI gate for public prerender routes (lab scores, warn-only thresholds)
+# Lighthouse CI gate for public prerender routes + authenticated SPA routes (lab scores, warn-only thresholds)
 name: Frontend Lighthouse CI
 
 on:
@@ -8,6 +8,11 @@ on:
       - '.github/workflows/frontend-lighthouse.yml'
       - 'scripts/run-lighthouse-ci.sh'
       - 'scripts/verify-lighthouse-ci-workflow-lib.mjs'
+      - 'docker-compose.yml'
+      - 'docker-compose.e2e-ci.yml'
+      - 'Dockerfile.agrr-server'
+      - 'docker/**'
+      - 'crates/agrr-migrate/**'
   push:
     branches:
       - master
@@ -22,7 +27,7 @@ concurrency:
 jobs:
   frontend-lighthouse:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: frontend
@@ -46,8 +51,23 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-lighthouse-ci-workflow.test.mjs
 
+      - name: Cache E2E dev SQLite
+        uses: actions/cache@v4
+        with:
+          path: .docker/e2e_dev_db_cache
+          key: e2e-dev-db-${{ hashFiles('crates/agrr-migrate/migrations/**/*.sql', 'db/fixtures/**') }}
+          restore-keys: |
+            e2e-dev-db-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+
       - name: Run Lighthouse CI
         working-directory: ${{ github.workspace }}
+        env:
+          E2E_CI_HEALTH_WAIT_SECS: "240"
         run: bash scripts/run-lighthouse-ci.sh
 
       - name: Upload Lighthouse reports
@@ -63,10 +83,12 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           echo "Re-run locally: bash scripts/run-lighthouse-ci.sh"
+          echo "Public-only (no Docker): bash scripts/run-lighthouse-ci.sh --public-only"
           echo "Reports artifact: lighthouse-ci-reports (frontend/.lighthouseci/)"
           node -e "
-            const routes = require('./frontend/scripts/lighthouse-ci-routes.mjs').LIGHTHOUSE_CI_ROUTES;
-            for (const r of routes) {
-              console.log('URL (static prerender):', r.path);
+            const pub = require('./frontend/scripts/lighthouse-ci-routes.json').routes;
+            const auth = require('./frontend/scripts/lighthouse-ci-routes.json').authRoutes || [];
+            for (const r of [...pub, ...auth]) {
+              console.log('Route:', r.path, r.preset ? '(' + r.preset + ')' : '');
             }
           "

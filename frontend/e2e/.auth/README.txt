@@ -50,6 +50,25 @@ Google OAuth の redirect URI は **FRONTEND_URL 先頭 + `/auth/google_oauth2/c
 
 E2E の global setup と同じ `/auth/test/mock_login_as/{user}?return_to=` 経路。
 
+## Lighthouse CI（認証後代表ルート）
+
+認証後 SPA ルート（`/plans`, `/plans/:id`, `/work`）はプリレンダ不可のため、**mock_login + cookie 注入**で計測する（E2E と同経路）。
+
+```bash
+# CI と同条件（Docker dev stack + build + lhci）
+bash scripts/run-lighthouse-ci.sh
+
+# 公開ルートのみ（Docker 不要）
+bash scripts/run-lighthouse-ci.sh --public-only
+```
+
+手順:
+1. `docker compose` で agrr-server + strangler を起動（`run-lighthouse-ci.sh` が自動実行）
+2. `node frontend/scripts/lighthouse-ci-auth-setup.mjs` が `session_id` cookie と解決済み URL を `frontend/scripts/lighthouse-ci-auth-urls.json` に書き出す
+3. `lighthouserc.js` が ng serve + `lighthouse-ci-auth-puppeteer.cjs` で cookie を注入して Lighthouse 計測
+
+生成物（`.lighthouse-auth-cookies.json`, `lighthouse-ci-auth-urls.json`）は gitignore 済み。
+
 ## 手動（codegen・OAuth）
 
 1. フロントと API が動く環境で一度ログインした状態を保存する。
