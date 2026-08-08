@@ -2380,7 +2380,32 @@
       "applying": "Applying…",
       "invalid_json": "Invalid JSON.",
       "invalid_shape": "JSON must include stages, agricultural_tasks, and task_schedule_blueprints.",
-      "clipboard_error": "Could not read clipboard."
+      "clipboard_error": "Could not read clipboard.",
+      "l0_notice_label": "AI proposal import notices",
+      "l0_notice_ai_source": "This is proposal JSON from an external AI / MCP source. Content is not auto-verified.",
+      "l0_notice_dry_run": "Run Preview (validate) for a dry-run check before applying.",
+      "l0_notice_overwrite": "Applying may overwrite crop master data (stages, tasks, and schedule templates).",
+      "fix_and_preview_hint": "Fix the JSON above and run Preview again.",
+      "success_title": "Proposal applied",
+      "success_message": "Crop master data was updated from the proposal.",
+      "back_to_crop": "Back to crop detail",
+      "validation_errors": {
+        "is_required": "This field is required.",
+        "must_contain_one_stage": "Must contain at least one stage.",
+        "must_be_object": "Must be an object.",
+        "must_be_positive": "Must be greater than 0.",
+        "duplicate_stage_order": "Duplicate stage order in proposal.",
+        "stage_order_conflict": "Conflicts with an existing crop stage order.",
+        "cannot_be_blank": "Cannot be blank.",
+        "duplicate_ref": "Duplicate ref in proposal.",
+        "invalid_region": "Must be one of jp, us, in.",
+        "invalid_task_type": "Must be field_work, basal_fertilization, or topdress_fertilization.",
+        "missing_task_ref": "Must reference an agricultural_tasks.ref in the proposal.",
+        "invalid_stage_order": "Must match a stages[].order in the proposal.",
+        "duplicate_blueprint": "Duplicate blueprint for the same task, stage, and gdd_trigger.",
+        "non_negative_number": "Must be a non-negative number.",
+        "generic": "Validation failed. Check the JSON."
+      }
     },
     "errors": {
       "invalid_id": "Invalid crop ID.",

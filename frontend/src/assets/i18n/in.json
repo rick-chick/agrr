@@ -531,7 +531,32 @@
       "applying": "लागू हो रहा है…",
       "invalid_json": "JSON का प्रारूप अमान्य है।",
       "invalid_shape": "JSON में stages, agricultural_tasks और task_schedule_blueprints होना चाहिए।",
-      "clipboard_error": "क्लिपबोर्ड पढ़ा नहीं जा सका।"
+      "clipboard_error": "क्लिपबोर्ड पढ़ा नहीं जा सका।",
+      "l0_notice_label": "AI प्रस्ताव आयात सूचनाएँ",
+      "l0_notice_ai_source": "यह बाहरी AI / MCP स्रोत से प्रस्ताव JSON है। सामग्री स्वतः सत्यापित नहीं होती।",
+      "l0_notice_dry_run": "लागू करने से पहले dry-run के लिए पूर्वावलोकन (सत्यापन) चलाएँ।",
+      "l0_notice_overwrite": "लागू करने पर फसल मास्टर (चरण, कार्य, टेम्पलेट) अधिलेखित हो सकता है।",
+      "fix_and_preview_hint": "JSON ठीक करें और पुनः पूर्वावलोकन चलाएँ।",
+      "success_title": "प्रस्ताव लागू हो गया",
+      "success_message": "फसल मास्टर डेटा अपडेट हो गया।",
+      "back_to_crop": "फसल विवरण पर वापस जाएँ",
+      "validation_errors": {
+        "is_required": "यह फ़ील्ड आवश्यक है।",
+        "must_contain_one_stage": "कम से कम एक चरण शामिल करें।",
+        "must_be_object": "ऑब्जेक्ट होना चाहिए।",
+        "must_be_positive": "0 से बड़ा होना चाहिए।",
+        "duplicate_stage_order": "प्रस्ताव में चरण क्रम दोहराया गया है।",
+        "stage_order_conflict": "मौजूदा फसल चरण क्रम से टकराता है।",
+        "cannot_be_blank": "खाली नहीं हो सकता।",
+        "duplicate_ref": "प्रस्ताव में ref दोहराया गया है।",
+        "invalid_region": "region jp, us या in में से एक होना चाहिए।",
+        "invalid_task_type": "task_type field_work, basal_fertilization या topdress_fertilization होना चाहिए।",
+        "missing_task_ref": "agricultural_tasks.ref का संदर्भ दें।",
+        "invalid_stage_order": "stages[].order से मेल खाना चाहिए।",
+        "duplicate_blueprint": "एक ही कार्य, चरण और gdd_trigger के लिए डुप्लिकेट टेम्पलेट।",
+        "non_negative_number": "गैर-ऋणात्मक संख्या होनी चाहिए।",
+        "generic": "सत्यापन विफल। JSON जाँचें।"
+      }
     }
   },
   "pests": {
