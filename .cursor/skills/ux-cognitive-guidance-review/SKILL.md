@@ -7,7 +7,7 @@ description: >-
 
 # 認知・導線レビュー（わからないときの救済）
 
-`frontend-agent-visual-review`（見た目・i18n）と `docs/product/USER-FLOW-REVIEW.md`（ルート間遷移）を補う。**ユーザーが迷った・止まった・失敗したときに、次の有効行動へ届くか**を評価する。
+`frontend-agent-visual-review`（見た目・i18n）を補う。**ユーザーが迷った・止まった・失敗したときに、次の有効行動へ届くか**を評価する。ルート間遷移は `frontend/src/app/routes/` とコードを正とする（古い product レビュー md は参照しない）。
 
 ## 前提（正とするファイル）
 

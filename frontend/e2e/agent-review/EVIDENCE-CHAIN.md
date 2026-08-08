@@ -27,8 +27,9 @@ node ../.cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs
 | ファイル | git | 役割 |
 |----------|-----|------|
 | `e2e/agent-review/out/*.png` | ignore | スクリーンショット（再キャプチャで上書き） |
-| `e2e/agent-review/agent-review-bundle.json` | **追跡** | runId・sha256・capturedAt（PNG の正本メタ） |
-| `e2e/agent-review/visual-review-results.md` | 追跡 | レビュー表。**captureRunId 必須** |
+| `e2e/agent-review/agent-review-bundle.json` | ignore（推奨） | runId・sha256・capturedAt（PNG の正本メタ）。**コミットしない** |
+| `e2e/agent-review/visual-review-results.md` | **ignore** | レビュー表。**captureRunId 必須**。パイプライン生成物のみ |
+| `e2e/agent-review/cognitive-guidance-review.md` | **ignore** | 認知導線レビュー。パイプライン生成物のみ |
 
 ## 差分キャプチャ
 

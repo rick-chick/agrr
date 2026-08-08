@@ -2,7 +2,7 @@
 
 **目的**: ユーザー影響ベースの信頼性目標（SLI / SLO）を定義し、アラートとインシデント対応の根拠を明文化する。  
 **対象サービス**: Cloud Run `agrr-production`（`agrr-475323` / `asia-northeast1`）  
-**関連**: [本番ベンチ・ログ調査](product/PRODUCTION-BENCHMARK-INVESTIGATION.md)、[deploy-server スキル](../.cursor/skills/deploy-server/SKILL.md)、[production-admin スキル](../.cursor/skills/production-admin/SKILL.md)  
+**関連**: [deploy-server スキル](../.cursor/skills/deploy-server/SKILL.md)、[production-admin スキル](../.cursor/skills/production-admin/SKILL.md)、[production-primary-sqlite-query スキル](../.cursor/skills/production-primary-sqlite-query/SKILL.md)  
 **ヘルスエンドポイント**: `/health`, `/up`, `/api/v1/health`（`crates/agrr-server/src/lib.rs`）
 
 本番の目視確認・デプロイ後の手動チェックは **Automation 受け入れ対象外**。ランブック記載で運用する。
@@ -137,7 +137,7 @@ gcloud logging metrics create optimization_chain_failed_count \
 
 ### Runbook: 最適化失敗率上昇
 
-1. **確認**: [PRODUCTION-BENCHMARK-INVESTIGATION.md §4](product/PRODUCTION-BENCHMARK-INVESTIGATION.md#4-層-a--cloud-run-ログ) のログキーワード表で失敗パターンを分類（`fetch_weather_data failed` / `optimization failed` / enqueue のみ等）。
+1. **確認**: Cloud Logging で `fetch_weather_data failed` / `optimization failed` / enqueue のみ等の失敗パターンを分類（[`production-primary-sqlite-query` スキル](../../.cursor/skills/production-primary-sqlite-query/SKILL.md) と併用）。
 2. **サンプル plan_id**: 失敗ログから `plan_id=` を抽出し DB と突合（[production-primary-sqlite-query スキル](../.cursor/skills/production-primary-sqlite-query/SKILL.md)）。
 3. **典型原因**: 気象 API / GCS 読み取り、agrr デーモン未応答、作物ステージ未設定、Cloud Run 再起動によるインメモリキュー喪失。
 4. **緩和**: 単一 plan の再 enqueue は backdoor / 管理 API 経路があれば利用。 widespread ならデプロイ・デーモン・参照 fixture を確認。
@@ -147,7 +147,7 @@ gcloud logging metrics create optimization_chain_failed_count \
 1. **確認**: Monitoring で `run.googleapis.com/request_latencies` の P50/P95/P99 と遅い URL パスを特定。
 2. **DB / GCS**: SQLite ロック、GCS 天気読み取りのスパイク（`gcs_reads=` テレメトリ行）を確認。
 3. **キャパシティ**: Cloud Run `max-instances`（本番は 1）と同時最適化チェーン数 `OPTIMIZATION_MAX_CONCURRENT_CHAINS` の飽和を疑う。
-4. **関連**: [PRODUCTION-BENCHMARK-INVESTIGATION.md](product/PRODUCTION-BENCHMARK-INVESTIGATION.md) §2〜§5
+4. **関連**: [`production-primary-sqlite-query` スキル](../../.cursor/skills/production-primary-sqlite-query/SKILL.md)、[`production-admin` スキル](../../.cursor/skills/production-admin/SKILL.md)
 
 ---
 
