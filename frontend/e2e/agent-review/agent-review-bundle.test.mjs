@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import {
   buildRunId,
   bundleCoversPngs,
+  bundlePath,
   isActionableReviewRow,
   isUnreviewedResultToken,
   parseVisualReviewCaptureRunId,
@@ -83,6 +84,25 @@ test('bundleCoversPngs checks artifact list', () => {
   const bad = bundleCoversPngs(bundle, ['missing.ja.png']);
   assert.equal(bad.ok, false);
   assert.deepEqual(bad.missing, ['missing.ja.png']);
+});
+
+test('tracked visual-review captureRunId matches agent-review-bundle.json', async () => {
+  const frontendRoot = join(import.meta.dirname, '..', '..');
+  const bundle = JSON.parse(await readFile(bundlePath(frontendRoot), 'utf8'));
+  const reviewMarkdown = await readFile(
+    join(frontendRoot, 'e2e/agent-review/visual-review-results.md'),
+    'utf8',
+  );
+  const result = validateAgentReviewEvidenceChain({
+    bundle,
+    reviewMarkdown,
+    manifestRouteCount: bundle.routeManifestRouteCount,
+  });
+  assert.equal(
+    result.ok,
+    true,
+    `evidence chain structural errors: ${result.errors.join('; ')}`,
+  );
 });
 
 test('generateCaptureBundle writes bundle with artifacts', async () => {

@@ -45,3 +45,28 @@ npm run e2e:agent-review:stamp-review
 - captureRunId なし / bundle なしで `gh issue create`
 - 本文に「PNG で確認済み」と書く（collect が証拠鎖通過を記録する）
 - `未レビュー` / `未キャプチャ` 行から Issue 起票（collect が除外）
+
+## 四半期ごとの認知導線再レビュー（運用）
+
+**目的**: happy path 偏重を防ぎ、空状態・ブロック・API エラー画面の L0–L4 導線を定期的に再評価する。
+
+**頻度**: 四半期ごと（1・4・7・10 月の第 1 週を目安。ルート大幅変更時は臨時実施可）。
+
+**手順**（正本スキル: `.cursor/skills/ux-cognitive-guidance-review/SKILL.md`）:
+
+1. **キャプチャ** — `npm run e2e:capture-for-agent`（manifest 全ルート + `empty-state-capture-for-agent` の 4 シナリオ ja PNG）
+2. **ビジュアル** — `frontend-agent-visual-review` で `visual-review-results.md` 更新 → `npm run e2e:agent-review:stamp-review`
+3. **認知導線** — `ux-cognitive-guidance-review` で `cognitive-guidance-review.md` を J1–J8 軸で更新（空状態セクション必須）
+4. **証拠鎖** — `npm run e2e:agent-review:evidence:check:enforce` が exit 0
+5. **起票** — `collect-ux-findings` → `ux-issue-creator`（P1 以上の `要確認` は follow-up issue 化）
+
+**成果物チェックリスト**:
+
+| 成果物 | 更新 |
+|--------|------|
+| `cognitive-guidance-review.md` | ジョブ表・画面表・空状態セクション |
+| `visual-review-results.md` | captureRunId が bundle と一致 |
+| `agent-review-bundle.json` | 最新キャプチャ runId |
+| `docs/product/USER-FLOW-REVIEW.md` | 対応済み項目のステータス（必要時） |
+
+**CI との関係**: 週次 `frontend-e2e-capture.yml` が PNG artifact を生成。四半期レビューは artifact 取得後に上記 2–5 を実施してもよい（ローカルキャプチャと同等）。
