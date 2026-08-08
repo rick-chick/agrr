@@ -8,7 +8,6 @@
   - [Organization データモデル案](design/organization-data-model.md) — 親 [#604](https://github.com/rick-chick/agrr/issues/604)
 - **作業実績分離（計画）**: [`design/work-record-separation-plan.md`](design/work-record-separation-plan.md)（BE）/ [`design/work-record-gui-plan.md`](design/work-record-gui-plan.md)（GUI）
 - **製品成長の問題点・改善案**: [`product/PRODUCT-GROWTH-ISSUES.md`](product/PRODUCT-GROWTH-ISSUES.md)
-- **導線レビュー（2026-06）**: [`product/USER-FLOW-REVIEW.md`](product/USER-FLOW-REVIEW.md)
 - **本番ベンチ・ログ調査手順**: [`product/PRODUCTION-BENCHMARK-INVESTIGATION.md`](product/PRODUCTION-BENCHMARK-INVESTIGATION.md)
 - **コア API / 最適化 SLI・SLO・アラート**: [`ops/core-api-optimization-sli-slo.md`](ops/core-api-optimization-sli-slo.md)
 - **マイグレーション・データ移行**: [`migration/`](migration/)

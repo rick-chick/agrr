@@ -15,8 +15,7 @@ description: >-
 |------|------|
 | ルート一覧 | `frontend/e2e/agent-review/route-to-png.md` |
 | PNG | `frontend/e2e/agent-review/out/*.{ja,en,in}.png` |
-| レイアウト/i18n レビュー | `frontend/e2e/agent-review/visual-review-results.md` |
-| フロー横断 | `docs/product/USER-FLOW-REVIEW.md` |
+| レイアウト/i18n レビュー | `frontend/e2e/agent-review/visual-review-results.md`（**captureRunId 付きの最新のみ**。コミット済み古い md は参照しない） |
 | ジョブシナリオ定義 | [references/job-scenarios.md](references/job-scenarios.md) |
 | 迷いの分類 | [references/confusion-taxonomy.md](references/confusion-taxonomy.md) |
 

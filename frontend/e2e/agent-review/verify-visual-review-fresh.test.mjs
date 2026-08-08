@@ -1,8 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { test } from 'node:test';
-import { fileURLToPath } from 'node:url';
 
 import {
   compareVisualReviewFreshness,
@@ -10,8 +7,6 @@ import {
   parseVisualReviewMetaRange,
   parseVisualReviewSummaryPatterns,
 } from './verify-visual-review-fresh-lib.mjs';
-
-const FRONTEND = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 
 test('displayPattern maps empty manifest pattern to (home)', () => {
   assert.equal(displayPattern(''), '(home)');
@@ -63,20 +58,3 @@ test('compareVisualReviewFreshness passes when pattern sets match', () => {
   assert.deepEqual(result.extraInReview, []);
 });
 
-test('committed visual-review-results is parsed and compared to route-manifest', async () => {
-  const manifest = JSON.parse(
-    await readFile(join(FRONTEND, 'e2e/route-manifest.json'), 'utf8'),
-  );
-  const md = await readFile(
-    join(FRONTEND, 'e2e/agent-review/visual-review-results.md'),
-    'utf8',
-  );
-  const manifestPatterns = manifest.routes.map((r) => displayPattern(r.pattern));
-  const reviewPatterns = parseVisualReviewSummaryPatterns(md);
-  const result = compareVisualReviewFreshness({ manifestPatterns, reviewPatterns });
-
-  assert.equal(reviewPatterns.length, manifestPatterns.length);
-  assert.equal(result.ok, true);
-  assert.deepEqual(result.missingInReview, []);
-  assert.deepEqual(result.extraInReview, []);
-});

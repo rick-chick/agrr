@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 /** Manifest empty path → visual-review summary label. */
@@ -94,6 +94,20 @@ export async function checkVisualReviewFreshness(frontendRoot) {
   const reviewPath = join(frontendRoot, 'e2e/agent-review/visual-review-results.md');
 
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  try {
+    await access(reviewPath);
+  } catch {
+    return {
+      ok: false,
+      missingInReview: manifest.routes.map((r) => displayPattern(r.pattern)),
+      extraInReview: [],
+      manifestCount: manifest.routes.length,
+      reviewCount: 0,
+      metaRange: null,
+      metaRangeMismatch:
+        'visual-review-results.md が存在しない。e2e:capture-for-agent → frontend-agent-visual-review で再生成すること（古いコミット済み md は正本にしない）',
+    };
+  }
   const md = await readFile(reviewPath, 'utf8');
 
   const manifestPatterns = manifest.routes.map((r) => displayPattern(r.pattern));
