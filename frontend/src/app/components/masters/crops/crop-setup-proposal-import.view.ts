@@ -3,7 +3,7 @@ import {
   CropSetupProposalValidationErrorItem
 } from '../../../domain/crops/crop-setup-proposal';
 
-type CropSetupProposalImportPhase = 'input' | 'preview' | 'validation_errors';
+type CropSetupProposalImportPhase = 'input' | 'preview' | 'validation_errors' | 'success';
 
 export interface CropSetupProposalImportViewState {
   loading: boolean;

@@ -1,8 +1,24 @@
 @import '../_master-layout.css';
 
 .crop-setup-proposal-import__lead {
-  margin: 0 0 var(--space-md);
+  margin: 0 0 var(--space-sm);
   color: var(--color-text-secondary);
+}
+
+.crop-setup-proposal-import__l0-notice {
+  margin: 0 0 var(--space-md);
+  padding-left: 1.25rem;
+  color: var(--color-text-secondary);
+}
+
+.crop-setup-proposal-import__recovery-hint {
+  margin: var(--space-sm) 0 var(--space-md);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.crop-setup-proposal-import__success {
+  margin-top: var(--space-md);
 }
 
 .crop-setup-proposal-import__input-actions {
