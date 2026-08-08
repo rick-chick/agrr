@@ -48,6 +48,9 @@ describe('FarmDetailComponent', () => {
   let translate: TranslateService;
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     loadUseCase = { execute: vi.fn() };
     subscribeWeatherUseCase = { execute: vi.fn() };
     deleteUseCase = { execute: vi.fn() };
@@ -155,11 +158,30 @@ describe('FarmDetailComponent', () => {
     });
   });
 
-  it('calls deleteUseCase.execute on deleteFarm when farm exists', () => {
+  it('opens delete confirm dialog before calling deleteUseCase when farm exists', () => {
     const farm = { id: 123, name: 'Test Farm', region: 'Test Region', latitude: 0, longitude: 0 };
     component.control = { ...component.control, farm };
+    component.deleteConfirmDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as never;
+    translate.setTranslation('en', {
+      farms: {
+        show: {
+          delete_confirm_message:
+            'Delete this farm? Registered fields and cultivation plans will be affected. You can undo shortly after deleting.'
+        }
+      },
+      common: { cancel: 'Cancel', delete: 'Delete' }
+    });
+    translate.use('en');
 
     component.deleteFarm();
+    fixture.detectChanges();
+
+    expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
+    expect(deleteUseCase.execute).not.toHaveBeenCalled();
+
+    component.confirmDeleteFarm();
     expect(deleteUseCase.execute).toHaveBeenCalledWith({
       farmId: 123,
       onSuccess: expect.any(Function)
