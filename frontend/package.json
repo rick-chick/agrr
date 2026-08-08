@@ -15,6 +15,7 @@
     "check-hardcoded-i18n:enforce": "node scripts/check-hardcoded-i18n.mjs --enforce",
     "check:btn-base-class": "node scripts/check-btn-base-class.mjs",
     "check:btn-base-class:enforce": "node scripts/check-btn-base-class.mjs --enforce",
+    "verify:design-system-guide": "node --test scripts/check-design-system-guide.test.mjs",
     "verify:primary-color-tokens": "node --test scripts/check-primary-color-tokens.test.mjs",
     "verify:fluid-typography-tokens": "node --test scripts/check-fluid-typography-tokens.test.mjs",
     "verify:package-deps": "node --test scripts/check-package-deps.test.mjs",
