@@ -3,7 +3,7 @@ import { readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { waitForPageStable } from '../page-stable';
 import {
-  assertPageValidity,
+  assertCapturePageValidity,
   type RouteRow,
   expectedPathnameFromResolvedGoto,
 } from '../route-validity';
@@ -44,7 +44,7 @@ function routeLabel(r: RouteRow): string {
 }
 
 async function captureForAgent(
-  page: Parameters<typeof assertPageValidity>[0],
+  page: Parameters<typeof assertCapturePageValidity>[0],
   r: RouteRow,
   locale: CaptureLocale,
 ): Promise<void> {
@@ -89,7 +89,7 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
           test.skip(true, 'public plan session seed unavailable');
         }
         await page.goto(url);
-        await assertPageValidity(page, r, pathnameExpect);
+        await assertCapturePageValidity(page, r, pathnameExpect);
         await waitForCaptureLocaleReady(page, locale, r.pattern);
         await waitForPageStable(page, r);
         if (r.pattern === 'public-plans/select-crop') {
