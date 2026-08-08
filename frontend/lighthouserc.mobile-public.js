@@ -1,4 +1,5 @@
 const { mobilePublicRoute, thresholds } = require('./scripts/lighthouse-ci-routes.json');
+const { collectSettingsForPreset } = require('./scripts/lighthouse-ci-lhci-settings-lib.mjs');
 
 /** @type {import('@lhci/cli/src/index').LHCI.ServerCommand.Options} */
 module.exports = {
@@ -8,7 +9,7 @@ module.exports = {
       url: [mobilePublicRoute.url],
       numberOfRuns: 1,
       settings: {
-        preset: mobilePublicRoute.preset,
+        ...collectSettingsForPreset(mobilePublicRoute.preset),
         chromeFlags: '--no-sandbox --disable-dev-shm-usage',
       },
     },
