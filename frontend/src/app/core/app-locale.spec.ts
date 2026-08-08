@@ -4,6 +4,7 @@ import {
   documentHtmlLang,
   mapFarmRegionToAppLang,
   ogLocaleForAppLang,
+  researchReportPathForAppLang,
   resolveInitialAppLang
 } from './app-locale';
 
@@ -18,6 +19,12 @@ describe('app-locale', () => {
     expect(ogLocaleForAppLang('ja')).toBe('ja_JP');
     expect(ogLocaleForAppLang('en')).toBe('en_US');
     expect(ogLocaleForAppLang('in')).toBe('hi_IN');
+  });
+
+  it('researchReportPathForAppLang maps ja to Japanese research and others to English', () => {
+    expect(researchReportPathForAppLang('ja')).toBe('/research/');
+    expect(researchReportPathForAppLang('en')).toBe('/research/en/');
+    expect(researchReportPathForAppLang('in')).toBe('/research/en/');
   });
 
   it('applyAppLang sets document.documentElement.lang via documentHtmlLang', () => {

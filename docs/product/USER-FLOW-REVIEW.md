@@ -59,6 +59,7 @@
 
 ## 🟢 確認済み・意図的（記録のみ）
 
+- **M5 対応**: in ロケールのレポート導線を英語版 `/research/en/` にフォールバック（#735）。
 - **entry-schedule のナビ非表示**: `navbar.component.ts:43` にコメントで明示（「未成熟のためナビから非表示。ルートは残す」）。ルート自体は到達可能で、画面内の相互リンク（一覧⇔詳細）は整合。
 - **公開プランフローの状態ガード**: `/public-plans/select-crop` は farm 未設定時に `/public-plans/new` へ、`/public-plans/optimizing` は planId 解決不能時に `/public-plans/new` へリダイレクト。直接着地しても破綻しない。
 - **AUTH_REQUIRED_PREFIXES の同期**: `login-auth-urls.ts` と `crates/agrr-server/src/auth_return_to.rs` で一致を確認（9 プレフィックス）。
@@ -68,7 +69,6 @@
 - **マスタ系ルート順序**: `farms/new` → `farms/:id/edit` → `farms/:id` の順で定義されており、`:id` の誤マッチなし（全マスタ共通）。
 - **ワイルドカード位置**: `**` → NotFound は `pagesRoutes` 内にあり、`app.routes.ts` で最後に spread されるため全ルートの後段で機能する。
 - **未ログイン保存導線**: 結果画面の保存 → `/login?return_to=<結果URL>` → OAuth → ミラー済みシェルで復帰 → `consumePendingPublicPlanSave()` で自動保存。設計として成立（ただし H2 のエッジケースあり）。
-- **M5 対応（in ロケールのレポート導線）**: `navbar.component.ts` の `reportUrl` を `lang === 'ja'` のみ日本語版、それ以外（`en` / `in`）は `/research/en/` へ。issue #735。
 
 ---
 

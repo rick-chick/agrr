@@ -51,7 +51,7 @@ describe('NavbarComponent', () => {
     expect(component.reportUrl).toBe(`${window.location.origin}/research/en/`);
   });
 
-  it('uses /research/en/ for in locale (English report fallback)', () => {
+  it('uses /research/en/ for in locale (English research fallback)', () => {
     translate.setDefaultLang('ja');
     translate.use('in');
     fixture.detectChanges();

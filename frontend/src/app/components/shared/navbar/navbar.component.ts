@@ -3,6 +3,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { filter, Subscription } from 'rxjs';
 import { loginReturnQueryForLocation } from '../../../core/auth/login-auth-urls';
+import { researchReportPathForAppLang } from '../../../core/app-locale';
 import { type CurrentUser } from '../../../services/api.service';
 import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
@@ -177,7 +178,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   get reportUrl(): string {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const lang = this.translate.currentLang || this.translate.defaultLang || 'ja';
-    const reportPath = lang === 'ja' ? '/research/' : '/research/en/';
+    const reportPath = researchReportPathForAppLang(lang);
     return `${origin}${reportPath}`;
   }
 
