@@ -23,6 +23,7 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   '${ROOT}/docker-compose.yml',
   '${ROOT}/docker-compose.e2e-ci.yml',
   'LIGHTHOUSE_AUTH_API_ORIGIN="http://127.0.0.1:3000"',
+  'CHROME_PATH',
 ];
 
 const REQUIRED_LIGHTHOUSE_RC_SNIPPETS = [

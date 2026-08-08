@@ -109,10 +109,32 @@ fi
 echo "==> Lighthouse CI (warn-only thresholds: Performance >= 85, LCP <= 2.5s lab)"
 echo "==> Reports: frontend/${REPORT_DIR}/"
 
+resolve_chrome_path() {
+  if [[ -n "${CHROME_PATH:-}" ]]; then
+    return 0
+  fi
+  for candidate in google-chrome-stable google-chrome chromium-browser chromium; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      CHROME_PATH="$(command -v "$candidate")"
+      export CHROME_PATH
+      export PUPPETEER_EXECUTABLE_PATH="${CHROME_PATH}"
+      echo "==> Using CHROME_PATH=${CHROME_PATH}"
+      return 0
+    fi
+  done
+  echo "WARN: Chrome executable not found in PATH before Lighthouse CI" >&2
+}
+
+resolve_chrome_path
+
 run_lhci() {
   local config_file="$1"
   echo "==> lhci autorun --config=${config_file}"
-  npx lhci autorun --config="${config_file}"
+  if [[ -n "${CHROME_PATH:-}" ]]; then
+    npx lhci autorun --config="${config_file}" --collect.settings.chromePath="${CHROME_PATH}"
+  else
+    npx lhci autorun --config="${config_file}"
+  fi
 }
 
 run_lhci lighthouserc.public-desktop.js

@@ -32,16 +32,23 @@ function groupRoutesByPreset(routeList) {
 
 /** @param {string} preset */
 function buildCollectSettings(preset) {
-  if (preset === 'mobile') {
-    return {
-      formFactor: 'mobile',
-      chromeFlags: CHROME_FLAGS,
-    };
+  /** @type {Record<string, unknown>} */
+  const settings =
+    preset === 'mobile'
+      ? {
+          formFactor: 'mobile',
+          chromeFlags: CHROME_FLAGS,
+        }
+      : {
+          preset: 'desktop',
+          chromeFlags: CHROME_FLAGS,
+        };
+
+  if (process.env.CHROME_PATH) {
+    settings.chromePath = process.env.CHROME_PATH;
   }
-  return {
-    preset: 'desktop',
-    chromeFlags: CHROME_FLAGS,
-  };
+
+  return settings;
 }
 
 /** @param {string} preset */
