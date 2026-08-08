@@ -2,26 +2,25 @@
 
 フロントエンド SPA のルート定義・ナビゲーション・認証導線・CDN URL マップ・SEO 導線を横断レビューした結果。対象は `frontend/src/app/routes/`、`frontend/src/app/components/`、`scripts/agrr-frontend-url-map-simple.yaml`、`frontend/public/{sitemap.xml,robots.txt}`、`crates/agrr-server/src/{auth.rs,auth_return_to.rs}`。
 
-ステータス凡例: 🔴 修正推奨（ユーザー影響あり） / 🟡 改善余地 / 🟢 意図的・記録のみ
+ステータス凡例: 🔴 修正推奨（ユーザー影響あり） / 🟡 改善余地 / 🟢 意図的・記録のみ / ✅ 対応済み（2026-08 受け入れ確認）
 
 ---
 
 ## 🔴 High
 
-### H1. authGuard がリダイレクト時に return_to を保持しない
+### H1. authGuard がリダイレクト時に return_to を保持しない — ✅ 対応済み
 
-`frontend/src/app/guards/auth.guard.ts:19` は未認証時に `router.parseUrl('/login')` を返すだけで、元の目的地を渡さない。
+**対応**: `frontend/src/app/guards/auth.guard.ts` が `loginReturnQueryForLocation` 経由で `return_to` を付与して `/login` へ遷移する（`router.createUrlTree(['/login'], { queryParams })`）。
 
-- 再現: 未ログインで `/plans/123` などの深いリンクに直接アクセス → `/login` へ → ログイン完了後は `/`（ホーム）に着地し、目的地が失われる。
-- navbar のログインリンク（`navbar.component.ts` の `loginReturnQuery`）は `return_to` を付与しており、ガード経由だけが欠落している。`oauthReturnToUrl()` / `_post_login` ハブの仕組み（`login-auth-urls.ts`）は深いリンク復帰に対応済みなので、ガード側が `return_to` を付ければ既存機構で完結する。
-- 対応案: `router.createUrlTree(['/login'], { queryParams: { return_to: <現在の絶対URL> } })` を返す。
+- 元の指摘: 未認証時に `router.parseUrl('/login')` のみで深いリンクが失われる。
+- 確認: `login-auth-urls.ts` の `navigateTargetFromReturnTo` とガード・navbar で同一契約。
 
-### H2. ログイン済みで /login に来ると return_to を無視して `/` へ
+### H2. ログイン済みで /login に来ると return_to を無視して `/` へ — ✅ 対応済み
 
-`frontend/src/app/components/auth/login/login.component.ts:76` — `loadCurrentUser()` がユーザーを返すと無条件に `/` へ遷移し、クエリの `return_to` を見ない。
+**対応**: `frontend/src/app/components/auth/login/login.component.ts` が `loadCurrentUser()` 成功時に `navigateTargetFromReturnTo(return_to)` を検証し、有効なら `navigateByUrl` で復帰する。
 
-- 影響する具体導線: 公開プラン結果画面の「保存」（`public-plan-results.component.ts` の `savePlan()`）。クライアント側の認証状態が未確立のままクリックすると `setPendingPublicPlanSave()` 後に `/login?return_to=<結果画面URL>` へ遷移するが、実はセッションが生きていた場合 `/` に飛ばされ、保存は実行されず pending 状態だけが残る。
-- 対応案: `return_to` が同一オリジンなら検証のうえそちらへ `navigateByUrl` する。
+- 元の指摘: セッション済みで `/login?return_to=...` に来たとき無条件 `/` へ飛ぶ。
+- 確認: 公開プラン保存導線（`public-plan-results.component.ts`）のエッジケースを解消。
 
 ### H3. sitemap.xml に内部作業ファイルが露出
 
@@ -47,9 +46,11 @@
 
 `scripts/agrr-frontend-url-map-simple.yaml` の catch-all（`/*` → `/index.html` rewrite）により、存在しないパスも 200 + SPA シェルが返り、`NotFoundComponent` を表示しても HTTP ステータスは 200。`not-found.component.ts` は `noindex` メタも設定していない。SPA + CDN 構成での既知のトレードオフだが、最低限 NotFound 表示時に `<meta name="robots" content="noindex">` を動的設定すべき。
 
-### M3. ルーター遷移時のスクロール位置復元が未設定
+### M3. ルーター遷移時のスクロール位置復元が未設定 — ✅ 対応済み
 
-`frontend/src/app/app.config.ts:22` — `provideRouter(routes)` に `withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })` が無い。長い一覧（crops 等）をスクロール後に詳細へ遷移すると、詳細ページがスクロール済み位置で表示される。戻る操作の位置復元も効かない。
+**対応**: `frontend/src/app/app-router-features.ts` が `withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' })` を `app.config.ts` 経由で提供する。
+
+- 元の指摘: 一覧→詳細遷移でスクロール位置が引き継がれ、戻る復元も効かない。
 
 ### M4. `_post_login` クエリが未認証時に URL に残留する
 
@@ -77,7 +78,8 @@
 
 ## 対応優先順位の提案
 
-1. H1 + H2（ログイン復帰導線。`return_to` の発行と消費を両端で揃える — 同一修正単位）
+1. ~~H1 + H2（ログイン復帰導線）~~ — **対応済み**（2026-08 受け入れ確認）
 2. H3（公開情報の露出。sitemap 再生成 + バケットから内部ファイル削除）
 3. M1（`/dashboard` レガシールートの方針決定 — 削除か実体化か）
-4. M2〜M5（UX/SEO 改善。独立に着手可能）
+4. M2、M4、M5（UX/SEO 改善。独立に着手可能）
+5. ~~M3（スクロール位置復元）~~ — **対応済み**（`app-router-features.ts`）

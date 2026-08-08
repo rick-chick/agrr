@@ -60,17 +60,17 @@
 
 ### P0
 
-（なし — コアジョブの完全デッドエンドは未検出。USER-FLOW H1/H2 は認証層で別途）
+（なし — コアジョブの完全デッドエンドは未検出。USER-FLOW H1/H2 は **対応済み** — `docs/product/USER-FLOW-REVIEW.md` 2026-08 更新）
 
 ### P1
 
-1. **#10 public-plans/optimizing — failed** — 迷い: C,D / 導線: L1 あり・L0 不足 / 提案: 「気象データ取得に失敗」等の原因カテゴリをユーザー語で表示。`処理に失敗しました` 単体は Q3 不合格。
+1. **#10 public-plans/optimizing — failed** — 迷い: C,D / 導線: L1 あり・L0 不足 / 提案: 「気象データ取得に失敗」等の原因カテゴリをユーザー語で表示。`処理に失敗しました` 単体は Q3 不合格。→ **follow-up**: #166, #578（CLOSED）
 
-2. **#31–32 fertilizes/:id, :id/edit — API 404** — 迷い: C,D / 導線: なし / 提案: マスタ一覧へ戻る L2 リンク＋「データが見つかりません」+ 再読み込み（work-hub / plan-work パターンに統一）。英語 HTTP 露出は i18n と併せて修正。
+2. **#31–32 fertilizes/:id, :id/edit — API 404** — 迷い: C,D / 導線: なし / 提案: マスタ一覧へ戻る L2 リンク＋「データが見つかりません」+ 再読み込み（work-hub / plan-work パターンに統一）。英語 HTTP 露出は i18n と併せて修正。→ **follow-up**: #167, #630, #672（CLOSED）
 
-3. **#39–40 pesticides/:id, :id/edit — API 500** — 迷い: C,D / 導線: なし / 提案: 同上。フォーム空＋技術エラーのみは Q10 に近い。
+3. **#39–40 pesticides/:id, :id/edit — API 500** — 迷い: C,D / 導線: なし / 提案: 同上。フォーム空＋技術エラーのみは Q10 に近い。→ **follow-up**: #167, #630, #672（CLOSED）
 
-4. **#12 public-plans/select-crop — キャプチャずれ** — 迷い: F / 導線: — / 提案: E2E 状態シードまたはガードの見直し。ユーザーは step2 に着いたつもりが step1 だと J2 全体が破綻。
+4. **#12 public-plans/select-crop — キャプチャずれ** — 迷い: F / 導線: — / 提案: E2E 状態シードまたはガードの見直し。ユーザーは step2 に着いたつもりが step1 だと J2 全体が破綻。→ **follow-up**: #168（CLOSED）
 
 ### P2
 
@@ -105,6 +105,16 @@
 ### 空状態の総評
 
 初回ユーザー向け 4 画面のうち **計画 0・作物 0・農場 0 は L1 導線が十分**。`plans/new` の圃場 0 ブロックのみ **注意**（既存 P2 #52 と同一）。本 issue のスコープ外として follow-up は不要（#52 相当は cognitive P2 に既記載）。
+
+## 要確認 follow-up issue 一覧（#730 受け入れ）
+
+| 認知レビュー指摘 | follow-up issue | 状態 |
+|------------------|-----------------|------|
+| P1 #10 optimizing 失敗原因 | #166, #578 | CLOSED |
+| P1 #31–32 fertilizes API 404 | #167, #630, #672 | CLOSED |
+| P1 #39–40 pesticides API 500 | #167, #630, #672 | CLOSED |
+| P1 #12 select-crop キャプチャずれ | #168 | CLOSED |
+| P2 #52 plans/new 圃場 0 | （cognitive P2 既記載・別途起票不要） | 記録のみ |
 
 ## 次回レビューで足すもの
 
