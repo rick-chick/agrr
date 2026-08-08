@@ -92,7 +92,7 @@ jobs:
 
       - name: verify-lighthouse-ci-workflow unit tests
         working-directory: ${{ github.workspace }}
-        run: node --test scripts/verify-lighthouse-ci-workflow.test.mjs
+        run: node --test scripts/verify-lighthouse-ci-workflow.test.mjs frontend/scripts/lighthouse-auth-route-bundle-boundary.test.mjs
 
       - name: verify-frontend-test-ci-workflow unit tests
         working-directory: ${{ github.workspace }}

@@ -55,6 +55,16 @@ export async function verifyLighthouseCiWorkflow(repoRoot) {
     errors.push(`missing workflow: ${workflowPath}`);
   }
 
+  const frontendTestWorkflowPath = join(repoRoot, '.github/workflows/frontend-test.yml');
+  try {
+    const frontendTestWorkflow = await readFile(frontendTestWorkflowPath, 'utf8');
+    if (!frontendTestWorkflow.includes('lighthouse-auth-route-bundle-boundary.test.mjs')) {
+      errors.push('frontend-test.yml missing lighthouse-auth-route-bundle-boundary.test.mjs');
+    }
+  } catch {
+    errors.push(`missing workflow: ${frontendTestWorkflowPath}`);
+  }
+
   for (const snippet of REQUIRED_WORKFLOW_SNIPPETS) {
     if (!workflowText.includes(snippet)) {
       errors.push(`workflow missing required snippet: ${snippet}`);
