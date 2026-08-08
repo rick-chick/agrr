@@ -55,9 +55,9 @@
 
 `frontend/src/app/app.ts:97` — `maybeNavigatePostLogin()` はセッション確立に失敗した場合（`authService.user()` が null）に早期 return し、`/?_post_login=...` のクエリを消費しない。ユーザーには意味不明なクエリ付きホームが残る。認証失敗時もクエリを除去（`replaceUrl`）すべき。
 
-### M5. ヒンディー語（in）ユーザーのレポート導線が日本語版に飛ぶ
+### M5. ヒンディー語（in）ユーザーのレポート導線 — 対応済み
 
-`frontend/src/app/components/shared/navbar/navbar.component.ts:127` — レポートリンクは `lang === 'en' ? '/research/en/' : '/research/'` の二択で、`in` ロケール（`assets/i18n/in.json` あり、地域選択にも `in` あり）は日本語の `/research/` に着地する。英語版へのフォールバック（`lang === 'ja' ? '/research/' : '/research/en/'`）が妥当。
+`navbar.component.ts` の `reportUrl` を `lang === 'ja' ? '/research/' : '/research/en/'` に変更。`in` ロケールは英語版レポートへフォールバック（issue #735）。
 
 ---
 
@@ -72,6 +72,7 @@
 - **マスタ系ルート順序**: `farms/new` → `farms/:id/edit` → `farms/:id` の順で定義されており、`:id` の誤マッチなし（全マスタ共通）。
 - **ワイルドカード位置**: `**` → NotFound は `pagesRoutes` 内にあり、`app.routes.ts` で最後に spread されるため全ルートの後段で機能する。
 - **未ログイン保存導線**: 結果画面の保存 → `/login?return_to=<結果URL>` → OAuth → ミラー済みシェルで復帰 → `consumePendingPublicPlanSave()` で自動保存。設計として成立（ただし H2 のエッジケースあり）。
+- **M5 対応（in ロケールのレポート導線）**: `navbar.component.ts` の `reportUrl` を `lang === 'ja'` のみ日本語版、それ以外（`en` / `in`）は `/research/en/` へ。issue #735。
 
 ---
 
@@ -80,4 +81,4 @@
 1. H1 + H2（ログイン復帰導線。`return_to` の発行と消費を両端で揃える — 同一修正単位）
 2. H3（公開情報の露出。sitemap 再生成 + バケットから内部ファイル削除）
 3. M1（`/dashboard` レガシールートの方針決定 — 削除か実体化か）
-4. M2〜M5（UX/SEO 改善。独立に着手可能）
+4. M2〜M4（UX/SEO 改善。独立に着手可能）

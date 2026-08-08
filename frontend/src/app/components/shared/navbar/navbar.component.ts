@@ -177,7 +177,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   get reportUrl(): string {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const lang = this.translate.currentLang || this.translate.defaultLang || 'ja';
-    const reportPath = lang === 'en' ? '/research/en/' : '/research/';
+    const reportPath = lang === 'ja' ? '/research/' : '/research/en/';
     return `${origin}${reportPath}`;
   }
 
