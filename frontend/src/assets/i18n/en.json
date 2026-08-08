@@ -251,6 +251,7 @@
   },
   "nav": {
     "main": "Main navigation",
+    "skip_to_main": "Skip to main content",
     "open_menu": "Open menu",
     "close_menu": "Close menu",
     "plan": "Plans",

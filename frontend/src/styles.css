@@ -268,6 +268,32 @@
   border: 0;
 }
 
+/* アクセシビリティ: スキップリンク（フォーカス時のみ表示・WCAG 2.4.1） */
+.skip-link {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 10000;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-decoration: none;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link:focus {
+  clip: auto;
+  clip-path: none;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
 /* アクセシビリティ: アニメーション・モーション軽減（WCAG 2.3.3） */
 @media (prefers-reduced-motion: reduce) {
   *,

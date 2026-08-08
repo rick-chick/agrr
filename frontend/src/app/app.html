@@ -1,3 +1,5 @@
+<a href="#main-content" class="skip-link">{{ 'nav.skip_to_main' | translate }}</a>
+
 <app-navbar
   [user]="authService.user()"
   [loading]="authService.loading()"
@@ -6,7 +8,7 @@
 
 <app-flash-message />
 
-<main class="app-main">
+<main id="main-content" class="app-main" tabindex="-1">
   <router-outlet />
 </main>
 

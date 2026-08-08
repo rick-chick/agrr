@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Subscription, take } from 'rxjs';
@@ -19,6 +20,7 @@ import { UndoToastService } from './services/undo-toast.service';
   standalone: true,
   imports: [
     RouterOutlet,
+    TranslateModule,
     NavbarComponent,
     FooterComponent,
     FlashMessageComponent,
