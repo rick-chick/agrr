@@ -116,7 +116,6 @@ describe('AccountComponent', () => {
     fixture.detectChanges();
 
     component.confirmDeleteAccount();
-    fixture.detectChanges();
     await fixture.whenStable();
 
     expect(accountService.deleteAccount).toHaveBeenCalledWith(true, undefined);

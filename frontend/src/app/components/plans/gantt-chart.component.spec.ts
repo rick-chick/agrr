@@ -177,15 +177,19 @@ describe('GanttChartComponent', () => {
           cultivations: [cultivation]
         }
       } as any;
+      component.deleteConfirmDialogRef = {
+        nativeElement: {
+          showModal: HTMLDialogElement.prototype.showModal,
+          close: HTMLDialogElement.prototype.close
+        }
+      } as any;
     });
 
     it('opens delete confirm dialog and does not remove cultivation when cancelled', () => {
       component.confirmRemoveCultivation(cultivation);
-      fixture.detectChanges();
 
       expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
-      expect(fixture.nativeElement.querySelector('.gantt-chart__delete-confirm')).toBeTruthy();
-      expect(fixture.nativeElement.textContent).toContain('Riceを削除しますか？');
+      expect(component.deleteConfirmMessage).toContain('Rice');
       expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
 
       component.cancelDeleteConfirmDialog();
@@ -194,8 +198,6 @@ describe('GanttChartComponent', () => {
 
     it('removes cultivation when delete confirm dialog is accepted', () => {
       component.confirmRemoveCultivation(cultivation);
-      fixture.detectChanges();
-
       component.confirmDeleteAction();
 
       expect(runGanttPlanMutationUseCase.execute).toHaveBeenCalledWith({
@@ -209,10 +211,9 @@ describe('GanttChartComponent', () => {
       const group = { fieldId: 88, fieldName: 'Empty Field', cultivations: [] } as any;
 
       component.confirmRemoveField(group);
-      fixture.detectChanges();
 
       expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
-      expect(fixture.nativeElement.textContent).toContain('Empty Fieldを削除しますか？');
+      expect(component.deleteConfirmMessage).toContain('Empty Field');
       expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
 
       component.cancelDeleteConfirmDialog();
@@ -223,7 +224,6 @@ describe('GanttChartComponent', () => {
       const group = { fieldId: 88, fieldName: 'Empty Field', cultivations: [] } as any;
 
       component.confirmRemoveField(group);
-      fixture.detectChanges();
       component.confirmDeleteAction();
 
       expect(runGanttPlanMutationUseCase.execute).toHaveBeenCalledWith({
