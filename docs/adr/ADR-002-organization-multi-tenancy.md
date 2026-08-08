@@ -61,7 +61,7 @@ AGRR は現状 **ユーザー単位のテナント分離** のみを持つ。農
 
 ### 4. アクセス制御の移行方針
 
-ドメイン層（`lib/domain` 相当 = `agrr-domain`）では:
+ドメイン層（`crates/agrr-domain`）では:
 
 1. **新規**: `OrganizationAccessPolicy`（仮称）— メンバーシップ + ロール + `organization_id` 一致
 2. **既存ポリシー**: `FarmPolicy` 等は `organization_id` チェックを追加し、`user_id` 単独判定を段階的に縮小
