@@ -73,6 +73,10 @@ describe('GanttChartComponent', () => {
           confirm_delete_crop: '{{crop_name}}を削除しますか？',
           confirm_delete_field: '{{field_name}}を削除しますか？'
         }
+      },
+      common: {
+        delete: '削除',
+        cancel: 'キャンセル'
       }
     }, true);
     translate.use('ja');
@@ -86,6 +90,8 @@ describe('GanttChartComponent', () => {
         removeEventListener: vi.fn()
       }))
     );
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
   });
 
   describe('gantt chart visibility', () => {
@@ -171,25 +177,60 @@ describe('GanttChartComponent', () => {
           cultivations: [cultivation]
         }
       } as any;
+      component.deleteConfirmDialogRef = {
+        nativeElement: {
+          showModal: HTMLDialogElement.prototype.showModal,
+          close: HTMLDialogElement.prototype.close
+        }
+      } as any;
     });
 
-    it('does not remove cultivation when confirm is cancelled', () => {
-      vi.stubGlobal('confirm', vi.fn().mockReturnValue(false));
-
+    it('opens delete confirm dialog and does not remove cultivation when cancelled', () => {
       component.confirmRemoveCultivation(cultivation);
 
+      expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+      expect(component.deleteConfirmMessage).toContain('Rice');
       expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
-      vi.unstubAllGlobals();
+
+      component.cancelDeleteConfirmDialog();
+      expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
     });
 
-    it('does not remove field when confirm is cancelled', () => {
-      vi.stubGlobal('confirm', vi.fn().mockReturnValue(false));
+    it('removes cultivation when delete confirm dialog is accepted', () => {
+      component.confirmRemoveCultivation(cultivation);
+      component.confirmDeleteAction();
+
+      expect(runGanttPlanMutationUseCase.execute).toHaveBeenCalledWith({
+        planType: 'private',
+        planId: 7,
+        command: { kind: 'removeCultivation', cultivationId: 33 }
+      });
+    });
+
+    it('opens delete confirm dialog and does not remove field when cancelled', () => {
       const group = { fieldId: 88, fieldName: 'Empty Field', cultivations: [] } as any;
 
       component.confirmRemoveField(group);
 
+      expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+      expect(component.deleteConfirmMessage).toContain('Empty Field');
       expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
-      vi.unstubAllGlobals();
+
+      component.cancelDeleteConfirmDialog();
+      expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('removes field when delete confirm dialog is accepted', () => {
+      const group = { fieldId: 88, fieldName: 'Empty Field', cultivations: [] } as any;
+
+      component.confirmRemoveField(group);
+      component.confirmDeleteAction();
+
+      expect(runGanttPlanMutationUseCase.execute).toHaveBeenCalledWith({
+        planType: 'private',
+        planId: 7,
+        command: { kind: 'removeField', fieldId: 88 }
+      });
     });
   });
 

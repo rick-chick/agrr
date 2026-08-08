@@ -532,6 +532,32 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
         </div>
       }
     </dialog>
+
+    <dialog
+      #deleteBlueprintConfirmDialog
+      class="confirm-dialog crop-blueprints__delete-confirm"
+      [attr.aria-labelledby]="'crop-blueprints-delete-confirm-title'"
+      [attr.aria-describedby]="'crop-blueprints-delete-confirm-message'"
+      (cancel)="cancelDeleteBlueprintConfirmDialog($event)"
+      (click)="onDeleteBlueprintConfirmDialogBackdropClick($event)"
+    >
+      @if (pendingDeleteBlueprintId != null) {
+        <h2 id="crop-blueprints-delete-confirm-title" class="confirm-dialog__title">
+          {{ 'common.delete' | translate }}
+        </h2>
+        <p id="crop-blueprints-delete-confirm-message" class="confirm-dialog__message">
+          {{ 'crops.show.delete_blueprint_confirm' | translate }}
+        </p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelDeleteBlueprintConfirmDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDeleteBlueprint()">
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./crop-task-schedule-blueprints.component.css']
 })
@@ -549,6 +575,10 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
   private readonly translate = inject(TranslateService);
 
   @ViewChild('blueprintAddDialog') blueprintAddDialogRef!: ElementRef<HTMLDialogElement>;
+  @ViewChild('deleteBlueprintConfirmDialog')
+  deleteBlueprintConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
+  pendingDeleteBlueprintId: number | null = null;
 
   protected readonly gddAxisTotalGdd = gddAxisTotalGdd;
   protected readonly blueprintLaneId = blueprintLaneId;
@@ -768,7 +798,28 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
   deleteBlueprint(blueprintId: number): void {
     const cropId = this.control.crop?.id;
     if (!cropId) return;
-    if (!confirm(this.translate.instant('crops.show.delete_blueprint_confirm'))) return;
+    this.pendingDeleteBlueprintId = blueprintId;
+    this.deleteBlueprintConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  confirmDeleteBlueprint(): void {
+    const cropId = this.control.crop?.id;
+    const blueprintId = this.pendingDeleteBlueprintId;
+    this.deleteBlueprintConfirmDialogRef?.nativeElement?.close();
+    this.pendingDeleteBlueprintId = null;
+    if (!cropId || blueprintId == null) return;
     this.deleteBlueprintUseCase.execute({ cropId, blueprintId });
+  }
+
+  cancelDeleteBlueprintConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.deleteBlueprintConfirmDialogRef?.nativeElement?.close();
+    this.pendingDeleteBlueprintId = null;
+  }
+
+  onDeleteBlueprintConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.deleteBlueprintConfirmDialogRef?.nativeElement) {
+      this.cancelDeleteBlueprintConfirmDialog();
+    }
   }
 }

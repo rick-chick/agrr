@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
   API_DOCS_URL,
@@ -107,10 +107,36 @@ import { FlashMessageService } from '../../../services/flash-message.service';
         </div>
       }
     </div>
+
+    <dialog
+      #regenerateConfirmDialog
+      class="confirm-dialog api-keys__regenerate-confirm"
+      [attr.aria-labelledby]="'api-keys-regenerate-confirm-title'"
+      [attr.aria-describedby]="'api-keys-regenerate-confirm-message'"
+      (cancel)="cancelRegenerateConfirmDialog($event)"
+      (click)="onRegenerateConfirmDialogBackdropClick($event)"
+    >
+      <h2 id="api-keys-regenerate-confirm-title" class="confirm-dialog__title">
+        {{ 'api_keys.actions.regenerate' | translate }}
+      </h2>
+      <p id="api-keys-regenerate-confirm-message" class="confirm-dialog__message">
+        {{ 'api_keys.actions.regenerate_confirm' | translate }}
+      </p>
+      <div class="confirm-dialog__actions">
+        <button type="button" class="btn-secondary" (click)="cancelRegenerateConfirmDialog()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button type="button" class="btn-primary" (click)="confirmRegenerate()">
+          {{ 'common.confirm' | translate }}
+        </button>
+      </div>
+    </dialog>
   `,
   styleUrls: ['./api-keys.component.css']
 })
 export class ApiKeysComponent implements OnInit {
+  @ViewChild('regenerateConfirmDialog') regenerateConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
   private readonly management = inject(ApiKeyManagementService);
   private readonly flash = inject(FlashMessageService);
   private readonly translate = inject(TranslateService);
@@ -149,9 +175,32 @@ export class ApiKeysComponent implements OnInit {
   }
 
   regenerate(): void {
+    this.openRegenerateConfirmDialog();
+  }
+
+  openRegenerateConfirmDialog(): void {
     if (this.generating) return;
-    const confirmed = confirm(this.translate.instant('api_keys.actions.regenerate_confirm'));
-    if (!confirmed) return;
+    this.regenerateConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  confirmRegenerate(): void {
+    this.regenerateConfirmDialogRef?.nativeElement?.close();
+    this.executeRegenerate();
+  }
+
+  cancelRegenerateConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.regenerateConfirmDialogRef?.nativeElement?.close();
+  }
+
+  onRegenerateConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.regenerateConfirmDialogRef?.nativeElement) {
+      this.cancelRegenerateConfirmDialog();
+    }
+  }
+
+  private executeRegenerate(): void {
+    if (this.generating) return;
 
     this.generating = true;
     this.errorMessage = null;
