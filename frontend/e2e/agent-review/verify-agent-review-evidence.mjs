@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   bundlePath,
+  parseAgentReviewBundleContent,
   validateAgentReviewEvidenceChain,
   verifyBundleArtifactsOnDisk,
 } from './agent-review-bundle-lib.mjs';
@@ -27,8 +28,12 @@ const reviewMarkdown = await readFile(reviewPath, 'utf8');
 
 /** @type {object | null} */
 let bundle = null;
+let bundleParseErrors = [];
 try {
-  bundle = JSON.parse(await readFile(bundlePath(FRONTEND), 'utf8'));
+  const raw = await readFile(bundlePath(FRONTEND), 'utf8');
+  const parsed = parseAgentReviewBundleContent(raw);
+  bundle = parsed.bundle;
+  bundleParseErrors = parsed.errors;
 } catch {
   bundle = null;
 }
@@ -38,6 +43,10 @@ const chain = validateAgentReviewEvidenceChain({
   reviewMarkdown,
   manifestRouteCount: manifest.routes.length,
 });
+if (bundleParseErrors.length > 0) {
+  chain.errors.unshift(...bundleParseErrors);
+  chain.ok = false;
+}
 
 let diskOk = true;
 let diskDetail = { missing: [], hashMismatch: [] };
