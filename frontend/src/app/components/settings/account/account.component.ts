@@ -21,7 +21,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
       <section class="info-box">
         <h2 class="info-box-title">{{ 'account.export.heading' | translate }}</h2>
         <p class="info-box-content">{{ 'account.export.description' | translate }}</p>
-        <button type="button" class="btn-primary" (click)="exportData()" [disabled]="exporting">
+        <button type="button" class="btn btn-primary" (click)="exportData()" [disabled]="exporting">
           {{ 'account.export.action' | translate }}
         </button>
       </section>
@@ -50,7 +50,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 
         <button
           type="button"
-          class="btn-danger"
+          class="btn btn-danger"
           (click)="deleteAccount()"
           [disabled]="deleting || !confirmChecked"
         >
@@ -78,10 +78,10 @@ import { FlashMessageService } from '../../../services/flash-message.service';
         {{ 'account.delete.confirm_dialog' | translate }}
       </p>
       <div class="confirm-dialog__actions">
-        <button type="button" class="btn-secondary" (click)="cancelDeleteConfirmDialog()">
+        <button type="button" class="btn btn-secondary" (click)="cancelDeleteConfirmDialog()">
           {{ 'common.cancel' | translate }}
         </button>
-        <button type="button" class="btn-danger" (click)="confirmDeleteAccount()">
+        <button type="button" class="btn btn-danger" (click)="confirmDeleteAccount()">
           {{ 'account.delete.action' | translate }}
         </button>
       </div>

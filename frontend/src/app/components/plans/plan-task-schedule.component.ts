@@ -73,7 +73,7 @@ const initialControl: PlanTaskScheduleViewState = {
         } @else if (control.error) {
           <div class="page-alert-error plan-work__error" role="alert">
             <p>{{ control.error | translate }}</p>
-            <button type="button" class="btn-secondary plan-work__retry" (click)="reload()">
+            <button type="button" class="btn btn-secondary plan-work__retry" (click)="reload()">
               {{ 'plans.work.retry' | translate }}
             </button>
           </div>
@@ -263,10 +263,10 @@ const initialControl: PlanTaskScheduleViewState = {
         'plans.task_schedules.regenerate_confirm' | translate
       }}</p>
       <div class="confirm-dialog__actions">
-        <button type="button" class="btn-secondary" (click)="cancelRegenerateConfirmDialog()">
+        <button type="button" class="btn btn-secondary" (click)="cancelRegenerateConfirmDialog()">
           {{ 'common.cancel' | translate }}
         </button>
-        <button type="button" class="btn-primary" (click)="confirmRegenerateTaskSchedule()">
+        <button type="button" class="btn btn-primary" (click)="confirmRegenerateTaskSchedule()">
           {{ 'plans.task_schedules.sync_retry' | translate }}
         </button>
       </div>
