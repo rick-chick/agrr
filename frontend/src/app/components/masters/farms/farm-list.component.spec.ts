@@ -106,15 +106,32 @@ describe('FarmListComponent', () => {
 
   it('opens delete confirm dialog before calling deleteUseCase', () => {
     const farmId = 123;
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [
+        {
+          id: farmId,
+          name: 'User Farm',
+          region: 'jp',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          weather_data_status: 'completed' as const,
+          is_reference: false
+        }
+      ],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
     component.deleteConfirmDialogRef = {
       nativeElement: { showModal: vi.fn(), close: vi.fn() }
     } as never;
 
     component.deleteFarm(farmId);
-    fixture.detectChanges();
 
     expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('Registered fields and cultivation plans');
     expect(deleteUseCase.execute).not.toHaveBeenCalled();
 
     component.confirmDeleteFarm();
@@ -122,6 +139,13 @@ describe('FarmListComponent', () => {
       farmId,
       onAfterUndo: expect.any(Function)
     });
+  });
+
+  it('delete confirm dialog shows impact scope message', () => {
+    component.pendingDeleteFarmId = 123;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Registered fields and cultivation plans');
   });
 
   it('ngOnInit sets view on presenter and calls load', () => {

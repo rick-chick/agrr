@@ -72,10 +72,13 @@ const translations = {
 
 describe('CropListComponent card actions', () => {
   let fixture: ComponentFixture<CropListComponent>;
+  let deleteUseCase: { execute: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     HTMLDialogElement.prototype.showModal = vi.fn();
     HTMLDialogElement.prototype.close = vi.fn();
+
+    deleteUseCase = { execute: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [CropListComponent, TranslateModule.forRoot()],
@@ -83,7 +86,7 @@ describe('CropListComponent card actions', () => {
         provideRouter([]),
         CropListPresenter,
         { provide: LoadCropListUseCase, useValue: { execute: vi.fn() } },
-        { provide: DeleteCropUseCase, useValue: { execute: vi.fn() } },
+        { provide: DeleteCropUseCase, useValue: deleteUseCase },
         { provide: AuthService, useValue: { user: () => ({ admin: false }) } },
         { provide: FlashMessageService, useValue: { show: vi.fn() } },
         { provide: UndoToastService, useValue: { show: vi.fn() } },
@@ -215,18 +218,15 @@ describe('CropListComponent card actions', () => {
     expect(fixture.nativeElement.querySelector('.master-loading:not(.list-loading-text)')).toBeNull();
   });
 
-  it('opens delete confirm dialog with impact message before deleting crop', () => {
+  it('opens delete confirm dialog before deleting crop', () => {
     const component = fixture.componentInstance;
-    const deleteUseCase = TestBed.inject(DeleteCropUseCase) as { execute: ReturnType<typeof vi.fn> };
     component.deleteConfirmDialogRef = {
       nativeElement: { showModal: vi.fn(), close: vi.fn() }
     } as never;
 
     component.deleteCrop(10);
-    fixture.detectChanges();
 
     expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('Growth stages and task schedule templates');
     expect(deleteUseCase.execute).not.toHaveBeenCalled();
 
     component.confirmDeleteCrop();

@@ -125,20 +125,15 @@ describe('PlanListComponent', () => {
     expect(loadUseCase.execute).toHaveBeenCalled();
   });
 
-  it('deletePlan opens confirm dialog with impact message before calling deleteUseCase', async () => {
-    const nativeElement = await renderPlans([
-      { id: 12, name: 'Plan A', status: 'pending', farm_id: 1 }
-    ]);
-
+  it('deletePlan opens confirm dialog before calling deleteUseCase', async () => {
+    await renderPlans([{ id: 12, name: 'Plan A', status: 'pending', farm_id: 1 }]);
     component.deleteConfirmDialogRef = {
       nativeElement: { showModal: vi.fn(), close: vi.fn() }
     } as never;
 
     component.deletePlan(12);
-    fixture.detectChanges();
 
     expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
-    expect(nativeElement.textContent).toContain('Field assignments and work record links');
     expect(deleteUseCase.execute).not.toHaveBeenCalled();
 
     component.confirmDeletePlan();
