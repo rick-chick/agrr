@@ -101,6 +101,9 @@ export async function verifyLighthouseCiWorkflow(repoRoot) {
     if (!authText.includes('puppeteerScript')) {
       errors.push('lighthouserc.auth.js missing puppeteerScript');
     }
+    if (!authText.includes('chromePath')) {
+      errors.push('lighthouserc.auth.js missing chromePath for puppeteerScript mode');
+    }
   } catch {
     errors.push(`missing config: ${authRcPath}`);
   }

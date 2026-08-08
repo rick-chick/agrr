@@ -141,6 +141,18 @@ run_authenticated_lighthouse() {
   node scripts/lighthouse-ci-resolve-auth-urls.mjs --api-origin http://127.0.0.1:4200
 
   echo "==> Lighthouse CI authenticated routes (mock_login puppeteerScript)"
+  if [[ -z "${PUPPETEER_EXECUTABLE_PATH:-}" && -z "${CHROME_PATH:-}" ]]; then
+    if command -v google-chrome-stable >/dev/null 2>&1; then
+      export CHROME_PATH="$(command -v google-chrome-stable)"
+    elif command -v google-chrome >/dev/null 2>&1; then
+      export CHROME_PATH="$(command -v google-chrome)"
+    elif command -v chromium-browser >/dev/null 2>&1; then
+      export CHROME_PATH="$(command -v chromium-browser)"
+    else
+      echo "==> Installing Chrome for Puppeteer (authenticated Lighthouse CI)"
+      npx --yes @puppeteer/browsers install chrome@stable
+    fi
+  fi
   npx lhci autorun --config=lighthouserc.auth.js
 
   cleanup_auth_stack
