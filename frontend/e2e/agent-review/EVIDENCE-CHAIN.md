@@ -45,3 +45,25 @@ npm run e2e:agent-review:stamp-review
 - captureRunId なし / bundle なしで `gh issue create`
 - 本文に「PNG で確認済み」と書く（collect が証拠鎖通過を記録する）
 - `未レビュー` / `未キャプチャ` 行から Issue 起票（collect が除外）
+
+## 四半期ごとの認知導線再レビュー（運用）
+
+**目的**: ジョブシナリオ（J1–J8）・空状態・エラー回復の導線が、ルート追加後も退行していないかを定期的に確認する。
+
+**頻度**: 四半期ごと（1・4・7・10 月の第 1 週を目安）。ルート manifest の大幅変更（10 件超の追加・削除）があった場合は臨時実施。
+
+**手順**（`ux-cognitive-guidance-review` スキルに準拠）:
+
+1. **キャプチャ** — `cd frontend && npm run e2e:capture-for-agent`（happy path + `empty-state-capture-for-agent`）
+2. **ビジュアルレビュー** — `frontend-agent-visual-review` で `visual-review-results.md` を更新
+3. **証拠鎖** — `npm run e2e:agent-review:stamp-review` → `npm run e2e:agent-review:evidence:check:enforce`
+4. **認知導線レビュー** — `ux-cognitive-guidance-review` で `cognitive-guidance-review.md` を更新（空状態・エラー状態を優先）
+5. **Issue 化** — 要確認項目は `ux-issue-pipeline` / `ux-issue-creator` で起票。P1 以上は `agent-ready` 付与
+
+**完了条件**:
+
+- `agent-review-bundle.json` の `captureRunId` と `visual-review-results.md` が一致
+- `cognitive-guidance-review.md` のレビュー日が当四半期内
+- 新規「要確認」には follow-up issue 番号が本文に列挙されている
+
+**参照**: `.cursor/skills/ux-cognitive-guidance-review/SKILL.md`、`frontend/e2e/agent-review/cognitive-guidance-review.md`
