@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, readFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
@@ -9,31 +9,9 @@ import {
   bundleCoversPngs,
   isActionableReviewRow,
   isUnreviewedResultToken,
-  parseVisualReviewCaptureRunId,
-  stampVisualReviewCaptureRunId,
   validateAgentReviewEvidenceChain,
 } from './agent-review-bundle-lib.mjs';
-
-test('parseVisualReviewCaptureRunId reads meta stamp', () => {
-  const md = `
-## メタ
-
-- **captureRunId**: \`2026-08-07T09:00:00.000Z-abc1234\`
-
-## サマリ表
-`;
-  assert.equal(
-    parseVisualReviewCaptureRunId(md),
-    '2026-08-07T09:00:00.000Z-abc1234',
-  );
-});
-
-test('stampVisualReviewCaptureRunId replaces existing line', () => {
-  const md = '## メタ\n\n- **captureRunId**: `old`\n\n## サマリ表\n';
-  const out = stampVisualReviewCaptureRunId(md, 'new-run');
-  assert.match(out, /captureRunId.*new-run/);
-  assert.doesNotMatch(out, /`old`/);
-});
+import { bundlePath } from './agent-review-paths.mjs';
 
 test('validateAgentReviewEvidenceChain fails when runId mismatches', () => {
   const bundle = {
@@ -41,14 +19,29 @@ test('validateAgentReviewEvidenceChain fails when runId mismatches', () => {
     routeManifestRouteCount: 2,
     artifacts: [{ png: 'home.ja.png' }, { png: 'home.en.png' }, { png: 'home.in.png' }],
   };
-  const md = '## メタ\n\n- **captureRunId**: `run-b`\n';
+  const review = { captureRunId: 'run-b' };
   const result = validateAgentReviewEvidenceChain({
     bundle,
-    reviewMarkdown: md,
+    review,
     manifestRouteCount: 2,
   });
   assert.equal(result.ok, false);
   assert.match(result.errors[0], /不一致/);
+});
+
+test('validateAgentReviewEvidenceChain passes when captureRunId matches bundle', () => {
+  const bundle = {
+    runId: 'run-a',
+    routeManifestRouteCount: 1,
+    artifacts: [{ png: 'home.ja.png' }, { png: 'home.en.png' }, { png: 'home.in.png' }],
+  };
+  const review = { captureRunId: 'run-a' };
+  const result = validateAgentReviewEvidenceChain({
+    bundle,
+    review,
+    manifestRouteCount: 1,
+  });
+  assert.equal(result.ok, true);
 });
 
 test('isActionableReviewRow rejects 未レビュー', () => {
@@ -85,10 +78,10 @@ test('bundleCoversPngs checks artifact list', () => {
   assert.deepEqual(bad.missing, ['missing.ja.png']);
 });
 
-test('generateCaptureBundle writes bundle with artifacts', async () => {
+test('generateCaptureBundle writes bundle under tmp/agent-review', async () => {
   const frontend = await mkdtemp(join(tmpdir(), 'agrr-bundle-'));
   const outDir = join(frontend, 'e2e/agent-review/out');
-  await import('node:fs/promises').then((fs) => fs.mkdir(outDir, { recursive: true }));
+  await mkdir(outDir, { recursive: true });
 
   const manifest = {
     generatedAt: '2026-01-01T00:00:00.000Z',
@@ -108,8 +101,15 @@ test('generateCaptureBundle writes bundle with artifacts', async () => {
 
   assert.equal(bundle.artifacts.length, 1);
   assert.equal(bundle.artifacts[0].png, 'home.ja.png');
-  const saved = JSON.parse(
-    await readFile(join(frontend, 'e2e/agent-review/agent-review-bundle.json'), 'utf8'),
-  );
+  const saved = JSON.parse(await readFile(bundlePath(frontend), 'utf8'));
   assert.equal(saved.runId, bundle.runId);
+});
+
+test('buildRunId uses git short hash', () => {
+  assert.equal(buildRunId('abcdef1234567890', '2026-01-01T00:00:00.000Z'), '2026-01-01T00:00:00.000Z-abcdef1');
+});
+
+test('isUnreviewedResultToken', () => {
+  assert.equal(isUnreviewedResultToken('未レビュー'), true);
+  assert.equal(isUnreviewedResultToken('OK'), false);
 });

@@ -2,7 +2,7 @@
 name: ux-cognitive-guidance-review
 description: >-
   AGRR の「わからない」状態と救済導線（L0–L4）を、ジョブシナリオ・状態マトリクス・PNG/コードでレビューし
-  cognitive-guidance-review.md に書き出す。認知導線レビュー、わからないときの導線、empty state / エラー回復の UX 監査で適用する。
+  cognitive-guidance-review.json に書き出す。認知導線レビュー、わからないときの導線、empty state / エラー回復の UX 監査で適用する。
 ---
 
 # 認知・導線レビュー（わからないときの救済）
@@ -15,7 +15,7 @@ description: >-
 |------|------|
 | ルート一覧 | `frontend/e2e/agent-review/route-to-png.md` |
 | PNG | `frontend/e2e/agent-review/out/*.{ja,en,in}.png` |
-| レイアウト/i18n レビュー | `frontend/e2e/agent-review/visual-review-results.md`（**captureRunId 付きの最新のみ**。コミット済み古い md は参照しない） |
+| レイアウト/i18n レビュー | `frontend/tmp/agent-review/visual-review.json`（captureRunId 付き） |
 | ジョブシナリオ定義 | [references/job-scenarios.md](references/job-scenarios.md) |
 | 迷いの分類 | [references/confusion-taxonomy.md](references/confusion-taxonomy.md) |
 
@@ -97,14 +97,14 @@ description: >-
 
 ## 必須アウトプット
 
-**`frontend/e2e/agent-review/cognitive-guidance-review.md`**（パス固定。ユーザーが別名を指示したときだけ従う）。
+**`frontend/tmp/agent-review/cognitive-guidance-review.json`**（パス固定。ユーザーが別名を指示したときだけ従う）。**リポジトリ内の md は作らない。**
 
 ### 1. メタ
 
 - レビュー日（UTC 可）
 - 対象ジョブ（例: J1–J5）と pattern 行範囲
 - キャプチャ種別（`e2e:capture-for-agent` 等）と前提一言
-- 参照: `visual-review-results.md` の有無・日付
+- 参照: `visual-review.json` の captureRunId・reviewedAt
 
 ### 2. ジョブサマリ表
 
@@ -154,12 +154,12 @@ description: >-
 2. PNG が無ければ `frontend-css-route-audit` でキャプチャ（verify 通過）
 3. ジョブごとに PNG（ja 必須、en/in は導線文言が違う画面）と該当 component / presenter を読む
 4. 状態マトリクス・10 問・迷い種類・導線層を記録
-5. `cognitive-guidance-review.md` を書く
+5. `cognitive-guidance-review.json` を書く
 6. Issue 化は **`ux-issue-pipeline`** フェーズ 4 以降（起票はユーザー明示まで）
 
 ## 実施しないこと
 
-- レイアウト/i18n のみの指摘をこの成果物に重複列挙（`visual-review-results.md` へ）
+- レイアウト/i18n のみの指摘をこの成果物に重複列挙（`visual-review.json` へ）
 - ユーザーに「どの画面を見るか」を聞いてレビュー範囲を先送りする
 - コード未読で「ヘルプがあるはず」と推測
 

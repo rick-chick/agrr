@@ -64,35 +64,31 @@ export function parseDetailedFindings(markdown) {
 }
 
 /**
- * @param {string} markdown
+ * @param {object} review visual-review.json
  */
-export function parseVisualReviewTable(markdown) {
-  /** @type {Array<Record<string, string>>} */
-  const rows = [];
-  for (const line of markdown.split('\n')) {
-    if (!line.startsWith('|') || line.includes('|---') || line.includes('| # |')) {
-      continue;
-    }
-    const cols = line
-      .split('|')
-      .map((c) => c.trim())
-      .filter((_, i, arr) => i > 0 && i < arr.length - 1);
-    if (cols.length < 8) continue;
-    const [num, pattern, ja, en, inp, layout, i18n, note] = cols;
-    if (!/^\d+$/.test(num)) continue;
+export function parseVisualReviewJson(review) {
+  return (review.summary ?? []).map((row) => ({
+    num: String(row.num ?? ''),
+    pattern: String(row.pattern ?? ''),
+    ja: String(row.ja ?? ''),
+    en: String(row.en ?? ''),
+    in: String(row.in ?? ''),
+    layout: String(row.layout ?? ''),
+    i18n: String(row.i18n ?? ''),
+    note: String(row.note ?? 'なし'),
+  }));
+}
 
-    rows.push({
-      num,
-      pattern: pattern.replace(/`/g, ''),
-      ja: ja.replace(/`/g, ''),
-      en: en.replace(/`/g, ''),
-      in: inp.replace(/`/g, ''),
-      layout,
-      i18n,
-      note,
-    });
-  }
-  return rows;
+/**
+ * @param {object} review visual-review.json
+ */
+export function parseDetailedFindingsFromReview(review) {
+  return (review.details ?? []).map((item) => ({
+    priority: String(item.priority ?? 'P2'),
+    rows: Array.isArray(item.rows) ? item.rows.map((n) => Number(n)) : [],
+    patternLabel: String(item.patternLabel ?? ''),
+    text: String(item.text ?? ''),
+  }));
 }
 
 /**

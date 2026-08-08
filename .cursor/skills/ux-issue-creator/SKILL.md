@@ -1,7 +1,7 @@
 ---
 name: ux-issue-creator
 description: >-
-  visual-review-results.md・audit:css-tokens の指摘から rick-chick/agrr 向け GitHub Issue を起票する。
+  visual-review.json・audit:css-tokens の指摘から rick-chick/agrr 向け GitHub Issue を起票する。
   重複確認・ドライラン・gh issue create・agent-ready ラベル付与まで。
   UX Issue 作成、ビジュアルレビューから issue、CSS 監査から issue、
   ux-findings-draft の起票で適用する。
@@ -15,22 +15,22 @@ description: >-
 
 | 入力 | パス |
 |------|------|
-| ビジュアルレビュー | `frontend/e2e/agent-review/visual-review-results.md` |
+| ビジュアルレビュー | `frontend/tmp/agent-review/visual-review.json` |
 | PNG | `frontend/e2e/agent-review/out/*.{ja,en,in}.png` |
 | CSS 監査 | `cd frontend && npm run audit:css-tokens` |
-| **自動収集の出力** | `frontend/e2e/agent-review/ux-findings-draft.json` |
-| **人間可読草案** | `frontend/e2e/agent-review/ux-issue-drafts.md` |
+| **自動収集の出力** | `frontend/tmp/agent-review/ux-findings-draft.json` |
+| **人間可読草案** | `frontend/tmp/agent-review/ux-issue-drafts.md` |
 
-**前提**: `visual-review-results.md` が最新であること。無い・古い場合は先に **`ux-issue-pipeline`** のステップ 1–2 を実行する。
+**前提**: `visual-review.json` が最新であること（captureRunId = bundle.runId）。無い・古い場合は先に **`ux-issue-pipeline`** のステップ 1–2 を実行する。
 
 **証拠鎖（必須）**: 視覚指摘を Issue にする場合は [`frontend/e2e/agent-review/EVIDENCE-CHAIN.md`](../../../frontend/e2e/agent-review/EVIDENCE-CHAIN.md) に従う。
 
-1. `npm run e2e:capture-for-agent` → `agent-review-bundle.json` 生成
-2. ビジュアルレビュー更新後 `npm run e2e:agent-review:stamp-review`
+1. `npm run e2e:capture-for-agent` → `tmp/agent-review/agent-review-bundle.json` 生成
+2. `frontend-agent-visual-review` で `visual-review.json` 生成（captureRunId 必須）
 3. `npm run e2e:agent-review:evidence:check:enforce` GREEN
 4. `collect-ux-findings.mjs`（証拠鎖ゲート内蔵）
 
-古い PNG や古いレビュー md **単体**を根拠に起票しない。
+古い PNG や古いレビュー **単体**を根拠に起票しない。
 
 ## 1) 指摘の収集
 
@@ -40,7 +40,7 @@ node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs
 node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs --skip-gh
 ```
 
-- `visual-review-results.md` のサマリ表（`注意` / `要確認`）と「指摘の詳細」の P0–P2 をマージ
+- `visual-review.json` の summary（`注意` / `要確認`）と details の P0–P2 をマージ
 - **複合行**（`#8 / #14`、`#17–18, #30–31`）は `mergeGroups` として **1 issue 候補**に統合
 - CSS は `audit:css-tokens` の **var 外セクションのみ**を拾い、**リポジトリ全体で 1 issue**（#24 方針）
 - 各 finding に `existingIssueCandidates`（`gh issue list` 照合・score ≥ 3）を付与
@@ -165,7 +165,7 @@ gh issue edit <N> --remove-label agent-ready
 
 ## 禁止
 
-- `visual-review-results.md` 未更新のまま起票
+- `visual-review.json` 未生成のまま起票
 - 重複確認なしの大量 `gh issue create`
 - **証拠鎖未通過**での起票（bundle / captureRunId / PNG 不整合）
 - 完了条件・参照なしの issue

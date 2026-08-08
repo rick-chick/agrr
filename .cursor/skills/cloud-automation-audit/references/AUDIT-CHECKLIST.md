@@ -40,7 +40,7 @@
 | # | 確認 | クリティカル条件 |
 |---|------|------------------|
 | 1 | SKILL.md § Automation が存在 | ファイル欠落 |
-| 2 | `agent-review-bundle.json` + `visual-review-results.md` が揃うときのみ `collect-ux-findings` | 欠落時は UX 起票スキップ（正常）。コミット済み古い md を要求しない |
+| 2 | `tmp/agent-review/agent-review-bundle.json` + `visual-review.json` が揃うときのみ `collect-ux-findings` | 欠落時は UX 起票スキップ（正常） |
 | 3 | `collect-ux-findings.mjs --skip-gh` が exit 0 | 実行時例外（P0） |
 | 4 | `collect-ux-findings.mjs --check` / 単体 test が pass | 構文・パーサ破損 |
 | 5 | `githubLookupStatus: failed` | **1 週**: Memory + Dashboard 手順。**2 週連続**: P1 エスカレーション |

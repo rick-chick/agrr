@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * visual-review-results.md と audit:css-tokens の出力から UX/UI 改善 Issue 草案を生成する。
+ * frontend/tmp/agent-review/visual-review.json と audit:css-tokens の出力から UX/UI 改善 Issue 草案を生成する。
  *
  * 使い方（リポジトリルートから）:
  *   node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs
@@ -8,8 +8,8 @@
  *   node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs --skip-gh
  *
  * 出力:
- *   frontend/e2e/agent-review/ux-findings-draft.json
- *   frontend/e2e/agent-review/ux-issue-drafts.md
+ *   frontend/tmp/agent-review/ux-findings-draft.json
+ *   frontend/tmp/agent-review/ux-issue-drafts.md
  */
 import { execFile } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -18,14 +18,19 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
 import {
+  agentReviewTmpDir,
+  uxFindingsDraftPath,
+  uxIssueDraftsPath,
+} from '../../../../frontend/e2e/agent-review/agent-review-paths.mjs';
+import {
   attachIssueCandidates,
   buildCssFindings,
   buildVisualFindings,
   isLikelyDuplicateFinding,
   isLikelyResolvedFinding,
   parseCssAuditLog,
-  parseDetailedFindings,
-  parseVisualReviewTable,
+  parseDetailedFindingsFromReview,
+  parseVisualReviewJson,
 } from './collect-ux-findings-parsers.mjs';
 import {
   filterFindingsByEvidence,
@@ -36,14 +41,10 @@ const execFileAsync = promisify(execFile);
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const REPO_ROOT = join(__dirname, '../../../../');
+const FRONTEND_ROOT = join(REPO_ROOT, 'frontend');
 const GITHUB_REPO = 'rick-chick/agrr';
-const VISUAL_REVIEW_PATH = join(
-  REPO_ROOT,
-  'frontend/e2e/agent-review/visual-review-results.md',
-);
-const OUT_DIR = join(REPO_ROOT, 'frontend/e2e/agent-review');
-const JSON_OUT = join(OUT_DIR, 'ux-findings-draft.json');
-const MD_OUT = join(OUT_DIR, 'ux-issue-drafts.md');
+const JSON_OUT = uxFindingsDraftPath(FRONTEND_ROOT);
+const MD_OUT = uxIssueDraftsPath(FRONTEND_ROOT);
 
 const CSS_LOG_ARG = process.argv.indexOf('--css-audit-log');
 const CSS_LOG_PATH =
@@ -178,14 +179,14 @@ async function main() {
       console.error(`  - ${err}`);
     }
     console.error(
-      '  手順: npm run e2e:capture-for-agent → frontend-agent-visual-review → npm run e2e:agent-review:stamp-review',
+      '  手順: npm run e2e:capture-for-agent → frontend-agent-visual-review（visual-review.json 生成）',
     );
     process.exit(1);
   }
 
-  const visualMarkdown = evidence.reviewMarkdown;
-  const tableRows = parseVisualReviewTable(visualMarkdown);
-  const detailedItems = parseDetailedFindings(visualMarkdown);
+  const visualReview = evidence.review;
+  const tableRows = parseVisualReviewJson(visualReview);
+  const detailedItems = parseDetailedFindingsFromReview(visualReview);
   const visualFindings = buildVisualFindings(tableRows, detailedItems);
 
   let cssLog = '';
@@ -209,7 +210,7 @@ async function main() {
   const payload = {
     generatedAt: new Date().toISOString(),
     sources: {
-      visualReview: 'frontend/e2e/agent-review/visual-review-results.md',
+      visualReview: 'frontend/tmp/agent-review/visual-review.json',
       captureRunId: evidence.bundle?.runId ?? null,
       cssAudit: CSS_LOG_PATH || 'npm run audit:css-tokens (frontend/)',
       githubIssues: SKIP_GH ? 'skipped' : `gh issue list --repo ${GITHUB_REPO}`,
@@ -234,7 +235,7 @@ async function main() {
     findings,
   };
 
-  await mkdir(OUT_DIR, { recursive: true });
+  await mkdir(agentReviewTmpDir(FRONTEND_ROOT), { recursive: true });
   await writeFile(JSON_OUT, `${JSON.stringify(payload, null, 2)}\n`);
   await writeFile(MD_OUT, `${renderMarkdownDraft(findings)}\n`);
 
