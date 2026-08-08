@@ -32,6 +32,7 @@ frontend/angular.json -filter -diff -merge text eol=lf
 frontend/tsconfig*.json -filter -diff -merge text eol=lf
 frontend/src/assets/i18n/*.json -filter -diff -merge text eol=lf
 frontend/e2e/route-manifest.json -filter -diff -merge text eol=lf
+frontend/e2e/agent-review/agent-review-bundle.json -filter -diff -merge text eol=lf
 frontend/e2e/smoke/a11y-allowlist.json -filter -diff -merge text eol=lf
 # Lighthouse CI reads routes at build time (workflow checkout uses lfs: false)
 frontend/scripts/lighthouse-ci-routes.json -filter -diff -merge text eol=lf

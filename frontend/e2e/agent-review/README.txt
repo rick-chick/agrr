@@ -58,7 +58,8 @@ GitHub Actions workflow **`.github/workflows/frontend-e2e-capture.yml`** が **`
 | スタック | `docker compose` + `docker-compose.e2e-ci.yml`（`agrr-server` + `strangler-proxy`）+ Playwright `ng serve` |
 | テスト | リポジトリ root で `bash scripts/run-e2e-capture-ci.sh` → frontend で `npm run e2e:capture-for-agent` |
 | ゲート | `verify-capture-complete.mjs`（ルート数 × 3 言語の PNG 件数） |
-| artifact | `frontend/e2e/agent-review/out/*.png` + `frontend/tmp/agent-review/agent-review-bundle.json`（保持 14 日） |
+| artifact | `frontend/e2e/agent-review/out/*.png` + `frontend/tmp/agent-review/agent-review-bundle.json`（保持 14 日。57 ルート × 3 言語 ≈ 171 枚・合計数十 MB 程度） |
+| bundle runId 整合 | キャプチャ時に `tmp/agent-review/agent-review-bundle.json` を生成。`visual-review.json` の **captureRunId** は `frontend-agent-visual-review` で bundle.runId と一致させる（repo 追跡の md/json は使わない） |
 | 所要時間 | 初回（DB ロード + イメージ build）は 60–90 分、キャッシュ済みは 30–50 分程度（runner 性能依存） |
 
 ローカルで CI と同条件を試す場合（Docker 必須）:

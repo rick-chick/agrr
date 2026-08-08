@@ -15,6 +15,36 @@ export { BUNDLE_FILENAME } from './agent-review-paths.mjs';
 export { bundlePath } from './agent-review-paths.mjs';
 
 /**
+ * @param {string} content
+ */
+export function isGitLfsPointer(content) {
+  return String(content || '').trimStart().startsWith('version https://git-lfs.github.com/spec/v1');
+}
+
+/**
+ * @param {string} content
+ * @returns {{ bundle: object | null, errors: string[] }}
+ */
+export function parseAgentReviewBundleContent(content) {
+  if (!content?.trim()) {
+    return { bundle: null, errors: ['agent-review-bundle.json が空です'] };
+  }
+  if (isGitLfsPointer(content)) {
+    return {
+      bundle: null,
+      errors: [
+        'agent-review-bundle.json が Git LFS ポインタのままです。`git lfs pull` するか、.gitattributes で LFS 除外後に実体 JSON をコミットすること',
+      ],
+    };
+  }
+  try {
+    return { bundle: JSON.parse(content), errors: [] };
+  } catch {
+    return { bundle: null, errors: ['agent-review-bundle.json が JSON として読めません'] };
+  }
+}
+
+/**
  * @param {string} frontendRoot
  */
 export function agentOutDir(frontendRoot) {
