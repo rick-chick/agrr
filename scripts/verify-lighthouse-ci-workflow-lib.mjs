@@ -21,6 +21,7 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'mock_login',
   'lighthouse-ci-resolve-auth-urls.mjs',
   'lighthouse-ci-auth-puppeteer.cjs',
+  '${ROOT}/docker-compose.yml',
 ];
 
 const REQUIRED_LIGHTHOUSE_RC_SNIPPETS = [
