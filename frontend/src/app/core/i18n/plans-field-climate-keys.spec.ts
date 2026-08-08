@@ -39,8 +39,7 @@ const FIELD_CLIMATE_KEYS = [
   'plans.field_climate.open_task_schedule',
   'plans.field_climate.a11y.temperature_chart',
   'plans.field_climate.a11y.gdd_chart',
-  'plans.field_climate.a11y.skip_to_data_table',
-  'plans.detail.select_cultivation_hint'
+  'plans.field_climate.a11y.skip_to_data_table'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [
