@@ -121,6 +121,18 @@ describe('CropSetupProposalImportPresenter', () => {
     expect(lastControl.applying).toBe(false);
   });
 
+  it('onApplySuccess with valid false shows validation errors', () => {
+    presenter.onApplySuccess({
+      mode: 'apply',
+      valid: false,
+      errors: [{ path: 'stages[0].order', message: 'conflicts with an existing crop stage order' }]
+    });
+
+    expect(lastControl.applying).toBe(false);
+    expect(lastControl.phase).toBe('validation_errors');
+    expect(lastControl.validationErrors[0]?.path).toBe('stages[0].order');
+  });
+
   it('onError clears loading and submitting flags', () => {
     lastControl = {
       ...initialControl,
