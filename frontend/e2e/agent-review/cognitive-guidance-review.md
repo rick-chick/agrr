@@ -66,11 +66,11 @@
 
 1. **#10 public-plans/optimizing — failed** — 迷い: C,D / 導線: L1 あり・L0 不足 / 提案: 「気象データ取得に失敗」等の原因カテゴリをユーザー語で表示。`処理に失敗しました` 単体は Q3 不合格。
 
-2. **#31–32 fertilizes/:id, :id/edit — API 404** — 迷い: C,D / 導線: なし / 提案: マスタ一覧へ戻る L2 リンク＋「データが見つかりません」+ 再読み込み（work-hub / plan-work パターンに統一）。英語 HTTP 露出は i18n と併せて修正。
+2. **#31–32 fertilizes/:id, :id/edit — API 404** — 迷い: C,D / 導線: なし / 提案: マスタ一覧へ戻る L2 リンク＋「データが見つかりません」+ 再読み込み（work-hub / plan-work パターンに統一）。英語 HTTP 露出は i18n と併せて修正。**Follow-up: #741**
 
-3. **#39–40 pesticides/:id, :id/edit — API 500** — 迷い: C,D / 導線: なし / 提案: 同上。フォーム空＋技術エラーのみは Q10 に近い。
+3. **#39–40 pesticides/:id, :id/edit — API 500** — 迷い: C,D / 導線: なし / 提案: 同上。フォーム空＋技術エラーのみは Q10 に近い。**Follow-up: #741**
 
-4. **#12 public-plans/select-crop — キャプチャずれ** — 迷い: F / 導線: — / 提案: E2E 状態シードまたはガードの見直し。ユーザーは step2 に着いたつもりが step1 だと J2 全体が破綻。
+4. **#12 public-plans/select-crop — キャプチャずれ** — 迷い: F / 導線: — / 提案: E2E 状態シードまたはガードの見直し。ユーザーは step2 に着いたつもりが step1 だと J2 全体が破綻。**Follow-up: #740**
 
 ### P2
 

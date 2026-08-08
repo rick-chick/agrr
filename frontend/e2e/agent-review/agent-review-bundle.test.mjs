@@ -1,18 +1,44 @@
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { mkdtemp, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { promisify } from 'node:util';
 import { test } from 'node:test';
 
 import {
   buildRunId,
   bundleCoversPngs,
+  bundlePath,
   isActionableReviewRow,
   isUnreviewedResultToken,
   parseVisualReviewCaptureRunId,
   stampVisualReviewCaptureRunId,
   validateAgentReviewEvidenceChain,
 } from './agent-review-bundle-lib.mjs';
+
+const execFileAsync = promisify(execFile);
+const GIT_LFS_POINTER_PREFIX = 'version https://git-lfs.github.com/spec/v1';
+
+/**
+ * CI checkout uses lfs: false; materialize bundle when only the pointer is present.
+ * @param {string} frontendRoot
+ */
+async function readBundleJson(frontendRoot) {
+  const path = bundlePath(frontendRoot);
+  let raw = await readFile(path, 'utf8');
+  if (raw.startsWith(GIT_LFS_POINTER_PREFIX)) {
+    const repoRoot = join(frontendRoot, '..');
+    await execFileAsync('git', [
+      'lfs',
+      'pull',
+      '--include',
+      'frontend/e2e/agent-review/agent-review-bundle.json',
+    ], { cwd: repoRoot });
+    raw = await readFile(path, 'utf8');
+  }
+  return JSON.parse(raw);
+}
 
 test('parseVisualReviewCaptureRunId reads meta stamp', () => {
   const md = `
@@ -83,6 +109,25 @@ test('bundleCoversPngs checks artifact list', () => {
   const bad = bundleCoversPngs(bundle, ['missing.ja.png']);
   assert.equal(bad.ok, false);
   assert.deepEqual(bad.missing, ['missing.ja.png']);
+});
+
+test('tracked visual-review captureRunId matches agent-review-bundle.json', async () => {
+  const frontendRoot = join(import.meta.dirname, '..', '..');
+  const bundle = await readBundleJson(frontendRoot);
+  const reviewMarkdown = await readFile(
+    join(frontendRoot, 'e2e/agent-review/visual-review-results.md'),
+    'utf8',
+  );
+  const result = validateAgentReviewEvidenceChain({
+    bundle,
+    reviewMarkdown,
+    manifestRouteCount: bundle.routeManifestRouteCount,
+  });
+  assert.equal(
+    result.ok,
+    true,
+    `evidence chain structural errors: ${result.errors.join('; ')}`,
+  );
 });
 
 test('generateCaptureBundle writes bundle with artifacts', async () => {
