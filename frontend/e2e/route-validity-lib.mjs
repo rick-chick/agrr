@@ -21,10 +21,3 @@ export function workCapturePathnameOk(pathname) {
   const n = normalizePathname(pathname);
   return n === '/work' || /^\/plans\/\d+\/work$/.test(n);
 }
-
-/** @param {string} pathname 正規化済み pathname */
-export function hostSelectorForWorkCapture(pathname) {
-  const n = normalizePathname(pathname);
-  if (/^\/plans\/\d+\/work$/.test(n)) return 'app-plan-work';
-  return 'app-work-hub';
-}

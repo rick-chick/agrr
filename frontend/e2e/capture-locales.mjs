@@ -9,7 +9,7 @@ import { documentHtmlLang } from '../scripts/document-html-lang.mjs';
 export const CAPTURE_LOCALES = ['ja', 'en', 'in'];
 
 /** @param {string} pattern route-manifest の pattern */
-export function pngBasename(pattern) {
+function pngBasename(pattern) {
   if (pattern === '') return 'home';
   if (pattern === '**') return 'not-found';
   return pattern.replace(/[^\w.-]+/g, '_');
@@ -22,8 +22,6 @@ export function pngBasename(pattern) {
 export function agentPngFilename(pattern, locale) {
   return `${pngBasename(pattern)}.${locale}.png`;
 }
-
-export { documentHtmlLang };
 
 /**
  * Agent PNG キャプチャ時の期待 `document.documentElement.lang`。

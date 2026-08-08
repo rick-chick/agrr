@@ -141,7 +141,7 @@
 
 **CSS**: `audit:css-tokens:enforce` exit 0（var 外 0 件）。
 
-**キャプチャ**: 2026-08-08 に manifest 全 **57 ルート × 3 言語 = 171 PNG** を `e2e:capture-for-agent` で取得。証拠鎖用 `captureRunId` は未設定（`npm run e2e:agent-review:stamp-review` 要）。
+**キャプチャ**: 2026-08-08 に manifest 全 **57 ルート × 3 言語 = 171 PNG** を `e2e:capture-for-agent` で取得。`captureRunId` は `agent-review-bundle.json` と一致。
 
 **ビジュアル**: #713 増分（`en`・`account`・`api-keys`・作物 setup/stages/blueprints・`work` リダイレクト）をレビュー済み。public-plans results の 404 二重表示・optimizing 気象失敗・`work` ハブ未検証が残課題。
 
