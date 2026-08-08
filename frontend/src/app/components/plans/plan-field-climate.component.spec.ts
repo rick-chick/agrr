@@ -225,6 +225,23 @@ describe('PlanFieldClimateComponent (template)', () => {
     fixture?.destroy();
   });
 
+  it('exposes role=img and aria-label on climate chart regions', () => {
+    component.control = { loading: false, error: null, climateData: sampleData };
+    fixture.detectChanges();
+
+    const temperatureChart = fixture.nativeElement.querySelector(
+      '.plan-field-climate__chart-card--temperature .plan-field-climate__chart-wrapper'
+    );
+    expect(temperatureChart?.getAttribute('role')).toBe('img');
+    expect(temperatureChart?.getAttribute('aria-label')).toBeTruthy();
+
+    const gddChart = fixture.nativeElement.querySelector(
+      '.plan-field-climate__chart-card--gdd .plan-field-climate__chart-wrapper'
+    );
+    expect(gddChart?.getAttribute('role')).toBe('img');
+    expect(gddChart?.getAttribute('aria-label')).toBeTruthy();
+  });
+
   it('renders chart-first layout markers and mobile chart tabs when climate data is shown', async () => {
     component.control = { loading: false, error: null, climateData: sampleData };
     fixture.detectChanges();
