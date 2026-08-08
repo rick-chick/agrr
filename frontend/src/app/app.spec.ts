@@ -38,4 +38,22 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-navbar')).toBeTruthy();
   });
+
+  it('should render skip link targeting main content', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const skipLink = compiled.querySelector('a.skip-link');
+    expect(skipLink).toBeTruthy();
+    expect(skipLink?.getAttribute('href')).toBe('#main-content');
+  });
+
+  it('should expose main landmark with id main-content for skip navigation', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const main = compiled.querySelector('main.app-main');
+    expect(main?.id).toBe('main-content');
+    expect(main?.getAttribute('tabindex')).toBe('-1');
+  });
 });
