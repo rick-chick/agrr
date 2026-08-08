@@ -50,6 +50,8 @@ const translations = {
       title: 'Crops',
       description: 'Manage crops',
       new_crop: 'Add crop',
+      delete_confirm_message:
+        'Delete this crop? Growth stages and task schedule templates will also be removed. You can undo shortly after deleting.',
       inline: {
         stages_toggle: 'Growth stages',
         blueprints_toggle: 'Edit task plans'
@@ -63,21 +65,28 @@ const translations = {
     loading: 'Loading…',
     edit: 'Edit',
     delete: 'Delete',
+    cancel: 'Cancel',
     actions: 'Actions'
   }
 };
 
 describe('CropListComponent card actions', () => {
   let fixture: ComponentFixture<CropListComponent>;
+  let deleteUseCase: { execute: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
+    deleteUseCase = { execute: vi.fn() };
+
     await TestBed.configureTestingModule({
       imports: [CropListComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
         CropListPresenter,
         { provide: LoadCropListUseCase, useValue: { execute: vi.fn() } },
-        { provide: DeleteCropUseCase, useValue: { execute: vi.fn() } },
+        { provide: DeleteCropUseCase, useValue: deleteUseCase },
         { provide: AuthService, useValue: { user: () => ({ admin: false }) } },
         { provide: FlashMessageService, useValue: { show: vi.fn() } },
         { provide: UndoToastService, useValue: { show: vi.fn() } },
@@ -207,5 +216,23 @@ describe('CropListComponent card actions', () => {
 
     expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.master-loading:not(.list-loading-text)')).toBeNull();
+  });
+
+  it('opens delete confirm dialog before deleting crop', () => {
+    const component = fixture.componentInstance;
+    component.deleteConfirmDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as never;
+
+    component.deleteCrop(10);
+
+    expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
+    expect(deleteUseCase.execute).not.toHaveBeenCalled();
+
+    component.confirmDeleteCrop();
+    expect(deleteUseCase.execute).toHaveBeenCalledWith({
+      cropId: 10,
+      onAfterUndo: expect.any(Function)
+    });
   });
 });
