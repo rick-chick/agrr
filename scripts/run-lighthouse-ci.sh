@@ -40,7 +40,7 @@ if [[ ! -d "$DIST_DIR" ]]; then
 fi
 
 run_auth_phase() {
-  local compose_files=(-f docker-compose.yml -f docker-compose.e2e-ci.yml)
+  local compose_files=(-f "${ROOT}/docker-compose.yml" -f "${ROOT}/docker-compose.e2e-ci.yml")
   local cache_dir="${ROOT}/.docker/e2e_dev_db_cache"
   local storage_dir="${ROOT}/storage"
   local db_path="${storage_dir}/development.sqlite3"
@@ -96,6 +96,10 @@ if [[ "$PUBLIC_ONLY" -eq 0 ]]; then
     run_auth_phase || {
       echo "WARN: auth Lighthouse phase skipped (stack unavailable). Public routes only." >&2
       rm -f scripts/lighthouse-ci-auth-urls.json scripts/.lighthouse-auth-cookies.json
+      if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+        echo "ERROR: auth Lighthouse phase is required in CI (docker stack must start)" >&2
+        exit 1
+      fi
     }
   else
     echo "WARN: docker not found — skipping auth Lighthouse routes" >&2

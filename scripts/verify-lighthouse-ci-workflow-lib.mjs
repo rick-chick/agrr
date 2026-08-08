@@ -18,6 +18,8 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'npm run build',
   'lighthouse-ci-auth-setup.mjs',
   'mock_login_as',
+  '${ROOT}/docker-compose.yml',
+  '${ROOT}/docker-compose.e2e-ci.yml',
 ];
 
 const REQUIRED_LIGHTHOUSE_RC_SNIPPETS = [
