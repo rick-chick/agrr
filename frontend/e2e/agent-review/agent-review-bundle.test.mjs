@@ -11,14 +11,15 @@ import {
   bundleCoversPngs,
   bundlePath,
   isActionableReviewRow,
+  isGitLfsPointer,
   isUnreviewedResultToken,
+  parseAgentReviewBundleContent,
   parseVisualReviewCaptureRunId,
   stampVisualReviewCaptureRunId,
   validateAgentReviewEvidenceChain,
 } from './agent-review-bundle-lib.mjs';
 
 const execFileAsync = promisify(execFile);
-const GIT_LFS_POINTER_PREFIX = 'version https://git-lfs.github.com/spec/v1';
 
 /**
  * CI checkout uses lfs: false; materialize bundle when only the pointer is present.
@@ -27,7 +28,7 @@ const GIT_LFS_POINTER_PREFIX = 'version https://git-lfs.github.com/spec/v1';
 async function readBundleJson(frontendRoot) {
   const path = bundlePath(frontendRoot);
   let raw = await readFile(path, 'utf8');
-  if (raw.startsWith(GIT_LFS_POINTER_PREFIX)) {
+  if (isGitLfsPointer(raw)) {
     const repoRoot = join(frontendRoot, '..');
     await execFileAsync('git', [
       'lfs',
@@ -37,8 +38,28 @@ async function readBundleJson(frontendRoot) {
     ], { cwd: repoRoot });
     raw = await readFile(path, 'utf8');
   }
-  return JSON.parse(raw);
+  const { bundle, errors } = parseAgentReviewBundleContent(raw);
+  if (!bundle) {
+    throw new Error(errors.join('; '));
+  }
+  return bundle;
 }
+
+test('parseAgentReviewBundleContent rejects LFS pointer', () => {
+  const { bundle, errors } = parseAgentReviewBundleContent(
+    'version https://git-lfs.github.com/spec/v1\noid sha256:abc\nsize 1\n',
+  );
+  assert.equal(bundle, null);
+  assert.match(errors[0], /LFS ポインタ/);
+});
+
+test('isGitLfsPointer detects LFS pointer text', () => {
+  assert.equal(
+    isGitLfsPointer('version https://git-lfs.github.com/spec/v1\noid sha256:abc\nsize 1\n'),
+    true,
+  );
+  assert.equal(isGitLfsPointer('{"bundleVersion":1}\n'), false);
+});
 
 test('parseVisualReviewCaptureRunId reads meta stamp', () => {
   const md = `
