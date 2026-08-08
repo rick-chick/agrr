@@ -151,5 +151,31 @@ export async function verifyLighthouseCiWorkflow(repoRoot) {
     errors.push(`missing runbook: ${runbookPath}`);
   }
 
+  const smokeReadmePath = join(repoRoot, 'frontend/e2e/smoke/README.md');
+  try {
+    const smokeReadme = await readFile(smokeReadmePath, 'utf8');
+    for (const snippet of [
+      'Lighthouse CI',
+      'mock_login',
+      'lighthouse-ci-auth-puppeteer',
+      'run-lighthouse-ci.sh',
+    ]) {
+      if (!smokeReadme.includes(snippet)) {
+        errors.push(`e2e/smoke/README.md missing Lighthouse auth snippet: ${snippet}`);
+      }
+    }
+  } catch {
+    errors.push(`missing smoke README: ${smokeReadmePath}`);
+  }
+
+  try {
+    const lighthouseRcDoc = await readFile(lighthouseRcPath, 'utf8');
+    if (!lighthouseRcDoc.includes('mobile') || !lighthouseRcDoc.includes('desktop')) {
+      errors.push('lighthouserc.js missing desktop vs mobile preset documentation');
+    }
+  } catch {
+    /* lighthouseRcPath error already recorded above */
+  }
+
   return { ok: errors.length === 0, errors };
 }
