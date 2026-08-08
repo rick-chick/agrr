@@ -84,10 +84,15 @@ describe('CropDetailComponent', () => {
       paramMap: { get: ReturnType<typeof vi.fn> };
     };
   };
+  let deleteUseCase: { execute: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     loadUseCase = { execute: vi.fn() };
     loadBlueprintsUseCase = { execute: vi.fn() };
+    deleteUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
     mockActivatedRoute = {
       snapshot: {
@@ -100,7 +105,7 @@ describe('CropDetailComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadCropDetailUseCase, useValue: loadUseCase },
-          { provide: DeleteCropUseCase, useValue: { execute: vi.fn() } },
+          { provide: DeleteCropUseCase, useValue: deleteUseCase },
           { provide: LoadCropTaskScheduleBlueprintsUseCase, useValue: loadBlueprintsUseCase },
           { provide: CropDetailPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } },
@@ -865,5 +870,56 @@ describe('CropDetailComponent', () => {
     expect(
       fixture.nativeElement.querySelector('.master-loading:not(.detail-loading-text)')
     ).toBeNull();
+  });
+
+  it('opens delete confirm dialog before deleting crop', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      crops: {
+        show: {
+          delete_confirm_message:
+            'Delete this crop? Growth stages and task schedule templates will also be removed. You can undo shortly after deleting.'
+        }
+      },
+      common: { cancel: 'Cancel', delete: 'Delete' }
+    });
+    translate.use('en');
+
+    component.control = loadedState;
+    component.deleteConfirmDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as never;
+    fixture.detectChanges();
+
+    component.deleteCrop();
+
+    expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
+    expect(deleteUseCase.execute).not.toHaveBeenCalled();
+
+    component.confirmDeleteCrop();
+    expect(deleteUseCase.execute).toHaveBeenCalledWith({
+      cropId: 3,
+      onSuccess: expect.any(Function)
+    });
+  });
+
+  it('delete confirm dialog shows impact scope message', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      crops: {
+        show: {
+          delete_confirm_message:
+            'Delete this crop? Growth stages and task schedule templates will also be removed. You can undo shortly after deleting.'
+        }
+      },
+      common: { cancel: 'Cancel', delete: 'Delete' }
+    });
+    translate.use('en');
+
+    component.control = loadedState;
+    component.pendingDeleteCrop = true;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Growth stages and task schedule templates');
   });
 });
