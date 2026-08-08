@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -79,6 +79,25 @@ const initialControl: FarmListViewState = {
         }
       </section>
     </div>
+
+    <dialog
+      #deleteConfirmDialog
+      class="confirm-dialog farm-list__delete-confirm"
+      (cancel)="cancelDeleteConfirmDialog($event)"
+      (click)="onDeleteConfirmDialogBackdropClick($event)"
+    >
+      @if (pendingDeleteFarmId != null) {
+        <p class="confirm-dialog__message">{{ 'farms.index.delete_confirm_message' | translate }}</p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelDeleteConfirmDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDeleteFarm()">
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./farm-list.component.css']
 })
@@ -91,6 +110,10 @@ export class FarmListComponent implements FarmListView, OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
+
+  @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
+  pendingDeleteFarmId: number | null = null;
 
   private _control: FarmListViewState = initialControl;
   get control(): FarmListViewState {
@@ -125,6 +148,29 @@ export class FarmListComponent implements FarmListView, OnInit, OnDestroy {
   }
 
   deleteFarm(farmId: number): void {
+    this.pendingDeleteFarmId = farmId;
+    this.deleteConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  confirmDeleteFarm(): void {
+    if (this.pendingDeleteFarmId == null) {
+      return;
+    }
+    const farmId = this.pendingDeleteFarmId;
+    this.pendingDeleteFarmId = null;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
     this.deleteUseCase.execute({ farmId, onAfterUndo: () => this.refreshAfterUndo() });
+  }
+
+  cancelDeleteConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.pendingDeleteFarmId = null;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+  }
+
+  onDeleteConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
+      this.cancelDeleteConfirmDialog();
+    }
   }
 }

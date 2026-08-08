@@ -33,7 +33,8 @@ const CATALOG_KEYS = [
   'farms.index.title',
   'farms.index.description',
   'farms.index.new_farm',
-  'farms.index.reference_badge'
+  'farms.index.reference_badge',
+  'farms.index.delete_confirm_message'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [
