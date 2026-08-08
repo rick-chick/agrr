@@ -86,7 +86,7 @@ run_auth_phase() {
   fi
 
   echo "==> Preparing auth cookies and resolved URLs (mock_login_as/developer)"
-  export LIGHTHOUSE_AUTH_API_ORIGIN="http://127.0.0.1:4200"
+  export LIGHTHOUSE_AUTH_API_ORIGIN="http://127.0.0.1:3000"
   export LIGHTHOUSE_AUTH_FRONTEND_ORIGIN="http://127.0.0.1:4200"
   node scripts/lighthouse-ci-auth-setup.mjs
 }

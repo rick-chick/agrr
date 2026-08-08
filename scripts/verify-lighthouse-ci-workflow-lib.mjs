@@ -20,6 +20,7 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'mock_login_as',
   '${ROOT}/docker-compose.yml',
   '${ROOT}/docker-compose.e2e-ci.yml',
+  'LIGHTHOUSE_AUTH_API_ORIGIN="http://127.0.0.1:3000"',
 ];
 
 const REQUIRED_LIGHTHOUSE_RC_SNIPPETS = [
