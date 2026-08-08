@@ -1,3 +1,8 @@
+# Status: historical
+
+This document describes the **Ruby `lib/domain` era** layout. Production code now lives in `crates/agrr-domain`. Current layer rules: [`../../architecture/LAYER-RULES.md`](../../architecture/LAYER-RULES.md).
+
+---
 # Rust ドメイン層アーキテクチャ
 
 ## レイヤ対応
