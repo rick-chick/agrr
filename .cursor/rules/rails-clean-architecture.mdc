@@ -1,7 +1,7 @@
 ---
 description: >-
-  Rails / Angular CA boundary in this repo; ARCHITECTURE.md wins; parent runs
-  full workflow (section 0–6) per violation-fix SKILL for new and existing work.
+  Rust / Angular CA boundary in this repo; ARCHITECTURE.md + LAYER-RULES.md win;
+  parent runs full workflow (section 0–6) per violation-fix SKILL for new and existing work.
 alwaysApply: true
 ---
 
@@ -9,43 +9,36 @@ alwaysApply: true
 
 ## 規約の優先順位（必ず従う）
 
-**`ARCHITECTURE.md` が最上位。** 次はその要約（詳細・禁止番号は常に原文を見る）。
+**[`ARCHITECTURE.md`](../../ARCHITECTURE.md)**（L1 codemap）と **[`docs/architecture/LAYER-RULES.md`](../../docs/architecture/LAYER-RULES.md)**（L2 詳細）が最上位。禁止番号は LAYER-RULES の R0–R10 / ❌ 条項（ゲートでは 1–39 として照合）。
 
 | 優先 | 根拠として使ってよいか |
 |------|------------------------|
-| 1. **`ARCHITECTURE.md`**（`## What we require`、`## Prohibited practices` 1–30、境界の説明） | 可 |
+| 1. **ARCHITECTURE.md + LAYER-RULES.md**（`## What we require`、禁止 ❌、境界） | 可 |
 | 2. **該当テスト**（観測可能な振る舞いを表明） | 可（1 と矛盾させない範囲） |
 | 3. 業界記事・慣習・Pragmatism 単体 | 不可 |
 | 4. 「既存もそう」 | 不可 |
 | 5. 「テストが通った」だけ | 不可 |
 
-`lib/domain`・gateway・`CompositionRoot`・Interactor / Presenter 配線に触れる変更では、触れる層に関わる `What we require` / `Prohibited practices` を読み、違反を増やさない。ブログ的な書き方と規約が食い違ったら **規約側**。
+`crates/agrr-domain`・gateway・`composition.rs`・Interactor / Presenter 配線に触れる変更では、触れる層の LAYER-RULES を読み、違反を増やさない。
 
-総則は **`no-convenience-tech-debt.mdc`**。下記は**最小チェック**（禁止の網羅は `ARCHITECTURE.md`）。
+総則は **`no-convenience-tech-debt.mdc`**。下記は**最小チェック**（禁止の網羅は LAYER-RULES）。
 
 ## 求めること（肯定形）
 
-- **内向き依存**: フレームワーク・ORM・HTTP・時刻は**端**で注入。`lib/domain` の Interactor は **DTO/エンティティと狭いポート**だけを受け取る。
-- **判断は一箇所**: ビジネス結果は **policy / interactor**。Presenter・テンプレは**出力の形**だけ。同じルールをモデル・サービス・ビューに複製しない。
-- **配線は明示**: コンストラクタが契約。`*Port.default` / `*Gateway.default` / `CompositionRoot.*` を **presenter や interactor 内部**から呼ばない。
-- **挙動の規約**: **`ARCHITECTURE.md`・ポート/DTO・そのテスト**。「既存 Rails と同じ」だけを根拠にしない。
+- **内向き依存**: フレームワーク・ORM・HTTP・時刻は**端**（`crates/agrr-server`）で注入。`crates/agrr-domain` の Interactor は **DTO/エンティティと狭いポート**だけを受け取る。
+- **判断は一箇所**: ビジネス結果は **policy / interactor**。Presenter は**出力の形**だけ。
+- **配線は明示**: コンストラクタが契約。デフォルトゲートウェイや composition 内部呼び出しを **presenter / interactor 内部**に置かない。
+- **挙動の規約**: **LAYER-RULES・ポート/DTO・そのテスト**。
 
 ## 行わないこと（代表的なもの）
 
 | 領域 | 行わないこと |
 |------|----|
-| `lib/domain` | `Rails.*`、`Date.current` / `Time.current`（注入 clock または引数でない）、AR の `.where` / `includes`、具象 `Adapters::` の `new` |
-| Interactor | `params` 生形、`render` / `redirect_to`、表示順だけのロジック、`CompositionRoot` 呼び出し |
-| `lib/presenters` | `CompositionRoot` / `Gateway.default` / `find_model` でのデータ取得、認可・本質的バリデーション |
-| `app/views`（ERB 等テンプレート） | ActiveRecord の取得・クエリ・関連トラバース（表示用データは Interactor → Presenter 経由の DTO / 値のみ） |
-| リファクタ | domain から追い出して**太い controller / app/services**に寄せるだけ（DTO・ポート・注入なし） |
-
-## アンチパターン（根拠不足で受け入れない説明）
-
-レイヤ外へ責務を移す・God Gateway・配線の差し替えを、「ドメインに書いてない」「インターフェースがある」「テストが通った」だけで受け入れない（該当は `ARCHITECTURE.md` の 17・18・20・22・26 など）。違反の記述は **番号と層**で行い、形容詞や「後で直す」での先送りは `no-convenience-tech-debt.mdc` に反する。
-
-`rescue ActiveRecord::RecordInvalid` の残置・二重取得・Input Port の歪み・十分な根拠のない `else` 振り分けなど、**新規差分で増やした／残した**ものは **Application edge 項 3 / Interactors 項 / Rationalizations** を原文で照合する。
+| `crates/agrr-domain` | `chrono::Utc::now()` の直叩き（clock 注入なし）、SQL/HTTP 直叩き、具象 adapter の `new` |
+| Interactor | 生 HTTP パラメータ、`render` 相当、表示順だけのロジック、edge からの隠れ取得 |
+| Presenter | gateway 取得・認可・本質的バリデーション |
+| リファクタ | domain から追い出して**太い handler / services**に寄せるだけ |
 
 ## 実装後
 
-`lib/domain`・gateway 境界・`CompositionRoot` に触れる変更（**Rails / Angular とも**）では、**実装後の Clean Architecture チェック**を実施する（**新規・単発も**省略不可）。範囲・手順は [`agent-conventions.mdc`](agent-conventions.mdc) 用語表に従う。コミットメッセージで禁止番号を明示するとよい。
+`crates/agrr-domain`・gateway 境界・composition に触れる変更では、**実装後の Clean Architecture チェック**を実施（[`agent-conventions.mdc`](agent-conventions.mdc) 用語表）。
