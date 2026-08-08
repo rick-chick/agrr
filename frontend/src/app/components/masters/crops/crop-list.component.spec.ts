@@ -50,6 +50,8 @@ const translations = {
       title: 'Crops',
       description: 'Manage crops',
       new_crop: 'Add crop',
+      delete_confirm_message:
+        'Delete this crop? Growth stages and task schedule templates will also be removed. You can undo shortly after deleting.',
       inline: {
         stages_toggle: 'Growth stages',
         blueprints_toggle: 'Edit task plans'
@@ -63,6 +65,7 @@ const translations = {
     loading: 'Loading…',
     edit: 'Edit',
     delete: 'Delete',
+    cancel: 'Cancel',
     actions: 'Actions'
   }
 };
@@ -71,6 +74,9 @@ describe('CropListComponent card actions', () => {
   let fixture: ComponentFixture<CropListComponent>;
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     await TestBed.configureTestingModule({
       imports: [CropListComponent, TranslateModule.forRoot()],
       providers: [
@@ -207,5 +213,26 @@ describe('CropListComponent card actions', () => {
 
     expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.master-loading:not(.list-loading-text)')).toBeNull();
+  });
+
+  it('opens delete confirm dialog with impact message before deleting crop', () => {
+    const component = fixture.componentInstance;
+    const deleteUseCase = TestBed.inject(DeleteCropUseCase) as { execute: ReturnType<typeof vi.fn> };
+    component.deleteConfirmDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as never;
+
+    component.deleteCrop(10);
+    fixture.detectChanges();
+
+    expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Growth stages and task schedule templates');
+    expect(deleteUseCase.execute).not.toHaveBeenCalled();
+
+    component.confirmDeleteCrop();
+    expect(deleteUseCase.execute).toHaveBeenCalledWith({
+      cropId: 10,
+      onAfterUndo: expect.any(Function)
+    });
   });
 });

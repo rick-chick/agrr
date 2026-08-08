@@ -86,6 +86,9 @@ describe('CropDetailComponent', () => {
   };
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     loadUseCase = { execute: vi.fn() };
     loadBlueprintsUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
@@ -865,5 +868,39 @@ describe('CropDetailComponent', () => {
     expect(
       fixture.nativeElement.querySelector('.master-loading:not(.detail-loading-text)')
     ).toBeNull();
+  });
+
+  it('opens delete confirm dialog with impact message before deleting crop', () => {
+    const translate = TestBed.inject(TranslateService);
+    const deleteUseCase = TestBed.inject(DeleteCropUseCase) as { execute: ReturnType<typeof vi.fn> };
+    translate.setTranslation('en', {
+      crops: {
+        show: {
+          delete_confirm_message:
+            'Delete this crop? Growth stages and task schedule templates will also be removed. You can undo shortly after deleting.'
+        }
+      },
+      common: { cancel: 'Cancel', delete: 'Delete' }
+    });
+    translate.use('en');
+
+    component.control = loadedState;
+    component.deleteConfirmDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as never;
+    fixture.detectChanges();
+
+    component.deleteCrop();
+    fixture.detectChanges();
+
+    expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Growth stages and task schedule templates');
+    expect(deleteUseCase.execute).not.toHaveBeenCalled();
+
+    component.confirmDeleteCrop();
+    expect(deleteUseCase.execute).toHaveBeenCalledWith({
+      cropId: 3,
+      onSuccess: expect.any(Function)
+    });
   });
 });

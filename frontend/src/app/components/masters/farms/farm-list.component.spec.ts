@@ -20,6 +20,9 @@ describe('FarmListComponent', () => {
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     loadUseCase = { execute: vi.fn() };
     deleteUseCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
@@ -59,9 +62,12 @@ describe('FarmListComponent', () => {
     translateService.setTranslation('en', {
       farms: {
         index: {
-          reference_badge: 'Reference'
+          reference_badge: 'Reference',
+          delete_confirm_message:
+            'Delete this farm? Registered fields and cultivation plans will be affected. You can undo shortly after deleting.'
         }
-      }
+      },
+      common: { cancel: 'Cancel', delete: 'Delete' }
     });
     translateService.use('en');
 
@@ -98,9 +104,20 @@ describe('FarmListComponent', () => {
     expect(loadUseCase.execute).toHaveBeenCalled();
   });
 
-  it('calls deleteUseCase.execute with farmId on deleteFarm', () => {
+  it('opens delete confirm dialog before calling deleteUseCase', () => {
     const farmId = 123;
+    component.deleteConfirmDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as never;
+
     component.deleteFarm(farmId);
+    fixture.detectChanges();
+
+    expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Registered fields and cultivation plans');
+    expect(deleteUseCase.execute).not.toHaveBeenCalled();
+
+    component.confirmDeleteFarm();
     expect(deleteUseCase.execute).toHaveBeenCalledWith({
       farmId,
       onAfterUndo: expect.any(Function)

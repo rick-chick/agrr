@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { PlanListComponent } from './plan-list.component';
@@ -39,6 +39,9 @@ describe('PlanListComponent', () => {
   };
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     loadUseCase = { execute: vi.fn() };
     deleteUseCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
@@ -64,6 +67,18 @@ describe('PlanListComponent', () => {
 
     fixture = TestBed.createComponent(PlanListComponent);
     component = fixture.componentInstance;
+
+    const translateService = TestBed.inject(TranslateService);
+    translateService.setTranslation('en', {
+      plans: {
+        index: {
+          delete_confirm_message:
+            'Delete this cultivation plan? Field assignments and work record links will be removed. You can undo shortly after deleting.'
+        }
+      },
+      common: { cancel: 'Cancel', delete: 'Delete' }
+    });
+    translateService.use('en');
 
     Object.defineProperty(component, 'cdr', { value: cdr });
   });
@@ -110,19 +125,35 @@ describe('PlanListComponent', () => {
     expect(loadUseCase.execute).toHaveBeenCalled();
   });
 
-  it('deletePlan calls deleteUseCase with onAfterUndo callback', () => {
-    const planId = 12;
+  it('deletePlan opens confirm dialog with impact message before calling deleteUseCase', async () => {
+    const nativeElement = await renderPlans([
+      { id: 12, name: 'Plan A', status: 'pending', farm_id: 1 }
+    ]);
 
-    component.deletePlan(planId);
+    component.deleteConfirmDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as never;
 
+    component.deletePlan(12);
+    fixture.detectChanges();
+
+    expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
+    expect(nativeElement.textContent).toContain('Field assignments and work record links');
+    expect(deleteUseCase.execute).not.toHaveBeenCalled();
+
+    component.confirmDeletePlan();
     expect(deleteUseCase.execute).toHaveBeenCalledWith({
-      planId,
+      planId: 12,
       onAfterUndo: expect.any(Function)
     });
   });
 
   it('onAfterUndo callback triggers refreshAfterUndo', () => {
+    component.deleteConfirmDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as never;
     component.deletePlan(42);
+    component.confirmDeletePlan();
 
     const executeCall = deleteUseCase.execute.mock.calls[0][0];
     expect(executeCall.onAfterUndo).toBeDefined();
@@ -197,18 +228,22 @@ describe('PlanListComponent', () => {
     expect(planTitles[1].textContent.trim()).toBe('Plan B');
   });
 
-  it('delete button triggers deletePlan action', async () => {
+  it('delete button opens delete confirm dialog', async () => {
     const plans: PlanSummary[] = [
       { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
     ];
 
     const nativeElement = await renderPlans(plans);
+    component.deleteConfirmDialogRef = {
+      nativeElement: { showModal: vi.fn(), close: vi.fn() }
+    } as never;
     const deleteSpy = vi.spyOn(component, 'deletePlan');
 
     const deleteButton = nativeElement.querySelector('.item-card__actions .btn-danger');
     deleteButton.click();
 
     expect(deleteSpy).toHaveBeenCalledWith(1);
+    expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
   });
 
   it('delete button uses outline danger style (not filled red background)', async () => {
