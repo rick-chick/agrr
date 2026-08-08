@@ -29,8 +29,8 @@ test('public-desktop config targets prerender dist with desktop preset routes', 
   assert.ok(config.ci.collect.url.includes('/contact/'));
 });
 
-test('public-mobile config uses mobile preset for /about', () => {
+test('public-mobile config uses mobile form factor for /about', () => {
   const config = require(join(FRONTEND_ROOT, 'lighthouserc.public-mobile.js'));
-  assert.equal(config.ci.collect.settings.preset, 'mobile');
+  assert.equal(config.ci.collect.settings.formFactor, 'mobile');
   assert.deepEqual(config.ci.collect.url, ['/about/']);
 });

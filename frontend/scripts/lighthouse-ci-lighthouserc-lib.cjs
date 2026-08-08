@@ -31,6 +31,20 @@ function groupRoutesByPreset(routeList) {
 }
 
 /** @param {string} preset */
+function buildCollectSettings(preset) {
+  if (preset === 'mobile') {
+    return {
+      formFactor: 'mobile',
+      chromeFlags: CHROME_FLAGS,
+    };
+  }
+  return {
+    preset: 'desktop',
+    chromeFlags: CHROME_FLAGS,
+  };
+}
+
+/** @param {string} preset */
 function buildPublicConfig(preset) {
   const byPreset = groupRoutesByPreset(routes);
   const urls = byPreset[preset] ?? [];
@@ -40,10 +54,7 @@ function buildPublicConfig(preset) {
         staticDistDir: './dist/frontend/browser',
         url: urls,
         numberOfRuns: 1,
-        settings: {
-          preset,
-          chromeFlags: CHROME_FLAGS,
-        },
+        settings: buildCollectSettings(preset),
       },
       assert: buildAssertions(),
       upload: buildUpload(),
