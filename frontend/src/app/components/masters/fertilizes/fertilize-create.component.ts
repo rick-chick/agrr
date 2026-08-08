@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -13,6 +13,7 @@ import {
   FERTILIZE_CREATE_PROVIDERS
 } from '../../../usecase/fertilizes/fertilize-create.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
+import { FormFieldComponent } from '../../shared/form-field/form-field.component';
 
 const initialFormData: FertilizeCreateFormData = {
   name: '',
@@ -38,18 +39,23 @@ const initialControl: FertilizeCreateViewState = {
 @Component({
   selector: 'app-fertilize-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, FormFieldComponent, MasterContextHeaderComponent],
   providers: [...FERTILIZE_CREATE_PROVIDERS],
   template: `
     <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'fertilizes.new.title' | translate }}</h2>
-        <form (ngSubmit)="createFertilize()" #fertilizeForm="ngForm" class="form-card__form">
-          <label for="name" class="form-card__field">
-            <span class="form-card__field-label">{{ 'fertilizes.form.name_label' | translate }}</span>
-            <input id="name" name="name" [(ngModel)]="control.formData.name" required />
-          </label>
+        <form (ngSubmit)="createFertilize(fertilizeForm)" #fertilizeForm="ngForm" class="form-card__form">
+          <app-form-field
+            inputId="name"
+            name="name"
+            labelKey="fertilizes.form.name_label"
+            [required]="true"
+            [formSubmitted]="formSubmitted"
+            [value]="control.formData.name"
+            (valueChange)="onNameChange($event)"
+          />
           @if (auth.user()?.admin) {
             <app-region-select
               [region]="control.formData.region"
@@ -72,10 +78,14 @@ const initialControl: FertilizeCreateViewState = {
             <span class="form-card__field-label">{{ 'fertilizes.form.package_size_label' | translate }}</span>
             <input id="package_size" name="package_size" type="number" step="0.01" [(ngModel)]="control.formData.package_size" />
           </label>
-          <label for="description" class="form-card__field">
-            <span class="form-card__field-label">{{ 'fertilizes.form.description_label' | translate }}</span>
-            <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
-          </label>
+          <app-form-field
+            inputId="description"
+            name="description"
+            labelKey="fertilizes.form.description_label"
+            fieldType="textarea"
+            [value]="control.formData.description"
+            (valueChange)="onDescriptionChange($event)"
+          />
           <div class="form-card__actions">
             <button type="submit" class="btn btn-primary" [disabled]="fertilizeForm.invalid || control.saving">
               {{ 'fertilizes.form.submit_create' | translate }}
@@ -94,6 +104,8 @@ export class FertilizeCreateComponent implements FertilizeCreateView, OnInit {
   private readonly presenter = inject(FertilizeCreatePresenter);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  formSubmitted = false;
 
   private _control: FertilizeCreateViewState = initialControl;
   get control(): FertilizeCreateViewState {
@@ -115,7 +127,23 @@ export class FertilizeCreateComponent implements FertilizeCreateView, OnInit {
     this.presenter.setView(this);
   }
 
-  createFertilize(): void {
+  onNameChange(value: string | number | null): void {
+    this.control.formData.name = value == null ? '' : String(value);
+  }
+
+  onDescriptionChange(value: string | number | null): void {
+    this.control.formData.description =
+      value == null ? null : typeof value === 'string' ? value : String(value);
+  }
+
+  createFertilize(form?: NgForm): void {
+    this.formSubmitted = true;
+    if (form?.invalid) {
+      for (const control of Object.values(form.controls)) {
+        control.markAsTouched();
+      }
+      return;
+    }
     if (this.control.saving) return;
     this.control = { ...this.control, saving: true, error: null };
     const userRegion = (this.auth.user() as { region?: string | null } | null)?.region ?? null;

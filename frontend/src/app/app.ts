@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { filter, Subscription, take } from 'rxjs';
 import { getGoogleAdsLoginConversionSendTo } from './core/google-ads-runtime-config';
 import { AppSeoMetaService } from './core/seo/app-seo-meta.service';
@@ -19,6 +19,7 @@ import { UndoToastService } from './services/undo-toast.service';
   standalone: true,
   imports: [
     RouterOutlet,
+    TranslateModule,
     NavbarComponent,
     FooterComponent,
     FlashMessageComponent,

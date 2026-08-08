@@ -91,9 +91,24 @@
 - **#46 plans** — 空状態時 `no_plans` + hint + 作成 CTA + 公開プラン試用リンク（コード `plan-list.component.ts`）。
 - **#49 plans/:id/task_schedule** — 同期失敗時、対象作物への L2 ウィザードリンク + L1 再生成ボタン。
 
+## 空状態セクション（2026-08-08 追記・#714）
+
+`e2e_empty` ユーザー + `empty-state-capture-for-agent.spec.ts` により ja PNG を取得。ファイル: `empty-state_*.ja.png`（`e2e/agent-review/out/`）。
+
+| シナリオ | ルート | 状態 | 迷い | 導線 | 結果 | 指摘 |
+|----------|--------|------|------|------|------|------|
+| farms-zero | `/farms` | ユーザー農場 0 件 | — | L1 | OK | 新規農場 CTA のみ。参照農場は非 admin では非表示 |
+| plans-zero | `/plans` | 計画 0 件 | — | L1–L2 | OK | `no_plans` + hint + 作成 CTA + 公開プラン試用（模範 #46 と一致） |
+| crops-zero | `/crops` | 作物 0 件 | — | L1 | OK | 新規作物 CTA。空リストだが次アクションは明確 |
+| farm-no-fields | `/plans/new` | 農場あり・圃場 0 | A,D | L1 弱 | 注意 | P2 #52 既出。`plan-new-warning` は出るが選択前の説明はドロップダウン内 disabled のみ |
+
+### 空状態の総評
+
+初回ユーザー向け 4 画面のうち **計画 0・作物 0・農場 0 は L1 導線が十分**。`plans/new` の圃場 0 ブロックのみ **注意**（既存 P2 #52 と同一）。本 issue のスコープ外として follow-up は不要（#52 相当は cognitive P2 に既記載）。
+
 ## 次回レビューで足すもの
 
-1. **空状態キャプチャ**: 農場 0・計画 0・作物 0 の専用シードまたは E2E フィクスチャで PNG 再取得（現状は happy path 偏重）
+1. ~~**空状態キャプチャ**~~ — **完了（#714）**: `empty-state_*.ja.png` + `empty-state-smoke.spec.ts`
 2. **#22–23** crops stages / blueprints（visual-review 未レビュー）
 3. **en/in 導線文言の同等性**（本パイロットは ja 中心）
 4. **collect-ux-findings 連携**: 本ファイルの P1 を `cognitive:` プレフィックスで visual-review 詳細にマージするか、パーサ拡張を別タスク
