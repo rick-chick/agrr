@@ -1499,6 +1499,7 @@
       "no_plans": "No plans yet",
       "no_plans_hint": "Create a new plan to optimize your cultivation schedule.",
       "retry": "Reload",
+      "delete_confirm_message": "Delete this cultivation plan? Field assignments and work record links in this plan will be removed. You can undo shortly after deleting.",
       "year_label": "Year {{year}}",
       "status": {
         "pending": "Pending",
@@ -2054,7 +2055,8 @@
       "description": "Manage crop master data for your cultivation plans.",
       "menu": {
         "more_actions": "More actions"
-      }
+      },
+      "delete_confirm_message": "Delete this crop? Growth stages and task schedule templates will also be removed. You can undo shortly after deleting."
     },
     "new": {
       "title": "Add New Crop"
@@ -2251,6 +2253,7 @@
       "return_to_plan": "Return to plan",
       "from_plan_stages_wizard_lead": "Set base temperature and required GDD for each growth stage. When finished, return to the plan and regenerate task plans.",
       "confirm_delete": "Are you sure you want to delete this crop?",
+      "delete_confirm_message": "Delete this crop? Growth stages and task schedule templates will also be removed. You can undo shortly after deleting.",
       "form": {
         "name_label": "Name",
         "variety_label": "Variety",
@@ -2356,10 +2359,6 @@
       "breadcrumb": "Import proposal",
       "title": "Import proposal for {{name}}",
       "lead": "Paste or upload JSON from an external skill to validate and apply it to this crop.",
-      "l0_notice_label": "AI proposal import notices",
-      "l0_notice_ai_source": "This is proposal JSON from an external AI / MCP source. Content is not auto-verified.",
-      "l0_notice_dry_run": "Run Preview (validate) for a dry-run check before applying.",
-      "l0_notice_overwrite": "Applying may overwrite crop master data (stages, tasks, and schedule templates).",
       "json_label": "Proposal JSON",
       "json_placeholder": "{ \"stages\": [], \"agricultural_tasks\": [], \"task_schedule_blueprints\": [] }",
       "choose_file": "Choose file",
@@ -2368,15 +2367,19 @@
       "previewing": "Validating…",
       "preview_title": "Normalized preview",
       "validation_errors_title": "Validation errors",
-      "fix_and_preview_hint": "Fix the JSON above and run Preview again.",
       "apply_button": "Apply to crop",
       "applying": "Applying…",
-      "success_title": "Proposal applied",
-      "success_message": "Crop master data was updated from the proposal.",
-      "back_to_crop": "Back to crop detail",
       "invalid_json": "Invalid JSON.",
       "invalid_shape": "JSON must include stages, agricultural_tasks, and task_schedule_blueprints.",
       "clipboard_error": "Could not read clipboard.",
+      "l0_notice_label": "AI proposal import notices",
+      "l0_notice_ai_source": "This is proposal JSON from an external AI / MCP source. Content is not auto-verified.",
+      "l0_notice_dry_run": "Run Preview (validate) for a dry-run check before applying.",
+      "l0_notice_overwrite": "Applying may overwrite crop master data (stages, tasks, and schedule templates).",
+      "fix_and_preview_hint": "Fix the JSON above and run Preview again.",
+      "success_title": "Proposal applied",
+      "success_message": "Crop master data was updated from the proposal.",
+      "back_to_crop": "Back to crop detail",
       "validation_errors": {
         "is_required": "This field is required.",
         "must_contain_one_stage": "Must contain at least one stage.",
@@ -2660,7 +2663,8 @@
       },
       "debug": {
         "label": "Debug:"
-      }
+      },
+      "delete_confirm_message": "Delete this farm? Registered fields and cultivation plans linked to this farm will be affected. You can undo shortly after deleting."
     },
     "form": {
       "region_label": "Region",
@@ -2714,6 +2718,7 @@
       "edit": "Edit",
       "delete": "Delete",
       "delete_confirm": "Are you sure you want to delete this farm?",
+      "delete_confirm_message": "Delete this farm? Registered fields and cultivation plans linked to this farm will be affected. You can undo shortly after deleting.",
       "back": "Back",
       "back_to_list": "Farm list",
       "location": "Region",

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -84,6 +84,25 @@ const initialControl: PlanListViewState = {
       </section>
     </div>
 
+    <dialog
+      #deleteConfirmDialog
+      class="confirm-dialog plan-list__delete-confirm"
+      (cancel)="cancelDeleteConfirmDialog($event)"
+      (click)="onDeleteConfirmDialogBackdropClick($event)"
+    >
+      @if (pendingDeletePlanId != null) {
+        <p class="confirm-dialog__message">{{ 'plans.index.delete_confirm_message' | translate }}</p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelDeleteConfirmDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDeletePlan()">
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
+
   `,
   styleUrls: ['./plan-list.component.css']
 })
@@ -94,6 +113,10 @@ export class PlanListComponent implements PlanListView, OnInit {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
+  pendingDeletePlanId: number | null = null;
 
   private _control: PlanListViewState = initialControl;
   get control(): PlanListViewState {
@@ -123,9 +146,32 @@ export class PlanListComponent implements PlanListView, OnInit {
   }
 
   deletePlan(planId: number): void {
+    this.pendingDeletePlanId = planId;
+    this.deleteConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  confirmDeletePlan(): void {
+    if (this.pendingDeletePlanId == null) {
+      return;
+    }
+    const planId = this.pendingDeletePlanId;
+    this.pendingDeletePlanId = null;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
     this.deleteUseCase.execute({
       planId,
       onAfterUndo: () => this.refreshAfterUndo()
     });
+  }
+
+  cancelDeleteConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.pendingDeletePlanId = null;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+  }
+
+  onDeleteConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
+      this.cancelDeleteConfirmDialog();
+    }
   }
 }
