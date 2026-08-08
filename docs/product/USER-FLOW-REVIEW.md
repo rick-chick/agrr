@@ -55,14 +55,15 @@
 
 `frontend/src/app/app.ts:97` — `maybeNavigatePostLogin()` はセッション確立に失敗した場合（`authService.user()` が null）に早期 return し、`/?_post_login=...` のクエリを消費しない。ユーザーには意味不明なクエリ付きホームが残る。認証失敗時もクエリを除去（`replaceUrl`）すべき。
 
-### M5. ヒンディー語（in）ユーザーのレポート導線が日本語版に飛ぶ
+### M5. ヒンディー語（in）ユーザーのレポート導線が日本語版に飛ぶ — **対応済み** (#735)
 
-`frontend/src/app/components/shared/navbar/navbar.component.ts:127` — レポートリンクは `lang === 'en' ? '/research/en/' : '/research/'` の二択で、`in` ロケール（`assets/i18n/in.json` あり、地域選択にも `in` あり）は日本語の `/research/` に着地する。英語版へのフォールバック（`lang === 'ja' ? '/research/' : '/research/en/'`）が妥当。
+`frontend/src/app/components/shared/navbar/navbar.component.ts` — `reportUrl` を `lang === 'ja' ? '/research/' : '/research/en/'` に変更。`in` ロケールは英語版 research へフォールバック。
 
 ---
 
 ## 🟢 確認済み・意図的（記録のみ）
 
+- **M5 対応**: in ロケールのレポート導線を英語版 `/research/en/` にフォールバック（#735）。
 - **entry-schedule のナビ非表示**: `navbar.component.ts:40` にコメントで明示（「未成熟のためナビから非表示。ルートは残す」）。ルート自体は到達可能で、画面内の相互リンク（一覧⇔詳細）は整合。
 - **公開プランフローの状態ガード**: `/public-plans/select-crop` は farm 未設定時に `/public-plans/new` へ、`/public-plans/optimizing` は planId 解決不能時に `/public-plans/new` へリダイレクト。直接着地しても破綻しない。
 - **AUTH_REQUIRED_PREFIXES の同期**: `login-auth-urls.ts` と `crates/agrr-server/src/auth_return_to.rs` で一致を確認（9 プレフィックス）。
