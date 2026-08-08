@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FertilizeCreateComponent } from './fertilize-create.component';
 import { FertilizeCreatePresenter } from '../../../usecase/fertilizes/fertilize-create.providers';
 import { CreateFertilizeUseCase } from '../../../usecase/fertilizes/create-fertilize.usecase';
-import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { AuthService } from '../../../services/auth.service';
 
 describe('FertilizeCreateComponent', () => {
@@ -14,7 +13,7 @@ describe('FertilizeCreateComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FertilizeCreateComponent, RegionSelectComponent, TranslateModule.forRoot()],
+      imports: [FertilizeCreateComponent, TranslateModule.forRoot()],
       providers: [
         FertilizeCreatePresenter,
         provideRouter([]),

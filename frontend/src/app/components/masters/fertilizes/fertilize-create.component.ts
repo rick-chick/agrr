@@ -67,7 +67,6 @@ const initialControl: FertilizeCreateViewState = {
             type="number"
             labelKey="fertilizes.form.n_label"
             step="0.01"
-            [formSubmitted]="formSubmitted"
             [(value)]="control.formData.n"
           />
           <app-form-field
@@ -76,7 +75,6 @@ const initialControl: FertilizeCreateViewState = {
             type="number"
             labelKey="fertilizes.form.p_label"
             step="0.01"
-            [formSubmitted]="formSubmitted"
             [(value)]="control.formData.p"
           />
           <app-form-field
@@ -85,7 +83,6 @@ const initialControl: FertilizeCreateViewState = {
             type="number"
             labelKey="fertilizes.form.k_label"
             step="0.01"
-            [formSubmitted]="formSubmitted"
             [(value)]="control.formData.k"
           />
           <app-form-field
@@ -94,7 +91,6 @@ const initialControl: FertilizeCreateViewState = {
             type="number"
             labelKey="fertilizes.form.package_size_label"
             step="0.01"
-            [formSubmitted]="formSubmitted"
             [(value)]="control.formData.package_size"
           />
           <app-form-field
@@ -102,7 +98,6 @@ const initialControl: FertilizeCreateViewState = {
             name="description"
             type="textarea"
             labelKey="fertilizes.form.description_label"
-            [formSubmitted]="formSubmitted"
             [(value)]="control.formData.description"
           />
           <div class="form-card__actions">

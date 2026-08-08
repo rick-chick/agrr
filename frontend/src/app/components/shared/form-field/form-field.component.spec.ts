@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -11,7 +10,7 @@ describe('FormFieldComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FormFieldComponent, FormsModule, TranslateModule.forRoot()]
+      imports: [FormFieldComponent, TranslateModule.forRoot()]
     }).compileComponents();
 
     translate = TestBed.inject(TranslateService);
