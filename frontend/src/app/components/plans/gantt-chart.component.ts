@@ -289,7 +289,7 @@ type GanttPendingDeleteAction =
             </div>
           }
           <div class="gantt-scroll-area">
-            <svg #svg class="custom-gantt-chart" [attr.width]="config.width" [attr.height]="config.height">
+            <svg #svg class="custom-gantt-chart" [attr.width]="config.width" [attr.height]="config.height" role="img" [attr.aria-label]="'plans.gantt.a11y.chart' | translate">
             <defs>
               <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
@@ -340,7 +340,11 @@ type GanttPendingDeleteAction =
 
             <!-- Field Rows -->
             @for (group of fieldGroups; track group.fieldId; let i = $index) {
-              <g class="field-row" [attr.transform]="'translate(0, ' + (config.margin.top + i * config.rowHeight) + ')'">
+              <g
+                class="field-row"
+                role="row"
+                [attr.aria-label]="getFieldRowAriaLabel(group, i)"
+                [attr.transform]="'translate(0, ' + (config.margin.top + i * config.rowHeight) + ')'">
                 @if (!isMobileLayout) {
                   <clipPath [attr.id]="'field-label-clip-' + i">
                     <rect
@@ -391,8 +395,12 @@ type GanttPendingDeleteAction =
                 <!-- Cultivation Bars -->
                 @for (cultivation of group.cultivations; track cultivation.id) {
                   @if (getBarParams(cultivation); as params) {
-                    <g class="cultivation-bar" 
-                       (pointerdown)="onPointerDown($event, cultivation)"
+                    <g
+                      class="cultivation-bar"
+                      role="option"
+                      [attr.aria-label]="getCultivationBarAriaLabel(cultivation)"
+                      [attr.aria-selected]="isCultivationBarSelected(cultivation) ? 'true' : 'false'"
+                      (pointerdown)="onPointerDown($event, cultivation)"
                        [class.dragging]="draggedCultivation?.id === cultivation.id"
                        [attr.data-id]="cultivation.id"
                        [attr.data-field]="cultivation.field_name">
@@ -484,6 +492,7 @@ export class GanttChartComponent
   readonly ganttCropStrokeColor = ganttCropStrokeColor;
   @Input() data: CultivationPlanData | null = null;
   @Input() planType: CultivationPlanContextType = 'private';
+  @Input() selectedCultivationId: number | null = null;
   @Output() cultivationSelected = new EventEmitter<{
     cultivationId: number;
     planType: CultivationPlanContextType;
@@ -587,6 +596,26 @@ export class GanttChartComponent
   private readonly platformId = inject(PLATFORM_ID);
 
   constructor(private translate: TranslateService) {}
+
+  getFieldRowAriaLabel(group: GanttFieldGroup, index: number): string {
+    return this.translate.instant('plans.gantt.a11y.field_row', {
+      index: this.isMobileLayout ? formatGanttFieldRowIndexLabel(index) : String(index + 1),
+      fieldName: group.fieldName
+    });
+  }
+
+  getCultivationBarAriaLabel(cultivation: CultivationData): string {
+    return this.translate.instant('plans.gantt.a11y.cultivation_bar', {
+      cropName: cultivation.crop_name,
+      fieldName: cultivation.field_name,
+      startDate: cultivation.start_date,
+      endDate: cultivation.completion_date
+    });
+  }
+
+  isCultivationBarSelected(cultivation: CultivationData): boolean {
+    return this.selectedCultivationId === cultivation.id;
+  }
 
   ngOnInit(): void {
     this.ganttPresenter.setView(this);

@@ -62,6 +62,11 @@ describe('GanttChartComponent', () => {
             field_legend_delete: '削除',
             drag_target_field: '移動先: {{index}} — {{fieldName}}',
             field_column_short: '#'
+          },
+          a11y: {
+            chart: '栽培スケジュール ガントチャート',
+            field_row: '圃場 {{index}}: {{fieldName}}',
+            cultivation_bar: '{{cropName}}、{{fieldName}}、{{startDate}}〜{{endDate}}'
           }
         }
       },
@@ -385,6 +390,51 @@ describe('GanttChartComponent', () => {
     it('exposes full field name for assistive technologies', () => {
       const title = fixture.nativeElement.querySelector('.field-label title');
       expect(title?.textContent?.trim()).toBe('Baseline Field');
+    });
+
+    it('exposes aria-label on field rows and cultivation bars for screen readers', () => {
+      const fieldRow = fixture.nativeElement.querySelector('.field-row');
+      expect(fieldRow?.getAttribute('aria-label')).toBe('圃場 1: Baseline Field');
+
+      const cultivationBar = fixture.nativeElement.querySelector('.cultivation-bar');
+      expect(cultivationBar?.getAttribute('aria-label')).toBe(
+        'Rice、Baseline Field、2026-01-01〜2026-01-31'
+      );
+    });
+  });
+
+  describe('cultivation selection a11y', () => {
+    beforeEach(() => {
+      mobileLayoutMatches = false;
+      component.isMobileLayout = false;
+      component.selectedCultivationId = 14;
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, name: 'Baseline Field' }],
+          cultivations: [{
+            id: 14,
+            field_id: 1,
+            field_name: 'Baseline Field',
+            crop_name: 'Rice',
+            start_date: '2026-01-01',
+            completion_date: '2026-01-31'
+          }]
+        }
+      } as any;
+
+      const mockContainer = document.createElement('div');
+      mockContainer.style.width = '800px';
+      component['container'] = { nativeElement: mockContainer } as any;
+      component['updateChart']();
+      fixture.detectChanges();
+    });
+
+    it('marks selected cultivation bar with aria-selected', () => {
+      const cultivationBar = fixture.nativeElement.querySelector('.cultivation-bar');
+      expect(cultivationBar?.getAttribute('aria-selected')).toBe('true');
     });
   });
 

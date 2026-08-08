@@ -216,6 +216,27 @@ describe('PlanFieldClimateComponent (template)', () => {
     component = fixture.componentInstance;
     stubChartLifecycle(component);
     component.fieldCultivationId = 1;
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        plans: {
+          field_climate: {
+            header_title_fallback: 'Crop name unavailable',
+            period_unknown: 'Period unknown',
+            a11y: {
+              temperature_chart:
+                '{{cropName}}, period {{period}}, current stage {{stage}}, base temperature {{baseTemp}} ℃ daily temperature chart',
+              gdd_chart: '{{cropName}}, period {{period}}, current stage {{stage}} accumulated GDD chart'
+            }
+          }
+        }
+      },
+      true
+    );
+    translate.use('en');
+
     fixture.detectChanges();
   });
 
@@ -270,5 +291,24 @@ describe('PlanFieldClimateComponent (template)', () => {
     await flushChartMicrotasks();
 
     expect(fixture.nativeElement.querySelector('.plan-field-climate__task-schedule-link')).toBeNull();
+  });
+
+  it('exposes role=img and aria-label on climate chart regions for screen readers', async () => {
+    component.control = { loading: false, error: null, climateData: sampleData };
+    fixture.detectChanges();
+    await flushChartMicrotasks();
+
+    const temperatureChart = fixture.nativeElement.querySelector(
+      '.plan-field-climate__chart-card--temperature .plan-field-climate__chart-wrapper'
+    ) as HTMLElement;
+    expect(temperatureChart?.getAttribute('role')).toBe('img');
+    expect(temperatureChart?.getAttribute('aria-label')).toContain('Tomato');
+    expect(temperatureChart?.getAttribute('aria-label')).toContain('2026-02-01');
+
+    const gddChart = fixture.nativeElement.querySelector(
+      '.plan-field-climate__chart-card--gdd .plan-field-climate__chart-wrapper'
+    ) as HTMLElement;
+    expect(gddChart?.getAttribute('role')).toBe('img');
+    expect(gddChart?.getAttribute('aria-label')).toContain('Germination');
   });
 });
