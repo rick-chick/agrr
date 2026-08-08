@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { join } from 'node:path';
 import {
   ensureEmptyStateSession,
   emptyStateSessionPath,
