@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -62,10 +62,36 @@ import { FlashMessageService } from '../../../services/flash-message.service';
         }
       </section>
     </div>
+
+    <dialog
+      #deleteConfirmDialog
+      class="confirm-dialog account__delete-confirm"
+      [attr.aria-labelledby]="'account-delete-confirm-title'"
+      [attr.aria-describedby]="'account-delete-confirm-message'"
+      (cancel)="cancelDeleteConfirmDialog($event)"
+      (click)="onDeleteConfirmDialogBackdropClick($event)"
+    >
+      <h2 id="account-delete-confirm-title" class="confirm-dialog__title">
+        {{ 'account.delete.heading' | translate }}
+      </h2>
+      <p id="account-delete-confirm-message" class="confirm-dialog__message">
+        {{ 'account.delete.confirm_dialog' | translate }}
+      </p>
+      <div class="confirm-dialog__actions">
+        <button type="button" class="btn-secondary" (click)="cancelDeleteConfirmDialog()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button type="button" class="btn-danger" (click)="confirmDeleteAccount()">
+          {{ 'account.delete.action' | translate }}
+        </button>
+      </div>
+    </dialog>
   `,
   styleUrls: ['./account.component.css']
 })
 export class AccountComponent implements OnInit {
+  @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
   private readonly accountService = inject(AccountManagementService);
   private readonly api = inject(ApiService);
   private readonly flash = inject(FlashMessageService);
@@ -117,10 +143,30 @@ export class AccountComponent implements OnInit {
     if (!this.confirmChecked) {
       return;
     }
-    const confirmMessage = this.translate.instant('account.delete.confirm_dialog');
-    if (!window.confirm(confirmMessage)) {
-      return;
+    this.openDeleteConfirmDialog();
+  }
+
+  openDeleteConfirmDialog(): void {
+    this.deleteConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  confirmDeleteAccount(): void {
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+    this.executeDeleteAccount();
+  }
+
+  cancelDeleteConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+  }
+
+  onDeleteConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
+      this.cancelDeleteConfirmDialog();
     }
+  }
+
+  private executeDeleteAccount(): void {
     this.deleting = true;
     this.errorMessage = null;
     this.accountService
