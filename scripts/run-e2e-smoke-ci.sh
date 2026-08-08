@@ -99,4 +99,7 @@ npm run test:e2e:smoke:route
 echo "==> Running a11y smoke (axe-core + gantt keyboard alternative)"
 npm run test:e2e:smoke:a11y
 
-echo "==> route-smoke + a11y smoke GREEN"
+echo "==> Running empty-state smoke (e2e_empty user)"
+npm run test:e2e:smoke:empty-state
+
+echo "==> route-smoke + a11y + empty-state smoke GREEN"

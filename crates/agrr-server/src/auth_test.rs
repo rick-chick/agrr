@@ -66,6 +66,12 @@ async fn mock_login_as(
             "Contract API",
             false,
         ),
+        "e2e_empty" => (
+            "e2e_empty_user_001",
+            "e2e-empty@agrr.dev",
+            "E2E Empty",
+            false,
+        ),
         _ => return Ok(Redirect::to("/").into_response()),
     };
     mock_login_impl(

@@ -12,6 +12,7 @@ import {
 } from '../../../usecase/farms/farm-create.providers';
 import { FarmMapComponent } from './farm-map.component';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
+import { FormFieldComponent } from '../../shared/form-field/form-field.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { CurrentUser } from '../../../services/api.service';
@@ -48,7 +49,7 @@ const initialControl: FarmCreateViewState = {
 @Component({
   selector: 'app-farm-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, FarmMapComponent, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, FarmMapComponent, RegionSelectComponent, FormFieldComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...FARM_CREATE_PROVIDERS],
   template: `
     <div class="page-main">
@@ -56,23 +57,15 @@ const initialControl: FarmCreateViewState = {
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'farms.new.title' | translate }}</h2>
         <form (ngSubmit)="createFarm(farmForm)" #farmForm="ngForm" class="form-card__form">
-          <label class="form-card__field" for="name">
-            <span class="form-card__field-label">{{ 'farms.new.form.name_label' | translate }}</span>
-            <input
-              id="name"
-              name="name"
-              [(ngModel)]="control.formData.name"
-              required
-              [class.form-card__input--invalid]="showsRequiredError(formSubmitted, control.formData.name)"
-              [attr.aria-invalid]="ariaInvalidForRequired(formSubmitted, control.formData.name)"
-              [attr.aria-describedby]="ariaDescribedbyForRequired('name', formSubmitted, control.formData.name)"
-            />
-            @if (showsRequiredError(formSubmitted, control.formData.name)) {
-              <span [id]="fieldErrorId('name')" class="form-card__field-error" role="alert">
-                {{ 'common.form.required_field' | translate }}
-              </span>
-            }
-          </label>
+          <app-form-field
+            inputId="name"
+            name="name"
+            labelKey="farms.new.form.name_label"
+            [required]="true"
+            [formSubmitted]="formSubmitted"
+            [value]="control.formData.name"
+            (valueChange)="onNameChange($event)"
+          />
           @if (auth.user()?.admin) {
             <app-region-select
               id="region"
@@ -187,6 +180,10 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
     this.presenter.setView(this);
     this.applyUserRegion(this.auth.user());
     this.auth.loadCurrentUser().subscribe((user) => this.applyUserRegion(user));
+  }
+
+  onNameChange(value: string | number | null): void {
+    this.control.formData.name = value == null ? '' : String(value);
   }
 
   onCoordinatesChange(event: { latitude: number; longitude: number }): void {

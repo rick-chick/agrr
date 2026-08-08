@@ -6,14 +6,22 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'run-lighthouse-ci.sh',
   'lighthouse-ci-reports',
   'lfs: false',
+  'docker-compose.e2e-ci.yml',
+  'e2e-dev-db',
 ];
 
 const REQUIRED_SCRIPT_SNIPPETS = [
   'lhci autorun',
   'lighthouserc.js',
+  'lighthouserc.mobile-public.js',
+  'lighthouserc.auth.js',
   'dist/frontend/browser',
   '.lighthouseci',
   'npm run build',
+  'mock_login',
+  'lighthouse-ci-resolve-auth-urls.mjs',
+  'lighthouse-ci-auth-puppeteer.cjs',
+  '${ROOT}/docker-compose.yml',
 ];
 
 const REQUIRED_LIGHTHOUSE_RC_SNIPPETS = [
@@ -21,6 +29,13 @@ const REQUIRED_LIGHTHOUSE_RC_SNIPPETS = [
   'categories:performance',
   'largest-contentful-paint',
   "'warn'",
+];
+
+const REQUIRED_ROUTES_JSON_KEYS = [
+  'publicRoutes',
+  'mobilePublicRoute',
+  'authenticatedRoutes',
+  'thresholds',
 ];
 
 const REQUIRED_PACKAGE_SCRIPTS = ['lighthouse:ci'];
@@ -70,9 +85,43 @@ export async function verifyLighthouseCiWorkflow(repoRoot) {
     errors.push(`missing config: ${lighthouseRcPath}`);
   }
 
+  const mobileRcPath = join(repoRoot, 'frontend/lighthouserc.mobile-public.js');
+  try {
+    const mobileText = await readFile(mobileRcPath, 'utf8');
+    if (!mobileText.includes('mobilePublicRoute.preset') && !mobileText.includes("'mobile'")) {
+      errors.push('lighthouserc.mobile-public.js missing mobile preset');
+    }
+  } catch {
+    errors.push(`missing config: ${mobileRcPath}`);
+  }
+
+  const authRcPath = join(repoRoot, 'frontend/lighthouserc.auth.js');
+  try {
+    const authText = await readFile(authRcPath, 'utf8');
+    if (!authText.includes('puppeteerScript')) {
+      errors.push('lighthouserc.auth.js missing puppeteerScript');
+    }
+    if (!authText.includes('chromePath')) {
+      errors.push('lighthouserc.auth.js missing chromePath for puppeteerScript mode');
+    }
+  } catch {
+    errors.push(`missing config: ${authRcPath}`);
+  }
+
   const routesPath = join(repoRoot, 'frontend/scripts/lighthouse-ci-routes.json');
   try {
-    await readFile(routesPath, 'utf8');
+    const routes = JSON.parse(await readFile(routesPath, 'utf8'));
+    for (const key of REQUIRED_ROUTES_JSON_KEYS) {
+      if (!(key in routes)) {
+        errors.push(`lighthouse-ci-routes.json missing key: ${key}`);
+      }
+    }
+    const authPaths = (routes.authenticatedRoutes ?? []).map((route) => route.path);
+    for (const expected of ['/plans', '/plans/:id', '/work']) {
+      if (!authPaths.includes(expected)) {
+        errors.push(`lighthouse-ci-routes.json missing authenticated route: ${expected}`);
+      }
+    }
   } catch {
     errors.push(`missing routes module: ${routesPath}`);
   }

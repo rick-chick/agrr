@@ -1,9 +1,19 @@
 {
-  "routes": [
+  "publicRoutes": [
     { "path": "/", "url": "/" },
     { "path": "/about", "url": "/about/" },
     { "path": "/contact", "url": "/contact/" },
     { "path": "/public-plans/new", "url": "/public-plans/new/" }
+  ],
+  "mobilePublicRoute": {
+    "path": "/contact",
+    "url": "/contact/",
+    "preset": "mobile"
+  },
+  "authenticatedRoutes": [
+    { "path": "/plans", "url": "/plans" },
+    { "path": "/plans/:id", "urlTemplate": "/plans/{planId}" },
+    { "path": "/work", "url": "/work" }
   ],
   "thresholds": {
     "performanceMinScore": 0.85,
