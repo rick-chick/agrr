@@ -10,7 +10,7 @@ alwaysApply: false
 ## 実行経路
 
 - テストは常に **`test-common` スキル**経由で実行する。`rails test` や `npm test` を直接実行しない。
-- **`lib/domain` の純粋ロジックのみ**を変えたときは、Rails を立ち上げずに `.cursor/skills/test-common/scripts/run-test-domain-lib.sh` で足りる場合がある。DB／SimpleCov／フルスタックが不要なときの高速経路。
+- **`crates/agrr-domain` の純粋ロジックのみ**を変えたときは、`.cursor/skills/test-common/scripts/run-test-rust-domain.sh` で足りる場合がある。
 - **`test/domain/**` を新規・編集したら** `run-test-domain-lib.sh` で実行する（`run-test-rails.sh` の全件一覧には `test/domain` が入らない）。CI の `./bin/test` は domain-lib も続けて走る。
 
 ## `test/domain/` の require（厳守）
