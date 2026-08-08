@@ -34,3 +34,30 @@ test('public-mobile config uses mobile form factor for /about', () => {
   assert.equal(config.ci.collect.settings.formFactor, 'mobile');
   assert.deepEqual(config.ci.collect.url, ['/about/']);
 });
+
+test('auth config resolves relative routes to absolute frontend URLs', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const authUrlsPath = path.join(FRONTEND_ROOT, 'scripts/lighthouse-ci-auth-urls.json');
+  const previous = process.env.LIGHTHOUSE_AUTH_FRONTEND_ORIGIN;
+  process.env.LIGHTHOUSE_AUTH_FRONTEND_ORIGIN = 'http://127.0.0.1:4200';
+  fs.writeFileSync(
+    authUrlsPath,
+    JSON.stringify({ urls: ['/plans', '/plans/42', '/work'] })
+  );
+  try {
+    const { buildAuthConfig } = require(join(FRONTEND_ROOT, 'scripts/lighthouse-ci-lighthouserc-lib.cjs'));
+    const config = buildAuthConfig();
+    assert.ok(config);
+    assert.deepEqual(config.ci.collect.url, [
+      'http://127.0.0.1:4200/plans',
+      'http://127.0.0.1:4200/plans/42',
+      'http://127.0.0.1:4200/work',
+    ]);
+    assert.equal(config.ci.collect.startServerReadyTimeout, 240000);
+  } finally {
+    if (previous === undefined) delete process.env.LIGHTHOUSE_AUTH_FRONTEND_ORIGIN;
+    else process.env.LIGHTHOUSE_AUTH_FRONTEND_ORIGIN = previous;
+    fs.unlinkSync(authUrlsPath);
+  }
+});

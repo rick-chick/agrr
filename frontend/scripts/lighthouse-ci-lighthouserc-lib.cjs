@@ -81,18 +81,27 @@ function buildAuthConfig() {
     return null;
   }
 
+  const frontendOrigin = (process.env.LIGHTHOUSE_AUTH_FRONTEND_ORIGIN ?? 'http://127.0.0.1:4200').replace(
+    /\/$/,
+    ''
+  );
+  const absoluteUrls = urls.map((routePath) =>
+    routePath.startsWith('http') ? routePath : `${frontendOrigin}${routePath.startsWith('/') ? routePath : `/${routePath}`}`
+  );
+
   return {
     ci: {
       collect: {
-        url: urls,
+        url: absoluteUrls,
         numberOfRuns: 1,
         startServerCommand: 'npx ng serve --host 127.0.0.1 --port 4200 --configuration development',
         startServerReadyPattern: '127.0.0.1:4200',
+        startServerReadyTimeout: 240000,
         puppeteerScript: './scripts/lighthouse-ci-auth-puppeteer.cjs',
-        settings: {
-          preset: 'desktop',
-          chromeFlags: CHROME_FLAGS,
+        puppeteerLaunchOptions: {
+          args: ['--no-sandbox', '--disable-dev-shm-usage'],
         },
+        settings: buildCollectSettings('desktop'),
       },
       assert: buildAssertions(),
       upload: buildUpload(),
