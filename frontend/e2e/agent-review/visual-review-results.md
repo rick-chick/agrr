@@ -64,7 +64,7 @@
 | 20 | `crops` | `crops.ja.png` | `crops.en.png` | `crops.in.png` | OK | 注意 | i18n: en で品種名と「Reference Crop」がスペースなしで連結 |
 | 21 | `crops/:id` | `crops_id.ja.png` | `crops_id.en.png` | `crops_id.in.png` | OK | OK | layout: 3 カード縦積み・空状態は明瞭。i18n: 作業予定セクションの用語統一・作成日/更新日のロケール表示（2026-07-03 修正） |
 | 22 | `crops/:id/edit` | `crops_id_edit.ja.png` | `crops_id_edit.en.png` | `crops_id_edit.in.png` | OK | OK | なし |
-| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | OK | OK | **#713 再キャプチャ**: レタス提案インポート（JSON 貼付・プレビュー）UI 正常 |
+| 23 | `crops/:id/setup_proposal` | `crops_id_setup_proposal.ja.png` | `crops_id_setup_proposal.en.png` | `crops_id_setup_proposal.in.png` | OK | OK | **#733**: L0 AI 透明性（3 要素リスト）・検証エラー i18n・復帰ヒント・適用成功 CTA を追加（component spec GREEN）。PNG は #713 キャプチャのため L0 追加分の再キャプチャは follow-up |
 | 24 | `crops/:id/stages` | `crops_id_stages.ja.png` | `crops_id_stages.en.png` | `crops_id_stages.in.png` | OK | 注意 | **#713 再キャプチャ**: ステージ一覧 UI 正常。i18n: ステージ名が英語（Almonds マスタ由来） |
 | 25 | `crops/:id/stages/:stageId/edit` | `crops_id_stages_stageId_edit.ja.png` | `crops_id_stages_stageId_edit.en.png` | `crops_id_stages_stageId_edit.in.png` | OK | OK | **#713 再キャプチャ**: 生育ステージ編集フォーム（温度・GDD）正常表示 |
 | 26 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 注意 | OK | **#713 再キャプチャ**: テンプレート DnD UI 正常。layout: 全カード「タイミング未設定」警告（データ未入力） |
