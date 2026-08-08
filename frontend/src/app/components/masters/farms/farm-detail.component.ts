@@ -180,6 +180,25 @@ const initialControl: FarmDetailViewState = {
         </div>
       </form>
     </dialog>
+
+    <dialog
+      #deleteConfirmDialog
+      class="confirm-dialog farm-detail__delete-confirm"
+      (cancel)="cancelDeleteConfirmDialog($event)"
+      (click)="onDeleteConfirmDialogBackdropClick($event)"
+    >
+      @if (pendingDeleteFarm) {
+        <p class="confirm-dialog__message">{{ 'farms.show.delete_confirm_message' | translate }}</p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelDeleteConfirmDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDeleteFarm()">
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./farm-detail.component.css']
 })
@@ -208,6 +227,9 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private static readonly WEATHER_POLL_MAX_ATTEMPTS = 40;
 
   @ViewChild('fieldFormDialog') fieldFormDialogRef!: ElementRef<HTMLDialogElement>;
+  @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
+  pendingDeleteFarm = false;
 
   editingField: Field | null = null;
   chartSelectedPeriod: FarmTemperatureChartPeriod = '90d';
@@ -310,10 +332,31 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
 
   deleteFarm(): void {
     if (!this.control.farm) return;
+    this.pendingDeleteFarm = true;
+    this.deleteConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  confirmDeleteFarm(): void {
+    if (!this.control.farm) return;
+    const farmId = this.control.farm.id;
+    this.pendingDeleteFarm = false;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
     this.deleteUseCase.execute({
-      farmId: this.control.farm.id,
+      farmId,
       onSuccess: () => this.router.navigate(['/farms'])
     });
+  }
+
+  cancelDeleteConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.pendingDeleteFarm = false;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+  }
+
+  onDeleteConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
+      this.cancelDeleteConfirmDialog();
+    }
   }
 
   deleteField(field: Field): void {
