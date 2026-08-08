@@ -2197,6 +2197,11 @@
       "no_data": "表示するデータがありません。",
       "adjust_failed": "調整に失敗しました。",
       "trash_drop_label": "作付を削除",
+      "a11y": {
+        "field_row": "{{index}}. {{fieldName}}（作付 {{cropCount}} 件）",
+        "cultivation_bar": "{{fieldName}}の{{cropName}}（{{startDate}}〜{{endDate}}）",
+        "chart_summary": "栽培スケジュール。{{fieldCount}} 圃場、{{cultivationCount}} 件の作付"
+      },
       "range": {
         "prev_month": "前月",
         "next_month": "次月"
@@ -2243,7 +2248,12 @@
         "tooltip_format": "yyyy/MM/dd",
         "required_cumulative_gdd": "必要積算温度"
       },
-      "open_task_schedule": "この圃場の作業計画を見る"
+      "open_task_schedule": "この圃場の作業計画を見る",
+      "a11y": {
+        "temperature_chart": "{{cropName}}（{{fieldName}}）の日別気温チャート。期間 {{period}}。最低限界温度 {{baseTemp}}℃。現在のステージ {{currentStage}}。",
+        "gdd_chart": "{{cropName}}（{{fieldName}}）の積算温度チャート。期間 {{period}}。現在のステージ {{currentStage}}。",
+        "skip_to_data_table": "数値データ表へスキップ"
+      }
     },
     "detail": {
       "select_cultivation_hint": "ガントチャートの栽培バーを選択すると、気候データが表示されます。"

@@ -156,6 +156,101 @@ describe('GanttChartComponent', () => {
     });
   });
 
+  describe('screen reader accessibility', () => {
+    const ganttData = {
+      data: {
+        id: 7,
+        planning_start_date: '2026-01-01',
+        planning_end_date: '2026-12-31',
+        fields: [{ id: 1, name: 'Field 1' }],
+        cultivations: [{
+          id: 14,
+          field_id: 1,
+          field_name: 'Field 1',
+          crop_name: 'Rice',
+          start_date: '2026-01-01',
+          completion_date: '2026-01-31'
+        }]
+      }
+    } as any;
+
+    beforeEach(() => {
+      const translate = TestBed.inject(TranslateService);
+      translate.setTranslation('ja', {
+        plans: {
+          gantt: {
+            a11y: {
+              field_row: '{{index}}. {{fieldName}}（作付 {{cropCount}} 件）',
+              cultivation_bar: '{{fieldName}}の{{cropName}}（{{startDate}}〜{{endDate}}）'
+            },
+            labels: { year: '年' },
+            mobile: { field_column_short: '#' }
+          }
+        },
+        shared: { navbar: { farms: '農場' } }
+      }, true);
+      translate.use('ja');
+
+      component.data = ganttData;
+      component['updateChart']();
+      fixture.detectChanges();
+    });
+
+    it('exposes aria-label on field rows and cultivation bars', () => {
+      const fieldRow = fixture.nativeElement.querySelector('.field-row');
+      expect(fieldRow?.getAttribute('aria-label')).toContain('Field 1');
+
+      const bar = fixture.nativeElement.querySelector('.cultivation-bar');
+      expect(bar?.getAttribute('aria-label')).toContain('Rice');
+      expect(bar?.getAttribute('role')).toBe('button');
+    });
+  });
+
+  describe('screen reader accessibility (selected cultivation)', () => {
+    beforeEach(() => {
+      const translate = TestBed.inject(TranslateService);
+      translate.setTranslation('ja', {
+        plans: {
+          gantt: {
+            a11y: {
+              field_row: '{{index}}. {{fieldName}}（作付 {{cropCount}} 件）',
+              cultivation_bar: '{{fieldName}}の{{cropName}}（{{startDate}}〜{{endDate}}）'
+            },
+            labels: { year: '年' },
+            mobile: { field_column_short: '#' }
+          }
+        },
+        shared: { navbar: { farms: '農場' } }
+      }, true);
+      translate.use('ja');
+
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, name: 'Field 1' }],
+          cultivations: [{
+            id: 14,
+            field_id: 1,
+            field_name: 'Field 1',
+            crop_name: 'Rice',
+            start_date: '2026-01-01',
+            completion_date: '2026-01-31'
+          }]
+        }
+      } as any;
+      component.selectedCultivationId = 14;
+      component['updateChart']();
+      fixture.detectChanges();
+    });
+
+    it('marks selected cultivation with aria-selected', () => {
+      const bar = fixture.nativeElement.querySelector('.cultivation-bar');
+      expect(bar?.getAttribute('aria-selected')).toBe('true');
+    });
+  });
+
   describe('deletion confirmation', () => {
     const cultivation = {
       id: 33,
