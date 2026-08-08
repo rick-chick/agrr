@@ -1,0 +1,31 @@
+# Documentation freshness checks (internal links + stale path patterns)
+name: Doc freshness
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  doc-freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check internal markdown links
+        run: ./scripts/check-doc-internal-links.sh
+
+      - name: Check stale documentation paths
+        run: ./scripts/check-doc-stale-paths.sh
+
+      - name: Doc freshness unit tests
+        run: node --test scripts/check-doc-freshness-lib.test.mjs
