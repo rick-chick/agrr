@@ -74,7 +74,8 @@ describe('InteractionRuleDetailPresenter', () => {
         target_group: 'cereal',
         impact_ratio: 0.5,
         is_directional: true,
-        is_reference: false
+        is_reference: false,
+        region: null
       },
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -98,7 +99,8 @@ describe('InteractionRuleDetailPresenter', () => {
           target_group: 'cereal',
           impact_ratio: 0.5,
           is_directional: true,
-          is_reference: false
+          is_reference: false,
+          region: null
         },
         pendingUndoToast: null,
         pendingErrorFlash: null
