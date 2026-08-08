@@ -4,6 +4,8 @@ P6–P8 完了後、**現行のテスト・開発の正**は次を参照する�
 
 | 用途 | 正 |
 |------|-----|
+| レイヤ規約（L1 codemap） | [`../../../ARCHITECTURE.md`](../../../ARCHITECTURE.md) |
+| レイヤ規約（L2 詳細） | [`../../architecture/LAYER-RULES.md`](../../architecture/LAYER-RULES.md) |
 | 本番 API / 切替 | [`../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md`](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md) |
 | Rails シェル削除 | [`../app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](../app-rust-stack/P8-RAILS-SHELL-REMOVAL.md) |
 | ドメイン・adapter テスト | [`../lib-domain-rust/TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md) |

@@ -15,7 +15,7 @@ alwaysApply: false
 | Output Port／View インターフェースの**メソッド名検証**だけ | 名前リネームで壊れる | 渡された DTO・状態を**値で**assert |
 | アダプター層テストで業務分岐網羅 | 二重証明・[CA違反 セクション2](../skills/clean-architecture-violation-fix-workflow/SKILL.md) | 網羅は判断層、アダプターは契約と E2E |
 | 1 テストで成功と失敗を両方 assert | 失敗時の原因切り分けが困難 | 経路ごとに別テスト |
-| `Time.current` / `Date.today` をテスト本体で参照 | 時間依存で再現性が崩れる、`lib/domain` の禁止と整合しない | clock 注入＋固定時刻 Fake |
+| `Time.current` / `Date.today` をテスト本体で参照 | 時間依存で再現性が崩れる、`agrr-domain` の clock 注入規約と整合しない | clock 注入＋固定時刻 Fake |
 
 ## セクション B: 改修時の関連テスト棚卸し
 

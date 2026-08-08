@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of } from 'rxjs';
@@ -47,7 +47,20 @@ const translations = {
       applying: 'Applying…',
       invalid_json: 'Invalid JSON.',
       invalid_shape: 'JSON must include stages, agricultural_tasks, and task_schedule_blueprints.',
-      clipboard_error: 'Could not read clipboard.'
+      clipboard_error: 'Could not read clipboard.',
+      l0_notice_ai_source: 'External AI/MCP proposal JSON.',
+      l0_notice_dry_run: 'Preview validates before apply.',
+      l0_notice_overwrite: 'Apply may overwrite crop master data.',
+      l0_notice_label: 'AI proposal import notices',
+      fix_and_preview_hint: 'Fix the JSON above and run Preview again.',
+      success_title: 'Proposal applied',
+      success_message: 'Crop master data was updated.',
+      back_to_crop: 'Back to crop detail',
+      validation_errors: {
+        is_required: 'This field is required.',
+        stage_order_conflict: 'Conflicts with an existing stage order.',
+        generic: 'Validation failed.'
+      }
     }
   },
   common: {
@@ -62,7 +75,6 @@ describe('CropSetupProposalImportComponent', () => {
   let mockDryRunUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockApplyUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: CropSetupProposalImportPresenter;
-  let router: Router;
 
   beforeEach(async () => {
     mockLoadUseCase = { execute: vi.fn() };
@@ -97,9 +109,6 @@ describe('CropSetupProposalImportComponent', () => {
     translate.setTranslation('en', translations, true);
     translate.use('en');
 
-    router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
     fixture = TestBed.createComponent(CropSetupProposalImportComponent);
     component = fixture.componentInstance;
     presenter = fixture.debugElement.injector.get(CropSetupProposalImportPresenter);
@@ -109,6 +118,17 @@ describe('CropSetupProposalImportComponent', () => {
   it('should create and load crop on init', () => {
     expect(component).toBeTruthy();
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ cropId: 42 });
+  });
+
+  it('shows L0 transparency notices below lead', () => {
+    presenter.present({ crop: { id: 42, name: 'Tomato' } as never });
+    fixture.detectChanges();
+
+    const notice = fixture.nativeElement.querySelector('.crop-setup-proposal-import__l0-notice');
+    expect(notice).toBeTruthy();
+    expect(notice.textContent).toContain('External AI/MCP proposal JSON.');
+    expect(notice.textContent).toContain('Preview validates before apply.');
+    expect(notice.textContent).toContain('Apply may overwrite crop master data.');
   });
 
   it('dry_run success shows normalized preview', () => {
@@ -158,7 +178,25 @@ describe('CropSetupProposalImportComponent', () => {
 
     expect(component.control.phase).toBe('validation_errors');
     expect(fixture.nativeElement.textContent).toContain('stages[0].thermal_requirement.required_gdd');
-    expect(fixture.nativeElement.textContent).toContain('is required');
+    expect(fixture.nativeElement.textContent).toContain('This field is required.');
+    expect(fixture.nativeElement.textContent).toContain('Fix the JSON above and run Preview again.');
+  });
+
+  it('invalid JSON shows recovery hint without dead end', () => {
+    component.control = {
+      ...component.control,
+      loading: false,
+      cropName: 'Tomato',
+      jsonInput: '{not-json'
+    };
+    fixture.detectChanges();
+
+    component.previewProposal();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Invalid JSON.');
+    expect(fixture.nativeElement.textContent).toContain('Fix the JSON above and run Preview again.');
+    expect(fixture.nativeElement.querySelector('#proposal-json')).toBeTruthy();
   });
 
   it('apply validation failure does not navigate to crop stages', () => {
@@ -182,7 +220,7 @@ describe('CropSetupProposalImportComponent', () => {
     });
     fixture.detectChanges();
 
-    expect(router.navigate).not.toHaveBeenCalled();
+    expect(mockApplyUseCase.execute).toHaveBeenCalled();
     expect(component.control.phase).toBe('validation_errors');
     expect(component.control.validationErrors[0]?.path).toBe('stages[0].order');
   });
@@ -210,7 +248,7 @@ describe('CropSetupProposalImportComponent', () => {
     );
   });
 
-  it('apply success navigates to crop stages', () => {
+  it('apply success shows crop detail CTA instead of auto-navigating', () => {
     component.control = {
       ...component.control,
       loading: false,
@@ -236,6 +274,14 @@ describe('CropSetupProposalImportComponent', () => {
       result: { stage_ids: [1], agricultural_task_ids: [2], blueprint_ids: [3] }
     });
     onSuccess();
-    expect(router.navigate).toHaveBeenCalledWith(['/crops', 42, 'stages']);
+    fixture.detectChanges();
+
+    expect(component.control.phase).toBe('success');
+    const backLink = fixture.nativeElement.querySelector(
+      'a.crop-setup-proposal-import__back-to-crop'
+    );
+    expect(backLink).toBeTruthy();
+    expect(backLink.getAttribute('href')).toBe('/crops/42');
+    expect(fixture.nativeElement.textContent).toContain('Proposal applied');
   });
 });

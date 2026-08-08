@@ -121,7 +121,7 @@ GET /api/v1/masters/farms/{farm_id}/temperature_chart?period=90d
 ### 3.2 ドメイン
 
 ```
-lib/domain/farm/  （または weather_data/ に Farm 向け read を追加）
+crates/agrr-domain/src/farm/  （または weather_data/ に Farm 向け read を追加）
 ├── dtos/
 │   ├── farm_temperature_chart_input.rs      # farm_id, period, user_id
 │   └── farm_temperature_chart_output.rs     # points, data_quality, dates
