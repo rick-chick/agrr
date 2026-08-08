@@ -65,6 +65,9 @@ describe('FarmListComponent', () => {
           reference_badge: 'Reference',
           delete_confirm_message:
             'Delete this farm? Registered fields and cultivation plans will be affected. You can undo shortly after deleting.'
+        },
+        form: {
+          region_jp: 'Japan'
         }
       },
       common: { cancel: 'Cancel', delete: 'Delete' }
@@ -183,6 +186,33 @@ describe('FarmListComponent', () => {
     const style = getComputedStyle(deleteButton);
     expect(style.backgroundColor).toBe('rgb(255, 255, 255)');
     expect(style.color).toBe('rgb(220, 38, 38)');
+  });
+
+  it('renders translated region label instead of raw region code', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [
+        {
+          id: 1,
+          name: 'User Farm',
+          region: 'jp',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          weather_data_status: 'completed' as const,
+          is_reference: false
+        }
+      ],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+
+    fixture.detectChanges();
+
+    const meta = fixture.nativeElement.querySelector('.item-card__meta') as HTMLElement;
+    expect(meta?.textContent?.trim()).toBe('Japan');
+    expect(fixture.nativeElement.textContent).not.toContain('region_jp');
+    expect(fixture.nativeElement.textContent).not.toMatch(/\bjp\b/);
   });
 
   it('displays reference farms with (参照) indicator', () => {
