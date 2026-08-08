@@ -402,6 +402,70 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
+  it('opens delete blueprint confirm dialog instead of window.confirm', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const deleteButton = fixture.nativeElement.querySelector(
+      '.blueprint-card__remove'
+    ) as HTMLButtonElement | null;
+    deleteButton?.click();
+    fixture.detectChanges();
+
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__delete-confirm')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Delete this task plan?');
+    expect(deleteBlueprintUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('cancels blueprint delete from confirm dialog', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    component.deleteBlueprint(20);
+    fixture.detectChanges();
+    component.cancelDeleteBlueprintConfirmDialog();
+
+    expect(deleteBlueprintUseCase.execute).not.toHaveBeenCalled();
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+  });
+
+  it('deletes blueprint when confirm dialog is accepted', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    component.deleteBlueprint(20);
+    fixture.detectChanges();
+    component.confirmDeleteBlueprint();
+
+    expect(deleteBlueprintUseCase.execute).toHaveBeenCalledWith({
+      cropId: 3,
+      blueprintId: 20
+    });
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+  });
+
   it('disables header add button when no agricultural tasks exist', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);

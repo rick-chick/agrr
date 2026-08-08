@@ -72,6 +72,10 @@ import { GanttChartPresenter } from '../../usecase/plans/gantt-chart.providers';
 import { LoadGanttPlanDataUseCase } from '../../usecase/plans/load-gantt-plan-data.usecase';
 import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-mutation.usecase';
 
+type GanttPendingDeleteAction =
+  | { type: 'cultivation'; cultivation: CultivationData }
+  | { type: 'field'; group: GanttFieldGroup };
+
 @Component({
   selector: 'app-gantt-chart',
   standalone: true,
@@ -439,6 +443,32 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
         </div>
       }
     </div>
+
+    <dialog
+      #deleteConfirmDialog
+      class="confirm-dialog gantt-chart__delete-confirm"
+      [attr.aria-labelledby]="'gantt-delete-confirm-title'"
+      [attr.aria-describedby]="'gantt-delete-confirm-message'"
+      (cancel)="cancelDeleteConfirmDialog($event)"
+      (click)="onDeleteConfirmDialogBackdropClick($event)"
+    >
+      @if (pendingDeleteAction) {
+        <h2 id="gantt-delete-confirm-title" class="confirm-dialog__title">
+          {{ 'common.delete' | translate }}
+        </h2>
+        <p id="gantt-delete-confirm-message" class="confirm-dialog__message">
+          {{ deleteConfirmMessage }}
+        </p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn-secondary" (click)="cancelDeleteConfirmDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn-danger" (click)="confirmDeleteAction()">
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./gantt-chart.component.css']
 })
@@ -464,6 +494,9 @@ export class GanttChartComponent
   @ViewChild('svg') svgElement!: ElementRef<SVGSVGElement>;
   @ViewChild('highlightRect') highlightRect!: ElementRef<SVGRectElement>;
   @ViewChild('trashDropzone') trashDropzone?: ElementRef<HTMLElement>;
+  @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
+  pendingDeleteAction: GanttPendingDeleteAction | null = null;
 
   /** max-width: 768px — matches project mobile breakpoints */
   isMobileLayout = false;
@@ -1524,21 +1557,67 @@ export class GanttChartComponent
 
   confirmRemoveCultivation(cultivation: CultivationData) {
     if (!this.data) return;
-    const confirmed = confirm(
-      this.translate.instant('js.gantt.confirm_delete_crop', {
-        crop_name: cultivation.crop_name
-      })
-    );
-    if (!confirmed) return;
+    this.pendingDeleteAction = { type: 'cultivation', cultivation };
+    this.deleteConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  confirmRemoveField(group: GanttFieldGroup) {
+    if (!this.data || group.cultivations.length > 0) return;
+    this.pendingDeleteAction = { type: 'field', group };
+    this.deleteConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  get deleteConfirmMessage(): string {
+    if (!this.pendingDeleteAction) {
+      return '';
+    }
+    if (this.pendingDeleteAction.type === 'cultivation') {
+      return this.translate.instant('js.gantt.confirm_delete_crop', {
+        crop_name: this.pendingDeleteAction.cultivation.crop_name
+      });
+    }
+    return this.translate.instant('js.gantt.confirm_delete_field', {
+      field_name: this.pendingDeleteAction.group.fieldName
+    });
+  }
+
+  confirmDeleteAction(): void {
+    const action = this.pendingDeleteAction;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+    this.pendingDeleteAction = null;
+    if (!action || !this.data) {
+      return;
+    }
 
     const planId = this.data.data.id;
     this.showOptimizationLock = true;
 
+    if (action.type === 'cultivation') {
+      this.runGanttPlanMutationUseCase.execute({
+        planType: this.planType,
+        planId,
+        command: { kind: 'removeCultivation', cultivationId: action.cultivation.id }
+      });
+      return;
+    }
+
     this.runGanttPlanMutationUseCase.execute({
       planType: this.planType,
       planId,
-      command: { kind: 'removeCultivation', cultivationId: cultivation.id }
+      command: { kind: 'removeField', fieldId: action.group.fieldId }
     });
+  }
+
+  cancelDeleteConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+    this.pendingDeleteAction = null;
+  }
+
+  onDeleteConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
+      this.cancelDeleteConfirmDialog();
+    }
   }
 
   toggleFieldForm() {
@@ -1573,25 +1652,6 @@ export class GanttChartComponent
           this.applyRefreshedPlanData(data);
         }
       }
-    });
-  }
-
-  confirmRemoveField(group: GanttFieldGroup) {
-    if (!this.data || group.cultivations.length > 0) return;
-    const confirmed = confirm(
-      this.translate.instant('js.gantt.confirm_delete_field', {
-        field_name: group.fieldName
-      })
-    );
-    if (!confirmed) return;
-
-    const planId = this.data.data.id;
-    this.showOptimizationLock = true;
-
-    this.runGanttPlanMutationUseCase.execute({
-      planType: this.planType,
-      planId,
-      command: { kind: 'removeField', fieldId: group.fieldId }
     });
   }
 

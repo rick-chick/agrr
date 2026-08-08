@@ -179,3 +179,34 @@
 .master-loading {
   color: var(--color-text-secondary);
 }
+
+.confirm-dialog {
+  max-width: 32rem;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-modal);
+}
+
+.confirm-dialog::backdrop {
+  background: var(--color-dialog-backdrop);
+}
+
+.confirm-dialog__title {
+  margin: 0 0 0.75rem;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.confirm-dialog__message {
+  margin: 0 0 1rem;
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}

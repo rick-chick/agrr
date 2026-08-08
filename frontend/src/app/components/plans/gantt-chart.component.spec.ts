@@ -73,6 +73,10 @@ describe('GanttChartComponent', () => {
           confirm_delete_crop: '{{crop_name}}を削除しますか？',
           confirm_delete_field: '{{field_name}}を削除しますか？'
         }
+      },
+      common: {
+        delete: '削除',
+        cancel: 'キャンセル'
       }
     }, true);
     translate.use('ja');
@@ -86,6 +90,8 @@ describe('GanttChartComponent', () => {
         removeEventListener: vi.fn()
       }))
     );
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
   });
 
   describe('gantt chart visibility', () => {
@@ -173,23 +179,58 @@ describe('GanttChartComponent', () => {
       } as any;
     });
 
-    it('does not remove cultivation when confirm is cancelled', () => {
-      vi.stubGlobal('confirm', vi.fn().mockReturnValue(false));
-
+    it('opens delete confirm dialog and does not remove cultivation when cancelled', () => {
       component.confirmRemoveCultivation(cultivation);
+      fixture.detectChanges();
 
+      expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+      expect(fixture.nativeElement.querySelector('.gantt-chart__delete-confirm')).toBeTruthy();
+      expect(fixture.nativeElement.textContent).toContain('Riceを削除しますか？');
       expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
-      vi.unstubAllGlobals();
+
+      component.cancelDeleteConfirmDialog();
+      expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
     });
 
-    it('does not remove field when confirm is cancelled', () => {
-      vi.stubGlobal('confirm', vi.fn().mockReturnValue(false));
+    it('removes cultivation when delete confirm dialog is accepted', () => {
+      component.confirmRemoveCultivation(cultivation);
+      fixture.detectChanges();
+
+      component.confirmDeleteAction();
+
+      expect(runGanttPlanMutationUseCase.execute).toHaveBeenCalledWith({
+        planType: 'private',
+        planId: 7,
+        command: { kind: 'removeCultivation', cultivationId: 33 }
+      });
+    });
+
+    it('opens delete confirm dialog and does not remove field when cancelled', () => {
       const group = { fieldId: 88, fieldName: 'Empty Field', cultivations: [] } as any;
 
       component.confirmRemoveField(group);
+      fixture.detectChanges();
 
+      expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+      expect(fixture.nativeElement.textContent).toContain('Empty Fieldを削除しますか？');
       expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
-      vi.unstubAllGlobals();
+
+      component.cancelDeleteConfirmDialog();
+      expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('removes field when delete confirm dialog is accepted', () => {
+      const group = { fieldId: 88, fieldName: 'Empty Field', cultivations: [] } as any;
+
+      component.confirmRemoveField(group);
+      fixture.detectChanges();
+      component.confirmDeleteAction();
+
+      expect(runGanttPlanMutationUseCase.execute).toHaveBeenCalledWith({
+        planType: 'private',
+        planId: 7,
+        command: { kind: 'removeField', fieldId: 88 }
+      });
     });
   });
 
