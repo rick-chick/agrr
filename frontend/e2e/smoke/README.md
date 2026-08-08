@@ -107,3 +107,19 @@ npm run test:e2e:smoke:locale-i18n
 | `public-plans/results` 未解決 | 完成済み public cultivation_plan が DB に無い |
 
 `buildResolvedCaptureIds` は各マスタ・private Plan で **`E2E Baseline` プレフィックス一致 id を優先**し、無ければ一覧先頭にフォールバックする（[`../shared/baseline-ids.ts`](../shared/baseline-ids.ts)）。
+
+## Lighthouse CI（認証後代表画面・#736）
+
+認証後代表ルート（`/plans`, `/plans/:id`, `/work`）の性能退行検知は workflow **`.github/workflows/frontend-lighthouse.yml`** が担当する。公開ルートとは別経路。
+
+| 項目 | 内容 |
+|------|------|
+| ルート定義 | [`../../scripts/lighthouse-ci-routes.json`](../../scripts/lighthouse-ci-routes.json) の `authenticatedRoutes` |
+| 認証 | Playwright と同じ dev セッション: `GET /auth/test/mock_login_as/developer` → `session_id` cookie |
+| URL 解決 | `node scripts/lighthouse-ci-resolve-auth-urls.mjs`（plan id は `GET /api/v1/plans`） |
+| LHCI 設定 | [`../../lighthouserc.auth.js`](../../lighthouserc.auth.js) + `lighthouse-ci-auth-puppeteer.cjs`（cookie 注入） |
+| 起動 | リポジトリ root で `bash scripts/run-lighthouse-ci.sh`（docker dev stack + `ng serve` + 上記 resolve） |
+| 閾値 | performance ≥ 0.85、LCP ≤ 2500ms（warn のみ — 初回計測値は PR コメントに記録） |
+| desktop vs mobile | 公開 desktop は `lighthouserc.js`（preset desktop）。モバイル実利用との差は `/contact` の `lighthouserc.mobile-public.js`（screenEmulation）で 1 件サンプル。認証ルートは desktop preset |
+
+遅延ロード退行検知: [`../../src/app/routes/perf-bundle-boundary.spec.ts`](../../src/app/routes/perf-bundle-boundary.spec.ts)（`npm test` / frontend-test CI）が `/plans`・`/work` の `loadComponent` 境界と initial bundle budget を検証する。

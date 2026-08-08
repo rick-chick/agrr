@@ -81,6 +81,9 @@ export async function verifyLighthouseCiWorkflow(repoRoot) {
         errors.push(`lighthouserc.js missing required snippet: ${snippet}`);
       }
     }
+    if (!rcText.includes('desktop preset') || !rcText.includes('mobile')) {
+      errors.push('lighthouserc.js missing desktop vs mobile preset documentation comment');
+    }
   } catch {
     errors.push(`missing config: ${lighthouseRcPath}`);
   }
@@ -149,6 +152,33 @@ export async function verifyLighthouseCiWorkflow(repoRoot) {
     }
   } catch {
     errors.push(`missing runbook: ${runbookPath}`);
+  }
+
+  const smokeReadmePath = join(repoRoot, 'frontend/e2e/smoke/README.md');
+  try {
+    const smokeReadmeText = await readFile(smokeReadmePath, 'utf8');
+    for (const snippet of [
+      'Lighthouse CI',
+      'mock_login',
+      'lighthouse-ci-resolve-auth-urls',
+      'lighthouserc.auth.js',
+    ]) {
+      if (!smokeReadmeText.includes(snippet)) {
+        errors.push(`e2e/smoke/README.md missing Lighthouse CI snippet: ${snippet}`);
+      }
+    }
+  } catch {
+    errors.push(`missing smoke README: ${smokeReadmePath}`);
+  }
+
+  const bundleBoundaryPath = join(
+    repoRoot,
+    'frontend/src/app/routes/perf-bundle-boundary.spec.ts',
+  );
+  try {
+    await readFile(bundleBoundaryPath, 'utf8');
+  } catch {
+    errors.push(`missing perf bundle boundary spec: ${bundleBoundaryPath}`);
   }
 
   return { ok: errors.length === 0, errors };
