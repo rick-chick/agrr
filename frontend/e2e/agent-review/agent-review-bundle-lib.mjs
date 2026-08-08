@@ -1,23 +1,18 @@
 import { createHash } from 'node:crypto';
-import { readFile, stat, writeFile } from 'node:fs/promises';
+import { readFile, stat, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import { CAPTURE_LOCALES, agentPngFilename } from '../capture-locales.mjs';
+import { bundlePath, agentReviewTmpDir } from './agent-review-paths.mjs';
+import { captureRunIdFromReview } from './visual-review-lib.mjs';
 import { displayPattern } from './verify-visual-review-fresh-lib.mjs';
 
 const execFileAsync = promisify(execFile);
 
-export const BUNDLE_FILENAME = 'agent-review-bundle.json';
-export const BUNDLE_VERSION = 1;
-
-/**
- * @param {string} frontendRoot
- */
-export function bundlePath(frontendRoot) {
-  return join(frontendRoot, 'e2e/agent-review', BUNDLE_FILENAME);
-}
+export { BUNDLE_FILENAME } from './agent-review-paths.mjs';
+export { bundlePath } from './agent-review-paths.mjs';
 
 /**
  * @param {string} frontendRoot
@@ -59,23 +54,7 @@ export function buildRunId(gitCommit, completedAt) {
 }
 
 /**
- * @param {string} markdown
- * @returns {string | null}
- */
-export function parseVisualReviewCaptureRunId(markdown) {
-  const meta = markdown.split('## サマリ表')[0] ?? markdown;
-  const boldMatch = meta.match(/\*\*captureRunId\*\*:\s*`([^`]+)`/);
-  if (boldMatch) return boldMatch[1].trim();
-  const lineMatch = meta.match(/captureRunId:\s*`([^`]+)`/);
-  if (lineMatch) return lineMatch[1].trim();
-  const bareBold = meta.match(/\*\*captureRunId\*\*:\s*([^\s`（]+)/);
-  if (bareBold) return bareBold[1].trim();
-  const bare = meta.match(/captureRunId:\s*([^\s`（]+)/);
-  return bare ? bare[1].trim() : null;
-}
-
-/**
- * @param {string} markdown
+ * @param {string} value
  * @returns {boolean}
  */
 export function isUnreviewedResultToken(value) {
@@ -180,7 +159,7 @@ export async function generateCaptureBundle(options) {
   });
 
   const bundle = {
-    bundleVersion: BUNDLE_VERSION,
+    bundleVersion: 1,
     runId,
     gitCommit,
     routeManifestGeneratedAt: manifest.generatedAt ?? null,
@@ -190,6 +169,7 @@ export async function generateCaptureBundle(options) {
     artifacts,
   };
 
+  await mkdir(agentReviewTmpDir(frontendRoot), { recursive: true });
   await writeFile(bundleFile, `${JSON.stringify(bundle, null, 2)}\n`);
   return bundle;
 }
@@ -223,33 +203,12 @@ export async function verifyBundleArtifactsOnDisk(bundle, frontendRoot) {
 }
 
 /**
- * @param {string} markdown
- * @param {string} runId
- */
-export function stampVisualReviewCaptureRunId(markdown, runId) {
-  const stampLine = `- **captureRunId**: \`${runId}\`（agent-review-bundle.json と一致必須。PNG 根拠の有効期限）`;
-  const captureRunIdLine =
-    /^- \*\*captureRunId\*\*:.*$|^captureRunId:.*$/gm;
-  const stripped = markdown.replace(captureRunIdLine, '').replace(/\n{3,}/g, '\n\n');
-
-  const metaHeading = '## メタ';
-  const idx = stripped.indexOf(metaHeading);
-  if (idx < 0) {
-    return `${metaHeading}\n\n${stampLine}\n\n${stripped}`;
-  }
-  const afterHeading = stripped.indexOf('\n', idx);
-  const insertAt = afterHeading >= 0 ? afterHeading + 1 : idx + metaHeading.length;
-  return `${stripped.slice(0, insertAt)}\n${stampLine}\n${stripped.slice(insertAt)}`;
-}
-
-/**
  * @param {object} bundle
  * @param {string[]} pngNames
  */
 export function bundleCoversPngs(bundle, pngNames) {
   const byName = new Map((bundle.artifacts ?? []).map((a) => [a.png, a]));
   const missing = [];
-  const stale = [];
 
   for (const png of pngNames) {
     const artifact = byName.get(png);
@@ -258,29 +217,29 @@ export function bundleCoversPngs(bundle, pngNames) {
     }
   }
 
-  return { ok: missing.length === 0, missing, stale };
+  return { ok: missing.length === 0, missing, stale: [] };
 }
 
 /**
  * @param {{
  *   bundle: object | null,
- *   reviewMarkdown: string,
+ *   review: object | null,
  *   manifestRouteCount: number,
  * }} input
  */
 export function validateAgentReviewEvidenceChain(input) {
   const errors = [];
-  const { bundle, reviewMarkdown, manifestRouteCount } = input;
+  const { bundle, review, manifestRouteCount } = input;
 
   if (!bundle) {
     errors.push('agent-review-bundle.json が存在しない。npm run e2e:capture-for-agent を実行すること');
     return { ok: false, errors, captureRunId: null };
   }
 
-  const reviewRunId = parseVisualReviewCaptureRunId(reviewMarkdown);
+  const reviewRunId = review ? captureRunIdFromReview(review) : null;
   if (!reviewRunId) {
     errors.push(
-      'visual-review-results.md メタに captureRunId がない。npm run e2e:agent-review:stamp-review を実行すること',
+      'visual-review.json に captureRunId がない。frontend-agent-visual-review で bundle.runId を含めて生成すること',
     );
   } else if (reviewRunId !== bundle.runId) {
     errors.push(

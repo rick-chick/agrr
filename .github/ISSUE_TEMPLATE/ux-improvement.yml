@@ -77,7 +77,7 @@ body:
     id: references
     attributes:
       label: 参照
-      description: visual-review-results.md 行、PNG、コンポーネント path
+      description: visual-review.json summary #N、PNG、コンポーネント path
       placeholder: |
-        - visual-review-results.md #46
+        - visual-review.json summary #46
         - frontend/e2e/agent-review/out/plans_id_optimizing.ja.png

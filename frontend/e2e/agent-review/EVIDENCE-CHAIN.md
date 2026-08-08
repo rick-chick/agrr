@@ -1,34 +1,35 @@
 # UX/UI Issue 起票 — 証拠鎖（Capture Run）
 
-PNG を根拠にする Issue 起票は **Capture Run ボンドル**で束ねる。古い `visual-review-results.md` や古い PNG を単独の正本にしない。
+PNG を根拠にする Issue 起票は **Capture Run ボンドル**で束ねる。レビュー成果物は **リポジトリに置かない**（`frontend/tmp/agent-review/` のみ）。
 
 ## 証拠の二層
 
 | 層 | 正本 | Issue 起票 |
 |----|------|------------|
 | **機械** | `audit:css-tokens`、locale catalog spec、axe smoke 等 | CSS / 一部 i18n・a11y は PNG 不要 |
-| **視覚** | `agent-review-bundle.json` + 同 runId の PNG | bundle に無い PNG は根拠にしない |
+| **視覚** | `tmp/agent-review/agent-review-bundle.json` + 同 runId の PNG | bundle に無い PNG は根拠にしない |
 
 ## 必須パイプライン（視覚指摘 → Issue）
 
 ```bash
 cd frontend
-npm run e2e:capture-for-agent          # PNG + agent-review-bundle.json 生成
-# frontend-agent-visual-review で visual-review-results.md 更新
-npm run e2e:agent-review:stamp-review # メタに captureRunId を刻む
+npm run e2e:capture-for-agent          # PNG + bundle 生成（tmp/agent-review/）
+# frontend-agent-visual-review で visual-review.json 生成（captureRunId = bundle.runId）
 npm run e2e:agent-review:evidence:check:enforce
 node ../.cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs
 ```
 
 `collect-ux-findings` は **証拠鎖ゲート未通過なら exit 1**（起票中止）。
 
-## ファイル
+## ファイル（すべて gitignore）
 
-| ファイル | git | 役割 |
-|----------|-----|------|
-| `e2e/agent-review/out/*.png` | ignore | スクリーンショット（再キャプチャで上書き） |
-| `e2e/agent-review/agent-review-bundle.json` | **追跡** | runId・sha256・capturedAt（PNG の正本メタ） |
-| `e2e/agent-review/visual-review-results.md` | 追跡 | レビュー表。**captureRunId 必須** |
+| ファイル | 役割 |
+|----------|------|
+| `e2e/agent-review/out/*.png` | スクリーンショット（再キャプチャで上書き） |
+| `tmp/agent-review/agent-review-bundle.json` | runId・sha256・capturedAt（PNG の正本メタ） |
+| `tmp/agent-review/visual-review.json` | ビジュアルレビュー。**captureRunId 必須** |
+| `tmp/agent-review/cognitive-guidance-review.json` | 認知導線レビュー（任意） |
+| `tmp/agent-review/ux-findings-draft.json` | collect 出力 |
 
 ## 差分キャプチャ
 
@@ -37,7 +38,7 @@ node ../.cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs
 ```bash
 playwright test e2e/visual/route-manifest-visual.spec.ts --grep 'pattern'
 node e2e/agent-review/generate-capture-bundle.mjs --merge
-npm run e2e:agent-review:stamp-review
+# visual-review.json を captureRunId 付きで再生成
 ```
 
 ## 禁止
@@ -45,3 +46,4 @@ npm run e2e:agent-review:stamp-review
 - captureRunId なし / bundle なしで `gh issue create`
 - 本文に「PNG で確認済み」と書く（collect が証拠鎖通過を記録する）
 - `未レビュー` / `未キャプチャ` 行から Issue 起票（collect が除外）
+- レビュー成果物を `e2e/agent-review/` 配下にコミットする

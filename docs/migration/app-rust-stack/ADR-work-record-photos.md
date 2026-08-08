@@ -8,7 +8,7 @@ Accepted (2026-07-14)
 
 ## Context
 
-作業記録（`work_records`）に写真を添付し、実績履歴で確認できるようにする。当初 `docs/design/work-record-gui-plan.md` §6 では非スコープだったが、モバイル畑作業での実績記録ニーズにより v1 を追加する。
+作業記録（`work_records`）に写真を添付し、実績履歴で確認できるようにする。当初 GUI 計画では非スコープだったが、モバイル畑作業での実績記録ニーズにより v1 を追加する。
 
 既存インフラは GCP（Cloud Run + Litestream GCS + 気象 GCS）。予測気象の二層化（`ADR-predicted-weather-gcs-two-layer.md`）と同様、SQLite はメタデータのみ、画像本体はオブジェクトストレージに置く。
 

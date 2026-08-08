@@ -11,7 +11,7 @@
 
 ## 根拠
 
-- captureRunId: `<agent-review-bundle.json の runId>`（視覚指摘のみ）
+- captureRunId: `<tmp/agent-review/agent-review-bundle.json の runId>`（視覚指摘のみ）
 - または: `<spec ファイル / audit コマンド>`
 
 ## 完了条件
@@ -25,7 +25,7 @@
 
 ## 参照
 
-- visual-review-results.md #N
+- visual-review.json summary #N
 - frontend/e2e/agent-review/out/<png>
 - コンポーネント: `path/to/file`
 ```

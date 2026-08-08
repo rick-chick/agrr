@@ -19,7 +19,8 @@ import {
   parseCssAuditLog,
   parseDetailRowNumbers,
   parseDetailedFindings,
-  parseVisualReviewTable,
+  parseDetailedFindingsFromReview,
+  parseVisualReviewJson,
   titleMatchesSegment,
 } from './collect-ux-findings-parsers.mjs';
 
@@ -213,18 +214,50 @@ test('isLikelyResolvedFinding: CLOSED かつ score >= 5', () => {
   );
 });
 
-test('parseVisualReviewTable: サマリ表の列をパース', () => {
-  const md = `
-| # | pattern | ja | en | in | 結果 | i18n | 指摘 |
-|---|---------|----|----|----|----|------|------|
-| 3 | \`about\` | \`about.ja.png\` | \`about.en.png\` | \`about.in.png\` | OK | 要確認 | i18n: key |
-`;
-  const rows = parseVisualReviewTable(md);
+test('parseVisualReviewJson: サマリ行をパース', () => {
+  const review = {
+    summary: [
+      {
+        num: 3,
+        pattern: 'about',
+        ja: 'about.ja.png',
+        en: 'about.en.png',
+        in: 'about.in.png',
+        layout: 'OK',
+        i18n: '要確認',
+        note: 'i18n: key',
+      },
+    ],
+  };
+  const rows = parseVisualReviewJson(review);
   assert.equal(rows.length, 1);
   assert.equal(rows[0].num, '3');
   assert.equal(rows[0].pattern, 'about');
   assert.equal(rows[0].ja, 'about.ja.png');
   assert.equal(rows[0].i18n, '要確認');
+});
+
+test('parseDetailedFindingsFromReview: details 配列を展開', () => {
+  const review = {
+    details: [
+      {
+        priority: 'P1',
+        rows: [8, 14],
+        patternLabel: 'privacy / terms',
+        text: 'contact_link 未展開。',
+      },
+      {
+        priority: 'P1',
+        rows: [17, 18, 30, 31],
+        patternLabel: 'region labels',
+        text: 'en で地域ラベルが日本語。',
+      },
+    ],
+  };
+  const items = parseDetailedFindingsFromReview(review);
+  assert.equal(items.length, 2);
+  assert.deepEqual(items[0].rows, [8, 14]);
+  assert.deepEqual(items[1].rows, [17, 18, 30, 31]);
 });
 
 test('isReferenceDataExclusion: 参照データ由来は起票対象外', () => {

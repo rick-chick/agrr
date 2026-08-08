@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * route-manifest.json の pattern と visual-review-results.md サマリ表を突合する。
+ * route-manifest.json の pattern と visual-review.json summary を突合する。
  *
  * 使い方:
  *   node e2e/agent-review/verify-visual-review-fresh.mjs           # レポートのみ（exit 0）
@@ -19,7 +19,7 @@ const result = await checkVisualReviewFreshness(FRONTEND);
 
 if (result.ok) {
   console.log(
-    `verify-visual-review-fresh: OK ${result.manifestCount} patterns match between route-manifest and visual-review-results`,
+    `verify-visual-review-fresh: OK ${result.manifestCount} patterns match between route-manifest and visual-review.json`,
   );
   process.exit(0);
 }

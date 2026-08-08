@@ -74,14 +74,15 @@ bash .cursor/scripts/cloud-gh-auth.sh
 gh auth status
 gh issue list --repo rick-chick/agrr --limit 1
 
-# UX Audit 前提ファイル（欠落時は UX Audit が本番パスでクラッシュ）
-test -f frontend/e2e/agent-review/visual-review-results.md
+# UX Audit 前提（証拠鎖: bundle + visual-review.json。リポジトリ内の成果物は不要）
+test -f frontend/tmp/agent-review/agent-review-bundle.json || echo 'skip UX collect: no capture bundle'
 
 # UX Audit スクリプト
 node --check .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs
 node --test .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.test.mjs
-# 本番パス（visual-review 存在時のみ。--skip-gh で gh 重複呼び出しを省略）
-if test -f frontend/e2e/agent-review/visual-review-results.md; then
+# 本番パス（bundle + visual-review がある場合のみ）
+if test -f frontend/tmp/agent-review/agent-review-bundle.json \
+   && test -f frontend/tmp/agent-review/visual-review.json; then
   node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs --skip-gh
 fi
 
@@ -162,9 +163,7 @@ gh api repos/rick-chick/agrr/rulesets --jq 'map(select(.name=="master CI require
 ### スモーク
 - cloud-gh-auth: pass / fail
 - gh issue list: pass / fail
-- visual-review-results.md: present / missing
-- collect-ux-findings.test.mjs: pass / fail
-- collect-ux-findings.mjs --skip-gh: pass / fail / skipped（ファイル欠落時）
+- capture bundle + visual-review: present / missing（欠落時は UX collect スキップ＝正常）
 
 ### 自己監査（前回 Automation Audit）
 - 前回 Memory の「実施した修正」が P0/P1 に該当していたか
