@@ -51,6 +51,13 @@ describe('NavbarComponent', () => {
     expect(component.reportUrl).toBe(`${window.location.origin}/research/en/`);
   });
 
+  it('uses /research/en/ for in locale (English report fallback)', () => {
+    translate.setDefaultLang('ja');
+    translate.use('in');
+    fixture.detectChanges();
+    expect(component.reportUrl).toBe(`${window.location.origin}/research/en/`);
+  });
+
   it('maps developer mock user to locale-aware short label', () => {
     translate.setTranslation('en', {
       auth: { login: { dev_login_as_developer: 'Login as Developer' } },
