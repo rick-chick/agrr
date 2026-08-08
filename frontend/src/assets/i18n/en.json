@@ -2051,7 +2051,7 @@
       "debug": {
         "label": "Debug:"
       },
-      "description": "Manage crops for your cultivation plans. Reference crops are shared master data and cannot be edited. Your own crops can be edited anytime.",
+      "description": "Manage crops for your cultivation plans. Reference crops are shared master data and cannot be edited or deleted. Your own crops can be edited anytime.",
       "menu": {
         "more_actions": "More actions"
       }
