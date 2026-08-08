@@ -107,3 +107,29 @@ npm run test:e2e:smoke:locale-i18n
 | `public-plans/results` 未解決 | 完成済み public cultivation_plan が DB に無い |
 
 `buildResolvedCaptureIds` は各マスタ・private Plan で **`E2E Baseline` プレフィックス一致 id を優先**し、無ければ一覧先頭にフォールバックする（[`../shared/baseline-ids.ts`](../shared/baseline-ids.ts)）。
+
+## Lighthouse CI（認証後代表ルート）
+
+PR / `master` では workflow **`.github/workflows/frontend-lighthouse.yml`** が `bash scripts/run-lighthouse-ci.sh` を実行する（warn-only: performance ≥ 0.85、LCP ≤ 2500ms）。
+
+| フェーズ | 対象 | 設定 |
+|----------|------|------|
+| 公開 desktop | prerender 4 ルート | `lighthouserc.js`（`staticDistDir`） |
+| 公開 mobile | `/contact` | `lighthouserc.mobile-public.js`（mobile formFactor） |
+| 認証後 | `/plans`, `/plans/:id`, `/work` | `lighthouserc.auth.js` + `lighthouse-ci-auth-puppeteer.cjs` |
+
+認証ルートは Playwright E2E と同じ **mock_login** 経路を使う:
+
+1. `docker compose` + `docker-compose.e2e-ci.yml` で agrr-server + strangler-proxy（`:3000`）
+2. `ng serve`（development proxy → `:3000`）で SPA を `:4200` に起動
+3. `node scripts/lighthouse-ci-resolve-auth-urls.mjs` が `mock_login_as/developer` でセッションを確立し `/api/v1/plans` から `planId` を解決 → `lighthouse-ci-auth-urls.generated.json` を出力
+4. LHCI `puppeteerScript`（`lighthouse-ci-auth-puppeteer.cjs`）が各 URL 監査前に cookie を注入
+
+ローカル再現:
+
+```bash
+bash scripts/run-lighthouse-ci.sh          # フル（公開 + mobile + 認証）
+bash scripts/run-lighthouse-ci.sh --dry-run # ファイル存在チェックのみ
+```
+
+遅延ロード退行検知: `node --test frontend/scripts/lighthouse-auth-route-bundle-boundary.test.mjs`（`/plans`・`/work` がガント / Chart.js / Leaflet を静的 import しないこと）と `src/app/components/home/home-bundle-boundary.spec.ts`（ホーム初期バンドル）。

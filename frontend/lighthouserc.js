@@ -1,5 +1,14 @@
 const { publicRoutes, thresholds } = require('./scripts/lighthouse-ci-routes.json');
 
+/**
+ * Public prerender routes — Lighthouse **desktop** preset (lab, static dist).
+ *
+ * Mobile real-user performance differs: CI also runs `lighthouserc.mobile-public.js`
+ * (formFactor mobile + screen emulation on `/contact`) and authenticated routes via
+ * `lighthouserc.auth.js` (desktop preset against ng serve). Field CWV on phones is
+ * tracked separately (CrUX / GSC runbook); do not treat desktop lab scores as mobile UX.
+ */
+
 /** @type {import('@lhci/cli/src/index').LHCI.ServerCommand.Options} */
 module.exports = {
   ci: {
