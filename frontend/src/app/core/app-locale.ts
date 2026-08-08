@@ -26,6 +26,14 @@ export function ogLocaleForAppLang(lang: AppLang): string {
   return 'hi_IN';
 }
 
+/**
+ * Static research site path for each app locale.
+ * Japanese UI → `/research/`; all other locales (en, in, unknown) → English research.
+ */
+export function researchReportPathForAppLang(lang: AppLang | string): string {
+  return lang === 'ja' ? '/research/' : '/research/en/';
+}
+
 const STORAGE_KEY = 'agrr.app.lang';
 
 export function mapFarmRegionToAppLang(region?: string | null): AppLang | undefined {

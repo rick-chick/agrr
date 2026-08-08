@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { CropSetupProposalImportView } from '../../components/masters/crops/crop-setup-proposal-import.view';
 import { CropSetupProposalApplyResponse, CropSetupProposalDryRunResponse } from '../../domain/crops/crop-setup-proposal';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
 import { LoadCropForEditOutputPort } from '../../usecase/crops/load-crop-for-edit.output-port';
 import {
@@ -98,7 +99,7 @@ export class CropSetupProposalImportPresenter
       loading: false,
       submitting: false,
       applying: false,
-      error: dto.message
+      error: errorDtoI18nKey(dto)
     };
   }
 }

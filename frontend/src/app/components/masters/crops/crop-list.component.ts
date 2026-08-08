@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -122,6 +122,25 @@ const initialControl: CropListViewState = {
         }
       </section>
     </div>
+
+    <dialog
+      #deleteConfirmDialog
+      class="confirm-dialog crop-list__delete-confirm"
+      (cancel)="cancelDeleteConfirmDialog($event)"
+      (click)="onDeleteConfirmDialogBackdropClick($event)"
+    >
+      @if (pendingDeleteCropId != null) {
+        <p class="confirm-dialog__message">{{ 'crops.index.delete_confirm_message' | translate }}</p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelDeleteConfirmDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDeleteCrop()">
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./crop-list.component.css']
 })
@@ -137,6 +156,10 @@ export class CropListComponent implements CropListView, OnInit, OnDestroy {
   private unsubRefresh: (() => void) | null = null;
 
   openMenuCropId: number | null = null;
+
+  @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
+  pendingDeleteCropId: number | null = null;
 
   private _control: CropListViewState = initialControl;
   get control(): CropListViewState {
@@ -172,7 +195,30 @@ export class CropListComponent implements CropListView, OnInit, OnDestroy {
   }
 
   deleteCrop(cropId: number): void {
+    this.pendingDeleteCropId = cropId;
+    this.deleteConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  confirmDeleteCrop(): void {
+    if (this.pendingDeleteCropId == null) {
+      return;
+    }
+    const cropId = this.pendingDeleteCropId;
+    this.pendingDeleteCropId = null;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
     this.deleteUseCase.execute({ cropId, onAfterUndo: () => this.refreshAfterUndo() });
+  }
+
+  cancelDeleteConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.pendingDeleteCropId = null;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+  }
+
+  onDeleteConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
+      this.cancelDeleteConfirmDialog();
+    }
   }
 
   toggleOverflowMenu(cropId: number, event: MouseEvent): void {

@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef, DestroyRef } from '@angul
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -17,6 +17,7 @@ import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edi
 import { DryRunCropSetupProposalUseCase } from '../../../usecase/crops/dry-run-crop-setup-proposal.usecase';
 import { ApplyCropSetupProposalUseCase } from '../../../usecase/crops/apply-crop-setup-proposal.usecase';
 import { CropSetupProposalBody } from '../../../domain/crops/crop-setup-proposal';
+import { setupProposalValidationErrorI18nKey } from '../../../core/setup-proposal-validation-error-i18n';
 
 const initialControl: CropSetupProposalImportViewState = {
   loading: true,
@@ -44,7 +45,7 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
 @Component({
   selector: 'app-crop-setup-proposal-import',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RouterLink, MasterContextHeaderComponent],
   providers: [...CROP_SETUP_PROPOSAL_IMPORT_PROVIDERS],
   template: `
     <div class="page-main">
@@ -61,8 +62,17 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
             {{ 'crops.setup_proposal_import.lead' | translate }}
           </p>
 
+          <ul class="crop-setup-proposal-import__l0-notice" aria-label="{{ 'crops.setup_proposal_import.l0_notice_label' | translate }}">
+            <li>{{ 'crops.setup_proposal_import.l0_notice_ai_source' | translate }}</li>
+            <li>{{ 'crops.setup_proposal_import.l0_notice_dry_run' | translate }}</li>
+            <li>{{ 'crops.setup_proposal_import.l0_notice_overwrite' | translate }}</li>
+          </ul>
+
           @if (control.error) {
             <p class="master-loading master-error" role="alert">{{ control.error | translate }}</p>
+            <p class="crop-setup-proposal-import__recovery-hint">
+              {{ 'crops.setup_proposal_import.fix_and_preview_hint' | translate }}
+            </p>
           }
 
           <label for="proposal-json" class="form-card__field">
@@ -126,10 +136,31 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
               <ul class="crop-setup-proposal-import__errors">
                 @for (item of control.validationErrors; track item.path + item.message) {
                   <li>
-                    <strong>{{ item.path }}</strong>: {{ item.message }}
+                    <strong>{{ item.path }}</strong>:
+                    {{ validationErrorMessageKey(item) | translate }}
                   </li>
                 }
               </ul>
+              <p class="crop-setup-proposal-import__recovery-hint">
+                {{ 'crops.setup_proposal_import.fix_and_preview_hint' | translate }}
+              </p>
+            </section>
+          }
+
+          @if (control.phase === 'success') {
+            <section aria-labelledby="success-heading" class="crop-setup-proposal-import__success">
+              <h3 id="success-heading" class="crop-setup-proposal-import__section-title">
+                {{ 'crops.setup_proposal_import.success_title' | translate }}
+              </h3>
+              <p>{{ 'crops.setup_proposal_import.success_message' | translate }}</p>
+              <div class="form-card__actions">
+                <a
+                  [routerLink]="['/crops', cropId]"
+                  class="btn btn-primary crop-setup-proposal-import__back-to-crop"
+                >
+                  {{ 'crops.setup_proposal_import.back_to_crop' | translate }}
+                </a>
+              </div>
             </section>
           }
 
@@ -164,7 +195,6 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
 })
 export class CropSetupProposalImportComponent implements CropSetupProposalImportView, OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadCropForEditUseCase);
   private readonly dryRunUseCase = inject(DryRunCropSetupProposalUseCase);
   private readonly applyUseCase = inject(ApplyCropSetupProposalUseCase);
@@ -172,6 +202,10 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translate = inject(TranslateService);
+
+  validationErrorMessageKey(item: { path: string; message: string }): string {
+    return setupProposalValidationErrorI18nKey(item);
+  }
 
   private _control: CropSetupProposalImportViewState = initialControl;
   get control(): CropSetupProposalImportViewState {
@@ -196,7 +230,7 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
     return crumbs;
   }
 
-  private get cropId(): number {
+  get cropId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
   }
 
@@ -213,7 +247,7 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('crops.errors.invalid_id')
+        error: 'crops.errors.invalid_id'
       };
       return;
     }
@@ -284,7 +318,9 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
     this.applyUseCase.execute({
       cropId: this.cropId,
       proposal,
-      onSuccess: () => this.router.navigate(['/crops', this.cropId, 'stages'])
+      onSuccess: () => {
+        this.control = { ...this.control, phase: 'success' };
+      }
     });
   }
 
@@ -294,7 +330,7 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
       if (!isProposalBody(parsed)) {
         this.control = {
           ...this.control,
-          error: this.translate.instant('crops.setup_proposal_import.invalid_shape')
+          error: 'crops.setup_proposal_import.invalid_shape'
         };
         return null;
       }
@@ -303,7 +339,7 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
     } catch {
       this.control = {
         ...this.control,
-        error: this.translate.instant('crops.setup_proposal_import.invalid_json')
+        error: 'crops.setup_proposal_import.invalid_json'
       };
       return null;
     }

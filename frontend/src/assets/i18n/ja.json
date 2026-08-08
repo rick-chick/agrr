@@ -422,7 +422,8 @@
       "description": "作付け計画で使う作物マスタの登録・管理を行います。",
       "menu": {
         "more_actions": "その他の操作"
-      }
+      },
+      "delete_confirm_message": "この作物を削除します。生育ステージや作業予定テンプレートも削除されます。削除後、しばらく「元に戻す」で取り消せます。"
     },
     "new": {
       "title": "新しい作物を追加"
@@ -620,6 +621,7 @@
       "return_to_plan": "計画へ戻る",
       "from_plan_stages_wizard_lead": "生育ステージの最低限界温度と必要積算温度を設定してください。完了したら計画へ戻って作業計画を再生成してください。",
       "confirm_delete": "この作物を削除しますか？",
+      "delete_confirm_message": "この作物を削除します。生育ステージや作業予定テンプレートも削除されます。削除後、しばらく「元に戻す」で取り消せます。",
       "form": {
         "name_label": "名前",
         "variety_label": "品種",
@@ -737,7 +739,32 @@
       "applying": "適用中…",
       "invalid_json": "JSON の形式が正しくありません。",
       "invalid_shape": "stages・agricultural_tasks・task_schedule_blueprints を含む JSON が必要です。",
-      "clipboard_error": "クリップボードを読み取れませんでした。"
+      "clipboard_error": "クリップボードを読み取れませんでした。",
+      "l0_notice_label": "AI 提案インポートの注意事項",
+      "l0_notice_ai_source": "外部 AI / MCP が生成した提案 JSON です。内容は自動検証されません。",
+      "l0_notice_dry_run": "「プレビュー（検証）」で dry-run 確認してから適用してください。",
+      "l0_notice_overwrite": "適用すると作物マスタ（ステージ・作業・テンプレート）が上書きされる場合があります。",
+      "fix_and_preview_hint": "JSON を修正して、もう一度「プレビュー（検証）」を実行してください。",
+      "success_title": "適用が完了しました",
+      "success_message": "作物マスタに提案内容を反映しました。",
+      "back_to_crop": "作物詳細に戻る",
+      "validation_errors": {
+        "is_required": "必須項目です。",
+        "must_contain_one_stage": "ステージを 1 件以上含めてください。",
+        "must_be_object": "オブジェクト形式である必要があります。",
+        "must_be_positive": "1 より大きい値を指定してください。",
+        "duplicate_stage_order": "提案内でステージ順序が重複しています。",
+        "stage_order_conflict": "既存の生育ステージと順序が重複しています。",
+        "cannot_be_blank": "空にできません。",
+        "duplicate_ref": "提案内で作業 ref が重複しています。",
+        "invalid_region": "region は jp / us / in のいずれかです。",
+        "invalid_task_type": "task_type は field_work / basal_fertilization / topdress_fertilization のいずれかです。",
+        "missing_task_ref": "agricultural_tasks の ref を参照してください。",
+        "invalid_stage_order": "stages の order と一致する値を指定してください。",
+        "duplicate_blueprint": "同じ作業・ステージ・GDD のテンプレートが重複しています。",
+        "non_negative_number": "0 以上の数値を指定してください。",
+        "generic": "検証に失敗しました。JSON を確認してください。"
+      }
     },
     "errors": {
       "invalid_id": "作物IDが不正です。",
@@ -1010,7 +1037,8 @@
       },
       "debug": {
         "label": "デバッグ:"
-      }
+      },
+      "delete_confirm_message": "この農場を削除します。登録済みの圃場や、この農場に紐づく作付け計画にも影響します。削除後、しばらく「元に戻す」で取り消せます。"
     },
     "form": {
       "region_label": "地域",
@@ -1076,6 +1104,7 @@
       "edit": "編集",
       "delete": "削除",
       "delete_confirm": "本当に削除しますか？",
+      "delete_confirm_message": "この農場を削除します。登録済みの圃場や、この農場に紐づく作付け計画にも影響します。削除後、しばらく「元に戻す」で取り消せます。",
       "back": "戻る",
       "back_to_list": "農場一覧へ",
       "location": "地域",
@@ -2264,6 +2293,7 @@
       "no_plans": "まだ計画がありません",
       "no_plans_hint": "新しい計画を作成して栽培スケジュールを最適化しましょう。",
       "retry": "再読み込み",
+      "delete_confirm_message": "この作付け計画を削除します。計画内の圃場配置や作業記録への参照が失われます。削除後、しばらく「元に戻す」で取り消せます。",
       "year_label": "{{year}}年度",
       "status": {
         "pending": "作成待ち",
