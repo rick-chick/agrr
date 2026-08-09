@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname, resolve, relative } from 'node:path';
 
 const STALE_PATTERNS = [
@@ -38,7 +38,6 @@ function walkMarkdown(absDir, relDir, files) {
 
 function isStalePathAllowlisted(relPath) {
   const normalized = relPath.replace(/\\/g, '/');
-  if (normalized === 'docs/architecture/LAYER-RULES.md') return true;
   return normalized.startsWith('docs/migration/');
 }
 
