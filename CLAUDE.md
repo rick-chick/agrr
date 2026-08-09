@@ -33,6 +33,7 @@ Touching `crates/agrr-domain`, gateways, or composition: re-read LAYER-RULES for
 @.cursor/rules/gcp-available.mdc
 @.cursor/rules/i18n-completion-orchestrator.mdc
 @.cursor/rules/implementation-consistency-with-existing.mdc
+@.cursor/rules/naming-ules.mdc
 @.cursor/rules/no-convenience-tech-debt.mdc
 @.cursor/rules/project-necessary-code-only.mdc
 @.cursor/rules/rails-clean-architecture.mdc
@@ -40,8 +41,8 @@ Touching `crates/agrr-domain`, gateways, or composition: re-read LAYER-RULES for
 @.cursor/rules/skill-authoring.mdc
 @.cursor/rules/test-quality-core.mdc
 @.cursor/rules/test-quality-checklist.mdc
-@.cursor/rules/user-request-project-alignment.mdc
 @.cursor/rules/use-skills-on-edit.mdc
+@.cursor/rules/user-request-project-alignment.mdc
 
 ## Architecture (minimal)
 
