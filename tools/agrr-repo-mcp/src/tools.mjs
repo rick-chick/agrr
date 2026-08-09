@@ -1,11 +1,7 @@
-import { z } from 'zod';
-
 /**
  * @param {ReturnType<import('./repo-scanner.mjs').createRepoScanner>} scanner
  */
 export function createAgrrRepoMcpToolHandlers(scanner) {
-  const emptySchema = z.object({});
-
   return {
     list_bounded_contexts: {
       description:
