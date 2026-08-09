@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+description: 命名の統一性（オンデマンド）
+alwaysApply: false
 ---
 - プロジェクトや@ARCHITECTUREに沿った名前を使うこと。十分に検討してから決定すること。
 - 既存の命名を尊重すること。名前を発散させない。
