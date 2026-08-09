@@ -1,6 +1,6 @@
 ---
 description: 作業着手前にユーザー依頼とプロジェクト事実の整合を調査する。矛盾時は実装前にユーザーへ問い合わせる。
-alwaysApply: true
+alwaysApply: false
 ---
 
 # 依頼とプロジェクト事実の整合（着手前）

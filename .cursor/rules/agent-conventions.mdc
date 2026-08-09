@@ -1,6 +1,6 @@
 ---
 description: ルール間の担当所在表、ワークフローのセクション番号、用語。重複列挙の置き場所。
-alwaysApply: true
+alwaysApply: false
 ---
 
 # ルール間の担当所在表と用語
