@@ -1,0 +1,21 @@
+{
+  "name": "@agrr/repo-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Filesystem-derived MCP server for AGRR repository structure queries",
+  "bin": {
+    "agrr-repo-mcp": "./src/index.mjs"
+  },
+  "scripts": {
+    "start": "node src/index.mjs",
+    "test": "node --test src/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.26.0",
+    "zod": "^3.24.2"
+  }
+}
