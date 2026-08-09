@@ -9,7 +9,7 @@
 - **フロント UseCase**: [frontend/src/app/usecase/plans/load-plan-detail.usecase.ts](/frontend/src/app/usecase/plans/load-plan-detail.usecase.ts) — `LoadPlanDetailUseCase` が `fetchPlan` と `fetchPlanData` を `forkJoin` で呼ぶ
 - **Gateway Interface**: [frontend/src/app/usecase/plans/plan-gateway.ts](/frontend/src/app/usecase/plans/plan-gateway.ts)
 - **Gateway 実装**: [frontend/src/app/adapters/plans/plan-api.gateway.ts](/frontend/src/app/adapters/plans/plan-api.gateway.ts)
-- **サーバー**: Rails MVC（Plans API）。[app/controllers/api/v1/plans_controller.rb](/app/controllers/api/v1/plans_controller.rb)、[config/routes.rb](/config/routes.rb) の `plans` 関連
+- **サーバー**: agrr-server Plans API（`crates/agrr-server/src/`）、[`docs/api/openapi.yaml`](../../../../docs/api/openapi.yaml) の `plans` 関連
 
 **マッピング**:
 - `LoadPlanDetailUseCase` → `GET /api/v1/plans/:id`, `GET /api/v1/plans/cultivation_plans/:id/data`

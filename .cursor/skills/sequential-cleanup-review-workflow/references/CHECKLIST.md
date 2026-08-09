@@ -5,7 +5,7 @@
 ```
 修正単位: <名前（例: crop delete API presenter）>
 マニフェスト: tmp/cleanup-unit-<slug>.md  （collect-modification-scope.sh で生成）
-触れた層: <例: presenter-server, interactor-test-server>
+触れた層: <例: clean-architecture-violation-fix-workflow, usecase-test-frontend>
 
 - [ ] Step 0 マニフェスト・スコープ確定
 - [ ] 改修 RED→GREEN 済み（tdd-on-edit）

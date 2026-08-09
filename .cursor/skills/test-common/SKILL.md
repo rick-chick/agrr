@@ -30,4 +30,4 @@ disable-model-invocation: false
 
 ## ドメインの正
 
-`crates/agrr-domain`（`run-test-rust-domain.sh`）。`lib/domain/` は P7 で削除済み。
+`crates/agrr-domain`（`run-test-rust-domain.sh`）。旧 Ruby domain パスは P7 で削除済み。

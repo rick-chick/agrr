@@ -22,7 +22,7 @@ description: >-
 
 ## 新規実装・機能追加（内側ループの前提）
 
-違反削減でも新規でも、**セクション1〜5 は同一**。実装前に `ARCHITECTURE.md` の `## What we require` と `## Prohibited practices` を読み、触れる domain / Gateway IF / adapter 実装 / Presenter / `CompositionRoot` / 契約に対応する条項を確認する。サブエージェントへ渡すプロンプトに、契約パス・feature 名に加え「**違反を増やさない**」を含める。単発変更は [`use-skills-on-edit.mdc`](../../rules/use-skills-on-edit.mdc)。要件からの機能一式は [`feature-orchestrator.mdc`](../../rules/feature-orchestrator.mdc)（Phase 締め後、累積 diff でセクション4）。
+違反削減でも新規でも、**セクション1〜5 は同一**。実装前に `ARCHITECTURE.md` の `## What we require` と `## Prohibited practices` を読み、触れる domain / Gateway IF / adapter 実装 / Presenter / `crates/agrr-server/src/composition.rs`（composition モジュール） / 契約に対応する条項を確認する。サブエージェントへ渡すプロンプトに、契約パス・feature 名に加え「**違反を増やさない**」を含める。単発変更は [`use-skills-on-edit.mdc`](../../rules/use-skills-on-edit.mdc)。要件からの機能一式は [`feature-orchestrator.mdc`](../../rules/feature-orchestrator.mdc)（Phase 締め後、累積 diff でセクション4）。
 
 ## サブエージェント委譲
 
@@ -40,7 +40,7 @@ description: >-
 
 - **作業スコープ**: 洗い出しで得た修正単位の一覧から、**先頭**を今回のセクション1〜6 に固定する（ユーザーが別順を明示しない限り、迷ったら先頭）。再現可能な並べ方（辞書順・経路順など）をその場で決める。
 - **修正単位の束ね方**: 同一原因・境界・ユースケース筋で関連違反をまとめる。複数ファイル・複数禁止条項を含めてよいが、内側ループで追えるサイズにし、無関係な違反を混ぜない。スコープ外の修正はしない。
-- **大きいテーマ・横断整理**: 1 イテレーションに収まるよう セクション0 で必ず分割する。「どの境界から」「どれを先に」をユーザーに委ねず、再現可能な基準（直前の洗い出し一覧の先頭、`lib/domain/<name>/` の辞書順、ファイルパス辞書順など 1 つ）を添え、分割後の一覧の**先頭**を今回の作業スコープに固定する。
+- **大きいテーマ・横断整理**: 1 イテレーションに収まるよう セクション0 で必ず分割する。「どの境界から」「どれを先に」をユーザーに委ねず、再現可能な基準（直前の洗い出し一覧の先頭、`crates/agrr-domain/src/<context>/` の辞書順、ファイルパス辞書順など 1 つ）を添え、分割後の一覧の**先頭**を今回の作業スコープに固定する。
 
 ## 1. 実装
 
@@ -48,18 +48,18 @@ description: >-
 - 実装前に `ARCHITECTURE.md` の該当禁止事項・境界を読み、今回の変更で触れる禁止番号を確認する。
 - 変更範囲に応じて [`CODE_MODIFICATION_SKILLS.md`](../../references/CODE_MODIFICATION_SKILLS.md) の実装・テストスキルを選び、その `SKILL.md` に従う。
 - 親エージェントが実装するときは [`use-skills-on-edit.mdc`](../../rules/use-skills-on-edit.mdc) に従って役割別サブエージェントへ委譲する（自身がサブエージェントとして起動されているときは委譲しない）。
-- 振る舞い変更は該当テストと `lib/domain` のポート/DTO を同じ PR で整合させる（旧 `docs/contracts/` は廃止）。
+- 振る舞い変更は該当テストと `crates/agrr-domain` のポート/DTO を同じ PR で整合させる（旧 `docs/contracts/` は廃止）。
 
 ## 2. レビュー
 
 差分ではなく意味で確認する。違反は `ARCHITECTURE.md` の **禁止番号 × 層** で書く（重大度ラベルでの先送り禁止）。
 
-- **依存方向**: `lib/domain` にフレームワーク・ORM・HTTP・具象アダプターの `new` が紛れ込んでいないか。
-- **配線**: `CompositionRoot` / コンストラクタ注入が本番とテストで同一の契約か。
+- **依存方向**: `crates/agrr-domain` にフレームワーク・ORM・HTTP・具象アダプターの `new` が紛れ込んでいないか。
+- **配線**: `crates/agrr-server/src/composition.rs`（composition モジュール） / コンストラクタ注入が本番とテストで同一の契約か。
 - **責務**: Presenter が取得・認可・本質バリデーションを握っていないか。Gateway が表示用 Hash 互換まで抱えていないか。Controller を業務分岐の主スイッチにしていないか。
-- **DTO**: DTO に `ApplicationRecord` / `Relation` が載っていないか。Interactor がそれに `persisted?` / `validate!` を当てたり `ActiveRecord::*` を rescue してユースケース分岐したりしていないか。境界を跨いだあとは ID・値・エンティティ・プレゼン非依存の構造のみを運ぶ。
+- **DTO**: DTO に ORM 型や永続化層の詳細が載っていないか。Interactor が永続化の例外を rescue してユースケース分岐したりしていないか。境界を跨いだあとは ID・値・エンティティ・プレゼン非依存の構造のみを運ぶ。
 - **アダプター層テスト**: Gateway / Presenter / Controller のテストでユースケース網羅を主題にしていないか（**主題にしてよいのは**境界契約と E2E / 統合のみ。網羅と setup 共有は Interactor / domain テスト＋ヘルパーで行う）。
-- **Concern**: `ActiveSupport::Concern` / `include …Concern` で新規にユースケース判断・ドメイン共通化を載せていないか。
+- **Concern**: `include` / trait 合成で新規にユースケース判断・ドメイン共通化を載せていないか。
 
 ## 3. レビューに対する修正
 
@@ -76,7 +76,7 @@ description: >-
 
 - **意図したファイルだけが変わっているか**: `git diff` / `git status` でスコープ外の変更がないことを確認する。
 - **期待する振る舞い・出力**: 仕様・契約・表示が意図どおりか。
-- **テスト**: `lib/domain` / gateway 境界 / `CompositionRoot` に触れたら [`rails-testing-workflow.mdc`](../../rules/rails-testing-workflow.mdc) に従って test-common 経由で実行する（個別 → 全体 → 遅延検知。省略不可）。
+- **テスト**: `crates/agrr-domain` / gateway 境界 / `crates/agrr-server/src/composition.rs`（composition モジュール）に触れたら [`rails-testing-workflow.mdc`](../../rules/rails-testing-workflow.mdc) に従って test-common 経由で実行する（個別 → 全体 → 遅延検知。省略不可）。
 
 ## 5. チェック結果に対する修正
 

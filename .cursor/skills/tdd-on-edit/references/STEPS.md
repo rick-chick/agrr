@@ -13,7 +13,7 @@
 
 ## 2. RED
 
-1. 対象層の **テストスキル**（例: `interactor-test-server`, `gateway-test-frontend`）を開き、手順に従ってテストを書く
+1. 対象層の **テストスキル**（例: `run-test-rust-domain.sh`, `usecase-test-frontend`）を開き、手順に従ってテストを書く
 2. テストは **「この振る舞いが満たされれば GREEN」** になるように書く（原因の仮説だけを固定しない）
 3. **`test-common`** で実行し、**失敗**を確認する
    - 既存が GREEN のまま → テストが不足しているか、期待が弱い

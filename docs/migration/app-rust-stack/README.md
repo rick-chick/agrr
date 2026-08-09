@@ -11,12 +11,15 @@
 | [P7-MIGRATION-RUNBOOK.md](./P7-MIGRATION-RUNBOOK.md) | `agrr-migrate` schema / data CLI |
 | [P7-REFINERY-ADR.md](./P7-REFINERY-ADR.md) | refinery スキーマ移管 |
 | [WEATHER-DATA-GCS-SMOKE.md](./WEATHER-DATA-GCS-SMOKE.md) | 天気 GCS スモーク |
-| [PROVISIONAL-STACK.md](./PROVISIONAL-STACK.md) | 終着スタック・OAuth・運用（R4 節は現行に更新済み） |
 | [ADR-strangler-lb-url-map.md](./ADR-strangler-lb-url-map.md) | ストラングラー配線 ADR（履歴含む） |
 
 ## 履歴（P6 移行期）
 
 [`../archive/`](../archive/) — P6 完了条件・`TRACKING-P6.yaml`・移行期テスト手順。
+
+| 文書 | 内容 |
+|------|------|
+| [PROVISIONAL-STACK.md](./PROVISIONAL-STACK.md) | 終着スタック・OAuth・運用（P6 移行期の記録） |
 
 ## 関連
 

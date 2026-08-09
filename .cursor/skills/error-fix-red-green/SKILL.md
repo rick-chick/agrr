@@ -28,5 +28,4 @@ disable-model-invocation: true
 - [references/CHECKLIST.md](references/CHECKLIST.md) - Pre/post-fix checklists
 - [error-investigation](../error-investigation/SKILL.md) - Prerequisite investigation skill
 - [restart-angular](../restart-angular/SKILL.md) - Angular server restart if needed
-- [restart-rails](../restart-rails/SKILL.md) - Rails server restart if needed
 - [test-common](../test-common/SKILL.md) - Read before command test

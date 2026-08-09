@@ -12,7 +12,7 @@ SESSION_PATTERNS.md で特定したパターンに応じて修正対象ファイ
 
 | 修正対象 | ファイル例 | 修正内容 |
 |----------|-----------|---------|
-| コントローラの session.id 取得メソッド | `app/controllers/api/v1/public_plans/wizard_controller.rb` | `session.id` → `SecureRandom.hex(32)` |
+| コントローラの session.id 取得メソッド | `crates/agrr-server/src/` の該当 handler | `session.id` → `SecureRandom.hex(32)` |
 | ActionCable Connection | `app/channels/application_cable/connection.rb` | `request.session&.id.to_s` で nil-safe |
 | コントローラテスト | `test/controllers/.../wizard_controller_test.rb` | `session.id` 一致アサーション → hex 形式チェックに変更 |
 
