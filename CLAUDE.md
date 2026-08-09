@@ -62,6 +62,8 @@ Touching `crates/agrr-domain`, gateways, or composition: re-read LAYER-RULES for
 | Domain tests | `.cursor/skills/test-common/scripts/run-test-rust-domain.sh` |
 | Frontend tests | `.cursor/skills/test-common/scripts/run-test-frontend.sh` |
 
+構造クエリ: `tools/agrr-repo-mcp`（MCP `list_bounded_contexts` 等）
+
 **Tests:** always via [test-common](.cursor/skills/test-common/SKILL.md). Individual file GREEN → full suite → slow-test check ([test-slow-detection](.cursor/skills/test-slow-detection/SKILL.md)).
 
 **Shell:** use [process-monitor](.cursor/skills/process-monitor/SKILL.md) before reporting success on long commands.
