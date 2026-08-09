@@ -1,6 +1,6 @@
 ---
 description: 設計・実装の前に確実性または再現性のいずれかを満たす。仮説・可能性の段階では設計・実装しない。
-alwaysApply: true
+alwaysApply: false
 ---
 
 # 根拠ゲート（設計・実装）
