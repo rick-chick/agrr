@@ -4,14 +4,12 @@ alwaysApply: true
 ---
 # Git 操作制約（常時）
 
-**`git checkout`・`git switch`・`git reset`・`git restore`・`git clean`・`git push --force` は、ユーザーの明示許可がない限り実行しない。**
+**`git checkout`・`git switch`・`git reset`・`git restore`・`git clean`・`git push --force` は、ユーザー明示許可なしに実行しない。**
 
-## 禁止（明示許可なし）
+| 許可 | 禁止 |
+|------|------|
+| `git status` / `diff` / `log` / `show` / `branch` | 作業ツリー・HEAD の巻き戻し |
+| `git add` / `git commit`（依頼時） | `restore` / `reset` / `checkout` / `switch` / `clean` / force push |
+| `git stash`（ユーザー明示時のみ） | PR 整理・allowlist 整理の名目での破棄 |
 
-`git checkout` / `git switch` / `git reset` / `git restore` / `git clean` / `git push --force`
-
-## 許可
-
-`git status` / `git diff` / `git log` / `git show` / `git branch` / `git add` / `git commit`（`--amend`・`stash` はユーザー明示時のみ）
-
-作業ツリーを戻すときは `git diff` で示し、戻すコマンド案を提示。ユーザーが明示許可するまで実行しない。
+戻す必要があるときは `git diff` で示し、コマンド案を提示して**ユーザー許可**を得る。
