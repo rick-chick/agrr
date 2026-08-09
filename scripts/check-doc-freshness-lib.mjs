@@ -38,7 +38,6 @@ function walkMarkdown(absDir, relDir, files) {
 
 function isStalePathAllowlisted(relPath) {
   const normalized = relPath.replace(/\\/g, '/');
-  if (normalized === 'docs/architecture/LAYER-RULES.md') return true;
   return normalized.startsWith('docs/migration/');
 }
 
