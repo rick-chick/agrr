@@ -1,6 +1,6 @@
 ---
 description: 便宜による ARCHITECTURE 違反禁止と軽微技術負債の原則。逸脱は残置しない。ブロック時は中断・報告。
-alwaysApply: true
+alwaysApply: false
 ---
 
 # 技術負債の禁止と軽微負債の原則
