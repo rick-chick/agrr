@@ -97,7 +97,7 @@
    - 該当テストファイル・観測可能な assert を列挙
 
 2. **並列開発**
-   - usecase-server / usecase-frontend へ同一ゴールを渡す
+   - `crates/agrr-domain` interactor と Angular usecase へ同一ゴールを渡す
 
 3. **Q&A**
    - ポート/DTO とテスト意図の不明点を解消
@@ -115,27 +115,24 @@
    - 自動テストの設定
    - デプロイ環境の準備
 
-## Phase 3: UseCase層実装
+## Phase 3: ドメイン・UseCase 層実装
 
-### Step 3.1: Rails UseCase層
+### Step 3.1: Rust ドメイン層
 ```
 担当: サーバー開発者
-スキル: usecase-server
+スキル: clean-architecture-violation-fix-workflow + tdd-on-edit
 ```
 
-1. **Input/Output Port定義**
-   - Domain::[Feature]::Portsモジュール
-   - DTOクラスの作成
+1. **Input/Output Port 定義**
+   - `crates/agrr-domain/src/<context>/` の ports / DTO
 
-2. **Gateway Interface定義**
-   - Domain::[Feature]::Gatewaysモジュール
-   - メソッドシグネチャの定義
+2. **Gateway trait 定義**
+   - `crates/agrr-domain/src/<context>/gateways/`
 
-3. **Interactor実装**
-   - Domain::[Feature]::Interactorsクラス
-   - ビジネスロジックの記述
+3. **Interactor 実装**
+   - `crates/agrr-domain/src/<context>/interactors/`
 
-### Step 3.2: Angular UseCase層
+### Step 3.2: Angular UseCase 層
 ```
 担当: フロントエンド開発者
 スキル: usecase-frontend
@@ -158,35 +155,33 @@
 担当: 全員
 ```
 
-1. **Interfaceの整合性確認**
-   - Rails/Angular間で型定義の一致
-   - DTO構造の同期
+1. **Interface の整合性確認**
+   - Rust domain DTO と Angular domain 型の一致
+   - OpenAPI / 契約ドキュメントとの同期
 
 2. **テスト実装**
    - UseCase層の単体テスト
    - モックを使用した検証
 
-## Phase 4: Adapter層実装
+## Phase 4: エッジ・Adapter 層実装
 
-### Step 4.1: Rails Adapter層
+### Step 4.1: agrr-server エッジ層
 ```
 担当: サーバー開発者
-スキル: presenter-server, gateway-server, controller-server
+スキル: clean-architecture-violation-fix-workflow + tdd-on-edit
 ```
 
-1. **Presenter実装**
-   - Output Portの実装
-   - Viewとの連携
+1. **Presenter 実装**
+   - `crates/agrr-server/src/` の presenter 配線
 
-2. **Gateway実装**
-   - Repositoryパターン
-   - ActiveRecord連携
+2. **Gateway 実装**
+   - `crates/agrr-adapters-*/` の具象 adapter
 
-3. **Controller実装**
-   - HTTPリクエスト処理
-   - パラメータ変換
+3. **Route / Handler 実装**
+   - `crates/agrr-server/src/` の HTTP エッジ
+   - `crates/agrr-server/src/composition.rs`（composition モジュール）での配線
 
-### Step 4.2: Angular Adapter層
+### Step 4.2: Angular Adapter 層
 ```
 担当: フロントエンド開発者
 スキル: presenter-frontend, gateway-frontend, controller-frontend

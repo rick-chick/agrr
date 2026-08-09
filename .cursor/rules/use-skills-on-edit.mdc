@@ -13,14 +13,14 @@ alwaysApply: false
 
 ## 委譲の手順
 
-1. **対象の特定**: 何を直す・追加するか（役割: usecase-server / gateway-frontend / controller-server など）を整理する。修正対象に応じたスキル一覧は [.cursor/references/CODE_MODIFICATION_SKILLS.md](.cursor/references/CODE_MODIFICATION_SKILLS.md) を参照する。
+1. **対象の特定**: 何を直す・追加するか（役割: `crates/agrr-domain` interactor / `crates/agrr-server` route / gateway-frontend など）を整理する。修正対象に応じたスキル一覧は [.cursor/references/CODE_MODIFICATION_SKILLS.md](.cursor/references/CODE_MODIFICATION_SKILLS.md) を参照する。
 2. **並列起動**: 依存関係のないタスクは必ず並列実行する。すべてのサブエージェントを1回の実行の中で起動すること。
 3. **モデル**: Task 起動時は **`model: "composer-2.5"`** を毎回指定（省略すると Composer 2.5 Fast になりやすい）。`composer-2.5-fast` は使わない。
 4. **ゴールの明示**: 層をまたぐ場合は、各サブエージェントにゴール記述（または振る舞いの要点）と feature 名を渡す。
 
 ## プロンプトの例
 
-- 「ゴール記述（crop API、ARCHITECTURE.md 準拠）に従い presenter-server を実装・テストして。presenter-server サブエージェントに従うこと。」
+- 「ゴール記述（crop API、ARCHITECTURE.md 準拠）に従い `crates/agrr-server` presenter 配線を実装・テストして。`clean-architecture-violation-fix-workflow` + `tdd-on-edit` に従うこと。」
 - 「fertilize の delete 機能の gateway-frontend で、エラーハンドリングが不足しているので修正して。gateway-frontend サブエージェントに従うこと。」
 
 **プロンプトのポイント**:

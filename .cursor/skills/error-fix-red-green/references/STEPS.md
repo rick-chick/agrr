@@ -16,5 +16,5 @@
 ## 3. 再起動
 
 フロント・サーバーいずれも再起動を行わなければ確認できない場合は、無条件に再起動する。
-[restart-angular](../../restart-angular/SKILL.md) / [restart-rails](../../restart-rails/SKILL.md) を参照する。
+[restart-angular](../../restart-angular/SKILL.md) を参照する。`agrr-server` の API バイナリ変更後は [`dev-docker`](../../dev-docker/SKILL.md) の `rebuild-restart.sh` で再起動する。
 

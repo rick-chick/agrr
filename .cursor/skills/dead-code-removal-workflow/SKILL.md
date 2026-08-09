@@ -26,7 +26,7 @@ disable-model-invocation: true
 
 ### Phase A — 到達可能性（広め・意味読み）
 
-1. **探索範囲**: `app/` に限らず `config/`、**`lib/` 全体**（`lib/domain`・`lib/adapters`・`lib/presenters`・`lib/tasks/*.rake` など）、`db/`（コメントは参考）、`docs/`、`automation/`、`scripts/`、`.github/**` を含める。`lib/tasks` だけに絞る理由はない（Rake 以外の主参照は `lib/` 側に多い）。
+1. **探索範囲**: `crates/`（`agrr-domain`・`agrr-server`・`agrr-adapters-*`）、`frontend/src/`、`docs/`、`automation/`、`scripts/`、`.github/**` を含める。
 2. **Ruby**: クラス/モジュール/定数/メソッド名の出現を追い、**定義・コメント・別シンボル**を切り分ける。
 3. **動的経路**: `constantize` / `safe_constantize` / `const_get` / `qualified_const_get` / `send` / `public_send` / `__send__`、ジョブ `chain` の `class` 文字列、環境変数や initializer でのクラス名切替。
 4. **ジョブ**: `perform_later` / `perform_now` / チェーン・定期実行設定（例: `config/recurring.yml`）への記載。

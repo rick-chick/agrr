@@ -42,7 +42,7 @@
 |------|------|
 | Component にユースケース分岐・Gateway 直呼び | **UseCase / Presenter へ移動**（実装スキルは CODE_MODIFICATION_SKILLS） |
 | 画面完結 UI（開閉・ホバー・タイマー）が Feature に混在 | [`shared-screen-only-component`](../../shared-screen-only-component/SKILL.md) で shared へ抽出 |
-| Presenter / Gateway / Interactor の層越境 | 正しい層へ移動。edge の配線だけ Controller / CompositionRoot 側で更新 |
+| Presenter / Gateway / Interactor の層越境 | 正しい層へ移動。edge の配線だけ handler / `crates/agrr-server/src/composition.rs`（composition モジュール）側で更新 |
 | 移動後に呼ばれなくなった旧コード | A（デッドコード）に回してセーフ削除 |
 
 **Component 以外**（Presenter・Gateway・Interactor 等）も同様に、触れたファイル内の責務外を同ループで処理する。

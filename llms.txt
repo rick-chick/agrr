@@ -1,0 +1,16 @@
+# AGRR
+
+> Agricultural planning SPA + agrr-server (Rust API) on Cloud Run.
+
+## Canonical
+
+- [ARCHITECTURE.md](https://github.com/rick-chick/agrr/blob/master/ARCHITECTURE.md): L1 codemap and Clean Architecture boundaries for the production Rust/Angular stack.
+- [docs/architecture/LAYER-RULES.md](https://github.com/rick-chick/agrr/blob/master/docs/architecture/LAYER-RULES.md): L2 layer rules, required patterns, and prohibited practices (R0–R10).
+- [CLAUDE.md](https://github.com/rick-chick/agrr/blob/master/CLAUDE.md): Agent routing entry — commands, workflows, and rule index.
+- [docs/api/openapi.yaml](https://github.com/rick-chick/agrr/blob/master/docs/api/openapi.yaml): OpenAPI contract for agrr-server HTTP APIs.
+- [docs/migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md](https://github.com/rick-chick/agrr/blob/master/docs/migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md): Production cutover status and current operational stack.
+
+## Historical
+
+- [docs/migration/archive/README.md](https://github.com/rick-chick/agrr/blob/master/docs/migration/archive/README.md): Archived P6 migration docs and tracking artifacts.
+- [docs/migration/app-rust-stack/PROVISIONAL-STACK.md](https://github.com/rick-chick/agrr/blob/master/docs/migration/app-rust-stack/PROVISIONAL-STACK.md): P6 provisional stack notes retained for migration history.

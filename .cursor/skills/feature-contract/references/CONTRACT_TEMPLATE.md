@@ -2,7 +2,7 @@
 
 ## 概要
 
-このテンプレートは、AngularフロントエンドとRailsサーバー間のAPI契約を定義するための標準フォーマットです。Contract-First開発により、並列開発を可能にします。
+このテンプレートは、Angular フロントエンドと agrr-server（Rust API）間の API 契約を定義するための標準フォーマットです。Contract-First 開発により、並列開発を可能にします。
 
 ## テンプレート構造
 
@@ -208,54 +208,14 @@ export interface [Model] {
 }
 ```
 
-```ruby
-# lib/domain/[feature]/entities/[model]_entity.rb
-module Domain
-  module [Feature]
-    module Entities
-      class [Model]Entity
-        attr_reader :id, :name, :description, :created_at, :updated_at
-
-        def initialize(attributes = {})
-          @id = attributes[:id]
-          @name = attributes[:name]
-          @description = attributes[:description]
-          @created_at = attributes[:created_at]
-          @updated_at = attributes[:updated_at]
-        end
-      end
-    end
-  end
-end
-```
-```
-
 ### 5. 実装タスク
 
 ```markdown
 ## Implementation Tasks
 
-### Phase 1: UseCase層実装
-- [ ] usecase-serverスキルでRails UseCase層を実装
-- [ ] usecase-frontendスキルでAngular UseCase層を実装
-
-### Phase 2: Adapter層実装
-- [ ] presenter-serverスキルでRails Presenterを実装
-- [ ] gateway-serverスキルでRails Gatewayを実装
-- [ ] controller-serverスキルでRails Controllerを実装
-- [ ] presenter-frontendスキルでAngular Presenterを実装
-- [ ] gateway-frontendスキルでAngular Gatewayを実装
-- [ ] controller-frontendスキルでAngular Controllerを実装
-
-### Phase 3: テスト実装
-- [ ] Rails UseCaseテストを実装
-- [ ] Angular UseCaseテストを実装
-- [ ] 統合テストを実装
-
-### Phase 4: 検証
-- [ ] API契約通りの動作確認
-- [ ] エラーケースの動作確認
-- [ ] パフォーマンス要件の確認
+- [ ] `crates/agrr-domain` に interactor / gateway trait / DTO を実装（`clean-architecture-violation-fix-workflow` + `tdd-on-edit`）
+- [ ] `crates/agrr-server` に route / presenter 配線を実装
+- [ ] `scripts/run-rust-contract-tests.sh` および該当 `cargo test` が GREEN
 ```
 
 ### 6. レビューポイント
@@ -304,5 +264,5 @@ end
 
 - APIレスポンスのJSONスキーマは厳密に定義すること
 - エラーレスポンスも含めてすべてのHTTPステータスを定義すること
-- データモデルのTypeScript/Ruby実装例を必ず含めること
+- データモデルの TypeScript 実装例を必ず含めること
 - 並列開発を可能にするため、契約は実装前に確定させること
