@@ -1,0 +1,15 @@
+---
+description: テスト実行は test-common スキル経由のみ（常時適用）
+alwaysApply: true
+---
+# テスト実行入口
+
+テストは **[`test-common` スキル](../skills/test-common/SKILL.md)** のスクリプトのみ。`bundle exec rails test` / 直 `npm test` は禁止。
+
+| 対象 | スクリプト |
+|------|-----------|
+| agrr-domain | `.cursor/skills/test-common/scripts/run-test-rust-domain.sh` |
+| R4 契約 | `scripts/run-rust-contract-tests.sh` |
+| Frontend | `.cursor/skills/test-common/scripts/run-test-frontend.sh` |
+
+順序・遅延検知は [`rails-testing-workflow.mdc`](rails-testing-workflow.mdc) と [`test-slow-detection`](../skills/test-slow-detection/SKILL.md)。
