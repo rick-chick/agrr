@@ -2,7 +2,7 @@
 description: >-
   オートメーション修正は PRINCIPLES 優先。機械層の本文パース禁止。
   判断はエージェント起動。コスト低減はパース・例外ラベル・dispatch 省略以外。
-alwaysApply: true
+alwaysApply: false
 ---
 
 # オートメーション思想優先

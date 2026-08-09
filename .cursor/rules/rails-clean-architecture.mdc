@@ -2,7 +2,7 @@
 description: >-
   Rust / Angular CA boundary in this repo; ARCHITECTURE.md + LAYER-RULES.md win;
   parent runs full workflow (section 0–6) per violation-fix SKILL for new and existing work.
-alwaysApply: true
+alwaysApply: false
 ---
 
 # Clean Architecture（バックエンド）

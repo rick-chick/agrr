@@ -1,6 +1,6 @@
 ---
 description: このプロジェクトでは gcloud / GCP が利用可能である
-alwaysApply: true
+alwaysApply: false
 ---
 # GCP 利用可能
 

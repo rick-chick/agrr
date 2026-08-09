@@ -1,0 +1,8 @@
+---
+description: テスト実行は test-common スキル経由のみ。直叩き禁止。
+alwaysApply: true
+---
+
+# test-common 入口
+
+テスト実行・失敗一覧・スイート洗い出しは **[`test-common` スキル](../skills/test-common/SKILL.md)** を読み、同スキルのスクリプトのみ使う（`rails test` / `npm test` 直叩き禁止）。
