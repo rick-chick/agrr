@@ -116,6 +116,12 @@ jobs:
           npm ci
           npm test
 
+      - name: agrr-repo-mcp unit tests
+        working-directory: tools/agrr-repo-mcp
+        run: |
+          npm ci
+          npm test
+
       - name: automation script unit tests
         working-directory: ${{ github.workspace }}
         run: |
