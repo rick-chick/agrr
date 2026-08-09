@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import {
+  checkAlwaysApplyRules,
   checkDocInternalLinks,
   checkDocStalePaths,
 } from './check-doc-freshness-lib.mjs';
@@ -38,6 +39,31 @@ test('checkDocStalePaths fails on stale lib/domain outside allowlist', () => {
   const result = checkDocStalePaths(root);
   assert.equal(result.ok, false);
   assert.match(result.errors.join('\n'), /lib\/domain/);
+});
+
+test('checkAlwaysApplyRules passes on production repo tree', () => {
+  const result = checkAlwaysApplyRules(REPO_ROOT);
+  assert.equal(result.ok, true, result.errors.join('\n'));
+});
+
+test('checkAlwaysApplyRules fails when extra alwaysApply file exists', () => {
+  const root = mkdtempSync(join(tmpdir(), 'alwaysapply-'));
+  mkdirSync(join(root, '.cursor/rules'), { recursive: true });
+  writeFileSync(
+    join(root, 'CLAUDE.md'),
+    '## Always-apply rules\n@.cursor/rules/git-operational-constraints.mdc\n\n## Contextual rules\n',
+  );
+  writeFileSync(
+    join(root, '.cursor/rules/git-operational-constraints.mdc'),
+    '---\nalwaysApply: true\n---\n# git\n',
+  );
+  writeFileSync(
+    join(root, '.cursor/rules/extra.mdc'),
+    '---\nalwaysApply: true\n---\n# extra\n',
+  );
+  const result = checkAlwaysApplyRules(root);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /alwaysApply: true count/);
 });
 
 test('checkDocStalePaths allows docs/migration/archive historical paths', () => {
