@@ -2,13 +2,14 @@
 description: Docker 開発時、agrr-server の Rust API 変更後は再ビルド・再起動をエージェントが実行する
 alwaysApply: true
 ---
-
 # Docker 開発 — agrr-server 再ビルド
 
-`crates/` は bind mount されない。`crates/agrr-server/**`・`agrr-domain/**`・`agrr-adapters-*/**` 等を変更したら、検証前に必ず:
+`agrr-server` API バイナリはイメージに焼き込まれる（`crates/` は bind mount されない）。
+
+`crates/agrr-server/**`・`crates/agrr-domain/**`・`crates/agrr-adapters-*/**`・API 形に影響する migration を変更したら、Docker 検証前に:
 
 ```bash
 .cursor/skills/dev-docker/scripts/rebuild-restart.sh
 ```
 
-`docker compose restart agrr-server` だけでは不十分。watch 開発は [`dev-docker` スキル](../skills/dev-docker/SKILL.md)。
+`docker compose restart agrr-server` だけでは不十分。手順は [`dev-docker` スキル](../skills/dev-docker/SKILL.md)。

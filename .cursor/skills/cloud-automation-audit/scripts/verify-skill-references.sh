@@ -54,12 +54,14 @@ require .cursor/skills/clean-architecture-goal-statement/SKILL.md
 require .cursor/skills/test-common/scripts/run-test-frontend.sh
 require .cursor/skills/test-common/scripts/run-test-rust-domain.sh
 
-# CLAUDE.md always-applied rules
-for rule in agent-conventions dont-finish-task-while-process-is-running \
+# CLAUDE.md always-applied rules (4) + contextual rules
+for rule in git-operational-constraints tdd-on-edit docker-dev-agrr-server-rebuild test-common-entry \
+  agent-conventions automation-philosophy-priority dont-finish-task-while-process-is-running \
   evidence-before-design-and-implementation user-request-project-alignment gcp-available \
   implementation-consistency-with-existing no-convenience-tech-debt project-necessary-code-only \
-  rails-clean-architecture git-operational-constraints tdd-on-edit docker-dev-agrr-server-rebuild \
-  ca-violation-fix-architecture-gate use-skills-on-edit; do
+  naming-ules rails-clean-architecture ca-violation-fix-architecture-gate use-skills-on-edit \
+  feature-orchestrator i18n-completion-orchestrator rails-testing-workflow skill-authoring \
+  test-quality-core test-quality-checklist; do
   require ".cursor/rules/${rule}.mdc"
 done
 
@@ -73,5 +75,6 @@ if [ "$missing" -ne 0 ]; then
 fi
 
 bash scripts/verify-agent-doc-freshness.sh
+bash scripts/verify-alwaysapply-rules.sh
 
 echo "verify-skill-references: OK"

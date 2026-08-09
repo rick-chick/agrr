@@ -2,11 +2,12 @@
 description: 改修・新規実装は TDD（RED→GREEN→REFACTOR）。手順は tdd-on-edit スキル、実行は test-common。
 alwaysApply: true
 ---
-
 # 改修は TDD
 
-ソース・テストの追加・変更では、実装より先に失敗テスト（RED）を書き、`test-common` で RED 確認後に GREEN。
+**ソース・テストの追加・変更**では、実装より先に**失敗テスト（RED）**を書き、`test-common` で RED を確認してから GREEN に進む。
 
-着手前に **[`tdd-on-edit` スキル](../skills/tdd-on-edit/SKILL.md)** を読む。バグは [`error-investigation`](../skills/error-investigation/SKILL.md) → [`error-fix-red-green`](../skills/error-fix-red-green/SKILL.md)。
+- 手順: **[`tdd-on-edit` スキル](../skills/tdd-on-edit/SKILL.md)**
+- 実行: **[`test-common`](../skills/test-common/SKILL.md)** のみ
+- バグ: [`error-investigation`](../skills/error-investigation/SKILL.md) → [`error-fix-red-green`](../skills/error-fix-red-green/SKILL.md)
 
-例外: 振る舞い不変リファクタ（既存テスト十分）・ドキュメントのみ変更。
+**例外**: 振る舞い不変リファクタ（既存テスト十分）・ドキュメント/設定のみ。詳細はスキル参照。
