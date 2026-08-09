@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname, resolve, relative } from 'node:path';
 
 const STALE_PATTERNS = [
