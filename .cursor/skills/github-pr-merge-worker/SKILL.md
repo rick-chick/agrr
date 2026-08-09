@@ -87,7 +87,7 @@ Cursor Automation が作成する **Draft PR** は [`.github/workflows/pr-agent-
 
 | 条件（すべて） | 説明 |
 |----------------|------|
-| 必須 CI のいずれか **FAIL**（完了済み） | `rails-test` / `frontend-test` / `lint / frontend-lint` |
+| 必須 CI のいずれか **FAIL**（完了済み） | `rails-test` / `frontend-test` / `lint / frontend-lint` / `lint / run-architecture-guard` |
 | **コンフリクトなし** | `mergeable: MERGEABLE` かつ `BEHIND` / `DIRTY` / `CONFLICTING` でない |
 | **オプトアウトなし** | fork / `CHANGES_REQUESTED` 等の構造除外のみ |
 
