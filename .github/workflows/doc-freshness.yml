@@ -28,4 +28,7 @@ jobs:
         run: ./scripts/check-doc-stale-paths.sh
 
       - name: Doc freshness unit tests
-        run: node --test scripts/check-doc-freshness-lib.test.mjs
+        run: node --test scripts/check-doc-freshness-lib.test.mjs scripts/verify-agents-md-lib.test.mjs
+
+      - name: Verify AGENTS.md slim contract
+        run: bash scripts/verify-agents-md.sh

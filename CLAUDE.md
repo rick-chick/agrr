@@ -8,10 +8,9 @@ AGRR: **Angular 21 SPA** + **agrr-server** (Rust API/WS/OAuth on Cloud Run) + SQ
 
 ## Norm priority
 
-1. [`ARCHITECTURE.md`](ARCHITECTURE.md) — L1 codemap, R0–R9 summary
+1. Observable tests (`run-rust-contract-tests.sh`, frontend/cargo runners)
 2. [`docs/architecture/LAYER-RULES.md`](docs/architecture/LAYER-RULES.md) — L2 What we require / prohibited patterns (gate: 1–39)
-3. Observable tests (`run-rust-contract-tests.sh`, frontend/cargo runners)
-4. [`.cursor/rules/*.mdc`](.cursor/rules/) — alwaysApply / contextual rules
+3. [`.cursor/rules/*.mdc`](.cursor/rules/) — alwaysApply / contextual rules
 
 Touching `crates/agrr-domain`, gateways, or composition: re-read LAYER-RULES for the affected layer.
 

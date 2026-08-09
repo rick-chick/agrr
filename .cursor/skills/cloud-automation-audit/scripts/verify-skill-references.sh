@@ -73,5 +73,6 @@ if [ "$missing" -ne 0 ]; then
 fi
 
 bash scripts/verify-agent-doc-freshness.sh
+bash scripts/verify-agents-md.sh
 
 echo "verify-skill-references: OK"
