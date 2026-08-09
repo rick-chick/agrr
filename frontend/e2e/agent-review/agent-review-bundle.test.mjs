@@ -47,6 +47,22 @@ test('validateAgentReviewEvidenceChain fails when runId mismatches', () => {
   assert.match(result.errors[0], /不一致/);
 });
 
+test('validateAgentReviewEvidenceChain fails when captureRunId is blank', () => {
+  const bundle = {
+    runId: 'run-a',
+    routeManifestRouteCount: 1,
+    artifacts: [{ png: 'home.ja.png' }, { png: 'home.en.png' }, { png: 'home.in.png' }],
+  };
+  const review = { captureRunId: '   ' };
+  const result = validateAgentReviewEvidenceChain({
+    bundle,
+    review,
+    manifestRouteCount: 1,
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.errors[0], /captureRunId/);
+});
+
 test('validateAgentReviewEvidenceChain passes when captureRunId matches bundle', () => {
   const bundle = {
     runId: 'run-a',
