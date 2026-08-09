@@ -220,3 +220,125 @@ export function checkDocInternalLinks(rootDir) {
   }
   return { ok: errors.length === 0, errors };
 }
+
+const DOMAIN_SRC = 'crates/agrr-domain/src';
+const BOUNDED_CONTEXT_EXCLUDE = new Set(['shared']);
+const DEV_DOCKER_SCRIPTS = '.cursor/skills/dev-docker/scripts';
+
+function listDomainContextDirs(rootDir) {
+  const domainSrc = join(rootDir, DOMAIN_SRC);
+  if (!existsSync(domainSrc)) return [];
+  return readdirSync(domainSrc, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !BOUNDED_CONTEXT_EXCLUDE.has(entry.name))
+    .map((entry) => entry.name)
+    .sort();
+}
+
+function parseArchitectureBoundedContexts(rootDir) {
+  const archPath = join(rootDir, 'ARCHITECTURE.md');
+  if (!existsSync(archPath)) return null;
+  const content = readFileSync(archPath, 'utf8');
+  const match = content.match(
+    /\*\*Bounded contexts\*\*[^:]*:\s*((?:`[^`]+`(?:,\s*)?)+)/,
+  );
+  if (!match) return null;
+  return [...match[1].matchAll(/`([^`]+)`/g)]
+    .map((m) => m[1])
+    .filter((name) => !BOUNDED_CONTEXT_EXCLUDE.has(name))
+    .sort();
+}
+
+export function checkBoundedContextSync(rootDir) {
+  const errors = [];
+  const actual = listDomainContextDirs(rootDir);
+  const documented = parseArchitectureBoundedContexts(rootDir);
+  if (!documented) {
+    return { ok: false, errors: ['ARCHITECTURE.md: Bounded contexts list not found'] };
+  }
+  const actualSet = new Set(actual);
+  const documentedSet = new Set(documented);
+  for (const name of actual) {
+    if (!documentedSet.has(name)) {
+      errors.push(`ARCHITECTURE.md: missing bounded context ${name} (present in ${DOMAIN_SRC}/)`);
+    }
+  }
+  for (const name of documented) {
+    if (!actualSet.has(name)) {
+      errors.push(`ARCHITECTURE.md: documents bounded context ${name} but ${DOMAIN_SRC}/${name}/ is missing`);
+    }
+  }
+  return { ok: errors.length === 0, errors };
+}
+
+function extractMarkdownSection(content, heading) {
+  const re = new RegExp(`## ${heading}\\n([\\s\\S]*?)(?=\\n## |\\n$)`);
+  const match = content.match(re);
+  return match ? match[1] : null;
+}
+
+function isScriptPath(value) {
+  if (!value || value.includes('*') || value.includes('{')) return false;
+  if (value.endsWith('.sh')) return true;
+  return value.includes('/scripts/') || value.startsWith('scripts/');
+}
+
+function extractTableCommandPaths(section) {
+  const paths = [];
+  const rowRe = /^\|[^|]+\|\s*([^|]+)\|/gm;
+  let match;
+  while ((match = rowRe.exec(section)) !== null) {
+    const cell = match[1];
+    if (/^[-:]+$/.test(cell.trim())) continue;
+    for (const tick of cell.matchAll(/`([^`]+)`/g)) {
+      const value = tick[1].trim();
+      if (!isScriptPath(value)) continue;
+      if (value.includes('/')) {
+        paths.push(value);
+      } else {
+        paths.push(`${DEV_DOCKER_SCRIPTS}/${value}`);
+      }
+    }
+  }
+  return paths;
+}
+
+function verifyScriptPaths(rootDir, relPaths, sourceLabel) {
+  const errors = [];
+  for (const relPath of relPaths) {
+    const abs = join(rootDir, relPath);
+    if (!existsSync(abs)) {
+      errors.push(`${sourceLabel}: script path missing ${relPath}`);
+    }
+  }
+  return errors;
+}
+
+export function checkCommandTableSync(rootDir) {
+  const claudePath = join(rootDir, 'CLAUDE.md');
+  if (!existsSync(claudePath)) {
+    return { ok: false, errors: ['CLAUDE.md: missing'] };
+  }
+  const content = readFileSync(claudePath, 'utf8');
+  const section = extractMarkdownSection(content, 'Commands');
+  if (!section) {
+    return { ok: false, errors: ['CLAUDE.md: Commands section not found'] };
+  }
+  const paths = extractTableCommandPaths(section);
+  const errors = verifyScriptPaths(rootDir, paths, 'CLAUDE.md Commands');
+  return { ok: errors.length === 0, errors };
+}
+
+export function checkAgentsCommandSync(rootDir) {
+  const agentsPath = join(rootDir, 'AGENTS.md');
+  if (!existsSync(agentsPath)) {
+    return { ok: false, errors: ['AGENTS.md: missing'] };
+  }
+  const content = readFileSync(agentsPath, 'utf8');
+  const section = extractMarkdownSection(content, 'Test commands');
+  if (!section) {
+    return { ok: false, errors: ['AGENTS.md: Test commands section not found'] };
+  }
+  const paths = extractTableCommandPaths(section);
+  const errors = verifyScriptPaths(rootDir, paths, 'AGENTS.md');
+  return { ok: errors.length === 0, errors };
+}
