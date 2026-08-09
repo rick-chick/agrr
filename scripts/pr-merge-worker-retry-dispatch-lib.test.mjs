@@ -37,6 +37,7 @@ const GREEN_CHECKS = [
   { name: 'rails-test', state: 'SUCCESS' },
   { name: 'frontend-test', state: 'SUCCESS' },
   { name: 'lint / frontend-lint', state: 'SUCCESS' },
+  { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
 ];
 
 test('isInProgressStale is false while within stale threshold', () => {
@@ -63,6 +64,7 @@ const FAILED_CHECKS = [
   { name: 'rails-test', state: 'SUCCESS' },
   { name: 'frontend-test', state: 'FAILURE' },
   { name: 'lint / frontend-lint', state: 'SUCCESS' },
+  { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
 ];
 
 test('classifyReconcileCandidate accepts draft PR with failed required CI', () => {
@@ -160,6 +162,7 @@ test('classifyReconcileCandidate rejects draft PR while required CI is pending',
       { name: 'rails-test', state: 'SUCCESS' },
       { name: 'frontend-test', state: 'PENDING' },
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
+      { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
     ],
     baseOwner: 'rick-chick',
     nowMs: NOW,
