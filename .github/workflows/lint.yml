@@ -9,6 +9,25 @@ on:
       - master
 
 jobs:
+  run-architecture-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Architecture guard (R0-R10)
+        run: ./scripts/run-architecture-guard.sh
+
+      - name: Architecture guard unit tests
+        run: node --test scripts/run-architecture-guard-lib.test.mjs
+
   frontend-lint:
     runs-on: ubuntu-latest
     defaults:
