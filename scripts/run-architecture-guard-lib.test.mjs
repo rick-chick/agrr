@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -8,6 +9,16 @@ import { fileURLToPath } from 'node:url';
 import { runArchitectureGuard } from './run-architecture-guard-lib.mjs';
 
 const REPO_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
+const GUARD_SCRIPT = join(REPO_ROOT, 'scripts/run-architecture-guard.sh');
+
+function writeMinimalArchGuardTree(root) {
+  mkdirSync(join(root, 'crates/agrr-domain/src'), { recursive: true });
+  writeFileSync(join(root, 'crates/agrr-domain/Cargo.toml'), '[dependencies]\nserde = "1"\n');
+  mkdirSync(join(root, 'crates/agrr-server/src'), { recursive: true });
+  writeFileSync(join(root, 'crates/agrr-server/src/lib.rs'), '');
+  mkdirSync(join(root, 'frontend/src/app/components'), { recursive: true });
+  mkdirSync(join(root, 'frontend/src/app/domain'), { recursive: true });
+}
 
 test('runArchitectureGuard passes on production repo tree', () => {
   const result = runArchitectureGuard(REPO_ROOT);
@@ -66,18 +77,26 @@ test('R2 fails on gateway default() in domain', () => {
 
 test('R6 fails when presenter imports agrr-adapters', () => {
   const root = mkdtempSync(join(tmpdir(), 'arch-guard-r6-'));
-  mkdirSync(join(root, 'crates/agrr-domain/src'), { recursive: true });
-  writeFileSync(join(root, 'crates/agrr-domain/Cargo.toml'), '[dependencies]\nserde = "1"\n');
-  mkdirSync(join(root, 'crates/agrr-server/src'), { recursive: true });
+  writeMinimalArchGuardTree(root);
   writeFileSync(
     join(root, 'crates/agrr-server/src/foo_presenter.rs'),
     'use agrr_adapters_sqlite::Foo;\n',
   );
-  mkdirSync(join(root, 'frontend/src/app/components'), { recursive: true });
-  mkdirSync(join(root, 'frontend/src/app/domain'), { recursive: true });
   const result = runArchitectureGuard(root);
   assert.equal(result.ok, false);
   assert.ok(result.violations.some((v) => v.ruleId === 'R6'));
+});
+
+test('run-architecture-guard.sh exits 1 on intentional R6 violation fixture', () => {
+  const root = mkdtempSync(join(tmpdir(), 'arch-guard-r6-shell-'));
+  writeMinimalArchGuardTree(root);
+  writeFileSync(
+    join(root, 'crates/agrr-server/src/foo_presenter.rs'),
+    'use agrr_adapters_sqlite::Foo;\n',
+  );
+  const result = spawnSync('bash', [GUARD_SCRIPT, root], { encoding: 'utf8' });
+  assert.equal(result.status, 1, `expected exit 1, got ${result.status}\nstdout: ${result.stdout}\nstderr: ${result.stderr}`);
+  assert.match(result.stderr ?? '', /R6/);
 });
 
 test('R7 fails when route handler lacks interactor delegation', () => {

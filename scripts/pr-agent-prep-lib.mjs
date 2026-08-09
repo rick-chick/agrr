@@ -4,6 +4,7 @@ export const REQUIRED_CI_CONTEXTS = [
   'rails-test',
   'frontend-test',
   'lint / frontend-lint',
+  'lint / run-architecture-guard',
 ];
 
 /**

@@ -173,6 +173,7 @@ test('areRequiredChecksGreen requires ruleset contexts', () => {
       { name: 'rails-test', state: 'SUCCESS' },
       { name: 'frontend-test', state: 'SUCCESS' },
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
+      { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
     ]),
     true,
   );
@@ -181,6 +182,7 @@ test('areRequiredChecksGreen requires ruleset contexts', () => {
       { name: 'rails-test', state: 'SUCCESS' },
       { name: 'frontend-test', state: 'PENDING' },
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
+      { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
     ]),
     false,
   );
@@ -192,6 +194,7 @@ test('areRequiredChecksComplete is false while any required check is pending', (
       { name: 'rails-test', state: 'SUCCESS' },
       { name: 'frontend-test', state: 'PENDING' },
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
+      { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
     ]),
     false,
   );
@@ -200,6 +203,7 @@ test('areRequiredChecksComplete is false while any required check is pending', (
       { name: 'rails-test', state: 'SUCCESS' },
       { name: 'frontend-test', state: 'FAILURE' },
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
+      { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
     ]),
     true,
   );
@@ -211,6 +215,7 @@ test('classifyRequiredCiState maps checks to incomplete, failed, or green', () =
       { name: 'rails-test', state: 'SUCCESS' },
       { name: 'frontend-test', state: 'IN_PROGRESS' },
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
+      { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
     ]),
     'incomplete',
   );
@@ -219,6 +224,7 @@ test('classifyRequiredCiState maps checks to incomplete, failed, or green', () =
       { name: 'rails-test', state: 'SUCCESS' },
       { name: 'frontend-test', state: 'FAILURE' },
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
+      { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
     ]),
     'failed',
   );
@@ -227,6 +233,7 @@ test('classifyRequiredCiState maps checks to incomplete, failed, or green', () =
       { name: 'rails-test', state: 'SUCCESS' },
       { name: 'frontend-test', state: 'SUCCESS' },
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
+      { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
     ]),
     'green',
   );
