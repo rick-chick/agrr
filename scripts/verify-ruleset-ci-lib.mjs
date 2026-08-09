@@ -1,0 +1,40 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+import { REQUIRED_CI_CONTEXTS } from './pr-agent-prep-lib.mjs';
+
+/**
+ * @param {string[]} actualContexts
+ * @returns {{ ok: boolean; missing: string[] }}
+ */
+export function verifyRulesetContexts(actualContexts) {
+  const actual = new Set(actualContexts);
+  const missing = REQUIRED_CI_CONTEXTS.filter((context) => !actual.has(context));
+  return { ok: missing.length === 0, missing };
+}
+
+/**
+ * @param {string} repoRoot
+ * @returns {Promise<{ ok: boolean; errors: string[] }>}
+ */
+export async function verifyRulesetCiContract(repoRoot) {
+  const errors = [];
+  const lintWorkflowPath = join(repoRoot, '.github/workflows/lint.yml');
+
+  let lintWorkflowText = '';
+  try {
+    lintWorkflowText = await readFile(lintWorkflowPath, 'utf8');
+  } catch {
+    errors.push(`missing workflow: ${lintWorkflowPath}`);
+  }
+
+  if (!lintWorkflowText.includes('run-architecture-guard:')) {
+    errors.push('lint.yml must define run-architecture-guard job');
+  }
+
+  if (!REQUIRED_CI_CONTEXTS.includes('lint / run-architecture-guard')) {
+    errors.push('REQUIRED_CI_CONTEXTS must include lint / run-architecture-guard');
+  }
+
+  return { ok: errors.length === 0, errors };
+}

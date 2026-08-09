@@ -70,7 +70,10 @@ description: >-
 
 **アーキテクチャゲート（1 回目・2 回目とも省略不可）**
 
-手順・記録形式は [`ca-violation-fix-architecture-gate.mdc`](../../rules/ca-violation-fix-architecture-gate.mdc) に従う。違反があれば修正してから次へ。両方クリアした場合のみ振る舞いチェックへ進む。
+1. `bash scripts/run-architecture-guard.sh` を実行する。
+2. exit code 0 を確認する。
+
+違反があれば修正してから次へ。両方クリアした場合のみ振る舞いチェックへ進む。手順の正本は [`ca-violation-fix-architecture-gate.mdc`](../../rules/ca-violation-fix-architecture-gate.mdc)。
 
 **振る舞いチェック**
 
@@ -116,7 +119,7 @@ description: >-
 
 - [Cursor エージェントで外側ループを繰り返すシェル](../clean-architecture-workflow-agent-loop/SKILL.md) — `workflowComplete` の機械判定（**バックログ専用ファイルには依存しない**）
 - [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) — 規約本体・禁止事項
-- [`ca-violation-fix-architecture-gate.mdc`](../../rules/ca-violation-fix-architecture-gate.mdc) — アーキテクチャゲートの手順・記録形式
+- [`ca-violation-fix-architecture-gate.mdc`](../../rules/ca-violation-fix-architecture-gate.mdc) — アーキテクチャゲート（`run-architecture-guard.sh`）
 - [`rails-testing-workflow.mdc`](../../rules/rails-testing-workflow.mdc) — テスト実行・順序・遅延検知
 - [`references/agent-operational-canonical.md`](references/agent-operational-canonical.md) — 本番断定・シェル（-path が無い場合は ARCHITECTURE.md とワークフロー本文を正とする）
 - [`no-convenience-tech-debt.mdc`](../../rules/no-convenience-tech-debt.mdc)

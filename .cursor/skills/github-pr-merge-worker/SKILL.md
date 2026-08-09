@@ -26,7 +26,7 @@ description: >-
 
 | 層 | 担当 | 本リポジトリ |
 |----|------|--------------|
-| **硬いゲート** | 必須 CI・ruleset | `rails-test` / `frontend-test` / `lint / frontend-lint`（ruleset **master CI required**） |
+| **硬いゲート** | 必須 CI・ruleset | `rails-test` / `frontend-test` / `lint / frontend-lint` / `lint / run-architecture-guard`（ruleset **master CI required**） |
 | **軽いゲート** | 差分レビュー・影響調査・テスト補完 | 本 Worker（Cloud Agent） |
 
 **原則**
@@ -87,7 +87,7 @@ Cursor Automation が作成する **Draft PR** は [`.github/workflows/pr-agent-
 
 | 条件（すべて） | 説明 |
 |----------------|------|
-| 必須 CI のいずれか **FAIL**（完了済み） | `rails-test` / `frontend-test` / `lint / frontend-lint` |
+| 必須 CI のいずれか **FAIL**（完了済み） | `rails-test` / `frontend-test` / `lint / frontend-lint` / `lint / run-architecture-guard` |
 | **コンフリクトなし** | `mergeable: MERGEABLE` かつ `BEHIND` / `DIRTY` / `CONFLICTING` でない |
 | **オプトアウトなし** | fork / `CHANGES_REQUESTED` 等の構造除外のみ |
 
@@ -184,6 +184,7 @@ gh pr checks <N> --watch --interval 30   # 最大 45 分想定（Backend test �
 | `rails-test` | Backend test |
 | `frontend-test` | Frontend test |
 | `lint / frontend-lint` | Lint |
+| `lint / run-architecture-guard` | Lint |
 
 **追加（軟ゲート — ruleset 未登録）**（diff に `crates/**` が含まれ、check が PR に表示されているとき — Agent が pass を確認。ruleset だけではマージはブロックされない）:
 
@@ -468,6 +469,7 @@ gh pr edit <N> --remove-label agent-merge-in-progress
 | `rails-test` | Backend test |
 | `frontend-test` | Frontend test |
 | `lint / frontend-lint` | Lint |
+| `lint / run-architecture-guard` | Lint (architecture guard) |
 
 `strict_required_status_checks_policy: true`（head が最新 `master` より進んでいること）。
 
