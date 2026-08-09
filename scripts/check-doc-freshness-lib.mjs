@@ -91,6 +91,115 @@ function resolveLink(fromFile, href, rootDir) {
   return { target };
 }
 
+const ALLOWED_ALWAYS_APPLY = [
+  '.cursor/rules/git-operational-constraints.mdc',
+  '.cursor/rules/tdd-on-edit.mdc',
+  '.cursor/rules/docker-dev-agrr-server-rebuild.mdc',
+  '.cursor/rules/test-common-entry.mdc',
+];
+
+const MAX_ALWAYS_APPLY_TOTAL_LINES = 80;
+
+const CLAUDE_ALWAYS_APPLY_REFS = [
+  '@.cursor/rules/git-operational-constraints.mdc',
+  '@.cursor/rules/tdd-on-edit.mdc',
+  '@.cursor/rules/docker-dev-agrr-server-rebuild.mdc',
+  '@.cursor/rules/test-common-entry.mdc',
+];
+
+function countLines(absPath) {
+  return readFileSync(absPath, 'utf8').split('\n').length;
+}
+
+function hasAlwaysApplyTrue(content) {
+  return /alwaysApply:\s*true/.test(content);
+}
+
+export function checkAlwaysApplyRules(rootDir) {
+  const errors = [];
+  const rulesDir = join(rootDir, '.cursor/rules');
+  if (!existsSync(rulesDir)) {
+    return { ok: false, errors: ['.cursor/rules: missing'] };
+  }
+
+  const alwaysApplyFiles = [];
+  for (const entry of readdirSync(rulesDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.mdc')) continue;
+    const rel = `.cursor/rules/${entry.name}`;
+    const content = readFileSync(join(rulesDir, entry.name), 'utf8');
+    if (hasAlwaysApplyTrue(content)) {
+      alwaysApplyFiles.push(rel);
+    }
+  }
+
+  alwaysApplyFiles.sort();
+  const allowed = [...ALLOWED_ALWAYS_APPLY].sort();
+  if (alwaysApplyFiles.length !== allowed.length) {
+    errors.push(
+      `alwaysApply: true count ${alwaysApplyFiles.length}, expected ${allowed.length}: ${alwaysApplyFiles.join(', ')}`,
+    );
+  } else {
+    for (let i = 0; i < allowed.length; i += 1) {
+      if (alwaysApplyFiles[i] !== allowed[i]) {
+        errors.push(
+          `alwaysApply: true mismatch at index ${i}: got ${alwaysApplyFiles[i]}, expected ${allowed[i]}`,
+        );
+      }
+    }
+  }
+
+  let totalLines = 0;
+  for (const rel of ALLOWED_ALWAYS_APPLY) {
+    const abs = join(rootDir, rel);
+    if (!existsSync(abs)) {
+      errors.push(`${rel}: missing`);
+      continue;
+    }
+    totalLines += countLines(abs);
+  }
+  if (totalLines > MAX_ALWAYS_APPLY_TOTAL_LINES) {
+    errors.push(
+      `alwaysApply rules total lines ${totalLines}, max ${MAX_ALWAYS_APPLY_TOTAL_LINES}`,
+    );
+  }
+
+  const claudePath = join(rootDir, 'CLAUDE.md');
+  if (!existsSync(claudePath)) {
+    errors.push('CLAUDE.md: missing');
+  } else {
+    const claude = readFileSync(claudePath, 'utf8');
+    const sectionMatch = claude.match(
+      /## Always-apply rules\n([\s\S]*?)(?=\n## |\n$)/,
+    );
+    if (!sectionMatch) {
+      errors.push('CLAUDE.md: missing ## Always-apply rules section');
+    } else {
+      const refs = sectionMatch[1]
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('@.cursor/rules/'));
+      const expected = [...CLAUDE_ALWAYS_APPLY_REFS];
+      refs.sort();
+      expected.sort();
+      if (refs.length !== expected.length) {
+        errors.push(
+          `CLAUDE.md Always-apply refs count ${refs.length}, expected ${expected.length}`,
+        );
+      } else {
+        for (let i = 0; i < expected.length; i += 1) {
+          if (refs[i] !== expected[i]) {
+            errors.push(
+              `CLAUDE.md Always-apply ref mismatch: got ${refs[i]}, expected ${expected[i]}`,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}
+
 export function checkDocInternalLinks(rootDir) {
   const errors = [];
   const linkRegex = /(?<!!)\[([^\]]*)\]\(([^)]+)\)/g;
