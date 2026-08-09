@@ -1,3 +1,21 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:f5573ef3a5a305e2c9a52e9f35d214b004d1930593988060b6e4d8e74a6fe81e
-size 463
+{
+  "name": "@agrr/repo-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server for filesystem-derived AGRR repo structure queries",
+  "bin": {
+    "agrr-repo-mcp": "./src/index.mjs"
+  },
+  "scripts": {
+    "start": "node src/index.mjs",
+    "test": "node --test src/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.26.0",
+    "zod": "^3.24.2"
+  }
+}
