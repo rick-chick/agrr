@@ -6,7 +6,10 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import {
+  checkAgentsCommandSync,
   checkAlwaysApplyRules,
+  checkBoundedContextSync,
+  checkCommandTableSync,
   checkDocInternalLinks,
   checkDocStalePaths,
 } from './check-doc-freshness-lib.mjs';
@@ -75,4 +78,71 @@ test('checkDocStalePaths allows docs/migration/archive historical paths', () => 
   );
   const result = checkDocStalePaths(root);
   assert.equal(result.ok, true, result.errors.join('\n'));
+});
+
+test('checkBoundedContextSync passes on production repo tree', () => {
+  const result = checkBoundedContextSync(REPO_ROOT);
+  assert.equal(result.ok, true, result.errors.join('\n'));
+});
+
+test('checkBoundedContextSync fails when ARCHITECTURE.md omits a bounded context', () => {
+  const root = mkdtempSync(join(tmpdir(), 'bc-sync-'));
+  mkdirSync(join(root, 'crates/agrr-domain/src/crop'), { recursive: true });
+  mkdirSync(join(root, 'crates/agrr-domain/src/farm'), { recursive: true });
+  mkdirSync(join(root, 'crates/agrr-domain/src/shared'), { recursive: true });
+  writeFileSync(
+    join(root, 'ARCHITECTURE.md'),
+    '**Bounded contexts** (`crates/agrr-domain/src/`): `crop`.\n',
+  );
+  const result = checkBoundedContextSync(root);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /farm/);
+});
+
+test('checkCommandTableSync passes on production repo tree', () => {
+  const result = checkCommandTableSync(REPO_ROOT);
+  assert.equal(result.ok, true, result.errors.join('\n'));
+});
+
+test('checkCommandTableSync fails when CLAUDE.md references missing script', () => {
+  const root = mkdtempSync(join(tmpdir(), 'cmd-sync-'));
+  writeFileSync(
+    join(root, 'CLAUDE.md'),
+    `# CLAUDE.md
+
+## Commands
+
+| Task | Command |
+| ---- | ------- |
+| Missing | \`scripts/does-not-exist.sh\` |
+
+## Workflows
+`,
+  );
+  const result = checkCommandTableSync(root);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /does-not-exist\.sh/);
+});
+
+test('checkAgentsCommandSync passes on production repo tree', () => {
+  const result = checkAgentsCommandSync(REPO_ROOT);
+  assert.equal(result.ok, true, result.errors.join('\n'));
+});
+
+test('checkAgentsCommandSync fails when AGENTS.md references missing script', () => {
+  const root = mkdtempSync(join(tmpdir(), 'agents-cmd-'));
+  writeFileSync(
+    join(root, 'AGENTS.md'),
+    `# Agent commands
+
+## Test commands
+
+| Task | Command |
+| ---- | ------- |
+| Bad | \`scripts/missing-agents-script.sh\` |
+`,
+  );
+  const result = checkAgentsCommandSync(root);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /missing-agents-script\.sh/);
 });
