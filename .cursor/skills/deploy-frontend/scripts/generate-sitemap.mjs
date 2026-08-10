@@ -7,7 +7,7 @@ import { readdir, stat, writeFile, mkdir, access } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { constants } from 'node:fs';
-import { isIndexableResearchHtml } from './generate-sitemap-lib.mjs';
+import { isSitemapIndexableResearchHtml } from './generate-sitemap-lib.mjs';
 import { entryScheduleCropSitemapPaths } from '../../../../frontend/scripts/entry-schedule-prerender-catalog.mjs';
 import {
   alternateLocaleRelativePath,
@@ -15,6 +15,7 @@ import {
   researchRelativePathToUrlPath,
   resolveResearchHreflangUrls,
 } from '../../../../scripts/research-hreflang-lib.mjs';
+import { shouldInjectResearchHreflang } from '../../../../scripts/research-en-translated-crops-lib.mjs';
 import {
   buildSitemapHreflangAlternates as buildSpaSitemapHreflangAlternates,
   resolveSpaHreflangUrls,
@@ -74,7 +75,7 @@ async function collectResearchHtml(dir, files = []) {
       continue;
     }
     const rel = relative(RESEARCH_DIR, fullPath);
-    if (!isIndexableResearchHtml(rel)) {
+    if (!isSitemapIndexableResearchHtml(rel)) {
       continue;
     }
     files.push(fullPath);
@@ -120,7 +121,8 @@ async function main() {
       alternateExists: await alternateExists(rel),
       baseUrl: BASE_URL,
     });
-    if (hreflang) {
+    const hasTranslatedPair = shouldInjectResearchHreflang(rel, Boolean(hreflang));
+    if (hreflang && hasTranslatedPair) {
       entry.alternates = buildSitemapHreflangAlternates({
         jaUrl: hreflang.jaUrl,
         enUrl: hreflang.enUrl,

@@ -1,4 +1,5 @@
 import { toResearchCanonicalUrl } from '../../deploy-frontend/scripts/generate-sitemap-lib.mjs';
+import { HREFLANG_MARKER_START } from '../../../../scripts/research-hreflang-lib.mjs';
 
 export const MARKER_START = '<!-- agrr-research-canonical:start -->';
 export const MARKER_END = '<!-- agrr-research-canonical:end -->';
@@ -13,10 +14,35 @@ export function buildCanonicalSnippet(canonicalUrl) {
 
 /**
  * @param {string} html
+ * @returns {boolean}
+ */
+export function hasResearchHreflangMarkers(html) {
+  return html.includes(HREFLANG_MARKER_START);
+}
+
+/**
+ * @param {string} html
+ * @returns {string}
+ */
+export function removeCanonicalMarkerFromHtml(html) {
+  if (!html.includes(MARKER_START)) {
+    return html;
+  }
+  return html.replace(
+    new RegExp(`\\s*${escapeRegExp(MARKER_START)}[\\s\\S]*?${escapeRegExp(MARKER_END)}\\s*`),
+    ''
+  );
+}
+
+/**
+ * @param {string} html
  * @param {string} canonicalUrl
  * @returns {string}
  */
 export function injectCanonicalIntoHtml(html, canonicalUrl) {
+  if (hasResearchHreflangMarkers(html)) {
+    return removeCanonicalMarkerFromHtml(html);
+  }
   const snippet = buildCanonicalSnippet(canonicalUrl);
   if (html.includes(MARKER_START)) {
     if (!html.includes(MARKER_END)) {

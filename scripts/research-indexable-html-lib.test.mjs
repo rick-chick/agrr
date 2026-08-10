@@ -1,6 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { isIndexableResearchHtml } from './research-indexable-html-lib.mjs';
+import {
+  isIndexableResearchHtml,
+  isSitemapIndexableResearchHtml,
+} from './research-indexable-html-lib.mjs';
 
 describe('isIndexableResearchHtml', () => {
   it('allows locale index pages', () => {
@@ -40,5 +43,37 @@ describe('isIndexableResearchHtml', () => {
   it('rejects 404 and README pages', () => {
     assert.equal(isIndexableResearchHtml('404.html'), false);
     assert.equal(isIndexableResearchHtml('research_reports/README.html'), false);
+  });
+});
+
+describe('isSitemapIndexableResearchHtml', () => {
+  it('includes JA crop reports and locale index pages', () => {
+    assert.equal(isSitemapIndexableResearchHtml('index.html'), true);
+    assert.equal(isSitemapIndexableResearchHtml('en/index.html'), true);
+    assert.equal(
+      isSitemapIndexableResearchHtml(
+        'research_reports/potato/01_environmental_requirements/temperature_requirements.html'
+      ),
+      true
+    );
+  });
+
+  it('includes EN pages only for fully translated crops', () => {
+    assert.equal(
+      isSitemapIndexableResearchHtml(
+        'en/research_reports/tomato/02_nutrition/npk_absorption.html'
+      ),
+      true
+    );
+    assert.equal(
+      isSitemapIndexableResearchHtml(
+        'en/research_reports/potato/01_environmental_requirements/temperature_requirements.html'
+      ),
+      false
+    );
+  });
+
+  it('rejects non-indexable internal paths', () => {
+    assert.equal(isSitemapIndexableResearchHtml('research_reports/commands_template.html'), false);
   });
 });

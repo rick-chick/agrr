@@ -144,3 +144,17 @@ export function injectResearchHreflangIntoHtml(html, snippet) {
   }
   return html.replace(/<\/head>/i, `${snippet}\n  </head>`);
 }
+
+/**
+ * @param {string} html
+ * @returns {string}
+ */
+export function removeResearchHreflangFromHtml(html) {
+  if (!html.includes(HREFLANG_MARKER_START)) {
+    return html;
+  }
+  return html.replace(
+    new RegExp(`\\s*${HREFLANG_MARKER_START}[\\s\\S]*?${HREFLANG_MARKER_END}\\s*`, 'm'),
+    ''
+  );
+}

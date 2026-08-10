@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   isIndexableResearchHtml,
+  isSitemapIndexableResearchHtml,
   toResearchCanonicalPath,
   toResearchCanonicalUrl,
 } from './generate-sitemap-lib.mjs';
@@ -53,5 +54,23 @@ describe('generate-sitemap-lib re-export', () => {
     const lib = await import('./generate-sitemap-lib.mjs');
     const shared = await import('../../../../scripts/research-indexable-html-lib.mjs');
     assert.equal(lib.isIndexableResearchHtml, shared.isIndexableResearchHtml);
+    assert.equal(lib.isSitemapIndexableResearchHtml, shared.isSitemapIndexableResearchHtml);
+  });
+});
+
+describe('isSitemapIndexableResearchHtml', () => {
+  it('excludes untranslated EN crop reports from sitemap', () => {
+    assert.equal(
+      isSitemapIndexableResearchHtml(
+        'en/research_reports/potato/01_environmental_requirements/temperature_requirements.html'
+      ),
+      false
+    );
+    assert.equal(
+      isSitemapIndexableResearchHtml(
+        'en/research_reports/tomato/01_environmental_requirements/temperature_requirements.html'
+      ),
+      true
+    );
   });
 });

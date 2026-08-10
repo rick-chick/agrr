@@ -3,6 +3,8 @@
  * Only canonical crop report pages and locale index pages are indexable.
  */
 
+import { isTranslatedEnResearchRelativePath } from './research-en-translated-crops-lib.mjs';
+
 /** Matches research_reports/{crop}/{NN}_{category}/{report}.html (JA or EN). */
 const CROP_REPORT_PATTERN =
   /^(en\/)?research_reports\/[a-z_]+\/\d{2}_[^/]+\/[a-z_]+\.html$/;
@@ -22,4 +24,18 @@ export function isIndexableResearchHtml(relativePath) {
     return true;
   }
   return CROP_REPORT_PATTERN.test(posix);
+}
+
+/**
+ * Whether a research HTML file should appear in sitemap.xml.
+ * Untranslated EN crop reports are excluded until EN content is ready.
+ *
+ * @param {string} relativePath - Path relative to public/research/ (POSIX slashes).
+ * @returns {boolean}
+ */
+export function isSitemapIndexableResearchHtml(relativePath) {
+  if (!isIndexableResearchHtml(relativePath)) {
+    return false;
+  }
+  return isTranslatedEnResearchRelativePath(relativePath);
 }

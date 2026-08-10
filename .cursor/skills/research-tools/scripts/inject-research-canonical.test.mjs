@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {
   buildCanonicalSnippet,
   canonicalUrlForResearchFile,
+  hasResearchHreflangMarkers,
   injectCanonicalIntoHtml,
+  removeCanonicalMarkerFromHtml,
 } from './inject-research-canonical-lib.mjs';
 
 describe('canonicalUrlForResearchFile', () => {
@@ -42,6 +44,27 @@ describe('injectCanonicalIntoHtml', () => {
       1
     );
     assert.equal(second, first);
+  });
+
+  it('skips injection when hreflang markers already provide canonical', () => {
+    const html = `<html><head>
+<!-- agrr-research-canonical:start -->
+<link rel="canonical" href="https://agrr.net/research/legacy">
+<!-- agrr-research-canonical:end -->
+<!-- agrr-research-hreflang:start -->
+<link rel="canonical" href="https://agrr.net/research/en/">
+<!-- agrr-research-hreflang:end -->
+</head></html>`;
+    const out = injectCanonicalIntoHtml(html, 'https://agrr.net/research/');
+    assert.doesNotMatch(out, /agrr-research-canonical/);
+    assert.match(out, /hreflang/);
+    assert.equal(hasResearchHreflangMarkers(html), true);
+  });
+
+  it('removeCanonicalMarkerFromHtml strips standalone canonical block', () => {
+    const html = `<html><head>${buildCanonicalSnippet('https://agrr.net/research/')}</head></html>`;
+    const out = removeCanonicalMarkerFromHtml(html);
+    assert.doesNotMatch(out, /agrr-research-canonical/);
   });
 });
 
