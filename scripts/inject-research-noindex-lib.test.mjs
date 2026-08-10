@@ -38,6 +38,30 @@ describe('removeResearchNoindexFromHtml', () => {
     assert.equal(hasResearchNoindex(out), false);
     assert.doesNotMatch(out, /agrr-research-noindex/);
   });
+
+  it('returns html unchanged when no marker is present', () => {
+    assert.equal(removeResearchNoindexFromHtml(SAMPLE_HTML), SAMPLE_HTML);
+  });
+});
+
+describe('injectResearchNoindexIntoHtml error paths', () => {
+  it('throws when noindex markers are broken (start without end)', () => {
+    const broken = SAMPLE_HTML.replace(
+      '</head>',
+      '<!-- agrr-research-noindex:start -->\n  </head>'
+    );
+    assert.throws(
+      () => injectResearchNoindexIntoHtml(broken),
+      /broken research noindex markers/
+    );
+  });
+
+  it('throws when </head> is missing', () => {
+    assert.throws(
+      () => injectResearchNoindexIntoHtml('<html><body></body></html>'),
+      /missing <\/head>/
+    );
+  });
 });
 
 describe('buildResearchNoindexSnippet', () => {
