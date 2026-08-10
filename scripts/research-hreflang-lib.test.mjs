@@ -5,6 +5,7 @@ import {
   buildResearchHreflangSnippet,
   buildSitemapHreflangAlternates,
   injectResearchHreflangIntoHtml,
+  removeResearchHreflangFromHtml,
   researchRelativePathToUrlPath,
   resolveResearchHreflangUrls,
 } from './research-hreflang-lib.mjs';
@@ -150,6 +151,24 @@ describe('injectResearchHreflangIntoHtml', () => {
 
     assert.equal(first, second);
     assert.match(second, /rel="canonical" href="https:\/\/agrr\.net\/research\/en\/"/);
+  });
+});
+
+describe('removeResearchHreflangFromHtml', () => {
+  it('removes hreflang marker block including canonical inside it', () => {
+    const resolved = resolveResearchHreflangUrls({
+      relativePath: 'index.html',
+      alternateExists: true,
+      baseUrl: 'https://agrr.net',
+    });
+    assert.ok(resolved);
+
+    const snippet = buildResearchHreflangSnippet(resolved);
+    const withHreflang = injectResearchHreflangIntoHtml(SAMPLE_HTML, snippet);
+    const out = removeResearchHreflangFromHtml(withHreflang);
+
+    assert.doesNotMatch(out, /agrr-research-hreflang/);
+    assert.doesNotMatch(out, /hreflang=/);
   });
 });
 

@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 /**
  * Idempotently inject canonical + hreflang (ja/en/x-default) into built VitePress HTML
- * under public/research/ for indexable JA/EN paired pages.
+ * under public/research/ for indexable JA/EN paired pages with completed EN translation.
  */
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isIndexableResearchHtml } from '../../../../scripts/research-indexable-html-lib.mjs';
+import { shouldInjectResearchHreflang } from '../../../../scripts/research-en-translated-crops-lib.mjs';
 import {
   alternateLocaleRelativePath,
   buildResearchHreflangSnippet,
   injectResearchHreflangIntoHtml,
+  removeResearchHreflangFromHtml,
   resolveResearchHreflangUrls,
 } from '../../../../scripts/research-hreflang-lib.mjs';
 
@@ -38,7 +40,7 @@ function walkHtmlFiles(dir) {
   return results;
 }
 
-function shouldInject(relativePath) {
+function shouldProcess(relativePath) {
   if (!isIndexableResearchHtml(relativePath)) {
     return false;
   }
@@ -52,19 +54,34 @@ function main() {
   }
 
   let updated = 0;
+  let stripped = 0;
   let skipped = 0;
 
   for (const filePath of walkHtmlFiles(RESEARCH_DIR)) {
     const relativePath = relative(RESEARCH_DIR, filePath).split('\\').join('/');
-    if (!shouldInject(relativePath)) {
+    if (!shouldProcess(relativePath)) {
       continue;
     }
 
     const alternateRelative = alternateLocaleRelativePath(relativePath);
     const alternatePath = join(RESEARCH_DIR, alternateRelative);
+    const alternateExists = existsSync(alternatePath);
+    const html = readFileSync(filePath, 'utf8');
+
+    if (!shouldInjectResearchHreflang(relativePath, alternateExists)) {
+      const strippedHtml = removeResearchHreflangFromHtml(html);
+      if (strippedHtml !== html) {
+        writeFileSync(filePath, strippedHtml);
+        updated += 1;
+        stripped += 1;
+      }
+      skipped += 1;
+      continue;
+    }
+
     const resolved = resolveResearchHreflangUrls({
       relativePath,
-      alternateExists: existsSync(alternatePath),
+      alternateExists,
       baseUrl: BASE_URL,
     });
     if (!resolved) {
@@ -73,15 +90,14 @@ function main() {
     }
 
     const snippet = buildResearchHreflangSnippet(resolved);
-    const html = readFileSync(filePath, 'utf8');
     const nextHtml = injectResearchHreflangIntoHtml(html, snippet);
     if (nextHtml !== html) {
-      writeFileSync(filePath, nextHtml, 'utf8');
+      writeFileSync(filePath, nextHtml);
       updated += 1;
     }
   }
 
-  console.log(`[inject-research-hreflang] updated=${updated} skipped=${skipped}`);
+  console.log(`[inject-research-hreflang] updated=${updated} stripped=${stripped} skipped=${skipped}`);
 }
 
 main();

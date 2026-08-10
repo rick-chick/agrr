@@ -1,4 +1,4 @@
-export { isIndexableResearchHtml } from '../../../../scripts/research-indexable-html-lib.mjs';
+export { isIndexableResearchHtml, isSitemapIndexableResearchHtml } from '../../../../scripts/research-indexable-html-lib.mjs';
 
 /**
  * Sitemap indexability rules for static research HTML under public/research/.
