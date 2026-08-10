@@ -55,6 +55,15 @@ describe('isTranslatedEnResearchRelativePath', () => {
       true
     );
   });
+
+  it('rejects EN pages for crops outside EN_TRANSLATED_CROPS', () => {
+    assert.equal(
+      isTranslatedEnResearchRelativePath(
+        'en/research_reports/watermelon/01_environmental_requirements/temperature_requirements.html'
+      ),
+      false
+    );
+  });
 });
 
 describe('shouldInjectResearchHreflang', () => {
@@ -84,6 +93,12 @@ describe('shouldInjectResearchHreflang', () => {
       ),
       false
     );
+  });
+
+  it('does not inject hreflang for EN crop pages outside EN_TRANSLATED_CROPS', () => {
+    const enWatermelon =
+      'en/research_reports/watermelon/01_environmental_requirements/gdd_requirements.html';
+    assert.equal(shouldInjectResearchHreflang(enWatermelon, true), false);
   });
 });
 

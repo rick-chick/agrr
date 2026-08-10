@@ -201,7 +201,10 @@ jobs:
         run: |
           node --test scripts/patch-research-vitepress-en-locale-lib.test.mjs
           node --test scripts/research-major-pests-crop-alignment-lib.test.mjs
+          node --test scripts/research-vp-doc-lib.test.mjs
           node --test scripts/verify-research-en-translation-lib.test.mjs
+          node --test scripts/inject-research-noindex-lib.test.mjs
+          node --test scripts/research-en-translated-crops-lib.test.mjs
           node scripts/verify-research-en-translation.mjs
 
       - name: research footer brand patch unit tests
