@@ -69,7 +69,7 @@ describe('isSitemapIndexableResearchHtml', () => {
       isSitemapIndexableResearchHtml(
         'en/research_reports/potato/01_environmental_requirements/temperature_requirements.html'
       ),
-      false
+      true
     );
   });
 

@@ -6,6 +6,8 @@
 
 - **sync-research-gcs.sh** — `public/research/` を GCS に同期し、sitemap を再生成して frontend バケットへアップロード
 - **patch-research-vitepress-links.mjs** — VitePress `__VP_SITE_DATA__` の nav/sidebar リンクに `.html` を付与（リロード 404 回避）
+- **patch-research-vitepress-en-locale.mjs** — EN 作物レポートの VitePress `base` を `/research/en/` に統一し、混在 sidebar ラベルを英語化
+- **inject-research-noindex.mjs** — 未翻訳 EN 作物レポートに `noindex` を注入（`EN_TRANSLATED_CROPS` 以外）
 - **inject-research-hreflang.mjs** — 対応 JA/EN ページに canonical + hreflang（ja/en/x-default）を注入
 - **inject-research-canonical.mjs** — 静的 HTML に `/research/` 正規 URL 向け `rel=canonical` を注入
 - **patch-research-meta-descriptions.mjs** — レポート HTML の `meta description` をページタイトルとパス（作物・カテゴリ）から一意化
@@ -33,3 +35,5 @@
 研究用の静的コンテンツを GCS + Cloud CDN でホスティング。デプロイ前に GA4 タグを動的に注入して、アクセス解析を有効化。
 
 sitemap 生成は [deploy-frontend](../deploy-frontend/SKILL.md) の `generate-sitemap.mjs` を呼び出す。
+
+EN 翻訳完了後は [`scripts/research-en-translated-crops-lib.mjs`](../../scripts/research-en-translated-crops-lib.mjs) の allowlist を更新し、`node scripts/verify-research-en-translation.mjs` で QA する。手順は [vitepress-rebuild-checklist](../../docs/seo/vitepress-rebuild-checklist.md) の「EN translation completion」を参照。

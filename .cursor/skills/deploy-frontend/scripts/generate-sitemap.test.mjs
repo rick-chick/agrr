@@ -62,13 +62,19 @@ describe('isSitemapIndexableResearchHtml', () => {
   it('excludes untranslated EN crop reports from sitemap', () => {
     assert.equal(
       isSitemapIndexableResearchHtml(
-        'en/research_reports/potato/01_environmental_requirements/temperature_requirements.html'
+        'en/research_reports/unknown_crop/01_environmental_requirements/temperature_requirements.html'
       ),
       false
     );
     assert.equal(
       isSitemapIndexableResearchHtml(
         'en/research_reports/tomato/01_environmental_requirements/temperature_requirements.html'
+      ),
+      true
+    );
+    assert.equal(
+      isSitemapIndexableResearchHtml(
+        'en/research_reports/potato/01_environmental_requirements/temperature_requirements.html'
       ),
       true
     );

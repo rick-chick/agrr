@@ -311,12 +311,41 @@ for shell_path in "${PRERENDER_SHELL_PATHS[@]}"; do
   fi
 done
 
+# GCS allows object keys "en" and "en/about" to coexist; the local build tree cannot
+# (extensionless locale root vs nested locale routes). Upload those shells after rsync.
+shell_path_has_extensionless_parent() {
+  local path="$1"
+  [[ "$path" != */* ]] && return 1
+  local seg="${path%%/*}"
+  local candidate
+  for candidate in "${PRERENDER_SHELL_PATHS[@]}"; do
+    [[ "$candidate" == "$seg" ]] && return 0
+  done
+  return 1
+}
+
+DEFERRED_GCS_SHELL_PATHS=()
+DEFERRED_GCS_SHELL_SOURCES=()
+
 # Classic EXTERNAL LB does not return HTTP 200 for urlRewrite SPA fallback alone.
 # Mirror HTML at public client-route object paths so GCS serves 200 directly.
 # Prerendered public routes use build-time SSG HTML; CSR-only routes use index.csr.html.
 for shell_path in "${PRERENDER_SHELL_PATHS[@]}"; do
   shell_target="$BUILD_OUTPUT_DIR/$shell_path"
   prerender_file="$BUILD_OUTPUT_DIR/$STATIC_PATH_PREFIX/$shell_path/index.html"
+  if shell_path_has_extensionless_parent "$shell_path"; then
+    if [ -f "$prerender_file" ]; then
+      DEFERRED_GCS_SHELL_PATHS+=("$shell_path")
+      DEFERRED_GCS_SHELL_SOURCES+=("$prerender_file")
+    else
+      info "Prerender missing for /$shell_path — deferring CSR shell to GCS"
+      deferred_csr="$(mktemp)"
+      run cp "$CSR_SHELL_HTML" "$deferred_csr"
+      DEFERRED_GCS_SHELL_PATHS+=("$shell_path")
+      DEFERRED_GCS_SHELL_SOURCES+=("$deferred_csr")
+    fi
+    continue
+  fi
   run mkdir -p "$(dirname "$shell_target")"
   if [ -f "$prerender_file" ]; then
     if [ -d "$shell_target" ]; then
@@ -359,6 +388,19 @@ GCS_TARGET="gs://$BUCKET_NAME"
 info "Syncing to $GCS_TARGET"
 # Use rsync: delete removed files (-d), recursive (-r), multithreaded via -m
 run gsutil -m rsync -r -d "$BUILD_OUTPUT_DIR" "$GCS_TARGET"
+
+if [ "${#DEFERRED_GCS_SHELL_PATHS[@]}" -gt 0 ]; then
+  info "Uploading deferred SPA shell objects (extensionless parent + nested route)"
+  for i in "${!DEFERRED_GCS_SHELL_PATHS[@]}"; do
+    shell_path="${DEFERRED_GCS_SHELL_PATHS[$i]}"
+    source_html="${DEFERRED_GCS_SHELL_SOURCES[$i]}"
+    run gsutil -h "Content-Type:text/html" -h "Cache-Control:no-cache, max-age=0, must-revalidate" \
+      cp "$source_html" "$GCS_TARGET/$shell_path"
+    if [[ "$source_html" == /tmp/* ]]; then
+      run rm -f "$source_html"
+    fi
+  done
+fi
 
 # Set cache-control metadata
 info "Setting Cache-Control metadata"

@@ -52,7 +52,7 @@ describe('isTranslatedEnResearchRelativePath', () => {
       isTranslatedEnResearchRelativePath(
         'en/research_reports/potato/01_environmental_requirements/temperature_requirements.html'
       ),
-      false
+      true
     );
   });
 });
@@ -73,7 +73,7 @@ describe('shouldInjectResearchHreflang', () => {
 
     assert.equal(shouldInjectResearchHreflang(jaTomato, true), true);
     assert.equal(shouldInjectResearchHreflang(enTomato, true), true);
-    assert.equal(shouldInjectResearchHreflang(jaPotato, true), false);
+    assert.equal(shouldInjectResearchHreflang(jaPotato, true), true);
   });
 
   it('does not inject when alternate locale file is missing', () => {
@@ -88,7 +88,24 @@ describe('shouldInjectResearchHreflang', () => {
 });
 
 describe('EN_TRANSLATED_CROPS', () => {
-  it('currently includes tomato only', () => {
-    assert.deepEqual([...EN_TRANSLATED_CROPS], ['tomato']);
+  it('includes all 15 research crops', () => {
+    const expected = [
+      'bell_pepper',
+      'broccoli',
+      'cabbage',
+      'carrot',
+      'chinese_cabbage',
+      'corn',
+      'cucumber',
+      'eggplant',
+      'lettuce',
+      'onion',
+      'potato',
+      'pumpkin',
+      'radish',
+      'spinach',
+      'tomato',
+    ];
+    assert.deepEqual([...EN_TRANSLATED_CROPS].sort(), expected.sort());
   });
 });
