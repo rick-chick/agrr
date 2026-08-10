@@ -2,7 +2,23 @@
  * Crops with fully translated EN research report content.
  * Update when VitePress EN build is completed for additional crops.
  */
-export const EN_TRANSLATED_CROPS = new Set(['tomato']);
+export const EN_TRANSLATED_CROPS = new Set([
+  'bell_pepper',
+  'broccoli',
+  'cabbage',
+  'carrot',
+  'chinese_cabbage',
+  'corn',
+  'cucumber',
+  'eggplant',
+  'lettuce',
+  'onion',
+  'potato',
+  'pumpkin',
+  'radish',
+  'spinach',
+  'tomato',
+]);
 
 const CROP_REPORT_PATH_RE =
   /^(?:en\/)?research_reports\/([a-z_]+)\/\d{2}_[^/]+\/[a-z_]+\.html$/;

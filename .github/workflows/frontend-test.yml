@@ -192,7 +192,17 @@ jobs:
 
       - name: research vitepress link patch unit tests
         working-directory: ${{ github.workspace }}
-        run: node --test .cursor/skills/research-tools/scripts/patch-research-vitepress-links.test.mjs
+        run: |
+          node --test .cursor/skills/research-tools/scripts/patch-research-vitepress-links.test.mjs
+          node --test .cursor/skills/research-tools/scripts/patch-research-vitepress-en-locale.test.mjs
+
+      - name: research EN translation QA unit tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          node --test scripts/patch-research-vitepress-en-locale-lib.test.mjs
+          node --test scripts/research-major-pests-crop-alignment-lib.test.mjs
+          node --test scripts/verify-research-en-translation-lib.test.mjs
+          node scripts/verify-research-en-translation.mjs
 
       - name: research footer brand patch unit tests
         working-directory: ${{ github.workspace }}
