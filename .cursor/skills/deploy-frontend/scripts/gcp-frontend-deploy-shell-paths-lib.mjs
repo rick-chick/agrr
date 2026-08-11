@@ -37,6 +37,22 @@ export function parsePrerenderShellPaths(deployScript) {
 }
 
 /**
+ * Nested locale routes (e.g. en/about) cannot share a local build tree with an
+ * extensionless locale root (en). Defer those shells to post-rsync GCS upload.
+ *
+ * @param {string} path
+ * @param {readonly string[]} prerenderShellPaths
+ * @returns {boolean}
+ */
+export function shellPathHasExtensionlessParent(path, prerenderShellPaths) {
+  if (!path.includes('/')) {
+    return false;
+  }
+  const seg = path.split('/')[0];
+  return prerenderShellPaths.includes(seg);
+}
+
+/**
  * @param {string} repoRoot
  * @returns {{ ok: boolean; errors: string[]; deployPaths: string[]; expectedPaths: string[] }}
  */
