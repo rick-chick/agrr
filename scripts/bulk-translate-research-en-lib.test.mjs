@@ -30,12 +30,17 @@ describe('normalizeSectionHeadings', () => {
     assert.doesNotMatch(next, /<h2>Summary/);
   });
 
-  it('renames trailing Summary h2 to Conclusion when no conclusion exists', () => {
+  it('leaves plain trailing Summary unchanged (split heuristic requires leading >)', () => {
+    const html = '<h2>Overview</h2><p>Body</p><h2>Summary</h2><p>Wrap up</p>';
+    assert.equal(normalizeSectionHeadings(html), html);
+  });
+
+  it('renames VitePress Summary headings with anchors to Overview', () => {
     const html =
-      '<h2>Overview</h2><p>Body</p><h2>Summary</h2><p>Wrap up</p>';
+      '<h2 id="summary" tabindex="-1">Summary<a class="header-anchor" href="#summary">#</a></h2>';
     const next = normalizeSectionHeadings(html);
-    assert.match(next, /<h2>Conclusion<\/h2>/);
-    assert.doesNotMatch(next, /<h2>Summary<\/h2>/);
+    assert.match(next, /<h2[^>]*>Overview<a class="header-anchor"/);
+    assert.doesNotMatch(next, />Summary<a class="header-anchor"/);
   });
 
   it('leaves Summary unchanged when Conclusion already present', () => {

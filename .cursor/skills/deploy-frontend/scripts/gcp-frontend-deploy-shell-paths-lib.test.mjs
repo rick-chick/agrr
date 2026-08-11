@@ -41,8 +41,12 @@ describe('shellPathHasExtensionlessParent', () => {
 
   it('does not defer top-level or unrelated nested paths', () => {
     assert.equal(shellPathHasExtensionlessParent('about', shellPaths), false);
-    assert.equal(shellPathHasExtensionlessParent('entry-schedule/tomato', shellPaths), false);
     assert.equal(shellPathHasExtensionlessParent('public-plans/new', shellPaths), false);
+    assert.equal(shellPathHasExtensionlessParent('public-plans/new/extra', shellPaths), false);
+  });
+
+  it('defers nested entry-schedule crop paths when entry-schedule is extensionless', () => {
+    assert.equal(shellPathHasExtensionlessParent('entry-schedule/tomato', shellPaths), true);
   });
 });
 
