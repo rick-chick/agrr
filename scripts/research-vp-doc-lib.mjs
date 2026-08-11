@@ -38,3 +38,17 @@ export function splitJaEnVpDocPair(jaHtml, enHtml) {
   }
   return { jaInner, enShell: enHtml };
 }
+
+/**
+ * @param {string} html
+ * @param {string} innerHtml
+ * @returns {string}
+ */
+export function updateTitleFromVpDocH1(html, innerHtml) {
+  const titleMatch = innerHtml.match(/<h1[^>]*>([^<]+)/);
+  if (!titleMatch) {
+    return html;
+  }
+  const title = titleMatch[1].replace(/\u200b/g, '').replace(/\s+/g, ' ').trim();
+  return html.replace(/<title>[^<]*<\/title>/, `<title>${title} | AGRR</title>`);
+}

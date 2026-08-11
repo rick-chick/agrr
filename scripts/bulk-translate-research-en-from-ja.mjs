@@ -8,8 +8,14 @@ import { join } from 'node:path';
 import {
   extractVpDocInnerHtml,
   replaceVpDocInnerHtml,
+  updateTitleFromVpDocH1,
 } from './research-vp-doc-lib.mjs';
 import { verifyEnResearchHtml } from './verify-research-en-translation-lib.mjs';
+import {
+  fixEnglishAnchors,
+  fixResearchCta,
+  normalizeSectionHeadings,
+} from './bulk-translate-research-en-lib.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const RESEARCH = join(ROOT, 'public', 'research');
@@ -20,32 +26,6 @@ const REPORTS = [
   ['02_nutrition', 'npk_absorption'],
   ['03_pest_disease', 'major_pests'],
 ];
-
-const CTA_JA =
-  /<div class="tip custom-block agrr-gdd-simulate-cta">[\s\S]*?<\/div>/g;
-const CTA_EN_TEMPLATE = (cropLabel) =>
-  `<div class="tip custom-block agrr-gdd-simulate-cta"><p class="custom-block-title">Try it in your region</p><p>See how these GDD requirements apply to your local weather data. <a href="https://agrr.net/public-plans/new" target="_blank" rel="noopener noreferrer">Simulate ${cropLabel} cultivation →</a></p></div>`;
-
-const CROP_LABELS = {
-  bell_pepper: 'Bell pepper',
-  broccoli: 'Broccoli',
-  cabbage: 'Cabbage',
-  carrot: 'Carrot',
-  chinese_cabbage: 'Chinese cabbage',
-  corn: 'Corn',
-  cucumber: 'Cucumber',
-  eggplant: 'Eggplant',
-  lettuce: 'Lettuce',
-  onion: 'Onion',
-  potato: 'Potato',
-  pumpkin: 'Pumpkin',
-  radish: 'Radish',
-  spinach: 'Spinach',
-  tomato: 'Tomato',
-};
-
-const TEMP_CTA_EN = (cropLabel) =>
-  `<div class="tip custom-block agrr-temperature-simulate-cta"><p class="custom-block-title">Try it in your region</p><p>See how these temperature requirements apply to your local weather data. <a href="https://agrr.net/public-plans/new" target="_blank" rel="noopener noreferrer">Simulate ${cropLabel} cultivation →</a></p></div>`;
 
 async function translateJaToEn(text) {
   const max = 1200;
@@ -85,60 +65,6 @@ async function translateJaToEn(text) {
   return out.join('');
 }
 
-function slugifyHeading(text) {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .slice(0, 80);
-}
-
-function normalizeSectionHeadings(html) {
-  let next = html;
-  next = next.replace(
-    /(<h2[^>]*>)\s*Summary(\s*<a class="header-anchor")/i,
-    '$1Overview$2'
-  );
-  next = next.replace(
-    /(<h2[^>]*id="[^"]*summary[^"]*"[^>]*>)\s*Summary(\s*<a)/i,
-    '$1Overview$2'
-  );
-  const parts = next.split(/<h2[^>]*>/i);
-  if (parts.length > 1) {
-    const last = parts[parts.length - 1];
-    if (/>\s*Summary\s*</i.test(last) && !/conclusion/i.test(last)) {
-      parts[parts.length - 1] = last.replace(/>\s*Summary\s*</i, '>Conclusion<');
-      next = parts.join('<h2');
-    }
-  }
-  return next;
-}
-
-function fixEnglishAnchors(html) {
-  return html.replace(
-    /<h([1-6]) id="[^"]*" tabindex="-1">([^<]+)<a class="header-anchor" href="#[^"]*" aria-label="[^"]*">/g,
-    (match, level, title) => {
-      const slug = slugifyHeading(title.replace(/​/g, '').trim());
-      const safe = slug || `section-${level}`;
-      return `<h${level} id="${safe}" tabindex="-1">${title}<a class="header-anchor" href="#${safe}" aria-label="Permalink to &quot;${title.replace(/​/g, '').trim()}&quot;">`;
-    }
-  );
-}
-
-function fixCta(html, crop, report) {
-  const label = CROP_LABELS[crop] ?? crop;
-  let next = html.replace(CTA_JA, () => CTA_EN_TEMPLATE(label));
-  if (report === 'temperature_requirements') {
-    next = next.replace(
-      /<div class="tip custom-block agrr-temperature-simulate-cta">[\s\S]*?<\/div>/g,
-      () => TEMP_CTA_EN(label)
-    );
-  }
-  return next;
-}
-
 async function translateCropReport(crop, category, report) {
   const jaPath = join(RESEARCH, 'research_reports', crop, category, `${report}.html`);
   const enPath = join(RESEARCH, 'en', 'research_reports', crop, category, `${report}.html`);
@@ -163,16 +89,12 @@ async function translateCropReport(crop, category, report) {
   }
 
   let translated = await translateJaToEn(jaInner);
-  translated = fixCta(translated, crop, report);
+  translated = fixResearchCta(translated, crop, report);
   translated = normalizeSectionHeadings(translated);
   translated = fixEnglishAnchors(translated);
 
   let next = replaceVpDocInnerHtml(enShell, translated);
-  const titleMatch = translated.match(/<h1[^>]*>([^<]+)/);
-  if (titleMatch) {
-    const title = titleMatch[1].replace(/​/g, '').trim();
-    next = next.replace(/<title>[^<]*<\/title>/, `<title>${title} | AGRR</title>`);
-  }
+  next = updateTitleFromVpDocH1(next, translated);
 
   writeFileSync(enPath, next, 'utf8');
 

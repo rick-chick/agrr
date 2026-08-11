@@ -4,6 +4,7 @@ import {
   extractVpDocInnerHtml,
   replaceVpDocInnerHtml,
   splitJaEnVpDocPair,
+  updateTitleFromVpDocH1,
 } from './research-vp-doc-lib.mjs';
 
 const VP_DOC_SHELL = (inner) =>
@@ -63,5 +64,19 @@ describe('splitJaEnVpDocPair', () => {
       () => splitJaEnVpDocPair(valid, invalid),
       /vp-doc block not found/
     );
+  });
+});
+
+describe('updateTitleFromVpDocH1', () => {
+  it('updates page title from first h1 in vp-doc inner HTML', () => {
+    const html = '<html><head><title>Old | AGRR</title></head><body></body></html>';
+    const inner = '<h1>Potato GDD Requirements</h1><p>Content</p>';
+    const next = updateTitleFromVpDocH1(html, inner);
+    assert.match(next, /<title>Potato GDD Requirements \| AGRR<\/title>/);
+  });
+
+  it('leaves HTML unchanged when inner HTML has no h1', () => {
+    const html = '<html><head><title>Old | AGRR</title></head></html>';
+    assert.equal(updateTitleFromVpDocH1(html, '<p>No heading</p>'), html);
   });
 });

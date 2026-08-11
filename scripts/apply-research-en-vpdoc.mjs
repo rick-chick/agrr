@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import {
   extractVpDocInnerHtml,
   replaceVpDocInnerHtml,
+  updateTitleFromVpDocH1,
 } from './research-vp-doc-lib.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -33,12 +34,7 @@ if (extractVpDocInnerHtml(enHtml) === null) {
 }
 
 let next = replaceVpDocInnerHtml(enHtml, innerHtml.trim());
-
-const titleMatch = innerHtml.match(/<h1[^>]*>([^<]+)/);
-if (titleMatch) {
-  const title = titleMatch[1].replace(/\s+/g, ' ').trim();
-  next = next.replace(/<title>[^<]*<\/title>/, `<title>${title} | AGRR</title>`);
-}
+next = updateTitleFromVpDocH1(next, innerHtml);
 
 writeFileSync(enPath, next, 'utf8');
 console.log(`Updated ${rel}`);

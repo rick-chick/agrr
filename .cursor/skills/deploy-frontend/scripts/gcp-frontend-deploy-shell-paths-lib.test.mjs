@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import {
   EXPECTED_PRERENDER_SHELL_PATHS,
   parsePrerenderShellPaths,
+  shellPathHasExtensionlessParent,
   verifyPrerenderShellPathsSync,
 } from './gcp-frontend-deploy-shell-paths-lib.mjs';
 
@@ -27,6 +28,25 @@ PRERENDER_SHELL_PATHS=(
       'public-plans/new',
       'entry-schedule',
     ]);
+  });
+});
+
+describe('shellPathHasExtensionlessParent', () => {
+  const shellPaths = ['about', 'en', 'en/about', 'entry-schedule'];
+
+  it('defers nested paths whose first segment is an extensionless shell', () => {
+    assert.equal(shellPathHasExtensionlessParent('en/about', shellPaths), true);
+    assert.equal(shellPathHasExtensionlessParent('en/research', shellPaths), true);
+  });
+
+  it('does not defer top-level or unrelated nested paths', () => {
+    assert.equal(shellPathHasExtensionlessParent('about', shellPaths), false);
+    assert.equal(shellPathHasExtensionlessParent('public-plans/new', shellPaths), false);
+    assert.equal(shellPathHasExtensionlessParent('public-plans/new/extra', shellPaths), false);
+  });
+
+  it('defers nested entry-schedule crop paths when entry-schedule is extensionless', () => {
+    assert.equal(shellPathHasExtensionlessParent('entry-schedule/tomato', shellPaths), true);
   });
 });
 
