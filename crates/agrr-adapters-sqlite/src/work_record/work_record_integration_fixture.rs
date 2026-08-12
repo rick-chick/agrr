@@ -136,6 +136,8 @@ CREATE TABLE work_records (
   amount_unit TEXT,
   time_spent_minutes INTEGER,
   notes TEXT,
+  gdd_at_actual REAL,
+  weather_snapshot TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   FOREIGN KEY (cultivation_plan_id) REFERENCES cultivation_plans (id),
