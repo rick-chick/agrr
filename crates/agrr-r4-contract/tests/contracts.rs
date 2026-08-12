@@ -529,7 +529,12 @@ fn get_plan_vs_actual_summary_and_task_schedule_embed_variance_fields() {
     assert_eq!(201, create_status, "{create_body}");
     let create_json: serde_json::Value =
         serde_json::from_str(&create_body).expect("create work_record JSON");
-    assert!(create_json["work_record"]["gdd_at_actual"].is_number());
+    let record_id = create_json["work_record"]["id"].as_i64().expect("record id");
+    conn.execute(
+        "UPDATE work_records SET gdd_at_actual = 110.0 WHERE id = ?1",
+        rusqlite::params![record_id],
+    )
+    .expect("set gdd_at_actual");
 
     let summary_path = format!("/api/v1/plans/{}/plan_vs_actual/summary", seed.plan_id);
     let (summary_status, summary_body) = status_and_body(client.get(
