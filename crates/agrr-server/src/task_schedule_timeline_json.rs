@@ -5,6 +5,7 @@ use agrr_domain::cultivation_plan::dtos::{
     TaskScheduleTimelineScheduleItemRead, TaskScheduleTimelineTaskOptionRead,
     TaskScheduleTimelineWorkRecordSummaryRead,
 };
+use agrr_domain::cultivation_plan::mappers::PlanVsActualMapper;
 use serde_json::{json, Map, Value};
 use time::{Date, Duration, Weekday};
 
@@ -226,6 +227,7 @@ impl TimelineJsonPresenter {
         field_cultivation_id: i64,
     ) -> Value {
         let status = item.status.as_str();
+        let plan_vs_actual = PlanVsActualMapper::item_read(item, category);
         let work_records: Vec<Value> = item
             .work_records
             .iter()
@@ -237,9 +239,13 @@ impl TimelineJsonPresenter {
             "task_type": item.task_type,
             "category": category,
             "scheduled_date": item.scheduled_date,
+            "actual_date": plan_vs_actual.actual_date,
+            "delta_days": plan_vs_actual.delta_days,
             "stage_name": item.stage_name,
             "stage_order": item.stage_order,
             "gdd_trigger": optional_f64_as_string(item.gdd_trigger),
+            "gdd_at_actual": optional_f64_json(plan_vs_actual.gdd_at_actual),
+            "gdd_delta": optional_f64_json(plan_vs_actual.gdd_delta),
             "gdd_tolerance": optional_f64_as_string(item.gdd_tolerance),
             "priority": item.priority,
             "source": item.source,
@@ -336,6 +342,7 @@ fn work_record_payload(record: &TaskScheduleTimelineWorkRecordSummaryRead) -> Va
         "id": record.id,
         "actual_date": record.actual_date,
         "notes": record.notes,
+        "gdd_at_actual": optional_f64_json(record.gdd_at_actual),
     })
 }
 
@@ -394,6 +401,10 @@ fn detail_payload(item: &TaskScheduleTimelineScheduleItemRead) -> Value {
 
 fn optional_f64_as_string(value: Option<f64>) -> Value {
     value.map(|v| json!(v.to_string())).unwrap_or(Value::Null)
+}
+
+fn optional_f64_json(value: Option<f64>) -> Value {
+    value.map(|v| json!(v)).unwrap_or(Value::Null)
 }
 
 fn priority_level(value: Option<i64>) -> &'static str {
@@ -640,6 +651,53 @@ mod tests {
         });
         assert_eq!(501, payload["agricultural_task_id"].as_i64().unwrap());
         assert_eq!(501, payload["template_id"].as_i64().unwrap());
+    }
+
+    #[test]
+    fn serialize_item_includes_plan_vs_actual_fields() {
+        let item = TaskScheduleTimelineScheduleItemRead {
+            id: 1001,
+            name: "Weed".into(),
+            task_type: "field_work".into(),
+            scheduled_date: Some("2026-06-02".into()),
+            stage_name: None,
+            stage_order: None,
+            gdd_trigger: Some(120.0),
+            gdd_tolerance: None,
+            priority: None,
+            source: "agrr".into(),
+            weather_dependency: None,
+            time_per_sqm: None,
+            amount: None,
+            amount_unit: None,
+            status: "planned".into(),
+            agricultural_task_id: None,
+            field_cultivation_id: 10,
+            agricultural_task: None,
+            rescheduled_at: None,
+            cancelled_at: None,
+            completed: true,
+            work_records: vec![TaskScheduleTimelineWorkRecordSummaryRead {
+                id: 2001,
+                actual_date: "2026-06-08".into(),
+                notes: None,
+                gdd_at_actual: Some(130.5),
+            }],
+        };
+        let presenter = TimelineJsonPresenter::new(
+            TaskScheduleTimeline {
+                plan: sample_plan(),
+                fields: vec![],
+                scheduled_dates: vec![],
+                today: Date::from_calendar_date(2026, Month::June, 1).expect("date"),
+            },
+            default_query(),
+        );
+        let payload = presenter.serialize_item(&item, "general", 10);
+        assert_eq!("2026-06-08", payload["actual_date"].as_str().unwrap());
+        assert_eq!(6, payload["delta_days"].as_i64().unwrap());
+        assert_eq!(130.5, payload["gdd_at_actual"].as_f64().unwrap());
+        assert_eq!(10.5, payload["gdd_delta"].as_f64().unwrap());
     }
 
     #[test]
