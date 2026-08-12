@@ -32,7 +32,9 @@ describe('WorkHubApiGateway', () => {
         fieldCount: 2,
         totalArea: 80,
         hasValidFields: true,
-        planId: 9
+        planId: 9,
+        overdueCount: 0,
+        todayCount: 0
       }
     ]);
   });

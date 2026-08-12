@@ -239,6 +239,8 @@
       "creating_plan": "Preparing your plan…",
       "creating_plan_for": "Preparing the plan for {{name}}…",
       "farm_meta": "{{count}} fields · {{area}} m² total",
+      "overdue_summary": "{{count}} overdue",
+      "today_summary": "{{count}} today",
       "open_work": "Open work",
       "start_recording": "Start recording",
       "no_fields_warning": "No valid fields on this farm.",

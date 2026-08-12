@@ -2310,6 +2310,8 @@
       "creating_plan": "योजना तैयार हो रही है…",
       "creating_plan_for": "{{name}} की योजना तैयार हो रही है…",
       "farm_meta": "{{count}} खेत क्षेत्र · कुल {{area}} वर्ग मी",
+      "overdue_summary": "{{count}} अतिदेय",
+      "today_summary": "आज {{count}}",
       "open_work": "कार्य खोलें",
       "start_recording": "दर्ज करना शुरू करें",
       "no_fields_warning": "इस खेत पर कोई मान्य खेत क्षेत्र नहीं है।",

@@ -26,6 +26,8 @@ const WORK_HUB_I18N_KEYS = [
   'work.hub.creating_plan',
   'work.hub.creating_plan_for',
   'work.hub.farm_meta',
+  'work.hub.overdue_summary',
+  'work.hub.today_summary',
   'work.hub.open_work',
   'work.hub.start_recording',
   'work.hub.no_fields_warning',
