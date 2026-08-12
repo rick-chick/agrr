@@ -16,7 +16,8 @@ describe('PlanDetailContextNavComponent', () => {
           { path: 'plans/:id', component: PlanDetailContextNavComponent },
           { path: 'plans/:id/task_schedule', component: PlanDetailContextNavComponent },
           { path: 'plans/:id/work', component: PlanDetailContextNavComponent },
-          { path: 'plans/:id/work_records', component: PlanDetailContextNavComponent }
+          { path: 'plans/:id/work_records', component: PlanDetailContextNavComponent },
+          { path: 'plans/:id/learn', component: PlanDetailContextNavComponent }
         ])
       ]
     }).compileComponents();
@@ -28,6 +29,7 @@ describe('PlanDetailContextNavComponent', () => {
       'plans.show.nav.aria_label': '計画画面ナビゲーション',
       'plans.show.nav.workbench': '作付け計画',
       'plans.show.nav.task_schedule': '作業計画表',
+      'plans.show.nav.learn': '振り返り',
       'plans.work.nav.work': '今日の作業',
       'plans.work.nav.history': '実績履歴'
     });
@@ -37,7 +39,7 @@ describe('PlanDetailContextNavComponent', () => {
     fixture.componentInstance.planId = 1;
   });
 
-  it('renders four plan context tabs with navigation role', async () => {
+  it('renders five plan context tabs with navigation role', async () => {
     await router.navigateByUrl('/plans/1/work');
     fixture.detectChanges();
     await fixture.whenStable();
@@ -48,11 +50,12 @@ describe('PlanDetailContextNavComponent', () => {
     expect(nav?.getAttribute('aria-label')).toBe('計画画面ナビゲーション');
 
     const links = fixture.nativeElement.querySelectorAll('.plan-context-nav__link');
-    expect(links.length).toBe(4);
+    expect(links.length).toBe(5);
     expect(links[0].textContent?.trim()).toBe('作付け計画');
     expect(links[1].textContent?.trim()).toBe('作業計画表');
     expect(links[2].textContent?.trim()).toBe('今日の作業');
     expect(links[3].textContent?.trim()).toBe('実績履歴');
+    expect(links[4].textContent?.trim()).toBe('振り返り');
     expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
       '今日の作業'
     );
@@ -88,6 +91,17 @@ describe('PlanDetailContextNavComponent', () => {
 
     expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
       '実績履歴'
+    );
+  });
+
+  it('marks learn link active on learn route', async () => {
+    await router.navigateByUrl('/plans/1/learn');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
+      '振り返り'
     );
   });
 });

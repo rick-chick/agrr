@@ -44,6 +44,7 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   'pests/new': 'app-pest-create',
   plans: 'app-plan-list',
   'plans/:id': 'app-plan-detail',
+  'plans/:id/learn': 'app-plan-learn',
   'plans/:id/optimizing': 'app-plan-optimizing',
   'plans/:id/task_schedule': 'app-plan-task-schedule',
   'plans/:id/work': 'app-plan-work',

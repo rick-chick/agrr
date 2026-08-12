@@ -72,9 +72,7 @@ const loadedState: PlanTaskScheduleViewState = {
   allFieldsLackTasks: false,
   varianceLoading: false,
   varianceError: null,
-  varianceSummary: null,
-  varianceStats: null,
-  varianceUnrecordedRows: []
+  varianceStats: null
 };
 
 function sampleGeneralTask(
@@ -268,9 +266,7 @@ describe('PlanTaskScheduleComponent', () => {
       allFieldsLackTasks: false,
       varianceLoading: false,
       varianceError: null,
-      varianceSummary: null,
-      varianceStats: null,
-      varianceUnrecordedRows: []
+      varianceStats: null
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -343,7 +339,7 @@ describe('PlanTaskScheduleComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Weeding');
   });
 
-  it('uses the unified plan context header with four-tab navigation and plan list L2 breadcrumb', async () => {
+  it('uses the unified plan context header with five-tab navigation and plan list L2 breadcrumb', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
@@ -360,7 +356,7 @@ describe('PlanTaskScheduleComponent', () => {
     expect(header.querySelector('a.plan-context-header__back')).toBeTruthy();
     expect(header.querySelector('.plan-context-header__current')?.textContent).toContain('Main Plan');
     const navLinks = header.querySelectorAll('app-plan-detail-context-nav .plan-context-nav__link');
-    expect(navLinks.length).toBe(4);
+    expect(navLinks.length).toBe(5);
     expect(navLinks[0]?.getAttribute('href')).toContain('/plans/7');
   });
 
@@ -1099,7 +1095,7 @@ describe('PlanTaskScheduleComponent', () => {
     );
   });
 
-  it('switches to variance subview when view=variance query param is set', async () => {
+  it('shows variance summary line and learn link on task schedule list', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
@@ -1107,10 +1103,7 @@ describe('PlanTaskScheduleComponent', () => {
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
-    const varianceRouteMock = createPlanRouteMock({
-      planId: '7',
-      query: { view: 'variance' }
-    });
+    const listRouteMock = createPlanRouteMock({ planId: '7' });
 
     TestBed.overrideComponent(PlanTaskScheduleComponent, {
       set: {
@@ -1122,7 +1115,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
-          { provide: ActivatedRoute, useValue: varianceRouteMock }
+          { provide: ActivatedRoute, useValue: listRouteMock }
         ]
       }
     });
@@ -1137,10 +1130,10 @@ describe('PlanTaskScheduleComponent', () => {
     translate.setDefaultLang('en');
     translate.use('en');
 
-    const varianceFixture = TestBed.createComponent(PlanTaskScheduleComponent);
-    const variancePresenter = varianceFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
-    varianceFixture.detectChanges();
-    setScheduleControl(varianceFixture.componentInstance, variancePresenter, {
+    const listFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const listPresenter = listFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
+    listFixture.detectChanges();
+    setScheduleControl(listFixture.componentInstance, listPresenter, {
       ...loadedState,
       schedule: {
         ...loadedSchedule,
@@ -1156,29 +1149,33 @@ describe('PlanTaskScheduleComponent', () => {
         ]
       },
       varianceStats: {
-        completedCount: 1,
-        averageDeltaDays: 2,
-        unrecordedCount: 0
-      },
-      varianceSummary: {
-        plan_id: 7,
-        unrecorded_count: 0,
-        categories: [],
-        top_variance_items: []
+        completedCount: 2,
+        averageDeltaDays: 1.5,
+        unrecordedCount: 1
       }
     });
-    varianceFixture.detectChanges();
-    await varianceFixture.whenStable();
+    listFixture.detectChanges();
+    await listFixture.whenStable();
 
     expect(varianceUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ planId: 7 })
     );
     expect(
-      varianceFixture.nativeElement.querySelector('app-task-schedule-variance-view')
-    ).toBeTruthy();
-    expect(
-      varianceFixture.nativeElement.querySelector('app-task-schedule-month-list')
+      listFixture.nativeElement.querySelector('.plan-task-schedule__view-toggle')
     ).toBeNull();
-    expect(varianceFixture.nativeElement.textContent).toContain('Variance');
+    expect(
+      listFixture.nativeElement.querySelector('app-task-schedule-variance-view')
+    ).toBeNull();
+    expect(
+      listFixture.nativeElement.querySelector('.plan-task-schedule__variance-summary')
+    ).toBeTruthy();
+    expect(listFixture.nativeElement.textContent).toContain('Completed 2');
+    expect(listFixture.nativeElement.textContent).toContain('Review variance');
+    expect(
+      listFixture.nativeElement.querySelector('.plan-task-schedule__learn-link')?.getAttribute('href')
+    ).toContain('/plans/7/learn');
+    expect(
+      listFixture.nativeElement.querySelector('app-task-schedule-month-list')
+    ).toBeTruthy();
   });
 });

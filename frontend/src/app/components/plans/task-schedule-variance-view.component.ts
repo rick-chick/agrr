@@ -203,7 +203,6 @@ export class TaskScheduleVarianceViewComponent {
 
   scheduleLinkQuery(row: PlanTaskScheduleRowView): Record<string, string | number | null> {
     return {
-      view: null,
       field_cultivation_id: row.fieldCultivationId,
       from_date: row.item.scheduled_date
     };

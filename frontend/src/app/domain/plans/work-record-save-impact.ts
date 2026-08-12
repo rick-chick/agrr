@@ -1,6 +1,6 @@
 import { WorkRecord } from '../../models/plans/work-record';
-import type { WorkRecordSheetMode } from '../../components/plans/work-record-sheet.view';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../work-schedule/format-plan-task-schedule-delta-days';
+import type { WorkRecordSaveMode } from './work-record-save-toast';
 import { buildPlanVsActualPlanSummaryStats } from './build-plan-vs-actual-plan-summary';
 import type { PlanVsActualSummary } from './plan-vs-actual-summary';
 import {
@@ -22,7 +22,7 @@ export type WorkRecordSaveImpactPanelView = {
 
 export type WorkRecordSaveImpactRequest = {
   workRecord: WorkRecord;
-  mode: WorkRecordSheetMode;
+  mode: WorkRecordSaveMode;
   planId: number;
   gddTrigger?: string | number | null;
 };
@@ -71,7 +71,7 @@ export function buildWorkRecordSaveImpactPanel(
 }
 
 export function workRecordSaveImpactRequestFromSavedEvent(
-  event: { workRecord: WorkRecord; mode: WorkRecordSheetMode; gddTrigger?: string | number | null },
+  event: { workRecord: WorkRecord; mode: WorkRecordSaveMode; gddTrigger?: string | number | null },
   planId: number
 ): WorkRecordSaveImpactRequest {
   return {
