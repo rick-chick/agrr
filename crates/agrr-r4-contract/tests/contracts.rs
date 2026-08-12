@@ -134,6 +134,8 @@ fn post_work_records_from_schedule_item_returns_201() {
     assert_eq!("F1", record["field_name"].as_str().unwrap());
     assert_eq!(seed.crop_name, record["crop_name"].as_str().unwrap());
     assert!(record["task_schedule_item"].is_object());
+    assert!(record.get("gdd_at_actual").is_some());
+    assert!(record.get("weather_snapshot").is_some());
 }
 
 #[test]
@@ -175,6 +177,8 @@ fn get_work_records_list_includes_field_and_crop_name() {
         .expect("created record in list");
     assert_eq!("F1", record["field_name"].as_str().unwrap());
     assert_eq!(seed.crop_name, record["crop_name"].as_str().unwrap());
+    assert!(record.get("gdd_at_actual").is_some());
+    assert!(record.get("weather_snapshot").is_some());
 }
 
 #[test]

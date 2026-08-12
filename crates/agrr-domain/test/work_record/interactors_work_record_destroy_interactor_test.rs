@@ -168,6 +168,7 @@ impl WorkRecordGateway for StubWorkRecordGateway {
         _: i64,
         _: i64,
         _: &crate::work_record::dtos::WorkRecordUpdateInput,
+        _: Option<&crate::work_record::gateways::WorkRecordClimatePersistFields>,
         _: OffsetDateTime,
     ) -> Result<WorkRecordRead, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
@@ -212,6 +213,8 @@ fn sample_record() -> WorkRecordRead {
         amount_unit: None,
         time_spent_minutes: None,
         notes: None,
+        gdd_at_actual: None,
+        weather_snapshot: None,
         created_at: OffsetDateTime::now_utc(),
         updated_at: OffsetDateTime::now_utc(),
         field_name: None,

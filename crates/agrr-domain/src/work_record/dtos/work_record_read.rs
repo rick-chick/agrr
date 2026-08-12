@@ -1,6 +1,7 @@
 //! Ruby: `Domain::WorkRecord::Dtos::WorkRecordRead`
 
 use rust_decimal::Decimal;
+use serde_json::Value;
 use time::{Date, OffsetDateTime};
 
 /// Nested schedule item summary for API responses.
@@ -26,6 +27,8 @@ pub struct WorkRecordRead {
     pub amount_unit: Option<String>,
     pub time_spent_minutes: Option<i64>,
     pub notes: Option<String>,
+    pub gdd_at_actual: Option<f64>,
+    pub weather_snapshot: Option<Value>,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
     pub field_name: Option<String>,

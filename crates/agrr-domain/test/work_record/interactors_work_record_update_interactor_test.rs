@@ -4,8 +4,10 @@ use crate::cultivation_plan::dtos::CultivationPlanCreateAttrs;
 use crate::cultivation_plan::entities::{CultivationPlanEntity, FieldCultivationEntity};
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::shared::ports::ClockPort;
-use crate::work_record::dtos::{WorkRecordListInput, WorkRecordRead};
-use crate::work_record::gateways::{WorkRecordCreatePersistAttrs, WorkRecordGateway};
+use crate::work_record::dtos::{WorkRecordClimateSnapshot, WorkRecordListInput, WorkRecordRead};
+use crate::work_record::gateways::{
+    WorkRecordClimateSnapshotGateway, WorkRecordCreatePersistAttrs, WorkRecordGateway,
+};
 use crate::work_record::ports::WorkRecordUpdateOutputPort;
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -124,6 +126,18 @@ impl CultivationPlanGateway for StubPlanGateway {
     }
 }
 
+struct EmptyClimateSnapshot;
+
+impl WorkRecordClimateSnapshotGateway for EmptyClimateSnapshot {
+    fn lookup(
+        &self,
+        _: i64,
+        _: Date,
+    ) -> Result<WorkRecordClimateSnapshot, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(WorkRecordClimateSnapshot::empty())
+    }
+}
+
 struct StubWorkRecordGateway;
 
 impl WorkRecordGateway for StubWorkRecordGateway {
@@ -156,6 +170,7 @@ impl WorkRecordGateway for StubWorkRecordGateway {
         _: i64,
         _: i64,
         _: &crate::work_record::dtos::WorkRecordUpdateInput,
+        _: Option<&crate::work_record::gateways::WorkRecordClimatePersistFields>,
         _: OffsetDateTime,
     ) -> Result<WorkRecordRead, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
@@ -215,6 +230,7 @@ fn dispatches_record_invalid_when_task_schedule_item_id_is_submitted() {
         &mut output,
         &plan_gateway,
         &StubWorkRecordGateway,
+        &EmptyClimateSnapshot,
         &clock,
         &EmptyScopeGateway,
     );
@@ -255,6 +271,7 @@ fn dispatches_not_found_when_private_plan_access_denied() {
         &mut output,
         &plan_gateway,
         &StubWorkRecordGateway,
+        &EmptyClimateSnapshot,
         &clock,
         &EmptyScopeGateway,
     );
