@@ -143,6 +143,8 @@ fn work_record_gateway_list_omits_field_and_crop_name_without_field_cultivation(
                 amount_unit: None,
                 time_spent_minutes: None,
                 notes: None,
+                gdd_at_actual: None,
+                weather_snapshot: None,
                 created_at: now,
                 updated_at: now,
             },
