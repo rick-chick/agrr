@@ -2565,8 +2565,7 @@
         "fertilizer": {
           "planned_amount": "予定用量",
           "planned_amount_empty": "予定用量なし",
-          "actual_amount": "実施用量",
-          "diff": "予定比 {{value}}"
+          "actual_amount": "実施用量"
         },
         "climate_preview": {
           "label": "記録時に保存される気象情報",

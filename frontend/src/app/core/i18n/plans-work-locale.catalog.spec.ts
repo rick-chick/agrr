@@ -59,7 +59,6 @@ const PLANS_WORK_KEYS = [
   'plans.work.sheet.fertilizer.planned_amount',
   'plans.work.sheet.fertilizer.planned_amount_empty',
   'plans.work.sheet.fertilizer.actual_amount',
-  'plans.work.sheet.fertilizer.diff',
   'plans.work.sheet.climate_preview.label',
   'plans.work.sheet.climate_preview.loading',
   'plans.work.sheet.climate_preview.unavailable',
