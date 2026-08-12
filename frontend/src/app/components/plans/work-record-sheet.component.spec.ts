@@ -8,6 +8,7 @@ import { WorkRecordSheetPresenter } from '../../adapters/plans/work-record-sheet
 import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
+import { PreviewWorkRecordClimateUseCase } from '../../usecase/plans/preview-work-record-climate/preview-work-record-climate.usecase';
 import {
   WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO,
   WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET,
@@ -20,10 +21,12 @@ describe('WorkRecordSheetComponent', () => {
   let component: WorkRecordSheetComponent;
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
   let loadTaskListUseCase: { execute: ReturnType<typeof vi.fn> };
+  let previewClimateUseCase: { execute: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     mockPresenter = { setView: vi.fn() };
     loadTaskListUseCase = { execute: vi.fn() };
+    previewClimateUseCase = { execute: vi.fn() };
     HTMLDialogElement.prototype.showModal = vi.fn();
     HTMLDialogElement.prototype.close = vi.fn();
 
@@ -34,6 +37,7 @@ describe('WorkRecordSheetComponent', () => {
           { provide: SaveWorkRecordSheetUseCase, useValue: { execute: vi.fn() } },
           { provide: DeleteWorkRecordUseCase, useValue: { execute: vi.fn() } },
           { provide: LoadAgriculturalTaskListUseCase, useValue: loadTaskListUseCase },
+          { provide: PreviewWorkRecordClimateUseCase, useValue: previewClimateUseCase },
           { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
         ]
       }
@@ -61,6 +65,15 @@ describe('WorkRecordSheetComponent', () => {
       'plans.work.sheet.field_optional': '未選択',
       'plans.work.sheet.show_details': '詳細を追加',
       'plans.work.sheet.hide_details': '詳細を閉じる',
+      'plans.work.sheet.fertilizer.planned_amount': '予定用量',
+      'plans.work.sheet.fertilizer.planned_amount_empty': '予定用量なし',
+      'plans.work.sheet.fertilizer.actual_amount': '実施用量',
+      'plans.work.sheet.climate_preview.label': '記録時に保存される気象情報',
+      'plans.work.sheet.climate_preview.loading': '気象データを読み込み中…',
+      'plans.work.sheet.climate_preview.unavailable': 'この日付の気象データがありません',
+      'plans.work.sheet.climate_preview.gdd': 'GDD {{value}}',
+      'plans.work.sheet.climate_preview.weather':
+        '最高{{max}}°C / 最低{{min}}°C（平均{{mean}}°C）',
       'plans.work.sheet.submit': '記録する',
       'plans.work.sheet.photos.label': '写真',
       'plans.work.sheet.photos.remove': '削除',
@@ -172,5 +185,98 @@ describe('WorkRecordSheetComponent', () => {
     expect(img.getAttribute('decoding')).toBe('async');
     expect(img.getAttribute('width')).toBe(String(WORK_RECORD_PHOTO_THUMB_WIDTH_PX_SHEET));
     expect(img.getAttribute('height')).toBe(String(WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET));
+  });
+
+  it('shows fertilizer planned amount, prefilled actual amount, and diff for scheduled fertilizer items', () => {
+    component.openFromItem({
+      item: {
+        item_id: 10,
+        name: '追肥',
+        task_type: 'fertilizer',
+        category: 'fertilizer',
+        scheduled_date: '2026-06-12',
+        priority: 1,
+        source: 'plan',
+        weather_dependency: 'low',
+        time_per_sqm: '0',
+        amount: '10',
+        amount_unit: 'kg',
+        status: 'scheduled',
+        agricultural_task_id: 1,
+        field_cultivation_id: 5,
+        completed: false,
+        work_records: [],
+        details: {} as never,
+        badge: { type: 'fertilizer' }
+      },
+      fieldName: 'A圃場',
+      cropName: 'トマト',
+      recordedToday: false
+    });
+    component.control = {
+      ...component.control,
+      form: {
+        ...component.control.form,
+        amount: '12'
+      }
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('予定用量');
+    expect(fixture.nativeElement.textContent).toContain('10 kg');
+    expect(fixture.nativeElement.textContent).toContain('実施用量');
+    expect(fixture.nativeElement.querySelector('#wr-amount')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('+2 kg');
+    expect(previewClimateUseCase.execute).toHaveBeenCalledWith({
+      fieldCultivationId: 5,
+      actualDate: component.control.form.actual_date
+    });
+  });
+
+  it('shows climate preview row when field cultivation and date are set', () => {
+    component.openFromItem({
+      item: {
+        item_id: 11,
+        name: '除草',
+        task_type: 'general',
+        category: 'general',
+        scheduled_date: '2026-06-12',
+        priority: 1,
+        source: 'plan',
+        weather_dependency: 'low',
+        time_per_sqm: '0',
+        amount: '',
+        amount_unit: '',
+        status: 'scheduled',
+        agricultural_task_id: 2,
+        field_cultivation_id: 7,
+        completed: false,
+        work_records: [],
+        details: {} as never,
+        badge: { type: 'general' }
+      },
+      fieldName: 'B圃場',
+      cropName: 'キュウリ',
+      recordedToday: false
+    });
+    component.control = {
+      ...component.control,
+      showDetails: true,
+      climatePreview: {
+        gddAtActual: 145.25,
+        weatherDate: '2026-06-12',
+        temperatureMax: 30,
+        temperatureMin: 20,
+        temperatureMean: 25,
+        loading: false
+      }
+    };
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector('[data-testid="climate-preview"]');
+    expect(preview).toBeTruthy();
+    expect(preview.textContent).toContain('記録時に保存される気象情報');
+    expect(preview.textContent).toContain('GDD 145.25');
+    expect(preview.textContent).toContain('最高30°C');
   });
 });

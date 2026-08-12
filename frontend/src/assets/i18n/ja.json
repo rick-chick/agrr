@@ -2562,6 +2562,19 @@
         "task_other": "その他",
         "show_details": "詳細を追加",
         "hide_details": "詳細を閉じる",
+        "fertilizer": {
+          "planned_amount": "予定用量",
+          "planned_amount_empty": "予定用量なし",
+          "actual_amount": "実施用量",
+          "diff": "予定比 {{value}}"
+        },
+        "climate_preview": {
+          "label": "記録時に保存される気象情報",
+          "loading": "気象データを読み込み中…",
+          "unavailable": "この日付の気象データがありません",
+          "gdd": "GDD {{value}}",
+          "weather": "最高{{max}}°C / 最低{{min}}°C（平均{{mean}}°C）"
+        },
         "photos": {
           "label": "写真（任意）",
           "add": "写真を追加",
