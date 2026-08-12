@@ -14,21 +14,23 @@ use crate::work_record::dtos::work_record_create_input::record_invalid_field;
 use crate::work_record::dtos::WorkRecordCreateInput;
 use crate::work_record::entities::WorkRecordEntity;
 use crate::work_record::gateways::{
-    TaskScheduleItemLookupGateway, WorkRecordCreatePersistAttrs, WorkRecordGateway,
+    TaskScheduleItemLookupGateway, WorkRecordClimateSnapshotGateway, WorkRecordCreatePersistAttrs,
+    WorkRecordGateway,
 };
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::WorkRecordCreateOutputPort;
 
-pub struct WorkRecordCreateInteractor<'a, O, P, G, L, C, S> {
+pub struct WorkRecordCreateInteractor<'a, O, P, G, L, C, S, Cl> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
     item_lookup_gateway: &'a L,
+    climate_snapshot_gateway: &'a Cl,
     clock: &'a C,
     scope_gateway: &'a S,
 }
 
-impl<'a, O, P, G, L, C, S> WorkRecordCreateInteractor<'a, O, P, G, L, C, S>
+impl<'a, O, P, G, L, C, S, Cl> WorkRecordCreateInteractor<'a, O, P, G, L, C, S, Cl>
 where
     O: WorkRecordCreateOutputPort,
     P: CultivationPlanGateway,
@@ -36,12 +38,14 @@ where
     L: TaskScheduleItemLookupGateway,
     C: ClockPort,
     S: UserOrganizationScopeGateway,
+    Cl: WorkRecordClimateSnapshotGateway,
 {
     pub fn new(
         output_port: &'a mut O,
         plan_gateway: &'a P,
         gateway: &'a G,
         item_lookup_gateway: &'a L,
+        climate_snapshot_gateway: &'a Cl,
         clock: &'a C,
         scope_gateway: &'a S,
     ) -> Self {
@@ -50,6 +54,7 @@ where
             plan_gateway,
             gateway,
             item_lookup_gateway,
+            climate_snapshot_gateway,
             clock,
             scope_gateway,
         }
@@ -141,8 +146,22 @@ where
                 .or_else(|| prefill.as_ref().and_then(|p| p.amount_unit.clone())),
             time_spent_minutes: input.time_spent_minutes,
             notes: input.notes.clone(),
+            gdd_at_actual: None,
+            weather_snapshot: None,
             created_at: now,
             updated_at: now,
+        })
+        .map(|mut attrs| {
+            if let Some(fc_id) = attrs.field_cultivation_id {
+                if let Ok(snapshot) = self
+                    .climate_snapshot_gateway
+                    .lookup(fc_id, attrs.actual_date)
+                {
+                    attrs.gdd_at_actual = snapshot.gdd_at_actual;
+                    attrs.weather_snapshot = snapshot.weather_snapshot;
+                }
+            }
+            attrs
         })
     }
 

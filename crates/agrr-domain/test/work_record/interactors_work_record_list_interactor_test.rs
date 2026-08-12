@@ -149,6 +149,7 @@ impl WorkRecordGateway for StubWorkRecordGateway {
         _: i64,
         _: i64,
         _: &crate::work_record::dtos::WorkRecordUpdateInput,
+        _: Option<&crate::work_record::gateways::WorkRecordClimatePersistFields>,
         _: OffsetDateTime,
     ) -> Result<WorkRecordRead, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
