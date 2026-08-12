@@ -150,6 +150,7 @@ gh issue edit <N> --repo rick-chick/agrr --add-label agent-ready
 ## 関連
 
 - 実装: **`github-issue-worker`**
+- プロダクトギャップ調査〜起票: **`product-gap-to-issues`**
 - UX 起票: **`ux-issue-creator`** / **`ux-issue-pipeline`**
 - 要件整理: **`requirements-analysis`**
 - GitHub テンプレ: [`.github/ISSUE_TEMPLATE/`](../../../.github/ISSUE_TEMPLATE/)
