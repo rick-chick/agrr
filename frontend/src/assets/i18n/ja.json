@@ -2395,7 +2395,8 @@
       "nav": {
         "aria_label": "計画画面ナビゲーション",
         "workbench": "作付け計画",
-        "task_schedule": "作業計画表"
+        "task_schedule": "作業計画表",
+        "learn": "振り返り"
       },
       "copy_plan": "次年度にコピー",
       "delete": "削除",
@@ -2531,10 +2532,9 @@
           "early": "{{delta}}日早着"
         }
       },
+      "variance_summary_line": "完了 {{completed}} 件 · 未記録 {{unrecorded}} 件 · 平均乖離 {{average}} 日",
+      "open_learn": "振り返りを見る",
       "variance_subview": {
-        "toggle_aria": "作業予定の表示切替",
-        "view_list": "一覧",
-        "view_variance": "乖離",
         "summary_title": "計画全体の乖離サマリ",
         "summary_completed": "完了件数",
         "summary_average_delta": "平均乖離（日）",
@@ -2557,6 +2557,9 @@
           "unscheduled": "未確定"
         }
       }
+    },
+    "learn": {
+      "page_title": "振り返り — {{name}}"
     },
     "work": {
       "page_title": "{{name}}の作業記録",

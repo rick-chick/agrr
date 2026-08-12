@@ -34,6 +34,11 @@ import { TranslateModule } from '@ngx-translate/core';
         routerLinkActive="plan-context-nav__link--active"
         class="plan-context-nav__link"
       >{{ 'plans.work.nav.history' | translate }}</a>
+      <a
+        [routerLink]="['/plans', planId, 'learn']"
+        routerLinkActive="plan-context-nav__link--active"
+        class="plan-context-nav__link"
+      >{{ 'plans.show.nav.learn' | translate }}</a>
     </nav>
   `,
   styleUrls: ['./plan-context-nav.css']
