@@ -18,6 +18,7 @@ const PLANS_WORK_KEYS = [
   'plans.work.page_title',
   'plans.work.show_skipped',
   'plans.work.section.overdue',
+  'plans.work.overdue_days',
   'plans.work.section.today',
   'plans.work.section.upcoming',
   'plans.work.empty_today',

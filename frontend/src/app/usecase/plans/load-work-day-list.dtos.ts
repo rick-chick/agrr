@@ -5,6 +5,8 @@ export interface WorkDayListRowDto {
   fieldName: string;
   cropName: string;
   recordedToday: boolean;
+  /** Days past scheduled_date when grouped as overdue (local today basis). */
+  overdueDays?: number;
 }
 
 export interface LoadWorkDayListInputDto {

@@ -1418,6 +1418,7 @@
         "today": "Today {{date}}",
         "upcoming": "Next 7 days"
       },
+      "overdue_days": "{{count}} days late",
       "complete": "Done",
       "record_with_details": "Record with details",
       "add_record": "+ Record work",

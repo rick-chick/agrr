@@ -76,6 +76,12 @@
   color: var(--color-text-secondary);
 }
 
+.plan-work__overdue-days {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-error);
+}
+
 .plan-work__name {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text);

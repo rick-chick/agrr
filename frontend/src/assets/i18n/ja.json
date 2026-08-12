@@ -2526,6 +2526,7 @@
         "today": "今日 {{date}}",
         "upcoming": "今後7日"
       },
+      "overdue_days": "{{count}}日遅れ",
       "complete": "完了",
       "record_with_details": "詳細を記録",
       "add_record": "+ 作業を記録",
