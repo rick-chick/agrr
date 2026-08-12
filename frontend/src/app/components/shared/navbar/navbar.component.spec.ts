@@ -180,4 +180,45 @@ describe('NavbarComponent', () => {
     expect(component.moreItems.some((item) => item.link === '/account')).toBe(false);
     expect(component.moreItems.some((item) => item.link === '/api-keys')).toBe(false);
   });
+
+  it('shows overdue badge when workLogOverdueCount is positive', () => {
+    translate.setTranslation('ja', {
+      nav: { work_log: '作業記録', work_log_overdue_aria: '作業記録、期限超過 {{count}} 件' }
+    });
+    translate.use('ja');
+    component.user = {
+      id: 1,
+      name: 'Test',
+      email: 'test@example.com',
+      avatar_url: null,
+      admin: false
+    };
+    component.workLogOverdueCount = 3;
+    fixture.detectChanges();
+
+    const workLogLink = fixture.nativeElement.querySelector(
+      'a.nav-link--with-badge'
+    ) as HTMLAnchorElement;
+    expect(workLogLink.getAttribute('href')).toContain('/work');
+    expect(workLogLink.getAttribute('aria-label')).toBe('作業記録、期限超過 3 件');
+    expect(workLogLink.querySelector('.nav-link__badge')?.textContent?.trim()).toBe('3');
+  });
+
+  it('hides overdue badge when workLogOverdueCount is zero', () => {
+    component.user = {
+      id: 1,
+      name: 'Test',
+      email: 'test@example.com',
+      avatar_url: null,
+      admin: false
+    };
+    component.workLogOverdueCount = 0;
+    fixture.detectChanges();
+
+    const workLogLink = fixture.nativeElement.querySelector(
+      'a.nav-link--with-badge'
+    ) as HTMLAnchorElement;
+    expect(workLogLink.getAttribute('aria-label')).toBeNull();
+    expect(workLogLink.querySelector('.nav-link__badge')).toBeNull();
+  });
 });

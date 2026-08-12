@@ -115,3 +115,7 @@ export function countWorkDayListFromFields(
     todayCount: grouped.today.length
   };
 }
+
+export function sumOverdueCounts(counts: Pick<WorkDayListCounts, 'overdueCount'>[]): number {
+  return counts.reduce((total, count) => total + count.overdueCount, 0);
+}

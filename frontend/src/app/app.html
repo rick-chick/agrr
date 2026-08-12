@@ -3,6 +3,7 @@
 <app-navbar
   [user]="authService.user()"
   [loading]="authService.loading()"
+  [workLogOverdueCount]="workLogOverdueCount()"
   (logout)="logout()"
 />
 

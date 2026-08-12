@@ -13,6 +13,11 @@ import { GoogleAnalyticsService } from './services/google-analytics.service';
 import { POST_LOGIN_QUERY_PARAM } from './core/auth/login-auth-urls';
 import { AuthService } from './services/auth.service';
 import { UndoToastService } from './services/undo-toast.service';
+import { LoadNavOverdueBadgeUseCase } from './usecase/nav/load-nav-overdue-badge.usecase';
+import {
+  NAV_OVERDUE_BADGE_PROVIDERS,
+  NavOverdueBadgePresenter
+} from './usecase/nav/nav-overdue-badge.providers';
 
 @Component({
   selector: 'app-root',
@@ -26,6 +31,7 @@ import { UndoToastService } from './services/undo-toast.service';
     UndoToastComponent,
     CookieConsentBannerComponent
   ],
+  providers: [...NAV_OVERDUE_BADGE_PROVIDERS],
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })
@@ -36,8 +42,12 @@ export class App implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly undoToastService = inject(UndoToastService);
   private readonly googleAnalytics = inject(GoogleAnalyticsService);
+  private readonly navOverdueBadgePresenter = inject(NavOverdueBadgePresenter);
+  private readonly loadNavOverdueBadgeUseCase = inject(LoadNavOverdueBadgeUseCase);
   private routerSubscription?: Subscription;
   private langChangeSubscription?: Subscription;
+
+  readonly workLogOverdueCount = this.navOverdueBadgePresenter.overdueCount;
 
   performUndo(): void {
     this.undoToastService.performUndo();
@@ -46,9 +56,11 @@ export class App implements OnInit, OnDestroy {
   logout(): void {
     this.authService.logout().subscribe({
       next: () => {
+        this.navOverdueBadgePresenter.reset();
         this.router.navigate(['/login']);
       },
       error: () => {
+        this.navOverdueBadgePresenter.reset();
         this.router.navigate(['/login']);
       }
     });
@@ -68,6 +80,7 @@ export class App implements OnInit, OnDestroy {
       .pipe(take(1))
       .subscribe(() => {
         void this.handleOAuthLandingSideEffects();
+        this.refreshNavOverdueBadge();
       });
 
     this.routerSubscription = this.router.events
@@ -75,6 +88,7 @@ export class App implements OnInit, OnDestroy {
       .subscribe((event) => {
         this.googleAnalytics.trackPageView(event.urlAfterRedirects);
         this.seoMeta.refreshDefaultMeta();
+        this.refreshNavOverdueBadge();
       });
   }
 
@@ -86,6 +100,14 @@ export class App implements OnInit, OnDestroy {
   private async handleOAuthLandingSideEffects(): Promise<void> {
     await this.maybeTrackGoogleAdsAfterOAuthLanding();
     await this.maybeNavigatePostLogin();
+  }
+
+  private refreshNavOverdueBadge(): void {
+    if (!this.authService.user()) {
+      this.navOverdueBadgePresenter.reset();
+      return;
+    }
+    this.loadNavOverdueBadgeUseCase.execute();
   }
 
   /** 認証必須パスは `/?_post_login=` 経由で着地 — セッション確認後にクライアント遷移 */

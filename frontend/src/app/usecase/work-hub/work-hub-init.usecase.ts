@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@angular/core';
-import { forkJoin, of } from 'rxjs';
+import { of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { localTodayIso } from '../../core/local-today';
-import { countWorkDayListFromFields } from '../../domain/work-schedule/work-day-list-summary';
 import { WorkHubFarmRow } from '../../domain/work-hub/work-hub-farm-row';
 import { PLAN_GATEWAY, PlanGateway } from '../plans/plan-gateway';
 import { WORK_HUB_GATEWAY, WorkHubGateway } from './work-hub-gateway';
 import { EnsurePlanForFarmUseCase } from './ensure-plan-for-farm.usecase';
+import { loadHubFarmTaskCounts } from './load-hub-farm-task-counts';
 import { WorkHubInitInputPort } from './work-hub-init.input-port';
 import { WORK_HUB_INIT_OUTPUT_PORT, WorkHubInitOutputPort } from './work-hub-init.output-port';
 
@@ -36,33 +36,23 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
           if (!farms.some((farm) => farm.planId != null)) {
             return of({ farms: withZeroCounts(farms), autoRedirect: false as const });
           }
-          return forkJoin(
-            farms.map((farm) => {
-              if (farm.planId == null) {
-                return of({ farmId: farm.farmId, overdueCount: 0, todayCount: 0 });
-              }
-              return this.planGateway.getTaskSchedule(farm.planId).pipe(
-                map((schedule) => ({
-                  farmId: farm.farmId,
-                  ...countWorkDayListFromFields(schedule.fields, today, false)
-                }))
-              );
-            })
+          return loadHubFarmTaskCounts(
+            farms.map((farm) => ({ farmId: farm.farmId, planId: farm.planId })),
+            this.planGateway,
+            today,
+            false
           ).pipe(
-            map((summaries) => {
-              const byFarmId = new Map(summaries.map((summary) => [summary.farmId, summary]));
-              return {
-                farms: farms.map((farm) => {
-                  const summary = byFarmId.get(farm.farmId);
-                  return {
-                    ...farm,
-                    overdueCount: summary?.overdueCount ?? 0,
-                    todayCount: summary?.todayCount ?? 0
-                  };
-                }),
-                autoRedirect: false as const
-              };
-            })
+            map((countsByFarmId) => ({
+              farms: farms.map((farm) => {
+                const summary = countsByFarmId.get(farm.farmId);
+                return {
+                  ...farm,
+                  overdueCount: summary?.overdueCount ?? 0,
+                  todayCount: summary?.todayCount ?? 0
+                };
+              }),
+              autoRedirect: false as const
+            }))
           );
         })
       )

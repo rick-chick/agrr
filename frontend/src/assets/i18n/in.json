@@ -2331,6 +2331,7 @@
     "close_menu": "मेनू बंद करें",
     "plan": "योजनाएं",
     "work_log": "कार्य लॉग",
+    "work_log_overdue_aria": "कार्य लॉग, {{count}} अतिदेय",
     "menu_masters": "मास्टर डेटा",
     "new_plan": "फसल योजना बनाएं",
     "reports": "रिपोर्ट",
