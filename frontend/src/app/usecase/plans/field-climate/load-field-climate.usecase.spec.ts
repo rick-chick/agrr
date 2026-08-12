@@ -109,6 +109,93 @@ describe('LoadFieldClimateUseCase', () => {
     });
   });
 
+  it('enriches presentation with workbench data when planId is provided', () => {
+    const gateway: FieldClimateGateway = {
+      fetchFieldClimateData: () => of(sampleData)
+    };
+
+    const workRecordsGateway: WorkRecordGateway = {
+      ...workRecordGateway,
+      listWorkRecords: () =>
+        of({
+          work_records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 1,
+              task_schedule_item_id: 5,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: { id: 5, name: 'Weeding', scheduled_date: '2026-06-10' }
+            }
+          ]
+        })
+    };
+
+    const planGatewayWithVariance = {
+      getTaskSchedule: () =>
+        of({
+          plan: {} as never,
+          week: {} as never,
+          milestones: [],
+          fields: [
+            {
+              id: 1,
+              name: 'Field A',
+              crop_name: 'Tomato',
+              area_sqm: 100,
+              field_cultivation_id: 1,
+              crop_id: 1,
+              schedules: {
+                general: [{ item_id: 5, delta_days: 2, gdd_delta: 10.5 }],
+                fertilizer: [],
+                unscheduled: []
+              }
+            }
+          ],
+          labels: {},
+          minimap: {} as never
+        })
+    } as unknown as PlanGateway;
+
+    let presented: FieldClimatePresentationDto | null = null;
+    const outputPort: LoadFieldClimateOutputPort = {
+      present: (dto) => {
+        presented = dto;
+      },
+      onError: () => {}
+    };
+
+    const useCase = new LoadFieldClimateUseCase(
+      outputPort,
+      gateway,
+      workRecordsGateway,
+      planGatewayWithVariance
+    );
+    useCase.execute({ fieldCultivationId: 1, planType: 'private', planId: 7 });
+
+    expect(presented?.workDayMarkers).toEqual([
+      {
+        actualDate: '2026-06-12',
+        name: 'Weeding',
+        taskScheduleItemId: 5
+      }
+    ]);
+    expect(presented?.latestImplementation).toEqual({
+      name: 'Weeding',
+      deltaDaysLabel: '+2',
+      gddDeltaLabel: '+10.5'
+    });
+  });
+
   it('forwards gateway errors to outputPort.onError', () => {
     const gateway: FieldClimateGateway = {
       fetchFieldClimateData: () => throwError(() => new Error('connection lost'))

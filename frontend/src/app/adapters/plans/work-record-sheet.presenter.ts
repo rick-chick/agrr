@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { WorkRecordSheetSavedEvent, WorkRecordSheetView } from '../../components/plans/work-record-sheet.view';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { buildWorkRecordSaveToast } from '../../domain/plans/work-record-save-toast';
+import { mapWorkRecordSaveToastToPendingRequest } from './work-record-save-toast.presenter.helpers';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { AgriculturalTaskListDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-list.dtos';
 import { LoadAgriculturalTaskListOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-list.output-port';
@@ -53,10 +54,12 @@ export class WorkRecordSheetPresenter
       fieldErrors: {},
       error: null,
       photoError: null,
-      pendingToast: buildWorkRecordSaveToast(
-        dto.workRecord,
-        mode,
-        this.view.control.saveToastContext
+      pendingToast: mapWorkRecordSaveToastToPendingRequest(
+        buildWorkRecordSaveToast(
+          dto.workRecord,
+          mode,
+          this.view.control.saveToastContext
+        )
       ),
       saveToastContext: null
     };

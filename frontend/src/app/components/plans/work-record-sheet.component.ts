@@ -39,7 +39,6 @@ import {
   mapFormToUpdateRequest
 } from '../../usecase/plans/work-record-form.mapper';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
-import { parseGddTrigger } from '../../domain/plans/work-record-variance';
 import {
   WorkRecordSheetExistingPhoto,
   WorkRecordSheetFormState,

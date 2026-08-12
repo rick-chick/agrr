@@ -1,6 +1,4 @@
 import { WorkRecord } from '../../models/plans/work-record';
-import { PendingToastRequest } from '../../core/view-effects/pending-toast-view.effects';
-import { WorkRecordSheetMode } from '../../components/plans/work-record-sheet.view';
 import {
   formatVarianceDeltaDays,
   formatVarianceGddDelta,
@@ -9,6 +7,8 @@ import {
   workRecordGddDelta
 } from './work-record-variance';
 
+export type WorkRecordSaveMode = 'create-from-item' | 'create-adhoc' | 'edit';
+
 export type WorkRecordSaveToastContext = {
   planId: number;
   fieldCultivationId: number;
@@ -16,11 +16,21 @@ export type WorkRecordSaveToastContext = {
   gddTrigger?: string | number | null;
 };
 
+export type WorkRecordSaveToastResult = {
+  textKey: string;
+  textParams?: Record<string, string | number>;
+  navigation?: {
+    planId: number;
+    fieldCultivationId: number;
+    taskScheduleItemId: number;
+  };
+};
+
 export function buildWorkRecordSaveToast(
   record: WorkRecord,
-  mode: WorkRecordSheetMode,
+  mode: WorkRecordSaveMode,
   context?: WorkRecordSaveToastContext | null
-): PendingToastRequest {
+): WorkRecordSaveToastResult {
   if (mode === 'edit') {
     return { textKey: 'plans.work_records.toast.record_updated' };
   }
@@ -43,13 +53,10 @@ export function buildWorkRecordSaveToast(
       deltaDays: deltaDays != null ? formatVarianceDeltaDays(deltaDays) : '—',
       gddDelta: gddDelta != null ? formatVarianceGddDelta(gddDelta) : '—'
     },
-    action: {
-      labelKey: 'plans.work.toast.view_task_detail',
-      routerLink: ['/plans', context.planId, 'task_schedule'],
-      queryParams: {
-        field_cultivation_id: context.fieldCultivationId,
-        item_id: context.taskScheduleItemId
-      }
+    navigation: {
+      planId: context.planId,
+      fieldCultivationId: context.fieldCultivationId,
+      taskScheduleItemId: context.taskScheduleItemId
     }
   };
 }

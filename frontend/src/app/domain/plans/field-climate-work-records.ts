@@ -18,7 +18,7 @@ export type FieldClimateLatestImplementation = {
   gddDeltaLabel: string | null;
 };
 
-export function sortWorkRecordsByRecency(records: WorkRecord[]): WorkRecord[] {
+function sortWorkRecordsByRecency(records: WorkRecord[]): WorkRecord[] {
   return [...records].sort((left, right) => {
     const dateCompare = right.actual_date.localeCompare(left.actual_date);
     if (dateCompare !== 0) {

@@ -31,6 +31,7 @@ import {
 } from '../../usecase/plans/task-schedule-sync-lifecycle';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 import { buildWorkRecordSaveToast } from '../../domain/plans/work-record-save-toast';
+import { mapWorkRecordSaveToastToPendingRequest } from './work-record-save-toast.presenter.helpers';
 
 const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
   cropIdsForBanner: [],
@@ -249,10 +250,12 @@ export class PlanWorkPresenter
       ...this.view.control,
       completingItemId: null,
       error: null,
-      pendingRecordSavedToast: buildWorkRecordSaveToast(
-        dto.workRecord,
-        'create-from-item',
-        saveContext
+      pendingRecordSavedToast: mapWorkRecordSaveToastToPendingRequest(
+        buildWorkRecordSaveToast(
+          dto.workRecord,
+          'create-from-item',
+          saveContext
+        )
       ),
       pendingRecordSavedEvent: {
         workRecord: dto.workRecord,

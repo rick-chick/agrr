@@ -43,13 +43,10 @@ describe('buildWorkRecordSaveToast', () => {
         deltaDays: '+3',
         gddDelta: '+30.5'
       },
-      action: {
-        labelKey: 'plans.work.toast.view_task_detail',
-        routerLink: ['/plans', 7, 'task_schedule'],
-        queryParams: {
-          field_cultivation_id: 10,
-          item_id: 5
-        }
+      navigation: {
+        planId: 7,
+        fieldCultivationId: 10,
+        taskScheduleItemId: 5
       }
     });
   });
@@ -68,6 +65,6 @@ describe('buildWorkRecordSaveToast', () => {
     );
 
     expect(toast.textKey).toBe('plans.work.toast.record_saved_adhoc');
-    expect(toast.action).toBeUndefined();
+    expect(toast.navigation).toBeUndefined();
   });
 });
