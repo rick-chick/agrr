@@ -7,6 +7,7 @@ import { BehaviorSubject } from 'rxjs';
 
 import en from '../../../assets/i18n/en.json';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
+import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { PlanTaskSchedulePresenter } from '../../usecase/plans/plan-task-schedule.providers';
@@ -68,7 +69,12 @@ const loadedState: PlanTaskScheduleViewState = {
   totalFieldCount: 0,
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
-  allFieldsLackTasks: false
+  allFieldsLackTasks: false,
+  varianceLoading: false,
+  varianceError: null,
+  varianceSummary: null,
+  varianceStats: null,
+  varianceUnrecordedRows: []
 };
 
 function sampleGeneralTask(
@@ -188,6 +194,7 @@ describe('PlanTaskScheduleComponent', () => {
   let component: PlanTaskScheduleComponent;
   let fixture: ComponentFixture<PlanTaskScheduleComponent>;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
+  let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: PlanTaskSchedulePresenter;
@@ -199,6 +206,7 @@ describe('PlanTaskScheduleComponent', () => {
     HTMLDialogElement.prototype.close = vi.fn();
 
     loadUseCase = { execute: vi.fn() };
+    varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -209,6 +217,7 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           PlanTaskSchedulePresenter,
@@ -256,7 +265,12 @@ describe('PlanTaskScheduleComponent', () => {
       totalFieldCount: 0,
       fieldsWithTasksCount: 0,
       fieldsWithoutTasksCount: 0,
-      allFieldsLackTasks: false
+      allFieldsLackTasks: false,
+      varianceLoading: false,
+      varianceError: null,
+      varianceSummary: null,
+      varianceStats: null,
+      varianceUnrecordedRows: []
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -402,6 +416,7 @@ describe('PlanTaskScheduleComponent', () => {
   it('uses from_date query param for the date filter', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
+    varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -416,6 +431,7 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           PlanTaskSchedulePresenter,
@@ -1013,6 +1029,7 @@ describe('PlanTaskScheduleComponent', () => {
   it('does not show redundant filter navigation when field_cultivation_id query param is set', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
+    varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -1027,6 +1044,7 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           PlanTaskSchedulePresenter,
@@ -1079,5 +1097,88 @@ describe('PlanTaskScheduleComponent', () => {
     expect(loadUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ planId: 7, fieldCultivationId: 42 })
     );
+  });
+
+  it('switches to variance subview when view=variance query param is set', async () => {
+    TestBed.resetTestingModule();
+    loadUseCase = { execute: vi.fn() };
+    varianceUseCase = { execute: vi.fn() };
+    regenerateUseCase = { execute: vi.fn() };
+    subscribeSyncUseCase = { execute: vi.fn() };
+    cdr = { markForCheck: vi.fn() };
+
+    const varianceRouteMock = createPlanRouteMock({
+      planId: '7',
+      query: { view: 'variance' }
+    });
+
+    TestBed.overrideComponent(PlanTaskScheduleComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
+          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          PlanTaskSchedulePresenter,
+          { provide: ChangeDetectorRef, useValue: cdr },
+          { provide: ActivatedRoute, useValue: varianceRouteMock }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    const varianceFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const variancePresenter = varianceFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
+    varianceFixture.detectChanges();
+    setScheduleControl(varianceFixture.componentInstance, variancePresenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            ...emptyFieldSchedule(1, 'Field A'),
+            schedules: {
+              general: [sampleGeneralTask()],
+              fertilizer: [],
+              unscheduled: []
+            }
+          }
+        ]
+      },
+      varianceStats: {
+        completedCount: 1,
+        averageDeltaDays: 2,
+        unrecordedCount: 0
+      },
+      varianceSummary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      }
+    });
+    varianceFixture.detectChanges();
+    await varianceFixture.whenStable();
+
+    expect(varianceUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 7 })
+    );
+    expect(
+      varianceFixture.nativeElement.querySelector('app-task-schedule-variance-view')
+    ).toBeTruthy();
+    expect(
+      varianceFixture.nativeElement.querySelector('app-task-schedule-month-list')
+    ).toBeNull();
+    expect(varianceFixture.nativeElement.textContent).toContain('Variance');
   });
 });

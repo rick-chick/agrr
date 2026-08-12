@@ -38,6 +38,7 @@ describe('LoadPlanDetailUseCase', () => {
       fetchPlanData: () => of(planData),
       getPublicPlanData: () => of(planData),
       getTaskSchedule: () => of({ plan: {} as never, week: {} as never, milestones: [], fields: [], labels: {}, minimap: { start_date: '', end_date: '', weeks: [] } } as TaskScheduleResponse),
+      getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as DeletionUndoResponse)
     };
@@ -93,6 +94,7 @@ describe('LoadPlanDetailUseCase', () => {
           labels: {},
           minimap: { start_date: '', end_date: '', weeks: [] }
         } as TaskScheduleResponse),
+      getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as DeletionUndoResponse)
     };

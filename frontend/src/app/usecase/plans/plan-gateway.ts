@@ -2,6 +2,7 @@ import { InjectionToken } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
+import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { RegenerateTaskScheduleResponseDto } from './regenerate-task-schedule-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
@@ -17,6 +18,7 @@ export interface PlanGateway {
   fetchPlanData(planId: number): Observable<CultivationPlanData>;
   getPublicPlanData(planId: number): Observable<CultivationPlanData>;
   getTaskSchedule(planId: number, params?: TaskScheduleQueryParams): Observable<TaskScheduleResponse>;
+  getPlanVsActualSummary(planId: number): Observable<PlanVsActualSummary>;
   regenerateTaskSchedule(planId: number): Observable<RegenerateTaskScheduleResponseDto>;
   deletePlan(planId: number): Observable<DeletionUndoResponse>;
 }

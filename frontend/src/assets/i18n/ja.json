@@ -2530,6 +2530,32 @@
           "late": "{{delta}}日遅れ",
           "early": "{{delta}}日早着"
         }
+      },
+      "variance_subview": {
+        "toggle_aria": "作業予定の表示切替",
+        "view_list": "一覧",
+        "view_variance": "乖離",
+        "summary_title": "計画全体の乖離サマリ",
+        "summary_completed": "完了件数",
+        "summary_average_delta": "平均乖離（日）",
+        "summary_unrecorded": "未記録件数",
+        "categories_title": "カテゴリ別平均乖離",
+        "category_column": "カテゴリ",
+        "category_average": "平均 Δ 日",
+        "category_recorded": "記録済み",
+        "top_variance_title": "乖離が大きい順",
+        "top_item_dates": "予定 {{scheduled}} · 実施 {{actual}}",
+        "unrecorded_title": "予定のみ未記録",
+        "open_in_schedule": "一覧で開く",
+        "no_data": "乖離データはまだありません",
+        "delta_value": "Δ {{delta}} 日",
+        "average_value": "{{delta}} 日",
+        "not_available": "—",
+        "category": {
+          "general": "一般作業",
+          "fertilizer": "施肥",
+          "unscheduled": "未確定"
+        }
       }
     },
     "work": {

@@ -1425,6 +1425,32 @@
           "late": "{{delta}} days late",
           "early": "{{delta}} days early"
         }
+      },
+      "variance_subview": {
+        "toggle_aria": "Task schedule view",
+        "view_list": "Schedule",
+        "view_variance": "Variance",
+        "summary_title": "Plan variance summary",
+        "summary_completed": "Completed",
+        "summary_average_delta": "Average Δ days",
+        "summary_unrecorded": "Not recorded",
+        "categories_title": "Average variance by category",
+        "category_column": "Category",
+        "category_average": "Avg Δ days",
+        "category_recorded": "Recorded",
+        "top_variance_title": "Largest variance",
+        "top_item_dates": "Scheduled {{scheduled}} · Actual {{actual}}",
+        "unrecorded_title": "Scheduled but not recorded",
+        "open_in_schedule": "Open in schedule",
+        "no_data": "No variance data yet",
+        "delta_value": "Δ {{delta}} days",
+        "average_value": "{{delta}} days",
+        "not_available": "—",
+        "category": {
+          "general": "General tasks",
+          "fertilizer": "Fertilizer",
+          "unscheduled": "Unscheduled"
+        }
       }
     },
     "work": {

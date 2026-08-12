@@ -4,6 +4,7 @@ import { ApiService } from '../../services/api.service';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
+import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
 import { PlanGateway, TaskScheduleQueryParams } from '../../usecase/plans/plan-gateway';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
@@ -42,6 +43,12 @@ export class PlanApiGateway implements PlanGateway {
     const qs = query.toString();
     const path = `/api/v1/plans/${planId}/task_schedule${qs ? `?${qs}` : ''}`;
     return this.apiClient.get<TaskScheduleResponse>(path);
+  }
+
+  getPlanVsActualSummary(planId: number): Observable<PlanVsActualSummary> {
+    return this.apiClient.get<PlanVsActualSummary>(
+      `/api/v1/plans/${planId}/plan_vs_actual/summary`
+    );
   }
 
   regenerateTaskSchedule(planId: number): Observable<RegenerateTaskScheduleResponseDto> {
