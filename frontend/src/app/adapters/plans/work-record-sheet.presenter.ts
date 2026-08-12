@@ -11,13 +11,16 @@ import {
   SaveWorkRecordSheetValidationErrorDto
 } from '../../usecase/plans/save-work-record-sheet.dtos';
 import { SaveWorkRecordSheetOutputPort } from '../../usecase/plans/save-work-record-sheet.output-port';
+import { PreviewWorkRecordClimateStateDto } from '../../usecase/plans/preview-work-record-climate/preview-work-record-climate.dtos';
+import { PreviewWorkRecordClimateOutputPort } from '../../usecase/plans/preview-work-record-climate/preview-work-record-climate.output-port';
 
 @Injectable()
 export class WorkRecordSheetPresenter
   implements
     DeleteWorkRecordOutputPort,
     LoadAgriculturalTaskListOutputPort,
-    SaveWorkRecordSheetOutputPort
+    SaveWorkRecordSheetOutputPort,
+    PreviewWorkRecordClimateOutputPort
 {
   private view: WorkRecordSheetView | null = null;
   onSavedCallback: ((event: WorkRecordSheetSavedEvent) => void) | null = null;
@@ -79,6 +82,21 @@ export class WorkRecordSheetPresenter
       submitting: false,
       fieldErrors: {},
       error: dto.message
+    };
+  }
+
+  presentClimatePreview(dto: PreviewWorkRecordClimateStateDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      climatePreview: {
+        gddAtActual: dto.gddAtActual,
+        weatherDate: dto.weatherDate,
+        temperatureMax: dto.temperatureMax,
+        temperatureMin: dto.temperatureMin,
+        temperatureMean: dto.temperatureMean,
+        loading: dto.loading
+      }
     };
   }
 

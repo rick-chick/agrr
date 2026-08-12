@@ -1896,6 +1896,11 @@
         "actual_gdd": "वास्तविक GDD",
         "gdd_delta": "GDD अंतर"
       },
+      "empty_cta": "खेती योजना खोलें",
+      "sync_plan_link": "खेती योजना की समीक्षा करें",
+      "unscheduled_title": "अनिश्चित कार्य",
+      "empty_fields_summary": "{{total}} खेतों में {{empty}} में कोई कार्य योजना नहीं",
+      "empty_fields_no_tasks_hint": "अभी तक कोई कार्य योजना निर्धारित नहीं है। \"खेती योजना\" टैब में खेत और फसलें जाँचें, या ऊपर दिए गए पंजीकरण विज़ार्ड का उपयोग करें।",
       "variance": {
         "month_average": "मासिक औसत Δ {{delta}} दिन",
         "badge": {
@@ -1904,12 +1909,7 @@
           "late": "{{delta}} दिन देरी",
           "early": "{{delta}} दिन जल्दी"
         }
-      },
-      "empty_cta": "खेती योजना खोलें",
-      "sync_plan_link": "खेती योजना की समीक्षा करें",
-      "unscheduled_title": "अनिश्चित कार्य",
-      "empty_fields_summary": "{{total}} खेतों में {{empty}} में कोई कार्य योजना नहीं",
-      "empty_fields_no_tasks_hint": "अभी तक कोई कार्य योजना निर्धारित नहीं है। \"खेती योजना\" टैब में खेत और फसलें जाँचें, या ऊपर दिए गए पंजीकरण विज़ार्ड का उपयोग करें।"
+      }
     },
     "work": {
       "page_title": "कार्य लॉग — {{name}}",
@@ -1958,6 +1958,18 @@
         "task_other": "अन्य",
         "show_details": "विवरण जोड़ें",
         "hide_details": "विवरण छुपाएं",
+        "fertilizer": {
+          "planned_amount": "नियोजित मात्रा",
+          "planned_amount_empty": "कोई नियोजित मात्रा नहीं",
+          "actual_amount": "वास्तविक मात्रा"
+        },
+        "climate_preview": {
+          "label": "इस रिकॉर्ड के साथ सहेजा गया जलवायु डेटा",
+          "loading": "जलवायु डेटा लोड हो रहा है…",
+          "unavailable": "इस तिथि के लिए जलवायु डेटा उपलब्ध नहीं",
+          "gdd": "GDD {{value}}",
+          "weather": "अधिकतम {{max}}°C / न्यूनतम {{min}}°C (औसत {{mean}}°C)"
+        },
         "photos": {
           "label": "फ़ोटो (वैकल्पिक)",
           "add": "फ़ोटो जोड़ें",

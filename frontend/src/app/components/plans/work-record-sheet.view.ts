@@ -3,6 +3,16 @@ import { WorkRecord } from '../../models/plans/work-record';
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 
 export type WorkRecordSheetMode = 'create-from-item' | 'create-adhoc' | 'edit';
+export type WorkRecordScheduleCategory = 'general' | 'fertilizer' | null;
+
+export interface WorkRecordClimatePreviewState {
+  gddAtActual: number | null;
+  weatherDate: string | null;
+  temperatureMax: number | null;
+  temperatureMin: number | null;
+  temperatureMean: number | null;
+  loading: boolean;
+}
 
 export interface WorkRecordSheetTaskChip {
   id: number;
@@ -49,6 +59,10 @@ export interface WorkRecordSheetViewState {
   fieldErrors: Record<string, string[]>;
   form: WorkRecordSheetFormState;
   fieldOptions: FieldSchedule[];
+  scheduleCategory: WorkRecordScheduleCategory;
+  plannedAmount: string;
+  plannedAmountUnit: string;
+  climatePreview: WorkRecordClimatePreviewState;
   showDetails: boolean;
   taskChips: WorkRecordSheetTaskChip[];
   loadingTaskChips: boolean;

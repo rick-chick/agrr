@@ -29,7 +29,11 @@ import { applyWorkRecordSheetViewEffects } from './work-record-sheet-view.effect
 import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
-import { WORK_RECORD_SHEET_PROVIDERS } from '../../usecase/plans/work-record-sheet.providers';
+import { PreviewWorkRecordClimateUseCase } from '../../usecase/plans/preview-work-record-climate/preview-work-record-climate.usecase';
+import {
+  computeWorkRecordAmountDiff,
+  WorkRecordAmountDiff
+} from '../../domain/work-schedule/work-record-amount-diff';
 import {
   mapFormToCreateRequest,
   mapFormToUpdateRequest
@@ -44,6 +48,18 @@ import {
   WorkRecordSheetView,
   WorkRecordSheetViewState
 } from './work-record-sheet.view';
+import { WORK_RECORD_SHEET_PROVIDERS } from '../../usecase/plans/work-record-sheet.providers';
+
+function emptyClimatePreview() {
+  return {
+    gddAtActual: null,
+    weatherDate: null,
+    temperatureMax: null,
+    temperatureMin: null,
+    temperatureMean: null,
+    loading: false
+  };
+}
 
 function emptyForm(): WorkRecordSheetFormState {
   return {
@@ -69,6 +85,10 @@ const initialControl: WorkRecordSheetViewState = {
   fieldErrors: {},
   form: emptyForm(),
   fieldOptions: [],
+  scheduleCategory: null,
+  plannedAmount: '',
+  plannedAmountUnit: '',
+  climatePreview: emptyClimatePreview(),
   showDetails: false,
   taskChips: [],
   loadingTaskChips: false,
@@ -180,7 +200,14 @@ const initialControl: WorkRecordSheetViewState = {
 
         <div class="form-card__field">
           <label for="wr-date">{{ 'plans.work.sheet.actual_date' | translate }}</label>
-          <input id="wr-date" type="date" name="actual_date" [(ngModel)]="control.form.actual_date" required />
+          <input
+            id="wr-date"
+            type="date"
+            name="actual_date"
+            [(ngModel)]="control.form.actual_date"
+            (ngModelChange)="onClimateInputsChanged()"
+            required
+          />
           @if (fieldError('actual_date')) {
             <p class="form-card__error">{{ fieldError('actual_date') | translate }}</p>
           }
@@ -189,7 +216,12 @@ const initialControl: WorkRecordSheetViewState = {
         @if (control.mode === 'create-adhoc') {
           <div class="form-card__field">
             <label for="wr-field">{{ 'plans.work.sheet.field_select' | translate }}</label>
-            <select id="wr-field" name="field_cultivation_id" [(ngModel)]="control.form.field_cultivation_id">
+            <select
+              id="wr-field"
+              name="field_cultivation_id"
+              [(ngModel)]="control.form.field_cultivation_id"
+              (ngModelChange)="onClimateInputsChanged()"
+            >
               <option [ngValue]="null">{{ 'plans.work.sheet.field_optional' | translate }}</option>
               @for (field of control.fieldOptions; track field.field_cultivation_id) {
                 <option [ngValue]="field.field_cultivation_id">
@@ -226,16 +258,51 @@ const initialControl: WorkRecordSheetViewState = {
         }
 
         @if (control.mode === 'edit' || control.showDetails) {
+          @if (control.scheduleCategory === 'fertilizer') {
+            <div class="form-card__field">
+              <span class="form-card__label">{{ 'plans.work.sheet.fertilizer.planned_amount' | translate }}</span>
+              <p class="work-record-sheet__readonly">
+                @if (control.plannedAmount) {
+                  {{ control.plannedAmount }} {{ control.plannedAmountUnit }}
+                } @else {
+                  {{ 'plans.work.sheet.fertilizer.planned_amount_empty' | translate }}
+                }
+              </p>
+            </div>
+          }
+
           <div class="form-card__field form-card__field--row">
             <div>
-              <label for="wr-amount">{{ 'plans.work.sheet.amount' | translate }}</label>
-              <input id="wr-amount" type="text" name="amount" [(ngModel)]="control.form.amount" />
+              <label for="wr-amount">
+                @if (control.scheduleCategory === 'fertilizer') {
+                  {{ 'plans.work.sheet.fertilizer.actual_amount' | translate }}
+                } @else {
+                  {{ 'plans.work.sheet.amount' | translate }}
+                }
+              </label>
+              <input
+                id="wr-amount"
+                type="text"
+                name="amount"
+                [(ngModel)]="control.form.amount"
+                (ngModelChange)="onAmountChanged()"
+              />
             </div>
             <div>
               <label for="wr-unit">{{ 'plans.work.sheet.amount_unit' | translate }}</label>
               <input id="wr-unit" type="text" name="amount_unit" [(ngModel)]="control.form.amount_unit" />
             </div>
           </div>
+
+          @if (amountDiff(); as diff) {
+            <p
+              class="work-record-sheet__amount-diff"
+              [class.work-record-sheet__amount-diff--over]="diff.diff != null && diff.diff > 0"
+              [class.work-record-sheet__amount-diff--under]="diff.diff != null && diff.diff < 0"
+            >
+              {{ amountDiffLabel(diff) }}
+            </p>
+          }
 
           <div class="form-card__field">
             <label for="wr-time">{{ 'plans.work.sheet.time_spent' | translate }}</label>
@@ -251,6 +318,41 @@ const initialControl: WorkRecordSheetViewState = {
           <div class="form-card__field">
             <label for="wr-notes">{{ 'plans.work.sheet.notes' | translate }}</label>
             <textarea id="wr-notes" name="notes" rows="3" [(ngModel)]="control.form.notes"></textarea>
+          </div>
+        }
+
+        @if (showClimatePreview()) {
+          <div class="work-record-sheet__climate-preview" data-testid="climate-preview">
+            <span class="form-card__label">{{ 'plans.work.sheet.climate_preview.label' | translate }}</span>
+            @if (control.climatePreview.loading) {
+              <p class="work-record-sheet__hint">{{ 'plans.work.sheet.climate_preview.loading' | translate }}</p>
+            } @else if (control.climatePreview.gddAtActual != null || control.climatePreview.weatherDate) {
+              <p class="work-record-sheet__climate-preview-row">
+                @if (control.climatePreview.gddAtActual != null) {
+                  <span>
+                    {{
+                      'plans.work.sheet.climate_preview.gdd'
+                        | translate: { value: control.climatePreview.gddAtActual }
+                    }}
+                  </span>
+                }
+                @if (control.climatePreview.weatherDate) {
+                  <span>
+                    {{
+                      'plans.work.sheet.climate_preview.weather'
+                        | translate
+                          : {
+                              max: control.climatePreview.temperatureMax,
+                              min: control.climatePreview.temperatureMin,
+                              mean: control.climatePreview.temperatureMean
+                            }
+                    }}
+                  </span>
+                }
+              </p>
+            } @else {
+              <p class="work-record-sheet__hint">{{ 'plans.work.sheet.climate_preview.unavailable' | translate }}</p>
+            }
           </div>
         }
 
@@ -355,6 +457,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   private readonly saveUseCase = inject(SaveWorkRecordSheetUseCase);
   private readonly deleteUseCase = inject(DeleteWorkRecordUseCase);
   private readonly loadTaskListUseCase = inject(LoadAgriculturalTaskListUseCase);
+  private readonly previewClimateUseCase = inject(PreviewWorkRecordClimateUseCase);
   private readonly presenter = inject(WorkRecordSheetPresenter);
   readonly photoAccept = WORK_RECORD_PHOTO_ACCEPT;
   readonly thumbWidthPx = WORK_RECORD_PHOTO_THUMB_WIDTH_PX_SHEET;
@@ -385,16 +488,22 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
 
   openFromItem(row: WorkDayListRowDto, options?: { fieldErrors?: Record<string, string[]> }): void {
     const { item, fieldName, cropName } = row;
+    const scheduleCategory = resolveScheduleCategory(item.category);
+    const plannedAmount = item.amount ?? '';
+    const plannedAmountUnit = item.amount_unit ?? '';
     this.control = {
       ...initialControl,
       mode: 'create-from-item',
-      showDetails: false,
+      showDetails: scheduleCategory === 'fertilizer',
+      scheduleCategory,
+      plannedAmount,
+      plannedAmountUnit,
       fieldErrors: options?.fieldErrors ?? {},
       form: {
         name: item.name,
         actual_date: localTodayIso(),
-        amount: item.amount ?? '',
-        amount_unit: item.amount_unit ?? '',
+        amount: plannedAmount,
+        amount_unit: plannedAmountUnit,
         time_spent_minutes: '',
         notes: '',
         field_cultivation_id: item.field_cultivation_id,
@@ -407,6 +516,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       fieldOptions: []
     };
     this.sheetDialogRef?.nativeElement?.showModal();
+    this.refreshClimatePreview();
   }
 
   openAdHoc(fieldOptions: FieldSchedule[]): void {
@@ -426,6 +536,9 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       ...initialControl,
       mode: 'edit',
       showDetails: true,
+      scheduleCategory: null,
+      plannedAmount: '',
+      plannedAmountUnit: '',
       existingPhotos: (record.photos ?? []).map((photo) => ({
         id: photo.id,
         url: this.photoUrl(photo.url),
@@ -448,6 +561,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       fieldOptions: []
     };
     this.sheetDialogRef?.nativeElement?.showModal();
+    this.refreshClimatePreview();
   }
 
   selectTaskChip(chip: WorkRecordSheetTaskChip): void {
@@ -476,6 +590,54 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
 
   toggleDetails(): void {
     this.control = { ...this.control, showDetails: !this.control.showDetails };
+    if (this.control.showDetails) {
+      this.refreshClimatePreview();
+    }
+  }
+
+  onClimateInputsChanged(): void {
+    this.refreshClimatePreview();
+  }
+
+  onAmountChanged(): void {
+    this.cdr.markForCheck();
+  }
+
+  amountDiff(): WorkRecordAmountDiff | null {
+    if (this.control.scheduleCategory !== 'fertilizer') {
+      return null;
+    }
+    return computeWorkRecordAmountDiff(
+      this.control.plannedAmount,
+      this.control.form.amount,
+      this.control.form.amount_unit || this.control.plannedAmountUnit
+    );
+  }
+
+  amountDiffLabel(diff: WorkRecordAmountDiff): string {
+    if (diff.diff == null) {
+      return '';
+    }
+    const sign = diff.diff > 0 ? '+' : '';
+    return `${sign}${diff.diff}${diff.unit ? ` ${diff.unit}` : ''}`;
+  }
+
+  showClimatePreview(): boolean {
+    return this.control.form.field_cultivation_id != null && Boolean(this.control.form.actual_date.trim());
+  }
+
+  private refreshClimatePreview(): void {
+    if (!this.showClimatePreview()) {
+      this.control = {
+        ...this.control,
+        climatePreview: emptyClimatePreview()
+      };
+      return;
+    }
+    this.previewClimateUseCase.execute({
+      fieldCultivationId: this.control.form.field_cultivation_id,
+      actualDate: this.control.form.actual_date
+    });
   }
 
   canSubmit(recordForm: NgForm): boolean {
@@ -655,4 +817,14 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
     this.control = { ...this.control, submitting: true };
     this.deleteUseCase.execute({ planId: this.planId, workRecordId: id });
   }
+}
+
+function resolveScheduleCategory(category: string): 'general' | 'fertilizer' | null {
+  if (category === 'fertilizer') {
+    return 'fertilizer';
+  }
+  if (category === 'general') {
+    return 'general';
+  }
+  return null;
 }

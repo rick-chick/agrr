@@ -12,16 +12,23 @@ import { SAVE_WORK_RECORD_SHEET_OUTPUT_PORT } from './save-work-record-sheet.out
 import { SaveWorkRecordSheetUseCase } from './save-work-record-sheet.usecase';
 import { WORK_RECORD_PHOTO_GATEWAY } from './work-record-photo-gateway';
 import { WORK_RECORD_GATEWAY } from './work-record-gateway';
+import { FieldClimateApiGateway } from '../../adapters/plans/field-climate-api.gateway';
+import { FIELD_CLIMATE_GATEWAY } from './field-climate/field-climate.gateway';
+import { PreviewWorkRecordClimateUseCase } from './preview-work-record-climate/preview-work-record-climate.usecase';
+import { PREVIEW_WORK_RECORD_CLIMATE_OUTPUT_PORT } from './preview-work-record-climate/preview-work-record-climate.output-port';
 
 export const WORK_RECORD_SHEET_PROVIDERS: readonly Provider[] = [
   WorkRecordSheetPresenter,
   DeleteWorkRecordUseCase,
   SaveWorkRecordSheetUseCase,
   LoadAgriculturalTaskListUseCase,
+  PreviewWorkRecordClimateUseCase,
   { provide: DELETE_WORK_RECORD_OUTPUT_PORT, useExisting: WorkRecordSheetPresenter },
   { provide: SAVE_WORK_RECORD_SHEET_OUTPUT_PORT, useExisting: WorkRecordSheetPresenter },
   { provide: LOAD_AGRICULTURAL_TASK_LIST_OUTPUT_PORT, useExisting: WorkRecordSheetPresenter },
+  { provide: PREVIEW_WORK_RECORD_CLIMATE_OUTPUT_PORT, useExisting: WorkRecordSheetPresenter },
   { provide: WORK_RECORD_GATEWAY, useClass: WorkRecordApiGateway },
   { provide: WORK_RECORD_PHOTO_GATEWAY, useClass: WorkRecordPhotoApiGateway },
-  { provide: AGRICULTURAL_TASK_GATEWAY, useClass: AgriculturalTaskApiGateway }
+  { provide: AGRICULTURAL_TASK_GATEWAY, useClass: AgriculturalTaskApiGateway },
+  { provide: FIELD_CLIMATE_GATEWAY, useClass: FieldClimateApiGateway }
 ];
