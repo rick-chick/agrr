@@ -112,4 +112,29 @@ describe('loadHubFarmTaskCounts', () => {
     expect(counts.get(2)).toEqual({ overdueCount: 1, todayCount: 0 });
     expect(counts.get(3)).toEqual({ overdueCount: 0, todayCount: 0 });
   });
+
+  it('returns empty map when no farms have a plan', async () => {
+    const planGateway: PlanGateway = {
+      listPlans: () => of([]),
+      fetchPlan: () => of({} as never),
+      fetchPlanData: () => of({} as never),
+      getPublicPlanData: () => of({} as never),
+      getTaskSchedule: () => of({ fields: [] } as never),
+      regenerateTaskSchedule: () => of(undefined),
+      deletePlan: () => of({} as never)
+    };
+
+    const counts = await firstValueFrom(
+      loadHubFarmTaskCounts(
+        [
+          { farmId: 1, planId: null },
+          { farmId: 2, planId: null }
+        ],
+        planGateway,
+        today
+      )
+    );
+
+    expect(counts.size).toBe(0);
+  });
 });

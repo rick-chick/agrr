@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
-import { countWorkDayListFromFields, sumOverdueCounts } from './work-day-list-summary';
+import {
+  countWorkDayListFromFields,
+  flattenFieldScheduleItems,
+  groupWorkDayListRows,
+  sumOverdueCounts
+} from './work-day-list-summary';
 
 const baseDetails = {
   stage: { name: 'stage', order: 1 },
@@ -42,6 +47,76 @@ function item(
     ...overrides
   };
 }
+
+describe('flattenFieldScheduleItems', () => {
+  it('merges general and fertilizer schedules with field metadata', () => {
+    const rows = flattenFieldScheduleItems({
+      id: 1,
+      name: '第1圃場',
+      crop_name: 'トマト',
+      area_sqm: 100,
+      field_cultivation_id: 10,
+      crop_id: 1,
+      task_options: [],
+      schedules: {
+        general: [item({ item_id: 1, scheduled_date: '2026-06-12' })],
+        fertilizer: [item({ item_id: 2, scheduled_date: '2026-06-13', name: '追肥' })],
+        unscheduled: []
+      }
+    });
+
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      item: { item_id: 1 },
+      fieldName: '第1圃場',
+      cropName: 'トマト'
+    });
+    expect(rows[1].item.name).toBe('追肥');
+  });
+});
+
+describe('groupWorkDayListRows', () => {
+  const today = '2026-06-12';
+  const row = (
+    overrides: Partial<TaskScheduleItem> & { item_id: number; scheduled_date: string | null }
+  ) => ({
+    item: item(overrides),
+    fieldName: '第1圃場',
+    cropName: 'トマト'
+  });
+
+  it('attaches overdueDays to overdue rows', () => {
+    const grouped = groupWorkDayListRows(
+      [row({ item_id: 1, scheduled_date: '2026-06-08' })],
+      today,
+      false
+    );
+
+    expect(grouped.overdue).toHaveLength(1);
+    expect(grouped.overdue[0].overdueDays).toBe(4);
+    expect(grouped.today).toHaveLength(0);
+    expect(grouped.upcoming).toHaveLength(0);
+  });
+
+  it('places completed items with today work records in today list', () => {
+    const grouped = groupWorkDayListRows(
+      [
+        row({
+          item_id: 1,
+          scheduled_date: '2026-06-10',
+          completed: true,
+          work_records: [{ id: 9, actual_date: today, notes: null }]
+        })
+      ],
+      today,
+      false
+    );
+
+    expect(grouped.today).toHaveLength(1);
+    expect(grouped.today[0].recordedToday).toBe(true);
+    expect(grouped.overdue).toHaveLength(0);
+  });
+});
 
 describe('countWorkDayListFromFields', () => {
   const today = '2026-06-12';
