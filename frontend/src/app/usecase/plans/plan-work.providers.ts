@@ -48,5 +48,3 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   { provide: WORK_RECORD_GATEWAY, useClass: WorkRecordApiGateway },
   { provide: PLAN_OPTIMIZATION_GATEWAY, useClass: PlanOptimizationChannelGateway }
 ];
-
-export { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';

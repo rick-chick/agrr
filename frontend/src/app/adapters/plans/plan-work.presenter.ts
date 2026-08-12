@@ -156,7 +156,6 @@ export class PlanWorkPresenter
       pendingSyncToastKey: loadResult.toastI18nKey,
       pendingRecordSavedToast: null,
       pendingRecordSavedEvent: null,
-      pendingSaveImpactLoadGeneration: 0,
       ...emptyPlanSaveImpactViewFields,
       pendingQuickCompleteValidation: null,
       syncReloadNonce: loadResult.requestReload
@@ -288,7 +287,7 @@ export class PlanWorkPresenter
       ...this.view.control,
       ...fields
     };
-    return fields.pendingSaveImpactLoadGeneration;
+    return this.saveImpactLoadGeneration;
   }
 
   presentSaveImpactSummary(dto: PlanVsActualSummaryDataDto): void {
@@ -305,8 +304,7 @@ export class PlanWorkPresenter
     this.pendingSaveImpactRequest = applied.pending;
     this.view.control = {
       ...this.view.control,
-      ...applied.fields,
-      pendingSaveImpactLoadGeneration: 0
+      ...applied.fields
     };
   }
 
@@ -315,8 +313,7 @@ export class PlanWorkPresenter
     this.pendingSaveImpactRequest = null;
     this.view.control = {
       ...this.view.control,
-      ...planSaveImpactErrorFields(dto.message),
-      pendingSaveImpactLoadGeneration: 0
+      ...planSaveImpactErrorFields(dto.message)
     };
   }
 
@@ -331,14 +328,10 @@ export class PlanWorkPresenter
   private beginSaveImpactLoadFields(
     event: WorkRecordSheetSavedEvent,
     context: WorkRecordSaveToastContext | null = event.saveToastContext ?? null
-  ): { pendingSaveImpactLoadGeneration: number } & ReturnType<typeof beginPlanSaveImpactLoad>['fields'] {
+  ): ReturnType<typeof beginPlanSaveImpactLoad>['fields'] {
     this.saveImpactLoadGeneration += 1;
     this.pendingSaveImpactRequest = { event, context };
-    const began = beginPlanSaveImpactLoad(this.pendingSaveImpactRequest, this.saveImpactLoadGeneration);
-    return {
-      pendingSaveImpactLoadGeneration: this.saveImpactLoadGeneration,
-      ...began.fields
-    };
+    return beginPlanSaveImpactLoad(this.pendingSaveImpactRequest, this.saveImpactLoadGeneration).fields;
   }
 
   private findRowByItemId(itemId: number): WorkDayListRowDto | null {

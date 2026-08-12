@@ -35,7 +35,6 @@ const initialControl: PlanWorkRecordsViewState = {
   error: null,
   plan: null,
   groups: [],
-  pendingSaveImpactLoadGeneration: 0,
   ...emptyPlanSaveImpactViewFields
 };
 

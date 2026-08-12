@@ -18,7 +18,6 @@ import {
 } from '../../domain/plans/work-record-photo.constants';
 
 const SAVE_IMPACT_DEFAULTS = {
-  pendingSaveImpactLoadGeneration: 0,
   ...emptyPlanSaveImpactViewFields
 };
 

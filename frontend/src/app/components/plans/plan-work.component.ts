@@ -44,7 +44,6 @@ const initialControl: PlanWorkViewState = {
   pendingSyncToastKey: null,
   pendingRecordSavedToast: null,
   pendingRecordSavedEvent: null,
-  pendingSaveImpactLoadGeneration: 0,
   ...emptyPlanSaveImpactViewFields,
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,

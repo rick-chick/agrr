@@ -7,7 +7,6 @@ import { PlanWorkRecordsPresenter } from './plan-work-records.presenter';
 import { emptyPlanSaveImpactViewFields } from './plan-save-impact.presenter.helpers';
 
 const SAVE_IMPACT_DEFAULTS = {
-  pendingSaveImpactLoadGeneration: 0,
   ...emptyPlanSaveImpactViewFields
 };
 

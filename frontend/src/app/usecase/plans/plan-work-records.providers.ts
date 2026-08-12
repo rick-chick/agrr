@@ -27,5 +27,3 @@ export const PLAN_WORK_RECORDS_PROVIDERS: readonly Provider[] = [
   { provide: PLAN_GATEWAY, useClass: PlanApiGateway },
   { provide: WORK_RECORD_GATEWAY, useClass: WorkRecordApiGateway }
 ];
-
-export { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';

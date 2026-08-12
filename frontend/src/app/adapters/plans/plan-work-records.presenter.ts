@@ -3,7 +3,6 @@ import { PlanWorkRecordsView } from '../../components/plans/plan-work-records.vi
 import { WorkRecordSheetSavedEvent } from '../../components/plans/work-record-sheet.view';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { WorkRecordSaveToastContext } from '../../domain/plans/work-record-save-toast';
-import type { WorkRecordSaveImpactViewModel } from '../../domain/plans/work-record-save-impact';
 import { LoadWorkRecordsDataDto } from '../../usecase/plans/load-work-records.dtos';
 import { LoadWorkRecordsOutputPort } from '../../usecase/plans/load-work-records.output-port';
 import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
@@ -43,7 +42,6 @@ export class PlanWorkRecordsPresenter implements LoadWorkRecordsOutputPort {
       error: dto.message,
       plan: null,
       groups: [],
-      pendingSaveImpactLoadGeneration: 0,
       ...emptyPlanSaveImpactViewFields
     };
   }
@@ -58,7 +56,7 @@ export class PlanWorkRecordsPresenter implements LoadWorkRecordsOutputPort {
       ...this.view.control,
       ...fields
     };
-    return fields.pendingSaveImpactLoadGeneration;
+    return this.saveImpactLoadGeneration;
   }
 
   presentSaveImpactSummary(dto: PlanVsActualSummaryDataDto): void {
@@ -75,8 +73,7 @@ export class PlanWorkRecordsPresenter implements LoadWorkRecordsOutputPort {
     this.pendingSaveImpactRequest = applied.pending;
     this.view.control = {
       ...this.view.control,
-      ...applied.fields,
-      pendingSaveImpactLoadGeneration: 0
+      ...applied.fields
     };
   }
 
@@ -85,8 +82,7 @@ export class PlanWorkRecordsPresenter implements LoadWorkRecordsOutputPort {
     this.pendingSaveImpactRequest = null;
     this.view.control = {
       ...this.view.control,
-      ...planSaveImpactErrorFields(dto.message),
-      pendingSaveImpactLoadGeneration: 0
+      ...planSaveImpactErrorFields(dto.message)
     };
   }
 
@@ -101,18 +97,9 @@ export class PlanWorkRecordsPresenter implements LoadWorkRecordsOutputPort {
   private beginSaveImpactLoadFields(
     event: WorkRecordSheetSavedEvent,
     context: WorkRecordSaveToastContext | null
-  ): {
-    pendingSaveImpactLoadGeneration: number;
-    saveImpact: WorkRecordSaveImpactViewModel | null;
-    saveImpactLoading: boolean;
-    saveImpactError: string | null;
-  } {
+  ): ReturnType<typeof beginPlanSaveImpactLoad>['fields'] {
     this.saveImpactLoadGeneration += 1;
     this.pendingSaveImpactRequest = { event, context };
-    const began = beginPlanSaveImpactLoad(this.pendingSaveImpactRequest, this.saveImpactLoadGeneration);
-    return {
-      pendingSaveImpactLoadGeneration: this.saveImpactLoadGeneration,
-      ...began.fields
-    };
+    return beginPlanSaveImpactLoad(this.pendingSaveImpactRequest, this.saveImpactLoadGeneration).fields;
   }
 }

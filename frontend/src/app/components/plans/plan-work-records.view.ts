@@ -9,7 +9,6 @@ export interface PlanWorkRecordsViewState extends PlanSaveImpactViewFields {
   error: string | null;
   plan: WorkRecordsPlanHeaderDto | null;
   groups: WorkRecordMonthGroupDto[];
-  pendingSaveImpactLoadGeneration: number;
 }
 
 export interface PlanWorkRecordsView {

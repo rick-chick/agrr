@@ -10,7 +10,6 @@ interface PlanWorkViewEffectState {
   pendingSyncToastKey: string | null;
   pendingRecordSavedToast: PendingToastRequest | null;
   pendingRecordSavedEvent: WorkRecordSheetSavedEvent | null;
-  pendingSaveImpactLoadGeneration: number;
   pendingQuickCompleteValidation: {
     itemId: number;
     fieldErrors: Record<string, string[]>;
