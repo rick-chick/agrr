@@ -1,4 +1,4 @@
-import { consumePendingToastKey, PendingToastViewEffectDeps } from '../../core/view-effects/pending-toast-view.effects';
+import { consumePendingToastKey, PendingToastRequest, PendingToastViewEffectDeps } from '../../core/view-effects/pending-toast-view.effects';
 import {
   consumePendingUndoToast,
   PendingUndoToastViewEffectDeps

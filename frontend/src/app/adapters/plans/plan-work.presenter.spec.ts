@@ -131,7 +131,13 @@ describe('PlanWorkPresenter quick complete', () => {
   });
 
   it('queues variance toast and pending saved event on quick complete success', () => {
-    presenter.onSuccess({ workRecord: { ...workRecord, gdd_at_actual: 130.5, actual_date: '2026-06-13' } });
+    const savedWorkRecord = {
+      ...workRecord,
+      gdd_at_actual: 130.5,
+      actual_date: '2026-06-13',
+      task_schedule_item: { id: 11, name: '追肥', scheduled_date: '2026-06-10' }
+    };
+    presenter.onSuccess({ workRecord: savedWorkRecord });
 
     expect(view.control.pendingRecordSavedToast).toEqual({
       textKey: 'plans.work.toast.record_saved_variance',
@@ -150,7 +156,7 @@ describe('PlanWorkPresenter quick complete', () => {
       }
     });
     expect(view.control.pendingRecordSavedEvent).toEqual({
-      workRecord,
+      workRecord: savedWorkRecord,
       mode: 'create-from-item'
     });
     expect(view.control.completingItemId).toBeNull();

@@ -68,7 +68,7 @@ describe('LoadFieldClimateUseCase', () => {
     unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
   };
 
-  const planGateway: PlanGateway = {
+  const planGateway = {
     fetchPlan: () => of({} as never),
     getTaskSchedule: () =>
       of({
@@ -79,7 +79,7 @@ describe('LoadFieldClimateUseCase', () => {
         labels: {},
         minimap: {} as never
       })
-  };
+  } as unknown as PlanGateway;
 
   it('passes gateway result to outputPort.present', () => {
     const gateway: FieldClimateGateway = {

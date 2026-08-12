@@ -1,4 +1,4 @@
-import { consumePendingToastKey } from '../../core/view-effects/pending-toast-view.effects';
+import { consumePendingToastKey, PendingToastRequest } from '../../core/view-effects/pending-toast-view.effects';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import { planWorkRecordSavedPatch } from './plan-work-record-saved-view';
 import {
