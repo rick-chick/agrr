@@ -1,10 +1,16 @@
 //! Task schedule mutation / timeline output ports.
 
+use crate::cultivation_plan::dtos::PlanVsActualSummaryRead;
 use crate::cultivation_plan::dtos::TaskScheduleTimeline;
 use crate::shared::dtos::Error;
 use std::collections::BTreeMap;
 
 use serde_json::Value;
+
+pub trait PlanVsActualSummaryOutputPort {
+    fn on_success(&mut self, dto: PlanVsActualSummaryRead);
+    fn on_failure(&mut self, error: Error);
+}
 
 pub trait TaskScheduleTimelineOutputPort {
     fn on_success(&mut self, dto: TaskScheduleTimeline);

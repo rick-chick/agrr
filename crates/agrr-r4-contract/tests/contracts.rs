@@ -498,6 +498,76 @@ fn get_task_schedule_includes_sync_state_and_items() {
 }
 
 #[test]
+fn get_plan_vs_actual_summary_and_task_schedule_embed_variance_fields() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let sqlite_path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&sqlite_path).expect("open contract sqlite");
+    conn.execute(
+        "UPDATE task_schedule_items SET gdd_trigger = 100.0 WHERE id = ?1",
+        rusqlite::params![seed.task_schedule_item_id],
+    )
+    .expect("set gdd_trigger");
+
+    let create_path = format!("/api/v1/plans/{}/work_records", seed.plan_id);
+    let (create_status, create_body) = status_and_body(client.post(
+        &create_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": seed.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "plan vs actual contract"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create work_record JSON");
+    assert!(create_json["work_record"]["gdd_at_actual"].is_number());
+
+    let summary_path = format!("/api/v1/plans/{}/plan_vs_actual/summary", seed.plan_id);
+    let (summary_status, summary_body) = status_and_body(client.get(
+        &summary_path,
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, summary_status, "{summary_body}");
+    let summary: serde_json::Value =
+        serde_json::from_str(&summary_body).expect("plan_vs_actual summary JSON");
+    assert_eq!(seed.plan_id, summary["plan_id"].as_i64().unwrap());
+    assert_eq!(0, summary["unrecorded_count"].as_i64().unwrap());
+    let categories = summary["categories"].as_array().expect("categories");
+    assert!(!categories.is_empty(), "{summary_body}");
+    assert!(categories[0]["average_delta_days"].is_number());
+    let top_items = summary["top_variance_items"].as_array().expect("top_variance_items");
+    assert_eq!(1, top_items.len());
+    assert_eq!(seed.task_schedule_item_id, top_items[0]["item_id"].as_i64().unwrap());
+    assert_eq!(10, top_items[0]["delta_days"].as_i64().unwrap());
+    assert!(top_items[0]["gdd_at_actual"].is_number());
+    assert!(top_items[0]["gdd_delta"].is_number());
+
+    let (schedule_status, schedule_body) = status_and_body(client.get(
+        &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, schedule_status, "{schedule_body}");
+    let schedule: serde_json::Value =
+        serde_json::from_str(&schedule_body).expect("task schedule JSON");
+    let item = schedule["fields"][0]["schedules"]["general"][0].clone();
+    assert_eq!("2026-06-12", item["actual_date"].as_str().unwrap());
+    assert_eq!(10, item["delta_days"].as_i64().unwrap());
+    assert!(item["gdd_at_actual"].is_number());
+    assert!(item["gdd_delta"].is_number());
+}
+
+#[test]
 fn get_task_schedule_includes_compat_milestones_labels_and_week_days() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
