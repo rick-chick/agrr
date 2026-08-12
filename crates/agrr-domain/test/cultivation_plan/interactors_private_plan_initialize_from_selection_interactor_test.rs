@@ -299,7 +299,6 @@ total_area: 1.0,
             farm_id: 1,
             user: user(1),
             plan_name: None,
-            carryover_from_plan_id: None,
         };
         interactor.call(&input).unwrap();
 
@@ -363,7 +362,6 @@ total_area: 1.0,
             farm_id: 1,
             user: user(1),
             plan_name: Some("P".into()),
-            carryover_from_plan_id: None,
         };
         interactor.call(&input).unwrap();
 
@@ -423,7 +421,6 @@ total_area: 1.0,
             farm_id: 1,
             user: user(1),
             plan_name: None,
-            carryover_from_plan_id: None,
         };
         let err = interactor.call(&input).unwrap_err();
         assert!(err.to_string().contains("queue down"));

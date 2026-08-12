@@ -382,7 +382,6 @@ async fn create_plan(
         farm_id: body.plan.farm_id,
         user,
         plan_name: body.plan.plan_name,
-        carryover_from_plan_id: body.plan.carryover_from_plan_id,
     };
     interactor.call(&input).map_err(|e| {
         (

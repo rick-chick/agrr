@@ -150,7 +150,6 @@ describe('PlanNewComponent', () => {
     mockCarryoverUseCase.loadSourcePlans.mockReturnValue(
       of([
         { id: 1, name: 'Plan A', farm_id: 10 },
-        { id: 2, name: 'Plan B', farm_id: 20 },
         { id: 3, name: 'Plan C', farm_id: 10 }
       ])
     );
