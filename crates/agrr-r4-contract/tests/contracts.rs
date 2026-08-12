@@ -573,6 +573,88 @@ fn get_plan_vs_actual_summary_and_task_schedule_embed_variance_fields() {
 }
 
 #[test]
+fn post_plan_create_with_carryover_persists_variance_learning_snapshot() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let source = seed_work_record_plan(user_id);
+
+    let sqlite_path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&sqlite_path).expect("open contract sqlite");
+    conn.execute(
+        "UPDATE task_schedule_items SET gdd_trigger = 100.0 WHERE id = ?1",
+        rusqlite::params![source.task_schedule_item_id],
+    )
+    .expect("set gdd_trigger");
+
+    let create_record_path = format!("/api/v1/plans/{}/work_records", source.plan_id);
+    let (record_status, record_body) = status_and_body(client.post(
+        &create_record_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": source.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "carryover contract seed"
+            }
+        })),
+    ));
+    assert_eq!(201, record_status, "{record_body}");
+    let record_json: serde_json::Value =
+        serde_json::from_str(&record_body).expect("create work_record JSON");
+    let record_id = record_json["work_record"]["id"].as_i64().expect("record id");
+    conn.execute(
+        "UPDATE work_records SET gdd_at_actual = 110.0 WHERE id = ?1",
+        rusqlite::params![record_id],
+    )
+    .expect("set gdd_at_actual");
+
+    let target_farm_id = seed_user_farm_without_organization(user_id);
+    conn.execute(
+        "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
+         VALUES (?1, ?2, 'Carryover Target Field', 40.0, 0, datetime('now'), datetime('now'))",
+        rusqlite::params![target_farm_id, user_id],
+    )
+    .expect("insert target field");
+
+    let (create_status, create_body) = status_and_body(client.post(
+        "/api/v1/plans",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "plan": {
+                "farm_id": target_farm_id,
+                "plan_name": "Carryover Target Plan",
+                "carryover_from_plan_id": source.plan_id
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create plan JSON");
+    let new_plan_id = create_json["id"].as_i64().expect("new plan id");
+
+    let learning_path = format!("/api/v1/plans/{new_plan_id}/variance_learning");
+    let (learning_status, learning_body) = status_and_body(client.get(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, learning_status, "{learning_body}");
+    let learning: serde_json::Value =
+        serde_json::from_str(&learning_body).expect("variance learning JSON");
+    assert_eq!(new_plan_id, learning["plan_id"].as_i64().unwrap());
+    assert_eq!(source.plan_id, learning["source_plan_id"].as_i64().unwrap());
+    let categories = learning["summary"]["categories"]
+        .as_array()
+        .expect("summary categories");
+    assert!(!categories.is_empty(), "{learning_body}");
+    assert!(categories[0]["average_delta_days"].is_number());
+}
+
+#[test]
 fn get_task_schedule_includes_compat_milestones_labels_and_week_days() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

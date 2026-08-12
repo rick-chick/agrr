@@ -66,6 +66,7 @@ pub mod plan_allocation_adjust_debug_dump;
 pub mod plan_allocation_candidates;
 pub mod plan_vs_actual;
 pub mod plan_vs_actual_json;
+pub mod plan_variance_learning;
 pub mod plans;
 pub mod public_plan_save;
 pub mod public_plans;
@@ -139,6 +140,7 @@ pub async fn run_http_server() {
         .merge(plans::routes())
         .merge(task_schedules::routes())
         .merge(plan_vs_actual::routes())
+        .merge(plan_variance_learning::routes())
         .merge(work_records::routes())
         .merge(work_record_photos::routes())
         .merge(work_hub::routes())

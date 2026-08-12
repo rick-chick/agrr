@@ -41,6 +41,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde_json::{json, Value};
 use time::Date;
+use crate::plan_variance_learning::run_carryover_after_create;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -226,6 +227,7 @@ struct CreatePlanBody {
 struct CreatePlanParams {
     farm_id: i64,
     plan_name: Option<String>,
+    carryover_from_plan_id: Option<i64>,
 }
 
 struct CreatePresenter {
@@ -380,6 +382,7 @@ async fn create_plan(
         farm_id: body.plan.farm_id,
         user,
         plan_name: body.plan.plan_name,
+        carryover_from_plan_id: body.plan.carryover_from_plan_id,
     };
     interactor.call(&input).map_err(|e| {
         (
@@ -388,7 +391,28 @@ async fn create_plan(
         )
     })?;
     match presenter.body {
-        Some(CreateOutcome::Success(id)) => Ok((StatusCode::CREATED, Json(json!({"id": id})))),
+        Some(CreateOutcome::Success(id)) => {
+            if let Some(source_plan_id) = body.plan.carryover_from_plan_id {
+                if let Err(err) = run_carryover_after_create(
+                    &state,
+                    user_id,
+                    id,
+                    body.plan.farm_id,
+                    source_plan_id,
+                ) {
+                    let message = err
+                        .downcast_ref::<agrr_domain::shared::exceptions::RecordInvalidError>()
+                        .and_then(|invalid| invalid.detail_message())
+                        .unwrap_or("carryover failed")
+                        .to_string();
+                    return Err((
+                        StatusCode::UNPROCESSABLE_ENTITY,
+                        Json(json!({"error": message})),
+                    ));
+                }
+            }
+            Ok((StatusCode::CREATED, Json(json!({"id": id}))))
+        }
         Some(CreateOutcome::Failure { status, message }) => {
             Err((status, Json(json!({"error": message}))))
         }
