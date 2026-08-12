@@ -150,7 +150,9 @@ describe('LoadWorkDayListUseCase', () => {
 
     expect(result!.overdue).toHaveLength(1);
     expect(result!.overdue[0].item.item_id).toBe(1);
+    expect(result!.overdue[0].overdueDays).toBe(4);
     expect(result!.today).toHaveLength(1);
+    expect(result!.today[0].overdueDays).toBeUndefined();
     expect(result!.today[0].item.item_id).toBe(2);
     expect(result!.upcoming).toHaveLength(1);
     expect(result!.upcoming[0].item.item_id).toBe(3);

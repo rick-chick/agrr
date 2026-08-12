@@ -1906,6 +1906,7 @@
         "today": "आज {{date}}",
         "upcoming": "अगले 7 दिन"
       },
+      "overdue_days": "{{count}} दिन देरी",
       "complete": "पूर्ण",
       "record_with_details": "विवरण के साथ दर्ज करें",
       "add_record": "+ कार्य दर्ज करें",

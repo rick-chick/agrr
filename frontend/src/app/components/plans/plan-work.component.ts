@@ -222,6 +222,11 @@ const initialControl: PlanWorkViewState = {
       >
         <div class="plan-work__row-main">
           <span class="plan-work__date">{{ displayDate(row.item.scheduled_date) }}</span>
+          @if (overdue && row.overdueDays != null) {
+            <span class="plan-work__overdue-days">
+              {{ 'plans.work.overdue_days' | translate: { count: row.overdueDays } }}
+            </span>
+          }
           <span class="plan-work__name">{{ row.item.name }}</span>
           <span class="plan-work__field">{{ row.fieldName }} {{ row.cropName }}</span>
           @if (row.recordedToday) {

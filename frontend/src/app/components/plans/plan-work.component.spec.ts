@@ -68,7 +68,10 @@ function createPlanRouteMock(planId: string) {
   };
 }
 
-function mockRow(overrides: Partial<TaskScheduleItem> = {}): WorkDayListRowDto {
+function mockRow(
+  overrides: Partial<TaskScheduleItem> = {},
+  rowOverrides: Partial<WorkDayListRowDto> = {}
+): WorkDayListRowDto {
   return {
     item: {
       item_id: 1,
@@ -97,7 +100,8 @@ function mockRow(overrides: Partial<TaskScheduleItem> = {}): WorkDayListRowDto {
     } as TaskScheduleItem,
     fieldName: 'A区画',
     cropName: 'トマト',
-    recordedToday: false
+    recordedToday: false,
+    ...rowOverrides
   };
 }
 
@@ -117,7 +121,7 @@ const loadedState: PlanWorkViewState = {
     task_schedule_sync_error_crop_id: null
   },
   fields: [],
-  overdue: [mockRow({ item_id: 10, name: '遅延作業' })],
+  overdue: [mockRow({ item_id: 10, name: '遅延作業', scheduled_date: '2026-06-08' }, { overdueDays: 4 })],
   today: [mockRow({ item_id: 11, name: '今日の作業' })],
   upcoming: [],
   includeSkipped: false,
@@ -203,6 +207,7 @@ describe('PlanWorkComponent mobile UX', () => {
         'plans.work.page_title': '作業記録 — {{name}}',
         'plans.work.show_skipped': 'スキップを表示',
         'plans.work.section.overdue': '期限超過 ({{count}})',
+        'plans.work.overdue_days': '{{count}}日遅れ',
         'plans.work.section.today': '今日 {{date}}',
         'plans.work.section.upcoming': '今後7日',
       'plans.work.complete': '完了',
@@ -321,6 +326,13 @@ describe('PlanWorkComponent mobile UX', () => {
     const overdueRow = fixture.nativeElement.querySelector('.plan-work__row--overdue');
     expect(overdueRow).toBeTruthy();
     expect(overdueRow.textContent).toContain('遅延作業');
+  });
+
+  it('shows overdue delay days on overdue rows', () => {
+    renderLoaded();
+    const overdueDays = fixture.nativeElement.querySelector('.plan-work__overdue-days');
+    expect(overdueDays).toBeTruthy();
+    expect(overdueDays.textContent?.trim()).toBe('4日遅れ');
   });
 
   it('distinguishes done and skip badges with separate classes', () => {
