@@ -1,12 +1,36 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanNewComponent } from './plan-new.component';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
 import { CreatePrivatePlanUseCase } from '../../usecase/private-plan-create/create-private-plan.usecase';
 import { PlanNewPresenter } from '../../usecase/plans/plan-new.providers';
 import { CreatePrivatePlanPresenter } from '../../adapters/private-plan-create/create-private-plan.presenter';
+import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
+import { PlanNewViewState } from './plan-new.view';
+
+function defaultControl(overrides: Partial<PlanNewViewState> = {}): PlanNewViewState {
+  return {
+    loading: false,
+    submitting: false,
+    error: null,
+    farms: [],
+    selectedFarmId: null,
+    noFieldsWarning: false,
+    carryoverEnabled: false,
+    sourcePlans: [],
+    selectedSourcePlanId: null,
+    carryoverPreviewLoading: false,
+    carryoverPreviewError: null,
+    carryoverPreview: null,
+    pendingErrorFlash: null,
+    pendingSuccessFlash: null,
+    pendingNavigation: null,
+    ...overrides
+  };
+}
 
 describe('PlanNewComponent', () => {
   let component: PlanNewComponent;
@@ -15,12 +39,22 @@ describe('PlanNewComponent', () => {
   let mockCreateUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockFarmsPresenter: { setView: ReturnType<typeof vi.fn> };
   let mockCreatePresenter: { setView: ReturnType<typeof vi.fn> };
+  let mockPlanGateway: {
+    listPlans: ReturnType<typeof vi.fn>;
+    getPlanVsActualSummary: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     mockLoadUseCase = { execute: vi.fn() };
     mockCreateUseCase = { execute: vi.fn() };
     mockFarmsPresenter = { setView: vi.fn() };
     mockCreatePresenter = { setView: vi.fn() };
+    mockPlanGateway = {
+      listPlans: vi.fn(() => of([])),
+      getPlanVsActualSummary: vi.fn(() =>
+        of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] })
+      )
+    };
 
     await TestBed.configureTestingModule({
       imports: [PlanNewComponent, TranslateModule.forRoot()],
@@ -29,7 +63,8 @@ describe('PlanNewComponent', () => {
         { provide: LoadPrivatePlanFarmsUseCase, useValue: mockLoadUseCase },
         { provide: CreatePrivatePlanUseCase, useValue: mockCreateUseCase },
         { provide: PlanNewPresenter, useValue: mockFarmsPresenter },
-        { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter }
+        { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter },
+        { provide: PLAN_GATEWAY, useValue: mockPlanGateway }
       ]
     })
       .overrideComponent(PlanNewComponent, { set: { providers: [] } })
@@ -54,6 +89,18 @@ describe('PlanNewComponent', () => {
       'plans.new.plan_name_label': 'Plan name',
       'plans.new.plan_name_placeholder': 'e.g. Main plan',
       'plans.new.create_button': 'Create',
+      'plans.new.carryover_enabled_label': 'Carry over previous plan learning data',
+      'plans.new.carryover_hint': 'Apply variance learning from a completed plan.',
+      'plans.new.carryover_source_label': 'Source plan',
+      'plans.new.carryover_source_hint': 'Select a previous plan',
+      'plans.new.carryover_preview_title': 'Learning data preview',
+      'plans.new.carryover_no_source_plans': 'No previous plans found.',
+      'plans.new.carryover_preview_empty': 'No category variance data.',
+      'plans.task_schedules.variance_subview.category_column': 'Category',
+      'plans.task_schedules.variance_subview.category_average': 'Avg Δ days',
+      'plans.task_schedules.variance_subview.not_available': '—',
+      'plans.task_schedules.variance_subview.average_value': '{{delta}} days',
+      'plans.task_schedules.variance_subview.category.general': 'General tasks',
       'common.loading': 'Loading...'
     });
     translate.setDefaultLang('en');
@@ -69,17 +116,10 @@ describe('PlanNewComponent', () => {
   });
 
   it('should call createUseCase on submit when farm has valid fields', () => {
-    component.control = {
-      loading: false,
-      submitting: false,
-      error: null,
+    component.control = defaultControl({
       farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
-      selectedFarmId: 1,
-      noFieldsWarning: false,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      pendingNavigation: null
-    };
+      selectedFarmId: 1
+    });
     component.planName = 'My Plan';
 
     component.onSubmit(new Event('submit'));
@@ -90,18 +130,62 @@ describe('PlanNewComponent', () => {
     });
   });
 
-  it('renders breadcrumb with plans list link and no bottom cancel button', () => {
-    component.control = {
-      loading: false,
-      submitting: false,
-      error: null,
+  it('includes carryoverFromPlanId on submit when carryover is enabled and source plan selected', () => {
+    component.control = defaultControl({
       farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
       selectedFarmId: 1,
-      noFieldsWarning: false,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      pendingNavigation: null
+      carryoverEnabled: true,
+      selectedSourcePlanId: 9
+    });
+
+    component.onSubmit(new Event('submit'));
+
+    expect(mockCreateUseCase.execute).toHaveBeenCalledWith({
+      farmId: 1,
+      carryoverFromPlanId: 9
+    });
+  });
+
+  it('loads source plans filtered by farm when carryover is enabled', () => {
+    mockPlanGateway.listPlans.mockReturnValue(
+      of([
+        { id: 1, name: 'Plan A', farm_id: 10 },
+        { id: 2, name: 'Plan B', farm_id: 20 },
+        { id: 3, name: 'Plan C', farm_id: 10 }
+      ])
+    );
+
+    component.control = defaultControl({ selectedFarmId: 10 });
+    component.onCarryoverEnabledChange(true);
+
+    expect(mockPlanGateway.listPlans).toHaveBeenCalled();
+    expect(component.control.sourcePlans).toEqual([
+      { id: 1, name: 'Plan A', farm_id: 10 },
+      { id: 3, name: 'Plan C', farm_id: 10 }
+    ]);
+  });
+
+  it('loads carryover preview when source plan is selected', () => {
+    const summary = {
+      plan_id: 5,
+      unrecorded_count: 0,
+      categories: [{ category: 'general', average_delta_days: 2, item_count: 3, recorded_count: 2 }],
+      top_variance_items: []
     };
+    mockPlanGateway.getPlanVsActualSummary.mockReturnValue(of(summary));
+
+    component.onSourcePlanChange(5);
+
+    expect(mockPlanGateway.getPlanVsActualSummary).toHaveBeenCalledWith(5);
+    expect(component.control.carryoverPreview).toEqual(summary);
+    expect(component.control.carryoverPreviewLoading).toBe(false);
+  });
+
+  it('renders breadcrumb with plans list link and no bottom cancel button', () => {
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
+      selectedFarmId: 1
+    });
     fixture.detectChanges();
 
     const backLink = fixture.nativeElement.querySelector(
@@ -133,17 +217,9 @@ describe('PlanNewComponent', () => {
 
   it('shows no-fields warning and register link before selection when only farms without fields exist', () => {
     fixture.detectChanges();
-    component.control = {
-      loading: false,
-      submitting: false,
-      error: null,
-      farms: [{ id: 42, name: 'Empty Farm', fieldCount: 0, totalArea: 0, hasValidFields: false }],
-      selectedFarmId: null,
-      noFieldsWarning: false,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      pendingNavigation: null
-    };
+    component.control = defaultControl({
+      farms: [{ id: 42, name: 'Empty Farm', fieldCount: 0, totalArea: 0, hasValidFields: false }]
+    });
     fixture.detectChanges();
 
     const warning = fixture.nativeElement.querySelector('.plan-new-warning');
@@ -160,21 +236,13 @@ describe('PlanNewComponent', () => {
 
   it('shows summary hint and per-farm register links when some farms lack fields but others are selectable', () => {
     fixture.detectChanges();
-    component.control = {
-      loading: false,
-      submitting: false,
-      error: null,
+    component.control = defaultControl({
       farms: [
         { id: 1, name: 'Ready Farm', fieldCount: 2, totalArea: 100, hasValidFields: true },
         { id: 2, name: 'Empty Farm', fieldCount: 0, totalArea: 0, hasValidFields: false },
         { id: 3, name: 'Another Empty', fieldCount: 0, totalArea: 0, hasValidFields: false }
-      ],
-      selectedFarmId: null,
-      noFieldsWarning: false,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      pendingNavigation: null
-    };
+      ]
+    });
     fixture.detectChanges();
 
     const warnings = fixture.nativeElement.querySelectorAll('.plan-new-warning');
@@ -197,20 +265,38 @@ describe('PlanNewComponent', () => {
   });
 
   it('should not submit when selected farm has no valid fields', () => {
-    component.control = {
-      loading: false,
-      submitting: false,
-      error: null,
+    component.control = defaultControl({
       farms: [{ id: 1, name: 'Farm', fieldCount: 0, totalArea: 0, hasValidFields: false }],
       selectedFarmId: 1,
-      noFieldsWarning: true,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      pendingNavigation: null
-    };
+      noFieldsWarning: true
+    });
 
     component.onSubmit(new Event('submit'));
 
     expect(mockCreateUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('renders carryover checkbox and preview when enabled with source plan', () => {
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
+      selectedFarmId: 1,
+      carryoverEnabled: true,
+      sourcePlans: [{ id: 9, name: 'Old Plan', farm_id: 1 }],
+      selectedSourcePlanId: 9,
+      carryoverPreview: {
+        plan_id: 9,
+        unrecorded_count: 0,
+        categories: [
+          { category: 'general', average_delta_days: 2, item_count: 1, recorded_count: 1 }
+        ],
+        top_variance_items: []
+      }
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Carry over previous plan learning data');
+    expect(fixture.nativeElement.textContent).toContain('Learning data preview');
+    expect(fixture.nativeElement.textContent).toContain('General tasks');
+    expect(fixture.nativeElement.textContent).toContain('+2 days');
   });
 });

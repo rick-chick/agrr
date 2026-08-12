@@ -175,6 +175,26 @@ describe('PrivatePlanCreateApiGateway', () => {
       });
     });
 
+    it('includes carryover_from_plan_id when carryoverFromPlanId is set', async () => {
+      const input: CreatePrivatePlanInputDto = {
+        farmId: 1,
+        planName: 'Next Plan',
+        carryoverFromPlanId: 42
+      };
+      const response: CreatePrivatePlanResponseDto = { id: 789 };
+      vi.mocked(apiClient.post).mockReturnValue(of(response));
+
+      const result = await firstValueFrom(gateway.createPlan(input));
+      expect(result).toEqual(response);
+      expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans', {
+        plan: {
+          farm_id: 1,
+          plan_name: 'Next Plan',
+          carryover_from_plan_id: 42
+        }
+      });
+    });
+
     it('forwards error when api fails', async () => {
       const input: CreatePrivatePlanInputDto = {
         farmId: 1

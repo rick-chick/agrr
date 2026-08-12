@@ -2341,7 +2341,14 @@
       "farm_option_no_fields": "{{name}}（圃場未登録）",
       "no_fields_warning": "この農場には圃場が登録されていません。",
       "some_farms_no_fields_hint": "圃場が未登録の農場は計画作成の対象に選べません。",
-      "register_fields_link": "圃場を登録する"
+      "register_fields_link": "圃場を登録する",
+      "carryover_enabled_label": "前回計画の学習データを引き継ぐ",
+      "carryover_hint": "この農場の完了済み計画の実績差分を、新しい計画の作業スケジュールに反映します。",
+      "carryover_source_label": "引き継ぎ元の計画",
+      "carryover_source_hint": "引き継ぐ計画を選択してください",
+      "carryover_preview_title": "学習データのプレビュー",
+      "carryover_no_source_plans": "この農場の過去の計画が見つかりません。",
+      "carryover_preview_empty": "選択した計画にカテゴリ別の実績差分データがありません。"
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
