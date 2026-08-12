@@ -260,6 +260,7 @@
     "close_menu": "Close menu",
     "plan": "Plans",
     "work_log": "Work log",
+    "work_log_overdue_aria": "Work log, {{count}} overdue",
     "menu_masters": "Master Data",
     "new_plan": "Create Crop Plan",
     "reports": "Reports",

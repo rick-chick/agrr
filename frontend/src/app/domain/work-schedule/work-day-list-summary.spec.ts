@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
-import { countWorkDayListFromFields } from './work-day-list-summary';
+import { countWorkDayListFromFields, sumOverdueCounts } from './work-day-list-summary';
 
 const baseDetails = {
   stage: { name: 'stage', order: 1 },
@@ -92,5 +92,21 @@ describe('countWorkDayListFromFields', () => {
       overdueCount: 0,
       todayCount: 0
     });
+  });
+});
+
+describe('sumOverdueCounts', () => {
+  it('sums overdue counts across farms', () => {
+    expect(
+      sumOverdueCounts([
+        { overdueCount: 2, todayCount: 1 },
+        { overdueCount: 0, todayCount: 3 },
+        { overdueCount: 1, todayCount: 0 }
+      ])
+    ).toBe(3);
+  });
+
+  it('returns zero for empty input', () => {
+    expect(sumOverdueCounts([])).toBe(0);
   });
 });

@@ -28,7 +28,19 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
       <ul class="nav-links" role="list">
         @if (user) {
           <li><a class="nav-link" routerLink="/plans" [class.is-active]="isPlanNavActive()">{{ 'nav.plan' | translate }}</a></li>
-          <li><a class="nav-link" routerLink="/work" [class.is-active]="isWorkLogNavActive()">{{ 'nav.work_log' | translate }}</a></li>
+          <li>
+            <a
+              class="nav-link nav-link--with-badge"
+              routerLink="/work"
+              [class.is-active]="isWorkLogNavActive()"
+              [attr.aria-label]="workLogOverdueCount > 0 ? ('nav.work_log_overdue_aria' | translate: { count: workLogOverdueCount }) : null"
+            >
+              {{ 'nav.work_log' | translate }}
+              @if (workLogOverdueCount > 0) {
+                <span class="nav-link__badge" aria-hidden="true">{{ workLogOverdueCount }}</span>
+              }
+            </a>
+          </li>
           <li>
             <app-nav-dropdown
               triggerLabelKey="nav.menu_masters"
@@ -81,6 +93,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   @Input() user: CurrentUser | null = null;
   @Input() loading = false;
+  @Input() workLogOverdueCount = 0;
   @Output() logout = new EventEmitter<void>();
 
   /** 画面完結: どれか一つだけ開く（interactor 不要） */

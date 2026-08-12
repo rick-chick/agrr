@@ -2644,6 +2644,7 @@
     "close_menu": "メニューを閉じる",
     "plan": "計画",
     "work_log": "作業記録",
+    "work_log_overdue_aria": "作業記録、期限超過 {{count}} 件",
     "menu_masters": "マスタデータ",
     "new_plan": "作付け計画を作成",
     "reports": "レポート",
