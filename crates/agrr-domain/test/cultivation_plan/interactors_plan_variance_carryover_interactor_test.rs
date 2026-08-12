@@ -15,7 +15,7 @@ use crate::cultivation_plan::gateways::{
 use crate::cultivation_plan::interactors::{
     PlanVarianceCarryoverInput, PlanVarianceCarryoverInteractor,
 };
-use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::ports::{LoggerPort, TranslatorPort};
 use crate::shared::ports::translator_port::TranslateOptions;

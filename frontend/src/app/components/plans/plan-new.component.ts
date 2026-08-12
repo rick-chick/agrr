@@ -11,7 +11,7 @@ import { CreatePrivatePlanPresenter } from '../../adapters/private-plan-create/c
 import { PlanNewView, PlanNewViewState } from './plan-new.view';
 import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
-import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
+import { LoadPlanNewCarryoverUseCase } from '../../usecase/plans/load-plan-new-carryover.usecase';
 import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-actual-summary';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 
@@ -224,7 +224,7 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   private readonly createUseCase = inject(CreatePrivatePlanUseCase);
   private readonly farmsPresenter = inject(PlanNewPresenter);
   private readonly createPresenter = inject(CreatePrivatePlanPresenter);
-  private readonly planGateway = inject(PLAN_GATEWAY);
+  private readonly carryoverUseCase = inject(LoadPlanNewCarryoverUseCase);
   private readonly translate = inject(TranslateService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly router = inject(Router);
@@ -371,14 +371,14 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   }
 
   private loadSourcePlans(farmId: number): void {
-    this.planGateway
-      .listPlans()
+    this.carryoverUseCase
+      .loadSourcePlans(farmId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (plans) => {
+        next: (sourcePlans) => {
           this.control = {
             ...this.control,
-            sourcePlans: plans.filter((plan) => plan.farm_id === farmId)
+            sourcePlans
           };
         },
         error: () => {
@@ -391,8 +391,8 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   }
 
   private loadCarryoverPreview(planId: number): void {
-    this.planGateway
-      .getPlanVsActualSummary(planId)
+    this.carryoverUseCase
+      .loadCarryoverPreview(planId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (summary) => {

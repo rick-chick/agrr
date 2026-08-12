@@ -8,7 +8,7 @@ import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/l
 import { CreatePrivatePlanUseCase } from '../../usecase/private-plan-create/create-private-plan.usecase';
 import { PlanNewPresenter } from '../../usecase/plans/plan-new.providers';
 import { CreatePrivatePlanPresenter } from '../../adapters/private-plan-create/create-private-plan.presenter';
-import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
+import { LoadPlanNewCarryoverUseCase } from '../../usecase/plans/load-plan-new-carryover.usecase';
 import { PlanNewViewState } from './plan-new.view';
 
 function defaultControl(overrides: Partial<PlanNewViewState> = {}): PlanNewViewState {
@@ -39,9 +39,9 @@ describe('PlanNewComponent', () => {
   let mockCreateUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockFarmsPresenter: { setView: ReturnType<typeof vi.fn> };
   let mockCreatePresenter: { setView: ReturnType<typeof vi.fn> };
-  let mockPlanGateway: {
-    listPlans: ReturnType<typeof vi.fn>;
-    getPlanVsActualSummary: ReturnType<typeof vi.fn>;
+  let mockCarryoverUseCase: {
+    loadSourcePlans: ReturnType<typeof vi.fn>;
+    loadCarryoverPreview: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -49,9 +49,9 @@ describe('PlanNewComponent', () => {
     mockCreateUseCase = { execute: vi.fn() };
     mockFarmsPresenter = { setView: vi.fn() };
     mockCreatePresenter = { setView: vi.fn() };
-    mockPlanGateway = {
-      listPlans: vi.fn(() => of([])),
-      getPlanVsActualSummary: vi.fn(() =>
+    mockCarryoverUseCase = {
+      loadSourcePlans: vi.fn(() => of([])),
+      loadCarryoverPreview: vi.fn(() =>
         of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] })
       )
     };
@@ -64,7 +64,7 @@ describe('PlanNewComponent', () => {
         { provide: CreatePrivatePlanUseCase, useValue: mockCreateUseCase },
         { provide: PlanNewPresenter, useValue: mockFarmsPresenter },
         { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter },
-        { provide: PLAN_GATEWAY, useValue: mockPlanGateway }
+        { provide: LoadPlanNewCarryoverUseCase, useValue: mockCarryoverUseCase }
       ]
     })
       .overrideComponent(PlanNewComponent, { set: { providers: [] } })
@@ -147,7 +147,7 @@ describe('PlanNewComponent', () => {
   });
 
   it('loads source plans filtered by farm when carryover is enabled', () => {
-    mockPlanGateway.listPlans.mockReturnValue(
+    mockCarryoverUseCase.loadSourcePlans.mockReturnValue(
       of([
         { id: 1, name: 'Plan A', farm_id: 10 },
         { id: 2, name: 'Plan B', farm_id: 20 },
@@ -158,7 +158,7 @@ describe('PlanNewComponent', () => {
     component.control = defaultControl({ selectedFarmId: 10 });
     component.onCarryoverEnabledChange(true);
 
-    expect(mockPlanGateway.listPlans).toHaveBeenCalled();
+    expect(mockCarryoverUseCase.loadSourcePlans).toHaveBeenCalledWith(10);
     expect(component.control.sourcePlans).toEqual([
       { id: 1, name: 'Plan A', farm_id: 10 },
       { id: 3, name: 'Plan C', farm_id: 10 }
@@ -172,11 +172,11 @@ describe('PlanNewComponent', () => {
       categories: [{ category: 'general', average_delta_days: 2, item_count: 3, recorded_count: 2 }],
       top_variance_items: []
     };
-    mockPlanGateway.getPlanVsActualSummary.mockReturnValue(of(summary));
+    mockCarryoverUseCase.loadCarryoverPreview.mockReturnValue(of(summary));
 
     component.onSourcePlanChange(5);
 
-    expect(mockPlanGateway.getPlanVsActualSummary).toHaveBeenCalledWith(5);
+    expect(mockCarryoverUseCase.loadCarryoverPreview).toHaveBeenCalledWith(5);
     expect(component.control.carryoverPreview).toEqual(summary);
     expect(component.control.carryoverPreviewLoading).toBe(false);
   });

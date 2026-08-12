@@ -7,6 +7,7 @@ import { LOAD_PRIVATE_PLAN_FARMS_OUTPUT_PORT } from '../private-plan-create/load
 import { LoadPrivatePlanFarmsUseCase } from '../private-plan-create/load-private-plan-farms.usecase';
 import { CREATE_PRIVATE_PLAN_OUTPUT_PORT } from '../private-plan-create/create-private-plan.output-port';
 import { CreatePrivatePlanUseCase } from '../private-plan-create/create-private-plan.usecase';
+import { LoadPlanNewCarryoverUseCase } from './load-plan-new-carryover.usecase';
 import { PRIVATE_PLAN_CREATE_GATEWAY } from '../private-plan-create/private-plan-create-gateway';
 import { PLAN_GATEWAY } from './plan-gateway';
 
@@ -15,6 +16,7 @@ export const PLAN_NEW_PROVIDERS: readonly Provider[] = [
   CreatePrivatePlanPresenter,
   LoadPrivatePlanFarmsUseCase,
   CreatePrivatePlanUseCase,
+  LoadPlanNewCarryoverUseCase,
   { provide: LOAD_PRIVATE_PLAN_FARMS_OUTPUT_PORT, useExisting: PlanNewPresenter },
   { provide: CREATE_PRIVATE_PLAN_OUTPUT_PORT, useExisting: CreatePrivatePlanPresenter },
   { provide: PRIVATE_PLAN_CREATE_GATEWAY, useClass: PrivatePlanCreateApiGateway },

@@ -8,14 +8,15 @@ use agrr_adapters_sqlite::{
     CultivationPlanPrivateSnapshotReadSqliteGateway, CultivationPlanSqliteGateway,
     PlanVarianceLearningSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
 };
-use agrr_domain::cultivation_plan::gateways::PlanVarianceLearningGateway;
+use agrr_domain::cultivation_plan::dtos::PlanVarianceLearningSnapshotRead;
 use agrr_domain::cultivation_plan::interactors::{
-    task_schedule_private_plan_access_allowed, PlanVarianceCarryoverInput,
-    PlanVarianceCarryoverInteractor,
+    PlanVarianceCarryoverInput, PlanVarianceCarryoverInteractor, PlanVarianceLearningReadInteractor,
 };
+use agrr_domain::cultivation_plan::ports::PlanVarianceLearningReadOutputPort;
+use agrr_domain::shared::dtos::Error;
+use agrr_domain::shared::exceptions::RecordNotFoundError;
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     routing::get,
     Json, Router,
 };
@@ -29,56 +30,85 @@ pub fn routes() -> Router<AppState> {
     )
 }
 
+struct VarianceLearningPresenter {
+    body: Option<VarianceLearningOutcome>,
+}
+
+enum VarianceLearningOutcome {
+    Success(PlanVarianceLearningSnapshotRead),
+    NotFound,
+}
+
+impl PlanVarianceLearningReadOutputPort for VarianceLearningPresenter {
+    fn on_success(&mut self, dto: PlanVarianceLearningSnapshotRead) {
+        self.body = Some(VarianceLearningOutcome::Success(dto));
+    }
+
+    fn on_failure(&mut self, _error: Error) {
+        self.body = Some(VarianceLearningOutcome::NotFound);
+    }
+}
+
 async fn show_variance_learning(
     State(state): State<AppState>,
     jar: CookieJar,
-    Path(id): Path<i64>,
-) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|status| (status, Json(json!({"error": "unauthorized"}))))?;
+    Path(plan_id): Path<i64>,
+) -> Result<Json<Value>, (axum::http::StatusCode, Json<Value>)> {
+    let user_id = user_id_from_session(&state, &jar).map_err(|status| {
+        (
+            status,
+            Json(json!({"errors": ["unauthorized"]})),
+        )
+    })?;
+
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let variance_gateway = PlanVarianceLearningSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool.clone());
     let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
-    let org_ids = agrr_domain::shared::org_scope::member_organization_ids(&scope_gateway, user_id)
-        .map_err(|_| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "internal"})),
-            )
-        })?;
 
-    if !task_schedule_private_plan_access_allowed(
-        &plan_gateway,
-        id,
+    let mut presenter = VarianceLearningPresenter { body: None };
+    let translator = PassthroughTranslator;
+    let logger = NoopLogger;
+
+    let mut interactor = PlanVarianceLearningReadInteractor::new(
+        &mut presenter,
         user_id,
-        &org_ids,
-    ) {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(json!({"error": "Plan not found"})),
-        ));
-    }
+        plan_id,
+        &plan_gateway,
+        &variance_gateway,
+        &translator,
+        &logger,
+        &user_lookup,
+        &scope_gateway,
+    );
 
-    match variance_gateway.find_by_plan_id(id).map_err(|_| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "internal"})),
-        )
-    })? {
-        Some(snapshot) => {
-            let summary_body = summary_to_json_body(snapshot.summary);
-            Ok(Json(json!({
-                "plan_id": snapshot.plan_id,
-                "source_plan_id": snapshot.source_plan_id,
-                "summary": summary_body,
-            })))
-        }
-        None => Err((
-            StatusCode::NOT_FOUND,
-            Json(json!({"error": "Variance learning snapshot not found"})),
+    match interactor.call() {
+        Ok(()) => match presenter.body {
+            Some(VarianceLearningOutcome::Success(snapshot)) => {
+                let summary_body = summary_to_json_body(snapshot.summary);
+                Ok(Json(json!({
+                    "plan_id": snapshot.plan_id,
+                    "source_plan_id": snapshot.source_plan_id,
+                    "summary": summary_body,
+                })))
+            }
+            Some(VarianceLearningOutcome::NotFound) | None => Err((
+                axum::http::StatusCode::NOT_FOUND,
+                Json(json!({"errors": ["not_found"]})),
+            )),
+        },
+        Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => Err((
+            axum::http::StatusCode::NOT_FOUND,
+            Json(json!({"errors": ["not_found"]})),
         )),
+        Err(err) => {
+            tracing::error!("variance_learning read failed: {err}");
+            Err((
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            ))
+        }
     }
 }
 
