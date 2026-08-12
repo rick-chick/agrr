@@ -14,15 +14,27 @@
 | `screen-mocks.md` | 8 | 起票まで行う場合 ✓ |
 | `issue-pack.md` | 9 | 起票まで行う場合 ✓ |
 
-## ゲート JSON の最小例
+## ゲート JSON の例
 
-**G2 pass:**
+**G2 pass（既存強化）:**
 
 ```json
 {
   "gate": "overlap-ux-guard",
   "verdict": "pass",
-  "summary": "新画面不要。/work を入口、/plans/:id/work を実行本体に強化",
+  "summary": "既存 /work と /plans/:id/work で役割分担。新画面なし",
+  "findings": [],
+  "mandatory_corrections": []
+}
+```
+
+**G2 pass（新ルートあり・justification 済み）:**
+
+```json
+{
+  "gate": "overlap-ux-guard",
+  "verdict": "pass",
+  "summary": "新ルート /reports/compliance は既存画面では帳票導線を賄えないため採用",
   "findings": [],
   "mandatory_corrections": []
 }
@@ -34,9 +46,9 @@
 {
   "gate": "plan-review",
   "verdict": "fail",
-  "summary": "v1 が5項目あり上限超過",
-  "findings": ["天候1行とGDD補足がv1に残っている"],
-  "mandatory_corrections": ["天候・GDDをv2へ移動", "v1を3 issueに固定"]
+  "summary": "v1 と v2 の境界が未記載",
+  "findings": ["天候注意と GDD 補足が v1 issue に混在"],
+  "mandatory_corrections": ["enhancement-plan に v1/v2 を分離", "v2 を Epic の後続に移動"]
 }
 ```
 

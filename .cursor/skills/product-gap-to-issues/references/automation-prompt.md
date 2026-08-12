@@ -12,16 +12,16 @@ End goal: issue 起票まで（ユーザー依頼が調査のみの場合は SKI
 
 Rules:
 - Run phases 1–9 in order. Do not skip G2 or G3.
-- On G2/G3 verdict=fail: apply mandatory_corrections and re-run that gate (G3 max 2 retries).
+- On G2/G3 verdict=fail: apply mandatory_corrections and re-run that gate until pass or blocked.
 - On verdict=blocked: stop and report; do not gh issue create.
 - Write all artifacts under tmp/product-gap/ (do not commit).
 - Do NOT write implementation code or open PRs.
-- Do NOT add agent-ready unless the user explicitly requested it.
+- agent-ready: follow github-issue-creator SKILL.md §6 only.
 - Use Task tool for subagent phases per subagent-prompts.md.
 - For gh issue create: check labels with gh label list first.
 
-Product core (fixed): AGRR is a cultivation PLANNING app (weather × GDD × optimization), not a full farm ERP.
-Default: enhance existing screens; no new dashboard route.
+Product core: cultivation PLANNING (weather × GDD × optimization), not a full farm ERP.
+Prefer enhancing existing screens; new routes require new_surface_justification in deep-dive artifacts.
 ```
 
 ## トリガー例
