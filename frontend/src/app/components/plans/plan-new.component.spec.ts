@@ -276,7 +276,8 @@ describe('PlanNewComponent', () => {
     expect(mockCreateUseCase.execute).not.toHaveBeenCalled();
   });
 
-  it('renders carryover checkbox and preview when enabled with source plan', () => {
+  it('renders carryover preview when enabled with source plan selected', () => {
+    fixture.detectChanges();
     component.control = defaultControl({
       farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
       selectedFarmId: 1,
@@ -294,9 +295,14 @@ describe('PlanNewComponent', () => {
     });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Carry over previous plan learning data');
-    expect(fixture.nativeElement.textContent).toContain('Learning data preview');
-    expect(fixture.nativeElement.textContent).toContain('General tasks');
-    expect(fixture.nativeElement.textContent).toContain('+2 days');
+    expect(component.control.carryoverEnabled).toBe(true);
+    expect(
+      fixture.nativeElement.querySelector('input[name="carryoverEnabled"]')
+    ).toBeTruthy();
+    const preview = fixture.nativeElement.querySelector('.plan-new-carryover-preview');
+    expect(preview).toBeTruthy();
+    expect(preview?.textContent).toContain('Learning data preview');
+    expect(preview?.textContent).toContain('General tasks');
+    expect(preview?.textContent).toContain('+2 days');
   });
 });

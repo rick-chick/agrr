@@ -5,6 +5,24 @@ import { PlanNewView, PlanNewViewState } from '../../components/plans/plan-new.v
 import { FarmPlanCreateOption } from '../../usecase/private-plan-create/private-plan-create-gateway';
 import { ErrorDto } from '../../domain/shared/error.dto';
 
+const emptyPlanNewControl = (): PlanNewViewState => ({
+  loading: true,
+  submitting: false,
+  error: null,
+  farms: [],
+  selectedFarmId: null,
+  noFieldsWarning: false,
+  carryoverEnabled: false,
+  sourcePlans: [],
+  selectedSourcePlanId: null,
+  carryoverPreviewLoading: false,
+  carryoverPreviewError: null,
+  carryoverPreview: null,
+  pendingErrorFlash: null,
+  pendingSuccessFlash: null,
+  pendingNavigation: null
+});
+
 describe('PlanNewPresenter', () => {
   let presenter: PlanNewPresenter;
   let view: PlanNewView;
@@ -20,19 +38,7 @@ describe('PlanNewPresenter', () => {
     lastControl = null;
     view = {
       get control(): PlanNewViewState {
-        return (
-          lastControl ?? {
-            loading: true,
-            submitting: false,
-            error: null,
-            farms: [],
-            selectedFarmId: null,
-            noFieldsWarning: false,
-            pendingErrorFlash: null,
-            pendingSuccessFlash: null,
-            pendingNavigation: null
-          }
-        );
+        return lastControl ?? emptyPlanNewControl();
       },
       set control(value: PlanNewViewState) {
         lastControl = value;
@@ -63,17 +69,7 @@ describe('PlanNewPresenter', () => {
   });
 
   it('queues pending error flash and updates view.control on onError(dto)', () => {
-    const initialControl: PlanNewViewState = {
-      loading: true,
-      submitting: false,
-      error: null,
-      farms: [],
-      selectedFarmId: null,
-      noFieldsWarning: false,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      pendingNavigation: null
-    };
+    const initialControl: PlanNewViewState = emptyPlanNewControl();
     lastControl = initialControl;
 
     const dto: ErrorDto = { message: 'Failed to load farms' };
