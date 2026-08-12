@@ -61,6 +61,7 @@ describe('PlanWorkRecordsPresenter', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [baseRecord()]
         }
       ]
@@ -88,6 +89,7 @@ describe('PlanWorkRecordsPresenter', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [baseRecord({ photos })]
         }
       ]

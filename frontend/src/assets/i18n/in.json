@@ -2016,6 +2016,17 @@
           "invalid_byte_size": "छवि 5 MB सीमा से अधिक है",
           "already_completed": "यह फ़ोटो पहले ही अपलोड हो चुकी है"
         }
+      },
+      "variance": {
+        "scheduled": "नियोजित {{date}}",
+        "delta_days_late": "{{count}} दिन देरी",
+        "delta_days_early": "{{count}} दिन पहले",
+        "delta_days_on_time": "नियोजित समय पर",
+        "gdd_at_actual": "GDD {{value}}",
+        "no_schedule": "कोई अनुसूची नहीं",
+        "month_average_late": "औसत {{count}} दिन देरी",
+        "month_average_early": "औसत {{count}} दिन पहले",
+        "month_average_on_time": "औसत नियोजित समय पर"
       }
     },
     "index": {

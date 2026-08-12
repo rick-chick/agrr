@@ -4,6 +4,7 @@ import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { WorkRecord } from '../../models/plans/work-record';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
 import { WORK_RECORD_GATEWAY, WorkRecordGateway } from './work-record-gateway';
+import { averageWorkRecordDeltaDays } from '../../domain/plans/work-record-variance';
 import { LoadWorkRecordsInputDto, WorkRecordMonthGroupDto } from './load-work-records.dtos';
 import { LoadWorkRecordsInputPort } from './load-work-records.input-port';
 import {
@@ -19,8 +20,13 @@ export function groupWorkRecordsByMonth(records: WorkRecord[]): WorkRecordMonthG
     const last = groups[groups.length - 1];
     if (last?.monthLabel === monthLabel) {
       last.records.push(rec);
+      last.averageDeltaDays = averageWorkRecordDeltaDays(last.records);
     } else {
-      groups.push({ monthLabel, records: [rec] });
+      groups.push({
+        monthLabel,
+        records: [rec],
+        averageDeltaDays: averageWorkRecordDeltaDays([rec])
+      });
     }
   }
   return groups;

@@ -141,6 +141,7 @@ describe('PlanWorkRecordsComponent', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [
             {
               id: 1,
@@ -182,6 +183,7 @@ describe('PlanWorkRecordsComponent', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [
             {
               id: 1,
@@ -301,6 +303,7 @@ describe('PlanWorkRecordsComponent', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [
             {
               id: 1,
@@ -360,6 +363,7 @@ describe('PlanWorkRecordsComponent', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [
             {
               id: 1,
@@ -400,6 +404,7 @@ describe('PlanWorkRecordsComponent', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [
             {
               id: 1,
@@ -476,6 +481,7 @@ describe('PlanWorkRecordsComponent', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [
             {
               id: 1,
@@ -534,6 +540,7 @@ describe('PlanWorkRecordsComponent', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [
             {
               id: 1,
@@ -571,6 +578,7 @@ describe('PlanWorkRecordsComponent', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [
             {
               id: 1,
@@ -624,6 +632,7 @@ describe('PlanWorkRecordsComponent', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [
             {
               id: 1,
@@ -690,6 +699,7 @@ describe('PlanWorkRecordsComponent', () => {
       groups: [
         {
           monthLabel: '2026-06',
+          averageDeltaDays: null,
           records: [
             {
               id: 1,
@@ -749,5 +759,83 @@ describe('PlanWorkRecordsComponent', () => {
     fixture.nativeElement.querySelector('.plan-work-records__lightbox-prev')?.click();
     fixture.detectChanges();
     expect(image?.src).toContain('/photos/1.jpg');
+  });
+
+  it('renders variance columns for schedule-linked records and no-schedule label for ad hoc', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'plans.work_records.variance.scheduled': 'Scheduled {{date}}',
+        'plans.work_records.variance.delta_days_late': '{{count}} days late',
+        'plans.work_records.variance.delta_days_early': '{{count}} days early',
+        'plans.work_records.variance.delta_days_on_time': 'On schedule',
+        'plans.work_records.variance.gdd_at_actual': 'GDD {{value}}',
+        'plans.work_records.variance.no_schedule': 'No schedule',
+        'plans.work_records.variance.month_average_late': 'Avg. {{count}} days late'
+      },
+      true
+    );
+
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          averageDeltaDays: 2,
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: 5,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              gdd_at_actual: 120.5,
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: { id: 5, name: 'Weeding', scheduled_date: '2026-06-10' }
+            },
+            {
+              id: 2,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: null,
+              agricultural_task_id: null,
+              name: 'Ad hoc task',
+              task_type: null,
+              actual_date: '2026-06-11',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              created_at: '2026-06-11',
+              updated_at: '2026-06-11',
+              task_schedule_item: null
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('Scheduled June 10, 2026');
+    expect(text).toContain('2 days late');
+    expect(text).toContain('GDD 120.5');
+    expect(text).toContain('No schedule');
+    expect(text).toContain('Avg. 2 days late');
+
+    const varianceRows = fixture.nativeElement.querySelectorAll('.plan-work-records__variance');
+    expect(varianceRows.length).toBe(2);
   });
 });
