@@ -49,7 +49,7 @@ disable-model-invocation: true
 - ユーザーが方針・優先度・スコープを明示した機能依頼
 - 調査済みで重複なし（§3）
 
-## 3) 重複確認（必須）
+## 3) 重複確認（必須・正本）
 
 ```bash
 gh issue list --repo rick-chick/agrr --state all \
@@ -63,6 +63,8 @@ gh issue list --repo rick-chick/agrr --state all \
 | 部分重複 | §2 で統合方針を議論 |
 | 重複なし | §4 へ |
 
+`product-gap-to-issues` フェーズ 9 でも本表が正本。Automation で部分重複に人間議論が必要なときは §2 を省略せず問い合わせ待ち（[`phases.md`](../product-gap-to-issues/references/phases.md) フェーズ 9 参照）。
+
 ## 4) 草案（ドライラン・必須）
 
 `gh issue create` の**前**にチャットへ次を出力する（本文は [references/issue-body-template.md](references/issue-body-template.md) のテンプレートを満たす）。
@@ -75,7 +77,10 @@ gh issue list --repo rick-chick/agrr --state all \
 
 **ユーザーが「起票して」「作成して」等と明示するまで `gh issue create` しない。**
 
-例外: ユーザーが最初から「起票して agent-ready まで」と依頼し、§2・§3 を満たしている場合は、草案提示直後に §5 へ進んでよい。
+例外（`agent-ready` の指定の有無とは別）:
+
+- ユーザーが最初から「起票」「起票まで」等と明示し、§2・§3 を満たしている場合は、草案提示直後に §5 へ進んでよい
+- **`product-gap-to-issues` フェーズ 9（F9）**: 終了地点が issue 起票と確定した時点で issue 起票の明示依頼とみなす。`issue-pack.md` を一括ドライランとし、§2・§3 を満たしていれば同一実行で §5 へ進んでよい。F9 以外で着手し後から起票へ進む依頼は、その新しい依頼が明示承認（通常の §4 パス）
 
 ## 5) Issue 起票
 
@@ -91,10 +96,11 @@ gh issue create --repo rick-chick/agrr \
 - 本文テンプレート: [references/issue-body-template.md](references/issue-body-template.md)
 - バグなら `--label bug`、ドキュメントのみなら `documentation`
 - 起票後、issue 番号と URL を報告
+- 作業用 `--body-file` に `tmp/` パスを使うのは可。Issue **本文**に `tmp/` 参照を書かない
 
-## 6) agent-ready 付与
+## 6) agent-ready 付与（正本）
 
-**起票直後**、ブロッカーがなければ `agent-ready` を付与する（ユーザーの既定意向）。これにより [`issue-worker-dispatch.yml`](../../../.github/workflows/issue-worker-dispatch.yml) 経由で **`github-issue-worker`** が実装経路に入る。
+**起票内容確定後**（`gh issue create` 完了後）、ブロッカーを評価し、なければ `agent-ready` を付与する（ユーザーの既定意向）。これにより [`issue-worker-dispatch.yml`](../../../.github/workflows/issue-worker-dispatch.yml) 経由で **`github-issue-worker`** が実装経路に入る。
 
 ```bash
 # ラベルが無ければ作成
@@ -114,6 +120,8 @@ gh issue edit <N> --repo rick-chick/agrr --add-label agent-ready
 | 重複の可能性が残っている | 人間の最終確認待ち |
 
 付けない場合は、その理由をチャットと issue コメントのどちらかに残す。
+
+`product-gap-to-issues` の Epic / 子 issue 固有補足: [`issue-pack-template.md`](../product-gap-to-issues/references/issue-pack-template.md) §agent-ready 補足。
 
 ## 7) 終了条件
 

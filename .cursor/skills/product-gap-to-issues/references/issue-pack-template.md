@@ -1,6 +1,10 @@
 # Issue パックテンプレート
 
-起票前に `tmp/product-gap/issue-pack.md` にまとめる。本文は [`github-issue-creator/references/issue-body-template.md`](../../github-issue-creator/references/issue-body-template.md) に合わせる。
+起票前に `tmp/product-gap/issue-pack.md` にまとめる（一括ドライラン）。本文は [`github-issue-creator/references/issue-body-template.md`](../../github-issue-creator/references/issue-body-template.md) に合わせる。
+
+**Issue 本文に `tmp/` パスを書かない。** モック要約・観測事実は本文に埋め込む。作業用 `--body-file` に `tmp/` を使うのは可。
+
+重複確認は [`github-issue-creator`](../../github-issue-creator/SKILL.md) **§3** が正本（本ファイルで再定義しない）。
 
 ---
 
@@ -73,13 +77,16 @@
 ## 子 issue（v2・後続）
 - …
 
+## 画面モック要約
+<screen-mocks.md の内容を要約して埋め込む。Before/After・v1/v2 の区別を含める>
+
 ## 完了条件
 - [ ] v1 子 issue がすべて CLOSED
 - [ ] …
 
 ## 参照
-- tmp/product-gap/screen-mocks.md
-- コード path（調査済み）
+- 画面: `/path`
+- コード: `path/to/file`（調査済み）
 ```
 
 起票後 `gh issue edit` で子番号を `#N` に差し替える。
@@ -88,14 +95,17 @@
 
 ## 子 issue（v1）
 
-**1 issue = 1 観測可能スコープ。** 実装方法は書かない。
+**1 issue = 1 観測可能スコープ。** 実装方法・コンポーネント設計は書かない。
 
 ```markdown
 ## 目的
-<1段落>
+<1段落。観測可能な振る舞いまで>
 
 ## 背景
 <なぜ v1 か>
+
+## 画面モック要約（該当画面のみ）
+<該当画面の Before/After・遷移を本文に埋め込む>
 
 ## 完了条件
 - [ ] <観測可能>
@@ -119,6 +129,20 @@
 
 ---
 
+## agent-ready 補足（product-gap 固有）
+
+正本: [`github-issue-creator`](../../github-issue-creator/SKILL.md) **§6**。以下は Epic / 子 issue 起票時の補足のみ。
+
+| 対象 | `agent-ready` |
+|------|---------------|
+| **Epic** | **付与しない** — 子 issue が未完了のため依存未解消扱い |
+| **子 issue（v1）** | 未完了の依存 issue が**ない**ものだけ、起票内容確定後にブロッカー評価して付与 |
+| **依存ありの子** | 依存が CLOSED になるまで付与しない。依存解消後の後続運用で付与 |
+
+付与しない場合は理由を issue コメントまたはチャットに残す。
+
+---
+
 ## 起票コマンド例
 
 ```bash
@@ -129,4 +153,4 @@ gh issue create --repo rick-chick/agrr \
 
 ラベルは `gh label list --repo rick-chick/agrr` で存在確認してから付与する。
 
-`agent-ready` は [`github-issue-creator`](../github-issue-creator/SKILL.md) §6 に従う。
+`agent-ready` は [`github-issue-creator`](../../github-issue-creator/SKILL.md) §6 に従う。

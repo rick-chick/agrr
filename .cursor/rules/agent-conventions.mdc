@@ -28,7 +28,9 @@ alwaysApply: false
 | サブエージェント委譲規律 | [`use-skills-on-edit.mdc`](use-skills-on-edit.mdc) |
 | **git checkout / switch / reset / restore 禁止**（常時・明示許可のみ） | [`git-operational-constraints.mdc`](git-operational-constraints.mdc) |
 | **依頼とプロジェクト事実の整合**（着手前に依頼前提とコード・規約・契約等を照合・矛盾時は実装前にユーザーへ問い合わせ・依頼文だけを事実としない） | [`user-request-project-alignment.mdc`](user-request-project-alignment.mdc) |
-| **プロダクトギャップ調査〜Issue 起票**（競合比較・既存画面強化・G2/G3 ゲート・モック・Epic 起票。実装は `github-issue-worker`） | [`product-gap-to-issues` スキル](../skills/product-gap-to-issues/SKILL.md) |
+| **汎用 GitHub issue 起票**（機能・バグ・リファクタ・負債。1 件ずつ。重複確認・草案・`agent-ready`） | [`github-issue-creator` スキル](../skills/github-issue-creator/SKILL.md) |
+| **UX 監査由来の issue 一括起票**（visual-review / CSS 監査・PNG レビュー経由） | [`ux-issue-creator` スキル](../skills/ux-issue-creator/SKILL.md) / [`ux-issue-pipeline` スキル](../skills/ux-issue-pipeline/SKILL.md) |
+| **プロダクトギャップ調査〜Issue 起票**（競合比較・方針策定・G2/G3 ゲート・モック・Epic 起票。実装は `github-issue-worker`） | [`product-gap-to-issues` スキル](../skills/product-gap-to-issues/SKILL.md) |
 | **設計・実装の根拠ゲート**（確実に説明できる／再現できるのいずれか未満では着手しない・未満なら調査継続・仮説段階で設計・実装しない） | [`evidence-before-design-and-implementation.mdc`](evidence-before-design-and-implementation.mdc) |
 | **プロジェクトに必要な成果物のみ**（コード・ドキュメント・スクリプト。依頼・根拠・規約に直結しない追加は禁止） | [`project-necessary-code-only.mdc`](project-necessary-code-only.mdc) |
 | **Automation / dispatch 新規追加・変更の設計規約** | [`automation-authoring` スキル](../skills/automation-authoring/SKILL.md) |

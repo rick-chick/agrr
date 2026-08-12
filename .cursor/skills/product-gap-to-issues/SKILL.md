@@ -8,21 +8,11 @@ description: >-
 
 # プロダクトギャップ → Issue 起票（AGRR）
 
-市場・他アプリとのギャップを整理し、**既存画面の強化を先に検討**したうえで、Epic / 子 issue まで起票する。新画面が要る場合は G2 で **理由の観測**を必須とする。
+市場・他アプリとのギャップを整理し、**既存画面の強化を先に検討**したうえで Epic / 子 issue まで起票する。
 
-```
-依頼整合 → 現状把握 → ギャップ列挙 → テーマ選定 → 深掘り
-  → 重複・UXゲート(G2) → 方針 → 計画レビュー(G3)
-  → 画面モック → issue パック → gh issue create
-```
+正本: [`references/artifacts.md`](references/artifacts.md)（終了地点語彙・成果物・完了報告）・[`references/gates.md`](references/gates.md)（G2/G3）・[`references/phases.md`](references/phases.md)（フェーズ手順）。
 
-正本: 成果物は [`references/artifacts.md`](references/artifacts.md)。ゲートは [`references/gates.md`](references/gates.md)。
-
-## いつ使うか
-
-- 「農業アプリにあって AGRR にない機能は？」から issue 起票まで一気通貫
-- 競合機能の取り込み候補をバックログ化したい
-- 深掘りが詳細過多・既存重複に寄ったとき、**G2/G3 で止めてから**起票したい
+新規画面の理由（`new_surface_justification`）は **フェーズ 4 で記載**し、**フェーズ 5（G2）で検証**する。
 
 ## 適用範囲
 
@@ -37,15 +27,9 @@ description: >-
 
 1. [`user-request-project-alignment.mdc`](../../rules/user-request-project-alignment.mdc) — 依頼とプロジェクト事実の整合
 2. `mkdir -p tmp/product-gap`
-3. 依頼から **終了地点** を確定する:
-   - `調査のみ` → フェーズ 4 まで
-   - `方針まで` → フェーズ 7（G3 通過）まで
-   - `モックまで` → フェーズ 8 まで
-   - `issue 起票まで` → フェーズ 9 まで（ユーザーが「起票」と言っていれば §9 で `gh issue create` 可）
+3. 依頼から **終了地点**（最終フェーズ）を確定する — 語彙・F9 明示依頼の扱いは [`references/artifacts.md`](references/artifacts.md)「終了地点語彙（正本）」
 
 **AGRR のプロダクト芯（照合用）**: 農業**計画**支援（気象 × GDD × 最適化）。フル農場 ERP ではない。
-
----
 
 ## フェーズ一覧
 
@@ -59,133 +43,36 @@ description: >-
 | 6 | 方針・画面役割 | 親エージェント | `enhancement-plan.md` |
 | 7 | 計画レビュー **G3** | Task `generalPurpose` | `plan-review.json` |
 | 8 | 画面モック | 親エージェント | `screen-mocks.md` |
-| 9 | issue パック起票 | [`github-issue-creator`](../github-issue-creator/SKILL.md) + `gh` | `issue-pack.md`, GitHub #N |
+| 9 | issue パック起票 | 親 + [`github-issue-creator`](../github-issue-creator/SKILL.md) | `issue-pack.md`, GitHub #N |
 
-**ゲート未通過なら次フェーズに進まない。**
+**ゲート未通過は次フェーズに進まない。** 手順・終了チェック・収束条件: [`references/phases.md`](references/phases.md)・[`references/gates.md`](references/gates.md)。
 
----
-
-## フェーズ 1 — 現状把握
-
-Task `explore`（thoroughness: `very thorough`）。プロンプト: [`references/subagent-prompts.md`](references/subagent-prompts.md) §1。
-
-`tmp/product-gap/current-state.md` に保存。画面・ルート、ドメイン境界、**計画 → 実行 → 学習** の薄い箇所（観測ベース）。
-
----
-
-## フェーズ 2 — ギャップ列挙
-
-Task `generalPurpose`。プロンプト: §2。
-
-`tmp/product-gap/gap-backlog.md`: カテゴリ別、差別化との接続、優先度仮説、既存強化 vs 新規の初判。
-
----
-
-## フェーズ 3 — テーマ選定
-
-親エージェントが **1 テーマ** を `theme-selection.md` に記録。ユーザー指定を優先。対象セグメント・スコープ外候補を含める。
-
----
-
-## フェーズ 4 — テーマ深掘り
-
-Task `explore`。プロンプト: §3。
-
-`theme-deep-dive.md`: 再利用資産、不足、UI 置き場案（画面パスレベル）、既存強化案と新規案の比較。
-
-新画面を含む案は **`new_surface_justification`**（既存で代替できない理由）を必ず書く。
-
-**実装コードは書かない。**
-
----
-
-## フェーズ 5 — 重複・UXゲート（G2）
-
-Task `generalPurpose`。プロンプト: §4。ルーブリック: [`references/gates.md`](references/gates.md) §G2。
-
-| verdict | 動作 |
-|---------|------|
-| `pass` | フェーズ 6 へ |
-| `fail` | `mandatory_corrections` を反映し G2 を再実行 |
-| `blocked` | [`user-request-project-alignment.mdc`](../../rules/user-request-project-alignment.mdc) に従いユーザーへ問い合わせ |
-
----
-
-## フェーズ 6 — 方針・画面役割
-
-`enhancement-plan.md` の必須セクション:
-
-1. 画面ごとの役割
-2. v1 / v2 の境界
-3. 対象ユーザーセグメント（テーマに関係する場合）
-4. スコープ外
-5. 当初案と採用案の対応
-6. **集約 API・新ルートの観測**（[`references/gates.md`](references/gates.md) 末尾）
-
-テンプレ: [`references/issue-pack-template.md`](references/issue-pack-template.md) §方針
-
----
-
-## フェーズ 7 — 計画レビュー（G3）
-
-Task `generalPurpose`。プロンプト: §5。ルーブリック: [`references/gates.md`](references/gates.md) §G3。
-
-| verdict | 動作 |
-|---------|------|
-| `pass` | フェーズ 8 へ |
-| `fail` | `enhancement-plan.md` を修正し G3 を再実行 |
-| `blocked` | ユーザー問い合わせ |
-
----
-
-## フェーズ 8 — 画面モック
-
-`screen-mocks.md`: 変わる画面のみ、Before/After、v1/v2 の区別、遷移図。
-
-- **実装コードは書かない**
-- テーマが分析・気候中心ならチャートをモックに含めてよい（G2-3 で過剰でなければ pass）
-
----
-
-## フェーズ 9 — issue パック起票
-
-1. `issue-pack.md` をテンプレに沿って作成
-2. [`github-issue-creator`](../github-issue-creator/SKILL.md) §1–§7 に従う（重複確認・草案・起票・**`agent-ready` は §6 準拠**）
-3. 依頼が `issue 起票まで` なら Epic → 子 issue の順に `gh issue create`
-4. Epic 本文に子 issue 番号を `gh issue edit` で追記
-
----
+**委譲**: Task は毎回 `model: "composer-2.5"`。サブエージェントは成果物パスへ**直接書く**。親はファイル存在・内容を確認してから次へ。
 
 ## 部分実行の早見
 
-| 依頼 | フェーズ |
-|------|----------|
-| ギャップ洗い出しだけ | 1 → 2 |
-| 1 テーマ深掘りまで | 1 → 2 → 3 → 4 |
-| 方針レビューまで | 1 → … → 7 |
-| モックまで | 1 → … → 8 |
-| issue 起票まで | 1 → … → 9 |
+終了地点コード（F2〜F9）の詳細は [`references/artifacts.md`](references/artifacts.md)「終了地点語彙（正本）」。
 
----
+| 依頼の例 | フェーズ |
+|----------|----------|
+| ギャップ洗い出しだけ（F2） | 1 → 2 |
+| 1 テーマ深掘りまで（F4） | 1 → 2 → 3 → 4 |
+| 方針レビューまで（F7） | 1 → … → 7 |
+| モックまで（F8） | 1 → … → 8 |
+| issue 起票まで（F9） | 1 → … → 9 |
 
 ## 禁止
 
 - G2 / G3 未通過で issue 起票
+- 重複確認失敗・部分重複の自動判定不能時の起票（`blocked` で停止）
 - 本パイプライン内で **実装コード** を書く（起票までがスコープ）
 - 本スキル内で PR 作成・`github-issue-worker` による実装
 - `ux-issue-pipeline` の代替として UX 監査起票を行う
-
----
+- Issue 本文への `tmp/` 参照（モック要約・観測は本文に埋め込む）
 
 ## Automation（Cloud Agent）
 
-[`references/automation-prompt.md`](references/automation-prompt.md)
-
-- 成果物は `tmp/product-gap/`（commit しない）
-- G2/G3 が `blocked` のときだけ停止。`fail` は修正して再実行
-- **PR を開かない**
-
----
+[`references/automation-prompt.md`](references/automation-prompt.md) — 確定した終了フェーズまでのみ実行。`blocked` は依頼と事実の矛盾・確定不能時に正しく停止する。
 
 ## 関連
 
