@@ -11,30 +11,35 @@ use crate::shared::org_scope::member_organization_ids;
 use crate::shared::ports::ClockPort;
 use crate::shared::validation::{from_errors, ErrorsInput};
 use crate::work_record::dtos::WorkRecordUpdateInput;
-use crate::work_record::gateways::WorkRecordGateway;
+use crate::work_record::gateways::{
+    WorkRecordClimatePersistFields, WorkRecordClimateSnapshotGateway, WorkRecordGateway,
+};
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::WorkRecordUpdateOutputPort;
 
-pub struct WorkRecordUpdateInteractor<'a, O, P, G, C, S> {
+pub struct WorkRecordUpdateInteractor<'a, O, P, G, C, S, Cl> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
+    climate_snapshot_gateway: &'a Cl,
     clock: &'a C,
     scope_gateway: &'a S,
 }
 
-impl<'a, O, P, G, C, S> WorkRecordUpdateInteractor<'a, O, P, G, C, S>
+impl<'a, O, P, G, C, S, Cl> WorkRecordUpdateInteractor<'a, O, P, G, C, S, Cl>
 where
     O: WorkRecordUpdateOutputPort,
     P: CultivationPlanGateway,
     G: WorkRecordGateway,
     C: ClockPort,
     S: UserOrganizationScopeGateway,
+    Cl: WorkRecordClimateSnapshotGateway,
 {
     pub fn new(
         output_port: &'a mut O,
         plan_gateway: &'a P,
         gateway: &'a G,
+        climate_snapshot_gateway: &'a Cl,
         clock: &'a C,
         scope_gateway: &'a S,
     ) -> Self {
@@ -42,6 +47,7 @@ where
             output_port,
             plan_gateway,
             gateway,
+            climate_snapshot_gateway,
             clock,
             scope_gateway,
         }
@@ -61,9 +67,24 @@ where
         }
 
         let input = WorkRecordUpdateInput::from_params(params, self.clock)?;
+        let existing = self.gateway.find_for_plan(plan_id, record_id)?;
+        let climate = if input.actual_date.is_some_and(|d| d != existing.actual_date) {
+            existing.field_cultivation_id.and_then(|fc_id| {
+                let new_date = input.actual_date.unwrap_or(existing.actual_date);
+                self.climate_snapshot_gateway
+                    .lookup(fc_id, new_date)
+                    .ok()
+                    .map(|snapshot| WorkRecordClimatePersistFields {
+                        gdd_at_actual: snapshot.gdd_at_actual,
+                        weather_snapshot: snapshot.weather_snapshot,
+                    })
+            })
+        } else {
+            None
+        };
         let record = self
             .gateway
-            .update(plan_id, record_id, &input, self.clock.now())?;
+            .update(plan_id, record_id, &input, climate.as_ref(), self.clock.now())?;
         self.output_port.on_success(record);
         Ok(())
     }

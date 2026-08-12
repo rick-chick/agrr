@@ -1,6 +1,7 @@
 //! Ruby: `Domain::WorkRecord::Gateways::WorkRecordGateway`
 
 use rust_decimal::Decimal;
+use serde_json::Value;
 use time::{Date, OffsetDateTime};
 
 use crate::shared::dtos::Error;
@@ -19,8 +20,17 @@ pub struct WorkRecordCreatePersistAttrs {
     pub amount_unit: Option<String>,
     pub time_spent_minutes: Option<i64>,
     pub notes: Option<String>,
+    pub gdd_at_actual: Option<f64>,
+    pub weather_snapshot: Option<Value>,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
+}
+
+/// Climate fields recomputed on update when `actual_date` changes.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WorkRecordClimatePersistFields {
+    pub gdd_at_actual: Option<f64>,
+    pub weather_snapshot: Option<Value>,
 }
 
 pub trait WorkRecordGateway: Send + Sync {
@@ -47,6 +57,7 @@ pub trait WorkRecordGateway: Send + Sync {
         plan_id: i64,
         record_id: i64,
         input: &WorkRecordUpdateInput,
+        climate: Option<&WorkRecordClimatePersistFields>,
         updated_at: OffsetDateTime,
     ) -> Result<WorkRecordRead, Box<dyn std::error::Error + Send + Sync>>;
 

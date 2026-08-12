@@ -92,6 +92,8 @@ fn cultivation_plan_undo_restores_task_schedule_items_and_work_records() {
                 amount_unit: Some("ha".into()),
                 time_spent_minutes: Some(30),
                 notes: None,
+                gdd_at_actual: None,
+                weather_snapshot: None,
                 created_at: now,
                 updated_at: now,
             },

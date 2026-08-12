@@ -79,6 +79,7 @@ pub mod task_schedule_generation;
 pub mod task_schedule_timeline_json;
 pub mod task_schedules;
 pub mod work_records;
+pub mod work_record_climate_snapshot;
 pub mod work_record_photos;
 pub mod work_hub;
 pub mod weather_prediction_anchors;
