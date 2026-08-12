@@ -87,6 +87,27 @@
   margin-bottom: var(--space-4);
 }
 
+.plan-task-schedule__variance-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.plan-task-schedule__learn-link {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.plan-task-schedule__learn-link:hover {
+  color: var(--color-accent-hover);
+}
+
 .plan-task-schedule__view-toggle {
   display: inline-flex;
   gap: var(--space-1);

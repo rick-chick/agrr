@@ -1426,6 +1426,8 @@
           "early": "{{delta}} days early"
         }
       },
+      "variance_summary_line": "Completed {{completed}} · Not recorded {{unrecorded}} · Avg Δ {{average}} days",
+      "open_learn": "Review variance",
       "variance_subview": {
         "toggle_aria": "Task schedule view",
         "view_list": "Schedule",
@@ -1452,6 +1454,9 @@
           "unscheduled": "Unscheduled"
         }
       }
+    },
+    "learn": {
+      "page_title": "Review — {{name}}"
     },
     "work": {
       "page_title": "Work log — {{name}}",
@@ -1724,7 +1729,8 @@
       "nav": {
         "aria_label": "Plan screen navigation",
         "workbench": "Cropping plan",
-        "task_schedule": "Task plan"
+        "task_schedule": "Task plan",
+        "learn": "Review"
       },
       "copy_plan": "Copy to Next Year",
       "delete": "Delete",
