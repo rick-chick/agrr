@@ -10,7 +10,8 @@ use agrr_adapters_sqlite::{
 };
 use agrr_domain::cultivation_plan::gateways::PlanVarianceLearningGateway;
 use agrr_domain::cultivation_plan::interactors::{
-    task_schedule_private_plan_access, PlanVarianceCarryoverInput, PlanVarianceCarryoverInteractor,
+    task_schedule_private_plan_access_allowed, PlanVarianceCarryoverInput,
+    PlanVarianceCarryoverInteractor,
 };
 use axum::{
     extract::{Path, State},
@@ -48,7 +49,7 @@ async fn show_variance_learning(
             )
         })?;
 
-    if !task_schedule_private_plan_access::access_allowed(
+    if !task_schedule_private_plan_access_allowed(
         &plan_gateway,
         id,
         user_id,
