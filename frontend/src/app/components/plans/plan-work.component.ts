@@ -22,6 +22,11 @@ import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-ta
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPlanWorkViewEffects } from './plan-work-view.effects';
+import { WorkRecordSaveImpactPanelComponent } from './work-record-save-impact-panel.component';
+import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
+import {
+  workRecordSaveImpactRequestFromSavedEvent
+} from '../../domain/plans/work-record-save-impact';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -44,7 +49,10 @@ const initialControl: PlanWorkViewState = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  recordSaveImpactPanel: null,
+  recordSaveImpactLoading: false,
+  recordSaveImpactError: null
 };
 
 @Component({
@@ -56,7 +64,8 @@ const initialControl: PlanWorkViewState = {
     TranslateModule,
     PlanPlanContextHeaderComponent,
     WorkRecordSheetComponent,
-    TaskScheduleSyncBannerComponent
+    TaskScheduleSyncBannerComponent,
+    WorkRecordSaveImpactPanelComponent
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
@@ -90,6 +99,21 @@ const initialControl: PlanWorkViewState = {
             [regenerateError]="control.regenerateError"
             (retry)="regenerateTaskSchedule()"
           />
+
+          @if (control.recordSaveImpactPanel) {
+            <app-work-record-save-impact-panel
+              [panel]="control.recordSaveImpactPanel"
+              (dismiss)="dismissRecordSaveImpactPanel()"
+            />
+          } @else if (control.recordSaveImpactLoading) {
+            <p class="plan-work__impact-loading" role="status">
+              {{ 'plans.work.save_impact.loading' | translate }}
+            </p>
+          } @else if (control.recordSaveImpactError) {
+            <div class="page-alert-error plan-work__impact-error" role="alert">
+              <p>{{ control.recordSaveImpactError | translate }}</p>
+            </div>
+          }
 
           @if (control.overdue.length) {
             <section class="plan-work__section">
@@ -291,6 +315,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
 
   private readonly route = inject(ActivatedRoute);
   private readonly loadUseCase = inject(LoadWorkDayListUseCase);
+  private readonly loadImpactUseCase = inject(LoadPlanVsActualSummaryUseCase);
   private readonly skipUseCase = inject(SkipTaskScheduleItemUseCase);
   private readonly createUseCase = inject(CreateWorkRecordUseCase);
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
@@ -339,7 +364,8 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
         if (row) {
           this.sheet.openFromItem(row, { fieldErrors });
         }
-      }
+      },
+      onRequestImpactPreview: (event) => this.requestImpactPreview(event)
     });
     this.cdr.markForCheck();
   }
@@ -398,6 +424,19 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
 
   onRecordSaved(event: WorkRecordSheetSavedEvent): void {
     this.control = { ...this.control, pendingRecordSavedEvent: event };
+  }
+
+  dismissRecordSaveImpactPanel(): void {
+    this.presenter.dismissRecordSaveImpactPanel();
+  }
+
+  private requestImpactPreview(event: WorkRecordSheetSavedEvent): void {
+    const generation = this.presenter.beginImpactPreview(
+      workRecordSaveImpactRequestFromSavedEvent(event, this.planId)
+    );
+    if (generation != null) {
+      this.loadImpactUseCase.execute({ planId: this.planId, loadGeneration: generation });
+    }
   }
 
   private scheduleHighlightClear(itemId: number): void {

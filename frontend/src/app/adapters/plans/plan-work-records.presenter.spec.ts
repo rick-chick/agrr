@@ -44,7 +44,10 @@ describe('PlanWorkRecordsPresenter', () => {
             loading: true,
             error: null,
             plan: null,
-            groups: []
+            groups: [],
+            recordSaveImpactPanel: null,
+            recordSaveImpactLoading: false,
+            recordSaveImpactError: null
           }
         );
       },

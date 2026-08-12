@@ -104,7 +104,8 @@ describe('WorkRecordSheetPresenter', () => {
     expect(view.close).toHaveBeenCalled();
     expect(onSavedCallback).toHaveBeenCalledWith({
       workRecord,
-      mode: 'create-adhoc'
+      mode: 'create-adhoc',
+      gddTrigger: null
     });
   });
 

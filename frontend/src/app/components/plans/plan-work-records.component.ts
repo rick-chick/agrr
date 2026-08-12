@@ -21,16 +21,25 @@ import {
 } from '../../domain/plans/work-record-photo.constants';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
+import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PLAN_WORK_RECORDS_PROVIDERS } from '../../usecase/plans/plan-work-records.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanWorkRecordsView, PlanWorkRecordsViewState } from './plan-work-records.view';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
+import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
+import { WorkRecordSaveImpactPanelComponent } from './work-record-save-impact-panel.component';
+import {
+  workRecordSaveImpactRequestFromSavedEvent
+} from '../../domain/plans/work-record-save-impact';
 
 const initialControl: PlanWorkRecordsViewState = {
   loading: true,
   error: null,
   plan: null,
-  groups: []
+  groups: [],
+  recordSaveImpactPanel: null,
+  recordSaveImpactLoading: false,
+  recordSaveImpactError: null
 };
 
 @Component({
@@ -41,7 +50,8 @@ const initialControl: PlanWorkRecordsViewState = {
     RouterLink,
     TranslateModule,
     PlanPlanContextHeaderComponent,
-    WorkRecordSheetComponent
+    WorkRecordSheetComponent,
+    WorkRecordSaveImpactPanelComponent
   ],
   providers: [...PLAN_WORK_RECORDS_PROVIDERS],
   template: `
@@ -51,6 +61,21 @@ const initialControl: PlanWorkRecordsViewState = {
         [planName]="control.plan?.name ?? null"
         pageTitleKey="plans.work.page_title"
       />
+
+      @if (control.recordSaveImpactPanel) {
+        <app-work-record-save-impact-panel
+          [panel]="control.recordSaveImpactPanel"
+          (dismiss)="dismissRecordSaveImpactPanel()"
+        />
+      } @else if (control.recordSaveImpactLoading) {
+        <p class="plan-work-records__impact-loading" role="status">
+          {{ 'plans.work.save_impact.loading' | translate }}
+        </p>
+      } @else if (control.recordSaveImpactError) {
+        <div class="page-alert-error plan-work-records__impact-error" role="alert">
+          <p>{{ control.recordSaveImpactError | translate }}</p>
+        </div>
+      }
 
       <section class="section-card" aria-labelledby="plan-context-page-title">
         @if (control.loading) {
@@ -176,7 +201,7 @@ const initialControl: PlanWorkRecordsViewState = {
 
     <app-work-record-sheet
       [planId]="planId"
-      (saved)="reload({ silent: true })"
+      (saved)="onRecordSaved($event)"
       (deleted)="reload({ silent: true })"
     />
 
@@ -228,6 +253,7 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
 
   private readonly route = inject(ActivatedRoute);
   private readonly loadUseCase = inject(LoadWorkRecordsUseCase);
+  private readonly loadImpactUseCase = inject(LoadPlanVsActualSummaryUseCase);
   private readonly presenter = inject(PlanWorkRecordsPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
@@ -271,6 +297,20 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
       this.control = { ...this.control, loading: true, error: null };
     }
     this.loadUseCase.execute({ planId: this.planId });
+  }
+
+  onRecordSaved(event: WorkRecordSheetSavedEvent): void {
+    this.reload({ silent: true });
+    const generation = this.presenter.beginImpactPreview(
+      workRecordSaveImpactRequestFromSavedEvent(event, this.planId)
+    );
+    if (generation != null) {
+      this.loadImpactUseCase.execute({ planId: this.planId, loadGeneration: generation });
+    }
+  }
+
+  dismissRecordSaveImpactPanel(): void {
+    this.presenter.dismissRecordSaveImpactPanel();
   }
 
   openEdit(record: WorkRecord): void {

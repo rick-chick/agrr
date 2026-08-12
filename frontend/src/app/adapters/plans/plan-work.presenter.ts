@@ -32,6 +32,12 @@ import {
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 import { buildWorkRecordSaveToast } from '../../domain/plans/work-record-save-toast';
 import { mapWorkRecordSaveToastToPendingRequest } from './work-record-save-toast.presenter.helpers';
+import {
+  buildWorkRecordSaveImpactPanel,
+  shouldShowWorkRecordSaveImpact,
+  type WorkRecordSaveImpactRequest
+} from '../../domain/plans/work-record-save-impact';
+import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
 
 const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
   cropIdsForBanner: [],
@@ -49,6 +55,8 @@ export class PlanWorkPresenter
 {
   private view: PlanWorkView | null = null;
   private syncLifecycle: TaskScheduleSyncLifecycleState = initialTaskScheduleSyncLifecycleState();
+  private impactLoadGeneration = 0;
+  private pendingImpactRequest: WorkRecordSaveImpactRequest | null = null;
 
   setView(view: PlanWorkView): void {
     this.view = view;
@@ -149,6 +157,9 @@ export class PlanWorkPresenter
       syncReloadNonce: loadResult.requestReload
         ? this.view.control.syncReloadNonce + 1
         : this.view.control.syncReloadNonce,
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null,
       ...cropBanner
     };
   }
@@ -231,6 +242,60 @@ export class PlanWorkPresenter
     };
   }
 
+  beginImpactPreview(request: WorkRecordSaveImpactRequest): number | null {
+    if (!shouldShowWorkRecordSaveImpact(request)) {
+      this.pendingImpactRequest = null;
+      return null;
+    }
+    this.pendingImpactRequest = request;
+    this.impactLoadGeneration += 1;
+    if (this.view) {
+      this.view.control = {
+        ...this.view.control,
+        recordSaveImpactPanel: null,
+        recordSaveImpactLoading: true,
+        recordSaveImpactError: null
+      };
+    }
+    return this.impactLoadGeneration;
+  }
+
+  presentImpactSummary(dto: PlanVsActualSummaryDataDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    if (dto.loadGeneration !== this.impactLoadGeneration || !this.pendingImpactRequest) {
+      return;
+    }
+    const panel = buildWorkRecordSaveImpactPanel(this.pendingImpactRequest, dto.summary);
+    this.pendingImpactRequest = null;
+    this.view.control = {
+      ...this.view.control,
+      recordSaveImpactPanel: panel,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
+    };
+  }
+
+  onImpactError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.pendingImpactRequest = null;
+    this.view.control = {
+      ...this.view.control,
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: dto.message
+    };
+  }
+
+  dismissRecordSaveImpactPanel(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
+    };
+  }
+
   private handleQuickCompleteSuccess(dto: CreateWorkRecordSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const itemId = this.view.control.completingItemId;
@@ -259,7 +324,8 @@ export class PlanWorkPresenter
       ),
       pendingRecordSavedEvent: {
         workRecord: dto.workRecord,
-        mode: 'create-from-item'
+        mode: 'create-from-item',
+        gddTrigger: saveContext?.gddTrigger ?? null
       }
     };
   }

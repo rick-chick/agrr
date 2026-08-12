@@ -1969,6 +1969,15 @@
         "record_saved_variance": "{{name}}: {{deltaDays}} दिन / GDD {{gddDelta}}",
         "view_task_detail": "कार्य विवरण देखें"
       },
+      "save_impact": {
+        "title": "इस रिकॉर्ड का योजना पर प्रभाव",
+        "loading": "योजना प्रभाव लोड हो रहा है…",
+        "task_variance": "यह कार्य",
+        "task_variance_value": "{{name}}: {{deltaDays}} दिन / GDD {{gddDelta}}",
+        "unrecorded": "अभिलेखित नहीं (योजना)",
+        "average_delta": "औसत Δ दिन (योजना)",
+        "learn_link": "योजना विचलन की समीक्षा करें"
+      },
       "recent_adhoc": "「{{name}}」（{{date}}）दर्ज किया गया",
       "recent_adhoc_history_link": "कार्य इतिहास देखें",
       "sheet": {

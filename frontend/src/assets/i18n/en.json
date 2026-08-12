@@ -1484,6 +1484,15 @@
         "record_saved_variance": "{{name}}: {{deltaDays}} days / GDD {{gddDelta}}",
         "view_task_detail": "View task detail"
       },
+      "save_impact": {
+        "title": "Plan impact from this record",
+        "loading": "Loading plan impact…",
+        "task_variance": "This task",
+        "task_variance_value": "{{name}}: {{deltaDays}} days / GDD {{gddDelta}}",
+        "unrecorded": "Not recorded (plan)",
+        "average_delta": "Average Δ days (plan)",
+        "learn_link": "Review plan variance"
+      },
       "recent_adhoc": "Recorded “{{name}}” on {{date}}",
       "recent_adhoc_history_link": "View work history",
       "sheet": {

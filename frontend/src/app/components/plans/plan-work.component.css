@@ -253,3 +253,13 @@
 .plan-work__recent-adhoc-link:hover {
   text-decoration: underline;
 }
+
+.plan-work__impact-loading {
+  margin: var(--space-3) 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.plan-work__impact-error {
+  margin: var(--space-3) 0;
+}

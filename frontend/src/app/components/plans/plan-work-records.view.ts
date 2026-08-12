@@ -1,3 +1,4 @@
+import type { WorkRecordSaveImpactPanelView } from '../../domain/plans/work-record-save-impact';
 import {
   WorkRecordMonthGroupDto,
   WorkRecordsPlanHeaderDto
@@ -8,6 +9,9 @@ export interface PlanWorkRecordsViewState {
   error: string | null;
   plan: WorkRecordsPlanHeaderDto | null;
   groups: WorkRecordMonthGroupDto[];
+  recordSaveImpactPanel: WorkRecordSaveImpactPanelView | null;
+  recordSaveImpactLoading: boolean;
+  recordSaveImpactError: string | null;
 }
 
 export interface PlanWorkRecordsView {

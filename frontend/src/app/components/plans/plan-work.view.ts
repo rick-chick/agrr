@@ -1,6 +1,7 @@
 import { FieldSchedule, PlanInfo } from '../../models/plans/task-schedule';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { PendingToastRequest } from '../../core/view-effects/pending-toast-view.effects';
+import type { WorkRecordSaveImpactPanelView } from '../../domain/plans/work-record-save-impact';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 
 export interface PlanWorkViewState {
@@ -28,6 +29,9 @@ export interface PlanWorkViewState {
   syncReloadNonce: number;
   cropIdsForBanner: number[];
   cropNamesForBanner: Record<number, string>;
+  recordSaveImpactPanel: WorkRecordSaveImpactPanelView | null;
+  recordSaveImpactLoading: boolean;
+  recordSaveImpactError: string | null;
 }
 
 export interface PlanWorkView {

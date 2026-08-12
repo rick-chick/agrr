@@ -7,6 +7,7 @@ import { BehaviorSubject } from 'rxjs';
 import { PlanWorkRecordsComponent } from './plan-work-records.component';
 import { PlanWorkRecordsViewState } from './plan-work-records.view';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
+import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
 import {
   WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO,
@@ -46,14 +47,24 @@ describe('PlanWorkRecordsComponent', () => {
   let component: PlanWorkRecordsComponent;
   let fixture: ComponentFixture<PlanWorkRecordsComponent>;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockPresenter: { setView: ReturnType<typeof vi.fn> };
+  let loadImpactUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockPresenter: {
+    setView: ReturnType<typeof vi.fn>;
+    beginImpactPreview: ReturnType<typeof vi.fn>;
+    dismissRecordSaveImpactPanel: ReturnType<typeof vi.fn>;
+  };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   let mockActivatedRoute: ReturnType<typeof createPlanRouteMock>;
 
   beforeEach(async () => {
     loadUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
+    loadImpactUseCase = { execute: vi.fn() };
+    mockPresenter = {
+      setView: vi.fn(),
+      beginImpactPreview: vi.fn(() => null),
+      dismissRecordSaveImpactPanel: vi.fn()
+    };
     cdr = { markForCheck: vi.fn() };
     mockActivatedRoute = createPlanRouteMock('7');
     HTMLDialogElement.prototype.showModal = vi.fn();
@@ -64,6 +75,7 @@ describe('PlanWorkRecordsComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadWorkRecordsUseCase, useValue: loadUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: loadImpactUseCase },
           { provide: PlanWorkRecordsPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr },
           {
@@ -110,7 +122,10 @@ describe('PlanWorkRecordsComponent', () => {
       error: null,
       plan: null,
       groups: []
-    
+    ,
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -122,7 +137,10 @@ describe('PlanWorkRecordsComponent', () => {
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
-      groups: []
+      groups: [],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -163,7 +181,10 @@ describe('PlanWorkRecordsComponent', () => {
           ]
         }
       ]
-    
+    ,
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -204,7 +225,10 @@ describe('PlanWorkRecordsComponent', () => {
             }
           ]
         }
-      ]
+      ],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -221,7 +245,10 @@ describe('PlanWorkRecordsComponent', () => {
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
-      groups: []
+      groups: [],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -240,7 +267,10 @@ describe('PlanWorkRecordsComponent', () => {
       error: 'common.api_error.generic',
       plan: null,
       groups: []
-    
+    ,
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -266,7 +296,10 @@ describe('PlanWorkRecordsComponent', () => {
       error: 'common.api_error.generic',
       plan: null,
       groups: []
-    
+    ,
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -335,7 +368,10 @@ describe('PlanWorkRecordsComponent', () => {
             }
           ]
         }
-      ]
+      ],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -386,7 +422,10 @@ describe('PlanWorkRecordsComponent', () => {
             }
           ]
         }
-      ]
+      ],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -463,7 +502,10 @@ describe('PlanWorkRecordsComponent', () => {
             }
           ]
         }
-      ]
+      ],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -513,7 +555,10 @@ describe('PlanWorkRecordsComponent', () => {
             }
           ]
         }
-      ]
+      ],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -561,7 +606,10 @@ describe('PlanWorkRecordsComponent', () => {
             }
           ]
         }
-      ]
+      ],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -610,7 +658,10 @@ describe('PlanWorkRecordsComponent', () => {
             }
           ]
         }
-      ]
+      ],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -664,7 +715,10 @@ describe('PlanWorkRecordsComponent', () => {
             }
           ]
         }
-      ]
+      ],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -740,7 +794,10 @@ describe('PlanWorkRecordsComponent', () => {
             }
           ]
         }
-      ]
+      ],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 
@@ -824,7 +881,10 @@ describe('PlanWorkRecordsComponent', () => {
             }
           ]
         }
-      ]
+      ],
+      recordSaveImpactPanel: null,
+      recordSaveImpactLoading: false,
+      recordSaveImpactError: null
     };
     fixture.detectChanges();
 

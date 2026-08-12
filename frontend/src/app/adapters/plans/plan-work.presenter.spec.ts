@@ -44,7 +44,10 @@ const baseControl = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  recordSaveImpactPanel: null,
+  recordSaveImpactLoading: false,
+  recordSaveImpactError: null
 };
 
 function field(overrides: Partial<FieldSchedule> & Pick<FieldSchedule, 'field_cultivation_id'>): FieldSchedule {
@@ -157,7 +160,8 @@ describe('PlanWorkPresenter quick complete', () => {
     });
     expect(view.control.pendingRecordSavedEvent).toEqual({
       workRecord: savedWorkRecord,
-      mode: 'create-from-item'
+      mode: 'create-from-item',
+      gddTrigger: '100'
     });
     expect(view.control.completingItemId).toBeNull();
   });
@@ -177,6 +181,51 @@ describe('PlanWorkPresenter quick complete', () => {
 
     expect(view.control.completingItemId).toBeNull();
     expect(view.control.error).toBe('common.api_error.generic');
+  });
+
+  it('builds impact panel after plan summary reload', () => {
+    const generation = presenter.beginImpactPreview({
+      workRecord: {
+        ...workRecord,
+        name: '追肥',
+        actual_date: '2026-06-13',
+        gdd_at_actual: 130.5,
+        task_schedule_item: { id: 11, name: '追肥', scheduled_date: '2026-06-10' }
+      },
+      mode: 'create-from-item',
+      planId: 7,
+      gddTrigger: '100'
+    });
+
+    expect(generation).toBe(1);
+    expect(view.control.recordSaveImpactLoading).toBe(true);
+
+    presenter.presentImpactSummary({
+      loadGeneration: generation!,
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 3,
+        categories: [
+          {
+            category: 'general',
+            average_delta_days: 2,
+            item_count: 2,
+            recorded_count: 2
+          }
+        ],
+        top_variance_items: []
+      }
+    });
+
+    expect(view.control.recordSaveImpactPanel).toEqual({
+      planId: 7,
+      taskName: '追肥',
+      deltaDays: '+3',
+      gddDelta: '+30.5',
+      unrecordedCount: 3,
+      averageDeltaDays: '+2'
+    });
+    expect(view.control.recordSaveImpactLoading).toBe(false);
   });
 
   it('sets regenerating when regenerate starts', () => {

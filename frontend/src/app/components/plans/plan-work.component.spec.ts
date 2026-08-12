@@ -9,6 +9,7 @@ import ja from '../../../assets/i18n/ja.json';
 import { PlanWorkComponent } from './plan-work.component';
 import { PlanWorkViewState } from './plan-work.view';
 import { LoadWorkDayListUseCase } from '../../usecase/plans/load-work-day-list.usecase';
+import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-schedule-item.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
@@ -38,7 +39,10 @@ const initialControl: PlanWorkViewState = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  recordSaveImpactPanel: null,
+  recordSaveImpactLoading: false,
+  recordSaveImpactError: null
 };
 
 function createPlanRouteMock(planId: string) {
@@ -137,7 +141,10 @@ const loadedState: PlanWorkViewState = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  recordSaveImpactPanel: null,
+  recordSaveImpactLoading: false,
+  recordSaveImpactError: null
 };
 
 describe('PlanWorkComponent mobile UX', () => {
@@ -149,22 +156,28 @@ describe('PlanWorkComponent mobile UX', () => {
   let createUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
+  let loadImpactUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: {
     setView: ReturnType<typeof vi.fn>;
     beginScheduleLoad: ReturnType<typeof vi.fn>;
+    beginImpactPreview: ReturnType<typeof vi.fn>;
+    dismissRecordSaveImpactPanel: ReturnType<typeof vi.fn>;
   };
   let mockActivatedRoute: ReturnType<typeof createPlanRouteMock>;
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     loadUseCase = { execute: vi.fn() };
+    loadImpactUseCase = { execute: vi.fn() };
     skipUseCase = { execute: vi.fn() };
     createUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     mockPresenter = {
       setView: vi.fn(),
-      beginScheduleLoad: vi.fn(() => 1)
+      beginScheduleLoad: vi.fn(() => 1),
+      beginImpactPreview: vi.fn(() => null),
+      dismissRecordSaveImpactPanel: vi.fn()
     };
     cdr = { markForCheck: vi.fn() };
     mockActivatedRoute = createPlanRouteMock('7');
@@ -174,6 +187,7 @@ describe('PlanWorkComponent mobile UX', () => {
         styleUrls: [],
         providers: [
           { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: loadImpactUseCase },
           { provide: SkipTaskScheduleItemUseCase, useValue: skipUseCase },
           { provide: CreateWorkRecordUseCase, useValue: createUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
@@ -741,13 +755,16 @@ describe('PlanWorkComponent in locale labels', () => {
 
   beforeEach(async () => {
     const loadUseCase = { execute: vi.fn() };
+    const loadImpactUseCase = { execute: vi.fn() };
     const skipUseCase = { execute: vi.fn() };
     const createUseCase = { execute: vi.fn() };
     const regenerateUseCase = { execute: vi.fn() };
     const subscribeSyncUseCase = { execute: vi.fn() };
     const mockPresenter = {
       setView: vi.fn(),
-      beginScheduleLoad: vi.fn(() => 1)
+      beginScheduleLoad: vi.fn(() => 1),
+      beginImpactPreview: vi.fn(() => null),
+      dismissRecordSaveImpactPanel: vi.fn()
     };
     const cdr = { markForCheck: vi.fn() };
     const localeRouteMock = createPlanRouteMock('7');
@@ -757,6 +774,7 @@ describe('PlanWorkComponent in locale labels', () => {
         styleUrls: [],
         providers: [
           { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: loadImpactUseCase },
           { provide: SkipTaskScheduleItemUseCase, useValue: skipUseCase },
           { provide: CreateWorkRecordUseCase, useValue: createUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },

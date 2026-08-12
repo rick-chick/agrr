@@ -7,6 +7,8 @@ import { CREATE_WORK_RECORD_OUTPUT_PORT } from './create-work-record.output-port
 import { CreateWorkRecordUseCase } from './create-work-record.usecase';
 import { LOAD_WORK_DAY_LIST_OUTPUT_PORT } from './load-work-day-list.output-port';
 import { LoadWorkDayListUseCase } from './load-work-day-list.usecase';
+import { LoadPlanVsActualSummaryUseCase } from './load-plan-vs-actual-summary.usecase';
+import { LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT } from './load-plan-vs-actual-summary.output-port';
 import { PLAN_GATEWAY } from './plan-gateway';
 import { PLAN_OPTIMIZATION_GATEWAY } from './plan-optimization-gateway';
 import { REGENERATE_TASK_SCHEDULE_OUTPUT_PORT } from './regenerate-task-schedule.output-port';
@@ -21,6 +23,7 @@ import { WORK_RECORD_GATEWAY } from './work-record-gateway';
 export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   PlanWorkPresenter,
   LoadWorkDayListUseCase,
+  LoadPlanVsActualSummaryUseCase,
   SkipTaskScheduleItemUseCase,
   CreateWorkRecordUseCase,
   RegenerateTaskScheduleUseCase,
@@ -31,6 +34,16 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   { provide: CREATE_WORK_RECORD_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: REGENERATE_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: SUBSCRIBE_TASK_SCHEDULE_SYNC_OUTPUT_PORT, useExisting: PlanWorkPresenter },
+  {
+    provide: LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT,
+    useFactory: (presenter: PlanWorkPresenter) => ({
+      present: (dto: Parameters<PlanWorkPresenter['presentImpactSummary']>[0]) =>
+        presenter.presentImpactSummary(dto),
+      onError: (dto: Parameters<PlanWorkPresenter['onImpactError']>[0]) =>
+        presenter.onImpactError(dto)
+    }),
+    deps: [PlanWorkPresenter]
+  },
   { provide: PLAN_GATEWAY, useClass: PlanApiGateway },
   { provide: WORK_RECORD_GATEWAY, useClass: WorkRecordApiGateway },
   { provide: PLAN_OPTIMIZATION_GATEWAY, useClass: PlanOptimizationChannelGateway }
