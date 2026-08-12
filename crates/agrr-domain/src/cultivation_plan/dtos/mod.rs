@@ -36,6 +36,7 @@ pub(crate) mod task_schedule_item_amount_snapshot;
 pub(crate) mod task_schedule_item_deletion_undo_schedule_row;
 pub(crate) mod regenerate_task_schedule_input;
 pub(crate) mod task_schedule_timeline;
+pub mod plan_vs_actual;
 pub mod task_schedule_timeline_snapshot;
 pub(crate) mod plan_save_agricultural_tasks;
 pub(crate) mod plan_save_crops;
@@ -168,6 +169,9 @@ pub use task_schedule_field_cultivation_snapshot::TaskScheduleFieldCultivationSn
 pub use task_schedule_generation_context::TaskScheduleGenerationContext;
 pub use task_schedule_item_amount_snapshot::TaskScheduleItemAmountSnapshot;
 pub use task_schedule_item_deletion_undo_schedule_row::TaskScheduleItemDeletionUndoScheduleRow;
+pub use plan_vs_actual::{
+    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+};
 pub use task_schedule_timeline::TaskScheduleTimeline;
 pub use task_schedule_timeline_snapshot::{
     TaskScheduleTimelineAgriculturalTaskRead, TaskScheduleTimelineFieldRead,

@@ -198,7 +198,7 @@ fn load_work_record_summaries(
     plan_id: i64,
 ) -> rusqlite::Result<std::collections::BTreeMap<i64, Vec<TaskScheduleTimelineWorkRecordSummaryRead>>> {
     let mut stmt = conn.prepare(
-        "SELECT wr.task_schedule_item_id, wr.id, wr.actual_date, wr.notes \
+        "SELECT wr.task_schedule_item_id, wr.id, wr.actual_date, wr.notes, wr.gdd_at_actual \
          FROM work_records wr \
          WHERE wr.cultivation_plan_id = ?1 AND wr.task_schedule_item_id IS NOT NULL \
          ORDER BY wr.task_schedule_item_id, wr.actual_date ASC",
@@ -210,6 +210,7 @@ fn load_work_record_summaries(
                 id: row.get(1)?,
                 actual_date: row.get(2)?,
                 notes: row.get(3)?,
+                gdd_at_actual: row.get(4)?,
             },
         ))
     })?;
@@ -436,7 +437,7 @@ CREATE TABLE task_schedule_items (
 );
 CREATE TABLE work_records (
   id INTEGER PRIMARY KEY, cultivation_plan_id INTEGER, task_schedule_item_id INTEGER,
-  actual_date TEXT, notes TEXT
+  actual_date TEXT, notes TEXT, gdd_at_actual REAL
 );
 ";
 
@@ -496,8 +497,8 @@ CREATE TABLE work_records (
                 [],
             )?;
             conn.execute(
-                "INSERT INTO work_records (id, cultivation_plan_id, task_schedule_item_id, actual_date, notes)
-                 VALUES (2001, 1, 1001, '2026-07-05', 'done')",
+                "INSERT INTO work_records (id, cultivation_plan_id, task_schedule_item_id, actual_date, notes, gdd_at_actual)
+                 VALUES (2001, 1, 1001, '2026-07-05', 'done', 142.5)",
                 [],
             )?;
             Ok(())
@@ -542,6 +543,7 @@ CREATE TABLE work_records (
         assert!(item.completed);
         assert_eq!(item.work_records.len(), 1);
         assert_eq!(item.work_records[0].actual_date, "2026-07-05");
+        assert_eq!(item.work_records[0].gdd_at_actual, Some(142.5));
         let master = item.agricultural_task.as_ref().expect("master");
         assert_eq!(master.name, "Weeding");
     }
