@@ -29,7 +29,13 @@ describe('PlanDetailPresenter', () => {
     let lastControl: PlanDetailViewState | null = null;
     const view: PlanDetailView = {
       get control(): PlanDetailViewState {
-        return lastControl ?? { loading: true, error: null, plan: null, planData: null };
+        return lastControl ?? {
+          loading: true,
+          error: null,
+          plan: null,
+          planData: null,
+          varianceActionItemsOnGantt: []
+        };
       },
       set control(value: PlanDetailViewState) {
         lastControl = value;
@@ -38,7 +44,7 @@ describe('PlanDetailPresenter', () => {
 
     const presenter = new PlanDetailPresenter();
     presenter.setView(view);
-    presenter.present({ plan, planData } as PlanDetailDataDto);
+    presenter.present({ plan, planData, varianceActionItemsOnGantt: [] });
 
     expect(lastControl).not.toBeNull();
     expect(lastControl!.loading).toBe(false);
@@ -51,7 +57,13 @@ describe('PlanDetailPresenter', () => {
     let lastControl: PlanDetailViewState | null = null;
     const view: PlanDetailView = {
       get control(): PlanDetailViewState {
-        return lastControl ?? { loading: true, error: null, plan: null, planData: null };
+        return lastControl ?? {
+          loading: true,
+          error: null,
+          plan: null,
+          planData: null,
+          varianceActionItemsOnGantt: []
+        };
       },
       set control(value: PlanDetailViewState) {
         lastControl = value;

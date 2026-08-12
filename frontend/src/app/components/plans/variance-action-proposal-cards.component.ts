@@ -63,9 +63,8 @@ export class VarianceActionProposalCardsComponent {
     const badge = resolvePlanTaskScheduleVarianceBadge({
       status: 'planned',
       scheduled_date: '2026-01-01',
-      actual_date: '2026-01-02',
-      delta_days: deltaDays,
-      cancelled_at: null
+      actualDate: '2026-01-02',
+      deltaDays
     });
     return badge ? formatPlanTaskScheduleDeltaDaysLabel(badge) : '—';
   }
