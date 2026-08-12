@@ -66,6 +66,17 @@ describe('WorkRecordSheetPresenter', () => {
           agricultural_task_id: null
         },
         fieldOptions: [],
+        scheduleCategory: null,
+        plannedAmount: '',
+        plannedAmountUnit: '',
+        climatePreview: {
+          gddAtActual: null,
+          weatherDate: null,
+          temperatureMax: null,
+          temperatureMin: null,
+          temperatureMean: null,
+          loading: false
+        },
         showDetails: false,
         taskChips: [],
         loadingTaskChips: false,

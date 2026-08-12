@@ -1942,6 +1942,18 @@
         "task_other": "अन्य",
         "show_details": "विवरण जोड़ें",
         "hide_details": "विवरण छुपाएं",
+        "fertilizer": {
+          "planned_amount": "नियोजित मात्रा",
+          "planned_amount_empty": "कोई नियोजित मात्रा नहीं",
+          "actual_amount": "वास्तविक मात्रा"
+        },
+        "climate_preview": {
+          "label": "इस रिकॉर्ड के साथ सहेजा गया जलवायु डेटा",
+          "loading": "जलवायु डेटा लोड हो रहा है…",
+          "unavailable": "इस तिथि के लिए जलवायु डेटा उपलब्ध नहीं",
+          "gdd": "GDD {{value}}",
+          "weather": "अधिकतम {{max}}°C / न्यूनतम {{min}}°C (औसत {{mean}}°C)"
+        },
         "photos": {
           "label": "फ़ोटो (वैकल्पिक)",
           "add": "फ़ोटो जोड़ें",
