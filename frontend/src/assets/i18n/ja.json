@@ -2662,6 +2662,17 @@
           "invalid_byte_size": "画像サイズが上限（5MB）を超えています",
           "already_completed": "この写真はすでにアップロード済みです"
         }
+      },
+      "variance": {
+        "scheduled": "予定 {{date}}",
+        "delta_days_late": "{{count}}日遅れ",
+        "delta_days_early": "{{count}}日早着",
+        "delta_days_on_time": "予定通り",
+        "gdd_at_actual": "GDD {{value}}",
+        "no_schedule": "予定なし",
+        "month_average_late": "平均 {{count}}日遅れ",
+        "month_average_early": "平均 {{count}}日早着",
+        "month_average_on_time": "平均 予定通り"
       }
     }
   },

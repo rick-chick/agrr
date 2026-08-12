@@ -40,6 +40,24 @@ describe('groupWorkRecordsByMonth', () => {
     expect(groups[0].records.map((r) => r.id)).toEqual([1, 2]);
     expect(groups[1].monthLabel).toBe('2026-05');
   });
+
+  it('computes average delta days per month group for schedule-linked records', () => {
+    const groups = groupWorkRecordsByMonth([
+      {
+        ...record(1, '2026-06-12'),
+        task_schedule_item_id: 1,
+        task_schedule_item: { id: 1, name: 'A', scheduled_date: '2026-06-10' }
+      },
+      {
+        ...record(2, '2026-06-14'),
+        task_schedule_item_id: 2,
+        task_schedule_item: { id: 2, name: 'B', scheduled_date: '2026-06-10' }
+      },
+      record(3, '2026-06-11')
+    ]);
+
+    expect(groups[0].averageDeltaDays).toBe(3);
+  });
 });
 
 describe('LoadWorkRecordsUseCase', () => {
