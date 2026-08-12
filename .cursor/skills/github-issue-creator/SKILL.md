@@ -17,6 +17,7 @@ disable-model-invocation: true
 | 経路 | スキル |
 |------|--------|
 | 汎用（機能・バグ・リファクタ・負債） | **本スキル** |
+| 競合・プロダクトギャップ調査〜Epic 起票 | **`product-gap-to-issues`** |
 | visual-review / CSS 監査の一括起票 | **`ux-issue-creator`** |
 | 要件の深掘りのみ（起票前） | **`requirements-analysis`**（必要時） |
 
@@ -149,6 +150,7 @@ gh issue edit <N> --repo rick-chick/agrr --add-label agent-ready
 ## 関連
 
 - 実装: **`github-issue-worker`**
+- プロダクトギャップ調査〜起票: **`product-gap-to-issues`**
 - UX 起票: **`ux-issue-creator`** / **`ux-issue-pipeline`**
 - 要件整理: **`requirements-analysis`**
 - GitHub テンプレ: [`.github/ISSUE_TEMPLATE/`](../../../.github/ISSUE_TEMPLATE/)
