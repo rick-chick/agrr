@@ -7,10 +7,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Channel } from 'actioncable';
 import { combineLatest } from 'rxjs';
 import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
-import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
 import {
   PlanTaskScheduleView,
-  PlanTaskScheduleViewMode,
   PlanTaskScheduleViewState,
   PlanTaskScheduleRowView
 } from './plan-task-schedule.view';
@@ -25,6 +23,7 @@ import { FlashMessageService } from '../../services/flash-message.service';
 import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effects';
 import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
+import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -53,9 +52,7 @@ const initialControl: PlanTaskScheduleViewState = {
   allFieldsLackTasks: false,
   varianceLoading: false,
   varianceError: null,
-  varianceSummary: null,
-  varianceStats: null,
-  varianceUnrecordedRows: []
+  varianceStats: null
 };
 
 @Component({
@@ -66,7 +63,6 @@ const initialControl: PlanTaskScheduleViewState = {
     FormsModule,
     RouterLink,
     TaskScheduleMonthListComponent,
-    TaskScheduleVarianceViewComponent,
     TranslateModule,
     PlanPlanContextHeaderComponent,
     TaskScheduleSyncBannerComponent
@@ -199,38 +195,27 @@ const initialControl: PlanTaskScheduleViewState = {
                   }}
                 </p>
               }
-            <div class="plan-task-schedule__view-toggle" role="tablist" aria-label="{{ 'plans.task_schedules.variance_subview.toggle_aria' | translate }}">
-              <button
-                type="button"
-                role="tab"
-                class="plan-task-schedule__view-toggle-btn"
-                [class.plan-task-schedule__view-toggle-btn--active]="!isVarianceView"
-                [attr.aria-selected]="!isVarianceView"
-                (click)="onViewModeChange('list')"
-              >
-                {{ 'plans.task_schedules.variance_subview.view_list' | translate }}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                class="plan-task-schedule__view-toggle-btn"
-                [class.plan-task-schedule__view-toggle-btn--active]="isVarianceView"
-                [attr.aria-selected]="isVarianceView"
-                (click)="onViewModeChange('variance')"
-              >
-                {{ 'plans.task_schedules.variance_subview.view_variance' | translate }}
-              </button>
-            </div>
-            @if (isVarianceView) {
-              <app-task-schedule-variance-view
-                [planId]="planId"
-                [loading]="control.varianceLoading"
-                [error]="control.varianceError"
-                [stats]="control.varianceStats"
-                [summary]="control.varianceSummary"
-                [unrecordedRows]="control.varianceUnrecordedRows"
-              />
-            } @else {
+            <p class="plan-task-schedule__variance-summary" role="status">
+              @if (control.varianceLoading) {
+                <span>{{ 'common.loading' | translate }}</span>
+              } @else if (control.varianceError) {
+                <span>{{ control.varianceError | translate }}</span>
+              } @else if (control.varianceStats) {
+                <span>{{
+                  'plans.task_schedules.variance_summary_line'
+                    | translate
+                      : {
+                          completed: control.varianceStats.completedCount,
+                          unrecorded: control.varianceStats.unrecordedCount,
+                          average: varianceAverageLabel(control.varianceStats.averageDeltaDays)
+                        }
+                }}</span>
+              }
+              <a
+                class="plan-task-schedule__learn-link"
+                [routerLink]="['/plans', planId, 'learn']"
+              >{{ 'plans.task_schedules.open_learn' | translate }}</a>
+            </p>
             <div class="plan-task-schedule__filters">
               <label class="plan-task-schedule__filter">
                 <span class="plan-task-schedule__filter-label">{{
@@ -267,7 +252,6 @@ const initialControl: PlanTaskScheduleViewState = {
               [monthGroups]="scheduleMonthGroups"
               [unscheduledRows]="scheduleUnscheduledRows"
             />
-            }
             <footer class="plan-task-schedule__footer">
               <p class="plan-task-schedule__generated-at">{{ timelineGeneratedAtLabel }}</p>
               <p class="plan-task-schedule__summary">{{
@@ -421,12 +405,11 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     return this.control.fieldFilterOptions;
   }
 
-  get viewMode(): PlanTaskScheduleViewMode {
-    return this.resolveViewModeFromRoute();
-  }
-
-  get isVarianceView(): boolean {
-    return this.viewMode === 'variance';
+  varianceAverageLabel(value: number | null): string {
+    if (value == null) {
+      return this.translate.instant('plans.task_schedules.variance_subview.not_available');
+    }
+    return formatPlanTaskScheduleAverageDeltaDaysLabel(value);
   }
 
   private _control: PlanTaskScheduleViewState = initialControl;
@@ -458,6 +441,9 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
+    if (this.maybeRedirectLegacyVarianceView()) {
+      return;
+    }
     this.syncChannel?.unsubscribe();
     this.syncChannel = null;
     this.presenter.applyClientFilters(
@@ -473,9 +459,15 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       }
     });
     this.reload();
-    if (this.isVarianceView) {
-      this.loadVarianceSummary();
+    this.loadVarianceSummary();
+  }
+
+  private maybeRedirectLegacyVarianceView(): boolean {
+    if (this.route.snapshot.queryParamMap.get('view') !== 'variance') {
+      return false;
     }
+    void this.router.navigate(['/plans', this.planId, 'learn'], { replaceUrl: true });
+    return true;
   }
 
   private loadVarianceSummary(): void {
@@ -490,18 +482,6 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     };
     const loadGeneration = this.presenter.beginVarianceLoad();
     this.varianceUseCase.execute({ planId, loadGeneration });
-  }
-
-  onViewModeChange(view: PlanTaskScheduleViewMode): void {
-    if (this.viewMode === view) {
-      return;
-    }
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { view: view === 'variance' ? 'variance' : null },
-      queryParamsHandling: 'merge',
-      replaceUrl: true
-    });
   }
 
   reload(options?: { silent?: boolean }): void {
@@ -607,11 +587,6 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       return raw;
     }
     return localTodayIso();
-  }
-
-  private resolveViewModeFromRoute(): PlanTaskScheduleViewMode {
-    const raw = this.route.snapshot.queryParamMap.get('view');
-    return raw === 'variance' ? 'variance' : 'list';
   }
 
   regenerateTaskSchedule(): void {

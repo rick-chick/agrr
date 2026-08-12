@@ -62,12 +62,13 @@
 | 49 | `pests/new` | `/pests/new` | yes | `pests_new.ja.png` | `pests_new.en.png` | `pests_new.in.png` |
 | 50 | `plans` | `/plans` | yes | `plans.ja.png` | `plans.en.png` | `plans.in.png` |
 | 51 | `plans/:id` | `/plans/1` | yes | `plans_id.ja.png` | `plans_id.en.png` | `plans_id.in.png` |
-| 52 | `plans/:id/optimizing` | `/plans/1/optimizing` | yes | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` |
-| 53 | `plans/:id/task_schedule` | `/plans/1/task_schedule` | yes | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` |
-| 54 | `plans/:id/work` | `/plans/1/work` | yes | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` |
-| 55 | `plans/:id/work_records` | `/plans/1/work_records` | yes | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` |
-| 56 | `plans/new` | `/plans/new` | yes | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` |
-| 57 | `work` | `/work` | yes | `work.ja.png` | `work.en.png` | `work.in.png` |
+| 52 | `plans/:id/learn` | `/plans/1/learn` | yes | `plans_id_learn.ja.png` | `plans_id_learn.en.png` | `plans_id_learn.in.png` |
+| 53 | `plans/:id/optimizing` | `/plans/1/optimizing` | yes | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` |
+| 54 | `plans/:id/task_schedule` | `/plans/1/task_schedule` | yes | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` |
+| 55 | `plans/:id/work` | `/plans/1/work` | yes | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` |
+| 56 | `plans/:id/work_records` | `/plans/1/work_records` | yes | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` |
+| 57 | `plans/new` | `/plans/new` | yes | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` |
+| 58 | `work` | `/work` | yes | `work.ja.png` | `work.en.png` | `work.in.png` |
 
 ## キャプチャ前提
 

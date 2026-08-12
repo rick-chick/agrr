@@ -1911,10 +1911,9 @@
           "early": "{{delta}} दिन जल्दी"
         }
       },
+      "variance_summary_line": "पूर्ण {{completed}} · अभिलेखित नहीं {{unrecorded}} · औसत Δ {{average}} दिन",
+      "open_learn": "अंतर की समीक्षा करें",
       "variance_subview": {
-        "toggle_aria": "कार्य अनुसूची दृश्य",
-        "view_list": "अनुसूची",
-        "view_variance": "अंतर",
         "summary_title": "योजना अंतर सारांश",
         "summary_completed": "पूर्ण",
         "summary_average_delta": "औसत Δ दिन",
@@ -1935,8 +1934,14 @@
           "general": "सामान्य कार्य",
           "fertilizer": "उर्वरक",
           "unscheduled": "अनिश्चित"
-        }
+        },
+        "toggle_aria": "कार्य अनुसूची दृश्य",
+        "view_list": "अनुसूची",
+        "view_variance": "अंतर"
       }
+    },
+    "learn": {
+      "page_title": "समीक्षा — {{name}}"
     },
     "work": {
       "page_title": "कार्य लॉग — {{name}}",
@@ -1968,16 +1973,6 @@
         "record_saved_adhoc": "कार्य दर्ज हो गया। कार्य इतिहास में देखें।",
         "record_saved_variance": "{{name}}: {{deltaDays}} दिन / GDD {{gddDelta}}",
         "view_task_detail": "कार्य विवरण देखें"
-      },
-      "save_impact": {
-        "title": "योजना पर प्रभाव",
-        "task_label": "दर्ज कार्य",
-        "delta_days": "दिनों का अंतर",
-        "gdd_delta": "GDD अंतर",
-        "unrecorded": "अदर्ज कार्य",
-        "average_delta": "औसत दिन अंतर",
-        "learn_link": "Learn में समीक्षा करें",
-        "dismiss": "प्रभाव पूर्वावलोकन बंद करें"
       },
       "recent_adhoc": "「{{name}}」（{{date}}）दर्ज किया गया",
       "recent_adhoc_history_link": "कार्य इतिहास देखें",
@@ -2024,7 +2019,17 @@
         "name_required": "कार्य का नाम आवश्यक है"
       },
       "empty_plan_cta": "खेती योजना देखें",
-      "empty_task_schedule_cta": "कार्य योजना खोलें"
+      "empty_task_schedule_cta": "कार्य योजना खोलें",
+      "save_impact": {
+        "title": "योजना पर प्रभाव",
+        "task_label": "दर्ज कार्य",
+        "delta_days": "दिनों का अंतर",
+        "gdd_delta": "GDD अंतर",
+        "unrecorded": "अदर्ज कार्य",
+        "average_delta": "औसत दिन अंतर",
+        "learn_link": "Learn में समीक्षा करें",
+        "dismiss": "प्रभाव पूर्वावलोकन बंद करें"
+      }
     },
     "work_records": {
       "empty": "अभी तक कोई कार्य दर्ज नहीं",
@@ -2219,7 +2224,8 @@
       "nav": {
         "aria_label": "योजना स्क्रीन नेविगेशन",
         "workbench": "खेती योजना",
-        "task_schedule": "कार्य योजना"
+        "task_schedule": "कार्य योजना",
+        "learn": "समीक्षा"
       },
       "copy_plan": "अगले वर्ष में कॉपी करें",
       "delete": "हटाएं",
