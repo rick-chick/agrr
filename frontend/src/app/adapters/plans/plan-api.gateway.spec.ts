@@ -268,6 +268,22 @@ describe('PlanApiGateway', () => {
     });
   });
 
+  describe('getPlanVsActualSummary', () => {
+    it('calls GET /api/v1/plans/:id/plan_vs_actual/summary', async () => {
+      const summary = {
+        plan_id: 7,
+        unrecorded_count: 1,
+        categories: [],
+        top_variance_items: []
+      };
+      vi.mocked(apiClient.get).mockReturnValue(of(summary));
+
+      const result = await firstValueFrom(gateway.getPlanVsActualSummary(7));
+      expect(result).toEqual(summary);
+      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/plan_vs_actual/summary');
+    });
+  });
+
   describe('regenerateTaskSchedule', () => {
     it('calls POST /api/v1/plans/:id/task_schedule/regenerate and returns sync state', async () => {
       const response = { success: true, task_schedule_sync_state: 'generating' };

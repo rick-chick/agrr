@@ -1909,6 +1909,32 @@
           "late": "{{delta}} दिन देरी",
           "early": "{{delta}} दिन जल्दी"
         }
+      },
+      "variance_subview": {
+        "toggle_aria": "कार्य अनुसूची दृश्य",
+        "view_list": "अनुसूची",
+        "view_variance": "अंतर",
+        "summary_title": "योजना अंतर सारांश",
+        "summary_completed": "पूर्ण",
+        "summary_average_delta": "औसत Δ दिन",
+        "summary_unrecorded": "अभिलेखित नहीं",
+        "categories_title": "श्रेणी के अनुसार औसत अंतर",
+        "category_column": "श्रेणी",
+        "category_average": "औसत Δ दिन",
+        "category_recorded": "अभिलेखित",
+        "top_variance_title": "सबसे बड़ा अंतर",
+        "top_item_dates": "नियोजित {{scheduled}} · वास्तविक {{actual}}",
+        "unrecorded_title": "नियोजित लेकिन अभिलेखित नहीं",
+        "open_in_schedule": "अनुसूची में खोलें",
+        "no_data": "अभी तक कोई अंतर डेटा नहीं",
+        "delta_value": "Δ {{delta}} दिन",
+        "average_value": "{{delta}} दिन",
+        "not_available": "—",
+        "category": {
+          "general": "सामान्य कार्य",
+          "fertilizer": "उर्वरक",
+          "unscheduled": "अनिश्चित"
+        }
       }
     },
     "work": {

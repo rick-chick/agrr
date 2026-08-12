@@ -1,0 +1,112 @@
+@import './plan-work-shared.css';
+
+.task-schedule-variance__section-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.task-schedule-variance__summary {
+  margin-bottom: var(--space-4);
+}
+
+.task-schedule-variance__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.task-schedule-variance__summary-grid dt {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.task-schedule-variance__summary-grid dd {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.task-schedule-variance__section {
+  margin-bottom: var(--space-4);
+}
+
+.task-schedule-variance__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.task-schedule-variance__table th,
+.task-schedule-variance__table td {
+  padding: var(--space-2) var(--space-1);
+  border-bottom: 1px solid var(--color-divider);
+  text-align: left;
+}
+
+.task-schedule-variance__table th {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.task-schedule-variance__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.task-schedule-variance__list-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.task-schedule-variance__list-main {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.task-schedule-variance__list-name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.task-schedule-variance__list-meta,
+.task-schedule-variance__list-date {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.task-schedule-variance__list-delta {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.task-schedule-variance__list-link {
+  font-size: var(--font-size-xs);
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  white-space: nowrap;
+}
+
+.task-schedule-variance__empty {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}

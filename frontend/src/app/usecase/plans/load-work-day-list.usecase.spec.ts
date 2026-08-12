@@ -94,6 +94,7 @@ describe('LoadWorkDayListUseCase', () => {
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of(response),
+      getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
     }) as PlanGateway;
@@ -350,6 +351,7 @@ describe('LoadWorkDayListUseCase', () => {
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => throwError(() => new Error('fail')),
+      getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
     };
