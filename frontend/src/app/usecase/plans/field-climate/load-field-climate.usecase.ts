@@ -15,7 +15,9 @@ import { PLAN_GATEWAY, PlanGateway } from '../plan-gateway';
 import { WORK_RECORD_GATEWAY, WorkRecordGateway } from '../work-record-gateway';
 import {
   buildFieldClimateLatestImplementation,
-  buildFieldClimateWorkDayMarkers
+  buildFieldClimateWorkDayMarkers,
+  FieldClimateLatestImplementation,
+  FieldClimateWorkDayMarker
 } from '../../../domain/plans/field-climate-work-records';
 import {
   collectTaskScheduleItemsForField,
@@ -61,8 +63,8 @@ export class LoadFieldClimateUseCase implements LoadFieldClimateInputPort {
       workbench: workbench$
     }).subscribe({
       next: ({ climate, workbench }) => {
-        let workDayMarkers = [];
-        let latestImplementation = null;
+        let workDayMarkers: FieldClimateWorkDayMarker[] = [];
+        let latestImplementation: FieldClimateLatestImplementation | null = null;
         if (workbench) {
           const scheduleItems = collectTaskScheduleItemsForField(
             workbench.taskSchedule.fields,
