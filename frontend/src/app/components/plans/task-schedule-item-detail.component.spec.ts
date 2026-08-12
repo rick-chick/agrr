@@ -70,7 +70,7 @@ describe('TaskScheduleItemDetailComponent', () => {
     component.task = mockTask();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelectorAll('.task-schedule-detail__fact')).toHaveLength(3);
+    expect(fixture.nativeElement.querySelectorAll('.task-schedule-detail__facts')[0].querySelectorAll('.task-schedule-detail__fact')).toHaveLength(3);
 
     const text = fixture.nativeElement.textContent ?? '';
     expect(text).toContain('Growth');

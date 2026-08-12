@@ -72,7 +72,9 @@ describe('TaskScheduleMonthListComponent', () => {
         'plans.task_schedules.detail.dialog_title': '{{task}} · {{crop}}',
         'plans.task_schedules.detail.stage': 'Stage',
         'plans.task_schedules.detail.not_applicable': 'N/A',
-        'common.close': 'Close'
+        'common.close': 'Close',
+        'plans.task_schedules.variance.month_average': 'Monthly avg Δ {{delta}} days',
+        'plans.task_schedules.variance.badge.late': '{{delta}} days late'
       },
       true
     );
