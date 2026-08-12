@@ -11,6 +11,18 @@
   color: var(--color-text-secondary);
 }
 
+.plan-work-records__month-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+}
+
+.plan-work-records__month-average {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
 .plan-work-records__list {
   list-style: none;
   margin: 0;
@@ -65,10 +77,21 @@
 
 .plan-work-records__amount,
 .plan-work-records__notes,
-.plan-work-records__field {
+.plan-work-records__field,
+.plan-work-records__variance {
   grid-column: 1 / -1;
   font-size: 0.875rem;
   color: var(--color-text-secondary);
+}
+
+.plan-work-records__variance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}
+
+.plan-work-records__variance-delta {
+  font-weight: 600;
 }
 
 .plan-work-records__notes {

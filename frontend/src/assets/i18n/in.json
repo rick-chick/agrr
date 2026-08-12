@@ -1979,6 +1979,17 @@
         "from_schedule": "अनुसूची से",
         "adhoc": "अनियोजित"
       },
+      "variance": {
+        "scheduled": "नियोजित {{date}}",
+        "delta_days_late": "{{count}} दिन देरी",
+        "delta_days_early": "{{count}} दिन पहले",
+        "delta_days_on_time": "नियोजित समय पर",
+        "gdd_at_actual": "GDD {{value}}",
+        "no_schedule": "कोई अनुसूची नहीं",
+        "month_average_late": "औसत {{count}} दिन देरी",
+        "month_average_early": "औसत {{count}} दिन पहले",
+        "month_average_on_time": "औसत नियोजित समय पर"
+      },
       "sheet": {
         "edit_title": "कार्य संपादित करें",
         "save": "सहेजें",

@@ -1494,6 +1494,17 @@
         "from_schedule": "From schedule",
         "adhoc": "Ad hoc"
       },
+      "variance": {
+        "scheduled": "Scheduled {{date}}",
+        "delta_days_late": "{{count}} days late",
+        "delta_days_early": "{{count}} days early",
+        "delta_days_on_time": "On schedule",
+        "gdd_at_actual": "GDD {{value}}",
+        "no_schedule": "No schedule",
+        "month_average_late": "Avg. {{count}} days late",
+        "month_average_early": "Avg. {{count}} days early",
+        "month_average_on_time": "Avg. on schedule"
+      },
       "sheet": {
         "edit_title": "Edit record",
         "save": "Save",

@@ -25,6 +25,7 @@ export interface WorkRecord {
   amount_unit: string | null;
   time_spent_minutes: number | null;
   notes: string | null;
+  gdd_at_actual?: number | null;
   field_name?: string | null;
   crop_name?: string | null;
   created_at: string;

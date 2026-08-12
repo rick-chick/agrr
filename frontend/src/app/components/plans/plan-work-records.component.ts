@@ -9,6 +9,10 @@ import {
   previewWorkRecordPhotos,
   sortedWorkRecordPhotos
 } from '../../domain/plans/work-record-photo-preview';
+import {
+  workRecordDeltaDays,
+  workRecordScheduledDate
+} from '../../domain/plans/work-record-variance';
 import { WorkRecord } from '../../models/plans/work-record';
 import { WorkRecordPhoto } from '../../models/plans/work-record-photo';
 import {
@@ -72,7 +76,14 @@ const initialControl: PlanWorkRecordsViewState = {
 
           @for (group of control.groups; track group.monthLabel) {
             <section class="plan-work-records__month">
-              <h3>{{ displayMonth(group.monthLabel) }}</h3>
+              <h3 class="plan-work-records__month-heading">
+                <span>{{ displayMonth(group.monthLabel) }}</span>
+                @if (group.averageDeltaDays != null) {
+                  <span class="plan-work-records__month-average">
+                    {{ formatAverageDelta(group.averageDeltaDays) }}
+                  </span>
+                }
+              </h3>
               <ul class="plan-work-records__list">
                 @for (record of group.records; track record.id) {
                   <li>
@@ -98,6 +109,35 @@ const initialControl: PlanWorkRecordsViewState = {
                         @if (record.notes) {
                           <span class="plan-work-records__notes">{{ record.notes }}</span>
                         }
+                        <div class="plan-work-records__variance">
+                          @if (record.task_schedule_item_id) {
+                            @if (scheduledDate(record); as scheduled) {
+                              <span class="plan-work-records__variance-scheduled">
+                                {{
+                                  'plans.work_records.variance.scheduled'
+                                    | translate: { date: displayDate(scheduled) }
+                                }}
+                              </span>
+                              @if (deltaDays(record); as delta) {
+                                <span class="plan-work-records__variance-delta">
+                                  {{ formatDeltaDays(delta) }}
+                                </span>
+                              }
+                              @if (record.gdd_at_actual != null) {
+                                <span class="plan-work-records__variance-gdd">
+                                  {{
+                                    'plans.work_records.variance.gdd_at_actual'
+                                      | translate: { value: record.gdd_at_actual }
+                                  }}
+                                </span>
+                              }
+                            }
+                          } @else {
+                            <span class="plan-work-records__variance-none">
+                              {{ 'plans.work_records.variance.no_schedule' | translate }}
+                            </span>
+                          }
+                        </div>
                       </div>
                       @if (record.photos?.length) {
                         <div
@@ -280,5 +320,40 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
 
   displayMonth(isoYm: string): string {
     return formatIsoMonthForDisplay(isoYm, this.translate.currentLang);
+  }
+
+  scheduledDate(record: WorkRecord): string | null {
+    return workRecordScheduledDate(record);
+  }
+
+  deltaDays(record: WorkRecord): number | null {
+    return workRecordDeltaDays(record);
+  }
+
+  formatDeltaDays(delta: number): string {
+    if (delta > 0) {
+      return this.translate.instant('plans.work_records.variance.delta_days_late', { count: delta });
+    }
+    if (delta < 0) {
+      return this.translate.instant('plans.work_records.variance.delta_days_early', {
+        count: Math.abs(delta)
+      });
+    }
+    return this.translate.instant('plans.work_records.variance.delta_days_on_time');
+  }
+
+  formatAverageDelta(average: number): string {
+    const rounded = Math.round(average);
+    if (rounded > 0) {
+      return this.translate.instant('plans.work_records.variance.month_average_late', {
+        count: rounded
+      });
+    }
+    if (rounded < 0) {
+      return this.translate.instant('plans.work_records.variance.month_average_early', {
+        count: Math.abs(rounded)
+      });
+    }
+    return this.translate.instant('plans.work_records.variance.month_average_on_time');
   }
 }
