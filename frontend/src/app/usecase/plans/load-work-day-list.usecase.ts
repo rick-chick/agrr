@@ -3,10 +3,10 @@ import { forkJoin } from 'rxjs';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import {
   groupWorkDayListRows,
-  countWorkDayListFromFields
+  flattenFieldScheduleItems
 } from '../../domain/work-schedule/work-day-list-summary';
 import { WorkRecord } from '../../models/plans/work-record';
-import { FieldSchedule, TaskScheduleItem } from '../../models/plans/task-schedule';
+import { TaskScheduleItem } from '../../models/plans/task-schedule';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
 import {
   LoadWorkDayListInputDto,
@@ -20,15 +20,6 @@ import {
 } from './load-work-day-list.output-port';
 import { WORK_RECORD_GATEWAY, WorkRecordGateway } from './work-record-gateway';
 
-function flattenFieldItems(field: FieldSchedule): Omit<WorkDayListRowDto, 'recordedToday'>[] {
-  const categories = [...field.schedules.general, ...field.schedules.fertilizer];
-  return categories.map((item) => ({
-    item,
-    fieldName: field.name,
-    cropName: field.crop_name
-  }));
-}
-
 function withRecordedToday(row: WorkDayListRowInput, today: string): WorkDayListRowDto {
   return {
     ...row,
@@ -41,8 +32,6 @@ function hasWorkRecordOnDate(item: TaskScheduleItem, date: string): boolean {
 }
 
 type WorkDayListRowInput = Omit<WorkDayListRowDto, 'recordedToday'>;
-
-export { countWorkDayListFromFields };
 
 export function findNextScheduled(
   rows: WorkDayListRowInput[],
@@ -100,7 +89,7 @@ export class LoadWorkDayListUseCase implements LoadWorkDayListInputPort {
       records: this.workRecordGateway.listWorkRecords(dto.planId)
     }).subscribe({
       next: ({ schedule, records }) => {
-        const rows = schedule.fields.flatMap(flattenFieldItems);
+        const rows = schedule.fields.flatMap(flattenFieldScheduleItems);
         const grouped = groupWorkDayListRows(rows, dto.today, dto.includeSkipped ?? false);
         const recentAdHocRecord =
           grouped.today.length === 0

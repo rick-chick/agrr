@@ -22,14 +22,16 @@ function addDays(isoDate: string, days: number): string {
   return `${y}-${m}-${d}`;
 }
 
-export function daysOverdue(scheduled: string, today: string): number {
+function daysOverdue(scheduled: string, today: string): number {
   const scheduledDate = parseDate(scheduled);
   const todayDate = parseDate(today);
   const msPerDay = 24 * 60 * 60 * 1000;
   return Math.round((todayDate.getTime() - scheduledDate.getTime()) / msPerDay);
 }
 
-function flattenFieldItems(field: FieldSchedule): Omit<WorkDayListRowDto, 'recordedToday'>[] {
+export function flattenFieldScheduleItems(
+  field: FieldSchedule
+): Omit<WorkDayListRowDto, 'recordedToday'>[] {
   const categories = [...field.schedules.general, ...field.schedules.fertilizer];
   return categories.map((item) => ({
     item,
@@ -106,7 +108,7 @@ export function countWorkDayListFromFields(
   today: string,
   includeSkipped = false
 ): WorkDayListCounts {
-  const rows = fields.flatMap(flattenFieldItems);
+  const rows = fields.flatMap(flattenFieldScheduleItems);
   const grouped = groupWorkDayListRows(rows, today, includeSkipped);
   return {
     overdueCount: grouped.overdue.length,
