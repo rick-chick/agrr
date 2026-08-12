@@ -72,9 +72,7 @@ const loadedState: PlanTaskScheduleViewState = {
   allFieldsLackTasks: false,
   varianceLoading: false,
   varianceError: null,
-  varianceSummary: null,
-  varianceStats: null,
-  varianceUnrecordedRows: []
+  varianceStats: null
 };
 
 function sampleGeneralTask(
@@ -268,9 +266,7 @@ describe('PlanTaskScheduleComponent', () => {
       allFieldsLackTasks: false,
       varianceLoading: false,
       varianceError: null,
-      varianceSummary: null,
-      varianceStats: null,
-      varianceUnrecordedRows: []
+      varianceStats: null
     };
     component.control = state;
     expect(component.control).toEqual(state);

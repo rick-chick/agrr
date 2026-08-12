@@ -32,10 +32,6 @@ export class PlanLearnPresenter implements LoadPlanTaskScheduleOutputPort {
     this.view = view;
   }
 
-  beginScheduleLoad(): number {
-    return 0;
-  }
-
   beginVarianceLoad(): number {
     this.varianceLoadGeneration += 1;
     return this.varianceLoadGeneration;

@@ -1429,9 +1429,6 @@
       "variance_summary_line": "Completed {{completed}} · Not recorded {{unrecorded}} · Avg Δ {{average}} days",
       "open_learn": "Review variance",
       "variance_subview": {
-        "toggle_aria": "Task schedule view",
-        "view_list": "Schedule",
-        "view_variance": "Variance",
         "summary_title": "Plan variance summary",
         "summary_completed": "Completed",
         "summary_average_delta": "Average Δ days",

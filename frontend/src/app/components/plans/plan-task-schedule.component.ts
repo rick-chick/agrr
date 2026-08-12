@@ -52,9 +52,7 @@ const initialControl: PlanTaskScheduleViewState = {
   allFieldsLackTasks: false,
   varianceLoading: false,
   varianceError: null,
-  varianceSummary: null,
-  varianceStats: null,
-  varianceUnrecordedRows: []
+  varianceStats: null
 };
 
 @Component({
