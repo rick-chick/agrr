@@ -88,6 +88,18 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.detail.amount',
   'plans.task_schedules.detail.master_description',
   'plans.task_schedules.detail.not_applicable',
+  'plans.task_schedules.detail.variance_heading',
+  'plans.task_schedules.detail.scheduled_date',
+  'plans.task_schedules.detail.actual_date',
+  'plans.task_schedules.detail.delta_days',
+  'plans.task_schedules.detail.planned_gdd',
+  'plans.task_schedules.detail.actual_gdd',
+  'plans.task_schedules.detail.gdd_delta',
+  'plans.task_schedules.variance.month_average',
+  'plans.task_schedules.variance.badge.unrecorded',
+  'plans.task_schedules.variance.badge.on_time',
+  'plans.task_schedules.variance.badge.late',
+  'plans.task_schedules.variance.badge.early',
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

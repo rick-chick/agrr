@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlanTaskScheduleItem } from './plan-schedule-snapshot';
-import { emptyPlanTaskScheduleItemDetails } from './plan-schedule-snapshot';
+import { emptyPlanTaskScheduleItemDetails, emptyPlanTaskScheduleItemVariance } from './plan-schedule-snapshot';
 import { flattenCrossFarmSchedules } from './flatten-cross-farm-schedule';
 import type { CrossFarmScheduleSource } from './cross-farm-schedule-row';
 
@@ -13,6 +13,7 @@ function mockTask(
     status: 'planned',
     completed: false,
     details: emptyPlanTaskScheduleItemDetails,
+    ...emptyPlanTaskScheduleItemVariance,
     ...overrides
   };
 }

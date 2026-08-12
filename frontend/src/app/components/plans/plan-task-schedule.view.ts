@@ -12,6 +12,7 @@ export type PlanTaskScheduleRowView = CrossFarmScheduleRow & {
 export type PlanTaskScheduleMonthGroupView = {
   monthKey: string;
   rows: PlanTaskScheduleRowView[];
+  averageDeltaDays: number | null;
 };
 
 export type PlanTaskScheduleViewState = {

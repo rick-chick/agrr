@@ -1402,13 +1402,29 @@
         "stage": "Stage",
         "amount": "Fertilizer amount",
         "master_description": "Description",
-        "not_applicable": "N/A"
+        "not_applicable": "N/A",
+        "variance_heading": "Plan vs actual",
+        "scheduled_date": "Scheduled date",
+        "actual_date": "Actual date",
+        "delta_days": "Day variance (Δ days)",
+        "planned_gdd": "Planned GDD",
+        "actual_gdd": "Actual GDD",
+        "gdd_delta": "GDD variance"
       },
       "empty_cta": "Open cropping plan",
       "sync_plan_link": "Review cultivation plan",
       "unscheduled_title": "Unconfirmed tasks",
       "empty_fields_summary": "{{total}} fields · {{empty}} without task plans",
-      "empty_fields_no_tasks_hint": "No task plans are scheduled yet. Review fields and crops on the Cropping plan tab, or use the registration wizard above."
+      "empty_fields_no_tasks_hint": "No task plans are scheduled yet. Review fields and crops on the Cropping plan tab, or use the registration wizard above.",
+      "variance": {
+        "month_average": "Monthly avg Δ {{delta}} days",
+        "badge": {
+          "unrecorded": "Not recorded",
+          "on_time": "On schedule (±0 days)",
+          "late": "{{delta}} days late",
+          "early": "{{delta}} days early"
+        }
+      }
     },
     "work": {
       "page_title": "Work log — {{name}}",

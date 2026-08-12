@@ -20,11 +20,24 @@ function mapTaskScheduleItemDetails(details: TaskDetails): PlanTaskScheduleItemD
   };
 }
 
+function parseOptionalNumber(value: string | number | null | undefined): number | null {
+  if (value == null || value === '') {
+    return null;
+  }
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function mapTaskScheduleItem(item: TaskScheduleItem): PlanTaskScheduleItem {
   return {
     item_id: item.item_id,
     name: item.name,
     scheduled_date: item.scheduled_date,
+    actualDate: item.actual_date ?? null,
+    deltaDays: item.delta_days ?? null,
+    gddTrigger: parseOptionalNumber(item.gdd_trigger),
+    gddAtActual: item.gdd_at_actual ?? null,
+    gddDelta: item.gdd_delta ?? null,
     status: item.status,
     completed: item.completed,
     details: mapTaskScheduleItemDetails(item.details)

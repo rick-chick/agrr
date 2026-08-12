@@ -5,15 +5,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '../../../assets/i18n/en.json';
 import type { PlanTaskScheduleMonthGroupView } from './plan-task-schedule.view';
 import type { PlanTaskScheduleItem } from '../../domain/work-schedule/plan-schedule-snapshot';
+import { emptyPlanTaskScheduleItemVariance } from '../../domain/work-schedule/plan-schedule-snapshot';
 import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
 
 function domainTask(
   overrides: Partial<PlanTaskScheduleItem> & Pick<PlanTaskScheduleItem, 'item_id' | 'name' | 'scheduled_date'>
 ): PlanTaskScheduleItem {
   return {
-    item_id: overrides.item_id,
-    name: overrides.name,
-    scheduled_date: overrides.scheduled_date,
     status: overrides.status ?? 'planned',
     completed: overrides.completed ?? false,
     details: overrides.details ?? {
@@ -21,13 +19,16 @@ function domainTask(
       amount: '20',
       amountUnit: 'kg',
       masterDescription: 'Pull weeds carefully'
-    }
+    },
+    ...emptyPlanTaskScheduleItemVariance,
+    ...overrides
   };
 }
 
 const monthGroups: PlanTaskScheduleMonthGroupView[] = [
   {
     monthKey: '2026-06',
+    averageDeltaDays: null,
     rows: [
       {
         item: domainTask({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10' }),
@@ -71,7 +72,9 @@ describe('TaskScheduleMonthListComponent', () => {
         'plans.task_schedules.detail.dialog_title': '{{task}} · {{crop}}',
         'plans.task_schedules.detail.stage': 'Stage',
         'plans.task_schedules.detail.not_applicable': 'N/A',
-        'common.close': 'Close'
+        'common.close': 'Close',
+        'plans.task_schedules.variance.month_average': 'Monthly avg Δ {{delta}} days',
+        'plans.task_schedules.variance.badge.late': '{{delta}} days late'
       },
       true
     );
@@ -109,6 +112,7 @@ describe('TaskScheduleMonthListComponent', () => {
     completedFixture.componentInstance.monthGroups = [
       {
         monthKey: '2026-06',
+        averageDeltaDays: null,
         rows: [
           {
             ...monthGroups[0].rows[0],
@@ -140,6 +144,7 @@ describe('TaskScheduleMonthListComponent', () => {
     skippedFixture.componentInstance.monthGroups = [
       {
         monthKey: '2026-06',
+        averageDeltaDays: null,
         rows: [
           {
             ...monthGroups[0].rows[0],
@@ -278,5 +283,65 @@ describe('TaskScheduleMonthListComponent', () => {
     expect(emptyFixture.nativeElement.querySelector('.plan-task-schedule-month-list__empty')).toBeTruthy();
     expect(emptyFixture.nativeElement.textContent).toContain('No tasks match the current filters.');
     emptyFixture.destroy();
+  });
+
+  it('renders variance badge for late recorded task', async () => {
+    const lateFixture = TestBed.createComponent(TaskScheduleMonthListComponent);
+    lateFixture.componentInstance.monthGroups = [
+      {
+        monthKey: '2026-06',
+        averageDeltaDays: 3,
+        rows: [
+          {
+            ...monthGroups[0].rows[0],
+            item: domainTask({
+              item_id: 4,
+              name: 'Late task',
+              scheduled_date: '2026-06-10',
+              actualDate: '2026-06-13',
+              deltaDays: 3
+            })
+          }
+        ]
+      }
+    ];
+    lateFixture.detectChanges();
+    await lateFixture.whenStable();
+
+    expect(
+      lateFixture.nativeElement.querySelector('.plan-task-schedule-month-list__variance--late')
+    ).toBeTruthy();
+    expect(lateFixture.nativeElement.textContent).toContain('+3');
+    expect(lateFixture.nativeElement.textContent).toContain('Monthly avg');
+    lateFixture.destroy();
+  });
+
+  it('renders unrecorded variance badge when scheduled but no actual date', async () => {
+    const unrecordedFixture = TestBed.createComponent(TaskScheduleMonthListComponent);
+    unrecordedFixture.componentInstance.monthGroups = [
+      {
+        monthKey: '2026-06',
+        averageDeltaDays: null,
+        rows: [
+          {
+            ...monthGroups[0].rows[0],
+            item: domainTask({
+              item_id: 5,
+              name: 'Pending',
+              scheduled_date: '2026-06-10'
+            })
+          }
+        ]
+      }
+    ];
+    unrecordedFixture.detectChanges();
+    await unrecordedFixture.whenStable();
+
+    expect(
+      unrecordedFixture.nativeElement.querySelector(
+        '.plan-task-schedule-month-list__variance--unrecorded'
+      )
+    ).toBeTruthy();
+    unrecordedFixture.destroy();
   });
 });

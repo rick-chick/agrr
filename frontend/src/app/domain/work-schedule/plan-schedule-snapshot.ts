@@ -13,11 +13,24 @@ export const emptyPlanTaskScheduleItemDetails: PlanTaskScheduleItemDetails = {
   masterDescription: null
 };
 
+export const emptyPlanTaskScheduleItemVariance = {
+  actualDate: null,
+  deltaDays: null,
+  gddTrigger: null,
+  gddAtActual: null,
+  gddDelta: null
+} as const;
+
 /** Task row fields used by flatten / filter / group and month-list display. */
 export interface PlanTaskScheduleItem {
   item_id: number;
   name: string;
   scheduled_date: string | null;
+  actualDate: string | null;
+  deltaDays: number | null;
+  gddTrigger: number | null;
+  gddAtActual: number | null;
+  gddDelta: number | null;
   status: string;
   /** Derived from linked work_records in timeline API; not from legacy status column. */
   completed: boolean;
