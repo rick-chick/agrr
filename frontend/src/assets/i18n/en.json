@@ -1402,13 +1402,29 @@
         "stage": "Stage",
         "amount": "Fertilizer amount",
         "master_description": "Description",
-        "not_applicable": "N/A"
+        "not_applicable": "N/A",
+        "variance_heading": "Plan vs actual",
+        "scheduled_date": "Scheduled date",
+        "actual_date": "Actual date",
+        "delta_days": "Day variance (Δ days)",
+        "planned_gdd": "Planned GDD",
+        "actual_gdd": "Actual GDD",
+        "gdd_delta": "GDD variance"
       },
       "empty_cta": "Open cropping plan",
       "sync_plan_link": "Review cultivation plan",
       "unscheduled_title": "Unconfirmed tasks",
       "empty_fields_summary": "{{total}} fields · {{empty}} without task plans",
-      "empty_fields_no_tasks_hint": "No task plans are scheduled yet. Review fields and crops on the Cropping plan tab, or use the registration wizard above."
+      "empty_fields_no_tasks_hint": "No task plans are scheduled yet. Review fields and crops on the Cropping plan tab, or use the registration wizard above.",
+      "variance": {
+        "month_average": "Monthly avg Δ {{delta}} days",
+        "badge": {
+          "unrecorded": "Not recorded",
+          "on_time": "On schedule (±0 days)",
+          "late": "{{delta}} days late",
+          "early": "{{delta}} days early"
+        }
+      }
     },
     "work": {
       "page_title": "Work log — {{name}}",
@@ -1494,17 +1510,6 @@
         "from_schedule": "From schedule",
         "adhoc": "Ad hoc"
       },
-      "variance": {
-        "scheduled": "Scheduled {{date}}",
-        "delta_days_late": "{{count}} days late",
-        "delta_days_early": "{{count}} days early",
-        "delta_days_on_time": "On schedule",
-        "gdd_at_actual": "GDD {{value}}",
-        "no_schedule": "No schedule",
-        "month_average_late": "Avg. {{count}} days late",
-        "month_average_early": "Avg. {{count}} days early",
-        "month_average_on_time": "Avg. on schedule"
-      },
       "sheet": {
         "edit_title": "Edit record",
         "save": "Save",
@@ -1526,6 +1531,17 @@
           "invalid_byte_size": "Image exceeds the 5 MB limit",
           "already_completed": "This photo was already uploaded"
         }
+      },
+      "variance": {
+        "scheduled": "Scheduled {{date}}",
+        "delta_days_late": "{{count}} days late",
+        "delta_days_early": "{{count}} days early",
+        "delta_days_on_time": "On schedule",
+        "gdd_at_actual": "GDD {{value}}",
+        "no_schedule": "No schedule",
+        "month_average_late": "Avg. {{count}} days late",
+        "month_average_early": "Avg. {{count}} days early",
+        "month_average_on_time": "Avg. on schedule"
       }
     },
     "index": {

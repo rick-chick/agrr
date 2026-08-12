@@ -1887,13 +1887,29 @@
         "stage": "चरण",
         "amount": "उर्वरक मात्रा",
         "master_description": "विवरण",
-        "not_applicable": "लागू नहीं"
+        "not_applicable": "लागू नहीं",
+        "variance_heading": "योजना बनाम वास्तविक",
+        "scheduled_date": "नियोजित तिथि",
+        "actual_date": "वास्तविक तिथि",
+        "delta_days": "दिन अंतर (Δ दिन)",
+        "planned_gdd": "नियोजित GDD",
+        "actual_gdd": "वास्तविक GDD",
+        "gdd_delta": "GDD अंतर"
       },
       "empty_cta": "खेती योजना खोलें",
       "sync_plan_link": "खेती योजना की समीक्षा करें",
       "unscheduled_title": "अनिश्चित कार्य",
       "empty_fields_summary": "{{total}} खेतों में {{empty}} में कोई कार्य योजना नहीं",
-      "empty_fields_no_tasks_hint": "अभी तक कोई कार्य योजना निर्धारित नहीं है। \"खेती योजना\" टैब में खेत और फसलें जाँचें, या ऊपर दिए गए पंजीकरण विज़ार्ड का उपयोग करें।"
+      "empty_fields_no_tasks_hint": "अभी तक कोई कार्य योजना निर्धारित नहीं है। \"खेती योजना\" टैब में खेत और फसलें जाँचें, या ऊपर दिए गए पंजीकरण विज़ार्ड का उपयोग करें।",
+      "variance": {
+        "month_average": "मासिक औसत Δ {{delta}} दिन",
+        "badge": {
+          "unrecorded": "अभिलेखित नहीं",
+          "on_time": "समय पर (±0 दिन)",
+          "late": "{{delta}} दिन देरी",
+          "early": "{{delta}} दिन जल्दी"
+        }
+      }
     },
     "work": {
       "page_title": "कार्य लॉग — {{name}}",
@@ -1979,17 +1995,6 @@
         "from_schedule": "अनुसूची से",
         "adhoc": "अनियोजित"
       },
-      "variance": {
-        "scheduled": "नियोजित {{date}}",
-        "delta_days_late": "{{count}} दिन देरी",
-        "delta_days_early": "{{count}} दिन पहले",
-        "delta_days_on_time": "नियोजित समय पर",
-        "gdd_at_actual": "GDD {{value}}",
-        "no_schedule": "कोई अनुसूची नहीं",
-        "month_average_late": "औसत {{count}} दिन देरी",
-        "month_average_early": "औसत {{count}} दिन पहले",
-        "month_average_on_time": "औसत नियोजित समय पर"
-      },
       "sheet": {
         "edit_title": "कार्य संपादित करें",
         "save": "सहेजें",
@@ -2011,6 +2016,17 @@
           "invalid_byte_size": "छवि 5 MB सीमा से अधिक है",
           "already_completed": "यह फ़ोटो पहले ही अपलोड हो चुकी है"
         }
+      },
+      "variance": {
+        "scheduled": "नियोजित {{date}}",
+        "delta_days_late": "{{count}} दिन देरी",
+        "delta_days_early": "{{count}} दिन पहले",
+        "delta_days_on_time": "नियोजित समय पर",
+        "gdd_at_actual": "GDD {{value}}",
+        "no_schedule": "कोई अनुसूची नहीं",
+        "month_average_late": "औसत {{count}} दिन देरी",
+        "month_average_early": "औसत {{count}} दिन पहले",
+        "month_average_on_time": "औसत नियोजित समय पर"
       }
     },
     "index": {

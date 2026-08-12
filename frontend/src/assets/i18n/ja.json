@@ -2507,13 +2507,29 @@
         "stage": "ステージ",
         "amount": "施肥量",
         "master_description": "作業説明",
-        "not_applicable": "該当なし"
+        "not_applicable": "該当なし",
+        "variance_heading": "予定と実績の比較",
+        "scheduled_date": "予定日",
+        "actual_date": "実施日",
+        "delta_days": "日数差（Δ日）",
+        "planned_gdd": "予定 GDD",
+        "actual_gdd": "実施 GDD",
+        "gdd_delta": "GDD 差"
       },
       "empty_cta": "作付け計画を確認",
       "sync_plan_link": "作付け計画を確認する",
       "unscheduled_title": "未確定の作業",
       "empty_fields_summary": "{{total}}圃場中 {{empty}}圃場は作業予定未設定",
-      "empty_fields_no_tasks_hint": "作業予定がまだありません。「作付け計画」タブで圃場と作物を確認するか、上の登録ウィザードをご利用ください。"
+      "empty_fields_no_tasks_hint": "作業予定がまだありません。「作付け計画」タブで圃場と作物を確認するか、上の登録ウィザードをご利用ください。",
+      "variance": {
+        "month_average": "月平均 Δ {{delta}} 日",
+        "badge": {
+          "unrecorded": "未実施",
+          "on_time": "予定どおり（±0日）",
+          "late": "{{delta}}日遅れ",
+          "early": "{{delta}}日早着"
+        }
+      }
     },
     "work": {
       "page_title": "{{name}}の作業記録",
@@ -2599,17 +2615,6 @@
         "from_schedule": "予定由来",
         "adhoc": "予定外"
       },
-      "variance": {
-        "scheduled": "予定 {{date}}",
-        "delta_days_late": "{{count}}日遅れ",
-        "delta_days_early": "{{count}}日早着",
-        "delta_days_on_time": "予定通り",
-        "gdd_at_actual": "GDD {{value}}",
-        "no_schedule": "予定なし",
-        "month_average_late": "平均 {{count}}日遅れ",
-        "month_average_early": "平均 {{count}}日早着",
-        "month_average_on_time": "平均 予定通り"
-      },
       "sheet": {
         "edit_title": "実績を編集",
         "save": "保存する",
@@ -2631,6 +2636,17 @@
           "invalid_byte_size": "画像サイズが上限（5MB）を超えています",
           "already_completed": "この写真はすでにアップロード済みです"
         }
+      },
+      "variance": {
+        "scheduled": "予定 {{date}}",
+        "delta_days_late": "{{count}}日遅れ",
+        "delta_days_early": "{{count}}日早着",
+        "delta_days_on_time": "予定通り",
+        "gdd_at_actual": "GDD {{value}}",
+        "no_schedule": "予定なし",
+        "month_average_late": "平均 {{count}}日遅れ",
+        "month_average_early": "平均 {{count}}日早着",
+        "month_average_on_time": "平均 予定通り"
       }
     }
   },

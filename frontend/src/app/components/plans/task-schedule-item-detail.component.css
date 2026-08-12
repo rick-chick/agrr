@@ -40,6 +40,21 @@
   color: var(--color-text-secondary);
 }
 
+.task-schedule-detail__variance {
+  margin-top: var(--space-4);
+}
+
+.task-schedule-detail__variance-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.task-schedule-detail__facts--variance {
+  margin-top: 0;
+}
+
 @media (max-width: 480px) {
   .task-schedule-detail__facts {
     grid-template-columns: 1fr;

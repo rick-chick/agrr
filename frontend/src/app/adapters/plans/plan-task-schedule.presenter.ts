@@ -19,6 +19,7 @@ import type {
 import type { CrossFarmScheduleRow } from '../../domain/work-schedule/cross-farm-schedule-row';
 import type { CrossFarmScheduleMonthGroup } from '../../domain/work-schedule/group-cross-farm-schedule-by-month';
 import { summarizePlanTaskScheduleFieldCoverage } from '../../domain/work-schedule/summarize-plan-task-schedule-field-coverage';
+import { computePlanTaskScheduleMonthAverageDelta } from '../../domain/work-schedule/compute-plan-task-schedule-month-average-delta';
 import { localTodayIso } from '../../core/local-today';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { mapTaskScheduleResponseToDomain } from './map-task-schedule-response-to-domain';
@@ -327,6 +328,9 @@ function enrichPlanTaskScheduleMonthGroups(
 ): PlanTaskScheduleMonthGroupView[] {
   return monthGroups.map((group) => ({
     monthKey: group.monthKey,
+    averageDeltaDays: computePlanTaskScheduleMonthAverageDelta(
+      group.rows.map((row) => row.item)
+    ),
     rows: group.rows.map(
       (row): PlanTaskScheduleRowView => ({
         ...row,

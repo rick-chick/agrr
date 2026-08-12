@@ -97,6 +97,10 @@ export interface TaskScheduleItem {
   task_type: string;
   category: string;
   scheduled_date: string | null;
+  actual_date?: string | null;
+  delta_days?: number | null;
+  gdd_at_actual?: number | null;
+  gdd_delta?: number | null;
   /** Legacy API duplicates; UI reads details.stage / details.gdd. */
   stage_name?: string;
   stage_order?: number;

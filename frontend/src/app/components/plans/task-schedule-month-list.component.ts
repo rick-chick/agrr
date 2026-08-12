@@ -4,6 +4,14 @@ import { formatIsoDateForDisplay, formatIsoDayForDisplay, formatIsoMonthForDispl
 import type { PlanTaskScheduleMonthGroupView, PlanTaskScheduleRowView } from './plan-task-schedule.view';
 import type { PlanTaskScheduleItem } from '../../domain/work-schedule/plan-schedule-snapshot';
 import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.component';
+import {
+  resolvePlanTaskScheduleVarianceBadge,
+  type PlanTaskScheduleVarianceBadge
+} from '../../domain/work-schedule/resolve-plan-task-schedule-variance-badge';
+import {
+  formatPlanTaskScheduleAverageDeltaDaysLabel,
+  formatPlanTaskScheduleDeltaDaysLabel
+} from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 
 @Component({
   selector: 'app-task-schedule-month-list',
@@ -42,9 +50,20 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
                         }}</span>
                       </span>
                     </span>
-                    <span [class]="statusModifierClass(row)">{{
-                      statusLabelKey(row) | translate
-                    }}</span>
+                    <span class="plan-task-schedule-month-list__badges">
+                      <span [class]="statusModifierClass(row)">{{
+                        statusLabelKey(row) | translate
+                      }}</span>
+                      @if (varianceBadge(row); as badge) {
+                        <span
+                          class="plan-task-schedule-month-list__variance"
+                          [class]="varianceModifierClass(badge)"
+                          [attr.aria-label]="varianceAriaLabel(badge)"
+                        >
+                          {{ varianceDeltaLabel(badge) }}
+                        </span>
+                      }
+                    </span>
                   </button>
                 </li>
               }
@@ -56,7 +75,17 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
             class="plan-task-schedule-month-list__month"
             [attr.aria-label]="formatMonth(group.monthKey)"
           >
-            <h3 class="plan-task-schedule-month-list__month-title">{{ formatMonth(group.monthKey) }}</h3>
+            <h3 class="plan-task-schedule-month-list__month-title">
+              <span>{{ formatMonth(group.monthKey) }}</span>
+              @if (group.averageDeltaDays != null) {
+                <span class="plan-task-schedule-month-list__month-average">
+                  {{
+                    'plans.task_schedules.variance.month_average'
+                      | translate: { delta: formatAverageDelta(group.averageDeltaDays) }
+                  }}
+                </span>
+              }
+            </h3>
             <ul class="plan-task-schedule-month-list__list" role="list">
               @for (row of group.rows; track row.item.item_id) {
                 <li>
@@ -80,9 +109,20 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
                         }}</span>
                       </span>
                     </span>
-                    <span [class]="statusModifierClass(row)">{{
-                      statusLabelKey(row) | translate
-                    }}</span>
+                    <span class="plan-task-schedule-month-list__badges">
+                      <span [class]="statusModifierClass(row)">{{
+                        statusLabelKey(row) | translate
+                      }}</span>
+                      @if (varianceBadge(row); as badge) {
+                        <span
+                          class="plan-task-schedule-month-list__variance"
+                          [class]="varianceModifierClass(badge)"
+                          [attr.aria-label]="varianceAriaLabel(badge)"
+                        >
+                          {{ varianceDeltaLabel(badge) }}
+                        </span>
+                      }
+                    </span>
                   </button>
                 </li>
               }
@@ -160,6 +200,28 @@ export class TaskScheduleMonthListComponent {
 
   statusModifierClass(row: PlanTaskScheduleRowView): string {
     return `plan-task-schedule-month-list__status plan-task-schedule-month-list__status--${row.displayStatus}`;
+  }
+
+  varianceBadge(row: PlanTaskScheduleRowView): PlanTaskScheduleVarianceBadge | null {
+    return resolvePlanTaskScheduleVarianceBadge(row.item);
+  }
+
+  varianceModifierClass(badge: PlanTaskScheduleVarianceBadge): string {
+    return `plan-task-schedule-month-list__variance--${badge.kind}`;
+  }
+
+  varianceDeltaLabel(badge: PlanTaskScheduleVarianceBadge): string {
+    return formatPlanTaskScheduleDeltaDaysLabel(badge);
+  }
+
+  varianceAriaLabel(badge: PlanTaskScheduleVarianceBadge): string {
+    return this.translate.instant(`plans.task_schedules.variance.badge.${badge.kind}`, {
+      delta: badge.deltaDays ?? 0
+    });
+  }
+
+  formatAverageDelta(average: number): string {
+    return formatPlanTaskScheduleAverageDeltaDaysLabel(average);
   }
 
   selectRow(row: PlanTaskScheduleRowView): void {
