@@ -5,7 +5,10 @@ use crate::cultivation_plan::entities::{CultivationPlanEntity, FieldCultivationE
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::shared::ports::ClockPort;
 use crate::work_record::dtos::{WorkRecordListInput, WorkRecordRead};
-use crate::work_record::gateways::{WorkRecordCreatePersistAttrs, WorkRecordGateway};
+use crate::work_record::gateways::{
+    WorkRecordCreatePersistAttrs, WorkRecordClimateSnapshot, WorkRecordClimateSnapshotGateway,
+    WorkRecordGateway,
+};
 use crate::work_record::ports::WorkRecordUpdateOutputPort;
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -59,6 +62,21 @@ impl WorkRecordUpdateOutputPort for SpyUpdateOutput {
 
     fn on_not_found(&mut self) {
         self.events.lock().unwrap().push("not_found".into());
+    }
+}
+
+struct NoopClimateGateway;
+
+impl WorkRecordClimateSnapshotGateway for NoopClimateGateway {
+    fn capture_at_date(
+        &self,
+        _: i64,
+        _: Date,
+    ) -> Result<
+        Option<WorkRecordClimateSnapshot>,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
+        Ok(None)
     }
 }
 
@@ -217,6 +235,7 @@ fn dispatches_record_invalid_when_task_schedule_item_id_is_submitted() {
         &StubWorkRecordGateway,
         &clock,
         &EmptyScopeGateway,
+        &NoopClimateGateway,
     );
 
     let mut params = BTreeMap::new();
@@ -257,6 +276,7 @@ fn dispatches_not_found_when_private_plan_access_denied() {
         &StubWorkRecordGateway,
         &clock,
         &EmptyScopeGateway,
+        &NoopClimateGateway,
     );
 
     interactor

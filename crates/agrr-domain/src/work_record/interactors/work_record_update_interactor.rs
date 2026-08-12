@@ -11,25 +11,27 @@ use crate::shared::org_scope::member_organization_ids;
 use crate::shared::ports::ClockPort;
 use crate::shared::validation::{from_errors, ErrorsInput};
 use crate::work_record::dtos::WorkRecordUpdateInput;
-use crate::work_record::gateways::WorkRecordGateway;
+use crate::work_record::gateways::{WorkRecordClimateSnapshotGateway, WorkRecordGateway};
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::WorkRecordUpdateOutputPort;
 
-pub struct WorkRecordUpdateInteractor<'a, O, P, G, C, S> {
+pub struct WorkRecordUpdateInteractor<'a, O, P, G, C, S, Cl> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
     clock: &'a C,
     scope_gateway: &'a S,
+    climate_gateway: &'a Cl,
 }
 
-impl<'a, O, P, G, C, S> WorkRecordUpdateInteractor<'a, O, P, G, C, S>
+impl<'a, O, P, G, C, S, Cl> WorkRecordUpdateInteractor<'a, O, P, G, C, S, Cl>
 where
     O: WorkRecordUpdateOutputPort,
     P: CultivationPlanGateway,
     G: WorkRecordGateway,
     C: ClockPort,
     S: UserOrganizationScopeGateway,
+    Cl: WorkRecordClimateSnapshotGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -37,6 +39,7 @@ where
         gateway: &'a G,
         clock: &'a C,
         scope_gateway: &'a S,
+        climate_gateway: &'a Cl,
     ) -> Self {
         Self {
             output_port,
@@ -44,6 +47,7 @@ where
             gateway,
             clock,
             scope_gateway,
+            climate_gateway,
         }
     }
 
@@ -61,9 +65,24 @@ where
         }
 
         let input = WorkRecordUpdateInput::from_params(params, self.clock)?;
+        let existing = self.gateway.find_for_plan(plan_id, record_id)?;
+
+        let mut update_input = input;
+        if update_input.actual_date.is_some() {
+            if let Some(fc_id) = existing.field_cultivation_id {
+                let capture_date = update_input.actual_date.unwrap_or(existing.actual_date);
+                if let Ok(snapshot) = self.climate_gateway.capture_at_date(fc_id, capture_date) {
+                    if let Some(climate) = snapshot {
+                        update_input.gdd_at_actual = climate.gdd_at_actual;
+                        update_input.weather_snapshot = climate.weather_snapshot;
+                    }
+                }
+            }
+        }
+
         let record = self
             .gateway
-            .update(plan_id, record_id, &input, self.clock.now())?;
+            .update(plan_id, record_id, &update_input, self.clock.now())?;
         self.output_port.on_success(record);
         Ok(())
     }

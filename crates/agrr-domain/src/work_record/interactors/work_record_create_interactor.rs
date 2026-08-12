@@ -14,21 +14,23 @@ use crate::work_record::dtos::work_record_create_input::record_invalid_field;
 use crate::work_record::dtos::WorkRecordCreateInput;
 use crate::work_record::entities::WorkRecordEntity;
 use crate::work_record::gateways::{
-    TaskScheduleItemLookupGateway, WorkRecordCreatePersistAttrs, WorkRecordGateway,
+    TaskScheduleItemLookupGateway, WorkRecordClimateSnapshotGateway, WorkRecordCreatePersistAttrs,
+    WorkRecordGateway,
 };
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::WorkRecordCreateOutputPort;
 
-pub struct WorkRecordCreateInteractor<'a, O, P, G, L, C, S> {
+pub struct WorkRecordCreateInteractor<'a, O, P, G, L, C, S, Cl> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
     item_lookup_gateway: &'a L,
     clock: &'a C,
     scope_gateway: &'a S,
+    climate_gateway: &'a Cl,
 }
 
-impl<'a, O, P, G, L, C, S> WorkRecordCreateInteractor<'a, O, P, G, L, C, S>
+impl<'a, O, P, G, L, C, S, Cl> WorkRecordCreateInteractor<'a, O, P, G, L, C, S, Cl>
 where
     O: WorkRecordCreateOutputPort,
     P: CultivationPlanGateway,
@@ -36,6 +38,7 @@ where
     L: TaskScheduleItemLookupGateway,
     C: ClockPort,
     S: UserOrganizationScopeGateway,
+    Cl: WorkRecordClimateSnapshotGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -44,6 +47,7 @@ where
         item_lookup_gateway: &'a L,
         clock: &'a C,
         scope_gateway: &'a S,
+        climate_gateway: &'a Cl,
     ) -> Self {
         Self {
             output_port,
@@ -52,6 +56,7 @@ where
             item_lookup_gateway,
             clock,
             scope_gateway,
+            climate_gateway,
         }
     }
 
@@ -120,10 +125,19 @@ where
             )
         })?;
 
+        let field_cultivation_id = input
+            .field_cultivation_id
+            .or_else(|| prefill.as_ref().and_then(|p| p.field_cultivation_id));
+        let climate_snapshot = match field_cultivation_id {
+            Some(fc_id) => self
+                .climate_gateway
+                .capture_at_date(fc_id, input.actual_date)
+                .unwrap_or(None),
+            None => None,
+        };
+
         Ok(WorkRecordCreatePersistAttrs {
-            field_cultivation_id: input
-                .field_cultivation_id
-                .or_else(|| prefill.as_ref().and_then(|p| p.field_cultivation_id)),
+            field_cultivation_id,
             task_schedule_item_id: input.task_schedule_item_id,
             agricultural_task_id: input
                 .agricultural_task_id
@@ -141,6 +155,8 @@ where
                 .or_else(|| prefill.as_ref().and_then(|p| p.amount_unit.clone())),
             time_spent_minutes: input.time_spent_minutes,
             notes: input.notes.clone(),
+            gdd_at_actual: climate_snapshot.as_ref().and_then(|s| s.gdd_at_actual),
+            weather_snapshot: climate_snapshot.and_then(|s| s.weather_snapshot),
             created_at: now,
             updated_at: now,
         })

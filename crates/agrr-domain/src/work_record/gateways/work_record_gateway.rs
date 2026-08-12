@@ -1,6 +1,7 @@
 //! Ruby: `Domain::WorkRecord::Gateways::WorkRecordGateway`
 
 use rust_decimal::Decimal;
+use serde_json::Value;
 use time::{Date, OffsetDateTime};
 
 use crate::shared::dtos::Error;
@@ -19,6 +20,8 @@ pub struct WorkRecordCreatePersistAttrs {
     pub amount_unit: Option<String>,
     pub time_spent_minutes: Option<i64>,
     pub notes: Option<String>,
+    pub gdd_at_actual: Option<f64>,
+    pub weather_snapshot: Option<Value>,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
 }

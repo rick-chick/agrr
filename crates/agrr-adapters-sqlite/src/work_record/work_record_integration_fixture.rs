@@ -94,6 +94,8 @@ CREATE TABLE field_cultivations (
   cultivation_plan_crop_id INTEGER NOT NULL,
   area REAL,
   status TEXT,
+  start_date TEXT,
+  completion_date TEXT,
   created_at TEXT,
   updated_at TEXT
 );
@@ -136,6 +138,8 @@ CREATE TABLE work_records (
   amount_unit TEXT,
   time_spent_minutes INTEGER,
   notes TEXT,
+  gdd_at_actual REAL,
+  weather_snapshot TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   FOREIGN KEY (cultivation_plan_id) REFERENCES cultivation_plans (id),
@@ -223,8 +227,8 @@ pub fn seed_work_record_crud(pool: &SqlitePool) -> WorkRecordCrudSeed {
             params![plan_crop_id, plan_id, crop_id],
         )?;
         conn.execute(
-            "INSERT INTO field_cultivations (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, status, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, 50.0, 'completed', datetime('now'), datetime('now'))",
+            "INSERT INTO field_cultivations (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, status, start_date, completion_date, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, 50.0, 'completed', '2026-01-01', '2026-12-31', datetime('now'), datetime('now'))",
             params![field_cultivation_id, plan_id, plan_field_id, plan_crop_id],
         )?;
         conn.execute(

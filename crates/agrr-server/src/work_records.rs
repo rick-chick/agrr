@@ -6,7 +6,11 @@ use crate::adapters::SystemClock;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use crate::work_record_photos::load_photos_json_for_records;
-use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, TaskScheduleItemLookupSqliteGateway, UserOrganizationScopeSqliteGateway, WorkRecordPhotoSqliteGateway, WorkRecordSqliteGateway};
+use crate::work_record_climate_capture::work_record_climate_snapshot_gateway;
+use agrr_adapters_sqlite::{
+    CultivationPlanSqliteGateway, TaskScheduleItemLookupSqliteGateway,
+    UserOrganizationScopeSqliteGateway, WorkRecordPhotoSqliteGateway, WorkRecordSqliteGateway,
+};
 use agrr_domain::work_record::dtos::{WorkRecordDestroyOutput, WorkRecordRead};
 use agrr_domain::work_record::interactors::{
     WorkRecordCreateInteractor, WorkRecordDestroyInteractor, WorkRecordListInteractor,
@@ -227,6 +231,8 @@ fn work_record_to_json(record: WorkRecordRead, photos: Vec<Value>) -> Value {
         "amount_unit": record.amount_unit,
         "time_spent_minutes": record.time_spent_minutes,
         "notes": record.notes,
+        "gdd_at_actual": record.gdd_at_actual,
+        "weather_snapshot": record.weather_snapshot.clone(),
         "field_name": record.field_name,
         "crop_name": record.crop_name,
         "created_at": format_datetime(record.created_at),
@@ -267,6 +273,7 @@ async fn create_work_record(
     let item_lookup = TaskScheduleItemLookupSqliteGateway::new(pool.clone());
     let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let clock = SystemClock;
+    let climate_gateway = work_record_climate_snapshot_gateway(&state).map_err(|_| internal_error())?;
     let mut presenter = CreatePresenter { body: None };
 
     let mut interactor = WorkRecordCreateInteractor::new(
@@ -276,6 +283,7 @@ async fn create_work_record(
         &item_lookup,
         &clock,
         &scope_gateway,
+        &climate_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, &body.work_record)
@@ -344,6 +352,7 @@ async fn update_work_record(
     let work_record_gateway = WorkRecordSqliteGateway::new(pool.clone());
     let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let clock = SystemClock;
+    let climate_gateway = work_record_climate_snapshot_gateway(&state).map_err(|_| internal_error())?;
     let mut presenter = UpdatePresenter { body: None };
 
     let mut interactor = WorkRecordUpdateInteractor::new(
@@ -352,6 +361,7 @@ async fn update_work_record(
         &work_record_gateway,
         &clock,
         &scope_gateway,
+        &climate_gateway,
     );
     interactor
         .call_rescuing(user_id, plan_id, record_id, &body.work_record)

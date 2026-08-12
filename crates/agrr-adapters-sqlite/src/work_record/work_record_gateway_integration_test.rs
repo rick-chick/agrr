@@ -28,6 +28,11 @@ fn sample_create_attrs(
         amount_unit: Some("kg".into()),
         time_spent_minutes: Some(45),
         notes: Some("午前に実施".into()),
+        gdd_at_actual: Some(88.25),
+        weather_snapshot: Some(serde_json::json!({
+            "date": "2026-06-10",
+            "temperature_mean": 22.0
+        })),
         created_at: now,
         updated_at: now,
     }
@@ -53,6 +58,15 @@ fn work_record_gateway_crud_roundtrip() {
     assert_eq!(seed.plan_id, created.cultivation_plan_id);
     assert_eq!(Some(seed.task_schedule_item_id), created.task_schedule_item_id);
     assert_eq!("除草作業", created.name);
+    assert_eq!(Some(88.25), created.gdd_at_actual);
+    assert_eq!(
+        Some(22.0),
+        created
+            .weather_snapshot
+            .as_ref()
+            .and_then(|v| v.get("temperature_mean"))
+            .and_then(|v| v.as_f64())
+    );
     assert_eq!(Some("F1".into()), created.field_name);
     assert_eq!(Some("Test Crop".into()), created.crop_name);
     assert!(created.task_schedule_item.is_some());

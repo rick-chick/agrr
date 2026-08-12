@@ -72,7 +72,7 @@ impl WeatherPredictionAnchorsPort for FixedAnchors {
     }
 }
 
-struct StoreBackedWeatherPredictionService<'a> {
+pub(crate) struct StoreBackedWeatherPredictionService<'a> {
     store: &'a dyn PredictedWeatherStoreGateway,
 }
 
