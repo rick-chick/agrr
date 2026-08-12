@@ -1,5 +1,5 @@
 import { of, throwError } from 'rxjs';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
 import { PlanGateway } from '../plans/plan-gateway';
 import { WorkHubGateway } from '../work-hub/work-hub-gateway';
@@ -46,6 +46,10 @@ function item(
 }
 
 describe('LoadNavOverdueBadgeUseCase', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const createPlanGateway = (overrides: Partial<PlanGateway> = {}): PlanGateway =>
     ({
       listPlans: () => of([]),
