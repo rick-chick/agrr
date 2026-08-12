@@ -83,6 +83,6 @@ describe('PlanDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('a.plan-context-header__back')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('app-plan-detail-context-nav')).toBeTruthy();
     const navLinks = fixture.nativeElement.querySelectorAll('.plan-context-nav__link');
-    expect(navLinks.length).toBe(4);
+    expect(navLinks.length).toBe(5);
   });
 });

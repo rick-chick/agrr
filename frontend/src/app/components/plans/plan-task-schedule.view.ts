@@ -4,12 +4,9 @@ import type {
 } from '../../domain/work-schedule/cross-farm-schedule-row';
 import type { PlanTaskScheduleDisplayStatus } from '../../domain/work-schedule/resolve-plan-task-schedule-display-status';
 import type {
-  PlanVsActualPlanSummaryStats,
-  PlanVsActualSummary
+  PlanVsActualPlanSummaryStats
 } from '../../domain/plans/plan-vs-actual-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
-
-export type PlanTaskScheduleViewMode = 'list' | 'variance';
 
 export type PlanTaskScheduleRowView = CrossFarmScheduleRow & {
   displayStatus: PlanTaskScheduleDisplayStatus;
@@ -46,9 +43,7 @@ export type PlanTaskScheduleViewState = {
   allFieldsLackTasks: boolean;
   varianceLoading: boolean;
   varianceError: string | null;
-  varianceSummary: PlanVsActualSummary | null;
   varianceStats: PlanVsActualPlanSummaryStats | null;
-  varianceUnrecordedRows: PlanTaskScheduleRowView[];
 };
 
 export interface PlanTaskScheduleView {

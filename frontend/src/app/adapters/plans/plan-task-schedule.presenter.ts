@@ -40,7 +40,6 @@ import {
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
 import { buildPlanVsActualPlanSummaryStats } from '../../domain/plans/build-plan-vs-actual-plan-summary';
-import { collectPlanTaskScheduleUnrecordedRows } from '../../domain/work-schedule/collect-plan-task-schedule-unrecorded-rows';
 
 type DerivedViewFields = Pick<
   PlanTaskScheduleViewState,
@@ -56,7 +55,6 @@ type DerivedViewFields = Pick<
   | 'fieldsWithTasksCount'
   | 'fieldsWithoutTasksCount'
   | 'allFieldsLackTasks'
-  | 'varianceUnrecordedRows'
 >;
 
 const emptyDerivedFields: DerivedViewFields = {
@@ -71,8 +69,7 @@ const emptyDerivedFields: DerivedViewFields = {
   totalFieldCount: 0,
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
-  allFieldsLackTasks: false,
-  varianceUnrecordedRows: []
+  allFieldsLackTasks: false
 };
 
 @Injectable()
@@ -192,7 +189,6 @@ export class PlanTaskSchedulePresenter
       regenerateError: null,
       varianceLoading: false,
       varianceError: null,
-      varianceSummary: null,
       varianceStats: null,
       ...emptyDerivedFields
     };
@@ -207,7 +203,6 @@ export class PlanTaskSchedulePresenter
       ...this.view.control,
       varianceLoading: false,
       varianceError: null,
-      varianceSummary: dto.summary,
       varianceStats: buildPlanVsActualPlanSummaryStats(dto.summary)
     };
   }
@@ -218,7 +213,6 @@ export class PlanTaskSchedulePresenter
       ...this.view.control,
       varianceLoading: false,
       varianceError: dto.message,
-      varianceSummary: null,
       varianceStats: null
     };
   }
@@ -337,9 +331,6 @@ export class PlanTaskSchedulePresenter
     );
 
     const fieldCoverage = summarizePlanTaskScheduleFieldCoverage(schedule.fields);
-    const varianceUnrecordedRows = enrichPlanTaskScheduleUnscheduledRows(
-      collectPlanTaskScheduleUnrecordedRows(rows)
-    );
 
     return {
       monthGroups,
@@ -350,7 +341,6 @@ export class PlanTaskSchedulePresenter
       filteredFieldCount,
       filteredTaskCount,
       regenerateRequiresConfirm: countScheduleTasks(schedule) > 0,
-      varianceUnrecordedRows,
       ...fieldCoverage
     };
   }

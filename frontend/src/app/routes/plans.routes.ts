@@ -47,5 +47,11 @@ export const plansRoutes: Routes = [
         (m) => m.PlanWorkRecordsComponent
       ),
     canActivate: [authGuard]
+  },
+  {
+    path: 'plans/:id/learn',
+    loadComponent: () =>
+      import('../components/plans/plan-learn.component').then((m) => m.PlanLearnComponent),
+    canActivate: [authGuard]
   }
 ];

@@ -1911,10 +1911,9 @@
           "early": "{{delta}} दिन जल्दी"
         }
       },
+      "variance_summary_line": "पूर्ण {{completed}} · अभिलेखित नहीं {{unrecorded}} · औसत Δ {{average}} दिन",
+      "open_learn": "अंतर की समीक्षा करें",
       "variance_subview": {
-        "toggle_aria": "कार्य अनुसूची दृश्य",
-        "view_list": "अनुसूची",
-        "view_variance": "अंतर",
         "summary_title": "योजना अंतर सारांश",
         "summary_completed": "पूर्ण",
         "summary_average_delta": "औसत Δ दिन",
@@ -1935,8 +1934,14 @@
           "general": "सामान्य कार्य",
           "fertilizer": "उर्वरक",
           "unscheduled": "अनिश्चित"
-        }
+        },
+        "toggle_aria": "कार्य अनुसूची दृश्य",
+        "view_list": "अनुसूची",
+        "view_variance": "अंतर"
       }
+    },
+    "learn": {
+      "page_title": "समीक्षा — {{name}}"
     },
     "work": {
       "page_title": "कार्य लॉग — {{name}}",
@@ -2216,7 +2221,8 @@
       "nav": {
         "aria_label": "योजना स्क्रीन नेविगेशन",
         "workbench": "खेती योजना",
-        "task_schedule": "कार्य योजना"
+        "task_schedule": "कार्य योजना",
+        "learn": "समीक्षा"
       },
       "copy_plan": "अगले वर्ष में कॉपी करें",
       "delete": "हटाएं",
