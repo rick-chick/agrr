@@ -7,4 +7,5 @@ pub struct PrivatePlanInitializeFromSelectionInput {
     pub farm_id: i64,
     pub user: User,
     pub plan_name: Option<String>,
+    pub carryover_from_plan_id: Option<i64>,
 }
