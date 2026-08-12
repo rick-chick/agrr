@@ -84,6 +84,17 @@ const initialControl: WorkHubViewState = {
                             | translate: { count: farm.fieldCount, area: farm.totalArea }
                         }}
                       </span>
+                      <span class="work-hub__summary">
+                        {{
+                          'work.hub.overdue_summary'
+                            | translate: { count: farm.overdueCount }
+                        }}
+                        ·
+                        {{
+                          'work.hub.today_summary'
+                            | translate: { count: farm.todayCount }
+                        }}
+                      </span>
                       <span class="work-hub__cta">
                         {{
                           farm.planId

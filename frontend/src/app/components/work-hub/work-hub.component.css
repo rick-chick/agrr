@@ -42,10 +42,15 @@
 }
 
 .work-hub__meta,
+.work-hub__summary,
 .work-hub__cta {
   display: block;
   margin-top: 0.35rem;
   font-size: 0.875rem;
+}
+
+.work-hub__summary {
+  color: var(--color-text-muted);
 }
 
 .work-hub__cta {

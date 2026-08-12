@@ -78,6 +78,9 @@ describe('WorkHubComponent', () => {
       'work.hub.subtitle': '農場を選んで今日の作業を記録します',
       'work.hub.error_subtitle': '農場一覧を読み込めませんでした',
       'work.hub.retry': '再読み込み',
+      'work.hub.farm_meta': '圃場 {{count}} 件・合計 {{area}} ㎡',
+      'work.hub.overdue_summary': '期限超過 {{count}} 件',
+      'work.hub.today_summary': '今日 {{count}} 件',
       'common.api_error.generic': 'エラーが発生しました'
     });
   });
@@ -98,7 +101,9 @@ describe('WorkHubComponent', () => {
           fieldCount: 2,
           totalArea: 100,
           hasValidFields: true,
-          planId: 9
+          planId: 9,
+          overdueCount: 2,
+          todayCount: 1
         }
       ]
     });
@@ -127,7 +132,9 @@ describe('WorkHubComponent', () => {
           fieldCount: 2,
           totalArea: 100,
           hasValidFields: true,
-          planId: 9
+          planId: 9,
+          overdueCount: 2,
+          todayCount: 1
         },
         {
           farmId: 2,
@@ -135,7 +142,9 @@ describe('WorkHubComponent', () => {
           fieldCount: 1,
           totalArea: 50,
           hasValidFields: true,
-          planId: null
+          planId: null,
+          overdueCount: 0,
+          todayCount: 0
         }
       ]
     });
@@ -152,7 +161,9 @@ describe('WorkHubComponent', () => {
       fieldCount: 1,
       totalArea: 40,
       hasValidFields: true,
-      planId: null
+      planId: null,
+      overdueCount: 0,
+      todayCount: 0
     });
     expect(component.control.submitting).toBe(true);
     expect(ensureExecute).toHaveBeenCalledWith({ farmId: 3, existingPlanId: null });
@@ -168,7 +179,9 @@ describe('WorkHubComponent', () => {
           fieldCount: 2,
           totalArea: 100,
           hasValidFields: true,
-          planId: 9
+          planId: 9,
+          overdueCount: 2,
+          todayCount: 1
         }
       ]
     });
@@ -187,7 +200,9 @@ describe('WorkHubComponent', () => {
           fieldCount: 0,
           totalArea: 0,
           hasValidFields: false,
-          planId: null
+          planId: null,
+          overdueCount: 0,
+          todayCount: 0
         }
       ]
     });
@@ -208,7 +223,9 @@ describe('WorkHubComponent', () => {
           fieldCount: 1,
           totalArea: 50,
           hasValidFields: true,
-          planId: null
+          planId: null,
+          overdueCount: 0,
+          todayCount: 0
         }
       ]
     });
@@ -243,7 +260,9 @@ describe('WorkHubComponent', () => {
           fieldCount: 2,
           totalArea: 100,
           hasValidFields: true,
-          planId: null
+          planId: null,
+          overdueCount: 0,
+          todayCount: 0
         }
       ]
     });
@@ -252,6 +271,41 @@ describe('WorkHubComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('エラーが発生しました');
     expect(fixture.nativeElement.querySelectorAll('.work-hub__farm-btn')).toHaveLength(1);
     expect(fixture.nativeElement.textContent).toContain('再読み込み');
+  });
+
+  it('shows overdue and today counts on farm cards', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 2,
+          todayCount: 1
+        },
+        {
+          farmId: 2,
+          farmName: 'Farm B',
+          fieldCount: 1,
+          totalArea: 50,
+          hasValidFields: true,
+          planId: 10,
+          overdueCount: 0,
+          todayCount: 0
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const summary = fixture.nativeElement.querySelector('.work-hub__summary');
+    expect(summary?.textContent).toContain('期限超過 2 件');
+    expect(summary?.textContent).toContain('今日 1 件');
+    expect(fixture.nativeElement.textContent).toContain('期限超過 0 件');
+    expect(fixture.nativeElement.textContent).toContain('今日 0 件');
   });
 
   it('reloads hub data when retry is clicked', () => {

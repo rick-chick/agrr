@@ -5,4 +5,6 @@ export interface WorkHubFarmRow {
   totalArea: number;
   hasValidFields: boolean;
   planId: number | null;
+  overdueCount: number;
+  todayCount: number;
 }

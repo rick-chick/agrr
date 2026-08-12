@@ -45,7 +45,9 @@ describe('WorkHubPresenter', () => {
           fieldCount: 2,
           totalArea: 100,
           hasValidFields: true,
-          planId: 9
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0
         }
       ]
     });
@@ -60,7 +62,9 @@ describe('WorkHubPresenter', () => {
             fieldCount: 2,
             totalArea: 100,
             hasValidFields: true,
-            planId: 9
+            planId: 9,
+            overdueCount: 0,
+            todayCount: 0
           }
         ]
       })
