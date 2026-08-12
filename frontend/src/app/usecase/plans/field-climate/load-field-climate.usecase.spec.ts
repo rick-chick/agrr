@@ -2,8 +2,11 @@ import { of, throwError } from 'rxjs';
 import { describe, it, expect } from 'vitest';
 import { FieldCultivationClimateData } from '../../../domain/plans/field-cultivation-climate-data';
 import { FieldClimateGateway } from './field-climate.gateway';
+import { FieldClimatePresentationDto } from './load-field-climate.dtos';
 import { LoadFieldClimateOutputPort } from './load-field-climate.output-port';
 import { LoadFieldClimateUseCase } from './load-field-climate.usecase';
+import { PlanGateway } from '../plan-gateway';
+import { WorkRecordGateway } from '../work-record-gateway';
 
 describe('LoadFieldClimateUseCase', () => {
   const sampleData: FieldCultivationClimateData = {
@@ -56,12 +59,34 @@ describe('LoadFieldClimateUseCase', () => {
     ]
   };
 
+  const workRecordGateway: WorkRecordGateway = {
+    listWorkRecords: () => of({ work_records: [] }),
+    createWorkRecord: () => of({ work_record: {} as never }),
+    updateWorkRecord: () => of({ work_record: {} as never }),
+    deleteWorkRecord: () => of({} as never),
+    skipTaskScheduleItem: () => of({ item: { id: 1, status: 'skipped', cancelled_at: null } }),
+    unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
+  };
+
+  const planGateway: PlanGateway = {
+    fetchPlan: () => of({} as never),
+    getTaskSchedule: () =>
+      of({
+        plan: {} as never,
+        week: {} as never,
+        milestones: [],
+        fields: [],
+        labels: {},
+        minimap: {} as never
+      })
+  };
+
   it('passes gateway result to outputPort.present', () => {
     const gateway: FieldClimateGateway = {
       fetchFieldClimateData: () => of(sampleData)
     };
 
-    let presented: FieldCultivationClimateData | null = null;
+    let presented: FieldClimatePresentationDto | null = null;
     const outputPort: LoadFieldClimateOutputPort = {
       present: (dto) => {
         presented = dto;
@@ -69,10 +94,19 @@ describe('LoadFieldClimateUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadFieldClimateUseCase(outputPort, gateway);
+    const useCase = new LoadFieldClimateUseCase(
+      outputPort,
+      gateway,
+      workRecordGateway,
+      planGateway
+    );
     useCase.execute({ fieldCultivationId: 1, planType: 'private' });
 
-    expect(presented).toEqual(sampleData);
+    expect(presented).toEqual({
+      climateData: sampleData,
+      workDayMarkers: [],
+      latestImplementation: null
+    });
   });
 
   it('forwards gateway errors to outputPort.onError', () => {
@@ -88,7 +122,12 @@ describe('LoadFieldClimateUseCase', () => {
       }
     };
 
-    const useCase = new LoadFieldClimateUseCase(outputPort, gateway);
+    const useCase = new LoadFieldClimateUseCase(
+      outputPort,
+      gateway,
+      workRecordGateway,
+      planGateway
+    );
     useCase.execute({ fieldCultivationId: 1, planType: 'public' });
 
     expect(receivedError).not.toBeNull();

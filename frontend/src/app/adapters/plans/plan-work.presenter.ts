@@ -7,7 +7,7 @@ import {
   CreateWorkRecordValidationErrorDto
 } from '../../usecase/plans/create-work-record.dtos';
 import { CreateWorkRecordOutputPort } from '../../usecase/plans/create-work-record.output-port';
-import { LoadWorkDayListDataDto } from '../../usecase/plans/load-work-day-list.dtos';
+import { LoadWorkDayListDataDto, WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { LoadWorkDayListOutputPort } from '../../usecase/plans/load-work-day-list.output-port';
 import { SkipTaskScheduleItemOutputPort } from '../../usecase/plans/skip-task-schedule-item.output-port';
 import { RegenerateTaskScheduleOutputPort } from '../../usecase/plans/regenerate-task-schedule.output-port';
@@ -30,6 +30,7 @@ import {
   type TaskScheduleSyncLifecycleState
 } from '../../usecase/plans/task-schedule-sync-lifecycle';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
+import { buildWorkRecordSaveToast } from '../../domain/plans/work-record-save-toast';
 
 const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
   cropIdsForBanner: [],
@@ -141,7 +142,7 @@ export class PlanWorkPresenter
       regenerating: loadResult.regenerating,
       regenerateError: null,
       pendingSyncToastKey: loadResult.toastI18nKey,
-      pendingRecordSavedToastKey: null,
+      pendingRecordSavedToast: null,
       pendingRecordSavedEvent: null,
       pendingQuickCompleteValidation: null,
       syncReloadNonce: loadResult.requestReload
@@ -231,15 +232,44 @@ export class PlanWorkPresenter
 
   private handleQuickCompleteSuccess(dto: CreateWorkRecordSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const itemId = this.view.control.completingItemId;
+    const row = itemId != null ? this.findRowByItemId(itemId) : null;
+    const planId = this.view.control.plan?.id;
+    const saveContext =
+      row && planId
+        ? {
+            planId,
+            fieldCultivationId: row.item.field_cultivation_id,
+            taskScheduleItemId: row.item.item_id,
+            gddTrigger: row.item.gdd_trigger ?? row.item.details?.gdd?.trigger ?? null
+          }
+        : null;
+
     this.view.control = {
       ...this.view.control,
       completingItemId: null,
       error: null,
-      pendingRecordSavedToastKey: 'plans.work.toast.record_saved',
+      pendingRecordSavedToast: buildWorkRecordSaveToast(
+        dto.workRecord,
+        'create-from-item',
+        saveContext
+      ),
       pendingRecordSavedEvent: {
         workRecord: dto.workRecord,
         mode: 'create-from-item'
       }
     };
+  }
+
+  private findRowByItemId(itemId: number): WorkDayListRowDto | null {
+    if (!this.view) {
+      return null;
+    }
+    const rows = [
+      ...this.view.control.overdue,
+      ...this.view.control.today,
+      ...this.view.control.upcoming
+    ];
+    return rows.find((row) => row.item.item_id === itemId) ?? null;
   }
 }

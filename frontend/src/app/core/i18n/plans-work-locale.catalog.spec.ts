@@ -37,6 +37,8 @@ const PLANS_WORK_KEYS = [
   'plans.work.retry',
   'plans.work.toast.record_saved',
   'plans.work.toast.record_saved_adhoc',
+  'plans.work.toast.record_saved_variance',
+  'plans.work.toast.view_task_detail',
   'plans.work.recent_adhoc',
   'plans.work.recent_adhoc_history_link',
   'plans.work.nav.work',

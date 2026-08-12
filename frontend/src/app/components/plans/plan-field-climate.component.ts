@@ -34,7 +34,9 @@ import { PlanFieldClimatePresenter } from '../../adapters/plans/plan-field-clima
 const INITIAL_STATE: PlanFieldClimateViewState = {
   loading: false,
   error: null,
-  climateData: null
+  climateData: null,
+  workDayMarkers: [],
+  latestImplementation: null
 };
 
 type StageTemperatureBand = {
@@ -76,6 +78,19 @@ type StageTemperatureBand = {
             }}</span>
             <span>{{ headerPeriod }}</span>
           </div>
+          @if (control.latestImplementation) {
+            <p class="plan-field-climate__latest-implementation">
+              {{
+                'plans.field_climate.latest_implementation_summary'
+                  | translate
+                    : {
+                        name: control.latestImplementation.name,
+                        deltaDays: control.latestImplementation.deltaDaysLabel ?? '—',
+                        gddDelta: control.latestImplementation.gddDeltaLabel ?? '—'
+                      }
+              }}
+            </p>
+          }
           @if (planId && fieldCultivationId) {
             <a
               class="plan-field-climate__task-schedule-link"
@@ -242,6 +257,7 @@ export class PlanFieldClimateComponent
     { optimal: 'rgba(14, 165, 233, 0.16)', stress: 'rgba(239, 68, 68, 0.08)' }
   ];
   private lastFieldCultivationId: number | null = null;
+  private workDayMarkerTimestamps: number[] = [];
   private langChangeSub?: Subscription;
 
   constructor(
@@ -301,6 +317,9 @@ export class PlanFieldClimateComponent
       this.lastFieldCultivationId = newFieldId;
     }
     this._control = value;
+    this.workDayMarkerTimestamps = value.workDayMarkers
+      .map((marker) => this.toTimestamp(marker.actualDate))
+      .filter((timestamp): timestamp is number => timestamp != null);
     this.cdr.markForCheck();
     this.scheduleChartRefresh();
   }
@@ -357,7 +376,13 @@ export class PlanFieldClimateComponent
 
   retry(): void {
     if (!this.currentRequest) return;
-    this.control = { loading: true, error: null, climateData: null };
+    this.control = {
+      loading: true,
+      error: null,
+      climateData: null,
+      workDayMarkers: [],
+      latestImplementation: null
+    };
     this.useCase.execute(this.currentRequest);
   }
 
@@ -379,13 +404,20 @@ export class PlanFieldClimateComponent
   private loadClimateIfNeeded(): void {
     if (!this.fieldCultivationId) {
       this.currentRequest = null;
-      this.control = { loading: false, error: null, climateData: null };
+      this.control = {
+        loading: false,
+        error: null,
+        climateData: null,
+        workDayMarkers: [],
+        latestImplementation: null
+      };
       return;
     }
 
     const payload: LoadFieldClimateInputDto = {
       fieldCultivationId: this.fieldCultivationId,
       planType: this.planType,
+      planId: this.planId,
       displayStartDate: this.displayStartDate,
       displayEndDate: this.displayEndDate
     };
@@ -394,13 +426,20 @@ export class PlanFieldClimateComponent
       !this.currentRequest ||
       this.currentRequest.fieldCultivationId !== payload.fieldCultivationId ||
       this.currentRequest.planType !== payload.planType ||
+      this.currentRequest.planId !== payload.planId ||
       this.currentRequest.displayStartDate !== payload.displayStartDate ||
       this.currentRequest.displayEndDate !== payload.displayEndDate;
 
     if (!shouldFetch) return;
 
     this.currentRequest = payload;
-    this.control = { loading: true, error: null, climateData: null };
+    this.control = {
+      loading: true,
+      error: null,
+      climateData: null,
+      workDayMarkers: [],
+      latestImplementation: null
+    };
     this.useCase.execute(payload);
   }
 
@@ -412,7 +451,7 @@ export class PlanFieldClimateComponent
         type: 'line',
         data: { labels: [], datasets: [] },
         options: this.buildChartOptions(this.chartLabel('temperature')),
-        plugins: [this.getStageBandPlugin()]
+        plugins: [this.getStageBandPlugin(), this.getWorkDayMarkerPlugin()]
       });
     }
 
@@ -420,7 +459,8 @@ export class PlanFieldClimateComponent
       this.gddChart = new Chart(this.gddCanvas.nativeElement, {
         type: 'line',
         data: { labels: [], datasets: [] },
-        options: this.buildGddChartOptions(this.chartLabel('cumulative_gdd'))
+        options: this.buildGddChartOptions(this.chartLabel('cumulative_gdd')),
+        plugins: [this.getWorkDayMarkerPlugin()]
       });
     }
   }
@@ -759,6 +799,34 @@ export class PlanFieldClimateComponent
     }
 
     return bands;
+  }
+
+  private getWorkDayMarkerPlugin(): Plugin<'line'> {
+    return {
+      id: 'workDayMarkerPlugin',
+      beforeDatasetsDraw: (chart) => {
+        if (!this.workDayMarkerTimestamps.length) return;
+        const ctx = chart.ctx;
+        const xScale = chart.scales['x'];
+        const yScale = chart.scales['y'] ?? chart.scales['y1'];
+        if (!xScale || !yScale) return;
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(234, 88, 12, 0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        for (const timestamp of this.workDayMarkerTimestamps) {
+          const x = xScale.getPixelForValue(timestamp);
+          if (isNaN(x)) continue;
+          ctx.beginPath();
+          ctx.moveTo(x, yScale.top);
+          ctx.lineTo(x, yScale.bottom);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+    };
   }
 
   private getStageBandPlugin(): Plugin<'line'> {

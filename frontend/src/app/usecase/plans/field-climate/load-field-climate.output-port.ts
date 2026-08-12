@@ -1,9 +1,9 @@
 import { InjectionToken } from '@angular/core';
-import { FieldCultivationClimateData } from '../../../domain/plans/field-cultivation-climate-data';
+import { FieldClimatePresentationDto } from './load-field-climate.dtos';
 import { ErrorDto } from '../../../domain/shared/error.dto';
 
 export interface LoadFieldClimateOutputPort {
-  present(dto: FieldCultivationClimateData): void;
+  present(dto: FieldClimatePresentationDto): void;
   onError(dto: ErrorDto): void;
 }
 

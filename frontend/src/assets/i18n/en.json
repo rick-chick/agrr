@@ -1317,6 +1317,7 @@
         "required_cumulative_gdd": "Required cumulative GDD"
       },
       "open_task_schedule": "Open task plan for this field",
+      "latest_implementation_summary": "Latest: {{name}} · {{deltaDays}} days · GDD {{gddDelta}}",
       "a11y": {
         "temperature_chart": "Daily temperature chart for {{cropName}} in {{fieldName}}. Period {{period}}. Base temperature {{baseTemp}} ℃. Current stage {{currentStage}}.",
         "gdd_chart": "GDD progress chart for {{cropName}} in {{fieldName}}. Period {{period}}. Current stage {{currentStage}}.",
@@ -1453,7 +1454,9 @@
       "retry": "Reload",
       "toast": {
         "record_saved": "Work recorded",
-        "record_saved_adhoc": "Work recorded. View it in work history."
+        "record_saved_adhoc": "Work recorded. View it in work history.",
+        "record_saved_variance": "{{name}}: {{deltaDays}} days / GDD {{gddDelta}}",
+        "view_task_detail": "View task detail"
       },
       "recent_adhoc": "Recorded “{{name}}” on {{date}}",
       "recent_adhoc_history_link": "View work history",

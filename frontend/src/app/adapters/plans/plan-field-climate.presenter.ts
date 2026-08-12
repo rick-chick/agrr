@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
 import { PlanFieldClimateView, PlanFieldClimateViewState } from '../../components/plans/plan-field-climate.view';
+import { FieldClimatePresentationDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
 import { LoadFieldClimateOutputPort } from '../../usecase/plans/field-climate/load-field-climate.output-port';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class PlanFieldClimatePresenter implements LoadFieldClimateOutputPort {
     this.view = view;
   }
 
-  present(dto: FieldCultivationClimateData): void {
+  present(dto: FieldClimatePresentationDto): void {
     if (!this.view) throw new Error('PlanFieldClimatePresenter: view not set');
     this.view.control = this.createViewState(dto, null);
   }
@@ -23,13 +23,15 @@ export class PlanFieldClimatePresenter implements LoadFieldClimateOutputPort {
   }
 
   private createViewState(
-    climateData: FieldCultivationClimateData | null,
+    dto: FieldClimatePresentationDto | null,
     error: string | null
   ): PlanFieldClimateViewState {
     return {
       loading: false,
       error,
-      climateData
+      climateData: dto?.climateData ?? null,
+      workDayMarkers: dto?.workDayMarkers ?? [],
+      latestImplementation: dto?.latestImplementation ?? null
     };
   }
 }

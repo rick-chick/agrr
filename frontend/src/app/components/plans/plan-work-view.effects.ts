@@ -8,7 +8,7 @@ import {
 
 interface PlanWorkViewEffectState {
   pendingSyncToastKey: string | null;
-  pendingRecordSavedToastKey: string | null;
+  pendingRecordSavedToast: PendingToastRequest | null;
   pendingRecordSavedEvent: WorkRecordSheetSavedEvent | null;
   pendingQuickCompleteValidation: {
     itemId: number;
@@ -32,8 +32,8 @@ export function applyPlanWorkViewEffects<T extends PlanWorkViewEffectState>(
   let state = applyTaskScheduleSyncViewEffects(prev, next, deps);
   state = consumePendingToastKey(
     state,
-    state.pendingRecordSavedToastKey,
-    (current) => ({ ...current, pendingRecordSavedToastKey: null }),
+    state.pendingRecordSavedToast,
+    (current) => ({ ...current, pendingRecordSavedToast: null }),
     deps
   );
 

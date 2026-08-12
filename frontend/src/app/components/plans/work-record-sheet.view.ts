@@ -1,6 +1,8 @@
 import { FieldSchedule } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
+import { PendingToastRequest } from '../../core/view-effects/pending-toast-view.effects';
+import { WorkRecordSaveToastContext } from '../../domain/plans/work-record-save-toast';
 
 export type WorkRecordSheetMode = 'create-from-item' | 'create-adhoc' | 'edit';
 export type WorkRecordScheduleCategory = 'general' | 'fertilizer' | null;
@@ -67,7 +69,8 @@ export interface WorkRecordSheetViewState {
   taskChips: WorkRecordSheetTaskChip[];
   loadingTaskChips: boolean;
   selectedTaskId: number | 'other' | null;
-  pendingToastKey: string | null;
+  pendingToast: PendingToastRequest | null;
+  saveToastContext: WorkRecordSaveToastContext | null;
   pendingUndoToast: PendingUndoToastRequest | null;
   existingPhotos: WorkRecordSheetExistingPhoto[];
   pendingPhotos: WorkRecordSheetPendingPhoto[];

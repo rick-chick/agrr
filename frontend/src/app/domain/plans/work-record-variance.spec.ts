@@ -4,6 +4,7 @@ import {
   averageWorkRecordDeltaDays,
   deltaDaysBetween,
   workRecordDeltaDays,
+  workRecordGddDelta,
   workRecordScheduledDate
 } from './work-record-variance';
 
@@ -81,5 +82,18 @@ describe('work-record-variance', () => {
     ]);
 
     expect(average).toBe(3);
+  });
+
+  it('computes gdd delta from trigger and actual gdd', () => {
+    expect(
+      workRecordGddDelta(
+        record({
+          id: 1,
+          actual_date: '2026-06-12',
+          gdd_at_actual: 130.5
+        }),
+        100
+      )
+    ).toBe(30.5);
   });
 });

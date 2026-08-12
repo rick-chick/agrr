@@ -6,7 +6,7 @@ import {
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 
 interface WorkRecordSheetViewEffectState {
-  pendingToastKey: string | null;
+  pendingToast: PendingToastRequest | null;
   pendingUndoToast: PendingUndoToastRequest | null;
 }
 
@@ -18,8 +18,8 @@ export function applyWorkRecordSheetViewEffects<T extends WorkRecordSheetViewEff
 ): T {
   const afterToast = consumePendingToastKey(
     next,
-    next.pendingToastKey,
-    (state) => ({ ...state, pendingToastKey: null }),
+    next.pendingToast,
+    (state) => ({ ...state, pendingToast: null }),
     deps
   );
   return consumePendingUndoToast(afterToast, deps);
