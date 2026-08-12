@@ -92,6 +92,11 @@ describe('mapTaskScheduleResponseToDomain', () => {
                 item_id: 1,
                 name: 'Weeding',
                 scheduled_date: '2026-06-10',
+                actualDate: null,
+                deltaDays: null,
+                gddTrigger: 100,
+                gddAtActual: null,
+                gddDelta: null,
                 status: 'planned',
                 completed: false,
                 details: {
@@ -281,6 +286,11 @@ describe('mapTaskScheduleResponseToDomain', () => {
         item_id: 9,
         name: 'Pending prep',
         scheduled_date: null,
+        actualDate: null,
+        deltaDays: null,
+        gddTrigger: 100,
+        gddAtActual: null,
+        gddDelta: null,
         status: 'planned',
         completed: false,
         details: {
@@ -292,4 +302,65 @@ describe('mapTaskScheduleResponseToDomain', () => {
       }
     ]);
   });
+
+  it('maps plan vs actual variance fields from API task item', () => {
+    const response: TaskScheduleResponse = {
+      plan: planInfoFromTest(),
+      week: { start_date: '2026-06-01', end_date: '2026-06-07', label: '2026-06-01' },
+      milestones: [],
+      fields: [
+        {
+          id: 1,
+          name: 'North',
+          crop_name: 'Tomato',
+          area_sqm: 100,
+          field_cultivation_id: 10,
+          crop_id: 20,
+          schedules: {
+            general: [
+              task({
+                item_id: 1,
+                name: 'Weeding',
+                scheduled_date: '2026-06-10',
+                actual_date: '2026-06-13',
+                delta_days: 3,
+                gdd_trigger: '100',
+                gdd_at_actual: 110,
+                gdd_delta: 10
+              })
+            ],
+            fertilizer: [],
+            unscheduled: []
+          }
+        }
+      ],
+      labels: {},
+      minimap: { start_date: '', end_date: '', weeks: [] }
+    };
+
+    const item = mapTaskScheduleResponseToDomain(response).fields[0]?.schedules.general[0];
+
+    expect(item).toMatchObject({
+      actualDate: '2026-06-13',
+      deltaDays: 3,
+      gddTrigger: 100,
+      gddAtActual: 110,
+      gddDelta: 10
+    });
+  });
 });
+
+function planInfoFromTest(): TaskScheduleResponse['plan'] {
+  return {
+    id: 7,
+    name: 'Main Plan',
+    status: 'completed',
+    planning_start_date: '2026-01-01',
+    planning_end_date: '2026-12-31',
+    timeline_generated_at: '2026-06-01T00:00:00Z',
+    timeline_generated_at_display: '2026-06-01',
+    task_schedule_sync_state: 'ready',
+    task_schedule_sync_error: null,
+    task_schedule_sync_error_crop_id: null
+  };
+}

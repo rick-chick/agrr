@@ -1402,7 +1402,23 @@
         "stage": "Stage",
         "amount": "Fertilizer amount",
         "master_description": "Description",
-        "not_applicable": "N/A"
+        "not_applicable": "N/A",
+        "variance_heading": "Plan vs actual",
+        "scheduled_date": "Scheduled date",
+        "actual_date": "Actual date",
+        "delta_days": "Day variance (Δ days)",
+        "planned_gdd": "Planned GDD",
+        "actual_gdd": "Actual GDD",
+        "gdd_delta": "GDD variance"
+      },
+      "variance": {
+        "month_average": "Monthly avg Δ {{delta}} days",
+        "badge": {
+          "unrecorded": "Not recorded",
+          "on_time": "On schedule (±0 days)",
+          "late": "{{delta}} days late",
+          "early": "{{delta}} days early"
+        }
       },
       "empty_cta": "Open cropping plan",
       "sync_plan_link": "Review cultivation plan",

@@ -2507,7 +2507,23 @@
         "stage": "ステージ",
         "amount": "施肥量",
         "master_description": "作業説明",
-        "not_applicable": "該当なし"
+        "not_applicable": "該当なし",
+        "variance_heading": "予定と実績の比較",
+        "scheduled_date": "予定日",
+        "actual_date": "実施日",
+        "delta_days": "日数差（Δ日）",
+        "planned_gdd": "予定 GDD",
+        "actual_gdd": "実施 GDD",
+        "gdd_delta": "GDD 差"
+      },
+      "variance": {
+        "month_average": "月平均 Δ {{delta}} 日",
+        "badge": {
+          "unrecorded": "未実施",
+          "on_time": "予定どおり（±0日）",
+          "late": "{{delta}}日遅れ",
+          "early": "{{delta}}日早着"
+        }
       },
       "empty_cta": "作付け計画を確認",
       "sync_plan_link": "作付け計画を確認する",

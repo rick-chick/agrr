@@ -1887,7 +1887,23 @@
         "stage": "चरण",
         "amount": "उर्वरक मात्रा",
         "master_description": "विवरण",
-        "not_applicable": "लागू नहीं"
+        "not_applicable": "लागू नहीं",
+        "variance_heading": "योजना बनाम वास्तविक",
+        "scheduled_date": "नियोजित तिथि",
+        "actual_date": "वास्तविक तिथि",
+        "delta_days": "दिन अंतर (Δ दिन)",
+        "planned_gdd": "नियोजित GDD",
+        "actual_gdd": "वास्तविक GDD",
+        "gdd_delta": "GDD अंतर"
+      },
+      "variance": {
+        "month_average": "मासिक औसत Δ {{delta}} दिन",
+        "badge": {
+          "unrecorded": "अभिलेखित नहीं",
+          "on_time": "समय पर (±0 दिन)",
+          "late": "{{delta}} दिन देरी",
+          "early": "{{delta}} दिन जल्दी"
+        }
       },
       "empty_cta": "खेती योजना खोलें",
       "sync_plan_link": "खेती योजना की समीक्षा करें",

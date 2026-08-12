@@ -4,7 +4,7 @@ import type {
   PlanSchedulePlanInfo,
   PlanTaskScheduleItem
 } from './plan-schedule-snapshot';
-import { emptyPlanTaskScheduleItemDetails } from './plan-schedule-snapshot';
+import { emptyPlanTaskScheduleItemDetails, emptyPlanTaskScheduleItemVariance } from './plan-schedule-snapshot';
 import { flattenPlanTaskSchedule } from './flatten-plan-task-schedule';
 
 function task(
@@ -16,7 +16,9 @@ function task(
     scheduled_date: overrides.scheduled_date ?? null,
     status: overrides.status ?? 'planned',
     completed: overrides.completed ?? false,
-    details: overrides.details ?? emptyPlanTaskScheduleItemDetails
+    details: overrides.details ?? emptyPlanTaskScheduleItemDetails,
+    ...emptyPlanTaskScheduleItemVariance,
+    ...overrides
   };
 }
 
