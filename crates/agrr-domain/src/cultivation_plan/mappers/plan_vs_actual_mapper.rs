@@ -1,10 +1,14 @@
 //! Computes plan-vs-actual deltas from task schedule timeline snapshot rows.
 
 use crate::cultivation_plan::dtos::plan_vs_actual::{
-    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+    PlanVarianceActionItemRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
+    PlanVsActualSummaryRead,
 };
 use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
     TaskScheduleTimelineScheduleItemRead, TaskScheduleTimelineSnapshot,
+};
+use crate::cultivation_plan::policies::plan_variance_threshold_policy::{
+    exceedance_kind, VarianceExceedanceKind,
 };
 use time::{format_description::well_known::Iso8601, Date};
 
@@ -61,12 +65,14 @@ impl PlanVsActualMapper {
 
         let categories = category_summaries(&items);
         let top_variance_items = top_variance(&items, top_n);
+        let action_required_items = action_required(&items);
 
         PlanVsActualSummaryRead {
             plan_id: snapshot.plan.id,
             unrecorded_count,
             categories,
             top_variance_items,
+            action_required_items,
         }
     }
 }
@@ -155,6 +161,23 @@ fn top_variance(items: &[PlanVsActualItemRead], top_n: usize) -> Vec<PlanVsActua
         .take(top_n)
         .cloned()
         .collect()
+}
+
+fn action_required(items: &[PlanVsActualItemRead]) -> Vec<PlanVarianceActionItemRead> {
+    let mut required: Vec<PlanVarianceActionItemRead> = items
+        .iter()
+        .filter_map(|item| {
+            exceedance_kind(item).map(|kind| PlanVarianceActionItemRead::from_item(item, kind))
+        })
+        .collect();
+    required.sort_by(|left, right| {
+        let left_days = left.delta_days.map(|days| days.unsigned_abs()).unwrap_or(0);
+        let right_days = right.delta_days.map(|days| days.unsigned_abs()).unwrap_or(0);
+        right_days
+            .cmp(&left_days)
+            .then_with(|| left.item_id.cmp(&right.item_id))
+    });
+    required
 }
 
 #[cfg(test)]

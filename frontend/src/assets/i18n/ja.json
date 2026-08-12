@@ -2418,6 +2418,11 @@
       "gantt": {
         "title": "栽培スケジュール"
       },
+      "variance_action_banner": {
+        "message": "この計画で {{count}} 件のタスクが乖離閾値を超えています",
+        "manual_hint": "提案を確認し、準備ができたら手動で adjust または再最適化を検討してください。",
+        "review_link": "振り返りタブで提案を確認"
+      },
       "detail": {
         "title": "栽培詳細",
         "loading": "詳細を読み込んでいます..."
@@ -2559,7 +2564,17 @@
       }
     },
     "learn": {
-      "page_title": "振り返り — {{name}}"
+      "page_title": "振り返り — {{name}}",
+      "action_proposals": {
+        "title": "スケジュール乖離の確認が必要です",
+        "manual_hint": "作業台で確認したうえで、手動で adjust または再最適化を検討してください。自動変更は行いません。",
+        "open_workbench": "作業台を開く",
+        "exceedance": {
+          "days": "日数の乖離が閾値を超えています",
+          "gdd": "GDD の乖離が閾値を超えています",
+          "both": "日数と GDD の乖離が閾値を超えています"
+        }
+      }
     },
     "work": {
       "page_title": "{{name}}の作業記録",

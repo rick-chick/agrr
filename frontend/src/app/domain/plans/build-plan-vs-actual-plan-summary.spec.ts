@@ -24,6 +24,7 @@ function sampleSummary(
       }
     ],
     top_variance_items: [],
+    action_required_items: [],
     ...overrides
   };
 }
