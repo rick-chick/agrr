@@ -140,6 +140,46 @@ describe('PlanFieldClimateComponent', () => {
     expect(mockCdr.markForCheck).toHaveBeenCalled();
   });
 
+  it('exposes latest implementation summary from control state', () => {
+    const sampleData: FieldCultivationClimateData = {
+      success: true,
+      field_cultivation: {
+        id: 1,
+        field_name: 'Field A',
+        crop_name: 'Tomato',
+        start_date: '2026-02-01',
+        completion_date: '2026-04-01'
+      },
+      farm: {
+        id: 1,
+        name: 'Test Farm',
+        latitude: 35.0,
+        longitude: 139.0
+      },
+      crop_requirements: {
+        base_temperature: 12
+      },
+      weather_data: [],
+      gdd_data: [],
+      stages: []
+    };
+
+    component.control = {
+      ...climateControl(sampleData),
+      latestImplementation: {
+        name: 'Weeding',
+        deltaDaysLabel: '+2',
+        gddDeltaLabel: '+10.5'
+      }
+    };
+
+    expect(component.control.latestImplementation).toEqual({
+      name: 'Weeding',
+      deltaDaysLabel: '+2',
+      gddDeltaLabel: '+10.5'
+    });
+  });
+
   it('defaults activeChartTab to temperature', () => {
     expect(component.activeChartTab).toBe('temperature');
   });
