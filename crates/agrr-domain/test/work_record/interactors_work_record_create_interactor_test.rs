@@ -7,9 +7,10 @@ use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::ports::ClockPort;
 use crate::work_record::dtos::{WorkRecordRead, WorkRecordTaskScheduleItemSummary};
 use crate::work_record::gateways::{
-    TaskScheduleItemLookupGateway, TaskScheduleItemPrefillSnapshot, WorkRecordCreatePersistAttrs,
-    WorkRecordGateway,
+    TaskScheduleItemLookupGateway, TaskScheduleItemPrefillSnapshot, WorkRecordClimateSnapshotGateway,
+    WorkRecordCreatePersistAttrs, WorkRecordGateway,
 };
+use crate::work_record::mappers::work_record_climate_snapshot_mapper::WorkRecordClimateSnapshot;
 use crate::work_record::ports::WorkRecordCreateOutputPort;
 use rust_decimal::Decimal;
 use serde_json::Value;
@@ -131,6 +132,34 @@ impl CultivationPlanGateway for StubPlanGateway {
     }
 }
 
+struct EmptyClimateSnapshotGateway;
+
+impl WorkRecordClimateSnapshotGateway for EmptyClimateSnapshotGateway {
+    fn snapshot_for_field_cultivation(
+        &self,
+        _: i64,
+        _: i64,
+        _: Date,
+    ) -> Result<WorkRecordClimateSnapshot, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(WorkRecordClimateSnapshot::empty())
+    }
+}
+
+struct StubClimateSnapshotGateway {
+    snapshot: WorkRecordClimateSnapshot,
+}
+
+impl WorkRecordClimateSnapshotGateway for StubClimateSnapshotGateway {
+    fn snapshot_for_field_cultivation(
+        &self,
+        _: i64,
+        _: i64,
+        _: Date,
+    ) -> Result<WorkRecordClimateSnapshot, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(self.snapshot.clone())
+    }
+}
+
 struct StubItemLookup {
     snapshot: Option<TaskScheduleItemPrefillSnapshot>,
 }
@@ -240,6 +269,8 @@ fn sample_read() -> WorkRecordRead {
         amount_unit: Some("kg".into()),
         time_spent_minutes: None,
         notes: Some("雨上がり".into()),
+        gdd_at_actual: None,
+        weather_snapshot: None,
         created_at: datetime!(2026-06-12 10:00 UTC),
         updated_at: datetime!(2026-06-12 10:00 UTC),
         field_name: Some("F1".into()),
@@ -290,6 +321,7 @@ fn creates_scheduled_record_with_item_prefill() {
         &plan_gateway,
         &gateway,
         &item_lookup,
+        &EmptyClimateSnapshotGateway,
         &clock,
         &EmptyScopeGateway,
     );
@@ -318,6 +350,77 @@ fn creates_scheduled_record_with_item_prefill() {
     assert_eq!(calls[0].1.amount, Some(Decimal::new(15, 1)));
     assert_eq!(calls[0].1.notes.as_deref(), Some("雨上がり"));
     assert!(record_slot.lock().unwrap().is_some());
+}
+
+#[test]
+fn persists_climate_snapshot_when_field_cultivation_present() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let record_slot = Arc::new(Mutex::new(None));
+    let mut output = SpyCreateOutput {
+        events: Arc::clone(&events),
+        record: Arc::clone(&record_slot),
+        errors: Arc::new(Mutex::new(None)),
+    };
+    let create_calls = Arc::new(Mutex::new(Vec::new()));
+    let gateway = StubWorkRecordGateway {
+        create_calls: Arc::clone(&create_calls),
+        create_result: sample_read(),
+    };
+    let item_lookup = StubItemLookup {
+        snapshot: Some(TaskScheduleItemPrefillSnapshot {
+            cultivation_plan_id: 2,
+            field_cultivation_id: Some(45),
+            agricultural_task_id: Some(7),
+            name: "除草".into(),
+            task_type: Some("field_work".into()),
+            scheduled_date: Some(date!(2026-06-10)),
+            amount: None,
+            amount_unit: None,
+        }),
+    };
+    let climate_gateway = StubClimateSnapshotGateway {
+        snapshot: WorkRecordClimateSnapshot {
+            gdd_at_actual: Some(120.5),
+            weather_snapshot: Some(serde_json::json!({
+                "date": "2026-06-12",
+                "temperature_max": 28.0,
+                "temperature_min": 18.0,
+                "temperature_mean": 23.0,
+            })),
+        },
+    };
+    let clock = FakeClock {
+        today_val: date!(2026-06-12),
+        now_val: datetime!(2026-06-12 10:00 UTC),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: private_plan(1),
+    };
+    let mut interactor = WorkRecordCreateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &gateway,
+        &item_lookup,
+        &climate_gateway,
+        &clock,
+        &EmptyScopeGateway,
+    );
+
+    let mut params = BTreeMap::new();
+    params.insert(
+        "task_schedule_item_id".into(),
+        Value::Number(123.into()),
+    );
+    params.insert(
+        "actual_date".into(),
+        Value::String("2026-06-12".into()),
+    );
+
+    interactor.call_rescuing(1, 2, &params).unwrap();
+
+    let calls = create_calls.lock().unwrap();
+    assert_eq!(Some(120.5), calls[0].1.gdd_at_actual);
+    assert!(calls[0].1.weather_snapshot.is_some());
 }
 
 #[test]
@@ -357,6 +460,7 @@ fn dispatches_record_invalid_when_item_belongs_to_other_plan() {
         &plan_gateway,
         &gateway,
         &item_lookup,
+        &EmptyClimateSnapshotGateway,
         &clock,
         &EmptyScopeGateway,
     );
@@ -406,6 +510,7 @@ fn dispatches_record_invalid_when_ad_hoc_name_missing() {
         &plan_gateway,
         &gateway,
         &item_lookup,
+        &EmptyClimateSnapshotGateway,
         &clock,
         &EmptyScopeGateway,
     );
@@ -454,6 +559,7 @@ fn dispatches_not_found_when_private_plan_access_denied() {
         &plan_gateway,
         &gateway,
         &item_lookup,
+        &EmptyClimateSnapshotGateway,
         &clock,
         &EmptyScopeGateway,
     );

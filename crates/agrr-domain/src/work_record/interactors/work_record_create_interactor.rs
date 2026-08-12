@@ -3,6 +3,7 @@
 use std::collections::BTreeMap;
 
 use serde_json::Value;
+use time::Date;
 
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
@@ -14,26 +15,30 @@ use crate::work_record::dtos::work_record_create_input::record_invalid_field;
 use crate::work_record::dtos::WorkRecordCreateInput;
 use crate::work_record::entities::WorkRecordEntity;
 use crate::work_record::gateways::{
-    TaskScheduleItemLookupGateway, WorkRecordCreatePersistAttrs, WorkRecordGateway,
+    TaskScheduleItemLookupGateway, WorkRecordClimateSnapshotGateway, WorkRecordCreatePersistAttrs,
+    WorkRecordGateway,
 };
+use crate::work_record::mappers::work_record_climate_snapshot_mapper::WorkRecordClimateSnapshot;
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::WorkRecordCreateOutputPort;
 
-pub struct WorkRecordCreateInteractor<'a, O, P, G, L, C, S> {
+pub struct WorkRecordCreateInteractor<'a, O, P, G, L, C, S, Cl> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
     item_lookup_gateway: &'a L,
+    climate_snapshot_gateway: &'a Cl,
     clock: &'a C,
     scope_gateway: &'a S,
 }
 
-impl<'a, O, P, G, L, C, S> WorkRecordCreateInteractor<'a, O, P, G, L, C, S>
+impl<'a, O, P, G, L, C, S, Cl> WorkRecordCreateInteractor<'a, O, P, G, L, C, S, Cl>
 where
     O: WorkRecordCreateOutputPort,
     P: CultivationPlanGateway,
     G: WorkRecordGateway,
     L: TaskScheduleItemLookupGateway,
+    Cl: WorkRecordClimateSnapshotGateway,
     C: ClockPort,
     S: UserOrganizationScopeGateway,
 {
@@ -42,6 +47,7 @@ where
         plan_gateway: &'a P,
         gateway: &'a G,
         item_lookup_gateway: &'a L,
+        climate_snapshot_gateway: &'a Cl,
         clock: &'a C,
         scope_gateway: &'a S,
     ) -> Self {
@@ -50,6 +56,7 @@ where
             plan_gateway,
             gateway,
             item_lookup_gateway,
+            climate_snapshot_gateway,
             clock,
             scope_gateway,
         }
@@ -68,7 +75,7 @@ where
         }
 
         let input = WorkRecordCreateInput::from_params(params, self.clock)?;
-        let persist_attrs = self.build_persist_attrs(plan_id, &input)?;
+        let persist_attrs = self.build_persist_attrs(user_id, plan_id, &input)?;
         let record = self.gateway.create(plan_id, persist_attrs)?;
         self.output_port.on_success(record);
         Ok(())
@@ -76,6 +83,7 @@ where
 
     fn build_persist_attrs(
         &self,
+        user_id: i64,
         plan_id: i64,
         input: &WorkRecordCreateInput,
     ) -> Result<WorkRecordCreatePersistAttrs, RecordInvalidError> {
@@ -120,10 +128,18 @@ where
             )
         })?;
 
+        let field_cultivation_id = input
+            .field_cultivation_id
+            .or_else(|| prefill.as_ref().and_then(|p| p.field_cultivation_id));
+        let climate_snapshot = resolve_climate_snapshot(
+            self.climate_snapshot_gateway,
+            user_id,
+            field_cultivation_id,
+            input.actual_date,
+        );
+
         Ok(WorkRecordCreatePersistAttrs {
-            field_cultivation_id: input
-                .field_cultivation_id
-                .or_else(|| prefill.as_ref().and_then(|p| p.field_cultivation_id)),
+            field_cultivation_id,
             task_schedule_item_id: input.task_schedule_item_id,
             agricultural_task_id: input
                 .agricultural_task_id
@@ -141,6 +157,8 @@ where
                 .or_else(|| prefill.as_ref().and_then(|p| p.amount_unit.clone())),
             time_spent_minutes: input.time_spent_minutes,
             notes: input.notes.clone(),
+            gdd_at_actual: climate_snapshot.gdd_at_actual,
+            weather_snapshot: climate_snapshot.weather_snapshot,
             created_at: now,
             updated_at: now,
         })
@@ -178,6 +196,20 @@ fn pick_string(override_value: Option<&str>, fallback: Option<&str>) -> Option<S
         .filter(|s| !s.trim().is_empty())
         .map(str::to_string)
         .or_else(|| fallback.filter(|s| !s.trim().is_empty()).map(str::to_string))
+}
+
+pub(crate) fn resolve_climate_snapshot(
+    gateway: &dyn WorkRecordClimateSnapshotGateway,
+    user_id: i64,
+    field_cultivation_id: Option<i64>,
+    actual_date: Date,
+) -> WorkRecordClimateSnapshot {
+    let Some(fc_id) = field_cultivation_id else {
+        return WorkRecordClimateSnapshot::empty();
+    };
+    gateway
+        .snapshot_for_field_cultivation(user_id, fc_id, actual_date)
+        .unwrap_or_else(|_| WorkRecordClimateSnapshot::empty())
 }
 
 #[cfg(test)]

@@ -20,6 +20,8 @@ pub struct WorkRecordUpdateInput {
     pub amount_unit: Option<String>,
     pub time_spent_minutes: Option<i64>,
     pub notes: Option<String>,
+    pub gdd_at_actual: Option<f64>,
+    pub weather_snapshot: Option<Value>,
 }
 
 impl WorkRecordUpdateInput {
@@ -56,6 +58,8 @@ impl WorkRecordUpdateInput {
             amount_unit,
             time_spent_minutes,
             notes,
+            gdd_at_actual: None,
+            weather_snapshot: None,
         })
     }
 }

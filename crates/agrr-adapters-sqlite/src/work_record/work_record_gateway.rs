@@ -26,6 +26,7 @@ impl WorkRecordSqliteGateway {
     const SELECT_COLUMNS: &'static str = "wr.id, wr.cultivation_plan_id, wr.field_cultivation_id, \
          wr.task_schedule_item_id, wr.agricultural_task_id, wr.name, wr.task_type, wr.actual_date, \
          CAST(wr.amount AS TEXT), wr.amount_unit, wr.time_spent_minutes, wr.notes, \
+         wr.gdd_at_actual, wr.weather_snapshot, \
          wr.created_at, wr.updated_at, \
          NULLIF(TRIM(COALESCE(cpf.name, '')), ''), \
          NULLIF(TRIM(COALESCE(cpc.name, cr.name, '')), ''), \
@@ -55,16 +56,21 @@ impl WorkRecordSqliteGateway {
                 rusqlite::types::Type::Text,
             )
         })?;
-        let created_at = Self::parse_datetime(&row.get::<_, String>(12)?);
-        let updated_at = Self::parse_datetime(&row.get::<_, String>(13)?);
-        let field_name: Option<String> = row.get(14)?;
-        let crop_name: Option<String> = row.get(15)?;
-        let item_id: Option<i64> = row.get(16)?;
+        let gdd_at_actual: Option<f64> = row.get(12)?;
+        let weather_snapshot_raw: Option<String> = row.get(13)?;
+        let weather_snapshot = weather_snapshot_raw
+            .as_deref()
+            .and_then(|s| serde_json::from_str(s).ok());
+        let created_at = Self::parse_datetime(&row.get::<_, String>(14)?);
+        let updated_at = Self::parse_datetime(&row.get::<_, String>(15)?);
+        let field_name: Option<String> = row.get(16)?;
+        let crop_name: Option<String> = row.get(17)?;
+        let item_id: Option<i64> = row.get(18)?;
         let task_schedule_item = item_id.map(|id| {
-            let scheduled_date_raw: Option<String> = row.get(18).unwrap_or(None);
+            let scheduled_date_raw: Option<String> = row.get(20).unwrap_or(None);
             WorkRecordTaskScheduleItemSummary {
                 id,
-                name: row.get(17).unwrap_or_default(),
+                name: row.get(19).unwrap_or_default(),
                 scheduled_date: scheduled_date_raw.as_deref().and_then(parse_iso_date),
             }
         });
@@ -81,6 +87,8 @@ impl WorkRecordSqliteGateway {
             amount_unit: row.get(9)?,
             time_spent_minutes: row.get(10)?,
             notes: row.get(11)?,
+            gdd_at_actual,
+            weather_snapshot,
             created_at,
             updated_at,
             field_name,
@@ -127,8 +135,8 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
                 "INSERT INTO work_records (\
                  cultivation_plan_id, field_cultivation_id, task_schedule_item_id, \
                  agricultural_task_id, name, task_type, actual_date, amount, amount_unit, \
-                 time_spent_minutes, notes, created_at, updated_at) \
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+                 time_spent_minutes, notes, gdd_at_actual, weather_snapshot, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
                 params![
                     plan_id,
                     attrs.field_cultivation_id,
@@ -141,6 +149,11 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
                     attrs.amount_unit,
                     attrs.time_spent_minutes,
                     attrs.notes,
+                    attrs.gdd_at_actual,
+                    attrs
+                        .weather_snapshot
+                        .as_ref()
+                        .map(|v| v.to_string()),
                     Self::format_datetime(attrs.created_at),
                     Self::format_datetime(attrs.updated_at),
                 ],
@@ -230,6 +243,14 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
         if let Some(notes) = &input.notes {
             sets.push(format!("notes = ?{}", values.len() + 1));
             values.push(Value::Text(notes.clone()));
+        }
+        if let Some(gdd) = input.gdd_at_actual {
+            sets.push(format!("gdd_at_actual = ?{}", values.len() + 1));
+            values.push(Value::from(gdd));
+        }
+        if let Some(snapshot) = &input.weather_snapshot {
+            sets.push(format!("weather_snapshot = ?{}", values.len() + 1));
+            values.push(Value::Text(snapshot.to_string()));
         }
 
         let sql = format!(

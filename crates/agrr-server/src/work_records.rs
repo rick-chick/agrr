@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use crate::adapters::SystemClock;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
+use crate::work_record_climate_snapshot_gateway::WorkRecordClimateSnapshotGatewayImpl;
 use crate::work_record_photos::load_photos_json_for_records;
 use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, TaskScheduleItemLookupSqliteGateway, UserOrganizationScopeSqliteGateway, WorkRecordPhotoSqliteGateway, WorkRecordSqliteGateway};
 use agrr_domain::work_record::dtos::{WorkRecordDestroyOutput, WorkRecordRead};
@@ -227,6 +228,8 @@ fn work_record_to_json(record: WorkRecordRead, photos: Vec<Value>) -> Value {
         "amount_unit": record.amount_unit,
         "time_spent_minutes": record.time_spent_minutes,
         "notes": record.notes,
+        "gdd_at_actual": record.gdd_at_actual,
+        "weather_snapshot": record.weather_snapshot,
         "field_name": record.field_name,
         "crop_name": record.crop_name,
         "created_at": format_datetime(record.created_at),
@@ -266,6 +269,7 @@ async fn create_work_record(
     let work_record_gateway = WorkRecordSqliteGateway::new(pool.clone());
     let item_lookup = TaskScheduleItemLookupSqliteGateway::new(pool.clone());
     let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
+    let climate_snapshot_gateway = WorkRecordClimateSnapshotGatewayImpl::new(&state);
     let clock = SystemClock;
     let mut presenter = CreatePresenter { body: None };
 
@@ -274,6 +278,7 @@ async fn create_work_record(
         &plan_gateway,
         &work_record_gateway,
         &item_lookup,
+        &climate_snapshot_gateway,
         &clock,
         &scope_gateway,
     );
@@ -343,6 +348,7 @@ async fn update_work_record(
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let work_record_gateway = WorkRecordSqliteGateway::new(pool.clone());
     let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
+    let climate_snapshot_gateway = WorkRecordClimateSnapshotGatewayImpl::new(&state);
     let clock = SystemClock;
     let mut presenter = UpdatePresenter { body: None };
 
@@ -350,6 +356,7 @@ async fn update_work_record(
         &mut presenter,
         &plan_gateway,
         &work_record_gateway,
+        &climate_snapshot_gateway,
         &clock,
         &scope_gateway,
     );

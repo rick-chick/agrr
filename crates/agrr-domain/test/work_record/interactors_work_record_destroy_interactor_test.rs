@@ -212,6 +212,8 @@ fn sample_record() -> WorkRecordRead {
         amount_unit: None,
         time_spent_minutes: None,
         notes: None,
+        gdd_at_actual: None,
+        weather_snapshot: None,
         created_at: OffsetDateTime::now_utc(),
         updated_at: OffsetDateTime::now_utc(),
         field_name: None,

@@ -28,6 +28,13 @@ fn sample_create_attrs(
         amount_unit: Some("kg".into()),
         time_spent_minutes: Some(45),
         notes: Some("午前に実施".into()),
+        gdd_at_actual: Some(88.5),
+        weather_snapshot: Some(serde_json::json!({
+            "date": "2026-06-12",
+            "temperature_max": 26.0,
+            "temperature_min": 16.0,
+            "temperature_mean": 21.0,
+        })),
         created_at: now,
         updated_at: now,
     }
@@ -62,6 +69,8 @@ fn work_record_gateway_crud_roundtrip() {
         .expect("find");
     assert_eq!(created.id, found.id);
     assert_eq!(created.notes, found.notes);
+    assert_eq!(Some(88.5), found.gdd_at_actual);
+    assert!(found.weather_snapshot.is_some());
 
     let listed = gateway
         .list_for_plan(
@@ -129,6 +138,8 @@ fn work_record_gateway_list_omits_field_and_crop_name_without_field_cultivation(
                 amount_unit: None,
                 time_spent_minutes: None,
                 notes: None,
+                gdd_at_actual: None,
+                weather_snapshot: None,
                 created_at: now,
                 updated_at: now,
             },
