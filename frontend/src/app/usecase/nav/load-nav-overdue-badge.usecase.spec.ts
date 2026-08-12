@@ -46,6 +46,18 @@ function item(
 }
 
 describe('LoadNavOverdueBadgeUseCase', () => {
+  const createPlanGateway = (overrides: Partial<PlanGateway> = {}): PlanGateway =>
+    ({
+      listPlans: () => of([]),
+      fetchPlan: () => of({} as never),
+      fetchPlanData: () => of({} as never),
+      getPublicPlanData: () => of({} as never),
+      getTaskSchedule: () => of({ fields: [] } as never),
+      regenerateTaskSchedule: () => of(undefined),
+      deletePlan: () => of({} as never),
+      ...overrides
+    }) as PlanGateway;
+
   it('presents total overdue count across farms', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-12T12:00:00'));
@@ -76,11 +88,7 @@ describe('LoadNavOverdueBadgeUseCase', () => {
         ])
     };
 
-    const planGateway: PlanGateway = {
-      listPlans: () => of([]),
-      fetchPlan: () => of({} as never),
-      fetchPlanData: () => of({} as never),
-      getPublicPlanData: () => of({} as never),
+    const planGateway: PlanGateway = createPlanGateway({
       getTaskSchedule: (planId) =>
         of({
           fields: [
@@ -107,7 +115,7 @@ describe('LoadNavOverdueBadgeUseCase', () => {
         } as never),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
-    };
+    });
 
     const present = vi.fn();
     const outputPort: LoadNavOverdueBadgeOutputPort = { present };
@@ -122,9 +130,7 @@ describe('LoadNavOverdueBadgeUseCase', () => {
     const workHubGateway: WorkHubGateway = {
       listHubFarms: () => throwError(() => new Error('network'))
     };
-    const planGateway = {
-      getTaskSchedule: () => of({ fields: [] })
-    } as PlanGateway;
+    const planGateway = createPlanGateway();
     const present = vi.fn();
     const outputPort: LoadNavOverdueBadgeOutputPort = { present };
     const useCase = new LoadNavOverdueBadgeUseCase(outputPort, workHubGateway, planGateway);

@@ -99,9 +99,9 @@ describe('sumOverdueCounts', () => {
   it('sums overdue counts across farms', () => {
     expect(
       sumOverdueCounts([
-        { overdueCount: 2, todayCount: 1 },
-        { overdueCount: 0, todayCount: 3 },
-        { overdueCount: 1, todayCount: 0 }
+        { overdueCount: 2 },
+        { overdueCount: 0 },
+        { overdueCount: 1 }
       ])
     ).toBe(3);
   });

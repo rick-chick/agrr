@@ -110,6 +110,6 @@ describe('loadHubFarmTaskCounts', () => {
 
     expect(counts.get(1)).toEqual({ overdueCount: 1, todayCount: 0 });
     expect(counts.get(2)).toEqual({ overdueCount: 1, todayCount: 0 });
-    expect(counts.has(3)).toBe(false);
+    expect(counts.get(3)).toEqual({ overdueCount: 0, todayCount: 0 });
   });
 });
