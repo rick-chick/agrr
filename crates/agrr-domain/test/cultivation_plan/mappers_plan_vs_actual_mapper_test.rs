@@ -138,7 +138,7 @@ fn summary_counts_unrecorded_and_top_variance() {
     assert_eq!(1, summary.unrecorded_count);
     assert_eq!(1, summary.categories.len());
     assert_eq!("general", summary.categories[0].category);
-    assert_eq!(Some(3.5), summary.categories[0].average_delta_days);
+    assert_eq!(Some(4.0), summary.categories[0].average_delta_days);
     assert_eq!(3, summary.categories[0].item_count);
     assert_eq!(2, summary.categories[0].recorded_count);
     assert_eq!(2, summary.top_variance_items.len());

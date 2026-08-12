@@ -36,6 +36,7 @@ mod farm_to_json_tests {
             longitude: Some(139.0),
             region: Some("jp".into()),
             user_id: Some(10),
+            organization_id: None,
             created_at: None,
             updated_at: None,
             is_reference: false,
