@@ -53,8 +53,8 @@ describe('PlanDetailComponent', () => {
       loading: false,
       error: null,
       plan: null,
-      planData: null
-    
+      planData: null,
+      varianceActionItemsOnGantt: []
     };
     const markForCheckSpy = vi.spyOn(cdr, 'markForCheck');
     component.control = state;
@@ -73,7 +73,8 @@ describe('PlanDetailComponent', () => {
         status: 'completed',
         farm_id: 1
       },
-      planData: null
+      planData: null,
+      varianceActionItemsOnGantt: []
     };
     fixture.detectChanges();
 

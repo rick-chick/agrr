@@ -148,7 +148,7 @@ fn summary_counts_unrecorded_and_top_variance() {
     assert_eq!(1, summary.action_required_items.len());
     assert_eq!(1, summary.action_required_items[0].item_id);
     assert_eq!(
-        VarianceExceedanceKind::Both,
+        VarianceExceedanceKind::Days,
         summary.action_required_items[0].exceedance_kind
     );
 }

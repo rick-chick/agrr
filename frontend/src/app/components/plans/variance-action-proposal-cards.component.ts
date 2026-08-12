@@ -3,6 +3,7 @@ import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { formatPlanTaskScheduleDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
+import { resolvePlanTaskScheduleVarianceBadge } from '../../domain/work-schedule/resolve-plan-task-schedule-variance-badge';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 
 @Component({
@@ -59,6 +60,13 @@ export class VarianceActionProposalCardsComponent {
   }
 
   deltaLabel(deltaDays: number): string {
-    return formatPlanTaskScheduleDeltaDaysLabel(deltaDays);
+    const badge = resolvePlanTaskScheduleVarianceBadge({
+      status: 'planned',
+      scheduled_date: '2026-01-01',
+      actual_date: '2026-01-02',
+      delta_days: deltaDays,
+      cancelled_at: null
+    });
+    return badge ? formatPlanTaskScheduleDeltaDaysLabel(badge) : '—';
   }
 }
