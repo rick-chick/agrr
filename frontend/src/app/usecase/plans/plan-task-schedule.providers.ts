@@ -3,6 +3,7 @@ import { PlanOptimizationChannelGateway } from '../../adapters/plans/plan-optimi
 import { PlanApiGateway } from '../../adapters/plans/plan-api.gateway';
 import { PlanTaskSchedulePresenter } from '../../adapters/plans/plan-task-schedule.presenter';
 import { LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT } from './load-plan-task-schedule.output-port';
+import { LoadPlanTaskScheduleUseCase } from './load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from './load-plan-vs-actual-summary.usecase';
 import { LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT } from './load-plan-vs-actual-summary.output-port';
 import { PLAN_GATEWAY } from './plan-gateway';

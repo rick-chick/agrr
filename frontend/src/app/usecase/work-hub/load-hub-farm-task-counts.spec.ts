@@ -92,6 +92,7 @@ describe('loadHubFarmTaskCounts', () => {
                   }
                 ]
         } as never),
+      getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
     };
@@ -120,6 +121,7 @@ describe('loadHubFarmTaskCounts', () => {
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({ fields: [] } as never),
+      getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
     };

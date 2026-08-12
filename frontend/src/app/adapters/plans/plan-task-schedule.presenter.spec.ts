@@ -131,6 +131,11 @@ function createView(overrides: Partial<PlanTaskScheduleView['control']> = {}): P
       fieldsWithTasksCount: 0,
       fieldsWithoutTasksCount: 0,
       allFieldsLackTasks: false,
+      varianceLoading: false,
+      varianceError: null,
+      varianceSummary: null,
+      varianceStats: null,
+      varianceUnrecordedRows: [],
       ...overrides
     }
   };
