@@ -38,6 +38,9 @@ import {
   type TaskScheduleSyncLifecycleState
 } from '../../usecase/plans/task-schedule-sync-lifecycle';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
+import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
+import { buildPlanVsActualPlanSummaryStats } from '../../domain/plans/build-plan-vs-actual-plan-summary';
+import { collectPlanTaskScheduleUnrecordedRows } from '../../domain/work-schedule/collect-plan-task-schedule-unrecorded-rows';
 
 type DerivedViewFields = Pick<
   PlanTaskScheduleViewState,
@@ -53,6 +56,7 @@ type DerivedViewFields = Pick<
   | 'fieldsWithTasksCount'
   | 'fieldsWithoutTasksCount'
   | 'allFieldsLackTasks'
+  | 'varianceUnrecordedRows'
 >;
 
 const emptyDerivedFields: DerivedViewFields = {
@@ -67,7 +71,8 @@ const emptyDerivedFields: DerivedViewFields = {
   totalFieldCount: 0,
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
-  allFieldsLackTasks: false
+  allFieldsLackTasks: false,
+  varianceUnrecordedRows: []
 };
 
 @Injectable()
@@ -79,6 +84,7 @@ export class PlanTaskSchedulePresenter
 {
   private view: PlanTaskScheduleView | null = null;
   private syncLifecycle: TaskScheduleSyncLifecycleState = initialTaskScheduleSyncLifecycleState();
+  private varianceLoadGeneration = 0;
 
   setView(view: PlanTaskScheduleView): void {
     this.view = view;
@@ -88,6 +94,11 @@ export class PlanTaskSchedulePresenter
     const result = beginScheduleLoad(this.syncLifecycle);
     this.syncLifecycle = result.lifecycle;
     return result.generation;
+  }
+
+  beginVarianceLoad(): number {
+    this.varianceLoadGeneration += 1;
+    return this.varianceLoadGeneration;
   }
 
   applyClientFilters(
@@ -179,7 +190,36 @@ export class PlanTaskSchedulePresenter
       schedule: null,
       regenerating: false,
       regenerateError: null,
+      varianceLoading: false,
+      varianceError: null,
+      varianceSummary: null,
+      varianceStats: null,
       ...emptyDerivedFields
+    };
+  }
+
+  presentVarianceSummary(dto: PlanVsActualSummaryDataDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    if (dto.loadGeneration !== this.varianceLoadGeneration) {
+      return;
+    }
+    this.view.control = {
+      ...this.view.control,
+      varianceLoading: false,
+      varianceError: null,
+      varianceSummary: dto.summary,
+      varianceStats: buildPlanVsActualPlanSummaryStats(dto.summary)
+    };
+  }
+
+  onVarianceError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      varianceLoading: false,
+      varianceError: dto.message,
+      varianceSummary: null,
+      varianceStats: null
     };
   }
 
@@ -297,6 +337,9 @@ export class PlanTaskSchedulePresenter
     );
 
     const fieldCoverage = summarizePlanTaskScheduleFieldCoverage(schedule.fields);
+    const varianceUnrecordedRows = enrichPlanTaskScheduleUnscheduledRows(
+      collectPlanTaskScheduleUnrecordedRows(rows)
+    );
 
     return {
       monthGroups,
@@ -307,6 +350,7 @@ export class PlanTaskSchedulePresenter
       filteredFieldCount,
       filteredTaskCount,
       regenerateRequiresConfirm: countScheduleTasks(schedule) > 0,
+      varianceUnrecordedRows,
       ...fieldCoverage
     };
   }

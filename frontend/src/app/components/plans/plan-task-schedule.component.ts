@@ -7,8 +7,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Channel } from 'actioncable';
 import { combineLatest } from 'rxjs';
 import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
-import { PlanTaskScheduleView, PlanTaskScheduleViewState } from './plan-task-schedule.view';
+import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
+import { PlanTaskScheduleView, PlanTaskScheduleViewMode, PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
+import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
@@ -43,7 +45,12 @@ const initialControl: PlanTaskScheduleViewState = {
   totalFieldCount: 0,
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
-  allFieldsLackTasks: false
+  allFieldsLackTasks: false,
+  varianceLoading: false,
+  varianceError: null,
+  varianceSummary: null,
+  varianceStats: null,
+  varianceUnrecordedRows: []
 };
 
 @Component({
@@ -54,6 +61,7 @@ const initialControl: PlanTaskScheduleViewState = {
     FormsModule,
     RouterLink,
     TaskScheduleMonthListComponent,
+    TaskScheduleVarianceViewComponent,
     TranslateModule,
     PlanPlanContextHeaderComponent,
     TaskScheduleSyncBannerComponent
@@ -186,6 +194,38 @@ const initialControl: PlanTaskScheduleViewState = {
                   }}
                 </p>
               }
+            <div class="plan-task-schedule__view-toggle" role="tablist" aria-label="{{ 'plans.task_schedules.variance_subview.toggle_aria' | translate }}">
+              <button
+                type="button"
+                role="tab"
+                class="plan-task-schedule__view-toggle-btn"
+                [class.plan-task-schedule__view-toggle-btn--active]="!isVarianceView"
+                [attr.aria-selected]="!isVarianceView"
+                (click)="onViewModeChange('list')"
+              >
+                {{ 'plans.task_schedules.variance_subview.view_list' | translate }}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="plan-task-schedule__view-toggle-btn"
+                [class.plan-task-schedule__view-toggle-btn--active]="isVarianceView"
+                [attr.aria-selected]="isVarianceView"
+                (click)="onViewModeChange('variance')"
+              >
+                {{ 'plans.task_schedules.variance_subview.view_variance' | translate }}
+              </button>
+            </div>
+            @if (isVarianceView) {
+              <app-task-schedule-variance-view
+                [planId]="planId"
+                [loading]="control.varianceLoading"
+                [error]="control.varianceError"
+                [stats]="control.varianceStats"
+                [summary]="control.varianceSummary"
+                [unrecordedRows]="control.varianceUnrecordedRows"
+              />
+            } @else {
             <div class="plan-task-schedule__filters">
               <label class="plan-task-schedule__filter">
                 <span class="plan-task-schedule__filter-label">{{
@@ -221,6 +261,7 @@ const initialControl: PlanTaskScheduleViewState = {
               [monthGroups]="scheduleMonthGroups"
               [unscheduledRows]="scheduleUnscheduledRows"
             />
+            }
             <footer class="plan-task-schedule__footer">
               <p class="plan-task-schedule__generated-at">{{ timelineGeneratedAtLabel }}</p>
               <p class="plan-task-schedule__summary">{{
@@ -280,6 +321,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
+  private readonly varianceUseCase = inject(LoadPlanVsActualSummaryUseCase);
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
   private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
   private readonly presenter = inject(PlanTaskSchedulePresenter);
@@ -370,6 +412,14 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     return this.control.fieldFilterOptions;
   }
 
+  get viewMode(): PlanTaskScheduleViewMode {
+    return this.resolveViewModeFromRoute();
+  }
+
+  get isVarianceView(): boolean {
+    return this.viewMode === 'variance';
+  }
+
   private _control: PlanTaskScheduleViewState = initialControl;
   get control(): PlanTaskScheduleViewState {
     return this._control;
@@ -412,6 +462,35 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       }
     });
     this.reload();
+    if (this.isVarianceView) {
+      this.loadVarianceSummary();
+    }
+  }
+
+  private loadVarianceSummary(): void {
+    const planId = this.planId;
+    if (!planId) {
+      return;
+    }
+    this.control = {
+      ...this.control,
+      varianceLoading: true,
+      varianceError: null
+    };
+    const loadGeneration = this.presenter.beginVarianceLoad();
+    this.varianceUseCase.execute({ planId, loadGeneration });
+  }
+
+  onViewModeChange(view: PlanTaskScheduleViewMode): void {
+    if (this.viewMode === view) {
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { view: view === 'variance' ? 'variance' : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
   }
 
   reload(options?: { silent?: boolean }): void {
@@ -486,6 +565,11 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       return raw;
     }
     return localTodayIso();
+  }
+
+  private resolveViewModeFromRoute(): PlanTaskScheduleViewMode {
+    const raw = this.route.snapshot.queryParamMap.get('view');
+    return raw === 'variance' ? 'variance' : 'list';
   }
 
   regenerateTaskSchedule(): void {

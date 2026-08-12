@@ -100,6 +100,28 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.variance.badge.on_time',
   'plans.task_schedules.variance.badge.late',
   'plans.task_schedules.variance.badge.early',
+  'plans.task_schedules.variance_subview.toggle_aria',
+  'plans.task_schedules.variance_subview.view_list',
+  'plans.task_schedules.variance_subview.view_variance',
+  'plans.task_schedules.variance_subview.summary_title',
+  'plans.task_schedules.variance_subview.summary_completed',
+  'plans.task_schedules.variance_subview.summary_average_delta',
+  'plans.task_schedules.variance_subview.summary_unrecorded',
+  'plans.task_schedules.variance_subview.categories_title',
+  'plans.task_schedules.variance_subview.category_column',
+  'plans.task_schedules.variance_subview.category_average',
+  'plans.task_schedules.variance_subview.category_recorded',
+  'plans.task_schedules.variance_subview.top_variance_title',
+  'plans.task_schedules.variance_subview.top_item_dates',
+  'plans.task_schedules.variance_subview.unrecorded_title',
+  'plans.task_schedules.variance_subview.open_in_schedule',
+  'plans.task_schedules.variance_subview.no_data',
+  'plans.task_schedules.variance_subview.delta_value',
+  'plans.task_schedules.variance_subview.average_value',
+  'plans.task_schedules.variance_subview.not_available',
+  'plans.task_schedules.variance_subview.category.general',
+  'plans.task_schedules.variance_subview.category.fertilizer',
+  'plans.task_schedules.variance_subview.category.unscheduled'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [
