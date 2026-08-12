@@ -8,7 +8,12 @@ import { Channel } from 'actioncable';
 import { combineLatest } from 'rxjs';
 import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
-import { PlanTaskScheduleView, PlanTaskScheduleViewMode, PlanTaskScheduleViewState } from './plan-task-schedule.view';
+import {
+  PlanTaskScheduleView,
+  PlanTaskScheduleViewMode,
+  PlanTaskScheduleViewState,
+  PlanTaskScheduleRowView
+} from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
@@ -258,6 +263,7 @@ const initialControl: PlanTaskScheduleViewState = {
               </label>
             </div>
             <app-task-schedule-month-list
+              #monthList
               [monthGroups]="scheduleMonthGroups"
               [unscheduledRows]="scheduleUnscheduledRows"
             />
@@ -317,6 +323,9 @@ const initialControl: PlanTaskScheduleViewState = {
 })
 export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   @ViewChild('regenerateConfirmDialog') regenerateConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('monthList') monthList?: TaskScheduleMonthListComponent;
+
+  private pendingItemIdFromRoute: number | null = null;
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -429,6 +438,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       flash: this.flashMessage,
       onReload: () => this.reload({ silent: true })
     });
+    this.maybeOpenItemDetailFromRoute();
     this.cdr.markForCheck();
   }
 
@@ -455,6 +465,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       this.resolveFieldFilterFromRoute(),
       this.resolveFieldCultivationFilterFromRoute()
     );
+    this.pendingItemIdFromRoute = this.resolveItemIdFromRoute();
     this.subscribeSyncUseCase.execute({
       planId,
       onSubscribed: (channel) => {
@@ -557,6 +568,37 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     }
     const parsed = Number(raw);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  private resolveItemIdFromRoute(): number | null {
+    const raw = this.route.snapshot.queryParamMap.get('item_id');
+    if (!raw) {
+      return null;
+    }
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  private maybeOpenItemDetailFromRoute(): void {
+    if (this.pendingItemIdFromRoute == null || this._control.loading) {
+      return;
+    }
+    const row = this.findRowByItemId(this.pendingItemIdFromRoute);
+    if (!row) {
+      return;
+    }
+    this.pendingItemIdFromRoute = null;
+    Promise.resolve().then(() => this.monthList?.selectRow(row));
+  }
+
+  private findRowByItemId(itemId: number): PlanTaskScheduleRowView | null {
+    for (const group of this._control.monthGroups) {
+      const row = group.rows.find((entry) => entry.item.item_id === itemId);
+      if (row) {
+        return row;
+      }
+    }
+    return this._control.unscheduledRows.find((entry) => entry.item.item_id === itemId) ?? null;
   }
 
   private resolveFromDateFromRoute(): string {

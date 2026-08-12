@@ -16,7 +16,9 @@ const createViewFixture = (): ViewFixture => {
   let currentState: PlanFieldClimateViewState = {
     loading: true,
     error: null,
-    climateData: null
+    climateData: null,
+    workDayMarkers: [],
+    latestImplementation: null
   };
 
   return {
@@ -61,12 +63,18 @@ describe('PlanFieldClimatePresenter', () => {
     const presenter = new PlanFieldClimatePresenter();
     presenter.setView(fixture.view);
 
-    presenter.present(sampleClimateData);
+    presenter.present({
+      climateData: sampleClimateData,
+      workDayMarkers: [{ actualDate: '2026-06-12', name: 'Weeding', taskScheduleItemId: 5 }],
+      latestImplementation: { name: 'Weeding', deltaDaysLabel: '+2', gddDeltaLabel: '+10' }
+    });
 
     const state = fixture.getState();
     expect(state.loading).toBe(false);
     expect(state.error).toBeNull();
     expect(state.climateData).toBe(sampleClimateData);
+    expect(state.workDayMarkers).toHaveLength(1);
+    expect(state.latestImplementation?.name).toBe('Weeding');
   });
 
   it('onError maps message into view control', () => {
@@ -80,12 +88,19 @@ describe('PlanFieldClimatePresenter', () => {
     expect(state.loading).toBe(false);
     expect(state.climateData).toBeNull();
     expect(state.error).toBe('climate failed');
+    expect(state.workDayMarkers).toEqual([]);
   });
 
   it('throws when view is not set', () => {
     const presenter = new PlanFieldClimatePresenter();
 
-    expect(() => presenter.present(sampleClimateData)).toThrow(/view not set/);
+    expect(() =>
+      presenter.present({
+        climateData: sampleClimateData,
+        workDayMarkers: [],
+        latestImplementation: null
+      })
+    ).toThrow(/view not set/);
     expect(() => presenter.onError({ message: 'x' })).toThrow(/view not set/);
   });
 });

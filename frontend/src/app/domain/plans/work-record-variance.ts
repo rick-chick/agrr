@@ -37,3 +37,40 @@ export function averageWorkRecordDeltaDays(records: WorkRecord[]): number | null
   const sum = deltas.reduce((total, delta) => total + delta, 0);
   return sum / deltas.length;
 }
+
+export function parseGddTrigger(value: string | number | null | undefined): number | null {
+  if (value == null || value === '') {
+    return null;
+  }
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function workRecordGddDelta(
+  record: WorkRecord,
+  gddTrigger?: number | null
+): number | null {
+  const actual = record.gdd_at_actual;
+  if (actual == null) {
+    return null;
+  }
+  const trigger = gddTrigger ?? null;
+  if (trigger == null) {
+    return null;
+  }
+  return Math.round((actual - trigger) * 10) / 10;
+}
+
+export function formatVarianceDeltaDays(delta: number): string {
+  if (delta === 0) {
+    return '±0';
+  }
+  return delta > 0 ? `+${delta}` : `${delta}`;
+}
+
+export function formatVarianceGddDelta(delta: number): string {
+  if (delta === 0) {
+    return '±0';
+  }
+  return delta > 0 ? `+${delta}` : `${delta}`;
+}

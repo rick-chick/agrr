@@ -200,3 +200,20 @@ test('frontend rule fails when domain imports ../components/', () => {
   assert.equal(result.ok, false);
   assert.ok(result.violations.some((v) => v.ruleId === 'FE-DOMAIN'));
 });
+
+test('frontend rule fails when domain imports ../../components/', () => {
+  const root = mkdtempSync(join(tmpdir(), 'arch-guard-fe-domain-nested-'));
+  mkdirSync(join(root, 'crates/agrr-domain/src'), { recursive: true });
+  writeFileSync(join(root, 'crates/agrr-domain/Cargo.toml'), '[dependencies]\nserde = "1"\n');
+  mkdirSync(join(root, 'crates/agrr-server/src'), { recursive: true });
+  writeFileSync(join(root, 'crates/agrr-server/src/lib.rs'), '');
+  mkdirSync(join(root, 'frontend/src/app/components'), { recursive: true });
+  mkdirSync(join(root, 'frontend/src/app/domain/foo'), { recursive: true });
+  writeFileSync(
+    join(root, 'frontend/src/app/domain/foo/bad.ts'),
+    "import { X } from '../../components/x';\n",
+  );
+  const result = runArchitectureGuard(root);
+  assert.equal(result.ok, false);
+  assert.ok(result.violations.some((v) => v.ruleId === 'FE-DOMAIN'));
+});

@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { translateServerToastMessage } from '../core/i18n/translate-server-toast-message';
+import { FlashMessageAction } from '../core/view-effects/pending-toast-view.effects';
 
 const DEFAULT_SUCCESS_AUTO_DISMISS_MS = 3000;
 
@@ -8,10 +9,12 @@ export type FlashMessage = {
   id: string;
   type: 'info' | 'success' | 'warning' | 'error';
   text: string;
+  action?: FlashMessageAction;
 };
 
 export type FlashMessageInput = Omit<FlashMessage, 'id'> & {
   autoDismissMs?: number;
+  textParams?: Record<string, string | number>;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -27,9 +30,12 @@ export class FlashMessageService {
   show(message: FlashMessageInput) {
     const id = crypto.randomUUID();
     const text = translateServerToastMessage(message.text, (key, params) =>
-      this.translate.instant(key, params)
+      this.translate.instant(key, { ...message.textParams, ...params })
     );
-    this.messagesSignal.update((messages) => [...messages, { id, ...message, text }]);
+    this.messagesSignal.update((messages) => [
+      ...messages,
+      { id, type: message.type, text, action: message.action }
+    ]);
 
     if (message.type === 'success') {
       const autoDismissMs = message.autoDismissMs ?? DEFAULT_SUCCESS_AUTO_DISMISS_MS;

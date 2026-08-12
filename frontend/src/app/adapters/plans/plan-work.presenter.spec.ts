@@ -39,7 +39,7 @@ const baseControl = {
   regenerating: false,
   regenerateError: null,
   pendingSyncToastKey: null,
-  pendingRecordSavedToastKey: null,
+  pendingRecordSavedToast: null,
   pendingRecordSavedEvent: null,
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
@@ -73,18 +73,90 @@ describe('PlanWorkPresenter quick complete', () => {
     view = {
       control: {
         ...baseControl,
-        completingItemId: 11
+        completingItemId: 11,
+        plan: {
+          id: 7,
+          name: 'Plan',
+          status: 'ready',
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          timeline_generated_at: '2026-06-01',
+          timeline_generated_at_display: '2026-06-01',
+          task_schedule_sync_state: 'ready',
+          task_schedule_sync_error: null,
+          task_schedule_sync_error_crop_id: null
+        },
+        today: [
+          {
+            item: {
+              item_id: 11,
+              name: '追肥',
+              task_type: 'field_work',
+              category: 'general',
+              scheduled_date: '2026-06-10',
+              priority: 1,
+              source: 'manual',
+              weather_dependency: 'low',
+              time_per_sqm: '1',
+              amount: '',
+              amount_unit: '',
+              status: 'planned',
+              agricultural_task_id: 1,
+              field_cultivation_id: 10,
+              completed: false,
+              work_records: [],
+              details: {
+                stage: { name: 'Stage', order: 1 },
+                gdd: { trigger: '100', tolerance: '0' },
+                priority: 1,
+                weather_dependency: 'low',
+                time_per_sqm: '1',
+                amount: '',
+                amount_unit: '',
+                source: 'manual',
+                master: null,
+                history: { rescheduled_at: null, cancelled_at: null }
+              },
+              badge: { type: 'planned' },
+              gdd_trigger: '100'
+            },
+            fieldName: 'Field A',
+            cropName: 'Tomato',
+            recordedToday: false
+          }
+        ]
       }
     };
     presenter.setView(view);
   });
 
-  it('queues record saved toast and pending saved event on quick complete success', () => {
-    presenter.onSuccess({ workRecord });
+  it('queues variance toast and pending saved event on quick complete success', () => {
+    const savedWorkRecord = {
+      ...workRecord,
+      gdd_at_actual: 130.5,
+      actual_date: '2026-06-13',
+      task_schedule_item: { id: 11, name: '追肥', scheduled_date: '2026-06-10' }
+    };
+    presenter.onSuccess({ workRecord: savedWorkRecord });
 
-    expect(view.control.pendingRecordSavedToastKey).toBe('plans.work.toast.record_saved');
+    expect(view.control.pendingRecordSavedToast).toEqual({
+      textKey: 'plans.work.toast.record_saved_variance',
+      textParams: {
+        name: '追肥',
+        deltaDays: '+3',
+        gddDelta: '+30.5'
+      },
+      action: {
+        labelKey: 'plans.work.toast.view_task_detail',
+        routerLink: ['/plans', 7, 'task_schedule'],
+        queryParams: {
+          field_cultivation_id: 10,
+          item_id: 11
+        }
+      }
+    });
     expect(view.control.pendingRecordSavedEvent).toEqual({
-      workRecord,
+      workRecord: savedWorkRecord,
       mode: 'create-from-item'
     });
     expect(view.control.completingItemId).toBeNull();

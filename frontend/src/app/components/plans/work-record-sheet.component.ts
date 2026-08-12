@@ -93,7 +93,8 @@ const initialControl: WorkRecordSheetViewState = {
   taskChips: [],
   loadingTaskChips: false,
   selectedTaskId: null,
-  pendingToastKey: null,
+  pendingToast: null,
+  saveToastContext: null,
   pendingUndoToast: null,
   existingPhotos: [],
   pendingPhotos: [],
@@ -513,7 +514,13 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
         work_record_id: null,
         agricultural_task_id: item.agricultural_task_id ?? null
       },
-      fieldOptions: []
+      fieldOptions: [],
+      saveToastContext: {
+        planId: this.planId,
+        fieldCultivationId: item.field_cultivation_id,
+        taskScheduleItemId: item.item_id,
+        gddTrigger: item.gdd_trigger ?? item.details?.gdd?.trigger ?? null
+      }
     };
     this.sheetDialogRef?.nativeElement?.showModal();
     this.refreshClimatePreview();

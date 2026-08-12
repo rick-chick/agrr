@@ -1802,6 +1802,7 @@
         "required_cumulative_gdd": "आवश्यक संचयी तापमान"
       },
       "open_task_schedule": "इस खेत के लिए कार्य योजना खोलें",
+      "latest_implementation_summary": "नवीनतम: {{name}} · {{deltaDays}} दिन · GDD {{gddDelta}}",
       "a11y": {
         "temperature_chart": "{{fieldName}} में {{cropName}} के लिए दैनिक तापमान चार्ट। अवधि {{period}}। आधार तापमान {{baseTemp}} ℃। वर्तमान चरण {{currentStage}}।",
         "gdd_chart": "{{fieldName}} में {{cropName}} के लिए GDD प्रगति चार्ट। अवधि {{period}}। वर्तमान चरण {{currentStage}}।",
@@ -1964,7 +1965,9 @@
       "retry": "पुनः लोड करें",
       "toast": {
         "record_saved": "कार्य दर्ज हो गया",
-        "record_saved_adhoc": "कार्य दर्ज हो गया। कार्य इतिहास में देखें।"
+        "record_saved_adhoc": "कार्य दर्ज हो गया। कार्य इतिहास में देखें।",
+        "record_saved_variance": "{{name}}: {{deltaDays}} दिन / GDD {{gddDelta}}",
+        "view_task_detail": "कार्य विवरण देखें"
       },
       "recent_adhoc": "「{{name}}」（{{date}}）दर्ज किया गया",
       "recent_adhoc_history_link": "कार्य इतिहास देखें",

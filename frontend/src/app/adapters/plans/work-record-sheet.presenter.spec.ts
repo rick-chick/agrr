@@ -81,7 +81,8 @@ describe('WorkRecordSheetPresenter', () => {
         taskChips: [],
         loadingTaskChips: false,
         selectedTaskId: null,
-        pendingToastKey: null,
+        pendingToast: null,
+        saveToastContext: null,
         pendingUndoToast: null,
         existingPhotos: [],
         pendingPhotos: [],
@@ -97,7 +98,9 @@ describe('WorkRecordSheetPresenter', () => {
   it('queues ad-hoc toast and emits saved payload on create success', () => {
     presenter.onSuccess({ workRecord, mode: 'create-adhoc' });
 
-    expect(view.control.pendingToastKey).toBe('plans.work.toast.record_saved_adhoc');
+    expect(view.control.pendingToast).toEqual({
+      textKey: 'plans.work.toast.record_saved_adhoc'
+    });
     expect(view.close).toHaveBeenCalled();
     expect(onSavedCallback).toHaveBeenCalledWith({
       workRecord,
@@ -105,18 +108,45 @@ describe('WorkRecordSheetPresenter', () => {
     });
   });
 
-  it('queues schedule toast on create-from-item success', () => {
-    view.control = { ...view.control, mode: 'create-from-item' };
+  it('queues variance toast on create-from-item success', () => {
+    view.control = {
+      ...view.control,
+      mode: 'create-from-item',
+      saveToastContext: {
+        planId: 7,
+        fieldCultivationId: 10,
+        taskScheduleItemId: 5,
+        gddTrigger: 100
+      }
+    };
 
     presenter.onSuccess({
-      workRecord: { ...workRecord, task_schedule_item_id: 5 },
+      workRecord: {
+        ...workRecord,
+        task_schedule_item_id: 5,
+        gdd_at_actual: 130.5,
+        task_schedule_item: { id: 5, name: '除草', scheduled_date: '2026-06-10' },
+        actual_date: '2026-06-13'
+      },
       mode: 'create-from-item'
     });
 
-    expect(view.control.pendingToastKey).toBe('plans.work.toast.record_saved');
-    expect(onSavedCallback).toHaveBeenCalledWith(
-      expect.objectContaining({ mode: 'create-from-item' })
-    );
+    expect(view.control.pendingToast).toEqual({
+      textKey: 'plans.work.toast.record_saved_variance',
+      textParams: {
+        name: '除草',
+        deltaDays: '+3',
+        gddDelta: '+30.5'
+      },
+      action: {
+        labelKey: 'plans.work.toast.view_task_detail',
+        routerLink: ['/plans', 7, 'task_schedule'],
+        queryParams: {
+          field_cultivation_id: 10,
+          item_id: 5
+        }
+      }
+    });
   });
 
   it('queues updated toast on edit success', () => {
@@ -124,7 +154,9 @@ describe('WorkRecordSheetPresenter', () => {
 
     presenter.onSuccess({ workRecord, mode: 'edit' });
 
-    expect(view.control.pendingToastKey).toBe('plans.work_records.toast.record_updated');
+    expect(view.control.pendingToast).toEqual({
+      textKey: 'plans.work_records.toast.record_updated'
+    });
   });
 
   it('queues undo toast on delete success', () => {

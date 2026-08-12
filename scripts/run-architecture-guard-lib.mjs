@@ -236,7 +236,7 @@ export function runArchitectureGuard(rootDir) {
       rootDir,
       FE_DOMAIN,
       'FE-DOMAIN',
-      /from\s+['"]\.\.\/(?:adapters|components)\//,
+      /from\s+['"](?:\.\.\/)+(?:adapters|components)\//,
     ),
   ];
   return { ok: violations.length === 0, violations };

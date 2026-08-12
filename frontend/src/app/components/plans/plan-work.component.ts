@@ -39,7 +39,7 @@ const initialControl: PlanWorkViewState = {
   regenerating: false,
   regenerateError: null,
   pendingSyncToastKey: null,
-  pendingRecordSavedToastKey: null,
+  pendingRecordSavedToast: null,
   pendingRecordSavedEvent: null,
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,

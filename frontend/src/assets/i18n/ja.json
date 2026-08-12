@@ -2278,6 +2278,7 @@
         "required_cumulative_gdd": "必要積算温度"
       },
       "open_task_schedule": "この圃場の作業計画を見る",
+      "latest_implementation_summary": "最新: {{name}} · {{deltaDays}}日 · GDD {{gddDelta}}",
       "a11y": {
         "temperature_chart": "{{cropName}}（{{fieldName}}）の日別気温チャート。期間 {{period}}。最低限界温度 {{baseTemp}}℃。現在のステージ {{currentStage}}。",
         "gdd_chart": "{{cropName}}（{{fieldName}}）の積算温度チャート。期間 {{period}}。現在のステージ {{currentStage}}。",
@@ -2584,7 +2585,9 @@
       "retry": "再読み込み",
       "toast": {
         "record_saved": "作業を記録しました",
-        "record_saved_adhoc": "作業を記録しました。実績履歴で確認できます"
+        "record_saved_adhoc": "作業を記録しました。実績履歴で確認できます",
+        "record_saved_variance": "{{name}}: {{deltaDays}}日 / GDD {{gddDelta}}",
+        "view_task_detail": "作業予定の詳細を見る"
       },
       "recent_adhoc": "「{{name}}」（{{date}}）を記録しました",
       "recent_adhoc_history_link": "実績履歴で見る",

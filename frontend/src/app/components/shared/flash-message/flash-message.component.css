@@ -13,7 +13,7 @@
 
 .flash-message {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
   width: 100%;
@@ -24,6 +24,20 @@
   border: 1px solid var(--color-info-muted-border);
   box-shadow: var(--shadow-toast);
   pointer-events: auto;
+}
+
+.flash-message__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.flash-message__action {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: inherit;
+  text-decoration: underline;
 }
 
 .flash-message.success {
