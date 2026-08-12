@@ -4,6 +4,7 @@ import { PlanWorkView } from '../../components/plans/plan-work.view';
 import type { FieldSchedule } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
 import { PlanWorkPresenter } from './plan-work.presenter';
+import { emptyPlanSaveImpactViewFields } from './plan-save-impact.presenter.helpers';
 
 const workRecord: WorkRecord = {
   id: 1,
@@ -41,6 +42,8 @@ const baseControl = {
   pendingSyncToastKey: null,
   pendingRecordSavedToast: null,
   pendingRecordSavedEvent: null,
+  pendingSaveImpactLoadGeneration: 0,
+  ...emptyPlanSaveImpactViewFields,
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
@@ -157,7 +160,13 @@ describe('PlanWorkPresenter quick complete', () => {
     });
     expect(view.control.pendingRecordSavedEvent).toEqual({
       workRecord: savedWorkRecord,
-      mode: 'create-from-item'
+      mode: 'create-from-item',
+      saveToastContext: {
+        planId: 7,
+        fieldCultivationId: 10,
+        taskScheduleItemId: 11,
+        gddTrigger: '100'
+      }
     });
     expect(view.control.completingItemId).toBeNull();
   });
@@ -460,5 +469,70 @@ describe('PlanWorkPresenter crop banner context', () => {
 
     expect(view.control.cropIdsForBanner).toEqual([]);
     expect(view.control.cropNamesForBanner).toEqual({});
+  });
+});
+
+describe('PlanWorkPresenter save impact', () => {
+  let presenter: PlanWorkPresenter;
+  let view: PlanWorkView;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [PlanWorkPresenter]
+    });
+
+    presenter = TestBed.inject(PlanWorkPresenter);
+    view = { control: { ...baseControl } };
+    presenter.setView(view);
+  });
+
+  it('presents save impact summary after queueing a create save', () => {
+    const generation = presenter.queueSaveImpactAfterSave({
+      workRecord: {
+        ...workRecord,
+        gdd_at_actual: 130.5,
+        actual_date: '2026-06-13',
+        task_schedule_item: { id: 11, name: '追肥', scheduled_date: '2026-06-10' }
+      },
+      mode: 'create-from-item',
+      saveToastContext: {
+        planId: 7,
+        fieldCultivationId: 10,
+        taskScheduleItemId: 11,
+        gddTrigger: '100'
+      }
+    });
+
+    expect(generation).toBe(1);
+    expect(view.control.saveImpactLoading).toBe(true);
+
+    presenter.presentSaveImpactSummary({
+      loadGeneration: 1,
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 4,
+        categories: [
+          {
+            category: 'general',
+            average_delta_days: 2.5,
+            item_count: 5,
+            recorded_count: 3
+          }
+        ],
+        top_variance_items: []
+      }
+    });
+
+    expect(view.control.saveImpact).toEqual({
+      taskName: '追肥',
+      deltaDays: '+3',
+      gddDelta: '+30.5',
+      planStats: {
+        completedCount: 3,
+        averageDeltaDays: 2.5,
+        unrecordedCount: 4
+      }
+    });
+    expect(view.control.saveImpactLoading).toBe(false);
   });
 });

@@ -2589,6 +2589,16 @@
         "record_saved_variance": "{{name}}: {{deltaDays}}日 / GDD {{gddDelta}}",
         "view_task_detail": "作業予定の詳細を見る"
       },
+      "save_impact": {
+        "title": "計画への影響",
+        "task_label": "記録した作業",
+        "delta_days": "日数のずれ",
+        "gdd_delta": "GDDのずれ",
+        "unrecorded": "未記録件数",
+        "average_delta": "平均日数のずれ",
+        "learn_link": "振り返りで確認",
+        "dismiss": "影響プレビューを閉じる"
+      },
       "recent_adhoc": "「{{name}}」（{{date}}）を記録しました",
       "recent_adhoc_history_link": "実績履歴で見る",
       "sheet": {

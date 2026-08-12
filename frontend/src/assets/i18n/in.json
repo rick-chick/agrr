@@ -1969,6 +1969,16 @@
         "record_saved_variance": "{{name}}: {{deltaDays}} दिन / GDD {{gddDelta}}",
         "view_task_detail": "कार्य विवरण देखें"
       },
+      "save_impact": {
+        "title": "योजना पर प्रभाव",
+        "task_label": "दर्ज कार्य",
+        "delta_days": "दिनों का अंतर",
+        "gdd_delta": "GDD अंतर",
+        "unrecorded": "अदर्ज कार्य",
+        "average_delta": "औसत दिन अंतर",
+        "learn_link": "Learn में समीक्षा करें",
+        "dismiss": "प्रभाव पूर्वावलोकन बंद करें"
+      },
       "recent_adhoc": "「{{name}}」（{{date}}）दर्ज किया गया",
       "recent_adhoc_history_link": "कार्य इतिहास देखें",
       "sheet": {

@@ -4,6 +4,12 @@ import { PlanWorkRecordsView, PlanWorkRecordsViewState } from '../../components/
 import { WorkRecord } from '../../models/plans/work-record';
 import { LoadWorkRecordsDataDto } from '../../usecase/plans/load-work-records.dtos';
 import { PlanWorkRecordsPresenter } from './plan-work-records.presenter';
+import { emptyPlanSaveImpactViewFields } from './plan-save-impact.presenter.helpers';
+
+const SAVE_IMPACT_DEFAULTS = {
+  pendingSaveImpactLoadGeneration: 0,
+  ...emptyPlanSaveImpactViewFields
+};
 
 function baseRecord(overrides: Partial<WorkRecord> = {}): WorkRecord {
   return {
@@ -41,6 +47,7 @@ describe('PlanWorkRecordsPresenter', () => {
       get control(): PlanWorkRecordsViewState {
         return (
           lastControl ?? {
+            ...SAVE_IMPACT_DEFAULTS,
             loading: true,
             error: null,
             plan: null,

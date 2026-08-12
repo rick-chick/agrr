@@ -1,13 +1,15 @@
+import type { PlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
 import {
   WorkRecordMonthGroupDto,
   WorkRecordsPlanHeaderDto
 } from '../../usecase/plans/load-work-records.dtos';
 
-export interface PlanWorkRecordsViewState {
+export interface PlanWorkRecordsViewState extends PlanSaveImpactViewFields {
   loading: boolean;
   error: string | null;
   plan: WorkRecordsPlanHeaderDto | null;
   groups: WorkRecordMonthGroupDto[];
+  pendingSaveImpactLoadGeneration: number;
 }
 
 export interface PlanWorkRecordsView {
