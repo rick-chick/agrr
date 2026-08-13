@@ -25,7 +25,11 @@ import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effe
 import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
-import { parseLearningOrchestration } from '../../domain/plans/learn-master-update-orchestration';
+import {
+  ensureLearnOrchestrationReturnForTaskSchedule,
+  parseLearningOrchestration,
+  readLearnOrchestrationReturnToLearn
+} from '../../domain/plans/learn-master-update-orchestration';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -85,6 +89,8 @@ const initialControl: PlanTaskScheduleViewState = {
             [planId]="planId"
             [mode]="learningOrchestrationMode"
             [syncState]="syncState"
+            [regenerating]="control.regenerating"
+            [showReturnToLearn]="showOrchestrationReturnToLearn"
           />
         }
         @if (control.loading) {
@@ -376,6 +382,10 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     return this.control.schedule?.plan.task_schedule_sync_state ?? '';
   }
 
+  get showOrchestrationReturnToLearn(): boolean {
+    return readLearnOrchestrationReturnToLearn(this.planId);
+  }
+
   get emptyHintKey(): string | null {
     if (this.syncState === 'generating' || this.syncState === 'failed') {
       return null;
@@ -466,6 +476,12 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     this.learningOrchestrationMode = parseLearningOrchestration(
       this.route.snapshot.queryParamMap.get('learningOrchestration')
     );
+    if (
+      this.learningOrchestrationMode === 'regenerate' ||
+      this.learningOrchestrationMode === 'sync_verify'
+    ) {
+      ensureLearnOrchestrationReturnForTaskSchedule(planId);
+    }
     this.subscribeSyncUseCase.execute({
       planId,
       onSubscribed: (channel) => {

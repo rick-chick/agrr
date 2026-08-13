@@ -4,10 +4,17 @@ import {
   buildPlanDetailAdjustNavigation,
   buildPlanTaskScheduleOrchestrationNavigation,
   clearLearnOrchestrationReturnToLearn,
+  completeTaskScheduleOrchestrationReturn,
+  ensureLearnOrchestrationReturnForTaskSchedule,
   hasPendingMasterUpdateConfirmation,
+  isLearnOrchestrationStepComplete,
+  isTaskScheduleOrchestrationReadyForReturn,
   learnOrchestrationReturnStorageKey,
+  learnOrchestrationStepsStorageKey,
+  markLearnOrchestrationStepComplete,
   markStageGddProposalAppliedPending,
   parseLearningOrchestration,
+  readLearnOrchestrationCompletedSteps,
   readLearnOrchestrationReturnToLearn,
   storeLearnOrchestrationReturnToLearn
 } from './learn-master-update-orchestration';
@@ -69,6 +76,42 @@ describe('learn-master-update-orchestration', () => {
 
       clearLearnOrchestrationReturnToLearn(5);
       expect(readLearnOrchestrationReturnToLearn(5)).toBe(false);
+    });
+  });
+
+  describe('orchestration step completion', () => {
+    it('tracks completed regenerate and sync_verify steps per plan', () => {
+      expect(learnOrchestrationStepsStorageKey(5)).toBe('agrr:learn-orchestration-steps:5');
+      expect(readLearnOrchestrationCompletedSteps(5)).toEqual([]);
+      expect(isLearnOrchestrationStepComplete(5, 'regenerate')).toBe(false);
+
+      markLearnOrchestrationStepComplete(5, 'regenerate');
+      expect(readLearnOrchestrationCompletedSteps(5)).toEqual(['regenerate']);
+      expect(isLearnOrchestrationStepComplete(5, 'regenerate')).toBe(true);
+      expect(isLearnOrchestrationStepComplete(5, 'sync_verify')).toBe(false);
+
+      markLearnOrchestrationStepComplete(5, 'sync_verify');
+      expect(readLearnOrchestrationCompletedSteps(5)).toEqual(['regenerate', 'sync_verify']);
+    });
+  });
+
+  describe('task schedule orchestration return', () => {
+    it('detects when sync is ready and regeneration finished', () => {
+      expect(isTaskScheduleOrchestrationReadyForReturn('ready', false)).toBe(true);
+      expect(isTaskScheduleOrchestrationReadyForReturn('generating', false)).toBe(false);
+      expect(isTaskScheduleOrchestrationReadyForReturn('ready', true)).toBe(false);
+    });
+
+    it('stores return context for task schedule orchestration', () => {
+      ensureLearnOrchestrationReturnForTaskSchedule(8);
+      expect(readLearnOrchestrationReturnToLearn(8)).toBe(true);
+    });
+
+    it('marks step complete and clears return context on completion', () => {
+      storeLearnOrchestrationReturnToLearn(8);
+      completeTaskScheduleOrchestrationReturn(8, 'regenerate');
+      expect(isLearnOrchestrationStepComplete(8, 'regenerate')).toBe(true);
+      expect(readLearnOrchestrationReturnToLearn(8)).toBe(false);
     });
   });
 

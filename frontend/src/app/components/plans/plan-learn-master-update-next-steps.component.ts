@@ -4,7 +4,8 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import {
   buildPlanDetailAdjustNavigation,
-  buildPlanTaskScheduleOrchestrationNavigation
+  buildPlanTaskScheduleOrchestrationNavigation,
+  isLearnOrchestrationStepComplete
 } from '../../domain/plans/learn-master-update-orchestration';
 
 export interface LearnMasterUpdateNextStep {
@@ -34,7 +35,10 @@ export interface LearnMasterUpdateNextStep {
         </p>
         <ol class="learn-next-steps__list" role="list">
           @for (step of steps; track step.stepKey) {
-            <li class="learn-next-steps__item">
+            <li
+              class="learn-next-steps__item"
+              [class.learn-next-steps__item--complete]="isStepComplete(step.stepKey)"
+            >
               <div class="learn-next-steps__item-main">
                 <span class="learn-next-steps__step-label">{{
                   stepLabel(step.stepNumber) | translate
@@ -44,13 +48,19 @@ export interface LearnMasterUpdateNextStep {
                   {{ step.descriptionKey | translate }}
                 </p>
               </div>
-              <a
-                class="btn-secondary learn-next-steps__cta"
-                [routerLink]="step.commands"
-                [queryParams]="step.queryParams"
-              >
-                {{ ctaKey(step.stepKey) | translate }}
-              </a>
+              @if (isStepComplete(step.stepKey)) {
+                <span class="learn-next-steps__completed" role="status">
+                  {{ 'plans.learn.next_steps.completed' | translate }}
+                </span>
+              } @else {
+                <a
+                  class="btn-secondary learn-next-steps__cta"
+                  [routerLink]="step.commands"
+                  [queryParams]="step.queryParams"
+                >
+                  {{ ctaKey(step.stepKey) | translate }}
+                </a>
+              }
             </li>
           }
         </ol>
@@ -73,6 +83,10 @@ export class PlanLearnMasterUpdateNextStepsComponent {
 
   ctaKey(stepKey: LearnMasterUpdateNextStep['stepKey']): string {
     return `plans.learn.next_steps.cta.${stepKey}`;
+  }
+
+  isStepComplete(stepKey: LearnMasterUpdateNextStep['stepKey']): boolean {
+    return isLearnOrchestrationStepComplete(this.planId, stepKey);
   }
 }
 

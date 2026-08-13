@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { markLearnOrchestrationStepComplete } from '../../domain/plans/learn-master-update-orchestration';
 import {
   PlanLearnMasterUpdateNextStepsComponent,
   buildLearnMasterUpdateNextSteps
@@ -57,7 +58,8 @@ describe('PlanLearnMasterUpdateNextStepsComponent', () => {
         'plans.learn.next_steps.sync_verify.description': 'Confirm task schedule sync.',
         'plans.learn.next_steps.cta.placement': 'Open workbench',
         'plans.learn.next_steps.cta.regenerate': 'Open task schedule',
-        'plans.learn.next_steps.cta.sync_verify': 'Check sync'
+        'plans.learn.next_steps.cta.sync_verify': 'Check sync',
+        'plans.learn.next_steps.completed': 'Completed'
       },
       true
     );
@@ -90,5 +92,17 @@ describe('PlanLearnMasterUpdateNextStepsComponent', () => {
     fixture.componentInstance.visible = false;
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.learn-next-steps')).toBeNull();
+  });
+
+  it('shows completed label instead of CTA for finished orchestration steps', () => {
+    markLearnOrchestrationStepComplete(7, 'regenerate');
+    fixture.componentInstance.visible = true;
+    fixture.detectChanges();
+
+    const items = fixture.nativeElement.querySelectorAll('.learn-next-steps__item');
+    expect(items[1].classList.contains('learn-next-steps__item--complete')).toBe(true);
+    expect(items[1].querySelector('.learn-next-steps__completed')?.textContent).toContain('Completed');
+    expect(items[1].querySelector('a.learn-next-steps__cta')).toBeNull();
+    expect(items[2].querySelector('a.learn-next-steps__cta')).not.toBeNull();
   });
 });

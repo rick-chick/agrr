@@ -62,6 +62,19 @@
   font-size: var(--text-sm);
 }
 
+.learn-next-steps__item--complete {
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--color-border-subtle));
+  background: color-mix(in srgb, var(--color-success) 6%, var(--color-surface-raised));
+}
+
+.learn-next-steps__completed {
+  align-self: center;
+  color: var(--color-success);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .learn-next-steps__cta {
   align-self: center;
   white-space: nowrap;

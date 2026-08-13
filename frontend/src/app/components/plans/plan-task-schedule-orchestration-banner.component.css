@@ -17,6 +17,8 @@
   font-size: var(--text-sm);
 }
 
-.learn-orchestration-banner__work-link {
+.learn-orchestration-banner__work-link,
+.learn-orchestration-banner__learn-link {
   display: inline-flex;
+  margin-top: var(--space-2);
 }
