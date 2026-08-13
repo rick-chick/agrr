@@ -284,6 +284,48 @@ describe('PlanApiGateway', () => {
     });
   });
 
+  describe('getVarianceLearning', () => {
+    it('calls GET /api/v1/plans/:id/variance_learning', async () => {
+      const snapshot = {
+        plan_id: 7,
+        source_plan_id: 3,
+        summary: {
+          plan_id: 7,
+          unrecorded_count: 0,
+          categories: [{ category: 'general', average_delta_days: 2, item_count: 1, recorded_count: 1 }],
+          top_variance_items: []
+        }
+      };
+      vi.mocked(apiClient.get).mockReturnValue(of(snapshot));
+
+      const result = await firstValueFrom(gateway.getVarianceLearning(7));
+      expect(result).toEqual(snapshot);
+      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/variance_learning');
+    });
+  });
+
+  describe('importVarianceLearning', () => {
+    it('calls POST /api/v1/plans/:id/variance_learning with source_plan_id', async () => {
+      const snapshot = {
+        plan_id: 7,
+        source_plan_id: 3,
+        summary: {
+          plan_id: 7,
+          unrecorded_count: 0,
+          categories: [],
+          top_variance_items: []
+        }
+      };
+      vi.mocked(apiClient.post).mockReturnValue(of(snapshot));
+
+      const result = await firstValueFrom(gateway.importVarianceLearning(7, 3));
+      expect(result).toEqual(snapshot);
+      expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans/7/variance_learning', {
+        source_plan_id: 3
+      });
+    });
+  });
+
   describe('regenerateTaskSchedule', () => {
     it('calls POST /api/v1/plans/:id/task_schedule/regenerate and returns sync state', async () => {
       const response = { success: true, task_schedule_sync_state: 'generating' };

@@ -1,0 +1,17 @@
+.plan-learn-imported-banner {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted, var(--color-surface));
+}
+
+.plan-learn-imported-banner__hint {
+  margin: var(--space-2) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.plan-learn-imported-banner__link {
+  font-weight: var(--font-weight-medium);
+}

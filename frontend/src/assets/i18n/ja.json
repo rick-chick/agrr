@@ -2482,17 +2482,6 @@
       "sync_stale": "計画の変更により作業計画が古くなっています。",
       "sync_updated": "作業計画を更新しました。",
       "sync_retry": "作業計画を再生成",
-      "orchestration": {
-        "regenerate": {
-          "message": "マスタ更新後は作業表の再生成を推奨します",
-          "hint": "下の同期バナーから作業計画を再生成してください。確認ダイアログが表示されます。"
-        },
-        "sync_verify": {
-          "message": "作業表の同期を確認してください",
-          "hint": "下の同期状態を確認してください。生成に失敗した場合は作業画面から再試行できます。"
-        },
-        "work_retry": "作業画面で再試行"
-      },
       "regenerate_confirm": "作業計画を再生成すると、未完了の自動生成予定が置き換わります。実績のある予定と手動追加予定は残ります。よろしいですか？",
       "sync_wizard_cta_hint": "登録ウィザードを開く",
       "sync_errors": {
@@ -2588,10 +2577,68 @@
         "view_list": "一覧",
         "view_variance": "乖離",
         "open_workbench": "作業台を開く"
+      },
+      "orchestration": {
+        "regenerate": {
+          "message": "マスタ更新後は作業表の再生成を推奨します",
+          "hint": "下の同期バナーから作業計画を再生成してください。確認ダイアログが表示されます。"
+        },
+        "sync_verify": {
+          "message": "作業表の同期を確認してください",
+          "hint": "下の同期状態を確認してください。生成に失敗した場合は作業画面から再試行できます。"
+        },
+        "work_retry": "作業画面で再試行"
       }
     },
     "learn": {
       "page_title": "振り返り — {{name}}",
+      "imported_snapshot_title": "計画 #{{sourcePlanId}} から取り込んだ学習データ",
+      "imported_snapshot_empty": "取り込みスナップショットにカテゴリ差分データがありません。",
+      "imported_banner": {
+        "message": "取り込んだ差分 {{count}} 件が作業台での adjust を要する可能性があります。",
+        "manual_hint": "スケジュールを変更する前に、作業台で取り込んだ学習内容を確認してください。自動変更は行われません。",
+        "workbench_link": "作業台で adjust を検討"
+      },
+      "carryover": {
+        "title": "他の計画から学習を取り込む",
+        "hint": "同一農場内の過去計画から、進行中計画へ variance 学習データをコピーします。",
+        "source_label": "ソース計画",
+        "source_hint": "過去の計画を選択",
+        "no_source_plans": "同一農場内に他の計画がありません。",
+        "preview_title": "学習データプレビュー",
+        "preview_empty": "カテゴリ差分データがありません。",
+        "import_button": "学習を取り込む"
+      },
+      "stage_gdd_calibration": {
+        "title": "ステージ GDD 校正提案",
+        "lead": "この計画の実績 GDD 差分から、ステージの thermal requirement 更新を提案します。内容を確認し、同意する場合のみ保存してください。",
+        "empty": "ステージ GDD 校正提案はまだありません。GDD 付きの作業実績を記録すると提案が表示されます。",
+        "delta_label": "平均 GDD 差分: {{delta}}",
+        "proposed_value": "現在の要求 GDD {{current}} → 提案 {{proposed}}",
+        "cta": "ステージ要求量を校正"
+      },
+      "action_proposals": {
+        "title": "スケジュール乖離の確認が必要です",
+        "manual_hint": "作業台で確認したうえで、手動で adjust または再最適化を検討してください。自動変更は行いません。",
+        "open_workbench": "作業台を開く",
+        "exceedance": {
+          "days": "日数の乖離が閾値を超えています",
+          "gdd": "GDD の乖離が閾値を超えています",
+          "both": "日数と GDD の乖離が閾値を超えています"
+        }
+      },
+      "bp_timing_adjustment": {
+        "title": "作業 BP タイミング調整の提案",
+        "lead": "計画と実績のカテゴリ別乖離から、作業スケジュール BP の GDD トリガー調整案を生成します。適用前に dry_run で確認してください。",
+        "empty": "現時点で提案できる BP タイミング調整はありません。",
+        "delta_label": "平均乖離: {{delta}}",
+        "affected_count": "対象 BP: {{count}} 件",
+        "cta": "BP タイミングを調整",
+        "category": {
+          "general": "一般作業",
+          "fertilizer": "施肥"
+        }
+      },
       "application_progress": {
         "title": "提案適用の進捗",
         "lead": "振り返り提案からマスタへ適用した内容の確認状態を追跡します。",
@@ -2637,36 +2684,6 @@
           "placement": "ワークベンチを開く",
           "regenerate": "作業表を開く",
           "sync_verify": "同期を確認"
-        }
-      },
-      "stage_gdd_calibration": {
-        "title": "ステージ GDD 校正提案",
-        "lead": "この計画の実績 GDD 差分から、ステージの thermal requirement 更新を提案します。内容を確認し、同意する場合のみ保存してください。",
-        "empty": "ステージ GDD 校正提案はまだありません。GDD 付きの作業実績を記録すると提案が表示されます。",
-        "delta_label": "平均 GDD 差分: {{delta}}",
-        "proposed_value": "現在の要求 GDD {{current}} → 提案 {{proposed}}",
-        "cta": "ステージ要求量を校正"
-      },
-      "action_proposals": {
-        "title": "スケジュール乖離の確認が必要です",
-        "manual_hint": "作業台で確認したうえで、手動で adjust または再最適化を検討してください。自動変更は行いません。",
-        "open_workbench": "作業台を開く",
-        "exceedance": {
-          "days": "日数の乖離が閾値を超えています",
-          "gdd": "GDD の乖離が閾値を超えています",
-          "both": "日数と GDD の乖離が閾値を超えています"
-        }
-      },
-      "bp_timing_adjustment": {
-        "title": "作業 BP タイミング調整の提案",
-        "lead": "計画と実績のカテゴリ別乖離から、作業スケジュール BP の GDD トリガー調整案を生成します。適用前に dry_run で確認してください。",
-        "empty": "現時点で提案できる BP タイミング調整はありません。",
-        "delta_label": "平均乖離: {{delta}}",
-        "affected_count": "対象 BP: {{count}} 件",
-        "cta": "BP タイミングを調整",
-        "category": {
-          "general": "一般作業",
-          "fertilizer": "施肥"
         }
       }
     },

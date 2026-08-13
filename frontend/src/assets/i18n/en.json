@@ -1359,17 +1359,6 @@
       "sync_stale": "Task plans are out of date with the latest plan.",
       "sync_updated": "Task plans have been updated.",
       "sync_retry": "Regenerate task plans",
-      "orchestration": {
-        "regenerate": {
-          "message": "Regenerate recommended after master update",
-          "hint": "Use the sync banner below to regenerate task plans. Confirm when prompted."
-        },
-        "sync_verify": {
-          "message": "Verify task schedule sync",
-          "hint": "Check sync status below. If generation failed, retry from the work screen."
-        },
-        "work_retry": "Open work screen to retry"
-      },
       "regenerate_confirm": "Regenerating replaces unfinished auto-generated items. Items with work records and manual entries are kept. Continue?",
       "sync_wizard_cta_hint": "Open registration wizard",
       "sync_errors": {
@@ -1465,10 +1454,68 @@
         "view_list": "Schedule",
         "view_variance": "Variance",
         "open_workbench": "Open workbench"
+      },
+      "orchestration": {
+        "regenerate": {
+          "message": "Regenerate recommended after master update",
+          "hint": "Use the sync banner below to regenerate task plans. Confirm when prompted."
+        },
+        "sync_verify": {
+          "message": "Verify task schedule sync",
+          "hint": "Check sync status below. If generation failed, retry from the work screen."
+        },
+        "work_retry": "Open work screen to retry"
       }
     },
     "learn": {
       "page_title": "Review — {{name}}",
+      "imported_snapshot_title": "Imported learning from plan #{{sourcePlanId}}",
+      "imported_snapshot_empty": "No category variance data in the imported snapshot.",
+      "imported_banner": {
+        "message": "{{count}} imported variance item(s) may need adjust on the workbench.",
+        "manual_hint": "Review imported learning on the workbench before changing the schedule. No automatic changes are made.",
+        "workbench_link": "Review adjust on workbench"
+      },
+      "carryover": {
+        "title": "Import learning from another plan",
+        "hint": "Copy variance learning from a previous plan on the same farm into this in-progress plan.",
+        "source_label": "Source plan",
+        "source_hint": "Select a previous plan",
+        "no_source_plans": "No other plans on this farm are available.",
+        "preview_title": "Learning data preview",
+        "preview_empty": "No category variance data.",
+        "import_button": "Import learning"
+      },
+      "stage_gdd_calibration": {
+        "title": "Stage GDD calibration proposals",
+        "lead": "Actual GDD variance from this plan suggests updating stage thermal requirements. Review and save only if you agree.",
+        "empty": "No stage GDD calibration proposals yet. Record work with GDD data to generate suggestions.",
+        "delta_label": "Average GDD delta: {{delta}}",
+        "proposed_value": "Current required GDD {{current}} → proposed {{proposed}}",
+        "cta": "Adjust stage requirement"
+      },
+      "action_proposals": {
+        "title": "Schedule variance needs your review",
+        "manual_hint": "Adjust or re-optimize only after you confirm on the workbench. No automatic changes are made.",
+        "open_workbench": "Open workbench",
+        "exceedance": {
+          "days": "Day variance exceeded threshold",
+          "gdd": "GDD variance exceeded threshold",
+          "both": "Day and GDD variance exceeded thresholds"
+        }
+      },
+      "bp_timing_adjustment": {
+        "title": "Task BP timing adjustment proposals",
+        "lead": "Category-level plan vs actual variance suggests GDD trigger adjustments for task schedule blueprints. Review with dry_run before applying.",
+        "empty": "No BP timing adjustments are available right now.",
+        "delta_label": "Average variance: {{delta}}",
+        "affected_count": "Affected BPs: {{count}}",
+        "cta": "Adjust BP timing",
+        "category": {
+          "general": "General tasks",
+          "fertilizer": "Fertilization"
+        }
+      },
       "application_progress": {
         "title": "Proposal application progress",
         "lead": "Track whether master updates from learn proposals are still pending your confirmation.",
@@ -1514,36 +1561,6 @@
           "placement": "Open workbench",
           "regenerate": "Open task schedule",
           "sync_verify": "Check sync"
-        }
-      },
-      "stage_gdd_calibration": {
-        "title": "Stage GDD calibration proposals",
-        "lead": "Actual GDD variance from this plan suggests updating stage thermal requirements. Review and save only if you agree.",
-        "empty": "No stage GDD calibration proposals yet. Record work with GDD data to generate suggestions.",
-        "delta_label": "Average GDD delta: {{delta}}",
-        "proposed_value": "Current required GDD {{current}} → proposed {{proposed}}",
-        "cta": "Adjust stage requirement"
-      },
-      "action_proposals": {
-        "title": "Schedule variance needs your review",
-        "manual_hint": "Adjust or re-optimize only after you confirm on the workbench. No automatic changes are made.",
-        "open_workbench": "Open workbench",
-        "exceedance": {
-          "days": "Day variance exceeded threshold",
-          "gdd": "GDD variance exceeded threshold",
-          "both": "Day and GDD variance exceeded thresholds"
-        }
-      },
-      "bp_timing_adjustment": {
-        "title": "Task BP timing adjustment proposals",
-        "lead": "Category-level plan vs actual variance suggests GDD trigger adjustments for task schedule blueprints. Review with dry_run before applying.",
-        "empty": "No BP timing adjustments are available right now.",
-        "delta_label": "Average variance: {{delta}}",
-        "affected_count": "Affected BPs: {{count}}",
-        "cta": "Adjust BP timing",
-        "category": {
-          "general": "General tasks",
-          "fertilizer": "Fertilization"
         }
       }
     },

@@ -2,13 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 
 import en from '../../../assets/i18n/en.json';
 import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-timing-adjustment-proposals.usecase';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
+import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
 import { PlanLearnComponent } from './plan-learn.component';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import {
@@ -73,6 +74,12 @@ describe('PlanLearnComponent', () => {
   let scheduleUseCase: { execute: ReturnType<typeof vi.fn> };
   let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
   let blueprintTimingUseCase: { execute: ReturnType<typeof vi.fn> };
+  let carryoverUseCase: {
+    loadFarmContext: ReturnType<typeof vi.fn>;
+    loadLearningSnapshot: ReturnType<typeof vi.fn>;
+    loadCarryoverPreview: ReturnType<typeof vi.fn>;
+    importLearning: ReturnType<typeof vi.fn>;
+  };
   let presenter: PlanLearnPresenter;
 
   beforeEach(async () => {
@@ -80,6 +87,14 @@ describe('PlanLearnComponent', () => {
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };
+    carryoverUseCase = {
+      loadFarmContext: vi.fn().mockReturnValue(
+        of([{ id: 8, name: 'Source Plan', farm_id: 1 }])
+      ),
+      loadLearningSnapshot: vi.fn().mockReturnValue(of(null)),
+      loadCarryoverPreview: vi.fn(),
+      importLearning: vi.fn()
+    };
 
     TestBed.overrideComponent(PlanLearnComponent, {
       set: {
@@ -91,6 +106,7 @@ describe('PlanLearnComponent', () => {
             provide: LoadBlueprintTimingAdjustmentProposalsUseCase,
             useValue: blueprintTimingUseCase
           },
+          { provide: LoadPlanLearnCarryoverUseCase, useValue: carryoverUseCase },
           PlanLearnPresenter
         ]
       }
@@ -185,13 +201,104 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Schedule variance needs your review');
     expect(fixture.nativeElement.textContent).toContain('Weed control');
   });
+
+  it('renders carryover import section with source plans', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(carryoverUseCase.loadFarmContext).toHaveBeenCalledWith(7);
+    expect(fixture.nativeElement.textContent).toContain('Import learning from another plan');
+    expect(fixture.nativeElement.querySelector('#plan-learn-carryover-source')).toBeTruthy();
+  });
+
+  it('shows imported snapshot and adjust banner after import', async () => {
+    carryoverUseCase.importLearning.mockReturnValue(
+      of({
+        plan_id: 7,
+        source_plan_id: 8,
+        summary: {
+          plan_id: 7,
+          unrecorded_count: 0,
+          categories: [{ category: 'general', average_delta_days: 2, item_count: 1, recorded_count: 1 }],
+          top_variance_items: [],
+          action_required_items: [
+            {
+              item_id: 11,
+              field_cultivation_id: 100,
+              category: 'general',
+              name: 'Weed control',
+              scheduled_date: '2026-06-01',
+              actual_date: '2026-06-08',
+              delta_days: 7,
+              gdd_trigger: 100,
+              gdd_at_actual: 110,
+              gdd_delta: 10,
+              exceedance_kind: 'days'
+            }
+          ]
+        }
+      })
+    );
+
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    componentSetSourcePlan(fixture, 8);
+    carryoverUseCase.loadCarryoverPreview.mockReturnValue(
+      of({
+        plan_id: 8,
+        unrecorded_count: 0,
+        categories: [{ category: 'general', average_delta_days: 2, item_count: 1, recorded_count: 1 }],
+        top_variance_items: []
+      })
+    );
+    fixture.componentInstance.onSourcePlanChange(8);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    fixture.componentInstance.onImportLearning();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(carryoverUseCase.importLearning).toHaveBeenCalledWith(7, 8);
+    expect(fixture.nativeElement.textContent).toContain('Imported learning from plan #8');
+    expect(fixture.nativeElement.querySelector('app-plan-learn-imported-banner')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Review adjust on workbench');
+  });
 });
+
+function componentSetSourcePlan(
+  fixture: ComponentFixture<PlanLearnComponent>,
+  sourcePlanId: number
+): void {
+  fixture.componentInstance.control = {
+    ...fixture.componentInstance.control,
+    selectedSourcePlanId: sourcePlanId,
+    carryoverPreview: {
+      plan_id: sourcePlanId,
+      unrecorded_count: 0,
+      categories: [{ category: 'general', average_delta_days: 2, item_count: 1, recorded_count: 1 }],
+      top_variance_items: []
+    },
+    carryoverPreviewLoading: false
+  };
+}
 
 describe('PlanLearnComponent post_master follow-up', () => {
   let fixture: ComponentFixture<PlanLearnComponent>;
   let scheduleUseCase: { execute: ReturnType<typeof vi.fn> };
   let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
   let blueprintTimingUseCase: { execute: ReturnType<typeof vi.fn> };
+  let carryoverUseCase: {
+    loadFarmContext: ReturnType<typeof vi.fn>;
+    loadLearningSnapshot: ReturnType<typeof vi.fn>;
+    loadCarryoverPreview: ReturnType<typeof vi.fn>;
+    importLearning: ReturnType<typeof vi.fn>;
+  };
   let presenter: PlanLearnPresenter;
 
   beforeEach(async () => {
@@ -199,6 +306,12 @@ describe('PlanLearnComponent post_master follow-up', () => {
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };
+    carryoverUseCase = {
+      loadFarmContext: vi.fn().mockReturnValue(of([])),
+      loadLearningSnapshot: vi.fn().mockReturnValue(of(null)),
+      loadCarryoverPreview: vi.fn(),
+      importLearning: vi.fn()
+    };
 
     TestBed.overrideComponent(PlanLearnComponent, {
       set: {
@@ -210,6 +323,7 @@ describe('PlanLearnComponent post_master follow-up', () => {
             provide: LoadBlueprintTimingAdjustmentProposalsUseCase,
             useValue: blueprintTimingUseCase
           },
+          { provide: LoadPlanLearnCarryoverUseCase, useValue: carryoverUseCase },
           PlanLearnPresenter
         ]
       }
