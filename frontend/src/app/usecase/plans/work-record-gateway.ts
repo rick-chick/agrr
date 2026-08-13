@@ -8,6 +8,8 @@ import {
   WorkRecordUpdateResponse,
   WorkRecordsListResponse
 } from '../../models/plans/work-record';
+import { TaskScheduleItemMutationResponse } from './task-schedule-item-mutation.dtos';
+import { TaskScheduleItemUpdateRequest } from './plan-gateway';
 
 export interface WorkRecordGateway {
   listWorkRecords(planId: number, params?: { from?: string; to?: string; field_cultivation_id?: number }): Observable<WorkRecordsListResponse>;
@@ -16,6 +18,11 @@ export interface WorkRecordGateway {
   deleteWorkRecord(planId: number, id: number): Observable<DeletionUndoResponse>;
   skipTaskScheduleItem(planId: number, itemId: number): Observable<{ item: { id: number; status: string; cancelled_at: string | null } }>;
   unskipTaskScheduleItem(planId: number, itemId: number): Observable<{ item: { id: number; status: string; cancelled_at: string | null } }>;
+  updateTaskScheduleItem(
+    planId: number,
+    itemId: number,
+    body: TaskScheduleItemUpdateRequest
+  ): Observable<TaskScheduleItemMutationResponse>;
 }
 
 export const WORK_RECORD_GATEWAY = new InjectionToken<WorkRecordGateway>('WORK_RECORD_GATEWAY');

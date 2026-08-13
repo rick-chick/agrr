@@ -7,10 +7,22 @@ import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summ
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { RegenerateTaskScheduleResponseDto } from './regenerate-task-schedule-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
+import { TaskScheduleItemMutationResponse } from './task-schedule-item-mutation.dtos';
 
 export interface TaskScheduleQueryParams {
   scope?: 'plan';
   field_cultivation_id?: number;
+}
+
+export interface TaskScheduleItemCreateRequest {
+  field_cultivation_id: number;
+  name: string;
+  scheduled_date: string;
+  agricultural_task_id?: number;
+}
+
+export interface TaskScheduleItemUpdateRequest {
+  scheduled_date: string;
 }
 
 export interface PlanGateway {
@@ -26,6 +38,15 @@ export interface PlanGateway {
     sourcePlanId: number
   ): Observable<PlanVarianceLearningSnapshot>;
   regenerateTaskSchedule(planId: number): Observable<RegenerateTaskScheduleResponseDto>;
+  createTaskScheduleItem(
+    planId: number,
+    body: TaskScheduleItemCreateRequest
+  ): Observable<TaskScheduleItemMutationResponse>;
+  updateTaskScheduleItem(
+    planId: number,
+    itemId: number,
+    body: TaskScheduleItemUpdateRequest
+  ): Observable<TaskScheduleItemMutationResponse>;
   deletePlan(planId: number): Observable<DeletionUndoResponse>;
 }
 

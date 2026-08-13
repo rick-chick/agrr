@@ -1353,6 +1353,13 @@
       "filter_from_date": "From date",
       "list_empty": "No tasks match the current filters.",
       "list_row_meta": "{{field}} · {{crop}}",
+      "edit_scheduled_date": "Edit scheduled date",
+      "add_item": {
+        "title": "Add task manually",
+        "name": "Task name",
+        "scheduled_date": "Scheduled date",
+        "submit": "Add"
+      },
       "sync_never": "Task plans have not been generated yet.",
       "sync_failed": "Task plan generation failed.",
       "sync_generating": "Generating task plans...",
@@ -1631,6 +1638,9 @@
       "show_skipped": "Show skipped",
       "skip": "Skip",
       "unskip": "Unskip",
+      "change_date": "Change date",
+      "change_date_field": "New scheduled date",
+      "change_date_submit": "Update date",
       "menu": "Menu",
       "retry": "Reload",
       "toast": {

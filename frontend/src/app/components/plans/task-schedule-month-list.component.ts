@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { formatIsoDateForDisplay, formatIsoDayForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
@@ -112,11 +112,14 @@ import {
                     <span class="plan-task-schedule-month-list__main">
                       <span class="plan-task-schedule-month-list__name">{{ row.item.name }}</span>
                       <span class="plan-task-schedule-month-list__sub">
-                        <time
-                          class="plan-task-schedule-month-list__date"
-                          [attr.datetime]="row.item.scheduled_date"
-                          >{{ formatDay(row.item.scheduled_date!) }}</time
-                        >
+                        <input
+                          type="date"
+                          class="plan-task-schedule-month-list__date-input"
+                          [value]="row.item.scheduled_date ?? ''"
+                          [attr.aria-label]="'plans.task_schedules.edit_scheduled_date' | translate"
+                          (click)="$event.stopPropagation()"
+                          (change)="emitScheduledDateChange(row, $event)"
+                        />
                         <span class="plan-task-schedule-month-list__meta">{{
                           'plans.task_schedules.list_row_meta'
                             | translate: { field: row.fieldName, crop: row.cropName }
@@ -205,6 +208,8 @@ export class TaskScheduleMonthListComponent {
 
   @Input() planId: number | null = null;
 
+  @Output() scheduledDateChange = new EventEmitter<{ itemId: number; scheduledDate: string }>();
+
   selectedRow: PlanTaskScheduleRowView | null = null;
 
   get selectedTask(): PlanTaskScheduleItem | null {
@@ -274,5 +279,13 @@ export class TaskScheduleMonthListComponent {
 
   isSelected(row: PlanTaskScheduleRowView): boolean {
     return this.selectedRow?.item.item_id === row.item.item_id;
+  }
+
+  emitScheduledDateChange(row: PlanTaskScheduleRowView, event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    if (!value || value === row.item.scheduled_date) {
+      return;
+    }
+    this.scheduledDateChange.emit({ itemId: row.item.item_id, scheduledDate: value });
   }
 }

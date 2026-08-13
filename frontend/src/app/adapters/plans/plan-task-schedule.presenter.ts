@@ -344,6 +344,22 @@ export class PlanTaskSchedulePresenter
       ...fieldCoverage
     };
   }
+
+  onItemMutationSuccess(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      syncReloadNonce: this.view.control.syncReloadNonce + 1
+    };
+  }
+
+  onItemMutationError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      regenerateError: dto.message
+    };
+  }
 }
 
 function enrichPlanTaskScheduleUnscheduledRows(

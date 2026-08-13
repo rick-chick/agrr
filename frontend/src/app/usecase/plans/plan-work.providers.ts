@@ -19,6 +19,8 @@ import { PollTaskScheduleSyncUseCase } from './poll-task-schedule-sync.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from './subscribe-task-schedule-sync.usecase';
 import { WORK_RECORD_GATEWAY } from './work-record-gateway';
 import { PlanOptimizationChannelGateway } from '../../adapters/plans/plan-optimization-channel.gateway';
+import { UPDATE_TASK_SCHEDULE_ITEM_OUTPUT_PORT } from './update-task-schedule-item.output-port';
+import { UpdateTaskScheduleItemUseCase } from './update-task-schedule-item.usecase';
 
 export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   PlanWorkPresenter,
@@ -26,11 +28,13 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   LoadPlanVsActualSummaryUseCase,
   SkipTaskScheduleItemUseCase,
   CreateWorkRecordUseCase,
+  UpdateTaskScheduleItemUseCase,
   RegenerateTaskScheduleUseCase,
   PollTaskScheduleSyncUseCase,
   SubscribeTaskScheduleSyncUseCase,
   { provide: LOAD_WORK_DAY_LIST_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: SKIP_TASK_SCHEDULE_ITEM_OUTPUT_PORT, useExisting: PlanWorkPresenter },
+  { provide: UPDATE_TASK_SCHEDULE_ITEM_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: CREATE_WORK_RECORD_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: REGENERATE_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: SUBSCRIBE_TASK_SCHEDULE_SYNC_OUTPUT_PORT, useExisting: PlanWorkPresenter },

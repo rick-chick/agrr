@@ -9,6 +9,11 @@ import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summ
 import { PlanGateway, TaskScheduleQueryParams } from '../../usecase/plans/plan-gateway';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
+import {
+  TaskScheduleItemCreateRequest,
+  TaskScheduleItemUpdateRequest
+} from '../../usecase/plans/plan-gateway';
+import { TaskScheduleItemMutationResponse } from '../../usecase/plans/task-schedule-item-mutation.dtos';
 
 @Injectable()
 export class PlanApiGateway implements PlanGateway {
@@ -72,6 +77,27 @@ export class PlanApiGateway implements PlanGateway {
     return this.apiClient.post<RegenerateTaskScheduleResponseDto>(
       `/api/v1/plans/${planId}/task_schedule/regenerate`,
       {}
+    );
+  }
+
+  createTaskScheduleItem(
+    planId: number,
+    body: TaskScheduleItemCreateRequest
+  ): Observable<TaskScheduleItemMutationResponse> {
+    return this.apiClient.post<TaskScheduleItemMutationResponse>(
+      `/api/v1/plans/${planId}/task_schedule/items`,
+      { task_schedule_item: body }
+    );
+  }
+
+  updateTaskScheduleItem(
+    planId: number,
+    itemId: number,
+    body: TaskScheduleItemUpdateRequest
+  ): Observable<TaskScheduleItemMutationResponse> {
+    return this.apiClient.patch<TaskScheduleItemMutationResponse>(
+      `/api/v1/plans/${planId}/task_schedule/items/${itemId}`,
+      { task_schedule_item: body }
     );
   }
 

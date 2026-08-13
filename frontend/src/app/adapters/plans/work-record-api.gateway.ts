@@ -10,6 +10,8 @@ import {
 } from '../../models/plans/work-record';
 import { ApiService } from '../../services/api.service';
 import { WorkRecordGateway } from '../../usecase/plans/work-record-gateway';
+import { TaskScheduleItemMutationResponse } from '../../usecase/plans/task-schedule-item-mutation.dtos';
+import { TaskScheduleItemUpdateRequest } from '../../usecase/plans/plan-gateway';
 
 @Injectable()
 export class WorkRecordApiGateway implements WorkRecordGateway {
@@ -68,6 +70,17 @@ export class WorkRecordApiGateway implements WorkRecordGateway {
     return this.apiClient.patch<{ item: { id: number; status: string; cancelled_at: string | null } }>(
       `/api/v1/plans/${planId}/task_schedule/items/${itemId}/unskip`,
       {}
+    );
+  }
+
+  updateTaskScheduleItem(
+    planId: number,
+    itemId: number,
+    body: TaskScheduleItemUpdateRequest
+  ): Observable<TaskScheduleItemMutationResponse> {
+    return this.apiClient.patch<TaskScheduleItemMutationResponse>(
+      `/api/v1/plans/${planId}/task_schedule/items/${itemId}`,
+      { task_schedule_item: body }
     );
   }
 }
