@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
+import { VarianceActionProposalCardsComponent } from './variance-action-proposal-cards.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
@@ -28,7 +29,8 @@ const initialControl: PlanLearnViewState = {
     CommonModule,
     TranslateModule,
     PlanPlanContextHeaderComponent,
-    TaskScheduleVarianceViewComponent
+    TaskScheduleVarianceViewComponent,
+    VarianceActionProposalCardsComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -50,6 +52,10 @@ const initialControl: PlanLearnViewState = {
             </button>
           </div>
         } @else {
+          <app-variance-action-proposal-cards
+            [planId]="planId"
+            [items]="control.varianceSummary?.action_required_items ?? []"
+          />
           <app-task-schedule-variance-view
             [planId]="planId"
             [loading]="control.varianceLoading"
