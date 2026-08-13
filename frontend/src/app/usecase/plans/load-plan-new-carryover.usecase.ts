@@ -18,4 +18,8 @@ export class LoadPlanNewCarryoverUseCase {
   loadCarryoverPreview(planId: number): Observable<PlanVsActualSummary> {
     return this.planGateway.getPlanVsActualSummary(planId);
   }
+
+  loadSourcePlan(planId: number): Observable<PlanSummary | null> {
+    return this.planGateway.fetchPlan(planId).pipe(catchError(() => of(null)));
+  }
 }

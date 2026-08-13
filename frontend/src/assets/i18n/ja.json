@@ -2600,6 +2600,7 @@
       "current_variance_hint": "この計画の作業記録に基づく差分です。別計画から取り込んだ学習は上に表示されます。",
       "imported_banner": {
         "message": "取り込んだ差分 {{count}} 件が作業台での adjust を要する可能性があります。",
+        "merged_proposals": "マージされた提案 {{count}} 件を学習から取り込みました。",
         "manual_hint": "スケジュールを変更する前に、作業台で取り込んだ学習内容を確認してください。自動変更は行われません。",
         "workbench_link": "作業台で adjust を検討"
       },
@@ -2708,7 +2709,8 @@
           "apply_stage_gdd": "ステージ GDD 校正を適用",
           "apply_bp_timing": "BP タイミング調整を適用",
           "reorganize_placement": "作業台で配置を確認",
-          "handoff_carryover": "学習をインポートまたは引き継ぎ"
+          "handoff_carryover": "学習をインポートまたは引き継ぎ",
+          "handoff_new_plan": "次の計画を作成（学習を引き継ぐ）"
         }
       }
     },
