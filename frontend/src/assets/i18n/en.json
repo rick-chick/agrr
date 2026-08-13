@@ -1585,7 +1585,6 @@
           "apply_stage_gdd": "Apply stage GDD calibration",
           "apply_bp_timing": "Apply BP timing adjustment",
           "reorganize_placement": "Verify placement on workbench",
-          "handoff_carryover": "Import or carry over learning",
           "handoff_new_plan": "Create next plan (carry over learning)"
         }
       }

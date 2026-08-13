@@ -442,7 +442,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
 
   private scrollToImportedSnapshotIfRequested(): void {
     const expand = this.route.snapshot.queryParamMap.get('expand');
-    if (expand !== 'imported_snapshot' && expand !== 'carryover') {
+    if (expand !== 'imported_snapshot') {
       return;
     }
     requestAnimationFrame(() => {
