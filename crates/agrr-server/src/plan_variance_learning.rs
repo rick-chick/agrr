@@ -1,4 +1,5 @@
 //! `GET /api/v1/plans/:id/variance_learning` — persisted variance learning snapshot.
+//! `PATCH /api/v1/plans/:id/variance_learning` — proposal application progress updates.
 
 use crate::adapters::{NoopLogger, PassthroughTranslator};
 use crate::plan_vs_actual_json::summary_to_json_body;
@@ -13,23 +14,29 @@ use agrr_domain::cultivation_plan::gateways::{
     CultivationPlanGateway, PlanVarianceLearningGateway,
 };
 use agrr_domain::cultivation_plan::interactors::{
-    PlanVarianceCarryoverInput, PlanVarianceCarryoverInteractor, PlanVarianceLearningReadInteractor,
+    PlanVarianceCarryoverInput, PlanVarianceCarryoverInteractor,
+    PlanVarianceLearningProposalProgressUpdateInteractor, PlanVarianceLearningReadInteractor,
 };
-use agrr_domain::cultivation_plan::ports::PlanVarianceLearningReadOutputPort;
+use agrr_domain::cultivation_plan::ports::{
+    PlanVarianceLearningProposalProgressUpdateOutputPort, PlanVarianceLearningReadOutputPort,
+};
 use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::exceptions::RecordNotFoundError;
 use axum::{
     extract::{Path, State},
-    routing::get,
+    routing::{get, patch, post},
     Json, Router,
 };
 use axum_extra::extract::cookie::CookieJar;
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
+use std::collections::BTreeMap;
 
 pub fn routes() -> Router<AppState> {
     Router::new().route(
         "/api/v1/plans/{id}/variance_learning",
-        get(show_variance_learning).post(import_variance_learning),
+        get(show_variance_learning)
+            .post(import_variance_learning)
+            .patch(patch_variance_learning),
     )
 }
 
@@ -50,6 +57,53 @@ impl PlanVarianceLearningReadOutputPort for VarianceLearningPresenter {
     fn on_failure(&mut self, _error: Error) {
         self.body = Some(VarianceLearningOutcome::NotFound);
     }
+}
+
+struct VarianceLearningUpdatePresenter {
+    body: Option<VarianceLearningUpdateOutcome>,
+}
+
+enum VarianceLearningUpdateOutcome {
+    Success(PlanVarianceLearningSnapshotRead),
+    NotFound,
+    Invalid(BTreeMap<String, Vec<String>>, String),
+}
+
+impl PlanVarianceLearningProposalProgressUpdateOutputPort for VarianceLearningUpdatePresenter {
+    fn on_success(&mut self, dto: PlanVarianceLearningSnapshotRead) {
+        self.body = Some(VarianceLearningUpdateOutcome::Success(dto));
+    }
+
+    fn on_record_invalid(
+        &mut self,
+        errors: BTreeMap<String, Vec<String>>,
+        fallback_message: &str,
+    ) {
+        self.body = Some(VarianceLearningUpdateOutcome::Invalid(
+            errors,
+            fallback_message.to_string(),
+        ));
+    }
+
+    fn on_not_found(&mut self) {
+        self.body = Some(VarianceLearningUpdateOutcome::NotFound);
+    }
+}
+
+fn snapshot_to_json(snapshot: &PlanVarianceLearningSnapshotRead) -> Value {
+    let mut body = Map::new();
+    body.insert("plan_id".into(), json!(snapshot.plan_id));
+    if let Some(source_plan_id) = snapshot.source_plan_id {
+        body.insert("source_plan_id".into(), json!(source_plan_id));
+    }
+    if let Some(summary) = &snapshot.summary {
+        body.insert("summary".into(), summary_to_json_body(summary.clone()));
+    }
+    body.insert(
+        "proposal_application_progress".into(),
+        json!(snapshot.proposal_application_progress),
+    );
+    Value::Object(body)
 }
 
 async fn show_variance_learning(
@@ -89,12 +143,7 @@ async fn show_variance_learning(
     match interactor.call() {
         Ok(()) => match presenter.body {
             Some(VarianceLearningOutcome::Success(snapshot)) => {
-                let summary_body = summary_to_json_body(snapshot.summary);
-                Ok(Json(json!({
-                    "plan_id": snapshot.plan_id,
-                    "source_plan_id": snapshot.source_plan_id,
-                    "summary": summary_body,
-                })))
+                Ok(Json(snapshot_to_json(&snapshot)))
             }
             Some(VarianceLearningOutcome::NotFound) | None => Err((
                 axum::http::StatusCode::NOT_FOUND,
@@ -118,6 +167,70 @@ async fn show_variance_learning(
 #[derive(serde::Deserialize)]
 struct ImportVarianceLearningBody {
     source_plan_id: i64,
+}
+
+#[derive(serde::Deserialize)]
+struct PatchVarianceLearningBody {
+    proposal_application_progress: BTreeMap<String, String>,
+}
+
+async fn patch_variance_learning(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(plan_id): Path<i64>,
+    Json(body): Json<PatchVarianceLearningBody>,
+) -> Result<Json<Value>, (axum::http::StatusCode, Json<Value>)> {
+    let user_id = user_id_from_session(&state, &jar).map_err(|status| {
+        (
+            status,
+            Json(json!({"errors": ["unauthorized"]})),
+        )
+    })?;
+
+    let pool = state.sqlite.clone();
+    let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let variance_gateway = PlanVarianceLearningSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
+
+    let mut presenter = VarianceLearningUpdatePresenter { body: None };
+
+    let mut interactor = PlanVarianceLearningProposalProgressUpdateInteractor::new(
+        &mut presenter,
+        &plan_gateway,
+        &variance_gateway,
+        &scope_gateway,
+    );
+
+    match interactor.call(user_id, plan_id, body.proposal_application_progress) {
+        Ok(()) => match presenter.body {
+            Some(VarianceLearningUpdateOutcome::Success(snapshot)) => {
+                Ok(Json(snapshot_to_json(&snapshot)))
+            }
+            Some(VarianceLearningUpdateOutcome::NotFound) | None => Err((
+                axum::http::StatusCode::NOT_FOUND,
+                Json(json!({"errors": ["not_found"]})),
+            )),
+            Some(VarianceLearningUpdateOutcome::Invalid(errors, fallback)) => {
+                let message = errors
+                    .values()
+                    .flatten()
+                    .next()
+                    .cloned()
+                    .unwrap_or(fallback);
+                Err((
+                    axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({"errors": [message]})),
+                ))
+            }
+        },
+        Err(err) => {
+            tracing::error!("variance_learning patch failed: {err}");
+            Err((
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            ))
+        }
+    }
 }
 
 async fn import_variance_learning(
@@ -174,7 +287,7 @@ async fn import_variance_learning(
         ));
     }
 
-    let variance_gateway = PlanVarianceLearningSqliteGateway::new(pool);
+    let variance_gateway = PlanVarianceLearningSqliteGateway::new(pool.clone());
     let snapshot = variance_gateway
         .find_by_plan_id(plan_id)
         .map_err(|err| {
@@ -191,12 +304,24 @@ async fn import_variance_learning(
             )
         })?;
 
-    let summary_body = summary_to_json_body(snapshot.summary);
-    Ok(Json(json!({
-        "plan_id": snapshot.plan_id,
-        "source_plan_id": snapshot.source_plan_id,
-        "summary": summary_body,
-    })))
+    let progress = variance_gateway
+        .find_proposal_application_progress_by_plan_id(plan_id)
+        .map_err(|err| {
+            tracing::error!("variance_learning import progress read failed: {err}");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            )
+        })?;
+
+    let merged = PlanVarianceLearningSnapshotRead {
+        plan_id: snapshot.plan_id,
+        source_plan_id: snapshot.source_plan_id,
+        summary: snapshot.summary,
+        proposal_application_progress: progress,
+    };
+
+    Ok(Json(snapshot_to_json(&merged)))
 }
 
 pub fn run_carryover_after_create(

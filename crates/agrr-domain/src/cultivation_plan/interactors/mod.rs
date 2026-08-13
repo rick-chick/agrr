@@ -32,6 +32,7 @@ pub(crate) mod task_schedule_item_schedule_deletion_undo_interactor;
 pub(crate) mod task_schedule_item_update_interactor;
 pub(crate) mod plan_vs_actual_summary_interactor;
 pub(crate) mod plan_variance_carryover_interactor;
+pub(crate) mod plan_variance_learning_proposal_progress_update_interactor;
 pub(crate) mod plan_variance_learning_read_interactor;
 pub(crate) mod regenerate_task_schedule_interactor;
 pub(crate) mod task_schedule_private_plan_access;
@@ -78,6 +79,7 @@ pub use plan_vs_actual_summary_interactor::PlanVsActualSummaryInteractor;
 pub use plan_variance_carryover_interactor::{
     PlanVarianceCarryoverInput, PlanVarianceCarryoverInteractor,
 };
+pub use plan_variance_learning_proposal_progress_update_interactor::PlanVarianceLearningProposalProgressUpdateInteractor;
 pub use plan_variance_learning_read_interactor::PlanVarianceLearningReadInteractor;
 pub use regenerate_task_schedule_interactor::RegenerateTaskScheduleInteractor;
 pub use task_schedule_private_plan_access::access_allowed as task_schedule_private_plan_access_allowed;

@@ -73,6 +73,16 @@ export class PlanApiGateway implements PlanGateway {
     );
   }
 
+  patchVarianceLearningProposalProgress(
+    planId: number,
+    proposalApplicationProgress: Record<string, string>
+  ): Observable<PlanVarianceLearningSnapshot> {
+    return this.apiClient.patch<PlanVarianceLearningSnapshot>(
+      `/api/v1/plans/${planId}/variance_learning`,
+      { proposal_application_progress: proposalApplicationProgress }
+    );
+  }
+
   regenerateTaskSchedule(planId: number): Observable<RegenerateTaskScheduleResponseDto> {
     return this.apiClient.post<RegenerateTaskScheduleResponseDto>(
       `/api/v1/plans/${planId}/task_schedule/regenerate`,

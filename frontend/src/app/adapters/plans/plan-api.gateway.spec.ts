@@ -306,6 +306,26 @@ describe('PlanApiGateway', () => {
     });
   });
 
+  describe('patchVarianceLearningProposalProgress', () => {
+    it('calls PATCH /api/v1/plans/:id/variance_learning with proposal_application_progress', async () => {
+      const snapshot = {
+        plan_id: 7,
+        proposal_application_progress: {
+          'stage_gdd:1:2': 'dismissed'
+        }
+      };
+      vi.mocked(apiClient.patch).mockReturnValue(of(snapshot));
+
+      const result = await firstValueFrom(
+        gateway.patchVarianceLearningProposalProgress(7, { 'stage_gdd:1:2': 'dismissed' })
+      );
+      expect(result).toEqual(snapshot);
+      expect(apiClient.patch).toHaveBeenCalledWith('/api/v1/plans/7/variance_learning', {
+        proposal_application_progress: { 'stage_gdd:1:2': 'dismissed' }
+      });
+    });
+  });
+
   describe('importVarianceLearning', () => {
     it('calls POST /api/v1/plans/:id/variance_learning with source_plan_id', async () => {
       const snapshot = {

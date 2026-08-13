@@ -17,6 +17,7 @@ import {
   storeLearnOrchestrationReturnToLearn
 } from './learn-master-update-orchestration';
 import {
+  clearLearnProposalApplicationProgressCache,
   markLearnProposalConfirmed,
   markStageGddProposalAppliedPending,
   readLearnProposalApplicationProgress,
@@ -27,6 +28,7 @@ import {
 describe('learn-master-update-orchestration', () => {
   beforeEach(() => {
     sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
   });
 
   describe('parseLearningOrchestration', () => {

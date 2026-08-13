@@ -1,5 +1,7 @@
 //! SQLite persistence for plan variance learning snapshots.
 
+use std::collections::BTreeMap;
+
 use crate::pool::SqlitePool;
 use agrr_domain::cultivation_plan::dtos::{
     PlanVarianceLearningSnapshotRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
@@ -63,13 +65,56 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
                         .map_err(|err| rusqlite::Error::ToSqlConversionFailure(err))?;
                     Ok(Some(PlanVarianceLearningSnapshotRead {
                         plan_id,
-                        source_plan_id,
-                        summary,
+                        source_plan_id: Some(source_plan_id),
+                        summary: Some(summary),
+                        proposal_application_progress: BTreeMap::new(),
                     }))
                 }
                 Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
                 Err(err) => Err(err),
             }
+        })
+    }
+
+    fn find_proposal_application_progress_by_plan_id(
+        &self,
+        plan_id: i64,
+    ) -> Result<BTreeMap<String, String>, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_read_box(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT proposal_key, status \
+                 FROM plan_variance_learning_proposal_states WHERE plan_id = ?1",
+            )?;
+            let rows = stmt.query_map(params![plan_id], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })?;
+            let mut map = BTreeMap::new();
+            for row in rows {
+                let (key, status) = row?;
+                map.insert(key, status);
+            }
+            Ok(map)
+        })
+    }
+
+    fn upsert_proposal_application_progress(
+        &self,
+        plan_id: i64,
+        updates: &BTreeMap<String, String>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_write_box(|conn| {
+            for (proposal_key, status) in updates {
+                conn.execute(
+                    "INSERT INTO plan_variance_learning_proposal_states \
+                     (plan_id, proposal_key, status, created_at, updated_at) \
+                     VALUES (?1, ?2, ?3, datetime('now'), datetime('now')) \
+                     ON CONFLICT(plan_id, proposal_key) DO UPDATE SET \
+                       status = excluded.status, \
+                       updated_at = datetime('now')",
+                    params![plan_id, proposal_key, status],
+                )?;
+            }
+            Ok(())
         })
     }
 }
@@ -174,6 +219,15 @@ mod plan_variance_learning_sqlite_gateway_test {
                    snapshot_json TEXT NOT NULL,
                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                 );
+                 CREATE TABLE plan_variance_learning_proposal_states (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   plan_id INTEGER NOT NULL,
+                   proposal_key TEXT NOT NULL,
+                   status TEXT NOT NULL,
+                   created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                   UNIQUE(plan_id, proposal_key)
                  );",
             )
         })
@@ -206,8 +260,39 @@ mod plan_variance_learning_sqlite_gateway_test {
             .expect("find")
             .expect("snapshot");
         assert_eq!(20, found.plan_id);
-        assert_eq!(10, found.source_plan_id);
-        assert_eq!(1, found.summary.unrecorded_count);
-        assert_eq!(Some(3.0), found.summary.categories[0].average_delta_days);
+        assert_eq!(Some(10), found.source_plan_id);
+        assert_eq!(1, found.summary.as_ref().unwrap().unrecorded_count);
+        assert_eq!(
+            Some(3.0),
+            found.summary.as_ref().unwrap().categories[0].average_delta_days
+        );
+    }
+
+    #[test]
+    fn upsert_and_find_proposal_application_progress() {
+        let pool = test_pool();
+        let gateway = PlanVarianceLearningSqliteGateway::new(pool);
+        let mut updates = BTreeMap::new();
+        updates.insert("stage_gdd:1:2".into(), "dismissed".into());
+
+        gateway
+            .upsert_proposal_application_progress(7, &updates)
+            .expect("upsert");
+        let found = gateway
+            .find_proposal_application_progress_by_plan_id(7)
+            .expect("find");
+        assert_eq!(
+            BTreeMap::from([("stage_gdd:1:2".into(), "dismissed".into())]),
+            found
+        );
+
+        updates.insert("stage_gdd:1:2".into(), "confirmed".into());
+        gateway
+            .upsert_proposal_application_progress(7, &updates)
+            .expect("upsert again");
+        let updated = gateway
+            .find_proposal_application_progress_by_plan_id(7)
+            .expect("find updated");
+        assert_eq!("confirmed", updated.get("stage_gdd:1:2").unwrap());
     }
 }

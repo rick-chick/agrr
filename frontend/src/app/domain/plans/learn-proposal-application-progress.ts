@@ -17,10 +17,6 @@ export interface LearnPostMasterPayload {
   appliedRequiredGdd?: number | null;
 }
 
-export function learnProposalApplicationProgressStorageKey(planId: number): string {
-  return `agrr:learn-proposal-application-progress:${planId}`;
-}
-
 export function learnPostMasterPayloadStorageKey(planId: number): string {
   return `agrr:learn-post-master:${planId}`;
 }
@@ -46,28 +42,57 @@ export function bpTimingProposalProgressKey(cropId: number, category: string): s
 
 type ProgressMap = Record<string, LearnProposalApplicationStatus>;
 
-function readProgressMap(planId: number): ProgressMap {
-  const raw = sessionStorage.getItem(learnProposalApplicationProgressStorageKey(planId));
-  if (!raw) {
-    return {};
-  }
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') {
-      return {};
+const progressCache: Record<number, ProgressMap> = {};
+
+type ProgressPatchHandler = (
+  planId: number,
+  updates: Record<string, LearnProposalApplicationStatus>
+) => void;
+
+let patchHandler: ProgressPatchHandler | null = null;
+
+export function registerLearnProposalApplicationProgressPatchHandler(
+  handler: ProgressPatchHandler
+): void {
+  patchHandler = handler;
+}
+
+export function clearLearnProposalApplicationProgressCache(planId?: number): void {
+  if (planId == null) {
+    for (const key of Object.keys(progressCache)) {
+      delete progressCache[Number(key)];
     }
-    return parsed as ProgressMap;
-  } catch {
-    return {};
+    return;
   }
+  delete progressCache[planId];
+}
+
+export function hydrateLearnProposalApplicationProgress(
+  planId: number,
+  map: Record<string, LearnProposalApplicationStatus>
+): void {
+  progressCache[planId] = { ...map };
+}
+
+function readProgressMap(planId: number): ProgressMap {
+  return progressCache[planId] ?? {};
 }
 
 function writeProgressMap(planId: number, map: ProgressMap): void {
-  sessionStorage.setItem(learnProposalApplicationProgressStorageKey(planId), JSON.stringify(map));
+  progressCache[planId] = map;
+}
+
+function syncProgressUpdates(
+  planId: number,
+  updates: Record<string, LearnProposalApplicationStatus>
+): void {
+  if (patchHandler && Object.keys(updates).length > 0) {
+    patchHandler(planId, updates);
+  }
 }
 
 export function readLearnProposalApplicationProgress(planId: number): ProgressMap {
-  return readProgressMap(planId);
+  return { ...readProgressMap(planId) };
 }
 
 export function resolveLearnProposalApplicationStatus(
@@ -81,6 +106,7 @@ function markProposalAppliedPending(planId: number, proposalKey: string): void {
   const map = readProgressMap(planId);
   map[proposalKey] = 'applied_pending_confirmation';
   writeProgressMap(planId, map);
+  syncProgressUpdates(planId, { [proposalKey]: 'applied_pending_confirmation' });
 }
 
 export function markStageGddProposalAppliedPending(
@@ -139,6 +165,7 @@ function setProposalStatus(
   const map = readProgressMap(planId);
   map[proposalKey] = status;
   writeProgressMap(planId, map);
+  syncProgressUpdates(planId, { [proposalKey]: status });
 }
 
 export function markLearnProposalConfirmed(planId: number, proposalKey: string): void {
@@ -166,15 +193,18 @@ export function confirmLearnProposalFromPostMaster(
 
 export function markAllConfirmedProposalsDone(planId: number): void {
   const map = readProgressMap(planId);
+  const updates: Record<string, LearnProposalApplicationStatus> = {};
   let changed = false;
   for (const [key, status] of Object.entries(map)) {
     if (status === 'confirmed') {
       map[key] = 'done';
+      updates[key] = 'done';
       changed = true;
     }
   }
   if (changed) {
     writeProgressMap(planId, map);
+    syncProgressUpdates(planId, updates);
   }
 }
 

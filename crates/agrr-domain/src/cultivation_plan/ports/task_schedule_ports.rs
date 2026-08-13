@@ -17,6 +17,12 @@ pub trait PlanVarianceLearningReadOutputPort {
     fn on_failure(&mut self, error: Error);
 }
 
+pub trait PlanVarianceLearningProposalProgressUpdateOutputPort {
+    fn on_success(&mut self, dto: PlanVarianceLearningSnapshotRead);
+    fn on_record_invalid(&mut self, errors: BTreeMap<String, Vec<String>>, fallback_message: &str);
+    fn on_not_found(&mut self);
+}
+
 pub trait TaskScheduleTimelineOutputPort {
     fn on_success(&mut self, dto: TaskScheduleTimeline);
     fn on_failure(&mut self, error: Error);

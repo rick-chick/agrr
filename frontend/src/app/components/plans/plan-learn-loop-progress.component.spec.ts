@@ -4,6 +4,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import {
+  clearLearnProposalApplicationProgressCache,
   markBpTimingProposalDismissed,
   markStageGddProposalDismissed
 } from '../../domain/plans/learn-proposal-application-progress';
@@ -30,6 +31,7 @@ describe('PlanLearnLoopProgressComponent', () => {
 
   beforeEach(async () => {
     sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
     await TestBed.configureTestingModule({
       imports: [PlanLearnLoopProgressComponent, TranslateModule.forRoot()],
       providers: [provideRouter([])]

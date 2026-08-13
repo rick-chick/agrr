@@ -1,8 +1,9 @@
-import { Inject, Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { catchError, map, Observable, of, switchMap } from 'rxjs';
 import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
 import type { PlanSummary } from '../../domain/plans/plan-summary';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
+import { hydrateLearnProposalApplicationProgress } from '../../domain/plans/learn-proposal-application-progress';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
 
 @Injectable()
@@ -30,13 +31,30 @@ export class LoadPlanLearnCarryoverUseCase {
   }
 
   loadLearningSnapshot(planId: number): Observable<PlanVarianceLearningSnapshot | null> {
-    return this.planGateway.getVarianceLearning(planId).pipe(catchError(() => of(null)));
+    return this.planGateway.getVarianceLearning(planId).pipe(
+      map((snapshot) => {
+        hydrateLearnProposalApplicationProgress(
+          planId,
+          snapshot.proposal_application_progress ?? {}
+        );
+        return snapshot;
+      }),
+      catchError(() => of(null))
+    );
   }
 
   importLearning(
     planId: number,
     sourcePlanId: number
   ): Observable<PlanVarianceLearningSnapshot> {
-    return this.planGateway.importVarianceLearning(planId, sourcePlanId);
+    return this.planGateway.importVarianceLearning(planId, sourcePlanId).pipe(
+      map((snapshot) => {
+        hydrateLearnProposalApplicationProgress(
+          planId,
+          snapshot.proposal_application_progress ?? {}
+        );
+        return snapshot;
+      })
+    );
   }
 }

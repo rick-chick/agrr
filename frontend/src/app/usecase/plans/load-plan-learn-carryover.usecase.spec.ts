@@ -5,6 +5,11 @@ import type { PlanGateway } from './plan-gateway';
 import type { PlanSummary } from '../../domain/plans/plan-summary';
 import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
+import {
+  clearLearnProposalApplicationProgressCache,
+  readLearnProposalApplicationProgress,
+  stageGddProposalProgressKey
+} from '../../domain/plans/learn-proposal-application-progress';
 
 const PLAN_ID = 7;
 const FARM_ID = 3;
@@ -36,6 +41,7 @@ function createGateway(overrides: Partial<PlanGateway> = {}): PlanGateway {
     getPlanVsActualSummary: () => of(summary),
     getVarianceLearning: () => of(snapshot),
     importVarianceLearning: () => of(snapshot),
+    patchVarianceLearningProposalProgress: () => of(snapshot),
     regenerateTaskSchedule: () => of(undefined),
 
     createTaskScheduleItem: () => of({} as never),
@@ -75,6 +81,30 @@ describe('LoadPlanLearnCarryoverUseCase', () => {
     const useCase = new LoadPlanLearnCarryoverUseCase(createGateway());
 
     await expect(firstValueFrom(useCase.loadCarryoverPreview(PLAN_ID))).resolves.toEqual(summary);
+  });
+
+  it('loadLearningSnapshot hydrates proposal application progress from API', async () => {
+    clearLearnProposalApplicationProgressCache();
+    const gateway = createGateway({
+      getVarianceLearning: () =>
+        of({
+          ...snapshot,
+          proposal_application_progress: {
+            [stageGddProposalProgressKey(1, 2)]: 'dismissed'
+          }
+        })
+    });
+    const useCase = new LoadPlanLearnCarryoverUseCase(gateway);
+
+    await expect(firstValueFrom(useCase.loadLearningSnapshot(PLAN_ID))).resolves.toEqual({
+      ...snapshot,
+      proposal_application_progress: {
+        [stageGddProposalProgressKey(1, 2)]: 'dismissed'
+      }
+    });
+    expect(readLearnProposalApplicationProgress(PLAN_ID)).toEqual({
+      [stageGddProposalProgressKey(1, 2)]: 'dismissed'
+    });
   });
 
   it('loadLearningSnapshot returns null when gateway errors', async () => {

@@ -37,6 +37,10 @@ export interface PlanGateway {
     planId: number,
     sourcePlanId: number
   ): Observable<PlanVarianceLearningSnapshot>;
+  patchVarianceLearningProposalProgress(
+    planId: number,
+    proposalApplicationProgress: Record<string, string>
+  ): Observable<PlanVarianceLearningSnapshot>;
   regenerateTaskSchedule(planId: number): Observable<RegenerateTaskScheduleResponseDto>;
   createTaskScheduleItem(
     planId: number,

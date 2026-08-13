@@ -1,5 +1,7 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::PlanVarianceLearningReadInteractor`
 
+use std::collections::BTreeMap;
+
 use crate::cultivation_plan::dtos::PlanVarianceLearningSnapshotRead;
 use crate::cultivation_plan::gateways::{CultivationPlanGateway, PlanVarianceLearningGateway};
 use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
@@ -69,15 +71,33 @@ where
             return Err(Box::new(RecordNotFoundError));
         }
 
+        let progress = self
+            .variance_learning_gateway
+            .find_proposal_application_progress_by_plan_id(self.plan_id)?;
+
         match self.variance_learning_gateway.find_by_plan_id(self.plan_id) {
             Ok(Some(snapshot)) => {
-                self.output_port.on_success(snapshot);
+                self.output_port.on_success(PlanVarianceLearningSnapshotRead {
+                    plan_id: snapshot.plan_id,
+                    source_plan_id: snapshot.source_plan_id,
+                    summary: snapshot.summary,
+                    proposal_application_progress: progress,
+                });
                 Ok(())
             }
             Ok(None) => {
-                self.logger.warn("[PlanVarianceLearningReadInteractor] snapshot_not_found");
-                self.output_port
-                    .on_failure(Error::new(self.translator.t("plans.errors.not_found", &Default::default())));
+                if progress.is_empty() {
+                    self.logger.warn("[PlanVarianceLearningReadInteractor] snapshot_not_found");
+                    self.output_port
+                        .on_failure(Error::new(self.translator.t("plans.errors.not_found", &Default::default())));
+                } else {
+                    self.output_port.on_success(PlanVarianceLearningSnapshotRead {
+                        plan_id: self.plan_id,
+                        source_plan_id: None,
+                        summary: None,
+                        proposal_application_progress: progress,
+                    });
+                }
                 Ok(())
             }
             Err(err) => Err(err),
