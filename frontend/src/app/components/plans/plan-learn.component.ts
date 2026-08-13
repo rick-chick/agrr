@@ -130,17 +130,16 @@ const initialControl: PlanLearnViewState = {
             [blueprintTimingProposals]="control.blueprintTimingProposals"
             [progressRefreshVersion]="proposalProgressRefreshVersion"
           />
-          @if (
-            control.learningSnapshot?.source_plan_id != null && control.learningSnapshot.summary
-          ) {
+          @if (control.learningSnapshot; as learningSnapshot) {
+            @if (learningSnapshot.source_plan_id != null && learningSnapshot.summary) {
             <div class="plan-learn-imported-snapshot" aria-labelledby="plan-learn-imported-title">
               <h3 id="plan-learn-imported-title" class="plan-learn-imported-snapshot__title">
                 {{
                   'plans.learn.imported_snapshot_title'
-                    | translate: { sourcePlanId: control.learningSnapshot.source_plan_id }
+                    | translate: { sourcePlanId: learningSnapshot.source_plan_id }
                 }}
               </h3>
-              @if (control.learningSnapshot.summary.categories.length) {
+              @if (learningSnapshot.summary.categories.length) {
                 <table class="plan-learn-carryover-preview__table">
                   <thead>
                     <tr>
@@ -154,7 +153,7 @@ const initialControl: PlanLearnViewState = {
                   </thead>
                   <tbody>
                     @for (
-                      category of control.learningSnapshot.summary.categories;
+                      category of learningSnapshot.summary.categories;
                       track category.category
                     ) {
                       <tr>
@@ -172,9 +171,10 @@ const initialControl: PlanLearnViewState = {
             </div>
             <app-plan-learn-imported-banner
               [planId]="planId"
-              [items]="control.learningSnapshot.summary.action_required_items ?? []"
+              [items]="learningSnapshot.summary.action_required_items ?? []"
               [mergedProposalCount]="mergedProposalCount"
             />
+            }
           }
 
           <div class="plan-learn-carryover" aria-labelledby="plan-learn-carryover-title">

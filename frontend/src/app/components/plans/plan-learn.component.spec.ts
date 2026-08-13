@@ -14,6 +14,7 @@ import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-lea
 import { PlanLearnComponent } from './plan-learn.component';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import {
+  clearLearnProposalApplicationProgressCache,
   markStageGddProposalAppliedPending,
   resolveLearnProposalApplicationStatus,
   stageGddProposalProgressKey,
@@ -88,6 +89,7 @@ describe('PlanLearnComponent', () => {
 
   beforeEach(async () => {
     sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };
@@ -491,6 +493,7 @@ describe('PlanLearnComponent post_master follow-up', () => {
 
   beforeEach(async () => {
     sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };

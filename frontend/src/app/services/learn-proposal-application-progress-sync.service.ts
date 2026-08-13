@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { ApiService } from '../../services/api.service';
-import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
-import type { LearnProposalApplicationStatus } from '../../domain/plans/learn-proposal-application-progress';
+import { ApiService } from './api.service';
+import type { PlanVarianceLearningSnapshot } from '../domain/plans/plan-variance-learning-snapshot';
+import type { LearnProposalApplicationStatus } from '../domain/plans/learn-proposal-application-progress';
 import {
   registerLearnProposalApplicationProgressPatchHandler
-} from '../../domain/plans/learn-proposal-application-progress';
+} from '../domain/plans/learn-proposal-application-progress';
 
 @Injectable({ providedIn: 'root' })
 export class LearnProposalApplicationProgressSyncService {
