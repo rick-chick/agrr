@@ -17,10 +17,6 @@ export interface LearnPostMasterPayload {
   appliedRequiredGdd?: number | null;
 }
 
-export function learnProposalApplicationProgressStorageKey(planId: number): string {
-  return `agrr:learn-proposal-application-progress:${planId}`;
-}
-
 export function learnPostMasterPayloadStorageKey(planId: number): string {
   return `agrr:learn-post-master:${planId}`;
 }

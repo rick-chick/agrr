@@ -7,8 +7,6 @@ use crate::cultivation_plan::gateways::{CultivationPlanGateway, PlanVarianceLear
 use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
 use crate::cultivation_plan::policies::plan_variance_learning_proposal_progress_policy;
 use crate::cultivation_plan::ports::PlanVarianceLearningProposalProgressUpdateOutputPort;
-use crate::shared::exceptions::RecordInvalidError;
-use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::UserOrganizationScopeGateway;
 use crate::shared::org_scope::member_organization_ids;
 use crate::shared::validation::from_message;
