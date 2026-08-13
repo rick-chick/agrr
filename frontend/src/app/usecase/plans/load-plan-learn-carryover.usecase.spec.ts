@@ -1,4 +1,4 @@
-import { of, throwError } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.usecase';
 import type { PlanGateway } from './plan-gateway';
@@ -43,70 +43,56 @@ function createGateway(overrides: Partial<PlanGateway> = {}): PlanGateway {
 }
 
 describe('LoadPlanLearnCarryoverUseCase', () => {
-  it('loadFarmContext returns same-farm plans excluding the current plan', (done) => {
+  it('loadFarmContext returns same-farm plans excluding the current plan', async () => {
     const useCase = new LoadPlanLearnCarryoverUseCase(createGateway());
 
-    useCase.loadFarmContext(PLAN_ID).subscribe((plans) => {
-      expect(plans).toEqual([sameFarmPlan]);
-      done();
-    });
+    await expect(firstValueFrom(useCase.loadFarmContext(PLAN_ID))).resolves.toEqual([sameFarmPlan]);
   });
 
-  it('loadFarmContext returns empty array when fetchPlan fails', (done) => {
+  it('loadFarmContext returns empty array when fetchPlan fails', async () => {
     const gateway = createGateway({
       fetchPlan: () => throwError(() => new Error('not found'))
     });
     const useCase = new LoadPlanLearnCarryoverUseCase(gateway);
 
-    useCase.loadFarmContext(PLAN_ID).subscribe((plans) => {
-      expect(plans).toEqual([]);
-      done();
-    });
+    await expect(firstValueFrom(useCase.loadFarmContext(PLAN_ID))).resolves.toEqual([]);
   });
 
-  it('loadFarmContext returns empty array when listPlans fails', (done) => {
+  it('loadFarmContext returns empty array when listPlans fails', async () => {
     const gateway = createGateway({
       listPlans: () => throwError(() => new Error('network'))
     });
     const useCase = new LoadPlanLearnCarryoverUseCase(gateway);
 
-    useCase.loadFarmContext(PLAN_ID).subscribe((plans) => {
-      expect(plans).toEqual([]);
-      done();
-    });
+    await expect(firstValueFrom(useCase.loadFarmContext(PLAN_ID))).resolves.toEqual([]);
   });
 
-  it('loadCarryoverPreview delegates to getPlanVsActualSummary', (done) => {
+  it('loadCarryoverPreview delegates to getPlanVsActualSummary', async () => {
     const useCase = new LoadPlanLearnCarryoverUseCase(createGateway());
 
-    useCase.loadCarryoverPreview(PLAN_ID).subscribe((result) => {
-      expect(result).toEqual(summary);
-      done();
-    });
+    await expect(firstValueFrom(useCase.loadCarryoverPreview(PLAN_ID))).resolves.toEqual(summary);
   });
 
-  it('loadLearningSnapshot returns null when gateway errors', (done) => {
+  it('loadLearningSnapshot returns null when gateway errors', async () => {
     const gateway = createGateway({
       getVarianceLearning: () => throwError(() => new Error('missing'))
     });
     const useCase = new LoadPlanLearnCarryoverUseCase(gateway);
 
-    useCase.loadLearningSnapshot(PLAN_ID).subscribe((result) => {
-      expect(result).toBeNull();
-      done();
-    });
+    await expect(firstValueFrom(useCase.loadLearningSnapshot(PLAN_ID))).resolves.toBeNull();
   });
 
-  it('importLearning delegates to importVarianceLearning with source plan id', (done) => {
+  it('importLearning delegates to importVarianceLearning with source plan id', async () => {
     const gateway = createGateway({
       importVarianceLearning: (planId, sourcePlanId) =>
         of({ ...snapshot, plan_id: planId, source_plan_id: sourcePlanId })
     });
     const useCase = new LoadPlanLearnCarryoverUseCase(gateway);
 
-    useCase.importLearning(PLAN_ID, 8).subscribe((result) => {
-      expect(result).toEqual({ ...snapshot, plan_id: PLAN_ID, source_plan_id: 8 });
-      done();
+    await expect(firstValueFrom(useCase.importLearning(PLAN_ID, 8))).resolves.toEqual({
+      ...snapshot,
+      plan_id: PLAN_ID,
+      source_plan_id: 8
     });
   });
 });

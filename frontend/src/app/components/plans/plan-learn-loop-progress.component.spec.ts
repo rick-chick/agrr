@@ -2,7 +2,24 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
+import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import { PlanLearnLoopProgressComponent } from './plan-learn-loop-progress.component';
+
+function actionItem(fieldCultivationId: number): PlanVarianceActionItem {
+  return {
+    item_id: 1,
+    field_cultivation_id: fieldCultivationId,
+    category: 'task',
+    name: 'Irrigation',
+    scheduled_date: '2026-06-01',
+    actual_date: '2026-06-03',
+    delta_days: 2,
+    gdd_trigger: 100,
+    gdd_at_actual: 110,
+    gdd_delta: 10,
+    exceedance_kind: 'days'
+  };
+}
 
 describe('PlanLearnLoopProgressComponent', () => {
   let fixture: ComponentFixture<PlanLearnLoopProgressComponent>;
@@ -37,7 +54,7 @@ describe('PlanLearnLoopProgressComponent', () => {
   });
 
   it('renders all four loop phases with observe highlighted when action items exist', () => {
-    fixture.componentInstance.actionRequiredItems = [{ field_cultivation_id: 100 }];
+    fixture.componentInstance.actionRequiredItems = [actionItem(100)];
     fixture.detectChanges();
 
     const phases = fixture.nativeElement.querySelectorAll('.learn-loop-progress__phase');
@@ -47,7 +64,7 @@ describe('PlanLearnLoopProgressComponent', () => {
   });
 
   it('shows workbench router link CTA for observe phase with field cultivation', () => {
-    fixture.componentInstance.actionRequiredItems = [{ field_cultivation_id: 100 }];
+    fixture.componentInstance.actionRequiredItems = [actionItem(100)];
     fixture.detectChanges();
 
     const cta = fixture.nativeElement.querySelector('.learn-loop-progress__next-cta');
@@ -56,20 +73,7 @@ describe('PlanLearnLoopProgressComponent', () => {
     expect(cta.textContent).toContain('Open workbench');
   });
 
-  it('shows carryover scroll CTA when proposals are applied and snapshot exists', () => {
-    fixture.componentInstance.stageGddProposals = [
-      {
-        cropId: 1,
-        cropName: 'Tomato',
-        stageId: 2,
-        stageOrder: 1,
-        stageName: 'Vegetative',
-        averageGddDelta: 10,
-        recordedItemCount: 3,
-        currentRequiredGdd: 100,
-        proposedRequiredGdd: 110
-      }
-    ];
+  it('shows carryover scroll CTA when learning snapshot and carryover sources exist', () => {
     fixture.componentInstance.hasLearningSnapshot = true;
     fixture.componentInstance.carryoverSourcePlanCount = 2;
     fixture.detectChanges();
@@ -85,19 +89,6 @@ describe('PlanLearnLoopProgressComponent', () => {
   });
 
   it('marks earlier phases as completed when current phase is handoff', () => {
-    fixture.componentInstance.stageGddProposals = [
-      {
-        cropId: 1,
-        cropName: 'Tomato',
-        stageId: 2,
-        stageOrder: 1,
-        stageName: 'Vegetative',
-        averageGddDelta: 10,
-        recordedItemCount: 3,
-        currentRequiredGdd: 100,
-        proposedRequiredGdd: 110
-      }
-    ];
     fixture.componentInstance.hasLearningSnapshot = true;
     fixture.componentInstance.carryoverSourcePlanCount = 1;
     fixture.detectChanges();
