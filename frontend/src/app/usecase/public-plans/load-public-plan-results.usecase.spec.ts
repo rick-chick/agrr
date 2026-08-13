@@ -25,6 +25,9 @@ describe('LoadPublicPlanResultsUseCase', () => {
       getVarianceLearning: vi.fn(),
       importVarianceLearning: vi.fn(),
       regenerateTaskSchedule: vi.fn(),
+      createTaskScheduleItem: () => of({} as never),
+
+      updateTaskScheduleItem: () => of({} as never),
       deletePlan: vi.fn()
     };
     useCase = new LoadPublicPlanResultsUseCase(outputPort, gateway);

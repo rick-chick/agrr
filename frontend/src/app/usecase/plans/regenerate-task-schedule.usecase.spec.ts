@@ -9,7 +9,10 @@ describe('RegenerateTaskScheduleUseCase', () => {
   it('calls gateway regenerate and notifies output port on success', () => {
     const response = { success: true, task_schedule_sync_state: 'ready' };
     const gateway = {
-      regenerateTaskSchedule: vi.fn().mockReturnValue(of(response))
+      regenerateTaskSchedule: vi.fn().mockReturnValue(of(response)),
+      createTaskScheduleItem: () => of({} as never),
+
+      updateTaskScheduleItem: () => of({} as never),
     } as unknown as PlanGateway;
     const outputPort: RegenerateTaskScheduleOutputPort = {
       onRegenerateStarted: vi.fn(),
@@ -31,7 +34,10 @@ describe('RegenerateTaskScheduleUseCase', () => {
   it('starts bounded poll when POST returns generating', () => {
     const response = { success: true, task_schedule_sync_state: 'generating' };
     const gateway = {
-      regenerateTaskSchedule: vi.fn().mockReturnValue(of(response))
+      regenerateTaskSchedule: vi.fn().mockReturnValue(of(response)),
+      createTaskScheduleItem: () => of({} as never),
+
+      updateTaskScheduleItem: () => of({} as never),
     } as unknown as PlanGateway;
     const outputPort: RegenerateTaskScheduleOutputPort = {
       onRegenerateStarted: vi.fn(),
@@ -48,7 +54,10 @@ describe('RegenerateTaskScheduleUseCase', () => {
 
   it('notifies output port on error', () => {
     const gateway = {
-      regenerateTaskSchedule: vi.fn().mockReturnValue(throwError(() => ({ status: 500 })))
+      regenerateTaskSchedule: vi.fn().mockReturnValue(throwError(() => ({ status: 500 }))),
+      createTaskScheduleItem: () => of({} as never),
+
+      updateTaskScheduleItem: () => of({} as never),
     } as unknown as PlanGateway;
     const outputPort: RegenerateTaskScheduleOutputPort = {
       onRegenerateStarted: vi.fn(),

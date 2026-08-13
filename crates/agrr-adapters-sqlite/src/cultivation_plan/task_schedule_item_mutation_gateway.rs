@@ -103,6 +103,16 @@ impl TaskScheduleItemMutationSqliteGateway {
         Ok(conn.last_insert_rowid())
     }
 
+    fn optional_text_column(row: &rusqlite::Row<'_>, index: usize) -> rusqlite::Result<Option<String>> {
+        match row.get::<_, Option<String>>(index) {
+            Ok(value) => Ok(value),
+            Err(_) => {
+                let as_int: Option<i64> = row.get(index)?;
+                Ok(as_int.map(|v| v.to_string()))
+            }
+        }
+    }
+
     fn item_json_from_row(
         id: i64,
         name: String,
@@ -328,12 +338,12 @@ impl TaskScheduleItemMutationGateway for TaskScheduleItemMutationSqliteGateway {
                         item_id,
                         row.get(0)?,
                         row.get(1)?,
-                        row.get(2)?,
+                        Self::optional_text_column(row, 2)?,
                         row.get(3)?,
                         row.get(4)?,
                         row.get(5)?,
-                        row.get(6)?,
-                        row.get(7)?,
+                        Self::optional_text_column(row, 6)?,
+                        Self::optional_text_column(row, 7)?,
                     ))
                 },
             )

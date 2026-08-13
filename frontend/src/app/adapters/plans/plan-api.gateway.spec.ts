@@ -11,6 +11,7 @@ describe('PlanApiGateway', () => {
   let apiClient: {
     get: ReturnType<typeof vi.fn>;
     post: ReturnType<typeof vi.fn>;
+    patch: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
   let gateway: PlanApiGateway;

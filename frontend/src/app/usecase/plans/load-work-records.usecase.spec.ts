@@ -76,7 +76,8 @@ describe('LoadWorkRecordsUseCase', () => {
           auto_hide_after: 5000
         }),
       skipTaskScheduleItem: () => of({ item: { id: 1, status: 'skipped', cancelled_at: null } }),
-      unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
+      unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } }),
+      updateTaskScheduleItem: () => of({} as never),
     };
     const planGateway: PlanGateway = {
       listPlans: () => of([]),
@@ -88,6 +89,9 @@ describe('LoadWorkRecordsUseCase', () => {
       getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       regenerateTaskSchedule: () => of(undefined),
+      createTaskScheduleItem: () => of({} as never),
+
+      updateTaskScheduleItem: () => of({} as never),
       deletePlan: () => of({} as never)
     };
     let result: Parameters<LoadWorkRecordsOutputPort['present']>[0] | null = null;
@@ -120,7 +124,8 @@ describe('LoadWorkRecordsUseCase', () => {
           auto_hide_after: 5000
         }),
       skipTaskScheduleItem: () => of({ item: { id: 1, status: 'skipped', cancelled_at: null } }),
-      unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
+      unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } }),
+      updateTaskScheduleItem: () => of({} as never),
     };
     const planGateway: PlanGateway = {
       listPlans: () => of([]),
@@ -132,6 +137,9 @@ describe('LoadWorkRecordsUseCase', () => {
       getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       regenerateTaskSchedule: () => of(undefined),
+      createTaskScheduleItem: () => of({} as never),
+
+      updateTaskScheduleItem: () => of({} as never),
       deletePlan: () => of({} as never)
     };
     const onError = vi.fn();

@@ -41,7 +41,8 @@ describe('CreateWorkRecordUseCase', () => {
           auto_hide_after: 5000
         }),
       skipTaskScheduleItem: () => of({ item: { id: 1, status: 'skipped', cancelled_at: null } }),
-      unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
+      unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } }),
+      updateTaskScheduleItem: () => of({} as never),
     }) as WorkRecordGateway;
 
   it('calls gateway and forwards success', () => {
