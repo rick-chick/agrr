@@ -23,7 +23,8 @@ describe('PlanTaskScheduleOrchestrationBannerComponent', () => {
         'plans.task_schedules.orchestration.regenerate.hint': 'Use sync banner',
         'plans.task_schedules.orchestration.sync_verify.message': 'Verify sync',
         'plans.task_schedules.orchestration.sync_verify.hint': 'Check sync status',
-        'plans.task_schedules.orchestration.work_retry': 'Open work screen'
+        'plans.task_schedules.orchestration.work_retry': 'Open work screen',
+        'plans.task_schedules.orchestration.return_to_learn': 'Return to learning screen'
       },
       true
     );
@@ -49,5 +50,26 @@ describe('PlanTaskScheduleOrchestrationBannerComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('a.learn-orchestration-banner__work-link')).toBeNull();
+  });
+
+  it('shows return-to-learn link when orchestration is complete', () => {
+    fixture.componentInstance.mode = 'regenerate';
+    fixture.componentInstance.syncState = 'ready';
+    fixture.componentInstance.orchestrationComplete = true;
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('a.learn-orchestration-banner__learn-link');
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('href')).toBe('/plans/4/learn');
+    expect(link.textContent).toContain('Return to learning screen');
+  });
+
+  it('does not show return-to-learn link before orchestration completes', () => {
+    fixture.componentInstance.mode = 'regenerate';
+    fixture.componentInstance.syncState = 'generating';
+    fixture.componentInstance.orchestrationComplete = false;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('a.learn-orchestration-banner__learn-link')).toBeNull();
   });
 });

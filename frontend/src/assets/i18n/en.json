@@ -1464,7 +1464,8 @@
           "message": "Verify task schedule sync",
           "hint": "Check sync status below. If generation failed, retry from the work screen."
         },
-        "work_retry": "Open work screen to retry"
+        "work_retry": "Open work screen to retry",
+        "return_to_learn": "Return to learning screen"
       }
     },
     "learn": {
@@ -1528,24 +1529,6 @@
           "applied_pending_confirmation": "Applied — pending confirmation"
         }
       },
-      "loop": {
-        "title": "Learning loop progress",
-        "next_action_title": "Next action",
-        "phase": {
-          "observe": "Observe",
-          "apply": "Apply",
-          "reorganize": "Reorganize",
-          "handoff": "Handoff"
-        },
-        "next_action": {
-          "observe_workbench": "Open workbench to review variance",
-          "observe_proposals": "Review master update proposals",
-          "apply_stage_gdd": "Apply stage GDD calibration",
-          "apply_bp_timing": "Apply BP timing adjustment",
-          "reorganize_placement": "Verify placement on workbench",
-          "handoff_carryover": "Import or carry over learning"
-        }
-      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",
@@ -1579,6 +1562,25 @@
           "placement": "Open workbench",
           "regenerate": "Open task schedule",
           "sync_verify": "Check sync"
+        },
+        "completed": "Completed"
+      },
+      "loop": {
+        "title": "Learning loop progress",
+        "next_action_title": "Next action",
+        "phase": {
+          "observe": "Observe",
+          "apply": "Apply",
+          "reorganize": "Reorganize",
+          "handoff": "Handoff"
+        },
+        "next_action": {
+          "observe_workbench": "Open workbench to review variance",
+          "observe_proposals": "Review master update proposals",
+          "apply_stage_gdd": "Apply stage GDD calibration",
+          "apply_bp_timing": "Apply BP timing adjustment",
+          "reorganize_placement": "Verify placement on workbench",
+          "handoff_carryover": "Import or carry over learning"
         }
       }
     },

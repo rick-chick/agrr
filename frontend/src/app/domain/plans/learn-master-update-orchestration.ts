@@ -1,11 +1,8 @@
-import {
-  readLearnProposalApplicationProgress,
-  markStageGddProposalAppliedPending
-} from './learn-proposal-application-progress';
+import { readLearnProposalApplicationProgress } from './learn-proposal-application-progress';
 
 export type LearningOrchestrationMode = 'adjust' | 'regenerate' | 'sync_verify';
 
-export { markStageGddProposalAppliedPending };
+export type LearnOrchestrationStepKey = 'placement' | 'regenerate' | 'sync_verify';
 
 export function parseLearningOrchestration(
   raw: string | null | undefined
@@ -66,6 +63,60 @@ export function readLearnOrchestrationReturnToLearn(planId: number): boolean {
 
 export function clearLearnOrchestrationReturnToLearn(planId: number): void {
   sessionStorage.removeItem(learnOrchestrationReturnStorageKey(planId));
+}
+
+export function learnOrchestrationStepProgressStorageKey(planId: number): string {
+  return `agrr:learn-orchestration-step-progress:${planId}`;
+}
+
+function readLearnOrchestrationStepProgress(planId: number): Record<string, true> {
+  const raw = sessionStorage.getItem(learnOrchestrationStepProgressStorageKey(planId));
+  if (!raw) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([, value]) => value === true)
+    ) as Record<string, true>;
+  } catch {
+    return {};
+  }
+}
+
+function writeLearnOrchestrationStepProgress(
+  planId: number,
+  progress: Record<string, true>
+): void {
+  sessionStorage.setItem(
+    learnOrchestrationStepProgressStorageKey(planId),
+    JSON.stringify(progress)
+  );
+}
+
+export function markLearnOrchestrationStepComplete(
+  planId: number,
+  step: LearnOrchestrationStepKey
+): void {
+  const progress = readLearnOrchestrationStepProgress(planId);
+  progress[step] = true;
+  writeLearnOrchestrationStepProgress(planId, progress);
+}
+
+export function readLearnOrchestrationStepComplete(
+  planId: number,
+  step: LearnOrchestrationStepKey
+): boolean {
+  return readLearnOrchestrationStepProgress(planId)[step] === true;
+}
+
+export function isTaskScheduleOrchestrationComplete(
+  mode: 'regenerate' | 'sync_verify',
+  syncState: string | null,
+  regenerating: boolean
+): boolean {
+  void mode;
+  return syncState === 'ready' && !regenerating;
 }
 
 export function hasPendingMasterUpdateConfirmation(planId: number): boolean {

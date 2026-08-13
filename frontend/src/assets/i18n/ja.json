@@ -2587,7 +2587,8 @@
           "message": "作業表の同期を確認してください",
           "hint": "下の同期状態を確認してください。生成に失敗した場合は作業画面から再試行できます。"
         },
-        "work_retry": "作業画面で再試行"
+        "work_retry": "作業画面で再試行",
+        "return_to_learn": "学習画面に戻る"
       }
     },
     "learn": {
@@ -2651,24 +2652,6 @@
           "applied_pending_confirmation": "適用済み・確認待ち"
         }
       },
-      "loop": {
-        "title": "学習ループの進捗",
-        "next_action_title": "次のアクション",
-        "phase": {
-          "observe": "観測",
-          "apply": "適用",
-          "reorganize": "再編成",
-          "handoff": "引き継ぎ"
-        },
-        "next_action": {
-          "observe_workbench": "作業台で乖離を確認",
-          "observe_proposals": "マスタ更新提案を確認",
-          "apply_stage_gdd": "ステージ GDD 校正を適用",
-          "apply_bp_timing": "BP タイミング調整を適用",
-          "reorganize_placement": "作業台で配置を確認",
-          "handoff_carryover": "学習をインポートまたは引き継ぎ"
-        }
-      },
       "post_master": {
         "title": "マスタ更新を適用しました",
         "lead": "マスタの変更を保存しました。適用内容を確認し、作業台で配置を確認してください。",
@@ -2702,6 +2685,25 @@
           "placement": "ワークベンチを開く",
           "regenerate": "作業表を開く",
           "sync_verify": "同期を確認"
+        },
+        "completed": "完了"
+      },
+      "loop": {
+        "title": "学習ループの進捗",
+        "next_action_title": "次のアクション",
+        "phase": {
+          "observe": "観測",
+          "apply": "適用",
+          "reorganize": "再編成",
+          "handoff": "引き継ぎ"
+        },
+        "next_action": {
+          "observe_workbench": "作業台で乖離を確認",
+          "observe_proposals": "マスタ更新提案を確認",
+          "apply_stage_gdd": "ステージ GDD 校正を適用",
+          "apply_bp_timing": "BP タイミング調整を適用",
+          "reorganize_placement": "作業台で配置を確認",
+          "handoff_carryover": "学習をインポートまたは引き継ぎ"
         }
       }
     },
