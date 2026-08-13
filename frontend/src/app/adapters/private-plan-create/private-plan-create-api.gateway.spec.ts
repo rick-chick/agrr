@@ -145,7 +145,6 @@ describe('PrivatePlanCreateApiGateway', () => {
         farmId: 1,
         planName: 'Test Plan'
       };
-      const response: CreatePrivatePlanResponseDto = { id: 123 };
       vi.mocked(apiClient.post).mockReturnValue(of({ id: 123 }));
 
       const result = await firstValueFrom(gateway.createPlan(input));
