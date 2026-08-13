@@ -22,7 +22,9 @@ describe('SkipTaskScheduleItemUseCase', () => {
           auto_hide_after: 5000
         }),
       skipTaskScheduleItem: skipFn,
-      unskipTaskScheduleItem: unskipFn
+      unskipTaskScheduleItem: unskipFn,
+      createTaskScheduleItem: () => of({} as never),
+      updateTaskScheduleItem: () => of({} as never)
     }) as WorkRecordGateway;
 
   it('calls skip when skip is true', () => {

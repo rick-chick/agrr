@@ -13,6 +13,12 @@ import { RegenerateTaskScheduleUseCase } from './regenerate-task-schedule.usecas
 import { SUBSCRIBE_TASK_SCHEDULE_SYNC_OUTPUT_PORT } from './subscribe-task-schedule-sync.output-port';
 import { PollTaskScheduleSyncUseCase } from './poll-task-schedule-sync.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from './subscribe-task-schedule-sync.usecase';
+import { CREATE_TASK_SCHEDULE_ITEM_OUTPUT_PORT } from './create-task-schedule-item.output-port';
+import { CreateTaskScheduleItemUseCase } from './create-task-schedule-item.usecase';
+import { UPDATE_TASK_SCHEDULE_ITEM_OUTPUT_PORT } from './update-task-schedule-item.output-port';
+import { UpdateTaskScheduleItemUseCase } from './update-task-schedule-item.usecase';
+import { WorkRecordApiGateway } from '../../adapters/plans/work-record-api.gateway';
+import { WORK_RECORD_GATEWAY } from './work-record-gateway';
 
 export const PLAN_TASK_SCHEDULE_PROVIDERS: readonly Provider[] = [
   PlanTaskSchedulePresenter,
@@ -21,6 +27,8 @@ export const PLAN_TASK_SCHEDULE_PROVIDERS: readonly Provider[] = [
   RegenerateTaskScheduleUseCase,
   PollTaskScheduleSyncUseCase,
   SubscribeTaskScheduleSyncUseCase,
+  CreateTaskScheduleItemUseCase,
+  UpdateTaskScheduleItemUseCase,
   { provide: LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanTaskSchedulePresenter },
   {
     provide: LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT,
@@ -34,7 +42,10 @@ export const PLAN_TASK_SCHEDULE_PROVIDERS: readonly Provider[] = [
   },
   { provide: REGENERATE_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanTaskSchedulePresenter },
   { provide: SUBSCRIBE_TASK_SCHEDULE_SYNC_OUTPUT_PORT, useExisting: PlanTaskSchedulePresenter },
+  { provide: CREATE_TASK_SCHEDULE_ITEM_OUTPUT_PORT, useExisting: PlanTaskSchedulePresenter },
+  { provide: UPDATE_TASK_SCHEDULE_ITEM_OUTPUT_PORT, useExisting: PlanTaskSchedulePresenter },
   { provide: PLAN_GATEWAY, useClass: PlanApiGateway },
+  { provide: WORK_RECORD_GATEWAY, useClass: WorkRecordApiGateway },
   { provide: PLAN_OPTIMIZATION_GATEWAY, useClass: PlanOptimizationChannelGateway }
 ];
 

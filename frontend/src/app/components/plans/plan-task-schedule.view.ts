@@ -44,6 +44,7 @@ export type PlanTaskScheduleViewState = {
   varianceLoading: boolean;
   varianceError: string | null;
   varianceStats: PlanVsActualPlanSummaryStats | null;
+  scheduleItemMutationError: string | null;
 };
 
 export interface PlanTaskScheduleView {

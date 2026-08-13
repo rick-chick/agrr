@@ -40,6 +40,8 @@ import {
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
 import { buildPlanVsActualPlanSummaryStats } from '../../domain/plans/build-plan-vs-actual-plan-summary';
+import { CreateTaskScheduleItemOutputPort } from '../../usecase/plans/create-task-schedule-item.output-port';
+import { UpdateTaskScheduleItemOutputPort } from '../../usecase/plans/update-task-schedule-item.output-port';
 
 type DerivedViewFields = Pick<
   PlanTaskScheduleViewState,
@@ -77,7 +79,9 @@ export class PlanTaskSchedulePresenter
   implements
     LoadPlanTaskScheduleOutputPort,
     RegenerateTaskScheduleOutputPort,
-    SubscribeTaskScheduleSyncOutputPort
+    SubscribeTaskScheduleSyncOutputPort,
+    CreateTaskScheduleItemOutputPort,
+    UpdateTaskScheduleItemOutputPort
 {
   private view: PlanTaskScheduleView | null = null;
   private syncLifecycle: TaskScheduleSyncLifecycleState = initialTaskScheduleSyncLifecycleState();
@@ -190,7 +194,25 @@ export class PlanTaskSchedulePresenter
       varianceLoading: false,
       varianceError: null,
       varianceStats: null,
+      scheduleItemMutationError: null,
       ...emptyDerivedFields
+    };
+  }
+
+  onMutationSuccess(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      scheduleItemMutationError: null,
+      syncReloadNonce: this.view.control.syncReloadNonce + 1
+    };
+  }
+
+  onMutationError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      scheduleItemMutationError: dto.message
     };
   }
 

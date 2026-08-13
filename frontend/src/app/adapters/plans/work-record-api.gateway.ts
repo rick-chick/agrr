@@ -2,6 +2,11 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import {
+  TaskScheduleItemCreateRequest,
+  TaskScheduleItemMutationResponse,
+  TaskScheduleItemUpdateRequest
+} from '../../models/plans/task-schedule';
+import {
   WorkRecordCreateRequest,
   WorkRecordCreateResponse,
   WorkRecordUpdateRequest,
@@ -68,6 +73,27 @@ export class WorkRecordApiGateway implements WorkRecordGateway {
     return this.apiClient.patch<{ item: { id: number; status: string; cancelled_at: string | null } }>(
       `/api/v1/plans/${planId}/task_schedule/items/${itemId}/unskip`,
       {}
+    );
+  }
+
+  createTaskScheduleItem(
+    planId: number,
+    body: TaskScheduleItemCreateRequest
+  ): Observable<TaskScheduleItemMutationResponse> {
+    return this.apiClient.post<TaskScheduleItemMutationResponse>(
+      `/api/v1/plans/${planId}/task_schedule/items`,
+      { task_schedule_item: body }
+    );
+  }
+
+  updateTaskScheduleItem(
+    planId: number,
+    itemId: number,
+    body: TaskScheduleItemUpdateRequest
+  ): Observable<TaskScheduleItemMutationResponse> {
+    return this.apiClient.patch<TaskScheduleItemMutationResponse>(
+      `/api/v1/plans/${planId}/task_schedule/items/${itemId}`,
+      { task_schedule_item: body }
     );
   }
 }

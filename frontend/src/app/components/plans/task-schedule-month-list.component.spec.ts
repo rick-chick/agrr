@@ -104,9 +104,22 @@ describe('TaskScheduleMonthListComponent', () => {
     const name = main?.querySelector('.plan-task-schedule-month-list__name');
     const status = row?.querySelector('.plan-task-schedule-month-list__status--planned');
 
-    expect(name?.textContent?.trim()).toBe('Weeding');
-    expect(main?.querySelector('time.plan-task-schedule-month-list__date')).toBeTruthy();
+    expect(main?.querySelector('.plan-task-schedule-month-list__name')?.textContent?.trim()).toBe('Weeding');
+    expect(main?.querySelector('input.plan-task-schedule-month-list__date-input')).toBeTruthy();
     expect(status?.textContent?.trim()).toBe('Planned');
+  });
+
+  it('emits scheduledDateChange when inline date input changes', () => {
+    const emitSpy = vi.fn();
+    component.scheduledDateChange.subscribe(emitSpy);
+
+    const dateInput = fixture.nativeElement.querySelector(
+      'input.plan-task-schedule-month-list__date-input'
+    ) as HTMLInputElement;
+    dateInput.value = '2026-06-20';
+    dateInput.dispatchEvent(new Event('change'));
+
+    expect(emitSpy).toHaveBeenCalledWith({ itemId: 1, scheduledDate: '2026-06-20' });
   });
 
   it('applies completed badge when work record linkage marks item completed', async () => {

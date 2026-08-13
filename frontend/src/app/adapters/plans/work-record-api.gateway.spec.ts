@@ -96,6 +96,58 @@ describe('WorkRecordApiGateway', () => {
     expect(apiClient.patch).toHaveBeenCalledWith('/api/v1/plans/5/task_schedule/items/123/skip', {});
   });
 
+  it('creates task schedule item', async () => {
+    vi.mocked(apiClient.post).mockReturnValue(
+      of({
+        item: {
+          id: 99,
+          name: 'Manual task',
+          scheduled_date: '2026-07-10',
+          status: 'planned',
+          field_cultivation_id: 10
+        }
+      })
+    );
+
+    const result = await firstValueFrom(
+      gateway.createTaskScheduleItem(5, {
+        field_cultivation_id: 10,
+        name: 'Manual task',
+        scheduled_date: '2026-07-10'
+      })
+    );
+    expect(result.item.id).toBe(99);
+    expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans/5/task_schedule/items', {
+      task_schedule_item: {
+        field_cultivation_id: 10,
+        name: 'Manual task',
+        scheduled_date: '2026-07-10'
+      }
+    });
+  });
+
+  it('updates task schedule item scheduled date', async () => {
+    vi.mocked(apiClient.patch).mockReturnValue(
+      of({
+        item: {
+          id: 123,
+          name: 'Weeding',
+          scheduled_date: '2026-07-15',
+          status: 'rescheduled',
+          field_cultivation_id: 10
+        }
+      })
+    );
+
+    const result = await firstValueFrom(
+      gateway.updateTaskScheduleItem(5, 123, { scheduled_date: '2026-07-15' })
+    );
+    expect(result.item.scheduled_date).toBe('2026-07-15');
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/v1/plans/5/task_schedule/items/123', {
+      task_schedule_item: { scheduled_date: '2026-07-15' }
+    });
+  });
+
   it('forwards errors on create', async () => {
     vi.mocked(apiClient.post).mockReturnValue(throwError(() => new Error('network error')));
 

@@ -40,6 +40,7 @@ import {
 } from './plan-save-impact.presenter.helpers';
 import { mapWorkRecordSaveToastToPendingRequest } from './work-record-save-toast.presenter.helpers';
 import { WorkRecordSheetSavedEvent } from '../../components/plans/work-record-sheet.view';
+import { UpdateTaskScheduleItemOutputPort } from '../../usecase/plans/update-task-schedule-item.output-port';
 import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
 
 const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
@@ -54,7 +55,8 @@ export class PlanWorkPresenter
     SkipTaskScheduleItemOutputPort,
     CreateWorkRecordOutputPort,
     RegenerateTaskScheduleOutputPort,
-    SubscribeTaskScheduleSyncOutputPort
+    SubscribeTaskScheduleSyncOutputPort,
+    UpdateTaskScheduleItemOutputPort
 {
   private view: PlanWorkView | null = null;
   private syncLifecycle: TaskScheduleSyncLifecycleState = initialTaskScheduleSyncLifecycleState();
@@ -81,6 +83,14 @@ export class PlanWorkPresenter
       ...this.view.control,
       syncReloadNonce: this.view.control.syncReloadNonce + 1
     };
+  }
+
+  onMutationSuccess(): void {
+    this.onSuccess();
+  }
+
+  onMutationError(_dto: ErrorDto): void {
+    // Work page surfaces mutation errors via dto.onError in the component.
   }
 
   onRegenerateStarted(): void {

@@ -127,3 +127,42 @@
   border-radius: var(--radius-md);
   background: var(--color-surface);
 }
+
+.plan-task-schedule__add-item {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-background);
+}
+
+.plan-task-schedule__add-item-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.plan-task-schedule__mutation-error {
+  margin: 0 0 var(--space-3);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+}
+
+.plan-task-schedule__add-item-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+}
+
+.plan-task-schedule__add-item-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: min(100%, 12rem);
+  font-size: var(--font-size-sm);
+}
+
+.plan-task-schedule__add-item-submit {
+  flex-shrink: 0;
+}

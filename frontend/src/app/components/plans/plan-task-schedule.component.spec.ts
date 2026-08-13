@@ -7,6 +7,8 @@ import { BehaviorSubject } from 'rxjs';
 
 import en from '../../../assets/i18n/en.json';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
+import { CreateTaskScheduleItemUseCase } from '../../usecase/plans/create-task-schedule-item.usecase';
+import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-schedule-item.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
@@ -72,7 +74,8 @@ const loadedState: PlanTaskScheduleViewState = {
   allFieldsLackTasks: false,
   varianceLoading: false,
   varianceError: null,
-  varianceStats: null
+  varianceStats: null,
+  scheduleItemMutationError: null
 };
 
 function sampleGeneralTask(
@@ -192,6 +195,8 @@ describe('PlanTaskScheduleComponent', () => {
   let component: PlanTaskScheduleComponent;
   let fixture: ComponentFixture<PlanTaskScheduleComponent>;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
+  let createItemUseCase: { execute: ReturnType<typeof vi.fn> };
+  let updateItemUseCase: { execute: ReturnType<typeof vi.fn> };
   let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
@@ -204,6 +209,8 @@ describe('PlanTaskScheduleComponent', () => {
     HTMLDialogElement.prototype.close = vi.fn();
 
     loadUseCase = { execute: vi.fn() };
+    createItemUseCase = { execute: vi.fn() };
+    updateItemUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
@@ -215,6 +222,8 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: createItemUseCase },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: updateItemUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
@@ -266,7 +275,8 @@ describe('PlanTaskScheduleComponent', () => {
       allFieldsLackTasks: false,
       varianceLoading: false,
       varianceError: null,
-      varianceStats: null
+      varianceStats: null,
+      scheduleItemMutationError: null
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -412,6 +422,8 @@ describe('PlanTaskScheduleComponent', () => {
   it('uses from_date query param for the date filter', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
+    createItemUseCase = { execute: vi.fn() };
+    updateItemUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
@@ -427,6 +439,8 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: createItemUseCase },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: updateItemUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
@@ -1025,6 +1039,8 @@ describe('PlanTaskScheduleComponent', () => {
   it('does not show redundant filter navigation when field_cultivation_id query param is set', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
+    createItemUseCase = { execute: vi.fn() };
+    updateItemUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
@@ -1040,6 +1056,8 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: createItemUseCase },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: updateItemUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
@@ -1098,6 +1116,8 @@ describe('PlanTaskScheduleComponent', () => {
   it('shows variance summary line and learn link on task schedule list', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
+    createItemUseCase = { execute: vi.fn() };
+    updateItemUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
@@ -1110,6 +1130,8 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: createItemUseCase },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: updateItemUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
@@ -1182,6 +1204,8 @@ describe('PlanTaskScheduleComponent', () => {
   it('shows return-to-learn link in orchestration banner when regenerate completes', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
+    createItemUseCase = { execute: vi.fn() };
+    updateItemUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
@@ -1197,6 +1221,8 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: createItemUseCase },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: updateItemUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
@@ -1255,6 +1281,100 @@ describe('PlanTaskScheduleComponent', () => {
     expect(link.getAttribute('href')).toBe('/plans/7/learn');
     expect(sessionStorage.getItem('agrr:learn-orchestration-step-progress:7')).toContain(
       '"regenerate":true'
+    );
+  });
+
+  it('submits create task schedule item via use case', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    const today = localTodayIso();
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            id: 1,
+            name: 'Field A',
+            crop_name: 'Tomato',
+            area_sqm: 100,
+            field_cultivation_id: 10,
+            crop_id: 20,
+            task_options: [],
+            schedules: {
+              general: [sampleGeneralTask({ scheduled_date: today })],
+              fertilizer: [],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    }, { fromDate: today });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    component.createFieldCultivationId = 10;
+    component.createName = 'Manual weeding';
+    component.createScheduledDate = '2026-07-10';
+    component.submitCreateItem();
+
+    expect(createItemUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planId: 7,
+        body: {
+          field_cultivation_id: 10,
+          name: 'Manual weeding',
+          scheduled_date: '2026-07-10'
+        }
+      })
+    );
+  });
+
+  it('updates scheduled date from month list via use case', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    const today = localTodayIso();
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            id: 1,
+            name: 'Field A',
+            crop_name: 'Tomato',
+            area_sqm: 100,
+            field_cultivation_id: 10,
+            crop_id: 20,
+            task_options: [],
+            schedules: {
+              general: [sampleGeneralTask({ item_id: 5, scheduled_date: today })],
+              fertilizer: [],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    }, { fromDate: today });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    component.onScheduledDateChange({ itemId: 5, scheduledDate: '2026-07-15' });
+
+    expect(updateItemUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planId: 7,
+        itemId: 5,
+        body: { scheduled_date: '2026-07-15' }
+      })
     );
   });
 });

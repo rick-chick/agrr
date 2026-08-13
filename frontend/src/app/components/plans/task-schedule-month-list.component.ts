@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { formatIsoDateForDisplay, formatIsoDayForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
@@ -45,6 +45,15 @@ import {
                     <span class="plan-task-schedule-month-list__main">
                       <span class="plan-task-schedule-month-list__name">{{ row.item.name }}</span>
                       <span class="plan-task-schedule-month-list__sub">
+                        <input
+                          type="date"
+                          class="plan-task-schedule-month-list__date-input"
+                          [attr.aria-label]="'plans.task_schedules.edit_scheduled_date' | translate"
+                          [value]="row.item.scheduled_date ?? ''"
+                          [disabled]="updatingItemId === row.item.item_id"
+                          (click)="$event.stopPropagation()"
+                          (change)="onScheduledDateInput(row, $event)"
+                        />
                         <span class="plan-task-schedule-month-list__meta">{{
                           'plans.task_schedules.list_row_meta'
                             | translate: { field: row.fieldName, crop: row.cropName }
@@ -112,11 +121,15 @@ import {
                     <span class="plan-task-schedule-month-list__main">
                       <span class="plan-task-schedule-month-list__name">{{ row.item.name }}</span>
                       <span class="plan-task-schedule-month-list__sub">
-                        <time
-                          class="plan-task-schedule-month-list__date"
-                          [attr.datetime]="row.item.scheduled_date"
-                          >{{ formatDay(row.item.scheduled_date!) }}</time
-                        >
+                        <input
+                          type="date"
+                          class="plan-task-schedule-month-list__date-input"
+                          [attr.aria-label]="'plans.task_schedules.edit_scheduled_date' | translate"
+                          [value]="row.item.scheduled_date ?? ''"
+                          [disabled]="updatingItemId === row.item.item_id"
+                          (click)="$event.stopPropagation()"
+                          (change)="onScheduledDateInput(row, $event)"
+                        />
                         <span class="plan-task-schedule-month-list__meta">{{
                           'plans.task_schedules.list_row_meta'
                             | translate: { field: row.fieldName, crop: row.cropName }
@@ -205,6 +218,10 @@ export class TaskScheduleMonthListComponent {
 
   @Input() planId: number | null = null;
 
+  @Input() updatingItemId: number | null = null;
+
+  @Output() readonly scheduledDateChange = new EventEmitter<{ itemId: number; scheduledDate: string }>();
+
   selectedRow: PlanTaskScheduleRowView | null = null;
 
   get selectedTask(): PlanTaskScheduleItem | null {
@@ -274,5 +291,15 @@ export class TaskScheduleMonthListComponent {
 
   isSelected(row: PlanTaskScheduleRowView): boolean {
     return this.selectedRow?.item.item_id === row.item.item_id;
+  }
+
+  onScheduledDateInput(row: PlanTaskScheduleRowView, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const nextDate = input.value;
+    const currentDate = row.item.scheduled_date ?? '';
+    if (!nextDate || nextDate === currentDate) {
+      return;
+    }
+    this.scheduledDateChange.emit({ itemId: row.item.item_id, scheduledDate: nextDate });
   }
 }

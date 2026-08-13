@@ -10,6 +10,7 @@ import { PlanWorkComponent } from './plan-work.component';
 import { PlanWorkViewState } from './plan-work.view';
 import { LoadWorkDayListUseCase } from '../../usecase/plans/load-work-day-list.usecase';
 import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-schedule-item.usecase';
+import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-schedule-item.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
 import { emptyPlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
@@ -150,6 +151,7 @@ describe('PlanWorkComponent mobile UX', () => {
   let translate: TranslateService;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
   let skipUseCase: { execute: ReturnType<typeof vi.fn> };
+  let updateItemUseCase: { execute: ReturnType<typeof vi.fn> };
   let createUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
@@ -164,8 +166,12 @@ describe('PlanWorkComponent mobile UX', () => {
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     loadUseCase = { execute: vi.fn() };
     skipUseCase = { execute: vi.fn() };
+    updateItemUseCase = { execute: vi.fn() };
     createUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
@@ -185,6 +191,7 @@ describe('PlanWorkComponent mobile UX', () => {
         providers: [
           { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
           { provide: SkipTaskScheduleItemUseCase, useValue: skipUseCase },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: updateItemUseCase },
           { provide: CreateWorkRecordUseCase, useValue: createUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
@@ -232,7 +239,12 @@ describe('PlanWorkComponent mobile UX', () => {
         'plans.work.skipped_badge': 'スキップ済み',
         'plans.work.menu': 'メニュー',
         'plans.work.skip': 'スキップ',
-        'plans.work.unskip': 'スキップ解除'
+        'plans.work.unskip': 'スキップ解除',
+        'plans.work.change_date': '日付を変更',
+        'plans.work.change_date_dialog.title': '日付を変更 — {{name}}',
+        'plans.work.change_date_dialog.scheduled_date': '予定日',
+        'plans.work.change_date_dialog.submit': '日付を保存',
+        'common.cancel': 'キャンセル'
       },
       true
     );
@@ -330,6 +342,32 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(menuBtn).toBeTruthy();
     expect(menuBtn.textContent?.trim()).toBe('⋮');
     expect(menuBtn.classList.contains('btn-sm')).toBe(false);
+  });
+
+  it('opens change date dialog and submits update via use case', () => {
+    renderLoaded();
+    const menuBtn = fixture.nativeElement.querySelector('.plan-work__menu-btn') as HTMLButtonElement;
+    menuBtn.click();
+    fixture.detectChanges();
+
+    const changeDateBtn = Array.from(
+      fixture.nativeElement.querySelectorAll('.plan-work__menu [role="menuitem"]')
+    ).find((el: HTMLElement) => el.textContent?.includes('日付を変更')) as HTMLButtonElement;
+    expect(changeDateBtn).toBeTruthy();
+    changeDateBtn.click();
+    fixture.detectChanges();
+
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+    component.changeDateValue = '2026-07-01';
+    component.submitChangeDate();
+
+    expect(updateItemUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planId: 7,
+        itemId: 10,
+        body: { scheduled_date: '2026-07-01' }
+      })
+    );
   });
 
   it('marks overdue rows with overdue modifier class', () => {
@@ -787,6 +825,7 @@ describe('PlanWorkComponent in locale labels', () => {
   beforeEach(async () => {
     const loadUseCase = { execute: vi.fn() };
     const skipUseCase = { execute: vi.fn() };
+    const updateItemUseCase = { execute: vi.fn() };
     const createUseCase = { execute: vi.fn() };
     const regenerateUseCase = { execute: vi.fn() };
     const subscribeSyncUseCase = { execute: vi.fn() };
@@ -806,6 +845,7 @@ describe('PlanWorkComponent in locale labels', () => {
         providers: [
           { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
           { provide: SkipTaskScheduleItemUseCase, useValue: skipUseCase },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: updateItemUseCase },
           { provide: CreateWorkRecordUseCase, useValue: createUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },

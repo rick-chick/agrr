@@ -20,7 +20,9 @@ describe('DeleteWorkRecordUseCase', () => {
       updateWorkRecord: () => of({} as never),
       deleteWorkRecord,
       skipTaskScheduleItem: () => of({ item: { id: 1, status: 'skipped', cancelled_at: null } }),
-      unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
+      unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } }),
+      createTaskScheduleItem: () => of({} as never),
+      updateTaskScheduleItem: () => of({} as never)
     }) as WorkRecordGateway;
 
   it('calls gateway delete and onDeleteSuccess with undo payload', () => {

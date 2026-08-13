@@ -1837,6 +1837,15 @@
       "filter_field": "खेत",
       "filter_all_fields": "सभी खेत",
       "filter_from_date": "प्रारंभ तिथि",
+      "edit_scheduled_date": "नियोजित तिथि",
+      "add_item": {
+        "title": "मैन्युअल कार्य जोड़ें",
+        "field": "खेत",
+        "field_placeholder": "खेत चुनें",
+        "name": "कार्य का नाम",
+        "scheduled_date": "नियोजित तिथि",
+        "submit": "कार्य जोड़ें"
+      },
       "list_empty": "वर्तमान फ़िल्टर से मेल खाने वाला कोई कार्य नहीं है।",
       "list_row_meta": "{{field}} · {{crop}}",
       "sync_never": "अभी तक कोई कार्य योजना नहीं बनाई गई है।",
@@ -2117,6 +2126,12 @@
       "show_skipped": "छोड़े गए दिखाएं",
       "skip": "छोड़ें",
       "unskip": "छोड़ना रद्द करें",
+      "change_date": "तिथि बदलें",
+      "change_date_dialog": {
+        "title": "तिथि बदलें — {{name}}",
+        "scheduled_date": "नियोजित तिथि",
+        "submit": "तिथि सहेजें"
+      },
       "menu": "मेनू",
       "retry": "पुनः लोड करें",
       "toast": {

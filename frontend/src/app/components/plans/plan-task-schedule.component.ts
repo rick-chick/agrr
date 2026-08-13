@@ -14,6 +14,8 @@ import {
 } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
+import { CreateTaskScheduleItemUseCase } from '../../usecase/plans/create-task-schedule-item.usecase';
+import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-schedule-item.usecase';
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
@@ -59,7 +61,8 @@ const initialControl: PlanTaskScheduleViewState = {
   allFieldsLackTasks: false,
   varianceLoading: false,
   varianceError: null,
-  varianceStats: null
+  varianceStats: null,
+  scheduleItemMutationError: null
 };
 
 @Component({
@@ -263,11 +266,73 @@ const initialControl: PlanTaskScheduleViewState = {
                 />
               </label>
             </div>
+            <section class="plan-task-schedule__add-item" aria-labelledby="plan-task-schedule-add-item-title">
+              <h3 id="plan-task-schedule-add-item-title" class="plan-task-schedule__add-item-title">{{
+                'plans.task_schedules.add_item.title' | translate
+              }}</h3>
+              @if (control.scheduleItemMutationError) {
+                <p class="plan-task-schedule__mutation-error" role="alert">
+                  {{ control.scheduleItemMutationError | translate }}
+                </p>
+              }
+              <div class="plan-task-schedule__add-item-fields">
+                <label class="plan-task-schedule__add-item-field">
+                  <span>{{ 'plans.task_schedules.add_item.field' | translate }}</span>
+                  <select
+                    class="plan-task-schedule__filter-select"
+                    [ngModel]="createFieldCultivationId"
+                    (ngModelChange)="createFieldCultivationId = $event"
+                    [disabled]="!addItemFieldOptions.length || createSubmitting"
+                  >
+                    <option [ngValue]="null" disabled>{{
+                      'plans.task_schedules.add_item.field_placeholder' | translate
+                    }}</option>
+                    @for (field of addItemFieldOptions; track field.field_cultivation_id) {
+                      <option [ngValue]="field.field_cultivation_id">{{ field.label }}</option>
+                    }
+                  </select>
+                </label>
+                <label class="plan-task-schedule__add-item-field">
+                  <span>{{ 'plans.task_schedules.add_item.name' | translate }}</span>
+                  <input
+                    type="text"
+                    class="plan-task-schedule__filter-select"
+                    [ngModel]="createName"
+                    (ngModelChange)="createName = $event"
+                    [disabled]="createSubmitting"
+                  />
+                </label>
+                <label class="plan-task-schedule__add-item-field">
+                  <span>{{ 'plans.task_schedules.add_item.scheduled_date' | translate }}</span>
+                  <input
+                    type="date"
+                    class="plan-task-schedule__filter-select"
+                    [ngModel]="createScheduledDate"
+                    (ngModelChange)="createScheduledDate = $event"
+                    [disabled]="createSubmitting"
+                  />
+                </label>
+                <button
+                  type="button"
+                  class="btn-primary plan-task-schedule__add-item-submit"
+                  [disabled]="!canSubmitCreateItem || createSubmitting"
+                  (click)="submitCreateItem()"
+                >
+                  {{
+                    (createSubmitting
+                      ? 'common.loading'
+                      : 'plans.task_schedules.add_item.submit') | translate
+                  }}
+                </button>
+              </div>
+            </section>
             <app-task-schedule-month-list
               #monthList
               [planId]="planId"
               [monthGroups]="scheduleMonthGroups"
               [unscheduledRows]="scheduleUnscheduledRows"
+              [updatingItemId]="updatingItemId"
+              (scheduledDateChange)="onScheduledDateChange($event)"
             />
             <footer class="plan-task-schedule__footer">
               <p class="plan-task-schedule__generated-at">{{ timelineGeneratedAtLabel }}</p>
@@ -331,6 +396,8 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
+  private readonly createItemUseCase = inject(CreateTaskScheduleItemUseCase);
+  private readonly updateItemUseCase = inject(UpdateTaskScheduleItemUseCase);
   private readonly varianceUseCase = inject(LoadPlanVsActualSummaryUseCase);
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
   private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
@@ -342,6 +409,28 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   private syncChannel: Channel | null = null;
   learningOrchestrationMode: ReturnType<typeof parseLearningOrchestration> = null;
+
+  updatingItemId: number | null = null;
+  createFieldCultivationId: number | null = null;
+  createName = '';
+  createScheduledDate = localTodayIso();
+  createSubmitting = false;
+
+  get addItemFieldOptions(): { field_cultivation_id: number; label: string }[] {
+    const fields = this.control.schedule?.fields ?? [];
+    return fields.map((field) => ({
+      field_cultivation_id: field.field_cultivation_id,
+      label: `${field.name} · ${field.crop_name}`
+    }));
+  }
+
+  get canSubmitCreateItem(): boolean {
+    return (
+      this.createFieldCultivationId != null &&
+      this.createName.trim().length > 0 &&
+      this.createScheduledDate.length > 0
+    );
+  }
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -656,6 +745,46 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   private executeRegenerateTaskSchedule(): void {
     this.regenerateUseCase.execute({ planId: this.planId });
+  }
+
+  onScheduledDateChange(event: { itemId: number; scheduledDate: string }): void {
+    this.updatingItemId = event.itemId;
+    this.updateItemUseCase.execute({
+      planId: this.planId,
+      itemId: event.itemId,
+      body: { scheduled_date: event.scheduledDate },
+      onSuccess: () => {
+        this.updatingItemId = null;
+      },
+      onError: () => {
+        this.updatingItemId = null;
+      }
+    });
+  }
+
+  submitCreateItem(): void {
+    if (!this.canSubmitCreateItem || this.createSubmitting) {
+      return;
+    }
+    const fieldCultivationId = this.createFieldCultivationId!;
+    this.createSubmitting = true;
+    this.createItemUseCase.execute({
+      planId: this.planId,
+      body: {
+        field_cultivation_id: fieldCultivationId,
+        name: this.createName.trim(),
+        scheduled_date: this.createScheduledDate
+      },
+      onSuccess: () => {
+        this.createSubmitting = false;
+        this.createName = '';
+        this.createScheduledDate = localTodayIso();
+        this.createFieldCultivationId = fieldCultivationId;
+      },
+      onError: () => {
+        this.createSubmitting = false;
+      }
+    });
   }
 
   private maybeMarkOrchestrationStepComplete(): void {

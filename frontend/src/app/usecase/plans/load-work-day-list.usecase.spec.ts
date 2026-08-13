@@ -108,7 +108,9 @@ describe('LoadWorkDayListUseCase', () => {
       updateWorkRecord: () => of({} as never),
       deleteWorkRecord: () => of({} as never),
       skipTaskScheduleItem: () => of({} as never),
-      unskipTaskScheduleItem: () => of({} as never)
+      unskipTaskScheduleItem: () => of({} as never),
+      createTaskScheduleItem: () => of({} as never),
+      updateTaskScheduleItem: () => of({} as never)
     }) as WorkRecordGateway;
 
   const adhocRecord = (overrides: Partial<WorkRecord> & { actual_date: string; name: string }): WorkRecord => ({

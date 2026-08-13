@@ -14,6 +14,8 @@ import { REGENERATE_TASK_SCHEDULE_OUTPUT_PORT } from './regenerate-task-schedule
 import { RegenerateTaskScheduleUseCase } from './regenerate-task-schedule.usecase';
 import { SKIP_TASK_SCHEDULE_ITEM_OUTPUT_PORT } from './skip-task-schedule-item.output-port';
 import { SkipTaskScheduleItemUseCase } from './skip-task-schedule-item.usecase';
+import { UPDATE_TASK_SCHEDULE_ITEM_OUTPUT_PORT } from './update-task-schedule-item.output-port';
+import { UpdateTaskScheduleItemUseCase } from './update-task-schedule-item.usecase';
 import { SUBSCRIBE_TASK_SCHEDULE_SYNC_OUTPUT_PORT } from './subscribe-task-schedule-sync.output-port';
 import { PollTaskScheduleSyncUseCase } from './poll-task-schedule-sync.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from './subscribe-task-schedule-sync.usecase';
@@ -25,12 +27,14 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   LoadWorkDayListUseCase,
   LoadPlanVsActualSummaryUseCase,
   SkipTaskScheduleItemUseCase,
+  UpdateTaskScheduleItemUseCase,
   CreateWorkRecordUseCase,
   RegenerateTaskScheduleUseCase,
   PollTaskScheduleSyncUseCase,
   SubscribeTaskScheduleSyncUseCase,
   { provide: LOAD_WORK_DAY_LIST_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: SKIP_TASK_SCHEDULE_ITEM_OUTPUT_PORT, useExisting: PlanWorkPresenter },
+  { provide: UPDATE_TASK_SCHEDULE_ITEM_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: CREATE_WORK_RECORD_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: REGENERATE_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanWorkPresenter },
   { provide: SUBSCRIBE_TASK_SCHEDULE_SYNC_OUTPUT_PORT, useExisting: PlanWorkPresenter },

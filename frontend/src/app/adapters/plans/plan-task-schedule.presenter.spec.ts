@@ -134,6 +134,7 @@ function createView(overrides: Partial<PlanTaskScheduleView['control']> = {}): P
       varianceLoading: false,
       varianceError: null,
       varianceStats: null,
+      scheduleItemMutationError: null,
       ...overrides
     }
   };

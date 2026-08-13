@@ -65,7 +65,9 @@ describe('LoadFieldClimateUseCase', () => {
     updateWorkRecord: () => of({ work_record: {} as never }),
     deleteWorkRecord: () => of({} as never),
     skipTaskScheduleItem: () => of({ item: { id: 1, status: 'skipped', cancelled_at: null } }),
-    unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
+    unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } }),
+    createTaskScheduleItem: () => of({} as never),
+    updateTaskScheduleItem: () => of({} as never)
   };
 
   const planGateway = {

@@ -162,3 +162,28 @@ export interface TaskScheduleResponse {
   labels: any;
   minimap: TaskScheduleMinimap;
 }
+
+export interface TaskScheduleItemMutationItem {
+  id: number;
+  name: string;
+  scheduled_date: string | null;
+  status: string;
+  field_cultivation_id: number;
+  rescheduled_at?: string | null;
+  cancelled_at?: string | null;
+}
+
+export interface TaskScheduleItemMutationResponse {
+  item: TaskScheduleItemMutationItem;
+}
+
+export interface TaskScheduleItemCreateRequest {
+  field_cultivation_id: number;
+  cultivation_plan_crop_id?: number;
+  name: string;
+  scheduled_date: string;
+}
+
+export interface TaskScheduleItemUpdateRequest {
+  scheduled_date: string;
+}
