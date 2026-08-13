@@ -63,6 +63,15 @@ import type { WorkRecordSaveImpactViewModel } from '../../domain/plans/work-reco
             <dd>{{ averageDeltaLabel(impact.planStats.averageDeltaDays) }}</dd>
           </div>
         </dl>
+        @if (impact.workbenchFieldCultivationId != null) {
+          <a
+            class="work-record-save-impact__workbench-link"
+            [routerLink]="['/plans', planId]"
+            [queryParams]="{ field_cultivation_id: impact.workbenchFieldCultivationId }"
+          >
+            {{ 'plans.work.save_impact.workbench_link' | translate }}
+          </a>
+        }
         <a class="work-record-save-impact__learn-link" [routerLink]="['/plans', planId, 'learn']">
           {{ 'plans.work.save_impact.learn_link' | translate }}
         </a>

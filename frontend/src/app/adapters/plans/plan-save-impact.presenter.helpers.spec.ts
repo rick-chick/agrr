@@ -98,9 +98,67 @@ describe('plan-save-impact presenter helpers', () => {
         completedCount: 3,
         averageDeltaDays: 2.5,
         unrecordedCount: 4
-      }
+      },
+      workbenchFieldCultivationId: null
     });
     expect(applied?.fields.saveImpactLoading).toBe(false);
+  });
+
+  it('includes workbench deep link when saved task is in action_required_items', () => {
+    const applied = applyPlanSaveImpactSummary(
+      {
+        event: {
+          workRecord: {
+            id: 1,
+            cultivation_plan_id: 7,
+            field_cultivation_id: 10,
+            task_schedule_item_id: 5,
+            agricultural_task_id: null,
+            name: 'Weeding',
+            task_type: null,
+            actual_date: '2026-06-13',
+            amount: null,
+            amount_unit: null,
+            time_spent_minutes: null,
+            notes: null,
+            created_at: '2026-06-13',
+            updated_at: '2026-06-13',
+            task_schedule_item: { id: 5, name: 'Weeding', scheduled_date: '2026-06-10' },
+            gdd_at_actual: 130.5
+          },
+          mode: 'create-from-item'
+        },
+        context: { planId: 7, fieldCultivationId: 10, taskScheduleItemId: 5, gddTrigger: 100 }
+      },
+      3,
+      3,
+      {
+        loadGeneration: 3,
+        summary: {
+          plan_id: 7,
+          unrecorded_count: 4,
+          categories: [],
+          top_variance_items: [],
+          action_required_items: [
+            {
+              item_id: 5,
+              field_cultivation_id: 10,
+              category: 'general',
+              name: 'Weeding',
+              scheduled_date: '2026-06-10',
+              actual_date: '2026-06-13',
+              delta_days: 3,
+              gdd_trigger: 100,
+              gdd_at_actual: 130.5,
+              gdd_delta: 30.5,
+              exceedance_kind: 'both'
+            }
+          ]
+        }
+      }
+    );
+
+    expect(applied?.fields.saveImpact?.workbenchFieldCultivationId).toBe(10);
   });
 
   it('ignores stale summary responses', () => {

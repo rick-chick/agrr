@@ -67,6 +67,10 @@ describe('TaskScheduleVarianceViewComponent', () => {
     expect(text).toContain('Largest variance');
     expect(text).toContain('Weeding');
     expect(text).toContain('Δ +7 days');
+    const workbenchLink = fixture.nativeElement.querySelector(
+      'a.task-schedule-variance__list-link'
+    ) as HTMLAnchorElement;
+    expect(workbenchLink.getAttribute('href')).toContain('field_cultivation_id=10');
   });
 
   it('renders unrecorded rows with schedule deep links', async () => {

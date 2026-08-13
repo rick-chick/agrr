@@ -124,34 +124,28 @@ describe('PublicPlanCreateComponent (class-level)', () => {
   });
 
   it('uses app language region (ja→jp) when browser is en-US', () => {
-    const originalNavigator = (globalThis as any).navigator;
     translate.currentLang = 'ja';
     translate.defaultLang = 'ja';
-    (globalThis as any).navigator = { languages: ['en-US'], language: 'en-US' };
+    vi.stubGlobal('navigator', { languages: ['en-US'], language: 'en-US' });
 
-    try {
-      publicPlanStore.state = {};
-      PublicPlanCreateComponent.prototype.ngOnInit.call(component);
-      expect(resetStateUseCase.execute).toHaveBeenCalledWith({});
-      expect(useCase.execute).toHaveBeenCalledWith({ region: 'jp' });
-    } finally {
-      (globalThis as any).navigator = originalNavigator;
-    }
+    publicPlanStore.state = {};
+    PublicPlanCreateComponent.prototype.ngOnInit.call(component);
+    expect(resetStateUseCase.execute).toHaveBeenCalledWith({});
+    expect(useCase.execute).toHaveBeenCalledWith({ region: 'jp' });
+
+    vi.unstubAllGlobals();
   });
 
   it('uses India region when app language is in even if browser is en-US', () => {
-    const originalNavigator = (globalThis as any).navigator;
     translate.currentLang = 'in';
     translate.defaultLang = 'ja';
-    (globalThis as any).navigator = { languages: ['en-US'], language: 'en-US' };
+    vi.stubGlobal('navigator', { languages: ['en-US'], language: 'en-US' });
 
-    try {
-      publicPlanStore.state = {};
-      PublicPlanCreateComponent.prototype.ngOnInit.call(component);
-      expect(useCase.execute).toHaveBeenCalledWith({ region: 'in' });
-    } finally {
-      (globalThis as any).navigator = originalNavigator;
-    }
+    publicPlanStore.state = {};
+    PublicPlanCreateComponent.prototype.ngOnInit.call(component);
+    expect(useCase.execute).toHaveBeenCalledWith({ region: 'in' });
+
+    vi.unstubAllGlobals();
   });
 
   it('localizes reference farm card labels via displayFarmName', () => {

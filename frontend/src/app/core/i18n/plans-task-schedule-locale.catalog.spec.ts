@@ -116,6 +116,7 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.variance_subview.top_item_dates',
   'plans.task_schedules.variance_subview.unrecorded_title',
   'plans.task_schedules.variance_subview.open_in_schedule',
+  'plans.task_schedules.variance_subview.open_workbench',
   'plans.task_schedules.variance_subview.no_data',
   'plans.task_schedules.variance_subview.delta_value',
   'plans.task_schedules.variance_subview.average_value',

@@ -1938,7 +1938,8 @@
         },
         "toggle_aria": "कार्य अनुसूची दृश्य",
         "view_list": "अनुसूची",
-        "view_variance": "अंतर"
+        "view_variance": "अंतर",
+        "open_workbench": "कार्य मंच खोलें"
       }
     },
     "learn": {
@@ -2059,7 +2060,8 @@
         "unrecorded": "अदर्ज कार्य",
         "average_delta": "औसत दिन अंतर",
         "learn_link": "Learn में समीक्षा करें",
-        "dismiss": "प्रभाव पूर्वावलोकन बंद करें"
+        "dismiss": "प्रभाव पूर्वावलोकन बंद करें",
+        "workbench_link": "कार्य मंच पर adjust की समीक्षा करें"
       }
     },
     "work_records": {

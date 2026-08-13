@@ -530,7 +530,8 @@ describe('PlanWorkPresenter save impact', () => {
         completedCount: 3,
         averageDeltaDays: 2.5,
         unrecordedCount: 4
-      }
+      },
+      workbenchFieldCultivationId: null
     });
     expect(view.control.saveImpactLoading).toBe(false);
   });

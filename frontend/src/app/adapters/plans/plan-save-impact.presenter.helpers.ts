@@ -52,7 +52,8 @@ export function applyPlanSaveImpactSummary(
     pending.event.workRecord,
     pending.event.mode,
     planStats,
-    pending.context
+    pending.context,
+    dto.summary.action_required_items ?? []
   );
 
   return {

@@ -46,6 +46,7 @@ const PLANS_WORK_KEYS = [
   'plans.work.save_impact.unrecorded',
   'plans.work.save_impact.average_delta',
   'plans.work.save_impact.learn_link',
+  'plans.work.save_impact.workbench_link',
   'plans.work.save_impact.dismiss',
   'plans.work.recent_adhoc',
   'plans.work.recent_adhoc_history_link',

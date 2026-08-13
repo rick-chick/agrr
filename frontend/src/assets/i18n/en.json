@@ -1452,7 +1452,8 @@
         },
         "toggle_aria": "Task schedule view",
         "view_list": "Schedule",
-        "view_variance": "Variance"
+        "view_variance": "Variance",
+        "open_workbench": "Open workbench"
       }
     },
     "learn": {
@@ -1573,7 +1574,8 @@
         "unrecorded": "Unrecorded tasks",
         "average_delta": "Avg days vs plan",
         "learn_link": "Review in Learn",
-        "dismiss": "Dismiss impact preview"
+        "dismiss": "Dismiss impact preview",
+        "workbench_link": "Review adjust on workbench"
       }
     },
     "work_records": {
