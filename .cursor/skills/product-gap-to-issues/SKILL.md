@@ -77,13 +77,15 @@ Task `explore`（thoroughness: `very thorough`）。プロンプト: [`reference
 
 Task `generalPurpose`。プロンプト: §2。
 
-`tmp/product-gap/gap-backlog.md`: カテゴリ別、差別化との接続、優先度仮説、既存強化 vs 新規の初判。
+`tmp/product-gap/gap-backlog.md`: カテゴリ別、差別化との接続、優先度仮説、既存強化 vs 新規の初判、**各候補の幅/深さ**（[`references/breadth-depth-scale.md`](references/breadth-depth-scale.md)）。
 
 ---
 
 ## フェーズ 3 — テーマ選定
 
 親エージェントが **1 テーマ** を `theme-selection.md` に記録。ユーザー指定を優先。対象セグメント・スコープ外候補を含める。
+
+**幅 vs 深さ**を [`references/breadth-depth-scale.md`](references/breadth-depth-scale.md) のコア 5 で比較し、判定と見送り候補を必ず書く。
 
 ---
 
@@ -94,6 +96,8 @@ Task `explore`。プロンプト: §3。
 `theme-deep-dive.md`: 再利用資産、不足、UI 置き場案（画面パスレベル）、既存強化案と新規案の比較。
 
 新画面を含む案は **`new_surface_justification`**（既存で代替できない理由）を必ず書く。
+
+深掘りが過剰なら [`references/breadth-depth-scale.md`](references/breadth-depth-scale.md) の打ち止め条件で幅候補へ回す。
 
 **実装コードは書かない。**
 
@@ -121,6 +125,7 @@ Task `generalPurpose`。プロンプト: §4。ルーブリック: [`references/
 4. スコープ外
 5. 当初案と採用案の対応
 6. **集約 API・新ルートの観測**（[`references/gates.md`](references/gates.md) 末尾）
+7. **幅 vs 深さと v1/v2 の対応** — `theme-selection.md` の判定と矛盾しないこと（[`references/breadth-depth-scale.md`](references/breadth-depth-scale.md)）
 
 テンプレ: [`references/issue-pack-template.md`](references/issue-pack-template.md) §方針
 
