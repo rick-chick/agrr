@@ -24,6 +24,7 @@ function sampleSummary(
       }
     ],
     top_variance_items: [],
+    stage_gdd_calibration_proposals: [],
     ...overrides
   };
 }
