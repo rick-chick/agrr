@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BehaviorSubject } from 'rxjs';
 
 import en from '../../../assets/i18n/en.json';
+import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-timing-adjustment-proposals.usecase';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
@@ -60,11 +61,13 @@ describe('PlanLearnComponent', () => {
   let fixture: ComponentFixture<PlanLearnComponent>;
   let scheduleUseCase: { execute: ReturnType<typeof vi.fn> };
   let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
+  let blueprintTimingUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: PlanLearnPresenter;
 
   beforeEach(async () => {
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
+    blueprintTimingUseCase = { execute: vi.fn() };
 
     TestBed.overrideComponent(PlanLearnComponent, {
       set: {
@@ -72,6 +75,10 @@ describe('PlanLearnComponent', () => {
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: scheduleUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
+          {
+            provide: LoadBlueprintTimingAdjustmentProposalsUseCase,
+            useValue: blueprintTimingUseCase
+          },
           PlanLearnPresenter
         ]
       }

@@ -1474,6 +1474,18 @@
           "gdd": "GDD variance exceeded threshold",
           "both": "Day and GDD variance exceeded thresholds"
         }
+      },
+      "bp_timing_adjustment": {
+        "title": "Task BP timing adjustment proposals",
+        "lead": "Category-level plan vs actual variance suggests GDD trigger adjustments for task schedule blueprints. Review with dry_run before applying.",
+        "empty": "No BP timing adjustments are available right now.",
+        "delta_label": "Average variance: {{delta}}",
+        "affected_count": "Affected BPs: {{count}}",
+        "cta": "Adjust BP timing",
+        "category": {
+          "general": "General tasks",
+          "fertilizer": "Fertilization"
+        }
       }
     },
     "work": {

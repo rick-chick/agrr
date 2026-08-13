@@ -1,8 +1,9 @@
 //! JSON shape for `GET /api/v1/plans/:id/plan_vs_actual/summary`.
 
 use agrr_domain::cultivation_plan::dtos::{
-    PlanVarianceActionItemRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
-    PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
+    BlueprintTimingAdjustmentProposalRead, PlanVarianceActionItemRead,
+    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+    StageGddCalibrationProposalRead,
 };
 use agrr_domain::cultivation_plan::policies::plan_variance_threshold_policy::VarianceExceedanceKind;
 use serde_json::{json, Value};
@@ -26,6 +27,11 @@ pub fn summary_to_json_body(summary: PlanVsActualSummaryRead) -> Value {
             .action_required_items
             .iter()
             .map(action_item_payload)
+            .collect::<Vec<_>>(),
+        "blueprint_timing_adjustment_proposals": summary
+            .blueprint_timing_adjustment_proposals
+            .iter()
+            .map(blueprint_timing_proposal_payload)
             .collect::<Vec<_>>(),
     })
 }
@@ -80,6 +86,17 @@ fn action_item_payload(item: &PlanVarianceActionItemRead) -> Value {
         "gdd_at_actual": optional_f64(item.gdd_at_actual),
         "gdd_delta": optional_f64(item.gdd_delta),
         "exceedance_kind": exceedance_kind_payload(item.exceedance_kind),
+    })
+}
+
+fn blueprint_timing_proposal_payload(proposal: &BlueprintTimingAdjustmentProposalRead) -> Value {
+    json!({
+        "crop_id": proposal.crop_id,
+        "crop_name": proposal.crop_name,
+        "category": proposal.category,
+        "average_delta_days": proposal.average_delta_days,
+        "average_gdd_delta": optional_f64(proposal.average_gdd_delta),
+        "recorded_item_count": proposal.recorded_item_count,
     })
 }
 
@@ -139,6 +156,14 @@ mod tests {
                 gdd_delta: Some(10.5),
                 exceedance_kind: VarianceExceedanceKind::Both,
             }],
+            blueprint_timing_adjustment_proposals: vec![BlueprintTimingAdjustmentProposalRead {
+                crop_id: 42,
+                crop_name: "Tomato".into(),
+                category: "general".into(),
+                average_delta_days: 4.5,
+                average_gdd_delta: Some(8.0),
+                recorded_item_count: 2,
+            }],
         });
 
         assert_eq!(7, body["plan_id"].as_i64().unwrap());
@@ -157,5 +182,7 @@ mod tests {
             "both",
             body["action_required_items"][0]["exceedance_kind"].as_str().unwrap()
         );
+        assert_eq!(1, body["blueprint_timing_adjustment_proposals"].as_array().unwrap().len());
+        assert_eq!(42, body["blueprint_timing_adjustment_proposals"][0]["crop_id"].as_i64().unwrap());
     }
 }

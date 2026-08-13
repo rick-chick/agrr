@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
 import { StageGddCalibrationProposalsViewComponent } from './stage-gdd-calibration-proposals-view.component';
 import { VarianceActionProposalCardsComponent } from './variance-action-proposal-cards.component';
+import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
@@ -21,6 +22,8 @@ const initialControl: PlanLearnViewState = {
   varianceSummary: null,
   varianceStats: null,
   varianceUnrecordedRows: [],
+  blueprintTimingLoading: false,
+  blueprintTimingProposals: [],
   stageGddProposalsLoading: false,
   stageGddProposals: []
 };
@@ -34,7 +37,8 @@ const initialControl: PlanLearnViewState = {
     PlanPlanContextHeaderComponent,
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
-    VarianceActionProposalCardsComponent
+    VarianceActionProposalCardsComponent,
+    BlueprintTimingAdjustmentProposalsViewComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -59,6 +63,11 @@ const initialControl: PlanLearnViewState = {
           <app-variance-action-proposal-cards
             [planId]="planId"
             [items]="control.varianceSummary?.action_required_items ?? []"
+          />
+          <app-blueprint-timing-adjustment-proposals-view
+            [planId]="planId"
+            [loading]="control.blueprintTimingLoading"
+            [proposals]="control.blueprintTimingProposals"
           />
           <app-task-schedule-variance-view
             [planId]="planId"

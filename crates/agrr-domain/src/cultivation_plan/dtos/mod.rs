@@ -170,8 +170,9 @@ pub use task_schedule_generation_context::TaskScheduleGenerationContext;
 pub use task_schedule_item_amount_snapshot::TaskScheduleItemAmountSnapshot;
 pub use task_schedule_item_deletion_undo_schedule_row::TaskScheduleItemDeletionUndoScheduleRow;
 pub use plan_vs_actual::{
-    PlanVarianceActionItemRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
-    PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
+    BlueprintTimingAdjustmentProposalRead, PlanVarianceActionItemRead,
+    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+    StageGddCalibrationProposalRead,
 };
 pub use task_schedule_timeline::TaskScheduleTimeline;
 pub use task_schedule_timeline_snapshot::{
