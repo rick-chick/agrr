@@ -2658,8 +2658,8 @@
           "dismissed": "適用しない"
         }
       },
-      "proposal_dismiss": {
-        "cta": "適用しない"
+      "proposal": {
+        "dismiss": "適用しない"
       },
       "post_master": {
         "title": "マスタ更新を適用しました",
@@ -2699,7 +2699,6 @@
       },
       "loop": {
         "title": "学習ループの進捗",
-        "complete_message": "学習ループ完了",
         "next_action_title": "次のアクション",
         "phase": {
           "observe": "観測",
@@ -2708,6 +2707,7 @@
           "handoff": "引き継ぎ",
           "complete": "完了"
         },
+        "complete_message": "学習ループ完了",
         "next_action": {
           "observe_workbench": "作業台で乖離を確認",
           "observe_proposals": "マスタ更新提案を確認",
@@ -2715,8 +2715,13 @@
           "apply_bp_timing": "BP タイミング調整を適用",
           "reorganize_placement": "作業台で配置を確認",
           "handoff_carryover": "学習をインポートまたは引き継ぎ",
+          "loop_complete_next_plan": "次の計画へ進む",
           "complete_reorganize": "作業台で配置を確認",
           "complete_next_plan": "計画一覧へ"
+        },
+        "complete": {
+          "title": "学習ループ完了",
+          "lead": "すべてのマスタ更新提案が適用済み・却下済み・完了です。再編成または次の計画に進んでください。"
         }
       }
     },

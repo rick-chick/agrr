@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -71,6 +71,15 @@ import {
                 </p>
               </div>
               <div class="blueprint-timing-adjustment__actions">
+                @if (canDismiss(proposal)) {
+                  <button
+                    type="button"
+                    class="btn-secondary blueprint-timing-adjustment__dismiss"
+                    (click)="dismissProposal(proposal)"
+                  >
+                    {{ 'plans.learn.proposal.dismiss' | translate }}
+                  </button>
+                }
                 @if (canApply(proposal)) {
                   <button
                     type="button"
@@ -78,15 +87,6 @@ import {
                     (click)="openSetupProposal(proposal)"
                   >
                     {{ 'plans.learn.bp_timing_adjustment.cta' | translate }}
-                  </button>
-                }
-                @if (canDismiss(proposal)) {
-                  <button
-                    type="button"
-                    class="btn-secondary blueprint-timing-adjustment__dismiss"
-                    (click)="dismissProposal(proposal)"
-                  >
-                    {{ 'plans.learn.proposal_dismiss.cta' | translate }}
                   </button>
                 }
               </div>
@@ -102,12 +102,11 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
   @Input({ required: true }) planId!: number;
   @Input() loading = false;
   @Input() proposals: BlueprintTimingAdjustmentProposal[] = [];
-  @Output() proposalProgressChanged = new EventEmitter<void>();
+  @Output() progressChanged = new EventEmitter<void>();
 
-  constructor(
-    private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
-  ) {}
+  private refreshVersion = 0;
+
+  constructor(private readonly router: Router) {}
 
   proposalKey(proposal: BlueprintTimingAdjustmentProposal): string {
     return `${proposal.cropId}-${proposal.category}`;
@@ -138,22 +137,18 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
   }
 
   proposalStatus(proposal: BlueprintTimingAdjustmentProposal): LearnProposalApplicationStatus {
+    void this.refreshVersion;
     return resolveLearnProposalApplicationStatus(
       this.planId,
       bpTimingProposalProgressKey(proposal.cropId, proposal.category)
     );
   }
 
-  statusLabel(status: LearnProposalApplicationStatus): string {
-    return `plans.learn.application_progress.status.${status}`;
+  canDismiss(proposal: BlueprintTimingAdjustmentProposal): boolean {
+    return this.proposalStatus(proposal) === 'not_started';
   }
 
   canApply(proposal: BlueprintTimingAdjustmentProposal): boolean {
-    const status = this.proposalStatus(proposal);
-    return status === 'not_started' || status === 'applied_pending_confirmation';
-  }
-
-  canDismiss(proposal: BlueprintTimingAdjustmentProposal): boolean {
     return this.proposalStatus(proposal) === 'not_started';
   }
 
@@ -162,7 +157,11 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
       cropId: proposal.cropId,
       category: proposal.category
     });
-    this.cdr.markForCheck();
-    this.proposalProgressChanged.emit();
+    this.refreshVersion += 1;
+    this.progressChanged.emit();
+  }
+
+  statusLabel(status: LearnProposalApplicationStatus): string {
+    return `plans.learn.application_progress.status.${status}`;
   }
 }

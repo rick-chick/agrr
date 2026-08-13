@@ -2020,8 +2020,8 @@
           "dismissed": "अस्वीकृत"
         }
       },
-      "proposal_dismiss": {
-        "cta": "लागू न करें"
+      "proposal": {
+        "dismiss": "लागू न करें"
       },
       "post_master": {
         "title": "मास्टर अपडेट लागू किया गया",
@@ -2061,7 +2061,6 @@
       },
       "loop": {
         "title": "सीखने लूप की प्रगति",
-        "complete_message": "सीखने लूप पूर्ण",
         "next_action_title": "अगला कदम",
         "phase": {
           "observe": "अवलोकन",
@@ -2070,6 +2069,7 @@
           "handoff": "हस्तांतरण",
           "complete": "पूर्ण"
         },
+        "complete_message": "सीखने का लूप पूर्ण",
         "next_action": {
           "observe_workbench": "विचरण समीक्षा के लिए कार्यक्षेत्र खोलें",
           "observe_proposals": "मास्टर अपडेट प्रस्तावों की समीक्षा करें",
@@ -2077,8 +2077,13 @@
           "apply_bp_timing": "BP समय समायोजन लागू करें",
           "reorganize_placement": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
           "handoff_carryover": "सीखना आयात या हस्तांतरण करें",
+          "loop_complete_next_plan": "अगली योजना पर जाएँ",
           "complete_reorganize": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
           "complete_next_plan": "योजनाओं पर जाएँ"
+        },
+        "complete": {
+          "title": "सीखने का लूप पूर्ण",
+          "lead": "सभी मास्टर अपडेट प्रस्ताव लागू, अस्वीकृत या पूर्ण हैं। पुनर्गठन या अगली योजना पर आगे बढ़ें।"
         }
       }
     },

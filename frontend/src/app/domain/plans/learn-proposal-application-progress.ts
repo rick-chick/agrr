@@ -97,6 +97,27 @@ export function markBpTimingProposalAppliedPending(
   markProposalAppliedPending(planId, bpTimingProposalProgressKey(input.cropId, input.category));
 }
 
+export function markStageGddProposalDismissed(
+  planId: number,
+  input: { cropId: number; stageId: number }
+): void {
+  dismissProposalIfNotStarted(planId, stageGddProposalProgressKey(input.cropId, input.stageId));
+}
+
+export function markBpTimingProposalDismissed(
+  planId: number,
+  input: { cropId: number; category: string }
+): void {
+  dismissProposalIfNotStarted(planId, bpTimingProposalProgressKey(input.cropId, input.category));
+}
+
+function dismissProposalIfNotStarted(planId: number, proposalKey: string): void {
+  const current = resolveLearnProposalApplicationStatus(planId, proposalKey);
+  if (current === 'not_started') {
+    setProposalStatus(planId, proposalKey, 'dismissed');
+  }
+}
+
 export function proposalKeyFromPostMasterPayload(payload: LearnPostMasterPayload): string {
   if (payload.kind === 'stage_gdd') {
     if (payload.stageId == null) {
@@ -125,21 +146,7 @@ export function markLearnProposalConfirmed(planId: number, proposalKey: string):
 }
 
 export function markLearnProposalDismissed(planId: number, proposalKey: string): void {
-  setProposalStatus(planId, proposalKey, 'dismissed');
-}
-
-export function markStageGddProposalDismissed(
-  planId: number,
-  input: { cropId: number; stageId: number }
-): void {
-  markLearnProposalDismissed(planId, stageGddProposalProgressKey(input.cropId, input.stageId));
-}
-
-export function markBpTimingProposalDismissed(
-  planId: number,
-  input: { cropId: number; category: string }
-): void {
-  markLearnProposalDismissed(planId, bpTimingProposalProgressKey(input.cropId, input.category));
+  dismissProposalIfNotStarted(planId, proposalKey);
 }
 
 export function isLearnProposalResolved(status: LearnProposalApplicationStatus): boolean {

@@ -8,7 +8,8 @@ import {
   bpTimingProposalProgressKey,
   isLearnProposalResolved,
   resolveLearnProposalApplicationStatus,
-  stageGddProposalProgressKey
+  stageGddProposalProgressKey,
+  type LearnProposalApplicationStatus
 } from './learn-proposal-application-progress';
 
 export type LearnLoopPhaseId = 'observe' | 'apply' | 'reorganize' | 'handoff' | 'complete';
@@ -28,6 +29,7 @@ export interface LearnLoopPhaseInput {
   blueprintTimingProposalCount: number;
   notStartedProposalCount: number;
   appliedPendingProposalCount: number;
+  loopComplete: boolean;
   hasPostMasterConfirmation: boolean;
   hasMasterUpdateNextSteps: boolean;
   hasLearningSnapshot: boolean;
@@ -103,16 +105,64 @@ export function countLearnProposalApplicationStatuses(
   let resolved = 0;
 
   for (const proposal of stageGddProposals) {
+    tallyProposalStatus(
+      resolveLearnProposalApplicationStatus(
+        planId,
+        stageGddProposalProgressKey(proposal.cropId, proposal.stageId)
+      ),
+      (n) => (notStarted += n),
+      (n) => (appliedPending += n),
+      (n) => (resolved += n)
+    );
+  }
+
+  for (const proposal of blueprintTimingProposals) {
+    tallyProposalStatus(
+      resolveLearnProposalApplicationStatus(
+        planId,
+        bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+      ),
+      (n) => (notStarted += n),
+      (n) => (appliedPending += n),
+      (n) => (resolved += n)
+    );
+  }
+
+  return { notStarted, appliedPending, resolved };
+}
+
+function tallyProposalStatus(
+  status: LearnProposalApplicationStatus,
+  addNotStarted: (count: number) => void,
+  addAppliedPending: (count: number) => void,
+  addResolved: (count: number) => void
+): void {
+  if (status === 'not_started') {
+    addNotStarted(1);
+  } else if (status === 'applied_pending_confirmation' || status === 'confirmed') {
+    addAppliedPending(1);
+  } else if (isLearnProposalResolved(status)) {
+    addResolved(1);
+  }
+}
+
+export function isLearnLoopComplete(
+  planId: number,
+  stageGddProposals: ReadonlyArray<StageGddCalibrationProposal>,
+  blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>
+): boolean {
+  const totalProposals = stageGddProposals.length + blueprintTimingProposals.length;
+  if (totalProposals === 0) {
+    return false;
+  }
+
+  for (const proposal of stageGddProposals) {
     const status = resolveLearnProposalApplicationStatus(
       planId,
       stageGddProposalProgressKey(proposal.cropId, proposal.stageId)
     );
-    if (status === 'not_started') {
-      notStarted += 1;
-    } else if (isLearnProposalResolved(status)) {
-      resolved += 1;
-    } else {
-      appliedPending += 1;
+    if (status !== 'done' && status !== 'dismissed') {
+      return false;
     }
   }
 
@@ -121,16 +171,12 @@ export function countLearnProposalApplicationStatuses(
       planId,
       bpTimingProposalProgressKey(proposal.cropId, proposal.category)
     );
-    if (status === 'not_started') {
-      notStarted += 1;
-    } else if (isLearnProposalResolved(status)) {
-      resolved += 1;
-    } else {
-      appliedPending += 1;
+    if (status !== 'done' && status !== 'dismissed') {
+      return false;
     }
   }
 
-  return { notStarted, appliedPending, resolved };
+  return true;
 }
 
 export function findFirstNotStartedStageGddProposal(
@@ -176,6 +222,10 @@ export function resolveLearnLoopPhase(input: LearnLoopPhaseInput): LearnLoopPhas
 
   if (input.notStartedProposalCount > 0) {
     return 'apply';
+  }
+
+  if (input.loopComplete) {
+    return 'handoff';
   }
 
   const hasMasterProposals =
@@ -265,6 +315,13 @@ export function resolveLearnLoopNextAction(input: LearnLoopPhaseInput): LearnLoo
       };
 
     case 'handoff':
+      if (input.loopComplete) {
+        return {
+          labelKey: 'plans.learn.loop.next_action.loop_complete_next_plan',
+          kind: 'scroll',
+          scrollTargetId: 'plan-learn-carryover-title'
+        };
+      }
       return {
         labelKey: 'plans.learn.loop.next_action.handoff_carryover',
         kind: 'scroll',
@@ -328,6 +385,11 @@ export function buildLearnLoopPhaseInputFromState(input: {
     blueprintTimingProposalCount: input.blueprintTimingProposals.length,
     notStartedProposalCount: counts.notStarted,
     appliedPendingProposalCount: counts.appliedPending,
+    loopComplete: isLearnLoopComplete(
+      input.planId,
+      input.stageGddProposals,
+      input.blueprintTimingProposals
+    ),
     hasPostMasterConfirmation: input.hasPostMasterConfirmation,
     hasMasterUpdateNextSteps:
       input.hasMasterUpdateNextSteps ||

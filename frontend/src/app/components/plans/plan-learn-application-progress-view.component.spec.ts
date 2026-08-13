@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  markBpTimingProposalDismissed,
   markLearnProposalConfirmed,
   markLearnProposalDismissed,
   markStageGddProposalAppliedPending,
-  markAllConfirmedProposalsDone
+  markAllConfirmedProposalsDone,
+  markStageGddProposalDismissed
 } from '../../domain/plans/learn-proposal-application-progress';
 import { buildLearnApplicationProgressItems } from './plan-learn-application-progress-view.component';
 
@@ -105,7 +107,8 @@ describe('buildLearnApplicationProgressItems', () => {
   });
 
   it('reflects dismissed status from session storage', () => {
-    markLearnProposalDismissed(7, 'stage_gdd:1:2');
+    markStageGddProposalDismissed(7, { cropId: 1, stageId: 2 });
+    markBpTimingProposalDismissed(7, { cropId: 1, category: 'general' });
 
     const items = buildLearnApplicationProgressItems(
       7,
@@ -122,9 +125,25 @@ describe('buildLearnApplicationProgressItems', () => {
           proposedRequiredGdd: 110
         }
       ],
-      []
+      [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          category: 'general',
+          averageDeltaDays: 2,
+          averageGddDelta: 5,
+          recordedItemCount: 4,
+          affectedBlueprintCount: 2,
+          proposalBody: {
+            stages: [],
+            agricultural_tasks: [],
+            task_schedule_blueprints: []
+          }
+        }
+      ]
     );
 
     expect(items[0]?.status).toBe('dismissed');
+    expect(items[1]?.status).toBe('dismissed');
   });
 });

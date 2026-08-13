@@ -1,5 +1,5 @@
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
@@ -72,6 +72,15 @@ import {
                 </p>
               </div>
               <div class="stage-gdd-calibration__actions">
+                @if (canDismiss(proposal)) {
+                  <button
+                    type="button"
+                    class="btn-secondary stage-gdd-calibration__dismiss"
+                    (click)="dismissProposal(proposal)"
+                  >
+                    {{ 'plans.learn.proposal.dismiss' | translate }}
+                  </button>
+                }
                 @if (canApply(proposal)) {
                   <a
                     class="btn-secondary stage-gdd-calibration__cta"
@@ -80,15 +89,6 @@ import {
                   >
                     {{ 'plans.learn.stage_gdd_calibration.cta' | translate }}
                   </a>
-                }
-                @if (canDismiss(proposal)) {
-                  <button
-                    type="button"
-                    class="btn-secondary stage-gdd-calibration__dismiss"
-                    (click)="dismissProposal(proposal)"
-                  >
-                    {{ 'plans.learn.proposal_dismiss.cta' | translate }}
-                  </button>
                 }
               </div>
             </li>
@@ -103,9 +103,9 @@ export class StageGddCalibrationProposalsViewComponent {
   @Input({ required: true }) planId!: number;
   @Input() loading = false;
   @Input() proposals: StageGddCalibrationProposal[] = [];
-  @Output() proposalProgressChanged = new EventEmitter<void>();
+  @Output() progressChanged = new EventEmitter<void>();
 
-  constructor(private readonly cdr: ChangeDetectorRef) {}
+  private refreshVersion = 0;
 
   proposalKey(proposal: StageGddCalibrationProposal): string {
     return `${proposal.cropId}-${proposal.stageId}`;
@@ -132,22 +132,18 @@ export class StageGddCalibrationProposalsViewComponent {
   }
 
   proposalStatus(proposal: StageGddCalibrationProposal): LearnProposalApplicationStatus {
+    void this.refreshVersion;
     return resolveLearnProposalApplicationStatus(
       this.planId,
       stageGddProposalProgressKey(proposal.cropId, proposal.stageId)
     );
   }
 
-  statusLabel(status: LearnProposalApplicationStatus): string {
-    return `plans.learn.application_progress.status.${status}`;
+  canDismiss(proposal: StageGddCalibrationProposal): boolean {
+    return this.proposalStatus(proposal) === 'not_started';
   }
 
   canApply(proposal: StageGddCalibrationProposal): boolean {
-    const status = this.proposalStatus(proposal);
-    return status === 'not_started' || status === 'applied_pending_confirmation';
-  }
-
-  canDismiss(proposal: StageGddCalibrationProposal): boolean {
     return this.proposalStatus(proposal) === 'not_started';
   }
 
@@ -156,7 +152,11 @@ export class StageGddCalibrationProposalsViewComponent {
       cropId: proposal.cropId,
       stageId: proposal.stageId
     });
-    this.cdr.markForCheck();
-    this.proposalProgressChanged.emit();
+    this.refreshVersion += 1;
+    this.progressChanged.emit();
+  }
+
+  statusLabel(status: LearnProposalApplicationStatus): string {
+    return `plans.learn.application_progress.status.${status}`;
   }
 }

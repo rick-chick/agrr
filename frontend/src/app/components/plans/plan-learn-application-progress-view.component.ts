@@ -70,8 +70,10 @@ export class PlanLearnApplicationProgressViewComponent {
   @Input({ required: true }) planId!: number;
   @Input() stageGddProposals: StageGddCalibrationProposal[] = [];
   @Input() blueprintTimingProposals: BlueprintTimingAdjustmentProposal[] = [];
+  @Input() progressRefreshVersion = 0;
 
   get items(): LearnApplicationProgressItem[] {
+    void this.progressRefreshVersion;
     return buildLearnApplicationProgressItems(
       this.planId,
       this.stageGddProposals,
