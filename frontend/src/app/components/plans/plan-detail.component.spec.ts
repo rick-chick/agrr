@@ -1,8 +1,9 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { of } from 'rxjs';
+import { of, type Observable } from 'rxjs';
+import type { ParamMap } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlanDetailComponent } from './plan-detail.component';
 import { PlanDetailViewState } from './plan-detail.view';
@@ -16,6 +17,7 @@ describe('PlanDetailComponent', () => {
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
   let activatedRoute: {
     snapshot: { paramMap: { get: ReturnType<typeof vi.fn> } };
+    queryParamMap: Observable<ParamMap>;
   };
   let cdr: ChangeDetectorRef;
 
@@ -25,7 +27,8 @@ describe('PlanDetailComponent', () => {
     activatedRoute = {
       snapshot: {
         paramMap: { get: vi.fn(() => '1') }
-      }
+      },
+      queryParamMap: of(convertToParamMap({}))
     };
 
     TestBed.resetTestingModule();
