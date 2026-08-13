@@ -1963,7 +1963,8 @@
       "imported_banner": {
         "message": "आयातित variance की {{count}} वस्तु(एँ) workbench पर adjust की समीक्षा चाह सकती हैं।",
         "manual_hint": "अनुसूची बदलने से पहले workbench पर आयातित सीख की समीक्षा करें। कोई स्वचालित परिवर्तन नहीं होता।",
-        "workbench_link": "workbench पर adjust की समीक्षा करें"
+        "workbench_link": "workbench पर adjust की समीक्षा करें",
+        "merged_proposals": "सीख से {{count}} मर्ज प्रस्ताव आयात किए गए।"
       },
       "carryover": {
         "title": "दूसरी योजना से सीख आयात करें",
@@ -2086,6 +2087,11 @@
           "title": "सीखने का लूप पूर्ण",
           "lead": "सभी मास्टर अपडेट प्रस्ताव लागू, अस्वीकृत या पूर्ण हैं। पुनर्गठन या अगली योजना पर आगे बढ़ें।"
         }
+      },
+      "observe_phase": {
+        "unrecorded_message": "{{count}} कार्य अभी तक अभिलेखित नहीं हैं।",
+        "unrecorded_cta": "कार्य अभिलेखित करें",
+        "complete_message": "अवलोकन चरण पूर्ण — सभी निर्धारित कार्य अभिलेखित हैं।"
       }
     },
     "work": {

@@ -1477,7 +1477,8 @@
       "imported_banner": {
         "message": "{{count}} imported variance item(s) may need adjust on the workbench.",
         "manual_hint": "Review imported learning on the workbench before changing the schedule. No automatic changes are made.",
-        "workbench_link": "Review adjust on workbench"
+        "workbench_link": "Review adjust on workbench",
+        "merged_proposals": "{{count}} merged proposal(s) imported from learning."
       },
       "carryover": {
         "title": "Import learning from another plan",
@@ -1600,6 +1601,11 @@
           "title": "Learning loop complete",
           "lead": "All master update proposals are applied, dismissed, or finished. Continue with reorganization or your next plan."
         }
+      },
+      "observe_phase": {
+        "unrecorded_message": "{{count}} tasks are not recorded yet.",
+        "unrecorded_cta": "Record work",
+        "complete_message": "Observation phase complete — all scheduled tasks are recorded."
       }
     },
     "work": {
