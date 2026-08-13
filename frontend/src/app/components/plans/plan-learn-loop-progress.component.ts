@@ -56,6 +56,11 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
       }
       @if (nextAction) {
         <div class="learn-loop-progress__next">
+          @if (currentPhase === 'complete') {
+            <p class="learn-loop-progress__complete-message" role="status">
+              {{ 'plans.learn.loop.complete_message' | translate }}
+            </p>
+          }
           <p class="learn-loop-progress__next-label">
             {{ 'plans.learn.loop.next_action_title' | translate }}:
             {{ nextAction.labelKey | translate }}
@@ -74,6 +79,15 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
               [href]="scrollHref(nextAction)"
             >
               {{ nextAction.labelKey | translate }}
+            </a>
+          }
+          @if (secondaryAction?.kind === 'router_link') {
+            <a
+              class="btn btn-secondary learn-loop-progress__secondary-cta"
+              [routerLink]="secondaryAction.routerLink"
+              [queryParams]="secondaryAction.queryParams"
+            >
+              {{ secondaryAction.labelKey | translate }}
             </a>
           }
         </div>

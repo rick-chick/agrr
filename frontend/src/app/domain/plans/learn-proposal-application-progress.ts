@@ -145,6 +145,28 @@ export function markLearnProposalConfirmed(planId: number, proposalKey: string):
   setProposalStatus(planId, proposalKey, 'confirmed');
 }
 
+export function markLearnProposalDismissed(planId: number, proposalKey: string): void {
+  setProposalStatus(planId, proposalKey, 'dismissed');
+}
+
+export function markStageGddProposalDismissed(
+  planId: number,
+  input: { cropId: number; stageId: number }
+): void {
+  markLearnProposalDismissed(planId, stageGddProposalProgressKey(input.cropId, input.stageId));
+}
+
+export function markBpTimingProposalDismissed(
+  planId: number,
+  input: { cropId: number; category: string }
+): void {
+  markLearnProposalDismissed(planId, bpTimingProposalProgressKey(input.cropId, input.category));
+}
+
+export function isLearnProposalResolved(status: LearnProposalApplicationStatus): boolean {
+  return status === 'done' || status === 'dismissed';
+}
+
 export function confirmLearnProposalFromPostMaster(
   planId: number,
   payload: LearnPostMasterPayload

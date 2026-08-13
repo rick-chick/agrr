@@ -9,6 +9,7 @@ import {
   markBpTimingProposalAppliedPending,
   markBpTimingProposalDismissed,
   markLearnProposalConfirmed,
+  markLearnProposalDismissed,
   markStageGddProposalAppliedPending,
   markStageGddProposalDismissed,
   parsePlanLearnFollowUp,
@@ -85,6 +86,16 @@ describe('learn proposal application progress storage', () => {
     expect(
       resolveLearnProposalApplicationStatus(PLAN_ID, stageGddProposalProgressKey(1, 2))
     ).toBe('confirmed');
+  });
+
+  it('marks proposal as dismissed and persists in session storage', () => {
+    const key = stageGddProposalProgressKey(1, 2);
+    markLearnProposalDismissed(PLAN_ID, key);
+
+    expect(resolveLearnProposalApplicationStatus(PLAN_ID, key)).toBe('dismissed');
+    expect(readLearnProposalApplicationProgress(PLAN_ID)).toEqual({
+      [key]: 'dismissed'
+    });
   });
 
   it('marks confirmed proposals as done', () => {

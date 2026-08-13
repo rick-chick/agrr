@@ -6,18 +6,20 @@ import type { BlueprintTimingAdjustmentProposal } from './blueprint-timing-adjus
 import type { StageGddCalibrationProposal } from './stage-gdd-calibration-proposal';
 import {
   bpTimingProposalProgressKey,
+  isLearnProposalResolved,
   resolveLearnProposalApplicationStatus,
   stageGddProposalProgressKey,
   type LearnProposalApplicationStatus
 } from './learn-proposal-application-progress';
 
-export type LearnLoopPhaseId = 'observe' | 'apply' | 'reorganize' | 'handoff';
+export type LearnLoopPhaseId = 'observe' | 'apply' | 'reorganize' | 'handoff' | 'complete';
 
 export const LEARN_LOOP_PHASE_ORDER: ReadonlyArray<LearnLoopPhaseId> = [
   'observe',
   'apply',
   'reorganize',
-  'handoff'
+  'handoff',
+  'complete'
 ];
 
 export interface LearnLoopPhaseInput {
@@ -41,6 +43,7 @@ export interface LearnLoopPhaseInput {
     BlueprintTimingAdjustmentProposal,
     'cropId' | 'cropName' | 'category'
   > | null;
+  allProposalsResolved: boolean;
 }
 
 export type LearnLoopNextActionKind = 'router_link' | 'scroll';
@@ -56,15 +59,50 @@ export interface LearnLoopNextAction {
 export interface LearnLoopPhaseResult {
   currentPhase: LearnLoopPhaseId;
   nextAction: LearnLoopNextAction | null;
+  secondaryAction?: LearnLoopNextAction | null;
+}
+
+export function areAllLearnProposalsResolved(
+  planId: number,
+  stageGddProposals: ReadonlyArray<StageGddCalibrationProposal>,
+  blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>
+): boolean {
+  const totalCount = stageGddProposals.length + blueprintTimingProposals.length;
+  if (totalCount === 0) {
+    return false;
+  }
+
+  for (const proposal of stageGddProposals) {
+    const status = resolveLearnProposalApplicationStatus(
+      planId,
+      stageGddProposalProgressKey(proposal.cropId, proposal.stageId)
+    );
+    if (!isLearnProposalResolved(status)) {
+      return false;
+    }
+  }
+
+  for (const proposal of blueprintTimingProposals) {
+    const status = resolveLearnProposalApplicationStatus(
+      planId,
+      bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+    );
+    if (!isLearnProposalResolved(status)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export function countLearnProposalApplicationStatuses(
   planId: number,
   stageGddProposals: ReadonlyArray<StageGddCalibrationProposal>,
   blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>
-): { notStarted: number; appliedPending: number } {
+): { notStarted: number; appliedPending: number; resolved: number } {
   let notStarted = 0;
   let appliedPending = 0;
+  let resolved = 0;
 
   for (const proposal of stageGddProposals) {
     tallyProposalStatus(
@@ -188,6 +226,10 @@ export function resolveLearnLoopPhase(input: LearnLoopPhaseInput): LearnLoopPhas
   const hasMasterProposals =
     input.stageGddProposalCount > 0 || input.blueprintTimingProposalCount > 0;
 
+  if (hasMasterProposals && input.allProposalsResolved) {
+    return 'complete';
+  }
+
   if (
     hasMasterProposals &&
     (input.hasLearningSnapshot ||
@@ -280,13 +322,38 @@ export function resolveLearnLoopNextAction(input: LearnLoopPhaseInput): LearnLoo
         kind: 'scroll',
         scrollTargetId: 'plan-learn-carryover-title'
       };
+
+    case 'complete': {
+      const adjust = buildPlanDetailAdjustNavigation(input.planId);
+      return {
+        labelKey: 'plans.learn.loop.next_action.complete_reorganize',
+        kind: 'router_link',
+        routerLink: adjust.commands,
+        queryParams: adjust.queryParams
+      };
+    }
   }
+}
+
+export function resolveLearnLoopSecondaryAction(
+  input: LearnLoopPhaseInput
+): LearnLoopNextAction | null {
+  if (resolveLearnLoopPhase(input) !== 'complete') {
+    return null;
+  }
+
+  return {
+    labelKey: 'plans.learn.loop.next_action.complete_next_plan',
+    kind: 'router_link',
+    routerLink: ['/plans']
+  };
 }
 
 export function buildLearnLoopPhaseResult(input: LearnLoopPhaseInput): LearnLoopPhaseResult {
   return {
     currentPhase: resolveLearnLoopPhase(input),
-    nextAction: resolveLearnLoopNextAction(input)
+    nextAction: resolveLearnLoopNextAction(input),
+    secondaryAction: resolveLearnLoopSecondaryAction(input)
   };
 }
 
@@ -332,6 +399,11 @@ export function buildLearnLoopPhaseInputFromState(input: {
     ),
     firstNotStartedBpTimingProposal: findFirstNotStartedBpTimingProposal(
       input.planId,
+      input.blueprintTimingProposals
+    ),
+    allProposalsResolved: areAllLearnProposalsResolved(
+      input.planId,
+      input.stageGddProposals,
       input.blueprintTimingProposals
     )
   };

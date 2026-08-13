@@ -47,8 +47,12 @@ describe('PlanLearnLoopProgressComponent', () => {
         'plans.learn.loop.phase.apply': 'Apply',
         'plans.learn.loop.phase.reorganize': 'Reorganize',
         'plans.learn.loop.phase.handoff': 'Handoff',
+        'plans.learn.loop.phase.complete': 'Complete',
+        'plans.learn.loop.complete_message': 'Learning loop complete',
         'plans.learn.loop.next_action.observe_workbench': 'Open workbench',
-        'plans.learn.loop.next_action.handoff_carryover': 'Import carryover'
+        'plans.learn.loop.next_action.handoff_carryover': 'Import carryover',
+        'plans.learn.loop.next_action.complete_reorganize': 'Verify placement',
+        'plans.learn.loop.next_action.complete_next_plan': 'Go to plans'
       },
       true
     );
@@ -62,7 +66,7 @@ describe('PlanLearnLoopProgressComponent', () => {
     fixture.detectChanges();
 
     const phases = fixture.nativeElement.querySelectorAll('.learn-loop-progress__phase');
-    expect(phases).toHaveLength(4);
+    expect(phases).toHaveLength(5);
     expect(phases[0].classList.contains('learn-loop-progress__phase--current')).toBe(true);
     expect(phases[0].getAttribute('aria-current')).toBe('step');
   });
