@@ -5,7 +5,6 @@ import {
   buildPlanDetailAdjustNavigation,
   buildPlanTaskScheduleOrchestrationNavigation,
   buildLearnOrchestrationResumeNavigation,
-  findFirstIncompleteOrchestrationStep,
   readLearnOrchestrationStepComplete
 } from '../../domain/plans/learn-master-update-orchestration';
 
