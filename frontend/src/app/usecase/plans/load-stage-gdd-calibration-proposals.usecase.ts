@@ -25,7 +25,7 @@ export class LoadStageGddCalibrationProposalsUseCase {
   execute(dto: LoadStageGddCalibrationProposalsInputDto): void {
     const cropIds = [...new Set(dto.rawProposals.map((proposal) => proposal.crop_id))];
     if (cropIds.length === 0) {
-      this.outputPort.present({
+      this.outputPort.presentStageGddProposals({
         loadGeneration: dto.loadGeneration,
         proposals: []
       });
@@ -43,13 +43,13 @@ export class LoadStageGddCalibrationProposalsUseCase {
           dto.rawProposals,
           cropStagesByCropId
         );
-        this.outputPort.present({
+        this.outputPort.presentStageGddProposals({
           loadGeneration: dto.loadGeneration,
           proposals
         });
       },
       error: () =>
-        this.outputPort.present({
+        this.outputPort.presentStageGddProposals({
           loadGeneration: dto.loadGeneration,
           proposals: []
         })

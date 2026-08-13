@@ -7,7 +7,7 @@ export interface LoadStageGddCalibrationProposalsDataDto {
 }
 
 export interface LoadStageGddCalibrationProposalsOutputPort {
-  present(dto: LoadStageGddCalibrationProposalsDataDto): void;
+  presentStageGddProposals(dto: LoadStageGddCalibrationProposalsDataDto): void;
 }
 
 export const LOAD_STAGE_GDD_CALIBRATION_PROPOSALS_OUTPUT_PORT =

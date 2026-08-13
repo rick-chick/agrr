@@ -93,7 +93,7 @@ export class PlanLearnPresenter
     };
   }
 
-  present(dto: LoadStageGddCalibrationProposalsDataDto): void {
+  presentStageGddProposals(dto: LoadStageGddCalibrationProposalsDataDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (dto.loadGeneration !== this.stageGddProposalsLoadGeneration) {
       return;

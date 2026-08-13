@@ -63,7 +63,7 @@ impl PlanVsActualMapper {
         let categories = category_summaries(&items);
         let top_variance_items = top_variance(&items, top_n);
         let stage_gdd_calibration_proposals =
-            stage_gdd_calibration_proposals_from_snapshot(snapshot);
+            Self::stage_gdd_calibration_proposals_from_snapshot(snapshot);
 
         PlanVsActualSummaryRead {
             plan_id: snapshot.plan.id,
