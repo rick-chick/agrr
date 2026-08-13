@@ -11,6 +11,10 @@ import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs
 import { PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { PlanLearnComponent } from './plan-learn.component';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
+import {
+  markStageGddProposalAppliedPending,
+  storeLearnPostMasterPayload
+} from '../../domain/plans/learn-proposal-application-progress';
 
 const loadedSchedule: TaskScheduleResponse = {
   plan: {
@@ -43,17 +47,24 @@ const loadedSchedule: TaskScheduleResponse = {
   }
 };
 
-function createRouteMock(planId: string) {
+function createRouteMock(planId: string, queryParams: Record<string, string> = {}) {
   const paramMapSubject = new BehaviorSubject({
     get: (key: string) => (key === 'id' ? planId : null)
+  });
+  const queryParamMapSubject = new BehaviorSubject({
+    get: (key: string) => queryParams[key] ?? null
   });
   return {
     snapshot: {
       get paramMap() {
         return paramMapSubject.value;
+      },
+      get queryParamMap() {
+        return queryParamMapSubject.value;
       }
     },
-    paramMap: paramMapSubject.asObservable()
+    paramMap: paramMapSubject.asObservable(),
+    queryParamMap: queryParamMapSubject.asObservable()
   };
 }
 
@@ -65,6 +76,7 @@ describe('PlanLearnComponent', () => {
   let presenter: PlanLearnPresenter;
 
   beforeEach(async () => {
+    sessionStorage.clear();
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };
@@ -172,5 +184,110 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.querySelector('app-variance-action-proposal-cards')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Schedule variance needs your review');
     expect(fixture.nativeElement.textContent).toContain('Weed control');
+  });
+});
+
+describe('PlanLearnComponent post_master follow-up', () => {
+  let fixture: ComponentFixture<PlanLearnComponent>;
+  let scheduleUseCase: { execute: ReturnType<typeof vi.fn> };
+  let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
+  let blueprintTimingUseCase: { execute: ReturnType<typeof vi.fn> };
+  let presenter: PlanLearnPresenter;
+
+  beforeEach(async () => {
+    sessionStorage.clear();
+    scheduleUseCase = { execute: vi.fn() };
+    varianceUseCase = { execute: vi.fn() };
+    blueprintTimingUseCase = { execute: vi.fn() };
+
+    TestBed.overrideComponent(PlanLearnComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPlanTaskScheduleUseCase, useValue: scheduleUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
+          {
+            provide: LoadBlueprintTimingAdjustmentProposalsUseCase,
+            useValue: blueprintTimingUseCase
+          },
+          PlanLearnPresenter
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanLearnComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([{ path: 'plans/:id/learn', component: PlanLearnComponent }]),
+        { provide: ActivatedRoute, useValue: createRouteMock('7', { followUp: 'post_master' }) }
+      ]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture = TestBed.createComponent(PlanLearnComponent);
+    presenter = fixture.debugElement.injector.get(PlanLearnPresenter);
+  });
+
+  it('renders application progress and post_master confirmation when followUp is set', async () => {
+    storeLearnPostMasterPayload(7, {
+      kind: 'stage_gdd',
+      cropId: 1,
+      cropName: 'Tomato',
+      stageId: 2,
+      stageName: 'Vegetative',
+      appliedRequiredGdd: 150
+    });
+    markStageGddProposalAppliedPending(7, { cropId: 1, stageId: 2 });
+
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: [],
+        stage_gdd_calibration_proposals: [
+          {
+            crop_id: 1,
+            crop_name: 'Tomato',
+            stage_order: 1,
+            stage_name: 'Vegetative',
+            average_gdd_delta: 10,
+            recorded_item_count: 2
+          }
+        ]
+      },
+      loadGeneration: 1
+    });
+    presenter.presentStageGddProposals({
+      proposals: [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 2,
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageGddDelta: 10,
+          recordedItemCount: 2,
+          currentRequiredGdd: 100,
+          proposedRequiredGdd: 150
+        }
+      ],
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-application-progress-view')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Proposal application progress');
+    expect(fixture.nativeElement.textContent).toContain('Applied — pending confirmation');
+    expect(fixture.nativeElement.querySelector('app-plan-learn-post-master-confirmation')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Master update applied');
+    expect(fixture.nativeElement.textContent).toContain('Verify placement on workbench');
   });
 });

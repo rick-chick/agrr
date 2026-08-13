@@ -320,6 +320,26 @@ describe('CropStageEditComponent', () => {
     });
   });
 
+  it('navigates to learn post_master after successful panel save when returnTo=learn', async () => {
+    sessionStorage.clear();
+    await loadStage();
+    component.fromPlanId = 7;
+    component.returnTab = 'learn';
+    component.stageEditDraft.name = 'Updated Name';
+    component.stageEditDraft.required_gdd = 150;
+    component.saveStagePanel();
+
+    const presenter = fixture.debugElement.injector.get(CropStageEditPresenter);
+    presenter.onSuccess({
+      stage: { ...stageFixture, name: 'Updated Name' }
+    });
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 7, 'learn'], {
+      queryParams: { followUp: 'post_master' }
+    });
+  });
+
   it('resyncs panel draft from server after partial panel save failure', async () => {
     await loadStage();
 

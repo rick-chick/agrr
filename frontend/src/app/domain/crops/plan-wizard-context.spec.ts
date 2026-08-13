@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cropPlanWizardQueryParams,
   parsePlanWizardReturnTab,
+  planLearnPostMasterReturnNavigation,
   planWizardReturnPath
 } from './plan-wizard-context';
 
@@ -34,6 +35,15 @@ describe('cropPlanWizardQueryParams', () => {
     expect(cropPlanWizardQueryParams(7, 'task_schedule')).toEqual({
       fromPlan: 7,
       returnTo: 'task_schedule'
+    });
+  });
+});
+
+describe('planLearnPostMasterReturnNavigation', () => {
+  it('routes to learn with followUp=post_master', () => {
+    expect(planLearnPostMasterReturnNavigation(7)).toEqual({
+      commands: ['/plans', 7, 'learn'],
+      queryParams: { followUp: 'post_master' }
     });
   });
 });

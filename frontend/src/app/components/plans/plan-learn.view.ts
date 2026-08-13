@@ -5,6 +5,7 @@ import type {
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
 import type { PlanTaskScheduleRowView } from './plan-task-schedule.view';
+import type { LearnPostMasterPayload } from '../../domain/plans/learn-proposal-application-progress';
 
 export type PlanLearnViewState = {
   loading: boolean;
@@ -19,6 +20,7 @@ export type PlanLearnViewState = {
   blueprintTimingProposals: BlueprintTimingAdjustmentProposal[];
   stageGddProposalsLoading: boolean;
   stageGddProposals: StageGddCalibrationProposal[];
+  postMasterPayload: LearnPostMasterPayload | null;
 };
 
 export interface PlanLearnView {

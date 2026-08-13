@@ -2577,6 +2577,27 @@
     },
     "learn": {
       "page_title": "振り返り — {{name}}",
+      "application_progress": {
+        "title": "提案適用の進捗",
+        "lead": "振り返り提案からマスタへ適用した内容の確認状態を追跡します。",
+        "kind": {
+          "stage_gdd": "ステージ GDD 校正",
+          "bp_timing": "BP タイミング調整"
+        },
+        "status": {
+          "not_started": "未着手",
+          "applied_pending_confirmation": "適用済み・確認待ち"
+        }
+      },
+      "post_master": {
+        "title": "マスタ更新を適用しました",
+        "lead": "マスタの変更を保存しました。適用内容を確認し、作業台で配置を確認してください。",
+        "crop_label": "作物",
+        "stage_label": "ステージ",
+        "required_gdd_label": "要求 GDD",
+        "category_label": "カテゴリ",
+        "open_workbench": "ワークベンチで配置を確認"
+      },
       "stage_gdd_calibration": {
         "title": "ステージ GDD 校正提案",
         "lead": "この計画の実績 GDD 差分から、ステージの thermal requirement 更新を提案します。内容を確認し、同意する場合のみ保存してください。",
