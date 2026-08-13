@@ -197,6 +197,10 @@ describe('PlanLearnComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
+    expect(fixture.nativeElement.querySelector('app-plan-learn-loop-progress')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Learning loop progress');
+    expect(fixture.nativeElement.textContent).toContain('Observe');
+    expect(fixture.nativeElement.textContent).toContain('Open workbench to review variance');
     expect(fixture.nativeElement.querySelector('app-variance-action-proposal-cards')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Schedule variance needs your review');
     expect(fixture.nativeElement.textContent).toContain('Weed control');

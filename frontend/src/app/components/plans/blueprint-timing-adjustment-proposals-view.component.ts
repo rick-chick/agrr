@@ -6,7 +6,12 @@ import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/bluep
 import { blueprintTimingPrefillStorageKey } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import { cropPlanWizardQueryParams } from '../../domain/crops/plan-wizard-context';
-import { storeLearnBpTimingApplyContext } from '../../domain/plans/learn-proposal-application-progress';
+import {
+  bpTimingProposalProgressKey,
+  resolveLearnProposalApplicationStatus,
+  storeLearnBpTimingApplyContext,
+  type LearnProposalApplicationStatus
+} from '../../domain/plans/learn-proposal-application-progress';
 
 @Component({
   selector: 'app-blueprint-timing-adjustment-proposals-view',
@@ -35,9 +40,19 @@ import { storeLearnBpTimingApplyContext } from '../../domain/plans/learn-proposa
           @for (proposal of proposals; track proposalKey(proposal)) {
             <li class="blueprint-timing-adjustment__item">
               <div class="blueprint-timing-adjustment__summary">
-                <p class="blueprint-timing-adjustment__name">
-                  {{ proposal.cropName }} — {{ categoryLabel(proposal.category) | translate }}
-                </p>
+                <div class="blueprint-timing-adjustment__header">
+                  <p class="blueprint-timing-adjustment__name">
+                    {{ proposal.cropName }} — {{ categoryLabel(proposal.category) | translate }}
+                  </p>
+                  <span
+                    class="blueprint-timing-adjustment__status"
+                    [class.blueprint-timing-adjustment__status--pending]="
+                      proposalStatus(proposal) === 'applied_pending_confirmation'
+                    "
+                  >
+                    {{ statusLabel(proposalStatus(proposal)) | translate }}
+                  </span>
+                </div>
                 <p class="blueprint-timing-adjustment__delta">
                   {{
                     'plans.learn.bp_timing_adjustment.delta_label'
@@ -99,5 +114,16 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
     void this.router.navigate(['/crops', proposal.cropId, 'setup_proposal'], {
       queryParams: cropPlanWizardQueryParams(this.planId, 'learn')
     });
+  }
+
+  proposalStatus(proposal: BlueprintTimingAdjustmentProposal): LearnProposalApplicationStatus {
+    return resolveLearnProposalApplicationStatus(
+      this.planId,
+      bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+    );
+  }
+
+  statusLabel(status: LearnProposalApplicationStatus): string {
+    return `plans.learn.application_progress.status.${status}`;
   }
 }

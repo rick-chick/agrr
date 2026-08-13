@@ -2011,7 +2011,7 @@
           "bp_timing": "BP समय समायोजन"
         },
         "status": {
-          "not_started": "शुरू नहीं",
+          "not_started": "लागू नहीं",
           "applied_pending_confirmation": "लागू — पुष्टि लंबित"
         }
       },
@@ -2050,6 +2050,24 @@
           "sync_verify": "सिंक जाँचें"
         },
         "completed": "पूर्ण"
+      },
+      "loop": {
+        "title": "सीखने लूप की प्रगति",
+        "next_action_title": "अगला कदम",
+        "phase": {
+          "observe": "अवलोकन",
+          "apply": "लागू करें",
+          "reorganize": "पुनर्गठन",
+          "handoff": "हस्तांतरण"
+        },
+        "next_action": {
+          "observe_workbench": "विचरण समीक्षा के लिए कार्यक्षेत्र खोलें",
+          "observe_proposals": "मास्टर अपडेट प्रस्तावों की समीक्षा करें",
+          "apply_stage_gdd": "चरण GDD अंशांकन लागू करें",
+          "apply_bp_timing": "BP समय समायोजन लागू करें",
+          "reorganize_placement": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
+          "handoff_carryover": "सीखना आयात या हस्तांतरण करें"
+        }
       }
     },
     "work": {
