@@ -33,6 +33,14 @@ const initialControl: PlanLearnViewState = {
   blueprintTimingProposals: [],
   stageGddProposalsLoading: false,
   stageGddProposals: [],
+  learningSnapshot: null,
+  carryoverSourcePlans: [],
+  selectedSourcePlanId: null,
+  carryoverPreviewLoading: false,
+  carryoverPreviewError: null,
+  carryoverPreview: null,
+  carryoverImporting: false,
+  carryoverImportError: null,
   postMasterPayload: null
 };
 

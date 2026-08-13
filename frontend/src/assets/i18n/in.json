@@ -1944,26 +1944,22 @@
     },
     "learn": {
       "page_title": "समीक्षा — {{name}}",
-      "application_progress": {
-        "title": "प्रस्ताव लागू करने की प्रगति",
-        "lead": "सीखने के प्रस्तावों से मास्टर अपडेट की पुष्टि स्थिति ट्रैक करें।",
-        "kind": {
-          "stage_gdd": "चरण GDD अंशांकन",
-          "bp_timing": "BP समय समायोजन"
-        },
-        "status": {
-          "not_started": "शुरू नहीं",
-          "applied_pending_confirmation": "लागू — पुष्टि लंबित"
-        }
+      "imported_snapshot_title": "योजना #{{sourcePlanId}} से आयातित सीख",
+      "imported_snapshot_empty": "आयातित स्नैपशॉट में कोई श्रेणी variance डेटा नहीं है।",
+      "imported_banner": {
+        "message": "आयातित variance की {{count}} वस्तु(एँ) workbench पर adjust की समीक्षा चाह सकती हैं।",
+        "manual_hint": "अनुसूची बदलने से पहले workbench पर आयातित सीख की समीक्षा करें। कोई स्वचालित परिवर्तन नहीं होता।",
+        "workbench_link": "workbench पर adjust की समीक्षा करें"
       },
-      "post_master": {
-        "title": "मास्टर अपडेट लागू किया गया",
-        "lead": "आपका मास्टर परिवर्तन सहेजा गया। नीचे लागू मानों की समीक्षा करें, फिर कार्यक्षेत्र पर स्थान की पुष्टि करें।",
-        "crop_label": "फसल",
-        "stage_label": "चरण",
-        "required_gdd_label": "आवश्यक GDD",
-        "category_label": "श्रेणी",
-        "open_workbench": "कार्यक्षेत्र पर स्थान की पुष्टि करें"
+      "carryover": {
+        "title": "दूसरी योजना से सीख आयात करें",
+        "hint": "उसी खेत की पिछली योजना से variance सीख इस चल रही योजना में कॉपी करें।",
+        "source_label": "स्रोत योजना",
+        "source_hint": "पिछली योजना चुनें",
+        "no_source_plans": "इस खेत पर कोई अन्य योजना उपलब्ध नहीं है।",
+        "preview_title": "सीख डेटा पूर्वावलोकन",
+        "preview_empty": "कोई श्रेणी variance डेटा नहीं।",
+        "import_button": "सीख आयात करें"
       },
       "stage_gdd_calibration": {
         "title": "चरण GDD अंशांकन प्रस्ताव",
@@ -1994,6 +1990,27 @@
           "general": "सामान्य कार्य",
           "fertilizer": "उर्वरक"
         }
+      },
+      "application_progress": {
+        "title": "प्रस्ताव लागू करने की प्रगति",
+        "lead": "सीखने के प्रस्तावों से मास्टर अपडेट की पुष्टि स्थिति ट्रैक करें।",
+        "kind": {
+          "stage_gdd": "चरण GDD अंशांकन",
+          "bp_timing": "BP समय समायोजन"
+        },
+        "status": {
+          "not_started": "शुरू नहीं",
+          "applied_pending_confirmation": "लागू — पुष्टि लंबित"
+        }
+      },
+      "post_master": {
+        "title": "मास्टर अपडेट लागू किया गया",
+        "lead": "आपका मास्टर परिवर्तन सहेजा गया। नीचे लागू मानों की समीक्षा करें, फिर कार्यक्षेत्र पर स्थान की पुष्टि करें।",
+        "crop_label": "फसल",
+        "stage_label": "चरण",
+        "required_gdd_label": "आवश्यक GDD",
+        "category_label": "श्रेणी",
+        "open_workbench": "कार्यक्षेत्र पर स्थान की पुष्टि करें"
       }
     },
     "work": {

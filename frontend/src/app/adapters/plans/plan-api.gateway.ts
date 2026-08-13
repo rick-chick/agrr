@@ -4,6 +4,7 @@ import { ApiService } from '../../services/api.service';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
+import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
 import { PlanGateway, TaskScheduleQueryParams } from '../../usecase/plans/plan-gateway';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
@@ -48,6 +49,22 @@ export class PlanApiGateway implements PlanGateway {
   getPlanVsActualSummary(planId: number): Observable<PlanVsActualSummary> {
     return this.apiClient.get<PlanVsActualSummary>(
       `/api/v1/plans/${planId}/plan_vs_actual/summary`
+    );
+  }
+
+  getVarianceLearning(planId: number): Observable<PlanVarianceLearningSnapshot> {
+    return this.apiClient.get<PlanVarianceLearningSnapshot>(
+      `/api/v1/plans/${planId}/variance_learning`
+    );
+  }
+
+  importVarianceLearning(
+    planId: number,
+    sourcePlanId: number
+  ): Observable<PlanVarianceLearningSnapshot> {
+    return this.apiClient.post<PlanVarianceLearningSnapshot>(
+      `/api/v1/plans/${planId}/variance_learning`,
+      { source_plan_id: sourcePlanId }
     );
   }
 

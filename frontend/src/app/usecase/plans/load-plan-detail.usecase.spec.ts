@@ -39,6 +39,8 @@ describe('LoadPlanDetailUseCase', () => {
       getPublicPlanData: () => of(planData),
       getTaskSchedule: () => of({ plan: {} as never, week: {} as never, milestones: [], fields: [], labels: {}, minimap: { start_date: '', end_date: '', weeks: [] } } as TaskScheduleResponse),
       getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
+      getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
+      importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as DeletionUndoResponse)
     };
@@ -146,6 +148,8 @@ describe('LoadPlanDetailUseCase', () => {
             }
           ]
         }),
+      getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
+      importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as DeletionUndoResponse)
     };
@@ -201,6 +205,8 @@ describe('LoadPlanDetailUseCase', () => {
           minimap: { start_date: '', end_date: '', weeks: [] }
         } as TaskScheduleResponse),
       getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
+      getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
+      importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as DeletionUndoResponse)
     };

@@ -61,6 +61,8 @@ describe('WorkHubInitUseCase', () => {
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({ fields: [] } as never),
       getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
+      getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
+      importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never),
       ...overrides
