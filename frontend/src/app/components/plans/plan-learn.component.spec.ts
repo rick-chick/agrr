@@ -77,7 +77,7 @@ describe('PlanLearnComponent', () => {
     blueprintTimingUseCase = { execute: vi.fn() };
     carryoverUseCase = {
       loadFarmContext: vi.fn().mockReturnValue(
-        of({ farmId: 1, sourcePlans: [{ id: 8, name: 'Source Plan', farm_id: 1 }] })
+        of([{ id: 8, name: 'Source Plan', farm_id: 1 }])
       ),
       loadLearningSnapshot: vi.fn().mockReturnValue(of(null)),
       loadCarryoverPreview: vi.fn(),

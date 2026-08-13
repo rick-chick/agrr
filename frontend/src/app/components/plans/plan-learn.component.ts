@@ -31,9 +31,7 @@ const initialControl: PlanLearnViewState = {
   blueprintTimingProposals: [],
   stageGddProposalsLoading: false,
   stageGddProposals: [],
-  farmId: null,
   learningSnapshot: null,
-  learningSnapshotLoading: true,
   carryoverSourcePlans: [],
   selectedSourcePlanId: null,
   carryoverPreviewLoading: false,
@@ -270,8 +268,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
         ...initialControl,
         loading: false,
         error: 'plans.errors.invalid_id',
-        varianceLoading: false,
-        learningSnapshotLoading: false
+        varianceLoading: false
       };
       return;
     }
@@ -280,8 +277,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
       loading: true,
       error: null,
       varianceLoading: true,
-      varianceError: null,
-      learningSnapshotLoading: true
+      varianceError: null
     };
     this.scheduleUseCase.execute({ planId, loadGeneration: 0 });
     const loadGeneration = this.presenter.beginVarianceLoad();
@@ -359,7 +355,6 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
         next: (snapshot) => {
           this.control = {
             ...this.control,
-            learningSnapshotLoading: false,
             learningSnapshot: snapshot
           };
         }
@@ -371,10 +366,9 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
       .loadFarmContext(planId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ farmId, sourcePlans }) => {
+        next: (sourcePlans) => {
           this.control = {
             ...this.control,
-            farmId,
             carryoverSourcePlans: sourcePlans
           };
         }

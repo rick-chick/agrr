@@ -21,9 +21,7 @@ export type PlanLearnViewState = {
   blueprintTimingProposals: BlueprintTimingAdjustmentProposal[];
   stageGddProposalsLoading: boolean;
   stageGddProposals: StageGddCalibrationProposal[];
-  farmId: number | null;
   learningSnapshot: PlanVarianceLearningSnapshot | null;
-  learningSnapshotLoading: boolean;
   carryoverSourcePlans: PlanSummary[];
   selectedSourcePlanId: number | null;
   carryoverPreviewLoading: boolean;

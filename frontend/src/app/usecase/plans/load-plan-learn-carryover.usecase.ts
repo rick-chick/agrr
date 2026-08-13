@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { catchError, map, Observable, of, switchMap } from 'rxjs';
 import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
@@ -10,27 +9,19 @@ import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
 export class LoadPlanLearnCarryoverUseCase {
   constructor(@Inject(PLAN_GATEWAY) private readonly planGateway: PlanGateway) {}
 
-  loadFarmContext(
-    planId: number
-  ): Observable<{ farmId: number; sourcePlans: PlanSummary[] }> {
+  loadFarmContext(planId: number): Observable<PlanSummary[]> {
     return this.planGateway.fetchPlan(planId).pipe(
       switchMap((plan) =>
         this.planGateway.listPlans().pipe(
-          map((plans) => ({
-            farmId: plan.farm_id,
-            sourcePlans: plans.filter(
+          map((plans) =>
+            plans.filter(
               (candidate) => candidate.farm_id === plan.farm_id && candidate.id !== planId
             )
-          })),
-          catchError(() =>
-            of({
-              farmId: plan.farm_id,
-              sourcePlans: [] as PlanSummary[]
-            })
-          )
+          ),
+          catchError(() => of([] as PlanSummary[]))
         )
       ),
-      catchError(() => of({ farmId: 0, sourcePlans: [] as PlanSummary[] }))
+      catchError(() => of([] as PlanSummary[]))
     );
   }
 
@@ -39,14 +30,7 @@ export class LoadPlanLearnCarryoverUseCase {
   }
 
   loadLearningSnapshot(planId: number): Observable<PlanVarianceLearningSnapshot | null> {
-    return this.planGateway.getVarianceLearning(planId).pipe(
-      catchError((err: unknown) => {
-        if (err instanceof HttpErrorResponse && err.status === 404) {
-          return of(null);
-        }
-        return of(null);
-      })
-    );
+    return this.planGateway.getVarianceLearning(planId).pipe(catchError(() => of(null)));
   }
 
   importLearning(
