@@ -25,6 +25,8 @@ function baseInput(overrides: Partial<LearnLoopPhaseInput> = {}): LearnLoopPhase
     hasMasterUpdateNextSteps: false,
     hasLearningSnapshot: false,
     carryoverSourcePlanCount: 0,
+    unrecordedCount: 0,
+    varianceLoaded: false,
     firstActionFieldCultivationId: null,
     firstNotStartedStageGddProposal: null,
     firstNotStartedBpTimingProposal: null,
@@ -43,11 +45,29 @@ describe('buildLearnLoopPhaseResult', () => {
     sessionStorage.clear();
   });
 
+  it('returns observe with work CTA when unrecorded tasks remain', () => {
+    const result = buildLearnLoopPhaseResult(
+      baseInput({
+        unrecordedCount: 3,
+        varianceLoaded: true
+      })
+    );
+
+    expect(result.currentPhase).toBe('observe');
+    expect(result.nextAction).toMatchObject({
+      labelKey: 'plans.learn.loop.next_action.observe_record_work',
+      kind: 'router_link',
+      routerLink: ['/plans', PLAN_ID, 'work']
+    });
+  });
+
   it('returns observe with workbench CTA when action items need review', () => {
     const result = buildLearnLoopPhaseResult(
       baseInput({
         actionRequiredCount: 2,
-        firstActionFieldCultivationId: 100
+        firstActionFieldCultivationId: 100,
+        unrecordedCount: 0,
+        varianceLoaded: true
       })
     );
 

@@ -77,6 +77,8 @@ export class PlanLearnLoopProgressComponent {
   @Input() hasMasterUpdateNextSteps = false;
   @Input() hasLearningSnapshot = false;
   @Input() carryoverSourcePlanCount = 0;
+  @Input() unrecordedCount = 0;
+  @Input() varianceLoaded = false;
 
   readonly phases = LEARN_LOOP_PHASE_ORDER;
 
@@ -98,7 +100,9 @@ export class PlanLearnLoopProgressComponent {
         hasPostMasterConfirmation: this.hasPostMasterConfirmation,
         hasMasterUpdateNextSteps: this.hasMasterUpdateNextSteps,
         hasLearningSnapshot: this.hasLearningSnapshot,
-        carryoverSourcePlanCount: this.carryoverSourcePlanCount
+        carryoverSourcePlanCount: this.carryoverSourcePlanCount,
+        unrecordedCount: this.unrecordedCount,
+        varianceLoaded: this.varianceLoaded
       })
     );
   }

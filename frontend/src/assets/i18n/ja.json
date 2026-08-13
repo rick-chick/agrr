@@ -2543,6 +2543,7 @@
       "empty_fields_no_tasks_hint": "作業予定がまだありません。「作付け計画」タブで圃場と作物を確認するか、上の登録ウィザードをご利用ください。",
       "variance": {
         "month_average": "月平均 Δ {{delta}} 日",
+        "open_learn_section": "振り返りで乖離を確認: {{badge}}",
         "badge": {
           "unrecorded": "未実施",
           "on_time": "予定どおり（±0日）",
@@ -2598,6 +2599,11 @@
       "imported_snapshot_empty": "取り込みスナップショットにカテゴリ差分データがありません。",
       "current_variance_title": "現計画の実績差分",
       "current_variance_hint": "この計画の作業記録に基づく差分です。別計画から取り込んだ学習は上に表示されます。",
+      "observe": {
+        "unrecorded_message": "観測完了まで、未記録の作業が {{count}} 件あります。",
+        "record_work_cta": "作業を記録する",
+        "complete_message": "観測フェーズ完了 — 予定タスクはすべて記録済みです。"
+      },
       "imported_banner": {
         "message": "取り込んだ差分 {{count}} 件が作業台での adjust を要する可能性があります。",
         "manual_hint": "スケジュールを変更する前に、作業台で取り込んだ学習内容を確認してください。自動変更は行われません。",
@@ -2705,6 +2711,7 @@
         "next_action": {
           "observe_workbench": "作業台で乖離を確認",
           "observe_proposals": "マスタ更新提案を確認",
+          "observe_record_work": "残りの作業を記録",
           "apply_stage_gdd": "ステージ GDD 校正を適用",
           "apply_bp_timing": "BP タイミング調整を適用",
           "reorganize_placement": "作業台で配置を確認",

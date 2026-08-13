@@ -176,6 +176,48 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('General tasks');
   });
 
+  it('shows unrecorded CTA when summary has unrecorded_count', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 3,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.plan-learn-observe-status--unrecorded')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('3 tasks still need work records');
+    const link = fixture.nativeElement.querySelector(
+      'a.plan-learn-observe-status__cta'
+    ) as HTMLAnchorElement;
+    expect(link?.getAttribute('href')).toContain('/plans/7/work');
+  });
+
+  it('shows observe phase complete when unrecorded_count is zero', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.plan-learn-observe-status--complete')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Observation phase complete');
+  });
+
   it('renders proposal cards when action_required_items are present', async () => {
     fixture.detectChanges();
     presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });

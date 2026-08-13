@@ -1905,6 +1905,7 @@
       "empty_fields_no_tasks_hint": "अभी तक कोई कार्य योजना निर्धारित नहीं है। \"खेती योजना\" टैब में खेत और फसलें जाँचें, या ऊपर दिए गए पंजीकरण विज़ार्ड का उपयोग करें।",
       "variance": {
         "month_average": "मासिक औसत Δ {{delta}} दिन",
+        "open_learn_section": "सीख में variance की समीक्षा करें: {{badge}}",
         "badge": {
           "unrecorded": "अभिलेखित नहीं",
           "on_time": "समय पर (±0 दिन)",
@@ -1960,6 +1961,11 @@
       "imported_snapshot_empty": "आयातित स्नैपशॉट में कोई श्रेणी variance डेटा नहीं है।",
       "current_variance_title": "वर्तमान योजना variance",
       "current_variance_hint": "इस योजना के कार्य रिकॉर्ड से variance। दूसरी योजना से आयातित सीख ऊपर दिखाई जाती है।",
+      "observe": {
+        "unrecorded_message": "अवलोकन पूर्ण करने से पहले {{count}} कार्यों के रिकॉर्ड अभी भी आवश्यक हैं।",
+        "record_work_cta": "कार्य रिकॉर्ड करें",
+        "complete_message": "अवलोकन चरण पूर्ण — सभी निर्धारित कार्य रिकॉर्ड हो चुके हैं।"
+      },
       "imported_banner": {
         "message": "आयातित variance की {{count}} वस्तु(एँ) workbench पर adjust की समीक्षा चाह सकती हैं।",
         "manual_hint": "अनुसूची बदलने से पहले workbench पर आयातित सीख की समीक्षा करें। कोई स्वचालित परिवर्तन नहीं होता।",
@@ -2067,6 +2073,7 @@
         "next_action": {
           "observe_workbench": "विचरण समीक्षा के लिए कार्यक्षेत्र खोलें",
           "observe_proposals": "मास्टर अपडेट प्रस्तावों की समीक्षा करें",
+          "observe_record_work": "शेष कार्य रिकॉर्ड करें",
           "apply_stage_gdd": "चरण GDD अंशांकन लागू करें",
           "apply_bp_timing": "BP समय समायोजन लागू करें",
           "reorganize_placement": "कार्यक्षेत्र पर स्थान की पुष्टि करें",

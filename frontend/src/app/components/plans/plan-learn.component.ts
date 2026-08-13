@@ -11,6 +11,7 @@ import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-tim
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.component';
 import { PlanLearnLoopProgressComponent } from './plan-learn-loop-progress.component';
+import { PlanLearnObserveStatusComponent } from './plan-learn-observe-status.component';
 import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
@@ -72,7 +73,8 @@ const initialControl: PlanLearnViewState = {
     VarianceActionProposalCardsComponent,
     BlueprintTimingAdjustmentProposalsViewComponent,
     PlanLearnImportedBannerComponent,
-    PlanLearnLoopProgressComponent
+    PlanLearnLoopProgressComponent,
+    PlanLearnObserveStatusComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -103,6 +105,14 @@ const initialControl: PlanLearnViewState = {
             [hasMasterUpdateNextSteps]="showMasterUpdateNextSteps"
             [hasLearningSnapshot]="control.learningSnapshot != null"
             [carryoverSourcePlanCount]="control.carryoverSourcePlans.length"
+            [unrecordedCount]="control.varianceSummary?.unrecorded_count ?? 0"
+            [varianceLoaded]="!control.varianceLoading && control.varianceError == null"
+          />
+          <app-plan-learn-observe-status
+            [planId]="planId"
+            [varianceLoading]="control.varianceLoading"
+            [varianceError]="control.varianceError"
+            [unrecordedCount]="control.varianceSummary?.unrecorded_count ?? 0"
           />
           @if (showPostMasterConfirmation) {
             <app-plan-learn-post-master-confirmation

@@ -30,6 +30,8 @@ export interface LearnLoopPhaseInput {
   hasMasterUpdateNextSteps: boolean;
   hasLearningSnapshot: boolean;
   carryoverSourcePlanCount: number;
+  unrecordedCount: number;
+  varianceLoaded: boolean;
   firstActionFieldCultivationId: number | null;
   firstNotStartedStageGddProposal: Pick<
     StageGddCalibrationProposal,
@@ -163,6 +165,13 @@ export function resolveLearnLoopNextAction(input: LearnLoopPhaseInput): LearnLoo
 
   switch (phase) {
     case 'observe':
+      if (input.unrecordedCount > 0 && input.varianceLoaded) {
+        return {
+          labelKey: 'plans.learn.loop.next_action.observe_record_work',
+          kind: 'router_link',
+          routerLink: ['/plans', input.planId, 'work']
+        };
+      }
       if (input.firstActionFieldCultivationId != null) {
         return {
           labelKey: 'plans.learn.loop.next_action.observe_workbench',
@@ -243,6 +252,8 @@ export function buildLearnLoopPhaseInputFromState(input: {
   hasMasterUpdateNextSteps: boolean;
   hasLearningSnapshot: boolean;
   carryoverSourcePlanCount: number;
+  unrecordedCount?: number;
+  varianceLoaded?: boolean;
 }): LearnLoopPhaseInput {
   const counts = countLearnProposalApplicationStatuses(
     input.planId,
@@ -263,6 +274,8 @@ export function buildLearnLoopPhaseInputFromState(input: {
       hasPendingMasterUpdateConfirmation(input.planId),
     hasLearningSnapshot: input.hasLearningSnapshot,
     carryoverSourcePlanCount: input.carryoverSourcePlanCount,
+    unrecordedCount: input.unrecordedCount ?? 0,
+    varianceLoaded: input.varianceLoaded ?? false,
     firstActionFieldCultivationId:
       input.actionRequiredItems[0]?.field_cultivation_id ?? null,
     firstNotStartedStageGddProposal: findFirstNotStartedStageGddProposal(

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -55,7 +56,8 @@ describe('TaskScheduleMonthListComponent', () => {
     HTMLDialogElement.prototype.close = vi.fn();
 
     await TestBed.configureTestingModule({
-      imports: [TaskScheduleMonthListComponent, TranslateModule.forRoot()]
+      imports: [TaskScheduleMonthListComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
     }).compileComponents();
 
     const translate = TestBed.inject(TranslateService);
@@ -343,5 +345,38 @@ describe('TaskScheduleMonthListComponent', () => {
       )
     ).toBeTruthy();
     unrecordedFixture.destroy();
+  });
+
+  it('links variance badge to Learn variance section when planId is set', async () => {
+    const linkFixture = TestBed.createComponent(TaskScheduleMonthListComponent);
+    linkFixture.componentInstance.planId = 7;
+    linkFixture.componentInstance.monthGroups = [
+      {
+        monthKey: '2026-06',
+        averageDeltaDays: 3,
+        rows: [
+          {
+            ...monthGroups[0].rows[0],
+            item: domainTask({
+              item_id: 6,
+              name: 'Late linked',
+              scheduled_date: '2026-06-10',
+              actualDate: '2026-06-13',
+              deltaDays: 3
+            })
+          }
+        ]
+      }
+    ];
+    linkFixture.detectChanges();
+    await linkFixture.whenStable();
+
+    const link = linkFixture.nativeElement.querySelector(
+      'a.plan-task-schedule-month-list__variance-link'
+    ) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toContain('/plans/7/learn');
+    expect(link.getAttribute('href')).toContain('#plan-learn-loop-proposals');
+    linkFixture.destroy();
   });
 });

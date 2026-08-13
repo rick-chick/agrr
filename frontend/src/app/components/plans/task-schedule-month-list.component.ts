@@ -1,6 +1,8 @@
 import { Component, ElementRef, Input, ViewChild, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { formatIsoDateForDisplay, formatIsoDayForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
+import { PLAN_LEARN_VARIANCE_SECTION_ID } from '../../domain/plans/learn-observe-phase-status';
 import type { PlanTaskScheduleMonthGroupView, PlanTaskScheduleRowView } from './plan-task-schedule.view';
 import type { PlanTaskScheduleItem } from '../../domain/work-schedule/plan-schedule-snapshot';
 import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.component';
@@ -16,7 +18,7 @@ import {
 @Component({
   selector: 'app-task-schedule-month-list',
   standalone: true,
-  imports: [TranslateModule, TaskScheduleItemDetailComponent],
+  imports: [RouterLink, TranslateModule, TaskScheduleItemDetailComponent],
   template: `
     @if (!monthGroups.length && !unscheduledRows.length) {
       <p class="plan-task-schedule-month-list__empty">{{
@@ -34,7 +36,7 @@ import {
             }}</h3>
             <ul class="plan-task-schedule-month-list__list" role="list">
               @for (row of unscheduledRows; track row.item.item_id) {
-                <li>
+                <li class="plan-task-schedule-month-list__item">
                   <button
                     type="button"
                     class="plan-task-schedule-month-list__row"
@@ -54,17 +56,29 @@ import {
                       <span [class]="statusModifierClass(row)">{{
                         statusLabelKey(row) | translate
                       }}</span>
-                      @if (varianceBadge(row); as badge) {
-                        <span
-                          class="plan-task-schedule-month-list__variance"
-                          [class]="varianceModifierClass(badge)"
-                          [attr.aria-label]="varianceAriaLabel(badge)"
-                        >
-                          {{ varianceDeltaLabel(badge) }}
-                        </span>
-                      }
                     </span>
                   </button>
+                  @if (varianceBadge(row); as badge) {
+                    @if (planId != null) {
+                      <a
+                        class="plan-task-schedule-month-list__variance plan-task-schedule-month-list__variance-link"
+                        [class]="varianceModifierClass(badge)"
+                        [routerLink]="['/plans', planId, 'learn']"
+                        [fragment]="learnVarianceFragment"
+                        [attr.aria-label]="varianceLearnAriaLabel(badge)"
+                      >
+                        {{ varianceDeltaLabel(badge) }}
+                      </a>
+                    } @else {
+                      <span
+                        class="plan-task-schedule-month-list__variance"
+                        [class]="varianceModifierClass(badge)"
+                        [attr.aria-label]="varianceAriaLabel(badge)"
+                      >
+                        {{ varianceDeltaLabel(badge) }}
+                      </span>
+                    }
+                  }
                 </li>
               }
             </ul>
@@ -88,7 +102,7 @@ import {
             </h3>
             <ul class="plan-task-schedule-month-list__list" role="list">
               @for (row of group.rows; track row.item.item_id) {
-                <li>
+                <li class="plan-task-schedule-month-list__item">
                   <button
                     type="button"
                     class="plan-task-schedule-month-list__row"
@@ -113,17 +127,29 @@ import {
                       <span [class]="statusModifierClass(row)">{{
                         statusLabelKey(row) | translate
                       }}</span>
-                      @if (varianceBadge(row); as badge) {
-                        <span
-                          class="plan-task-schedule-month-list__variance"
-                          [class]="varianceModifierClass(badge)"
-                          [attr.aria-label]="varianceAriaLabel(badge)"
-                        >
-                          {{ varianceDeltaLabel(badge) }}
-                        </span>
-                      }
                     </span>
                   </button>
+                  @if (varianceBadge(row); as badge) {
+                    @if (planId != null) {
+                      <a
+                        class="plan-task-schedule-month-list__variance plan-task-schedule-month-list__variance-link"
+                        [class]="varianceModifierClass(badge)"
+                        [routerLink]="['/plans', planId, 'learn']"
+                        [fragment]="learnVarianceFragment"
+                        [attr.aria-label]="varianceLearnAriaLabel(badge)"
+                      >
+                        {{ varianceDeltaLabel(badge) }}
+                      </a>
+                    } @else {
+                      <span
+                        class="plan-task-schedule-month-list__variance"
+                        [class]="varianceModifierClass(badge)"
+                        [attr.aria-label]="varianceAriaLabel(badge)"
+                      >
+                        {{ varianceDeltaLabel(badge) }}
+                      </span>
+                    }
+                  }
                 </li>
               }
             </ul>
@@ -176,6 +202,10 @@ export class TaskScheduleMonthListComponent {
 
   @Input() unscheduledRows: PlanTaskScheduleRowView[] = [];
 
+  @Input() planId: number | null = null;
+
+  readonly learnVarianceFragment = PLAN_LEARN_VARIANCE_SECTION_ID;
+
   selectedRow: PlanTaskScheduleRowView | null = null;
 
   get selectedTask(): PlanTaskScheduleItem | null {
@@ -217,6 +247,12 @@ export class TaskScheduleMonthListComponent {
   varianceAriaLabel(badge: PlanTaskScheduleVarianceBadge): string {
     return this.translate.instant(`plans.task_schedules.variance.badge.${badge.kind}`, {
       delta: badge.deltaDays ?? 0
+    });
+  }
+
+  varianceLearnAriaLabel(badge: PlanTaskScheduleVarianceBadge): string {
+    return this.translate.instant('plans.task_schedules.variance.open_learn_section', {
+      badge: this.varianceAriaLabel(badge)
     });
   }
 

@@ -1,0 +1,25 @@
+.plan-learn-observe-status {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.plan-learn-observe-status--unrecorded {
+  background: var(--color-surface-warning-subtle, #fff8e6);
+  border-color: var(--color-border-warning, #e6c200);
+}
+
+.plan-learn-observe-status--complete {
+  background: var(--color-surface-success-subtle, #edf7ed);
+  border-color: var(--color-border-success, #2e7d32);
+}
+
+.plan-learn-observe-status__message {
+  margin: 0 0 var(--space-2);
+}
+
+.plan-learn-observe-status__cta {
+  display: inline-flex;
+  align-items: center;
+}
