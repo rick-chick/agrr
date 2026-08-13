@@ -475,13 +475,14 @@ fn post_task_schedule_item_create_returns_item_payload() {
     let body = serde_json::json!({
         "task_schedule_item": {
             "field_cultivation_id": seed.field_cultivation_id,
+            "cultivation_plan_crop_id": seed.cultivation_plan_crop_id,
             "name": "手動追加作業",
             "scheduled_date": "2026-07-10"
         }
     });
 
     let (status, response_body) = status_and_body(
-        client.post(&path, Some(&session_id), &empty_headers(), Some(&body.to_string())),
+        client.post(&path, Some(&session_id), &empty_headers(), Some(body)),
     );
     assert_eq!(201, status, "{response_body}");
     let json: serde_json::Value =
@@ -514,7 +515,7 @@ fn patch_task_schedule_item_update_scheduled_date_returns_item_payload() {
     });
 
     let (status, response_body) = status_and_body(
-        client.patch(&path, Some(&session_id), &empty_headers(), Some(&body.to_string())),
+        client.patch(&path, Some(&session_id), &empty_headers(), Some(body)),
     );
     assert_eq!(200, status, "{response_body}");
     let json: serde_json::Value =

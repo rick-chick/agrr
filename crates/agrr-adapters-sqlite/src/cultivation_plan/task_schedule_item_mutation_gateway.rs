@@ -116,7 +116,13 @@ impl TaskScheduleItemMutationSqliteGateway {
              WHERE tsi.id = ?1",
             params![item_id],
             |row| {
-                let rescheduled_at: Option<String> = row.get(5)?;
+                let rescheduled_at = match row.get::<_, rusqlite::types::Value>(5)? {
+                    rusqlite::types::Value::Null => None,
+                    rusqlite::types::Value::Text(s) => Some(s),
+                    rusqlite::types::Value::Integer(i) => Some(i.to_string()),
+                    rusqlite::types::Value::Real(f) => Some(f.to_string()),
+                    _ => None,
+                };
                 Ok(json!({
                     "id": row.get::<_, i64>(0)?,
                     "name": row.get::<_, String>(1)?,

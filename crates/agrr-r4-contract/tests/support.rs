@@ -160,6 +160,7 @@ pub struct WorkRecordPlanSeed {
     pub farm_id: i64,
     pub crop_id: i64,
     pub crop_name: String,
+    pub cultivation_plan_crop_id: i64,
     pub field_cultivation_id: i64,
     pub task_schedule_item_id: i64,
 }
@@ -462,6 +463,7 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
         farm_id,
         crop_id,
         crop_name,
+        cultivation_plan_crop_id: plan_crop_id,
         field_cultivation_id,
         task_schedule_item_id,
     }
