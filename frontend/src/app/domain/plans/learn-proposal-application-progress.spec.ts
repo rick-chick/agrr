@@ -7,8 +7,11 @@ import {
   confirmLearnProposalFromPostMaster,
   markAllConfirmedProposalsDone,
   markBpTimingProposalAppliedPending,
+  markBpTimingProposalDismissed,
   markLearnProposalConfirmed,
+  markLearnProposalDismissed,
   markStageGddProposalAppliedPending,
+  markStageGddProposalDismissed,
   parsePlanLearnFollowUp,
   proposalKeyFromPostMasterPayload,
   readLearnBpTimingApplyContext,
@@ -83,6 +86,16 @@ describe('learn proposal application progress storage', () => {
     expect(
       resolveLearnProposalApplicationStatus(PLAN_ID, stageGddProposalProgressKey(1, 2))
     ).toBe('confirmed');
+  });
+
+  it('marks proposal as dismissed and persists in session storage', () => {
+    const key = stageGddProposalProgressKey(1, 2);
+    markLearnProposalDismissed(PLAN_ID, key);
+
+    expect(resolveLearnProposalApplicationStatus(PLAN_ID, key)).toBe('dismissed');
+    expect(readLearnProposalApplicationProgress(PLAN_ID)).toEqual({
+      [key]: 'dismissed'
+    });
   });
 
   it('marks confirmed proposals as done', () => {
@@ -183,6 +196,35 @@ describe('confirmLearnProposalFromPostMaster edge cases', () => {
     expect(() => proposalKeyFromPostMasterPayload(payload)).toThrow(
       'category is required for bp_timing post_master payload'
     );
+  });
+});
+
+describe('dismiss learn proposals', () => {
+  it('marks stage GDD proposal as dismissed in session storage', () => {
+    markStageGddProposalDismissed(PLAN_ID, { cropId: 1, stageId: 2 });
+
+    expect(
+      resolveLearnProposalApplicationStatus(PLAN_ID, stageGddProposalProgressKey(1, 2))
+    ).toBe('dismissed');
+  });
+
+  it('marks BP timing proposal as dismissed in session storage', () => {
+    markBpTimingProposalDismissed(PLAN_ID, { cropId: 4, category: 'fertilizer' });
+
+    expect(
+      resolveLearnProposalApplicationStatus(PLAN_ID, bpTimingProposalProgressKey(4, 'fertilizer'))
+    ).toBe('dismissed');
+  });
+
+  it('does not overwrite done status when dismissing', () => {
+    const key = stageGddProposalProgressKey(1, 2);
+    markStageGddProposalAppliedPending(PLAN_ID, { cropId: 1, stageId: 2 });
+    markLearnProposalConfirmed(PLAN_ID, key);
+    markAllConfirmedProposalsDone(PLAN_ID);
+
+    markStageGddProposalDismissed(PLAN_ID, { cropId: 1, stageId: 2 });
+
+    expect(resolveLearnProposalApplicationStatus(PLAN_ID, key)).toBe('done');
   });
 });
 

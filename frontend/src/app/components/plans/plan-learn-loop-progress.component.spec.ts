@@ -3,6 +3,10 @@ import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
+import {
+  markBpTimingProposalDismissed,
+  markStageGddProposalDismissed
+} from '../../domain/plans/learn-proposal-application-progress';
 import { PlanLearnLoopProgressComponent } from './plan-learn-loop-progress.component';
 
 function actionItem(fieldCultivationId: number): PlanVarianceActionItem {
@@ -43,8 +47,13 @@ describe('PlanLearnLoopProgressComponent', () => {
         'plans.learn.loop.phase.apply': 'Apply',
         'plans.learn.loop.phase.reorganize': 'Reorganize',
         'plans.learn.loop.phase.handoff': 'Handoff',
+        'plans.learn.loop.phase.complete': 'Complete',
+        'plans.learn.loop.complete_message': 'Learning loop complete',
         'plans.learn.loop.next_action.observe_workbench': 'Open workbench',
-        'plans.learn.loop.next_action.handoff_new_plan': 'Create next plan with learning'
+        'plans.learn.loop.next_action.handoff_carryover': 'Import carryover',
+        'plans.learn.loop.next_action.handoff_new_plan': 'Create next plan with learning',
+        'plans.learn.loop.next_action.complete_reorganize': 'Verify placement',
+        'plans.learn.loop.next_action.complete_next_plan': 'Go to plans'
       },
       true
     );
@@ -58,7 +67,7 @@ describe('PlanLearnLoopProgressComponent', () => {
     fixture.detectChanges();
 
     const phases = fixture.nativeElement.querySelectorAll('.learn-loop-progress__phase');
-    expect(phases).toHaveLength(4);
+    expect(phases).toHaveLength(5);
     expect(phases[0].classList.contains('learn-loop-progress__phase--current')).toBe(true);
     expect(phases[0].getAttribute('aria-current')).toBe('step');
   });
@@ -97,5 +106,42 @@ describe('PlanLearnLoopProgressComponent', () => {
       '.learn-loop-progress__phase--completed'
     );
     expect(completedPhases.length).toBeGreaterThan(0);
+  });
+
+  it('shows learning loop complete banner when all proposals are dismissed', () => {
+    markStageGddProposalDismissed(7, { cropId: 1, stageId: 2 });
+    markBpTimingProposalDismissed(7, { cropId: 1, category: 'general' });
+
+    fixture.componentInstance.stageGddProposals = [
+      {
+        cropId: 1,
+        cropName: 'Tomato',
+        stageId: 2,
+        stageOrder: 1,
+        stageName: 'Vegetative',
+        averageGddDelta: 10,
+        recordedItemCount: 3,
+        currentRequiredGdd: 100,
+        proposedRequiredGdd: 110
+      }
+    ];
+    fixture.componentInstance.blueprintTimingProposals = [
+      {
+        cropId: 1,
+        cropName: 'Tomato',
+        category: 'general',
+        averageDeltaDays: 2,
+        averageGddDelta: 5,
+        recordedItemCount: 4,
+        affectedBlueprintCount: 2,
+        proposalBody: { stages: [], agricultural_tasks: [], task_schedule_blueprints: [] }
+      }
+    ];
+    fixture.componentInstance.progressRefreshVersion = 1;
+    fixture.detectChanges();
+
+    const completeBanner = fixture.nativeElement.querySelector('.learn-loop-progress__complete');
+    expect(completeBanner).not.toBeNull();
+    expect(completeBanner.getAttribute('role')).toBe('status');
   });
 });

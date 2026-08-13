@@ -73,3 +73,22 @@
 .learn-loop-progress__next-cta {
   flex-shrink: 0;
 }
+
+.learn-loop-progress__complete {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface-base));
+}
+
+.learn-loop-progress__complete-title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.learn-loop-progress__complete-lead {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}

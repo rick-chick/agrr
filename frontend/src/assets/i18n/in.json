@@ -2017,8 +2017,12 @@
           "not_started": "लागू नहीं",
           "applied_pending_confirmation": "लागू — पुष्टि लंबित",
           "confirmed": "पुष्टि की गई — पुनर्गठन प्रगति में",
-          "done": "पूर्ण"
+          "done": "पूर्ण",
+          "dismissed": "अस्वीकृत"
         }
+      },
+      "proposal": {
+        "dismiss": "लागू न करें"
       },
       "post_master": {
         "title": "मास्टर अपडेट लागू किया गया",
@@ -2056,11 +2060,6 @@
         },
         "completed": "पूर्ण"
       },
-      "observe_phase": {
-        "unrecorded_message": "{{count}} कार्य अभी तक अभिलेखित नहीं हैं।",
-        "unrecorded_cta": "कार्य अभिलेखित करें",
-        "complete_message": "अवलोकन चरण पूर्ण — सभी निर्धारित कार्य अभिलेखित हैं।"
-      },
       "loop": {
         "title": "सीखने लूप की प्रगति",
         "next_action_title": "अगला कदम",
@@ -2068,8 +2067,10 @@
           "observe": "अवलोकन",
           "apply": "लागू करें",
           "reorganize": "पुनर्गठन",
-          "handoff": "हस्तांतरण"
+          "handoff": "हस्तांतरण",
+          "complete": "पूर्ण"
         },
+        "complete_message": "सीखने का लूप पूर्ण",
         "next_action": {
           "observe_workbench": "विचरण समीक्षा के लिए कार्यक्षेत्र खोलें",
           "observe_proposals": "मास्टर अपडेट प्रस्तावों की समीक्षा करें",
@@ -2077,8 +2078,20 @@
           "apply_bp_timing": "BP समय समायोजन लागू करें",
           "reorganize_placement": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
           "handoff_carryover": "सीखना आयात या हस्तांतरण करें",
+          "loop_complete_next_plan": "अगली योजना पर जाएँ",
+          "complete_reorganize": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
+          "complete_next_plan": "योजनाओं पर जाएँ",
           "handoff_new_plan": "सीख के साथ अगली योजना बनाएँ"
+        },
+        "complete": {
+          "title": "सीखने का लूप पूर्ण",
+          "lead": "सभी मास्टर अपडेट प्रस्ताव लागू, अस्वीकृत या पूर्ण हैं। पुनर्गठन या अगली योजना पर आगे बढ़ें।"
         }
+      },
+      "observe_phase": {
+        "unrecorded_message": "{{count}} कार्य अभी तक अभिलेखित नहीं हैं।",
+        "unrecorded_cta": "कार्य अभिलेखित करें",
+        "complete_message": "अवलोकन चरण पूर्ण — सभी निर्धारित कार्य अभिलेखित हैं।"
       }
     },
     "work": {

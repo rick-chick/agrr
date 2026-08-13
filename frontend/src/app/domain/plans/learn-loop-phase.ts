@@ -6,17 +6,20 @@ import type { BlueprintTimingAdjustmentProposal } from './blueprint-timing-adjus
 import type { StageGddCalibrationProposal } from './stage-gdd-calibration-proposal';
 import {
   bpTimingProposalProgressKey,
+  isLearnProposalResolved,
   resolveLearnProposalApplicationStatus,
-  stageGddProposalProgressKey
+  stageGddProposalProgressKey,
+  type LearnProposalApplicationStatus
 } from './learn-proposal-application-progress';
 
-export type LearnLoopPhaseId = 'observe' | 'apply' | 'reorganize' | 'handoff';
+export type LearnLoopPhaseId = 'observe' | 'apply' | 'reorganize' | 'handoff' | 'complete';
 
 export const LEARN_LOOP_PHASE_ORDER: ReadonlyArray<LearnLoopPhaseId> = [
   'observe',
   'apply',
   'reorganize',
-  'handoff'
+  'handoff',
+  'complete'
 ];
 
 export interface LearnLoopPhaseInput {
@@ -26,6 +29,7 @@ export interface LearnLoopPhaseInput {
   blueprintTimingProposalCount: number;
   notStartedProposalCount: number;
   appliedPendingProposalCount: number;
+  loopComplete: boolean;
   hasPostMasterConfirmation: boolean;
   hasMasterUpdateNextSteps: boolean;
   hasLearningSnapshot: boolean;
@@ -39,6 +43,7 @@ export interface LearnLoopPhaseInput {
     BlueprintTimingAdjustmentProposal,
     'cropId' | 'cropName' | 'category'
   > | null;
+  allProposalsResolved: boolean;
 }
 
 export type LearnLoopNextActionKind = 'router_link' | 'scroll';
@@ -54,25 +59,26 @@ export interface LearnLoopNextAction {
 export interface LearnLoopPhaseResult {
   currentPhase: LearnLoopPhaseId;
   nextAction: LearnLoopNextAction | null;
+  secondaryAction?: LearnLoopNextAction | null;
 }
 
-export function countLearnProposalApplicationStatuses(
+export function areAllLearnProposalsResolved(
   planId: number,
   stageGddProposals: ReadonlyArray<StageGddCalibrationProposal>,
   blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>
-): { notStarted: number; appliedPending: number } {
-  let notStarted = 0;
-  let appliedPending = 0;
+): boolean {
+  const totalCount = stageGddProposals.length + blueprintTimingProposals.length;
+  if (totalCount === 0) {
+    return false;
+  }
 
   for (const proposal of stageGddProposals) {
     const status = resolveLearnProposalApplicationStatus(
       planId,
       stageGddProposalProgressKey(proposal.cropId, proposal.stageId)
     );
-    if (status === 'not_started') {
-      notStarted += 1;
-    } else {
-      appliedPending += 1;
+    if (!isLearnProposalResolved(status)) {
+      return false;
     }
   }
 
@@ -81,14 +87,96 @@ export function countLearnProposalApplicationStatuses(
       planId,
       bpTimingProposalProgressKey(proposal.cropId, proposal.category)
     );
-    if (status === 'not_started') {
-      notStarted += 1;
-    } else {
-      appliedPending += 1;
+    if (!isLearnProposalResolved(status)) {
+      return false;
     }
   }
 
-  return { notStarted, appliedPending };
+  return true;
+}
+
+export function countLearnProposalApplicationStatuses(
+  planId: number,
+  stageGddProposals: ReadonlyArray<StageGddCalibrationProposal>,
+  blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>
+): { notStarted: number; appliedPending: number; resolved: number } {
+  let notStarted = 0;
+  let appliedPending = 0;
+  let resolved = 0;
+
+  for (const proposal of stageGddProposals) {
+    tallyProposalStatus(
+      resolveLearnProposalApplicationStatus(
+        planId,
+        stageGddProposalProgressKey(proposal.cropId, proposal.stageId)
+      ),
+      (n) => (notStarted += n),
+      (n) => (appliedPending += n),
+      (n) => (resolved += n)
+    );
+  }
+
+  for (const proposal of blueprintTimingProposals) {
+    tallyProposalStatus(
+      resolveLearnProposalApplicationStatus(
+        planId,
+        bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+      ),
+      (n) => (notStarted += n),
+      (n) => (appliedPending += n),
+      (n) => (resolved += n)
+    );
+  }
+
+  return { notStarted, appliedPending, resolved };
+}
+
+function tallyProposalStatus(
+  status: LearnProposalApplicationStatus,
+  addNotStarted: (count: number) => void,
+  addAppliedPending: (count: number) => void,
+  addResolved: (count: number) => void
+): void {
+  if (status === 'not_started') {
+    addNotStarted(1);
+  } else if (status === 'applied_pending_confirmation' || status === 'confirmed') {
+    addAppliedPending(1);
+  } else if (isLearnProposalResolved(status)) {
+    addResolved(1);
+  }
+}
+
+export function isLearnLoopComplete(
+  planId: number,
+  stageGddProposals: ReadonlyArray<StageGddCalibrationProposal>,
+  blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>
+): boolean {
+  const totalProposals = stageGddProposals.length + blueprintTimingProposals.length;
+  if (totalProposals === 0) {
+    return false;
+  }
+
+  for (const proposal of stageGddProposals) {
+    const status = resolveLearnProposalApplicationStatus(
+      planId,
+      stageGddProposalProgressKey(proposal.cropId, proposal.stageId)
+    );
+    if (status !== 'done' && status !== 'dismissed') {
+      return false;
+    }
+  }
+
+  for (const proposal of blueprintTimingProposals) {
+    const status = resolveLearnProposalApplicationStatus(
+      planId,
+      bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+    );
+    if (status !== 'done' && status !== 'dismissed') {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export function findFirstNotStartedStageGddProposal(
@@ -136,8 +224,16 @@ export function resolveLearnLoopPhase(input: LearnLoopPhaseInput): LearnLoopPhas
     return 'apply';
   }
 
+  if (input.loopComplete) {
+    return 'handoff';
+  }
+
   const hasMasterProposals =
     input.stageGddProposalCount > 0 || input.blueprintTimingProposalCount > 0;
+
+  if (hasMasterProposals && input.allProposalsResolved) {
+    return 'complete';
+  }
 
   if (
     hasMasterProposals &&
@@ -219,19 +315,51 @@ export function resolveLearnLoopNextAction(input: LearnLoopPhaseInput): LearnLoo
       };
 
     case 'handoff':
+      if (input.loopComplete) {
+        return {
+          labelKey: 'plans.learn.loop.next_action.loop_complete_next_plan',
+          kind: 'scroll',
+          scrollTargetId: 'plan-learn-carryover-title'
+        };
+      }
       return {
         labelKey: 'plans.learn.loop.next_action.handoff_new_plan',
         kind: 'router_link',
         routerLink: ['/plans', 'new'],
         queryParams: { carryoverFrom: input.planId }
       };
+
+    case 'complete': {
+      const adjust = buildPlanDetailAdjustNavigation(input.planId);
+      return {
+        labelKey: 'plans.learn.loop.next_action.complete_reorganize',
+        kind: 'router_link',
+        routerLink: adjust.commands,
+        queryParams: adjust.queryParams
+      };
+    }
   }
+}
+
+export function resolveLearnLoopSecondaryAction(
+  input: LearnLoopPhaseInput
+): LearnLoopNextAction | null {
+  if (resolveLearnLoopPhase(input) !== 'complete') {
+    return null;
+  }
+
+  return {
+    labelKey: 'plans.learn.loop.next_action.complete_next_plan',
+    kind: 'router_link',
+    routerLink: ['/plans']
+  };
 }
 
 export function buildLearnLoopPhaseResult(input: LearnLoopPhaseInput): LearnLoopPhaseResult {
   return {
     currentPhase: resolveLearnLoopPhase(input),
-    nextAction: resolveLearnLoopNextAction(input)
+    nextAction: resolveLearnLoopNextAction(input),
+    secondaryAction: resolveLearnLoopSecondaryAction(input)
   };
 }
 
@@ -258,6 +386,11 @@ export function buildLearnLoopPhaseInputFromState(input: {
     blueprintTimingProposalCount: input.blueprintTimingProposals.length,
     notStartedProposalCount: counts.notStarted,
     appliedPendingProposalCount: counts.appliedPending,
+    loopComplete: isLearnLoopComplete(
+      input.planId,
+      input.stageGddProposals,
+      input.blueprintTimingProposals
+    ),
     hasPostMasterConfirmation: input.hasPostMasterConfirmation,
     hasMasterUpdateNextSteps:
       input.hasMasterUpdateNextSteps ||
@@ -272,6 +405,11 @@ export function buildLearnLoopPhaseInputFromState(input: {
     ),
     firstNotStartedBpTimingProposal: findFirstNotStartedBpTimingProposal(
       input.planId,
+      input.blueprintTimingProposals
+    ),
+    allProposalsResolved: areAllLearnProposalsResolved(
+      input.planId,
+      input.stageGddProposals,
       input.blueprintTimingProposals
     )
   };
