@@ -14,6 +14,8 @@ import { PlanLearnComponent } from './plan-learn.component';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import {
   markStageGddProposalAppliedPending,
+  resolveLearnProposalApplicationStatus,
+  stageGddProposalProgressKey,
   storeLearnPostMasterPayload
 } from '../../domain/plans/learn-proposal-application-progress';
 
@@ -399,11 +401,32 @@ describe('PlanLearnComponent post_master follow-up', () => {
 
     expect(fixture.nativeElement.querySelector('app-plan-learn-application-progress-view')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Proposal application progress');
-    expect(fixture.nativeElement.textContent).toContain('Applied — pending confirmation');
+    expect(fixture.nativeElement.textContent).toContain('Confirmed — reorganization in progress');
     expect(fixture.nativeElement.querySelector('app-plan-learn-post-master-confirmation')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Master update applied');
     expect(fixture.nativeElement.textContent).toContain('Verify placement on workbench');
     expect(fixture.nativeElement.querySelector('app-plan-learn-master-update-next-steps')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Next steps after master update');
+  });
+
+  it('transitions proposal status to confirmed when post_master follow-up is consumed', async () => {
+    storeLearnPostMasterPayload(7, {
+      kind: 'stage_gdd',
+      cropId: 1,
+      cropName: 'Tomato',
+      stageId: 2,
+      stageName: 'Vegetative',
+      appliedRequiredGdd: 150
+    });
+    markStageGddProposalAppliedPending(7, { cropId: 1, stageId: 2 });
+
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(
+      resolveLearnProposalApplicationStatus(7, stageGddProposalProgressKey(1, 2))
+    ).toBe('confirmed');
   });
 });

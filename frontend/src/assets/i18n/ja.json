@@ -2649,7 +2649,9 @@
         },
         "status": {
           "not_started": "未着手",
-          "applied_pending_confirmation": "適用済み・確認待ち"
+          "applied_pending_confirmation": "適用済み・確認待ち",
+          "confirmed": "確認済み・再編成中",
+          "done": "完了"
         }
       },
       "post_master": {

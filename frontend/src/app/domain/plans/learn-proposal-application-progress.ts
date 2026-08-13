@@ -1,4 +1,8 @@
-export type LearnProposalApplicationStatus = 'not_started' | 'applied_pending_confirmation';
+export type LearnProposalApplicationStatus =
+  | 'not_started'
+  | 'applied_pending_confirmation'
+  | 'confirmed'
+  | 'done';
 
 export type LearnProposalKind = 'stage_gdd' | 'bp_timing';
 
@@ -90,6 +94,58 @@ export function markBpTimingProposalAppliedPending(
   input: { cropId: number; category: string }
 ): void {
   markProposalAppliedPending(planId, bpTimingProposalProgressKey(input.cropId, input.category));
+}
+
+export function proposalKeyFromPostMasterPayload(payload: LearnPostMasterPayload): string {
+  if (payload.kind === 'stage_gdd') {
+    if (payload.stageId == null) {
+      throw new Error('stageId is required for stage_gdd post_master payload');
+    }
+    return stageGddProposalProgressKey(payload.cropId, payload.stageId);
+  }
+  if (!payload.category) {
+    throw new Error('category is required for bp_timing post_master payload');
+  }
+  return bpTimingProposalProgressKey(payload.cropId, payload.category);
+}
+
+function setProposalStatus(
+  planId: number,
+  proposalKey: string,
+  status: LearnProposalApplicationStatus
+): void {
+  const map = readProgressMap(planId);
+  map[proposalKey] = status;
+  writeProgressMap(planId, map);
+}
+
+export function markLearnProposalConfirmed(planId: number, proposalKey: string): void {
+  setProposalStatus(planId, proposalKey, 'confirmed');
+}
+
+export function confirmLearnProposalFromPostMaster(
+  planId: number,
+  payload: LearnPostMasterPayload
+): void {
+  const proposalKey = proposalKeyFromPostMasterPayload(payload);
+  const current = resolveLearnProposalApplicationStatus(planId, proposalKey);
+  if (current === 'applied_pending_confirmation') {
+    markLearnProposalConfirmed(planId, proposalKey);
+  }
+}
+
+export function markAllConfirmedProposalsDone(planId: number): void {
+  const map = readProgressMap(planId);
+  let changed = false;
+  for (const [key, status] of Object.entries(map)) {
+    if (status === 'confirmed') {
+      map[key] = 'done';
+      changed = true;
+    }
+  }
+  if (changed) {
+    writeProgressMap(planId, map);
+  }
 }
 
 export function storeLearnPostMasterPayload(planId: number, payload: LearnPostMasterPayload): void {

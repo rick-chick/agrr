@@ -48,6 +48,10 @@ export interface LearnApplicationProgressItem {
                 [class.learn-application-progress__status--pending]="
                   item.status === 'applied_pending_confirmation'
                 "
+                [class.learn-application-progress__status--confirmed]="
+                  item.status === 'confirmed'
+                "
+                [class.learn-application-progress__status--done]="item.status === 'done'"
               >
                 {{ statusLabel(item.status) | translate }}
               </span>

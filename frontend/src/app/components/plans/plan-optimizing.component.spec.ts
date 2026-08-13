@@ -174,6 +174,16 @@ describe('PlanOptimizingComponent', () => {
     expect(sessionStorage.getItem('agrr:learn-orchestration-return:13')).toBeNull();
   });
 
+  it('marks placement orchestration step complete when returning to learn', () => {
+    sessionStorage.setItem('agrr:learn-orchestration-return:13', 'learn');
+
+    component.onOptimizationCompleted();
+
+    expect(
+      sessionStorage.getItem('agrr:learn-orchestration-step-progress:13')
+    ).toContain('"placement":true');
+  });
+
   it('initializes with the presenter and executes the use case', () => {
     component.ngOnInit();
 

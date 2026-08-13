@@ -9,6 +9,7 @@ import { PlanOptimizingPresenter, PLAN_OPTIMIZING_PROVIDERS } from '../../usecas
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import {
   clearLearnOrchestrationReturnToLearn,
+  markLearnOrchestrationStepComplete,
   readLearnOrchestrationReturnToLearn
 } from '../../domain/plans/learn-master-update-orchestration';
 
@@ -132,6 +133,7 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     const planId = this.planId;
     if (planId && readLearnOrchestrationReturnToLearn(planId)) {
       clearLearnOrchestrationReturnToLearn(planId);
+      markLearnOrchestrationStepComplete(planId, 'placement');
       void this.router.navigate(['/plans', planId, 'learn']);
       return;
     }

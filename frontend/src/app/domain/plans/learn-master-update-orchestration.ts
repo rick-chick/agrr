@@ -1,4 +1,7 @@
-import { readLearnProposalApplicationProgress } from './learn-proposal-application-progress';
+import {
+  markAllConfirmedProposalsDone,
+  readLearnProposalApplicationProgress
+} from './learn-proposal-application-progress';
 
 export type LearningOrchestrationMode = 'adjust' | 'regenerate' | 'sync_verify';
 
@@ -101,6 +104,17 @@ export function markLearnOrchestrationStepComplete(
   const progress = readLearnOrchestrationStepProgress(planId);
   progress[step] = true;
   writeLearnOrchestrationStepProgress(planId, progress);
+  if (areAllLearnOrchestrationStepsComplete(planId)) {
+    markAllConfirmedProposalsDone(planId);
+  }
+}
+
+export function areAllLearnOrchestrationStepsComplete(planId: number): boolean {
+  return (
+    readLearnOrchestrationStepComplete(planId, 'placement') &&
+    readLearnOrchestrationStepComplete(planId, 'regenerate') &&
+    readLearnOrchestrationStepComplete(planId, 'sync_verify')
+  );
 }
 
 export function readLearnOrchestrationStepComplete(
@@ -122,4 +136,11 @@ export function isTaskScheduleOrchestrationComplete(
 export function hasPendingMasterUpdateConfirmation(planId: number): boolean {
   const progress = readLearnProposalApplicationProgress(planId);
   return Object.values(progress).some((status) => status === 'applied_pending_confirmation');
+}
+
+export function hasActiveLearnMasterUpdateFlow(planId: number): boolean {
+  const progress = readLearnProposalApplicationProgress(planId);
+  return Object.values(progress).some(
+    (status) => status === 'applied_pending_confirmation' || status === 'confirmed'
+  );
 }

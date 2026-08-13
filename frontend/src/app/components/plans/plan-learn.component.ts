@@ -22,10 +22,11 @@ import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-act
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import {
   clearLearnPostMasterPayload,
+  confirmLearnProposalFromPostMaster,
   parsePlanLearnFollowUp,
   readLearnPostMasterPayload
 } from '../../domain/plans/learn-proposal-application-progress';
-import { hasPendingMasterUpdateConfirmation } from '../../domain/plans/learn-master-update-orchestration';
+import { hasActiveLearnMasterUpdateFlow } from '../../domain/plans/learn-master-update-orchestration';
 
 const initialControl: PlanLearnViewState = {
   loading: true,
@@ -290,7 +291,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
 
   get showMasterUpdateNextSteps(): boolean {
     return (
-      this.showPostMasterConfirmation || hasPendingMasterUpdateConfirmation(this.planId)
+      this.showPostMasterConfirmation || hasActiveLearnMasterUpdateFlow(this.planId)
     );
   }
 
@@ -319,6 +320,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
     if (!payload) {
       return;
     }
+    confirmLearnProposalFromPostMaster(planId, payload);
     this.control = { ...this.control, postMasterPayload: payload };
     clearLearnPostMasterPayload(planId);
   }

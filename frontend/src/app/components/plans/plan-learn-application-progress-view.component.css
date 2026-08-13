@@ -68,3 +68,13 @@
   background: color-mix(in srgb, var(--color-warning) 18%, transparent);
   color: var(--color-warning-strong, var(--color-warning));
 }
+
+.learn-application-progress__status--confirmed {
+  background: color-mix(in srgb, var(--color-info) 18%, transparent);
+  color: var(--color-info-strong, var(--color-info));
+}
+
+.learn-application-progress__status--done {
+  background: color-mix(in srgb, var(--color-success) 18%, transparent);
+  color: var(--color-success-strong, var(--color-success));
+}
