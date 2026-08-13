@@ -2477,6 +2477,13 @@
       "filter_from_date": "開始日",
       "list_empty": "条件に一致する作業計画がありません。",
       "list_row_meta": "{{field}} · {{crop}}",
+      "edit_scheduled_date": "予定日を編集",
+      "add_item": {
+        "title": "作業を手動追加",
+        "name": "作業名",
+        "scheduled_date": "予定日",
+        "submit": "追加"
+      },
       "sync_never": "作業計画がまだ生成されていません。",
       "sync_failed": "作業計画の生成に失敗しました。",
       "sync_generating": "作業計画を生成しています...",
@@ -2755,6 +2762,9 @@
       "show_skipped": "スキップ済みを表示",
       "skip": "スキップ",
       "unskip": "スキップを解除",
+      "change_date": "日付変更",
+      "change_date_field": "新しい予定日",
+      "change_date_submit": "日付を更新",
       "menu": "メニュー",
       "retry": "再読み込み",
       "toast": {

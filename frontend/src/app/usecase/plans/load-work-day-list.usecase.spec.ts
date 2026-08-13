@@ -98,6 +98,9 @@ describe('LoadWorkDayListUseCase', () => {
       getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       regenerateTaskSchedule: () => of(undefined),
+      createTaskScheduleItem: () => of({} as never),
+
+      updateTaskScheduleItem: () => of({} as never),
       deletePlan: () => of({} as never)
     }) as PlanGateway;
 
@@ -108,7 +111,8 @@ describe('LoadWorkDayListUseCase', () => {
       updateWorkRecord: () => of({} as never),
       deleteWorkRecord: () => of({} as never),
       skipTaskScheduleItem: () => of({} as never),
-      unskipTaskScheduleItem: () => of({} as never)
+      unskipTaskScheduleItem: () => of({} as never),
+      updateTaskScheduleItem: () => of({} as never),
     }) as WorkRecordGateway;
 
   const adhocRecord = (overrides: Partial<WorkRecord> & { actual_date: string; name: string }): WorkRecord => ({
@@ -357,6 +361,9 @@ describe('LoadWorkDayListUseCase', () => {
       getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       regenerateTaskSchedule: () => of(undefined),
+      createTaskScheduleItem: () => of({} as never),
+
+      updateTaskScheduleItem: () => of({} as never),
       deletePlan: () => of({} as never)
     };
     const outputPort: LoadWorkDayListOutputPort = {

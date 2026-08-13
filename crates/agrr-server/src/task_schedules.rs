@@ -1,4 +1,6 @@
 //! `GET /api/v1/plans/:id/task_schedule` — private plan task timeline (P6).
+//! `POST .../task_schedule/items` — manual item create (P867).
+//! `PATCH .../task_schedule/items/:item_id` — item update (P867).
 //! `PATCH .../task_schedule/items/:item_id/skip|unskip` — skip / unskip (P5).
 
 use crate::adapters::SystemClock;
@@ -15,22 +17,25 @@ use agrr_domain::agricultural_task::constants::task_schedule_sync_states;
 use agrr_domain::cultivation_plan::dtos::TaskScheduleTimeline;
 use agrr_domain::cultivation_plan::dtos::RegenerateTaskScheduleInput;
 use agrr_domain::cultivation_plan::interactors::{
-    RegenerateTaskScheduleInteractor, TaskScheduleItemSkipInteractor, TaskScheduleTimelineInteractor,
+    RegenerateTaskScheduleInteractor, TaskScheduleItemCreateInteractor,
+    TaskScheduleItemSkipInteractor, TaskScheduleItemUpdateInteractor, TaskScheduleTimelineInteractor,
 };
 use agrr_domain::cultivation_plan::ports::{
     RegenerateTaskScheduleOutputPort, TaskScheduleItemMutationOutputPort,
     TaskScheduleRegenEnqueuePort, TaskScheduleTimelineOutputPort,
 };
+use agrr_domain::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
 use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::exceptions::RecordNotFoundError;
 use axum::{
     extract::{Path, Query, State},
+    http::StatusCode,
     routing::{get, patch, post},
     Json, Router,
 };
 use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 use std::collections::BTreeMap;
 
 pub fn routes() -> Router<AppState> {
@@ -48,9 +53,70 @@ pub fn routes() -> Router<AppState> {
             patch(unskip_task_schedule_item),
         )
         .route(
+            "/api/v1/plans/{id}/task_schedule/items",
+            post(create_task_schedule_item),
+        )
+        .route(
+            "/api/v1/plans/{plan_id}/task_schedule/items/{item_id}",
+            patch(update_task_schedule_item),
+        )
+        .route(
             "/api/v1/plans/{id}/task_schedule/regenerate",
             post(regenerate_task_schedule),
         )
+}
+
+#[derive(Deserialize)]
+struct TaskScheduleItemBody {
+    task_schedule_item: BTreeMap<String, Value>,
+}
+
+fn attrs_from_task_schedule_item_payload(data: &BTreeMap<String, Value>) -> AttrMap {
+    let mut pairs = Vec::new();
+    for (key, value) in data {
+        let attr = match value {
+            Value::Null => AttrValue::Null,
+            Value::Bool(b) => AttrValue::Bool(*b),
+            Value::Number(n) => {
+                if let Some(i) = n.as_i64() {
+                    AttrValue::Int(i)
+                } else {
+                    AttrValue::Str(n.to_string())
+                }
+            }
+            Value::String(s) => AttrValue::Str(s.clone()),
+            _ => continue,
+        };
+        pairs.push((key.clone(), attr));
+    }
+    attr_map_from_pairs(pairs)
+}
+
+fn map_mutation_response(
+    outcome: Option<MutationOutcome>,
+    success_status: StatusCode,
+) -> Result<(StatusCode, Json<Value>), (axum::http::StatusCode, Json<Value>)> {
+    match outcome {
+        Some(MutationOutcome::Success(item)) => Ok((success_status, Json(json!({ "item": item })))),
+        Some(MutationOutcome::NotFound) => Err((
+            axum::http::StatusCode::NOT_FOUND,
+            Json(json!({"errors": ["plans.errors.not_found"]})),
+        )),
+        Some(MutationOutcome::RecordInvalid(errors)) => {
+            let mut map = Map::new();
+            for (key, messages) in errors {
+                map.insert(key, json!(messages));
+            }
+            Err((
+                axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                Json(json!({ "errors": map })),
+            ))
+        }
+        None => Err((
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"errors": ["no response"]})),
+        )),
+    }
 }
 
 #[derive(Deserialize, Default)]
@@ -195,6 +261,82 @@ async fn unskip_task_schedule_item(
     Path((plan_id, item_id)): Path<(i64, i64)>,
 ) -> Result<Json<Value>, (axum::http::StatusCode, Json<Value>)> {
     run_skip_mutation(&state, &jar, plan_id, item_id, false).await
+}
+
+async fn create_task_schedule_item(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(plan_id): Path<i64>,
+    Json(body): Json<TaskScheduleItemBody>,
+) -> Result<(StatusCode, Json<Value>), (axum::http::StatusCode, Json<Value>)> {
+    run_item_mutation(&state, &jar, plan_id, None, body, StatusCode::CREATED).await
+}
+
+async fn update_task_schedule_item(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path((plan_id, item_id)): Path<(i64, i64)>,
+    Json(body): Json<TaskScheduleItemBody>,
+) -> Result<(StatusCode, Json<Value>), (axum::http::StatusCode, Json<Value>)> {
+    run_item_mutation(&state, &jar, plan_id, Some(item_id), body, StatusCode::OK).await
+}
+
+async fn run_item_mutation(
+    state: &AppState,
+    jar: &CookieJar,
+    plan_id: i64,
+    item_id: Option<i64>,
+    body: TaskScheduleItemBody,
+    success_status: StatusCode,
+) -> Result<(StatusCode, Json<Value>), (axum::http::StatusCode, Json<Value>)> {
+    let user_id = user_id_from_session(state, jar).map_err(|status| {
+        (
+            status,
+            Json(json!({"errors": ["unauthorized"]})),
+        )
+    })?;
+
+    let pool = state.sqlite.clone();
+    let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
+    let mutation_gateway = TaskScheduleItemMutationSqliteGateway::new(pool);
+    let clock = SystemClock;
+    let mut presenter = MutationPresenter { body: None };
+
+    let attrs = attrs_from_task_schedule_item_payload(&body.task_schedule_item);
+    let result = if let Some(item_id) = item_id {
+        let mut interactor = TaskScheduleItemUpdateInteractor::new(
+            &mut presenter,
+            &plan_gateway,
+            &mutation_gateway,
+            &clock,
+            &scope_gateway,
+        );
+        interactor.call_rescuing(user_id, plan_id, item_id, attrs)
+    } else {
+        let mut interactor = TaskScheduleItemCreateInteractor::new(
+            &mut presenter,
+            &plan_gateway,
+            &mutation_gateway,
+            &scope_gateway,
+        );
+        interactor.call_rescuing(user_id, plan_id, attrs)
+    };
+
+    if let Err(err) = result {
+        if err.downcast_ref::<RecordNotFoundError>().is_some() {
+            return Err((
+                axum::http::StatusCode::NOT_FOUND,
+                Json(json!({"errors": ["plans.errors.not_found"]})),
+            ));
+        }
+        return Err((
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"errors": ["internal"]})),
+        ));
+    }
+
+    map_mutation_response(presenter.body, success_status)
 }
 
 async fn run_skip_mutation(

@@ -105,7 +105,7 @@ describe('TaskScheduleMonthListComponent', () => {
     const status = row?.querySelector('.plan-task-schedule-month-list__status--planned');
 
     expect(name?.textContent?.trim()).toBe('Weeding');
-    expect(main?.querySelector('time.plan-task-schedule-month-list__date')).toBeTruthy();
+    expect(main?.querySelector('input.plan-task-schedule-month-list__date-input')).toBeTruthy();
     expect(status?.textContent?.trim()).toBe('Planned');
   });
 

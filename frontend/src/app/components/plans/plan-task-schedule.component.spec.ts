@@ -9,6 +9,8 @@ import en from '../../../assets/i18n/en.json';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
+import { CreateTaskScheduleItemUseCase } from '../../usecase/plans/create-task-schedule-item.usecase';
+import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-schedule-item.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { PlanTaskSchedulePresenter } from '../../usecase/plans/plan-task-schedule.providers';
 import { PlanTaskScheduleComponent } from './plan-task-schedule.component';
@@ -217,6 +219,8 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
@@ -429,6 +433,8 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
@@ -1042,6 +1048,8 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
@@ -1112,6 +1120,8 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
@@ -1199,6 +1209,8 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },

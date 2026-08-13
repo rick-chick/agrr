@@ -51,7 +51,7 @@ where
             return Ok(());
         }
 
-        let params = attrs_to_params(&attributes);
+        let mut params = attrs_to_params(&attributes);
         let field_cultivation_id = params
             .get("field_cultivation_id")
             .and_then(|v| v.as_deref())
@@ -61,6 +61,18 @@ where
         let field_cultivation = self
             .gateway
             .find_field_cultivation_for_create(plan_id, field_cultivation_id)?;
+
+        if params
+            .get("cultivation_plan_crop_id")
+            .and_then(|v| v.as_deref())
+            .filter(|s| !s.trim().is_empty())
+            .is_none()
+        {
+            params.insert(
+                "cultivation_plan_crop_id".into(),
+                Some(field_cultivation.cultivation_plan_crop_id.to_string()),
+            );
+        }
 
         let agricultural_task_id = params
             .get("agricultural_task_id")

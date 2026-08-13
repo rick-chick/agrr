@@ -11,6 +11,7 @@ describe('PlanApiGateway', () => {
   let apiClient: {
     get: ReturnType<typeof vi.fn>;
     post: ReturnType<typeof vi.fn>;
+    patch: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
   let gateway: PlanApiGateway;
@@ -19,6 +20,7 @@ describe('PlanApiGateway', () => {
     apiClient = {
       get: vi.fn(),
       post: vi.fn(),
+      patch: vi.fn(),
       delete: vi.fn()
     };
     gateway = new PlanApiGateway(apiClient as unknown as ApiService);
@@ -409,6 +411,48 @@ describe('PlanApiGateway', () => {
       expect(result.redirect_path).toBe('/plans');
       expect(result.auto_hide_after).toBe(45000);
       expect(apiClient.delete).toHaveBeenCalledWith('/api/v1/plans/10');
+    });
+  });
+
+  describe('createTaskScheduleItem', () => {
+    it('POSTs wrapped task_schedule_item body', async () => {
+      const response = {
+        item: { id: 1, name: 'Manual', scheduled_date: '2026-07-10', status: 'planned' }
+      };
+      vi.mocked(apiClient.post).mockReturnValue(of(response));
+
+      const result = await firstValueFrom(
+        gateway.createTaskScheduleItem(5, {
+          field_cultivation_id: 11,
+          name: 'Manual',
+          scheduled_date: '2026-07-10'
+        })
+      );
+      expect(result).toEqual(response);
+      expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans/5/task_schedule/items', {
+        task_schedule_item: {
+          field_cultivation_id: 11,
+          name: 'Manual',
+          scheduled_date: '2026-07-10'
+        }
+      });
+    });
+  });
+
+  describe('updateTaskScheduleItem', () => {
+    it('PATCHes wrapped task_schedule_item body', async () => {
+      const response = {
+        item: { id: 9, name: 'Weeding', scheduled_date: '2026-07-15', status: 'rescheduled' }
+      };
+      vi.mocked(apiClient.patch).mockReturnValue(of(response));
+
+      const result = await firstValueFrom(
+        gateway.updateTaskScheduleItem(5, 9, { scheduled_date: '2026-07-15' })
+      );
+      expect(result).toEqual(response);
+      expect(apiClient.patch).toHaveBeenCalledWith('/api/v1/plans/5/task_schedule/items/9', {
+        task_schedule_item: { scheduled_date: '2026-07-15' }
+      });
     });
   });
 });

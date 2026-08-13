@@ -37,6 +37,10 @@ function createGateway(overrides: Partial<PlanGateway> = {}): PlanGateway {
     getVarianceLearning: () => of(snapshot),
     importVarianceLearning: () => of(snapshot),
     regenerateTaskSchedule: () => of(undefined),
+
+    createTaskScheduleItem: () => of({} as never),
+
+    updateTaskScheduleItem: () => of({} as never),
     deletePlan: () => of({} as never),
     ...overrides
   };

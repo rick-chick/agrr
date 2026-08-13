@@ -76,7 +76,8 @@ describe('SaveWorkRecordSheetUseCase', () => {
       updateWorkRecord: vi.fn(),
       deleteWorkRecord: vi.fn(),
       skipTaskScheduleItem: vi.fn(),
-      unskipTaskScheduleItem: vi.fn()
+      unskipTaskScheduleItem: vi.fn(),
+      updateTaskScheduleItem: () => of({} as never),
     };
 
     const file = new File([new Uint8Array([1, 2, 3, 4])], 'field.jpg', {
@@ -120,7 +121,8 @@ describe('SaveWorkRecordSheetUseCase', () => {
       updateWorkRecord: vi.fn(() => of({ work_record: sampleRecord })),
       deleteWorkRecord: vi.fn(),
       skipTaskScheduleItem: vi.fn(),
-      unskipTaskScheduleItem: vi.fn()
+      unskipTaskScheduleItem: vi.fn(),
+      updateTaskScheduleItem: () => of({} as never),
     };
     const outputPort: SaveWorkRecordSheetOutputPort = {
       onSuccess: vi.fn(),
@@ -168,7 +170,8 @@ describe('SaveWorkRecordSheetUseCase', () => {
       updateWorkRecord: vi.fn(),
       deleteWorkRecord: vi.fn(),
       skipTaskScheduleItem: vi.fn(),
-      unskipTaskScheduleItem: vi.fn()
+      unskipTaskScheduleItem: vi.fn(),
+      updateTaskScheduleItem: () => of({} as never),
     };
 
     const useCase = new SaveWorkRecordSheetUseCase(

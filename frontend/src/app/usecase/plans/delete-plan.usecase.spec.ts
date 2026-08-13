@@ -18,6 +18,9 @@ describe('DeletePlanUseCase', () => {
       getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       regenerateTaskSchedule: () => of(undefined),
+      createTaskScheduleItem: () => of({} as never),
+
+      updateTaskScheduleItem: () => of({} as never),
       deletePlan
     } as PlanGateway);
 

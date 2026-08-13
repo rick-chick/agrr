@@ -10,6 +10,7 @@ import { CreateWorkRecordOutputPort } from '../../usecase/plans/create-work-reco
 import { LoadWorkDayListDataDto, WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { LoadWorkDayListOutputPort } from '../../usecase/plans/load-work-day-list.output-port';
 import { SkipTaskScheduleItemOutputPort } from '../../usecase/plans/skip-task-schedule-item.output-port';
+import { UpdateTaskScheduleItemOutputPort } from '../../usecase/plans/update-task-schedule-item.output-port';
 import { RegenerateTaskScheduleOutputPort } from '../../usecase/plans/regenerate-task-schedule.output-port';
 import {
   SubscribeTaskScheduleSyncOutputPort
@@ -52,6 +53,7 @@ export class PlanWorkPresenter
   implements
     LoadWorkDayListOutputPort,
     SkipTaskScheduleItemOutputPort,
+    UpdateTaskScheduleItemOutputPort,
     CreateWorkRecordOutputPort,
     RegenerateTaskScheduleOutputPort,
     SubscribeTaskScheduleSyncOutputPort

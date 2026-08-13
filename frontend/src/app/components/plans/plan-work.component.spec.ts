@@ -10,6 +10,7 @@ import { PlanWorkComponent } from './plan-work.component';
 import { PlanWorkViewState } from './plan-work.view';
 import { LoadWorkDayListUseCase } from '../../usecase/plans/load-work-day-list.usecase';
 import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-schedule-item.usecase';
+import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-schedule-item.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
 import { emptyPlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
@@ -185,6 +186,7 @@ describe('PlanWorkComponent mobile UX', () => {
         providers: [
           { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
           { provide: SkipTaskScheduleItemUseCase, useValue: skipUseCase },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: CreateWorkRecordUseCase, useValue: createUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
@@ -806,6 +808,7 @@ describe('PlanWorkComponent in locale labels', () => {
         providers: [
           { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
           { provide: SkipTaskScheduleItemUseCase, useValue: skipUseCase },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: CreateWorkRecordUseCase, useValue: createUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },

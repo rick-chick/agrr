@@ -1,5 +1,6 @@
-import { ChangeDetectorRef, Component, DestroyRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -11,6 +12,7 @@ import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
 import { LoadWorkDayListUseCase } from '../../usecase/plans/load-work-day-list.usecase';
 import { PLAN_WORK_PROVIDERS } from '../../usecase/plans/plan-work.providers';
 import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-schedule-item.usecase';
+import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-schedule-item.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
@@ -56,6 +58,7 @@ const initialControl: PlanWorkViewState = {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterLink,
     TranslateModule,
     PlanPlanContextHeaderComponent,
@@ -280,6 +283,9 @@ const initialControl: PlanWorkViewState = {
                   {{ 'plans.work.unskip' | translate }}
                 </button>
               } @else {
+                <button type="button" role="menuitem" (click)="openChangeDate(row)">
+                  {{ 'plans.work.change_date' | translate }}
+                </button>
                 <button type="button" role="menuitem" (click)="openCompleteWithDetails(row)">
                   {{ 'plans.work.record_with_details' | translate }}
                 </button>
@@ -298,15 +304,45 @@ const initialControl: PlanWorkViewState = {
       (saved)="onRecordSaved($event)"
       (deleted)="reload({ silent: true })"
     />
+
+    <dialog
+      #changeDateDialog
+      class="form-dialog plan-work__change-date-dialog"
+      (cancel)="closeChangeDateDialog($event)"
+      (click)="onChangeDateDialogBackdropClick($event)"
+    >
+      @if (changeDateRow) {
+        <h3 class="plan-work__change-date-title">{{ 'plans.work.change_date' | translate }}</h3>
+        <p class="plan-work__change-date-task">{{ changeDateRow.item.name }}</p>
+        <label class="plan-work__change-date-label">
+          <span>{{ 'plans.work.change_date_field' | translate }}</span>
+          <input
+            type="date"
+            class="plan-work__change-date-input"
+            [(ngModel)]="changeDateValue"
+          />
+        </label>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn-secondary" (click)="closeChangeDateDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn-primary" (click)="submitChangeDate()">
+            {{ 'plans.work.change_date_submit' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./plan-work.component.css']
 })
 export class PlanWorkComponent implements PlanWorkView, OnInit {
   @ViewChild(WorkRecordSheetComponent) sheet!: WorkRecordSheetComponent;
+  @ViewChild('changeDateDialog') changeDateDialogRef?: ElementRef<HTMLDialogElement>;
 
   private readonly route = inject(ActivatedRoute);
   private readonly loadUseCase = inject(LoadWorkDayListUseCase);
   private readonly skipUseCase = inject(SkipTaskScheduleItemUseCase);
+  private readonly updateItemUseCase = inject(UpdateTaskScheduleItemUseCase);
   private readonly createUseCase = inject(CreateWorkRecordUseCase);
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
   private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
@@ -318,6 +354,8 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   openMenuItemId: number | null = null;
+  changeDateRow: WorkDayListRowDto | null = null;
+  changeDateValue = localTodayIso();
   private syncChannel: Channel | null = null;
   private highlightClearTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -493,5 +531,37 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   unskip(row: WorkDayListRowDto): void {
     this.openMenuItemId = null;
     this.skipUseCase.execute({ planId: this.planId, itemId: row.item.item_id, skip: false });
+  }
+
+  openChangeDate(row: WorkDayListRowDto): void {
+    this.openMenuItemId = null;
+    this.changeDateRow = row;
+    this.changeDateValue = row.item.scheduled_date ?? localTodayIso();
+    this.changeDateDialogRef?.nativeElement?.showModal();
+  }
+
+  closeChangeDateDialog(event?: Event): void {
+    event?.preventDefault();
+    this.changeDateDialogRef?.nativeElement?.close();
+    this.changeDateRow = null;
+  }
+
+  onChangeDateDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.changeDateDialogRef?.nativeElement) {
+      this.closeChangeDateDialog();
+    }
+  }
+
+  submitChangeDate(): void {
+    if (!this.changeDateRow || !this.changeDateValue) {
+      return;
+    }
+    const row = this.changeDateRow;
+    this.updateItemUseCase.execute({
+      planId: this.planId,
+      itemId: row.item.item_id,
+      scheduledDate: this.changeDateValue,
+      onSuccess: () => this.closeChangeDateDialog()
+    });
   }
 }
