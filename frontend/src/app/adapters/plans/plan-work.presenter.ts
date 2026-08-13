@@ -30,8 +30,17 @@ import {
   type TaskScheduleSyncLifecycleState
 } from '../../usecase/plans/task-schedule-sync-lifecycle';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
-import { buildWorkRecordSaveToast } from '../../domain/plans/work-record-save-toast';
+import { buildWorkRecordSaveToast, WorkRecordSaveToastContext } from '../../domain/plans/work-record-save-toast';
+import {
+  applyPlanSaveImpactSummary,
+  beginPlanSaveImpactLoad,
+  emptyPlanSaveImpactViewFields,
+  PendingSaveImpactRequest,
+  planSaveImpactErrorFields
+} from './plan-save-impact.presenter.helpers';
 import { mapWorkRecordSaveToastToPendingRequest } from './work-record-save-toast.presenter.helpers';
+import { WorkRecordSheetSavedEvent } from '../../components/plans/work-record-sheet.view';
+import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
 
 const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
   cropIdsForBanner: [],
@@ -49,6 +58,8 @@ export class PlanWorkPresenter
 {
   private view: PlanWorkView | null = null;
   private syncLifecycle: TaskScheduleSyncLifecycleState = initialTaskScheduleSyncLifecycleState();
+  private pendingSaveImpactRequest: PendingSaveImpactRequest | null = null;
+  private saveImpactLoadGeneration = 0;
 
   setView(view: PlanWorkView): void {
     this.view = view;
@@ -145,6 +156,7 @@ export class PlanWorkPresenter
       pendingSyncToastKey: loadResult.toastI18nKey,
       pendingRecordSavedToast: null,
       pendingRecordSavedEvent: null,
+      ...emptyPlanSaveImpactViewFields,
       pendingQuickCompleteValidation: null,
       syncReloadNonce: loadResult.requestReload
         ? this.view.control.syncReloadNonce + 1
@@ -259,9 +271,67 @@ export class PlanWorkPresenter
       ),
       pendingRecordSavedEvent: {
         workRecord: dto.workRecord,
-        mode: 'create-from-item'
+        mode: 'create-from-item',
+        saveToastContext: saveContext
       }
     };
+  }
+
+  queueSaveImpactAfterSave(event: WorkRecordSheetSavedEvent): number {
+    if (!this.view || event.mode === 'edit') {
+      return 0;
+    }
+    const context = event.saveToastContext ?? null;
+    const fields = this.beginSaveImpactLoadFields(event, context);
+    this.view.control = {
+      ...this.view.control,
+      ...fields
+    };
+    return this.saveImpactLoadGeneration;
+  }
+
+  presentSaveImpactSummary(dto: PlanVsActualSummaryDataDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const applied = applyPlanSaveImpactSummary(
+      this.pendingSaveImpactRequest,
+      dto.loadGeneration,
+      this.saveImpactLoadGeneration,
+      dto
+    );
+    if (!applied) {
+      return;
+    }
+    this.pendingSaveImpactRequest = applied.pending;
+    this.view.control = {
+      ...this.view.control,
+      ...applied.fields
+    };
+  }
+
+  onSaveImpactError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.pendingSaveImpactRequest = null;
+    this.view.control = {
+      ...this.view.control,
+      ...planSaveImpactErrorFields(dto.message)
+    };
+  }
+
+  dismissSaveImpact(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      ...emptyPlanSaveImpactViewFields
+    };
+  }
+
+  private beginSaveImpactLoadFields(
+    event: WorkRecordSheetSavedEvent,
+    context: WorkRecordSaveToastContext | null = event.saveToastContext ?? null
+  ): ReturnType<typeof beginPlanSaveImpactLoad>['fields'] {
+    this.saveImpactLoadGeneration += 1;
+    this.pendingSaveImpactRequest = { event, context };
+    return beginPlanSaveImpactLoad(this.pendingSaveImpactRequest, this.saveImpactLoadGeneration).fields;
   }
 
   private findRowByItemId(itemId: number): WorkDayListRowDto | null {

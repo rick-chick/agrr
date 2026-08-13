@@ -1534,7 +1534,17 @@
         "name_required": "Task name is required"
       },
       "empty_plan_cta": "Review cropping plan",
-      "empty_task_schedule_cta": "Open task plan"
+      "empty_task_schedule_cta": "Open task plan",
+      "save_impact": {
+        "title": "Plan impact",
+        "task_label": "Recorded task",
+        "delta_days": "Days vs plan",
+        "gdd_delta": "GDD vs plan",
+        "unrecorded": "Unrecorded tasks",
+        "average_delta": "Avg days vs plan",
+        "learn_link": "Review in Learn",
+        "dismiss": "Dismiss impact preview"
+      }
     },
     "work_records": {
       "empty": "No work records yet",

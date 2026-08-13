@@ -1,9 +1,10 @@
 import { FieldSchedule, PlanInfo } from '../../models/plans/task-schedule';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { PendingToastRequest } from '../../core/view-effects/pending-toast-view.effects';
+import type { PlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 
-export interface PlanWorkViewState {
+export interface PlanWorkViewState extends PlanSaveImpactViewFields {
   loading: boolean;
   error: string | null;
   plan: PlanInfo | null;

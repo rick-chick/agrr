@@ -2647,7 +2647,17 @@
         "name_required": "作業名を入力してください"
       },
       "empty_plan_cta": "作付け計画を確認",
-      "empty_task_schedule_cta": "作業計画表を確認"
+      "empty_task_schedule_cta": "作業計画表を確認",
+      "save_impact": {
+        "title": "計画への影響",
+        "task_label": "記録した作業",
+        "delta_days": "日数のずれ",
+        "gdd_delta": "GDDのずれ",
+        "unrecorded": "未記録件数",
+        "average_delta": "平均日数のずれ",
+        "learn_link": "振り返りで確認",
+        "dismiss": "影響プレビューを閉じる"
+      }
     },
     "work_records": {
       "empty": "実績がまだありません",
