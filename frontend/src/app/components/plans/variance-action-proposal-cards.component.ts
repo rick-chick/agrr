@@ -4,6 +4,10 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { formatPlanTaskScheduleDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import { resolvePlanTaskScheduleVarianceBadge } from '../../domain/work-schedule/resolve-plan-task-schedule-variance-badge';
+import {
+  markVarianceActionItemReviewed,
+  resolveVarianceActionItemReviewStatus
+} from '../../domain/plans/learn-proposal-application-progress';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 
 @Component({
@@ -27,6 +31,12 @@ import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-s
             <li class="variance-action-proposals__card">
               <div class="variance-action-proposals__card-main">
                 <span class="variance-action-proposals__card-name">{{ item.name }}</span>
+                <span
+                  class="variance-action-proposals__status"
+                  [class.variance-action-proposals__status--applied]="isApplied(item)"
+                >
+                  {{ statusLabel(item) | translate }}
+                </span>
                 <span class="variance-action-proposals__card-meta">{{
                   exceedanceLabel(item.exceedance_kind) | translate
                 }}</span>
@@ -40,6 +50,7 @@ import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-s
                 class="variance-action-proposals__cta"
                 [routerLink]="['/plans', planId]"
                 [queryParams]="{ field_cultivation_id: item.field_cultivation_id }"
+                (click)="onWorkbenchClick(item)"
               >
                 {{ 'plans.learn.action_proposals.open_workbench' | translate }}
               </a>
@@ -57,6 +68,20 @@ export class VarianceActionProposalCardsComponent {
 
   exceedanceLabel(kind: PlanVarianceActionItem['exceedance_kind']): string {
     return `plans.learn.action_proposals.exceedance.${kind}`;
+  }
+
+  isApplied(item: PlanVarianceActionItem): boolean {
+    return resolveVarianceActionItemReviewStatus(this.planId, item.item_id) === 'reviewed';
+  }
+
+  statusLabel(item: PlanVarianceActionItem): string {
+    return this.isApplied(item)
+      ? 'plans.learn.proposal_status.applied'
+      : 'plans.learn.proposal_status.unapplied';
+  }
+
+  onWorkbenchClick(item: PlanVarianceActionItem): void {
+    markVarianceActionItemReviewed(this.planId, item.item_id);
   }
 
   deltaLabel(deltaDays: number): string {

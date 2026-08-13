@@ -13,6 +13,7 @@ import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.c
 import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
+import { PlanLearnLoopPhaseViewComponent } from './plan-learn-loop-phase-view.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
@@ -26,6 +27,7 @@ import {
   readLearnPostMasterPayload
 } from '../../domain/plans/learn-proposal-application-progress';
 import { hasPendingMasterUpdateConfirmation } from '../../domain/plans/learn-master-update-orchestration';
+import type { LearnLoopPhaseInput } from '../../domain/plans/learn-loop-phase';
 
 const initialControl: PlanLearnViewState = {
   loading: true,
@@ -59,6 +61,7 @@ const initialControl: PlanLearnViewState = {
     FormsModule,
     TranslateModule,
     PlanPlanContextHeaderComponent,
+    PlanLearnLoopPhaseViewComponent,
     PlanLearnApplicationProgressViewComponent,
     PlanLearnPostMasterConfirmationComponent,
     PlanLearnMasterUpdateNextStepsComponent,
@@ -88,6 +91,10 @@ const initialControl: PlanLearnViewState = {
             </button>
           </div>
         } @else {
+          <app-plan-learn-loop-phase-view
+            [planId]="planId"
+            [phaseInput]="loopPhaseInput"
+          />
           @if (showPostMasterConfirmation) {
             <app-plan-learn-post-master-confirmation
               [planId]="planId"
@@ -292,6 +299,20 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
     return (
       this.showPostMasterConfirmation || hasPendingMasterUpdateConfirmation(this.planId)
     );
+  }
+
+  get loopPhaseInput(): LearnLoopPhaseInput {
+    return {
+      planId: this.planId,
+      varianceLoaded: !this.control.varianceLoading && this.control.varianceSummary != null,
+      actionRequiredItems: this.control.varianceSummary?.action_required_items ?? [],
+      stageGddProposals: this.control.stageGddProposals,
+      blueprintTimingProposals: this.control.blueprintTimingProposals,
+      hasPendingMasterUpdate: hasPendingMasterUpdateConfirmation(this.planId),
+      hasPostMasterPayload: this.control.postMasterPayload != null,
+      carryoverSourcePlans: this.control.carryoverSourcePlans,
+      hasLearningSnapshot: this.control.learningSnapshot != null
+    };
   }
 
   ngOnInit(): void {

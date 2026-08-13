@@ -42,11 +42,13 @@ describe('VarianceActionProposalCardsComponent', () => {
     await fixture.whenStable();
   });
 
-  it('renders proposal cards with manual action hint and workbench link', () => {
+  it('renders proposal cards with manual action hint, workbench link, and status badge', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.textContent).toContain('Schedule variance needs your review');
     expect(el.textContent).toContain('Adjust or re-optimize only after you confirm');
     expect(el.textContent).toContain('Weed control');
+    expect(el.textContent).toContain('Not applied');
+    expect(el.querySelector('.variance-action-proposals__status')).toBeTruthy();
     const link = el.querySelector('a.variance-action-proposals__cta') as HTMLAnchorElement;
     expect(link).toBeTruthy();
     expect(link.getAttribute('href')).toContain('/plans/7');

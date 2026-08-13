@@ -77,7 +77,9 @@ export class PlanLearnApplicationProgressViewComponent {
   }
 
   statusLabel(status: LearnProposalApplicationStatus): string {
-    return `plans.learn.application_progress.status.${status}`;
+    return status === 'applied_pending_confirmation'
+      ? 'plans.learn.proposal_status.applied'
+      : 'plans.learn.proposal_status.unapplied';
   }
 }
 

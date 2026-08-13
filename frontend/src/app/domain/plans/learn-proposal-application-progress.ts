@@ -92,6 +92,25 @@ export function markBpTimingProposalAppliedPending(
   markProposalAppliedPending(planId, bpTimingProposalProgressKey(input.cropId, input.category));
 }
 
+export function varianceActionItemProgressKey(itemId: number): string {
+  return `variance_action:${itemId}`;
+}
+
+export type VarianceActionItemReviewStatus = 'not_reviewed' | 'reviewed';
+
+export function resolveVarianceActionItemReviewStatus(
+  planId: number,
+  itemId: number
+): VarianceActionItemReviewStatus {
+  const key = varianceActionItemProgressKey(itemId);
+  const status = readProgressMap(planId)[key];
+  return status === 'applied_pending_confirmation' ? 'reviewed' : 'not_reviewed';
+}
+
+export function markVarianceActionItemReviewed(planId: number, itemId: number): void {
+  markProposalAppliedPending(planId, varianceActionItemProgressKey(itemId));
+}
+
 export function storeLearnPostMasterPayload(planId: number, payload: LearnPostMasterPayload): void {
   sessionStorage.setItem(learnPostMasterPayloadStorageKey(planId), JSON.stringify(payload));
 }

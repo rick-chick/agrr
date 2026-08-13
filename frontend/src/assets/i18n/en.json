@@ -1528,6 +1528,29 @@
           "applied_pending_confirmation": "Applied — pending confirmation"
         }
       },
+      "loop_phase": {
+        "title": "Learning loop progress",
+        "progress_aria": "Learning loop phases",
+        "current_label": "Current phase",
+        "steps": {
+          "observe": "Observe",
+          "apply": "Apply",
+          "reorganize": "Reorganize",
+          "handover": "Handover"
+        },
+        "next_action": {
+          "observe": "Review variance summary",
+          "apply_variance": "Review variance on workbench",
+          "apply_stage_gdd": "Review stage GDD proposal",
+          "apply_bp_timing": "Review BP timing proposal",
+          "reorganize": "Verify placement on workbench",
+          "handover": "Import learning to next plan"
+        }
+      },
+      "proposal_status": {
+        "unapplied": "Not applied",
+        "applied": "Applied"
+      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",

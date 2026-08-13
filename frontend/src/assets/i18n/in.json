@@ -2014,6 +2014,29 @@
           "applied_pending_confirmation": "लागू — पुष्टि लंबित"
         }
       },
+      "loop_phase": {
+        "title": "सीखने का लूप प्रगति",
+        "progress_aria": "सीखने के लूप के चरण",
+        "current_label": "वर्तमान चरण",
+        "steps": {
+          "observe": "अवलोकन",
+          "apply": "लागू करें",
+          "reorganize": "पुनर्गठन",
+          "handover": "हस्तांतरण"
+        },
+        "next_action": {
+          "observe": "variance सारांश की समीक्षा करें",
+          "apply_variance": "workbench पर variance की समीक्षा करें",
+          "apply_stage_gdd": "चरण GDD प्रस्ताव की समीक्षा करें",
+          "apply_bp_timing": "BP समय प्रस्ताव की समीक्षा करें",
+          "reorganize": "workbench पर स्थान की पुष्टि करें",
+          "handover": "अगली योजना में सीख आयात करें"
+        }
+      },
+      "proposal_status": {
+        "unapplied": "लागू नहीं",
+        "applied": "लागू"
+      },
       "post_master": {
         "title": "मास्टर अपडेट लागू किया गया",
         "lead": "आपका मास्टर परिवर्तन सहेजा गया। नीचे लागू मानों की समीक्षा करें, फिर कार्यक्षेत्र पर स्थान की पुष्टि करें।",

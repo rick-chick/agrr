@@ -1,0 +1,86 @@
+.learn-loop-phase {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.learn-loop-phase__heading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+}
+
+.learn-loop-phase__progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.learn-loop-phase__step {
+  display: flex;
+  flex: 1 1 8rem;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted, var(--color-surface));
+}
+
+.learn-loop-phase__step--completed {
+  color: var(--color-text);
+  border-color: var(--color-success, #15803d);
+}
+
+.learn-loop-phase__step--current {
+  color: var(--color-text);
+  border-color: var(--color-primary, #2563eb);
+  background: var(--color-primary-surface, rgba(37, 99, 235, 0.08));
+  font-weight: var(--font-weight-medium);
+}
+
+.learn-loop-phase__step-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  background: var(--color-border);
+}
+
+.learn-loop-phase__step--completed .learn-loop-phase__step-marker {
+  background: var(--color-success, #15803d);
+  color: #fff;
+}
+
+.learn-loop-phase__step--current .learn-loop-phase__step-marker {
+  background: var(--color-primary, #2563eb);
+  color: #fff;
+}
+
+.learn-loop-phase__next-action {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.learn-loop-phase__current {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.learn-loop-phase__cta {
+  align-self: flex-start;
+}
