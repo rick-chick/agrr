@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
@@ -236,8 +236,11 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   private readonly translate = inject(TranslateService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+
+  private carryoverPresetApplied = false;
 
   planName = '';
 
@@ -257,6 +260,9 @@ export class PlanNewComponent implements PlanNewView, OnInit {
       flash: this.flashMessage,
       router: this.router
     });
+    if (!value.loading && value.farms.length > 0) {
+      this.applyCarryoverFromQueryPreset();
+    }
     this.cdr.markForCheck();
   }
 
@@ -382,6 +388,51 @@ export class PlanNewComponent implements PlanNewView, OnInit {
 
   onSubmitWithLearnReview(event: Event): void {
     this.onSubmit(event, true);
+  }
+
+  applyCarryoverFromQueryPreset(): void {
+    if (this.carryoverPresetApplied) {
+      return;
+    }
+    const raw = this.route.snapshot.queryParamMap.get('carryoverFrom');
+    if (!raw) {
+      return;
+    }
+    const planId = Number(raw);
+    if (!Number.isFinite(planId) || planId <= 0) {
+      return;
+    }
+
+    this.carryoverUseCase
+      .loadSourcePlan(planId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (plan) => {
+          if (!plan) {
+            return;
+          }
+          const farm = this._control.farms.find(
+            (candidate) => candidate.id === plan.farm_id && candidate.hasValidFields
+          );
+          if (!farm) {
+            return;
+          }
+          this.carryoverPresetApplied = true;
+          this._control = {
+            ...this._control,
+            selectedFarmId: plan.farm_id,
+            carryoverEnabled: true,
+            selectedSourcePlanId: planId,
+            sourcePlans: [],
+            carryoverPreview: null,
+            carryoverPreviewError: null,
+            carryoverPreviewLoading: true
+          };
+          this.loadSourcePlans(plan.farm_id);
+          this.loadCarryoverPreview(planId);
+          this.cdr.markForCheck();
+        }
+      });
   }
 
   private loadSourcePlans(farmId: number): void {

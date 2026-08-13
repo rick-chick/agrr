@@ -326,6 +326,54 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Review adjust on workbench');
   });
 
+  it('shows merged proposal count in imported banner after import', async () => {
+    carryoverUseCase.importLearning.mockReturnValue(
+      of({
+        plan_id: 7,
+        source_plan_id: 8,
+        summary: {
+          plan_id: 7,
+          unrecorded_count: 0,
+          categories: [],
+          top_variance_items: [],
+          stage_gdd_calibration_proposals: [
+            {
+              crop_id: 1,
+              crop_name: 'Tomato',
+              stage_order: 1,
+              stage_name: 'Vegetative',
+              average_gdd_delta: 10,
+              recorded_item_count: 2
+            }
+          ],
+          blueprint_timing_adjustment_proposals: [
+            {
+              crop_id: 1,
+              crop_name: 'Tomato',
+              category: 'general',
+              average_delta_days: 2,
+              average_gdd_delta: 5,
+              recorded_item_count: 4,
+              affected_blueprint_count: 2
+            }
+          ]
+        }
+      })
+    );
+
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    componentSetSourcePlan(fixture, 8);
+    fixture.componentInstance.onImportLearning();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('2 merged proposal');
+  });
+
   it('distinguishes imported snapshot from current plan variance headings', async () => {
     carryoverUseCase.loadLearningSnapshot.mockReturnValue(
       of({

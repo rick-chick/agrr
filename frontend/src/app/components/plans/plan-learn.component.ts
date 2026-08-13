@@ -22,6 +22,7 @@ import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-lea
 import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-timing-adjustment-proposals.usecase';
 import { LoadStageGddCalibrationProposalsUseCase } from '../../usecase/plans/load-stage-gdd-calibration-proposals.usecase';
 import { loadMergedLearnProposals } from '../../usecase/plans/load-merged-learn-proposals';
+import { countMergedLearnProposals } from '../../domain/plans/count-merged-learn-proposals';
 import { PLAN_LEARN_PROVIDERS, PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { PlanLearnView, PlanLearnViewState } from './plan-learn.view';
 import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-actual-summary';
@@ -168,6 +169,7 @@ const initialControl: PlanLearnViewState = {
             <app-plan-learn-imported-banner
               [planId]="planId"
               [items]="control.learningSnapshot.summary.action_required_items ?? []"
+              [mergedProposalCount]="mergedProposalCount"
             />
           }
 
@@ -329,6 +331,13 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
   get showMasterUpdateNextSteps(): boolean {
     return (
       this.showPostMasterConfirmation || hasActiveLearnMasterUpdateFlow(this.planId)
+    );
+  }
+
+  get mergedProposalCount(): number {
+    return countMergedLearnProposals(
+      this.control.varianceSummary,
+      this.control.learningSnapshot
     );
   }
 

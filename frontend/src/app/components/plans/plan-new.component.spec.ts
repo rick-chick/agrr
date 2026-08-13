@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanNewComponent } from './plan-new.component';
@@ -42,6 +42,7 @@ describe('PlanNewComponent', () => {
   let mockCarryoverUseCase: {
     loadSourcePlans: ReturnType<typeof vi.fn>;
     loadCarryoverPreview: ReturnType<typeof vi.fn>;
+    loadSourcePlan: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -53,7 +54,8 @@ describe('PlanNewComponent', () => {
       loadSourcePlans: vi.fn(() => of([])),
       loadCarryoverPreview: vi.fn(() =>
         of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] })
-      )
+      ),
+      loadSourcePlan: vi.fn(() => of(null))
     };
 
     await TestBed.configureTestingModule({
@@ -350,5 +352,53 @@ describe('PlanNewComponent', () => {
     expect(preview?.textContent).toContain('Learning data preview');
     expect(preview?.textContent).toContain('General tasks');
     expect(preview?.textContent).toContain('+2 days');
+  });
+
+  it('presets carryover from carryoverFrom query param after farms load', () => {
+    const sourcePlan = { id: 7, name: 'Source Plan', farm_id: 10 };
+    mockCarryoverUseCase.loadSourcePlan = vi.fn(() => of(sourcePlan));
+    mockCarryoverUseCase.loadSourcePlans.mockReturnValue(of([sourcePlan]));
+    mockCarryoverUseCase.loadCarryoverPreview.mockReturnValue(
+      of({
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      })
+    );
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [PlanNewComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: { get: (key: string) => (key === 'carryoverFrom' ? '7' : null) } }
+          }
+        },
+        { provide: LoadPrivatePlanFarmsUseCase, useValue: mockLoadUseCase },
+        { provide: CreatePrivatePlanUseCase, useValue: mockCreateUseCase },
+        { provide: PlanNewPresenter, useValue: mockFarmsPresenter },
+        { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter },
+        { provide: LoadPlanNewCarryoverUseCase, useValue: mockCarryoverUseCase }
+      ]
+    })
+      .overrideComponent(PlanNewComponent, { set: { providers: [] } })
+      .compileComponents();
+
+    const localFixture = TestBed.createComponent(PlanNewComponent);
+    const localComponent = localFixture.componentInstance;
+    localComponent.control = defaultControl({
+      farms: [{ id: 10, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }]
+    });
+
+    localComponent.applyCarryoverFromQueryPreset();
+
+    expect(mockCarryoverUseCase.loadSourcePlan).toHaveBeenCalledWith(7);
+    expect(localComponent.control.carryoverEnabled).toBe(true);
+    expect(localComponent.control.selectedFarmId).toBe(10);
+    expect(localComponent.control.selectedSourcePlanId).toBe(7);
   });
 });
