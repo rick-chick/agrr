@@ -67,14 +67,16 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
               {{ nextAction.labelKey | translate }}
             </a>
           }
-          @if (secondaryAction?.kind === 'router_link') {
-            <a
-              class="btn btn-secondary learn-loop-progress__secondary-cta"
-              [routerLink]="secondaryAction.routerLink"
-              [queryParams]="secondaryAction.queryParams"
-            >
-              {{ secondaryAction.labelKey | translate }}
-            </a>
+          @if (secondaryAction; as secondary) {
+            @if (secondary.kind === 'router_link') {
+              <a
+                class="btn btn-secondary learn-loop-progress__secondary-cta"
+                [routerLink]="secondary.routerLink"
+                [queryParams]="secondary.queryParams"
+              >
+                {{ secondary.labelKey | translate }}
+              </a>
+            }
           }
         </div>
       }
