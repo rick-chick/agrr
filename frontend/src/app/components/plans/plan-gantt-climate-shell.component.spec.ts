@@ -87,6 +87,60 @@ describe('PlanGanttClimateShellComponent', () => {
       expect(component.selectedPlanType).toBe('private');
     });
 
+    it('selects cultivation from deep link query when cultivation exists', () => {
+      component.data = {
+        success: true,
+        data: {
+          id: 1,
+          plan_year: 2026,
+          plan_name: 'Plan',
+          status: 'completed',
+          total_area: 10,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [],
+          crops: [],
+          cultivations: [
+            {
+              id: 42,
+              field_id: 1,
+              field_name: 'North',
+              crop_id: 1,
+              crop_name: 'Tomato',
+              area: 1,
+              start_date: '2026-04-01',
+              completion_date: '2026-10-01',
+              cultivation_days: 180,
+              estimated_cost: 0,
+              revenue: 0,
+              profit: 0,
+              status: 'active'
+            }
+          ]
+        },
+        total_profit: 0,
+        total_revenue: 0,
+        total_cost: 0
+      };
+      component.deepLinkFieldCultivationId = 42;
+      component.ngOnChanges({
+        data: {
+          currentValue: component.data,
+          previousValue: undefined,
+          firstChange: true,
+          isFirstChange: () => true
+        },
+        deepLinkFieldCultivationId: {
+          currentValue: 42,
+          previousValue: undefined,
+          firstChange: true,
+          isFirstChange: () => true
+        }
+      });
+
+      expect(component.selectedCultivationId).toBe(42);
+    });
+
     it('passes planId to the climate panel when a cultivation is selected', async () => {
       await TestBed.configureTestingModule({
         imports: [PlanGanttClimateShellComponent, TranslateModule.forRoot()],

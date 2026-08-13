@@ -26,6 +26,7 @@ describe('WorkRecordSaveImpactPanelComponent', () => {
         'plans.work.save_impact.unrecorded': 'Unrecorded',
         'plans.work.save_impact.average_delta': 'Avg delta',
         'plans.work.save_impact.learn_link': 'Review in Learn',
+        'plans.work.save_impact.workbench_link': 'Review adjust on workbench',
         'plans.work.save_impact.dismiss': 'Dismiss'
       },
       true
@@ -41,7 +42,8 @@ describe('WorkRecordSaveImpactPanelComponent', () => {
         completedCount: 3,
         averageDeltaDays: 2.5,
         unrecordedCount: 4
-      }
+      },
+      workbenchFieldCultivationId: null
     };
     fixture.detectChanges();
   });
@@ -55,5 +57,26 @@ describe('WorkRecordSaveImpactPanelComponent', () => {
     expect(element.textContent).toContain('+2.5');
     const learnLink = element.querySelector('.work-record-save-impact__learn-link') as HTMLAnchorElement;
     expect(learnLink.getAttribute('href')).toBe('/plans/7/learn');
+  });
+
+  it('renders workbench deep link when threshold action is required', () => {
+    fixture.componentInstance.impact = {
+      taskName: 'Weeding',
+      deltaDays: '+3',
+      gddDelta: '+30.5',
+      planStats: {
+        completedCount: 3,
+        averageDeltaDays: 2.5,
+        unrecordedCount: 4
+      },
+      workbenchFieldCultivationId: 10
+    };
+    fixture.detectChanges();
+
+    const workbenchLink = fixture.nativeElement.querySelector(
+      '.work-record-save-impact__workbench-link'
+    ) as HTMLAnchorElement;
+    expect(workbenchLink.textContent).toContain('Review adjust on workbench');
+    expect(workbenchLink.getAttribute('href')).toContain('field_cultivation_id=10');
   });
 });

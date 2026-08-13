@@ -1,6 +1,7 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
 import { PlanGanttClimateShellComponent } from './plan-gantt-climate-shell.component';
 import { VarianceActionBannerComponent } from './variance-action-banner.component';
@@ -58,6 +59,7 @@ const initialControl: PlanDetailViewState = {
               [data]="control.planData"
               [planType]="planType"
               [planId]="planId"
+              [deepLinkFieldCultivationId]="deepLinkFieldCultivationId"
             />
           </div>
         }
@@ -71,6 +73,9 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   private readonly useCase = inject(LoadPlanDetailUseCase);
   private readonly presenter = inject(PlanDetailPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+
+  deepLinkFieldCultivationId: number | null = null;
 
   private _control: PlanDetailViewState = initialControl;
   get control(): PlanDetailViewState {
@@ -89,6 +94,14 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const raw = params.get('field_cultivation_id');
+      const parsed = raw != null ? Number(raw) : NaN;
+      this.deepLinkFieldCultivationId =
+        Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+      this.cdr.markForCheck();
+    });
+
     const planId = Number(this.route.snapshot.paramMap.get('id'));
     if (!planId) {
       this.control = {

@@ -51,3 +51,9 @@
   display: inline-flex;
   font-weight: 600;
 }
+
+.work-record-save-impact__workbench-link {
+  display: inline-flex;
+  margin-right: var(--space-4);
+  font-weight: 600;
+}

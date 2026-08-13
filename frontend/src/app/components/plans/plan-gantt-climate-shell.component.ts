@@ -1,9 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import { GanttVisibleRange } from '../../domain/plans/gantt-chart-layout';
+import { resolveDeepLinkFieldCultivationId } from '../../domain/plans/plan-workbench-deep-link';
 import { GanttChartComponent } from './gantt-chart.component';
 import { PlanFieldClimateComponent } from './plan-field-climate.component';
 
@@ -56,15 +57,34 @@ export type CultivationSelectionEvent = {
     </div>
   `
 })
-export class PlanGanttClimateShellComponent {
+export class PlanGanttClimateShellComponent implements OnChanges {
   @Input({ required: true }) data!: CultivationPlanData;
   @Input() planType: CultivationPlanContextType = 'private';
   @Input() planId: number | null = null;
+  @Input() deepLinkFieldCultivationId: number | null = null;
 
   selectedCultivationId: number | null = null;
   selectedPlanType: CultivationPlanContextType = this.planType;
   visibleRangeStartDate: string | null = null;
   visibleRangeEndDate: string | null = null;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['deepLinkFieldCultivationId'] || changes['data']) {
+      this.applyDeepLinkSelection();
+    }
+  }
+
+  private applyDeepLinkSelection(): void {
+    const resolved = resolveDeepLinkFieldCultivationId(
+      this.data?.data?.cultivations ?? [],
+      this.deepLinkFieldCultivationId
+    );
+    if (resolved == null) {
+      return;
+    }
+    this.selectedCultivationId = resolved;
+    this.selectedPlanType = this.planType;
+  }
 
   handleCultivationSelection(event: CultivationSelectionEvent): void {
     const alreadySelected =

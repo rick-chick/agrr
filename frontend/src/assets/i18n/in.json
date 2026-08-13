@@ -1927,6 +1927,7 @@
         "top_item_dates": "नियोजित {{scheduled}} · वास्तविक {{actual}}",
         "unrecorded_title": "नियोजित लेकिन अभिलेखित नहीं",
         "open_in_schedule": "अनुसूची में खोलें",
+        "open_workbench": "कार्य मंच खोलें",
         "no_data": "अभी तक कोई अंतर डेटा नहीं",
         "delta_value": "Δ {{delta}} दिन",
         "average_value": "{{delta}} दिन",
@@ -2047,6 +2048,7 @@
         "unrecorded": "अदर्ज कार्य",
         "average_delta": "औसत दिन अंतर",
         "learn_link": "Learn में समीक्षा करें",
+        "workbench_link": "कार्य मंच पर adjust की समीक्षा करें",
         "dismiss": "प्रभाव पूर्वावलोकन बंद करें"
       }
     },

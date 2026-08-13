@@ -90,6 +90,11 @@ import type { PlanTaskScheduleRowView } from './plan-task-schedule.view';
                   }}</span>
                 </div>
                 <span class="task-schedule-variance__list-delta">{{ itemDeltaLabel(item) }}</span>
+                <a
+                  class="task-schedule-variance__list-link"
+                  [routerLink]="['/plans', planId]"
+                  [queryParams]="{ field_cultivation_id: item.field_cultivation_id }"
+                >{{ 'plans.task_schedules.variance_subview.open_workbench' | translate }}</a>
               </li>
             }
           </ul>

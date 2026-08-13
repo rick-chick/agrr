@@ -53,7 +53,36 @@ describe('buildWorkRecordSaveImpact', () => {
       taskName: 'Weeding',
       deltaDays: '+3',
       gddDelta: '+30.5',
-      planStats
+      planStats,
+      workbenchFieldCultivationId: null
+    });
+  });
+
+  it('includes workbench deep link when the saved task exceeds variance threshold', () => {
+    expect(
+      buildWorkRecordSaveImpact(
+        record({ id: 1, actual_date: '2026-06-13', name: 'Weeding' }),
+        'create-from-item',
+        planStats,
+        { planId: 7, fieldCultivationId: 10, taskScheduleItemId: 5, gddTrigger: 100 },
+        [
+          {
+            item_id: 5,
+            field_cultivation_id: 10,
+            category: 'general',
+            name: 'Weeding',
+            scheduled_date: '2026-06-10',
+            actual_date: '2026-06-13',
+            delta_days: 3,
+            gdd_trigger: 100,
+            gdd_at_actual: 130.5,
+            gdd_delta: 30.5,
+            exceedance_kind: 'both'
+          }
+        ]
+      )
+    ).toMatchObject({
+      workbenchFieldCultivationId: 10
     });
   });
 
@@ -75,7 +104,8 @@ describe('buildWorkRecordSaveImpact', () => {
       taskName: 'Extra work',
       deltaDays: null,
       gddDelta: null,
-      planStats
+      planStats,
+      workbenchFieldCultivationId: null
     });
   });
 });
