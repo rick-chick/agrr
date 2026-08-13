@@ -6,7 +6,7 @@
 |----------|----------|------|
 | `current-state.md` | 1 | ✓ |
 | `gap-backlog.md` | 2 | ✓ |
-| `theme-selection.md` | 3 | ✓ |
+| `theme-selection.md` | 3 | ✓（`breadth-depth-scale.md` §theme-selection 形式） |
 | `theme-deep-dive.md` | 4 | ✓ |
 | `overlap-ux-gate.json` | 5 G2 | ✓ |
 | `enhancement-plan.md` | 6 | ✓ |
