@@ -215,6 +215,49 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Weed control');
   });
 
+  it('shows observe phase completion when all tasks are recorded', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-observe-phase-status')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Observation phase complete');
+  });
+
+  it('shows unrecorded count and work CTA when tasks are not recorded', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 3,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('3 tasks are not recorded yet.');
+    const workLink = fixture.nativeElement.querySelector(
+      'a.plan-learn-observe-phase__cta'
+    ) as HTMLAnchorElement;
+    expect(workLink).toBeTruthy();
+    expect(workLink.getAttribute('href')).toBe('/plans/7/work');
+    expect(workLink.textContent).toContain('Record work');
+  });
+
   it('renders carryover import section with source plans', async () => {
     fixture.detectChanges();
     presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });

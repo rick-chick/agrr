@@ -2600,9 +2600,9 @@
       "current_variance_hint": "この計画の作業記録に基づく差分です。別計画から取り込んだ学習は上に表示されます。",
       "imported_banner": {
         "message": "取り込んだ差分 {{count}} 件が作業台での adjust を要する可能性があります。",
-        "merged_proposals": "マージされた提案 {{count}} 件を学習から取り込みました。",
         "manual_hint": "スケジュールを変更する前に、作業台で取り込んだ学習内容を確認してください。自動変更は行われません。",
-        "workbench_link": "作業台で adjust を検討"
+        "workbench_link": "作業台で adjust を検討",
+        "merged_proposals": "マージされた提案 {{count}} 件を学習から取り込みました。"
       },
       "carryover": {
         "title": "他の計画から学習を取り込む",
@@ -2693,6 +2693,11 @@
           "sync_verify": "同期を確認"
         },
         "completed": "完了"
+      },
+      "observe_phase": {
+        "unrecorded_message": "未記録のタスクが {{count}} 件あります。",
+        "unrecorded_cta": "作業を記録する",
+        "complete_message": "観測フェーズ完了 — 予定タスクはすべて記録済みです。"
       },
       "loop": {
         "title": "学習ループの進捗",

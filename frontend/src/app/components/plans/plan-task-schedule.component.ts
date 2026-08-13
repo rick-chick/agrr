@@ -265,6 +265,7 @@ const initialControl: PlanTaskScheduleViewState = {
             </div>
             <app-task-schedule-month-list
               #monthList
+              [planId]="planId"
               [monthGroups]="scheduleMonthGroups"
               [unscheduledRows]="scheduleUnscheduledRows"
             />
