@@ -2055,6 +2055,11 @@
         },
         "completed": "पूर्ण"
       },
+      "observe_phase": {
+        "unrecorded_message": "{{count}} कार्य अभी तक अभिलेखित नहीं हैं।",
+        "unrecorded_cta": "कार्य अभिलेखित करें",
+        "complete_message": "अवलोकन चरण पूर्ण — सभी निर्धारित कार्य अभिलेखित हैं।"
+      },
       "loop": {
         "title": "सीखने लूप की प्रगति",
         "next_action_title": "अगला कदम",

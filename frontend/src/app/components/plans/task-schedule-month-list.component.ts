@@ -1,4 +1,5 @@
 import { Component, ElementRef, Input, ViewChild, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { formatIsoDateForDisplay, formatIsoDayForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
 import type { PlanTaskScheduleMonthGroupView, PlanTaskScheduleRowView } from './plan-task-schedule.view';
@@ -16,7 +17,7 @@ import {
 @Component({
   selector: 'app-task-schedule-month-list',
   standalone: true,
-  imports: [TranslateModule, TaskScheduleItemDetailComponent],
+  imports: [TranslateModule, TaskScheduleItemDetailComponent, RouterLink],
   template: `
     @if (!monthGroups.length && !unscheduledRows.length) {
       <p class="plan-task-schedule-month-list__empty">{{
@@ -55,13 +56,26 @@ import {
                         statusLabelKey(row) | translate
                       }}</span>
                       @if (varianceBadge(row); as badge) {
-                        <span
-                          class="plan-task-schedule-month-list__variance"
-                          [class]="varianceModifierClass(badge)"
-                          [attr.aria-label]="varianceAriaLabel(badge)"
-                        >
-                          {{ varianceDeltaLabel(badge) }}
-                        </span>
+                        @if (planId != null) {
+                          <a
+                            class="plan-task-schedule-month-list__variance plan-task-schedule-month-list__variance-link"
+                            [class]="varianceModifierClass(badge)"
+                            [attr.aria-label]="varianceAriaLabel(badge)"
+                            [routerLink]="['/plans', planId, 'learn']"
+                            fragment="plan-learn-current-variance-title"
+                            (click)="$event.stopPropagation()"
+                          >
+                            {{ varianceDeltaLabel(badge) }}
+                          </a>
+                        } @else {
+                          <span
+                            class="plan-task-schedule-month-list__variance"
+                            [class]="varianceModifierClass(badge)"
+                            [attr.aria-label]="varianceAriaLabel(badge)"
+                          >
+                            {{ varianceDeltaLabel(badge) }}
+                          </span>
+                        }
                       }
                     </span>
                   </button>
@@ -114,13 +128,26 @@ import {
                         statusLabelKey(row) | translate
                       }}</span>
                       @if (varianceBadge(row); as badge) {
-                        <span
-                          class="plan-task-schedule-month-list__variance"
-                          [class]="varianceModifierClass(badge)"
-                          [attr.aria-label]="varianceAriaLabel(badge)"
-                        >
-                          {{ varianceDeltaLabel(badge) }}
-                        </span>
+                        @if (planId != null) {
+                          <a
+                            class="plan-task-schedule-month-list__variance plan-task-schedule-month-list__variance-link"
+                            [class]="varianceModifierClass(badge)"
+                            [attr.aria-label]="varianceAriaLabel(badge)"
+                            [routerLink]="['/plans', planId, 'learn']"
+                            fragment="plan-learn-current-variance-title"
+                            (click)="$event.stopPropagation()"
+                          >
+                            {{ varianceDeltaLabel(badge) }}
+                          </a>
+                        } @else {
+                          <span
+                            class="plan-task-schedule-month-list__variance"
+                            [class]="varianceModifierClass(badge)"
+                            [attr.aria-label]="varianceAriaLabel(badge)"
+                          >
+                            {{ varianceDeltaLabel(badge) }}
+                          </span>
+                        }
                       }
                     </span>
                   </button>
@@ -175,6 +202,8 @@ export class TaskScheduleMonthListComponent {
   @Input({ required: true }) monthGroups: PlanTaskScheduleMonthGroupView[] = [];
 
   @Input() unscheduledRows: PlanTaskScheduleRowView[] = [];
+
+  @Input() planId: number | null = null;
 
   selectedRow: PlanTaskScheduleRowView | null = null;
 

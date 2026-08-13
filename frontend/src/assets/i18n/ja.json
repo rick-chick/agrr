@@ -2693,6 +2693,11 @@
         },
         "completed": "完了"
       },
+      "observe_phase": {
+        "unrecorded_message": "未記録のタスクが {{count}} 件あります。",
+        "unrecorded_cta": "作業を記録する",
+        "complete_message": "観測フェーズ完了 — 予定タスクはすべて記録済みです。"
+      },
       "loop": {
         "title": "学習ループの進捗",
         "next_action_title": "次のアクション",
