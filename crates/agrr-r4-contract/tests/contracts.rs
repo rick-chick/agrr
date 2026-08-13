@@ -676,6 +676,100 @@ fn post_plan_create_with_carryover_persists_variance_learning_snapshot() {
 }
 
 #[test]
+fn post_plan_variance_learning_imports_snapshot_for_in_progress_plan() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let source = seed_work_record_plan(user_id);
+
+    let sqlite_path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&sqlite_path).expect("open contract sqlite");
+    conn.execute(
+        "UPDATE task_schedule_items SET gdd_trigger = 100.0 WHERE id = ?1",
+        rusqlite::params![source.task_schedule_item_id],
+    )
+    .expect("set gdd_trigger");
+
+    let create_record_path = format!("/api/v1/plans/{}/work_records", source.plan_id);
+    let (record_status, record_body) = status_and_body(client.post(
+        &create_record_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": source.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "in-progress carryover seed"
+            }
+        })),
+    ));
+    assert_eq!(201, record_status, "{record_body}");
+    let record_json: serde_json::Value =
+        serde_json::from_str(&record_body).expect("create work_record JSON");
+    let record_id = record_json["work_record"]["id"].as_i64().expect("record id");
+    conn.execute(
+        "UPDATE work_records SET gdd_at_actual = 110.0 WHERE id = ?1",
+        rusqlite::params![record_id],
+    )
+    .expect("set gdd_at_actual");
+
+    let target_farm_id = seed_user_farm_without_organization(user_id);
+    conn.execute(
+        "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
+         VALUES (?1, ?2, 'In Progress Target Field', 40.0, 0, datetime('now'), datetime('now'))",
+        rusqlite::params![target_farm_id, user_id],
+    )
+    .expect("insert target field");
+
+    let (create_status, create_body) = status_and_body(client.post(
+        "/api/v1/plans",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "plan": {
+                "farm_id": target_farm_id,
+                "plan_name": "In Progress Target Plan"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create plan JSON");
+    let target_plan_id = create_json["id"].as_i64().expect("target plan id");
+
+    let import_path = format!("/api/v1/plans/{target_plan_id}/variance_learning");
+    let (import_status, import_body) = status_and_body(client.post(
+        &import_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "source_plan_id": source.plan_id
+        })),
+    ));
+    assert_eq!(200, import_status, "{import_body}");
+    let imported: serde_json::Value =
+        serde_json::from_str(&import_body).expect("import variance learning JSON");
+    assert_eq!(target_plan_id, imported["plan_id"].as_i64().unwrap());
+    assert_eq!(source.plan_id, imported["source_plan_id"].as_i64().unwrap());
+
+    let (learning_status, learning_body) = status_and_body(client.get(
+        &import_path,
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, learning_status, "{learning_body}");
+    let learning: serde_json::Value =
+        serde_json::from_str(&learning_body).expect("variance learning JSON");
+    assert_eq!(target_plan_id, learning["plan_id"].as_i64().unwrap());
+    assert_eq!(source.plan_id, learning["source_plan_id"].as_i64().unwrap());
+    let categories = learning["summary"]["categories"]
+        .as_array()
+        .expect("summary categories");
+    assert!(!categories.is_empty(), "{learning_body}");
+}
+
+#[test]
 fn get_task_schedule_includes_compat_milestones_labels_and_week_days() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

@@ -14,6 +14,7 @@ import { LOAD_STAGE_GDD_CALIBRATION_PROPOSALS_OUTPUT_PORT } from './load-stage-g
 import { PLAN_GATEWAY } from './plan-gateway';
 import { LoadBlueprintTimingAdjustmentProposalsUseCase } from './load-blueprint-timing-adjustment-proposals.usecase';
 import { LOAD_BLUEPRINT_TIMING_ADJUSTMENT_PROPOSALS_OUTPUT_PORT } from './load-blueprint-timing-adjustment-proposals.output-port';
+import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.usecase';
 
 export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
   PlanLearnPresenter,
@@ -21,6 +22,7 @@ export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
   LoadPlanVsActualSummaryUseCase,
   LoadBlueprintTimingAdjustmentProposalsUseCase,
   LoadStageGddCalibrationProposalsUseCase,
+  LoadPlanLearnCarryoverUseCase,
   { provide: LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanLearnPresenter },
   {
     provide: LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT,

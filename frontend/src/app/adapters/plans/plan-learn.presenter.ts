@@ -32,7 +32,17 @@ const initialControl: PlanLearnViewState = {
   blueprintTimingLoading: false,
   blueprintTimingProposals: [],
   stageGddProposalsLoading: false,
-  stageGddProposals: []
+  stageGddProposals: [],
+  farmId: null,
+  learningSnapshot: null,
+  learningSnapshotLoading: true,
+  carryoverSourcePlans: [],
+  selectedSourcePlanId: null,
+  carryoverPreviewLoading: false,
+  carryoverPreviewError: null,
+  carryoverPreview: null,
+  carryoverImporting: false,
+  carryoverImportError: null
 };
 
 @Injectable()

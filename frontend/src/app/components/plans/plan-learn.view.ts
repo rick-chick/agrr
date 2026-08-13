@@ -1,3 +1,5 @@
+import type { PlanSummary } from '../../domain/plans/plan-summary';
+import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
 import type {
   PlanVsActualPlanSummaryStats,
   PlanVsActualSummary
@@ -19,6 +21,16 @@ export type PlanLearnViewState = {
   blueprintTimingProposals: BlueprintTimingAdjustmentProposal[];
   stageGddProposalsLoading: boolean;
   stageGddProposals: StageGddCalibrationProposal[];
+  farmId: number | null;
+  learningSnapshot: PlanVarianceLearningSnapshot | null;
+  learningSnapshotLoading: boolean;
+  carryoverSourcePlans: PlanSummary[];
+  selectedSourcePlanId: number | null;
+  carryoverPreviewLoading: boolean;
+  carryoverPreviewError: string | null;
+  carryoverPreview: PlanVsActualSummary | null;
+  carryoverImporting: boolean;
+  carryoverImportError: string | null;
 };
 
 export interface PlanLearnView {

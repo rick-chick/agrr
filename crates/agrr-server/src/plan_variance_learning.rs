@@ -9,6 +9,9 @@ use agrr_adapters_sqlite::{
     PlanVarianceLearningSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::cultivation_plan::dtos::PlanVarianceLearningSnapshotRead;
+use agrr_domain::cultivation_plan::gateways::{
+    CultivationPlanGateway, PlanVarianceLearningGateway,
+};
 use agrr_domain::cultivation_plan::interactors::{
     PlanVarianceCarryoverInput, PlanVarianceCarryoverInteractor, PlanVarianceLearningReadInteractor,
 };
@@ -17,7 +20,7 @@ use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::exceptions::RecordNotFoundError;
 use axum::{
     extract::{Path, State},
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use axum_extra::extract::cookie::CookieJar;
@@ -26,7 +29,7 @@ use serde_json::{json, Value};
 pub fn routes() -> Router<AppState> {
     Router::new().route(
         "/api/v1/plans/{id}/variance_learning",
-        get(show_variance_learning),
+        get(show_variance_learning).post(import_variance_learning),
     )
 }
 
@@ -110,6 +113,84 @@ async fn show_variance_learning(
             ))
         }
     }
+}
+
+#[derive(serde::Deserialize)]
+struct ImportVarianceLearningBody {
+    source_plan_id: i64,
+}
+
+async fn import_variance_learning(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(plan_id): Path<i64>,
+    Json(body): Json<ImportVarianceLearningBody>,
+) -> Result<Json<Value>, (axum::http::StatusCode, Json<Value>)> {
+    let user_id = user_id_from_session(&state, &jar).map_err(|status| {
+        (
+            status,
+            Json(json!({"errors": ["unauthorized"]})),
+        )
+    })?;
+
+    let pool = state.sqlite.clone();
+    let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let target_plan = plan_gateway.find_by_id(plan_id).map_err(|err| {
+        if err.downcast_ref::<RecordNotFoundError>().is_some() {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                Json(json!({"errors": ["not_found"]})),
+            )
+        } else {
+            tracing::error!("variance_learning import plan lookup failed: {err}");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            )
+        }
+    })?;
+
+    if let Err(err) = run_carryover_after_create(
+        &state,
+        user_id,
+        plan_id,
+        target_plan.farm_id,
+        body.source_plan_id,
+    ) {
+        let message = err
+            .downcast_ref::<agrr_domain::shared::exceptions::RecordInvalidError>()
+            .and_then(|invalid| invalid.detail_message())
+            .unwrap_or("carryover failed")
+            .to_string();
+        return Err((
+            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"errors": [message]})),
+        ));
+    }
+
+    let variance_gateway = PlanVarianceLearningSqliteGateway::new(pool);
+    let snapshot = variance_gateway
+        .find_by_plan_id(plan_id)
+        .map_err(|err| {
+            tracing::error!("variance_learning import read-back failed: {err}");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            )
+        })?;
+
+    let summary_body = summary_to_json_body(snapshot.summary);
+    Ok(Json(json!({
+        "plan_id": snapshot.plan_id,
+        "source_plan_id": snapshot.source_plan_id,
+        "summary": summary_body,
+    })))
 }
 
 pub fn run_carryover_after_create(

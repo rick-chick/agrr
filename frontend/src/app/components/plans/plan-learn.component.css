@@ -1,2 +1,105 @@
 @import '../masters/_master-layout.css';
-@import './plan-work-shared.css';
+
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.plan-learn-carryover {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.plan-learn-carryover__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+}
+
+.plan-learn-carryover__hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.plan-learn-carryover__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.plan-learn-carryover__label {
+  display: block;
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.plan-learn-carryover__select {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  background: var(--color-surface);
+}
+
+.plan-learn-carryover-preview {
+  margin-top: var(--space-2);
+}
+
+.plan-learn-carryover-preview__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.plan-learn-carryover-preview__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.plan-learn-carryover-preview__table th,
+.plan-learn-carryover-preview__table td {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.plan-learn-carryover-preview__table th {
+  background: var(--color-surface-muted, var(--color-surface));
+  font-weight: var(--font-weight-medium);
+}
+
+.plan-learn-imported-snapshot {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.plan-learn-imported-snapshot__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.plan-learn-carryover__error {
+  margin: 0;
+  color: var(--color-danger, #b91c1c);
+  font-size: var(--font-size-sm);
+}
+
+.plan-work__error {
+  margin-bottom: var(--space-4);
+}
+
+.plan-work__retry {
+  margin-top: var(--space-2);
+}

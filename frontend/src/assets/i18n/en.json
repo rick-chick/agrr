@@ -1458,6 +1458,23 @@
     },
     "learn": {
       "page_title": "Review — {{name}}",
+      "imported_snapshot_title": "Imported learning from plan #{{sourcePlanId}}",
+      "imported_snapshot_empty": "No category variance data in the imported snapshot.",
+      "imported_banner": {
+        "message": "{{count}} imported variance item(s) may need adjust on the workbench.",
+        "manual_hint": "Review imported learning on the workbench before changing the schedule. No automatic changes are made.",
+        "workbench_link": "Review adjust on workbench"
+      },
+      "carryover": {
+        "title": "Import learning from another plan",
+        "hint": "Copy variance learning from a previous plan on the same farm into this in-progress plan.",
+        "source_label": "Source plan",
+        "source_hint": "Select a previous plan",
+        "no_source_plans": "No other plans on this farm are available.",
+        "preview_title": "Learning data preview",
+        "preview_empty": "No category variance data.",
+        "import_button": "Import learning"
+      },
       "stage_gdd_calibration": {
         "title": "Stage GDD calibration proposals",
         "lead": "Actual GDD variance from this plan suggests updating stage thermal requirements. Review and save only if you agree.",

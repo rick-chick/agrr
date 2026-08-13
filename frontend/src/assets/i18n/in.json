@@ -1944,6 +1944,23 @@
     },
     "learn": {
       "page_title": "समीक्षा — {{name}}",
+      "imported_snapshot_title": "योजना #{{sourcePlanId}} से आयातित सीख",
+      "imported_snapshot_empty": "आयातित स्नैपशॉट में कोई श्रेणी variance डेटा नहीं है।",
+      "imported_banner": {
+        "message": "आयातित variance की {{count}} वस्तु(एँ) workbench पर adjust की समीक्षा चाह सकती हैं।",
+        "manual_hint": "अनुसूची बदलने से पहले workbench पर आयातित सीख की समीक्षा करें। कोई स्वचालित परिवर्तन नहीं होता।",
+        "workbench_link": "workbench पर adjust की समीक्षा करें"
+      },
+      "carryover": {
+        "title": "दूसरी योजना से सीख आयात करें",
+        "hint": "उसी खेत की पिछली योजना से variance सीख इस चल रही योजना में कॉपी करें।",
+        "source_label": "स्रोत योजना",
+        "source_hint": "पिछली योजना चुनें",
+        "no_source_plans": "इस खेत पर कोई अन्य योजना उपलब्ध नहीं है।",
+        "preview_title": "सीख डेटा पूर्वावलोकन",
+        "preview_empty": "कोई श्रेणी variance डेटा नहीं।",
+        "import_button": "सीख आयात करें"
+      },
       "stage_gdd_calibration": {
         "title": "चरण GDD अंशांकन प्रस्ताव",
         "lead": "इस योजना के वास्तविक GDD अंतर से चरण thermal requirement अपडेट का प्रस्ताव दिया गया है। समीक्षा करें और केवल सहमति होने पर सहेजें।",
