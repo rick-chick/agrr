@@ -4,6 +4,11 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
 import { formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
+import {
+  resolveLearnProposalApplicationStatus,
+  stageGddProposalProgressKey,
+  type LearnProposalApplicationStatus
+} from '../../domain/plans/learn-proposal-application-progress';
 
 @Component({
   selector: 'app-stage-gdd-calibration-proposals-view',
@@ -32,9 +37,19 @@ import { formatVarianceGddDelta } from '../../domain/plans/work-record-variance'
           @for (proposal of proposals; track proposalKey(proposal)) {
             <li class="stage-gdd-calibration__item">
               <div class="stage-gdd-calibration__summary">
-                <p class="stage-gdd-calibration__stage-name">
-                  {{ proposal.cropName }} — {{ proposal.stageName }}
-                </p>
+                <div class="stage-gdd-calibration__header">
+                  <p class="stage-gdd-calibration__stage-name">
+                    {{ proposal.cropName }} — {{ proposal.stageName }}
+                  </p>
+                  <span
+                    class="stage-gdd-calibration__status"
+                    [class.stage-gdd-calibration__status--pending]="
+                      proposalStatus(proposal) === 'applied_pending_confirmation'
+                    "
+                  >
+                    {{ statusLabel(proposalStatus(proposal)) | translate }}
+                  </span>
+                </div>
                 <p class="stage-gdd-calibration__delta">
                   {{
                     'plans.learn.stage_gdd_calibration.delta_label'
@@ -94,5 +109,16 @@ export class StageGddCalibrationProposalsViewComponent {
       returnTo: 'learn',
       proposedRequiredGdd: proposal.proposedRequiredGdd ?? ''
     };
+  }
+
+  proposalStatus(proposal: StageGddCalibrationProposal): LearnProposalApplicationStatus {
+    return resolveLearnProposalApplicationStatus(
+      this.planId,
+      stageGddProposalProgressKey(proposal.cropId, proposal.stageId)
+    );
+  }
+
+  statusLabel(status: LearnProposalApplicationStatus): string {
+    return `plans.learn.application_progress.status.${status}`;
   }
 }
