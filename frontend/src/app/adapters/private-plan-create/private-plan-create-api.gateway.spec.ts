@@ -4,7 +4,7 @@ import { PrivatePlanCreateApiGateway } from './private-plan-create-api.gateway';
 import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
 import { Crop } from '../../domain/crops/crop';
-import { CreatePrivatePlanInputDto, CreatePrivatePlanResponseDto } from '../../usecase/private-plan-create/create-private-plan.dtos';
+import { CreatePrivatePlanInputDto } from '../../usecase/private-plan-create/create-private-plan.dtos';
 
 describe('PrivatePlanCreateApiGateway', () => {
   let apiClient: {
