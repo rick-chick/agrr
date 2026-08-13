@@ -2577,6 +2577,18 @@
           "gdd": "GDD の乖離が閾値を超えています",
           "both": "日数と GDD の乖離が閾値を超えています"
         }
+      },
+      "bp_timing_adjustment": {
+        "title": "作業 BP タイミング調整の提案",
+        "lead": "計画と実績のカテゴリ別乖離から、作業スケジュール BP の GDD トリガー調整案を生成します。適用前に dry_run で確認してください。",
+        "empty": "現時点で提案できる BP タイミング調整はありません。",
+        "delta_label": "平均乖離: {{delta}}",
+        "affected_count": "対象 BP: {{count}} 件",
+        "cta": "BP タイミングを調整",
+        "category": {
+          "general": "一般作業",
+          "fertilizer": "施肥"
+        }
       }
     },
     "work": {

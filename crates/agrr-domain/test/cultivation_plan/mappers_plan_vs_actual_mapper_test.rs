@@ -152,3 +152,33 @@ fn summary_counts_unrecorded_and_top_variance() {
         summary.action_required_items[0].exceedance_kind
     );
 }
+
+#[test]
+fn summary_includes_blueprint_timing_adjustment_proposals_per_crop_category() {
+    let snapshot = sample_snapshot(vec![
+        sample_item(1, Some("2026-06-01"), Some("2026-06-08"), Some(100.0), Some(110.0), "planned"),
+        sample_item(2, Some("2026-06-02"), Some("2026-06-04"), Some(100.0), Some(108.0), "planned"),
+    ]);
+
+    let summary = PlanVsActualMapper::summary_from_snapshot(&snapshot, 5);
+
+    assert_eq!(1, summary.blueprint_timing_adjustment_proposals.len());
+    let proposal = &summary.blueprint_timing_adjustment_proposals[0];
+    assert_eq!(42, proposal.crop_id);
+    assert_eq!("Tomato", proposal.crop_name);
+    assert_eq!("general", proposal.category);
+    assert_eq!(2, proposal.recorded_item_count);
+    assert!((proposal.average_delta_days - 4.5).abs() < f64::EPSILON);
+    assert!(proposal.average_gdd_delta.is_some());
+}
+
+#[test]
+fn blueprint_timing_proposals_skip_small_variance() {
+    let snapshot = sample_snapshot(vec![
+        sample_item(1, Some("2026-06-01"), Some("2026-06-01"), Some(100.0), Some(100.0), "planned"),
+    ]);
+
+    let summary = PlanVsActualMapper::summary_from_snapshot(&snapshot, 5);
+
+    assert!(summary.blueprint_timing_adjustment_proposals.is_empty());
+}

@@ -30,6 +30,7 @@ export interface PlanVsActualSummary {
   categories: PlanVsActualCategorySummary[];
   top_variance_items: PlanVsActualItem[];
   action_required_items?: PlanVarianceActionItem[];
+  blueprint_timing_adjustment_proposals?: import('./blueprint-timing-adjustment-proposal').BlueprintTimingAdjustmentProposalRaw[];
 }
 
 export interface PlanVsActualPlanSummaryStats {

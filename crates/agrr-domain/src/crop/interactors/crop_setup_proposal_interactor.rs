@@ -91,11 +91,12 @@ where
                 Ok(())
             }
             crate::crop::dtos::CropSetupProposalMode::Apply => {
-                let result = self.proposal_gateway.apply_plan(
-                    input.user_id,
-                    input.crop_id,
-                    &plan,
-                )?;
+                let result = if plan.intent.as_deref() == Some("blueprint_timing_patch") {
+                    self.proposal_gateway
+                        .apply_blueprint_timing_patch(input.user_id, input.crop_id, &plan)?
+                } else {
+                    self.proposal_gateway.apply_plan(input.user_id, input.crop_id, &plan)?
+                };
                 self.output_port.on_apply_success(result, normalized);
                 Ok(())
             }

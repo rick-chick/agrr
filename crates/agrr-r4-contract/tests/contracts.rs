@@ -567,6 +567,13 @@ fn get_plan_vs_actual_summary_and_task_schedule_embed_variance_fields() {
     );
     assert_eq!("days", action_items[0]["exceedance_kind"].as_str().unwrap());
 
+    let bp_proposals = summary["blueprint_timing_adjustment_proposals"]
+        .as_array()
+        .expect("blueprint_timing_adjustment_proposals");
+    assert_eq!(1, bp_proposals.len());
+    assert_eq!(seed.crop_id, bp_proposals[0]["crop_id"].as_i64().unwrap());
+    assert!(bp_proposals[0]["average_delta_days"].is_number());
+
     let (schedule_status, schedule_body) = status_and_body(client.get(
         &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
         Some(&session_id),

@@ -5,9 +5,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
 import { VarianceActionProposalCardsComponent } from './variance-action-proposal-cards.component';
+import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
+import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-timing-adjustment-proposals.usecase';
 import { PLAN_LEARN_PROVIDERS, PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { PlanLearnView, PlanLearnViewState } from './plan-learn.view';
 
@@ -19,7 +21,9 @@ const initialControl: PlanLearnViewState = {
   varianceError: null,
   varianceSummary: null,
   varianceStats: null,
-  varianceUnrecordedRows: []
+  varianceUnrecordedRows: [],
+  blueprintTimingLoading: false,
+  blueprintTimingProposals: []
 };
 
 @Component({
@@ -30,7 +34,8 @@ const initialControl: PlanLearnViewState = {
     TranslateModule,
     PlanPlanContextHeaderComponent,
     TaskScheduleVarianceViewComponent,
-    VarianceActionProposalCardsComponent
+    VarianceActionProposalCardsComponent,
+    BlueprintTimingAdjustmentProposalsViewComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -56,6 +61,11 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [items]="control.varianceSummary?.action_required_items ?? []"
           />
+          <app-blueprint-timing-adjustment-proposals-view
+            [planId]="planId"
+            [loading]="control.blueprintTimingLoading"
+            [proposals]="control.blueprintTimingProposals"
+          />
           <app-task-schedule-variance-view
             [planId]="planId"
             [loading]="control.varianceLoading"
@@ -74,6 +84,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly scheduleUseCase = inject(LoadPlanTaskScheduleUseCase);
   private readonly varianceUseCase = inject(LoadPlanVsActualSummaryUseCase);
+  private readonly blueprintTimingUseCase = inject(LoadBlueprintTimingAdjustmentProposalsUseCase);
   private readonly presenter = inject(PlanLearnPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);

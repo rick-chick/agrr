@@ -45,10 +45,18 @@ pub struct CropSetupProposalBlueprintPlan {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct CropSetupProposalBlueprintPatchPlan {
+    pub blueprint_id: i64,
+    pub gdd_trigger: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct CropSetupProposalPlan {
+    pub intent: Option<String>,
     pub stages: Vec<CropSetupProposalStagePlan>,
     pub agricultural_tasks: Vec<CropSetupProposalAgriculturalTaskPlan>,
     pub task_schedule_blueprints: Vec<CropSetupProposalBlueprintPlan>,
+    pub blueprint_timing_patches: Vec<CropSetupProposalBlueprintPatchPlan>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

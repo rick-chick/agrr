@@ -4,9 +4,9 @@ use crate::agricultural_task::constants::schedule_item_types::{
     BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
 };
 use crate::crop::dtos::{
-    CropSetupProposalAgriculturalTaskPlan, CropSetupProposalBlueprintPlan,
-    CropSetupProposalPlan, CropSetupProposalStagePlan, CropSetupProposalValidationError,
-    MastersCropTaskScheduleBlueprint,
+    CropSetupProposalAgriculturalTaskPlan, CropSetupProposalBlueprintPatchPlan,
+    CropSetupProposalBlueprintPlan, CropSetupProposalPlan, CropSetupProposalStagePlan,
+    CropSetupProposalValidationError, MastersCropTaskScheduleBlueprint,
 };
 use crate::crop::entities::CropStageEntity;
 use serde_json::{json, Map, Value};
@@ -19,11 +19,17 @@ const ALLOWED_TASK_TYPES: &[&str] = &[
     TOPDRESS_FERTILIZATION,
 ];
 
+const BLUEPRINT_TIMING_PATCH_INTENT: &str = "blueprint_timing_patch";
+
 pub fn validate_and_normalize(
     body: &Value,
-    _existing_blueprints: &[MastersCropTaskScheduleBlueprint],
+    existing_blueprints: &[MastersCropTaskScheduleBlueprint],
     existing_stages: &[CropStageEntity],
 ) -> Result<(CropSetupProposalPlan, Value), Vec<CropSetupProposalValidationError>> {
+    if body.get("intent").and_then(|v| v.as_str()) == Some(BLUEPRINT_TIMING_PATCH_INTENT) {
+        return validate_blueprint_timing_patch(body, existing_blueprints);
+    }
+
     let mut errors = Vec::new();
 
     let stages_value = body.get("stages").and_then(|v| v.as_array());
@@ -274,11 +280,110 @@ pub fn validate_and_normalize(
     }
 
     let plan = CropSetupProposalPlan {
+        intent: None,
         stages,
         agricultural_tasks,
         task_schedule_blueprints,
+        blueprint_timing_patches: Vec::new(),
     };
     Ok((plan.clone(), plan_to_normalized_json(&plan)))
+}
+
+fn validate_blueprint_timing_patch(
+    body: &Value,
+    existing_blueprints: &[MastersCropTaskScheduleBlueprint],
+) -> Result<(CropSetupProposalPlan, Value), Vec<CropSetupProposalValidationError>> {
+    let mut errors = Vec::new();
+    let blueprints_raw = match body.get("task_schedule_blueprints").and_then(|v| v.as_array()) {
+        Some(items) if !items.is_empty() => items,
+        Some(_) => {
+            errors.push(CropSetupProposalValidationError::new(
+                "task_schedule_blueprints",
+                "must contain at least one blueprint patch",
+            ));
+            return Err(errors);
+        }
+        None => {
+            errors.push(CropSetupProposalValidationError::new(
+                "task_schedule_blueprints",
+                "is required",
+            ));
+            return Err(errors);
+        }
+    };
+
+    let mut blueprint_timing_patches = Vec::new();
+    let mut seen_ids = HashSet::new();
+
+    for (index, blueprint) in blueprints_raw.iter().enumerate() {
+        let prefix = format!("task_schedule_blueprints[{index}]");
+        let Some(obj) = blueprint.as_object() else {
+            errors.push(CropSetupProposalValidationError::new(
+                prefix,
+                "must be an object",
+            ));
+            continue;
+        };
+
+        let blueprint_id = required_i64(obj, "blueprint_id", &prefix, &mut errors);
+        let gdd_trigger = required_f64(obj, "gdd_trigger", &prefix, &mut errors);
+
+        if let Some(blueprint_id) = blueprint_id {
+            if !seen_ids.insert(blueprint_id) {
+                errors.push(CropSetupProposalValidationError::new(
+                    format!("{prefix}.blueprint_id"),
+                    "duplicate blueprint_id in proposal",
+                ));
+            }
+            if !existing_blueprints.iter().any(|row| row.id == blueprint_id) {
+                errors.push(CropSetupProposalValidationError::new(
+                    format!("{prefix}.blueprint_id"),
+                    "must reference an existing crop blueprint",
+                ));
+            }
+        }
+
+        if let (Some(blueprint_id), Some(gdd_trigger)) = (blueprint_id, gdd_trigger) {
+            if gdd_trigger <= 0.0 {
+                errors.push(CropSetupProposalValidationError::new(
+                    format!("{prefix}.gdd_trigger"),
+                    "must be greater than 0",
+                ));
+            } else {
+                blueprint_timing_patches.push(CropSetupProposalBlueprintPatchPlan {
+                    blueprint_id,
+                    gdd_trigger,
+                });
+            }
+        }
+    }
+
+    if !errors.is_empty() {
+        return Err(errors);
+    }
+
+    let plan = CropSetupProposalPlan {
+        intent: Some(BLUEPRINT_TIMING_PATCH_INTENT.to_string()),
+        stages: Vec::new(),
+        agricultural_tasks: Vec::new(),
+        task_schedule_blueprints: Vec::new(),
+        blueprint_timing_patches,
+    };
+    Ok((plan.clone(), patch_plan_to_normalized_json(&plan)))
+}
+
+fn patch_plan_to_normalized_json(plan: &CropSetupProposalPlan) -> Value {
+    json!({
+        "intent": BLUEPRINT_TIMING_PATCH_INTENT,
+        "stages": [],
+        "agricultural_tasks": [],
+        "task_schedule_blueprints": plan.blueprint_timing_patches.iter().map(|bp| {
+            json!({
+                "blueprint_id": bp.blueprint_id,
+                "gdd_trigger": bp.gdd_trigger,
+            })
+        }).collect::<Vec<_>>(),
+    })
 }
 
 fn plan_to_normalized_json(plan: &CropSetupProposalPlan) -> Value {
@@ -353,6 +458,24 @@ fn required_i32(
     }
 }
 
+fn required_i64(
+    obj: &Map<String, Value>,
+    key: &str,
+    prefix: &str,
+    errors: &mut Vec<CropSetupProposalValidationError>,
+) -> Option<i64> {
+    match obj.get(key).and_then(parse_i64) {
+        Some(value) => Some(value),
+        None => {
+            errors.push(CropSetupProposalValidationError::new(
+                format!("{prefix}.{key}"),
+                "is required",
+            ));
+            None
+        }
+    }
+}
+
 fn required_f64(
     obj: &Map<String, Value>,
     key: &str,
@@ -389,6 +512,12 @@ fn parse_i32(value: &Value) -> Option<i32> {
     value
         .as_i64()
         .and_then(|v| i32::try_from(v).ok())
+        .or_else(|| value.as_str().and_then(|s| s.parse().ok()))
+}
+
+fn parse_i64(value: &Value) -> Option<i64> {
+    value
+        .as_i64()
         .or_else(|| value.as_str().and_then(|s| s.parse().ok()))
 }
 

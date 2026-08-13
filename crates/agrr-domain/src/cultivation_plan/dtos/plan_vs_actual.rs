@@ -58,10 +58,21 @@ impl PlanVarianceActionItemRead {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct BlueprintTimingAdjustmentProposalRead {
+    pub crop_id: i64,
+    pub crop_name: String,
+    pub category: String,
+    pub average_delta_days: f64,
+    pub average_gdd_delta: Option<f64>,
+    pub recorded_item_count: i64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct PlanVsActualSummaryRead {
     pub plan_id: i64,
     pub unrecorded_count: i64,
     pub categories: Vec<PlanVsActualCategorySummaryRead>,
     pub top_variance_items: Vec<PlanVsActualItemRead>,
     pub action_required_items: Vec<PlanVarianceActionItemRead>,
+    pub blueprint_timing_adjustment_proposals: Vec<BlueprintTimingAdjustmentProposalRead>,
 }
