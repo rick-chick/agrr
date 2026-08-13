@@ -1441,6 +1441,7 @@
         "top_item_dates": "Scheduled {{scheduled}} · Actual {{actual}}",
         "unrecorded_title": "Scheduled but not recorded",
         "open_in_schedule": "Open in schedule",
+        "open_workbench": "Open workbench",
         "no_data": "No variance data yet",
         "delta_value": "Δ {{delta}} days",
         "average_value": "{{delta}} days",
