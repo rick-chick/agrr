@@ -6,6 +6,7 @@ import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/bluep
 import { blueprintTimingPrefillStorageKey } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import { cropPlanWizardQueryParams } from '../../domain/crops/plan-wizard-context';
+import { storeLearnBpTimingApplyContext } from '../../domain/plans/learn-proposal-application-progress';
 
 @Component({
   selector: 'app-blueprint-timing-adjustment-proposals-view',
@@ -89,6 +90,12 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
       blueprintTimingPrefillStorageKey(proposal.cropId),
       JSON.stringify(proposal.proposalBody)
     );
+    storeLearnBpTimingApplyContext(proposal.cropId, {
+      planId: this.planId,
+      cropId: proposal.cropId,
+      cropName: proposal.cropName,
+      category: proposal.category
+    });
     void this.router.navigate(['/crops', proposal.cropId, 'setup_proposal'], {
       queryParams: cropPlanWizardQueryParams(this.planId, 'learn')
     });
