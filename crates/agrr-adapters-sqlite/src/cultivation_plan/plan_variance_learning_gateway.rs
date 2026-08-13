@@ -139,6 +139,9 @@ fn summary_from_json(
         unrecorded_count: value["unrecorded_count"].as_i64().unwrap_or(0),
         categories,
         top_variance_items,
+        stage_gdd_calibration_proposals: vec![],
+        action_required_items: vec![],
+        blueprint_timing_adjustment_proposals: vec![],
     })
 }
 
@@ -192,6 +195,9 @@ mod plan_variance_learning_sqlite_gateway_test {
                 recorded_count: 1,
             }],
             top_variance_items: vec![],
+            stage_gdd_calibration_proposals: vec![],
+            action_required_items: vec![],
+            blueprint_timing_adjustment_proposals: vec![],
         };
 
         gateway.save(20, 10, &summary).expect("save");

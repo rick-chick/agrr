@@ -4,7 +4,9 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
+import { StageGddCalibrationProposalsViewComponent } from './stage-gdd-calibration-proposals-view.component';
 import { VarianceActionProposalCardsComponent } from './variance-action-proposal-cards.component';
+import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
@@ -19,7 +21,11 @@ const initialControl: PlanLearnViewState = {
   varianceError: null,
   varianceSummary: null,
   varianceStats: null,
-  varianceUnrecordedRows: []
+  varianceUnrecordedRows: [],
+  blueprintTimingLoading: false,
+  blueprintTimingProposals: [],
+  stageGddProposalsLoading: false,
+  stageGddProposals: []
 };
 
 @Component({
@@ -30,7 +36,9 @@ const initialControl: PlanLearnViewState = {
     TranslateModule,
     PlanPlanContextHeaderComponent,
     TaskScheduleVarianceViewComponent,
-    VarianceActionProposalCardsComponent
+    StageGddCalibrationProposalsViewComponent,
+    VarianceActionProposalCardsComponent,
+    BlueprintTimingAdjustmentProposalsViewComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -56,6 +64,11 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [items]="control.varianceSummary?.action_required_items ?? []"
           />
+          <app-blueprint-timing-adjustment-proposals-view
+            [planId]="planId"
+            [loading]="control.blueprintTimingLoading"
+            [proposals]="control.blueprintTimingProposals"
+          />
           <app-task-schedule-variance-view
             [planId]="planId"
             [loading]="control.varianceLoading"
@@ -63,6 +76,11 @@ const initialControl: PlanLearnViewState = {
             [stats]="control.varianceStats"
             [summary]="control.varianceSummary"
             [unrecordedRows]="control.varianceUnrecordedRows"
+          />
+          <app-stage-gdd-calibration-proposals-view
+            [planId]="planId"
+            [loading]="control.stageGddProposalsLoading"
+            [proposals]="control.stageGddProposals"
           />
         }
       </section>

@@ -1,12 +1,14 @@
 //! Computes plan-vs-actual deltas from task schedule timeline snapshot rows.
 
 use crate::cultivation_plan::dtos::plan_vs_actual::{
-    PlanVarianceActionItemRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
-    PlanVsActualSummaryRead,
+    BlueprintTimingAdjustmentProposalRead, PlanVarianceActionItemRead,
+    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+    StageGddCalibrationProposalRead,
 };
 use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
     TaskScheduleTimelineScheduleItemRead, TaskScheduleTimelineSnapshot,
 };
+use crate::cultivation_plan::policies::blueprint_timing_adjustment_policy::qualifies_for_proposal;
 use crate::cultivation_plan::policies::plan_variance_threshold_policy::exceedance_kind;
 use time::{format_description::well_known::Iso8601, Date};
 
@@ -63,15 +65,160 @@ impl PlanVsActualMapper {
 
         let categories = category_summaries(&items);
         let top_variance_items = top_variance(&items, top_n);
+        let stage_gdd_calibration_proposals =
+            Self::stage_gdd_calibration_proposals_from_snapshot(snapshot);
         let action_required_items = action_required(&items);
+        let blueprint_timing_adjustment_proposals =
+            Self::blueprint_timing_adjustment_proposals_from_snapshot(snapshot);
 
         PlanVsActualSummaryRead {
             plan_id: snapshot.plan.id,
             unrecorded_count,
             categories,
             top_variance_items,
+            stage_gdd_calibration_proposals,
             action_required_items,
+            blueprint_timing_adjustment_proposals,
         }
+    }
+
+    pub fn stage_gdd_calibration_proposals_from_snapshot(
+        snapshot: &TaskScheduleTimelineSnapshot,
+    ) -> Vec<StageGddCalibrationProposalRead> {
+        let mut groups: std::collections::BTreeMap<(i64, String, i32, String), Vec<f64>> =
+            std::collections::BTreeMap::new();
+
+        for field in &snapshot.fields {
+            for schedule in &field.schedules {
+                for item in &schedule.items {
+                    if !counts_toward_summary(item) {
+                        continue;
+                    }
+                    let Some(stage_order) = item.stage_order else {
+                        continue;
+                    };
+                    let stage_name = item
+                        .stage_name
+                        .clone()
+                        .unwrap_or_else(|| format!("Stage {stage_order}"));
+                    let gdd_at_actual = primary_gdd_at_actual(item);
+                    let gdd_delta = gdd_delta_between(item.gdd_trigger, gdd_at_actual);
+                    let Some(delta) = gdd_delta else {
+                        continue;
+                    };
+                    groups
+                        .entry((
+                            field.crop_id,
+                            field.crop_name.clone(),
+                            stage_order,
+                            stage_name,
+                        ))
+                        .or_default()
+                        .push(delta);
+                }
+            }
+        }
+
+        let mut proposals: Vec<StageGddCalibrationProposalRead> = groups
+            .into_iter()
+            .map(|((crop_id, crop_name, stage_order, stage_name), deltas)| {
+                let recorded_item_count = deltas.len() as i64;
+                let average_gdd_delta = deltas.iter().sum::<f64>() / deltas.len() as f64;
+                StageGddCalibrationProposalRead {
+                    crop_id,
+                    crop_name,
+                    stage_order,
+                    stage_name,
+                    average_gdd_delta,
+                    recorded_item_count,
+                }
+            })
+            .collect();
+
+        proposals.sort_by(|left, right| {
+            right
+                .average_gdd_delta
+                .abs()
+                .partial_cmp(&left.average_gdd_delta.abs())
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| left.crop_id.cmp(&right.crop_id))
+                .then_with(|| left.stage_order.cmp(&right.stage_order))
+        });
+
+        proposals
+    }
+
+    pub fn blueprint_timing_adjustment_proposals_from_snapshot(
+        snapshot: &TaskScheduleTimelineSnapshot,
+    ) -> Vec<BlueprintTimingAdjustmentProposalRead> {
+        let mut groups: std::collections::BTreeMap<
+            (i64, String, String),
+            (Vec<f64>, Vec<f64>),
+        > = std::collections::BTreeMap::new();
+
+        for field in &snapshot.fields {
+            for schedule in &field.schedules {
+                for item in &schedule.items {
+                    if !counts_toward_summary(item) {
+                        continue;
+                    }
+                    let Some(delta_days) =
+                        Self::item_read(item, schedule.category.as_str()).delta_days
+                    else {
+                        continue;
+                    };
+                    let gdd_delta =
+                        gdd_delta_between(item.gdd_trigger, primary_gdd_at_actual(item));
+                    let entry = groups
+                        .entry((
+                            field.crop_id,
+                            field.crop_name.clone(),
+                            schedule.category.clone(),
+                        ))
+                        .or_insert((Vec::new(), Vec::new()));
+                    entry.0.push(delta_days as f64);
+                    if let Some(delta) = gdd_delta {
+                        entry.1.push(delta);
+                    }
+                }
+            }
+        }
+
+        let mut proposals: Vec<BlueprintTimingAdjustmentProposalRead> = groups
+            .into_iter()
+            .filter_map(|((crop_id, crop_name, category), (day_deltas, gdd_deltas))| {
+                let recorded_item_count = day_deltas.len() as i64;
+                let average_delta_days = day_deltas.iter().sum::<f64>() / day_deltas.len() as f64;
+                if !qualifies_for_proposal(average_delta_days, recorded_item_count) {
+                    return None;
+                }
+                let average_gdd_delta = if gdd_deltas.is_empty() {
+                    None
+                } else {
+                    Some(gdd_deltas.iter().sum::<f64>() / gdd_deltas.len() as f64)
+                };
+                Some(BlueprintTimingAdjustmentProposalRead {
+                    crop_id,
+                    crop_name,
+                    category,
+                    average_delta_days,
+                    average_gdd_delta,
+                    recorded_item_count,
+                })
+            })
+            .collect();
+
+        proposals.sort_by(|left, right| {
+            right
+                .average_delta_days
+                .abs()
+                .partial_cmp(&left.average_delta_days.abs())
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| left.crop_id.cmp(&right.crop_id))
+                .then_with(|| left.category.cmp(&right.category))
+        });
+
+        proposals
     }
 }
 
@@ -80,11 +227,15 @@ fn counts_toward_summary(item: &TaskScheduleTimelineScheduleItemRead) -> bool {
 }
 
 fn primary_actual_date(item: &TaskScheduleTimelineScheduleItemRead) -> Option<String> {
-    item.work_records.first().map(|record| record.actual_date.clone())
+    item.work_records
+        .first()
+        .map(|record| record.actual_date.clone())
 }
 
 fn primary_gdd_at_actual(item: &TaskScheduleTimelineScheduleItemRead) -> Option<f64> {
-    item.work_records.first().and_then(|record| record.gdd_at_actual)
+    item.work_records
+        .first()
+        .and_then(|record| record.gdd_at_actual)
 }
 
 fn parse_date(value: &str) -> Option<Date> {

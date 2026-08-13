@@ -1,3 +1,5 @@
+import type { StageGddCalibrationProposalRaw } from './stage-gdd-calibration-proposal';
+
 export interface PlanVsActualCategorySummary {
   category: string;
   average_delta_days: number | null;
@@ -29,7 +31,9 @@ export interface PlanVsActualSummary {
   unrecorded_count: number;
   categories: PlanVsActualCategorySummary[];
   top_variance_items: PlanVsActualItem[];
+  stage_gdd_calibration_proposals?: StageGddCalibrationProposalRaw[];
   action_required_items?: PlanVarianceActionItem[];
+  blueprint_timing_adjustment_proposals?: import('./blueprint-timing-adjustment-proposal').BlueprintTimingAdjustmentProposalRaw[];
 }
 
 export interface PlanVsActualPlanSummaryStats {

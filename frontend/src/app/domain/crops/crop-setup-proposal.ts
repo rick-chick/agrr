@@ -1,4 +1,5 @@
 export interface CropSetupProposalBody {
+  intent?: string;
   stages: unknown[];
   agricultural_tasks: unknown[];
   task_schedule_blueprints: unknown[];

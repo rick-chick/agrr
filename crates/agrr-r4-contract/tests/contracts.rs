@@ -556,6 +556,10 @@ fn get_plan_vs_actual_summary_and_task_schedule_embed_variance_fields() {
     assert_eq!(10, top_items[0]["delta_days"].as_i64().unwrap());
     assert!(top_items[0]["gdd_at_actual"].is_number());
     assert!(top_items[0]["gdd_delta"].is_number());
+    let proposals = summary["stage_gdd_calibration_proposals"]
+        .as_array()
+        .expect("stage_gdd_calibration_proposals");
+    assert!(proposals.is_empty() || proposals[0]["average_gdd_delta"].is_number());
 
     let action_items = summary["action_required_items"]
         .as_array()
@@ -566,6 +570,13 @@ fn get_plan_vs_actual_summary_and_task_schedule_embed_variance_fields() {
         action_items[0]["item_id"].as_i64().unwrap()
     );
     assert_eq!("days", action_items[0]["exceedance_kind"].as_str().unwrap());
+
+    let bp_proposals = summary["blueprint_timing_adjustment_proposals"]
+        .as_array()
+        .expect("blueprint_timing_adjustment_proposals");
+    assert_eq!(1, bp_proposals.len());
+    assert_eq!(seed.crop_id, bp_proposals[0]["crop_id"].as_i64().unwrap());
+    assert!(bp_proposals[0]["average_delta_days"].is_number());
 
     let (schedule_status, schedule_body) = status_and_body(client.get(
         &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
