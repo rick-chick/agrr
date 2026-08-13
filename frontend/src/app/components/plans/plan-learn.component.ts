@@ -17,6 +17,9 @@ import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-upd
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
+import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-timing-adjustment-proposals.usecase';
+import { LoadStageGddCalibrationProposalsUseCase } from '../../usecase/plans/load-stage-gdd-calibration-proposals.usecase';
+import { loadMergedLearnProposals } from '../../usecase/plans/load-merged-learn-proposals';
 import { PLAN_LEARN_PROVIDERS, PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { PlanLearnView, PlanLearnViewState } from './plan-learn.view';
 import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-actual-summary';
@@ -251,6 +254,12 @@ const initialControl: PlanLearnViewState = {
             [items]="control.varianceSummary?.action_required_items ?? []"
           />
           <div id="plan-learn-loop-proposals">
+          <h3 id="plan-learn-current-variance-title" class="plan-learn-current-variance__title">
+            {{ 'plans.learn.current_variance_title' | translate }}
+          </h3>
+          <p class="plan-learn-current-variance__hint">
+            {{ 'plans.learn.current_variance_hint' | translate }}
+          </p>
           <app-blueprint-timing-adjustment-proposals-view
             [planId]="planId"
             [loading]="control.blueprintTimingLoading"
@@ -281,6 +290,8 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
   private readonly scheduleUseCase = inject(LoadPlanTaskScheduleUseCase);
   private readonly varianceUseCase = inject(LoadPlanVsActualSummaryUseCase);
   private readonly carryoverUseCase = inject(LoadPlanLearnCarryoverUseCase);
+  private readonly blueprintTimingUseCase = inject(LoadBlueprintTimingAdjustmentProposalsUseCase);
+  private readonly stageGddProposalsUseCase = inject(LoadStageGddCalibrationProposalsUseCase);
   private readonly presenter = inject(PlanLearnPresenter);
   private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -399,6 +410,13 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
             learningSnapshot: snapshot,
             carryoverImportError: null
           };
+          loadMergedLearnProposals(
+            this.presenter,
+            this.blueprintTimingUseCase,
+            this.stageGddProposalsUseCase,
+            this.control.varianceSummary,
+            snapshot
+          );
         },
         error: (err: Error) => {
           this.control = {
@@ -408,6 +426,19 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
           };
         }
       });
+  }
+
+  private scrollToImportedSnapshotIfRequested(): void {
+    const expand = this.route.snapshot.queryParamMap.get('expand');
+    if (expand !== 'imported_snapshot' && expand !== 'carryover') {
+      return;
+    }
+    requestAnimationFrame(() => {
+      document.getElementById('plan-learn-imported-title')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    });
   }
 
   categoryLabel(category: PlanVsActualCategorySummary): string {
@@ -435,6 +466,16 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
             ...this.control,
             learningSnapshot: snapshot
           };
+          if (snapshot) {
+            loadMergedLearnProposals(
+              this.presenter,
+              this.blueprintTimingUseCase,
+              this.stageGddProposalsUseCase,
+              this.control.varianceSummary,
+              snapshot
+            );
+            this.scrollToImportedSnapshotIfRequested();
+          }
         }
       });
   }

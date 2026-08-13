@@ -17,6 +17,11 @@ export class CreatePrivatePlanPresenter implements CreatePrivatePlanOutputPort {
 
   present(dto: CreatePrivatePlanResponseDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const navigation = dto.navigateToLearnAfterCreate
+      ? pendingNavigationTo(['/plans', dto.id, 'learn'], {
+          queryParams: { expand: 'imported_snapshot' }
+        })
+      : pendingNavigationTo(['/plans', dto.id]);
     this.view.control = {
       ...this.view.control,
       loading: false,
@@ -24,7 +29,7 @@ export class CreatePrivatePlanPresenter implements CreatePrivatePlanOutputPort {
       error: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: pendingSuccessFlashFromText('plans.messages.plan_created'),
-      pendingNavigation: pendingNavigationTo(['/plans', dto.id])
+      pendingNavigation: navigation
     };
   }
 

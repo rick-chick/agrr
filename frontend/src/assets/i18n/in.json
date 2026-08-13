@@ -1958,6 +1958,8 @@
       "page_title": "समीक्षा — {{name}}",
       "imported_snapshot_title": "योजना #{{sourcePlanId}} से आयातित सीख",
       "imported_snapshot_empty": "आयातित स्नैपशॉट में कोई श्रेणी variance डेटा नहीं है।",
+      "current_variance_title": "वर्तमान योजना variance",
+      "current_variance_hint": "इस योजना के कार्य रिकॉर्ड से variance। दूसरी योजना से आयातित सीख ऊपर दिखाई जाती है।",
       "imported_banner": {
         "message": "आयातित variance की {{count}} वस्तु(एँ) workbench पर adjust की समीक्षा चाह सकती हैं।",
         "manual_hint": "अनुसूची बदलने से पहले workbench पर आयातित सीख की समीक्षा करें। कोई स्वचालित परिवर्तन नहीं होता।",
@@ -2255,7 +2257,8 @@
       "carryover_source_hint": "ले जाने के लिए पिछली योजना चुनें",
       "carryover_preview_title": "सीखे हुए डेटा का पूर्वावलोकन",
       "carryover_no_source_plans": "इस खेत के लिए कोई पिछली योजना नहीं मिली।",
-      "carryover_preview_empty": "चयनित योजना के लिए कोई श्रेणी वेरिएंस डेटा उपलब्ध नहीं है।"
+      "carryover_preview_empty": "चयनित योजना के लिए कोई श्रेणी वेरिएंस डेटा उपलब्ध नहीं है।",
+      "carryover_learn_cta": "बनाएं और सीखें पर समीक्षा करें"
     },
     "select_crop": {
       "title": "🌾 उगाने के लिए फसलें चुनें",

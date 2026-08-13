@@ -89,6 +89,13 @@ export class PrivatePlanCreateApiGateway implements PrivatePlanCreateGateway {
     if (dto.carryoverFromPlanId != null) {
       requestBody.plan.carryover_from_plan_id = dto.carryoverFromPlanId;
     }
-    return this.apiClient.post<CreatePrivatePlanResponseDto>('/api/v1/plans', requestBody);
+    return this.apiClient
+      .post<{ id: number }>('/api/v1/plans', requestBody)
+      .pipe(
+        map((response) => ({
+          id: response.id,
+          navigateToLearnAfterCreate: dto.navigateToLearnAfterCreate ?? false
+        }))
+      );
   }
 }
