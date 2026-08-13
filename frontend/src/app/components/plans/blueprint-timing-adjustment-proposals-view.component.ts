@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import { blueprintTimingPrefillStorageKey } from '../../domain/plans/blueprint-timing-adjustment-proposal';
-import { formatPlanTaskScheduleDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
+import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import { cropPlanWizardQueryParams } from '../../domain/crops/plan-wizard-context';
 
 @Component({
@@ -81,7 +81,7 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
   }
 
   deltaLabel(deltaDays: number): string {
-    return formatPlanTaskScheduleDeltaDaysLabel(deltaDays);
+    return formatPlanTaskScheduleAverageDeltaDaysLabel(deltaDays);
   }
 
   openSetupProposal(proposal: BlueprintTimingAdjustmentProposal): void {
