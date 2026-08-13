@@ -173,10 +173,12 @@ describe('PlanNewComponent', () => {
   });
 
   it('shows learn CTA when carryover preview is available', () => {
+    fixture.detectChanges();
     component.control = defaultControl({
       farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
       selectedFarmId: 1,
       carryoverEnabled: true,
+      sourcePlans: [{ id: 9, name: 'Source', farm_id: 1 }],
       selectedSourcePlanId: 9,
       carryoverPreview: {
         plan_id: 9,
