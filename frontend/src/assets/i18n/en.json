@@ -1464,6 +1464,16 @@
         "delta_label": "Average GDD delta: {{delta}}",
         "proposed_value": "Current required GDD {{current}} → proposed {{proposed}}",
         "cta": "Adjust stage requirement"
+      },
+      "action_proposals": {
+        "title": "Schedule variance needs your review",
+        "manual_hint": "Adjust or re-optimize only after you confirm on the workbench. No automatic changes are made.",
+        "open_workbench": "Open workbench",
+        "exceedance": {
+          "days": "Day variance exceeded threshold",
+          "gdd": "GDD variance exceeded threshold",
+          "both": "Day and GDD variance exceeded thresholds"
+        }
       }
     },
     "work": {

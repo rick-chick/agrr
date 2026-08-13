@@ -1,12 +1,13 @@
 //! Computes plan-vs-actual deltas from task schedule timeline snapshot rows.
 
 use crate::cultivation_plan::dtos::plan_vs_actual::{
-    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
-    StageGddCalibrationProposalRead,
+    PlanVarianceActionItemRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
+    PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
 };
 use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
     TaskScheduleTimelineScheduleItemRead, TaskScheduleTimelineSnapshot,
 };
+use crate::cultivation_plan::policies::plan_variance_threshold_policy::exceedance_kind;
 use time::{format_description::well_known::Iso8601, Date};
 
 pub const DEFAULT_TOP_VARIANCE_LIMIT: usize = 5;
@@ -64,6 +65,7 @@ impl PlanVsActualMapper {
         let top_variance_items = top_variance(&items, top_n);
         let stage_gdd_calibration_proposals =
             Self::stage_gdd_calibration_proposals_from_snapshot(snapshot);
+        let action_required_items = action_required(&items);
 
         PlanVsActualSummaryRead {
             plan_id: snapshot.plan.id,
@@ -71,6 +73,7 @@ impl PlanVsActualMapper {
             categories,
             top_variance_items,
             stage_gdd_calibration_proposals,
+            action_required_items,
         }
     }
 
@@ -227,6 +230,23 @@ fn top_variance(items: &[PlanVsActualItemRead], top_n: usize) -> Vec<PlanVsActua
         .take(top_n)
         .cloned()
         .collect()
+}
+
+fn action_required(items: &[PlanVsActualItemRead]) -> Vec<PlanVarianceActionItemRead> {
+    let mut required: Vec<PlanVarianceActionItemRead> = items
+        .iter()
+        .filter_map(|item| {
+            exceedance_kind(item).map(|kind| PlanVarianceActionItemRead::from_item(item, kind))
+        })
+        .collect();
+    required.sort_by(|left, right| {
+        let left_days = left.delta_days.map(|days| days.unsigned_abs()).unwrap_or(0);
+        let right_days = right.delta_days.map(|days| days.unsigned_abs()).unwrap_or(0);
+        right_days
+            .cmp(&left_days)
+            .then_with(|| left.item_id.cmp(&right.item_id))
+    });
+    required
 }
 
 #[cfg(test)]

@@ -20,12 +20,19 @@ export interface PlanVsActualItem {
   gdd_delta: number | null;
 }
 
+export type VarianceExceedanceKind = 'days' | 'gdd' | 'both';
+
+export interface PlanVarianceActionItem extends PlanVsActualItem {
+  exceedance_kind: VarianceExceedanceKind;
+}
+
 export interface PlanVsActualSummary {
   plan_id: number;
   unrecorded_count: number;
   categories: PlanVsActualCategorySummary[];
   top_variance_items: PlanVsActualItem[];
   stage_gdd_calibration_proposals?: StageGddCalibrationProposalRaw[];
+  action_required_items?: PlanVarianceActionItem[];
 }
 
 export interface PlanVsActualPlanSummaryStats {

@@ -1,9 +1,10 @@
 //! JSON shape for `GET /api/v1/plans/:id/plan_vs_actual/summary`.
 
 use agrr_domain::cultivation_plan::dtos::{
-    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
-    StageGddCalibrationProposalRead,
+    PlanVarianceActionItemRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
+    PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
 };
+use agrr_domain::cultivation_plan::policies::plan_variance_threshold_policy::VarianceExceedanceKind;
 use serde_json::{json, Value};
 
 pub fn summary_to_json_body(summary: PlanVsActualSummaryRead) -> Value {
@@ -20,6 +21,11 @@ pub fn summary_to_json_body(summary: PlanVsActualSummaryRead) -> Value {
             .stage_gdd_calibration_proposals
             .iter()
             .map(stage_gdd_calibration_proposal_payload)
+            .collect::<Vec<_>>(),
+        "action_required_items": summary
+            .action_required_items
+            .iter()
+            .map(action_item_payload)
             .collect::<Vec<_>>(),
     })
 }
@@ -61,6 +67,26 @@ fn item_payload(item: &PlanVsActualItemRead) -> Value {
     })
 }
 
+fn action_item_payload(item: &PlanVarianceActionItemRead) -> Value {
+    json!({
+        "item_id": item.item_id,
+        "field_cultivation_id": item.field_cultivation_id,
+        "category": item.category,
+        "name": item.name,
+        "scheduled_date": item.scheduled_date,
+        "actual_date": item.actual_date,
+        "delta_days": item.delta_days,
+        "gdd_trigger": optional_f64(item.gdd_trigger),
+        "gdd_at_actual": optional_f64(item.gdd_at_actual),
+        "gdd_delta": optional_f64(item.gdd_delta),
+        "exceedance_kind": exceedance_kind_payload(item.exceedance_kind),
+    })
+}
+
+fn exceedance_kind_payload(kind: VarianceExceedanceKind) -> &'static str {
+    kind.as_str()
+}
+
 fn optional_f64(value: Option<f64>) -> Value {
     value.map(|v| json!(v)).unwrap_or(Value::Null)
 }
@@ -100,6 +126,19 @@ mod tests {
                 average_gdd_delta: 10.5,
                 recorded_item_count: 2,
             }],
+            action_required_items: vec![PlanVarianceActionItemRead {
+                item_id: 11,
+                field_cultivation_id: 100,
+                category: "general".into(),
+                name: "Weed".into(),
+                scheduled_date: Some("2026-06-01".into()),
+                actual_date: Some("2026-06-08".into()),
+                delta_days: Some(7),
+                gdd_trigger: Some(120.0),
+                gdd_at_actual: Some(130.5),
+                gdd_delta: Some(10.5),
+                exceedance_kind: VarianceExceedanceKind::Both,
+            }],
         });
 
         assert_eq!(7, body["plan_id"].as_i64().unwrap());
@@ -112,6 +151,11 @@ mod tests {
             body["stage_gdd_calibration_proposals"][0]["average_gdd_delta"]
                 .as_f64()
                 .unwrap()
+        );
+        assert_eq!(1, body["action_required_items"].as_array().unwrap().len());
+        assert_eq!(
+            "both",
+            body["action_required_items"][0]["exceedance_kind"].as_str().unwrap()
         );
     }
 }

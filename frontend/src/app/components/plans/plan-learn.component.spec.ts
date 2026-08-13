@@ -131,4 +131,39 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Plan variance summary');
     expect(fixture.nativeElement.textContent).toContain('General tasks');
   });
+
+  it('renders proposal cards when action_required_items are present', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: [],
+        action_required_items: [
+          {
+            item_id: 11,
+            field_cultivation_id: 100,
+            category: 'general',
+            name: 'Weed control',
+            scheduled_date: '2026-06-01',
+            actual_date: '2026-06-08',
+            delta_days: 7,
+            gdd_trigger: 100,
+            gdd_at_actual: 110,
+            gdd_delta: 10,
+            exceedance_kind: 'days'
+          }
+        ]
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-variance-action-proposal-cards')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Schedule variance needs your review');
+    expect(fixture.nativeElement.textContent).toContain('Weed control');
+  });
 });
