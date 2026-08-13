@@ -26,6 +26,15 @@ import {
   cropPlanWizardQueryParams,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
+import {
+  markProposalApplied,
+  stageGddProposalKey
+} from '../../../domain/plans/learn-proposal-application-progress';
+import {
+  learnPostMasterPath,
+  learnPostMasterQueryParams,
+  writeLearnPostMasterContext
+} from '../../../domain/plans/learn-post-master-follow-up';
 import { parseOptionalNumber } from '../../../domain/crops/parse-optional-number';
 import type { CropStage } from '../../../domain/crops/crop';
 import { countLinkedTaskScheduleBlueprintsForStage } from '../../../domain/crops/stage-linked-blueprint-count';
@@ -465,9 +474,9 @@ export class CropStageEditComponent implements CropStageEditView, UnsavedChanges
 
     if (shouldNavigateAfterPanelSave) {
       this.pendingPanelSaveNavigate = false;
-      this.navigateToStagesList();
+      this.navigateAfterPanelSave();
     } else if (shouldNavigateToList) {
-      this.navigateToStagesList();
+      this.navigateAfterPanelSave();
     }
 
     this.cdr.markForCheck();
@@ -670,6 +679,23 @@ export class CropStageEditComponent implements CropStageEditView, UnsavedChanges
       return;
     }
     this.loadBlueprintsUseCase.execute({ cropId: this.cropId });
+  }
+
+  private navigateAfterPanelSave(): void {
+    if (this.returnTab === 'learn' && this.fromPlanId != null && this.stage) {
+      const key = stageGddProposalKey(this.cropId, this.stage.id);
+      markProposalApplied(this.fromPlanId, key);
+      writeLearnPostMasterContext(this.fromPlanId, {
+        kind: 'stage_gdd',
+        cropName: this.control.formData.name,
+        detailLabel: this.stage.name
+      });
+      void this.router.navigate(learnPostMasterPath(this.fromPlanId), {
+        queryParams: learnPostMasterQueryParams()
+      });
+      return;
+    }
+    this.navigateToStagesList();
   }
 
   private navigateToStagesList(): void {

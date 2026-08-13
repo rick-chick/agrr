@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BehaviorSubject } from 'rxjs';
@@ -11,6 +11,14 @@ import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs
 import { PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { PlanLearnComponent } from './plan-learn.component';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
+import {
+  markProposalApplied,
+  stageGddProposalKey
+} from '../../domain/plans/learn-proposal-application-progress';
+import {
+  LEARN_FOLLOW_UP_POST_MASTER,
+  writeLearnPostMasterContext
+} from '../../domain/plans/learn-post-master-follow-up';
 
 const loadedSchedule: TaskScheduleResponse = {
   plan: {
@@ -43,17 +51,24 @@ const loadedSchedule: TaskScheduleResponse = {
   }
 };
 
-function createRouteMock(planId: string) {
+function createRouteMock(planId: string, queryParams: Record<string, string> = {}) {
   const paramMapSubject = new BehaviorSubject({
     get: (key: string) => (key === 'id' ? planId : null)
+  });
+  const queryParamMapSubject = new BehaviorSubject({
+    get: (key: string) => queryParams[key] ?? null
   });
   return {
     snapshot: {
       get paramMap() {
         return paramMapSubject.value;
+      },
+      get queryParamMap() {
+        return queryParamMapSubject.value;
       }
     },
-    paramMap: paramMapSubject.asObservable()
+    paramMap: paramMapSubject.asObservable(),
+    queryParamMap: queryParamMapSubject.asObservable()
   };
 }
 
@@ -64,7 +79,10 @@ describe('PlanLearnComponent', () => {
   let blueprintTimingUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: PlanLearnPresenter;
 
-  beforeEach(async () => {
+  async function setup(
+    planId = '7',
+    queryParams: Record<string, string> = {}
+  ): Promise<void> {
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };
@@ -87,8 +105,11 @@ describe('PlanLearnComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PlanLearnComponent, TranslateModule.forRoot()],
       providers: [
-        provideRouter([{ path: 'plans/:id/learn', component: PlanLearnComponent }]),
-        { provide: ActivatedRoute, useValue: createRouteMock('7') }
+        provideRouter([
+          { path: 'plans/:id/learn', component: PlanLearnComponent },
+          { path: 'plans/:id', component: PlanLearnComponent }
+        ]),
+        { provide: ActivatedRoute, useValue: createRouteMock(planId, queryParams) }
       ]
     }).compileComponents();
 
@@ -99,6 +120,11 @@ describe('PlanLearnComponent', () => {
 
     fixture = TestBed.createComponent(PlanLearnComponent);
     presenter = fixture.debugElement.injector.get(PlanLearnPresenter);
+  }
+
+  beforeEach(async () => {
+    sessionStorage.clear();
+    await setup();
   });
 
   it('loads schedule and variance summary on init', () => {
@@ -172,5 +198,86 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.querySelector('app-variance-action-proposal-cards')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Schedule variance needs your review');
     expect(fixture.nativeElement.textContent).toContain('Weed control');
+  });
+
+  it('renders application progress for stage GDD and BP timing proposals', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    presenter.presentStageGddProposals({
+      proposals: [
+        {
+          cropId: 3,
+          cropName: 'Tomato',
+          stageId: 12,
+          stageOrder: 2,
+          stageName: 'Vegetative',
+          averageGddDelta: 15,
+          recordedItemCount: 4,
+          currentRequiredGdd: 200,
+          proposedRequiredGdd: 215
+        }
+      ],
+      loadGeneration: 1
+    });
+    presenter.presentBlueprintTimingProposals({
+      proposals: [
+        {
+          cropId: 3,
+          cropName: 'Tomato',
+          category: 'general',
+          averageDeltaDays: 3,
+          averageGddDelta: 12,
+          recordedItemCount: 5,
+          affectedBlueprintCount: 2,
+          proposalBody: {
+            intent: 'blueprint_timing_patch',
+            stages: [],
+            agricultural_tasks: [],
+            task_schedule_blueprints: []
+          }
+        }
+      ],
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-learn-proposal-application-progress')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Proposal application progress');
+    expect(fixture.nativeElement.textContent).toContain('Not started');
+    expect(fixture.nativeElement.textContent).toContain('Vegetative');
+    expect(fixture.nativeElement.textContent).toContain('General tasks');
+  });
+
+  it('shows post_master confirmation and workbench CTA after master apply redirect', async () => {
+    markProposalApplied(7, stageGddProposalKey(3, 12));
+    writeLearnPostMasterContext(7, {
+      kind: 'stage_gdd',
+      cropName: 'Tomato',
+      detailLabel: 'Vegetative'
+    });
+
+    TestBed.resetTestingModule();
+    await setup('7', { followUp: LEARN_FOLLOW_UP_POST_MASTER });
+
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Master update applied');
+    const workbenchLink = fixture.nativeElement.querySelector(
+      '.learn-post-master-confirmation__workbench-cta'
+    ) as HTMLAnchorElement;
+    expect(workbenchLink.getAttribute('href')).toBe('/plans/7');
   });
 });

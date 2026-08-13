@@ -1,17 +1,29 @@
 import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
 import { StageGddCalibrationProposalsViewComponent } from './stage-gdd-calibration-proposals-view.component';
 import { VarianceActionProposalCardsComponent } from './variance-action-proposal-cards.component';
 import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
+import { LearnProposalApplicationProgressComponent } from './learn-proposal-application-progress.component';
+import { LearnPostMasterConfirmationComponent } from './learn-post-master-confirmation.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PLAN_LEARN_PROVIDERS, PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { PlanLearnView, PlanLearnViewState } from './plan-learn.view';
+import {
+  buildLearnProposalProgressItems,
+  readAppliedProposalKeys
+} from '../../domain/plans/learn-proposal-application-progress';
+import {
+  clearLearnPostMasterContext,
+  isLearnPostMasterFollowUp,
+  readLearnPostMasterContext,
+  type LearnPostMasterContext
+} from '../../domain/plans/learn-post-master-follow-up';
 
 const initialControl: PlanLearnViewState = {
   loading: true,
@@ -38,7 +50,8 @@ const initialControl: PlanLearnViewState = {
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
     VarianceActionProposalCardsComponent,
-    BlueprintTimingAdjustmentProposalsViewComponent
+    LearnProposalApplicationProgressComponent,
+    LearnPostMasterConfirmationComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -60,6 +73,17 @@ const initialControl: PlanLearnViewState = {
             </button>
           </div>
         } @else {
+          @if (showPostMasterConfirmation && postMasterContext) {
+            <app-learn-post-master-confirmation
+              [planId]="planId"
+              [context]="postMasterContext"
+              (confirmed)="onPostMasterConfirmed()"
+            />
+          }
+          <app-learn-proposal-application-progress
+            [planId]="planId"
+            [items]="proposalProgressItems"
+          />
           <app-variance-action-proposal-cards
             [planId]="planId"
             [items]="control.varianceSummary?.action_required_items ?? []"
@@ -90,6 +114,7 @@ const initialControl: PlanLearnViewState = {
 })
 export class PlanLearnComponent implements PlanLearnView, OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly scheduleUseCase = inject(LoadPlanTaskScheduleUseCase);
   private readonly varianceUseCase = inject(LoadPlanVsActualSummaryUseCase);
   private readonly presenter = inject(PlanLearnPresenter);
@@ -101,6 +126,17 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
   }
 
   private _control: PlanLearnViewState = initialControl;
+  showPostMasterConfirmation = false;
+  postMasterContext: LearnPostMasterContext | null = null;
+
+  get proposalProgressItems() {
+    return buildLearnProposalProgressItems(
+      this.control.stageGddProposals,
+      this.control.blueprintTimingProposals,
+      readAppliedProposalKeys(this.planId)
+    );
+  }
+
   get control(): PlanLearnViewState {
     return this._control;
   }
@@ -112,6 +148,30 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.reload());
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.syncPostMasterFollowUp();
+    });
+    this.syncPostMasterFollowUp();
+  }
+
+  onPostMasterConfirmed(): void {
+    clearLearnPostMasterContext(this.planId);
+    this.showPostMasterConfirmation = false;
+    this.postMasterContext = null;
+    void this.router.navigate(learnPath(this.planId));
+  }
+
+  private syncPostMasterFollowUp(): void {
+    const followUp = this.route.snapshot.queryParamMap.get('followUp');
+    if (!isLearnPostMasterFollowUp(followUp)) {
+      this.showPostMasterConfirmation = false;
+      this.postMasterContext = null;
+      return;
+    }
+    const context = readLearnPostMasterContext(this.planId);
+    this.showPostMasterConfirmation = context != null;
+    this.postMasterContext = context;
+    this.cdr.markForCheck();
   }
 
   reload(): void {
@@ -136,4 +196,8 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
     const loadGeneration = this.presenter.beginVarianceLoad();
     this.varianceUseCase.execute({ planId, loadGeneration });
   }
+}
+
+function learnPath(planId: number): (string | number)[] {
+  return ['/plans', planId, 'learn'];
 }

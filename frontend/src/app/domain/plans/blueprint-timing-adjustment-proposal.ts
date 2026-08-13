@@ -25,3 +25,12 @@ export const BLUEPRINT_TIMING_PATCH_INTENT = 'blueprint_timing_patch';
 export function blueprintTimingPrefillStorageKey(cropId: number): string {
   return `agrr:setup-proposal-prefill:${cropId}`;
 }
+
+export function blueprintTimingLearnApplyContextStorageKey(planId: number, cropId: number): string {
+  return `agrr:learn-bp-timing-apply-context:${planId}:${cropId}`;
+}
+
+export interface BlueprintTimingLearnApplyContext {
+  cropName: string;
+  category: string;
+}

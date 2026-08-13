@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
-import { blueprintTimingPrefillStorageKey } from '../../domain/plans/blueprint-timing-adjustment-proposal';
+import { blueprintTimingPrefillStorageKey, blueprintTimingLearnApplyContextStorageKey } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import { cropPlanWizardQueryParams } from '../../domain/crops/plan-wizard-context';
 
@@ -88,6 +88,10 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
     sessionStorage.setItem(
       blueprintTimingPrefillStorageKey(proposal.cropId),
       JSON.stringify(proposal.proposalBody)
+    );
+    sessionStorage.setItem(
+      blueprintTimingLearnApplyContextStorageKey(this.planId, proposal.cropId),
+      JSON.stringify({ cropName: proposal.cropName, category: proposal.category })
     );
     void this.router.navigate(['/crops', proposal.cropId, 'setup_proposal'], {
       queryParams: cropPlanWizardQueryParams(this.planId, 'learn')

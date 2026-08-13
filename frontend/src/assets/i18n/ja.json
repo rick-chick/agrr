@@ -2577,6 +2577,20 @@
     },
     "learn": {
       "page_title": "振り返り — {{name}}",
+      "application_progress": {
+        "title": "提案の適用進捗",
+        "lead": "この計画からマスタへ反映した各提案が、未着手か適用済み（確認待ち）かを確認できます。",
+        "status": {
+          "not_started": "未着手",
+          "applied_pending_confirmation": "適用済み・確認待ち"
+        }
+      },
+      "post_master": {
+        "title": "マスタを更新しました",
+        "stage_gdd_message": "{{crop}} — {{detail}}：ステージ要求 GDD を更新しました。準備ができたらワークベンチで配置を確認してください。",
+        "bp_timing_message": "{{crop}} — {{detail}}：作業 BP のタイミングを更新しました。準備ができたらワークベンチで配置を確認してください。",
+        "open_workbench": "ワークベンチで配置を確認"
+      },
       "stage_gdd_calibration": {
         "title": "ステージ GDD 校正提案",
         "lead": "この計画の実績 GDD 差分から、ステージの thermal requirement 更新を提案します。内容を確認し、同意する場合のみ保存してください。",

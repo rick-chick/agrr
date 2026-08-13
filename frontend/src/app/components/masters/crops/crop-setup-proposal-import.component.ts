@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef, DestroyRef } from '@angul
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -17,7 +17,15 @@ import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edi
 import { DryRunCropSetupProposalUseCase } from '../../../usecase/crops/dry-run-crop-setup-proposal.usecase';
 import { ApplyCropSetupProposalUseCase } from '../../../usecase/crops/apply-crop-setup-proposal.usecase';
 import { CropSetupProposalBody } from '../../../domain/crops/crop-setup-proposal';
-import { blueprintTimingPrefillStorageKey } from '../../../domain/plans/blueprint-timing-adjustment-proposal';
+import { blueprintTimingPrefillStorageKey, blueprintTimingLearnApplyContextStorageKey, type BlueprintTimingLearnApplyContext } from '../../../domain/plans/blueprint-timing-adjustment-proposal';
+import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
+import { parsePlanWizardReturnTab, type PlanWizardReturnTab } from '../../../domain/crops/plan-wizard-context';
+import { bpTimingProposalKey, markProposalApplied } from '../../../domain/plans/learn-proposal-application-progress';
+import {
+  learnPostMasterPath,
+  learnPostMasterQueryParams,
+  writeLearnPostMasterContext
+} from '../../../domain/plans/learn-post-master-follow-up';
 import { setupProposalValidationErrorI18nKey } from '../../../core/setup-proposal-validation-error-i18n';
 
 const initialControl: CropSetupProposalImportViewState = {
@@ -199,6 +207,7 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
 })
 export class CropSetupProposalImportComponent implements CropSetupProposalImportView, OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadCropForEditUseCase);
   private readonly dryRunUseCase = inject(DryRunCropSetupProposalUseCase);
   private readonly applyUseCase = inject(ApplyCropSetupProposalUseCase);
@@ -206,6 +215,9 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translate = inject(TranslateService);
+
+  fromPlanId: number | null = null;
+  returnTab: PlanWizardReturnTab = 'task_schedule';
 
   validationErrorMessageKey(item: { path: string; message: string }): string {
     return setupProposalValidationErrorI18nKey(item);
@@ -244,6 +256,8 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
+    this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.handleCropRouteChange();
     });
@@ -351,9 +365,61 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
       cropId: this.cropId,
       proposal,
       onSuccess: () => {
+        if (this.navigateToLearnPostMasterIfNeeded()) {
+          return;
+        }
         this.control = { ...this.control, phase: 'success' };
       }
     });
+  }
+
+  private navigateToLearnPostMasterIfNeeded(): boolean {
+    if (this.returnTab !== 'learn' || this.fromPlanId == null) {
+      return false;
+    }
+    const applyContext = this.readBlueprintTimingApplyContext();
+    if (!applyContext) {
+      return false;
+    }
+    const key = bpTimingProposalKey(this.cropId, applyContext.category);
+    markProposalApplied(this.fromPlanId, key);
+    writeLearnPostMasterContext(this.fromPlanId, {
+      kind: 'bp_timing',
+      cropName: applyContext.cropName,
+      detailLabel: applyContext.category
+    });
+    sessionStorage.removeItem(
+      blueprintTimingLearnApplyContextStorageKey(this.fromPlanId, this.cropId)
+    );
+    void this.router.navigate(learnPostMasterPath(this.fromPlanId), {
+      queryParams: learnPostMasterQueryParams()
+    });
+    return true;
+  }
+
+  private readBlueprintTimingApplyContext(): BlueprintTimingLearnApplyContext | null {
+    if (this.fromPlanId == null) {
+      return null;
+    }
+    const raw = sessionStorage.getItem(
+      blueprintTimingLearnApplyContextStorageKey(this.fromPlanId, this.cropId)
+    );
+    if (!raw) {
+      return null;
+    }
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') {
+        return null;
+      }
+      const record = parsed as Record<string, unknown>;
+      if (typeof record['cropName'] !== 'string' || typeof record['category'] !== 'string') {
+        return null;
+      }
+      return { cropName: record['cropName'], category: record['category'] };
+    } catch {
+      return null;
+    }
   }
 
   private parseProposalInput(): CropSetupProposalBody | null {

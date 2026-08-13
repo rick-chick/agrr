@@ -1458,6 +1458,20 @@
     },
     "learn": {
       "page_title": "Review — {{name}}",
+      "application_progress": {
+        "title": "Proposal application progress",
+        "lead": "Track whether each master adjustment from this plan has been applied and is waiting for your confirmation.",
+        "status": {
+          "not_started": "Not started",
+          "applied_pending_confirmation": "Applied — pending confirmation"
+        }
+      },
+      "post_master": {
+        "title": "Master update applied",
+        "stage_gdd_message": "{{crop}} — {{detail}}: stage required GDD was updated. Confirm placement on the workbench when ready.",
+        "bp_timing_message": "{{crop}} — {{detail}}: task BP timing was updated. Confirm placement on the workbench when ready.",
+        "open_workbench": "Confirm placement on workbench"
+      },
       "stage_gdd_calibration": {
         "title": "Stage GDD calibration proposals",
         "lead": "Actual GDD variance from this plan suggests updating stage thermal requirements. Review and save only if you agree.",

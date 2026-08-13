@@ -13,6 +13,11 @@ import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stag
 import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { AuthService } from '../../../services/auth.service';
+import { LEARN_FOLLOW_UP_POST_MASTER } from '../../../domain/plans/learn-post-master-follow-up';
+import {
+  readAppliedProposalKeys,
+  stageGddProposalKey
+} from '../../../domain/plans/learn-proposal-application-progress';
 
 const loadedControlBase = {
   loading: false,
@@ -143,6 +148,7 @@ describe('CropStageEditComponent', () => {
   }
 
   beforeEach(async () => {
+    sessionStorage.clear();
     HTMLDialogElement.prototype.showModal = vi.fn();
     HTMLDialogElement.prototype.close = vi.fn();
 
@@ -318,6 +324,30 @@ describe('CropStageEditComponent', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/crops', 1, 'stages'], {
       queryParams: undefined
     });
+  });
+
+  it('navigates to learn post_master after successful panel save when returnTo=learn', async () => {
+    mockActivatedRoute.snapshot.queryParamMap.get = vi.fn((key: string) => {
+      if (key === 'fromPlan') return '7';
+      if (key === 'returnTo') return 'learn';
+      return null;
+    });
+
+    await loadStage();
+
+    component.stageEditDraft.name = 'Updated Name';
+    component.saveStagePanel();
+
+    const presenter = fixture.debugElement.injector.get(CropStageEditPresenter);
+    presenter.onSuccess({
+      stage: { ...stageFixture, name: 'Updated Name' }
+    });
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 7, 'learn'], {
+      queryParams: { followUp: LEARN_FOLLOW_UP_POST_MASTER }
+    });
+    expect(readAppliedProposalKeys(7)).toEqual(new Set([stageGddProposalKey(1, 1)]));
   });
 
   it('resyncs panel draft from server after partial panel save failure', async () => {
