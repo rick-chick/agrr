@@ -24,6 +24,34 @@
   background: var(--color-surface-raised);
 }
 
+.blueprint-timing-adjustment__summary {
+  min-width: 12rem;
+}
+
+.blueprint-timing-adjustment__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.blueprint-timing-adjustment__status {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.blueprint-timing-adjustment__status--pending {
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  color: var(--color-warning-strong, var(--color-warning));
+}
+
 .blueprint-timing-adjustment__name {
   margin: 0;
   font-weight: 600;

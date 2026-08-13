@@ -10,6 +10,7 @@ import { VarianceActionProposalCardsComponent } from './variance-action-proposal
 import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.component';
+import { PlanLearnLoopProgressComponent } from './plan-learn-loop-progress.component';
 import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
@@ -67,7 +68,8 @@ const initialControl: PlanLearnViewState = {
     StageGddCalibrationProposalsViewComponent,
     VarianceActionProposalCardsComponent,
     BlueprintTimingAdjustmentProposalsViewComponent,
-    PlanLearnImportedBannerComponent
+    PlanLearnImportedBannerComponent,
+    PlanLearnLoopProgressComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -89,6 +91,16 @@ const initialControl: PlanLearnViewState = {
             </button>
           </div>
         } @else {
+          <app-plan-learn-loop-progress
+            [planId]="planId"
+            [actionRequiredItems]="control.varianceSummary?.action_required_items ?? []"
+            [stageGddProposals]="control.stageGddProposals"
+            [blueprintTimingProposals]="control.blueprintTimingProposals"
+            [hasPostMasterConfirmation]="showPostMasterConfirmation"
+            [hasMasterUpdateNextSteps]="showMasterUpdateNextSteps"
+            [hasLearningSnapshot]="control.learningSnapshot != null"
+            [carryoverSourcePlanCount]="control.carryoverSourcePlans.length"
+          />
           @if (showPostMasterConfirmation) {
             <app-plan-learn-post-master-confirmation
               [planId]="planId"
@@ -238,6 +250,7 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [items]="control.varianceSummary?.action_required_items ?? []"
           />
+          <div id="plan-learn-loop-proposals">
           <app-blueprint-timing-adjustment-proposals-view
             [planId]="planId"
             [loading]="control.blueprintTimingLoading"
@@ -256,6 +269,7 @@ const initialControl: PlanLearnViewState = {
             [loading]="control.stageGddProposalsLoading"
             [proposals]="control.stageGddProposals"
           />
+          </div>
         }
       </section>
     </div>

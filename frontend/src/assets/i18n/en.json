@@ -1525,7 +1525,7 @@
           "bp_timing": "BP timing adjustment"
         },
         "status": {
-          "not_started": "Not started",
+          "not_started": "Not applied",
           "applied_pending_confirmation": "Applied — pending confirmation",
           "confirmed": "Confirmed — reorganization in progress",
           "done": "Complete"
@@ -1566,6 +1566,24 @@
           "sync_verify": "Check sync"
         },
         "completed": "Completed"
+      },
+      "loop": {
+        "title": "Learning loop progress",
+        "next_action_title": "Next action",
+        "phase": {
+          "observe": "Observe",
+          "apply": "Apply",
+          "reorganize": "Reorganize",
+          "handoff": "Handoff"
+        },
+        "next_action": {
+          "observe_workbench": "Open workbench to review variance",
+          "observe_proposals": "Review master update proposals",
+          "apply_stage_gdd": "Apply stage GDD calibration",
+          "apply_bp_timing": "Apply BP timing adjustment",
+          "reorganize_placement": "Verify placement on workbench",
+          "handoff_carryover": "Import or carry over learning"
+        }
       }
     },
     "work": {

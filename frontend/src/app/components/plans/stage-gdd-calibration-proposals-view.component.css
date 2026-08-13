@@ -28,6 +28,30 @@
   min-width: 12rem;
 }
 
+.stage-gdd-calibration__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.stage-gdd-calibration__status {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.stage-gdd-calibration__status--pending {
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  color: var(--color-warning-strong, var(--color-warning));
+}
+
 .stage-gdd-calibration__stage-name,
 .stage-gdd-calibration__delta,
 .stage-gdd-calibration__proposal-value {
