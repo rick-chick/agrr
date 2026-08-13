@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { markLearnOrchestrationStepComplete } from '../../domain/plans/learn-master-update-orchestration';
 import {
   PlanLearnMasterUpdateNextStepsComponent,
   buildLearnMasterUpdateNextSteps
@@ -33,6 +34,7 @@ describe('PlanLearnMasterUpdateNextStepsComponent', () => {
   let fixture: ComponentFixture<PlanLearnMasterUpdateNextStepsComponent>;
 
   beforeEach(async () => {
+    sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [PlanLearnMasterUpdateNextStepsComponent, TranslateModule.forRoot()],
       providers: [provideRouter([])]
@@ -57,7 +59,8 @@ describe('PlanLearnMasterUpdateNextStepsComponent', () => {
         'plans.learn.next_steps.sync_verify.description': 'Confirm task schedule sync.',
         'plans.learn.next_steps.cta.placement': 'Open workbench',
         'plans.learn.next_steps.cta.regenerate': 'Open task schedule',
-        'plans.learn.next_steps.cta.sync_verify': 'Check sync'
+        'plans.learn.next_steps.cta.sync_verify': 'Check sync',
+        'plans.learn.next_steps.completed': 'Completed'
       },
       true
     );
@@ -90,5 +93,20 @@ describe('PlanLearnMasterUpdateNextStepsComponent', () => {
     fixture.componentInstance.visible = false;
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.learn-next-steps')).toBeNull();
+  });
+
+  it('marks regenerate and sync_verify steps as completed from session progress', () => {
+    sessionStorage.clear();
+    markLearnOrchestrationStepComplete(7, 'regenerate');
+    markLearnOrchestrationStepComplete(7, 'sync_verify');
+
+    fixture.componentInstance.visible = true;
+    fixture.detectChanges();
+
+    const completedItems = fixture.nativeElement.querySelectorAll('.learn-next-steps__item--completed');
+    expect(completedItems).toHaveLength(2);
+    expect(completedItems[0].textContent).toContain('Completed');
+    expect(completedItems[1].textContent).toContain('Completed');
+    expect(completedItems[0].querySelector('a.learn-next-steps__cta')).toBeNull();
   });
 });

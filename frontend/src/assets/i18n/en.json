@@ -1464,7 +1464,8 @@
           "message": "Verify task schedule sync",
           "hint": "Check sync status below. If generation failed, retry from the work screen."
         },
-        "work_retry": "Open work screen to retry"
+        "work_retry": "Open work screen to retry",
+        "return_to_learn": "Return to learning screen"
       }
     },
     "learn": {
@@ -1561,7 +1562,8 @@
           "placement": "Open workbench",
           "regenerate": "Open task schedule",
           "sync_verify": "Check sync"
-        }
+        },
+        "completed": "Completed"
       }
     },
     "work": {
