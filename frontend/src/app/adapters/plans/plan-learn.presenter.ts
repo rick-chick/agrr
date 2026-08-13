@@ -40,7 +40,8 @@ const initialControl: PlanLearnViewState = {
   carryoverPreviewError: null,
   carryoverPreview: null,
   carryoverImporting: false,
-  carryoverImportError: null
+  carryoverImportError: null,
+  postMasterPayload: null
 };
 
 @Injectable()

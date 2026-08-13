@@ -10,6 +10,8 @@ import { VarianceActionProposalCardsComponent } from './variance-action-proposal
 import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.component';
+import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
+import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
@@ -17,6 +19,11 @@ import { PLAN_LEARN_PROVIDERS, PlanLearnPresenter } from '../../usecase/plans/pl
 import { PlanLearnView, PlanLearnViewState } from './plan-learn.view';
 import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-actual-summary';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
+import {
+  clearLearnPostMasterPayload,
+  parsePlanLearnFollowUp,
+  readLearnPostMasterPayload
+} from '../../domain/plans/learn-proposal-application-progress';
 
 const initialControl: PlanLearnViewState = {
   loading: true,
@@ -38,7 +45,8 @@ const initialControl: PlanLearnViewState = {
   carryoverPreviewError: null,
   carryoverPreview: null,
   carryoverImporting: false,
-  carryoverImportError: null
+  carryoverImportError: null,
+  postMasterPayload: null
 };
 
 @Component({
@@ -49,6 +57,8 @@ const initialControl: PlanLearnViewState = {
     FormsModule,
     TranslateModule,
     PlanPlanContextHeaderComponent,
+    PlanLearnApplicationProgressViewComponent,
+    PlanLearnPostMasterConfirmationComponent,
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
     VarianceActionProposalCardsComponent,
@@ -75,6 +85,17 @@ const initialControl: PlanLearnViewState = {
             </button>
           </div>
         } @else {
+          @if (showPostMasterConfirmation) {
+            <app-plan-learn-post-master-confirmation
+              [planId]="planId"
+              [payload]="control.postMasterPayload"
+            />
+          }
+          <app-plan-learn-application-progress-view
+            [planId]="planId"
+            [stageGddProposals]="control.stageGddProposals"
+            [blueprintTimingProposals]="control.blueprintTimingProposals"
+          />
           @if (control.learningSnapshot) {
             <div class="plan-learn-imported-snapshot" aria-labelledby="plan-learn-imported-title">
               <h3 id="plan-learn-imported-title" class="plan-learn-imported-snapshot__title">
@@ -256,9 +277,37 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
     this.cdr.markForCheck();
   }
 
+  get showPostMasterConfirmation(): boolean {
+    return this.control.postMasterPayload != null;
+  }
+
   ngOnInit(): void {
     this.presenter.setView(this);
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.reload());
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.syncPostMasterFollowUp();
+    });
+    this.syncPostMasterFollowUp();
+  }
+
+  private syncPostMasterFollowUp(): void {
+    const planId = this.planId;
+    if (!planId) {
+      return;
+    }
+    const followUp = parsePlanLearnFollowUp(this.route.snapshot.queryParamMap.get('followUp'));
+    if (followUp !== 'post_master') {
+      if (this.control.postMasterPayload != null) {
+        this.control = { ...this.control, postMasterPayload: null };
+      }
+      return;
+    }
+    const payload = readLearnPostMasterPayload(planId);
+    if (!payload) {
+      return;
+    }
+    this.control = { ...this.control, postMasterPayload: payload };
+    clearLearnPostMasterPayload(planId);
   }
 
   reload(): void {
