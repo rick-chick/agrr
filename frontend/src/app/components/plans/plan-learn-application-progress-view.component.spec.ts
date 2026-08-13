@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   markBpTimingProposalDismissed,
   markLearnProposalConfirmed,
-  markLearnProposalDismissed,
   markStageGddProposalAppliedPending,
   markAllConfirmedProposalsDone,
   markStageGddProposalDismissed
