@@ -70,7 +70,7 @@ impl WorkRecordSqliteGateway {
             let scheduled_date_raw: Option<String> = row.get(20).unwrap_or(None);
             WorkRecordTaskScheduleItemSummary {
                 id,
-                name: row.get(17).unwrap_or_default(),
+                name: row.get(19).unwrap_or_default(),
                 scheduled_date: scheduled_date_raw.as_deref().and_then(parse_iso_date),
             }
         });

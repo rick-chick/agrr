@@ -63,6 +63,14 @@ fn work_record_gateway_crud_roundtrip() {
     assert_eq!(Some("F1".into()), created.field_name);
     assert_eq!(Some("Test Crop".into()), created.crop_name);
     assert!(created.task_schedule_item.is_some());
+    assert_eq!(
+        "除草作業",
+        created
+            .task_schedule_item
+            .as_ref()
+            .map(|item| item.name.as_str())
+            .unwrap_or_default()
+    );
     assert_eq!(Some(120.0), created.gdd_at_actual);
     assert!(created.weather_snapshot.is_some());
 

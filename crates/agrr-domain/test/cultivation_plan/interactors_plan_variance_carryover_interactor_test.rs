@@ -307,6 +307,48 @@ fn on_success_saves_variance_snapshot_with_new_plan_id() {
 }
 
 #[test]
+fn denies_carryover_when_user_cannot_access_target_plan() {
+    let saved = Arc::new(Mutex::new(Vec::new()));
+    let plan_gateway = StubPlanGateway {
+        plans: vec![plan_entity(10, 7, 1), plan_entity(20, 7, 2)],
+    };
+    let snapshot_gateway = StubSnapshotGateway {
+        snapshot: sample_snapshot(),
+    };
+    let variance_gateway = SpyVarianceLearningGateway {
+        saved: Arc::clone(&saved),
+    };
+    let user_lookup = StubUserLookup {
+        user: User::new(1, false),
+    };
+    let translator = FakeTranslator;
+    let logger = FakeLogger;
+    let scope = EmptyScopeGateway;
+
+    let interactor = PlanVarianceCarryoverInteractor::new(
+        &plan_gateway,
+        &snapshot_gateway,
+        &variance_gateway,
+        &user_lookup,
+        &scope,
+        &translator,
+        &logger,
+    );
+
+    let err = interactor
+        .call(PlanVarianceCarryoverInput {
+            new_plan_id: 20,
+            source_plan_id: 10,
+            target_farm_id: 7,
+            user_id: 1,
+        })
+        .expect_err("carryover to another user's plan must fail");
+
+    assert!(err.downcast_ref::<RecordNotFoundError>().is_some());
+    assert!(saved.lock().unwrap().is_empty());
+}
+
+#[test]
 fn allows_carryover_from_source_on_different_farm_when_accessible() {
     let saved = Arc::new(Mutex::new(Vec::new()));
     let plan_gateway = StubPlanGateway {

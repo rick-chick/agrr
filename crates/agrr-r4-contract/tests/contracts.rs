@@ -770,6 +770,61 @@ fn post_plan_variance_learning_imports_snapshot_for_in_progress_plan() {
 }
 
 #[test]
+fn post_plan_variance_learning_import_other_user_returns_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let owner_source = seed_work_record_plan(owner_id);
+
+    let other_session = farmer_session_id(&client);
+    let other_id = user_id_for_session(&client, &other_session);
+    let other_target_farm_id = seed_user_farm_without_organization(other_id);
+    let sqlite_path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&sqlite_path).expect("open contract sqlite");
+    conn.execute(
+        "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
+         VALUES (?1, ?2, 'Other User Target Field', 40.0, 0, datetime('now'), datetime('now'))",
+        rusqlite::params![other_target_farm_id, other_id],
+    )
+    .expect("insert other user target field");
+
+    let (create_status, create_body) = status_and_body(client.post(
+        "/api/v1/plans",
+        Some(&other_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "plan": {
+                "farm_id": other_target_farm_id,
+                "plan_name": "Other User Target Plan"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create plan JSON");
+    let other_target_plan_id = create_json["id"].as_i64().expect("other target plan id");
+
+    let import_path = format!("/api/v1/plans/{other_target_plan_id}/variance_learning");
+    let (status, body) = status_and_body(client.post(
+        &import_path,
+        Some(&owner_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "source_plan_id": owner_source.plan_id
+        })),
+    ));
+    assert_cross_user_access_denied(status, &body);
+
+    let (learning_status, learning_body) = status_and_body(client.get(
+        &import_path,
+        Some(&other_session),
+        &empty_headers(),
+    ));
+    assert_eq!(404, learning_status, "{learning_body}");
+}
+
+#[test]
 fn get_task_schedule_includes_compat_milestones_labels_and_week_days() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
