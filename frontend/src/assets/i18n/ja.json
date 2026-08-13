@@ -2654,8 +2654,12 @@
           "not_started": "未適用",
           "applied_pending_confirmation": "適用済み・確認待ち",
           "confirmed": "確認済み・再編成中",
-          "done": "完了"
+          "done": "完了",
+          "dismissed": "適用しない"
         }
+      },
+      "proposal_dismiss": {
+        "cta": "適用しない"
       },
       "post_master": {
         "title": "マスタ更新を適用しました",
@@ -2695,12 +2699,14 @@
       },
       "loop": {
         "title": "学習ループの進捗",
+        "complete_message": "学習ループ完了",
         "next_action_title": "次のアクション",
         "phase": {
           "observe": "観測",
           "apply": "適用",
           "reorganize": "再編成",
-          "handoff": "引き継ぎ"
+          "handoff": "引き継ぎ",
+          "complete": "完了"
         },
         "next_action": {
           "observe_workbench": "作業台で乖離を確認",
@@ -2708,7 +2714,9 @@
           "apply_stage_gdd": "ステージ GDD 校正を適用",
           "apply_bp_timing": "BP タイミング調整を適用",
           "reorganize_placement": "作業台で配置を確認",
-          "handoff_carryover": "学習をインポートまたは引き継ぎ"
+          "handoff_carryover": "学習をインポートまたは引き継ぎ",
+          "complete_reorganize": "作業台で配置を確認",
+          "complete_next_plan": "計画一覧へ"
         }
       }
     },

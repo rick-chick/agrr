@@ -42,6 +42,11 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
       </ol>
       @if (nextAction) {
         <div class="learn-loop-progress__next">
+          @if (currentPhase === 'complete') {
+            <p class="learn-loop-progress__complete-message" role="status">
+              {{ 'plans.learn.loop.complete_message' | translate }}
+            </p>
+          }
           <p class="learn-loop-progress__next-label">
             {{ 'plans.learn.loop.next_action_title' | translate }}:
             {{ nextAction.labelKey | translate }}
@@ -62,6 +67,15 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
               {{ nextAction.labelKey | translate }}
             </a>
           }
+          @if (secondaryAction?.kind === 'router_link') {
+            <a
+              class="btn btn-secondary learn-loop-progress__secondary-cta"
+              [routerLink]="secondaryAction.routerLink"
+              [queryParams]="secondaryAction.queryParams"
+            >
+              {{ secondaryAction.labelKey | translate }}
+            </a>
+          }
         </div>
       }
     </section>
@@ -77,6 +91,7 @@ export class PlanLearnLoopProgressComponent {
   @Input() hasMasterUpdateNextSteps = false;
   @Input() hasLearningSnapshot = false;
   @Input() carryoverSourcePlanCount = 0;
+  @Input() progressRevision = 0;
 
   readonly phases = LEARN_LOOP_PHASE_ORDER;
 
@@ -88,7 +103,12 @@ export class PlanLearnLoopProgressComponent {
     return this.phaseResult.nextAction;
   }
 
+  get secondaryAction(): LearnLoopNextAction | null | undefined {
+    return this.phaseResult.secondaryAction;
+  }
+
   private get phaseResult(): ReturnType<typeof buildLearnLoopPhaseResult> {
+    void this.progressRevision;
     return buildLearnLoopPhaseResult(
       buildLearnLoopPhaseInputFromState({
         planId: this.planId,

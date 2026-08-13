@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-s
 import { cropPlanWizardQueryParams } from '../../domain/crops/plan-wizard-context';
 import {
   bpTimingProposalProgressKey,
+  markBpTimingProposalDismissed,
   resolveLearnProposalApplicationStatus,
   storeLearnBpTimingApplyContext,
   type LearnProposalApplicationStatus
@@ -49,6 +50,9 @@ import {
                     [class.blueprint-timing-adjustment__status--pending]="
                       proposalStatus(proposal) === 'applied_pending_confirmation'
                     "
+                    [class.blueprint-timing-adjustment__status--dismissed]="
+                      proposalStatus(proposal) === 'dismissed'
+                    "
                   >
                     {{ statusLabel(proposalStatus(proposal)) | translate }}
                   </span>
@@ -66,13 +70,26 @@ import {
                   }}
                 </p>
               </div>
-              <button
-                type="button"
-                class="btn-secondary blueprint-timing-adjustment__cta"
-                (click)="openSetupProposal(proposal)"
-              >
-                {{ 'plans.learn.bp_timing_adjustment.cta' | translate }}
-              </button>
+              <div class="blueprint-timing-adjustment__actions">
+                @if (canApply(proposal)) {
+                  <button
+                    type="button"
+                    class="btn-secondary blueprint-timing-adjustment__cta"
+                    (click)="openSetupProposal(proposal)"
+                  >
+                    {{ 'plans.learn.bp_timing_adjustment.cta' | translate }}
+                  </button>
+                }
+                @if (canDismiss(proposal)) {
+                  <button
+                    type="button"
+                    class="btn-secondary blueprint-timing-adjustment__dismiss"
+                    (click)="dismissProposal(proposal)"
+                  >
+                    {{ 'plans.learn.proposal_dismiss.cta' | translate }}
+                  </button>
+                }
+              </div>
             </li>
           }
         </ul>
@@ -85,8 +102,12 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
   @Input({ required: true }) planId!: number;
   @Input() loading = false;
   @Input() proposals: BlueprintTimingAdjustmentProposal[] = [];
+  @Output() proposalProgressChanged = new EventEmitter<void>();
 
-  constructor(private readonly router: Router) {}
+  constructor(
+    private readonly router: Router,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
   proposalKey(proposal: BlueprintTimingAdjustmentProposal): string {
     return `${proposal.cropId}-${proposal.category}`;
@@ -125,5 +146,23 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
 
   statusLabel(status: LearnProposalApplicationStatus): string {
     return `plans.learn.application_progress.status.${status}`;
+  }
+
+  canApply(proposal: BlueprintTimingAdjustmentProposal): boolean {
+    const status = this.proposalStatus(proposal);
+    return status === 'not_started' || status === 'applied_pending_confirmation';
+  }
+
+  canDismiss(proposal: BlueprintTimingAdjustmentProposal): boolean {
+    return this.proposalStatus(proposal) === 'not_started';
+  }
+
+  dismissProposal(proposal: BlueprintTimingAdjustmentProposal): void {
+    markBpTimingProposalDismissed(this.planId, {
+      cropId: proposal.cropId,
+      category: proposal.category
+    });
+    this.cdr.markForCheck();
+    this.proposalProgressChanged.emit();
   }
 }

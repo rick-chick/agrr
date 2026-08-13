@@ -3,6 +3,12 @@ import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
+import {
+  markAllConfirmedProposalsDone,
+  markLearnProposalConfirmed,
+  markStageGddProposalAppliedPending,
+  stageGddProposalProgressKey
+} from '../../domain/plans/learn-proposal-application-progress';
 import { PlanLearnLoopProgressComponent } from './plan-learn-loop-progress.component';
 
 function actionItem(fieldCultivationId: number): PlanVarianceActionItem {
@@ -43,8 +49,12 @@ describe('PlanLearnLoopProgressComponent', () => {
         'plans.learn.loop.phase.apply': 'Apply',
         'plans.learn.loop.phase.reorganize': 'Reorganize',
         'plans.learn.loop.phase.handoff': 'Handoff',
+        'plans.learn.loop.phase.complete': 'Complete',
+        'plans.learn.loop.complete_message': 'Learning loop complete',
         'plans.learn.loop.next_action.observe_workbench': 'Open workbench',
-        'plans.learn.loop.next_action.handoff_carryover': 'Import carryover'
+        'plans.learn.loop.next_action.handoff_carryover': 'Import carryover',
+        'plans.learn.loop.next_action.complete_reorganize': 'Verify placement',
+        'plans.learn.loop.next_action.complete_next_plan': 'Go to plans'
       },
       true
     );
@@ -58,7 +68,7 @@ describe('PlanLearnLoopProgressComponent', () => {
     fixture.detectChanges();
 
     const phases = fixture.nativeElement.querySelectorAll('.learn-loop-progress__phase');
-    expect(phases).toHaveLength(4);
+    expect(phases).toHaveLength(5);
     expect(phases[0].classList.contains('learn-loop-progress__phase--current')).toBe(true);
     expect(phases[0].getAttribute('aria-current')).toBe('step');
   });
@@ -97,5 +107,42 @@ describe('PlanLearnLoopProgressComponent', () => {
       '.learn-loop-progress__phase--completed'
     );
     expect(completedPhases.length).toBeGreaterThan(0);
+  });
+
+  it('shows learning loop complete with reorganize and plans CTAs when all proposals are resolved', () => {
+    const key = stageGddProposalProgressKey(1, 2);
+    markStageGddProposalAppliedPending(7, { cropId: 1, stageId: 2 });
+    markLearnProposalConfirmed(7, key);
+    markAllConfirmedProposalsDone(7);
+
+    fixture.componentInstance.stageGddProposals = [
+      {
+        cropId: 1,
+        cropName: 'Tomato',
+        stageId: 2,
+        stageOrder: 1,
+        stageName: 'Vegetative',
+        averageGddDelta: 10,
+        recordedItemCount: 3,
+        currentRequiredGdd: 100,
+        proposedRequiredGdd: 110
+      }
+    ];
+    fixture.componentInstance.progressRevision = 1;
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('.learn-loop-progress__complete-message')?.textContent
+    ).toContain('Learning loop complete');
+
+    const primaryCta = fixture.nativeElement.querySelector('.learn-loop-progress__next-cta');
+    expect(primaryCta?.getAttribute('href')).toBe('/plans/7?learningOrchestration=adjust');
+    expect(primaryCta?.textContent).toContain('Verify placement');
+
+    const secondaryCta = fixture.nativeElement.querySelector(
+      '.learn-loop-progress__secondary-cta'
+    );
+    expect(secondaryCta?.getAttribute('href')).toBe('/plans');
+    expect(secondaryCta?.textContent).toContain('Go to plans');
   });
 });

@@ -2016,8 +2016,12 @@
           "not_started": "लागू नहीं",
           "applied_pending_confirmation": "लागू — पुष्टि लंबित",
           "confirmed": "पुष्टि की गई — पुनर्गठन प्रगति में",
-          "done": "पूर्ण"
+          "done": "पूर्ण",
+          "dismissed": "अस्वीकृत"
         }
+      },
+      "proposal_dismiss": {
+        "cta": "लागू न करें"
       },
       "post_master": {
         "title": "मास्टर अपडेट लागू किया गया",
@@ -2057,12 +2061,14 @@
       },
       "loop": {
         "title": "सीखने लूप की प्रगति",
+        "complete_message": "सीखने लूप पूर्ण",
         "next_action_title": "अगला कदम",
         "phase": {
           "observe": "अवलोकन",
           "apply": "लागू करें",
           "reorganize": "पुनर्गठन",
-          "handoff": "हस्तांतरण"
+          "handoff": "हस्तांतरण",
+          "complete": "पूर्ण"
         },
         "next_action": {
           "observe_workbench": "विचरण समीक्षा के लिए कार्यक्षेत्र खोलें",
@@ -2070,7 +2076,9 @@
           "apply_stage_gdd": "चरण GDD अंशांकन लागू करें",
           "apply_bp_timing": "BP समय समायोजन लागू करें",
           "reorganize_placement": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
-          "handoff_carryover": "सीखना आयात या हस्तांतरण करें"
+          "handoff_carryover": "सीखना आयात या हस्तांतरण करें",
+          "complete_reorganize": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
+          "complete_next_plan": "योजनाओं पर जाएँ"
         }
       }
     },

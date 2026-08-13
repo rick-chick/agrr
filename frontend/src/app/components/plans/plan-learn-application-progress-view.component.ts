@@ -52,6 +52,9 @@ export interface LearnApplicationProgressItem {
                   item.status === 'confirmed'
                 "
                 [class.learn-application-progress__status--done]="item.status === 'done'"
+                [class.learn-application-progress__status--dismissed]="
+                  item.status === 'dismissed'
+                "
               >
                 {{ statusLabel(item.status) | translate }}
               </span>

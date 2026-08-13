@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   markLearnProposalConfirmed,
+  markLearnProposalDismissed,
   markStageGddProposalAppliedPending,
   markAllConfirmedProposalsDone
 } from '../../domain/plans/learn-proposal-application-progress';
@@ -101,5 +102,29 @@ describe('buildLearnApplicationProgressItems', () => {
       []
     );
     expect(doneItems[0]?.status).toBe('done');
+  });
+
+  it('reflects dismissed status from session storage', () => {
+    markLearnProposalDismissed(7, 'stage_gdd:1:2');
+
+    const items = buildLearnApplicationProgressItems(
+      7,
+      [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 2,
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageGddDelta: 10,
+          recordedItemCount: 3,
+          currentRequiredGdd: 100,
+          proposedRequiredGdd: 110
+        }
+      ],
+      []
+    );
+
+    expect(items[0]?.status).toBe('dismissed');
   });
 });

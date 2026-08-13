@@ -96,6 +96,7 @@ const initialControl: PlanLearnViewState = {
         } @else {
           <app-plan-learn-loop-progress
             [planId]="planId"
+            [progressRevision]="proposalProgressRevision"
             [actionRequiredItems]="control.varianceSummary?.action_required_items ?? []"
             [stageGddProposals]="control.stageGddProposals"
             [blueprintTimingProposals]="control.blueprintTimingProposals"
@@ -264,6 +265,7 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [loading]="control.blueprintTimingLoading"
             [proposals]="control.blueprintTimingProposals"
+            (proposalProgressChanged)="onProposalProgressChanged()"
           />
           <app-task-schedule-variance-view
             [planId]="planId"
@@ -277,6 +279,7 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [loading]="control.stageGddProposalsLoading"
             [proposals]="control.stageGddProposals"
+            (proposalProgressChanged)="onProposalProgressChanged()"
           />
           </div>
         }
@@ -302,6 +305,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
   }
 
   private _control: PlanLearnViewState = initialControl;
+  proposalProgressRevision = 0;
   get control(): PlanLearnViewState {
     return this._control;
   }
@@ -348,6 +352,11 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
     confirmLearnProposalFromPostMaster(planId, payload);
     this.control = { ...this.control, postMasterPayload: payload };
     clearLearnPostMasterPayload(planId);
+  }
+
+  onProposalProgressChanged(): void {
+    this.proposalProgressRevision += 1;
+    this.cdr.markForCheck();
   }
 
   reload(): void {
