@@ -9,6 +9,7 @@ import {
   type LearnLoopPhaseInput
 } from './learn-loop-phase';
 import {
+  clearLearnProposalApplicationProgressCache,
   markAllConfirmedProposalsDone,
   markBpTimingProposalAppliedPending,
   markBpTimingProposalDismissed,
@@ -57,6 +58,7 @@ describe('LEARN_LOOP_PHASE_ORDER', () => {
 describe('buildLearnLoopPhaseResult', () => {
   beforeEach(() => {
     sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
   });
 
   it('returns observe with workbench CTA when action items need review', () => {

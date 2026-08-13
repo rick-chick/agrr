@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  clearLearnProposalApplicationProgressCache,
   markBpTimingProposalDismissed,
   markLearnProposalConfirmed,
   markStageGddProposalAppliedPending,
@@ -11,6 +12,7 @@ import { buildLearnApplicationProgressItems } from './plan-learn-application-pro
 describe('buildLearnApplicationProgressItems', () => {
   beforeEach(() => {
     sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
   });
 
   it('returns not_started for proposals without stored progress', () => {
