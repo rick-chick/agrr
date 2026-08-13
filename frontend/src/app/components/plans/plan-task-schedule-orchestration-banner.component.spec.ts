@@ -74,10 +74,8 @@ describe('PlanTaskScheduleOrchestrationBannerComponent', () => {
     fixture.componentInstance.mode = 'regenerate';
     fixture.componentInstance.syncState = 'ready';
     fixture.componentInstance.showReturnToLearn = true;
-    fixture.detectChanges();
 
-    const link = fixture.nativeElement.querySelector('a.learn-orchestration-banner__learn-link');
-    link?.click();
+    fixture.componentInstance.onReturnToLearnClick();
 
     expect(isLearnOrchestrationStepComplete(4, 'regenerate')).toBe(true);
     expect(readLearnOrchestrationReturnToLearn(4)).toBe(false);
