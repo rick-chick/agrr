@@ -466,6 +466,67 @@ fn patch_task_schedule_item_skip_and_unskip_returns_item_payload() {
 }
 
 #[test]
+fn post_task_schedule_item_create_returns_item_payload() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    let path = format!("/api/v1/plans/{}/task_schedule/items", seed.plan_id);
+    let body = serde_json::json!({
+        "task_schedule_item": {
+            "field_cultivation_id": seed.field_cultivation_id,
+            "name": "手動追加作業",
+            "scheduled_date": "2026-07-10"
+        }
+    });
+
+    let (status, response_body) = status_and_body(
+        client.post(&path, Some(&session_id), &empty_headers(), Some(&body.to_string())),
+    );
+    assert_eq!(201, status, "{response_body}");
+    let json: serde_json::Value =
+        serde_json::from_str(&response_body).expect("create task schedule item JSON");
+    let item = &json["item"];
+    assert!(item["id"].as_i64().is_some(), "{response_body}");
+    assert_eq!("手動追加作業", item["name"].as_str().unwrap());
+    assert_eq!("2026-07-10", item["scheduled_date"].as_str().unwrap());
+    assert_eq!("planned", item["status"].as_str().unwrap());
+    assert_eq!(
+        seed.field_cultivation_id,
+        item["field_cultivation_id"].as_i64().unwrap()
+    );
+}
+
+#[test]
+fn patch_task_schedule_item_update_scheduled_date_returns_item_payload() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    let path = format!(
+        "/api/v1/plans/{}/task_schedule/items/{}",
+        seed.plan_id, seed.task_schedule_item_id
+    );
+    let body = serde_json::json!({
+        "task_schedule_item": {
+            "scheduled_date": "2026-07-15"
+        }
+    });
+
+    let (status, response_body) = status_and_body(
+        client.patch(&path, Some(&session_id), &empty_headers(), Some(&body.to_string())),
+    );
+    assert_eq!(200, status, "{response_body}");
+    let json: serde_json::Value =
+        serde_json::from_str(&response_body).expect("update task schedule item JSON");
+    let item = &json["item"];
+    assert_eq!(seed.task_schedule_item_id, item["id"].as_i64().unwrap());
+    assert_eq!("2026-07-15", item["scheduled_date"].as_str().unwrap());
+    assert_eq!("rescheduled", item["status"].as_str().unwrap());
+    assert!(item["rescheduled_at"].is_string());
+}
+
+#[test]
 fn get_task_schedule_includes_sync_state_and_items() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

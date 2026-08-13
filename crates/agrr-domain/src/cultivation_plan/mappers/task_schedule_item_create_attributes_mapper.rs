@@ -21,14 +21,45 @@ pub fn attrs_to_params(attrs: &AttrMap) -> BTreeMap<String, Option<String>> {
 }
 
 pub fn create_attrs_to_attr_map(attrs: &TaskScheduleItemCreateAttributes) -> AttrMap {
-    let mut pairs = Vec::new();
+    let mut pairs: Vec<(String, AttrValue)> = Vec::new();
     if let Some(id) = attrs.field_cultivation_id {
-        pairs.push(("field_cultivation_id".to_string(), AttrValue::Int(id)));
+        pairs.push(("field_cultivation_id".into(), AttrValue::Int(id)));
     }
-    pairs.push(("task_type".to_string(), AttrValue::Str(attrs.task_type.clone())));
-    pairs.push(("name".to_string(), AttrValue::Str(attrs.name.clone())));
+    pairs.push(("task_type".into(), AttrValue::Str(attrs.task_type.clone())));
+    pairs.push(("name".into(), AttrValue::Str(attrs.name.clone())));
+    if let Some(d) = &attrs.description {
+        pairs.push(("description".into(), AttrValue::Str(d.clone())));
+    }
     if let Some(d) = &attrs.scheduled_date {
-        pairs.push(("scheduled_date".to_string(), AttrValue::Str(d.clone())));
+        pairs.push(("scheduled_date".into(), AttrValue::Str(d.clone())));
+    }
+    if let Some(s) = &attrs.stage_name {
+        pairs.push(("stage_name".into(), AttrValue::Str(s.clone())));
+    }
+    if let Some(v) = attrs.stage_order {
+        pairs.push(("stage_order".into(), AttrValue::Int(i64::from(v))));
+    }
+    if let Some(v) = attrs.priority {
+        pairs.push(("priority".into(), AttrValue::Int(i64::from(v))));
+    }
+    pairs.push(("source".into(), AttrValue::Str(attrs.source.clone())));
+    if let Some(w) = &attrs.weather_dependency {
+        pairs.push(("weather_dependency".into(), AttrValue::Str(w.clone())));
+    }
+    if let Some(v) = attrs.time_per_sqm {
+        pairs.push(("time_per_sqm".into(), AttrValue::Str(v.to_string())));
+    }
+    if let Some(v) = attrs.amount {
+        pairs.push(("amount".into(), AttrValue::Str(v.to_string())));
+    }
+    if let Some(u) = &attrs.amount_unit {
+        pairs.push(("amount_unit".into(), AttrValue::Str(u.clone())));
+    }
+    if let Some(id) = attrs.agricultural_task_id {
+        pairs.push(("agricultural_task_id".into(), AttrValue::Int(id)));
+    }
+    if let Some(id) = attrs.cultivation_plan_crop_id {
+        pairs.push(("cultivation_plan_crop_id".into(), AttrValue::Int(id)));
     }
     attr_map_from_pairs(pairs)
 }
