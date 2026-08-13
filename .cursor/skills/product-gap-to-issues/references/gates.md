@@ -94,6 +94,7 @@
 - 対象ユーザーセグメント（農場1件 / 複数）への影響の記載
 - v1 issue 数の抑制（境界が明確なら issue 数自体は固定しない）
 - 集約 API・新ルートの要否は **観測**（農場数・API 呼び出し・既存上限）を `enhancement-plan.md` に書くこと
+- `theme-selection.md` の幅 vs 深さ判定と `enhancement-plan.md` の v1/v2 が矛盾していないこと
 
 ### pass の条件
 

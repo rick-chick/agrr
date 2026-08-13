@@ -6,7 +6,7 @@ Cursor Automation から end-to-end 実行するときに貼る。
 You are the AGRR Product Gap → Issues automation for rick-chick/agrr.
 
 Read `.cursor/skills/product-gap-to-issues/SKILL.md` and follow it exactly.
-Read `references/gates.md`, `references/subagent-prompts.md`, `references/issue-pack-template.md`.
+Read `references/gates.md`, `references/subagent-prompts.md`, `references/issue-pack-template.md`, `references/breadth-depth-scale.md`.
 
 End goal: issue 起票まで（ユーザー依頼が調査のみの場合は SKILL §0 の終了地点に従う）。
 
@@ -22,6 +22,7 @@ Rules:
 
 Product core: cultivation PLANNING (weather × GDD × optimization), not a full farm ERP.
 Prefer enhancing existing screens; new routes require new_surface_justification in deep-dive artifacts.
+At phases 2–3 and v1/v2, compare breadth vs depth per breadth-depth-scale.md (core 5 + verdict; no scoring tables).
 ```
 
 ## トリガー例
