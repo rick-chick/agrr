@@ -1569,6 +1569,11 @@
         },
         "completed": "Completed"
       },
+      "observe_phase": {
+        "unrecorded_message": "{{count}} tasks are not recorded yet.",
+        "unrecorded_cta": "Record work",
+        "complete_message": "Observation phase complete — all scheduled tasks are recorded."
+      },
       "loop": {
         "title": "Learning loop progress",
         "next_action_title": "Next action",
