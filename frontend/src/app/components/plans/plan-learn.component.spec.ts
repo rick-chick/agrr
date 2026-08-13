@@ -215,6 +215,49 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Weed control');
   });
 
+  it('shows observe phase completion when all tasks are recorded', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-observe-phase-status')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Observation phase complete');
+  });
+
+  it('shows unrecorded count and work CTA when tasks are not recorded', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 3,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('3 tasks are not recorded yet.');
+    const workLink = fixture.nativeElement.querySelector(
+      'a.plan-learn-observe-phase__cta'
+    ) as HTMLAnchorElement;
+    expect(workLink).toBeTruthy();
+    expect(workLink.getAttribute('href')).toBe('/plans/7/work');
+    expect(workLink.textContent).toContain('Record work');
+  });
+
   it('renders carryover import section with source plans', async () => {
     fixture.detectChanges();
     presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
@@ -281,6 +324,54 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Imported learning from plan #8');
     expect(fixture.nativeElement.querySelector('app-plan-learn-imported-banner')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Review adjust on workbench');
+  });
+
+  it('shows merged proposal count in imported banner after import', async () => {
+    carryoverUseCase.importLearning.mockReturnValue(
+      of({
+        plan_id: 7,
+        source_plan_id: 8,
+        summary: {
+          plan_id: 7,
+          unrecorded_count: 0,
+          categories: [],
+          top_variance_items: [],
+          stage_gdd_calibration_proposals: [
+            {
+              crop_id: 1,
+              crop_name: 'Tomato',
+              stage_order: 1,
+              stage_name: 'Vegetative',
+              average_gdd_delta: 10,
+              recorded_item_count: 2
+            }
+          ],
+          blueprint_timing_adjustment_proposals: [
+            {
+              crop_id: 1,
+              crop_name: 'Tomato',
+              category: 'general',
+              average_delta_days: 2,
+              average_gdd_delta: 5,
+              recorded_item_count: 4,
+              affected_blueprint_count: 2
+            }
+          ]
+        }
+      })
+    );
+
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    componentSetSourcePlan(fixture, 8);
+    fixture.componentInstance.onImportLearning();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('2 merged proposal');
   });
 
   it('distinguishes imported snapshot from current plan variance headings', async () => {

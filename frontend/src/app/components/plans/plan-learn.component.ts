@@ -11,6 +11,8 @@ import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-tim
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.component';
 import { PlanLearnLoopProgressComponent } from './plan-learn-loop-progress.component';
+import { PlanLearnObservePhaseStatusComponent } from './plan-learn-observe-phase-status.component';
+import { resolveLearnObservePhaseStatus } from '../../domain/plans/resolve-learn-observe-phase-status';
 import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
@@ -20,6 +22,7 @@ import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-lea
 import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-timing-adjustment-proposals.usecase';
 import { LoadStageGddCalibrationProposalsUseCase } from '../../usecase/plans/load-stage-gdd-calibration-proposals.usecase';
 import { loadMergedLearnProposals } from '../../usecase/plans/load-merged-learn-proposals';
+import { countMergedLearnProposals } from '../../domain/plans/count-merged-learn-proposals';
 import { PLAN_LEARN_PROVIDERS, PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { PlanLearnView, PlanLearnViewState } from './plan-learn.view';
 import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-actual-summary';
@@ -72,7 +75,8 @@ const initialControl: PlanLearnViewState = {
     VarianceActionProposalCardsComponent,
     BlueprintTimingAdjustmentProposalsViewComponent,
     PlanLearnImportedBannerComponent,
-    PlanLearnLoopProgressComponent
+    PlanLearnLoopProgressComponent,
+    PlanLearnObservePhaseStatusComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -104,6 +108,11 @@ const initialControl: PlanLearnViewState = {
             [hasLearningSnapshot]="control.learningSnapshot != null"
             [carryoverSourcePlanCount]="control.carryoverSourcePlans.length"
             [progressRefreshVersion]="proposalProgressRefreshVersion"
+          />
+          <app-plan-learn-observe-phase-status
+            [planId]="planId"
+            [status]="observePhaseStatus"
+            [unrecordedCount]="control.varianceSummary?.unrecorded_count ?? 0"
           />
           @if (showPostMasterConfirmation) {
             <app-plan-learn-post-master-confirmation
@@ -162,6 +171,7 @@ const initialControl: PlanLearnViewState = {
             <app-plan-learn-imported-banner
               [planId]="planId"
               [items]="control.learningSnapshot.summary.action_required_items ?? []"
+              [mergedProposalCount]="mergedProposalCount"
             />
           }
 
@@ -312,8 +322,12 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
     return this._control;
   }
   set control(value: PlanLearnViewState) {
+    const prevVarianceLoading = this._control.varianceLoading;
     this._control = value;
     this.cdr.markForCheck();
+    if (prevVarianceLoading && !value.varianceLoading && !value.varianceError) {
+      this.scrollToVarianceSectionIfRequested();
+    }
   }
 
   get showPostMasterConfirmation(): boolean {
@@ -326,6 +340,21 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
     );
   }
 
+  get mergedProposalCount(): number {
+    return countMergedLearnProposals(
+      this.control.varianceSummary,
+      this.control.learningSnapshot
+    );
+  }
+
+  get observePhaseStatus(): ReturnType<typeof resolveLearnObservePhaseStatus> {
+    return resolveLearnObservePhaseStatus({
+      varianceLoading: this.control.varianceLoading,
+      varianceError: this.control.varianceError,
+      unrecordedCount: this.control.varianceSummary?.unrecorded_count ?? null
+    });
+  }
+
   ngOnInit(): void {
     this.presenter.setView(this);
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.reload());
@@ -333,6 +362,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
       this.syncPostMasterFollowUp();
     });
     this.syncPostMasterFollowUp();
+    this.scrollToVarianceSectionIfRequested();
   }
 
   private syncPostMasterFollowUp(): void {
@@ -437,6 +467,18 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
           };
         }
       });
+  }
+
+  private scrollToVarianceSectionIfRequested(): void {
+    if (this.route.snapshot.fragment !== 'plan-learn-current-variance-title') {
+      return;
+    }
+    requestAnimationFrame(() => {
+      document.getElementById('plan-learn-current-variance-title')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    });
   }
 
   private scrollToImportedSnapshotIfRequested(): void {

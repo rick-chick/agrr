@@ -1593,7 +1593,8 @@
           "handoff_carryover": "Import or carry over learning",
           "loop_complete_next_plan": "Continue to next plan",
           "complete_reorganize": "Verify placement on workbench",
-          "complete_next_plan": "Go to plans"
+          "complete_next_plan": "Go to plans",
+          "handoff_new_plan": "Create next plan with learning"
         },
         "complete": {
           "title": "Learning loop complete",
