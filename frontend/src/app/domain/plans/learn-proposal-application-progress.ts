@@ -2,7 +2,8 @@ export type LearnProposalApplicationStatus =
   | 'not_started'
   | 'applied_pending_confirmation'
   | 'confirmed'
-  | 'done';
+  | 'done'
+  | 'dismissed';
 
 export type LearnProposalKind = 'stage_gdd' | 'bp_timing';
 
@@ -94,6 +95,27 @@ export function markBpTimingProposalAppliedPending(
   input: { cropId: number; category: string }
 ): void {
   markProposalAppliedPending(planId, bpTimingProposalProgressKey(input.cropId, input.category));
+}
+
+export function markStageGddProposalDismissed(
+  planId: number,
+  input: { cropId: number; stageId: number }
+): void {
+  dismissProposalIfNotStarted(planId, stageGddProposalProgressKey(input.cropId, input.stageId));
+}
+
+export function markBpTimingProposalDismissed(
+  planId: number,
+  input: { cropId: number; category: string }
+): void {
+  dismissProposalIfNotStarted(planId, bpTimingProposalProgressKey(input.cropId, input.category));
+}
+
+function dismissProposalIfNotStarted(planId: number, proposalKey: string): void {
+  const current = resolveLearnProposalApplicationStatus(planId, proposalKey);
+  if (current === 'not_started') {
+    setProposalStatus(planId, proposalKey, 'dismissed');
+  }
 }
 
 export function proposalKeyFromPostMasterPayload(payload: LearnPostMasterPayload): string {

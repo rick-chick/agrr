@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  markBpTimingProposalDismissed,
   markLearnProposalConfirmed,
   markStageGddProposalAppliedPending,
-  markAllConfirmedProposalsDone
+  markAllConfirmedProposalsDone,
+  markStageGddProposalDismissed
 } from '../../domain/plans/learn-proposal-application-progress';
 import { buildLearnApplicationProgressItems } from './plan-learn-application-progress-view.component';
 
@@ -101,5 +103,46 @@ describe('buildLearnApplicationProgressItems', () => {
       []
     );
     expect(doneItems[0]?.status).toBe('done');
+  });
+
+  it('reflects dismissed status from session storage', () => {
+    markStageGddProposalDismissed(7, { cropId: 1, stageId: 2 });
+    markBpTimingProposalDismissed(7, { cropId: 1, category: 'general' });
+
+    const items = buildLearnApplicationProgressItems(
+      7,
+      [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 2,
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageGddDelta: 10,
+          recordedItemCount: 3,
+          currentRequiredGdd: 100,
+          proposedRequiredGdd: 110
+        }
+      ],
+      [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          category: 'general',
+          averageDeltaDays: 2,
+          averageGddDelta: 5,
+          recordedItemCount: 4,
+          affectedBlueprintCount: 2,
+          proposalBody: {
+            stages: [],
+            agricultural_tasks: [],
+            task_schedule_blueprints: []
+          }
+        }
+      ]
+    );
+
+    expect(items[0]?.status).toBe('dismissed');
+    expect(items[1]?.status).toBe('dismissed');
   });
 });

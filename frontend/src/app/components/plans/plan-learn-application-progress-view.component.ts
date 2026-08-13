@@ -52,6 +52,9 @@ export interface LearnApplicationProgressItem {
                   item.status === 'confirmed'
                 "
                 [class.learn-application-progress__status--done]="item.status === 'done'"
+                [class.learn-application-progress__status--dismissed]="
+                  item.status === 'dismissed'
+                "
               >
                 {{ statusLabel(item.status) | translate }}
               </span>
@@ -67,8 +70,10 @@ export class PlanLearnApplicationProgressViewComponent {
   @Input({ required: true }) planId!: number;
   @Input() stageGddProposals: StageGddCalibrationProposal[] = [];
   @Input() blueprintTimingProposals: BlueprintTimingAdjustmentProposal[] = [];
+  @Input() progressRefreshVersion = 0;
 
   get items(): LearnApplicationProgressItem[] {
+    void this.progressRefreshVersion;
     return buildLearnApplicationProgressItems(
       this.planId,
       this.stageGddProposals,

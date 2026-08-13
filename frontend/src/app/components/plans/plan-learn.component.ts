@@ -103,6 +103,7 @@ const initialControl: PlanLearnViewState = {
             [hasMasterUpdateNextSteps]="showMasterUpdateNextSteps"
             [hasLearningSnapshot]="control.learningSnapshot != null"
             [carryoverSourcePlanCount]="control.carryoverSourcePlans.length"
+            [progressRefreshVersion]="proposalProgressRefreshVersion"
           />
           @if (showPostMasterConfirmation) {
             <app-plan-learn-post-master-confirmation
@@ -118,6 +119,7 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [stageGddProposals]="control.stageGddProposals"
             [blueprintTimingProposals]="control.blueprintTimingProposals"
+            [progressRefreshVersion]="proposalProgressRefreshVersion"
           />
           @if (control.learningSnapshot) {
             <div class="plan-learn-imported-snapshot" aria-labelledby="plan-learn-imported-title">
@@ -264,6 +266,7 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [loading]="control.blueprintTimingLoading"
             [proposals]="control.blueprintTimingProposals"
+            (progressChanged)="onProposalProgressChanged()"
           />
           <app-task-schedule-variance-view
             [planId]="planId"
@@ -277,6 +280,7 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [loading]="control.stageGddProposalsLoading"
             [proposals]="control.stageGddProposals"
+            (progressChanged)="onProposalProgressChanged()"
           />
           </div>
         }
@@ -296,6 +300,8 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
   private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+
+  proposalProgressRefreshVersion = 0;
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -348,6 +354,11 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
     confirmLearnProposalFromPostMaster(planId, payload);
     this.control = { ...this.control, postMasterPayload: payload };
     clearLearnPostMasterPayload(planId);
+  }
+
+  onProposalProgressChanged(): void {
+    this.proposalProgressRefreshVersion += 1;
+    this.cdr.markForCheck();
   }
 
   reload(): void {

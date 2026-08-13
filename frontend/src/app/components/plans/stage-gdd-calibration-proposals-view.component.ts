@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
 import { formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
 import {
+  markStageGddProposalDismissed,
   resolveLearnProposalApplicationStatus,
   stageGddProposalProgressKey,
   type LearnProposalApplicationStatus
@@ -46,6 +47,9 @@ import {
                     [class.stage-gdd-calibration__status--pending]="
                       proposalStatus(proposal) === 'applied_pending_confirmation'
                     "
+                    [class.stage-gdd-calibration__status--dismissed]="
+                      proposalStatus(proposal) === 'dismissed'
+                    "
                   >
                     {{ statusLabel(proposalStatus(proposal)) | translate }}
                   </span>
@@ -67,13 +71,26 @@ import {
                   }}
                 </p>
               </div>
-              <a
-                class="btn-secondary stage-gdd-calibration__cta"
-                [routerLink]="stageEditLink(proposal)"
-                [queryParams]="stageEditQueryParams(proposal)"
-              >
-                {{ 'plans.learn.stage_gdd_calibration.cta' | translate }}
-              </a>
+              <div class="stage-gdd-calibration__actions">
+                @if (canDismiss(proposal)) {
+                  <button
+                    type="button"
+                    class="btn-secondary stage-gdd-calibration__dismiss"
+                    (click)="dismissProposal(proposal)"
+                  >
+                    {{ 'plans.learn.proposal.dismiss' | translate }}
+                  </button>
+                }
+                @if (canApply(proposal)) {
+                  <a
+                    class="btn-secondary stage-gdd-calibration__cta"
+                    [routerLink]="stageEditLink(proposal)"
+                    [queryParams]="stageEditQueryParams(proposal)"
+                  >
+                    {{ 'plans.learn.stage_gdd_calibration.cta' | translate }}
+                  </a>
+                }
+              </div>
             </li>
           }
         </ul>
@@ -86,6 +103,9 @@ export class StageGddCalibrationProposalsViewComponent {
   @Input({ required: true }) planId!: number;
   @Input() loading = false;
   @Input() proposals: StageGddCalibrationProposal[] = [];
+  @Output() progressChanged = new EventEmitter<void>();
+
+  private refreshVersion = 0;
 
   proposalKey(proposal: StageGddCalibrationProposal): string {
     return `${proposal.cropId}-${proposal.stageId}`;
@@ -112,10 +132,28 @@ export class StageGddCalibrationProposalsViewComponent {
   }
 
   proposalStatus(proposal: StageGddCalibrationProposal): LearnProposalApplicationStatus {
+    void this.refreshVersion;
     return resolveLearnProposalApplicationStatus(
       this.planId,
       stageGddProposalProgressKey(proposal.cropId, proposal.stageId)
     );
+  }
+
+  canDismiss(proposal: StageGddCalibrationProposal): boolean {
+    return this.proposalStatus(proposal) === 'not_started';
+  }
+
+  canApply(proposal: StageGddCalibrationProposal): boolean {
+    return this.proposalStatus(proposal) === 'not_started';
+  }
+
+  dismissProposal(proposal: StageGddCalibrationProposal): void {
+    markStageGddProposalDismissed(this.planId, {
+      cropId: proposal.cropId,
+      stageId: proposal.stageId
+    });
+    this.refreshVersion += 1;
+    this.progressChanged.emit();
   }
 
   statusLabel(status: LearnProposalApplicationStatus): string {

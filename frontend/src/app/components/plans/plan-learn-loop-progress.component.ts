@@ -40,6 +40,20 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
           </li>
         }
       </ol>
+      @if (loopComplete) {
+        <div
+          class="learn-loop-progress__complete"
+          role="status"
+          aria-labelledby="plan-learn-loop-complete-heading"
+        >
+          <h3 id="plan-learn-loop-complete-heading" class="learn-loop-progress__complete-title">
+            {{ 'plans.learn.loop.complete.title' | translate }}
+          </h3>
+          <p class="learn-loop-progress__complete-lead">
+            {{ 'plans.learn.loop.complete.lead' | translate }}
+          </p>
+        </div>
+      }
       @if (nextAction) {
         <div class="learn-loop-progress__next">
           <p class="learn-loop-progress__next-label">
@@ -77,8 +91,14 @@ export class PlanLearnLoopProgressComponent {
   @Input() hasMasterUpdateNextSteps = false;
   @Input() hasLearningSnapshot = false;
   @Input() carryoverSourcePlanCount = 0;
+  @Input() progressRefreshVersion = 0;
 
   readonly phases = LEARN_LOOP_PHASE_ORDER;
+
+  get loopComplete(): boolean {
+    void this.progressRefreshVersion;
+    return this.phaseInput.loopComplete;
+  }
 
   get currentPhase(): LearnLoopPhaseId {
     return this.phaseResult.currentPhase;
@@ -88,19 +108,22 @@ export class PlanLearnLoopProgressComponent {
     return this.phaseResult.nextAction;
   }
 
+  private get phaseInput(): ReturnType<typeof buildLearnLoopPhaseInputFromState> {
+    void this.progressRefreshVersion;
+    return buildLearnLoopPhaseInputFromState({
+      planId: this.planId,
+      actionRequiredItems: this.actionRequiredItems,
+      stageGddProposals: this.stageGddProposals,
+      blueprintTimingProposals: this.blueprintTimingProposals,
+      hasPostMasterConfirmation: this.hasPostMasterConfirmation,
+      hasMasterUpdateNextSteps: this.hasMasterUpdateNextSteps,
+      hasLearningSnapshot: this.hasLearningSnapshot,
+      carryoverSourcePlanCount: this.carryoverSourcePlanCount
+    });
+  }
+
   private get phaseResult(): ReturnType<typeof buildLearnLoopPhaseResult> {
-    return buildLearnLoopPhaseResult(
-      buildLearnLoopPhaseInputFromState({
-        planId: this.planId,
-        actionRequiredItems: this.actionRequiredItems,
-        stageGddProposals: this.stageGddProposals,
-        blueprintTimingProposals: this.blueprintTimingProposals,
-        hasPostMasterConfirmation: this.hasPostMasterConfirmation,
-        hasMasterUpdateNextSteps: this.hasMasterUpdateNextSteps,
-        hasLearningSnapshot: this.hasLearningSnapshot,
-        carryoverSourcePlanCount: this.carryoverSourcePlanCount
-      })
-    );
+    return buildLearnLoopPhaseResult(this.phaseInput);
   }
 
   phaseLabelKey(phase: LearnLoopPhaseId): string {
