@@ -6,7 +6,7 @@ import type { LearnProposalProgressItem } from '../../domain/plans/learn-proposa
 @Component({
   selector: 'app-learn-proposal-application-progress',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, TranslateModule],
   template: `
   @if (items.length > 0) {
     <section

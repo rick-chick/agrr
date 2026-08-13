@@ -336,6 +336,10 @@ describe('CropSetupProposalImportComponent', () => {
       ]
     }).compileComponents();
 
+    TestBed.overrideProvider(LoadCropForEditUseCase, { useValue: mockLoadUseCase });
+    TestBed.overrideProvider(DryRunCropSetupProposalUseCase, { useValue: mockDryRunUseCase });
+    TestBed.overrideProvider(ApplyCropSetupProposalUseCase, { useValue: mockApplyUseCase });
+
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', translations, true);
     translate.use('en');
@@ -345,6 +349,7 @@ describe('CropSetupProposalImportComponent', () => {
     presenter = fixture.debugElement.injector.get(CropSetupProposalImportPresenter);
     mockRouter = TestBed.inject(Router) as unknown as { navigate: ReturnType<typeof vi.fn> };
     vi.spyOn(mockRouter, 'navigate').mockResolvedValue(true);
+    fixture.detectChanges();
 
     sessionStorage.setItem(
       blueprintTimingLearnApplyContextStorageKey(7, 42),

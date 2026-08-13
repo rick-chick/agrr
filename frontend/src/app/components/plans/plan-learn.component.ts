@@ -50,6 +50,7 @@ const initialControl: PlanLearnViewState = {
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
     VarianceActionProposalCardsComponent,
+    BlueprintTimingAdjustmentProposalsViewComponent,
     LearnProposalApplicationProgressComponent,
     LearnPostMasterConfirmationComponent
   ],
