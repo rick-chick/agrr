@@ -45,10 +45,10 @@ describe('WorkRecordSaveImpactPanelComponent', () => {
       },
       workbenchFieldCultivationId: null
     };
-    fixture.detectChanges();
   });
 
   it('renders task variance and plan summary with learn link', () => {
+    fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
     expect(element.textContent).toContain('Weeding');
     expect(element.textContent).toContain('+3');
