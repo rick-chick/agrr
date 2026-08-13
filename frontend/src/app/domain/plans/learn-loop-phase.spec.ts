@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   LEARN_LOOP_PHASE_ORDER,
+  buildLearnLoopPhaseInputFromState,
   buildLearnLoopPhaseResult,
+  countLearnProposalApplicationStatuses,
   type LearnLoopPhaseInput
 } from './learn-loop-phase';
-import { markStageGddProposalAppliedPending } from './learn-proposal-application-progress';
+import {
+  markBpTimingProposalAppliedPending,
+  markStageGddProposalAppliedPending
+} from './learn-proposal-application-progress';
 
 const PLAN_ID = 7;
 
@@ -116,6 +121,86 @@ describe('buildLearnLoopPhaseResult', () => {
       kind: 'scroll',
       scrollTargetId: 'plan-learn-carryover-title'
     });
+  });
+
+  it('buildLearnLoopPhaseInputFromState derives counts from session storage', () => {
+    markStageGddProposalAppliedPending(PLAN_ID, { cropId: 1, stageId: 2 });
+    markBpTimingProposalAppliedPending(PLAN_ID, { cropId: 1, category: 'general' });
+
+    const input = buildLearnLoopPhaseInputFromState({
+      planId: PLAN_ID,
+      actionRequiredItems: [{ field_cultivation_id: 50 }],
+      stageGddProposals: [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 2,
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageGddDelta: 10,
+          recordedItemCount: 3,
+          currentRequiredGdd: 100,
+          proposedRequiredGdd: 110
+        }
+      ],
+      blueprintTimingProposals: [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          category: 'general',
+          averageDeltaDays: 2,
+          averageGddDelta: 5,
+          recordedItemCount: 4,
+          affectedBlueprintCount: 2,
+          proposalBody: { stages: [], agricultural_tasks: [], task_schedule_blueprints: [] }
+        }
+      ],
+      hasPostMasterConfirmation: false,
+      hasMasterUpdateNextSteps: false,
+      hasLearningSnapshot: false,
+      carryoverSourcePlanCount: 0
+    });
+
+    expect(input.actionRequiredCount).toBe(1);
+    expect(input.firstActionFieldCultivationId).toBe(50);
+    expect(input.notStartedProposalCount).toBe(0);
+    expect(input.appliedPendingProposalCount).toBe(2);
+    expect(input.hasMasterUpdateNextSteps).toBe(true);
+  });
+
+  it('countLearnProposalApplicationStatuses tallies not_started vs applied', () => {
+    markStageGddProposalAppliedPending(PLAN_ID, { cropId: 1, stageId: 2 });
+
+    const counts = countLearnProposalApplicationStatuses(
+      PLAN_ID,
+      [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 2,
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageGddDelta: 10,
+          recordedItemCount: 3,
+          currentRequiredGdd: 100,
+          proposedRequiredGdd: 110
+        },
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 3,
+          stageOrder: 2,
+          stageName: 'Flowering',
+          averageGddDelta: 5,
+          recordedItemCount: 2,
+          currentRequiredGdd: 80,
+          proposedRequiredGdd: 85
+        }
+      ],
+      []
+    );
+
+    expect(counts).toEqual({ notStarted: 1, appliedPending: 1 });
   });
 
   it('returns apply with BP timing CTA when only BP proposals are not started', () => {

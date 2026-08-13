@@ -2,17 +2,21 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   bpTimingProposalProgressKey,
   buildLearnPostMasterNavigation,
+  clearLearnBpTimingApplyContext,
   clearLearnPostMasterPayload,
   confirmLearnProposalFromPostMaster,
   markAllConfirmedProposalsDone,
   markBpTimingProposalAppliedPending,
   markLearnProposalConfirmed,
   markStageGddProposalAppliedPending,
+  parsePlanLearnFollowUp,
   proposalKeyFromPostMasterPayload,
+  readLearnBpTimingApplyContext,
   readLearnPostMasterPayload,
   readLearnProposalApplicationProgress,
   resolveLearnProposalApplicationStatus,
   stageGddProposalProgressKey,
+  storeLearnBpTimingApplyContext,
   storeLearnPostMasterPayload,
   type LearnPostMasterPayload
 } from './learn-proposal-application-progress';
@@ -127,5 +131,74 @@ describe('learn post_master payload', () => {
       commands: ['/plans', PLAN_ID, 'learn'],
       queryParams: { followUp: 'post_master' }
     });
+  });
+});
+
+describe('parsePlanLearnFollowUp', () => {
+  it('returns post_master only for exact match', () => {
+    expect(parsePlanLearnFollowUp('post_master')).toBe('post_master');
+    expect(parsePlanLearnFollowUp(null)).toBeNull();
+    expect(parsePlanLearnFollowUp(undefined)).toBeNull();
+    expect(parsePlanLearnFollowUp('')).toBeNull();
+    expect(parsePlanLearnFollowUp('other')).toBeNull();
+  });
+});
+
+describe('confirmLearnProposalFromPostMaster edge cases', () => {
+  it('does not confirm when proposal is still not_started', () => {
+    const payload: LearnPostMasterPayload = {
+      kind: 'stage_gdd',
+      cropId: 1,
+      cropName: 'Tomato',
+      stageId: 2,
+      stageName: 'Vegetative'
+    };
+
+    confirmLearnProposalFromPostMaster(PLAN_ID, payload);
+
+    expect(
+      resolveLearnProposalApplicationStatus(PLAN_ID, stageGddProposalProgressKey(1, 2))
+    ).toBe('not_started');
+  });
+
+  it('throws when stage_gdd payload lacks stageId', () => {
+    const payload = {
+      kind: 'stage_gdd' as const,
+      cropId: 1,
+      cropName: 'Tomato'
+    };
+
+    expect(() => proposalKeyFromPostMasterPayload(payload)).toThrow(
+      'stageId is required for stage_gdd post_master payload'
+    );
+  });
+
+  it('throws when bp_timing payload lacks category', () => {
+    const payload = {
+      kind: 'bp_timing' as const,
+      cropId: 4,
+      cropName: 'Tomato'
+    };
+
+    expect(() => proposalKeyFromPostMasterPayload(payload)).toThrow(
+      'category is required for bp_timing post_master payload'
+    );
+  });
+});
+
+describe('learn BP timing apply context', () => {
+  it('stores, reads, and clears context per crop', () => {
+    const context = {
+      planId: PLAN_ID,
+      cropId: 4,
+      cropName: 'Tomato',
+      category: 'fertilizer'
+    };
+
+    storeLearnBpTimingApplyContext(4, context);
+    expect(readLearnBpTimingApplyContext(4)).toEqual(context);
+
+    clearLearnBpTimingApplyContext(4);
+    expect(readLearnBpTimingApplyContext(4)).toBeNull();
   });
 });

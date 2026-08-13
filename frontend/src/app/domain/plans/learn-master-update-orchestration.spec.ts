@@ -153,5 +153,18 @@ describe('learn-master-update-orchestration', () => {
       markLearnOrchestrationStepComplete(5, 'sync_verify');
       expect(areAllLearnOrchestrationStepsComplete(5)).toBe(true);
     });
+
+    it('marks confirmed proposals done when final orchestration step completes', () => {
+      const key = stageGddProposalProgressKey(1, 2);
+      markStageGddProposalAppliedPending(5, { cropId: 1, stageId: 2 });
+      markLearnProposalConfirmed(5, key);
+
+      markLearnOrchestrationStepComplete(5, 'placement');
+      markLearnOrchestrationStepComplete(5, 'regenerate');
+      expect(resolveLearnProposalApplicationStatus(5, key)).toBe('confirmed');
+
+      markLearnOrchestrationStepComplete(5, 'sync_verify');
+      expect(resolveLearnProposalApplicationStatus(5, key)).toBe('done');
+    });
   });
 });
