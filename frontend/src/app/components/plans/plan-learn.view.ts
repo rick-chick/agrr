@@ -3,6 +3,7 @@ import type {
   PlanVsActualSummary
 } from '../../domain/plans/plan-vs-actual-summary';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
+import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
 import type { PlanTaskScheduleRowView } from './plan-task-schedule.view';
 
 export type PlanLearnViewState = {
@@ -16,6 +17,8 @@ export type PlanLearnViewState = {
   varianceUnrecordedRows: PlanTaskScheduleRowView[];
   blueprintTimingLoading: boolean;
   blueprintTimingProposals: BlueprintTimingAdjustmentProposal[];
+  stageGddProposalsLoading: boolean;
+  stageGddProposals: StageGddCalibrationProposal[];
 };
 
 export interface PlanLearnView {

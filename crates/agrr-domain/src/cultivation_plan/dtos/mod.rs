@@ -172,6 +172,7 @@ pub use task_schedule_item_deletion_undo_schedule_row::TaskScheduleItemDeletionU
 pub use plan_vs_actual::{
     BlueprintTimingAdjustmentProposalRead, PlanVarianceActionItemRead,
     PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+    StageGddCalibrationProposalRead,
 };
 pub use task_schedule_timeline::TaskScheduleTimeline;
 pub use task_schedule_timeline_snapshot::{

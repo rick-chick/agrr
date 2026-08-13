@@ -4,12 +4,12 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
+import { StageGddCalibrationProposalsViewComponent } from './stage-gdd-calibration-proposals-view.component';
 import { VarianceActionProposalCardsComponent } from './variance-action-proposal-cards.component';
 import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
-import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-timing-adjustment-proposals.usecase';
 import { PLAN_LEARN_PROVIDERS, PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { PlanLearnView, PlanLearnViewState } from './plan-learn.view';
 
@@ -23,7 +23,9 @@ const initialControl: PlanLearnViewState = {
   varianceStats: null,
   varianceUnrecordedRows: [],
   blueprintTimingLoading: false,
-  blueprintTimingProposals: []
+  blueprintTimingProposals: [],
+  stageGddProposalsLoading: false,
+  stageGddProposals: []
 };
 
 @Component({
@@ -34,6 +36,7 @@ const initialControl: PlanLearnViewState = {
     TranslateModule,
     PlanPlanContextHeaderComponent,
     TaskScheduleVarianceViewComponent,
+    StageGddCalibrationProposalsViewComponent,
     VarianceActionProposalCardsComponent,
     BlueprintTimingAdjustmentProposalsViewComponent
   ],
@@ -74,6 +77,11 @@ const initialControl: PlanLearnViewState = {
             [summary]="control.varianceSummary"
             [unrecordedRows]="control.varianceUnrecordedRows"
           />
+          <app-stage-gdd-calibration-proposals-view
+            [planId]="planId"
+            [loading]="control.stageGddProposalsLoading"
+            [proposals]="control.stageGddProposals"
+          />
         }
       </section>
     </div>
@@ -84,7 +92,6 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly scheduleUseCase = inject(LoadPlanTaskScheduleUseCase);
   private readonly varianceUseCase = inject(LoadPlanVsActualSummaryUseCase);
-  private readonly blueprintTimingUseCase = inject(LoadBlueprintTimingAdjustmentProposalsUseCase);
   private readonly presenter = inject(PlanLearnPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);

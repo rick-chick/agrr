@@ -1,0 +1,49 @@
+.stage-gdd-calibration__lead,
+.stage-gdd-calibration__empty {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+.stage-gdd-calibration__list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stage-gdd-calibration__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+}
+
+.stage-gdd-calibration__summary {
+  min-width: 12rem;
+}
+
+.stage-gdd-calibration__stage-name,
+.stage-gdd-calibration__delta,
+.stage-gdd-calibration__proposal-value {
+  margin: 0;
+}
+
+.stage-gdd-calibration__stage-name {
+  font-weight: 600;
+}
+
+.stage-gdd-calibration__delta,
+.stage-gdd-calibration__proposal-value {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.stage-gdd-calibration__cta {
+  white-space: nowrap;
+}
