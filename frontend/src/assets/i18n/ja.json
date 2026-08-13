@@ -2342,7 +2342,14 @@
       "farm_option_no_fields": "{{name}}（圃場未登録）",
       "no_fields_warning": "この農場には圃場が登録されていません。",
       "some_farms_no_fields_hint": "圃場が未登録の農場は計画作成の対象に選べません。",
-      "register_fields_link": "圃場を登録する"
+      "register_fields_link": "圃場を登録する",
+      "carryover_enabled_label": "前回計画の学習データを引き継ぐ",
+      "carryover_hint": "この農場の完了済み計画の実績差分を、新しい計画の作業スケジュールに反映します。",
+      "carryover_source_label": "引き継ぎ元の計画",
+      "carryover_source_hint": "引き継ぐ計画を選択してください",
+      "carryover_preview_title": "学習データのプレビュー",
+      "carryover_no_source_plans": "この農場の過去の計画が見つかりません。",
+      "carryover_preview_empty": "選択した計画にカテゴリ別の実績差分データがありません。"
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
@@ -2553,7 +2560,6 @@
         "top_item_dates": "予定 {{scheduled}} · 実施 {{actual}}",
         "unrecorded_title": "予定のみ未記録",
         "open_in_schedule": "一覧で開く",
-        "open_workbench": "作業台を開く",
         "no_data": "乖離データはまだありません",
         "delta_value": "Δ {{delta}} 日",
         "average_value": "{{delta}} 日",
@@ -2565,7 +2571,8 @@
         },
         "toggle_aria": "作業予定の表示切替",
         "view_list": "一覧",
-        "view_variance": "乖離"
+        "view_variance": "乖離",
+        "open_workbench": "作業台を開く"
       }
     },
     "learn": {
@@ -2686,8 +2693,8 @@
         "unrecorded": "未記録件数",
         "average_delta": "平均日数のずれ",
         "learn_link": "振り返りで確認",
-        "workbench_link": "作業台で adjust を検討",
-        "dismiss": "影響プレビューを閉じる"
+        "dismiss": "影響プレビューを閉じる",
+        "workbench_link": "作業台で adjust を検討"
       }
     },
     "work_records": {

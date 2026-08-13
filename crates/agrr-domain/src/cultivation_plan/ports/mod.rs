@@ -35,8 +35,9 @@ pub use public_plan_save_ports::{
 };
 pub use retrieve_cultivation_plan_output_port::RetrieveCultivationPlanOutputPort;
 pub use task_schedule_ports::{
-    PlanVsActualSummaryOutputPort, PrivatePlanInitializeFromSelectionOutputPort,
-    RegenerateTaskScheduleOutputPort, TaskScheduleItemMutationOutputPort,
-    TaskScheduleTimelineOutputPort, UserAgriculturalTaskMappingPort,
+    PlanVarianceLearningReadOutputPort, PlanVsActualSummaryOutputPort,
+    PrivatePlanInitializeFromSelectionOutputPort, RegenerateTaskScheduleOutputPort,
+    TaskScheduleItemMutationOutputPort, TaskScheduleTimelineOutputPort,
+    UserAgriculturalTaskMappingPort,
 };
 pub use task_schedule_regen_enqueue_port::TaskScheduleRegenEnqueuePort;

@@ -74,12 +74,21 @@ export class PrivatePlanCreateApiGateway implements PrivatePlanCreateGateway {
   }
 
   createPlan(dto: CreatePrivatePlanInputDto): Observable<CreatePrivatePlanResponseDto> {
-    const requestBody = {
+    const requestBody: {
+      plan: {
+        farm_id: number;
+        plan_name?: string;
+        carryover_from_plan_id?: number;
+      };
+    } = {
       plan: {
         farm_id: dto.farmId,
         plan_name: dto.planName
       }
     };
+    if (dto.carryoverFromPlanId != null) {
+      requestBody.plan.carryover_from_plan_id = dto.carryoverFromPlanId;
+    }
     return this.apiClient.post<CreatePrivatePlanResponseDto>('/api/v1/plans', requestBody);
   }
 }

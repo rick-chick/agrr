@@ -1441,7 +1441,6 @@
         "top_item_dates": "Scheduled {{scheduled}} · Actual {{actual}}",
         "unrecorded_title": "Scheduled but not recorded",
         "open_in_schedule": "Open in schedule",
-        "open_workbench": "Open workbench",
         "no_data": "No variance data yet",
         "delta_value": "Δ {{delta}} days",
         "average_value": "{{delta}} days",
@@ -1453,7 +1452,8 @@
         },
         "toggle_aria": "Task schedule view",
         "view_list": "Schedule",
-        "view_variance": "Variance"
+        "view_variance": "Variance",
+        "open_workbench": "Open workbench"
       }
     },
     "learn": {
@@ -1574,8 +1574,8 @@
         "unrecorded": "Unrecorded tasks",
         "average_delta": "Avg days vs plan",
         "learn_link": "Review in Learn",
-        "workbench_link": "Review adjust on workbench",
-        "dismiss": "Dismiss impact preview"
+        "dismiss": "Dismiss impact preview",
+        "workbench_link": "Review adjust on workbench"
       }
     },
     "work_records": {
@@ -1665,7 +1665,14 @@
       "farm_option_no_fields": "{{name}} (no fields)",
       "no_fields_warning": "This farm has no registered fields.",
       "some_farms_no_fields_hint": "Farms without registered fields cannot be selected for planning.",
-      "register_fields_link": "Register fields"
+      "register_fields_link": "Register fields",
+      "carryover_enabled_label": "Carry over previous plan learning data",
+      "carryover_hint": "Apply variance learning from a completed plan on this farm to improve task scheduling.",
+      "carryover_source_label": "Source plan",
+      "carryover_source_hint": "Select a previous plan to carry over",
+      "carryover_preview_title": "Learning data preview",
+      "carryover_no_source_plans": "No previous plans found for this farm.",
+      "carryover_preview_empty": "No category variance data available for the selected plan."
     },
     "select_crop": {
       "title": "🌾 Select Crops to Grow",

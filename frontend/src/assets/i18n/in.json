@@ -1927,7 +1927,6 @@
         "top_item_dates": "नियोजित {{scheduled}} · वास्तविक {{actual}}",
         "unrecorded_title": "नियोजित लेकिन अभिलेखित नहीं",
         "open_in_schedule": "अनुसूची में खोलें",
-        "open_workbench": "कार्य मंच खोलें",
         "no_data": "अभी तक कोई अंतर डेटा नहीं",
         "delta_value": "Δ {{delta}} दिन",
         "average_value": "{{delta}} दिन",
@@ -1939,7 +1938,8 @@
         },
         "toggle_aria": "कार्य अनुसूची दृश्य",
         "view_list": "अनुसूची",
-        "view_variance": "अंतर"
+        "view_variance": "अंतर",
+        "open_workbench": "कार्य मंच खोलें"
       }
     },
     "learn": {
@@ -2060,8 +2060,8 @@
         "unrecorded": "अदर्ज कार्य",
         "average_delta": "औसत दिन अंतर",
         "learn_link": "Learn में समीक्षा करें",
-        "workbench_link": "कार्य मंच पर adjust की समीक्षा करें",
-        "dismiss": "प्रभाव पूर्वावलोकन बंद करें"
+        "dismiss": "प्रभाव पूर्वावलोकन बंद करें",
+        "workbench_link": "कार्य मंच पर adjust की समीक्षा करें"
       }
     },
     "work_records": {
@@ -2151,7 +2151,14 @@
       "farm_option_no_fields": "{{name}} (कोई खेत क्षेत्र नहीं)",
       "no_fields_warning": "इस खेत पर कोई पंजीकृत खेत क्षेत्र नहीं है।",
       "some_farms_no_fields_hint": "बिना पंजीकृत खेत क्षेत्र वाले खेतों को योजना बनाने के लिए चुना नहीं जा सकता।",
-      "register_fields_link": "खेत क्षेत्र पंजीकृत करें"
+      "register_fields_link": "खेत क्षेत्र पंजीकृत करें",
+      "carryover_enabled_label": "पिछली योजना का सीखा हुआ डेटा ले जाएं",
+      "carryover_hint": "इस खेत की पूर्ण योजना के वेरिएंस सीख को नई योजना के कार्य शेड्यूल में लागू करें।",
+      "carryover_source_label": "स्रोत योजना",
+      "carryover_source_hint": "ले जाने के लिए पिछली योजना चुनें",
+      "carryover_preview_title": "सीखे हुए डेटा का पूर्वावलोकन",
+      "carryover_no_source_plans": "इस खेत के लिए कोई पिछली योजना नहीं मिली।",
+      "carryover_preview_empty": "चयनित योजना के लिए कोई श्रेणी वेरिएंस डेटा उपलब्ध नहीं है।"
     },
     "select_crop": {
       "title": "🌾 उगाने के लिए फसलें चुनें",
