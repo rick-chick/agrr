@@ -2440,6 +2440,11 @@
           "range_2year": "2年",
           "full_range": "全体"
         }
+      },
+      "variance_action_banner": {
+        "message": "この計画で {{count}} 件のタスクが乖離閾値を超えています",
+        "manual_hint": "提案を確認し、準備ができたら手動で adjust または再最適化を検討してください。",
+        "review_link": "振り返りタブで提案を確認"
       }
     },
     "task_schedules": {
