@@ -63,6 +63,17 @@ describe('CreatePrivatePlanPresenter', () => {
       expect(lastControl!.error).toBeNull();
     });
 
+    it('navigates to learn with imported snapshot expand when navigateToLearnAfterCreate is true', () => {
+      const dto: CreatePrivatePlanResponseDto = { id: 123, navigateToLearnAfterCreate: true };
+
+      presenter.present(dto);
+
+      expect(lastControl!.pendingNavigation).toEqual({
+        commands: ['/plans', 123, 'learn'],
+        extras: { queryParams: { expand: 'imported_snapshot' } }
+      });
+    });
+
     it('queues pending error flash and updates view.control on onError(dto)', () => {
       const initialControl: PlanNewViewState = emptyPlanNewControl();
       lastControl = initialControl;

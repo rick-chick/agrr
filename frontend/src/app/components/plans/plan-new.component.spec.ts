@@ -96,6 +96,7 @@ describe('PlanNewComponent', () => {
       'plans.new.carryover_preview_title': 'Learning data preview',
       'plans.new.carryover_no_source_plans': 'No previous plans found.',
       'plans.new.carryover_preview_empty': 'No category variance data.',
+      'plans.new.carryover_learn_cta': 'Create and review on Learn',
       'plans.task_schedules.variance_subview.category_column': 'Category',
       'plans.task_schedules.variance_subview.category_average': 'Avg Δ days',
       'plans.task_schedules.variance_subview.not_available': '—',
@@ -126,7 +127,8 @@ describe('PlanNewComponent', () => {
 
     expect(mockCreateUseCase.execute).toHaveBeenCalledWith({
       farmId: 1,
-      planName: 'My Plan'
+      planName: 'My Plan',
+      navigateToLearnAfterCreate: false
     });
   });
 
@@ -142,8 +144,53 @@ describe('PlanNewComponent', () => {
 
     expect(mockCreateUseCase.execute).toHaveBeenCalledWith({
       farmId: 1,
-      carryoverFromPlanId: 9
+      carryoverFromPlanId: 9,
+      navigateToLearnAfterCreate: false
     });
+  });
+
+  it('submits with navigateToLearnAfterCreate when learn CTA is clicked', () => {
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
+      selectedFarmId: 1,
+      carryoverEnabled: true,
+      selectedSourcePlanId: 9,
+      carryoverPreview: {
+        plan_id: 9,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      }
+    });
+
+    component.onSubmitWithLearnReview(new Event('submit'));
+
+    expect(mockCreateUseCase.execute).toHaveBeenCalledWith({
+      farmId: 1,
+      carryoverFromPlanId: 9,
+      navigateToLearnAfterCreate: true
+    });
+  });
+
+  it('shows learn CTA when carryover preview is available', () => {
+    fixture.detectChanges();
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
+      selectedFarmId: 1,
+      carryoverEnabled: true,
+      sourcePlans: [{ id: 9, name: 'Source', farm_id: 1 }],
+      selectedSourcePlanId: 9,
+      carryoverPreview: {
+        plan_id: 9,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      }
+    });
+    fixture.detectChanges();
+
+    const cta = fixture.nativeElement.querySelector('.plan-new-carryover-learn-cta');
+    expect(cta?.textContent?.trim()).toBe('Create and review on Learn');
   });
 
   it('loads source plans filtered by farm when carryover is enabled', () => {

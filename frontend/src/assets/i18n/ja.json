@@ -2349,7 +2349,8 @@
       "carryover_source_hint": "引き継ぐ計画を選択してください",
       "carryover_preview_title": "学習データのプレビュー",
       "carryover_no_source_plans": "この農場の過去の計画が見つかりません。",
-      "carryover_preview_empty": "選択した計画にカテゴリ別の実績差分データがありません。"
+      "carryover_preview_empty": "選択した計画にカテゴリ別の実績差分データがありません。",
+      "carryover_learn_cta": "作成後に学習画面で確認"
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
@@ -2595,6 +2596,8 @@
       "page_title": "振り返り — {{name}}",
       "imported_snapshot_title": "計画 #{{sourcePlanId}} から取り込んだ学習データ",
       "imported_snapshot_empty": "取り込みスナップショットにカテゴリ差分データがありません。",
+      "current_variance_title": "現計画の実績差分",
+      "current_variance_hint": "この計画の作業記録に基づく差分です。別計画から取り込んだ学習は上に表示されます。",
       "imported_banner": {
         "message": "取り込んだ差分 {{count}} 件が作業台での adjust を要する可能性があります。",
         "manual_hint": "スケジュールを変更する前に、作業台で取り込んだ学習内容を確認してください。自動変更は行われません。",

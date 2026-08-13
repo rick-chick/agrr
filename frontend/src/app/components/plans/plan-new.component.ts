@@ -194,10 +194,18 @@ const initialControl: PlanNewViewState = {
                               }
                             </tbody>
                           </table>
-                        } @else {
-                          <p class="form-hint">{{ 'plans.new.carryover_preview_empty' | translate }}</p>
-                        }
-                      </div>
+                      } @else {
+                        <p class="form-hint">{{ 'plans.new.carryover_preview_empty' | translate }}</p>
+                      }
+                      <button
+                        type="button"
+                        class="btn btn-secondary plan-new-carryover-learn-cta"
+                        [disabled]="control.submitting"
+                        (click)="onSubmitWithLearnReview($event)"
+                      >
+                        {{ 'plans.new.carryover_learn_cta' | translate }}
+                      </button>
+                    </div>
                     }
                   }
                 }
@@ -347,7 +355,7 @@ export class PlanNewComponent implements PlanNewView, OnInit {
     });
   }
 
-  onSubmit(event: Event): void {
+  onSubmit(event: Event, navigateToLearnAfterCreate = false): void {
     event.preventDefault();
     const farmId = this.control.selectedFarmId;
     if (!this.canSubmit || this.control.submitting || farmId == null) {
@@ -360,14 +368,20 @@ export class PlanNewComponent implements PlanNewView, OnInit {
       farmId: number;
       planName?: string;
       carryoverFromPlanId?: number;
+      navigateToLearnAfterCreate?: boolean;
     } = {
       farmId,
-      planName: trimmedName.length > 0 ? trimmedName : undefined
+      planName: trimmedName.length > 0 ? trimmedName : undefined,
+      navigateToLearnAfterCreate
     };
     if (this.control.carryoverEnabled && this.control.selectedSourcePlanId != null) {
       input.carryoverFromPlanId = this.control.selectedSourcePlanId;
     }
     this.createUseCase.execute(input);
+  }
+
+  onSubmitWithLearnReview(event: Event): void {
+    this.onSubmit(event, true);
   }
 
   private loadSourcePlans(farmId: number): void {
