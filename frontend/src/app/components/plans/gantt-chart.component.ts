@@ -499,11 +499,13 @@ export class GanttChartComponent
   @Input() data: CultivationPlanData | null = null;
   @Input() planType: CultivationPlanContextType = 'private';
   @Input() selectedCultivationId: number | null = null;
+  @Input() learningOrchestrationAdjust = false;
   @Output() cultivationSelected = new EventEmitter<{
     cultivationId: number;
     planType: CultivationPlanContextType;
   }>();
   @Output() visibleRangeChange = new EventEmitter<GanttVisibleRange>();
+  @Output() adjustOrchestrationStarted = new EventEmitter<void>();
 
   @ViewChild('container') container!: ElementRef<HTMLDivElement>;
   @ViewChild('svg') svgElement!: ElementRef<SVGSVGElement>;
@@ -1283,6 +1285,9 @@ export class GanttChartComponent
 
         // ドロップ後、最適化完了までスクリーンロックを表示
         this.showOptimizationLock = true;
+        if (this.learningOrchestrationAdjust) {
+          this.adjustOrchestrationStarted.emit();
+        }
         this.scheduleDetectChanges();
         // API呼び出し
         this.adjustCultivation(

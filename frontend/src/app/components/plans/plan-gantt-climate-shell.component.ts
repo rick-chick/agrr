@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
@@ -28,8 +28,10 @@ export type CultivationSelectionEvent = {
           [data]="data"
           [planType]="planType"
           [selectedCultivationId]="selectedCultivationId"
+          [learningOrchestrationAdjust]="learningOrchestrationAdjust"
           (cultivationSelected)="handleCultivationSelection($event)"
           (visibleRangeChange)="handleVisibleRangeUpdate($event)"
+          (adjustOrchestrationStarted)="adjustOrchestrationStarted.emit()"
         >
           <ng-content select="[ganttActionPrefix]" />
         </app-gantt-chart>
@@ -62,6 +64,8 @@ export class PlanGanttClimateShellComponent implements OnChanges {
   @Input() planType: CultivationPlanContextType = 'private';
   @Input() planId: number | null = null;
   @Input() deepLinkFieldCultivationId: number | null = null;
+  @Input() learningOrchestrationAdjust = false;
+  @Output() adjustOrchestrationStarted = new EventEmitter<void>();
 
   selectedCultivationId: number | null = null;
   selectedPlanType: CultivationPlanContextType = this.planType;

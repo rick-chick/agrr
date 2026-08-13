@@ -2452,6 +2452,10 @@
         "message": "この計画で {{count}} 件のタスクが乖離閾値を超えています",
         "manual_hint": "提案を確認し、準備ができたら手動で adjust または再最適化を検討してください。",
         "review_link": "振り返りタブで提案を確認"
+      },
+      "reoptimization_banner": {
+        "message": "マスタ更新後は再最適化を推奨します",
+        "hint": "ガントで栽培バーをドラッグして配置を調整してください。ドロップ後に再最適化が開始されます。"
       }
     },
     "task_schedules": {
@@ -2478,6 +2482,17 @@
       "sync_stale": "計画の変更により作業計画が古くなっています。",
       "sync_updated": "作業計画を更新しました。",
       "sync_retry": "作業計画を再生成",
+      "orchestration": {
+        "regenerate": {
+          "message": "マスタ更新後は作業表の再生成を推奨します",
+          "hint": "下の同期バナーから作業計画を再生成してください。確認ダイアログが表示されます。"
+        },
+        "sync_verify": {
+          "message": "作業表の同期を確認してください",
+          "hint": "下の同期状態を確認してください。生成に失敗した場合は作業画面から再試行できます。"
+        },
+        "work_retry": "作業画面で再試行"
+      },
       "regenerate_confirm": "作業計画を再生成すると、未完了の自動生成予定が置き換わります。実績のある予定と手動追加予定は残ります。よろしいですか？",
       "sync_wizard_cta_hint": "登録ウィザードを開く",
       "sync_errors": {
@@ -2597,6 +2612,32 @@
         "required_gdd_label": "要求 GDD",
         "category_label": "カテゴリ",
         "open_workbench": "ワークベンチで配置を確認"
+      },
+      "next_steps": {
+        "title": "マスタ更新後の次のステップ",
+        "lead": "マスタ変更後は、次の手順で計画と作業表を更新してください。",
+        "step_label": {
+          "1": "ステップ 1",
+          "2": "ステップ 2",
+          "3": "ステップ 3"
+        },
+        "placement": {
+          "title": "配置確認と再最適化",
+          "description": "ワークベンチで配置を確認し、必要に応じて adjust 後に再最適化します。"
+        },
+        "regenerate": {
+          "title": "作業表の再生成",
+          "description": "更新されたマスタから作業表を再生成します。"
+        },
+        "sync_verify": {
+          "title": "同期の確認",
+          "description": "作業表の生成と同期状態が正常か確認します。"
+        },
+        "cta": {
+          "placement": "ワークベンチを開く",
+          "regenerate": "作業表を開く",
+          "sync_verify": "同期を確認"
+        }
       },
       "stage_gdd_calibration": {
         "title": "ステージ GDD 校正提案",

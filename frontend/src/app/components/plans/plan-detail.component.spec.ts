@@ -1,6 +1,6 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { of, type Observable } from 'rxjs';
 import type { ParamMap } from '@angular/router';
@@ -88,5 +88,22 @@ describe('PlanDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('app-plan-detail-context-nav')).toBeTruthy();
     const navLinks = fixture.nativeElement.querySelectorAll('.plan-context-nav__link');
     expect(navLinks.length).toBe(5);
+  });
+
+  it('enables reoptimization banner when learningOrchestration is adjust', () => {
+    component.learningOrchestrationMode = 'adjust';
+    expect(component.showReoptimizationBanner).toBe(true);
+  });
+
+  it('navigates to optimizing and stores learn return context when adjust orchestration starts', () => {
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    sessionStorage.clear();
+
+    component.learningOrchestrationMode = 'adjust';
+    component.handleAdjustOrchestrationStarted();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/plans', 1, 'optimizing']);
+    expect(sessionStorage.getItem('agrr:learn-orchestration-return:1')).toBe('learn');
   });
 });
