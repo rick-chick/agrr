@@ -7,7 +7,7 @@ use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
 use crate::cultivation_plan::mappers::plan_vs_actual_mapper::{
     DEFAULT_TOP_VARIANCE_LIMIT, PlanVsActualMapper,
 };
-use crate::shared::exceptions::RecordInvalidError;
+use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
 use crate::shared::org_scope::member_organization_ids;
 use crate::shared::ports::{LoggerPort, TranslatorPort};
@@ -85,6 +85,15 @@ where
                 ),
                 None,
             )));
+        }
+
+        if !task_schedule_private_plan_access::access_allowed(
+            self.cultivation_plan_gateway,
+            input.new_plan_id,
+            user.id,
+            &org_ids,
+        ) {
+            return Err(Box::new(RecordNotFoundError));
         }
 
         if !task_schedule_private_plan_access::access_allowed(

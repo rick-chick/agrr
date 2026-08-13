@@ -157,6 +157,12 @@ async fn import_variance_learning(
         target_plan.farm_id,
         body.source_plan_id,
     ) {
+        if err.downcast_ref::<RecordNotFoundError>().is_some() {
+            return Err((
+                axum::http::StatusCode::NOT_FOUND,
+                Json(json!({"errors": ["not_found"]})),
+            ));
+        }
         let message = err
             .downcast_ref::<agrr_domain::shared::exceptions::RecordInvalidError>()
             .and_then(|invalid| invalid.detail_message())
