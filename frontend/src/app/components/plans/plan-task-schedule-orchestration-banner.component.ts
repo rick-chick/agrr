@@ -22,6 +22,11 @@ import type { LearningOrchestrationMode } from '../../domain/plans/learn-master-
             {{ 'plans.task_schedules.orchestration.work_retry' | translate }}
           </a>
         }
+        @if (showReturnToLearnLink) {
+          <a class="btn-primary learn-orchestration-banner__learn-link" [routerLink]="learnLink">
+            {{ 'plans.task_schedules.orchestration.return_to_learn' | translate }}
+          </a>
+        }
       </div>
     }
   `,
@@ -31,6 +36,7 @@ export class PlanTaskScheduleOrchestrationBannerComponent {
   @Input({ required: true }) planId!: number;
   @Input() mode: LearningOrchestrationMode | null = null;
   @Input() syncState: string | null = null;
+  @Input() orchestrationComplete = false;
 
   get messageKey(): string {
     if (this.mode === 'regenerate') {
@@ -50,7 +56,17 @@ export class PlanTaskScheduleOrchestrationBannerComponent {
     return this.mode === 'sync_verify' && this.syncState === 'failed';
   }
 
+  get showReturnToLearnLink(): boolean {
+    return (
+      (this.mode === 'regenerate' || this.mode === 'sync_verify') && this.orchestrationComplete
+    );
+  }
+
   get workLink(): (string | number)[] {
     return ['/plans', this.planId, 'work'];
+  }
+
+  get learnLink(): (string | number)[] {
+    return ['/plans', this.planId, 'learn'];
   }
 }

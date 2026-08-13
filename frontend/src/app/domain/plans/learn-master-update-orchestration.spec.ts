@@ -5,10 +5,14 @@ import {
   buildPlanTaskScheduleOrchestrationNavigation,
   clearLearnOrchestrationReturnToLearn,
   hasPendingMasterUpdateConfirmation,
+  isTaskScheduleOrchestrationComplete,
   learnOrchestrationReturnStorageKey,
+  learnOrchestrationStepProgressStorageKey,
+  markLearnOrchestrationStepComplete,
   markStageGddProposalAppliedPending,
   parseLearningOrchestration,
   readLearnOrchestrationReturnToLearn,
+  readLearnOrchestrationStepComplete,
   storeLearnOrchestrationReturnToLearn
 } from './learn-master-update-orchestration';
 import { readLearnProposalApplicationProgress } from './learn-proposal-application-progress';
@@ -69,6 +73,35 @@ describe('learn-master-update-orchestration', () => {
 
       clearLearnOrchestrationReturnToLearn(5);
       expect(readLearnOrchestrationReturnToLearn(5)).toBe(false);
+    });
+  });
+
+  describe('task schedule orchestration completion', () => {
+    it('is complete when sync is ready and not regenerating', () => {
+      expect(isTaskScheduleOrchestrationComplete('regenerate', 'ready', false)).toBe(true);
+      expect(isTaskScheduleOrchestrationComplete('sync_verify', 'ready', false)).toBe(true);
+    });
+
+    it('is not complete while regenerating or sync is not ready', () => {
+      expect(isTaskScheduleOrchestrationComplete('regenerate', 'ready', true)).toBe(false);
+      expect(isTaskScheduleOrchestrationComplete('regenerate', 'generating', false)).toBe(false);
+      expect(isTaskScheduleOrchestrationComplete('sync_verify', 'failed', false)).toBe(false);
+    });
+  });
+
+  describe('orchestration step progress', () => {
+    it('stores and reads step completion per plan', () => {
+      expect(learnOrchestrationStepProgressStorageKey(5)).toBe(
+        'agrr:learn-orchestration-step-progress:5'
+      );
+      expect(readLearnOrchestrationStepComplete(5, 'regenerate')).toBe(false);
+
+      markLearnOrchestrationStepComplete(5, 'regenerate');
+      expect(readLearnOrchestrationStepComplete(5, 'regenerate')).toBe(true);
+      expect(readLearnOrchestrationStepComplete(5, 'sync_verify')).toBe(false);
+
+      markLearnOrchestrationStepComplete(5, 'sync_verify');
+      expect(readLearnOrchestrationStepComplete(5, 'sync_verify')).toBe(true);
     });
   });
 

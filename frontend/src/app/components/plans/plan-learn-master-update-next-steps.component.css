@@ -66,3 +66,16 @@
   align-self: center;
   white-space: nowrap;
 }
+
+.learn-next-steps__item--completed {
+  border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border-subtle));
+  background: color-mix(in srgb, var(--color-success) 8%, var(--color-surface-raised));
+}
+
+.learn-next-steps__completed-badge {
+  align-self: center;
+  color: var(--color-success);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}

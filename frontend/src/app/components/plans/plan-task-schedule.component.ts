@@ -25,7 +25,12 @@ import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effe
 import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
-import { parseLearningOrchestration } from '../../domain/plans/learn-master-update-orchestration';
+import {
+  isTaskScheduleOrchestrationComplete,
+  markLearnOrchestrationStepComplete,
+  parseLearningOrchestration,
+  type LearnOrchestrationStepKey
+} from '../../domain/plans/learn-master-update-orchestration';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -85,6 +90,7 @@ const initialControl: PlanTaskScheduleViewState = {
             [planId]="planId"
             [mode]="learningOrchestrationMode"
             [syncState]="syncState"
+            [orchestrationComplete]="orchestrationComplete"
           />
         }
         @if (control.loading) {
@@ -376,6 +382,18 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     return this.control.schedule?.plan.task_schedule_sync_state ?? '';
   }
 
+  get orchestrationComplete(): boolean {
+    const mode = this.learningOrchestrationMode;
+    if (mode !== 'regenerate' && mode !== 'sync_verify') {
+      return false;
+    }
+    return isTaskScheduleOrchestrationComplete(
+      mode,
+      this.syncState || null,
+      this.control.regenerating
+    );
+  }
+
   get emptyHintKey(): string | null {
     if (this.syncState === 'generating' || this.syncState === 'failed') {
       return null;
@@ -432,6 +450,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       flash: this.flashMessage,
       onReload: () => this.reload({ silent: true })
     });
+    this.maybeMarkOrchestrationStepComplete();
     this.maybeOpenItemDetailFromRoute();
     this.cdr.markForCheck();
   }
@@ -636,5 +655,16 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   private executeRegenerateTaskSchedule(): void {
     this.regenerateUseCase.execute({ planId: this.planId });
+  }
+
+  private maybeMarkOrchestrationStepComplete(): void {
+    const mode = this.learningOrchestrationMode;
+    if (mode !== 'regenerate' && mode !== 'sync_verify') {
+      return;
+    }
+    if (!this.orchestrationComplete) {
+      return;
+    }
+    markLearnOrchestrationStepComplete(this.planId, mode as LearnOrchestrationStepKey);
   }
 }

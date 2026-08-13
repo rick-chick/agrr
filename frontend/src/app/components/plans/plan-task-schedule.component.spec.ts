@@ -1178,4 +1178,83 @@ describe('PlanTaskScheduleComponent', () => {
       listFixture.nativeElement.querySelector('app-task-schedule-month-list')
     ).toBeTruthy();
   });
+
+  it('shows return-to-learn link in orchestration banner when regenerate completes', async () => {
+    TestBed.resetTestingModule();
+    loadUseCase = { execute: vi.fn() };
+    varianceUseCase = { execute: vi.fn() };
+    regenerateUseCase = { execute: vi.fn() };
+    subscribeSyncUseCase = { execute: vi.fn() };
+    cdr = { markForCheck: vi.fn() };
+
+    const orchestrationRouteMock = createPlanRouteMock({
+      planId: '7',
+      query: { learningOrchestration: 'regenerate' }
+    });
+
+    TestBed.overrideComponent(PlanTaskScheduleComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
+          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          PlanTaskSchedulePresenter,
+          { provide: ChangeDetectorRef, useValue: cdr },
+          { provide: ActivatedRoute, useValue: orchestrationRouteMock }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        ...(en as TranslationObject),
+        'plans.task_schedules.orchestration.return_to_learn': 'Return to learning screen'
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    const orchestrationFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const orchestrationPresenter = orchestrationFixture.debugElement.injector.get(
+      PlanTaskSchedulePresenter
+    );
+    orchestrationFixture.detectChanges();
+    setScheduleControl(orchestrationFixture.componentInstance, orchestrationPresenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            ...emptyFieldSchedule(1, 'Field A'),
+            schedules: {
+              general: [sampleGeneralTask()],
+              fertilizer: [],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    });
+    orchestrationFixture.detectChanges();
+    await orchestrationFixture.whenStable();
+
+    const link = orchestrationFixture.nativeElement.querySelector(
+      'a.learn-orchestration-banner__learn-link'
+    );
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('href')).toBe('/plans/7/learn');
+    expect(sessionStorage.getItem('agrr:learn-orchestration-step-progress:7')).toContain(
+      '"regenerate":true'
+    );
+  });
 });
