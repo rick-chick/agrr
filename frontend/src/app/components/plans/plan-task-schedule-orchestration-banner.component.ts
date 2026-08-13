@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -7,7 +6,7 @@ import type { LearningOrchestrationMode } from '../../domain/plans/learn-master-
 @Component({
   selector: 'app-plan-task-schedule-orchestration-banner',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [RouterLink, TranslateModule],
   template: `
     @if (mode) {
       <div class="learn-orchestration-banner" role="status" aria-live="polite">

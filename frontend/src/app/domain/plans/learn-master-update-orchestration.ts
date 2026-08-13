@@ -1,13 +1,8 @@
-import {
-  readLearnProposalApplicationProgress,
-  markStageGddProposalAppliedPending
-} from './learn-proposal-application-progress';
+import { readLearnProposalApplicationProgress } from './learn-proposal-application-progress';
 
 export type LearningOrchestrationMode = 'adjust' | 'regenerate' | 'sync_verify';
 
 export type LearnOrchestrationStepKey = 'placement' | 'regenerate' | 'sync_verify';
-
-export { markStageGddProposalAppliedPending };
 
 export function parseLearningOrchestration(
   raw: string | null | undefined

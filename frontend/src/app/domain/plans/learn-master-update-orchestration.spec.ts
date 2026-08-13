@@ -9,13 +9,15 @@ import {
   learnOrchestrationReturnStorageKey,
   learnOrchestrationStepProgressStorageKey,
   markLearnOrchestrationStepComplete,
-  markStageGddProposalAppliedPending,
   parseLearningOrchestration,
   readLearnOrchestrationReturnToLearn,
   readLearnOrchestrationStepComplete,
   storeLearnOrchestrationReturnToLearn
 } from './learn-master-update-orchestration';
-import { readLearnProposalApplicationProgress } from './learn-proposal-application-progress';
+import {
+  markStageGddProposalAppliedPending,
+  readLearnProposalApplicationProgress
+} from './learn-proposal-application-progress';
 
 describe('learn-master-update-orchestration', () => {
   beforeEach(() => {

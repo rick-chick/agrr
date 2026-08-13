@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -20,7 +19,7 @@ export interface LearnMasterUpdateNextStep {
 @Component({
   selector: 'app-plan-learn-master-update-next-steps',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [RouterLink, TranslateModule],
   template: `
     @if (visible) {
       <section

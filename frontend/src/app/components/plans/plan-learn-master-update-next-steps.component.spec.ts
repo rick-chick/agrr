@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { markLearnOrchestrationStepComplete } from '../../domain/plans/learn-master-update-orchestration';
 import {
   PlanLearnMasterUpdateNextStepsComponent,
