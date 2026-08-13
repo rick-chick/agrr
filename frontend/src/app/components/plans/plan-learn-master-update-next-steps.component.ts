@@ -4,6 +4,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
   buildPlanDetailAdjustNavigation,
   buildPlanTaskScheduleOrchestrationNavigation,
+  buildLearnOrchestrationResumeNavigation,
+  findFirstIncompleteOrchestrationStep,
   readLearnOrchestrationStepComplete
 } from '../../domain/plans/learn-master-update-orchestration';
 
@@ -32,6 +34,15 @@ export interface LearnMasterUpdateNextStep {
         <p class="learn-next-steps__lead">
           {{ 'plans.learn.next_steps.lead' | translate }}
         </p>
+        @if (resumeNavigation) {
+          <a
+            class="btn-primary learn-next-steps__continue"
+            [routerLink]="resumeNavigation.commands"
+            [queryParams]="resumeNavigation.queryParams"
+          >
+            {{ 'plans.learn.next_steps.continue' | translate }}
+          </a>
+        }
         <ol class="learn-next-steps__list" role="list">
           @for (step of steps; track step.stepKey) {
             <li
@@ -74,6 +85,17 @@ export class PlanLearnMasterUpdateNextStepsComponent {
 
   get steps(): LearnMasterUpdateNextStep[] {
     return buildLearnMasterUpdateNextSteps(this.planId);
+  }
+
+  get resumeNavigation(): {
+    commands: (string | number)[];
+    queryParams: { learningOrchestration: string };
+  } | null {
+    return buildLearnOrchestrationResumeNavigation(this.planId);
+  }
+
+  get hasIncompleteStep(): boolean {
+    return findFirstIncompleteOrchestrationStep(this.planId) != null;
   }
 
   stepLabel(stepNumber: 1 | 2 | 3): string {

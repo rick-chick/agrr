@@ -7,6 +7,12 @@ import { PlanOptimizingComponent } from './plan-optimizing.component';
 import { PlanOptimizingViewState } from './plan-optimizing.view';
 import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-plan-optimization.usecase';
 import { PlanOptimizingPresenter } from '../../usecase/plans/plan-optimizing.providers';
+import {
+  clearLearnOrchestrationProgressCache,
+  hydrateLearnOrchestrationProgress,
+  readLearnOrchestrationReturnToLearn,
+  readLearnOrchestrationStepComplete
+} from '../../domain/plans/learn-master-update-orchestration';
 
 describe('PlanOptimizingComponent', () => {
   let component: PlanOptimizingComponent;
@@ -50,6 +56,7 @@ describe('PlanOptimizingComponent', () => {
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    clearLearnOrchestrationProgressCache();
 
     const translate = TestBed.inject(TranslateService);
     translate.setDefaultLang('en');
@@ -166,22 +173,20 @@ describe('PlanOptimizingComponent', () => {
   });
 
   it('navigates to learn when orchestration return context is set', () => {
-    sessionStorage.setItem('agrr:learn-orchestration-return:13', 'learn');
+    hydrateLearnOrchestrationProgress(13, { return_to_learn: true });
 
     component.onOptimizationCompleted();
 
     expect(router.navigate).toHaveBeenCalledWith(['/plans', 13, 'learn']);
-    expect(sessionStorage.getItem('agrr:learn-orchestration-return:13')).toBeNull();
+    expect(readLearnOrchestrationReturnToLearn(13)).toBe(false);
   });
 
   it('marks placement orchestration step complete when returning to learn', () => {
-    sessionStorage.setItem('agrr:learn-orchestration-return:13', 'learn');
+    hydrateLearnOrchestrationProgress(13, { return_to_learn: true });
 
     component.onOptimizationCompleted();
 
-    expect(
-      sessionStorage.getItem('agrr:learn-orchestration-step-progress:13')
-    ).toContain('"placement":true');
+    expect(readLearnOrchestrationStepComplete(13, 'placement')).toBe(true);
   });
 
   it('initializes with the presenter and executes the use case', () => {

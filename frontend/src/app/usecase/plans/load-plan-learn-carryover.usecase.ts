@@ -4,6 +4,7 @@ import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-varia
 import type { PlanSummary } from '../../domain/plans/plan-summary';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
 import { hydrateLearnProposalApplicationProgress } from '../../domain/plans/learn-proposal-application-progress';
+import { hydrateLearnOrchestrationProgress } from '../../domain/plans/learn-master-update-orchestration';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
 
 @Injectable()
@@ -36,6 +37,10 @@ export class LoadPlanLearnCarryoverUseCase {
         hydrateLearnProposalApplicationProgress(
           planId,
           snapshot.proposal_application_progress ?? {}
+        );
+        hydrateLearnOrchestrationProgress(
+          planId,
+          snapshot.reorganize_orchestration_progress ?? {}
         );
         return snapshot;
       }),

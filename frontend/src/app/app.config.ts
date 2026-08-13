@@ -16,6 +16,7 @@ import { provideInitialI18nBootstrap } from './core/i18n/initial-i18n-bootstrap'
 import { ENTRY_SCHEDULE_GATEWAY } from './usecase/entry-schedule/entry-schedule-gateway';
 import { EntryScheduleApiGateway } from './adapters/entry-schedule/entry-schedule-api.gateway';
 import { LearnProposalApplicationProgressSyncService } from './services/learn-proposal-application-progress-sync.service';
+import { LearnOrchestrationProgressSyncService } from './services/learn-orchestration-progress-sync.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -36,6 +37,7 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(provideInitialI18nBootstrap()),
     provideAppInitializer(() => {
       inject(LearnProposalApplicationProgressSyncService);
+      inject(LearnOrchestrationProgressSyncService);
     })
   ]
 };

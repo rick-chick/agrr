@@ -1002,6 +1002,86 @@ fn get_plan_variance_learning_includes_proposal_application_progress() {
 }
 
 #[test]
+fn get_plan_variance_learning_includes_reorganize_orchestration_progress() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    let learning_path = format!("/api/v1/plans/{}/variance_learning", seed.plan_id);
+
+    let (patch_status, patch_body) = status_and_body(client.patch(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "reorganize_orchestration_progress": {
+                "placement": true,
+                "return_to_learn": true
+            }
+        })),
+    ));
+    assert_eq!(200, patch_status, "{patch_body}");
+    let patched: serde_json::Value =
+        serde_json::from_str(&patch_body).expect("patch variance learning JSON");
+    let patched_orchestration = patched["reorganize_orchestration_progress"]
+        .as_object()
+        .expect("patched reorganize_orchestration_progress");
+    assert_eq!(true, patched_orchestration["placement"].as_bool().unwrap());
+    assert_eq!(true, patched_orchestration["return_to_learn"].as_bool().unwrap());
+
+    let (get_status, get_body) = status_and_body(client.get(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, get_status, "{get_body}");
+    let learning: serde_json::Value =
+        serde_json::from_str(&get_body).expect("variance learning JSON");
+    let orchestration = learning["reorganize_orchestration_progress"]
+        .as_object()
+        .expect("reorganize_orchestration_progress object");
+    assert_eq!(true, orchestration["placement"].as_bool().unwrap());
+    assert_eq!(false, orchestration["regenerate"].as_bool().unwrap());
+    assert_eq!(false, orchestration["sync_verify"].as_bool().unwrap());
+    assert_eq!(true, orchestration["return_to_learn"].as_bool().unwrap());
+
+    let (round_trip_status, round_trip_body) = status_and_body(client.get(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, round_trip_status, "{round_trip_body}");
+    let round_trip: serde_json::Value =
+        serde_json::from_str(&round_trip_body).expect("round trip variance learning JSON");
+    let round_trip_orchestration = round_trip["reorganize_orchestration_progress"]
+        .as_object()
+        .expect("round trip reorganize_orchestration_progress");
+    assert_eq!(true, round_trip_orchestration["placement"].as_bool().unwrap());
+    assert_eq!(true, round_trip_orchestration["return_to_learn"].as_bool().unwrap());
+
+    let (regen_status, regen_body) = status_and_body(client.patch(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "reorganize_orchestration_progress": {
+                "regenerate": true,
+                "return_to_learn": false
+            }
+        })),
+    ));
+    assert_eq!(200, regen_status, "{regen_body}");
+    let regen: serde_json::Value =
+        serde_json::from_str(&regen_body).expect("regenerate patch JSON");
+    let regen_orchestration = regen["reorganize_orchestration_progress"]
+        .as_object()
+        .expect("regenerate orchestration progress");
+    assert_eq!(true, regen_orchestration["placement"].as_bool().unwrap());
+    assert_eq!(true, regen_orchestration["regenerate"].as_bool().unwrap());
+    assert_eq!(false, regen_orchestration["return_to_learn"].as_bool().unwrap());
+}
+
+#[test]
 fn patch_plan_variance_learning_invalid_status_returns_unprocessable() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

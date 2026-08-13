@@ -2703,7 +2703,8 @@
           "regenerate": "作業表を開く",
           "sync_verify": "同期を確認"
         },
-        "completed": "完了"
+        "completed": "完了",
+        "continue": "続ける"
       },
       "loop": {
         "title": "学習ループの進捗",

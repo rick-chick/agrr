@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 
-use crate::cultivation_plan::dtos::PlanVarianceLearningSnapshotRead;
+use crate::cultivation_plan::dtos::{PlanVarianceLearningSnapshotRead, ReorganizeOrchestrationProgressRead};
 use crate::cultivation_plan::gateways::{CultivationPlanGateway, PlanVarianceLearningGateway};
 use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
 use crate::cultivation_plan::ports::PlanVarianceLearningReadOutputPort;
@@ -74,6 +74,9 @@ where
         let progress = self
             .variance_learning_gateway
             .find_proposal_application_progress_by_plan_id(self.plan_id)?;
+        let orchestration = self
+            .variance_learning_gateway
+            .find_reorganize_orchestration_progress_by_plan_id(self.plan_id)?;
 
         match self.variance_learning_gateway.find_by_plan_id(self.plan_id) {
             Ok(Some(snapshot)) => {
@@ -82,11 +85,12 @@ where
                     source_plan_id: snapshot.source_plan_id,
                     summary: snapshot.summary,
                     proposal_application_progress: progress,
+                    reorganize_orchestration_progress: orchestration,
                 });
                 Ok(())
             }
             Ok(None) => {
-                if progress.is_empty() {
+                if progress.is_empty() && orchestration == ReorganizeOrchestrationProgressRead::default() {
                     self.logger.warn("[PlanVarianceLearningReadInteractor] snapshot_not_found");
                     self.output_port
                         .on_failure(Error::new(self.translator.t("plans.errors.not_found", &Default::default())));
@@ -96,6 +100,7 @@ where
                         source_plan_id: None,
                         summary: None,
                         proposal_application_progress: progress,
+                        reorganize_orchestration_progress: orchestration,
                     });
                 }
                 Ok(())
