@@ -130,7 +130,9 @@ const initialControl: PlanLearnViewState = {
             [blueprintTimingProposals]="control.blueprintTimingProposals"
             [progressRefreshVersion]="proposalProgressRefreshVersion"
           />
-          @if (control.learningSnapshot) {
+          @if (
+            control.learningSnapshot?.source_plan_id != null && control.learningSnapshot.summary
+          ) {
             <div class="plan-learn-imported-snapshot" aria-labelledby="plan-learn-imported-title">
               <h3 id="plan-learn-imported-title" class="plan-learn-imported-snapshot__title">
                 {{

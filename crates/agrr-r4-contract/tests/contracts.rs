@@ -903,7 +903,128 @@ fn post_plan_variance_learning_import_other_user_returns_not_found() {
 }
 
 #[test]
-fn get_task_schedule_includes_compat_milestones_labels_and_week_days() {
+fn get_plan_variance_learning_includes_proposal_application_progress() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let source = seed_work_record_plan(user_id);
+
+    let sqlite_path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&sqlite_path).expect("open contract sqlite");
+    conn.execute(
+        "UPDATE task_schedule_items SET gdd_trigger = 100.0 WHERE id = ?1",
+        rusqlite::params![source.task_schedule_item_id],
+    )
+    .expect("set gdd_trigger");
+
+    let create_record_path = format!("/api/v1/plans/{}/work_records", source.plan_id);
+    let (record_status, record_body) = status_and_body(client.post(
+        &create_record_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": source.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "proposal progress contract seed"
+            }
+        })),
+    ));
+    assert_eq!(201, record_status, "{record_body}");
+    let record_json: serde_json::Value =
+        serde_json::from_str(&record_body).expect("create work_record JSON");
+    let record_id = record_json["work_record"]["id"].as_i64().expect("record id");
+    conn.execute(
+        "UPDATE work_records SET gdd_at_actual = 110.0 WHERE id = ?1",
+        rusqlite::params![record_id],
+    )
+    .expect("set gdd_at_actual");
+
+    let target_farm_id = seed_user_farm_without_organization(user_id);
+    conn.execute(
+        "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
+         VALUES (?1, ?2, 'Proposal Progress Field', 40.0, 0, datetime('now'), datetime('now'))",
+        rusqlite::params![target_farm_id, user_id],
+    )
+    .expect("insert target field");
+
+    let (create_status, create_body) = status_and_body(client.post(
+        "/api/v1/plans",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "plan": {
+                "farm_id": target_farm_id,
+                "plan_name": "Proposal Progress Plan",
+                "carryover_from_plan_id": source.plan_id
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create plan JSON");
+    let plan_id = create_json["id"].as_i64().expect("plan id");
+
+    let learning_path = format!("/api/v1/plans/{plan_id}/variance_learning");
+    let proposal_key = "stage_gdd:1:2";
+
+    let (patch_status, patch_body) = status_and_body(client.patch(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "proposal_application_progress": {
+                proposal_key: "dismissed"
+            }
+        })),
+    ));
+    assert_eq!(200, patch_status, "{patch_body}");
+    let patched: serde_json::Value =
+        serde_json::from_str(&patch_body).expect("patch variance learning JSON");
+    let progress = patched["proposal_application_progress"]
+        .as_object()
+        .expect("proposal_application_progress object");
+    assert_eq!("dismissed", progress[proposal_key].as_str().unwrap());
+
+    let (get_status, get_body) = status_and_body(client.get(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, get_status, "{get_body}");
+    let learning: serde_json::Value =
+        serde_json::from_str(&get_body).expect("variance learning JSON");
+    let get_progress = learning["proposal_application_progress"]
+        .as_object()
+        .expect("proposal_application_progress on GET");
+    assert_eq!("dismissed", get_progress[proposal_key].as_str().unwrap());
+}
+
+#[test]
+fn patch_plan_variance_learning_invalid_status_returns_unprocessable() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    let learning_path = format!("/api/v1/plans/{}/variance_learning", seed.plan_id);
+
+    let (status, body) = status_and_body(client.patch(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "proposal_application_progress": {
+                "stage_gdd:1:2": "invalid_status"
+            }
+        })),
+    ));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("error JSON");
+    assert!(json["errors"].as_array().is_some(), "{body}");
+}
+
+#[test]
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);

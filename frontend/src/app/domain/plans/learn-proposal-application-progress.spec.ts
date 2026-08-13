@@ -4,6 +4,7 @@ import {
   buildLearnPostMasterNavigation,
   clearLearnBpTimingApplyContext,
   clearLearnPostMasterPayload,
+  clearLearnProposalApplicationProgressCache,
   confirmLearnProposalFromPostMaster,
   markAllConfirmedProposalsDone,
   markBpTimingProposalAppliedPending,
@@ -28,6 +29,7 @@ const PLAN_ID = 7;
 
 afterEach(() => {
   sessionStorage.clear();
+  clearLearnProposalApplicationProgressCache();
 });
 
 describe('learn proposal application progress keys', () => {
@@ -88,7 +90,7 @@ describe('learn proposal application progress storage', () => {
     ).toBe('confirmed');
   });
 
-  it('marks proposal as dismissed and persists in session storage', () => {
+  it('marks proposal as dismissed and persists in progress cache', () => {
     const key = stageGddProposalProgressKey(1, 2);
     markLearnProposalDismissed(PLAN_ID, key);
 
@@ -200,7 +202,7 @@ describe('confirmLearnProposalFromPostMaster edge cases', () => {
 });
 
 describe('dismiss learn proposals', () => {
-  it('marks stage GDD proposal as dismissed in session storage', () => {
+  it('marks stage GDD proposal as dismissed in progress cache', () => {
     markStageGddProposalDismissed(PLAN_ID, { cropId: 1, stageId: 2 });
 
     expect(
@@ -208,7 +210,7 @@ describe('dismiss learn proposals', () => {
     ).toBe('dismissed');
   });
 
-  it('marks BP timing proposal as dismissed in session storage', () => {
+  it('marks BP timing proposal as dismissed in progress cache', () => {
     markBpTimingProposalDismissed(PLAN_ID, { cropId: 4, category: 'fertilizer' });
 
     expect(

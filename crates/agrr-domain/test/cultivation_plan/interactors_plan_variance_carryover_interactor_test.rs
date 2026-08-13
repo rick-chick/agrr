@@ -196,6 +196,21 @@ impl PlanVarianceLearningGateway for SpyVarianceLearningGateway {
     ) -> Result<Option<PlanVarianceLearningSnapshotRead>, Box<dyn std::error::Error + Send + Sync>> {
         Ok(None)
     }
+
+    fn find_proposal_application_progress_by_plan_id(
+        &self,
+        _: i64,
+    ) -> Result<std::collections::BTreeMap<String, String>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(std::collections::BTreeMap::new())
+    }
+
+    fn upsert_proposal_application_progress(
+        &self,
+        _: i64,
+        _: &std::collections::BTreeMap<String, String>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
 }
 
 fn sample_snapshot() -> TaskScheduleTimelineSnapshot {

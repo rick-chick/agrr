@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, provideAppInitializer } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { provideClientHydration } from '@angular/platform-browser';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
@@ -15,6 +15,7 @@ import { createTranslateLoader } from './core/i18n/translate-loader';
 import { provideInitialI18nBootstrap } from './core/i18n/initial-i18n-bootstrap';
 import { ENTRY_SCHEDULE_GATEWAY } from './usecase/entry-schedule/entry-schedule-gateway';
 import { EntryScheduleApiGateway } from './adapters/entry-schedule/entry-schedule-api.gateway';
+import { LearnProposalApplicationProgressSyncService } from './services/learn-proposal-application-progress-sync.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -32,6 +33,9 @@ export const appConfig: ApplicationConfig = {
         parser: provideTranslateParser(AgrrTranslateParser)
       })
     ),
-    provideAppInitializer(provideInitialI18nBootstrap())
+    provideAppInitializer(provideInitialI18nBootstrap()),
+    provideAppInitializer(() => {
+      inject(LearnProposalApplicationProgressSyncService);
+    })
   ]
 };
