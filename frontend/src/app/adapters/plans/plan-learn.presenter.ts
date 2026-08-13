@@ -13,6 +13,7 @@ import {
   LoadStageGddCalibrationProposalsOutputPort
 } from '../../usecase/plans/load-stage-gdd-calibration-proposals.output-port';
 import { buildPlanVsActualPlanSummaryStats } from '../../domain/plans/build-plan-vs-actual-plan-summary';
+import { collectLearnProposalRawSources } from '../../domain/plans/collect-learn-proposal-raw-sources';
 import { flattenPlanTaskSchedule } from '../../domain/work-schedule/flatten-plan-task-schedule';
 import { collectPlanTaskScheduleUnrecordedRows } from '../../domain/work-schedule/collect-plan-task-schedule-unrecorded-rows';
 import { resolvePlanTaskScheduleDisplayStatus } from '../../domain/work-schedule/resolve-plan-task-schedule-display-status';
@@ -58,6 +59,10 @@ export class PlanLearnPresenter
 
   setView(view: PlanLearnView): void {
     this.view = view;
+  }
+
+  getLearningSnapshot(): PlanLearnViewState['learningSnapshot'] {
+    return this.view?.control.learningSnapshot ?? null;
   }
 
   beginVarianceLoad(): number {
@@ -106,17 +111,19 @@ export class PlanLearnPresenter
     if (dto.loadGeneration !== this.varianceLoadGeneration) {
       return;
     }
+    const proposalSources = collectLearnProposalRawSources(
+      dto.summary,
+      this.getLearningSnapshot()
+    );
     this.view.control = {
       ...this.view.control,
       varianceLoading: false,
       varianceError: null,
       varianceSummary: dto.summary,
       varianceStats: buildPlanVsActualPlanSummaryStats(dto.summary),
-      blueprintTimingLoading:
-        (dto.summary.blueprint_timing_adjustment_proposals?.length ?? 0) > 0,
+      blueprintTimingLoading: proposalSources.blueprintTimingAdjustmentProposals.length > 0,
       blueprintTimingProposals: [],
-      stageGddProposalsLoading:
-        (dto.summary.stage_gdd_calibration_proposals?.length ?? 0) > 0,
+      stageGddProposalsLoading: proposalSources.stageGddCalibrationProposals.length > 0,
       stageGddProposals: []
     };
   }

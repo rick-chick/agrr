@@ -4,7 +4,7 @@ import { PrivatePlanCreateApiGateway } from './private-plan-create-api.gateway';
 import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
 import { Crop } from '../../domain/crops/crop';
-import { CreatePrivatePlanInputDto, CreatePrivatePlanResponseDto } from '../../usecase/private-plan-create/create-private-plan.dtos';
+import { CreatePrivatePlanInputDto } from '../../usecase/private-plan-create/create-private-plan.dtos';
 
 describe('PrivatePlanCreateApiGateway', () => {
   let apiClient: {
@@ -145,11 +145,10 @@ describe('PrivatePlanCreateApiGateway', () => {
         farmId: 1,
         planName: 'Test Plan'
       };
-      const response: CreatePrivatePlanResponseDto = { id: 123 };
-      vi.mocked(apiClient.post).mockReturnValue(of(response));
+      vi.mocked(apiClient.post).mockReturnValue(of({ id: 123 }));
 
       const result = await firstValueFrom(gateway.createPlan(input));
-      expect(result).toEqual(response);
+      expect(result).toEqual({ id: 123, navigateToLearnAfterCreate: false });
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans', {
         plan: {
           farm_id: 1,
@@ -162,11 +161,10 @@ describe('PrivatePlanCreateApiGateway', () => {
       const input: CreatePrivatePlanInputDto = {
         farmId: 1
       };
-      const response: CreatePrivatePlanResponseDto = { id: 456 };
-      vi.mocked(apiClient.post).mockReturnValue(of(response));
+      vi.mocked(apiClient.post).mockReturnValue(of({ id: 456 }));
 
       const result = await firstValueFrom(gateway.createPlan(input));
-      expect(result).toEqual(response);
+      expect(result).toEqual({ id: 456, navigateToLearnAfterCreate: false });
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans', {
         plan: {
           farm_id: 1,
@@ -181,11 +179,10 @@ describe('PrivatePlanCreateApiGateway', () => {
         planName: 'Next Plan',
         carryoverFromPlanId: 42
       };
-      const response: CreatePrivatePlanResponseDto = { id: 789 };
-      vi.mocked(apiClient.post).mockReturnValue(of(response));
+      vi.mocked(apiClient.post).mockReturnValue(of({ id: 789 }));
 
       const result = await firstValueFrom(gateway.createPlan(input));
-      expect(result).toEqual(response);
+      expect(result).toEqual({ id: 789, navigateToLearnAfterCreate: false });
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans', {
         plan: {
           farm_id: 1,
@@ -193,6 +190,17 @@ describe('PrivatePlanCreateApiGateway', () => {
           carryover_from_plan_id: 42
         }
       });
+    });
+
+    it('echoes navigateToLearnAfterCreate in response', async () => {
+      const input: CreatePrivatePlanInputDto = {
+        farmId: 1,
+        navigateToLearnAfterCreate: true
+      };
+      vi.mocked(apiClient.post).mockReturnValue(of({ id: 321 }));
+
+      const result = await firstValueFrom(gateway.createPlan(input));
+      expect(result).toEqual({ id: 321, navigateToLearnAfterCreate: true });
     });
 
     it('forwards error when api fails', async () => {

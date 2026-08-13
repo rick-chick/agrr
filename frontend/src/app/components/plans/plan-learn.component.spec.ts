@@ -9,6 +9,7 @@ import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/pla
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
+import { LoadStageGddCalibrationProposalsUseCase } from '../../usecase/plans/load-stage-gdd-calibration-proposals.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
 import { PlanLearnComponent } from './plan-learn.component';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
@@ -76,6 +77,7 @@ describe('PlanLearnComponent', () => {
   let scheduleUseCase: { execute: ReturnType<typeof vi.fn> };
   let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
   let blueprintTimingUseCase: { execute: ReturnType<typeof vi.fn> };
+  let stageGddUseCase: { execute: ReturnType<typeof vi.fn> };
   let carryoverUseCase: {
     loadFarmContext: ReturnType<typeof vi.fn>;
     loadLearningSnapshot: ReturnType<typeof vi.fn>;
@@ -89,6 +91,7 @@ describe('PlanLearnComponent', () => {
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };
+    stageGddUseCase = { execute: vi.fn() };
     carryoverUseCase = {
       loadFarmContext: vi.fn().mockReturnValue(
         of([{ id: 8, name: 'Source Plan', farm_id: 1 }])
@@ -107,6 +110,10 @@ describe('PlanLearnComponent', () => {
           {
             provide: LoadBlueprintTimingAdjustmentProposalsUseCase,
             useValue: blueprintTimingUseCase
+          },
+          {
+            provide: LoadStageGddCalibrationProposalsUseCase,
+            useValue: stageGddUseCase
           },
           { provide: LoadPlanLearnCarryoverUseCase, useValue: carryoverUseCase },
           PlanLearnPresenter
@@ -275,6 +282,89 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.querySelector('app-plan-learn-imported-banner')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Review adjust on workbench');
   });
+
+  it('distinguishes imported snapshot from current plan variance headings', async () => {
+    carryoverUseCase.loadLearningSnapshot.mockReturnValue(
+      of({
+        plan_id: 7,
+        source_plan_id: 8,
+        summary: {
+          plan_id: 7,
+          unrecorded_count: 0,
+          categories: [],
+          top_variance_items: []
+        }
+      })
+    );
+
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Imported learning from plan #8');
+    expect(fixture.nativeElement.textContent).toContain('Current plan variance');
+  });
+
+  it('loads merged proposals from imported snapshot when variance has none', async () => {
+    carryoverUseCase.loadLearningSnapshot.mockReturnValue(
+      of({
+        plan_id: 7,
+        source_plan_id: 8,
+        summary: {
+          plan_id: 7,
+          unrecorded_count: 0,
+          categories: [],
+          top_variance_items: [],
+          stage_gdd_calibration_proposals: [
+            {
+              crop_id: 1,
+              crop_name: 'Tomato',
+              stage_order: 1,
+              stage_name: 'Vegetative',
+              average_gdd_delta: 10,
+              recorded_item_count: 2
+            }
+          ]
+        }
+      })
+    );
+
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(stageGddUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rawProposals: [
+          expect.objectContaining({
+            crop_id: 1,
+            stage_order: 1,
+            average_gdd_delta: 10
+          })
+        ]
+      })
+    );
+  });
 });
 
 function componentSetSourcePlan(
@@ -299,6 +389,7 @@ describe('PlanLearnComponent post_master follow-up', () => {
   let scheduleUseCase: { execute: ReturnType<typeof vi.fn> };
   let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
   let blueprintTimingUseCase: { execute: ReturnType<typeof vi.fn> };
+  let stageGddUseCase: { execute: ReturnType<typeof vi.fn> };
   let carryoverUseCase: {
     loadFarmContext: ReturnType<typeof vi.fn>;
     loadLearningSnapshot: ReturnType<typeof vi.fn>;
@@ -312,6 +403,7 @@ describe('PlanLearnComponent post_master follow-up', () => {
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };
+    stageGddUseCase = { execute: vi.fn() };
     carryoverUseCase = {
       loadFarmContext: vi.fn().mockReturnValue(of([])),
       loadLearningSnapshot: vi.fn().mockReturnValue(of(null)),
@@ -328,6 +420,10 @@ describe('PlanLearnComponent post_master follow-up', () => {
           {
             provide: LoadBlueprintTimingAdjustmentProposalsUseCase,
             useValue: blueprintTimingUseCase
+          },
+          {
+            provide: LoadStageGddCalibrationProposalsUseCase,
+            useValue: stageGddUseCase
           },
           { provide: LoadPlanLearnCarryoverUseCase, useValue: carryoverUseCase },
           PlanLearnPresenter

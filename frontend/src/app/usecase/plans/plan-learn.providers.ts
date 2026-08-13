@@ -15,6 +15,7 @@ import { PLAN_GATEWAY } from './plan-gateway';
 import { LoadBlueprintTimingAdjustmentProposalsUseCase } from './load-blueprint-timing-adjustment-proposals.usecase';
 import { LOAD_BLUEPRINT_TIMING_ADJUSTMENT_PROPOSALS_OUTPUT_PORT } from './load-blueprint-timing-adjustment-proposals.output-port';
 import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.usecase';
+import { loadMergedLearnProposals } from './load-merged-learn-proposals';
 
 export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
   PlanLearnPresenter,
@@ -33,16 +34,13 @@ export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
     ) => ({
       present: (dto: Parameters<PlanLearnPresenter['presentVarianceSummary']>[0]) => {
         presenter.presentVarianceSummary(dto);
-        const rawBlueprintProposals = dto.summary.blueprint_timing_adjustment_proposals ?? [];
-        if (rawBlueprintProposals.length > 0) {
-          const loadGeneration = presenter.beginBlueprintTimingProposalsLoad();
-          blueprintProposalsUseCase.execute({ rawProposals: rawBlueprintProposals, loadGeneration });
-        }
-        const rawStageGddProposals = dto.summary.stage_gdd_calibration_proposals ?? [];
-        if (rawStageGddProposals.length > 0) {
-          const loadGeneration = presenter.beginStageGddProposalsLoad();
-          stageGddProposalsUseCase.execute({ rawProposals: rawStageGddProposals, loadGeneration });
-        }
+        loadMergedLearnProposals(
+          presenter,
+          blueprintProposalsUseCase,
+          stageGddProposalsUseCase,
+          dto.summary,
+          presenter.getLearningSnapshot()
+        );
       },
       onError: (dto: Parameters<PlanLearnPresenter['onVarianceError']>[0]) =>
         presenter.onVarianceError(dto)

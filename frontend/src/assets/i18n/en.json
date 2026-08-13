@@ -1472,6 +1472,8 @@
       "page_title": "Review — {{name}}",
       "imported_snapshot_title": "Imported learning from plan #{{sourcePlanId}}",
       "imported_snapshot_empty": "No category variance data in the imported snapshot.",
+      "current_variance_title": "Current plan variance",
+      "current_variance_hint": "Variance from work records on this plan. Imported learning from another plan is shown above.",
       "imported_banner": {
         "message": "{{count}} imported variance item(s) may need adjust on the workbench.",
         "manual_hint": "Review imported learning on the workbench before changing the schedule. No automatic changes are made.",
@@ -1769,7 +1771,8 @@
       "carryover_source_hint": "Select a previous plan to carry over",
       "carryover_preview_title": "Learning data preview",
       "carryover_no_source_plans": "No previous plans found for this farm.",
-      "carryover_preview_empty": "No category variance data available for the selected plan."
+      "carryover_preview_empty": "No category variance data available for the selected plan.",
+      "carryover_learn_cta": "Create and review on Learn"
     },
     "select_crop": {
       "title": "🌾 Select Crops to Grow",
