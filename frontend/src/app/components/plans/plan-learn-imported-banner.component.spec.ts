@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.component';
 
@@ -12,6 +12,16 @@ describe('PlanLearnImportedBannerComponent', () => {
       imports: [PlanLearnImportedBannerComponent, TranslateModule.forRoot()],
       providers: [provideRouter([])]
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      'plans.learn.imported_banner.message': '{{count}} imported variance item(s)',
+      'plans.learn.imported_banner.merged_proposals': '{{count}} merged proposal(s)',
+      'plans.learn.imported_banner.manual_hint': 'Review on workbench',
+      'plans.learn.imported_banner.workbench_link': 'Review adjust on workbench'
+    });
+    translate.setDefaultLang('en');
+    translate.use('en');
 
     fixture = TestBed.createComponent(PlanLearnImportedBannerComponent);
     fixture.componentInstance.planId = 7;
@@ -43,7 +53,29 @@ describe('PlanLearnImportedBannerComponent', () => {
     expect(link.getAttribute('href')).toContain('field_cultivation_id=10');
   });
 
-  it('hides banner when no action items', () => {
+  it('shows merged proposal count when proposals were imported', () => {
+    fixture.componentInstance.items = [
+      {
+        item_id: 1,
+        field_cultivation_id: 10,
+        category: 'general',
+        name: 'Weed control',
+        scheduled_date: '2026-06-01',
+        actual_date: '2026-06-08',
+        delta_days: 7,
+        gdd_trigger: 100,
+        gdd_at_actual: 110,
+        gdd_delta: 10,
+        exceedance_kind: 'days'
+      }
+    ];
+    fixture.componentInstance.mergedProposalCount = 2;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('2 merged proposal(s)');
+  });
+
+  it('hides banner when no action items and no merged proposals', () => {
     fixture.componentInstance.items = [];
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.plan-learn-imported-banner')).toBeNull();

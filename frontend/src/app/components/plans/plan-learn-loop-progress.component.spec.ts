@@ -44,7 +44,7 @@ describe('PlanLearnLoopProgressComponent', () => {
         'plans.learn.loop.phase.reorganize': 'Reorganize',
         'plans.learn.loop.phase.handoff': 'Handoff',
         'plans.learn.loop.next_action.observe_workbench': 'Open workbench',
-        'plans.learn.loop.next_action.handoff_carryover': 'Import carryover'
+        'plans.learn.loop.next_action.handoff_new_plan': 'Create next plan (carry over learning)'
       },
       true
     );
@@ -73,7 +73,7 @@ describe('PlanLearnLoopProgressComponent', () => {
     expect(cta.textContent).toContain('Open workbench');
   });
 
-  it('shows carryover scroll CTA when learning snapshot and carryover sources exist', () => {
+  it('shows new-plan carryover router link CTA when learning snapshot and carryover sources exist', () => {
     fixture.componentInstance.hasLearningSnapshot = true;
     fixture.componentInstance.carryoverSourcePlanCount = 2;
     fixture.detectChanges();
@@ -84,8 +84,8 @@ describe('PlanLearnLoopProgressComponent', () => {
     expect(currentPhase?.textContent).toContain('Handoff');
 
     const cta = fixture.nativeElement.querySelector('.learn-loop-progress__next-cta');
-    expect(cta?.getAttribute('href')).toBe('#plan-learn-carryover-title');
-    expect(cta?.textContent).toContain('Import carryover');
+    expect(cta?.getAttribute('href')).toBe('/plans/new?carryoverFrom=7');
+    expect(cta?.textContent).toContain('Create next plan');
   });
 
   it('marks earlier phases as completed when current phase is handoff', () => {

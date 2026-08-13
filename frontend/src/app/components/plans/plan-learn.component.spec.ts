@@ -250,6 +250,26 @@ describe('PlanLearnComponent', () => {
               gdd_delta: 10,
               exceedance_kind: 'days'
             }
+          ],
+          stage_gdd_calibration_proposals: [
+            {
+              crop_id: 1,
+              crop_name: 'Tomato',
+              stage_order: 1,
+              stage_name: 'Vegetative',
+              average_gdd_delta: 10,
+              recorded_item_count: 2
+            }
+          ],
+          blueprint_timing_adjustment_proposals: [
+            {
+              crop_id: 1,
+              crop_name: 'Tomato',
+              category: 'general',
+              average_delta_days: 2,
+              average_gdd_delta: 5,
+              recorded_item_count: 3
+            }
           ]
         }
       })
@@ -281,6 +301,7 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Imported learning from plan #8');
     expect(fixture.nativeElement.querySelector('app-plan-learn-imported-banner')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Review adjust on workbench');
+    expect(fixture.nativeElement.textContent).toContain('2 merged proposal(s)');
   });
 
   it('distinguishes imported snapshot from current plan variance headings', async () => {

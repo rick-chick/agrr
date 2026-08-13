@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanNewComponent } from './plan-new.component';
@@ -42,6 +42,7 @@ describe('PlanNewComponent', () => {
   let mockCarryoverUseCase: {
     loadSourcePlans: ReturnType<typeof vi.fn>;
     loadCarryoverPreview: ReturnType<typeof vi.fn>;
+    resolveCarryoverPreset: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -53,7 +54,8 @@ describe('PlanNewComponent', () => {
       loadSourcePlans: vi.fn(() => of([])),
       loadCarryoverPreview: vi.fn(() =>
         of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] })
-      )
+      ),
+      resolveCarryoverPreset: vi.fn(() => of(null))
     };
 
     await TestBed.configureTestingModule({
@@ -350,5 +352,92 @@ describe('PlanNewComponent', () => {
     expect(preview?.textContent).toContain('Learning data preview');
     expect(preview?.textContent).toContain('General tasks');
     expect(preview?.textContent).toContain('+2 days');
+  });
+
+  it('enables carryover preset when carryoverFrom query param is present', async () => {
+    const carryoverSummary = {
+      plan_id: 9,
+      unrecorded_count: 0,
+      categories: [{ category: 'general', average_delta_days: 1, item_count: 1, recorded_count: 1 }],
+      top_variance_items: []
+    };
+    mockCarryoverUseCase.resolveCarryoverPreset.mockReturnValue(
+      of({
+        farmId: 1,
+        sourcePlan: { id: 9, name: 'Source', farm_id: 1 }
+      })
+    );
+    mockCarryoverUseCase.loadSourcePlans.mockReturnValue(
+      of([{ id: 9, name: 'Source', farm_id: 1 }])
+    );
+    mockCarryoverUseCase.loadCarryoverPreview.mockReturnValue(of(carryoverSummary));
+
+    await TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [PlanNewComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        { provide: LoadPrivatePlanFarmsUseCase, useValue: mockLoadUseCase },
+        { provide: CreatePrivatePlanUseCase, useValue: mockCreateUseCase },
+        { provide: PlanNewPresenter, useValue: mockFarmsPresenter },
+        { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter },
+        { provide: LoadPlanNewCarryoverUseCase, useValue: mockCarryoverUseCase },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: { get: (key: string) => (key === 'carryoverFrom' ? '9' : null) } }
+          }
+        }
+      ]
+    })
+      .overrideComponent(PlanNewComponent, { set: { providers: [] } })
+      .compileComponents();
+
+    const localFixture = TestBed.createComponent(PlanNewComponent);
+    const localComponent = localFixture.componentInstance;
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      'plans.index.title': 'Plans',
+      'plans.new.breadcrumb': 'New plan',
+      'plans.new.title': 'Select a farm',
+      'plans.new.subtitle': 'Choose a farm',
+      'plans.new.farm_label': 'Farm',
+      'plans.new.farm_hint': 'Select a farm',
+      'plans.new.farm_option_with_fields': '{{name}} ({{count}} fields)',
+      'plans.new.plan_name_label': 'Plan name',
+      'plans.new.plan_name_placeholder': 'e.g. Main plan',
+      'plans.new.create_button': 'Create',
+      'plans.new.carryover_enabled_label': 'Carry over previous plan learning data',
+      'plans.new.carryover_hint': 'Apply variance learning from a completed plan.',
+      'plans.new.carryover_source_label': 'Source plan',
+      'plans.new.carryover_source_hint': 'Select a previous plan',
+      'plans.new.carryover_preview_title': 'Learning data preview',
+      'plans.new.carryover_no_source_plans': 'No previous plans found.',
+      'plans.new.carryover_preview_empty': 'No category variance data.',
+      'plans.new.carryover_learn_cta': 'Create and review on Learn',
+      'plans.task_schedules.variance_subview.category_column': 'Category',
+      'plans.task_schedules.variance_subview.category_average': 'Avg Δ days',
+      'plans.task_schedules.variance_subview.not_available': '—',
+      'plans.task_schedules.variance_subview.average_value': '{{delta}} days',
+      'plans.task_schedules.variance_subview.category.general': 'General tasks',
+      'common.loading': 'Loading...'
+    });
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    localComponent.ngOnInit();
+    localComponent.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
+      loading: false
+    });
+    localComponent.applyCarryoverFromQueryPreset();
+    localFixture.detectChanges();
+    await localFixture.whenStable();
+
+    expect(mockCarryoverUseCase.resolveCarryoverPreset).toHaveBeenCalledWith(9);
+    expect(localComponent.control.carryoverEnabled).toBe(true);
+    expect(localComponent.control.selectedFarmId).toBe(1);
+    expect(localComponent.control.selectedSourcePlanId).toBe(9);
+    expect(localComponent.control.carryoverPreview).toEqual(carryoverSummary);
   });
 });

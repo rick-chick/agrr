@@ -1962,6 +1962,7 @@
       "current_variance_hint": "इस योजना के कार्य रिकॉर्ड से variance। दूसरी योजना से आयातित सीख ऊपर दिखाई जाती है।",
       "imported_banner": {
         "message": "आयातित variance की {{count}} वस्तु(एँ) workbench पर adjust की समीक्षा चाह सकती हैं।",
+        "merged_proposals": "आयातित सीख से {{count}} मर्ज प्रस्ताव।",
         "manual_hint": "अनुसूची बदलने से पहले workbench पर आयातित सीख की समीक्षा करें। कोई स्वचालित परिवर्तन नहीं होता।",
         "workbench_link": "workbench पर adjust की समीक्षा करें"
       },
@@ -2070,7 +2071,8 @@
           "apply_stage_gdd": "चरण GDD अंशांकन लागू करें",
           "apply_bp_timing": "BP समय समायोजन लागू करें",
           "reorganize_placement": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
-          "handoff_carryover": "सीखना आयात या हस्तांतरण करें"
+          "handoff_carryover": "सीखना आयात या हस्तांतरण करें",
+          "handoff_new_plan": "अगली योजना बनाएँ (सीख हस्तांतरित करें)"
         }
       }
     },

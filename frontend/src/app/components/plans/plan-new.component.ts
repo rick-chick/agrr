@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
@@ -12,6 +12,7 @@ import { PlanNewView, PlanNewViewState } from './plan-new.view';
 import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { LoadPlanNewCarryoverUseCase } from '../../usecase/plans/load-plan-new-carryover.usecase';
+import { parseCarryoverFromQueryParam } from '../../domain/plans/parse-carryover-from-query-param';
 import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-actual-summary';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 
@@ -233,6 +234,7 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   private readonly farmsPresenter = inject(PlanNewPresenter);
   private readonly createPresenter = inject(CreatePrivatePlanPresenter);
   private readonly carryoverUseCase = inject(LoadPlanNewCarryoverUseCase);
+  private readonly route = inject(ActivatedRoute);
   private readonly translate = inject(TranslateService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly router = inject(Router);
@@ -240,6 +242,8 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   planName = '';
+  private carryoverFromQueryPlanId: number | null = null;
+  private carryoverPresetApplied = false;
 
   get contextCrumbs(): MasterContextCrumb[] {
     return [
@@ -253,10 +257,14 @@ export class PlanNewComponent implements PlanNewView, OnInit {
     return this._control;
   }
   set control(value: PlanNewViewState) {
+    const wasLoading = this._control.loading;
     this._control = applyPendingFlashAndNavigationViewEffects(value, {
       flash: this.flashMessage,
       router: this.router
     });
+    if (wasLoading && !value.loading && !this.carryoverPresetApplied) {
+      this.applyCarryoverFromQueryPreset();
+    }
     this.cdr.markForCheck();
   }
 
@@ -287,9 +295,48 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   }
 
   ngOnInit(): void {
+    this.carryoverFromQueryPlanId = parseCarryoverFromQueryParam(
+      this.route.snapshot.queryParamMap.get('carryoverFrom')
+    );
     this.farmsPresenter.setView(this);
     this.createPresenter.setView(this);
     this.load();
+  }
+
+  applyCarryoverFromQueryPreset(): void {
+    const sourcePlanId = this.carryoverFromQueryPlanId;
+    if (sourcePlanId == null || this.carryoverPresetApplied || this.control.loading) {
+      return;
+    }
+    this.carryoverUseCase
+      .resolveCarryoverPreset(sourcePlanId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (preset) => {
+          if (!preset) {
+            return;
+          }
+          const farmAvailable = this.control.farms.some(
+            (farm) => farm.id === preset.farmId && farm.hasValidFields
+          );
+          if (!farmAvailable) {
+            return;
+          }
+          this.carryoverPresetApplied = true;
+          this.control = {
+            ...this.control,
+            carryoverEnabled: true,
+            selectedFarmId: preset.farmId,
+            selectedSourcePlanId: preset.sourcePlan.id,
+            carryoverPreview: null,
+            carryoverPreviewError: null,
+            carryoverPreviewLoading: true,
+            sourcePlans: []
+          };
+          this.loadSourcePlans(preset.farmId);
+          this.loadCarryoverPreview(preset.sourcePlan.id);
+        }
+      });
   }
 
   load(): void {

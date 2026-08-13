@@ -1476,6 +1476,7 @@
       "current_variance_hint": "Variance from work records on this plan. Imported learning from another plan is shown above.",
       "imported_banner": {
         "message": "{{count}} imported variance item(s) may need adjust on the workbench.",
+        "merged_proposals": "{{count}} merged proposal(s) from imported learning.",
         "manual_hint": "Review imported learning on the workbench before changing the schedule. No automatic changes are made.",
         "workbench_link": "Review adjust on workbench"
       },
@@ -1584,7 +1585,8 @@
           "apply_stage_gdd": "Apply stage GDD calibration",
           "apply_bp_timing": "Apply BP timing adjustment",
           "reorganize_placement": "Verify placement on workbench",
-          "handoff_carryover": "Import or carry over learning"
+          "handoff_carryover": "Import or carry over learning",
+          "handoff_new_plan": "Create next plan (carry over learning)"
         }
       }
     },
