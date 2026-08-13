@@ -94,3 +94,48 @@ fn validate_rejects_unknown_task_ref_in_blueprint() {
         "{errors:?}"
     );
 }
+
+#[test]
+fn validate_accepts_blueprint_timing_patch_intent() {
+    use crate::crop::dtos::MastersCropTaskScheduleBlueprint;
+    use rust_decimal::Decimal;
+
+    let existing = vec![MastersCropTaskScheduleBlueprint {
+        id: 99,
+        crop_id: 1,
+        agricultural_task_id: Some(10),
+        source_agricultural_task_id: None,
+        stage_order: Some(1),
+        stage_name: Some("育苗".into()),
+        gdd_trigger: Some(Decimal::from(120)),
+        gdd_tolerance: None,
+        task_type: "field_work".into(),
+        source: "manual".into(),
+        priority: 1,
+        amount: None,
+        amount_unit: None,
+        description: None,
+        weather_dependency: None,
+        time_per_sqm: None,
+        name: Some("除草".into()),
+        created_at: None,
+        updated_at: None,
+    }];
+
+    let body = json!({
+        "intent": "blueprint_timing_patch",
+        "task_schedule_blueprints": [{
+            "blueprint_id": 99,
+            "gdd_trigger": 130.0
+        }]
+    });
+
+    let (plan, normalized) = validate_and_normalize(&body, &existing, &[]).expect("valid patch");
+    assert_eq!(Some("blueprint_timing_patch".to_string()), plan.intent);
+    assert_eq!(1, plan.blueprint_timing_patches.len());
+    assert_eq!(99, plan.blueprint_timing_patches[0].blueprint_id);
+    assert_eq!(
+        "blueprint_timing_patch",
+        normalized["intent"].as_str().unwrap()
+    );
+}

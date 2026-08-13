@@ -17,6 +17,7 @@ import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edi
 import { DryRunCropSetupProposalUseCase } from '../../../usecase/crops/dry-run-crop-setup-proposal.usecase';
 import { ApplyCropSetupProposalUseCase } from '../../../usecase/crops/apply-crop-setup-proposal.usecase';
 import { CropSetupProposalBody } from '../../../domain/crops/crop-setup-proposal';
+import { blueprintTimingPrefillStorageKey } from '../../../domain/plans/blueprint-timing-adjustment-proposal';
 import { setupProposalValidationErrorI18nKey } from '../../../core/setup-proposal-validation-error-i18n';
 
 const initialControl: CropSetupProposalImportViewState = {
@@ -35,6 +36,9 @@ const initialControl: CropSetupProposalImportViewState = {
 function isProposalBody(value: unknown): value is CropSetupProposalBody {
   if (!value || typeof value !== 'object') return false;
   const record = value as Record<string, unknown>;
+  if (record['intent'] === 'blueprint_timing_patch') {
+    return Array.isArray(record['task_schedule_blueprints']);
+  }
   return (
     Array.isArray(record['stages']) &&
     Array.isArray(record['agricultural_tasks']) &&
@@ -212,7 +216,11 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
     return this._control;
   }
   set control(value: CropSetupProposalImportViewState) {
+    const wasLoading = this._control.loading;
     this._control = value;
+    if (wasLoading && !value.loading && !value.error) {
+      this.applyPrefillFromSession();
+    }
     this.cdr.markForCheck();
   }
 
@@ -252,6 +260,30 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
       return;
     }
     this.loadUseCase.execute({ cropId: this.cropId });
+  }
+
+  private applyPrefillFromSession(): void {
+    const stored = sessionStorage.getItem(blueprintTimingPrefillStorageKey(this.cropId));
+    if (!stored) {
+      return;
+    }
+    sessionStorage.removeItem(blueprintTimingPrefillStorageKey(this.cropId));
+    try {
+      const parsed: unknown = JSON.parse(stored);
+      if (!isProposalBody(parsed)) {
+        return;
+      }
+      this.control = {
+        ...this.control,
+        jsonInput: JSON.stringify(parsed, null, 2),
+        parsedProposal: parsed,
+        phase: 'input',
+        error: null
+      };
+      this.dryRunUseCase.execute({ cropId: this.cropId, proposal: parsed });
+    } catch {
+      // ignore invalid prefill payload
+    }
   }
 
   onJsonInputChange(): void {
