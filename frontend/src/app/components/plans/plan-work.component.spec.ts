@@ -12,8 +12,10 @@ import { LoadWorkDayListUseCase } from '../../usecase/plans/load-work-day-list.u
 import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-schedule-item.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
+import { emptyPlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
+import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
 
@@ -35,6 +37,7 @@ const initialControl: PlanWorkViewState = {
   pendingSyncToastKey: null,
   pendingRecordSavedToast: null,
   pendingRecordSavedEvent: null,
+  ...emptyPlanSaveImpactViewFields,
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
@@ -134,6 +137,7 @@ const loadedState: PlanWorkViewState = {
   pendingSyncToastKey: null,
   pendingRecordSavedToast: null,
   pendingRecordSavedEvent: null,
+  ...emptyPlanSaveImpactViewFields,
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
@@ -149,9 +153,12 @@ describe('PlanWorkComponent mobile UX', () => {
   let createUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
+  let loadSummaryUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: {
     setView: ReturnType<typeof vi.fn>;
     beginScheduleLoad: ReturnType<typeof vi.fn>;
+    queueSaveImpactAfterSave: ReturnType<typeof vi.fn>;
+    dismissSaveImpact: ReturnType<typeof vi.fn>;
   };
   let mockActivatedRoute: ReturnType<typeof createPlanRouteMock>;
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
@@ -162,9 +169,12 @@ describe('PlanWorkComponent mobile UX', () => {
     createUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
+    loadSummaryUseCase = { execute: vi.fn() };
     mockPresenter = {
       setView: vi.fn(),
-      beginScheduleLoad: vi.fn(() => 1)
+      beginScheduleLoad: vi.fn(() => 1),
+      queueSaveImpactAfterSave: vi.fn(() => 1),
+      dismissSaveImpact: vi.fn()
     };
     cdr = { markForCheck: vi.fn() };
     mockActivatedRoute = createPlanRouteMock('7');
@@ -178,6 +188,7 @@ describe('PlanWorkComponent mobile UX', () => {
           { provide: CreateWorkRecordUseCase, useValue: createUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: loadSummaryUseCase },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr }
         ]
@@ -612,6 +623,40 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(fixture.nativeElement.querySelector('.plan-work__row--highlight')).toBeTruthy();
   });
 
+  it('loads plan save impact summary after recording from item', () => {
+    fixture.detectChanges();
+    component.onRecordSaved({
+      workRecord: {
+        id: 1,
+        cultivation_plan_id: 7,
+        field_cultivation_id: 10,
+        task_schedule_item_id: 11,
+        agricultural_task_id: null,
+        name: '今日の作業',
+        task_type: null,
+        actual_date: '2026-06-25',
+        amount: null,
+        amount_unit: null,
+        time_spent_minutes: null,
+        notes: null,
+        created_at: '2026-06-25',
+        updated_at: '2026-06-25',
+        task_schedule_item: { id: 11, name: '今日の作業', scheduled_date: '2026-06-10' },
+        gdd_at_actual: 130.5
+      },
+      mode: 'create-from-item',
+      saveToastContext: {
+        planId: 7,
+        fieldCultivationId: 10,
+        taskScheduleItemId: 11,
+        gddTrigger: '100'
+      }
+    });
+
+    expect(mockPresenter.queueSaveImpactAfterSave).toHaveBeenCalled();
+    expect(loadSummaryUseCase.execute).toHaveBeenCalledWith({ planId: 7, loadGeneration: 1 });
+  });
+
   it('shows error with retry button and reloads when retry is clicked', () => {
     fixture.detectChanges();
     component.control = {
@@ -745,9 +790,12 @@ describe('PlanWorkComponent in locale labels', () => {
     const createUseCase = { execute: vi.fn() };
     const regenerateUseCase = { execute: vi.fn() };
     const subscribeSyncUseCase = { execute: vi.fn() };
+    const loadSummaryUseCase = { execute: vi.fn() };
     const mockPresenter = {
       setView: vi.fn(),
-      beginScheduleLoad: vi.fn(() => 1)
+      beginScheduleLoad: vi.fn(() => 1),
+      queueSaveImpactAfterSave: vi.fn(() => 1),
+      dismissSaveImpact: vi.fn()
     };
     const cdr = { markForCheck: vi.fn() };
     const localeRouteMock = createPlanRouteMock('7');
@@ -761,6 +809,7 @@ describe('PlanWorkComponent in locale labels', () => {
           { provide: CreateWorkRecordUseCase, useValue: createUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: loadSummaryUseCase },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr }
         ]

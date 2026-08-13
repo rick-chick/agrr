@@ -48,6 +48,7 @@ export class WorkRecordSheetPresenter
   onSuccess(dto: SaveWorkRecordSheetSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const mode = dto.mode;
+    const saveToastContext = this.view.control.saveToastContext;
     this.view.control = {
       ...this.view.control,
       submitting: false,
@@ -58,13 +59,17 @@ export class WorkRecordSheetPresenter
         buildWorkRecordSaveToast(
           dto.workRecord,
           mode,
-          this.view.control.saveToastContext
+          saveToastContext
         )
       ),
       saveToastContext: null
     };
     this.view.close();
-    this.onSavedCallback?.({ workRecord: dto.workRecord, mode });
+    this.onSavedCallback?.({
+      workRecord: dto.workRecord,
+      mode,
+      saveToastContext
+    });
   }
 
   onValidationError(dto: SaveWorkRecordSheetValidationErrorDto): void {

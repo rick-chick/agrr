@@ -20,17 +20,22 @@ import {
   WORK_RECORD_PHOTO_THUMB_WIDTH_PX_HISTORY
 } from '../../domain/plans/work-record-photo.constants';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
+import { emptyPlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
+import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PLAN_WORK_RECORDS_PROVIDERS } from '../../usecase/plans/plan-work-records.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanWorkRecordsView, PlanWorkRecordsViewState } from './plan-work-records.view';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
+import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
+import { WorkRecordSaveImpactPanelComponent } from './work-record-save-impact-panel.component';
 
 const initialControl: PlanWorkRecordsViewState = {
   loading: true,
   error: null,
   plan: null,
-  groups: []
+  groups: [],
+  ...emptyPlanSaveImpactViewFields
 };
 
 @Component({
@@ -41,7 +46,8 @@ const initialControl: PlanWorkRecordsViewState = {
     RouterLink,
     TranslateModule,
     PlanPlanContextHeaderComponent,
-    WorkRecordSheetComponent
+    WorkRecordSheetComponent,
+    WorkRecordSaveImpactPanelComponent
   ],
   providers: [...PLAN_WORK_RECORDS_PROVIDERS],
   template: `
@@ -63,6 +69,16 @@ const initialControl: PlanWorkRecordsViewState = {
             </button>
           </div>
         } @else if (control.plan) {
+          @if (control.saveImpactLoading || control.saveImpact || control.saveImpactError) {
+            <app-work-record-save-impact-panel
+              [planId]="planId"
+              [impact]="control.saveImpact"
+              [loading]="control.saveImpactLoading"
+              [error]="control.saveImpactError"
+              (dismiss)="dismissSaveImpact()"
+            />
+          }
+
           @if (!control.groups.length) {
             <div class="plan-work__empty">
               <p class="plan-work__empty-message">{{ 'plans.work_records.empty' | translate }}</p>
@@ -176,7 +192,7 @@ const initialControl: PlanWorkRecordsViewState = {
 
     <app-work-record-sheet
       [planId]="planId"
-      (saved)="reload({ silent: true })"
+      (saved)="onRecordSaved($event)"
       (deleted)="reload({ silent: true })"
     />
 
@@ -228,6 +244,7 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
 
   private readonly route = inject(ActivatedRoute);
   private readonly loadUseCase = inject(LoadWorkRecordsUseCase);
+  private readonly loadSummaryUseCase = inject(LoadPlanVsActualSummaryUseCase);
   private readonly presenter = inject(PlanWorkRecordsPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
@@ -271,6 +288,18 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
       this.control = { ...this.control, loading: true, error: null };
     }
     this.loadUseCase.execute({ planId: this.planId });
+  }
+
+  onRecordSaved(event: WorkRecordSheetSavedEvent): void {
+    this.reload({ silent: true });
+    const loadGeneration = this.presenter.queueSaveImpactAfterSave(event);
+    if (loadGeneration > 0) {
+      this.loadSummaryUseCase.execute({ planId: this.planId, loadGeneration });
+    }
+  }
+
+  dismissSaveImpact(): void {
+    this.presenter.dismissSaveImpact();
   }
 
   openEdit(record: WorkRecord): void {

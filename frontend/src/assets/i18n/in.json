@@ -1934,7 +1934,10 @@
           "general": "सामान्य कार्य",
           "fertilizer": "उर्वरक",
           "unscheduled": "अनिश्चित"
-        }
+        },
+        "toggle_aria": "कार्य अनुसूची दृश्य",
+        "view_list": "अनुसूची",
+        "view_variance": "अंतर"
       }
     },
     "learn": {
@@ -2016,7 +2019,17 @@
         "name_required": "कार्य का नाम आवश्यक है"
       },
       "empty_plan_cta": "खेती योजना देखें",
-      "empty_task_schedule_cta": "कार्य योजना खोलें"
+      "empty_task_schedule_cta": "कार्य योजना खोलें",
+      "save_impact": {
+        "title": "योजना पर प्रभाव",
+        "task_label": "दर्ज कार्य",
+        "delta_days": "दिनों का अंतर",
+        "gdd_delta": "GDD अंतर",
+        "unrecorded": "अदर्ज कार्य",
+        "average_delta": "औसत दिन अंतर",
+        "learn_link": "Learn में समीक्षा करें",
+        "dismiss": "प्रभाव पूर्वावलोकन बंद करें"
+      }
     },
     "work_records": {
       "empty": "अभी तक कोई कार्य दर्ज नहीं",

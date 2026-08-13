@@ -22,6 +22,7 @@ interface PlanWorkViewEffectState {
 export type PlanWorkViewEffectDeps = TaskScheduleSyncViewEffectDeps & {
   scheduleHighlightClear: (itemId: number) => void;
   onQuickCompleteValidation: (itemId: number, fieldErrors: Record<string, string[]>) => void;
+  onLoadSaveImpact: (event: WorkRecordSheetSavedEvent) => void;
 };
 
 export function applyPlanWorkViewEffects<T extends PlanWorkViewEffectState>(
@@ -41,12 +42,14 @@ export function applyPlanWorkViewEffects<T extends PlanWorkViewEffectState>(
     next.pendingRecordSavedEvent !== prev.pendingRecordSavedEvent &&
     next.pendingRecordSavedEvent != null
   ) {
-    const patch = planWorkRecordSavedPatch(next.pendingRecordSavedEvent);
+    const event = next.pendingRecordSavedEvent;
+    const patch = planWorkRecordSavedPatch(event);
     state = { ...state, ...patch, pendingRecordSavedEvent: null };
     if (patch.highlightedItemId != null) {
       deps.scheduleHighlightClear(patch.highlightedItemId);
     }
     deps.onReload();
+    deps.onLoadSaveImpact(event);
   }
 
   if (
