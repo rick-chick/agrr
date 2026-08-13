@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
@@ -159,23 +158,5 @@ export class StageGddCalibrationProposalsViewComponent {
 
   statusLabel(status: LearnProposalApplicationStatus): string {
     return `plans.learn.application_progress.status.${status}`;
-  }
-
-  canApply(proposal: StageGddCalibrationProposal): boolean {
-    const status = this.proposalStatus(proposal);
-    return status === 'not_started' || status === 'applied_pending_confirmation';
-  }
-
-  canDismiss(proposal: StageGddCalibrationProposal): boolean {
-    return this.proposalStatus(proposal) === 'not_started';
-  }
-
-  dismissProposal(proposal: StageGddCalibrationProposal): void {
-    markStageGddProposalDismissed(this.planId, {
-      cropId: proposal.cropId,
-      stageId: proposal.stageId
-    });
-    this.cdr.markForCheck();
-    this.proposalProgressChanged.emit();
   }
 }

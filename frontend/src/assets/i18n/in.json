@@ -2066,8 +2066,10 @@
           "observe": "अवलोकन",
           "apply": "लागू करें",
           "reorganize": "पुनर्गठन",
-          "handoff": "हस्तांतरण"
+          "handoff": "हस्तांतरण",
+          "complete": "पूर्ण"
         },
+        "complete_message": "सीखने का लूप पूर्ण",
         "next_action": {
           "observe_workbench": "विचरण समीक्षा के लिए कार्यक्षेत्र खोलें",
           "observe_proposals": "मास्टर अपडेट प्रस्तावों की समीक्षा करें",
@@ -2075,7 +2077,9 @@
           "apply_bp_timing": "BP समय समायोजन लागू करें",
           "reorganize_placement": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
           "handoff_carryover": "सीखना आयात या हस्तांतरण करें",
-          "loop_complete_next_plan": "अगली योजना पर जाएँ"
+          "loop_complete_next_plan": "अगली योजना पर जाएँ",
+          "complete_reorganize": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
+          "complete_next_plan": "योजनाओं पर जाएँ"
         },
         "complete": {
           "title": "सीखने का लूप पूर्ण",

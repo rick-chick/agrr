@@ -1580,8 +1580,10 @@
           "observe": "Observe",
           "apply": "Apply",
           "reorganize": "Reorganize",
-          "handoff": "Handoff"
+          "handoff": "Handoff",
+          "complete": "Complete"
         },
+        "complete_message": "Learning loop complete",
         "next_action": {
           "observe_workbench": "Open workbench to review variance",
           "observe_proposals": "Review master update proposals",
@@ -1589,7 +1591,9 @@
           "apply_bp_timing": "Apply BP timing adjustment",
           "reorganize_placement": "Verify placement on workbench",
           "handoff_carryover": "Import or carry over learning",
-          "loop_complete_next_plan": "Continue to next plan"
+          "loop_complete_next_plan": "Continue to next plan",
+          "complete_reorganize": "Verify placement on workbench",
+          "complete_next_plan": "Go to plans"
         },
         "complete": {
           "title": "Learning loop complete",

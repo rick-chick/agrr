@@ -111,7 +111,8 @@ export function countLearnProposalApplicationStatuses(
         stageGddProposalProgressKey(proposal.cropId, proposal.stageId)
       ),
       (n) => (notStarted += n),
-      (n) => (appliedPending += n)
+      (n) => (appliedPending += n),
+      (n) => (resolved += n)
     );
   }
 
@@ -122,22 +123,26 @@ export function countLearnProposalApplicationStatuses(
         bpTimingProposalProgressKey(proposal.cropId, proposal.category)
       ),
       (n) => (notStarted += n),
-      (n) => (appliedPending += n)
+      (n) => (appliedPending += n),
+      (n) => (resolved += n)
     );
   }
 
-  return { notStarted, appliedPending };
+  return { notStarted, appliedPending, resolved };
 }
 
 function tallyProposalStatus(
   status: LearnProposalApplicationStatus,
   addNotStarted: (count: number) => void,
-  addAppliedPending: (count: number) => void
+  addAppliedPending: (count: number) => void,
+  addResolved: (count: number) => void
 ): void {
   if (status === 'not_started') {
     addNotStarted(1);
   } else if (status === 'applied_pending_confirmation' || status === 'confirmed') {
     addAppliedPending(1);
+  } else if (isLearnProposalResolved(status)) {
+    addResolved(1);
   }
 }
 

@@ -14,8 +14,8 @@ import {
   markBpTimingProposalDismissed,
   markStageGddProposalAppliedPending,
   markStageGddProposalDismissed,
-  markAllConfirmedProposalsDone,
   markLearnProposalConfirmed,
+  markLearnProposalDismissed,
   stageGddProposalProgressKey
 } from './learn-proposal-application-progress';
 
@@ -389,7 +389,7 @@ describe('buildLearnLoopPhaseResult', () => {
       ]
     );
 
-    expect(counts).toEqual({ notStarted: 1, appliedPending: 1 });
+    expect(counts).toEqual({ notStarted: 1, appliedPending: 1, resolved: 1 });
   });
 
   it('returns loop complete next action when all proposals are done or dismissed', () => {

@@ -96,7 +96,6 @@ const initialControl: PlanLearnViewState = {
         } @else {
           <app-plan-learn-loop-progress
             [planId]="planId"
-            [progressRevision]="proposalProgressRevision"
             [actionRequiredItems]="control.varianceSummary?.action_required_items ?? []"
             [stageGddProposals]="control.stageGddProposals"
             [blueprintTimingProposals]="control.blueprintTimingProposals"
@@ -309,7 +308,6 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
   }
 
   private _control: PlanLearnViewState = initialControl;
-  proposalProgressRevision = 0;
   get control(): PlanLearnViewState {
     return this._control;
   }

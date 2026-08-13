@@ -146,21 +146,7 @@ export function markLearnProposalConfirmed(planId: number, proposalKey: string):
 }
 
 export function markLearnProposalDismissed(planId: number, proposalKey: string): void {
-  setProposalStatus(planId, proposalKey, 'dismissed');
-}
-
-export function markStageGddProposalDismissed(
-  planId: number,
-  input: { cropId: number; stageId: number }
-): void {
-  markLearnProposalDismissed(planId, stageGddProposalProgressKey(input.cropId, input.stageId));
-}
-
-export function markBpTimingProposalDismissed(
-  planId: number,
-  input: { cropId: number; category: string }
-): void {
-  markLearnProposalDismissed(planId, bpTimingProposalProgressKey(input.cropId, input.category));
+  dismissProposalIfNotStarted(planId, proposalKey);
 }
 
 export function isLearnProposalResolved(status: LearnProposalApplicationStatus): boolean {

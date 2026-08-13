@@ -2704,8 +2704,10 @@
           "observe": "観測",
           "apply": "適用",
           "reorganize": "再編成",
-          "handoff": "引き継ぎ"
+          "handoff": "引き継ぎ",
+          "complete": "完了"
         },
+        "complete_message": "学習ループ完了",
         "next_action": {
           "observe_workbench": "作業台で乖離を確認",
           "observe_proposals": "マスタ更新提案を確認",
@@ -2713,7 +2715,9 @@
           "apply_bp_timing": "BP タイミング調整を適用",
           "reorganize_placement": "作業台で配置を確認",
           "handoff_carryover": "学習をインポートまたは引き継ぎ",
-          "loop_complete_next_plan": "次の計画へ進む"
+          "loop_complete_next_plan": "次の計画へ進む",
+          "complete_reorganize": "作業台で配置を確認",
+          "complete_next_plan": "計画一覧へ"
         },
         "complete": {
           "title": "学習ループ完了",

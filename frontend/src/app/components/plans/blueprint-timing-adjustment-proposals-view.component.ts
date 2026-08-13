@@ -106,10 +106,7 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
 
   private refreshVersion = 0;
 
-  constructor(
-    private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
-  ) {}
+  constructor(private readonly router: Router) {}
 
   proposalKey(proposal: BlueprintTimingAdjustmentProposal): string {
     return `${proposal.cropId}-${proposal.category}`;
@@ -166,23 +163,5 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
 
   statusLabel(status: LearnProposalApplicationStatus): string {
     return `plans.learn.application_progress.status.${status}`;
-  }
-
-  canApply(proposal: BlueprintTimingAdjustmentProposal): boolean {
-    const status = this.proposalStatus(proposal);
-    return status === 'not_started' || status === 'applied_pending_confirmation';
-  }
-
-  canDismiss(proposal: BlueprintTimingAdjustmentProposal): boolean {
-    return this.proposalStatus(proposal) === 'not_started';
-  }
-
-  dismissProposal(proposal: BlueprintTimingAdjustmentProposal): void {
-    markBpTimingProposalDismissed(this.planId, {
-      cropId: proposal.cropId,
-      category: proposal.category
-    });
-    this.cdr.markForCheck();
-    this.proposalProgressChanged.emit();
   }
 }

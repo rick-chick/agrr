@@ -122,6 +122,10 @@ export class PlanLearnLoopProgressComponent {
     return this.phaseResult.nextAction;
   }
 
+  get secondaryAction(): LearnLoopNextAction | null | undefined {
+    return this.phaseResult.secondaryAction;
+  }
+
   private get phaseInput(): ReturnType<typeof buildLearnLoopPhaseInputFromState> {
     void this.progressRefreshVersion;
     return buildLearnLoopPhaseInputFromState({
