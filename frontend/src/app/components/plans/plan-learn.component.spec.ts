@@ -293,6 +293,12 @@ describe('PlanLearnComponent post_master follow-up', () => {
   let scheduleUseCase: { execute: ReturnType<typeof vi.fn> };
   let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
   let blueprintTimingUseCase: { execute: ReturnType<typeof vi.fn> };
+  let carryoverUseCase: {
+    loadFarmContext: ReturnType<typeof vi.fn>;
+    loadLearningSnapshot: ReturnType<typeof vi.fn>;
+    loadCarryoverPreview: ReturnType<typeof vi.fn>;
+    importLearning: ReturnType<typeof vi.fn>;
+  };
   let presenter: PlanLearnPresenter;
 
   beforeEach(async () => {
@@ -300,6 +306,12 @@ describe('PlanLearnComponent post_master follow-up', () => {
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };
+    carryoverUseCase = {
+      loadFarmContext: vi.fn().mockReturnValue(of([])),
+      loadLearningSnapshot: vi.fn().mockReturnValue(of(null)),
+      loadCarryoverPreview: vi.fn(),
+      importLearning: vi.fn()
+    };
 
     TestBed.overrideComponent(PlanLearnComponent, {
       set: {
@@ -311,6 +323,7 @@ describe('PlanLearnComponent post_master follow-up', () => {
             provide: LoadBlueprintTimingAdjustmentProposalsUseCase,
             useValue: blueprintTimingUseCase
           },
+          { provide: LoadPlanLearnCarryoverUseCase, useValue: carryoverUseCase },
           PlanLearnPresenter
         ]
       }
