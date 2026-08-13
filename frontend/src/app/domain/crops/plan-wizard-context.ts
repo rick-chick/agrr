@@ -1,14 +1,26 @@
-export type PlanWizardReturnTab = 'work' | 'task_schedule';
+export type PlanWizardReturnTab = 'work' | 'task_schedule' | 'learn';
 
 export function parsePlanWizardReturnTab(raw: string | null | undefined): PlanWizardReturnTab {
-  return raw === 'work' ? 'work' : 'task_schedule';
+  if (raw === 'work') {
+    return 'work';
+  }
+  if (raw === 'learn') {
+    return 'learn';
+  }
+  return 'task_schedule';
 }
 
 export function planWizardReturnPath(
   planId: number,
   tab: PlanWizardReturnTab
 ): (string | number)[] {
-  return tab === 'work' ? ['/plans', planId, 'work'] : ['/plans', planId, 'task_schedule'];
+  if (tab === 'work') {
+    return ['/plans', planId, 'work'];
+  }
+  if (tab === 'learn') {
+    return ['/plans', planId, 'learn'];
+  }
+  return ['/plans', planId, 'task_schedule'];
 }
 
 export interface CropPlanWizardQueryParams {

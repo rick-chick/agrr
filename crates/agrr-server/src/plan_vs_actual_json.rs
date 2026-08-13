@@ -2,6 +2,7 @@
 
 use agrr_domain::cultivation_plan::dtos::{
     PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+    StageGddCalibrationProposalRead,
 };
 use serde_json::{json, Value};
 
@@ -15,6 +16,24 @@ pub fn summary_to_json_body(summary: PlanVsActualSummaryRead) -> Value {
             .iter()
             .map(item_payload)
             .collect::<Vec<_>>(),
+        "stage_gdd_calibration_proposals": summary
+            .stage_gdd_calibration_proposals
+            .iter()
+            .map(stage_gdd_calibration_proposal_payload)
+            .collect::<Vec<_>>(),
+    })
+}
+
+fn stage_gdd_calibration_proposal_payload(
+    proposal: &StageGddCalibrationProposalRead,
+) -> Value {
+    json!({
+        "crop_id": proposal.crop_id,
+        "crop_name": proposal.crop_name,
+        "stage_order": proposal.stage_order,
+        "stage_name": proposal.stage_name,
+        "average_gdd_delta": proposal.average_gdd_delta,
+        "recorded_item_count": proposal.recorded_item_count,
     })
 }
 
@@ -73,6 +92,14 @@ mod tests {
                 gdd_at_actual: Some(130.5),
                 gdd_delta: Some(10.5),
             }],
+            stage_gdd_calibration_proposals: vec![StageGddCalibrationProposalRead {
+                crop_id: 42,
+                crop_name: "Tomato".into(),
+                stage_order: 1,
+                stage_name: "Vegetative".into(),
+                average_gdd_delta: 10.5,
+                recorded_item_count: 2,
+            }],
         });
 
         assert_eq!(7, body["plan_id"].as_i64().unwrap());
@@ -80,5 +107,11 @@ mod tests {
         assert_eq!(3.5, body["categories"][0]["average_delta_days"].as_f64().unwrap());
         assert_eq!(7, body["top_variance_items"][0]["delta_days"].as_i64().unwrap());
         assert_eq!(130.5, body["top_variance_items"][0]["gdd_at_actual"].as_f64().unwrap());
+        assert_eq!(
+            10.5,
+            body["stage_gdd_calibration_proposals"][0]["average_gdd_delta"]
+                .as_f64()
+                .unwrap()
+        );
     }
 }
