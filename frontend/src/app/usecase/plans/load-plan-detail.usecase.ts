@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
+import { filterVarianceActionItemsOnGantt } from '../../domain/plans/filter-variance-action-items';
 import { LoadPlanDetailInputDto } from './load-plan-detail.dtos';
 import { LoadPlanDetailInputPort } from './load-plan-detail.input-port';
 import {
@@ -19,13 +21,25 @@ export class LoadPlanDetailUseCase implements LoadPlanDetailInputPort {
   execute(dto: LoadPlanDetailInputDto): void {
     forkJoin({
       plan: this.planGateway.fetchPlan(dto.planId),
-      planData: this.planGateway.fetchPlanData(dto.planId)
+      planData: this.planGateway.fetchPlanData(dto.planId),
+      varianceSummary: this.planGateway.getPlanVsActualSummary(dto.planId).pipe(
+        catchError(() => of(null))
+      )
     }).subscribe({
-      next: (data) =>
+      next: (data) => {
+        const cultivations = data.planData.data.cultivations ?? [];
+        const varianceActionItemsOnGantt = data.varianceSummary
+          ? filterVarianceActionItemsOnGantt(
+              data.varianceSummary.action_required_items ?? [],
+              cultivations
+            )
+          : [];
         this.outputPort.present({
           plan: data.plan,
-          planData: data.planData
-        }),
+          planData: data.planData,
+          varianceActionItemsOnGantt
+        });
+      },
       error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }

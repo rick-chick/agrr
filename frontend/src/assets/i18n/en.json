@@ -1456,7 +1456,17 @@
       }
     },
     "learn": {
-      "page_title": "Review — {{name}}"
+      "page_title": "Review — {{name}}",
+      "action_proposals": {
+        "title": "Schedule variance needs your review",
+        "manual_hint": "Adjust or re-optimize only after you confirm on the workbench. No automatic changes are made.",
+        "open_workbench": "Open workbench",
+        "exceedance": {
+          "days": "Day variance exceeded threshold",
+          "gdd": "GDD variance exceeded threshold",
+          "both": "Day and GDD variance exceeded thresholds"
+        }
+      }
     },
     "work": {
       "page_title": "Work log — {{name}}",
@@ -1777,6 +1787,11 @@
       "confirms": {
         "optimize": "Do you want to optimize this plan?",
         "copy_next_year": "Copy this plan to next year ({{year}})?"
+      },
+      "variance_action_banner": {
+        "message": "{{count}} task exceeded the variance threshold on this plan",
+        "manual_hint": "Review the proposals and adjust or re-optimize manually when ready.",
+        "review_link": "Review proposals on the Review tab"
       }
     }
   },

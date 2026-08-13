@@ -557,6 +557,16 @@ fn get_plan_vs_actual_summary_and_task_schedule_embed_variance_fields() {
     assert!(top_items[0]["gdd_at_actual"].is_number());
     assert!(top_items[0]["gdd_delta"].is_number());
 
+    let action_items = summary["action_required_items"]
+        .as_array()
+        .expect("action_required_items");
+    assert_eq!(1, action_items.len());
+    assert_eq!(
+        seed.task_schedule_item_id,
+        action_items[0]["item_id"].as_i64().unwrap()
+    );
+    assert_eq!("days", action_items[0]["exceedance_kind"].as_str().unwrap());
+
     let (schedule_status, schedule_body) = status_and_body(client.get(
         &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
         Some(&session_id),

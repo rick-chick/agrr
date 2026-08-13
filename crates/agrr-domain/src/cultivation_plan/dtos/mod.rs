@@ -171,7 +171,8 @@ pub use task_schedule_generation_context::TaskScheduleGenerationContext;
 pub use task_schedule_item_amount_snapshot::TaskScheduleItemAmountSnapshot;
 pub use task_schedule_item_deletion_undo_schedule_row::TaskScheduleItemDeletionUndoScheduleRow;
 pub use plan_vs_actual::{
-    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+    PlanVarianceActionItemRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
+    PlanVsActualSummaryRead,
 };
 pub use plan_variance_learning_snapshot::PlanVarianceLearningSnapshotRead;
 pub use task_schedule_timeline::TaskScheduleTimeline;

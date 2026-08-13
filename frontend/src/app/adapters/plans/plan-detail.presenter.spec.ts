@@ -2,7 +2,6 @@ import { PlanDetailPresenter } from './plan-detail.presenter';
 import { PlanDetailView, PlanDetailViewState } from '../../components/plans/plan-detail.view';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
-import { PlanDetailDataDto } from '../../usecase/plans/load-plan-detail.dtos';
 
 describe('PlanDetailPresenter', () => {
   const plan: PlanSummary = { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 };
@@ -29,7 +28,13 @@ describe('PlanDetailPresenter', () => {
     let lastControl: PlanDetailViewState | null = null;
     const view: PlanDetailView = {
       get control(): PlanDetailViewState {
-        return lastControl ?? { loading: true, error: null, plan: null, planData: null };
+        return lastControl ?? {
+          loading: true,
+          error: null,
+          plan: null,
+          planData: null,
+          varianceActionItemsOnGantt: []
+        };
       },
       set control(value: PlanDetailViewState) {
         lastControl = value;
@@ -38,7 +43,7 @@ describe('PlanDetailPresenter', () => {
 
     const presenter = new PlanDetailPresenter();
     presenter.setView(view);
-    presenter.present({ plan, planData } as PlanDetailDataDto);
+    presenter.present({ plan, planData, varianceActionItemsOnGantt: [] });
 
     expect(lastControl).not.toBeNull();
     expect(lastControl!.loading).toBe(false);
@@ -51,7 +56,13 @@ describe('PlanDetailPresenter', () => {
     let lastControl: PlanDetailViewState | null = null;
     const view: PlanDetailView = {
       get control(): PlanDetailViewState {
-        return lastControl ?? { loading: true, error: null, plan: null, planData: null };
+        return lastControl ?? {
+          loading: true,
+          error: null,
+          plan: null,
+          planData: null,
+          varianceActionItemsOnGantt: []
+        };
       },
       set control(value: PlanDetailViewState) {
         lastControl = value;

@@ -18,7 +18,8 @@ export class PlanDetailPresenter implements LoadPlanDetailOutputPort {
       loading: false,
       error: null,
       plan: dto.plan,
-      planData: dto.planData
+      planData: dto.planData,
+      varianceActionItemsOnGantt: dto.varianceActionItemsOnGantt
     };
   }
 
@@ -28,7 +29,8 @@ export class PlanDetailPresenter implements LoadPlanDetailOutputPort {
       loading: false,
       error: dto.message,
       plan: null,
-      planData: null
+      planData: null,
+      varianceActionItemsOnGantt: []
     };
   }
 }

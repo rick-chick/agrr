@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { PlanGanttClimateShellComponent } from './plan-gantt-climate-shell.component';
+import { VarianceActionBannerComponent } from './variance-action-banner.component';
 import { PlanDetailView, PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
 import { PlanDetailPresenter, PLAN_DETAIL_PROVIDERS } from '../../usecase/plans/plan-detail.providers';
@@ -14,7 +15,8 @@ const initialControl: PlanDetailViewState = {
   loading: true,
   error: null,
   plan: null,
-  planData: null
+  planData: null,
+  varianceActionItemsOnGantt: []
 };
 
 @Component({
@@ -24,7 +26,8 @@ const initialControl: PlanDetailViewState = {
     CommonModule,
     PlanGanttClimateShellComponent,
     TranslateModule,
-    PlanPlanContextHeaderComponent
+    PlanPlanContextHeaderComponent,
+    VarianceActionBannerComponent
   ],
   providers: [
     ...PLAN_DETAIL_PROVIDERS,
@@ -46,6 +49,10 @@ const initialControl: PlanDetailViewState = {
         </div>
       } @else if (control.plan) {
         @if (control.planData) {
+          <app-variance-action-banner
+            [planId]="planId"
+            [items]="control.varianceActionItemsOnGantt"
+          />
           <div class="plan-detail__body plan-detail-surface">
             <app-plan-gantt-climate-shell
               [data]="control.planData"

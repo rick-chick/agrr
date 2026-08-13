@@ -6,6 +6,7 @@ use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
     TaskScheduleTimelineFieldRead, TaskScheduleTimelineWorkRecordSummaryRead,
 };
 use crate::cultivation_plan::mappers::plan_vs_actual_mapper::PlanVsActualMapper;
+use crate::cultivation_plan::policies::plan_variance_threshold_policy::VarianceExceedanceKind;
 use time::Date;
 
 fn sample_item(
@@ -144,4 +145,10 @@ fn summary_counts_unrecorded_and_top_variance() {
     assert_eq!(2, summary.top_variance_items.len());
     assert_eq!(1, summary.top_variance_items[0].item_id);
     assert_eq!(Some(7), summary.top_variance_items[0].delta_days);
+    assert_eq!(1, summary.action_required_items.len());
+    assert_eq!(1, summary.action_required_items[0].item_id);
+    assert_eq!(
+        VarianceExceedanceKind::Days,
+        summary.action_required_items[0].exceedance_kind
+    );
 }
