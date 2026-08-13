@@ -1,4 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import {
+  markLearnProposalConfirmed,
+  markStageGddProposalAppliedPending,
+  markAllConfirmedProposalsDone
+} from '../../domain/plans/learn-proposal-application-progress';
 import { buildLearnApplicationProgressItems } from './plan-learn-application-progress-view.component';
 
 describe('buildLearnApplicationProgressItems', () => {
@@ -51,5 +56,50 @@ describe('buildLearnApplicationProgressItems', () => {
       title: 'Tomato — general',
       status: 'not_started'
     });
+  });
+
+  it('reflects confirmed and done statuses from session storage', () => {
+    const key = 'stage_gdd:1:2';
+    markStageGddProposalAppliedPending(7, { cropId: 1, stageId: 2 });
+    markLearnProposalConfirmed(7, key);
+
+    const confirmedItems = buildLearnApplicationProgressItems(
+      7,
+      [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 2,
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageGddDelta: 10,
+          recordedItemCount: 3,
+          currentRequiredGdd: 100,
+          proposedRequiredGdd: 110
+        }
+      ],
+      []
+    );
+    expect(confirmedItems[0]?.status).toBe('confirmed');
+
+    markAllConfirmedProposalsDone(7);
+    const doneItems = buildLearnApplicationProgressItems(
+      7,
+      [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 2,
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageGddDelta: 10,
+          recordedItemCount: 3,
+          currentRequiredGdd: 100,
+          proposedRequiredGdd: 110
+        }
+      ],
+      []
+    );
+    expect(doneItems[0]?.status).toBe('done');
   });
 });

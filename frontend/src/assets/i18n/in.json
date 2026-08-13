@@ -2012,7 +2012,9 @@
         },
         "status": {
           "not_started": "लागू नहीं",
-          "applied_pending_confirmation": "लागू — पुष्टि लंबित"
+          "applied_pending_confirmation": "लागू — पुष्टि लंबित",
+          "confirmed": "पुष्टि की गई — पुनर्गठन प्रगति में",
+          "done": "पूर्ण"
         }
       },
       "post_master": {

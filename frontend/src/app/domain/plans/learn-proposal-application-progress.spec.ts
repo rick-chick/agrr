@@ -3,8 +3,12 @@ import {
   bpTimingProposalProgressKey,
   buildLearnPostMasterNavigation,
   clearLearnPostMasterPayload,
+  confirmLearnProposalFromPostMaster,
+  markAllConfirmedProposalsDone,
   markBpTimingProposalAppliedPending,
+  markLearnProposalConfirmed,
   markStageGddProposalAppliedPending,
+  proposalKeyFromPostMasterPayload,
   readLearnPostMasterPayload,
   readLearnProposalApplicationProgress,
   resolveLearnProposalApplicationStatus,
@@ -56,6 +60,48 @@ describe('learn proposal application progress storage', () => {
     expect(
       resolveLearnProposalApplicationStatus(PLAN_ID, bpTimingProposalProgressKey(4, 'fertilizer'))
     ).toBe('applied_pending_confirmation');
+  });
+
+  it('confirms proposal from post_master payload after applied_pending_confirmation', () => {
+    const payload: LearnPostMasterPayload = {
+      kind: 'stage_gdd',
+      cropId: 1,
+      cropName: 'Tomato',
+      stageId: 2,
+      stageName: 'Vegetative',
+      appliedRequiredGdd: 150
+    };
+    markStageGddProposalAppliedPending(PLAN_ID, { cropId: 1, stageId: 2 });
+
+    confirmLearnProposalFromPostMaster(PLAN_ID, payload);
+
+    expect(proposalKeyFromPostMasterPayload(payload)).toBe(stageGddProposalProgressKey(1, 2));
+    expect(
+      resolveLearnProposalApplicationStatus(PLAN_ID, stageGddProposalProgressKey(1, 2))
+    ).toBe('confirmed');
+  });
+
+  it('marks confirmed proposals as done', () => {
+    const key = stageGddProposalProgressKey(1, 2);
+    markStageGddProposalAppliedPending(PLAN_ID, { cropId: 1, stageId: 2 });
+    markLearnProposalConfirmed(PLAN_ID, key);
+
+    markAllConfirmedProposalsDone(PLAN_ID);
+
+    expect(resolveLearnProposalApplicationStatus(PLAN_ID, key)).toBe('done');
+  });
+
+  it('builds proposal key from bp_timing post_master payload', () => {
+    const payload: LearnPostMasterPayload = {
+      kind: 'bp_timing',
+      cropId: 4,
+      cropName: 'Tomato',
+      category: 'fertilizer'
+    };
+
+    expect(proposalKeyFromPostMasterPayload(payload)).toBe(
+      bpTimingProposalProgressKey(4, 'fertilizer')
+    );
   });
 });
 

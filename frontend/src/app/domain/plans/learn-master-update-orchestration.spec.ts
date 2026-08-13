@@ -1,9 +1,11 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
+  areAllLearnOrchestrationStepsComplete,
   buildLearningOrchestrationNavigation,
   buildPlanDetailAdjustNavigation,
   buildPlanTaskScheduleOrchestrationNavigation,
   clearLearnOrchestrationReturnToLearn,
+  hasActiveLearnMasterUpdateFlow,
   hasPendingMasterUpdateConfirmation,
   isTaskScheduleOrchestrationComplete,
   learnOrchestrationReturnStorageKey,
@@ -15,8 +17,11 @@ import {
   storeLearnOrchestrationReturnToLearn
 } from './learn-master-update-orchestration';
 import {
+  markLearnProposalConfirmed,
   markStageGddProposalAppliedPending,
-  readLearnProposalApplicationProgress
+  readLearnProposalApplicationProgress,
+  resolveLearnProposalApplicationStatus,
+  stageGddProposalProgressKey
 } from './learn-proposal-application-progress';
 
 describe('learn-master-update-orchestration', () => {
@@ -118,6 +123,35 @@ describe('learn-master-update-orchestration', () => {
 
     it('is false when no pending confirmations exist', () => {
       expect(hasPendingMasterUpdateConfirmation(9)).toBe(false);
+    });
+  });
+
+  describe('hasActiveLearnMasterUpdateFlow', () => {
+    it('is true when any proposal is confirmed', () => {
+      markLearnProposalConfirmed(9, stageGddProposalProgressKey(1, 2));
+      expect(hasActiveLearnMasterUpdateFlow(9)).toBe(true);
+    });
+
+    it('is false when all proposals are done', () => {
+      markLearnProposalConfirmed(9, stageGddProposalProgressKey(1, 2));
+      markLearnOrchestrationStepComplete(9, 'placement');
+      markLearnOrchestrationStepComplete(9, 'regenerate');
+      markLearnOrchestrationStepComplete(9, 'sync_verify');
+      expect(hasActiveLearnMasterUpdateFlow(9)).toBe(false);
+      expect(resolveLearnProposalApplicationStatus(9, stageGddProposalProgressKey(1, 2))).toBe(
+        'done'
+      );
+    });
+  });
+
+  describe('areAllLearnOrchestrationStepsComplete', () => {
+    it('is true only when placement, regenerate, and sync_verify are complete', () => {
+      expect(areAllLearnOrchestrationStepsComplete(5)).toBe(false);
+      markLearnOrchestrationStepComplete(5, 'placement');
+      markLearnOrchestrationStepComplete(5, 'regenerate');
+      expect(areAllLearnOrchestrationStepsComplete(5)).toBe(false);
+      markLearnOrchestrationStepComplete(5, 'sync_verify');
+      expect(areAllLearnOrchestrationStepsComplete(5)).toBe(true);
     });
   });
 });

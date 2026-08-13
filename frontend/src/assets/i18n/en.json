@@ -1526,7 +1526,9 @@
         },
         "status": {
           "not_started": "Not applied",
-          "applied_pending_confirmation": "Applied — pending confirmation"
+          "applied_pending_confirmation": "Applied — pending confirmation",
+          "confirmed": "Confirmed — reorganization in progress",
+          "done": "Complete"
         }
       },
       "post_master": {
