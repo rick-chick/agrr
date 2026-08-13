@@ -2,7 +2,6 @@ import { PlanDetailPresenter } from './plan-detail.presenter';
 import { PlanDetailView, PlanDetailViewState } from '../../components/plans/plan-detail.view';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
-import { PlanDetailDataDto } from '../../usecase/plans/load-plan-detail.dtos';
 
 describe('PlanDetailPresenter', () => {
   const plan: PlanSummary = { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 };

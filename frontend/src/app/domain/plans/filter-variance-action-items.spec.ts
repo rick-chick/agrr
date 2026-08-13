@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  filterVarianceActionItemsOnGantt,
-  uniqueFieldCultivationIds
-} from './filter-variance-action-items';
+import { filterVarianceActionItemsOnGantt } from './filter-variance-action-items';
 import type { PlanVarianceActionItem } from './plan-vs-actual-summary';
 
 function actionItem(
@@ -39,17 +36,5 @@ describe('filterVarianceActionItemsOnGantt', () => {
     expect(
       filterVarianceActionItemsOnGantt([actionItem()], [{ id: 999 } as never])
     ).toEqual([]);
-  });
-});
-
-describe('uniqueFieldCultivationIds', () => {
-  it('deduplicates field cultivation ids preserving order', () => {
-    const items = [
-      actionItem({ field_cultivation_id: 100 }),
-      actionItem({ item_id: 2, field_cultivation_id: 200 }),
-      actionItem({ item_id: 3, field_cultivation_id: 100 })
-    ];
-
-    expect(uniqueFieldCultivationIds(items)).toEqual([100, 200]);
   });
 });

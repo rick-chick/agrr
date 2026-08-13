@@ -7,9 +7,7 @@ use crate::cultivation_plan::dtos::plan_vs_actual::{
 use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
     TaskScheduleTimelineScheduleItemRead, TaskScheduleTimelineSnapshot,
 };
-use crate::cultivation_plan::policies::plan_variance_threshold_policy::{
-    exceedance_kind, VarianceExceedanceKind,
-};
+use crate::cultivation_plan::policies::plan_variance_threshold_policy::exceedance_kind;
 use time::{format_description::well_known::Iso8601, Date};
 
 pub const DEFAULT_TOP_VARIANCE_LIMIT: usize = 5;
