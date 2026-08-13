@@ -34,13 +34,3 @@ export function cropPlanWizardQueryParams(
 ): CropPlanWizardQueryParams {
   return { fromPlan: fromPlanId, returnTo: returnTab };
 }
-
-export function planLearnPostMasterReturnNavigation(planId: number): {
-  commands: (string | number)[];
-  queryParams: { followUp: 'post_master' };
-} {
-  return {
-    commands: planWizardReturnPath(planId, 'learn'),
-    queryParams: { followUp: 'post_master' }
-  };
-}
