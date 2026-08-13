@@ -8,12 +8,18 @@ import { PlanWorkRecordsComponent } from './plan-work-records.component';
 import { PlanWorkRecordsViewState } from './plan-work-records.view';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
+import { emptyPlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
+import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import {
   WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO,
   WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_HISTORY,
   WORK_RECORD_PHOTO_THUMB_WIDTH_HISTORY,
   WORK_RECORD_PHOTO_THUMB_WIDTH_PX_HISTORY
 } from '../../domain/plans/work-record-photo.constants';
+
+const SAVE_IMPACT_DEFAULTS = {
+  ...emptyPlanSaveImpactViewFields
+};
 
 function createPlanRouteMock(planId: string) {
   let currentPlanId = planId;
@@ -46,14 +52,24 @@ describe('PlanWorkRecordsComponent', () => {
   let component: PlanWorkRecordsComponent;
   let fixture: ComponentFixture<PlanWorkRecordsComponent>;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockPresenter: { setView: ReturnType<typeof vi.fn> };
+  let loadSummaryUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockPresenter: {
+    setView: ReturnType<typeof vi.fn>;
+    queueSaveImpactAfterSave: ReturnType<typeof vi.fn>;
+    dismissSaveImpact: ReturnType<typeof vi.fn>;
+  };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   let mockActivatedRoute: ReturnType<typeof createPlanRouteMock>;
 
   beforeEach(async () => {
     loadUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
+    loadSummaryUseCase = { execute: vi.fn() };
+    mockPresenter = {
+      setView: vi.fn(),
+      queueSaveImpactAfterSave: vi.fn(() => 1),
+      dismissSaveImpact: vi.fn()
+    };
     cdr = { markForCheck: vi.fn() };
     mockActivatedRoute = createPlanRouteMock('7');
     HTMLDialogElement.prototype.showModal = vi.fn();
@@ -64,6 +80,7 @@ describe('PlanWorkRecordsComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadWorkRecordsUseCase, useValue: loadUseCase },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: loadSummaryUseCase },
           { provide: PlanWorkRecordsPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr },
           {
@@ -106,6 +123,7 @@ describe('PlanWorkRecordsComponent', () => {
 
   it('implements View control getter/setter', () => {
     const state: PlanWorkRecordsViewState = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: null,
@@ -119,6 +137,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('uses unified plan context header with plan list L2 breadcrumb', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -135,6 +154,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('renders grouped work records when data is loaded', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -177,6 +197,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('formats month and date labels for the active locale', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -218,6 +239,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('renders unified empty state with link to today tab', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -236,6 +258,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('renders translated API error instead of raw i18n key', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: 'common.api_error.generic',
       plan: null,
@@ -262,6 +285,7 @@ describe('PlanWorkRecordsComponent', () => {
 
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: 'common.api_error.generic',
       plan: null,
@@ -297,6 +321,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('places photo thumbnails below record meta in a single column', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -357,6 +382,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('renders field and crop name when present on the record', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -398,6 +424,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('renders up to three photo thumbnails for records with photos', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -475,6 +502,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('renders history photo thumbnails with landscape 4:3 aspect ratio and lazy loading', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -534,6 +562,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('does not render photo thumbnails when record has no photos', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -572,6 +601,7 @@ describe('PlanWorkRecordsComponent', () => {
     const openEditSpy = vi.spyOn(component, 'openEdit');
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -626,6 +656,7 @@ describe('PlanWorkRecordsComponent', () => {
   it('closes lightbox when close button is clicked', () => {
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -693,6 +724,7 @@ describe('PlanWorkRecordsComponent', () => {
 
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },
@@ -779,6 +811,7 @@ describe('PlanWorkRecordsComponent', () => {
 
     fixture.detectChanges();
     component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
       loading: false,
       error: null,
       plan: { id: 7, name: 'Field plan' },

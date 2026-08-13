@@ -25,6 +25,7 @@ export interface WorkRecordSheetTaskChip {
 export interface WorkRecordSheetSavedEvent {
   workRecord: WorkRecord;
   mode: WorkRecordSheetMode;
+  saveToastContext?: WorkRecordSaveToastContext | null;
 }
 
 export interface WorkRecordSheetExistingPhoto {
