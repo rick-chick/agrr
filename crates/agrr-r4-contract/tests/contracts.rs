@@ -1025,6 +1025,7 @@ fn patch_plan_variance_learning_invalid_status_returns_unprocessable() {
 }
 
 #[test]
+fn get_task_schedule_includes_compat_milestones_labels_and_week_days() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
