@@ -1,0 +1,22 @@
+.learn-orchestration-banner {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-info) 35%, var(--color-border-subtle));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-info) 8%, var(--color-surface-raised));
+}
+
+.learn-orchestration-banner__message {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+}
+
+.learn-orchestration-banner__hint {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.learn-orchestration-banner__work-link {
+  display: inline-flex;
+}

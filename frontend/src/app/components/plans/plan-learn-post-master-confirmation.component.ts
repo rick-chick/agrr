@@ -3,6 +3,7 @@ import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { LearnPostMasterPayload } from '../../domain/plans/learn-proposal-application-progress';
+import { buildPlanDetailAdjustNavigation } from '../../domain/plans/learn-master-update-orchestration';
 
 @Component({
   selector: 'app-plan-learn-post-master-confirmation',
@@ -42,7 +43,11 @@ import type { LearnPostMasterPayload } from '../../domain/plans/learn-proposal-a
             </div>
           }
         </dl>
-        <a class="btn-primary learn-post-master__cta" [routerLink]="workbenchLink">
+        <a
+          class="btn-primary learn-post-master__cta"
+          [routerLink]="workbenchLink.commands"
+          [queryParams]="workbenchLink.queryParams"
+        >
           {{ 'plans.learn.post_master.open_workbench' | translate }}
         </a>
       </section>
@@ -54,8 +59,8 @@ export class PlanLearnPostMasterConfirmationComponent {
   @Input({ required: true }) planId!: number;
   @Input() payload: LearnPostMasterPayload | null = null;
 
-  get workbenchLink(): (string | number)[] {
-    return ['/plans', this.planId];
+  get workbenchLink(): ReturnType<typeof buildPlanDetailAdjustNavigation> {
+    return buildPlanDetailAdjustNavigation(this.planId);
   }
 
   formatRequiredGdd(value: number | null | undefined): string {

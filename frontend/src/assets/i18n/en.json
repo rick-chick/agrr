@@ -1454,6 +1454,17 @@
         "view_list": "Schedule",
         "view_variance": "Variance",
         "open_workbench": "Open workbench"
+      },
+      "orchestration": {
+        "regenerate": {
+          "message": "Regenerate recommended after master update",
+          "hint": "Use the sync banner below to regenerate task plans. Confirm when prompted."
+        },
+        "sync_verify": {
+          "message": "Verify task schedule sync",
+          "hint": "Check sync status below. If generation failed, retry from the work screen."
+        },
+        "work_retry": "Open work screen to retry"
       }
     },
     "learn": {
@@ -1525,6 +1536,32 @@
         "required_gdd_label": "Required GDD",
         "category_label": "Category",
         "open_workbench": "Verify placement on workbench"
+      },
+      "next_steps": {
+        "title": "Next steps after master update",
+        "lead": "Follow these steps to refresh your plan after master changes.",
+        "step_label": {
+          "1": "Step 1",
+          "2": "Step 2",
+          "3": "Step 3"
+        },
+        "placement": {
+          "title": "Verify placement and re-optimize",
+          "description": "Open the workbench, adjust placements if needed, and run re-optimization."
+        },
+        "regenerate": {
+          "title": "Regenerate task schedule",
+          "description": "Rebuild the work schedule from the updated master data."
+        },
+        "sync_verify": {
+          "title": "Verify task schedule sync",
+          "description": "Confirm generation completed and sync status is healthy."
+        },
+        "cta": {
+          "placement": "Open workbench",
+          "regenerate": "Open task schedule",
+          "sync_verify": "Check sync"
+        }
       }
     },
     "work": {
@@ -1852,6 +1889,10 @@
         "message": "{{count}} task exceeded the variance threshold on this plan",
         "manual_hint": "Review the proposals and adjust or re-optimize manually when ready.",
         "review_link": "Review proposals on the Review tab"
+      },
+      "reoptimization_banner": {
+        "message": "Re-optimization recommended after master update",
+        "hint": "Drag cultivations on the Gantt to adjust placement. Re-optimization starts automatically after you drop."
       }
     }
   },

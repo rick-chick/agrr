@@ -12,6 +12,7 @@ import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.compo
 import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.component';
 import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
+import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
@@ -24,6 +25,7 @@ import {
   parsePlanLearnFollowUp,
   readLearnPostMasterPayload
 } from '../../domain/plans/learn-proposal-application-progress';
+import { hasPendingMasterUpdateConfirmation } from '../../domain/plans/learn-master-update-orchestration';
 
 const initialControl: PlanLearnViewState = {
   loading: true,
@@ -59,6 +61,7 @@ const initialControl: PlanLearnViewState = {
     PlanPlanContextHeaderComponent,
     PlanLearnApplicationProgressViewComponent,
     PlanLearnPostMasterConfirmationComponent,
+    PlanLearnMasterUpdateNextStepsComponent,
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
     VarianceActionProposalCardsComponent,
@@ -91,6 +94,10 @@ const initialControl: PlanLearnViewState = {
               [payload]="control.postMasterPayload"
             />
           }
+          <app-plan-learn-master-update-next-steps
+            [planId]="planId"
+            [visible]="showMasterUpdateNextSteps"
+          />
           <app-plan-learn-application-progress-view
             [planId]="planId"
             [stageGddProposals]="control.stageGddProposals"
@@ -279,6 +286,12 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
 
   get showPostMasterConfirmation(): boolean {
     return this.control.postMasterPayload != null;
+  }
+
+  get showMasterUpdateNextSteps(): boolean {
+    return (
+      this.showPostMasterConfirmation || hasPendingMasterUpdateConfirmation(this.planId)
+    );
   }
 
   ngOnInit(): void {

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
 import { PlanGanttClimateShellComponent } from './plan-gantt-climate-shell.component';
@@ -11,6 +11,11 @@ import { PlanDetailPresenter, PLAN_DETAIL_PROVIDERS } from '../../usecase/plans/
 import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.providers';
 import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
+import { PlanReoptimizationBannerComponent } from './plan-reoptimization-banner.component';
+import {
+  parseLearningOrchestration,
+  storeLearnOrchestrationReturnToLearn
+} from '../../domain/plans/learn-master-update-orchestration';
 
 const initialControl: PlanDetailViewState = {
   loading: true,
@@ -28,7 +33,8 @@ const initialControl: PlanDetailViewState = {
     PlanGanttClimateShellComponent,
     TranslateModule,
     PlanPlanContextHeaderComponent,
-    VarianceActionBannerComponent
+    VarianceActionBannerComponent,
+    PlanReoptimizationBannerComponent
   ],
   providers: [
     ...PLAN_DETAIL_PROVIDERS,
@@ -54,12 +60,15 @@ const initialControl: PlanDetailViewState = {
             [planId]="planId"
             [items]="control.varianceActionItemsOnGantt"
           />
+          <app-plan-reoptimization-banner [visible]="showReoptimizationBanner" />
           <div class="plan-detail__body plan-detail-surface">
             <app-plan-gantt-climate-shell
               [data]="control.planData"
               [planType]="planType"
               [planId]="planId"
               [deepLinkFieldCultivationId]="deepLinkFieldCultivationId"
+              [learningOrchestrationAdjust]="showReoptimizationBanner"
+              (adjustOrchestrationStarted)="handleAdjustOrchestrationStarted()"
             />
           </div>
         }
@@ -70,12 +79,14 @@ const initialControl: PlanDetailViewState = {
 })
 export class PlanDetailComponent implements PlanDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly useCase = inject(LoadPlanDetailUseCase);
   private readonly presenter = inject(PlanDetailPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
   deepLinkFieldCultivationId: number | null = null;
+  learningOrchestrationMode: ReturnType<typeof parseLearningOrchestration> = null;
 
   private _control: PlanDetailViewState = initialControl;
   get control(): PlanDetailViewState {
@@ -92,6 +103,10 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
   }
 
+  get showReoptimizationBanner(): boolean {
+    return this.learningOrchestrationMode === 'adjust';
+  }
+
   ngOnInit(): void {
     this.presenter.setView(this);
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -99,6 +114,9 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
       const parsed = raw != null ? Number(raw) : NaN;
       this.deepLinkFieldCultivationId =
         Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+      this.learningOrchestrationMode = parseLearningOrchestration(
+        params.get('learningOrchestration')
+      );
       this.cdr.markForCheck();
     });
 
@@ -117,5 +135,14 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   load(planId: number): void {
     this.control = { ...this.control, loading: true };
     this.useCase.execute({ planId });
+  }
+
+  handleAdjustOrchestrationStarted(): void {
+    const planId = this.planId;
+    if (!planId || !this.showReoptimizationBanner) {
+      return;
+    }
+    storeLearnOrchestrationReturnToLearn(planId);
+    void this.router.navigate(['/plans', planId, 'optimizing']);
   }
 }

@@ -403,5 +403,7 @@ describe('PlanLearnComponent post_master follow-up', () => {
     expect(fixture.nativeElement.querySelector('app-plan-learn-post-master-confirmation')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Master update applied');
     expect(fixture.nativeElement.textContent).toContain('Verify placement on workbench');
+    expect(fixture.nativeElement.querySelector('app-plan-learn-master-update-next-steps')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Next steps after master update');
   });
 });

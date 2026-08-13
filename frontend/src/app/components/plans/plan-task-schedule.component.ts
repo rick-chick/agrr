@@ -17,6 +17,7 @@ import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
+import { PlanTaskScheduleOrchestrationBannerComponent } from './plan-task-schedule-orchestration-banner.component';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { FlashMessageService } from '../../services/flash-message.service';
@@ -24,6 +25,7 @@ import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effe
 import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
+import { parseLearningOrchestration } from '../../domain/plans/learn-master-update-orchestration';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -65,7 +67,8 @@ const initialControl: PlanTaskScheduleViewState = {
     TaskScheduleMonthListComponent,
     TranslateModule,
     PlanPlanContextHeaderComponent,
-    TaskScheduleSyncBannerComponent
+    TaskScheduleSyncBannerComponent,
+    PlanTaskScheduleOrchestrationBannerComponent
   ],
   providers: [...PLAN_TASK_SCHEDULE_PROVIDERS],
   template: `
@@ -77,6 +80,13 @@ const initialControl: PlanTaskScheduleViewState = {
       />
 
       <section class="section-card" aria-labelledby="plan-context-page-title">
+        @if (learningOrchestrationMode === 'regenerate' || learningOrchestrationMode === 'sync_verify') {
+          <app-plan-task-schedule-orchestration-banner
+            [planId]="planId"
+            [mode]="learningOrchestrationMode"
+            [syncState]="syncState"
+          />
+        }
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
@@ -324,6 +334,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   private syncChannel: Channel | null = null;
+  learningOrchestrationMode: ReturnType<typeof parseLearningOrchestration> = null;
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -452,6 +463,9 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       this.resolveFieldCultivationFilterFromRoute()
     );
     this.pendingItemIdFromRoute = this.resolveItemIdFromRoute();
+    this.learningOrchestrationMode = parseLearningOrchestration(
+      this.route.snapshot.queryParamMap.get('learningOrchestration')
+    );
     this.subscribeSyncUseCase.execute({
       planId,
       onSubscribed: (channel) => {

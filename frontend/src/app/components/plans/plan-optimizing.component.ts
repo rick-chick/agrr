@@ -7,6 +7,10 @@ import { PlanOptimizingView, PlanOptimizingViewState } from './plan-optimizing.v
 import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-plan-optimization.usecase';
 import { PlanOptimizingPresenter, PLAN_OPTIMIZING_PROVIDERS } from '../../usecase/plans/plan-optimizing.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
+import {
+  clearLearnOrchestrationReturnToLearn,
+  readLearnOrchestrationReturnToLearn
+} from '../../domain/plans/learn-master-update-orchestration';
 
 const initialControl: PlanOptimizingViewState = {
   status: 'pending',
@@ -125,7 +129,13 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
   }
 
   onOptimizationCompleted(): void {
-    void this.router.navigate(['/plans', this.planId]);
+    const planId = this.planId;
+    if (planId && readLearnOrchestrationReturnToLearn(planId)) {
+      clearLearnOrchestrationReturnToLearn(planId);
+      void this.router.navigate(['/plans', planId, 'learn']);
+      return;
+    }
+    void this.router.navigate(['/plans', planId]);
   }
 
   ngOnDestroy(): void {

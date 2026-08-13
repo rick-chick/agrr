@@ -165,6 +165,15 @@ describe('PlanOptimizingComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/plans', 13]);
   });
 
+  it('navigates to learn when orchestration return context is set', () => {
+    sessionStorage.setItem('agrr:learn-orchestration-return:13', 'learn');
+
+    component.onOptimizationCompleted();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/plans', 13, 'learn']);
+    expect(sessionStorage.getItem('agrr:learn-orchestration-return:13')).toBeNull();
+  });
+
   it('initializes with the presenter and executes the use case', () => {
     component.ngOnInit();
 
