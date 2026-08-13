@@ -32,7 +32,8 @@ const initialControl: PlanLearnViewState = {
   blueprintTimingLoading: false,
   blueprintTimingProposals: [],
   stageGddProposalsLoading: false,
-  stageGddProposals: []
+  stageGddProposals: [],
+  postMasterPayload: null
 };
 
 @Injectable()

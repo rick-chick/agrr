@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef, DestroyRef } from '@angul
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -19,6 +19,18 @@ import { ApplyCropSetupProposalUseCase } from '../../../usecase/crops/apply-crop
 import { CropSetupProposalBody } from '../../../domain/crops/crop-setup-proposal';
 import { blueprintTimingPrefillStorageKey } from '../../../domain/plans/blueprint-timing-adjustment-proposal';
 import { setupProposalValidationErrorI18nKey } from '../../../core/setup-proposal-validation-error-i18n';
+import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
+import {
+  parsePlanWizardReturnTab,
+  type PlanWizardReturnTab
+} from '../../../domain/crops/plan-wizard-context';
+import {
+  buildLearnPostMasterNavigation,
+  clearLearnBpTimingApplyContext,
+  markBpTimingProposalAppliedPending,
+  readLearnBpTimingApplyContext,
+  storeLearnPostMasterPayload
+} from '../../../domain/plans/learn-proposal-application-progress';
 
 const initialControl: CropSetupProposalImportViewState = {
   loading: true,
@@ -199,6 +211,7 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
 })
 export class CropSetupProposalImportComponent implements CropSetupProposalImportView, OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadCropForEditUseCase);
   private readonly dryRunUseCase = inject(DryRunCropSetupProposalUseCase);
   private readonly applyUseCase = inject(ApplyCropSetupProposalUseCase);
@@ -206,6 +219,9 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translate = inject(TranslateService);
+
+  fromPlanId: number | null = null;
+  returnTab: PlanWizardReturnTab = 'task_schedule';
 
   validationErrorMessageKey(item: { path: string; message: string }): string {
     return setupProposalValidationErrorI18nKey(item);
@@ -244,8 +260,14 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
+    this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.handleCropRouteChange();
+    });
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
+      this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
     });
   }
 
@@ -352,7 +374,33 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
       proposal,
       onSuccess: () => {
         this.control = { ...this.control, phase: 'success' };
+        this.navigateAfterSuccessfulApply();
       }
+    });
+  }
+
+  private navigateAfterSuccessfulApply(): void {
+    if (this.returnTab !== 'learn' || this.fromPlanId == null) {
+      return;
+    }
+    const context = readLearnBpTimingApplyContext(this.cropId);
+    if (!context || context.planId !== this.fromPlanId) {
+      return;
+    }
+    storeLearnPostMasterPayload(this.fromPlanId, {
+      kind: 'bp_timing',
+      cropId: context.cropId,
+      cropName: context.cropName,
+      category: context.category
+    });
+    markBpTimingProposalAppliedPending(this.fromPlanId, {
+      cropId: context.cropId,
+      category: context.category
+    });
+    clearLearnBpTimingApplyContext(this.cropId);
+    const navigation = buildLearnPostMasterNavigation(this.fromPlanId);
+    void this.router.navigate(navigation.commands, {
+      queryParams: navigation.queryParams
     });
   }
 

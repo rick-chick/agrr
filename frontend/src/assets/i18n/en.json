@@ -1458,6 +1458,27 @@
     },
     "learn": {
       "page_title": "Review — {{name}}",
+      "application_progress": {
+        "title": "Proposal application progress",
+        "lead": "Track whether master updates from learn proposals are still pending your confirmation.",
+        "kind": {
+          "stage_gdd": "Stage GDD calibration",
+          "bp_timing": "BP timing adjustment"
+        },
+        "status": {
+          "not_started": "Not started",
+          "applied_pending_confirmation": "Applied — pending confirmation"
+        }
+      },
+      "post_master": {
+        "title": "Master update applied",
+        "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",
+        "crop_label": "Crop",
+        "stage_label": "Stage",
+        "required_gdd_label": "Required GDD",
+        "category_label": "Category",
+        "open_workbench": "Verify placement on workbench"
+      },
       "stage_gdd_calibration": {
         "title": "Stage GDD calibration proposals",
         "lead": "Actual GDD variance from this plan suggests updating stage thermal requirements. Review and save only if you agree.",

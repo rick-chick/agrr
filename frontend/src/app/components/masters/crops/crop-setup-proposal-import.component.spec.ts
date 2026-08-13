@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of } from 'rxjs';
@@ -9,6 +9,7 @@ import { CropSetupProposalImportPresenter } from '../../../usecase/crops/crop-se
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { DryRunCropSetupProposalUseCase } from '../../../usecase/crops/dry-run-crop-setup-proposal.usecase';
 import { ApplyCropSetupProposalUseCase } from '../../../usecase/crops/apply-crop-setup-proposal.usecase';
+import { storeLearnBpTimingApplyContext } from '../../../domain/plans/learn-proposal-application-progress';
 
 const validProposal = {
   stages: [{ name: '育苗', order: 1, thermal_requirement: { required_gdd: '120' } }],
@@ -75,8 +76,10 @@ describe('CropSetupProposalImportComponent', () => {
   let mockDryRunUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockApplyUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: CropSetupProposalImportPresenter;
+  let mockRouter: Router;
 
   beforeEach(async () => {
+    sessionStorage.clear();
     mockLoadUseCase = { execute: vi.fn() };
     mockDryRunUseCase = { execute: vi.fn() };
     mockApplyUseCase = { execute: vi.fn() };
@@ -91,8 +94,12 @@ describe('CropSetupProposalImportComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: { paramMap: convertToParamMap({ id: '42' }) },
-            paramMap: of(convertToParamMap({ id: '42' }))
+            snapshot: {
+              paramMap: convertToParamMap({ id: '42' }),
+              queryParamMap: convertToParamMap({})
+            },
+            paramMap: of(convertToParamMap({ id: '42' })),
+            queryParamMap: of(convertToParamMap({}))
           }
         },
         { provide: LoadCropForEditUseCase, useValue: mockLoadUseCase },
@@ -112,6 +119,8 @@ describe('CropSetupProposalImportComponent', () => {
     fixture = TestBed.createComponent(CropSetupProposalImportComponent);
     component = fixture.componentInstance;
     presenter = fixture.debugElement.injector.get(CropSetupProposalImportPresenter);
+    mockRouter = TestBed.inject(Router);
+    vi.spyOn(mockRouter, 'navigate').mockResolvedValue(true);
     fixture.detectChanges();
   });
 
@@ -283,5 +292,42 @@ describe('CropSetupProposalImportComponent', () => {
     expect(backLink).toBeTruthy();
     expect(backLink.getAttribute('href')).toBe('/crops/42');
     expect(fixture.nativeElement.textContent).toContain('Proposal applied');
+  });
+
+  it('navigates to learn post_master after apply success when returnTo=learn', () => {
+    component.fromPlanId = 7;
+    component.returnTab = 'learn';
+    storeLearnBpTimingApplyContext(42, {
+      planId: 7,
+      cropId: 42,
+      cropName: 'Tomato',
+      category: 'general'
+    });
+    component.control = {
+      ...component.control,
+      loading: false,
+      cropName: 'Tomato',
+      jsonInput: JSON.stringify(validProposal),
+      phase: 'preview',
+      normalizedPreview: validProposal,
+      parsedProposal: validProposal
+    };
+    fixture.detectChanges();
+
+    component.applyProposal();
+
+    const onSuccess = mockApplyUseCase.execute.mock.calls[0][0].onSuccess as () => void;
+    presenter.onApplySuccess({
+      mode: 'apply',
+      valid: true,
+      normalized: validProposal,
+      result: { stage_ids: [1], agricultural_task_ids: [2], blueprint_ids: [3] }
+    });
+    onSuccess();
+    fixture.detectChanges();
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 7, 'learn'], {
+      queryParams: { followUp: 'post_master' }
+    });
   });
 });

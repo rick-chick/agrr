@@ -26,6 +26,11 @@ import {
   cropPlanWizardQueryParams,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
+import {
+  buildLearnPostMasterNavigation,
+  markStageGddProposalAppliedPending,
+  storeLearnPostMasterPayload
+} from '../../../domain/plans/learn-proposal-application-progress';
 import { parseOptionalNumber } from '../../../domain/crops/parse-optional-number';
 import type { CropStage } from '../../../domain/crops/crop';
 import { countLinkedTaskScheduleBlueprintsForStage } from '../../../domain/crops/stage-linked-blueprint-count';
@@ -465,7 +470,7 @@ export class CropStageEditComponent implements CropStageEditView, UnsavedChanges
 
     if (shouldNavigateAfterPanelSave) {
       this.pendingPanelSaveNavigate = false;
-      this.navigateToStagesList();
+      this.navigateAfterSuccessfulPanelSave();
     } else if (shouldNavigateToList) {
       this.navigateToStagesList();
     }
@@ -676,6 +681,32 @@ export class CropStageEditComponent implements CropStageEditView, UnsavedChanges
     void this.router.navigate(this.stagesListLink, {
       queryParams: this.wizardQueryParams ?? undefined
     });
+  }
+
+  private navigateAfterSuccessfulPanelSave(): void {
+    if (this.returnTab === 'learn' && this.fromPlanId != null) {
+      const currentStage = this.stage;
+      if (currentStage) {
+        storeLearnPostMasterPayload(this.fromPlanId, {
+          kind: 'stage_gdd',
+          cropId: this.cropId,
+          cropName: this.control.formData.name,
+          stageId: currentStage.id,
+          stageName: currentStage.name,
+          appliedRequiredGdd: this.stageEditDraft.required_gdd
+        });
+        markStageGddProposalAppliedPending(this.fromPlanId, {
+          cropId: this.cropId,
+          stageId: currentStage.id
+        });
+      }
+      const navigation = buildLearnPostMasterNavigation(this.fromPlanId);
+      void this.router.navigate(navigation.commands, {
+        queryParams: navigation.queryParams
+      });
+      return;
+    }
+    this.navigateToStagesList();
   }
 
   saveStagePanel(): void {
