@@ -1457,6 +1457,14 @@
     },
     "learn": {
       "page_title": "Review — {{name}}",
+      "stage_gdd_calibration": {
+        "title": "Stage GDD calibration proposals",
+        "lead": "Actual GDD variance from this plan suggests updating stage thermal requirements. Review and save only if you agree.",
+        "empty": "No stage GDD calibration proposals yet. Record work with GDD data to generate suggestions.",
+        "delta_label": "Average GDD delta: {{delta}}",
+        "proposed_value": "Current required GDD {{current}} → proposed {{proposed}}",
+        "cta": "Adjust stage requirement"
+      },
       "action_proposals": {
         "title": "Schedule variance needs your review",
         "manual_hint": "Adjust or re-optimize only after you confirm on the workbench. No automatic changes are made.",
@@ -2219,6 +2227,7 @@
       "advanced_details_title": "Sunshine & nutrient details",
       "unsaved_confirm_message": "You have unsaved changes. Switching stages will discard them. Continue?",
       "reference_stages_readonly": "Reference crops are read-only. Only administrators can edit growth stages.",
+      "proposed_required_gdd_notice": "Prefilled from plan review: proposed required GDD is {{value}}. Save only if you agree.",
       "stage_name_required": "Please enter a stage name.",
       "table_order": "Order",
       "table_stage_name": "Stage name",

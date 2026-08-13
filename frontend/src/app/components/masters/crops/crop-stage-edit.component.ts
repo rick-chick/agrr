@@ -121,6 +121,12 @@ const initialControl: CropStageEditViewState = {
           </div>
         }
 
+        @if (hasProposedRequiredGdd) {
+          <div class="crop-stage-edit__proposal-notice" role="status">
+            <p>{{ 'crops.edit.proposed_required_gdd_notice' | translate: { value: proposedRequiredGdd } }}</p>
+          </div>
+        }
+
         <section class="form-card crop-stages-section" aria-labelledby="stage-edit-heading">
           <div class="crop-stages-edit-panel">
             <div class="crop-stages-edit-panel__header">
@@ -424,6 +430,11 @@ export class CropStageEditComponent implements CropStageEditView, UnsavedChanges
 
   fromPlanId: number | null = null;
   returnTab: PlanWizardReturnTab = 'task_schedule';
+  proposedRequiredGdd: number | null = null;
+
+  get hasProposedRequiredGdd(): boolean {
+    return this.proposedRequiredGdd != null;
+  }
 
   get control(): CropStageEditViewState {
     return this._control;
@@ -621,6 +632,9 @@ export class CropStageEditComponent implements CropStageEditView, UnsavedChanges
     this.presenter.setView(this);
     this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
     this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
+    this.proposedRequiredGdd = parseOptionalNumber(
+      this.route.snapshot.queryParamMap.get('proposedRequiredGdd')
+    );
     if (this.resolvedCropId == null) {
       this.control = {
         ...initialControl,
@@ -947,7 +961,9 @@ export class CropStageEditComponent implements CropStageEditView, UnsavedChanges
       optimal_min: parseOptionalNumber(stage.temperature_requirement?.optimal_min),
       optimal_max: parseOptionalNumber(stage.temperature_requirement?.optimal_max),
       max_temperature: parseOptionalNumber(stage.temperature_requirement?.max_temperature),
-      required_gdd: parseOptionalNumber(stage.thermal_requirement?.required_gdd)
+      required_gdd:
+        this.proposedRequiredGdd ??
+        parseOptionalNumber(stage.thermal_requirement?.required_gdd)
     };
   }
 }

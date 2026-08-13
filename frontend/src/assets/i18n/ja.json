@@ -473,6 +473,7 @@
       "advanced_details_title": "日照・栄養素の詳細",
       "unsaved_confirm_message": "未保存の変更があります。切り替えると変更は破棄されます。続行しますか？",
       "reference_stages_readonly": "参照作物は読み取り専用です。生育ステージの編集は管理者のみ可能です。",
+      "proposed_required_gdd_notice": "計画振り返りからの提案値です。要求 GDD {{value}} をプリフィルしています。同意する場合のみ保存してください。",
       "stage_name_required": "ステージ名を入力してください。",
       "table_order": "順序",
       "table_stage_name": "ステージ名",
@@ -2568,6 +2569,14 @@
     },
     "learn": {
       "page_title": "振り返り — {{name}}",
+      "stage_gdd_calibration": {
+        "title": "ステージ GDD 校正提案",
+        "lead": "この計画の実績 GDD 差分から、ステージの thermal requirement 更新を提案します。内容を確認し、同意する場合のみ保存してください。",
+        "empty": "ステージ GDD 校正提案はまだありません。GDD 付きの作業実績を記録すると提案が表示されます。",
+        "delta_label": "平均 GDD 差分: {{delta}}",
+        "proposed_value": "現在の要求 GDD {{current}} → 提案 {{proposed}}",
+        "cta": "ステージ要求量を校正"
+      },
       "action_proposals": {
         "title": "スケジュール乖離の確認が必要です",
         "manual_hint": "作業台で確認したうえで、手動で adjust または再最適化を検討してください。自動変更は行いません。",

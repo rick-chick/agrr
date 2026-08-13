@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
+import { StageGddCalibrationProposalsViewComponent } from './stage-gdd-calibration-proposals-view.component';
 import { VarianceActionProposalCardsComponent } from './variance-action-proposal-cards.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
@@ -19,7 +20,9 @@ const initialControl: PlanLearnViewState = {
   varianceError: null,
   varianceSummary: null,
   varianceStats: null,
-  varianceUnrecordedRows: []
+  varianceUnrecordedRows: [],
+  stageGddProposalsLoading: false,
+  stageGddProposals: []
 };
 
 @Component({
@@ -30,6 +33,7 @@ const initialControl: PlanLearnViewState = {
     TranslateModule,
     PlanPlanContextHeaderComponent,
     TaskScheduleVarianceViewComponent,
+    StageGddCalibrationProposalsViewComponent,
     VarianceActionProposalCardsComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
@@ -63,6 +67,11 @@ const initialControl: PlanLearnViewState = {
             [stats]="control.varianceStats"
             [summary]="control.varianceSummary"
             [unrecordedRows]="control.varianceUnrecordedRows"
+          />
+          <app-stage-gdd-calibration-proposals-view
+            [planId]="planId"
+            [loading]="control.stageGddProposalsLoading"
+            [proposals]="control.stageGddProposals"
           />
         }
       </section>

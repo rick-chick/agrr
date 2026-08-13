@@ -556,6 +556,10 @@ fn get_plan_vs_actual_summary_and_task_schedule_embed_variance_fields() {
     assert_eq!(10, top_items[0]["delta_days"].as_i64().unwrap());
     assert!(top_items[0]["gdd_at_actual"].is_number());
     assert!(top_items[0]["gdd_delta"].is_number());
+    let proposals = summary["stage_gdd_calibration_proposals"]
+        .as_array()
+        .expect("stage_gdd_calibration_proposals");
+    assert!(proposals.is_empty() || proposals[0]["average_gdd_delta"].is_number());
 
     let action_items = summary["action_required_items"]
         .as_array()

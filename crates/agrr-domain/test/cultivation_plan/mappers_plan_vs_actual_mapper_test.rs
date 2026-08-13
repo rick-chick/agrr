@@ -17,6 +17,19 @@ fn sample_item(
     gdd_at_actual: Option<f64>,
     status: &str,
 ) -> TaskScheduleTimelineScheduleItemRead {
+    sample_item_with_stage(id, scheduled_date, actual_date, gdd_trigger, gdd_at_actual, status, None, None)
+}
+
+fn sample_item_with_stage(
+    id: i64,
+    scheduled_date: Option<&str>,
+    actual_date: Option<&str>,
+    gdd_trigger: Option<f64>,
+    gdd_at_actual: Option<f64>,
+    status: &str,
+    stage_order: Option<i32>,
+    stage_name: Option<&str>,
+) -> TaskScheduleTimelineScheduleItemRead {
     let work_records = actual_date
         .map(|date| vec![TaskScheduleTimelineWorkRecordSummaryRead {
             id: id * 10,
@@ -31,8 +44,8 @@ fn sample_item(
         name: format!("Task {id}"),
         task_type: "field_work".into(),
         scheduled_date: scheduled_date.map(str::to_string),
-        stage_name: None,
-        stage_order: None,
+        stage_name: stage_name.map(str::to_string),
+        stage_order,
         gdd_trigger,
         gdd_tolerance: None,
         priority: None,
@@ -151,4 +164,62 @@ fn summary_counts_unrecorded_and_top_variance() {
         VarianceExceedanceKind::Days,
         summary.action_required_items[0].exceedance_kind
     );
+}
+
+#[test]
+fn stage_gdd_calibration_proposals_aggregate_by_crop_and_stage() {
+    let snapshot = sample_snapshot(vec![
+        sample_item_with_stage(
+            1,
+            Some("2026-06-01"),
+            Some("2026-06-08"),
+            Some(100.0),
+            Some(110.0),
+            "planned",
+            Some(1),
+            Some("Vegetative"),
+        ),
+        sample_item_with_stage(
+            2,
+            Some("2026-06-02"),
+            Some("2026-06-03"),
+            Some(100.0),
+            Some(120.0),
+            "planned",
+            Some(1),
+            Some("Vegetative"),
+        ),
+        sample_item_with_stage(
+            3,
+            Some("2026-06-03"),
+            Some("2026-06-10"),
+            Some(200.0),
+            Some(205.0),
+            "planned",
+            Some(2),
+            Some("Flowering"),
+        ),
+        sample_item_with_stage(
+            4,
+            Some("2026-06-04"),
+            None,
+            Some(100.0),
+            None,
+            "planned",
+            Some(1),
+            Some("Vegetative"),
+        ),
+    ]);
+
+    let proposals = PlanVsActualMapper::stage_gdd_calibration_proposals_from_snapshot(&snapshot);
+
+    assert_eq!(2, proposals.len());
+    assert_eq!(42, proposals[0].crop_id);
+    assert_eq!("Tomato", proposals[0].crop_name.as_str());
+    assert_eq!(1, proposals[0].stage_order);
+    assert_eq!("Vegetative", proposals[0].stage_name.as_str());
+    assert_eq!(15.0, proposals[0].average_gdd_delta);
+    assert_eq!(2, proposals[0].recorded_item_count);
+    assert_eq!(2, proposals[1].stage_order);
+    assert_eq!(5.0, proposals[1].average_gdd_delta);
 }
