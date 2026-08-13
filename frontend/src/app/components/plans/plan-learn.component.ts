@@ -91,10 +91,7 @@ const initialControl: PlanLearnViewState = {
             </button>
           </div>
         } @else {
-          <app-plan-learn-loop-phase-view
-            [planId]="planId"
-            [phaseInput]="loopPhaseInput"
-          />
+          <app-plan-learn-loop-phase-view [phaseInput]="loopPhaseInput" />
           @if (showPostMasterConfirmation) {
             <app-plan-learn-post-master-confirmation
               [planId]="planId"

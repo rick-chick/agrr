@@ -2645,10 +2645,6 @@
         "kind": {
           "stage_gdd": "ステージ GDD 校正",
           "bp_timing": "BP タイミング調整"
-        },
-        "status": {
-          "not_started": "未着手",
-          "applied_pending_confirmation": "適用済み・確認待ち"
         }
       },
       "loop_phase": {

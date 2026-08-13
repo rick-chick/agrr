@@ -401,7 +401,7 @@ describe('PlanLearnComponent post_master follow-up', () => {
 
     expect(fixture.nativeElement.querySelector('app-plan-learn-application-progress-view')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Proposal application progress');
-    expect(fixture.nativeElement.textContent).toContain('Not applied');
+    expect(fixture.nativeElement.textContent).toContain('Applied');
     expect(fixture.nativeElement.querySelector('app-plan-learn-post-master-confirmation')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Master update applied');
     expect(fixture.nativeElement.textContent).toContain('Verify placement on workbench');

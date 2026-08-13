@@ -46,7 +46,6 @@ describe('PlanLearnLoopPhaseViewComponent', () => {
     translate.use('en');
 
     fixture = TestBed.createComponent(PlanLearnLoopPhaseViewComponent);
-    fixture.componentRef.setInput('planId', 7);
     fixture.componentRef.setInput('phaseInput', phaseInput);
     fixture.detectChanges();
     await fixture.whenStable();

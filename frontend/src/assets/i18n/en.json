@@ -1522,10 +1522,6 @@
         "kind": {
           "stage_gdd": "Stage GDD calibration",
           "bp_timing": "BP timing adjustment"
-        },
-        "status": {
-          "not_started": "Not started",
-          "applied_pending_confirmation": "Applied — pending confirmation"
         }
       },
       "loop_phase": {

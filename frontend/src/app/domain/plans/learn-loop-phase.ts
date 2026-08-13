@@ -7,8 +7,7 @@ import {
   stageGddProposalProgressKey
 } from './learn-proposal-application-progress';
 import {
-  buildPlanDetailAdjustNavigation,
-  buildPlanTaskScheduleOrchestrationNavigation
+  buildPlanDetailAdjustNavigation
 } from './learn-master-update-orchestration';
 import type { PlanVarianceActionItem } from './plan-vs-actual-summary';
 import type { StageGddCalibrationProposal } from './stage-gdd-calibration-proposal';
@@ -107,8 +106,7 @@ function countUnappliedProposals(input: LearnLoopPhaseInput): number {
 function resolveObserveNextAction(planId: number): LearnLoopNextAction {
   return {
     labelKey: 'plans.learn.loop_phase.next_action.observe',
-    commands: ['/plans', planId, 'learn'],
-    queryParams: { focus: 'variance' }
+    commands: ['/plans', planId, 'learn']
   };
 }
 
@@ -131,8 +129,7 @@ function resolveApplyNextAction(input: LearnLoopPhaseInput): LearnLoopNextAction
   if (unappliedStageGdd) {
     return {
       labelKey: 'plans.learn.loop_phase.next_action.apply_stage_gdd',
-      commands: ['/plans', input.planId, 'learn'],
-      queryParams: { focus: 'stage_gdd' }
+      commands: ['/plans', input.planId, 'learn']
     };
   }
 
@@ -143,12 +140,16 @@ function resolveApplyNextAction(input: LearnLoopPhaseInput): LearnLoopNextAction
   if (unappliedBpTiming) {
     return {
       labelKey: 'plans.learn.loop_phase.next_action.apply_bp_timing',
-      commands: ['/plans', input.planId, 'learn'],
-      queryParams: { focus: 'bp_timing' }
+      commands: ['/plans', input.planId, 'learn']
     };
   }
 
-  return null;
+  const adjust = buildPlanDetailAdjustNavigation(input.planId);
+  return {
+    labelKey: 'plans.learn.loop_phase.next_action.apply_variance',
+    commands: adjust.commands,
+    queryParams: adjust.queryParams
+  };
 }
 
 function resolveReorganizeNextAction(planId: number): LearnLoopNextAction {
@@ -163,7 +164,6 @@ function resolveReorganizeNextAction(planId: number): LearnLoopNextAction {
 function resolveHandoverNextAction(planId: number): LearnLoopNextAction {
   return {
     labelKey: 'plans.learn.loop_phase.next_action.handover',
-    commands: ['/plans', planId, 'learn'],
-    queryParams: { focus: 'carryover' }
+    commands: ['/plans', planId, 'learn']
   };
 }

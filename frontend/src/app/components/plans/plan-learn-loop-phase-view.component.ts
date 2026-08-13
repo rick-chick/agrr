@@ -65,7 +65,6 @@ import {
   styleUrls: ['./plan-learn-loop-phase-view.component.css']
 })
 export class PlanLearnLoopPhaseViewComponent {
-  @Input({ required: true }) planId!: number;
   @Input() phaseInput: LearnLoopPhaseInput | null = null;
 
   readonly phases = LEARN_LOOP_PHASES;

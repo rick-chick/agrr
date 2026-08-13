@@ -2008,10 +2008,6 @@
         "kind": {
           "stage_gdd": "चरण GDD अंशांकन",
           "bp_timing": "BP समय समायोजन"
-        },
-        "status": {
-          "not_started": "शुरू नहीं",
-          "applied_pending_confirmation": "लागू — पुष्टि लंबित"
         }
       },
       "loop_phase": {
