@@ -86,6 +86,7 @@ AGRR リポジトリの現状機能を調査せよ。
 ```
 入力:
 - current-state.md
+- theme-selection.md（G2/G3 共通: breadth-depth-scale.md §幅 vs 深さ 形式）
 - theme-deep-dive.md
 
 ルーブリック: .cursor/skills/product-gap-to-issues/references/gates.md §G2
@@ -94,7 +95,7 @@ AGRR リポジトリの現状機能を調査せよ。
 
 verdict=fail のとき mandatory_corrections に、gates.md の該当行に沿った具体修正を書く。
 
-新画面案は自動 fail にしない。G2-4（justification 未記載）と G2-1〜3（重複・過剰・コード）を優先して判定する。
+新画面案は自動 fail にしない。G2-4（justification 未記載）と G2-1〜3（重複・過剰・コード）、G2-5〜8（深掘り打ち止め・見送り）を優先して判定する。
 ```
 
 ---
@@ -106,6 +107,8 @@ verdict=fail のとき mandatory_corrections に、gates.md の該当行に沿�
 - enhancement-plan.md
 - overlap-ux-gate.json（pass 前提）
 - current-state.md
+- theme-selection.md（G2/G3 共通: 幅 vs 深さ 判定・見送り）
+- theme-deep-dive.md（G2 入力。打ち止め・justification の整合確認）
 
 ルーブリック: .cursor/skills/product-gap-to-issues/references/gates.md §G3
 
