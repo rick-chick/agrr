@@ -1568,6 +1568,14 @@
       "proposal": {
         "dismiss": "Do not apply"
       },
+      "bulk_apply": {
+        "title": "Bulk apply safe proposals",
+        "lead": "{{count}} proposal(s) are within variance thresholds and can be applied without manual review.",
+        "apply_button": "Apply all safe proposals ({{count}})",
+        "applying": "Applying {{applied}} / {{total}}…",
+        "complete_message": "{{count}} safe proposal(s) applied. Start the reorganization pipeline to refresh your plan.",
+        "start_pipeline": "Start reorganization pipeline"
+      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",
@@ -1729,6 +1737,17 @@
         "learn_link": "Review in Learn",
         "dismiss": "Dismiss impact preview",
         "workbench_link": "Review adjust on workbench"
+      },
+      "variance_summary": {
+        "title": "Plan vs actual summary",
+        "unrecorded": "Not recorded",
+        "threshold_exceeded": "Threshold exceeded",
+        "gdd_delay": "GDD delay",
+        "learn_cta": "Review details in Learn"
+      },
+      "exceedance_badge": {
+        "days": "Δ {{delta}} days",
+        "gdd": "GDD {{delta}}"
       }
     },
     "work_records": {

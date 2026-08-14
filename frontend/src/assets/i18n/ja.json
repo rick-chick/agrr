@@ -2692,6 +2692,14 @@
       "proposal": {
         "dismiss": "適用しない"
       },
+      "bulk_apply": {
+        "title": "安全な提案を一括適用",
+        "lead": "閾値内で要確認のない提案が {{count}} 件あります。",
+        "apply_button": "安全な提案を一括適用（{{count}}）",
+        "applying": "適用中 {{applied}} / {{total}}…",
+        "complete_message": "安全な提案 {{count}} 件を適用しました。再最適化パイプラインを開始して計画を更新してください。",
+        "start_pipeline": "再最適化パイプラインを開始"
+      },
       "post_master": {
         "title": "マスタ更新を適用しました",
         "lead": "マスタの変更を保存しました。適用内容を確認し、作業台で配置を確認してください。",
@@ -2853,6 +2861,17 @@
         "learn_link": "振り返りで確認",
         "dismiss": "影響プレビューを閉じる",
         "workbench_link": "作業台で adjust を検討"
+      },
+      "variance_summary": {
+        "title": "予実乖離サマリ",
+        "unrecorded": "未記録",
+        "threshold_exceeded": "閾値超過",
+        "gdd_delay": "GDD遅延",
+        "learn_cta": "振り返りで詳細を見る"
+      },
+      "exceedance_badge": {
+        "days": "Δ {{delta}}日",
+        "gdd": "GDD {{delta}}"
       }
     },
     "work_records": {

@@ -119,6 +119,28 @@
   width: fit-content;
 }
 
+.plan-work__exceedance-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  width: fit-content;
+}
+
+.plan-work__exceedance-badge--days {
+  color: var(--color-warning-dark);
+  background: var(--color-warning-muted-bg);
+  border: 1px solid var(--color-warning-muted-border);
+}
+
+.plan-work__exceedance-badge--gdd {
+  color: var(--color-error-dark);
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border-soft);
+}
+
 .plan-work__row-actions {
   display: flex;
   gap: var(--space-3);
