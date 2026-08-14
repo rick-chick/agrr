@@ -1507,7 +1507,10 @@
         "empty": "No stage GDD calibration proposals yet. Record work with GDD data to generate suggestions.",
         "delta_label": "Average GDD delta: {{delta}}",
         "proposed_value": "Current required GDD {{current}} → proposed {{proposed}}",
-        "cta": "Adjust stage requirement",
+        "preview": "Preview",
+        "apply": "Apply",
+        "detail_edit": "Detail edit",
+        "preview_panel": "Proposed required GDD: {{proposed}}",
         "evidence": {
           "toggle": "Show rationale",
           "rationale": "{{count}} of {{total}} recorded tasks exceeded the GDD threshold of {{threshold}}.",
@@ -1531,7 +1534,10 @@
         "empty": "No BP timing adjustments are available right now.",
         "delta_label": "Average variance: {{delta}}",
         "affected_count": "Affected BPs: {{count}}",
-        "cta": "Adjust BP timing",
+        "dry_run_preview": "Dry-run preview",
+        "apply": "Apply",
+        "detail_edit": "Detail edit",
+        "dry_run_result": "Dry-run result",
         "category": {
           "general": "General tasks",
           "fertilizer": "Fertilization"
@@ -1546,6 +1552,7 @@
       "application_progress": {
         "title": "Proposal application progress",
         "lead": "Track whether master updates from learn proposals are still pending your confirmation.",
+        "summary": "{{addressed}} / {{total}} addressed",
         "kind": {
           "stage_gdd": "Stage GDD calibration",
           "bp_timing": "BP timing adjustment"

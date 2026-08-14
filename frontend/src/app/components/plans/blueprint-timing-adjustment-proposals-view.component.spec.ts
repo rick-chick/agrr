@@ -1,0 +1,148 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  bpTimingProposalProgressKey,
+  clearLearnProposalApplicationProgressCache,
+  markLearnProposalConfirmed,
+  resolveLearnProposalApplicationStatus
+} from '../../domain/plans/learn-proposal-application-progress';
+import { ApplyBpTimingProposalFromLearnUseCase } from '../../usecase/plans/apply-bp-timing-proposal-from-learn.usecase';
+import { DryRunBpTimingProposalFromLearnUseCase } from '../../usecase/plans/dry-run-bp-timing-proposal-from-learn.usecase';
+import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
+
+const proposalBody = {
+  intent: 'blueprint_timing_patch',
+  stages: [],
+  agricultural_tasks: [],
+  task_schedule_blueprints: [{ category: 'general', gdd_trigger: 100 }]
+};
+
+const sampleProposal = {
+  cropId: 1,
+  cropName: 'Tomato',
+  category: 'general',
+  averageDeltaDays: 2,
+  averageGddDelta: 5,
+  recordedItemCount: 4,
+  affectedBlueprintCount: 2,
+  proposalBody
+};
+
+describe('BlueprintTimingAdjustmentProposalsViewComponent inline apply', () => {
+  let fixture: ComponentFixture<BlueprintTimingAdjustmentProposalsViewComponent>;
+  let applyUseCase: { execute: ReturnType<typeof vi.fn> };
+  let dryRunUseCase: { execute: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
+    applyUseCase = {
+      execute: vi.fn(({ onSuccess }: { onSuccess?: () => void }) => {
+        markLearnProposalConfirmed(7, bpTimingProposalProgressKey(1, 'general'));
+        onSuccess?.();
+      })
+    };
+    dryRunUseCase = {
+      execute: vi.fn(({ onSuccess }: { onSuccess?: (preview: string) => void }) => {
+        onSuccess?.('{"task_schedule_blueprints":[{"category":"general"}]}');
+      })
+    };
+
+    TestBed.overrideComponent(BlueprintTimingAdjustmentProposalsViewComponent, {
+      set: {
+        providers: [
+          { provide: ApplyBpTimingProposalFromLearnUseCase, useValue: applyUseCase },
+          { provide: DryRunBpTimingProposalFromLearnUseCase, useValue: dryRunUseCase }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [BlueprintTimingAdjustmentProposalsViewComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'plans.learn.bp_timing_adjustment.title': 'BP timing',
+        'plans.learn.bp_timing_adjustment.lead': 'Lead',
+        'plans.learn.bp_timing_adjustment.delta_label': 'Delta {{delta}}',
+        'plans.learn.bp_timing_adjustment.affected_count': 'BPs {{count}}',
+        'plans.learn.bp_timing_adjustment.category.general': 'General',
+        'plans.learn.bp_timing_adjustment.dry_run_preview': 'Dry-run preview',
+        'plans.learn.bp_timing_adjustment.apply': 'Apply',
+        'plans.learn.bp_timing_adjustment.detail_edit': 'Detail edit',
+        'plans.learn.bp_timing_adjustment.dry_run_result': 'Dry-run result',
+        'plans.learn.proposal.dismiss': 'Do not apply',
+        'plans.learn.application_progress.status.not_started': 'Not applied',
+        'plans.learn.application_progress.status.confirmed': 'Confirmed',
+        'plans.learn.bp_timing_adjustment.evidence.toggle': 'Show rationale',
+        'plans.learn.bp_timing_adjustment.evidence.rationale': 'Rationale',
+        'plans.learn.bp_timing_adjustment.evidence.records_title': 'Records',
+        'plans.learn.bp_timing_adjustment.evidence.record': 'Record'
+      },
+      true
+    );
+    translate.use('en');
+
+    fixture = TestBed.createComponent(BlueprintTimingAdjustmentProposalsViewComponent);
+    fixture.componentRef.setInput('planId', 7);
+    fixture.componentRef.setInput('proposals', [sampleProposal]);
+    fixture.detectChanges();
+  });
+
+  it('shows dry_run preview, apply, and detail edit buttons', () => {
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')).map(
+      (el: Element) => el.textContent?.trim()
+    );
+
+    expect(buttons).toContain('Dry-run preview');
+    expect(buttons).toContain('Apply');
+    expect(buttons).toContain('Detail edit');
+  });
+
+  it('runs dry_run preview and shows result', () => {
+    const previewButton = Array.from(fixture.nativeElement.querySelectorAll('button')).find(
+      (el: Element) => el.textContent?.trim() === 'Dry-run preview'
+    ) as HTMLButtonElement;
+    previewButton.click();
+    fixture.detectChanges();
+
+    expect(dryRunUseCase.execute).toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Dry-run result');
+    expect(fixture.nativeElement.textContent).toContain('task_schedule_blueprints');
+  });
+
+  it('applies proposal inline and transitions status to confirmed', () => {
+    const applyButton = Array.from(fixture.nativeElement.querySelectorAll('button')).find(
+      (el: Element) => el.textContent?.trim() === 'Apply'
+    ) as HTMLButtonElement;
+    applyButton.click();
+    fixture.detectChanges();
+
+    expect(applyUseCase.execute).toHaveBeenCalled();
+    expect(
+      resolveLearnProposalApplicationStatus(7, bpTimingProposalProgressKey(1, 'general'))
+    ).toBe('confirmed');
+    expect(fixture.nativeElement.textContent).toContain('Confirmed');
+  });
+
+  it('navigates to setup_proposal on detail edit', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const detailButton = Array.from(fixture.nativeElement.querySelectorAll('button')).find(
+      (el: Element) => el.textContent?.trim() === 'Detail edit'
+    ) as HTMLButtonElement;
+    detailButton.click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(
+      ['/crops', 1, 'setup_proposal'],
+      expect.objectContaining({ queryParams: expect.objectContaining({ fromPlan: 7 }) })
+    );
+  });
+});

@@ -9,6 +9,7 @@ import {
   type LearnProposalApplicationStatus,
   type LearnProposalKind
 } from '../../domain/plans/learn-proposal-application-progress';
+import { countAddressedLearnApplicationProgress } from '../../domain/plans/learn-application-progress-summary';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
 
 export interface LearnApplicationProgressItem {
@@ -33,6 +34,12 @@ export interface LearnApplicationProgressItem {
         </h3>
         <p class="learn-application-progress__lead">
           {{ 'plans.learn.application_progress.lead' | translate }}
+        </p>
+        <p class="learn-application-progress__summary" role="status">
+          {{
+            'plans.learn.application_progress.summary'
+              | translate: { addressed: summary.addressed, total: summary.total }
+          }}
         </p>
         <ul class="learn-application-progress__list" role="list">
           @for (item of items; track item.key) {
@@ -79,6 +86,11 @@ export class PlanLearnApplicationProgressViewComponent {
       this.stageGddProposals,
       this.blueprintTimingProposals
     );
+  }
+
+  get summary(): { addressed: number; total: number } {
+    void this.progressRefreshVersion;
+    return countAddressedLearnApplicationProgress(this.items.map((item) => item.status));
   }
 
   kindLabel(kind: LearnProposalKind): string {

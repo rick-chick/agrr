@@ -52,6 +52,15 @@
   color: var(--color-warning-strong, var(--color-warning));
 }
 
+.blueprint-timing-adjustment__status--confirmed {
+  background: color-mix(in srgb, var(--color-success) 18%, transparent);
+  color: var(--color-success-strong, var(--color-success));
+}
+
+.blueprint-timing-adjustment__status--dismissed {
+  opacity: 0.75;
+}
+
 .blueprint-timing-adjustment__name {
   margin: 0;
   font-weight: 600;
@@ -63,6 +72,35 @@
   color: var(--color-text-muted);
 }
 
-.blueprint-timing-adjustment__cta {
-  flex-shrink: 0;
+.blueprint-timing-adjustment__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.blueprint-timing-adjustment__preview-panel {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.blueprint-timing-adjustment__preview-title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.blueprint-timing-adjustment__preview-json {
+  margin: 0;
+  overflow-x: auto;
+  font-size: var(--text-xs);
+  white-space: pre-wrap;
+}
+
+.blueprint-timing-adjustment__error {
+  margin: var(--space-2) 0 0;
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
 }
