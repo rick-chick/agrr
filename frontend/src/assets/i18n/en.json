@@ -1639,6 +1639,18 @@
         "complete": {
           "title": "Learning loop complete",
           "lead": "All master update proposals are applied, dismissed, or finished. Continue with reorganization or your next plan."
+        },
+        "handoff_source_plan": "Source plan: {{planName}}"
+      },
+      "reorganize": {
+        "return_to_learn": "Return to learning screen",
+        "placement": {
+          "message": "Re-optimization recommended after master update",
+          "hint": "Drag cultivations on the Gantt to adjust placement. Re-optimization starts automatically after you drop."
+        },
+        "optimizing": {
+          "message": "Re-optimization in progress",
+          "hint": "Placement optimization is running. You can return to the learning screen to review progress."
         }
       },
       "observe_phase": {

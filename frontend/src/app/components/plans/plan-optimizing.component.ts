@@ -7,6 +7,7 @@ import { PlanOptimizingView, PlanOptimizingViewState } from './plan-optimizing.v
 import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-plan-optimization.usecase';
 import { PlanOptimizingPresenter, PLAN_OPTIMIZING_PROVIDERS } from '../../usecase/plans/plan-optimizing.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
+import { PlanLearnReorganizeBannerComponent } from './plan-learn-reorganize-banner.component';
 import {
   clearLearnOrchestrationReturnToLearn,
   markLearnOrchestrationStepComplete,
@@ -26,7 +27,7 @@ const initialControl: PlanOptimizingViewState = {
 @Component({
   selector: 'app-plan-optimizing',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, PlanPlanContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, PlanPlanContextHeaderComponent, PlanLearnReorganizeBannerComponent],
   providers: [...PLAN_OPTIMIZING_PROVIDERS],
   template: `
     <div class="page-main page-main--fit">
@@ -34,6 +35,11 @@ const initialControl: PlanOptimizingViewState = {
         [planId]="planId"
         [planName]="null"
         pageTitleKey="plans.optimizing_live.heading"
+      />
+      <app-plan-learn-reorganize-banner
+        [planId]="planId"
+        [visible]="showLearnReorganizeBanner"
+        context="optimizing"
       />
       <section class="page">
         @if (isFailed) {
@@ -101,6 +107,17 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
 
   get isFailed(): boolean {
     return this.control.status === 'failed';
+  }
+
+  get showLearnReorganizeBanner(): boolean {
+    const planId = this.planId;
+    if (!planId) {
+      return false;
+    }
+    return (
+      readLearnOrchestrationReturnToLearn(planId) ||
+      readLearnReorganizePipelineAutoChain(planId)
+    );
   }
 
   private _control: PlanOptimizingViewState = initialControl;

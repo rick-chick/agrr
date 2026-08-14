@@ -11,7 +11,7 @@ import { PlanDetailPresenter, PLAN_DETAIL_PROVIDERS } from '../../usecase/plans/
 import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.providers';
 import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
-import { PlanReoptimizationBannerComponent } from './plan-reoptimization-banner.component';
+import { PlanLearnReorganizeBannerComponent } from './plan-learn-reorganize-banner.component';
 import {
   parseLearningOrchestration,
   storeLearnOrchestrationReturnToLearn
@@ -34,7 +34,7 @@ const initialControl: PlanDetailViewState = {
     TranslateModule,
     PlanPlanContextHeaderComponent,
     VarianceActionBannerComponent,
-    PlanReoptimizationBannerComponent
+    PlanLearnReorganizeBannerComponent
   ],
   providers: [
     ...PLAN_DETAIL_PROVIDERS,
@@ -55,12 +55,16 @@ const initialControl: PlanDetailViewState = {
           <p>{{ control.error | translate }}</p>
         </div>
       } @else if (control.plan) {
+        <app-plan-learn-reorganize-banner
+          [planId]="planId"
+          [visible]="showReoptimizationBanner"
+          context="placement"
+        />
         @if (control.planData) {
           <app-variance-action-banner
             [planId]="planId"
             [items]="control.varianceActionItemsOnGantt"
           />
-          <app-plan-reoptimization-banner [visible]="showReoptimizationBanner" />
           <div class="plan-detail__body plan-detail-surface">
             <app-plan-gantt-climate-shell
               [data]="control.planData"

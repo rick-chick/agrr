@@ -242,4 +242,17 @@ describe('PlanOptimizingComponent', () => {
     expect(fixture.nativeElement.querySelector('a.plan-context-header__back')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-plan-detail-context-nav')).toBeNull();
   });
+
+  it('shows learn reorganize banner with return-to-learn link during orchestration', () => {
+    hydrateLearnOrchestrationProgress(13, { return_to_learn: true });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-reorganize-banner')).toBeTruthy();
+    const learnLink = fixture.nativeElement.querySelector('a.learn-reorganize-banner__learn-link');
+    expect(learnLink).not.toBeNull();
+    expect(learnLink.getAttribute('href')).toBe('/plans/13/learn');
+    expect(
+      fixture.nativeElement.querySelector('app-plan-learn-loop-progress-strip')
+    ).not.toBeNull();
+  });
 });
