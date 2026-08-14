@@ -1,6 +1,15 @@
 # Issue パックテンプレート
 
-起票前に `tmp/product-gap/issue-pack.md` にまとめる。本文は [`github-issue-creator/references/issue-body-template.md`](../../github-issue-creator/references/issue-body-template.md) に合わせる。
+起票前に `tmp/product-gap/issue-pack.md` にまとめる（ローカル成果物。commit しない）。本文は [`github-issue-creator/references/issue-body-template.md`](../../github-issue-creator/references/issue-body-template.md) に合わせる。
+
+## GitHub issue 本文の「参照」節（起票時）
+
+`gh issue create` に渡す本文の **「参照」節では `tmp/product-gap/` path を禁止**する。許可する参照は次のみ:
+
+- リポジトリ内のコード path（例: `frontend/...`, `crates/...`）
+- 関連 GitHub issue / PR 番号（`#N`）
+
+`issue-pack.md` 内で調査メモとして `tmp/product-gap/` を書いてもよいが、**起票直前に上記へ変換**してから `gh issue create` する（手順: [`artifacts.md`](artifacts.md) §起票時の参照変換）。
 
 ---
 
@@ -80,8 +89,8 @@
 - [ ] …
 
 ## 参照
-- tmp/product-gap/screen-mocks.md
-- コード path（調査済み）
+- コード: `frontend/src/app/...`（調査済み path）
+- 関連 issue: #N
 ```
 
 起票後 `gh issue edit` で子番号を `#N` に差し替える。
@@ -113,8 +122,9 @@
 - …
 
 ## 参照
-- 画面: `/path`
-- コード: `path/to/file`
+- 画面: `/plans/:id/work`
+- コード: `frontend/src/app/...`
+- 関連 issue: #EPIC
 ```
 
 **着手順:** 依存の少ない順。集約ロジック共有が要るものは依存 issue で明示。
@@ -125,8 +135,10 @@
 
 ```bash
 mkdir -p tmp/product-gap
+# issue-pack.md の「参照」をリポジトリ path + #N に変換し、起票用本文を書き出す
+# （artifacts.md §起票時の参照変換）
 gh issue create --repo rick-chick/agrr \
-  --title "..." --label enhancement --body-file tmp/product-gap/epic-body.md
+  --title "..." --label enhancement --body-file tmp/product-gap/epic-body-ready.md
 ```
 
 ラベルは `gh label list --repo rick-chick/agrr` で存在確認してから付与する。

@@ -4,7 +4,7 @@
 
 | ファイル | フェーズ | 必須 |
 |----------|----------|------|
-| `current-state.md` | 1 | ✓ |
+| `current-state.md` | 1 | ✓（必須セクション下記） |
 | `gap-backlog.md` | 2 | ✓ |
 | `theme-selection.md` | 3 | ✓（`breadth-depth-scale.md` §theme-selection 形式） |
 | `theme-deep-dive.md` | 4 | ✓ |
@@ -13,6 +13,17 @@
 | `plan-review.json` | 7 G3 | ✓（起票まで行う場合） |
 | `screen-mocks.md` | 8 | 起票まで行う場合 ✓ |
 | `issue-pack.md` | 9 | 起票まで行う場合 ✓ |
+
+## `current-state.md` 必須セクション（フェーズ 1）
+
+[`subagent-prompts.md`](subagent-prompts.md) §1 の調査・出力と対応する。いずれかが空なら親エージェントは **フェーズ 2 に進まず** 調査を継続する。
+
+| セクション | 内容 |
+|------------|------|
+| **既存 backlog** | 選定テーマ（またはギャップ候補）に関連する issue の番号・state（OPEN / CLOSED）・タイトル要約。`gh issue list` / `gh issue view` による観測 |
+| **実装済み** | 同一テーマのマージ済み PR 番号と触れたコード path。`gh pr list --state merged` による観測 |
+| **できること一覧** | 画面・API レベルの機能とコード path |
+| **計画→実行→学習** | ループの薄い箇所。上記 backlog・PR 観測と矛盾しない記述 |
 
 ## ゲート JSON の例
 
@@ -60,3 +71,14 @@
 | 方針まで | `enhancement-plan.md` + G2/G3 verdict |
 | モックまで | `screen-mocks.md` リンク |
 | 起票まで | Epic / 子 issue の URL 一覧 |
+
+## 起票時の参照変換（フェーズ 9）
+
+`tmp/product-gap/issue-pack.md` はローカル成果物のため GitHub から観測できない。`gh issue create` の**直前**に次を実施する:
+
+1. Epic / 子 issue 本文の「参照」節を開く
+2. `tmp/product-gap/...` を削除し、次に置き換える:
+   - 調査で特定した **リポジトリ内コード path**（`frontend/...`, `crates/...` 等）
+   - 既に起票済みの **GitHub issue / PR 番号**（`#N`）
+3. 変換後の本文を `tmp/product-gap/*-body-ready.md` 等に書き出し、`--body-file` で起票する
+4. 完了報告に「参照はリポジトリ path + `#N` に変換済み」と明記する
