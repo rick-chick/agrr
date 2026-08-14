@@ -76,6 +76,7 @@ describe('PlanOptimizingComponent', () => {
         'plans.optimizing_live.default_message': 'Preparing optimization...',
         'plans.optimizing_live.error.retry': 'Reload',
         'plans.optimizing_live.error.back_to_plan': 'Back to plan',
+        'plans.task_schedules.orchestration.return_to_learn': 'Return to learning screen',
         'models.cultivation_plan.phases.task_schedule_generating': 'Generating task plans...',
         'models.cultivation_plan.phase_failed.default': 'Process failed'
       },
@@ -203,6 +204,26 @@ describe('PlanOptimizingComponent', () => {
     component.onOptimizationCompleted();
 
     expect(readLearnOrchestrationStepComplete(13, 'placement')).toBe(true);
+  });
+
+  it('shows learn loop progress strip when reorganize return context is active', () => {
+    hydrateLearnOrchestrationProgress(13, { return_to_learn: true });
+    component.control = { status: 'optimizing', progress: 40, phaseMessage: '' };
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('app-plan-learn-loop-progress-strip')
+    ).not.toBeNull();
+  });
+
+  it('shows return-to-learn link when reorganize return context is active', () => {
+    hydrateLearnOrchestrationProgress(13, { return_to_learn: true });
+    component.control = { status: 'optimizing', progress: 40, phaseMessage: '' };
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('a.plan-optimizing__learn-link');
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('href')).toBe('/plans/13/learn');
   });
 
   it('initializes with the presenter and executes the use case', () => {
