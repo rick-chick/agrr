@@ -2926,6 +2926,15 @@
       "exceedance_badge": {
         "days": "Δ {{delta}}日",
         "gdd": "GDD {{delta}}"
+      },
+      "context_badge": {
+        "gdd_trigger": "GDD {{trigger}}",
+        "gdd_reached": "GDD到達",
+        "gdd_remaining": "残り {{remaining}}",
+        "weather_low": "天候: 低",
+        "weather_medium": "天候: 中",
+        "weather_high": "天候: 高",
+        "weather_other": "天候: {{level}}"
       }
     },
     "work_records": {

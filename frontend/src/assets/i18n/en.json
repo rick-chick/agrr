@@ -1801,6 +1801,15 @@
       "exceedance_badge": {
         "days": "Δ {{delta}} days",
         "gdd": "GDD {{delta}}"
+      },
+      "context_badge": {
+        "gdd_trigger": "GDD {{trigger}}",
+        "gdd_reached": "GDD reached",
+        "gdd_remaining": "{{remaining}} remaining",
+        "weather_low": "Weather: low",
+        "weather_medium": "Weather: medium",
+        "weather_high": "Weather: high",
+        "weather_other": "Weather: {{level}}"
       }
     },
     "work_records": {

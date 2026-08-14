@@ -31,6 +31,12 @@ import { PlanWorkVarianceSummaryComponent } from './plan-work-variance-summary.c
 import { findVarianceActionItemForTask } from '../../domain/plans/find-variance-action-item-for-task';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import { formatVarianceDeltaDays, formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
+import {
+  resolveWorkRowGddContext,
+  resolveWorkRowWeatherDependency,
+  shouldShowWorkRowGddProgress,
+  type WorkRowGddContext
+} from '../../domain/plans/resolve-work-row-context-badges';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -287,6 +293,35 @@ const initialControl: PlanWorkViewState = {
               </span>
             }
           }
+          @if (gddContextForRow(row); as gddContext) {
+            <span class="plan-work__context-badge plan-work__context-badge--gdd-trigger">
+              {{ 'plans.work.context_badge.gdd_trigger' | translate: { trigger: gddContext.trigger } }}
+            </span>
+            @if (showGddProgressContext(row, gddContext)) {
+              @if (gddContext.state === 'reached') {
+                <span class="plan-work__context-badge plan-work__context-badge--gdd-reached">
+                  {{ 'plans.work.context_badge.gdd_reached' | translate }}
+                </span>
+              } @else if (gddContext.state === 'remaining' && gddContext.remaining != null) {
+                <span class="plan-work__context-badge plan-work__context-badge--gdd-remaining">
+                  {{
+                    'plans.work.context_badge.gdd_remaining'
+                      | translate: { remaining: gddContext.remaining }
+                  }}
+                </span>
+              }
+            }
+          }
+          @if (weatherDependencyForRow(row); as weatherDependency) {
+            <span
+              class="plan-work__context-badge"
+              [class.plan-work__context-badge--weather-low]="weatherDependency === 'low'"
+              [class.plan-work__context-badge--weather-medium]="weatherDependency === 'medium'"
+              [class.plan-work__context-badge--weather-high]="weatherDependency === 'high'"
+            >
+              {{ weatherDependencyLabel(weatherDependency) | translate }}
+            </span>
+          }
         </div>
         <div class="plan-work__row-actions">
           @if (!row.recordedToday && row.item.status !== 'skipped') {
@@ -435,6 +470,26 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
 
   gddExceedanceLabel(item: PlanVarianceActionItem): string {
     return item.gdd_delta != null ? formatVarianceGddDelta(item.gdd_delta) : '—';
+  }
+
+  gddContextForRow(row: WorkDayListRowDto): WorkRowGddContext | null {
+    return resolveWorkRowGddContext(row.item);
+  }
+
+  showGddProgressContext(row: WorkDayListRowDto, context: WorkRowGddContext): boolean {
+    const actionItem = this.varianceActionItemForRow(row);
+    return shouldShowWorkRowGddProgress(context, actionItem != null && this.showGddExceedanceBadge(actionItem));
+  }
+
+  weatherDependencyForRow(row: WorkDayListRowDto): string | null {
+    return resolveWorkRowWeatherDependency(row.item);
+  }
+
+  weatherDependencyLabel(dependency: string): string {
+    if (dependency === 'low' || dependency === 'medium' || dependency === 'high') {
+      return `plans.work.context_badge.weather_${dependency}`;
+    }
+    return 'plans.work.context_badge.weather_other';
   }
 
   private _control: PlanWorkViewState = initialControl;

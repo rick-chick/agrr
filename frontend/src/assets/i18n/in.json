@@ -2288,6 +2288,15 @@
       "exceedance_badge": {
         "days": "Δ {{delta}} दिन",
         "gdd": "GDD {{delta}}"
+      },
+      "context_badge": {
+        "gdd_trigger": "GDD {{trigger}}",
+        "gdd_reached": "GDD पूर्ण",
+        "gdd_remaining": "{{remaining}} शेष",
+        "weather_low": "मौसम: कम",
+        "weather_medium": "मौसम: मध्यम",
+        "weather_high": "मौसम: उच्च",
+        "weather_other": "मौसम: {{level}}"
       }
     },
     "work_records": {

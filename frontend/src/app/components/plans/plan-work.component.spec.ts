@@ -867,6 +867,105 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(fixture.nativeElement.textContent).toContain('GDD +15');
   });
 
+  it('shows GDD trigger and weather context badges on work rows', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.context_badge.gdd_trigger': 'GDD {{trigger}}',
+        'plans.work.context_badge.gdd_reached': 'GDD到達',
+        'plans.work.context_badge.gdd_remaining': '残り {{remaining}}',
+        'plans.work.context_badge.weather_low': '天候: 低',
+        'plans.work.context_badge.weather_medium': '天候: 中',
+        'plans.work.context_badge.weather_high': '天候: 高'
+      },
+      true
+    );
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      today: [
+        mockRow({
+          item_id: 11,
+          name: '追肥',
+          gdd_trigger: '120',
+          weather_dependency: 'high',
+          details: { gdd: { trigger: '120', tolerance: '0' }, weather_dependency: 'high' }
+        })
+      ],
+      upcoming: [
+        mockRow({
+          item_id: 12,
+          name: '除草',
+          gdd_trigger: '80',
+          gdd_at_actual: 95,
+          gdd_delta: 15,
+          weather_dependency: 'low',
+          details: { gdd: { trigger: '80', tolerance: '0' }, weather_dependency: 'low' }
+        })
+      ]
+    };
+    fixture.detectChanges();
+
+    const badges = fixture.nativeElement.querySelectorAll('.plan-work__context-badge');
+    expect(badges.length).toBeGreaterThanOrEqual(4);
+    expect(fixture.nativeElement.textContent).toContain('GDD 120');
+    expect(fixture.nativeElement.textContent).toContain('天候: 高');
+    expect(fixture.nativeElement.textContent).toContain('GDD 80');
+    expect(fixture.nativeElement.textContent).toContain('GDD到達');
+    expect(fixture.nativeElement.textContent).toContain('天候: 低');
+  });
+
+  it('hides GDD progress context badge when exceedance GDD badge is shown', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.context_badge.gdd_trigger': 'GDD {{trigger}}',
+        'plans.work.context_badge.gdd_reached': 'GDD到達',
+        'plans.work.exceedance_badge.gdd': 'GDD {{delta}}'
+      },
+      true
+    );
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      overdue: [
+        mockRow(
+          {
+            item_id: 10,
+            name: '遅延作業',
+            scheduled_date: '2026-06-08',
+            gdd_trigger: '100',
+            gdd_at_actual: 120,
+            gdd_delta: 15
+          },
+          { overdueDays: 4 }
+        )
+      ],
+      actionRequiredItems: [
+        {
+          item_id: 10,
+          field_cultivation_id: 1,
+          category: 'general',
+          name: '遅延作業',
+          scheduled_date: '2026-06-08',
+          actual_date: '2026-06-12',
+          delta_days: 4,
+          gdd_trigger: 100,
+          gdd_at_actual: 120,
+          gdd_delta: 15,
+          exceedance_kind: 'gdd'
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-work__exceedance-badge--gdd')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.plan-work__context-badge--gdd-reached')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('GDD 100');
+    expect(fixture.nativeElement.textContent).toContain('GDD +15');
+    expect(fixture.nativeElement.textContent).not.toContain('GDD到達');
+  });
+
   it('subscribes to task schedule sync cable on init', () => {
     component.ngOnInit();
 
