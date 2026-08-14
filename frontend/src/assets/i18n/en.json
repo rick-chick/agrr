@@ -2603,6 +2603,7 @@
       "from_plan_wizard_title": "Registration for this plan's task plans",
       "from_plan_wizard_lead": "Register task plans using the form below. When finished, use the breadcrumb to return to the plan.",
       "return_to_plan": "Return to plan",
+      "return_to_learn": "Return to learning screen",
       "from_plan_stages_wizard_lead": "Set base temperature and required GDD for each growth stage. When finished, return to the plan and regenerate task plans.",
       "confirm_delete": "Are you sure you want to delete this crop?",
       "delete_confirm_message": "Delete this crop? Growth stages and task schedule templates will also be removed. You can undo shortly after deleting.",

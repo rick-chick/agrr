@@ -620,6 +620,7 @@
       "from_plan_wizard_title": "計画の作業計画を作るための登録",
       "from_plan_wizard_lead": "下のフォームから作業計画を登録してください。完了したらパンくずから計画へ戻れます。",
       "return_to_plan": "計画へ戻る",
+      "return_to_learn": "学習画面に戻る",
       "from_plan_stages_wizard_lead": "生育ステージの最低限界温度と必要積算温度を設定してください。完了したら計画へ戻って作業計画を再生成してください。",
       "confirm_delete": "この作物を削除しますか？",
       "delete_confirm_message": "この作物を削除します。生育ステージや作業予定テンプレートも削除されます。削除後、しばらく「元に戻す」で取り消せます。",
