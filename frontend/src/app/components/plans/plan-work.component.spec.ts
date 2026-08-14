@@ -813,6 +813,65 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(learnLink?.getAttribute('href')).toContain('/plans/7/learn');
   });
 
+  it('renders today attention card below variance summary with learn CTA', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.today_attention.title': '今日の注意',
+        'plans.work.today_attention.frost_risk': '霜リスク',
+        'plans.work.today_attention.gdd_delay': 'GDD遅延',
+        'plans.work.today_attention.threshold_exceeded': '閾値超過',
+        'plans.work.today_attention.frost_risk_field': '{{field}}（{{crop}}）',
+        'plans.work.today_attention.gdd_delay_task': 'GDD遅延: {{name}}',
+        'plans.work.today_attention.threshold_exceeded_task': '閾値超過: {{name}}',
+        'plans.work.today_attention.learn_cta': '振り返りで詳細を見る'
+      },
+      true
+    );
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      today: [
+        mockRow({
+          item_id: 11,
+          name: '今日の作業',
+          weather_dependency: 'high',
+          field_cultivation_id: 20
+        })
+      ],
+      varianceSummaryLoading: false,
+      actionRequiredItems: [
+        {
+          item_id: 10,
+          field_cultivation_id: 1,
+          category: 'general',
+          name: '遅延作業',
+          scheduled_date: '2026-06-08',
+          actual_date: '2026-06-12',
+          delta_days: 4,
+          gdd_trigger: 100,
+          gdd_at_actual: 120,
+          gdd_delta: 15,
+          exceedance_kind: 'both'
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const attention = fixture.nativeElement.querySelector('app-plan-work-today-attention');
+    expect(attention).toBeTruthy();
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('今日の注意');
+    expect(text).toContain('霜リスク');
+    expect(text).toContain('A区画');
+    expect(text).toContain('GDD遅延: 遅延作業');
+    expect(text).toContain('閾値超過: 遅延作業');
+    const learnLink = fixture.nativeElement.querySelector(
+      '.plan-work-today-attention__learn-link'
+    ) as HTMLAnchorElement;
+    expect(learnLink?.getAttribute('href')).toContain('/plans/7/learn');
+  });
+
   it('highlights task row from highlight_item query param after schedule load', () => {
     mockActivatedRoute.setQueryParams({ highlight_item: '10' });
     fixture.detectChanges();
