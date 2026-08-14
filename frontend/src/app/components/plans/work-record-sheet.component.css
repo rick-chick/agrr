@@ -112,6 +112,14 @@
   color: var(--color-text);
 }
 
+.work-record-sheet__gdd-diff--over {
+  color: var(--color-warning);
+}
+
+.work-record-sheet__gdd-diff--under {
+  color: var(--color-primary);
+}
+
 .form-dialog .form-card__field input.ng-invalid.ng-touched,
 .form-dialog .form-card__field input.ng-invalid.ng-dirty {
   border-color: var(--color-error);

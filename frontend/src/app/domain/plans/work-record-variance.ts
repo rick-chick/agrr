@@ -46,6 +46,20 @@ export function parseGddTrigger(value: string | number | null | undefined): numb
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+export function gddDeltaFromValues(
+  actual: number | null | undefined,
+  trigger: string | number | null | undefined
+): number | null {
+  if (actual == null) {
+    return null;
+  }
+  const parsed = parseGddTrigger(trigger);
+  if (parsed == null) {
+    return null;
+  }
+  return Math.round((actual - parsed) * 10) / 10;
+}
+
 export function workRecordGddDelta(
   record: WorkRecord,
   gddTrigger?: number | null
@@ -58,7 +72,7 @@ export function workRecordGddDelta(
   if (trigger == null) {
     return null;
   }
-  return Math.round((actual - trigger) * 10) / 10;
+  return gddDeltaFromValues(actual, trigger);
 }
 
 export function formatVarianceDeltaDays(delta: number): string {

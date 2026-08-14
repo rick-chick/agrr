@@ -109,6 +109,8 @@ export class WorkRecordSheetPresenter
         temperatureMax: dto.temperatureMax,
         temperatureMin: dto.temperatureMin,
         temperatureMean: dto.temperatureMean,
+        plannedGdd: dto.plannedGdd,
+        gddDelta: dto.gddDelta,
         loading: dto.loading
       }
     };
