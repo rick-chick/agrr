@@ -60,3 +60,14 @@
 | 方針まで | `enhancement-plan.md` + G2/G3 verdict |
 | モックまで | `screen-mocks.md` リンク |
 | 起票まで | Epic / 子 issue の URL 一覧 |
+
+## 起票時の参照変換（フェーズ 9）
+
+`tmp/product-gap/issue-pack.md` はローカル成果物のため GitHub から観測できない。`gh issue create` の**直前**に次を実施する:
+
+1. Epic / 子 issue 本文の「参照」節を開く
+2. `tmp/product-gap/...` を削除し、次に置き換える:
+   - 調査で特定した **リポジトリ内コード path**（`frontend/...`, `crates/...` 等）
+   - 既に起票済みの **GitHub issue / PR 番号**（`#N`）
+3. 変換後の本文を `tmp/product-gap/*-body-ready.md` 等に書き出し、`--body-file` で起票する
+4. 完了報告に「参照はリポジトリ path + `#N` に変換済み」と明記する
