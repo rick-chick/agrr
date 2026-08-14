@@ -1993,16 +1993,6 @@
         "workbench_link": "workbench पर adjust की समीक्षा करें",
         "merged_proposals": "सीख से {{count}} मर्ज प्रस्ताव आयात किए गए।"
       },
-      "carryover": {
-        "title": "दूसरी योजना से सीख आयात करें",
-        "hint": "उसी खेत की पिछली योजना से variance सीख इस चल रही योजना में कॉपी करें।",
-        "source_label": "स्रोत योजना",
-        "source_hint": "पिछली योजना चुनें",
-        "no_source_plans": "इस खेत पर कोई अन्य योजना उपलब्ध नहीं है।",
-        "preview_title": "सीख डेटा पूर्वावलोकन",
-        "preview_empty": "कोई श्रेणी variance डेटा नहीं।",
-        "import_button": "सीख आयात करें"
-      },
       "stage_gdd_calibration": {
         "title": "चरण GDD अंशांकन प्रस्ताव",
         "lead": "इस योजना के वास्तविक GDD अंतर से चरण thermal requirement अपडेट का प्रस्ताव दिया गया है। समीक्षा करें और केवल सहमति होने पर सहेजें।",
@@ -2137,14 +2127,12 @@
           "loop_complete_next_plan": "अगली योजना पर जाएँ",
           "complete_reorganize": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
           "complete_next_plan": "योजनाओं पर जाएँ",
-          "handoff_new_plan": "सीख के साथ अगली योजना बनाएँ",
           "handoff_source_plan": "स्रोत योजना: {{planName}}"
         },
         "complete": {
           "title": "सीखने का लूप पूर्ण",
           "lead": "सभी मास्टर अपडेट प्रस्ताव लागू, अस्वीकृत या पूर्ण हैं। पुनर्गठन या अगली योजना पर आगे बढ़ें।"
-        },
-        "handoff_source_plan": "स्रोत योजना: {{planName}}"
+        }
       },
       "reorganize": {
         "return_to_learn": "सीखने की स्क्रीन पर वापस जाएँ",
@@ -2371,15 +2359,7 @@
       "farm_option_no_fields": "{{name}} (कोई खेत क्षेत्र नहीं)",
       "no_fields_warning": "इस खेत पर कोई पंजीकृत खेत क्षेत्र नहीं है।",
       "some_farms_no_fields_hint": "बिना पंजीकृत खेत क्षेत्र वाले खेतों को योजना बनाने के लिए चुना नहीं जा सकता।",
-      "register_fields_link": "खेत क्षेत्र पंजीकृत करें",
-      "carryover_enabled_label": "पिछली योजना का सीखा हुआ डेटा ले जाएं",
-      "carryover_hint": "इस खेत की पूर्ण योजना के वेरिएंस सीख को नई योजना के कार्य शेड्यूल में लागू करें।",
-      "carryover_source_label": "स्रोत योजना",
-      "carryover_source_hint": "ले जाने के लिए पिछली योजना चुनें",
-      "carryover_preview_title": "सीखे हुए डेटा का पूर्वावलोकन",
-      "carryover_no_source_plans": "इस खेत के लिए कोई पिछली योजना नहीं मिली।",
-      "carryover_preview_empty": "चयनित योजना के लिए कोई श्रेणी वेरिएंस डेटा उपलब्ध नहीं है।",
-      "carryover_learn_cta": "बनाएं और सीखें पर समीक्षा करें"
+      "register_fields_link": "खेत क्षेत्र पंजीकृत करें"
     },
     "select_crop": {
       "title": "🌾 उगाने के लिए फसलें चुनें",

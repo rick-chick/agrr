@@ -53,8 +53,6 @@ describe('PlanLearnLoopProgressComponent', () => {
         'plans.learn.loop.complete_message': 'Learning loop complete',
         'plans.learn.loop.next_action.observe_workbench': 'Open workbench',
         'plans.learn.loop.next_action.handoff_carryover': 'Import carryover',
-        'plans.learn.loop.next_action.handoff_new_plan': 'Create next plan with learning',
-        'plans.learn.loop.handoff_source_plan': 'Source plan: {{planName}}',
         'plans.learn.loop.next_action.complete_reorganize': 'Verify placement',
         'plans.learn.loop.next_action.complete_next_plan': 'Go to plans'
       },
@@ -86,7 +84,6 @@ describe('PlanLearnLoopProgressComponent', () => {
   });
 
   it('shows carryover scroll CTA when learning snapshot and carryover sources exist', () => {
-    fixture.componentInstance.planName = 'Main Plan';
     fixture.componentInstance.hasLearningSnapshot = true;
     fixture.componentInstance.carryoverSourcePlanCount = 2;
     fixture.detectChanges();
@@ -99,18 +96,6 @@ describe('PlanLearnLoopProgressComponent', () => {
     const cta = fixture.nativeElement.querySelector('.learn-loop-progress__next-cta');
     expect(cta?.getAttribute('href')).toBe('#plan-learn-carryover-title');
     expect(cta?.textContent).toContain('Import carryover');
-  });
-
-  it('does not show source plan name in handoff scroll action', () => {
-    fixture.componentInstance.planName = 'Spring Rotation 2026';
-    fixture.componentInstance.hasLearningSnapshot = true;
-    fixture.componentInstance.carryoverSourcePlanCount = 2;
-    fixture.detectChanges();
-
-    const sourceLabel = fixture.nativeElement.querySelector(
-      '.learn-loop-progress__handoff-source'
-    );
-    expect(sourceLabel).toBeNull();
   });
 
   it('marks earlier phases as completed when current phase is handoff', () => {

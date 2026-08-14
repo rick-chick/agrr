@@ -1507,16 +1507,6 @@
         "workbench_link": "Review adjust on workbench",
         "merged_proposals": "{{count}} merged proposal(s) imported from learning."
       },
-      "carryover": {
-        "title": "Import learning from another plan",
-        "hint": "Copy variance learning from a previous plan on the same farm into this in-progress plan.",
-        "source_label": "Source plan",
-        "source_hint": "Select a previous plan",
-        "no_source_plans": "No other plans on this farm are available.",
-        "preview_title": "Learning data preview",
-        "preview_empty": "No category variance data.",
-        "import_button": "Import learning"
-      },
       "stage_gdd_calibration": {
         "title": "Stage GDD calibration proposals",
         "lead": "Actual GDD variance from this plan suggests updating stage thermal requirements. Review and save only if you agree.",
@@ -1651,14 +1641,12 @@
           "loop_complete_next_plan": "Continue to next plan",
           "complete_reorganize": "Verify placement on workbench",
           "complete_next_plan": "Go to plans",
-          "handoff_new_plan": "Create next plan with learning",
           "handoff_source_plan": "Source plan: {{planName}}"
         },
         "complete": {
           "title": "Learning loop complete",
           "lead": "All master update proposals are applied, dismissed, or finished. Continue with reorganization or your next plan."
-        },
-        "handoff_source_plan": "Source plan: {{planName}}"
+        }
       },
       "reorganize": {
         "return_to_learn": "Return to learning screen",
@@ -1885,15 +1873,7 @@
       "farm_option_no_fields": "{{name}} (no fields)",
       "no_fields_warning": "This farm has no registered fields.",
       "some_farms_no_fields_hint": "Farms without registered fields cannot be selected for planning.",
-      "register_fields_link": "Register fields",
-      "carryover_enabled_label": "Carry over previous plan learning data",
-      "carryover_hint": "Apply variance learning from a completed plan on this farm to improve task scheduling.",
-      "carryover_source_label": "Source plan",
-      "carryover_source_hint": "Select a previous plan to carry over",
-      "carryover_preview_title": "Learning data preview",
-      "carryover_no_source_plans": "No previous plans found for this farm.",
-      "carryover_preview_empty": "No category variance data available for the selected plan.",
-      "carryover_learn_cta": "Create and review on Learn"
+      "register_fields_link": "Register fields"
     },
     "select_crop": {
       "title": "🌾 Select Crops to Grow",

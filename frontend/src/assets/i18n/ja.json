@@ -2342,15 +2342,7 @@
       "farm_option_no_fields": "{{name}}（圃場未登録）",
       "no_fields_warning": "この農場には圃場が登録されていません。",
       "some_farms_no_fields_hint": "圃場が未登録の農場は計画作成の対象に選べません。",
-      "register_fields_link": "圃場を登録する",
-      "carryover_enabled_label": "前回計画の学習データを引き継ぐ",
-      "carryover_hint": "この農場の完了済み計画の実績差分を、新しい計画の作業スケジュールに反映します。",
-      "carryover_source_label": "引き継ぎ元の計画",
-      "carryover_source_hint": "引き継ぐ計画を選択してください",
-      "carryover_preview_title": "学習データのプレビュー",
-      "carryover_no_source_plans": "この農場の過去の計画が見つかりません。",
-      "carryover_preview_empty": "選択した計画にカテゴリ別の実績差分データがありません。",
-      "carryover_learn_cta": "作成後に学習画面で確認"
+      "register_fields_link": "圃場を登録する"
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
@@ -2631,16 +2623,6 @@
         "workbench_link": "作業台で adjust を検討",
         "merged_proposals": "マージされた提案 {{count}} 件を学習から取り込みました。"
       },
-      "carryover": {
-        "title": "他の計画から学習を取り込む",
-        "hint": "同一農場内の過去計画から、進行中計画へ variance 学習データをコピーします。",
-        "source_label": "ソース計画",
-        "source_hint": "過去の計画を選択",
-        "no_source_plans": "同一農場内に他の計画がありません。",
-        "preview_title": "学習データプレビュー",
-        "preview_empty": "カテゴリ差分データがありません。",
-        "import_button": "学習を取り込む"
-      },
       "stage_gdd_calibration": {
         "title": "ステージ GDD 校正提案",
         "lead": "この計画の実績 GDD 差分から、ステージの thermal requirement 更新を提案します。内容を確認し、同意する場合のみ保存してください。",
@@ -2775,14 +2757,12 @@
           "loop_complete_next_plan": "次の計画へ進む",
           "complete_reorganize": "作業台で配置を確認",
           "complete_next_plan": "計画一覧へ",
-          "handoff_new_plan": "次の計画を作成（学習を引き継ぐ）",
           "handoff_source_plan": "引き継ぎ元の計画: {{planName}}"
         },
         "complete": {
           "title": "学習ループ完了",
           "lead": "すべてのマスタ更新提案が適用済み・却下済み・完了です。再編成または次の計画に進んでください。"
-        },
-        "handoff_source_plan": "ソース計画: {{planName}}"
+        }
       },
       "reorganize": {
         "return_to_learn": "学習画面に戻る",
