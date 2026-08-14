@@ -85,7 +85,7 @@ AGRR リポジトリの現状機能を調査せよ。
 
 verdict=fail のとき mandatory_corrections に、gates.md の該当行に沿った具体修正を書く。
 
-新画面案は自動 fail にしない。G2-4（justification 未記載）と G2-1〜3（重複・過剰・コード）を優先して判定する。
+新画面案は自動 fail にしない。G2-4（justification 未記載）と G2-1〜3（重複・過剰・コード）、G2-5〜8（深掘り打ち止め・見送り）を優先して判定する。
 ```
 
 ---

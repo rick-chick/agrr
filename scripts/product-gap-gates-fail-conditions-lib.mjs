@@ -1,10 +1,10 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const GATES_REL = '.cursor/skills/product-gap-to-issues/references/gates.md';
-export const SUBAGENT_PROMPTS_REL =
+const GATES_REL = '.cursor/skills/product-gap-to-issues/references/gates.md';
+const SUBAGENT_PROMPTS_REL =
   '.cursor/skills/product-gap-to-issues/references/subagent-prompts.md';
-export const SKILL_REL = '.cursor/skills/product-gap-to-issues/SKILL.md';
+const SKILL_REL = '.cursor/skills/product-gap-to-issues/SKILL.md';
 
 /** @typedef {{ ok: boolean; errors: string[] }} CheckResult */
 
@@ -51,8 +51,8 @@ export function checkProductGapGatesFailConditions(rootDir) {
   }
 
   // theme-selection 見送り fail
-  if (!/G2-8|G3-6/.test(gates)) {
-    errors.push(`${GATES_REL}: missing theme-selection 見送り fail row (G2-8 or G3-6)`);
+  if (!/G2-8/.test(gates)) {
+    errors.push(`${GATES_REL}: missing theme-selection 見送り fail row (G2-8)`);
   }
   if (!/見送り（反対側）/.test(gates)) {
     errors.push(`${GATES_REL}: missing 見送り（反対側） fail condition text`);
