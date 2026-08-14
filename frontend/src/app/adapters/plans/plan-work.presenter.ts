@@ -42,10 +42,21 @@ import {
 import { mapWorkRecordSaveToastToPendingRequest } from './work-record-save-toast.presenter.helpers';
 import { WorkRecordSheetSavedEvent } from '../../components/plans/work-record-sheet.view';
 import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
+import { buildPlanWorkVarianceSummaryStats } from '../../domain/plans/build-plan-work-variance-summary-stats';
 
 const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
   cropIdsForBanner: [],
   cropNamesForBanner: {}
+};
+
+const emptyPageVarianceFields: Pick<
+  PlanWorkViewState,
+  'varianceSummaryLoading' | 'varianceSummaryError' | 'varianceSummaryStats' | 'actionRequiredItems'
+> = {
+  varianceSummaryLoading: true,
+  varianceSummaryError: null,
+  varianceSummaryStats: null,
+  actionRequiredItems: []
 };
 
 @Injectable()
@@ -62,6 +73,7 @@ export class PlanWorkPresenter
   private syncLifecycle: TaskScheduleSyncLifecycleState = initialTaskScheduleSyncLifecycleState();
   private pendingSaveImpactRequest: PendingSaveImpactRequest | null = null;
   private saveImpactLoadGeneration = 0;
+  private pageVarianceLoadGeneration = 0;
 
   setView(view: PlanWorkView): void {
     this.view = view;
@@ -71,6 +83,11 @@ export class PlanWorkPresenter
     const result = beginScheduleLoad(this.syncLifecycle);
     this.syncLifecycle = result.lifecycle;
     return result.generation;
+  }
+
+  beginPageVarianceLoad(): number {
+    this.pageVarianceLoadGeneration += 1;
+    return this.pageVarianceLoadGeneration;
   }
 
   onSuccess(dto?: CreateWorkRecordSuccessDto): void {
@@ -200,7 +217,8 @@ export class PlanWorkPresenter
       nextScheduled: null,
       regenerating: false,
       regenerateError: null,
-      ...emptyCropBannerFields
+      ...emptyCropBannerFields,
+      ...emptyPageVarianceFields
     };
   }
 
@@ -285,9 +303,12 @@ export class PlanWorkPresenter
     }
     const context = event.saveToastContext ?? null;
     const fields = this.beginSaveImpactLoadFields(event, context);
+    this.pageVarianceLoadGeneration = this.saveImpactLoadGeneration;
     this.view.control = {
       ...this.view.control,
-      ...fields
+      ...fields,
+      varianceSummaryLoading: true,
+      varianceSummaryError: null
     };
     return this.saveImpactLoadGeneration;
   }
@@ -300,14 +321,14 @@ export class PlanWorkPresenter
       this.saveImpactLoadGeneration,
       dto
     );
-    if (!applied) {
-      return;
+    if (applied) {
+      this.pendingSaveImpactRequest = applied.pending;
+      this.view.control = {
+        ...this.view.control,
+        ...applied.fields
+      };
     }
-    this.pendingSaveImpactRequest = applied.pending;
-    this.view.control = {
-      ...this.view.control,
-      ...applied.fields
-    };
+    this.applyPageVarianceSummary(dto);
   }
 
   onSaveImpactError(dto: ErrorDto): void {
@@ -316,6 +337,36 @@ export class PlanWorkPresenter
     this.view.control = {
       ...this.view.control,
       ...planSaveImpactErrorFields(dto.message)
+    };
+    this.onPageVarianceError(dto);
+  }
+
+  onPageVarianceError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    if (!this.view.control.varianceSummaryLoading) {
+      return;
+    }
+    this.view.control = {
+      ...this.view.control,
+      varianceSummaryLoading: false,
+      varianceSummaryError: dto.message,
+      varianceSummaryStats: null,
+      actionRequiredItems: []
+    };
+  }
+
+  private applyPageVarianceSummary(dto: PlanVsActualSummaryDataDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    if (dto.loadGeneration !== this.pageVarianceLoadGeneration) {
+      return;
+    }
+    const actionRequiredItems = dto.summary.action_required_items ?? [];
+    this.view.control = {
+      ...this.view.control,
+      varianceSummaryLoading: false,
+      varianceSummaryError: null,
+      varianceSummaryStats: buildPlanWorkVarianceSummaryStats(dto.summary),
+      actionRequiredItems
     };
   }
 

@@ -42,7 +42,11 @@ const initialControl: PlanWorkViewState = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  varianceSummaryLoading: false,
+  varianceSummaryError: null,
+  varianceSummaryStats: null,
+  actionRequiredItems: []
 };
 
 function createPlanRouteMock(planId: string) {
@@ -142,7 +146,11 @@ const loadedState: PlanWorkViewState = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  varianceSummaryLoading: false,
+  varianceSummaryError: null,
+  varianceSummaryStats: null,
+  actionRequiredItems: []
 };
 
 describe('PlanWorkComponent mobile UX', () => {
@@ -158,6 +166,7 @@ describe('PlanWorkComponent mobile UX', () => {
   let mockPresenter: {
     setView: ReturnType<typeof vi.fn>;
     beginScheduleLoad: ReturnType<typeof vi.fn>;
+    beginPageVarianceLoad: ReturnType<typeof vi.fn>;
     queueSaveImpactAfterSave: ReturnType<typeof vi.fn>;
     dismissSaveImpact: ReturnType<typeof vi.fn>;
   };
@@ -174,6 +183,7 @@ describe('PlanWorkComponent mobile UX', () => {
     mockPresenter = {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
+      beginPageVarianceLoad: vi.fn(() => 2),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };
@@ -747,6 +757,95 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(component.cropNamesForBanner).toEqual({ 20: 'Tomato', 30: 'Carrot' });
   });
 
+  it('loads plan vs actual summary on init', () => {
+    component.ngOnInit();
+
+    expect(mockPresenter.beginPageVarianceLoad).toHaveBeenCalled();
+    expect(loadSummaryUseCase.execute).toHaveBeenCalledWith({
+      planId: 7,
+      loadGeneration: 2
+    });
+  });
+
+  it('renders variance summary with learn CTA at page top', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.variance_summary.title': '予実乖離サマリ',
+        'plans.work.variance_summary.unrecorded': '未記録',
+        'plans.work.variance_summary.threshold_exceeded': '閾値超過',
+        'plans.work.variance_summary.gdd_delay': 'GDD遅延',
+        'plans.work.variance_summary.learn_cta': '振り返りで詳細を見る'
+      },
+      true
+    );
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      varianceSummaryLoading: false,
+      varianceSummaryStats: {
+        unrecordedCount: 2,
+        thresholdExceededCount: 1,
+        gddDelayCount: 1
+      }
+    };
+    fixture.detectChanges();
+
+    const summary = fixture.nativeElement.querySelector('app-plan-work-variance-summary');
+    expect(summary).toBeTruthy();
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('未記録');
+    expect(text).toContain('2');
+    expect(text).toContain('閾値超過');
+    expect(text).toContain('1');
+    const learnLink = fixture.nativeElement.querySelector(
+      '.plan-work-variance-summary__learn-link'
+    ) as HTMLAnchorElement;
+    expect(learnLink?.getAttribute('href')).toContain('/plans/7/learn');
+  });
+
+  it('shows exceedance badges on threshold-exceeded task rows', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.exceedance_badge.days': 'Δ {{delta}}日',
+        'plans.work.exceedance_badge.gdd': 'GDD {{delta}}'
+      },
+      true
+    );
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      overdue: [
+        mockRow(
+          { item_id: 10, name: '遅延作業', scheduled_date: '2026-06-08' },
+          { overdueDays: 4 }
+        )
+      ],
+      actionRequiredItems: [
+        {
+          item_id: 10,
+          field_cultivation_id: 1,
+          category: 'general',
+          name: '遅延作業',
+          scheduled_date: '2026-06-08',
+          actual_date: '2026-06-12',
+          delta_days: 4,
+          gdd_trigger: 100,
+          gdd_at_actual: 120,
+          gdd_delta: 15,
+          exceedance_kind: 'both'
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-work__exceedance-badge--days')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.plan-work__exceedance-badge--gdd')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Δ +4日');
+    expect(fixture.nativeElement.textContent).toContain('GDD +15');
+  });
+
   it('subscribes to task schedule sync cable on init', () => {
     component.ngOnInit();
 
@@ -756,6 +855,7 @@ describe('PlanWorkComponent mobile UX', () => {
       onSubscribed: expect.any(Function)
     });
     expect(loadUseCase.execute).toHaveBeenCalled();
+    expect(loadSummaryUseCase.execute).toHaveBeenCalled();
   });
 
   it('reloads and resubscribes when route plan id changes', () => {
@@ -796,6 +896,7 @@ describe('PlanWorkComponent in locale labels', () => {
     const mockPresenter = {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
+      beginPageVarianceLoad: vi.fn(() => 2),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };
