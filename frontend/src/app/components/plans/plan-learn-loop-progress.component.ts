@@ -61,14 +61,11 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
               {{ 'plans.learn.loop.complete_message' | translate }}
             </p>
           }
-<<<<<<< HEAD
           @if (showHandoffSourcePlan) {
             <p class="learn-loop-progress__handoff-source" role="status">
               {{ 'plans.learn.loop.handoff_source_plan' | translate: { planName: planName } }}
             </p>
           }
-=======
->>>>>>> b46ec83768ac8e444bb66172af8692ce443efd8f
           <p class="learn-loop-progress__next-label">
             {{ 'plans.learn.loop.next_action_title' | translate }}:
             {{ nextAction.labelKey | translate }}
