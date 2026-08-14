@@ -16,6 +16,7 @@ import { resolveLearnObservePhaseStatus } from '../../domain/plans/resolve-learn
 import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
+import { PlanLearnBulkApplyComponent } from './plan-learn-bulk-apply.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
@@ -72,6 +73,7 @@ const initialControl: PlanLearnViewState = {
     PlanLearnApplicationProgressViewComponent,
     PlanLearnPostMasterConfirmationComponent,
     PlanLearnMasterUpdateNextStepsComponent,
+    PlanLearnBulkApplyComponent,
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
     VarianceActionProposalCardsComponent,
@@ -270,6 +272,13 @@ const initialControl: PlanLearnViewState = {
             [items]="control.varianceSummary?.action_required_items ?? []"
           />
           <div id="plan-learn-loop-proposals">
+          <app-plan-learn-bulk-apply
+            [planId]="planId"
+            [stageGddProposals]="control.stageGddProposals"
+            [blueprintTimingProposals]="control.blueprintTimingProposals"
+            [progressRefreshVersion]="proposalProgressRefreshVersion"
+            (progressChanged)="onProposalProgressChanged()"
+          />
           <h3 id="plan-learn-current-variance-title" class="plan-learn-current-variance__title">
             {{ 'plans.learn.current_variance_title' | translate }}
           </h3>

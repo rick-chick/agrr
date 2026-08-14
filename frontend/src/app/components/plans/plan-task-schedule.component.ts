@@ -31,8 +31,10 @@ import {
   isTaskScheduleOrchestrationComplete,
   markLearnOrchestrationStepComplete,
   parseLearningOrchestration,
+  readLearnOrchestrationStepComplete,
   type LearnOrchestrationStepKey
 } from '../../domain/plans/learn-master-update-orchestration';
+import { resolveLearnOrchestrationAutoChainNavigationAfterStep } from '../../domain/plans/learn-orchestration-auto-chain';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -784,6 +786,14 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     if (!this.orchestrationComplete) {
       return;
     }
+    const wasComplete = readLearnOrchestrationStepComplete(this.planId, mode);
     markLearnOrchestrationStepComplete(this.planId, mode as LearnOrchestrationStepKey);
+    if (wasComplete) {
+      return;
+    }
+    const autoChainNav = resolveLearnOrchestrationAutoChainNavigationAfterStep(this.planId, mode);
+    if (autoChainNav) {
+      void this.router.navigate(autoChainNav.commands, { queryParams: autoChainNav.queryParams });
+    }
   }
 }

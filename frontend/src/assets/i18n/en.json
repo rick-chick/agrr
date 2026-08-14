@@ -1568,6 +1568,14 @@
       "proposal": {
         "dismiss": "Do not apply"
       },
+      "bulk_apply": {
+        "title": "Apply safe proposals",
+        "lead": "{{count}} proposals are within threshold and can be applied without extra confirmation.",
+        "cta": "Apply all safe proposals ({{count}})",
+        "applying": "Applying proposals…",
+        "success": "Applied {{count}} proposals.",
+        "start_pipeline": "Start reoptimization pipeline"
+      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",

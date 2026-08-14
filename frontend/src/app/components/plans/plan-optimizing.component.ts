@@ -12,6 +12,7 @@ import {
   markLearnOrchestrationStepComplete,
   readLearnOrchestrationReturnToLearn
 } from '../../domain/plans/learn-master-update-orchestration';
+import { resolveLearnOrchestrationAutoChainNavigationAfterStep } from '../../domain/plans/learn-orchestration-auto-chain';
 
 const initialControl: PlanOptimizingViewState = {
   status: 'pending',
@@ -134,6 +135,11 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     if (planId && readLearnOrchestrationReturnToLearn(planId)) {
       clearLearnOrchestrationReturnToLearn(planId);
       markLearnOrchestrationStepComplete(planId, 'placement');
+      const autoChainNav = resolveLearnOrchestrationAutoChainNavigationAfterStep(planId, 'placement');
+      if (autoChainNav) {
+        void this.router.navigate(autoChainNav.commands, { queryParams: autoChainNav.queryParams });
+        return;
+      }
       void this.router.navigate(['/plans', planId, 'learn']);
       return;
     }
