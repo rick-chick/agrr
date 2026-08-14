@@ -91,7 +91,6 @@ export class PlanLearnBulkApplyPanelComponent {
   @Input() blueprintTimingProposals: BlueprintTimingAdjustmentProposal[] = [];
   @Input() progressRefreshVersion = 0;
   @Output() progressChanged = new EventEmitter<void>();
-  @Output() bulkApplyConfirmed = new EventEmitter<{ appliedCount: number }>();
 
   applying = false;
   applyError: string | null = null;
@@ -130,9 +129,6 @@ export class PlanLearnBulkApplyPanelComponent {
         this.lastAppliedCount = result.appliedCount;
         this.bulkApplyComplete = result.appliedCount > 0;
         this.progressChanged.emit();
-        if (result.appliedCount > 0) {
-          this.bulkApplyConfirmed.emit({ appliedCount: result.appliedCount });
-        }
         this.cdr.markForCheck();
       },
       onError: (message) => {

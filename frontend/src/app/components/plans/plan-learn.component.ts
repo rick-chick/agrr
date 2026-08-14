@@ -20,7 +20,6 @@ import { resolvePlanWorkHighlightItemId } from '../../domain/plans/build-plan-wo
 import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
-import { PlanLearnBulkApplyPanelComponent } from './plan-learn-bulk-apply-panel.component';
 import { PlanLearnProposalQueueComponent } from './plan-learn-proposal-queue.component';
 import { PlanLearnPipelineStatusComponent } from './plan-learn-pipeline-status.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';

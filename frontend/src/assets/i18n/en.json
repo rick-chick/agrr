@@ -1574,8 +1574,7 @@
         "apply_button": "Apply all safe proposals ({{count}})",
         "applying": "Applying {{applied}} / {{total}}…",
         "complete_message": "{{count}} safe proposal(s) applied. Start the reorganization pipeline to refresh your plan.",
-        "start_pipeline": "Start reorganization pipeline",
-        "starting_pipeline": "{{count}} safe proposal(s) applied. Starting reorganization pipeline…"
+        "start_pipeline": "Start reorganization pipeline"
       },
       "proposal_queue": {
         "title": "Proposal queue",

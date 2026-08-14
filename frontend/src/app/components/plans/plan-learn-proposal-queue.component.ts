@@ -54,7 +54,6 @@ import { PlanLearnBulkApplyPanelComponent } from './plan-learn-bulk-apply-panel.
           [blueprintTimingProposals]="blueprintTimingProposals"
           [progressRefreshVersion]="progressRefreshVersion"
           (progressChanged)="progressChanged.emit()"
-          (bulkApplyConfirmed)="bulkApplyConfirmed.emit($event)"
         />
       </section>
     }
@@ -71,7 +70,6 @@ export class PlanLearnProposalQueueComponent {
   readonly visibleTiers = ['action_required', 'needs_review', 'safe'] as const;
 
   @Output() progressChanged = new EventEmitter<void>();
-  @Output() bulkApplyConfirmed = new EventEmitter<{ appliedCount: number }>();
 
   get queue() {
     void this.progressRefreshVersion;

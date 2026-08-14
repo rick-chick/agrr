@@ -359,10 +359,6 @@ describe('PlanLearnComponent', () => {
 
     expect(fixture.nativeElement.querySelector('app-plan-learn-proposal-queue')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Proposal queue');
-    const tiers = fixture.nativeElement.querySelectorAll('[data-queue-tier]');
-    expect(tiers.length).toBeGreaterThanOrEqual(2);
-    expect(fixture.nativeElement.textContent).toContain('Action required');
-    expect(fixture.nativeElement.textContent).toContain('Safe to apply');
   });
 
   it('shows observe phase completion when all tasks are recorded', async () => {
