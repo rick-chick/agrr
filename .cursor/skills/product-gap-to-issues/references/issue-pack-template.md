@@ -61,6 +61,11 @@
 
 **ラベル:** `enhancement`（`epic` ラベルが無ければタイトルの `[epic]` のみ）
 
+**参照の制約** — issue 本文の「参照」節に `tmp/product-gap/` path は**禁止**（成果物は commit しないため観測不能）。許可する参照は次のみ:
+
+- リポジトリ内のコード path（例: `frontend/src/app/...`, `crates/agrr-domain/...`）
+- 関連 GitHub issue / PR 番号（`#N`）
+
 ```markdown
 ## 目的
 <2–4行>
@@ -80,8 +85,9 @@
 - [ ] …
 
 ## 参照
-- tmp/product-gap/screen-mocks.md
-- コード path（調査済み）
+- コード: `frontend/src/app/plans/plan-detail.component.ts`
+- 画面: `/plans/:id`
+- 関連: #898
 ```
 
 起票後 `gh issue edit` で子番号を `#N` に差し替える。
@@ -91,6 +97,8 @@
 ## 子 issue（v1）
 
 **1 issue = 1 観測可能スコープ。** 実装方法は書かない。
+
+**参照の制約** — `tmp/product-gap/` path は**禁止**。許可: リポジトリ内コード path + GitHub `#N` のみ。
 
 ```markdown
 ## 目的
@@ -113,8 +121,9 @@
 - …
 
 ## 参照
-- 画面: `/path`
-- コード: `path/to/file`
+- 画面: `/plans/:id`
+- コード: `frontend/src/app/plans/plan-detail.component.ts`
+- 親 epic: #EPIC
 ```
 
 **着手順:** 依存の少ない順。集約ロジック共有が要るものは依存 issue で明示。

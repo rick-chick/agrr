@@ -60,3 +60,15 @@
 | 方針まで | `enhancement-plan.md` + G2/G3 verdict |
 | モックまで | `screen-mocks.md` リンク |
 | 起票まで | Epic / 子 issue の URL 一覧 |
+
+## 起票時の参照変換（フェーズ 9）
+
+`tmp/product-gap/` の成果物は commit しないため、GitHub issue 本文からは**観測不能**。`gh issue create` の前に `issue-pack.md` 内の「参照」節を次の手順で変換する。
+
+1. `issue-pack.md` の各 Epic / 子 issue 草案を読む
+2. `tmp/product-gap/*.md` への参照を、調査で確認した**リポジトリ内のコード path**（`frontend/...`, `crates/...` 等）に置き換える
+3. 画面・ルートは Angular route path（例: `/plans/:id`）で記載する
+4. 関連 issue / PR は `#N` で記載する（起票前に存在するもののみ）
+5. 変換後の本文に `tmp/product-gap/` が残っていないことを確認してから `gh issue create --body-file` を実行する
+
+**許可する参照**: リポジトリ内コード path + GitHub `#N` のみ。**禁止**: `tmp/product-gap/` および commit されていないローカル path。

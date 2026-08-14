@@ -156,8 +156,9 @@ Task `generalPurpose`。プロンプト: §5。ルーブリック: [`references/
 
 1. `issue-pack.md` をテンプレに沿って作成
 2. [`github-issue-creator`](../github-issue-creator/SKILL.md) §1–§7 に従う（重複確認・草案・起票・**`agent-ready` は §6 準拠**）
-3. 依頼が `issue 起票まで` なら Epic → 子 issue の順に `gh issue create`
-4. Epic 本文に子 issue 番号を `gh issue edit` で追記
+3. **`gh issue create` 前に参照を変換** — issue 本文の「参照」節に `tmp/product-gap/` path を**載せない**。調査済みファイルはリポジトリ内のコード path（`frontend/...`, `crates/...` 等）と GitHub issue / PR 番号（`#N`）のみに置き換える（[`references/artifacts.md`](references/artifacts.md) §起票時の参照変換）
+4. 依頼が `issue 起票まで` なら Epic → 子 issue の順に `gh issue create`
+5. Epic 本文に子 issue 番号を `gh issue edit` で追記
 
 ---
 

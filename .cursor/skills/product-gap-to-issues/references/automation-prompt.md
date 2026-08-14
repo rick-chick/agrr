@@ -15,6 +15,7 @@ Rules:
 - On G2/G3 verdict=fail: apply mandatory_corrections and re-run that gate until pass or blocked.
 - On verdict=blocked: stop and report; do not gh issue create.
 - Write all artifacts under tmp/product-gap/ (do not commit).
+- Before gh issue create: convert issue body 参照 to repository code paths (frontend/..., crates/...) and GitHub #N only — never put tmp/product-gap/ paths in issue bodies (see artifacts.md §起票時の参照変換).
 - Do NOT write implementation code or open PRs.
 - agent-ready: follow github-issue-creator SKILL.md §6 only.
 - Use Task tool for subagent phases per subagent-prompts.md.
