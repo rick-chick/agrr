@@ -1,7 +1,7 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::PlanVarianceLearningOrchestrationProgressUpdateInteractor`
 
 use crate::cultivation_plan::dtos::{
-    PlanVarianceLearningSnapshotRead, ReorganizeOrchestrationProgressPatch,
+    ReorganizeOrchestrationProgressPatch, assemble_plan_variance_learning_snapshot,
 };
 use crate::cultivation_plan::gateways::{CultivationPlanGateway, PlanVarianceLearningGateway};
 use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
@@ -79,23 +79,18 @@ where
         let orchestration_progress = self
             .variance_learning_gateway
             .find_reorganize_orchestration_progress_by_plan_id(plan_id)?;
+        let learn_handoff = self
+            .variance_learning_gateway
+            .find_learn_handoff_by_plan_id(plan_id)?;
+        let base = self.variance_learning_gateway.find_by_plan_id(plan_id)?;
 
-        let snapshot = match self.variance_learning_gateway.find_by_plan_id(plan_id)? {
-            Some(existing) => PlanVarianceLearningSnapshotRead {
-                plan_id: existing.plan_id,
-                source_plan_id: existing.source_plan_id,
-                summary: existing.summary,
-                proposal_application_progress: proposal_progress,
-                reorganize_orchestration_progress: orchestration_progress,
-            },
-            None => PlanVarianceLearningSnapshotRead {
-                plan_id,
-                source_plan_id: None,
-                summary: None,
-                proposal_application_progress: proposal_progress,
-                reorganize_orchestration_progress: orchestration_progress,
-            },
-        };
+        let snapshot = assemble_plan_variance_learning_snapshot(
+            plan_id,
+            base,
+            proposal_progress,
+            orchestration_progress,
+            learn_handoff,
+        );
 
         self.output_port.on_success(snapshot);
         Ok(())

@@ -2,10 +2,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   bpTimingProposalProgressKey,
   buildLearnPostMasterNavigation,
+  clearBlueprintTimingPrefill,
   clearLearnBpTimingApplyContext,
+  clearLearnHandoffCache,
   clearLearnPostMasterPayload,
   clearLearnProposalApplicationProgressCache,
   confirmLearnProposalFromPostMaster,
+  hydrateLearnHandoff,
   markAllConfirmedProposalsDone,
   markBpTimingProposalAppliedPending,
   markBpTimingProposalDismissed,
@@ -15,11 +18,13 @@ import {
   markStageGddProposalDismissed,
   parsePlanLearnFollowUp,
   proposalKeyFromPostMasterPayload,
+  readBlueprintTimingPrefill,
   readLearnBpTimingApplyContext,
   readLearnPostMasterPayload,
   readLearnProposalApplicationProgress,
   resolveLearnProposalApplicationStatus,
   stageGddProposalProgressKey,
+  storeBlueprintTimingPrefill,
   storeLearnBpTimingApplyContext,
   storeLearnPostMasterPayload,
   type LearnPostMasterPayload
@@ -28,7 +33,7 @@ import {
 const PLAN_ID = 7;
 
 afterEach(() => {
-  sessionStorage.clear();
+  clearLearnHandoffCache();
   clearLearnProposalApplicationProgressCache();
 });
 
@@ -141,6 +146,11 @@ describe('learn post_master payload', () => {
     expect(readLearnPostMasterPayload(PLAN_ID)).toBeNull();
   });
 
+  it('hydrates post_master payload from API snapshot', () => {
+    hydrateLearnHandoff(PLAN_ID, { post_master_payload: payload });
+    expect(readLearnPostMasterPayload(PLAN_ID)).toEqual(payload);
+  });
+
   it('builds learn navigation with followUp=post_master', () => {
     expect(buildLearnPostMasterNavigation(PLAN_ID)).toEqual({
       commands: ['/plans', PLAN_ID, 'learn'],
@@ -231,7 +241,7 @@ describe('dismiss learn proposals', () => {
 });
 
 describe('learn BP timing apply context', () => {
-  it('stores, reads, and clears context per crop', () => {
+  it('stores, reads, and clears context per plan and crop', () => {
     const context = {
       planId: PLAN_ID,
       cropId: 4,
@@ -239,10 +249,27 @@ describe('learn BP timing apply context', () => {
       category: 'fertilizer'
     };
 
-    storeLearnBpTimingApplyContext(4, context);
-    expect(readLearnBpTimingApplyContext(4)).toEqual(context);
+    storeLearnBpTimingApplyContext(PLAN_ID, context);
+    expect(readLearnBpTimingApplyContext(PLAN_ID, 4)).toEqual(context);
 
-    clearLearnBpTimingApplyContext(4);
-    expect(readLearnBpTimingApplyContext(4)).toBeNull();
+    clearLearnBpTimingApplyContext(PLAN_ID, 4);
+    expect(readLearnBpTimingApplyContext(PLAN_ID, 4)).toBeNull();
+  });
+});
+
+describe('blueprint timing prefill handoff', () => {
+  it('stores, reads, and clears blueprint prefill per plan and crop', () => {
+    const body = {
+      crop_name: 'Tomato',
+      stages: [],
+      agricultural_tasks: [],
+      task_schedule_blueprints: []
+    };
+
+    storeBlueprintTimingPrefill(PLAN_ID, 4, body);
+    expect(readBlueprintTimingPrefill(PLAN_ID, 4)).toEqual(body);
+
+    clearBlueprintTimingPrefill(PLAN_ID, 4);
+    expect(readBlueprintTimingPrefill(PLAN_ID, 4)).toBeNull();
   });
 });

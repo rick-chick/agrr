@@ -3,8 +3,9 @@
 use std::collections::BTreeMap;
 
 use crate::cultivation_plan::dtos::{
-    PlanVarianceLearningSnapshotRead, PlanVsActualSummaryRead,
-    ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
+    LearnHandoffStatePatch, LearnHandoffStateRead, PlanVarianceLearningSnapshotRead,
+    PlanVsActualSummaryRead, ReorganizeOrchestrationProgressPatch,
+    ReorganizeOrchestrationProgressRead,
 };
 
 pub trait PlanVarianceLearningGateway: Send + Sync {
@@ -40,5 +41,16 @@ pub trait PlanVarianceLearningGateway: Send + Sync {
         &self,
         plan_id: i64,
         updates: &ReorganizeOrchestrationProgressPatch,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+
+    fn find_learn_handoff_by_plan_id(
+        &self,
+        plan_id: i64,
+    ) -> Result<LearnHandoffStateRead, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn patch_learn_handoff(
+        &self,
+        plan_id: i64,
+        patch: &LearnHandoffStatePatch,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }

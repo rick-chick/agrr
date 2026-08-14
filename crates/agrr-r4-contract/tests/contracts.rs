@@ -1003,23 +1003,6 @@ fn get_plan_variance_learning_includes_proposal_application_progress() {
 
 #[test]
 fn get_plan_variance_learning_includes_reorganize_orchestration_progress() {
-    let client = ContractClient::from_env();
-    let session_id = developer_session_id(&client);
-    let user_id = user_id_for_session(&client, &session_id);
-    let seed = seed_work_record_plan(user_id);
-    let learning_path = format!("/api/v1/plans/{}/variance_learning", seed.plan_id);
-
-    let (patch_status, patch_body) = status_and_body(client.patch(
-        &learning_path,
-        Some(&session_id),
-        &empty_headers(),
-        Some(serde_json::json!({
-            "reorganize_orchestration_progress": {
-                "placement": true,
-                "return_to_learn": true
-            }
-        })),
-    ));
     assert_eq!(200, patch_status, "{patch_body}");
     let patched: serde_json::Value =
         serde_json::from_str(&patch_body).expect("patch variance learning JSON");
@@ -1079,6 +1062,83 @@ fn get_plan_variance_learning_includes_reorganize_orchestration_progress() {
     assert_eq!(true, regen_orchestration["placement"].as_bool().unwrap());
     assert_eq!(true, regen_orchestration["regenerate"].as_bool().unwrap());
     assert_eq!(false, regen_orchestration["return_to_learn"].as_bool().unwrap());
+}
+
+#[test]
+fn get_plan_variance_learning_includes_learn_handoff() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    let learning_path = format!("/api/v1/plans/{}/variance_learning", seed.plan_id);
+
+    let post_master_payload = serde_json::json!({
+        "kind": "stage_gdd",
+        "cropId": 1,
+        "cropName": "Tomato",
+        "stageId": 2,
+        "stageName": "Vegetative",
+        "appliedRequiredGdd": 150
+    });
+
+    let (patch_status, patch_body) = status_and_body(client.patch(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "learn_handoff": {
+                "post_master_payload": post_master_payload
+            }
+        })),
+    ));
+    assert_eq!(200, patch_status, "{patch_body}");
+    let patched: serde_json::Value =
+        serde_json::from_str(&patch_body).expect("patch variance learning JSON");
+    let handoff = patched["learn_handoff"]
+        .as_object()
+        .expect("learn_handoff object");
+    assert_eq!(
+        post_master_payload,
+        handoff["post_master_payload"].clone()
+    );
+
+    let (get_status, get_body) = status_and_body(client.get(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, get_status, "{get_body}");
+    let learning: serde_json::Value =
+        serde_json::from_str(&get_body).expect("variance learning JSON");
+    let get_handoff = learning["learn_handoff"]
+        .as_object()
+        .expect("learn_handoff on GET");
+    assert_eq!(
+        post_master_payload,
+        get_handoff["post_master_payload"].clone()
+    );
+
+    let (clear_status, clear_body) = status_and_body(client.patch(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "learn_handoff": {
+                "post_master_payload": null
+            }
+        })),
+    ));
+    assert_eq!(200, clear_status, "{clear_body}");
+    let cleared: serde_json::Value =
+        serde_json::from_str(&clear_body).expect("clear handoff JSON");
+    assert!(
+        cleared["learn_handoff"]
+            .as_object()
+            .expect("cleared learn_handoff")
+            .get("post_master_payload")
+            .is_none(),
+        "{clear_body}"
+    );
 }
 
 #[test]

@@ -17,7 +17,6 @@ import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edi
 import { DryRunCropSetupProposalUseCase } from '../../../usecase/crops/dry-run-crop-setup-proposal.usecase';
 import { ApplyCropSetupProposalUseCase } from '../../../usecase/crops/apply-crop-setup-proposal.usecase';
 import { CropSetupProposalBody } from '../../../domain/crops/crop-setup-proposal';
-import { blueprintTimingPrefillStorageKey } from '../../../domain/plans/blueprint-timing-adjustment-proposal';
 import { setupProposalValidationErrorI18nKey } from '../../../core/setup-proposal-validation-error-i18n';
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
 import {
@@ -26,11 +25,15 @@ import {
 } from '../../../domain/crops/plan-wizard-context';
 import {
   buildLearnPostMasterNavigation,
+  clearBlueprintTimingPrefill,
   clearLearnBpTimingApplyContext,
+  hydrateLearnHandoff,
   markBpTimingProposalAppliedPending,
+  readBlueprintTimingPrefill,
   readLearnBpTimingApplyContext,
   storeLearnPostMasterPayload
 } from '../../../domain/plans/learn-proposal-application-progress';
+import { PLAN_GATEWAY, PlanGateway } from '../../../usecase/plans/plan-gateway';
 
 const initialControl: CropSetupProposalImportViewState = {
   loading: true,
@@ -219,6 +222,7 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translate = inject(TranslateService);
+  private readonly planGateway = inject<PlanGateway>(PLAN_GATEWAY);
 
   fromPlanId: number | null = null;
   returnTab: PlanWizardReturnTab = 'task_schedule';
@@ -285,27 +289,35 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
   }
 
   private applyPrefillFromSession(): void {
-    const stored = sessionStorage.getItem(blueprintTimingPrefillStorageKey(this.cropId));
-    if (!stored) {
+    const planId = this.fromPlanId;
+    if (planId == null) {
       return;
     }
-    sessionStorage.removeItem(blueprintTimingPrefillStorageKey(this.cropId));
-    try {
-      const parsed: unknown = JSON.parse(stored);
-      if (!isProposalBody(parsed)) {
-        return;
-      }
-      this.control = {
-        ...this.control,
-        jsonInput: JSON.stringify(parsed, null, 2),
-        parsedProposal: parsed,
-        phase: 'input',
-        error: null
-      };
-      this.dryRunUseCase.execute({ cropId: this.cropId, proposal: parsed });
-    } catch {
-      // ignore invalid prefill payload
-    }
+
+    this.planGateway
+      .getVarianceLearning(planId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (snapshot) => {
+          hydrateLearnHandoff(planId, snapshot.learn_handoff);
+          const stored = readBlueprintTimingPrefill(planId, this.cropId);
+          if (!stored) {
+            return;
+          }
+          clearBlueprintTimingPrefill(planId, this.cropId);
+          this.control = {
+            ...this.control,
+            jsonInput: JSON.stringify(stored, null, 2),
+            parsedProposal: stored,
+            phase: 'input',
+            error: null
+          };
+          this.dryRunUseCase.execute({ cropId: this.cropId, proposal: stored });
+        },
+        error: () => {
+          /* prefill is optional */
+        }
+      });
   }
 
   onJsonInputChange(): void {
@@ -383,7 +395,7 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
     if (this.returnTab !== 'learn' || this.fromPlanId == null) {
       return;
     }
-    const context = readLearnBpTimingApplyContext(this.cropId);
+    const context = readLearnBpTimingApplyContext(this.fromPlanId, this.cropId);
     if (!context || context.planId !== this.fromPlanId) {
       return;
     }
@@ -397,7 +409,7 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
       cropId: context.cropId,
       category: context.category
     });
-    clearLearnBpTimingApplyContext(this.cropId);
+    clearLearnBpTimingApplyContext(this.fromPlanId, this.cropId);
     const navigation = buildLearnPostMasterNavigation(this.fromPlanId);
     void this.router.navigate(navigation.commands, {
       queryParams: navigation.queryParams

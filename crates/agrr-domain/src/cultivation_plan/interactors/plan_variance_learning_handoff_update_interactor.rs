@@ -1,24 +1,24 @@
-//! Ruby: `Domain::CultivationPlan::Interactors::PlanVarianceLearningProposalProgressUpdateInteractor`
+//! Ruby: `Domain::CultivationPlan::Interactors::PlanVarianceLearningHandoffUpdateInteractor`
 
-use std::collections::BTreeMap;
-
-use crate::cultivation_plan::dtos::{assemble_plan_variance_learning_snapshot};
+use crate::cultivation_plan::dtos::{
+    LearnHandoffStatePatch, assemble_plan_variance_learning_snapshot,
+};
 use crate::cultivation_plan::gateways::{CultivationPlanGateway, PlanVarianceLearningGateway};
 use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
-use crate::cultivation_plan::policies::plan_variance_learning_proposal_progress_policy;
+use crate::cultivation_plan::policies::plan_variance_learning_handoff_policy;
 use crate::cultivation_plan::ports::PlanVarianceLearningProposalProgressUpdateOutputPort;
 use crate::shared::gateways::UserOrganizationScopeGateway;
 use crate::shared::org_scope::member_organization_ids;
 use crate::shared::validation::from_message;
 
-pub struct PlanVarianceLearningProposalProgressUpdateInteractor<'a, O, P, V, S> {
+pub struct PlanVarianceLearningHandoffUpdateInteractor<'a, O, P, V, S> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     variance_learning_gateway: &'a V,
     scope_gateway: &'a S,
 }
 
-impl<'a, O, P, V, S> PlanVarianceLearningProposalProgressUpdateInteractor<'a, O, P, V, S>
+impl<'a, O, P, V, S> PlanVarianceLearningHandoffUpdateInteractor<'a, O, P, V, S>
 where
     O: PlanVarianceLearningProposalProgressUpdateOutputPort,
     P: CultivationPlanGateway,
@@ -43,7 +43,7 @@ where
         &mut self,
         user_id: i64,
         plan_id: i64,
-        updates: BTreeMap<String, String>,
+        patch: LearnHandoffStatePatch,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let org_ids = member_organization_ids(self.scope_gateway, user_id)?;
 
@@ -57,34 +57,22 @@ where
             return Ok(());
         }
 
-        if updates.is_empty() {
-            self.output_port.on_record_invalid(
-                BTreeMap::new(),
-                "proposal_application_progress is required",
-            );
-            return Ok(());
-        }
-
-        if let Err(err) =
-            plan_variance_learning_proposal_progress_policy::validate_proposal_application_progress_updates(
-                &updates,
-            )
-        {
+        if let Err(err) = plan_variance_learning_handoff_policy::validate_learn_handoff_patch(&patch) {
             let message = err
                 .detail_message()
-                .unwrap_or("invalid proposal progress")
+                .unwrap_or("invalid learn handoff")
                 .to_string();
-            self.output_port.on_record_invalid(from_message(message), "invalid proposal progress");
+            self.output_port.on_record_invalid(from_message(message), "invalid learn handoff");
             return Ok(());
         }
 
         self.variance_learning_gateway
-            .upsert_proposal_application_progress(plan_id, &updates)?;
+            .patch_learn_handoff(plan_id, &patch)?;
 
-        let progress = self
+        let proposal_progress = self
             .variance_learning_gateway
             .find_proposal_application_progress_by_plan_id(plan_id)?;
-        let orchestration = self
+        let orchestration_progress = self
             .variance_learning_gateway
             .find_reorganize_orchestration_progress_by_plan_id(plan_id)?;
         let learn_handoff = self
@@ -95,8 +83,8 @@ where
         let snapshot = assemble_plan_variance_learning_snapshot(
             plan_id,
             base,
-            progress,
-            orchestration,
+            proposal_progress,
+            orchestration_progress,
             learn_handoff,
         );
 

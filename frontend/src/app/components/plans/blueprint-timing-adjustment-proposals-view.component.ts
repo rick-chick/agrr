@@ -4,14 +4,11 @@ import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
-import { blueprintTimingPrefillStorageKey } from '../../domain/plans/blueprint-timing-adjustment-proposal';
-import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
-import { cropPlanWizardQueryParams } from '../../domain/crops/plan-wizard-context';
-import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-panel.component';
 import {
   bpTimingProposalProgressKey,
   markBpTimingProposalDismissed,
   resolveLearnProposalApplicationStatus,
+  storeBlueprintTimingPrefill,
   storeLearnBpTimingApplyContext,
   type LearnProposalApplicationStatus
 } from '../../domain/plans/learn-proposal-application-progress';
@@ -185,11 +182,8 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
   }
 
   openDetailEdit(proposal: BlueprintTimingAdjustmentProposal): void {
-    sessionStorage.setItem(
-      blueprintTimingPrefillStorageKey(proposal.cropId),
-      JSON.stringify(proposal.proposalBody)
-    );
-    storeLearnBpTimingApplyContext(proposal.cropId, {
+    storeBlueprintTimingPrefill(this.planId, proposal.cropId, proposal.proposalBody);
+    storeLearnBpTimingApplyContext(this.planId, {
       planId: this.planId,
       cropId: proposal.cropId,
       cropName: proposal.cropName,

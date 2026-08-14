@@ -1,3 +1,6 @@
+import type { CropSetupProposalBody } from '../crops/crop-setup-proposal';
+import type { LearnHandoffState } from './plan-variance-learning-snapshot';
+
 export type LearnProposalApplicationStatus =
   | 'not_started'
   | 'applied_pending_confirmation'
@@ -17,10 +20,12 @@ export interface LearnPostMasterPayload {
   appliedRequiredGdd?: number | null;
 }
 
+/** @deprecated sessionStorage key — retained for test compatibility only */
 export function learnPostMasterPayloadStorageKey(planId: number): string {
   return `agrr:learn-post-master:${planId}`;
 }
 
+/** @deprecated sessionStorage key — retained for test compatibility only */
 export function learnBpTimingApplyContextStorageKey(cropId: number): string {
   return `agrr:learn-bp-timing-apply-context:${cropId}`;
 }
@@ -50,6 +55,82 @@ type ProgressPatchHandler = (
 ) => void;
 
 let patchHandler: ProgressPatchHandler | null = null;
+
+interface LearnHandoffCache {
+  postMasterPayload: LearnPostMasterPayload | null;
+  bpTimingApplyContext: LearnBpTimingApplyContext | null;
+  blueprintPrefillByCropId: Record<number, CropSetupProposalBody>;
+}
+
+const handoffCache: Record<number, LearnHandoffCache> = {};
+
+export interface LearnHandoffPatch {
+  post_master_payload?: LearnPostMasterPayload | null;
+  bp_timing_apply_context?: LearnBpTimingApplyContext | null;
+  blueprint_prefill?: {
+    crop_id: number;
+    body: CropSetupProposalBody | null;
+  };
+}
+
+type HandoffPatchHandler = (planId: number, patch: LearnHandoffPatch) => void;
+
+let handoffPatchHandler: HandoffPatchHandler | null = null;
+
+function emptyHandoffCache(): LearnHandoffCache {
+  return {
+    postMasterPayload: null,
+    bpTimingApplyContext: null,
+    blueprintPrefillByCropId: {}
+  };
+}
+
+function readHandoffCache(planId: number): LearnHandoffCache {
+  return handoffCache[planId] ?? emptyHandoffCache();
+}
+
+function writeHandoffCache(planId: number, cache: LearnHandoffCache): void {
+  handoffCache[planId] = cache;
+}
+
+function syncHandoffPatch(planId: number, patch: LearnHandoffPatch): void {
+  if (handoffPatchHandler) {
+    handoffPatchHandler(planId, patch);
+  }
+}
+
+export function registerLearnHandoffPatchHandler(handler: HandoffPatchHandler): void {
+  handoffPatchHandler = handler;
+}
+
+export function clearLearnHandoffCache(planId?: number): void {
+  if (planId == null) {
+    for (const key of Object.keys(handoffCache)) {
+      delete handoffCache[Number(key)];
+    }
+    return;
+  }
+  delete handoffCache[planId];
+}
+
+export function hydrateLearnHandoff(planId: number, handoff: LearnHandoffState | undefined): void {
+  if (!handoff) {
+    writeHandoffCache(planId, emptyHandoffCache());
+    return;
+  }
+
+  const blueprintPrefillByCropId: Record<number, CropSetupProposalBody> = {};
+  for (const [cropId, body] of Object.entries(handoff.blueprint_prefill_by_crop_id ?? {})) {
+    blueprintPrefillByCropId[Number(cropId)] = body as CropSetupProposalBody;
+  }
+
+  writeHandoffCache(planId, {
+    postMasterPayload: (handoff.post_master_payload as LearnPostMasterPayload | null) ?? null,
+    bpTimingApplyContext:
+      (handoff.bp_timing_apply_context as LearnBpTimingApplyContext | null) ?? null,
+    blueprintPrefillByCropId
+  });
+}
 
 export function registerLearnProposalApplicationProgressPatchHandler(
   handler: ProgressPatchHandler
@@ -209,57 +290,83 @@ export function markAllConfirmedProposalsDone(planId: number): void {
 }
 
 export function storeLearnPostMasterPayload(planId: number, payload: LearnPostMasterPayload): void {
-  sessionStorage.setItem(learnPostMasterPayloadStorageKey(planId), JSON.stringify(payload));
+  const cache = readHandoffCache(planId);
+  cache.postMasterPayload = payload;
+  writeHandoffCache(planId, cache);
+  syncHandoffPatch(planId, { post_master_payload: payload });
 }
 
 export function readLearnPostMasterPayload(planId: number): LearnPostMasterPayload | null {
-  const raw = sessionStorage.getItem(learnPostMasterPayloadStorageKey(planId));
-  if (!raw) {
-    return null;
-  }
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') {
-      return null;
-    }
-    return parsed as LearnPostMasterPayload;
-  } catch {
-    return null;
-  }
+  return readHandoffCache(planId).postMasterPayload;
 }
 
 export function clearLearnPostMasterPayload(planId: number): void {
-  sessionStorage.removeItem(learnPostMasterPayloadStorageKey(planId));
+  const cache = readHandoffCache(planId);
+  cache.postMasterPayload = null;
+  writeHandoffCache(planId, cache);
+  syncHandoffPatch(planId, { post_master_payload: null });
 }
 
 export function storeLearnBpTimingApplyContext(
-  cropId: number,
+  planId: number,
   context: LearnBpTimingApplyContext
 ): void {
-  sessionStorage.setItem(
-    learnBpTimingApplyContextStorageKey(cropId),
-    JSON.stringify(context)
-  );
+  const cache = readHandoffCache(planId);
+  cache.bpTimingApplyContext = context;
+  writeHandoffCache(planId, cache);
+  syncHandoffPatch(planId, { bp_timing_apply_context: context });
 }
 
-export function readLearnBpTimingApplyContext(cropId: number): LearnBpTimingApplyContext | null {
-  const raw = sessionStorage.getItem(learnBpTimingApplyContextStorageKey(cropId));
-  if (!raw) {
+export function readLearnBpTimingApplyContext(
+  planId: number,
+  cropId: number
+): LearnBpTimingApplyContext | null {
+  const context = readHandoffCache(planId).bpTimingApplyContext;
+  if (!context || context.cropId !== cropId) {
     return null;
   }
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') {
-      return null;
-    }
-    return parsed as LearnBpTimingApplyContext;
-  } catch {
-    return null;
+  return context;
+}
+
+export function clearLearnBpTimingApplyContext(planId: number, cropId: number): void {
+  const cache = readHandoffCache(planId);
+  if (cache.bpTimingApplyContext?.cropId === cropId) {
+    cache.bpTimingApplyContext = null;
+    writeHandoffCache(planId, cache);
+    syncHandoffPatch(planId, { bp_timing_apply_context: null });
   }
 }
 
-export function clearLearnBpTimingApplyContext(cropId: number): void {
-  sessionStorage.removeItem(learnBpTimingApplyContextStorageKey(cropId));
+export function storeBlueprintTimingPrefill(
+  planId: number,
+  cropId: number,
+  body: CropSetupProposalBody
+): void {
+  const cache = readHandoffCache(planId);
+  cache.blueprintPrefillByCropId[cropId] = body;
+  writeHandoffCache(planId, cache);
+  syncHandoffPatch(planId, {
+    blueprint_prefill: { crop_id: cropId, body }
+  });
+}
+
+export function readBlueprintTimingPrefill(
+  planId: number,
+  cropId: number
+): CropSetupProposalBody | null {
+  return readHandoffCache(planId).blueprintPrefillByCropId[cropId] ?? null;
+}
+
+export function clearBlueprintTimingPrefill(planId: number, cropId: number): void {
+  const cache = readHandoffCache(planId);
+  if (cache.blueprintPrefillByCropId[cropId] == null) {
+    return;
+  }
+  delete cache.blueprintPrefillByCropId[cropId];
+  writeHandoffCache(planId, cache);
+  syncHandoffPatch(planId, {
+    blueprint_prefill: { crop_id: cropId, body: null }
+  });
 }
 
 export function buildLearnPostMasterNavigation(planId: number): {

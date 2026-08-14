@@ -17,6 +17,7 @@ import { ENTRY_SCHEDULE_GATEWAY } from './usecase/entry-schedule/entry-schedule-
 import { EntryScheduleApiGateway } from './adapters/entry-schedule/entry-schedule-api.gateway';
 import { LearnProposalApplicationProgressSyncService } from './services/learn-proposal-application-progress-sync.service';
 import { LearnOrchestrationProgressSyncService } from './services/learn-orchestration-progress-sync.service';
+import { LearnHandoffSyncService } from './services/learn-handoff-sync.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -38,6 +39,7 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(LearnProposalApplicationProgressSyncService);
       inject(LearnOrchestrationProgressSyncService);
+      inject(LearnHandoffSyncService);
     })
   ]
 };
