@@ -2926,6 +2926,16 @@
       "exceedance_badge": {
         "days": "Δ {{delta}}日",
         "gdd": "GDD {{delta}}"
+      },
+      "today_attention": {
+        "title": "今日の注意",
+        "frost_risk": "霜リスク",
+        "gdd_delay": "GDD遅延",
+        "threshold_exceeded": "閾値超過",
+        "frost_risk_field": "{{field}}（{{crop}}）",
+        "gdd_delay_task": "GDD遅延: {{name}}",
+        "threshold_exceeded_task": "閾値超過: {{name}}",
+        "learn_cta": "振り返りで詳細を見る"
       }
     },
     "work_records": {

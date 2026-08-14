@@ -2288,6 +2288,16 @@
       "exceedance_badge": {
         "days": "Δ {{delta}} दिन",
         "gdd": "GDD {{delta}}"
+      },
+      "today_attention": {
+        "title": "आज का ध्यान",
+        "frost_risk": "पाला जोखिम",
+        "gdd_delay": "GDD विलंब",
+        "threshold_exceeded": "सीमा पार",
+        "frost_risk_field": "{{field}} ({{crop}})",
+        "gdd_delay_task": "GDD विलंब: {{name}}",
+        "threshold_exceeded_task": "सीमा पार: {{name}}",
+        "learn_cta": "Learn में विवरण देखें"
       }
     },
     "work_records": {

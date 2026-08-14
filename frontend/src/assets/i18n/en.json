@@ -1804,6 +1804,16 @@
       "exceedance_badge": {
         "days": "Δ {{delta}} days",
         "gdd": "GDD {{delta}}"
+      },
+      "today_attention": {
+        "title": "Today's attention",
+        "frost_risk": "Frost risk",
+        "gdd_delay": "GDD delay",
+        "threshold_exceeded": "Threshold exceeded",
+        "frost_risk_field": "{{field}} ({{crop}})",
+        "gdd_delay_task": "GDD delay: {{name}}",
+        "threshold_exceeded_task": "Threshold exceeded: {{name}}",
+        "learn_cta": "Review details in Learn"
       }
     },
     "work_records": {
