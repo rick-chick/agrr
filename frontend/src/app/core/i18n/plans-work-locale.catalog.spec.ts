@@ -95,6 +95,8 @@ const PLANS_WORK_KEYS = [
   'plans.work.sheet.climate_preview.loading',
   'plans.work.sheet.climate_preview.unavailable',
   'plans.work.sheet.climate_preview.gdd',
+  'plans.work.sheet.climate_preview.planned_gdd',
+  'plans.work.sheet.climate_preview.gdd_delta',
   'plans.work.sheet.climate_preview.weather',
   'plans.work.sheet.photos.label',
   'plans.work.sheet.photos.add',
