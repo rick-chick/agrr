@@ -28,7 +28,10 @@ import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs
 import { applyPlanWorkViewEffects } from './plan-work-view.effects';
 import { WorkRecordSaveImpactPanelComponent } from './work-record-save-impact-panel.component';
 import { PlanWorkVarianceSummaryComponent } from './plan-work-variance-summary.component';
+import { PlanWorkTodayAttentionComponent } from './plan-work-today-attention.component';
 import { findVarianceActionItemForTask } from '../../domain/plans/find-variance-action-item-for-task';
+import { buildPlanWorkTodayAttention } from '../../domain/plans/build-plan-work-today-attention';
+import type { PlanWorkTodayAttentionSummary } from '../../domain/plans/build-plan-work-today-attention';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import { formatVarianceDeltaDays, formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
 
@@ -73,7 +76,8 @@ const initialControl: PlanWorkViewState = {
     WorkRecordSheetComponent,
     TaskScheduleSyncBannerComponent,
     WorkRecordSaveImpactPanelComponent,
-    PlanWorkVarianceSummaryComponent
+    PlanWorkVarianceSummaryComponent,
+    PlanWorkTodayAttentionComponent
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
@@ -112,6 +116,13 @@ const initialControl: PlanWorkViewState = {
             [planId]="planId"
             [stats]="control.varianceSummaryStats"
             [loading]="control.varianceSummaryLoading"
+            [error]="control.varianceSummaryError"
+          />
+
+          <app-plan-work-today-attention
+            [planId]="planId"
+            [summary]="todayAttentionSummary"
+            [loading]="todayAttentionLoading"
             [error]="control.varianceSummaryError"
           />
 
@@ -408,6 +419,26 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
 
   get todayLabel(): string {
     return this.displayDate(localTodayIso());
+  }
+
+  get todayAttentionLoading(): boolean {
+    return this.control.loading || this.control.varianceSummaryLoading;
+  }
+
+  get todayAttentionSummary(): PlanWorkTodayAttentionSummary | null {
+    if (this.todayAttentionLoading || this.control.varianceSummaryError) {
+      return null;
+    }
+    return buildPlanWorkTodayAttention(
+      {
+        plan_id: this.planId,
+        unrecorded_count: this.control.varianceSummaryStats?.unrecordedCount ?? 0,
+        categories: [],
+        top_variance_items: [],
+        action_required_items: this.control.actionRequiredItems
+      },
+      [...this.control.overdue, ...this.control.today]
+    );
   }
 
   displayDate(iso: string): string {
