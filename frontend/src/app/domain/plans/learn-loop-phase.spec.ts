@@ -124,7 +124,7 @@ describe('buildLearnLoopPhaseResult', () => {
     });
   });
 
-  it('returns handoff with new-plan router link when apply and reorganize are complete', () => {
+  it('returns handoff with carryover scroll CTA when apply and reorganize are complete', () => {
     const result = buildLearnLoopPhaseResult(
       baseInput({
         stageGddProposalCount: 1,
@@ -135,10 +135,9 @@ describe('buildLearnLoopPhaseResult', () => {
 
     expect(result.currentPhase).toBe('handoff');
     expect(result.nextAction).toMatchObject({
-      labelKey: 'plans.learn.loop.next_action.handoff_new_plan',
-      kind: 'router_link',
-      routerLink: ['/plans', 'new'],
-      queryParams: { carryoverFrom: PLAN_ID }
+      labelKey: 'plans.learn.loop.next_action.handoff_carryover',
+      kind: 'scroll',
+      scrollTargetId: 'plan-learn-carryover-title'
     });
   });
 

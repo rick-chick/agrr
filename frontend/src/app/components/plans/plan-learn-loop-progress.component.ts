@@ -135,11 +135,7 @@ export class PlanLearnLoopProgressComponent {
   }
 
   get showHandoffSourcePlan(): boolean {
-    return (
-      this.currentPhase === 'handoff' &&
-      this.planName != null &&
-      this.nextAction?.labelKey === 'plans.learn.loop.next_action.handoff_new_plan'
-    );
+    return false;
   }
 
   private get phaseInput(): ReturnType<typeof buildLearnLoopPhaseInputFromState> {

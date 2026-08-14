@@ -12,6 +12,7 @@ import { PlanNewView, PlanNewViewState } from './plan-new.view';
 import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { LoadPlanNewCarryoverUseCase } from '../../usecase/plans/load-plan-new-carryover.usecase';
+import { PLAN_CARRYOVER_FROM_QUERY_PARAM } from '../../domain/plans/plan-carryover-handoff';
 import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-actual-summary';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 
@@ -135,18 +136,18 @@ const initialControl: PlanNewViewState = {
                   [ngModel]="control.carryoverEnabled"
                   (ngModelChange)="onCarryoverEnabledChange($event)"
                 />
-                {{ 'plans.new.carryover_enabled_label' | translate }}
+                {{ 'plans.carryover.enabled_label' | translate }}
               </label>
               @if (control.carryoverEnabled) {
-                <p class="form-hint">{{ 'plans.new.carryover_hint' | translate }}</p>
+                <p class="form-hint">{{ 'plans.carryover.handoff_hint' | translate }}</p>
                 @if (control.selectedFarmId != null) {
                   <label for="carryover-source-plan" class="form-label">{{
-                    'plans.new.carryover_source_label' | translate
+                    'plans.carryover.source_label' | translate
                   }}</label>
-                  <p class="form-hint">{{ 'plans.new.carryover_source_hint' | translate }}</p>
+                  <p class="form-hint">{{ 'plans.carryover.source_hint' | translate }}</p>
                   @if (control.sourcePlans.length === 0) {
                     <p class="plan-new-warning" role="status">{{
-                      'plans.new.carryover_no_source_plans' | translate
+                      'plans.carryover.no_source_plans' | translate
                     }}</p>
                   } @else {
                     <select
@@ -157,7 +158,7 @@ const initialControl: PlanNewViewState = {
                       [ngModel]="control.selectedSourcePlanId"
                       (ngModelChange)="onSourcePlanChange($event)"
                     >
-                      <option [ngValue]="null">{{ 'plans.new.carryover_source_hint' | translate }}</option>
+                      <option [ngValue]="null">{{ 'plans.carryover.source_hint' | translate }}</option>
                       @for (plan of control.sourcePlans; track plan.id) {
                         <option [ngValue]="plan.id">{{ plan.name }}</option>
                       }
@@ -171,7 +172,7 @@ const initialControl: PlanNewViewState = {
                     } @else if (control.carryoverPreview) {
                       <div class="plan-new-carryover-preview">
                         <h3 class="plan-new-carryover-preview__title">{{
-                          'plans.new.carryover_preview_title' | translate
+                          'plans.carryover.preview_title' | translate
                         }}</h3>
                         @if (control.carryoverPreview.categories.length) {
                           <table class="plan-new-carryover-preview__table">
@@ -195,7 +196,7 @@ const initialControl: PlanNewViewState = {
                             </tbody>
                           </table>
                       } @else {
-                        <p class="form-hint">{{ 'plans.new.carryover_preview_empty' | translate }}</p>
+                        <p class="form-hint">{{ 'plans.carryover.preview_empty' | translate }}</p>
                       }
                       <button
                         type="button"
@@ -203,7 +204,7 @@ const initialControl: PlanNewViewState = {
                         [disabled]="control.submitting"
                         (click)="onSubmitWithLearnReview($event)"
                       >
-                        {{ 'plans.new.carryover_learn_cta' | translate }}
+                        {{ 'plans.carryover.learn_cta' | translate }}
                       </button>
                     </div>
                     }
@@ -394,7 +395,7 @@ export class PlanNewComponent implements PlanNewView, OnInit {
     if (this.carryoverPresetApplied) {
       return;
     }
-    const raw = this.route.snapshot.queryParamMap.get('carryoverFrom');
+    const raw = this.route.snapshot.queryParamMap.get(PLAN_CARRYOVER_FROM_QUERY_PARAM);
     if (!raw) {
       return;
     }

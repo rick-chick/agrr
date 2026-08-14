@@ -2599,6 +2599,22 @@
         "return_to_learn": "学習画面に戻る"
       }
     },
+    "carryover": {
+      "section_title": "学習の引き継ぎ",
+      "import_title": "他の計画から学習を取り込む",
+      "import_hint": "同一農場内の過去計画から、進行中計画へ variance 学習データをコピーします。",
+      "next_plan_hint": "この計画の学習データを引き継いで、新しい計画を作成します。",
+      "next_plan_cta": "次の計画を作成（学習を引き継ぐ）",
+      "enabled_label": "前回計画の学習データを引き継ぐ",
+      "handoff_hint": "この農場の完了済み計画の実績差分を、新しい計画の作業スケジュールに反映します。",
+      "source_label": "ソース計画",
+      "source_hint": "過去の計画を選択",
+      "no_source_plans": "同一農場内に他の計画がありません。",
+      "preview_title": "学習データプレビュー",
+      "preview_empty": "カテゴリ差分データがありません。",
+      "import_button": "学習を取り込む",
+      "learn_cta": "作成後に学習画面で確認"
+    },
     "learn": {
       "page_title": "振り返り — {{name}}",
       "nav_badge": {
