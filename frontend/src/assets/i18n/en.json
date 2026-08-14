@@ -1646,6 +1646,17 @@
         "unrecorded_message": "{{count}} tasks are not recorded yet.",
         "unrecorded_cta": "Record work",
         "complete_message": "Observation phase complete — all scheduled tasks are recorded."
+      },
+      "input_gap": {
+        "title": "Input gap summary",
+        "unrecorded": "Not recorded",
+        "action_required": "Action required",
+        "work_cta": "Record unrecorded tasks"
+      },
+      "proposal_confidence": {
+        "high": "High confidence",
+        "medium": "Medium confidence",
+        "low": "Low confidence"
       }
     },
     "work": {
@@ -1740,9 +1751,9 @@
         "workbench_link": "Review adjust on workbench"
       },
       "variance_summary": {
-        "title": "Plan vs actual summary",
+        "title": "Input gap summary",
         "unrecorded": "Not recorded",
-        "threshold_exceeded": "Threshold exceeded",
+        "threshold_exceeded": "Action required",
         "gdd_delay": "GDD delay",
         "learn_cta": "Review details in Learn"
       },

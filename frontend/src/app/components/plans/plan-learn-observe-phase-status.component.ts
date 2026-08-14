@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { buildPlanWorkDeepLinkQuery } from '../../domain/plans/build-plan-work-deep-link-query';
 import type { LearnObservePhaseStatus } from '../../domain/plans/resolve-learn-observe-phase-status';
 
 @Component({
@@ -17,7 +18,11 @@ import type { LearnObservePhaseStatus } from '../../domain/plans/resolve-learn-o
                 | translate: { count: unrecordedCount }
             }}
           </p>
-          <a class="plan-learn-observe-phase__cta" [routerLink]="['/plans', planId, 'work']">
+          <a
+            class="plan-learn-observe-phase__cta"
+            [routerLink]="['/plans', planId, 'work']"
+            [queryParams]="workDeepLinkQuery"
+          >
             {{ 'plans.learn.observe_phase.unrecorded_cta' | translate }}
           </a>
         } @else {
@@ -32,4 +37,9 @@ export class PlanLearnObservePhaseStatusComponent {
   @Input({ required: true }) planId!: number;
   @Input() status: LearnObservePhaseStatus | null = null;
   @Input() unrecordedCount = 0;
+  @Input() highlightItemId: number | null = null;
+
+  get workDeepLinkQuery(): Record<string, number> | null {
+    return buildPlanWorkDeepLinkQuery(this.highlightItemId);
+  }
 }
