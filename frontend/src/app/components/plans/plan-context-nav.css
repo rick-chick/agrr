@@ -49,6 +49,24 @@
   box-shadow: none;
 }
 
+.plan-context-nav__link--with-badge {
+  gap: var(--space-1);
+}
+
+.plan-context-nav__learn-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .plan-context-nav__link:focus-visible {
   outline: var(--focus-outline);
   outline-offset: 1px;

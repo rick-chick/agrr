@@ -55,7 +55,8 @@ describe('PlanDetailContextNavComponent', () => {
     expect(links[1].textContent?.trim()).toBe('作業計画表');
     expect(links[2].textContent?.trim()).toBe('今日の作業');
     expect(links[3].textContent?.trim()).toBe('実績履歴');
-    expect(links[4].textContent?.trim()).toBe('振り返り');
+    expect(links[4].textContent?.trim()).toContain('振り返り');
+    expect(fixture.nativeElement.querySelector('app-plan-learn-nav-badge-host')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
       '今日の作業'
     );
