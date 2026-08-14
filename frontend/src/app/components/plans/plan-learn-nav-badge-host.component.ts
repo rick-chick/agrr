@@ -1,6 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { PLAN_LEARN_PROVIDERS } from '../../usecase/plans/plan-learn.providers';
 import type { LearnLoopPhaseId } from '../../domain/plans/learn-loop-phase';
 import {
   learnNavBadgeAriaLabelKey,
@@ -17,7 +16,6 @@ import {
   selector: 'app-plan-learn-nav-badge-host',
   standalone: true,
   imports: [TranslateModule],
-  providers: [...PLAN_LEARN_PROVIDERS, PlanLearnLoopSummaryCoordinator],
   template: `
     @if (snapshot?.badge; as badge) {
       <span
