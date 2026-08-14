@@ -1,13 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { of, throwError } from 'rxjs';
 import { BLUEPRINT_TIMING_PATCH_INTENT } from '../../domain/plans/blueprint-timing-adjustment-proposal';
-import {
-  clearLearnProposalApplicationProgressCache,
-  resolveLearnProposalApplicationStatus,
-  stageGddProposalProgressKey,
-  bpTimingProposalProgressKey
-} from '../../domain/plans/learn-proposal-application-progress';
+import { clearLearnProposalApplicationProgressCache } from '../../domain/plans/learn-proposal-application-progress';
 import { ApplyBpTimingProposalFromLearnUseCase } from './apply-bp-timing-proposal-from-learn.usecase';
 import { ApplyStageGddCalibrationFromLearnUseCase } from './apply-stage-gdd-calibration-from-learn.usecase';
 import { BulkApplySafeLearnProposalsUseCase } from './bulk-apply-safe-learn-proposals.usecase';

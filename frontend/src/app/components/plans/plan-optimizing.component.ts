@@ -10,14 +10,11 @@ import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.compo
 import {
   clearLearnOrchestrationReturnToLearn,
   markLearnOrchestrationStepComplete,
-  readLearnOrchestrationReturnToLearn,
-  readLearnOrchestrationStepComplete
+  readLearnOrchestrationReturnToLearn
 } from '../../domain/plans/learn-master-update-orchestration';
 import {
   buildLearnReorganizePipelineRegenerateNavigation,
-  clearLearnReorganizePipelineAutoChain,
-  readLearnReorganizePipelineAutoChain,
-  storeLearnReorganizePipelineAutoChain
+  readLearnReorganizePipelineAutoChain
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 
 const initialControl: PlanOptimizingViewState = {

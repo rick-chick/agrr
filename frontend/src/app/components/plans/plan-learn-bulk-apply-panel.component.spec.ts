@@ -3,7 +3,6 @@ import { provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '../../../assets/i18n/en.json';
-import { BLUEPRINT_TIMING_PATCH_INTENT } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import {
   clearLearnProposalApplicationProgressCache
 } from '../../domain/plans/learn-proposal-application-progress';

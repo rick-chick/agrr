@@ -48,10 +48,7 @@ export class BulkApplySafeLearnProposalsUseCase {
     };
 
     for (const proposal of safe.stageGdd) {
-      if (proposal.proposedRequiredGdd == null) {
-        continue;
-      }
-      const proposedRequiredGdd = proposal.proposedRequiredGdd;
+      const proposedRequiredGdd = proposal.proposedRequiredGdd as number;
       remaining.push(() => {
         this.stageGddApplyUseCase.execute({
           planId: dto.planId,
