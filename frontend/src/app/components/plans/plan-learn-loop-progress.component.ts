@@ -105,6 +105,7 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
 })
 export class PlanLearnLoopProgressComponent {
   @Input({ required: true }) planId!: number;
+  @Input() planName: string | null = null;
   @Input() actionRequiredItems: PlanVarianceActionItem[] = [];
   @Input() stageGddProposals: StageGddCalibrationProposal[] = [];
   @Input() blueprintTimingProposals: BlueprintTimingAdjustmentProposal[] = [];
@@ -112,7 +113,6 @@ export class PlanLearnLoopProgressComponent {
   @Input() hasMasterUpdateNextSteps = false;
   @Input() hasLearningSnapshot = false;
   @Input() carryoverSourcePlanCount = 0;
-  @Input() planName: string | null = null;
   @Input() progressRefreshVersion = 0;
 
   readonly phases = LEARN_LOOP_PHASE_ORDER;

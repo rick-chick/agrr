@@ -76,6 +76,7 @@ describe('PlanOptimizingComponent', () => {
         'plans.optimizing_live.default_message': 'Preparing optimization...',
         'plans.optimizing_live.error.retry': 'Reload',
         'plans.optimizing_live.error.back_to_plan': 'Back to plan',
+        'plans.task_schedules.orchestration.return_to_learn': 'Return to learning screen',
         'models.cultivation_plan.phases.task_schedule_generating': 'Generating task plans...',
         'models.cultivation_plan.phase_failed.default': 'Process failed'
       },
