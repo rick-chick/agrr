@@ -60,7 +60,7 @@ const initialControl: PlanDetailViewState = {
             [planId]="planId"
             [items]="control.varianceActionItemsOnGantt"
           />
-          <app-plan-reoptimization-banner [visible]="showReoptimizationBanner" />
+          <app-plan-reoptimization-banner [visible]="showReoptimizationBanner" [planId]="planId" />
           <div class="plan-detail__body plan-detail-surface">
             <app-plan-gantt-climate-shell
               [data]="control.planData"
