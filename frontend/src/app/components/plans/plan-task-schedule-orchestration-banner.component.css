@@ -6,6 +6,52 @@
   background: color-mix(in srgb, var(--color-info) 8%, var(--color-surface-raised));
 }
 
+.learn-orchestration-banner__loop-progress {
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.learn-orchestration-banner__loop-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.learn-orchestration-banner__loop-phases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.learn-orchestration-banner__loop-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full, 999px);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.learn-orchestration-banner__loop-phase--current {
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.learn-orchestration-banner__loop-phase--completed {
+  color: var(--color-text-muted);
+}
+
+.learn-orchestration-banner__loop-phase-index {
+  font-weight: var(--font-weight-bold);
+}
+
 .learn-orchestration-banner__message {
   margin: 0 0 var(--space-2);
   font-weight: 600;

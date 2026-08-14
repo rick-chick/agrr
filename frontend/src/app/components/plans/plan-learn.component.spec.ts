@@ -12,6 +12,7 @@ import { PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { LoadStageGddCalibrationProposalsUseCase } from '../../usecase/plans/load-stage-gdd-calibration-proposals.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
 import { PlanLearnComponent } from './plan-learn.component';
+import { PlanLearnNavBadgeComponent } from './plan-learn-nav-badge.component';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import {
   clearLearnProposalApplicationProgressCache,
@@ -102,6 +103,10 @@ describe('PlanLearnComponent', () => {
       loadCarryoverPreview: vi.fn(),
       importLearning: vi.fn()
     };
+
+    TestBed.overrideComponent(PlanLearnNavBadgeComponent, {
+      set: { template: '' }
+    });
 
     TestBed.overrideComponent(PlanLearnComponent, {
       set: {
@@ -215,6 +220,28 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.querySelector('app-variance-action-proposal-cards')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Schedule variance needs your review');
     expect(fixture.nativeElement.textContent).toContain('Weed control');
+  });
+
+  it('always renders reorganize checklist on learn page', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-master-update-next-steps')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Next steps after master update');
+    expect(fixture.nativeElement.textContent).toContain('Verify placement');
+    expect(fixture.nativeElement.textContent).toContain('Regenerate task schedule');
+    expect(fixture.nativeElement.textContent).toContain('Verify task schedule sync');
   });
 
   it('shows observe phase completion when all tasks are recorded', async () => {
@@ -504,6 +531,10 @@ describe('PlanLearnComponent post_master follow-up', () => {
       loadCarryoverPreview: vi.fn(),
       importLearning: vi.fn()
     };
+
+    TestBed.overrideComponent(PlanLearnNavBadgeComponent, {
+      set: { template: '' }
+    });
 
     TestBed.overrideComponent(PlanLearnComponent, {
       set: {

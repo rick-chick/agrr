@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
 import { PlanDetailContextNavComponent } from './plan-detail-context-nav.component';
 
 describe('PlanDetailContextNavComponent', () => {
@@ -20,7 +22,31 @@ describe('PlanDetailContextNavComponent', () => {
           { path: 'plans/:id/learn', component: PlanDetailContextNavComponent }
         ])
       ]
-    }).compileComponents();
+    })
+      .overrideComponent(PlanDetailContextNavComponent, {
+        set: {
+          providers: [
+            {
+              provide: PLAN_GATEWAY,
+              useValue: {
+                getPlanVsActualSummary: vi.fn().mockReturnValue(
+                  of({
+                    plan_id: 1,
+                    action_required_items: [],
+                    unrecorded_count: 0,
+                    categories: [],
+                    top_variance_items: [],
+                    stage_gdd_calibration_proposals: [],
+                    blueprint_timing_adjustment_proposals: []
+                  })
+                ),
+                getVarianceLearning: vi.fn().mockReturnValue(of(null))
+              }
+            }
+          ]
+        }
+      })
+      .compileComponents();
 
     const translate = TestBed.inject(TranslateService);
     translate.setDefaultLang('ja');
@@ -103,5 +129,13 @@ describe('PlanDetailContextNavComponent', () => {
     expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
       '振り返り'
     );
+  });
+
+  it('renders learn nav badge host on the learn tab', () => {
+    fixture.detectChanges();
+
+    const learnLink = fixture.nativeElement.querySelector('.plan-context-nav__link--with-badge');
+    expect(learnLink).not.toBeNull();
+    expect(learnLink.querySelector('app-plan-learn-nav-badge')).not.toBeNull();
   });
 });

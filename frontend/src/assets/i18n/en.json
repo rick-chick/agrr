@@ -1463,6 +1463,7 @@
         "open_workbench": "Open workbench"
       },
       "orchestration": {
+        "loop_progress_title": "Learning loop progress",
         "regenerate": {
           "message": "Regenerate recommended after master update",
           "hint": "Use the sync banner below to regenerate task plans. Confirm when prompted."
@@ -1910,7 +1911,11 @@
         "aria_label": "Plan screen navigation",
         "workbench": "Cropping plan",
         "task_schedule": "Task plan",
-        "learn": "Review"
+        "learn": "Review",
+        "learn_badge": {
+          "proposals": "{{count}} unapplied proposals",
+          "phase": "Current phase: {{phase}}"
+        }
       },
       "copy_plan": "Copy to Next Year",
       "delete": "Delete",

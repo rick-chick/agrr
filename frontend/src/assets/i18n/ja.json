@@ -2405,7 +2405,11 @@
         "aria_label": "計画画面ナビゲーション",
         "workbench": "作付け計画",
         "task_schedule": "作業計画表",
-        "learn": "振り返り"
+        "learn": "振り返り",
+        "learn_badge": {
+          "proposals": "未適用提案 {{count}} 件",
+          "phase": "現在のフェーズ: {{phase}}"
+        }
       },
       "copy_plan": "次年度にコピー",
       "delete": "削除",
@@ -2587,6 +2591,7 @@
         "open_workbench": "作業台を開く"
       },
       "orchestration": {
+        "loop_progress_title": "学習ループの進捗",
         "regenerate": {
           "message": "マスタ更新後は作業表の再生成を推奨します",
           "hint": "下の同期バナーから作業計画を再生成してください。確認ダイアログが表示されます。"

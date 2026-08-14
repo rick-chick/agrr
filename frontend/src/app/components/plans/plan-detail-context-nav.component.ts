@@ -1,11 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { PlanLearnNavBadgeComponent } from './plan-learn-nav-badge.component';
 
 @Component({
   selector: 'app-plan-detail-context-nav',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, TranslateModule],
+  imports: [RouterLink, RouterLinkActive, TranslateModule, PlanLearnNavBadgeComponent],
   template: `
     <nav
       class="plan-context-nav plan-context-nav--spaced"
@@ -37,8 +38,11 @@ import { TranslateModule } from '@ngx-translate/core';
       <a
         [routerLink]="['/plans', planId, 'learn']"
         routerLinkActive="plan-context-nav__link--active"
-        class="plan-context-nav__link"
-      >{{ 'plans.show.nav.learn' | translate }}</a>
+        class="plan-context-nav__link plan-context-nav__link--with-badge"
+      >
+        {{ 'plans.show.nav.learn' | translate }}
+        <app-plan-learn-nav-badge [planId]="planId" />
+      </a>
     </nav>
   `,
   styleUrls: ['./plan-context-nav.css']

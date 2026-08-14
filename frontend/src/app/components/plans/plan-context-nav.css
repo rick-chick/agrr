@@ -13,6 +13,10 @@
   margin-bottom: var(--space-3);
 }
 
+.plan-context-nav__link--with-badge {
+  gap: var(--space-1);
+}
+
 .plan-context-nav__link {
   flex: 0 1 auto;
   min-width: max-content;
