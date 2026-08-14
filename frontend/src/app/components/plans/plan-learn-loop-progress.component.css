@@ -73,7 +73,7 @@
 .learn-loop-progress__handoff-source {
   margin: 0;
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .learn-loop-progress__next-cta {
