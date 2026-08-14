@@ -78,6 +78,15 @@ describe('shouldShowWorkRowGddProgress', () => {
     ).toBe(true);
   });
 
+  it('shows progress for remaining state without exceedance badge', () => {
+    expect(
+      shouldShowWorkRowGddProgress(
+        { trigger: 100, state: 'remaining', remaining: 10, gddAtActual: 90 },
+        false
+      )
+    ).toBe(true);
+  });
+
   it('does not show progress for trigger_only state', () => {
     expect(shouldShowWorkRowGddProgress({ trigger: 100, state: 'trigger_only' }, false)).toBe(false);
   });

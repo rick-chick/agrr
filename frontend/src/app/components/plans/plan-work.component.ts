@@ -319,7 +319,18 @@ const initialControl: PlanWorkViewState = {
               [class.plan-work__context-badge--weather-medium]="weatherDependency === 'medium'"
               [class.plan-work__context-badge--weather-high]="weatherDependency === 'high'"
             >
-              {{ weatherDependencyLabel(weatherDependency) | translate }}
+              @if (
+                weatherDependency === 'low' ||
+                weatherDependency === 'medium' ||
+                weatherDependency === 'high'
+              ) {
+                {{ weatherDependencyLabel(weatherDependency) | translate }}
+              } @else {
+                {{
+                  'plans.work.context_badge.weather_other'
+                    | translate: { level: weatherDependency }
+                }}
+              }
             </span>
           }
         </div>
@@ -485,11 +496,8 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     return resolveWorkRowWeatherDependency(row.item);
   }
 
-  weatherDependencyLabel(dependency: string): string {
-    if (dependency === 'low' || dependency === 'medium' || dependency === 'high') {
-      return `plans.work.context_badge.weather_${dependency}`;
-    }
-    return 'plans.work.context_badge.weather_other';
+  weatherDependencyLabel(dependency: 'low' | 'medium' | 'high'): string {
+    return `plans.work.context_badge.weather_${dependency}`;
   }
 
   private _control: PlanWorkViewState = initialControl;

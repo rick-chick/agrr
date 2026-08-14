@@ -915,6 +915,35 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(fixture.nativeElement.textContent).toContain('天候: 低');
   });
 
+  it('shows GDD remaining context badge when cumulative GDD is below trigger', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.context_badge.gdd_trigger': 'GDD {{trigger}}',
+        'plans.work.context_badge.gdd_remaining': '残り {{remaining}}'
+      },
+      true
+    );
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      upcoming: [
+        mockRow({
+          item_id: 13,
+          name: '間引き',
+          gdd_trigger: '100',
+          gdd_at_actual: 85.5,
+          gdd_delta: -14.5,
+          details: { gdd: { trigger: '100', tolerance: '0' } } as TaskScheduleItem['details']
+        })
+      ]
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-work__context-badge--gdd-remaining')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('残り 14.5');
+  });
+
   it('hides GDD progress context badge when exceedance GDD badge is shown', () => {
     translate.setTranslation(
       'ja',
