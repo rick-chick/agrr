@@ -9,6 +9,7 @@ import { StageGddCalibrationProposalsViewComponent } from './stage-gdd-calibrati
 import { VarianceActionProposalCardsComponent } from './variance-action-proposal-cards.component';
 import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
+import { PlanLearnCarryoverSectionComponent } from './plan-learn-carryover-section.component';
 import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.component';
 import { PlanLearnLoopProgressComponent } from './plan-learn-loop-progress.component';
 import { PlanLearnObservePhaseStatusComponent } from './plan-learn-observe-phase-status.component';
@@ -85,6 +86,7 @@ const initialControl: PlanLearnViewState = {
     VarianceActionProposalCardsComponent,
     BlueprintTimingAdjustmentProposalsViewComponent,
     PlanLearnImportedBannerComponent,
+    PlanLearnCarryoverSectionComponent,
     PlanLearnLoopProgressComponent,
     PlanLearnObservePhaseStatusComponent,
     PlanLearnInputGapSummaryComponent
@@ -208,91 +210,18 @@ const initialControl: PlanLearnViewState = {
             }
           }
 
-          <div class="plan-learn-carryover" aria-labelledby="plan-learn-carryover-title">
-            <h3 id="plan-learn-carryover-title" class="plan-learn-carryover__title">
-              {{ 'plans.learn.carryover.title' | translate }}
-            </h3>
-            <p class="plan-learn-carryover__hint">{{ 'plans.learn.carryover.hint' | translate }}</p>
-            @if (control.carryoverSourcePlans.length === 0) {
-              <p class="plan-learn-carryover__hint">{{
-                'plans.learn.carryover.no_source_plans' | translate
-              }}</p>
-            } @else {
-              <div class="plan-learn-carryover__form">
-                <label for="plan-learn-carryover-source" class="plan-learn-carryover__label">{{
-                  'plans.learn.carryover.source_label' | translate
-                }}</label>
-                <select
-                  id="plan-learn-carryover-source"
-                  class="plan-learn-carryover__select"
-                  [disabled]="control.carryoverImporting"
-                  [ngModel]="control.selectedSourcePlanId"
-                  (ngModelChange)="onSourcePlanChange($event)"
-                >
-                  <option [ngValue]="null">{{
-                    'plans.learn.carryover.source_hint' | translate
-                  }}</option>
-                  @for (plan of control.carryoverSourcePlans; track plan.id) {
-                    <option [ngValue]="plan.id">{{ plan.name }}</option>
-                  }
-                </select>
-                @if (control.selectedSourcePlanId != null) {
-                  @if (control.carryoverPreviewLoading) {
-                    <p class="master-loading">{{ 'common.loading' | translate }}</p>
-                  } @else if (control.carryoverPreviewError) {
-                    <p class="plan-learn-carryover__error">{{ control.carryoverPreviewError }}</p>
-                  } @else if (control.carryoverPreview) {
-                    <div class="plan-learn-carryover-preview">
-                      <h4 class="plan-learn-carryover-preview__title">{{
-                        'plans.learn.carryover.preview_title' | translate
-                      }}</h4>
-                      @if (control.carryoverPreview.categories.length) {
-                        <table class="plan-learn-carryover-preview__table">
-                          <thead>
-                            <tr>
-                              <th scope="col">{{
-                                'plans.task_schedules.variance_subview.category_column' | translate
-                              }}</th>
-                              <th scope="col">{{
-                                'plans.task_schedules.variance_subview.category_average' | translate
-                              }}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (category of control.carryoverPreview.categories; track category.category) {
-                              <tr>
-                                <td>{{ categoryLabel(category) }}</td>
-                                <td>{{ categoryAverageLabel(category) }}</td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
-                      } @else {
-                        <p class="plan-learn-carryover__hint">{{
-                          'plans.learn.carryover.preview_empty' | translate
-                        }}</p>
-                      }
-                      <button
-                        type="button"
-                        class="btn btn-primary"
-                        [disabled]="control.carryoverImporting"
-                        (click)="onImportLearning()"
-                      >
-                        {{
-                          control.carryoverImporting
-                            ? ('common.loading' | translate)
-                            : ('plans.learn.carryover.import_button' | translate)
-                        }}
-                      </button>
-                      @if (control.carryoverImportError) {
-                        <p class="plan-learn-carryover__error">{{ control.carryoverImportError }}</p>
-                      }
-                    </div>
-                  }
-                }
-              </div>
-            }
-          </div>
+          <app-plan-learn-carryover-section
+            [planId]="planId"
+            [carryoverSourcePlans]="control.carryoverSourcePlans"
+            [selectedSourcePlanId]="control.selectedSourcePlanId"
+            [carryoverPreviewLoading]="control.carryoverPreviewLoading"
+            [carryoverPreviewError]="control.carryoverPreviewError"
+            [carryoverPreview]="control.carryoverPreview"
+            [carryoverImporting]="control.carryoverImporting"
+            [carryoverImportError]="control.carryoverImportError"
+            (sourcePlanChange)="onSourcePlanChange($event)"
+            (importLearning)="onImportLearning()"
+          />
 
           <app-variance-action-proposal-cards
             [planId]="planId"
