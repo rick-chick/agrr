@@ -72,10 +72,6 @@
   color: var(--color-text-muted);
 }
 
-.blueprint-timing-adjustment__cta {
-  flex-shrink: 0;
-}
-
 .blueprint-timing-adjustment__actions {
   display: flex;
   flex-wrap: wrap;

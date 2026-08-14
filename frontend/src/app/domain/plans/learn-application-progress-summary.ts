@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import type { LearnProposalApplicationStatus } from './learn-proposal-application-progress';
 
 export function countAddressedLearnApplicationProgress(
