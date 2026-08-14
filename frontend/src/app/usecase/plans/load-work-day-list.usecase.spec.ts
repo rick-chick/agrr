@@ -1,8 +1,6 @@
 import { of, throwError } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
 import {
-  attachCumulativeGddToRows,
-  fetchCumulativeGddByField,
   findNextScheduled,
   findTodayAdHocRecord,
   LoadWorkDayListUseCase
