@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -22,7 +21,7 @@ import { PLAN_GATEWAY, PlanGateway } from '../../usecase/plans/plan-gateway';
 @Component({
   selector: 'app-plan-task-schedule-orchestration-banner',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [RouterLink, TranslateModule],
   providers: [{ provide: PLAN_GATEWAY, useClass: PlanApiGateway }],
   template: `
     @if (mode) {
@@ -76,7 +75,6 @@ export class PlanTaskScheduleOrchestrationBannerComponent implements OnInit {
   @Input({ required: true }) planId!: number;
   @Input() mode: LearningOrchestrationMode | null = null;
   @Input() syncState: string | null = null;
-  @Input() orchestrationComplete = false;
 
   readonly phases = LEARN_LOOP_PHASE_ORDER;
   currentPhase: LearnLoopPhaseId | null = null;

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
@@ -16,7 +15,7 @@ import { PLAN_GATEWAY, PlanGateway } from '../../usecase/plans/plan-gateway';
 @Component({
   selector: 'app-plan-learn-nav-badge',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
+  imports: [TranslateModule],
   providers: [{ provide: PLAN_GATEWAY, useClass: PlanApiGateway }],
   template: `
     @if (badge) {

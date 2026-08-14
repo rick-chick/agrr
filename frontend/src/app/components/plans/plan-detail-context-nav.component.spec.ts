@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { PlanDetailContextNavComponent } from './plan-detail-context-nav.component';
+import { PlanLearnNavBadgeComponent } from './plan-learn-nav-badge.component';
 
 describe('PlanDetailContextNavComponent', () => {
   let fixture: ComponentFixture<PlanDetailContextNavComponent>;
@@ -23,28 +22,8 @@ describe('PlanDetailContextNavComponent', () => {
         ])
       ]
     })
-      .overrideComponent(PlanDetailContextNavComponent, {
-        set: {
-          providers: [
-            {
-              provide: PLAN_GATEWAY,
-              useValue: {
-                getPlanVsActualSummary: vi.fn().mockReturnValue(
-                  of({
-                    plan_id: 1,
-                    action_required_items: [],
-                    unrecorded_count: 0,
-                    categories: [],
-                    top_variance_items: [],
-                    stage_gdd_calibration_proposals: [],
-                    blueprint_timing_adjustment_proposals: []
-                  })
-                ),
-                getVarianceLearning: vi.fn().mockReturnValue(of(null))
-              }
-            }
-          ]
-        }
+      .overrideComponent(PlanLearnNavBadgeComponent, {
+        set: { template: '' }
       })
       .compileComponents();
 

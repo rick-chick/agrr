@@ -98,7 +98,6 @@ describe('PlanTaskScheduleOrchestrationBannerComponent', () => {
   it('shows return-to-learn link during orchestration even before completion', async () => {
     fixture.componentInstance.mode = 'regenerate';
     fixture.componentInstance.syncState = 'generating';
-    fixture.componentInstance.orchestrationComplete = false;
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
