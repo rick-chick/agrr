@@ -52,6 +52,15 @@
   color: var(--color-warning-strong, var(--color-warning));
 }
 
+.stage-gdd-calibration__status--confirmed {
+  background: color-mix(in srgb, var(--color-success) 18%, transparent);
+  color: var(--color-success-strong, var(--color-success));
+}
+
+.stage-gdd-calibration__status--dismissed {
+  opacity: 0.75;
+}
+
 .stage-gdd-calibration__stage-name,
 .stage-gdd-calibration__delta,
 .stage-gdd-calibration__proposal-value {
@@ -70,4 +79,26 @@
 
 .stage-gdd-calibration__cta {
   white-space: nowrap;
+}
+
+.stage-gdd-calibration__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.stage-gdd-calibration__preview-panel {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.stage-gdd-calibration__error {
+  margin: var(--space-2) 0 0;
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
 }

@@ -2632,6 +2632,10 @@
         "delta_label": "平均 GDD 差分: {{delta}}",
         "proposed_value": "現在の要求 GDD {{current}} → 提案 {{proposed}}",
         "cta": "ステージ要求量を校正",
+        "preview": "プレビュー",
+        "apply": "適用する",
+        "detail_edit": "詳細編集",
+        "preview_panel": "提案 required GDD: {{proposed}}",
         "evidence": {
           "toggle": "根拠を表示",
           "rationale": "{{total}} 件の作業実績のうち {{count}} 件が GDD 閾値 {{threshold}} を超過しています。",
@@ -2656,6 +2660,10 @@
         "delta_label": "平均乖離: {{delta}}",
         "affected_count": "対象 BP: {{count}} 件",
         "cta": "BP タイミングを調整",
+        "dry_run_preview": "dry_run プレビュー",
+        "apply": "適用する",
+        "detail_edit": "詳細編集",
+        "dry_run_result": "dry_run 結果",
         "category": {
           "general": "一般作業",
           "fertilizer": "施肥"
@@ -2670,6 +2678,7 @@
       "application_progress": {
         "title": "提案適用の進捗",
         "lead": "振り返り提案からマスタへ適用した内容の確認状態を追跡します。",
+        "summary": "{{addressed}} / {{total}} 件対応済み",
         "kind": {
           "stage_gdd": "ステージ GDD 校正",
           "bp_timing": "BP タイミング調整"

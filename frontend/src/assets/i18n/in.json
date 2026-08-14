@@ -1994,6 +1994,10 @@
         "delta_label": "औसत GDD अंतर: {{delta}}",
         "proposed_value": "वर्तमान आवश्यक GDD {{current}} → प्रस्तावित {{proposed}}",
         "cta": "चरण आवश्यकता समायोजित करें",
+        "preview": "पूर्वावलोकन",
+        "apply": "लागू करें",
+        "detail_edit": "विस्तृत संपादन",
+        "preview_panel": "प्रस्तावित आवश्यक GDD: {{proposed}}",
         "evidence": {
           "toggle": "आधार दिखाएँ",
           "rationale": "{{total}} रिकॉर्ड किए गए कार्यों में से {{count}} ने GDD सीमा {{threshold}} पार की।",
@@ -2018,6 +2022,10 @@
         "delta_label": "औसत अंतर: {{delta}}",
         "affected_count": "प्रभावित BP: {{count}}",
         "cta": "BP समय समायोजित करें",
+        "dry_run_preview": "dry_run पूर्वावलोकन",
+        "apply": "लागू करें",
+        "detail_edit": "विस्तृत संपादन",
+        "dry_run_result": "dry_run परिणाम",
         "category": {
           "general": "सामान्य कार्य",
           "fertilizer": "उर्वरक"
@@ -2032,6 +2040,7 @@
       "application_progress": {
         "title": "प्रस्ताव लागू करने की प्रगति",
         "lead": "सीखने के प्रस्तावों से मास्टर अपडेट की पुष्टि स्थिति ट्रैक करें।",
+        "summary": "{{addressed}} / {{total}} संबोधित",
         "kind": {
           "stage_gdd": "चरण GDD अंशांकन",
           "bp_timing": "BP समय समायोजन"

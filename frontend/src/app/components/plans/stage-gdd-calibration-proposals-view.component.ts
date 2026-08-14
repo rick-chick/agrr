@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -12,11 +12,14 @@ import {
   stageGddProposalProgressKey,
   type LearnProposalApplicationStatus
 } from '../../domain/plans/learn-proposal-application-progress';
+import { ApplyStageGddCalibrationFromLearnUseCase } from '../../usecase/plans/apply-stage-gdd-calibration-from-learn.usecase';
+import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn-proposal-inline-apply.providers';
 
 @Component({
   selector: 'app-stage-gdd-calibration-proposals-view',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule, LearnProposalEvidencePanelComponent],
+  providers: [...LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS],
   template: `
     <section
       class="task-schedule-variance__section stage-gdd-calibration"
@@ -49,6 +52,9 @@ import {
                     [class.stage-gdd-calibration__status--pending]="
                       proposalStatus(proposal) === 'applied_pending_confirmation'
                     "
+                    [class.stage-gdd-calibration__status--confirmed]="
+                      proposalStatus(proposal) === 'confirmed'
+                    "
                     [class.stage-gdd-calibration__status--dismissed]="
                       proposalStatus(proposal) === 'dismissed'
                     "
@@ -72,6 +78,22 @@ import {
                           }
                   }}
                 </p>
+                @if (isPreviewOpen(proposal)) {
+                  <p class="stage-gdd-calibration__preview-panel" role="status">
+                    {{
+                      'plans.learn.stage_gdd_calibration.preview_panel'
+                        | translate
+                          : {
+                              proposed: formatRequiredGdd(proposal.proposedRequiredGdd)
+                            }
+                    }}
+                  </p>
+                }
+                @if (applyError(proposal)) {
+                  <p class="stage-gdd-calibration__error" role="alert">
+                    {{ applyError(proposal) | translate }}
+                  </p>
+                }
                 <app-learn-proposal-evidence-panel
                   [evidence]="evidenceFor(proposal)"
                   toggleLabelKey="plans.learn.stage_gdd_calibration.evidence.toggle"
@@ -91,12 +113,31 @@ import {
                   </button>
                 }
                 @if (canApply(proposal)) {
+                  <button
+                    type="button"
+                    class="btn-secondary stage-gdd-calibration__preview"
+                    (click)="togglePreview(proposal)"
+                  >
+                    {{ 'plans.learn.stage_gdd_calibration.preview' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-primary stage-gdd-calibration__apply"
+                    [disabled]="isApplying(proposal)"
+                    (click)="applyProposal(proposal)"
+                  >
+                    {{
+                      isApplying(proposal)
+                        ? ('common.loading' | translate)
+                        : ('plans.learn.stage_gdd_calibration.apply' | translate)
+                    }}
+                  </button>
                   <a
-                    class="btn-secondary stage-gdd-calibration__cta"
+                    class="btn-secondary stage-gdd-calibration__detail-edit"
                     [routerLink]="stageEditLink(proposal)"
                     [queryParams]="stageEditQueryParams(proposal)"
                   >
-                    {{ 'plans.learn.stage_gdd_calibration.cta' | translate }}
+                    {{ 'plans.learn.stage_gdd_calibration.detail_edit' | translate }}
                   </a>
                 }
               </div>
@@ -109,6 +150,8 @@ import {
   styleUrls: ['./stage-gdd-calibration-proposals-view.component.css']
 })
 export class StageGddCalibrationProposalsViewComponent {
+  private readonly applyUseCase = inject(ApplyStageGddCalibrationFromLearnUseCase);
+
   @Input({ required: true }) planId!: number;
   @Input() loading = false;
   @Input() proposals: StageGddCalibrationProposal[] = [];
@@ -116,6 +159,9 @@ export class StageGddCalibrationProposalsViewComponent {
   @Output() progressChanged = new EventEmitter<void>();
 
   private refreshVersion = 0;
+  private previewOpenKeys = new Set<string>();
+  private applyingKeys = new Set<string>();
+  private applyErrors: Record<string, string> = {};
 
   proposalKey(proposal: StageGddCalibrationProposal): string {
     return `${proposal.cropId}-${proposal.stageId}`;
@@ -159,6 +205,59 @@ export class StageGddCalibrationProposalsViewComponent {
 
   canApply(proposal: StageGddCalibrationProposal): boolean {
     return this.proposalStatus(proposal) === 'not_started';
+  }
+
+  isPreviewOpen(proposal: StageGddCalibrationProposal): boolean {
+    void this.refreshVersion;
+    return this.previewOpenKeys.has(this.proposalKey(proposal));
+  }
+
+  isApplying(proposal: StageGddCalibrationProposal): boolean {
+    void this.refreshVersion;
+    return this.applyingKeys.has(this.proposalKey(proposal));
+  }
+
+  applyError(proposal: StageGddCalibrationProposal): string | null {
+    void this.refreshVersion;
+    return this.applyErrors[this.proposalKey(proposal)] ?? null;
+  }
+
+  togglePreview(proposal: StageGddCalibrationProposal): void {
+    const key = this.proposalKey(proposal);
+    if (this.previewOpenKeys.has(key)) {
+      this.previewOpenKeys.delete(key);
+    } else {
+      this.previewOpenKeys.add(key);
+    }
+    this.refreshVersion += 1;
+  }
+
+  applyProposal(proposal: StageGddCalibrationProposal): void {
+    if (proposal.proposedRequiredGdd == null || this.isApplying(proposal)) {
+      return;
+    }
+    const key = this.proposalKey(proposal);
+    this.applyingKeys.add(key);
+    delete this.applyErrors[key];
+    this.refreshVersion += 1;
+
+    this.applyUseCase.execute({
+      planId: this.planId,
+      cropId: proposal.cropId,
+      stageId: proposal.stageId,
+      proposedRequiredGdd: proposal.proposedRequiredGdd,
+      onSuccess: () => {
+        this.applyingKeys.delete(key);
+        this.previewOpenKeys.delete(key);
+        this.refreshVersion += 1;
+        this.progressChanged.emit();
+      },
+      onError: (message) => {
+        this.applyingKeys.delete(key);
+        this.applyErrors[key] = message;
+        this.refreshVersion += 1;
+      }
+    });
   }
 
   dismissProposal(proposal: StageGddCalibrationProposal): void {
