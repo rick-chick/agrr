@@ -1,3 +1,4 @@
+import type { ClimateTemperaturePoint } from '../../domain/plans/field-cultivation-climate-data';
 import { WorkRecordPhoto } from './work-record-photo';
 
 export interface WorkRecordSummary {
@@ -26,6 +27,7 @@ export interface WorkRecord {
   time_spent_minutes: number | null;
   notes: string | null;
   gdd_at_actual?: number | null;
+  weather_snapshot?: ClimateTemperaturePoint | null;
   field_name?: string | null;
   crop_name?: string | null;
   created_at: string;

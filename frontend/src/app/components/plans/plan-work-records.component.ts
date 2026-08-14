@@ -13,6 +13,9 @@ import {
   workRecordDeltaDays,
   workRecordScheduledDate
 } from '../../domain/plans/work-record-variance';
+import {
+  workRecordWeatherSnapshotSummary
+} from '../../domain/plans/work-record-weather-snapshot';
 import { WorkRecord } from '../../models/plans/work-record';
 import { WorkRecordPhoto } from '../../models/plans/work-record-photo';
 import {
@@ -144,6 +147,19 @@ const initialControl: PlanWorkRecordsViewState = {
                                   {{
                                     'plans.work_records.variance.gdd_at_actual'
                                       | translate: { value: record.gdd_at_actual }
+                                  }}
+                                </span>
+                              }
+                              @if (weatherSnapshotSummary(record); as weather) {
+                                <span class="plan-work-records__variance-weather">
+                                  {{
+                                    'plans.work_records.variance.weather_snapshot'
+                                      | translate
+                                        : {
+                                            max: weather.max,
+                                            min: weather.min,
+                                            mean: weather.mean
+                                          }
                                   }}
                                 </span>
                               }
@@ -384,5 +400,9 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
       });
     }
     return this.translate.instant('plans.work_records.variance.month_average_on_time');
+  }
+
+  weatherSnapshotSummary(record: WorkRecord) {
+    return workRecordWeatherSnapshotSummary(record.weather_snapshot);
   }
 }

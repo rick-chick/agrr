@@ -1839,6 +1839,7 @@
         "delta_days_early": "{{count}} days early",
         "delta_days_on_time": "On schedule",
         "gdd_at_actual": "GDD {{value}}",
+        "weather_snapshot": "High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)",
         "no_schedule": "No schedule",
         "month_average_late": "Avg. {{count}} days late",
         "month_average_early": "Avg. {{count}} days early",
