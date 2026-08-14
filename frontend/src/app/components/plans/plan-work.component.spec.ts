@@ -936,6 +936,47 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(fixture.nativeElement.textContent).toContain('天候: 低');
   });
 
+  it('expands work row to show mini climate panel on toggle', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.mini_climate.expand': '気候情報を展開',
+        'plans.work.mini_climate.collapse': '気候情報を折りたたむ'
+      },
+      true
+    );
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      today: [mockRow({ item_id: 11, name: '今日の作業', field_cultivation_id: 42 })],
+      overdue: [],
+      upcoming: []
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="work-row-mini-climate-panel"]')).toBeNull();
+
+    const expandButton = fixture.nativeElement.querySelector(
+      '[data-testid="work-row-expand-toggle"]'
+    ) as HTMLButtonElement;
+    expect(expandButton).toBeTruthy();
+    expect(expandButton.getAttribute('aria-expanded')).toBe('false');
+
+    expandButton.click();
+    fixture.detectChanges();
+
+    expect(expandButton.getAttribute('aria-expanded')).toBe('true');
+    expect(
+      fixture.nativeElement.querySelector('app-plan-work-mini-climate-panel')
+    ).toBeTruthy();
+
+    expandButton.click();
+    fixture.detectChanges();
+
+    expect(expandButton.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.nativeElement.querySelector('app-plan-work-mini-climate-panel')).toBeNull();
+  });
+
   it('hides GDD gap context badge when GDD exceedance badge is shown', () => {
     translate.setTranslation(
       'ja',

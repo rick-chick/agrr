@@ -1825,6 +1825,16 @@
         "weather_low": "Weather: low",
         "weather_medium": "Weather: medium",
         "weather_high": "Weather: high"
+      },
+      "mini_climate": {
+        "title": "Mini climate panel",
+        "expand": "Expand climate details",
+        "collapse": "Collapse climate details",
+        "loading": "Loading climate data…",
+        "unavailable": "Climate data is unavailable",
+        "cumulative_gdd": "Cumulative GDD: {{value}}",
+        "daily_weather": "High {{max}}°C / Low {{min}}°C / Mean {{mean}}°C",
+        "workbench_link": "Open workbench climate panel"
       }
     },
     "work_records": {
