@@ -1,23 +1,43 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
+  clearLearnOrchestrationProgressCache,
+  hydrateLearnOrchestrationProgress,
+  readLearnOrchestrationPipelineActive
+} from './learn-master-update-orchestration';
+import {
   buildLearnReorganizePipelineStartNavigation,
   clearLearnReorganizePipelineAutoChain,
   readLearnReorganizePipelineAutoChain,
-  storeLearnReorganizePipelineAutoChain
+  setLearnReorganizePipelineError,
+  storeLearnReorganizePipelineAutoChain,
+  updateLearnReorganizePipelinePhase
 } from './learn-reorganize-pipeline-auto-chain';
 
 describe('learn-reorganize-pipeline-auto-chain', () => {
   beforeEach(() => {
-    clearLearnReorganizePipelineAutoChain();
+    clearLearnOrchestrationProgressCache();
   });
 
-  it('stores and reads auto-chain flag per plan', () => {
+  it('stores and reads auto-chain flag per plan via orchestration progress', () => {
     expect(readLearnReorganizePipelineAutoChain(7)).toBe(false);
     storeLearnReorganizePipelineAutoChain(7);
     expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
+    expect(readLearnOrchestrationPipelineActive(7)).toBe(true);
     expect(readLearnReorganizePipelineAutoChain(8)).toBe(false);
     clearLearnReorganizePipelineAutoChain(7);
     expect(readLearnReorganizePipelineAutoChain(7)).toBe(false);
+  });
+
+  it('persists pipeline phase and error in orchestration progress', () => {
+    storeLearnReorganizePipelineAutoChain(7);
+    updateLearnReorganizePipelinePhase(7, 'optimizing');
+    setLearnReorganizePipelineError(7, 'timeout');
+    hydrateLearnOrchestrationProgress(7, {
+      pipeline_active: true,
+      current_phase: 'failed',
+      last_error: 'timeout'
+    });
+    expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
   });
 
   it('builds adjust navigation for pipeline start', () => {

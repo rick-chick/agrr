@@ -1,0 +1,27 @@
+.learn-pipeline-status {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border-subtle, #d8dee4);
+  border-radius: 0.5rem;
+  background: var(--color-surface-muted, #f6f8fa);
+}
+
+.learn-pipeline-status--active {
+  border-color: var(--color-accent, #0969da);
+}
+
+.learn-pipeline-status__title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.learn-pipeline-status__message,
+.learn-pipeline-status__active-message {
+  margin: 0 0 0.75rem;
+}
+
+.learn-pipeline-status__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

@@ -31,3 +31,27 @@ fn accepts_return_to_learn_update() {
     };
     assert!(validate_reorganize_orchestration_progress_patch(&patch).is_ok());
 }
+
+#[test]
+fn accepts_pipeline_active_and_phase_update() {
+    let patch = ReorganizeOrchestrationProgressPatch {
+        pipeline_active: Some(true),
+        current_phase: Some("placement".into()),
+        ..Default::default()
+    };
+    assert!(validate_reorganize_orchestration_progress_patch(&patch).is_ok());
+}
+
+#[test]
+fn rejects_invalid_pipeline_phase() {
+    let patch = ReorganizeOrchestrationProgressPatch {
+        current_phase: Some("unknown".into()),
+        ..Default::default()
+    };
+    let err =
+        validate_reorganize_orchestration_progress_patch(&patch).expect_err("invalid phase");
+    assert_eq!(
+        err.detail_message(),
+        Some("invalid pipeline current_phase")
+    );
+}

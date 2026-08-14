@@ -10,6 +10,7 @@ import {
   clearLearnReorganizePipelineAutoChain,
   readLearnReorganizePipelineAutoChain
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
+import { clearLearnOrchestrationProgressCache } from '../../domain/plans/learn-master-update-orchestration';
 import { BulkApplySafeLearnProposalsUseCase } from '../../usecase/plans/bulk-apply-safe-learn-proposals.usecase';
 import { PlanLearnBulkApplyPanelComponent } from './plan-learn-bulk-apply-panel.component';
 
@@ -21,6 +22,7 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
   beforeEach(async () => {
     sessionStorage.clear();
     clearLearnProposalApplicationProgressCache();
+    clearLearnOrchestrationProgressCache();
     clearLearnReorganizePipelineAutoChain();
 
     bulkApplyUseCase = {
@@ -93,7 +95,7 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
     expect(fixture.nativeElement.querySelector('.learn-bulk-apply')).toBeNull();
   });
 
-  it('applies safe proposals and shows reorganize pipeline CTA', async () => {
+  it('applies safe proposals and auto-starts reorganize pipeline', async () => {
     fixture.componentInstance.stageGddProposals = [
       {
         cropId: 1,
@@ -119,10 +121,13 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
     await fixture.whenStable();
 
     expect(bulkApplyUseCase.execute).toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('Start reorganization pipeline');
+    expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
+    expect(router.navigate).toHaveBeenCalledWith(['/plans', 7], {
+      queryParams: { learningOrchestration: 'adjust' }
+    });
   });
 
-  it('navigates to adjust with auto-chain when pipeline CTA is clicked', () => {
+  it('navigates to adjust with auto-chain when pipeline is started manually', () => {
     fixture.componentInstance.bulkApplyComplete = true;
     fixture.componentInstance.lastAppliedCount = 1;
     fixture.detectChanges();
