@@ -6,6 +6,8 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
 import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
 import { formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
 import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-panel.component';
+import { LearnProposalConfidenceBadgeComponent } from './learn-proposal-confidence-badge.component';
+import type { LearnProposalConfidence } from '../../domain/plans/resolve-learn-proposal-confidence';
 import {
   markStageGddProposalDismissed,
   resolveLearnProposalApplicationStatus,
@@ -18,7 +20,7 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
 @Component({
   selector: 'app-stage-gdd-calibration-proposals-view',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, LearnProposalEvidencePanelComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, LearnProposalEvidencePanelComponent, LearnProposalConfidenceBadgeComponent],
   providers: [...LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS],
   template: `
     <section
@@ -47,7 +49,9 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                   <p class="stage-gdd-calibration__stage-name">
                     {{ proposal.cropName }} — {{ proposal.stageName }}
                   </p>
-                  <span
+                  <div class="stage-gdd-calibration__badges">
+                    <app-learn-proposal-confidence-badge [confidence]="proposalConfidence" />
+                    <span
                     class="stage-gdd-calibration__status"
                     [class.stage-gdd-calibration__status--pending]="
                       proposalStatus(proposal) === 'applied_pending_confirmation'
@@ -61,6 +65,7 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                   >
                     {{ statusLabel(proposalStatus(proposal)) | translate }}
                   </span>
+                  </div>
                 </div>
                 <p class="stage-gdd-calibration__delta">
                   {{
@@ -156,6 +161,7 @@ export class StageGddCalibrationProposalsViewComponent {
   @Input() loading = false;
   @Input() proposals: StageGddCalibrationProposal[] = [];
   @Input() evidenceByKey: Record<string, LearnProposalEvidence> = {};
+  @Input() proposalConfidence: LearnProposalConfidence = 'high';
   @Output() progressChanged = new EventEmitter<void>();
 
   private refreshVersion = 0;
