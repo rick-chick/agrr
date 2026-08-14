@@ -2700,12 +2700,6 @@
         "complete_message": "安全な提案 {{count}} 件を適用しました。再最適化パイプラインを開始して計画を更新してください。",
         "start_pipeline": "再最適化パイプラインを開始"
       },
-      "pipeline": {
-        "error_title": "再配置パイプラインが失敗しました",
-        "retry": "このステップを再試行",
-        "resume_message": "再配置パイプラインが進行中です。中断したところから再開できます。",
-        "resume": "パイプラインを再開"
-      },
       "post_master": {
         "title": "マスタ更新を適用しました",
         "lead": "マスタの変更を保存しました。適用内容を確認し、作業台で配置を確認してください。",
@@ -2764,7 +2758,8 @@
           "loop_complete_next_plan": "次の計画へ進む",
           "complete_reorganize": "作業台で配置を確認",
           "complete_next_plan": "計画一覧へ",
-          "handoff_new_plan": "次の計画を作成（学習を引き継ぐ）"
+          "handoff_new_plan": "次の計画を作成（学習を引き継ぐ）",
+          "handoff_source_plan": "引き継ぎ元の計画: {{planName}}"
         },
         "complete": {
           "title": "学習ループ完了",
@@ -2775,6 +2770,12 @@
         "unrecorded_message": "未記録のタスクが {{count}} 件あります。",
         "unrecorded_cta": "作業を記録する",
         "complete_message": "観測フェーズ完了 — 予定タスクはすべて記録済みです。"
+      },
+      "pipeline": {
+        "error_title": "再配置パイプラインが失敗しました",
+        "retry": "このステップを再試行",
+        "resume_message": "再配置パイプラインが進行中です。中断したところから再開できます。",
+        "resume": "パイプラインを再開"
       }
     },
     "work": {
