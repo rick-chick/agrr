@@ -13,12 +13,22 @@ AGRR リポジトリの現状機能を調査せよ。
 - frontend ルート・主要画面
 - crates/agrr-domain の bounded context
 - 計画→実行→学習のループのうち薄い箇所
+- GitHub backlog（選定テーマまたはギャップ候補に関連する issue）:
+  - `gh issue list --repo rick-chick/agrr --search "<テーマキーワード>" --state all --json number,title,state`
+  - 候補ごとに `gh issue view <N> --json number,title,state` で OPEN / CLOSED を確認
+- 同一テーマのマージ済み PR:
+  - `gh pr list --repo rick-chick/agrr --search "is:merged <テーマキーワード> in:title" --state merged --json number,title,mergedAt`
+  - 各 PR の diff から触れたコード path を列挙（`gh pr view <N> --json files` または diff 要約）
 
-出力（Markdown）:
-1. できること一覧（画面・API レベル）
-2. ユーザーフロー（ログイン後・作業・計画）
-3. 再利用可能な資産（use case, domain 型, API）
-4. ファイルパス付き
+出力（Markdown）— `tmp/product-gap/current-state.md` の必須セクション（[`artifacts.md`](artifacts.md) 参照）:
+1. **既存 backlog** — 関連 issue 番号・state・タイトル要約
+2. **実装済み** — マージ済み PR 番号と触れたコード path
+3. **できること一覧**（画面・API レベル、コード path 付き）
+4. **計画→実行→学習**の薄い箇所（上記 GitHub 観測と矛盾しない記述）
+5. ユーザーフロー（ログイン後・作業・計画）
+6. 再利用可能な資産（use case, domain 型, API）
+
+必須セクション 1–4 が空のときは調査不足。親エージェントはフェーズ 2 に進まない。
 
 プロダクト芯: 気象×GDD×最適化の計画アプリ（フル ERP ではない）。
 コードは書かない。
@@ -76,6 +86,7 @@ AGRR リポジトリの現状機能を調査せよ。
 ```
 入力:
 - current-state.md
+- theme-selection.md（G2/G3 共通: breadth-depth-scale.md §幅 vs 深さ 形式）
 - theme-deep-dive.md
 
 ルーブリック: .cursor/skills/product-gap-to-issues/references/gates.md §G2
@@ -84,7 +95,7 @@ AGRR リポジトリの現状機能を調査せよ。
 
 verdict=fail のとき mandatory_corrections に、gates.md の該当行に沿った具体修正を書く。
 
-新画面案は自動 fail にしない。G2-4（justification 未記載）と G2-1〜3（重複・過剰・コード）を優先して判定する。
+新画面案は自動 fail にしない。G2-4（justification 未記載）と G2-1〜3（重複・過剰・コード）、G2-5〜8（深掘り打ち止め・見送り）を優先して判定する。
 ```
 
 ---
@@ -96,6 +107,8 @@ verdict=fail のとき mandatory_corrections に、gates.md の該当行に沿�
 - enhancement-plan.md
 - overlap-ux-gate.json（pass 前提）
 - current-state.md
+- theme-selection.md（G2/G3 共通: 幅 vs 深さ 判定・見送り）
+- theme-deep-dive.md（G2 入力。打ち止め・justification の整合確認）
 
 ルーブリック: .cursor/skills/product-gap-to-issues/references/gates.md §G3
 

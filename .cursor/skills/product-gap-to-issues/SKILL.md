@@ -69,7 +69,14 @@ description: >-
 
 Task `explore`（thoroughness: `very thorough`）。プロンプト: [`references/subagent-prompts.md`](references/subagent-prompts.md) §1。
 
-`tmp/product-gap/current-state.md` に保存。画面・ルート、ドメイン境界、**計画 → 実行 → 学習** の薄い箇所（観測ベース）。
+`tmp/product-gap/current-state.md` に保存。**必須セクション**（[`references/artifacts.md`](references/artifacts.md)）:
+
+- **既存 backlog** — `gh issue list` / `gh issue view` で選定テーマ（またはギャップ候補）に関連する OPEN / CLOSED issue を列挙
+- **実装済み** — `gh pr list --state merged` で同一テーマのマージ済み PR と触れたコード path を列挙
+- **できること一覧** — 画面・API レベル（コード path 付き）
+- **計画 → 実行 → 学習** — 薄い箇所（上記 GitHub 観測と矛盾しない記述）
+
+上記のいずれかが空のとき、親エージェントは **フェーズ 2 に進まず** 調査を継続する（コード・ルート・ドメインのみの把握でフェーズ 2 へ進めない）。
 
 ---
 
@@ -87,6 +94,8 @@ Task `generalPurpose`。プロンプト: §2。
 
 **幅 vs 深さ**を [`references/breadth-depth-scale.md`](references/breadth-depth-scale.md) のコア 5 で比較し、判定と見送り候補を必ず書く。
 
+**ゲート対応**: 見送り（反対側）行が欠けると G2（[`references/gates.md`](references/gates.md) **G2-8**）で `fail` になる。フェーズ 5 の G2 再実行まで進めない。
+
 ---
 
 ## フェーズ 4 — テーマ深掘り
@@ -98,6 +107,8 @@ Task `explore`。プロンプト: §3。
 新画面を含む案は **`new_surface_justification`**（既存で代替できない理由）を必ず書く。
 
 深掘りが過剰なら [`references/breadth-depth-scale.md`](references/breadth-depth-scale.md) の打ち止め条件で幅候補へ回す。
+
+**ゲート対応**: 打ち止め条件（G2-3 抵触見込み・深さ寄りコア5が2未満・既存強化で足りる）が揃ったのに深掘り続行すると G2（[`references/gates.md`](references/gates.md) **G2-5〜G2-7**）で `fail` になる。`mandatory_corrections` は打ち止め追記・見送り明示・幅候補へのテーマ差し替えを要求する。
 
 **実装コードは書かない。**
 
