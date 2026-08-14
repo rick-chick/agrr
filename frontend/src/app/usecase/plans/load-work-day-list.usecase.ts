@@ -1,12 +1,14 @@
 import { Inject, Injectable } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import {
   groupWorkDayListRows,
   flattenFieldScheduleItems
 } from '../../domain/work-schedule/work-day-list-summary';
+import { snapshotClimateForDate } from '../../domain/work-schedule/work-record-climate-snapshot';
 import { WorkRecord } from '../../models/plans/work-record';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
+import { FIELD_CLIMATE_GATEWAY, FieldClimateGateway } from './field-climate/field-climate.gateway';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
 import {
   LoadWorkDayListInputDto,
@@ -32,6 +34,48 @@ function hasWorkRecordOnDate(item: TaskScheduleItem, date: string): boolean {
 }
 
 type WorkDayListRowInput = Omit<WorkDayListRowDto, 'recordedToday'>;
+
+export function attachCumulativeGddToRows(
+  rows: WorkDayListRowInput[],
+  cumulativeByField: ReadonlyMap<number, number | null>
+): WorkDayListRowInput[] {
+  return rows.map((row) => ({
+    ...row,
+    cumulativeGddAtToday: cumulativeByField.get(row.item.field_cultivation_id) ?? null
+  }));
+}
+
+export function fetchCumulativeGddByField(
+  gateway: FieldClimateGateway,
+  fieldIds: number[],
+  today: string
+) {
+  if (fieldIds.length === 0) {
+    return of(new Map<number, number | null>());
+  }
+  return forkJoin(
+    fieldIds.map((fieldCultivationId) =>
+      gateway
+        .fetchFieldClimateData({
+          fieldCultivationId,
+          planType: 'private',
+          displayStartDate: today,
+          displayEndDate: today
+        })
+        .pipe(
+          map((data) => {
+            const cumulative = snapshotClimateForDate(
+              data.gdd_data ?? [],
+              data.weather_data ?? [],
+              today
+            ).gddAtActual;
+            return [fieldCultivationId, cumulative] as const;
+          }),
+          catchError(() => of([fieldCultivationId, null] as const))
+        )
+    )
+  ).pipe(map((entries) => new Map<number, number | null>(entries)));
+}
 
 export function findNextScheduled(
   rows: WorkDayListRowInput[],
@@ -80,16 +124,33 @@ export class LoadWorkDayListUseCase implements LoadWorkDayListInputPort {
   constructor(
     @Inject(LOAD_WORK_DAY_LIST_OUTPUT_PORT) private readonly outputPort: LoadWorkDayListOutputPort,
     @Inject(PLAN_GATEWAY) private readonly planGateway: PlanGateway,
-    @Inject(WORK_RECORD_GATEWAY) private readonly workRecordGateway: WorkRecordGateway
+    @Inject(WORK_RECORD_GATEWAY) private readonly workRecordGateway: WorkRecordGateway,
+    @Inject(FIELD_CLIMATE_GATEWAY) private readonly fieldClimateGateway: FieldClimateGateway
   ) {}
 
   execute(dto: LoadWorkDayListInputDto): void {
     forkJoin({
       schedule: this.planGateway.getTaskSchedule(dto.planId),
       records: this.workRecordGateway.listWorkRecords(dto.planId)
-    }).subscribe({
-      next: ({ schedule, records }) => {
-        const rows = schedule.fields.flatMap(flattenFieldScheduleItems);
+    })
+      .pipe(
+        switchMap(({ schedule, records }) => {
+          const fieldIds = [
+            ...new Set(schedule.fields.map((field) => field.field_cultivation_id))
+          ];
+          return fetchCumulativeGddByField(
+            this.fieldClimateGateway,
+            fieldIds,
+            dto.today
+          ).pipe(map((cumulativeByField) => ({ schedule, records, cumulativeByField })));
+        })
+      )
+      .subscribe({
+        next: ({ schedule, records, cumulativeByField }) => {
+          const rows = attachCumulativeGddToRows(
+            schedule.fields.flatMap(flattenFieldScheduleItems),
+            cumulativeByField
+          );
         const grouped = groupWorkDayListRows(rows, dto.today, dto.includeSkipped ?? false);
         const recentAdHocRecord =
           grouped.today.length === 0
@@ -111,7 +172,7 @@ export class LoadWorkDayListUseCase implements LoadWorkDayListInputPort {
           loadGeneration: dto.loadGeneration
         });
       },
-      error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
-    });
+        error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
+      });
   }
 }

@@ -1,9 +1,11 @@
 import { Provider } from '@angular/core';
+import { FieldClimateApiGateway } from '../../adapters/plans/field-climate-api.gateway';
 import { PlanApiGateway } from '../../adapters/plans/plan-api.gateway';
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
 import { WorkRecordApiGateway } from '../../adapters/plans/work-record-api.gateway';
 import { CREATE_WORK_RECORD_OUTPUT_PORT } from './create-work-record.output-port';
 import { CreateWorkRecordUseCase } from './create-work-record.usecase';
+import { FIELD_CLIMATE_GATEWAY } from './field-climate/field-climate.gateway';
 import { LOAD_WORK_DAY_LIST_OUTPUT_PORT } from './load-work-day-list.output-port';
 import { LoadWorkDayListUseCase } from './load-work-day-list.usecase';
 import { LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT } from './load-plan-vs-actual-summary.output-port';
@@ -51,5 +53,6 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   },
   { provide: PLAN_GATEWAY, useClass: PlanApiGateway },
   { provide: WORK_RECORD_GATEWAY, useClass: WorkRecordApiGateway },
+  { provide: FIELD_CLIMATE_GATEWAY, useClass: FieldClimateApiGateway },
   { provide: PLAN_OPTIMIZATION_GATEWAY, useClass: PlanOptimizationChannelGateway }
 ];

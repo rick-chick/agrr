@@ -141,6 +141,40 @@
   border: 1px solid var(--color-error-border-soft);
 }
 
+.plan-work__context-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  width: fit-content;
+}
+
+.plan-work__context-badge--gdd-trigger {
+  color: var(--color-primary-dark);
+  background: var(--color-primary-muted-bg, var(--color-gray-50));
+  border: 1px solid var(--color-primary-muted-border, var(--color-border));
+}
+
+.plan-work__context-badge--gdd-gap {
+  color: var(--color-warning-dark);
+  background: var(--color-warning-muted-bg);
+  border: 1px solid var(--color-warning-muted-border);
+}
+
+.plan-work__context-badge--gdd-reached {
+  color: var(--color-success-dark);
+  background: var(--color-success-muted-bg);
+  border: 1px solid var(--color-success-muted-border);
+}
+
+.plan-work__context-badge--weather {
+  color: var(--color-text-secondary);
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-300);
+}
+
 .plan-work__row-actions {
   display: flex;
   gap: var(--space-3);
