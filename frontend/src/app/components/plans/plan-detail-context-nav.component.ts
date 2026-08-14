@@ -1,12 +1,15 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { PLAN_LEARN_PROVIDERS } from '../../usecase/plans/plan-learn.providers';
+import { PlanLearnLoopSummaryCoordinator } from '../../usecase/plans/plan-learn-loop-summary.coordinator';
 import { PlanLearnNavBadgeHostComponent } from './plan-learn-nav-badge-host.component';
 
 @Component({
   selector: 'app-plan-detail-context-nav',
   standalone: true,
   imports: [RouterLink, RouterLinkActive, TranslateModule, PlanLearnNavBadgeHostComponent],
+  providers: [...PLAN_LEARN_PROVIDERS, PlanLearnLoopSummaryCoordinator],
   template: `
     <nav
       class="plan-context-nav plan-context-nav--spaced"
