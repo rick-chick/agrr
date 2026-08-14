@@ -14,3 +14,13 @@ pub fn validate_reorganize_orchestration_progress_patch(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod policies_plan_variance_learning_orchestration_progress_policy_test_inline {
+    use super::*;
+
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/policies_plan_variance_learning_orchestration_progress_policy_test.rs"
+    ));
+}

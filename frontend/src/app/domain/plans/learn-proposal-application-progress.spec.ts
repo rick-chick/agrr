@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   bpTimingProposalProgressKey,
   buildLearnPostMasterNavigation,
@@ -22,6 +22,8 @@ import {
   readLearnBpTimingApplyContext,
   readLearnPostMasterPayload,
   readLearnProposalApplicationProgress,
+  registerLearnHandoffPatchHandler,
+  registerLearnProposalApplicationProgressPatchHandler,
   resolveLearnProposalApplicationStatus,
   stageGddProposalProgressKey,
   storeBlueprintTimingPrefill,
@@ -271,5 +273,53 @@ describe('blueprint timing prefill handoff', () => {
 
     clearBlueprintTimingPrefill(PLAN_ID, 4);
     expect(readBlueprintTimingPrefill(PLAN_ID, 4)).toBeNull();
+  });
+});
+
+describe('learn patch handler registration', () => {
+  it('invokes proposal progress patch handler when marking applied pending', () => {
+    const handler = vi.fn();
+    registerLearnProposalApplicationProgressPatchHandler(handler);
+
+    markStageGddProposalAppliedPending(PLAN_ID, { cropId: 1, stageId: 2 });
+
+    expect(handler).toHaveBeenCalledWith(PLAN_ID, {
+      [stageGddProposalProgressKey(1, 2)]: 'applied_pending_confirmation'
+    });
+  });
+
+  it('invokes handoff patch handler when storing post_master payload', () => {
+    const handler = vi.fn();
+    registerLearnHandoffPatchHandler(handler);
+    const payload: LearnPostMasterPayload = {
+      kind: 'stage_gdd',
+      cropId: 1,
+      cropName: 'Tomato',
+      stageId: 2,
+      stageName: 'Vegetative'
+    };
+
+    storeLearnPostMasterPayload(PLAN_ID, payload);
+
+    expect(handler).toHaveBeenCalledWith(PLAN_ID, { post_master_payload: payload });
+  });
+
+  it('invokes handoff patch handler when clearing blueprint prefill', () => {
+    const handler = vi.fn();
+    registerLearnHandoffPatchHandler(handler);
+    const body = {
+      crop_name: 'Tomato',
+      stages: [],
+      agricultural_tasks: [],
+      task_schedule_blueprints: []
+    };
+    storeBlueprintTimingPrefill(PLAN_ID, 4, body);
+
+    handler.mockClear();
+    clearBlueprintTimingPrefill(PLAN_ID, 4);
+
+    expect(handler).toHaveBeenCalledWith(PLAN_ID, {
+      blueprint_prefill: { crop_id: 4, body: null }
+    });
   });
 });

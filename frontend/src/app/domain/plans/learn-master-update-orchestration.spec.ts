@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import {
   areAllLearnOrchestrationStepsComplete,
   buildLearnOrchestrationResumeNavigation,
@@ -16,6 +16,7 @@ import {
   parseLearningOrchestration,
   readLearnOrchestrationReturnToLearn,
   readLearnOrchestrationStepComplete,
+  registerLearnOrchestrationProgressPatchHandler,
   storeLearnOrchestrationReturnToLearn
 } from './learn-master-update-orchestration';
 import {
@@ -186,6 +187,17 @@ describe('learn-master-update-orchestration', () => {
 
       markLearnOrchestrationStepComplete(5, 'sync_verify');
       expect(resolveLearnProposalApplicationStatus(5, key)).toBe('done');
+    });
+  });
+
+  describe('orchestration patch handler registration', () => {
+    it('invokes patch handler when marking orchestration step complete', () => {
+      const handler = vi.fn();
+      registerLearnOrchestrationProgressPatchHandler(handler);
+
+      markLearnOrchestrationStepComplete(5, 'regenerate');
+
+      expect(handler).toHaveBeenCalledWith(5, { regenerate: true });
     });
   });
 });
