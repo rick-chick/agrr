@@ -4,6 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
   buildLearnOrchestrationResumeNavigation,
   hasLearnReorganizePipelineFailure,
+  readLearnOrchestrationCurrentPhase,
   readLearnOrchestrationLastError
 } from '../../domain/plans/learn-master-update-orchestration';
 import {
@@ -12,6 +13,7 @@ import {
   storeLearnReorganizePipelineAutoChain,
   updateLearnReorganizePipelinePhase
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
+import { resolveLearnReorganizePipelineStageLabelKey } from '../../domain/plans/resolve-learn-reorganize-pipeline-stage';
 
 @Component({
   selector: 'app-plan-learn-pipeline-status',
@@ -41,6 +43,9 @@ import {
       </section>
     } @else if (showActive) {
       <section class="learn-pipeline-status learn-pipeline-status--active" aria-live="polite">
+        @if (phaseLabelKey) {
+          <p class="learn-pipeline-status__phase">{{ phaseLabelKey | translate }}</p>
+        }
         <p class="learn-pipeline-status__active-message">
           {{ 'plans.learn.pipeline_status.active_message' | translate }}
         </p>
@@ -79,6 +84,13 @@ export class PlanLearnPipelineStatusComponent {
     return (
       readLearnOrchestrationLastError(this.planId) ??
       'plans.learn.pipeline_status.unknown_error'
+    );
+  }
+
+  get phaseLabelKey(): string | null {
+    void this.refreshVersion;
+    return resolveLearnReorganizePipelineStageLabelKey(
+      readLearnOrchestrationCurrentPhase(this.planId)
     );
   }
 

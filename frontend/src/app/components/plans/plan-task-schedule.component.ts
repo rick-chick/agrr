@@ -27,6 +27,7 @@ import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 import {
   isTaskScheduleOrchestrationComplete,
+  hasLearnReorganizePipelineFailure,
   markLearnOrchestrationStepComplete,
   parseLearningOrchestration,
   readLearnOrchestrationStepComplete,
@@ -36,6 +37,7 @@ import {
   buildLearnReorganizePipelineSyncVerifyNavigation,
   clearLearnReorganizePipelineAutoChain,
   readLearnReorganizePipelineAutoChain,
+  setLearnReorganizePipelineError,
   updateLearnReorganizePipelinePhase
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 
@@ -549,6 +551,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       flash: this.flashMessage,
       onReload: () => this.reload({ silent: true })
     });
+    this.maybeHandleAutoChainPipelineFailure();
     this.maybeMarkOrchestrationStepComplete();
     this.maybeOpenItemDetailFromRoute();
     this.syncAddItemDefaults();
@@ -748,6 +751,25 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   private executeRegenerateTaskSchedule(): void {
     this.regenerateUseCase.execute({ planId: this.planId });
+  }
+
+  private maybeHandleAutoChainPipelineFailure(): void {
+    const planId = this.planId;
+    const mode = this.learningOrchestrationMode;
+    if (!planId || !readLearnReorganizePipelineAutoChain(planId)) {
+      return;
+    }
+    if (mode !== 'regenerate' && mode !== 'sync_verify') {
+      return;
+    }
+    if (this.syncState !== 'failed' || hasLearnReorganizePipelineFailure(planId)) {
+      return;
+    }
+    const errorMessage =
+      this.control.schedule?.plan.task_schedule_sync_error ??
+      'plans.task_schedules.sync.failed';
+    setLearnReorganizePipelineError(planId, errorMessage);
+    void this.router.navigate(['/plans', planId, 'learn']);
   }
 
   private maybeMarkOrchestrationStepComplete(): void {

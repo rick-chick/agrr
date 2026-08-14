@@ -2805,7 +2805,12 @@
         "unknown_error": "再配置中に予期しないエラーが発生しました。",
         "retry": "パイプラインを再試行",
         "resume": "パイプラインを再開",
-        "active_message": "再配置パイプラインが進行中です。中断したところから再開できます。"
+        "active_message": "再配置パイプラインが進行中です。中断したところから再開できます。",
+        "stage": {
+          "adjust": "現在の段階: 配置調整",
+          "optimizing": "現在の段階: 最適化",
+          "task_schedule": "現在の段階: 作業予定"
+        }
       },
       "proposal_queue": {
         "title": "提案キュー",

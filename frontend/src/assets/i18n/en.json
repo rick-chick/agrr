@@ -1680,7 +1680,12 @@
         "unknown_error": "An unexpected error occurred during reorganization.",
         "retry": "Retry pipeline",
         "resume": "Resume pipeline",
-        "active_message": "A reorganization pipeline is in progress. Resume where you left off."
+        "active_message": "A reorganization pipeline is in progress. Resume where you left off.",
+        "stage": {
+          "adjust": "Current step: Placement adjustment",
+          "optimizing": "Current step: Optimization",
+          "task_schedule": "Current step: Task schedule"
+        }
       },
       "proposal_queue": {
         "title": "Proposal queue",
