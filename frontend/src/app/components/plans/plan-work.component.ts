@@ -27,6 +27,10 @@ import { FlashMessageService } from '../../services/flash-message.service';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { applyPlanWorkViewEffects } from './plan-work-view.effects';
 import { WorkRecordSaveImpactPanelComponent } from './work-record-save-impact-panel.component';
+import { PlanWorkVarianceSummaryComponent } from './plan-work-variance-summary.component';
+import { findVarianceActionItemForTask } from '../../domain/plans/find-variance-action-item-for-task';
+import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
+import { formatVarianceDeltaDays, formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -50,7 +54,11 @@ const initialControl: PlanWorkViewState = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  varianceSummaryLoading: true,
+  varianceSummaryError: null,
+  varianceSummaryStats: null,
+  actionRequiredItems: []
 };
 
 @Component({
@@ -64,7 +72,8 @@ const initialControl: PlanWorkViewState = {
     PlanPlanContextHeaderComponent,
     WorkRecordSheetComponent,
     TaskScheduleSyncBannerComponent,
-    WorkRecordSaveImpactPanelComponent
+    WorkRecordSaveImpactPanelComponent,
+    PlanWorkVarianceSummaryComponent
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
@@ -97,6 +106,13 @@ const initialControl: PlanWorkViewState = {
             [regenerating]="control.regenerating"
             [regenerateError]="control.regenerateError"
             (retry)="regenerateTaskSchedule()"
+          />
+
+          <app-plan-work-variance-summary
+            [planId]="planId"
+            [stats]="control.varianceSummaryStats"
+            [loading]="control.varianceSummaryLoading"
+            [error]="control.varianceSummaryError"
           />
 
           @if (control.saveImpactLoading || control.saveImpact || control.saveImpactError) {
@@ -253,6 +269,24 @@ const initialControl: PlanWorkViewState = {
           @if (row.item.status === 'skipped') {
             <span class="plan-work__skip-badge">{{ 'plans.work.skipped_badge' | translate }}</span>
           }
+          @if (varianceActionItemForRow(row); as actionItem) {
+            @if (showDaysExceedanceBadge(actionItem)) {
+              <span class="plan-work__exceedance-badge plan-work__exceedance-badge--days">
+                {{
+                  'plans.work.exceedance_badge.days'
+                    | translate: { delta: daysExceedanceLabel(actionItem) }
+                }}
+              </span>
+            }
+            @if (showGddExceedanceBadge(actionItem)) {
+              <span class="plan-work__exceedance-badge plan-work__exceedance-badge--gdd">
+                {{
+                  'plans.work.exceedance_badge.gdd'
+                    | translate: { delta: gddExceedanceLabel(actionItem) }
+                }}
+              </span>
+            }
+          }
         </div>
         <div class="plan-work__row-actions">
           @if (!row.recordedToday && row.item.status !== 'skipped') {
@@ -379,6 +413,29 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     return formatIsoDateForDisplay(iso, this.translate.currentLang);
   }
 
+  varianceActionItemForRow(row: WorkDayListRowDto): PlanVarianceActionItem | null {
+    return findVarianceActionItemForTask(
+      row.item.item_id,
+      this.control.actionRequiredItems
+    );
+  }
+
+  showDaysExceedanceBadge(item: PlanVarianceActionItem): boolean {
+    return item.exceedance_kind === 'days' || item.exceedance_kind === 'both';
+  }
+
+  showGddExceedanceBadge(item: PlanVarianceActionItem): boolean {
+    return item.exceedance_kind === 'gdd' || item.exceedance_kind === 'both';
+  }
+
+  daysExceedanceLabel(item: PlanVarianceActionItem): string {
+    return item.delta_days != null ? formatVarianceDeltaDays(item.delta_days) : '—';
+  }
+
+  gddExceedanceLabel(item: PlanVarianceActionItem): string {
+    return item.gdd_delta != null ? formatVarianceGddDelta(item.gdd_delta) : '—';
+  }
+
   private _control: PlanWorkViewState = initialControl;
   get control(): PlanWorkViewState {
     return this._control;
@@ -439,12 +496,19 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       };
     }
     const loadGeneration = this.presenter.beginScheduleLoad();
+    const varianceLoadGeneration = this.presenter.beginPageVarianceLoad();
     this.loadUseCase.execute({
       planId: this.planId,
       today: localTodayIso(),
       includeSkipped: this.control.includeSkipped,
       loadGeneration
     });
+    this.control = {
+      ...this.control,
+      varianceSummaryLoading: true,
+      varianceSummaryError: null
+    };
+    this.loadSummaryUseCase.execute({ planId: this.planId, loadGeneration: varianceLoadGeneration });
   }
 
   regenerateTaskSchedule(): void {

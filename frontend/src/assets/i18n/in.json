@@ -2215,6 +2215,17 @@
         "learn_link": "Learn में समीक्षा करें",
         "dismiss": "प्रभाव पूर्वावलोकन बंद करें",
         "workbench_link": "कार्य मंच पर adjust की समीक्षा करें"
+      },
+      "variance_summary": {
+        "title": "योजना बनाम वास्तविक सारांश",
+        "unrecorded": "अदर्ज",
+        "threshold_exceeded": "सीमा पार",
+        "gdd_delay": "GDD विलंब",
+        "learn_cta": "Learn में विवरण देखें"
+      },
+      "exceedance_badge": {
+        "days": "Δ {{delta}} दिन",
+        "gdd": "GDD {{delta}}"
       }
     },
     "work_records": {

@@ -1729,6 +1729,17 @@
         "learn_link": "Review in Learn",
         "dismiss": "Dismiss impact preview",
         "workbench_link": "Review adjust on workbench"
+      },
+      "variance_summary": {
+        "title": "Plan vs actual summary",
+        "unrecorded": "Not recorded",
+        "threshold_exceeded": "Threshold exceeded",
+        "gdd_delay": "GDD delay",
+        "learn_cta": "Review details in Learn"
+      },
+      "exceedance_badge": {
+        "days": "Δ {{delta}} days",
+        "gdd": "GDD {{delta}}"
       }
     },
     "work_records": {
