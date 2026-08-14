@@ -12,7 +12,11 @@
 }
 
 .plan-reoptimization-banner__hint {
-  margin: 0;
+  margin: 0 0 var(--space-3);
   color: var(--color-text-muted);
   font-size: var(--text-sm);
+}
+
+.plan-reoptimization-banner__learn-link {
+  display: inline-flex;
 }

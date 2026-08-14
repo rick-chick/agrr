@@ -54,6 +54,7 @@ describe('PlanLearnLoopProgressComponent', () => {
         'plans.learn.loop.next_action.observe_workbench': 'Open workbench',
         'plans.learn.loop.next_action.handoff_carryover': 'Import carryover',
         'plans.learn.loop.next_action.handoff_new_plan': 'Create next plan with learning',
+        'plans.learn.loop.next_action.handoff_source_plan': 'Source plan: {{planName}}',
         'plans.learn.loop.next_action.complete_reorganize': 'Verify placement',
         'plans.learn.loop.next_action.complete_next_plan': 'Go to plans'
       },
@@ -97,6 +98,19 @@ describe('PlanLearnLoopProgressComponent', () => {
     const cta = fixture.nativeElement.querySelector('.learn-loop-progress__next-cta');
     expect(cta?.getAttribute('href')).toBe('/plans/new?carryoverFrom=7');
     expect(cta?.textContent).toContain('Create next plan with learning');
+  });
+
+  it('shows source plan name in handoff phase next action', () => {
+    fixture.componentInstance.planName = 'Spring Rotation 2026';
+    fixture.componentInstance.hasLearningSnapshot = true;
+    fixture.componentInstance.carryoverSourcePlanCount = 2;
+    fixture.detectChanges();
+
+    const sourceLabel = fixture.nativeElement.querySelector(
+      '.learn-loop-progress__handoff-source'
+    );
+    expect(sourceLabel).not.toBeNull();
+    expect(sourceLabel.textContent).toContain('Spring Rotation 2026');
   });
 
   it('marks earlier phases as completed when current phase is handoff', () => {

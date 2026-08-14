@@ -2120,7 +2120,8 @@
           "loop_complete_next_plan": "अगली योजना पर जाएँ",
           "complete_reorganize": "कार्यक्षेत्र पर स्थान की पुष्टि करें",
           "complete_next_plan": "योजनाओं पर जाएँ",
-          "handoff_new_plan": "सीख के साथ अगली योजना बनाएँ"
+          "handoff_new_plan": "सीख के साथ अगली योजना बनाएँ",
+          "handoff_source_plan": "स्रोत योजना: {{planName}}"
         },
         "complete": {
           "title": "सीखने का लूप पूर्ण",
