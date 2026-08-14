@@ -1963,6 +1963,10 @@
     },
     "learn": {
       "page_title": "समीक्षा — {{name}}",
+      "nav_badge": {
+        "unapplied_count": "{{count}} अप्रयुक्त प्रस्ताव",
+        "current_phase": "सीख चरण: {{phase}}"
+      },
       "imported_snapshot_title": "योजना #{{sourcePlanId}} से आयातित सीख",
       "imported_snapshot_empty": "आयातित स्नैपशॉट में कोई श्रेणी variance डेटा नहीं है।",
       "current_variance_title": "वर्तमान योजना variance",
