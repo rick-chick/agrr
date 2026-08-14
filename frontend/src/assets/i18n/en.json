@@ -2638,7 +2638,8 @@
       },
       "daily_uptake_k": "Potassium (K) Uptake",
       "daily_uptake_n": "Nitrogen (N) Uptake",
-      "daily_uptake_p": "Phosphorus (P) Uptake"
+      "daily_uptake_p": "Phosphorus (P) Uptake",
+      "return_to_learn": "Return to learning screen"
     },
     "pests": {
       "flash": {

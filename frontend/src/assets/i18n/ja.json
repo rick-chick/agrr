@@ -651,7 +651,8 @@
       },
       "daily_uptake_k": "カリウム (K) 吸収量",
       "daily_uptake_n": "窒素 (N) 吸収量",
-      "daily_uptake_p": "リン (P) 吸収量"
+      "daily_uptake_p": "リン (P) 吸収量",
+      "return_to_learn": "学習画面に戻る"
     },
     "pests": {
       "flash": {
