@@ -1798,6 +1798,16 @@
         "gdd_delay": "GDD delay",
         "learn_cta": "Review details in Learn"
       },
+      "today_attention": {
+        "title": "Today's attention",
+        "frost_risk": "Frost risk",
+        "gdd_delay": "GDD delay",
+        "threshold_exceeded": "Threshold exceeded",
+        "frost_risk_field": "{{field}} ({{crop}})",
+        "gdd_delay_task": "GDD delay: {{name}}",
+        "threshold_exceeded_task": "Threshold exceeded: {{name}}",
+        "learn_cta": "Review details in Learn"
+      },
       "exceedance_badge": {
         "days": "Δ {{delta}} days",
         "gdd": "GDD {{delta}}"
@@ -1839,11 +1849,11 @@
         "delta_days_early": "{{count}} days early",
         "delta_days_on_time": "On schedule",
         "gdd_at_actual": "GDD {{value}}",
-        "weather_snapshot": "High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)",
         "no_schedule": "No schedule",
         "month_average_late": "Avg. {{count}} days late",
         "month_average_early": "Avg. {{count}} days early",
-        "month_average_on_time": "Avg. on schedule"
+        "month_average_on_time": "Avg. on schedule",
+        "weather_snapshot": "High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)"
       }
     },
     "index": {
