@@ -77,7 +77,20 @@ const initialControl: WorkHubViewState = {
                       [disabled]="!farm.hasValidFields || control.submitting"
                       (click)="selectFarm(farm)"
                     >
-                      <span class="item-card__title">{{ farm.farmName }}</span>
+                      <span class="item-card__title">
+                        {{ farm.farmName }}
+                        @if (farm.thresholdExceededCount > 0) {
+                          <span
+                            class="work-hub__context-badge"
+                            [attr.aria-label]="
+                              'work.hub.context_attention_badge_aria'
+                                | translate: { count: farm.thresholdExceededCount }
+                            "
+                          >
+                            {{ 'work.hub.context_attention_badge' | translate }}
+                          </span>
+                        }
+                      </span>
                       <span class="work-hub__meta">
                         {{
                           'work.hub.farm_meta'
@@ -93,6 +106,16 @@ const initialControl: WorkHubViewState = {
                         {{
                           'work.hub.today_summary'
                             | translate: { count: farm.todayCount }
+                        }}
+                        ·
+                        {{
+                          'work.hub.gdd_delay_summary'
+                            | translate: { count: farm.gddDelayCount }
+                        }}
+                        ·
+                        {{
+                          'work.hub.threshold_exceeded_summary'
+                            | translate: { count: farm.thresholdExceededCount }
                         }}
                       </span>
                       <span class="work-hub__cta">
