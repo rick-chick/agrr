@@ -46,7 +46,11 @@ const baseControl = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  varianceSummaryLoading: false,
+  varianceSummaryError: null,
+  varianceSummaryStats: null,
+  actionRequiredItems: []
 };
 
 function field(overrides: Partial<FieldSchedule> & Pick<FieldSchedule, 'field_cultivation_id'>): FieldSchedule {
@@ -534,5 +538,48 @@ describe('PlanWorkPresenter save impact', () => {
       workbenchFieldCultivationId: null
     });
     expect(view.control.saveImpactLoading).toBe(false);
+    expect(view.control.varianceSummaryStats).toEqual({
+      unrecordedCount: 4,
+      thresholdExceededCount: 0,
+      gddDelayCount: 0
+    });
+    expect(view.control.actionRequiredItems).toEqual([]);
+  });
+
+  it('updates page variance summary when load generation matches', () => {
+    const generation = presenter.beginPageVarianceLoad();
+
+    presenter.presentSaveImpactSummary({
+      loadGeneration: generation,
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 2,
+        categories: [],
+        top_variance_items: [],
+        action_required_items: [
+          {
+            item_id: 10,
+            field_cultivation_id: 1,
+            category: 'general',
+            name: '追肥',
+            scheduled_date: '2026-06-01',
+            actual_date: '2026-06-10',
+            delta_days: 5,
+            gdd_trigger: 100,
+            gdd_at_actual: 120,
+            gdd_delta: 12,
+            exceedance_kind: 'gdd'
+          }
+        ]
+      }
+    });
+
+    expect(view.control.varianceSummaryLoading).toBe(false);
+    expect(view.control.varianceSummaryStats).toEqual({
+      unrecordedCount: 2,
+      thresholdExceededCount: 1,
+      gddDelayCount: 1
+    });
+    expect(view.control.actionRequiredItems.length).toBe(1);
   });
 });
