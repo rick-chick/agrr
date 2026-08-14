@@ -2,11 +2,15 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import {
   areAllLearnOrchestrationStepsComplete,
   buildLearnOrchestrationResumeNavigation,
+  buildLearnOrchestrationPipelineRegenerateNavigation,
+  buildLearnOrchestrationPipelineStartNavigation,
+  buildLearnOrchestrationPipelineSyncVerifyNavigation,
   buildLearningOrchestrationNavigation,
   buildPlanDetailAdjustNavigation,
   buildPlanTaskScheduleOrchestrationNavigation,
   clearLearnOrchestrationProgressCache,
   clearLearnOrchestrationReturnToLearn,
+  clearLearnOrchestrationPipelineActive,
   findFirstIncompleteOrchestrationStep,
   hasActiveLearnMasterUpdateFlow,
   hasPendingMasterUpdateConfirmation,
@@ -15,7 +19,9 @@ import {
   markLearnOrchestrationStepComplete,
   parseLearningOrchestration,
   readLearnOrchestrationReturnToLearn,
+  readLearnOrchestrationPipelineActive,
   readLearnOrchestrationStepComplete,
+  storeLearnOrchestrationPipelineActive,
   storeLearnOrchestrationReturnToLearn
 } from './learn-master-update-orchestration';
 import {
@@ -92,6 +98,33 @@ describe('learn-master-update-orchestration', () => {
 
       clearLearnOrchestrationReturnToLearn(5);
       expect(readLearnOrchestrationReturnToLearn(5)).toBe(false);
+    });
+  });
+
+  describe('pipeline auto-chain context', () => {
+    it('stores and reads pipeline-active flag per plan', () => {
+      expect(readLearnOrchestrationPipelineActive(5)).toBe(false);
+
+      storeLearnOrchestrationPipelineActive(5);
+      expect(readLearnOrchestrationPipelineActive(5)).toBe(true);
+
+      clearLearnOrchestrationPipelineActive(5);
+      expect(readLearnOrchestrationPipelineActive(5)).toBe(false);
+    });
+
+    it('builds pipeline step navigation with learningOrchestration query params', () => {
+      expect(buildLearnOrchestrationPipelineStartNavigation(7)).toEqual({
+        commands: ['/plans', 7],
+        queryParams: { learningOrchestration: 'adjust' }
+      });
+      expect(buildLearnOrchestrationPipelineRegenerateNavigation(7)).toEqual({
+        commands: ['/plans', 7, 'task_schedule'],
+        queryParams: { learningOrchestration: 'regenerate' }
+      });
+      expect(buildLearnOrchestrationPipelineSyncVerifyNavigation(7)).toEqual({
+        commands: ['/plans', 7, 'task_schedule'],
+        queryParams: { learningOrchestration: 'sync_verify' }
+      });
     });
   });
 

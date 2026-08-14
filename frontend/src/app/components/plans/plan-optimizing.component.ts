@@ -10,7 +10,9 @@ import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.compo
 import {
   clearLearnOrchestrationReturnToLearn,
   markLearnOrchestrationStepComplete,
-  readLearnOrchestrationReturnToLearn
+  readLearnOrchestrationPipelineActive,
+  readLearnOrchestrationReturnToLearn,
+  buildLearnOrchestrationPipelineRegenerateNavigation
 } from '../../domain/plans/learn-master-update-orchestration';
 
 const initialControl: PlanOptimizingViewState = {
@@ -131,6 +133,13 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
 
   onOptimizationCompleted(): void {
     const planId = this.planId;
+    if (planId && readLearnOrchestrationPipelineActive(planId)) {
+      clearLearnOrchestrationReturnToLearn(planId);
+      markLearnOrchestrationStepComplete(planId, 'placement');
+      const next = buildLearnOrchestrationPipelineRegenerateNavigation(planId);
+      void this.router.navigate(next.commands, { queryParams: next.queryParams });
+      return;
+    }
     if (planId && readLearnOrchestrationReturnToLearn(planId)) {
       clearLearnOrchestrationReturnToLearn(planId);
       markLearnOrchestrationStepComplete(planId, 'placement');

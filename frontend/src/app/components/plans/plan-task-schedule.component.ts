@@ -28,9 +28,12 @@ import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import {
+  buildLearnOrchestrationPipelineSyncVerifyNavigation,
+  clearLearnOrchestrationPipelineActive,
   isTaskScheduleOrchestrationComplete,
   markLearnOrchestrationStepComplete,
   parseLearningOrchestration,
+  readLearnOrchestrationPipelineActive,
   type LearnOrchestrationStepKey
 } from '../../domain/plans/learn-master-update-orchestration';
 
@@ -398,6 +401,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   private syncChannel: Channel | null = null;
   learningOrchestrationMode: ReturnType<typeof parseLearningOrchestration> = null;
+  private pipelineRegenerateTriggered = false;
   newItemFieldCultivationId: number | null = null;
   newItemName = '';
   newItemScheduledDate = localTodayIso();
@@ -604,6 +608,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     this.learningOrchestrationMode = parseLearningOrchestration(
       this.route.snapshot.queryParamMap.get('learningOrchestration')
     );
+    this.pipelineRegenerateTriggered = false;
     this.subscribeSyncUseCase.execute({
       planId,
       onSubscribed: (channel) => {
@@ -782,8 +787,36 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       return;
     }
     if (!this.orchestrationComplete) {
+      this.maybeAutoStartPipelineRegenerate(mode);
       return;
     }
     markLearnOrchestrationStepComplete(this.planId, mode as LearnOrchestrationStepKey);
+    this.maybeContinuePipelineAfterStep(mode);
+  }
+
+  private maybeAutoStartPipelineRegenerate(mode: 'regenerate' | 'sync_verify'): void {
+    if (
+      mode !== 'regenerate' ||
+      !readLearnOrchestrationPipelineActive(this.planId) ||
+      this.pipelineRegenerateTriggered ||
+      this.control.regenerating
+    ) {
+      return;
+    }
+    this.pipelineRegenerateTriggered = true;
+    this.regenerateTaskSchedule();
+  }
+
+  private maybeContinuePipelineAfterStep(mode: 'regenerate' | 'sync_verify'): void {
+    if (!readLearnOrchestrationPipelineActive(this.planId)) {
+      return;
+    }
+    if (mode === 'regenerate') {
+      const next = buildLearnOrchestrationPipelineSyncVerifyNavigation(this.planId);
+      void this.router.navigate(next.commands, { queryParams: next.queryParams });
+      return;
+    }
+    clearLearnOrchestrationPipelineActive(this.planId);
+    void this.router.navigate(['/plans', this.planId, 'learn']);
   }
 }

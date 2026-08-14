@@ -1568,6 +1568,15 @@
       "proposal": {
         "dismiss": "Do not apply"
       },
+      "bulk_apply": {
+        "title": "Bulk apply safe proposals",
+        "lead": "{{count}} safe proposal(s) within variance thresholds can be applied at once.",
+        "cta": "Apply {{count}} safe proposal(s)",
+        "pipeline_lead": "Master updates are confirmed. Start the re-optimization pipeline to refresh placement, task schedule, and sync.",
+        "start_pipeline": "Start re-optimization pipeline",
+        "failed": "Bulk apply failed. Try applying proposals individually.",
+        "missing_proposed_gdd": "A safe proposal is missing a proposed GDD value."
+      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",

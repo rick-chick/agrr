@@ -22,6 +22,7 @@ const defaultOrchestrationProgress = (): ReorganizeOrchestrationProgress => ({
 });
 
 const orchestrationCache: Record<number, ReorganizeOrchestrationProgress> = {};
+const pipelineActiveByPlanId = new Set<number>();
 
 type OrchestrationPatchHandler = (
   planId: number,
@@ -41,9 +42,44 @@ export function clearLearnOrchestrationProgressCache(planId?: number): void {
     for (const key of Object.keys(orchestrationCache)) {
       delete orchestrationCache[Number(key)];
     }
+    pipelineActiveByPlanId.clear();
     return;
   }
   delete orchestrationCache[planId];
+  pipelineActiveByPlanId.delete(planId);
+}
+
+export function storeLearnOrchestrationPipelineActive(planId: number): void {
+  pipelineActiveByPlanId.add(planId);
+}
+
+export function readLearnOrchestrationPipelineActive(planId: number): boolean {
+  return pipelineActiveByPlanId.has(planId);
+}
+
+export function clearLearnOrchestrationPipelineActive(planId: number): void {
+  pipelineActiveByPlanId.delete(planId);
+}
+
+export function buildLearnOrchestrationPipelineStartNavigation(planId: number): {
+  commands: (string | number)[];
+  queryParams: { learningOrchestration: 'adjust' };
+} {
+  return buildPlanDetailAdjustNavigation(planId);
+}
+
+export function buildLearnOrchestrationPipelineRegenerateNavigation(planId: number): {
+  commands: (string | number)[];
+  queryParams: { learningOrchestration: LearningOrchestrationMode };
+} {
+  return buildPlanTaskScheduleOrchestrationNavigation(planId, 'regenerate');
+}
+
+export function buildLearnOrchestrationPipelineSyncVerifyNavigation(planId: number): {
+  commands: (string | number)[];
+  queryParams: { learningOrchestration: LearningOrchestrationMode };
+} {
+  return buildPlanTaskScheduleOrchestrationNavigation(planId, 'sync_verify');
 }
 
 export function hydrateLearnOrchestrationProgress(

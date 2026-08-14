@@ -140,6 +140,52 @@ describe('PlanLearnComponent', () => {
     presenter = fixture.debugElement.injector.get(PlanLearnPresenter);
   });
 
+  it('shows bulk apply panel when safe proposals are available', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: [],
+        stage_gdd_calibration_proposals: [
+          {
+            crop_id: 1,
+            crop_name: 'Tomato',
+            stage_order: 1,
+            stage_name: 'Vegetative',
+            average_gdd_delta: 5,
+            recorded_item_count: 2
+          }
+        ]
+      },
+      loadGeneration: 1
+    });
+    presenter.presentStageGddProposals({
+      proposals: [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 2,
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageGddDelta: 5,
+          recordedItemCount: 2,
+          currentRequiredGdd: 100,
+          proposedRequiredGdd: 105
+        }
+      ],
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-bulk-apply-panel')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Bulk apply safe proposals');
+    expect(fixture.nativeElement.textContent).toContain('Apply 1 safe proposal(s)');
+  });
+
   it('always shows reorganization checklist on learn page', async () => {
     fixture.detectChanges();
     presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
