@@ -31,8 +31,14 @@ import {
   isTaskScheduleOrchestrationComplete,
   markLearnOrchestrationStepComplete,
   parseLearningOrchestration,
+  readLearnOrchestrationStepComplete,
   type LearnOrchestrationStepKey
 } from '../../domain/plans/learn-master-update-orchestration';
+import {
+  buildLearnReorganizePipelineSyncVerifyNavigation,
+  clearLearnReorganizePipelineAutoChain,
+  readLearnReorganizePipelineAutoChain
+} from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -398,6 +404,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   private syncChannel: Channel | null = null;
   learningOrchestrationMode: ReturnType<typeof parseLearningOrchestration> = null;
+  private autoRegenerateTriggered = false;
   newItemFieldCultivationId: number | null = null;
   newItemName = '';
   newItemScheduledDate = localTodayIso();
@@ -601,6 +608,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       this.resolveFieldCultivationFilterFromRoute()
     );
     this.pendingItemIdFromRoute = this.resolveItemIdFromRoute();
+    this.autoRegenerateTriggered = false;
     this.learningOrchestrationMode = parseLearningOrchestration(
       this.route.snapshot.queryParamMap.get('learningOrchestration')
     );
@@ -778,12 +786,44 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   private maybeMarkOrchestrationStepComplete(): void {
     const mode = this.learningOrchestrationMode;
+    const planId = this.planId;
     if (mode !== 'regenerate' && mode !== 'sync_verify') {
       return;
     }
     if (!this.orchestrationComplete) {
+      this.maybeAutoStartRegenerate();
       return;
     }
-    markLearnOrchestrationStepComplete(this.planId, mode as LearnOrchestrationStepKey);
+    if (readLearnOrchestrationStepComplete(planId, mode)) {
+      return;
+    }
+    markLearnOrchestrationStepComplete(planId, mode as LearnOrchestrationStepKey);
+    if (!readLearnReorganizePipelineAutoChain(planId)) {
+      return;
+    }
+    if (mode === 'regenerate') {
+      const navigation = buildLearnReorganizePipelineSyncVerifyNavigation(planId);
+      void this.router.navigate(navigation.commands, { queryParams: navigation.queryParams });
+      return;
+    }
+    clearLearnReorganizePipelineAutoChain(planId);
+    void this.router.navigate(['/plans', planId, 'learn']);
+  }
+
+  private maybeAutoStartRegenerate(): void {
+    if (this.autoRegenerateTriggered) {
+      return;
+    }
+    if (this.learningOrchestrationMode !== 'regenerate') {
+      return;
+    }
+    if (!readLearnReorganizePipelineAutoChain(this.planId)) {
+      return;
+    }
+    if (this.control.loading || this.control.regenerating) {
+      return;
+    }
+    this.autoRegenerateTriggered = true;
+    this.executeRegenerateTaskSchedule();
   }
 }
