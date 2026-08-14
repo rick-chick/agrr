@@ -95,7 +95,7 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
     expect(fixture.nativeElement.querySelector('.learn-bulk-apply')).toBeNull();
   });
 
-  it('applies safe proposals and auto-starts reorganize pipeline', async () => {
+  it('applies safe proposals and shows post-apply confirmation without auto-navigation', async () => {
     fixture.componentInstance.stageGddProposals = [
       {
         cropId: 1,
@@ -121,10 +121,45 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
     await fixture.whenStable();
 
     expect(bulkApplyUseCase.execute).toHaveBeenCalled();
-    expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
+    expect(readLearnReorganizePipelineAutoChain(7)).toBeFalsy();
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Safe proposals applied');
+    expect(fixture.nativeElement.textContent).toContain('Start reorganization pipeline');
+  });
+
+  it('starts reorganize pipeline when user confirms after bulk apply', async () => {
+    fixture.componentInstance.stageGddProposals = [
+      {
+        cropId: 1,
+        cropName: 'Tomato',
+        stageId: 2,
+        stageOrder: 1,
+        stageName: 'Vegetative',
+        averageGddDelta: 5,
+        recordedItemCount: 2,
+        currentRequiredGdd: 100,
+        proposedRequiredGdd: 105
+      }
+    ];
+    fixture.detectChanges();
+
+    const applyButton = fixture.nativeElement.querySelector(
+      '.learn-bulk-apply .btn-primary'
+    ) as HTMLButtonElement;
+    applyButton.click();
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+
+    const pipelineButton = fixture.nativeElement.querySelector(
+      '.learn-bulk-apply__confirmation .btn-primary'
+    ) as HTMLButtonElement;
+    pipelineButton.click();
+
     expect(router.navigate).toHaveBeenCalledWith(['/plans', 7], {
       queryParams: { learningOrchestration: 'adjust' }
     });
+    expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
   });
 
   it('navigates to adjust with auto-chain when pipeline is started manually', () => {

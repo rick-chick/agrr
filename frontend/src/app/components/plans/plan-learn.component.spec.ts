@@ -311,6 +311,60 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Weed control');
   });
 
+  it('renders prioritized proposal queue with observable tier sections', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: [],
+        action_required_items: [
+          {
+            item_id: 11,
+            field_cultivation_id: 100,
+            category: 'general',
+            name: 'Weed control',
+            scheduled_date: '2026-06-01',
+            actual_date: '2026-06-08',
+            delta_days: 7,
+            gdd_trigger: 100,
+            gdd_at_actual: 110,
+            gdd_delta: 10,
+            exceedance_kind: 'days'
+          }
+        ]
+      },
+      loadGeneration: 1
+    });
+    presenter.presentStageGddProposals({
+      loadGeneration: 1,
+      proposals: [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 2,
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageGddDelta: 5,
+          recordedItemCount: 2,
+          currentRequiredGdd: 100,
+          proposedRequiredGdd: 105
+        }
+      ]
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-proposal-queue')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Proposal queue');
+    const tiers = fixture.nativeElement.querySelectorAll('[data-queue-tier]');
+    expect(tiers.length).toBeGreaterThanOrEqual(2);
+    expect(fixture.nativeElement.textContent).toContain('Action required');
+    expect(fixture.nativeElement.textContent).toContain('Safe to apply');
+  });
+
   it('shows observe phase completion when all tasks are recorded', async () => {
     fixture.detectChanges();
     presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });

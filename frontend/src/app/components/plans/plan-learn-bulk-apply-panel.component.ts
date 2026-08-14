@@ -27,12 +27,30 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
           {{ 'plans.learn.bulk_apply.title' | translate }}
         </h3>
         @if (bulkApplyComplete) {
-          <p class="learn-bulk-apply__success" role="status">
-            {{
-              'plans.learn.bulk_apply.starting_pipeline'
-                | translate: { count: lastAppliedCount }
-            }}
-          </p>
+          <section
+            class="learn-bulk-apply__confirmation"
+            aria-labelledby="learn-bulk-apply-confirmation-heading"
+            role="status"
+          >
+            <h4 id="learn-bulk-apply-confirmation-heading" class="learn-bulk-apply__confirmation-title">
+              {{ 'plans.learn.proposal_queue.post_apply.title' | translate }}
+            </h4>
+            <p class="learn-bulk-apply__success">
+              {{
+                'plans.learn.bulk_apply.complete_message'
+                  | translate: { count: lastAppliedCount }
+              }}
+            </p>
+            <div class="learn-bulk-apply__actions">
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="startReorganizePipeline()"
+              >
+                {{ 'plans.learn.bulk_apply.start_pipeline' | translate }}
+              </button>
+            </div>
+          </section>
         } @else {
           <p class="learn-bulk-apply__lead">
             {{
@@ -73,6 +91,7 @@ export class PlanLearnBulkApplyPanelComponent {
   @Input() blueprintTimingProposals: BlueprintTimingAdjustmentProposal[] = [];
   @Input() progressRefreshVersion = 0;
   @Output() progressChanged = new EventEmitter<void>();
+  @Output() bulkApplyConfirmed = new EventEmitter<{ appliedCount: number }>();
 
   applying = false;
   applyError: string | null = null;
@@ -112,7 +131,7 @@ export class PlanLearnBulkApplyPanelComponent {
         this.bulkApplyComplete = result.appliedCount > 0;
         this.progressChanged.emit();
         if (result.appliedCount > 0) {
-          this.startReorganizePipeline();
+          this.bulkApplyConfirmed.emit({ appliedCount: result.appliedCount });
         }
         this.cdr.markForCheck();
       },

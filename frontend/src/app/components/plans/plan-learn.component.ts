@@ -21,6 +21,7 @@ import { PlanLearnApplicationProgressViewComponent } from './plan-learn-applicat
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
 import { PlanLearnBulkApplyPanelComponent } from './plan-learn-bulk-apply-panel.component';
+import { PlanLearnProposalQueueComponent } from './plan-learn-proposal-queue.component';
 import { PlanLearnPipelineStatusComponent } from './plan-learn-pipeline-status.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
@@ -78,7 +79,7 @@ const initialControl: PlanLearnViewState = {
     PlanLearnApplicationProgressViewComponent,
     PlanLearnPostMasterConfirmationComponent,
     PlanLearnMasterUpdateNextStepsComponent,
-    PlanLearnBulkApplyPanelComponent,
+    PlanLearnProposalQueueComponent,
     PlanLearnPipelineStatusComponent,
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
@@ -144,16 +145,17 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [visible]="true"
           />
-          <app-plan-learn-pipeline-status
-            [planId]="planId"
-            [refreshVersion]="proposalProgressRefreshVersion"
-          />
-          <app-plan-learn-bulk-apply-panel
+          <app-plan-learn-proposal-queue
             [planId]="planId"
             [stageGddProposals]="control.stageGddProposals"
             [blueprintTimingProposals]="control.blueprintTimingProposals"
+            [actionRequiredItems]="control.varianceSummary?.action_required_items ?? []"
             [progressRefreshVersion]="proposalProgressRefreshVersion"
             (progressChanged)="onProposalProgressChanged()"
+          />
+          <app-plan-learn-pipeline-status
+            [planId]="planId"
+            [refreshVersion]="proposalProgressRefreshVersion"
           />
           <app-plan-learn-application-progress-view
             [planId]="planId"

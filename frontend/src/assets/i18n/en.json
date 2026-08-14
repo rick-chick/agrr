@@ -1577,6 +1577,21 @@
         "start_pipeline": "Start reorganization pipeline",
         "starting_pipeline": "{{count}} safe proposal(s) applied. Starting reorganization pipeline…"
       },
+      "proposal_queue": {
+        "title": "Proposal queue",
+        "lead": "Review and apply learning proposals in priority order.",
+        "tier": {
+          "action_required": "Action required",
+          "needs_review": "Needs review",
+          "safe": "Safe to apply"
+        },
+        "kind": {
+          "variance_action": "Schedule variance"
+        },
+        "post_apply": {
+          "title": "Safe proposals applied"
+        }
+      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",
