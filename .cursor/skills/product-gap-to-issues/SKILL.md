@@ -87,6 +87,8 @@ Task `generalPurpose`。プロンプト: §2。
 
 **幅 vs 深さ**を [`references/breadth-depth-scale.md`](references/breadth-depth-scale.md) のコア 5 で比較し、判定と見送り候補を必ず書く。
 
+**ゲート対応**: `theme-selection.md` に **見送り（反対側）** 行が無いと G3-6 で `fail`（[`references/gates.md`](references/gates.md) §G3）。
+
 ---
 
 ## フェーズ 4 — テーマ深掘り
@@ -98,6 +100,8 @@ Task `explore`。プロンプト: §3。
 新画面を含む案は **`new_surface_justification`**（既存で代替できない理由）を必ず書く。
 
 深掘りが過剰なら [`references/breadth-depth-scale.md`](references/breadth-depth-scale.md) の打ち止め条件で幅候補へ回す。
+
+**ゲート対応**: 打ち止め条件（G2-3 抵触見込み・深さ寄りコア5が2未満・既存強化で足りる）に該当するのに `theme-deep-dive.md` に打ち止めが無いと G2-5〜7 で `fail`（[`references/gates.md`](references/gates.md) §G2）。
 
 **実装コードは書かない。**
 

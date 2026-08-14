@@ -30,6 +30,7 @@
 ### 入力
 
 - `tmp/product-gap/current-state.md`
+- `tmp/product-gap/theme-selection.md`（幅 vs 深さ・見送り候補）
 - `tmp/product-gap/theme-deep-dive.md`
 
 ### 判定の順序
@@ -46,6 +47,11 @@
 | G2-2 | 深掘り成果物に **実装コード・コンポーネント設計** が含まれるか？ | 削除し画面役割・振る舞いレベルに戻す |
 | G2-3 | テーマに対し **情報量が過剰**か？（根拠なしのチャート・カード・横断一覧の積み上げ） | 削減案を書く。詳細は既存分析画面へ |
 | G2-4 | **新画面・新ルート**があり、既存で代替不可の理由が **観測ベースで未記載**か？ | `new_surface_justification` を追記するか、既存強化に差し替え |
+| G2-5 | `breadth-depth-scale.md` §深掘り打ち止め — **G2-3 に抵触しそう**（根拠なしのチャート・カード・横断一覧の積み上げ）に該当するのに、`theme-deep-dive.md` に **深掘り打ち止め** が未記載か、幅候補への回しがない | 削減案を書き、`theme-deep-dive.md` 末尾に打ち止め理由と幅に回す候補を追記 |
+| G2-6 | `breadth-depth-scale.md` §深掘り打ち止め — **コア 5 のうち深さ寄りが 2 未満**で、幅候補に計画芯・シナジーが強いものがあるのに、打ち止めが未記載 | 深掘りを打ち止め、幅候補を `見送り` に回す旨を `theme-deep-dive.md` に追記 |
+| G2-7 | `breadth-depth-scale.md` §深掘り打ち止め — **既存強化で足りる**と確定し、新表面の justification が弱いのに、打ち止めが未記載 | 既存強化案に差し替え、打ち止め理由を `theme-deep-dive.md` に追記 |
+
+**打ち止め時の `mandatory_corrections`（G2-5〜7）**: 打ち止め追記・見送り候補の明示・幅候補へのテーマ差し替えのいずれか（該当条件に応じて具体化）を必ず含める。
 
 ### pass の条件
 
@@ -76,6 +82,8 @@
 ### 入力
 
 - `tmp/product-gap/enhancement-plan.md`
+- `tmp/product-gap/theme-selection.md`（幅 vs 深さ・見送り候補）
+- `tmp/product-gap/theme-deep-dive.md`（打ち止めの有無）
 - `tmp/product-gap/overlap-ux-gate.json`（G2 pass 前提）
 - `tmp/product-gap/current-state.md`
 
@@ -88,6 +96,9 @@
 | G3-3 | **完了条件**が観測可能か（issue 化できるか）？ | 曖昧語を具体化 |
 | G3-4 | **スコープ外**が列挙されているか？ | 追記 |
 | G3-5 | 入口画面と実行画面の **両方**がある場合、同じリストの **重複**が残っていないか？ | サマリ vs 実行に再分割 |
+| G3-6 | `theme-selection.md` に `breadth-depth-scale.md` §theme-selection 必須形式の **見送り（反対側）** 行が欠けているか？ | 見送り候補名と次回に回す理由 1 行を追記 |
+
+**見送り欠落時の `mandatory_corrections`（G3-6）**: 見送り候補の明示と、幅候補へのテーマ差し替え（または深さ優先の根拠）を要求する。
 
 ### 推奨（fail にしない）
 
