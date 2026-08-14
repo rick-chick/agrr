@@ -29,6 +29,7 @@ const PLANS_WORK_RECORDS_KEYS = [
   'plans.work_records.variance.delta_days_early',
   'plans.work_records.variance.delta_days_on_time',
   'plans.work_records.variance.gdd_at_actual',
+  'plans.work_records.variance.weather_snapshot',
   'plans.work_records.variance.no_schedule',
   'plans.work_records.variance.month_average_late',
   'plans.work_records.variance.month_average_early',

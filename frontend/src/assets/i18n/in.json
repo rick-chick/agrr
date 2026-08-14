@@ -2326,6 +2326,7 @@
         "delta_days_early": "{{count}} दिन पहले",
         "delta_days_on_time": "नियोजित समय पर",
         "gdd_at_actual": "GDD {{value}}",
+        "weather_snapshot": "High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)",
         "no_schedule": "कोई अनुसूची नहीं",
         "month_average_late": "औसत {{count}} दिन देरी",
         "month_average_early": "औसत {{count}} दिन पहले",

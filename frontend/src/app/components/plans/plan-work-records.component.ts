@@ -13,6 +13,10 @@ import {
   workRecordDeltaDays,
   workRecordScheduledDate
 } from '../../domain/plans/work-record-variance';
+import {
+  workRecordWeatherSnapshotSummary,
+  WorkRecordWeatherSnapshotSummary
+} from '../../domain/plans/work-record-weather-snapshot';
 import { WorkRecord } from '../../models/plans/work-record';
 import { WorkRecordPhoto } from '../../models/plans/work-record-photo';
 import {
@@ -144,6 +148,19 @@ const initialControl: PlanWorkRecordsViewState = {
                                   {{
                                     'plans.work_records.variance.gdd_at_actual'
                                       | translate: { value: record.gdd_at_actual }
+                                  }}
+                                </span>
+                              }
+                              @if (weatherSnapshotSummary(record); as weather) {
+                                <span class="plan-work-records__variance-weather">
+                                  {{
+                                    'plans.work_records.variance.weather_snapshot'
+                                      | translate
+                                        : {
+                                            max: weather.temperatureMax,
+                                            min: weather.temperatureMin,
+                                            mean: weather.temperatureMean
+                                          }
                                   }}
                                 </span>
                               }
@@ -357,6 +374,10 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
 
   deltaDays(record: WorkRecord): number | null {
     return workRecordDeltaDays(record);
+  }
+
+  weatherSnapshotSummary(record: WorkRecord): WorkRecordWeatherSnapshotSummary | null {
+    return workRecordWeatherSnapshotSummary(record);
   }
 
   formatDeltaDays(delta: number): string {

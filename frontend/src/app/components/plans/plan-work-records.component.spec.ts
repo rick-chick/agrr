@@ -803,6 +803,8 @@ describe('PlanWorkRecordsComponent', () => {
         'plans.work_records.variance.delta_days_early': '{{count}} days early',
         'plans.work_records.variance.delta_days_on_time': 'On schedule',
         'plans.work_records.variance.gdd_at_actual': 'GDD {{value}}',
+        'plans.work_records.variance.weather_snapshot':
+          'High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)',
         'plans.work_records.variance.no_schedule': 'No schedule',
         'plans.work_records.variance.month_average_late': 'Avg. {{count}} days late'
       },
@@ -870,5 +872,118 @@ describe('PlanWorkRecordsComponent', () => {
 
     const varianceRows = fixture.nativeElement.querySelectorAll('.plan-work-records__variance');
     expect(varianceRows.length).toBe(2);
+  });
+
+  it('renders weather snapshot summary next to gdd for schedule-linked records', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'plans.work_records.variance.scheduled': 'Scheduled {{date}}',
+        'plans.work_records.variance.delta_days_late': '{{count}} days late',
+        'plans.work_records.variance.gdd_at_actual': 'GDD {{value}}',
+        'plans.work_records.variance.weather_snapshot':
+          'High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)'
+      },
+      true
+    );
+
+    fixture.detectChanges();
+    component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          averageDeltaDays: null,
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: 5,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              gdd_at_actual: 120.5,
+              weather_snapshot: {
+                date: '2026-06-12',
+                temperature_max: 25,
+                temperature_min: 15,
+                temperature_mean: 20
+              },
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: { id: 5, name: 'Weeding', scheduled_date: '2026-06-10' }
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('GDD 120.5');
+    expect(text).toContain('High 25°C / Low 15°C (avg 20°C)');
+    expect(fixture.nativeElement.querySelector('.plan-work-records__variance-weather')).toBeTruthy();
+  });
+
+  it('does not render weather snapshot when record has no snapshot', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'plans.work_records.variance.scheduled': 'Scheduled {{date}}',
+        'plans.work_records.variance.gdd_at_actual': 'GDD {{value}}',
+        'plans.work_records.variance.weather_snapshot':
+          'High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)'
+      },
+      true
+    );
+
+    fixture.detectChanges();
+    component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          averageDeltaDays: null,
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: 5,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              gdd_at_actual: 120.5,
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: { id: 5, name: 'Weeding', scheduled_date: '2026-06-10' }
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-work-records__variance-weather')).toBeNull();
+    expect(fixture.nativeElement.textContent ?? '').not.toContain('High 25°C');
   });
 });
