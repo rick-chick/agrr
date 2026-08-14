@@ -5,11 +5,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { formatPlanTaskScheduleDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import { resolvePlanTaskScheduleVarianceBadge } from '../../domain/work-schedule/resolve-plan-task-schedule-variance-badge';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
+import { LearnProposalConfidenceBadgeComponent } from './learn-proposal-confidence-badge.component';
+import type { LearnProposalConfidence } from '../../domain/plans/resolve-learn-proposal-confidence';
 
 @Component({
   selector: 'app-variance-action-proposal-cards',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, LearnProposalConfidenceBadgeComponent],
   template: `
     @if (items.length) {
       <section
@@ -26,7 +28,10 @@ import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-s
           @for (item of items; track item.item_id) {
             <li class="variance-action-proposals__card">
               <div class="variance-action-proposals__card-main">
-                <span class="variance-action-proposals__card-name">{{ item.name }}</span>
+                <div class="variance-action-proposals__card-heading">
+                  <span class="variance-action-proposals__card-name">{{ item.name }}</span>
+                  <app-learn-proposal-confidence-badge [confidence]="proposalConfidence" />
+                </div>
                 <span class="variance-action-proposals__card-meta">{{
                   exceedanceLabel(item.exceedance_kind) | translate
                 }}</span>
@@ -54,6 +59,7 @@ import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-s
 export class VarianceActionProposalCardsComponent {
   @Input({ required: true }) planId!: number;
   @Input() items: PlanVarianceActionItem[] = [];
+  @Input() proposalConfidence: LearnProposalConfidence = 'high';
 
   exceedanceLabel(kind: PlanVarianceActionItem['exceedance_kind']): string {
     return `plans.learn.action_proposals.exceedance.${kind}`;

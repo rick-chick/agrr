@@ -392,6 +392,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   changeDateValue = localTodayIso();
   private syncChannel: Channel | null = null;
   private highlightClearTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingHighlightItemId: number | null = null;
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -441,6 +442,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     return this._control;
   }
   set control(value: PlanWorkViewState) {
+    const prevLoading = this._control.loading;
     this._control = applyPlanWorkViewEffects(this._control, value, {
       flash: this.flashMessage,
       onReload: () => this.reload({ silent: true }),
@@ -453,6 +455,9 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       },
       onLoadSaveImpact: (event) => this.loadSaveImpact(event)
     });
+    if (prevLoading && !this._control.loading && !this._control.error) {
+      this.applyPendingHighlightItem();
+    }
     this.cdr.markForCheck();
   }
 
@@ -474,6 +479,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
+    this.pendingHighlightItemId = this.readHighlightItemIdFromRoute();
     this.syncChannel?.unsubscribe();
     this.syncChannel = null;
     this.subscribeSyncUseCase.execute({
@@ -540,6 +546,28 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       }
       this.highlightClearTimer = null;
     }, 3000);
+  }
+
+  private readHighlightItemIdFromRoute(): number | null {
+    const raw = this.route.snapshot.queryParamMap.get('highlight_item');
+    if (raw == null || raw === '') {
+      return null;
+    }
+    const itemId = Number(raw);
+    return Number.isFinite(itemId) ? itemId : null;
+  }
+
+  private applyPendingHighlightItem(): void {
+    const itemId = this.pendingHighlightItemId;
+    if (itemId == null) {
+      return;
+    }
+    this.pendingHighlightItemId = null;
+    if (!this.findRowByItemId(itemId)) {
+      return;
+    }
+    this.control = { ...this.control, highlightedItemId: itemId };
+    this.scheduleHighlightClear(itemId);
   }
 
   toggleSkipped(event: Event): void {

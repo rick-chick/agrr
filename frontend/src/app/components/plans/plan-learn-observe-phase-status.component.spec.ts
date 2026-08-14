@@ -54,6 +54,18 @@ describe('PlanLearnObservePhaseStatusComponent', () => {
     expect(link.textContent).toContain('Record work');
   });
 
+  it('deep-links to the first unrecorded task on work page', () => {
+    fixture.componentInstance.status = 'unrecorded';
+    fixture.componentInstance.unrecordedCount = 2;
+    fixture.componentInstance.highlightItemId = 15;
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector(
+      'a.plan-learn-observe-phase__cta'
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toContain('highlight_item=15');
+  });
+
   it('shows completion message when status is complete', () => {
     fixture.componentInstance.status = 'complete';
     fixture.detectChanges();
