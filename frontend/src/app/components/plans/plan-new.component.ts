@@ -14,6 +14,10 @@ import { MasterContextCrumb } from '../masters/master-context-header/master-cont
 import { LoadPlanNewCarryoverUseCase } from '../../usecase/plans/load-plan-new-carryover.usecase';
 import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-actual-summary';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
+import {
+  PLAN_CARRYOVER_FROM_QUERY_PARAM,
+  parseCarryoverFromPlanId
+} from '../../domain/plans/plan-carryover-navigation';
 
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingFlashAndNavigationViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
@@ -394,12 +398,12 @@ export class PlanNewComponent implements PlanNewView, OnInit {
     if (this.carryoverPresetApplied) {
       return;
     }
-    const raw = this.route.snapshot.queryParamMap.get('carryoverFrom');
+    const raw = this.route.snapshot.queryParamMap.get(PLAN_CARRYOVER_FROM_QUERY_PARAM);
     if (!raw) {
       return;
     }
-    const planId = Number(raw);
-    if (!Number.isFinite(planId) || planId <= 0) {
+    const planId = parseCarryoverFromPlanId(raw);
+    if (planId == null) {
       return;
     }
 

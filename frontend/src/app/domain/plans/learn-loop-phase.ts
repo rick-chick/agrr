@@ -323,10 +323,9 @@ export function resolveLearnLoopNextAction(input: LearnLoopPhaseInput): LearnLoo
         };
       }
       return {
-        labelKey: 'plans.learn.loop.next_action.handoff_new_plan',
-        kind: 'router_link',
-        routerLink: ['/plans', 'new'],
-        queryParams: { carryoverFrom: input.planId }
+        labelKey: 'plans.learn.loop.next_action.handoff_carryover',
+        kind: 'scroll',
+        scrollTargetId: 'plan-learn-carryover-title'
       };
 
     case 'complete': {
