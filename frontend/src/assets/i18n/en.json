@@ -1568,6 +1568,14 @@
       "proposal": {
         "dismiss": "Do not apply"
       },
+      "bulk_apply": {
+        "title": "Bulk apply safe proposals",
+        "lead": "{{count}} proposal(s) are within variance thresholds and can be applied without manual review.",
+        "apply_button": "Apply all safe proposals ({{count}})",
+        "applying": "Applying {{applied}} / {{total}}…",
+        "complete_message": "{{count}} safe proposal(s) applied. Start the reorganization pipeline to refresh your plan.",
+        "start_pipeline": "Start reorganization pipeline"
+      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",
@@ -1719,15 +1727,6 @@
       },
       "empty_plan_cta": "Review cropping plan",
       "empty_task_schedule_cta": "Open task plan",
-      "variance": {
-        "summary_line": "Not recorded {{unrecorded}} · Threshold exceeded {{threshold}} · GDD delay {{gddDelay}}",
-        "learn_cta": "Review in Learn",
-        "badge": {
-          "days": "Days exceeded",
-          "gdd": "GDD delay",
-          "both": "Days & GDD exceeded"
-        }
-      },
       "save_impact": {
         "title": "Plan impact",
         "task_label": "Recorded task",
@@ -1738,6 +1737,15 @@
         "learn_link": "Review in Learn",
         "dismiss": "Dismiss impact preview",
         "workbench_link": "Review adjust on workbench"
+      },
+      "variance": {
+        "summary_line": "Not recorded {{unrecorded}} · Threshold exceeded {{threshold}} · GDD delay {{gddDelay}}",
+        "learn_cta": "Review in Learn",
+        "badge": {
+          "days": "Days exceeded",
+          "gdd": "GDD delay",
+          "both": "Days & GDD exceeded"
+        }
       }
     },
     "work_records": {

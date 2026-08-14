@@ -2692,6 +2692,14 @@
       "proposal": {
         "dismiss": "適用しない"
       },
+      "bulk_apply": {
+        "title": "安全な提案を一括適用",
+        "lead": "閾値内で要確認のない提案が {{count}} 件あります。",
+        "apply_button": "安全な提案を一括適用（{{count}}）",
+        "applying": "適用中 {{applied}} / {{total}}…",
+        "complete_message": "安全な提案 {{count}} 件を適用しました。再最適化パイプラインを開始して計画を更新してください。",
+        "start_pipeline": "再最適化パイプラインを開始"
+      },
       "post_master": {
         "title": "マスタ更新を適用しました",
         "lead": "マスタの変更を保存しました。適用内容を確認し、作業台で配置を確認してください。",
@@ -2843,15 +2851,6 @@
       },
       "empty_plan_cta": "作付け計画を確認",
       "empty_task_schedule_cta": "作業計画表を確認",
-      "variance": {
-        "summary_line": "未記録 {{unrecorded}} 件 · 閾値超過 {{threshold}} 件 · GDD遅延 {{gddDelay}} 件",
-        "learn_cta": "振り返りで確認",
-        "badge": {
-          "days": "日数超過",
-          "gdd": "GDD遅延",
-          "both": "日数・GDD超過"
-        }
-      },
       "save_impact": {
         "title": "計画への影響",
         "task_label": "記録した作業",
@@ -2862,6 +2861,15 @@
         "learn_link": "振り返りで確認",
         "dismiss": "影響プレビューを閉じる",
         "workbench_link": "作業台で adjust を検討"
+      },
+      "variance": {
+        "summary_line": "未記録 {{unrecorded}} 件 · 閾値超過 {{threshold}} 件 · GDD遅延 {{gddDelay}} 件",
+        "learn_cta": "振り返りで確認",
+        "badge": {
+          "days": "日数超過",
+          "gdd": "GDD遅延",
+          "both": "日数・GDD超過"
+        }
       }
     },
     "work_records": {

@@ -13,6 +13,10 @@ import {
   readLearnOrchestrationReturnToLearn,
   readLearnOrchestrationStepComplete
 } from '../../domain/plans/learn-master-update-orchestration';
+import {
+  clearLearnReorganizePipelineAutoChain,
+  storeLearnReorganizePipelineAutoChain
+} from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 
 describe('PlanOptimizingComponent', () => {
   let component: PlanOptimizingComponent;
@@ -170,6 +174,18 @@ describe('PlanOptimizingComponent', () => {
     component.onOptimizationCompleted();
 
     expect(router.navigate).toHaveBeenCalledWith(['/plans', 13]);
+  });
+
+  it('navigates to task schedule regenerate when auto-chain pipeline is active', () => {
+    storeLearnReorganizePipelineAutoChain(13);
+
+    component.onOptimizationCompleted();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/plans', 13, 'task_schedule'], {
+      queryParams: { learningOrchestration: 'regenerate' }
+    });
+    expect(readLearnOrchestrationStepComplete(13, 'placement')).toBe(true);
+    clearLearnReorganizePipelineAutoChain(13);
   });
 
   it('navigates to learn when orchestration return context is set', () => {
