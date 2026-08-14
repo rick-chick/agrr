@@ -3,51 +3,45 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { of } from 'rxjs';
 import { PlanWorkMiniClimatePanelComponent } from './plan-work-mini-climate-panel.component';
-import { FIELD_CLIMATE_GATEWAY } from '../../usecase/plans/field-climate/field-climate.gateway';
+import { PlanWorkMiniClimatePanelPresenter } from '../../adapters/plans/plan-work-mini-climate-panel.presenter';
+import { PreviewWorkRowMiniClimateUseCase } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.usecase';
+import { PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.output-port';
 
 describe('PlanWorkMiniClimatePanelComponent', () => {
   let fixture: ComponentFixture<PlanWorkMiniClimatePanelComponent>;
   let translate: TranslateService;
+  let previewUseCase: { execute: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    previewUseCase = { execute: vi.fn() };
+
     await TestBed.configureTestingModule({
       imports: [PlanWorkMiniClimatePanelComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
+        PlanWorkMiniClimatePanelPresenter,
+        { provide: PreviewWorkRowMiniClimateUseCase, useValue: previewUseCase },
         {
-          provide: FIELD_CLIMATE_GATEWAY,
-          useValue: {
-            fetchFieldClimateData: vi.fn(() =>
-              of({
-                success: true,
-                field_cultivation: {
-                  id: 5,
-                  field_name: 'A',
-                  crop_name: 'Tomato',
-                  start_date: '',
-                  completion_date: ''
-                },
-                farm: { id: 1, name: 'Farm', latitude: 0, longitude: 0 },
-                crop_requirements: { base_temperature: 10 },
-                weather_data: [
-                  {
-                    date: '2026-06-15',
-                    temperature_max: 28,
-                    temperature_min: 18,
-                    temperature_mean: 23
-                  }
-                ],
-                gdd_data: [{ date: '2026-06-17', gdd: 8, cumulative_gdd: 145.5 }],
-                stages: []
-              })
-            )
-          }
+          provide: PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT,
+          useExisting: PlanWorkMiniClimatePanelPresenter
         },
         { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
       ]
-    }).compileComponents();
+    })
+      .overrideComponent(PlanWorkMiniClimatePanelComponent, {
+        set: {
+          providers: [
+            PlanWorkMiniClimatePanelPresenter,
+            { provide: PreviewWorkRowMiniClimateUseCase, useValue: previewUseCase },
+            {
+              provide: PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT,
+              useExisting: PlanWorkMiniClimatePanelPresenter
+            }
+          ]
+        }
+      })
+      .compileComponents();
 
     translate = TestBed.inject(TranslateService);
     translate.setTranslation(
@@ -70,13 +64,32 @@ describe('PlanWorkMiniClimatePanelComponent', () => {
     fixture.componentRef.setInput('fieldCultivationId', 5);
   });
 
-  it('loads climate data on init and renders cumulative GDD and workbench link', async () => {
-    fixture.detectChanges();
-    await fixture.whenStable();
+  it('loads climate data on init and renders cumulative GDD and workbench link', () => {
+    previewUseCase.execute.mockImplementation(() => {
+      const panelPresenter = fixture.debugElement.injector.get(PlanWorkMiniClimatePanelPresenter);
+      panelPresenter.presentMiniClimate({
+        cumulativeGdd: 145.5,
+        dailyWeather: [
+          {
+            date: '2026-06-15',
+            temperatureMax: 28,
+            temperatureMin: 18,
+            temperatureMean: 23
+          }
+        ],
+        startDate: '2026-06-11',
+        endDate: '2026-06-17',
+        loading: false
+      });
+    });
+
     fixture.detectChanges();
 
     const panel = fixture.nativeElement.querySelector('[data-testid="work-row-mini-climate-panel"]');
     expect(panel).toBeTruthy();
+    expect(previewUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ fieldCultivationId: 5 })
+    );
     expect(fixture.nativeElement.textContent).toContain('累積 GDD: 145.5');
     expect(fixture.nativeElement.textContent).toContain('28');
     const link = fixture.nativeElement.querySelector(

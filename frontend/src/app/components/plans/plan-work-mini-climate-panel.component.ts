@@ -8,16 +8,16 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { formatIsoDateForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 import { FieldClimateApiGateway } from '../../adapters/plans/field-climate-api.gateway';
+import { PlanWorkMiniClimatePanelPresenter } from '../../adapters/plans/plan-work-mini-climate-panel.presenter';
 import { FIELD_CLIMATE_GATEWAY } from '../../usecase/plans/field-climate/field-climate.gateway';
 import { PreviewWorkRowMiniClimateStateDto } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.dtos';
 import { PreviewWorkRowMiniClimateUseCase } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.usecase';
 import {
-  PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT,
-  PreviewWorkRowMiniClimateOutputPort
+  PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT
 } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.output-port';
 
 function emptyMiniClimateState(): PreviewWorkRowMiniClimateStateDto {
@@ -35,8 +35,12 @@ function emptyMiniClimateState(): PreviewWorkRowMiniClimateStateDto {
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
+    PlanWorkMiniClimatePanelPresenter,
     PreviewWorkRowMiniClimateUseCase,
-    { provide: PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT, useExisting: PlanWorkMiniClimatePanelComponent },
+    {
+      provide: PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT,
+      useExisting: PlanWorkMiniClimatePanelPresenter
+    },
     { provide: FIELD_CLIMATE_GATEWAY, useClass: FieldClimateApiGateway }
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,8 +98,7 @@ function emptyMiniClimateState(): PreviewWorkRowMiniClimateStateDto {
   `,
   styleUrls: ['./plan-work-mini-climate-panel.component.css']
 })
-export class PlanWorkMiniClimatePanelComponent
-  implements PreviewWorkRowMiniClimateOutputPort, OnInit
+export class PlanWorkMiniClimatePanelComponent implements OnInit
 {
   @Input({ required: true }) planId!: number;
   @Input({ required: true }) fieldCultivationId!: number;
@@ -103,19 +106,20 @@ export class PlanWorkMiniClimatePanelComponent
   state: PreviewWorkRowMiniClimateStateDto = emptyMiniClimateState();
 
   private readonly previewUseCase = inject(PreviewWorkRowMiniClimateUseCase);
+  private readonly presenter = inject(PlanWorkMiniClimatePanelPresenter);
+  private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
+    this.presenter.setOnUpdate((state) => {
+      this.state = state;
+      this.cdr.markForCheck();
+    });
     this.loadClimate();
   }
 
-  presentMiniClimate(state: PreviewWorkRowMiniClimateStateDto): void {
-    this.state = state;
-    this.cdr.markForCheck();
-  }
-
   displayDate(isoDate: string): string {
-    return formatIsoDateForDisplay(isoDate);
+    return formatIsoDateForDisplay(isoDate, this.translate.currentLang);
   }
 
   private loadClimate(): void {
