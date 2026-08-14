@@ -1574,7 +1574,15 @@
         "apply_button": "Apply all safe proposals ({{count}})",
         "applying": "Applying {{applied}} / {{total}}…",
         "complete_message": "{{count}} safe proposal(s) applied. Start the reorganization pipeline to refresh your plan.",
-        "start_pipeline": "Start reorganization pipeline"
+        "start_pipeline": "Start reorganization pipeline",
+        "starting_pipeline": "{{count}} safe proposal(s) applied. Starting reorganization pipeline…"
+      },
+      "pipeline_status": {
+        "failed_title": "Reorganization pipeline failed",
+        "unknown_error": "An unexpected error occurred during reorganization.",
+        "retry": "Retry pipeline",
+        "resume": "Resume pipeline",
+        "active_message": "A reorganization pipeline is in progress. Resume where you left off."
       },
       "post_master": {
         "title": "Master update applied",

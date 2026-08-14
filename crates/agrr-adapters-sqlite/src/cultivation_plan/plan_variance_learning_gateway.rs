@@ -129,7 +129,8 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
     ) -> Result<ReorganizeOrchestrationProgressRead, Box<dyn std::error::Error + Send + Sync>> {
         self.pool.with_read_box(|conn| {
             let mut stmt = conn.prepare(
-                "SELECT placement_complete, regenerate_complete, sync_verify_complete, return_to_learn \
+                "SELECT placement_complete, regenerate_complete, sync_verify_complete, return_to_learn, \
+                 pipeline_active, current_phase, last_error \
                  FROM plan_variance_learning_orchestration_steps WHERE plan_id = ?1 LIMIT 1",
             )?;
             let result = stmt.query_row(params![plan_id], |row| {
@@ -138,6 +139,9 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
                     regenerate: row.get::<_, i64>(1)? != 0,
                     sync_verify: row.get::<_, i64>(2)? != 0,
                     return_to_learn: row.get::<_, i64>(3)? != 0,
+                    pipeline_active: row.get::<_, i64>(4)? != 0,
+                    current_phase: row.get(5)?,
+                    last_error: row.get(6)?,
                 })
             });
             match result {
@@ -158,7 +162,8 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
         self.pool.with_write_box(|conn| {
             let current = {
                 let mut stmt = conn.prepare(
-                    "SELECT placement_complete, regenerate_complete, sync_verify_complete, return_to_learn \
+                    "SELECT placement_complete, regenerate_complete, sync_verify_complete, return_to_learn, \
+                     pipeline_active, current_phase, last_error \
                      FROM plan_variance_learning_orchestration_steps WHERE plan_id = ?1 LIMIT 1",
                 )?;
                 let result = stmt.query_row(params![plan_id], |row| {
@@ -167,6 +172,9 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
                         regenerate: row.get::<_, i64>(1)? != 0,
                         sync_verify: row.get::<_, i64>(2)? != 0,
                         return_to_learn: row.get::<_, i64>(3)? != 0,
+                        pipeline_active: row.get::<_, i64>(4)? != 0,
+                        current_phase: row.get(5)?,
+                        last_error: row.get(6)?,
                     })
                 });
                 match result {
@@ -182,16 +190,30 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
             let regenerate = updates.regenerate.unwrap_or(current.regenerate);
             let sync_verify = updates.sync_verify.unwrap_or(current.sync_verify);
             let return_to_learn = updates.return_to_learn.unwrap_or(current.return_to_learn);
+            let pipeline_active = updates.pipeline_active.unwrap_or(current.pipeline_active);
+            let current_phase = updates
+                .current_phase
+                .clone()
+                .unwrap_or(current.current_phase);
+            let last_error = match &updates.last_error {
+                None => current.last_error.clone(),
+                Some(None) => None,
+                Some(Some(message)) => Some(message.clone()),
+            };
 
             conn.execute(
                 "INSERT INTO plan_variance_learning_orchestration_steps \
-                 (plan_id, placement_complete, regenerate_complete, sync_verify_complete, return_to_learn, created_at, updated_at) \
-                 VALUES (?1, ?2, ?3, ?4, ?5, datetime('now'), datetime('now')) \
+                 (plan_id, placement_complete, regenerate_complete, sync_verify_complete, return_to_learn, \
+                  pipeline_active, current_phase, last_error, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, datetime('now'), datetime('now')) \
                  ON CONFLICT(plan_id) DO UPDATE SET \
                    placement_complete = excluded.placement_complete, \
                    regenerate_complete = excluded.regenerate_complete, \
                    sync_verify_complete = excluded.sync_verify_complete, \
                    return_to_learn = excluded.return_to_learn, \
+                   pipeline_active = excluded.pipeline_active, \
+                   current_phase = excluded.current_phase, \
+                   last_error = excluded.last_error, \
                    updated_at = datetime('now')",
                 params![
                     plan_id,
@@ -199,6 +221,9 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
                     regenerate as i64,
                     sync_verify as i64,
                     return_to_learn as i64,
+                    pipeline_active as i64,
+                    current_phase,
+                    last_error,
                 ],
             )?;
             Ok(())
@@ -545,6 +570,9 @@ mod plan_variance_learning_sqlite_gateway_test {
                    regenerate_complete INTEGER NOT NULL DEFAULT 0,
                    sync_verify_complete INTEGER NOT NULL DEFAULT 0,
                    return_to_learn INTEGER NOT NULL DEFAULT 0,
+                   pipeline_active INTEGER NOT NULL DEFAULT 0,
+                   current_phase TEXT NOT NULL DEFAULT 'idle',
+                   last_error TEXT,
                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
                  );
@@ -694,6 +722,9 @@ mod plan_variance_learning_sqlite_gateway_test {
                     regenerate: None,
                     sync_verify: None,
                     return_to_learn: Some(true),
+                    pipeline_active: Some(true),
+                    current_phase: Some("optimizing".into()),
+                    last_error: Some(Some("weather fetch failed".into())),
                 },
             )
             .expect("upsert");
@@ -705,6 +736,12 @@ mod plan_variance_learning_sqlite_gateway_test {
         assert!(!found.regenerate);
         assert!(!found.sync_verify);
         assert!(found.return_to_learn);
+        assert!(found.pipeline_active);
+        assert_eq!("optimizing", found.current_phase);
+        assert_eq!(
+            Some("weather fetch failed".to_string()),
+            found.last_error
+        );
 
         gateway
             .upsert_reorganize_orchestration_progress(
@@ -714,6 +751,9 @@ mod plan_variance_learning_sqlite_gateway_test {
                     return_to_learn: Some(false),
                     placement: None,
                     sync_verify: None,
+                    pipeline_active: None,
+                    current_phase: Some("regenerate".into()),
+                    last_error: Some(None),
                 },
             )
             .expect("upsert partial");
@@ -724,6 +764,9 @@ mod plan_variance_learning_sqlite_gateway_test {
         assert!(updated.placement);
         assert!(updated.regenerate);
         assert!(!updated.return_to_learn);
+        assert!(updated.pipeline_active);
+        assert_eq!("regenerate", updated.current_phase);
+        assert_eq!(None, updated.last_error);
     }
 
     #[test]

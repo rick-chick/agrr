@@ -17,6 +17,7 @@ import { PlanLearnApplicationProgressViewComponent } from './plan-learn-applicat
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
 import { PlanLearnBulkApplyPanelComponent } from './plan-learn-bulk-apply-panel.component';
+import { PlanLearnPipelineStatusComponent } from './plan-learn-pipeline-status.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
@@ -74,6 +75,7 @@ const initialControl: PlanLearnViewState = {
     PlanLearnPostMasterConfirmationComponent,
     PlanLearnMasterUpdateNextStepsComponent,
     PlanLearnBulkApplyPanelComponent,
+    PlanLearnPipelineStatusComponent,
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
     VarianceActionProposalCardsComponent,
@@ -127,6 +129,10 @@ const initialControl: PlanLearnViewState = {
           <app-plan-learn-master-update-next-steps
             [planId]="planId"
             [visible]="true"
+          />
+          <app-plan-learn-pipeline-status
+            [planId]="planId"
+            [refreshVersion]="proposalProgressRefreshVersion"
           />
           <app-plan-learn-bulk-apply-panel
             [planId]="planId"
