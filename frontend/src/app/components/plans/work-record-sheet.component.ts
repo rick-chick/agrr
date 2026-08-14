@@ -30,6 +30,7 @@ import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-task
 import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
 import { PreviewWorkRecordClimateUseCase } from '../../usecase/plans/preview-work-record-climate/preview-work-record-climate.usecase';
+import { formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
 import {
   computeWorkRecordAmountDiff,
   WorkRecordAmountDiff
@@ -57,6 +58,8 @@ function emptyClimatePreview() {
     temperatureMax: null,
     temperatureMin: null,
     temperatureMean: null,
+    plannedGdd: null,
+    gddDelta: null,
     loading: false
   };
 }
@@ -334,6 +337,30 @@ const initialControl: WorkRecordSheetViewState = {
                     {{
                       'plans.work.sheet.climate_preview.gdd'
                         | translate: { value: control.climatePreview.gddAtActual }
+                    }}
+                  </span>
+                }
+                @if (
+                  control.climatePreview.plannedGdd != null && control.climatePreview.gddAtActual != null
+                ) {
+                  <span>
+                    {{
+                      'plans.work.sheet.climate_preview.planned_gdd'
+                        | translate: { value: control.climatePreview.plannedGdd }
+                    }}
+                  </span>
+                  <span
+                    class="work-record-sheet__gdd-diff"
+                    [class.work-record-sheet__gdd-diff--over]="
+                      control.climatePreview.gddDelta != null && control.climatePreview.gddDelta > 0
+                    "
+                    [class.work-record-sheet__gdd-diff--under]="
+                      control.climatePreview.gddDelta != null && control.climatePreview.gddDelta < 0
+                    "
+                  >
+                    {{
+                      'plans.work.sheet.climate_preview.gdd_delta'
+                        | translate: { value: climatePreviewGddDeltaLabel() }
                     }}
                   </span>
                 }
@@ -633,6 +660,14 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
     return this.control.form.field_cultivation_id != null && Boolean(this.control.form.actual_date.trim());
   }
 
+  climatePreviewGddDeltaLabel(): string {
+    const delta = this.control.climatePreview.gddDelta;
+    if (delta == null) {
+      return '';
+    }
+    return formatVarianceGddDelta(delta);
+  }
+
   private refreshClimatePreview(): void {
     if (!this.showClimatePreview()) {
       this.control = {
@@ -643,7 +678,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
     }
     this.previewClimateUseCase.execute({
       fieldCultivationId: this.control.form.field_cultivation_id,
-      actualDate: this.control.form.actual_date
+      actualDate: this.control.form.actual_date,
+      gddTrigger: this.control.saveToastContext?.gddTrigger ?? null
     });
   }
 
