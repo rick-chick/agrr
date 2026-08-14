@@ -889,7 +889,7 @@ describe('PlanWorkComponent mobile UX', () => {
           name: '追肥',
           gdd_trigger: '120',
           weather_dependency: 'high',
-          details: { gdd: { trigger: '120', tolerance: '0' }, weather_dependency: 'high' }
+          details: { gdd: { trigger: '120', tolerance: '0' }, weather_dependency: 'high' } as TaskScheduleItem['details']
         })
       ],
       upcoming: [
@@ -900,7 +900,7 @@ describe('PlanWorkComponent mobile UX', () => {
           gdd_at_actual: 95,
           gdd_delta: 15,
           weather_dependency: 'low',
-          details: { gdd: { trigger: '80', tolerance: '0' }, weather_dependency: 'low' }
+          details: { gdd: { trigger: '80', tolerance: '0' }, weather_dependency: 'low' } as TaskScheduleItem['details']
         })
       ]
     };
