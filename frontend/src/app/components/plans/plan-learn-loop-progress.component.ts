@@ -61,6 +61,11 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
               {{ 'plans.learn.loop.complete_message' | translate }}
             </p>
           }
+          @if (currentPhase === 'handoff' && planName) {
+            <p class="learn-loop-progress__handoff-source">
+              {{ 'plans.learn.loop.next_action.handoff_source_plan' | translate: { planName } }}
+            </p>
+          }
           <p class="learn-loop-progress__next-label">
             {{ 'plans.learn.loop.next_action_title' | translate }}:
             {{ nextAction.labelKey | translate }}
@@ -100,6 +105,7 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
 })
 export class PlanLearnLoopProgressComponent {
   @Input({ required: true }) planId!: number;
+  @Input() planName: string | null = null;
   @Input() actionRequiredItems: PlanVarianceActionItem[] = [];
   @Input() stageGddProposals: StageGddCalibrationProposal[] = [];
   @Input() blueprintTimingProposals: BlueprintTimingAdjustmentProposal[] = [];
