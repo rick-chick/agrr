@@ -76,6 +76,7 @@ AGRR リポジトリの現状機能を調査せよ。
 ```
 入力:
 - current-state.md
+- theme-selection.md（G2/G3 共通: breadth-depth-scale.md §幅 vs 深さ 形式）
 - theme-deep-dive.md
 
 ルーブリック: .cursor/skills/product-gap-to-issues/references/gates.md §G2
@@ -96,6 +97,8 @@ verdict=fail のとき mandatory_corrections に、gates.md の該当行に沿�
 - enhancement-plan.md
 - overlap-ux-gate.json（pass 前提）
 - current-state.md
+- theme-selection.md（G2/G3 共通: 幅 vs 深さ 判定・見送り）
+- theme-deep-dive.md（G2 入力。打ち止め・justification の整合確認）
 
 ルーブリック: .cursor/skills/product-gap-to-issues/references/gates.md §G3
 
