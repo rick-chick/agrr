@@ -170,6 +170,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-core-api-optimization-sli-slo-doc-lib.test.mjs
 
+      - name: product-gap phase 1 current-state contract unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-product-gap-phase1-current-state-lib.test.mjs
+
       - name: prerender shell paths sync contract unit tests
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-prerender-shell-paths-sync.test.mjs
