@@ -229,6 +229,24 @@ impl PlanVarianceLearningGateway for SpyVarianceLearningGateway {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Ok(())
     }
+
+    fn find_learn_handoff_by_plan_id(
+        &self,
+        _: i64,
+    ) -> Result<
+        crate::cultivation_plan::dtos::LearnHandoffStateRead,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
+        Ok(crate::cultivation_plan::dtos::LearnHandoffStateRead::default())
+    }
+
+    fn patch_learn_handoff(
+        &self,
+        _: i64,
+        _: &crate::cultivation_plan::dtos::LearnHandoffStatePatch,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
 }
 
 fn sample_snapshot() -> TaskScheduleTimelineSnapshot {

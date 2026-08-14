@@ -4,12 +4,13 @@ use std::collections::BTreeMap;
 
 use crate::pool::SqlitePool;
 use agrr_domain::cultivation_plan::dtos::{
-    PlanVarianceLearningSnapshotRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
-    PlanVsActualSummaryRead, ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
+    LearnHandoffStatePatch, LearnHandoffStateRead, PlanVarianceLearningSnapshotRead,
+    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+    ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
 };
 use agrr_domain::cultivation_plan::gateways::PlanVarianceLearningGateway;
 use rusqlite::params;
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 
 pub struct PlanVarianceLearningSqliteGateway {
     pool: SqlitePool,
@@ -69,6 +70,7 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
                         summary: Some(summary),
                         proposal_application_progress: BTreeMap::new(),
                         reorganize_orchestration_progress: ReorganizeOrchestrationProgressRead::default(),
+                        learn_handoff: LearnHandoffStateRead::default(),
                     }))
                 }
                 Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
@@ -200,6 +202,132 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
             Ok(())
         })
     }
+
+    fn find_learn_handoff_by_plan_id(
+        &self,
+        plan_id: i64,
+    ) -> Result<LearnHandoffStateRead, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_read_box(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT handoff_json \
+                 FROM plan_variance_learning_handoff_states WHERE plan_id = ?1 LIMIT 1",
+            )?;
+            let result = stmt.query_row(params![plan_id], |row| {
+                let handoff_json: String = row.get(0)?;
+                Ok(handoff_json)
+            });
+            match result {
+                Ok(json) => learn_handoff_from_json(&json)
+                    .map_err(|err| rusqlite::Error::ToSqlConversionFailure(err)),
+                Err(rusqlite::Error::QueryReturnedNoRows) => Ok(LearnHandoffStateRead::default()),
+                Err(err) => Err(err),
+            }
+        })
+    }
+
+    fn patch_learn_handoff(
+        &self,
+        plan_id: i64,
+        patch: &LearnHandoffStatePatch,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_write_box(|conn| {
+            let current = {
+                let mut stmt = conn.prepare(
+                    "SELECT handoff_json \
+                     FROM plan_variance_learning_handoff_states WHERE plan_id = ?1 LIMIT 1",
+                )?;
+                let result = stmt.query_row(params![plan_id], |row| {
+                    let handoff_json: String = row.get(0)?;
+                    Ok(handoff_json)
+                });
+                match result {
+                    Ok(json) => learn_handoff_from_json(&json)
+                        .map_err(|err| rusqlite::Error::ToSqlConversionFailure(err))?,
+                    Err(rusqlite::Error::QueryReturnedNoRows) => LearnHandoffStateRead::default(),
+                    Err(err) => return Err(err.into()),
+                }
+            };
+
+            let mut next = current;
+            if let Some(post_master_payload) = &patch.post_master_payload {
+                next.post_master_payload = post_master_payload.clone();
+            }
+            if let Some(bp_timing_apply_context) = &patch.bp_timing_apply_context {
+                next.bp_timing_apply_context = bp_timing_apply_context.clone();
+            }
+            if let Some(crop_id) = patch.blueprint_prefill_crop_id {
+                let key = crop_id.to_string();
+                match &patch.blueprint_prefill_body {
+                    Some(Some(body)) => {
+                        next.blueprint_prefill_by_crop_id.insert(key, body.clone());
+                    }
+                    Some(None) => {
+                        next.blueprint_prefill_by_crop_id.remove(&key);
+                    }
+                    None => {}
+                }
+            }
+
+            let handoff_json = learn_handoff_to_json(&next)
+                .map_err(|err| rusqlite::Error::ToSqlConversionFailure(err))?;
+            conn.execute(
+                "INSERT INTO plan_variance_learning_handoff_states \
+                 (plan_id, handoff_json, created_at, updated_at) \
+                 VALUES (?1, ?2, datetime('now'), datetime('now')) \
+                 ON CONFLICT(plan_id) DO UPDATE SET \
+                   handoff_json = excluded.handoff_json, \
+                   updated_at = datetime('now')",
+                params![plan_id, handoff_json],
+            )?;
+            Ok(())
+        })
+    }
+}
+
+fn learn_handoff_from_json(
+    handoff_json: &str,
+) -> Result<LearnHandoffStateRead, Box<dyn std::error::Error + Send + Sync>> {
+    let value: Value = serde_json::from_str(handoff_json)?;
+    let blueprint_prefill = value
+        .get("blueprint_prefill_by_crop_id")
+        .and_then(|v| v.as_object())
+        .map(|map| {
+            map.iter()
+                .filter_map(|(key, body)| body.as_object().map(|_| (key.clone(), body.clone())))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    Ok(LearnHandoffStateRead {
+        post_master_payload: value.get("post_master_payload").cloned(),
+        bp_timing_apply_context: value.get("bp_timing_apply_context").cloned(),
+        blueprint_prefill_by_crop_id: blueprint_prefill,
+    })
+}
+
+fn learn_handoff_to_json(
+    handoff: &LearnHandoffStateRead,
+) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+    let mut body = Map::new();
+    if let Some(payload) = &handoff.post_master_payload {
+        body.insert("post_master_payload".into(), payload.clone());
+    }
+    if let Some(context) = &handoff.bp_timing_apply_context {
+        body.insert("bp_timing_apply_context".into(), context.clone());
+    }
+    if !handoff.blueprint_prefill_by_crop_id.is_empty() {
+        body.insert(
+            "blueprint_prefill_by_crop_id".into(),
+            Value::Object(
+                handoff
+                    .blueprint_prefill_by_crop_id
+                    .iter()
+                    .map(|(key, value)| (key.clone(), value.clone()))
+                    .collect(),
+            ),
+        );
+    }
+    Ok(Value::Object(body).to_string())
 }
 
 fn summary_to_json(summary: &PlanVsActualSummaryRead) -> String {
@@ -321,6 +449,13 @@ mod plan_variance_learning_sqlite_gateway_test {
                    return_to_learn INTEGER NOT NULL DEFAULT 0,
                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                 );
+                 CREATE TABLE plan_variance_learning_handoff_states (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   plan_id INTEGER NOT NULL UNIQUE,
+                   handoff_json TEXT NOT NULL DEFAULT '{}',
+                   created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
                  );",
             )
         })
@@ -437,5 +572,52 @@ mod plan_variance_learning_sqlite_gateway_test {
         assert!(updated.placement);
         assert!(updated.regenerate);
         assert!(!updated.return_to_learn);
+    }
+
+    #[test]
+    fn patch_and_find_learn_handoff() {
+        let pool = test_pool();
+        let gateway = PlanVarianceLearningSqliteGateway::new(pool);
+
+        let empty = gateway
+            .find_learn_handoff_by_plan_id(11)
+            .expect("find empty handoff");
+        assert!(empty.is_empty());
+
+        let payload = json!({
+            "kind": "stage_gdd",
+            "cropId": 1,
+            "cropName": "Tomato",
+            "stageId": 2
+        });
+        gateway
+            .patch_learn_handoff(
+                11,
+                &LearnHandoffStatePatch {
+                    post_master_payload: Some(Some(payload.clone())),
+                    ..Default::default()
+                },
+            )
+            .expect("patch post_master");
+
+        let found = gateway
+            .find_learn_handoff_by_plan_id(11)
+            .expect("find handoff");
+        assert_eq!(Some(payload), found.post_master_payload);
+
+        gateway
+            .patch_learn_handoff(
+                11,
+                &LearnHandoffStatePatch {
+                    post_master_payload: Some(None),
+                    ..Default::default()
+                },
+            )
+            .expect("clear post_master");
+
+        let cleared = gateway
+            .find_learn_handoff_by_plan_id(11)
+            .expect("find cleared handoff");
+        assert!(cleared.post_master_payload.is_none());
     }
 }

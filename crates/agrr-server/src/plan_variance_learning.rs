@@ -9,13 +9,16 @@ use agrr_adapters_sqlite::{
     CultivationPlanPrivateSnapshotReadSqliteGateway, CultivationPlanSqliteGateway,
     PlanVarianceLearningSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
 };
-use agrr_domain::cultivation_plan::dtos::PlanVarianceLearningSnapshotRead;
-use agrr_domain::cultivation_plan::dtos::ReorganizeOrchestrationProgressPatch;
+use agrr_domain::cultivation_plan::dtos::{
+    assemble_plan_variance_learning_snapshot, LearnHandoffStatePatch,
+    PlanVarianceLearningSnapshotRead, ReorganizeOrchestrationProgressPatch,
+};
 use agrr_domain::cultivation_plan::gateways::{
     CultivationPlanGateway, PlanVarianceLearningGateway,
 };
 use agrr_domain::cultivation_plan::interactors::{
     PlanVarianceCarryoverInput, PlanVarianceCarryoverInteractor,
+    PlanVarianceLearningHandoffUpdateInteractor,
     PlanVarianceLearningOrchestrationProgressUpdateInteractor,
     PlanVarianceLearningProposalProgressUpdateInteractor, PlanVarianceLearningReadInteractor,
 };
@@ -114,6 +117,27 @@ fn snapshot_to_json(snapshot: &PlanVarianceLearningSnapshotRead) -> Value {
             "return_to_learn": snapshot.reorganize_orchestration_progress.return_to_learn,
         }),
     );
+    let mut handoff = Map::new();
+    if let Some(payload) = &snapshot.learn_handoff.post_master_payload {
+        handoff.insert("post_master_payload".into(), payload.clone());
+    }
+    if let Some(context) = &snapshot.learn_handoff.bp_timing_apply_context {
+        handoff.insert("bp_timing_apply_context".into(), context.clone());
+    }
+    if !snapshot.learn_handoff.blueprint_prefill_by_crop_id.is_empty() {
+        handoff.insert(
+            "blueprint_prefill_by_crop_id".into(),
+            Value::Object(
+                snapshot
+                    .learn_handoff
+                    .blueprint_prefill_by_crop_id
+                    .iter()
+                    .map(|(key, value)| (key.clone(), value.clone()))
+                    .collect(),
+            ),
+        );
+    }
+    body.insert("learn_handoff".into(), Value::Object(handoff));
     Value::Object(body)
 }
 
@@ -184,6 +208,66 @@ struct ImportVarianceLearningBody {
 struct PatchVarianceLearningBody {
     proposal_application_progress: Option<BTreeMap<String, String>>,
     reorganize_orchestration_progress: Option<PatchReorganizeOrchestrationProgressBody>,
+    learn_handoff: Option<Value>,
+}
+
+fn parse_learn_handoff_patch(value: &Value) -> LearnHandoffStatePatch {
+    let mut patch = LearnHandoffStatePatch::default();
+    let Some(obj) = value.as_object() else {
+        return patch;
+    };
+
+    if obj.contains_key("post_master_payload") {
+        patch.post_master_payload = Some(match obj.get("post_master_payload") {
+            Some(Value::Null) | None => None,
+            Some(payload) => Some(payload.clone()),
+        });
+    }
+
+    if obj.contains_key("bp_timing_apply_context") {
+        patch.bp_timing_apply_context = Some(match obj.get("bp_timing_apply_context") {
+            Some(Value::Null) | None => None,
+            Some(context) => Some(context.clone()),
+        });
+    }
+
+    if let Some(prefill) = obj.get("blueprint_prefill").and_then(|v| v.as_object()) {
+        if let Some(crop_id) = prefill.get("crop_id").and_then(|v| v.as_i64()) {
+            patch.blueprint_prefill_crop_id = Some(crop_id);
+            patch.blueprint_prefill_body = Some(match prefill.get("body") {
+                Some(Value::Null) | None => None,
+                Some(body) => Some(body.clone()),
+            });
+        }
+    }
+
+    patch
+}
+
+fn finalize_patch_response(
+    presenter: &VarianceLearningUpdatePresenter,
+) -> Result<Json<Value>, (axum::http::StatusCode, Json<Value>)> {
+    match &presenter.body {
+        Some(VarianceLearningUpdateOutcome::Success(snapshot)) => {
+            Ok(Json(snapshot_to_json(snapshot)))
+        }
+        Some(VarianceLearningUpdateOutcome::NotFound) | None => Err((
+            axum::http::StatusCode::NOT_FOUND,
+            Json(json!({"errors": ["not_found"]})),
+        )),
+        Some(VarianceLearningUpdateOutcome::Invalid(errors, fallback)) => {
+            let message = errors
+                .values()
+                .flatten()
+                .next()
+                .cloned()
+                .unwrap_or_else(|| fallback.clone());
+            Err((
+                axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                Json(json!({"errors": [message]})),
+            ))
+        }
+    }
 }
 
 #[derive(serde::Deserialize)]
@@ -207,10 +291,13 @@ async fn patch_variance_learning(
         )
     })?;
 
-    if body.proposal_application_progress.is_none() && body.reorganize_orchestration_progress.is_none() {
+    if body.proposal_application_progress.is_none()
+        && body.reorganize_orchestration_progress.is_none()
+        && body.learn_handoff.is_none()
+    {
         return Err((
             axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"errors": ["proposal_application_progress or reorganize_orchestration_progress is required"]})),
+            Json(json!({"errors": ["proposal_application_progress, reorganize_orchestration_progress, or learn_handoff is required"]})),
         ));
     }
 
@@ -239,30 +326,6 @@ async fn patch_variance_learning(
                 ));
             }
         }
-
-        if body.reorganize_orchestration_progress.is_none() {
-            return match presenter.body {
-                Some(VarianceLearningUpdateOutcome::Success(snapshot)) => {
-                    Ok(Json(snapshot_to_json(&snapshot)))
-                }
-                Some(VarianceLearningUpdateOutcome::NotFound) | None => Err((
-                    axum::http::StatusCode::NOT_FOUND,
-                    Json(json!({"errors": ["not_found"]})),
-                )),
-                Some(VarianceLearningUpdateOutcome::Invalid(errors, fallback)) => {
-                    let message = errors
-                        .values()
-                        .flatten()
-                        .next()
-                        .cloned()
-                        .unwrap_or(fallback);
-                    Err((
-                        axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-                        Json(json!({"errors": [message]})),
-                    ))
-                }
-            };
-        }
     }
 
     if let Some(orchestration_body) = body.reorganize_orchestration_progress {
@@ -280,42 +343,34 @@ async fn patch_variance_learning(
             &scope_gateway,
         );
 
-        return match interactor.call(user_id, plan_id, orchestration_patch) {
-            Ok(()) => match presenter.body {
-                Some(VarianceLearningUpdateOutcome::Success(snapshot)) => {
-                    Ok(Json(snapshot_to_json(&snapshot)))
-                }
-                Some(VarianceLearningUpdateOutcome::NotFound) | None => Err((
-                    axum::http::StatusCode::NOT_FOUND,
-                    Json(json!({"errors": ["not_found"]})),
-                )),
-                Some(VarianceLearningUpdateOutcome::Invalid(errors, fallback)) => {
-                    let message = errors
-                        .values()
-                        .flatten()
-                        .next()
-                        .cloned()
-                        .unwrap_or(fallback);
-                    Err((
-                        axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-                        Json(json!({"errors": [message]})),
-                    ))
-                }
-            },
-            Err(err) => {
-                tracing::error!("variance_learning orchestration patch failed: {err}");
-                Err((
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({"errors": ["internal_error"]})),
-                ))
-            }
-        };
+        if let Err(err) = interactor.call(user_id, plan_id, orchestration_patch) {
+            tracing::error!("variance_learning orchestration patch failed: {err}");
+            return Err((
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            ));
+        }
     }
 
-    Err((
-        axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-        Json(json!({"errors": ["proposal_application_progress or reorganize_orchestration_progress is required"]})),
-    ))
+    if let Some(handoff_body) = body.learn_handoff {
+        let handoff_patch = parse_learn_handoff_patch(&handoff_body);
+        let mut interactor = PlanVarianceLearningHandoffUpdateInteractor::new(
+            &mut presenter,
+            &plan_gateway,
+            &variance_gateway,
+            &scope_gateway,
+        );
+
+        if let Err(err) = interactor.call(user_id, plan_id, handoff_patch) {
+            tracing::error!("variance_learning handoff patch failed: {err}");
+            return Err((
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            ));
+        }
+    }
+
+    finalize_patch_response(&presenter)
 }
 
 async fn import_variance_learning(
@@ -409,13 +464,23 @@ async fn import_variance_learning(
             )
         })?;
 
-    let merged = PlanVarianceLearningSnapshotRead {
-        plan_id: snapshot.plan_id,
-        source_plan_id: snapshot.source_plan_id,
-        summary: snapshot.summary,
-        proposal_application_progress: progress,
-        reorganize_orchestration_progress: orchestration,
-    };
+    let learn_handoff = variance_gateway
+        .find_learn_handoff_by_plan_id(plan_id)
+        .map_err(|err| {
+            tracing::error!("variance_learning import handoff read failed: {err}");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            )
+        })?;
+
+    let merged = assemble_plan_variance_learning_snapshot(
+        snapshot.plan_id,
+        Some(snapshot),
+        progress,
+        orchestration,
+        learn_handoff,
+    );
 
     Ok(Json(snapshot_to_json(&merged)))
 }

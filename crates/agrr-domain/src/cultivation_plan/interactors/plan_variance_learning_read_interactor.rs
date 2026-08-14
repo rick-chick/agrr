@@ -1,8 +1,9 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::PlanVarianceLearningReadInteractor`
 
-use std::collections::BTreeMap;
-
-use crate::cultivation_plan::dtos::{PlanVarianceLearningSnapshotRead, ReorganizeOrchestrationProgressRead};
+use crate::cultivation_plan::dtos::{
+    PlanVarianceLearningSnapshotRead, ReorganizeOrchestrationProgressRead,
+    assemble_plan_variance_learning_snapshot,
+};
 use crate::cultivation_plan::gateways::{CultivationPlanGateway, PlanVarianceLearningGateway};
 use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
 use crate::cultivation_plan::ports::PlanVarianceLearningReadOutputPort;
@@ -77,31 +78,37 @@ where
         let orchestration = self
             .variance_learning_gateway
             .find_reorganize_orchestration_progress_by_plan_id(self.plan_id)?;
+        let learn_handoff = self
+            .variance_learning_gateway
+            .find_learn_handoff_by_plan_id(self.plan_id)?;
 
         match self.variance_learning_gateway.find_by_plan_id(self.plan_id) {
             Ok(Some(snapshot)) => {
-                self.output_port.on_success(PlanVarianceLearningSnapshotRead {
-                    plan_id: snapshot.plan_id,
-                    source_plan_id: snapshot.source_plan_id,
-                    summary: snapshot.summary,
-                    proposal_application_progress: progress,
-                    reorganize_orchestration_progress: orchestration,
-                });
+                self.output_port.on_success(assemble_plan_variance_learning_snapshot(
+                    snapshot.plan_id,
+                    Some(snapshot),
+                    progress,
+                    orchestration,
+                    learn_handoff,
+                ));
                 Ok(())
             }
             Ok(None) => {
-                if progress.is_empty() && orchestration == ReorganizeOrchestrationProgressRead::default() {
+                if progress.is_empty()
+                    && orchestration == ReorganizeOrchestrationProgressRead::default()
+                    && learn_handoff.is_empty()
+                {
                     self.logger.warn("[PlanVarianceLearningReadInteractor] snapshot_not_found");
                     self.output_port
                         .on_failure(Error::new(self.translator.t("plans.errors.not_found", &Default::default())));
                 } else {
-                    self.output_port.on_success(PlanVarianceLearningSnapshotRead {
-                        plan_id: self.plan_id,
-                        source_plan_id: None,
-                        summary: None,
-                        proposal_application_progress: progress,
-                        reorganize_orchestration_progress: orchestration,
-                    });
+                    self.output_port.on_success(assemble_plan_variance_learning_snapshot(
+                        self.plan_id,
+                        None,
+                        progress,
+                        orchestration,
+                        learn_handoff,
+                    ));
                 }
                 Ok(())
             }

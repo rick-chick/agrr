@@ -10,6 +10,7 @@ import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edi
 import { DryRunCropSetupProposalUseCase } from '../../../usecase/crops/dry-run-crop-setup-proposal.usecase';
 import { ApplyCropSetupProposalUseCase } from '../../../usecase/crops/apply-crop-setup-proposal.usecase';
 import { storeLearnBpTimingApplyContext } from '../../../domain/plans/learn-proposal-application-progress';
+import { PLAN_GATEWAY } from '../../../usecase/plans/plan-gateway';
 
 const validProposal = {
   stages: [{ name: '育苗', order: 1, thermal_requirement: { required_gdd: '120' } }],
@@ -104,7 +105,13 @@ describe('CropSetupProposalImportComponent', () => {
         },
         { provide: LoadCropForEditUseCase, useValue: mockLoadUseCase },
         { provide: DryRunCropSetupProposalUseCase, useValue: mockDryRunUseCase },
-        { provide: ApplyCropSetupProposalUseCase, useValue: mockApplyUseCase }
+        { provide: ApplyCropSetupProposalUseCase, useValue: mockApplyUseCase },
+        {
+          provide: PLAN_GATEWAY,
+          useValue: {
+            getVarianceLearning: vi.fn().mockReturnValue(of({ plan_id: 7 }))
+          }
+        }
       ]
     }).compileComponents();
 
@@ -295,9 +302,7 @@ describe('CropSetupProposalImportComponent', () => {
   });
 
   it('navigates to learn post_master after apply success when returnTo=learn', () => {
-    component.fromPlanId = 7;
-    component.returnTab = 'learn';
-    storeLearnBpTimingApplyContext(42, {
+    storeLearnBpTimingApplyContext(7, {
       planId: 7,
       cropId: 42,
       cropName: 'Tomato',
@@ -313,6 +318,8 @@ describe('CropSetupProposalImportComponent', () => {
       parsedProposal: validProposal
     };
     fixture.detectChanges();
+    component.fromPlanId = 7;
+    component.returnTab = 'learn';
 
     component.applyProposal();
 

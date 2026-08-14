@@ -3,7 +3,10 @@ import { catchError, map, Observable, of, switchMap } from 'rxjs';
 import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
 import type { PlanSummary } from '../../domain/plans/plan-summary';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
-import { hydrateLearnProposalApplicationProgress } from '../../domain/plans/learn-proposal-application-progress';
+import {
+  hydrateLearnHandoff,
+  hydrateLearnProposalApplicationProgress
+} from '../../domain/plans/learn-proposal-application-progress';
 import { hydrateLearnOrchestrationProgress } from '../../domain/plans/learn-master-update-orchestration';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
 
@@ -42,6 +45,7 @@ export class LoadPlanLearnCarryoverUseCase {
           planId,
           snapshot.reorganize_orchestration_progress ?? {}
         );
+        hydrateLearnHandoff(planId, snapshot.learn_handoff);
         return snapshot;
       }),
       catchError(() => of(null))
@@ -58,6 +62,7 @@ export class LoadPlanLearnCarryoverUseCase {
           planId,
           snapshot.proposal_application_progress ?? {}
         );
+        hydrateLearnHandoff(planId, snapshot.learn_handoff);
         return snapshot;
       })
     );
