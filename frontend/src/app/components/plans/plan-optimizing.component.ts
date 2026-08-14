@@ -10,8 +10,15 @@ import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.compo
 import {
   clearLearnOrchestrationReturnToLearn,
   markLearnOrchestrationStepComplete,
-  readLearnOrchestrationReturnToLearn
+  readLearnOrchestrationReturnToLearn,
+  readLearnOrchestrationStepComplete
 } from '../../domain/plans/learn-master-update-orchestration';
+import {
+  buildLearnReorganizePipelineRegenerateNavigation,
+  clearLearnReorganizePipelineAutoChain,
+  readLearnReorganizePipelineAutoChain,
+  storeLearnReorganizePipelineAutoChain
+} from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 
 const initialControl: PlanOptimizingViewState = {
   status: 'pending',
@@ -131,6 +138,12 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
 
   onOptimizationCompleted(): void {
     const planId = this.planId;
+    if (planId && readLearnReorganizePipelineAutoChain(planId)) {
+      markLearnOrchestrationStepComplete(planId, 'placement');
+      const navigation = buildLearnReorganizePipelineRegenerateNavigation(planId);
+      void this.router.navigate(navigation.commands, { queryParams: navigation.queryParams });
+      return;
+    }
     if (planId && readLearnOrchestrationReturnToLearn(planId)) {
       clearLearnOrchestrationReturnToLearn(planId);
       markLearnOrchestrationStepComplete(planId, 'placement');
