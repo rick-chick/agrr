@@ -111,6 +111,7 @@ const initialControl: PlanLearnViewState = {
         } @else {
           <app-plan-learn-loop-progress
             [planId]="planId"
+            [planName]="control.planName"
             [actionRequiredItems]="control.varianceSummary?.action_required_items ?? []"
             [stageGddProposals]="control.stageGddProposals"
             [blueprintTimingProposals]="control.blueprintTimingProposals"
