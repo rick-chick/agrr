@@ -53,8 +53,6 @@ describe('PlanLearnLoopProgressComponent', () => {
         'plans.learn.loop.complete_message': 'Learning loop complete',
         'plans.learn.loop.next_action.observe_workbench': 'Open workbench',
         'plans.learn.loop.next_action.handoff_carryover': 'Import carryover',
-        'plans.learn.loop.next_action.handoff_new_plan': 'Create next plan with learning',
-        'plans.learn.loop.handoff_source_plan': 'Source plan: {{planName}}',
         'plans.learn.loop.next_action.complete_reorganize': 'Verify placement',
         'plans.learn.loop.next_action.complete_next_plan': 'Go to plans'
       },

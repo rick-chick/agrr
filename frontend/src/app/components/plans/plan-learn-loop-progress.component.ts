@@ -100,7 +100,6 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
 })
 export class PlanLearnLoopProgressComponent {
   @Input({ required: true }) planId!: number;
-  @Input() planName: string | null = null;
   @Input() actionRequiredItems: PlanVarianceActionItem[] = [];
   @Input() stageGddProposals: StageGddCalibrationProposal[] = [];
   @Input() blueprintTimingProposals: BlueprintTimingAdjustmentProposal[] = [];
