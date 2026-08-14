@@ -71,12 +71,12 @@ Task `explore`（thoroughness: `very thorough`）。プロンプト: [`reference
 
 `tmp/product-gap/current-state.md` に保存。**必須セクション**（[`references/artifacts.md`](references/artifacts.md)）:
 
-- **既存 backlog** — 関連 issue（`gh issue list` / `gh issue view` で OPEN / CLOSED）
-- **実装済み** — 同一テーマのマージ済み PR（`gh pr list --state merged`）と触れたコード path
+- **既存 backlog** — `gh issue list` / `gh issue view` で選定テーマ（またはギャップ候補）に関連する OPEN / CLOSED issue を列挙
+- **実装済み** — `gh pr list --state merged` で同一テーマのマージ済み PR と触れたコード path を列挙
 - **できること一覧** — 画面・API レベル（コード path 付き）
-- **計画→実行→学習** — 薄い箇所（上記観測と矛盾しない記述）
+- **計画 → 実行 → 学習** — 薄い箇所（上記 GitHub 観測と矛盾しない記述）
 
-上記のいずれかが**空**なら **フェーズ 2 に進まない**。親エージェントは §1 調査を継続する。
+上記のいずれかが空のとき、親エージェントは **フェーズ 2 に進まず** 調査を継続する（コード・ルート・ドメインのみの把握でフェーズ 2 へ進めない）。
 
 ---
 
