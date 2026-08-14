@@ -337,4 +337,49 @@ describe('WorkRecordSheetComponent', () => {
       gddTrigger: '100'
     });
   });
+
+  it('does not show planned GDD comparison in edit mode without gdd trigger', () => {
+    component.openEdit({
+      id: 99,
+      cultivation_plan_id: 1,
+      field_cultivation_id: 7,
+      task_schedule_item_id: 11,
+      agricultural_task_id: 2,
+      name: '除草',
+      task_type: 'general',
+      actual_date: '2026-06-12',
+      amount: null,
+      amount_unit: null,
+      time_spent_minutes: null,
+      notes: null,
+      created_at: '2026-06-12',
+      updated_at: '2026-06-12',
+      task_schedule_item: { id: 11, name: '除草', scheduled_date: '2026-06-10' }
+    });
+    component.control = {
+      ...component.control,
+      showDetails: true,
+      climatePreview: {
+        gddAtActual: 145.25,
+        weatherDate: '2026-06-12',
+        temperatureMax: 30,
+        temperatureMin: 20,
+        temperatureMean: 25,
+        plannedGdd: null,
+        gddDelta: null,
+        loading: false
+      }
+    };
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector('[data-testid="climate-preview"]');
+    expect(preview.textContent).toContain('GDD 145.25');
+    expect(preview.textContent).not.toContain('予定 GDD');
+    expect(preview.textContent).not.toContain('予定比');
+    expect(previewClimateUseCase.execute).toHaveBeenCalledWith({
+      fieldCultivationId: 7,
+      actualDate: '2026-06-12',
+      gddTrigger: null
+    });
+  });
 });

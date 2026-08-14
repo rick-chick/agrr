@@ -175,4 +175,28 @@ describe('WorkRecordSheetPresenter', () => {
     expect(view.close).toHaveBeenCalled();
     expect(onDeletedCallback).toHaveBeenCalled();
   });
+
+  it('maps planned GDD comparison fields in presentClimatePreview', () => {
+    presenter.presentClimatePreview({
+      gddAtActual: 145.25,
+      weatherDate: '2026-06-12',
+      temperatureMax: 30,
+      temperatureMin: 20,
+      temperatureMean: 25,
+      plannedGdd: 100,
+      gddDelta: 45.3,
+      loading: false
+    });
+
+    expect(view.control.climatePreview).toEqual({
+      gddAtActual: 145.25,
+      weatherDate: '2026-06-12',
+      temperatureMax: 30,
+      temperatureMin: 20,
+      temperatureMean: 25,
+      plannedGdd: 100,
+      gddDelta: 45.3,
+      loading: false
+    });
+  });
 });
