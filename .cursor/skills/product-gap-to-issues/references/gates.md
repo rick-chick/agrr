@@ -29,7 +29,7 @@
 
 ### 入力
 
-- `tmp/product-gap/current-state.md`
+- `tmp/product-gap/current-state.md`（**既存 backlog** セクション必須）
 - `tmp/product-gap/theme-selection.md`（`breadth-depth-scale.md` §幅 vs 深さ 形式）
 - `tmp/product-gap/theme-deep-dive.md`
 
@@ -51,8 +51,13 @@
 | G2-6 | **深掘り打ち止め**: コア5の深さ寄りが **2 未満**で、幅候補に計画芯・シナジーが強いものがあるのに深掘り続行しているか？ | 打ち止めを宣言し、幅候補を `theme-selection.md` の見送りに明示する |
 | G2-7 | **深掘り打ち止め**: 既存強化で足りると確定しているのに新表面の justification が弱いまま深掘りを続けているか？ | 既存強化案に差し替えるか、`new_surface_justification` を観測ベースで追記する |
 | G2-8 | `theme-selection.md` の §幅 vs 深さ に **見送り（反対側）** 行が欠けているか？ | `breadth-depth-scale.md` 形式で見送り候補と理由を追記する |
+| G2-9 | **既存 backlog**（`current-state.md`）に、計画・深掘りと **同一要求**の **OPEN** issue があるか？ | 新規 Epic / 子 issue 起票不可。既存 #N へコメント追記方針を `mandatory_corrections` に書く |
+| G2-10 | **既存 backlog** に **CLOSED** で `already_fixed` 相当（同等修正済み）の issue があるか？ | 起票不可。理由を `findings` に記録し、代替（既存機能の強化のみ等）を `mandatory_corrections` に書く |
+| G2-11 | **既存 backlog** と **部分重複**（同一要求ではないが統合要）か？ | `blocked` または `fail`。統合方針（新規 / コメント追記 / Epic 統合）を `mandatory_corrections` に書く |
 
 上記 G2-5〜G2-8 の `mandatory_corrections` は [`breadth-depth-scale.md`](breadth-depth-scale.md) に沿うこと: **打ち止め追記**、**見送り候補の明示**、**幅候補へのテーマ差し替え**のいずれか（または組み合わせ）を要求する。
+
+G2-9〜11 は [`github-issue-creator` §3](../../github-issue-creator/SKILL.md) の **backlog 重複**確認と **同等の観測・動作**。フェーズ 9 の §3 は起票直前の最終確認として **二重でも矛盾しない**（G2 で fail ならフェーズ 6 以降に進まない）。
 
 ### pass の条件
 
@@ -77,6 +82,9 @@
 | 深さ寄りコア5が2未満・幅候補が強い | G2-6 |
 | 既存強化で足りる・justification 弱い | G2-7 |
 | 見送り（反対側）行の欠落 | G2-8 |
+| backlog 同一要求 OPEN | G2-9 |
+| backlog CLOSED already_fixed | G2-10 |
+| backlog 部分重複 | G2-11 |
 
 ---
 
@@ -88,7 +96,7 @@
 
 - `tmp/product-gap/enhancement-plan.md`
 - `tmp/product-gap/overlap-ux-gate.json`（G2 pass 前提）
-- `tmp/product-gap/current-state.md`
+- `tmp/product-gap/current-state.md`（**既存 backlog** セクション必須）
 
 ### fail 条件
 
@@ -99,6 +107,11 @@
 | G3-3 | **完了条件**が観測可能か（issue 化できるか）？ | 曖昧語を具体化 |
 | G3-4 | **スコープ外**が列挙されているか？ | 追記 |
 | G3-5 | 入口画面と実行画面の **両方**がある場合、同じリストの **重複**が残っていないか？ | サマリ vs 実行に再分割 |
+| G3-6 | `enhancement-plan.md` の v1 issue 案が **既存 backlog** と **同一要求**の **OPEN** issue と重複するか？ | 新規起票不可。既存 #N へコメント追記または Epic 統合を `mandatory_corrections` に書く |
+| G3-7 | v1 issue 案が **CLOSED** で `already_fixed` 相当の backlog と重複するか？ | 起票不可。理由を `findings` に記録 |
+| G3-8 | v1 issue 案が **既存 backlog** と **部分重複**するか？ | `blocked` または `fail`。統合方針を `mandatory_corrections` に書く |
+
+G3-6〜8 は G2-9〜11 と同じ [`github-issue-creator` §3](../../github-issue-creator/SKILL.md) 判定を **計画レビュー時**に再確認する。G2 で pass でも計画段階で重複が顕在化したら fail。
 
 ### 推奨（fail にしない）
 

@@ -118,6 +118,8 @@ Task `explore`。プロンプト: §3。
 
 Task `generalPurpose`。プロンプト: §4。ルーブリック: [`references/gates.md`](references/gates.md) §G2。
 
+**バックログ重複**（G2-5〜7）: `current-state.md` の **既存 backlog** と深掘り成果を照合。判定は [`github-issue-creator`](../github-issue-creator/SKILL.md) §3 と同等。フェーズ 9 の §3 は起票直前の最終確認であり、本ゲートと **二重でも矛盾しない**（G2 fail ならフェーズ 6 へ進まない）。
+
 | verdict | 動作 |
 |---------|------|
 | `pass` | フェーズ 6 へ |
@@ -146,6 +148,8 @@ Task `generalPurpose`。プロンプト: §4。ルーブリック: [`references/
 
 Task `generalPurpose`。プロンプト: §5。ルーブリック: [`references/gates.md`](references/gates.md) §G3。
 
+**バックログ重複**（G3-6〜8）: `enhancement-plan.md` の v1 issue 案と `current-state.md` **既存 backlog** を再照合（§3 同等）。G2 pass 後でも計画段階で重複が顕在化したら fail。
+
 | verdict | 動作 |
 |---------|------|
 | `pass` | フェーズ 8 へ |
@@ -167,7 +171,7 @@ Task `generalPurpose`。プロンプト: §5。ルーブリック: [`references/
 
 1. `issue-pack.md` をテンプレに沿って作成
 2. **起票本文の「参照」節から `tmp/product-gap/` path を除去** — リポジトリ内コード path と `#N` のみ残す（[`references/artifacts.md`](references/artifacts.md) §起票時の参照変換）
-3. [`github-issue-creator`](../github-issue-creator/SKILL.md) §1–§7 に従う（重複確認・草案・起票・**`agent-ready` は §6 準拠**）
+3. [`github-issue-creator`](../github-issue-creator/SKILL.md) §1–§7 に従う（重複確認・草案・起票・**`agent-ready` は §6 準拠**）。§3 重複確認は G2/G3（`gates.md` §G2-5〜7 / §G3-6〜8）で **事前検証済み**であり、起票直前の §3 は最終確認として **二重でも矛盾しない**
 4. 依頼が `issue 起票まで` なら Epic → 子 issue の順に `gh issue create`
 5. Epic 本文に子 issue 番号を `gh issue edit` で追記
 
