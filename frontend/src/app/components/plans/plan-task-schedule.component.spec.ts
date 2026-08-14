@@ -72,10 +72,7 @@ const loadedState: PlanTaskScheduleViewState = {
   totalFieldCount: 0,
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
-  allFieldsLackTasks: false,
-  varianceLoading: false,
-  varianceError: null,
-  varianceStats: null
+  allFieldsLackTasks: false
 };
 
 function sampleGeneralTask(
@@ -268,10 +265,7 @@ describe('PlanTaskScheduleComponent', () => {
       totalFieldCount: 0,
       fieldsWithTasksCount: 0,
       fieldsWithoutTasksCount: 0,
-      allFieldsLackTasks: false,
-      varianceLoading: false,
-      varianceError: null,
-      varianceStats: null
+      allFieldsLackTasks: false
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -1104,7 +1098,7 @@ describe('PlanTaskScheduleComponent', () => {
     );
   });
 
-  it('shows variance summary line and learn link on task schedule list', async () => {
+  it('shows learn link for variance on task schedule list without summary stats', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
@@ -1159,18 +1153,11 @@ describe('PlanTaskScheduleComponent', () => {
           }
         ]
       },
-      varianceStats: {
-        completedCount: 2,
-        averageDeltaDays: 1.5,
-        unrecordedCount: 1
-      }
     });
     listFixture.detectChanges();
     await listFixture.whenStable();
 
-    expect(varianceUseCase.execute).toHaveBeenCalledWith(
-      expect.objectContaining({ planId: 7 })
-    );
+    expect(varianceUseCase.execute).not.toHaveBeenCalled();
     expect(
       listFixture.nativeElement.querySelector('.plan-task-schedule__view-toggle')
     ).toBeNull();
@@ -1178,13 +1165,15 @@ describe('PlanTaskScheduleComponent', () => {
       listFixture.nativeElement.querySelector('app-task-schedule-variance-view')
     ).toBeNull();
     expect(
-      listFixture.nativeElement.querySelector('.plan-task-schedule__variance-summary')
+      listFixture.nativeElement.querySelector('.plan-task-schedule__variance-learn')
     ).toBeTruthy();
-    expect(listFixture.nativeElement.textContent).toContain('Completed 2');
+    expect(listFixture.nativeElement.textContent).not.toContain('Completed 2');
     expect(listFixture.nativeElement.textContent).toContain('Review variance');
-    expect(
-      listFixture.nativeElement.querySelector('.plan-task-schedule__learn-link')?.getAttribute('href')
-    ).toContain('/plans/7/learn');
+    const learnLink = listFixture.nativeElement.querySelector(
+      '.plan-task-schedule__learn-link'
+    ) as HTMLAnchorElement;
+    expect(learnLink.getAttribute('href')).toContain('/plans/7/learn');
+    expect(learnLink.getAttribute('href')).toContain('plan-learn-current-variance-title');
     expect(
       listFixture.nativeElement.querySelector('app-task-schedule-month-list')
     ).toBeTruthy();

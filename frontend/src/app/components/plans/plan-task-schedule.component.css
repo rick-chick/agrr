@@ -87,14 +87,9 @@
   margin-bottom: var(--space-4);
 }
 
-.plan-task-schedule__variance-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-1) var(--space-3);
+.plan-task-schedule__variance-learn {
   margin: 0 0 var(--space-3);
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
