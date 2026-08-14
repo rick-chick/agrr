@@ -61,9 +61,9 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
               {{ 'plans.learn.loop.complete_message' | translate }}
             </p>
           }
-          @if (currentPhase === 'handoff' && planName) {
-            <p class="learn-loop-progress__handoff-source">
-              {{ 'plans.learn.loop.next_action.handoff_source_plan' | translate: { planName } }}
+          @if (showHandoffSourcePlan) {
+            <p class="learn-loop-progress__handoff-source" role="status">
+              {{ 'plans.learn.loop.handoff_source_plan' | translate: { planName: planName } }}
             </p>
           }
           <p class="learn-loop-progress__next-label">
@@ -132,6 +132,14 @@ export class PlanLearnLoopProgressComponent {
 
   get secondaryAction(): LearnLoopNextAction | null | undefined {
     return this.phaseResult.secondaryAction;
+  }
+
+  get showHandoffSourcePlan(): boolean {
+    return (
+      this.currentPhase === 'handoff' &&
+      this.planName != null &&
+      this.nextAction?.labelKey === 'plans.learn.loop.next_action.handoff_new_plan'
+    );
   }
 
   private get phaseInput(): ReturnType<typeof buildLearnLoopPhaseInputFromState> {

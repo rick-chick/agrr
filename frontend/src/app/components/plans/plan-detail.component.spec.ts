@@ -100,6 +100,36 @@ describe('PlanDetailComponent', () => {
     expect(component.showReoptimizationBanner).toBe(true);
   });
 
+  it('shows learn reorganize banner with progress strip when adjust orchestration is active', () => {
+    activatedRoute.queryParamMap = of(
+      convertToParamMap({ learningOrchestration: 'adjust' })
+    );
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: {
+        id: 1,
+        name: 'Plan A',
+        status: 'completed',
+        farm_id: 1
+      },
+      planData: null,
+      varianceActionItemsOnGantt: []
+    };
+    fixture.detectChanges();
+
+    expect(component.showReoptimizationBanner).toBe(true);
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-reorganize-banner')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('app-plan-learn-loop-progress-strip')
+    ).not.toBeNull();
+    const learnLink = fixture.nativeElement.querySelector('a.learn-reorganize-banner__learn-link');
+    expect(learnLink).not.toBeNull();
+    expect(learnLink.getAttribute('href')).toBe('/plans/1/learn');
+  });
+
   it('navigates to optimizing and stores learn return context when adjust orchestration starts', () => {
     const router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
