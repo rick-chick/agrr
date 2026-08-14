@@ -7,7 +7,7 @@ import {
 import { DAYS_VARIANCE_THRESHOLD, GDD_VARIANCE_THRESHOLD } from './plan-variance-thresholds';
 import type { StageGddCalibrationProposal } from './stage-gdd-calibration-proposal';
 
-export interface SafeLearnProposals {
+interface SafeLearnProposals {
   stageGdd: StageGddCalibrationProposal[];
   bpTiming: BlueprintTimingAdjustmentProposal[];
 }

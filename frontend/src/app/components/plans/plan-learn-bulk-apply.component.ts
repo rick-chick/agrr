@@ -96,28 +96,23 @@ export class PlanLearnBulkApplyComponent implements OnChanges {
     this.applying = true;
     this.applyError = null;
 
-    void this.bulkApplyUseCase
-      .execute({
-        planId: this.planId,
-        stageGddProposals: this.stageGddProposals,
-        blueprintTimingProposals: this.blueprintTimingProposals,
-        onComplete: (result) => {
-          this.applying = false;
-          this.appliedCount = result.appliedCount;
-          this.bulkApplyComplete = true;
-          this.safeProposalCount = 0;
-          this.progressChanged.emit();
-        },
-        onError: (message) => {
-          this.applying = false;
-          this.applyError = message;
-          this.progressChanged.emit();
-        }
-      })
-      .catch(() => {
+    void this.bulkApplyUseCase.execute({
+      planId: this.planId,
+      stageGddProposals: this.stageGddProposals,
+      blueprintTimingProposals: this.blueprintTimingProposals,
+      onComplete: (result) => {
         this.applying = false;
-        this.applyError = 'common.error';
-      });
+        this.appliedCount = result.appliedCount;
+        this.bulkApplyComplete = true;
+        this.safeProposalCount = 0;
+        this.progressChanged.emit();
+      },
+      onError: (message) => {
+        this.applying = false;
+        this.applyError = message;
+        this.progressChanged.emit();
+      }
+    });
   }
 
   onStartPipeline(): void {

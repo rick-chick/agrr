@@ -45,7 +45,7 @@ export function clearLearnOrchestrationAutoChain(planId?: number): void {
   writeAutoChainPlanIds(planIds);
 }
 
-export interface LearnOrchestrationAutoChainNavigation {
+interface LearnOrchestrationAutoChainNavigation {
   commands: (string | number)[];
   queryParams: Record<string, string>;
 }

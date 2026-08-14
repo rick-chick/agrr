@@ -17,7 +17,6 @@ export interface BulkApplySafeLearnProposalsInputDto {
   planId: number;
   stageGddProposals: ReadonlyArray<StageGddCalibrationProposal>;
   blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>;
-  onProgress?: (completed: number, total: number) => void;
   onComplete?: (result: BulkApplySafeLearnProposalsResult) => void;
   onError?: (message: string, result: BulkApplySafeLearnProposalsResult) => void;
 }
@@ -44,12 +43,10 @@ export class BulkApplySafeLearnProposalsUseCase {
       ...safe.stageGdd.map((proposal) => ({ kind: 'stage_gdd' as const, proposal })),
       ...safe.bpTiming.map((proposal) => ({ kind: 'bp_timing' as const, proposal }))
     ];
-    const total = queue.length;
     let appliedCount = 0;
     let failedCount = 0;
 
-    for (let index = 0; index < queue.length; index += 1) {
-      const item = queue[index];
+    for (const item of queue) {
       try {
         if (item.kind === 'stage_gdd') {
           await this.applyStageGdd(dto.planId, item.proposal);
@@ -62,7 +59,6 @@ export class BulkApplySafeLearnProposalsUseCase {
         dto.onError?.(apiErrorI18nKey(error), { appliedCount, failedCount });
         return;
       }
-      dto.onProgress?.(index + 1, total);
     }
 
     dto.onComplete?.({ appliedCount, failedCount });
