@@ -220,7 +220,7 @@ struct ImportVarianceLearningBody {
 #[derive(serde::Deserialize)]
 struct PatchVarianceLearningBody {
     proposal_application_progress: Option<BTreeMap<String, String>>,
-    reorganize_orchestration_progress: Option<PatchReorganizeOrchestrationProgressBody>,
+    reorganize_orchestration_progress: Option<Value>,
     learn_handoff: Option<Value>,
 }
 
@@ -283,28 +283,49 @@ fn finalize_patch_response(
     }
 }
 
-#[derive(serde::Deserialize)]
-struct PatchReorganizeOrchestrationProgressBody {
-    placement: Option<bool>,
-    regenerate: Option<bool>,
-    sync_verify: Option<bool>,
-    return_to_learn: Option<bool>,
-    pipeline_active: Option<bool>,
-    pipeline_phase: Option<Option<String>>,
-    pipeline_failed_phase: Option<Option<String>>,
-    pipeline_error: Option<Option<String>>,
-}
+fn parse_reorganize_orchestration_progress_patch(
+    value: &Value,
+) -> Result<ReorganizeOrchestrationProgressPatch, String> {
+    let Some(obj) = value.as_object() else {
+        return Ok(ReorganizeOrchestrationProgressPatch::default());
+    };
 
-fn parse_pipeline_phase_option(
-    value: Option<Option<String>>,
-) -> Result<Option<Option<ReorganizePipelinePhase>>, String> {
-    match value {
-        None => Ok(None),
-        Some(None) => Ok(Some(None)),
-        Some(Some(raw)) => ReorganizePipelinePhase::parse(&raw)
-            .map(|phase| Some(Some(phase)))
-            .ok_or_else(|| format!("invalid pipeline phase: {raw}")),
-    }
+    let bool_field = |key: &str| -> Option<bool> { obj.get(key).and_then(|v| v.as_bool()) };
+
+    let parse_phase_field = |key: &str| -> Result<Option<Option<ReorganizePipelinePhase>>, String> {
+        if !obj.contains_key(key) {
+            return Ok(None);
+        }
+        match obj.get(key) {
+            Some(Value::Null) | None => Ok(Some(None)),
+            Some(Value::String(raw)) => ReorganizePipelinePhase::parse(raw)
+                .map(|phase| Some(Some(phase)))
+                .ok_or_else(|| format!("invalid pipeline phase: {raw}")),
+            _ => Err(format!("invalid {key}")),
+        }
+    };
+
+    let parse_string_field = |key: &str| -> Option<Option<String>> {
+        if !obj.contains_key(key) {
+            return None;
+        }
+        match obj.get(key) {
+            Some(Value::Null) | None => Some(None),
+            Some(Value::String(value)) => Some(Some(value.clone())),
+            _ => None,
+        }
+    };
+
+    Ok(ReorganizeOrchestrationProgressPatch {
+        placement: bool_field("placement"),
+        regenerate: bool_field("regenerate"),
+        sync_verify: bool_field("sync_verify"),
+        return_to_learn: bool_field("return_to_learn"),
+        pipeline_active: bool_field("pipeline_active"),
+        pipeline_phase: parse_phase_field("pipeline_phase")?,
+        pipeline_failed_phase: parse_phase_field("pipeline_failed_phase")?,
+        pipeline_error: parse_string_field("pipeline_error"),
+    })
 }
 
 async fn patch_variance_learning(
@@ -358,15 +379,8 @@ async fn patch_variance_learning(
     }
 
     if let Some(orchestration_body) = body.reorganize_orchestration_progress {
-        let pipeline_phase = parse_pipeline_phase_option(orchestration_body.pipeline_phase)
-            .map_err(|message| {
-                (
-                    axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-                    Json(json!({"errors": [message]})),
-                )
-            })?;
-        let pipeline_failed_phase =
-            parse_pipeline_phase_option(orchestration_body.pipeline_failed_phase).map_err(
+        let orchestration_patch =
+            parse_reorganize_orchestration_progress_patch(&orchestration_body).map_err(
                 |message| {
                     (
                         axum::http::StatusCode::UNPROCESSABLE_ENTITY,
@@ -374,17 +388,6 @@ async fn patch_variance_learning(
                     )
                 },
             )?;
-
-        let orchestration_patch = ReorganizeOrchestrationProgressPatch {
-            placement: orchestration_body.placement,
-            regenerate: orchestration_body.regenerate,
-            sync_verify: orchestration_body.sync_verify,
-            return_to_learn: orchestration_body.return_to_learn,
-            pipeline_active: orchestration_body.pipeline_active,
-            pipeline_phase,
-            pipeline_failed_phase,
-            pipeline_error: orchestration_body.pipeline_error,
-        };
 
         let mut interactor = PlanVarianceLearningOrchestrationProgressUpdateInteractor::new(
             &mut presenter,
@@ -566,4 +569,48 @@ pub fn run_carryover_after_create(
         target_farm_id,
         user_id,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_reorganize_orchestration_progress_patch_clears_pipeline_phase_on_null() {
+        let patch = parse_reorganize_orchestration_progress_patch(&json!({
+            "pipeline_active": false,
+            "pipeline_phase": null,
+            "pipeline_failed_phase": "regenerate",
+            "pipeline_error": "regenerate failed"
+        }))
+        .expect("parse failure patch");
+
+        assert_eq!(Some(false), patch.pipeline_active);
+        assert_eq!(Some(None), patch.pipeline_phase);
+        assert_eq!(
+            Some(Some(ReorganizePipelinePhase::Regenerate)),
+            patch.pipeline_failed_phase
+        );
+        assert_eq!(
+            Some(Some("regenerate failed".into())),
+            patch.pipeline_error
+        );
+    }
+
+    #[test]
+    fn parse_reorganize_orchestration_progress_patch_omits_absent_fields() {
+        let patch = parse_reorganize_orchestration_progress_patch(&json!({
+            "pipeline_active": true,
+            "pipeline_phase": "optimizing"
+        }))
+        .expect("parse active patch");
+
+        assert_eq!(Some(true), patch.pipeline_active);
+        assert_eq!(
+            Some(Some(ReorganizePipelinePhase::Optimizing)),
+            patch.pipeline_phase
+        );
+        assert!(patch.pipeline_failed_phase.is_none());
+        assert!(patch.pipeline_error.is_none());
+    }
 }
