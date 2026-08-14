@@ -145,6 +145,7 @@ jobs:
           node --test scripts/verify-issue-worker-dispatch-workflow.test.mjs
           node --test scripts/verify-delivery-agent-cutover-lib.test.mjs
           node --test scripts/verify-product-gap-current-state-lib.test.mjs
+          node --test scripts/product-gap-gates-fail-conditions-lib.test.mjs
           node --test scripts/verify-ruleset-ci-lib.test.mjs
           node --test scripts/webhook-post-lib.test.mjs
           node --test scripts/resolve-workflow-run-pr-lib.test.mjs
