@@ -18,6 +18,14 @@ describe('workRecordWeatherSnapshotSummary', () => {
     });
   });
 
+  it('returns null when snapshot has date but no temperature values', () => {
+    expect(
+      workRecordWeatherSnapshotSummary({
+        date: '2026-06-12'
+      })
+    ).toBeNull();
+  });
+
   it('returns null when snapshot is missing or empty', () => {
     expect(workRecordWeatherSnapshotSummary(null)).toBeNull();
     expect(workRecordWeatherSnapshotSummary(undefined)).toBeNull();

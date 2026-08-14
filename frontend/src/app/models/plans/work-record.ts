@@ -1,12 +1,6 @@
 import type { ClimateTemperaturePoint } from '../../domain/plans/field-cultivation-climate-data';
 import { WorkRecordPhoto } from './work-record-photo';
 
-export interface WorkRecordSummary {
-  id: number;
-  actual_date: string;
-  notes: string | null;
-}
-
 export interface WorkRecordTaskScheduleItemRef {
   id: number;
   name: string;

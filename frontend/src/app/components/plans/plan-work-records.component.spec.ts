@@ -859,6 +859,12 @@ describe('PlanWorkRecordsComponent', () => {
               amount_unit: null,
               time_spent_minutes: null,
               notes: null,
+              weather_snapshot: {
+                date: '2026-06-11',
+                temperature_max: 25,
+                temperature_min: 15,
+                temperature_mean: 20
+              },
               created_at: '2026-06-11',
               updated_at: '2026-06-11',
               task_schedule_item: null
@@ -875,6 +881,7 @@ describe('PlanWorkRecordsComponent', () => {
     expect(text).toContain('GDD 120.5');
     expect(text).toContain('High 28°C / Low 18°C (avg 23°C)');
     expect(text).toContain('No schedule');
+    expect(text).toContain('High 25°C / Low 15°C (avg 20°C)');
     expect(text).toContain('Avg. 2 days late');
 
     const varianceRows = fixture.nativeElement.querySelectorAll('.plan-work-records__variance');

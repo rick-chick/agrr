@@ -150,23 +150,23 @@ const initialControl: PlanWorkRecordsViewState = {
                                   }}
                                 </span>
                               }
-                              @if (weatherSnapshotSummary(record); as weather) {
-                                <span class="plan-work-records__variance-weather">
-                                  {{
-                                    'plans.work_records.variance.weather_snapshot'
-                                      | translate
-                                        : {
-                                            max: weather.max,
-                                            min: weather.min,
-                                            mean: weather.mean
-                                          }
-                                  }}
-                                </span>
-                              }
                             }
                           } @else {
                             <span class="plan-work-records__variance-none">
                               {{ 'plans.work_records.variance.no_schedule' | translate }}
+                            </span>
+                          }
+                          @if (weatherSnapshotSummary(record); as weather) {
+                            <span class="plan-work-records__variance-weather">
+                              {{
+                                'plans.work_records.variance.weather_snapshot'
+                                  | translate
+                                    : {
+                                        max: weather.max,
+                                        min: weather.min,
+                                        mean: weather.mean
+                                      }
+                              }}
                             </span>
                           }
                         </div>

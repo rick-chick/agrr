@@ -1,6 +1,6 @@
 import type { ClimateTemperaturePoint } from './field-cultivation-climate-data';
 
-export type WorkRecordWeatherSnapshotSummary = {
+type WorkRecordWeatherSnapshotSummary = {
   max: number | null;
   min: number | null;
   mean: number | null;
@@ -13,13 +13,12 @@ export function workRecordWeatherSnapshotSummary(
     return null;
   }
 
-  const hasDate = typeof snapshot.date === 'string' && snapshot.date.trim().length > 0;
   const hasTemperature =
     snapshot.temperature_max != null ||
     snapshot.temperature_min != null ||
     snapshot.temperature_mean != null;
 
-  if (!hasDate && !hasTemperature) {
+  if (!hasTemperature) {
     return null;
   }
 
