@@ -1568,6 +1568,14 @@
       "proposal": {
         "dismiss": "Do not apply"
       },
+      "bulk_apply": {
+        "title": "Bulk apply safe proposals",
+        "lead": "{{count}} proposal(s) are within variance thresholds and can be applied without manual review.",
+        "apply_button": "Apply all safe proposals ({{count}})",
+        "applying": "Applying {{applied}} / {{total}}…",
+        "complete_message": "{{count}} safe proposal(s) applied. Start the reorganization pipeline to refresh your plan.",
+        "start_pipeline": "Start reorganization pipeline"
+      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",
