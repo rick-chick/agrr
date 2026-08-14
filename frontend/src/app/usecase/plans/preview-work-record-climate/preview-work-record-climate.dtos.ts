@@ -1,6 +1,7 @@
 export interface PreviewWorkRecordClimateInputDto {
   fieldCultivationId: number | null;
   actualDate: string;
+  gddTrigger?: string | number | null;
 }
 
 export interface PreviewWorkRecordClimateStateDto {
@@ -9,5 +10,7 @@ export interface PreviewWorkRecordClimateStateDto {
   temperatureMax: number | null;
   temperatureMin: number | null;
   temperatureMean: number | null;
+  plannedGdd: number | null;
+  gddDelta: number | null;
   loading: boolean;
 }

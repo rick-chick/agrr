@@ -13,6 +13,8 @@ export interface WorkRecordClimatePreviewState {
   temperatureMax: number | null;
   temperatureMin: number | null;
   temperatureMean: number | null;
+  plannedGdd: number | null;
+  gddDelta: number | null;
   loading: boolean;
 }
 

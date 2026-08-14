@@ -72,6 +72,8 @@ describe('WorkRecordSheetComponent', () => {
       'plans.work.sheet.climate_preview.loading': '気象データを読み込み中…',
       'plans.work.sheet.climate_preview.unavailable': 'この日付の気象データがありません',
       'plans.work.sheet.climate_preview.gdd': 'GDD {{value}}',
+      'plans.work.sheet.climate_preview.planned_gdd': '予定 GDD {{value}}',
+      'plans.work.sheet.climate_preview.gdd_delta': '予定比 {{value}}',
       'plans.work.sheet.climate_preview.weather':
         '最高{{max}}°C / 最低{{min}}°C（平均{{mean}}°C）',
       'plans.work.sheet.submit': '記録する',
@@ -229,7 +231,8 @@ describe('WorkRecordSheetComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('+2 kg');
     expect(previewClimateUseCase.execute).toHaveBeenCalledWith({
       fieldCultivationId: 5,
-      actualDate: component.control.form.actual_date
+      actualDate: component.control.form.actual_date,
+      gddTrigger: null
     });
   });
 
@@ -268,6 +271,8 @@ describe('WorkRecordSheetComponent', () => {
         temperatureMax: 30,
         temperatureMin: 20,
         temperatureMean: 25,
+        plannedGdd: null,
+        gddDelta: null,
         loading: false
       }
     };
@@ -278,5 +283,103 @@ describe('WorkRecordSheetComponent', () => {
     expect(preview.textContent).toContain('記録時に保存される気象情報');
     expect(preview.textContent).toContain('GDD 145.25');
     expect(preview.textContent).toContain('最高30°C');
+  });
+
+  it('shows planned GDD comparison in climate preview when trigger is available', () => {
+    component.openFromItem({
+      item: {
+        item_id: 11,
+        name: '除草',
+        task_type: 'general',
+        category: 'general',
+        scheduled_date: '2026-06-12',
+        priority: 1,
+        source: 'plan',
+        weather_dependency: 'low',
+        time_per_sqm: '0',
+        amount: '',
+        amount_unit: '',
+        status: 'scheduled',
+        agricultural_task_id: 2,
+        field_cultivation_id: 7,
+        gdd_trigger: '100',
+        completed: false,
+        work_records: [],
+        details: {} as never,
+        badge: { type: 'general' }
+      },
+      fieldName: 'B圃場',
+      cropName: 'キュウリ',
+      recordedToday: false
+    });
+    component.control = {
+      ...component.control,
+      showDetails: true,
+      climatePreview: {
+        gddAtActual: 145.25,
+        weatherDate: '2026-06-12',
+        temperatureMax: 30,
+        temperatureMin: 20,
+        temperatureMean: 25,
+        plannedGdd: 100,
+        gddDelta: 45.3,
+        loading: false
+      }
+    };
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector('[data-testid="climate-preview"]');
+    expect(preview.textContent).toContain('予定 GDD 100');
+    expect(preview.textContent).toContain('予定比 +45.3');
+    expect(previewClimateUseCase.execute).toHaveBeenCalledWith({
+      fieldCultivationId: 7,
+      actualDate: component.control.form.actual_date,
+      gddTrigger: '100'
+    });
+  });
+
+  it('does not show planned GDD comparison in edit mode without gdd trigger', () => {
+    component.openEdit({
+      id: 99,
+      cultivation_plan_id: 1,
+      field_cultivation_id: 7,
+      task_schedule_item_id: 11,
+      agricultural_task_id: 2,
+      name: '除草',
+      task_type: 'general',
+      actual_date: '2026-06-12',
+      amount: null,
+      amount_unit: null,
+      time_spent_minutes: null,
+      notes: null,
+      created_at: '2026-06-12',
+      updated_at: '2026-06-12',
+      task_schedule_item: { id: 11, name: '除草', scheduled_date: '2026-06-10' }
+    });
+    component.control = {
+      ...component.control,
+      showDetails: true,
+      climatePreview: {
+        gddAtActual: 145.25,
+        weatherDate: '2026-06-12',
+        temperatureMax: 30,
+        temperatureMin: 20,
+        temperatureMean: 25,
+        plannedGdd: null,
+        gddDelta: null,
+        loading: false
+      }
+    };
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector('[data-testid="climate-preview"]');
+    expect(preview.textContent).toContain('GDD 145.25');
+    expect(preview.textContent).not.toContain('予定 GDD');
+    expect(preview.textContent).not.toContain('予定比');
+    expect(previewClimateUseCase.execute).toHaveBeenCalledWith({
+      fieldCultivationId: 7,
+      actualDate: '2026-06-12',
+      gddTrigger: null
+    });
   });
 });
