@@ -56,10 +56,27 @@ describe('PlanDetailContextNavComponent', () => {
     expect(links[2].textContent?.trim()).toBe('今日の作業');
     expect(links[3].textContent?.trim()).toBe('実績履歴');
     expect(links[4].textContent?.trim()).toContain('振り返り');
-    expect(fixture.nativeElement.querySelector('app-plan-learn-nav-badge-host')).toBeTruthy();
+    const badgeHosts = fixture.nativeElement.querySelectorAll('app-plan-learn-nav-badge-host');
+    expect(badgeHosts.length).toBe(2);
     expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
       '今日の作業'
     );
+  });
+
+  it('renders learn loop phase badge host on work and learn nav tabs', async () => {
+    await router.navigateByUrl('/plans/1/work');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const links = fixture.nativeElement.querySelectorAll('.plan-context-nav__link');
+    const workLink = links[2] as HTMLElement;
+    const learnLink = links[4] as HTMLElement;
+
+    expect(workLink.classList.contains('plan-context-nav__link--with-badge')).toBe(true);
+    expect(learnLink.classList.contains('plan-context-nav__link--with-badge')).toBe(true);
+    expect(workLink.querySelector('app-plan-learn-nav-badge-host')).toBeTruthy();
+    expect(learnLink.querySelector('app-plan-learn-nav-badge-host')).toBeTruthy();
   });
 
   it('marks workbench link active on plan detail route', async () => {
