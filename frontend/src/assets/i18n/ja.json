@@ -2843,6 +2843,15 @@
       },
       "empty_plan_cta": "作付け計画を確認",
       "empty_task_schedule_cta": "作業計画表を確認",
+      "variance": {
+        "summary_line": "未記録 {{unrecorded}} 件 · 閾値超過 {{threshold}} 件 · GDD遅延 {{gddDelay}} 件",
+        "learn_cta": "振り返りで確認",
+        "badge": {
+          "days": "日数超過",
+          "gdd": "GDD遅延",
+          "both": "日数・GDD超過"
+        }
+      },
       "save_impact": {
         "title": "計画への影響",
         "task_label": "記録した作業",

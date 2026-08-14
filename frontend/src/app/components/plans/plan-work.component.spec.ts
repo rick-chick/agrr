@@ -42,7 +42,11 @@ const initialControl: PlanWorkViewState = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  varianceLoading: false,
+  varianceError: null,
+  varianceStats: null,
+  varianceActionItems: []
 };
 
 function createPlanRouteMock(planId: string) {
@@ -142,7 +146,11 @@ const loadedState: PlanWorkViewState = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  varianceLoading: false,
+  varianceError: null,
+  varianceStats: null,
+  varianceActionItems: []
 };
 
 describe('PlanWorkComponent mobile UX', () => {
@@ -158,6 +166,7 @@ describe('PlanWorkComponent mobile UX', () => {
   let mockPresenter: {
     setView: ReturnType<typeof vi.fn>;
     beginScheduleLoad: ReturnType<typeof vi.fn>;
+    beginVarianceLoad: ReturnType<typeof vi.fn>;
     queueSaveImpactAfterSave: ReturnType<typeof vi.fn>;
     dismissSaveImpact: ReturnType<typeof vi.fn>;
   };
@@ -174,6 +183,7 @@ describe('PlanWorkComponent mobile UX', () => {
     mockPresenter = {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
+      beginVarianceLoad: vi.fn(() => 1),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };
@@ -758,6 +768,87 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(loadUseCase.execute).toHaveBeenCalled();
   });
 
+  it('loads plan vs actual summary when work screen reloads', () => {
+    renderLoaded();
+    loadSummaryUseCase.execute.mockClear();
+
+    component.reload();
+
+    expect(loadSummaryUseCase.execute).toHaveBeenCalledWith({ planId: 7, loadGeneration: 1 });
+  });
+
+  it('renders variance summary banner with learn CTA when stats are loaded', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.variance.summary_line':
+          '未記録 {{unrecorded}} 件 · 閾値超過 {{threshold}} 件 · GDD遅延 {{gddDelay}} 件',
+        'plans.work.variance.learn_cta': '振り返りで確認'
+      },
+      true
+    );
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      varianceLoading: false,
+      varianceError: null,
+      varianceStats: {
+        unrecordedCount: 2,
+        thresholdExceedanceCount: 1,
+        gddDelayCount: 1
+      },
+      varianceActionItems: []
+    };
+    fixture.detectChanges();
+
+    const banner = fixture.nativeElement.querySelector('app-plan-work-variance-summary');
+    expect(banner).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('未記録 2 件');
+    expect(fixture.nativeElement.textContent).toContain('振り返りで確認');
+    const learnLink = fixture.nativeElement.querySelector('.plan-work-variance-summary__cta');
+    expect(learnLink?.getAttribute('href')).toContain('/plans/7/learn');
+  });
+
+  it('shows threshold exceedance badge on matching work rows', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.variance.badge.both': '日数・GDD超過'
+      },
+      true
+    );
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      varianceLoading: false,
+      varianceStats: {
+        unrecordedCount: 0,
+        thresholdExceedanceCount: 1,
+        gddDelayCount: 1
+      },
+      varianceActionItems: [
+        {
+          item_id: 10,
+          field_cultivation_id: 1,
+          category: 'field_work',
+          name: '遅延作業',
+          scheduled_date: '2026-06-08',
+          actual_date: '2026-06-12',
+          delta_days: 4,
+          gdd_trigger: 100,
+          gdd_at_actual: 120,
+          gdd_delta: 20,
+          exceedance_kind: 'both'
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const badge = fixture.nativeElement.querySelector('.plan-work__variance-badge--both');
+    expect(badge).toBeTruthy();
+    expect(badge.textContent?.trim()).toBe('日数・GDD超過');
+  });
+
   it('reloads and resubscribes when route plan id changes', () => {
     const oldChannel = { unsubscribe: vi.fn() };
     subscribeSyncUseCase.execute.mockImplementation(({ onSubscribed }) => {
@@ -796,6 +887,7 @@ describe('PlanWorkComponent in locale labels', () => {
     const mockPresenter = {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
+      beginVarianceLoad: vi.fn(() => 1),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };

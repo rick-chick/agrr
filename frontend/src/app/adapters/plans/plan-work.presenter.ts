@@ -41,6 +41,7 @@ import {
 } from './plan-save-impact.presenter.helpers';
 import { mapWorkRecordSaveToastToPendingRequest } from './work-record-save-toast.presenter.helpers';
 import { WorkRecordSheetSavedEvent } from '../../components/plans/work-record-sheet.view';
+import { buildPlanWorkVarianceSummaryStats } from '../../domain/plans/build-plan-work-variance-summary-stats';
 import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
 
 const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
@@ -62,6 +63,7 @@ export class PlanWorkPresenter
   private syncLifecycle: TaskScheduleSyncLifecycleState = initialTaskScheduleSyncLifecycleState();
   private pendingSaveImpactRequest: PendingSaveImpactRequest | null = null;
   private saveImpactLoadGeneration = 0;
+  private varianceLoadGeneration = 0;
 
   setView(view: PlanWorkView): void {
     this.view = view;
@@ -71,6 +73,11 @@ export class PlanWorkPresenter
     const result = beginScheduleLoad(this.syncLifecycle);
     this.syncLifecycle = result.lifecycle;
     return result.generation;
+  }
+
+  beginVarianceLoad(): number {
+    this.varianceLoadGeneration += 1;
+    return this.varianceLoadGeneration;
   }
 
   onSuccess(dto?: CreateWorkRecordSuccessDto): void {
@@ -292,6 +299,53 @@ export class PlanWorkPresenter
     return this.saveImpactLoadGeneration;
   }
 
+  routeVarianceSummaryPresent(dto: PlanVsActualSummaryDataDto): void {
+    if (dto.loadGeneration === this.varianceLoadGeneration) {
+      this.presentWorkVarianceSummary(dto);
+      return;
+    }
+    if (dto.loadGeneration === this.saveImpactLoadGeneration) {
+      this.presentSaveImpactSummary(dto);
+    }
+  }
+
+  routeVarianceSummaryError(dto: ErrorDto): void {
+    if (this.pendingSaveImpactRequest != null) {
+      this.onSaveImpactError(dto);
+      return;
+    }
+    if (this.view?.control.varianceLoading) {
+      this.onWorkVarianceError(dto);
+      return;
+    }
+    this.onSaveImpactError(dto);
+  }
+
+  presentWorkVarianceSummary(dto: PlanVsActualSummaryDataDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    if (dto.loadGeneration !== this.varianceLoadGeneration) {
+      return;
+    }
+    this.view.control = {
+      ...this.view.control,
+      varianceLoading: false,
+      varianceError: null,
+      varianceStats: buildPlanWorkVarianceSummaryStats(dto.summary),
+      varianceActionItems: dto.summary.action_required_items ?? []
+    };
+  }
+
+  onWorkVarianceError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      varianceLoading: false,
+      varianceError: dto.message,
+      varianceStats: null,
+      varianceActionItems: []
+    };
+  }
+
   presentSaveImpactSummary(dto: PlanVsActualSummaryDataDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const applied = applyPlanSaveImpactSummary(
@@ -306,7 +360,11 @@ export class PlanWorkPresenter
     this.pendingSaveImpactRequest = applied.pending;
     this.view.control = {
       ...this.view.control,
-      ...applied.fields
+      ...applied.fields,
+      varianceLoading: false,
+      varianceError: null,
+      varianceStats: buildPlanWorkVarianceSummaryStats(dto.summary),
+      varianceActionItems: dto.summary.action_required_items ?? []
     };
   }
 

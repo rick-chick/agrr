@@ -27,6 +27,9 @@ import { FlashMessageService } from '../../services/flash-message.service';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { applyPlanWorkViewEffects } from './plan-work-view.effects';
 import { WorkRecordSaveImpactPanelComponent } from './work-record-save-impact-panel.component';
+import { PlanWorkVarianceSummaryComponent } from './plan-work-variance-summary.component';
+import { findVarianceActionItemForScheduleItem } from '../../domain/plans/find-variance-action-item-for-schedule-item';
+import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -50,7 +53,11 @@ const initialControl: PlanWorkViewState = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  varianceLoading: true,
+  varianceError: null,
+  varianceStats: null,
+  varianceActionItems: []
 };
 
 @Component({
@@ -64,7 +71,8 @@ const initialControl: PlanWorkViewState = {
     PlanPlanContextHeaderComponent,
     WorkRecordSheetComponent,
     TaskScheduleSyncBannerComponent,
-    WorkRecordSaveImpactPanelComponent
+    WorkRecordSaveImpactPanelComponent,
+    PlanWorkVarianceSummaryComponent
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
@@ -97,6 +105,13 @@ const initialControl: PlanWorkViewState = {
             [regenerating]="control.regenerating"
             [regenerateError]="control.regenerateError"
             (retry)="regenerateTaskSchedule()"
+          />
+
+          <app-plan-work-variance-summary
+            [planId]="planId"
+            [loading]="control.varianceLoading"
+            [error]="control.varianceError"
+            [stats]="control.varianceStats"
           />
 
           @if (control.saveImpactLoading || control.saveImpact || control.saveImpactError) {
@@ -249,6 +264,11 @@ const initialControl: PlanWorkViewState = {
           <span class="plan-work__field">{{ row.fieldName }} {{ row.cropName }}</span>
           @if (row.recordedToday) {
             <span class="plan-work__done-badge">✓ {{ 'plans.work.recorded_today' | translate }}</span>
+          }
+          @if (varianceActionItem(row.item.item_id); as actionItem) {
+            <span class="plan-work__variance-badge plan-work__variance-badge--{{ actionItem.exceedance_kind }}">
+              {{ varianceBadgeLabel(actionItem) | translate }}
+            </span>
           }
           @if (row.item.status === 'skipped') {
             <span class="plan-work__skip-badge">{{ 'plans.work.skipped_badge' | translate }}</span>
@@ -428,6 +448,27 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     this.reload();
   }
 
+  private loadWorkVarianceSummary(): void {
+    if (!this.planId) {
+      return;
+    }
+    this.control = {
+      ...this.control,
+      varianceLoading: true,
+      varianceError: null
+    };
+    const loadGeneration = this.presenter.beginVarianceLoad();
+    this.loadSummaryUseCase.execute({ planId: this.planId, loadGeneration });
+  }
+
+  varianceActionItem(itemId: number): PlanVarianceActionItem | null {
+    return findVarianceActionItemForScheduleItem(itemId, this.control.varianceActionItems);
+  }
+
+  varianceBadgeLabel(item: PlanVarianceActionItem): string {
+    return `plans.work.variance.badge.${item.exceedance_kind}`;
+  }
+
   reload(options?: { silent?: boolean }): void {
     this.openMenuItemId = null;
     if (!options?.silent) {
@@ -445,6 +486,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       includeSkipped: this.control.includeSkipped,
       loadGeneration
     });
+    this.loadWorkVarianceSummary();
   }
 
   regenerateTaskSchedule(): void {

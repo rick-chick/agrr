@@ -41,10 +41,10 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   {
     provide: LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT,
     useFactory: (presenter: PlanWorkPresenter) => ({
-      present: (dto: Parameters<PlanWorkPresenter['presentSaveImpactSummary']>[0]) =>
-        presenter.presentSaveImpactSummary(dto),
-      onError: (dto: Parameters<PlanWorkPresenter['onSaveImpactError']>[0]) =>
-        presenter.onSaveImpactError(dto)
+      present: (dto: Parameters<PlanWorkPresenter['routeVarianceSummaryPresent']>[0]) =>
+        presenter.routeVarianceSummaryPresent(dto),
+      onError: (dto: Parameters<PlanWorkPresenter['routeVarianceSummaryError']>[0]) =>
+        presenter.routeVarianceSummaryError(dto)
     }),
     deps: [PlanWorkPresenter]
   },

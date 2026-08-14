@@ -1719,6 +1719,15 @@
       },
       "empty_plan_cta": "Review cropping plan",
       "empty_task_schedule_cta": "Open task plan",
+      "variance": {
+        "summary_line": "Not recorded {{unrecorded}} · Threshold exceeded {{threshold}} · GDD delay {{gddDelay}}",
+        "learn_cta": "Review in Learn",
+        "badge": {
+          "days": "Days exceeded",
+          "gdd": "GDD delay",
+          "both": "Days & GDD exceeded"
+        }
+      },
       "save_impact": {
         "title": "Plan impact",
         "task_label": "Recorded task",

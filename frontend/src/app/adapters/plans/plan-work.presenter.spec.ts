@@ -46,7 +46,11 @@ const baseControl = {
   pendingQuickCompleteValidation: null,
   syncReloadNonce: 0,
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  varianceLoading: false,
+  varianceError: null,
+  varianceStats: null,
+  varianceActionItems: []
 };
 
 function field(overrides: Partial<FieldSchedule> & Pick<FieldSchedule, 'field_cultivation_id'>): FieldSchedule {
@@ -534,5 +538,44 @@ describe('PlanWorkPresenter save impact', () => {
       workbenchFieldCultivationId: null
     });
     expect(view.control.saveImpactLoading).toBe(false);
+  });
+
+  it('presents work variance summary stats and action items', () => {
+    view = { control: { ...baseControl, varianceLoading: true } };
+    presenter.setView(view);
+    const generation = presenter.beginVarianceLoad();
+
+    presenter.presentWorkVarianceSummary({
+      loadGeneration: generation,
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 2,
+        categories: [],
+        top_variance_items: [],
+        action_required_items: [
+          {
+            item_id: 10,
+            field_cultivation_id: 1,
+            category: 'field_work',
+            name: '追肥',
+            scheduled_date: '2026-06-01',
+            actual_date: '2026-06-08',
+            delta_days: 7,
+            gdd_trigger: 100,
+            gdd_at_actual: 120,
+            gdd_delta: 20,
+            exceedance_kind: 'both'
+          }
+        ]
+      }
+    });
+
+    expect(view.control.varianceLoading).toBe(false);
+    expect(view.control.varianceStats).toEqual({
+      unrecordedCount: 2,
+      thresholdExceedanceCount: 1,
+      gddDelayCount: 1
+    });
+    expect(view.control.varianceActionItems).toHaveLength(1);
   });
 });
