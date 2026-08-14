@@ -94,7 +94,28 @@ const initialControl: WorkHubViewState = {
                           'work.hub.today_summary'
                             | translate: { count: farm.todayCount }
                         }}
+                        ·
+                        {{
+                          'work.hub.gdd_delay_summary'
+                            | translate: { count: farm.gddDelayCount }
+                        }}
+                        ·
+                        {{
+                          'work.hub.threshold_exceeded_summary'
+                            | translate: { count: farm.thresholdExceededCount }
+                        }}
                       </span>
+                      @if (farm.thresholdExceededCount > 0) {
+                        <span
+                          class="work-hub__context-attention-badge"
+                          role="status"
+                          [attr.aria-label]="
+                            'work.hub.context_attention_badge' | translate
+                          "
+                        >
+                          {{ 'work.hub.context_attention_badge' | translate }}
+                        </span>
+                      }
                       <span class="work-hub__cta">
                         {{
                           farm.planId

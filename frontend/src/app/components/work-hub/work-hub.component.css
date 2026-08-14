@@ -53,6 +53,19 @@
   color: var(--color-text-muted);
 }
 
+.work-hub__context-attention-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.35rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .work-hub__cta {
   color: var(--color-primary);
   font-weight: 600;

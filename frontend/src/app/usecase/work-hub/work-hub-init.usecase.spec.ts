@@ -85,7 +85,9 @@ describe('WorkHubInitUseCase', () => {
             ...baseFarm,
             planId: 9,
             overdueCount: 0,
-            todayCount: 0
+            todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
           },
           {
             farmId: 2,
@@ -95,7 +97,9 @@ describe('WorkHubInitUseCase', () => {
             hasValidFields: true,
             planId: 10,
             overdueCount: 0,
-            todayCount: 0
+            todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
           }
         ])
     };
@@ -143,17 +147,120 @@ describe('WorkHubInitUseCase', () => {
         expect.objectContaining({
           farmId: 1,
           overdueCount: 1,
-          todayCount: 0
+          todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
         }),
         expect.objectContaining({
           farmId: 2,
           overdueCount: 0,
-          todayCount: 1
+          todayCount: 1,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
         })
       ]
     });
 
     vi.useRealTimers();
+  });
+
+  it('presents plan core summary counts when multiple farms have plans', () => {
+    const workHubGateway: WorkHubGateway = {
+      listHubFarms: () =>
+        of([
+          {
+            farmId: 1,
+            farmName: 'Farm 1',
+            ...baseFarm,
+            planId: 9,
+            overdueCount: 0,
+            todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
+          },
+          {
+            farmId: 2,
+            farmName: 'Farm 2',
+            fieldCount: 1,
+            totalArea: 40,
+            hasValidFields: true,
+            planId: 10,
+            overdueCount: 0,
+            todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
+          }
+        ])
+    };
+    const present = vi.fn();
+    const outputPort: WorkHubInitOutputPort = {
+      present,
+      onError: vi.fn(),
+      beginEnsure: vi.fn()
+    };
+    const planGateway = createPlanGateway({
+      getPlanVsActualSummary: (planId: number) =>
+        of({
+          plan_id: planId,
+          unrecorded_count: 0,
+          categories: [],
+          top_variance_items: [],
+          action_required_items:
+            planId === 9
+              ? [
+                  {
+                    item_id: 1,
+                    field_cultivation_id: 10,
+                    category: 'general',
+                    name: '追肥',
+                    scheduled_date: '2026-06-01',
+                    actual_date: '2026-06-10',
+                    delta_days: 5,
+                    gdd_trigger: 100,
+                    gdd_at_actual: 120,
+                    gdd_delta: 15,
+                    exceedance_kind: 'gdd'
+                  },
+                  {
+                    item_id: 2,
+                    field_cultivation_id: 10,
+                    category: 'general',
+                    name: '除草',
+                    scheduled_date: '2026-06-02',
+                    actual_date: '2026-06-08',
+                    delta_days: 2,
+                    gdd_trigger: 50,
+                    gdd_at_actual: 65,
+                    gdd_delta: 12,
+                    exceedance_kind: 'days'
+                  }
+                ]
+              : []
+        })
+    });
+
+    const useCase = new WorkHubInitUseCase(
+      outputPort,
+      workHubGateway,
+      planGateway,
+      { execute: vi.fn() } as unknown as EnsurePlanForFarmUseCase
+    );
+    useCase.execute();
+
+    expect(present).toHaveBeenCalledWith({
+      farms: [
+        expect.objectContaining({
+          farmId: 1,
+          gddDelayCount: 1,
+          thresholdExceededCount: 2
+        }),
+        expect.objectContaining({
+          farmId: 2,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
+        })
+      ]
+    });
   });
 
   it('presents zero counts when farms have no plans', () => {
@@ -166,7 +273,9 @@ describe('WorkHubInitUseCase', () => {
             ...baseFarm,
             planId: null,
             overdueCount: 0,
-            todayCount: 0
+            todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
           },
           {
             farmId: 2,
@@ -176,7 +285,9 @@ describe('WorkHubInitUseCase', () => {
             hasValidFields: true,
             planId: null,
             overdueCount: 0,
-            todayCount: 0
+            todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
           }
         ])
     };
@@ -199,8 +310,12 @@ describe('WorkHubInitUseCase', () => {
     expect(getTaskSchedule).not.toHaveBeenCalled();
     expect(present).toHaveBeenCalledWith({
       farms: [
-        expect.objectContaining({ overdueCount: 0, todayCount: 0 }),
-        expect.objectContaining({ overdueCount: 0, todayCount: 0 })
+        expect.objectContaining({ overdueCount: 0, todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0 }),
+        expect.objectContaining({ overdueCount: 0, todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0 })
       ]
     });
   });
@@ -215,7 +330,9 @@ describe('WorkHubInitUseCase', () => {
         hasValidFields: true,
         planId: 9,
         overdueCount: 0,
-        todayCount: 0
+        todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
       }
     ];
     const workHubGateway: WorkHubGateway = {
@@ -255,7 +372,9 @@ describe('WorkHubInitUseCase', () => {
             hasValidFields: false,
             planId: null,
             overdueCount: 0,
-            todayCount: 0
+            todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
           }
         ])
     };
@@ -280,7 +399,9 @@ describe('WorkHubInitUseCase', () => {
           farmId: 5,
           hasValidFields: false,
           overdueCount: 0,
-          todayCount: 0
+          todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
         })
       ]
     });

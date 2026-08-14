@@ -28,7 +28,9 @@ export class WorkHubApiGateway implements WorkHubGateway {
           hasValidFields: row.has_valid_fields,
           planId: row.plan_id,
           overdueCount: 0,
-          todayCount: 0
+          todayCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
         }))
       )
     );

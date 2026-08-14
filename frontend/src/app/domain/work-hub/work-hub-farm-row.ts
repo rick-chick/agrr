@@ -7,4 +7,6 @@ export interface WorkHubFarmRow {
   planId: number | null;
   overdueCount: number;
   todayCount: number;
+  gddDelayCount: number;
+  thresholdExceededCount: number;
 }

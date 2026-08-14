@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { of } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { localTodayIso } from '../../core/local-today';
@@ -7,12 +7,24 @@ import { WorkHubFarmRow } from '../../domain/work-hub/work-hub-farm-row';
 import { PLAN_GATEWAY, PlanGateway } from '../plans/plan-gateway';
 import { WORK_HUB_GATEWAY, WorkHubGateway } from './work-hub-gateway';
 import { EnsurePlanForFarmUseCase } from './ensure-plan-for-farm.usecase';
+import { loadHubFarmPlanCoreSummary } from './load-hub-farm-plan-core-summary';
 import { loadHubFarmTaskCounts } from './load-hub-farm-task-counts';
 import { WorkHubInitInputPort } from './work-hub-init.input-port';
 import { WORK_HUB_INIT_OUTPUT_PORT, WorkHubInitOutputPort } from './work-hub-init.output-port';
 
-function withZeroCounts(farms: Omit<WorkHubFarmRow, 'overdueCount' | 'todayCount'>[]): WorkHubFarmRow[] {
-  return farms.map((farm) => ({ ...farm, overdueCount: 0, todayCount: 0 }));
+type WorkHubFarmBase = Omit<
+  WorkHubFarmRow,
+  'overdueCount' | 'todayCount' | 'gddDelayCount' | 'thresholdExceededCount'
+>;
+
+function withZeroSummaries(farms: WorkHubFarmBase[]): WorkHubFarmRow[] {
+  return farms.map((farm) => ({
+    ...farm,
+    overdueCount: 0,
+    todayCount: 0,
+    gddDelayCount: 0,
+    thresholdExceededCount: 0
+  }));
 }
 
 @Injectable()
@@ -34,21 +46,23 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
           }
           const today = localTodayIso();
           if (!farms.some((farm) => farm.planId != null)) {
-            return of({ farms: withZeroCounts(farms), autoRedirect: false as const });
+            return of({ farms: withZeroSummaries(farms), autoRedirect: false as const });
           }
-          return loadHubFarmTaskCounts(
-            farms.map((farm) => ({ farmId: farm.farmId, planId: farm.planId })),
-            this.planGateway,
-            today,
-            false
-          ).pipe(
-            map((countsByFarmId) => ({
+          const farmPlans = farms.map((farm) => ({ farmId: farm.farmId, planId: farm.planId }));
+          return forkJoin({
+            taskCounts: loadHubFarmTaskCounts(farmPlans, this.planGateway, today, false),
+            planCoreSummaries: loadHubFarmPlanCoreSummary(farmPlans, this.planGateway)
+          }).pipe(
+            map(({ taskCounts, planCoreSummaries }) => ({
               farms: farms.map((farm) => {
-                const summary = countsByFarmId.get(farm.farmId);
+                const taskSummary = taskCounts.get(farm.farmId);
+                const planCoreSummary = planCoreSummaries.get(farm.farmId);
                 return {
                   ...farm,
-                  overdueCount: summary?.overdueCount ?? 0,
-                  todayCount: summary?.todayCount ?? 0
+                  overdueCount: taskSummary?.overdueCount ?? 0,
+                  todayCount: taskSummary?.todayCount ?? 0,
+                  gddDelayCount: planCoreSummary?.gddDelayCount ?? 0,
+                  thresholdExceededCount: planCoreSummary?.thresholdExceededCount ?? 0
                 };
               }),
               autoRedirect: false as const
