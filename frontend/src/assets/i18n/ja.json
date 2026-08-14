@@ -2772,6 +2772,17 @@
         "unrecorded_cta": "作業を記録する",
         "complete_message": "観測フェーズ完了 — 予定タスクはすべて記録済みです。"
       },
+      "input_gap": {
+        "title": "入力ギャップサマリ",
+        "unrecorded": "未記録件数",
+        "action_required": "要対応件数",
+        "work_cta": "未記録タスクを記録する"
+      },
+      "proposal_confidence": {
+        "high": "信頼度：高",
+        "medium": "信頼度：中",
+        "low": "信頼度：低"
+      },
       "pipeline_status": {
         "failed_title": "再配置パイプラインが失敗しました",
         "unknown_error": "再配置中に予期しないエラーが発生しました。",
@@ -2872,9 +2883,9 @@
         "workbench_link": "作業台で adjust を検討"
       },
       "variance_summary": {
-        "title": "予実乖離サマリ",
+        "title": "入力ギャップサマリ",
         "unrecorded": "未記録",
-        "threshold_exceeded": "閾値超過",
+        "threshold_exceeded": "要対応",
         "gdd_delay": "GDD遅延",
         "learn_cta": "振り返りで詳細を見る"
       },

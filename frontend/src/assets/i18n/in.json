@@ -2134,6 +2134,17 @@
         "unrecorded_cta": "कार्य अभिलेखित करें",
         "complete_message": "अवलोकन चरण पूर्ण — सभी निर्धारित कार्य अभिलेखित हैं।"
       },
+      "input_gap": {
+        "title": "इनपुट अंतराल सारांश",
+        "unrecorded": "अभिलेखित नहीं",
+        "action_required": "कार्रवाई आवश्यक",
+        "work_cta": "अभिलेखित न किए कार्य दर्ज करें"
+      },
+      "proposal_confidence": {
+        "high": "उच्च विश्वास",
+        "medium": "मध्यम विश्वास",
+        "low": "निम्न विश्वास"
+      },
       "pipeline_status": {
         "failed_title": "पुनर्गठन पाइपलाइन विफल",
         "unknown_error": "पुनर्गठन के दौरान अप्रत्याशित त्रुटि हुई।",
@@ -2234,9 +2245,9 @@
         "workbench_link": "कार्य मंच पर adjust की समीक्षा करें"
       },
       "variance_summary": {
-        "title": "योजना बनाम वास्तविक सारांश",
+        "title": "इनपुट अंतराल सारांश",
         "unrecorded": "अदर्ज",
-        "threshold_exceeded": "सीमा पार",
+        "threshold_exceeded": "कार्रवाई आवश्यक",
         "gdd_delay": "GDD विलंब",
         "learn_cta": "Learn में विवरण देखें"
       },

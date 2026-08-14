@@ -49,13 +49,14 @@ const initialControl: PlanWorkViewState = {
   actionRequiredItems: []
 };
 
-function createPlanRouteMock(planId: string) {
+function createPlanRouteMock(planId: string, queryParams: Record<string, string> = {}) {
   let currentPlanId = planId;
+  let currentQueryParams = { ...queryParams };
   const paramMapSubject = new BehaviorSubject({
     get: (key: string) => (key === 'id' ? currentPlanId : null)
   });
   const queryParamMapSubject = new BehaviorSubject({
-    get: () => null
+    get: (key: string) => currentQueryParams[key] ?? null
   });
 
   return {
@@ -63,7 +64,9 @@ function createPlanRouteMock(planId: string) {
       get paramMap() {
         return paramMapSubject.value;
       },
-      queryParamMap: { get: () => null }
+      get queryParamMap() {
+        return queryParamMapSubject.value;
+      }
     },
     paramMap: paramMapSubject.asObservable(),
     queryParamMap: queryParamMapSubject.asObservable(),
@@ -71,6 +74,12 @@ function createPlanRouteMock(planId: string) {
       currentPlanId = id;
       paramMapSubject.next({
         get: (key: string) => (key === 'id' ? currentPlanId : null)
+      });
+    },
+    setQueryParams(params: Record<string, string>) {
+      currentQueryParams = { ...params };
+      queryParamMapSubject.next({
+        get: (key: string) => currentQueryParams[key] ?? null
       });
     }
   };
@@ -771,9 +780,9 @@ describe('PlanWorkComponent mobile UX', () => {
     translate.setTranslation(
       'ja',
       {
-        'plans.work.variance_summary.title': '予実乖離サマリ',
+        'plans.work.variance_summary.title': '入力ギャップサマリ',
         'plans.work.variance_summary.unrecorded': '未記録',
-        'plans.work.variance_summary.threshold_exceeded': '閾値超過',
+        'plans.work.variance_summary.threshold_exceeded': '要対応',
         'plans.work.variance_summary.gdd_delay': 'GDD遅延',
         'plans.work.variance_summary.learn_cta': '振り返りで詳細を見る'
       },
@@ -796,12 +805,24 @@ describe('PlanWorkComponent mobile UX', () => {
     const text = fixture.nativeElement.textContent ?? '';
     expect(text).toContain('未記録');
     expect(text).toContain('2');
-    expect(text).toContain('閾値超過');
+    expect(text).toContain('要対応');
     expect(text).toContain('1');
     const learnLink = fixture.nativeElement.querySelector(
       '.plan-work-variance-summary__learn-link'
     ) as HTMLAnchorElement;
     expect(learnLink?.getAttribute('href')).toContain('/plans/7/learn');
+  });
+
+  it('highlights task row from highlight_item query param after schedule load', () => {
+    mockActivatedRoute.setQueryParams({ highlight_item: '10' });
+    fixture.detectChanges();
+    component.control = { ...loadedState, loading: true };
+    component.control = { ...loadedState, loading: false };
+    fixture.detectChanges();
+
+    expect(component.control.highlightedItemId).toBe(10);
+    const highlightedRow = fixture.nativeElement.querySelector('.plan-work__row--highlight');
+    expect(highlightedRow).toBeTruthy();
   });
 
   it('shows exceedance badges on threshold-exceeded task rows', () => {

@@ -12,7 +12,11 @@ import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.compo
 import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.component';
 import { PlanLearnLoopProgressComponent } from './plan-learn-loop-progress.component';
 import { PlanLearnObservePhaseStatusComponent } from './plan-learn-observe-phase-status.component';
+import { PlanLearnInputGapSummaryComponent } from './plan-learn-input-gap-summary.component';
 import { resolveLearnObservePhaseStatus } from '../../domain/plans/resolve-learn-observe-phase-status';
+import { buildPlanInputGapSummary } from '../../domain/plans/build-plan-input-gap-summary';
+import { resolveLearnProposalConfidence } from '../../domain/plans/resolve-learn-proposal-confidence';
+import { resolvePlanWorkHighlightItemId } from '../../domain/plans/build-plan-work-deep-link-query';
 import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
@@ -82,7 +86,8 @@ const initialControl: PlanLearnViewState = {
     BlueprintTimingAdjustmentProposalsViewComponent,
     PlanLearnImportedBannerComponent,
     PlanLearnLoopProgressComponent,
-    PlanLearnObservePhaseStatusComponent
+    PlanLearnObservePhaseStatusComponent,
+    PlanLearnInputGapSummaryComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -116,10 +121,18 @@ const initialControl: PlanLearnViewState = {
             [carryoverSourcePlanCount]="control.carryoverSourcePlans.length"
             [progressRefreshVersion]="proposalProgressRefreshVersion"
           />
+          <app-plan-learn-input-gap-summary
+            [planId]="planId"
+            [summary]="inputGapSummary"
+            [loading]="control.varianceLoading"
+            [error]="control.varianceError"
+            [highlightItemId]="workHighlightItemId"
+          />
           <app-plan-learn-observe-phase-status
             [planId]="planId"
             [status]="observePhaseStatus"
             [unrecordedCount]="control.varianceSummary?.unrecorded_count ?? 0"
+            [highlightItemId]="workHighlightItemId"
           />
           @if (showPostMasterConfirmation) {
             <app-plan-learn-post-master-confirmation
@@ -284,6 +297,7 @@ const initialControl: PlanLearnViewState = {
           <app-variance-action-proposal-cards
             [planId]="planId"
             [items]="control.varianceSummary?.action_required_items ?? []"
+            [proposalConfidence]="proposalConfidence"
           />
           <div id="plan-learn-loop-proposals">
           <h3 id="plan-learn-current-variance-title" class="plan-learn-current-variance__title">
@@ -297,6 +311,7 @@ const initialControl: PlanLearnViewState = {
             [loading]="control.blueprintTimingLoading"
             [proposals]="control.blueprintTimingProposals"
             [evidenceByKey]="control.blueprintTimingEvidenceByKey"
+            [proposalConfidence]="proposalConfidence"
             (progressChanged)="onProposalProgressChanged()"
           />
           <app-task-schedule-variance-view
@@ -312,6 +327,7 @@ const initialControl: PlanLearnViewState = {
             [loading]="control.stageGddProposalsLoading"
             [proposals]="control.stageGddProposals"
             [evidenceByKey]="control.stageGddEvidenceByKey"
+            [proposalConfidence]="proposalConfidence"
             (progressChanged)="onProposalProgressChanged()"
           />
           </div>
@@ -375,6 +391,25 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
       varianceError: this.control.varianceError,
       unrecordedCount: this.control.varianceSummary?.unrecorded_count ?? null
     });
+  }
+
+  get inputGapSummary(): ReturnType<typeof buildPlanInputGapSummary> | null {
+    if (!this.control.varianceSummary) {
+      return null;
+    }
+    return buildPlanInputGapSummary(this.control.varianceSummary);
+  }
+
+  get workHighlightItemId(): number | null {
+    return resolvePlanWorkHighlightItemId(this.control.varianceUnrecordedRows);
+  }
+
+  get proposalConfidence(): ReturnType<typeof resolveLearnProposalConfidence> {
+    const summary = this.inputGapSummary;
+    if (!summary) {
+      return 'high';
+    }
+    return resolveLearnProposalConfidence(summary);
   }
 
   ngOnInit(): void {

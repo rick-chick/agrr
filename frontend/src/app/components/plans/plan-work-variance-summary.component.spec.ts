@@ -22,9 +22,9 @@ describe('PlanWorkVarianceSummaryComponent', () => {
     translate.setTranslation(
       'ja',
       {
-        'plans.work.variance_summary.title': '予実乖離サマリ',
+        'plans.work.variance_summary.title': '入力ギャップサマリ',
         'plans.work.variance_summary.unrecorded': '未記録',
-        'plans.work.variance_summary.threshold_exceeded': '閾値超過',
+        'plans.work.variance_summary.threshold_exceeded': '要対応',
         'plans.work.variance_summary.gdd_delay': 'GDD遅延',
         'plans.work.variance_summary.learn_cta': '振り返りで詳細を見る',
         'common.loading': '読み込み中'
@@ -44,7 +44,7 @@ describe('PlanWorkVarianceSummaryComponent', () => {
     const text = fixture.nativeElement.textContent ?? '';
     expect(text).toContain('未記録');
     expect(text).toContain('2');
-    expect(text).toContain('閾値超過');
+    expect(text).toContain('要対応');
     expect(text).toContain('3');
     expect(text).toContain('GDD遅延');
     expect(text).toContain('1');
