@@ -428,6 +428,32 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Current plan variance');
   });
 
+  it('shows bulk apply panel for safe stage GDD proposals', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentStageGddProposals({
+      proposals: [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          stageId: 2,
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageGddDelta: 5,
+          recordedItemCount: 2,
+          currentRequiredGdd: 100,
+          proposedRequiredGdd: 105
+        }
+      ],
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-bulk-apply-panel')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Apply all safe proposals');
+  });
+
   it('loads merged proposals from imported snapshot when variance has none', async () => {
     carryoverUseCase.loadLearningSnapshot.mockReturnValue(
       of({

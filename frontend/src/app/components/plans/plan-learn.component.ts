@@ -16,6 +16,7 @@ import { resolveLearnObservePhaseStatus } from '../../domain/plans/resolve-learn
 import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
+import { PlanLearnBulkApplyPanelComponent } from './plan-learn-bulk-apply-panel.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
@@ -72,6 +73,7 @@ const initialControl: PlanLearnViewState = {
     PlanLearnApplicationProgressViewComponent,
     PlanLearnPostMasterConfirmationComponent,
     PlanLearnMasterUpdateNextStepsComponent,
+    PlanLearnBulkApplyPanelComponent,
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
     VarianceActionProposalCardsComponent,
@@ -125,6 +127,13 @@ const initialControl: PlanLearnViewState = {
           <app-plan-learn-master-update-next-steps
             [planId]="planId"
             [visible]="true"
+          />
+          <app-plan-learn-bulk-apply-panel
+            [planId]="planId"
+            [stageGddProposals]="control.stageGddProposals"
+            [blueprintTimingProposals]="control.blueprintTimingProposals"
+            [progressRefreshVersion]="proposalProgressRefreshVersion"
+            (progressChanged)="onProposalProgressChanged()"
           />
           <app-plan-learn-application-progress-view
             [planId]="planId"
