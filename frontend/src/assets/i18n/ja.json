@@ -2758,7 +2758,8 @@
           "loop_complete_next_plan": "次の計画へ進む",
           "complete_reorganize": "作業台で配置を確認",
           "complete_next_plan": "計画一覧へ",
-          "handoff_new_plan": "次の計画を作成（学習を引き継ぐ）"
+          "handoff_new_plan": "次の計画を作成（学習を引き継ぐ）",
+          "handoff_source_plan": "引き継ぎ元の計画: {{planName}}"
         },
         "complete": {
           "title": "学習ループ完了",
