@@ -34,6 +34,13 @@ import { buildPlanWorkTodayAttention } from '../../domain/plans/build-plan-work-
 import type { PlanWorkTodayAttentionSummary } from '../../domain/plans/build-plan-work-today-attention';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import { formatVarianceDeltaDays, formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
+import {
+  resolveWorkRowGddGapState,
+  resolveWorkRowGddTrigger,
+  resolveWorkRowWeatherDependency,
+  shouldShowWorkRowGddGapBadge,
+  type WorkRowGddGapState
+} from '../../domain/work-schedule/work-row-context-badges';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -298,6 +305,37 @@ const initialControl: PlanWorkViewState = {
               </span>
             }
           }
+          @if (gddTriggerForRow(row); as gddTrigger) {
+            <span class="plan-work__context-badge plan-work__context-badge--gdd-trigger">
+              {{
+                'plans.work.context_badge.gdd_trigger'
+                  | translate: { value: formatGddTriggerLabel(gddTrigger) }
+              }}
+            </span>
+          }
+          @if (showGddGapBadgeForRow(row)) {
+            @if (gddGapStateForRow(row); as gapState) {
+              @if (gapState.kind === 'reached') {
+                <span class="plan-work__context-badge plan-work__context-badge--gdd-reached">
+                  {{ 'plans.work.context_badge.gdd_reached' | translate }}
+                </span>
+              } @else if (gapState.kind === 'shortfall') {
+                <span class="plan-work__context-badge plan-work__context-badge--gdd-gap">
+                  {{
+                    'plans.work.context_badge.gdd_shortfall'
+                      | translate: { gap: formatGddGapLabel(gapState.gap) }
+                  }}
+                </span>
+              }
+            }
+          }
+          @if (weatherDependencyForRow(row); as weatherDependency) {
+            <span class="plan-work__context-badge plan-work__context-badge--weather">
+              {{
+                ('plans.work.context_badge.weather_' + weatherDependency) | translate
+              }}
+            </span>
+          }
         </div>
         <div class="plan-work__row-actions">
           @if (!row.recordedToday && row.item.status !== 'skipped') {
@@ -466,6 +504,36 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
 
   gddExceedanceLabel(item: PlanVarianceActionItem): string {
     return item.gdd_delta != null ? formatVarianceGddDelta(item.gdd_delta) : '—';
+  }
+
+  gddTriggerForRow(row: WorkDayListRowDto): number | null {
+    return resolveWorkRowGddTrigger(row.item);
+  }
+
+  formatGddTriggerLabel(trigger: number): string {
+    return Number.isInteger(trigger) ? String(trigger) : trigger.toFixed(1);
+  }
+
+  gddGapStateForRow(row: WorkDayListRowDto): WorkRowGddGapState {
+    return resolveWorkRowGddGapState(
+      resolveWorkRowGddTrigger(row.item),
+      row.cumulativeGddAtToday
+    );
+  }
+
+  showGddGapBadgeForRow(row: WorkDayListRowDto): boolean {
+    const actionItem = this.varianceActionItemForRow(row);
+    const hasGddExceedance =
+      actionItem != null && this.showGddExceedanceBadge(actionItem);
+    return shouldShowWorkRowGddGapBadge(this.gddGapStateForRow(row), hasGddExceedance);
+  }
+
+  formatGddGapLabel(gap: number): string {
+    return Number.isInteger(gap) ? String(gap) : gap.toFixed(1);
+  }
+
+  weatherDependencyForRow(row: WorkDayListRowDto): string | null {
+    return resolveWorkRowWeatherDependency(row.item);
   }
 
   private _control: PlanWorkViewState = initialControl;

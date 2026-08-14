@@ -11,6 +11,8 @@ import { LoadWorkDayListDataDto } from './load-work-day-list.dtos';
 import { TaskScheduleItem, TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
 import { WorkRecordGateway } from './work-record-gateway';
+import { FieldClimateGateway } from './field-climate/field-climate.gateway';
+import { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
 
 const baseDetails = {
   stage: { name: 'stage', order: 1 },
@@ -87,6 +89,37 @@ function scheduleWithItems(items: TaskScheduleItem[]): TaskScheduleResponse {
 describe('LoadWorkDayListUseCase', () => {
   const today = '2026-06-12';
 
+  const createFieldClimateGateway = (
+    cumulativeByField: Record<number, number | null> = {}
+  ): FieldClimateGateway =>
+    ({
+      fetchFieldClimateData: ({ fieldCultivationId, displayStartDate }) =>
+        of({
+          gdd_data: [
+            {
+              date: displayStartDate ?? today,
+              gdd: 0,
+              cumulative_gdd: cumulativeByField[fieldCultivationId] ?? null
+            }
+          ],
+          weather_data: [],
+          stages: []
+        } as FieldCultivationClimateData)
+    }) as FieldClimateGateway;
+
+  const createUseCase = (
+    outputPort: LoadWorkDayListOutputPort,
+    gateway: PlanGateway,
+    workRecordGateway: WorkRecordGateway = createWorkRecordGateway(),
+    fieldClimateGateway: FieldClimateGateway = createFieldClimateGateway()
+  ) =>
+    new LoadWorkDayListUseCase(
+      outputPort,
+      gateway,
+      workRecordGateway,
+      fieldClimateGateway
+    );
+
   const createGateway = (response: TaskScheduleResponse): PlanGateway =>
     ({
       listPlans: () => of([]),
@@ -149,7 +182,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway()
@@ -178,7 +211,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway()
@@ -202,7 +235,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway()
@@ -225,7 +258,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway()
@@ -251,7 +284,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway()
@@ -278,7 +311,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway()
@@ -315,7 +348,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway()
@@ -340,7 +373,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway()
@@ -373,7 +406,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError
     };
 
-    const useCase = new LoadWorkDayListUseCase(outputPort, gateway, createWorkRecordGateway());
+    const useCase = createUseCase(outputPort, gateway, createWorkRecordGateway());
     useCase.execute({ planId: 1, today });
 
     expect(onError).toHaveBeenCalled();
@@ -389,7 +422,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway([
@@ -415,7 +448,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway()
@@ -442,7 +475,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway()
@@ -465,7 +498,7 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(
+    const useCase = createUseCase(
       outputPort,
       createGateway(response),
       createWorkRecordGateway([adhocRecord({ name: '規格選別', actual_date: today })])
@@ -474,6 +507,29 @@ describe('LoadWorkDayListUseCase', () => {
 
     expect(result!.today).toHaveLength(1);
     expect(result!.recentAdHocRecord).toBeNull();
+  });
+
+  it('attaches cumulative GDD from field climate to work day rows', () => {
+    const response = scheduleWithItems([
+      item({ item_id: 1, scheduled_date: today, name: '防除' })
+    ]);
+    let result: LoadWorkDayListDataDto | null = null;
+    const outputPort: LoadWorkDayListOutputPort = {
+      present: (dto) => {
+        result = dto;
+      },
+      onError: () => {}
+    };
+
+    const useCase = createUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway(),
+      createFieldClimateGateway({ 10: 142.5 })
+    );
+    useCase.execute({ planId: 1, today });
+
+    expect(result!.today[0].cumulativeGddAtToday).toBe(142.5);
   });
 });
 
