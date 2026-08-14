@@ -28,8 +28,11 @@ import { PlanLearnNavBadgeHostComponent } from './plan-learn-nav-badge-host.comp
         [routerLink]="['/plans', planId, 'work']"
         routerLinkActive="plan-context-nav__link--active"
         [routerLinkActiveOptions]="{ exact: true }"
-        class="plan-context-nav__link"
-      >{{ 'plans.work.nav.work' | translate }}</a>
+        class="plan-context-nav__link plan-context-nav__link--with-badge"
+      >
+        {{ 'plans.work.nav.work' | translate }}
+        <app-plan-learn-nav-badge-host [planId]="planId" />
+      </a>
       <a
         [routerLink]="['/plans', planId, 'work_records']"
         routerLinkActive="plan-context-nav__link--active"
