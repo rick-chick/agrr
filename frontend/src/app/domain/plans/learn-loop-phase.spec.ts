@@ -135,10 +135,9 @@ describe('buildLearnLoopPhaseResult', () => {
 
     expect(result.currentPhase).toBe('handoff');
     expect(result.nextAction).toMatchObject({
-      labelKey: 'plans.learn.loop.next_action.handoff_new_plan',
-      kind: 'router_link',
-      routerLink: ['/plans', 'new'],
-      queryParams: { carryoverFrom: PLAN_ID }
+      labelKey: 'plans.learn.loop.next_action.handoff_carryover',
+      kind: 'scroll',
+      scrollTargetId: 'plan-learn-carryover-title'
     });
   });
 

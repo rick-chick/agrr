@@ -2599,6 +2599,11 @@
         "return_to_learn": "学習画面に戻る"
       }
     },
+    "carryover": {
+      "next_plan_heading": "次の計画",
+      "next_plan_hint": "この計画の学習を引き継いで新しい計画を作成します。",
+      "next_plan_cta": "次の計画を作成（学習を引き継ぐ）"
+    },
     "learn": {
       "page_title": "振り返り — {{name}}",
       "nav_badge": {
@@ -2698,22 +2703,8 @@
         "apply_button": "安全な提案を一括適用（{{count}}）",
         "applying": "適用中 {{applied}} / {{total}}…",
         "complete_message": "安全な提案 {{count}} 件を適用しました。再最適化パイプラインを開始して計画を更新してください。",
-        "start_pipeline": "再最適化パイプラインを開始"
-      },
-      "proposal_queue": {
-        "title": "提案キュー",
-        "lead": "優先順位に従って学習提案を確認・適用します。",
-        "tier": {
-          "action_required": "要作業",
-          "needs_review": "要確認",
-          "safe": "安全（一括適用可）"
-        },
-        "kind": {
-          "variance_action": "スケジュール乖離"
-        },
-        "post_apply": {
-          "title": "安全な提案を適用しました"
-        }
+        "start_pipeline": "再最適化パイプラインを開始",
+        "starting_pipeline": "安全な提案 {{count}} 件を適用しました。再最適化パイプラインを開始しています…"
       },
       "post_master": {
         "title": "マスタ更新を適用しました",
@@ -2815,6 +2806,21 @@
         "retry": "パイプラインを再試行",
         "resume": "パイプラインを再開",
         "active_message": "再配置パイプラインが進行中です。中断したところから再開できます。"
+      },
+      "proposal_queue": {
+        "title": "提案キュー",
+        "lead": "優先順位に従って学習提案を確認・適用します。",
+        "tier": {
+          "action_required": "要作業",
+          "needs_review": "要確認",
+          "safe": "安全（一括適用可）"
+        },
+        "kind": {
+          "variance_action": "スケジュール乖離"
+        },
+        "post_apply": {
+          "title": "安全な提案を適用しました"
+        }
       }
     },
     "work": {

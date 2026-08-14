@@ -53,8 +53,6 @@ describe('PlanLearnLoopProgressComponent', () => {
         'plans.learn.loop.complete_message': 'Learning loop complete',
         'plans.learn.loop.next_action.observe_workbench': 'Open workbench',
         'plans.learn.loop.next_action.handoff_carryover': 'Import carryover',
-        'plans.learn.loop.next_action.handoff_new_plan': 'Create next plan with learning',
-        'plans.learn.loop.handoff_source_plan': 'Source plan: {{planName}}',
         'plans.learn.loop.next_action.complete_reorganize': 'Verify placement',
         'plans.learn.loop.next_action.complete_next_plan': 'Go to plans'
       },
@@ -85,8 +83,7 @@ describe('PlanLearnLoopProgressComponent', () => {
     expect(cta.textContent).toContain('Open workbench');
   });
 
-  it('shows new-plan router link CTA when learning snapshot and carryover sources exist', () => {
-    fixture.componentInstance.planName = 'Main Plan';
+  it('shows scroll CTA to carryover section when learning snapshot and carryover sources exist', () => {
     fixture.componentInstance.hasLearningSnapshot = true;
     fixture.componentInstance.carryoverSourcePlanCount = 2;
     fixture.detectChanges();
@@ -97,22 +94,8 @@ describe('PlanLearnLoopProgressComponent', () => {
     expect(currentPhase?.textContent).toContain('Handoff');
 
     const cta = fixture.nativeElement.querySelector('.learn-loop-progress__next-cta');
-    expect(cta?.getAttribute('href')).toBe('/plans/new?carryoverFrom=7');
-    expect(cta?.textContent).toContain('Create next plan with learning');
-    expect(fixture.nativeElement.textContent).toContain('Source plan: Main Plan');
-  });
-
-  it('shows source plan name in handoff phase next action', () => {
-    fixture.componentInstance.planName = 'Spring Rotation 2026';
-    fixture.componentInstance.hasLearningSnapshot = true;
-    fixture.componentInstance.carryoverSourcePlanCount = 2;
-    fixture.detectChanges();
-
-    const sourceLabel = fixture.nativeElement.querySelector(
-      '.learn-loop-progress__handoff-source'
-    );
-    expect(sourceLabel).not.toBeNull();
-    expect(sourceLabel.textContent).toContain('Spring Rotation 2026');
+    expect(cta?.getAttribute('href')).toBe('#plan-learn-carryover-title');
+    expect(cta?.textContent).toContain('Import carryover');
   });
 
   it('marks earlier phases as completed when current phase is handoff', () => {

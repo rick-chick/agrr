@@ -1475,6 +1475,11 @@
         "return_to_learn": "Return to learning screen"
       }
     },
+    "carryover": {
+      "next_plan_heading": "Next plan",
+      "next_plan_hint": "Create a new plan that carries learning from this plan forward.",
+      "next_plan_cta": "Create next plan with learning"
+    },
     "learn": {
       "page_title": "Review — {{name}}",
       "nav_badge": {
@@ -1574,22 +1579,8 @@
         "apply_button": "Apply all safe proposals ({{count}})",
         "applying": "Applying {{applied}} / {{total}}…",
         "complete_message": "{{count}} safe proposal(s) applied. Start the reorganization pipeline to refresh your plan.",
-        "start_pipeline": "Start reorganization pipeline"
-      },
-      "proposal_queue": {
-        "title": "Proposal queue",
-        "lead": "Review and apply learning proposals in priority order.",
-        "tier": {
-          "action_required": "Action required",
-          "needs_review": "Needs review",
-          "safe": "Safe to apply"
-        },
-        "kind": {
-          "variance_action": "Schedule variance"
-        },
-        "post_apply": {
-          "title": "Safe proposals applied"
-        }
+        "start_pipeline": "Start reorganization pipeline",
+        "starting_pipeline": "{{count}} safe proposal(s) applied. Starting reorganization pipeline…"
       },
       "post_master": {
         "title": "Master update applied",
@@ -1691,6 +1682,21 @@
         "retry": "Retry pipeline",
         "resume": "Resume pipeline",
         "active_message": "A reorganization pipeline is in progress. Resume where you left off."
+      },
+      "proposal_queue": {
+        "title": "Proposal queue",
+        "lead": "Review and apply learning proposals in priority order.",
+        "tier": {
+          "action_required": "Action required",
+          "needs_review": "Needs review",
+          "safe": "Safe to apply"
+        },
+        "kind": {
+          "variance_action": "Schedule variance"
+        },
+        "post_apply": {
+          "title": "Safe proposals applied"
+        }
       }
     },
     "work": {
