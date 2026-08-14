@@ -10,6 +10,7 @@ import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.compo
 import { PlanLearnReorganizeBannerComponent } from './plan-learn-reorganize-banner.component';
 import {
   clearLearnOrchestrationReturnToLearn,
+  hasLearnReorganizePipelineFailure,
   markLearnOrchestrationStepComplete,
   readLearnOrchestrationReturnToLearn
 } from '../../domain/plans/learn-master-update-orchestration';
@@ -130,10 +131,13 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     this._control = value;
     const planId = this.planId;
     if (planId && value.status === 'failed' && readLearnReorganizePipelineAutoChain(planId)) {
-      setLearnReorganizePipelineError(
-        planId,
-        value.phaseMessage || 'plans.optimizing_live.error.generic'
-      );
+      if (!hasLearnReorganizePipelineFailure(planId)) {
+        setLearnReorganizePipelineError(
+          planId,
+          value.phaseMessage || 'plans.optimizing_live.error.generic'
+        );
+        void this.router.navigate(['/plans', planId, 'learn']);
+      }
     }
     this.cdr.markForCheck();
   }

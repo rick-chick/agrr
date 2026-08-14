@@ -16,7 +16,16 @@ import { PlanTaskScheduleComponent } from './plan-task-schedule.component';
 import type { PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { localTodayIso } from '../../core/local-today';
-import { readLearnOrchestrationStepComplete } from '../../domain/plans/learn-master-update-orchestration';
+import {
+  clearLearnOrchestrationProgressCache,
+  hasLearnReorganizePipelineFailure,
+  readLearnOrchestrationStepComplete
+} from '../../domain/plans/learn-master-update-orchestration';
+import {
+  clearLearnReorganizePipelineAutoChain,
+  readLearnReorganizePipelineAutoChain,
+  storeLearnReorganizePipelineAutoChain
+} from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 
 const loadedSchedule: TaskScheduleResponse = {
   plan: {
@@ -1243,5 +1252,135 @@ describe('PlanTaskScheduleComponent', () => {
     expect(link).not.toBeNull();
     expect(link.getAttribute('href')).toBe('/plans/7/learn');
     expect(readLearnOrchestrationStepComplete(7, 'regenerate')).toBe(true);
+  });
+
+  it('auto-returns to learn when sync_verify completes during auto-chain pipeline', async () => {
+    TestBed.resetTestingModule();
+    clearLearnOrchestrationProgressCache();
+    clearLearnReorganizePipelineAutoChain(7);
+    storeLearnReorganizePipelineAutoChain(7);
+
+    loadUseCase = { execute: vi.fn() };
+    regenerateUseCase = { execute: vi.fn() };
+    subscribeSyncUseCase = { execute: vi.fn() };
+    cdr = { markForCheck: vi.fn() };
+
+    const syncVerifyRouteMock = createPlanRouteMock({
+      planId: '7',
+      query: { learningOrchestration: 'sync_verify' }
+    });
+
+    TestBed.overrideComponent(PlanTaskScheduleComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          PlanTaskSchedulePresenter,
+          { provide: ChangeDetectorRef, useValue: cdr },
+          { provide: ActivatedRoute, useValue: syncVerifyRouteMock }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    translate.setTranslation('en', en as TranslationObject, true);
+
+    const autoChainFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const autoChainPresenter = autoChainFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
+    const autoChainRouter = TestBed.inject(Router);
+    vi.spyOn(autoChainRouter, 'navigate').mockResolvedValue(true);
+
+    autoChainFixture.detectChanges();
+    setScheduleControl(autoChainFixture.componentInstance, autoChainPresenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        plan: {
+          ...loadedSchedule.plan,
+          task_schedule_sync_state: 'ready'
+        }
+      }
+    });
+    await autoChainFixture.whenStable();
+
+    expect(readLearnOrchestrationStepComplete(7, 'sync_verify')).toBe(true);
+    expect(readLearnReorganizePipelineAutoChain(7)).toBe(false);
+    expect(autoChainRouter.navigate).toHaveBeenCalledWith(['/plans', 7, 'learn']);
+  });
+
+  it('returns to learn when task schedule sync fails during auto-chain pipeline', async () => {
+    TestBed.resetTestingModule();
+    clearLearnOrchestrationProgressCache();
+    clearLearnReorganizePipelineAutoChain(7);
+    storeLearnReorganizePipelineAutoChain(7);
+
+    loadUseCase = { execute: vi.fn() };
+    regenerateUseCase = { execute: vi.fn() };
+    subscribeSyncUseCase = { execute: vi.fn() };
+    cdr = { markForCheck: vi.fn() };
+
+    const regenerateRouteMock = createPlanRouteMock({
+      planId: '7',
+      query: { learningOrchestration: 'regenerate' }
+    });
+
+    TestBed.overrideComponent(PlanTaskScheduleComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          PlanTaskSchedulePresenter,
+          { provide: ChangeDetectorRef, useValue: cdr },
+          { provide: ActivatedRoute, useValue: regenerateRouteMock }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    translate.setTranslation('en', en as TranslationObject, true);
+
+    const failureFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const failurePresenter = failureFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
+    const failureRouter = TestBed.inject(Router);
+    vi.spyOn(failureRouter, 'navigate').mockResolvedValue(true);
+
+    failureFixture.detectChanges();
+    setScheduleControl(failureFixture.componentInstance, failurePresenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        plan: {
+          ...loadedSchedule.plan,
+          task_schedule_sync_state: 'failed',
+          task_schedule_sync_error: 'Sync failed'
+        }
+      }
+    });
+    await failureFixture.whenStable();
+
+    expect(hasLearnReorganizePipelineFailure(7)).toBe(true);
+    expect(failureRouter.navigate).toHaveBeenCalledWith(['/plans', 7, 'learn']);
   });
 });

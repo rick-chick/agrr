@@ -9,6 +9,7 @@ import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-
 import { PlanOptimizingPresenter } from '../../usecase/plans/plan-optimizing.providers';
 import {
   clearLearnOrchestrationProgressCache,
+  hasLearnReorganizePipelineFailure,
   hydrateLearnOrchestrationProgress,
   readLearnOrchestrationReturnToLearn,
   readLearnOrchestrationStepComplete
@@ -186,6 +187,20 @@ describe('PlanOptimizingComponent', () => {
       queryParams: { learningOrchestration: 'regenerate' }
     });
     expect(readLearnOrchestrationStepComplete(13, 'placement')).toBe(true);
+    clearLearnReorganizePipelineAutoChain(13);
+  });
+
+  it('returns to learn and records pipeline failure when optimization fails during auto-chain', () => {
+    storeLearnReorganizePipelineAutoChain(13);
+
+    component.control = {
+      status: 'failed',
+      progress: 40,
+      phaseMessage: 'Process failed'
+    };
+
+    expect(hasLearnReorganizePipelineFailure(13)).toBe(true);
+    expect(router.navigate).toHaveBeenCalledWith(['/plans', 13, 'learn']);
     clearLearnReorganizePipelineAutoChain(13);
   });
 

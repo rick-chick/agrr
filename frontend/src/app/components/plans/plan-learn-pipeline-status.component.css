@@ -16,7 +16,8 @@
 }
 
 .learn-pipeline-status__message,
-.learn-pipeline-status__active-message {
+.learn-pipeline-status__active-message,
+.learn-pipeline-status__phase {
   margin: 0 0 0.75rem;
 }
 
