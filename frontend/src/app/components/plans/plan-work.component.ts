@@ -422,7 +422,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   }
 
   get todayAttentionLoading(): boolean {
-    return this.control.loading || this.control.varianceSummaryLoading;
+    return this.control.varianceSummaryLoading;
   }
 
   get todayAttentionSummary(): PlanWorkTodayAttentionSummary | null {
