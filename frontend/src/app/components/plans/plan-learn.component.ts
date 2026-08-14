@@ -122,7 +122,7 @@ const initialControl: PlanLearnViewState = {
           }
           <app-plan-learn-master-update-next-steps
             [planId]="planId"
-            [visible]="showMasterUpdateNextSteps"
+            [visible]="true"
           />
           <app-plan-learn-application-progress-view
             [planId]="planId"

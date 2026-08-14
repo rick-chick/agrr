@@ -2601,6 +2601,10 @@
     },
     "learn": {
       "page_title": "振り返り — {{name}}",
+      "nav_badge": {
+        "unapplied_count": "未適用提案 {{count}} 件",
+        "current_phase": "学習フェーズ: {{phase}}"
+      },
       "imported_snapshot_title": "計画 #{{sourcePlanId}} から取り込んだ学習データ",
       "imported_snapshot_empty": "取り込みスナップショットにカテゴリ差分データがありません。",
       "current_variance_title": "現計画の実績差分",

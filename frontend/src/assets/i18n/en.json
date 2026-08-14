@@ -1477,6 +1477,10 @@
     },
     "learn": {
       "page_title": "Review — {{name}}",
+      "nav_badge": {
+        "unapplied_count": "{{count}} unapplied proposals",
+        "current_phase": "Learning phase: {{phase}}"
+      },
       "imported_snapshot_title": "Imported learning from plan #{{sourcePlanId}}",
       "imported_snapshot_empty": "No category variance data in the imported snapshot.",
       "current_variance_title": "Current plan variance",
