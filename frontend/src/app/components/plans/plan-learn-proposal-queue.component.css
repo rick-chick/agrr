@@ -1,0 +1,100 @@
+.learn-proposal-queue {
+  margin-block: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+}
+
+.learn-proposal-queue__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.learn-proposal-queue__lead {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+.learn-proposal-queue__category {
+  margin-block-end: var(--space-4);
+}
+
+.learn-proposal-queue__category-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.learn-proposal-queue__category-count {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-normal);
+}
+
+.learn-proposal-queue__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.learn-proposal-queue__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-base);
+}
+
+.learn-proposal-queue__item + .learn-proposal-queue__item {
+  margin-block-start: var(--space-2);
+}
+
+.learn-proposal-queue__item-title {
+  font-weight: var(--font-weight-medium);
+}
+
+.learn-proposal-queue__item-subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.learn-proposal-queue__bulk-apply {
+  margin-block: var(--space-4) 0;
+  padding: var(--space-3);
+  border: 1px dashed var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.learn-proposal-queue__post-apply {
+  margin-block-end: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-accent, var(--color-border-subtle));
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-base);
+}
+
+.learn-proposal-queue__post-apply-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.learn-proposal-queue__post-apply-lead {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+.learn-proposal-queue :is(.learn-bulk-apply__lead, .learn-bulk-apply__actions, .learn-bulk-apply__error) {
+  margin: 0;
+}
+
+.learn-proposal-queue .learn-bulk-apply__actions {
+  margin-block-start: var(--space-3);
+}
+
+.learn-proposal-queue .learn-bulk-apply__error {
+  margin-block-start: var(--space-2);
+}
