@@ -7,6 +7,7 @@ import { PlanOptimizingView, PlanOptimizingViewState } from './plan-optimizing.v
 import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-plan-optimization.usecase';
 import { PlanOptimizingPresenter, PLAN_OPTIMIZING_PROVIDERS } from '../../usecase/plans/plan-optimizing.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
+import { PlanLearnLoopProgressStripComponent } from './plan-learn-loop-progress-strip.component';
 import {
   clearLearnOrchestrationReturnToLearn,
   markLearnOrchestrationStepComplete,
@@ -26,7 +27,7 @@ const initialControl: PlanOptimizingViewState = {
 @Component({
   selector: 'app-plan-optimizing',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, PlanPlanContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, PlanPlanContextHeaderComponent, PlanLearnLoopProgressStripComponent],
   providers: [...PLAN_OPTIMIZING_PROVIDERS],
   template: `
     <div class="page-main page-main--fit">
@@ -36,6 +37,17 @@ const initialControl: PlanOptimizingViewState = {
         pageTitleKey="plans.optimizing_live.heading"
       />
       <section class="page">
+        @if (showLearnReorganizeShell) {
+          <div class="plan-optimizing__reorganize-shell" role="status" aria-live="polite">
+            <app-plan-learn-loop-progress-strip [planId]="planId" />
+            <a
+              class="btn btn-primary plan-optimizing__learn-link"
+              [routerLink]="['/plans', planId, 'learn']"
+            >
+              {{ 'plans.task_schedules.orchestration.return_to_learn' | translate }}
+            </a>
+          </div>
+        }
         @if (isFailed) {
           <div class="page-alert-error plan-optimizing__error" role="alert">
             <p>{{ control.phaseMessage }}</p>
@@ -101,6 +113,16 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
 
   get isFailed(): boolean {
     return this.control.status === 'failed';
+  }
+
+  get showLearnReorganizeShell(): boolean {
+    const planId = this.planId;
+    if (!planId) {
+      return false;
+    }
+    return (
+      readLearnOrchestrationReturnToLearn(planId) || readLearnReorganizePipelineAutoChain(planId)
+    );
   }
 
   private _control: PlanOptimizingViewState = initialControl;
