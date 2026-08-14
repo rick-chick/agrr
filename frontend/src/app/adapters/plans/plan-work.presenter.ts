@@ -386,9 +386,7 @@ export class PlanWorkPresenter
     this.frostRiskCount = dto.frostRiskCount;
     this.view.control = {
       ...this.view.control,
-      todayAttentionLoading: false,
       todayAttentionError: null,
-      todayAttentionReady: true,
       ...this.syncTodayAttentionFields(this.view.control.varianceSummaryStats, false)
     };
   }
@@ -401,9 +399,7 @@ export class PlanWorkPresenter
     this.frostRiskCount = 0;
     this.view.control = {
       ...this.view.control,
-      todayAttentionLoading: false,
       todayAttentionError: dto.message,
-      todayAttentionReady: true,
       ...this.syncTodayAttentionFields(this.view.control.varianceSummaryStats, false)
     };
   }
