@@ -1577,6 +1577,18 @@
         "start_pipeline": "Start reorganization pipeline",
         "starting_pipeline": "{{count}} safe proposal(s) applied. Starting reorganization pipeline…"
       },
+      "proposal_queue": {
+        "title": "Proposal queue",
+        "lead": "Review learn proposals by priority. Safe proposals can be bulk-applied; others need your confirmation or workbench action.",
+        "category": {
+          "safe": "Safe to apply",
+          "requires_confirmation": "Requires confirmation",
+          "requires_action": "Requires your action"
+        },
+        "post_apply": {
+          "title": "Safe proposals applied"
+        }
+      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",

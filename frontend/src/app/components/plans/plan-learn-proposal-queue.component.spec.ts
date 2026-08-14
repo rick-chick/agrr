@@ -4,7 +4,8 @@ import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '../../../assets/i18n/en.json';
 import {
-  clearLearnProposalApplicationProgressCache
+  clearLearnProposalApplicationProgressCache,
+  storeLearnPostMasterPayload
 } from '../../domain/plans/learn-proposal-application-progress';
 import {
   clearLearnReorganizePipelineAutoChain,
@@ -12,10 +13,10 @@ import {
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 import { clearLearnOrchestrationProgressCache } from '../../domain/plans/learn-master-update-orchestration';
 import { BulkApplySafeLearnProposalsUseCase } from '../../usecase/plans/bulk-apply-safe-learn-proposals.usecase';
-import { PlanLearnBulkApplyPanelComponent } from './plan-learn-bulk-apply-panel.component';
+import { PlanLearnProposalQueueComponent } from './plan-learn-proposal-queue.component';
 
-describe('PlanLearnBulkApplyPanelComponent', () => {
-  let fixture: ComponentFixture<PlanLearnBulkApplyPanelComponent>;
+describe('PlanLearnProposalQueueComponent', () => {
+  let fixture: ComponentFixture<PlanLearnProposalQueueComponent>;
   let bulkApplyUseCase: { execute: ReturnType<typeof vi.fn> };
   let router: Router;
 
@@ -32,13 +33,13 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [PlanLearnBulkApplyPanelComponent, TranslateModule.forRoot()],
+      imports: [PlanLearnProposalQueueComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
         { provide: BulkApplySafeLearnProposalsUseCase, useValue: bulkApplyUseCase }
       ]
     })
-      .overrideComponent(PlanLearnBulkApplyPanelComponent, {
+      .overrideComponent(PlanLearnProposalQueueComponent, {
         set: {
           providers: [{ provide: BulkApplySafeLearnProposalsUseCase, useValue: bulkApplyUseCase }]
         }
@@ -50,13 +51,13 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
     translate.setDefaultLang('en');
     translate.use('en');
 
-    fixture = TestBed.createComponent(PlanLearnBulkApplyPanelComponent);
+    fixture = TestBed.createComponent(PlanLearnProposalQueueComponent);
     fixture.componentInstance.planId = 7;
     router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
   });
 
-  it('shows bulk apply CTA when safe proposals exist', () => {
+  it('renders categorized proposal queue with observable counts', () => {
     fixture.componentInstance.stageGddProposals = [
       {
         cropId: 1,
@@ -68,34 +69,49 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
         recordedItemCount: 2,
         currentRequiredGdd: 100,
         proposedRequiredGdd: 105
-      }
-    ];
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.textContent).toContain('Apply all safe proposals');
-    expect(fixture.nativeElement.textContent).toContain('(1)');
-  });
-
-  it('hides panel when no safe proposals exist', () => {
-    fixture.componentInstance.stageGddProposals = [
+      },
       {
         cropId: 1,
         cropName: 'Tomato',
-        stageId: 2,
-        stageOrder: 1,
-        stageName: 'Vegetative',
+        stageId: 3,
+        stageOrder: 2,
+        stageName: 'Flowering',
         averageGddDelta: 50,
         recordedItemCount: 2,
-        currentRequiredGdd: 100,
-        proposedRequiredGdd: 150
+        currentRequiredGdd: 200,
+        proposedRequiredGdd: 250
+      }
+    ];
+    fixture.componentInstance.actionRequiredItems = [
+      {
+        item_id: 11,
+        field_cultivation_id: 100,
+        category: 'general',
+        name: 'Weed control',
+        scheduled_date: '2026-06-01',
+        actual_date: '2026-06-08',
+        delta_days: 7,
+        gdd_trigger: 100,
+        gdd_at_actual: 110,
+        gdd_delta: 10,
+        exceedance_kind: 'days'
       }
     ];
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.learn-bulk-apply')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Proposal queue');
+    expect(fixture.nativeElement.textContent).toContain('Requires your action');
+    expect(fixture.nativeElement.textContent).toContain('Requires confirmation');
+    expect(fixture.nativeElement.textContent).toContain('Safe to apply');
+    expect(fixture.nativeElement.textContent).toContain('Weed control');
+    expect(fixture.nativeElement.textContent).toContain('Tomato — Flowering');
+    expect(fixture.nativeElement.textContent).toContain('Tomato — Vegetative');
+    expect(fixture.nativeElement.querySelector('[data-testid="queue-count-requires_action"]')?.textContent).toContain('1');
+    expect(fixture.nativeElement.querySelector('[data-testid="queue-count-requires_confirmation"]')?.textContent).toContain('1');
+    expect(fixture.nativeElement.querySelector('[data-testid="queue-count-safe"]')?.textContent).toContain('1');
   });
 
-  it('applies safe proposals and shows post-apply confirmation without auto navigation', async () => {
+  it('shows post-apply confirmation on same screen after bulk apply without auto navigation', async () => {
     fixture.componentInstance.stageGddProposals = [
       {
         cropId: 1,
@@ -112,7 +128,7 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
     fixture.detectChanges();
 
     const applyButton = fixture.nativeElement.querySelector(
-      '.learn-bulk-apply .btn-primary'
+      '.learn-proposal-queue__bulk-apply .btn-primary'
     ) as HTMLButtonElement;
     applyButton.click();
     fixture.detectChanges();
@@ -121,21 +137,48 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
     await fixture.whenStable();
 
     expect(bulkApplyUseCase.execute).toHaveBeenCalled();
-    expect(readLearnReorganizePipelineAutoChain(7)).toBe(false);
     expect(router.navigate).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('1 safe proposal(s) applied');
     expect(fixture.nativeElement.textContent).toContain('Start reorganization pipeline');
+    expect(fixture.nativeElement.querySelector('.learn-proposal-queue__post-apply')).toBeTruthy();
   });
 
-  it('navigates to adjust with auto-chain when pipeline is started manually', () => {
+  it('starts reorganize pipeline only when user confirms post-apply step', () => {
     fixture.componentInstance.bulkApplyComplete = true;
-    fixture.componentInstance.lastAppliedCount = 1;
+    fixture.componentInstance.lastAppliedCount = 2;
     fixture.detectChanges();
 
-    fixture.componentInstance.startReorganizePipeline();
+    const startButton = fixture.nativeElement.querySelector(
+      '.learn-proposal-queue__post-apply .btn-primary'
+    ) as HTMLButtonElement;
+    startButton.click();
+
+    expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
     expect(router.navigate).toHaveBeenCalledWith(['/plans', 7], {
       queryParams: { learningOrchestration: 'adjust' }
     });
-    expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
+  });
+
+  it('renders post_master confirmation within the queue when payload is set', () => {
+    storeLearnPostMasterPayload(7, {
+      kind: 'stage_gdd',
+      cropId: 1,
+      cropName: 'Tomato',
+      stageId: 2,
+      stageName: 'Vegetative',
+      appliedRequiredGdd: 150
+    });
+    fixture.componentInstance.postMasterPayload = {
+      kind: 'stage_gdd',
+      cropId: 1,
+      cropName: 'Tomato',
+      stageId: 2,
+      stageName: 'Vegetative',
+      appliedRequiredGdd: 150
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-post-master-confirmation')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Master update applied');
   });
 });

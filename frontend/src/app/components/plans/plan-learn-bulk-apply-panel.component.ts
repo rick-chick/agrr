@@ -29,10 +29,15 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
         @if (bulkApplyComplete) {
           <p class="learn-bulk-apply__success" role="status">
             {{
-              'plans.learn.bulk_apply.starting_pipeline'
+              'plans.learn.bulk_apply.complete_message'
                 | translate: { count: lastAppliedCount }
             }}
           </p>
+          <div class="learn-bulk-apply__actions">
+            <button type="button" class="btn btn-primary" (click)="startReorganizePipeline()">
+              {{ 'plans.learn.bulk_apply.start_pipeline' | translate }}
+            </button>
+          </div>
         } @else {
           <p class="learn-bulk-apply__lead">
             {{
@@ -111,9 +116,6 @@ export class PlanLearnBulkApplyPanelComponent {
         this.lastAppliedCount = result.appliedCount;
         this.bulkApplyComplete = result.appliedCount > 0;
         this.progressChanged.emit();
-        if (result.appliedCount > 0) {
-          this.startReorganizePipeline();
-        }
         this.cdr.markForCheck();
       },
       onError: (message) => {
