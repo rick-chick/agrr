@@ -102,6 +102,19 @@ describe('PlanLearnLoopProgressComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Source plan: Main Plan');
   });
 
+  it('shows source plan name in handoff phase next action', () => {
+    fixture.componentInstance.planName = 'Spring Rotation 2026';
+    fixture.componentInstance.hasLearningSnapshot = true;
+    fixture.componentInstance.carryoverSourcePlanCount = 2;
+    fixture.detectChanges();
+
+    const sourceLabel = fixture.nativeElement.querySelector(
+      '.learn-loop-progress__handoff-source'
+    );
+    expect(sourceLabel).not.toBeNull();
+    expect(sourceLabel.textContent).toContain('Spring Rotation 2026');
+  });
+
   it('marks earlier phases as completed when current phase is handoff', () => {
     fixture.componentInstance.hasLearningSnapshot = true;
     fixture.componentInstance.carryoverSourcePlanCount = 1;
