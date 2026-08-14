@@ -1577,13 +1577,6 @@
         "start_pipeline": "Start reorganization pipeline",
         "starting_pipeline": "{{count}} safe proposal(s) applied. Starting reorganization pipeline…"
       },
-      "pipeline_status": {
-        "failed_title": "Reorganization pipeline failed",
-        "unknown_error": "An unexpected error occurred during reorganization.",
-        "retry": "Retry pipeline",
-        "resume": "Resume pipeline",
-        "active_message": "A reorganization pipeline is in progress. Resume where you left off."
-      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",
@@ -1642,7 +1635,8 @@
           "loop_complete_next_plan": "Continue to next plan",
           "complete_reorganize": "Verify placement on workbench",
           "complete_next_plan": "Go to plans",
-          "handoff_new_plan": "Create next plan with learning"
+          "handoff_new_plan": "Create next plan with learning",
+          "handoff_source_plan": "Source plan: {{planName}}"
         },
         "complete": {
           "title": "Learning loop complete",
@@ -1653,6 +1647,13 @@
         "unrecorded_message": "{{count}} tasks are not recorded yet.",
         "unrecorded_cta": "Record work",
         "complete_message": "Observation phase complete — all scheduled tasks are recorded."
+      },
+      "pipeline_status": {
+        "failed_title": "Reorganization pipeline failed",
+        "unknown_error": "An unexpected error occurred during reorganization.",
+        "retry": "Retry pipeline",
+        "resume": "Resume pipeline",
+        "active_message": "A reorganization pipeline is in progress. Resume where you left off."
       }
     },
     "work": {
