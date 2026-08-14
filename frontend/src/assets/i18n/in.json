@@ -2308,6 +2308,16 @@
         "weather_low": "मौसम: कम",
         "weather_medium": "मौसम: मध्यम",
         "weather_high": "मौसम: अधिक"
+      },
+      "mini_climate": {
+        "title": "मिनी जलवायु पैनल",
+        "expand": "जलवायु विवरण खोलें",
+        "collapse": "जलवायु विवरण बंद करें",
+        "loading": "जलवायु डेटा लोड हो रहा है…",
+        "unavailable": "जलवायु डेटा उपलब्ध नहीं",
+        "cumulative_gdd": "संचयी GDD: {{value}}",
+        "daily_weather": "अधिकतम {{max}}°C / न्यूनतम {{min}}°C / औसत {{mean}}°C",
+        "workbench_link": "वर्कबेंच जलवायु पैनल खोलें"
       }
     },
     "work_records": {

@@ -2946,6 +2946,16 @@
         "weather_low": "天候: 低",
         "weather_medium": "天候: 中",
         "weather_high": "天候: 高"
+      },
+      "mini_climate": {
+        "title": "ミニ気候パネル",
+        "expand": "気候情報を展開",
+        "collapse": "気候情報を折りたたむ",
+        "loading": "気候データを読み込み中…",
+        "unavailable": "気候データを取得できませんでした",
+        "cumulative_gdd": "累積 GDD: {{value}}",
+        "daily_weather": "最高 {{max}}℃ / 最低 {{min}}℃ / 平均 {{mean}}℃",
+        "workbench_link": "ワークベンチの気候パネルを開く"
       }
     },
     "work_records": {

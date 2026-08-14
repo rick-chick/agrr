@@ -1,0 +1,43 @@
+.plan-work-mini-climate {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-muted, #f5f6f8);
+  border: 1px solid var(--border-subtle, #e2e5ea);
+}
+
+.plan-work-mini-climate__loading,
+.plan-work-mini-climate__unavailable {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted, #5f6672);
+}
+
+.plan-work-mini-climate__gdd {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.plan-work-mini-climate__weather-list {
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-work-mini-climate__weather-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  padding: 0.25rem 0;
+}
+
+.plan-work-mini-climate__weather-date {
+  color: var(--text-muted, #5f6672);
+  white-space: nowrap;
+}
+
+.plan-work-mini-climate__workbench-link {
+  font-size: 0.875rem;
+}

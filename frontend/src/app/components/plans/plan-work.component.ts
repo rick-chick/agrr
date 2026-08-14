@@ -29,6 +29,7 @@ import { applyPlanWorkViewEffects } from './plan-work-view.effects';
 import { WorkRecordSaveImpactPanelComponent } from './work-record-save-impact-panel.component';
 import { PlanWorkVarianceSummaryComponent } from './plan-work-variance-summary.component';
 import { PlanWorkTodayAttentionComponent } from './plan-work-today-attention.component';
+import { PlanWorkMiniClimatePanelComponent } from './plan-work-mini-climate-panel.component';
 import { findVarianceActionItemForTask } from '../../domain/plans/find-variance-action-item-for-task';
 import { buildPlanWorkTodayAttention } from '../../domain/plans/build-plan-work-today-attention';
 import type { PlanWorkTodayAttentionSummary } from '../../domain/plans/build-plan-work-today-attention';
@@ -84,7 +85,8 @@ const initialControl: PlanWorkViewState = {
     TaskScheduleSyncBannerComponent,
     WorkRecordSaveImpactPanelComponent,
     PlanWorkVarianceSummaryComponent,
-    PlanWorkTodayAttentionComponent
+    PlanWorkTodayAttentionComponent,
+    PlanWorkMiniClimatePanelComponent
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
@@ -271,8 +273,28 @@ const initialControl: PlanWorkViewState = {
         [class.plan-work__row--done]="row.recordedToday"
         [class.plan-work__row--overdue]="overdue"
         [class.plan-work__row--highlight]="control.highlightedItemId === row.item.item_id"
+        [class.plan-work__row--expanded]="expandedRowItemId === row.item.item_id"
       >
-        <div class="plan-work__row-main">
+        <div class="plan-work__row-body">
+          <div class="plan-work__row-main">
+            @if (row.item.field_cultivation_id != null) {
+              <button
+                type="button"
+                class="plan-work__row-expand-btn"
+                data-testid="work-row-expand-toggle"
+                [attr.aria-expanded]="expandedRowItemId === row.item.item_id"
+                [attr.aria-label]="
+                  (expandedRowItemId === row.item.item_id
+                    ? 'plans.work.mini_climate.collapse'
+                    : 'plans.work.mini_climate.expand') | translate
+                "
+                (click)="toggleRowExpand(row.item.item_id)"
+              >
+                <span aria-hidden="true">
+                  {{ expandedRowItemId === row.item.item_id ? '▼' : '▶' }}
+                </span>
+              </button>
+            }
           <span class="plan-work__date">{{ displayDate(row.item.scheduled_date) }}</span>
           @if (overdue && row.overdueDays != null) {
             <span class="plan-work__overdue-days">
@@ -335,6 +357,15 @@ const initialControl: PlanWorkViewState = {
                 ('plans.work.context_badge.weather_' + weatherDependency) | translate
               }}
             </span>
+          }
+        </div>
+          @if (
+            expandedRowItemId === row.item.item_id && row.item.field_cultivation_id != null
+          ) {
+            <app-plan-work-mini-climate-panel
+              [planId]="planId"
+              [fieldCultivationId]="row.item.field_cultivation_id"
+            />
           }
         </div>
         <div class="plan-work__row-actions">
@@ -437,6 +468,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   openMenuItemId: number | null = null;
+  expandedRowItemId: number | null = null;
   changeDateRow: WorkDayListRowDto | null = null;
   changeDateValue = localTodayIso();
   private syncChannel: Channel | null = null;
@@ -704,6 +736,10 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   toggleMenu(itemId: number, event?: Event): void {
     event?.stopPropagation();
     this.openMenuItemId = this.openMenuItemId === itemId ? null : itemId;
+  }
+
+  toggleRowExpand(itemId: number): void {
+    this.expandedRowItemId = this.expandedRowItemId === itemId ? null : itemId;
   }
 
   @HostListener('document:click', ['$event'])
