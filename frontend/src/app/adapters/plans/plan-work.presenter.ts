@@ -43,6 +43,10 @@ import { mapWorkRecordSaveToastToPendingRequest } from './work-record-save-toast
 import { WorkRecordSheetSavedEvent } from '../../components/plans/work-record-sheet.view';
 import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
 import { buildPlanWorkVarianceSummaryStats } from '../../domain/plans/build-plan-work-variance-summary-stats';
+import {
+  buildPlanWorkTodayAttention
+} from '../../domain/plans/build-plan-work-today-attention';
+import { LoadPlanWorkFrostRiskDataDto } from '../../usecase/plans/load-plan-work-frost-risk.dtos';
 
 const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
   cropIdsForBanner: [],
@@ -57,6 +61,16 @@ const emptyPageVarianceFields: Pick<
   varianceSummaryError: null,
   varianceSummaryStats: null,
   actionRequiredItems: []
+};
+
+const emptyTodayAttentionFields: Pick<
+  PlanWorkViewState,
+  'todayAttentionLoading' | 'todayAttentionError' | 'todayAttention' | 'todayAttentionReady'
+> = {
+  todayAttentionLoading: true,
+  todayAttentionError: null,
+  todayAttention: null,
+  todayAttentionReady: false
 };
 
 @Injectable()
@@ -74,6 +88,8 @@ export class PlanWorkPresenter
   private pendingSaveImpactRequest: PendingSaveImpactRequest | null = null;
   private saveImpactLoadGeneration = 0;
   private pageVarianceLoadGeneration = 0;
+  private todayAttentionLoadGeneration = 0;
+  private frostRiskCount = 0;
 
   setView(view: PlanWorkView): void {
     this.view = view;
@@ -88,6 +104,11 @@ export class PlanWorkPresenter
   beginPageVarianceLoad(): number {
     this.pageVarianceLoadGeneration += 1;
     return this.pageVarianceLoadGeneration;
+  }
+
+  beginTodayAttentionLoad(): number {
+    this.todayAttentionLoadGeneration += 1;
+    return this.todayAttentionLoadGeneration;
   }
 
   onSuccess(dto?: CreateWorkRecordSuccessDto): void {
@@ -218,7 +239,8 @@ export class PlanWorkPresenter
       regenerating: false,
       regenerateError: null,
       ...emptyCropBannerFields,
-      ...emptyPageVarianceFields
+      ...emptyPageVarianceFields,
+      ...emptyTodayAttentionFields
     };
   }
 
@@ -351,7 +373,38 @@ export class PlanWorkPresenter
       varianceSummaryLoading: false,
       varianceSummaryError: dto.message,
       varianceSummaryStats: null,
-      actionRequiredItems: []
+      actionRequiredItems: [],
+      ...this.syncTodayAttentionFields(this.view.control.varianceSummaryStats, true)
+    };
+  }
+
+  presentFrostRisk(dto: LoadPlanWorkFrostRiskDataDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    if (dto.loadGeneration != null && dto.loadGeneration !== this.todayAttentionLoadGeneration) {
+      return;
+    }
+    this.frostRiskCount = dto.frostRiskCount;
+    this.view.control = {
+      ...this.view.control,
+      todayAttentionLoading: false,
+      todayAttentionError: null,
+      todayAttentionReady: true,
+      ...this.syncTodayAttentionFields(this.view.control.varianceSummaryStats, false)
+    };
+  }
+
+  onFrostRiskError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    if (!this.view.control.todayAttentionLoading) {
+      return;
+    }
+    this.frostRiskCount = 0;
+    this.view.control = {
+      ...this.view.control,
+      todayAttentionLoading: false,
+      todayAttentionError: dto.message,
+      todayAttentionReady: true,
+      ...this.syncTodayAttentionFields(this.view.control.varianceSummaryStats, false)
     };
   }
 
@@ -361,12 +414,29 @@ export class PlanWorkPresenter
       return;
     }
     const actionRequiredItems = dto.summary.action_required_items ?? [];
+    const varianceSummaryStats = buildPlanWorkVarianceSummaryStats(dto.summary);
     this.view.control = {
       ...this.view.control,
       varianceSummaryLoading: false,
       varianceSummaryError: null,
-      varianceSummaryStats: buildPlanWorkVarianceSummaryStats(dto.summary),
-      actionRequiredItems
+      varianceSummaryStats,
+      actionRequiredItems,
+      ...this.syncTodayAttentionFields(varianceSummaryStats, this.view.control.todayAttentionLoading)
+    };
+  }
+
+  private syncTodayAttentionFields(
+    varianceSummaryStats: PlanWorkViewState['varianceSummaryStats'],
+    stillLoading: boolean
+  ): Pick<
+    PlanWorkViewState,
+    'todayAttention' | 'todayAttentionLoading' | 'todayAttentionReady'
+  > {
+    const todayAttention = buildPlanWorkTodayAttention(varianceSummaryStats, this.frostRiskCount);
+    return {
+      todayAttention,
+      todayAttentionLoading: stillLoading,
+      todayAttentionReady: !stillLoading
     };
   }
 

@@ -50,7 +50,11 @@ const baseControl = {
   varianceSummaryLoading: false,
   varianceSummaryError: null,
   varianceSummaryStats: null,
-  actionRequiredItems: []
+  actionRequiredItems: [],
+  todayAttentionLoading: false,
+  todayAttentionError: null,
+  todayAttention: null,
+  todayAttentionReady: false
 };
 
 function field(overrides: Partial<FieldSchedule> & Pick<FieldSchedule, 'field_cultivation_id'>): FieldSchedule {
@@ -580,6 +584,25 @@ describe('PlanWorkPresenter save impact', () => {
       thresholdExceededCount: 1,
       gddDelayCount: 1
     });
+    expect(view.control.todayAttention).toEqual({
+      frostRiskCount: 0,
+      thresholdExceededCount: 1,
+      gddDelayCount: 1
+    });
     expect(view.control.actionRequiredItems.length).toBe(1);
+  });
+
+  it('updates today attention when frost risk load completes', () => {
+    const generation = presenter.beginTodayAttentionLoad();
+
+    presenter.presentFrostRisk({ frostRiskCount: 2, loadGeneration: generation });
+
+    expect(view.control.todayAttentionLoading).toBe(false);
+    expect(view.control.todayAttentionReady).toBe(true);
+    expect(view.control.todayAttention).toEqual({
+      frostRiskCount: 2,
+      thresholdExceededCount: 0,
+      gddDelayCount: 0
+    });
   });
 });

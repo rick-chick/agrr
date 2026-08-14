@@ -34,6 +34,7 @@ export interface StageRequirement {
   optimal_temperature_max?: number;
   low_stress_threshold?: number;
   high_stress_threshold?: number;
+  frost_threshold?: number;
 }
 
 export interface FieldCultivationSummary {

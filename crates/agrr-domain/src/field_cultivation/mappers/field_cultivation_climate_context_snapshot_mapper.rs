@@ -80,6 +80,7 @@ fn build_stage_requirements(crop: &ClimateCropEntity) -> Vec<Value> {
             "optimal_temperature_max": temp_req.optimal_max,
             "low_stress_threshold": temp_req.low_stress_threshold,
             "high_stress_threshold": temp_req.high_stress_threshold,
+            "frost_threshold": temp_req.frost_threshold,
         }));
     }
 

@@ -1798,6 +1798,14 @@
         "gdd_delay": "GDD delay",
         "learn_cta": "Review details in Learn"
       },
+      "today_attention": {
+        "title": "Today's alerts",
+        "frost_risk": "Frost risk",
+        "threshold_exceeded": "Threshold exceeded",
+        "gdd_delay": "GDD delay",
+        "learn_cta": "Review details in Learn",
+        "empty": "No alerts for today"
+      },
       "exceedance_badge": {
         "days": "Δ {{delta}} days",
         "gdd": "GDD {{delta}}"

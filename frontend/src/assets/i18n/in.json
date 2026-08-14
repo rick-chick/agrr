@@ -2285,6 +2285,14 @@
         "gdd_delay": "GDD विलंब",
         "learn_cta": "Learn में विवरण देखें"
       },
+      "today_attention": {
+        "title": "आज की चेतावनी",
+        "frost_risk": "पाला जोखिम",
+        "threshold_exceeded": "सीमा पार कार्य",
+        "gdd_delay": "GDD विलंब",
+        "learn_cta": "Learn में विवरण देखें",
+        "empty": "आज के लिए कोई चेतावनी नहीं"
+      },
       "exceedance_badge": {
         "days": "Δ {{delta}} दिन",
         "gdd": "GDD {{delta}}"

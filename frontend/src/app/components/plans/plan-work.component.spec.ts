@@ -17,6 +17,7 @@ import { emptyPlanSaveImpactViewFields } from '../../adapters/plans/plan-save-im
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
+import { LoadPlanWorkFrostRiskUseCase } from '../../usecase/plans/load-plan-work-frost-risk.usecase';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
 
@@ -46,7 +47,11 @@ const initialControl: PlanWorkViewState = {
   varianceSummaryLoading: false,
   varianceSummaryError: null,
   varianceSummaryStats: null,
-  actionRequiredItems: []
+  actionRequiredItems: [],
+  todayAttentionLoading: false,
+  todayAttentionError: null,
+  todayAttention: null,
+  todayAttentionReady: false
 };
 
 function createPlanRouteMock(planId: string, queryParams: Record<string, string> = {}) {
@@ -159,7 +164,11 @@ const loadedState: PlanWorkViewState = {
   varianceSummaryLoading: false,
   varianceSummaryError: null,
   varianceSummaryStats: null,
-  actionRequiredItems: []
+  actionRequiredItems: [],
+  todayAttentionLoading: false,
+  todayAttentionError: null,
+  todayAttention: null,
+  todayAttentionReady: false
 };
 
 describe('PlanWorkComponent mobile UX', () => {
@@ -172,10 +181,12 @@ describe('PlanWorkComponent mobile UX', () => {
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let loadSummaryUseCase: { execute: ReturnType<typeof vi.fn> };
+  let loadFrostRiskUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: {
     setView: ReturnType<typeof vi.fn>;
     beginScheduleLoad: ReturnType<typeof vi.fn>;
     beginPageVarianceLoad: ReturnType<typeof vi.fn>;
+    beginTodayAttentionLoad: ReturnType<typeof vi.fn>;
     queueSaveImpactAfterSave: ReturnType<typeof vi.fn>;
     dismissSaveImpact: ReturnType<typeof vi.fn>;
   };
@@ -189,10 +200,12 @@ describe('PlanWorkComponent mobile UX', () => {
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     loadSummaryUseCase = { execute: vi.fn() };
+    loadFrostRiskUseCase = { execute: vi.fn() };
     mockPresenter = {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
       beginPageVarianceLoad: vi.fn(() => 2),
+      beginTodayAttentionLoad: vi.fn(() => 3),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };
@@ -210,6 +223,7 @@ describe('PlanWorkComponent mobile UX', () => {
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: loadSummaryUseCase },
+          { provide: LoadPlanWorkFrostRiskUseCase, useValue: loadFrostRiskUseCase },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr }
         ]
@@ -776,6 +790,43 @@ describe('PlanWorkComponent mobile UX', () => {
     });
   });
 
+  it('renders today attention card below variance summary with learn link', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.today_attention.title': '今日の注意',
+        'plans.work.today_attention.frost_risk': '霜リスク',
+        'plans.work.today_attention.threshold_exceeded': '閾値超過タスク',
+        'plans.work.today_attention.gdd_delay': 'GDD遅延',
+        'plans.work.today_attention.learn_cta': '振り返りで詳細を見る'
+      },
+      true
+    );
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      todayAttentionLoading: false,
+      todayAttentionReady: true,
+      todayAttention: {
+        frostRiskCount: 1,
+        thresholdExceededCount: 2,
+        gddDelayCount: 1
+      }
+    };
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('app-plan-work-today-attention');
+    expect(card).toBeTruthy();
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('今日の注意');
+    expect(text).toContain('霜リスク');
+    expect(text).toContain('閾値超過タスク');
+    const learnLink = fixture.nativeElement.querySelector(
+      '.plan-work-today-attention__learn-link'
+    ) as HTMLAnchorElement;
+    expect(learnLink?.getAttribute('href')).toContain('/plans/7/learn');
+  });
+
   it('renders variance summary with learn CTA at page top', () => {
     translate.setTranslation(
       'ja',
@@ -914,10 +965,12 @@ describe('PlanWorkComponent in locale labels', () => {
     const regenerateUseCase = { execute: vi.fn() };
     const subscribeSyncUseCase = { execute: vi.fn() };
     const loadSummaryUseCase = { execute: vi.fn() };
+    const loadFrostRiskUseCase = { execute: vi.fn() };
     const mockPresenter = {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
       beginPageVarianceLoad: vi.fn(() => 2),
+      beginTodayAttentionLoad: vi.fn(() => 3),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };
@@ -935,6 +988,7 @@ describe('PlanWorkComponent in locale labels', () => {
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: loadSummaryUseCase },
+          { provide: LoadPlanWorkFrostRiskUseCase, useValue: loadFrostRiskUseCase },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr }
         ]

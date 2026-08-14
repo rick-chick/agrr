@@ -2923,6 +2923,14 @@
         "gdd_delay": "GDD遅延",
         "learn_cta": "振り返りで詳細を見る"
       },
+      "today_attention": {
+        "title": "今日の注意",
+        "frost_risk": "霜リスク",
+        "threshold_exceeded": "閾値超過タスク",
+        "gdd_delay": "GDD遅延",
+        "learn_cta": "振り返りで詳細を見る",
+        "empty": "本日の注意事項はありません"
+      },
       "exceedance_badge": {
         "days": "Δ {{delta}}日",
         "gdd": "GDD {{delta}}"

@@ -25,9 +25,11 @@ import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-
 import { emptyPlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
+import { LoadPlanWorkFrostRiskUseCase } from '../../usecase/plans/load-plan-work-frost-risk.usecase';
 import { applyPlanWorkViewEffects } from './plan-work-view.effects';
 import { WorkRecordSaveImpactPanelComponent } from './work-record-save-impact-panel.component';
 import { PlanWorkVarianceSummaryComponent } from './plan-work-variance-summary.component';
+import { PlanWorkTodayAttentionComponent } from './plan-work-today-attention.component';
 import { findVarianceActionItemForTask } from '../../domain/plans/find-variance-action-item-for-task';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import { formatVarianceDeltaDays, formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
@@ -58,7 +60,11 @@ const initialControl: PlanWorkViewState = {
   varianceSummaryLoading: true,
   varianceSummaryError: null,
   varianceSummaryStats: null,
-  actionRequiredItems: []
+  actionRequiredItems: [],
+  todayAttentionLoading: true,
+  todayAttentionError: null,
+  todayAttention: null,
+  todayAttentionReady: false
 };
 
 @Component({
@@ -73,7 +79,8 @@ const initialControl: PlanWorkViewState = {
     WorkRecordSheetComponent,
     TaskScheduleSyncBannerComponent,
     WorkRecordSaveImpactPanelComponent,
-    PlanWorkVarianceSummaryComponent
+    PlanWorkVarianceSummaryComponent,
+    PlanWorkTodayAttentionComponent
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
@@ -113,6 +120,14 @@ const initialControl: PlanWorkViewState = {
             [stats]="control.varianceSummaryStats"
             [loading]="control.varianceSummaryLoading"
             [error]="control.varianceSummaryError"
+          />
+
+          <app-plan-work-today-attention
+            [planId]="planId"
+            [attention]="control.todayAttention"
+            [loading]="control.todayAttentionLoading"
+            [error]="control.todayAttentionError"
+            [showEmptyState]="control.todayAttentionReady && !control.todayAttention"
           />
 
           @if (control.saveImpactLoading || control.saveImpact || control.saveImpactError) {
@@ -381,6 +396,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
   private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
   private readonly loadSummaryUseCase = inject(LoadPlanVsActualSummaryUseCase);
+  private readonly loadFrostRiskUseCase = inject(LoadPlanWorkFrostRiskUseCase);
   private readonly presenter = inject(PlanWorkPresenter);
   private readonly translate = inject(TranslateService);
   private readonly flashMessage = inject(FlashMessageService);
@@ -457,6 +473,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     });
     if (prevLoading && !this._control.loading && !this._control.error) {
       this.applyPendingHighlightItem();
+      this.reloadFrostRisk();
     }
     this.cdr.markForCheck();
   }
@@ -512,9 +529,23 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     this.control = {
       ...this.control,
       varianceSummaryLoading: true,
-      varianceSummaryError: null
+      varianceSummaryError: null,
+      todayAttentionLoading: true,
+      todayAttentionError: null,
+      todayAttentionReady: false
     };
     this.loadSummaryUseCase.execute({ planId: this.planId, loadGeneration: varianceLoadGeneration });
+  }
+
+  private reloadFrostRisk(): void {
+    const fieldIds = this.control.fields.map((field) => field.field_cultivation_id);
+    const loadGeneration = this.presenter.beginTodayAttentionLoad();
+    this.loadFrostRiskUseCase.execute({
+      planId: this.planId,
+      fieldCultivationIds: fieldIds,
+      today: localTodayIso(),
+      loadGeneration
+    });
   }
 
   regenerateTaskSchedule(): void {

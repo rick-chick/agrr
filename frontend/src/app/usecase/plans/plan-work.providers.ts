@@ -8,6 +8,10 @@ import { LOAD_WORK_DAY_LIST_OUTPUT_PORT } from './load-work-day-list.output-port
 import { LoadWorkDayListUseCase } from './load-work-day-list.usecase';
 import { LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT } from './load-plan-vs-actual-summary.output-port';
 import { LoadPlanVsActualSummaryUseCase } from './load-plan-vs-actual-summary.usecase';
+import { LoadPlanWorkFrostRiskUseCase } from './load-plan-work-frost-risk.usecase';
+import { LOAD_PLAN_WORK_FROST_RISK_OUTPUT_PORT } from './load-plan-work-frost-risk.output-port';
+import { FieldClimateApiGateway } from '../../adapters/plans/field-climate-api.gateway';
+import { FIELD_CLIMATE_GATEWAY } from './field-climate/field-climate.gateway';
 import { PLAN_GATEWAY } from './plan-gateway';
 import { PLAN_OPTIMIZATION_GATEWAY } from './plan-optimization-gateway';
 import { REGENERATE_TASK_SCHEDULE_OUTPUT_PORT } from './regenerate-task-schedule.output-port';
@@ -26,6 +30,7 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   PlanWorkPresenter,
   LoadWorkDayListUseCase,
   LoadPlanVsActualSummaryUseCase,
+  LoadPlanWorkFrostRiskUseCase,
   SkipTaskScheduleItemUseCase,
   CreateWorkRecordUseCase,
   UpdateTaskScheduleItemUseCase,
@@ -49,6 +54,18 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
     }),
     deps: [PlanWorkPresenter]
   },
+  {
+    provide: LOAD_PLAN_WORK_FROST_RISK_OUTPUT_PORT,
+    useFactory: (presenter: PlanWorkPresenter) => ({
+      present: (dto: Parameters<PlanWorkPresenter['presentFrostRisk']>[0]) =>
+        presenter.presentFrostRisk(dto),
+      onError: (dto: Parameters<PlanWorkPresenter['onFrostRiskError']>[0]) => {
+        presenter.onFrostRiskError(dto);
+      }
+    }),
+    deps: [PlanWorkPresenter]
+  },
+  { provide: FIELD_CLIMATE_GATEWAY, useClass: FieldClimateApiGateway },
   { provide: PLAN_GATEWAY, useClass: PlanApiGateway },
   { provide: WORK_RECORD_GATEWAY, useClass: WorkRecordApiGateway },
   { provide: PLAN_OPTIMIZATION_GATEWAY, useClass: PlanOptimizationChannelGateway }

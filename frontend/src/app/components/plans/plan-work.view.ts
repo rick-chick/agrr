@@ -3,6 +3,7 @@ import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { PendingToastRequest } from '../../core/view-effects/pending-toast-view.effects';
 import type { PlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
 import type { PlanWorkVarianceSummaryStats } from '../../domain/plans/build-plan-work-variance-summary-stats';
+import type { PlanWorkTodayAttention } from '../../domain/plans/build-plan-work-today-attention';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 
@@ -35,6 +36,10 @@ export interface PlanWorkViewState extends PlanSaveImpactViewFields {
   varianceSummaryError: string | null;
   varianceSummaryStats: PlanWorkVarianceSummaryStats | null;
   actionRequiredItems: PlanVarianceActionItem[];
+  todayAttentionLoading: boolean;
+  todayAttentionError: string | null;
+  todayAttention: PlanWorkTodayAttention | null;
+  todayAttentionReady: boolean;
 }
 
 export interface PlanWorkView {
