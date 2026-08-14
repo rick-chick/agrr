@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 
 use crate::cultivation_plan::dtos::{
     PlanVarianceLearningSnapshotRead, PlanVsActualSummaryRead,
+    ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
 };
 
 pub trait PlanVarianceLearningGateway: Send + Sync {
@@ -28,5 +29,16 @@ pub trait PlanVarianceLearningGateway: Send + Sync {
         &self,
         plan_id: i64,
         updates: &BTreeMap<String, String>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+
+    fn find_reorganize_orchestration_progress_by_plan_id(
+        &self,
+        plan_id: i64,
+    ) -> Result<ReorganizeOrchestrationProgressRead, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn upsert_reorganize_orchestration_progress(
+        &self,
+        plan_id: i64,
+        updates: &ReorganizeOrchestrationProgressPatch,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }

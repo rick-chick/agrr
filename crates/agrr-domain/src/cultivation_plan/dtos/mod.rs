@@ -38,6 +38,7 @@ pub(crate) mod regenerate_task_schedule_input;
 pub(crate) mod task_schedule_timeline;
 pub mod plan_vs_actual;
 pub mod plan_variance_learning_snapshot;
+pub mod reorganize_orchestration_progress;
 pub mod task_schedule_timeline_snapshot;
 pub(crate) mod plan_save_agricultural_tasks;
 pub(crate) mod plan_save_crops;
@@ -176,6 +177,9 @@ pub use plan_vs_actual::{
     StageGddCalibrationProposalRead,
 };
 pub use plan_variance_learning_snapshot::PlanVarianceLearningSnapshotRead;
+pub use reorganize_orchestration_progress::{
+    ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
+};
 pub use task_schedule_timeline::TaskScheduleTimeline;
 pub use task_schedule_timeline_snapshot::{
     TaskScheduleTimelineAgriculturalTaskRead, TaskScheduleTimelineFieldRead,

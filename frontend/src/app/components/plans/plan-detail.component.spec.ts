@@ -9,6 +9,10 @@ import { PlanDetailComponent } from './plan-detail.component';
 import { PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
 import { PlanDetailPresenter } from '../../usecase/plans/plan-detail.providers';
+import {
+  clearLearnOrchestrationProgressCache,
+  readLearnOrchestrationReturnToLearn
+} from '../../domain/plans/learn-master-update-orchestration';
 
 describe('PlanDetailComponent', () => {
   let component: PlanDetailComponent;
@@ -48,6 +52,7 @@ describe('PlanDetailComponent', () => {
   });
 
   afterEach(() => {
+    clearLearnOrchestrationProgressCache();
     vi.restoreAllMocks();
   });
 
@@ -98,12 +103,12 @@ describe('PlanDetailComponent', () => {
   it('navigates to optimizing and stores learn return context when adjust orchestration starts', () => {
     const router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    sessionStorage.clear();
+    clearLearnOrchestrationProgressCache();
 
     component.learningOrchestrationMode = 'adjust';
     component.handleAdjustOrchestrationStarted();
 
     expect(router.navigate).toHaveBeenCalledWith(['/plans', 1, 'optimizing']);
-    expect(sessionStorage.getItem('agrr:learn-orchestration-return:1')).toBe('learn');
+    expect(readLearnOrchestrationReturnToLearn(1)).toBe(true);
   });
 });

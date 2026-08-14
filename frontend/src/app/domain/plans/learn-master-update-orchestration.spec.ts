@@ -1,15 +1,17 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
   areAllLearnOrchestrationStepsComplete,
+  buildLearnOrchestrationResumeNavigation,
   buildLearningOrchestrationNavigation,
   buildPlanDetailAdjustNavigation,
   buildPlanTaskScheduleOrchestrationNavigation,
+  clearLearnOrchestrationProgressCache,
   clearLearnOrchestrationReturnToLearn,
+  findFirstIncompleteOrchestrationStep,
   hasActiveLearnMasterUpdateFlow,
   hasPendingMasterUpdateConfirmation,
+  hydrateLearnOrchestrationProgress,
   isTaskScheduleOrchestrationComplete,
-  learnOrchestrationReturnStorageKey,
-  learnOrchestrationStepProgressStorageKey,
   markLearnOrchestrationStepComplete,
   parseLearningOrchestration,
   readLearnOrchestrationReturnToLearn,
@@ -27,7 +29,7 @@ import {
 
 describe('learn-master-update-orchestration', () => {
   beforeEach(() => {
-    sessionStorage.clear();
+    clearLearnOrchestrationProgressCache();
     clearLearnProposalApplicationProgressCache();
   });
 
@@ -70,11 +72,19 @@ describe('learn-master-update-orchestration', () => {
         queryParams: { learningOrchestration: 'adjust' }
       });
     });
+
+    it('builds resume navigation for the first incomplete step', () => {
+      hydrateLearnOrchestrationProgress(3, { placement: true });
+      expect(buildLearnOrchestrationResumeNavigation(3)).toEqual({
+        commands: ['/plans', 3, 'task_schedule'],
+        queryParams: { learningOrchestration: 'regenerate' }
+      });
+      expect(findFirstIncompleteOrchestrationStep(3)).toBe('regenerate');
+    });
   });
 
   describe('optimizing return context', () => {
     it('stores and reads return-to-learn flag per plan', () => {
-      expect(learnOrchestrationReturnStorageKey(5)).toBe('agrr:learn-orchestration-return:5');
       expect(readLearnOrchestrationReturnToLearn(5)).toBe(false);
 
       storeLearnOrchestrationReturnToLearn(5);
@@ -99,10 +109,7 @@ describe('learn-master-update-orchestration', () => {
   });
 
   describe('orchestration step progress', () => {
-    it('stores and reads step completion per plan', () => {
-      expect(learnOrchestrationStepProgressStorageKey(5)).toBe(
-        'agrr:learn-orchestration-step-progress:5'
-      );
+    it('stores and reads step completion per plan from hydrated cache', () => {
       expect(readLearnOrchestrationStepComplete(5, 'regenerate')).toBe(false);
 
       markLearnOrchestrationStepComplete(5, 'regenerate');
@@ -111,6 +118,18 @@ describe('learn-master-update-orchestration', () => {
 
       markLearnOrchestrationStepComplete(5, 'sync_verify');
       expect(readLearnOrchestrationStepComplete(5, 'sync_verify')).toBe(true);
+    });
+
+    it('hydrates orchestration progress from server snapshot', () => {
+      hydrateLearnOrchestrationProgress(5, {
+        placement: true,
+        regenerate: true,
+        sync_verify: false,
+        return_to_learn: false
+      });
+      expect(readLearnOrchestrationStepComplete(5, 'placement')).toBe(true);
+      expect(readLearnOrchestrationStepComplete(5, 'regenerate')).toBe(true);
+      expect(readLearnOrchestrationStepComplete(5, 'sync_verify')).toBe(false);
     });
   });
 

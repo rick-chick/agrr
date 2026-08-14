@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use crate::pool::SqlitePool;
 use agrr_domain::cultivation_plan::dtos::{
     PlanVarianceLearningSnapshotRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
-    PlanVsActualSummaryRead,
+    PlanVsActualSummaryRead, ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
 };
 use agrr_domain::cultivation_plan::gateways::PlanVarianceLearningGateway;
 use rusqlite::params;
@@ -68,6 +68,7 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
                         source_plan_id: Some(source_plan_id),
                         summary: Some(summary),
                         proposal_application_progress: BTreeMap::new(),
+                        reorganize_orchestration_progress: ReorganizeOrchestrationProgressRead::default(),
                     }))
                 }
                 Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
@@ -114,6 +115,88 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
                     params![plan_id, proposal_key, status],
                 )?;
             }
+            Ok(())
+        })
+    }
+
+    fn find_reorganize_orchestration_progress_by_plan_id(
+        &self,
+        plan_id: i64,
+    ) -> Result<ReorganizeOrchestrationProgressRead, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_read_box(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT placement_complete, regenerate_complete, sync_verify_complete, return_to_learn \
+                 FROM plan_variance_learning_orchestration_steps WHERE plan_id = ?1 LIMIT 1",
+            )?;
+            let result = stmt.query_row(params![plan_id], |row| {
+                Ok(ReorganizeOrchestrationProgressRead {
+                    placement: row.get::<_, i64>(0)? != 0,
+                    regenerate: row.get::<_, i64>(1)? != 0,
+                    sync_verify: row.get::<_, i64>(2)? != 0,
+                    return_to_learn: row.get::<_, i64>(3)? != 0,
+                })
+            });
+            match result {
+                Ok(progress) => Ok(progress),
+                Err(rusqlite::Error::QueryReturnedNoRows) => {
+                    Ok(ReorganizeOrchestrationProgressRead::default())
+                }
+                Err(err) => Err(err),
+            }
+        })
+    }
+
+    fn upsert_reorganize_orchestration_progress(
+        &self,
+        plan_id: i64,
+        updates: &ReorganizeOrchestrationProgressPatch,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_write_box(|conn| {
+            let current = {
+                let mut stmt = conn.prepare(
+                    "SELECT placement_complete, regenerate_complete, sync_verify_complete, return_to_learn \
+                     FROM plan_variance_learning_orchestration_steps WHERE plan_id = ?1 LIMIT 1",
+                )?;
+                let result = stmt.query_row(params![plan_id], |row| {
+                    Ok(ReorganizeOrchestrationProgressRead {
+                        placement: row.get::<_, i64>(0)? != 0,
+                        regenerate: row.get::<_, i64>(1)? != 0,
+                        sync_verify: row.get::<_, i64>(2)? != 0,
+                        return_to_learn: row.get::<_, i64>(3)? != 0,
+                    })
+                });
+                match result {
+                    Ok(progress) => progress,
+                    Err(rusqlite::Error::QueryReturnedNoRows) => {
+                        ReorganizeOrchestrationProgressRead::default()
+                    }
+                    Err(err) => return Err(err.into()),
+                }
+            };
+
+            let placement = updates.placement.unwrap_or(current.placement);
+            let regenerate = updates.regenerate.unwrap_or(current.regenerate);
+            let sync_verify = updates.sync_verify.unwrap_or(current.sync_verify);
+            let return_to_learn = updates.return_to_learn.unwrap_or(current.return_to_learn);
+
+            conn.execute(
+                "INSERT INTO plan_variance_learning_orchestration_steps \
+                 (plan_id, placement_complete, regenerate_complete, sync_verify_complete, return_to_learn, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5, datetime('now'), datetime('now')) \
+                 ON CONFLICT(plan_id) DO UPDATE SET \
+                   placement_complete = excluded.placement_complete, \
+                   regenerate_complete = excluded.regenerate_complete, \
+                   sync_verify_complete = excluded.sync_verify_complete, \
+                   return_to_learn = excluded.return_to_learn, \
+                   updated_at = datetime('now')",
+                params![
+                    plan_id,
+                    placement as i64,
+                    regenerate as i64,
+                    sync_verify as i64,
+                    return_to_learn as i64,
+                ],
+            )?;
             Ok(())
         })
     }
@@ -228,6 +311,16 @@ mod plan_variance_learning_sqlite_gateway_test {
                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
                    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
                    UNIQUE(plan_id, proposal_key)
+                 );
+                 CREATE TABLE plan_variance_learning_orchestration_steps (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   plan_id INTEGER NOT NULL UNIQUE,
+                   placement_complete INTEGER NOT NULL DEFAULT 0,
+                   regenerate_complete INTEGER NOT NULL DEFAULT 0,
+                   sync_verify_complete INTEGER NOT NULL DEFAULT 0,
+                   return_to_learn INTEGER NOT NULL DEFAULT 0,
+                   created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
                  );",
             )
         })
@@ -294,5 +387,55 @@ mod plan_variance_learning_sqlite_gateway_test {
             .find_proposal_application_progress_by_plan_id(7)
             .expect("find updated");
         assert_eq!("confirmed", updated.get("stage_gdd:1:2").unwrap());
+    }
+
+    #[test]
+    fn upsert_and_find_reorganize_orchestration_progress() {
+        let pool = test_pool();
+        let gateway = PlanVarianceLearningSqliteGateway::new(pool);
+
+        let empty = gateway
+            .find_reorganize_orchestration_progress_by_plan_id(9)
+            .expect("find empty");
+        assert_eq!(ReorganizeOrchestrationProgressRead::default(), empty);
+
+        gateway
+            .upsert_reorganize_orchestration_progress(
+                9,
+                &ReorganizeOrchestrationProgressPatch {
+                    placement: Some(true),
+                    regenerate: None,
+                    sync_verify: None,
+                    return_to_learn: Some(true),
+                },
+            )
+            .expect("upsert");
+
+        let found = gateway
+            .find_reorganize_orchestration_progress_by_plan_id(9)
+            .expect("find");
+        assert!(found.placement);
+        assert!(!found.regenerate);
+        assert!(!found.sync_verify);
+        assert!(found.return_to_learn);
+
+        gateway
+            .upsert_reorganize_orchestration_progress(
+                9,
+                &ReorganizeOrchestrationProgressPatch {
+                    regenerate: Some(true),
+                    return_to_learn: Some(false),
+                    placement: None,
+                    sync_verify: None,
+                },
+            )
+            .expect("upsert partial");
+
+        let updated = gateway
+            .find_reorganize_orchestration_progress_by_plan_id(9)
+            .expect("find updated");
+        assert!(updated.placement);
+        assert!(updated.regenerate);
+        assert!(!updated.return_to_learn);
     }
 }

@@ -211,6 +211,24 @@ impl PlanVarianceLearningGateway for SpyVarianceLearningGateway {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Ok(())
     }
+
+    fn find_reorganize_orchestration_progress_by_plan_id(
+        &self,
+        _: i64,
+    ) -> Result<
+        crate::cultivation_plan::dtos::ReorganizeOrchestrationProgressRead,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
+        Ok(crate::cultivation_plan::dtos::ReorganizeOrchestrationProgressRead::default())
+    }
+
+    fn upsert_reorganize_orchestration_progress(
+        &self,
+        _: i64,
+        _: &crate::cultivation_plan::dtos::ReorganizeOrchestrationProgressPatch,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
 }
 
 fn sample_snapshot() -> TaskScheduleTimelineSnapshot {

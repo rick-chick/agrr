@@ -2065,7 +2065,8 @@
           "regenerate": "कार्य अनुसूची खोलें",
           "sync_verify": "सिंक जाँचें"
         },
-        "completed": "पूर्ण"
+        "completed": "पूर्ण",
+        "continue": "जारी रखें"
       },
       "loop": {
         "title": "सीखने लूप की प्रगति",

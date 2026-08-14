@@ -10,11 +10,13 @@ use agrr_adapters_sqlite::{
     PlanVarianceLearningSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::cultivation_plan::dtos::PlanVarianceLearningSnapshotRead;
+use agrr_domain::cultivation_plan::dtos::ReorganizeOrchestrationProgressPatch;
 use agrr_domain::cultivation_plan::gateways::{
     CultivationPlanGateway, PlanVarianceLearningGateway,
 };
 use agrr_domain::cultivation_plan::interactors::{
     PlanVarianceCarryoverInput, PlanVarianceCarryoverInteractor,
+    PlanVarianceLearningOrchestrationProgressUpdateInteractor,
     PlanVarianceLearningProposalProgressUpdateInteractor, PlanVarianceLearningReadInteractor,
 };
 use agrr_domain::cultivation_plan::ports::{
@@ -103,6 +105,15 @@ fn snapshot_to_json(snapshot: &PlanVarianceLearningSnapshotRead) -> Value {
         "proposal_application_progress".into(),
         json!(snapshot.proposal_application_progress),
     );
+    body.insert(
+        "reorganize_orchestration_progress".into(),
+        json!({
+            "placement": snapshot.reorganize_orchestration_progress.placement,
+            "regenerate": snapshot.reorganize_orchestration_progress.regenerate,
+            "sync_verify": snapshot.reorganize_orchestration_progress.sync_verify,
+            "return_to_learn": snapshot.reorganize_orchestration_progress.return_to_learn,
+        }),
+    );
     Value::Object(body)
 }
 
@@ -171,7 +182,16 @@ struct ImportVarianceLearningBody {
 
 #[derive(serde::Deserialize)]
 struct PatchVarianceLearningBody {
-    proposal_application_progress: BTreeMap<String, String>,
+    proposal_application_progress: Option<BTreeMap<String, String>>,
+    reorganize_orchestration_progress: Option<PatchReorganizeOrchestrationProgressBody>,
+}
+
+#[derive(serde::Deserialize)]
+struct PatchReorganizeOrchestrationProgressBody {
+    placement: Option<bool>,
+    regenerate: Option<bool>,
+    sync_verify: Option<bool>,
+    return_to_learn: Option<bool>,
 }
 
 async fn patch_variance_learning(
@@ -187,6 +207,13 @@ async fn patch_variance_learning(
         )
     })?;
 
+    if body.proposal_application_progress.is_none() && body.reorganize_orchestration_progress.is_none() {
+        return Err((
+            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"errors": ["proposal_application_progress or reorganize_orchestration_progress is required"]})),
+        ));
+    }
+
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let variance_gateway = PlanVarianceLearningSqliteGateway::new(pool.clone());
@@ -194,43 +221,101 @@ async fn patch_variance_learning(
 
     let mut presenter = VarianceLearningUpdatePresenter { body: None };
 
-    let mut interactor = PlanVarianceLearningProposalProgressUpdateInteractor::new(
-        &mut presenter,
-        &plan_gateway,
-        &variance_gateway,
-        &scope_gateway,
-    );
+    if let Some(proposal_updates) = body.proposal_application_progress {
+        let mut interactor = PlanVarianceLearningProposalProgressUpdateInteractor::new(
+            &mut presenter,
+            &plan_gateway,
+            &variance_gateway,
+            &scope_gateway,
+        );
 
-    match interactor.call(user_id, plan_id, body.proposal_application_progress) {
-        Ok(()) => match presenter.body {
-            Some(VarianceLearningUpdateOutcome::Success(snapshot)) => {
-                Ok(Json(snapshot_to_json(&snapshot)))
+        match interactor.call(user_id, plan_id, proposal_updates) {
+            Ok(()) => {}
+            Err(err) => {
+                tracing::error!("variance_learning patch failed: {err}");
+                return Err((
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({"errors": ["internal_error"]})),
+                ));
             }
-            Some(VarianceLearningUpdateOutcome::NotFound) | None => Err((
-                axum::http::StatusCode::NOT_FOUND,
-                Json(json!({"errors": ["not_found"]})),
-            )),
-            Some(VarianceLearningUpdateOutcome::Invalid(errors, fallback)) => {
-                let message = errors
-                    .values()
-                    .flatten()
-                    .next()
-                    .cloned()
-                    .unwrap_or(fallback);
-                Err((
-                    axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-                    Json(json!({"errors": [message]})),
-                ))
-            }
-        },
-        Err(err) => {
-            tracing::error!("variance_learning patch failed: {err}");
-            Err((
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"errors": ["internal_error"]})),
-            ))
+        }
+
+        if body.reorganize_orchestration_progress.is_none() {
+            return match presenter.body {
+                Some(VarianceLearningUpdateOutcome::Success(snapshot)) => {
+                    Ok(Json(snapshot_to_json(&snapshot)))
+                }
+                Some(VarianceLearningUpdateOutcome::NotFound) | None => Err((
+                    axum::http::StatusCode::NOT_FOUND,
+                    Json(json!({"errors": ["not_found"]})),
+                )),
+                Some(VarianceLearningUpdateOutcome::Invalid(errors, fallback)) => {
+                    let message = errors
+                        .values()
+                        .flatten()
+                        .next()
+                        .cloned()
+                        .unwrap_or(fallback);
+                    Err((
+                        axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        Json(json!({"errors": [message]})),
+                    ))
+                }
+            };
         }
     }
+
+    if let Some(orchestration_body) = body.reorganize_orchestration_progress {
+        let orchestration_patch = ReorganizeOrchestrationProgressPatch {
+            placement: orchestration_body.placement,
+            regenerate: orchestration_body.regenerate,
+            sync_verify: orchestration_body.sync_verify,
+            return_to_learn: orchestration_body.return_to_learn,
+        };
+
+        let mut interactor = PlanVarianceLearningOrchestrationProgressUpdateInteractor::new(
+            &mut presenter,
+            &plan_gateway,
+            &variance_gateway,
+            &scope_gateway,
+        );
+
+        return match interactor.call(user_id, plan_id, orchestration_patch) {
+            Ok(()) => match presenter.body {
+                Some(VarianceLearningUpdateOutcome::Success(snapshot)) => {
+                    Ok(Json(snapshot_to_json(&snapshot)))
+                }
+                Some(VarianceLearningUpdateOutcome::NotFound) | None => Err((
+                    axum::http::StatusCode::NOT_FOUND,
+                    Json(json!({"errors": ["not_found"]})),
+                )),
+                Some(VarianceLearningUpdateOutcome::Invalid(errors, fallback)) => {
+                    let message = errors
+                        .values()
+                        .flatten()
+                        .next()
+                        .cloned()
+                        .unwrap_or(fallback);
+                    Err((
+                        axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        Json(json!({"errors": [message]})),
+                    ))
+                }
+            },
+            Err(err) => {
+                tracing::error!("variance_learning orchestration patch failed: {err}");
+                Err((
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({"errors": ["internal_error"]})),
+                ))
+            }
+        };
+    }
+
+    Err((
+        axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+        Json(json!({"errors": ["proposal_application_progress or reorganize_orchestration_progress is required"]})),
+    ))
 }
 
 async fn import_variance_learning(
@@ -314,11 +399,22 @@ async fn import_variance_learning(
             )
         })?;
 
+    let orchestration = variance_gateway
+        .find_reorganize_orchestration_progress_by_plan_id(plan_id)
+        .map_err(|err| {
+            tracing::error!("variance_learning import orchestration read failed: {err}");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            )
+        })?;
+
     let merged = PlanVarianceLearningSnapshotRead {
         plan_id: snapshot.plan_id,
         source_plan_id: snapshot.source_plan_id,
         summary: snapshot.summary,
         proposal_application_progress: progress,
+        reorganize_orchestration_progress: orchestration,
     };
 
     Ok(Json(snapshot_to_json(&merged)))

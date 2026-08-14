@@ -17,6 +17,7 @@ import { PlanTaskScheduleComponent } from './plan-task-schedule.component';
 import type { PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { localTodayIso } from '../../core/local-today';
+import { readLearnOrchestrationStepComplete } from '../../domain/plans/learn-master-update-orchestration';
 
 const loadedSchedule: TaskScheduleResponse = {
   plan: {
@@ -1265,8 +1266,6 @@ describe('PlanTaskScheduleComponent', () => {
     );
     expect(link).not.toBeNull();
     expect(link.getAttribute('href')).toBe('/plans/7/learn');
-    expect(sessionStorage.getItem('agrr:learn-orchestration-step-progress:7')).toContain(
-      '"regenerate":true'
-    );
+    expect(readLearnOrchestrationStepComplete(7, 'regenerate')).toBe(true);
   });
 });

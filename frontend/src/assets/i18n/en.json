@@ -1579,7 +1579,8 @@
           "regenerate": "Open task schedule",
           "sync_verify": "Check sync"
         },
-        "completed": "Completed"
+        "completed": "Completed",
+        "continue": "Continue"
       },
       "loop": {
         "title": "Learning loop progress",
