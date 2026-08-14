@@ -4,8 +4,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   clearLearnOrchestrationProgressCache,
-  hydrateLearnOrchestrationProgress,
-  markLearnOrchestrationStepComplete
+  hydrateLearnOrchestrationProgress
 } from '../../domain/plans/learn-master-update-orchestration';
 import {
   PlanLearnMasterUpdateNextStepsComponent,

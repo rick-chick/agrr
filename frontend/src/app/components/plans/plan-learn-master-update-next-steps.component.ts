@@ -93,10 +93,6 @@ export class PlanLearnMasterUpdateNextStepsComponent {
     return buildLearnOrchestrationResumeNavigation(this.planId);
   }
 
-  get hasIncompleteStep(): boolean {
-    return findFirstIncompleteOrchestrationStep(this.planId) != null;
-  }
-
   stepLabel(stepNumber: 1 | 2 | 3): string {
     return `plans.learn.next_steps.step_label.${stepNumber}`;
   }
