@@ -92,7 +92,6 @@ const initialControl: PlanTaskScheduleViewState = {
             [planId]="planId"
             [mode]="learningOrchestrationMode"
             [syncState]="syncState"
-            [orchestrationComplete]="orchestrationComplete"
           />
         }
         @if (control.loading) {

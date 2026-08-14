@@ -55,7 +55,6 @@ describe('PlanTaskScheduleOrchestrationBannerComponent', () => {
   it('shows return-to-learn link when orchestration is complete', () => {
     fixture.componentInstance.mode = 'regenerate';
     fixture.componentInstance.syncState = 'ready';
-    fixture.componentInstance.orchestrationComplete = true;
     fixture.detectChanges();
 
     const link = fixture.nativeElement.querySelector('a.learn-orchestration-banner__learn-link');
@@ -67,7 +66,6 @@ describe('PlanTaskScheduleOrchestrationBannerComponent', () => {
   it('shows return-to-learn link during orchestration', () => {
     fixture.componentInstance.mode = 'regenerate';
     fixture.componentInstance.syncState = 'generating';
-    fixture.componentInstance.orchestrationComplete = false;
     fixture.detectChanges();
 
     const link = fixture.nativeElement.querySelector('a.learn-orchestration-banner__learn-link');

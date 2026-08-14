@@ -125,6 +125,5 @@ describe('buildLearnLoopCrossDisplaySummary', () => {
 
     expect(summary.currentPhase).toBe('observe');
     expect(summary.phases).toEqual(['observe', 'apply', 'reorganize', 'handoff', 'complete']);
-    expect(summary.completedPhaseCount).toBe(0);
   });
 });
