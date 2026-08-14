@@ -7,6 +7,8 @@ export interface WorkDayListRowDto {
   recordedToday: boolean;
   /** Days past scheduled_date when grouped as overdue (local today basis). */
   overdueDays?: number;
+  /** Field cumulative GDD as of the work list "today" date (from climate_data). */
+  cumulativeGddAtToday?: number | null;
 }
 
 export interface LoadWorkDayListInputDto {
