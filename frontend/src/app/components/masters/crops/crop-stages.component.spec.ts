@@ -70,6 +70,11 @@ const tableTranslations = {
       return_to_plan: 'Return to plan',
       blueprint_readiness: {
         detail_title: 'Configuration status',
+        stages_ready: 'Growth stages have base temperature and required GDD',
+        stages_missing: 'Growth stages are missing base temperature or required GDD',
+        blueprints_ready: 'Task plan templates are configured',
+        blueprints_missing: 'Task plan templates are not configured',
+        blueprints_action: 'Configure task plan templates',
         stages_page_gap_base_temperature: '{{stageName}}: base temperature not set',
         stages_page_gap_required_gdd: '{{stageName}}: required GDD not set',
         stages_next_step_action: 'Go to task plan templates'
@@ -98,6 +103,13 @@ const tableTranslations = {
   },
   common: {
     loading: 'Loading...'
+  },
+  plans: {
+    learn: {
+      reorganize: {
+        return_to_learn: 'Return to learning screen'
+      }
+    }
   }
 };
 
@@ -537,6 +549,49 @@ describe('CropStagesComponent', () => {
     expect(gaps).toBeTruthy();
     expect(gaps?.textContent).toContain('Vegetative');
     expect(gaps?.textContent).toContain('base temperature not set');
+  });
+
+  it('shows stage and blueprint readiness checklist in fromPlan banner', async () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) => {
+      if (key === 'fromPlan') return '7';
+      if (key === 'returnTo') return 'learn';
+      return null;
+    });
+    component.fromPlanId = 7;
+    component.returnTab = 'learn';
+    const incompleteStage: CropStage = {
+      id: 2,
+      name: 'Vegetative',
+      order: 2
+    } as CropStage;
+    await loadStages([incompleteStage]);
+
+    const banner = fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner');
+    const checklist = banner?.querySelector('.crop-stages__from-plan-readiness');
+    expect(checklist).toBeTruthy();
+    expect(checklist?.textContent).toContain('Growth stages are missing base temperature or required GDD');
+    expect(checklist?.textContent).toContain('Task plan templates are not configured');
+    const blueprintLink = checklist?.querySelector(
+      'a.blueprint-readiness__link'
+    ) as HTMLAnchorElement;
+    expect(blueprintLink?.getAttribute('href')).toContain('/crops/1/task_schedule_blueprints');
+  });
+
+  it('links back to learn when returnTo=learn in fromPlan banner', async () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) => {
+      if (key === 'fromPlan') return '7';
+      if (key === 'returnTo') return 'learn';
+      return null;
+    });
+    component.fromPlanId = 7;
+    component.returnTab = 'learn';
+    await loadStages([stageFixture]);
+
+    const returnLink = fixture.nativeElement.querySelector(
+      '.crop-stages__return-to-plan'
+    ) as HTMLAnchorElement;
+    expect(returnLink?.getAttribute('href')).toBe('/plans/7/learn');
+    expect(returnLink?.textContent?.trim()).toBe('Return to learning screen');
   });
 
   it('persists reordered stage orders after drag-drop via handle column', () => {

@@ -100,6 +100,34 @@ const initialControl: CropStagesViewState = {
             <p class="crop-blueprints__plan-wizard-banner-lead">
               {{ 'crops.show.from_plan_stages_wizard_lead' | translate }}
             </p>
+            <div class="blueprint-readiness crop-stages__from-plan-readiness" role="status">
+              <p class="blueprint-readiness__title">
+                {{ 'crops.show.blueprint_readiness.detail_title' | translate }}
+              </p>
+              <ul class="blueprint-readiness__list">
+                <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.stageRequirementsReady">
+                  @if (control.blueprintReadiness.stageRequirementsReady) {
+                    <span>{{ 'crops.show.blueprint_readiness.stages_ready' | translate }}</span>
+                  } @else {
+                    <span>{{ 'crops.show.blueprint_readiness.stages_missing' | translate }}</span>
+                  }
+                </li>
+                <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.blueprintsReady">
+                  @if (control.blueprintReadiness.blueprintsReady) {
+                    <span>{{ 'crops.show.blueprint_readiness.blueprints_ready' | translate }}</span>
+                  } @else {
+                    <span>{{ 'crops.show.blueprint_readiness.blueprints_missing' | translate }}</span>
+                    <a
+                      [routerLink]="['/crops', cropId, 'task_schedule_blueprints']"
+                      [queryParams]="wizardQueryParams"
+                      class="blueprint-readiness__link"
+                    >
+                      {{ 'crops.show.blueprint_readiness.blueprints_action' | translate }}
+                    </a>
+                  }
+                </li>
+              </ul>
+            </div>
             @if (control.stageRequirementGaps.length > 0) {
               <ul class="crop-stages__plan-wizard-gaps" role="list">
                 @for (gap of control.stageRequirementGaps; track gap.stageId) {
@@ -121,7 +149,7 @@ const initialControl: CropStagesViewState = {
               </ul>
             }
             <a [routerLink]="planReturnPath" class="btn-secondary crop-stages__return-to-plan">
-              {{ 'crops.show.return_to_plan' | translate }}
+              {{ planReturnLabelKey | translate }}
             </a>
           </div>
         }
@@ -310,6 +338,12 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   get planReturnPath(): (string | number)[] {
     return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
+  }
+
+  get planReturnLabelKey(): string {
+    return this.returnTab === 'learn'
+      ? 'plans.learn.reorganize.return_to_learn'
+      : 'crops.show.return_to_plan';
   }
 
   get wizardQueryParams(): ReturnType<typeof cropPlanWizardQueryParams> | null {
