@@ -3009,7 +3009,11 @@
       "start_recording": "記録を始める",
       "no_fields_warning": "有効な圃場がありません。",
       "register_fields_link": "圃場を登録する",
-      "retry": "再読み込み"
+      "retry": "再読み込み",
+      "gdd_delay_summary": "GDD遅延 {{count}} 件",
+      "threshold_exceeded_summary": "要対応 {{count}} 件",
+      "context_attention_badge": "注意",
+      "context_attention_badge_aria": "計画芯で要対応 {{count}} 件"
     }
   },
   "status": {

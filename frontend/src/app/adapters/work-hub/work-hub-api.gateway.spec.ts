@@ -34,7 +34,9 @@ describe('WorkHubApiGateway', () => {
         hasValidFields: true,
         planId: 9,
         overdueCount: 0,
-        todayCount: 0
+        todayCount: 0,
+        gddDelayCount: 0,
+        thresholdExceededCount: 0
       }
     ]);
   });
