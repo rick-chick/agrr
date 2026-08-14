@@ -2558,7 +2558,6 @@
           "early": "{{delta}}日早着"
         }
       },
-      "variance_summary_line": "完了 {{completed}} 件 · 未記録 {{unrecorded}} 件 · 平均乖離 {{average}} 日",
       "open_learn": "振り返りを見る",
       "variance_subview": {
         "summary_title": "計画全体の乖離サマリ",

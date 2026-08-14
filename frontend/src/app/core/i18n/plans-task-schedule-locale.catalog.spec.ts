@@ -101,7 +101,6 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.variance.badge.on_time',
   'plans.task_schedules.variance.badge.late',
   'plans.task_schedules.variance.badge.early',
-  'plans.task_schedules.variance_summary_line',
   'plans.task_schedules.open_learn',
   'plans.learn.page_title',
   'plans.task_schedules.variance_subview.summary_title',

@@ -7,7 +7,6 @@ import { BehaviorSubject } from 'rxjs';
 
 import en from '../../../assets/i18n/en.json';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
-import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { CreateTaskScheduleItemUseCase } from '../../usecase/plans/create-task-schedule-item.usecase';
 import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-schedule-item.usecase';
@@ -72,10 +71,7 @@ const loadedState: PlanTaskScheduleViewState = {
   totalFieldCount: 0,
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
-  allFieldsLackTasks: false,
-  varianceLoading: false,
-  varianceError: null,
-  varianceStats: null
+  allFieldsLackTasks: false
 };
 
 function sampleGeneralTask(
@@ -195,7 +191,6 @@ describe('PlanTaskScheduleComponent', () => {
   let component: PlanTaskScheduleComponent;
   let fixture: ComponentFixture<PlanTaskScheduleComponent>;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
-  let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: PlanTaskSchedulePresenter;
@@ -207,7 +202,6 @@ describe('PlanTaskScheduleComponent', () => {
     HTMLDialogElement.prototype.close = vi.fn();
 
     loadUseCase = { execute: vi.fn() };
-    varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -218,7 +212,6 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
-          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
@@ -268,10 +261,7 @@ describe('PlanTaskScheduleComponent', () => {
       totalFieldCount: 0,
       fieldsWithTasksCount: 0,
       fieldsWithoutTasksCount: 0,
-      allFieldsLackTasks: false,
-      varianceLoading: false,
-      varianceError: null,
-      varianceStats: null
+      allFieldsLackTasks: false
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -417,7 +407,6 @@ describe('PlanTaskScheduleComponent', () => {
   it('uses from_date query param for the date filter', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
-    varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -432,7 +421,6 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
-          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
@@ -1032,7 +1020,6 @@ describe('PlanTaskScheduleComponent', () => {
   it('does not show redundant filter navigation when field_cultivation_id query param is set', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
-    varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -1047,7 +1034,6 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
-          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
@@ -1104,10 +1090,9 @@ describe('PlanTaskScheduleComponent', () => {
     );
   });
 
-  it('shows variance summary line and learn link on task schedule list', async () => {
+  it('shows learn link for variance on task schedule list without summary stats', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
-    varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -1119,7 +1104,6 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
-          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
@@ -1159,18 +1143,10 @@ describe('PlanTaskScheduleComponent', () => {
           }
         ]
       },
-      varianceStats: {
-        completedCount: 2,
-        averageDeltaDays: 1.5,
-        unrecordedCount: 1
-      }
     });
     listFixture.detectChanges();
     await listFixture.whenStable();
 
-    expect(varianceUseCase.execute).toHaveBeenCalledWith(
-      expect.objectContaining({ planId: 7 })
-    );
     expect(
       listFixture.nativeElement.querySelector('.plan-task-schedule__view-toggle')
     ).toBeNull();
@@ -1178,13 +1154,15 @@ describe('PlanTaskScheduleComponent', () => {
       listFixture.nativeElement.querySelector('app-task-schedule-variance-view')
     ).toBeNull();
     expect(
-      listFixture.nativeElement.querySelector('.plan-task-schedule__variance-summary')
+      listFixture.nativeElement.querySelector('.plan-task-schedule__variance-learn')
     ).toBeTruthy();
-    expect(listFixture.nativeElement.textContent).toContain('Completed 2');
+    expect(listFixture.nativeElement.textContent).not.toContain('Completed 2');
     expect(listFixture.nativeElement.textContent).toContain('Review variance');
-    expect(
-      listFixture.nativeElement.querySelector('.plan-task-schedule__learn-link')?.getAttribute('href')
-    ).toContain('/plans/7/learn');
+    const learnLink = listFixture.nativeElement.querySelector(
+      '.plan-task-schedule__learn-link'
+    ) as HTMLAnchorElement;
+    expect(learnLink.getAttribute('href')).toContain('/plans/7/learn');
+    expect(learnLink.getAttribute('href')).toContain('plan-learn-current-variance-title');
     expect(
       listFixture.nativeElement.querySelector('app-task-schedule-month-list')
     ).toBeTruthy();
@@ -1193,7 +1171,6 @@ describe('PlanTaskScheduleComponent', () => {
   it('shows return-to-learn link in orchestration banner when regenerate completes', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
-    varianceUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -1208,7 +1185,6 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
-          { provide: LoadPlanVsActualSummaryUseCase, useValue: varianceUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },

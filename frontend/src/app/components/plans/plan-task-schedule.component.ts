@@ -13,7 +13,6 @@ import {
   PlanTaskScheduleRowView
 } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
-import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
@@ -26,7 +25,6 @@ import { FlashMessageService } from '../../services/flash-message.service';
 import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effects';
 import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
-import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import {
   isTaskScheduleOrchestrationComplete,
   markLearnOrchestrationStepComplete,
@@ -65,10 +63,7 @@ const initialControl: PlanTaskScheduleViewState = {
   totalFieldCount: 0,
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
-  allFieldsLackTasks: false,
-  varianceLoading: false,
-  varianceError: null,
-  varianceStats: null
+  allFieldsLackTasks: false
 };
 
 @Component({
@@ -219,25 +214,11 @@ const initialControl: PlanTaskScheduleViewState = {
                   }}
                 </p>
               }
-            <p class="plan-task-schedule__variance-summary" role="status">
-              @if (control.varianceLoading) {
-                <span>{{ 'common.loading' | translate }}</span>
-              } @else if (control.varianceError) {
-                <span>{{ control.varianceError | translate }}</span>
-              } @else if (control.varianceStats) {
-                <span>{{
-                  'plans.task_schedules.variance_summary_line'
-                    | translate
-                      : {
-                          completed: control.varianceStats.completedCount,
-                          unrecorded: control.varianceStats.unrecordedCount,
-                          average: varianceAverageLabel(control.varianceStats.averageDeltaDays)
-                        }
-                }}</span>
-              }
+            <p class="plan-task-schedule__variance-learn" role="status">
               <a
                 class="plan-task-schedule__learn-link"
                 [routerLink]="['/plans', planId, 'learn']"
+                fragment="plan-learn-current-variance-title"
               >{{ 'plans.task_schedules.open_learn' | translate }}</a>
             </p>
             <div class="plan-task-schedule__filters">
@@ -392,7 +373,6 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
-  private readonly varianceUseCase = inject(LoadPlanVsActualSummaryUseCase);
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
   private readonly createItemUseCase = inject(CreateTaskScheduleItemUseCase);
   private readonly updateItemUseCase = inject(UpdateTaskScheduleItemUseCase);
@@ -560,13 +540,6 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     }
   }
 
-  varianceAverageLabel(value: number | null): string {
-    if (value == null) {
-      return this.translate.instant('plans.task_schedules.variance_subview.not_available');
-    }
-    return formatPlanTaskScheduleAverageDeltaDaysLabel(value);
-  }
-
   private _control: PlanTaskScheduleViewState = initialControl;
   get control(): PlanTaskScheduleViewState {
     return this._control;
@@ -627,7 +600,6 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       }
     });
     this.reload();
-    this.loadVarianceSummary();
   }
 
   private maybeRedirectLegacyVarianceView(): boolean {
@@ -636,20 +608,6 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     }
     void this.router.navigate(['/plans', this.planId, 'learn'], { replaceUrl: true });
     return true;
-  }
-
-  private loadVarianceSummary(): void {
-    const planId = this.planId;
-    if (!planId) {
-      return;
-    }
-    this.control = {
-      ...this.control,
-      varianceLoading: true,
-      varianceError: null
-    };
-    const loadGeneration = this.presenter.beginVarianceLoad();
-    this.varianceUseCase.execute({ planId, loadGeneration });
   }
 
   reload(options?: { silent?: boolean }): void {
