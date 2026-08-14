@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,7 +7,7 @@ import { buildPlanWorkDeepLinkQuery } from '../../domain/plans/build-plan-work-d
 @Component({
   selector: 'app-plan-learn-input-gap-summary',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [RouterLink, TranslateModule],
   template: `
   <section
     class="plan-learn-input-gap-summary"
