@@ -34,22 +34,18 @@ export function verifyProductGapBreadthDepthGates(repoRoot) {
   // G2: each 深掘り打ち止め condition → fail row
   const g2StopConditions = [
     {
-      id: 'G2-5',
       patterns: [/G2-5/, /深掘り打ち止め/],
       hint: 'G2 fail for 深掘り打ち止め (breadth-depth-scale.md §深掘り打ち止め)',
     },
     {
-      id: 'g2-3-stop',
       patterns: [/G2-3.*打ち止め|打ち止め.*G2-3/i, /根拠なしのチャート/],
       hint: 'G2 fail linking G2-3 excess to 打ち止め',
     },
     {
-      id: 'core5-depth',
       patterns: [/深さ寄り.*2\s*未満|2\s*未満.*深さ寄り/],
       hint: 'G2 fail for core-5 depth-oriented < 2 with breadth candidates',
     },
     {
-      id: 'existing-enhancement',
       patterns: [/既存強化で足りる/],
       hint: 'G2 fail for 既存強化で足りる 打ち止め condition',
     },
@@ -70,9 +66,8 @@ export function verifyProductGapBreadthDepthGates(repoRoot) {
 
   // mandatory_corrections guidance
   const correctionPatterns = [/打ち止め/, /見送り/, /幅.*候補|幅候補/];
-  const correctionSection = gates.match(/mandatory_corrections[\s\S]*?(?=###|## |$)/i)?.[0] ?? gates;
   for (const p of correctionPatterns) {
-    if (!p.test(correctionSection) && !p.test(gates)) {
+    if (!p.test(gates)) {
       errors.push(`gates.md missing mandatory_corrections guidance matching ${p}`);
     }
   }
