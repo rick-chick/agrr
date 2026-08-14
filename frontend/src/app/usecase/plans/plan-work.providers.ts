@@ -43,8 +43,9 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
     useFactory: (presenter: PlanWorkPresenter) => ({
       present: (dto: Parameters<PlanWorkPresenter['presentSaveImpactSummary']>[0]) =>
         presenter.presentSaveImpactSummary(dto),
-      onError: (dto: Parameters<PlanWorkPresenter['onSaveImpactError']>[0]) =>
-        presenter.onSaveImpactError(dto)
+      onError: (dto: Parameters<PlanWorkPresenter['onSaveImpactError']>[0]) => {
+        presenter.onSaveImpactError(dto);
+      }
     }),
     deps: [PlanWorkPresenter]
   },
