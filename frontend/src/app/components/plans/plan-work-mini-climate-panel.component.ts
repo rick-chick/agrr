@@ -11,14 +11,10 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { formatIsoDateForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
-import { FieldClimateApiGateway } from '../../adapters/plans/field-climate-api.gateway';
 import { PlanWorkMiniClimatePanelPresenter } from '../../adapters/plans/plan-work-mini-climate-panel.presenter';
-import { FIELD_CLIMATE_GATEWAY } from '../../usecase/plans/field-climate/field-climate.gateway';
 import { PreviewWorkRowMiniClimateStateDto } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.dtos';
 import { PreviewWorkRowMiniClimateUseCase } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.usecase';
-import {
-  PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT
-} from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.output-port';
+import { PREVIEW_WORK_ROW_MINI_CLIMATE_PROVIDERS } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.providers';
 
 function emptyMiniClimateState(): PreviewWorkRowMiniClimateStateDto {
   return {
@@ -34,15 +30,7 @@ function emptyMiniClimateState(): PreviewWorkRowMiniClimateStateDto {
   selector: 'app-plan-work-mini-climate-panel',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    PlanWorkMiniClimatePanelPresenter,
-    PreviewWorkRowMiniClimateUseCase,
-    {
-      provide: PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT,
-      useExisting: PlanWorkMiniClimatePanelPresenter
-    },
-    { provide: FIELD_CLIMATE_GATEWAY, useClass: FieldClimateApiGateway }
-  ],
+  providers: [...PREVIEW_WORK_ROW_MINI_CLIMATE_PROVIDERS],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section

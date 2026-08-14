@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlanWorkMiniClimatePanelComponent } from './plan-work-mini-climate-panel.component';
 import { PlanWorkMiniClimatePanelPresenter } from '../../adapters/plans/plan-work-mini-climate-panel.presenter';
 import { PreviewWorkRowMiniClimateUseCase } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.usecase';
-import { PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.output-port';
+import { PREVIEW_WORK_ROW_MINI_CLIMATE_PROVIDERS } from '../../usecase/plans/preview-work-row-mini-climate/preview-work-row-mini-climate.providers';
 
 describe('PlanWorkMiniClimatePanelComponent', () => {
   let fixture: ComponentFixture<PlanWorkMiniClimatePanelComponent>;
@@ -20,24 +20,26 @@ describe('PlanWorkMiniClimatePanelComponent', () => {
       imports: [PlanWorkMiniClimatePanelComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
-        PlanWorkMiniClimatePanelPresenter,
+        ...PREVIEW_WORK_ROW_MINI_CLIMATE_PROVIDERS.filter(
+          (provider) =>
+            typeof provider !== 'object' ||
+            !('provide' in provider) ||
+            provider.provide !== PreviewWorkRowMiniClimateUseCase
+        ),
         { provide: PreviewWorkRowMiniClimateUseCase, useValue: previewUseCase },
-        {
-          provide: PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT,
-          useExisting: PlanWorkMiniClimatePanelPresenter
-        },
         { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
       ]
     })
       .overrideComponent(PlanWorkMiniClimatePanelComponent, {
         set: {
           providers: [
-            PlanWorkMiniClimatePanelPresenter,
-            { provide: PreviewWorkRowMiniClimateUseCase, useValue: previewUseCase },
-            {
-              provide: PREVIEW_WORK_ROW_MINI_CLIMATE_OUTPUT_PORT,
-              useExisting: PlanWorkMiniClimatePanelPresenter
-            }
+            ...PREVIEW_WORK_ROW_MINI_CLIMATE_PROVIDERS.filter(
+              (provider) =>
+                typeof provider !== 'object' ||
+                !('provide' in provider) ||
+                provider.provide !== PreviewWorkRowMiniClimateUseCase
+            ),
+            { provide: PreviewWorkRowMiniClimateUseCase, useValue: previewUseCase }
           ]
         }
       })
