@@ -13,12 +13,18 @@ AGRR リポジトリの現状機能を調査せよ。
 - frontend ルート・主要画面
 - crates/agrr-domain の bounded context
 - 計画→実行→学習のループのうち薄い箇所
+- GitHub backlog（選定テーマまたはギャップ候補に関連する issue）
+  - `gh issue list` / `gh issue view` で OPEN / CLOSED を列挙（番号・state・タイトル要約）
+- マージ済み PR（同一テーマ）
+  - `gh pr list --state merged` で列挙（PR 番号・触れたコード path）
 
-出力（Markdown）:
-1. できること一覧（画面・API レベル）
-2. ユーザーフロー（ログイン後・作業・計画）
-3. 再利用可能な資産（use case, domain 型, API）
-4. ファイルパス付き
+出力（Markdown）— `current-state.md` の必須セクション（空欄禁止）:
+1. **既存 backlog** — 関連 issue 番号・state・タイトル要約
+2. **実装済み** — マージ済み PR 番号と触れたコード path
+3. **できること一覧** — 画面・API レベル（コード path 付き）
+4. **計画→実行→学習** — 薄い箇所（上記観測と矛盾しない記述）
+5. ユーザーフロー（ログイン後・作業・計画）
+6. 再利用可能な資産（use case, domain 型, API）
 
 プロダクト芯: 気象×GDD×最適化の計画アプリ（フル ERP ではない）。
 コードは書かない。

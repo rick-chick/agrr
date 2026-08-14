@@ -69,7 +69,14 @@ description: >-
 
 Task `explore`（thoroughness: `very thorough`）。プロンプト: [`references/subagent-prompts.md`](references/subagent-prompts.md) §1。
 
-`tmp/product-gap/current-state.md` に保存。画面・ルート、ドメイン境界、**計画 → 実行 → 学習** の薄い箇所（観測ベース）。
+`tmp/product-gap/current-state.md` に保存。**必須セクション**（[`references/artifacts.md`](references/artifacts.md)）:
+
+- **既存 backlog** — 関連 issue（`gh issue list` / `gh issue view` で OPEN / CLOSED）
+- **実装済み** — 同一テーマのマージ済み PR（`gh pr list --state merged`）と触れたコード path
+- **できること一覧** — 画面・API レベル（コード path 付き）
+- **計画→実行→学習** — 薄い箇所（上記観測と矛盾しない記述）
+
+上記のいずれかが**空**なら **フェーズ 2 に進まない**。親エージェントは §1 調査を継続する。
 
 ---
 
