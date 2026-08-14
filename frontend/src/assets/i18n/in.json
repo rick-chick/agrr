@@ -2285,6 +2285,16 @@
         "gdd_delay": "GDD विलंब",
         "learn_cta": "Learn में विवरण देखें"
       },
+      "today_attention": {
+        "title": "आज का ध्यान",
+        "frost_risk": "पाला जोखिम",
+        "gdd_delay": "GDD विलंब",
+        "threshold_exceeded": "सीमा पार",
+        "frost_risk_field": "{{field}} ({{crop}})",
+        "gdd_delay_task": "GDD विलंब: {{name}}",
+        "threshold_exceeded_task": "सीमा पार: {{name}}",
+        "learn_cta": "Learn में विवरण देखें"
+      },
       "exceedance_badge": {
         "days": "Δ {{delta}} दिन",
         "gdd": "GDD {{delta}}"
@@ -2672,15 +2682,15 @@
       "farm_meta": "{{count}} खेत क्षेत्र · कुल {{area}} वर्ग मी",
       "overdue_summary": "{{count}} अतिदेय",
       "today_summary": "आज {{count}}",
-      "gdd_delay_summary": "{{count}} GDD विलंब",
-      "threshold_exceeded_summary": "{{count}} कार्य आवश्यक",
-      "context_attention_badge": "ध्यान",
-      "context_attention_badge_aria": "योजना-कोर में {{count}} कार्य आवश्यक",
       "open_work": "कार्य खोलें",
       "start_recording": "दर्ज करना शुरू करें",
       "no_fields_warning": "इस खेत पर कोई मान्य खेत क्षेत्र नहीं है।",
       "register_fields_link": "खेत क्षेत्र पंजीकृत करें",
-      "retry": "पुनः लोड करें"
+      "retry": "पुनः लोड करें",
+      "gdd_delay_summary": "{{count}} GDD विलंब",
+      "threshold_exceeded_summary": "{{count}} कार्य आवश्यक",
+      "context_attention_badge": "ध्यान",
+      "context_attention_badge_aria": "योजना-कोर में {{count}} कार्य आवश्यक"
     }
   },
   "status": {

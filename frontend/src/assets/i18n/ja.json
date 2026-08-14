@@ -2923,6 +2923,16 @@
         "gdd_delay": "GDD遅延",
         "learn_cta": "振り返りで詳細を見る"
       },
+      "today_attention": {
+        "title": "今日の注意",
+        "frost_risk": "霜リスク",
+        "gdd_delay": "GDD遅延",
+        "threshold_exceeded": "閾値超過",
+        "frost_risk_field": "{{field}}（{{crop}}）",
+        "gdd_delay_task": "GDD遅延: {{name}}",
+        "threshold_exceeded_task": "閾値超過: {{name}}",
+        "learn_cta": "振り返りで詳細を見る"
+      },
       "exceedance_badge": {
         "days": "Δ {{delta}}日",
         "gdd": "GDD {{delta}}"
@@ -2985,15 +2995,15 @@
       "farm_meta": "圃場 {{count}} 件・合計 {{area}} ㎡",
       "overdue_summary": "期限超過 {{count}} 件",
       "today_summary": "今日 {{count}} 件",
-      "gdd_delay_summary": "GDD遅延 {{count}} 件",
-      "threshold_exceeded_summary": "要対応 {{count}} 件",
-      "context_attention_badge": "注意",
-      "context_attention_badge_aria": "計画芯で要対応 {{count}} 件",
       "open_work": "作業へ",
       "start_recording": "記録を始める",
       "no_fields_warning": "有効な圃場がありません。",
       "register_fields_link": "圃場を登録する",
-      "retry": "再読み込み"
+      "retry": "再読み込み",
+      "gdd_delay_summary": "GDD遅延 {{count}} 件",
+      "threshold_exceeded_summary": "要対応 {{count}} 件",
+      "context_attention_badge": "注意",
+      "context_attention_badge_aria": "計画芯で要対応 {{count}} 件"
     }
   },
   "status": {
