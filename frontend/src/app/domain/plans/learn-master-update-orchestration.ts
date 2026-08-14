@@ -3,10 +3,7 @@ import {
   readLearnProposalApplicationProgress
 } from './learn-proposal-application-progress';
 import {
-  hydrateLearnOrchestrationProgress,
   readLearnOrchestrationProgress,
-  registerLearnOrchestrationProgressPatchHandler,
-  syncLearnOrchestrationUpdates,
   updateLearnOrchestrationProgress
 } from './learn-reorganize-pipeline-state';
 

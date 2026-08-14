@@ -6,10 +6,8 @@ import en from '../../../assets/i18n/en.json';
 import {
   clearLearnProposalApplicationProgressCache
 } from '../../domain/plans/learn-proposal-application-progress';
-import {
-  clearLearnReorganizePipelineAutoChain,
-  readLearnReorganizePipelineAutoChain
-} from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
+import { clearLearnOrchestrationProgressCache } from '../../domain/plans/learn-master-update-orchestration';
+import { readLearnReorganizePipelineAutoChain } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 import { BulkApplySafeLearnProposalsUseCase } from '../../usecase/plans/bulk-apply-safe-learn-proposals.usecase';
 import { PlanLearnBulkApplyPanelComponent } from './plan-learn-bulk-apply-panel.component';
 
@@ -21,7 +19,7 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
   beforeEach(async () => {
     sessionStorage.clear();
     clearLearnProposalApplicationProgressCache();
-    clearLearnReorganizePipelineAutoChain();
+    clearLearnOrchestrationProgressCache();
 
     bulkApplyUseCase = {
       execute: vi.fn(({ onSuccess }: { onSuccess?: (result: { appliedCount: number; totalSafeCount: number }) => void }) => {

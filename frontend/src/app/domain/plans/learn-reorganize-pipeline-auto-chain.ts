@@ -2,7 +2,6 @@ import { buildPlanDetailAdjustNavigation } from './learn-master-update-orchestra
 import type { ReorganizePipelinePhase } from './learn-master-update-orchestration';
 import {
   readLearnOrchestrationProgress,
-  syncLearnOrchestrationUpdates,
   updateLearnOrchestrationProgress
 } from './learn-reorganize-pipeline-state';
 
@@ -19,10 +18,7 @@ export function readLearnReorganizePipelineAutoChain(planId: number): boolean {
   return readLearnOrchestrationProgress(planId).pipeline_active === true;
 }
 
-export function clearLearnReorganizePipelineAutoChain(planId?: number): void {
-  if (planId == null) {
-    return;
-  }
+export function clearLearnReorganizePipelineAutoChain(planId: number): void {
   updateLearnOrchestrationProgress(planId, {
     pipeline_active: false,
     pipeline_phase: null,
