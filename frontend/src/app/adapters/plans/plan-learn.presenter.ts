@@ -14,6 +14,12 @@ import {
 } from '../../usecase/plans/load-stage-gdd-calibration-proposals.output-port';
 import { buildPlanVsActualPlanSummaryStats } from '../../domain/plans/build-plan-vs-actual-plan-summary';
 import { collectLearnProposalRawSources } from '../../domain/plans/collect-learn-proposal-raw-sources';
+import { extractLearnProposalEvidenceSources } from '../../domain/plans/extract-learn-proposal-evidence-sources';
+import {
+  buildBlueprintTimingProposalEvidence,
+  buildLearnProposalEvidenceMap,
+  buildStageGddProposalEvidence
+} from '../../domain/plans/learn-proposal-evidence';
 import { flattenPlanTaskSchedule } from '../../domain/work-schedule/flatten-plan-task-schedule';
 import { collectPlanTaskScheduleUnrecordedRows } from '../../domain/work-schedule/collect-plan-task-schedule-unrecorded-rows';
 import { resolvePlanTaskScheduleDisplayStatus } from '../../domain/work-schedule/resolve-plan-task-schedule-display-status';
@@ -32,8 +38,10 @@ const initialControl: PlanLearnViewState = {
   varianceUnrecordedRows: [],
   blueprintTimingLoading: false,
   blueprintTimingProposals: [],
+  blueprintTimingEvidenceByKey: {},
   stageGddProposalsLoading: false,
   stageGddProposals: [],
+  stageGddEvidenceByKey: {},
   learningSnapshot: null,
   carryoverSourcePlans: [],
   selectedSourcePlanId: null,
@@ -56,6 +64,7 @@ export class PlanLearnPresenter
   private varianceLoadGeneration = 0;
   private blueprintTimingProposalsLoadGeneration = 0;
   private stageGddProposalsLoadGeneration = 0;
+  private evidenceSources = extractLearnProposalEvidenceSources([]);
 
   setView(view: PlanLearnView): void {
     this.view = view;
@@ -87,12 +96,14 @@ export class PlanLearnPresenter
     const snapshot = mapTaskScheduleResponseToDomain(dto.schedule);
     const rows = flattenPlanTaskSchedule(snapshot.plan, snapshot.fields);
     const varianceUnrecordedRows = enrichUnrecordedRows(collectPlanTaskScheduleUnrecordedRows(rows));
+    this.evidenceSources = extractLearnProposalEvidenceSources(snapshot.fields);
     this.view.control = {
       ...this.view.control,
       loading: false,
       error: null,
       planName: dto.schedule.plan.name,
-      varianceUnrecordedRows
+      varianceUnrecordedRows,
+      ...this.buildProposalEvidenceState()
     };
   }
 
@@ -136,7 +147,8 @@ export class PlanLearnPresenter
     this.view.control = {
       ...this.view.control,
       blueprintTimingLoading: false,
-      blueprintTimingProposals: dto.proposals
+      blueprintTimingProposals: dto.proposals,
+      ...this.buildProposalEvidenceState(dto.proposals)
     };
   }
 
@@ -148,7 +160,31 @@ export class PlanLearnPresenter
     this.view.control = {
       ...this.view.control,
       stageGddProposalsLoading: false,
-      stageGddProposals: dto.proposals
+      stageGddProposals: dto.proposals,
+      ...this.buildProposalEvidenceState(undefined, dto.proposals)
+    };
+  }
+
+  private buildProposalEvidenceState(
+    blueprintTimingProposals = this.view?.control.blueprintTimingProposals ?? [],
+    stageGddProposals = this.view?.control.stageGddProposals ?? []
+  ): Pick<
+    PlanLearnViewState,
+    'blueprintTimingEvidenceByKey' | 'stageGddEvidenceByKey'
+  > {
+    return {
+      blueprintTimingEvidenceByKey: buildLearnProposalEvidenceMap(
+        blueprintTimingProposals,
+        this.evidenceSources,
+        buildBlueprintTimingProposalEvidence,
+        (proposal) => `${proposal.cropId}-${proposal.category}`
+      ),
+      stageGddEvidenceByKey: buildLearnProposalEvidenceMap(
+        stageGddProposals,
+        this.evidenceSources,
+        buildStageGddProposalEvidence,
+        (proposal) => `${proposal.cropId}-${proposal.stageId}`
+      )
     };
   }
 

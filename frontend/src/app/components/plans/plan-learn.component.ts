@@ -46,8 +46,10 @@ const initialControl: PlanLearnViewState = {
   varianceUnrecordedRows: [],
   blueprintTimingLoading: false,
   blueprintTimingProposals: [],
+  blueprintTimingEvidenceByKey: {},
   stageGddProposalsLoading: false,
   stageGddProposals: [],
+  stageGddEvidenceByKey: {},
   learningSnapshot: null,
   carryoverSourcePlans: [],
   selectedSourcePlanId: null,
@@ -278,6 +280,7 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [loading]="control.blueprintTimingLoading"
             [proposals]="control.blueprintTimingProposals"
+            [evidenceByKey]="control.blueprintTimingEvidenceByKey"
             (progressChanged)="onProposalProgressChanged()"
           />
           <app-task-schedule-variance-view
@@ -292,6 +295,7 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [loading]="control.stageGddProposalsLoading"
             [proposals]="control.stageGddProposals"
+            [evidenceByKey]="control.stageGddEvidenceByKey"
             (progressChanged)="onProposalProgressChanged()"
           />
           </div>

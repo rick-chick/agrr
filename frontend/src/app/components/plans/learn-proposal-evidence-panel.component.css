@@ -1,0 +1,39 @@
+.learn-proposal-evidence {
+  margin-top: var(--space-2);
+}
+
+.learn-proposal-evidence__toggle {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-link);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.learn-proposal-evidence__panel {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.learn-proposal-evidence__rationale,
+.learn-proposal-evidence__records-title {
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.learn-proposal-evidence__records {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.learn-proposal-evidence__record + .learn-proposal-evidence__record {
+  margin-top: var(--space-1);
+}

@@ -2627,7 +2627,13 @@
         "empty": "ステージ GDD 校正提案はまだありません。GDD 付きの作業実績を記録すると提案が表示されます。",
         "delta_label": "平均 GDD 差分: {{delta}}",
         "proposed_value": "現在の要求 GDD {{current}} → 提案 {{proposed}}",
-        "cta": "ステージ要求量を校正"
+        "cta": "ステージ要求量を校正",
+        "evidence": {
+          "toggle": "根拠を表示",
+          "rationale": "{{total}} 件の作業実績のうち {{count}} 件が GDD 閾値 {{threshold}} を超過しています。",
+          "records_title": "寄与実績（最大 5 件）",
+          "record": "{{name}} — {{date}}"
+        }
       },
       "action_proposals": {
         "title": "スケジュール乖離の確認が必要です",
@@ -2649,6 +2655,12 @@
         "category": {
           "general": "一般作業",
           "fertilizer": "施肥"
+        },
+        "evidence": {
+          "toggle": "根拠を表示",
+          "rationale": "{{total}} 件の作業実績のうち {{count}} 件が日数閾値 {{threshold}} 日を超過しています。",
+          "records_title": "寄与実績（最大 5 件）",
+          "record": "{{name}} — {{date}}"
         }
       },
       "application_progress": {

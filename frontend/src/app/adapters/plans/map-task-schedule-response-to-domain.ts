@@ -38,6 +38,8 @@ function mapTaskScheduleItem(item: TaskScheduleItem): PlanTaskScheduleItem {
     gddTrigger: parseOptionalNumber(item.gdd_trigger),
     gddAtActual: item.gdd_at_actual ?? null,
     gddDelta: item.gdd_delta ?? null,
+    stageOrder: item.stage_order ?? item.details.stage.order ?? null,
+    category: item.category,
     status: item.status,
     completed: item.completed,
     details: mapTaskScheduleItemDetails(item.details)
@@ -49,6 +51,7 @@ function mapFieldSchedule(field: FieldSchedule): PlanFieldSchedule {
     id: field.id,
     name: field.name,
     crop_name: field.crop_name,
+    crop_id: field.crop_id,
     field_cultivation_id: field.field_cultivation_id,
     schedules: {
       general: field.schedules.general.map(mapTaskScheduleItem),
