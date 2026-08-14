@@ -57,3 +57,16 @@
   gap: var(--space-3);
   margin-top: var(--space-4);
 }
+
+.plan-optimizing__reorganize-shell {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-info) 35%, var(--color-border-subtle));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-info) 8%, var(--color-surface-raised));
+}
+
+.plan-optimizing__learn-link {
+  display: inline-flex;
+  margin-top: var(--space-3);
+}
