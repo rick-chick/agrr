@@ -84,7 +84,9 @@ describe('LoadNavOverdueBadgeUseCase', () => {
             hasValidFields: true,
             planId: 9,
             overdueCount: 0,
-            todayCount: 0
+            todayCount: 0,
+            gddDelayCount: 0,
+            thresholdExceededCount: 0
           },
           {
             farmId: 2,
@@ -94,7 +96,9 @@ describe('LoadNavOverdueBadgeUseCase', () => {
             hasValidFields: true,
             planId: 10,
             overdueCount: 0,
-            todayCount: 0
+            todayCount: 0,
+            gddDelayCount: 0,
+            thresholdExceededCount: 0
           }
         ])
     };

@@ -245,7 +245,11 @@
       "start_recording": "Start recording",
       "no_fields_warning": "No valid fields on this farm.",
       "register_fields_link": "Register fields",
-      "retry": "Reload"
+      "retry": "Reload",
+      "gdd_delay_summary": "{{count}} GDD delayed",
+      "threshold_exceeded_summary": "{{count}} need action",
+      "context_attention_badge": "Attention",
+      "context_attention_badge_aria": "{{count}} plan-core items need action"
     }
   },
   "status": {

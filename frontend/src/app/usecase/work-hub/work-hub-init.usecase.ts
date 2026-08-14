@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { of } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { localTodayIso } from '../../core/local-today';
@@ -8,11 +8,23 @@ import { PLAN_GATEWAY, PlanGateway } from '../plans/plan-gateway';
 import { WORK_HUB_GATEWAY, WorkHubGateway } from './work-hub-gateway';
 import { EnsurePlanForFarmUseCase } from './ensure-plan-for-farm.usecase';
 import { loadHubFarmTaskCounts } from './load-hub-farm-task-counts';
+import { loadHubFarmVarianceStats } from './load-hub-farm-variance-stats';
 import { WorkHubInitInputPort } from './work-hub-init.input-port';
 import { WORK_HUB_INIT_OUTPUT_PORT, WorkHubInitOutputPort } from './work-hub-init.output-port';
 
-function withZeroCounts(farms: Omit<WorkHubFarmRow, 'overdueCount' | 'todayCount'>[]): WorkHubFarmRow[] {
-  return farms.map((farm) => ({ ...farm, overdueCount: 0, todayCount: 0 }));
+function withZeroCounts(
+  farms: Omit<
+    WorkHubFarmRow,
+    'overdueCount' | 'todayCount' | 'gddDelayCount' | 'thresholdExceededCount'
+  >[]
+): WorkHubFarmRow[] {
+  return farms.map((farm) => ({
+    ...farm,
+    overdueCount: 0,
+    todayCount: 0,
+    gddDelayCount: 0,
+    thresholdExceededCount: 0
+  }));
 }
 
 @Injectable()
@@ -36,19 +48,26 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
           if (!farms.some((farm) => farm.planId != null)) {
             return of({ farms: withZeroCounts(farms), autoRedirect: false as const });
           }
-          return loadHubFarmTaskCounts(
-            farms.map((farm) => ({ farmId: farm.farmId, planId: farm.planId })),
-            this.planGateway,
-            today,
-            false
-          ).pipe(
-            map((countsByFarmId) => ({
+          const farmsForCounts = farms.map((farm) => ({ farmId: farm.farmId, planId: farm.planId }));
+          return forkJoin({
+            countsByFarmId: loadHubFarmTaskCounts(
+              farmsForCounts,
+              this.planGateway,
+              today,
+              false
+            ),
+            varianceByFarmId: loadHubFarmVarianceStats(farmsForCounts, this.planGateway)
+          }).pipe(
+            map(({ countsByFarmId, varianceByFarmId }) => ({
               farms: farms.map((farm) => {
                 const summary = countsByFarmId.get(farm.farmId);
+                const variance = varianceByFarmId.get(farm.farmId);
                 return {
                   ...farm,
                   overdueCount: summary?.overdueCount ?? 0,
-                  todayCount: summary?.todayCount ?? 0
+                  todayCount: summary?.todayCount ?? 0,
+                  gddDelayCount: variance?.gddDelayCount ?? 0,
+                  thresholdExceededCount: variance?.thresholdExceededCount ?? 0
                 };
               }),
               autoRedirect: false as const
