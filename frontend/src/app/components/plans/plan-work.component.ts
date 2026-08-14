@@ -483,6 +483,20 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       }
     });
     this.reload();
+    this.applyTaskScheduleItemHighlightFromRoute();
+  }
+
+  private applyTaskScheduleItemHighlightFromRoute(): void {
+    const raw = this.route.snapshot.queryParamMap.get('task_schedule_item_id');
+    if (raw == null || raw === '') {
+      return;
+    }
+    const itemId = Number(raw);
+    if (!Number.isFinite(itemId) || itemId <= 0) {
+      return;
+    }
+    this.control = { ...this.control, highlightedItemId: itemId };
+    this.scheduleHighlightClear(itemId);
   }
 
   reload(options?: { silent?: boolean }): void {

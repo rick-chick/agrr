@@ -1645,6 +1645,18 @@
         "unrecorded_message": "{{count}} tasks are not recorded yet.",
         "unrecorded_cta": "Record work",
         "complete_message": "Observation phase complete — all scheduled tasks are recorded."
+      },
+      "input_gap": {
+        "title": "Input gap summary",
+        "unrecorded": "Unrecorded",
+        "action_required": "Threshold exceeded",
+        "work_cta": "Record work"
+      },
+      "proposal_confidence": {
+        "label": "Confidence",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
       }
     },
     "work": {

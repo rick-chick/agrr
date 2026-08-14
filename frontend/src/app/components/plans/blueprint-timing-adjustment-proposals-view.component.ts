@@ -7,6 +7,8 @@ import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-ev
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import { cropPlanWizardQueryParams } from '../../domain/crops/plan-wizard-context';
 import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-panel.component';
+import { LearnProposalConfidenceBadgeComponent } from './learn-proposal-confidence-badge.component';
+import type { LearnProposalConfidence } from '../../domain/plans/resolve-learn-proposal-confidence';
 import {
   bpTimingProposalProgressKey,
   markBpTimingProposalDismissed,
@@ -22,7 +24,7 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
 @Component({
   selector: 'app-blueprint-timing-adjustment-proposals-view',
   standalone: true,
-  imports: [CommonModule, TranslateModule, LearnProposalEvidencePanelComponent],
+  imports: [CommonModule, TranslateModule, LearnProposalEvidencePanelComponent, LearnProposalConfidenceBadgeComponent],
   providers: [...LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS],
   template: `
     <section
@@ -31,6 +33,9 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
     >
       <h3 id="blueprint-timing-adjustment-heading" class="task-schedule-variance__section-title">
         {{ 'plans.learn.bp_timing_adjustment.title' | translate }}
+        @if (proposalConfidence != null) {
+          <app-learn-proposal-confidence-badge [confidence]="proposalConfidence" />
+        }
       </h3>
       <p class="blueprint-timing-adjustment__lead">
         {{ 'plans.learn.bp_timing_adjustment.lead' | translate }}
@@ -160,6 +165,7 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
   @Input() loading = false;
   @Input() proposals: BlueprintTimingAdjustmentProposal[] = [];
   @Input() evidenceByKey: Record<string, LearnProposalEvidence> = {};
+  @Input() proposalConfidence: LearnProposalConfidence | null = null;
   @Output() progressChanged = new EventEmitter<void>();
 
   private refreshVersion = 0;

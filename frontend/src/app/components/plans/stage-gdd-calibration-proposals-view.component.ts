@@ -6,6 +6,8 @@ import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-c
 import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
 import { formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
 import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-panel.component';
+import { LearnProposalConfidenceBadgeComponent } from './learn-proposal-confidence-badge.component';
+import type { LearnProposalConfidence } from '../../domain/plans/resolve-learn-proposal-confidence';
 import {
   markStageGddProposalDismissed,
   resolveLearnProposalApplicationStatus,
@@ -18,7 +20,7 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
 @Component({
   selector: 'app-stage-gdd-calibration-proposals-view',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, LearnProposalEvidencePanelComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, LearnProposalEvidencePanelComponent, LearnProposalConfidenceBadgeComponent],
   providers: [...LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS],
   template: `
     <section
@@ -27,6 +29,9 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
     >
       <h3 id="stage-gdd-calibration-heading" class="task-schedule-variance__section-title">
         {{ 'plans.learn.stage_gdd_calibration.title' | translate }}
+        @if (proposalConfidence != null) {
+          <app-learn-proposal-confidence-badge [confidence]="proposalConfidence" />
+        }
       </h3>
       <p class="stage-gdd-calibration__lead">
         {{ 'plans.learn.stage_gdd_calibration.lead' | translate }}
@@ -156,6 +161,7 @@ export class StageGddCalibrationProposalsViewComponent {
   @Input() loading = false;
   @Input() proposals: StageGddCalibrationProposal[] = [];
   @Input() evidenceByKey: Record<string, LearnProposalEvidence> = {};
+  @Input() proposalConfidence: LearnProposalConfidence | null = null;
   @Output() progressChanged = new EventEmitter<void>();
 
   private refreshVersion = 0;

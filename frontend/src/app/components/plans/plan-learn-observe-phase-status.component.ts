@@ -17,7 +17,11 @@ import type { LearnObservePhaseStatus } from '../../domain/plans/resolve-learn-o
                 | translate: { count: unrecordedCount }
             }}
           </p>
-          <a class="plan-learn-observe-phase__cta" [routerLink]="['/plans', planId, 'work']">
+          <a
+            class="plan-learn-observe-phase__cta"
+            [routerLink]="['/plans', planId, 'work']"
+            [queryParams]="focusItemId != null ? { task_schedule_item_id: focusItemId } : null"
+          >
             {{ 'plans.learn.observe_phase.unrecorded_cta' | translate }}
           </a>
         } @else {
@@ -32,4 +36,5 @@ export class PlanLearnObservePhaseStatusComponent {
   @Input({ required: true }) planId!: number;
   @Input() status: LearnObservePhaseStatus | null = null;
   @Input() unrecordedCount = 0;
+  @Input() focusItemId: number | null = null;
 }

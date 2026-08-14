@@ -2131,6 +2131,18 @@
         "unrecorded_message": "{{count}} कार्य अभी तक अभिलेखित नहीं हैं।",
         "unrecorded_cta": "कार्य अभिलेखित करें",
         "complete_message": "अवलोकन चरण पूर्ण — सभी निर्धारित कार्य अभिलेखित हैं।"
+      },
+      "input_gap": {
+        "title": "इनपुट अंतर सारांश",
+        "unrecorded": "अभिलेखित नहीं",
+        "action_required": "सीमा पार",
+        "work_cta": "कार्य अभिलेखित करें"
+      },
+      "proposal_confidence": {
+        "label": "विश्वसनीयता",
+        "high": "उच्च",
+        "medium": "मध्यम",
+        "low": "निम्न"
       }
     },
     "work": {

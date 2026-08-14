@@ -5,11 +5,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { formatPlanTaskScheduleDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import { resolvePlanTaskScheduleVarianceBadge } from '../../domain/work-schedule/resolve-plan-task-schedule-variance-badge';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
+import type { LearnProposalConfidence } from '../../domain/plans/resolve-learn-proposal-confidence';
+import { LearnProposalConfidenceBadgeComponent } from './learn-proposal-confidence-badge.component';
 
 @Component({
   selector: 'app-variance-action-proposal-cards',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, LearnProposalConfidenceBadgeComponent],
   template: `
     @if (items.length) {
       <section
@@ -18,6 +20,9 @@ import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-s
       >
         <h3 id="variance-action-proposals-title" class="variance-action-proposals__title">
           {{ 'plans.learn.action_proposals.title' | translate }}
+          @if (proposalConfidence != null) {
+            <app-learn-proposal-confidence-badge [confidence]="proposalConfidence" />
+          }
         </h3>
         <p class="variance-action-proposals__hint">
           {{ 'plans.learn.action_proposals.manual_hint' | translate }}
@@ -54,6 +59,7 @@ import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-s
 export class VarianceActionProposalCardsComponent {
   @Input({ required: true }) planId!: number;
   @Input() items: PlanVarianceActionItem[] = [];
+  @Input() proposalConfidence: LearnProposalConfidence | null = null;
 
   exceedanceLabel(kind: PlanVarianceActionItem['exceedance_kind']): string {
     return `plans.learn.action_proposals.exceedance.${kind}`;

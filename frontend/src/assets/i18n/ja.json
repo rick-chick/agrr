@@ -2769,6 +2769,18 @@
         "unrecorded_message": "未記録のタスクが {{count}} 件あります。",
         "unrecorded_cta": "作業を記録する",
         "complete_message": "観測フェーズ完了 — 予定タスクはすべて記録済みです。"
+      },
+      "input_gap": {
+        "title": "入力ギャップサマリ",
+        "unrecorded": "未記録",
+        "action_required": "閾値超過",
+        "work_cta": "作業を記録する"
+      },
+      "proposal_confidence": {
+        "label": "信頼度",
+        "high": "高",
+        "medium": "中",
+        "low": "低"
       }
     },
     "work": {

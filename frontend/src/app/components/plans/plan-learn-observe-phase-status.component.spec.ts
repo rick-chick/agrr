@@ -54,6 +54,19 @@ describe('PlanLearnObservePhaseStatusComponent', () => {
     expect(link.textContent).toContain('Record work');
   });
 
+  it('includes task_schedule_item_id query param when focusItemId is set', () => {
+    fixture.componentInstance.status = 'unrecorded';
+    fixture.componentInstance.unrecordedCount = 2;
+    fixture.componentInstance.focusItemId = 55;
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector(
+      'a.plan-learn-observe-phase__cta'
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toContain('/plans/7/work');
+    expect(link.getAttribute('href')).toContain('task_schedule_item_id=55');
+  });
+
   it('shows completion message when status is complete', () => {
     fixture.componentInstance.status = 'complete';
     fixture.detectChanges();

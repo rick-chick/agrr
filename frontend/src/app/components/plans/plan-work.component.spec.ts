@@ -51,11 +51,12 @@ const initialControl: PlanWorkViewState = {
 
 function createPlanRouteMock(planId: string) {
   let currentPlanId = planId;
+  let currentQueryParams: Record<string, string | null> = {};
   const paramMapSubject = new BehaviorSubject({
     get: (key: string) => (key === 'id' ? currentPlanId : null)
   });
   const queryParamMapSubject = new BehaviorSubject({
-    get: () => null
+    get: (key: string) => currentQueryParams[key] ?? null
   });
 
   return {
@@ -63,7 +64,9 @@ function createPlanRouteMock(planId: string) {
       get paramMap() {
         return paramMapSubject.value;
       },
-      queryParamMap: { get: () => null }
+      get queryParamMap() {
+        return queryParamMapSubject.value;
+      }
     },
     paramMap: paramMapSubject.asObservable(),
     queryParamMap: queryParamMapSubject.asObservable(),
@@ -71,6 +74,12 @@ function createPlanRouteMock(planId: string) {
       currentPlanId = id;
       paramMapSubject.next({
         get: (key: string) => (key === 'id' ? currentPlanId : null)
+      });
+    },
+    setQueryParam(key: string, value: string | null) {
+      currentQueryParams = { ...currentQueryParams, [key]: value };
+      queryParamMapSubject.next({
+        get: (paramKey: string) => currentQueryParams[paramKey] ?? null
       });
     }
   };
@@ -266,6 +275,20 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('a.plan-context-header__back')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('app-plan-plan-context-header')).toBeTruthy();
+  });
+
+  it('highlights task row when task_schedule_item_id query param is present', () => {
+    mockActivatedRoute.setQueryParam('task_schedule_item_id', '10');
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      highlightedItemId: 10
+    };
+    fixture.detectChanges();
+
+    const highlighted = fixture.nativeElement.querySelector('.plan-work__row--highlight');
+    expect(highlighted).toBeTruthy();
+    expect(highlighted.textContent).toContain('遅延作業');
   });
 
   it('uses compact page-header with visually hidden title and section-card shell', () => {
