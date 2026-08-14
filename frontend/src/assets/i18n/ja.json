@@ -2887,8 +2887,8 @@
           "loading": "気象データを読み込み中…",
           "unavailable": "この日付の気象データがありません",
           "gdd": "GDD {{value}}",
-          "gdd_comparison": "予定 GDD {{planned}} · 差 {{delta}}",
-          "weather": "最高{{max}}°C / 最低{{min}}°C（平均{{mean}}°C）"
+          "weather": "最高{{max}}°C / 最低{{min}}°C（平均{{mean}}°C）",
+          "gdd_comparison": "予定 GDD {{planned}} · 差 {{delta}}"
         },
         "photos": {
           "label": "写真（任意）",
@@ -2922,6 +2922,16 @@
         "unrecorded": "未記録",
         "threshold_exceeded": "要対応",
         "gdd_delay": "GDD遅延",
+        "learn_cta": "振り返りで詳細を見る"
+      },
+      "today_attention": {
+        "title": "今日の注意",
+        "frost_risk": "霜リスク",
+        "gdd_delay": "GDD遅延",
+        "threshold_exceeded": "閾値超過",
+        "frost_risk_field": "{{field}}（{{crop}}）",
+        "gdd_delay_task": "GDD遅延: {{name}}",
+        "threshold_exceeded_task": "閾値超過: {{name}}",
         "learn_cta": "振り返りで詳細を見る"
       },
       "exceedance_badge": {

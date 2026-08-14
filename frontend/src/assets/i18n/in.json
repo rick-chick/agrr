@@ -2249,8 +2249,8 @@
           "loading": "जलवायु डेटा लोड हो रहा है…",
           "unavailable": "इस तिथि के लिए जलवायु डेटा उपलब्ध नहीं",
           "gdd": "GDD {{value}}",
-          "gdd_comparison": "नियोजित GDD {{planned}} · अंतर {{delta}}",
-          "weather": "अधिकतम {{max}}°C / न्यूनतम {{min}}°C (औसत {{mean}}°C)"
+          "weather": "अधिकतम {{max}}°C / न्यूनतम {{min}}°C (औसत {{mean}}°C)",
+          "gdd_comparison": "नियोजित GDD {{planned}} · अंतर {{delta}}"
         },
         "photos": {
           "label": "फ़ोटो (वैकल्पिक)",
@@ -2284,6 +2284,16 @@
         "unrecorded": "अदर्ज",
         "threshold_exceeded": "कार्रवाई आवश्यक",
         "gdd_delay": "GDD विलंब",
+        "learn_cta": "Learn में विवरण देखें"
+      },
+      "today_attention": {
+        "title": "आज का ध्यान",
+        "frost_risk": "पाला जोखिम",
+        "gdd_delay": "GDD विलंब",
+        "threshold_exceeded": "सीमा पार",
+        "frost_risk_field": "{{field}} ({{crop}})",
+        "gdd_delay_task": "GDD विलंब: {{name}}",
+        "threshold_exceeded_task": "सीमा पार: {{name}}",
         "learn_cta": "Learn में विवरण देखें"
       },
       "exceedance_badge": {
