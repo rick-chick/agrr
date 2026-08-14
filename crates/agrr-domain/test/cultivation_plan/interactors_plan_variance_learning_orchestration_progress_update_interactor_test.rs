@@ -186,6 +186,9 @@ impl PlanVarianceLearningGateway for SpyVarianceLearningGateway {
             regenerate: false,
             sync_verify: false,
             return_to_learn: false,
+            pipeline_active: false,
+            current_phase: "idle".into(),
+            last_error: None,
         })
     }
 

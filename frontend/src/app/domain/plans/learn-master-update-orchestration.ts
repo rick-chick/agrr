@@ -7,18 +7,33 @@ export type LearningOrchestrationMode = 'adjust' | 'regenerate' | 'sync_verify';
 
 export type LearnOrchestrationStepKey = 'placement' | 'regenerate' | 'sync_verify';
 
+export type LearnReorganizePipelinePhase =
+  | 'idle'
+  | 'placement'
+  | 'optimizing'
+  | 'regenerate'
+  | 'sync_verify'
+  | 'failed'
+  | 'completed';
+
 export interface ReorganizeOrchestrationProgress {
   placement: boolean;
   regenerate: boolean;
   sync_verify: boolean;
   return_to_learn: boolean;
+  pipeline_active: boolean;
+  current_phase: LearnReorganizePipelinePhase;
+  last_error: string | null;
 }
 
 const defaultOrchestrationProgress = (): ReorganizeOrchestrationProgress => ({
   placement: false,
   regenerate: false,
   sync_verify: false,
-  return_to_learn: false
+  return_to_learn: false,
+  pipeline_active: false,
+  current_phase: 'idle',
+  last_error: null
 });
 
 const orchestrationCache: Record<number, ReorganizeOrchestrationProgress> = {};
@@ -52,12 +67,41 @@ export function hydrateLearnOrchestrationProgress(
 ): void {
   orchestrationCache[planId] = {
     ...defaultOrchestrationProgress(),
-    ...progress
+    ...progress,
+    current_phase: progress.current_phase ?? defaultOrchestrationProgress().current_phase,
+    last_error: progress.last_error ?? null,
+    pipeline_active: progress.pipeline_active ?? false
   };
 }
 
 function readOrchestrationProgress(planId: number): ReorganizeOrchestrationProgress {
   return orchestrationCache[planId] ?? defaultOrchestrationProgress();
+}
+
+export function readLearnOrchestrationPipelineActive(planId: number): boolean {
+  return readOrchestrationProgress(planId).pipeline_active;
+}
+
+export function readLearnOrchestrationCurrentPhase(
+  planId: number
+): LearnReorganizePipelinePhase {
+  return readOrchestrationProgress(planId).current_phase;
+}
+
+export function readLearnOrchestrationLastError(planId: number): string | null {
+  return readOrchestrationProgress(planId).last_error;
+}
+
+export function patchLearnOrchestrationProgress(
+  planId: number,
+  updates: Partial<ReorganizeOrchestrationProgress>
+): void {
+  const progress = {
+    ...readOrchestrationProgress(planId),
+    ...updates
+  };
+  writeOrchestrationProgress(planId, progress);
+  syncOrchestrationUpdates(planId, updates);
 }
 
 function writeOrchestrationProgress(
@@ -178,6 +222,23 @@ export function buildLearnOrchestrationResumeNavigation(planId: number): {
   commands: (string | number)[];
   queryParams: { learningOrchestration: string };
 } | null {
+  const progress = readOrchestrationProgress(planId);
+  if (progress.pipeline_active && progress.current_phase === 'optimizing') {
+    return {
+      commands: ['/plans', planId, 'optimizing'],
+      queryParams: { learningOrchestration: 'adjust' }
+    };
+  }
+  if (progress.pipeline_active && progress.current_phase === 'regenerate') {
+    return buildPlanTaskScheduleOrchestrationNavigation(planId, 'regenerate');
+  }
+  if (progress.pipeline_active && progress.current_phase === 'sync_verify') {
+    return buildPlanTaskScheduleOrchestrationNavigation(planId, 'sync_verify');
+  }
+  if (progress.pipeline_active && progress.current_phase === 'placement') {
+    return buildPlanDetailAdjustNavigation(planId);
+  }
+
   const step = findFirstIncompleteOrchestrationStep(planId);
   if (!step) {
     return null;
@@ -186,6 +247,11 @@ export function buildLearnOrchestrationResumeNavigation(planId: number): {
     return buildPlanDetailAdjustNavigation(planId);
   }
   return buildPlanTaskScheduleOrchestrationNavigation(planId, step);
+}
+
+export function hasLearnReorganizePipelineFailure(planId: number): boolean {
+  const progress = readOrchestrationProgress(planId);
+  return progress.pipeline_active && progress.current_phase === 'failed';
 }
 
 export function isTaskScheduleOrchestrationComplete(

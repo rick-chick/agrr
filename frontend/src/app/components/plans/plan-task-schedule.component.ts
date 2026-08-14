@@ -37,7 +37,8 @@ import {
 import {
   buildLearnReorganizePipelineSyncVerifyNavigation,
   clearLearnReorganizePipelineAutoChain,
-  readLearnReorganizePipelineAutoChain
+  readLearnReorganizePipelineAutoChain,
+  updateLearnReorganizePipelinePhase
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -612,6 +613,13 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     this.learningOrchestrationMode = parseLearningOrchestration(
       this.route.snapshot.queryParamMap.get('learningOrchestration')
     );
+    if (
+      readLearnReorganizePipelineAutoChain(planId) &&
+      (this.learningOrchestrationMode === 'regenerate' ||
+        this.learningOrchestrationMode === 'sync_verify')
+    ) {
+      updateLearnReorganizePipelinePhase(planId, this.learningOrchestrationMode);
+    }
     this.subscribeSyncUseCase.execute({
       planId,
       onSubscribed: (channel) => {
@@ -802,6 +810,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       return;
     }
     if (mode === 'regenerate') {
+      updateLearnReorganizePipelinePhase(planId, 'sync_verify');
       const navigation = buildLearnReorganizePipelineSyncVerifyNavigation(planId);
       void this.router.navigate(navigation.commands, { queryParams: navigation.queryParams });
       return;
