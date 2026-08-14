@@ -217,7 +217,8 @@ export class PlanWorkPresenter
       nextScheduled: null,
       regenerating: false,
       regenerateError: null,
-      ...emptyCropBannerFields
+      ...emptyCropBannerFields,
+      ...emptyPageVarianceFields
     };
   }
 
