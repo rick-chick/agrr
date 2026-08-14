@@ -1507,7 +1507,13 @@
         "empty": "No stage GDD calibration proposals yet. Record work with GDD data to generate suggestions.",
         "delta_label": "Average GDD delta: {{delta}}",
         "proposed_value": "Current required GDD {{current}} → proposed {{proposed}}",
-        "cta": "Adjust stage requirement"
+        "cta": "Adjust stage requirement",
+        "evidence": {
+          "toggle": "Show rationale",
+          "rationale": "{{count}} of {{total}} recorded tasks exceeded the GDD threshold of {{threshold}}.",
+          "records_title": "Contributing records (up to 5)",
+          "record": "{{name}} — {{date}}"
+        }
       },
       "action_proposals": {
         "title": "Schedule variance needs your review",
@@ -1529,6 +1535,12 @@
         "category": {
           "general": "General tasks",
           "fertilizer": "Fertilization"
+        },
+        "evidence": {
+          "toggle": "Show rationale",
+          "rationale": "{{count}} of {{total}} recorded tasks exceeded the day threshold of {{threshold}} days.",
+          "records_title": "Contributing records (up to 5)",
+          "record": "{{name}} — {{date}}"
         }
       },
       "application_progress": {

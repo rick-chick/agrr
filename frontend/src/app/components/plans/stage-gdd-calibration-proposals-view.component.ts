@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
+import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
 import { formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
+import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-panel.component';
 import {
   markStageGddProposalDismissed,
   resolveLearnProposalApplicationStatus,
@@ -14,7 +16,7 @@ import {
 @Component({
   selector: 'app-stage-gdd-calibration-proposals-view',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, LearnProposalEvidencePanelComponent],
   template: `
     <section
       class="task-schedule-variance__section stage-gdd-calibration"
@@ -70,6 +72,13 @@ import {
                           }
                   }}
                 </p>
+                <app-learn-proposal-evidence-panel
+                  [evidence]="evidenceFor(proposal)"
+                  toggleLabelKey="plans.learn.stage_gdd_calibration.evidence.toggle"
+                  rationaleKey="plans.learn.stage_gdd_calibration.evidence.rationale"
+                  recordsTitleKey="plans.learn.stage_gdd_calibration.evidence.records_title"
+                  recordLabelKey="plans.learn.stage_gdd_calibration.evidence.record"
+                />
               </div>
               <div class="stage-gdd-calibration__actions">
                 @if (canDismiss(proposal)) {
@@ -103,12 +112,17 @@ export class StageGddCalibrationProposalsViewComponent {
   @Input({ required: true }) planId!: number;
   @Input() loading = false;
   @Input() proposals: StageGddCalibrationProposal[] = [];
+  @Input() evidenceByKey: Record<string, LearnProposalEvidence> = {};
   @Output() progressChanged = new EventEmitter<void>();
 
   private refreshVersion = 0;
 
   proposalKey(proposal: StageGddCalibrationProposal): string {
     return `${proposal.cropId}-${proposal.stageId}`;
+  }
+
+  evidenceFor(proposal: StageGddCalibrationProposal): LearnProposalEvidence | null {
+    return this.evidenceByKey[this.proposalKey(proposal)] ?? null;
   }
 
   formatDelta(delta: number): string {

@@ -3,9 +3,11 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
+import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
 import { blueprintTimingPrefillStorageKey } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import { cropPlanWizardQueryParams } from '../../domain/crops/plan-wizard-context';
+import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-panel.component';
 import {
   bpTimingProposalProgressKey,
   markBpTimingProposalDismissed,
@@ -17,7 +19,7 @@ import {
 @Component({
   selector: 'app-blueprint-timing-adjustment-proposals-view',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
+  imports: [CommonModule, TranslateModule, LearnProposalEvidencePanelComponent],
   template: `
     <section
       class="task-schedule-variance__section blueprint-timing-adjustment"
@@ -69,6 +71,13 @@ import {
                       | translate: { count: proposal.affectedBlueprintCount }
                   }}
                 </p>
+                <app-learn-proposal-evidence-panel
+                  [evidence]="evidenceFor(proposal)"
+                  toggleLabelKey="plans.learn.bp_timing_adjustment.evidence.toggle"
+                  rationaleKey="plans.learn.bp_timing_adjustment.evidence.rationale"
+                  recordsTitleKey="plans.learn.bp_timing_adjustment.evidence.records_title"
+                  recordLabelKey="plans.learn.bp_timing_adjustment.evidence.record"
+                />
               </div>
               <div class="blueprint-timing-adjustment__actions">
                 @if (canDismiss(proposal)) {
@@ -102,6 +111,7 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
   @Input({ required: true }) planId!: number;
   @Input() loading = false;
   @Input() proposals: BlueprintTimingAdjustmentProposal[] = [];
+  @Input() evidenceByKey: Record<string, LearnProposalEvidence> = {};
   @Output() progressChanged = new EventEmitter<void>();
 
   private refreshVersion = 0;
@@ -110,6 +120,10 @@ export class BlueprintTimingAdjustmentProposalsViewComponent {
 
   proposalKey(proposal: BlueprintTimingAdjustmentProposal): string {
     return `${proposal.cropId}-${proposal.category}`;
+  }
+
+  evidenceFor(proposal: BlueprintTimingAdjustmentProposal): LearnProposalEvidence | null {
+    return this.evidenceByKey[this.proposalKey(proposal)] ?? null;
   }
 
   categoryLabel(category: string): string {

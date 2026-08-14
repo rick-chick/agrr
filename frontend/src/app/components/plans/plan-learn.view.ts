@@ -5,6 +5,7 @@ import type {
   PlanVsActualSummary
 } from '../../domain/plans/plan-vs-actual-summary';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
+import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
 import type { PlanTaskScheduleRowView } from './plan-task-schedule.view';
 import type { LearnPostMasterPayload } from '../../domain/plans/learn-proposal-application-progress';
@@ -20,8 +21,10 @@ export type PlanLearnViewState = {
   varianceUnrecordedRows: PlanTaskScheduleRowView[];
   blueprintTimingLoading: boolean;
   blueprintTimingProposals: BlueprintTimingAdjustmentProposal[];
+  blueprintTimingEvidenceByKey: Record<string, LearnProposalEvidence>;
   stageGddProposalsLoading: boolean;
   stageGddProposals: StageGddCalibrationProposal[];
+  stageGddEvidenceByKey: Record<string, LearnProposalEvidence>;
   learningSnapshot: PlanVarianceLearningSnapshot | null;
   carryoverSourcePlans: PlanSummary[];
   selectedSourcePlanId: number | null;

@@ -31,6 +31,8 @@ export interface PlanTaskScheduleItem {
   gddTrigger: number | null;
   gddAtActual: number | null;
   gddDelta: number | null;
+  stageOrder?: number | null;
+  category?: string;
   status: string;
   /** Derived from linked work_records in timeline API; not from legacy status column. */
   completed: boolean;
@@ -41,6 +43,7 @@ export interface PlanFieldSchedule {
   id: number;
   name: string;
   crop_name: string;
+  crop_id?: number;
   field_cultivation_id: number;
   schedules: {
     general: ReadonlyArray<PlanTaskScheduleItem>;

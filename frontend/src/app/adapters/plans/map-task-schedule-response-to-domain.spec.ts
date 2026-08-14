@@ -85,6 +85,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
           id: 1,
           name: 'North',
           crop_name: 'Tomato',
+          crop_id: 20,
           field_cultivation_id: 10,
           schedules: {
             general: [
@@ -97,6 +98,8 @@ describe('mapTaskScheduleResponseToDomain', () => {
                 gddTrigger: null,
                 gddAtActual: null,
                 gddDelta: null,
+                stageOrder: 1,
+                category: 'general',
                 status: 'planned',
                 completed: false,
                 details: {
@@ -291,6 +294,8 @@ describe('mapTaskScheduleResponseToDomain', () => {
         gddTrigger: null,
         gddAtActual: null,
         gddDelta: null,
+        stageOrder: 1,
+        category: 'general',
         status: 'planned',
         completed: false,
         details: {

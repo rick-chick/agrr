@@ -1993,7 +1993,13 @@
         "empty": "अभी कोई चरण GDD अंशांकन प्रस्ताव नहीं है। GDD डेटा के साथ कार्य रिकॉर्ड करने पर प्रस्ताव दिखेंगे।",
         "delta_label": "औसत GDD अंतर: {{delta}}",
         "proposed_value": "वर्तमान आवश्यक GDD {{current}} → प्रस्तावित {{proposed}}",
-        "cta": "चरण आवश्यकता समायोजित करें"
+        "cta": "चरण आवश्यकता समायोजित करें",
+        "evidence": {
+          "toggle": "आधार दिखाएँ",
+          "rationale": "{{total}} रिकॉर्ड किए गए कार्यों में से {{count}} ने GDD सीमा {{threshold}} पार की।",
+          "records_title": "योगदान रिकॉर्ड (अधिकतम 5)",
+          "record": "{{name}} — {{date}}"
+        }
       },
       "action_proposals": {
         "title": "अनुसूची अंतर की समीक्षा आवश्यक है",
@@ -2015,6 +2021,12 @@
         "category": {
           "general": "सामान्य कार्य",
           "fertilizer": "उर्वरक"
+        },
+        "evidence": {
+          "toggle": "आधार दिखाएँ",
+          "rationale": "{{total}} रिकॉर्ड किए गए कार्यों में से {{count}} ने {{threshold}} दिन की सीमा पार की।",
+          "records_title": "योगदान रिकॉर्ड (अधिकतम 5)",
+          "record": "{{name}} — {{date}}"
         }
       },
       "application_progress": {
