@@ -2987,7 +2987,8 @@
         "no_schedule": "予定なし",
         "month_average_late": "平均 {{count}}日遅れ",
         "month_average_early": "平均 {{count}}日早着",
-        "month_average_on_time": "平均 予定通り"
+        "month_average_on_time": "平均 予定通り",
+        "weather_snapshot": "最高{{max}}°C / 最低{{min}}°C（平均{{mean}}°C）"
       }
     }
   },

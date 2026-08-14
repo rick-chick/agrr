@@ -2349,7 +2349,8 @@
         "no_schedule": "कोई अनुसूची नहीं",
         "month_average_late": "औसत {{count}} दिन देरी",
         "month_average_early": "औसत {{count}} दिन पहले",
-        "month_average_on_time": "औसत नियोजित समय पर"
+        "month_average_on_time": "औसत नियोजित समय पर",
+        "weather_snapshot": "High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)"
       }
     },
     "index": {

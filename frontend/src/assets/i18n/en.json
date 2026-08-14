@@ -1866,7 +1866,8 @@
         "no_schedule": "No schedule",
         "month_average_late": "Avg. {{count}} days late",
         "month_average_early": "Avg. {{count}} days early",
-        "month_average_on_time": "Avg. on schedule"
+        "month_average_on_time": "Avg. on schedule",
+        "weather_snapshot": "High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)"
       }
     },
     "index": {
