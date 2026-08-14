@@ -68,8 +68,13 @@ const tableTranslations = {
       from_plan_wizard_title: 'From plan wizard',
       from_plan_stages_wizard_lead: 'Configure stages',
       return_to_plan: 'Return to plan',
+      return_to_learn: 'Return to learning screen',
       blueprint_readiness: {
         detail_title: 'Configuration status',
+        stages_ready: 'Growth stages have base temperature and required GDD',
+        stages_missing: 'Growth stages are missing base temperature or required GDD',
+        blueprints_ready: 'At least one task plan is registered',
+        blueprints_missing: 'No task plans registered yet',
         stages_page_gap_base_temperature: '{{stageName}}: base temperature not set',
         stages_page_gap_required_gdd: '{{stageName}}: required GDD not set',
         stages_next_step_action: 'Go to task plan templates'
@@ -483,6 +488,44 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('a[href*="/plans/7"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.crop-stages__return-to-plan')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
+  });
+
+  it('shows fromPlan readiness checklist with stage GDD and blueprint BP status', async () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) =>
+      key === 'fromPlan' ? '7' : null
+    );
+    component.fromPlanId = 7;
+    await loadStages([stageFixture]);
+
+    const banner = fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner');
+    const checklist = banner?.querySelector('.crop-stages__from-plan-readiness');
+    expect(checklist).toBeTruthy();
+
+    const items = checklist?.querySelectorAll('.blueprint-readiness__list li');
+    expect(items?.length).toBe(2);
+    expect(items?.[0]?.classList.contains('blueprint-readiness__item--ok')).toBe(true);
+    expect(items?.[0]?.textContent).toContain('Growth stages have base temperature and required GDD');
+    expect(items?.[1]?.classList.contains('blueprint-readiness__item--ok')).toBe(false);
+    expect(items?.[1]?.textContent).toContain('No task plans registered yet');
+    expect(fixture.nativeElement.querySelector('.page-main > .blueprint-readiness')).toBeNull();
+  });
+
+  it('links return to learn when returnTo=learn query param is set', async () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) => {
+      if (key === 'fromPlan') return '7';
+      if (key === 'returnTo') return 'learn';
+      return null;
+    });
+    component.fromPlanId = 7;
+    component.returnTab = 'learn';
+    await loadStages([stageFixture]);
+
+    const returnLink = fixture.nativeElement.querySelector(
+      '.crop-stages__return-to-plan'
+    ) as HTMLAnchorElement;
+    expect(returnLink).toBeTruthy();
+    expect(returnLink.getAttribute('href')).toBe('/plans/7/learn');
+    expect(returnLink.textContent?.trim()).toBe('Return to learning screen');
   });
 
   it('shows empty state with description and header primary add button when no stages', async () => {
