@@ -302,8 +302,6 @@ describe('CropSetupProposalImportComponent', () => {
   });
 
   it('navigates to learn post_master after apply success when returnTo=learn', () => {
-    component.fromPlanId = 7;
-    component.returnTab = 'learn';
     storeLearnBpTimingApplyContext(7, {
       planId: 7,
       cropId: 42,
@@ -320,6 +318,8 @@ describe('CropSetupProposalImportComponent', () => {
       parsedProposal: validProposal
     };
     fixture.detectChanges();
+    component.fromPlanId = 7;
+    component.returnTab = 'learn';
 
     component.applyProposal();
 

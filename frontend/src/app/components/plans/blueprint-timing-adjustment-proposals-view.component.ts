@@ -4,6 +4,9 @@ import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
+import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
+import { cropPlanWizardQueryParams } from '../../domain/crops/plan-wizard-context';
+import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-panel.component';
 import {
   bpTimingProposalProgressKey,
   markBpTimingProposalDismissed,
