@@ -1003,6 +1003,23 @@ fn get_plan_variance_learning_includes_proposal_application_progress() {
 
 #[test]
 fn get_plan_variance_learning_includes_reorganize_orchestration_progress() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    let learning_path = format!("/api/v1/plans/{}/variance_learning", seed.plan_id);
+
+    let (patch_status, patch_body) = status_and_body(client.patch(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "reorganize_orchestration_progress": {
+                "placement": true,
+                "return_to_learn": true
+            }
+        })),
+    ));
     assert_eq!(200, patch_status, "{patch_body}");
     let patched: serde_json::Value =
         serde_json::from_str(&patch_body).expect("patch variance learning JSON");
