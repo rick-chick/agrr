@@ -4,10 +4,12 @@ use std::collections::BTreeMap;
 
 use crate::pool::SqlitePool;
 use agrr_domain::cultivation_plan::dtos::{
-    LearnHandoffStatePatch, LearnHandoffStateRead, PlanVarianceLearningSnapshotRead,
-    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+    BlueprintTimingAdjustmentProposalRead, LearnHandoffStatePatch, LearnHandoffStateRead,
+    PlanVarianceActionItemRead, PlanVarianceLearningSnapshotRead, PlanVsActualCategorySummaryRead,
+    PlanVsActualItemRead, PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
     ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
 };
+use agrr_domain::cultivation_plan::policies::plan_variance_threshold_policy::VarianceExceedanceKind;
 use agrr_domain::cultivation_plan::gateways::PlanVarianceLearningGateway;
 use rusqlite::params;
 use serde_json::{json, Map, Value};
@@ -352,6 +354,47 @@ fn summary_to_json(summary: &PlanVsActualSummaryRead) -> String {
             "gdd_at_actual": item.gdd_at_actual,
             "gdd_delta": item.gdd_delta,
         })).collect::<Vec<_>>(),
+        "stage_gdd_calibration_proposals": summary
+            .stage_gdd_calibration_proposals
+            .iter()
+            .map(|proposal| json!({
+                "crop_id": proposal.crop_id,
+                "crop_name": proposal.crop_name,
+                "stage_order": proposal.stage_order,
+                "stage_name": proposal.stage_name,
+                "average_gdd_delta": proposal.average_gdd_delta,
+                "recorded_item_count": proposal.recorded_item_count,
+            }))
+            .collect::<Vec<_>>(),
+        "action_required_items": summary
+            .action_required_items
+            .iter()
+            .map(|item| json!({
+                "item_id": item.item_id,
+                "field_cultivation_id": item.field_cultivation_id,
+                "category": item.category,
+                "name": item.name,
+                "scheduled_date": item.scheduled_date,
+                "actual_date": item.actual_date,
+                "delta_days": item.delta_days,
+                "gdd_trigger": item.gdd_trigger,
+                "gdd_at_actual": item.gdd_at_actual,
+                "gdd_delta": item.gdd_delta,
+                "exceedance_kind": item.exceedance_kind.as_str(),
+            }))
+            .collect::<Vec<_>>(),
+        "blueprint_timing_adjustment_proposals": summary
+            .blueprint_timing_adjustment_proposals
+            .iter()
+            .map(|proposal| json!({
+                "crop_id": proposal.crop_id,
+                "crop_name": proposal.crop_name,
+                "category": proposal.category,
+                "average_delta_days": proposal.average_delta_days,
+                "average_gdd_delta": proposal.average_gdd_delta,
+                "recorded_item_count": proposal.recorded_item_count,
+            }))
+            .collect::<Vec<_>>(),
     });
     body.to_string()
 }
@@ -389,16 +432,71 @@ fn summary_from_json(
             gdd_delta: item["gdd_delta"].as_f64(),
         })
         .collect();
+    let stage_gdd_calibration_proposals = value["stage_gdd_calibration_proposals"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .map(|proposal| StageGddCalibrationProposalRead {
+            crop_id: proposal["crop_id"].as_i64().unwrap_or(0),
+            crop_name: proposal["crop_name"].as_str().unwrap_or_default().to_string(),
+            stage_order: proposal["stage_order"].as_i64().unwrap_or(0) as i32,
+            stage_name: proposal["stage_name"].as_str().unwrap_or_default().to_string(),
+            average_gdd_delta: proposal["average_gdd_delta"].as_f64().unwrap_or(0.0),
+            recorded_item_count: proposal["recorded_item_count"].as_i64().unwrap_or(0),
+        })
+        .collect();
+    let action_required_items = value["action_required_items"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .map(|item| PlanVarianceActionItemRead {
+            item_id: item["item_id"].as_i64().unwrap_or(0),
+            field_cultivation_id: item["field_cultivation_id"].as_i64().unwrap_or(0),
+            category: item["category"].as_str().unwrap_or_default().to_string(),
+            name: item["name"].as_str().unwrap_or_default().to_string(),
+            scheduled_date: item["scheduled_date"].as_str().map(str::to_string),
+            actual_date: item["actual_date"].as_str().map(str::to_string),
+            delta_days: item["delta_days"].as_i64(),
+            gdd_trigger: item["gdd_trigger"].as_f64(),
+            gdd_at_actual: item["gdd_at_actual"].as_f64(),
+            gdd_delta: item["gdd_delta"].as_f64(),
+            exceedance_kind: parse_exceedance_kind(
+                item["exceedance_kind"].as_str().unwrap_or_default(),
+            ),
+        })
+        .collect();
+    let blueprint_timing_adjustment_proposals = value["blueprint_timing_adjustment_proposals"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .map(|proposal| BlueprintTimingAdjustmentProposalRead {
+            crop_id: proposal["crop_id"].as_i64().unwrap_or(0),
+            crop_name: proposal["crop_name"].as_str().unwrap_or_default().to_string(),
+            category: proposal["category"].as_str().unwrap_or_default().to_string(),
+            average_delta_days: proposal["average_delta_days"].as_f64().unwrap_or(0.0),
+            average_gdd_delta: proposal["average_gdd_delta"].as_f64(),
+            recorded_item_count: proposal["recorded_item_count"].as_i64().unwrap_or(0),
+        })
+        .collect();
 
     Ok(PlanVsActualSummaryRead {
         plan_id: value["plan_id"].as_i64().unwrap_or(plan_id),
         unrecorded_count: value["unrecorded_count"].as_i64().unwrap_or(0),
         categories,
         top_variance_items,
-        stage_gdd_calibration_proposals: vec![],
-        action_required_items: vec![],
-        blueprint_timing_adjustment_proposals: vec![],
+        stage_gdd_calibration_proposals,
+        action_required_items,
+        blueprint_timing_adjustment_proposals,
     })
+}
+
+fn parse_exceedance_kind(raw: &str) -> VarianceExceedanceKind {
+    match raw {
+        "days" => VarianceExceedanceKind::Days,
+        "gdd" => VarianceExceedanceKind::Gdd,
+        "both" => VarianceExceedanceKind::Both,
+        _ => VarianceExceedanceKind::Days,
+    }
 }
 
 #[cfg(test)]
@@ -461,6 +559,60 @@ mod plan_variance_learning_sqlite_gateway_test {
         })
         .expect("schema");
         pool
+    }
+
+    #[test]
+    fn save_and_find_round_trip_preserves_learning_proposals() {
+        let pool = test_pool();
+        let gateway = PlanVarianceLearningSqliteGateway::new(pool);
+        let summary = PlanVsActualSummaryRead {
+            plan_id: 21,
+            unrecorded_count: 0,
+            categories: vec![],
+            top_variance_items: vec![],
+            stage_gdd_calibration_proposals: vec![StageGddCalibrationProposalRead {
+                crop_id: 3,
+                crop_name: "Tomato".into(),
+                stage_order: 2,
+                stage_name: "Vegetative".into(),
+                average_gdd_delta: 12.5,
+                recorded_item_count: 4,
+            }],
+            action_required_items: vec![PlanVarianceActionItemRead {
+                item_id: 9,
+                field_cultivation_id: 5,
+                category: "general".into(),
+                name: "Weeding".into(),
+                scheduled_date: Some("2026-06-01".into()),
+                actual_date: Some("2026-06-10".into()),
+                delta_days: Some(9),
+                gdd_trigger: Some(100.0),
+                gdd_at_actual: Some(120.0),
+                gdd_delta: Some(20.0),
+                exceedance_kind: VarianceExceedanceKind::Both,
+            }],
+            blueprint_timing_adjustment_proposals: vec![BlueprintTimingAdjustmentProposalRead {
+                crop_id: 3,
+                crop_name: "Tomato".into(),
+                category: "general".into(),
+                average_delta_days: 5.0,
+                average_gdd_delta: Some(8.0),
+                recorded_item_count: 3,
+            }],
+        };
+
+        gateway.save(21, 10, &summary).expect("save");
+        let found = gateway
+            .find_by_plan_id(21)
+            .expect("find")
+            .expect("snapshot");
+        let stored = found.summary.expect("summary");
+        assert_eq!(1, stored.stage_gdd_calibration_proposals.len());
+        assert_eq!(12.5, stored.stage_gdd_calibration_proposals[0].average_gdd_delta);
+        assert_eq!(1, stored.action_required_items.len());
+        assert_eq!(VarianceExceedanceKind::Both, stored.action_required_items[0].exceedance_kind);
+        assert_eq!(1, stored.blueprint_timing_adjustment_proposals.len());
+        assert_eq!(5.0, stored.blueprint_timing_adjustment_proposals[0].average_delta_days);
     }
 
     #[test]
