@@ -2698,7 +2698,8 @@
         "apply_button": "安全な提案を一括適用（{{count}}）",
         "applying": "適用中 {{applied}} / {{total}}…",
         "complete_message": "安全な提案 {{count}} 件を適用しました。再最適化パイプラインを開始して計画を更新してください。",
-        "start_pipeline": "再最適化パイプラインを開始"
+        "start_pipeline": "再最適化パイプラインを開始",
+        "starting_pipeline": "安全な提案 {{count}} 件を適用しました。再最適化パイプラインを開始しています…"
       },
       "post_master": {
         "title": "マスタ更新を適用しました",
@@ -2758,29 +2759,36 @@
           "loop_complete_next_plan": "次の計画へ進む",
           "complete_reorganize": "作業台で配置を確認",
           "complete_next_plan": "計画一覧へ",
-          "handoff_new_plan": "次の計画を作成（学習を引き継ぐ）"
+          "handoff_new_plan": "次の計画を作成（学習を引き継ぐ）",
+          "handoff_source_plan": "引き継ぎ元の計画: {{planName}}"
         },
         "complete": {
           "title": "学習ループ完了",
           "lead": "すべてのマスタ更新提案が適用済み・却下済み・完了です。再編成または次の計画に進んでください。"
-        },
-        "handoff_source_plan": "ソース計画: {{planName}}"
-      },
-      "reorganize": {
-        "return_to_learn": "学習画面に戻る",
-        "placement": {
-          "message": "マスタ更新後の再最適化を推奨",
-          "hint": "ガントで栽培をドラッグして配置を調整してください。ドロップ後に再最適化が自動で始まります。"
-        },
-        "optimizing": {
-          "message": "再最適化を実行中",
-          "hint": "配置の最適化を実行しています。学習画面に戻って進捗を確認できます。"
         }
       },
       "observe_phase": {
         "unrecorded_message": "未記録のタスクが {{count}} 件あります。",
         "unrecorded_cta": "作業を記録する",
         "complete_message": "観測フェーズ完了 — 予定タスクはすべて記録済みです。"
+      },
+      "input_gap": {
+        "title": "入力ギャップサマリ",
+        "unrecorded": "未記録件数",
+        "action_required": "要対応件数",
+        "work_cta": "未記録タスクを記録する"
+      },
+      "proposal_confidence": {
+        "high": "信頼度：高",
+        "medium": "信頼度：中",
+        "low": "信頼度：低"
+      },
+      "pipeline_status": {
+        "failed_title": "再配置パイプラインが失敗しました",
+        "unknown_error": "再配置中に予期しないエラーが発生しました。",
+        "retry": "パイプラインを再試行",
+        "resume": "パイプラインを再開",
+        "active_message": "再配置パイプラインが進行中です。中断したところから再開できます。"
       }
     },
     "work": {
@@ -2875,9 +2883,9 @@
         "workbench_link": "作業台で adjust を検討"
       },
       "variance_summary": {
-        "title": "予実乖離サマリ",
+        "title": "入力ギャップサマリ",
         "unrecorded": "未記録",
-        "threshold_exceeded": "閾値超過",
+        "threshold_exceeded": "要対応",
         "gdd_delay": "GDD遅延",
         "learn_cta": "振り返りで詳細を見る"
       },

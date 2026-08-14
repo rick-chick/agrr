@@ -183,6 +183,9 @@ pub use plan_variance_learning_snapshot::{
 };
 pub use reorganize_orchestration_progress::{
     ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
+    PIPELINE_PHASE_COMPLETED, PIPELINE_PHASE_FAILED, PIPELINE_PHASE_IDLE,
+    PIPELINE_PHASE_OPTIMIZING, PIPELINE_PHASE_PLACEMENT, PIPELINE_PHASE_REGENERATE,
+    PIPELINE_PHASE_SYNC_VERIFY, PIPELINE_PHASES,
 };
 pub use task_schedule_timeline::TaskScheduleTimeline;
 pub use task_schedule_timeline_snapshot::{

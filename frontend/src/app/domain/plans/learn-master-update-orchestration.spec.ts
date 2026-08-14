@@ -82,6 +82,17 @@ describe('learn-master-update-orchestration', () => {
       });
       expect(findFirstIncompleteOrchestrationStep(3)).toBe('regenerate');
     });
+
+    it('builds resume navigation from persisted pipeline phase after reload', () => {
+      hydrateLearnOrchestrationProgress(3, {
+        pipeline_active: true,
+        current_phase: 'optimizing'
+      });
+      expect(buildLearnOrchestrationResumeNavigation(3)).toEqual({
+        commands: ['/plans', 3, 'optimizing'],
+        queryParams: { learningOrchestration: 'adjust' }
+      });
+    });
   });
 
   describe('optimizing return context', () => {

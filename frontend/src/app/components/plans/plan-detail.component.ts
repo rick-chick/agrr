@@ -16,6 +16,10 @@ import {
   parseLearningOrchestration,
   storeLearnOrchestrationReturnToLearn
 } from '../../domain/plans/learn-master-update-orchestration';
+import {
+  readLearnReorganizePipelineAutoChain,
+  updateLearnReorganizePipelinePhase
+} from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 
 const initialControl: PlanDetailViewState = {
   loading: true,
@@ -146,7 +150,11 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
     if (!planId || !this.showReoptimizationBanner) {
       return;
     }
-    storeLearnOrchestrationReturnToLearn(planId);
+    if (readLearnReorganizePipelineAutoChain(planId)) {
+      updateLearnReorganizePipelinePhase(planId, 'optimizing');
+    } else {
+      storeLearnOrchestrationReturnToLearn(planId);
+    }
     void this.router.navigate(['/plans', planId, 'optimizing']);
   }
 }

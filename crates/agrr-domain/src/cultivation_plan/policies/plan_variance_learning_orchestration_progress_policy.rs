@@ -1,6 +1,8 @@
 //! Validates reorganize orchestration progress patch payloads.
 
-use crate::cultivation_plan::dtos::ReorganizeOrchestrationProgressPatch;
+use crate::cultivation_plan::dtos::{
+    ReorganizeOrchestrationProgressPatch, PIPELINE_PHASES,
+};
 use crate::shared::exceptions::RecordInvalidError;
 
 pub fn validate_reorganize_orchestration_progress_patch(
@@ -12,6 +14,16 @@ pub fn validate_reorganize_orchestration_progress_patch(
             None,
         ));
     }
+
+    if let Some(phase) = &patch.current_phase {
+        if !PIPELINE_PHASES.contains(&phase.as_str()) {
+            return Err(RecordInvalidError::new(
+                Some("invalid pipeline current_phase".into()),
+                None,
+            ));
+        }
+    }
+
     Ok(())
 }
 
