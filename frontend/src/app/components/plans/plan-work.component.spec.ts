@@ -280,10 +280,8 @@ describe('PlanWorkComponent mobile UX', () => {
   it('highlights task row when task_schedule_item_id query param is present', () => {
     mockActivatedRoute.setQueryParam('task_schedule_item_id', '10');
     fixture.detectChanges();
-    component.control = {
-      ...loadedState,
-      highlightedItemId: 10
-    };
+    expect(component.control.highlightedItemId).toBe(10);
+    component.control = { ...loadedState, highlightedItemId: 10 };
     fixture.detectChanges();
 
     const highlighted = fixture.nativeElement.querySelector('.plan-work__row--highlight');
