@@ -104,3 +104,13 @@ where
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod interactors_plan_variance_learning_proposal_progress_update_interactor_test_inline {
+    use super::*;
+
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/interactors_plan_variance_learning_proposal_progress_update_interactor_test.rs"
+    ));
+}
