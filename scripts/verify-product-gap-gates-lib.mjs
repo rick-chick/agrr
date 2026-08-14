@@ -91,7 +91,6 @@ export function verifyProductGapBacklogDuplicationGates(repoRoot) {
 
   const phase5 = extractSkillPhase(skill, '## フェーズ 5');
   const phase7 = extractSkillPhase(skill, '## フェーズ 7');
-  const phase9 = extractSkillPhase(skill, '## フェーズ 9');
   if (!/backlog|§3|github-issue-creator/.test(phase5 + phase7)) {
     errors.push(
       'SKILL.md フェーズ5 or 7 must note backlog duplication is verified in G2/G3',
