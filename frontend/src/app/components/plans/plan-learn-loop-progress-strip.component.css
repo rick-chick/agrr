@@ -1,0 +1,44 @@
+.learn-loop-progress-strip {
+  margin-bottom: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.learn-loop-progress-strip__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.learn-loop-progress-strip__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.learn-loop-progress-strip__phase {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.learn-loop-progress-strip__phase--current {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.learn-loop-progress-strip__phase--completed {
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--color-border-subtle));
+  color: var(--color-text-muted);
+}
+
+.learn-loop-progress-strip__phase-label {
+  white-space: nowrap;
+}

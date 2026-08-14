@@ -64,12 +64,25 @@ describe('PlanTaskScheduleOrchestrationBannerComponent', () => {
     expect(link.textContent).toContain('Return to learning screen');
   });
 
-  it('does not show return-to-learn link before orchestration completes', () => {
+  it('shows return-to-learn link during orchestration', () => {
     fixture.componentInstance.mode = 'regenerate';
     fixture.componentInstance.syncState = 'generating';
     fixture.componentInstance.orchestrationComplete = false;
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('a.learn-orchestration-banner__learn-link')).toBeNull();
+    const link = fixture.nativeElement.querySelector('a.learn-orchestration-banner__learn-link');
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('href')).toBe('/plans/4/learn');
+    expect(link.textContent).toContain('Return to learning screen');
+  });
+
+  it('renders learn loop progress strip in orchestration banner', () => {
+    fixture.componentInstance.mode = 'sync_verify';
+    fixture.componentInstance.syncState = 'ready';
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('app-plan-learn-loop-progress-strip')
+    ).not.toBeNull();
   });
 });

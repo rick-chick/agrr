@@ -140,6 +140,26 @@ describe('PlanLearnComponent', () => {
     presenter = fixture.debugElement.injector.get(PlanLearnPresenter);
   });
 
+  it('always shows reorganization checklist on learn page', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      },
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-master-update-next-steps')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Next steps after master update');
+    expect(fixture.nativeElement.textContent).toContain('Verify placement');
+  });
+
   it('loads schedule and variance summary on init', () => {
     fixture.detectChanges();
 
