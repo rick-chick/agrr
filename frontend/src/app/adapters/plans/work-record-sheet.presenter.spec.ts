@@ -69,6 +69,7 @@ describe('WorkRecordSheetPresenter', () => {
         scheduleCategory: null,
         plannedAmount: '',
         plannedAmountUnit: '',
+        plannedGdd: null,
         climatePreview: {
           gddAtActual: null,
           weatherDate: null,

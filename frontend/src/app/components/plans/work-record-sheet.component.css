@@ -112,6 +112,18 @@
   color: var(--color-text);
 }
 
+.work-record-sheet__gdd-comparison {
+  color: var(--color-text-secondary);
+}
+
+.work-record-sheet__gdd-comparison--over {
+  color: var(--color-warning);
+}
+
+.work-record-sheet__gdd-comparison--under {
+  color: var(--color-primary);
+}
+
 .form-dialog .form-card__field input.ng-invalid.ng-touched,
 .form-dialog .form-card__field input.ng-invalid.ng-dirty {
   border-color: var(--color-error);

@@ -8,6 +8,16 @@ export interface WorkRecordClimateSnapshot {
   weatherSnapshot: ClimateTemperaturePoint | null;
 }
 
+export function climatePreviewGddDelta(
+  gddAtActual: number | null,
+  plannedGdd: number | null
+): number | null {
+  if (gddAtActual == null || plannedGdd == null) {
+    return null;
+  }
+  return Math.round((gddAtActual - plannedGdd) * 10) / 10;
+}
+
 export function snapshotClimateForDate(
   gddData: ClimateGddPoint[],
   weatherData: ClimateTemperaturePoint[],

@@ -34,6 +34,11 @@ import {
   computeWorkRecordAmountDiff,
   WorkRecordAmountDiff
 } from '../../domain/work-schedule/work-record-amount-diff';
+import { climatePreviewGddDelta } from '../../domain/work-schedule/work-record-climate-snapshot';
+import {
+  formatVarianceGddDelta,
+  parseGddTrigger
+} from '../../domain/plans/work-record-variance';
 import {
   mapFormToCreateRequest,
   mapFormToUpdateRequest
@@ -88,6 +93,7 @@ const initialControl: WorkRecordSheetViewState = {
   scheduleCategory: null,
   plannedAmount: '',
   plannedAmountUnit: '',
+  plannedGdd: null,
   climatePreview: emptyClimatePreview(),
   showDetails: false,
   taskChips: [],
@@ -337,6 +343,22 @@ const initialControl: WorkRecordSheetViewState = {
                     }}
                   </span>
                 }
+                @if (climatePreviewGddComparison(); as comparison) {
+                  <span
+                    class="work-record-sheet__gdd-comparison"
+                    [class.work-record-sheet__gdd-comparison--over]="comparison.delta > 0"
+                    [class.work-record-sheet__gdd-comparison--under]="comparison.delta < 0"
+                  >
+                    {{
+                      'plans.work.sheet.climate_preview.gdd_comparison'
+                        | translate
+                          : {
+                              planned: comparison.planned,
+                              delta: comparison.deltaLabel
+                            }
+                    }}
+                  </span>
+                }
                 @if (control.climatePreview.weatherDate) {
                   <span>
                     {{
@@ -499,6 +521,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       scheduleCategory,
       plannedAmount,
       plannedAmountUnit,
+      plannedGdd: parseGddTrigger(item.gdd_trigger ?? item.details?.gdd?.trigger ?? null),
       fieldErrors: options?.fieldErrors ?? {},
       form: {
         name: item.name,
@@ -627,6 +650,20 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
     }
     const sign = diff.diff > 0 ? '+' : '';
     return `${sign}${diff.diff}${diff.unit ? ` ${diff.unit}` : ''}`;
+  }
+
+  climatePreviewGddComparison(): { planned: number; delta: number; deltaLabel: string } | null {
+    const planned = this.control.plannedGdd;
+    const actual = this.control.climatePreview.gddAtActual;
+    const delta = climatePreviewGddDelta(actual, planned);
+    if (planned == null || delta == null) {
+      return null;
+    }
+    return {
+      planned,
+      delta,
+      deltaLabel: formatVarianceGddDelta(delta)
+    };
   }
 
   showClimatePreview(): boolean {

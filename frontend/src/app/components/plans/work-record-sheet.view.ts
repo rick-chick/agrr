@@ -65,6 +65,7 @@ export interface WorkRecordSheetViewState {
   scheduleCategory: WorkRecordScheduleCategory;
   plannedAmount: string;
   plannedAmountUnit: string;
+  plannedGdd: number | null;
   climatePreview: WorkRecordClimatePreviewState;
   showDetails: boolean;
   taskChips: WorkRecordSheetTaskChip[];

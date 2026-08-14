@@ -2887,6 +2887,7 @@
           "loading": "気象データを読み込み中…",
           "unavailable": "この日付の気象データがありません",
           "gdd": "GDD {{value}}",
+          "gdd_comparison": "予定 GDD {{planned}} · 差 {{delta}}",
           "weather": "最高{{max}}°C / 最低{{min}}°C（平均{{mean}}°C）"
         },
         "photos": {

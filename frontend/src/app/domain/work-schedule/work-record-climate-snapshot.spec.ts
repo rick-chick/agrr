@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { snapshotClimateForDate } from './work-record-climate-snapshot';
+import { climatePreviewGddDelta, snapshotClimateForDate } from './work-record-climate-snapshot';
 
 describe('snapshotClimateForDate', () => {
   it('extracts gdd and weather for the actual date', () => {
@@ -46,5 +46,19 @@ describe('snapshotClimateForDate', () => {
 
     expect(snapshot.gddAtActual).toBe(110);
     expect(snapshot.weatherSnapshot).toBeNull();
+  });
+});
+
+describe('climatePreviewGddDelta', () => {
+  it('returns delta between cumulative and planned gdd', () => {
+    expect(climatePreviewGddDelta(145.25, 100)).toBe(45.3);
+  });
+
+  it('returns null when planned gdd is unavailable', () => {
+    expect(climatePreviewGddDelta(145.25, null)).toBeNull();
+  });
+
+  it('returns null when cumulative gdd is unavailable', () => {
+    expect(climatePreviewGddDelta(null, 100)).toBeNull();
   });
 });

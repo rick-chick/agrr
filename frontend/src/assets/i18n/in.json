@@ -2249,6 +2249,7 @@
           "loading": "जलवायु डेटा लोड हो रहा है…",
           "unavailable": "इस तिथि के लिए जलवायु डेटा उपलब्ध नहीं",
           "gdd": "GDD {{value}}",
+          "gdd_comparison": "नियोजित GDD {{planned}} · अंतर {{delta}}",
           "weather": "अधिकतम {{max}}°C / न्यूनतम {{min}}°C (औसत {{mean}}°C)"
         },
         "photos": {

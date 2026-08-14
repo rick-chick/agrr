@@ -72,6 +72,7 @@ describe('WorkRecordSheetComponent', () => {
       'plans.work.sheet.climate_preview.loading': '気象データを読み込み中…',
       'plans.work.sheet.climate_preview.unavailable': 'この日付の気象データがありません',
       'plans.work.sheet.climate_preview.gdd': 'GDD {{value}}',
+      'plans.work.sheet.climate_preview.gdd_comparison': '予定 GDD {{planned}} · 差 {{delta}}',
       'plans.work.sheet.climate_preview.weather':
         '最高{{max}}°C / 最低{{min}}°C（平均{{mean}}°C）',
       'plans.work.sheet.submit': '記録する',
@@ -278,5 +279,98 @@ describe('WorkRecordSheetComponent', () => {
     expect(preview.textContent).toContain('記録時に保存される気象情報');
     expect(preview.textContent).toContain('GDD 145.25');
     expect(preview.textContent).toContain('最高30°C');
+  });
+
+  it('shows planned gdd comparison line when gdd trigger and climate preview are available', () => {
+    component.openFromItem({
+      item: {
+        item_id: 12,
+        name: '追肥',
+        task_type: 'fertilizer',
+        category: 'fertilizer',
+        scheduled_date: '2026-06-12',
+        priority: 1,
+        source: 'plan',
+        weather_dependency: 'low',
+        time_per_sqm: '0',
+        amount: '',
+        amount_unit: '',
+        status: 'scheduled',
+        agricultural_task_id: 3,
+        field_cultivation_id: 7,
+        gdd_trigger: '100',
+        completed: false,
+        work_records: [],
+        details: {} as never,
+        badge: { type: 'fertilizer' }
+      },
+      fieldName: 'B圃場',
+      cropName: 'キュウリ',
+      recordedToday: false
+    });
+    component.control = {
+      ...component.control,
+      showDetails: true,
+      climatePreview: {
+        gddAtActual: 145.25,
+        weatherDate: '2026-06-12',
+        temperatureMax: 30,
+        temperatureMin: 20,
+        temperatureMean: 25,
+        loading: false
+      }
+    };
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector('[data-testid="climate-preview"]');
+    expect(preview.textContent).toContain('予定 GDD 100');
+    expect(preview.textContent).toContain('差 +45.3');
+    expect(preview.querySelector('.work-record-sheet__gdd-comparison--over')).toBeTruthy();
+  });
+
+  it('omits planned gdd comparison when gdd trigger is unavailable', () => {
+    component.openFromItem({
+      item: {
+        item_id: 13,
+        name: '除草',
+        task_type: 'general',
+        category: 'general',
+        scheduled_date: '2026-06-12',
+        priority: 1,
+        source: 'plan',
+        weather_dependency: 'low',
+        time_per_sqm: '0',
+        amount: '',
+        amount_unit: '',
+        status: 'scheduled',
+        agricultural_task_id: 2,
+        field_cultivation_id: 7,
+        completed: false,
+        work_records: [],
+        details: {} as never,
+        badge: { type: 'general' }
+      },
+      fieldName: 'B圃場',
+      cropName: 'キュウリ',
+      recordedToday: false
+    });
+    component.control = {
+      ...component.control,
+      showDetails: true,
+      climatePreview: {
+        gddAtActual: 145.25,
+        weatherDate: '2026-06-12',
+        temperatureMax: 30,
+        temperatureMin: 20,
+        temperatureMean: 25,
+        loading: false
+      }
+    };
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector('[data-testid="climate-preview"]');
+    expect(preview.textContent).toContain('GDD 145.25');
+    expect(preview.textContent).not.toContain('予定 GDD');
+    expect(preview.querySelector('.work-record-sheet__gdd-comparison')).toBeNull();
   });
 });
