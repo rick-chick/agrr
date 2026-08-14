@@ -264,7 +264,7 @@ describe('PlanLearnComponent', () => {
 
     expect(fixture.nativeElement.querySelector('app-plan-learn-input-gap-summary')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Input gap summary');
-    expect(fixture.nativeElement.textContent).toContain('Low confidence');
+    expect(fixture.nativeElement.querySelector('app-plan-learn-proposal-queue')).toBeTruthy();
 
     const workLink = fixture.nativeElement.querySelector(
       '.plan-learn-input-gap-summary__work-link'
@@ -306,8 +306,9 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Learning loop progress');
     expect(fixture.nativeElement.textContent).toContain('Observe');
     expect(fixture.nativeElement.textContent).toContain('Open workbench to review variance');
-    expect(fixture.nativeElement.querySelector('app-variance-action-proposal-cards')).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('Schedule variance needs your review');
+    expect(fixture.nativeElement.querySelector('app-plan-learn-proposal-queue')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Proposal queue');
+    expect(fixture.nativeElement.textContent).toContain('Requires your action');
     expect(fixture.nativeElement.textContent).toContain('Weed control');
   });
 
@@ -524,7 +525,8 @@ describe('PlanLearnComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.querySelector('app-plan-learn-bulk-apply-panel')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-plan-learn-proposal-queue')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Proposal queue');
     expect(fixture.nativeElement.textContent).toContain('Apply all safe proposals');
   });
 
@@ -713,10 +715,9 @@ describe('PlanLearnComponent post_master follow-up', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.querySelector('app-plan-learn-application-progress-view')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-plan-learn-proposal-queue')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Proposal application progress');
     expect(fixture.nativeElement.textContent).toContain('Confirmed — reorganization in progress');
-    expect(fixture.nativeElement.querySelector('app-plan-learn-post-master-confirmation')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Master update applied');
     expect(fixture.nativeElement.textContent).toContain('Verify placement on workbench');
     expect(fixture.nativeElement.querySelector('app-plan-learn-master-update-next-steps')).toBeTruthy();

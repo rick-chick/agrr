@@ -1682,6 +1682,18 @@
         "retry": "Retry pipeline",
         "resume": "Resume pipeline",
         "active_message": "A reorganization pipeline is in progress. Resume where you left off."
+      },
+      "proposal_queue": {
+        "title": "Proposal queue",
+        "lead": "Review learn proposals by priority. Safe proposals can be bulk-applied; others need your confirmation or workbench action.",
+        "category": {
+          "safe": "Safe to apply",
+          "requires_confirmation": "Requires confirmation",
+          "requires_action": "Requires your action"
+        },
+        "post_apply": {
+          "title": "Safe proposals applied"
+        }
       }
     },
     "work": {

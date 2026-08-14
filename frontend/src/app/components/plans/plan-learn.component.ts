@@ -6,7 +6,6 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
 import { StageGddCalibrationProposalsViewComponent } from './stage-gdd-calibration-proposals-view.component';
-import { VarianceActionProposalCardsComponent } from './variance-action-proposal-cards.component';
 import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanLearnCarryoverSectionComponent } from './plan-learn-carryover-section.component';
@@ -18,10 +17,8 @@ import { resolveLearnObservePhaseStatus } from '../../domain/plans/resolve-learn
 import { buildPlanInputGapSummary } from '../../domain/plans/build-plan-input-gap-summary';
 import { resolveLearnProposalConfidence } from '../../domain/plans/resolve-learn-proposal-confidence';
 import { resolvePlanWorkHighlightItemId } from '../../domain/plans/build-plan-work-deep-link-query';
-import { PlanLearnApplicationProgressViewComponent } from './plan-learn-application-progress-view.component';
-import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
-import { PlanLearnBulkApplyPanelComponent } from './plan-learn-bulk-apply-panel.component';
+import { PlanLearnProposalQueueComponent } from './plan-learn-proposal-queue.component';
 import { PlanLearnPipelineStatusComponent } from './plan-learn-pipeline-status.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
@@ -76,14 +73,11 @@ const initialControl: PlanLearnViewState = {
     FormsModule,
     TranslateModule,
     PlanPlanContextHeaderComponent,
-    PlanLearnApplicationProgressViewComponent,
-    PlanLearnPostMasterConfirmationComponent,
     PlanLearnMasterUpdateNextStepsComponent,
-    PlanLearnBulkApplyPanelComponent,
+    PlanLearnProposalQueueComponent,
     PlanLearnPipelineStatusComponent,
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
-    VarianceActionProposalCardsComponent,
     BlueprintTimingAdjustmentProposalsViewComponent,
     PlanLearnImportedBannerComponent,
     PlanLearnCarryoverSectionComponent,
@@ -135,12 +129,6 @@ const initialControl: PlanLearnViewState = {
             [unrecordedCount]="control.varianceSummary?.unrecorded_count ?? 0"
             [highlightItemId]="workHighlightItemId"
           />
-          @if (showPostMasterConfirmation) {
-            <app-plan-learn-post-master-confirmation
-              [planId]="planId"
-              [payload]="control.postMasterPayload"
-            />
-          }
           <app-plan-learn-master-update-next-steps
             [planId]="planId"
             [visible]="true"
@@ -149,18 +137,14 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [refreshVersion]="proposalProgressRefreshVersion"
           />
-          <app-plan-learn-bulk-apply-panel
+          <app-plan-learn-proposal-queue
             [planId]="planId"
             [stageGddProposals]="control.stageGddProposals"
             [blueprintTimingProposals]="control.blueprintTimingProposals"
+            [actionRequiredItems]="control.varianceSummary?.action_required_items ?? []"
+            [postMasterPayload]="showPostMasterConfirmation ? control.postMasterPayload : null"
             [progressRefreshVersion]="proposalProgressRefreshVersion"
             (progressChanged)="onProposalProgressChanged()"
-          />
-          <app-plan-learn-application-progress-view
-            [planId]="planId"
-            [stageGddProposals]="control.stageGddProposals"
-            [blueprintTimingProposals]="control.blueprintTimingProposals"
-            [progressRefreshVersion]="proposalProgressRefreshVersion"
           />
           @if (control.learningSnapshot; as learningSnapshot) {
             @if (learningSnapshot.source_plan_id != null && learningSnapshot.summary) {
@@ -222,11 +206,6 @@ const initialControl: PlanLearnViewState = {
             (importLearning)="onImportLearning()"
           />
 
-          <app-variance-action-proposal-cards
-            [planId]="planId"
-            [items]="control.varianceSummary?.action_required_items ?? []"
-            [proposalConfidence]="proposalConfidence"
-          />
           <div id="plan-learn-loop-proposals">
           <h3 id="plan-learn-current-variance-title" class="plan-learn-current-variance__title">
             {{ 'plans.learn.current_variance_title' | translate }}

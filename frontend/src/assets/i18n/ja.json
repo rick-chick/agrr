@@ -2807,6 +2807,18 @@
         "retry": "パイプラインを再試行",
         "resume": "パイプラインを再開",
         "active_message": "再配置パイプラインが進行中です。中断したところから再開できます。"
+      },
+      "proposal_queue": {
+        "title": "提案キュー",
+        "lead": "優先順位付きで学習提案を確認します。安全な提案は一括適用でき、その他は確認または作業台での対応が必要です。",
+        "category": {
+          "safe": "安全（一括適用可）",
+          "requires_confirmation": "要確認",
+          "requires_action": "要作業"
+        },
+        "post_apply": {
+          "title": "安全な提案を適用しました"
+        }
       }
     },
     "work": {
