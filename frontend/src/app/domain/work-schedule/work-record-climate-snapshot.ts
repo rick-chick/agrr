@@ -2,6 +2,7 @@ import {
   ClimateGddPoint,
   ClimateTemperaturePoint
 } from '../plans/field-cultivation-climate-data';
+import { gddDeltaFromValues } from '../plans/work-record-variance';
 
 export interface WorkRecordClimateSnapshot {
   gddAtActual: number | null;
@@ -12,10 +13,7 @@ export function climatePreviewGddDelta(
   gddAtActual: number | null,
   plannedGdd: number | null
 ): number | null {
-  if (gddAtActual == null || plannedGdd == null) {
-    return null;
-  }
-  return Math.round((gddAtActual - plannedGdd) * 10) / 10;
+  return gddDeltaFromValues(gddAtActual, plannedGdd);
 }
 
 export function snapshotClimateForDate(
