@@ -2285,6 +2285,16 @@
         "gdd_delay": "GDD विलंब",
         "learn_cta": "Learn में विवरण देखें"
       },
+      "today_attention": {
+        "title": "आज का ध्यान",
+        "frost_risk": "पाला जोखिम",
+        "gdd_delay": "GDD विलंब",
+        "threshold_exceeded": "सीमा पार",
+        "frost_risk_field": "{{field}} ({{crop}})",
+        "gdd_delay_task": "GDD विलंब: {{name}}",
+        "threshold_exceeded_task": "सीमा पार: {{name}}",
+        "learn_cta": "Learn में विवरण देखें"
+      },
       "exceedance_badge": {
         "days": "Δ {{delta}} दिन",
         "gdd": "GDD {{delta}}"
@@ -2326,11 +2336,11 @@
         "delta_days_early": "{{count}} दिन पहले",
         "delta_days_on_time": "नियोजित समय पर",
         "gdd_at_actual": "GDD {{value}}",
-        "weather_snapshot": "High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)",
         "no_schedule": "कोई अनुसूची नहीं",
         "month_average_late": "औसत {{count}} दिन देरी",
         "month_average_early": "औसत {{count}} दिन पहले",
-        "month_average_on_time": "औसत नियोजित समय पर"
+        "month_average_on_time": "औसत नियोजित समय पर",
+        "weather_snapshot": "High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)"
       }
     },
     "index": {

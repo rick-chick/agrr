@@ -2923,6 +2923,16 @@
         "gdd_delay": "GDD遅延",
         "learn_cta": "振り返りで詳細を見る"
       },
+      "today_attention": {
+        "title": "今日の注意",
+        "frost_risk": "霜リスク",
+        "gdd_delay": "GDD遅延",
+        "threshold_exceeded": "閾値超過",
+        "frost_risk_field": "{{field}}（{{crop}}）",
+        "gdd_delay_task": "GDD遅延: {{name}}",
+        "threshold_exceeded_task": "閾値超過: {{name}}",
+        "learn_cta": "振り返りで詳細を見る"
+      },
       "exceedance_badge": {
         "days": "Δ {{delta}}日",
         "gdd": "GDD {{delta}}"
@@ -2964,11 +2974,11 @@
         "delta_days_early": "{{count}}日早着",
         "delta_days_on_time": "予定通り",
         "gdd_at_actual": "GDD {{value}}",
-        "weather_snapshot": "最高{{max}}°C / 最低{{min}}°C（平均{{mean}}°C）",
         "no_schedule": "予定なし",
         "month_average_late": "平均 {{count}}日遅れ",
         "month_average_early": "平均 {{count}}日早着",
-        "month_average_on_time": "平均 予定通り"
+        "month_average_on_time": "平均 予定通り",
+        "weather_snapshot": "最高{{max}}°C / 最低{{min}}°C（平均{{mean}}°C）"
       }
     }
   },
