@@ -1647,6 +1647,17 @@
         "unrecorded_cta": "Record work",
         "complete_message": "Observation phase complete — all scheduled tasks are recorded."
       },
+      "input_gap": {
+        "title": "Input gap summary",
+        "unrecorded": "Not recorded",
+        "action_required": "Action required",
+        "work_cta": "Record unrecorded tasks"
+      },
+      "proposal_confidence": {
+        "high": "High confidence",
+        "medium": "Medium confidence",
+        "low": "Low confidence"
+      },
       "pipeline": {
         "error_title": "Reorganization pipeline failed",
         "retry": "Retry pipeline step",
