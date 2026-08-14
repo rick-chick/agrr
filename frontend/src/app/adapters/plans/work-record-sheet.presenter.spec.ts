@@ -75,6 +75,8 @@ describe('WorkRecordSheetPresenter', () => {
           temperatureMax: null,
           temperatureMin: null,
           temperatureMean: null,
+          plannedGdd: null,
+          gddDelta: null,
           loading: false
         },
         showDetails: false,
