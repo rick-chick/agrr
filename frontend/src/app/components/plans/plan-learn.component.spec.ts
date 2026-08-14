@@ -198,6 +198,80 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('General tasks');
   });
 
+  it('renders input gap summary and low-confidence labels when unrecorded tasks remain', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 2,
+        categories: [],
+        top_variance_items: [],
+        action_required_items: [
+          {
+            item_id: 11,
+            field_cultivation_id: 100,
+            category: 'general',
+            name: 'Weed control',
+            scheduled_date: '2026-06-01',
+            actual_date: '2026-06-08',
+            delta_days: 7,
+            gdd_trigger: 100,
+            gdd_at_actual: 110,
+            gdd_delta: 10,
+            exceedance_kind: 'days'
+          }
+        ]
+      },
+      loadGeneration: 1
+    });
+    fixture.componentInstance.control = {
+      ...fixture.componentInstance.control,
+      varianceUnrecordedRows: [
+        {
+          item: {
+            item_id: 42,
+            name: 'Unrecorded task',
+            scheduled_date: '2026-06-02',
+            actualDate: null,
+            deltaDays: null,
+            gddTrigger: null,
+            gddAtActual: null,
+            gddDelta: null,
+            status: 'planned',
+            completed: false,
+            details: {
+              stageName: null,
+              amount: null,
+              amountUnit: null,
+              masterDescription: null
+            }
+          },
+          farmId: 0,
+          farmName: '',
+          planId: 7,
+          planName: 'Main Plan',
+          fieldId: 1,
+          fieldName: 'North',
+          fieldCultivationId: 1,
+          cropName: 'Tomato',
+          displayStatus: 'planned'
+        }
+      ]
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-input-gap-summary')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Input gap summary');
+    expect(fixture.nativeElement.textContent).toContain('Low confidence');
+
+    const workLink = fixture.nativeElement.querySelector(
+      '.plan-learn-input-gap-summary__work-link'
+    ) as HTMLAnchorElement;
+    expect(workLink?.getAttribute('href')).toContain('highlight_item=42');
+  });
+
   it('renders proposal cards when action_required_items are present', async () => {
     fixture.detectChanges();
     presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
