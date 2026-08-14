@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
   PLAN_CARRYOVER_NEXT_PLAN_CTA_KEY,
   PLAN_CARRYOVER_NEXT_PLAN_HINT_KEY,
@@ -124,6 +124,8 @@ import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-s
   styleUrls: ['./plan-learn-carryover-section.component.css']
 })
 export class PlanLearnCarryoverSectionComponent {
+  private readonly translate = inject(TranslateService);
+
   @Input({ required: true }) planId!: number;
   @Input() carryoverSourcePlans: PlanSummary[] = [];
   @Input() selectedSourcePlanId: number | null = null;
@@ -149,6 +151,11 @@ export class PlanLearnCarryoverSectionComponent {
   }
 
   categoryAverageLabel(category: PlanVsActualCategorySummary): string {
-    return formatPlanTaskScheduleAverageDeltaDaysLabel(category.average_delta_days);
+    if (category.average_delta_days == null) {
+      return this.translate.instant('plans.task_schedules.variance_subview.not_available');
+    }
+    return this.translate.instant('plans.task_schedules.variance_subview.average_value', {
+      delta: formatPlanTaskScheduleAverageDeltaDaysLabel(category.average_delta_days)
+    });
   }
 }

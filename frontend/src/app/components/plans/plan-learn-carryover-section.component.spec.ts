@@ -46,6 +46,8 @@ describe('PlanLearnCarryoverSectionComponent', () => {
         'plans.carryover.import_button': 'Import learning',
         'plans.task_schedules.variance_subview.category_column': 'Category',
         'plans.task_schedules.variance_subview.category_average': 'Average',
+        'plans.task_schedules.variance_subview.not_available': 'N/A',
+        'plans.task_schedules.variance_subview.average_value': 'Avg {{delta}}',
         'common.loading': 'Loading'
       },
       true
@@ -82,6 +84,20 @@ describe('PlanLearnCarryoverSectionComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.plan-learn-carryover__next-plan-cta')).toBeNull();
+  });
+
+  it('shows not available when category average is null', () => {
+    fixture.componentInstance.selectedSourcePlanId = 8;
+    fixture.componentInstance.carryoverPreview = {
+      ...preview,
+      categories: [{ category: 'general', average_delta_days: null, item_count: 1, recorded_count: 0 }]
+    };
+    fixture.detectChanges();
+
+    const cell = fixture.nativeElement.querySelector(
+      '.plan-learn-carryover-preview__table tbody td:last-child'
+    );
+    expect(cell?.textContent).toContain('N/A');
   });
 
   it('emits importLearning when import button is clicked', () => {
