@@ -120,6 +120,9 @@ export class PlanLearnBulkApplyPanelComponent {
         this.lastAppliedCount = result.appliedCount;
         this.bulkApplyComplete = result.appliedCount > 0;
         this.progressChanged.emit();
+        if (result.appliedCount > 0) {
+          this.startReorganizePipeline();
+        }
         this.cdr.markForCheck();
       },
       onError: (message) => {

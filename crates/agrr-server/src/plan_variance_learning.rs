@@ -12,6 +12,7 @@ use agrr_adapters_sqlite::{
 use agrr_domain::cultivation_plan::dtos::{
     assemble_plan_variance_learning_snapshot, LearnHandoffStatePatch,
     PlanVarianceLearningSnapshotRead, ReorganizeOrchestrationProgressPatch,
+    ReorganizePipelinePhase,
 };
 use agrr_domain::cultivation_plan::gateways::{
     CultivationPlanGateway, PlanVarianceLearningGateway,
@@ -115,6 +116,18 @@ fn snapshot_to_json(snapshot: &PlanVarianceLearningSnapshotRead) -> Value {
             "regenerate": snapshot.reorganize_orchestration_progress.regenerate,
             "sync_verify": snapshot.reorganize_orchestration_progress.sync_verify,
             "return_to_learn": snapshot.reorganize_orchestration_progress.return_to_learn,
+            "pipeline_active": snapshot.reorganize_orchestration_progress.pipeline_active,
+            "pipeline_phase": snapshot
+                .reorganize_orchestration_progress
+                .pipeline_phase
+                .as_ref()
+                .map(ReorganizePipelinePhase::as_str),
+            "pipeline_failed_phase": snapshot
+                .reorganize_orchestration_progress
+                .pipeline_failed_phase
+                .as_ref()
+                .map(ReorganizePipelinePhase::as_str),
+            "pipeline_error": snapshot.reorganize_orchestration_progress.pipeline_error,
         }),
     );
     let mut handoff = Map::new();
@@ -276,6 +289,22 @@ struct PatchReorganizeOrchestrationProgressBody {
     regenerate: Option<bool>,
     sync_verify: Option<bool>,
     return_to_learn: Option<bool>,
+    pipeline_active: Option<bool>,
+    pipeline_phase: Option<Option<String>>,
+    pipeline_failed_phase: Option<Option<String>>,
+    pipeline_error: Option<Option<String>>,
+}
+
+fn parse_pipeline_phase_option(
+    value: Option<Option<String>>,
+) -> Result<Option<Option<ReorganizePipelinePhase>>, String> {
+    match value {
+        None => Ok(None),
+        Some(None) => Ok(Some(None)),
+        Some(Some(raw)) => ReorganizePipelinePhase::parse(&raw)
+            .map(|phase| Some(Some(phase)))
+            .ok_or_else(|| format!("invalid pipeline phase: {raw}")),
+    }
 }
 
 async fn patch_variance_learning(
@@ -329,11 +358,32 @@ async fn patch_variance_learning(
     }
 
     if let Some(orchestration_body) = body.reorganize_orchestration_progress {
+        let pipeline_phase = parse_pipeline_phase_option(orchestration_body.pipeline_phase)
+            .map_err(|message| {
+                (
+                    axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({"errors": [message]})),
+                )
+            })?;
+        let pipeline_failed_phase =
+            parse_pipeline_phase_option(orchestration_body.pipeline_failed_phase).map_err(
+                |message| {
+                    (
+                        axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        Json(json!({"errors": [message]})),
+                    )
+                },
+            )?;
+
         let orchestration_patch = ReorganizeOrchestrationProgressPatch {
             placement: orchestration_body.placement,
             regenerate: orchestration_body.regenerate,
             sync_verify: orchestration_body.sync_verify,
             return_to_learn: orchestration_body.return_to_learn,
+            pipeline_active: orchestration_body.pipeline_active,
+            pipeline_phase,
+            pipeline_failed_phase,
+            pipeline_error: orchestration_body.pipeline_error,
         };
 
         let mut interactor = PlanVarianceLearningOrchestrationProgressUpdateInteractor::new(

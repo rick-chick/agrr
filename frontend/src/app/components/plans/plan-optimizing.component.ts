@@ -14,7 +14,9 @@ import {
 } from '../../domain/plans/learn-master-update-orchestration';
 import {
   buildLearnReorganizePipelineRegenerateNavigation,
-  readLearnReorganizePipelineAutoChain
+  readLearnReorganizePipelineAutoChain,
+  reportLearnReorganizePipelineFailure,
+  setLearnReorganizePipelinePhase
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 
 const initialControl: PlanOptimizingViewState = {
@@ -108,7 +110,17 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     return this._control;
   }
   set control(value: PlanOptimizingViewState) {
+    const previous = this._control;
     this._control = value;
+    const planId = this.planId;
+    if (
+      planId &&
+      value.status === 'failed' &&
+      previous.status !== 'failed' &&
+      readLearnReorganizePipelineAutoChain(planId)
+    ) {
+      reportLearnReorganizePipelineFailure(planId, 'optimizing', value.phaseMessage);
+    }
     this.cdr.markForCheck();
   }
 
@@ -118,6 +130,9 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     if (!planId) {
       this.control = { status: 'invalid_plan_id', progress: 0, phaseMessage: '' };
       return;
+    }
+    if (readLearnReorganizePipelineAutoChain(planId)) {
+      setLearnReorganizePipelinePhase(planId, 'optimizing');
     }
     this.subscribeOptimization(planId);
   }
@@ -137,6 +152,7 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     const planId = this.planId;
     if (planId && readLearnReorganizePipelineAutoChain(planId)) {
       markLearnOrchestrationStepComplete(planId, 'placement');
+      setLearnReorganizePipelinePhase(planId, 'regenerate');
       const navigation = buildLearnReorganizePipelineRegenerateNavigation(planId);
       void this.router.navigate(navigation.commands, { queryParams: navigation.queryParams });
       return;

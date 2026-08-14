@@ -1576,6 +1576,12 @@
         "complete_message": "{{count}} safe proposal(s) applied. Start the reorganization pipeline to refresh your plan.",
         "start_pipeline": "Start reorganization pipeline"
       },
+      "pipeline": {
+        "error_title": "Reorganization pipeline failed",
+        "retry": "Retry pipeline step",
+        "resume_message": "A reorganization pipeline is in progress. Resume where you left off.",
+        "resume": "Resume pipeline"
+      },
       "post_master": {
         "title": "Master update applied",
         "lead": "Your master change was saved. Review the applied values below, then open the workbench to verify placement.",

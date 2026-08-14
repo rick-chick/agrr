@@ -1,0 +1,21 @@
+.learn-pipeline-status {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border-subtle, #d9d9d9);
+  border-radius: 0.5rem;
+  background: var(--color-surface-muted, #f8f8f8);
+}
+
+.learn-pipeline-status--error {
+  border-color: var(--color-danger-border, #f5c2c7);
+  background: var(--color-danger-surface, #fff5f5);
+}
+
+.learn-pipeline-status__title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.learn-pipeline-status__message {
+  margin: 0 0 0.75rem;
+}

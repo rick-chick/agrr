@@ -183,6 +183,7 @@ pub use plan_variance_learning_snapshot::{
 };
 pub use reorganize_orchestration_progress::{
     ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
+    ReorganizePipelinePhase,
 };
 pub use task_schedule_timeline::TaskScheduleTimeline;
 pub use task_schedule_timeline_snapshot::{

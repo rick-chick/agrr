@@ -2,79 +2,36 @@ import {
   markAllConfirmedProposalsDone,
   readLearnProposalApplicationProgress
 } from './learn-proposal-application-progress';
+import {
+  hydrateLearnOrchestrationProgress,
+  readLearnOrchestrationProgress,
+  registerLearnOrchestrationProgressPatchHandler,
+  syncLearnOrchestrationUpdates,
+  updateLearnOrchestrationProgress
+} from './learn-reorganize-pipeline-state';
 
 export type LearningOrchestrationMode = 'adjust' | 'regenerate' | 'sync_verify';
 
 export type LearnOrchestrationStepKey = 'placement' | 'regenerate' | 'sync_verify';
+
+export type ReorganizePipelinePhase = 'placement' | 'optimizing' | 'regenerate' | 'sync_verify';
 
 export interface ReorganizeOrchestrationProgress {
   placement: boolean;
   regenerate: boolean;
   sync_verify: boolean;
   return_to_learn: boolean;
+  pipeline_active?: boolean;
+  pipeline_phase?: ReorganizePipelinePhase | null;
+  pipeline_failed_phase?: ReorganizePipelinePhase | null;
+  pipeline_error?: string | null;
 }
 
-const defaultOrchestrationProgress = (): ReorganizeOrchestrationProgress => ({
-  placement: false,
-  regenerate: false,
-  sync_verify: false,
-  return_to_learn: false
-});
-
-const orchestrationCache: Record<number, ReorganizeOrchestrationProgress> = {};
-
-type OrchestrationPatchHandler = (
-  planId: number,
-  updates: Partial<ReorganizeOrchestrationProgress>
-) => void;
-
-let orchestrationPatchHandler: OrchestrationPatchHandler | null = null;
-
-export function registerLearnOrchestrationProgressPatchHandler(
-  handler: OrchestrationPatchHandler
-): void {
-  orchestrationPatchHandler = handler;
-}
-
-export function clearLearnOrchestrationProgressCache(planId?: number): void {
-  if (planId == null) {
-    for (const key of Object.keys(orchestrationCache)) {
-      delete orchestrationCache[Number(key)];
-    }
-    return;
-  }
-  delete orchestrationCache[planId];
-}
-
-export function hydrateLearnOrchestrationProgress(
-  planId: number,
-  progress: Partial<ReorganizeOrchestrationProgress>
-): void {
-  orchestrationCache[planId] = {
-    ...defaultOrchestrationProgress(),
-    ...progress
-  };
-}
-
-function readOrchestrationProgress(planId: number): ReorganizeOrchestrationProgress {
-  return orchestrationCache[planId] ?? defaultOrchestrationProgress();
-}
-
-function writeOrchestrationProgress(
-  planId: number,
-  progress: ReorganizeOrchestrationProgress
-): void {
-  orchestrationCache[planId] = progress;
-}
-
-function syncOrchestrationUpdates(
-  planId: number,
-  updates: Partial<ReorganizeOrchestrationProgress>
-): void {
-  if (orchestrationPatchHandler && Object.keys(updates).length > 0) {
-    orchestrationPatchHandler(planId, updates);
-  }
-}
+export {
+  clearLearnOrchestrationProgressCache,
+  hydrateLearnOrchestrationProgress,
+  registerLearnOrchestrationProgressPatchHandler
+} from './learn-reorganize-pipeline-state';
 
 export function parseLearningOrchestration(
   raw: string | null | undefined
@@ -122,31 +79,22 @@ export function buildPlanTaskScheduleOrchestrationNavigation(
 }
 
 export function storeLearnOrchestrationReturnToLearn(planId: number): void {
-  const progress = readOrchestrationProgress(planId);
-  progress.return_to_learn = true;
-  writeOrchestrationProgress(planId, progress);
-  syncOrchestrationUpdates(planId, { return_to_learn: true });
+  updateLearnOrchestrationProgress(planId, { return_to_learn: true });
 }
 
 export function readLearnOrchestrationReturnToLearn(planId: number): boolean {
-  return readOrchestrationProgress(planId).return_to_learn;
+  return readLearnOrchestrationProgress(planId).return_to_learn;
 }
 
 export function clearLearnOrchestrationReturnToLearn(planId: number): void {
-  const progress = readOrchestrationProgress(planId);
-  progress.return_to_learn = false;
-  writeOrchestrationProgress(planId, progress);
-  syncOrchestrationUpdates(planId, { return_to_learn: false });
+  updateLearnOrchestrationProgress(planId, { return_to_learn: false });
 }
 
 export function markLearnOrchestrationStepComplete(
   planId: number,
   step: LearnOrchestrationStepKey
 ): void {
-  const progress = readOrchestrationProgress(planId);
-  progress[step] = true;
-  writeOrchestrationProgress(planId, progress);
-  syncOrchestrationUpdates(planId, { [step]: true });
+  updateLearnOrchestrationProgress(planId, { [step]: true });
   if (areAllLearnOrchestrationStepsComplete(planId)) {
     markAllConfirmedProposalsDone(planId);
   }
@@ -164,7 +112,7 @@ export function readLearnOrchestrationStepComplete(
   planId: number,
   step: LearnOrchestrationStepKey
 ): boolean {
-  return readOrchestrationProgress(planId)[step];
+  return readLearnOrchestrationProgress(planId)[step];
 }
 
 export function findFirstIncompleteOrchestrationStep(

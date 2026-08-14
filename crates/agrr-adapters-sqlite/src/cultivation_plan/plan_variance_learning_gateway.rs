@@ -8,6 +8,7 @@ use agrr_domain::cultivation_plan::dtos::{
     PlanVarianceActionItemRead, PlanVarianceLearningSnapshotRead, PlanVsActualCategorySummaryRead,
     PlanVsActualItemRead, PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
     ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
+    ReorganizePipelinePhase,
 };
 use agrr_domain::cultivation_plan::policies::plan_variance_threshold_policy::VarianceExceedanceKind;
 use agrr_domain::cultivation_plan::gateways::PlanVarianceLearningGateway;
@@ -129,16 +130,12 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
     ) -> Result<ReorganizeOrchestrationProgressRead, Box<dyn std::error::Error + Send + Sync>> {
         self.pool.with_read_box(|conn| {
             let mut stmt = conn.prepare(
-                "SELECT placement_complete, regenerate_complete, sync_verify_complete, return_to_learn \
+                "SELECT placement_complete, regenerate_complete, sync_verify_complete, return_to_learn, \
+                 pipeline_active, pipeline_phase, pipeline_failed_phase, pipeline_error \
                  FROM plan_variance_learning_orchestration_steps WHERE plan_id = ?1 LIMIT 1",
             )?;
             let result = stmt.query_row(params![plan_id], |row| {
-                Ok(ReorganizeOrchestrationProgressRead {
-                    placement: row.get::<_, i64>(0)? != 0,
-                    regenerate: row.get::<_, i64>(1)? != 0,
-                    sync_verify: row.get::<_, i64>(2)? != 0,
-                    return_to_learn: row.get::<_, i64>(3)? != 0,
-                })
+                read_orchestration_progress_row(row)
             });
             match result {
                 Ok(progress) => Ok(progress),
@@ -158,16 +155,12 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
         self.pool.with_write_box(|conn| {
             let current = {
                 let mut stmt = conn.prepare(
-                    "SELECT placement_complete, regenerate_complete, sync_verify_complete, return_to_learn \
+                    "SELECT placement_complete, regenerate_complete, sync_verify_complete, return_to_learn, \
+                     pipeline_active, pipeline_phase, pipeline_failed_phase, pipeline_error \
                      FROM plan_variance_learning_orchestration_steps WHERE plan_id = ?1 LIMIT 1",
                 )?;
                 let result = stmt.query_row(params![plan_id], |row| {
-                    Ok(ReorganizeOrchestrationProgressRead {
-                        placement: row.get::<_, i64>(0)? != 0,
-                        regenerate: row.get::<_, i64>(1)? != 0,
-                        sync_verify: row.get::<_, i64>(2)? != 0,
-                        return_to_learn: row.get::<_, i64>(3)? != 0,
-                    })
+                    read_orchestration_progress_row(row)
                 });
                 match result {
                     Ok(progress) => progress,
@@ -182,16 +175,34 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
             let regenerate = updates.regenerate.unwrap_or(current.regenerate);
             let sync_verify = updates.sync_verify.unwrap_or(current.sync_verify);
             let return_to_learn = updates.return_to_learn.unwrap_or(current.return_to_learn);
+            let pipeline_active = updates.pipeline_active.unwrap_or(current.pipeline_active);
+            let pipeline_phase = match &updates.pipeline_phase {
+                Some(value) => value.clone(),
+                None => current.pipeline_phase,
+            };
+            let pipeline_failed_phase = match &updates.pipeline_failed_phase {
+                Some(value) => value.clone(),
+                None => current.pipeline_failed_phase,
+            };
+            let pipeline_error = match &updates.pipeline_error {
+                Some(value) => value.clone(),
+                None => current.pipeline_error.clone(),
+            };
 
             conn.execute(
                 "INSERT INTO plan_variance_learning_orchestration_steps \
-                 (plan_id, placement_complete, regenerate_complete, sync_verify_complete, return_to_learn, created_at, updated_at) \
-                 VALUES (?1, ?2, ?3, ?4, ?5, datetime('now'), datetime('now')) \
+                 (plan_id, placement_complete, regenerate_complete, sync_verify_complete, return_to_learn, \
+                  pipeline_active, pipeline_phase, pipeline_failed_phase, pipeline_error, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, datetime('now'), datetime('now')) \
                  ON CONFLICT(plan_id) DO UPDATE SET \
                    placement_complete = excluded.placement_complete, \
                    regenerate_complete = excluded.regenerate_complete, \
                    sync_verify_complete = excluded.sync_verify_complete, \
                    return_to_learn = excluded.return_to_learn, \
+                   pipeline_active = excluded.pipeline_active, \
+                   pipeline_phase = excluded.pipeline_phase, \
+                   pipeline_failed_phase = excluded.pipeline_failed_phase, \
+                   pipeline_error = excluded.pipeline_error, \
                    updated_at = datetime('now')",
                 params![
                     plan_id,
@@ -199,6 +210,10 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
                     regenerate as i64,
                     sync_verify as i64,
                     return_to_learn as i64,
+                    pipeline_active as i64,
+                    pipeline_phase.as_ref().map(ReorganizePipelinePhase::as_str),
+                    pipeline_failed_phase.as_ref().map(ReorganizePipelinePhase::as_str),
+                    pipeline_error,
                 ],
             )?;
             Ok(())
@@ -284,6 +299,25 @@ impl PlanVarianceLearningGateway for PlanVarianceLearningSqliteGateway {
             Ok(())
         })
     }
+}
+
+fn read_orchestration_progress_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<ReorganizeOrchestrationProgressRead> {
+    let pipeline_phase: Option<String> = row.get(5)?;
+    let pipeline_failed_phase: Option<String> = row.get(6)?;
+    Ok(ReorganizeOrchestrationProgressRead {
+        placement: row.get::<_, i64>(0)? != 0,
+        regenerate: row.get::<_, i64>(1)? != 0,
+        sync_verify: row.get::<_, i64>(2)? != 0,
+        return_to_learn: row.get::<_, i64>(3)? != 0,
+        pipeline_active: row.get::<_, i64>(4)? != 0,
+        pipeline_phase: pipeline_phase
+            .as_deref()
+            .and_then(ReorganizePipelinePhase::parse),
+        pipeline_failed_phase: pipeline_failed_phase
+            .as_deref()
+            .and_then(ReorganizePipelinePhase::parse),
+        pipeline_error: row.get(7)?,
+    })
 }
 
 fn learn_handoff_from_json(
@@ -545,6 +579,10 @@ mod plan_variance_learning_sqlite_gateway_test {
                    regenerate_complete INTEGER NOT NULL DEFAULT 0,
                    sync_verify_complete INTEGER NOT NULL DEFAULT 0,
                    return_to_learn INTEGER NOT NULL DEFAULT 0,
+                   pipeline_active INTEGER NOT NULL DEFAULT 0,
+                   pipeline_phase TEXT,
+                   pipeline_failed_phase TEXT,
+                   pipeline_error TEXT,
                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
                  );
@@ -694,6 +732,7 @@ mod plan_variance_learning_sqlite_gateway_test {
                     regenerate: None,
                     sync_verify: None,
                     return_to_learn: Some(true),
+                    ..Default::default()
                 },
             )
             .expect("upsert");
@@ -714,6 +753,7 @@ mod plan_variance_learning_sqlite_gateway_test {
                     return_to_learn: Some(false),
                     placement: None,
                     sync_verify: None,
+                    ..Default::default()
                 },
             )
             .expect("upsert partial");
@@ -724,6 +764,56 @@ mod plan_variance_learning_sqlite_gateway_test {
         assert!(updated.placement);
         assert!(updated.regenerate);
         assert!(!updated.return_to_learn);
+    }
+
+    #[test]
+    fn upsert_and_find_pipeline_state() {
+        let pool = test_pool();
+        let gateway = PlanVarianceLearningSqliteGateway::new(pool);
+
+        gateway
+            .upsert_reorganize_orchestration_progress(
+                12,
+                &ReorganizeOrchestrationProgressPatch {
+                    pipeline_active: Some(true),
+                    pipeline_phase: Some(Some(ReorganizePipelinePhase::Optimizing)),
+                    ..Default::default()
+                },
+            )
+            .expect("upsert pipeline");
+
+        let found = gateway
+            .find_reorganize_orchestration_progress_by_plan_id(12)
+            .expect("find pipeline");
+        assert!(found.pipeline_active);
+        assert_eq!(
+            Some(ReorganizePipelinePhase::Optimizing),
+            found.pipeline_phase
+        );
+
+        gateway
+            .upsert_reorganize_orchestration_progress(
+                12,
+                &ReorganizeOrchestrationProgressPatch {
+                    pipeline_failed_phase: Some(Some(ReorganizePipelinePhase::Regenerate)),
+                    pipeline_error: Some(Some("regenerate failed".into())),
+                    pipeline_active: Some(false),
+                    pipeline_phase: Some(None),
+                    ..Default::default()
+                },
+            )
+            .expect("upsert pipeline failure");
+
+        let failed = gateway
+            .find_reorganize_orchestration_progress_by_plan_id(12)
+            .expect("find failed pipeline");
+        assert!(!failed.pipeline_active);
+        assert!(failed.pipeline_phase.is_none());
+        assert_eq!(
+            Some(ReorganizePipelinePhase::Regenerate),
+            failed.pipeline_failed_phase
+        );
+        assert_eq!(Some("regenerate failed".into()), failed.pipeline_error);
     }
 
     #[test]

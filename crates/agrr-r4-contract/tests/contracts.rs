@@ -1082,6 +1082,79 @@ fn get_plan_variance_learning_includes_reorganize_orchestration_progress() {
 }
 
 #[test]
+fn get_plan_variance_learning_includes_reorganize_pipeline_state() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    let learning_path = format!("/api/v1/plans/{}/variance_learning", seed.plan_id);
+
+    let (patch_status, patch_body) = status_and_body(client.patch(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "reorganize_orchestration_progress": {
+                "pipeline_active": true,
+                "pipeline_phase": "optimizing"
+            }
+        })),
+    ));
+    assert_eq!(200, patch_status, "{patch_body}");
+    let patched: serde_json::Value =
+        serde_json::from_str(&patch_body).expect("patch variance learning JSON");
+    let pipeline = patched["reorganize_orchestration_progress"]
+        .as_object()
+        .expect("patched orchestration progress");
+    assert_eq!(true, pipeline["pipeline_active"].as_bool().unwrap());
+    assert_eq!("optimizing", pipeline["pipeline_phase"].as_str().unwrap());
+
+    let (get_status, get_body) = status_and_body(client.get(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, get_status, "{get_body}");
+    let learning: serde_json::Value =
+        serde_json::from_str(&get_body).expect("variance learning JSON");
+    let round_trip = learning["reorganize_orchestration_progress"]
+        .as_object()
+        .expect("round trip orchestration progress");
+    assert_eq!(true, round_trip["pipeline_active"].as_bool().unwrap());
+    assert_eq!("optimizing", round_trip["pipeline_phase"].as_str().unwrap());
+
+    let (fail_status, fail_body) = status_and_body(client.patch(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "reorganize_orchestration_progress": {
+                "pipeline_active": false,
+                "pipeline_phase": null,
+                "pipeline_failed_phase": "regenerate",
+                "pipeline_error": "regenerate failed"
+            }
+        })),
+    ));
+    assert_eq!(200, fail_status, "{fail_body}");
+    let failed: serde_json::Value =
+        serde_json::from_str(&fail_body).expect("failure patch JSON");
+    let failed_progress = failed["reorganize_orchestration_progress"]
+        .as_object()
+        .expect("failed orchestration progress");
+    assert_eq!(false, failed_progress["pipeline_active"].as_bool().unwrap());
+    assert!(failed_progress["pipeline_phase"].is_null());
+    assert_eq!(
+        "regenerate",
+        failed_progress["pipeline_failed_phase"].as_str().unwrap()
+    );
+    assert_eq!(
+        "regenerate failed",
+        failed_progress["pipeline_error"].as_str().unwrap()
+    );
+}
+
+#[test]
 fn get_plan_variance_learning_includes_learn_handoff() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

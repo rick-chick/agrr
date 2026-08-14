@@ -186,6 +186,7 @@ impl PlanVarianceLearningGateway for SpyVarianceLearningGateway {
             regenerate: false,
             sync_verify: false,
             return_to_learn: false,
+            ..Default::default()
         })
     }
 

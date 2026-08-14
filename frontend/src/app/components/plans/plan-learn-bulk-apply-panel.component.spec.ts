@@ -93,7 +93,7 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
     expect(fixture.nativeElement.querySelector('.learn-bulk-apply')).toBeNull();
   });
 
-  it('applies safe proposals and shows reorganize pipeline CTA', async () => {
+  it('applies safe proposals and auto-starts reorganize pipeline', async () => {
     fixture.componentInstance.stageGddProposals = [
       {
         cropId: 1,
@@ -119,7 +119,10 @@ describe('PlanLearnBulkApplyPanelComponent', () => {
     await fixture.whenStable();
 
     expect(bulkApplyUseCase.execute).toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('Start reorganization pipeline');
+    expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
+    expect(router.navigate).toHaveBeenCalledWith(['/plans', 7], {
+      queryParams: { learningOrchestration: 'adjust' }
+    });
   });
 
   it('navigates to adjust with auto-chain when pipeline CTA is clicked', () => {
