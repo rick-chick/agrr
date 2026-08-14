@@ -1765,7 +1765,9 @@
           "loading": "Loading climate data…",
           "unavailable": "No climate data for this date",
           "gdd": "GDD {{value}}",
-          "weather": "High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)"
+          "weather": "High {{max}}°C / Low {{min}}°C (avg {{mean}}°C)",
+          "planned_gdd": "Planned GDD {{value}}",
+          "gdd_delta": "vs planned {{value}}"
         },
         "photos": {
           "label": "Photos (optional)",

@@ -3,6 +3,7 @@ import { WorkRecord } from '../../models/plans/work-record';
 import {
   averageWorkRecordDeltaDays,
   deltaDaysBetween,
+  gddDeltaFromValues,
   workRecordDeltaDays,
   workRecordGddDelta,
   workRecordScheduledDate
@@ -95,5 +96,11 @@ describe('work-record-variance', () => {
         100
       )
     ).toBe(30.5);
+  });
+
+  it('computes gdd delta from raw values for climate preview', () => {
+    expect(gddDeltaFromValues(145.25, 100)).toBe(45.3);
+    expect(gddDeltaFromValues(80, null)).toBeNull();
+    expect(gddDeltaFromValues(null, 100)).toBeNull();
   });
 });
