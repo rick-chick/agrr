@@ -1,12 +1,12 @@
 import { DestroyRef, Injectable, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import type { PlanLearnView, PlanLearnViewState } from './plan-learn.view';
-import { PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
-import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
-import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
-import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-timing-adjustment-proposals.usecase';
-import { LoadStageGddCalibrationProposalsUseCase } from '../../usecase/plans/load-stage-gdd-calibration-proposals.usecase';
-import { loadMergedLearnProposals } from '../../usecase/plans/load-merged-learn-proposals';
+import type { PlanLearnView, PlanLearnViewState } from '../../components/plans/plan-learn.view';
+import { PlanLearnPresenter } from './plan-learn.providers';
+import { LoadPlanVsActualSummaryUseCase } from './load-plan-vs-actual-summary.usecase';
+import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.usecase';
+import { LoadBlueprintTimingAdjustmentProposalsUseCase } from './load-blueprint-timing-adjustment-proposals.usecase';
+import { LoadStageGddCalibrationProposalsUseCase } from './load-stage-gdd-calibration-proposals.usecase';
+import { loadMergedLearnProposals } from './load-merged-learn-proposals';
 import {
   buildLearnLoopPhaseInputFromState,
   buildLearnLoopPhaseResult

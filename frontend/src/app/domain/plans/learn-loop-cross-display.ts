@@ -11,7 +11,6 @@ export type LearnNavBadge =
 export interface LearnLoopCrossDisplaySummary {
   currentPhase: LearnLoopPhaseId;
   phases: ReadonlyArray<LearnLoopPhaseId>;
-  completedPhaseCount: number;
 }
 
 export function shouldShowLearnNavBadge(input: {
@@ -72,10 +71,8 @@ export function learnNavBadgePhaseLabelKey(phase: LearnLoopPhaseId): string {
 export function buildLearnLoopCrossDisplaySummary(
   phaseResult: LearnLoopPhaseResult
 ): LearnLoopCrossDisplaySummary {
-  const currentIndex = LEARN_LOOP_PHASE_ORDER.indexOf(phaseResult.currentPhase);
   return {
     currentPhase: phaseResult.currentPhase,
-    phases: LEARN_LOOP_PHASE_ORDER,
-    completedPhaseCount: currentIndex > 0 ? currentIndex : 0
+    phases: LEARN_LOOP_PHASE_ORDER
   };
 }

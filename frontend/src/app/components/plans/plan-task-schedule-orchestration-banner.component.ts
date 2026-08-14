@@ -37,7 +37,6 @@ export class PlanTaskScheduleOrchestrationBannerComponent {
   @Input({ required: true }) planId!: number;
   @Input() mode: LearningOrchestrationMode | null = null;
   @Input() syncState: string | null = null;
-  @Input() orchestrationComplete = false;
 
   get messageKey(): string {
     if (this.mode === 'regenerate') {

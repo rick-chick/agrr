@@ -11,7 +11,7 @@ import {
 import {
   PlanLearnLoopSummaryCoordinator,
   type PlanLearnLoopSummarySnapshot
-} from './plan-learn-loop-summary.coordinator';
+} from '../../usecase/plans/plan-learn-loop-summary.coordinator';
 
 @Component({
   selector: 'app-plan-learn-nav-badge-host',

@@ -2,10 +2,11 @@ import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject }
 import { TranslateModule } from '@ngx-translate/core';
 import { PLAN_LEARN_PROVIDERS } from '../../usecase/plans/plan-learn.providers';
 import type { LearnLoopPhaseId } from '../../domain/plans/learn-loop-phase';
+import { learnNavBadgePhaseLabelKey } from '../../domain/plans/learn-loop-cross-display';
 import {
   PlanLearnLoopSummaryCoordinator,
   type PlanLearnLoopSummarySnapshot
-} from './plan-learn-loop-summary.coordinator';
+} from '../../usecase/plans/plan-learn-loop-summary.coordinator';
 
 @Component({
   selector: 'app-plan-learn-loop-progress-strip',
@@ -71,7 +72,7 @@ export class PlanLearnLoopProgressStripComponent implements OnInit, OnChanges, O
   }
 
   phaseLabelKey(phase: LearnLoopPhaseId): string {
-    return `plans.learn.loop.phase.${phase}`;
+    return learnNavBadgePhaseLabelKey(phase);
   }
 
   phaseIndex(phase: LearnLoopPhaseId): number {
