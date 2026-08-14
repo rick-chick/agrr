@@ -1433,7 +1433,6 @@
           "early": "{{delta}} days early"
         }
       },
-      "variance_summary_line": "Completed {{completed}} · Not recorded {{unrecorded}} · Avg Δ {{average}} days",
       "open_learn": "Review variance",
       "variance_subview": {
         "summary_title": "Plan variance summary",

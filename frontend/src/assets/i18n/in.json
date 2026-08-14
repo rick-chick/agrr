@@ -1919,7 +1919,6 @@
           "early": "{{delta}} दिन जल्दी"
         }
       },
-      "variance_summary_line": "पूर्ण {{completed}} · अभिलेखित नहीं {{unrecorded}} · औसत Δ {{average}} दिन",
       "open_learn": "अंतर की समीक्षा करें",
       "variance_subview": {
         "summary_title": "योजना अंतर सारांश",
