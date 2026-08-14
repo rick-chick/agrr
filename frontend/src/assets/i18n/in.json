@@ -1960,6 +1960,11 @@
         "return_to_learn": "सीखने की स्क्रीन पर वापस जाएँ"
       }
     },
+    "carryover": {
+      "next_plan_heading": "अगली योजना",
+      "next_plan_hint": "इस योजना की सीख को आगे ले जाने वाली नई योजना बनाएँ।",
+      "next_plan_cta": "सीख के साथ अगली योजना बनाएँ"
+    },
     "learn": {
       "page_title": "समीक्षा — {{name}}",
       "nav_badge": {
