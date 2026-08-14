@@ -29,7 +29,7 @@
 
 ### 入力
 
-- `tmp/product-gap/current-state.md`
+- `tmp/product-gap/current-state.md`（**既存 backlog** セクション必須）
 - `tmp/product-gap/theme-deep-dive.md`
 
 ### 判定の順序
@@ -46,6 +46,11 @@
 | G2-2 | 深掘り成果物に **実装コード・コンポーネント設計** が含まれるか？ | 削除し画面役割・振る舞いレベルに戻す |
 | G2-3 | テーマに対し **情報量が過剰**か？（根拠なしのチャート・カード・横断一覧の積み上げ） | 削減案を書く。詳細は既存分析画面へ |
 | G2-4 | **新画面・新ルート**があり、既存で代替不可の理由が **観測ベースで未記載**か？ | `new_surface_justification` を追記するか、既存強化に差し替え |
+| G2-5 | **既存 backlog**（`current-state.md`）に、計画・深掘りと **同一要求**の **OPEN** issue があるか？ | 新規 Epic / 子 issue 起票不可。既存 #N へコメント追記方針を `mandatory_corrections` に書く |
+| G2-6 | **既存 backlog** に **CLOSED** で `already_fixed` 相当（同等修正済み）の issue があるか？ | 起票不可。理由を `findings` に記録し、代替（既存機能の強化のみ等）を `mandatory_corrections` に書く |
+| G2-7 | **既存 backlog** と **部分重複**（同一要求ではないが統合要）か？ | `blocked` または `fail`。統合方針（新規 / コメント追記 / Epic 統合）を `mandatory_corrections` に書く |
+
+G2-5〜7 は [`github-issue-creator` §3](../../github-issue-creator/SKILL.md) の重複確認と **同等の観測・動作**。フェーズ 9 の §3 は起票直前の最終確認として **二重でも矛盾しない**（G2 で fail ならフェーズ 6 以降に進まない）。
 
 ### pass の条件
 
@@ -77,7 +82,7 @@
 
 - `tmp/product-gap/enhancement-plan.md`
 - `tmp/product-gap/overlap-ux-gate.json`（G2 pass 前提）
-- `tmp/product-gap/current-state.md`
+- `tmp/product-gap/current-state.md`（**既存 backlog** セクション必須）
 
 ### fail 条件
 
@@ -88,6 +93,11 @@
 | G3-3 | **完了条件**が観測可能か（issue 化できるか）？ | 曖昧語を具体化 |
 | G3-4 | **スコープ外**が列挙されているか？ | 追記 |
 | G3-5 | 入口画面と実行画面の **両方**がある場合、同じリストの **重複**が残っていないか？ | サマリ vs 実行に再分割 |
+| G3-6 | `enhancement-plan.md` の v1 issue 案が **既存 backlog** と **同一要求**の **OPEN** issue と重複するか？ | 新規起票不可。既存 #N へコメント追記または Epic 統合を `mandatory_corrections` に書く |
+| G3-7 | v1 issue 案が **CLOSED** で `already_fixed` 相当の backlog と重複するか？ | 起票不可。理由を `findings` に記録 |
+| G3-8 | v1 issue 案が **既存 backlog** と **部分重複**するか？ | `blocked` または `fail`。統合方針を `mandatory_corrections` に書く |
+
+G3-6〜8 は G2-5〜7 と同じ [`github-issue-creator` §3](../../github-issue-creator/SKILL.md) 判定を **計画レビュー時**に再確認する。G2 で pass でも計画段階で重複が顕在化したら fail。
 
 ### 推奨（fail にしない）
 

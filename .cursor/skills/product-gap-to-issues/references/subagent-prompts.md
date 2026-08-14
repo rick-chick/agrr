@@ -85,7 +85,7 @@ AGRR リポジトリの現状機能を調査せよ。
 
 ```
 入力:
-- current-state.md
+- current-state.md（**既存 backlog** セクション必須 — `gh issue list` / `gh issue view` 観測）
 - theme-deep-dive.md
 
 ルーブリック: .cursor/skills/product-gap-to-issues/references/gates.md §G2
@@ -95,6 +95,7 @@ AGRR リポジトリの現状機能を調査せよ。
 verdict=fail のとき mandatory_corrections に、gates.md の該当行に沿った具体修正を書く。
 
 新画面案は自動 fail にしない。G2-4（justification 未記載）と G2-1〜3（重複・過剰・コード）を優先して判定する。
+**G2-5〜7（backlog 重複）**: current-state.md の既存 backlog と深掘り・計画案を照合。OPEN 同一要求 / CLOSED already_fixed / 部分重複は github-issue-creator §3 と同等に fail または blocked。
 ```
 
 ---
@@ -105,7 +106,7 @@ verdict=fail のとき mandatory_corrections に、gates.md の該当行に沿�
 入力:
 - enhancement-plan.md
 - overlap-ux-gate.json（pass 前提）
-- current-state.md
+- current-state.md（**既存 backlog** セクション必須）
 
 ルーブリック: .cursor/skills/product-gap-to-issues/references/gates.md §G3
 
@@ -115,6 +116,7 @@ verdict=fail のとき mandatory_corrections に、gates.md の該当行に沿�
 - 画面役割・v1/v2 境界・観測可能な完了条件
 - 入口と実行の両方がある場合のリスト重複
 - 集約 API・新ルートの観測が enhancement-plan にあるか（要否の断定はしない）
+- **G3-6〜8（backlog 重複）**: enhancement-plan の v1 issue 案と current-state.md 既存 backlog を照合（github-issue-creator §3 同等）
 
 v1 の issue 数そのものは fail 条件にしない。
 ```

@@ -63,6 +63,31 @@
 }
 ```
 
+**G2 fail（backlog 重複 — OPEN 同一要求）:**
+
+```json
+{
+  "gate": "overlap-ux-guard",
+  "verdict": "fail",
+  "summary": "既存 backlog #412 OPEN が同一要求",
+  "findings": ["current-state.md 既存 backlog: #412 OPEN — 作業一覧 UX 改善"],
+  "mandatory_corrections": ["新規 Epic / 子 issue 起票不可", "既存 #412 へ調査結果をコメント追記する方針に差し替え"]
+}
+```
+
+**G3 blocked（backlog 部分重複）:**
+
+```json
+{
+  "gate": "plan-review",
+  "verdict": "blocked",
+  "summary": "v1 issue 案が #388 と部分重複",
+  "findings": ["#388 CLOSED already_fixed 相当の範囲と v1-2 が重なる"],
+  "mandatory_corrections": ["統合方針: v1-2 を #388 追記に統合するか Epic に統合するかを確定"],
+  "blocked_reason": "部分重複の統合方針が enhancement-plan に未記載"
+}
+```
+
 ## 完了報告に含めるもの
 
 | 終了地点 | 報告 |
