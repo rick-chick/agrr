@@ -71,6 +71,7 @@ const loadedState: PlanTaskScheduleViewState = {
   fieldFilterId: null,
   categoryFilter: null,
   fertilizerSummary: { total: 0, basal: 0, topdress: 0 },
+  pestControlSummary: { total: 0, preventive: 0, curative: 0 },
   monthGroups: [],
   unscheduledRows: [],
   fieldFilterOptions: [],
@@ -269,6 +270,7 @@ describe('PlanTaskScheduleComponent', () => {
       fieldCultivationFilterId: null,
       categoryFilter: null,
       fertilizerSummary: { total: 0, basal: 0, topdress: 0 },
+      pestControlSummary: { total: 0, preventive: 0, curative: 0 },
       monthGroups: [],
       unscheduledRows: [],
       fieldFilterOptions: [],
@@ -1442,8 +1444,52 @@ describe('PlanTaskScheduleComponent', () => {
     fixture.detectChanges();
 
     const chips = fixture.nativeElement.querySelectorAll('.plan-task-schedule__category-chip');
-    expect(chips.length).toBe(3);
+    expect(chips.length).toBe(4);
     expect(fixture.nativeElement.textContent).toContain('Fertilizer 2 (basal 1 · topdress 1)');
+  });
+
+  it('renders pest control filter chip and summary when pest control tasks exist', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    translate.setTranslation('en', en as TranslationObject, true);
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            ...emptyFieldSchedule(1, 'North'),
+            schedules: {
+              general: [sampleGeneralTask({ item_id: 1, scheduled_date: '2026-06-10' })],
+              fertilizer: [],
+              pest_control: [
+                {
+                  ...sampleGeneralTask({ item_id: 2, scheduled_date: '2026-06-15' }),
+                  task_type: 'preventive_spray',
+                  category: 'pest_control',
+                  name: 'Preventive'
+                },
+                {
+                  ...sampleGeneralTask({ item_id: 3, scheduled_date: '2026-06-20' }),
+                  task_type: 'curative_spray',
+                  category: 'pest_control',
+                  name: 'Curative'
+                }
+              ],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'Pest control 2 (preventive 1 · curative 1)'
+    );
   });
 
   it('reloads schedule with category=fertilizer when fertilizer chip is selected', async () => {
@@ -1488,6 +1534,51 @@ describe('PlanTaskScheduleComponent', () => {
 
     expect(loadUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ planId: 7, category: 'fertilizer' })
+    );
+  });
+
+  it('reloads schedule with category=pest_control when pest control chip is selected', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    translate.setTranslation('en', en as TranslationObject, true);
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            ...emptyFieldSchedule(1, 'North'),
+            schedules: {
+              general: [sampleGeneralTask()],
+              fertilizer: [],
+              pest_control: [
+                {
+                  ...sampleGeneralTask({ item_id: 2 }),
+                  task_type: 'preventive_spray',
+                  category: 'pest_control',
+                  name: 'Preventive'
+                }
+              ],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    });
+    loadUseCase.execute.mockClear();
+    fixture.detectChanges();
+
+    const pestControlChip = fixture.nativeElement.querySelectorAll(
+      '.plan-task-schedule__category-chip'
+    )[3] as HTMLButtonElement;
+    pestControlChip.click();
+    fixture.detectChanges();
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 7, category: 'pest_control' })
     );
   });
 });

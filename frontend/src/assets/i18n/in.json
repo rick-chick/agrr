@@ -1968,7 +1968,9 @@
       "filter_category_all": "सभी",
       "filter_category_general": "सामान्य",
       "filter_category_fertilizer": "उर्वरक",
-      "fertilizer_summary": "उर्वरक {{total}} (बेसल {{basal}} · टॉपड्रेस {{topdress}})"
+      "filter_category_pest_control": "कीट नियंत्रण",
+      "fertilizer_summary": "उर्वरक {{total}} (बेसल {{basal}} · टॉपड्रेस {{topdress}})",
+      "pest_control_summary": "कीट नियंत्रण {{total}} (निवारक {{preventive}} · उपचारात्मक {{curative}})"
     },
     "carryover": {
       "next_plan_heading": "अगली योजना",

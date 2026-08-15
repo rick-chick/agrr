@@ -2606,7 +2606,9 @@
       "filter_category_all": "すべて",
       "filter_category_general": "一般",
       "filter_category_fertilizer": "施肥",
-      "fertilizer_summary": "施肥 {{total}} 件（基肥 {{basal}} · 追肥 {{topdress}}）"
+      "filter_category_pest_control": "防除",
+      "fertilizer_summary": "施肥 {{total}} 件（基肥 {{basal}} · 追肥 {{topdress}}）",
+      "pest_control_summary": "防除 {{total}} 件（予防散布 {{preventive}} · 治療散布 {{curative}}）"
     },
     "carryover": {
       "next_plan_heading": "次の計画",
