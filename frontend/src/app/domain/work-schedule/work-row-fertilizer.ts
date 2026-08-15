@@ -39,7 +39,7 @@ export function filterWorkDayListBySegment(
   return rows.filter(isFertilizerWorkRow);
 }
 
-export function findLatestWorkRecordForItem(
+function findLatestWorkRecordForItem(
   records: WorkRecord[],
   itemId: number
 ): WorkRecord | null {
