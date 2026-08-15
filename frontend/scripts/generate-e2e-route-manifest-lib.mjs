@@ -15,6 +15,8 @@ export const HOST_SELECTOR_OVERRIDES = {
   'public-plans/select-farm-size': 'app-public-plan-create',
   /** locale-en.routes.ts: parent `en` has resolver-only children; home is child path '' */
   en: 'app-home',
+  /** work.routes.ts: nested child path `variance` under parent `work` */
+  'work/variance': 'app-work-variance',
 };
 
 const HOST_SELECTOR_OUT = 'e2e/host-selector-by-pattern.generated.ts';
