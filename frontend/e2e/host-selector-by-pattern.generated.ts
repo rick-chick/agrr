@@ -58,4 +58,5 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   'public-plans/select-farm-size': 'app-public-plan-create',
   terms: 'app-terms',
   work: 'app-work-hub',
+  'work/variance': 'app-work-variance',
 };

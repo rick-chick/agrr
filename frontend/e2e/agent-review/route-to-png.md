@@ -69,6 +69,7 @@
 | 56 | `plans/:id/work_records` | `/plans/1/work_records` | yes | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` |
 | 57 | `plans/new` | `/plans/new` | yes | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` |
 | 58 | `work` | `/work` | yes | `work.ja.png` | `work.en.png` | `work.in.png` |
+| 59 | `work/variance` | `/work/variance` | yes | `work_variance.ja.png` | `work_variance.en.png` | `work_variance.in.png` |
 
 ## キャプチャ前提
 
