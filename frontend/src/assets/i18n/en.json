@@ -249,7 +249,8 @@
       "gdd_delay_summary": "{{count}} GDD delayed",
       "threshold_exceeded_summary": "{{count}} need action",
       "context_attention_badge": "Attention",
-      "context_attention_badge_aria": "{{count}} plan-core items need action"
+      "context_attention_badge_aria": "{{count}} plan-core items need action",
+      "unrecorded_summary": "{{count}} unrecorded"
     }
   },
   "status": {

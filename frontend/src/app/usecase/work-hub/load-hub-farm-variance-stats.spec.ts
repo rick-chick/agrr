@@ -102,9 +102,62 @@ describe('loadHubFarmVarianceStats', () => {
       )
     );
 
-    expect(stats.get(1)).toEqual({ gddDelayCount: 1, thresholdExceededCount: 2 });
-    expect(stats.get(2)).toEqual({ gddDelayCount: 1, thresholdExceededCount: 1 });
-    expect(stats.get(3)).toEqual({ gddDelayCount: 0, thresholdExceededCount: 0 });
+    expect(stats.get(1)).toEqual({
+      unrecordedCount: 0,
+      gddDelayCount: 1,
+      thresholdExceededCount: 2
+    });
+    expect(stats.get(2)).toEqual({
+      unrecordedCount: 0,
+      gddDelayCount: 1,
+      thresholdExceededCount: 1
+    });
+    expect(stats.get(3)).toEqual({
+      unrecordedCount: 0,
+      gddDelayCount: 0,
+      thresholdExceededCount: 0
+    });
+  });
+
+  it('returns per-farm unrecorded counts from plan summary', async () => {
+    const planGateway: PlanGateway = {
+      listPlans: () => of([]),
+      fetchPlan: () => of({} as never),
+      fetchPlanData: () => of({} as never),
+      getPublicPlanData: () => of({} as never),
+      getTaskSchedule: () => of({ fields: [] } as never),
+      getPlanVsActualSummary: (planId) =>
+        of(
+          summaryForPlan(planId, {
+            unrecorded_count: planId === 9 ? 4 : 1
+          })
+        ),
+      getVarianceLearning: () =>
+        of({
+          plan_id: 0,
+          source_plan_id: 0,
+          summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }
+        }),
+      importVarianceLearning: () =>
+        of({
+          plan_id: 0,
+          source_plan_id: 0,
+          summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }
+        }),
+      patchVarianceLearningProposalProgress: () =>
+        of({ plan_id: 0, proposal_application_progress: {} }),
+      regenerateTaskSchedule: () => of(undefined),
+      createTaskScheduleItem: () => of({} as never),
+      updateTaskScheduleItem: () => of({} as never),
+      deletePlan: () => of({} as never)
+    };
+
+    const stats = await firstValueFrom(
+      loadHubFarmVarianceStats([{ farmId: 1, planId: 9 }, { farmId: 2, planId: 10 }], planGateway)
+    );
+
+    expect(stats.get(1)?.unrecordedCount).toBe(4);
+    expect(stats.get(2)?.unrecordedCount).toBe(1);
   });
 
   it('returns empty map when no farms have a plan', async () => {

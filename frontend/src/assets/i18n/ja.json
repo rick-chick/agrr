@@ -3083,7 +3083,8 @@
       "gdd_delay_summary": "GDD遅延 {{count}} 件",
       "threshold_exceeded_summary": "要対応 {{count}} 件",
       "context_attention_badge": "注意",
-      "context_attention_badge_aria": "計画芯で要対応 {{count}} 件"
+      "context_attention_badge_aria": "計画芯で要対応 {{count}} 件",
+      "unrecorded_summary": "未記録 {{count}} 件"
     }
   },
   "status": {

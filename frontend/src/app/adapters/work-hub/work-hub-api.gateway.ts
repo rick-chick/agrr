@@ -29,6 +29,7 @@ export class WorkHubApiGateway implements WorkHubGateway {
           planId: row.plan_id,
           overdueCount: 0,
           todayCount: 0,
+          unrecordedCount: 0,
           gddDelayCount: 0,
           thresholdExceededCount: 0
         }))
