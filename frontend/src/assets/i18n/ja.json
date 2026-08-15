@@ -2328,6 +2328,12 @@
         "delete": "削除",
         "delete_confirm": "本当にこの計画を削除しますか？この操作は取り消せません。",
         "created_at": "作成日"
+      },
+      "input_gap": {
+        "unrecorded_summary": "未記録: {{count}}件",
+        "action_required_summary": "要対応: {{count}}件",
+        "work_link": "作業を記録",
+        "learn_link": "学習を確認"
       }
     },
     "new": {
@@ -3069,7 +3075,6 @@
       "farm_meta": "圃場 {{count}} 件・合計 {{area}} ㎡",
       "overdue_summary": "期限超過 {{count}} 件",
       "today_summary": "今日 {{count}} 件",
-      "unrecorded_summary": "未記録 {{count}} 件",
       "open_work": "作業へ",
       "start_recording": "記録を始める",
       "no_fields_warning": "有効な圃場がありません。",
@@ -3078,7 +3083,8 @@
       "gdd_delay_summary": "GDD遅延 {{count}} 件",
       "threshold_exceeded_summary": "要対応 {{count}} 件",
       "context_attention_badge": "注意",
-      "context_attention_badge_aria": "計画芯で要対応 {{count}} 件"
+      "context_attention_badge_aria": "計画芯で要対応 {{count}} 件",
+      "unrecorded_summary": "未記録 {{count}} 件"
     }
   },
   "status": {

@@ -1,5 +1,5 @@
-import { PlanSummary } from '../../domain/plans/plan-summary';
+import { PlanListPlan } from '../../domain/plans/plan-list-plan';
 
 export interface PlanListDataDto {
-  plans: PlanSummary[];
+  plans: PlanListPlan[];
 }

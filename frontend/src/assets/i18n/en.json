@@ -241,7 +241,6 @@
       "farm_meta": "{{count}} fields · {{area}} m² total",
       "overdue_summary": "{{count}} overdue",
       "today_summary": "{{count}} today",
-      "unrecorded_summary": "{{count}} unrecorded",
       "open_work": "Open work",
       "start_recording": "Start recording",
       "no_fields_warning": "No valid fields on this farm.",
@@ -250,7 +249,8 @@
       "gdd_delay_summary": "{{count}} GDD delayed",
       "threshold_exceeded_summary": "{{count}} need action",
       "context_attention_badge": "Attention",
-      "context_attention_badge_aria": "{{count}} plan-core items need action"
+      "context_attention_badge_aria": "{{count}} plan-core items need action",
+      "unrecorded_summary": "{{count}} unrecorded"
     }
   },
   "status": {
@@ -1956,6 +1956,12 @@
         "delete": "Delete",
         "delete_confirm": "Are you sure you want to delete this plan? This action cannot be undone.",
         "created_at": "Created"
+      },
+      "input_gap": {
+        "unrecorded_summary": "Unrecorded: {{count}}",
+        "action_required_summary": "Action required: {{count}}",
+        "work_link": "Record work",
+        "learn_link": "Review learning"
       }
     },
     "new": {

@@ -6,7 +6,7 @@ import { PlanListDataDto } from '../../usecase/plans/load-plan-list.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeletePlanSuccessDto } from '../../usecase/plans/delete-plan.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
-import { PlanSummary } from '../../domain/plans/plan-summary';
+import { PlanListPlan } from '../../domain/plans/plan-list-plan';
 
 describe('PlanListPresenter', () => {
   let presenter: PlanListPresenter;
@@ -37,9 +37,21 @@ describe('PlanListPresenter', () => {
 
   describe('LoadPlanListOutputPort', () => {
     it('updates view.control on present(dto)', () => {
-      const plans: PlanSummary[] = [
-        { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
-        { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
+      const plans: PlanListPlan[] = [
+        {
+          id: 1,
+          name: 'Plan A',
+          status: 'pending',
+          farm_id: 1,
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0 }
+        },
+        {
+          id: 2,
+          name: 'Plan B',
+          status: 'completed',
+          farm_id: 2,
+          inputGap: { unrecordedCount: 1, actionRequiredCount: 0 }
+        }
       ];
       const dto: PlanListDataDto = { plans };
 
@@ -67,7 +79,15 @@ describe('PlanListPresenter', () => {
     });
 
     it('does not set error in view.control when scope is not load-plan-list', () => {
-      const initialPlans: PlanSummary[] = [{ id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }];
+      const initialPlans: PlanListPlan[] = [
+        {
+          id: 1,
+          name: 'Plan A',
+          status: 'pending',
+          farm_id: 1,
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0 }
+        }
+      ];
       const initialControl: PlanListViewState = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
       lastControl = initialControl;
 
@@ -84,9 +104,21 @@ describe('PlanListPresenter', () => {
 
   describe('DeletePlanOutputPort', () => {
     it('updates view.control on onSuccess(dto) without undo', () => {
-      const initialPlans: PlanSummary[] = [
-        { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
-        { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
+      const initialPlans: PlanListPlan[] = [
+        {
+          id: 1,
+          name: 'Plan A',
+          status: 'pending',
+          farm_id: 1,
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0 }
+        },
+        {
+          id: 2,
+          name: 'Plan B',
+          status: 'completed',
+          farm_id: 2,
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0 }
+        }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
 
@@ -101,9 +133,21 @@ describe('PlanListPresenter', () => {
     });
 
     it('queues pending undo toast with refresh callback on onSuccess(dto)', () => {
-      const initialPlans: PlanSummary[] = [
-        { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
-        { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
+      const initialPlans: PlanListPlan[] = [
+        {
+          id: 1,
+          name: 'Plan A',
+          status: 'pending',
+          farm_id: 1,
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0 }
+        },
+        {
+          id: 2,
+          name: 'Plan B',
+          status: 'completed',
+          farm_id: 2,
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0 }
+        }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
 
@@ -140,8 +184,14 @@ describe('PlanListPresenter', () => {
     });
 
     it('does not queue undo toast when undo is missing', () => {
-      const initialPlans: PlanSummary[] = [
-        { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
+      const initialPlans: PlanListPlan[] = [
+        {
+          id: 1,
+          name: 'Plan A',
+          status: 'pending',
+          farm_id: 1,
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0 }
+        }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
 
@@ -157,8 +207,14 @@ describe('PlanListPresenter', () => {
     });
 
     it('queues undo toast even when refresh callback is missing', () => {
-      const initialPlans: PlanSummary[] = [
-        { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
+      const initialPlans: PlanListPlan[] = [
+        {
+          id: 1,
+          name: 'Plan A',
+          status: 'pending',
+          farm_id: 1,
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0 }
+        }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
 

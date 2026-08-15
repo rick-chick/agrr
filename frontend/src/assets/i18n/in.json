@@ -2442,6 +2442,12 @@
         "delete": "हटाएं",
         "delete_confirm": "क्या आप वाकई इस योजना को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
         "created_at": "बनाया गया"
+      },
+      "input_gap": {
+        "unrecorded_summary": "अदर्ज नहीं: {{count}}",
+        "action_required_summary": "कार्रवाई आवश्यक: {{count}}",
+        "work_link": "कार्य अभिलेखित करें",
+        "learn_link": "सीख की समीक्षा करें"
       }
     },
     "new": {
@@ -2756,7 +2762,6 @@
       "farm_meta": "{{count}} खेत क्षेत्र · कुल {{area}} वर्ग मी",
       "overdue_summary": "{{count}} अतिदेय",
       "today_summary": "आज {{count}}",
-      "unrecorded_summary": "{{count}} अभिलेखित नहीं",
       "open_work": "कार्य खोलें",
       "start_recording": "दर्ज करना शुरू करें",
       "no_fields_warning": "इस खेत पर कोई मान्य खेत क्षेत्र नहीं है।",
@@ -2765,7 +2770,8 @@
       "gdd_delay_summary": "{{count}} GDD विलंब",
       "threshold_exceeded_summary": "{{count}} कार्य आवश्यक",
       "context_attention_badge": "ध्यान",
-      "context_attention_badge_aria": "योजना-कोर में {{count}} कार्य आवश्यक"
+      "context_attention_badge_aria": "योजना-कोर में {{count}} कार्य आवश्यक",
+      "unrecorded_summary": "{{count}} अभिलेखित नहीं"
     }
   },
   "status": {
