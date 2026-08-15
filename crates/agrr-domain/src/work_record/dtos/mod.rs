@@ -6,6 +6,7 @@ pub(crate) mod work_record_photo_read;
 pub(crate) mod work_record_photo_upload_init_output;
 pub(crate) mod work_record_read;
 pub(crate) mod work_record_update_input;
+pub(crate) mod variance_portfolio_row;
 pub(crate) mod work_hub_farm_row;
 
 pub use work_record_climate_snapshot::WorkRecordClimateSnapshot;
@@ -17,4 +18,5 @@ pub use work_record_photo_read::WorkRecordPhotoRead;
 pub use work_record_photo_upload_init_output::WorkRecordPhotoUploadInitOutput;
 pub use work_record_read::{WorkRecordRead, WorkRecordTaskScheduleItemSummary};
 pub use work_record_update_input::WorkRecordUpdateInput;
+pub use variance_portfolio_row::VariancePortfolioRow;
 pub use work_hub_farm_row::WorkHubFarmRow;

@@ -4,10 +4,12 @@ use std::collections::BTreeMap;
 
 use crate::work_record::dtos::WorkRecordRead;
 
+pub(crate) mod variance_portfolio_output_port;
 pub(crate) mod work_hub_list_output_port;
 pub(crate) mod work_record_destroy_output_port;
 pub(crate) mod work_record_photo_output_ports;
 
+pub use variance_portfolio_output_port::VariancePortfolioOutputPort;
 pub use work_hub_list_output_port::WorkHubListOutputPort;
 pub use work_record_destroy_output_port::{DestroyFailure, WorkRecordDestroyOutputPort};
 pub use work_record_photo_output_ports::{

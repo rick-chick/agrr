@@ -6,6 +6,7 @@ pub mod cultivation_plan_phase_policy;
 pub mod plan_variance_learning_handoff_policy;
 pub mod plan_variance_learning_orchestration_progress_policy;
 pub mod plan_variance_learning_proposal_progress_policy;
+pub mod plan_variance_summary_stats_policy;
 pub mod plan_variance_threshold_policy;
 pub mod plan_read_authorization;
 pub mod private_cultivation_plan_access_policy;

@@ -84,6 +84,7 @@ pub mod task_schedules;
 pub mod work_records;
 pub mod work_record_climate_snapshot;
 pub mod work_record_photos;
+pub mod variance_portfolio;
 pub mod work_hub;
 pub mod weather_prediction_anchors;
 pub mod workbench_payload;
@@ -144,6 +145,7 @@ pub async fn run_http_server() {
         .merge(work_records::routes())
         .merge(work_record_photos::routes())
         .merge(work_hub::routes())
+        .merge(variance_portfolio::routes())
         .merge(cultivation_plans::routes())
         .merge(cultivation_plans_mutations::mutation_routes())
         .merge(field_cultivations::routes())
