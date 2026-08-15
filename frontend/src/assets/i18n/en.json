@@ -1835,6 +1835,15 @@
         "cumulative_gdd": "Cumulative GDD: {{value}}",
         "daily_weather": "High {{max}}°C / Low {{min}}°C / Mean {{mean}}°C",
         "workbench_link": "Open workbench climate panel"
+      },
+      "segment": {
+        "label": "Work list view",
+        "all": "All",
+        "fertilizer": "Fertilizer"
+      },
+      "fertilizer_badge": {
+        "basal": "Basal",
+        "topdress": "Top-dress"
       }
     },
     "work_records": {

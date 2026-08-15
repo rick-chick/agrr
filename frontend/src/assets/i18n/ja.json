@@ -2960,6 +2960,15 @@
         "cumulative_gdd": "累積 GDD: {{value}}",
         "daily_weather": "最高 {{max}}℃ / 最低 {{min}}℃ / 平均 {{mean}}℃",
         "workbench_link": "ワークベンチの気候パネルを開く"
+      },
+      "segment": {
+        "label": "作業一覧の表示",
+        "all": "すべて",
+        "fertilizer": "施肥"
+      },
+      "fertilizer_badge": {
+        "basal": "基肥",
+        "topdress": "追肥"
       }
     },
     "work_records": {

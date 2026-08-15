@@ -9,6 +9,9 @@ export interface WorkDayListRowDto {
   overdueDays?: number;
   /** Field cumulative GDD as of the work list "today" date (from climate_data). */
   cumulativeGddAtToday?: number | null;
+  /** Latest work record amount for fertilizer row diff (from listWorkRecords). */
+  latestRecordAmount?: string | null;
+  latestRecordAmountUnit?: string | null;
 }
 
 export interface LoadWorkDayListInputDto {
