@@ -8,7 +8,8 @@ import {
 
 const CATEGORY_TASK_TYPES: Record<string, readonly string[]> = {
   general: ['field_work'],
-  fertilizer: ['basal_fertilization', 'topdress_fertilization']
+  fertilizer: ['basal_fertilization', 'topdress_fertilization'],
+  pest_control: ['preventive_spray', 'curative_spray']
 };
 
 export function buildBlueprintTimingAdjustmentProposals(

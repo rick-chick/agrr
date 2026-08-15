@@ -1555,7 +1555,8 @@
         "dry_run_result": "Dry-run result",
         "category": {
           "general": "General tasks",
-          "fertilizer": "Fertilization"
+          "fertilizer": "Fertilization",
+          "pest_control": "Pest control"
         },
         "evidence": {
           "toggle": "Show rationale",
@@ -1717,6 +1718,17 @@
             "toggle": "Show rationale",
             "rationale": "{{count}} of {{total}} recorded fertilizer tasks exceeded the day threshold of {{threshold}} days.",
             "records_title": "Contributing fertilizer records (up to 5)",
+            "record": "{{name}} — {{date}}"
+          }
+        },
+        "pest_control_timing": {
+          "title": "Pest control timing proposals",
+          "lead": "Blueprint timing adjustments from pest control schedule variance (preventive / curative spray). Review evidence before applying.",
+          "evidence": {
+            "source": "Evidence source: field.schedules.pest_control",
+            "toggle": "Show rationale",
+            "rationale": "{{count}} of {{total}} recorded pest control tasks exceeded the day threshold of {{threshold}} days.",
+            "records_title": "Contributing pest control records (up to 5)",
             "record": "{{name}} — {{date}}"
           }
         }
