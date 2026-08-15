@@ -7,7 +7,9 @@ import {
   buildHostSelectorData,
   buildManifestData,
   checkManifestFreshness,
+  composeRoutePattern,
   normalizeManifestJson,
+  parseRoutesFile,
   parseSelectorFromComponentSource,
 } from './generate-e2e-route-manifest-lib.mjs';
 
@@ -44,6 +46,23 @@ test('checkManifestFreshness detects stale route-manifest.json content', async (
 test('parseSelectorFromComponentSource extracts app-* selector', () => {
   const source = `@Component({ selector: 'app-farm-list', standalone: true })`;
   assert.equal(parseSelectorFromComponentSource(source), 'app-farm-list');
+});
+
+test('composeRoutePattern joins parent and child paths', () => {
+  assert.equal(composeRoutePattern('work', 'variance'), 'work/variance');
+  assert.equal(composeRoutePattern('work', ''), 'work');
+  assert.equal(composeRoutePattern('', 'about'), 'about');
+});
+
+test('parseRoutesFile composes nested work child routes', async () => {
+  const workRoutesPath = join(FRONTEND, 'src/app/routes/work.routes.ts');
+  const routes = await parseRoutesFile(workRoutesPath);
+  const patterns = routes.map((r) => r.pattern).sort();
+  assert.deepEqual(patterns, ['work', 'work/variance']);
+  const variance = routes.find((r) => r.pattern === 'work/variance');
+  assert.equal(variance?.url, '/work/variance');
+  assert.equal(variance?.requiresAuth, true);
+  assert.match(variance?.componentImportPath ?? '', /work-variance\.component\.ts$/);
 });
 
 test('buildHostSelectorData maps loadComponent routes to component selectors', async () => {
