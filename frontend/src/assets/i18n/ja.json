@@ -2982,11 +2982,16 @@
       "segment": {
         "label": "作業一覧の表示",
         "all": "すべて",
-        "fertilizer": "施肥"
+        "fertilizer": "施肥",
+        "pest_control": "防除"
       },
       "fertilizer_badge": {
         "basal": "基肥",
         "topdress": "追肥"
+      },
+      "pest_control_badge": {
+        "preventive": "予防",
+        "curative": "治療"
       }
     },
     "work_records": {

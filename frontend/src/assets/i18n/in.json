@@ -2344,11 +2344,16 @@
       "segment": {
         "label": "कार्य सूची दृश्य",
         "all": "सभी",
-        "fertilizer": "उर्वरक"
+        "fertilizer": "उर्वरक",
+        "pest_control": "कीट नियंत्रण"
       },
       "fertilizer_badge": {
         "basal": "बेसल",
         "topdress": "टॉप-ड्रेस"
+      },
+      "pest_control_badge": {
+        "preventive": "निवारक",
+        "curative": "उपचारात्मक"
       }
     },
     "work_records": {

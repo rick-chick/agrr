@@ -1857,11 +1857,16 @@
       "segment": {
         "label": "Work list view",
         "all": "All",
-        "fertilizer": "Fertilizer"
+        "fertilizer": "Fertilizer",
+        "pest_control": "Pest control"
       },
       "fertilizer_badge": {
         "basal": "Basal",
         "topdress": "Top-dress"
+      },
+      "pest_control_badge": {
+        "preventive": "Preventive",
+        "curative": "Curative"
       }
     },
     "work_records": {
