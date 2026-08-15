@@ -141,6 +141,7 @@ const initialControl: PlanLearnViewState = {
             [planId]="planId"
             [stageGddProposals]="control.stageGddProposals"
             [blueprintTimingProposals]="control.blueprintTimingProposals"
+            [blueprintTimingEvidenceByKey]="control.blueprintTimingEvidenceByKey"
             [actionRequiredItems]="control.varianceSummary?.action_required_items ?? []"
             [postMasterPayload]="showPostMasterConfirmation ? control.postMasterPayload : null"
             [progressRefreshVersion]="proposalProgressRefreshVersion"
