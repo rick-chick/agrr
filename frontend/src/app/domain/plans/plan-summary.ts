@@ -3,4 +3,5 @@ export interface PlanSummary {
   name: string;
   status?: string | null;
   farm_id: number;
+  plan_year?: number | null;
 }

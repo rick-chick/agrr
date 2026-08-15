@@ -67,6 +67,7 @@ fn get_plans_authenticated_includes_farm_id() {
         .find(|p| p["id"].as_i64() == Some(seed.plan_id))
         .expect("seeded plan in list");
     assert_eq!(seed.farm_id, plan["farm_id"].as_i64().unwrap());
+    assert_eq!(Some(2026), plan["plan_year"].as_i64().map(|y| y as i32));
 }
 
 #[test]
