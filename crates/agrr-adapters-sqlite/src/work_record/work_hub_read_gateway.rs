@@ -1,8 +1,14 @@
 //! Work hub read gateway — farms with field stats and optional private plan id.
+//!
+//! Representative `plan_id` per farm follows
+//! [`work_hub_representative_plan_policy`](agrr_domain::work_record::policies::work_hub_representative_plan_policy).
 
 use crate::pool::SqlitePool;
 use agrr_domain::work_record::dtos::WorkHubFarmRow;
 use agrr_domain::work_record::gateways::WorkHubReadGateway;
+use agrr_domain::work_record::policies::work_hub_representative_plan_policy::{
+    ACTIVE_PLAN_STATUS, DRAFT_PLAN_STATUS,
+};
 use rusqlite::params;
 
 pub struct WorkHubReadSqliteGateway {
@@ -27,12 +33,18 @@ impl WorkHubReadGateway for WorkHubReadSqliteGateway {
                  (SELECT COUNT(*) FROM fields fld WHERE fld.farm_id = f.id AND COALESCE(fld.area, 0) > 0), \
                  (SELECT COALESCE(SUM(fld.area), 0) FROM fields fld WHERE fld.farm_id = f.id AND COALESCE(fld.area, 0) > 0), \
                  (SELECT cp.id FROM cultivation_plans cp \
-                    WHERE cp.farm_id = f.id AND cp.user_id = ?1 AND cp.plan_type = 'private' LIMIT 1) \
+                    WHERE cp.farm_id = f.id AND cp.user_id = ?1 AND cp.plan_type = 'private' \
+                      AND cp.status IN (?2, ?3) \
+                    ORDER BY CASE cp.status WHEN ?2 THEN 0 WHEN ?3 THEN 1 END, \
+                             cp.updated_at DESC, cp.id DESC \
+                    LIMIT 1) \
                  FROM farms f \
                  WHERE f.user_id = ?1 AND f.is_reference = 0 \
                  ORDER BY f.name COLLATE NOCASE",
                 )?;
-                let rows = stmt.query_map(params![user_id], |row| {
+                let rows = stmt.query_map(
+                    params![user_id, ACTIVE_PLAN_STATUS, DRAFT_PLAN_STATUS],
+                    |row| {
                     let farm_id: i64 = row.get(0)?;
                     let farm_name: String = row.get(1)?;
                     let field_count: i32 = row.get(2)?;
@@ -160,6 +172,111 @@ mod tests {
         assert_eq!(1, rows.len());
         assert_eq!(0, rows[0].field_count);
         assert!(!rows[0].has_valid_fields);
+        assert_eq!(None, rows[0].plan_id);
+    }
+
+    fn insert_private_plan(
+        conn: &rusqlite::Connection,
+        id: i64,
+        farm_id: i64,
+        user_id: i64,
+        status: &str,
+        updated_at: &str,
+    ) -> rusqlite::Result<()> {
+        conn.execute(
+            "INSERT INTO cultivation_plans (id, farm_id, user_id, total_area, plan_type, plan_name, status, created_at, updated_at)
+             VALUES (?1, ?2, ?3, 100.0, 'private', ?4, ?5, datetime('now'), ?6)",
+            params![id, farm_id, user_id, format!("Plan {id}"), status, updated_at],
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn list_farm_rows_prefers_latest_completed_over_pending_and_older_completed() {
+        let pool = work_hub_test_pool();
+        let user_id = 9_i64;
+        pool.with_write(|conn| {
+            conn.execute(
+                "INSERT INTO farms (id, user_id, name, latitude, longitude, region, is_reference, created_at, updated_at)
+             VALUES (1, ?1, 'Farm A', 35.0, 139.0, 'jp', 0, datetime('now'), datetime('now'))",
+                params![user_id],
+            )?;
+            insert_private_plan(conn, 100, 1, user_id, "pending", "2026-01-01 00:00:00")?;
+            insert_private_plan(conn, 101, 1, user_id, "completed", "2026-01-02 00:00:00")?;
+            insert_private_plan(conn, 102, 1, user_id, "completed", "2026-01-03 00:00:00")?;
+            Ok(())
+        })
+        .unwrap();
+
+        let gw = WorkHubReadSqliteGateway::new(pool);
+        let rows = gw.list_farm_rows_for_user(user_id).unwrap();
+
+        assert_eq!(Some(102), rows[0].plan_id);
+    }
+
+    #[test]
+    fn list_farm_rows_falls_back_to_latest_pending_when_no_completed() {
+        let pool = work_hub_test_pool();
+        let user_id = 10_i64;
+        pool.with_write(|conn| {
+            conn.execute(
+                "INSERT INTO farms (id, user_id, name, latitude, longitude, region, is_reference, created_at, updated_at)
+             VALUES (1, ?1, 'Farm A', 35.0, 139.0, 'jp', 0, datetime('now'), datetime('now'))",
+                params![user_id],
+            )?;
+            insert_private_plan(conn, 100, 1, user_id, "pending", "2026-01-01 00:00:00")?;
+            insert_private_plan(conn, 101, 1, user_id, "pending", "2026-01-03 00:00:00")?;
+            Ok(())
+        })
+        .unwrap();
+
+        let gw = WorkHubReadSqliteGateway::new(pool);
+        let rows = gw.list_farm_rows_for_user(user_id).unwrap();
+
+        assert_eq!(Some(101), rows[0].plan_id);
+    }
+
+    #[test]
+    fn list_farm_rows_prefers_completed_even_when_pending_is_newer() {
+        let pool = work_hub_test_pool();
+        let user_id = 11_i64;
+        pool.with_write(|conn| {
+            conn.execute(
+                "INSERT INTO farms (id, user_id, name, latitude, longitude, region, is_reference, created_at, updated_at)
+             VALUES (1, ?1, 'Farm A', 35.0, 139.0, 'jp', 0, datetime('now'), datetime('now'))",
+                params![user_id],
+            )?;
+            insert_private_plan(conn, 100, 1, user_id, "completed", "2026-01-01 00:00:00")?;
+            insert_private_plan(conn, 101, 1, user_id, "pending", "2026-01-05 00:00:00")?;
+            Ok(())
+        })
+        .unwrap();
+
+        let gw = WorkHubReadSqliteGateway::new(pool);
+        let rows = gw.list_farm_rows_for_user(user_id).unwrap();
+
+        assert_eq!(Some(100), rows[0].plan_id);
+    }
+
+    #[test]
+    fn list_farm_rows_ignores_optimizing_and_failed_plans() {
+        let pool = work_hub_test_pool();
+        let user_id = 12_i64;
+        pool.with_write(|conn| {
+            conn.execute(
+                "INSERT INTO farms (id, user_id, name, latitude, longitude, region, is_reference, created_at, updated_at)
+             VALUES (1, ?1, 'Farm A', 35.0, 139.0, 'jp', 0, datetime('now'), datetime('now'))",
+                params![user_id],
+            )?;
+            insert_private_plan(conn, 100, 1, user_id, "optimizing", "2026-01-05 00:00:00")?;
+            insert_private_plan(conn, 101, 1, user_id, "failed", "2026-01-06 00:00:00")?;
+            Ok(())
+        })
+        .unwrap();
+
+        let gw = WorkHubReadSqliteGateway::new(pool);
+        let rows = gw.list_farm_rows_for_user(user_id).unwrap();
+
         assert_eq!(None, rows[0].plan_id);
     }
 }

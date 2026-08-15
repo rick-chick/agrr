@@ -1,1 +1,2 @@
+pub mod work_hub_representative_plan_policy;
 pub mod work_record_photo_policy;
