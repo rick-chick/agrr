@@ -5,8 +5,9 @@ import { TranslateModule } from '@ngx-translate/core';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import {
   buildFertilizerTimingQueueItems,
+  buildPestControlTimingQueueItems,
   buildUnifiedLearnProposalQueue,
-  groupUnifiedLearnProposalQueueExcludingFertilizerTiming,
+  groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections,
   resolveBpTimingEvidenceKey,
   type LearnProposalQueueCategory,
   type UnifiedLearnProposalQueueItem
@@ -106,24 +107,74 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
                     <span
                       class="learn-proposal-queue__item-status"
                       [class.learn-proposal-queue__item-status--pending]="
-                        fertilizerItemStatus(item) === 'applied_pending_confirmation'
+                        dedicatedTimingItemStatus(item) === 'applied_pending_confirmation'
                       "
                       [class.learn-proposal-queue__item-status--confirmed]="
-                        fertilizerItemStatus(item) === 'confirmed'
+                        dedicatedTimingItemStatus(item) === 'confirmed'
                       "
                       [class.learn-proposal-queue__item-status--done]="
-                        fertilizerItemStatus(item) === 'done'
+                        dedicatedTimingItemStatus(item) === 'done'
                       "
                     >
-                      {{ statusLabel(fertilizerItemStatus(item)) | translate }}
+                      {{ statusLabel(dedicatedTimingItemStatus(item)) | translate }}
                     </span>
                   </div>
                   <app-learn-proposal-evidence-panel
-                    [evidence]="fertilizerEvidenceFor(item)"
+                    [evidence]="dedicatedTimingEvidenceFor(item)"
                     toggleLabelKey="plans.learn.proposal_queue.fertilizer_timing.evidence.toggle"
                     rationaleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.rationale"
                     recordsTitleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.records_title"
                     recordLabelKey="plans.learn.proposal_queue.fertilizer_timing.evidence.record"
+                  />
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (pestControlTimingItems.length) {
+          <div
+            class="learn-proposal-queue__pest-control-timing"
+            data-testid="pest-control-timing-section"
+          >
+            <h4 class="learn-proposal-queue__pest-control-timing-title">
+              {{ 'plans.learn.proposal_queue.pest_control_timing.title' | translate }}
+            </h4>
+            <p class="learn-proposal-queue__pest-control-timing-lead">
+              {{ 'plans.learn.proposal_queue.pest_control_timing.lead' | translate }}
+            </p>
+            <p class="learn-proposal-queue__pest-control-timing-source">
+              {{ 'plans.learn.proposal_queue.pest_control_timing.evidence.source' | translate }}
+            </p>
+            <ul class="learn-proposal-queue__list" role="list">
+              @for (item of pestControlTimingItems; track item.id) {
+                <li class="learn-proposal-queue__item learn-proposal-queue__item--pest-control">
+                  <div class="learn-proposal-queue__item-header">
+                    <span class="learn-proposal-queue__item-title">{{ item.title }}</span>
+                    <span class="learn-proposal-queue__item-category-badge">
+                      {{ bpTimingCategoryLabel(item) | translate }}
+                    </span>
+                    <span
+                      class="learn-proposal-queue__item-status"
+                      [class.learn-proposal-queue__item-status--pending]="
+                        dedicatedTimingItemStatus(item) === 'applied_pending_confirmation'
+                      "
+                      [class.learn-proposal-queue__item-status--confirmed]="
+                        dedicatedTimingItemStatus(item) === 'confirmed'
+                      "
+                      [class.learn-proposal-queue__item-status--done]="
+                        dedicatedTimingItemStatus(item) === 'done'
+                      "
+                    >
+                      {{ statusLabel(dedicatedTimingItemStatus(item)) | translate }}
+                    </span>
+                  </div>
+                  <app-learn-proposal-evidence-panel
+                    [evidence]="dedicatedTimingEvidenceFor(item)"
+                    toggleLabelKey="plans.learn.proposal_queue.pest_control_timing.evidence.toggle"
+                    rationaleKey="plans.learn.proposal_queue.pest_control_timing.evidence.rationale"
+                    recordsTitleKey="plans.learn.proposal_queue.pest_control_timing.evidence.records_title"
+                    recordLabelKey="plans.learn.proposal_queue.pest_control_timing.evidence.record"
                   />
                 </li>
               }
@@ -236,11 +287,15 @@ export class PlanLearnProposalQueueComponent {
   }
 
   get groupedItems(): Record<LearnProposalQueueCategory, UnifiedLearnProposalQueueItem[]> {
-    return groupUnifiedLearnProposalQueueExcludingFertilizerTiming(this.queue);
+    return groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections(this.queue);
   }
 
   get fertilizerTimingItems(): UnifiedLearnProposalQueueItem[] {
     return buildFertilizerTimingQueueItems(this.planId, this.blueprintTimingProposals);
+  }
+
+  get pestControlTimingItems(): UnifiedLearnProposalQueueItem[] {
+    return buildPestControlTimingQueueItems(this.planId, this.blueprintTimingProposals);
   }
 
   get safeCount(): number {
@@ -251,6 +306,7 @@ export class PlanLearnProposalQueueComponent {
     return (
       this.queue.items.length > 0 ||
       this.fertilizerTimingItems.length > 0 ||
+      this.pestControlTimingItems.length > 0 ||
       this.postMasterPayload != null ||
       this.applicationProgressCount > 0 ||
       this.bulkApplyComplete
@@ -274,7 +330,7 @@ export class PlanLearnProposalQueueComponent {
     return `plans.learn.bp_timing_adjustment.category.${item.bpTimingCategory ?? 'general'}`;
   }
 
-  fertilizerEvidenceFor(item: UnifiedLearnProposalQueueItem): LearnProposalEvidence | null {
+  dedicatedTimingEvidenceFor(item: UnifiedLearnProposalQueueItem): LearnProposalEvidence | null {
     const proposal = this.blueprintTimingProposals.find(
       (candidate) => `bp_timing:${candidate.cropId}:${candidate.category}` === item.id
     );
@@ -284,7 +340,7 @@ export class PlanLearnProposalQueueComponent {
     return this.blueprintTimingEvidenceByKey[resolveBpTimingEvidenceKey(proposal)] ?? null;
   }
 
-  fertilizerItemStatus(item: UnifiedLearnProposalQueueItem): LearnProposalApplicationStatus {
+  dedicatedTimingItemStatus(item: UnifiedLearnProposalQueueItem): LearnProposalApplicationStatus {
     void this.progressRefreshVersion;
     const proposal = this.blueprintTimingProposals.find(
       (candidate) => `bp_timing:${candidate.cropId}:${candidate.category}` === item.id

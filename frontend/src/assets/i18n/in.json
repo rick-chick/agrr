@@ -2042,7 +2042,8 @@
         "dry_run_result": "dry_run परिणाम",
         "category": {
           "general": "सामान्य कार्य",
-          "fertilizer": "उर्वरक"
+          "fertilizer": "उर्वरक",
+          "pest_control": "कीट नियंत्रण"
         },
         "evidence": {
           "toggle": "आधार दिखाएँ",
@@ -2204,6 +2205,17 @@
             "toggle": "तर्क दिखाएं",
             "rationale": "{{total}} रिकॉर्ड उर्वरक कार्यों में से {{count}} ने {{threshold}} दिन की सीमा पार की।",
             "records_title": "योगदान देने वाले उर्वरक रिकॉर्ड (अधिकतम 5)",
+            "record": "{{name}} — {{date}}"
+          }
+        },
+        "pest_control_timing": {
+          "title": "कीट नियंत्रण समय प्रस्ताव",
+          "lead": "कीट नियंत्रण अनुसूची विचलन (निवारक / उपचारात्मक स्प्रे) से BP समय समायोजन। लागू करने से पहले साक्ष्य देखें।",
+          "evidence": {
+            "source": "साक्ष्य स्रोत: field.schedules.pest_control",
+            "toggle": "तर्क दिखाएं",
+            "rationale": "{{total}} रिकॉर्ड कीट नियंत्रण कार्यों में से {{count}} ने {{threshold}} दिन की सीमा पार की।",
+            "records_title": "योगदान देने वाले कीट नियंत्रण रिकॉर्ड (अधिकतम 5)",
             "record": "{{name}} — {{date}}"
           }
         }

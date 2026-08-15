@@ -2680,7 +2680,8 @@
         "dry_run_result": "dry_run 結果",
         "category": {
           "general": "一般作業",
-          "fertilizer": "施肥"
+          "fertilizer": "施肥",
+          "pest_control": "防除"
         },
         "evidence": {
           "toggle": "根拠を表示",
@@ -2842,6 +2843,17 @@
             "toggle": "根拠を表示",
             "rationale": "記録済み施肥作業 {{total}} 件のうち {{count}} 件が日数しきい値 {{threshold}} 日を超えています。",
             "records_title": "寄与した施肥記録（最大5件）",
+            "record": "{{name}} — {{date}}"
+          }
+        },
+        "pest_control_timing": {
+          "title": "防除タイミング提案",
+          "lead": "防除予定（予防散布・治療散布）の計画と実績のずれに基づく BP タイミング調整です。適用前に根拠を確認してください。",
+          "evidence": {
+            "source": "根拠ソース: field.schedules.pest_control",
+            "toggle": "根拠を表示",
+            "rationale": "記録済み防除作業 {{total}} 件のうち {{count}} 件が日数しきい値 {{threshold}} 日を超えています。",
+            "records_title": "寄与した防除記録（最大5件）",
             "record": "{{name}} — {{date}}"
           }
         }

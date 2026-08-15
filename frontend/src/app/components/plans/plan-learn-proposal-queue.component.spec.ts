@@ -34,6 +34,25 @@ const fertilizerBpTimingProposal = (): BlueprintTimingAdjustmentProposal => ({
   }
 });
 
+const pestControlBpTimingProposal = (): BlueprintTimingAdjustmentProposal => ({
+  cropId: 1,
+  cropName: 'Tomato',
+  category: 'pest_control',
+  averageDeltaDays: 3,
+  averageGddDelta: 6,
+  recordedItemCount: 2,
+  affectedBlueprintCount: 2,
+  proposalBody: {
+    intent: BLUEPRINT_TIMING_PATCH_INTENT,
+    stages: [],
+    agricultural_tasks: [],
+    task_schedule_blueprints: [
+      { blueprint_id: 20, gdd_trigger: 96 },
+      { blueprint_id: 21, gdd_trigger: 116 }
+    ]
+  }
+});
+
 describe('PlanLearnProposalQueueComponent', () => {
   let fixture: ComponentFixture<PlanLearnProposalQueueComponent>;
   let bulkApplyUseCase: { execute: ReturnType<typeof vi.fn> };
@@ -246,6 +265,56 @@ describe('PlanLearnProposalQueueComponent', () => {
 
     expect(
       fixture.nativeElement.querySelector('[data-testid="fertilizer-timing-section"]')
+    ).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="queue-category-safe"]')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Pepper');
+  });
+
+  it('renders dedicated pest control timing section with evidence and application status', () => {
+    fixture.componentInstance.blueprintTimingProposals = [pestControlBpTimingProposal()];
+    fixture.componentInstance.blueprintTimingEvidenceByKey = {
+      '1-pest_control': {
+        exceedanceCount: 2,
+        thresholdValue: 3,
+        totalRecordedCount: 2,
+        contributingRecords: [
+          { name: 'Preventive spray', actualDate: '2026-05-10' },
+          { name: 'Curative spray', actualDate: '2026-06-15' }
+        ]
+      }
+    };
+    markBpTimingProposalAppliedPending(7, { cropId: 1, category: 'pest_control' });
+    fixture.detectChanges();
+
+    const section = fixture.nativeElement.querySelector(
+      '[data-testid="pest-control-timing-section"]'
+    );
+    expect(section).toBeTruthy();
+    expect(section.textContent).toContain('Pest control timing proposals');
+    expect(section.textContent).toContain('Tomato');
+    expect(section.textContent).toContain('Pest control');
+    expect(section.textContent).toContain('field.schedules.pest_control');
+    expect(section.textContent).toContain('Applied — pending confirmation');
+    expect(section.querySelector('app-learn-proposal-evidence-panel')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="queue-category-safe"]')
+    ).toBeFalsy();
+  });
+
+  it('keeps general bp_timing in category sections when pest control section is shown', () => {
+    fixture.componentInstance.blueprintTimingProposals = [
+      pestControlBpTimingProposal(),
+      {
+        ...pestControlBpTimingProposal(),
+        category: 'general',
+        cropId: 2,
+        cropName: 'Pepper'
+      }
+    ];
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="pest-control-timing-section"]')
     ).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[data-testid="queue-category-safe"]')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Pepper');

@@ -56,6 +56,39 @@ describe('buildBlueprintTimingAdjustmentProposals', () => {
     ]);
   });
 
+  it('builds patch proposal for pest_control category blueprints', () => {
+    const proposals = buildBlueprintTimingAdjustmentProposals(
+      [
+        {
+          crop_id: 5,
+          crop_name: 'Tomato',
+          category: 'pest_control',
+          average_delta_days: 3,
+          average_gdd_delta: 6,
+          recorded_item_count: 2
+        }
+      ],
+      new Map([
+        [
+          5,
+          [
+            blueprint({ id: 20, task_type: 'preventive_spray', gdd_trigger: 90 }),
+            blueprint({ id: 21, task_type: 'curative_spray', gdd_trigger: 110 }),
+            blueprint({ id: 22, task_type: 'field_work', gdd_trigger: 50 })
+          ]
+        ]
+      ])
+    );
+
+    expect(proposals).toHaveLength(1);
+    expect(proposals[0].category).toBe('pest_control');
+    expect(proposals[0].affectedBlueprintCount).toBe(2);
+    expect(proposals[0].proposalBody.task_schedule_blueprints).toEqual([
+      { blueprint_id: 20, gdd_trigger: 96 },
+      { blueprint_id: 21, gdd_trigger: 116 }
+    ]);
+  });
+
   it('skips proposals when no matching blueprints exist', () => {
     const proposals = buildBlueprintTimingAdjustmentProposals(
       [

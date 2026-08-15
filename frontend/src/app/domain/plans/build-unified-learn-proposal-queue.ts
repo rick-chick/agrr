@@ -154,9 +154,14 @@ export function groupUnifiedLearnProposalQueueByCategory(
 }
 
 export const FERTILIZER_BP_TIMING_CATEGORY = 'fertilizer';
+export const PEST_CONTROL_BP_TIMING_CATEGORY = 'pest_control';
 
 export function isFertilizerBpTimingQueueItem(item: UnifiedLearnProposalQueueItem): boolean {
   return item.kind === 'bp_timing' && item.bpTimingCategory === FERTILIZER_BP_TIMING_CATEGORY;
+}
+
+export function isPestControlBpTimingQueueItem(item: UnifiedLearnProposalQueueItem): boolean {
+  return item.kind === 'bp_timing' && item.bpTimingCategory === PEST_CONTROL_BP_TIMING_CATEGORY;
 }
 
 export function partitionFertilizerBpTimingQueueItems(
@@ -179,6 +184,26 @@ export function partitionFertilizerBpTimingQueueItems(
   return { fertilizerTiming, other };
 }
 
+export function partitionPestControlBpTimingQueueItems(
+  items: ReadonlyArray<UnifiedLearnProposalQueueItem>
+): {
+  pestControlTiming: UnifiedLearnProposalQueueItem[];
+  other: UnifiedLearnProposalQueueItem[];
+} {
+  const pestControlTiming: UnifiedLearnProposalQueueItem[] = [];
+  const other: UnifiedLearnProposalQueueItem[] = [];
+
+  for (const item of items) {
+    if (isPestControlBpTimingQueueItem(item)) {
+      pestControlTiming.push(item);
+    } else {
+      other.push(item);
+    }
+  }
+
+  return { pestControlTiming, other };
+}
+
 function countByCategory(
   items: ReadonlyArray<UnifiedLearnProposalQueueItem>
 ): Record<LearnProposalQueueCategory, number> {
@@ -193,11 +218,19 @@ function countByCategory(
   return counts;
 }
 
+export function groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections(
+  queue: UnifiedLearnProposalQueue
+): Record<LearnProposalQueueCategory, UnifiedLearnProposalQueueItem[]> {
+  const { other: withoutFertilizer } = partitionFertilizerBpTimingQueueItems(queue.items);
+  const { other } = partitionPestControlBpTimingQueueItems(withoutFertilizer);
+  return groupUnifiedLearnProposalQueueByCategory({ items: other, counts: countByCategory(other) });
+}
+
+/** @deprecated Use groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections */
 export function groupUnifiedLearnProposalQueueExcludingFertilizerTiming(
   queue: UnifiedLearnProposalQueue
 ): Record<LearnProposalQueueCategory, UnifiedLearnProposalQueueItem[]> {
-  const { other } = partitionFertilizerBpTimingQueueItems(queue.items);
-  return groupUnifiedLearnProposalQueueByCategory({ items: other, counts: countByCategory(other) });
+  return groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections(queue);
 }
 
 export function buildFertilizerTimingQueueItems(
@@ -206,6 +239,41 @@ export function buildFertilizerTimingQueueItems(
 ): UnifiedLearnProposalQueueItem[] {
   return blueprintTimingProposals
     .filter((proposal) => proposal.category === FERTILIZER_BP_TIMING_CATEGORY)
+    .filter((proposal) => {
+      const status = resolveLearnProposalApplicationStatus(
+        planId,
+        bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+      );
+      return status !== 'dismissed';
+    })
+    .map((proposal) => {
+      const status = resolveLearnProposalApplicationStatus(
+        planId,
+        bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+      );
+      const category: LearnProposalQueueCategory = isSafeBlueprintTimingProposal(planId, proposal)
+        ? 'safe'
+        : status === 'not_started'
+          ? 'requires_confirmation'
+          : 'safe';
+      return {
+        id: `bp_timing:${proposal.cropId}:${proposal.category}`,
+        kind: 'bp_timing' as const,
+        category,
+        priority: 0,
+        title: proposal.cropName,
+        subtitle: proposal.category,
+        bpTimingCategory: proposal.category
+      };
+    });
+}
+
+export function buildPestControlTimingQueueItems(
+  planId: number,
+  blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>
+): UnifiedLearnProposalQueueItem[] {
+  return blueprintTimingProposals
+    .filter((proposal) => proposal.category === PEST_CONTROL_BP_TIMING_CATEGORY)
     .filter((proposal) => {
       const status = resolveLearnProposalApplicationStatus(
         planId,

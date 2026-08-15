@@ -3,11 +3,14 @@ import type { BlueprintTimingAdjustmentProposal } from './blueprint-timing-adjus
 import { BLUEPRINT_TIMING_PATCH_INTENT } from './blueprint-timing-adjustment-proposal';
 import {
   buildFertilizerTimingQueueItems,
+  buildPestControlTimingQueueItems,
   buildUnifiedLearnProposalQueue,
   groupUnifiedLearnProposalQueueByCategory,
-  groupUnifiedLearnProposalQueueExcludingFertilizerTiming,
+  groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections,
   isFertilizerBpTimingQueueItem,
-  partitionFertilizerBpTimingQueueItems
+  isPestControlBpTimingQueueItem,
+  partitionFertilizerBpTimingQueueItems,
+  partitionPestControlBpTimingQueueItems
 } from './build-unified-learn-proposal-queue';
 import {
   clearLearnProposalApplicationProgressCache,
@@ -186,7 +189,7 @@ describe('build-unified-learn-proposal-queue', () => {
       ],
       []
     );
-    const grouped = groupUnifiedLearnProposalQueueExcludingFertilizerTiming(queue);
+    const grouped = groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections(queue);
 
     expect(grouped.safe).toHaveLength(1);
     expect(grouped.safe[0].bpTimingCategory).toBe('general');
@@ -201,5 +204,72 @@ describe('build-unified-learn-proposal-queue', () => {
     expect(items).toHaveLength(1);
     expect(items[0].title).toBe('Tomato');
     expect(items[0].bpTimingCategory).toBe('fertilizer');
+  });
+
+  it('tags pest_control bp_timing items with bpTimingCategory for dedicated section', () => {
+    const queue = buildUnifiedLearnProposalQueue(
+      planId,
+      [],
+      [
+        bpTimingProposal({ category: 'pest_control', averageDeltaDays: 2 }),
+        bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
+      ],
+      []
+    );
+
+    const pestControlItem = queue.items.find((item) => item.id.includes('pest_control'));
+    const generalItem = queue.items.find((item) => item.id.includes('general'));
+
+    expect(pestControlItem?.bpTimingCategory).toBe('pest_control');
+    expect(isPestControlBpTimingQueueItem(pestControlItem!)).toBe(true);
+    expect(generalItem?.bpTimingCategory).toBe('general');
+    expect(isPestControlBpTimingQueueItem(generalItem!)).toBe(false);
+  });
+
+  it('partitions pest_control bp_timing items for dedicated queue section', () => {
+    const queue = buildUnifiedLearnProposalQueue(
+      planId,
+      [stageGddProposal({ averageGddDelta: 5 })],
+      [
+        bpTimingProposal({ category: 'pest_control', averageDeltaDays: 2 }),
+        bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
+      ],
+      []
+    );
+
+    const { pestControlTiming, other } = partitionPestControlBpTimingQueueItems(queue.items);
+
+    expect(pestControlTiming).toHaveLength(1);
+    expect(pestControlTiming[0].bpTimingCategory).toBe('pest_control');
+    expect(other).toHaveLength(2);
+    expect(other.map((item) => item.kind)).toEqual(['stage_gdd', 'bp_timing']);
+  });
+
+  it('excludes fertilizer and pest_control bp_timing from category grouping', () => {
+    const queue = buildUnifiedLearnProposalQueue(
+      planId,
+      [],
+      [
+        bpTimingProposal({ category: 'fertilizer', averageDeltaDays: 2 }),
+        bpTimingProposal({ category: 'pest_control', averageDeltaDays: 2 }),
+        bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
+      ],
+      []
+    );
+    const grouped = groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections(queue);
+
+    expect(grouped.safe).toHaveLength(1);
+    expect(grouped.safe[0].bpTimingCategory).toBe('general');
+  });
+
+  it('builds pest control timing queue items including applied proposals for status display', () => {
+    markBpTimingProposalAppliedPending(planId, { cropId: 1, category: 'pest_control' });
+    const items = buildPestControlTimingQueueItems(planId, [
+      bpTimingProposal({ category: 'pest_control', averageDeltaDays: 2 })
+    ]);
+
+    expect(items).toHaveLength(1);
+    expect(items[0].title).toBe('Tomato');
+    expect(items[0].bpTimingCategory).toBe('pest_control');
   });
 });
