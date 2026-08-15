@@ -349,6 +349,12 @@
       "url": "/work",
       "requiresAuth": true,
       "source": "work.routes.ts"
+    },
+    {
+      "pattern": "work/variance",
+      "url": "/work/variance",
+      "requiresAuth": true,
+      "source": "work.routes.ts"
     }
   ]
 }

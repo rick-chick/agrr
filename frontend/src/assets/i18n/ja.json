@@ -3098,6 +3098,51 @@
         "open_work": "作業へ",
         "open_learn": "振り返りへ"
       }
+    },
+    "variance": {
+      "title": "乖離ポートフォリオ",
+      "subtitle": "農場×計画×年度の乖離を横断比較します",
+      "error_subtitle": "乖離データを読み込めませんでした。再読み込みをお試しください。",
+      "retry": "再読み込み",
+      "no_plans": "表示できる計画がありません",
+      "no_plans_hint": "作付け計画を作成すると、ここで農場横断の乖離を確認できます。",
+      "create_plan_link": "計画を作成する",
+      "no_filter_results": "選択した条件に一致する計画がありません",
+      "portfolio_summary": {
+        "title": "フィルタ後サマリ",
+        "unrecorded": "未記録",
+        "action_required": "要対応",
+        "gdd_delay": "GDD遅延",
+        "threshold_exceeded": "閾値超過"
+      },
+      "filters": {
+        "title": "フィルタ",
+        "farm": "農場",
+        "status": "ステータス",
+        "year": "年度",
+        "all": "すべて"
+      },
+      "attention_list": {
+        "title": "要対応タスク（農場内複数計画）",
+        "item": "{{farm}} · {{task}}"
+      },
+      "table": {
+        "year": "年度",
+        "status": "ステータス",
+        "unrecorded": "未記録",
+        "gdd_delay": "GDD遅延",
+        "threshold_exceeded": "要対応",
+        "actions": "操作",
+        "work_link": "作業",
+        "learn_link": "学習",
+        "plan_link": "計画"
+      },
+      "status": {
+        "completed": "完了",
+        "pending": "保留",
+        "optimizing": "最適化中",
+        "failed": "失敗"
+      }
     }
   },
   "status": {

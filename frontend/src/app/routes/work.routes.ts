@@ -7,5 +7,11 @@ export const workRoutes: Routes = [
     loadComponent: () =>
       import('../components/work-hub/work-hub.component').then((m) => m.WorkHubComponent),
     canActivate: [authGuard]
+  },
+  {
+    path: 'work/variance',
+    loadComponent: () =>
+      import('../components/work-variance/work-variance.component').then((m) => m.WorkVarianceComponent),
+    canActivate: [authGuard]
   }
 ];

@@ -264,6 +264,51 @@
         "open_work": "Open work",
         "open_learn": "Open learn"
       }
+    },
+    "variance": {
+      "title": "Variance portfolio",
+      "subtitle": "Compare variance across farms, plans, and years",
+      "error_subtitle": "Could not load variance data. Try reloading.",
+      "retry": "Reload",
+      "no_plans": "No plans to display",
+      "no_plans_hint": "Create a cultivation plan to compare variance across farms here.",
+      "create_plan_link": "Create a plan",
+      "no_filter_results": "No plans match the selected filters",
+      "portfolio_summary": {
+        "title": "Filtered summary",
+        "unrecorded": "Unrecorded",
+        "action_required": "Action required",
+        "gdd_delay": "GDD delay",
+        "threshold_exceeded": "Threshold exceeded"
+      },
+      "filters": {
+        "title": "Filters",
+        "farm": "Farm",
+        "status": "Status",
+        "year": "Year",
+        "all": "All"
+      },
+      "attention_list": {
+        "title": "Action-required tasks (multiple plans per farm)",
+        "item": "{{farm}} · {{task}}"
+      },
+      "table": {
+        "year": "Year",
+        "status": "Status",
+        "unrecorded": "Unrecorded",
+        "gdd_delay": "GDD delay",
+        "threshold_exceeded": "Action required",
+        "actions": "Actions",
+        "work_link": "Work",
+        "learn_link": "Learn",
+        "plan_link": "Plan"
+      },
+      "status": {
+        "completed": "Completed",
+        "pending": "Pending",
+        "optimizing": "Optimizing",
+        "failed": "Failed"
+      }
     }
   },
   "status": {
