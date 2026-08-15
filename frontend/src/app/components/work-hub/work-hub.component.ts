@@ -68,7 +68,7 @@ const initialControl: WorkHubViewState = {
         </section>
       }
 
-      @if (!control.loading && control.attentionList?.items.length) {
+      @if (!control.loading && control.attentionList?.items?.length) {
         <section
           class="work-hub__attention-list"
           aria-labelledby="work-hub-attention-list-title"
