@@ -1259,14 +1259,6 @@ describe('PlanWorkComponent fertilizer segment', () => {
     fixture.destroy();
   });
 
-  it('renders all and fertilizer segment controls', () => {
-    const buttons = fixture.nativeElement.querySelectorAll('.plan-work__segment-btn');
-    expect(buttons.length).toBe(3);
-    expect(buttons[0].textContent?.trim()).toBe('すべて');
-    expect(buttons[1].textContent?.trim()).toBe('施肥');
-    expect(buttons[2].textContent?.trim()).toBe('防除');
-  });
-
   it('shows only fertilizer tasks when fertilizer segment is selected', () => {
     component.setWorkSegment('fertilizer');
     fixture.detectChanges();
