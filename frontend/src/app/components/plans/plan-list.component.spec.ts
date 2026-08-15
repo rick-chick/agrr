@@ -10,7 +10,7 @@ import { LOAD_PLAN_LIST_OUTPUT_PORT } from '../../usecase/plans/load-plan-list.o
 import { DELETE_PLAN_OUTPUT_PORT } from '../../usecase/plans/delete-plan.output-port';
 import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
 import { PlanListViewState } from './plan-list.view';
-import { PlanSummary } from '../../domain/plans/plan-summary';
+import { PlanListPlan } from '../../domain/plans/plan-list-plan';
 
 describe('PlanListComponent', () => {
   let component: PlanListComponent;
@@ -20,7 +20,7 @@ describe('PlanListComponent', () => {
   let presenter: { setView: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
-  const renderPlans = async (plans: PlanSummary[]) => {
+  const renderPlans = async (plans: PlanListPlan[]) => {
     const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
     try {
       component.control = {
@@ -73,14 +73,31 @@ describe('PlanListComponent', () => {
       plans: {
         index: {
           delete_confirm_message:
-            'Delete this cultivation plan? Field assignments and work record links will be removed. You can undo shortly after deleting.'
+            'Delete this cultivation plan? Field assignments and work record links will be removed. You can undo shortly after deleting.',
+          input_gap: {
+            unrecorded_summary: 'Unrecorded: {{count}}',
+            action_required_summary: 'Action required: {{count}}',
+            work_link: 'Record work',
+            learn_link: 'Review learning'
+          }
         }
       },
-      common: { cancel: 'Cancel', delete: 'Delete' }
+      common: { cancel: 'Cancel', delete: 'Delete', show: 'Show' }
     });
     translateService.use('en');
 
     Object.defineProperty(component, 'cdr', { value: cdr });
+  });
+
+  const planWithGap = (
+    overrides: Partial<PlanListPlan> = {}
+  ): PlanListPlan => ({
+    id: 1,
+    name: 'Plan A',
+    status: 'pending',
+    farm_id: 1,
+    inputGap: { unrecordedCount: 0, actionRequiredCount: 0 },
+    ...overrides
   });
 
   it('implements View control getter/setter', () => {
@@ -126,7 +143,7 @@ describe('PlanListComponent', () => {
   });
 
   it('deletePlan opens confirm dialog before calling deleteUseCase', async () => {
-    await renderPlans([{ id: 12, name: 'Plan A', status: 'pending', farm_id: 1 }]);
+    await renderPlans([planWithGap({ id: 12, name: 'Plan A' })]);
     component.deleteConfirmDialogRef = {
       nativeElement: { showModal: vi.fn(), close: vi.fn() }
     } as never;
@@ -170,7 +187,7 @@ describe('PlanListComponent', () => {
       component.control = {
         loading: false,
         error: null,
-        plans: [{ id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }],
+        plans: [planWithGap()],
         pendingUndoToast: null,
         pendingErrorFlash: null
       };
@@ -186,22 +203,18 @@ describe('PlanListComponent', () => {
   });
 
   it('shows create plan link in section-card header actions when plans exist', async () => {
-    const nativeElement = await renderPlans([
-      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
-    ]);
+    const nativeElement = await renderPlans([planWithGap()]);
     const link = nativeElement.querySelector('.section-card__header-actions .btn-primary');
     expect(link).toBeTruthy();
     expect(link.getAttribute('href')).toContain('/plans/new');
   });
 
   it('shows detail and delete actions on plan cards', async () => {
-    const nativeElement = await renderPlans([
-      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
-    ]);
-    const secondary = nativeElement.querySelector('.item-card__actions .btn-secondary');
+    const nativeElement = await renderPlans([planWithGap()]);
+    const showLink = nativeElement.querySelector('.item-card__actions a[href*="/plans/1"]:not([href*="/work"]):not([href*="/learn"])');
     const danger = nativeElement.querySelector('.item-card__actions .btn-danger');
-    expect(secondary).toBeTruthy();
-    expect(secondary.getAttribute('href')).toContain('/plans/1');
+    expect(showLink).toBeTruthy();
+    expect(showLink.getAttribute('href')).toContain('/plans/1');
     expect(danger).toBeTruthy();
   });
 
@@ -212,9 +225,9 @@ describe('PlanListComponent', () => {
   });
 
   it('displays plans in the list', async () => {
-    const plans: PlanSummary[] = [
-      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
-      { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
+    const plans: PlanListPlan[] = [
+      planWithGap({ id: 1, name: 'Plan A' }),
+      planWithGap({ id: 2, name: 'Plan B', status: 'completed', farm_id: 2 })
     ];
 
     const planTitles = (await renderPlans(plans)).querySelectorAll('.item-card__title');
@@ -224,11 +237,7 @@ describe('PlanListComponent', () => {
   });
 
   it('delete button opens delete confirm dialog', async () => {
-    const plans: PlanSummary[] = [
-      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
-    ];
-
-    const nativeElement = await renderPlans(plans);
+    const nativeElement = await renderPlans([planWithGap()]);
     component.deleteConfirmDialogRef = {
       nativeElement: { showModal: vi.fn(), close: vi.fn() }
     } as never;
@@ -242,9 +251,7 @@ describe('PlanListComponent', () => {
   });
 
   it('delete button uses outline danger style (not filled red background)', async () => {
-    const nativeElement = await renderPlans([
-      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
-    ]);
+    const nativeElement = await renderPlans([planWithGap()]);
     const deleteButton = nativeElement.querySelector(
       '.item-card__actions .btn-danger'
     ) as HTMLElement;
@@ -256,13 +263,29 @@ describe('PlanListComponent', () => {
     expect(styles.borderStyle).not.toBe('none');
   });
 
-  it('does not show a work log shortcut on plan cards', async () => {
+  it('shows input gap summary and work/learn links on plan cards', async () => {
     const nativeElement = await renderPlans([
-      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
+      planWithGap({
+        inputGap: { unrecordedCount: 3, actionRequiredCount: 2 }
+      })
     ]);
 
-    expect(nativeElement.querySelector('.plan-list__work-link')).toBeNull();
-    expect(nativeElement.querySelector('a[href*="/work"]')).toBeNull();
+    const gapSummary = nativeElement.querySelector('.plan-list__gap-summary');
+    expect(gapSummary?.textContent).toContain('Unrecorded: 3');
+    expect(gapSummary?.textContent).toContain('Action required: 2');
+
+    const workLink = nativeElement.querySelector('.plan-list__work-link');
+    const learnLink = nativeElement.querySelector('.plan-list__learn-link');
+    expect(workLink).toBeTruthy();
+    expect(workLink.getAttribute('href')).toContain('/plans/1/work');
+    expect(learnLink).toBeTruthy();
+    expect(learnLink.getAttribute('href')).toContain('/plans/1/learn');
+  });
+
+  it('hides input gap summary when inputGap is null', async () => {
+    const nativeElement = await renderPlans([planWithGap({ inputGap: null })]);
+
+    expect(nativeElement.querySelector('.plan-list__gap-summary')).toBeNull();
   });
 
   it('shows card-list skeleton while loading instead of text-only spinner', async () => {

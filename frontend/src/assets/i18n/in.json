@@ -2442,6 +2442,12 @@
         "delete": "हटाएं",
         "delete_confirm": "क्या आप वाकई इस योजना को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
         "created_at": "बनाया गया"
+      },
+      "input_gap": {
+        "unrecorded_summary": "अदर्ज नहीं: {{count}}",
+        "action_required_summary": "कार्रवाई आवश्यक: {{count}}",
+        "work_link": "कार्य अभिलेखित करें",
+        "learn_link": "सीख की समीक्षा करें"
       }
     },
     "new": {
