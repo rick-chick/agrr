@@ -22,6 +22,7 @@ export interface UnifiedLearnProposalQueueItem {
   priority: number;
   title: string;
   subtitle?: string;
+  bpTimingCategory?: string;
 }
 
 export interface UnifiedLearnProposalQueue {
@@ -109,7 +110,9 @@ export function buildUnifiedLearnProposalQueue(
         kind: 'bp_timing',
         category: 'safe',
         priority: CATEGORY_PRIORITY.safe * 1000 + magnitudePriority(proposal.averageDeltaDays),
-        title: `${proposal.cropName} — ${proposal.category}`
+        title: proposal.cropName,
+        subtitle: proposal.category,
+        bpTimingCategory: proposal.category
       });
     } else if (isRequiresConfirmationBpTiming(planId, proposal)) {
       items.push({
@@ -119,7 +122,9 @@ export function buildUnifiedLearnProposalQueue(
         priority:
           CATEGORY_PRIORITY.requires_confirmation * 1000 +
           magnitudePriority(proposal.averageDeltaDays),
-        title: `${proposal.cropName} — ${proposal.category}`
+        title: proposal.cropName,
+        subtitle: proposal.category,
+        bpTimingCategory: proposal.category
       });
     }
   }
@@ -146,4 +151,51 @@ export function groupUnifiedLearnProposalQueueByCategory(
     requires_confirmation: queue.items.filter((item) => item.category === 'requires_confirmation'),
     safe: queue.items.filter((item) => item.category === 'safe')
   };
+}
+
+export const FERTILIZER_BP_TIMING_CATEGORY = 'fertilizer';
+
+export function isFertilizerBpTimingQueueItem(item: UnifiedLearnProposalQueueItem): boolean {
+  return item.kind === 'bp_timing' && item.bpTimingCategory === FERTILIZER_BP_TIMING_CATEGORY;
+}
+
+export function partitionFertilizerBpTimingQueueItems(
+  items: ReadonlyArray<UnifiedLearnProposalQueueItem>
+): {
+  fertilizerTiming: UnifiedLearnProposalQueueItem[];
+  other: UnifiedLearnProposalQueueItem[];
+} {
+  const fertilizerTiming: UnifiedLearnProposalQueueItem[] = [];
+  const other: UnifiedLearnProposalQueueItem[] = [];
+
+  for (const item of items) {
+    if (isFertilizerBpTimingQueueItem(item)) {
+      fertilizerTiming.push(item);
+    } else {
+      other.push(item);
+    }
+  }
+
+  return { fertilizerTiming, other };
+}
+
+function countByCategory(
+  items: ReadonlyArray<UnifiedLearnProposalQueueItem>
+): Record<LearnProposalQueueCategory, number> {
+  const counts: Record<LearnProposalQueueCategory, number> = {
+    requires_action: 0,
+    requires_confirmation: 0,
+    safe: 0
+  };
+  for (const item of items) {
+    counts[item.category] += 1;
+  }
+  return counts;
+}
+
+export function groupUnifiedLearnProposalQueueExcludingFertilizerTiming(
+  queue: UnifiedLearnProposalQueue
+): Record<LearnProposalQueueCategory, UnifiedLearnProposalQueueItem[]> {
+  const { other } = partitionFertilizerBpTimingQueueItems(queue.items);
+  return groupUnifiedLearnProposalQueueByCategory({ items: other, counts: countByCategory(other) });
 }

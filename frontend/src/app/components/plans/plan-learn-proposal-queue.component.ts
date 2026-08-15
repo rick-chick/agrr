@@ -5,11 +5,18 @@ import { TranslateModule } from '@ngx-translate/core';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import {
   buildUnifiedLearnProposalQueue,
-  groupUnifiedLearnProposalQueueByCategory,
+  groupUnifiedLearnProposalQueueExcludingFertilizerTiming,
   type LearnProposalQueueCategory,
   type UnifiedLearnProposalQueueItem
 } from '../../domain/plans/build-unified-learn-proposal-queue';
+import { isSafeBlueprintTimingProposal } from '../../domain/plans/classify-safe-learn-proposals';
 import type { LearnPostMasterPayload } from '../../domain/plans/learn-proposal-application-progress';
+import {
+  bpTimingProposalProgressKey,
+  resolveLearnProposalApplicationStatus,
+  type LearnProposalApplicationStatus
+} from '../../domain/plans/learn-proposal-application-progress';
+import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
 import {
   buildLearnReorganizePipelineStartNavigation,
   storeLearnReorganizePipelineAutoChain
@@ -23,6 +30,7 @@ import {
   PlanLearnApplicationProgressViewComponent
 } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
+import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-panel.component';
 
 @Component({
   selector: 'app-plan-learn-proposal-queue',
@@ -31,7 +39,8 @@ import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-mast
     CommonModule,
     TranslateModule,
     PlanLearnPostMasterConfirmationComponent,
-    PlanLearnApplicationProgressViewComponent
+    PlanLearnApplicationProgressViewComponent,
+    LearnProposalEvidencePanelComponent
   ],
   providers: [BulkApplySafeLearnProposalsUseCase, ...LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS],
   template: `
@@ -68,6 +77,56 @@ import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-mast
             <button type="button" class="btn btn-primary" (click)="startReorganizePipeline()">
               {{ 'plans.learn.bulk_apply.start_pipeline' | translate }}
             </button>
+          </div>
+        }
+
+        @if (fertilizerTimingItems.length) {
+          <div
+            class="learn-proposal-queue__fertilizer-timing"
+            data-testid="fertilizer-timing-section"
+          >
+            <h4 class="learn-proposal-queue__fertilizer-timing-title">
+              {{ 'plans.learn.proposal_queue.fertilizer_timing.title' | translate }}
+            </h4>
+            <p class="learn-proposal-queue__fertilizer-timing-lead">
+              {{ 'plans.learn.proposal_queue.fertilizer_timing.lead' | translate }}
+            </p>
+            <p class="learn-proposal-queue__fertilizer-timing-source">
+              {{ 'plans.learn.proposal_queue.fertilizer_timing.evidence.source' | translate }}
+            </p>
+            <ul class="learn-proposal-queue__list" role="list">
+              @for (item of fertilizerTimingItems; track item.id) {
+                <li class="learn-proposal-queue__item learn-proposal-queue__item--fertilizer">
+                  <div class="learn-proposal-queue__item-header">
+                    <span class="learn-proposal-queue__item-title">{{ item.title }}</span>
+                    <span class="learn-proposal-queue__item-category-badge">
+                      {{ bpTimingCategoryLabel(item) | translate }}
+                    </span>
+                    <span
+                      class="learn-proposal-queue__item-status"
+                      [class.learn-proposal-queue__item-status--pending]="
+                        fertilizerItemStatus(item) === 'applied_pending_confirmation'
+                      "
+                      [class.learn-proposal-queue__item-status--confirmed]="
+                        fertilizerItemStatus(item) === 'confirmed'
+                      "
+                      [class.learn-proposal-queue__item-status--done]="
+                        fertilizerItemStatus(item) === 'done'
+                      "
+                    >
+                      {{ statusLabel(fertilizerItemStatus(item)) | translate }}
+                    </span>
+                  </div>
+                  <app-learn-proposal-evidence-panel
+                    [evidence]="fertilizerEvidenceFor(item)"
+                    toggleLabelKey="plans.learn.proposal_queue.fertilizer_timing.evidence.toggle"
+                    rationaleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.rationale"
+                    recordsTitleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.records_title"
+                    recordLabelKey="plans.learn.proposal_queue.fertilizer_timing.evidence.record"
+                  />
+                </li>
+              }
+            </ul>
           </div>
         }
 
@@ -153,6 +212,7 @@ export class PlanLearnProposalQueueComponent {
   @Input({ required: true }) planId!: number;
   @Input() stageGddProposals: StageGddCalibrationProposal[] = [];
   @Input() blueprintTimingProposals: BlueprintTimingAdjustmentProposal[] = [];
+  @Input() blueprintTimingEvidenceByKey: Record<string, LearnProposalEvidence> = {};
   @Input() actionRequiredItems: PlanVarianceActionItem[] = [];
   @Input() postMasterPayload: LearnPostMasterPayload | null = null;
   @Input() progressRefreshVersion = 0;
@@ -175,7 +235,39 @@ export class PlanLearnProposalQueueComponent {
   }
 
   get groupedItems(): Record<LearnProposalQueueCategory, UnifiedLearnProposalQueueItem[]> {
-    return groupUnifiedLearnProposalQueueByCategory(this.queue);
+    return groupUnifiedLearnProposalQueueExcludingFertilizerTiming(this.queue);
+  }
+
+  get fertilizerTimingItems(): UnifiedLearnProposalQueueItem[] {
+    return this.blueprintTimingProposals
+      .filter((proposal) => proposal.category === 'fertilizer')
+      .filter((proposal) => {
+        const status = resolveLearnProposalApplicationStatus(
+          this.planId,
+          bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+        );
+        return status !== 'dismissed';
+      })
+      .map((proposal) => {
+        const safe = isSafeBlueprintTimingProposal(this.planId, proposal);
+        const category: LearnProposalQueueCategory = safe
+          ? 'safe'
+          : resolveLearnProposalApplicationStatus(
+                this.planId,
+                bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+              ) === 'not_started'
+            ? 'requires_confirmation'
+            : 'safe';
+        return {
+          id: `bp_timing:${proposal.cropId}:${proposal.category}`,
+          kind: 'bp_timing' as const,
+          category,
+          priority: 0,
+          title: proposal.cropName,
+          subtitle: proposal.category,
+          bpTimingCategory: proposal.category
+        };
+      });
   }
 
   get safeCount(): number {
@@ -185,6 +277,7 @@ export class PlanLearnProposalQueueComponent {
   get hasQueueContent(): boolean {
     return (
       this.queue.items.length > 0 ||
+      this.fertilizerTimingItems.length > 0 ||
       this.postMasterPayload != null ||
       this.applicationProgressCount > 0 ||
       this.bulkApplyComplete
@@ -202,6 +295,38 @@ export class PlanLearnProposalQueueComponent {
 
   categoryLabel(category: LearnProposalQueueCategory): string {
     return `plans.learn.proposal_queue.category.${category}`;
+  }
+
+  bpTimingCategoryLabel(item: UnifiedLearnProposalQueueItem): string {
+    return `plans.learn.bp_timing_adjustment.category.${item.bpTimingCategory ?? 'general'}`;
+  }
+
+  fertilizerEvidenceFor(item: UnifiedLearnProposalQueueItem): LearnProposalEvidence | null {
+    const proposal = this.blueprintTimingProposals.find(
+      (candidate) => `bp_timing:${candidate.cropId}:${candidate.category}` === item.id
+    );
+    if (!proposal) {
+      return null;
+    }
+    return this.blueprintTimingEvidenceByKey[`${proposal.cropId}-${proposal.category}`] ?? null;
+  }
+
+  fertilizerItemStatus(item: UnifiedLearnProposalQueueItem): LearnProposalApplicationStatus {
+    void this.progressRefreshVersion;
+    const proposal = this.blueprintTimingProposals.find(
+      (candidate) => `bp_timing:${candidate.cropId}:${candidate.category}` === item.id
+    );
+    if (!proposal) {
+      return 'not_started';
+    }
+    return resolveLearnProposalApplicationStatus(
+      this.planId,
+      bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+    );
+  }
+
+  statusLabel(status: LearnProposalApplicationStatus): string {
+    return `plans.learn.application_progress.status.${status}`;
   }
 
   applyAllSafe(): void {

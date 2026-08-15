@@ -2822,6 +2822,17 @@
         },
         "post_apply": {
           "title": "安全な提案を適用しました"
+        },
+        "fertilizer_timing": {
+          "title": "施肥タイミング提案",
+          "lead": "施肥予定（基肥・追肥）の計画と実績のずれに基づく BP タイミング調整です。適用前に根拠を確認してください。",
+          "evidence": {
+            "source": "根拠ソース: field.schedules.fertilizer",
+            "toggle": "根拠を表示",
+            "rationale": "記録済み施肥作業 {{total}} 件のうち {{count}} 件が日数しきい値 {{threshold}} 日を超えています。",
+            "records_title": "寄与した施肥記録（最大5件）",
+            "record": "{{name}} — {{date}}"
+          }
         }
       }
     },

@@ -1701,6 +1701,17 @@
         },
         "post_apply": {
           "title": "Safe proposals applied"
+        },
+        "fertilizer_timing": {
+          "title": "Fertilization timing proposals",
+          "lead": "Blueprint timing adjustments from fertilizer schedule variance (basal / topdress). Review evidence before applying.",
+          "evidence": {
+            "source": "Evidence source: field.schedules.fertilizer",
+            "toggle": "Show rationale",
+            "rationale": "{{count}} of {{total}} recorded fertilizer tasks exceeded the day threshold of {{threshold}} days.",
+            "records_title": "Contributing fertilizer records (up to 5)",
+            "record": "{{name}} — {{date}}"
+          }
         }
       }
     },
