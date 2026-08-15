@@ -63,6 +63,7 @@ describe('buildPlanWorkVarianceSummaryStats', () => {
     expect(stats.unrecordedCount).toBe(3);
     expect(stats.thresholdExceededCount).toBe(3);
     expect(stats.gddDelayCount).toBe(2);
+    expect(stats.daysExceedanceCount).toBe(2);
   });
 
   it('returns zero counts when action_required_items is missing', () => {
@@ -73,5 +74,6 @@ describe('buildPlanWorkVarianceSummaryStats', () => {
     expect(stats.unrecordedCount).toBe(0);
     expect(stats.thresholdExceededCount).toBe(0);
     expect(stats.gddDelayCount).toBe(0);
+    expect(stats.daysExceedanceCount).toBe(0);
   });
 });

@@ -6,6 +6,7 @@ import { PlanGateway } from '../plans/plan-gateway';
 export interface HubFarmVarianceStats {
   unrecordedCount: number;
   gddDelayCount: number;
+  daysExceedanceCount: number;
   thresholdExceededCount: number;
 }
 
@@ -29,6 +30,7 @@ export function loadHubFarmVarianceStats(
           farmId: farm.farmId,
           unrecordedCount: 0,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0
         });
       }
@@ -39,6 +41,7 @@ export function loadHubFarmVarianceStats(
             farmId: farm.farmId,
             unrecordedCount: stats.unrecordedCount,
             gddDelayCount: stats.gddDelayCount,
+            daysExceedanceCount: stats.daysExceedanceCount,
             thresholdExceededCount: stats.thresholdExceededCount
           };
         })
@@ -53,6 +56,7 @@ export function loadHubFarmVarianceStats(
             {
               unrecordedCount: summary.unrecordedCount,
               gddDelayCount: summary.gddDelayCount,
+              daysExceedanceCount: summary.daysExceedanceCount,
               thresholdExceededCount: summary.thresholdExceededCount
             }
           ])

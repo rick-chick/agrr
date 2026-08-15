@@ -17,6 +17,7 @@ function baseControl(
     submitting: false,
     error: null,
     farms: [],
+    portfolioSummary: null,
     pendingSuccessFlash: null,
     pendingNavigation: null,
     ...overrides
@@ -86,6 +87,11 @@ describe('WorkHubComponent', () => {
       'work.hub.threshold_exceeded_summary': '要対応 {{count}} 件',
       'work.hub.context_attention_badge': '注意',
       'work.hub.context_attention_badge_aria': '計画芯で要対応 {{count}} 件',
+      'work.hub.portfolio_summary.title': '全農場サマリ',
+      'work.hub.portfolio_summary.unrecorded': '未記録',
+      'work.hub.portfolio_summary.action_required': '要対応',
+      'work.hub.portfolio_summary.gdd_delay': 'GDD遅延',
+      'work.hub.portfolio_summary.threshold_exceeded': '閾値超過',
       'common.api_error.generic': 'エラーが発生しました'
     });
   });
@@ -110,6 +116,7 @@ describe('WorkHubComponent', () => {
           overdueCount: 2,
           todayCount: 1,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0,
           unrecordedCount: 0
         }
@@ -144,6 +151,7 @@ describe('WorkHubComponent', () => {
           overdueCount: 2,
           todayCount: 1,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0,
           unrecordedCount: 0
         },
@@ -157,6 +165,7 @@ describe('WorkHubComponent', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0,
           unrecordedCount: 0
         }
@@ -180,6 +189,7 @@ describe('WorkHubComponent', () => {
       todayCount: 0,
       unrecordedCount: 0,
       gddDelayCount: 0,
+      daysExceedanceCount: 0,
       thresholdExceededCount: 0
     });
     expect(component.control.submitting).toBe(true);
@@ -200,6 +210,7 @@ describe('WorkHubComponent', () => {
           overdueCount: 2,
           todayCount: 1,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0,
           unrecordedCount: 0
         }
@@ -224,6 +235,7 @@ describe('WorkHubComponent', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0,
           unrecordedCount: 0
         }
@@ -250,6 +262,7 @@ describe('WorkHubComponent', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0,
           unrecordedCount: 0
         }
@@ -290,6 +303,7 @@ describe('WorkHubComponent', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0,
           unrecordedCount: 0
         }
@@ -316,6 +330,7 @@ describe('WorkHubComponent', () => {
           overdueCount: 2,
           todayCount: 1,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0,
           unrecordedCount: 0
         },
@@ -329,6 +344,7 @@ describe('WorkHubComponent', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0,
           unrecordedCount: 0
         }
@@ -358,6 +374,7 @@ describe('WorkHubComponent', () => {
           todayCount: 0,
           unrecordedCount: 0,
           gddDelayCount: 2,
+          daysExceedanceCount: 1,
           thresholdExceededCount: 3
         }
       ]
@@ -383,6 +400,7 @@ describe('WorkHubComponent', () => {
           todayCount: 0,
           unrecordedCount: 5,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0
         }
       ]
@@ -407,6 +425,7 @@ describe('WorkHubComponent', () => {
           todayCount: 0,
           unrecordedCount: 0,
           gddDelayCount: 1,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 2
         },
         {
@@ -420,6 +439,7 @@ describe('WorkHubComponent', () => {
           todayCount: 0,
           unrecordedCount: 0,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0
         }
       ]
@@ -430,6 +450,95 @@ describe('WorkHubComponent', () => {
     expect(badges).toHaveLength(1);
     expect(badges[0]?.textContent).toContain('注意');
     expect(badges[0]?.getAttribute('aria-label')).toContain('計画芯で要対応 2 件');
+  });
+
+  it('shows portfolio summary band with aggregated counts across farms', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      portfolioSummary: {
+        unrecordedCount: 5,
+        actionRequiredCount: 7,
+        gddDelayCount: 3,
+        daysThresholdExceededCount: 4
+      },
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 2,
+          todayCount: 1,
+          unrecordedCount: 3,
+          gddDelayCount: 2,
+          daysExceedanceCount: 2,
+          thresholdExceededCount: 4
+        },
+        {
+          farmId: 2,
+          farmName: 'Farm B',
+          fieldCount: 1,
+          totalArea: 50,
+          hasValidFields: true,
+          planId: 10,
+          overdueCount: 0,
+          todayCount: 0,
+          unrecordedCount: 2,
+          gddDelayCount: 1,
+          daysExceedanceCount: 2,
+          thresholdExceededCount: 3
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const band = fixture.nativeElement.querySelector('.work-hub__portfolio-summary');
+    expect(band).not.toBeNull();
+    expect(band?.textContent).toContain('全農場サマリ');
+    expect(band?.textContent).toContain('未記録');
+    expect(band?.textContent).toContain('5');
+    expect(band?.textContent).toContain('要対応');
+    expect(band?.textContent).toContain('7');
+    expect(band?.textContent).toContain('GDD遅延');
+    expect(band?.textContent).toContain('3');
+    expect(band?.textContent).toContain('閾値超過');
+    expect(band?.textContent).toContain('4');
+  });
+
+  it('shows portfolio summary band for single-farm auto-redirect while submitting', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      submitting: true,
+      portfolioSummary: {
+        unrecordedCount: 2,
+        actionRequiredCount: 1,
+        gddDelayCount: 1,
+        daysThresholdExceededCount: 1
+      },
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm Solo',
+          fieldCount: 1,
+          totalArea: 50,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          unrecordedCount: 2,
+          gddDelayCount: 1,
+          daysExceedanceCount: 1,
+          thresholdExceededCount: 1
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.work-hub__portfolio-summary')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('2');
+    expect(fixture.nativeElement.textContent).toContain('全農場サマリ');
   });
 
   it('reloads hub data when retry is clicked', () => {

@@ -37,7 +37,8 @@ describe('PlanWorkVarianceSummaryComponent', () => {
     fixture.componentInstance.stats = {
       unrecordedCount: 2,
       thresholdExceededCount: 3,
-      gddDelayCount: 1
+      gddDelayCount: 1,
+      daysExceedanceCount: 0
     };
     fixture.detectChanges();
 

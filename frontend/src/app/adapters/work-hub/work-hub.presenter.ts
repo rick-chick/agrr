@@ -24,6 +24,7 @@ export class WorkHubPresenter
       loading: false,
       error: null,
       farms: dto.farms,
+      portfolioSummary: dto.portfolioSummary,
       submitting: false,
       pendingSuccessFlash: null
     };

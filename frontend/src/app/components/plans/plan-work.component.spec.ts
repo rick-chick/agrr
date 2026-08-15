@@ -797,7 +797,8 @@ describe('PlanWorkComponent mobile UX', () => {
       varianceSummaryStats: {
         unrecordedCount: 2,
         thresholdExceededCount: 1,
-        gddDelayCount: 1
+        gddDelayCount: 1,
+        daysExceedanceCount: 0
       }
     };
     fixture.detectChanges();

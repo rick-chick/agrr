@@ -87,6 +87,7 @@ describe('LoadNavOverdueBadgeUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           },
           {
@@ -100,6 +101,7 @@ describe('LoadNavOverdueBadgeUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           }
         ])

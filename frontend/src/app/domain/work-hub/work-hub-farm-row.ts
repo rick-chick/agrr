@@ -9,5 +9,6 @@ export interface WorkHubFarmRow {
   todayCount: number;
   unrecordedCount: number;
   gddDelayCount: number;
+  daysExceedanceCount: number;
   thresholdExceededCount: number;
 }

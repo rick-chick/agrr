@@ -9,6 +9,7 @@ function baseControl(overrides: Partial<WorkHubViewState> = {}): WorkHubViewStat
     submitting: false,
     error: null,
     farms: [],
+    portfolioSummary: null,
     pendingSuccessFlash: null,
     pendingNavigation: null,
     ...overrides
@@ -50,14 +51,27 @@ describe('WorkHubPresenter', () => {
           todayCount: 0,
           unrecordedCount: 0,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0
         }
-      ]
+      ],
+      portfolioSummary: {
+        unrecordedCount: 0,
+        actionRequiredCount: 0,
+        gddDelayCount: 0,
+        daysThresholdExceededCount: 0
+      }
     });
 
     expect(lastControl).toEqual(
       baseControl({
         loading: false,
+        portfolioSummary: {
+          unrecordedCount: 0,
+          actionRequiredCount: 0,
+          gddDelayCount: 0,
+          daysThresholdExceededCount: 0
+        },
         farms: [
           {
             farmId: 1,
@@ -70,6 +84,7 @@ describe('WorkHubPresenter', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           }
         ]
