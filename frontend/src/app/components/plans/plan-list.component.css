@@ -42,6 +42,47 @@
   color: var(--color-text-muted);
 }
 
+.plan-list__farm-group + .plan-list__farm-group {
+  margin-top: var(--space-5);
+}
+
+.plan-list__farm-group-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.plan-list__farm-group-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.plan-list__farm-group-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.plan-list__plan-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.plan-list__plan-status {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-alt);
+}
+
 @media (max-width: 20rem) {
   .list-loading-skeleton {
     display: none;

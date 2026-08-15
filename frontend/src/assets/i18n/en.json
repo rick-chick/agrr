@@ -2020,6 +2020,11 @@
         "action_required_summary": "Action required: {{count}}",
         "work_link": "Record work",
         "learn_link": "Review learning"
+      },
+      "farm_group": {
+        "expand": "Expand",
+        "collapse": "Collapse",
+        "compare_variance": "Compare variance"
       }
     },
     "new": {

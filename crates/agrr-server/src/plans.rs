@@ -57,6 +57,7 @@ struct PlanListItem {
     name: String,
     status: String,
     farm_id: i64,
+    farm_name: String,
     plan_year: Option<i32>,
 }
 
@@ -80,6 +81,7 @@ impl PrivateOwnedPlansListOutputPort for ListPresenter {
                 name: row.display_name,
                 status: row.status,
                 farm_id: row.farm_id,
+                farm_name: row.farm_display_name,
                 plan_year: row.plan_year,
             })
             .collect();
