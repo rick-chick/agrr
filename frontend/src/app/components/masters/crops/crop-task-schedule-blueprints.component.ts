@@ -124,13 +124,25 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
             <div class="blueprint-readiness" role="status">
               <p class="blueprint-readiness__title">{{ 'crops.show.blueprint_readiness.title' | translate }}</p>
               <ul class="blueprint-readiness__list">
-                <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.blueprintsReady">
-                  @if (control.blueprintReadiness.blueprintsReady) {
+                <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.fieldWorkBlueprintsReady">
+                  @if (control.blueprintReadiness.hasFieldWorkBlueprint) {
                     <span>{{ 'crops.show.blueprint_readiness.blueprints_ready' | translate }}</span>
+                  } @else if (control.blueprintReadiness.hasFertilizerBlueprint) {
+                    <span>{{ 'crops.show.blueprint_readiness.field_work_not_required' | translate }}</span>
                   } @else {
                     <span>{{ 'crops.show.blueprint_readiness.blueprints_missing' | translate }}</span>
                     <a href="#page-title" class="blueprint-readiness__link">
                       {{ 'crops.show.blueprint_readiness.blueprints_action' | translate }}
+                    </a>
+                  }
+                </li>
+                <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.fertilizerBlueprintsReady">
+                  @if (control.blueprintReadiness.fertilizerBlueprintsReady) {
+                    <span>{{ 'crops.show.blueprint_readiness.fertilizer_ready' | translate }}</span>
+                  } @else {
+                    <span>{{ 'crops.show.blueprint_readiness.fertilizer_missing' | translate }}</span>
+                    <a href="#page-title" class="blueprint-readiness__link">
+                      {{ 'crops.show.blueprint_readiness.fertilizer_action' | translate }}
                     </a>
                   }
                 </li>

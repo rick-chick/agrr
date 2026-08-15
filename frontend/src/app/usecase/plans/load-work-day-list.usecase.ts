@@ -5,6 +5,7 @@ import {
   groupWorkDayListRows,
   flattenFieldScheduleItems
 } from '../../domain/work-schedule/work-day-list-summary';
+import { attachLatestWorkRecordAmounts } from '../../domain/work-schedule/work-row-fertilizer';
 import { snapshotClimateForDate } from '../../domain/work-schedule/work-record-climate-snapshot';
 import { WorkRecord } from '../../models/plans/work-record';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
@@ -147,9 +148,12 @@ export class LoadWorkDayListUseCase implements LoadWorkDayListInputPort {
       )
       .subscribe({
         next: ({ schedule, records, cumulativeByField }) => {
-          const rows = attachCumulativeGddToRows(
-            schedule.fields.flatMap(flattenFieldScheduleItems),
-            cumulativeByField
+          const rows = attachLatestWorkRecordAmounts(
+            attachCumulativeGddToRows(
+              schedule.fields.flatMap(flattenFieldScheduleItems),
+              cumulativeByField
+            ),
+            records.work_records
           );
         const grouped = groupWorkDayListRows(rows, dto.today, dto.includeSkipped ?? false);
         const recentAdHocRecord =
