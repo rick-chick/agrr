@@ -2846,6 +2846,15 @@
       "recorded_today": "実績登録済",
       "skipped_badge": "スキップ",
       "show_skipped": "スキップ済みを表示",
+      "segment": {
+        "label": "作業一覧の表示",
+        "all": "すべて",
+        "fertilizer": "施肥"
+      },
+      "fertilizer_badge": {
+        "basal": "基肥",
+        "topdress": "追肥"
+      },
       "skip": "スキップ",
       "unskip": "スキップを解除",
       "change_date": "日付変更",

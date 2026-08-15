@@ -2208,6 +2208,15 @@
       "recorded_today": "आज दर्ज किया गया",
       "skipped_badge": "छोड़ा गया",
       "show_skipped": "छोड़े गए दिखाएं",
+      "segment": {
+        "label": "कार्य सूची दृश्य",
+        "all": "सभी",
+        "fertilizer": "उर्वरक"
+      },
+      "fertilizer_badge": {
+        "basal": "बेसल",
+        "topdress": "टॉप-ड्रेस"
+      },
       "skip": "छोड़ें",
       "unskip": "छोड़ना रद्द करें",
       "change_date": "तिथि बदलें",

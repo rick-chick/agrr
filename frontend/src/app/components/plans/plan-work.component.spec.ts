@@ -29,6 +29,7 @@ const initialControl: PlanWorkViewState = {
   today: [],
   upcoming: [],
   includeSkipped: false,
+  workSegment: 'all',
   recentAdHocRecord: null,
   nextScheduled: null,
   highlightedItemId: null,
@@ -142,6 +143,7 @@ const loadedState: PlanWorkViewState = {
   today: [mockRow({ item_id: 11, name: '今日の作業' })],
   upcoming: [],
   includeSkipped: false,
+  workSegment: 'all',
   recentAdHocRecord: null,
   nextScheduled: null,
   highlightedItemId: null,
@@ -1175,5 +1177,116 @@ describe('PlanWorkComponent in locale labels', () => {
     const emptyMessage = fixture.nativeElement.querySelector('.plan-work__empty-message');
     expect(emptyMessage?.textContent?.trim()).toBe('आज के लिए कोई कार्य निर्धारित नहीं');
     expect(emptyMessage?.textContent?.trim()).not.toBe('今日の予定はありません');
+  });
+});
+
+describe('PlanWorkComponent fertilizer segment', () => {
+  let fixture: ComponentFixture<PlanWorkComponent>;
+  let component: PlanWorkComponent;
+
+  const generalRow = mockRow({ item_id: 1, name: '除草', category: 'general', task_type: 'field_work' });
+  const basalRow = mockRow({
+    item_id: 2,
+    name: '基肥',
+    category: 'fertilizer',
+    task_type: 'basal_fertilization',
+    amount: '20',
+    amount_unit: 'kg'
+  });
+  const topdressRow = mockRow(
+    {
+      item_id: 3,
+      name: '追肥',
+      category: 'fertilizer',
+      task_type: 'topdress_fertilization',
+      amount: '10',
+      amount_unit: 'kg'
+    },
+    {
+      latestRecordAmount: '12',
+      latestRecordAmountUnit: 'kg'
+    }
+  );
+
+  beforeEach(async () => {
+    const loadUseCase = { execute: vi.fn() };
+    const mockPresenter = {
+      setView: vi.fn(),
+      beginScheduleLoad: vi.fn(() => 1),
+      beginPageVarianceLoad: vi.fn(() => 2),
+      queueSaveImpactAfterSave: vi.fn(() => 1),
+      dismissSaveImpact: vi.fn()
+    };
+
+    TestBed.overrideComponent(PlanWorkComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
+          { provide: SkipTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: CreateWorkRecordUseCase, useValue: { execute: vi.fn() } },
+          { provide: RegenerateTaskScheduleUseCase, useValue: { execute: vi.fn() } },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: { execute: vi.fn() } },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: { execute: vi.fn() } },
+          { provide: PlanWorkPresenter, useValue: mockPresenter },
+          { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanWorkComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([]), { provide: ActivatedRoute, useValue: createPlanRouteMock('7') }]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlanWorkComponent);
+    component = fixture.componentInstance;
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', ja as TranslationObject, true);
+    translate.use('ja');
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      overdue: [],
+      today: [generalRow, basalRow, topdressRow],
+      upcoming: []
+    };
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+  });
+
+  it('renders all and fertilizer segment controls', () => {
+    const buttons = fixture.nativeElement.querySelectorAll('.plan-work__segment-btn');
+    expect(buttons.length).toBe(2);
+    expect(buttons[0].textContent?.trim()).toBe('すべて');
+    expect(buttons[1].textContent?.trim()).toBe('施肥');
+  });
+
+  it('shows only fertilizer tasks when fertilizer segment is selected', () => {
+    component.setWorkSegment('fertilizer');
+    fixture.detectChanges();
+
+    const names = [...fixture.nativeElement.querySelectorAll('.plan-work__name')].map((el: Element) =>
+      el.textContent?.trim()
+    );
+    expect(names).toEqual(['基肥', '追肥']);
+  });
+
+  it('shows basal/topdress badges and amount diff on fertilizer rows', () => {
+    component.setWorkSegment('fertilizer');
+    fixture.detectChanges();
+
+    const badges = [...fixture.nativeElement.querySelectorAll('.plan-work__fertilizer-badge')].map(
+      (el: Element) => el.textContent?.trim()
+    );
+    expect(badges).toEqual(['基肥', '追肥']);
+
+    const diff = fixture.nativeElement.querySelector('.plan-work__amount-diff');
+    expect(diff?.textContent?.trim()).toBe('+2 kg');
+    expect(diff?.classList.contains('plan-work__amount-diff--over')).toBe(true);
   });
 });

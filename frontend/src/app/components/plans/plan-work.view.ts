@@ -5,6 +5,7 @@ import type { PlanSaveImpactViewFields } from '../../adapters/plans/plan-save-im
 import type { PlanWorkVarianceSummaryStats } from '../../domain/plans/build-plan-work-variance-summary-stats';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
+import type { WorkListSegment } from '../../domain/work-schedule/work-row-fertilizer';
 
 export interface PlanWorkViewState extends PlanSaveImpactViewFields {
   loading: boolean;
@@ -15,6 +16,7 @@ export interface PlanWorkViewState extends PlanSaveImpactViewFields {
   today: WorkDayListRowDto[];
   upcoming: WorkDayListRowDto[];
   includeSkipped: boolean;
+  workSegment: WorkListSegment;
   recentAdHocRecord: { name: string; actualDate: string } | null;
   nextScheduled: WorkDayListRowDto | null;
   highlightedItemId: number | null;
