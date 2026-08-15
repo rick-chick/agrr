@@ -479,6 +479,10 @@
         "blueprints_ready": "कम से कम एक कार्य योजना पंजीकृत है",
         "blueprints_missing": "अभी तक कोई कार्य योजना पंजीकृत नहीं",
         "blueprints_action": "कार्य योजना पंजीकृत करें",
+        "field_work_not_required": "केवल उर्वरक फसलों के लिए खेत कार्य योजना आवश्यक नहीं",
+        "fertilizer_ready": "आधार या पोषक उर्वरक कार्य योजना पंजीकृत है",
+        "fertilizer_missing": "आधार या पोषक उर्वरक कार्य योजना अभी तक पंजीकृत नहीं",
+        "fertilizer_action": "उर्वरक कार्य योजना पंजीकृत करें",
         "stages_ready": "वृद्धि चरणों में न्यूनतम सीमा तापमान और आवश्यक GDD सेट है",
         "stages_missing": "वृद्धि चरणों में न्यूनतम सीमा तापमान या आवश्यक GDD अनुपलब्ध",
         "stages_action": "वृद्धि चरण सेट करें",
@@ -2208,15 +2212,6 @@
       "recorded_today": "आज दर्ज किया गया",
       "skipped_badge": "छोड़ा गया",
       "show_skipped": "छोड़े गए दिखाएं",
-      "segment": {
-        "label": "कार्य सूची दृश्य",
-        "all": "सभी",
-        "fertilizer": "उर्वरक"
-      },
-      "fertilizer_badge": {
-        "basal": "बेसल",
-        "topdress": "टॉप-ड्रेस"
-      },
       "skip": "छोड़ें",
       "unskip": "छोड़ना रद्द करें",
       "change_date": "तिथि बदलें",
@@ -2327,6 +2322,15 @@
         "cumulative_gdd": "संचयी GDD: {{value}}",
         "daily_weather": "अधिकतम {{max}}°C / न्यूनतम {{min}}°C / औसत {{mean}}°C",
         "workbench_link": "वर्कबेंच जलवायु पैनल खोलें"
+      },
+      "segment": {
+        "label": "कार्य सूची दृश्य",
+        "all": "सभी",
+        "fertilizer": "उर्वरक"
+      },
+      "fertilizer_badge": {
+        "basal": "बेसल",
+        "topdress": "टॉप-ड्रेस"
       }
     },
     "work_records": {

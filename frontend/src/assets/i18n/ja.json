@@ -589,6 +589,10 @@
         "blueprints_ready": "作業計画が1件以上登録されています",
         "blueprints_missing": "作業計画が未登録です",
         "blueprints_action": "作業計画を登録する",
+        "field_work_not_required": "施肥のみの作物のため圃場作業計画は不要です",
+        "fertilizer_ready": "施肥（基肥または追肥）の作業計画が登録されています",
+        "fertilizer_missing": "施肥（基肥または追肥）の作業計画が未登録です",
+        "fertilizer_action": "施肥の作業計画を登録する",
         "stages_ready": "生育ステージの最低限界温度と必要積算温度が設定されています",
         "stages_missing": "生育ステージの最低限界温度または必要積算温度が未設定です",
         "stages_action": "生育ステージを設定する",
@@ -2846,15 +2850,6 @@
       "recorded_today": "実績登録済",
       "skipped_badge": "スキップ",
       "show_skipped": "スキップ済みを表示",
-      "segment": {
-        "label": "作業一覧の表示",
-        "all": "すべて",
-        "fertilizer": "施肥"
-      },
-      "fertilizer_badge": {
-        "basal": "基肥",
-        "topdress": "追肥"
-      },
       "skip": "スキップ",
       "unskip": "スキップを解除",
       "change_date": "日付変更",
@@ -2965,6 +2960,15 @@
         "cumulative_gdd": "累積 GDD: {{value}}",
         "daily_weather": "最高 {{max}}℃ / 最低 {{min}}℃ / 平均 {{mean}}℃",
         "workbench_link": "ワークベンチの気候パネルを開く"
+      },
+      "segment": {
+        "label": "作業一覧の表示",
+        "all": "すべて",
+        "fertilizer": "施肥"
+      },
+      "fertilizer_badge": {
+        "basal": "基肥",
+        "topdress": "追肥"
       }
     },
     "work_records": {
