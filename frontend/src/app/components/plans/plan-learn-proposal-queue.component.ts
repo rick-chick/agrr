@@ -4,12 +4,13 @@ import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import {
+  buildFertilizerTimingQueueItems,
   buildUnifiedLearnProposalQueue,
   groupUnifiedLearnProposalQueueExcludingFertilizerTiming,
+  resolveBpTimingEvidenceKey,
   type LearnProposalQueueCategory,
   type UnifiedLearnProposalQueueItem
 } from '../../domain/plans/build-unified-learn-proposal-queue';
-import { isSafeBlueprintTimingProposal } from '../../domain/plans/classify-safe-learn-proposals';
 import type { LearnPostMasterPayload } from '../../domain/plans/learn-proposal-application-progress';
 import {
   bpTimingProposalProgressKey,
@@ -239,35 +240,7 @@ export class PlanLearnProposalQueueComponent {
   }
 
   get fertilizerTimingItems(): UnifiedLearnProposalQueueItem[] {
-    return this.blueprintTimingProposals
-      .filter((proposal) => proposal.category === 'fertilizer')
-      .filter((proposal) => {
-        const status = resolveLearnProposalApplicationStatus(
-          this.planId,
-          bpTimingProposalProgressKey(proposal.cropId, proposal.category)
-        );
-        return status !== 'dismissed';
-      })
-      .map((proposal) => {
-        const safe = isSafeBlueprintTimingProposal(this.planId, proposal);
-        const category: LearnProposalQueueCategory = safe
-          ? 'safe'
-          : resolveLearnProposalApplicationStatus(
-                this.planId,
-                bpTimingProposalProgressKey(proposal.cropId, proposal.category)
-              ) === 'not_started'
-            ? 'requires_confirmation'
-            : 'safe';
-        return {
-          id: `bp_timing:${proposal.cropId}:${proposal.category}`,
-          kind: 'bp_timing' as const,
-          category,
-          priority: 0,
-          title: proposal.cropName,
-          subtitle: proposal.category,
-          bpTimingCategory: proposal.category
-        };
-      });
+    return buildFertilizerTimingQueueItems(this.planId, this.blueprintTimingProposals);
   }
 
   get safeCount(): number {
@@ -308,7 +281,7 @@ export class PlanLearnProposalQueueComponent {
     if (!proposal) {
       return null;
     }
-    return this.blueprintTimingEvidenceByKey[`${proposal.cropId}-${proposal.category}`] ?? null;
+    return this.blueprintTimingEvidenceByKey[resolveBpTimingEvidenceKey(proposal)] ?? null;
   }
 
   fertilizerItemStatus(item: UnifiedLearnProposalQueueItem): LearnProposalApplicationStatus {

@@ -199,3 +199,42 @@ export function groupUnifiedLearnProposalQueueExcludingFertilizerTiming(
   const { other } = partitionFertilizerBpTimingQueueItems(queue.items);
   return groupUnifiedLearnProposalQueueByCategory({ items: other, counts: countByCategory(other) });
 }
+
+export function buildFertilizerTimingQueueItems(
+  planId: number,
+  blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>
+): UnifiedLearnProposalQueueItem[] {
+  return blueprintTimingProposals
+    .filter((proposal) => proposal.category === FERTILIZER_BP_TIMING_CATEGORY)
+    .filter((proposal) => {
+      const status = resolveLearnProposalApplicationStatus(
+        planId,
+        bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+      );
+      return status !== 'dismissed';
+    })
+    .map((proposal) => {
+      const status = resolveLearnProposalApplicationStatus(
+        planId,
+        bpTimingProposalProgressKey(proposal.cropId, proposal.category)
+      );
+      const category: LearnProposalQueueCategory = isSafeBlueprintTimingProposal(planId, proposal)
+        ? 'safe'
+        : status === 'not_started'
+          ? 'requires_confirmation'
+          : 'safe';
+      return {
+        id: `bp_timing:${proposal.cropId}:${proposal.category}`,
+        kind: 'bp_timing' as const,
+        category,
+        priority: 0,
+        title: proposal.cropName,
+        subtitle: proposal.category,
+        bpTimingCategory: proposal.category
+      };
+    });
+}
+
+export function resolveBpTimingEvidenceKey(proposal: BlueprintTimingAdjustmentProposal): string {
+  return `${proposal.cropId}-${proposal.category}`;
+}
