@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { PlanWorkView } from '../../components/plans/plan-work.view';
+import { PlanWorkView, PlanWorkViewState } from '../../components/plans/plan-work.view';
 import type { FieldSchedule } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
 import { PlanWorkPresenter } from './plan-work.presenter';
@@ -24,7 +24,7 @@ const workRecord: WorkRecord = {
   task_schedule_item: null
 };
 
-const baseControl = {
+const baseControl: PlanWorkViewState = {
   loading: false,
   error: null,
   plan: null,
@@ -33,6 +33,7 @@ const baseControl = {
   today: [],
   upcoming: [],
   includeSkipped: false,
+  workSegment: 'all',
   recentAdHocRecord: null,
   nextScheduled: null,
   highlightedItemId: null,

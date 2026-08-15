@@ -42,6 +42,16 @@ import {
   shouldShowWorkRowGddGapBadge,
   type WorkRowGddGapState
 } from '../../domain/work-schedule/work-row-context-badges';
+import {
+  filterWorkDayListBySegment,
+  formatWorkRowAmountDiffLabel,
+  isFertilizerWorkRow,
+  resolveFertilizerTaskKind,
+  resolveWorkRowAmountDiff,
+  type FertilizerTaskKind,
+  type WorkListSegment
+} from '../../domain/work-schedule/work-row-fertilizer';
+import type { WorkRecordAmountDiff } from '../../domain/work-schedule/work-record-amount-diff';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -52,6 +62,7 @@ const initialControl: PlanWorkViewState = {
   today: [],
   upcoming: [],
   includeSkipped: false,
+  workSegment: 'all',
   recentAdHocRecord: null,
   nextScheduled: null,
   highlightedItemId: null,
@@ -135,6 +146,29 @@ const initialControl: PlanWorkViewState = {
             [error]="control.varianceSummaryError"
           />
 
+          <div
+            class="plan-work__segment"
+            role="group"
+            [attr.aria-label]="'plans.work.segment.label' | translate"
+          >
+            <button
+              type="button"
+              class="plan-work__segment-btn"
+              [class.plan-work__segment-btn--active]="control.workSegment === 'all'"
+              (click)="setWorkSegment('all')"
+            >
+              {{ 'plans.work.segment.all' | translate }}
+            </button>
+            <button
+              type="button"
+              class="plan-work__segment-btn"
+              [class.plan-work__segment-btn--active]="control.workSegment === 'fertilizer'"
+              (click)="setWorkSegment('fertilizer')"
+            >
+              {{ 'plans.work.segment.fertilizer' | translate }}
+            </button>
+          </div>
+
           @if (control.saveImpactLoading || control.saveImpact || control.saveImpactError) {
             <app-work-record-save-impact-panel
               [planId]="planId"
@@ -145,13 +179,13 @@ const initialControl: PlanWorkViewState = {
             />
           }
 
-          @if (control.overdue.length) {
+          @if (filteredOverdue.length) {
             <section class="plan-work__section">
               <h3 class="plan-work__section-title plan-work__section-title--overdue">
-                {{ 'plans.work.section.overdue' | translate: { count: control.overdue.length } }}
+                {{ 'plans.work.section.overdue' | translate: { count: filteredOverdue.length } }}
               </h3>
               <ul class="plan-work__list">
-                @for (row of control.overdue; track row.item.item_id) {
+                @for (row of filteredOverdue; track row.item.item_id) {
                   <ng-container
                     *ngTemplateOutlet="rowTpl; context: { $implicit: row, overdue: true }"
                   />
@@ -174,9 +208,9 @@ const initialControl: PlanWorkViewState = {
                 {{ 'plans.work.show_skipped' | translate }}
               </label>
             </div>
-            @if (control.today.length) {
+            @if (filteredToday.length) {
               <ul class="plan-work__list">
-                @for (row of control.today; track row.item.item_id) {
+                @for (row of filteredToday; track row.item.item_id) {
                   <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: row }" />
                 }
               </ul>
@@ -241,18 +275,18 @@ const initialControl: PlanWorkViewState = {
             }
           </section>
 
-          @if (control.upcoming.length) {
+          @if (filteredUpcoming.length) {
             <section class="plan-work__section">
               <h3 class="plan-work__section-title">{{ 'plans.work.section.upcoming' | translate }}</h3>
               <ul class="plan-work__list">
-                @for (row of control.upcoming; track row.item.item_id) {
+                @for (row of filteredUpcoming; track row.item.item_id) {
                   <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: row }" />
                 }
               </ul>
             </section>
           }
 
-          @if (control.today.length) {
+          @if (filteredToday.length) {
             <footer class="plan-work__fab">
               <button
                 type="button"
@@ -308,6 +342,30 @@ const initialControl: PlanWorkViewState = {
           }
           @if (row.item.status === 'skipped') {
             <span class="plan-work__skip-badge">{{ 'plans.work.skipped_badge' | translate }}</span>
+          }
+          @if (fertilizerKindForRow(row); as fertilizerKind) {
+            <span
+              class="plan-work__fertilizer-badge"
+              [class.plan-work__fertilizer-badge--basal]="fertilizerKind === 'basal'"
+              [class.plan-work__fertilizer-badge--topdress]="fertilizerKind === 'topdress'"
+            >
+              {{
+                (fertilizerKind === 'basal'
+                  ? 'plans.work.fertilizer_badge.basal'
+                  : 'plans.work.fertilizer_badge.topdress') | translate
+              }}
+            </span>
+          }
+          @if (amountDiffForRow(row); as amountDiff) {
+            @if (amountDiffLabelForRow(amountDiff)) {
+              <span
+                class="plan-work__amount-diff"
+                [class.plan-work__amount-diff--over]="amountDiff.diff != null && amountDiff.diff > 0"
+                [class.plan-work__amount-diff--under]="amountDiff.diff != null && amountDiff.diff < 0"
+              >
+                {{ amountDiffLabelForRow(amountDiff) }}
+              </span>
+            }
           }
           @if (varianceActionItemForRow(row); as actionItem) {
             @if (showDaysExceedanceBadge(actionItem)) {
@@ -509,6 +567,37 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       },
       [...this.control.overdue, ...this.control.today]
     );
+  }
+
+  get filteredOverdue(): WorkDayListRowDto[] {
+    return filterWorkDayListBySegment(this.control.overdue, this.control.workSegment);
+  }
+
+  get filteredToday(): WorkDayListRowDto[] {
+    return filterWorkDayListBySegment(this.control.today, this.control.workSegment);
+  }
+
+  get filteredUpcoming(): WorkDayListRowDto[] {
+    return filterWorkDayListBySegment(this.control.upcoming, this.control.workSegment);
+  }
+
+  setWorkSegment(segment: WorkListSegment): void {
+    this.control = { ...this.control, workSegment: segment };
+  }
+
+  fertilizerKindForRow(row: WorkDayListRowDto): FertilizerTaskKind | null {
+    if (!isFertilizerWorkRow(row)) {
+      return null;
+    }
+    return resolveFertilizerTaskKind(row.item);
+  }
+
+  amountDiffForRow(row: WorkDayListRowDto): WorkRecordAmountDiff | null {
+    return resolveWorkRowAmountDiff(row);
+  }
+
+  amountDiffLabelForRow(diff: WorkRecordAmountDiff): string {
+    return formatWorkRowAmountDiffLabel(diff);
   }
 
   displayDate(iso: string): string {

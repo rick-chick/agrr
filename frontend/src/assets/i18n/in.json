@@ -2327,6 +2327,15 @@
         "cumulative_gdd": "संचयी GDD: {{value}}",
         "daily_weather": "अधिकतम {{max}}°C / न्यूनतम {{min}}°C / औसत {{mean}}°C",
         "workbench_link": "वर्कबेंच जलवायु पैनल खोलें"
+      },
+      "segment": {
+        "label": "कार्य सूची दृश्य",
+        "all": "सभी",
+        "fertilizer": "उर्वरक"
+      },
+      "fertilizer_badge": {
+        "basal": "बेसल",
+        "topdress": "टॉप-ड्रेस"
       }
     },
     "work_records": {
