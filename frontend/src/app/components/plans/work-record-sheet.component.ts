@@ -33,6 +33,7 @@ import { PreviewWorkRecordClimateUseCase } from '../../usecase/plans/preview-wor
 import { formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
 import {
   computeWorkRecordAmountDiff,
+  isAmountTrackedScheduleCategory,
   WorkRecordAmountDiff
 } from '../../domain/work-schedule/work-record-amount-diff';
 import {
@@ -47,7 +48,8 @@ import {
   WorkRecordSheetSavedEvent,
   WorkRecordSheetTaskChip,
   WorkRecordSheetView,
-  WorkRecordSheetViewState
+  WorkRecordSheetViewState,
+  WorkRecordScheduleCategory
 } from './work-record-sheet.view';
 import { WORK_RECORD_SHEET_PROVIDERS } from '../../usecase/plans/work-record-sheet.providers';
 
@@ -262,14 +264,19 @@ const initialControl: WorkRecordSheetViewState = {
         }
 
         @if (control.mode === 'edit' || control.showDetails) {
-          @if (control.scheduleCategory === 'fertilizer') {
+          @if (isAmountTrackedScheduleCategory(control.scheduleCategory)) {
             <div class="form-card__field">
-              <span class="form-card__label">{{ 'plans.work.sheet.fertilizer.planned_amount' | translate }}</span>
+              <span class="form-card__label">{{
+                'plans.work.sheet.' + control.scheduleCategory + '.planned_amount' | translate
+              }}</span>
               <p class="work-record-sheet__readonly">
                 @if (control.plannedAmount) {
                   {{ control.plannedAmount }} {{ control.plannedAmountUnit }}
                 } @else {
-                  {{ 'plans.work.sheet.fertilizer.planned_amount_empty' | translate }}
+                  {{
+                    'plans.work.sheet.' + control.scheduleCategory + '.planned_amount_empty'
+                      | translate
+                  }}
                 }
               </p>
             </div>
@@ -278,8 +285,10 @@ const initialControl: WorkRecordSheetViewState = {
           <div class="form-card__field form-card__field--row">
             <div>
               <label for="wr-amount">
-                @if (control.scheduleCategory === 'fertilizer') {
-                  {{ 'plans.work.sheet.fertilizer.actual_amount' | translate }}
+                @if (isAmountTrackedScheduleCategory(control.scheduleCategory)) {
+                  {{
+                    'plans.work.sheet.' + control.scheduleCategory + '.actual_amount' | translate
+                  }}
                 } @else {
                   {{ 'plans.work.sheet.amount' | translate }}
                 }
@@ -487,6 +496,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   private readonly loadTaskListUseCase = inject(LoadAgriculturalTaskListUseCase);
   private readonly previewClimateUseCase = inject(PreviewWorkRecordClimateUseCase);
   private readonly presenter = inject(WorkRecordSheetPresenter);
+  readonly isAmountTrackedScheduleCategory = isAmountTrackedScheduleCategory;
   readonly photoAccept = WORK_RECORD_PHOTO_ACCEPT;
   readonly thumbWidthPx = WORK_RECORD_PHOTO_THUMB_WIDTH_PX_SHEET;
   readonly thumbHeightPx = WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET;
@@ -522,7 +532,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
     this.control = {
       ...initialControl,
       mode: 'create-from-item',
-      showDetails: scheduleCategory === 'fertilizer',
+      showDetails: isAmountTrackedScheduleCategory(scheduleCategory),
       scheduleCategory,
       plannedAmount,
       plannedAmountUnit,
@@ -638,7 +648,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   }
 
   amountDiff(): WorkRecordAmountDiff | null {
-    if (this.control.scheduleCategory !== 'fertilizer') {
+    if (!isAmountTrackedScheduleCategory(this.control.scheduleCategory)) {
       return null;
     }
     return computeWorkRecordAmountDiff(
@@ -862,9 +872,9 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   }
 }
 
-function resolveScheduleCategory(category: string): 'general' | 'fertilizer' | null {
-  if (category === 'fertilizer') {
-    return 'fertilizer';
+function resolveScheduleCategory(category: string): WorkRecordScheduleCategory {
+  if (category === 'fertilizer' || category === 'pest_control') {
+    return category;
   }
   if (category === 'general') {
     return 'general';

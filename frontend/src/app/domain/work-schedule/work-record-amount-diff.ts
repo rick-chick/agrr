@@ -14,6 +14,12 @@ export function parseWorkRecordAmount(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+export function isAmountTrackedScheduleCategory(
+  category: string | null
+): category is 'fertilizer' | 'pest_control' {
+  return category === 'fertilizer' || category === 'pest_control';
+}
+
 export function computeWorkRecordAmountDiff(
   plannedAmount: string,
   actualAmount: string,
