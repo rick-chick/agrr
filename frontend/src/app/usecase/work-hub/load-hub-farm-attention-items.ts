@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
   buildWorkHubAttentionList,
-  type WorkHubAttentionItem
+  type WorkHubAttentionList
 } from '../../domain/work-hub/build-work-hub-attention-list';
 import { PlanGateway } from '../plans/plan-gateway';
 import { loadHubFarmPlanVarianceData, type HubFarmForPlanSummary } from './load-hub-farm-plan-variance-data';
@@ -10,7 +10,7 @@ import { loadHubFarmPlanVarianceData, type HubFarmForPlanSummary } from './load-
 export function loadHubFarmAttentionItems(
   farms: HubFarmForPlanSummary[],
   planGateway: PlanGateway
-): Observable<WorkHubAttentionItem[]> {
+): Observable<WorkHubAttentionList> {
   return loadHubFarmPlanVarianceData(farms, planGateway).pipe(
     map((varianceByFarmId) =>
       buildWorkHubAttentionList(

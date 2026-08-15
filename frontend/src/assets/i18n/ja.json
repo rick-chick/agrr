@@ -3094,6 +3094,7 @@
       },
       "attention_list": {
         "title": "要対応タスク（上位）",
+        "item": "{{farm}} · {{task}}",
         "open_work": "作業へ",
         "open_learn": "振り返りへ"
       }

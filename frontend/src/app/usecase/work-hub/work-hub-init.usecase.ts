@@ -4,6 +4,7 @@ import { map, switchMap } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { localTodayIso } from '../../core/local-today';
 import { buildWorkHubPortfolioSummaryStats } from '../../domain/work-hub/build-work-hub-portfolio-summary-stats';
+import type { WorkHubAttentionList } from '../../domain/work-hub/build-work-hub-attention-list';
 import { sortWorkHubFarmsByActionRequired } from '../../domain/work-hub/sort-work-hub-farms-by-action-required';
 import { WorkHubFarmRow } from '../../domain/work-hub/work-hub-farm-row';
 import { PLAN_GATEWAY, PlanGateway } from '../plans/plan-gateway';
@@ -42,6 +43,28 @@ function enrichFarmWithVariance(
     daysExceedanceCount: variance?.daysExceedanceCount ?? 0,
     thresholdExceededCount: variance?.thresholdExceededCount ?? 0
   };
+}
+
+const EMPTY_ATTENTION_LIST: WorkHubAttentionList = { items: [] };
+
+function presentHubData(
+  outputPort: WorkHubInitOutputPort,
+  farms: WorkHubFarmRow[],
+  attentionList: WorkHubAttentionList,
+  autoRedirect: boolean,
+  ensurePlanForFarmUseCase: EnsurePlanForFarmUseCase
+): void {
+  const portfolioSummary = buildWorkHubPortfolioSummaryStats(farms);
+  if (autoRedirect) {
+    outputPort.present({ farms, portfolioSummary, attentionList });
+    outputPort.beginEnsure();
+    ensurePlanForFarmUseCase.execute({
+      farmId: farms[0].farmId,
+      existingPlanId: farms[0].planId
+    });
+    return;
+  }
+  outputPort.present({ farms, portfolioSummary, attentionList });
 }
 
 function withZeroCounts(
@@ -92,7 +115,7 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
             if (farms[0].planId == null) {
               return of({
                 farms: withZeroCounts(farms),
-                attentionItems: [],
+                attentionList: EMPTY_ATTENTION_LIST,
                 autoRedirect: true as const
               });
             }
@@ -102,9 +125,9 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
                   enrichFarmWithVariance(farms[0], varianceByFarmId.get(farms[0].farmId)?.stats)
                 ];
                 return loadHubFarmAttentionItems(farmsForSummary, this.planGateway).pipe(
-                  map((attentionItems) => ({
+                  map((attentionList) => ({
                     farms: enrichedFarms,
-                    attentionItems,
+                    attentionList,
                     autoRedirect: true as const
                   }))
                 );
@@ -115,7 +138,7 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
           if (!farms.some((farm) => farm.planId != null)) {
             return of({
               farms: withZeroCounts(farms),
-              attentionItems: [],
+              attentionList: EMPTY_ATTENTION_LIST,
               autoRedirect: false as const
             });
           }
@@ -128,9 +151,9 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
               false
             ),
             varianceByFarmId: loadHubFarmPlanVarianceData(farmsForSummary, this.planGateway),
-            attentionItems: loadHubFarmAttentionItems(farmsForSummary, this.planGateway)
+            attentionList: loadHubFarmAttentionItems(farmsForSummary, this.planGateway)
           }).pipe(
-            map(({ countsByFarmId, varianceByFarmId, attentionItems }) => ({
+            map(({ countsByFarmId, varianceByFarmId, attentionList }) => ({
               farms: sortWorkHubFarmsByActionRequired(
                 farms.map((farm) =>
                   enrichFarmWithVariance(
@@ -140,25 +163,21 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
                   )
                 )
               ),
-              attentionItems,
+              attentionList,
               autoRedirect: false as const
             }))
           );
         })
       )
       .subscribe({
-        next: ({ farms, attentionItems, autoRedirect }) => {
-          const portfolioSummary = buildWorkHubPortfolioSummaryStats(farms);
-          if (autoRedirect) {
-            this.outputPort.present({ farms, portfolioSummary, attentionItems });
-            this.outputPort.beginEnsure();
-            this.ensurePlanForFarmUseCase.execute({
-              farmId: farms[0].farmId,
-              existingPlanId: farms[0].planId
-            });
-            return;
-          }
-          this.outputPort.present({ farms, portfolioSummary, attentionItems });
+        next: ({ farms, attentionList, autoRedirect }) => {
+          presentHubData(
+            this.outputPort,
+            farms,
+            attentionList,
+            autoRedirect,
+            this.ensurePlanForFarmUseCase
+          );
         },
         error: (err: unknown) =>
           this.outputPort.onError({

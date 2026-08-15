@@ -25,7 +25,7 @@ export class WorkHubPresenter
       error: null,
       farms: dto.farms,
       portfolioSummary: dto.portfolioSummary,
-      attentionItems: dto.attentionItems,
+      attentionList: dto.attentionList,
       submitting: false,
       pendingSuccessFlash: null
     };

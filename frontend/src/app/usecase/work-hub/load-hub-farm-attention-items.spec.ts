@@ -9,11 +9,11 @@ describe('loadHubFarmAttentionItems', () => {
       getPlanVsActualSummary: vi.fn()
     } as unknown as PlanGateway;
 
-    const items = await firstValueFrom(
+    const attentionList = await firstValueFrom(
       loadHubFarmAttentionItems([{ farmId: 1, farmName: 'Farm A', planId: null }], planGateway)
     );
 
-    expect(items).toEqual([]);
+    expect(attentionList).toEqual({ items: [] });
     expect(planGateway.getPlanVsActualSummary).not.toHaveBeenCalled();
   });
 
@@ -60,7 +60,7 @@ describe('loadHubFarmAttentionItems', () => {
         })
     } as unknown as PlanGateway;
 
-    const items = await firstValueFrom(
+    const attentionList = await firstValueFrom(
       loadHubFarmAttentionItems(
         [
           { farmId: 1, farmName: 'Farm A', planId: 9 },
@@ -70,23 +70,25 @@ describe('loadHubFarmAttentionItems', () => {
       )
     );
 
-    expect(items).toEqual([
-      {
-        farmId: 1,
-        farmName: 'Farm A',
-        planId: 9,
-        itemId: 1,
-        taskName: 'Farm A task',
-        linkTarget: 'work'
-      },
-      {
-        farmId: 2,
-        farmName: 'Farm B',
-        planId: 10,
-        itemId: 2,
-        taskName: 'Farm B task',
-        linkTarget: 'learn'
-      }
-    ]);
+    expect(attentionList).toEqual({
+      items: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          planId: 9,
+          itemId: 1,
+          taskName: 'Farm A task',
+          linkTarget: 'learn'
+        },
+        {
+          farmId: 2,
+          farmName: 'Farm B',
+          planId: 10,
+          itemId: 2,
+          taskName: 'Farm B task',
+          linkTarget: 'work'
+        }
+      ]
+    });
   });
 });

@@ -1,140 +1,119 @@
 import { describe, expect, it } from 'vitest';
-import type { PlanVarianceActionItem } from '../plans/plan-vs-actual-summary';
+
 import {
-  DEFAULT_WORK_HUB_ATTENTION_LIMIT,
   buildWorkHubAttentionList,
-  resolveWorkHubAttentionLinkTarget
+  type HubFarmAttentionSource
 } from './build-work-hub-attention-list';
+import type { PlanVarianceActionItem } from '../plans/plan-vs-actual-summary';
 
 function actionItem(
-  overrides: Partial<PlanVarianceActionItem> & Pick<PlanVarianceActionItem, 'item_id' | 'name'>
+  overrides: Partial<PlanVarianceActionItem> = {}
 ): PlanVarianceActionItem {
   return {
-    field_cultivation_id: 10,
-    category: 'general',
-    scheduled_date: '2026-06-01',
-    actual_date: '2026-06-10',
-    delta_days: 5,
-    gdd_trigger: 100,
-    gdd_at_actual: 120,
-    gdd_delta: 15,
-    exceedance_kind: 'both',
+    item_id: overrides.item_id ?? 1,
+    field_cultivation_id: overrides.field_cultivation_id ?? 10,
+    category: overrides.category ?? 'general',
+    name: overrides.name ?? '除草',
+    scheduled_date: overrides.scheduled_date ?? '2026-06-01',
+    actual_date: overrides.actual_date ?? '2026-06-08',
+    delta_days: overrides.delta_days ?? 3,
+    gdd_trigger: overrides.gdd_trigger ?? 100,
+    gdd_at_actual: overrides.gdd_at_actual ?? 110,
+    gdd_delta: overrides.gdd_delta ?? 10,
+    exceedance_kind: overrides.exceedance_kind ?? 'days'
+  };
+}
+
+function source(
+  overrides: Partial<HubFarmAttentionSource> & Pick<HubFarmAttentionSource, 'farmId' | 'farmName' | 'planId'>
+): HubFarmAttentionSource {
+  return {
+    actionItems: overrides.actionItems ?? [],
     ...overrides
   };
 }
 
-describe('resolveWorkHubAttentionLinkTarget', () => {
-  it('routes days-only exceedance to learn', () => {
-    expect(
-      resolveWorkHubAttentionLinkTarget(
-        actionItem({ item_id: 1, name: 'A', exceedance_kind: 'days' })
-      )
-    ).toBe('learn');
-  });
-
-  it('routes gdd exceedance to work', () => {
-    expect(
-      resolveWorkHubAttentionLinkTarget(
-        actionItem({ item_id: 1, name: 'A', exceedance_kind: 'gdd' })
-      )
-    ).toBe('work');
-  });
-
-  it('routes both exceedance to work', () => {
-    expect(
-      resolveWorkHubAttentionLinkTarget(
-        actionItem({ item_id: 1, name: 'A', exceedance_kind: 'both' })
-      )
-    ).toBe('work');
-  });
-});
-
 describe('buildWorkHubAttentionList', () => {
-  it('returns empty list when no farms have action items', () => {
-    expect(
-      buildWorkHubAttentionList([
-        { farmId: 1, farmName: 'Farm A', planId: 9, actionItems: [] }
-      ])
-    ).toEqual([]);
-  });
-
-  it('returns top K action items across farms with farm name and link target', () => {
-    const items = buildWorkHubAttentionList(
+  it('returns top K action items across farms sorted by variance magnitude', () => {
+    const list = buildWorkHubAttentionList(
       [
-        {
+        source({
           farmId: 1,
           farmName: 'Farm A',
           planId: 9,
           actionItems: [
-            actionItem({
-              item_id: 1,
-              name: 'Low priority',
-              exceedance_kind: 'days',
-              delta_days: 1,
-              gdd_delta: 1
-            }),
+            actionItem({ item_id: 1, name: '小遅延', delta_days: 2, exceedance_kind: 'days' }),
             actionItem({
               item_id: 2,
-              name: 'High priority',
+              name: '大遅延',
+              delta_days: 8,
               exceedance_kind: 'both',
-              delta_days: 10,
               gdd_delta: 20
             })
           ]
-        },
-        {
+        }),
+        source({
           farmId: 2,
           farmName: 'Farm B',
           planId: 10,
           actionItems: [
             actionItem({
               item_id: 3,
-              name: 'Mid priority',
-              exceedance_kind: 'gdd',
+              name: '中遅延',
               delta_days: 5,
-              gdd_delta: 12
+              exceedance_kind: 'gdd',
+              gdd_delta: 15
             })
           ]
-        }
+        })
       ],
       2
     );
 
-    expect(items).toHaveLength(2);
-    expect(items[0]).toEqual({
-      farmId: 1,
-      farmName: 'Farm A',
-      planId: 9,
-      itemId: 2,
-      taskName: 'High priority',
-      linkTarget: 'work'
-    });
-    expect(items[1]).toEqual({
-      farmId: 2,
-      farmName: 'Farm B',
-      planId: 10,
-      itemId: 3,
-      taskName: 'Mid priority',
-      linkTarget: 'work'
-    });
+    expect(list.items).toHaveLength(2);
+    expect(list.items[0]?.taskName).toBe('大遅延');
+    expect(list.items[0]?.farmName).toBe('Farm A');
+    expect(list.items[0]?.planId).toBe(9);
+    expect(list.items[0]?.linkTarget).toBe('learn');
+    expect(list.items[1]?.taskName).toBe('中遅延');
+    expect(list.items[1]?.linkTarget).toBe('learn');
   });
 
-  it('defaults to top five items', () => {
-    const farms = Array.from({ length: 6 }, (_, index) => ({
-      farmId: index + 1,
-      farmName: `Farm ${index + 1}`,
-      planId: index + 1,
-      actionItems: [
-        actionItem({
-          item_id: index + 1,
-          name: `Task ${index + 1}`,
-          exceedance_kind: 'both',
-          delta_days: index + 1,
-          gdd_delta: index + 1
-        })
-      ]
-    }));
+  it('defaults to top 5 items', () => {
+    const list = buildWorkHubAttentionList([
+      source({
+        farmId: 1,
+        farmName: 'Farm A',
+        planId: 9,
+        actionItems: Array.from({ length: 7 }, (_, index) =>
+          actionItem({ item_id: index + 1, delta_days: index })
+        )
+      })
+    ]);
 
-    expect(buildWorkHubAttentionList(farms)).toHaveLength(DEFAULT_WORK_HUB_ATTENTION_LIMIT);
+    expect(list.items).toHaveLength(5);
+  });
+
+  it('assigns work link for days-only items and learn for gdd/both', () => {
+    const list = buildWorkHubAttentionList([
+      source({
+        farmId: 1,
+        farmName: 'Farm A',
+        planId: 9,
+        actionItems: [
+          actionItem({ item_id: 1, exceedance_kind: 'days' }),
+          actionItem({ item_id: 2, exceedance_kind: 'gdd' }),
+          actionItem({ item_id: 3, exceedance_kind: 'both' })
+        ]
+      })
+    ]);
+
+    expect(list.items.find((item) => item.itemId === 1)?.linkTarget).toBe('work');
+    expect(list.items.find((item) => item.itemId === 2)?.linkTarget).toBe('learn');
+    expect(list.items.find((item) => item.itemId === 3)?.linkTarget).toBe('learn');
+  });
+
+  it('returns empty list when no action items exist', () => {
+    expect(buildWorkHubAttentionList([]).items).toEqual([]);
   });
 });
