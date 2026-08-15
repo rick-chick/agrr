@@ -3,6 +3,7 @@ import { forkJoin, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { localTodayIso } from '../../core/local-today';
+import { buildWorkHubAttentionList } from '../../domain/work-hub/build-work-hub-attention-list';
 import { buildWorkHubPortfolioSummaryStats } from '../../domain/work-hub/build-work-hub-portfolio-summary-stats';
 import { sortWorkHubFarmsByActionRequired } from '../../domain/work-hub/sort-work-hub-farms-by-action-required';
 import { WorkHubFarmRow } from '../../domain/work-hub/work-hub-farm-row';
@@ -10,7 +11,7 @@ import { PLAN_GATEWAY, PlanGateway } from '../plans/plan-gateway';
 import { WORK_HUB_GATEWAY, WorkHubGateway } from './work-hub-gateway';
 import { EnsurePlanForFarmUseCase } from './ensure-plan-for-farm.usecase';
 import { loadHubFarmTaskCounts } from './load-hub-farm-task-counts';
-import { loadHubFarmVarianceStats } from './load-hub-farm-variance-stats';
+import { loadHubFarmPlanVarianceData } from './load-hub-farm-plan-variance-data';
 import { WorkHubInitInputPort } from './work-hub-init.input-port';
 import { WORK_HUB_INIT_OUTPUT_PORT, WorkHubInitOutputPort } from './work-hub-init.output-port';
 
@@ -65,6 +66,33 @@ function withZeroCounts(
   }));
 }
 
+function buildAttentionItems(
+  farms: WorkHubFarmRow[],
+  varianceByFarmId: Map<
+    number,
+    {
+      stats: {
+        unrecordedCount: number;
+        gddDelayCount: number;
+        daysExceedanceCount: number;
+        thresholdExceededCount: number;
+      };
+      actionItems: import('../../domain/plans/plan-vs-actual-summary').PlanVarianceActionItem[];
+    }
+  >
+) {
+  return buildWorkHubAttentionList(
+    farms
+      .filter((farm) => farm.planId != null)
+      .map((farm) => ({
+        farmId: farm.farmId,
+        farmName: farm.farmName,
+        planId: farm.planId!,
+        actionItems: varianceByFarmId.get(farm.farmId)?.actionItems ?? []
+      }))
+  );
+}
+
 @Injectable()
 export class WorkHubInitUseCase implements WorkHubInitInputPort {
   constructor(
@@ -80,24 +108,41 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
       .pipe(
         switchMap((farms) => {
           const farmsForCounts = farms.map((farm) => ({ farmId: farm.farmId, planId: farm.planId }));
+          const farmsForSummary = farms.map((farm) => ({
+            farmId: farm.farmId,
+            farmName: farm.farmName,
+            planId: farm.planId
+          }));
           const today = localTodayIso();
 
           if (farms.length === 1 && farms[0].hasValidFields) {
             if (farms[0].planId == null) {
-              return of({ farms: withZeroCounts(farms), autoRedirect: true as const });
-            }
-            return loadHubFarmVarianceStats(farmsForCounts, this.planGateway).pipe(
-              map((varianceByFarmId) => ({
-                farms: [
-                  enrichFarmWithVariance(farms[0], varianceByFarmId.get(farms[0].farmId))
-                ],
+              return of({
+                farms: withZeroCounts(farms),
+                attentionItems: [],
                 autoRedirect: true as const
-              }))
+              });
+            }
+            return loadHubFarmPlanVarianceData(farmsForSummary, this.planGateway).pipe(
+              map((varianceByFarmId) => {
+                const enrichedFarms = [
+                  enrichFarmWithVariance(farms[0], varianceByFarmId.get(farms[0].farmId)?.stats)
+                ];
+                return {
+                  farms: enrichedFarms,
+                  attentionItems: buildAttentionItems(enrichedFarms, varianceByFarmId),
+                  autoRedirect: true as const
+                };
+              })
             );
           }
 
           if (!farms.some((farm) => farm.planId != null)) {
-            return of({ farms: withZeroCounts(farms), autoRedirect: false as const });
+            return of({
+              farms: withZeroCounts(farms),
+              attentionItems: [],
+              autoRedirect: false as const
+            });
           }
 
           return forkJoin({
@@ -107,28 +152,32 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
               today,
               false
             ),
-            varianceByFarmId: loadHubFarmVarianceStats(farmsForCounts, this.planGateway)
+            varianceByFarmId: loadHubFarmPlanVarianceData(farmsForSummary, this.planGateway)
           }).pipe(
-            map(({ countsByFarmId, varianceByFarmId }) => ({
-              farms: sortWorkHubFarmsByActionRequired(
+            map(({ countsByFarmId, varianceByFarmId }) => {
+              const enrichedFarms = sortWorkHubFarmsByActionRequired(
                 farms.map((farm) =>
                   enrichFarmWithVariance(
                     farm,
-                    varianceByFarmId.get(farm.farmId),
+                    varianceByFarmId.get(farm.farmId)?.stats,
                     countsByFarmId.get(farm.farmId)
                   )
                 )
-              ),
-              autoRedirect: false as const
-            }))
+              );
+              return {
+                farms: enrichedFarms,
+                attentionItems: buildAttentionItems(enrichedFarms, varianceByFarmId),
+                autoRedirect: false as const
+              };
+            })
           );
         })
       )
       .subscribe({
-        next: ({ farms, autoRedirect }) => {
+        next: ({ farms, attentionItems, autoRedirect }) => {
           const portfolioSummary = buildWorkHubPortfolioSummaryStats(farms);
           if (autoRedirect) {
-            this.outputPort.present({ farms, portfolioSummary });
+            this.outputPort.present({ farms, portfolioSummary, attentionItems });
             this.outputPort.beginEnsure();
             this.ensurePlanForFarmUseCase.execute({
               farmId: farms[0].farmId,
@@ -136,7 +185,7 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
             });
             return;
           }
-          this.outputPort.present({ farms, portfolioSummary });
+          this.outputPort.present({ farms, portfolioSummary, attentionItems });
         },
         error: (err: unknown) =>
           this.outputPort.onError({

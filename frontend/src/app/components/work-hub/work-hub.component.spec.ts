@@ -18,6 +18,7 @@ function baseControl(
     error: null,
     farms: [],
     portfolioSummary: null,
+    attentionItems: [],
     pendingSuccessFlash: null,
     pendingNavigation: null,
     ...overrides
@@ -92,6 +93,9 @@ describe('WorkHubComponent', () => {
       'work.hub.portfolio_summary.action_required': '要対応',
       'work.hub.portfolio_summary.gdd_delay': 'GDD遅延',
       'work.hub.portfolio_summary.threshold_exceeded': '閾値超過',
+      'work.hub.attention_list.title': '要対応タスク（上位）',
+      'work.hub.attention_list.open_work': '作業へ',
+      'work.hub.attention_list.open_learn': '振り返りへ',
       'common.api_error.generic': 'エラーが発生しました'
     });
   });
@@ -539,6 +543,67 @@ describe('WorkHubComponent', () => {
     expect(fixture.nativeElement.querySelector('.work-hub__portfolio-summary')).not.toBeNull();
     expect(fixture.nativeElement.textContent).toContain('2');
     expect(fixture.nativeElement.textContent).toContain('全農場サマリ');
+  });
+
+  it('shows cross-farm attention list with farm name, task name, and plan links', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      portfolioSummary: {
+        unrecordedCount: 1,
+        actionRequiredCount: 2,
+        gddDelayCount: 1,
+        daysThresholdExceededCount: 1
+      },
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          unrecordedCount: 1,
+          gddDelayCount: 1,
+          daysExceedanceCount: 1,
+          thresholdExceededCount: 1
+        }
+      ],
+      attentionItems: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          planId: 9,
+          itemId: 1,
+          taskName: '追肥',
+          linkTarget: 'work'
+        },
+        {
+          farmId: 2,
+          farmName: 'Farm B',
+          planId: 10,
+          itemId: 2,
+          taskName: '施肥',
+          linkTarget: 'learn'
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const list = fixture.nativeElement.querySelector('.work-hub__attention-list');
+    expect(list).not.toBeNull();
+    expect(list?.textContent).toContain('要対応タスク（上位）');
+    expect(list?.textContent).toContain('Farm A');
+    expect(list?.textContent).toContain('追肥');
+    expect(list?.textContent).toContain('作業へ');
+    expect(list?.textContent).toContain('Farm B');
+    expect(list?.textContent).toContain('施肥');
+    expect(list?.textContent).toContain('振り返りへ');
+
+    const links = fixture.nativeElement.querySelectorAll('.work-hub__attention-link');
+    expect(links[0]?.getAttribute('href')).toContain('/plans/9/work');
+    expect(links[1]?.getAttribute('href')).toContain('/plans/10/learn');
   });
 
   it('reloads hub data when retry is clicked', () => {

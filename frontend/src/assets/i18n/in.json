@@ -2778,6 +2778,11 @@
         "action_required": "कार्रवाई आवश्यक",
         "gdd_delay": "GDD विलंब",
         "threshold_exceeded": "सीमा पार"
+      },
+      "attention_list": {
+        "title": "शीर्ष कार्रवाई-आवश्यक कार्य",
+        "open_work": "कार्य खोलें",
+        "open_learn": "अध्ययन खोलें"
       }
     }
   },

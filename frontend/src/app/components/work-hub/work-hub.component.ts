@@ -17,6 +17,7 @@ const initialControl: WorkHubViewState = {
   error: null,
   farms: [],
   portfolioSummary: null,
+  attentionItems: [],
   pendingSuccessFlash: null,
   pendingNavigation: null
 };
@@ -64,6 +65,37 @@ const initialControl: WorkHubViewState = {
               <dd>{{ control.portfolioSummary.daysThresholdExceededCount }}</dd>
             </div>
           </dl>
+        </section>
+      }
+
+      @if (!control.loading && control.attentionItems.length) {
+        <section
+          class="work-hub__attention-list"
+          aria-labelledby="work-hub-attention-list-title"
+        >
+          <h2 id="work-hub-attention-list-title" class="work-hub__attention-list-title">
+            {{ 'work.hub.attention_list.title' | translate }}
+          </h2>
+          <ul class="work-hub__attention-items" role="list">
+            @for (item of control.attentionItems; track item.farmId + '-' + item.itemId) {
+              <li class="work-hub__attention-item">
+                <a
+                  class="work-hub__attention-link"
+                  [routerLink]="['/plans', item.planId, item.linkTarget]"
+                >
+                  <span class="work-hub__attention-farm">{{ item.farmName }}</span>
+                  <span class="work-hub__attention-task">{{ item.taskName }}</span>
+                  <span class="work-hub__attention-cta">
+                    {{
+                      item.linkTarget === 'learn'
+                        ? ('work.hub.attention_list.open_learn' | translate)
+                        : ('work.hub.attention_list.open_work' | translate)
+                    }}
+                  </span>
+                </a>
+              </li>
+            }
+          </ul>
         </section>
       }
 
