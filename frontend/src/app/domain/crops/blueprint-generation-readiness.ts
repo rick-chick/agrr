@@ -2,8 +2,11 @@ import type { Crop, CropStage } from './crop';
 import type { CropTaskScheduleBlueprint } from './crop-task-schedule-blueprint';
 
 const FIELD_WORK_TASK_TYPE = 'field_work';
+const FERTILIZER_TASK_TYPES = new Set(['basal_fertilization', 'topdress_fertilization']);
 
 export interface BlueprintGenerationReadiness {
+  fieldWorkBlueprintsReady: boolean;
+  fertilizerBlueprintsReady: boolean;
   blueprintsReady: boolean;
   stageRequirementsReady: boolean;
   ready: boolean;
@@ -11,21 +14,36 @@ export interface BlueprintGenerationReadiness {
 
 export function defaultBlueprintReadiness(): BlueprintGenerationReadiness {
   return {
+    fieldWorkBlueprintsReady: false,
+    fertilizerBlueprintsReady: false,
     blueprintsReady: false,
     stageRequirementsReady: false,
     ready: false
   };
 }
 
+export function isFertilizerTaskType(taskType: string | null | undefined): boolean {
+  return taskType != null && FERTILIZER_TASK_TYPES.has(taskType);
+}
+
 export function blueprintGenerationReadiness(
   crop: Crop | null | undefined,
   blueprints: CropTaskScheduleBlueprint[]
 ): BlueprintGenerationReadiness {
-  const blueprintsReady = blueprints.some(
+  const hasFieldWork = blueprints.some(
     (blueprint) => blueprint.task_type === FIELD_WORK_TASK_TYPE
   );
+  const hasFertilizer = blueprints.some((blueprint) =>
+    isFertilizerTaskType(blueprint.task_type)
+  );
+  const isFertilizerOnlyCrop = hasFertilizer && !hasFieldWork;
+  const fieldWorkBlueprintsReady = hasFieldWork || isFertilizerOnlyCrop;
+  const fertilizerBlueprintsReady = hasFertilizer;
+  const blueprintsReady = fieldWorkBlueprintsReady && fertilizerBlueprintsReady;
   const stageRequirementsReady = hasCompleteStageRequirements(crop);
   return {
+    fieldWorkBlueprintsReady,
+    fertilizerBlueprintsReady,
     blueprintsReady,
     stageRequirementsReady,
     ready: blueprintsReady && stageRequirementsReady

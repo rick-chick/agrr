@@ -263,7 +263,10 @@ describe('withCropBlueprintDisplayState', () => {
         ...baseControl,
         crop: cropWithRequirements,
         blueprintsLoading: false,
-        blueprints: [blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 })],
+        blueprints: [
+          blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 }),
+          blueprint({ id: 11, task_type: 'basal_fertilization', gdd_trigger: 80 })
+        ],
         blueprintsRegenerating: false
       });
       expect(next.showBlueprintReadinessChecklist).toBe(false);
@@ -391,7 +394,10 @@ describe('withCropBlueprintDisplayState', () => {
     const next = withCropBlueprintDisplayState({
       ...baseControl,
       crop: cropWithRequirements,
-      blueprints: [blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 })]
+      blueprints: [
+        blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 }),
+        blueprint({ id: 11, task_type: 'basal_fertilization', gdd_trigger: 80 })
+      ]
     });
     expect(next.blueprintReadiness.ready).toBe(true);
     expect(next.canRegenerateBlueprints).toBe(false);

@@ -104,12 +104,30 @@ describe('CropListBlueprintsPanelPresenter', () => {
           description: null,
           weather_dependency: null,
           time_per_sqm: null
+        },
+        {
+          id: 2,
+          crop_id: 10,
+          agricultural_task_id: 6,
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Seedling',
+          gdd_trigger: 40,
+          gdd_tolerance: null,
+          task_type: 'basal_fertilization',
+          source: 'manual',
+          priority: 1,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null
         }
       ]
     });
 
     expect(lastControl?.blueprintsLoading).toBe(false);
-    expect(lastControl?.blueprintCount).toBe(1);
+    expect(lastControl?.blueprintCount).toBe(2);
     expect(lastControl?.blueprintReadiness.ready).toBe(true);
     expect(lastControl?.blueprintSummary).not.toBeNull();
   });

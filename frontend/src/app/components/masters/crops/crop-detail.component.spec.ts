@@ -34,6 +34,13 @@ const loadedState: CropDetailViewState = withCropDetailSummaryState(
           crop_id: 3,
           name: 'Vegetative',
           order: 1,
+          temperature_requirement: {
+            id: 1,
+            crop_stage_id: 1,
+            base_temperature: 10,
+            optimal_min: 15,
+            optimal_max: 25
+          },
           thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 500 }
         }
       ],
@@ -44,7 +51,7 @@ const loadedState: CropDetailViewState = withCropDetailSummaryState(
     pendingErrorFlash: null,
     pendingSuccessFlash: null,
     blueprintsLoading: false,
-    blueprintCount: 1,
+    blueprintCount: 2,
     blueprintReadiness: defaultBlueprintReadiness(),
     blueprintSummary: null,
     stageBoardColumns: [],
@@ -69,6 +76,25 @@ const loadedState: CropDetailViewState = withCropDetailSummaryState(
       weather_dependency: null,
       time_per_sqm: null,
       name: 'Weeding'
+    },
+    {
+      id: 21,
+      crop_id: 3,
+      agricultural_task_id: 6,
+      source_agricultural_task_id: null,
+      stage_order: 1,
+      stage_name: 'Vegetative',
+      gdd_trigger: 80,
+      gdd_tolerance: null,
+      task_type: 'basal_fertilization',
+      source: 'manual',
+      priority: 1,
+      amount: null,
+      amount_unit: null,
+      description: null,
+      weather_dependency: null,
+      time_per_sqm: null,
+      name: 'Basal fertilizer'
     }
   ]
 );
@@ -311,7 +337,9 @@ describe('CropDetailComponent', () => {
               stages_missing: 'Growth stages are missing base temperature or required GDD',
               stages_action: 'Configure growth stages',
               blueprints_missing: 'No task plans registered yet',
-              blueprints_action: 'Register task plans'
+              blueprints_action: 'Register task plans',
+              fertilizer_blueprints_missing: 'No fertilization plan registered yet',
+              fertilizer_blueprints_action: 'Register fertilization plans'
             },
             blueprint_summary: {
               count: '{{count}} task plan(s)',
@@ -337,6 +365,18 @@ describe('CropDetailComponent', () => {
     component.control = withCropDetailSummaryState(
       {
         ...loadedState,
+        crop: {
+          ...loadedState.crop!,
+          crop_stages: [
+            {
+              id: 1,
+              crop_id: 3,
+              name: 'Vegetative',
+              order: 1,
+              thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 500 }
+            }
+          ]
+        },
         blueprintCount: 0,
         blueprintReadiness: defaultBlueprintReadiness()
       },
@@ -348,14 +388,21 @@ describe('CropDetailComponent', () => {
     const stagesLink = fixture.nativeElement.querySelector(
       '.blueprint-readiness a[href="/crops/3/stages"]'
     ) as HTMLAnchorElement | null;
-    const blueprintsLink = fixture.nativeElement.querySelector(
-      '.blueprint-readiness a[href="/crops/3/task_schedule_blueprints"]'
-    ) as HTMLAnchorElement | null;
+    const blueprintLinks = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.blueprint-readiness a[href="/crops/3/task_schedule_blueprints"]'
+      )
+    ) as HTMLAnchorElement[];
 
     expect(stagesLink).toBeTruthy();
     expect(stagesLink?.textContent).toContain('Configure growth stages');
-    expect(blueprintsLink).toBeTruthy();
-    expect(blueprintsLink?.textContent).toContain('Register task plans');
+    expect(blueprintLinks.length).toBeGreaterThanOrEqual(1);
+    expect(blueprintLinks.some((link) => link.textContent?.includes('Register task plans'))).toBe(
+      true
+    );
+    expect(
+      blueprintLinks.some((link) => link.textContent?.includes('Register fertilization plans'))
+    ).toBe(true);
   });
 
   it('renders cultivation template action buttons with equal secondary styling', async () => {
@@ -453,7 +500,13 @@ describe('CropDetailComponent', () => {
       {
         ...loadedState,
         blueprintCount: 3,
-        blueprintReadiness: { ...defaultBlueprintReadiness(), blueprintsReady: true, ready: true }
+        blueprintReadiness: {
+          ...defaultBlueprintReadiness(),
+          fieldWorkBlueprintsReady: true,
+          fertilizerBlueprintsReady: true,
+          blueprintsReady: true,
+          ready: true
+        }
       },
       [
         {
@@ -761,6 +814,8 @@ describe('CropDetailComponent', () => {
       blueprintReadiness: {
         ...defaultBlueprintReadiness(),
         stageRequirementsReady: true,
+        fieldWorkBlueprintsReady: true,
+        fertilizerBlueprintsReady: true,
         blueprintsReady: true,
         ready: true
       }

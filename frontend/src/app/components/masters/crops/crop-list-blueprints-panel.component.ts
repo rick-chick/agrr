@@ -45,11 +45,18 @@ const initialControl: CropListBlueprintsPanelViewState = {
                 <span>{{ 'crops.show.blueprint_readiness.stages_missing' | translate }}</span>
               }
             </li>
-            <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.blueprintsReady">
-              @if (control.blueprintReadiness.blueprintsReady) {
+            <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.fieldWorkBlueprintsReady">
+              @if (control.blueprintReadiness.fieldWorkBlueprintsReady) {
                 <span>{{ 'crops.show.blueprint_readiness.blueprints_ready' | translate }}</span>
               } @else {
                 <span>{{ 'crops.show.blueprint_readiness.blueprints_missing' | translate }}</span>
+              }
+            </li>
+            <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.fertilizerBlueprintsReady">
+              @if (control.blueprintReadiness.fertilizerBlueprintsReady) {
+                <span>{{ 'crops.show.blueprint_readiness.fertilizer_blueprints_ready' | translate }}</span>
+              } @else {
+                <span>{{ 'crops.show.blueprint_readiness.fertilizer_blueprints_missing' | translate }}</span>
               }
             </li>
           </ul>

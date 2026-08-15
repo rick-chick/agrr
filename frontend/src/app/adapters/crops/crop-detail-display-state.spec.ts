@@ -40,6 +40,25 @@ const baseControl: CropDetailViewState = {
 };
 
 describe('withCropDetailSummaryState', () => {
+  const fertilizerBlueprint = {
+    id: 21,
+    crop_id: 3,
+    agricultural_task_id: 6,
+    source_agricultural_task_id: null,
+    stage_order: 1,
+    stage_name: 'Vegetative',
+    gdd_trigger: 80,
+    gdd_tolerance: null,
+    task_type: 'basal_fertilization',
+    source: 'agrr',
+    priority: 1,
+    amount: null,
+    amount_unit: null,
+    description: null,
+    weather_dependency: null,
+    time_per_sqm: null
+  } as const;
+
   it('computes blueprint count and readiness from blueprints', () => {
     const next = withCropDetailSummaryState(baseControl, [
       {
@@ -59,10 +78,11 @@ describe('withCropDetailSummaryState', () => {
         description: null,
         weather_dependency: null,
         time_per_sqm: null
-      }
+      },
+      { ...fertilizerBlueprint }
     ]);
 
-    expect(next.blueprintCount).toBe(1);
+    expect(next.blueprintCount).toBe(2);
     expect(next.blueprintReadiness.blueprintsReady).toBe(true);
     expect(next.blueprintReadiness.stageRequirementsReady).toBe(true);
     expect(next.blueprintReadiness.ready).toBe(true);

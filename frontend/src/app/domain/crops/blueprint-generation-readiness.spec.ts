@@ -194,7 +194,9 @@ describe('blueprintGenerationReadiness', () => {
 
   it('is not ready when no stage has base temperature and required GDD', () => {
     const result = blueprintGenerationReadiness(baseCrop, [blueprint]);
-    expect(result.blueprintsReady).toBe(true);
+    expect(result.fieldWorkBlueprintsReady).toBe(true);
+    expect(result.fertilizerBlueprintsReady).toBe(false);
+    expect(result.blueprintsReady).toBe(false);
     expect(result.stageRequirementsReady).toBe(false);
     expect(result.ready).toBe(false);
   });
@@ -219,39 +221,51 @@ describe('blueprintGenerationReadiness', () => {
     expect(result.ready).toBe(false);
   });
 
-  it('is not ready when only fertilizer blueprints exist', () => {
-    const result = blueprintGenerationReadiness(
-      {
-        ...baseCrop,
-        crop_stages: [
-          {
-            id: 1,
-            crop_id: 1,
-            name: 'Vegetative',
-            order: 1,
-            temperature_requirement: {
-              id: 1,
-              crop_stage_id: 1,
-              base_temperature: 10
-            },
-            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
-          }
-        ]
-      },
-      [
+  it('is ready for fertilizer-only crops when basal or topdress blueprints exist', () => {
+    const cropWithStages = {
+      ...baseCrop,
+      crop_stages: [
         {
-          ...blueprint,
-          id: 11,
-          task_type: 'basal_fertilization',
-          name: 'Basal fertilization'
+          id: 1,
+          crop_id: 1,
+          name: 'Vegetative',
+          order: 1,
+          temperature_requirement: {
+            id: 1,
+            crop_stage_id: 1,
+            base_temperature: 10
+          },
+          thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
         }
       ]
-    );
-    expect(result.blueprintsReady).toBe(false);
-    expect(result.ready).toBe(false);
+    };
+    const basalOnly = blueprintGenerationReadiness(cropWithStages, [
+      {
+        ...blueprint,
+        id: 11,
+        task_type: 'basal_fertilization',
+        name: 'Basal fertilization'
+      }
+    ]);
+    expect(basalOnly.fieldWorkBlueprintsReady).toBe(true);
+    expect(basalOnly.fertilizerBlueprintsReady).toBe(true);
+    expect(basalOnly.blueprintsReady).toBe(true);
+    expect(basalOnly.ready).toBe(true);
+
+    const topdressOnly = blueprintGenerationReadiness(cropWithStages, [
+      {
+        ...blueprint,
+        id: 12,
+        task_type: 'topdress_fertilization',
+        name: 'Topdress fertilization'
+      }
+    ]);
+    expect(topdressOnly.fertilizerBlueprintsReady).toBe(true);
+    expect(topdressOnly.blueprintsReady).toBe(true);
+    expect(topdressOnly.ready).toBe(true);
   });
 
-  it('is ready when blueprints and complete stage requirements exist', () => {
+  it('is not ready when only field_work blueprints exist without fertilizer rows', () => {
     const result = blueprintGenerationReadiness(
       {
         ...baseCrop,
@@ -272,6 +286,44 @@ describe('blueprintGenerationReadiness', () => {
       },
       [blueprint]
     );
+    expect(result.fieldWorkBlueprintsReady).toBe(true);
+    expect(result.fertilizerBlueprintsReady).toBe(false);
+    expect(result.blueprintsReady).toBe(false);
+    expect(result.ready).toBe(false);
+  });
+
+  it('is ready when field_work, fertilizer blueprints, and stage requirements exist', () => {
+    const result = blueprintGenerationReadiness(
+      {
+        ...baseCrop,
+        crop_stages: [
+          {
+            id: 1,
+            crop_id: 1,
+            name: 'Vegetative',
+            order: 1,
+            temperature_requirement: {
+              id: 1,
+              crop_stage_id: 1,
+              base_temperature: 10
+            },
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
+          }
+        ]
+      },
+      [
+        blueprint,
+        {
+          ...blueprint,
+          id: 11,
+          task_type: 'basal_fertilization',
+          name: 'Basal fertilization'
+        }
+      ]
+    );
+    expect(result.fieldWorkBlueprintsReady).toBe(true);
+    expect(result.fertilizerBlueprintsReady).toBe(true);
+    expect(result.blueprintsReady).toBe(true);
     expect(result.ready).toBe(true);
   });
 
