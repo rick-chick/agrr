@@ -2790,6 +2790,51 @@
         "open_work": "कार्य खोलें",
         "open_learn": "अध्ययन खोलें"
       }
+    },
+    "variance": {
+      "title": "विचलन पोर्टफोलियो",
+      "subtitle": "खेत, योजना और वर्षों में विचलन की तुलना करें",
+      "error_subtitle": "विचलन डेटा लोड नहीं हो सका। पुनः लोड करने का प्रयास करें।",
+      "retry": "पुनः लोड करें",
+      "no_plans": "दिखाने के लिए कोई योजना नहीं",
+      "no_plans_hint": "खेतों में विचलन की तुलना के लिए एक खेती योजना बनाएं।",
+      "create_plan_link": "योजना बनाएं",
+      "no_filter_results": "चयनित फ़िल्टर से कोई योजना मेल नहीं खाती",
+      "portfolio_summary": {
+        "title": "फ़िल्टर किया गया सारांश",
+        "unrecorded": "अभिलेखित नहीं",
+        "action_required": "कार्रवाई आवश्यक",
+        "gdd_delay": "GDD विलंब",
+        "threshold_exceeded": "सीमा पार"
+      },
+      "filters": {
+        "title": "फ़िल्टर",
+        "farm": "खेत",
+        "status": "स्थिति",
+        "year": "वर्ष",
+        "all": "सभी"
+      },
+      "attention_list": {
+        "title": "कार्य आवश्यक कार्य (प्रति खेत कई योजनाएं)",
+        "item": "{{farm}} · {{task}}"
+      },
+      "table": {
+        "year": "वर्ष",
+        "status": "स्थिति",
+        "unrecorded": "अभिलेखित नहीं",
+        "gdd_delay": "GDD विलंब",
+        "threshold_exceeded": "कार्रवाई आवश्यक",
+        "actions": "क्रियाएं",
+        "work_link": "कार्य",
+        "learn_link": "अध्ययन",
+        "plan_link": "योजना"
+      },
+      "status": {
+        "completed": "पूर्ण",
+        "pending": "लंबित",
+        "optimizing": "अनुकूलन",
+        "failed": "विफल"
+      }
     }
   },
   "status": {

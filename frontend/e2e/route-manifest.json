@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-12T23:30:39.120Z",
+  "generatedAt": "2026-08-15T22:45:04.648Z",
   "note": "path の :param は URL では 1 に置換。`**` は意図的な 404 用パス。Agent 用 PNG は `npm run e2e:capture-for-agent`（Rails development + AuthTest モックログインで付与したセッション、`e2e/.auth/dev-session.json`）で全ルートを ja/en/in の3言語キャプチャする。requiresAuth はルート定義上のフラグ。",
   "routes": [
     {
@@ -18,17 +18,47 @@
       "pattern": "about",
       "url": "/about",
       "requiresAuth": false,
-      "source": "locale-en.routes.ts"
+      "source": "pages.routes.ts"
     },
     {
       "pattern": "contact",
       "url": "/contact",
       "requiresAuth": false,
-      "source": "locale-en.routes.ts"
+      "source": "pages.routes.ts"
     },
     {
       "pattern": "en",
       "url": "/en",
+      "requiresAuth": false,
+      "source": "locale-en.routes.ts"
+    },
+    {
+      "pattern": "en/about",
+      "url": "/en/about",
+      "requiresAuth": false,
+      "source": "locale-en.routes.ts"
+    },
+    {
+      "pattern": "en/contact",
+      "url": "/en/contact",
+      "requiresAuth": false,
+      "source": "locale-en.routes.ts"
+    },
+    {
+      "pattern": "en/privacy",
+      "url": "/en/privacy",
+      "requiresAuth": false,
+      "source": "locale-en.routes.ts"
+    },
+    {
+      "pattern": "en/public-plans/new",
+      "url": "/en/public-plans/new",
+      "requiresAuth": false,
+      "source": "locale-en.routes.ts"
+    },
+    {
+      "pattern": "en/terms",
+      "url": "/en/terms",
       "requiresAuth": false,
       "source": "locale-en.routes.ts"
     },
@@ -54,13 +84,13 @@
       "pattern": "privacy",
       "url": "/privacy",
       "requiresAuth": false,
-      "source": "locale-en.routes.ts"
+      "source": "pages.routes.ts"
     },
     {
       "pattern": "public-plans/new",
       "url": "/public-plans/new",
       "requiresAuth": false,
-      "source": "locale-en.routes.ts"
+      "source": "public-plans.routes.ts"
     },
     {
       "pattern": "public-plans/optimizing",
@@ -90,7 +120,7 @@
       "pattern": "terms",
       "url": "/terms",
       "requiresAuth": false,
-      "source": "locale-en.routes.ts"
+      "source": "pages.routes.ts"
     },
     {
       "pattern": "account",
@@ -347,6 +377,12 @@
     {
       "pattern": "work",
       "url": "/work",
+      "requiresAuth": true,
+      "source": "work.routes.ts"
+    },
+    {
+      "pattern": "work/variance",
+      "url": "/work/variance",
       "requiresAuth": true,
       "source": "work.routes.ts"
     }

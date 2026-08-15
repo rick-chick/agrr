@@ -1,0 +1,107 @@
+.work-variance__portfolio-summary {
+  margin-bottom: var(--space-6);
+}
+
+.work-variance__portfolio-summary-title {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-3);
+}
+
+.work-variance__portfolio-summary-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
+.work-variance__portfolio-summary-grid dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.work-variance__portfolio-summary-grid dd {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.work-variance__filters {
+  margin-bottom: var(--space-6);
+}
+
+.work-variance__filters-title,
+.work-variance__attention-list-title,
+.work-variance__farm-title {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-3);
+}
+
+.work-variance__filters-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.work-variance__filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.work-variance__filter select {
+  width: 100%;
+}
+
+.work-variance__attention-list {
+  margin-bottom: var(--space-6);
+}
+
+.work-variance__attention-list-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.work-variance__attention-list-item + .work-variance__attention-list-item {
+  margin-top: var(--space-2);
+}
+
+.work-variance__attention-list-link {
+  text-decoration: underline;
+}
+
+.work-variance__farm-group + .work-variance__farm-group {
+  margin-top: var(--space-8);
+}
+
+.work-variance__table-wrap {
+  overflow-x: auto;
+}
+
+.work-variance__table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.work-variance__table th,
+.work-variance__table td {
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.work-variance__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.work-variance-empty,
+.work-variance__no-results {
+  text-align: center;
+}
+
+.work-variance-empty-hint {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}

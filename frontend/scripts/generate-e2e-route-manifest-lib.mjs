@@ -13,8 +13,8 @@ export const E2E_EXCLUDE_MANIFEST_PATTERNS = new Set(['auth/login', 'dashboard']
 export const HOST_SELECTOR_OVERRIDES = {
   en: 'app-home',
   'public-plans/select-farm-size': 'app-public-plan-create',
-  /** locale-en.routes.ts: parent `en` has resolver-only children; home is child path '' */
-  en: 'app-home',
+  /** work.routes.ts: nested child path `variance` under parent `work` (override retained for safety) */
+  'work/variance': 'app-work-variance',
 };
 
 const HOST_SELECTOR_OUT = 'e2e/host-selector-by-pattern.generated.ts';
@@ -30,32 +30,95 @@ export function patternToUrl(pattern) {
   return p;
 }
 
+/** @param {string} parentPattern */
+export function composeRoutePattern(parentPattern, childPath) {
+  if (!parentPattern) return childPath;
+  if (!childPath) return parentPattern;
+  return `${parentPattern}/${childPath}`;
+}
+
+function findMatchingBracket(text, openIndex) {
+  let depth = 0;
+  for (let i = openIndex; i < text.length; i++) {
+    if (text[i] === '[') depth++;
+    else if (text[i] === ']') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+function splitTopLevelRouteObjects(content) {
+  const blocks = [];
+  let depth = 0;
+  let start = -1;
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i];
+    if (ch === '{') {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0 && start >= 0) {
+        blocks.push(content.slice(start, i + 1));
+        start = -1;
+      }
+    }
+  }
+  return blocks;
+}
+
+function parseRouteBlock(block, parentPattern, originalText, filePath) {
+  const pathMatch = block.match(/\bpath:\s*['"]([^'"]*)['"]/);
+  const path = pathMatch ? pathMatch[1] : '';
+  const pattern = composeRoutePattern(parentPattern, path);
+  const requiresAuth = /\bauthGuard\b/.test(block);
+  const componentImportPath = resolveComponentImportPath(block, originalText, filePath);
+  const childrenMatch = block.match(/\bchildren:\s*\[/);
+
+  if (childrenMatch) {
+    const childrenStart = block.indexOf('children:');
+    const bracketStart = block.indexOf('[', childrenStart);
+    const bracketEnd = findMatchingBracket(block, bracketStart);
+    const childrenContent = block.slice(bracketStart + 1, bracketEnd);
+    const routes = [];
+    for (const childBlock of splitTopLevelRouteObjects(childrenContent)) {
+      routes.push(...parseRouteBlock(childBlock, pattern, originalText, filePath));
+    }
+    return routes;
+  }
+
+  if (/\bredirectTo\b/.test(block) || componentImportPath) {
+    return [
+      {
+        pattern,
+        url: patternToUrl(pattern),
+        requiresAuth,
+        source: basename(filePath),
+        componentImportPath,
+      },
+    ];
+  }
+
+  return [];
+}
+
 export async function parseRoutesFile(filePath) {
   const text = await readFile(filePath, 'utf8');
   const clean = text
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/[^\n]*/g, '');
-  const pathRegex = /\bpath:\s*['"]([^'"]*)['"]/g;
-  const positions = [];
-  let m;
-  while ((m = pathRegex.exec(clean)) !== null) {
-    positions.push({ path: m[1], index: m.index });
-  }
+  const routesArrayMatch = clean.match(/\bRoutes\s*=\s*\[/);
+  if (!routesArrayMatch) return [];
+
+  const arrayStart = clean.indexOf('[', routesArrayMatch.index);
+  const arrayEnd = findMatchingBracket(clean, arrayStart);
+  if (arrayEnd < 0) return [];
+
   const routes = [];
-  for (let i = 0; i < positions.length; i++) {
-    const start = positions[i].index;
-    const end = i + 1 < positions.length ? positions[i + 1].index : clean.length;
-    const segment = clean.slice(start, end);
-    const requiresAuth = /\bauthGuard\b/.test(segment);
-    const pattern = positions[i].path;
-    const componentImportPath = resolveComponentImportPath(segment, text, filePath);
-    routes.push({
-      pattern,
-      url: patternToUrl(pattern),
-      requiresAuth,
-      source: basename(filePath),
-      componentImportPath,
-    });
+  for (const block of splitTopLevelRouteObjects(clean.slice(arrayStart + 1, arrayEnd))) {
+    routes.push(...parseRouteBlock(block, '', text, filePath));
   }
   return routes;
 }

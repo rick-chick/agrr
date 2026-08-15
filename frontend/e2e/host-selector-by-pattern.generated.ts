@@ -19,6 +19,11 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   'crops/:id/task_schedule_blueprints': 'app-crop-task-schedule-blueprints',
   'crops/new': 'app-crop-create',
   en: 'app-home',
+  'en/about': 'app-about',
+  'en/contact': 'app-contact',
+  'en/privacy': 'app-privacy',
+  'en/public-plans/new': 'app-public-plan-create',
+  'en/terms': 'app-terms',
   'entry-schedule': 'app-entry-schedule-list',
   'entry-schedule/crop/:cropId': 'app-entry-schedule-detail',
   farms: 'app-farm-list',
@@ -58,4 +63,5 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   'public-plans/select-farm-size': 'app-public-plan-create',
   terms: 'app-terms',
   work: 'app-work-hub',
+  'work/variance': 'app-work-variance',
 };
