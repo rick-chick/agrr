@@ -57,6 +57,7 @@ const initialControl: PlanTaskScheduleViewState = {
   fieldCultivationFilterId: null,
   categoryFilter: null,
   fertilizerSummary: { total: 0, basal: 0, topdress: 0 },
+  pestControlSummary: { total: 0, preventive: 0, curative: 0 },
   monthGroups: [],
   unscheduledRows: [],
   fieldFilterOptions: [],
@@ -256,6 +257,14 @@ const initialControl: PlanTaskScheduleViewState = {
                   >
                     {{ 'plans.task_schedules.filter_category_fertilizer' | translate }}
                   </button>
+                  <button
+                    type="button"
+                    class="plan-task-schedule__category-chip"
+                    [class.plan-task-schedule__category-chip--selected]="categoryFilter === 'pest_control'"
+                    (click)="onCategoryFilterChange('pest_control')"
+                  >
+                    {{ 'plans.task_schedules.filter_category_pest_control' | translate }}
+                  </button>
                 </div>
               </div>
               @if (control.fertilizerSummary.total > 0) {
@@ -267,6 +276,19 @@ const initialControl: PlanTaskScheduleViewState = {
                             total: control.fertilizerSummary.total,
                             basal: control.fertilizerSummary.basal,
                             topdress: control.fertilizerSummary.topdress
+                          }
+                  }}
+                </p>
+              }
+              @if (control.pestControlSummary.total > 0) {
+                <p class="plan-task-schedule__pest-control-summary" role="status">
+                  {{
+                    'plans.task_schedules.pest_control_summary'
+                      | translate
+                        : {
+                            total: control.pestControlSummary.total,
+                            preventive: control.pestControlSummary.preventive,
+                            curative: control.pestControlSummary.curative
                           }
                   }}
                 </p>
@@ -740,7 +762,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   private resolveCategoryFilterFromRoute(): PlanTaskScheduleCategoryFilter {
     const raw = this.route.snapshot.queryParamMap.get('category');
-    if (raw === 'general' || raw === 'fertilizer') {
+    if (raw === 'general' || raw === 'fertilizer' || raw === 'pest_control') {
       return raw;
     }
     return null;

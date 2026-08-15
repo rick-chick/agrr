@@ -122,7 +122,8 @@
   color: var(--color-text);
 }
 
-.plan-task-schedule__fertilizer-summary {
+.plan-task-schedule__fertilizer-summary,
+.plan-task-schedule__pest-control-summary {
   flex-basis: 100%;
   margin: 0;
   font-size: var(--font-size-sm);

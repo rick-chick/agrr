@@ -123,6 +123,7 @@ function createView(overrides: Partial<PlanTaskScheduleView['control']> = {}): P
       fieldCultivationFilterId: null,
       categoryFilter: null,
       fertilizerSummary: { total: 0, basal: 0, topdress: 0 },
+      pestControlSummary: { total: 0, preventive: 0, curative: 0 },
       monthGroups: [],
       unscheduledRows: [],
       fieldFilterOptions: [],
@@ -270,6 +271,44 @@ describe('PlanTaskSchedulePresenter derived fields', () => {
     });
 
     expect(view.control.fertilizerSummary).toEqual({ total: 2, basal: 1, topdress: 1 });
+  });
+
+  it('computes pest control summary from pest_control bucket tasks', () => {
+    presenter.present({
+      schedule: {
+        ...scheduleWithFields,
+        fields: [
+          field({
+            field_cultivation_id: 10,
+            schedules: {
+              general: [],
+              fertilizer: [],
+              pest_control: [
+                task({
+                  item_id: 21,
+                  name: 'Preventive',
+                  scheduled_date: '2026-06-10',
+                  field_cultivation_id: 10,
+                  task_type: 'preventive_spray',
+                  category: 'pest_control'
+                }),
+                task({
+                  item_id: 22,
+                  name: 'Curative',
+                  scheduled_date: '2026-06-20',
+                  field_cultivation_id: 10,
+                  task_type: 'curative_spray',
+                  category: 'pest_control'
+                })
+              ],
+              unscheduled: []
+            }
+          })
+        ]
+      }
+    });
+
+    expect(view.control.pestControlSummary).toEqual({ total: 2, preventive: 1, curative: 1 });
   });
 
   it('sets regenerateRequiresConfirm when schedule has tasks', () => {
