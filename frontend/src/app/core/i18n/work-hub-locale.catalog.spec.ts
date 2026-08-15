@@ -44,7 +44,9 @@ const WORK_HUB_I18N_KEYS = [
   'work.hub.portfolio_summary.gdd_delay',
   'work.hub.portfolio_summary.threshold_exceeded',
   'work.hub.attention_list.title',
-  'work.hub.attention_list.item'
+  'work.hub.attention_list.item',
+  'work.hub.attention_list.open_work',
+  'work.hub.attention_list.open_learn'
 ] as const;
 
 describe('work hub i18n catalog', () => {

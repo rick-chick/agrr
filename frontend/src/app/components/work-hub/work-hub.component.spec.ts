@@ -95,6 +95,8 @@ describe('WorkHubComponent', () => {
       'work.hub.portfolio_summary.threshold_exceeded': '閾値超過',
       'work.hub.attention_list.title': '要対応タスク（上位）',
       'work.hub.attention_list.item': '{{farm}} · {{task}}',
+      'work.hub.attention_list.open_work': '作業へ',
+      'work.hub.attention_list.open_learn': '振り返りへ',
       'common.api_error.generic': 'エラーが発生しました'
     });
   });

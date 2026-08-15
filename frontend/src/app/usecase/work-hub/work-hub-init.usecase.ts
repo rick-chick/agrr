@@ -4,14 +4,15 @@ import { map, switchMap } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { localTodayIso } from '../../core/local-today';
 import { buildWorkHubPortfolioSummaryStats } from '../../domain/work-hub/build-work-hub-portfolio-summary-stats';
-import { buildWorkHubAttentionList } from '../../domain/work-hub/build-work-hub-attention-list';
+import type { WorkHubAttentionList } from '../../domain/work-hub/build-work-hub-attention-list';
 import { sortWorkHubFarmsByActionRequired } from '../../domain/work-hub/sort-work-hub-farms-by-action-required';
 import { WorkHubFarmRow } from '../../domain/work-hub/work-hub-farm-row';
 import { PLAN_GATEWAY, PlanGateway } from '../plans/plan-gateway';
 import { WORK_HUB_GATEWAY, WorkHubGateway } from './work-hub-gateway';
 import { EnsurePlanForFarmUseCase } from './ensure-plan-for-farm.usecase';
+import { loadHubFarmAttentionItems } from './load-hub-farm-attention-items';
+import { loadHubFarmPlanVarianceData } from './load-hub-farm-plan-variance-data';
 import { loadHubFarmTaskCounts } from './load-hub-farm-task-counts';
-import { loadHubFarmVarianceStats, type HubFarmVarianceStats } from './load-hub-farm-variance-stats';
 import { WorkHubInitInputPort } from './work-hub-init.input-port';
 import { WORK_HUB_INIT_OUTPUT_PORT, WorkHubInitOutputPort } from './work-hub-init.output-port';
 
@@ -44,39 +45,16 @@ function enrichFarmWithVariance(
   };
 }
 
-function buildAttentionList(
-  farms: Omit<
-    WorkHubFarmRow,
-    | 'overdueCount'
-    | 'todayCount'
-    | 'unrecordedCount'
-    | 'gddDelayCount'
-    | 'daysExceedanceCount'
-    | 'thresholdExceededCount'
-  >[],
-  varianceByFarmId: Map<number, HubFarmVarianceStats>
-): ReturnType<typeof buildWorkHubAttentionList> {
-  return buildWorkHubAttentionList(
-    farms
-      .filter((farm) => farm.planId != null)
-      .map((farm) => ({
-        farmId: farm.farmId,
-        farmName: farm.farmName,
-        planId: farm.planId!,
-        actionItems: varianceByFarmId.get(farm.farmId)?.actionItems ?? []
-      }))
-  );
-}
+const EMPTY_ATTENTION_LIST: WorkHubAttentionList = { items: [] };
 
 function presentHubData(
   outputPort: WorkHubInitOutputPort,
   farms: WorkHubFarmRow[],
-  varianceByFarmId: Map<number, HubFarmVarianceStats>,
+  attentionList: WorkHubAttentionList,
   autoRedirect: boolean,
   ensurePlanForFarmUseCase: EnsurePlanForFarmUseCase
 ): void {
   const portfolioSummary = buildWorkHubPortfolioSummaryStats(farms);
-  const attentionList = buildAttentionList(farms, varianceByFarmId);
   if (autoRedirect) {
     outputPort.present({ farms, portfolioSummary, attentionList });
     outputPort.beginEnsure();
@@ -111,10 +89,6 @@ function withZeroCounts(
   }));
 }
 
-function emptyVarianceMap(): Map<number, HubFarmVarianceStats> {
-  return new Map();
-}
-
 @Injectable()
 export class WorkHubInitUseCase implements WorkHubInitInputPort {
   constructor(
@@ -130,31 +104,41 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
       .pipe(
         switchMap((farms) => {
           const farmsForCounts = farms.map((farm) => ({ farmId: farm.farmId, planId: farm.planId }));
+          const farmsForSummary = farms.map((farm) => ({
+            farmId: farm.farmId,
+            farmName: farm.farmName,
+            planId: farm.planId
+          }));
           const today = localTodayIso();
 
           if (farms.length === 1 && farms[0].hasValidFields) {
             if (farms[0].planId == null) {
               return of({
                 farms: withZeroCounts(farms),
-                varianceByFarmId: emptyVarianceMap(),
+                attentionList: EMPTY_ATTENTION_LIST,
                 autoRedirect: true as const
               });
             }
-            return loadHubFarmVarianceStats(farmsForCounts, this.planGateway).pipe(
-              map((varianceByFarmId) => ({
-                farms: [
-                  enrichFarmWithVariance(farms[0], varianceByFarmId.get(farms[0].farmId))
-                ],
-                varianceByFarmId,
-                autoRedirect: true as const
-              }))
+            return loadHubFarmPlanVarianceData(farmsForSummary, this.planGateway).pipe(
+              switchMap((varianceByFarmId) => {
+                const enrichedFarms = [
+                  enrichFarmWithVariance(farms[0], varianceByFarmId.get(farms[0].farmId)?.stats)
+                ];
+                return loadHubFarmAttentionItems(farmsForSummary, this.planGateway).pipe(
+                  map((attentionList) => ({
+                    farms: enrichedFarms,
+                    attentionList,
+                    autoRedirect: true as const
+                  }))
+                );
+              })
             );
           }
 
           if (!farms.some((farm) => farm.planId != null)) {
             return of({
               farms: withZeroCounts(farms),
-              varianceByFarmId: emptyVarianceMap(),
+              attentionList: EMPTY_ATTENTION_LIST,
               autoRedirect: false as const
             });
           }
@@ -166,30 +150,31 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
               today,
               false
             ),
-            varianceByFarmId: loadHubFarmVarianceStats(farmsForCounts, this.planGateway)
+            varianceByFarmId: loadHubFarmPlanVarianceData(farmsForSummary, this.planGateway),
+            attentionList: loadHubFarmAttentionItems(farmsForSummary, this.planGateway)
           }).pipe(
-            map(({ countsByFarmId, varianceByFarmId }) => ({
+            map(({ countsByFarmId, varianceByFarmId, attentionList }) => ({
               farms: sortWorkHubFarmsByActionRequired(
                 farms.map((farm) =>
                   enrichFarmWithVariance(
                     farm,
-                    varianceByFarmId.get(farm.farmId),
+                    varianceByFarmId.get(farm.farmId)?.stats,
                     countsByFarmId.get(farm.farmId)
                   )
                 )
               ),
-              varianceByFarmId,
+              attentionList,
               autoRedirect: false as const
             }))
           );
         })
       )
       .subscribe({
-        next: ({ farms, varianceByFarmId, autoRedirect }) => {
+        next: ({ farms, attentionList, autoRedirect }) => {
           presentHubData(
             this.outputPort,
             farms,
-            varianceByFarmId,
+            attentionList,
             autoRedirect,
             this.ensurePlanForFarmUseCase
           );

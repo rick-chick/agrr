@@ -260,7 +260,9 @@
       },
       "attention_list": {
         "title": "Top action-required tasks",
-        "item": "{{farm}} · {{task}}"
+        "item": "{{farm}} · {{task}}",
+        "open_work": "Open work",
+        "open_learn": "Open learn"
       }
     }
   },
