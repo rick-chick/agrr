@@ -53,7 +53,7 @@ function field(overrides: Partial<FieldSchedule> & Pick<FieldSchedule, 'field_cu
     field_cultivation_id: overrides.field_cultivation_id,
     crop_id: overrides.crop_id ?? 20,
     task_options: [],
-    schedules: overrides.schedules ?? { general: [], fertilizer: [], unscheduled: [] }
+    schedules: overrides.schedules ?? { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
   };
 }
 
@@ -86,6 +86,7 @@ const scheduleWithFields: TaskScheduleResponse = {
       schedules: {
         general: [task({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10', field_cultivation_id: 10 })],
         fertilizer: [],
+        pest_control: [],
         unscheduled: []
       }
     }),
@@ -98,6 +99,7 @@ const scheduleWithFields: TaskScheduleResponse = {
       schedules: {
         general: [task({ item_id: 2, name: 'Harvest', scheduled_date: '2026-07-05', field_cultivation_id: 20 })],
         fertilizer: [],
+        pest_control: [],
         unscheduled: []
       }
     })
@@ -259,6 +261,7 @@ describe('PlanTaskSchedulePresenter derived fields', () => {
                   category: 'fertilizer'
                 })
               ],
+              pest_control: [],
               unscheduled: []
             }
           })
@@ -282,7 +285,7 @@ describe('PlanTaskSchedulePresenter derived fields', () => {
         fields: [
           field({
             field_cultivation_id: 10,
-            schedules: { general: [], fertilizer: [], unscheduled: [] }
+            schedules: { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
           })
         ]
       }
@@ -301,6 +304,7 @@ describe('PlanTaskSchedulePresenter derived fields', () => {
             schedules: {
               general: [],
               fertilizer: [],
+              pest_control: [],
               unscheduled: [
                 task({
                   item_id: 99,

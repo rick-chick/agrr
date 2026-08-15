@@ -71,6 +71,7 @@ describe('loadHubFarmTaskCounts', () => {
                         item({ item_id: 2, scheduled_date: today, status: 'skipped' })
                       ],
                       fertilizer: [],
+                      pest_control: [],
                       unscheduled: []
                     }
                   }
@@ -87,6 +88,7 @@ describe('loadHubFarmTaskCounts', () => {
                     schedules: {
                       general: [item({ item_id: 3, scheduled_date: '2026-06-10' })],
                       fertilizer: [],
+                      pest_control: [],
                       unscheduled: []
                     }
                   }

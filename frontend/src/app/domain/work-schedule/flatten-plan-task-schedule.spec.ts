@@ -30,7 +30,7 @@ function field(
     name: overrides.name ?? 'Field A',
     crop_name: overrides.crop_name ?? 'Tomato',
     field_cultivation_id: overrides.field_cultivation_id,
-    schedules: overrides.schedules ?? { general: [], fertilizer: [], unscheduled: [] }
+    schedules: overrides.schedules ?? { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
   };
 }
 
@@ -47,6 +47,7 @@ describe('flattenPlanTaskSchedule', () => {
         schedules: {
           general: [task({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10' })],
           fertilizer: [task({ item_id: 2, name: 'Top dress', scheduled_date: '2026-06-12' })],
+          pest_control: [],
           unscheduled: []
         }
       })
@@ -69,6 +70,7 @@ describe('flattenPlanTaskSchedule', () => {
         schedules: {
           general: [task({ item_id: 1, name: 'Pending', scheduled_date: null })],
           fertilizer: [],
+          pest_control: [],
           unscheduled: []
         }
       })
@@ -84,6 +86,7 @@ describe('flattenPlanTaskSchedule', () => {
         schedules: {
           general: [],
           fertilizer: [],
+          pest_control: [],
           unscheduled: [task({ item_id: 3, name: 'Soil prep', scheduled_date: null })]
         }
       })

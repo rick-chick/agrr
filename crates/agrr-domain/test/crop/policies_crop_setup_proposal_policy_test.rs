@@ -35,6 +35,35 @@ fn validate_rejects_missing_required_gdd() {
 }
 
 #[test]
+fn validate_accepts_pest_control_task_types() {
+    let body = json!({
+        "stages": [{
+            "name": "生育期",
+            "order": 1,
+            "thermal_requirement": { "required_gdd": "120" }
+        }],
+        "agricultural_tasks": [{
+            "ref": "task-preventive",
+            "name": "予防散布",
+            "task_type": "preventive_spray",
+            "region": "jp"
+        }],
+        "task_schedule_blueprints": [{
+            "agricultural_task_ref": "task-preventive",
+            "stage_order": 1,
+            "stage_name": "生育期",
+            "gdd_trigger": 0,
+            "task_type": "preventive_spray",
+            "priority": 1
+        }]
+    });
+
+    let (plan, _normalized) = validate_and_normalize(&body, &[], &[]).expect("valid proposal");
+    assert_eq!("preventive_spray", plan.agricultural_tasks[0].task_type);
+    assert_eq!("preventive_spray", plan.task_schedule_blueprints[0].task_type);
+}
+
+#[test]
 fn validate_accepts_minimal_proposal() {
     let body = json!({
         "stages": [{

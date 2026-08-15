@@ -33,6 +33,7 @@ const fields: PlanFieldSchedule[] = [
         }
       ],
       fertilizer: [],
+      pest_control: [],
       unscheduled: []
     }
   }

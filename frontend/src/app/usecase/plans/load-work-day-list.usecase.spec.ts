@@ -78,7 +78,7 @@ function scheduleWithItems(items: TaskScheduleItem[]): TaskScheduleResponse {
         field_cultivation_id: 10,
         crop_id: 1,
         task_options: [],
-        schedules: { general: items, fertilizer: [], unscheduled: [] }
+        schedules: { general: items, fertilizer: [], pest_control: [], unscheduled: [] }
       }
     ],
     labels: {},
