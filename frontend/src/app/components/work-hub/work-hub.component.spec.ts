@@ -18,6 +18,7 @@ function baseControl(
     error: null,
     farms: [],
     portfolioSummary: null,
+    attentionList: null,
     pendingSuccessFlash: null,
     pendingNavigation: null,
     ...overrides
@@ -92,6 +93,8 @@ describe('WorkHubComponent', () => {
       'work.hub.portfolio_summary.action_required': '要対応',
       'work.hub.portfolio_summary.gdd_delay': 'GDD遅延',
       'work.hub.portfolio_summary.threshold_exceeded': '閾値超過',
+      'work.hub.attention_list.title': '要対応タスク（上位）',
+      'work.hub.attention_list.item': '{{farm}} · {{task}}',
       'common.api_error.generic': 'エラーが発生しました'
     });
   });
@@ -539,6 +542,80 @@ describe('WorkHubComponent', () => {
     expect(fixture.nativeElement.querySelector('.work-hub__portfolio-summary')).not.toBeNull();
     expect(fixture.nativeElement.textContent).toContain('2');
     expect(fixture.nativeElement.textContent).toContain('全農場サマリ');
+  });
+
+  it('shows cross-farm attention list with links to work or learn', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      portfolioSummary: {
+        unrecordedCount: 0,
+        actionRequiredCount: 2,
+        gddDelayCount: 1,
+        daysThresholdExceededCount: 1
+      },
+      attentionList: {
+        items: [
+          {
+            farmId: 1,
+            farmName: 'Farm A',
+            planId: 9,
+            itemId: 1,
+            taskName: '追肥',
+            linkTarget: 'learn'
+          },
+          {
+            farmId: 2,
+            farmName: 'Farm B',
+            planId: 10,
+            itemId: 2,
+            taskName: '除草',
+            linkTarget: 'work'
+          }
+        ]
+      },
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          unrecordedCount: 0,
+          gddDelayCount: 1,
+          daysExceedanceCount: 1,
+          thresholdExceededCount: 1
+        },
+        {
+          farmId: 2,
+          farmName: 'Farm B',
+          fieldCount: 1,
+          totalArea: 50,
+          hasValidFields: true,
+          planId: 10,
+          overdueCount: 0,
+          todayCount: 0,
+          unrecordedCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 1,
+          thresholdExceededCount: 1
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const list = fixture.nativeElement.querySelector('.work-hub__attention-list');
+    expect(list).not.toBeNull();
+    expect(list?.textContent).toContain('要対応タスク（上位）');
+    expect(list?.textContent).toContain('Farm A · 追肥');
+    expect(list?.textContent).toContain('Farm B · 除草');
+
+    const links = fixture.nativeElement.querySelectorAll('.work-hub__attention-list-link');
+    expect(links).toHaveLength(2);
+    expect(links[0]?.getAttribute('href')).toContain('/plans/9/learn');
+    expect(links[1]?.getAttribute('href')).toContain('/plans/10/work');
   });
 
   it('reloads hub data when retry is clicked', () => {

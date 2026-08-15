@@ -106,19 +106,22 @@ describe('loadHubFarmVarianceStats', () => {
       unrecordedCount: 0,
       gddDelayCount: 1,
       daysExceedanceCount: 2,
-      thresholdExceededCount: 2
+      thresholdExceededCount: 2,
+      actionItems: summaryForPlan(9).action_required_items
     });
     expect(stats.get(2)).toEqual({
       unrecordedCount: 0,
       gddDelayCount: 1,
       daysExceedanceCount: 0,
-      thresholdExceededCount: 1
+      thresholdExceededCount: 1,
+      actionItems: summaryForPlan(10).action_required_items
     });
     expect(stats.get(3)).toEqual({
       unrecordedCount: 0,
       gddDelayCount: 0,
       daysExceedanceCount: 0,
-      thresholdExceededCount: 0
+      thresholdExceededCount: 0,
+      actionItems: []
     });
   });
 

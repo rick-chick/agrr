@@ -3091,6 +3091,10 @@
         "action_required": "要対応",
         "gdd_delay": "GDD遅延",
         "threshold_exceeded": "閾値超過"
+      },
+      "attention_list": {
+        "title": "要対応タスク（上位）",
+        "item": "{{farm}} · {{task}}"
       }
     }
   },

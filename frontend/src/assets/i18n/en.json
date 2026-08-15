@@ -257,6 +257,10 @@
         "action_required": "Action required",
         "gdd_delay": "GDD delay",
         "threshold_exceeded": "Threshold exceeded"
+      },
+      "attention_list": {
+        "title": "Top action-required tasks",
+        "item": "{{farm}} · {{task}}"
       }
     }
   },

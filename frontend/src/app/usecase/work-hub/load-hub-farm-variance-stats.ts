@@ -1,6 +1,7 @@
 import { forkJoin, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { buildPlanWorkVarianceSummaryStats } from '../../domain/plans/build-plan-work-variance-summary-stats';
+import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import { PlanGateway } from '../plans/plan-gateway';
 
 export interface HubFarmVarianceStats {
@@ -8,6 +9,7 @@ export interface HubFarmVarianceStats {
   gddDelayCount: number;
   daysExceedanceCount: number;
   thresholdExceededCount: number;
+  actionItems: PlanVarianceActionItem[];
 }
 
 export interface HubFarmForVarianceStats {
@@ -31,7 +33,8 @@ export function loadHubFarmVarianceStats(
           unrecordedCount: 0,
           gddDelayCount: 0,
           daysExceedanceCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          actionItems: []
         });
       }
       return planGateway.getPlanVsActualSummary(farm.planId).pipe(
@@ -42,7 +45,8 @@ export function loadHubFarmVarianceStats(
             unrecordedCount: stats.unrecordedCount,
             gddDelayCount: stats.gddDelayCount,
             daysExceedanceCount: stats.daysExceedanceCount,
-            thresholdExceededCount: stats.thresholdExceededCount
+            thresholdExceededCount: stats.thresholdExceededCount,
+            actionItems: summary.action_required_items ?? []
           };
         })
       );
@@ -57,7 +61,8 @@ export function loadHubFarmVarianceStats(
               unrecordedCount: summary.unrecordedCount,
               gddDelayCount: summary.gddDelayCount,
               daysExceedanceCount: summary.daysExceedanceCount,
-              thresholdExceededCount: summary.thresholdExceededCount
+              thresholdExceededCount: summary.thresholdExceededCount,
+              actionItems: summary.actionItems
             }
           ])
         )

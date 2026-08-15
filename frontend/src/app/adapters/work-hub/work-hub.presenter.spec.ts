@@ -10,6 +10,7 @@ function baseControl(overrides: Partial<WorkHubViewState> = {}): WorkHubViewStat
     error: null,
     farms: [],
     portfolioSummary: null,
+    attentionList: null,
     pendingSuccessFlash: null,
     pendingNavigation: null,
     ...overrides
@@ -60,7 +61,8 @@ describe('WorkHubPresenter', () => {
         actionRequiredCount: 0,
         gddDelayCount: 0,
         daysThresholdExceededCount: 0
-      }
+      },
+      attentionList: { items: [] }
     });
 
     expect(lastControl).toEqual(
@@ -72,6 +74,7 @@ describe('WorkHubPresenter', () => {
           gddDelayCount: 0,
           daysThresholdExceededCount: 0
         },
+        attentionList: { items: [] },
         farms: [
           {
             farmId: 1,

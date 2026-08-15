@@ -167,7 +167,8 @@ describe('WorkHubInitUseCase', () => {
           todayCount: 1
         })
       ],
-      portfolioSummary: zeroPortfolio
+      portfolioSummary: zeroPortfolio,
+      attentionList: { items: [] }
     });
 
     vi.useRealTimers();
@@ -227,7 +228,8 @@ describe('WorkHubInitUseCase', () => {
         expect.objectContaining({ overdueCount: 0, todayCount: 0, unrecordedCount: 0, gddDelayCount: 0, daysExceedanceCount: 0, thresholdExceededCount: 0 }),
         expect.objectContaining({ overdueCount: 0, todayCount: 0, unrecordedCount: 0, gddDelayCount: 0, daysExceedanceCount: 0, thresholdExceededCount: 0 })
       ],
-      portfolioSummary: zeroPortfolio
+      portfolioSummary: zeroPortfolio,
+      attentionList: { items: [] }
     });
   });
 
@@ -278,7 +280,8 @@ describe('WorkHubInitUseCase', () => {
           thresholdExceededCount: 0
         })
       ],
-      portfolioSummary: zeroPortfolio
+      portfolioSummary: zeroPortfolio,
+      attentionList: { items: [] }
     });
     expect(beginEnsure).toHaveBeenCalled();
     expect(ensureExecute).toHaveBeenCalledWith({ farmId: 5, existingPlanId: 9 });
@@ -331,7 +334,8 @@ describe('WorkHubInitUseCase', () => {
           thresholdExceededCount: 0
         })
       ],
-      portfolioSummary: zeroPortfolio
+      portfolioSummary: zeroPortfolio,
+      attentionList: { items: [] }
     });
   });
 
@@ -458,6 +462,22 @@ describe('WorkHubInitUseCase', () => {
         actionRequiredCount: 3,
         gddDelayCount: 2,
         daysThresholdExceededCount: 2
+      },
+      attentionList: {
+        items: expect.arrayContaining([
+          expect.objectContaining({
+            farmName: 'Farm 1',
+            taskName: '追肥',
+            planId: 9,
+            linkTarget: 'learn'
+          }),
+          expect.objectContaining({
+            farmName: 'Farm 2',
+            taskName: '施肥',
+            planId: 10,
+            linkTarget: 'learn'
+          })
+        ])
       }
     });
   });
@@ -630,6 +650,11 @@ describe('WorkHubInitUseCase', () => {
         actionRequiredCount: 6,
         gddDelayCount: 1,
         daysThresholdExceededCount: 5
+      },
+      attentionList: {
+        items: expect.arrayContaining([
+          expect.objectContaining({ farmId: 2, taskName: 'B', linkTarget: 'work' })
+        ])
       }
     });
   });
