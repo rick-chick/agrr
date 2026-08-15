@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { computeWorkRecordAmountDiff, parseWorkRecordAmount } from './work-record-amount-diff';
+import {
+  computeWorkRecordAmountDiff,
+  isAmountTrackedScheduleCategory,
+  parseWorkRecordAmount
+} from './work-record-amount-diff';
 
 describe('parseWorkRecordAmount', () => {
   it('parses numeric strings', () => {
@@ -9,6 +13,18 @@ describe('parseWorkRecordAmount', () => {
   it('returns null for empty or invalid values', () => {
     expect(parseWorkRecordAmount('')).toBeNull();
     expect(parseWorkRecordAmount('abc')).toBeNull();
+  });
+});
+
+describe('isAmountTrackedScheduleCategory', () => {
+  it('returns true for fertilizer and pest_control', () => {
+    expect(isAmountTrackedScheduleCategory('fertilizer')).toBe(true);
+    expect(isAmountTrackedScheduleCategory('pest_control')).toBe(true);
+  });
+
+  it('returns false for general and null', () => {
+    expect(isAmountTrackedScheduleCategory('general')).toBe(false);
+    expect(isAmountTrackedScheduleCategory(null)).toBe(false);
   });
 });
 
