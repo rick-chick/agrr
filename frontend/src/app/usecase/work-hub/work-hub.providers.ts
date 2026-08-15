@@ -2,9 +2,11 @@ import { Provider } from '@angular/core';
 import { PlanApiGateway } from '../../adapters/plans/plan-api.gateway';
 import { PrivatePlanCreateApiGateway } from '../../adapters/private-plan-create/private-plan-create-api.gateway';
 import { WorkHubApiGateway } from '../../adapters/work-hub/work-hub-api.gateway';
+import { WorkVarianceApiGateway } from '../../adapters/work-variance/work-variance-api.gateway';
 import { WorkHubPresenter } from '../../adapters/work-hub/work-hub.presenter';
 import { PLAN_GATEWAY } from '../plans/plan-gateway';
 import { PRIVATE_PLAN_CREATE_GATEWAY } from '../private-plan-create/private-plan-create-gateway';
+import { WORK_VARIANCE_GATEWAY } from '../work-variance/work-variance-gateway';
 import { WORK_HUB_GATEWAY } from './work-hub-gateway';
 import { ENSURE_PLAN_FOR_FARM_OUTPUT_PORT } from './ensure-plan-for-farm.output-port';
 import { EnsurePlanForFarmUseCase } from './ensure-plan-for-farm.usecase';
@@ -18,6 +20,7 @@ export const WORK_HUB_PROVIDERS: readonly Provider[] = [
   { provide: WORK_HUB_INIT_OUTPUT_PORT, useExisting: WorkHubPresenter },
   { provide: ENSURE_PLAN_FOR_FARM_OUTPUT_PORT, useExisting: WorkHubPresenter },
   { provide: WORK_HUB_GATEWAY, useClass: WorkHubApiGateway },
+  { provide: WORK_VARIANCE_GATEWAY, useClass: WorkVarianceApiGateway },
   { provide: PLAN_GATEWAY, useClass: PlanApiGateway },
   { provide: PRIVATE_PLAN_CREATE_GATEWAY, useClass: PrivatePlanCreateApiGateway }
 ];

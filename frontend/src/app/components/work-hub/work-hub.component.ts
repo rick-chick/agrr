@@ -17,6 +17,7 @@ const initialControl: WorkHubViewState = {
   error: null,
   farms: [],
   portfolioSummary: null,
+  varianceCoverage: null,
   attentionList: null,
   pendingSuccessFlash: null,
   pendingNavigation: null
@@ -65,6 +66,21 @@ const initialControl: WorkHubViewState = {
               <dd>{{ control.portfolioSummary.daysThresholdExceededCount }}</dd>
             </div>
           </dl>
+          @if (control.varianceCoverage) {
+            <p class="work-hub__variance-coverage">
+              {{
+                'work.hub.portfolio_summary.variance_coverage'
+                  | translate
+                    : {
+                        farms: control.varianceCoverage.farmCount,
+                        plans: control.varianceCoverage.planCount
+                      }
+              }}
+            </p>
+          }
+          <a routerLink="/work/variance" class="btn btn-secondary work-hub__variance-link">
+            {{ 'work.hub.portfolio_summary.view_variance_portfolio' | translate }}
+          </a>
         </section>
       }
 
@@ -146,6 +162,20 @@ const initialControl: WorkHubViewState = {
                             "
                           >
                             {{ 'work.hub.context_attention_badge' | translate }}
+                          </span>
+                        }
+                        @if (farm.otherVariancePlanCount > 0) {
+                          <span
+                            class="work-hub__other-plans-badge"
+                            [attr.aria-label]="
+                              'work.hub.other_plans_badge_aria'
+                                | translate: { count: farm.otherVariancePlanCount }
+                            "
+                          >
+                            {{
+                              'work.hub.other_plans_badge'
+                                | translate: { count: farm.otherVariancePlanCount }
+                            }}
                           </span>
                         }
                       </span>

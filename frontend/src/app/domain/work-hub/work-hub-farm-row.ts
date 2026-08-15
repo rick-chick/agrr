@@ -11,4 +11,16 @@ export interface WorkHubFarmRow {
   gddDelayCount: number;
   daysExceedanceCount: number;
   thresholdExceededCount: number;
+  otherVariancePlanCount: number;
 }
+
+export type WorkHubListedFarm = Omit<
+  WorkHubFarmRow,
+  | 'overdueCount'
+  | 'todayCount'
+  | 'unrecordedCount'
+  | 'gddDelayCount'
+  | 'daysExceedanceCount'
+  | 'thresholdExceededCount'
+  | 'otherVariancePlanCount'
+>;

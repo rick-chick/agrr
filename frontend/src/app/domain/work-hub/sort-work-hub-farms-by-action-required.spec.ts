@@ -16,6 +16,7 @@ function farm(
     gddDelayCount: 0,
     daysExceedanceCount: 0,
     thresholdExceededCount: 0,
+    otherVariancePlanCount: 0,
     ...overrides
   };
 }

@@ -6,22 +6,14 @@ import {
   type WorkHubAttentionList
 } from '../../domain/work-hub/build-work-hub-attention-list';
 import type { VariancePortfolioRow } from '../../domain/work-variance-portfolio/variance-portfolio-row';
+import { variancePortfolioRowNeedsAttention } from '../../domain/work-variance-portfolio/variance-portfolio-row-needs-attention';
 import { PlanGateway } from '../plans/plan-gateway';
-
-function rowNeedsAttention(row: VariancePortfolioRow): boolean {
-  return (
-    row.unrecordedCount > 0 ||
-    row.gddDelayCount > 0 ||
-    row.thresholdExceededCount > 0 ||
-    row.daysThresholdExceededCount > 0
-  );
-}
 
 export function loadVariancePortfolioAttentionItems(
   rows: ReadonlyArray<VariancePortfolioRow>,
   planGateway: PlanGateway
 ): Observable<WorkHubAttentionList> {
-  const attentionRows = rows.filter(rowNeedsAttention);
+  const attentionRows = rows.filter(variancePortfolioRowNeedsAttention);
   if (!attentionRows.length) {
     return of({ items: [] });
   }

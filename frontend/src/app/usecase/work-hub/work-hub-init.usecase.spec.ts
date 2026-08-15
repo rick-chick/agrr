@@ -6,6 +6,7 @@ import { WorkHubGateway } from './work-hub-gateway';
 import { WorkHubInitOutputPort } from './work-hub-init.output-port';
 import { EnsurePlanForFarmUseCase } from './ensure-plan-for-farm.usecase';
 import { PlanGateway } from '../plans/plan-gateway';
+import { WorkVarianceGateway } from '../work-variance/work-variance-gateway';
 
 const baseFarm = {
   fieldCount: 2,
@@ -59,6 +60,11 @@ const zeroPortfolio = {
   daysThresholdExceededCount: 0
 };
 
+const zeroVarianceCoverage = {
+  farmCount: 0,
+  planCount: 0
+};
+
 describe('WorkHubInitUseCase', () => {
   const createPlanGateway = (overrides: Partial<PlanGateway> = {}): PlanGateway =>
     ({
@@ -79,6 +85,12 @@ describe('WorkHubInitUseCase', () => {
       ...overrides
     }) as PlanGateway;
 
+  const createWorkVarianceGateway = (overrides: Partial<WorkVarianceGateway> = {}): WorkVarianceGateway =>
+    ({
+      listVariancePortfolio: () => of([]),
+      ...overrides
+    }) as WorkVarianceGateway;
+
   it('presents farms with task counts when multiple farms exist', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-12T12:00:00'));
@@ -90,13 +102,7 @@ describe('WorkHubInitUseCase', () => {
             farmId: 1,
             farmName: 'Farm 1',
             ...baseFarm,
-            planId: 9,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: 9
           },
           {
             farmId: 2,
@@ -104,13 +110,7 @@ describe('WorkHubInitUseCase', () => {
             fieldCount: 1,
             totalArea: 40,
             hasValidFields: true,
-            planId: 10,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: 10
           }
         ])
     };
@@ -149,6 +149,7 @@ describe('WorkHubInitUseCase', () => {
     const useCase = new WorkHubInitUseCase(
       outputPort,
       workHubGateway,
+      createWorkVarianceGateway(),
       planGateway,
       { execute: vi.fn() } as unknown as EnsurePlanForFarmUseCase
     );
@@ -168,6 +169,7 @@ describe('WorkHubInitUseCase', () => {
         })
       ],
       portfolioSummary: zeroPortfolio,
+      varianceCoverage: zeroVarianceCoverage,
       attentionList: { items: [] }
     });
 
@@ -182,13 +184,7 @@ describe('WorkHubInitUseCase', () => {
             farmId: 1,
             farmName: 'Farm 1',
             ...baseFarm,
-            planId: null,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: null
           },
           {
             farmId: 2,
@@ -196,13 +192,7 @@ describe('WorkHubInitUseCase', () => {
             fieldCount: 1,
             totalArea: 40,
             hasValidFields: true,
-            planId: null,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: null
           }
         ])
     };
@@ -217,6 +207,7 @@ describe('WorkHubInitUseCase', () => {
     const useCase = new WorkHubInitUseCase(
       outputPort,
       workHubGateway,
+      createWorkVarianceGateway(),
       createPlanGateway({ getTaskSchedule }),
       { execute: vi.fn() } as unknown as EnsurePlanForFarmUseCase
     );
@@ -229,6 +220,7 @@ describe('WorkHubInitUseCase', () => {
         expect.objectContaining({ overdueCount: 0, todayCount: 0, unrecordedCount: 0, gddDelayCount: 0, daysExceedanceCount: 0, thresholdExceededCount: 0 })
       ],
       portfolioSummary: zeroPortfolio,
+      varianceCoverage: zeroVarianceCoverage,
       attentionList: { items: [] }
     });
   });
@@ -241,13 +233,7 @@ describe('WorkHubInitUseCase', () => {
         fieldCount: 1,
         totalArea: 50,
         hasValidFields: true,
-        planId: 9,
-        overdueCount: 0,
-        todayCount: 0,
-        unrecordedCount: 0,
-        gddDelayCount: 0,
-        daysExceedanceCount: 0,
-        thresholdExceededCount: 0
+        planId: 9
       }
     ];
     const workHubGateway: WorkHubGateway = {
@@ -265,6 +251,7 @@ describe('WorkHubInitUseCase', () => {
     const useCase = new WorkHubInitUseCase(
       outputPort,
       workHubGateway,
+      createWorkVarianceGateway(),
       createPlanGateway(),
       { execute: ensureExecute } as unknown as EnsurePlanForFarmUseCase
     );
@@ -281,6 +268,7 @@ describe('WorkHubInitUseCase', () => {
         })
       ],
       portfolioSummary: zeroPortfolio,
+      varianceCoverage: zeroVarianceCoverage,
       attentionList: { items: [] }
     });
     expect(beginEnsure).toHaveBeenCalled();
@@ -297,13 +285,7 @@ describe('WorkHubInitUseCase', () => {
             fieldCount: 0,
             totalArea: 0,
             hasValidFields: false,
-            planId: null,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: null
           }
         ])
     };
@@ -317,6 +299,7 @@ describe('WorkHubInitUseCase', () => {
     const useCase = new WorkHubInitUseCase(
       outputPort,
       workHubGateway,
+      createWorkVarianceGateway(),
       createPlanGateway(),
       { execute: vi.fn() } as unknown as EnsurePlanForFarmUseCase
     );
@@ -335,6 +318,7 @@ describe('WorkHubInitUseCase', () => {
         })
       ],
       portfolioSummary: zeroPortfolio,
+      varianceCoverage: zeroVarianceCoverage,
       attentionList: { items: [] }
     });
   });
@@ -347,13 +331,7 @@ describe('WorkHubInitUseCase', () => {
             farmId: 1,
             farmName: 'Farm 1',
             ...baseFarm,
-            planId: 9,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: 9
           },
           {
             farmId: 2,
@@ -361,13 +339,7 @@ describe('WorkHubInitUseCase', () => {
             fieldCount: 1,
             totalArea: 40,
             hasValidFields: true,
-            planId: 10,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: 10
           }
         ])
     };
@@ -435,6 +407,7 @@ describe('WorkHubInitUseCase', () => {
     const useCase = new WorkHubInitUseCase(
       outputPort,
       workHubGateway,
+      createWorkVarianceGateway(),
       planGateway,
       { execute: vi.fn() } as unknown as EnsurePlanForFarmUseCase
     );
@@ -463,6 +436,7 @@ describe('WorkHubInitUseCase', () => {
         gddDelayCount: 2,
         daysThresholdExceededCount: 2
       },
+      varianceCoverage: zeroVarianceCoverage,
       attentionList: {
         items: expect.arrayContaining([
           expect.objectContaining({
@@ -490,13 +464,7 @@ describe('WorkHubInitUseCase', () => {
             farmId: 1,
             farmName: 'Low',
             ...baseFarm,
-            planId: 9,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: 9
           },
           {
             farmId: 2,
@@ -504,13 +472,7 @@ describe('WorkHubInitUseCase', () => {
             fieldCount: 1,
             totalArea: 40,
             hasValidFields: true,
-            planId: 10,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: 10
           },
           {
             farmId: 3,
@@ -518,13 +480,7 @@ describe('WorkHubInitUseCase', () => {
             fieldCount: 1,
             totalArea: 40,
             hasValidFields: true,
-            planId: 11,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: 11
           }
         ])
     };
@@ -634,6 +590,7 @@ describe('WorkHubInitUseCase', () => {
     const useCase = new WorkHubInitUseCase(
       outputPort,
       workHubGateway,
+      createWorkVarianceGateway(),
       planGateway,
       { execute: vi.fn() } as unknown as EnsurePlanForFarmUseCase
     );
@@ -651,6 +608,7 @@ describe('WorkHubInitUseCase', () => {
         gddDelayCount: 1,
         daysThresholdExceededCount: 5
       },
+      varianceCoverage: zeroVarianceCoverage,
       attentionList: {
         items: expect.arrayContaining([
           expect.objectContaining({ farmId: 2, taskName: 'B', linkTarget: 'work' })
@@ -667,13 +625,7 @@ describe('WorkHubInitUseCase', () => {
             farmId: 1,
             farmName: 'Farm A',
             ...baseFarm,
-            planId: 9,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: 9
           },
           {
             farmId: 2,
@@ -681,13 +633,7 @@ describe('WorkHubInitUseCase', () => {
             fieldCount: 1,
             totalArea: 40,
             hasValidFields: true,
-            planId: 10,
-            overdueCount: 0,
-            todayCount: 0,
-            unrecordedCount: 0,
-            gddDelayCount: 0,
-            daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            planId: 10
           }
         ])
     };
@@ -742,6 +688,7 @@ describe('WorkHubInitUseCase', () => {
     const useCase = new WorkHubInitUseCase(
       outputPort,
       workHubGateway,
+      createWorkVarianceGateway(),
       planGateway,
       { execute: vi.fn() } as unknown as EnsurePlanForFarmUseCase
     );
@@ -773,6 +720,100 @@ describe('WorkHubInitUseCase', () => {
     );
   });
 
+  it('presents variance coverage and other plan counts from portfolio API', () => {
+    const workHubGateway: WorkHubGateway = {
+      listHubFarms: () =>
+        of([
+          {
+            farmId: 1,
+            farmName: 'Farm 1',
+            ...baseFarm,
+            planId: 9
+          },
+          {
+            farmId: 2,
+            farmName: 'Farm 2',
+            fieldCount: 1,
+            totalArea: 40,
+            hasValidFields: true,
+            planId: 20
+          }
+        ])
+    };
+    const present = vi.fn();
+    const outputPort: WorkHubInitOutputPort = {
+      present,
+      onError: vi.fn(),
+      beginEnsure: vi.fn()
+    };
+    const workVarianceGateway = createWorkVarianceGateway({
+      listVariancePortfolio: () =>
+        of([
+          {
+            farmId: 1,
+            farmName: 'Farm 1',
+            planId: 9,
+            planYear: 2026,
+            status: 'active',
+            unrecordedCount: 1,
+            gddDelayCount: 0,
+            thresholdExceededCount: 0,
+            daysThresholdExceededCount: 0,
+            carryoverNotImported: false
+          },
+          {
+            farmId: 1,
+            farmName: 'Farm 1',
+            planId: 10,
+            planYear: 2025,
+            status: 'active',
+            unrecordedCount: 0,
+            gddDelayCount: 1,
+            thresholdExceededCount: 0,
+            daysThresholdExceededCount: 0,
+            carryoverNotImported: false
+          },
+          {
+            farmId: 2,
+            farmName: 'Farm 2',
+            planId: 20,
+            planYear: 2026,
+            status: 'active',
+            unrecordedCount: 0,
+            gddDelayCount: 0,
+            thresholdExceededCount: 1,
+            daysThresholdExceededCount: 0,
+            carryoverNotImported: false
+          }
+        ])
+    });
+
+    const useCase = new WorkHubInitUseCase(
+      outputPort,
+      workHubGateway,
+      workVarianceGateway,
+      createPlanGateway(),
+      { execute: vi.fn() } as unknown as EnsurePlanForFarmUseCase
+    );
+    useCase.execute();
+
+    expect(present).toHaveBeenCalledWith({
+      farms: [
+        expect.objectContaining({
+          farmId: 1,
+          otherVariancePlanCount: 1
+        }),
+        expect.objectContaining({
+          farmId: 2,
+          otherVariancePlanCount: 0
+        })
+      ],
+      portfolioSummary: zeroPortfolio,
+      varianceCoverage: { farmCount: 2, planCount: 3 },
+      attentionList: { items: [] }
+    });
+  });
+
   it('forwards load errors to output port', () => {
     const workHubGateway: WorkHubGateway = {
       listHubFarms: () => throwError(() => new Error('common.api_error.generic'))
@@ -787,6 +828,7 @@ describe('WorkHubInitUseCase', () => {
     const useCase = new WorkHubInitUseCase(
       outputPort,
       workHubGateway,
+      createWorkVarianceGateway(),
       createPlanGateway(),
       { execute: vi.fn() } as unknown as EnsurePlanForFarmUseCase
     );

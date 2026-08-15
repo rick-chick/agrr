@@ -18,6 +18,7 @@ function baseControl(
     error: null,
     farms: [],
     portfolioSummary: null,
+    varianceCoverage: null,
     attentionList: null,
     pendingSuccessFlash: null,
     pendingNavigation: null,
@@ -93,6 +94,10 @@ describe('WorkHubComponent', () => {
       'work.hub.portfolio_summary.action_required': '要対応',
       'work.hub.portfolio_summary.gdd_delay': 'GDD遅延',
       'work.hub.portfolio_summary.threshold_exceeded': '閾値超過',
+      'work.hub.portfolio_summary.variance_coverage': '{{farms}} 農場 / {{plans}} 計画に乖離',
+      'work.hub.portfolio_summary.view_variance_portfolio': '乖離横断を見る',
+      'work.hub.other_plans_badge': '他 {{count}} 計画あり',
+      'work.hub.other_plans_badge_aria': '代表計画以外に乖離のある計画が {{count}} 件あります',
       'work.hub.attention_list.title': '要対応タスク（上位）',
       'work.hub.attention_list.item': '{{farm}} · {{task}}',
       'work.hub.attention_list.open_work': '作業へ',
@@ -123,6 +128,7 @@ describe('WorkHubComponent', () => {
           gddDelayCount: 0,
           daysExceedanceCount: 0,
           thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
           unrecordedCount: 0
         }
       ]
@@ -158,6 +164,7 @@ describe('WorkHubComponent', () => {
           gddDelayCount: 0,
           daysExceedanceCount: 0,
           thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
           unrecordedCount: 0
         },
         {
@@ -172,6 +179,7 @@ describe('WorkHubComponent', () => {
           gddDelayCount: 0,
           daysExceedanceCount: 0,
           thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
           unrecordedCount: 0
         }
       ]
@@ -195,7 +203,8 @@ describe('WorkHubComponent', () => {
       unrecordedCount: 0,
       gddDelayCount: 0,
       daysExceedanceCount: 0,
-      thresholdExceededCount: 0
+      thresholdExceededCount: 0,
+      otherVariancePlanCount: 0
     });
     expect(component.control.submitting).toBe(true);
     expect(ensureExecute).toHaveBeenCalledWith({ farmId: 3, existingPlanId: null });
@@ -217,6 +226,7 @@ describe('WorkHubComponent', () => {
           gddDelayCount: 0,
           daysExceedanceCount: 0,
           thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
           unrecordedCount: 0
         }
       ]
@@ -242,6 +252,7 @@ describe('WorkHubComponent', () => {
           gddDelayCount: 0,
           daysExceedanceCount: 0,
           thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
           unrecordedCount: 0
         }
       ]
@@ -269,6 +280,7 @@ describe('WorkHubComponent', () => {
           gddDelayCount: 0,
           daysExceedanceCount: 0,
           thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
           unrecordedCount: 0
         }
       ]
@@ -310,6 +322,7 @@ describe('WorkHubComponent', () => {
           gddDelayCount: 0,
           daysExceedanceCount: 0,
           thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
           unrecordedCount: 0
         }
       ]
@@ -337,6 +350,7 @@ describe('WorkHubComponent', () => {
           gddDelayCount: 0,
           daysExceedanceCount: 0,
           thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
           unrecordedCount: 0
         },
         {
@@ -351,6 +365,7 @@ describe('WorkHubComponent', () => {
           gddDelayCount: 0,
           daysExceedanceCount: 0,
           thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
           unrecordedCount: 0
         }
       ]
@@ -380,7 +395,8 @@ describe('WorkHubComponent', () => {
           unrecordedCount: 0,
           gddDelayCount: 2,
           daysExceedanceCount: 1,
-          thresholdExceededCount: 3
+          thresholdExceededCount: 3,
+          otherVariancePlanCount: 0
         }
       ]
     });
@@ -406,7 +422,8 @@ describe('WorkHubComponent', () => {
           unrecordedCount: 5,
           gddDelayCount: 0,
           daysExceedanceCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0
         }
       ]
     });
@@ -431,7 +448,8 @@ describe('WorkHubComponent', () => {
           unrecordedCount: 0,
           gddDelayCount: 1,
           daysExceedanceCount: 0,
-          thresholdExceededCount: 2
+          thresholdExceededCount: 2,
+          otherVariancePlanCount: 0
         },
         {
           farmId: 2,
@@ -445,7 +463,8 @@ describe('WorkHubComponent', () => {
           unrecordedCount: 0,
           gddDelayCount: 0,
           daysExceedanceCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0
         }
       ]
     });
@@ -479,7 +498,8 @@ describe('WorkHubComponent', () => {
           unrecordedCount: 3,
           gddDelayCount: 2,
           daysExceedanceCount: 2,
-          thresholdExceededCount: 4
+          thresholdExceededCount: 4,
+          otherVariancePlanCount: 0
         },
         {
           farmId: 2,
@@ -493,7 +513,8 @@ describe('WorkHubComponent', () => {
           unrecordedCount: 2,
           gddDelayCount: 1,
           daysExceedanceCount: 2,
-          thresholdExceededCount: 3
+          thresholdExceededCount: 3,
+          otherVariancePlanCount: 0
         }
       ]
     });
@@ -535,7 +556,8 @@ describe('WorkHubComponent', () => {
           unrecordedCount: 2,
           gddDelayCount: 1,
           daysExceedanceCount: 1,
-          thresholdExceededCount: 1
+          thresholdExceededCount: 1,
+          otherVariancePlanCount: 0
         }
       ]
     });
@@ -588,7 +610,8 @@ describe('WorkHubComponent', () => {
           unrecordedCount: 0,
           gddDelayCount: 1,
           daysExceedanceCount: 1,
-          thresholdExceededCount: 1
+          thresholdExceededCount: 1,
+          otherVariancePlanCount: 0
         },
         {
           farmId: 2,
@@ -602,7 +625,8 @@ describe('WorkHubComponent', () => {
           unrecordedCount: 0,
           gddDelayCount: 0,
           daysExceedanceCount: 1,
-          thresholdExceededCount: 1
+          thresholdExceededCount: 1,
+          otherVariancePlanCount: 0
         }
       ]
     });
@@ -630,5 +654,76 @@ describe('WorkHubComponent', () => {
     retryButton?.click();
 
     expect(initExecute).toHaveBeenCalled();
+  });
+
+  it('shows variance portfolio link and coverage text in portfolio summary', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      portfolioSummary: {
+        unrecordedCount: 1,
+        actionRequiredCount: 2,
+        gddDelayCount: 1,
+        daysThresholdExceededCount: 1
+      },
+      varianceCoverage: { farmCount: 2, planCount: 3 },
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          unrecordedCount: 1,
+          gddDelayCount: 1,
+          daysExceedanceCount: 1,
+          thresholdExceededCount: 2,
+          otherVariancePlanCount: 0
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('.work-hub__variance-link') as HTMLAnchorElement;
+    expect(link?.textContent).toContain('乖離横断を見る');
+    expect(link?.getAttribute('href')).toContain('/work/variance');
+    expect(fixture.nativeElement.textContent).toContain('2 農場 / 3 計画に乖離');
+  });
+
+  it('shows other plans badge when otherVariancePlanCount is positive', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      portfolioSummary: {
+        unrecordedCount: 0,
+        actionRequiredCount: 1,
+        gddDelayCount: 0,
+        daysThresholdExceededCount: 0
+      },
+      varianceCoverage: { farmCount: 1, planCount: 2 },
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          unrecordedCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 1,
+          otherVariancePlanCount: 2
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const badge = fixture.nativeElement.querySelector('.work-hub__other-plans-badge');
+    expect(badge?.textContent).toContain('他 2 計画あり');
+    expect(badge?.getAttribute('aria-label')).toContain('代表計画以外に乖離のある計画が 2 件あります');
   });
 });
