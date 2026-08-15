@@ -12,7 +12,7 @@ import { TaskScheduleItemMutationResponse } from './task-schedule-item-mutation.
 export interface TaskScheduleQueryParams {
   scope?: 'plan';
   field_cultivation_id?: number;
-  category?: 'general' | 'fertilizer';
+  category?: 'general' | 'fertilizer' | 'pest_control';
 }
 
 export interface TaskScheduleItemCreateRequest {

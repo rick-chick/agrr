@@ -1481,7 +1481,9 @@
       "filter_category_all": "All",
       "filter_category_general": "General",
       "filter_category_fertilizer": "Fertilizer",
-      "fertilizer_summary": "Fertilizer {{total}} (basal {{basal}} · topdress {{topdress}})"
+      "filter_category_pest_control": "Pest control",
+      "fertilizer_summary": "Fertilizer {{total}} (basal {{basal}} · topdress {{topdress}})",
+      "pest_control_summary": "Pest control {{total}} (preventive {{preventive}} · curative {{curative}})"
     },
     "carryover": {
       "next_plan_heading": "Next plan",

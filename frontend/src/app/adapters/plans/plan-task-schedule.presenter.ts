@@ -24,6 +24,10 @@ import {
   summarizePlanTaskScheduleFertilizer,
   type PlanTaskScheduleFertilizerSummary
 } from '../../domain/work-schedule/summarize-plan-task-schedule-fertilizer';
+import {
+  summarizePlanTaskSchedulePestControl,
+  type PlanTaskSchedulePestControlSummary
+} from '../../domain/work-schedule/summarize-plan-task-schedule-pest-control';
 import { computePlanTaskScheduleMonthAverageDelta } from '../../domain/work-schedule/compute-plan-task-schedule-month-average-delta';
 import { localTodayIso } from '../../core/local-today';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
@@ -59,6 +63,7 @@ type DerivedViewFields = Pick<
   | 'fieldsWithoutTasksCount'
   | 'allFieldsLackTasks'
   | 'fertilizerSummary'
+  | 'pestControlSummary'
 >;
 
 const emptyDerivedFields: DerivedViewFields = {
@@ -74,7 +79,8 @@ const emptyDerivedFields: DerivedViewFields = {
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
   allFieldsLackTasks: false,
-  fertilizerSummary: { total: 0, basal: 0, topdress: 0 }
+  fertilizerSummary: { total: 0, basal: 0, topdress: 0 },
+  pestControlSummary: { total: 0, preventive: 0, curative: 0 }
 };
 
 @Injectable()
@@ -90,6 +96,11 @@ export class PlanTaskSchedulePresenter
     total: 0,
     basal: 0,
     topdress: 0
+  };
+  private cachedPestControlSummary: PlanTaskSchedulePestControlSummary = {
+    total: 0,
+    preventive: 0,
+    curative: 0
   };
 
   setView(view: PlanTaskScheduleView): void {
@@ -318,6 +329,7 @@ export class PlanTaskSchedulePresenter
 
     const fieldCoverage = summarizePlanTaskScheduleFieldCoverage(schedule.fields);
     const fertilizerSummary = this.resolveFertilizerSummary(schedule.fields, categoryFilter);
+    const pestControlSummary = this.resolvePestControlSummary(schedule.fields, categoryFilter);
 
     return {
       monthGroups,
@@ -329,6 +341,7 @@ export class PlanTaskSchedulePresenter
       filteredTaskCount,
       regenerateRequiresConfirm: countScheduleTasks(schedule) > 0,
       fertilizerSummary,
+      pestControlSummary,
       ...fieldCoverage
     };
   }
@@ -346,6 +359,21 @@ export class PlanTaskSchedulePresenter
       return computed;
     }
     return this.cachedFertilizerSummary;
+  }
+
+  private resolvePestControlSummary(
+    fields: TaskScheduleResponse['fields'],
+    categoryFilter: PlanTaskScheduleCategoryFilter
+  ): PlanTaskSchedulePestControlSummary {
+    const computed = summarizePlanTaskSchedulePestControl(fields);
+    if (computed.total > 0) {
+      this.cachedPestControlSummary = computed;
+      return computed;
+    }
+    if (categoryFilter === 'pest_control') {
+      return computed;
+    }
+    return this.cachedPestControlSummary;
   }
 
   onItemMutationSuccess(): void {
