@@ -79,6 +79,16 @@ describe('PlanListComponent', () => {
             action_required_summary: 'Action required: {{count}}',
             work_link: 'Record work',
             learn_link: 'Review learning'
+          },
+          farm_group: {
+            expand: 'Expand',
+            collapse: 'Collapse',
+            compare_variance: 'Compare variance'
+          },
+          year_label: 'Year {{year}}',
+          status: {
+            pending: 'Pending',
+            completed: 'Completed'
           }
         }
       },
@@ -96,6 +106,8 @@ describe('PlanListComponent', () => {
     name: 'Plan A',
     status: 'pending',
     farm_id: 1,
+    farm_name: 'Farm A',
+    plan_year: 2026,
     inputGap: { unrecordedCount: 0, actionRequiredCount: 0 },
     ...overrides
   });
@@ -227,13 +239,49 @@ describe('PlanListComponent', () => {
   it('displays plans in the list', async () => {
     const plans: PlanListPlan[] = [
       planWithGap({ id: 1, name: 'Plan A' }),
-      planWithGap({ id: 2, name: 'Plan B', status: 'completed', farm_id: 2 })
+      planWithGap({ id: 2, name: 'Plan B', status: 'completed', farm_id: 2, farm_name: 'Farm B' })
     ];
 
     const planTitles = (await renderPlans(plans)).querySelectorAll('.item-card__title');
     expect(planTitles).toHaveLength(2);
     expect(planTitles[0].textContent.trim()).toBe('Plan A');
     expect(planTitles[1].textContent.trim()).toBe('Plan B');
+  });
+
+  it('groups plans by farm with collapsible sections', async () => {
+    const nativeElement = await renderPlans([
+      planWithGap({ id: 1, farm_id: 1, farm_name: 'Farm A' }),
+      planWithGap({ id: 2, farm_id: 2, farm_name: 'Farm B', name: 'Plan B' })
+    ]);
+
+    const groups = nativeElement.querySelectorAll('.plan-list__farm-group');
+    expect(groups).toHaveLength(2);
+    expect(nativeElement.querySelector('#plan-list-farm-1')?.textContent).toContain('Farm A');
+    expect(nativeElement.querySelector('#plan-list-farm-2')?.textContent).toContain('Farm B');
+
+    component.toggleFarmGroup(1);
+    fixture.detectChanges();
+
+    expect(nativeElement.querySelector('#plan-list-farm-plans-1')).toBeNull();
+    expect(nativeElement.querySelector('#plan-list-farm-plans-2')).toBeTruthy();
+  });
+
+  it('shows plan_year and status on each plan card', async () => {
+    const nativeElement = await renderPlans([
+      planWithGap({ id: 1, plan_year: 2025, status: 'pending' })
+    ]);
+
+    expect(nativeElement.querySelector('.plan-list__plan-year')?.textContent).toContain('2025');
+    expect(nativeElement.querySelector('.plan-list__plan-status')?.textContent).toContain('Pending');
+  });
+
+  it('links compare variance to /work/variance with farm filter', async () => {
+    const nativeElement = await renderPlans([planWithGap({ farm_id: 42, farm_name: 'Farm A' })]);
+
+    const link = nativeElement.querySelector('.plan-list__variance-link') as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toContain('/work/variance');
+    expect(link.getAttribute('href')).toContain('farm_id=42');
   });
 
   it('delete button opens delete confirm dialog', async () => {

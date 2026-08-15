@@ -2448,6 +2448,11 @@
         "action_required_summary": "कार्रवाई आवश्यक: {{count}}",
         "work_link": "कार्य अभिलेखित करें",
         "learn_link": "सीख की समीक्षा करें"
+      },
+      "farm_group": {
+        "expand": "विस्तार करें",
+        "collapse": "समेटें",
+        "compare_variance": "विचरण की तुलना करें"
       }
     },
     "new": {

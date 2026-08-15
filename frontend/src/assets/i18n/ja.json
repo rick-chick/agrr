@@ -2334,6 +2334,11 @@
         "action_required_summary": "要対応: {{count}}件",
         "work_link": "作業を記録",
         "learn_link": "学習を確認"
+      },
+      "farm_group": {
+        "expand": "展開",
+        "collapse": "折りたたむ",
+        "compare_variance": "乖離を比較"
       }
     },
     "new": {

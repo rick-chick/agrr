@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ElementRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -12,6 +12,8 @@ import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingUndoToastViewEffects } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { applyPendingErrorFlashViewEffects } from '../../core/view-effects/pending-error-flash-view.effects';
 import { CardListSkeletonComponent } from '../shared/skeleton/card-list-skeleton.component';
+import { buildPlanListFarmGroups } from '../../domain/plans/build-plan-list-farm-groups';
+import type { PlanListFarmGroup } from '../../domain/plans/plan-list-farm-group';
 
 const initialControl: PlanListViewState = {
   loading: true,
@@ -56,55 +58,104 @@ const initialControl: PlanListViewState = {
           <div class="section-card__header-actions">
             <a routerLink="/plans/new" class="btn btn-primary">{{ 'plans.index.new_plan' | translate }}</a>
           </div>
-          <ul class="card-list" role="list">
-            @for (plan of control.plans; track plan.id) {
-              <li class="card-list__item">
-                <article class="item-card">
-                  <a [routerLink]="['/plans', plan.id]" class="item-card__body">
-                    <span class="item-card__title">{{ plan.name | planDisplayName }}</span>
-                    @if (plan.inputGap) {
-                      <span class="plan-list__gap-summary">
-                        {{
-                          'plans.index.input_gap.unrecorded_summary'
-                            | translate: { count: plan.inputGap.unrecordedCount }
-                        }}
-                        ·
-                        {{
-                          'plans.index.input_gap.action_required_summary'
-                            | translate: { count: plan.inputGap.actionRequiredCount }
-                        }}
-                      </span>
-                    }
-                  </a>
-                  <div class="item-card__actions">
-                    <a
-                      [routerLink]="['/plans', plan.id, 'work']"
-                      class="btn btn-secondary plan-list__work-link"
-                    >
-                      {{ 'plans.index.input_gap.work_link' | translate }}
-                    </a>
-                    <a
-                      [routerLink]="['/plans', plan.id, 'learn']"
-                      class="btn btn-secondary plan-list__learn-link"
-                    >
-                      {{ 'plans.index.input_gap.learn_link' | translate }}
-                    </a>
-                    <a [routerLink]="['/plans', plan.id]" class="btn btn-secondary">
-                      {{ 'common.show' | translate }}
-                    </a>
-                    <button
-                      type="button"
-                      class="btn btn-danger"
-                      (click)="deletePlan(plan.id)"
-                      [attr.aria-label]="'common.delete' | translate"
-                    >
-                      {{ 'common.delete' | translate }}
-                    </button>
-                  </div>
-                </article>
-              </li>
-            }
-          </ul>
+          @for (group of farmGroups(); track group.farmId) {
+            <section class="plan-list__farm-group" [attr.aria-labelledby]="'plan-list-farm-' + group.farmId">
+              <header class="plan-list__farm-group-header">
+                <div class="plan-list__farm-group-heading">
+                  <button
+                    type="button"
+                    class="btn-link plan-list__farm-group-toggle"
+                    (click)="toggleFarmGroup(group.farmId)"
+                    [attr.aria-expanded]="isFarmGroupExpanded(group.farmId)"
+                    [attr.aria-controls]="'plan-list-farm-plans-' + group.farmId"
+                  >
+                    {{
+                      isFarmGroupExpanded(group.farmId)
+                        ? ('plans.index.farm_group.collapse' | translate)
+                        : ('plans.index.farm_group.expand' | translate)
+                    }}
+                  </button>
+                  <h2 id="plan-list-farm-{{ group.farmId }}" class="plan-list__farm-group-title">
+                    {{ group.farmName }}
+                  </h2>
+                </div>
+                <a
+                  class="btn btn-secondary plan-list__variance-link"
+                  routerLink="/work/variance"
+                  [queryParams]="{ farm_id: group.farmId }"
+                >
+                  {{ 'plans.index.farm_group.compare_variance' | translate }}
+                </a>
+              </header>
+              @if (isFarmGroupExpanded(group.farmId)) {
+                <ul
+                  id="plan-list-farm-plans-{{ group.farmId }}"
+                  class="card-list"
+                  role="list"
+                >
+                  @for (plan of group.plans; track plan.id) {
+                    <li class="card-list__item">
+                      <article class="item-card">
+                        <a [routerLink]="['/plans', plan.id]" class="item-card__body">
+                          <span class="item-card__title">{{ plan.name | planDisplayName }}</span>
+                          <span class="plan-list__plan-meta">
+                            @if (plan.plan_year != null) {
+                              <span class="plan-list__plan-year">
+                                {{ 'plans.index.year_label' | translate: { year: plan.plan_year } }}
+                              </span>
+                            }
+                            @if (plan.status) {
+                              <span class="plan-list__plan-status">
+                                {{ planStatusKey(plan.status) | translate }}
+                              </span>
+                            }
+                          </span>
+                          @if (plan.inputGap) {
+                            <span class="plan-list__gap-summary">
+                              {{
+                                'plans.index.input_gap.unrecorded_summary'
+                                  | translate: { count: plan.inputGap.unrecordedCount }
+                              }}
+                              ·
+                              {{
+                                'plans.index.input_gap.action_required_summary'
+                                  | translate: { count: plan.inputGap.actionRequiredCount }
+                              }}
+                            </span>
+                          }
+                        </a>
+                        <div class="item-card__actions">
+                          <a
+                            [routerLink]="['/plans', plan.id, 'work']"
+                            class="btn btn-secondary plan-list__work-link"
+                          >
+                            {{ 'plans.index.input_gap.work_link' | translate }}
+                          </a>
+                          <a
+                            [routerLink]="['/plans', plan.id, 'learn']"
+                            class="btn btn-secondary plan-list__learn-link"
+                          >
+                            {{ 'plans.index.input_gap.learn_link' | translate }}
+                          </a>
+                          <a [routerLink]="['/plans', plan.id]" class="btn btn-secondary">
+                            {{ 'common.show' | translate }}
+                          </a>
+                          <button
+                            type="button"
+                            class="btn btn-danger"
+                            (click)="deletePlan(plan.id)"
+                            [attr.aria-label]="'common.delete' | translate"
+                          >
+                            {{ 'common.delete' | translate }}
+                          </button>
+                        </div>
+                      </article>
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+          }
         }
       </section>
     </div>
@@ -143,6 +194,8 @@ export class PlanListComponent implements PlanListView, OnInit {
 
   pendingDeletePlanId: number | null = null;
 
+  private readonly collapsedFarmGroupIds = signal<ReadonlySet<number>>(new Set());
+
   private _control: PlanListViewState = initialControl;
   get control(): PlanListViewState {
     return this._control;
@@ -164,6 +217,30 @@ export class PlanListComponent implements PlanListView, OnInit {
   load(): void {
     this.control = { ...this.control, loading: true };
     this.loadUseCase.execute();
+  }
+
+  farmGroups(): PlanListFarmGroup[] {
+    return buildPlanListFarmGroups(this.control.plans);
+  }
+
+  isFarmGroupExpanded(farmId: number): boolean {
+    return !this.collapsedFarmGroupIds().has(farmId);
+  }
+
+  toggleFarmGroup(farmId: number): void {
+    this.collapsedFarmGroupIds.update((collapsed) => {
+      const next = new Set(collapsed);
+      if (next.has(farmId)) {
+        next.delete(farmId);
+      } else {
+        next.add(farmId);
+      }
+      return next;
+    });
+  }
+
+  planStatusKey(status: string): string {
+    return `plans.index.status.${status}`;
   }
 
   refreshAfterUndo(): void {
