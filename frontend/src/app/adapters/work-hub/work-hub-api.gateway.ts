@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { ApiService } from '../../services/api.service';
-import { WorkHubFarmRow } from '../../domain/work-hub/work-hub-farm-row';
+import { WorkHubListedFarm } from '../../domain/work-hub/work-hub-farm-row';
 import { WorkHubGateway } from '../../usecase/work-hub/work-hub-gateway';
 
 interface WorkHubFarmApiRow {
@@ -17,7 +17,7 @@ interface WorkHubFarmApiRow {
 export class WorkHubApiGateway implements WorkHubGateway {
   constructor(private readonly apiClient: ApiService) {}
 
-  listHubFarms(): Observable<WorkHubFarmRow[]> {
+  listHubFarms(): Observable<WorkHubListedFarm[]> {
     return this.apiClient.get<WorkHubFarmApiRow[]>('/api/v1/work/hub').pipe(
       map((rows) =>
         rows.map((row) => ({
@@ -26,13 +26,7 @@ export class WorkHubApiGateway implements WorkHubGateway {
           fieldCount: row.field_count,
           totalArea: row.total_area,
           hasValidFields: row.has_valid_fields,
-          planId: row.plan_id,
-          overdueCount: 0,
-          todayCount: 0,
-          unrecordedCount: 0,
-          gddDelayCount: 0,
-          daysExceedanceCount: 0,
-          thresholdExceededCount: 0
+          planId: row.plan_id
         }))
       )
     );

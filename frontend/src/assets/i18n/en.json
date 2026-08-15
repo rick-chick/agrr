@@ -250,13 +250,17 @@
       "threshold_exceeded_summary": "{{count}} need action",
       "context_attention_badge": "Attention",
       "context_attention_badge_aria": "{{count}} plan-core items need action",
+      "other_plans_badge": "{{count}} other plans",
+      "other_plans_badge_aria": "{{count}} other plans with variance besides the representative plan",
       "unrecorded_summary": "{{count}} unrecorded",
       "portfolio_summary": {
         "title": "All farms summary",
         "unrecorded": "Unrecorded",
         "action_required": "Action required",
         "gdd_delay": "GDD delay",
-        "threshold_exceeded": "Threshold exceeded"
+        "threshold_exceeded": "Threshold exceeded",
+        "variance_coverage": "Variance across {{farms}} farms / {{plans}} plans",
+        "view_variance_portfolio": "View variance portfolio"
       },
       "attention_list": {
         "title": "Top action-required tasks",

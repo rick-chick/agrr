@@ -10,6 +10,7 @@ function baseControl(overrides: Partial<WorkHubViewState> = {}): WorkHubViewStat
     error: null,
     farms: [],
     portfolioSummary: null,
+    varianceCoverage: null,
     attentionList: null,
     pendingSuccessFlash: null,
     pendingNavigation: null,
@@ -53,7 +54,8 @@ describe('WorkHubPresenter', () => {
           unrecordedCount: 0,
           gddDelayCount: 0,
           daysExceedanceCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0
         }
       ],
       portfolioSummary: {
@@ -62,6 +64,7 @@ describe('WorkHubPresenter', () => {
         gddDelayCount: 0,
         daysThresholdExceededCount: 0
       },
+      varianceCoverage: { farmCount: 0, planCount: 0 },
       attentionList: { items: [] }
     });
 
@@ -74,6 +77,7 @@ describe('WorkHubPresenter', () => {
           gddDelayCount: 0,
           daysThresholdExceededCount: 0
         },
+        varianceCoverage: { farmCount: 0, planCount: 0 },
         attentionList: { items: [] },
         farms: [
           {
@@ -88,7 +92,8 @@ describe('WorkHubPresenter', () => {
             unrecordedCount: 0,
             gddDelayCount: 0,
             daysExceedanceCount: 0,
-            thresholdExceededCount: 0
+            thresholdExceededCount: 0,
+            otherVariancePlanCount: 0
           }
         ]
       })

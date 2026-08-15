@@ -3089,13 +3089,17 @@
       "threshold_exceeded_summary": "要対応 {{count}} 件",
       "context_attention_badge": "注意",
       "context_attention_badge_aria": "計画芯で要対応 {{count}} 件",
+      "other_plans_badge": "他 {{count}} 計画あり",
+      "other_plans_badge_aria": "代表計画以外に乖離のある計画が {{count}} 件あります",
       "unrecorded_summary": "未記録 {{count}} 件",
       "portfolio_summary": {
         "title": "全農場サマリ",
         "unrecorded": "未記録",
         "action_required": "要対応",
         "gdd_delay": "GDD遅延",
-        "threshold_exceeded": "閾値超過"
+        "threshold_exceeded": "閾値超過",
+        "variance_coverage": "{{farms}} 農場 / {{plans}} 計画に乖離",
+        "view_variance_portfolio": "乖離横断を見る"
       },
       "attention_list": {
         "title": "要対応タスク（上位）",
