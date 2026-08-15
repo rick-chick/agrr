@@ -69,6 +69,8 @@ const loadedState: PlanTaskScheduleViewState = {
   fromDate: localTodayIso(),
   fieldCultivationFilterId: null,
   fieldFilterId: null,
+  categoryFilter: null,
+  fertilizerSummary: { total: 0, basal: 0, topdress: 0 },
   monthGroups: [],
   unscheduledRows: [],
   fieldFilterOptions: [],
@@ -167,14 +169,20 @@ function setScheduleControl(
   component: PlanTaskScheduleComponent,
   presenter: PlanTaskSchedulePresenter,
   control: PlanTaskScheduleViewState,
-  filters?: { fromDate?: string; fieldFilterId?: number | null; fieldCultivationFilterId?: number | null }
+  filters?: {
+    fromDate?: string;
+    fieldFilterId?: number | null;
+    fieldCultivationFilterId?: number | null;
+    categoryFilter?: PlanTaskScheduleViewState['categoryFilter'];
+  }
 ): void {
   component.control = control;
   if (control.schedule) {
     presenter.applyClientFilters(
       filters?.fromDate ?? control.fromDate,
       filters?.fieldFilterId ?? control.fieldFilterId,
-      filters?.fieldCultivationFilterId ?? control.fieldCultivationFilterId
+      filters?.fieldCultivationFilterId ?? control.fieldCultivationFilterId,
+      filters?.categoryFilter ?? control.categoryFilter
     );
   }
 }
@@ -259,6 +267,8 @@ describe('PlanTaskScheduleComponent', () => {
       fromDate: localTodayIso(),
       fieldFilterId: null,
       fieldCultivationFilterId: null,
+      categoryFilter: null,
+      fertilizerSummary: { total: 0, basal: 0, topdress: 0 },
       monthGroups: [],
       unscheduledRows: [],
       fieldFilterOptions: [],
@@ -823,7 +833,8 @@ describe('PlanTaskScheduleComponent', () => {
     expect(applyFiltersSpy).toHaveBeenCalledWith(
       expect.any(String),
       null,
-      42
+      42,
+      null
     );
   });
 
@@ -1382,5 +1393,92 @@ describe('PlanTaskScheduleComponent', () => {
 
     expect(hasLearnReorganizePipelineFailure(7)).toBe(true);
     expect(failureRouter.navigate).toHaveBeenCalledWith(['/plans', 7, 'learn']);
+  });
+
+  it('renders category filter chips and fertilizer summary when fertilizer tasks exist', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    translate.setTranslation('en', en as TranslationObject, true);
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            ...emptyFieldSchedule(1, 'North'),
+            schedules: {
+              general: [sampleGeneralTask({ item_id: 1, scheduled_date: '2026-06-10' })],
+              fertilizer: [
+                {
+                  ...sampleGeneralTask({ item_id: 2, scheduled_date: '2026-06-15' }),
+                  task_type: 'basal_fertilization',
+                  category: 'fertilizer',
+                  name: 'Basal'
+                },
+                {
+                  ...sampleGeneralTask({ item_id: 3, scheduled_date: '2026-06-20' }),
+                  task_type: 'topdress_fertilization',
+                  category: 'fertilizer',
+                  name: 'Topdress'
+                }
+              ],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    });
+    fixture.detectChanges();
+
+    const chips = fixture.nativeElement.querySelectorAll('.plan-task-schedule__category-chip');
+    expect(chips.length).toBe(3);
+    expect(fixture.nativeElement.textContent).toContain('Fertilizer 2 (basal 1 · topdress 1)');
+  });
+
+  it('reloads schedule with category=fertilizer when fertilizer chip is selected', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    translate.setTranslation('en', en as TranslationObject, true);
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            ...emptyFieldSchedule(1, 'North'),
+            schedules: {
+              general: [sampleGeneralTask()],
+              fertilizer: [
+                {
+                  ...sampleGeneralTask({ item_id: 2 }),
+                  task_type: 'basal_fertilization',
+                  category: 'fertilizer',
+                  name: 'Basal'
+                }
+              ],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    });
+    loadUseCase.execute.mockClear();
+    fixture.detectChanges();
+
+    const fertilizerChip = fixture.nativeElement.querySelectorAll(
+      '.plan-task-schedule__category-chip'
+    )[2] as HTMLButtonElement;
+    fertilizerChip.click();
+    fixture.detectChanges();
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 7, category: 'fertilizer' })
+    );
   });
 });

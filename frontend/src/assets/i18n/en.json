@@ -1476,7 +1476,12 @@
         },
         "work_retry": "Open work screen to retry",
         "return_to_learn": "Return to learning screen"
-      }
+      },
+      "filter_category": "Task category",
+      "filter_category_all": "All",
+      "filter_category_general": "General",
+      "filter_category_fertilizer": "Fertilizer",
+      "fertilizer_summary": "Fertilizer {{total}} (basal {{basal}} · topdress {{topdress}})"
     },
     "carryover": {
       "next_plan_heading": "Next plan",

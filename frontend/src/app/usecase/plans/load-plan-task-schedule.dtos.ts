@@ -3,6 +3,7 @@ import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 export interface LoadPlanTaskScheduleInputDto {
   planId: number;
   fieldCultivationId?: number;
+  category?: 'general' | 'fertilizer';
   loadGeneration?: number;
 }
 

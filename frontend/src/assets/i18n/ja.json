@@ -2601,7 +2601,12 @@
         },
         "work_retry": "作業画面で再試行",
         "return_to_learn": "学習画面に戻る"
-      }
+      },
+      "filter_category": "作業区分",
+      "filter_category_all": "すべて",
+      "filter_category_general": "一般",
+      "filter_category_fertilizer": "施肥",
+      "fertilizer_summary": "施肥 {{total}} 件（基肥 {{basal}} · 追肥 {{topdress}}）"
     },
     "carryover": {
       "next_plan_heading": "次の計画",

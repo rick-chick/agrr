@@ -20,6 +20,9 @@ export class LoadPlanTaskScheduleUseCase implements LoadPlanTaskScheduleInputPor
     if (dto.fieldCultivationId != null) {
       params.field_cultivation_id = dto.fieldCultivationId;
     }
+    if (dto.category != null) {
+      params.category = dto.category;
+    }
     this.planGateway.getTaskSchedule(dto.planId, params).subscribe({
       next: (schedule) =>
         this.outputPort.present({ schedule, loadGeneration: dto.loadGeneration }),

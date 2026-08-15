@@ -1963,7 +1963,12 @@
         },
         "work_retry": "पुनः प्रयास के लिए कार्य स्क्रीन खोलें",
         "return_to_learn": "सीखने की स्क्रीन पर वापस जाएँ"
-      }
+      },
+      "filter_category": "कार्य श्रेणी",
+      "filter_category_all": "सभी",
+      "filter_category_general": "सामान्य",
+      "filter_category_fertilizer": "उर्वरक",
+      "fertilizer_summary": "उर्वरक {{total}} (बेसल {{basal}} · टॉपड्रेस {{topdress}})"
     },
     "carryover": {
       "next_plan_heading": "अगली योजना",

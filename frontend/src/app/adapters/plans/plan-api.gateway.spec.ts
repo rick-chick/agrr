@@ -263,6 +263,18 @@ describe('PlanApiGateway', () => {
       );
     });
 
+    it('passes category query when provided', async () => {
+      vi.mocked(apiClient.get).mockReturnValue(of({} as TaskScheduleResponse));
+
+      await firstValueFrom(
+        gateway.getTaskSchedule(7, { scope: 'plan', category: 'fertilizer' })
+      );
+
+      expect(apiClient.get).toHaveBeenCalledWith(
+        '/api/v1/plans/7/task_schedule?scope=plan&category=fertilizer'
+      );
+    });
+
     it('forwards error when api fails', async () => {
       vi.mocked(apiClient.get).mockReturnValue(throwError(() => new Error('network error')));
 

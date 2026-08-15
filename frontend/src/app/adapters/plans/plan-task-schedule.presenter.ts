@@ -16,9 +16,14 @@ import type {
   PlanTaskScheduleMonthGroupView,
   PlanTaskScheduleRowView
 } from '../../components/plans/plan-task-schedule.view';
+import type { PlanTaskScheduleCategoryFilter } from '../../components/plans/plan-task-schedule.view';
 import type { CrossFarmScheduleRow } from '../../domain/work-schedule/cross-farm-schedule-row';
 import type { CrossFarmScheduleMonthGroup } from '../../domain/work-schedule/group-cross-farm-schedule-by-month';
 import { summarizePlanTaskScheduleFieldCoverage } from '../../domain/work-schedule/summarize-plan-task-schedule-field-coverage';
+import {
+  summarizePlanTaskScheduleFertilizer,
+  type PlanTaskScheduleFertilizerSummary
+} from '../../domain/work-schedule/summarize-plan-task-schedule-fertilizer';
 import { computePlanTaskScheduleMonthAverageDelta } from '../../domain/work-schedule/compute-plan-task-schedule-month-average-delta';
 import { localTodayIso } from '../../core/local-today';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
@@ -53,6 +58,7 @@ type DerivedViewFields = Pick<
   | 'fieldsWithTasksCount'
   | 'fieldsWithoutTasksCount'
   | 'allFieldsLackTasks'
+  | 'fertilizerSummary'
 >;
 
 const emptyDerivedFields: DerivedViewFields = {
@@ -67,7 +73,8 @@ const emptyDerivedFields: DerivedViewFields = {
   totalFieldCount: 0,
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
-  allFieldsLackTasks: false
+  allFieldsLackTasks: false,
+  fertilizerSummary: { total: 0, basal: 0, topdress: 0 }
 };
 
 @Injectable()
@@ -79,6 +86,11 @@ export class PlanTaskSchedulePresenter
 {
   private view: PlanTaskScheduleView | null = null;
   private syncLifecycle: TaskScheduleSyncLifecycleState = initialTaskScheduleSyncLifecycleState();
+  private cachedFertilizerSummary: PlanTaskScheduleFertilizerSummary = {
+    total: 0,
+    basal: 0,
+    topdress: 0
+  };
 
   setView(view: PlanTaskScheduleView): void {
     this.view = view;
@@ -93,7 +105,8 @@ export class PlanTaskSchedulePresenter
   applyClientFilters(
     fromDate: string,
     fieldFilterId: number | null,
-    fieldCultivationFilterId: number | null = null
+    fieldCultivationFilterId: number | null = null,
+    categoryFilter: PlanTaskScheduleCategoryFilter = null
   ): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const current = this.view.control;
@@ -101,13 +114,15 @@ export class PlanTaskSchedulePresenter
       current.schedule,
       fromDate,
       fieldFilterId,
-      fieldCultivationFilterId
+      fieldCultivationFilterId,
+      categoryFilter
     );
     this.view.control = {
       ...current,
       fromDate,
       fieldFilterId,
       fieldCultivationFilterId,
+      categoryFilter,
       ...derived
     };
   }
@@ -134,6 +149,7 @@ export class PlanTaskSchedulePresenter
     const fromDate = current.fromDate || localTodayIso();
     const fieldFilterId = current.fieldFilterId ?? null;
     const fieldCultivationFilterId = current.fieldCultivationFilterId ?? null;
+    const categoryFilter = current.categoryFilter ?? null;
     const loadResult = finishTaskScheduleLoad(
       this.syncLifecycle,
       dto.schedule.plan.task_schedule_sync_state
@@ -150,7 +166,8 @@ export class PlanTaskSchedulePresenter
       schedule,
       fromDate,
       fieldFilterId,
-      fieldCultivationFilterId
+      fieldCultivationFilterId,
+      categoryFilter
     );
     this.view.control = {
       ...current,
@@ -166,6 +183,7 @@ export class PlanTaskSchedulePresenter
       fromDate,
       fieldFilterId,
       fieldCultivationFilterId,
+      categoryFilter,
       ...derived
     };
   }
@@ -219,7 +237,8 @@ export class PlanTaskSchedulePresenter
       applied.schedule,
       current.fromDate,
       current.fieldFilterId,
-      current.fieldCultivationFilterId
+      current.fieldCultivationFilterId,
+      current.categoryFilter
     );
     this.view.control = {
       ...current,
@@ -265,7 +284,8 @@ export class PlanTaskSchedulePresenter
     schedule: TaskScheduleResponse | null,
     fromDate: string,
     fieldFilterId: number | null,
-    fieldCultivationFilterId: number | null
+    fieldCultivationFilterId: number | null,
+    categoryFilter: PlanTaskScheduleCategoryFilter
   ): DerivedViewFields {
     if (!schedule) {
       return emptyDerivedFields;
@@ -297,6 +317,7 @@ export class PlanTaskSchedulePresenter
     );
 
     const fieldCoverage = summarizePlanTaskScheduleFieldCoverage(schedule.fields);
+    const fertilizerSummary = this.resolveFertilizerSummary(schedule.fields, categoryFilter);
 
     return {
       monthGroups,
@@ -307,8 +328,24 @@ export class PlanTaskSchedulePresenter
       filteredFieldCount,
       filteredTaskCount,
       regenerateRequiresConfirm: countScheduleTasks(schedule) > 0,
+      fertilizerSummary,
       ...fieldCoverage
     };
+  }
+
+  private resolveFertilizerSummary(
+    fields: TaskScheduleResponse['fields'],
+    categoryFilter: PlanTaskScheduleCategoryFilter
+  ): PlanTaskScheduleFertilizerSummary {
+    const computed = summarizePlanTaskScheduleFertilizer(fields);
+    if (computed.total > 0) {
+      this.cachedFertilizerSummary = computed;
+      return computed;
+    }
+    if (categoryFilter === 'fertilizer') {
+      return computed;
+    }
+    return this.cachedFertilizerSummary;
   }
 
   onItemMutationSuccess(): void {

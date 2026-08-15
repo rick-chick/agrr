@@ -10,7 +10,8 @@ import { TaskScheduleMonthListComponent } from './task-schedule-month-list.compo
 import {
   PlanTaskScheduleView,
   PlanTaskScheduleViewState,
-  PlanTaskScheduleRowView
+  PlanTaskScheduleRowView,
+  PlanTaskScheduleCategoryFilter
 } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
@@ -54,6 +55,8 @@ const initialControl: PlanTaskScheduleViewState = {
   fromDate: localTodayIso(),
   fieldFilterId: null,
   fieldCultivationFilterId: null,
+  categoryFilter: null,
+  fertilizerSummary: { total: 0, basal: 0, topdress: 0 },
   monthGroups: [],
   unscheduledRows: [],
   fieldFilterOptions: [],
@@ -224,6 +227,50 @@ const initialControl: PlanTaskScheduleViewState = {
               >{{ 'plans.task_schedules.open_learn' | translate }}</a>
             </p>
             <div class="plan-task-schedule__filters">
+              <div class="plan-task-schedule__category-filters" role="group" aria-labelledby="plan-task-schedule-category-label">
+                <span id="plan-task-schedule-category-label" class="plan-task-schedule__filter-label">{{
+                  'plans.task_schedules.filter_category' | translate
+                }}</span>
+                <div class="plan-task-schedule__category-chips">
+                  <button
+                    type="button"
+                    class="plan-task-schedule__category-chip"
+                    [class.plan-task-schedule__category-chip--selected]="categoryFilter === null"
+                    (click)="onCategoryFilterChange(null)"
+                  >
+                    {{ 'plans.task_schedules.filter_category_all' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="plan-task-schedule__category-chip"
+                    [class.plan-task-schedule__category-chip--selected]="categoryFilter === 'general'"
+                    (click)="onCategoryFilterChange('general')"
+                  >
+                    {{ 'plans.task_schedules.filter_category_general' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="plan-task-schedule__category-chip"
+                    [class.plan-task-schedule__category-chip--selected]="categoryFilter === 'fertilizer'"
+                    (click)="onCategoryFilterChange('fertilizer')"
+                  >
+                    {{ 'plans.task_schedules.filter_category_fertilizer' | translate }}
+                  </button>
+                </div>
+              </div>
+              @if (control.fertilizerSummary.total > 0) {
+                <p class="plan-task-schedule__fertilizer-summary" role="status">
+                  {{
+                    'plans.task_schedules.fertilizer_summary'
+                      | translate
+                        : {
+                            total: control.fertilizerSummary.total,
+                            basal: control.fertilizerSummary.basal,
+                            topdress: control.fertilizerSummary.topdress
+                          }
+                  }}
+                </p>
+              }
               <label class="plan-task-schedule__filter">
                 <span class="plan-task-schedule__filter-label">{{
                   'plans.task_schedules.filter_field' | translate
@@ -413,6 +460,10 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     return this.control.fieldFilterId;
   }
 
+  get categoryFilter(): PlanTaskScheduleCategoryFilter {
+    return this.control.categoryFilter;
+  }
+
   get timelineGeneratedAtLabel(): string {
     const plan = this.control.schedule?.plan;
     if (!plan) {
@@ -582,7 +633,8 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     this.presenter.applyClientFilters(
       this.resolveFromDateFromRoute(),
       this.resolveFieldFilterFromRoute(),
-      this.resolveFieldCultivationFilterFromRoute()
+      this.resolveFieldCultivationFilterFromRoute(),
+      this.resolveCategoryFilterFromRoute()
     );
     this.pendingItemIdFromRoute = this.resolveItemIdFromRoute();
     this.autoRegenerateTriggered = false;
@@ -626,6 +678,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     this.useCase.execute({
       planId,
       fieldCultivationId: this.fieldCultivationFilterId ?? undefined,
+      category: this.categoryFilter ?? undefined,
       loadGeneration
     });
   }
@@ -643,8 +696,27 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
-    this.presenter.applyClientFilters(this.fromDate, fieldFilterId, null);
+    this.presenter.applyClientFilters(this.fromDate, fieldFilterId, null, this.categoryFilter);
     this.cdr.markForCheck();
+  }
+
+  onCategoryFilterChange(categoryFilter: PlanTaskScheduleCategoryFilter): void {
+    if (this.categoryFilter === categoryFilter) {
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { category: categoryFilter },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+    this.presenter.applyClientFilters(
+      this.fromDate,
+      this.fieldFilterId,
+      this.fieldCultivationFilterId,
+      categoryFilter
+    );
+    this.reload();
   }
 
   onFromDateChange(fromDate: string): void {
@@ -657,8 +729,21 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
-    this.presenter.applyClientFilters(fromDate, this.fieldFilterId, this.fieldCultivationFilterId);
+    this.presenter.applyClientFilters(
+      fromDate,
+      this.fieldFilterId,
+      this.fieldCultivationFilterId,
+      this.categoryFilter
+    );
     this.cdr.markForCheck();
+  }
+
+  private resolveCategoryFilterFromRoute(): PlanTaskScheduleCategoryFilter {
+    const raw = this.route.snapshot.queryParamMap.get('category');
+    if (raw === 'general' || raw === 'fertilizer') {
+      return raw;
+    }
+    return null;
   }
 
   private resolveFieldFilterFromRoute(): number | null {
