@@ -69,6 +69,25 @@ const loadedState: CropDetailViewState = withCropDetailSummaryState(
       weather_dependency: null,
       time_per_sqm: null,
       name: 'Weeding'
+    },
+    {
+      id: 21,
+      crop_id: 3,
+      agricultural_task_id: 6,
+      source_agricultural_task_id: null,
+      stage_order: 1,
+      stage_name: 'Vegetative',
+      gdd_trigger: 80,
+      gdd_tolerance: null,
+      task_type: 'basal_fertilization',
+      source: 'manual',
+      priority: 1,
+      amount: null,
+      amount_unit: null,
+      description: null,
+      weather_dependency: null,
+      time_per_sqm: null,
+      name: 'Basal fertilization'
     }
   ]
 );
@@ -289,7 +308,7 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Cumulative from crop start');
     expect(fixture.nativeElement.textContent).toContain('Configuration status');
     const link = fixture.nativeElement.querySelector(
-      'a[href*="/crops/3/task_schedule_blueprints"]'
+      '.crop-detail__cultivation-template a[href*="/crops/3/task_schedule_blueprints"]'
     ) as HTMLAnchorElement | null;
     expect(link).toBeTruthy();
     expect(link?.textContent).toContain('Edit task plans');

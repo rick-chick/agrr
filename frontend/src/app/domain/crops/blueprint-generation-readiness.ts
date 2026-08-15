@@ -2,8 +2,14 @@ import type { Crop, CropStage } from './crop';
 import type { CropTaskScheduleBlueprint } from './crop-task-schedule-blueprint';
 
 const FIELD_WORK_TASK_TYPE = 'field_work';
+const BASAL_FERTILIZATION_TASK_TYPE = 'basal_fertilization';
+const TOPDRESS_FERTILIZATION_TASK_TYPE = 'topdress_fertilization';
 
 export interface BlueprintGenerationReadiness {
+  hasFieldWorkBlueprint: boolean;
+  hasFertilizerBlueprint: boolean;
+  fieldWorkBlueprintsReady: boolean;
+  fertilizerBlueprintsReady: boolean;
   blueprintsReady: boolean;
   stageRequirementsReady: boolean;
   ready: boolean;
@@ -11,6 +17,10 @@ export interface BlueprintGenerationReadiness {
 
 export function defaultBlueprintReadiness(): BlueprintGenerationReadiness {
   return {
+    hasFieldWorkBlueprint: false,
+    hasFertilizerBlueprint: false,
+    fieldWorkBlueprintsReady: false,
+    fertilizerBlueprintsReady: false,
     blueprintsReady: false,
     stageRequirementsReady: false,
     ready: false
@@ -21,11 +31,23 @@ export function blueprintGenerationReadiness(
   crop: Crop | null | undefined,
   blueprints: CropTaskScheduleBlueprint[]
 ): BlueprintGenerationReadiness {
-  const blueprintsReady = blueprints.some(
+  const hasFieldWorkBlueprint = blueprints.some(
     (blueprint) => blueprint.task_type === FIELD_WORK_TASK_TYPE
   );
+  const hasFertilizerBlueprint = blueprints.some(
+    (blueprint) =>
+      blueprint.task_type === BASAL_FERTILIZATION_TASK_TYPE ||
+      blueprint.task_type === TOPDRESS_FERTILIZATION_TASK_TYPE
+  );
+  const fieldWorkBlueprintsReady = hasFieldWorkBlueprint || hasFertilizerBlueprint;
+  const fertilizerBlueprintsReady = hasFertilizerBlueprint;
+  const blueprintsReady = fieldWorkBlueprintsReady && fertilizerBlueprintsReady;
   const stageRequirementsReady = hasCompleteStageRequirements(crop);
   return {
+    hasFieldWorkBlueprint,
+    hasFertilizerBlueprint,
+    fieldWorkBlueprintsReady,
+    fertilizerBlueprintsReady,
     blueprintsReady,
     stageRequirementsReady,
     ready: blueprintsReady && stageRequirementsReady

@@ -194,7 +194,9 @@ describe('blueprintGenerationReadiness', () => {
 
   it('is not ready when no stage has base temperature and required GDD', () => {
     const result = blueprintGenerationReadiness(baseCrop, [blueprint]);
-    expect(result.blueprintsReady).toBe(true);
+    expect(result.fieldWorkBlueprintsReady).toBe(true);
+    expect(result.fertilizerBlueprintsReady).toBe(false);
+    expect(result.blueprintsReady).toBe(false);
     expect(result.stageRequirementsReady).toBe(false);
     expect(result.ready).toBe(false);
   });
@@ -219,7 +221,7 @@ describe('blueprintGenerationReadiness', () => {
     expect(result.ready).toBe(false);
   });
 
-  it('is not ready when only fertilizer blueprints exist', () => {
+  it('is ready when only fertilizer blueprints exist (fertilizer-only crop)', () => {
     const result = blueprintGenerationReadiness(
       {
         ...baseCrop,
@@ -247,8 +249,71 @@ describe('blueprintGenerationReadiness', () => {
         }
       ]
     );
+    expect(result.fieldWorkBlueprintsReady).toBe(true);
+    expect(result.fertilizerBlueprintsReady).toBe(true);
+    expect(result.blueprintsReady).toBe(true);
+    expect(result.ready).toBe(true);
+  });
+
+  it('is not ready when only field_work blueprints exist without fertilizer', () => {
+    const result = blueprintGenerationReadiness(
+      {
+        ...baseCrop,
+        crop_stages: [
+          {
+            id: 1,
+            crop_id: 1,
+            name: 'Vegetative',
+            order: 1,
+            temperature_requirement: {
+              id: 1,
+              crop_stage_id: 1,
+              base_temperature: 10
+            },
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
+          }
+        ]
+      },
+      [blueprint]
+    );
+    expect(result.fieldWorkBlueprintsReady).toBe(true);
+    expect(result.fertilizerBlueprintsReady).toBe(false);
     expect(result.blueprintsReady).toBe(false);
     expect(result.ready).toBe(false);
+  });
+
+  it('is ready when field_work and topdress fertilizer blueprints exist', () => {
+    const result = blueprintGenerationReadiness(
+      {
+        ...baseCrop,
+        crop_stages: [
+          {
+            id: 1,
+            crop_id: 1,
+            name: 'Vegetative',
+            order: 1,
+            temperature_requirement: {
+              id: 1,
+              crop_stage_id: 1,
+              base_temperature: 10
+            },
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
+          }
+        ]
+      },
+      [
+        blueprint,
+        {
+          ...blueprint,
+          id: 12,
+          task_type: 'topdress_fertilization',
+          name: 'Topdress fertilization'
+        }
+      ]
+    );
+    expect(result.fertilizerBlueprintsReady).toBe(true);
+    expect(result.blueprintsReady).toBe(true);
+    expect(result.ready).toBe(true);
   });
 
   it('is ready when blueprints and complete stage requirements exist', () => {
@@ -270,8 +335,17 @@ describe('blueprintGenerationReadiness', () => {
           }
         ]
       },
-      [blueprint]
+      [
+        blueprint,
+        {
+          ...blueprint,
+          id: 13,
+          task_type: 'basal_fertilization',
+          name: 'Basal fertilization'
+        }
+      ]
     );
+    expect(result.blueprintsReady).toBe(true);
     expect(result.ready).toBe(true);
   });
 
