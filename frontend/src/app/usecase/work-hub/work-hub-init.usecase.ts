@@ -3,6 +3,7 @@ import { forkJoin, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { localTodayIso } from '../../core/local-today';
+import { buildWorkHubPortfolioSummaryStats } from '../../domain/work-hub/build-work-hub-portfolio-summary-stats';
 import { sortWorkHubFarmsByActionRequired } from '../../domain/work-hub/sort-work-hub-farms-by-action-required';
 import { WorkHubFarmRow } from '../../domain/work-hub/work-hub-farm-row';
 import { PLAN_GATEWAY, PlanGateway } from '../plans/plan-gateway';
@@ -13,10 +14,44 @@ import { loadHubFarmVarianceStats } from './load-hub-farm-variance-stats';
 import { WorkHubInitInputPort } from './work-hub-init.input-port';
 import { WORK_HUB_INIT_OUTPUT_PORT, WorkHubInitOutputPort } from './work-hub-init.output-port';
 
+function enrichFarmWithVariance(
+  farm: Omit<
+    WorkHubFarmRow,
+    | 'overdueCount'
+    | 'todayCount'
+    | 'unrecordedCount'
+    | 'gddDelayCount'
+    | 'daysExceedanceCount'
+    | 'thresholdExceededCount'
+  >,
+  variance: {
+    unrecordedCount: number;
+    gddDelayCount: number;
+    daysExceedanceCount: number;
+    thresholdExceededCount: number;
+  } | undefined,
+  counts?: { overdueCount: number; todayCount: number }
+): WorkHubFarmRow {
+  return {
+    ...farm,
+    overdueCount: counts?.overdueCount ?? 0,
+    todayCount: counts?.todayCount ?? 0,
+    unrecordedCount: variance?.unrecordedCount ?? 0,
+    gddDelayCount: variance?.gddDelayCount ?? 0,
+    daysExceedanceCount: variance?.daysExceedanceCount ?? 0,
+    thresholdExceededCount: variance?.thresholdExceededCount ?? 0
+  };
+}
+
 function withZeroCounts(
   farms: Omit<
     WorkHubFarmRow,
-    'overdueCount' | 'todayCount' | 'unrecordedCount' | 'gddDelayCount' | 'thresholdExceededCount'
+    | 'overdueCount'
+    | 'todayCount'
+    | 'unrecordedCount'
+    | 'gddDelayCount'
+    | 'daysExceedanceCount'
+    | 'thresholdExceededCount'
   >[]
 ): WorkHubFarmRow[] {
   return farms.map((farm) => ({
@@ -25,6 +60,7 @@ function withZeroCounts(
     todayCount: 0,
     unrecordedCount: 0,
     gddDelayCount: 0,
+    daysExceedanceCount: 0,
     thresholdExceededCount: 0
   }));
 }
@@ -43,14 +79,27 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
       .listHubFarms()
       .pipe(
         switchMap((farms) => {
-          if (farms.length === 1 && farms[0].hasValidFields) {
-            return of({ farms, autoRedirect: true as const });
-          }
+          const farmsForCounts = farms.map((farm) => ({ farmId: farm.farmId, planId: farm.planId }));
           const today = localTodayIso();
+
+          if (farms.length === 1 && farms[0].hasValidFields) {
+            if (farms[0].planId == null) {
+              return of({ farms: withZeroCounts(farms), autoRedirect: true as const });
+            }
+            return loadHubFarmVarianceStats(farmsForCounts, this.planGateway).pipe(
+              map((varianceByFarmId) => ({
+                farms: [
+                  enrichFarmWithVariance(farms[0], varianceByFarmId.get(farms[0].farmId))
+                ],
+                autoRedirect: true as const
+              }))
+            );
+          }
+
           if (!farms.some((farm) => farm.planId != null)) {
             return of({ farms: withZeroCounts(farms), autoRedirect: false as const });
           }
-          const farmsForCounts = farms.map((farm) => ({ farmId: farm.farmId, planId: farm.planId }));
+
           return forkJoin({
             countsByFarmId: loadHubFarmTaskCounts(
               farmsForCounts,
@@ -62,18 +111,13 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
           }).pipe(
             map(({ countsByFarmId, varianceByFarmId }) => ({
               farms: sortWorkHubFarmsByActionRequired(
-                farms.map((farm) => {
-                  const summary = countsByFarmId.get(farm.farmId);
-                  const variance = varianceByFarmId.get(farm.farmId);
-                  return {
-                    ...farm,
-                    overdueCount: summary?.overdueCount ?? 0,
-                    todayCount: summary?.todayCount ?? 0,
-                    unrecordedCount: variance?.unrecordedCount ?? 0,
-                    gddDelayCount: variance?.gddDelayCount ?? 0,
-                    thresholdExceededCount: variance?.thresholdExceededCount ?? 0
-                  };
-                })
+                farms.map((farm) =>
+                  enrichFarmWithVariance(
+                    farm,
+                    varianceByFarmId.get(farm.farmId),
+                    countsByFarmId.get(farm.farmId)
+                  )
+                )
               ),
               autoRedirect: false as const
             }))
@@ -82,8 +126,9 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
       )
       .subscribe({
         next: ({ farms, autoRedirect }) => {
+          const portfolioSummary = buildWorkHubPortfolioSummaryStats(farms);
           if (autoRedirect) {
-            this.outputPort.present({ farms });
+            this.outputPort.present({ farms, portfolioSummary });
             this.outputPort.beginEnsure();
             this.ensurePlanForFarmUseCase.execute({
               farmId: farms[0].farmId,
@@ -91,7 +136,7 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
             });
             return;
           }
-          this.outputPort.present({ farms });
+          this.outputPort.present({ farms, portfolioSummary });
         },
         error: (err: unknown) =>
           this.outputPort.onError({

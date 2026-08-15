@@ -16,6 +16,7 @@ const initialControl: WorkHubViewState = {
   submitting: false,
   error: null,
   farms: [],
+  portfolioSummary: null,
   pendingSuccessFlash: null,
   pendingNavigation: null
 };
@@ -35,6 +36,36 @@ const initialControl: WorkHubViewState = {
           <p class="page-description">{{ 'work.hub.subtitle' | translate }}</p>
         }
       </header>
+
+      @if (!control.loading && control.portfolioSummary && control.farms.length) {
+        <section
+          class="work-hub__portfolio-summary"
+          role="status"
+          aria-labelledby="work-hub-portfolio-summary-title"
+        >
+          <h2 id="work-hub-portfolio-summary-title" class="work-hub__portfolio-summary-title">
+            {{ 'work.hub.portfolio_summary.title' | translate }}
+          </h2>
+          <dl class="work-hub__portfolio-summary-grid">
+            <div>
+              <dt>{{ 'work.hub.portfolio_summary.unrecorded' | translate }}</dt>
+              <dd>{{ control.portfolioSummary.unrecordedCount }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'work.hub.portfolio_summary.action_required' | translate }}</dt>
+              <dd>{{ control.portfolioSummary.actionRequiredCount }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'work.hub.portfolio_summary.gdd_delay' | translate }}</dt>
+              <dd>{{ control.portfolioSummary.gddDelayCount }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'work.hub.portfolio_summary.threshold_exceeded' | translate }}</dt>
+              <dd>{{ control.portfolioSummary.daysThresholdExceededCount }}</dd>
+            </div>
+          </dl>
+        </section>
+      }
 
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {

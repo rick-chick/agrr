@@ -2771,7 +2771,14 @@
       "threshold_exceeded_summary": "{{count}} कार्य आवश्यक",
       "context_attention_badge": "ध्यान",
       "context_attention_badge_aria": "योजना-कोर में {{count}} कार्य आवश्यक",
-      "unrecorded_summary": "{{count}} अभिलेखित नहीं"
+      "unrecorded_summary": "{{count}} अभिलेखित नहीं",
+      "portfolio_summary": {
+        "title": "सभी खेत सारांश",
+        "unrecorded": "अभिलेखित नहीं",
+        "action_required": "कार्रवाई आवश्यक",
+        "gdd_delay": "GDD विलंब",
+        "threshold_exceeded": "सीमा पार"
+      }
     }
   },
   "status": {

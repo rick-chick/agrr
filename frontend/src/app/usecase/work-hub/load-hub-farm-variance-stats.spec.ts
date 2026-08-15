@@ -105,16 +105,19 @@ describe('loadHubFarmVarianceStats', () => {
     expect(stats.get(1)).toEqual({
       unrecordedCount: 0,
       gddDelayCount: 1,
+      daysExceedanceCount: 2,
       thresholdExceededCount: 2
     });
     expect(stats.get(2)).toEqual({
       unrecordedCount: 0,
       gddDelayCount: 1,
+      daysExceedanceCount: 0,
       thresholdExceededCount: 1
     });
     expect(stats.get(3)).toEqual({
       unrecordedCount: 0,
       gddDelayCount: 0,
+      daysExceedanceCount: 0,
       thresholdExceededCount: 0
     });
   });

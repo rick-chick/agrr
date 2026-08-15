@@ -52,6 +52,13 @@ function item(
   };
 }
 
+const zeroPortfolio = {
+  unrecordedCount: 0,
+  actionRequiredCount: 0,
+  gddDelayCount: 0,
+  daysThresholdExceededCount: 0
+};
+
 describe('WorkHubInitUseCase', () => {
   const createPlanGateway = (overrides: Partial<PlanGateway> = {}): PlanGateway =>
     ({
@@ -88,6 +95,7 @@ describe('WorkHubInitUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           },
           {
@@ -101,6 +109,7 @@ describe('WorkHubInitUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           }
         ])
@@ -157,7 +166,8 @@ describe('WorkHubInitUseCase', () => {
           overdueCount: 0,
           todayCount: 1
         })
-      ]
+      ],
+      portfolioSummary: zeroPortfolio
     });
 
     vi.useRealTimers();
@@ -176,6 +186,7 @@ describe('WorkHubInitUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           },
           {
@@ -189,6 +200,7 @@ describe('WorkHubInitUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           }
         ])
@@ -212,9 +224,10 @@ describe('WorkHubInitUseCase', () => {
     expect(getTaskSchedule).not.toHaveBeenCalled();
     expect(present).toHaveBeenCalledWith({
       farms: [
-        expect.objectContaining({ overdueCount: 0, todayCount: 0, unrecordedCount: 0, gddDelayCount: 0, thresholdExceededCount: 0 }),
-        expect.objectContaining({ overdueCount: 0, todayCount: 0, unrecordedCount: 0, gddDelayCount: 0, thresholdExceededCount: 0 })
-      ]
+        expect.objectContaining({ overdueCount: 0, todayCount: 0, unrecordedCount: 0, gddDelayCount: 0, daysExceedanceCount: 0, thresholdExceededCount: 0 }),
+        expect.objectContaining({ overdueCount: 0, todayCount: 0, unrecordedCount: 0, gddDelayCount: 0, daysExceedanceCount: 0, thresholdExceededCount: 0 })
+      ],
+      portfolioSummary: zeroPortfolio
     });
   });
 
@@ -231,6 +244,7 @@ describe('WorkHubInitUseCase', () => {
         todayCount: 0,
         unrecordedCount: 0,
         gddDelayCount: 0,
+        daysExceedanceCount: 0,
         thresholdExceededCount: 0
       }
     ];
@@ -254,7 +268,18 @@ describe('WorkHubInitUseCase', () => {
     );
     useCase.execute();
 
-    expect(present).toHaveBeenCalledWith({ farms });
+    expect(present).toHaveBeenCalledWith({
+      farms: [
+        expect.objectContaining({
+          farmId: 5,
+          unrecordedCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0
+        })
+      ],
+      portfolioSummary: zeroPortfolio
+    });
     expect(beginEnsure).toHaveBeenCalled();
     expect(ensureExecute).toHaveBeenCalledWith({ farmId: 5, existingPlanId: 9 });
   });
@@ -274,6 +299,7 @@ describe('WorkHubInitUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           }
         ])
@@ -301,9 +327,11 @@ describe('WorkHubInitUseCase', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 0
         })
-      ]
+      ],
+      portfolioSummary: zeroPortfolio
     });
   });
 
@@ -320,6 +348,7 @@ describe('WorkHubInitUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           },
           {
@@ -333,6 +362,7 @@ describe('WorkHubInitUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           }
         ])
@@ -411,16 +441,24 @@ describe('WorkHubInitUseCase', () => {
         expect.objectContaining({
           farmId: 1,
           gddDelayCount: 1,
+          daysExceedanceCount: 2,
           thresholdExceededCount: 2,
           unrecordedCount: 0
         }),
         expect.objectContaining({
           farmId: 2,
           gddDelayCount: 1,
+          daysExceedanceCount: 0,
           thresholdExceededCount: 1,
           unrecordedCount: 0
         })
-      ]
+      ],
+      portfolioSummary: {
+        unrecordedCount: 0,
+        actionRequiredCount: 3,
+        gddDelayCount: 2,
+        daysThresholdExceededCount: 2
+      }
     });
   });
 
@@ -437,6 +475,7 @@ describe('WorkHubInitUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           },
           {
@@ -450,6 +489,7 @@ describe('WorkHubInitUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           },
           {
@@ -463,6 +503,7 @@ describe('WorkHubInitUseCase', () => {
             todayCount: 0,
             unrecordedCount: 0,
             gddDelayCount: 0,
+            daysExceedanceCount: 0,
             thresholdExceededCount: 0
           }
         ])
@@ -583,7 +624,13 @@ describe('WorkHubInitUseCase', () => {
         expect.objectContaining({ farmId: 2, thresholdExceededCount: 3 }),
         expect.objectContaining({ farmId: 3, thresholdExceededCount: 2 }),
         expect.objectContaining({ farmId: 1, thresholdExceededCount: 1 })
-      ]
+      ],
+      portfolioSummary: {
+        unrecordedCount: 0,
+        actionRequiredCount: 6,
+        gddDelayCount: 1,
+        daysThresholdExceededCount: 5
+      }
     });
   });
 

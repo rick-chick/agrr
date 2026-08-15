@@ -542,7 +542,8 @@ describe('PlanWorkPresenter save impact', () => {
     expect(view.control.varianceSummaryStats).toEqual({
       unrecordedCount: 4,
       thresholdExceededCount: 0,
-      gddDelayCount: 0
+      gddDelayCount: 0,
+      daysExceedanceCount: 0
     });
     expect(view.control.actionRequiredItems).toEqual([]);
   });
@@ -579,7 +580,8 @@ describe('PlanWorkPresenter save impact', () => {
     expect(view.control.varianceSummaryStats).toEqual({
       unrecordedCount: 2,
       thresholdExceededCount: 1,
-      gddDelayCount: 1
+      gddDelayCount: 1,
+      daysExceedanceCount: 0
     });
     expect(view.control.actionRequiredItems.length).toBe(1);
   });

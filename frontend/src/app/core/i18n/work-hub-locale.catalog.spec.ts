@@ -37,7 +37,12 @@ const WORK_HUB_I18N_KEYS = [
   'work.hub.start_recording',
   'work.hub.no_fields_warning',
   'work.hub.register_fields_link',
-  'work.hub.retry'
+  'work.hub.retry',
+  'work.hub.portfolio_summary.title',
+  'work.hub.portfolio_summary.unrecorded',
+  'work.hub.portfolio_summary.action_required',
+  'work.hub.portfolio_summary.gdd_delay',
+  'work.hub.portfolio_summary.threshold_exceeded'
 ] as const;
 
 describe('work hub i18n catalog', () => {
