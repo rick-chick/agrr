@@ -123,6 +123,7 @@ describe('LoadNavOverdueBadgeUseCase', () => {
                   })
                 ],
                 fertilizer: [],
+                pest_control: [],
                 unscheduled: []
               }
             }

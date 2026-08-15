@@ -63,7 +63,7 @@ function field(overrides: Partial<FieldSchedule> & Pick<FieldSchedule, 'field_cu
     field_cultivation_id: overrides.field_cultivation_id,
     crop_id: overrides.crop_id ?? 20,
     task_options: [],
-    schedules: overrides.schedules ?? { general: [], fertilizer: [], unscheduled: [] }
+    schedules: overrides.schedules ?? { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
   };
 }
 

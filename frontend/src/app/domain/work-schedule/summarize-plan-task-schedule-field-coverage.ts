@@ -9,6 +9,7 @@ type FieldSchedules = {
   schedules: {
     general: ReadonlyArray<unknown>;
     fertilizer: ReadonlyArray<unknown>;
+    pest_control: ReadonlyArray<unknown>;
     unscheduled: ReadonlyArray<unknown>;
   };
 };
@@ -17,6 +18,7 @@ export function countFieldScheduleTasks(field: FieldSchedules): number {
   return (
     field.schedules.general.length +
     field.schedules.fertilizer.length +
+    field.schedules.pest_control.length +
     field.schedules.unscheduled.length
   );
 }

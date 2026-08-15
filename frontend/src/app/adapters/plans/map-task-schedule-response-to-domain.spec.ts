@@ -68,6 +68,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
           schedules: {
             general: [task({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10' })],
             fertilizer: [],
+            pest_control: [],
             unscheduled: []
           }
         }
@@ -111,6 +112,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
               }
             ],
             fertilizer: [],
+            pest_control: [],
             unscheduled: []
           }
         }
@@ -171,6 +173,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
               })
             ],
             fertilizer: [],
+            pest_control: [],
             unscheduled: []
           }
         }
@@ -226,6 +229,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
               })
             ],
             fertilizer: [],
+            pest_control: [],
             unscheduled: []
           }
         }
@@ -267,6 +271,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
           schedules: {
             general: [],
             fertilizer: [],
+            pest_control: [],
             unscheduled: [
               task({
                 item_id: 9,
@@ -335,6 +340,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
               })
             ],
             fertilizer: [],
+            pest_control: [],
             unscheduled: []
           }
         }
@@ -352,6 +358,46 @@ describe('mapTaskScheduleResponseToDomain', () => {
       gddAtActual: 110,
       gddDelta: 10
     });
+  });
+
+  it('maps pest_control schedule bucket items', () => {
+    const response: TaskScheduleResponse = {
+      plan: planInfoFromTest(),
+      week: { start_date: '2026-06-01', end_date: '2026-06-07', label: '2026-06-01' },
+      milestones: [],
+      fields: [
+        {
+          id: 1,
+          name: 'North',
+          crop_name: 'Tomato',
+          area_sqm: 100,
+          field_cultivation_id: 10,
+          crop_id: 20,
+          schedules: {
+            general: [],
+            fertilizer: [],
+            pest_control: [
+              task({
+                item_id: 3,
+                name: '予防散布',
+                scheduled_date: '2026-06-15',
+                task_type: 'preventive_spray',
+                category: 'pest_control'
+              })
+            ],
+            unscheduled: []
+          }
+        }
+      ],
+      labels: {},
+      minimap: { start_date: '', end_date: '', weeks: [] }
+    };
+
+    const snapshot = mapTaskScheduleResponseToDomain(response);
+
+    expect(snapshot.fields[0].schedules.pest_control).toHaveLength(1);
+    expect(snapshot.fields[0].schedules.pest_control[0].name).toBe('予防散布');
+    expect(snapshot.fields[0].schedules.pest_control[0].category).toBe('pest_control');
   });
 });
 

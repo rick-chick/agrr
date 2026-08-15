@@ -8,11 +8,12 @@ function fieldWithTaskCounts(
   general = 0,
   fertilizer = 0,
   unscheduled = 0
-): { schedules: { general: unknown[]; fertilizer: unknown[]; unscheduled: unknown[] } } {
+): { schedules: { general: unknown[]; fertilizer: unknown[]; pest_control: unknown[]; unscheduled: unknown[] } } {
   return {
     schedules: {
       general: Array.from({ length: general }, () => ({})),
       fertilizer: Array.from({ length: fertilizer }, () => ({})),
+      pest_control: [],
       unscheduled: Array.from({ length: unscheduled }, () => ({}))
     }
   };

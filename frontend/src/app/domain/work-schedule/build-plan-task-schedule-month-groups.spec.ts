@@ -31,7 +31,7 @@ function field(
     name: overrides.name ?? 'Field A',
     crop_name: overrides.crop_name ?? 'Tomato',
     field_cultivation_id: overrides.field_cultivation_id,
-    schedules: overrides.schedules ?? { general: [], fertilizer: [], unscheduled: [] }
+    schedules: overrides.schedules ?? { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
   };
 }
 
@@ -49,6 +49,7 @@ describe('buildPlanTaskScheduleMonthGroups', () => {
       schedules: {
         general: [task({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10' })],
         fertilizer: [],
+        pest_control: [],
         unscheduled: []
       }
     }),
@@ -60,6 +61,7 @@ describe('buildPlanTaskScheduleMonthGroups', () => {
       schedules: {
         general: [task({ item_id: 2, name: 'Harvest', scheduled_date: '2026-07-05' })],
         fertilizer: [],
+        pest_control: [],
         unscheduled: []
       }
     })

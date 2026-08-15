@@ -181,7 +181,8 @@ where
             )));
         }
 
-        let (general_blueprints, fertilizer_blueprints) = partition_blueprints(blueprints.as_slice());
+        let (general_blueprints, fertilizer_blueprints, pest_control_blueprints) =
+            partition_blueprints(blueprints.as_slice());
         if general_blueprints.is_empty() {
             return Err(Box::new(TaskScheduleSyncError::with_crop_id(
                 sync_errors::MISSING_GENERAL_BLUEPRINTS,
@@ -278,6 +279,37 @@ where
                 field_cultivation,
                 protectable_items,
                 "fertilizer",
+                mutations,
+            )?;
+        }
+
+        if !pest_control_blueprints.is_empty() {
+            self.create_schedule(
+                plan,
+                field_cultivation,
+                protectable_items,
+                "pest_control",
+                mutations,
+                || {
+                    pest_control_blueprints
+                        .iter()
+                        .map(|blueprint| {
+                            self.item_attributes_for_blueprint(
+                                blueprint,
+                                &progress_records,
+                                field_cultivation.start_date,
+                                crop.id,
+                            )
+                        })
+                        .collect::<Result<Vec<_>, _>>()
+                },
+            )?;
+        } else {
+            self.clear_schedule(
+                plan,
+                field_cultivation,
+                protectable_items,
+                "pest_control",
                 mutations,
             )?;
         }

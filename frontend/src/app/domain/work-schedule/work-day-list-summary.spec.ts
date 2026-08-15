@@ -61,6 +61,7 @@ describe('flattenFieldScheduleItems', () => {
       schedules: {
         general: [item({ item_id: 1, scheduled_date: '2026-06-12' })],
         fertilizer: [item({ item_id: 2, scheduled_date: '2026-06-13', name: '追肥' })],
+        pest_control: [],
         unscheduled: []
       }
     });
@@ -138,6 +139,7 @@ describe('countWorkDayListFromFields', () => {
             item({ item_id: 3, scheduled_date: today, status: 'skipped' })
           ],
           fertilizer: [],
+          pest_control: [],
           unscheduled: []
         }
       }
@@ -159,7 +161,7 @@ describe('countWorkDayListFromFields', () => {
         field_cultivation_id: 10,
         crop_id: 1,
         task_options: [],
-        schedules: { general: [], fertilizer: [], unscheduled: [] }
+        schedules: { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
       }
     ];
 

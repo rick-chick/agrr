@@ -1367,6 +1367,62 @@ fn get_task_schedule_scope_week_filters_to_requested_week() {
 }
 
 #[test]
+fn get_task_schedule_category_pest_control_filters_to_pest_control_bucket() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let path = std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH");
+    let conn = rusqlite::Connection::open(&path).expect("open sqlite");
+    conn.execute(
+        "INSERT INTO task_schedules (
+           cultivation_plan_id, field_cultivation_id, category, status, source,
+           generated_at, created_at, updated_at
+         ) VALUES (?1, ?2, 'pest_control', 'active', 'agrr', datetime('now'), datetime('now'), datetime('now'))",
+        rusqlite::params![seed.plan_id, seed.field_cultivation_id],
+    )
+    .expect("insert pest_control task_schedule");
+    let pest_schedule_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO task_schedule_items (
+           task_schedule_id, task_type, name, source, stage_name, stage_order,
+           scheduled_date, agricultural_task_id, status, created_at, updated_at
+         ) VALUES (
+           ?1, 'preventive_spray', '予防散布', 'agrr', '生育期', 2,
+           '2026-06-03', ?2, 'planned', datetime('now'), datetime('now')
+         )",
+        rusqlite::params![pest_schedule_id, seed.agricultural_task_id],
+    )
+    .expect("insert pest_control task_schedule_item");
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/plans/{}/task_schedule?scope=plan&category=pest_control",
+            seed.plan_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let fields = json["fields"].as_array().expect("fields array");
+    assert_eq!(1, fields.len(), "{body}");
+    let general = fields[0]["schedules"]["general"]
+        .as_array()
+        .expect("general schedule bucket");
+    let pest_control = fields[0]["schedules"]["pest_control"]
+        .as_array()
+        .expect("pest_control schedule bucket");
+    assert!(
+        general.is_empty(),
+        "category=pest_control must exclude general items: {body}"
+    );
+    assert_eq!(1, pest_control.len(), "{body}");
+    assert_eq!("preventive_spray", pest_control[0]["task_type"].as_str().unwrap());
+}
+
+#[test]
 fn get_task_schedule_normalizes_legacy_raw_sync_error_to_generic_i18n_key() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

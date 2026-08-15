@@ -48,6 +48,7 @@ export interface PlanFieldSchedule {
   schedules: {
     general: ReadonlyArray<PlanTaskScheduleItem>;
     fertilizer: ReadonlyArray<PlanTaskScheduleItem>;
+    pest_control: ReadonlyArray<PlanTaskScheduleItem>;
     unscheduled: ReadonlyArray<PlanTaskScheduleItem>;
   };
 }

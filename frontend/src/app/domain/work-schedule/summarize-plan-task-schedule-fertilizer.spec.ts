@@ -50,6 +50,7 @@ function fieldWithFertilizer(
     schedules: {
       general: [],
       fertilizer,
+      pest_control: [],
       unscheduled: []
     },
     ...overrides

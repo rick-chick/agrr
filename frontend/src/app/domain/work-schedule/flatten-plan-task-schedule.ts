@@ -24,6 +24,7 @@ export function flattenPlanTaskSchedule(
         schedules: {
           general: field.schedules.general,
           fertilizer: field.schedules.fertilizer,
+          pest_control: field.schedules.pest_control,
           unscheduled: field.schedules.unscheduled
         }
       }))

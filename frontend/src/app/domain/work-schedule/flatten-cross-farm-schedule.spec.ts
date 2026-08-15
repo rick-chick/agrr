@@ -44,6 +44,7 @@ describe('flattenCrossFarmSchedules', () => {
             schedules: {
               general: [mockTask({ item_id: 1, name: 'Late', scheduled_date: '2026-06-15' })],
               fertilizer: [],
+              pest_control: [],
               unscheduled: []
             }
           }
@@ -69,6 +70,7 @@ describe('flattenCrossFarmSchedules', () => {
                   scheduled_date: '2026-06-12'
                 })
               ],
+              pest_control: [],
               unscheduled: []
             }
           }
@@ -100,6 +102,7 @@ describe('flattenCrossFarmSchedules', () => {
             schedules: {
               general: [mockTask({ item_id: 1, scheduled_date: null })],
               fertilizer: [],
+              pest_control: [],
               unscheduled: []
             }
           }
@@ -124,6 +127,7 @@ describe('flattenCrossFarmSchedules', () => {
             schedules: {
               general: [],
               fertilizer: [],
+              pest_control: [],
               unscheduled: [mockTask({ item_id: 9, name: 'Pending prep', scheduled_date: null })]
             }
           }

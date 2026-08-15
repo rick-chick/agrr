@@ -1,7 +1,7 @@
 // Tests for `mappers/task_schedule_blueprint_partition_mapper.rs`.
 
 use crate::agricultural_task::constants::schedule_item_types::{
-    BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
+    BASAL_FERTILIZATION, CURATIVE_SPRAY, FIELD_WORK, PREVENTIVE_SPRAY, TOPDRESS_FERTILIZATION,
 };
 use crate::agricultural_task::gateways::TaskScheduleBlueprint;
 
@@ -32,11 +32,30 @@ fn partition_blueprints_splits_field_work_and_fertilizer() {
         blueprint("unknown_type"),
     ];
 
-    let (general, fertilizer) = partition_blueprints(blueprints.as_slice());
+    let (general, fertilizer, pest_control) = partition_blueprints(blueprints.as_slice());
 
     assert_eq!(general.len(), 1);
     assert_eq!(general[0].task_type, FIELD_WORK);
     assert_eq!(fertilizer.len(), 2);
     assert_eq!(fertilizer[0].task_type, BASAL_FERTILIZATION);
     assert_eq!(fertilizer[1].task_type, TOPDRESS_FERTILIZATION);
+    assert!(pest_control.is_empty());
+}
+
+#[test]
+fn partition_blueprints_splits_pest_control_spray_types() {
+    let blueprints = vec![
+        blueprint(PREVENTIVE_SPRAY),
+        blueprint(CURATIVE_SPRAY),
+        blueprint(FIELD_WORK),
+    ];
+
+    let (general, fertilizer, pest_control) = partition_blueprints(blueprints.as_slice());
+
+    assert_eq!(general.len(), 1);
+    assert_eq!(general[0].task_type, FIELD_WORK);
+    assert!(fertilizer.is_empty());
+    assert_eq!(pest_control.len(), 2);
+    assert_eq!(pest_control[0].task_type, PREVENTIVE_SPRAY);
+    assert_eq!(pest_control[1].task_type, CURATIVE_SPRAY);
 }

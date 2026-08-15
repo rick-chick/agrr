@@ -132,9 +132,10 @@ export interface FieldSchedule {
   cultivation_end_date?: string | null;
   /** Present in API JSON; not used by task-schedule timeline yet. */
   task_options?: TaskOption[];
-  schedules: {
+    schedules: {
     general: TaskScheduleItem[];
     fertilizer: TaskScheduleItem[];
+    pest_control: TaskScheduleItem[];
     unscheduled: TaskScheduleItem[];
   };
 }
