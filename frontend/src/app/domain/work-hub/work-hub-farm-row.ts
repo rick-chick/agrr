@@ -5,6 +5,8 @@ export interface WorkHubFarmRow {
   totalArea: number;
   hasValidFields: boolean;
   planId: number | null;
+  /** DB status of hub-selected representative plan (`completed` = active, `pending` = draft). */
+  representativePlanStatus?: string | null;
   overdueCount: number;
   todayCount: number;
   gddDelayCount: number;

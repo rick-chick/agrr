@@ -3,6 +3,8 @@ import { map } from 'rxjs/operators';
 import { buildPlanWorkVarianceSummaryStats } from '../../domain/plans/build-plan-work-variance-summary-stats';
 import { PlanGateway } from '../plans/plan-gateway';
 
+/** Variance stats use hub `plan_id` (representative private plan per farm). */
+
 export interface HubFarmVarianceStats {
   gddDelayCount: number;
   thresholdExceededCount: number;

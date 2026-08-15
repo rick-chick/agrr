@@ -15,7 +15,8 @@ describe('WorkHubApiGateway', () => {
             field_count: 2,
             total_area: 80,
             has_valid_fields: true,
-            plan_id: 9
+            plan_id: 9,
+            representative_plan_status: 'completed'
           }
         ])
       )
@@ -33,6 +34,7 @@ describe('WorkHubApiGateway', () => {
         totalArea: 80,
         hasValidFields: true,
         planId: 9,
+        representativePlanStatus: 'completed',
         overdueCount: 0,
         todayCount: 0,
         gddDelayCount: 0,

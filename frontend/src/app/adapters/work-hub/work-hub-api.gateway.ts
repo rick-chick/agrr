@@ -11,6 +11,7 @@ interface WorkHubFarmApiRow {
   total_area: number;
   has_valid_fields: boolean;
   plan_id: number | null;
+  representative_plan_status?: string | null;
 }
 
 @Injectable()
@@ -27,6 +28,7 @@ export class WorkHubApiGateway implements WorkHubGateway {
           totalArea: row.total_area,
           hasValidFields: row.has_valid_fields,
           planId: row.plan_id,
+          representativePlanStatus: row.representative_plan_status ?? null,
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,

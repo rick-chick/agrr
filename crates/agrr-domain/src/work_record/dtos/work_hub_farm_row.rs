@@ -8,4 +8,6 @@ pub struct WorkHubFarmRow {
     pub total_area: f64,
     pub has_valid_fields: bool,
     pub plan_id: Option<i64>,
+    /// DB `cultivation_plans.status` of the representative private plan (`None` when no plan).
+    pub representative_plan_status: Option<String>,
 }

@@ -1,4 +1,8 @@
 //! `GET /api/v1/work/hub` — work hub farm rows with plan resolution.
+//!
+//! Representative private `plan_id` per farm follows [`WorkHubReadSqliteGateway`] selection
+//! (completed → pending → optimizing; latest `updated_at` within tier). Response includes
+//! `representative_plan_status` for observability.
 
 use crate::adapters::NoopLogger;
 use crate::session_auth::user_id_from_session;
@@ -30,6 +34,7 @@ struct WorkHubFarmItem {
     total_area: f64,
     has_valid_fields: bool,
     plan_id: Option<i64>,
+    representative_plan_status: Option<String>,
 }
 
 struct ListPresenter {
@@ -47,6 +52,7 @@ impl WorkHubListOutputPort for ListPresenter {
                 total_area: row.total_area,
                 has_valid_fields: row.has_valid_fields,
                 plan_id: row.plan_id,
+                representative_plan_status: row.representative_plan_status,
             })
             .collect();
         self.body = Some(Ok(payload));
