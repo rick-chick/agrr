@@ -1355,11 +1355,6 @@
       "filter_field": "Field",
       "filter_all_fields": "All fields",
       "filter_from_date": "From date",
-      "filter_category": "Task category",
-      "filter_category_all": "All",
-      "filter_category_general": "General",
-      "filter_category_fertilizer": "Fertilizer",
-      "fertilizer_summary": "Fertilizer {{total}} (basal {{basal}} · topdress {{topdress}})",
       "list_empty": "No tasks match the current filters.",
       "list_row_meta": "{{field}} · {{crop}}",
       "edit_scheduled_date": "Edit scheduled date",
@@ -1481,7 +1476,12 @@
         },
         "work_retry": "Open work screen to retry",
         "return_to_learn": "Return to learning screen"
-      }
+      },
+      "filter_category": "Task category",
+      "filter_category_all": "All",
+      "filter_category_general": "General",
+      "filter_category_fertilizer": "Fertilizer",
+      "fertilizer_summary": "Fertilizer {{total}} (basal {{basal}} · topdress {{topdress}})"
     },
     "carryover": {
       "next_plan_heading": "Next plan",
@@ -2633,6 +2633,10 @@
         "blueprints_ready": "At least one task plan is registered",
         "blueprints_missing": "No task plans registered yet",
         "blueprints_action": "Register task plans",
+        "field_work_not_required": "Field work plans are not required for fertilization-only crops",
+        "fertilizer_ready": "Basal or topdress fertilization task plans are registered",
+        "fertilizer_missing": "Basal or topdress fertilization task plans are not registered yet",
+        "fertilizer_action": "Register fertilization task plans",
         "stages_ready": "Growth stages have base temperature and required GDD",
         "stages_missing": "Growth stages are missing base temperature or required GDD",
         "stages_action": "Configure growth stages",

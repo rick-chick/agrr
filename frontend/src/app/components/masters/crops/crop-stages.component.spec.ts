@@ -75,6 +75,7 @@ const tableTranslations = {
         stages_missing: 'Growth stages are missing base temperature or required GDD',
         blueprints_ready: 'At least one task plan is registered',
         blueprints_missing: 'No task plans registered yet',
+        fertilizer_missing: 'Basal or topdress fertilization task plans are not registered yet',
         stages_page_gap_base_temperature: '{{stageName}}: base temperature not set',
         stages_page_gap_required_gdd: '{{stageName}}: required GDD not set',
         stages_next_step_action: 'Go to task plan templates'
@@ -502,11 +503,13 @@ describe('CropStagesComponent', () => {
     expect(checklist).toBeTruthy();
 
     const items = checklist?.querySelectorAll('.blueprint-readiness__list li');
-    expect(items?.length).toBe(2);
+    expect(items?.length).toBe(3);
     expect(items?.[0]?.classList.contains('blueprint-readiness__item--ok')).toBe(true);
     expect(items?.[0]?.textContent).toContain('Growth stages have base temperature and required GDD');
     expect(items?.[1]?.classList.contains('blueprint-readiness__item--ok')).toBe(false);
     expect(items?.[1]?.textContent).toContain('No task plans registered yet');
+    expect(items?.[2]?.classList.contains('blueprint-readiness__item--ok')).toBe(false);
+    expect(items?.[2]?.textContent).toContain('Basal or topdress fertilization task plans are not registered yet');
     expect(fixture.nativeElement.querySelector('.page-main > .blueprint-readiness')).toBeNull();
   });
 
