@@ -35,7 +35,7 @@ fn private_read_test_pool() -> SqlitePool {
             );
             CREATE TABLE cultivation_plans (
               id INTEGER PRIMARY KEY, farm_id INTEGER, user_id INTEGER, organization_id INTEGER,
-              total_area REAL, plan_type TEXT, plan_name TEXT, status TEXT,
+              total_area REAL, plan_type TEXT, plan_name TEXT, plan_year INTEGER, status TEXT,
               created_at TEXT, updated_at TEXT
             );
             CREATE TABLE cultivation_plan_crops (
@@ -61,8 +61,8 @@ fn list_private_plan_index_rows_includes_farm_id() {
             params![user_id],
         )?;
         conn.execute(
-            "INSERT INTO cultivation_plans (id, farm_id, user_id, total_area, plan_type, plan_name, status, created_at, updated_at)
-             VALUES (20, 10, ?1, 50.0, 'private', 'Plan X', 'pending', datetime('now'), datetime('now'))",
+            "INSERT INTO cultivation_plans (id, farm_id, user_id, total_area, plan_type, plan_name, plan_year, status, created_at, updated_at)
+             VALUES (20, 10, ?1, 50.0, 'private', 'Plan X', 2026, 'pending', datetime('now'), datetime('now'))",
             params![user_id],
         )?;
         Ok(())
@@ -77,4 +77,5 @@ fn list_private_plan_index_rows_includes_farm_id() {
     assert_eq!(1, rows.len());
     assert_eq!(10, rows[0].farm_id);
     assert_eq!(20, rows[0].id);
+    assert_eq!(Some(2026), rows[0].plan_year);
 }
