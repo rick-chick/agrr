@@ -62,8 +62,33 @@ const initialControl: PlanListViewState = {
                 <article class="item-card">
                   <a [routerLink]="['/plans', plan.id]" class="item-card__body">
                     <span class="item-card__title">{{ plan.name | planDisplayName }}</span>
+                    @if (plan.inputGap) {
+                      <span class="plan-list__gap-summary">
+                        {{
+                          'plans.index.input_gap.unrecorded_summary'
+                            | translate: { count: plan.inputGap.unrecordedCount }
+                        }}
+                        ·
+                        {{
+                          'plans.index.input_gap.action_required_summary'
+                            | translate: { count: plan.inputGap.actionRequiredCount }
+                        }}
+                      </span>
+                    }
                   </a>
                   <div class="item-card__actions">
+                    <a
+                      [routerLink]="['/plans', plan.id, 'work']"
+                      class="btn btn-secondary plan-list__work-link"
+                    >
+                      {{ 'plans.index.input_gap.work_link' | translate }}
+                    </a>
+                    <a
+                      [routerLink]="['/plans', plan.id, 'learn']"
+                      class="btn btn-secondary plan-list__learn-link"
+                    >
+                      {{ 'plans.index.input_gap.learn_link' | translate }}
+                    </a>
                     <a [routerLink]="['/plans', plan.id]" class="btn btn-secondary">
                       {{ 'common.show' | translate }}
                     </a>
