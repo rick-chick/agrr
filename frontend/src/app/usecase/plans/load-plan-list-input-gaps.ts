@@ -1,9 +1,9 @@
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import type { PlanGateway } from '../../usecase/plans/plan-gateway';
-import { buildPlanInputGapSummary } from './build-plan-input-gap-summary';
-import type { PlanListEntry } from './plan-list-entry';
-import type { PlanSummary } from './plan-summary';
+import { buildPlanInputGapSummary } from '../../domain/plans/build-plan-input-gap-summary';
+import type { PlanListEntry } from '../../domain/plans/plan-list-entry';
+import type { PlanSummary } from '../../domain/plans/plan-summary';
+import type { PlanGateway } from './plan-gateway';
 
 export function loadPlanListInputGaps(
   plans: PlanSummary[],

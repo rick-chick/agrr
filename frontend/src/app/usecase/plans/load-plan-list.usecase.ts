@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { switchMap } from 'rxjs/operators';
-import { loadPlanListInputGaps } from '../../domain/plans/load-plan-list-input-gaps';
+import { loadPlanListInputGaps } from './load-plan-list-input-gaps';
 import { LoadPlanListInputPort } from './load-plan-list.input-port';
 import { LoadPlanListOutputPort, LOAD_PLAN_LIST_OUTPUT_PORT } from './load-plan-list.output-port';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';

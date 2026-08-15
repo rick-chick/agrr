@@ -1,7 +1,7 @@
 import { firstValueFrom, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
-import type { PlanVsActualSummary } from './plan-vs-actual-summary';
-import { PlanGateway } from '../../usecase/plans/plan-gateway';
+import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
+import { PlanGateway } from './plan-gateway';
 import { loadPlanListInputGaps } from './load-plan-list-input-gaps';
 
 function summaryForPlan(planId: number): PlanVsActualSummary {
