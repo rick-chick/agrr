@@ -46,6 +46,9 @@ export class PlanApiGateway implements PlanGateway {
     if (params?.field_cultivation_id != null) {
       query.set('field_cultivation_id', String(params.field_cultivation_id));
     }
+    if (params?.category) {
+      query.set('category', params.category);
+    }
     const qs = query.toString();
     const path = `/api/v1/plans/${planId}/task_schedule${qs ? `?${qs}` : ''}`;
     return this.apiClient.get<TaskScheduleResponse>(path);

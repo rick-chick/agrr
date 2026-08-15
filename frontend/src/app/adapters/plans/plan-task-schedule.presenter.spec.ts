@@ -119,6 +119,8 @@ function createView(overrides: Partial<PlanTaskScheduleView['control']> = {}): P
       fromDate: '2026-01-01',
       fieldFilterId: null,
       fieldCultivationFilterId: null,
+      categoryFilter: null,
+      fertilizerSummary: { total: 0, basal: 0, topdress: 0 },
       monthGroups: [],
       unscheduledRows: [],
       fieldFilterOptions: [],
@@ -228,6 +230,43 @@ describe('PlanTaskSchedulePresenter derived fields', () => {
 
     expect(view.control.filteredFieldCount).toBe(1);
     expect(view.control.filteredTaskCount).toBe(1);
+  });
+
+  it('computes fertilizer summary from fertilizer bucket tasks', () => {
+    presenter.present({
+      schedule: {
+        ...scheduleWithFields,
+        fields: [
+          field({
+            field_cultivation_id: 10,
+            schedules: {
+              general: [],
+              fertilizer: [
+                task({
+                  item_id: 11,
+                  name: 'Basal',
+                  scheduled_date: '2026-06-10',
+                  field_cultivation_id: 10,
+                  task_type: 'basal_fertilization',
+                  category: 'fertilizer'
+                }),
+                task({
+                  item_id: 12,
+                  name: 'Topdress',
+                  scheduled_date: '2026-06-20',
+                  field_cultivation_id: 10,
+                  task_type: 'topdress_fertilization',
+                  category: 'fertilizer'
+                })
+              ],
+              unscheduled: []
+            }
+          })
+        ]
+      }
+    });
+
+    expect(view.control.fertilizerSummary).toEqual({ total: 2, basal: 1, topdress: 1 });
   });
 
   it('sets regenerateRequiresConfirm when schedule has tasks', () => {

@@ -52,6 +52,23 @@ describe('LoadPlanTaskScheduleUseCase', () => {
     });
   });
 
+  it('passes category to gateway when provided in dto', () => {
+    const getTaskSchedule = vi.fn().mockReturnValue(of(schedule));
+    const gateway = { getTaskSchedule } as unknown as PlanGateway;
+    const outputPort: LoadPlanTaskScheduleOutputPort = {
+      present: vi.fn(),
+      onError: vi.fn()
+    };
+    const useCase = new LoadPlanTaskScheduleUseCase(outputPort, gateway);
+
+    useCase.execute({ planId: 7, category: 'fertilizer' });
+
+    expect(getTaskSchedule).toHaveBeenCalledWith(7, {
+      scope: 'plan',
+      category: 'fertilizer'
+    });
+  });
+
   it('notifies output port on gateway error', () => {
     const gateway = {
       getTaskSchedule: vi.fn().mockReturnValue(throwError(() => ({ status: 500 })))
