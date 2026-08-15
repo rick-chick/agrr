@@ -68,6 +68,9 @@ describe('WorkRecordSheetComponent', () => {
       'plans.work.sheet.fertilizer.planned_amount': '予定用量',
       'plans.work.sheet.fertilizer.planned_amount_empty': '予定用量なし',
       'plans.work.sheet.fertilizer.actual_amount': '実施用量',
+      'plans.work.sheet.pest_control.planned_amount': '予定散布量',
+      'plans.work.sheet.pest_control.planned_amount_empty': '予定散布量なし',
+      'plans.work.sheet.pest_control.actual_amount': '実施散布量',
       'plans.work.sheet.climate_preview.label': '記録時に保存される気象情報',
       'plans.work.sheet.climate_preview.loading': '気象データを読み込み中…',
       'plans.work.sheet.climate_preview.unavailable': 'この日付の気象データがありません',
@@ -187,6 +190,48 @@ describe('WorkRecordSheetComponent', () => {
     expect(img.getAttribute('decoding')).toBe('async');
     expect(img.getAttribute('width')).toBe(String(WORK_RECORD_PHOTO_THUMB_WIDTH_PX_SHEET));
     expect(img.getAttribute('height')).toBe(String(WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET));
+  });
+
+  it('shows pest control planned spray amount, prefilled actual amount, and diff for scheduled pest control items', () => {
+    component.openFromItem({
+      item: {
+        item_id: 20,
+        name: '予防散布',
+        task_type: 'preventive_spray',
+        category: 'pest_control',
+        scheduled_date: '2026-07-01',
+        priority: 1,
+        source: 'plan',
+        weather_dependency: 'low',
+        time_per_sqm: '0',
+        amount: '5',
+        amount_unit: 'L',
+        status: 'scheduled',
+        agricultural_task_id: 3,
+        field_cultivation_id: 8,
+        completed: false,
+        work_records: [],
+        details: {} as never,
+        badge: { type: 'pest_control' }
+      },
+      fieldName: 'C圃場',
+      cropName: 'ナス',
+      recordedToday: false
+    });
+    component.control = {
+      ...component.control,
+      form: {
+        ...component.control.form,
+        amount: '3'
+      }
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('予定散布量');
+    expect(fixture.nativeElement.textContent).toContain('5 L');
+    expect(fixture.nativeElement.textContent).toContain('実施散布量');
+    expect(fixture.nativeElement.querySelector('#wr-amount')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('-2 L');
   });
 
   it('shows fertilizer planned amount, prefilled actual amount, and diff for scheduled fertilizer items', () => {

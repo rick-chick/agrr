@@ -1791,6 +1791,11 @@
           "planned_amount_empty": "No planned amount",
           "actual_amount": "Actual amount"
         },
+        "pest_control": {
+          "planned_amount": "Planned spray amount",
+          "planned_amount_empty": "No planned spray amount",
+          "actual_amount": "Actual spray amount"
+        },
         "climate_preview": {
           "label": "Climate data saved with this record",
           "loading": "Loading climate data…",

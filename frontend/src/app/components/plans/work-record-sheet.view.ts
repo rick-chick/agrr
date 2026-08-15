@@ -5,7 +5,7 @@ import { PendingToastRequest } from '../../core/view-effects/pending-toast-view.
 import { WorkRecordSaveToastContext } from '../../domain/plans/work-record-save-toast';
 
 export type WorkRecordSheetMode = 'create-from-item' | 'create-adhoc' | 'edit';
-export type WorkRecordScheduleCategory = 'general' | 'fertilizer' | null;
+export type WorkRecordScheduleCategory = 'general' | 'fertilizer' | 'pest_control' | null;
 
 export interface WorkRecordClimatePreviewState {
   gddAtActual: number | null;
