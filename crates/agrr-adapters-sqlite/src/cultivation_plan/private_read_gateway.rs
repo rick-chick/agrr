@@ -23,7 +23,7 @@ impl CultivationPlanPrivateReadGateway for CultivationPlanPrivateReadSqliteGatew
         self.pool.with_read(|conn| {
             let mut stmt = conn.prepare(
                 "SELECT cp.id, cp.farm_id, COALESCE(f.name, ''), COALESCE(cp.total_area, 0), cp.status, \
-                 COALESCE(cp.plan_name, ''), cp.created_at, \
+                 COALESCE(cp.plan_name, ''), cp.created_at, cp.plan_year, \
                  (SELECT COUNT(*) FROM cultivation_plan_crops cpc WHERE cpc.cultivation_plan_id = cp.id), \
                  (SELECT COUNT(*) FROM cultivation_plan_fields cpf WHERE cpf.cultivation_plan_id = cp.id) \
                  FROM cultivation_plans cp \
@@ -42,8 +42,9 @@ impl CultivationPlanPrivateReadGateway for CultivationPlanPrivateReadSqliteGatew
                 let status: String = row.get(4)?;
                 let plan_name: String = row.get(5)?;
                 let created_at: String = row.get(6)?;
-                let crops_count: i32 = row.get(7)?;
-                let fields_count: i32 = row.get(8)?;
+                let plan_year: Option<i32> = row.get(7)?;
+                let crops_count: i32 = row.get(8)?;
+                let fields_count: i32 = row.get(9)?;
                 let display_name = if plan_name.trim().is_empty() {
                     format!("Plan #{id}")
                 } else {
@@ -59,6 +60,7 @@ impl CultivationPlanPrivateReadGateway for CultivationPlanPrivateReadSqliteGatew
                     status,
                     display_name,
                     created_at,
+                    plan_year,
                 })
             })?;
             let mut out = Vec::new();

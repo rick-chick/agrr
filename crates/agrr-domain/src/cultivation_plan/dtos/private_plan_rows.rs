@@ -14,6 +14,7 @@ pub struct PrivatePlanIndexPlanRow {
     pub status: String,
     pub display_name: String,
     pub created_at: String,
+    pub plan_year: Option<i32>,
 }
 
 impl PrivatePlanIndexPlanRow {
