@@ -15,18 +15,19 @@ use agrr_domain::shared::value_objects::reference_index_list_filter::{
 use rusqlite::params;
 use rust_decimal::Decimal;
 use serde_json::json;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static CROP_GW_TEST_SEQ: AtomicU64 = AtomicU64::new(0);
 
 fn crop_test_pool() -> SqlitePool {
-    let dir = std::env::temp_dir().join(format!("agrr_crop_gw_test_{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    let path = dir.join(format!(
-        "crop_gw_test_{}_{}.sqlite3",
+    let seq = CROP_GW_TEST_SEQ.fetch_add(1, Ordering::Relaxed);
+    let dir = std::env::temp_dir().join(format!(
+        "agrr_crop_gw_test_{}_{}",
         std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
+        seq
     ));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join(format!("crop_gw_test_{}.sqlite3", seq));
     let pool = SqlitePool::new(path.to_str().unwrap());
     pool.with_write(|conn| {
         conn.execute_batch(
