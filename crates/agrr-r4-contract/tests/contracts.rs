@@ -68,6 +68,8 @@ fn get_plans_authenticated_includes_farm_id() {
         .expect("seeded plan in list");
     assert_eq!(seed.farm_id, plan["farm_id"].as_i64().unwrap());
     assert_eq!(Some(2026), plan["plan_year"].as_i64().map(|y| y as i32));
+    let farm_name = plan["farm_name"].as_str().expect("farm_name");
+    assert!(farm_name.contains("Contract Work Record Farm"));
 }
 
 #[test]
