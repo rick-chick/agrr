@@ -2,10 +2,17 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import type { BlueprintTimingAdjustmentProposal } from './blueprint-timing-adjustment-proposal';
 import { BLUEPRINT_TIMING_PATCH_INTENT } from './blueprint-timing-adjustment-proposal';
 import {
+  buildFertilizerTimingQueueItems,
   buildUnifiedLearnProposalQueue,
-  groupUnifiedLearnProposalQueueByCategory
+  groupUnifiedLearnProposalQueueByCategory,
+  groupUnifiedLearnProposalQueueExcludingFertilizerTiming,
+  isFertilizerBpTimingQueueItem,
+  partitionFertilizerBpTimingQueueItems
 } from './build-unified-learn-proposal-queue';
-import { clearLearnProposalApplicationProgressCache } from './learn-proposal-application-progress';
+import {
+  clearLearnProposalApplicationProgressCache,
+  markBpTimingProposalAppliedPending
+} from './learn-proposal-application-progress';
 import { DAYS_VARIANCE_THRESHOLD, GDD_VARIANCE_THRESHOLD } from './plan-variance-thresholds';
 import type { PlanVarianceActionItem } from './plan-vs-actual-summary';
 import type { StageGddCalibrationProposal } from './stage-gdd-calibration-proposal';
@@ -128,5 +135,71 @@ describe('build-unified-learn-proposal-queue', () => {
     expect(grouped.requires_action).toHaveLength(1);
     expect(grouped.requires_confirmation).toHaveLength(0);
     expect(grouped.safe).toHaveLength(1);
+  });
+
+  it('tags fertilizer bp_timing items with bpTimingCategory for dedicated section', () => {
+    const queue = buildUnifiedLearnProposalQueue(
+      planId,
+      [],
+      [
+        bpTimingProposal({ category: 'fertilizer', averageDeltaDays: 2 }),
+        bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
+      ],
+      []
+    );
+
+    const fertilizerItem = queue.items.find((item) => item.id.includes('fertilizer'));
+    const generalItem = queue.items.find((item) => item.id.includes('general'));
+
+    expect(fertilizerItem?.bpTimingCategory).toBe('fertilizer');
+    expect(isFertilizerBpTimingQueueItem(fertilizerItem!)).toBe(true);
+    expect(generalItem?.bpTimingCategory).toBe('general');
+    expect(isFertilizerBpTimingQueueItem(generalItem!)).toBe(false);
+  });
+
+  it('partitions fertilizer bp_timing items for dedicated queue section', () => {
+    const queue = buildUnifiedLearnProposalQueue(
+      planId,
+      [stageGddProposal({ averageGddDelta: 5 })],
+      [
+        bpTimingProposal({ category: 'fertilizer', averageDeltaDays: 2 }),
+        bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
+      ],
+      []
+    );
+
+    const { fertilizerTiming, other } = partitionFertilizerBpTimingQueueItems(queue.items);
+
+    expect(fertilizerTiming).toHaveLength(1);
+    expect(fertilizerTiming[0].bpTimingCategory).toBe('fertilizer');
+    expect(other).toHaveLength(2);
+    expect(other.map((item) => item.kind)).toEqual(['stage_gdd', 'bp_timing']);
+  });
+
+  it('excludes fertilizer bp_timing from category grouping', () => {
+    const queue = buildUnifiedLearnProposalQueue(
+      planId,
+      [],
+      [
+        bpTimingProposal({ category: 'fertilizer', averageDeltaDays: 2 }),
+        bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
+      ],
+      []
+    );
+    const grouped = groupUnifiedLearnProposalQueueExcludingFertilizerTiming(queue);
+
+    expect(grouped.safe).toHaveLength(1);
+    expect(grouped.safe[0].bpTimingCategory).toBe('general');
+  });
+
+  it('builds fertilizer timing queue items including applied proposals for status display', () => {
+    markBpTimingProposalAppliedPending(planId, { cropId: 1, category: 'fertilizer' });
+    const items = buildFertilizerTimingQueueItems(planId, [
+      bpTimingProposal({ category: 'fertilizer', averageDeltaDays: 2 })
+    ]);
+
+    expect(items).toHaveLength(1);
+    expect(items[0].title).toBe('Tomato');
+    expect(items[0].bpTimingCategory).toBe('fertilizer');
   });
 });

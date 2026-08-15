@@ -1706,6 +1706,17 @@
         },
         "post_apply": {
           "title": "Safe proposals applied"
+        },
+        "fertilizer_timing": {
+          "title": "Fertilization timing proposals",
+          "lead": "Blueprint timing adjustments from fertilizer schedule variance (basal / topdress). Review evidence before applying.",
+          "evidence": {
+            "source": "Evidence source: field.schedules.fertilizer",
+            "toggle": "Show rationale",
+            "rationale": "{{count}} of {{total}} recorded fertilizer tasks exceeded the day threshold of {{threshold}} days.",
+            "records_title": "Contributing fertilizer records (up to 5)",
+            "record": "{{name}} — {{date}}"
+          }
         }
       }
     },
@@ -2642,17 +2653,17 @@
         "blueprints_ready": "At least one task plan is registered",
         "blueprints_missing": "No task plans registered yet",
         "blueprints_action": "Register task plans",
-        "field_work_not_required": "Field work plans are not required for fertilization-only crops",
-        "fertilizer_ready": "Basal or topdress fertilization task plans are registered",
-        "fertilizer_missing": "Basal or topdress fertilization task plans are not registered yet",
-        "fertilizer_action": "Register fertilization task plans",
         "stages_ready": "Growth stages have base temperature and required GDD",
         "stages_missing": "Growth stages are missing base temperature or required GDD",
         "stages_action": "Configure growth stages",
         "stages_edit_action": "Edit growth stages",
         "stages_page_gap_base_temperature": "{{stageName}}: base temperature not set",
         "stages_page_gap_required_gdd": "{{stageName}}: required GDD not set",
-        "stages_next_step_action": "Go to task plan templates"
+        "stages_next_step_action": "Go to task plan templates",
+        "field_work_not_required": "Field work plans are not required for fertilization-only crops",
+        "fertilizer_ready": "Basal or topdress fertilization task plans are registered",
+        "fertilizer_missing": "Basal or topdress fertilization task plans are not registered yet",
+        "fertilizer_action": "Register fertilization task plans"
       },
       "blueprint_errors": {
         "missing_blueprints": "AI suggestions cannot be imported because no task plans are registered yet.",

@@ -3,8 +3,11 @@ import { provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '../../../assets/i18n/en.json';
+import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
+import { BLUEPRINT_TIMING_PATCH_INTENT } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import {
   clearLearnProposalApplicationProgressCache,
+  markBpTimingProposalAppliedPending,
   storeLearnPostMasterPayload
 } from '../../domain/plans/learn-proposal-application-progress';
 import {
@@ -14,6 +17,22 @@ import {
 import { clearLearnOrchestrationProgressCache } from '../../domain/plans/learn-master-update-orchestration';
 import { BulkApplySafeLearnProposalsUseCase } from '../../usecase/plans/bulk-apply-safe-learn-proposals.usecase';
 import { PlanLearnProposalQueueComponent } from './plan-learn-proposal-queue.component';
+
+const fertilizerBpTimingProposal = (): BlueprintTimingAdjustmentProposal => ({
+  cropId: 1,
+  cropName: 'Tomato',
+  category: 'fertilizer',
+  averageDeltaDays: 2,
+  averageGddDelta: 5,
+  recordedItemCount: 3,
+  affectedBlueprintCount: 2,
+  proposalBody: {
+    intent: BLUEPRINT_TIMING_PATCH_INTENT,
+    stages: [],
+    agricultural_tasks: [],
+    task_schedule_blueprints: [{ blueprint_id: 10, gdd_trigger: 120 }]
+  }
+});
 
 describe('PlanLearnProposalQueueComponent', () => {
   let fixture: ComponentFixture<PlanLearnProposalQueueComponent>;
@@ -180,5 +199,55 @@ describe('PlanLearnProposalQueueComponent', () => {
 
     expect(fixture.nativeElement.querySelector('app-plan-learn-post-master-confirmation')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Master update applied');
+  });
+
+  it('renders dedicated fertilizer timing section with evidence and application status', () => {
+    fixture.componentInstance.blueprintTimingProposals = [fertilizerBpTimingProposal()];
+    fixture.componentInstance.blueprintTimingEvidenceByKey = {
+      '1-fertilizer': {
+        exceedanceCount: 2,
+        thresholdValue: 3,
+        totalRecordedCount: 3,
+        contributingRecords: [
+          { name: 'Basal fertilization', actualDate: '2026-05-01' },
+          { name: 'Topdress', actualDate: '2026-06-01' }
+        ]
+      }
+    };
+    markBpTimingProposalAppliedPending(7, { cropId: 1, category: 'fertilizer' });
+    fixture.detectChanges();
+
+    const section = fixture.nativeElement.querySelector(
+      '[data-testid="fertilizer-timing-section"]'
+    );
+    expect(section).toBeTruthy();
+    expect(section.textContent).toContain('Fertilization timing proposals');
+    expect(section.textContent).toContain('Tomato');
+    expect(section.textContent).toContain('Fertilization');
+    expect(section.textContent).toContain('field.schedules.fertilizer');
+    expect(section.textContent).toContain('Applied — pending confirmation');
+    expect(section.querySelector('app-learn-proposal-evidence-panel')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="queue-category-safe"]')
+    ).toBeFalsy();
+  });
+
+  it('keeps general bp_timing in category sections when fertilizer section is shown', () => {
+    fixture.componentInstance.blueprintTimingProposals = [
+      fertilizerBpTimingProposal(),
+      {
+        ...fertilizerBpTimingProposal(),
+        category: 'general',
+        cropId: 2,
+        cropName: 'Pepper'
+      }
+    ];
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="fertilizer-timing-section"]')
+    ).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="queue-category-safe"]')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Pepper');
   });
 });

@@ -589,17 +589,17 @@
         "blueprints_ready": "作業計画が1件以上登録されています",
         "blueprints_missing": "作業計画が未登録です",
         "blueprints_action": "作業計画を登録する",
-        "field_work_not_required": "施肥のみの作物のため圃場作業計画は不要です",
-        "fertilizer_ready": "施肥（基肥または追肥）の作業計画が登録されています",
-        "fertilizer_missing": "施肥（基肥または追肥）の作業計画が未登録です",
-        "fertilizer_action": "施肥の作業計画を登録する",
         "stages_ready": "生育ステージの最低限界温度と必要積算温度が設定されています",
         "stages_missing": "生育ステージの最低限界温度または必要積算温度が未設定です",
         "stages_action": "生育ステージを設定する",
         "stages_edit_action": "生育ステージを編集",
         "stages_page_gap_base_temperature": "{{stageName}}: 最低限界温度が未設定",
         "stages_page_gap_required_gdd": "{{stageName}}: 必要積算温度が未設定",
-        "stages_next_step_action": "作業計画テンプレートへ"
+        "stages_next_step_action": "作業計画テンプレートへ",
+        "field_work_not_required": "施肥のみの作物のため圃場作業計画は不要です",
+        "fertilizer_ready": "施肥（基肥または追肥）の作業計画が登録されています",
+        "fertilizer_missing": "施肥（基肥または追肥）の作業計画が未登録です",
+        "fertilizer_action": "施肥の作業計画を登録する"
       },
       "blueprint_errors": {
         "missing_blueprints": "作業計画が未登録のため、AIによる提案を取り込めません。",
@@ -2831,6 +2831,17 @@
         },
         "post_apply": {
           "title": "安全な提案を適用しました"
+        },
+        "fertilizer_timing": {
+          "title": "施肥タイミング提案",
+          "lead": "施肥予定（基肥・追肥）の計画と実績のずれに基づく BP タイミング調整です。適用前に根拠を確認してください。",
+          "evidence": {
+            "source": "根拠ソース: field.schedules.fertilizer",
+            "toggle": "根拠を表示",
+            "rationale": "記録済み施肥作業 {{total}} 件のうち {{count}} 件が日数しきい値 {{threshold}} 日を超えています。",
+            "records_title": "寄与した施肥記録（最大5件）",
+            "record": "{{name}} — {{date}}"
+          }
         }
       }
     },
