@@ -90,6 +90,100 @@ fn get_work_hub_authenticated_returns_farm_rows_with_plan_id() {
 }
 
 #[test]
+fn get_work_variance_portfolio_returns_farm_plan_rows_with_variance_stats() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let source = seed_work_record_plan(user_id);
+
+    let sqlite_path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&sqlite_path).expect("open contract sqlite");
+    conn.execute(
+        "UPDATE task_schedule_items SET gdd_trigger = 100.0 WHERE id = ?1",
+        rusqlite::params![source.task_schedule_item_id],
+    )
+    .expect("set gdd_trigger");
+
+    let create_record_path = format!("/api/v1/plans/{}/work_records", source.plan_id);
+    let (record_status, record_body) = status_and_body(client.post(
+        &create_record_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": source.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "variance portfolio contract seed"
+            }
+        })),
+    ));
+    assert_eq!(201, record_status, "{record_body}");
+    let record_json: serde_json::Value =
+        serde_json::from_str(&record_body).expect("create work_record JSON");
+    let record_id = record_json["work_record"]["id"].as_i64().expect("record id");
+    conn.execute(
+        "UPDATE work_records SET gdd_at_actual = 110.0 WHERE id = ?1",
+        rusqlite::params![record_id],
+    )
+    .expect("set gdd_at_actual");
+
+    let pending_farm_id = seed_user_farm_without_organization(user_id);
+    conn.execute(
+        "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
+         VALUES (?1, ?2, 'Portfolio Pending Field', 40.0, 0, datetime('now'), datetime('now'))",
+        rusqlite::params![pending_farm_id, user_id],
+    )
+    .expect("insert pending farm field");
+
+    let (create_status, create_body) = status_and_body(client.post(
+        "/api/v1/plans",
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "plan": {
+                "farm_id": pending_farm_id,
+                "plan_name": "Portfolio Pending Plan"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create plan JSON");
+    let pending_plan_id = create_json["id"].as_i64().expect("pending plan id");
+
+    let (status, body) = status_and_body(client.get(
+        "/api/v1/work/variance_portfolio",
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let rows: Vec<serde_json::Value> = serde_json::from_str(&body).expect("variance portfolio JSON");
+    assert!(rows.len() >= 2, "{body}");
+
+    let completed_row = rows
+        .iter()
+        .find(|row| row["plan_id"].as_i64() == Some(source.plan_id))
+        .expect("completed plan row");
+    assert_eq!(source.farm_id, completed_row["farm_id"].as_i64().unwrap());
+    assert_eq!(2026, completed_row["plan_year"].as_i64().unwrap());
+    assert_eq!("completed", completed_row["status"].as_str().unwrap());
+    assert_eq!(0, completed_row["unrecorded_count"].as_i64().unwrap());
+    assert_eq!(1, completed_row["threshold_exceeded_count"].as_i64().unwrap());
+    assert_eq!(1, completed_row["days_threshold_exceeded_count"].as_i64().unwrap());
+    assert!(completed_row["carryover_not_imported"].is_boolean());
+
+    let pending_row = rows
+        .iter()
+        .find(|row| row["plan_id"].as_i64() == Some(pending_plan_id))
+        .expect("pending plan row");
+    assert_eq!(pending_farm_id, pending_row["farm_id"].as_i64().unwrap());
+    assert_eq!("optimizing", pending_row["status"].as_str().unwrap());
+    assert_eq!(0, pending_row["unrecorded_count"].as_i64().unwrap());
+    assert!(!pending_row["carryover_not_imported"].as_bool().unwrap());
+}
+
+#[test]
 fn post_work_records_unauthenticated_returns_401() {
     let client = ContractClient::from_env();
     let (status, body) = status_and_body(client.post(
