@@ -226,13 +226,6 @@ export function groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections(
   return groupUnifiedLearnProposalQueueByCategory({ items: other, counts: countByCategory(other) });
 }
 
-/** @deprecated Use groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections */
-export function groupUnifiedLearnProposalQueueExcludingFertilizerTiming(
-  queue: UnifiedLearnProposalQueue
-): Record<LearnProposalQueueCategory, UnifiedLearnProposalQueueItem[]> {
-  return groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections(queue);
-}
-
 export function buildFertilizerTimingQueueItems(
   planId: number,
   blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>
