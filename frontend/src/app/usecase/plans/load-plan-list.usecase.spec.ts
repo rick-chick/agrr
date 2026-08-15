@@ -1,4 +1,4 @@
-import { of, firstValueFrom } from 'rxjs';
+import { of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
 import { LoadPlanListUseCase } from './load-plan-list.usecase';
