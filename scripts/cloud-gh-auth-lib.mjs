@@ -1,38 +1,26 @@
-/**
- * Cloud Agent gh token resolution.
- * Cursor injects GITHUB_TOKEN (integration ghs_*) during agent sessions, which
- * overrides gh auth login from AGRR_GH_PAT. Prefer the user PAT when present.
- */
+export const PROFILE_SNIPPET_MARKER = '# cursor-cloud-gh-auth';
 
 /**
- * @param {{ agrrGhPat?: string | null; ghToken?: string | null; githubToken?: string | null }} input
- * @returns {string}
+ * Resolve shell env so `gh` uses the user PAT instead of Cursor integration token.
+ * Only AGRR_GH_PAT is considered; integration tokens are never promoted.
+ *
+ * @param {{ agrrGhPat?: string | null }} input
  */
-export function resolveGhTokenForCloudAgent(input) {
-  const { agrrGhPat, ghToken, githubToken } = input;
-  if (agrrGhPat) {
-    return agrrGhPat;
+export function buildGhAuthEnv({ agrrGhPat }) {
+  if (!agrrGhPat) {
+    return { ghToken: null, unsetGithubToken: false };
   }
-  if (ghToken) {
-    return ghToken;
-  }
-  if (githubToken) {
-    return githubToken;
-  }
-  return '';
+  return { ghToken: agrrGhPat, unsetGithubToken: true };
 }
 
 /**
- * Env vars for a gh subprocess so integration tokens do not win over AGRR_GH_PAT.
- *
- * @param {{ agrrGhPat?: string | null; ghToken?: string | null; githubToken?: string | null }} input
- * @returns {Record<string, string | undefined>}
+ * Bash snippet sourced from login shells to re-apply PAT auth after Cursor injects GITHUB_TOKEN.
  */
-export function buildGhExecEnv(input) {
-  const token = resolveGhTokenForCloudAgent(input);
-  const env = {
-    GITHUB_TOKEN: undefined,
-    GH_TOKEN: token || undefined,
-  };
-  return env;
+export function buildProfileSnippet() {
+  return `${PROFILE_SNIPPET_MARKER}: prefer AGRR_GH_PAT over Cursor integration token
+if [[ -n "\${AGRR_GH_PAT:-}" ]]; then
+  export GH_TOKEN="\$AGRR_GH_PAT"
+  unset GITHUB_TOKEN 2>/dev/null || true
+fi
+`;
 }
