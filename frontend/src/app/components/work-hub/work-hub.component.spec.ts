@@ -81,6 +81,7 @@ describe('WorkHubComponent', () => {
       'work.hub.farm_meta': '圃場 {{count}} 件・合計 {{area}} ㎡',
       'work.hub.overdue_summary': '期限超過 {{count}} 件',
       'work.hub.today_summary': '今日 {{count}} 件',
+      'work.hub.unrecorded_summary': '未記録 {{count}} 件',
       'work.hub.gdd_delay_summary': 'GDD遅延 {{count}} 件',
       'work.hub.threshold_exceeded_summary': '要対応 {{count}} 件',
       'work.hub.context_attention_badge': '注意',
@@ -109,7 +110,8 @@ describe('WorkHubComponent', () => {
           overdueCount: 2,
           todayCount: 1,
           gddDelayCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          unrecordedCount: 0
         }
       ]
     });
@@ -142,7 +144,8 @@ describe('WorkHubComponent', () => {
           overdueCount: 2,
           todayCount: 1,
           gddDelayCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          unrecordedCount: 0
         },
         {
           farmId: 2,
@@ -154,7 +157,8 @@ describe('WorkHubComponent', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          unrecordedCount: 0
         }
       ]
     });
@@ -174,6 +178,7 @@ describe('WorkHubComponent', () => {
       planId: null,
       overdueCount: 0,
       todayCount: 0,
+      unrecordedCount: 0,
       gddDelayCount: 0,
       thresholdExceededCount: 0
     });
@@ -195,7 +200,8 @@ describe('WorkHubComponent', () => {
           overdueCount: 2,
           todayCount: 1,
           gddDelayCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          unrecordedCount: 0
         }
       ]
     });
@@ -218,7 +224,8 @@ describe('WorkHubComponent', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          unrecordedCount: 0
         }
       ]
     });
@@ -243,7 +250,8 @@ describe('WorkHubComponent', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          unrecordedCount: 0
         }
       ]
     });
@@ -282,7 +290,8 @@ describe('WorkHubComponent', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          unrecordedCount: 0
         }
       ]
     });
@@ -307,7 +316,8 @@ describe('WorkHubComponent', () => {
           overdueCount: 2,
           todayCount: 1,
           gddDelayCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          unrecordedCount: 0
         },
         {
           farmId: 2,
@@ -319,7 +329,8 @@ describe('WorkHubComponent', () => {
           overdueCount: 0,
           todayCount: 0,
           gddDelayCount: 0,
-          thresholdExceededCount: 0
+          thresholdExceededCount: 0,
+          unrecordedCount: 0
         }
       ]
     });
@@ -345,6 +356,7 @@ describe('WorkHubComponent', () => {
           planId: 9,
           overdueCount: 0,
           todayCount: 0,
+          unrecordedCount: 0,
           gddDelayCount: 2,
           thresholdExceededCount: 3
         }
@@ -354,6 +366,30 @@ describe('WorkHubComponent', () => {
 
     expect(fixture.nativeElement.textContent).toContain('GDD遅延 2 件');
     expect(fixture.nativeElement.textContent).toContain('要対応 3 件');
+  });
+
+  it('shows unrecorded count on farm cards', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          unrecordedCount: 5,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('未記録 5 件');
   });
 
   it('shows context attention badge when threshold exceeded count is positive', () => {
@@ -369,6 +405,7 @@ describe('WorkHubComponent', () => {
           planId: 9,
           overdueCount: 0,
           todayCount: 0,
+          unrecordedCount: 0,
           gddDelayCount: 1,
           thresholdExceededCount: 2
         },
@@ -381,6 +418,7 @@ describe('WorkHubComponent', () => {
           planId: 10,
           overdueCount: 0,
           todayCount: 0,
+          unrecordedCount: 0,
           gddDelayCount: 0,
           thresholdExceededCount: 0
         }

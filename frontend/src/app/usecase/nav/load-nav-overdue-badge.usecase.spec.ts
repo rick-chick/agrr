@@ -85,6 +85,7 @@ describe('LoadNavOverdueBadgeUseCase', () => {
             planId: 9,
             overdueCount: 0,
             todayCount: 0,
+            unrecordedCount: 0,
             gddDelayCount: 0,
             thresholdExceededCount: 0
           },
@@ -97,6 +98,7 @@ describe('LoadNavOverdueBadgeUseCase', () => {
             planId: 10,
             overdueCount: 0,
             todayCount: 0,
+            unrecordedCount: 0,
             gddDelayCount: 0,
             thresholdExceededCount: 0
           }

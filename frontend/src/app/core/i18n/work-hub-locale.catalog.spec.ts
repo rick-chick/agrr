@@ -28,6 +28,7 @@ const WORK_HUB_I18N_KEYS = [
   'work.hub.farm_meta',
   'work.hub.overdue_summary',
   'work.hub.today_summary',
+  'work.hub.unrecorded_summary',
   'work.hub.gdd_delay_summary',
   'work.hub.threshold_exceeded_summary',
   'work.hub.context_attention_badge',

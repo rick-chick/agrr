@@ -2756,6 +2756,7 @@
       "farm_meta": "{{count}} खेत क्षेत्र · कुल {{area}} वर्ग मी",
       "overdue_summary": "{{count}} अतिदेय",
       "today_summary": "आज {{count}}",
+      "unrecorded_summary": "{{count}} अभिलेखित नहीं",
       "open_work": "कार्य खोलें",
       "start_recording": "दर्ज करना शुरू करें",
       "no_fields_warning": "इस खेत पर कोई मान्य खेत क्षेत्र नहीं है।",

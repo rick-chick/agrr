@@ -86,6 +86,7 @@ describe('WorkHubInitUseCase', () => {
             planId: 9,
             overdueCount: 0,
             todayCount: 0,
+            unrecordedCount: 0,
             gddDelayCount: 0,
             thresholdExceededCount: 0
           },
@@ -98,6 +99,7 @@ describe('WorkHubInitUseCase', () => {
             planId: 10,
             overdueCount: 0,
             todayCount: 0,
+            unrecordedCount: 0,
             gddDelayCount: 0,
             thresholdExceededCount: 0
           }
@@ -172,6 +174,7 @@ describe('WorkHubInitUseCase', () => {
             planId: null,
             overdueCount: 0,
             todayCount: 0,
+            unrecordedCount: 0,
             gddDelayCount: 0,
             thresholdExceededCount: 0
           },
@@ -184,6 +187,7 @@ describe('WorkHubInitUseCase', () => {
             planId: null,
             overdueCount: 0,
             todayCount: 0,
+            unrecordedCount: 0,
             gddDelayCount: 0,
             thresholdExceededCount: 0
           }
@@ -208,8 +212,8 @@ describe('WorkHubInitUseCase', () => {
     expect(getTaskSchedule).not.toHaveBeenCalled();
     expect(present).toHaveBeenCalledWith({
       farms: [
-        expect.objectContaining({ overdueCount: 0, todayCount: 0, gddDelayCount: 0, thresholdExceededCount: 0 }),
-        expect.objectContaining({ overdueCount: 0, todayCount: 0, gddDelayCount: 0, thresholdExceededCount: 0 })
+        expect.objectContaining({ overdueCount: 0, todayCount: 0, unrecordedCount: 0, gddDelayCount: 0, thresholdExceededCount: 0 }),
+        expect.objectContaining({ overdueCount: 0, todayCount: 0, unrecordedCount: 0, gddDelayCount: 0, thresholdExceededCount: 0 })
       ]
     });
   });
@@ -225,6 +229,7 @@ describe('WorkHubInitUseCase', () => {
         planId: 9,
         overdueCount: 0,
         todayCount: 0,
+        unrecordedCount: 0,
         gddDelayCount: 0,
         thresholdExceededCount: 0
       }
@@ -267,6 +272,7 @@ describe('WorkHubInitUseCase', () => {
             planId: null,
             overdueCount: 0,
             todayCount: 0,
+            unrecordedCount: 0,
             gddDelayCount: 0,
             thresholdExceededCount: 0
           }
@@ -312,6 +318,7 @@ describe('WorkHubInitUseCase', () => {
             planId: 9,
             overdueCount: 0,
             todayCount: 0,
+            unrecordedCount: 0,
             gddDelayCount: 0,
             thresholdExceededCount: 0
           },
@@ -324,6 +331,7 @@ describe('WorkHubInitUseCase', () => {
             planId: 10,
             overdueCount: 0,
             todayCount: 0,
+            unrecordedCount: 0,
             gddDelayCount: 0,
             thresholdExceededCount: 0
           }
@@ -403,13 +411,178 @@ describe('WorkHubInitUseCase', () => {
         expect.objectContaining({
           farmId: 1,
           gddDelayCount: 1,
-          thresholdExceededCount: 2
+          thresholdExceededCount: 2,
+          unrecordedCount: 0
         }),
         expect.objectContaining({
           farmId: 2,
           gddDelayCount: 1,
-          thresholdExceededCount: 1
+          thresholdExceededCount: 1,
+          unrecordedCount: 0
         })
+      ]
+    });
+  });
+
+  it('sorts farms by action-required count descending before presenting', () => {
+    const workHubGateway: WorkHubGateway = {
+      listHubFarms: () =>
+        of([
+          {
+            farmId: 1,
+            farmName: 'Low',
+            ...baseFarm,
+            planId: 9,
+            overdueCount: 0,
+            todayCount: 0,
+            unrecordedCount: 0,
+            gddDelayCount: 0,
+            thresholdExceededCount: 0
+          },
+          {
+            farmId: 2,
+            farmName: 'High',
+            fieldCount: 1,
+            totalArea: 40,
+            hasValidFields: true,
+            planId: 10,
+            overdueCount: 0,
+            todayCount: 0,
+            unrecordedCount: 0,
+            gddDelayCount: 0,
+            thresholdExceededCount: 0
+          },
+          {
+            farmId: 3,
+            farmName: 'Mid',
+            fieldCount: 1,
+            totalArea: 40,
+            hasValidFields: true,
+            planId: 11,
+            overdueCount: 0,
+            todayCount: 0,
+            unrecordedCount: 0,
+            gddDelayCount: 0,
+            thresholdExceededCount: 0
+          }
+        ])
+    };
+    const present = vi.fn();
+    const outputPort: WorkHubInitOutputPort = {
+      present,
+      onError: vi.fn(),
+      beginEnsure: vi.fn()
+    };
+    const planGateway = createPlanGateway({
+      getPlanVsActualSummary: (planId: number) =>
+        of({
+          plan_id: planId,
+          unrecorded_count: 0,
+          categories: [],
+          top_variance_items: [],
+          action_required_items:
+            planId === 9
+              ? [
+                  {
+                    item_id: 1,
+                    field_cultivation_id: 10,
+                    category: 'general',
+                    name: 'A',
+                    scheduled_date: '2026-06-01',
+                    actual_date: '2026-06-10',
+                    delta_days: 5,
+                    gdd_trigger: 100,
+                    gdd_at_actual: 120,
+                    gdd_delta: 15,
+                    exceedance_kind: 'days'
+                  }
+                ]
+              : planId === 10
+                ? [
+                    {
+                      item_id: 2,
+                      field_cultivation_id: 10,
+                      category: 'general',
+                      name: 'B',
+                      scheduled_date: '2026-06-01',
+                      actual_date: '2026-06-10',
+                      delta_days: 5,
+                      gdd_trigger: 100,
+                      gdd_at_actual: 120,
+                      gdd_delta: 15,
+                      exceedance_kind: 'days'
+                    },
+                    {
+                      item_id: 3,
+                      field_cultivation_id: 10,
+                      category: 'general',
+                      name: 'C',
+                      scheduled_date: '2026-06-02',
+                      actual_date: '2026-06-08',
+                      delta_days: 2,
+                      gdd_trigger: 50,
+                      gdd_at_actual: 65,
+                      gdd_delta: 12,
+                      exceedance_kind: 'days'
+                    },
+                    {
+                      item_id: 4,
+                      field_cultivation_id: 10,
+                      category: 'general',
+                      name: 'D',
+                      scheduled_date: '2026-06-03',
+                      actual_date: '2026-06-09',
+                      delta_days: 3,
+                      gdd_trigger: 50,
+                      gdd_at_actual: 60,
+                      gdd_delta: 10,
+                      exceedance_kind: 'days'
+                    }
+                  ]
+                : [
+                    {
+                      item_id: 5,
+                      field_cultivation_id: 11,
+                      category: 'fertilizer',
+                      name: 'E',
+                      scheduled_date: '2026-06-03',
+                      actual_date: '2026-06-10',
+                      delta_days: 4,
+                      gdd_trigger: 80,
+                      gdd_at_actual: 95,
+                      gdd_delta: 11,
+                      exceedance_kind: 'gdd'
+                    },
+                    {
+                      item_id: 6,
+                      field_cultivation_id: 11,
+                      category: 'fertilizer',
+                      name: 'F',
+                      scheduled_date: '2026-06-04',
+                      actual_date: '2026-06-11',
+                      delta_days: 3,
+                      gdd_trigger: 70,
+                      gdd_at_actual: 85,
+                      gdd_delta: 10,
+                      exceedance_kind: 'days'
+                    }
+                  ]
+        })
+    });
+
+    const useCase = new WorkHubInitUseCase(
+      outputPort,
+      workHubGateway,
+      planGateway,
+      { execute: vi.fn() } as unknown as EnsurePlanForFarmUseCase
+    );
+    useCase.execute();
+
+    expect(present).toHaveBeenCalledWith({
+      farms: [
+        expect.objectContaining({ farmId: 2, thresholdExceededCount: 3 }),
+        expect.objectContaining({ farmId: 3, thresholdExceededCount: 2 }),
+        expect.objectContaining({ farmId: 1, thresholdExceededCount: 1 })
       ]
     });
   });

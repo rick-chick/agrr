@@ -109,6 +109,11 @@ const initialControl: WorkHubViewState = {
                         }}
                         ·
                         {{
+                          'work.hub.unrecorded_summary'
+                            | translate: { count: farm.unrecordedCount }
+                        }}
+                        ·
+                        {{
                           'work.hub.gdd_delay_summary'
                             | translate: { count: farm.gddDelayCount }
                         }}

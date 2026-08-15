@@ -3,6 +3,7 @@ import { forkJoin, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { localTodayIso } from '../../core/local-today';
+import { sortWorkHubFarmsByActionRequired } from '../../domain/work-hub/sort-work-hub-farms-by-action-required';
 import { WorkHubFarmRow } from '../../domain/work-hub/work-hub-farm-row';
 import { PLAN_GATEWAY, PlanGateway } from '../plans/plan-gateway';
 import { WORK_HUB_GATEWAY, WorkHubGateway } from './work-hub-gateway';
@@ -15,13 +16,14 @@ import { WORK_HUB_INIT_OUTPUT_PORT, WorkHubInitOutputPort } from './work-hub-ini
 function withZeroCounts(
   farms: Omit<
     WorkHubFarmRow,
-    'overdueCount' | 'todayCount' | 'gddDelayCount' | 'thresholdExceededCount'
+    'overdueCount' | 'todayCount' | 'unrecordedCount' | 'gddDelayCount' | 'thresholdExceededCount'
   >[]
 ): WorkHubFarmRow[] {
   return farms.map((farm) => ({
     ...farm,
     overdueCount: 0,
     todayCount: 0,
+    unrecordedCount: 0,
     gddDelayCount: 0,
     thresholdExceededCount: 0
   }));
@@ -59,17 +61,20 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
             varianceByFarmId: loadHubFarmVarianceStats(farmsForCounts, this.planGateway)
           }).pipe(
             map(({ countsByFarmId, varianceByFarmId }) => ({
-              farms: farms.map((farm) => {
-                const summary = countsByFarmId.get(farm.farmId);
-                const variance = varianceByFarmId.get(farm.farmId);
-                return {
-                  ...farm,
-                  overdueCount: summary?.overdueCount ?? 0,
-                  todayCount: summary?.todayCount ?? 0,
-                  gddDelayCount: variance?.gddDelayCount ?? 0,
-                  thresholdExceededCount: variance?.thresholdExceededCount ?? 0
-                };
-              }),
+              farms: sortWorkHubFarmsByActionRequired(
+                farms.map((farm) => {
+                  const summary = countsByFarmId.get(farm.farmId);
+                  const variance = varianceByFarmId.get(farm.farmId);
+                  return {
+                    ...farm,
+                    overdueCount: summary?.overdueCount ?? 0,
+                    todayCount: summary?.todayCount ?? 0,
+                    unrecordedCount: variance?.unrecordedCount ?? 0,
+                    gddDelayCount: variance?.gddDelayCount ?? 0,
+                    thresholdExceededCount: variance?.thresholdExceededCount ?? 0
+                  };
+                })
+              ),
               autoRedirect: false as const
             }))
           );

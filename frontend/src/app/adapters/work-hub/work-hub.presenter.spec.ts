@@ -48,6 +48,7 @@ describe('WorkHubPresenter', () => {
           planId: 9,
           overdueCount: 0,
           todayCount: 0,
+          unrecordedCount: 0,
           gddDelayCount: 0,
           thresholdExceededCount: 0
         }
@@ -67,6 +68,7 @@ describe('WorkHubPresenter', () => {
             planId: 9,
             overdueCount: 0,
             todayCount: 0,
+            unrecordedCount: 0,
             gddDelayCount: 0,
             thresholdExceededCount: 0
           }

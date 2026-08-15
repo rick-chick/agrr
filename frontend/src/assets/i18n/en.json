@@ -241,6 +241,7 @@
       "farm_meta": "{{count}} fields · {{area}} m² total",
       "overdue_summary": "{{count}} overdue",
       "today_summary": "{{count}} today",
+      "unrecorded_summary": "{{count}} unrecorded",
       "open_work": "Open work",
       "start_recording": "Start recording",
       "no_fields_warning": "No valid fields on this farm.",

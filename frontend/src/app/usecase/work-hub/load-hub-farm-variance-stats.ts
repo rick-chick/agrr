@@ -4,6 +4,7 @@ import { buildPlanWorkVarianceSummaryStats } from '../../domain/plans/build-plan
 import { PlanGateway } from '../plans/plan-gateway';
 
 export interface HubFarmVarianceStats {
+  unrecordedCount: number;
   gddDelayCount: number;
   thresholdExceededCount: number;
 }
@@ -26,6 +27,7 @@ export function loadHubFarmVarianceStats(
       if (farm.planId == null) {
         return of({
           farmId: farm.farmId,
+          unrecordedCount: 0,
           gddDelayCount: 0,
           thresholdExceededCount: 0
         });
@@ -35,6 +37,7 @@ export function loadHubFarmVarianceStats(
           const stats = buildPlanWorkVarianceSummaryStats(summary);
           return {
             farmId: farm.farmId,
+            unrecordedCount: stats.unrecordedCount,
             gddDelayCount: stats.gddDelayCount,
             thresholdExceededCount: stats.thresholdExceededCount
           };
@@ -48,6 +51,7 @@ export function loadHubFarmVarianceStats(
           summaries.map((summary) => [
             summary.farmId,
             {
+              unrecordedCount: summary.unrecordedCount,
               gddDelayCount: summary.gddDelayCount,
               thresholdExceededCount: summary.thresholdExceededCount
             }
