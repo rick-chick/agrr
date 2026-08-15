@@ -1261,9 +1261,10 @@ describe('PlanWorkComponent fertilizer segment', () => {
 
   it('renders all and fertilizer segment controls', () => {
     const buttons = fixture.nativeElement.querySelectorAll('.plan-work__segment-btn');
-    expect(buttons.length).toBe(2);
+    expect(buttons.length).toBe(3);
     expect(buttons[0].textContent?.trim()).toBe('すべて');
     expect(buttons[1].textContent?.trim()).toBe('施肥');
+    expect(buttons[2].textContent?.trim()).toBe('防除');
   });
 
   it('shows only fertilizer tasks when fertilizer segment is selected', () => {
@@ -1288,5 +1289,114 @@ describe('PlanWorkComponent fertilizer segment', () => {
     const diff = fixture.nativeElement.querySelector('.plan-work__amount-diff');
     expect(diff?.textContent?.trim()).toBe('+2 kg');
     expect(diff?.classList.contains('plan-work__amount-diff--over')).toBe(true);
+  });
+});
+
+describe('PlanWorkComponent pest control segment', () => {
+  let fixture: ComponentFixture<PlanWorkComponent>;
+  let component: PlanWorkComponent;
+
+  const generalRow = mockRow({ item_id: 1, name: '除草', category: 'general', task_type: 'field_work' });
+  const preventiveRow = mockRow({
+    item_id: 2,
+    name: '予防散布',
+    category: 'pest_control',
+    task_type: 'preventive_spray',
+    gdd_trigger: '120',
+    weather_dependency: 'high'
+  }, { cumulativeGddAtToday: 95 });
+  const curativeRow = mockRow({
+    item_id: 3,
+    name: '治療散布',
+    category: 'pest_control',
+    task_type: 'curative_spray',
+    gdd_trigger: '80',
+    weather_dependency: 'low'
+  }, { cumulativeGddAtToday: 90 });
+
+  beforeEach(async () => {
+    const loadUseCase = { execute: vi.fn() };
+    const mockPresenter = {
+      setView: vi.fn(),
+      beginScheduleLoad: vi.fn(() => 1),
+      beginPageVarianceLoad: vi.fn(() => 2),
+      queueSaveImpactAfterSave: vi.fn(() => 1),
+      dismissSaveImpact: vi.fn()
+    };
+
+    TestBed.overrideComponent(PlanWorkComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
+          { provide: SkipTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: CreateWorkRecordUseCase, useValue: { execute: vi.fn() } },
+          { provide: RegenerateTaskScheduleUseCase, useValue: { execute: vi.fn() } },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: { execute: vi.fn() } },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: { execute: vi.fn() } },
+          { provide: PlanWorkPresenter, useValue: mockPresenter },
+          { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanWorkComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([]), { provide: ActivatedRoute, useValue: createPlanRouteMock('7') }]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlanWorkComponent);
+    component = fixture.componentInstance;
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', ja as TranslationObject, true);
+    translate.use('ja');
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      overdue: [],
+      today: [generalRow, preventiveRow, curativeRow],
+      upcoming: []
+    };
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+  });
+
+  it('renders all, fertilizer, and pest control segment controls', () => {
+    const buttons = fixture.nativeElement.querySelectorAll('.plan-work__segment-btn');
+    expect(buttons.length).toBe(3);
+    expect(buttons[0].textContent?.trim()).toBe('すべて');
+    expect(buttons[1].textContent?.trim()).toBe('施肥');
+    expect(buttons[2].textContent?.trim()).toBe('防除');
+  });
+
+  it('shows only pest_control tasks when pest control segment is selected', () => {
+    component.setWorkSegment('pest_control');
+    fixture.detectChanges();
+
+    const names = [...fixture.nativeElement.querySelectorAll('.plan-work__name')].map((el: Element) =>
+      el.textContent?.trim()
+    );
+    expect(names).toEqual(['予防散布', '治療散布']);
+  });
+
+  it('shows preventive/curative badges and context badges on pest control rows', () => {
+    component.setWorkSegment('pest_control');
+    fixture.detectChanges();
+
+    const badges = [...fixture.nativeElement.querySelectorAll('.plan-work__pest-control-badge')].map(
+      (el: Element) => el.textContent?.trim()
+    );
+    expect(badges).toEqual(['予防', '治療']);
+
+    expect(fixture.nativeElement.querySelectorAll('.plan-work__context-badge--gdd-trigger').length).toBe(2);
+    expect(fixture.nativeElement.textContent).toContain('GDD ≥ 120');
+    expect(fixture.nativeElement.textContent).toContain('あと 25');
+    expect(fixture.nativeElement.textContent).toContain('GDD到達');
+    expect(fixture.nativeElement.textContent).toContain('天候: 高');
+    expect(fixture.nativeElement.textContent).toContain('天候: 低');
   });
 });

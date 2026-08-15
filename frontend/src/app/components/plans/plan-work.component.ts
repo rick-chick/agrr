@@ -46,9 +46,12 @@ import {
   filterWorkDayListBySegment,
   formatWorkRowAmountDiffLabel,
   isFertilizerWorkRow,
+  isPestControlWorkRow,
   resolveFertilizerTaskKind,
+  resolvePestControlTaskKind,
   resolveWorkRowAmountDiff,
   type FertilizerTaskKind,
+  type PestControlTaskKind,
   type WorkListSegment
 } from '../../domain/work-schedule/work-row-fertilizer';
 import type { WorkRecordAmountDiff } from '../../domain/work-schedule/work-record-amount-diff';
@@ -166,6 +169,14 @@ const initialControl: PlanWorkViewState = {
               (click)="setWorkSegment('fertilizer')"
             >
               {{ 'plans.work.segment.fertilizer' | translate }}
+            </button>
+            <button
+              type="button"
+              class="plan-work__segment-btn"
+              [class.plan-work__segment-btn--active]="control.workSegment === 'pest_control'"
+              (click)="setWorkSegment('pest_control')"
+            >
+              {{ 'plans.work.segment.pest_control' | translate }}
             </button>
           </div>
 
@@ -353,6 +364,19 @@ const initialControl: PlanWorkViewState = {
                 (fertilizerKind === 'basal'
                   ? 'plans.work.fertilizer_badge.basal'
                   : 'plans.work.fertilizer_badge.topdress') | translate
+              }}
+            </span>
+          }
+          @if (pestControlKindForRow(row); as pestControlKind) {
+            <span
+              class="plan-work__pest-control-badge"
+              [class.plan-work__pest-control-badge--preventive]="pestControlKind === 'preventive'"
+              [class.plan-work__pest-control-badge--curative]="pestControlKind === 'curative'"
+            >
+              {{
+                (pestControlKind === 'preventive'
+                  ? 'plans.work.pest_control_badge.preventive'
+                  : 'plans.work.pest_control_badge.curative') | translate
               }}
             </span>
           }
@@ -590,6 +614,13 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       return null;
     }
     return resolveFertilizerTaskKind(row.item);
+  }
+
+  pestControlKindForRow(row: WorkDayListRowDto): PestControlTaskKind | null {
+    if (!isPestControlWorkRow(row)) {
+      return null;
+    }
+    return resolvePestControlTaskKind(row.item);
   }
 
   amountDiffForRow(row: WorkDayListRowDto): WorkRecordAmountDiff | null {

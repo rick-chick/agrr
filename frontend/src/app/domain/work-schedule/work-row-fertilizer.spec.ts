@@ -5,7 +5,9 @@ import {
   filterWorkDayListBySegment,
   formatWorkRowAmountDiffLabel,
   isFertilizerWorkRow,
+  isPestControlWorkRow,
   resolveFertilizerTaskKind,
+  resolvePestControlTaskKind,
   resolveWorkRowAmountDiff
 } from './work-row-fertilizer';
 
@@ -79,5 +81,32 @@ describe('work-row-fertilizer', () => {
   it('formats signed amount diff label', () => {
     const diff = resolveWorkRowAmountDiff(row(), '8', 'kg');
     expect(formatWorkRowAmountDiffLabel(diff!)).toBe('-2 kg');
+  });
+
+  it('identifies pest_control bucket rows by category', () => {
+    expect(isPestControlWorkRow(row({ category: 'pest_control' }))).toBe(true);
+    expect(isPestControlWorkRow(row({ category: 'general' }))).toBe(false);
+  });
+
+  it('resolves preventive and curative kinds from task_type', () => {
+    expect(resolvePestControlTaskKind(row({ task_type: 'preventive_spray' }).item)).toBe(
+      'preventive'
+    );
+    expect(resolvePestControlTaskKind(row({ task_type: 'curative_spray' }).item)).toBe('curative');
+    expect(resolvePestControlTaskKind(row({ task_type: 'field_work' }).item)).toBeNull();
+  });
+
+  it('filters rows by pest_control segment', () => {
+    const general = row({ item_id: 1, category: 'general', name: '除草' });
+    const preventive = row({
+      item_id: 2,
+      category: 'pest_control',
+      task_type: 'preventive_spray',
+      name: '予防散布'
+    });
+    const rows = [general, preventive];
+
+    expect(filterWorkDayListBySegment(rows, 'all')).toEqual(rows);
+    expect(filterWorkDayListBySegment(rows, 'pest_control')).toEqual([preventive]);
   });
 });

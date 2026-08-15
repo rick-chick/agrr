@@ -6,9 +6,11 @@ import {
   WorkRecordAmountDiff
 } from './work-record-amount-diff';
 
-export type WorkListSegment = 'all' | 'fertilizer';
+export type WorkListSegment = 'all' | 'fertilizer' | 'pest_control';
 
 export type FertilizerTaskKind = 'basal' | 'topdress';
+
+export type PestControlTaskKind = 'preventive' | 'curative';
 
 type WorkDayListRowAmountTarget = Pick<WorkDayListRowDto, 'item'> & {
   latestRecordAmount?: string | null;
@@ -17,6 +19,10 @@ type WorkDayListRowAmountTarget = Pick<WorkDayListRowDto, 'item'> & {
 
 export function isFertilizerWorkRow(row: WorkDayListRowDto): boolean {
   return row.item.category === 'fertilizer';
+}
+
+export function isPestControlWorkRow(row: WorkDayListRowDto): boolean {
+  return row.item.category === 'pest_control';
 }
 
 export function resolveFertilizerTaskKind(item: TaskScheduleItem): FertilizerTaskKind | null {
@@ -29,6 +35,16 @@ export function resolveFertilizerTaskKind(item: TaskScheduleItem): FertilizerTas
   return null;
 }
 
+export function resolvePestControlTaskKind(item: TaskScheduleItem): PestControlTaskKind | null {
+  if (item.task_type === 'preventive_spray') {
+    return 'preventive';
+  }
+  if (item.task_type === 'curative_spray') {
+    return 'curative';
+  }
+  return null;
+}
+
 export function filterWorkDayListBySegment(
   rows: WorkDayListRowDto[],
   segment: WorkListSegment
@@ -36,7 +52,10 @@ export function filterWorkDayListBySegment(
   if (segment === 'all') {
     return rows;
   }
-  return rows.filter(isFertilizerWorkRow);
+  if (segment === 'fertilizer') {
+    return rows.filter(isFertilizerWorkRow);
+  }
+  return rows.filter(isPestControlWorkRow);
 }
 
 function findLatestWorkRecordForItem(
