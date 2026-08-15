@@ -10,6 +10,7 @@ export const workRoutes: Routes = [
   },
   {
     path: 'work',
+    pathMatch: 'full',
     loadComponent: () =>
       import('../components/work-hub/work-hub.component').then((m) => m.WorkHubComponent),
     canActivate: [authGuard]
