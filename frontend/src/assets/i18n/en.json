@@ -1846,6 +1846,15 @@
         "cumulative_gdd": "Cumulative GDD: {{value}}",
         "daily_weather": "High {{max}}°C / Low {{min}}°C / Mean {{mean}}°C",
         "workbench_link": "Open workbench climate panel"
+      },
+      "segment": {
+        "label": "Work list view",
+        "all": "All",
+        "fertilizer": "Fertilizer"
+      },
+      "fertilizer_badge": {
+        "basal": "Basal",
+        "topdress": "Top-dress"
       }
     },
     "work_records": {
@@ -2645,7 +2654,11 @@
         "stages_edit_action": "Edit growth stages",
         "stages_page_gap_base_temperature": "{{stageName}}: base temperature not set",
         "stages_page_gap_required_gdd": "{{stageName}}: required GDD not set",
-        "stages_next_step_action": "Go to task plan templates"
+        "stages_next_step_action": "Go to task plan templates",
+        "field_work_not_required": "Field work plans are not required for fertilization-only crops",
+        "fertilizer_ready": "Basal or topdress fertilization task plans are registered",
+        "fertilizer_missing": "Basal or topdress fertilization task plans are not registered yet",
+        "fertilizer_action": "Register fertilization task plans"
       },
       "blueprint_errors": {
         "missing_blueprints": "AI suggestions cannot be imported because no task plans are registered yet.",
