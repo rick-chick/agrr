@@ -122,7 +122,7 @@ describe('LoadNavOverdueBadgeUseCase', () => {
                     scheduled_date: planId === 9 ? '2026-06-08' : '2026-06-10'
                   })
                 ],
-                fertilizer: [],
+                fertilizer: [], pest_control: [],
                 unscheduled: []
               }
             }

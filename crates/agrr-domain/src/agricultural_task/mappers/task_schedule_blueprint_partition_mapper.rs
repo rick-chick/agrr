@@ -1,23 +1,29 @@
-//! Partitions task schedule blueprints into general field work and fertilizer categories.
+//! Partitions task schedule blueprints into general field work, fertilizer, and pest control categories.
 
 use crate::agricultural_task::constants::schedule_item_types::{
-    BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
+    BASAL_FERTILIZATION, CURATIVE_SPRAY, FIELD_WORK, PREVENTIVE_SPRAY, TOPDRESS_FERTILIZATION,
 };
 use crate::agricultural_task::gateways::TaskScheduleBlueprint;
 
 pub fn partition_blueprints(
     blueprints: &[TaskScheduleBlueprint],
-) -> (Vec<&TaskScheduleBlueprint>, Vec<&TaskScheduleBlueprint>) {
+) -> (
+    Vec<&TaskScheduleBlueprint>,
+    Vec<&TaskScheduleBlueprint>,
+    Vec<&TaskScheduleBlueprint>,
+) {
     let mut general = Vec::new();
     let mut fertilizer = Vec::new();
+    let mut pest_control = Vec::new();
     for blueprint in blueprints {
         match blueprint.task_type.as_str() {
             FIELD_WORK => general.push(blueprint),
             BASAL_FERTILIZATION | TOPDRESS_FERTILIZATION => fertilizer.push(blueprint),
+            PREVENTIVE_SPRAY | CURATIVE_SPRAY => pest_control.push(blueprint),
             _ => {}
         }
     }
-    (general, fertilizer)
+    (general, fertilizer, pest_control)
 }
 
 #[cfg(test)]

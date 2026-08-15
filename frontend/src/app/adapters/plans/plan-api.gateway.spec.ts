@@ -228,7 +228,7 @@ describe('PlanApiGateway', () => {
             task_options: [],
             schedules: {
               general: [],
-              fertilizer: [],
+              fertilizer: [], pest_control: [],
               unscheduled: []
             }
           }

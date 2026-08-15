@@ -126,7 +126,7 @@ describe('WorkHubInitUseCase', () => {
                   planId === 9
                     ? [item({ item_id: 1, scheduled_date: '2026-06-08' })]
                     : [item({ item_id: 2, scheduled_date: '2026-06-12' })],
-                fertilizer: [],
+                fertilizer: [], pest_control: [],
                 unscheduled: []
               }
             }

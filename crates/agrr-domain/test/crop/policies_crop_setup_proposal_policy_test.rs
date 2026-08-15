@@ -139,3 +139,52 @@ fn validate_accepts_blueprint_timing_patch_intent() {
         normalized["intent"].as_str().unwrap()
     );
 }
+
+#[test]
+fn validate_accepts_pest_control_task_types() {
+    let body = json!({
+        "stages": [{
+            "name": "育苗",
+            "order": 1,
+            "thermal_requirement": { "required_gdd": "120" }
+        }],
+        "agricultural_tasks": [
+            {
+                "ref": "task-preventive",
+                "name": "予防散布",
+                "task_type": "preventive_spray",
+                "region": "jp"
+            },
+            {
+                "ref": "task-curative",
+                "name": "治療散布",
+                "task_type": "curative_spray",
+                "region": "jp"
+            }
+        ],
+        "task_schedule_blueprints": [
+            {
+                "agricultural_task_ref": "task-preventive",
+                "stage_order": 1,
+                "stage_name": "育苗",
+                "gdd_trigger": 0,
+                "task_type": "preventive_spray",
+                "priority": 1
+            },
+            {
+                "agricultural_task_ref": "task-curative",
+                "stage_order": 1,
+                "stage_name": "育苗",
+                "gdd_trigger": 50,
+                "task_type": "curative_spray",
+                "priority": 2
+            }
+        ]
+    });
+
+    let (plan, _) = validate_and_normalize(&body, &[], &[]).expect("valid pest control proposal");
+    assert_eq!(2, plan.agricultural_tasks.len());
+    assert_eq!("preventive_spray", plan.agricultural_tasks[0].task_type);
+    assert_eq!("curative_spray", plan.agricultural_tasks[1].task_type);
+    assert_eq!(2, plan.task_schedule_blueprints.len());
+}

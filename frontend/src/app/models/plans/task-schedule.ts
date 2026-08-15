@@ -135,6 +135,7 @@ export interface FieldSchedule {
   schedules: {
     general: TaskScheduleItem[];
     fertilizer: TaskScheduleItem[];
+    pest_control: TaskScheduleItem[];
     unscheduled: TaskScheduleItem[];
   };
 }

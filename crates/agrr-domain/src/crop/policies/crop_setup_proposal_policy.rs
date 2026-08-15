@@ -1,7 +1,7 @@
 //! Validates and normalizes external skill setup proposal JSON.
 
 use crate::agricultural_task::constants::schedule_item_types::{
-    BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
+    BASAL_FERTILIZATION, CURATIVE_SPRAY, FIELD_WORK, PREVENTIVE_SPRAY, TOPDRESS_FERTILIZATION,
 };
 use crate::crop::dtos::{
     CropSetupProposalAgriculturalTaskPlan, CropSetupProposalBlueprintPatchPlan,
@@ -17,6 +17,8 @@ const ALLOWED_TASK_TYPES: &[&str] = &[
     FIELD_WORK,
     BASAL_FERTILIZATION,
     TOPDRESS_FERTILIZATION,
+    PREVENTIVE_SPRAY,
+    CURATIVE_SPRAY,
 ];
 
 const BLUEPRINT_TIMING_PATCH_INTENT: &str = "blueprint_timing_patch";
@@ -167,7 +169,7 @@ pub fn validate_and_normalize(
             if !ALLOWED_TASK_TYPES.contains(&task_type) {
                 errors.push(CropSetupProposalValidationError::new(
                     format!("{prefix}.task_type"),
-                    "must be field_work, basal_fertilization, or topdress_fertilization",
+                    "must be field_work, basal_fertilization, topdress_fertilization, preventive_spray, or curative_spray",
                 ));
             }
         }
@@ -229,7 +231,7 @@ pub fn validate_and_normalize(
             if !ALLOWED_TASK_TYPES.contains(&task_type) {
                 errors.push(CropSetupProposalValidationError::new(
                     format!("{prefix}.task_type"),
-                    "must be field_work, basal_fertilization, or topdress_fertilization",
+                    "must be field_work, basal_fertilization, topdress_fertilization, preventive_spray, or curative_spray",
                 ));
             }
         }

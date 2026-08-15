@@ -18,7 +18,7 @@ describe('task-schedule-variance-lookup', () => {
           crop_id: 1,
           schedules: {
             general: [{ item_id: 1 } as TaskScheduleItem],
-            fertilizer: [],
+            fertilizer: [], pest_control: [],
             unscheduled: []
           }
         }

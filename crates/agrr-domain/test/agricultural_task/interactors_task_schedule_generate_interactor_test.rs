@@ -5,7 +5,7 @@
     use time::{Date, OffsetDateTime};
 
     use crate::agricultural_task::constants::schedule_item_types::{
-        BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
+        BASAL_FERTILIZATION, FIELD_WORK, PREVENTIVE_SPRAY, TOPDRESS_FERTILIZATION,
     };
     use crate::agricultural_task::dtos::TaskScheduleGenerateInput;
     use crate::agricultural_task::dtos::{
@@ -470,6 +470,63 @@
         assert_eq!(general.items[0].scheduled_date, Date::from_calendar_date(2025, time::Month::April, 1).unwrap());
         assert_eq!(fertilizer.items.len(), 2);
         assert_eq!(fertilizer.items.last().unwrap().scheduled_date, Date::from_calendar_date(2025, time::Month::April, 6).unwrap());
+    }
+
+    #[test]
+    fn generate_produces_pest_control_schedule_when_blueprints_present() {
+        let (mut ctx, task_schedule_gateway, clock) = build_test_fixtures();
+        let preventive_blueprint = TaskScheduleBlueprint {
+            task_type: PREVENTIVE_SPRAY.into(),
+            gdd_trigger: Some(dec("0.0")),
+            gdd_tolerance: Some(dec("5.0")),
+            description: None,
+            stage_name: Some("生育期".into()),
+            stage_order: Some(2),
+            priority: Some(1),
+            source: Some("agrr_schedule".into()),
+            weather_dependency: None,
+            time_per_sqm: None,
+            amount: None,
+            amount_unit: None,
+            agricultural_task: Some(TaskScheduleRelatedTask {
+                id: 14,
+                name: "予防散布".into(),
+                description: None,
+                weather_dependency: None,
+                time_per_sqm: None,
+            }),
+        };
+        if let Some(fc) = ctx.plan.field_cultivations.first_mut() {
+            if let Some(crop) = fc.crop.as_mut() {
+                crop.crop_task_schedule_blueprints.push(preventive_blueprint);
+            }
+        }
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway {
+            ctx,
+            protectable_items: vec![],
+        };
+        let progress_gateway = StubProgressGateway {
+            response: progress_response(),
+            received: Mutex::new(vec![]),
+        };
+        let interactor = TaskScheduleGenerateInteractor::new(
+            &progress_gateway,
+            &task_schedule_gateway,
+            &clock,
+            &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
+        );
+        interactor.call(TaskScheduleGenerateInput::new(99)).expect("call");
+
+        let replaced = task_schedule_gateway.merge_replaced.lock().unwrap();
+        assert_eq!(3, replaced.len());
+        let pest_control = replaced
+            .iter()
+            .find(|r| r._category == "pest_control")
+            .expect("pest_control schedule");
+        assert_eq!(1, pest_control.items.len());
+        assert_eq!(PREVENTIVE_SPRAY, pest_control.items[0].task_type);
     }
 
     #[test]

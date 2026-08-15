@@ -157,7 +157,7 @@ describe('LoadFieldClimateUseCase', () => {
               crop_id: 1,
               schedules: {
                 general: [{ item_id: 5, delta_days: 2, gdd_delta: 10.5 }],
-                fertilizer: [],
+                fertilizer: [], pest_control: [],
                 unscheduled: []
               }
             }

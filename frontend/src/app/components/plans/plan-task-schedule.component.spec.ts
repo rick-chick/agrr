@@ -200,7 +200,7 @@ function emptyFieldSchedule(
     field_cultivation_id: id * 10,
     crop_id: id * 20,
     task_options: [],
-    schedules: { general: [], fertilizer: [], unscheduled: [] }
+    schedules: { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
   };
 }
 
@@ -333,7 +333,7 @@ describe('PlanTaskScheduleComponent', () => {
             ...emptyFieldSchedule(1, 'Field A'),
             schedules: {
               general: [sampleGeneralTask({ scheduled_date: today })],
-              fertilizer: [],
+              fertilizer: [], pest_control: [],
               unscheduled: []
             }
           },
@@ -397,7 +397,7 @@ describe('PlanTaskScheduleComponent', () => {
             task_options: [],
             schedules: {
               general: [sampleGeneralTask({ scheduled_date: today })],
-              fertilizer: [],
+              fertilizer: [], pest_control: [],
               unscheduled: []
             }
           }
@@ -485,7 +485,7 @@ describe('PlanTaskScheduleComponent', () => {
                 sampleGeneralTask({ item_id: 1, name: 'Past task', scheduled_date: '2026-06-01' }),
                 sampleGeneralTask({ item_id: 2, name: 'Later task', scheduled_date: '2026-06-15' })
               ],
-              fertilizer: [],
+              fertilizer: [], pest_control: [],
               unscheduled: []
             }
           }
@@ -523,7 +523,7 @@ describe('PlanTaskScheduleComponent', () => {
             field_cultivation_id: 10,
             crop_id: 20,
             task_options: [],
-            schedules: { general: [], fertilizer: [], unscheduled: [] }
+            schedules: { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
           }
         ]
       }
@@ -858,7 +858,7 @@ describe('PlanTaskScheduleComponent', () => {
             field_cultivation_id: 10,
             crop_id: 20,
             task_options: [],
-            schedules: { general: [], fertilizer: [], unscheduled: [] }
+            schedules: { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
           }
         ]
       }
@@ -893,7 +893,7 @@ describe('PlanTaskScheduleComponent', () => {
             task_options: [],
             schedules: {
               general: [sampleGeneralTask()],
-              fertilizer: [],
+              fertilizer: [], pest_control: [],
               unscheduled: []
             }
           }
@@ -935,7 +935,7 @@ describe('PlanTaskScheduleComponent', () => {
             task_options: [],
             schedules: {
               general: [sampleGeneralTask()],
-              fertilizer: [],
+              fertilizer: [], pest_control: [],
               unscheduled: []
             }
           }
@@ -989,7 +989,7 @@ describe('PlanTaskScheduleComponent', () => {
             field_cultivation_id: 10,
             crop_id: 20,
             task_options: [],
-            schedules: { general: [], fertilizer: [], unscheduled: [] }
+            schedules: { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
           }
         ]
       }
@@ -1024,7 +1024,7 @@ describe('PlanTaskScheduleComponent', () => {
             field_cultivation_id: 10,
             crop_id: 20,
             task_options: [],
-            schedules: { general: [], fertilizer: [], unscheduled: [] }
+            schedules: { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
           }
         ]
       }
@@ -1094,7 +1094,7 @@ describe('PlanTaskScheduleComponent', () => {
             field_cultivation_id: 42,
             crop_id: 1,
             task_options: [],
-            schedules: { general: [], fertilizer: [], unscheduled: [] }
+            schedules: { general: [], fertilizer: [], pest_control: [], unscheduled: [] }
           }
         ]
       }
@@ -1157,7 +1157,7 @@ describe('PlanTaskScheduleComponent', () => {
             ...emptyFieldSchedule(1, 'Field A'),
             schedules: {
               general: [sampleGeneralTask()],
-              fertilizer: [],
+              fertilizer: [], pest_control: [],
               unscheduled: []
             }
           }
@@ -1247,7 +1247,7 @@ describe('PlanTaskScheduleComponent', () => {
             ...emptyFieldSchedule(1, 'Field A'),
             schedules: {
               general: [sampleGeneralTask()],
-              fertilizer: [],
+              fertilizer: [], pest_control: [],
               unscheduled: []
             }
           }
@@ -1424,7 +1424,7 @@ describe('PlanTaskScheduleComponent', () => {
                   category: 'fertilizer',
                   name: 'Topdress'
                 }
-              ],
+              ], pest_control: [],
               unscheduled: []
             }
           }
@@ -1461,7 +1461,7 @@ describe('PlanTaskScheduleComponent', () => {
                   category: 'fertilizer',
                   name: 'Basal'
                 }
-              ],
+              ], pest_control: [],
               unscheduled: []
             }
           }

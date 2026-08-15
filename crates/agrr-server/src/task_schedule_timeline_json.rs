@@ -12,6 +12,15 @@ use time::{Date, Duration, Weekday};
 const WEEK_LENGTH_DAYS: i64 = 6;
 const CATEGORY_GENERAL: &str = "general";
 const CATEGORY_FERTILIZER: &str = "fertilizer";
+const CATEGORY_PEST_CONTROL: &str = "pest_control";
+
+fn schedule_bucket(category: &str) -> &str {
+    match category {
+        CATEGORY_FERTILIZER => CATEGORY_FERTILIZER,
+        CATEGORY_PEST_CONTROL => CATEGORY_PEST_CONTROL,
+        _ => CATEGORY_GENERAL,
+    }
+}
 
 pub fn to_json_body(timeline: TaskScheduleTimeline, query: TaskScheduleQuery) -> Value {
     let presenter = TimelineJsonPresenter::new(timeline, query);
@@ -142,6 +151,7 @@ impl TimelineJsonPresenter {
         let mut categorized: Map<String, Value> = Map::new();
         categorized.insert(CATEGORY_GENERAL.to_string(), json!([]));
         categorized.insert(CATEGORY_FERTILIZER.to_string(), json!([]));
+        categorized.insert(CATEGORY_PEST_CONTROL.to_string(), json!([]));
         categorized.insert("unscheduled".to_string(), json!([]));
 
         for schedule in &field.schedules {
@@ -163,11 +173,7 @@ impl TimelineJsonPresenter {
                         .unwrap()
                         .push(serialized);
                 } else if self.is_plan_scope() {
-                    let bucket = if category == CATEGORY_FERTILIZER {
-                        CATEGORY_FERTILIZER
-                    } else {
-                        CATEGORY_GENERAL
-                    };
+                    let bucket = schedule_bucket(category);
                     categorized
                         .get_mut(bucket)
                         .unwrap()
@@ -175,11 +181,7 @@ impl TimelineJsonPresenter {
                         .unwrap()
                         .push(serialized);
                 } else if self.week_range().contains(&scheduled_date.unwrap()) {
-                    let bucket = if category == CATEGORY_FERTILIZER {
-                        CATEGORY_FERTILIZER
-                    } else {
-                        CATEGORY_GENERAL
-                    };
+                    let bucket = schedule_bucket(category);
                     categorized
                         .get_mut(bucket)
                         .unwrap()
@@ -280,7 +282,9 @@ impl TimelineJsonPresenter {
 
     fn include_category(&self, category: &str) -> bool {
         match self.query.category.as_deref() {
-            Some(CATEGORY_GENERAL) | Some(CATEGORY_FERTILIZER) => self.query.category.as_deref() == Some(category),
+            Some(CATEGORY_GENERAL) | Some(CATEGORY_FERTILIZER) | Some(CATEGORY_PEST_CONTROL) => {
+                self.query.category.as_deref() == Some(category)
+            }
             _ => true,
         }
     }
@@ -797,5 +801,70 @@ mod tests {
         );
         let fields = body["fields"].as_array().expect("fields");
         assert!(fields.is_empty(), "week scope should hide field with only out-of-week schedules");
+    }
+
+    #[test]
+    fn category_pest_control_filter_returns_pest_control_bucket() {
+        let today = Date::from_calendar_date(2026, Month::July, 5).expect("date");
+        let timeline = TaskScheduleTimeline {
+            plan: sample_plan(),
+            fields: vec![sample_field(
+                vec![
+                    TaskScheduleTimelineScheduleRead {
+                        category: "general".into(),
+                        items: vec![sample_scheduled_item("2026-07-05")],
+                    },
+                    TaskScheduleTimelineScheduleRead {
+                        category: "pest_control".into(),
+                        items: vec![TaskScheduleTimelineScheduleItemRead {
+                            id: 2001,
+                            name: "防除".into(),
+                            task_type: "preventive_spray".into(),
+                            scheduled_date: Some("2026-07-05".into()),
+                            stage_name: None,
+                            stage_order: None,
+                            gdd_trigger: None,
+                            gdd_tolerance: None,
+                            priority: None,
+                            source: "agrr".into(),
+                            weather_dependency: None,
+                            time_per_sqm: None,
+                            amount: None,
+                            amount_unit: None,
+                            status: "planned".into(),
+                            agricultural_task_id: Some(502),
+                            field_cultivation_id: 10,
+                            agricultural_task: None,
+                            rescheduled_at: None,
+                            cancelled_at: None,
+                            completed: false,
+                            work_records: vec![],
+                        }],
+                    },
+                ],
+                None,
+                None,
+            )],
+            scheduled_dates: vec![today],
+            today,
+        };
+        let body = to_json_body(
+            timeline,
+            TaskScheduleQuery {
+                week_start: Some("2026-07-05".into()),
+                field_cultivation_id: None,
+                category: Some("pest_control".into()),
+                scope: Some("week".into()),
+            },
+        );
+        let fields = body["fields"].as_array().expect("fields");
+        assert_eq!(1, fields.len());
+        let schedules = fields[0]["schedules"].as_object().expect("schedules");
+        assert!(schedules.contains_key("pest_control"));
+        let pest_control = schedules["pest_control"].as_array().expect("pest_control");
+        assert_eq!(1, pest_control.len());
+        assert_eq!(2001, pest_control[0]["item_id"].as_i64().unwrap());
+        let general = schedules["general"].as_array().expect("general");
+        assert!(general.is_empty());
     }
 }

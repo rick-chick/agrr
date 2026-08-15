@@ -67,7 +67,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
           crop_id: 20,
           schedules: {
             general: [task({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10' })],
-            fertilizer: [],
+            fertilizer: [], pest_control: [],
             unscheduled: []
           }
         }
@@ -170,7 +170,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
                 }
               })
             ],
-            fertilizer: [],
+            fertilizer: [], pest_control: [],
             unscheduled: []
           }
         }
@@ -225,7 +225,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
                 work_records: [{ id: 9, actual_date: '2026-06-10', notes: null }]
               })
             ],
-            fertilizer: [],
+            fertilizer: [], pest_control: [],
             unscheduled: []
           }
         }
@@ -266,7 +266,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
           crop_id: 20,
           schedules: {
             general: [],
-            fertilizer: [],
+            fertilizer: [], pest_control: [],
             unscheduled: [
               task({
                 item_id: 9,
@@ -334,7 +334,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
                 gdd_delta: 10
               })
             ],
-            fertilizer: [],
+            fertilizer: [], pest_control: [],
             unscheduled: []
           }
         }
