@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
+import { loadPlanListInputGaps } from '../../domain/plans/load-plan-list-input-gaps';
 import { LoadPlanListInputPort } from './load-plan-list.input-port';
 import { LoadPlanListOutputPort, LOAD_PLAN_LIST_OUTPUT_PORT } from './load-plan-list.output-port';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
@@ -11,13 +13,16 @@ export class LoadPlanListUseCase implements LoadPlanListInputPort {
   ) {}
 
   execute(): void {
-    this.planGateway.listPlans().subscribe({
-      next: (plans) => this.outputPort.present({ plans }),
-      error: (err: Error) =>
-        this.outputPort.onError({
-          message: err?.message ?? 'Unknown error',
-          scope: 'load-plan-list'
-        })
-    });
+    this.planGateway
+      .listPlans()
+      .pipe(switchMap((plans) => loadPlanListInputGaps(plans, this.planGateway)))
+      .subscribe({
+        next: (entries) => this.outputPort.present({ entries }),
+        error: (err: Error) =>
+          this.outputPort.onError({
+            message: err?.message ?? 'Unknown error',
+            scope: 'load-plan-list'
+          })
+      });
   }
 }

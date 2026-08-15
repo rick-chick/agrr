@@ -22,7 +22,7 @@ export class PlanListPresenter implements LoadPlanListOutputPort, DeletePlanOutp
     this.view.control = {
       loading: false,
       error: null,
-      plans: dto.plans,
+      entries: dto.entries,
       pendingUndoToast: null,
       pendingErrorFlash: null
     };
@@ -43,7 +43,7 @@ export class PlanListPresenter implements LoadPlanListOutputPort, DeletePlanOutp
     const prev = this.view.control;
     const nextControl = {
       ...prev,
-      plans: prev.plans.filter((plan) => plan.id !== dto.deletedPlanId),
+      entries: prev.entries.filter((entry) => entry.plan.id !== dto.deletedPlanId),
       pendingUndoToast: null as PendingUndoToastRequest | null
     };
     if (dto.undo) {

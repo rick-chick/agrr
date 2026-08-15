@@ -2327,7 +2327,10 @@
         "copy": "次年度にコピー",
         "delete": "削除",
         "delete_confirm": "本当にこの計画を削除しますか？この操作は取り消せません。",
-        "created_at": "作成日"
+        "created_at": "作成日",
+        "input_gap_label": "入力ギャップ",
+        "work_link": "作業を記録",
+        "learn_link": "要対応を確認"
       }
     },
     "new": {

@@ -16,7 +16,7 @@ import { CardListSkeletonComponent } from '../shared/skeleton/card-list-skeleton
 const initialControl: PlanListViewState = {
   loading: true,
   error: null,
-  plans: [],
+  entries: [],
   pendingUndoToast: null,
   pendingErrorFlash: null
 };
@@ -43,7 +43,7 @@ const initialControl: PlanListViewState = {
               {{ 'plans.index.retry' | translate }}
             </button>
           </div>
-        } @else if (control.plans.length === 0) {
+        } @else if (control.entries.length === 0) {
           <div class="plan-list-empty">
             <p>{{ 'plans.index.no_plans' | translate }}</p>
             <p class="plan-list-empty-hint">{{ 'plans.index.no_plans_hint' | translate }}</p>
@@ -57,20 +57,54 @@ const initialControl: PlanListViewState = {
             <a routerLink="/plans/new" class="btn btn-primary">{{ 'plans.index.new_plan' | translate }}</a>
           </div>
           <ul class="card-list" role="list">
-            @for (plan of control.plans; track plan.id) {
+            @for (entry of control.entries; track entry.plan.id) {
               <li class="card-list__item">
                 <article class="item-card">
-                  <a [routerLink]="['/plans', plan.id]" class="item-card__body">
-                    <span class="item-card__title">{{ plan.name | planDisplayName }}</span>
-                  </a>
+                  <div class="item-card__body">
+                    <a [routerLink]="['/plans', entry.plan.id]" class="item-card__title-link">
+                      <span class="item-card__title">{{ entry.plan.name | planDisplayName }}</span>
+                    </a>
+                    @if (entry.inputGap) {
+                      <dl class="plan-list__input-gap" aria-label="{{ 'plans.index.plan_card.input_gap_label' | translate }}">
+                        <div>
+                          <dt>{{ 'plans.learn.input_gap.unrecorded' | translate }}</dt>
+                          <dd>{{ entry.inputGap.unrecordedCount }}</dd>
+                        </div>
+                        <div>
+                          <dt>{{ 'plans.learn.input_gap.action_required' | translate }}</dt>
+                          <dd>{{ entry.inputGap.actionRequiredCount }}</dd>
+                        </div>
+                      </dl>
+                      @if (entry.inputGap.unrecordedCount > 0 || entry.inputGap.actionRequiredCount > 0) {
+                        <div class="plan-list__input-gap-links">
+                          @if (entry.inputGap.unrecordedCount > 0) {
+                            <a
+                              class="plan-list__work-link"
+                              [routerLink]="['/plans', entry.plan.id, 'work']"
+                            >
+                              {{ 'plans.index.plan_card.work_link' | translate }}
+                            </a>
+                          }
+                          @if (entry.inputGap.actionRequiredCount > 0) {
+                            <a
+                              class="plan-list__learn-link"
+                              [routerLink]="['/plans', entry.plan.id, 'learn']"
+                            >
+                              {{ 'plans.index.plan_card.learn_link' | translate }}
+                            </a>
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/plans', plan.id]" class="btn btn-secondary">
+                    <a [routerLink]="['/plans', entry.plan.id]" class="btn btn-secondary">
                       {{ 'common.show' | translate }}
                     </a>
                     <button
                       type="button"
                       class="btn btn-danger"
-                      (click)="deletePlan(plan.id)"
+                      (click)="deletePlan(entry.plan.id)"
                       [attr.aria-label]="'common.delete' | translate"
                     >
                       {{ 'common.delete' | translate }}

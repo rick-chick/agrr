@@ -35,6 +35,46 @@
   display: none;
 }
 
+.plan-list__input-gap {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+}
+
+.plan-list__input-gap dt {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-weight: normal;
+}
+
+.plan-list__input-gap dd {
+  margin: var(--space-1) 0 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.plan-list__input-gap-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.plan-list__work-link,
+.plan-list__learn-link {
+  font-size: var(--font-size-sm);
+}
+
+.item-card__title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.item-card__title-link:hover .item-card__title {
+  text-decoration: underline;
+}
+
 @media (max-width: 20rem) {
   .list-loading-skeleton {
     display: none;
