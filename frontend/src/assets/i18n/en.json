@@ -1911,6 +1911,16 @@
         "view_proposal": "View proposal",
         "stage_label": "Stage {{order}} — {{name}}",
         "stage_unassigned": "Unassigned stage"
+      },
+      "one_click_reoptimize": {
+        "title": "Apply learning and re-optimize",
+        "lead": "Re-optimize with current placement and continue through task schedule regeneration. No Gantt drag required.",
+        "cta": "Apply learning and re-optimize",
+        "starting": "Starting re-optimization…",
+        "error": {
+          "no_cultivations": "Cannot re-optimize because there are no cultivations.",
+          "adjust_failed": "Failed to start re-optimization."
+        }
       }
     },
     "work": {

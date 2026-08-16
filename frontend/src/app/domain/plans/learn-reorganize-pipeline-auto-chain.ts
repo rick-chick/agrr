@@ -13,6 +13,14 @@ export function storeLearnReorganizePipelineAutoChain(planId: number): void {
   });
 }
 
+export function storeLearnReorganizePipelineAutoChainSkipPlacement(planId: number): void {
+  patchLearnOrchestrationProgress(planId, {
+    pipeline_active: true,
+    current_phase: 'optimizing',
+    last_error: null
+  });
+}
+
 export function readLearnReorganizePipelineAutoChain(planId: number): boolean {
   return readLearnOrchestrationPipelineActive(planId);
 }

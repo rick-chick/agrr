@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import {
   clearLearnOrchestrationProgressCache,
   hydrateLearnOrchestrationProgress,
+  readLearnOrchestrationCurrentPhase,
   readLearnOrchestrationPipelineActive
 } from './learn-master-update-orchestration';
 import {
@@ -10,6 +11,7 @@ import {
   readLearnReorganizePipelineAutoChain,
   setLearnReorganizePipelineError,
   storeLearnReorganizePipelineAutoChain,
+  storeLearnReorganizePipelineAutoChainSkipPlacement,
   updateLearnReorganizePipelinePhase
 } from './learn-reorganize-pipeline-auto-chain';
 
@@ -45,5 +47,11 @@ describe('learn-reorganize-pipeline-auto-chain', () => {
       commands: ['/plans', 7],
       queryParams: { learningOrchestration: 'adjust' }
     });
+  });
+
+  it('stores skip-placement auto-chain at optimizing phase', () => {
+    storeLearnReorganizePipelineAutoChainSkipPlacement(7);
+    expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
+    expect(readLearnOrchestrationCurrentPhase(7)).toBe('optimizing');
   });
 });

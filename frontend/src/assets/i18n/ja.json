@@ -3015,6 +3015,16 @@
         "view_proposal": "提案を見る",
         "stage_label": "段階 {{order}} — {{name}}",
         "stage_unassigned": "段階未割当"
+      },
+      "one_click_reoptimize": {
+        "title": "学習を反映して再最適化",
+        "lead": "現在の配置を維持したまま再最適化し、作業表の再生成まで進めます。ガントでのドラッグは不要です。",
+        "cta": "学習を反映して再最適化",
+        "starting": "再最適化を開始しています…",
+        "error": {
+          "no_cultivations": "栽培がないため再最適化できません。",
+          "adjust_failed": "再最適化の開始に失敗しました。"
+        }
       }
     },
     "work": {

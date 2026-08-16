@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, Output, EventEmitter } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -7,13 +7,10 @@ import {
   readLearnOrchestrationCurrentPhase,
   readLearnOrchestrationLastError
 } from '../../domain/plans/learn-master-update-orchestration';
-import {
-  buildLearnReorganizePipelineStartNavigation,
-  clearLearnReorganizePipelineError,
-  storeLearnReorganizePipelineAutoChain,
-  updateLearnReorganizePipelinePhase
-} from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
+import { clearLearnReorganizePipelineError } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
+import { buildLearnReorganizeSkipPlacementOptimizingNavigation } from '../../domain/plans/learn-reorganize-skip-placement-pipeline';
 import { resolveLearnReorganizePipelineStageLabelKey } from '../../domain/plans/resolve-learn-reorganize-pipeline-stage';
+import { StartLearnOneClickReoptimizeUseCase } from '../../usecase/plans/start-learn-one-click-reoptimize.usecase';
 
 @Component({
   selector: 'app-plan-learn-pipeline-status',
@@ -65,9 +62,11 @@ import { resolveLearnReorganizePipelineStageLabelKey } from '../../domain/plans/
 })
 export class PlanLearnPipelineStatusComponent {
   private readonly router = inject(Router);
+  private readonly oneClickReoptimizeUseCase = inject(StartLearnOneClickReoptimizeUseCase);
 
   @Input({ required: true }) planId!: number;
   @Input() refreshVersion = 0;
+  @Output() progressChanged = new EventEmitter<void>();
 
   get showFailure(): boolean {
     void this.refreshVersion;
@@ -101,9 +100,16 @@ export class PlanLearnPipelineStatusComponent {
 
   retryPipeline(): void {
     clearLearnReorganizePipelineError(this.planId);
-    storeLearnReorganizePipelineAutoChain(this.planId);
-    updateLearnReorganizePipelinePhase(this.planId, 'placement');
-    const navigation = buildLearnReorganizePipelineStartNavigation(this.planId);
-    void this.router.navigate(navigation.commands, { queryParams: navigation.queryParams });
+    this.oneClickReoptimizeUseCase.execute({
+      planId: this.planId,
+      onSuccess: () => {
+        const navigation = buildLearnReorganizeSkipPlacementOptimizingNavigation(this.planId);
+        void this.router.navigate(navigation.commands);
+        this.progressChanged.emit();
+      },
+      onError: () => {
+        this.progressChanged.emit();
+      }
+    });
   }
 }
