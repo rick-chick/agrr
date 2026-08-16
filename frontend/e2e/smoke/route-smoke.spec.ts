@@ -76,7 +76,13 @@ smokeDescribe('route smoke (Angular + agrr-server session)', () => {
 
       const selector = HOST_SELECTOR_BY_PATTERN[r.pattern];
       if (selector && !HOST_HEALTH_ASSERT_EXCLUDE.has(r.pattern)) {
-        await assertHostHealthy(page, selector);
+        if (r.pattern === 'onboarding') {
+          const host =
+            page.url().includes('/onboarding') ? 'app-onboarding' : 'app-plan-list';
+          await assertHostHealthy(page, host);
+        } else {
+          await assertHostHealthy(page, selector);
+        }
       }
     });
   }

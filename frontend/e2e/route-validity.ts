@@ -7,6 +7,7 @@ import {
   expectedPathnameFromResolvedGoto as expectedPathnameFromResolvedGotoLib,
   normalizePathname as normalizePathnameLib,
   workCapturePathnameOk,
+  onboardingCapturePathnameOk,
 } from './route-validity-lib.mjs';
 
 /** route-manifest.json の `pattern` をキーに、ルータ到達後に表示されるホストコンポーネントのルートセレクタ */
@@ -60,6 +61,18 @@ export async function assertPageValidity(
     return;
   }
 
+  if (r.pattern === 'onboarding') {
+    await expect
+      .poll(() => onboardingCapturePathnameOk(normalizePathname(new URL(page.url()).pathname)), {
+        timeout: 30_000,
+      })
+      .toBe(true);
+    await expect(page.locator('app-onboarding').or(page.locator('app-plan-list'))).toBeVisible({
+      timeout: 30_000,
+    });
+    return;
+  }
+
   await expect
     .poll(() => normalizePathname(new URL(page.url()).pathname), { timeout: 30_000 })
     .toBe(want);
@@ -81,6 +94,16 @@ export async function assertCapturePageValidity(
       .poll(() => normalizePathname(new URL(page.url()).pathname), { timeout: 30_000 })
       .toMatch(new RegExp(`^(${want.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|/plans/\\d+/work)$`));
     await expect(page.locator('app-work-hub, app-plan-work').first()).toBeVisible({ timeout: 30_000 });
+    return;
+  }
+
+  if (r.pattern === 'onboarding') {
+    await expect
+      .poll(() => onboardingCapturePathnameOk(normalizePathname(new URL(page.url()).pathname)), {
+        timeout: 30_000,
+      })
+      .toBe(true);
+    await expect(page.locator('app-onboarding, app-plan-list').first()).toBeVisible({ timeout: 30_000 });
     return;
   }
 

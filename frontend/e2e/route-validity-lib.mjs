@@ -21,3 +21,9 @@ export function workCapturePathnameOk(pathname) {
   const n = normalizePathname(pathname);
   return n === '/work' || /^\/plans\/\d+\/work$/.test(n);
 }
+
+/** `/onboarding` — save_plan 済みユーザーは onboardingGuard が `/plans` へリダイレクトする */
+export function onboardingCapturePathnameOk(pathname) {
+  const n = normalizePathname(pathname);
+  return n === '/onboarding' || n === '/plans';
+}
