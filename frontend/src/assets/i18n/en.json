@@ -1067,6 +1067,51 @@
       "view_my_plans": "View My Plans",
       "chart_title": "Climate Data and Crop Growth Analysis",
       "loading_data": "Loading data...",
+      "private_value_preview": {
+        "title": "Features after you sign in",
+        "lead": "Save to My Plans to unlock these private features.",
+        "weather_reschedule": {
+          "title": "Weather reschedule",
+          "description": "Get automatic replanning proposals when weather shifts"
+        },
+        "learn_loop": {
+          "title": "Learning loop",
+          "description": "Improve next season's plan from plan vs actual gaps"
+        },
+        "work_gdd_comparison": {
+          "title": "Work GDD comparison",
+          "description": "Compare planned and recorded GDD to spot delays"
+        }
+      },
+      "next_steps": {
+        "title": "Next steps",
+        "lead": "After saving, follow this order.",
+        "step_label": {
+          "1": "Step 1",
+          "2": "Step 2",
+          "3": "Step 3"
+        },
+        "save": {
+          "title": "Save to My Plans",
+          "description": "Import this plan into your account"
+        },
+        "task_schedule": {
+          "title": "Review task schedule",
+          "description": "Check work timing against the GDD schedule"
+        },
+        "work_record": {
+          "title": "Record field work",
+          "description": "Log work in the field and compare with the plan"
+        },
+        "cta": {
+          "login_save": "Sign in to save",
+          "save": "Use the button above to save",
+          "task_schedule": "Open task schedule",
+          "work_record": "Open work records"
+        },
+        "completed": "Completed",
+        "after_save_hint": "Available after save"
+      },
       "chart": {
         "temperature_section": "Daily Temperature (°C)",
         "gdd_section": "GDD Trends (Daily・Cumulative・Required)",

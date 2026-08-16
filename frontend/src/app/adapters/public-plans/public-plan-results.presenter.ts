@@ -6,7 +6,6 @@ import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
-import { pendingNavigationTo } from '../../core/view-effects/pending-navigation-presenter.helpers';
 
 @Injectable()
 export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPort, SavePublicPlanOutputPort {
@@ -27,9 +26,8 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
         ...this.view.control,
         pendingErrorFlash: null,
         pendingSuccessFlash: pendingSuccessFlashFromText(dto.message),
-        pendingNavigation: dto.cultivation_plan_id
-          ? pendingNavigationTo(['/plans', dto.cultivation_plan_id])
-          : pendingNavigationTo(['/plans'])
+        pendingNavigation: null,
+        savedPrivatePlanId: dto.cultivation_plan_id ?? null
       };
       return;
     }
@@ -39,6 +37,7 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
       loading: false,
       error: null,
       data: dto as CultivationPlanData,
+      savedPrivatePlanId: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null
     };
