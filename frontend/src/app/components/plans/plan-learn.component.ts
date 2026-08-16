@@ -22,6 +22,7 @@ import { resolvePlanWorkHighlightItemId } from '../../domain/plans/build-plan-wo
 import { PlanLearnMasterUpdateNextStepsComponent } from './plan-learn-master-update-next-steps.component';
 import { PlanLearnProposalQueueComponent } from './plan-learn-proposal-queue.component';
 import { PlanLearnPipelineStatusComponent } from './plan-learn-pipeline-status.component';
+import { PlanLearnOneClickReoptimizeCtaComponent } from './plan-learn-one-click-reoptimize-cta.component';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
@@ -92,7 +93,8 @@ const initialControl: PlanLearnViewState = {
     PlanLearnLoopProgressComponent,
     PlanLearnObservePhaseStatusComponent,
     PlanLearnInputGapSummaryComponent,
-    PlanLearnAmountGroupSummariesComponent
+    PlanLearnAmountGroupSummariesComponent,
+    PlanLearnOneClickReoptimizeCtaComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -145,11 +147,16 @@ const initialControl: PlanLearnViewState = {
           />
           <app-plan-learn-master-update-next-steps
             [planId]="planId"
-            [visible]="true"
+            [visible]="showMasterUpdateNextSteps"
+          />
+          <app-plan-learn-one-click-reoptimize-cta
+            [planId]="planId"
+            [refreshVersion]="proposalProgressRefreshVersion"
           />
           <app-plan-learn-pipeline-status
             [planId]="planId"
             [refreshVersion]="proposalProgressRefreshVersion"
+            (progressChanged)="onProposalProgressChanged()"
           />
           <app-plan-learn-proposal-queue
             [planId]="planId"
