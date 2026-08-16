@@ -1,7 +1,5 @@
 //! Internal read context for weather-triggered reschedule proposal generation.
 
-use std::collections::HashMap;
-
 use time::Date;
 
 use crate::cultivation_plan::policies::weather_reschedule_trigger_policy::{
@@ -35,15 +33,5 @@ impl WeatherRescheduleProposalContext {
         self.cultivations
             .iter()
             .find(|row| row.field_cultivation_id == field_cultivation_id)
-    }
-
-    pub fn frost_threshold_by_cultivation(&self) -> HashMap<i64, f64> {
-        self.cultivations
-            .iter()
-            .filter_map(|row| {
-                row.frost_threshold
-                    .map(|threshold| (row.field_cultivation_id, threshold))
-            })
-            .collect()
     }
 }
