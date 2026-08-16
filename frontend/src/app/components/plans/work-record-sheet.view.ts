@@ -3,9 +3,10 @@ import { WorkRecord } from '../../models/plans/work-record';
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { PendingToastRequest } from '../../core/view-effects/pending-toast-view.effects';
 import { WorkRecordSaveToastContext } from '../../domain/plans/work-record-save-toast';
+import { WorkRecordScheduleCategory } from '../../domain/work-schedule/work-record-sheet-schedule';
 
 export type WorkRecordSheetMode = 'create-from-item' | 'create-adhoc' | 'edit';
-export type WorkRecordScheduleCategory = 'general' | 'fertilizer' | 'pest_control' | null;
+export type { WorkRecordScheduleCategory };
 
 export interface WorkRecordClimatePreviewState {
   gddAtActual: number | null;

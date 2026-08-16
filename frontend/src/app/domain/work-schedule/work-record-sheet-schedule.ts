@@ -1,5 +1,6 @@
-import { WorkRecordScheduleCategory } from '../../components/plans/work-record-sheet.view';
 import { FieldSchedule } from '../../models/plans/task-schedule';
+
+export type WorkRecordScheduleCategory = 'general' | 'fertilizer' | 'pest_control' | null;
 
 const FERTILIZER_TASK_TYPES = new Set(['fertilizer', 'basal_fertilization', 'topdress_fertilization']);
 const PEST_CONTROL_TASK_TYPES = new Set(['pest_control', 'preventive_spray', 'curative_spray']);
