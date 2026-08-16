@@ -1,6 +1,6 @@
 //! `GET /api/v1/plans/:id/weather_reschedule_proposals` — proactive weather-triggered adjust proposals.
 
-use crate::adapters::NoopLogger;
+use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
     CultivationPlanSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
