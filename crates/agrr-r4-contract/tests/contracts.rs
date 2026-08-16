@@ -2,6 +2,10 @@
 
 mod support;
 
+use agrr_domain::cultivation_plan::dtos::{
+    WeatherRescheduleProposalPreviewRead, WeatherRescheduleProposalRead,
+    WeatherRescheduleTriggerType,
+};
 use agrr_r4_contract::http::ContractClient;
 use support::{
     agrr_regeneration_contract_available,     assert_builtin_generation_deprecated_headers,
@@ -12,7 +16,8 @@ use support::{
     find_schedule_item, poll_task_schedule_sync_ready, schedule_item_ids_from_response,
     seed_masters_crop, seed_masters_crop_with_manual_blueprint, seed_masters_crop_with_stages,
     seed_masters_crop_with_stages_and_blueprints, seed_reference_crop_with_stage,
-    seed_task_schedule_regeneration_plan,
+    ensure_agrr_daemon_for_contract, seed_task_schedule_regeneration_plan,
+    seed_weather_reschedule_frost_forecast_plan,
     seed_work_record_plan, set_plan_task_schedule_sync_failed,
     insert_contract_fertilize, insert_contract_pesticide,
     set_plan_task_schedule_sync_failed_raw_error, set_user_api_key_scopes, status_and_body,
@@ -1097,6 +1102,28 @@ fn get_weather_reschedule_proposals_other_user_returns_not_found() {
 }
 
 #[test]
+fn get_weather_reschedule_proposals_authenticated_returns_frost_forecast_proposal_shape() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_weather_reschedule_frost_forecast_plan(user_id);
+
+    let path = format!("/api/v1/plans/{}/weather_reschedule_proposals", seed.plan_id);
+    let (status, body) = status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let proposals: Vec<WeatherRescheduleProposalRead> =
+        serde_json::from_str(&body).expect("weather_reschedule_proposals JSON array");
+    assert_eq!(1, proposals.len(), "{body}");
+    let proposal = &proposals[0];
+    assert_eq!(seed.proposal_id, proposal.id);
+    assert_eq!(WeatherRescheduleTriggerType::FrostForecast, proposal.trigger_type);
+    assert!(!proposal.severity.is_empty());
+    assert!(proposal.rationale.is_object());
+    assert_eq!(1, proposal.moves.len());
+    assert_eq!("move", proposal.moves[0]["action"].as_str().unwrap());
+}
+
+#[test]
 fn post_weather_reschedule_proposal_preview_unauthenticated_returns_401() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
@@ -1152,6 +1179,39 @@ fn post_weather_reschedule_proposal_preview_other_user_returns_not_found() {
         None,
     ));
     assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn post_weather_reschedule_proposal_preview_authenticated_returns_preview_shape() {
+    if !agrr_regeneration_contract_available() {
+        eprintln!("skip: agrr binary unavailable for weather reschedule preview contract test");
+        return;
+    }
+    ensure_agrr_daemon_for_contract();
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_weather_reschedule_frost_forecast_plan(user_id);
+
+    let path = format!(
+        "/api/v1/plans/{}/weather_reschedule_proposals/{}/preview",
+        seed.plan_id, seed.proposal_id
+    );
+    let (status, body) = status_and_body(client.post(
+        &path,
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, status, "{body}");
+    let preview: WeatherRescheduleProposalPreviewRead =
+        serde_json::from_str(&body).expect("weather reschedule preview JSON");
+    assert_eq!(seed.proposal_id, preview.proposal_id);
+    assert_eq!(seed.proposal_id, preview.proposal.id);
+    assert_eq!(WeatherRescheduleTriggerType::FrostForecast, preview.proposal.trigger_type);
+    assert!(!preview.moves.is_empty());
+    assert!(!preview.before.field_schedules.is_empty());
+    assert!(!preview.after.field_schedules.is_empty());
 }
 
 #[test]

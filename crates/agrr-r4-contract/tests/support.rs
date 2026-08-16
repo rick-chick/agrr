@@ -795,6 +795,222 @@ pub fn seed_task_schedule_regeneration_plan(user_id: i64) -> TaskScheduleRegener
     }
 }
 
+/// Plan seeded for frost-forecast weather reschedule proposal contract tests.
+pub struct WeatherRescheduleFrostForecastSeed {
+    pub plan_id: i64,
+    pub field_cultivation_id: i64,
+    pub task_schedule_item_id: i64,
+    pub proposal_id: String,
+}
+
+fn frost_forecast_predicted_weather_json(task_date: &str, next_date: &str) -> String {
+    format!(
+        r#"{{"location":{{"latitude":35.0,"longitude":139.0,"timezone":"Asia/Tokyo"}},"data":[
+  {{"time":"{task_date}T00:00:00","temperature_2m_min":-2.0,"temperature_2m_mean":5.0}},
+  {{"time":"{next_date}T00:00:00","temperature_2m_min":2.0,"temperature_2m_mean":8.0}}
+]}}"#
+    )
+}
+
+pub fn seed_predicted_weather_frost_forecast_for_plan(
+    plan_id: i64,
+    task_date: &str,
+    next_date: &str,
+) {
+    let conn = contract_sqlite_conn();
+    conn.execute(
+        "INSERT INTO predicted_weather_metadata \
+         (scope, scope_id, prediction_start_date, prediction_end_date, target_end_date, data_end_date, generated_at) \
+         VALUES ('plan', ?1, '2026-01-01', '2026-12-31', '2026-12-31', '2026-12-31', datetime('now')) \
+         ON CONFLICT(scope, scope_id) DO UPDATE SET \
+         prediction_start_date = excluded.prediction_start_date, \
+         prediction_end_date = excluded.prediction_end_date, \
+         target_end_date = excluded.target_end_date, \
+         data_end_date = excluded.data_end_date, \
+         generated_at = excluded.generated_at",
+        params![plan_id],
+    )
+    .expect("upsert predicted weather metadata");
+
+    let local_root = std::env::var("WEATHER_DATA_LOCAL_ROOT")
+        .unwrap_or_else(|_| "/tmp/agrr-weather-contract".to_string());
+    let object_path = format!("{local_root}/predicted_weather/plan/{plan_id}.json");
+    if let Some(parent) = std::path::Path::new(&object_path).parent() {
+        std::fs::create_dir_all(parent).expect("create weather mirror dir");
+    }
+    let payload = frost_forecast_predicted_weather_json(task_date, next_date);
+    std::fs::write(&object_path, payload).expect("write frost forecast predicted weather");
+}
+
+/// Seeds a plan that yields one frost-forecast proposal and supports adjust preview dry-run.
+pub fn seed_weather_reschedule_frost_forecast_plan(user_id: i64) -> WeatherRescheduleFrostForecastSeed {
+    const TASK_DATE: &str = "2026-06-01";
+    const NEXT_DATE: &str = "2026-06-02";
+
+    let conn = contract_sqlite_conn();
+    let suffix = seed_suffix();
+    let farm_name = format!("Contract Frost Forecast Farm {suffix}");
+
+    conn.execute(
+        "INSERT INTO weather_locations (latitude, longitude, elevation, timezone, created_at, updated_at)
+         VALUES (35.0, 139.0, 40.0, 'Asia/Tokyo', datetime('now'), datetime('now'))",
+        [],
+    )
+    .expect("insert weather_location");
+    let weather_location_id = conn.last_insert_rowid();
+    write_contract_observed_weather_gcs_fixture(weather_location_id);
+
+    conn.execute(
+        "INSERT INTO farms (
+           user_id, name, latitude, longitude, created_at, updated_at, is_reference,
+           weather_data_status, weather_data_fetched_years, weather_data_total_years,
+           weather_location_id
+         ) VALUES (
+           ?1, ?2, 35.0, 139.0, datetime('now'), datetime('now'), 0,
+           'completed', 5, 5, ?3
+         )",
+        params![user_id, farm_name, weather_location_id],
+    )
+    .expect("insert farm");
+    let farm_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
+         VALUES (?1, ?2, 'Contract Field', 50.0, 0, datetime('now'), datetime('now'))",
+        params![farm_id, user_id],
+    )
+    .expect("insert field");
+
+    let crop_name = format!("Contract Frost Crop {suffix}");
+    conn.execute(
+        "INSERT INTO crops (user_id, name, variety, is_reference, area_per_unit, revenue_per_area, groups, created_at, updated_at)
+         VALUES (?1, ?2, 'V1', 0, 0.25, 5000.0, '[]', datetime('now'), datetime('now'))",
+        params![user_id, crop_name],
+    )
+    .expect("insert crop");
+    let crop_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO crop_stages (crop_id, name, \"order\", created_at, updated_at)
+         VALUES (?1, '生育', 1, datetime('now'), datetime('now'))",
+        params![crop_id],
+    )
+    .expect("insert crop stage");
+    let crop_stage_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO temperature_requirements (
+           crop_stage_id, base_temperature, optimal_min, optimal_max, frost_threshold, max_temperature,
+           created_at, updated_at
+         ) VALUES (?1, 10.0, 18.0, 28.0, 0.0, 35.0, datetime('now'), datetime('now'))",
+        params![crop_stage_id],
+    )
+    .expect("insert temperature requirements");
+    conn.execute(
+        "INSERT INTO thermal_requirements (crop_stage_id, required_gdd, created_at, updated_at)
+         VALUES (?1, 200.0, datetime('now'), datetime('now'))",
+        params![crop_stage_id],
+    )
+    .expect("insert thermal requirements");
+
+    let task_name = format!("除草 {suffix}");
+    conn.execute(
+        "INSERT INTO agricultural_tasks (name, is_reference, user_id, task_type, created_at, updated_at)
+         VALUES (?1, 0, ?2, 'field_work', datetime('now'), datetime('now'))",
+        params![task_name, user_id],
+    )
+    .expect("insert agricultural_task");
+    let agricultural_task_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO crop_task_schedule_blueprints (
+           crop_id, agricultural_task_id, stage_order, stage_name, gdd_trigger, gdd_tolerance,
+           task_type, source, priority, created_at, updated_at
+         ) VALUES (?1, ?2, 1, '初期', 0.0, 5.0, 'field_work', 'agrr_schedule', 1, datetime('now'), datetime('now'))",
+        params![crop_id, agricultural_task_id],
+    )
+    .expect("insert blueprint");
+
+    let plan_name = format!("Contract Frost Forecast Plan {suffix}");
+    conn.execute(
+        "INSERT INTO cultivation_plans (
+           farm_id, user_id, total_area, plan_type, plan_year, plan_name,
+           planning_start_date, planning_end_date, status, created_at, updated_at
+         ) VALUES (
+           ?1, ?2, 50.0, 'private', 2026, ?3,
+           '2026-01-01', '2026-12-31', 'completed', datetime('now'), datetime('now')
+         )",
+        params![farm_id, user_id, plan_name],
+    )
+    .expect("insert cultivation_plan");
+    let plan_id = conn.last_insert_rowid();
+    let _ = conn.execute(
+        "UPDATE cultivation_plans SET task_schedule_sync_state = 'ready' WHERE id = ?1",
+        params![plan_id],
+    );
+
+    conn.execute(
+        "INSERT INTO cultivation_plan_fields (cultivation_plan_id, name, area, created_at, updated_at)
+         VALUES (?1, 'F1', 50.0, datetime('now'), datetime('now'))",
+        params![plan_id],
+    )
+    .expect("insert plan field");
+    let plan_field_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO cultivation_plan_crops (cultivation_plan_id, crop_id, name, created_at, updated_at)
+         VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+        params![plan_id, crop_id, crop_name],
+    )
+    .expect("insert plan crop");
+    let plan_crop_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO field_cultivations (
+           cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id,
+           area, start_date, completion_date, status, created_at, updated_at
+         ) VALUES (?1, ?2, ?3, 50.0, '2026-04-01', '2026-10-31', 'completed', datetime('now'), datetime('now'))",
+        params![plan_id, plan_field_id, plan_crop_id],
+    )
+    .expect("insert field_cultivation");
+    let field_cultivation_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO task_schedules (
+           cultivation_plan_id, field_cultivation_id, category, status, source,
+           generated_at, created_at, updated_at
+         ) VALUES (?1, ?2, 'general', 'active', 'agrr', datetime('now'), datetime('now'), datetime('now'))",
+        params![plan_id, field_cultivation_id],
+    )
+    .expect("insert task_schedule");
+    let task_schedule_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO task_schedule_items (
+           task_schedule_id, task_type, name, source, stage_name, stage_order,
+           scheduled_date, gdd_trigger, agricultural_task_id, status,
+           created_at, updated_at
+         ) VALUES (
+           ?1, 'field_work', 'agrr予定', 'agrr_schedule', '初期', 1,
+           ?2, 0.0, ?3, 'planned',
+           datetime('now'), datetime('now')
+         )",
+        params![task_schedule_id, TASK_DATE, agricultural_task_id],
+    )
+    .expect("insert frost-bound task item");
+    let task_schedule_item_id = conn.last_insert_rowid();
+
+    seed_predicted_weather_frost_forecast_for_plan(plan_id, TASK_DATE, NEXT_DATE);
+
+    let proposal_id = format!("frost_forecast:{field_cultivation_id}:{task_schedule_item_id}");
+
+    WeatherRescheduleFrostForecastSeed {
+        plan_id,
+        field_cultivation_id,
+        task_schedule_item_id,
+        proposal_id,
+    }
+}
+
 pub fn agrr_regeneration_contract_available() -> bool {
     let agrr_bin =
         std::env::var("AGRR_BIN_PATH").unwrap_or_else(|_| "/app/lib/core/agrr".to_string());
