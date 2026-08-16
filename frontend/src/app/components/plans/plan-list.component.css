@@ -81,6 +81,7 @@
   padding: 0 var(--space-2);
   border-radius: var(--radius-pill);
   background: var(--color-surface-alt);
+  color: var(--color-text-secondary);
 }
 
 @media (max-width: 20rem) {

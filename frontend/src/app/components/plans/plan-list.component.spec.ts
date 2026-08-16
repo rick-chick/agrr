@@ -285,6 +285,15 @@ describe('PlanListComponent', () => {
     expect(nativeElement.querySelector('.plan-list__plan-status')?.textContent).toContain('Pending');
   });
 
+  it('plan status badge uses secondary text color for contrast on surface-alt background', async () => {
+    const nativeElement = await renderPlans([planWithGap({ id: 1, status: 'failed' })]);
+    const status = nativeElement.querySelector('.plan-list__plan-status') as HTMLElement;
+    expect(status).toBeTruthy();
+
+    const styles = getComputedStyle(status);
+    expect(styles.color).toBe('var(--color-text-secondary)');
+  });
+
   it('links compare variance to /work/variance with farm filter', async () => {
     const nativeElement = await renderPlans([planWithGap({ farm_id: 42, farm_name: 'Farm A' })]);
 
