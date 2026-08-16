@@ -248,8 +248,8 @@ impl PlanVsActualMapper {
         snapshot: &TaskScheduleTimelineSnapshot,
     ) -> Vec<BlueprintAmountAdjustmentProposalRead> {
         let mut groups: std::collections::BTreeMap<
-            (i64, String, String, String),
-            (Vec<f64>, Option<i32>, Option<String>, Option<String>),
+            (i64, String, String, String, Option<i32>, String),
+            (Vec<f64>, Option<String>),
         > = std::collections::BTreeMap::new();
 
         for field in &snapshot.fields {
@@ -278,23 +278,13 @@ impl PlanVsActualMapper {
                             field.crop_name.clone(),
                             schedule.category.clone(),
                             item.task_type.clone(),
+                            item.stage_order,
+                            stage_name,
                         ))
-                        .or_insert((Vec::new(), item.stage_order, Some(stage_name), None));
+                        .or_insert((Vec::new(), None));
                     entry.0.push(delta);
                     if entry.1.is_none() {
-                        entry.1 = item.stage_order;
-                    }
-                    if entry.2.is_none() {
-                        entry.2 = item
-                            .stage_name
-                            .clone()
-                            .or_else(|| match item.stage_order {
-                                Some(order) => Some(format!("Stage {order}")),
-                                None => Some("Unassigned".to_string()),
-                            });
-                    }
-                    if entry.3.is_none() {
-                        entry.3 = read.amount_unit.clone();
+                        entry.1 = read.amount_unit.clone();
                     }
                 }
             }
@@ -303,7 +293,10 @@ impl PlanVsActualMapper {
         let mut proposals: Vec<BlueprintAmountAdjustmentProposalRead> = groups
             .into_iter()
             .filter_map(
-                |((crop_id, crop_name, category, task_type), (deltas, stage_order, stage_name, amount_unit))| {
+                |(
+                    (crop_id, crop_name, category, task_type, stage_order, stage_name),
+                    (deltas, amount_unit),
+                )| {
                     let recorded_item_count = deltas.len() as i64;
                     let average_amount_delta =
                         deltas.iter().sum::<f64>() / deltas.len() as f64;
@@ -320,7 +313,7 @@ impl PlanVsActualMapper {
                         category,
                         task_type,
                         stage_order,
-                        stage_name,
+                        stage_name: Some(stage_name),
                         average_amount_delta,
                         recorded_item_count,
                         amount_unit,
@@ -338,6 +331,7 @@ impl PlanVsActualMapper {
                 .then_with(|| left.crop_id.cmp(&right.crop_id))
                 .then_with(|| left.category.cmp(&right.category))
                 .then_with(|| left.task_type.cmp(&right.task_type))
+                .then_with(|| left.stage_order.cmp(&right.stage_order))
         });
 
         proposals
