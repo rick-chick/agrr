@@ -204,6 +204,19 @@ describe('NavbarComponent', () => {
     expect(workLogLink.querySelector('.nav-link__badge')?.textContent?.trim()).toBe('3');
   });
 
+  it('shows entry schedule nav link for logged-out users', () => {
+    translate.setTranslation('en', { nav: { entry_schedule: 'Entry schedule' } });
+    translate.use('en');
+    component.user = null;
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector(
+      'a.nav-link[href="/entry-schedule"]'
+    ) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.textContent?.trim()).toBe('Entry schedule');
+  });
+
   it('hides overdue badge when workLogOverdueCount is zero', () => {
     component.user = {
       id: 1,

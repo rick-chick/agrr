@@ -52,7 +52,10 @@ const ENTRY_SCHEDULE_UI_KEYS = [
   'entrySchedule.timeline',
   'entrySchedule.nextTask',
   'entrySchedule.nextTaskPlaceholder',
-  'entrySchedule.stages'
+  'entrySchedule.stages',
+  'entrySchedule.ctaSectionTitle',
+  'entrySchedule.ctaPublicPlan',
+  'entrySchedule.ctaCropSetup'
 ] as const;
 
 const ENTRY_SCHEDULE_API_KEYS = [
