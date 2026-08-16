@@ -67,6 +67,7 @@ describe('WorkRecordSheetPresenter', () => {
         },
         fieldOptions: [],
         scheduleCategory: null,
+        harvestContext: false,
         plannedAmount: '',
         plannedAmountUnit: '',
         climatePreview: {

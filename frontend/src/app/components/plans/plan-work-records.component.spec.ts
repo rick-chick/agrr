@@ -111,6 +111,8 @@ describe('PlanWorkRecordsComponent', () => {
         'plans.work_records.empty_cta': 'Record from Today\'s work',
         'plans.work_records.badge.from_schedule': 'From schedule',
         'plans.work_records.badge.adhoc': 'Ad hoc',
+        'plans.work_records.badge.harvest': '収穫',
+        'plans.work_records.yield': '収量 {{amount}} {{unit}}',
         'common.api_error.generic': 'An error occurred'
       },
       true
@@ -377,6 +379,47 @@ describe('PlanWorkRecordsComponent', () => {
     expect(photos?.parentElement).toBe(row);
     expect(meta?.parentElement).toBe(row);
     expect(meta?.nextElementSibling).toBe(photos);
+  });
+
+  it('shows harvest badge and yield label for harvest records', () => {
+    fixture.detectChanges();
+    component.control = {
+      ...SAVE_IMPACT_DEFAULTS,
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-07',
+          averageDeltaDays: null,
+          records: [
+            {
+              id: 9,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: 40,
+              agricultural_task_id: 4,
+              name: '収穫',
+              task_type: 'general',
+              actual_date: '2026-07-15',
+              amount: '25',
+              amount_unit: 'kg',
+              time_spent_minutes: null,
+              notes: null,
+              created_at: '2026-07-15',
+              updated_at: '2026-07-15',
+              task_schedule_item: { id: 40, name: '収穫', scheduled_date: '2026-07-15' }
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const meta = fixture.nativeElement.querySelector('.plan-work-records__meta');
+    expect(meta?.querySelector('.plan-work-records__badge--harvest')?.textContent?.trim()).toBe('収穫');
+    expect(meta?.querySelector('.plan-work-records__amount--harvest')?.textContent).toContain('25');
+    expect(meta?.querySelector('.plan-work-records__amount--harvest')?.textContent).toContain('kg');
   });
 
   it('renders field and crop name when present on the record', () => {

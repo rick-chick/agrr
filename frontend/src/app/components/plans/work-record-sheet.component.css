@@ -95,6 +95,18 @@
   color: var(--color-primary);
 }
 
+.form-card__field--harvest-yield {
+  padding: var(--space-3);
+  border: 2px solid var(--color-success-muted-border);
+  border-radius: var(--radius-md);
+  background: var(--color-success-muted-bg);
+}
+
+.work-record-sheet__yield-input--emphasized {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
 .work-record-sheet__climate-preview {
   margin-bottom: var(--space-3);
   padding: var(--space-3);
