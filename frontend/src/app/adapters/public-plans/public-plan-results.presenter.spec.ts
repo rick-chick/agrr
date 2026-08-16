@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PublicPlanResultsPresenter } from './public-plan-results.presenter';
 import { PublicPlanResultsView, PublicPlanResultsViewState } from '../../components/public-plans/public-plan-results.view';
+import { consumePlanPostSaveOnboardingPending } from '../../domain/plans/plan-post-save-onboarding';
 
 describe('PublicPlanResultsPresenter', () => {
   let presenter: PublicPlanResultsPresenter;
@@ -36,6 +37,10 @@ describe('PublicPlanResultsPresenter', () => {
     presenter.setView(view);
   });
 
+  afterEach(() => {
+    sessionStorage.clear();
+  });
+
   describe('SavePublicPlanOutputPort', () => {
     it('stores saved private plan id and success flash when cultivation_plan_id is returned', () => {
       presenter.present({
@@ -50,6 +55,7 @@ describe('PublicPlanResultsPresenter', () => {
         type: 'success',
         text: 'Plan saved successfully'
       });
+      expect(consumePlanPostSaveOnboardingPending(99)).toBe(true);
     });
 
     it('stores null saved private plan id when cultivation_plan_id is absent', () => {

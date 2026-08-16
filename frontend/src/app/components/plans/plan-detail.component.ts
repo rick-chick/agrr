@@ -15,6 +15,7 @@ import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.provi
 import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanLearnReorganizeBannerComponent } from './plan-learn-reorganize-banner.component';
+import { PlanPostSaveOnboardingBannerComponent } from './plan-post-save-onboarding-banner.component';
 import { HydrateReorganizeOrchestrationUseCase } from '../../usecase/plans/hydrate-reorganize-orchestration.usecase';
 import {
   parseLearningOrchestration,
@@ -28,6 +29,10 @@ import {
 import { dismissWeatherRescheduleProposal } from '../../domain/plans/weather-reschedule-proposal-session';
 import type { WeatherRescheduleProposal } from '../../domain/plans/weather-reschedule-proposal';
 import type { WeatherRescheduleAdjustMove } from '../../domain/plans/weather-reschedule-proposal-preview';
+import {
+  dismissPlanPostSaveOnboarding,
+  shouldShowPlanPostSaveOnboardingBanner
+} from '../../domain/plans/plan-post-save-onboarding';
 
 const initialControl: PlanDetailViewState = {
   loading: true,
@@ -55,7 +60,8 @@ const initialControl: PlanDetailViewState = {
     PlanPlanContextHeaderComponent,
     VarianceActionBannerComponent,
     WeatherRescheduleProposalBannerComponent,
-    PlanLearnReorganizeBannerComponent
+    PlanLearnReorganizeBannerComponent,
+    PlanPostSaveOnboardingBannerComponent
   ],
   providers: [
     ...PLAN_DETAIL_PROVIDERS,
@@ -81,6 +87,12 @@ const initialControl: PlanDetailViewState = {
           [visible]="showReoptimizationBanner"
           context="placement"
         />
+        @if (showPostSaveOnboardingBanner) {
+          <app-plan-post-save-onboarding-banner
+            [planId]="planId"
+            (dismiss)="handleDismissPostSaveOnboarding()"
+          />
+        }
         @if (activeWeatherProposal) {
           <app-weather-reschedule-proposal-banner
             [proposal]="activeWeatherProposal"
@@ -128,6 +140,7 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
 
   deepLinkFieldCultivationId: number | null = null;
   learningOrchestrationMode: ReturnType<typeof parseLearningOrchestration> = null;
+  showPostSaveOnboardingBanner = false;
   private pendingWeatherProposalId: string | null = null;
 
   private _control: PlanDetailViewState = initialControl;
@@ -182,6 +195,7 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
       };
       return;
     }
+    this.showPostSaveOnboardingBanner = shouldShowPlanPostSaveOnboardingBanner(planId);
     this.hydrateOrchestrationUseCase.execute(planId).subscribe({
       next: () => {
         this.applyHydratedOrchestrationState(planId);
@@ -218,6 +232,12 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
       storeLearnOrchestrationReturnToLearn(planId);
     }
     void this.router.navigate(['/plans', planId, 'optimizing']);
+  }
+
+  handleDismissPostSaveOnboarding(): void {
+    dismissPlanPostSaveOnboarding(this.planId);
+    this.showPostSaveOnboardingBanner = false;
+    this.cdr.markForCheck();
   }
 
   handleApproveWeatherProposal(): void {
