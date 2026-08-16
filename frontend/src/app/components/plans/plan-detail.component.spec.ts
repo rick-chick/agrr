@@ -17,6 +17,10 @@ import {
   hydrateLearnOrchestrationProgress,
   readLearnOrchestrationReturnToLearn
 } from '../../domain/plans/learn-master-update-orchestration';
+import {
+  isPlanPostSaveOnboardingDismissed,
+  markPlanPostSaveOnboardingPending
+} from '../../domain/plans/plan-post-save-onboarding';
 
 describe('PlanDetailComponent', () => {
   let component: PlanDetailComponent;
@@ -68,6 +72,7 @@ describe('PlanDetailComponent', () => {
 
   afterEach(() => {
     clearLearnOrchestrationProgressCache();
+    sessionStorage.clear();
     vi.restoreAllMocks();
   });
 
@@ -195,5 +200,65 @@ describe('PlanDetailComponent', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(['/plans', 1, 'optimizing']);
     expect(readLearnOrchestrationReturnToLearn(1)).toBe(true);
+  });
+
+  it('shows post-save onboarding banner on first visit after save', () => {
+    markPlanPostSaveOnboardingPending(1);
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: {
+        id: 1,
+        name: 'Plan A',
+        status: 'completed',
+        farm_id: 1
+      },
+      planData: null,
+      varianceActionItemsOnGantt: [],
+      weatherProposals: [],
+      activeWeatherProposalId: null,
+      weatherPreviewLoading: false,
+      weatherPreviewError: null,
+      weatherPreview: null,
+      weatherOverlayBars: [],
+      weatherApplyLoading: false,
+      weatherApplyError: null
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-plan-post-save-onboarding-banner')).toBeTruthy();
+  });
+
+  it('hides post-save onboarding banner after dismiss', () => {
+    markPlanPostSaveOnboardingPending(1);
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: {
+        id: 1,
+        name: 'Plan A',
+        status: 'completed',
+        farm_id: 1
+      },
+      planData: null,
+      varianceActionItemsOnGantt: [],
+      weatherProposals: [],
+      activeWeatherProposalId: null,
+      weatherPreviewLoading: false,
+      weatherPreviewError: null,
+      weatherPreview: null,
+      weatherOverlayBars: [],
+      weatherApplyLoading: false,
+      weatherApplyError: null
+    };
+    fixture.detectChanges();
+
+    component.handleDismissPostSaveOnboarding();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-plan-post-save-onboarding-banner')).toBeNull();
+    expect(isPlanPostSaveOnboardingDismissed(1)).toBe(true);
   });
 });

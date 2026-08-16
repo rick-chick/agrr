@@ -331,6 +331,7 @@
     "work_log_overdue_aria": "Work log, {{count}} overdue",
     "menu_masters": "Master Data",
     "new_plan": "Create Crop Plan",
+    "entry_schedule": "Sowing guide",
     "reports": "Reports",
     "menu_more": "More",
     "home": "Home",
@@ -355,8 +356,7 @@
     "language": "Language",
     "lang_ja": "日本語",
     "lang_en": "English",
-    "lang_in": "हिन्दी",
-    "entry_schedule": "Sowing guide"
+    "lang_in": "हिन्दी"
   },
   "footer": {
     "about": "About AGRR",
@@ -371,8 +371,8 @@
         "title": "🌱 Make Agriculture Smarter",
         "subtitle_html": "Visualize crop plans with weather and GDD.",
         "cta_scroll_demo": "Try it out",
-        "cta_footer_link": "Create plan",
-        "cta_entry_schedule": "View sowing guide"
+        "cta_entry_schedule": "View sowing guide",
+        "cta_footer_link": "Create plan"
       },
       "demo": {
         "hints_aria": "Interaction hints",
@@ -1069,57 +1069,6 @@
       "view_my_plans": "View My Plans",
       "chart_title": "Climate Data and Crop Growth Analysis",
       "loading_data": "Loading data...",
-      "private_value_preview": {
-        "title": "Private features after you save",
-        "lead": "Saving to My Plans unlocks weather rescheduling, learning loops, and work GDD comparison in one flow.",
-        "weather_reschedule": {
-          "title": "Weather reschedule proposals",
-          "description": "When weather turns unfavorable, preview cultivation date adjustments before applying them to your plan."
-        },
-        "learn_loop": {
-          "title": "Learning loop",
-          "description": "Compare actuals with the plan to refine crop masters and task schedules for the next season."
-        },
-        "work_gdd_comparison": {
-          "title": "Work GDD comparison",
-          "description": "Compare planned and recorded GDD to spot delays"
-        },
-        "badge": "After login",
-        "work_gdd": {
-          "title": "Work GDD comparison",
-          "description": "Compare recorded work GDD with the plan to spot delays or early completion."
-        }
-      },
-      "next_steps": {
-        "title": "Next steps",
-        "lead": "Save this public plan to My Plans, then review the task schedule and record field work.",
-        "step_label": {
-          "1": "Step 1",
-          "2": "Step 2",
-          "3": "Step 3"
-        },
-        "save": {
-          "title": "Save to My Plans",
-          "description": "Import this public plan into your account as the foundation for ongoing work management.",
-          "hint": "Use the “Save to My Plans” button above"
-        },
-        "task_schedule": {
-          "title": "Review task schedule",
-          "description": "Check the saved plan’s work schedule and see what is planned for each field."
-        },
-        "work_record": {
-          "title": "Record work",
-          "description": "Log completed work to feed GDD comparison and the learning loop."
-        },
-        "cta": {
-          "login_save": "Sign in to save",
-          "save": "Use the button above to save",
-          "task_schedule": "View task schedule",
-          "work_record": "Record work"
-        },
-        "completed": "Done",
-        "after_save_hint": "Available after save"
-      },
       "chart": {
         "temperature_section": "Daily Temperature (°C)",
         "gdd_section": "GDD Trends (Daily・Cumulative・Required)",
@@ -1197,6 +1146,57 @@
         "temp_axis": "Temperature (℃)",
         "gdd_label": "Accumulated GDD",
         "gdd_axis": "Accumulated GDD (℃·day)"
+      },
+      "private_value_preview": {
+        "title": "Private features after you save",
+        "lead": "Saving to My Plans unlocks weather rescheduling, learning loops, and work GDD comparison in one flow.",
+        "weather_reschedule": {
+          "title": "Weather reschedule proposals",
+          "description": "When weather turns unfavorable, preview cultivation date adjustments before applying them to your plan."
+        },
+        "learn_loop": {
+          "title": "Learning loop",
+          "description": "Compare actuals with the plan to refine crop masters and task schedules for the next season."
+        },
+        "work_gdd_comparison": {
+          "title": "Work GDD comparison",
+          "description": "Compare planned and recorded GDD to spot delays"
+        },
+        "badge": "After login",
+        "work_gdd": {
+          "title": "Work GDD comparison",
+          "description": "Compare recorded work GDD with the plan to spot delays or early completion."
+        }
+      },
+      "next_steps": {
+        "title": "Next steps",
+        "lead": "Save this public plan to My Plans, then review the task schedule and record field work.",
+        "step_label": {
+          "1": "Step 1",
+          "2": "Step 2",
+          "3": "Step 3"
+        },
+        "save": {
+          "title": "Save to My Plans",
+          "description": "Import this public plan into your account as the foundation for ongoing work management.",
+          "hint": "Use the “Save to My Plans” button above"
+        },
+        "task_schedule": {
+          "title": "Review task schedule",
+          "description": "Check the saved plan’s work schedule and see what is planned for each field."
+        },
+        "work_record": {
+          "title": "Record work",
+          "description": "Log completed work to feed GDD comparison and the learning loop."
+        },
+        "cta": {
+          "login_save": "Sign in to save",
+          "save": "Use the button above to save",
+          "task_schedule": "View task schedule",
+          "work_record": "Record work"
+        },
+        "completed": "Done",
+        "after_save_hint": "Available after save"
       }
     },
     "reference_farms": {
@@ -2175,7 +2175,8 @@
         "collapse": "Collapse",
         "compare_variance": "Compare variance"
       },
-      "initial_setup": "Initial setup wizard"
+      "initial_setup": "Initial setup wizard",
+      "public_plan_handoff": "Continue your public plan"
     },
     "new": {
       "breadcrumb": "New plan",
@@ -2369,6 +2370,13 @@
       "reoptimization_banner": {
         "message": "Re-optimization recommended after master update",
         "hint": "Drag cultivations on the Gantt to adjust placement. Re-optimization starts automatically after you drop."
+      },
+      "post_save_onboarding": {
+        "message": "Your cultivation plan is saved",
+        "hint": "Check your task schedule and start recording field work to keep the plan useful.",
+        "task_schedule_link": "Check task schedule",
+        "work_link": "Start work records",
+        "dismiss": "Dismiss"
       }
     }
   },

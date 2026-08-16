@@ -1,0 +1,38 @@
+.plan-post-save-onboarding-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-primary-border-soft);
+  background: var(--color-primary-surface, var(--color-surface-muted));
+}
+
+.plan-post-save-onboarding-banner__content {
+  flex: 1;
+}
+
+.plan-post-save-onboarding-banner__message {
+  margin: 0;
+  font-weight: 600;
+}
+
+.plan-post-save-onboarding-banner__hint {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.plan-post-save-onboarding-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.plan-post-save-onboarding-banner__dismiss {
+  flex-shrink: 0;
+  font-size: var(--font-size-sm);
+}
