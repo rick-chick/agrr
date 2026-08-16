@@ -177,7 +177,12 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
   private applyErrors: Record<string, string> = {};
 
   proposalKey(proposal: BlueprintAmountAdjustmentProposal): string {
-    return blueprintAmountProposalKey(proposal.cropId, proposal.category, proposal.taskType);
+    return blueprintAmountProposalKey(
+      proposal.cropId,
+      proposal.category,
+      proposal.taskType,
+      proposal.stageOrder
+    );
   }
 
   evidenceFor(proposal: BlueprintAmountAdjustmentProposal): LearnProposalEvidence | null {
