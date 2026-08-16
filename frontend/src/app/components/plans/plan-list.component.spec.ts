@@ -108,7 +108,7 @@ describe('PlanListComponent', () => {
     farm_id: 1,
     farm_name: 'Farm A',
     plan_year: 2026,
-    inputGap: { unrecordedCount: 0, actionRequiredCount: 0 },
+    inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0 },
     ...overrides
   });
 
@@ -314,7 +314,7 @@ describe('PlanListComponent', () => {
   it('shows input gap summary and work/learn links on plan cards', async () => {
     const nativeElement = await renderPlans([
       planWithGap({
-        inputGap: { unrecordedCount: 3, actionRequiredCount: 2 }
+        inputGap: { unrecordedCount: 3, actionRequiredCount: 2, structuredUnrecordedCount: 0 }
       })
     ]);
 

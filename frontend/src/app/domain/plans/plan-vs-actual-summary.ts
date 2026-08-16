@@ -29,6 +29,7 @@ export interface PlanVarianceActionItem extends PlanVsActualItem {
 export interface PlanVsActualSummary {
   plan_id: number;
   unrecorded_count: number;
+  structured_unrecorded_count?: number;
   categories: PlanVsActualCategorySummary[];
   top_variance_items: PlanVsActualItem[];
   stage_gdd_calibration_proposals?: StageGddCalibrationProposalRaw[];

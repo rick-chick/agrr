@@ -63,7 +63,7 @@ describe('LoadPlanListUseCase', () => {
           name: 'Plan A',
           status: 'active',
           farm_id: 3,
-          inputGap: { unrecordedCount: 2, actionRequiredCount: 1 }
+          inputGap: { unrecordedCount: 2, actionRequiredCount: 1, structuredUnrecordedCount: 0 }
         }
       ]
     });

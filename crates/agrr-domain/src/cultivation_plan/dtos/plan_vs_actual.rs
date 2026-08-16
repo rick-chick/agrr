@@ -81,6 +81,7 @@ pub struct BlueprintTimingAdjustmentProposalRead {
 pub struct PlanVsActualSummaryRead {
     pub plan_id: i64,
     pub unrecorded_count: i64,
+    pub structured_unrecorded_count: i64,
     pub categories: Vec<PlanVsActualCategorySummaryRead>,
     pub top_variance_items: Vec<PlanVsActualItemRead>,
     pub stage_gdd_calibration_proposals: Vec<StageGddCalibrationProposalRead>,

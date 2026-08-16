@@ -1743,7 +1743,9 @@
         "title": "Input gap summary",
         "unrecorded": "Not recorded",
         "action_required": "Action required",
-        "work_cta": "Record unrecorded tasks"
+        "structured_unrecorded": "Unstructured input",
+        "work_cta": "Record unrecorded tasks",
+        "structured_work_cta": "Fix missing master selections"
       },
       "proposal_confidence": {
         "high": "High confidence",
