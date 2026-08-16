@@ -1611,6 +1611,8 @@
       "next_plan_hint": "Create a new plan that carries learning from this plan forward.",
       "next_plan_cta": "Create next plan with learning",
       "preview": {
+        "title": "Learning data preview",
+        "empty": "No category variance data.",
         "stage_gdd_count": "Stage GDD calibration proposals",
         "bp_timing_count": "BP timing adjustment proposals",
         "bp_amount_count": "BP amount adjustment proposals"
