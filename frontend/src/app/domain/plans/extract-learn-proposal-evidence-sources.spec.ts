@@ -54,4 +54,56 @@ describe('extractLearnProposalEvidenceSources', () => {
       }
     ]);
   });
+
+  it('includes pest_control schedule items as evidence sources', () => {
+    const sources = extractLearnProposalEvidenceSources([
+      {
+        id: 2,
+        name: 'South bed',
+        crop_name: 'Tomato',
+        crop_id: 42,
+        field_cultivation_id: 11,
+        schedules: {
+          general: [],
+          fertilizer: [],
+          pest_control: [
+            {
+              item_id: 200,
+              name: 'Preventive spray',
+              scheduled_date: '2025-05-01',
+              actualDate: '2025-05-03',
+              deltaDays: 2,
+              gddTrigger: 50,
+              gddAtActual: 55,
+              gddDelta: 5,
+              stageOrder: 2,
+              category: 'pest_control',
+              status: 'completed',
+              completed: true,
+              details: {
+                stageName: 'Flowering',
+                amount: null,
+                amountUnit: null,
+                masterDescription: null
+              }
+            }
+          ],
+          unscheduled: []
+        }
+      }
+    ]);
+
+    expect(sources).toEqual([
+      {
+        cropId: 42,
+        category: 'pest_control',
+        stageOrder: 2,
+        name: 'Preventive spray',
+        actualDate: '2025-05-03',
+        deltaDays: 2,
+        gddDelta: 5,
+        status: 'completed'
+      }
+    ]);
+  });
 });

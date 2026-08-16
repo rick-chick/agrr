@@ -139,4 +139,36 @@ describe('flattenCrossFarmSchedules', () => {
     expect(rows[0]?.item.name).toBe('Pending prep');
     expect(rows[0]?.fieldName).toBe('Field 1');
   });
+
+  it('includes scheduled pest_control tasks', () => {
+    const rows = flattenCrossFarmSchedules([
+      mockSource({
+        farmId: 1,
+        planId: 10,
+        fields: [
+          {
+            id: 1,
+            name: 'Field 1',
+            crop_name: 'Tomato',
+            field_cultivation_id: 101,
+            schedules: {
+              general: [],
+              fertilizer: [],
+              pest_control: [
+                mockTask({
+                  item_id: 4,
+                  name: 'Spray',
+                  scheduled_date: '2026-06-11'
+                })
+              ],
+              unscheduled: []
+            }
+          }
+        ]
+      })
+    ]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.item.name).toBe('Spray');
+  });
 });
