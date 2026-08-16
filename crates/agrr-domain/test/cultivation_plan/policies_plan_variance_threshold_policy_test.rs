@@ -58,3 +58,27 @@ fn exceedance_kind_both_when_days_and_gdd_exceed() {
         exceedance_kind(&sample_item(Some(5), Some(12.0)))
     );
 }
+
+#[test]
+fn amount_delta_threshold_differs_by_fertilizer_and_pest_control() {
+    assert_eq!(
+        FERTILIZER_AMOUNT_DELTA_THRESHOLD,
+        amount_delta_threshold_for_category("fertilizer")
+    );
+    assert_eq!(
+        PEST_CONTROL_AMOUNT_DELTA_THRESHOLD,
+        amount_delta_threshold_for_category("pest_control")
+    );
+    assert_ne!(
+        amount_delta_threshold_for_category("fertilizer"),
+        amount_delta_threshold_for_category("pest_control")
+    );
+}
+
+#[test]
+fn amount_delta_threshold_falls_back_to_default_for_other_categories() {
+    assert_eq!(
+        DEFAULT_AMOUNT_DELTA_THRESHOLD,
+        amount_delta_threshold_for_category("general")
+    );
+}

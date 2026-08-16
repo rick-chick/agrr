@@ -334,6 +334,71 @@ fn blueprint_amount_proposals_skip_small_variance() {
 }
 
 #[test]
+fn blueprint_amount_proposals_use_category_specific_thresholds() {
+    let between_thresholds = 0.3;
+    let snapshot = TaskScheduleTimelineSnapshot {
+        plan: sample_snapshot(vec![]).plan,
+        fields: vec![TaskScheduleTimelineFieldRead {
+            id: 10,
+            name: "F1".into(),
+            crop_name: "Tomato".into(),
+            area_sqm: 50.0,
+            field_cultivation_id: 100,
+            crop_id: 42,
+            cultivation_start_date: None,
+            cultivation_end_date: None,
+            task_options: vec![],
+            schedules: vec![
+                TaskScheduleTimelineScheduleRead {
+                    category: "fertilizer".into(),
+                    items: vec![sample_item_with_amounts(
+                        1,
+                        "fertilizer",
+                        "fertilize",
+                        Some(1),
+                        Some("Vegetative"),
+                        Some(2.0),
+                        Some(2.0 + between_thresholds),
+                        Some("kg"),
+                    )],
+                },
+                TaskScheduleTimelineScheduleRead {
+                    category: "pest_control".into(),
+                    items: vec![sample_item_with_amounts(
+                        2,
+                        "pest_control",
+                        "spray",
+                        Some(2),
+                        Some("Flowering"),
+                        Some(1.0),
+                        Some(1.0 + between_thresholds),
+                        Some("L"),
+                    )],
+                },
+            ],
+        }],
+        scheduled_dates: vec![Date::parse(
+            "2026-06-02",
+            &time::format_description::well_known::Iso8601::DATE,
+        )
+        .expect("date")],
+    };
+
+    let summary = PlanVsActualMapper::summary_from_snapshot(&snapshot, 5);
+
+    assert!(summary
+        .blueprint_amount_adjustment_proposals
+        .iter()
+        .all(|proposal| proposal.category != "fertilizer"));
+    let pest = summary
+        .blueprint_amount_adjustment_proposals
+        .iter()
+        .find(|proposal| proposal.category == "pest_control")
+        .expect("pest_control proposal");
+    assert!((pest.average_amount_delta - between_thresholds).abs() < f64::EPSILON);
+}
+
+#[test]
 fn stage_gdd_calibration_proposals_aggregate_by_crop_and_stage() {
     let snapshot = sample_snapshot(vec![
         sample_item_with_stage(

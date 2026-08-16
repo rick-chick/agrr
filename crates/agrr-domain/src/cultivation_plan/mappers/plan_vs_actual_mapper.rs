@@ -13,7 +13,7 @@ use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
 use crate::cultivation_plan::policies::blueprint_amount_adjustment_policy::qualifies_for_proposal as amount_qualifies_for_proposal;
 use crate::cultivation_plan::policies::blueprint_timing_adjustment_policy::qualifies_for_proposal;
 use crate::cultivation_plan::policies::plan_variance_threshold_policy::{
-    exceedance_kind, DEFAULT_AMOUNT_DELTA_THRESHOLD,
+    amount_delta_threshold_for_category, exceedance_kind,
 };
 use time::{format_description::well_known::Iso8601, Date};
 
@@ -307,7 +307,11 @@ impl PlanVsActualMapper {
                     let recorded_item_count = deltas.len() as i64;
                     let average_amount_delta =
                         deltas.iter().sum::<f64>() / deltas.len() as f64;
-                    if !amount_qualifies_for_proposal(average_amount_delta, recorded_item_count) {
+                    if !amount_qualifies_for_proposal(
+                        average_amount_delta,
+                        recorded_item_count,
+                        category.as_str(),
+                    ) {
                         return None;
                     }
                     Some(BlueprintAmountAdjustmentProposalRead {
@@ -385,7 +389,9 @@ fn counts_toward_amount_variance(item: &PlanVsActualItemRead) -> bool {
         return true;
     }
     item.amount_delta
-        .map(|delta| delta.abs() >= DEFAULT_AMOUNT_DELTA_THRESHOLD)
+        .map(|delta| {
+            delta.abs() >= amount_delta_threshold_for_category(item.category.as_str())
+        })
         .unwrap_or(false)
 }
 
