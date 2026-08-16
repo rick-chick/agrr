@@ -74,14 +74,14 @@ describe('work-record-form.mapper', () => {
       pesticide_id: null
     });
     expect(createBody.fertilize_id).toBe(7);
-    expect(createBody.pesticide_id).toBeNull();
+    expect(createBody.pesticide_id).toBeUndefined();
 
     const updateBody = mapFormToUpdateRequest({
       ...baseForm,
       fertilize_id: null,
       pesticide_id: 9
     });
-    expect(updateBody.fertilize_id).toBeNull();
+    expect(updateBody.fertilize_id).toBeUndefined();
     expect(updateBody.pesticide_id).toBe(9);
   });
 });

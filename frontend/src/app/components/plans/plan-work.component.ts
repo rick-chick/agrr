@@ -712,7 +712,11 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       onQuickCompleteValidation: (itemId, fieldErrors) => {
         const row = this.findRowByItemId(itemId);
         if (row) {
-          this.sheet.openFromItem(row, { fieldErrors });
+          const cropId = resolveCropIdForFieldCultivation(
+            this.control.fields,
+            row.item.field_cultivation_id
+          );
+          this.sheet.openFromItem(row, { fieldErrors, cropId });
         }
       },
       onLoadSaveImpact: (event) => this.loadSaveImpact(event)

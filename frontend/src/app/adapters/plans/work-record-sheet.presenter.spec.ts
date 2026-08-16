@@ -63,10 +63,17 @@ describe('WorkRecordSheetPresenter', () => {
           cropName: '',
           task_schedule_item_id: null,
           work_record_id: null,
-          agricultural_task_id: null
+          agricultural_task_id: null,
+          fertilize_id: null,
+          pesticide_id: null
         },
         fieldOptions: [],
         scheduleCategory: null,
+        cropId: null,
+        fertilizeOptions: [],
+        pesticideOptions: [],
+        loadingFertilizeOptions: false,
+        loadingPesticideOptions: false,
         harvestContext: false,
         plannedAmount: '',
         plannedAmountUnit: '',
