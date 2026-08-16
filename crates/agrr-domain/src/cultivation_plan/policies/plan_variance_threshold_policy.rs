@@ -11,6 +11,21 @@ pub const DEFAULT_GDD_THRESHOLD: f64 = 10.0;
 /// Default amount variance threshold (absolute average delta).
 pub const DEFAULT_AMOUNT_DELTA_THRESHOLD: f64 = 0.5;
 
+/// Fertilizer amount variance threshold (kg-scale; tolerates larger deltas).
+pub const FERTILIZER_AMOUNT_DELTA_THRESHOLD: f64 = 0.5;
+
+/// Pest control amount variance threshold (L/ml-scale; tighter tolerance).
+pub const PEST_CONTROL_AMOUNT_DELTA_THRESHOLD: f64 = 0.2;
+
+/// Returns the amount delta threshold for structured-input categories.
+pub fn amount_delta_threshold_for_category(category: &str) -> f64 {
+    match category {
+        "fertilizer" => FERTILIZER_AMOUNT_DELTA_THRESHOLD,
+        "pest_control" => PEST_CONTROL_AMOUNT_DELTA_THRESHOLD,
+        _ => DEFAULT_AMOUNT_DELTA_THRESHOLD,
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VarianceExceedanceKind {
     Days,
