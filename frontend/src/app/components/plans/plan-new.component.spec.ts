@@ -119,6 +119,8 @@ describe('PlanNewComponent', () => {
       'plans.new.carryover_no_source_plans': 'No previous plans found.',
       'plans.new.carryover_preview_empty': 'No category variance data.',
       'plans.new.carryover_learn_cta': 'Create and review on Learn',
+      'plans.carryover.preview.title': 'Learning data preview',
+      'plans.carryover.preview.empty': 'No category variance data.',
       'plans.carryover.preview.stage_gdd_count': 'Stage GDD calibration proposals',
       'plans.carryover.preview.bp_timing_count': 'BP timing adjustment proposals',
       'plans.carryover.preview.bp_amount_count': 'BP amount adjustment proposals',
@@ -127,6 +129,7 @@ describe('PlanNewComponent', () => {
       'plans.task_schedules.variance_subview.not_available': '—',
       'plans.task_schedules.variance_subview.average_value': '{{delta}} days',
       'plans.task_schedules.variance_subview.category.general': 'General tasks',
+      'plans.learn.proposal_confidence.high': 'High confidence',
       'plans.new.readiness.title': 'Setup readiness',
       'plans.new.readiness.fields_ready': 'Fields registered ({{count}})',
       'plans.new.readiness.weather_ready': 'Weather data ready',
@@ -375,7 +378,7 @@ describe('PlanNewComponent', () => {
     expect(
       fixture.nativeElement.querySelector('input[name="carryoverEnabled"]')
     ).toBeTruthy();
-    const preview = fixture.nativeElement.querySelector('.plan-new-carryover-preview');
+    const preview = fixture.nativeElement.querySelector('.plan-carryover-preview');
     expect(preview).toBeTruthy();
     expect(preview?.textContent).toContain('Learning data preview');
     expect(preview?.textContent).toContain('General tasks');
@@ -403,7 +406,7 @@ describe('PlanNewComponent', () => {
     });
     fixture.detectChanges();
 
-    const rows = fixture.nativeElement.querySelectorAll('.plan-new-carryover-preview__table tbody tr');
+    const rows = fixture.nativeElement.querySelectorAll('.plan-carryover-preview__table tbody tr');
     expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain('Stage GDD calibration proposals');
     expect(rows[1].textContent).toContain('BP amount adjustment proposals');

@@ -25,8 +25,8 @@ describe('PlanLearnCarryoverSectionComponent', () => {
         'plans.learn.carryover.source_label': 'Source plan',
         'plans.learn.carryover.source_hint': 'Select source',
         'plans.learn.carryover.no_source_plans': 'No source plans',
-        'plans.learn.carryover.preview_title': 'Preview',
-        'plans.learn.carryover.preview_empty': 'No preview data',
+        'plans.carryover.preview.title': 'Preview',
+        'plans.carryover.preview.empty': 'No preview data',
         'plans.learn.carryover.import_button': 'Import learning',
         'plans.carryover.next_plan_cta': 'Create next plan with learning',
         'plans.carryover.next_plan_hint': 'Start a new plan carrying this learning forward',
@@ -34,6 +34,7 @@ describe('PlanLearnCarryoverSectionComponent', () => {
         'plans.carryover.preview.stage_gdd_count': 'Stage GDD calibration proposals',
         'plans.carryover.preview.bp_timing_count': 'BP timing adjustment proposals',
         'plans.carryover.preview.bp_amount_count': 'BP amount adjustment proposals',
+        'plans.learn.proposal_confidence.high': 'High confidence',
         'common.loading': 'Loading'
       },
       true
@@ -122,9 +123,7 @@ describe('PlanLearnCarryoverSectionComponent', () => {
     } as typeof fixture.componentInstance.carryoverPreview;
     fixture.detectChanges();
 
-    const rows = fixture.nativeElement.querySelectorAll(
-      '.plan-learn-carryover-preview__table tbody tr'
-    );
+    const rows = fixture.nativeElement.querySelectorAll('.plan-carryover-preview__table tbody tr');
     expect(rows).toHaveLength(3);
     expect(rows[1].textContent).toContain('Stage GDD calibration proposals');
     expect(rows[1].textContent).toContain('1');
