@@ -48,8 +48,8 @@ describe('learn proposal application progress keys', () => {
   it('builds stable keys for stage GDD, BP timing, and BP amount proposals', () => {
     expect(stageGddProposalProgressKey(3, 12)).toBe('stage_gdd:3:12');
     expect(bpTimingProposalProgressKey(3, 'general')).toBe('bp_timing:3:general');
-    expect(bpAmountProposalProgressKey(42, 'fertilizer', 'fertilize')).toBe(
-      'bp_amount:42:fertilizer:fertilize'
+    expect(bpAmountProposalProgressKey(42, 'fertilizer', 'fertilize', 1)).toBe(
+      'bp_amount:42:fertilizer:fertilize:1'
     );
   });
 });
@@ -90,13 +90,14 @@ describe('learn proposal application progress storage', () => {
     markBpAmountProposalAppliedPending(PLAN_ID, {
       cropId: 42,
       category: 'fertilizer',
-      taskType: 'fertilize'
+      taskType: 'fertilize',
+      stageOrder: 1
     });
 
     expect(
       resolveLearnProposalApplicationStatus(
         PLAN_ID,
-        bpAmountProposalProgressKey(42, 'fertilizer', 'fertilize')
+        bpAmountProposalProgressKey(42, 'fertilizer', 'fertilize', 1)
       )
     ).toBe('applied_pending_confirmation');
   });
@@ -159,11 +160,12 @@ describe('learn proposal application progress storage', () => {
       cropId: 42,
       cropName: 'Tomato',
       category: 'fertilizer',
-      taskType: 'fertilize'
+      taskType: 'fertilize',
+      stageOrder: 1
     };
 
     expect(proposalKeyFromPostMasterPayload(payload)).toBe(
-      bpAmountProposalProgressKey(42, 'fertilizer', 'fertilize')
+      bpAmountProposalProgressKey(42, 'fertilizer', 'fertilize', 1)
     );
   });
 });
@@ -286,7 +288,8 @@ describe('learn BP amount apply context', () => {
       cropId: 4,
       cropName: 'Tomato',
       category: 'fertilizer',
-      taskType: 'fertilize'
+      taskType: 'fertilize',
+      stageOrder: 2
     };
 
     storeLearnBpAmountApplyContext(PLAN_ID, context);

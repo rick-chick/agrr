@@ -344,7 +344,8 @@ describe('CropSetupProposalImportComponent', () => {
       cropId: 42,
       cropName: 'Tomato',
       category: 'fertilizer',
-      taskType: 'fertilize'
+      taskType: 'fertilize',
+      stageOrder: 1
     });
     component.control = {
       ...component.control,

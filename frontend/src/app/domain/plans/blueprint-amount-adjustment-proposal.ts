@@ -31,9 +31,10 @@ export const BLUEPRINT_AMOUNT_PATCH_INTENT = 'blueprint_amount_patch';
 export function blueprintAmountProposalKey(
   cropId: number,
   category: string,
-  taskType: string
+  taskType: string,
+  stageOrder: number | null
 ): string {
-  return `${cropId}-${category}-${taskType}`;
+  return `${cropId}-${category}-${taskType}-${stageOrder ?? 'null'}`;
 }
 
 export function blueprintAmountPrefillStorageKey(cropId: number): string {

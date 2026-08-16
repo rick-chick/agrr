@@ -190,7 +190,12 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
   private applyErrors: Record<string, string> = {};
 
   proposalKey(proposal: BlueprintAmountAdjustmentProposal): string {
-    return blueprintAmountProposalKey(proposal.cropId, proposal.category, proposal.taskType);
+    return blueprintAmountProposalKey(
+      proposal.cropId,
+      proposal.category,
+      proposal.taskType,
+      proposal.stageOrder
+    );
   }
 
   proposalAnchorId(proposal: BlueprintAmountAdjustmentProposal): string {
@@ -223,7 +228,8 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
       cropId: proposal.cropId,
       cropName: proposal.cropName,
       category: proposal.category,
-      taskType: proposal.taskType
+      taskType: proposal.taskType,
+      stageOrder: proposal.stageOrder
     });
     void this.router.navigate(['/crops', proposal.cropId, 'setup_proposal'], {
       queryParams: cropPlanWizardQueryParams(this.planId, 'learn')
@@ -234,7 +240,12 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
     void this.refreshVersion;
     return resolveLearnProposalApplicationStatus(
       this.planId,
-      bpAmountProposalProgressKey(proposal.cropId, proposal.category, proposal.taskType)
+      bpAmountProposalProgressKey(
+        proposal.cropId,
+        proposal.category,
+        proposal.taskType,
+        proposal.stageOrder
+      )
     );
   }
 
@@ -305,6 +316,7 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
       cropId: proposal.cropId,
       category: proposal.category,
       taskType: proposal.taskType,
+      stageOrder: proposal.stageOrder,
       proposal: proposal.proposalBody,
       onSuccess: () => {
         this.applyingKeys.delete(key);
@@ -324,7 +336,8 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
     markBpAmountProposalDismissed(this.planId, {
       cropId: proposal.cropId,
       category: proposal.category,
-      taskType: proposal.taskType
+      taskType: proposal.taskType,
+      stageOrder: proposal.stageOrder
     });
     this.refreshVersion += 1;
     this.progressChanged.emit();

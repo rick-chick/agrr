@@ -59,6 +59,46 @@ describe('buildBlueprintAmountAdjustmentProposals', () => {
     ]);
   });
 
+  it('applies amount patch only to blueprints matching proposal stage_order', () => {
+    const proposals = buildBlueprintAmountAdjustmentProposals(
+      [
+        {
+          crop_id: 5,
+          crop_name: 'Tomato',
+          category: 'fertilizer',
+          task_type: 'fertilize',
+          stage_order: 1,
+          stage_name: 'Vegetative',
+          average_amount_delta: 0.5,
+          recorded_item_count: 2,
+          amount_unit: 'kg'
+        }
+      ],
+      new Map([
+        [
+          5,
+          [
+            blueprint({ id: 10, task_type: 'fertilize', stage_order: 1, amount: 2, amount_unit: 'kg' }),
+            blueprint({
+              id: 11,
+              task_type: 'fertilize',
+              stage_order: 2,
+              stage_name: 'Flowering',
+              amount: 3,
+              amount_unit: 'kg'
+            })
+          ]
+        ]
+      ])
+    );
+
+    expect(proposals).toHaveLength(1);
+    expect(proposals[0].affectedBlueprintCount).toBe(1);
+    expect(proposals[0].proposalBody.task_schedule_blueprints).toEqual([
+      { blueprint_id: 10, amount: 2.5, amount_unit: 'kg' }
+    ]);
+  });
+
   it('skips proposals when no matching blueprints exist', () => {
     const proposals = buildBlueprintAmountAdjustmentProposals(
       [

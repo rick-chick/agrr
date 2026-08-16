@@ -15,6 +15,7 @@ export interface ApplyBpAmountProposalFromLearnInputDto {
   cropId: number;
   category: string;
   taskType: string;
+  stageOrder: number | null;
   proposal: CropSetupProposalBody;
   onSuccess?: () => void;
   onError?: (message: string) => void;
@@ -35,7 +36,12 @@ export class ApplyBpAmountProposalFromLearnUseCase {
         }
         markLearnProposalConfirmed(
           dto.planId,
-          bpAmountProposalProgressKey(dto.cropId, dto.category, dto.taskType)
+          bpAmountProposalProgressKey(
+            dto.cropId,
+            dto.category,
+            dto.taskType,
+            dto.stageOrder
+          )
         );
         dto.onSuccess?.();
       },

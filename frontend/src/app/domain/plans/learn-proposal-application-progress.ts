@@ -16,6 +16,7 @@ export interface LearnPostMasterPayload {
   cropName: string;
   stageId?: number;
   stageName?: string;
+  stageOrder?: number | null;
   category?: string;
   taskType?: string;
   appliedRequiredGdd?: number | null;
@@ -44,6 +45,7 @@ export interface LearnBpAmountApplyContext {
   cropName: string;
   category: string;
   taskType: string;
+  stageOrder: number | null;
 }
 
 export function stageGddProposalProgressKey(cropId: number, stageId: number): string {
@@ -57,9 +59,10 @@ export function bpTimingProposalProgressKey(cropId: number, category: string): s
 export function bpAmountProposalProgressKey(
   cropId: number,
   category: string,
-  taskType: string
+  taskType: string,
+  stageOrder: number | null
 ): string {
-  return `bp_amount:${cropId}:${category}:${taskType}`;
+  return `bp_amount:${cropId}:${category}:${taskType}:${stageOrder ?? 'null'}`;
 }
 
 type ProgressMap = Record<string, LearnProposalApplicationStatus>;
@@ -226,11 +229,11 @@ export function markBpTimingProposalAppliedPending(
 
 export function markBpAmountProposalAppliedPending(
   planId: number,
-  input: { cropId: number; category: string; taskType: string }
+  input: { cropId: number; category: string; taskType: string; stageOrder: number | null }
 ): void {
   markProposalAppliedPending(
     planId,
-    bpAmountProposalProgressKey(input.cropId, input.category, input.taskType)
+    bpAmountProposalProgressKey(input.cropId, input.category, input.taskType, input.stageOrder)
   );
 }
 
@@ -250,11 +253,11 @@ export function markBpTimingProposalDismissed(
 
 export function markBpAmountProposalDismissed(
   planId: number,
-  input: { cropId: number; category: string; taskType: string }
+  input: { cropId: number; category: string; taskType: string; stageOrder: number | null }
 ): void {
   dismissProposalIfNotStarted(
     planId,
-    bpAmountProposalProgressKey(input.cropId, input.category, input.taskType)
+    bpAmountProposalProgressKey(input.cropId, input.category, input.taskType, input.stageOrder)
   );
 }
 
@@ -279,7 +282,12 @@ export function proposalKeyFromPostMasterPayload(payload: LearnPostMasterPayload
     if (!payload.taskType) {
       throw new Error('taskType is required for bp_amount post_master payload');
     }
-    return bpAmountProposalProgressKey(payload.cropId, payload.category, payload.taskType);
+    return bpAmountProposalProgressKey(
+      payload.cropId,
+      payload.category,
+      payload.taskType,
+      payload.stageOrder ?? null
+    );
   }
   if (!payload.category) {
     throw new Error('category is required for bp_timing post_master payload');

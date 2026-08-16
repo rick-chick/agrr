@@ -43,7 +43,7 @@ describe('BlueprintAmountAdjustmentProposalsViewComponent inline apply', () => {
     clearLearnProposalApplicationProgressCache();
     applyUseCase = {
       execute: vi.fn(({ onSuccess }: { onSuccess?: () => void }) => {
-        markLearnProposalConfirmed(7, bpAmountProposalProgressKey(1, 'fertilizer', 'fertilize'));
+        markLearnProposalConfirmed(7, bpAmountProposalProgressKey(1, 'fertilizer', 'fertilize', 1));
         onSuccess?.();
       })
     };
@@ -142,7 +142,7 @@ describe('BlueprintAmountAdjustmentProposalsViewComponent inline apply', () => {
     expect(
       resolveLearnProposalApplicationStatus(
         7,
-        bpAmountProposalProgressKey(1, 'fertilizer', 'fertilize')
+        bpAmountProposalProgressKey(1, 'fertilizer', 'fertilize', 1)
       )
     ).toBe('confirmed');
     expect(fixture.nativeElement.textContent).toContain('Confirmed');
@@ -158,7 +158,7 @@ describe('BlueprintAmountAdjustmentProposalsViewComponent inline apply', () => {
     expect(
       resolveLearnProposalApplicationStatus(
         7,
-        bpAmountProposalProgressKey(1, 'fertilizer', 'fertilize')
+        bpAmountProposalProgressKey(1, 'fertilizer', 'fertilize', 1)
       )
     ).toBe('dismissed');
     expect(fixture.nativeElement.textContent).toContain('Dismissed');
