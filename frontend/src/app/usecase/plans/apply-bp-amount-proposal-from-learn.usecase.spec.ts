@@ -52,6 +52,7 @@ describe('ApplyBpAmountProposalFromLearnUseCase', () => {
       cropId: 1,
       category: 'fertilizer',
       taskType: 'fertilize',
+      stageOrder: 1,
       proposal: proposalBody,
       onSuccess,
       onError
@@ -61,7 +62,7 @@ describe('ApplyBpAmountProposalFromLearnUseCase', () => {
     expect(
       resolveLearnProposalApplicationStatus(
         PLAN_ID,
-        bpAmountProposalProgressKey(1, 'fertilizer', 'fertilize')
+        bpAmountProposalProgressKey(1, 'fertilizer', 'fertilize', 1)
       )
     ).toBe('confirmed');
     expect(onSuccess).toHaveBeenCalled();
@@ -84,6 +85,7 @@ describe('ApplyBpAmountProposalFromLearnUseCase', () => {
       cropId: 1,
       category: 'fertilizer',
       taskType: 'fertilize',
+      stageOrder: 1,
       proposal: proposalBody,
       onSuccess,
       onError
@@ -103,6 +105,7 @@ describe('ApplyBpAmountProposalFromLearnUseCase', () => {
       cropId: 1,
       category: 'fertilizer',
       taskType: 'fertilize',
+      stageOrder: 1,
       proposal: proposalBody,
       onSuccess,
       onError

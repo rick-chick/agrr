@@ -73,7 +73,8 @@ export function buildBlueprintAmountAdjustmentProposals(
       Math.abs(right.averageAmountDelta) - Math.abs(left.averageAmountDelta) ||
       left.cropId - right.cropId ||
       left.category.localeCompare(right.category) ||
-      left.taskType.localeCompare(right.taskType)
+      left.taskType.localeCompare(right.taskType) ||
+      (left.stageOrder ?? Number.MAX_SAFE_INTEGER) - (right.stageOrder ?? Number.MAX_SAFE_INTEGER)
   );
 }
 

@@ -408,12 +408,14 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
         cropId: amountContext.cropId,
         cropName: amountContext.cropName,
         category: amountContext.category,
-        taskType: amountContext.taskType
+        taskType: amountContext.taskType,
+        stageOrder: amountContext.stageOrder
       });
       markBpAmountProposalAppliedPending(this.fromPlanId, {
         cropId: amountContext.cropId,
         category: amountContext.category,
-        taskType: amountContext.taskType
+        taskType: amountContext.taskType,
+        stageOrder: amountContext.stageOrder
       });
       clearLearnBpAmountApplyContext(this.fromPlanId, this.cropId);
       const navigation = buildLearnPostMasterNavigation(this.fromPlanId);

@@ -135,7 +135,12 @@ export function buildLearnApplicationProgressItems(
   }
 
   for (const proposal of blueprintAmountProposals) {
-    const key = bpAmountProposalProgressKey(proposal.cropId, proposal.category, proposal.taskType);
+    const key = bpAmountProposalProgressKey(
+      proposal.cropId,
+      proposal.category,
+      proposal.taskType,
+      proposal.stageOrder
+    );
     items.push({
       key,
       kind: 'bp_amount',
