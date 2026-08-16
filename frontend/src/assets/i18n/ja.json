@@ -1955,51 +1955,6 @@
       "view_my_plans": "マイプランを見る",
       "chart_title": "気象データと作物成長分析",
       "loading_data": "データを読み込んでいます...",
-      "private_value_preview": {
-        "title": "保存後に使えるプライベート機能",
-        "lead": "マイプランに保存すると、天候変化への対応から学習・作業記録まで一気通貫で進められます。",
-        "badge": "ログイン後",
-        "weather_reschedule": {
-          "title": "天候リスケ提案",
-          "description": "悪天候が続くとき、栽培期間の調整案をプレビューしてから計画に反映できます。"
-        },
-        "learn_loop": {
-          "title": "学習ループ",
-          "description": "実績と計画の差分から、次シーズン向けのマスタ更新と作業計画の見直しを支援します。"
-        },
-        "work_gdd": {
-          "title": "作業 GDD 比較",
-          "description": "作業実績の積算温度を計画と比較し、遅れや前倒しを気づきやすくします。"
-        }
-      },
-      "next_steps": {
-        "title": "次のステップ",
-        "lead": "公開計画をマイプランに保存してから、作業予定の確認と記録へ進みましょう。",
-        "completed": "完了",
-        "after_save_hint": "保存後に利用できます",
-        "step_label": {
-          "1": "ステップ 1",
-          "2": "ステップ 2",
-          "3": "ステップ 3"
-        },
-        "cta": {
-          "task_schedule": "作業予定を見る",
-          "work_record": "作業記録へ"
-        },
-        "save": {
-          "title": "マイプランに保存",
-          "description": "この公開計画をアカウントに取り込み、以降の作業管理の土台にします。",
-          "hint": "上の「マイプランに保存」ボタンから進めます"
-        },
-        "task_schedule": {
-          "title": "作業予定を確認",
-          "description": "保存した計画の作業スケジュールを確認し、圃場ごとの予定を把握します。"
-        },
-        "work_record": {
-          "title": "作業を記録",
-          "description": "実際の作業を記録し、計画との GDD 比較や学習ループの材料にします。"
-        }
-      },
       "chart": {
         "temperature_section": "日別気温（°C）",
         "gdd_section": "GDD推移（日別・積算・要求）",
@@ -2048,6 +2003,51 @@
           "info": "基本情報",
           "temperature": "気温分析",
           "stages": "ステージ"
+        }
+      },
+      "private_value_preview": {
+        "title": "保存後に使えるプライベート機能",
+        "lead": "マイプランに保存すると、天候変化への対応から学習・作業記録まで一気通貫で進められます。",
+        "badge": "ログイン後",
+        "weather_reschedule": {
+          "title": "天候リスケ提案",
+          "description": "悪天候が続くとき、栽培期間の調整案をプレビューしてから計画に反映できます。"
+        },
+        "learn_loop": {
+          "title": "学習ループ",
+          "description": "実績と計画の差分から、次シーズン向けのマスタ更新と作業計画の見直しを支援します。"
+        },
+        "work_gdd": {
+          "title": "作業 GDD 比較",
+          "description": "作業実績の積算温度を計画と比較し、遅れや前倒しを気づきやすくします。"
+        }
+      },
+      "next_steps": {
+        "title": "次のステップ",
+        "lead": "公開計画をマイプランに保存してから、作業予定の確認と記録へ進みましょう。",
+        "completed": "完了",
+        "after_save_hint": "保存後に利用できます",
+        "step_label": {
+          "1": "ステップ 1",
+          "2": "ステップ 2",
+          "3": "ステップ 3"
+        },
+        "cta": {
+          "task_schedule": "作業予定を見る",
+          "work_record": "作業記録へ"
+        },
+        "save": {
+          "title": "マイプランに保存",
+          "description": "この公開計画をアカウントに取り込み、以降の作業管理の土台にします。",
+          "hint": "上の「マイプランに保存」ボタンから進めます"
+        },
+        "task_schedule": {
+          "title": "作業予定を確認",
+          "description": "保存した計画の作業スケジュールを確認し、圃場ごとの予定を把握します。"
+        },
+        "work_record": {
+          "title": "作業を記録",
+          "description": "実際の作業を記録し、計画との GDD 比較や学習ループの材料にします。"
         }
       }
     },
@@ -3316,6 +3316,7 @@
     "work_log_overdue_aria": "作業記録、期限超過 {{count}} 件",
     "menu_masters": "マスタデータ",
     "new_plan": "作付け計画を作成",
+    "entry_schedule": "作付け時期の目安",
     "reports": "レポート",
     "menu_more": "その他",
     "home": "ホーム",
@@ -3355,6 +3356,7 @@
         "title": "🌱 農業をもっとスマートに",
         "subtitle_html": "気象とGDDで、作付け計画を可視化。",
         "cta_scroll_demo": "操作してみる",
+        "cta_entry_schedule": "作付け時期の目安を見る",
         "cta_footer_link": "計画を作成"
       },
       "demo": {
@@ -4172,6 +4174,9 @@
     "timeline": "月別の流れ",
     "nextTask": "次の作業",
     "nextTaskPlaceholder": "次の作業候補はまだありません。",
-    "stages": "成長段階"
+    "stages": "成長段階",
+    "ctaSectionTitle": "次のステップ",
+    "ctaPublicPlan": "この作物で無料計画を作る",
+    "ctaCropSetup": "作物マスタを整備する"
   }
 }
