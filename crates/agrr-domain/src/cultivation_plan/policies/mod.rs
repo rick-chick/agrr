@@ -13,3 +13,4 @@ pub mod plan_read_authorization;
 pub mod private_cultivation_plan_access_policy;
 pub mod task_schedule_item_create_policy;
 pub mod task_schedule_item_update_policy;
+pub mod weather_reschedule_trigger_policy;
