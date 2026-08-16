@@ -9,7 +9,9 @@ import { CreatePrivatePlanUseCase } from '../../usecase/private-plan-create/crea
 import { PlanNewPresenter } from '../../usecase/plans/plan-new.providers';
 import { CreatePrivatePlanPresenter } from '../../adapters/private-plan-create/create-private-plan.presenter';
 import { LoadPlanNewCarryoverUseCase } from '../../usecase/plans/load-plan-new-carryover.usecase';
+import { LoadPlanNewReadinessUseCase } from '../../usecase/plans/load-plan-new-readiness.usecase';
 import { PlanNewViewState } from './plan-new.view';
+import { buildPlanCreateReadiness } from '../../domain/plans/plan-create-readiness';
 
 function defaultControl(overrides: Partial<PlanNewViewState> = {}): PlanNewViewState {
   return {
@@ -18,6 +20,8 @@ function defaultControl(overrides: Partial<PlanNewViewState> = {}): PlanNewViewS
     error: null,
     farms: [],
     selectedFarmId: null,
+    readinessLoading: false,
+    readiness: null,
     noFieldsWarning: false,
     carryoverEnabled: false,
     sourcePlans: [],
@@ -44,6 +48,7 @@ describe('PlanNewComponent', () => {
     loadCarryoverPreview: ReturnType<typeof vi.fn>;
     loadSourcePlan: ReturnType<typeof vi.fn>;
   };
+  let mockReadinessUseCase: { execute: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     mockLoadUseCase = { execute: vi.fn() };
@@ -57,6 +62,20 @@ describe('PlanNewComponent', () => {
       ),
       loadSourcePlan: vi.fn(() => of(null))
     };
+    mockReadinessUseCase = {
+      execute: vi.fn(() =>
+        of(
+          buildPlanCreateReadiness({
+            farmId: 1,
+            fieldCount: 1,
+            hasValidFields: true,
+            weatherStatus: 'completed',
+            crops: [],
+            cropBlueprints: {}
+          })
+        )
+      )
+    };
 
     await TestBed.configureTestingModule({
       imports: [PlanNewComponent, TranslateModule.forRoot()],
@@ -66,7 +85,8 @@ describe('PlanNewComponent', () => {
         { provide: CreatePrivatePlanUseCase, useValue: mockCreateUseCase },
         { provide: PlanNewPresenter, useValue: mockFarmsPresenter },
         { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter },
-        { provide: LoadPlanNewCarryoverUseCase, useValue: mockCarryoverUseCase }
+        { provide: LoadPlanNewCarryoverUseCase, useValue: mockCarryoverUseCase },
+        { provide: LoadPlanNewReadinessUseCase, useValue: mockReadinessUseCase }
       ]
     })
       .overrideComponent(PlanNewComponent, { set: { providers: [] } })
@@ -107,6 +127,11 @@ describe('PlanNewComponent', () => {
       'plans.task_schedules.variance_subview.not_available': '—',
       'plans.task_schedules.variance_subview.average_value': '{{delta}} days',
       'plans.task_schedules.variance_subview.category.general': 'General tasks',
+      'plans.new.readiness.title': 'Setup readiness',
+      'plans.new.readiness.fields_ready': 'Fields registered ({{count}})',
+      'plans.new.readiness.weather_ready': 'Weather data ready',
+      'plans.new.readiness.crops_missing': 'No crops registered yet',
+      'plans.new.readiness.crops_action': 'Set up crops',
       'common.loading': 'Loading...'
     });
     translate.setDefaultLang('en');
@@ -384,6 +409,20 @@ describe('PlanNewComponent', () => {
     expect(rows[1].textContent).toContain('BP amount adjustment proposals');
   });
 
+  it('loads and shows readiness summary after farm selection', () => {
+    fixture.detectChanges();
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }]
+    });
+    component.onFarmChange(1);
+    fixture.detectChanges();
+
+    expect(mockReadinessUseCase.execute).toHaveBeenCalledWith(1, 1, true);
+    expect(fixture.nativeElement.querySelector('.plan-create-readiness')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Setup readiness');
+    expect(fixture.nativeElement.textContent).toContain('Fields registered (1)');
+  });
+
   it('presets carryover from carryoverFrom query param after farms load', () => {
     const sourcePlan = { id: 7, name: 'Source Plan', farm_id: 10 };
     mockCarryoverUseCase.loadSourcePlan = vi.fn(() => of(sourcePlan));
@@ -412,7 +451,8 @@ describe('PlanNewComponent', () => {
         { provide: CreatePrivatePlanUseCase, useValue: mockCreateUseCase },
         { provide: PlanNewPresenter, useValue: mockFarmsPresenter },
         { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter },
-        { provide: LoadPlanNewCarryoverUseCase, useValue: mockCarryoverUseCase }
+        { provide: LoadPlanNewCarryoverUseCase, useValue: mockCarryoverUseCase },
+        { provide: LoadPlanNewReadinessUseCase, useValue: mockReadinessUseCase }
       ]
     })
       .overrideComponent(PlanNewComponent, { set: { providers: [] } })

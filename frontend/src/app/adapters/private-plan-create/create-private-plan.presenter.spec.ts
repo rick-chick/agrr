@@ -10,6 +10,8 @@ const emptyPlanNewControl = (): PlanNewViewState => ({
   error: null,
   farms: [],
   selectedFarmId: null,
+  readinessLoading: false,
+  readiness: null,
   noFieldsWarning: false,
   carryoverEnabled: false,
   sourcePlans: [],

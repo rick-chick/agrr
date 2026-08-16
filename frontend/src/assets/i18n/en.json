@@ -2123,7 +2123,8 @@
         "expand": "Expand",
         "collapse": "Collapse",
         "compare_variance": "Compare variance"
-      }
+      },
+      "initial_setup": "Initial setup wizard"
     },
     "new": {
       "breadcrumb": "New plan",
@@ -2150,7 +2151,21 @@
       "carryover_preview_title": "Learning data preview",
       "carryover_no_source_plans": "No previous plans found for this farm.",
       "carryover_preview_empty": "No category variance data available for the selected plan.",
-      "carryover_learn_cta": "Create and review on Learn"
+      "carryover_learn_cta": "Create and review on Learn",
+      "readiness": {
+        "title": "Setup readiness before creating a plan",
+        "fields_ready": "Fields registered ({{count}})",
+        "fields_missing": "No fields registered for this farm",
+        "fields_action": "Register fields",
+        "weather_ready": "Weather data ready",
+        "weather_missing": "Weather data not ready",
+        "weather_action": "Check weather on farm",
+        "crops_ready": "Crop task plans ready",
+        "crops_missing": "No crops registered yet",
+        "crops_incomplete": "Crop task plans need setup",
+        "crops_action": "Set up crops",
+        "crop_blueprint_action": "Edit task plans"
+      }
     },
     "select_crop": {
       "title": "🌾 Select Crops to Grow",
@@ -4097,5 +4112,30 @@
     "ctaSectionTitle": "Next steps",
     "ctaPublicPlan": "Create a free plan with this crop",
     "ctaCropSetup": "Improve crop master data"
+  },
+  "onboarding": {
+    "breadcrumb": "Initial setup",
+    "title": "Initial setup",
+    "subtitle": "Complete these steps before creating your first cultivation plan.",
+    "step_action": "Go to setup",
+    "create_plan_cta": "Create plan",
+    "steps": {
+      "farm": {
+        "title": "Register a farm",
+        "description": "Add your farm location so weather and planning can use the right region."
+      },
+      "fields": {
+        "title": "Register fields",
+        "description": "Add field areas on your farm. Plans need at least one field with area."
+      },
+      "crops": {
+        "title": "Set up crop task plans",
+        "description": "Configure growth stages and task schedule blueprints for crops you will grow."
+      },
+      "weather": {
+        "title": "Fetch weather data",
+        "description": "Weather history is fetched on the farm detail page. Wait until status is completed."
+      }
+    }
   }
 }

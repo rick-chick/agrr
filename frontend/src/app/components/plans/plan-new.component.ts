@@ -12,6 +12,8 @@ import { PlanNewView, PlanNewViewState } from './plan-new.view';
 import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { LoadPlanNewCarryoverUseCase } from '../../usecase/plans/load-plan-new-carryover.usecase';
+import { LoadPlanNewReadinessUseCase } from '../../usecase/plans/load-plan-new-readiness.usecase';
+import { PlanCreateReadinessSummaryComponent } from './plan-create-readiness-summary.component';
 import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-actual-summary';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
 import {
@@ -32,6 +34,8 @@ const initialControl: PlanNewViewState = {
   error: null,
   farms: [],
   selectedFarmId: null,
+  readinessLoading: false,
+  readiness: null,
   noFieldsWarning: false,
   carryoverEnabled: false,
   sourcePlans: [],
@@ -47,7 +51,14 @@ const initialControl: PlanNewViewState = {
 @Component({
   selector: 'app-plan-new',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, FormsModule, MasterContextHeaderComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    TranslateModule,
+    FormsModule,
+    MasterContextHeaderComponent,
+    PlanCreateReadinessSummaryComponent
+  ],
   providers: [...PLAN_NEW_PROVIDERS],
   template: `
     <div class="page-main">
@@ -119,6 +130,13 @@ const initialControl: PlanNewViewState = {
                 }
               </select>
             </div>
+            @if (control.selectedFarmId != null) {
+              @if (control.readinessLoading) {
+                <p class="master-loading">{{ 'common.loading' | translate }}</p>
+              } @else {
+                <app-plan-create-readiness-summary [readiness]="control.readiness" />
+              }
+            }
             <div class="form-group">
               <label for="plan-name" class="form-label">{{ 'plans.new.plan_name_label' | translate }}</label>
               <input
@@ -248,6 +266,7 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   private readonly farmsPresenter = inject(PlanNewPresenter);
   private readonly createPresenter = inject(CreatePrivatePlanPresenter);
   private readonly carryoverUseCase = inject(LoadPlanNewCarryoverUseCase);
+  private readonly readinessUseCase = inject(LoadPlanNewReadinessUseCase);
   private readonly translate = inject(TranslateService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly router = inject(Router);
@@ -328,12 +347,17 @@ export class PlanNewComponent implements PlanNewView, OnInit {
     this.control = {
       ...this.control,
       selectedFarmId: farmId,
+      readinessLoading: farmId != null,
+      readiness: null,
       selectedSourcePlanId: null,
       carryoverPreview: null,
       carryoverPreviewError: null,
       carryoverPreviewLoading: false,
       sourcePlans: []
     };
+    if (farmId != null) {
+      this.loadReadiness(farmId);
+    }
     if (this.control.carryoverEnabled && farmId != null) {
       this.loadSourcePlans(farmId);
     }
@@ -452,6 +476,39 @@ export class PlanNewComponent implements PlanNewView, OnInit {
           this.loadSourcePlans(plan.farm_id);
           this.loadCarryoverPreview(planId);
           this.cdr.markForCheck();
+        }
+      });
+  }
+
+  private loadReadiness(farmId: number): void {
+    const farm = this.control.farms.find((candidate) => candidate.id === farmId);
+    if (farm == null) {
+      return;
+    }
+
+    this.readinessUseCase
+      .execute(farmId, farm.fieldCount, farm.hasValidFields)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (readiness) => {
+          if (this.control.selectedFarmId !== farmId) {
+            return;
+          }
+          this.control = {
+            ...this.control,
+            readinessLoading: false,
+            readiness
+          };
+        },
+        error: () => {
+          if (this.control.selectedFarmId !== farmId) {
+            return;
+          }
+          this.control = {
+            ...this.control,
+            readinessLoading: false,
+            readiness: null
+          };
         }
       });
   }
