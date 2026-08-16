@@ -6,6 +6,7 @@ import { BehaviorSubject, of } from 'rxjs';
 
 import en from '../../../assets/i18n/en.json';
 import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-timing-adjustment-proposals.usecase';
+import { LoadBlueprintAmountAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-amount-adjustment-proposals.usecase';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
@@ -78,6 +79,7 @@ describe('PlanLearnComponent', () => {
   let scheduleUseCase: { execute: ReturnType<typeof vi.fn> };
   let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
   let blueprintTimingUseCase: { execute: ReturnType<typeof vi.fn> };
+  let blueprintAmountUseCase: { execute: ReturnType<typeof vi.fn> };
   let stageGddUseCase: { execute: ReturnType<typeof vi.fn> };
   let carryoverUseCase: {
     loadFarmContext: ReturnType<typeof vi.fn>;
@@ -93,6 +95,7 @@ describe('PlanLearnComponent', () => {
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };
+    blueprintAmountUseCase = { execute: vi.fn() };
     stageGddUseCase = { execute: vi.fn() };
     carryoverUseCase = {
       loadFarmContext: vi.fn().mockReturnValue(
@@ -112,6 +115,10 @@ describe('PlanLearnComponent', () => {
           {
             provide: LoadBlueprintTimingAdjustmentProposalsUseCase,
             useValue: blueprintTimingUseCase
+          },
+          {
+            provide: LoadBlueprintAmountAdjustmentProposalsUseCase,
+            useValue: blueprintAmountUseCase
           },
           {
             provide: LoadStageGddCalibrationProposalsUseCase,
@@ -604,6 +611,7 @@ describe('PlanLearnComponent post_master follow-up', () => {
   let scheduleUseCase: { execute: ReturnType<typeof vi.fn> };
   let varianceUseCase: { execute: ReturnType<typeof vi.fn> };
   let blueprintTimingUseCase: { execute: ReturnType<typeof vi.fn> };
+  let blueprintAmountUseCase: { execute: ReturnType<typeof vi.fn> };
   let stageGddUseCase: { execute: ReturnType<typeof vi.fn> };
   let carryoverUseCase: {
     loadFarmContext: ReturnType<typeof vi.fn>;
@@ -619,6 +627,7 @@ describe('PlanLearnComponent post_master follow-up', () => {
     scheduleUseCase = { execute: vi.fn() };
     varianceUseCase = { execute: vi.fn() };
     blueprintTimingUseCase = { execute: vi.fn() };
+    blueprintAmountUseCase = { execute: vi.fn() };
     stageGddUseCase = { execute: vi.fn() };
     carryoverUseCase = {
       loadFarmContext: vi.fn().mockReturnValue(of([])),
@@ -636,6 +645,10 @@ describe('PlanLearnComponent post_master follow-up', () => {
           {
             provide: LoadBlueprintTimingAdjustmentProposalsUseCase,
             useValue: blueprintTimingUseCase
+          },
+          {
+            provide: LoadBlueprintAmountAdjustmentProposalsUseCase,
+            useValue: blueprintAmountUseCase
           },
           {
             provide: LoadStageGddCalibrationProposalsUseCase,

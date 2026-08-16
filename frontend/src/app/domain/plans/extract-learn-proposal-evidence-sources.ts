@@ -14,6 +14,7 @@ function pushScheduleItems(
     sources.push({
       cropId,
       category,
+      taskType: item.taskType ?? null,
       stageOrder: item.stageOrder ?? null,
       name: item.name,
       actualDate: item.actualDate,

@@ -4,6 +4,7 @@ import type {
   PlanVsActualPlanSummaryStats,
   PlanVsActualSummary
 } from '../../domain/plans/plan-vs-actual-summary';
+import type { BlueprintAmountAdjustmentProposal } from '../../domain/plans/blueprint-amount-adjustment-proposal';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
@@ -22,6 +23,9 @@ export type PlanLearnViewState = {
   blueprintTimingLoading: boolean;
   blueprintTimingProposals: BlueprintTimingAdjustmentProposal[];
   blueprintTimingEvidenceByKey: Record<string, LearnProposalEvidence>;
+  blueprintAmountLoading: boolean;
+  blueprintAmountProposals: BlueprintAmountAdjustmentProposal[];
+  blueprintAmountEvidenceByKey: Record<string, LearnProposalEvidence>;
   stageGddProposalsLoading: boolean;
   stageGddProposals: StageGddCalibrationProposal[];
   stageGddEvidenceByKey: Record<string, LearnProposalEvidence>;

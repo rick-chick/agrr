@@ -4,6 +4,7 @@ import type { PlanLearnView, PlanLearnViewState } from '../../components/plans/p
 import { PlanLearnPresenter } from './plan-learn.providers';
 import { LoadPlanVsActualSummaryUseCase } from './load-plan-vs-actual-summary.usecase';
 import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.usecase';
+import { LoadBlueprintAmountAdjustmentProposalsUseCase } from './load-blueprint-amount-adjustment-proposals.usecase';
 import { LoadBlueprintTimingAdjustmentProposalsUseCase } from './load-blueprint-timing-adjustment-proposals.usecase';
 import { LoadStageGddCalibrationProposalsUseCase } from './load-stage-gdd-calibration-proposals.usecase';
 import { loadMergedLearnProposals } from './load-merged-learn-proposals';
@@ -33,6 +34,9 @@ const initialControl: PlanLearnViewState = {
   blueprintTimingLoading: true,
   blueprintTimingProposals: [],
   blueprintTimingEvidenceByKey: {},
+  blueprintAmountLoading: true,
+  blueprintAmountProposals: [],
+  blueprintAmountEvidenceByKey: {},
   stageGddProposalsLoading: true,
   stageGddProposals: [],
   stageGddEvidenceByKey: {},
@@ -59,6 +63,7 @@ export class PlanLearnLoopSummaryCoordinator implements PlanLearnView {
   private readonly varianceUseCase = inject(LoadPlanVsActualSummaryUseCase);
   private readonly carryoverUseCase = inject(LoadPlanLearnCarryoverUseCase);
   private readonly blueprintTimingUseCase = inject(LoadBlueprintTimingAdjustmentProposalsUseCase);
+  private readonly blueprintAmountUseCase = inject(LoadBlueprintAmountAdjustmentProposalsUseCase);
   private readonly stageGddProposalsUseCase = inject(LoadStageGddCalibrationProposalsUseCase);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -186,6 +191,7 @@ export class PlanLearnLoopSummaryCoordinator implements PlanLearnView {
             loadMergedLearnProposals(
               this.presenter,
               this.blueprintTimingUseCase,
+              this.blueprintAmountUseCase,
               this.stageGddProposalsUseCase,
               this._control.varianceSummary,
               snapshot

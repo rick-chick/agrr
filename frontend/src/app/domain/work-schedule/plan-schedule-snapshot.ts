@@ -33,6 +33,7 @@ export interface PlanTaskScheduleItem {
   gddDelta: number | null;
   stageOrder?: number | null;
   category?: string;
+  taskType?: string | null;
   status: string;
   /** Derived from linked work_records in timeline API; not from legacy status column. */
   completed: boolean;

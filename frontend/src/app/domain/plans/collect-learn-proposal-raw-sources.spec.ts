@@ -58,6 +58,7 @@ describe('collectLearnProposalRawSources', () => {
 
     expect(result.stageGddCalibrationProposals).toEqual([importedStageGdd]);
     expect(result.blueprintTimingAdjustmentProposals).toEqual([importedBlueprint]);
+    expect(result.blueprintAmountAdjustmentProposals).toEqual([]);
   });
 
   it('merges current variance and imported snapshot without duplicate keys', () => {
@@ -65,6 +66,7 @@ describe('collectLearnProposalRawSources', () => {
 
     expect(result.stageGddCalibrationProposals).toEqual([importedStageGdd, currentStageGdd]);
     expect(result.blueprintTimingAdjustmentProposals).toEqual([importedBlueprint]);
+    expect(result.blueprintAmountAdjustmentProposals).toEqual([]);
   });
 
   it('prefers current variance over imported snapshot for the same proposal key', () => {

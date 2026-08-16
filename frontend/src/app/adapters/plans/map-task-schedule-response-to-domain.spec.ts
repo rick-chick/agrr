@@ -101,6 +101,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
                 gddDelta: null,
                 stageOrder: 1,
                 category: 'general',
+                taskType: 'general',
                 status: 'planned',
                 completed: false,
                 details: {
@@ -301,6 +302,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
         gddDelta: null,
         stageOrder: 1,
         category: 'general',
+        taskType: 'general',
         status: 'planned',
         completed: false,
         details: {

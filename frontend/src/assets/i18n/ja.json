@@ -2572,6 +2572,10 @@
           "on_time": "予定どおり（±0日）",
           "late": "{{delta}}日遅れ",
           "early": "{{delta}}日早着"
+        },
+        "amount_badge": {
+          "over": "量 +{{delta}}",
+          "under": "量 {{delta}}"
         }
       },
       "open_learn": "振り返りを見る",
@@ -2698,6 +2702,33 @@
         "evidence": {
           "toggle": "根拠を表示",
           "rationale": "{{total}} 件の作業実績のうち {{count}} 件が日数閾値 {{threshold}} 日を超過しています。",
+          "records_title": "寄与実績（最大 5 件）",
+          "record": "{{name}} — {{date}}"
+        }
+      },
+      "bp_amount_adjustment": {
+        "title": "作業 BP 量調整の提案",
+        "lead": "計画と実績のカテゴリ・作業種別ごとの量乖離から、作業スケジュール BP の量調整案を生成します。",
+        "empty": "現時点で提案できる BP 量調整はありません。",
+        "delta_label": "平均量乖離: {{delta}}",
+        "affected_count": "対象 BP: {{count}} 件",
+        "detail_edit": "詳細編集",
+        "category": {
+          "general": "一般作業",
+          "fertilizer": "施肥",
+          "pest_control": "防除"
+        },
+        "task_type": {
+          "fertilize": "施肥",
+          "basal_fertilization": "基肥",
+          "topdress_fertilization": "追肥",
+          "preventive_spray": "予防散布",
+          "curative_spray": "治療散布",
+          "field_work": "圃場作業"
+        },
+        "evidence": {
+          "toggle": "根拠を表示",
+          "rationale": "{{total}} 件の作業実績のうち {{count}} 件が量閾値 {{threshold}} を超過しています。",
           "records_title": "寄与実績（最大 5 件）",
           "record": "{{name}} — {{date}}"
         }
