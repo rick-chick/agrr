@@ -359,6 +359,7 @@ total_area: 0.0,
                 plan_id: 2,
                 moves: vec![],
                 auth: Some(CultivationPlanRestAuth::private(1)),
+                dry_run: false,
             })
             .unwrap();
 
@@ -412,6 +413,7 @@ total_area: 0.0,
                 plan_id: 2,
                 moves: vec![],
                 auth: Some(CultivationPlanRestAuth::private(1)),
+                dry_run: false,
             })
             .unwrap();
 
@@ -463,6 +465,7 @@ total_area: 0.0,
                 plan_id: 2,
                 moves: vec![],
                 auth: Some(CultivationPlanRestAuth::private(1)),
+                dry_run: false,
             })
             .unwrap();
 

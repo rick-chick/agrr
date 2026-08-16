@@ -756,6 +756,19 @@ where
                 }
 
                 let sync_input = AgrrAdjustResultFieldCultivationSyncMapper::to_sync_input(&result);
+                if input.dry_run {
+                    self.output_port.on_success(PlanAllocationAdjustOutput {
+                        message: self.translator.translate(
+                            "optimization.messages.adjust_preview_completed",
+                            &crate::shared::ports::translator_port::TranslateOptions::new(),
+                        ),
+                        skipped: false,
+                        payload: None,
+                        adjust_result: Some(result),
+                    });
+                    return Ok(());
+                }
+
                 if let Err(err) = self
                     .field_cultivation_sync
                     .call(input.plan_id, sync_input)

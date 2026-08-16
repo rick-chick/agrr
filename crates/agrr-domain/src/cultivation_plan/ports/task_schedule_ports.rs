@@ -27,6 +27,11 @@ pub trait WeatherRescheduleProposalsListOutputPort {
     fn on_success(&mut self, proposals: Vec<crate::cultivation_plan::dtos::WeatherRescheduleProposalRead>);
 }
 
+pub trait WeatherRescheduleProposalPreviewOutputPort {
+    fn on_success(&mut self, preview: crate::cultivation_plan::dtos::WeatherRescheduleProposalPreviewRead);
+    fn on_failure(&mut self, failure: crate::cultivation_plan::dtos::PlanAllocationAdjustFailure);
+}
+
 pub trait TaskScheduleTimelineOutputPort {
     fn on_success(&mut self, dto: TaskScheduleTimeline);
     fn on_failure(&mut self, error: Error);

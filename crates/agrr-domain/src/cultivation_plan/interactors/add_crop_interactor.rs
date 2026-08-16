@@ -179,6 +179,7 @@ where
             plan_id,
             moves,
             auth: Some(auth.clone()),
+            dry_run: false,
         })?;
 
         let adjust_result = self.add_crop_adjust_result_sink.add_crop_adjust_result();

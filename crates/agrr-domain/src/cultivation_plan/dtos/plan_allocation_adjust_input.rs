@@ -9,6 +9,8 @@ pub struct PlanAllocationAdjustInput {
     pub plan_id: i64,
     pub moves: Vec<Value>,
     pub auth: Option<CultivationPlanRestAuth>,
+    /// When true, run agrr adjust but skip persistence side effects.
+    pub dry_run: bool,
 }
 
 impl PlanAllocationAdjustInput {
