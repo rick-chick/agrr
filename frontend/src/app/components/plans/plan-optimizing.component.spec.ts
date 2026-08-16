@@ -2,11 +2,13 @@ import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { PlanOptimizingComponent } from './plan-optimizing.component';
 import { PlanOptimizingViewState } from './plan-optimizing.view';
 import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-plan-optimization.usecase';
 import { PlanOptimizingPresenter } from '../../usecase/plans/plan-optimizing.providers';
+import { HydrateReorganizeOrchestrationUseCase } from '../../usecase/plans/hydrate-reorganize-orchestration.usecase';
 import {
   clearLearnOrchestrationProgressCache,
   hasLearnReorganizePipelineFailure,
@@ -23,6 +25,7 @@ describe('PlanOptimizingComponent', () => {
   let component: PlanOptimizingComponent;
   let fixture: ComponentFixture<PlanOptimizingComponent>;
   let mockUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockHydrateUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: PlanOptimizingPresenter;
   let mockCdr: ChangeDetectorRef;
   let mockActivatedRoute: ActivatedRoute;
@@ -30,6 +33,7 @@ describe('PlanOptimizingComponent', () => {
 
   beforeEach(async () => {
     mockUseCase = { execute: vi.fn() };
+    mockHydrateUseCase = { execute: vi.fn(() => of(null)) };
     mockPresenter = { setView: vi.fn() } as unknown as PlanOptimizingPresenter;
     mockCdr = { markForCheck: vi.fn() } as unknown as ChangeDetectorRef;
     mockActivatedRoute = {
@@ -45,6 +49,7 @@ describe('PlanOptimizingComponent', () => {
         styleUrls: [],
         providers: [
           { provide: SubscribePlanOptimizationUseCase, useValue: mockUseCase },
+          { provide: HydrateReorganizeOrchestrationUseCase, useValue: mockHydrateUseCase },
           { provide: PlanOptimizingPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: mockCdr },
           { provide: ActivatedRoute, useValue: mockActivatedRoute }
@@ -83,6 +88,22 @@ describe('PlanOptimizingComponent', () => {
       },
       true
     );
+  });
+
+  it('hydrates orchestration before subscribing when pipeline is active', () => {
+    mockHydrateUseCase.execute = vi.fn(() => {
+      hydrateLearnOrchestrationProgress(13, {
+        pipeline_active: true,
+        current_phase: 'optimizing'
+      });
+      return of(null);
+    });
+
+    fixture.detectChanges();
+
+    expect(mockHydrateUseCase.execute).toHaveBeenCalledWith(13);
+    expect(mockUseCase.execute).toHaveBeenCalled();
+    expect(component.showLearnReorganizeBanner).toBe(true);
   });
 
   it('renders progress without duplicating optimizing heading and status badge', () => {

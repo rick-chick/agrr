@@ -4,6 +4,8 @@ import { PlanApiGateway } from '../../adapters/plans/plan-api.gateway';
 import { PlanTaskSchedulePresenter } from '../../adapters/plans/plan-task-schedule.presenter';
 import { LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT } from './load-plan-task-schedule.output-port';
 import { LoadPlanTaskScheduleUseCase } from './load-plan-task-schedule.usecase';
+import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.usecase';
+import { HydrateReorganizeOrchestrationUseCase } from './hydrate-reorganize-orchestration.usecase';
 import { PLAN_GATEWAY } from './plan-gateway';
 import { PLAN_OPTIMIZATION_GATEWAY } from './plan-optimization-gateway';
 import { REGENERATE_TASK_SCHEDULE_OUTPUT_PORT } from './regenerate-task-schedule.output-port';
@@ -19,6 +21,8 @@ import { UpdateTaskScheduleItemUseCase } from './update-task-schedule-item.useca
 export const PLAN_TASK_SCHEDULE_PROVIDERS: readonly Provider[] = [
   PlanTaskSchedulePresenter,
   LoadPlanTaskScheduleUseCase,
+  LoadPlanLearnCarryoverUseCase,
+  HydrateReorganizeOrchestrationUseCase,
   RegenerateTaskScheduleUseCase,
   PollTaskScheduleSyncUseCase,
   SubscribeTaskScheduleSyncUseCase,

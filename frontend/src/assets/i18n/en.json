@@ -1796,6 +1796,7 @@
         "unknown_error": "An unexpected error occurred during reorganization.",
         "retry": "Retry pipeline",
         "resume": "Resume pipeline",
+        "orchestration_progress_sync_failed": "Could not save reorganization progress. Your changes are kept locally until you reload.",
         "active_message": "A reorganization pipeline is in progress. Resume where you left off.",
         "stage": {
           "adjust": "Current step: Placement adjustment",

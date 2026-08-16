@@ -7,6 +7,7 @@ import { BehaviorSubject } from 'rxjs';
 
 import en from '../../../assets/i18n/en.json';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
+import { HydrateReorganizeOrchestrationUseCase } from '../../usecase/plans/hydrate-reorganize-orchestration.usecase';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { CreateTaskScheduleItemUseCase } from '../../usecase/plans/create-task-schedule-item.usecase';
 import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-schedule-item.usecase';
@@ -212,6 +213,7 @@ describe('PlanTaskScheduleComponent', () => {
   let component: PlanTaskScheduleComponent;
   let fixture: ComponentFixture<PlanTaskScheduleComponent>;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
+  let hydrateUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: PlanTaskSchedulePresenter;
@@ -223,6 +225,7 @@ describe('PlanTaskScheduleComponent', () => {
     HTMLDialogElement.prototype.close = vi.fn();
 
     loadUseCase = { execute: vi.fn() };
+    hydrateUseCase = { execute: vi.fn(() => of(null)) };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -233,6 +236,7 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: HydrateReorganizeOrchestrationUseCase, useValue: hydrateUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
@@ -447,6 +451,7 @@ describe('PlanTaskScheduleComponent', () => {
   it('uses from_date query param for the date filter', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
+    hydrateUseCase = { execute: vi.fn(() => of(null)) };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -461,6 +466,7 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: HydrateReorganizeOrchestrationUseCase, useValue: hydrateUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
@@ -1077,6 +1083,7 @@ describe('PlanTaskScheduleComponent', () => {
   it('does not show redundant filter navigation when field_cultivation_id query param is set', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
+    hydrateUseCase = { execute: vi.fn(() => of(null)) };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -1091,6 +1098,7 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: HydrateReorganizeOrchestrationUseCase, useValue: hydrateUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
@@ -1163,6 +1171,7 @@ describe('PlanTaskScheduleComponent', () => {
   it('shows learn link for variance on task schedule list without summary stats', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
+    hydrateUseCase = { execute: vi.fn(() => of(null)) };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -1174,6 +1183,7 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: HydrateReorganizeOrchestrationUseCase, useValue: hydrateUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
@@ -1255,6 +1265,7 @@ describe('PlanTaskScheduleComponent', () => {
   it('shows return-to-learn link in orchestration banner when regenerate completes', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
+    hydrateUseCase = { execute: vi.fn(() => of(null)) };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -1269,6 +1280,7 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: HydrateReorganizeOrchestrationUseCase, useValue: hydrateUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
@@ -1350,6 +1362,7 @@ describe('PlanTaskScheduleComponent', () => {
     storeLearnReorganizePipelineAutoChain(7);
 
     loadUseCase = { execute: vi.fn() };
+    hydrateUseCase = { execute: vi.fn(() => of(null)) };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -1364,6 +1377,7 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: HydrateReorganizeOrchestrationUseCase, useValue: hydrateUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
@@ -1428,6 +1442,7 @@ describe('PlanTaskScheduleComponent', () => {
     storeLearnReorganizePipelineAutoChain(7);
 
     loadUseCase = { execute: vi.fn() };
+    hydrateUseCase = { execute: vi.fn(() => of(null)) };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -1442,6 +1457,7 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: HydrateReorganizeOrchestrationUseCase, useValue: hydrateUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },

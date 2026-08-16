@@ -8,12 +8,14 @@ import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-
 import { PlanOptimizingPresenter, PLAN_OPTIMIZING_PROVIDERS } from '../../usecase/plans/plan-optimizing.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanLearnReorganizeBannerComponent } from './plan-learn-reorganize-banner.component';
+import { HydrateReorganizeOrchestrationUseCase } from '../../usecase/plans/hydrate-reorganize-orchestration.usecase';
 import {
   clearLearnOrchestrationReturnToLearn,
   hasLearnReorganizePipelineFailure,
   markLearnOrchestrationStepComplete,
   readLearnOrchestrationReturnToLearn
 } from '../../domain/plans/learn-master-update-orchestration';
+import { shouldShowReorganizePipelineOnScreen } from '../../domain/plans/resolve-reorganize-screen-orchestration-mode';
 import {
   buildLearnReorganizePipelineRegenerateNavigation,
   readLearnReorganizePipelineAutoChain,
@@ -95,6 +97,7 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly useCase = inject(SubscribePlanOptimizationUseCase);
+  private readonly hydrateOrchestrationUseCase = inject(HydrateReorganizeOrchestrationUseCase);
   private readonly presenter = inject(PlanOptimizingPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -117,10 +120,7 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     if (!planId) {
       return false;
     }
-    return (
-      readLearnOrchestrationReturnToLearn(planId) ||
-      readLearnReorganizePipelineAutoChain(planId)
-    );
+    return shouldShowReorganizePipelineOnScreen(planId, 'plan_optimizing');
   }
 
   private _control: PlanOptimizingViewState = initialControl;
@@ -149,6 +149,13 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
       this.control = { status: 'invalid_plan_id', progress: 0, phaseMessage: '' };
       return;
     }
+    this.hydrateOrchestrationUseCase.execute(planId).subscribe({
+      next: () => this.continueOptimizingInit(planId),
+      error: () => this.continueOptimizingInit(planId)
+    });
+  }
+
+  private continueOptimizingInit(planId: number): void {
     if (readLearnReorganizePipelineAutoChain(planId)) {
       updateLearnReorganizePipelinePhase(planId, 'optimizing');
     }
