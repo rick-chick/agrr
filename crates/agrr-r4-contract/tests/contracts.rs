@@ -1097,6 +1097,64 @@ fn get_weather_reschedule_proposals_other_user_returns_not_found() {
 }
 
 #[test]
+fn post_weather_reschedule_proposal_preview_unauthenticated_returns_401() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let path = format!(
+        "/api/v1/plans/{}/weather_reschedule_proposals/frost_forecast:1:1/preview",
+        seed.plan_id
+    );
+    let (status, body) = status_and_body(client.post(&path, None, &empty_headers(), None));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
+fn post_weather_reschedule_proposal_preview_unknown_proposal_returns_not_found() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let path = format!(
+        "/api/v1/plans/{}/weather_reschedule_proposals/missing:1:1/preview",
+        seed.plan_id
+    );
+    let (status, body) = status_and_body(client.post(
+        &path,
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(404, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("preview not_found JSON");
+    assert_eq!(json["errors"][0], "not_found");
+}
+
+#[test]
+fn post_weather_reschedule_proposal_preview_other_user_returns_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let seed = seed_work_record_plan(owner_id);
+
+    let path = format!(
+        "/api/v1/plans/{}/weather_reschedule_proposals/frost_forecast:1:1/preview",
+        seed.plan_id
+    );
+    let other_session = farmer_session_id(&client);
+    let (status, body) = status_and_body(client.post(
+        &path,
+        Some(&other_session),
+        &empty_headers(),
+        None,
+    ));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
 fn get_plan_variance_learning_includes_proposal_application_progress() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

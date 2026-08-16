@@ -688,6 +688,7 @@ pub(crate) async fn run_adjust_plan(
             plan_id,
             moves,
             auth: Some(auth),
+            dry_run: false,
         })
         .map_err(|e| {
             (
