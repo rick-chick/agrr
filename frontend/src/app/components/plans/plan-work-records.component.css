@@ -75,6 +75,17 @@
   background: var(--color-status-complete-bg);
 }
 
+.plan-work-records__badge--harvest {
+  color: var(--color-success-dark);
+  background: var(--color-success-muted-bg);
+  border: 1px solid var(--color-success-muted-border);
+}
+
+.plan-work-records__amount--harvest {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success-dark);
+}
+
 .plan-work-records__amount,
 .plan-work-records__notes,
 .plan-work-records__field,

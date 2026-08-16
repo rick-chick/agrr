@@ -24,6 +24,8 @@ const PLANS_WORK_RECORDS_KEYS = [
   'plans.work_records.empty_cta',
   'plans.work_records.badge.from_schedule',
   'plans.work_records.badge.adhoc',
+  'plans.work_records.badge.harvest',
+  'plans.work_records.yield',
   'plans.work_records.variance.scheduled',
   'plans.work_records.variance.delta_days_late',
   'plans.work_records.variance.delta_days_early',
