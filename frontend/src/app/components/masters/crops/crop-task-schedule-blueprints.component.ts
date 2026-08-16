@@ -37,6 +37,7 @@ import {
   parsePlanWizardReturnTab,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
+import { resolveLearnHandoffHighlightStageOrder } from '../../../domain/plans/resolve-learn-handoff-highlight-stage-order';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
@@ -224,7 +225,11 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                   {{ 'crops.show.blueprint_stage_lane.keyboard_hint' | translate }}
                 </p>
                 @for (lane of control.blueprintStageLanes; track blueprintLaneId(lane)) {
-                  <div class="blueprint-stage-lane" role="listitem">
+                  <div
+                    class="blueprint-stage-lane"
+                    [class.blueprint-stage-lane--handoff-highlight]="isHandoffHighlightLane(lane.stageOrder)"
+                    role="listitem"
+                  >
                     <div class="blueprint-stage-lane__label">
                       @if (lane.stageOrder == null) {
                         <span class="blueprint-stage-lane__name">
@@ -596,6 +601,15 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
   protected readonly blueprintLaneId = blueprintLaneId;
 
   returnTab: PlanWizardReturnTab = 'task_schedule';
+  handoffHighlightStageOrder: number | null = null;
+
+  isHandoffHighlightLane(stageOrder: number | null): boolean {
+    return (
+      this.handoffHighlightStageOrder != null &&
+      stageOrder != null &&
+      stageOrder === this.handoffHighlightStageOrder
+    );
+  }
 
   get contextCrumbs(): MasterContextCrumb[] {
     const crumbs: MasterContextCrumb[] = [
@@ -611,7 +625,11 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
 
   get wizardQueryParams(): ReturnType<typeof cropPlanWizardQueryParams> | null {
     const planId = this.control.fromPlanId;
-    return planId != null ? cropPlanWizardQueryParams(planId, this.returnTab) : null;
+    return planId != null
+      ? cropPlanWizardQueryParams(planId, this.returnTab, {
+          handoffHighlightStageOrder: this.handoffHighlightStageOrder
+        })
+      : null;
   }
 
   private _control: CropTaskScheduleBlueprintsViewState = initialControl;
@@ -635,6 +653,11 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
     const fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
     this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
     const cropId = Number(this.route.snapshot.paramMap.get('id'));
+    this.handoffHighlightStageOrder = resolveLearnHandoffHighlightStageOrder(
+      this.route.snapshot.queryParamMap.get('handoffHighlightStageOrder'),
+      fromPlanId,
+      cropId
+    );
     if (!cropId) {
       this.control = {
         ...initialControl,

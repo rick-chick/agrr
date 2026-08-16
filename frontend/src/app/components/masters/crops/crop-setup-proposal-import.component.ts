@@ -19,6 +19,7 @@ import { ApplyCropSetupProposalUseCase } from '../../../usecase/crops/apply-crop
 import { CropSetupProposalBody } from '../../../domain/crops/crop-setup-proposal';
 import { setupProposalValidationErrorI18nKey } from '../../../core/setup-proposal-validation-error-i18n';
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
+import { buildSetupProposalBlueprintPreviewRows } from '../../../domain/crops/build-setup-proposal-blueprint-preview-rows';
 import {
   parsePlanWizardReturnTab,
   type PlanWizardReturnTab
@@ -36,6 +37,7 @@ import {
   readLearnBpAmountApplyContext,
   storeLearnPostMasterPayload
 } from '../../../domain/plans/learn-proposal-application-progress';
+import { resolveLearnHandoffHighlightStageOrder } from '../../../domain/plans/resolve-learn-handoff-highlight-stage-order';
 import { PLAN_GATEWAY, PlanGateway } from '../../../usecase/plans/plan-gateway';
 
 const initialControl: CropSetupProposalImportViewState = {
@@ -194,6 +196,37 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
               <h3 id="preview-heading" class="crop-setup-proposal-import__section-title">
                 {{ 'crops.setup_proposal_import.preview_title' | translate }}
               </h3>
+              @if (handoffHighlightStageOrder != null && previewBlueprintRows.length) {
+                <p class="crop-setup-proposal-import__handoff-notice" role="status">
+                  {{
+                    'crops.setup_proposal_import.handoff_stage_highlight_notice'
+                      | translate: { stageOrder: handoffHighlightStageOrder }
+                  }}
+                </p>
+                <ul
+                  class="crop-setup-proposal-import__blueprint-preview"
+                  aria-label="{{
+                    'crops.setup_proposal_import.handoff_stage_highlight_list_label' | translate
+                  }}"
+                >
+                  @for (row of previewBlueprintRows; track row.track) {
+                    <li
+                      class="crop-setup-proposal-import__blueprint-row"
+                      [class.crop-setup-proposal-import__blueprint-row--highlight]="row.highlighted"
+                    >
+                      <span class="crop-setup-proposal-import__blueprint-row-label">{{ row.label }}</span>
+                      @if (row.stageOrder != null) {
+                        <span class="crop-setup-proposal-import__blueprint-row-stage">
+                          {{
+                            'crops.setup_proposal_import.handoff_stage_order_label'
+                              | translate: { stageOrder: row.stageOrder }
+                          }}
+                        </span>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
               <pre class="crop-setup-proposal-import__preview">{{ control.normalizedPreview | json }}</pre>
               <div class="form-card__actions">
                 <button
@@ -232,6 +265,17 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
 
   fromPlanId: number | null = null;
   returnTab: PlanWizardReturnTab = 'task_schedule';
+  handoffHighlightStageOrder: number | null = null;
+
+  get previewBlueprintRows() {
+    if (this.control.phase !== 'preview' || !this.control.normalizedPreview) {
+      return [];
+    }
+    return buildSetupProposalBlueprintPreviewRows(
+      this.control.normalizedPreview,
+      this.handoffHighlightStageOrder
+    );
+  }
 
   validationErrorMessageKey(item: { path: string; message: string }): string {
     return setupProposalValidationErrorI18nKey(item);
@@ -270,15 +314,23 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
 
   ngOnInit(): void {
     this.presenter.setView(this);
-    this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
-    this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
+    this.syncPlanWizardQueryState();
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.handleCropRouteChange();
     });
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
-      this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
+      this.syncPlanWizardQueryState();
     });
+  }
+
+  private syncPlanWizardQueryState(): void {
+    this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
+    this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
+    this.handoffHighlightStageOrder = resolveLearnHandoffHighlightStageOrder(
+      this.route.snapshot.queryParamMap.get('handoffHighlightStageOrder'),
+      this.fromPlanId,
+      this.cropId
+    );
   }
 
   private handleCropRouteChange(): void {
