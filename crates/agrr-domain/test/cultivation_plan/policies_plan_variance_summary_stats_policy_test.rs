@@ -35,6 +35,7 @@ fn counts_unrecorded_and_threshold_items() {
             action_item(VarianceExceedanceKind::Both),
         ],
         blueprint_timing_adjustment_proposals: vec![],
+        blueprint_amount_adjustment_proposals: vec![],
     };
 
     let stats = stats_from_summary(&summary);

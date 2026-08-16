@@ -93,6 +93,19 @@ pub struct BlueprintTimingAdjustmentProposalRead {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct BlueprintAmountAdjustmentProposalRead {
+    pub crop_id: i64,
+    pub crop_name: String,
+    pub category: String,
+    pub task_type: String,
+    pub stage_order: Option<i32>,
+    pub stage_name: Option<String>,
+    pub average_amount_delta: f64,
+    pub recorded_item_count: i64,
+    pub amount_unit: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct PlanVsActualSummaryRead {
     pub plan_id: i64,
     pub unrecorded_count: i64,
@@ -103,4 +116,5 @@ pub struct PlanVsActualSummaryRead {
     pub stage_gdd_calibration_proposals: Vec<StageGddCalibrationProposalRead>,
     pub action_required_items: Vec<PlanVarianceActionItemRead>,
     pub blueprint_timing_adjustment_proposals: Vec<BlueprintTimingAdjustmentProposalRead>,
+    pub blueprint_amount_adjustment_proposals: Vec<BlueprintAmountAdjustmentProposalRead>,
 }

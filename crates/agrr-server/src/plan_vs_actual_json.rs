@@ -1,7 +1,8 @@
 //! JSON shape for `GET /api/v1/plans/:id/plan_vs_actual/summary`.
 
 use agrr_domain::cultivation_plan::dtos::{
-    BlueprintTimingAdjustmentProposalRead, PlanVarianceActionItemRead,
+    BlueprintAmountAdjustmentProposalRead, BlueprintTimingAdjustmentProposalRead,
+    PlanVarianceActionItemRead,
     PlanVsActualAmountGroupSummaryRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
     PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
 };
@@ -38,6 +39,11 @@ pub fn summary_to_json_body(summary: PlanVsActualSummaryRead) -> Value {
             .blueprint_timing_adjustment_proposals
             .iter()
             .map(blueprint_timing_proposal_payload)
+            .collect::<Vec<_>>(),
+        "blueprint_amount_adjustment_proposals": summary
+            .blueprint_amount_adjustment_proposals
+            .iter()
+            .map(blueprint_amount_proposal_payload)
             .collect::<Vec<_>>(),
     })
 }
@@ -122,6 +128,20 @@ fn blueprint_timing_proposal_payload(proposal: &BlueprintTimingAdjustmentProposa
     })
 }
 
+fn blueprint_amount_proposal_payload(proposal: &BlueprintAmountAdjustmentProposalRead) -> Value {
+    json!({
+        "crop_id": proposal.crop_id,
+        "crop_name": proposal.crop_name,
+        "category": proposal.category,
+        "task_type": proposal.task_type,
+        "stage_order": proposal.stage_order,
+        "stage_name": proposal.stage_name,
+        "average_amount_delta": proposal.average_amount_delta,
+        "recorded_item_count": proposal.recorded_item_count,
+        "amount_unit": proposal.amount_unit,
+    })
+}
+
 fn exceedance_kind_payload(kind: VarianceExceedanceKind) -> &'static str {
     kind.as_str()
 }
@@ -200,6 +220,17 @@ mod tests {
                 average_gdd_delta: Some(8.0),
                 recorded_item_count: 2,
             }],
+            blueprint_amount_adjustment_proposals: vec![BlueprintAmountAdjustmentProposalRead {
+                crop_id: 42,
+                crop_name: "Tomato".into(),
+                category: "fertilizer".into(),
+                task_type: "fertilize".into(),
+                stage_order: Some(1),
+                stage_name: Some("Vegetative".into()),
+                average_amount_delta: 0.5,
+                recorded_item_count: 2,
+                amount_unit: Some("kg".into()),
+            }],
         });
 
         assert_eq!(7, body["plan_id"].as_i64().unwrap());
@@ -228,5 +259,16 @@ mod tests {
         );
         assert_eq!(1, body["blueprint_timing_adjustment_proposals"].as_array().unwrap().len());
         assert_eq!(42, body["blueprint_timing_adjustment_proposals"][0]["crop_id"].as_i64().unwrap());
+        assert_eq!(1, body["blueprint_amount_adjustment_proposals"].as_array().unwrap().len());
+        assert_eq!(
+            "fertilize",
+            body["blueprint_amount_adjustment_proposals"][0]["task_type"].as_str().unwrap()
+        );
+        assert_eq!(
+            0.5,
+            body["blueprint_amount_adjustment_proposals"][0]["average_amount_delta"]
+                .as_f64()
+                .unwrap()
+        );
     }
 }
