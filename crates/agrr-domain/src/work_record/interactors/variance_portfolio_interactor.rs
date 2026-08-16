@@ -3,7 +3,9 @@
 use crate::cultivation_plan::gateways::{
     CultivationPlanGateway, CultivationPlanPrivateReadGateway,
     CultivationPlanPrivateSnapshotReadGateway, PlanVarianceLearningGateway,
+    WeatherRescheduleProposalReadGateway,
 };
+use crate::cultivation_plan::mappers::weather_reschedule_proposal_mapper::WeatherRescheduleProposalMapper;
 use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
 use crate::cultivation_plan::mappers::plan_vs_actual_mapper::PlanVsActualMapper;
 use crate::cultivation_plan::policies::plan_variance_summary_stats_policy::{
@@ -18,12 +20,13 @@ use crate::work_record::dtos::VariancePortfolioRow;
 use crate::work_record::policies::variance_portfolio_carryover_policy::carryover_not_imported;
 use crate::work_record::ports::VariancePortfolioOutputPort;
 
-pub struct VariancePortfolioInteractor<'a, O, CP, PR, PS, V, U, L, T, S> {
+pub struct VariancePortfolioInteractor<'a, O, CP, PR, PS, V, W, U, L, T, S> {
     output_port: &'a mut O,
     user_id: i64,
     private_read_gateway: &'a PR,
     private_snapshot_gateway: &'a PS,
     variance_learning_gateway: &'a V,
+    weather_read_gateway: &'a W,
     cultivation_plan_gateway: &'a CP,
     translator: &'a T,
     logger: &'a L,
@@ -31,13 +34,15 @@ pub struct VariancePortfolioInteractor<'a, O, CP, PR, PS, V, U, L, T, S> {
     scope_gateway: &'a S,
 }
 
-impl<'a, O, CP, PR, PS, V, U, L, T, S> VariancePortfolioInteractor<'a, O, CP, PR, PS, V, U, L, T, S>
+impl<'a, O, CP, PR, PS, V, W, U, L, T, S>
+    VariancePortfolioInteractor<'a, O, CP, PR, PS, V, W, U, L, T, S>
 where
     O: VariancePortfolioOutputPort,
     CP: CultivationPlanGateway,
     PR: CultivationPlanPrivateReadGateway,
     PS: CultivationPlanPrivateSnapshotReadGateway,
     V: PlanVarianceLearningGateway,
+    W: WeatherRescheduleProposalReadGateway,
     U: UserLookupGateway,
     L: LoggerPort,
     T: TranslatorPort,
@@ -54,6 +59,7 @@ where
         logger: &'a L,
         user_lookup: &'a U,
         scope_gateway: &'a S,
+        weather_read_gateway: &'a W,
     ) -> Self {
         Self {
             output_port,
@@ -61,6 +67,7 @@ where
             private_read_gateway,
             private_snapshot_gateway,
             variance_learning_gateway,
+            weather_read_gateway,
             cultivation_plan_gateway,
             translator,
             logger,
@@ -131,6 +138,16 @@ where
                 .find_by_plan_id(plan.id)?
                 .is_some();
 
+            let weather_trigger_count = match self
+                .weather_read_gateway
+                .find_context_by_plan_id(plan.id)
+            {
+                Ok(context) => {
+                    WeatherRescheduleProposalMapper::proposals_from_context(&context).len() as i64
+                }
+                Err(_) => 0,
+            };
+
             rows.push(VariancePortfolioRow {
                 farm_id: plan.farm_id,
                 farm_name: plan.farm_display_name.clone(),
@@ -142,10 +159,20 @@ where
                 threshold_exceeded_count: stats.threshold_exceeded_count,
                 days_threshold_exceeded_count: stats.days_threshold_exceeded_count,
                 carryover_not_imported: carryover_not_imported(plan, &plans, has_learning_snapshot),
+                weather_trigger_count,
             });
         }
 
         self.output_port.on_success(rows);
         Ok(())
     }
+}
+
+#[cfg(test)]
+mod interactors_variance_portfolio_interactor_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/work_record/interactors_variance_portfolio_interactor_test.rs"
+    ));
 }

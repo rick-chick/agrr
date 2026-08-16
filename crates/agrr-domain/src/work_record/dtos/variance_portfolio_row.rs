@@ -12,4 +12,5 @@ pub struct VariancePortfolioRow {
     pub threshold_exceeded_count: i64,
     pub days_threshold_exceeded_count: i64,
     pub carryover_not_imported: bool,
+    pub weather_trigger_count: i64,
 }

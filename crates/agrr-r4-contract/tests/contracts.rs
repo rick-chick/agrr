@@ -175,6 +175,7 @@ fn get_work_variance_portfolio_returns_farm_plan_rows_with_variance_stats() {
     assert_eq!(1, completed_row["threshold_exceeded_count"].as_i64().unwrap());
     assert_eq!(1, completed_row["days_threshold_exceeded_count"].as_i64().unwrap());
     assert!(completed_row["carryover_not_imported"].is_boolean());
+    assert!(completed_row["weather_trigger_count"].is_number());
 
     let pending_row = rows
         .iter()
