@@ -23,6 +23,7 @@ describe('PublicPlanResultsPresenter', () => {
           loading: true,
           error: null,
           data: null,
+          savedCultivationPlanId: null,
           pendingErrorFlash: null,
           pendingSuccessFlash: null,
           pendingNavigation: null
@@ -44,6 +45,7 @@ describe('PublicPlanResultsPresenter', () => {
       });
 
       expect(lastControl!.pendingNavigation).toEqual({ commands: ['/plans', 99] });
+      expect(lastControl!.savedCultivationPlanId).toBe(99);
       expect(lastControl!.pendingSuccessFlash).toEqual({
         type: 'success',
         text: 'Plan saved successfully'
@@ -54,6 +56,7 @@ describe('PublicPlanResultsPresenter', () => {
       presenter.present({ message: 'Plan saved successfully', plan_reused: false });
 
       expect(lastControl!.pendingNavigation).toEqual({ commands: ['/plans'] });
+      expect(lastControl!.savedCultivationPlanId).toBeNull();
       expect(lastControl!.pendingSuccessFlash).toEqual({
         type: 'success',
         text: 'Plan saved successfully'
@@ -79,6 +82,7 @@ describe('PublicPlanResultsPresenter', () => {
         loading: false,
         error: null,
         data: { id: 1 } as never,
+        savedCultivationPlanId: null,
         pendingErrorFlash: null,
         pendingSuccessFlash: null,
         pendingNavigation: null

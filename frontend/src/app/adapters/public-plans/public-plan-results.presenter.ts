@@ -23,12 +23,14 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
   ): void {
     if ('message' in dto && !('plan' in dto)) {
       if (!this.view) throw new Error('Presenter: view not set');
+      const cultivationPlanId = dto.cultivation_plan_id ?? null;
       this.view.control = {
         ...this.view.control,
+        savedCultivationPlanId: cultivationPlanId,
         pendingErrorFlash: null,
         pendingSuccessFlash: pendingSuccessFlashFromText(dto.message),
-        pendingNavigation: dto.cultivation_plan_id
-          ? pendingNavigationTo(['/plans', dto.cultivation_plan_id])
+        pendingNavigation: cultivationPlanId
+          ? pendingNavigationTo(['/plans', cultivationPlanId])
           : pendingNavigationTo(['/plans'])
       };
       return;
@@ -39,6 +41,7 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
       loading: false,
       error: null,
       data: dto as CultivationPlanData,
+      savedCultivationPlanId: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null
     };

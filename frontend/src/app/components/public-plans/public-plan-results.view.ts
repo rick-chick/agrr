@@ -7,6 +7,7 @@ export type PublicPlanResultsViewState = {
   loading: boolean;
   error: string | null;
   data: CultivationPlanData | null;
+  savedCultivationPlanId: number | null;
 
   pendingErrorFlash: PendingErrorFlashRequest | null;
   pendingSuccessFlash: PendingSuccessFlashRequest | null;

@@ -88,6 +88,7 @@ describe('PublicPlanResultsComponent', () => {
       loading: false,
       error: null,
       data: null,
+      savedCultivationPlanId: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
       pendingNavigation: null
@@ -198,10 +199,10 @@ describe('PublicPlanResultsComponent', () => {
 });
 
 describe('PublicPlanResultsComponent (template)', () => {
-  it('shows a single translated error message on load failure', async () => {
+  async function createResultsFixture() {
     const { TestBed } = await import('@angular/core/testing');
     const { provideRouter } = await import('@angular/router');
-    const { TranslateModule, TranslateService } = await import('@ngx-translate/core');
+    const { TranslateModule } = await import('@ngx-translate/core');
     const { PublicPlanResultsComponent } = await import('./public-plan-results.component');
     const { LoadPublicPlanResultsUseCase } = await import(
       '../../usecase/public-plans/load-public-plan-results.usecase'
@@ -245,7 +246,13 @@ describe('PublicPlanResultsComponent (template)', () => {
       ]
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(PublicPlanResultsComponent);
+    return TestBed.createComponent(PublicPlanResultsComponent);
+  }
+
+  it('shows a single translated error message on load failure', async () => {
+    const { TranslateService } = await import('@ngx-translate/core');
+    const { TestBed } = await import('@angular/core/testing');
+    const fixture = await createResultsFixture();
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('ja', {
       'public_plans.title': '計画',
@@ -260,6 +267,7 @@ describe('PublicPlanResultsComponent (template)', () => {
       loading: false,
       error: 'common.api_error.not_found',
       data: null,
+      savedCultivationPlanId: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
       pendingNavigation: null
