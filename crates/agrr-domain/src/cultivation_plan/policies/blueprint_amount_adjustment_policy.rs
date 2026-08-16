@@ -1,9 +1,6 @@
 //! Threshold policy for blueprint amount adjustment proposals from plan-vs-actual variance.
 
-use crate::cultivation_plan::policies::plan_variance_threshold_policy::DEFAULT_AMOUNT_DELTA_THRESHOLD;
-
-/// Minimum absolute average amount delta to suggest a BP amount adjustment.
-pub const MIN_AVERAGE_AMOUNT_DELTA: f64 = DEFAULT_AMOUNT_DELTA_THRESHOLD;
+use crate::cultivation_plan::policies::plan_variance_threshold_policy::amount_delta_threshold_for_category;
 
 /// Minimum recorded items required to emit a proposal.
 pub const MIN_RECORDED_ITEM_COUNT: i64 = 1;
@@ -14,9 +11,13 @@ pub fn proposal_progress_key(crop_id: i64, category: &str, task_type: &str) -> S
 }
 
 /// Returns true when amount variance is large enough to suggest BP amount adjustment.
-pub fn qualifies_for_proposal(average_amount_delta: f64, recorded_item_count: i64) -> bool {
+pub fn qualifies_for_proposal(
+    average_amount_delta: f64,
+    recorded_item_count: i64,
+    category: &str,
+) -> bool {
     recorded_item_count >= MIN_RECORDED_ITEM_COUNT
-        && average_amount_delta.abs() >= MIN_AVERAGE_AMOUNT_DELTA
+        && average_amount_delta.abs() >= amount_delta_threshold_for_category(category)
 }
 
 #[cfg(test)]

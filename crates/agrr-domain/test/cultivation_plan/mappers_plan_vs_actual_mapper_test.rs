@@ -402,6 +402,49 @@ fn blueprint_amount_proposals_skip_small_variance() {
 }
 
 #[test]
+fn pest_control_amount_proposals_use_lower_category_threshold() {
+    let snapshot = TaskScheduleTimelineSnapshot {
+        plan: sample_snapshot(vec![]).plan,
+        fields: vec![TaskScheduleTimelineFieldRead {
+            id: 10,
+            name: "F1".into(),
+            crop_name: "Tomato".into(),
+            area_sqm: 50.0,
+            field_cultivation_id: 100,
+            crop_id: 42,
+            cultivation_start_date: None,
+            cultivation_end_date: None,
+            task_options: vec![],
+            schedules: vec![TaskScheduleTimelineScheduleRead {
+                category: "pest_control".into(),
+                items: vec![sample_item_with_amounts(
+                    1,
+                    "pest_control",
+                    "preventive_spray",
+                    Some(1),
+                    Some("Vegetative"),
+                    Some(1.0),
+                    Some(1.35),
+                    Some("L"),
+                )],
+            }],
+        }],
+        scheduled_dates: vec![Date::parse(
+            "2026-06-02",
+            &time::format_description::well_known::Iso8601::DATE,
+        )
+        .expect("date")],
+    };
+
+    let summary = PlanVsActualMapper::summary_from_snapshot(&snapshot, 5);
+
+    assert_eq!(1, summary.blueprint_amount_adjustment_proposals.len());
+    let proposal = &summary.blueprint_amount_adjustment_proposals[0];
+    assert_eq!("pest_control", proposal.category);
+    assert!((proposal.average_amount_delta - 0.35).abs() < f64::EPSILON);
+}
+
+#[test]
 fn stage_gdd_calibration_proposals_aggregate_by_crop_and_stage() {
     let snapshot = sample_snapshot(vec![
         sample_item_with_stage(
