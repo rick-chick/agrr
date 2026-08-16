@@ -1,0 +1,12 @@
+@import '../masters/crops/_crop-blueprint-shared.css';
+
+.plan-create-readiness {
+  margin-top: var(--space-3);
+}
+
+.plan-create-readiness__crop-list {
+  margin: var(--space-2) 0 0 0;
+  padding-left: var(--space-4);
+  font-size: var(--font-size-sm);
+  list-style: disc;
+}

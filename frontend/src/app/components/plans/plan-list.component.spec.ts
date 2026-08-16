@@ -237,6 +237,15 @@ describe('PlanListComponent', () => {
     expect(nativeElement.querySelector('.plan-list-empty .btn-primary')).toBeTruthy();
   });
 
+  it('shows initial setup link in empty state', async () => {
+    const nativeElement = await renderPlans([]);
+    const setupLink = nativeElement.querySelector(
+      '.plan-list-empty-setup'
+    ) as HTMLAnchorElement;
+    expect(setupLink).toBeTruthy();
+    expect(setupLink.getAttribute('href')).toBe('/onboarding');
+  });
+
   it('displays plans in the list', async () => {
     const plans: PlanListPlan[] = [
       planWithGap({ id: 1, name: 'Plan A' }),
