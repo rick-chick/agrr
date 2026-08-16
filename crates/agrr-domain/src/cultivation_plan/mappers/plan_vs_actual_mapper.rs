@@ -1,7 +1,8 @@
 //! Computes plan-vs-actual deltas from task schedule timeline snapshot rows.
 
 use crate::cultivation_plan::dtos::plan_vs_actual::{
-    BlueprintTimingAdjustmentProposalRead, PlanVarianceActionItemRead,
+    BlueprintAmountAdjustmentProposalRead, BlueprintTimingAdjustmentProposalRead,
+    PlanVarianceActionItemRead,
     PlanVsActualAmountGroupSummaryRead, PlanVsActualCategorySummaryRead,
     PlanVsActualItemRead, PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
 };
@@ -9,6 +10,7 @@ use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
     TaskScheduleTimelineScheduleItemRead, TaskScheduleTimelineSnapshot,
     TaskScheduleTimelineWorkRecordSummaryRead,
 };
+use crate::cultivation_plan::policies::blueprint_amount_adjustment_policy::qualifies_for_proposal as amount_qualifies_for_proposal;
 use crate::cultivation_plan::policies::blueprint_timing_adjustment_policy::qualifies_for_proposal;
 use crate::cultivation_plan::policies::plan_variance_threshold_policy::exceedance_kind;
 use time::{format_description::well_known::Iso8601, Date};
@@ -82,6 +84,8 @@ impl PlanVsActualMapper {
         let action_required_items = action_required(&items);
         let blueprint_timing_adjustment_proposals =
             Self::blueprint_timing_adjustment_proposals_from_snapshot(snapshot);
+        let blueprint_amount_adjustment_proposals =
+            Self::blueprint_amount_adjustment_proposals_from_snapshot(snapshot);
 
         PlanVsActualSummaryRead {
             plan_id: snapshot.plan.id,
@@ -93,6 +97,7 @@ impl PlanVsActualMapper {
             stage_gdd_calibration_proposals,
             action_required_items,
             blueprint_timing_adjustment_proposals,
+            blueprint_amount_adjustment_proposals,
         }
     }
 
@@ -230,6 +235,101 @@ impl PlanVsActualMapper {
                 .unwrap_or(std::cmp::Ordering::Equal)
                 .then_with(|| left.crop_id.cmp(&right.crop_id))
                 .then_with(|| left.category.cmp(&right.category))
+        });
+
+        proposals
+    }
+
+    pub fn blueprint_amount_adjustment_proposals_from_snapshot(
+        snapshot: &TaskScheduleTimelineSnapshot,
+    ) -> Vec<BlueprintAmountAdjustmentProposalRead> {
+        let mut groups: std::collections::BTreeMap<
+            (i64, String, String, String),
+            (Vec<f64>, Option<i32>, Option<String>, Option<String>),
+        > = std::collections::BTreeMap::new();
+
+        for field in &snapshot.fields {
+            for schedule in &field.schedules {
+                if !is_structured_input_category(schedule.category.as_str()) {
+                    continue;
+                }
+                for item in &schedule.items {
+                    if !counts_toward_summary(item) {
+                        continue;
+                    }
+                    let read = Self::item_read(item, schedule.category.as_str());
+                    let Some(delta) = read.amount_delta else {
+                        continue;
+                    };
+                    let stage_name = item
+                        .stage_name
+                        .clone()
+                        .unwrap_or_else(|| match item.stage_order {
+                            Some(order) => format!("Stage {order}"),
+                            None => "Unassigned".to_string(),
+                        });
+                    let entry = groups
+                        .entry((
+                            field.crop_id,
+                            field.crop_name.clone(),
+                            schedule.category.clone(),
+                            item.task_type.clone(),
+                        ))
+                        .or_insert((Vec::new(), item.stage_order, Some(stage_name), None));
+                    entry.0.push(delta);
+                    if entry.1.is_none() {
+                        entry.1 = item.stage_order;
+                    }
+                    if entry.2.is_none() {
+                        entry.2 = item
+                            .stage_name
+                            .clone()
+                            .or_else(|| match item.stage_order {
+                                Some(order) => Some(format!("Stage {order}")),
+                                None => Some("Unassigned".to_string()),
+                            });
+                    }
+                    if entry.3.is_none() {
+                        entry.3 = read.amount_unit.clone();
+                    }
+                }
+            }
+        }
+
+        let mut proposals: Vec<BlueprintAmountAdjustmentProposalRead> = groups
+            .into_iter()
+            .filter_map(
+                |((crop_id, crop_name, category, task_type), (deltas, stage_order, stage_name, amount_unit))| {
+                    let recorded_item_count = deltas.len() as i64;
+                    let average_amount_delta =
+                        deltas.iter().sum::<f64>() / deltas.len() as f64;
+                    if !amount_qualifies_for_proposal(average_amount_delta, recorded_item_count) {
+                        return None;
+                    }
+                    Some(BlueprintAmountAdjustmentProposalRead {
+                        crop_id,
+                        crop_name,
+                        category,
+                        task_type,
+                        stage_order,
+                        stage_name,
+                        average_amount_delta,
+                        recorded_item_count,
+                        amount_unit,
+                    })
+                },
+            )
+            .collect();
+
+        proposals.sort_by(|left, right| {
+            right
+                .average_amount_delta
+                .abs()
+                .partial_cmp(&left.average_amount_delta.abs())
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| left.crop_id.cmp(&right.crop_id))
+                .then_with(|| left.category.cmp(&right.category))
+                .then_with(|| left.task_type.cmp(&right.task_type))
         });
 
         proposals

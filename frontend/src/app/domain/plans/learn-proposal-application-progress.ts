@@ -8,7 +8,7 @@ export type LearnProposalApplicationStatus =
   | 'done'
   | 'dismissed';
 
-export type LearnProposalKind = 'stage_gdd' | 'bp_timing';
+export type LearnProposalKind = 'stage_gdd' | 'bp_timing' | 'bp_amount';
 
 export interface LearnPostMasterPayload {
   kind: LearnProposalKind;
@@ -17,6 +17,7 @@ export interface LearnPostMasterPayload {
   stageId?: number;
   stageName?: string;
   category?: string;
+  taskType?: string;
   appliedRequiredGdd?: number | null;
 }
 
@@ -43,6 +44,14 @@ export function stageGddProposalProgressKey(cropId: number, stageId: number): st
 
 export function bpTimingProposalProgressKey(cropId: number, category: string): string {
   return `bp_timing:${cropId}:${category}`;
+}
+
+export function bpAmountProposalProgressKey(
+  cropId: number,
+  category: string,
+  taskType: string
+): string {
+  return `bp_amount:${cropId}:${category}:${taskType}`;
 }
 
 type ProgressMap = Record<string, LearnProposalApplicationStatus>;
@@ -231,6 +240,15 @@ export function proposalKeyFromPostMasterPayload(payload: LearnPostMasterPayload
       throw new Error('stageId is required for stage_gdd post_master payload');
     }
     return stageGddProposalProgressKey(payload.cropId, payload.stageId);
+  }
+  if (payload.kind === 'bp_amount') {
+    if (!payload.category) {
+      throw new Error('category is required for bp_amount post_master payload');
+    }
+    if (!payload.taskType) {
+      throw new Error('taskType is required for bp_amount post_master payload');
+    }
+    return bpAmountProposalProgressKey(payload.cropId, payload.category, payload.taskType);
   }
   if (!payload.category) {
     throw new Error('category is required for bp_timing post_master payload');

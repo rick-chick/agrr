@@ -8,6 +8,9 @@ pub const DEFAULT_DAYS_THRESHOLD: i64 = 3;
 /// Default GDD variance threshold (absolute delta).
 pub const DEFAULT_GDD_THRESHOLD: f64 = 10.0;
 
+/// Default amount variance threshold (absolute average delta).
+pub const DEFAULT_AMOUNT_DELTA_THRESHOLD: f64 = 0.5;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VarianceExceedanceKind {
     Days,

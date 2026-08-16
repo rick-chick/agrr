@@ -4,7 +4,8 @@ use std::collections::BTreeMap;
 
 use crate::pool::SqlitePool;
 use agrr_domain::cultivation_plan::dtos::{
-    BlueprintTimingAdjustmentProposalRead, LearnHandoffStatePatch, LearnHandoffStateRead,
+    BlueprintAmountAdjustmentProposalRead, BlueprintTimingAdjustmentProposalRead,
+    LearnHandoffStatePatch, LearnHandoffStateRead,
     PlanVarianceActionItemRead, PlanVarianceLearningSnapshotRead, PlanVsActualAmountGroupSummaryRead,
     PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
     StageGddCalibrationProposalRead,
@@ -439,6 +440,21 @@ fn summary_to_json(summary: &PlanVsActualSummaryRead) -> String {
                 "recorded_item_count": proposal.recorded_item_count,
             }))
             .collect::<Vec<_>>(),
+        "blueprint_amount_adjustment_proposals": summary
+            .blueprint_amount_adjustment_proposals
+            .iter()
+            .map(|proposal| json!({
+                "crop_id": proposal.crop_id,
+                "crop_name": proposal.crop_name,
+                "category": proposal.category,
+                "task_type": proposal.task_type,
+                "stage_order": proposal.stage_order,
+                "stage_name": proposal.stage_name,
+                "average_amount_delta": proposal.average_amount_delta,
+                "recorded_item_count": proposal.recorded_item_count,
+                "amount_unit": proposal.amount_unit,
+            }))
+            .collect::<Vec<_>>(),
     });
     body.to_string()
 }
@@ -540,6 +556,22 @@ fn summary_from_json(
             recorded_item_count: proposal["recorded_item_count"].as_i64().unwrap_or(0),
         })
         .collect();
+    let blueprint_amount_adjustment_proposals = value["blueprint_amount_adjustment_proposals"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .map(|proposal| BlueprintAmountAdjustmentProposalRead {
+            crop_id: proposal["crop_id"].as_i64().unwrap_or(0),
+            crop_name: proposal["crop_name"].as_str().unwrap_or_default().to_string(),
+            category: proposal["category"].as_str().unwrap_or_default().to_string(),
+            task_type: proposal["task_type"].as_str().unwrap_or_default().to_string(),
+            stage_order: proposal["stage_order"].as_i64().map(|order| order as i32),
+            stage_name: proposal["stage_name"].as_str().map(str::to_string),
+            average_amount_delta: proposal["average_amount_delta"].as_f64().unwrap_or(0.0),
+            recorded_item_count: proposal["recorded_item_count"].as_i64().unwrap_or(0),
+            amount_unit: proposal["amount_unit"].as_str().map(str::to_string),
+        })
+        .collect();
 
     Ok(PlanVsActualSummaryRead {
         plan_id: value["plan_id"].as_i64().unwrap_or(plan_id),
@@ -551,6 +583,7 @@ fn summary_from_json(
         stage_gdd_calibration_proposals,
         action_required_items,
         blueprint_timing_adjustment_proposals,
+        blueprint_amount_adjustment_proposals,
     })
 }
 
@@ -668,6 +701,17 @@ mod plan_variance_learning_sqlite_gateway_test {
                 average_gdd_delta: Some(8.0),
                 recorded_item_count: 3,
             }],
+            blueprint_amount_adjustment_proposals: vec![BlueprintAmountAdjustmentProposalRead {
+                crop_id: 3,
+                crop_name: "Tomato".into(),
+                category: "fertilizer".into(),
+                task_type: "fertilize".into(),
+                stage_order: Some(1),
+                stage_name: Some("Vegetative".into()),
+                average_amount_delta: 1.5,
+                recorded_item_count: 2,
+                amount_unit: Some("kg".into()),
+            }],
         };
 
         gateway.save(21, 10, &summary).expect("save");
@@ -682,6 +726,12 @@ mod plan_variance_learning_sqlite_gateway_test {
         assert_eq!(VarianceExceedanceKind::Both, stored.action_required_items[0].exceedance_kind);
         assert_eq!(1, stored.blueprint_timing_adjustment_proposals.len());
         assert_eq!(5.0, stored.blueprint_timing_adjustment_proposals[0].average_delta_days);
+        assert_eq!(1, stored.blueprint_amount_adjustment_proposals.len());
+        assert_eq!(
+            "fertilize",
+            stored.blueprint_amount_adjustment_proposals[0].task_type
+        );
+        assert_eq!(1.5, stored.blueprint_amount_adjustment_proposals[0].average_amount_delta);
     }
 
     #[test]
@@ -703,6 +753,7 @@ mod plan_variance_learning_sqlite_gateway_test {
             stage_gdd_calibration_proposals: vec![],
             action_required_items: vec![],
             blueprint_timing_adjustment_proposals: vec![],
+            blueprint_amount_adjustment_proposals: vec![],
         };
 
         gateway.save(20, 10, &summary).expect("save");

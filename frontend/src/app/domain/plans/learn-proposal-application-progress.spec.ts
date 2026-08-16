@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  bpAmountProposalProgressKey,
   bpTimingProposalProgressKey,
   buildLearnPostMasterNavigation,
   clearBlueprintTimingPrefill,
@@ -40,9 +41,12 @@ afterEach(() => {
 });
 
 describe('learn proposal application progress keys', () => {
-  it('builds stable keys for stage GDD and BP timing proposals', () => {
+  it('builds stable keys for stage GDD, BP timing, and BP amount proposals', () => {
     expect(stageGddProposalProgressKey(3, 12)).toBe('stage_gdd:3:12');
     expect(bpTimingProposalProgressKey(3, 'general')).toBe('bp_timing:3:general');
+    expect(bpAmountProposalProgressKey(42, 'fertilizer', 'fertilize')).toBe(
+      'bp_amount:42:fertilizer:fertilize'
+    );
   });
 });
 
@@ -127,6 +131,20 @@ describe('learn proposal application progress storage', () => {
 
     expect(proposalKeyFromPostMasterPayload(payload)).toBe(
       bpTimingProposalProgressKey(4, 'fertilizer')
+    );
+  });
+
+  it('builds proposal key from bp_amount post_master payload', () => {
+    const payload: LearnPostMasterPayload = {
+      kind: 'bp_amount',
+      cropId: 42,
+      cropName: 'Tomato',
+      category: 'fertilizer',
+      taskType: 'fertilize'
+    };
+
+    expect(proposalKeyFromPostMasterPayload(payload)).toBe(
+      bpAmountProposalProgressKey(42, 'fertilizer', 'fertilize')
     );
   });
 });

@@ -1,3 +1,4 @@
+pub mod blueprint_amount_adjustment_policy;
 pub mod blueprint_timing_adjustment_policy;
 pub mod cultivation_plan_allocate_allocation_policy;
 pub mod cultivation_plan_field_policy;
