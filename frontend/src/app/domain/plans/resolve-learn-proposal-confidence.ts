@@ -114,3 +114,27 @@ export function resolveBpAmountProposalConfidence(
 
   return 'medium';
 }
+
+export function buildBpAmountProposalConfidenceMap(
+  proposals: ReadonlyArray<BlueprintAmountAdjustmentProposal>,
+  input: {
+    planUnrecordedCount: number;
+    planActionRequiredCount: number;
+    evidenceByKey: Record<string, LearnProposalEvidence>;
+    evidenceSources: ReadonlyArray<LearnProposalEvidenceSource>;
+  },
+  keyOf: (proposal: BlueprintAmountAdjustmentProposal) => string
+): Record<string, LearnProposalConfidence> {
+  const confidenceByKey: Record<string, LearnProposalConfidence> = {};
+  for (const proposal of proposals) {
+    const key = keyOf(proposal);
+    confidenceByKey[key] = resolveBpAmountProposalConfidence({
+      planUnrecordedCount: input.planUnrecordedCount,
+      planActionRequiredCount: input.planActionRequiredCount,
+      proposal,
+      evidence: input.evidenceByKey[key] ?? null,
+      hasUnitMismatch: detectBpAmountProposalUnitMismatch(proposal, input.evidenceSources)
+    });
+  }
+  return confidenceByKey;
+}

@@ -37,6 +37,7 @@ const initialControl: PlanLearnViewState = {
   blueprintAmountLoading: true,
   blueprintAmountProposals: [],
   blueprintAmountEvidenceByKey: {},
+  blueprintAmountConfidenceByKey: {},
   proposalEvidenceSources: [],
   stageGddProposalsLoading: true,
   stageGddProposals: [],

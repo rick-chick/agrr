@@ -28,6 +28,7 @@ import {
   buildStageGddProposalEvidence,
   type LearnProposalEvidenceSource
 } from '../../domain/plans/learn-proposal-evidence';
+import { buildBpAmountProposalConfidenceMap } from '../../domain/plans/resolve-learn-proposal-confidence';
 import type { PlanFieldSchedule } from '../../domain/work-schedule/plan-schedule-snapshot';
 import { flattenPlanTaskSchedule } from '../../domain/work-schedule/flatten-plan-task-schedule';
 import { collectPlanTaskScheduleUnrecordedRows } from '../../domain/work-schedule/collect-plan-task-schedule-unrecorded-rows';
@@ -51,6 +52,7 @@ const initialControl: PlanLearnViewState = {
   blueprintAmountLoading: false,
   blueprintAmountProposals: [],
   blueprintAmountEvidenceByKey: {},
+  blueprintAmountConfidenceByKey: {},
   proposalEvidenceSources: [],
   stageGddProposalsLoading: false,
   stageGddProposals: [],
@@ -225,6 +227,7 @@ export class PlanLearnPresenter
     PlanLearnViewState,
     | 'blueprintTimingEvidenceByKey'
     | 'blueprintAmountEvidenceByKey'
+    | 'blueprintAmountConfidenceByKey'
     | 'stageGddEvidenceByKey'
     | 'proposalEvidenceSources'
   > {
@@ -235,6 +238,15 @@ export class PlanLearnPresenter
     const stageGddProposals =
       overrides.stageGddProposals ?? this.view?.control.stageGddProposals ?? [];
 
+    const varianceSummary = this.view?.control.varianceSummary;
+
+    const blueprintAmountEvidenceByKey = buildLearnProposalEvidenceMap(
+      blueprintAmountProposals,
+      this.evidenceSources,
+      buildBlueprintAmountProposalEvidence,
+      blueprintAmountProposalEvidenceKey
+    );
+
     return {
       proposalEvidenceSources: this.evidenceSources,
       blueprintTimingEvidenceByKey: buildLearnProposalEvidenceMap(
@@ -243,10 +255,15 @@ export class PlanLearnPresenter
         buildBlueprintTimingProposalEvidence,
         (proposal) => `${proposal.cropId}-${proposal.category}`
       ),
-      blueprintAmountEvidenceByKey: buildLearnProposalEvidenceMap(
+      blueprintAmountEvidenceByKey,
+      blueprintAmountConfidenceByKey: buildBpAmountProposalConfidenceMap(
         blueprintAmountProposals,
-        this.evidenceSources,
-        buildBlueprintAmountProposalEvidence,
+        {
+          planUnrecordedCount: varianceSummary?.unrecorded_count ?? 0,
+          planActionRequiredCount: varianceSummary?.action_required_items?.length ?? 0,
+          evidenceByKey: blueprintAmountEvidenceByKey,
+          evidenceSources: this.evidenceSources
+        },
         blueprintAmountProposalEvidenceKey
       ),
       stageGddEvidenceByKey: buildLearnProposalEvidenceMap(

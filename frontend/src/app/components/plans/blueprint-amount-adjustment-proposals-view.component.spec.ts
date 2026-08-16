@@ -205,21 +205,9 @@ describe('BlueprintAmountAdjustmentProposalsViewComponent inline apply', () => {
     };
 
     fixture.componentRef.setInput('proposals', [highConfidenceProposal, lowConfidenceProposal]);
-    fixture.componentRef.setInput('planUnrecordedCount', 0);
-    fixture.componentRef.setInput('planActionRequiredCount', 0);
-    fixture.componentRef.setInput('evidenceByKey', {
-      '1-fertilizer-fertilize-1': {
-        exceedanceCount: 2,
-        thresholdValue: 0.5,
-        contributingRecords: [],
-        totalRecordedCount: 3
-      },
-      '2-fertilizer-fertilize-2': {
-        exceedanceCount: 0,
-        thresholdValue: 0.5,
-        contributingRecords: [],
-        totalRecordedCount: 1
-      }
+    fixture.componentRef.setInput('confidenceByKey', {
+      '1-fertilizer-fertilize-1': 'high',
+      '2-fertilizer-fertilize-2': 'low'
     });
     fixture.detectChanges();
 
