@@ -282,15 +282,6 @@ impl PlanVsActualMapper {
                         ))
                         .or_insert((Vec::new(), Some(stage_name), None));
                     entry.0.push(delta);
-                    if entry.1.is_none() {
-                        entry.1 = item
-                            .stage_name
-                            .clone()
-                            .or_else(|| match item.stage_order {
-                                Some(order) => Some(format!("Stage {order}")),
-                                None => Some("Unassigned".to_string()),
-                            });
-                    }
                     if entry.2.is_none() {
                         entry.2 = read.amount_unit.clone();
                     }
