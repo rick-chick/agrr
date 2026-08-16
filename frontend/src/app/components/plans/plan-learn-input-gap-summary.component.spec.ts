@@ -22,7 +22,9 @@ describe('PlanLearnInputGapSummaryComponent', () => {
         'plans.learn.input_gap.title': '入力ギャップサマリ',
         'plans.learn.input_gap.unrecorded': '未記録件数',
         'plans.learn.input_gap.action_required': '要対応件数',
+        'plans.learn.input_gap.structured_unrecorded': '構造化未入力',
         'plans.learn.input_gap.work_cta': '未記録タスクを記録する',
+        'plans.learn.input_gap.structured_work_cta': 'マスタ未選択を修正する',
         'common.loading': '読み込み中'
       },
       true
@@ -35,7 +37,8 @@ describe('PlanLearnInputGapSummaryComponent', () => {
   it('renders unrecorded and action-required counts', () => {
     fixture.componentInstance.summary = {
       unrecordedCount: 2,
-      actionRequiredCount: 1
+      actionRequiredCount: 1,
+      structuredUnrecordedCount: 0
     };
     fixture.detectChanges();
 
@@ -45,12 +48,31 @@ describe('PlanLearnInputGapSummaryComponent', () => {
     expect(text).toContain('2');
     expect(text).toContain('要対応件数');
     expect(text).toContain('1');
+    expect(text).toContain('構造化未入力');
+    expect(text).toContain('0');
+  });
+
+  it('links to work with structured unrecorded CTA when only master selections are missing', () => {
+    fixture.componentInstance.summary = {
+      unrecordedCount: 0,
+      actionRequiredCount: 0,
+      structuredUnrecordedCount: 2
+    };
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector(
+      '.plan-learn-input-gap-summary__work-link'
+    ) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toContain('/plans/7/work');
+    expect(link.textContent?.trim()).toBe('マスタ未選択を修正する');
   });
 
   it('links to work with highlight_item when unrecorded tasks exist', () => {
     fixture.componentInstance.summary = {
       unrecordedCount: 1,
-      actionRequiredCount: 0
+      actionRequiredCount: 0,
+      structuredUnrecordedCount: 0
     };
     fixture.componentInstance.highlightItemId = 42;
     fixture.detectChanges();
@@ -64,10 +86,11 @@ describe('PlanLearnInputGapSummaryComponent', () => {
     expect(link.textContent?.trim()).toBe('未記録タスクを記録する');
   });
 
-  it('hides work CTA when there are no unrecorded tasks', () => {
+  it('hides work CTA when there are no unrecorded tasks or structured gaps', () => {
     fixture.componentInstance.summary = {
       unrecordedCount: 0,
-      actionRequiredCount: 2
+      actionRequiredCount: 2,
+      structuredUnrecordedCount: 0
     };
     fixture.detectChanges();
 

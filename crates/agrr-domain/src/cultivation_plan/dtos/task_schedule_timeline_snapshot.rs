@@ -99,4 +99,6 @@ pub struct TaskScheduleTimelineWorkRecordSummaryRead {
     pub actual_date: String,
     pub notes: Option<String>,
     pub gdd_at_actual: Option<f64>,
+    pub fertilize_id: Option<i64>,
+    pub pesticide_id: Option<i64>,
 }

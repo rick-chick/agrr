@@ -2167,7 +2167,9 @@
         "title": "इनपुट अंतराल सारांश",
         "unrecorded": "अभिलेखित नहीं",
         "action_required": "कार्रवाई आवश्यक",
-        "work_cta": "अभिलेखित न किए कार्य दर्ज करें"
+        "structured_unrecorded": "असंरचित इनपुट",
+        "work_cta": "अभिलेखित न किए कार्य दर्ज करें",
+        "structured_work_cta": "मास्टर चयन ठीक करें"
       },
       "proposal_confidence": {
         "high": "उच्च विश्वास",
