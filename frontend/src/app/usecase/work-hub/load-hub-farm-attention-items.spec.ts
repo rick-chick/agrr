@@ -73,6 +73,7 @@ describe('loadHubFarmAttentionItems', () => {
     expect(attentionList).toEqual({
       items: [
         {
+          kind: 'variance',
           farmId: 1,
           farmName: 'Farm A',
           planId: 9,
@@ -81,6 +82,7 @@ describe('loadHubFarmAttentionItems', () => {
           linkTarget: 'learn'
         },
         {
+          kind: 'variance',
           farmId: 2,
           farmName: 'Farm B',
           planId: 10,
@@ -90,5 +92,70 @@ describe('loadHubFarmAttentionItems', () => {
         }
       ]
     });
+  });
+
+  it('merges weather trigger rows from portfolio counts and proposal types', async () => {
+    const planGateway = {
+      getPlanVsActualSummary: () =>
+        of({
+          plan_id: 9,
+          unrecorded_count: 0,
+          categories: [],
+          top_variance_items: [],
+          action_required_items: []
+        }),
+      getWeatherRescheduleProposals: () =>
+        of([
+          {
+            id: 'frost_forecast:100:42',
+            trigger_type: 'frost_forecast',
+            severity: 'high',
+            rationale: {},
+            moves: []
+          },
+          {
+            id: 'gdd_trajectory_delay:100:43',
+            trigger_type: 'gdd_trajectory_delay',
+            severity: 'medium',
+            rationale: {},
+            moves: []
+          }
+        ])
+    } as unknown as PlanGateway;
+
+    const attentionList = await firstValueFrom(
+      loadHubFarmAttentionItems(
+        [{ farmId: 1, farmName: 'Farm A', planId: 9 }],
+        planGateway,
+        [
+          {
+            farmId: 1,
+            farmName: 'Farm A',
+            planId: 9,
+            planYear: 2026,
+            status: 'completed',
+            unrecordedCount: 0,
+            gddDelayCount: 0,
+            thresholdExceededCount: 0,
+            daysThresholdExceededCount: 0,
+            carryoverNotImported: false,
+            weatherTriggerCount: 2
+          }
+        ]
+      )
+    );
+
+    expect(attentionList.items).toEqual([
+      {
+        kind: 'weather_trigger',
+        farmId: 1,
+        farmName: 'Farm A',
+        planId: 9,
+        itemId: -9,
+        weatherTriggerCount: 2,
+        weatherTriggerTypes: ['frost_forecast', 'gdd_trajectory_delay'],
+        linkTarget: 'work'
+      }
+    ]);
   });
 });

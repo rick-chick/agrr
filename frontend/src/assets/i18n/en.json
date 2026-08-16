@@ -265,6 +265,7 @@
       "attention_list": {
         "title": "Top action-required tasks",
         "item": "{{farm}} · {{task}}",
+        "weather_trigger_item": "{{farm}} · {{count}} weather triggers",
         "open_work": "Open work",
         "open_learn": "Open learn"
       }

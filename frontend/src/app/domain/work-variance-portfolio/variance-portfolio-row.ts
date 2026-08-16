@@ -9,4 +9,5 @@ export interface VariancePortfolioRow {
   thresholdExceededCount: number;
   daysThresholdExceededCount: number;
   carryoverNotImported: boolean;
+  weatherTriggerCount: number;
 }

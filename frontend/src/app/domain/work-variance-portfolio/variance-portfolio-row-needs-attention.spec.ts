@@ -14,6 +14,7 @@ function row(overrides: Partial<VariancePortfolioRow> = {}): VariancePortfolioRo
     thresholdExceededCount: 0,
     daysThresholdExceededCount: 0,
     carryoverNotImported: false,
+    weatherTriggerCount: 0,
     ...overrides
   };
 }

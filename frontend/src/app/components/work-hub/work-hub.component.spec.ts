@@ -100,8 +100,12 @@ describe('WorkHubComponent', () => {
       'work.hub.other_plans_badge_aria': '代表計画以外に乖離のある計画が {{count}} 件あります',
       'work.hub.attention_list.title': '要対応タスク（上位）',
       'work.hub.attention_list.item': '{{farm}} · {{task}}',
+      'work.hub.attention_list.weather_trigger_item': '{{farm}} · 天候トリガー {{count}} 件',
       'work.hub.attention_list.open_work': '作業へ',
       'work.hub.attention_list.open_learn': '振り返りへ',
+      'plans.work.today_attention.weather_trigger.frost_forecast': '霜予報',
+      'plans.work.today_attention.weather_trigger.gdd_trajectory_delay': 'GDD軌道遅延',
+      'plans.work.today_attention.weather_trigger.forecast_sudden_change': '予報急変',
       'common.api_error.generic': 'エラーが発生しました'
     });
   });
@@ -580,6 +584,7 @@ describe('WorkHubComponent', () => {
       attentionList: {
         items: [
           {
+            kind: 'variance',
             farmId: 1,
             farmName: 'Farm A',
             planId: 9,
@@ -588,6 +593,7 @@ describe('WorkHubComponent', () => {
             linkTarget: 'learn'
           },
           {
+            kind: 'variance',
             farmId: 2,
             farmName: 'Farm B',
             planId: 10,
@@ -642,6 +648,59 @@ describe('WorkHubComponent', () => {
     expect(links).toHaveLength(2);
     expect(links[0]?.getAttribute('href')).toContain('/plans/9/learn');
     expect(links[1]?.getAttribute('href')).toContain('/plans/10/work');
+  });
+
+  it('shows weather trigger attention row with type badges linking to plan work', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      portfolioSummary: {
+        unrecordedCount: 0,
+        actionRequiredCount: 0,
+        gddDelayCount: 0,
+        daysThresholdExceededCount: 0
+      },
+      attentionList: {
+        items: [
+          {
+            kind: 'weather_trigger',
+            farmId: 1,
+            farmName: 'Farm A',
+            planId: 9,
+            itemId: -9,
+            weatherTriggerCount: 2,
+            weatherTriggerTypes: ['frost_forecast', 'gdd_trajectory_delay'],
+            linkTarget: 'work'
+          }
+        ]
+      },
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          fieldCount: 1,
+          totalArea: 50,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          unrecordedCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const list = fixture.nativeElement.querySelector('.work-hub__attention-list');
+    expect(list?.textContent).toContain('Farm A · 天候トリガー 2 件');
+    expect(list?.textContent).toContain('霜予報');
+    expect(list?.textContent).toContain('GDD軌道遅延');
+
+    const link = fixture.nativeElement.querySelector('.work-hub__attention-list-link') as HTMLAnchorElement;
+    expect(link?.getAttribute('href')).toContain('/plans/9/work');
+    expect(fixture.nativeElement.querySelectorAll('.work-hub__attention-list-badge')).toHaveLength(2);
   });
 
   it('reloads hub data when retry is clicked', () => {
