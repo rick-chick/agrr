@@ -1,6 +1,7 @@
 import { resolveVarianceActionItemLinkTarget } from '../plans/resolve-variance-action-item-link-target';
 import type { PlanVarianceActionItem } from '../plans/plan-vs-actual-summary';
 import type { VarianceActionLinkTarget } from '../plans/resolve-variance-action-item-link-target';
+import type { WeatherRescheduleTriggerType } from '../plans/weather-reschedule-proposal';
 
 export interface HubFarmAttentionSource {
   farmId: number;
@@ -9,14 +10,38 @@ export interface HubFarmAttentionSource {
   actionItems: ReadonlyArray<PlanVarianceActionItem>;
 }
 
-export interface WorkHubAttentionItem {
+export interface HubFarmWeatherTriggerSource {
+  farmId: number;
+  farmName: string;
+  planId: number;
+  count: number;
+  triggerTypes: ReadonlyArray<WeatherRescheduleTriggerType>;
+}
+
+interface WorkHubAttentionItemBase {
   farmId: number;
   farmName: string;
   planId: number;
   itemId: number;
+  linkTarget: VarianceActionLinkTarget | 'work';
+}
+
+export interface WorkHubVarianceAttentionItem extends WorkHubAttentionItemBase {
+  kind: 'variance';
   taskName: string;
   linkTarget: VarianceActionLinkTarget;
 }
+
+export interface WorkHubWeatherTriggerAttentionItem extends WorkHubAttentionItemBase {
+  kind: 'weather_trigger';
+  weatherTriggerCount: number;
+  weatherTriggerTypes: ReadonlyArray<WeatherRescheduleTriggerType>;
+  linkTarget: 'work';
+}
+
+export type WorkHubAttentionItem =
+  | WorkHubVarianceAttentionItem
+  | WorkHubWeatherTriggerAttentionItem;
 
 export interface WorkHubAttentionList {
   items: WorkHubAttentionItem[];
@@ -28,8 +53,13 @@ function attentionPriority(item: PlanVarianceActionItem): number {
   return Math.abs(item.delta_days ?? 0) * 1000 + Math.abs(item.gdd_delta ?? 0);
 }
 
+function weatherTriggerItemId(planId: number): number {
+  return -planId;
+}
+
 export function buildWorkHubAttentionList(
   sources: ReadonlyArray<HubFarmAttentionSource>,
+  weatherSources: ReadonlyArray<HubFarmWeatherTriggerSource> = [],
   limit = DEFAULT_ATTENTION_LIMIT
 ): WorkHubAttentionList {
   const candidates: Array<WorkHubAttentionItem & { priority: number }> = [];
@@ -37,6 +67,7 @@ export function buildWorkHubAttentionList(
   for (const source of sources) {
     for (const item of source.actionItems) {
       candidates.push({
+        kind: 'variance',
         farmId: source.farmId,
         farmName: source.farmName,
         planId: source.planId,
@@ -46,6 +77,23 @@ export function buildWorkHubAttentionList(
         priority: attentionPriority(item)
       });
     }
+  }
+
+  for (const source of weatherSources) {
+    if (source.count <= 0) {
+      continue;
+    }
+    candidates.push({
+      kind: 'weather_trigger',
+      farmId: source.farmId,
+      farmName: source.farmName,
+      planId: source.planId,
+      itemId: weatherTriggerItemId(source.planId),
+      weatherTriggerCount: source.count,
+      weatherTriggerTypes: [...source.triggerTypes],
+      linkTarget: 'work',
+      priority: source.count * 1000
+    });
   }
 
   const sorted = [...candidates].sort((left, right) => {

@@ -700,6 +700,7 @@ describe('WorkHubInitUseCase', () => {
         attentionList: {
           items: [
             {
+              kind: 'variance',
               farmId: 1,
               farmName: 'Farm A',
               planId: 9,
@@ -708,6 +709,7 @@ describe('WorkHubInitUseCase', () => {
               linkTarget: 'learn'
             },
             {
+              kind: 'variance',
               farmId: 2,
               farmName: 'Farm B',
               planId: 10,
@@ -760,7 +762,8 @@ describe('WorkHubInitUseCase', () => {
             gddDelayCount: 0,
             thresholdExceededCount: 0,
             daysThresholdExceededCount: 0,
-            carryoverNotImported: false
+            carryoverNotImported: false,
+            weatherTriggerCount: 0
           },
           {
             farmId: 1,
@@ -772,7 +775,8 @@ describe('WorkHubInitUseCase', () => {
             gddDelayCount: 1,
             thresholdExceededCount: 0,
             daysThresholdExceededCount: 0,
-            carryoverNotImported: false
+            carryoverNotImported: false,
+            weatherTriggerCount: 0
           },
           {
             farmId: 2,
@@ -784,7 +788,8 @@ describe('WorkHubInitUseCase', () => {
             gddDelayCount: 0,
             thresholdExceededCount: 1,
             daysThresholdExceededCount: 0,
-            carryoverNotImported: false
+            carryoverNotImported: false,
+            weatherTriggerCount: 0
           }
         ])
     });

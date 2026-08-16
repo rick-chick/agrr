@@ -49,6 +49,7 @@ const WORK_HUB_I18N_KEYS = [
   'work.hub.portfolio_summary.view_variance_portfolio',
   'work.hub.attention_list.title',
   'work.hub.attention_list.item',
+  'work.hub.attention_list.weather_trigger_item',
   'work.hub.attention_list.open_work',
   'work.hub.attention_list.open_learn'
 ] as const;

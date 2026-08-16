@@ -99,10 +99,29 @@ const initialControl: WorkHubViewState = {
                   class="work-hub__attention-list-link"
                   [routerLink]="['/plans', item.planId, item.linkTarget]"
                 >
-                  {{
-                    'work.hub.attention_list.item'
-                      | translate: { farm: item.farmName, task: item.taskName }
-                  }}
+                  @if (item.kind === 'weather_trigger') {
+                    {{
+                      'work.hub.attention_list.weather_trigger_item'
+                        | translate
+                          : {
+                              farm: item.farmName,
+                              count: item.weatherTriggerCount
+                            }
+                    }}
+                    @for (triggerType of item.weatherTriggerTypes; track triggerType) {
+                      <span class="work-hub__attention-list-badge">
+                        {{
+                          'plans.work.today_attention.weather_trigger.' + triggerType
+                            | translate
+                        }}
+                      </span>
+                    }
+                  } @else {
+                    {{
+                      'work.hub.attention_list.item'
+                        | translate: { farm: item.farmName, task: item.taskName }
+                    }}
+                  }
                 </a>
               </li>
             }

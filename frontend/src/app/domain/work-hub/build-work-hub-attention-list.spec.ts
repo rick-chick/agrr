@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildWorkHubAttentionList,
-  type HubFarmAttentionSource
+  type HubFarmAttentionSource,
+  type WorkHubVarianceAttentionItem
 } from './build-work-hub-attention-list';
 import type { PlanVarianceActionItem } from '../plans/plan-vs-actual-summary';
 
@@ -67,16 +68,20 @@ describe('buildWorkHubAttentionList', () => {
           ]
         })
       ],
+      [],
       2
     );
 
     expect(list.items).toHaveLength(2);
-    expect(list.items[0]?.taskName).toBe('大遅延');
-    expect(list.items[0]?.farmName).toBe('Farm A');
-    expect(list.items[0]?.planId).toBe(9);
-    expect(list.items[0]?.linkTarget).toBe('learn');
-    expect(list.items[1]?.taskName).toBe('中遅延');
-    expect(list.items[1]?.linkTarget).toBe('learn');
+    const first = list.items[0] as WorkHubVarianceAttentionItem;
+    const second = list.items[1] as WorkHubVarianceAttentionItem;
+    expect(first.taskName).toBe('大遅延');
+    expect(first.farmName).toBe('Farm A');
+    expect(first.planId).toBe(9);
+    expect(first.kind).toBe('variance');
+    expect(first.linkTarget).toBe('learn');
+    expect(second.taskName).toBe('中遅延');
+    expect(second.linkTarget).toBe('learn');
   });
 
   it('defaults to top 5 items', () => {
@@ -115,5 +120,61 @@ describe('buildWorkHubAttentionList', () => {
 
   it('returns empty list when no action items exist', () => {
     expect(buildWorkHubAttentionList([]).items).toEqual([]);
+  });
+
+  it('includes weather trigger rows with type badges and work link', () => {
+    const list = buildWorkHubAttentionList(
+      [],
+      [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          planId: 9,
+          count: 2,
+          triggerTypes: ['frost_forecast', 'gdd_trajectory_delay']
+        }
+      ]
+    );
+
+    expect(list.items).toEqual([
+      {
+        kind: 'weather_trigger',
+        farmId: 1,
+        farmName: 'Farm A',
+        planId: 9,
+        itemId: -9,
+        weatherTriggerCount: 2,
+        weatherTriggerTypes: ['frost_forecast', 'gdd_trajectory_delay'],
+        linkTarget: 'work'
+      }
+    ]);
+  });
+
+  it('merges weather trigger rows with variance items by priority', () => {
+    const list = buildWorkHubAttentionList(
+      [
+        source({
+          farmId: 1,
+          farmName: 'Farm A',
+          planId: 9,
+          actionItems: [actionItem({ item_id: 1, name: '小遅延', delta_days: 1 })]
+        })
+      ],
+      [
+        {
+          farmId: 2,
+          farmName: 'Farm B',
+          planId: 10,
+          count: 5,
+          triggerTypes: ['forecast_sudden_change']
+        }
+      ],
+      2
+    );
+
+    expect(list.items).toHaveLength(2);
+    expect(list.items[0]?.kind).toBe('weather_trigger');
+    expect(list.items[0]?.planId).toBe(10);
+    expect(list.items[1]?.kind).toBe('variance');
   });
 });

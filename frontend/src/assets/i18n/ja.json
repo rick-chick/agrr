@@ -3198,6 +3198,7 @@
       "attention_list": {
         "title": "要対応タスク（上位）",
         "item": "{{farm}} · {{task}}",
+        "weather_trigger_item": "{{farm}} · 天候トリガー {{count}} 件",
         "open_work": "作業へ",
         "open_learn": "振り返りへ"
       }
