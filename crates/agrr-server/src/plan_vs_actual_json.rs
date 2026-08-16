@@ -14,6 +14,7 @@ pub fn summary_to_json_body(summary: PlanVsActualSummaryRead) -> Value {
         "plan_id": summary.plan_id,
         "unrecorded_count": summary.unrecorded_count,
         "structured_unrecorded_count": summary.structured_unrecorded_count,
+        "amount_variance_count": summary.amount_variance_count,
         "categories": summary.categories.iter().map(category_payload).collect::<Vec<_>>(),
         "amount_group_summaries": summary
             .amount_group_summaries
@@ -160,6 +161,7 @@ mod tests {
             plan_id: 7,
             unrecorded_count: 2,
             structured_unrecorded_count: 1,
+            amount_variance_count: 3,
             categories: vec![PlanVsActualCategorySummaryRead {
                 category: "general".into(),
                 average_delta_days: Some(3.5),
@@ -236,6 +238,7 @@ mod tests {
         assert_eq!(7, body["plan_id"].as_i64().unwrap());
         assert_eq!(2, body["unrecorded_count"].as_i64().unwrap());
         assert_eq!(1, body["structured_unrecorded_count"].as_i64().unwrap());
+        assert_eq!(3, body["amount_variance_count"].as_i64().unwrap());
         assert_eq!(3.5, body["categories"][0]["average_delta_days"].as_f64().unwrap());
         assert_eq!(
             -0.5,

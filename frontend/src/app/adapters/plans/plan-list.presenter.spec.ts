@@ -43,14 +43,14 @@ describe('PlanListPresenter', () => {
           name: 'Plan A',
           status: 'pending',
           farm_id: 1,
-          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0 }
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         },
         {
           id: 2,
           name: 'Plan B',
           status: 'completed',
           farm_id: 2,
-          inputGap: { unrecordedCount: 1, actionRequiredCount: 0, structuredUnrecordedCount: 0 }
+          inputGap: { unrecordedCount: 1, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
       const dto: PlanListDataDto = { plans };
@@ -85,7 +85,7 @@ describe('PlanListPresenter', () => {
           name: 'Plan A',
           status: 'pending',
           farm_id: 1,
-          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0 }
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
       const initialControl: PlanListViewState = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
@@ -110,14 +110,14 @@ describe('PlanListPresenter', () => {
           name: 'Plan A',
           status: 'pending',
           farm_id: 1,
-          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0 }
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         },
         {
           id: 2,
           name: 'Plan B',
           status: 'completed',
           farm_id: 2,
-          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0 }
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
@@ -139,14 +139,14 @@ describe('PlanListPresenter', () => {
           name: 'Plan A',
           status: 'pending',
           farm_id: 1,
-          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0 }
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         },
         {
           id: 2,
           name: 'Plan B',
           status: 'completed',
           farm_id: 2,
-          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0 }
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
@@ -190,7 +190,7 @@ describe('PlanListPresenter', () => {
           name: 'Plan A',
           status: 'pending',
           farm_id: 1,
-          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0 }
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
@@ -213,7 +213,7 @@ describe('PlanListPresenter', () => {
           name: 'Plan A',
           status: 'pending',
           farm_id: 1,
-          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0 }
+          inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };

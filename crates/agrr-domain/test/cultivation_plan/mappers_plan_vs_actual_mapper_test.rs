@@ -651,3 +651,68 @@ fn summary_aggregates_average_amount_delta_by_category_stage_and_task_type() {
     assert_eq!(Some(0.5), pest.average_amount_delta);
     assert_eq!(Some("L"), pest.amount_unit.as_deref());
 }
+
+#[test]
+fn summary_counts_amount_variance_and_unrecorded_amounts_for_structured_categories() {
+    let snapshot = TaskScheduleTimelineSnapshot {
+        plan: sample_snapshot(vec![]).plan,
+        fields: vec![TaskScheduleTimelineFieldRead {
+            id: 10,
+            name: "F1".into(),
+            crop_name: "Tomato".into(),
+            area_sqm: 50.0,
+            field_cultivation_id: 100,
+            crop_id: 42,
+            cultivation_start_date: None,
+            cultivation_end_date: None,
+            task_options: vec![],
+            schedules: vec![
+                TaskScheduleTimelineScheduleRead {
+                    category: "fertilizer".into(),
+                    items: vec![sample_item_with_amounts(
+                        1,
+                        "fertilizer",
+                        "fertilize",
+                        Some(1),
+                        Some("Vegetative"),
+                        Some(10.0),
+                        None,
+                        Some("kg"),
+                    )],
+                },
+                TaskScheduleTimelineScheduleRead {
+                    category: "pest_control".into(),
+                    items: vec![sample_item_with_amounts(
+                        2,
+                        "pest_control",
+                        "spray",
+                        Some(2),
+                        Some("Flowering"),
+                        Some(2.0),
+                        Some(3.0),
+                        Some("L"),
+                    )],
+                },
+                TaskScheduleTimelineScheduleRead {
+                    category: "general".into(),
+                    items: vec![sample_item_with_amounts(
+                        3,
+                        "general",
+                        "field_work",
+                        None,
+                        None,
+                        Some(5.0),
+                        Some(6.0),
+                        Some("h"),
+                    )],
+                },
+            ],
+        }],
+        scheduled_dates: vec![Date::parse("2026-06-02", &time::format_description::well_known::Iso8601::DATE)
+            .expect("date")],
+    };
+
+    let summary = PlanVsActualMapper::summary_from_snapshot(&snapshot, 5);
+
+    assert_eq!(2, summary.amount_variance_count);
+}

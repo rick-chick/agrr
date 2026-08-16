@@ -2168,8 +2168,10 @@
         "unrecorded": "अभिलेखित नहीं",
         "action_required": "कार्रवाई आवश्यक",
         "structured_unrecorded": "असंरचित इनपुट",
+        "amount_variance": "मात्रा विचलन",
         "work_cta": "अभिलेखित न किए कार्य दर्ज करें",
-        "structured_work_cta": "मास्टर चयन ठीक करें"
+        "structured_work_cta": "मास्टर चयन ठीक करें",
+        "amount_variance_work_cta": "मात्रा विचलन की समीक्षा करें"
       },
       "proposal_confidence": {
         "high": "उच्च विश्वास",
@@ -2466,6 +2468,7 @@
       "input_gap": {
         "unrecorded_summary": "अदर्ज नहीं: {{count}}",
         "action_required_summary": "कार्रवाई आवश्यक: {{count}}",
+        "amount_variance_summary": "मात्रा विचलन: {{count}}",
         "work_link": "कार्य अभिलेखित करें",
         "learn_link": "सीख की समीक्षा करें"
       },

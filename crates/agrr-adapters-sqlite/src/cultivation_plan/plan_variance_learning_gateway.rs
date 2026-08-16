@@ -364,6 +364,7 @@ fn summary_to_json(summary: &PlanVsActualSummaryRead) -> String {
         "plan_id": summary.plan_id,
         "unrecorded_count": summary.unrecorded_count,
         "structured_unrecorded_count": summary.structured_unrecorded_count,
+        "amount_variance_count": summary.amount_variance_count,
         "categories": summary.categories.iter().map(|category| json!({
             "category": category.category,
             "average_delta_days": category.average_delta_days,
@@ -577,6 +578,7 @@ fn summary_from_json(
         plan_id: value["plan_id"].as_i64().unwrap_or(plan_id),
         unrecorded_count: value["unrecorded_count"].as_i64().unwrap_or(0),
         structured_unrecorded_count: value["structured_unrecorded_count"].as_i64().unwrap_or(0),
+        amount_variance_count: value["amount_variance_count"].as_i64().unwrap_or(0),
         categories,
         amount_group_summaries,
         top_variance_items,
@@ -669,6 +671,7 @@ mod plan_variance_learning_sqlite_gateway_test {
             plan_id: 21,
             unrecorded_count: 0,
             structured_unrecorded_count: 0,
+            amount_variance_count: 0,
             categories: vec![],
             amount_group_summaries: vec![],
             top_variance_items: vec![],
@@ -742,6 +745,7 @@ mod plan_variance_learning_sqlite_gateway_test {
             plan_id: 20,
             unrecorded_count: 1,
             structured_unrecorded_count: 0,
+            amount_variance_count: 0,
             categories: vec![PlanVsActualCategorySummaryRead {
                 category: "general".into(),
                 average_delta_days: Some(3.0),

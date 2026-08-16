@@ -25,6 +25,7 @@ fn counts_unrecorded_and_threshold_items() {
         plan_id: 7,
         unrecorded_count: 3,
         structured_unrecorded_count: 0,
+        amount_variance_count: 0,
         categories: vec![],
         amount_group_summaries: vec![],
         top_variance_items: vec![],

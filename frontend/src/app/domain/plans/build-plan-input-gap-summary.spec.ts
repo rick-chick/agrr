@@ -55,4 +55,20 @@ describe('buildPlanInputGapSummary', () => {
 
     expect(summary.actionRequiredCount).toBe(0);
   });
+
+  it('maps amount variance count from API summary', () => {
+    const summary = buildPlanInputGapSummary(
+      sampleSummary({
+        amount_variance_count: 2
+      })
+    );
+
+    expect(summary.amountVarianceCount).toBe(2);
+  });
+
+  it('defaults amount variance count to zero when missing', () => {
+    const summary = buildPlanInputGapSummary(sampleSummary());
+
+    expect(summary.amountVarianceCount).toBe(0);
+  });
 });

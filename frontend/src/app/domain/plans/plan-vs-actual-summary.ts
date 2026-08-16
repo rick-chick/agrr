@@ -44,6 +44,7 @@ export interface PlanVsActualSummary {
   plan_id: number;
   unrecorded_count: number;
   structured_unrecorded_count?: number;
+  amount_variance_count?: number;
   categories: PlanVsActualCategorySummary[];
   amount_group_summaries?: PlanVsActualAmountGroupSummary[];
   top_variance_items: PlanVsActualItem[];

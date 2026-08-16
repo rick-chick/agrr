@@ -3,6 +3,7 @@ import { WorkRecord } from '../../models/plans/work-record';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import {
   computeWorkRecordAmountDiff,
+  isAmountTrackedScheduleCategory,
   WorkRecordAmountDiff
 } from './work-record-amount-diff';
 
@@ -90,7 +91,7 @@ export function resolveWorkRowAmountDiff(
   actualAmount?: string | null,
   actualUnit?: string | null
 ): WorkRecordAmountDiff | null {
-  if (!isFertilizerWorkRow(row)) {
+  if (!isAmountTrackedScheduleCategory(row.item.category)) {
     return null;
   }
   const plannedAmount = row.item.amount ?? '';
