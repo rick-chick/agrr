@@ -106,7 +106,7 @@ export function buildBlueprintAmountProposalEvidence(
   return {
     exceedanceCount,
     thresholdValue: AMOUNT_VARIANCE_THRESHOLD,
-    contributingRecords: toContributingRecords(sortByAbsDesc(matching, (row) => row.amountDelta)),
+    contributingRecords: toContributingRecords(sortByAbsDesc(matching, (row) => row.amountDelta ?? null)),
     totalRecordedCount: matching.length
   };
 }

@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   bpAmountProposalProgressKey,
   clearLearnProposalApplicationProgressCache,
-  markBpAmountProposalDismissed,
   resolveLearnProposalApplicationStatus
 } from '../../domain/plans/learn-proposal-application-progress';
 import { BlueprintAmountAdjustmentProposalsViewComponent } from './blueprint-amount-adjustment-proposals-view.component';
