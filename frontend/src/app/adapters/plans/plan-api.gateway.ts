@@ -7,6 +7,7 @@ import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
 import type { WeatherRescheduleProposal } from '../../domain/plans/weather-reschedule-proposal';
+import type { WeatherRescheduleProposalPreview } from '../../domain/plans/weather-reschedule-proposal-preview';
 import { PlanGateway, TaskScheduleQueryParams } from '../../usecase/plans/plan-gateway';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
@@ -64,6 +65,16 @@ export class PlanApiGateway implements PlanGateway {
   getWeatherRescheduleProposals(planId: number): Observable<WeatherRescheduleProposal[]> {
     return this.apiClient.get<WeatherRescheduleProposal[]>(
       `/api/v1/plans/${planId}/weather_reschedule_proposals`
+    );
+  }
+
+  previewWeatherRescheduleProposal(
+    planId: number,
+    proposalId: string
+  ): Observable<WeatherRescheduleProposalPreview> {
+    return this.apiClient.post<WeatherRescheduleProposalPreview>(
+      `/api/v1/plans/${planId}/weather_reschedule_proposals/${encodeURIComponent(proposalId)}/preview`,
+      {}
     );
   }
 

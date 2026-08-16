@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
+import type { WeatherRescheduleGanttOverlayBar } from '../../domain/plans/weather-reschedule-proposal-preview';
 import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import { GanttVisibleRange } from '../../domain/plans/gantt-chart-layout';
 import { resolveDeepLinkFieldCultivationId } from '../../domain/plans/plan-workbench-deep-link';
@@ -29,6 +30,7 @@ export type CultivationSelectionEvent = {
           [planType]="planType"
           [selectedCultivationId]="selectedCultivationId"
           [learningOrchestrationAdjust]="learningOrchestrationAdjust"
+          [proposalOverlayBars]="proposalOverlayBars"
           (cultivationSelected)="handleCultivationSelection($event)"
           (visibleRangeChange)="handleVisibleRangeUpdate($event)"
           (adjustOrchestrationStarted)="adjustOrchestrationStarted.emit()"
@@ -65,6 +67,7 @@ export class PlanGanttClimateShellComponent implements OnChanges {
   @Input() planId: number | null = null;
   @Input() deepLinkFieldCultivationId: number | null = null;
   @Input() learningOrchestrationAdjust = false;
+  @Input() proposalOverlayBars: WeatherRescheduleGanttOverlayBar[] = [];
   @Output() adjustOrchestrationStarted = new EventEmitter<void>();
 
   selectedCultivationId: number | null = null;

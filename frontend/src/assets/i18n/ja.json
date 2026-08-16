@@ -2474,6 +2474,13 @@
         "manual_hint": "提案を確認し、準備ができたら手動で adjust または再最適化を検討してください。",
         "review_link": "振り返りタブで提案を確認"
       },
+      "weather_reschedule_proposal": {
+        "title": "天候リスケ提案",
+        "delay_days": "延期日数: {{days}}日",
+        "preview_loading": "プレビューを読み込み中…",
+        "approve": "承認して adjust",
+        "reject": "却下"
+      },
       "reoptimization_banner": {
         "message": "マスタ更新後は再最適化を推奨します",
         "hint": "ガントで栽培バーをドラッグして配置を調整してください。ドロップ後に再最適化が開始されます。"
@@ -3198,9 +3205,9 @@
       "attention_list": {
         "title": "要対応タスク（上位）",
         "item": "{{farm}} · {{task}}",
-        "weather_trigger_item": "{{farm}} · 天候トリガー {{count}} 件",
         "open_work": "作業へ",
-        "open_learn": "振り返りへ"
+        "open_learn": "振り返りへ",
+        "weather_trigger_item": "{{farm}} · 天候トリガー {{count}} 件"
       }
     },
     "variance": {

@@ -5,8 +5,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
 import { PlanGanttClimateShellComponent } from './plan-gantt-climate-shell.component';
 import { VarianceActionBannerComponent } from './variance-action-banner.component';
+import { WeatherRescheduleProposalBannerComponent } from './weather-reschedule-proposal-banner.component';
 import { PlanDetailView, PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
+import { PreviewWeatherRescheduleProposalUseCase } from '../../usecase/plans/preview-weather-reschedule-proposal.usecase';
+import { ApplyWeatherRescheduleProposalUseCase } from '../../usecase/plans/apply-weather-reschedule-proposal.usecase';
 import { PlanDetailPresenter, PLAN_DETAIL_PROVIDERS } from '../../usecase/plans/plan-detail.providers';
 import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.providers';
 import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
@@ -22,13 +25,24 @@ import {
   readLearnReorganizePipelineAutoChain,
   updateLearnReorganizePipelinePhase
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
+import { dismissWeatherRescheduleProposal } from '../../domain/plans/weather-reschedule-proposal-session';
+import type { WeatherRescheduleProposal } from '../../domain/plans/weather-reschedule-proposal';
+import type { WeatherRescheduleAdjustMove } from '../../domain/plans/weather-reschedule-proposal-preview';
 
 const initialControl: PlanDetailViewState = {
   loading: true,
   error: null,
   plan: null,
   planData: null,
-  varianceActionItemsOnGantt: []
+  varianceActionItemsOnGantt: [],
+  weatherProposals: [],
+  activeWeatherProposalId: null,
+  weatherPreviewLoading: false,
+  weatherPreviewError: null,
+  weatherPreview: null,
+  weatherOverlayBars: [],
+  weatherApplyLoading: false,
+  weatherApplyError: null
 };
 
 @Component({
@@ -40,6 +54,7 @@ const initialControl: PlanDetailViewState = {
     TranslateModule,
     PlanPlanContextHeaderComponent,
     VarianceActionBannerComponent,
+    WeatherRescheduleProposalBannerComponent,
     PlanLearnReorganizeBannerComponent
   ],
   providers: [
@@ -66,6 +81,18 @@ const initialControl: PlanDetailViewState = {
           [visible]="showReoptimizationBanner"
           context="placement"
         />
+        @if (activeWeatherProposal) {
+          <app-weather-reschedule-proposal-banner
+            [proposal]="activeWeatherProposal"
+            [preview]="control.weatherPreview"
+            [previewLoading]="control.weatherPreviewLoading"
+            [previewError]="control.weatherPreviewError"
+            [applyLoading]="control.weatherApplyLoading"
+            [applyError]="control.weatherApplyError"
+            (approve)="handleApproveWeatherProposal()"
+            (reject)="handleRejectWeatherProposal()"
+          />
+        }
         @if (control.planData) {
           <app-variance-action-banner
             [planId]="planId"
@@ -78,6 +105,7 @@ const initialControl: PlanDetailViewState = {
               [planId]="planId"
               [deepLinkFieldCultivationId]="deepLinkFieldCultivationId"
               [learningOrchestrationAdjust]="showReoptimizationBanner"
+              [proposalOverlayBars]="control.weatherOverlayBars"
               (adjustOrchestrationStarted)="handleAdjustOrchestrationStarted()"
             />
           </div>
@@ -91,6 +119,8 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadPlanDetailUseCase);
+  private readonly previewUseCase = inject(PreviewWeatherRescheduleProposalUseCase);
+  private readonly applyUseCase = inject(ApplyWeatherRescheduleProposalUseCase);
   private readonly hydrateOrchestrationUseCase = inject(HydrateReorganizeOrchestrationUseCase);
   private readonly presenter = inject(PlanDetailPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -98,6 +128,7 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
 
   deepLinkFieldCultivationId: number | null = null;
   learningOrchestrationMode: ReturnType<typeof parseLearningOrchestration> = null;
+  private pendingWeatherProposalId: string | null = null;
 
   private _control: PlanDetailViewState = initialControl;
   get control(): PlanDetailViewState {
@@ -106,6 +137,7 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   set control(value: PlanDetailViewState) {
     this._control = value;
     this.cdr.markForCheck();
+    this.syncActiveWeatherProposal();
   }
 
   readonly planType: 'private' | 'public' = 'private';
@@ -118,6 +150,14 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
     return this.learningOrchestrationMode === 'adjust';
   }
 
+  get activeWeatherProposal(): WeatherRescheduleProposal | null {
+    const activeId = this.control.activeWeatherProposalId;
+    if (!activeId) {
+      return null;
+    }
+    return this.control.weatherProposals.find((proposal) => proposal.id === activeId) ?? null;
+  }
+
   ngOnInit(): void {
     this.presenter.setView(this);
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -125,10 +165,12 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
       const parsed = raw != null ? Number(raw) : NaN;
       this.deepLinkFieldCultivationId =
         Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+      this.pendingWeatherProposalId = params.get('weatherProposal');
       this.learningOrchestrationMode = parseLearningOrchestration(
         params.get('learningOrchestration')
       );
       this.cdr.markForCheck();
+      this.syncActiveWeatherProposal();
     });
 
     const planId = Number(this.route.snapshot.paramMap.get('id'));
@@ -176,5 +218,81 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
       storeLearnOrchestrationReturnToLearn(planId);
     }
     void this.router.navigate(['/plans', planId, 'optimizing']);
+  }
+
+  handleApproveWeatherProposal(): void {
+    const preview = this.control.weatherPreview;
+    if (!preview?.moves?.length) {
+      return;
+    }
+    this.control = {
+      ...this.control,
+      weatherApplyLoading: true,
+      weatherApplyError: null
+    };
+    this.applyUseCase.execute({
+      planId: this.planId,
+      planType: this.planType,
+      moves: preview.moves as WeatherRescheduleAdjustMove[]
+    });
+  }
+
+  handleRejectWeatherProposal(): void {
+    const activeId = this.control.activeWeatherProposalId;
+    if (!activeId) {
+      return;
+    }
+    dismissWeatherRescheduleProposal(this.planId, activeId);
+    this.control = {
+      ...this.control,
+      activeWeatherProposalId: null,
+      weatherPreview: null,
+      weatherPreviewError: null,
+      weatherOverlayBars: [],
+      weatherProposals: this.control.weatherProposals.filter(
+        (proposal) => proposal.id !== activeId
+      )
+    };
+  }
+
+  private syncActiveWeatherProposal(): void {
+    if (this.control.loading || !this.control.weatherProposals.length) {
+      return;
+    }
+    const requestedId =
+      this.pendingWeatherProposalId ?? this.control.activeWeatherProposalId ?? null;
+    const resolved =
+      requestedId &&
+      this.control.weatherProposals.some((proposal) => proposal.id === requestedId)
+        ? requestedId
+        : this.control.weatherProposals[0]?.id ?? null;
+    if (!resolved || resolved === this.control.activeWeatherProposalId) {
+      if (
+        resolved &&
+        resolved === this.control.activeWeatherProposalId &&
+        !this.control.weatherPreview &&
+        !this.control.weatherPreviewLoading
+      ) {
+        this.loadWeatherPreview(resolved);
+      }
+      return;
+    }
+    this.control = {
+      ...this.control,
+      activeWeatherProposalId: resolved,
+      weatherPreview: null,
+      weatherPreviewError: null,
+      weatherOverlayBars: []
+    };
+    this.loadWeatherPreview(resolved);
+  }
+
+  private loadWeatherPreview(proposalId: string): void {
+    this.control = {
+      ...this.control,
+      weatherPreviewLoading: true,
+      weatherPreviewError: null
+    };
+    this.previewUseCase.execute({ planId: this.planId, proposalId });
   }
 }

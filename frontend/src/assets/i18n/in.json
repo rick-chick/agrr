@@ -2717,6 +2717,13 @@
         "manual_hint": "प्रस्तावों की समीक्षा करें और तैयार होने पर मैन्युअल रूप से adjust या पुनः अनुकूलन करें।",
         "review_link": "समीक्षा टैब पर प्रस्ताव देखें"
       },
+      "weather_reschedule_proposal": {
+        "title": "मौसम पुनर्निर्धारण प्रस्ताव",
+        "delay_days": "विलंब: {{days}} दिन",
+        "preview_loading": "पूर्वावलोकन लोड हो रहा है…",
+        "approve": "स्वीकृत करें और adjust",
+        "reject": "अस्वीकार"
+      },
       "reoptimization_banner": {
         "message": "मास्टर अपडेट के बाद पुनः अनुकूलन की सिफारिश",
         "hint": "गैंट पर खेती बार खींचकर स्थान समायोजित करें। छोड़ने पर पुनः अनुकूलन शुरू होगा।"
@@ -2885,9 +2892,9 @@
       "attention_list": {
         "title": "शीर्ष कार्य आवश्यक कार्य",
         "item": "{{farm}} · {{task}}",
-        "weather_trigger_item": "{{farm}} · {{count}} मौसम ट्रिगर",
         "open_work": "कार्य खोलें",
-        "open_learn": "अध्ययन खोलें"
+        "open_learn": "अध्ययन खोलें",
+        "weather_trigger_item": "{{farm}} · {{count}} मौसम ट्रिगर"
       }
     },
     "variance": {

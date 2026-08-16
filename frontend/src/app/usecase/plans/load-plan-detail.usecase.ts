@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
+import { filterActiveWeatherRescheduleProposals } from '../../domain/plans/weather-reschedule-proposal-session';
 import { filterVarianceActionItemsOnGantt } from '../../domain/plans/filter-variance-action-items';
 import { LoadPlanDetailInputDto } from './load-plan-detail.dtos';
 import { LoadPlanDetailInputPort } from './load-plan-detail.input-port';
@@ -24,6 +25,9 @@ export class LoadPlanDetailUseCase implements LoadPlanDetailInputPort {
       planData: this.planGateway.fetchPlanData(dto.planId),
       varianceSummary: this.planGateway.getPlanVsActualSummary(dto.planId).pipe(
         catchError(() => of(null))
+      ),
+      weatherProposals: this.planGateway.getWeatherRescheduleProposals(dto.planId).pipe(
+        catchError(() => of([]))
       )
     }).subscribe({
       next: (data) => {
@@ -34,10 +38,15 @@ export class LoadPlanDetailUseCase implements LoadPlanDetailInputPort {
               cultivations
             )
           : [];
+        const weatherProposals = filterActiveWeatherRescheduleProposals(
+          dto.planId,
+          data.weatherProposals
+        );
         this.outputPort.present({
           plan: data.plan,
           planData: data.planData,
-          varianceActionItemsOnGantt
+          varianceActionItemsOnGantt,
+          weatherProposals
         });
       },
       error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })

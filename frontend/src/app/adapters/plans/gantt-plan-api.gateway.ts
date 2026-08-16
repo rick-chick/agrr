@@ -19,6 +19,7 @@ import { GanttPlanGateway } from '../../usecase/plans/gantt-plan-gateway';
 import { ApiService } from '../../services/api.service';
 import { buildGanttCultivationPlanEndpoint, ganttPrivatePlanDataPath, ganttPublicPlanDataPath } from './gantt-cultivation-plan-endpoints';
 import { extractGanttPlanHttpErrorMessage } from './gantt-plan-http.helpers';
+import type { WeatherRescheduleAdjustMove } from '../../domain/plans/weather-reschedule-proposal-preview';
 import {
   GanttAddCropHttpResponse,
   GanttAddFieldHttpResponse,
@@ -50,6 +51,35 @@ export class GanttPlanApiGateway implements GanttPlanGateway {
 
   syncLandingDemoPlan(_labels: LandingDemoLabels): Observable<CultivationPlanData> {
     return throwError(() => new Error('demo-only'));
+  }
+
+  adjustPlanMoves(input: {
+    planType: CultivationPlanContextType;
+    planId: number;
+    moves: WeatherRescheduleAdjustMove[];
+  }): Observable<GanttPlanMutationCommandResult> {
+    if (input.planType === 'demo') {
+      return throwError(() => new Error(DEMO_NOT_SUPPORTED));
+    }
+    const endpoint = buildGanttCultivationPlanEndpoint(
+      input.planType,
+      input.planId,
+      'adjust'
+    );
+    if (!endpoint) {
+      return of(ganttMutationCommandFailure());
+    }
+
+    return this.apiClient.post<GanttAdjustPlanHttpResponse>(endpoint, { moves: input.moves }).pipe(
+      map((response) =>
+        response.success
+          ? ganttMutationCommandSuccess()
+          : ganttMutationCommandFailure(response.message)
+      ),
+      catchError((error: HttpErrorResponse) =>
+        of(ganttMutationCommandFailure(extractGanttPlanHttpErrorMessage(error)))
+      )
+    );
   }
 
   adjustCultivationMove(input: {

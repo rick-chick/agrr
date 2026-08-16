@@ -40,6 +40,7 @@ describe('LoadPlanDetailUseCase', () => {
       getTaskSchedule: () => of({ plan: {} as never, week: {} as never, milestones: [], fields: [], labels: {}, minimap: { start_date: '', end_date: '', weeks: [] } } as TaskScheduleResponse),
       getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
       getWeatherRescheduleProposals: () => of([]),
+      previewWeatherRescheduleProposal: () => of({} as never),
       getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       patchVarianceLearningProposalProgress: () => of({ plan_id: 0, proposal_application_progress: {} }),
@@ -65,6 +66,7 @@ describe('LoadPlanDetailUseCase', () => {
     expect(receivedDto!.plan).toEqual(plan);
     expect(receivedDto!.planData).toEqual(planData);
     expect(receivedDto!.varianceActionItemsOnGantt).toEqual([]);
+    expect(receivedDto!.weatherProposals).toEqual([]);
   });
 
   it('filters variance action items to cultivations on the gantt', () => {
@@ -154,6 +156,7 @@ describe('LoadPlanDetailUseCase', () => {
           ]
         }),
       getWeatherRescheduleProposals: () => of([]),
+      previewWeatherRescheduleProposal: () => of({} as never),
       getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       patchVarianceLearningProposalProgress: () => of({ plan_id: 0, proposal_application_progress: {} }),
@@ -216,6 +219,7 @@ describe('LoadPlanDetailUseCase', () => {
         } as TaskScheduleResponse),
       getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
       getWeatherRescheduleProposals: () => of([]),
+      previewWeatherRescheduleProposal: () => of({} as never),
       getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       patchVarianceLearningProposalProgress: () => of({ plan_id: 0, proposal_application_progress: {} }),

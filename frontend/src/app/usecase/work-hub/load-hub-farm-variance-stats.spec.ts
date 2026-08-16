@@ -72,6 +72,7 @@ describe('loadHubFarmVarianceStats', () => {
       getTaskSchedule: () => of({ fields: [] } as never),
       getPlanVsActualSummary: (planId) => of(summaryForPlan(planId)),
       getWeatherRescheduleProposals: () => of([]),
+      previewWeatherRescheduleProposal: () => of({} as never),
       getVarianceLearning: () =>
         of({
           plan_id: 0,
@@ -137,6 +138,7 @@ describe('loadHubFarmVarianceStats', () => {
           })
         ),
       getWeatherRescheduleProposals: () => of([]),
+      previewWeatherRescheduleProposal: () => of({} as never),
       getVarianceLearning: () =>
         of({
           plan_id: 0,
@@ -175,6 +177,7 @@ describe('loadHubFarmVarianceStats', () => {
       getTaskSchedule: () => of({ fields: [] } as never),
       getPlanVsActualSummary,
       getWeatherRescheduleProposals: () => of([]),
+      previewWeatherRescheduleProposal: () => of({} as never),
       getVarianceLearning: () =>
         of({
           plan_id: 0,

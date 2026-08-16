@@ -17,6 +17,7 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CultivationPlanData, CultivationData, AvailableCropData } from '../../domain/plans/cultivation-plan-data';
+import type { WeatherRescheduleGanttOverlayBar } from '../../domain/plans/weather-reschedule-proposal-preview';
 import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import {
   addMonths,
@@ -434,6 +435,30 @@ type GanttPendingDeleteAction =
                     </g>
                   }
                 }
+                @for (overlayBar of overlayBarsForGroup(group); track overlayBar.cultivationId) {
+                  @if (getOverlayBarParams(overlayBar); as overlayParams) {
+                    <g
+                      class="cultivation-bar cultivation-bar--proposal-overlay"
+                      [attr.data-id]="overlayBar.cultivationId"
+                      [attr.aria-hidden]="true"
+                    >
+                      <rect
+                        [attr.x]="overlayParams.x"
+                        [attr.y]="config.barPadding"
+                        [attr.width]="overlayParams.width"
+                        [attr.height]="config.barHeight"
+                        rx="6"
+                        ry="6"
+                        [attr.fill]="ganttCropFillColor(overlayBar.cropName)"
+                        [attr.stroke]="ganttCropStrokeColor(overlayBar.cropName)"
+                        stroke-width="2.5"
+                        stroke-dasharray="5,5"
+                        fill-opacity="0.25"
+                        pointer-events="none"
+                      />
+                    </g>
+                  }
+                }
               </g>
             }
             </svg>
@@ -500,6 +525,7 @@ export class GanttChartComponent
   @Input() planType: CultivationPlanContextType = 'private';
   @Input() selectedCultivationId: number | null = null;
   @Input() learningOrchestrationAdjust = false;
+  @Input() proposalOverlayBars: WeatherRescheduleGanttOverlayBar[] = [];
   @Output() cultivationSelected = new EventEmitter<{
     cultivationId: number;
     planType: CultivationPlanContextType;
@@ -891,6 +917,26 @@ export class GanttChartComponent
     return computeGanttBarParamsForPlanView({
       cultivationStart: cultivation.start_date,
       cultivationEnd: cultivation.completion_date,
+      planningStartDate: this.data.data.planning_start_date,
+      planningEndDate: this.data.data.planning_end_date,
+      visibleStart: this.visibleStartDate,
+      visibleEnd: this.visibleEndDate,
+      marginLeft: this.config.margin.left,
+      chartWidth: this.config.width - this.config.margin.left - this.config.margin.right
+    });
+  }
+
+  overlayBarsForGroup(group: GanttFieldGroup): WeatherRescheduleGanttOverlayBar[] {
+    const cultivationIds = new Set(group.cultivations.map((c) => c.id));
+    return this.proposalOverlayBars.filter((bar) => cultivationIds.has(bar.cultivationId));
+  }
+
+  getOverlayBarParams(overlayBar: WeatherRescheduleGanttOverlayBar) {
+    if (!this.data) return null;
+
+    return computeGanttBarParamsForPlanView({
+      cultivationStart: overlayBar.startDate,
+      cultivationEnd: overlayBar.completionDate,
       planningStartDate: this.data.data.planning_start_date,
       planningEndDate: this.data.data.planning_end_date,
       visibleStart: this.visibleStartDate,

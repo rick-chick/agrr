@@ -3,6 +3,17 @@ import { PlanDetailView, PlanDetailViewState } from '../../components/plans/plan
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 
+const emptyWeatherState = {
+  weatherProposals: [],
+  activeWeatherProposalId: null,
+  weatherPreviewLoading: false,
+  weatherPreviewError: null,
+  weatherPreview: null,
+  weatherOverlayBars: [],
+  weatherApplyLoading: false,
+  weatherApplyError: null
+};
+
 describe('PlanDetailPresenter', () => {
   const plan: PlanSummary = { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 };
   const planData: CultivationPlanData = {
@@ -33,7 +44,8 @@ describe('PlanDetailPresenter', () => {
           error: null,
           plan: null,
           planData: null,
-          varianceActionItemsOnGantt: []
+          varianceActionItemsOnGantt: [],
+          ...emptyWeatherState
         };
       },
       set control(value: PlanDetailViewState) {
@@ -43,13 +55,14 @@ describe('PlanDetailPresenter', () => {
 
     const presenter = new PlanDetailPresenter();
     presenter.setView(view);
-    presenter.present({ plan, planData, varianceActionItemsOnGantt: [] });
+    presenter.present({ plan, planData, varianceActionItemsOnGantt: [], weatherProposals: [] });
 
     expect(lastControl).not.toBeNull();
     expect(lastControl!.loading).toBe(false);
     expect(lastControl!.error).toBeNull();
     expect(lastControl!.plan?.id).toBe(1);
     expect(lastControl!.planData?.data.plan_name).toBe('Plan A');
+    expect(lastControl!.weatherProposals).toEqual([]);
   });
 
   it('updates view.control on onError(dto)', () => {
@@ -61,7 +74,8 @@ describe('PlanDetailPresenter', () => {
           error: null,
           plan: null,
           planData: null,
-          varianceActionItemsOnGantt: []
+          varianceActionItemsOnGantt: [],
+          ...emptyWeatherState
         };
       },
       set control(value: PlanDetailViewState) {

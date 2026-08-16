@@ -21,6 +21,7 @@ class StubGanttChartComponent {
   @Input() planType: 'private' | 'public' | 'demo' = 'private';
   @Input() selectedCultivationId: number | null = null;
   @Input() learningOrchestrationAdjust = false;
+  @Input() proposalOverlayBars: unknown[] = [];
 }
 
 @Component({
