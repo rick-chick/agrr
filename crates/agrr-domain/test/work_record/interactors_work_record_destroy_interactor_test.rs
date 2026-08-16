@@ -206,6 +206,8 @@ fn sample_record() -> WorkRecordRead {
         field_cultivation_id: None,
         task_schedule_item_id: None,
         agricultural_task_id: None,
+        fertilize_id: None,
+        pesticide_id: None,
         name: "除草".into(),
         task_type: None,
         actual_date: Date::from_calendar_date(2026, time::Month::January, 1).unwrap(),

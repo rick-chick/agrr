@@ -57,6 +57,32 @@ CREATE TABLE agricultural_tasks (
   created_at TEXT,
   updated_at TEXT
 );
+CREATE TABLE fertilizes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  name TEXT NOT NULL,
+  is_reference INTEGER NOT NULL DEFAULT 0,
+  user_id INTEGER,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE pests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  name TEXT NOT NULL,
+  is_reference INTEGER NOT NULL DEFAULT 0,
+  user_id INTEGER,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE pesticides (
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  name TEXT NOT NULL,
+  crop_id INTEGER NOT NULL,
+  pest_id INTEGER NOT NULL,
+  is_reference INTEGER NOT NULL DEFAULT 0,
+  user_id INTEGER,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
 CREATE TABLE cultivation_plans (
   id INTEGER PRIMARY KEY,
   farm_id INTEGER NOT NULL,
@@ -129,6 +155,8 @@ CREATE TABLE work_records (
   field_cultivation_id INTEGER,
   task_schedule_item_id INTEGER,
   agricultural_task_id INTEGER,
+  fertilize_id INTEGER,
+  pesticide_id INTEGER,
   name TEXT NOT NULL,
   task_type TEXT,
   actual_date TEXT NOT NULL,

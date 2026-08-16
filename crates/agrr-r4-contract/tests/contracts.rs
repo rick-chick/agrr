@@ -14,6 +14,7 @@ use support::{
     seed_masters_crop_with_stages_and_blueprints, seed_reference_crop_with_stage,
     seed_task_schedule_regeneration_plan,
     seed_work_record_plan, set_plan_task_schedule_sync_failed,
+    seed_user_fertilize, seed_user_pesticide,
     set_plan_task_schedule_sync_failed_raw_error, set_user_api_key_scopes, status_and_body,
     upload_ready_work_record_photo, user_id_for_session,
     seed_farm_temperature_chart_completed, seed_farm_temperature_chart_fetching,
@@ -233,6 +234,61 @@ fn post_work_records_from_schedule_item_returns_201() {
     assert!(record["task_schedule_item"].is_object());
     assert!(record.get("gdd_at_actual").is_some());
     assert!(record.get("weather_snapshot").is_some());
+}
+
+#[test]
+fn post_work_records_persists_fertilize_and_pesticide_ids() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    let fertilize_id = seed_user_fertilize(user_id);
+    let pesticide_id = seed_user_pesticide(user_id, seed.crop_id);
+
+    let (status, body) = status_and_body(client.post(
+        &format!("/api/v1/plans/{}/work_records", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "name": "施肥散布",
+                "actual_date": "2026-06-12",
+                "fertilize_id": fertilize_id,
+                "pesticide_id": pesticide_id
+            }
+        })),
+    ));
+    assert_eq!(201, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("create work_record JSON");
+    let record = &json["work_record"];
+    assert_eq!(fertilize_id, record["fertilize_id"].as_i64().unwrap());
+    assert_eq!(pesticide_id, record["pesticide_id"].as_i64().unwrap());
+
+    let record_id = record["id"].as_i64().expect("record id");
+    let patch_path = format!(
+        "/api/v1/plans/{}/work_records/{}",
+        seed.plan_id, record_id
+    );
+    let new_fertilize_id = seed_user_fertilize(user_id);
+    let (patch_status, patch_body) = status_and_body(client.patch(
+        &patch_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": { "fertilize_id": new_fertilize_id }
+        })),
+    ));
+    assert_eq!(200, patch_status, "{patch_body}");
+    let patch_json: serde_json::Value =
+        serde_json::from_str(&patch_body).expect("patch work_record JSON");
+    assert_eq!(
+        new_fertilize_id,
+        patch_json["work_record"]["fertilize_id"].as_i64().unwrap()
+    );
+    assert_eq!(
+        pesticide_id,
+        patch_json["work_record"]["pesticide_id"].as_i64().unwrap()
+    );
 }
 
 #[test]

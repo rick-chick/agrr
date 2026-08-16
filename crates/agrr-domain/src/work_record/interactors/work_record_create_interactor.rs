@@ -133,6 +133,8 @@ where
             agricultural_task_id: input
                 .agricultural_task_id
                 .or_else(|| prefill.as_ref().and_then(|p| p.agricultural_task_id)),
+            fertilize_id: input.fertilize_id,
+            pesticide_id: input.pesticide_id,
             name,
             task_type: input
                 .task_type

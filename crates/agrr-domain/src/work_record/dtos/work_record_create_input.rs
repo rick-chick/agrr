@@ -17,6 +17,8 @@ pub struct WorkRecordCreateInput {
     pub task_schedule_item_id: Option<i64>,
     pub field_cultivation_id: Option<i64>,
     pub agricultural_task_id: Option<i64>,
+    pub fertilize_id: Option<i64>,
+    pub pesticide_id: Option<i64>,
     pub name: Option<String>,
     pub task_type: Option<String>,
     pub actual_date: Date,
@@ -34,6 +36,8 @@ impl WorkRecordCreateInput {
         let task_schedule_item_id = parse_optional_i64(params.get("task_schedule_item_id"))?;
         let field_cultivation_id = parse_optional_i64(params.get("field_cultivation_id"))?;
         let agricultural_task_id = parse_optional_i64(params.get("agricultural_task_id"))?;
+        let fertilize_id = parse_optional_i64(params.get("fertilize_id"))?;
+        let pesticide_id = parse_optional_i64(params.get("pesticide_id"))?;
         let name = parse_optional_string(params.get("name"));
         let task_type = parse_optional_string(params.get("task_type"));
         let actual_date = coerce_actual_date(params.get("actual_date"), clock)?;
@@ -46,6 +50,8 @@ impl WorkRecordCreateInput {
             task_schedule_item_id,
             field_cultivation_id,
             agricultural_task_id,
+            fertilize_id,
+            pesticide_id,
             name,
             task_type,
             actual_date,

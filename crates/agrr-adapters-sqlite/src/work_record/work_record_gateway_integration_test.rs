@@ -10,6 +10,7 @@ use agrr_domain::work_record::gateways::{
     WorkRecordGateway,
 };
 use rust_decimal::Decimal;
+use rusqlite::params;
 use std::str::FromStr;
 use time::{Date, OffsetDateTime};
 
@@ -21,6 +22,8 @@ fn sample_create_attrs(
         field_cultivation_id: Some(seed.field_cultivation_id),
         task_schedule_item_id: Some(seed.task_schedule_item_id),
         agricultural_task_id: Some(seed.agricultural_task_id),
+        fertilize_id: None,
+        pesticide_id: None,
         name: "除草作業".into(),
         task_type: Some("field_work".into()),
         actual_date: Date::from_calendar_date(2026, time::Month::June, 12).unwrap(),
@@ -140,6 +143,8 @@ fn work_record_gateway_list_omits_field_and_crop_name_without_field_cultivation(
                 field_cultivation_id: None,
                 task_schedule_item_id: None,
                 agricultural_task_id: Some(seed.agricultural_task_id),
+                fertilize_id: None,
+                pesticide_id: None,
                 name: "手入力作業".into(),
                 task_type: Some("field_work".into()),
                 actual_date: Date::from_calendar_date(2026, time::Month::June, 15).unwrap(),
@@ -173,4 +178,70 @@ fn work_record_gateway_list_omits_field_and_crop_name_without_field_cultivation(
         .expect("ad-hoc record in list");
     assert!(record.field_name.is_none());
     assert!(record.crop_name.is_none());
+}
+
+#[test]
+fn work_record_gateway_persists_fertilize_and_pesticide_ids() {
+    let pool = work_record_integration_pool();
+    let seed = seed_work_record_crud(&pool);
+    let gateway = WorkRecordSqliteGateway::new(pool.clone());
+
+    pool.with_write(|conn| {
+        conn.execute(
+            "INSERT INTO fertilizes (name, is_reference, user_id, created_at, updated_at)
+             VALUES ('尿素', 0, 42, datetime('now'), datetime('now'))",
+            [],
+        )?;
+        conn.execute(
+            "INSERT INTO pests (name, is_reference, user_id, created_at, updated_at)
+             VALUES ('テスト害虫', 0, 42, datetime('now'), datetime('now'))",
+            [],
+        )?;
+        let pest_id = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO pesticides (name, crop_id, pest_id, is_reference, user_id, created_at, updated_at)
+             VALUES ('殺虫剤A', 100, ?1, 0, 42, datetime('now'), datetime('now'))",
+            params![pest_id],
+        )?;
+        Ok(())
+    })
+    .unwrap();
+
+    let (fertilize_id, pesticide_id) = pool
+        .with_read(|conn| {
+            let fertilize_id = conn.query_row(
+                "SELECT id FROM fertilizes ORDER BY id DESC LIMIT 1",
+                [],
+                |r| r.get(0),
+            )?;
+            let pesticide_id = conn.query_row(
+                "SELECT id FROM pesticides ORDER BY id DESC LIMIT 1",
+                [],
+                |r| r.get(0),
+            )?;
+            Ok((fertilize_id, pesticide_id))
+        })
+        .unwrap();
+
+    let mut attrs = sample_create_attrs(&seed);
+    attrs.fertilize_id = Some(fertilize_id);
+    attrs.pesticide_id = Some(pesticide_id);
+
+    let created = gateway.create(seed.plan_id, attrs).expect("create");
+    assert_eq!(Some(fertilize_id), created.fertilize_id);
+    assert_eq!(Some(pesticide_id), created.pesticide_id);
+
+    let updated = gateway
+        .update(
+            seed.plan_id,
+            created.id,
+            &WorkRecordUpdateInput {
+                pesticide_id: Some(fertilize_id),
+                ..Default::default()
+            },
+            None,
+            OffsetDateTime::now_utc(),
+        )
+        .expect("update");
+    assert_eq!(Some(fertilize_id), updated.pesticide_id);
 }

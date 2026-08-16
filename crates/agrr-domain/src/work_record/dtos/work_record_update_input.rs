@@ -14,6 +14,8 @@ use crate::work_record::dtos::work_record_create_input::record_invalid_field;
 /// Partial update payload for an existing work record.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct WorkRecordUpdateInput {
+    pub fertilize_id: Option<i64>,
+    pub pesticide_id: Option<i64>,
     pub name: Option<String>,
     pub actual_date: Option<Date>,
     pub amount: Option<Decimal>,
@@ -34,6 +36,8 @@ impl WorkRecordUpdateInput {
             ));
         }
 
+        let fertilize_id = parse_optional_i64(params.get("fertilize_id"))?;
+        let pesticide_id = parse_optional_i64(params.get("pesticide_id"))?;
         let name = parse_optional_string(params.get("name"));
         let actual_date = match params.get("actual_date") {
             None | Some(Value::Null) => None,
@@ -50,6 +54,8 @@ impl WorkRecordUpdateInput {
         let notes = parse_optional_string(params.get("notes"));
 
         Ok(Self {
+            fertilize_id,
+            pesticide_id,
             name,
             actual_date,
             amount,

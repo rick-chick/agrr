@@ -85,6 +85,8 @@ fn cultivation_plan_undo_restores_task_schedule_items_and_work_records() {
                 field_cultivation_id: Some(seed.field_cultivation_id),
                 task_schedule_item_id: Some(seed.task_schedule_item_id),
                 agricultural_task_id: Some(seed.agricultural_task_id),
+                fertilize_id: None,
+                pesticide_id: None,
                 name: "実績".into(),
                 task_type: Some("field_work".into()),
                 actual_date: Date::from_calendar_date(2026, time::Month::June, 2).unwrap(),
