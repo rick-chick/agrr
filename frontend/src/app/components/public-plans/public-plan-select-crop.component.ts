@@ -195,10 +195,14 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
       return;
     }
     const pendingCropSlug = this.publicPlanStore.state.pendingCropSlug;
+    const pendingCropId = this.publicPlanStore.state.pendingCropId;
     this.resetStateUseCase.execute({});
     this.publicPlanStore.setFarm(farm);
     if (pendingCropSlug) {
       this.publicPlanStore.setPendingCropSlug(pendingCropSlug);
+    }
+    if (pendingCropId != null) {
+      this.publicPlanStore.setPendingCropId(pendingCropId);
     }
     this.presenter.setView(this);
     this.selectedCrops = [...this.publicPlanStore.state.selectedCrops];
@@ -207,6 +211,18 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   }
 
   private applyPendingCropPreselection(crops: Crop[]): void {
+    const cropId = this.publicPlanStore.state.pendingCropId;
+    if (cropId != null && this.selectedCropIds.size === 0) {
+      const cropById = crops.find((c) => c.id === cropId);
+      this.publicPlanStore.setPendingCropId(null);
+      if (cropById) {
+        this.selectedCropIds = new Set([cropById.id]);
+        this.selectedCrops = [cropById];
+        this.publicPlanStore.setSelectedCrops(this.selectedCrops);
+        return;
+      }
+    }
+
     const slug = this.publicPlanStore.state.pendingCropSlug;
     if (!slug || this.selectedCropIds.size > 0) {
       return;

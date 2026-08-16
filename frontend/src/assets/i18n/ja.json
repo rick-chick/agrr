@@ -2310,7 +2310,6 @@
       "description": "農場別の計画を管理",
       "new_plan": "新しい計画を追加",
       "try_public_plans": "無料プランから始める",
-      "public_plan_handoff": "公開プランの続きを見る",
       "no_plans": "まだ計画がありません",
       "no_plans_hint": "新しい計画を作成して栽培スケジュールを最適化しましょう。",
       "retry": "再読み込み",
@@ -2344,7 +2343,8 @@
         "expand": "展開",
         "collapse": "折りたたむ",
         "compare_variance": "乖離を比較"
-      }
+      },
+      "public_plan_handoff": "公開プランの続きを見る"
     },
     "new": {
       "breadcrumb": "新規作成",
@@ -2475,13 +2475,6 @@
         "manual_hint": "提案を確認し、準備ができたら手動で adjust または再最適化を検討してください。",
         "review_link": "振り返りタブで提案を確認"
       },
-      "post_save_onboarding": {
-        "message": "作付け計画を保存しました",
-        "hint": "作業予定を確認し、圃場の作業記録を始めて計画を活用しましょう。",
-        "task_schedule_link": "作業予定を確認",
-        "work_link": "作業記録を始める",
-        "dismiss": "閉じる"
-      },
       "weather_reschedule_proposal": {
         "title": "天候リスケ提案",
         "delay_days": "延期日数: {{days}}日",
@@ -2492,6 +2485,13 @@
       "reoptimization_banner": {
         "message": "マスタ更新後は再最適化を推奨します",
         "hint": "ガントで栽培バーをドラッグして配置を調整してください。ドロップ後に再最適化が開始されます。"
+      },
+      "post_save_onboarding": {
+        "message": "作付け計画を保存しました",
+        "hint": "作業予定を確認し、圃場の作業記録を始めて計画を活用しましょう。",
+        "task_schedule_link": "作業予定を確認",
+        "work_link": "作業記録を始める",
+        "dismiss": "閉じる"
       }
     },
     "task_schedules": {
@@ -3279,6 +3279,7 @@
     "work_log_overdue_aria": "作業記録、期限超過 {{count}} 件",
     "menu_masters": "マスタデータ",
     "new_plan": "作付け計画を作成",
+    "entry_schedule": "作付け時期の目安",
     "reports": "レポート",
     "menu_more": "その他",
     "home": "ホーム",
@@ -3318,6 +3319,7 @@
         "title": "🌱 農業をもっとスマートに",
         "subtitle_html": "気象とGDDで、作付け計画を可視化。",
         "cta_scroll_demo": "操作してみる",
+        "cta_entry_schedule": "作付け時期の目安を見る",
         "cta_footer_link": "計画を作成"
       },
       "demo": {
@@ -4135,6 +4137,9 @@
     "timeline": "月別の流れ",
     "nextTask": "次の作業",
     "nextTaskPlaceholder": "次の作業候補はまだありません。",
-    "stages": "成長段階"
+    "stages": "成長段階",
+    "ctaSectionTitle": "次のステップ",
+    "ctaPublicPlan": "この作物で無料計画を作る",
+    "ctaCropSetup": "作物マスタを整備する"
   }
 }
