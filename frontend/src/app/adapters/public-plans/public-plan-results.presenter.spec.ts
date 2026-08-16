@@ -24,6 +24,7 @@ describe('PublicPlanResultsPresenter', () => {
           loading: true,
           error: null,
           data: null,
+          savedPrivatePlanId: null,
           pendingErrorFlash: null,
           pendingSuccessFlash: null,
           pendingNavigation: null
@@ -41,14 +42,15 @@ describe('PublicPlanResultsPresenter', () => {
   });
 
   describe('SavePublicPlanOutputPort', () => {
-    it('queues navigation to plan detail when cultivation_plan_id is returned', () => {
+    it('stores saved private plan id and success flash when cultivation_plan_id is returned', () => {
       presenter.present({
         message: 'Plan saved successfully',
         plan_reused: false,
         cultivation_plan_id: 99
       });
 
-      expect(lastControl!.pendingNavigation).toEqual({ commands: ['/plans', 99] });
+      expect(lastControl!.savedPrivatePlanId).toBe(99);
+      expect(lastControl!.pendingNavigation).toBeNull();
       expect(lastControl!.pendingSuccessFlash).toEqual({
         type: 'success',
         text: 'Plan saved successfully'
@@ -56,24 +58,26 @@ describe('PublicPlanResultsPresenter', () => {
       expect(consumePlanPostSaveOnboardingPending(99)).toBe(true);
     });
 
-    it('queues navigation to plans list when cultivation_plan_id is absent', () => {
+    it('stores null saved private plan id when cultivation_plan_id is absent', () => {
       presenter.present({ message: 'Plan saved successfully', plan_reused: false });
 
-      expect(lastControl!.pendingNavigation).toEqual({ commands: ['/plans'] });
+      expect(lastControl!.savedPrivatePlanId).toBeNull();
+      expect(lastControl!.pendingNavigation).toBeNull();
       expect(lastControl!.pendingSuccessFlash).toEqual({
         type: 'success',
         text: 'Plan saved successfully'
       });
     });
 
-    it('queues navigation to existing plan detail when plan_reused', () => {
+    it('stores saved private plan id when plan_reused', () => {
       presenter.present({
         message: 'Plan already exists',
         plan_reused: true,
         cultivation_plan_id: 42
       });
 
-      expect(lastControl!.pendingNavigation).toEqual({ commands: ['/plans', 42] });
+      expect(lastControl!.savedPrivatePlanId).toBe(42);
+      expect(lastControl!.pendingNavigation).toBeNull();
       expect(lastControl!.pendingSuccessFlash).toEqual({
         type: 'success',
         text: 'Plan already exists'
@@ -85,6 +89,7 @@ describe('PublicPlanResultsPresenter', () => {
         loading: false,
         error: null,
         data: { id: 1 } as never,
+        savedPrivatePlanId: null,
         pendingErrorFlash: null,
         pendingSuccessFlash: null,
         pendingNavigation: null

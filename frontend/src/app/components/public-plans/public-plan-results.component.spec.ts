@@ -1,3 +1,4 @@
+import { Component, Input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
@@ -13,6 +14,17 @@ import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
+import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
+
+@Component({
+  selector: 'app-plan-gantt-climate-shell',
+  standalone: true,
+  template: ''
+})
+class StubPlanGanttClimateShellComponent {
+  @Input() data: unknown;
+  @Input() planType: 'private' | 'public' | 'demo' = 'public';
+}
 
 describe('PublicPlanResultsComponent', () => {
   let component: PublicPlanResultsComponent;
@@ -88,6 +100,7 @@ describe('PublicPlanResultsComponent', () => {
       loading: false,
       error: null,
       data: null,
+      savedPrivatePlanId: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
       pendingNavigation: null
@@ -260,6 +273,7 @@ describe('PublicPlanResultsComponent (template)', () => {
       loading: false,
       error: 'common.api_error.not_found',
       data: null,
+      savedPrivatePlanId: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
       pendingNavigation: null
@@ -271,5 +285,140 @@ describe('PublicPlanResultsComponent (template)', () => {
     expect(errors[0].textContent).toContain('リソースが見つかりません');
     expect(fixture.nativeElement.textContent).not.toContain('404');
     expect(fixture.nativeElement.textContent).not.toContain('Http failure');
+  });
+
+  it('shows private value preview and next steps when plan data is loaded', async () => {
+    const { TestBed } = await import('@angular/core/testing');
+    const { provideRouter } = await import('@angular/router');
+    const { TranslateModule, TranslateService } = await import('@ngx-translate/core');
+    const { PublicPlanResultsComponent } = await import('./public-plan-results.component');
+    const { LoadPublicPlanResultsUseCase } = await import(
+      '../../usecase/public-plans/load-public-plan-results.usecase'
+    );
+    const { SavePublicPlanUseCase } = await import('../../usecase/public-plans/save-public-plan.usecase');
+    const { PublicPlanResultsPresenter } = await import(
+      '../../usecase/public-plans/public-plan-results.providers'
+    );
+    const { PublicPlanStore } = await import('../../services/public-plans/public-plan-store.service');
+    const { FlashMessageService } = await import('../../services/flash-message.service');
+    const { AuthService } = await import('../../services/auth.service');
+    const { AppSeoMetaService } = await import('../../core/seo/app-seo-meta.service');
+    const { ActivatedRoute } = await import('@angular/router');
+    const { of } = await import('rxjs');
+    const { vi } = await import('vitest');
+
+    await TestBed.configureTestingModule({
+      imports: [PublicPlanResultsComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        { provide: LoadPublicPlanResultsUseCase, useValue: { execute: vi.fn() } },
+        { provide: SavePublicPlanUseCase, useValue: { execute: vi.fn() } },
+        { provide: PublicPlanResultsPresenter, useValue: { setView: vi.fn() } },
+        {
+          provide: PublicPlanStore,
+          useValue: { state: { planId: 1, farm: { name: 'Test Farm', region: 'jp' } } }
+        },
+        { provide: FlashMessageService, useValue: { show: vi.fn() } },
+        {
+          provide: AuthService,
+          useValue: { user: vi.fn(() => null), loadCurrentUser: vi.fn(() => of(null)) }
+        },
+        {
+          provide: AppSeoMetaService,
+          useValue: { refreshPublicPlanResultsMeta: vi.fn() }
+        },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: { get: vi.fn().mockReturnValue('1') } } }
+        }
+      ]
+    })
+      .overrideComponent(PublicPlanResultsComponent, {
+        remove: { imports: [PlanGanttClimateShellComponent] },
+        add: { imports: [StubPlanGanttClimateShellComponent] }
+      })
+      .compileComponents();
+
+    const fixture = TestBed.createComponent(PublicPlanResultsComponent);
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', {
+      'public_plans.title': '計画',
+      'public_plans.breadcrumb_root': '無料作付け計画',
+      'public_plans.results.breadcrumb': '結果',
+      'public_plans.results.private_value_preview.title': 'ログイン後に使える機能',
+      'public_plans.results.private_value_preview.lead': 'マイプランに保存すると利用できます。',
+      'public_plans.results.private_value_preview.weather_reschedule.title': '天候リスケ',
+      'public_plans.results.private_value_preview.weather_reschedule.description': '天候提案',
+      'public_plans.results.private_value_preview.learn_loop.title': '学習ループ',
+      'public_plans.results.private_value_preview.learn_loop.description': '学習',
+      'public_plans.results.private_value_preview.work_gdd_comparison.title': '作業 GDD 比較',
+      'public_plans.results.private_value_preview.work_gdd_comparison.description': 'GDD比較',
+      'public_plans.results.next_steps.title': '次のステップ',
+      'public_plans.results.next_steps.lead': '保存後はこの順で進めましょう。',
+      'public_plans.results.next_steps.step_label.1': 'ステップ 1',
+      'public_plans.results.next_steps.step_label.2': 'ステップ 2',
+      'public_plans.results.next_steps.step_label.3': 'ステップ 3',
+      'public_plans.results.next_steps.save.title': 'マイプランに保存',
+      'public_plans.results.next_steps.save.description': '取り込み',
+      'public_plans.results.next_steps.task_schedule.title': '作業予定を確認',
+      'public_plans.results.next_steps.task_schedule.description': '確認',
+      'public_plans.results.next_steps.work_record.title': '作業を記録',
+      'public_plans.results.next_steps.work_record.description': '記録',
+      'public_plans.results.next_steps.cta.login_save': 'ログインして保存',
+      'public_plans.results.next_steps.after_save_hint': '保存後に利用できます',
+      'public_plans.save.button': 'マイプランに保存'
+    });
+    translate.setDefaultLang('ja');
+    translate.use('ja');
+
+    fixture.componentInstance.control = {
+      loading: false,
+      error: null,
+      data: {
+        success: true,
+        data: {
+          id: 1,
+          plan_year: 2026,
+          plan_name: 'Test',
+          status: 'active',
+          total_area: 100,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, field_id: 1, name: 'F1', area: 100, daily_fixed_cost: 0 }],
+          crops: [],
+          cultivations: [
+            {
+              id: 1,
+              field_id: 1,
+              field_name: 'F1',
+              crop_id: 1,
+              crop_name: 'C',
+              area: 100,
+              start_date: '2026-01-01',
+              completion_date: '2026-06-01',
+              cultivation_days: 150,
+              estimated_cost: 0,
+              revenue: 0,
+              profit: 0,
+              status: 'active'
+            }
+          ]
+        },
+        total_profit: 0,
+        total_revenue: 0,
+        total_cost: 0
+      } as never,
+      savedPrivatePlanId: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-public-plan-private-value-preview')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-public-plan-results-next-steps')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('ログイン後に使える機能');
+    expect(fixture.nativeElement.textContent).toContain('次のステップ');
+    expect(fixture.nativeElement.textContent).toContain('天候リスケ');
   });
 });

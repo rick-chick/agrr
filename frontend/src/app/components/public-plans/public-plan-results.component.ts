@@ -26,11 +26,14 @@ import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
+import { PublicPlanPrivateValuePreviewComponent } from './public-plan-private-value-preview.component';
+import { PublicPlanResultsNextStepsComponent } from './public-plan-results-next-steps.component';
 
 const initialControl: PublicPlanResultsViewState = {
   loading: true,
   error: null,
   data: null,
+  savedPrivatePlanId: null,
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
   pendingNavigation: null
@@ -39,7 +42,15 @@ const initialControl: PublicPlanResultsViewState = {
 @Component({
   selector: 'app-public-plan-results',
   standalone: true,
-  imports: [CommonModule, PlanGanttClimateShellComponent, TranslateModule, RouterLink, PublicPlanContextHeaderComponent],
+  imports: [
+    CommonModule,
+    PlanGanttClimateShellComponent,
+    TranslateModule,
+    RouterLink,
+    PublicPlanContextHeaderComponent,
+    PublicPlanPrivateValuePreviewComponent,
+    PublicPlanResultsNextStepsComponent
+  ],
   providers: [
     ...PUBLIC_PLAN_RESULTS_PROVIDERS,
     ...GANTT_CHART_API_PROVIDERS,
@@ -57,7 +68,11 @@ const initialControl: PublicPlanResultsViewState = {
         } @else if (control.error) {
           <p class="error-message">{{ control.error | translate }}</p>
         } @else if (control.data) {
-          <!-- 計画完成サマリー（.gantt-results-header）は意図的に非表示。ngx-translate は %{count} 非対応のため生表示になっていた。 -->
+          <app-public-plan-private-value-preview />
+          <app-public-plan-results-next-steps
+            [isLoggedIn]="auth.user() !== null"
+            [savedPrivatePlanId]="control.savedPrivatePlanId"
+          />
 
           <div class="public-plan-results__body plan-detail-surface">
             <app-plan-gantt-climate-shell [data]="control.data" [planType]="planType">
