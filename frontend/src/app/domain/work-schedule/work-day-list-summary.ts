@@ -32,7 +32,11 @@ function daysOverdue(scheduled: string, today: string): number {
 export function flattenFieldScheduleItems(
   field: FieldSchedule
 ): Omit<WorkDayListRowDto, 'recordedToday'>[] {
-  const categories = [...field.schedules.general, ...field.schedules.fertilizer];
+  const categories = [
+    ...field.schedules.general,
+    ...field.schedules.fertilizer,
+    ...field.schedules.pest_control
+  ];
   return categories.map((item) => ({
     item,
     fieldName: field.name,

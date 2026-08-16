@@ -74,6 +74,39 @@ describe('flattenFieldScheduleItems', () => {
     });
     expect(rows[1].item.name).toBe('追肥');
   });
+
+  it('includes pest_control schedules alongside general and fertilizer', () => {
+    const rows = flattenFieldScheduleItems({
+      id: 1,
+      name: '第1圃場',
+      crop_name: 'トマト',
+      area_sqm: 100,
+      field_cultivation_id: 10,
+      crop_id: 1,
+      task_options: [],
+      schedules: {
+        general: [item({ item_id: 1, scheduled_date: '2026-06-12' })],
+        fertilizer: [],
+        pest_control: [
+          item({
+            item_id: 2,
+            scheduled_date: '2026-06-14',
+            name: '予防散布',
+            category: 'pest_control',
+            task_type: 'preventive_spray'
+          })
+        ],
+        unscheduled: []
+      }
+    });
+
+    expect(rows).toHaveLength(2);
+    expect(rows[1]).toMatchObject({
+      item: { item_id: 2, category: 'pest_control', name: '予防散布' },
+      fieldName: '第1圃場',
+      cropName: 'トマト'
+    });
+  });
 });
 
 describe('groupWorkDayListRows', () => {
