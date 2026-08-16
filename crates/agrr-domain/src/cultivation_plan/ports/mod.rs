@@ -36,7 +36,7 @@ pub use public_plan_save_ports::{
 pub use retrieve_cultivation_plan_output_port::RetrieveCultivationPlanOutputPort;
 pub use task_schedule_ports::{
     PlanVarianceLearningProposalProgressUpdateOutputPort, PlanVarianceLearningReadOutputPort,
-    PlanVsActualSummaryOutputPort,
+    PlanVsActualSummaryOutputPort, WeatherRescheduleProposalsListOutputPort,
     PrivatePlanInitializeFromSelectionOutputPort, RegenerateTaskScheduleOutputPort,
     TaskScheduleItemMutationOutputPort, TaskScheduleTimelineOutputPort,
     UserAgriculturalTaskMappingPort,
