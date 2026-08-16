@@ -3355,7 +3355,8 @@
         "title": "🌱 農業をもっとスマートに",
         "subtitle_html": "気象とGDDで、作付け計画を可視化。",
         "cta_scroll_demo": "操作してみる",
-        "cta_footer_link": "計画を作成"
+        "cta_footer_link": "計画を作成",
+        "cta_entry_schedule": "作付け時期の目安を見る"
       },
       "demo": {
         "hints_aria": "操作のヒント",
@@ -4172,6 +4173,9 @@
     "timeline": "月別の流れ",
     "nextTask": "次の作業",
     "nextTaskPlaceholder": "次の作業候補はまだありません。",
-    "stages": "成長段階"
+    "stages": "成長段階",
+    "ctaSectionTitle": "次のステップ",
+    "ctaPublicPlan": "この作物で無料計画を作る",
+    "ctaCropSetup": "作物マスタを整備する"
   }
 }

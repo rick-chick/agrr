@@ -1,3 +1,4 @@
+import { Component, Input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
@@ -13,6 +14,17 @@ import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
+import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
+
+@Component({
+  selector: 'app-plan-gantt-climate-shell',
+  standalone: true,
+  template: ''
+})
+class StubPlanGanttClimateShellComponent {
+  @Input() data: unknown;
+  @Input() planType: 'private' | 'public' | 'demo' = 'public';
+}
 
 describe('PublicPlanResultsComponent', () => {
   let component: PublicPlanResultsComponent;
@@ -320,7 +332,12 @@ describe('PublicPlanResultsComponent (template)', () => {
           useValue: { snapshot: { queryParamMap: { get: vi.fn().mockReturnValue('1') } } }
         }
       ]
-    }).compileComponents();
+    })
+      .overrideComponent(PublicPlanResultsComponent, {
+        remove: { imports: [PlanGanttClimateShellComponent] },
+        add: { imports: [StubPlanGanttClimateShellComponent] }
+      })
+      .compileComponents();
 
     const fixture = TestBed.createComponent(PublicPlanResultsComponent);
     const translate = TestBed.inject(TranslateService);

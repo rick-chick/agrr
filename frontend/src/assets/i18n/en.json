@@ -370,7 +370,8 @@
         "title": "🌱 Make Agriculture Smarter",
         "subtitle_html": "Visualize crop plans with weather and GDD.",
         "cta_scroll_demo": "Try it out",
-        "cta_footer_link": "Create plan"
+        "cta_footer_link": "Create plan",
+        "cta_entry_schedule": "View sowing guide"
       },
       "demo": {
         "hints_aria": "Interaction hints",
@@ -4136,6 +4137,9 @@
     "timeline": "Monthly timeline",
     "nextTask": "Next task",
     "nextTaskPlaceholder": "No next task candidate yet.",
-    "stages": "Growth stages"
+    "stages": "Growth stages",
+    "ctaSectionTitle": "Next steps",
+    "ctaPublicPlan": "Create a free plan with this crop",
+    "ctaCropSetup": "Improve crop master data"
   }
 }

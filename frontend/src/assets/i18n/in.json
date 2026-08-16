@@ -3042,7 +3042,8 @@
         "title": "🌱 कृषि को और स्मार्ट बनाएं",
         "subtitle_html": "मौसम और GDD से फसल योजना को विज़ुअलाइज़ करें।",
         "cta_scroll_demo": "आज़माएं",
-        "cta_footer_link": "योजना बनाएं"
+        "cta_footer_link": "योजना बनाएं",
+        "cta_entry_schedule": "बुवाई मार्गदर्शक देखें"
       },
       "demo": {
         "hints_aria": "संचालन संकेत",
@@ -3885,6 +3886,9 @@
     "timeline": "मासिक प्रवाह",
     "nextTask": "अगला कार्य",
     "nextTaskPlaceholder": "अभी कोई अगला कार्य उम्मीदवार नहीं है।",
-    "stages": "विकास अवस्थाएँ"
+    "stages": "विकास अवस्थाएँ",
+    "ctaSectionTitle": "अगले कदम",
+    "ctaPublicPlan": "इस फसल से मुफ्त योजना बनाएं",
+    "ctaCropSetup": "फसल मास्टर डेटा सुधारें"
   }
 }
