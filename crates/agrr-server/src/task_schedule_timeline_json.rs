@@ -347,6 +347,8 @@ fn work_record_payload(record: &TaskScheduleTimelineWorkRecordSummaryRead) -> Va
         "actual_date": record.actual_date,
         "notes": record.notes,
         "gdd_at_actual": optional_f64_json(record.gdd_at_actual),
+        "amount": optional_f64_as_string(record.amount),
+        "amount_unit": record.amount_unit,
         "fertilize_id": record.fertilize_id,
         "pesticide_id": record.pesticide_id,
     })
@@ -688,6 +690,8 @@ mod tests {
                 actual_date: "2026-06-08".into(),
                 notes: None,
                 gdd_at_actual: Some(130.5),
+                amount: None,
+                amount_unit: None,
                 fertilize_id: None,
                 pesticide_id: None,
             }],

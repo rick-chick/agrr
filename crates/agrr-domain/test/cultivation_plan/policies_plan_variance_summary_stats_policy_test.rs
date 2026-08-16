@@ -26,6 +26,7 @@ fn counts_unrecorded_and_threshold_items() {
         unrecorded_count: 3,
         structured_unrecorded_count: 0,
         categories: vec![],
+        amount_group_summaries: vec![],
         top_variance_items: vec![],
         stage_gdd_calibration_proposals: vec![],
         action_required_items: vec![

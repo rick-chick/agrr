@@ -62,6 +62,8 @@ fn sample_item_with_work_record(
             actual_date: date.to_string(),
             notes: None,
             gdd_at_actual,
+            amount: None,
+            amount_unit: None,
             fertilize_id,
             pesticide_id,
         }])
@@ -372,4 +374,180 @@ fn summary_counts_structured_unrecorded_for_fertilizer_and_pest_control_only() {
     let summary = PlanVsActualMapper::summary_from_snapshot(&snapshot, 5);
 
     assert_eq!(2, summary.structured_unrecorded_count);
+}
+
+fn sample_item_with_amounts(
+    id: i64,
+    category: &str,
+    task_type: &str,
+    stage_order: Option<i32>,
+    stage_name: Option<&str>,
+    planned: Option<f64>,
+    actual: Option<f64>,
+    amount_unit: Option<&str>,
+) -> TaskScheduleTimelineScheduleItemRead {
+    let work_records = if actual.is_some() {
+        vec![TaskScheduleTimelineWorkRecordSummaryRead {
+            id: id * 10,
+            actual_date: "2026-06-02".into(),
+            notes: None,
+            gdd_at_actual: None,
+            amount: actual,
+            amount_unit: amount_unit.map(str::to_string),
+            fertilize_id: if category == "fertilizer" {
+                Some(1)
+            } else {
+                None
+            },
+            pesticide_id: if category == "pest_control" {
+                Some(1)
+            } else {
+                None
+            },
+        }]
+    } else {
+        vec![]
+    };
+
+    TaskScheduleTimelineScheduleItemRead {
+        id,
+        name: format!("Task {id}"),
+        task_type: task_type.into(),
+        scheduled_date: Some("2026-06-01".into()),
+        stage_name: stage_name.map(str::to_string),
+        stage_order,
+        gdd_trigger: None,
+        gdd_tolerance: None,
+        priority: None,
+        source: "agrr".into(),
+        weather_dependency: None,
+        time_per_sqm: None,
+        amount: planned,
+        amount_unit: amount_unit.map(str::to_string),
+        status: "planned".into(),
+        agricultural_task_id: None,
+        field_cultivation_id: 100,
+        agricultural_task: None,
+        rescheduled_at: None,
+        cancelled_at: None,
+        completed: !work_records.is_empty(),
+        work_records,
+    }
+}
+
+#[test]
+fn item_read_computes_amount_planned_actual_and_delta() {
+    let item = sample_item_with_amounts(
+        1,
+        "fertilizer",
+        "fertilize",
+        Some(1),
+        Some("Vegetative"),
+        Some(2.0),
+        Some(2.5),
+        Some("kg"),
+    );
+    let read = PlanVsActualMapper::item_read(&item, "fertilizer");
+
+    assert_eq!(Some(2.0), read.amount_planned);
+    assert_eq!(Some(2.5), read.amount_actual);
+    assert_eq!(Some(0.5), read.amount_delta);
+    assert_eq!(Some("kg"), read.amount_unit.as_deref());
+}
+
+#[test]
+fn summary_aggregates_average_amount_delta_by_category_stage_and_task_type() {
+    let snapshot = TaskScheduleTimelineSnapshot {
+        plan: sample_snapshot(vec![]).plan,
+        fields: vec![TaskScheduleTimelineFieldRead {
+            id: 10,
+            name: "F1".into(),
+            crop_name: "Tomato".into(),
+            area_sqm: 50.0,
+            field_cultivation_id: 100,
+            crop_id: 42,
+            cultivation_start_date: None,
+            cultivation_end_date: None,
+            task_options: vec![],
+            schedules: vec![
+                TaskScheduleTimelineScheduleRead {
+                    category: "fertilizer".into(),
+                    items: vec![
+                        sample_item_with_amounts(
+                            1,
+                            "fertilizer",
+                            "fertilize",
+                            Some(1),
+                            Some("Vegetative"),
+                            Some(2.0),
+                            Some(2.5),
+                            Some("kg"),
+                        ),
+                        sample_item_with_amounts(
+                            2,
+                            "fertilizer",
+                            "fertilize",
+                            Some(1),
+                            Some("Vegetative"),
+                            Some(3.0),
+                            Some(2.0),
+                            Some("kg"),
+                        ),
+                    ],
+                },
+                TaskScheduleTimelineScheduleRead {
+                    category: "pest_control".into(),
+                    items: vec![sample_item_with_amounts(
+                        3,
+                        "pest_control",
+                        "spray",
+                        Some(2),
+                        Some("Flowering"),
+                        Some(1.0),
+                        Some(1.5),
+                        Some("L"),
+                    )],
+                },
+                TaskScheduleTimelineScheduleRead {
+                    category: "general".into(),
+                    items: vec![sample_item_with_amounts(
+                        4,
+                        "general",
+                        "field_work",
+                        None,
+                        None,
+                        Some(5.0),
+                        Some(6.0),
+                        Some("h"),
+                    )],
+                },
+            ],
+        }],
+        scheduled_dates: vec![Date::parse("2026-06-02", &time::format_description::well_known::Iso8601::DATE)
+            .expect("date")],
+    };
+
+    let summary = PlanVsActualMapper::summary_from_snapshot(&snapshot, 5);
+
+    assert_eq!(2, summary.amount_group_summaries.len());
+    let fertilizer = summary
+        .amount_group_summaries
+        .iter()
+        .find(|group| group.category == "fertilizer")
+        .expect("fertilizer group");
+    assert_eq!(Some(1), fertilizer.stage_order);
+    assert_eq!("fertilize", fertilizer.task_type);
+    assert_eq!(2, fertilizer.recorded_item_count);
+    assert!((fertilizer.average_amount_delta.unwrap() - (-0.25)).abs() < f64::EPSILON);
+    assert_eq!(Some("kg"), fertilizer.amount_unit.as_deref());
+
+    let pest = summary
+        .amount_group_summaries
+        .iter()
+        .find(|group| group.category == "pest_control")
+        .expect("pest group");
+    assert_eq!(Some(2), pest.stage_order);
+    assert_eq!("spray", pest.task_type);
+    assert_eq!(Some(0.5), pest.average_amount_delta);
+    assert_eq!(Some("L"), pest.amount_unit.as_deref());
 }

@@ -14,6 +14,10 @@ fn sample_item(delta_days: Option<i64>, gdd_delta: Option<f64>) -> PlanVsActualI
         gdd_trigger: Some(100.0),
         gdd_at_actual: Some(110.0),
         gdd_delta,
+        amount_planned: None,
+        amount_actual: None,
+        amount_delta: None,
+        amount_unit: None,
     }
 }
 
