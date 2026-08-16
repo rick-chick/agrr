@@ -36,10 +36,19 @@ import { buildPlanDetailAdjustNavigation } from '../../domain/plans/learn-master
               <dt>{{ 'plans.learn.post_master.required_gdd_label' | translate }}</dt>
               <dd>{{ formatRequiredGdd(payload.appliedRequiredGdd) }}</dd>
             </div>
+          } @else if (payload.kind === 'bp_amount') {
+            <div class="learn-post-master__detail-row">
+              <dt>{{ 'plans.learn.post_master.category_label' | translate }}</dt>
+              <dd>{{ categoryLabel(payload.category, payload.kind) | translate }}</dd>
+            </div>
+            <div class="learn-post-master__detail-row">
+              <dt>{{ 'plans.learn.post_master.task_type_label' | translate }}</dt>
+              <dd>{{ taskTypeLabel(payload.taskType) | translate }}</dd>
+            </div>
           } @else {
             <div class="learn-post-master__detail-row">
               <dt>{{ 'plans.learn.post_master.category_label' | translate }}</dt>
-              <dd>{{ categoryLabel(payload.category) | translate }}</dd>
+              <dd>{{ categoryLabel(payload.category, payload.kind) | translate }}</dd>
             </div>
           }
         </dl>
@@ -67,7 +76,14 @@ export class PlanLearnPostMasterConfirmationComponent {
     return value == null ? '—' : String(value);
   }
 
-  categoryLabel(category: string | undefined): string {
+  categoryLabel(category: string | undefined, kind: LearnPostMasterPayload['kind']): string {
+    if (kind === 'bp_amount') {
+      return `plans.learn.bp_amount_adjustment.category.${category ?? 'general'}`;
+    }
     return `plans.learn.bp_timing_adjustment.category.${category ?? 'general'}`;
+  }
+
+  taskTypeLabel(taskType: string | undefined): string {
+    return `plans.learn.bp_amount_adjustment.task_type.${taskType ?? 'field_work'}`;
   }
 }

@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
+import type { BlueprintAmountAdjustmentProposal } from '../../domain/plans/blueprint-amount-adjustment-proposal';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import {
+  bpAmountProposalProgressKey,
   bpTimingProposalProgressKey,
   resolveLearnProposalApplicationStatus,
   stageGddProposalProgressKey,
@@ -77,6 +79,7 @@ export class PlanLearnApplicationProgressViewComponent {
   @Input({ required: true }) planId!: number;
   @Input() stageGddProposals: StageGddCalibrationProposal[] = [];
   @Input() blueprintTimingProposals: BlueprintTimingAdjustmentProposal[] = [];
+  @Input() blueprintAmountProposals: BlueprintAmountAdjustmentProposal[] = [];
   @Input() progressRefreshVersion = 0;
 
   get items(): LearnApplicationProgressItem[] {
@@ -84,7 +87,8 @@ export class PlanLearnApplicationProgressViewComponent {
     return buildLearnApplicationProgressItems(
       this.planId,
       this.stageGddProposals,
-      this.blueprintTimingProposals
+      this.blueprintTimingProposals,
+      this.blueprintAmountProposals
     );
   }
 
@@ -105,7 +109,8 @@ export class PlanLearnApplicationProgressViewComponent {
 export function buildLearnApplicationProgressItems(
   planId: number,
   stageGddProposals: ReadonlyArray<StageGddCalibrationProposal>,
-  blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>
+  blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>,
+  blueprintAmountProposals: ReadonlyArray<BlueprintAmountAdjustmentProposal> = []
 ): LearnApplicationProgressItem[] {
   const items: LearnApplicationProgressItem[] = [];
 
@@ -125,6 +130,16 @@ export function buildLearnApplicationProgressItems(
       key,
       kind: 'bp_timing',
       title: `${proposal.cropName} — ${proposal.category}`,
+      status: resolveLearnProposalApplicationStatus(planId, key)
+    });
+  }
+
+  for (const proposal of blueprintAmountProposals) {
+    const key = bpAmountProposalProgressKey(proposal.cropId, proposal.category, proposal.taskType);
+    items.push({
+      key,
+      kind: 'bp_amount',
+      title: `${proposal.cropName} — ${proposal.category} · ${proposal.taskType}`,
       status: resolveLearnProposalApplicationStatus(planId, key)
     });
   }

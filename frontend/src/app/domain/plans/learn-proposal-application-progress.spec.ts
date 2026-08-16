@@ -12,6 +12,7 @@ import {
   hydrateLearnHandoff,
   markAllConfirmedProposalsDone,
   markBpTimingProposalAppliedPending,
+  markBpAmountProposalAppliedPending,
   markBpTimingProposalDismissed,
   markLearnProposalConfirmed,
   markLearnProposalDismissed,
@@ -29,6 +30,9 @@ import {
   stageGddProposalProgressKey,
   storeBlueprintTimingPrefill,
   storeLearnBpTimingApplyContext,
+  storeLearnBpAmountApplyContext,
+  readLearnBpAmountApplyContext,
+  clearLearnBpAmountApplyContext,
   storeLearnPostMasterPayload,
   type LearnPostMasterPayload
 } from './learn-proposal-application-progress';
@@ -79,6 +83,21 @@ describe('learn proposal application progress storage', () => {
 
     expect(
       resolveLearnProposalApplicationStatus(PLAN_ID, bpTimingProposalProgressKey(4, 'fertilizer'))
+    ).toBe('applied_pending_confirmation');
+  });
+
+  it('marks BP amount proposal as applied_pending_confirmation', () => {
+    markBpAmountProposalAppliedPending(PLAN_ID, {
+      cropId: 42,
+      category: 'fertilizer',
+      taskType: 'fertilize'
+    });
+
+    expect(
+      resolveLearnProposalApplicationStatus(
+        PLAN_ID,
+        bpAmountProposalProgressKey(42, 'fertilizer', 'fertilize')
+      )
     ).toBe('applied_pending_confirmation');
   });
 
@@ -257,6 +276,24 @@ describe('dismiss learn proposals', () => {
     markStageGddProposalDismissed(PLAN_ID, { cropId: 1, stageId: 2 });
 
     expect(resolveLearnProposalApplicationStatus(PLAN_ID, key)).toBe('done');
+  });
+});
+
+describe('learn BP amount apply context', () => {
+  it('stores, reads, and clears context per plan and crop', () => {
+    const context = {
+      planId: PLAN_ID,
+      cropId: 4,
+      cropName: 'Tomato',
+      category: 'fertilizer',
+      taskType: 'fertilize'
+    };
+
+    storeLearnBpAmountApplyContext(PLAN_ID, context);
+    expect(readLearnBpAmountApplyContext(PLAN_ID, 4)).toEqual(context);
+
+    clearLearnBpAmountApplyContext(PLAN_ID, 4);
+    expect(readLearnBpAmountApplyContext(PLAN_ID, 4)).toBeNull();
   });
 });
 

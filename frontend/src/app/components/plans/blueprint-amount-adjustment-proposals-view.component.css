@@ -58,6 +58,16 @@
   opacity: 0.75;
 }
 
+.blueprint-amount-adjustment__status--pending {
+  background: var(--color-warning-surface);
+  color: var(--color-warning-text);
+}
+
+.blueprint-amount-adjustment__status--confirmed {
+  background: var(--color-success-surface);
+  color: var(--color-success-text);
+}
+
 .blueprint-amount-adjustment__name {
   margin: 0;
   font-weight: 600;
@@ -74,4 +84,28 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
+}
+
+.blueprint-amount-adjustment__preview-panel {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.blueprint-amount-adjustment__preview-title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.blueprint-amount-adjustment__preview-json {
+  margin: 0;
+  overflow-x: auto;
+  font-size: var(--text-xs);
+}
+
+.blueprint-amount-adjustment__error {
+  margin: var(--space-2) 0 0;
+  color: var(--color-danger-text);
 }

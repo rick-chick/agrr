@@ -15,13 +15,18 @@ import {
   markBpAmountProposalDismissed,
   resolveLearnProposalApplicationStatus,
   storeBlueprintTimingPrefill,
+  storeLearnBpAmountApplyContext,
   type LearnProposalApplicationStatus
 } from '../../domain/plans/learn-proposal-application-progress';
+import { ApplyBpAmountProposalFromLearnUseCase } from '../../usecase/plans/apply-bp-amount-proposal-from-learn.usecase';
+import { DryRunBpAmountProposalFromLearnUseCase } from '../../usecase/plans/dry-run-bp-amount-proposal-from-learn.usecase';
+import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn-proposal-inline-apply.providers';
 
 @Component({
   selector: 'app-blueprint-amount-adjustment-proposals-view',
   standalone: true,
   imports: [CommonModule, TranslateModule, LearnProposalEvidencePanelComponent, LearnProposalConfidenceBadgeComponent],
+  providers: [...LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS],
   template: `
     <section
       class="task-schedule-variance__section blueprint-amount-adjustment"
@@ -54,6 +59,12 @@ import {
                     <app-learn-proposal-confidence-badge [confidence]="proposalConfidence" />
                     <span
                       class="blueprint-amount-adjustment__status"
+                      [class.blueprint-amount-adjustment__status--pending]="
+                        proposalStatus(proposal) === 'applied_pending_confirmation'
+                      "
+                      [class.blueprint-amount-adjustment__status--confirmed]="
+                        proposalStatus(proposal) === 'confirmed'
+                      "
                       [class.blueprint-amount-adjustment__status--dismissed]="
                         proposalStatus(proposal) === 'dismissed'
                       "
@@ -74,6 +85,19 @@ import {
                       | translate: { count: proposal.affectedBlueprintCount }
                   }}
                 </p>
+                @if (dryRunPreview(proposal)) {
+                  <div class="blueprint-amount-adjustment__preview-panel" role="status">
+                    <p class="blueprint-amount-adjustment__preview-title">
+                      {{ 'plans.learn.bp_amount_adjustment.dry_run_result' | translate }}
+                    </p>
+                    <pre class="blueprint-amount-adjustment__preview-json">{{ dryRunPreview(proposal) }}</pre>
+                  </div>
+                }
+                @if (applyError(proposal)) {
+                  <p class="blueprint-amount-adjustment__error" role="alert">
+                    {{ applyError(proposal) | translate }}
+                  </p>
+                }
                 <app-learn-proposal-evidence-panel
                   [evidence]="evidenceFor(proposal)"
                   toggleLabelKey="plans.learn.bp_amount_adjustment.evidence.toggle"
@@ -92,13 +116,39 @@ import {
                     {{ 'plans.learn.proposal.dismiss' | translate }}
                   </button>
                 }
-                <button
-                  type="button"
-                  class="btn-secondary blueprint-amount-adjustment__detail-edit"
-                  (click)="openDetailEdit(proposal)"
-                >
-                  {{ 'plans.learn.bp_amount_adjustment.detail_edit' | translate }}
-                </button>
+                @if (canApply(proposal)) {
+                  <button
+                    type="button"
+                    class="btn-secondary blueprint-amount-adjustment__preview"
+                    [disabled]="isDryRunning(proposal)"
+                    (click)="runDryRunPreview(proposal)"
+                  >
+                    {{
+                      isDryRunning(proposal)
+                        ? ('common.loading' | translate)
+                        : ('plans.learn.bp_amount_adjustment.dry_run_preview' | translate)
+                    }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-primary blueprint-amount-adjustment__apply"
+                    [disabled]="isApplying(proposal)"
+                    (click)="applyProposal(proposal)"
+                  >
+                    {{
+                      isApplying(proposal)
+                        ? ('common.loading' | translate)
+                        : ('plans.learn.bp_amount_adjustment.apply' | translate)
+                    }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-secondary blueprint-amount-adjustment__detail-edit"
+                    (click)="openDetailEdit(proposal)"
+                  >
+                    {{ 'plans.learn.bp_amount_adjustment.detail_edit' | translate }}
+                  </button>
+                }
               </div>
             </li>
           }
@@ -110,6 +160,8 @@ import {
 })
 export class BlueprintAmountAdjustmentProposalsViewComponent {
   private readonly router = inject(Router);
+  private readonly applyUseCase = inject(ApplyBpAmountProposalFromLearnUseCase);
+  private readonly dryRunUseCase = inject(DryRunBpAmountProposalFromLearnUseCase);
 
   @Input({ required: true }) planId!: number;
   @Input() loading = false;
@@ -119,6 +171,10 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
   @Output() progressChanged = new EventEmitter<void>();
 
   private refreshVersion = 0;
+  private dryRunPreviews: Record<string, string> = {};
+  private dryRunningKeys = new Set<string>();
+  private applyingKeys = new Set<string>();
+  private applyErrors: Record<string, string> = {};
 
   proposalKey(proposal: BlueprintAmountAdjustmentProposal): string {
     return blueprintAmountProposalKey(proposal.cropId, proposal.category, proposal.taskType);
@@ -145,6 +201,13 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
 
   openDetailEdit(proposal: BlueprintAmountAdjustmentProposal): void {
     storeBlueprintTimingPrefill(this.planId, proposal.cropId, proposal.proposalBody);
+    storeLearnBpAmountApplyContext(this.planId, {
+      planId: this.planId,
+      cropId: proposal.cropId,
+      cropName: proposal.cropName,
+      category: proposal.category,
+      taskType: proposal.taskType
+    });
     void this.router.navigate(['/crops', proposal.cropId, 'setup_proposal'], {
       queryParams: cropPlanWizardQueryParams(this.planId, 'learn')
     });
@@ -160,6 +223,84 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
 
   canDismiss(proposal: BlueprintAmountAdjustmentProposal): boolean {
     return this.proposalStatus(proposal) === 'not_started';
+  }
+
+  canApply(proposal: BlueprintAmountAdjustmentProposal): boolean {
+    return this.proposalStatus(proposal) === 'not_started';
+  }
+
+  dryRunPreview(proposal: BlueprintAmountAdjustmentProposal): string | null {
+    void this.refreshVersion;
+    return this.dryRunPreviews[this.proposalKey(proposal)] ?? null;
+  }
+
+  isDryRunning(proposal: BlueprintAmountAdjustmentProposal): boolean {
+    void this.refreshVersion;
+    return this.dryRunningKeys.has(this.proposalKey(proposal));
+  }
+
+  isApplying(proposal: BlueprintAmountAdjustmentProposal): boolean {
+    void this.refreshVersion;
+    return this.applyingKeys.has(this.proposalKey(proposal));
+  }
+
+  applyError(proposal: BlueprintAmountAdjustmentProposal): string | null {
+    void this.refreshVersion;
+    return this.applyErrors[this.proposalKey(proposal)] ?? null;
+  }
+
+  runDryRunPreview(proposal: BlueprintAmountAdjustmentProposal): void {
+    const key = this.proposalKey(proposal);
+    if (this.isDryRunning(proposal)) {
+      return;
+    }
+    this.dryRunningKeys.add(key);
+    delete this.applyErrors[key];
+    this.refreshVersion += 1;
+
+    this.dryRunUseCase.execute({
+      cropId: proposal.cropId,
+      proposal: proposal.proposalBody,
+      onSuccess: (previewJson) => {
+        this.dryRunningKeys.delete(key);
+        this.dryRunPreviews[key] = previewJson;
+        this.refreshVersion += 1;
+      },
+      onError: (message) => {
+        this.dryRunningKeys.delete(key);
+        this.applyErrors[key] = message;
+        this.refreshVersion += 1;
+      }
+    });
+  }
+
+  applyProposal(proposal: BlueprintAmountAdjustmentProposal): void {
+    const key = this.proposalKey(proposal);
+    if (this.isApplying(proposal)) {
+      return;
+    }
+    this.applyingKeys.add(key);
+    delete this.applyErrors[key];
+    this.refreshVersion += 1;
+
+    this.applyUseCase.execute({
+      planId: this.planId,
+      cropId: proposal.cropId,
+      category: proposal.category,
+      taskType: proposal.taskType,
+      proposal: proposal.proposalBody,
+      onSuccess: () => {
+        this.applyingKeys.delete(key);
+        delete this.dryRunPreviews[key];
+        this.refreshVersion += 1;
+        this.progressChanged.emit();
+      },
+      onError: (message) => {
+        this.applyingKeys.delete(key);
+        this.applyErrors[key] = message;
+        this.refreshVersion += 1;
+      }
+    });
   }
 
   dismissProposal(proposal: BlueprintAmountAdjustmentProposal): void {

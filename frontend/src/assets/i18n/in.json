@@ -2062,7 +2062,10 @@
         "empty": "अभी कोई BP मात्रा समायोजन प्रस्ताव उपलब्ध नहीं है।",
         "delta_label": "औसत मात्रा अंतर: {{delta}}",
         "affected_count": "प्रभावित BP: {{count}}",
+        "dry_run_preview": "ड्राई-रन पूर्वावलोकन",
+        "apply": "लागू करें",
         "detail_edit": "विस्तृत संपादन",
+        "dry_run_result": "ड्राई-रन परिणाम",
         "category": {
           "general": "सामान्य कार्य",
           "fertilizer": "उर्वरक",
@@ -2089,7 +2092,8 @@
         "summary": "{{addressed}} / {{total}} संबोधित",
         "kind": {
           "stage_gdd": "चरण GDD अंशांकन",
-          "bp_timing": "BP समय समायोजन"
+          "bp_timing": "BP समय समायोजन",
+          "bp_amount": "BP मात्रा समायोजन"
         },
         "status": {
           "not_started": "लागू नहीं",
@@ -2118,6 +2122,7 @@
         "stage_label": "चरण",
         "required_gdd_label": "आवश्यक GDD",
         "category_label": "श्रेणी",
+        "task_type_label": "कार्य प्रकार",
         "open_workbench": "कार्यक्षेत्र पर स्थान की पुष्टि करें"
       },
       "next_steps": {

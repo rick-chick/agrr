@@ -27,10 +27,13 @@ import {
   buildLearnPostMasterNavigation,
   clearBlueprintTimingPrefill,
   clearLearnBpTimingApplyContext,
+  clearLearnBpAmountApplyContext,
   hydrateLearnHandoff,
   markBpTimingProposalAppliedPending,
+  markBpAmountProposalAppliedPending,
   readBlueprintTimingPrefill,
   readLearnBpTimingApplyContext,
+  readLearnBpAmountApplyContext,
   storeLearnPostMasterPayload
 } from '../../../domain/plans/learn-proposal-application-progress';
 import { PLAN_GATEWAY, PlanGateway } from '../../../usecase/plans/plan-gateway';
@@ -52,6 +55,9 @@ function isProposalBody(value: unknown): value is CropSetupProposalBody {
   if (!value || typeof value !== 'object') return false;
   const record = value as Record<string, unknown>;
   if (record['intent'] === 'blueprint_timing_patch') {
+    return Array.isArray(record['task_schedule_blueprints']);
+  }
+  if (record['intent'] === 'blueprint_amount_patch') {
     return Array.isArray(record['task_schedule_blueprints']);
   }
   return (
@@ -393,6 +399,27 @@ export class CropSetupProposalImportComponent implements CropSetupProposalImport
 
   private navigateAfterSuccessfulApply(): void {
     if (this.returnTab !== 'learn' || this.fromPlanId == null) {
+      return;
+    }
+    const amountContext = readLearnBpAmountApplyContext(this.fromPlanId, this.cropId);
+    if (amountContext && amountContext.planId === this.fromPlanId) {
+      storeLearnPostMasterPayload(this.fromPlanId, {
+        kind: 'bp_amount',
+        cropId: amountContext.cropId,
+        cropName: amountContext.cropName,
+        category: amountContext.category,
+        taskType: amountContext.taskType
+      });
+      markBpAmountProposalAppliedPending(this.fromPlanId, {
+        cropId: amountContext.cropId,
+        category: amountContext.category,
+        taskType: amountContext.taskType
+      });
+      clearLearnBpAmountApplyContext(this.fromPlanId, this.cropId);
+      const navigation = buildLearnPostMasterNavigation(this.fromPlanId);
+      void this.router.navigate(navigation.commands, {
+        queryParams: navigation.queryParams
+      });
       return;
     }
     const context = readLearnBpTimingApplyContext(this.fromPlanId, this.cropId);
