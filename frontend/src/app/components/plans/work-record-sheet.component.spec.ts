@@ -71,6 +71,8 @@ describe('WorkRecordSheetComponent', () => {
       'plans.work.sheet.pest_control.planned_amount': '予定散布量',
       'plans.work.sheet.pest_control.planned_amount_empty': '予定散布量なし',
       'plans.work.sheet.pest_control.actual_amount': '実施散布量',
+      'plans.work.sheet.harvest.yield_amount': '収量',
+      'plans.work.sheet.harvest.yield_unit': '収量の単位',
       'plans.work.sheet.climate_preview.label': '記録時に保存される気象情報',
       'plans.work.sheet.climate_preview.loading': '気象データを読み込み中…',
       'plans.work.sheet.climate_preview.unavailable': 'この日付の気象データがありません',
@@ -426,5 +428,52 @@ describe('WorkRecordSheetComponent', () => {
       actualDate: '2026-06-12',
       gddTrigger: null
     });
+  });
+
+  it('shows emphasized harvest yield fields for scheduled harvest items', () => {
+    component.openFromItem({
+      item: {
+        item_id: 20,
+        name: '収穫',
+        task_type: 'general',
+        category: 'general',
+        scheduled_date: '2026-07-15',
+        priority: 1,
+        source: 'plan',
+        weather_dependency: 'low',
+        time_per_sqm: '0',
+        amount: '50',
+        amount_unit: 'kg',
+        status: 'scheduled',
+        agricultural_task_id: 4,
+        field_cultivation_id: 9,
+        completed: false,
+        work_records: [],
+        details: {
+          stage: { name: '収穫期', order: 3 },
+          gdd: { trigger: '', tolerance: '' },
+          priority: 1,
+          weather_dependency: 'low',
+          time_per_sqm: '0',
+          amount: '',
+          amount_unit: '',
+          source: 'plan',
+          master: null,
+          history: { rescheduled_at: null, cancelled_at: null }
+        },
+        badge: { type: 'general' }
+      },
+      fieldName: 'D圃場',
+      cropName: 'キャベツ',
+      recordedToday: false
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('収量');
+    expect(fixture.nativeElement.textContent).toContain('収量の単位');
+    expect(fixture.nativeElement.querySelector('.form-card__field--harvest-yield')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#wr-amount')).toBeTruthy();
+    expect(component.control.form.amount).toBe('50');
+    expect(component.control.form.amount_unit).toBe('kg');
   });
 });
