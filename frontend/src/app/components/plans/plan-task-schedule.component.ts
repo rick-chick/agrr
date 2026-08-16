@@ -23,6 +23,7 @@ import { CreateTaskScheduleItemUseCase } from '../../usecase/plans/create-task-s
 import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-schedule-item.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { HydrateReorganizeOrchestrationUseCase } from '../../usecase/plans/hydrate-reorganize-orchestration.usecase';
 import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effects';
 import { buildPlanVsActualAmountDeltaByItemId } from '../../domain/plans/build-plan-vs-actual-amount-delta-by-item-id';
 import { PLAN_GATEWAY, PlanGateway } from '../../usecase/plans/plan-gateway';
@@ -36,6 +37,7 @@ import {
   readLearnOrchestrationStepComplete,
   type LearnOrchestrationStepKey
 } from '../../domain/plans/learn-master-update-orchestration';
+import { resolveReorganizeScreenOrchestrationMode } from '../../domain/plans/resolve-reorganize-screen-orchestration-mode';
 import {
   buildLearnReorganizePipelineSyncVerifyNavigation,
   clearLearnReorganizePipelineAutoChain,
@@ -448,6 +450,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
+  private readonly hydrateOrchestrationUseCase = inject(HydrateReorganizeOrchestrationUseCase);
   private readonly planGateway = inject<PlanGateway>(PLAN_GATEWAY);
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
   private readonly createItemUseCase = inject(CreateTaskScheduleItemUseCase);
@@ -655,6 +658,13 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     if (this.maybeRedirectLegacyVarianceView()) {
       return;
     }
+    this.hydrateOrchestrationUseCase.execute(planId).subscribe({
+      next: () => this.continueRouteChangeAfterHydrate(planId),
+      error: () => this.continueRouteChangeAfterHydrate(planId)
+    });
+  }
+
+  private continueRouteChangeAfterHydrate(planId: number): void {
     this.syncChannel?.unsubscribe();
     this.syncChannel = null;
     this.presenter.applyClientFilters(
@@ -665,9 +675,11 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     );
     this.pendingItemIdFromRoute = this.resolveItemIdFromRoute();
     this.autoRegenerateTriggered = false;
-    this.learningOrchestrationMode = parseLearningOrchestration(
+    const routeMode = parseLearningOrchestration(
       this.route.snapshot.queryParamMap.get('learningOrchestration')
     );
+    const hydratedMode = resolveReorganizeScreenOrchestrationMode(planId, 'plan_task_schedule');
+    this.learningOrchestrationMode = routeMode ?? hydratedMode;
     if (
       readLearnReorganizePipelineAutoChain(planId) &&
       (this.learningOrchestrationMode === 'regenerate' ||
