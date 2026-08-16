@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
 import { CreatePrivatePlanUseCase } from '../../usecase/private-plan-create/create-private-plan.usecase';
 import { PlanNewPresenter, PLAN_NEW_PROVIDERS } from '../../usecase/plans/plan-new.providers';
@@ -14,16 +14,11 @@ import { MasterContextCrumb } from '../masters/master-context-header/master-cont
 import { LoadPlanNewCarryoverUseCase } from '../../usecase/plans/load-plan-new-carryover.usecase';
 import { LoadPlanNewReadinessUseCase } from '../../usecase/plans/load-plan-new-readiness.usecase';
 import { PlanCreateReadinessSummaryComponent } from './plan-create-readiness-summary.component';
-import type { PlanVsActualCategorySummary } from '../../domain/plans/plan-vs-actual-summary';
-import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
+import { PlanCarryoverPreviewComponent } from './plan-carryover-preview.component';
 import {
   PLAN_CARRYOVER_FROM_QUERY_PARAM,
   parseCarryoverFromPlanId
 } from '../../domain/plans/plan-carryover-navigation';
-import {
-  buildPlanCarryoverPreviewTableRows,
-  type PlanCarryoverPreviewTableRow
-} from '../../domain/plans/build-plan-carryover-preview-table-rows';
 
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingFlashAndNavigationViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
@@ -57,7 +52,8 @@ const initialControl: PlanNewViewState = {
     TranslateModule,
     FormsModule,
     MasterContextHeaderComponent,
-    PlanCreateReadinessSummaryComponent
+    PlanCreateReadinessSummaryComponent,
+    PlanCarryoverPreviewComponent
   ],
   providers: [...PLAN_NEW_PROVIDERS],
   template: `
@@ -195,41 +191,7 @@ const initialControl: PlanNewViewState = {
                     } @else if (control.carryoverPreviewError) {
                       <p class="plan-new-error">{{ control.carryoverPreviewError }}</p>
                     } @else if (control.carryoverPreview) {
-                      <div class="plan-new-carryover-preview">
-                        <h3 class="plan-new-carryover-preview__title">{{
-                          'plans.new.carryover_preview_title' | translate
-                        }}</h3>
-                        @if (carryoverPreviewRows.length) {
-                          <table class="plan-new-carryover-preview__table">
-                            <thead>
-                              <tr>
-                                <th scope="col">{{
-                                  'plans.task_schedules.variance_subview.category_column' | translate
-                                }}</th>
-                                <th scope="col">{{
-                                  'plans.task_schedules.variance_subview.category_average' | translate
-                                }}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              @for (row of carryoverPreviewRows; track row.track) {
-                                @if (row.kind === 'category') {
-                                  <tr>
-                                    <td>{{ categoryLabel(row.category) }}</td>
-                                    <td>{{ categoryAverageLabel(row.category) }}</td>
-                                  </tr>
-                                } @else {
-                                  <tr>
-                                    <td>{{ row.labelKey | translate }}</td>
-                                    <td>{{ row.count }}</td>
-                                  </tr>
-                                }
-                              }
-                            </tbody>
-                          </table>
-                      } @else {
-                        <p class="form-hint">{{ 'plans.new.carryover_preview_empty' | translate }}</p>
-                      }
+                      <app-plan-carryover-preview [summary]="control.carryoverPreview" />
                       <button
                         type="button"
                         class="btn btn-secondary plan-new-carryover-learn-cta"
@@ -238,7 +200,6 @@ const initialControl: PlanNewViewState = {
                       >
                         {{ 'plans.new.carryover_learn_cta' | translate }}
                       </button>
-                    </div>
                     }
                   }
                 }
@@ -267,7 +228,6 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   private readonly createPresenter = inject(CreatePrivatePlanPresenter);
   private readonly carryoverUseCase = inject(LoadPlanNewCarryoverUseCase);
   private readonly readinessUseCase = inject(LoadPlanNewReadinessUseCase);
-  private readonly translate = inject(TranslateService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -324,12 +284,6 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   get canSubmit(): boolean {
     const farm = this.control.farms.find((f) => f.id === this.control.selectedFarmId);
     return Boolean(farm?.hasValidFields);
-  }
-
-  get carryoverPreviewRows(): PlanCarryoverPreviewTableRow[] {
-    return this.control.carryoverPreview
-      ? buildPlanCarryoverPreviewTableRows(this.control.carryoverPreview)
-      : [];
   }
 
   ngOnInit(): void {
@@ -389,21 +343,6 @@ export class PlanNewComponent implements PlanNewView, OnInit {
     if (planId != null) {
       this.loadCarryoverPreview(planId);
     }
-  }
-
-  categoryLabel(category: PlanVsActualCategorySummary): string {
-    return this.translate.instant(
-      `plans.task_schedules.variance_subview.category.${category.category}`
-    );
-  }
-
-  categoryAverageLabel(category: PlanVsActualCategorySummary): string {
-    if (category.average_delta_days == null) {
-      return this.translate.instant('plans.task_schedules.variance_subview.not_available');
-    }
-    return this.translate.instant('plans.task_schedules.variance_subview.average_value', {
-      delta: formatPlanTaskScheduleAverageDeltaDaysLabel(category.average_delta_days)
-    });
   }
 
   onSubmit(event: Event, navigateToLearnAfterCreate = false): void {
