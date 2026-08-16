@@ -6,6 +6,7 @@ import {
   expectedPathnameFromResolvedGoto,
   normalizePathname,
   workCapturePathnameOk,
+  onboardingCapturePathnameOk,
 } from './route-validity-lib.mjs';
 
 test('expectedPathname strips query and trailing slash', () => {
@@ -33,4 +34,10 @@ test('workCapturePathnameOk accepts hub and single-farm auto-redirect', () => {
   assert.equal(workCapturePathnameOk('/work'), true);
   assert.equal(workCapturePathnameOk('/plans/1/work'), true);
   assert.equal(workCapturePathnameOk('/plans/'), false);
+});
+
+test('onboardingCapturePathnameOk accepts wizard and saved-plan redirect', () => {
+  assert.equal(onboardingCapturePathnameOk('/onboarding'), true);
+  assert.equal(onboardingCapturePathnameOk('/plans'), true);
+  assert.equal(onboardingCapturePathnameOk('/plans/new'), false);
 });
