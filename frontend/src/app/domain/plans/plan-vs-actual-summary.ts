@@ -7,6 +7,16 @@ export interface PlanVsActualCategorySummary {
   recorded_count: number;
 }
 
+export interface PlanVsActualAmountGroupSummary {
+  category: string;
+  stage_order: number | null;
+  stage_name: string | null;
+  task_type: string;
+  average_amount_delta: number | null;
+  recorded_item_count: number;
+  amount_unit: string | null;
+}
+
 export interface PlanVsActualItem {
   item_id: number;
   field_cultivation_id: number;
@@ -18,6 +28,10 @@ export interface PlanVsActualItem {
   gdd_trigger: number | null;
   gdd_at_actual: number | null;
   gdd_delta: number | null;
+  amount_planned?: number | null;
+  amount_actual?: number | null;
+  amount_delta?: number | null;
+  amount_unit?: string | null;
 }
 
 export type VarianceExceedanceKind = 'days' | 'gdd' | 'both';
@@ -31,6 +45,7 @@ export interface PlanVsActualSummary {
   unrecorded_count: number;
   structured_unrecorded_count?: number;
   categories: PlanVsActualCategorySummary[];
+  amount_group_summaries?: PlanVsActualAmountGroupSummary[];
   top_variance_items: PlanVsActualItem[];
   stage_gdd_calibration_proposals?: StageGddCalibrationProposalRaw[];
   action_required_items?: PlanVarianceActionItem[];
