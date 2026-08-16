@@ -95,6 +95,7 @@ describe('loadHubFarmTaskCounts', () => {
                 ]
         } as never),
       getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
+      getWeatherRescheduleProposals: () => of([]),
       getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       patchVarianceLearningProposalProgress: () => of({ plan_id: 0, proposal_application_progress: {} }),
@@ -130,6 +131,7 @@ describe('loadHubFarmTaskCounts', () => {
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({ fields: [] } as never),
       getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
+      getWeatherRescheduleProposals: () => of([]),
       getVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       importVarianceLearning: () => of({ plan_id: 0, source_plan_id: 0, summary: { plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] } }),
       patchVarianceLearningProposalProgress: () => of({ plan_id: 0, proposal_application_progress: {} }),

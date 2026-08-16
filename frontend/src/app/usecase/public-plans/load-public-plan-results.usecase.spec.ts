@@ -22,6 +22,7 @@ describe('LoadPublicPlanResultsUseCase', () => {
       getPublicPlanData: vi.fn(),
       getTaskSchedule: vi.fn(),
       getPlanVsActualSummary: () => of({ plan_id: 0, unrecorded_count: 0, categories: [], top_variance_items: [] }),
+      getWeatherRescheduleProposals: () => of([]),
       getVarianceLearning: vi.fn(),
       importVarianceLearning: vi.fn(),
       patchVarianceLearningProposalProgress: vi.fn(),
