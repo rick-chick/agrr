@@ -16,6 +16,14 @@ import {
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 import { clearLearnOrchestrationProgressCache } from '../../domain/plans/learn-master-update-orchestration';
 import { BulkApplySafeLearnProposalsUseCase } from '../../usecase/plans/bulk-apply-safe-learn-proposals.usecase';
+import { ApplyBpTimingProposalFromLearnUseCase } from '../../usecase/plans/apply-bp-timing-proposal-from-learn.usecase';
+import { ApplyStageGddCalibrationFromLearnUseCase } from '../../usecase/plans/apply-stage-gdd-calibration-from-learn.usecase';
+import { DryRunBpTimingProposalFromLearnUseCase } from '../../usecase/plans/dry-run-bp-timing-proposal-from-learn.usecase';
+import {
+  markLearnProposalConfirmed,
+  stageGddProposalProgressKey,
+  resolveLearnProposalApplicationStatus
+} from '../../domain/plans/learn-proposal-application-progress';
 import { PlanLearnProposalQueueComponent } from './plan-learn-proposal-queue.component';
 
 const fertilizerBpTimingProposal = (): BlueprintTimingAdjustmentProposal => ({
@@ -53,6 +61,12 @@ const pestControlBpTimingProposal = (): BlueprintTimingAdjustmentProposal => ({
   }
 });
 
+const inlineApplyProviderMocks = () => [
+  { provide: ApplyStageGddCalibrationFromLearnUseCase, useValue: { execute: vi.fn() } },
+  { provide: ApplyBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } },
+  { provide: DryRunBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } }
+];
+
 describe('PlanLearnProposalQueueComponent', () => {
   let fixture: ComponentFixture<PlanLearnProposalQueueComponent>;
   let bulkApplyUseCase: { execute: ReturnType<typeof vi.fn> };
@@ -79,7 +93,10 @@ describe('PlanLearnProposalQueueComponent', () => {
     })
       .overrideComponent(PlanLearnProposalQueueComponent, {
         set: {
-          providers: [{ provide: BulkApplySafeLearnProposalsUseCase, useValue: bulkApplyUseCase }]
+          providers: [
+            { provide: BulkApplySafeLearnProposalsUseCase, useValue: bulkApplyUseCase },
+            ...inlineApplyProviderMocks()
+          ]
         }
       })
       .compileComponents();
@@ -345,5 +362,185 @@ describe('PlanLearnProposalQueueComponent', () => {
     ).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[data-testid="queue-category-safe"]')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Pepper');
+  });
+
+  it('shows inline apply actions for requires_confirmation stage_gdd proposals in queue', () => {
+    fixture.componentInstance.stageGddProposals = [
+      {
+        cropId: 1,
+        cropName: 'Tomato',
+        stageId: 3,
+        stageOrder: 2,
+        stageName: 'Flowering',
+        averageGddDelta: 50,
+        recordedItemCount: 2,
+        currentRequiredGdd: 200,
+        proposedRequiredGdd: 250
+      }
+    ];
+    fixture.detectChanges();
+
+    const section = fixture.nativeElement.querySelector(
+      '[data-testid="queue-category-requires_confirmation"]'
+    );
+    expect(section).toBeTruthy();
+    expect(section.querySelector('[data-testid="queue-inline-apply"]')).toBeTruthy();
+    expect(section.textContent).toContain('Apply');
+    expect(section.textContent).toContain('Preview');
+  });
+
+  it('shows detail edit deep link only when stage gdd cannot be inline applied', () => {
+    fixture.componentInstance.stageGddProposals = [
+      {
+        cropId: 1,
+        cropName: 'Tomato',
+        stageId: 3,
+        stageOrder: 2,
+        stageName: 'Flowering',
+        averageGddDelta: 50,
+        recordedItemCount: 2,
+        currentRequiredGdd: 200,
+        proposedRequiredGdd: null
+      }
+    ];
+    fixture.detectChanges();
+
+    const section = fixture.nativeElement.querySelector(
+      '[data-testid="queue-category-requires_confirmation"]'
+    );
+    expect(section.querySelector('[data-testid="queue-inline-apply"]')).toBeFalsy();
+    expect(section.querySelector('[data-testid="queue-inline-detail-edit"]')).toBeTruthy();
+    expect(section.textContent).toContain('Detail edit');
+  });
+});
+
+describe('PlanLearnProposalQueueComponent inline stage_gdd apply', () => {
+  let fixture: ComponentFixture<PlanLearnProposalQueueComponent>;
+  let router: Router;
+  let applyUseCase: { execute: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    TestBed.resetTestingModule();
+    sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
+
+    applyUseCase = {
+      execute: vi.fn(({ onSuccess }: { onSuccess?: () => void }) => {
+        markLearnProposalConfirmed(7, stageGddProposalProgressKey(1, 3));
+        onSuccess?.();
+      })
+    };
+
+    TestBed.overrideComponent(PlanLearnProposalQueueComponent, {
+      set: {
+        providers: [
+          { provide: BulkApplySafeLearnProposalsUseCase, useValue: { execute: vi.fn() } },
+          { provide: ApplyStageGddCalibrationFromLearnUseCase, useValue: applyUseCase },
+          { provide: ApplyBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } },
+          { provide: DryRunBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanLearnProposalQueueComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        { provide: BulkApplySafeLearnProposalsUseCase, useValue: { execute: vi.fn() } }
+      ]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    fixture = TestBed.createComponent(PlanLearnProposalQueueComponent);
+    fixture.componentInstance.planId = 7;
+    fixture.componentInstance.stageGddProposals = [
+      {
+        cropId: 1,
+        cropName: 'Tomato',
+        stageId: 3,
+        stageOrder: 2,
+        stageName: 'Flowering',
+        averageGddDelta: 50,
+        recordedItemCount: 2,
+        currentRequiredGdd: 200,
+        proposedRequiredGdd: 250
+      }
+    ];
+    fixture.detectChanges();
+  });
+
+  it('applies requires_confirmation stage_gdd proposal inline without crop navigation', async () => {
+    const applyButton = fixture.nativeElement.querySelector(
+      '[data-testid="queue-inline-apply"]'
+    ) as HTMLButtonElement;
+    applyButton.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(applyUseCase.execute).toHaveBeenCalled();
+    expect(
+      resolveLearnProposalApplicationStatus(7, stageGddProposalProgressKey(1, 3))
+    ).toBe('confirmed');
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('PlanLearnProposalQueueComponent inline fertilizer timing apply', () => {
+  let fixture: ComponentFixture<PlanLearnProposalQueueComponent>;
+
+  beforeEach(async () => {
+    TestBed.resetTestingModule();
+    sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
+
+    TestBed.overrideComponent(PlanLearnProposalQueueComponent, {
+      set: {
+        providers: [
+          { provide: BulkApplySafeLearnProposalsUseCase, useValue: { execute: vi.fn() } },
+          { provide: ApplyStageGddCalibrationFromLearnUseCase, useValue: { execute: vi.fn() } },
+          { provide: ApplyBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } },
+          { provide: DryRunBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanLearnProposalQueueComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        { provide: BulkApplySafeLearnProposalsUseCase, useValue: { execute: vi.fn() } }
+      ]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture = TestBed.createComponent(PlanLearnProposalQueueComponent);
+    fixture.componentInstance.planId = 7;
+    fixture.componentInstance.blueprintTimingProposals = [
+      {
+        ...fertilizerBpTimingProposal(),
+        averageDeltaDays: 5
+      }
+    ];
+    fixture.detectChanges();
+  });
+
+  it('shows inline apply for requires_confirmation fertilizer timing in dedicated section', () => {
+    const section = fixture.nativeElement.querySelector(
+      '[data-testid="fertilizer-timing-section"]'
+    );
+    expect(section.querySelector('[data-testid="queue-inline-apply"]')).toBeTruthy();
+    expect(section.textContent).toContain('Apply');
+    expect(section.textContent).toContain('Dry-run preview');
   });
 });
