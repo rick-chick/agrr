@@ -16,6 +16,7 @@ import {
 import {
   workRecordWeatherSnapshotSummary
 } from '../../domain/plans/work-record-weather-snapshot';
+import { isHarvestWorkRecord } from '../../domain/work-schedule/work-row-harvest';
 import { WorkRecord } from '../../models/plans/work-record';
 import { WorkRecordPhoto } from '../../models/plans/work-record-photo';
 import {
@@ -117,13 +118,30 @@ const initialControl: PlanWorkRecordsViewState = {
                         } @else {
                           <span class="plan-work-records__badge">{{ 'plans.work_records.badge.adhoc' | translate }}</span>
                         }
+                        @if (isHarvestRecord(record)) {
+                          <span class="plan-work-records__badge plan-work-records__badge--harvest">
+                            {{ 'plans.work_records.badge.harvest' | translate }}
+                          </span>
+                        }
                         @if (record.field_name || record.crop_name) {
                           <span class="plan-work-records__field">
                             {{ record.field_name }} {{ record.crop_name }}
                           </span>
                         }
                         @if (record.amount) {
-                          <span class="plan-work-records__amount">{{ record.amount }} {{ record.amount_unit }}</span>
+                          <span
+                            class="plan-work-records__amount"
+                            [class.plan-work-records__amount--harvest]="isHarvestRecord(record)"
+                          >
+                            @if (isHarvestRecord(record)) {
+                              {{
+                                'plans.work_records.yield'
+                                  | translate: { amount: record.amount, unit: record.amount_unit ?? '' }
+                              }}
+                            } @else {
+                              {{ record.amount }} {{ record.amount_unit }}
+                            }
+                          </span>
                         }
                         @if (record.notes) {
                           <span class="plan-work-records__notes">{{ record.notes }}</span>
@@ -404,5 +422,9 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
 
   weatherSnapshotSummary(record: WorkRecord) {
     return workRecordWeatherSnapshotSummary(record.weather_snapshot);
+  }
+
+  isHarvestRecord(record: WorkRecord): boolean {
+    return isHarvestWorkRecord(record);
   }
 }
