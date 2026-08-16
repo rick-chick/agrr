@@ -19,6 +19,7 @@ pub(crate) mod plan_save_pesticide_attributes_mapper;
 pub(crate) mod public_plan_save_session_data_mapper;
 pub(crate) mod task_schedule_item_create_attributes_mapper;
 pub mod plan_vs_actual_mapper;
+pub mod weather_reschedule_proposal_mapper;
 pub mod task_schedule_timeline_mapper;
 
 pub use plan_vs_actual_mapper::PlanVsActualMapper;

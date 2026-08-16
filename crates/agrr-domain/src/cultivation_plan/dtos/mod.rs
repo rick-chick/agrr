@@ -37,6 +37,8 @@ pub(crate) mod task_schedule_item_deletion_undo_schedule_row;
 pub(crate) mod regenerate_task_schedule_input;
 pub(crate) mod task_schedule_timeline;
 pub mod plan_vs_actual;
+pub mod weather_reschedule_proposal_context;
+pub mod weather_reschedule_proposal_read;
 pub mod learn_handoff_state;
 pub mod plan_variance_learning_snapshot;
 pub mod reorganize_orchestration_progress;
@@ -177,6 +179,9 @@ pub use plan_vs_actual::{
     PlanVarianceActionItemRead,
     PlanVsActualAmountGroupSummaryRead, PlanVsActualCategorySummaryRead,
     PlanVsActualItemRead, PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
+};
+pub use weather_reschedule_proposal_read::{
+    WeatherRescheduleProposalRead, WeatherRescheduleTriggerType,
 };
 pub use learn_handoff_state::{LearnHandoffStatePatch, LearnHandoffStateRead};
 pub use plan_variance_learning_snapshot::{
