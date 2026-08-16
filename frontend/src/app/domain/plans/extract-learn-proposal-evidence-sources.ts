@@ -20,6 +20,7 @@ function pushScheduleItems(
       actualDate: item.actualDate,
       deltaDays: item.deltaDays,
       gddDelta: item.gddDelta,
+      amountUnit: item.details.amountUnit,
       status: item.status
     });
   }

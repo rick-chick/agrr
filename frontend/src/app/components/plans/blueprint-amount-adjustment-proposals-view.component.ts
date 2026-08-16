@@ -69,7 +69,9 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                     </p>
                   }
                   <div class="blueprint-amount-adjustment__badges">
-                    <app-learn-proposal-confidence-badge [confidence]="proposalConfidence" />
+                    <app-learn-proposal-confidence-badge
+                      [confidence]="proposalConfidence(proposal)"
+                    />
                     <span
                       class="blueprint-amount-adjustment__status"
                       [class.blueprint-amount-adjustment__status--pending]="
@@ -180,7 +182,7 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
   @Input() loading = false;
   @Input() proposals: BlueprintAmountAdjustmentProposal[] = [];
   @Input() evidenceByKey: Record<string, LearnProposalEvidence> = {};
-  @Input() proposalConfidence: LearnProposalConfidence = 'high';
+  @Input() confidenceByKey: Record<string, LearnProposalConfidence> = {};
   @Output() progressChanged = new EventEmitter<void>();
 
   private refreshVersion = 0;
@@ -204,6 +206,10 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
 
   evidenceFor(proposal: BlueprintAmountAdjustmentProposal): LearnProposalEvidence | null {
     return this.evidenceByKey[this.proposalKey(proposal)] ?? null;
+  }
+
+  proposalConfidence(proposal: BlueprintAmountAdjustmentProposal): LearnProposalConfidence {
+    return this.confidenceByKey[this.proposalKey(proposal)] ?? 'medium';
   }
 
   categoryLabel(category: string): string {

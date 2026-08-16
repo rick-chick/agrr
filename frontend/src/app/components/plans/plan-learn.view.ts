@@ -7,6 +7,7 @@ import type {
 import type { BlueprintAmountAdjustmentProposal } from '../../domain/plans/blueprint-amount-adjustment-proposal';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
+import type { LearnProposalConfidence } from '../../domain/plans/resolve-learn-proposal-confidence';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
 import type { PlanTaskScheduleRowView } from './plan-task-schedule.view';
 import type { LearnPostMasterPayload } from '../../domain/plans/learn-proposal-application-progress';
@@ -26,6 +27,7 @@ export type PlanLearnViewState = {
   blueprintAmountLoading: boolean;
   blueprintAmountProposals: BlueprintAmountAdjustmentProposal[];
   blueprintAmountEvidenceByKey: Record<string, LearnProposalEvidence>;
+  blueprintAmountConfidenceByKey: Record<string, LearnProposalConfidence>;
   stageGddProposalsLoading: boolean;
   stageGddProposals: StageGddCalibrationProposal[];
   stageGddEvidenceByKey: Record<string, LearnProposalEvidence>;

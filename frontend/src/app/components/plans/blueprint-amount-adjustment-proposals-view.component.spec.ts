@@ -90,7 +90,10 @@ describe('BlueprintAmountAdjustmentProposalsViewComponent inline apply', () => {
         'plans.learn.bp_amount_adjustment.evidence.toggle': 'Show rationale',
         'plans.learn.bp_amount_adjustment.evidence.rationale': 'Rationale',
         'plans.learn.bp_amount_adjustment.evidence.records_title': 'Records',
-        'plans.learn.bp_amount_adjustment.evidence.record': 'Record'
+        'plans.learn.bp_amount_adjustment.evidence.record': 'Record',
+        'plans.learn.proposal_confidence.high': 'High confidence',
+        'plans.learn.proposal_confidence.medium': 'Medium confidence',
+        'plans.learn.proposal_confidence.low': 'Low confidence'
       },
       true
     );
@@ -189,5 +192,30 @@ describe('BlueprintAmountAdjustmentProposalsViewComponent inline apply', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('No amount proposals');
+  });
+
+  it('shows per-stage confidence labels based on recorded item count', () => {
+    const highConfidenceProposal = { ...sampleProposal, stageOrder: 1, recordedItemCount: 3 };
+    const lowConfidenceProposal = {
+      ...sampleProposal,
+      cropId: 2,
+      stageOrder: 2,
+      stageName: 'Fruiting',
+      recordedItemCount: 1
+    };
+
+    fixture.componentRef.setInput('proposals', [highConfidenceProposal, lowConfidenceProposal]);
+    fixture.componentRef.setInput('confidenceByKey', {
+      '1-fertilizer-fertilize-1': 'high',
+      '2-fertilizer-fertilize-2': 'low'
+    });
+    fixture.detectChanges();
+
+    const badges = Array.from(
+      fixture.nativeElement.querySelectorAll('.learn-proposal-confidence')
+    ).map((el: Element) => el.textContent?.trim());
+
+    expect(badges).toContain('High confidence');
+    expect(badges).toContain('Low confidence');
   });
 });
