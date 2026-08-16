@@ -3,6 +3,7 @@ export const HOME_INDEX_HERO_I18N_KEYS = {
   title: 'home.index.hero.title',
   subtitleHtml: 'home.index.hero.subtitle_html',
   ctaScrollDemo: 'home.index.hero.cta_scroll_demo',
+  ctaEntrySchedule: 'home.index.hero.cta_entry_schedule',
   ctaFooterLink: 'home.index.hero.cta_footer_link'
 } as const;
 

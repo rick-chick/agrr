@@ -53,7 +53,7 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
           </li>
         }
         <li><a class="nav-link" routerLink="/public-plans/new" routerLinkActive="is-active">{{ 'nav.new_plan' | translate }}</a></li>
-        <!-- 作物スケジュール（/entry-schedule）: 未成熟のためナビから非表示。ルートは残す -->
+        <li><a class="nav-link" routerLink="/entry-schedule" routerLinkActive="is-active">{{ 'nav.entry_schedule' | translate }}</a></li>
         <li><a class="nav-link" [href]="reportUrl">{{ 'nav.reports' | translate }}</a></li>
         <li>
           <app-nav-dropdown

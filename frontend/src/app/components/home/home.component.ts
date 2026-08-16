@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { scrollToElementId } from '../../core/dom/scroll-to-element-id';
 import {
@@ -13,7 +13,7 @@ import { HomeDemoSectionComponent } from './home-demo-section.component';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [TranslateModule, HomeDemoSectionComponent],
+  imports: [TranslateModule, HomeDemoSectionComponent, RouterLink],
   template: `
     <section class="hero-section">
       <h1>{{ hero.title | translate }}</h1>
@@ -21,6 +21,9 @@ import { HomeDemoSectionComponent } from './home-demo-section.component';
       <div class="hero-actions">
         <a href="#home-demo" class="hero-scroll-button" (click)="scrollToDemo($event)">
           {{ hero.ctaScrollDemo | translate }}
+        </a>
+        <a routerLink="/entry-schedule" class="hero-entry-schedule-link">
+          {{ hero.ctaEntrySchedule | translate }}
         </a>
       </div>
     </section>
