@@ -357,7 +357,40 @@ describe('PublicPlanResultsComponent (template)', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      data: { id: 1, fields: [] } as never,
+      data: {
+        success: true,
+        data: {
+          id: 1,
+          plan_year: 2026,
+          plan_name: 'Test',
+          status: 'active',
+          total_area: 100,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, field_id: 1, name: 'F1', area: 100, daily_fixed_cost: 0 }],
+          crops: [],
+          cultivations: [
+            {
+              id: 1,
+              field_id: 1,
+              field_name: 'F1',
+              crop_id: 1,
+              crop_name: 'C',
+              area: 100,
+              start_date: '2026-01-01',
+              completion_date: '2026-06-01',
+              cultivation_days: 150,
+              estimated_cost: 0,
+              revenue: 0,
+              profit: 0,
+              status: 'active'
+            }
+          ]
+        },
+        total_profit: 0,
+        total_revenue: 0,
+        total_cost: 0
+      } as never,
       savedPrivatePlanId: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
