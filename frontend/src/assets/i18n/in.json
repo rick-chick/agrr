@@ -2410,7 +2410,19 @@
         "frost_risk_field": "{{field}} ({{crop}})",
         "gdd_delay_task": "GDD विलंब: {{name}}",
         "threshold_exceeded_task": "सीमा पार: {{name}}",
-        "learn_cta": "Learn में विवरण देखें"
+        "learn_cta": "Learn में विवरण देखें",
+        "weather_trigger": {
+          "frost_forecast": "पाला पूर्वानुमान",
+          "gdd_trajectory_delay": "GDD प्रक्षेप विलंब",
+          "forecast_sudden_change": "पूर्वानुमान अचानक परिवर्तन"
+        },
+        "weather_target": "{{field}} ({{crop}})",
+        "weather_rationale": {
+          "frost_forecast": "न्यूनतम ताप {{tMin}}°C (सीमा {{threshold}}°C)",
+          "gdd_trajectory_delay": "GDD Δ {{delta}} (सीमा {{threshold}})",
+          "forecast_sudden_change": "पूर्वानुमान परिवर्तन Δ {{delta}}°C"
+        },
+        "weather_proposal_cta": "प्रस्ताव देखें"
       },
       "exceedance_badge": {
         "days": "Δ {{delta}} दिन",

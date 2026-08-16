@@ -26,6 +26,7 @@ import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-
 import { emptyPlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
+import { LoadWeatherRescheduleProposalsUseCase } from '../../usecase/plans/load-weather-reschedule-proposals.usecase';
 import { applyPlanWorkViewEffects } from './plan-work-view.effects';
 import { WorkRecordSaveImpactPanelComponent } from './work-record-save-impact-panel.component';
 import { PlanWorkVarianceSummaryComponent } from './plan-work-variance-summary.component';
@@ -85,7 +86,10 @@ const initialControl: PlanWorkViewState = {
   varianceSummaryLoading: true,
   varianceSummaryError: null,
   varianceSummaryStats: null,
-  actionRequiredItems: []
+  actionRequiredItems: [],
+  weatherProposalsLoading: true,
+  weatherProposalsError: null,
+  weatherProposals: []
 };
 
 @Component({
@@ -550,6 +554,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
   private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
   private readonly loadSummaryUseCase = inject(LoadPlanVsActualSummaryUseCase);
+  private readonly loadWeatherProposalsUseCase = inject(LoadWeatherRescheduleProposalsUseCase);
   private readonly presenter = inject(PlanWorkPresenter);
   private readonly translate = inject(TranslateService);
   private readonly flashMessage = inject(FlashMessageService);
@@ -581,7 +586,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   }
 
   get todayAttentionLoading(): boolean {
-    return this.control.varianceSummaryLoading;
+    return this.control.varianceSummaryLoading || this.control.weatherProposalsLoading;
   }
 
   get todayAttentionSummary(): PlanWorkTodayAttentionSummary | null {
@@ -596,7 +601,8 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
         top_variance_items: [],
         action_required_items: this.control.actionRequiredItems
       },
-      [...this.control.overdue, ...this.control.today]
+      [...this.control.overdue, ...this.control.today],
+      this.control.weatherProposals
     );
   }
 
@@ -769,6 +775,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     }
     const loadGeneration = this.presenter.beginScheduleLoad();
     const varianceLoadGeneration = this.presenter.beginPageVarianceLoad();
+    const weatherLoadGeneration = this.presenter.beginWeatherProposalsLoad();
     this.loadUseCase.execute({
       planId: this.planId,
       today: localTodayIso(),
@@ -778,9 +785,15 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     this.control = {
       ...this.control,
       varianceSummaryLoading: true,
-      varianceSummaryError: null
+      varianceSummaryError: null,
+      weatherProposalsLoading: true,
+      weatherProposalsError: null
     };
     this.loadSummaryUseCase.execute({ planId: this.planId, loadGeneration: varianceLoadGeneration });
+    this.loadWeatherProposalsUseCase.execute({
+      planId: this.planId,
+      loadGeneration: weatherLoadGeneration
+    });
   }
 
   regenerateTaskSchedule(): void {

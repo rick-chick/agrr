@@ -24,6 +24,7 @@ describe('UpdateTaskScheduleItemUseCase', () => {
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({} as never),
       getPlanVsActualSummary: () => of({} as never),
+      getWeatherRescheduleProposals: () => of([]),
       getVarianceLearning: () => of({} as never),
       importVarianceLearning: () => of({} as never),
       patchVarianceLearningProposalProgress: () => of({} as never),

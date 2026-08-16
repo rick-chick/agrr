@@ -42,6 +42,7 @@ import {
 import { mapWorkRecordSaveToastToPendingRequest } from './work-record-save-toast.presenter.helpers';
 import { WorkRecordSheetSavedEvent } from '../../components/plans/work-record-sheet.view';
 import { PlanVsActualSummaryDataDto } from '../../usecase/plans/load-plan-vs-actual-summary.output-port';
+import { WeatherRescheduleProposalsDataDto } from '../../usecase/plans/load-weather-reschedule-proposals.output-port';
 import { buildPlanWorkVarianceSummaryStats } from '../../domain/plans/build-plan-work-variance-summary-stats';
 
 const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
@@ -51,12 +52,21 @@ const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropN
 
 const emptyPageVarianceFields: Pick<
   PlanWorkViewState,
-  'varianceSummaryLoading' | 'varianceSummaryError' | 'varianceSummaryStats' | 'actionRequiredItems'
+  | 'varianceSummaryLoading'
+  | 'varianceSummaryError'
+  | 'varianceSummaryStats'
+  | 'actionRequiredItems'
+  | 'weatherProposalsLoading'
+  | 'weatherProposalsError'
+  | 'weatherProposals'
 > = {
   varianceSummaryLoading: true,
   varianceSummaryError: null,
   varianceSummaryStats: null,
-  actionRequiredItems: []
+  actionRequiredItems: [],
+  weatherProposalsLoading: true,
+  weatherProposalsError: null,
+  weatherProposals: []
 };
 
 @Injectable()
@@ -74,6 +84,7 @@ export class PlanWorkPresenter
   private pendingSaveImpactRequest: PendingSaveImpactRequest | null = null;
   private saveImpactLoadGeneration = 0;
   private pageVarianceLoadGeneration = 0;
+  private weatherProposalsLoadGeneration = 0;
 
   setView(view: PlanWorkView): void {
     this.view = view;
@@ -88,6 +99,11 @@ export class PlanWorkPresenter
   beginPageVarianceLoad(): number {
     this.pageVarianceLoadGeneration += 1;
     return this.pageVarianceLoadGeneration;
+  }
+
+  beginWeatherProposalsLoad(): number {
+    this.weatherProposalsLoadGeneration += 1;
+    return this.weatherProposalsLoadGeneration;
   }
 
   onSuccess(dto?: CreateWorkRecordSuccessDto): void {
@@ -352,6 +368,32 @@ export class PlanWorkPresenter
       varianceSummaryError: dto.message,
       varianceSummaryStats: null,
       actionRequiredItems: []
+    };
+  }
+
+  presentWeatherProposals(dto: WeatherRescheduleProposalsDataDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    if (dto.loadGeneration !== this.weatherProposalsLoadGeneration) {
+      return;
+    }
+    this.view.control = {
+      ...this.view.control,
+      weatherProposalsLoading: false,
+      weatherProposalsError: null,
+      weatherProposals: dto.proposals
+    };
+  }
+
+  onWeatherProposalsError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    if (!this.view.control.weatherProposalsLoading) {
+      return;
+    }
+    this.view.control = {
+      ...this.view.control,
+      weatherProposalsLoading: false,
+      weatherProposalsError: dto.message,
+      weatherProposals: []
     };
   }
 

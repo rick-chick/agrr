@@ -3060,7 +3060,19 @@
         "frost_risk_field": "{{field}}（{{crop}}）",
         "gdd_delay_task": "GDD遅延: {{name}}",
         "threshold_exceeded_task": "閾値超過: {{name}}",
-        "learn_cta": "振り返りで詳細を見る"
+        "learn_cta": "振り返りで詳細を見る",
+        "weather_trigger": {
+          "frost_forecast": "霜予報",
+          "gdd_trajectory_delay": "GDD軌道遅延",
+          "forecast_sudden_change": "予報急変"
+        },
+        "weather_target": "{{field}}（{{crop}}）",
+        "weather_rationale": {
+          "frost_forecast": "最低気温 {{tMin}}℃（閾値 {{threshold}}℃）",
+          "gdd_trajectory_delay": "GDD Δ {{delta}}（閾値 {{threshold}}）",
+          "forecast_sudden_change": "予報変化 Δ {{delta}}℃"
+        },
+        "weather_proposal_cta": "提案を見る"
       },
       "exceedance_badge": {
         "days": "Δ {{delta}}日",

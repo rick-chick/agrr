@@ -51,7 +51,10 @@ const baseControl: PlanWorkViewState = {
   varianceSummaryLoading: false,
   varianceSummaryError: null,
   varianceSummaryStats: null,
-  actionRequiredItems: []
+  actionRequiredItems: [],
+  weatherProposalsLoading: false,
+  weatherProposalsError: null,
+  weatherProposals: []
 };
 
 function field(overrides: Partial<FieldSchedule> & Pick<FieldSchedule, 'field_cultivation_id'>): FieldSchedule {

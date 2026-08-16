@@ -135,6 +135,33 @@ describe('buildPlanWorkTodayAttention', () => {
       '間引き',
       '施肥'
     ]);
+    expect(attention.weatherTriggers).toEqual([]);
+    expect(attention.hasAnyAttention).toBe(true);
+  });
+
+  it('includes weather triggers from proposals and marks hasAnyAttention', () => {
+    const attention = buildPlanWorkTodayAttention(
+      sampleSummary({ action_required_items: [] }),
+      [sampleRow({ weather_dependency: 'low' })],
+      [
+        {
+          id: 'frost_forecast:100:42',
+          trigger_type: 'frost_forecast',
+          severity: 'high',
+          rationale: {
+            forecast_t_min: -2,
+            frost_threshold: 0,
+            target_cultivation: { field_name: '北圃場', crop_name: 'トマト' }
+          },
+          moves: []
+        }
+      ]
+    );
+
+    expect(attention.weatherTriggers).toHaveLength(1);
+    expect(attention.weatherTriggers[0]?.fieldName).toBe('北圃場');
+    expect(attention.weatherTriggers[0]?.cropName).toBe('トマト');
+    expect(attention.frostRiskCount).toBe(0);
     expect(attention.hasAnyAttention).toBe(true);
   });
 
@@ -144,6 +171,7 @@ describe('buildPlanWorkTodayAttention', () => {
     ]);
 
     expect(attention.frostRiskCount).toBe(0);
+    expect(attention.weatherTriggers).toEqual([]);
     expect(attention.hasAnyAttention).toBe(false);
   });
 
@@ -156,6 +184,7 @@ describe('buildPlanWorkTodayAttention', () => {
     expect(attention.frostRiskCount).toBe(0);
     expect(attention.gddDelayCount).toBe(0);
     expect(attention.thresholdExceededCount).toBe(0);
+    expect(attention.weatherTriggers).toEqual([]);
     expect(attention.hasAnyAttention).toBe(false);
   });
 });

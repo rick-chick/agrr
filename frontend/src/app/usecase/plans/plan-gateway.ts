@@ -4,6 +4,7 @@ import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
+import type { WeatherRescheduleProposal } from '../../domain/plans/weather-reschedule-proposal';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { RegenerateTaskScheduleResponseDto } from './regenerate-task-schedule-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
@@ -33,6 +34,7 @@ export interface PlanGateway {
   getPublicPlanData(planId: number): Observable<CultivationPlanData>;
   getTaskSchedule(planId: number, params?: TaskScheduleQueryParams): Observable<TaskScheduleResponse>;
   getPlanVsActualSummary(planId: number): Observable<PlanVsActualSummary>;
+  getWeatherRescheduleProposals(planId: number): Observable<WeatherRescheduleProposal[]>;
   getVarianceLearning(planId: number): Observable<PlanVarianceLearningSnapshot>;
   importVarianceLearning(
     planId: number,

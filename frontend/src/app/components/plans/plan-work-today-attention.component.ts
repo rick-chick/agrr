@@ -43,6 +43,37 @@ import type { PlanWorkTodayAttentionSummary } from '../../domain/plans/build-pla
           {{ 'plans.work.today_attention.title' | translate }}
         </h2>
 
+        @if (summary!.weatherTriggers.length) {
+          <ul class="plan-work-today-attention__weather-list">
+            @for (trigger of summary!.weatherTriggers; track trigger.proposalId) {
+              <li class="plan-work-today-attention__weather-item">
+                <p class="plan-work-today-attention__weather-type">
+                  {{
+                    'plans.work.today_attention.weather_trigger.' + trigger.triggerType
+                      | translate
+                  }}
+                </p>
+                <p class="plan-work-today-attention__weather-target">
+                  {{
+                    'plans.work.today_attention.weather_target'
+                      | translate: { field: trigger.fieldName, crop: trigger.cropName }
+                  }}
+                </p>
+                <p class="plan-work-today-attention__weather-rationale">
+                  {{ trigger.rationaleI18nKey | translate: trigger.rationaleI18nParams }}
+                </p>
+                <a
+                  class="plan-work-today-attention__proposal-link"
+                  [routerLink]="['/plans', planId]"
+                  [queryParams]="{ weatherProposal: trigger.proposalId }"
+                >
+                  {{ 'plans.work.today_attention.weather_proposal_cta' | translate }}
+                </a>
+              </li>
+            }
+          </ul>
+        }
+
         <dl class="plan-work-today-attention__grid">
           <div>
             <dt>{{ 'plans.work.today_attention.frost_risk' | translate }}</dt>

@@ -10,6 +10,8 @@ import { LOAD_WORK_DAY_LIST_OUTPUT_PORT } from './load-work-day-list.output-port
 import { LoadWorkDayListUseCase } from './load-work-day-list.usecase';
 import { LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT } from './load-plan-vs-actual-summary.output-port';
 import { LoadPlanVsActualSummaryUseCase } from './load-plan-vs-actual-summary.usecase';
+import { LOAD_WEATHER_RESCHEDULE_PROPOSALS_OUTPUT_PORT } from './load-weather-reschedule-proposals.output-port';
+import { LoadWeatherRescheduleProposalsUseCase } from './load-weather-reschedule-proposals.usecase';
 import { PLAN_GATEWAY } from './plan-gateway';
 import { PLAN_OPTIMIZATION_GATEWAY } from './plan-optimization-gateway';
 import { REGENERATE_TASK_SCHEDULE_OUTPUT_PORT } from './regenerate-task-schedule.output-port';
@@ -28,6 +30,7 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
   PlanWorkPresenter,
   LoadWorkDayListUseCase,
   LoadPlanVsActualSummaryUseCase,
+  LoadWeatherRescheduleProposalsUseCase,
   SkipTaskScheduleItemUseCase,
   CreateWorkRecordUseCase,
   UpdateTaskScheduleItemUseCase,
@@ -47,6 +50,17 @@ export const PLAN_WORK_PROVIDERS: readonly Provider[] = [
         presenter.presentSaveImpactSummary(dto),
       onError: (dto: Parameters<PlanWorkPresenter['onSaveImpactError']>[0]) => {
         presenter.onSaveImpactError(dto);
+      }
+    }),
+    deps: [PlanWorkPresenter]
+  },
+  {
+    provide: LOAD_WEATHER_RESCHEDULE_PROPOSALS_OUTPUT_PORT,
+    useFactory: (presenter: PlanWorkPresenter) => ({
+      present: (dto: Parameters<PlanWorkPresenter['presentWeatherProposals']>[0]) =>
+        presenter.presentWeatherProposals(dto),
+      onError: (dto: Parameters<PlanWorkPresenter['onWeatherProposalsError']>[0]) => {
+        presenter.onWeatherProposalsError(dto);
       }
     }),
     deps: [PlanWorkPresenter]

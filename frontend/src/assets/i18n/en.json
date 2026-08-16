@@ -1983,7 +1983,19 @@
         "frost_risk_field": "{{field}} ({{crop}})",
         "gdd_delay_task": "GDD delay: {{name}}",
         "threshold_exceeded_task": "Threshold exceeded: {{name}}",
-        "learn_cta": "Review details in Learn"
+        "learn_cta": "Review details in Learn",
+        "weather_trigger": {
+          "frost_forecast": "Frost forecast",
+          "gdd_trajectory_delay": "GDD trajectory delay",
+          "forecast_sudden_change": "Forecast sudden change"
+        },
+        "weather_target": "{{field}} ({{crop}})",
+        "weather_rationale": {
+          "frost_forecast": "Min temp {{tMin}}°C (threshold {{threshold}}°C)",
+          "gdd_trajectory_delay": "GDD Δ {{delta}} (threshold {{threshold}})",
+          "forecast_sudden_change": "Forecast change Δ {{delta}}°C"
+        },
+        "weather_proposal_cta": "View proposal"
       },
       "exceedance_badge": {
         "days": "Δ {{delta}} days",

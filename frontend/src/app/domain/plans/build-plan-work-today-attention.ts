@@ -1,5 +1,8 @@
 import type { PlanVarianceActionItem, PlanVsActualSummary } from './plan-vs-actual-summary';
 import type { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
+import { mapWeatherProposalsToAttentionTriggers } from './map-weather-proposals-to-attention-triggers';
+import type { WeatherRescheduleProposal } from './weather-reschedule-proposal';
+import type { WeatherRescheduleTriggerType } from './weather-reschedule-proposal';
 
 export interface PlanWorkTodayAttentionField {
   fieldCultivationId: number;
@@ -12,6 +15,15 @@ export interface PlanWorkTodayAttentionTask {
   name: string;
 }
 
+export interface PlanWorkTodayAttentionWeatherTrigger {
+  proposalId: string;
+  triggerType: WeatherRescheduleTriggerType;
+  fieldName: string;
+  cropName: string;
+  rationaleI18nKey: string;
+  rationaleI18nParams: Record<string, string | number>;
+}
+
 export interface PlanWorkTodayAttentionSummary {
   frostRiskCount: number;
   frostRiskFields: PlanWorkTodayAttentionField[];
@@ -19,6 +31,7 @@ export interface PlanWorkTodayAttentionSummary {
   gddDelayTasks: PlanWorkTodayAttentionTask[];
   thresholdExceededCount: number;
   thresholdExceededTasks: PlanWorkTodayAttentionTask[];
+  weatherTriggers: PlanWorkTodayAttentionWeatherTrigger[];
   hasAnyAttention: boolean;
 }
 
@@ -60,12 +73,14 @@ function detectFrostRiskFields(activeRows: WorkDayListRowDto[]): PlanWorkTodayAt
 
 export function buildPlanWorkTodayAttention(
   summary: PlanVsActualSummary,
-  activeRows: WorkDayListRowDto[]
+  activeRows: WorkDayListRowDto[],
+  weatherProposals: WeatherRescheduleProposal[] = []
 ): PlanWorkTodayAttentionSummary {
   const actionItems = summary.action_required_items ?? [];
   const frostRiskFields = detectFrostRiskFields(activeRows);
   const gddDelayTasks = actionItems.filter(isGddDelayItem).map(toAttentionTask);
   const thresholdExceededTasks = actionItems.map(toAttentionTask);
+  const weatherTriggers = mapWeatherProposalsToAttentionTriggers(weatherProposals);
 
   const frostRiskCount = frostRiskFields.length;
   const gddDelayCount = gddDelayTasks.length;
@@ -78,7 +93,11 @@ export function buildPlanWorkTodayAttention(
     gddDelayTasks,
     thresholdExceededCount,
     thresholdExceededTasks,
+    weatherTriggers,
     hasAnyAttention:
-      frostRiskCount > 0 || gddDelayCount > 0 || thresholdExceededCount > 0
+      frostRiskCount > 0 ||
+      gddDelayCount > 0 ||
+      thresholdExceededCount > 0 ||
+      weatherTriggers.length > 0
   };
 }

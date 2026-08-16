@@ -40,6 +40,7 @@ function stubPlanGateway(
 ): PlanGateway {
   return {
     listPlans: () => of([]),
+  getWeatherRescheduleProposals: () => of([]),
     fetchPlan: () => of({} as never),
     fetchPlanData: () => of({} as never),
     getPublicPlanData: () => of({} as never),

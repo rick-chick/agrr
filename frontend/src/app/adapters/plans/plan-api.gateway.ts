@@ -6,6 +6,7 @@ import { PlanSummary } from '../../domain/plans/plan-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
+import type { WeatherRescheduleProposal } from '../../domain/plans/weather-reschedule-proposal';
 import { PlanGateway, TaskScheduleQueryParams } from '../../usecase/plans/plan-gateway';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
@@ -57,6 +58,12 @@ export class PlanApiGateway implements PlanGateway {
   getPlanVsActualSummary(planId: number): Observable<PlanVsActualSummary> {
     return this.apiClient.get<PlanVsActualSummary>(
       `/api/v1/plans/${planId}/plan_vs_actual/summary`
+    );
+  }
+
+  getWeatherRescheduleProposals(planId: number): Observable<WeatherRescheduleProposal[]> {
+    return this.apiClient.get<WeatherRescheduleProposal[]>(
+      `/api/v1/plans/${planId}/weather_reschedule_proposals`
     );
   }
 

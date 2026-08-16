@@ -4,6 +4,7 @@ import { PendingToastRequest } from '../../core/view-effects/pending-toast-view.
 import type { PlanSaveImpactViewFields } from '../../adapters/plans/plan-save-impact.presenter.helpers';
 import type { PlanWorkVarianceSummaryStats } from '../../domain/plans/build-plan-work-variance-summary-stats';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
+import type { WeatherRescheduleProposal } from '../../domain/plans/weather-reschedule-proposal';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import type { WorkListSegment } from '../../domain/work-schedule/work-row-fertilizer';
 
@@ -37,6 +38,9 @@ export interface PlanWorkViewState extends PlanSaveImpactViewFields {
   varianceSummaryError: string | null;
   varianceSummaryStats: PlanWorkVarianceSummaryStats | null;
   actionRequiredItems: PlanVarianceActionItem[];
+  weatherProposalsLoading: boolean;
+  weatherProposalsError: string | null;
+  weatherProposals: WeatherRescheduleProposal[];
 }
 
 export interface PlanWorkView {

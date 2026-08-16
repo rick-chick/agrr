@@ -71,6 +71,7 @@ describe('loadHubFarmVarianceStats', () => {
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({ fields: [] } as never),
       getPlanVsActualSummary: (planId) => of(summaryForPlan(planId)),
+      getWeatherRescheduleProposals: () => of([]),
       getVarianceLearning: () =>
         of({
           plan_id: 0,
@@ -135,6 +136,7 @@ describe('loadHubFarmVarianceStats', () => {
             unrecorded_count: planId === 9 ? 4 : 1
           })
         ),
+      getWeatherRescheduleProposals: () => of([]),
       getVarianceLearning: () =>
         of({
           plan_id: 0,
@@ -172,6 +174,7 @@ describe('loadHubFarmVarianceStats', () => {
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({ fields: [] } as never),
       getPlanVsActualSummary,
+      getWeatherRescheduleProposals: () => of([]),
       getVarianceLearning: () =>
         of({
           plan_id: 0,

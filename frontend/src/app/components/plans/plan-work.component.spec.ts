@@ -17,6 +17,7 @@ import { emptyPlanSaveImpactViewFields } from '../../adapters/plans/plan-save-im
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
+import { LoadWeatherRescheduleProposalsUseCase } from '../../usecase/plans/load-weather-reschedule-proposals.usecase';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
 
@@ -47,7 +48,10 @@ const initialControl: PlanWorkViewState = {
   varianceSummaryLoading: false,
   varianceSummaryError: null,
   varianceSummaryStats: null,
-  actionRequiredItems: []
+  actionRequiredItems: [],
+  weatherProposalsLoading: false,
+  weatherProposalsError: null,
+  weatherProposals: []
 };
 
 function createPlanRouteMock(planId: string, queryParams: Record<string, string> = {}) {
@@ -161,7 +165,10 @@ const loadedState: PlanWorkViewState = {
   varianceSummaryLoading: false,
   varianceSummaryError: null,
   varianceSummaryStats: null,
-  actionRequiredItems: []
+  actionRequiredItems: [],
+  weatherProposalsLoading: false,
+  weatherProposalsError: null,
+  weatherProposals: []
 };
 
 describe('PlanWorkComponent mobile UX', () => {
@@ -174,10 +181,12 @@ describe('PlanWorkComponent mobile UX', () => {
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let loadSummaryUseCase: { execute: ReturnType<typeof vi.fn> };
+  let loadWeatherProposalsUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: {
     setView: ReturnType<typeof vi.fn>;
     beginScheduleLoad: ReturnType<typeof vi.fn>;
     beginPageVarianceLoad: ReturnType<typeof vi.fn>;
+    beginWeatherProposalsLoad: ReturnType<typeof vi.fn>;
     queueSaveImpactAfterSave: ReturnType<typeof vi.fn>;
     dismissSaveImpact: ReturnType<typeof vi.fn>;
   };
@@ -191,10 +200,12 @@ describe('PlanWorkComponent mobile UX', () => {
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     loadSummaryUseCase = { execute: vi.fn() };
+    loadWeatherProposalsUseCase = { execute: vi.fn() };
     mockPresenter = {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
       beginPageVarianceLoad: vi.fn(() => 2),
+      beginWeatherProposalsLoad: vi.fn(() => 3),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };
@@ -212,6 +223,7 @@ describe('PlanWorkComponent mobile UX', () => {
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: loadSummaryUseCase },
+          { provide: LoadWeatherRescheduleProposalsUseCase, useValue: loadWeatherProposalsUseCase },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr }
         ]
@@ -1112,10 +1124,12 @@ describe('PlanWorkComponent in locale labels', () => {
     const regenerateUseCase = { execute: vi.fn() };
     const subscribeSyncUseCase = { execute: vi.fn() };
     const loadSummaryUseCase = { execute: vi.fn() };
+    const loadWeatherProposalsUseCase = { execute: vi.fn() };
     const mockPresenter = {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
       beginPageVarianceLoad: vi.fn(() => 2),
+      beginWeatherProposalsLoad: vi.fn(() => 3),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };
@@ -1133,6 +1147,7 @@ describe('PlanWorkComponent in locale labels', () => {
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: loadSummaryUseCase },
+          { provide: LoadWeatherRescheduleProposalsUseCase, useValue: loadWeatherProposalsUseCase },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr }
         ]
@@ -1215,6 +1230,7 @@ describe('PlanWorkComponent fertilizer segment', () => {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
       beginPageVarianceLoad: vi.fn(() => 2),
+      beginWeatherProposalsLoad: vi.fn(() => 3),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };
@@ -1230,6 +1246,7 @@ describe('PlanWorkComponent fertilizer segment', () => {
           { provide: RegenerateTaskScheduleUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: { execute: vi.fn() } },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: { execute: vi.fn() } },
+          { provide: LoadWeatherRescheduleProposalsUseCase, useValue: { execute: vi.fn() } },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
         ]
@@ -1313,6 +1330,7 @@ describe('PlanWorkComponent pest control segment', () => {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
       beginPageVarianceLoad: vi.fn(() => 2),
+      beginWeatherProposalsLoad: vi.fn(() => 3),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };
@@ -1328,6 +1346,7 @@ describe('PlanWorkComponent pest control segment', () => {
           { provide: RegenerateTaskScheduleUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: { execute: vi.fn() } },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: { execute: vi.fn() } },
+          { provide: LoadWeatherRescheduleProposalsUseCase, useValue: { execute: vi.fn() } },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
         ]
@@ -1423,6 +1442,7 @@ describe('PlanWorkComponent harvest badge', () => {
       setView: vi.fn(),
       beginScheduleLoad: vi.fn(() => 1),
       beginPageVarianceLoad: vi.fn(() => 2),
+      beginWeatherProposalsLoad: vi.fn(() => 3),
       queueSaveImpactAfterSave: vi.fn(() => 1),
       dismissSaveImpact: vi.fn()
     };
@@ -1438,6 +1458,7 @@ describe('PlanWorkComponent harvest badge', () => {
           { provide: RegenerateTaskScheduleUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: { execute: vi.fn() } },
           { provide: LoadPlanVsActualSummaryUseCase, useValue: { execute: vi.fn() } },
+          { provide: LoadWeatherRescheduleProposalsUseCase, useValue: { execute: vi.fn() } },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
         ]
