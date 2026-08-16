@@ -149,7 +149,7 @@ describe('PlanLearnProposalQueueComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="queue-count-safe"]')?.textContent).toContain('1');
   });
 
-  it('shows post-apply confirmation on same screen after bulk apply without auto navigation', async () => {
+  it('auto-starts reorganize pipeline after bulk apply without manual CTA', async () => {
     fixture.componentInstance.stageGddProposals = [
       {
         cropId: 1,
@@ -175,24 +175,51 @@ describe('PlanLearnProposalQueueComponent', () => {
     await fixture.whenStable();
 
     expect(bulkApplyUseCase.execute).toHaveBeenCalled();
-    expect(router.navigate).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('1 safe proposal(s) applied');
-    expect(fixture.nativeElement.textContent).toContain('Start reorganization pipeline');
-    expect(fixture.nativeElement.querySelector('.learn-proposal-queue__post-apply')).toBeTruthy();
-  });
-
-  it('starts reorganize pipeline only when user confirms post-apply step', () => {
-    fixture.componentInstance.bulkApplyComplete = true;
-    fixture.componentInstance.lastAppliedCount = 2;
-    fixture.detectChanges();
-
-    const startButton = fixture.nativeElement.querySelector(
-      '.learn-proposal-queue__post-apply .btn-primary'
-    ) as HTMLButtonElement;
-    startButton.click();
-
     expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
     expect(router.navigate).toHaveBeenCalledWith(['/plans', 7], {
+      queryParams: { learningOrchestration: 'adjust' }
+    });
+    expect(fixture.nativeElement.querySelector('.learn-proposal-queue__post-apply')).toBeFalsy();
+  });
+
+  it('shows manual retry CTA only when pipeline start navigation fails', async () => {
+    vi.mocked(router.navigate).mockRejectedValueOnce(new Error('navigation failed'));
+    fixture.componentInstance.stageGddProposals = [
+      {
+        cropId: 1,
+        cropName: 'Tomato',
+        stageId: 2,
+        stageOrder: 1,
+        stageName: 'Vegetative',
+        averageGddDelta: 5,
+        recordedItemCount: 2,
+        currentRequiredGdd: 100,
+        proposedRequiredGdd: 105
+      }
+    ];
+    fixture.detectChanges();
+
+    const applyButton = fixture.nativeElement.querySelector(
+      '.learn-proposal-queue__bulk-apply .btn-primary'
+    ) as HTMLButtonElement;
+    applyButton.click();
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.learn-proposal-queue__post-apply')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Start reorganization pipeline');
+    expect(fixture.nativeElement.textContent).toContain('1 safe proposal(s) applied');
+
+    vi.mocked(router.navigate).mockResolvedValueOnce(true);
+    const retryButton = fixture.nativeElement.querySelector(
+      '.learn-proposal-queue__post-apply .btn-primary'
+    ) as HTMLButtonElement;
+    retryButton.click();
+    await fixture.whenStable();
+
+    expect(router.navigate).toHaveBeenLastCalledWith(['/plans', 7], {
       queryParams: { learningOrchestration: 'adjust' }
     });
   });
