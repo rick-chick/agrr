@@ -69,6 +69,37 @@ describe('collectLearnProposalRawSources', () => {
     expect(result.blueprintAmountAdjustmentProposals).toEqual([]);
   });
 
+  it('keeps bp_amount proposals for different stage_order values', () => {
+    const stageOneAmount = {
+      crop_id: 1,
+      crop_name: 'Tomato',
+      category: 'fertilizer',
+      task_type: 'fertilize',
+      stage_order: 1,
+      stage_name: 'Vegetative',
+      average_amount_delta: 1,
+      recorded_item_count: 2,
+      amount_unit: 'kg'
+    };
+    const stageTwoAmount = {
+      ...stageOneAmount,
+      stage_order: 2,
+      stage_name: 'Flowering',
+      average_amount_delta: 2
+    };
+    const summary: PlanVsActualSummary = {
+      plan_id: 7,
+      unrecorded_count: 0,
+      categories: [],
+      top_variance_items: [],
+      blueprint_amount_adjustment_proposals: [stageOneAmount, stageTwoAmount]
+    };
+
+    const result = collectLearnProposalRawSources(summary, null);
+
+    expect(result.blueprintAmountAdjustmentProposals).toEqual([stageOneAmount, stageTwoAmount]);
+  });
+
   it('prefers current variance over imported snapshot for the same proposal key', () => {
     const overriddenImported = {
       ...importedStageGdd,
