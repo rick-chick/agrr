@@ -2278,12 +2278,21 @@
         "fertilizer": {
           "planned_amount": "नियोजित मात्रा",
           "planned_amount_empty": "कोई नियोजित मात्रा नहीं",
-          "actual_amount": "वास्तविक मात्रा"
+          "actual_amount": "वास्तविक मात्रा",
+          "master_add_link": "उर्वरक मास्टर पंजीकृत करें",
+          "master_empty": "अभी तक कोई उर्वरक पंजीकृत नहीं",
+          "master_label": "उपयोग किया गया उर्वरक",
+          "master_placeholder": "उर्वरक चुनें (वैकल्पिक)"
         },
         "pest_control": {
           "planned_amount": "नियोजित स्प्रे मात्रा",
           "planned_amount_empty": "कोई नियोजित स्प्रे मात्रा नहीं",
-          "actual_amount": "वास्तविक स्प्रे मात्रा"
+          "actual_amount": "वास्तविक स्प्रे मात्रा",
+          "master_add_link": "कीटनाशक मास्टर पंजीकृत करें",
+          "master_crop_required": "उस फसल के कीटनाशक चुनने के लिए खेत चुनें",
+          "master_empty": "इस फसल के लिए कोई कीटनाशक पंजीकृत नहीं",
+          "master_label": "उपयोग किया गया कीटनाशक",
+          "master_placeholder": "कीटनाशक चुनें (वैकल्पिक)"
         },
         "harvest": {
           "yield_amount": "कटाई उपज",

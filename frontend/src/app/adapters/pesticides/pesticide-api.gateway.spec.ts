@@ -26,6 +26,17 @@ describe('PesticideApiGateway', () => {
     expect(client.get).toHaveBeenCalledWith('/pesticides');
   });
 
+  it('listForCrop uses nested crop pesticides path', async () => {
+    const pesticides: Pesticide[] = [
+      { id: 2, name: 'Crop spray', crop_id: 51, pest_id: 1, is_reference: false }
+    ];
+    vi.mocked(client.get).mockReturnValue(of(pesticides));
+
+    const result = await firstValueFrom(gateway.listForCrop(51));
+    expect(result).toEqual(pesticides);
+    expect(client.get).toHaveBeenCalledWith('/crops/51/pesticides');
+  });
+
   it('show maps crop_name and pest_name from API response', async () => {
     const pesticide: Pesticide = {
       id: 1,

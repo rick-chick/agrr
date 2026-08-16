@@ -2927,12 +2927,21 @@
         "fertilizer": {
           "planned_amount": "予定用量",
           "planned_amount_empty": "予定用量なし",
-          "actual_amount": "実施用量"
+          "actual_amount": "実施用量",
+          "master_add_link": "肥料マスタを登録する",
+          "master_empty": "登録済みの肥料がありません",
+          "master_label": "使用肥料",
+          "master_placeholder": "肥料を選択（任意）"
         },
         "pest_control": {
           "planned_amount": "予定散布量",
           "planned_amount_empty": "予定散布量なし",
-          "actual_amount": "実施散布量"
+          "actual_amount": "実施散布量",
+          "master_add_link": "農薬マスタを登録する",
+          "master_crop_required": "圃場を選択すると、この作物向けの農薬を選べます",
+          "master_empty": "この作物向けの登録農薬がありません",
+          "master_label": "使用農薬",
+          "master_placeholder": "農薬を選択（任意）"
         },
         "harvest": {
           "yield_amount": "収量",

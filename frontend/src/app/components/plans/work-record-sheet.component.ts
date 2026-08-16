@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { localTodayIso } from '../../core/local-today';
 import { getApiBaseUrl } from '../../core/api-base-url';
@@ -26,7 +27,13 @@ import { WorkRecordSheetPresenter } from '../../adapters/plans/work-record-sheet
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyWorkRecordSheetViewEffects } from './work-record-sheet-view.effects';
+import {
+  resolveCropIdForFieldCultivation,
+  scheduleCategoryFromTaskType
+} from '../../domain/work-schedule/work-record-sheet-schedule';
 import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
+import { LoadFertilizeListUseCase } from '../../usecase/fertilizes/load-fertilize-list.usecase';
+import { LoadCropPesticideListUseCase } from '../../usecase/pesticides/load-crop-pesticide-list.usecase';
 import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
 import { PreviewWorkRecordClimateUseCase } from '../../usecase/plans/preview-work-record-climate/preview-work-record-climate.usecase';
@@ -80,7 +87,9 @@ function emptyForm(): WorkRecordSheetFormState {
     cropName: '',
     task_schedule_item_id: null,
     work_record_id: null,
-    agricultural_task_id: null
+    agricultural_task_id: null,
+    fertilize_id: null,
+    pesticide_id: null
   };
 }
 
@@ -92,6 +101,11 @@ const initialControl: WorkRecordSheetViewState = {
   form: emptyForm(),
   fieldOptions: [],
   scheduleCategory: null,
+  cropId: null,
+  fertilizeOptions: [],
+  pesticideOptions: [],
+  loadingFertilizeOptions: false,
+  loadingPesticideOptions: false,
   harvestContext: false,
   plannedAmount: '',
   plannedAmountUnit: '',
@@ -111,7 +125,7 @@ const initialControl: WorkRecordSheetViewState = {
 @Component({
   selector: 'app-work-record-sheet',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, RouterLink],
   providers: [...WORK_RECORD_SHEET_PROVIDERS],
   template: `
     <dialog #sheetDialog class="form-dialog" (cancel)="close()" (close)="onDialogClose()">
@@ -228,7 +242,7 @@ const initialControl: WorkRecordSheetViewState = {
               id="wr-field"
               name="field_cultivation_id"
               [(ngModel)]="control.form.field_cultivation_id"
-              (ngModelChange)="onClimateInputsChanged()"
+              (ngModelChange)="onFieldCultivationChanged($event)"
             >
               <option [ngValue]="null">{{ 'plans.work.sheet.field_optional' | translate }}</option>
               @for (field of control.fieldOptions; track field.field_cultivation_id) {
@@ -337,6 +351,64 @@ const initialControl: WorkRecordSheetViewState = {
             >
               {{ amountDiffLabel(diff) }}
             </p>
+          }
+
+          @if (control.scheduleCategory === 'fertilizer') {
+            <div class="form-card__field" data-testid="fertilize-master-picker">
+              <label for="wr-fertilize">{{
+                'plans.work.sheet.fertilizer.master_label' | translate
+              }}</label>
+              @if (control.loadingFertilizeOptions) {
+                <p class="work-record-sheet__hint">{{ 'common.loading' | translate }}</p>
+              } @else if (control.fertilizeOptions.length === 0) {
+                <p class="work-record-sheet__hint">{{
+                  'plans.work.sheet.fertilizer.master_empty' | translate
+                }}</p>
+                <a routerLink="/fertilizes/new" class="work-record-sheet__master-link">{{
+                  'plans.work.sheet.fertilizer.master_add_link' | translate
+                }}</a>
+              } @else {
+                <select id="wr-fertilize" name="fertilize_id" [(ngModel)]="control.form.fertilize_id">
+                  <option [ngValue]="null">{{
+                    'plans.work.sheet.fertilizer.master_placeholder' | translate
+                  }}</option>
+                  @for (option of control.fertilizeOptions; track option.id) {
+                    <option [ngValue]="option.id">{{ option.name }}</option>
+                  }
+                </select>
+              }
+            </div>
+          }
+
+          @if (control.scheduleCategory === 'pest_control') {
+            <div class="form-card__field" data-testid="pesticide-master-picker">
+              <label for="wr-pesticide">{{
+                'plans.work.sheet.pest_control.master_label' | translate
+              }}</label>
+              @if (control.cropId == null) {
+                <p class="work-record-sheet__hint">{{
+                  'plans.work.sheet.pest_control.master_crop_required' | translate
+                }}</p>
+              } @else if (control.loadingPesticideOptions) {
+                <p class="work-record-sheet__hint">{{ 'common.loading' | translate }}</p>
+              } @else if (control.pesticideOptions.length === 0) {
+                <p class="work-record-sheet__hint">{{
+                  'plans.work.sheet.pest_control.master_empty' | translate
+                }}</p>
+                <a routerLink="/pesticides/new" class="work-record-sheet__master-link">{{
+                  'plans.work.sheet.pest_control.master_add_link' | translate
+                }}</a>
+              } @else {
+                <select id="wr-pesticide" name="pesticide_id" [(ngModel)]="control.form.pesticide_id">
+                  <option [ngValue]="null">{{
+                    'plans.work.sheet.pest_control.master_placeholder' | translate
+                  }}</option>
+                  @for (option of control.pesticideOptions; track option.id) {
+                    <option [ngValue]="option.id">{{ option.name }}</option>
+                  }
+                </select>
+              }
+            </div>
           }
 
           <div class="form-card__field">
@@ -516,6 +588,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   private readonly saveUseCase = inject(SaveWorkRecordSheetUseCase);
   private readonly deleteUseCase = inject(DeleteWorkRecordUseCase);
   private readonly loadTaskListUseCase = inject(LoadAgriculturalTaskListUseCase);
+  private readonly loadFertilizeListUseCase = inject(LoadFertilizeListUseCase);
+  private readonly loadCropPesticideListUseCase = inject(LoadCropPesticideListUseCase);
   private readonly previewClimateUseCase = inject(PreviewWorkRecordClimateUseCase);
   private readonly presenter = inject(WorkRecordSheetPresenter);
   readonly isAmountTrackedScheduleCategory = isAmountTrackedScheduleCategory;
@@ -546,17 +620,22 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
     this.presenter.onDeletedCallback = () => this.deleted.emit();
   }
 
-  openFromItem(row: WorkDayListRowDto, options?: { fieldErrors?: Record<string, string[]> }): void {
+  openFromItem(
+    row: WorkDayListRowDto,
+    options?: { fieldErrors?: Record<string, string[]>; cropId?: number | null }
+  ): void {
     const { item, fieldName, cropName } = row;
     const scheduleCategory = resolveScheduleCategory(item.category);
     const harvestContext = isHarvestTaskItem(item);
     const plannedAmount = item.amount ?? '';
     const plannedAmountUnit = item.amount_unit ?? '';
+    const cropId = options?.cropId ?? null;
     this.control = {
       ...initialControl,
       mode: 'create-from-item',
       showDetails: isAmountTrackedScheduleCategory(scheduleCategory) || harvestContext,
       scheduleCategory,
+      cropId,
       harvestContext,
       plannedAmount,
       plannedAmountUnit,
@@ -573,7 +652,9 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
         cropName,
         task_schedule_item_id: item.item_id,
         work_record_id: null,
-        agricultural_task_id: item.agricultural_task_id ?? null
+        agricultural_task_id: item.agricultural_task_id ?? null,
+        fertilize_id: null,
+        pesticide_id: null
       },
       fieldOptions: [],
       saveToastContext: {
@@ -585,6 +666,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
     };
     this.sheetDialogRef?.nativeElement?.showModal();
     this.refreshClimatePreview();
+    this.loadMasterOptions(scheduleCategory, cropId);
   }
 
   openAdHoc(fieldOptions: FieldSchedule[]): void {
@@ -599,12 +681,20 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
     this.loadTaskListUseCase.execute();
   }
 
-  openEdit(record: WorkRecord, fieldName = '', cropName = ''): void {
+  openEdit(
+    record: WorkRecord,
+    fieldName = '',
+    cropName = '',
+    options?: { cropId?: number | null }
+  ): void {
+    const scheduleCategory = scheduleCategoryFromTaskType(record.task_type);
+    const cropId = options?.cropId ?? null;
     this.control = {
       ...initialControl,
       mode: 'edit',
       showDetails: true,
-      scheduleCategory: null,
+      scheduleCategory,
+      cropId,
       harvestContext: isHarvestWorkRecord(record),
       plannedAmount: '',
       plannedAmountUnit: '',
@@ -625,24 +715,32 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
         cropName,
         task_schedule_item_id: record.task_schedule_item_id,
         work_record_id: record.id,
-        agricultural_task_id: record.agricultural_task_id
+        agricultural_task_id: record.agricultural_task_id,
+        fertilize_id: record.fertilize_id ?? null,
+        pesticide_id: record.pesticide_id ?? null
       },
       fieldOptions: []
     };
     this.sheetDialogRef?.nativeElement?.showModal();
     this.refreshClimatePreview();
+    this.loadMasterOptions(scheduleCategory, cropId);
   }
 
   selectTaskChip(chip: WorkRecordSheetTaskChip): void {
+    const scheduleCategory = scheduleCategoryFromTaskType(chip.task_type);
     this.control = {
       ...this.control,
       selectedTaskId: chip.id,
+      scheduleCategory,
       form: {
         ...this.control.form,
         name: chip.name,
-        agricultural_task_id: chip.id
+        agricultural_task_id: chip.id,
+        fertilize_id: null,
+        pesticide_id: null
       }
     };
+    this.loadMasterOptions(scheduleCategory, this.control.cropId);
   }
 
   selectOtherTask(): void {
@@ -666,6 +764,62 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
 
   onClimateInputsChanged(): void {
     this.refreshClimatePreview();
+  }
+
+  onFieldCultivationChanged(fieldCultivationId: number | null): void {
+    const cropId = resolveCropIdForFieldCultivation(this.control.fieldOptions, fieldCultivationId);
+    this.control = {
+      ...this.control,
+      cropId,
+      form: {
+        ...this.control.form,
+        field_cultivation_id: fieldCultivationId,
+        pesticide_id: null
+      },
+      pesticideOptions: []
+    };
+    this.onClimateInputsChanged();
+    if (this.control.scheduleCategory === 'pest_control') {
+      this.loadPesticideOptions(cropId);
+    }
+  }
+
+  private loadMasterOptions(
+    scheduleCategory: WorkRecordScheduleCategory,
+    cropId: number | null
+  ): void {
+    if (scheduleCategory === 'fertilizer') {
+      this.loadFertilizeOptions();
+    }
+    if (scheduleCategory === 'pest_control') {
+      this.loadPesticideOptions(cropId);
+    }
+  }
+
+  private loadFertilizeOptions(): void {
+    this.control = {
+      ...this.control,
+      loadingFertilizeOptions: true,
+      fertilizeOptions: []
+    };
+    this.loadFertilizeListUseCase.execute();
+  }
+
+  private loadPesticideOptions(cropId: number | null): void {
+    if (cropId == null) {
+      this.control = {
+        ...this.control,
+        loadingPesticideOptions: false,
+        pesticideOptions: []
+      };
+      return;
+    }
+    this.control = {
+      ...this.control,
+      loadingPesticideOptions: true,
+      pesticideOptions: []
+    };
+    this.loadCropPesticideListUseCase.execute({ cropId });
   }
 
   onAmountChanged(): void {
@@ -860,7 +1014,9 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       time_spent_minutes: form.time_spent_minutes,
       notes: form.notes,
       field_cultivation_id: form.field_cultivation_id,
-      agricultural_task_id: form.agricultural_task_id
+      agricultural_task_id: form.agricultural_task_id,
+      fertilize_id: form.fertilize_id,
+      pesticide_id: form.pesticide_id
     };
 
     const photoIdsToDelete = this.control.existingPhotos

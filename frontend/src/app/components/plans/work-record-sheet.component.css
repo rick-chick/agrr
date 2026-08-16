@@ -195,6 +195,12 @@
   display: none;
 }
 
+.work-record-sheet__master-link {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+}
+
 .form-dialog .form-card__actions .btn-primary {
   min-width: 7rem;
 }

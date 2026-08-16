@@ -65,4 +65,23 @@ describe('work-record-form.mapper', () => {
       notes: 'memo'
     });
   });
+
+  it('maps fertilize_id and pesticide_id on create and update', () => {
+    const createBody = mapFormToCreateRequest({
+      ...baseForm,
+      task_schedule_item_id: 123,
+      fertilize_id: 7,
+      pesticide_id: null
+    });
+    expect(createBody.fertilize_id).toBe(7);
+    expect(createBody.pesticide_id).toBeUndefined();
+
+    const updateBody = mapFormToUpdateRequest({
+      ...baseForm,
+      fertilize_id: null,
+      pesticide_id: 9
+    });
+    expect(updateBody.fertilize_id).toBeUndefined();
+    expect(updateBody.pesticide_id).toBe(9);
+  });
 });

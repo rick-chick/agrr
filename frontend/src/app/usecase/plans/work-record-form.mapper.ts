@@ -13,6 +13,8 @@ export interface WorkRecordFormInput {
   notes: string;
   field_cultivation_id: number | null;
   agricultural_task_id?: number | null;
+  fertilize_id?: number | null;
+  pesticide_id?: number | null;
 }
 
 export function mapFormToCreateRequest(form: WorkRecordFormInput): WorkRecordCreateRequest {
@@ -25,6 +27,8 @@ export function mapFormToCreateRequest(form: WorkRecordFormInput): WorkRecordCre
     if (form.amount_unit) body.amount_unit = form.amount_unit;
     if (form.notes) body.notes = form.notes;
     if (form.time_spent_minutes) body.time_spent_minutes = Number(form.time_spent_minutes);
+    if (form.fertilize_id != null) body.fertilize_id = form.fertilize_id;
+    if (form.pesticide_id != null) body.pesticide_id = form.pesticide_id;
     return body;
   }
 
@@ -35,6 +39,8 @@ export function mapFormToCreateRequest(form: WorkRecordFormInput): WorkRecordCre
   if (form.amount_unit) body.amount_unit = form.amount_unit;
   if (form.notes) body.notes = form.notes;
   if (form.time_spent_minutes) body.time_spent_minutes = Number(form.time_spent_minutes);
+  if (form.fertilize_id != null) body.fertilize_id = form.fertilize_id;
+  if (form.pesticide_id != null) body.pesticide_id = form.pesticide_id;
   return body;
 }
 
@@ -45,6 +51,8 @@ export function mapFormToUpdateRequest(form: WorkRecordFormInput): WorkRecordUpd
     amount: form.amount || undefined,
     amount_unit: form.amount_unit || undefined,
     time_spent_minutes: form.time_spent_minutes ? Number(form.time_spent_minutes) : undefined,
-    notes: form.notes || undefined
+    notes: form.notes || undefined,
+    fertilize_id: form.fertilize_id ?? undefined,
+    pesticide_id: form.pesticide_id ?? undefined
   };
 }
