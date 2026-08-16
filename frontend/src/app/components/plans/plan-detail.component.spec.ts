@@ -9,8 +9,10 @@ import { PlanDetailComponent } from './plan-detail.component';
 import { PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
 import { PlanDetailPresenter } from '../../usecase/plans/plan-detail.providers';
+import { HydrateReorganizeOrchestrationUseCase } from '../../usecase/plans/hydrate-reorganize-orchestration.usecase';
 import {
   clearLearnOrchestrationProgressCache,
+  hydrateLearnOrchestrationProgress,
   readLearnOrchestrationReturnToLearn
 } from '../../domain/plans/learn-master-update-orchestration';
 
@@ -18,6 +20,7 @@ describe('PlanDetailComponent', () => {
   let component: PlanDetailComponent;
   let fixture: ComponentFixture<PlanDetailComponent>;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
+  let hydrateUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
   let activatedRoute: {
     snapshot: { paramMap: { get: ReturnType<typeof vi.fn> } };
@@ -27,6 +30,7 @@ describe('PlanDetailComponent', () => {
 
   beforeEach(() => {
     loadUseCase = { execute: vi.fn(() => of(undefined)) };
+    hydrateUseCase = { execute: vi.fn(() => of(null)) };
     mockPresenter = { setView: vi.fn() };
     activatedRoute = {
       snapshot: {
@@ -36,13 +40,20 @@ describe('PlanDetailComponent', () => {
     };
 
     TestBed.resetTestingModule();
+    TestBed.overrideComponent(PlanDetailComponent, {
+      set: {
+        providers: [
+          { provide: LoadPlanDetailUseCase, useValue: loadUseCase },
+          { provide: HydrateReorganizeOrchestrationUseCase, useValue: hydrateUseCase },
+          { provide: PlanDetailPresenter, useValue: mockPresenter }
+        ]
+      }
+    });
     TestBed.configureTestingModule({
       imports: [PlanDetailComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: activatedRoute },
-        { provide: LoadPlanDetailUseCase, useValue: loadUseCase },
-        { provide: PlanDetailPresenter, useValue: mockPresenter }
+        { provide: ActivatedRoute, useValue: activatedRoute }
       ]
     });
 
@@ -128,6 +139,22 @@ describe('PlanDetailComponent', () => {
     const learnLink = fixture.nativeElement.querySelector('a.learn-reorganize-banner__learn-link');
     expect(learnLink).not.toBeNull();
     expect(learnLink.getAttribute('href')).toBe('/plans/1/learn');
+  });
+
+  it('hydrates orchestration on init and shows reorganize banner after reload', () => {
+    hydrateUseCase.execute = vi.fn(() => {
+      hydrateLearnOrchestrationProgress(1, {
+        pipeline_active: true,
+        current_phase: 'placement'
+      });
+      return of(null);
+    });
+
+    fixture.detectChanges();
+
+    expect(hydrateUseCase.execute).toHaveBeenCalledWith(1);
+    expect(component.showReoptimizationBanner).toBe(true);
+    expect(loadUseCase.execute).toHaveBeenCalled();
   });
 
   it('navigates to optimizing and stores learn return context when adjust orchestration starts', () => {

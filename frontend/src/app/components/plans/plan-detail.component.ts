@@ -12,10 +12,12 @@ import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.provi
 import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanLearnReorganizeBannerComponent } from './plan-learn-reorganize-banner.component';
+import { HydrateReorganizeOrchestrationUseCase } from '../../usecase/plans/hydrate-reorganize-orchestration.usecase';
 import {
   parseLearningOrchestration,
   storeLearnOrchestrationReturnToLearn
 } from '../../domain/plans/learn-master-update-orchestration';
+import { resolveReorganizeScreenOrchestrationMode } from '../../domain/plans/resolve-reorganize-screen-orchestration-mode';
 import {
   readLearnReorganizePipelineAutoChain,
   updateLearnReorganizePipelinePhase
@@ -89,6 +91,7 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadPlanDetailUseCase);
+  private readonly hydrateOrchestrationUseCase = inject(HydrateReorganizeOrchestrationUseCase);
   private readonly presenter = inject(PlanDetailPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -137,7 +140,24 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
       };
       return;
     }
-    this.load(planId);
+    this.hydrateOrchestrationUseCase.execute(planId).subscribe({
+      next: () => {
+        this.applyHydratedOrchestrationState(planId);
+        this.load(planId);
+      },
+      error: () => this.load(planId)
+    });
+  }
+
+  private applyHydratedOrchestrationState(planId: number): void {
+    if (this.learningOrchestrationMode != null) {
+      return;
+    }
+    const resolvedMode = resolveReorganizeScreenOrchestrationMode(planId, 'plan_detail');
+    if (resolvedMode) {
+      this.learningOrchestrationMode = resolvedMode;
+      this.cdr.markForCheck();
+    }
   }
 
   load(planId: number): void {
