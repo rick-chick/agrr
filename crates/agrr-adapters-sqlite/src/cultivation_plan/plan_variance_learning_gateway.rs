@@ -5,8 +5,9 @@ use std::collections::BTreeMap;
 use crate::pool::SqlitePool;
 use agrr_domain::cultivation_plan::dtos::{
     BlueprintTimingAdjustmentProposalRead, LearnHandoffStatePatch, LearnHandoffStateRead,
-    PlanVarianceActionItemRead, PlanVarianceLearningSnapshotRead, PlanVsActualCategorySummaryRead,
-    PlanVsActualItemRead, PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
+    PlanVarianceActionItemRead, PlanVarianceLearningSnapshotRead, PlanVsActualAmountGroupSummaryRead,
+    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
+    StageGddCalibrationProposalRead,
     ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
 };
 use agrr_domain::cultivation_plan::policies::plan_variance_threshold_policy::VarianceExceedanceKind;
@@ -368,6 +369,19 @@ fn summary_to_json(summary: &PlanVsActualSummaryRead) -> String {
             "item_count": category.item_count,
             "recorded_count": category.recorded_count,
         })).collect::<Vec<_>>(),
+        "amount_group_summaries": summary
+            .amount_group_summaries
+            .iter()
+            .map(|group| json!({
+                "category": group.category,
+                "stage_order": group.stage_order,
+                "stage_name": group.stage_name,
+                "task_type": group.task_type,
+                "average_amount_delta": group.average_amount_delta,
+                "recorded_item_count": group.recorded_item_count,
+                "amount_unit": group.amount_unit,
+            }))
+            .collect::<Vec<_>>(),
         "top_variance_items": summary.top_variance_items.iter().map(|item| json!({
             "item_id": item.item_id,
             "field_cultivation_id": item.field_cultivation_id,
@@ -379,6 +393,10 @@ fn summary_to_json(summary: &PlanVsActualSummaryRead) -> String {
             "gdd_trigger": item.gdd_trigger,
             "gdd_at_actual": item.gdd_at_actual,
             "gdd_delta": item.gdd_delta,
+            "amount_planned": item.amount_planned,
+            "amount_actual": item.amount_actual,
+            "amount_delta": item.amount_delta,
+            "amount_unit": item.amount_unit,
         })).collect::<Vec<_>>(),
         "stage_gdd_calibration_proposals": summary
             .stage_gdd_calibration_proposals
@@ -441,6 +459,20 @@ fn summary_from_json(
             recorded_count: category["recorded_count"].as_i64().unwrap_or(0),
         })
         .collect();
+    let amount_group_summaries = value["amount_group_summaries"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .map(|group| PlanVsActualAmountGroupSummaryRead {
+            category: group["category"].as_str().unwrap_or_default().to_string(),
+            stage_order: group["stage_order"].as_i64().map(|order| order as i32),
+            stage_name: group["stage_name"].as_str().map(str::to_string),
+            task_type: group["task_type"].as_str().unwrap_or_default().to_string(),
+            average_amount_delta: group["average_amount_delta"].as_f64(),
+            recorded_item_count: group["recorded_item_count"].as_i64().unwrap_or(0),
+            amount_unit: group["amount_unit"].as_str().map(str::to_string),
+        })
+        .collect();
     let top_variance_items = value["top_variance_items"]
         .as_array()
         .unwrap_or(&vec![])
@@ -456,6 +488,10 @@ fn summary_from_json(
             gdd_trigger: item["gdd_trigger"].as_f64(),
             gdd_at_actual: item["gdd_at_actual"].as_f64(),
             gdd_delta: item["gdd_delta"].as_f64(),
+            amount_planned: item["amount_planned"].as_f64(),
+            amount_actual: item["amount_actual"].as_f64(),
+            amount_delta: item["amount_delta"].as_f64(),
+            amount_unit: item["amount_unit"].as_str().map(str::to_string),
         })
         .collect();
     let stage_gdd_calibration_proposals = value["stage_gdd_calibration_proposals"]
@@ -510,6 +546,7 @@ fn summary_from_json(
         unrecorded_count: value["unrecorded_count"].as_i64().unwrap_or(0),
         structured_unrecorded_count: value["structured_unrecorded_count"].as_i64().unwrap_or(0),
         categories,
+        amount_group_summaries,
         top_variance_items,
         stage_gdd_calibration_proposals,
         action_required_items,
@@ -600,6 +637,7 @@ mod plan_variance_learning_sqlite_gateway_test {
             unrecorded_count: 0,
             structured_unrecorded_count: 0,
             categories: vec![],
+            amount_group_summaries: vec![],
             top_variance_items: vec![],
             stage_gdd_calibration_proposals: vec![StageGddCalibrationProposalRead {
                 crop_id: 3,
@@ -660,6 +698,7 @@ mod plan_variance_learning_sqlite_gateway_test {
                 item_count: 2,
                 recorded_count: 1,
             }],
+            amount_group_summaries: vec![],
             top_variance_items: vec![],
             stage_gdd_calibration_proposals: vec![],
             action_required_items: vec![],

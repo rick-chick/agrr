@@ -14,6 +14,21 @@ pub struct PlanVsActualItemRead {
     pub gdd_trigger: Option<f64>,
     pub gdd_at_actual: Option<f64>,
     pub gdd_delta: Option<f64>,
+    pub amount_planned: Option<f64>,
+    pub amount_actual: Option<f64>,
+    pub amount_delta: Option<f64>,
+    pub amount_unit: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlanVsActualAmountGroupSummaryRead {
+    pub category: String,
+    pub stage_order: Option<i32>,
+    pub stage_name: Option<String>,
+    pub task_type: String,
+    pub average_amount_delta: Option<f64>,
+    pub recorded_item_count: i64,
+    pub amount_unit: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -83,6 +98,7 @@ pub struct PlanVsActualSummaryRead {
     pub unrecorded_count: i64,
     pub structured_unrecorded_count: i64,
     pub categories: Vec<PlanVsActualCategorySummaryRead>,
+    pub amount_group_summaries: Vec<PlanVsActualAmountGroupSummaryRead>,
     pub top_variance_items: Vec<PlanVsActualItemRead>,
     pub stage_gdd_calibration_proposals: Vec<StageGddCalibrationProposalRead>,
     pub action_required_items: Vec<PlanVarianceActionItemRead>,

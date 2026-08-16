@@ -2,8 +2,8 @@
 
 use agrr_domain::cultivation_plan::dtos::{
     BlueprintTimingAdjustmentProposalRead, PlanVarianceActionItemRead,
-    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
-    StageGddCalibrationProposalRead,
+    PlanVsActualAmountGroupSummaryRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
+    PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
 };
 use agrr_domain::cultivation_plan::policies::plan_variance_threshold_policy::VarianceExceedanceKind;
 use serde_json::{json, Value};
@@ -14,6 +14,11 @@ pub fn summary_to_json_body(summary: PlanVsActualSummaryRead) -> Value {
         "unrecorded_count": summary.unrecorded_count,
         "structured_unrecorded_count": summary.structured_unrecorded_count,
         "categories": summary.categories.iter().map(category_payload).collect::<Vec<_>>(),
+        "amount_group_summaries": summary
+            .amount_group_summaries
+            .iter()
+            .map(amount_group_summary_payload)
+            .collect::<Vec<_>>(),
         "top_variance_items": summary
             .top_variance_items
             .iter()
@@ -59,6 +64,18 @@ fn category_payload(category: &PlanVsActualCategorySummaryRead) -> Value {
     })
 }
 
+fn amount_group_summary_payload(group: &PlanVsActualAmountGroupSummaryRead) -> Value {
+    json!({
+        "category": group.category,
+        "stage_order": group.stage_order,
+        "stage_name": group.stage_name,
+        "task_type": group.task_type,
+        "average_amount_delta": group.average_amount_delta,
+        "recorded_item_count": group.recorded_item_count,
+        "amount_unit": group.amount_unit,
+    })
+}
+
 fn item_payload(item: &PlanVsActualItemRead) -> Value {
     json!({
         "item_id": item.item_id,
@@ -71,6 +88,10 @@ fn item_payload(item: &PlanVsActualItemRead) -> Value {
         "gdd_trigger": optional_f64(item.gdd_trigger),
         "gdd_at_actual": optional_f64(item.gdd_at_actual),
         "gdd_delta": optional_f64(item.gdd_delta),
+        "amount_planned": optional_f64(item.amount_planned),
+        "amount_actual": optional_f64(item.amount_actual),
+        "amount_delta": optional_f64(item.amount_delta),
+        "amount_unit": item.amount_unit,
     })
 }
 
@@ -125,6 +146,15 @@ mod tests {
                 item_count: 4,
                 recorded_count: 2,
             }],
+            amount_group_summaries: vec![PlanVsActualAmountGroupSummaryRead {
+                category: "fertilizer".into(),
+                stage_order: Some(1),
+                stage_name: Some("Vegetative".into()),
+                task_type: "fertilize".into(),
+                average_amount_delta: Some(-0.5),
+                recorded_item_count: 2,
+                amount_unit: Some("kg".into()),
+            }],
             top_variance_items: vec![PlanVsActualItemRead {
                 item_id: 11,
                 field_cultivation_id: 100,
@@ -136,6 +166,10 @@ mod tests {
                 gdd_trigger: Some(120.0),
                 gdd_at_actual: Some(130.5),
                 gdd_delta: Some(10.5),
+                amount_planned: Some(2.0),
+                amount_actual: Some(2.5),
+                amount_delta: Some(0.5),
+                amount_unit: Some("kg".into()),
             }],
             stage_gdd_calibration_proposals: vec![StageGddCalibrationProposalRead {
                 crop_id: 42,
@@ -172,7 +206,14 @@ mod tests {
         assert_eq!(2, body["unrecorded_count"].as_i64().unwrap());
         assert_eq!(1, body["structured_unrecorded_count"].as_i64().unwrap());
         assert_eq!(3.5, body["categories"][0]["average_delta_days"].as_f64().unwrap());
+        assert_eq!(
+            -0.5,
+            body["amount_group_summaries"][0]["average_amount_delta"]
+                .as_f64()
+                .unwrap()
+        );
         assert_eq!(7, body["top_variance_items"][0]["delta_days"].as_i64().unwrap());
+        assert_eq!(0.5, body["top_variance_items"][0]["amount_delta"].as_f64().unwrap());
         assert_eq!(130.5, body["top_variance_items"][0]["gdd_at_actual"].as_f64().unwrap());
         assert_eq!(
             10.5,

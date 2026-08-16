@@ -303,6 +303,8 @@ fn sample_snapshot() -> TaskScheduleTimelineSnapshot {
                         actual_date: "2026-06-08".into(),
                         notes: None,
                         gdd_at_actual: Some(110.0),
+                        amount: None,
+                        amount_unit: None,
                         fertilize_id: None,
                         pesticide_id: None,
                     }],

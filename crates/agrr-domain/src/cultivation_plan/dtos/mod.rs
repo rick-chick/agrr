@@ -174,8 +174,8 @@ pub use task_schedule_item_amount_snapshot::TaskScheduleItemAmountSnapshot;
 pub use task_schedule_item_deletion_undo_schedule_row::TaskScheduleItemDeletionUndoScheduleRow;
 pub use plan_vs_actual::{
     BlueprintTimingAdjustmentProposalRead, PlanVarianceActionItemRead,
-    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
-    StageGddCalibrationProposalRead,
+    PlanVsActualAmountGroupSummaryRead, PlanVsActualCategorySummaryRead,
+    PlanVsActualItemRead, PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
 };
 pub use learn_handoff_state::{LearnHandoffStatePatch, LearnHandoffStateRead};
 pub use plan_variance_learning_snapshot::{
