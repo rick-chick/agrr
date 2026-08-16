@@ -13,6 +13,8 @@ export interface PublicPlanState {
   planId: number | null;
   /** research GDD レポート等からの作物 slug（select-crop で一度だけ消費） */
   pendingCropSlug: string | null;
+  /** entry-schedule 等からの作物 id（select-crop で一度だけ消費） */
+  pendingCropId: number | null;
 }
 
 const INITIAL_STATE: PublicPlanState = {
@@ -20,7 +22,8 @@ const INITIAL_STATE: PublicPlanState = {
   farmSize: null,
   selectedCrops: [],
   planId: null,
-  pendingCropSlug: null
+  pendingCropSlug: null,
+  pendingCropId: null
 };
 
 const SESSION_STORAGE_KEY = 'agrr_public_plan_state';
@@ -53,6 +56,10 @@ export class PublicPlanStore implements PublicPlanSessionPort {
 
   setPendingCropSlug(slug: string | null): void {
     this.updateState({ pendingCropSlug: slug });
+  }
+
+  setPendingCropId(cropId: number | null): void {
+    this.updateState({ pendingCropId: cropId });
   }
 
   reset(): void {
@@ -107,7 +114,9 @@ export class PublicPlanStore implements PublicPlanSessionPort {
         return {
           ...INITIAL_STATE,
           ...parsed,
-          pendingCropSlug: parsed.pendingCropSlug ?? null
+          pendingCropSlug: parsed.pendingCropSlug ?? null,
+          pendingCropId:
+            typeof parsed.pendingCropId === 'number' ? parsed.pendingCropId : null
         };
       }
     } catch (e) {

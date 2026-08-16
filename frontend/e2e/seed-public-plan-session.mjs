@@ -16,5 +16,6 @@ export function buildPublicPlanSessionState(farm) {
     selectedCrops: [],
     planId: null,
     pendingCropSlug: null,
+    pendingCropId: null,
   };
 }
