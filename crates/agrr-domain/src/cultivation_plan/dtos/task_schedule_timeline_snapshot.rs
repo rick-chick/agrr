@@ -101,4 +101,6 @@ pub struct TaskScheduleTimelineWorkRecordSummaryRead {
     pub gdd_at_actual: Option<f64>,
     pub fertilize_id: Option<i64>,
     pub pesticide_id: Option<i64>,
+    pub amount: Option<f64>,
+    pub amount_unit: Option<String>,
 }

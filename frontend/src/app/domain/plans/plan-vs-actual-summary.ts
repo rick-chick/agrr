@@ -18,6 +18,20 @@ export interface PlanVsActualItem {
   gdd_trigger: number | null;
   gdd_at_actual: number | null;
   gdd_delta: number | null;
+  amount_planned?: number | null;
+  amount_actual?: number | null;
+  amount_delta?: number | null;
+  amount_unit?: string | null;
+}
+
+export interface PlanVsActualAmountDeltaSummary {
+  category: string;
+  stage_order: number | null;
+  stage_name: string | null;
+  task_type: string;
+  average_amount_delta: number;
+  recorded_item_count: number;
+  amount_unit: string | null;
 }
 
 export type VarianceExceedanceKind = 'days' | 'gdd' | 'both';
@@ -35,6 +49,7 @@ export interface PlanVsActualSummary {
   stage_gdd_calibration_proposals?: StageGddCalibrationProposalRaw[];
   action_required_items?: PlanVarianceActionItem[];
   blueprint_timing_adjustment_proposals?: import('./blueprint-timing-adjustment-proposal').BlueprintTimingAdjustmentProposalRaw[];
+  amount_delta_summaries?: PlanVsActualAmountDeltaSummary[];
 }
 
 export interface PlanVsActualPlanSummaryStats {

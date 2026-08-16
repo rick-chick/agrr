@@ -5,7 +5,8 @@ use std::collections::BTreeMap;
 use crate::pool::SqlitePool;
 use agrr_domain::cultivation_plan::dtos::{
     BlueprintTimingAdjustmentProposalRead, LearnHandoffStatePatch, LearnHandoffStateRead,
-    PlanVarianceActionItemRead, PlanVarianceLearningSnapshotRead, PlanVsActualCategorySummaryRead,
+    PlanVarianceActionItemRead, PlanVarianceLearningSnapshotRead, PlanVsActualAmountDeltaSummaryRead,
+    PlanVsActualCategorySummaryRead,
     PlanVsActualItemRead, PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
     ReorganizeOrchestrationProgressPatch, ReorganizeOrchestrationProgressRead,
 };
@@ -379,6 +380,10 @@ fn summary_to_json(summary: &PlanVsActualSummaryRead) -> String {
             "gdd_trigger": item.gdd_trigger,
             "gdd_at_actual": item.gdd_at_actual,
             "gdd_delta": item.gdd_delta,
+            "amount_planned": item.amount_planned,
+            "amount_actual": item.amount_actual,
+            "amount_delta": item.amount_delta,
+            "amount_unit": item.amount_unit,
         })).collect::<Vec<_>>(),
         "stage_gdd_calibration_proposals": summary
             .stage_gdd_calibration_proposals
@@ -406,6 +411,10 @@ fn summary_to_json(summary: &PlanVsActualSummaryRead) -> String {
                 "gdd_trigger": item.gdd_trigger,
                 "gdd_at_actual": item.gdd_at_actual,
                 "gdd_delta": item.gdd_delta,
+                "amount_planned": item.amount_planned,
+                "amount_actual": item.amount_actual,
+                "amount_delta": item.amount_delta,
+                "amount_unit": item.amount_unit,
                 "exceedance_kind": item.exceedance_kind.as_str(),
             }))
             .collect::<Vec<_>>(),
@@ -419,6 +428,19 @@ fn summary_to_json(summary: &PlanVsActualSummaryRead) -> String {
                 "average_delta_days": proposal.average_delta_days,
                 "average_gdd_delta": proposal.average_gdd_delta,
                 "recorded_item_count": proposal.recorded_item_count,
+            }))
+            .collect::<Vec<_>>(),
+        "amount_delta_summaries": summary
+            .amount_delta_summaries
+            .iter()
+            .map(|row| json!({
+                "category": row.category,
+                "stage_order": row.stage_order,
+                "stage_name": row.stage_name,
+                "task_type": row.task_type,
+                "average_amount_delta": row.average_amount_delta,
+                "recorded_item_count": row.recorded_item_count,
+                "amount_unit": row.amount_unit,
             }))
             .collect::<Vec<_>>(),
     });
@@ -456,6 +478,10 @@ fn summary_from_json(
             gdd_trigger: item["gdd_trigger"].as_f64(),
             gdd_at_actual: item["gdd_at_actual"].as_f64(),
             gdd_delta: item["gdd_delta"].as_f64(),
+            amount_planned: item["amount_planned"].as_f64(),
+            amount_actual: item["amount_actual"].as_f64(),
+            amount_delta: item["amount_delta"].as_f64(),
+            amount_unit: item["amount_unit"].as_str().map(str::to_string),
         })
         .collect();
     let stage_gdd_calibration_proposals = value["stage_gdd_calibration_proposals"]
@@ -486,6 +512,10 @@ fn summary_from_json(
             gdd_trigger: item["gdd_trigger"].as_f64(),
             gdd_at_actual: item["gdd_at_actual"].as_f64(),
             gdd_delta: item["gdd_delta"].as_f64(),
+            amount_planned: item["amount_planned"].as_f64(),
+            amount_actual: item["amount_actual"].as_f64(),
+            amount_delta: item["amount_delta"].as_f64(),
+            amount_unit: item["amount_unit"].as_str().map(str::to_string),
             exceedance_kind: parse_exceedance_kind(
                 item["exceedance_kind"].as_str().unwrap_or_default(),
             ),
@@ -504,6 +534,20 @@ fn summary_from_json(
             recorded_item_count: proposal["recorded_item_count"].as_i64().unwrap_or(0),
         })
         .collect();
+    let amount_delta_summaries = value["amount_delta_summaries"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .map(|row| PlanVsActualAmountDeltaSummaryRead {
+            category: row["category"].as_str().unwrap_or_default().to_string(),
+            stage_order: row["stage_order"].as_i64().map(|v| v as i32),
+            stage_name: row["stage_name"].as_str().map(str::to_string),
+            task_type: row["task_type"].as_str().unwrap_or_default().to_string(),
+            average_amount_delta: row["average_amount_delta"].as_f64().unwrap_or(0.0),
+            recorded_item_count: row["recorded_item_count"].as_i64().unwrap_or(0),
+            amount_unit: row["amount_unit"].as_str().map(str::to_string),
+        })
+        .collect();
 
     Ok(PlanVsActualSummaryRead {
         plan_id: value["plan_id"].as_i64().unwrap_or(plan_id),
@@ -514,6 +558,7 @@ fn summary_from_json(
         stage_gdd_calibration_proposals,
         action_required_items,
         blueprint_timing_adjustment_proposals,
+        amount_delta_summaries,
     })
 }
 
@@ -620,6 +665,10 @@ mod plan_variance_learning_sqlite_gateway_test {
                 gdd_trigger: Some(100.0),
                 gdd_at_actual: Some(120.0),
                 gdd_delta: Some(20.0),
+                amount_planned: None,
+                amount_actual: None,
+                amount_delta: None,
+                amount_unit: None,
                 exceedance_kind: VarianceExceedanceKind::Both,
             }],
             blueprint_timing_adjustment_proposals: vec![BlueprintTimingAdjustmentProposalRead {
@@ -630,6 +679,7 @@ mod plan_variance_learning_sqlite_gateway_test {
                 average_gdd_delta: Some(8.0),
                 recorded_item_count: 3,
             }],
+            amount_delta_summaries: vec![],
         };
 
         gateway.save(21, 10, &summary).expect("save");
@@ -664,6 +714,7 @@ mod plan_variance_learning_sqlite_gateway_test {
             stage_gdd_calibration_proposals: vec![],
             action_required_items: vec![],
             blueprint_timing_adjustment_proposals: vec![],
+            amount_delta_summaries: vec![],
         };
 
         gateway.save(20, 10, &summary).expect("save");

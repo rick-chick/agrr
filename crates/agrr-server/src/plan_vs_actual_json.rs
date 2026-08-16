@@ -2,8 +2,8 @@
 
 use agrr_domain::cultivation_plan::dtos::{
     BlueprintTimingAdjustmentProposalRead, PlanVarianceActionItemRead,
-    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
-    StageGddCalibrationProposalRead,
+    PlanVsActualAmountDeltaSummaryRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
+    PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
 };
 use agrr_domain::cultivation_plan::policies::plan_variance_threshold_policy::VarianceExceedanceKind;
 use serde_json::{json, Value};
@@ -33,6 +33,11 @@ pub fn summary_to_json_body(summary: PlanVsActualSummaryRead) -> Value {
             .blueprint_timing_adjustment_proposals
             .iter()
             .map(blueprint_timing_proposal_payload)
+            .collect::<Vec<_>>(),
+        "amount_delta_summaries": summary
+            .amount_delta_summaries
+            .iter()
+            .map(amount_delta_summary_payload)
             .collect::<Vec<_>>(),
     })
 }
@@ -71,6 +76,10 @@ fn item_payload(item: &PlanVsActualItemRead) -> Value {
         "gdd_trigger": optional_f64(item.gdd_trigger),
         "gdd_at_actual": optional_f64(item.gdd_at_actual),
         "gdd_delta": optional_f64(item.gdd_delta),
+        "amount_planned": optional_f64(item.amount_planned),
+        "amount_actual": optional_f64(item.amount_actual),
+        "amount_delta": optional_f64(item.amount_delta),
+        "amount_unit": item.amount_unit,
     })
 }
 
@@ -86,6 +95,10 @@ fn action_item_payload(item: &PlanVarianceActionItemRead) -> Value {
         "gdd_trigger": optional_f64(item.gdd_trigger),
         "gdd_at_actual": optional_f64(item.gdd_at_actual),
         "gdd_delta": optional_f64(item.gdd_delta),
+        "amount_planned": optional_f64(item.amount_planned),
+        "amount_actual": optional_f64(item.amount_actual),
+        "amount_delta": optional_f64(item.amount_delta),
+        "amount_unit": item.amount_unit,
         "exceedance_kind": exceedance_kind_payload(item.exceedance_kind),
     })
 }
@@ -98,6 +111,18 @@ fn blueprint_timing_proposal_payload(proposal: &BlueprintTimingAdjustmentProposa
         "average_delta_days": proposal.average_delta_days,
         "average_gdd_delta": optional_f64(proposal.average_gdd_delta),
         "recorded_item_count": proposal.recorded_item_count,
+    })
+}
+
+fn amount_delta_summary_payload(summary: &PlanVsActualAmountDeltaSummaryRead) -> Value {
+    json!({
+        "category": summary.category,
+        "stage_order": summary.stage_order,
+        "stage_name": summary.stage_name,
+        "task_type": summary.task_type,
+        "average_amount_delta": summary.average_amount_delta,
+        "recorded_item_count": summary.recorded_item_count,
+        "amount_unit": summary.amount_unit,
     })
 }
 
@@ -136,6 +161,10 @@ mod tests {
                 gdd_trigger: Some(120.0),
                 gdd_at_actual: Some(130.5),
                 gdd_delta: Some(10.5),
+                amount_planned: Some(10.0),
+                amount_actual: Some(12.0),
+                amount_delta: Some(2.0),
+                amount_unit: Some("kg".into()),
             }],
             stage_gdd_calibration_proposals: vec![StageGddCalibrationProposalRead {
                 crop_id: 42,
@@ -156,6 +185,10 @@ mod tests {
                 gdd_trigger: Some(120.0),
                 gdd_at_actual: Some(130.5),
                 gdd_delta: Some(10.5),
+                amount_planned: None,
+                amount_actual: None,
+                amount_delta: None,
+                amount_unit: None,
                 exceedance_kind: VarianceExceedanceKind::Both,
             }],
             blueprint_timing_adjustment_proposals: vec![BlueprintTimingAdjustmentProposalRead {
@@ -165,6 +198,15 @@ mod tests {
                 average_delta_days: 4.5,
                 average_gdd_delta: Some(8.0),
                 recorded_item_count: 2,
+            }],
+            amount_delta_summaries: vec![PlanVsActualAmountDeltaSummaryRead {
+                category: "fertilizer".into(),
+                stage_order: Some(1),
+                stage_name: Some("Vegetative".into()),
+                task_type: "fertilize".into(),
+                average_amount_delta: 2.0,
+                recorded_item_count: 1,
+                amount_unit: Some("kg".into()),
             }],
         });
 
@@ -187,5 +229,13 @@ mod tests {
         );
         assert_eq!(1, body["blueprint_timing_adjustment_proposals"].as_array().unwrap().len());
         assert_eq!(42, body["blueprint_timing_adjustment_proposals"][0]["crop_id"].as_i64().unwrap());
+        assert_eq!(1, body["amount_delta_summaries"].as_array().unwrap().len());
+        assert_eq!(
+            2.0,
+            body["amount_delta_summaries"][0]["average_amount_delta"]
+                .as_f64()
+                .unwrap()
+        );
+        assert_eq!(2.0, body["top_variance_items"][0]["amount_delta"].as_f64().unwrap());
     }
 }

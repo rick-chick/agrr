@@ -199,7 +199,7 @@ fn load_work_record_summaries(
 ) -> rusqlite::Result<std::collections::BTreeMap<i64, Vec<TaskScheduleTimelineWorkRecordSummaryRead>>> {
     let mut stmt = conn.prepare(
         "SELECT wr.task_schedule_item_id, wr.id, wr.actual_date, wr.notes, wr.gdd_at_actual, \
-         wr.fertilize_id, wr.pesticide_id \
+         wr.fertilize_id, wr.pesticide_id, wr.amount, wr.amount_unit \
          FROM work_records wr \
          WHERE wr.cultivation_plan_id = ?1 AND wr.task_schedule_item_id IS NOT NULL \
          ORDER BY wr.task_schedule_item_id, wr.actual_date ASC",
@@ -214,6 +214,8 @@ fn load_work_record_summaries(
                 gdd_at_actual: row.get(4)?,
                 fertilize_id: row.get(5)?,
                 pesticide_id: row.get(6)?,
+                amount: row.get(7)?,
+                amount_unit: row.get(8)?,
             },
         ))
     })?;

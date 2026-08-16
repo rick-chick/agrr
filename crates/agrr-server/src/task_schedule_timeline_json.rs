@@ -349,6 +349,8 @@ fn work_record_payload(record: &TaskScheduleTimelineWorkRecordSummaryRead) -> Va
         "gdd_at_actual": optional_f64_json(record.gdd_at_actual),
         "fertilize_id": record.fertilize_id,
         "pesticide_id": record.pesticide_id,
+        "amount": optional_f64_json(record.amount),
+        "amount_unit": record.amount_unit,
     })
 }
 
@@ -690,6 +692,8 @@ mod tests {
                 gdd_at_actual: Some(130.5),
                 fertilize_id: None,
                 pesticide_id: None,
+                amount: None,
+                amount_unit: None,
             }],
         };
         let presenter = TimelineJsonPresenter::new(

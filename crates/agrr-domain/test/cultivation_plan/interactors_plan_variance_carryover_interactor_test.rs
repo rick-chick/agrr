@@ -305,6 +305,8 @@ fn sample_snapshot() -> TaskScheduleTimelineSnapshot {
                         gdd_at_actual: Some(110.0),
                         fertilize_id: None,
                         pesticide_id: None,
+                        amount: None,
+                        amount_unit: None,
                     }],
                 }],
             }],

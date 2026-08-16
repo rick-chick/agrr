@@ -2,8 +2,8 @@
 
 use crate::cultivation_plan::dtos::plan_vs_actual::{
     BlueprintTimingAdjustmentProposalRead, PlanVarianceActionItemRead,
-    PlanVsActualCategorySummaryRead, PlanVsActualItemRead, PlanVsActualSummaryRead,
-    StageGddCalibrationProposalRead,
+    PlanVsActualAmountDeltaSummaryRead, PlanVsActualCategorySummaryRead, PlanVsActualItemRead,
+    PlanVsActualSummaryRead, StageGddCalibrationProposalRead,
 };
 use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
     TaskScheduleTimelineScheduleItemRead, TaskScheduleTimelineSnapshot,
@@ -28,6 +28,13 @@ impl PlanVsActualMapper {
         let gdd_at_actual = primary_gdd_at_actual(item);
         let gdd_trigger = item.gdd_trigger;
         let gdd_delta = gdd_delta_between(gdd_trigger, gdd_at_actual);
+        let amount_planned = item.amount;
+        let amount_actual = primary_amount_actual(item);
+        let amount_delta = amount_delta_between(amount_planned, amount_actual);
+        let amount_unit = item
+            .amount_unit
+            .clone()
+            .or_else(|| primary_amount_unit(item));
 
         PlanVsActualItemRead {
             item_id: item.id,
@@ -40,6 +47,10 @@ impl PlanVsActualMapper {
             gdd_trigger,
             gdd_at_actual,
             gdd_delta,
+            amount_planned,
+            amount_actual,
+            amount_delta,
+            amount_unit,
         }
     }
 
@@ -73,6 +84,7 @@ impl PlanVsActualMapper {
         let action_required_items = action_required(&items);
         let blueprint_timing_adjustment_proposals =
             Self::blueprint_timing_adjustment_proposals_from_snapshot(snapshot);
+        let amount_delta_summaries = amount_delta_summaries_from_snapshot(snapshot);
 
         PlanVsActualSummaryRead {
             plan_id: snapshot.plan.id,
@@ -83,6 +95,7 @@ impl PlanVsActualMapper {
             stage_gdd_calibration_proposals,
             action_required_items,
             blueprint_timing_adjustment_proposals,
+            amount_delta_summaries,
         }
     }
 
@@ -277,6 +290,90 @@ fn primary_gdd_at_actual(item: &TaskScheduleTimelineScheduleItemRead) -> Option<
     item.work_records
         .first()
         .and_then(|record| record.gdd_at_actual)
+}
+
+fn primary_amount_actual(item: &TaskScheduleTimelineScheduleItemRead) -> Option<f64> {
+    item.work_records.first().and_then(|record| record.amount)
+}
+
+fn primary_amount_unit(item: &TaskScheduleTimelineScheduleItemRead) -> Option<String> {
+    item.work_records
+        .first()
+        .and_then(|record| record.amount_unit.clone())
+}
+
+fn amount_delta_between(planned: Option<f64>, actual: Option<f64>) -> Option<f64> {
+    match (planned, actual) {
+        (Some(planned), Some(actual)) => Some(actual - planned),
+        _ => None,
+    }
+}
+
+fn amount_delta_summaries_from_snapshot(
+    snapshot: &TaskScheduleTimelineSnapshot,
+) -> Vec<PlanVsActualAmountDeltaSummaryRead> {
+    let mut groups: std::collections::BTreeMap<
+        (String, Option<i32>, Option<String>, String),
+        (Vec<f64>, Option<String>),
+    > = std::collections::BTreeMap::new();
+
+    for field in &snapshot.fields {
+        for schedule in &field.schedules {
+            if !is_amount_tracked_category(schedule.category.as_str()) {
+                continue;
+            }
+            for item in &schedule.items {
+                if !counts_toward_summary(item) {
+                    continue;
+                }
+                let read = PlanVsActualMapper::item_read(item, schedule.category.as_str());
+                let Some(delta) = read.amount_delta else {
+                    continue;
+                };
+                let key = (
+                    schedule.category.clone(),
+                    item.stage_order,
+                    item.stage_name.clone(),
+                    item.task_type.clone(),
+                );
+                let entry = groups.entry(key).or_insert((Vec::new(), read.amount_unit.clone()));
+                entry.0.push(delta);
+                if entry.1.is_none() {
+                    entry.1 = read.amount_unit.clone();
+                }
+            }
+        }
+    }
+
+    let mut summaries: Vec<PlanVsActualAmountDeltaSummaryRead> = groups
+        .into_iter()
+        .map(|((category, stage_order, stage_name, task_type), (deltas, amount_unit))| {
+            let recorded_item_count = deltas.len() as i64;
+            let average_amount_delta = deltas.iter().sum::<f64>() / deltas.len() as f64;
+            PlanVsActualAmountDeltaSummaryRead {
+                category,
+                stage_order,
+                stage_name,
+                task_type,
+                average_amount_delta,
+                recorded_item_count,
+                amount_unit,
+            }
+        })
+        .collect();
+
+    summaries.sort_by(|left, right| {
+        left.category
+            .cmp(&right.category)
+            .then_with(|| left.stage_order.cmp(&right.stage_order))
+            .then_with(|| left.task_type.cmp(&right.task_type))
+    });
+
+    summaries
+}
+
+fn is_amount_tracked_category(category: &str) -> bool {
+    matches!(category, "fertilizer" | "pest_control")
 }
 
 fn parse_date(value: &str) -> Option<Date> {

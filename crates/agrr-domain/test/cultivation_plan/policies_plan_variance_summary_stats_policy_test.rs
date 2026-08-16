@@ -1,5 +1,6 @@
 // Tests for `policies/plan_variance_summary_stats_policy.rs`.
 
+use crate::cultivation_plan::dtos::plan_vs_actual::PlanVarianceActionItemRead;
 use crate::cultivation_plan::dtos::plan_vs_actual::PlanVsActualSummaryRead;
 use crate::cultivation_plan::policies::plan_variance_threshold_policy::VarianceExceedanceKind;
 
@@ -15,6 +16,10 @@ fn action_item(exceedance_kind: VarianceExceedanceKind) -> PlanVarianceActionIte
         gdd_trigger: Some(100.0),
         gdd_at_actual: Some(110.0),
         gdd_delta: Some(10.0),
+        amount_planned: None,
+        amount_actual: None,
+        amount_delta: None,
+        amount_unit: None,
         exceedance_kind,
     }
 }
@@ -34,6 +39,7 @@ fn counts_unrecorded_and_threshold_items() {
             action_item(VarianceExceedanceKind::Both),
         ],
         blueprint_timing_adjustment_proposals: vec![],
+        amount_delta_summaries: vec![],
     };
 
     let stats = stats_from_summary(&summary);
