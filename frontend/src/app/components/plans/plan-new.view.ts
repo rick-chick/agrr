@@ -2,6 +2,7 @@ import { FarmPlanCreateOption } from '../../usecase/private-plan-create/private-
 import { PendingErrorFlashRequest } from '../../core/view-effects/pending-error-flash-view.effects';
 import { PendingSuccessFlashRequest } from '../../core/view-effects/pending-success-flash-view.effects';
 import { PendingNavigationRequest } from '../../core/view-effects/pending-navigation-view.effects';
+import type { PlanCreateReadiness } from '../../domain/plans/plan-create-readiness';
 import type { PlanSummary } from '../../domain/plans/plan-summary';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
 
@@ -11,6 +12,8 @@ export interface PlanNewViewState {
   error: string | null;
   farms: FarmPlanCreateOption[];
   selectedFarmId: number | null;
+  readinessLoading: boolean;
+  readiness: PlanCreateReadiness | null;
   noFieldsWarning: boolean;
   carryoverEnabled: boolean;
   sourcePlans: PlanSummary[];
