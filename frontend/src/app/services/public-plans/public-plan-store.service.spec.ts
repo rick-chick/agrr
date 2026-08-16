@@ -29,6 +29,16 @@ describe('PublicPlanStore pendingCropSlug', () => {
     expect(stored.pendingCropSlug).toBe('bell_pepper');
   });
 
+  it('persists pendingCropId when setPendingCropId is called', () => {
+    const store = new PublicPlanStore();
+
+    store.setPendingCropId(42);
+
+    expect(store.state.pendingCropId).toBe(42);
+    const stored = JSON.parse(sessionStorage.getItem('agrr_public_plan_state')!);
+    expect(stored.pendingCropId).toBe(42);
+  });
+
   it('clears pendingCropSlug on reset', () => {
     const store = new PublicPlanStore();
     store.setPendingCropSlug('tomato');
@@ -51,6 +61,7 @@ describe('PublicPlanStore pendingCropSlug', () => {
         selectedCrops: [],
         planId: null,
         pendingCropSlug: null,
+        pendingCropId: null
       }),
     );
 

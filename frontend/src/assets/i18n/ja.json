@@ -2148,31 +2148,6 @@
     "create_failed": "計画作成に失敗しました: {{errors}}",
     "invalid_farm_id": "農場IDが不正です。"
   },
-  "onboarding": {
-    "breadcrumb": "初回セットアップ",
-    "title": "初回セットアップ",
-    "subtitle": "初めての作付け計画を作成する前に、次の準備を完了してください。",
-    "step_action": "設定画面へ",
-    "create_plan_cta": "計画を作成",
-    "steps": {
-      "farm": {
-        "title": "農場を登録",
-        "description": "天候や計画に使う地域のため、農場の位置を登録します。"
-      },
-      "fields": {
-        "title": "圃場を登録",
-        "description": "農場に圃場の面積を登録します。計画には面積のある圃場が必要です。"
-      },
-      "crops": {
-        "title": "作物の作業計画を設定",
-        "description": "栽培する作物の生育ステージと作業計画テンプレートを設定します。"
-      },
-      "weather": {
-        "title": "天候データを取得",
-        "description": "農場詳細画面で天候履歴を取得します。完了になるまでお待ちください。"
-      }
-    }
-  },
   "plans": {
     "errors": {
       "field_not_found": "圃場が見つかりません。",
@@ -2337,7 +2312,6 @@
       "try_public_plans": "無料プランから始める",
       "no_plans": "まだ計画がありません",
       "no_plans_hint": "新しい計画を作成して栽培スケジュールを最適化しましょう。",
-      "initial_setup": "初回セットアップ",
       "retry": "再読み込み",
       "delete_confirm_message": "この作付け計画を削除します。計画内の圃場配置や作業記録への参照が失われます。削除後、しばらく「元に戻す」で取り消せます。",
       "year_label": "{{year}}年度",
@@ -2369,7 +2343,8 @@
         "expand": "展開",
         "collapse": "折りたたむ",
         "compare_variance": "乖離を比較"
-      }
+      },
+      "initial_setup": "初回セットアップ"
     },
     "new": {
       "breadcrumb": "新規作成",
@@ -3311,6 +3286,7 @@
     "work_log_overdue_aria": "作業記録、期限超過 {{count}} 件",
     "menu_masters": "マスタデータ",
     "new_plan": "作付け計画を作成",
+    "entry_schedule": "作付け時期の目安",
     "reports": "レポート",
     "menu_more": "その他",
     "home": "ホーム",
@@ -3350,6 +3326,7 @@
         "title": "🌱 農業をもっとスマートに",
         "subtitle_html": "気象とGDDで、作付け計画を可視化。",
         "cta_scroll_demo": "操作してみる",
+        "cta_entry_schedule": "作付け時期の目安を見る",
         "cta_footer_link": "計画を作成"
       },
       "demo": {
@@ -4167,6 +4144,34 @@
     "timeline": "月別の流れ",
     "nextTask": "次の作業",
     "nextTaskPlaceholder": "次の作業候補はまだありません。",
-    "stages": "成長段階"
+    "stages": "成長段階",
+    "ctaSectionTitle": "次のステップ",
+    "ctaPublicPlan": "この作物で無料計画を作る",
+    "ctaCropSetup": "作物マスタを整備する"
+  },
+  "onboarding": {
+    "breadcrumb": "初回セットアップ",
+    "title": "初回セットアップ",
+    "subtitle": "初めての作付け計画を作成する前に、次の準備を完了してください。",
+    "step_action": "設定画面へ",
+    "create_plan_cta": "計画を作成",
+    "steps": {
+      "farm": {
+        "title": "農場を登録",
+        "description": "天候や計画に使う地域のため、農場の位置を登録します。"
+      },
+      "fields": {
+        "title": "圃場を登録",
+        "description": "農場に圃場の面積を登録します。計画には面積のある圃場が必要です。"
+      },
+      "crops": {
+        "title": "作物の作業計画を設定",
+        "description": "栽培する作物の生育ステージと作業計画テンプレートを設定します。"
+      },
+      "weather": {
+        "title": "天候データを取得",
+        "description": "農場詳細画面で天候履歴を取得します。完了になるまでお待ちください。"
+      }
+    }
   }
 }
