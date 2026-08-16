@@ -88,30 +88,6 @@ const sources: LearnProposalEvidenceSource[] = [
     deltaDays: 6,
     gddDelta: 12,
     status: 'completed'
-  },
-  {
-    cropId: 42,
-    category: 'fertilizer',
-    taskType: 'fertilize',
-    stageOrder: 2,
-    name: 'Side dressing',
-    actualDate: '2025-05-01',
-    deltaDays: 1,
-    gddDelta: 3,
-    amountDelta: 0.9,
-    status: 'completed'
-  },
-  {
-    cropId: 42,
-    category: 'fertilizer',
-    taskType: 'fertilize',
-    stageOrder: 2,
-    name: 'Basal',
-    actualDate: '2025-05-02',
-    deltaDays: 0,
-    gddDelta: 1,
-    amountDelta: 0.2,
-    status: 'completed'
   }
 ];
 
@@ -162,18 +138,76 @@ describe('buildStageGddProposalEvidence', () => {
 });
 
 describe('buildBlueprintAmountProposalEvidence', () => {
-  it('returns amount threshold exceedance count and top contributing records', () => {
-    const evidence = buildBlueprintAmountProposalEvidence(bpAmountProposal, sources);
+  it('matches contributing records by crop, category, task_type, and stage_order', () => {
+    const stageOneSources: LearnProposalEvidenceSource[] = [
+      {
+        cropId: 42,
+        category: 'fertilizer',
+        taskType: 'fertilize',
+        stageOrder: 1,
+        name: 'Basal dressing',
+        actualDate: '2025-04-10',
+        deltaDays: null,
+        gddDelta: null,
+        amountDelta: 0.9,
+        status: 'completed'
+      },
+      {
+        cropId: 42,
+        category: 'fertilizer',
+        taskType: 'fertilize',
+        stageOrder: 1,
+        name: 'Top dressing',
+        actualDate: '2025-04-12',
+        deltaDays: null,
+        gddDelta: null,
+        amountDelta: 0.2,
+        status: 'completed'
+      },
+      {
+        cropId: 42,
+        category: 'fertilizer',
+        taskType: 'fertilize',
+        stageOrder: 2,
+        name: 'Side dressing',
+        actualDate: '2025-05-01',
+        deltaDays: null,
+        gddDelta: null,
+        amountDelta: 1.5,
+        status: 'completed'
+      }
+    ];
+
+    const evidence = buildBlueprintAmountProposalEvidence(bpAmountProposal, stageOneSources);
 
     expect(evidence).toEqual({
       exceedanceCount: 1,
       thresholdValue: 0.5,
       totalRecordedCount: 2,
       contributingRecords: [
-        { name: 'Side dressing', actualDate: '2025-05-01' },
-        { name: 'Basal', actualDate: '2025-05-02' }
+        { name: 'Basal dressing', actualDate: '2025-04-10' },
+        { name: 'Top dressing', actualDate: '2025-04-12' }
       ]
     });
+  });
+
+  it('ignores records from other stages even when task_type matches', () => {
+    const onlyOtherStage: LearnProposalEvidenceSource[] = [
+      {
+        cropId: 42,
+        category: 'fertilizer',
+        taskType: 'fertilize',
+        stageOrder: 2,
+        name: 'Side dressing',
+        actualDate: '2025-05-01',
+        deltaDays: null,
+        gddDelta: null,
+        amountDelta: 0.9,
+        status: 'completed'
+      }
+    ];
+
+    expect(buildBlueprintAmountProposalEvidence(bpAmountProposal, onlyOtherStage)).toBeNull();
   });
 });
 

@@ -93,6 +93,7 @@ export function buildBlueprintAmountProposalEvidence(
       source.cropId === proposal.cropId &&
       source.category === proposal.category &&
       (source.taskType == null || source.taskType === proposal.taskType) &&
+      source.stageOrder === proposal.stageOrder &&
       source.amountDelta != null
   );
   if (matching.length === 0) {
@@ -114,7 +115,12 @@ export function buildBlueprintAmountProposalEvidence(
 export function blueprintAmountProposalEvidenceKey(
   proposal: BlueprintAmountAdjustmentProposal
 ): string {
-  return blueprintAmountProposalKey(proposal.cropId, proposal.category, proposal.taskType);
+  return blueprintAmountProposalKey(
+    proposal.cropId,
+    proposal.category,
+    proposal.taskType,
+    proposal.stageOrder
+  );
 }
 
 export function buildBlueprintTimingProposalEvidence(

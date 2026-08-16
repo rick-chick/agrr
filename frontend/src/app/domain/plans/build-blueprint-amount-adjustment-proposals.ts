@@ -14,7 +14,8 @@ export function buildBlueprintAmountAdjustmentProposals(
 
   for (const raw of rawProposals) {
     const blueprints = (blueprintsByCropId.get(raw.crop_id) ?? []).filter(
-      (blueprint) => blueprint.task_type === raw.task_type
+      (blueprint) =>
+        blueprint.task_type === raw.task_type && blueprint.stage_order === raw.stage_order
     );
     if (blueprints.length === 0) {
       continue;
@@ -72,7 +73,8 @@ export function buildBlueprintAmountAdjustmentProposals(
       Math.abs(right.averageAmountDelta) - Math.abs(left.averageAmountDelta) ||
       left.cropId - right.cropId ||
       left.category.localeCompare(right.category) ||
-      left.taskType.localeCompare(right.taskType)
+      left.taskType.localeCompare(right.taskType) ||
+      (left.stageOrder ?? Number.MAX_SAFE_INTEGER) - (right.stageOrder ?? Number.MAX_SAFE_INTEGER)
   );
 }
 

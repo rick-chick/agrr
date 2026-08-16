@@ -153,7 +153,8 @@ describe('buildLearnApplicationProgressItems', () => {
     markBpAmountProposalAppliedPending(7, {
       cropId: 1,
       category: 'fertilizer',
-      taskType: 'fertilize'
+      taskType: 'fertilize',
+      stageOrder: 1
     });
 
     const items = buildLearnApplicationProgressItems(
