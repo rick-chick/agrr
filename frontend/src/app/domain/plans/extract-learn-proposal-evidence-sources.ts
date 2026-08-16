@@ -33,6 +33,7 @@ export function extractLearnProposalEvidenceSources(
     const cropId = field.crop_id ?? 0;
     pushScheduleItems(sources, cropId, 'general', field.schedules.general);
     pushScheduleItems(sources, cropId, 'fertilizer', field.schedules.fertilizer);
+    pushScheduleItems(sources, cropId, 'pest_control', field.schedules.pest_control);
     pushScheduleItems(sources, cropId, 'unscheduled', field.schedules.unscheduled);
   }
 
