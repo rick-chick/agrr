@@ -16,6 +16,7 @@ export function collectTaskScheduleItemsForField(
   return [
     ...field.schedules.general,
     ...field.schedules.fertilizer,
+    ...field.schedules.pest_control,
     ...field.schedules.unscheduled
   ];
 }

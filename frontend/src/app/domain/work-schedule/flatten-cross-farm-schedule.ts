@@ -23,7 +23,11 @@ export function flattenCrossFarmSchedules(
 
   for (const source of sources) {
     for (const field of source.fields) {
-      const scheduledTasks = [...field.schedules.general, ...field.schedules.fertilizer];
+      const scheduledTasks = [
+        ...field.schedules.general,
+        ...field.schedules.fertilizer,
+        ...field.schedules.pest_control
+      ];
       for (const item of scheduledTasks) {
         if (!item.scheduled_date) {
           continue;
