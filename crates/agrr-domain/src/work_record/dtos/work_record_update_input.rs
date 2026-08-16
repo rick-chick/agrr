@@ -22,6 +22,10 @@ pub struct WorkRecordUpdateInput {
     pub amount_unit: Option<String>,
     pub time_spent_minutes: Option<i64>,
     pub notes: Option<String>,
+    /// `None` = omit from PATCH; `Some(None)` = clear FK; `Some(Some(id))` = set FK.
+    pub fertilize_id: Option<Option<i64>>,
+    /// `None` = omit from PATCH; `Some(None)` = clear FK; `Some(Some(id))` = set FK.
+    pub pesticide_id: Option<Option<i64>>,
 }
 
 impl WorkRecordUpdateInput {
@@ -52,6 +56,16 @@ impl WorkRecordUpdateInput {
         let amount_unit = parse_optional_string(params.get("amount_unit"));
         let time_spent_minutes = parse_optional_i64(params.get("time_spent_minutes"))?;
         let notes = parse_optional_string(params.get("notes"));
+        let fertilize_id = if params.contains_key("fertilize_id") {
+            Some(parse_optional_i64(params.get("fertilize_id"))?)
+        } else {
+            None
+        };
+        let pesticide_id = if params.contains_key("pesticide_id") {
+            Some(parse_optional_i64(params.get("pesticide_id"))?)
+        } else {
+            None
+        };
 
         Ok(Self {
             fertilize_id,
@@ -62,6 +76,8 @@ impl WorkRecordUpdateInput {
             amount_unit,
             time_spent_minutes,
             notes,
+            fertilize_id,
+            pesticide_id,
         })
     }
 }

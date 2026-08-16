@@ -149,6 +149,31 @@ CREATE TABLE task_schedule_items (
   created_at TEXT,
   updated_at TEXT
 );
+CREATE TABLE fertilizes (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  is_reference INTEGER NOT NULL DEFAULT 1,
+  user_id INTEGER,
+  created_at TEXT,
+  updated_at TEXT
+);
+CREATE TABLE pests (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  is_reference INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT,
+  updated_at TEXT
+);
+CREATE TABLE pesticides (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  crop_id INTEGER NOT NULL,
+  pest_id INTEGER NOT NULL,
+  is_reference INTEGER NOT NULL DEFAULT 0,
+  user_id INTEGER,
+  created_at TEXT,
+  updated_at TEXT
+);
 CREATE TABLE work_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   cultivation_plan_id INTEGER NOT NULL,
@@ -266,6 +291,21 @@ pub fn seed_work_record_crud(pool: &SqlitePool) -> WorkRecordCrudSeed {
             "INSERT INTO task_schedule_items (task_schedule_id, task_type, name, stage_name, stage_order, scheduled_date, amount, amount_unit, agricultural_task_id, status, created_at, updated_at)
              VALUES (?1, 'field_work', '除草作業', '初期', 1, '2026-06-02', 2.5, 'kg', ?2, 'planned', datetime('now'), datetime('now'))",
             params![task_schedule_id, agricultural_task_id],
+        )?;
+        conn.execute(
+            "INSERT INTO fertilizes (id, name, is_reference, created_at, updated_at)
+             VALUES (1, 'Integration Fertilize', 1, datetime('now'), datetime('now'))",
+            [],
+        )?;
+        conn.execute(
+            "INSERT INTO pests (id, name, is_reference, created_at, updated_at)
+             VALUES (1, 'Integration Pest', 1, datetime('now'), datetime('now'))",
+            [],
+        )?;
+        conn.execute(
+            "INSERT INTO pesticides (id, name, crop_id, pest_id, is_reference, created_at, updated_at)
+             VALUES (2, 'Integration Pesticide', ?1, 1, 1, datetime('now'), datetime('now'))",
+            params![crop_id],
         )?;
         Ok(())
     })

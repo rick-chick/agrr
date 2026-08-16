@@ -259,6 +259,20 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
             sets.push(format!("notes = ?{}", values.len() + 1));
             values.push(Value::Text(notes.clone()));
         }
+        if let Some(fertilize_id) = &input.fertilize_id {
+            sets.push(format!("fertilize_id = ?{}", values.len() + 1));
+            values.push(match fertilize_id {
+                Some(id) => Value::from(*id),
+                None => Value::Null,
+            });
+        }
+        if let Some(pesticide_id) = &input.pesticide_id {
+            sets.push(format!("pesticide_id = ?{}", values.len() + 1));
+            values.push(match pesticide_id {
+                Some(id) => Value::from(*id),
+                None => Value::Null,
+            });
+        }
         if let Some(climate) = climate {
             sets.push(format!("gdd_at_actual = ?{}", values.len() + 1));
             values.push(match climate.gdd_at_actual {

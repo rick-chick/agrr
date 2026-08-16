@@ -617,17 +617,14 @@ fn creates_ad_hoc_record_with_fertilize_and_pesticide_ids() {
 
     let mut params = BTreeMap::new();
     params.insert("name".into(), Value::String("施肥".into()));
-    params.insert(
-        "actual_date".into(),
-        Value::String("2026-06-12".into()),
-    );
-    params.insert("fertilize_id".into(), Value::Number(11.into()));
-    params.insert("pesticide_id".into(), Value::Number(22.into()));
+    params.insert("actual_date".into(), Value::String("2026-06-12".into()));
+    params.insert("fertilize_id".into(), Value::from(42_i64));
+    params.insert("pesticide_id".into(), Value::from(99_i64));
 
     interactor.call_rescuing(1, 2, &params).unwrap();
 
     assert_eq!(&*events.lock().unwrap(), &["success".to_string()]);
-    let calls = create_calls.lock().unwrap();
-    assert_eq!(Some(11), calls[0].1.fertilize_id);
-    assert_eq!(Some(22), calls[0].1.pesticide_id);
+    let attrs = &create_calls.lock().unwrap()[0].1;
+    assert_eq!(Some(42), attrs.fertilize_id);
+    assert_eq!(Some(99), attrs.pesticide_id);
 }

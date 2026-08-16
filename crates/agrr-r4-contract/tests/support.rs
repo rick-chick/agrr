@@ -469,41 +469,39 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
     }
 }
 
-/// Seeds a user-owned fertilize row for contract tests.
-pub fn seed_user_fertilize(user_id: i64) -> i64 {
+/// Inserts a user-owned fertilize row for contract tests.
+pub fn insert_contract_fertilize(user_id: i64, name: &str) -> i64 {
     let path =
         std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
     let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
-    let suffix = seed_suffix();
-    let name = format!("Contract Fertilize {suffix}");
+    let unique_name = format!("{} {}", name, seed_suffix());
     conn.execute(
         "INSERT INTO fertilizes (name, is_reference, user_id, created_at, updated_at)
          VALUES (?1, 0, ?2, datetime('now'), datetime('now'))",
-        params![name, user_id],
+        params![unique_name, user_id],
     )
     .expect("insert fertilize");
     conn.last_insert_rowid()
 }
 
-/// Seeds a user-owned pesticide row for contract tests (requires crop_id).
-pub fn seed_user_pesticide(user_id: i64, crop_id: i64) -> i64 {
+/// Inserts a user-owned pesticide row for contract tests (`crop_id` must exist).
+pub fn insert_contract_pesticide(user_id: i64, crop_id: i64, name: &str) -> i64 {
     let path =
         std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
     let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
     let suffix = seed_suffix();
-    let pest_name = format!("Contract Pest {suffix}");
     conn.execute(
-        "INSERT INTO pests (name, is_reference, user_id, created_at, updated_at)
-         VALUES (?1, 0, ?2, datetime('now'), datetime('now'))",
-        params![pest_name, user_id],
+        "INSERT INTO pests (name, is_reference, created_at, updated_at)
+         VALUES (?1, 1, datetime('now'), datetime('now'))",
+        params![format!("Contract Pest {suffix}")],
     )
     .expect("insert pest");
     let pest_id = conn.last_insert_rowid();
-    let pesticide_name = format!("Contract Pesticide {suffix}");
+    let unique_name = format!("{} {}", name, suffix);
     conn.execute(
         "INSERT INTO pesticides (name, crop_id, pest_id, is_reference, user_id, created_at, updated_at)
          VALUES (?1, ?2, ?3, 0, ?4, datetime('now'), datetime('now'))",
-        params![pesticide_name, crop_id, pest_id, user_id],
+        params![unique_name, crop_id, pest_id, user_id],
     )
     .expect("insert pesticide");
     conn.last_insert_rowid()

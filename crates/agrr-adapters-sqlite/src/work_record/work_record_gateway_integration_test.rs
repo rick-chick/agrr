@@ -101,6 +101,37 @@ fn work_record_gateway_crud_roundtrip() {
             seed.plan_id,
             created.id,
             &WorkRecordUpdateInput {
+                fertilize_id: Some(Some(1)),
+                pesticide_id: Some(Some(2)),
+                ..Default::default()
+            },
+            None,
+            OffsetDateTime::now_utc(),
+        )
+        .expect("update fk ids");
+    assert_eq!(Some(1), updated.fertilize_id);
+    assert_eq!(Some(2), updated.pesticide_id);
+
+    let cleared = gateway
+        .update(
+            seed.plan_id,
+            created.id,
+            &WorkRecordUpdateInput {
+                fertilize_id: Some(None),
+                ..Default::default()
+            },
+            None,
+            OffsetDateTime::now_utc(),
+        )
+        .expect("clear fertilize_id");
+    assert!(cleared.fertilize_id.is_none());
+    assert_eq!(Some(2), cleared.pesticide_id);
+
+    let updated = gateway
+        .update(
+            seed.plan_id,
+            created.id,
+            &WorkRecordUpdateInput {
                 notes: Some("修正メモ".into()),
                 time_spent_minutes: Some(60),
                 ..Default::default()
