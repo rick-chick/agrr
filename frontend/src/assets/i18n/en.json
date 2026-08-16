@@ -1611,6 +1611,8 @@
       "next_plan_hint": "Create a new plan that carries learning from this plan forward.",
       "next_plan_cta": "Create next plan with learning",
       "preview": {
+        "title": "Learning data preview",
+        "empty": "No category variance data.",
         "stage_gdd_count": "Stage GDD calibration proposals",
         "bp_timing_count": "BP timing adjustment proposals",
         "bp_amount_count": "BP amount adjustment proposals"
@@ -1850,16 +1852,6 @@
         "medium": "Medium confidence",
         "low": "Low confidence"
       },
-      "one_click_reoptimize": {
-        "title": "Apply learning and re-optimize",
-        "lead": "Re-optimize with current placement and continue through task schedule regeneration. No Gantt drag required.",
-        "cta": "Apply learning and re-optimize",
-        "starting": "Starting re-optimization…",
-        "error": {
-          "no_cultivations": "Cannot re-optimize because there are no cultivations.",
-          "adjust_failed": "Failed to start re-optimization."
-        }
-      },
       "pipeline_status": {
         "failed_title": "Reorganization pipeline failed",
         "unknown_error": "An unexpected error occurred during reorganization.",
@@ -1919,6 +1911,16 @@
         "view_proposal": "View proposal",
         "stage_label": "Stage {{order}} — {{name}}",
         "stage_unassigned": "Unassigned stage"
+      },
+      "one_click_reoptimize": {
+        "title": "Apply learning and re-optimize",
+        "lead": "Re-optimize with current placement and continue through task schedule regeneration. No Gantt drag required.",
+        "cta": "Apply learning and re-optimize",
+        "starting": "Starting re-optimization…",
+        "error": {
+          "no_cultivations": "Cannot re-optimize because there are no cultivations.",
+          "adjust_failed": "Failed to start re-optimization."
+        }
       }
     },
     "work": {
