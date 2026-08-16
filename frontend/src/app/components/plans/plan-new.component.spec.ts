@@ -99,6 +99,9 @@ describe('PlanNewComponent', () => {
       'plans.new.carryover_no_source_plans': 'No previous plans found.',
       'plans.new.carryover_preview_empty': 'No category variance data.',
       'plans.new.carryover_learn_cta': 'Create and review on Learn',
+      'plans.carryover.preview.stage_gdd_count': 'Stage GDD calibration proposals',
+      'plans.carryover.preview.bp_timing_count': 'BP timing adjustment proposals',
+      'plans.carryover.preview.bp_amount_count': 'BP amount adjustment proposals',
       'plans.task_schedules.variance_subview.category_column': 'Category',
       'plans.task_schedules.variance_subview.category_average': 'Avg Δ days',
       'plans.task_schedules.variance_subview.not_available': '—',
@@ -352,6 +355,33 @@ describe('PlanNewComponent', () => {
     expect(preview?.textContent).toContain('Learning data preview');
     expect(preview?.textContent).toContain('General tasks');
     expect(preview?.textContent).toContain('+2 days');
+  });
+
+  it('shows GDD and BP proposal counts in carryover preview table', () => {
+    fixture.detectChanges();
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
+      selectedFarmId: 1,
+      carryoverEnabled: true,
+      sourcePlans: [{ id: 9, name: 'Old Plan', farm_id: 1 }],
+      selectedSourcePlanId: 9,
+      carryoverPreview: {
+        plan_id: 9,
+        unrecorded_count: 0,
+        categories: [],
+        stage_gdd_calibration_proposals: [{ crop_id: 1, stage_id: 2 } as never],
+        blueprint_amount_adjustment_proposals: [
+          { crop_id: 1, category: 'general', stage_order: 1 } as never
+        ],
+        top_variance_items: []
+      }
+    });
+    fixture.detectChanges();
+
+    const rows = fixture.nativeElement.querySelectorAll('.plan-new-carryover-preview__table tbody tr');
+    expect(rows).toHaveLength(2);
+    expect(rows[0].textContent).toContain('Stage GDD calibration proposals');
+    expect(rows[1].textContent).toContain('BP amount adjustment proposals');
   });
 
   it('presets carryover from carryoverFrom query param after farms load', () => {

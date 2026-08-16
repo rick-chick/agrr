@@ -2632,7 +2632,12 @@
     "carryover": {
       "next_plan_heading": "次の計画",
       "next_plan_hint": "この計画の学習を引き継いで新しい計画を作成します。",
-      "next_plan_cta": "次の計画を作成（学習を引き継ぐ）"
+      "next_plan_cta": "次の計画を作成（学習を引き継ぐ）",
+      "preview": {
+        "stage_gdd_count": "ステージ GDD 校正提案",
+        "bp_timing_count": "BP タイミング調整提案",
+        "bp_amount_count": "BP 量調整提案"
+      }
     },
     "learn": {
       "page_title": "振り返り — {{name}}",

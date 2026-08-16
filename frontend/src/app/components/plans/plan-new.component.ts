@@ -18,6 +18,10 @@ import {
   PLAN_CARRYOVER_FROM_QUERY_PARAM,
   parseCarryoverFromPlanId
 } from '../../domain/plans/plan-carryover-navigation';
+import {
+  buildPlanCarryoverPreviewTableRows,
+  type PlanCarryoverPreviewTableRow
+} from '../../domain/plans/build-plan-carryover-preview-table-rows';
 
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingFlashAndNavigationViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
@@ -177,7 +181,7 @@ const initialControl: PlanNewViewState = {
                         <h3 class="plan-new-carryover-preview__title">{{
                           'plans.new.carryover_preview_title' | translate
                         }}</h3>
-                        @if (control.carryoverPreview.categories.length) {
+                        @if (carryoverPreviewRows.length) {
                           <table class="plan-new-carryover-preview__table">
                             <thead>
                               <tr>
@@ -190,11 +194,18 @@ const initialControl: PlanNewViewState = {
                               </tr>
                             </thead>
                             <tbody>
-                              @for (category of control.carryoverPreview.categories; track category.category) {
-                                <tr>
-                                  <td>{{ categoryLabel(category) }}</td>
-                                  <td>{{ categoryAverageLabel(category) }}</td>
-                                </tr>
+                              @for (row of carryoverPreviewRows; track row.track) {
+                                @if (row.kind === 'category') {
+                                  <tr>
+                                    <td>{{ categoryLabel(row.category) }}</td>
+                                    <td>{{ categoryAverageLabel(row.category) }}</td>
+                                  </tr>
+                                } @else {
+                                  <tr>
+                                    <td>{{ row.labelKey | translate }}</td>
+                                    <td>{{ row.count }}</td>
+                                  </tr>
+                                }
                               }
                             </tbody>
                           </table>
@@ -294,6 +305,12 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   get canSubmit(): boolean {
     const farm = this.control.farms.find((f) => f.id === this.control.selectedFarmId);
     return Boolean(farm?.hasValidFields);
+  }
+
+  get carryoverPreviewRows(): PlanCarryoverPreviewTableRow[] {
+    return this.control.carryoverPreview
+      ? buildPlanCarryoverPreviewTableRows(this.control.carryoverPreview)
+      : [];
   }
 
   ngOnInit(): void {

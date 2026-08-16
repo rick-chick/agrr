@@ -6,6 +6,10 @@ import {
   buildPlanNewCarryoverFromNavigation,
   PLAN_CARRYOVER_NEXT_PLAN_CTA_KEY
 } from '../../domain/plans/plan-carryover-navigation';
+import {
+  buildPlanCarryoverPreviewTableRows,
+  type PlanCarryoverPreviewTableRow
+} from '../../domain/plans/build-plan-carryover-preview-table-rows';
 import type { PlanSummary } from '../../domain/plans/plan-summary';
 import type { PlanVsActualCategorySummary, PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
 import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
@@ -52,7 +56,7 @@ import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-s
                 <h4 class="plan-learn-carryover-preview__title">{{
                   'plans.learn.carryover.preview_title' | translate
                 }}</h4>
-                @if (carryoverPreview.categories.length) {
+                @if (carryoverPreviewRows.length) {
                   <table class="plan-learn-carryover-preview__table">
                     <thead>
                       <tr>
@@ -65,11 +69,18 @@ import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-s
                       </tr>
                     </thead>
                     <tbody>
-                      @for (category of carryoverPreview.categories; track category.category) {
-                        <tr>
-                          <td>{{ categoryLabel(category) }}</td>
-                          <td>{{ categoryAverageLabel(category) }}</td>
-                        </tr>
+                      @for (row of carryoverPreviewRows; track row.track) {
+                        @if (row.kind === 'category') {
+                          <tr>
+                            <td>{{ categoryLabel(row.category) }}</td>
+                            <td>{{ categoryAverageLabel(row.category) }}</td>
+                          </tr>
+                        } @else {
+                          <tr>
+                            <td>{{ row.labelKey | translate }}</td>
+                            <td>{{ row.count }}</td>
+                          </tr>
+                        }
                       }
                     </tbody>
                   </table>
@@ -103,6 +114,11 @@ import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-s
         <h4 id="plan-learn-carryover-next-plan-title" class="plan-learn-carryover__next-plan-title">
           {{ 'plans.carryover.next_plan_heading' | translate }}
         </h4>
+        @if (sourcePlanName) {
+          <p class="plan-learn-carryover__source-plan">
+            {{ 'plans.learn.loop.handoff_source_plan' | translate: { planName: sourcePlanName } }}
+          </p>
+        }
         <p class="plan-learn-carryover__hint">{{ 'plans.carryover.next_plan_hint' | translate }}</p>
         <a
           class="btn btn-primary plan-learn-carryover__next-plan-cta"
@@ -118,6 +134,7 @@ import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-s
 })
 export class PlanLearnCarryoverSectionComponent {
   @Input({ required: true }) planId!: number;
+  @Input() sourcePlanName: string | null = null;
   @Input() carryoverSourcePlans: PlanSummary[] = [];
   @Input() selectedSourcePlanId: number | null = null;
   @Input() carryoverPreviewLoading = false;
@@ -135,6 +152,10 @@ export class PlanLearnCarryoverSectionComponent {
 
   get nextPlanNavigation(): ReturnType<typeof buildPlanNewCarryoverFromNavigation> {
     return buildPlanNewCarryoverFromNavigation(this.planId);
+  }
+
+  get carryoverPreviewRows(): PlanCarryoverPreviewTableRow[] {
+    return this.carryoverPreview ? buildPlanCarryoverPreviewTableRows(this.carryoverPreview) : [];
   }
 
   onSourcePlanChange(planId: number | null): void {

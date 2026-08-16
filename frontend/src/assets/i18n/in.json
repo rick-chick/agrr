@@ -1982,7 +1982,12 @@
     "carryover": {
       "next_plan_heading": "अगली योजना",
       "next_plan_hint": "इस योजना की सीख को आगे ले जाने वाली नई योजना बनाएँ।",
-      "next_plan_cta": "सीख के साथ अगली योजना बनाएँ"
+      "next_plan_cta": "सीख के साथ अगली योजना बनाएँ",
+      "preview": {
+        "stage_gdd_count": "स्टेज GDD कैलिब्रेशन प्रस्ताव",
+        "bp_timing_count": "BP समय समायोजन प्रस्ताव",
+        "bp_amount_count": "BP मात्रा समायोजन प्रस्ताव"
+      }
     },
     "learn": {
       "page_title": "समीक्षा — {{name}}",

@@ -2,6 +2,7 @@ import {
   buildPlanDetailAdjustNavigation,
   hasPendingMasterUpdateConfirmation
 } from './learn-master-update-orchestration';
+import { buildPlanNewCarryoverFromNavigation } from './plan-carryover-navigation';
 import type { BlueprintTimingAdjustmentProposal } from './blueprint-timing-adjustment-proposal';
 import type { StageGddCalibrationProposal } from './stage-gdd-calibration-proposal';
 import {
@@ -314,19 +315,23 @@ export function resolveLearnLoopNextAction(input: LearnLoopPhaseInput): LearnLoo
         queryParams: adjust.queryParams
       };
 
-    case 'handoff':
+    case 'handoff': {
+      const carryoverNav = buildPlanNewCarryoverFromNavigation(input.planId);
       if (input.loopComplete) {
         return {
           labelKey: 'plans.learn.loop.next_action.loop_complete_next_plan',
-          kind: 'scroll',
-          scrollTargetId: 'plan-learn-carryover-title'
+          kind: 'router_link',
+          routerLink: carryoverNav.routerLink,
+          queryParams: carryoverNav.queryParams
         };
       }
       return {
-        labelKey: 'plans.learn.loop.next_action.handoff_carryover',
-        kind: 'scroll',
-        scrollTargetId: 'plan-learn-carryover-title'
+        labelKey: 'plans.learn.loop.next_action.handoff_new_plan',
+        kind: 'router_link',
+        routerLink: carryoverNav.routerLink,
+        queryParams: carryoverNav.queryParams
       };
+    }
 
     case 'complete': {
       const adjust = buildPlanDetailAdjustNavigation(input.planId);
@@ -347,10 +352,12 @@ export function resolveLearnLoopSecondaryAction(
     return null;
   }
 
+  const carryoverNav = buildPlanNewCarryoverFromNavigation(input.planId);
   return {
-    labelKey: 'plans.learn.loop.next_action.complete_next_plan',
+    labelKey: 'plans.learn.loop.next_action.handoff_new_plan',
     kind: 'router_link',
-    routerLink: ['/plans']
+    routerLink: carryoverNav.routerLink,
+    queryParams: carryoverNav.queryParams
   };
 }
 
