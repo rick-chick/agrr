@@ -31,7 +31,19 @@ const PLAN_NEW_I18N_KEYS = [
   'plans.new.farm_option_no_fields',
   'plans.new.no_fields_warning',
   'plans.new.some_farms_no_fields_hint',
-  'plans.new.register_fields_link'
+  'plans.new.register_fields_link',
+  'plans.new.readiness.title',
+  'plans.new.readiness.fields_ready',
+  'plans.new.readiness.fields_missing',
+  'plans.new.readiness.fields_action',
+  'plans.new.readiness.weather_ready',
+  'plans.new.readiness.weather_missing',
+  'plans.new.readiness.weather_action',
+  'plans.new.readiness.crops_ready',
+  'plans.new.readiness.crops_missing',
+  'plans.new.readiness.crops_incomplete',
+  'plans.new.readiness.crops_action',
+  'plans.new.readiness.crop_blueprint_action'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [
