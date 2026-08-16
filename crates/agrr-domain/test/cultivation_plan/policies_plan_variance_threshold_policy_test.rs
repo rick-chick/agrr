@@ -60,7 +60,7 @@ fn exceedance_kind_both_when_days_and_gdd_exceed() {
 }
 
 #[test]
-fn amount_delta_threshold_differs_by_fertilizer_and_pest_control() {
+fn amount_delta_threshold_differs_by_category() {
     assert_eq!(
         FERTILIZER_AMOUNT_DELTA_THRESHOLD,
         amount_delta_threshold_for_category("fertilizer")
@@ -76,7 +76,7 @@ fn amount_delta_threshold_differs_by_fertilizer_and_pest_control() {
 }
 
 #[test]
-fn amount_delta_threshold_falls_back_to_default_for_other_categories() {
+fn amount_delta_threshold_falls_back_to_default_for_unknown_category() {
     assert_eq!(
         DEFAULT_AMOUNT_DELTA_THRESHOLD,
         amount_delta_threshold_for_category("general")
