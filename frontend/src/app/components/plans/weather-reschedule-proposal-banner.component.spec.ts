@@ -51,8 +51,8 @@ describe('WeatherRescheduleProposalBannerComponent', () => {
     const text = fixture.nativeElement.textContent ?? '';
     expect(text).toContain('plans.show.weather_reschedule_proposal.title');
     expect(text).toContain('plans.work.today_attention.weather_trigger.frost_forecast');
-    expect(text).toContain('北圃場');
-    expect(text).toContain('トマト');
+    expect(text).toContain('plans.work.today_attention.weather_target');
+    expect(text).toContain('plans.work.today_attention.weather_rationale.frost_forecast');
     expect(fixture.nativeElement.querySelector('.weather-reschedule-proposal-banner__delay')).toBeTruthy();
   });
 

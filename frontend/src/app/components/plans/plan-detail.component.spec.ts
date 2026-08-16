@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlanDetailComponent } from './plan-detail.component';
 import { PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
+import { PreviewWeatherRescheduleProposalUseCase } from '../../usecase/plans/preview-weather-reschedule-proposal.usecase';
+import { ApplyWeatherRescheduleProposalUseCase } from '../../usecase/plans/apply-weather-reschedule-proposal.usecase';
 import { PlanDetailPresenter } from '../../usecase/plans/plan-detail.providers';
 import { HydrateReorganizeOrchestrationUseCase } from '../../usecase/plans/hydrate-reorganize-orchestration.usecase';
 import {
@@ -44,6 +46,8 @@ describe('PlanDetailComponent', () => {
       set: {
         providers: [
           { provide: LoadPlanDetailUseCase, useValue: loadUseCase },
+          { provide: PreviewWeatherRescheduleProposalUseCase, useValue: { execute: vi.fn() } },
+          { provide: ApplyWeatherRescheduleProposalUseCase, useValue: { execute: vi.fn() } },
           { provide: HydrateReorganizeOrchestrationUseCase, useValue: hydrateUseCase },
           { provide: PlanDetailPresenter, useValue: mockPresenter }
         ]

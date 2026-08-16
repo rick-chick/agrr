@@ -27,8 +27,10 @@ export class ApplyWeatherRescheduleProposalUseCase
       })
       .subscribe({
         next: (result) => {
-          if (!result.success) {
-            this.outputPort.onError({ message: result.message ?? 'plans.errors.adjust_failed' });
+          if (result.success === false) {
+            this.outputPort.onError({
+              message: result.message ?? 'plans.errors.adjust_failed'
+            });
             return;
           }
           this.ganttGateway.loadPlanData(dto.planType, dto.planId).subscribe({
