@@ -1,23 +1,19 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import {
   buildPlanNewCarryoverFromNavigation,
   PLAN_CARRYOVER_NEXT_PLAN_CTA_KEY
 } from '../../domain/plans/plan-carryover-navigation';
-import {
-  buildPlanCarryoverPreviewTableRows,
-  type PlanCarryoverPreviewTableRow
-} from '../../domain/plans/build-plan-carryover-preview-table-rows';
 import type { PlanSummary } from '../../domain/plans/plan-summary';
-import type { PlanVsActualCategorySummary, PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
-import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
+import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
+import { PlanCarryoverPreviewComponent } from './plan-carryover-preview.component';
 
 @Component({
   selector: 'app-plan-learn-carryover-section',
   standalone: true,
-  imports: [FormsModule, RouterLink, TranslateModule],
+  imports: [FormsModule, RouterLink, TranslateModule, PlanCarryoverPreviewComponent],
   template: `
     <section class="plan-learn-carryover" aria-labelledby="plan-learn-carryover-title">
       <h3 id="plan-learn-carryover-title" class="plan-learn-carryover__title">
@@ -52,59 +48,22 @@ import { formatPlanTaskScheduleAverageDeltaDaysLabel } from '../../domain/work-s
             } @else if (carryoverPreviewError) {
               <p class="plan-learn-carryover__error">{{ carryoverPreviewError }}</p>
             } @else if (carryoverPreview) {
-              <div class="plan-learn-carryover-preview">
-                <h4 class="plan-learn-carryover-preview__title">{{
-                  'plans.learn.carryover.preview_title' | translate
-                }}</h4>
-                @if (carryoverPreviewRows.length) {
-                  <table class="plan-learn-carryover-preview__table">
-                    <thead>
-                      <tr>
-                        <th scope="col">{{
-                          'plans.task_schedules.variance_subview.category_column' | translate
-                        }}</th>
-                        <th scope="col">{{
-                          'plans.task_schedules.variance_subview.category_average' | translate
-                        }}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (row of carryoverPreviewRows; track row.track) {
-                        @if (row.kind === 'category') {
-                          <tr>
-                            <td>{{ categoryLabel(row.category) }}</td>
-                            <td>{{ categoryAverageLabel(row.category) }}</td>
-                          </tr>
-                        } @else {
-                          <tr>
-                            <td>{{ row.labelKey | translate }}</td>
-                            <td>{{ row.count }}</td>
-                          </tr>
-                        }
-                      }
-                    </tbody>
-                  </table>
-                } @else {
-                  <p class="plan-learn-carryover__hint">{{
-                    'plans.learn.carryover.preview_empty' | translate
-                  }}</p>
-                }
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  [disabled]="carryoverImporting"
-                  (click)="onImportLearning()"
-                >
-                  {{
-                    carryoverImporting
-                      ? ('common.loading' | translate)
-                      : ('plans.learn.carryover.import_button' | translate)
-                  }}
-                </button>
-                @if (carryoverImportError) {
-                  <p class="plan-learn-carryover__error">{{ carryoverImportError }}</p>
-                }
-              </div>
+              <app-plan-carryover-preview [summary]="carryoverPreview" />
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="carryoverImporting"
+                (click)="onImportLearning()"
+              >
+                {{
+                  carryoverImporting
+                    ? ('common.loading' | translate)
+                    : ('plans.learn.carryover.import_button' | translate)
+                }}
+              </button>
+              @if (carryoverImportError) {
+                <p class="plan-learn-carryover__error">{{ carryoverImportError }}</p>
+              }
             }
           }
         </div>
@@ -148,14 +107,8 @@ export class PlanLearnCarryoverSectionComponent {
 
   readonly nextPlanCtaKey = PLAN_CARRYOVER_NEXT_PLAN_CTA_KEY;
 
-  constructor(private readonly translate: TranslateService) {}
-
   get nextPlanNavigation(): ReturnType<typeof buildPlanNewCarryoverFromNavigation> {
     return buildPlanNewCarryoverFromNavigation(this.planId);
-  }
-
-  get carryoverPreviewRows(): PlanCarryoverPreviewTableRow[] {
-    return this.carryoverPreview ? buildPlanCarryoverPreviewTableRows(this.carryoverPreview) : [];
   }
 
   onSourcePlanChange(planId: number | null): void {
@@ -164,20 +117,5 @@ export class PlanLearnCarryoverSectionComponent {
 
   onImportLearning(): void {
     this.importLearning.emit();
-  }
-
-  categoryLabel(category: PlanVsActualCategorySummary): string {
-    return this.translate.instant(
-      `plans.task_schedules.variance_subview.category.${category.category}`
-    );
-  }
-
-  categoryAverageLabel(category: PlanVsActualCategorySummary): string {
-    if (category.average_delta_days == null) {
-      return this.translate.instant('plans.task_schedules.variance_subview.not_available');
-    }
-    return this.translate.instant('plans.task_schedules.variance_subview.average_value', {
-      delta: formatPlanTaskScheduleAverageDeltaDaysLabel(category.average_delta_days)
-    });
   }
 }
