@@ -17,8 +17,6 @@ import {
 } from '../../usecase/plans/apply-weather-reschedule-proposal.output-port';
 
 const emptyWeatherState = {
-  weatherProposalsLoading: false,
-  weatherProposalsError: null as string | null,
   weatherProposals: [] as WeatherRescheduleProposal[],
   activeWeatherProposalId: null as string | null,
   weatherPreviewLoading: false,

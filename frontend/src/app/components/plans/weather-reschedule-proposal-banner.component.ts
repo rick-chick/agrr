@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { computeWeatherRescheduleDelayDays } from '../../domain/plans/compute-weather-reschedule-delay-days';
 import { mapWeatherProposalToAttentionTrigger } from '../../domain/plans/map-weather-proposals-to-attention-triggers';
 import type { WeatherRescheduleProposal } from '../../domain/plans/weather-reschedule-proposal';
-import type { WeatherRescheduleProposalPreview } from '../../domain/plans/weather-reschedule-proposal-preview';
+import type { WeatherRescheduleProposalPreview, WeatherRescheduleAdjustMove } from '../../domain/plans/weather-reschedule-proposal-preview';
 
 @Component({
   selector: 'app-weather-reschedule-proposal-banner',
@@ -121,10 +121,7 @@ export class WeatherRescheduleProposalBannerComponent {
     if (!startDate || !Array.isArray(moves)) {
       return null;
     }
-    return computeWeatherRescheduleDelayDays(
-      startDate,
-      moves as { allocation_id: number; action: 'move'; to_field_id: number; to_start_date: string }[]
-    );
+    return computeWeatherRescheduleDelayDays(startDate, moves as WeatherRescheduleAdjustMove[]);
   }
 
   get canApprove(): boolean {

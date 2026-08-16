@@ -35,8 +35,6 @@ const initialControl: PlanDetailViewState = {
   plan: null,
   planData: null,
   varianceActionItemsOnGantt: [],
-  weatherProposalsLoading: false,
-  weatherProposalsError: null,
   weatherProposals: [],
   activeWeatherProposalId: null,
   weatherPreviewLoading: false,

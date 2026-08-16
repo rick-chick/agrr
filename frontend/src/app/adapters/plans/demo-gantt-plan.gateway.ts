@@ -16,6 +16,7 @@ import {
   GanttAddFieldRequest
 } from '../../usecase/plans/gantt-plan-mutation.dtos';
 import { GanttPlanGateway } from '../../usecase/plans/gantt-plan-gateway';
+import type { WeatherRescheduleAdjustMove } from '../../domain/plans/weather-reschedule-proposal-preview';
 import { DemoGanttPlanMemoryGateway } from './demo-gantt-plan-memory.gateway';
 
 @Injectable()
@@ -65,7 +66,7 @@ export class DemoGanttPlanGateway implements GanttPlanGateway {
   adjustPlanMoves(input: {
     planType: CultivationPlanContextType;
     planId: number;
-    moves: import('../../domain/plans/weather-reschedule-proposal-preview').WeatherRescheduleAdjustMove[];
+    moves: WeatherRescheduleAdjustMove[];
   }): Observable<GanttPlanMutationCommandResult> {
     if (input.planType !== 'demo' || input.moves.length === 0) {
       return of(ganttMutationCommandFailure());

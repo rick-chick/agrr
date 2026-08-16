@@ -13,8 +13,6 @@ export type PlanDetailViewState = {
   plan: PlanSummary | null;
   planData: CultivationPlanData | null;
   varianceActionItemsOnGantt: PlanVarianceActionItem[];
-  weatherProposalsLoading: boolean;
-  weatherProposalsError: string | null;
   weatherProposals: WeatherRescheduleProposal[];
   activeWeatherProposalId: string | null;
   weatherPreviewLoading: boolean;
