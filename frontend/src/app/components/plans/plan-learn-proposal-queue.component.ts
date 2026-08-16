@@ -66,7 +66,7 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
           />
         }
 
-        @if (bulkApplyComplete) {
+        @if (pipelineStartFailed) {
           <div class="learn-proposal-queue__post-apply" role="status">
             <h4 class="learn-proposal-queue__post-apply-title">
               {{ 'plans.learn.proposal_queue.post_apply.title' | translate }}
@@ -77,7 +77,7 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
                   | translate: { count: lastAppliedCount }
               }}
             </p>
-            <button type="button" class="btn btn-primary" (click)="startReorganizePipeline()">
+            <button type="button" class="btn btn-primary" (click)="retryReorganizePipeline()">
               {{ 'plans.learn.bulk_apply.start_pipeline' | translate }}
             </button>
           </div>
@@ -212,7 +212,7 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
           }
         }
 
-        @if (safeCount > 0 && !bulkApplyComplete) {
+        @if (safeCount > 0 && !pipelineStartFailed) {
           <div class="learn-proposal-queue__bulk-apply learn-bulk-apply">
             <p class="learn-bulk-apply__lead">
               {{
@@ -275,7 +275,7 @@ export class PlanLearnProposalQueueComponent {
 
   applying = false;
   applyError: string | null = null;
-  bulkApplyComplete = false;
+  pipelineStartFailed = false;
   lastAppliedCount = 0;
   applyProgress = { applied: 0, total: 0 };
 
@@ -312,7 +312,7 @@ export class PlanLearnProposalQueueComponent {
       this.pestControlTimingItems.length > 0 ||
       this.postMasterPayload != null ||
       this.applicationProgressCount > 0 ||
-      this.bulkApplyComplete
+      this.pipelineStartFailed
     );
   }
 
@@ -382,9 +382,11 @@ export class PlanLearnProposalQueueComponent {
       onSuccess: (result) => {
         this.applying = false;
         this.lastAppliedCount = result.appliedCount;
-        this.bulkApplyComplete = result.appliedCount > 0;
         this.progressChanged.emit();
         this.cdr.markForCheck();
+        if (result.appliedCount > 0) {
+          void this.startReorganizePipelineAfterBulkApply();
+        }
       },
       onError: (message) => {
         this.applying = false;
@@ -394,9 +396,23 @@ export class PlanLearnProposalQueueComponent {
     });
   }
 
-  startReorganizePipeline(): void {
+  retryReorganizePipeline(): void {
+    void this.startReorganizePipelineAfterBulkApply();
+  }
+
+  private async startReorganizePipelineAfterBulkApply(): Promise<void> {
     storeLearnReorganizePipelineAutoChain(this.planId);
     const navigation = buildLearnReorganizePipelineStartNavigation(this.planId);
-    void this.router.navigate(navigation.commands, { queryParams: navigation.queryParams });
+    try {
+      const navigated = await this.router.navigate(navigation.commands, {
+        queryParams: navigation.queryParams
+      });
+      if (!navigated) {
+        throw new Error('navigation rejected');
+      }
+    } catch {
+      this.pipelineStartFailed = true;
+      this.cdr.markForCheck();
+    }
   }
 }
