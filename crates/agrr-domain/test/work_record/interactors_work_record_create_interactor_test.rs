@@ -260,6 +260,8 @@ fn sample_read() -> WorkRecordRead {
         field_cultivation_id: Some(45),
         task_schedule_item_id: Some(123),
         agricultural_task_id: Some(7),
+        fertilize_id: None,
+        pesticide_id: None,
         name: "除草".into(),
         task_type: Some("field_work".into()),
         actual_date: date!(2026-06-12),
@@ -578,4 +580,51 @@ fn dispatches_not_found_when_private_plan_access_denied() {
 
     assert_eq!(&*events.lock().unwrap(), &["not_found".to_string()]);
     assert!(create_calls.lock().unwrap().is_empty());
+}
+
+#[test]
+fn creates_ad_hoc_record_with_fertilize_and_pesticide_ids() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let record_slot = Arc::new(Mutex::new(None));
+    let mut output = SpyCreateOutput {
+        events: Arc::clone(&events),
+        record: Arc::clone(&record_slot),
+        errors: Arc::new(Mutex::new(None)),
+    };
+    let create_calls = Arc::new(Mutex::new(Vec::new()));
+    let gateway = StubWorkRecordGateway {
+        create_calls: Arc::clone(&create_calls),
+        create_result: sample_read(),
+    };
+    let item_lookup = StubItemLookup { snapshot: None };
+    let clock = FakeClock {
+        today_val: date!(2026-06-12),
+        now_val: datetime!(2026-06-12 10:00 UTC),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: private_plan(1),
+    };
+    let climate_snapshot = EmptyClimateSnapshot;
+    let mut interactor = WorkRecordCreateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &gateway,
+        &item_lookup,
+        &climate_snapshot,
+        &clock,
+        &EmptyScopeGateway,
+    );
+
+    let mut params = BTreeMap::new();
+    params.insert("name".into(), Value::String("施肥".into()));
+    params.insert("actual_date".into(), Value::String("2026-06-12".into()));
+    params.insert("fertilize_id".into(), Value::from(42_i64));
+    params.insert("pesticide_id".into(), Value::from(99_i64));
+
+    interactor.call_rescuing(1, 2, &params).unwrap();
+
+    assert_eq!(&*events.lock().unwrap(), &["success".to_string()]);
+    let attrs = &create_calls.lock().unwrap()[0].1;
+    assert_eq!(Some(42), attrs.fertilize_id);
+    assert_eq!(Some(99), attrs.pesticide_id);
 }

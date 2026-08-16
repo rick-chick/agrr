@@ -469,6 +469,41 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
     }
 }
 
+/// Inserts a user-owned fertilize row for contract tests.
+pub fn insert_contract_fertilize(user_id: i64, name: &str) -> i64 {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    conn.execute(
+        "INSERT INTO fertilizes (name, is_reference, user_id, created_at, updated_at)
+         VALUES (?1, 0, ?2, datetime('now'), datetime('now'))",
+        params![name, user_id],
+    )
+    .expect("insert fertilize");
+    conn.last_insert_rowid()
+}
+
+/// Inserts a user-owned pesticide row for contract tests (`crop_id` must exist).
+pub fn insert_contract_pesticide(user_id: i64, crop_id: i64, name: &str) -> i64 {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    conn.execute(
+        "INSERT INTO pests (name, is_reference, created_at, updated_at)
+         VALUES ('Contract Pest', 1, datetime('now'), datetime('now'))",
+        [],
+    )
+    .expect("insert pest");
+    let pest_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO pesticides (name, crop_id, pest_id, is_reference, user_id, created_at, updated_at)
+         VALUES (?1, ?2, ?3, 0, ?4, datetime('now'), datetime('now'))",
+        params![name, crop_id, pest_id, user_id],
+    )
+    .expect("insert pesticide");
+    conn.last_insert_rowid()
+}
+
 /// Sets failed sync state with optional crop context for remediation links.
 pub fn set_plan_task_schedule_sync_failed(
     plan_id: i64,

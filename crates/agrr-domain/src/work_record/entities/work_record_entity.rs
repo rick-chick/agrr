@@ -11,6 +11,8 @@ pub struct WorkRecordEntity {
     pub field_cultivation_id: Option<i64>,
     pub task_schedule_item_id: Option<i64>,
     pub agricultural_task_id: Option<i64>,
+    pub fertilize_id: Option<i64>,
+    pub pesticide_id: Option<i64>,
     pub name: String,
     pub task_type: Option<String>,
     pub actual_date: Date,
