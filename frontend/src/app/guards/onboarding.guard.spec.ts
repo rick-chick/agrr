@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { onboardingGuard } from './onboarding.guard';
 import { ApiService } from '../services/api.service';
@@ -20,7 +20,9 @@ describe('onboardingGuard', () => {
       ]
     });
 
-    const result = await TestBed.runInInjectionContext(() => onboardingGuard({} as never, {} as never));
+    const result = await TestBed.runInInjectionContext(() =>
+      firstValueFrom(onboardingGuard({} as never, {} as never) as ReturnType<typeof of>)
+    );
     expect(result).toBe(true);
   });
 
@@ -40,7 +42,9 @@ describe('onboardingGuard', () => {
       ]
     });
 
-    const result = await TestBed.runInInjectionContext(() => onboardingGuard({} as never, {} as never));
+    const result = await TestBed.runInInjectionContext(() =>
+      firstValueFrom(onboardingGuard({} as never, {} as never) as ReturnType<typeof of>)
+    );
     expect(createUrlTree).toHaveBeenCalledWith(['/plans']);
     expect(result).toBe(urlTree);
   });
