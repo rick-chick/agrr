@@ -88,30 +88,6 @@ const sources: LearnProposalEvidenceSource[] = [
     deltaDays: 6,
     gddDelta: 12,
     status: 'completed'
-  },
-  {
-    cropId: 42,
-    category: 'fertilizer',
-    taskType: 'fertilize',
-    stageOrder: 2,
-    name: 'Side dressing',
-    actualDate: '2025-05-01',
-    deltaDays: 1,
-    gddDelta: 3,
-    amountDelta: 0.9,
-    status: 'completed'
-  },
-  {
-    cropId: 42,
-    category: 'fertilizer',
-    taskType: 'fertilize',
-    stageOrder: 2,
-    name: 'Basal',
-    actualDate: '2025-05-02',
-    deltaDays: 0,
-    gddDelta: 1,
-    amountDelta: 0.2,
-    status: 'completed'
   }
 ];
 
