@@ -2344,7 +2344,8 @@
         "collapse": "折りたたむ",
         "compare_variance": "乖離を比較"
       },
-      "initial_setup": "初回セットアップ"
+      "initial_setup": "初回セットアップ",
+      "public_plan_handoff": "公開プランの続きを見る"
     },
     "new": {
       "breadcrumb": "新規作成",
@@ -2499,6 +2500,13 @@
       "reoptimization_banner": {
         "message": "マスタ更新後は再最適化を推奨します",
         "hint": "ガントで栽培バーをドラッグして配置を調整してください。ドロップ後に再最適化が開始されます。"
+      },
+      "post_save_onboarding": {
+        "message": "作付け計画を保存しました",
+        "hint": "作業予定を確認し、圃場の作業記録を始めて計画を活用しましょう。",
+        "task_schedule_link": "作業予定を確認",
+        "work_link": "作業記録を始める",
+        "dismiss": "閉じる"
       }
     },
     "task_schedules": {

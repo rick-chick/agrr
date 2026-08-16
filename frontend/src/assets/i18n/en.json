@@ -2124,7 +2124,8 @@
         "collapse": "Collapse",
         "compare_variance": "Compare variance"
       },
-      "initial_setup": "Initial setup wizard"
+      "initial_setup": "Initial setup wizard",
+      "public_plan_handoff": "Continue your public plan"
     },
     "new": {
       "breadcrumb": "New plan",
@@ -2318,6 +2319,13 @@
       "reoptimization_banner": {
         "message": "Re-optimization recommended after master update",
         "hint": "Drag cultivations on the Gantt to adjust placement. Re-optimization starts automatically after you drop."
+      },
+      "post_save_onboarding": {
+        "message": "Your cultivation plan is saved",
+        "hint": "Check your task schedule and start recording field work to keep the plan useful.",
+        "task_schedule_link": "Check task schedule",
+        "work_link": "Start work records",
+        "dismiss": "Dismiss"
       }
     }
   },

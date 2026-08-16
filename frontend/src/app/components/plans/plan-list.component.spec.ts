@@ -11,6 +11,7 @@ import { DELETE_PLAN_OUTPUT_PORT } from '../../usecase/plans/delete-plan.output-
 import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
 import { PlanListViewState } from './plan-list.view';
 import { PlanListPlan } from '../../domain/plans/plan-list-plan';
+import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 
 describe('PlanListComponent', () => {
   let component: PlanListComponent;
@@ -19,6 +20,7 @@ describe('PlanListComponent', () => {
   let deleteUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: { setView: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
+  let publicPlanStore: { state: { planId: number | null } };
 
   const renderPlans = async (plans: PlanListPlan[]) => {
     const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
@@ -46,6 +48,7 @@ describe('PlanListComponent', () => {
     deleteUseCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
+    publicPlanStore = { state: { planId: null } };
 
     await TestBed.configureTestingModule({
       imports: [PlanListComponent, TranslateModule.forRoot()],
@@ -59,7 +62,8 @@ describe('PlanListComponent', () => {
             { provide: PlanListPresenter, useValue: presenter },
             { provide: LOAD_PLAN_LIST_OUTPUT_PORT, useValue: presenter },
             { provide: DELETE_PLAN_OUTPUT_PORT, useValue: presenter },
-            { provide: PLAN_GATEWAY, useValue: {} }
+            { provide: PLAN_GATEWAY, useValue: {} },
+            { provide: PublicPlanStore, useValue: publicPlanStore }
           ]
         }
       })
@@ -235,6 +239,21 @@ describe('PlanListComponent', () => {
     const nativeElement = await renderPlans([]);
     expect(nativeElement.querySelector('.plan-list-empty')).toBeTruthy();
     expect(nativeElement.querySelector('.plan-list-empty .btn-primary')).toBeTruthy();
+  });
+
+  it('shows public plan handoff in empty state when PublicPlanStore has planId', async () => {
+    publicPlanStore.state.planId = 88;
+    const nativeElement = await renderPlans([]);
+    const handoffLink = nativeElement.querySelector('.plan-list-empty-handoff a') as HTMLAnchorElement;
+    expect(handoffLink).toBeTruthy();
+    expect(handoffLink.getAttribute('href')).toContain('/public-plans/results');
+    expect(handoffLink.getAttribute('href')).toContain('planId=88');
+  });
+
+  it('hides public plan handoff when PublicPlanStore has no planId', async () => {
+    publicPlanStore.state.planId = null;
+    const nativeElement = await renderPlans([]);
+    expect(nativeElement.querySelector('.plan-list-empty-handoff')).toBeNull();
   });
 
   it('shows initial setup link in empty state', async () => {
