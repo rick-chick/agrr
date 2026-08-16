@@ -11,6 +11,7 @@ import { DELETE_PLAN_OUTPUT_PORT } from '../../usecase/plans/delete-plan.output-
 import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
 import { PlanListViewState } from './plan-list.view';
 import { PlanListPlan } from '../../domain/plans/plan-list-plan';
+import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 
 describe('PlanListComponent', () => {
   let component: PlanListComponent;
@@ -19,6 +20,7 @@ describe('PlanListComponent', () => {
   let deleteUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: { setView: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
+  let publicPlanStore: { state: { planId: number | null } };
 
   const renderPlans = async (plans: PlanListPlan[]) => {
     const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
@@ -46,6 +48,7 @@ describe('PlanListComponent', () => {
     deleteUseCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
+    publicPlanStore = { state: { planId: null } };
 
     await TestBed.configureTestingModule({
       imports: [PlanListComponent, TranslateModule.forRoot()],
@@ -59,7 +62,8 @@ describe('PlanListComponent', () => {
             { provide: PlanListPresenter, useValue: presenter },
             { provide: LOAD_PLAN_LIST_OUTPUT_PORT, useValue: presenter },
             { provide: DELETE_PLAN_OUTPUT_PORT, useValue: presenter },
-            { provide: PLAN_GATEWAY, useValue: {} }
+            { provide: PLAN_GATEWAY, useValue: {} },
+            { provide: PublicPlanStore, useValue: publicPlanStore }
           ]
         }
       })
@@ -90,7 +94,12 @@ describe('PlanListComponent', () => {
           status: {
             pending: 'Pending',
             completed: 'Completed'
-          }
+          },
+          no_plans: 'No plans yet',
+          no_plans_hint: 'Create a plan',
+          new_plan: 'New plan',
+          try_public_plans: 'Try Free Plans',
+          continue_public_plan: 'Continue your public plan'
         }
       },
       common: { cancel: 'Cancel', delete: 'Delete', show: 'Show' }
@@ -235,6 +244,23 @@ describe('PlanListComponent', () => {
     const nativeElement = await renderPlans([]);
     expect(nativeElement.querySelector('.plan-list-empty')).toBeTruthy();
     expect(nativeElement.querySelector('.plan-list-empty .btn-primary')).toBeTruthy();
+  });
+
+  it('shows public plan handoff when empty list and PublicPlanStore has planId', async () => {
+    publicPlanStore.state.planId = 456;
+    const nativeElement = await renderPlans([]);
+
+    const handoff = nativeElement.querySelector('.plan-list-empty-public-handoff a');
+    expect(handoff).toBeTruthy();
+    expect(handoff.getAttribute('href')).toContain('/public-plans/results');
+    expect(handoff.textContent).toContain('Continue your public plan');
+  });
+
+  it('hides public plan handoff when plan list is not empty', async () => {
+    publicPlanStore.state.planId = 456;
+    const nativeElement = await renderPlans([planWithGap()]);
+
+    expect(nativeElement.querySelector('.plan-list-empty-public-handoff')).toBeNull();
   });
 
   it('displays plans in the list', async () => {

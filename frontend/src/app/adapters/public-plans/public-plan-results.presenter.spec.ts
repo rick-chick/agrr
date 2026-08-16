@@ -2,6 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PublicPlanResultsPresenter } from './public-plan-results.presenter';
 import { PublicPlanResultsView, PublicPlanResultsViewState } from '../../components/public-plans/public-plan-results.view';
+import {
+  clearPlanPostSaveOnboardingSession,
+  shouldShowPlanPostSaveBanner
+} from '../../domain/plans/plan-post-save-onboarding-session';
 
 describe('PublicPlanResultsPresenter', () => {
   let presenter: PublicPlanResultsPresenter;
@@ -10,6 +14,7 @@ describe('PublicPlanResultsPresenter', () => {
 
   beforeEach(() => {
     TestBed.resetTestingModule();
+    clearPlanPostSaveOnboardingSession();
 
     TestBed.configureTestingModule({
       providers: [PublicPlanResultsPresenter]
@@ -48,6 +53,7 @@ describe('PublicPlanResultsPresenter', () => {
         type: 'success',
         text: 'Plan saved successfully'
       });
+      expect(shouldShowPlanPostSaveBanner(99)).toBe(true);
     });
 
     it('queues navigation to plans list when cultivation_plan_id is absent', () => {

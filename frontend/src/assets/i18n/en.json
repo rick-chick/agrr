@@ -2088,6 +2088,7 @@
       "description": "Manage your yearly cultivation plans",
       "new_plan": "Add New Plan",
       "try_public_plans": "Try Free Plans",
+      "continue_public_plan": "Continue your public plan",
       "no_plans": "No plans yet",
       "no_plans_hint": "Create a new plan to optimize your cultivation schedule.",
       "retry": "Reload",
@@ -2301,6 +2302,14 @@
       "reoptimization_banner": {
         "message": "Re-optimization recommended after master update",
         "hint": "Drag cultivations on the Gantt to adjust placement. Re-optimization starts automatically after you drop."
+      },
+      "post_save_banner": {
+        "title": "Plan saved",
+        "message": "Your cultivation plan is ready. What would you like to do next?",
+        "hint": "Review your task schedule or start recording field work.",
+        "task_schedule_link": "Review task schedule",
+        "work_link": "Start work records",
+        "dismiss": "Dismiss"
       }
     }
   },

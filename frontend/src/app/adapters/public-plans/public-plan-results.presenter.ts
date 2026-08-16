@@ -7,6 +7,7 @@ import { ErrorDto } from '../../domain/shared/error.dto';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
 import { pendingNavigationTo } from '../../core/view-effects/pending-navigation-presenter.helpers';
+import { markPlanPostSaveOnboarding } from '../../domain/plans/plan-post-save-onboarding-session';
 
 @Injectable()
 export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPort, SavePublicPlanOutputPort {
@@ -23,6 +24,9 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
   ): void {
     if ('message' in dto && !('plan' in dto)) {
       if (!this.view) throw new Error('Presenter: view not set');
+      if (dto.cultivation_plan_id) {
+        markPlanPostSaveOnboarding(dto.cultivation_plan_id);
+      }
       this.view.control = {
         ...this.view.control,
         pendingErrorFlash: null,

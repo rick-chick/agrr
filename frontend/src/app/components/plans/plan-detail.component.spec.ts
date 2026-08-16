@@ -17,6 +17,10 @@ import {
   hydrateLearnOrchestrationProgress,
   readLearnOrchestrationReturnToLearn
 } from '../../domain/plans/learn-master-update-orchestration';
+import {
+  clearPlanPostSaveOnboardingSession,
+  markPlanPostSaveOnboarding
+} from '../../domain/plans/plan-post-save-onboarding-session';
 
 describe('PlanDetailComponent', () => {
   let component: PlanDetailComponent;
@@ -68,6 +72,7 @@ describe('PlanDetailComponent', () => {
 
   afterEach(() => {
     clearLearnOrchestrationProgressCache();
+    clearPlanPostSaveOnboardingSession();
     vi.restoreAllMocks();
   });
 
@@ -195,5 +200,44 @@ describe('PlanDetailComponent', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(['/plans', 1, 'optimizing']);
     expect(readLearnOrchestrationReturnToLearn(1)).toBe(true);
+  });
+
+  it('shows post-save onboarding banner after public plan save handoff', () => {
+    markPlanPostSaveOnboarding(1);
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: {
+        id: 1,
+        name: 'Plan A',
+        status: 'completed',
+        farm_id: 1
+      },
+      planData: null,
+      varianceActionItemsOnGantt: [],
+      weatherProposals: [],
+      activeWeatherProposalId: null,
+      weatherPreviewLoading: false,
+      weatherPreviewError: null,
+      weatherPreview: null,
+      weatherOverlayBars: [],
+      weatherApplyLoading: false,
+      weatherApplyError: null
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-plan-post-save-banner')).toBeTruthy();
+    expect(component.showPostSaveBanner).toBe(true);
+  });
+
+  it('hides post-save banner after dismiss', () => {
+    markPlanPostSaveOnboarding(1);
+    fixture.detectChanges();
+    component.showPostSaveBanner = true;
+    component.handleDismissPostSaveBanner();
+    fixture.detectChanges();
+
+    expect(component.showPostSaveBanner).toBe(false);
   });
 });

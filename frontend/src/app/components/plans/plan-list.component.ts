@@ -9,6 +9,7 @@ import { DeletePlanUseCase } from '../../usecase/plans/delete-plan.usecase';
 import { PlanListPresenter, PLAN_LIST_PROVIDERS } from '../../usecase/plans/plan-list.providers';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { applyPendingUndoToastViewEffects } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { applyPendingErrorFlashViewEffects } from '../../core/view-effects/pending-error-flash-view.effects';
 import { CardListSkeletonComponent } from '../shared/skeleton/card-list-skeleton.component';
@@ -53,6 +54,13 @@ const initialControl: PlanListViewState = {
             <p class="plan-list-empty-secondary">
               <a routerLink="/public-plans/new">{{ 'plans.index.try_public_plans' | translate }}</a>
             </p>
+            @if (publicPlanHandoffPlanId; as handoffPlanId) {
+              <p class="plan-list-empty-public-handoff">
+                <a [routerLink]="['/public-plans/results']" [queryParams]="{ planId: handoffPlanId }">
+                  {{ 'plans.index.continue_public_plan' | translate }}
+                </a>
+              </p>
+            }
           </div>
         } @else {
           <div class="section-card__header-actions">
@@ -195,11 +203,17 @@ export class PlanListComponent implements PlanListView, OnInit {
   private readonly presenter = inject(PlanListPresenter);
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
+  private readonly publicPlanStore = inject(PublicPlanStore);
   private readonly cdr = inject(ChangeDetectorRef);
 
   @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
 
   pendingDeletePlanId: number | null = null;
+
+  get publicPlanHandoffPlanId(): number | null {
+    const planId = this.publicPlanStore.state.planId;
+    return planId && planId > 0 ? planId : null;
+  }
 
   private readonly collapsedFarmGroupIds = signal<ReadonlySet<number>>(new Set());
 
