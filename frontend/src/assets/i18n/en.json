@@ -1632,10 +1632,24 @@
           "record": "{{name}} — {{date}}"
         }
       },
+      "amount_group_summaries": {
+        "title": "Stage amount summaries",
+        "lead": "Amount variance grouped by crop stage, category, and task type.",
+        "empty": "No amount summaries yet.",
+        "stage_column": "Stage",
+        "category_column": "Category",
+        "task_type_column": "Task type",
+        "delta_column": "Average delta",
+        "recorded_column": "Recorded",
+        "view_proposal": "View proposal",
+        "stage_label": "Stage {{order}} — {{name}}",
+        "stage_unassigned": "Unassigned stage"
+      },
       "bp_amount_adjustment": {
         "title": "Task BP amount adjustment proposals",
         "lead": "Category and task-type plan vs actual variance suggests amount adjustments for task schedule blueprints.",
         "empty": "No BP amount adjustments are available right now.",
+        "stage_label": "Stage {{order}} — {{name}}",
         "delta_label": "Average amount variance: {{delta}}",
         "affected_count": "Affected BPs: {{count}}",
         "dry_run_preview": "Dry-run preview",

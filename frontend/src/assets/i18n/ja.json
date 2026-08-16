@@ -2706,10 +2706,24 @@
           "record": "{{name}} — {{date}}"
         }
       },
+      "amount_group_summaries": {
+        "title": "段階別量サマリ",
+        "lead": "生育段階・カテゴリ・作業種別ごとの量乖離集計です。",
+        "empty": "量サマリはまだありません。",
+        "stage_column": "段階",
+        "category_column": "カテゴリ",
+        "task_type_column": "作業種別",
+        "delta_column": "平均乖離",
+        "recorded_column": "記録件数",
+        "view_proposal": "提案を見る",
+        "stage_label": "段階 {{order}} — {{name}}",
+        "stage_unassigned": "段階未割当"
+      },
       "bp_amount_adjustment": {
         "title": "作業 BP 量調整の提案",
         "lead": "計画と実績のカテゴリ・作業種別ごとの量乖離から、作業スケジュール BP の量調整案を生成します。",
         "empty": "現時点で提案できる BP 量調整はありません。",
+        "stage_label": "段階 {{order}} — {{name}}",
         "delta_label": "平均量乖離: {{delta}}",
         "affected_count": "対象 BP: {{count}} 件",
         "dry_run_preview": "ドライラン確認",

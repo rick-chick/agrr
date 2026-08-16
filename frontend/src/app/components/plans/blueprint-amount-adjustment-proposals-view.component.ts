@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { BlueprintAmountAdjustmentProposal } from '../../domain/plans/blueprint-amount-adjustment-proposal';
 import { blueprintAmountProposalKey } from '../../domain/plans/blueprint-amount-adjustment-proposal';
+import { bpAmountProposalAnchorId } from '../../domain/plans/amount-group-summary-anchor';
 import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
 import { formatPlanTaskScheduleAmountDeltaLabel } from '../../domain/work-schedule/format-plan-task-schedule-amount-delta';
 import { cropPlanWizardQueryParams } from '../../domain/crops/plan-wizard-context';
@@ -48,13 +49,25 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
       } @else {
         <ul class="blueprint-amount-adjustment__list">
           @for (proposal of proposals; track proposalKey(proposal)) {
-            <li class="blueprint-amount-adjustment__item">
+            <li
+              class="blueprint-amount-adjustment__item"
+              [id]="proposalAnchorId(proposal)"
+              [attr.data-stage-order]="proposal.stageOrder"
+            >
               <div class="blueprint-amount-adjustment__summary">
                 <div class="blueprint-amount-adjustment__header">
                   <p class="blueprint-amount-adjustment__name">
                     {{ proposal.cropName }} — {{ categoryLabel(proposal.category) | translate }}
                     · {{ taskTypeLabel(proposal.taskType) | translate }}
                   </p>
+                  @if (proposal.stageOrder != null) {
+                    <p class="blueprint-amount-adjustment__stage">
+                      {{
+                        'plans.learn.bp_amount_adjustment.stage_label'
+                          | translate: { order: proposal.stageOrder, name: proposal.stageName ?? '' }
+                      }}
+                    </p>
+                  }
                   <div class="blueprint-amount-adjustment__badges">
                     <app-learn-proposal-confidence-badge [confidence]="proposalConfidence" />
                     <span
@@ -178,6 +191,10 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
 
   proposalKey(proposal: BlueprintAmountAdjustmentProposal): string {
     return blueprintAmountProposalKey(proposal.cropId, proposal.category, proposal.taskType);
+  }
+
+  proposalAnchorId(proposal: BlueprintAmountAdjustmentProposal): string {
+    return bpAmountProposalAnchorId(proposal.stageOrder, proposal.category, proposal.taskType);
   }
 
   evidenceFor(proposal: BlueprintAmountAdjustmentProposal): LearnProposalEvidence | null {

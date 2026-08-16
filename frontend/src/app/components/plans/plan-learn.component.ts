@@ -14,6 +14,7 @@ import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.c
 import { PlanLearnLoopProgressComponent } from './plan-learn-loop-progress.component';
 import { PlanLearnObservePhaseStatusComponent } from './plan-learn-observe-phase-status.component';
 import { PlanLearnInputGapSummaryComponent } from './plan-learn-input-gap-summary.component';
+import { PlanLearnAmountGroupSummariesComponent } from './plan-learn-amount-group-summaries.component';
 import { resolveLearnObservePhaseStatus } from '../../domain/plans/resolve-learn-observe-phase-status';
 import { buildPlanInputGapSummary } from '../../domain/plans/build-plan-input-gap-summary';
 import { resolveLearnProposalConfidence } from '../../domain/plans/resolve-learn-proposal-confidence';
@@ -89,7 +90,8 @@ const initialControl: PlanLearnViewState = {
     PlanLearnCarryoverSectionComponent,
     PlanLearnLoopProgressComponent,
     PlanLearnObservePhaseStatusComponent,
-    PlanLearnInputGapSummaryComponent
+    PlanLearnInputGapSummaryComponent,
+    PlanLearnAmountGroupSummariesComponent
   ],
   providers: [...PLAN_LEARN_PROVIDERS],
   template: `
@@ -128,6 +130,10 @@ const initialControl: PlanLearnViewState = {
             [loading]="control.varianceLoading"
             [error]="control.varianceError"
             [highlightItemId]="workHighlightItemId"
+          />
+          <app-plan-learn-amount-group-summaries
+            [summaries]="control.varianceSummary?.amount_group_summaries ?? []"
+            [loading]="control.varianceLoading"
           />
           <app-plan-learn-observe-phase-status
             [planId]="planId"

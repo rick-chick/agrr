@@ -167,6 +167,68 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Verify placement');
   });
 
+  it('renders amount_group_summaries and links to bp_amount proposal anchors', async () => {
+    fixture.detectChanges();
+    presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
+    presenter.presentVarianceSummary({
+      summary: {
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: [],
+        amount_group_summaries: [
+          {
+            category: 'fertilizer',
+            stage_order: 1,
+            stage_name: 'Vegetative',
+            task_type: 'fertilize',
+            average_amount_delta: 0.5,
+            recorded_item_count: 2,
+            amount_unit: 'kg'
+          }
+        ]
+      },
+      loadGeneration: 1
+    });
+    presenter.presentBlueprintAmountProposals({
+      proposals: [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          category: 'fertilizer',
+          taskType: 'fertilize',
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageAmountDelta: 0.5,
+          recordedItemCount: 2,
+          amountUnit: 'kg',
+          affectedBlueprintCount: 1,
+          proposalBody: {
+            intent: 'blueprint_amount_patch',
+            stages: [],
+            agricultural_tasks: [],
+            task_schedule_blueprints: [{ blueprint_id: 10, amount: 2.5, amount_unit: 'kg' }]
+          }
+        }
+      ],
+      loadGeneration: 1
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-plan-learn-amount-group-summaries')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Stage amount summaries');
+    expect(fixture.nativeElement.textContent).toContain('Vegetative');
+    expect(
+      fixture.nativeElement.querySelector('#plan-learn-bp-amount-proposal-1-fertilizer-fertilize')
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector(
+        '.plan-learn-amount-group-summaries__proposal-link[href="#plan-learn-bp-amount-proposal-1-fertilizer-fertilize"]'
+      )
+    ).toBeTruthy();
+  });
+
   it('loads schedule and variance summary on init', () => {
     fixture.detectChanges();
 

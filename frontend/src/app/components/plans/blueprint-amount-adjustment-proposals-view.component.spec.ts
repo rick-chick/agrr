@@ -78,6 +78,7 @@ describe('BlueprintAmountAdjustmentProposalsViewComponent inline apply', () => {
         'plans.learn.bp_amount_adjustment.affected_count': 'BPs {{count}}',
         'plans.learn.bp_amount_adjustment.category.fertilizer': 'Fertilization',
         'plans.learn.bp_amount_adjustment.task_type.fertilize': 'Fertilize',
+        'plans.learn.bp_amount_adjustment.stage_label': 'Stage {{order}} — {{name}}',
         'plans.learn.bp_amount_adjustment.detail_edit': 'Detail edit',
         'plans.learn.bp_amount_adjustment.dry_run_preview': 'Dry-run preview',
         'plans.learn.bp_amount_adjustment.apply': 'Apply',
@@ -109,6 +110,13 @@ describe('BlueprintAmountAdjustmentProposalsViewComponent inline apply', () => {
     expect(buttons).toContain('Dry-run preview');
     expect(buttons).toContain('Apply');
     expect(buttons).toContain('Detail edit');
+  });
+
+  it('exposes a stage_order anchor id for proposal cards', () => {
+    const item = fixture.nativeElement.querySelector('.blueprint-amount-adjustment__item');
+    expect(item?.id).toBe('plan-learn-bp-amount-proposal-1-fertilizer-fertilize');
+    expect(item?.getAttribute('data-stage-order')).toBe('1');
+    expect(fixture.nativeElement.textContent).toContain('Stage 1');
   });
 
   it('runs dry_run preview and shows result', () => {
