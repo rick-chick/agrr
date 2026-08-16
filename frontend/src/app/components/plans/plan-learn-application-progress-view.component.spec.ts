@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   clearLearnProposalApplicationProgressCache,
+  markBpAmountProposalAppliedPending,
   markBpTimingProposalDismissed,
   markLearnProposalConfirmed,
   markStageGddProposalAppliedPending,
@@ -146,5 +147,46 @@ describe('buildLearnApplicationProgressItems', () => {
 
     expect(items[0]?.status).toBe('dismissed');
     expect(items[1]?.status).toBe('dismissed');
+  });
+
+  it('includes bp_amount proposals in application progress items', () => {
+    markBpAmountProposalAppliedPending(7, {
+      cropId: 1,
+      category: 'fertilizer',
+      taskType: 'fertilize'
+    });
+
+    const items = buildLearnApplicationProgressItems(
+      7,
+      [],
+      [],
+      [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          category: 'fertilizer',
+          taskType: 'fertilize',
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageAmountDelta: 0.5,
+          recordedItemCount: 2,
+          amountUnit: 'kg',
+          affectedBlueprintCount: 1,
+          proposalBody: {
+            intent: 'blueprint_amount_patch',
+            stages: [],
+            agricultural_tasks: [],
+            task_schedule_blueprints: []
+          }
+        }
+      ]
+    );
+
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      kind: 'bp_amount',
+      title: 'Tomato — fertilizer · fertilize',
+      status: 'applied_pending_confirmation'
+    });
   });
 });

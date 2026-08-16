@@ -2712,7 +2712,10 @@
         "empty": "現時点で提案できる BP 量調整はありません。",
         "delta_label": "平均量乖離: {{delta}}",
         "affected_count": "対象 BP: {{count}} 件",
+        "dry_run_preview": "ドライラン確認",
+        "apply": "適用",
         "detail_edit": "詳細編集",
+        "dry_run_result": "ドライラン結果",
         "category": {
           "general": "一般作業",
           "fertilizer": "施肥",
@@ -2739,7 +2742,8 @@
         "summary": "{{addressed}} / {{total}} 件対応済み",
         "kind": {
           "stage_gdd": "ステージ GDD 校正",
-          "bp_timing": "BP タイミング調整"
+          "bp_timing": "BP タイミング調整",
+          "bp_amount": "BP 量調整"
         },
         "status": {
           "not_started": "未適用",
@@ -2768,6 +2772,7 @@
         "stage_label": "ステージ",
         "required_gdd_label": "要求 GDD",
         "category_label": "カテゴリ",
+        "task_type_label": "作業種別",
         "open_workbench": "ワークベンチで配置を確認"
       },
       "next_steps": {

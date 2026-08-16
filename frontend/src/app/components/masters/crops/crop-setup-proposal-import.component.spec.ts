@@ -9,7 +9,7 @@ import { CropSetupProposalImportPresenter } from '../../../usecase/crops/crop-se
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { DryRunCropSetupProposalUseCase } from '../../../usecase/crops/dry-run-crop-setup-proposal.usecase';
 import { ApplyCropSetupProposalUseCase } from '../../../usecase/crops/apply-crop-setup-proposal.usecase';
-import { storeLearnBpTimingApplyContext } from '../../../domain/plans/learn-proposal-application-progress';
+import { storeLearnBpTimingApplyContext, storeLearnBpAmountApplyContext } from '../../../domain/plans/learn-proposal-application-progress';
 import { PLAN_GATEWAY } from '../../../usecase/plans/plan-gateway';
 
 const validProposal = {
@@ -329,6 +329,49 @@ describe('CropSetupProposalImportComponent', () => {
       valid: true,
       normalized: validProposal,
       result: { stage_ids: [1], agricultural_task_ids: [2], blueprint_ids: [3] }
+    });
+    onSuccess();
+    fixture.detectChanges();
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 7, 'learn'], {
+      queryParams: { followUp: 'post_master' }
+    });
+  });
+
+  it('navigates to learn post_master after apply success when returnTo=learn for bp_amount', () => {
+    storeLearnBpAmountApplyContext(7, {
+      planId: 7,
+      cropId: 42,
+      cropName: 'Tomato',
+      category: 'fertilizer',
+      taskType: 'fertilize'
+    });
+    component.control = {
+      ...component.control,
+      loading: false,
+      cropName: 'Tomato',
+      jsonInput: JSON.stringify({
+        intent: 'blueprint_amount_patch',
+        stages: [],
+        agricultural_tasks: [],
+        task_schedule_blueprints: [{ blueprint_id: 10, amount: 2.5, amount_unit: 'kg' }]
+      }),
+      phase: 'preview',
+      normalizedPreview: validProposal,
+      parsedProposal: validProposal
+    };
+    fixture.detectChanges();
+    component.fromPlanId = 7;
+    component.returnTab = 'learn';
+
+    component.applyProposal();
+
+    const onSuccess = mockApplyUseCase.execute.mock.calls[0][0].onSuccess as () => void;
+    presenter.onApplySuccess({
+      mode: 'apply',
+      valid: true,
+      normalized: validProposal,
+      result: { stage_ids: [], agricultural_task_ids: [], blueprint_ids: [10] }
     });
     onSuccess();
     fixture.detectChanges();

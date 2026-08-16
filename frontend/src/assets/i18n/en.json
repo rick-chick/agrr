@@ -1638,7 +1638,10 @@
         "empty": "No BP amount adjustments are available right now.",
         "delta_label": "Average amount variance: {{delta}}",
         "affected_count": "Affected BPs: {{count}}",
+        "dry_run_preview": "Dry-run preview",
+        "apply": "Apply",
         "detail_edit": "Detail edit",
+        "dry_run_result": "Dry-run result",
         "category": {
           "general": "General tasks",
           "fertilizer": "Fertilization",
@@ -1665,7 +1668,8 @@
         "summary": "{{addressed}} / {{total}} addressed",
         "kind": {
           "stage_gdd": "Stage GDD calibration",
-          "bp_timing": "BP timing adjustment"
+          "bp_timing": "BP timing adjustment",
+          "bp_amount": "BP amount adjustment"
         },
         "status": {
           "not_started": "Not applied",
@@ -1694,6 +1698,7 @@
         "stage_label": "Stage",
         "required_gdd_label": "Required GDD",
         "category_label": "Category",
+        "task_type_label": "Task type",
         "open_workbench": "Verify placement on workbench"
       },
       "next_steps": {

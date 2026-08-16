@@ -38,6 +38,14 @@ export interface LearnBpTimingApplyContext {
   category: string;
 }
 
+export interface LearnBpAmountApplyContext {
+  planId: number;
+  cropId: number;
+  cropName: string;
+  category: string;
+  taskType: string;
+}
+
 export function stageGddProposalProgressKey(cropId: number, stageId: number): string {
   return `stage_gdd:${cropId}:${stageId}`;
 }
@@ -68,6 +76,7 @@ let patchHandler: ProgressPatchHandler | null = null;
 interface LearnHandoffCache {
   postMasterPayload: LearnPostMasterPayload | null;
   bpTimingApplyContext: LearnBpTimingApplyContext | null;
+  bpAmountApplyContext: LearnBpAmountApplyContext | null;
   blueprintPrefillByCropId: Record<number, CropSetupProposalBody>;
 }
 
@@ -90,6 +99,7 @@ function emptyHandoffCache(): LearnHandoffCache {
   return {
     postMasterPayload: null,
     bpTimingApplyContext: null,
+    bpAmountApplyContext: null,
     blueprintPrefillByCropId: {}
   };
 }
@@ -137,6 +147,7 @@ export function hydrateLearnHandoff(planId: number, handoff: LearnHandoffState |
     postMasterPayload: (handoff.post_master_payload as LearnPostMasterPayload | null) ?? null,
     bpTimingApplyContext:
       (handoff.bp_timing_apply_context as LearnBpTimingApplyContext | null) ?? null,
+    bpAmountApplyContext: null,
     blueprintPrefillByCropId
   });
 }
@@ -211,6 +222,16 @@ export function markBpTimingProposalAppliedPending(
   input: { cropId: number; category: string }
 ): void {
   markProposalAppliedPending(planId, bpTimingProposalProgressKey(input.cropId, input.category));
+}
+
+export function markBpAmountProposalAppliedPending(
+  planId: number,
+  input: { cropId: number; category: string; taskType: string }
+): void {
+  markProposalAppliedPending(
+    planId,
+    bpAmountProposalProgressKey(input.cropId, input.category, input.taskType)
+  );
 }
 
 export function markStageGddProposalDismissed(
@@ -362,6 +383,34 @@ export function clearLearnBpTimingApplyContext(planId: number, cropId: number): 
     cache.bpTimingApplyContext = null;
     writeHandoffCache(planId, cache);
     syncHandoffPatch(planId, { bp_timing_apply_context: null });
+  }
+}
+
+export function storeLearnBpAmountApplyContext(
+  planId: number,
+  context: LearnBpAmountApplyContext
+): void {
+  const cache = readHandoffCache(planId);
+  cache.bpAmountApplyContext = context;
+  writeHandoffCache(planId, cache);
+}
+
+export function readLearnBpAmountApplyContext(
+  planId: number,
+  cropId: number
+): LearnBpAmountApplyContext | null {
+  const context = readHandoffCache(planId).bpAmountApplyContext;
+  if (!context || context.cropId !== cropId) {
+    return null;
+  }
+  return context;
+}
+
+export function clearLearnBpAmountApplyContext(planId: number, cropId: number): void {
+  const cache = readHandoffCache(planId);
+  if (cache.bpAmountApplyContext?.cropId === cropId) {
+    cache.bpAmountApplyContext = null;
+    writeHandoffCache(planId, cache);
   }
 }
 

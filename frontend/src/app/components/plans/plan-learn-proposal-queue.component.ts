@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import type { BlueprintAmountAdjustmentProposal } from '../../domain/plans/blueprint-amount-adjustment-proposal';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import {
   buildFertilizerTimingQueueItems,
@@ -243,6 +244,7 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
           [planId]="planId"
           [stageGddProposals]="stageGddProposals"
           [blueprintTimingProposals]="blueprintTimingProposals"
+          [blueprintAmountProposals]="blueprintAmountProposals"
           [progressRefreshVersion]="progressRefreshVersion"
         />
       </section>
@@ -264,6 +266,7 @@ export class PlanLearnProposalQueueComponent {
   @Input({ required: true }) planId!: number;
   @Input() stageGddProposals: StageGddCalibrationProposal[] = [];
   @Input() blueprintTimingProposals: BlueprintTimingAdjustmentProposal[] = [];
+  @Input() blueprintAmountProposals: BlueprintAmountAdjustmentProposal[] = [];
   @Input() blueprintTimingEvidenceByKey: Record<string, LearnProposalEvidence> = {};
   @Input() actionRequiredItems: PlanVarianceActionItem[] = [];
   @Input() postMasterPayload: LearnPostMasterPayload | null = null;
@@ -318,7 +321,8 @@ export class PlanLearnProposalQueueComponent {
     return buildLearnApplicationProgressItems(
       this.planId,
       this.stageGddProposals,
-      this.blueprintTimingProposals
+      this.blueprintTimingProposals,
+      this.blueprintAmountProposals
     ).filter((item) => item.status !== 'not_started').length;
   }
 
