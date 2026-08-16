@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PublicPlanResultsPresenter } from './public-plan-results.presenter';
 import { PublicPlanResultsView, PublicPlanResultsViewState } from '../../components/public-plans/public-plan-results.view';
+import { consumePlanPostSaveOnboardingPending } from '../../domain/plans/plan-post-save-onboarding';
 
 describe('PublicPlanResultsPresenter', () => {
   let presenter: PublicPlanResultsPresenter;
@@ -35,6 +36,10 @@ describe('PublicPlanResultsPresenter', () => {
     presenter.setView(view);
   });
 
+  afterEach(() => {
+    sessionStorage.clear();
+  });
+
   describe('SavePublicPlanOutputPort', () => {
     it('queues navigation to plan detail when cultivation_plan_id is returned', () => {
       presenter.present({
@@ -48,6 +53,7 @@ describe('PublicPlanResultsPresenter', () => {
         type: 'success',
         text: 'Plan saved successfully'
       });
+      expect(consumePlanPostSaveOnboardingPending(99)).toBe(true);
     });
 
     it('queues navigation to plans list when cultivation_plan_id is absent', () => {
