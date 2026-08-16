@@ -19,7 +19,7 @@ function blueprintKey(proposal: BlueprintTimingAdjustmentProposalRaw): string {
 }
 
 function blueprintAmountKey(proposal: BlueprintAmountAdjustmentProposalRaw): string {
-  return `${proposal.crop_id}:${proposal.category}:${proposal.task_type}`;
+  return `${proposal.crop_id}:${proposal.category}:${proposal.task_type}:${proposal.stage_order ?? 'null'}`;
 }
 
 export function collectLearnProposalRawSources(
