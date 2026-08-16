@@ -1632,24 +1632,10 @@
           "record": "{{name}} — {{date}}"
         }
       },
-      "amount_group_summaries": {
-        "title": "Stage amount summaries",
-        "lead": "Amount variance grouped by crop stage, category, and task type.",
-        "empty": "No amount summaries yet.",
-        "stage_column": "Stage",
-        "category_column": "Category",
-        "task_type_column": "Task type",
-        "delta_column": "Average delta",
-        "recorded_column": "Recorded",
-        "view_proposal": "View proposal",
-        "stage_label": "Stage {{order}} — {{name}}",
-        "stage_unassigned": "Unassigned stage"
-      },
       "bp_amount_adjustment": {
         "title": "Task BP amount adjustment proposals",
         "lead": "Category and task-type plan vs actual variance suggests amount adjustments for task schedule blueprints.",
         "empty": "No BP amount adjustments are available right now.",
-        "stage_label": "Stage {{order}} — {{name}}",
         "delta_label": "Average amount variance: {{delta}}",
         "affected_count": "Affected BPs: {{count}}",
         "dry_run_preview": "Dry-run preview",
@@ -1674,7 +1660,8 @@
           "rationale": "{{count}} of {{total}} recorded tasks exceeded the amount threshold of {{threshold}}.",
           "records_title": "Contributing records (up to 5)",
           "record": "{{name}} — {{date}}"
-        }
+        },
+        "stage_label": "Stage {{order}} — {{name}}"
       },
       "application_progress": {
         "title": "Proposal application progress",
@@ -1849,6 +1836,19 @@
             "record": "{{name}} — {{date}}"
           }
         }
+      },
+      "amount_group_summaries": {
+        "title": "Stage amount summaries",
+        "lead": "Amount variance grouped by crop stage, category, and task type.",
+        "empty": "No amount summaries yet.",
+        "stage_column": "Stage",
+        "category_column": "Category",
+        "task_type_column": "Task type",
+        "delta_column": "Average delta",
+        "recorded_column": "Recorded",
+        "view_proposal": "View proposal",
+        "stage_label": "Stage {{order}} — {{name}}",
+        "stage_unassigned": "Unassigned stage"
       }
     },
     "work": {
@@ -2975,6 +2975,9 @@
       "preview_button": "Preview (validate)",
       "previewing": "Validating…",
       "preview_title": "Normalized preview",
+      "handoff_stage_highlight_notice": "Rows for stage order {{stageOrder}} are highlighted — these are the learn handoff targets.",
+      "handoff_stage_highlight_list_label": "Blueprint rows in this proposal",
+      "handoff_stage_order_label": "Stage order {{stageOrder}}",
       "validation_errors_title": "Validation errors",
       "apply_button": "Apply to crop",
       "applying": "Applying…",

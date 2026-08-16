@@ -26,11 +26,32 @@ export function planWizardReturnPath(
 export interface CropPlanWizardQueryParams {
   fromPlan: number;
   returnTo: PlanWizardReturnTab;
+  handoffHighlightStageOrder?: number;
+}
+
+export interface CropPlanWizardQueryOptions {
+  handoffHighlightStageOrder?: number | null;
 }
 
 export function cropPlanWizardQueryParams(
   fromPlanId: number,
-  returnTab: PlanWizardReturnTab
+  returnTab: PlanWizardReturnTab,
+  options?: CropPlanWizardQueryOptions
 ): CropPlanWizardQueryParams {
-  return { fromPlan: fromPlanId, returnTo: returnTab };
+  const params: CropPlanWizardQueryParams = { fromPlan: fromPlanId, returnTo: returnTab };
+  if (options?.handoffHighlightStageOrder != null) {
+    params.handoffHighlightStageOrder = options.handoffHighlightStageOrder;
+  }
+  return params;
+}
+
+export function parseHandoffHighlightStageOrder(raw: string | null | undefined): number | null {
+  if (raw == null || raw === '') {
+    return null;
+  }
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return null;
+  }
+  return parsed;
 }

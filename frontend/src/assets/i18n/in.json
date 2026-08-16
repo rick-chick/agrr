@@ -532,6 +532,9 @@
       "preview_button": "पूर्वावलोकन (सत्यापन)",
       "previewing": "सत्यापन हो रहा है…",
       "preview_title": "सामान्यीकृत पूर्वावलोकन",
+      "handoff_stage_highlight_notice": "चरण क्रम {{stageOrder}} की पंक्तियाँ हाइलाइट हैं — ये learn handoff लक्ष्य हैं।",
+      "handoff_stage_highlight_list_label": "इस प्रस्ताव की BP पंक्तियाँ",
+      "handoff_stage_order_label": "चरण क्रम {{stageOrder}}",
       "validation_errors_title": "सत्यापन त्रुटियाँ",
       "apply_button": "इस फसल पर लागू करें",
       "applying": "लागू हो रहा है…",
@@ -2056,24 +2059,10 @@
           "record": "{{name}} — {{date}}"
         }
       },
-      "amount_group_summaries": {
-        "title": "चरण मात्रा सारांश",
-        "lead": "फसल चरण, श्रेणी और कार्य प्रकार के अनुसार मात्रा अंतर का सारांश।",
-        "empty": "अभी कोई मात्रा सारांश नहीं है।",
-        "stage_column": "चरण",
-        "category_column": "श्रेणी",
-        "task_type_column": "कार्य प्रकार",
-        "delta_column": "औसत अंतर",
-        "recorded_column": "रिकॉर्ड",
-        "view_proposal": "प्रस्ताव देखें",
-        "stage_label": "चरण {{order}} — {{name}}",
-        "stage_unassigned": "अनिर्दिष्ट चरण"
-      },
       "bp_amount_adjustment": {
         "title": "कार्य BP मात्रा समायोजन प्रस्ताव",
         "lead": "योजना बनाम वास्तविक श्रेणी और कार्य प्रकार के मात्रा अंतर से BP मात्रा समायोजन सुझाए जाते हैं।",
         "empty": "अभी कोई BP मात्रा समायोजन प्रस्ताव उपलब्ध नहीं है।",
-        "stage_label": "चरण {{order}} — {{name}}",
         "delta_label": "औसत मात्रा अंतर: {{delta}}",
         "affected_count": "प्रभावित BP: {{count}}",
         "dry_run_preview": "ड्राई-रन पूर्वावलोकन",
@@ -2098,7 +2087,8 @@
           "rationale": "{{total}} रिकॉर्ड में से {{count}} ने मात्रा सीमा {{threshold}} पार की।",
           "records_title": "योगदान रिकॉर्ड (अधिकतम 5)",
           "record": "{{name}} — {{date}}"
-        }
+        },
+        "stage_label": "चरण {{order}} — {{name}}"
       },
       "application_progress": {
         "title": "प्रस्ताव लागू करने की प्रगति",
@@ -2273,6 +2263,19 @@
             "record": "{{name}} — {{date}}"
           }
         }
+      },
+      "amount_group_summaries": {
+        "title": "चरण मात्रा सारांश",
+        "lead": "फसल चरण, श्रेणी और कार्य प्रकार के अनुसार मात्रा अंतर का सारांश।",
+        "empty": "अभी कोई मात्रा सारांश नहीं है।",
+        "stage_column": "चरण",
+        "category_column": "श्रेणी",
+        "task_type_column": "कार्य प्रकार",
+        "delta_column": "औसत अंतर",
+        "recorded_column": "रिकॉर्ड",
+        "view_proposal": "प्रस्ताव देखें",
+        "stage_label": "चरण {{order}} — {{name}}",
+        "stage_unassigned": "अनिर्दिष्ट चरण"
       }
     },
     "work": {

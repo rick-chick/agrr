@@ -740,6 +740,9 @@
       "preview_button": "プレビュー（検証）",
       "previewing": "検証中…",
       "preview_title": "正規化プレビュー",
+      "handoff_stage_highlight_notice": "ステージ順 {{stageOrder}} の行をハイライトしています（学習 handoff の対象です）。",
+      "handoff_stage_highlight_list_label": "この提案の BP 行",
+      "handoff_stage_order_label": "ステージ順 {{stageOrder}}",
       "validation_errors_title": "検証エラー",
       "apply_button": "この作物に適用",
       "applying": "適用中…",
@@ -2706,24 +2709,10 @@
           "record": "{{name}} — {{date}}"
         }
       },
-      "amount_group_summaries": {
-        "title": "段階別量サマリ",
-        "lead": "生育段階・カテゴリ・作業種別ごとの量乖離集計です。",
-        "empty": "量サマリはまだありません。",
-        "stage_column": "段階",
-        "category_column": "カテゴリ",
-        "task_type_column": "作業種別",
-        "delta_column": "平均乖離",
-        "recorded_column": "記録件数",
-        "view_proposal": "提案を見る",
-        "stage_label": "段階 {{order}} — {{name}}",
-        "stage_unassigned": "段階未割当"
-      },
       "bp_amount_adjustment": {
         "title": "作業 BP 量調整の提案",
         "lead": "計画と実績のカテゴリ・作業種別ごとの量乖離から、作業スケジュール BP の量調整案を生成します。",
         "empty": "現時点で提案できる BP 量調整はありません。",
-        "stage_label": "段階 {{order}} — {{name}}",
         "delta_label": "平均量乖離: {{delta}}",
         "affected_count": "対象 BP: {{count}} 件",
         "dry_run_preview": "ドライラン確認",
@@ -2748,7 +2737,8 @@
           "rationale": "{{total}} 件の作業実績のうち {{count}} 件が量閾値 {{threshold}} を超過しています。",
           "records_title": "寄与実績（最大 5 件）",
           "record": "{{name}} — {{date}}"
-        }
+        },
+        "stage_label": "段階 {{order}} — {{name}}"
       },
       "application_progress": {
         "title": "提案適用の進捗",
@@ -2923,6 +2913,19 @@
             "record": "{{name}} — {{date}}"
           }
         }
+      },
+      "amount_group_summaries": {
+        "title": "段階別量サマリ",
+        "lead": "生育段階・カテゴリ・作業種別ごとの量乖離集計です。",
+        "empty": "量サマリはまだありません。",
+        "stage_column": "段階",
+        "category_column": "カテゴリ",
+        "task_type_column": "作業種別",
+        "delta_column": "平均乖離",
+        "recorded_column": "記録件数",
+        "view_proposal": "提案を見る",
+        "stage_label": "段階 {{order}} — {{name}}",
+        "stage_unassigned": "段階未割当"
       }
     },
     "work": {

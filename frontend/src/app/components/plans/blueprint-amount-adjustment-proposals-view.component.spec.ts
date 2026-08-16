@@ -175,7 +175,12 @@ describe('BlueprintAmountAdjustmentProposalsViewComponent inline apply', () => {
 
     expect(navigateSpy).toHaveBeenCalledWith(
       ['/crops', 1, 'setup_proposal'],
-      expect.objectContaining({ queryParams: expect.objectContaining({ fromPlan: 7 }) })
+      expect.objectContaining({
+        queryParams: expect.objectContaining({
+          fromPlan: 7,
+          handoffHighlightStageOrder: 1
+        })
+      })
     );
   });
 

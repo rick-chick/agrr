@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cropPlanWizardQueryParams,
+  parseHandoffHighlightStageOrder,
   parsePlanWizardReturnTab,
   planWizardReturnPath
 } from './plan-wizard-context';
@@ -35,5 +36,28 @@ describe('cropPlanWizardQueryParams', () => {
       fromPlan: 7,
       returnTo: 'task_schedule'
     });
+  });
+
+  it('includes handoffHighlightStageOrder when provided', () => {
+    expect(
+      cropPlanWizardQueryParams(7, 'learn', { handoffHighlightStageOrder: 2 })
+    ).toEqual({
+      fromPlan: 7,
+      returnTo: 'learn',
+      handoffHighlightStageOrder: 2
+    });
+  });
+});
+
+describe('parseHandoffHighlightStageOrder', () => {
+  it('parses positive integers', () => {
+    expect(parseHandoffHighlightStageOrder('2')).toBe(2);
+  });
+
+  it('rejects invalid values', () => {
+    expect(parseHandoffHighlightStageOrder(null)).toBeNull();
+    expect(parseHandoffHighlightStageOrder('')).toBeNull();
+    expect(parseHandoffHighlightStageOrder('0')).toBeNull();
+    expect(parseHandoffHighlightStageOrder('1.5')).toBeNull();
   });
 });

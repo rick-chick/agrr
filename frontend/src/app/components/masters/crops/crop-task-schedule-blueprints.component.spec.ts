@@ -297,6 +297,26 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
   });
 
+  it('highlights blueprint stage lane from learn handoff query param', async () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) => {
+      if (key === 'fromPlan') return '7';
+      if (key === 'handoffHighlightStageOrder') return '1';
+      return null;
+    });
+
+    fixture.detectChanges();
+    component.ngOnInit();
+    component.control = withCropBlueprintDisplayState({
+      ...readyState,
+      fromPlanId: 7
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.handoffHighlightStageOrder).toBe(1);
+    expect(fixture.nativeElement.querySelector('.blueprint-stage-lane--handoff-highlight')).toBeTruthy();
+  });
+
   it('shows page description lead when blueprints exist and not from plan', async () => {
     const lead = 'Plans use these templates.';
     const translate = TestBed.inject(TranslateService);

@@ -232,7 +232,9 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
       stageOrder: proposal.stageOrder
     });
     void this.router.navigate(['/crops', proposal.cropId, 'setup_proposal'], {
-      queryParams: cropPlanWizardQueryParams(this.planId, 'learn')
+      queryParams: cropPlanWizardQueryParams(this.planId, 'learn', {
+        handoffHighlightStageOrder: proposal.stageOrder
+      })
     });
   }
 
