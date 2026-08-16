@@ -53,7 +53,6 @@ const initialControl: PlanLearnViewState = {
   blueprintAmountProposals: [],
   blueprintAmountEvidenceByKey: {},
   blueprintAmountConfidenceByKey: {},
-  proposalEvidenceSources: [],
   stageGddProposalsLoading: false,
   stageGddProposals: [],
   stageGddEvidenceByKey: {},
@@ -229,7 +228,6 @@ export class PlanLearnPresenter
     | 'blueprintAmountEvidenceByKey'
     | 'blueprintAmountConfidenceByKey'
     | 'stageGddEvidenceByKey'
-    | 'proposalEvidenceSources'
   > {
     const blueprintTimingProposals =
       overrides.blueprintTimingProposals ?? this.view?.control.blueprintTimingProposals ?? [];
@@ -248,7 +246,6 @@ export class PlanLearnPresenter
     );
 
     return {
-      proposalEvidenceSources: this.evidenceSources,
       blueprintTimingEvidenceByKey: buildLearnProposalEvidenceMap(
         blueprintTimingProposals,
         this.evidenceSources,
