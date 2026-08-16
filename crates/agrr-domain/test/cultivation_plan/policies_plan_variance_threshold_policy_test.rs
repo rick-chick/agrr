@@ -82,3 +82,9 @@ fn amount_delta_threshold_falls_back_to_default_for_other_categories() {
         amount_delta_threshold_for_category("general")
     );
 }
+
+#[test]
+fn amount_delta_exceeds_threshold_uses_category_specific_values() {
+    assert!(amount_delta_exceeds_threshold(0.3, "pest_control"));
+    assert!(!amount_delta_exceeds_threshold(0.3, "fertilizer"));
+}

@@ -26,6 +26,11 @@ pub fn amount_delta_threshold_for_category(category: &str) -> f64 {
     }
 }
 
+/// Returns true when an item's amount delta exceeds the category threshold.
+pub fn amount_delta_exceeds_threshold(delta: f64, category: &str) -> bool {
+    delta.abs() >= amount_delta_threshold_for_category(category)
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VarianceExceedanceKind {
     Days,

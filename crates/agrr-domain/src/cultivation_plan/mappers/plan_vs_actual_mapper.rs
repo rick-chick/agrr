@@ -13,7 +13,7 @@ use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
 use crate::cultivation_plan::policies::blueprint_amount_adjustment_policy::qualifies_for_proposal as amount_qualifies_for_proposal;
 use crate::cultivation_plan::policies::blueprint_timing_adjustment_policy::qualifies_for_proposal;
 use crate::cultivation_plan::policies::plan_variance_threshold_policy::{
-    amount_delta_threshold_for_category, exceedance_kind,
+    amount_delta_exceeds_threshold, exceedance_kind,
 };
 use time::{format_description::well_known::Iso8601, Date};
 
@@ -389,9 +389,7 @@ fn counts_toward_amount_variance(item: &PlanVsActualItemRead) -> bool {
         return true;
     }
     item.amount_delta
-        .map(|delta| {
-            delta.abs() >= amount_delta_threshold_for_category(item.category.as_str())
-        })
+        .map(|delta| amount_delta_exceeds_threshold(delta, item.category.as_str()))
         .unwrap_or(false)
 }
 
