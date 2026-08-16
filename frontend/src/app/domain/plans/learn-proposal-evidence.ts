@@ -1,5 +1,8 @@
+import type { BlueprintAmountAdjustmentProposal } from './blueprint-amount-adjustment-proposal';
+import { blueprintAmountProposalKey } from './blueprint-amount-adjustment-proposal';
 import type { BlueprintTimingAdjustmentProposal } from './blueprint-timing-adjustment-proposal';
 import {
+  AMOUNT_VARIANCE_THRESHOLD,
   DAYS_VARIANCE_THRESHOLD,
   GDD_VARIANCE_THRESHOLD
 } from './plan-variance-thresholds';
@@ -20,11 +23,13 @@ export interface LearnProposalEvidence {
 export interface LearnProposalEvidenceSource {
   cropId: number;
   category: string;
+  taskType?: string | null;
   stageOrder: number | null;
   name: string;
   actualDate: string | null;
   deltaDays: number | null;
   gddDelta: number | null;
+  amountDelta?: number | null;
   status: string;
 }
 
@@ -76,6 +81,40 @@ export function buildStageGddProposalEvidence(
     contributingRecords: toContributingRecords(sortByAbsDesc(matching, (row) => row.gddDelta)),
     totalRecordedCount: matching.length
   };
+}
+
+export function buildBlueprintAmountProposalEvidence(
+  proposal: BlueprintAmountAdjustmentProposal,
+  sources: ReadonlyArray<LearnProposalEvidenceSource>
+): LearnProposalEvidence | null {
+  const matching = sources.filter(
+    (source) =>
+      countsTowardEvidence(source) &&
+      source.cropId === proposal.cropId &&
+      source.category === proposal.category &&
+      (source.taskType == null || source.taskType === proposal.taskType) &&
+      source.amountDelta != null
+  );
+  if (matching.length === 0) {
+    return null;
+  }
+
+  const exceedanceCount = matching.filter(
+    (source) => Math.abs(source.amountDelta ?? 0) > AMOUNT_VARIANCE_THRESHOLD
+  ).length;
+
+  return {
+    exceedanceCount,
+    thresholdValue: AMOUNT_VARIANCE_THRESHOLD,
+    contributingRecords: toContributingRecords(sortByAbsDesc(matching, (row) => row.amountDelta ?? null)),
+    totalRecordedCount: matching.length
+  };
+}
+
+export function blueprintAmountProposalEvidenceKey(
+  proposal: BlueprintAmountAdjustmentProposal
+): string {
+  return blueprintAmountProposalKey(proposal.cropId, proposal.category, proposal.taskType);
 }
 
 export function buildBlueprintTimingProposalEvidence(

@@ -66,6 +66,7 @@ describe('extractLearnProposalEvidenceSources', () => {
       {
         cropId: 42,
         category: 'general',
+        taskType: null,
         stageOrder: 1,
         name: 'Transplant',
         actualDate: '2025-04-10',
@@ -76,6 +77,7 @@ describe('extractLearnProposalEvidenceSources', () => {
       {
         cropId: 42,
         category: 'pest_control',
+        taskType: null,
         stageOrder: 2,
         name: 'Preventive spray',
         actualDate: '2025-05-03',

@@ -1498,6 +1498,10 @@
           "on_time": "On schedule (±0 days)",
           "late": "{{delta}} days late",
           "early": "{{delta}} days early"
+        },
+        "amount_badge": {
+          "over": "Amount +{{delta}}",
+          "under": "Amount {{delta}}"
         }
       },
       "open_learn": "Review variance",
@@ -1624,6 +1628,33 @@
         "evidence": {
           "toggle": "Show rationale",
           "rationale": "{{count}} of {{total}} recorded tasks exceeded the day threshold of {{threshold}} days.",
+          "records_title": "Contributing records (up to 5)",
+          "record": "{{name}} — {{date}}"
+        }
+      },
+      "bp_amount_adjustment": {
+        "title": "Task BP amount adjustment proposals",
+        "lead": "Category and task-type plan vs actual variance suggests amount adjustments for task schedule blueprints.",
+        "empty": "No BP amount adjustments are available right now.",
+        "delta_label": "Average amount variance: {{delta}}",
+        "affected_count": "Affected BPs: {{count}}",
+        "detail_edit": "Detail edit",
+        "category": {
+          "general": "General tasks",
+          "fertilizer": "Fertilization",
+          "pest_control": "Pest control"
+        },
+        "task_type": {
+          "fertilize": "Fertilize",
+          "basal_fertilization": "Basal fertilization",
+          "topdress_fertilization": "Topdress fertilization",
+          "preventive_spray": "Preventive spray",
+          "curative_spray": "Curative spray",
+          "field_work": "Field work"
+        },
+        "evidence": {
+          "toggle": "Show rationale",
+          "rationale": "{{count}} of {{total}} recorded tasks exceeded the amount threshold of {{threshold}}.",
           "records_title": "Contributing records (up to 5)",
           "record": "{{name}} — {{date}}"
         }

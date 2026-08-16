@@ -40,6 +40,7 @@ function mapTaskScheduleItem(item: TaskScheduleItem): PlanTaskScheduleItem {
     gddDelta: item.gdd_delta ?? null,
     stageOrder: item.stage_order ?? item.details.stage.order ?? null,
     category: item.category,
+    taskType: item.task_type ?? item.details.master?.task_type ?? null,
     status: item.status,
     completed: item.completed,
     details: mapTaskScheduleItemDetails(item.details)

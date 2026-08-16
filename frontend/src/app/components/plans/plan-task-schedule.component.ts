@@ -24,6 +24,8 @@ import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-s
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effects';
+import { buildPlanVsActualAmountDeltaByItemId } from '../../domain/plans/build-plan-vs-actual-amount-delta-by-item-id';
+import { PLAN_GATEWAY, PlanGateway } from '../../usecase/plans/plan-gateway';
 import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 import {
@@ -69,7 +71,8 @@ const initialControl: PlanTaskScheduleViewState = {
   totalFieldCount: 0,
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
-  allFieldsLackTasks: false
+  allFieldsLackTasks: false,
+  amountDeltaByItemId: {}
 };
 
 @Component({
@@ -380,6 +383,7 @@ const initialControl: PlanTaskScheduleViewState = {
               [planId]="planId"
               [monthGroups]="scheduleMonthGroups"
               [unscheduledRows]="scheduleUnscheduledRows"
+              [amountDeltaByItemId]="control.amountDeltaByItemId"
               (scheduledDateChange)="onScheduledDateChange($event)"
             />
             <footer class="plan-task-schedule__footer">
@@ -444,6 +448,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
+  private readonly planGateway = inject<PlanGateway>(PLAN_GATEWAY);
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
   private readonly createItemUseCase = inject(CreateTaskScheduleItemUseCase);
   private readonly updateItemUseCase = inject(UpdateTaskScheduleItemUseCase);
@@ -702,6 +707,26 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       fieldCultivationId: this.fieldCultivationFilterId ?? undefined,
       category: this.categoryFilter ?? undefined,
       loadGeneration
+    });
+    this.loadAmountVarianceDeltas(planId);
+  }
+
+  private loadAmountVarianceDeltas(planId: number): void {
+    this.planGateway.getPlanVsActualSummary(planId).subscribe({
+      next: (summary) => {
+        this.control = {
+          ...this.control,
+          amountDeltaByItemId: buildPlanVsActualAmountDeltaByItemId(summary)
+        };
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.control = {
+          ...this.control,
+          amountDeltaByItemId: {}
+        };
+        this.cdr.markForCheck();
+      }
     });
   }
 

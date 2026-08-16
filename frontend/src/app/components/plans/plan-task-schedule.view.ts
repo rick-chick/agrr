@@ -45,6 +45,7 @@ export type PlanTaskScheduleViewState = {
   fieldsWithTasksCount: number;
   fieldsWithoutTasksCount: number;
   allFieldsLackTasks: boolean;
+  amountDeltaByItemId: Record<number, number>;
 };
 
 export interface PlanTaskScheduleView {

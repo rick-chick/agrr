@@ -7,6 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
 import { StageGddCalibrationProposalsViewComponent } from './stage-gdd-calibration-proposals-view.component';
 import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
+import { BlueprintAmountAdjustmentProposalsViewComponent } from './blueprint-amount-adjustment-proposals-view.component';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { PlanLearnCarryoverSectionComponent } from './plan-learn-carryover-section.component';
 import { PlanLearnImportedBannerComponent } from './plan-learn-imported-banner.component';
@@ -24,6 +25,7 @@ import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-
 import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs-actual-summary.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
 import { LoadBlueprintTimingAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-timing-adjustment-proposals.usecase';
+import { LoadBlueprintAmountAdjustmentProposalsUseCase } from '../../usecase/plans/load-blueprint-amount-adjustment-proposals.usecase';
 import { LoadStageGddCalibrationProposalsUseCase } from '../../usecase/plans/load-stage-gdd-calibration-proposals.usecase';
 import { loadMergedLearnProposals } from '../../usecase/plans/load-merged-learn-proposals';
 import { countMergedLearnProposals } from '../../domain/plans/count-merged-learn-proposals';
@@ -51,6 +53,9 @@ const initialControl: PlanLearnViewState = {
   blueprintTimingLoading: false,
   blueprintTimingProposals: [],
   blueprintTimingEvidenceByKey: {},
+  blueprintAmountLoading: false,
+  blueprintAmountProposals: [],
+  blueprintAmountEvidenceByKey: {},
   stageGddProposalsLoading: false,
   stageGddProposals: [],
   stageGddEvidenceByKey: {},
@@ -79,6 +84,7 @@ const initialControl: PlanLearnViewState = {
     TaskScheduleVarianceViewComponent,
     StageGddCalibrationProposalsViewComponent,
     BlueprintTimingAdjustmentProposalsViewComponent,
+    BlueprintAmountAdjustmentProposalsViewComponent,
     PlanLearnImportedBannerComponent,
     PlanLearnCarryoverSectionComponent,
     PlanLearnLoopProgressComponent,
@@ -222,6 +228,14 @@ const initialControl: PlanLearnViewState = {
             [proposalConfidence]="proposalConfidence"
             (progressChanged)="onProposalProgressChanged()"
           />
+          <app-blueprint-amount-adjustment-proposals-view
+            [planId]="planId"
+            [loading]="control.blueprintAmountLoading"
+            [proposals]="control.blueprintAmountProposals"
+            [evidenceByKey]="control.blueprintAmountEvidenceByKey"
+            [proposalConfidence]="proposalConfidence"
+            (progressChanged)="onProposalProgressChanged()"
+          />
           <app-task-schedule-variance-view
             [planId]="planId"
             [loading]="control.varianceLoading"
@@ -251,6 +265,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
   private readonly varianceUseCase = inject(LoadPlanVsActualSummaryUseCase);
   private readonly carryoverUseCase = inject(LoadPlanLearnCarryoverUseCase);
   private readonly blueprintTimingUseCase = inject(LoadBlueprintTimingAdjustmentProposalsUseCase);
+  private readonly blueprintAmountUseCase = inject(LoadBlueprintAmountAdjustmentProposalsUseCase);
   private readonly stageGddProposalsUseCase = inject(LoadStageGddCalibrationProposalsUseCase);
   private readonly presenter = inject(PlanLearnPresenter);
   private readonly translate = inject(TranslateService);
@@ -419,6 +434,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
           loadMergedLearnProposals(
             this.presenter,
             this.blueprintTimingUseCase,
+            this.blueprintAmountUseCase,
             this.stageGddProposalsUseCase,
             this.control.varianceSummary,
             snapshot
@@ -488,6 +504,7 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
             loadMergedLearnProposals(
               this.presenter,
               this.blueprintTimingUseCase,
+              this.blueprintAmountUseCase,
               this.stageGddProposalsUseCase,
               this.control.varianceSummary,
               snapshot

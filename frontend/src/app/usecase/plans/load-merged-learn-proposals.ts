@@ -2,28 +2,46 @@ import type { PlanLearnPresenter } from '../../adapters/plans/plan-learn.present
 import { collectLearnProposalRawSources } from '../../domain/plans/collect-learn-proposal-raw-sources';
 import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
+import type { LoadBlueprintAmountAdjustmentProposalsUseCase } from './load-blueprint-amount-adjustment-proposals.usecase';
 import type { LoadBlueprintTimingAdjustmentProposalsUseCase } from './load-blueprint-timing-adjustment-proposals.usecase';
 import type { LoadStageGddCalibrationProposalsUseCase } from './load-stage-gdd-calibration-proposals.usecase';
 
 export function loadMergedLearnProposals(
   presenter: PlanLearnPresenter,
-  blueprintProposalsUseCase: LoadBlueprintTimingAdjustmentProposalsUseCase,
+  blueprintTimingProposalsUseCase: LoadBlueprintTimingAdjustmentProposalsUseCase,
+  blueprintAmountProposalsUseCase: LoadBlueprintAmountAdjustmentProposalsUseCase,
   stageGddProposalsUseCase: LoadStageGddCalibrationProposalsUseCase,
   varianceSummary: PlanVsActualSummary | null,
   learningSnapshot: PlanVarianceLearningSnapshot | null
 ): void {
-  const { stageGddCalibrationProposals, blueprintTimingAdjustmentProposals } =
-    collectLearnProposalRawSources(varianceSummary, learningSnapshot);
+  const {
+    stageGddCalibrationProposals,
+    blueprintTimingAdjustmentProposals,
+    blueprintAmountAdjustmentProposals
+  } = collectLearnProposalRawSources(varianceSummary, learningSnapshot);
 
   if (blueprintTimingAdjustmentProposals.length > 0) {
     const loadGeneration = presenter.beginBlueprintTimingProposalsLoad();
-    blueprintProposalsUseCase.execute({
+    blueprintTimingProposalsUseCase.execute({
       rawProposals: blueprintTimingAdjustmentProposals,
       loadGeneration
     });
   } else {
     presenter.presentBlueprintTimingProposals({
       loadGeneration: presenter.beginBlueprintTimingProposalsLoad(),
+      proposals: []
+    });
+  }
+
+  if (blueprintAmountAdjustmentProposals.length > 0) {
+    const loadGeneration = presenter.beginBlueprintAmountProposalsLoad();
+    blueprintAmountProposalsUseCase.execute({
+      rawProposals: blueprintAmountAdjustmentProposals,
+      loadGeneration
+    });
+  } else {
+    presenter.presentBlueprintAmountProposals({
+      loadGeneration: presenter.beginBlueprintAmountProposalsLoad(),
       proposals: []
     });
   }

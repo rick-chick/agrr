@@ -12,6 +12,8 @@ import { LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT } from './load-plan-vs-actual-s
 import { LoadStageGddCalibrationProposalsUseCase } from './load-stage-gdd-calibration-proposals.usecase';
 import { LOAD_STAGE_GDD_CALIBRATION_PROPOSALS_OUTPUT_PORT } from './load-stage-gdd-calibration-proposals.output-port';
 import { PLAN_GATEWAY } from './plan-gateway';
+import { LoadBlueprintAmountAdjustmentProposalsUseCase } from './load-blueprint-amount-adjustment-proposals.usecase';
+import { LOAD_BLUEPRINT_AMOUNT_ADJUSTMENT_PROPOSALS_OUTPUT_PORT } from './load-blueprint-amount-adjustment-proposals.output-port';
 import { LoadBlueprintTimingAdjustmentProposalsUseCase } from './load-blueprint-timing-adjustment-proposals.usecase';
 import { LOAD_BLUEPRINT_TIMING_ADJUSTMENT_PROPOSALS_OUTPUT_PORT } from './load-blueprint-timing-adjustment-proposals.output-port';
 import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.usecase';
@@ -22,6 +24,7 @@ export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
   LoadPlanTaskScheduleUseCase,
   LoadPlanVsActualSummaryUseCase,
   LoadBlueprintTimingAdjustmentProposalsUseCase,
+  LoadBlueprintAmountAdjustmentProposalsUseCase,
   LoadStageGddCalibrationProposalsUseCase,
   LoadPlanLearnCarryoverUseCase,
   { provide: LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanLearnPresenter },
@@ -29,14 +32,16 @@ export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
     provide: LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT,
     useFactory: (
       presenter: PlanLearnPresenter,
-      blueprintProposalsUseCase: LoadBlueprintTimingAdjustmentProposalsUseCase,
+      blueprintTimingProposalsUseCase: LoadBlueprintTimingAdjustmentProposalsUseCase,
+      blueprintAmountProposalsUseCase: LoadBlueprintAmountAdjustmentProposalsUseCase,
       stageGddProposalsUseCase: LoadStageGddCalibrationProposalsUseCase
     ) => ({
       present: (dto: Parameters<PlanLearnPresenter['presentVarianceSummary']>[0]) => {
         presenter.presentVarianceSummary(dto);
         loadMergedLearnProposals(
           presenter,
-          blueprintProposalsUseCase,
+          blueprintTimingProposalsUseCase,
+          blueprintAmountProposalsUseCase,
           stageGddProposalsUseCase,
           dto.summary,
           presenter.getLearningSnapshot()
@@ -48,11 +53,16 @@ export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
     deps: [
       PlanLearnPresenter,
       LoadBlueprintTimingAdjustmentProposalsUseCase,
+      LoadBlueprintAmountAdjustmentProposalsUseCase,
       LoadStageGddCalibrationProposalsUseCase
     ]
   },
   {
     provide: LOAD_BLUEPRINT_TIMING_ADJUSTMENT_PROPOSALS_OUTPUT_PORT,
+    useExisting: PlanLearnPresenter
+  },
+  {
+    provide: LOAD_BLUEPRINT_AMOUNT_ADJUSTMENT_PROPOSALS_OUTPUT_PORT,
     useExisting: PlanLearnPresenter
   },
   {

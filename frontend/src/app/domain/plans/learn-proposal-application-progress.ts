@@ -227,6 +227,16 @@ export function markBpTimingProposalDismissed(
   dismissProposalIfNotStarted(planId, bpTimingProposalProgressKey(input.cropId, input.category));
 }
 
+export function markBpAmountProposalDismissed(
+  planId: number,
+  input: { cropId: number; category: string; taskType: string }
+): void {
+  dismissProposalIfNotStarted(
+    planId,
+    bpAmountProposalProgressKey(input.cropId, input.category, input.taskType)
+  );
+}
+
 function dismissProposalIfNotStarted(planId: number, proposalKey: string): void {
   const current = resolveLearnProposalApplicationStatus(planId, proposalKey);
   if (current === 'not_started') {

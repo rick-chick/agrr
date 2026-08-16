@@ -15,6 +15,8 @@ import { PlanTaskSchedulePresenter } from '../../usecase/plans/plan-task-schedul
 import { PlanTaskScheduleComponent } from './plan-task-schedule.component';
 import type { PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
+import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
+import { of } from 'rxjs';
 import { localTodayIso } from '../../core/local-today';
 import {
   clearLearnOrchestrationProgressCache,
@@ -83,7 +85,8 @@ const loadedState: PlanTaskScheduleViewState = {
   totalFieldCount: 0,
   fieldsWithTasksCount: 0,
   fieldsWithoutTasksCount: 0,
-  allFieldsLackTasks: false
+  allFieldsLackTasks: false,
+  amountDeltaByItemId: {}
 };
 
 function sampleGeneralTask(
@@ -234,6 +237,19 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          {
+            provide: PLAN_GATEWAY,
+            useValue: {
+              getPlanVsActualSummary: vi.fn().mockReturnValue(
+                of({
+                  plan_id: 7,
+                  unrecorded_count: 0,
+                  categories: [],
+                  top_variance_items: []
+                })
+              )
+            }
+          },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           { provide: ActivatedRoute, useValue: mockActivatedRoute }
@@ -282,7 +298,8 @@ describe('PlanTaskScheduleComponent', () => {
       totalFieldCount: 0,
       fieldsWithTasksCount: 0,
       fieldsWithoutTasksCount: 0,
-      allFieldsLackTasks: false
+      allFieldsLackTasks: false,
+      amountDeltaByItemId: {}
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -448,6 +465,19 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          {
+            provide: PLAN_GATEWAY,
+            useValue: {
+              getPlanVsActualSummary: vi.fn().mockReturnValue(
+                of({
+                  plan_id: 7,
+                  unrecorded_count: 0,
+                  categories: [],
+                  top_variance_items: []
+                })
+              )
+            }
+          },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           {
@@ -1065,6 +1095,19 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          {
+            provide: PLAN_GATEWAY,
+            useValue: {
+              getPlanVsActualSummary: vi.fn().mockReturnValue(
+                of({
+                  plan_id: 7,
+                  unrecorded_count: 0,
+                  categories: [],
+                  top_variance_items: []
+                })
+              )
+            }
+          },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           {
@@ -1135,6 +1178,19 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          {
+            provide: PLAN_GATEWAY,
+            useValue: {
+              getPlanVsActualSummary: vi.fn().mockReturnValue(
+                of({
+                  plan_id: 7,
+                  unrecorded_count: 0,
+                  categories: [],
+                  top_variance_items: []
+                })
+              )
+            }
+          },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           { provide: ActivatedRoute, useValue: listRouteMock }
@@ -1217,6 +1273,19 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          {
+            provide: PLAN_GATEWAY,
+            useValue: {
+              getPlanVsActualSummary: vi.fn().mockReturnValue(
+                of({
+                  plan_id: 7,
+                  unrecorded_count: 0,
+                  categories: [],
+                  top_variance_items: []
+                })
+              )
+            }
+          },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           { provide: ActivatedRoute, useValue: orchestrationRouteMock }
@@ -1299,6 +1368,19 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          {
+            provide: PLAN_GATEWAY,
+            useValue: {
+              getPlanVsActualSummary: vi.fn().mockReturnValue(
+                of({
+                  plan_id: 7,
+                  unrecorded_count: 0,
+                  categories: [],
+                  top_variance_items: []
+                })
+              )
+            }
+          },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           { provide: ActivatedRoute, useValue: syncVerifyRouteMock }
@@ -1364,6 +1446,19 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: CreateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          {
+            provide: PLAN_GATEWAY,
+            useValue: {
+              getPlanVsActualSummary: vi.fn().mockReturnValue(
+                of({
+                  plan_id: 7,
+                  unrecorded_count: 0,
+                  categories: [],
+                  top_variance_items: []
+                })
+              )
+            }
+          },
           PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           { provide: ActivatedRoute, useValue: regenerateRouteMock }

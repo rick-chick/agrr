@@ -51,6 +51,7 @@ export interface PlanVsActualSummary {
   stage_gdd_calibration_proposals?: StageGddCalibrationProposalRaw[];
   action_required_items?: PlanVarianceActionItem[];
   blueprint_timing_adjustment_proposals?: import('./blueprint-timing-adjustment-proposal').BlueprintTimingAdjustmentProposalRaw[];
+  blueprint_amount_adjustment_proposals?: import('./blueprint-amount-adjustment-proposal').BlueprintAmountAdjustmentProposalRaw[];
 }
 
 export interface PlanVsActualPlanSummaryStats {

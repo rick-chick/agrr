@@ -9,6 +9,7 @@ export function countMergedLearnProposals(
   const sources = collectLearnProposalRawSources(varianceSummary, learningSnapshot);
   return (
     sources.stageGddCalibrationProposals.length +
-    sources.blueprintTimingAdjustmentProposals.length
+    sources.blueprintTimingAdjustmentProposals.length +
+    sources.blueprintAmountAdjustmentProposals.length
   );
 }

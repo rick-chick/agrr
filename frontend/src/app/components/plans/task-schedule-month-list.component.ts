@@ -10,6 +10,11 @@ import {
   type PlanTaskScheduleVarianceBadge
 } from '../../domain/work-schedule/resolve-plan-task-schedule-variance-badge';
 import {
+  resolvePlanTaskScheduleAmountVarianceBadge,
+  type PlanTaskScheduleAmountVarianceBadge
+} from '../../domain/work-schedule/resolve-plan-task-schedule-amount-variance-badge';
+import { formatPlanTaskScheduleAmountDeltaLabel } from '../../domain/work-schedule/format-plan-task-schedule-amount-delta';
+import {
   formatPlanTaskScheduleAverageDeltaDaysLabel,
   formatPlanTaskScheduleDeltaDaysLabel
 } from '../../domain/work-schedule/format-plan-task-schedule-delta-days';
@@ -76,6 +81,15 @@ import {
                             {{ varianceDeltaLabel(badge) }}
                           </span>
                         }
+                      }
+                      @if (amountVarianceBadge(row); as amountBadge) {
+                        <span
+                          class="plan-task-schedule-month-list__amount-variance"
+                          [class]="amountVarianceModifierClass(amountBadge)"
+                          [attr.aria-label]="amountVarianceAriaLabel(amountBadge)"
+                        >
+                          {{ amountVarianceDeltaLabel(amountBadge) }}
+                        </span>
                       }
                     </span>
                   </button>
@@ -152,6 +166,15 @@ import {
                           </span>
                         }
                       }
+                      @if (amountVarianceBadge(row); as amountBadge) {
+                        <span
+                          class="plan-task-schedule-month-list__amount-variance"
+                          [class]="amountVarianceModifierClass(amountBadge)"
+                          [attr.aria-label]="amountVarianceAriaLabel(amountBadge)"
+                        >
+                          {{ amountVarianceDeltaLabel(amountBadge) }}
+                        </span>
+                      }
                     </span>
                   </button>
                 </li>
@@ -208,6 +231,8 @@ export class TaskScheduleMonthListComponent {
 
   @Input() planId: number | null = null;
 
+  @Input() amountDeltaByItemId: Record<number, number> = {};
+
   @Output() scheduledDateChange = new EventEmitter<{ itemId: number; scheduledDate: string }>();
 
   selectedRow: PlanTaskScheduleRowView | null = null;
@@ -238,6 +263,28 @@ export class TaskScheduleMonthListComponent {
 
   varianceBadge(row: PlanTaskScheduleRowView): PlanTaskScheduleVarianceBadge | null {
     return resolvePlanTaskScheduleVarianceBadge(row.item);
+  }
+
+  amountVarianceBadge(row: PlanTaskScheduleRowView): PlanTaskScheduleAmountVarianceBadge | null {
+    const amountDelta = this.amountDeltaByItemId[row.item.item_id] ?? null;
+    return resolvePlanTaskScheduleAmountVarianceBadge({
+      status: row.item.status,
+      amountDelta
+    });
+  }
+
+  amountVarianceModifierClass(badge: PlanTaskScheduleAmountVarianceBadge): string {
+    return `plan-task-schedule-month-list__amount-variance--${badge.kind}`;
+  }
+
+  amountVarianceDeltaLabel(badge: PlanTaskScheduleAmountVarianceBadge): string {
+    return formatPlanTaskScheduleAmountDeltaLabel(badge.amountDelta);
+  }
+
+  amountVarianceAriaLabel(badge: PlanTaskScheduleAmountVarianceBadge): string {
+    return this.translate.instant(`plans.task_schedules.variance.amount_badge.${badge.kind}`, {
+      delta: formatPlanTaskScheduleAmountDeltaLabel(badge.amountDelta)
+    });
   }
 
   varianceModifierClass(badge: PlanTaskScheduleVarianceBadge): string {

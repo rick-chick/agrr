@@ -1922,6 +1922,10 @@
           "on_time": "समय पर (±0 दिन)",
           "late": "{{delta}} दिन देरी",
           "early": "{{delta}} दिन जल्दी"
+        },
+        "amount_badge": {
+          "over": "मात्रा +{{delta}}",
+          "under": "मात्रा {{delta}}"
         }
       },
       "open_learn": "अंतर की समीक्षा करें",
@@ -2048,6 +2052,33 @@
         "evidence": {
           "toggle": "आधार दिखाएँ",
           "rationale": "{{total}} रिकॉर्ड किए गए कार्यों में से {{count}} ने {{threshold}} दिन की सीमा पार की।",
+          "records_title": "योगदान रिकॉर्ड (अधिकतम 5)",
+          "record": "{{name}} — {{date}}"
+        }
+      },
+      "bp_amount_adjustment": {
+        "title": "कार्य BP मात्रा समायोजन प्रस्ताव",
+        "lead": "योजना बनाम वास्तविक श्रेणी और कार्य प्रकार के मात्रा अंतर से BP मात्रा समायोजन सुझाए जाते हैं।",
+        "empty": "अभी कोई BP मात्रा समायोजन प्रस्ताव उपलब्ध नहीं है।",
+        "delta_label": "औसत मात्रा अंतर: {{delta}}",
+        "affected_count": "प्रभावित BP: {{count}}",
+        "detail_edit": "विस्तृत संपादन",
+        "category": {
+          "general": "सामान्य कार्य",
+          "fertilizer": "उर्वरक",
+          "pest_control": "कीट नियंत्रण"
+        },
+        "task_type": {
+          "fertilize": "उर्वरक",
+          "basal_fertilization": "बेसल उर्वरक",
+          "topdress_fertilization": "टॉपड्रेस उर्वरक",
+          "preventive_spray": "निवारक स्प्रे",
+          "curative_spray": "उपचारात्मक स्प्रे",
+          "field_work": "खेत कार्य"
+        },
+        "evidence": {
+          "toggle": "आधार दिखाएँ",
+          "rationale": "{{total}} रिकॉर्ड में से {{count}} ने मात्रा सीमा {{threshold}} पार की।",
           "records_title": "योगदान रिकॉर्ड (अधिकतम 5)",
           "record": "{{name}} — {{date}}"
         }
