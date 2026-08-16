@@ -14,6 +14,7 @@ import { applyPendingErrorFlashViewEffects } from '../../core/view-effects/pendi
 import { CardListSkeletonComponent } from '../shared/skeleton/card-list-skeleton.component';
 import { buildPlanListFarmGroups } from '../../domain/plans/build-plan-list-farm-groups';
 import type { PlanListFarmGroup } from '../../domain/plans/plan-list-farm-group';
+import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 
 const initialControl: PlanListViewState = {
   loading: true,
@@ -53,6 +54,16 @@ const initialControl: PlanListViewState = {
             <p class="plan-list-empty-secondary">
               <a routerLink="/public-plans/new">{{ 'plans.index.try_public_plans' | translate }}</a>
             </p>
+            @if (publicPlanHandoffId) {
+              <p class="plan-list-empty-handoff">
+                <a
+                  routerLink="/public-plans/results"
+                  [queryParams]="{ planId: publicPlanHandoffId }"
+                >
+                  {{ 'plans.index.public_plan_handoff' | translate }}
+                </a>
+              </p>
+            }
           </div>
         } @else {
           <div class="section-card__header-actions">
@@ -195,11 +206,17 @@ export class PlanListComponent implements PlanListView, OnInit {
   private readonly presenter = inject(PlanListPresenter);
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
+  private readonly publicPlanStore = inject(PublicPlanStore);
   private readonly cdr = inject(ChangeDetectorRef);
 
   @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
 
   pendingDeletePlanId: number | null = null;
+
+  get publicPlanHandoffId(): number | null {
+    const planId = this.publicPlanStore.state.planId;
+    return planId != null && planId > 0 ? planId : null;
+  }
 
   private readonly collapsedFarmGroupIds = signal<ReadonlySet<number>>(new Set());
 

@@ -2310,6 +2310,7 @@
       "description": "農場別の計画を管理",
       "new_plan": "新しい計画を追加",
       "try_public_plans": "無料プランから始める",
+      "public_plan_handoff": "公開プランの続きを見る",
       "no_plans": "まだ計画がありません",
       "no_plans_hint": "新しい計画を作成して栽培スケジュールを最適化しましょう。",
       "retry": "再読み込み",
@@ -2473,6 +2474,13 @@
         "message": "この計画で {{count}} 件のタスクが乖離閾値を超えています",
         "manual_hint": "提案を確認し、準備ができたら手動で adjust または再最適化を検討してください。",
         "review_link": "振り返りタブで提案を確認"
+      },
+      "post_save_onboarding": {
+        "message": "作付け計画を保存しました",
+        "hint": "作業予定を確認し、圃場の作業記録を始めて計画を活用しましょう。",
+        "task_schedule_link": "作業予定を確認",
+        "work_link": "作業記録を始める",
+        "dismiss": "閉じる"
       },
       "weather_reschedule_proposal": {
         "title": "天候リスケ提案",
