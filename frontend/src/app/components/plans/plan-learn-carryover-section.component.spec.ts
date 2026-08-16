@@ -30,6 +30,10 @@ describe('PlanLearnCarryoverSectionComponent', () => {
         'plans.learn.carryover.import_button': 'Import learning',
         'plans.carryover.next_plan_cta': 'Create next plan with learning',
         'plans.carryover.next_plan_hint': 'Start a new plan carrying this learning forward',
+        'plans.learn.loop.handoff_source_plan': 'Source plan: {{planName}}',
+        'plans.carryover.preview.stage_gdd_count': 'Stage GDD calibration proposals',
+        'plans.carryover.preview.bp_timing_count': 'BP timing adjustment proposals',
+        'plans.carryover.preview.bp_amount_count': 'BP amount adjustment proposals',
         'common.loading': 'Loading'
       },
       true
@@ -43,10 +47,12 @@ describe('PlanLearnCarryoverSectionComponent', () => {
     fixture.componentInstance.carryoverSourcePlans = [
       { id: 8, name: 'Previous', farm_id: 1 }
     ];
+    fixture.componentInstance.sourcePlanName = 'Current plan';
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('#plan-learn-carryover-title')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('#plan-learn-carryover-source')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Source plan: Current plan');
 
     const nextPlanCta = fixture.nativeElement.querySelector('.plan-learn-carryover__next-plan-cta');
     expect(nextPlanCta).not.toBeNull();
@@ -91,5 +97,37 @@ describe('PlanLearnCarryoverSectionComponent', () => {
     fixture.componentInstance.onImportLearning();
 
     expect(handler).toHaveBeenCalled();
+  });
+
+  it('shows proposal count rows in carryover preview table', () => {
+    fixture.componentInstance.carryoverSourcePlans = [
+      { id: 8, name: 'Previous', farm_id: 1 }
+    ];
+    fixture.componentInstance.selectedSourcePlanId = 8;
+    fixture.componentInstance.carryoverPreview = {
+      plan_id: 8,
+      categories: [
+        {
+          category: 'task',
+          average_delta_days: 1,
+          item_count: 2,
+          recorded_count: 2
+        }
+      ],
+      stage_gdd_calibration_proposals: [{ crop_id: 1, stage_id: 2 } as never],
+      blueprint_timing_adjustment_proposals: [{ crop_id: 1, category: 'general' } as never],
+      action_required_items: [],
+      unrecorded_count: 0,
+      top_variance_items: []
+    } as typeof fixture.componentInstance.carryoverPreview;
+    fixture.detectChanges();
+
+    const rows = fixture.nativeElement.querySelectorAll(
+      '.plan-learn-carryover-preview__table tbody tr'
+    );
+    expect(rows).toHaveLength(3);
+    expect(rows[1].textContent).toContain('Stage GDD calibration proposals');
+    expect(rows[1].textContent).toContain('1');
+    expect(rows[2].textContent).toContain('BP timing adjustment proposals');
   });
 });

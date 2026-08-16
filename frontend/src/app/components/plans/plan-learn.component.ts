@@ -116,6 +116,7 @@ const initialControl: PlanLearnViewState = {
         } @else {
           <app-plan-learn-loop-progress
             [planId]="planId"
+            [planName]="control.planName"
             [actionRequiredItems]="control.varianceSummary?.action_required_items ?? []"
             [stageGddProposals]="control.stageGddProposals"
             [blueprintTimingProposals]="control.blueprintTimingProposals"
@@ -210,6 +211,7 @@ const initialControl: PlanLearnViewState = {
 
           <app-plan-learn-carryover-section
             [planId]="planId"
+            [sourcePlanName]="control.planName"
             [carryoverSourcePlans]="control.carryoverSourcePlans"
             [selectedSourcePlanId]="control.selectedSourcePlanId"
             [carryoverPreviewLoading]="control.carryoverPreviewLoading"

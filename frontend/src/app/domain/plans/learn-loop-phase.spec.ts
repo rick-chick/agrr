@@ -135,9 +135,10 @@ describe('buildLearnLoopPhaseResult', () => {
 
     expect(result.currentPhase).toBe('handoff');
     expect(result.nextAction).toMatchObject({
-      labelKey: 'plans.learn.loop.next_action.handoff_carryover',
-      kind: 'scroll',
-      scrollTargetId: 'plan-learn-carryover-title'
+      labelKey: 'plans.learn.loop.next_action.handoff_new_plan',
+      kind: 'router_link',
+      routerLink: ['/plans', 'new'],
+      queryParams: { carryoverFrom: PLAN_ID }
     });
   });
 
@@ -284,9 +285,10 @@ describe('buildLearnLoopPhaseResult', () => {
       queryParams: { learningOrchestration: 'adjust' }
     });
     expect(result.secondaryAction).toMatchObject({
-      labelKey: 'plans.learn.loop.next_action.complete_next_plan',
+      labelKey: 'plans.learn.loop.next_action.handoff_new_plan',
       kind: 'router_link',
-      routerLink: ['/plans']
+      routerLink: ['/plans', 'new'],
+      queryParams: { carryoverFrom: PLAN_ID }
     });
   });
 
@@ -443,8 +445,9 @@ describe('buildLearnLoopPhaseResult', () => {
     expect(result.currentPhase).toBe('handoff');
     expect(result.nextAction).toMatchObject({
       labelKey: 'plans.learn.loop.next_action.loop_complete_next_plan',
-      kind: 'scroll',
-      scrollTargetId: 'plan-learn-carryover-title'
+      kind: 'router_link',
+      routerLink: ['/plans', 'new'],
+      queryParams: { carryoverFrom: PLAN_ID }
     });
   });
 
