@@ -12,7 +12,9 @@ use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
 };
 use crate::cultivation_plan::policies::blueprint_amount_adjustment_policy::qualifies_for_proposal as amount_qualifies_for_proposal;
 use crate::cultivation_plan::policies::blueprint_timing_adjustment_policy::qualifies_for_proposal;
-use crate::cultivation_plan::policies::plan_variance_threshold_policy::exceedance_kind;
+use crate::cultivation_plan::policies::plan_variance_threshold_policy::{
+    exceedance_kind, DEFAULT_AMOUNT_DELTA_THRESHOLD,
+};
 use time::{format_description::well_known::Iso8601, Date};
 
 pub const DEFAULT_TOP_VARIANCE_LIMIT: usize = 5;
@@ -75,6 +77,7 @@ impl PlanVsActualMapper {
             .count() as i64;
 
         let structured_unrecorded_count = structured_unrecorded_count_from_snapshot(snapshot);
+        let amount_variance_count = amount_variance_count_from_items(&items);
 
         let categories = category_summaries(&items);
         let amount_group_summaries = amount_group_summaries_from_snapshot(snapshot);
@@ -91,6 +94,7 @@ impl PlanVsActualMapper {
             plan_id: snapshot.plan.id,
             unrecorded_count,
             structured_unrecorded_count,
+            amount_variance_count,
             categories,
             amount_group_summaries,
             top_variance_items,
@@ -364,6 +368,25 @@ fn structured_unrecorded_count_from_snapshot(snapshot: &TaskScheduleTimelineSnap
 
 fn is_structured_input_category(category: &str) -> bool {
     matches!(category, "fertilizer" | "pest_control")
+}
+
+fn amount_variance_count_from_items(items: &[PlanVsActualItemRead]) -> i64 {
+    items
+        .iter()
+        .filter(|item| counts_toward_amount_variance(item))
+        .count() as i64
+}
+
+fn counts_toward_amount_variance(item: &PlanVsActualItemRead) -> bool {
+    if !is_structured_input_category(item.category.as_str()) {
+        return false;
+    }
+    if item.amount_planned.is_some() && item.amount_actual.is_none() {
+        return true;
+    }
+    item.amount_delta
+        .map(|delta| delta.abs() >= DEFAULT_AMOUNT_DELTA_THRESHOLD)
+        .unwrap_or(false)
 }
 
 fn is_structured_unrecorded_work_record(

@@ -121,6 +121,13 @@ const initialControl: PlanListViewState = {
                                 'plans.index.input_gap.action_required_summary'
                                   | translate: { count: plan.inputGap.actionRequiredCount }
                               }}
+                              @if (plan.inputGap.amountVarianceCount > 0) {
+                                ·
+                                {{
+                                  'plans.index.input_gap.amount_variance_summary'
+                                    | translate: { count: plan.inputGap.amountVarianceCount }
+                                }}
+                              }
                             </span>
                           }
                         </a>

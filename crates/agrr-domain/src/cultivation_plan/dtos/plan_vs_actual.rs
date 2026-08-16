@@ -110,6 +110,7 @@ pub struct PlanVsActualSummaryRead {
     pub plan_id: i64,
     pub unrecorded_count: i64,
     pub structured_unrecorded_count: i64,
+    pub amount_variance_count: i64,
     pub categories: Vec<PlanVsActualCategorySummaryRead>,
     pub amount_group_summaries: Vec<PlanVsActualAmountGroupSummaryRead>,
     pub top_variance_items: Vec<PlanVsActualItemRead>,

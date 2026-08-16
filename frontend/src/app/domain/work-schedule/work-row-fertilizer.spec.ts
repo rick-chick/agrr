@@ -109,4 +109,19 @@ describe('work-row-fertilizer', () => {
     expect(filterWorkDayListBySegment(rows, 'all')).toEqual(rows);
     expect(filterWorkDayListBySegment(rows, 'pest_control')).toEqual([preventive]);
   });
+
+  it('computes amount diff for pest_control rows with planned and actual amounts', () => {
+    const pestRow = row({
+      category: 'pest_control',
+      task_type: 'preventive_spray',
+      amount: '2',
+      amount_unit: 'L'
+    });
+    const diff = resolveWorkRowAmountDiff(pestRow, '2.5', 'L');
+    expect(diff).toEqual({ planned: 2, actual: 2.5, diff: 0.5, unit: 'L' });
+  });
+
+  it('returns null amount diff for general category rows', () => {
+    expect(resolveWorkRowAmountDiff(row({ category: 'general' }), '1', 'kg')).toBeNull();
+  });
 });

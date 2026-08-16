@@ -1744,8 +1744,10 @@
         "unrecorded": "Not recorded",
         "action_required": "Action required",
         "structured_unrecorded": "Unstructured input",
+        "amount_variance": "Amount variance",
         "work_cta": "Record unrecorded tasks",
-        "structured_work_cta": "Fix missing master selections"
+        "structured_work_cta": "Fix missing master selections",
+        "amount_variance_work_cta": "Review amount variance"
       },
       "proposal_confidence": {
         "high": "High confidence",
@@ -2042,6 +2044,7 @@
       "input_gap": {
         "unrecorded_summary": "Unrecorded: {{count}}",
         "action_required_summary": "Action required: {{count}}",
+        "amount_variance_summary": "Amount variance: {{count}}",
         "work_link": "Record work",
         "learn_link": "Review learning"
       },

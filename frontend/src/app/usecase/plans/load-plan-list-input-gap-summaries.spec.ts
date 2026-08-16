@@ -83,12 +83,14 @@ describe('loadPlanListInputGapSummaries', () => {
     expect(gaps.get(1)).toEqual({
       unrecordedCount: 3,
       actionRequiredCount: 0,
-      structuredUnrecordedCount: 0
+      structuredUnrecordedCount: 0,
+      amountVarianceCount: 0
     });
     expect(gaps.get(2)).toEqual({
       unrecordedCount: 0,
       actionRequiredCount: 1,
-      structuredUnrecordedCount: 0
+      structuredUnrecordedCount: 0,
+      amountVarianceCount: 0
     });
   });
 
@@ -115,7 +117,8 @@ describe('loadPlanListInputGapSummaries', () => {
     expect(gaps.get(9)).toEqual({
       unrecordedCount: 0,
       actionRequiredCount: 0,
-      structuredUnrecordedCount: 0
+      structuredUnrecordedCount: 0,
+      amountVarianceCount: 0
     });
   });
 });

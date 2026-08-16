@@ -77,6 +77,7 @@ describe('PlanListComponent', () => {
           input_gap: {
             unrecorded_summary: 'Unrecorded: {{count}}',
             action_required_summary: 'Action required: {{count}}',
+            amount_variance_summary: 'Amount variance: {{count}}',
             work_link: 'Record work',
             learn_link: 'Review learning'
           },
@@ -108,7 +109,7 @@ describe('PlanListComponent', () => {
     farm_id: 1,
     farm_name: 'Farm A',
     plan_year: 2026,
-    inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0 },
+    inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 },
     ...overrides
   });
 
@@ -311,10 +312,26 @@ describe('PlanListComponent', () => {
     expect(styles.borderStyle).not.toBe('none');
   });
 
+  it('shows amount variance in input gap summary when count is positive', async () => {
+    const nativeElement = await renderPlans([
+      planWithGap({
+        inputGap: {
+          unrecordedCount: 0,
+          actionRequiredCount: 0,
+          structuredUnrecordedCount: 0,
+          amountVarianceCount: 4
+        }
+      })
+    ]);
+
+    const gapSummary = nativeElement.querySelector('.plan-list__gap-summary');
+    expect(gapSummary?.textContent).toContain('Amount variance: 4');
+  });
+
   it('shows input gap summary and work/learn links on plan cards', async () => {
     const nativeElement = await renderPlans([
       planWithGap({
-        inputGap: { unrecordedCount: 3, actionRequiredCount: 2, structuredUnrecordedCount: 0 }
+        inputGap: { unrecordedCount: 3, actionRequiredCount: 2, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
       })
     ]);
 

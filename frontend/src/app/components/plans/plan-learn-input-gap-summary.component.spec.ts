@@ -23,6 +23,8 @@ describe('PlanLearnInputGapSummaryComponent', () => {
         'plans.learn.input_gap.unrecorded': '未記録件数',
         'plans.learn.input_gap.action_required': '要対応件数',
         'plans.learn.input_gap.structured_unrecorded': '構造化未入力',
+        'plans.learn.input_gap.amount_variance': '量乖離',
+        'plans.learn.input_gap.amount_variance_work_cta': '量の乖離を確認する',
         'plans.learn.input_gap.work_cta': '未記録タスクを記録する',
         'plans.learn.input_gap.structured_work_cta': 'マスタ未選択を修正する',
         'common.loading': '読み込み中'
@@ -38,7 +40,8 @@ describe('PlanLearnInputGapSummaryComponent', () => {
     fixture.componentInstance.summary = {
       unrecordedCount: 2,
       actionRequiredCount: 1,
-      structuredUnrecordedCount: 0
+      structuredUnrecordedCount: 0,
+      amountVarianceCount: 0
     };
     fixture.detectChanges();
 
@@ -52,11 +55,43 @@ describe('PlanLearnInputGapSummaryComponent', () => {
     expect(text).toContain('0');
   });
 
+  it('renders amount variance count', () => {
+    fixture.componentInstance.summary = {
+      unrecordedCount: 0,
+      actionRequiredCount: 0,
+      structuredUnrecordedCount: 0,
+      amountVarianceCount: 3
+    };
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('量乖離');
+    expect(text).toContain('3');
+  });
+
+  it('links to work with amount variance CTA when only amount gaps exist', () => {
+    fixture.componentInstance.summary = {
+      unrecordedCount: 0,
+      actionRequiredCount: 0,
+      structuredUnrecordedCount: 0,
+      amountVarianceCount: 2
+    };
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector(
+      '.plan-learn-input-gap-summary__work-link'
+    ) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toContain('/plans/7/work');
+    expect(link.textContent?.trim()).toBe('量の乖離を確認する');
+  });
+
   it('links to work with structured unrecorded CTA when only master selections are missing', () => {
     fixture.componentInstance.summary = {
       unrecordedCount: 0,
       actionRequiredCount: 0,
-      structuredUnrecordedCount: 2
+      structuredUnrecordedCount: 2,
+      amountVarianceCount: 0
     };
     fixture.detectChanges();
 
@@ -72,7 +107,8 @@ describe('PlanLearnInputGapSummaryComponent', () => {
     fixture.componentInstance.summary = {
       unrecordedCount: 1,
       actionRequiredCount: 0,
-      structuredUnrecordedCount: 0
+      structuredUnrecordedCount: 0,
+      amountVarianceCount: 0
     };
     fixture.componentInstance.highlightItemId = 42;
     fixture.detectChanges();
@@ -90,7 +126,8 @@ describe('PlanLearnInputGapSummaryComponent', () => {
     fixture.componentInstance.summary = {
       unrecordedCount: 0,
       actionRequiredCount: 2,
-      structuredUnrecordedCount: 0
+      structuredUnrecordedCount: 0,
+      amountVarianceCount: 0
     };
     fixture.detectChanges();
 
