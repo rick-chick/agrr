@@ -30,12 +30,40 @@ fn sample_item_with_stage(
     stage_order: Option<i32>,
     stage_name: Option<&str>,
 ) -> TaskScheduleTimelineScheduleItemRead {
+    sample_item_with_work_record(
+        id,
+        scheduled_date,
+        actual_date,
+        gdd_trigger,
+        gdd_at_actual,
+        status,
+        stage_order,
+        stage_name,
+        None,
+        None,
+    )
+}
+
+fn sample_item_with_work_record(
+    id: i64,
+    scheduled_date: Option<&str>,
+    actual_date: Option<&str>,
+    gdd_trigger: Option<f64>,
+    gdd_at_actual: Option<f64>,
+    status: &str,
+    stage_order: Option<i32>,
+    stage_name: Option<&str>,
+    fertilize_id: Option<i64>,
+    pesticide_id: Option<i64>,
+) -> TaskScheduleTimelineScheduleItemRead {
     let work_records = actual_date
         .map(|date| vec![TaskScheduleTimelineWorkRecordSummaryRead {
             id: id * 10,
             actual_date: date.to_string(),
             notes: None,
             gdd_at_actual,
+            fertilize_id,
+            pesticide_id,
         }])
         .unwrap_or_default();
 
@@ -66,6 +94,13 @@ fn sample_item_with_stage(
 }
 
 fn sample_snapshot(items: Vec<TaskScheduleTimelineScheduleItemRead>) -> TaskScheduleTimelineSnapshot {
+    sample_snapshot_with_category("general", items)
+}
+
+fn sample_snapshot_with_category(
+    category: &str,
+    items: Vec<TaskScheduleTimelineScheduleItemRead>,
+) -> TaskScheduleTimelineSnapshot {
     TaskScheduleTimelineSnapshot {
         plan: TaskScheduleTimelinePlanRead {
             id: 1,
@@ -91,7 +126,7 @@ fn sample_snapshot(items: Vec<TaskScheduleTimelineScheduleItemRead>) -> TaskSche
             cultivation_end_date: None,
             task_options: vec![],
             schedules: vec![TaskScheduleTimelineScheduleRead {
-                category: "general".into(),
+                category: category.into(),
                 items,
             }],
         }],
@@ -252,4 +287,89 @@ fn stage_gdd_calibration_proposals_aggregate_by_crop_and_stage() {
     assert_eq!(2, proposals[0].recorded_item_count);
     assert_eq!(2, proposals[1].stage_order);
     assert_eq!(5.0, proposals[1].average_gdd_delta);
+}
+
+#[test]
+fn summary_counts_structured_unrecorded_for_fertilizer_and_pest_control_only() {
+    let snapshot = TaskScheduleTimelineSnapshot {
+        plan: sample_snapshot(vec![]).plan,
+        fields: vec![TaskScheduleTimelineFieldRead {
+            id: 10,
+            name: "F1".into(),
+            crop_name: "Tomato".into(),
+            area_sqm: 50.0,
+            field_cultivation_id: 100,
+            crop_id: 42,
+            cultivation_start_date: None,
+            cultivation_end_date: None,
+            task_options: vec![],
+            schedules: vec![
+                TaskScheduleTimelineScheduleRead {
+                    category: "fertilizer".into(),
+                    items: vec![
+                        sample_item_with_work_record(
+                            1,
+                            Some("2026-06-01"),
+                            Some("2026-06-02"),
+                            None,
+                            None,
+                            "planned",
+                            None,
+                            None,
+                            None,
+                            None,
+                        ),
+                        sample_item_with_work_record(
+                            2,
+                            Some("2026-06-03"),
+                            Some("2026-06-04"),
+                            None,
+                            None,
+                            "planned",
+                            None,
+                            None,
+                            Some(5),
+                            None,
+                        ),
+                    ],
+                },
+                TaskScheduleTimelineScheduleRead {
+                    category: "pest_control".into(),
+                    items: vec![sample_item_with_work_record(
+                        3,
+                        Some("2026-06-05"),
+                        Some("2026-06-06"),
+                        None,
+                        None,
+                        "planned",
+                        None,
+                        None,
+                        None,
+                        None,
+                    )],
+                },
+                TaskScheduleTimelineScheduleRead {
+                    category: "general".into(),
+                    items: vec![sample_item_with_work_record(
+                        4,
+                        Some("2026-06-07"),
+                        Some("2026-06-08"),
+                        None,
+                        None,
+                        "planned",
+                        None,
+                        None,
+                        None,
+                        None,
+                    )],
+                },
+            ],
+        }],
+        scheduled_dates: vec![Date::parse("2026-06-02", &time::format_description::well_known::Iso8601::DATE)
+            .expect("date")],
+    };
+
+    let summary = PlanVsActualMapper::summary_from_snapshot(&snapshot, 5);
+
+    assert_eq!(2, summary.structured_unrecorded_count);
 }

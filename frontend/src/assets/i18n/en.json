@@ -1743,7 +1743,9 @@
         "title": "Input gap summary",
         "unrecorded": "Not recorded",
         "action_required": "Action required",
-        "work_cta": "Record unrecorded tasks"
+        "structured_unrecorded": "Unstructured input",
+        "work_cta": "Record unrecorded tasks",
+        "structured_work_cta": "Fix missing master selections"
       },
       "proposal_confidence": {
         "high": "High confidence",
@@ -1853,20 +1855,20 @@
           "planned_amount": "Planned amount",
           "planned_amount_empty": "No planned amount",
           "actual_amount": "Actual amount",
-          "master_label": "Fertilizer used",
-          "master_placeholder": "Select fertilizer (optional)",
+          "master_add_link": "Register a fertilizer",
           "master_empty": "No fertilizers registered yet",
-          "master_add_link": "Register a fertilizer"
+          "master_label": "Fertilizer used",
+          "master_placeholder": "Select fertilizer (optional)"
         },
         "pest_control": {
           "planned_amount": "Planned spray amount",
           "planned_amount_empty": "No planned spray amount",
           "actual_amount": "Actual spray amount",
-          "master_label": "Pesticide used",
-          "master_placeholder": "Select pesticide (optional)",
-          "master_empty": "No pesticides registered for this crop",
           "master_add_link": "Register a pesticide",
-          "master_crop_required": "Select a field to choose pesticides for that crop"
+          "master_crop_required": "Select a field to choose pesticides for that crop",
+          "master_empty": "No pesticides registered for this crop",
+          "master_label": "Pesticide used",
+          "master_placeholder": "Select pesticide (optional)"
         },
         "harvest": {
           "yield_amount": "Harvest yield",

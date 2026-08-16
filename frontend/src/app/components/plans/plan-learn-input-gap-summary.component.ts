@@ -34,15 +34,19 @@ import { buildPlanWorkDeepLinkQuery } from '../../domain/plans/build-plan-work-d
           <dt>{{ 'plans.learn.input_gap.action_required' | translate }}</dt>
           <dd>{{ summary.actionRequiredCount }}</dd>
         </div>
+        <div>
+          <dt>{{ 'plans.learn.input_gap.structured_unrecorded' | translate }}</dt>
+          <dd>{{ summary.structuredUnrecordedCount }}</dd>
+        </div>
       </dl>
 
-      @if (summary.unrecordedCount > 0) {
+      @if (summary.unrecordedCount > 0 || summary.structuredUnrecordedCount > 0) {
         <a
           class="plan-learn-input-gap-summary__work-link"
           [routerLink]="['/plans', planId, 'work']"
           [queryParams]="workDeepLinkQuery"
         >
-          {{ 'plans.learn.input_gap.work_cta' | translate }}
+          {{ workCtaKey | translate }}
         </a>
       }
     }
@@ -59,5 +63,12 @@ export class PlanLearnInputGapSummaryComponent {
 
   get workDeepLinkQuery(): Record<string, number> | null {
     return buildPlanWorkDeepLinkQuery(this.highlightItemId);
+  }
+
+  get workCtaKey(): string {
+    if ((this.summary?.unrecordedCount ?? 0) > 0) {
+      return 'plans.learn.input_gap.work_cta';
+    }
+    return 'plans.learn.input_gap.structured_work_cta';
   }
 }

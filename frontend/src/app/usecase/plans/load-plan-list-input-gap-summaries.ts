@@ -7,7 +7,11 @@ import {
 import type { PlanSummary } from '../../domain/plans/plan-summary';
 import { PlanGateway } from './plan-gateway';
 
-const ZERO_GAP: PlanInputGapSummary = { unrecordedCount: 0, actionRequiredCount: 0 };
+const ZERO_GAP: PlanInputGapSummary = {
+  unrecordedCount: 0,
+  actionRequiredCount: 0,
+  structuredUnrecordedCount: 0
+};
 
 export function loadPlanListInputGapSummaries(
   plans: PlanSummary[],

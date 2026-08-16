@@ -7,6 +7,7 @@ use crate::cultivation_plan::dtos::plan_vs_actual::{
 };
 use crate::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
     TaskScheduleTimelineScheduleItemRead, TaskScheduleTimelineSnapshot,
+    TaskScheduleTimelineWorkRecordSummaryRead,
 };
 use crate::cultivation_plan::policies::blueprint_timing_adjustment_policy::qualifies_for_proposal;
 use crate::cultivation_plan::policies::plan_variance_threshold_policy::exceedance_kind;
@@ -63,6 +64,8 @@ impl PlanVsActualMapper {
             .filter(|row| row.scheduled_date.is_some() && row.actual_date.is_none())
             .count() as i64;
 
+        let structured_unrecorded_count = structured_unrecorded_count_from_snapshot(snapshot);
+
         let categories = category_summaries(&items);
         let top_variance_items = top_variance(&items, top_n);
         let stage_gdd_calibration_proposals =
@@ -74,6 +77,7 @@ impl PlanVsActualMapper {
         PlanVsActualSummaryRead {
             plan_id: snapshot.plan.id,
             unrecorded_count,
+            structured_unrecorded_count,
             categories,
             top_variance_items,
             stage_gdd_calibration_proposals,
@@ -224,6 +228,43 @@ impl PlanVsActualMapper {
 
 fn counts_toward_summary(item: &TaskScheduleTimelineScheduleItemRead) -> bool {
     item.status != "skipped" && item.cancelled_at.is_none()
+}
+
+fn structured_unrecorded_count_from_snapshot(snapshot: &TaskScheduleTimelineSnapshot) -> i64 {
+    let mut count = 0_i64;
+    for field in &snapshot.fields {
+        for schedule in &field.schedules {
+            if !is_structured_input_category(schedule.category.as_str()) {
+                continue;
+            }
+            for item in &schedule.items {
+                if !counts_toward_summary(item) {
+                    continue;
+                }
+                for record in &item.work_records {
+                    if is_structured_unrecorded_work_record(schedule.category.as_str(), record) {
+                        count += 1;
+                    }
+                }
+            }
+        }
+    }
+    count
+}
+
+fn is_structured_input_category(category: &str) -> bool {
+    matches!(category, "fertilizer" | "pest_control")
+}
+
+fn is_structured_unrecorded_work_record(
+    category: &str,
+    record: &TaskScheduleTimelineWorkRecordSummaryRead,
+) -> bool {
+    match category {
+        "fertilizer" => record.fertilize_id.is_none(),
+        "pest_control" => record.pesticide_id.is_none(),
+        _ => false,
+    }
 }
 
 fn primary_actual_date(item: &TaskScheduleTimelineScheduleItemRead) -> Option<String> {

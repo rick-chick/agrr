@@ -24,6 +24,7 @@ fn counts_unrecorded_and_threshold_items() {
     let summary = PlanVsActualSummaryRead {
         plan_id: 7,
         unrecorded_count: 3,
+        structured_unrecorded_count: 0,
         categories: vec![],
         top_variance_items: vec![],
         stage_gdd_calibration_proposals: vec![],
