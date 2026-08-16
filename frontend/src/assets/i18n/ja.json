@@ -1955,6 +1955,56 @@
       "view_my_plans": "マイプランを見る",
       "chart_title": "気象データと作物成長分析",
       "loading_data": "データを読み込んでいます...",
+      "chart": {
+        "temperature_section": "日別気温（°C）",
+        "gdd_section": "GDD推移（日別・積算・要求）",
+        "temp_max": "最高気温",
+        "temp_mean": "平均気温",
+        "temp_min": "最低気温",
+        "temp_chart_title": "日別気温推移（適正温度帯・限界温度帯表示）",
+        "optimal_zone": "🟢 適正温度帯",
+        "stress_zone": "🟠 限界温度帯（ストレス）",
+        "stage_optimal_label": "適正:",
+        "daily_gdd": "日別GDD",
+        "cumulative_gdd": "積算GDD",
+        "required_gdd": "要求GDD（ステップ）",
+        "gdd_chart_title": "GDD（積算温度）推移",
+        "date_label": "日付",
+        "cumulative_required_label": "積算GDD / 要求GDD",
+        "temp_axis_label": "気温 (°C)"
+      },
+      "header": {
+        "title": "計画完成",
+        "badge": "完成",
+        "region": "地域",
+        "total_area": "総面積",
+        "field_count": "圃場数",
+        "field_count_value": "{{count}}圃場",
+        "total_cost": "総コスト",
+        "total_revenue": "総収益",
+        "total_profit": "総利益",
+        "subtitle": "{{count}}圃場の最適な栽培期間が決定しました"
+      },
+      "gantt": {
+        "title": "栽培スケジュール",
+        "month_format": "{{month}}月"
+      },
+      "crop_palette": {
+        "title": "作物を追加",
+        "toggle": "パネルを開閉",
+        "hint": "作物をドラッグしてスケジュールに追加できます",
+        "in_use": "使用中"
+      },
+      "detail": {
+        "title": "栽培詳細",
+        "loading": "詳細を読み込んでいます...",
+        "loading_data": "データを読み込んでいます...",
+        "tabs": {
+          "info": "基本情報",
+          "temperature": "気温分析",
+          "stages": "ステージ"
+        }
+      },
       "private_value_preview": {
         "title": "保存後に使えるプライベート機能",
         "lead": "マイプランに保存すると、天候変化への対応から学習・作業記録まで一気通貫で進められます。",
@@ -2005,56 +2055,6 @@
         },
         "completed": "完了",
         "after_save_hint": "保存後に利用できます"
-      },
-      "chart": {
-        "temperature_section": "日別気温（°C）",
-        "gdd_section": "GDD推移（日別・積算・要求）",
-        "temp_max": "最高気温",
-        "temp_mean": "平均気温",
-        "temp_min": "最低気温",
-        "temp_chart_title": "日別気温推移（適正温度帯・限界温度帯表示）",
-        "optimal_zone": "🟢 適正温度帯",
-        "stress_zone": "🟠 限界温度帯（ストレス）",
-        "stage_optimal_label": "適正:",
-        "daily_gdd": "日別GDD",
-        "cumulative_gdd": "積算GDD",
-        "required_gdd": "要求GDD（ステップ）",
-        "gdd_chart_title": "GDD（積算温度）推移",
-        "date_label": "日付",
-        "cumulative_required_label": "積算GDD / 要求GDD",
-        "temp_axis_label": "気温 (°C)"
-      },
-      "header": {
-        "title": "計画完成",
-        "badge": "完成",
-        "region": "地域",
-        "total_area": "総面積",
-        "field_count": "圃場数",
-        "field_count_value": "{{count}}圃場",
-        "total_cost": "総コスト",
-        "total_revenue": "総収益",
-        "total_profit": "総利益",
-        "subtitle": "{{count}}圃場の最適な栽培期間が決定しました"
-      },
-      "gantt": {
-        "title": "栽培スケジュール",
-        "month_format": "{{month}}月"
-      },
-      "crop_palette": {
-        "title": "作物を追加",
-        "toggle": "パネルを開閉",
-        "hint": "作物をドラッグしてスケジュールに追加できます",
-        "in_use": "使用中"
-      },
-      "detail": {
-        "title": "栽培詳細",
-        "loading": "詳細を読み込んでいます...",
-        "loading_data": "データを読み込んでいます...",
-        "tabs": {
-          "info": "基本情報",
-          "temperature": "気温分析",
-          "stages": "ステージ"
-        }
       }
     },
     "show": {
@@ -3345,6 +3345,7 @@
     "work_log_overdue_aria": "作業記録、期限超過 {{count}} 件",
     "menu_masters": "マスタデータ",
     "new_plan": "作付け計画を作成",
+    "entry_schedule": "作付け時期の目安",
     "reports": "レポート",
     "menu_more": "その他",
     "home": "ホーム",
@@ -3369,8 +3370,7 @@
     "language": "言語",
     "lang_ja": "日本語",
     "lang_en": "English",
-    "lang_in": "हिन्दी",
-    "entry_schedule": "作付け時期の目安"
+    "lang_in": "हिन्दी"
   },
   "footer": {
     "about": "AGRRについて",
@@ -3385,8 +3385,8 @@
         "title": "🌱 農業をもっとスマートに",
         "subtitle_html": "気象とGDDで、作付け計画を可視化。",
         "cta_scroll_demo": "操作してみる",
-        "cta_footer_link": "計画を作成",
-        "cta_entry_schedule": "作付け時期の目安を見る"
+        "cta_entry_schedule": "作付け時期の目安を見る",
+        "cta_footer_link": "計画を作成"
       },
       "demo": {
         "hints_aria": "操作のヒント",
