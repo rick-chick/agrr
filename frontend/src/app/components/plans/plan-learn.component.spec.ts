@@ -12,6 +12,7 @@ import { LoadPlanVsActualSummaryUseCase } from '../../usecase/plans/load-plan-vs
 import { PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { LoadStageGddCalibrationProposalsUseCase } from '../../usecase/plans/load-stage-gdd-calibration-proposals.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
+import { StartLearnOneClickReoptimizeUseCase } from '../../usecase/plans/start-learn-one-click-reoptimize.usecase';
 import { PlanLearnComponent } from './plan-learn.component';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import {
@@ -125,6 +126,10 @@ describe('PlanLearnComponent', () => {
             useValue: stageGddUseCase
           },
           { provide: LoadPlanLearnCarryoverUseCase, useValue: carryoverUseCase },
+          {
+            provide: StartLearnOneClickReoptimizeUseCase,
+            useValue: { execute: vi.fn() }
+          },
           PlanLearnPresenter
         ]
       }
@@ -147,7 +152,8 @@ describe('PlanLearnComponent', () => {
     presenter = fixture.debugElement.injector.get(PlanLearnPresenter);
   });
 
-  it('always shows reorganization checklist on learn page', async () => {
+  it('shows reorganization checklist when master update flow is active', async () => {
+    markStageGddProposalAppliedPending(7, { cropId: 1, stageId: 2 });
     fixture.detectChanges();
     presenter.present({ schedule: loadedSchedule, loadGeneration: 0 });
     presenter.presentVarianceSummary({
@@ -165,6 +171,7 @@ describe('PlanLearnComponent', () => {
     expect(fixture.nativeElement.querySelector('app-plan-learn-master-update-next-steps')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Next steps after master update');
     expect(fixture.nativeElement.textContent).toContain('Verify placement');
+    expect(fixture.nativeElement.querySelector('app-plan-learn-one-click-reoptimize-cta')).toBeTruthy();
   });
 
   it('renders amount_group_summaries and links to bp_amount proposal anchors', async () => {
@@ -717,6 +724,10 @@ describe('PlanLearnComponent post_master follow-up', () => {
             useValue: stageGddUseCase
           },
           { provide: LoadPlanLearnCarryoverUseCase, useValue: carryoverUseCase },
+          {
+            provide: StartLearnOneClickReoptimizeUseCase,
+            useValue: { execute: vi.fn() }
+          },
           PlanLearnPresenter
         ]
       }

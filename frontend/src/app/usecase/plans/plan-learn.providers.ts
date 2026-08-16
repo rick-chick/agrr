@@ -18,6 +18,9 @@ import { LoadBlueprintTimingAdjustmentProposalsUseCase } from './load-blueprint-
 import { LOAD_BLUEPRINT_TIMING_ADJUSTMENT_PROPOSALS_OUTPUT_PORT } from './load-blueprint-timing-adjustment-proposals.output-port';
 import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.usecase';
 import { loadMergedLearnProposals } from './load-merged-learn-proposals';
+import { GanttPlanApiGateway } from '../../adapters/plans/gantt-plan-api.gateway';
+import { GANTT_PLAN_GATEWAY } from './gantt-plan-gateway';
+import { StartLearnOneClickReoptimizeUseCase } from './start-learn-one-click-reoptimize.usecase';
 
 export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
   PlanLearnPresenter,
@@ -27,6 +30,9 @@ export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
   LoadBlueprintAmountAdjustmentProposalsUseCase,
   LoadStageGddCalibrationProposalsUseCase,
   LoadPlanLearnCarryoverUseCase,
+  StartLearnOneClickReoptimizeUseCase,
+  GanttPlanApiGateway,
+  { provide: GANTT_PLAN_GATEWAY, useClass: GanttPlanApiGateway },
   { provide: LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanLearnPresenter },
   {
     provide: LOAD_PLAN_VS_ACTUAL_SUMMARY_OUTPUT_PORT,

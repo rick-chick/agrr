@@ -8,17 +8,23 @@ import {
   hydrateLearnOrchestrationProgress
 } from '../../domain/plans/learn-master-update-orchestration';
 import { storeLearnReorganizePipelineAutoChain } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
+import { StartLearnOneClickReoptimizeUseCase } from '../../usecase/plans/start-learn-one-click-reoptimize.usecase';
 
 describe('PlanLearnPipelineStatusComponent', () => {
   let fixture: ComponentFixture<PlanLearnPipelineStatusComponent>;
   let router: Router;
+  let oneClickUseCase: { execute: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     clearLearnOrchestrationProgressCache();
+    oneClickUseCase = { execute: vi.fn((dto) => dto.onSuccess?.()) };
 
     await TestBed.configureTestingModule({
       imports: [PlanLearnPipelineStatusComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([])]
+      providers: [
+        provideRouter([]),
+        { provide: StartLearnOneClickReoptimizeUseCase, useValue: oneClickUseCase }
+      ]
     }).compileComponents();
 
     const translate = TestBed.inject(TranslateService);
@@ -81,7 +87,7 @@ describe('PlanLearnPipelineStatusComponent', () => {
     expect(alert.textContent).toContain('Retry pipeline');
   });
 
-  it('retries pipeline from learn screen', () => {
+  it('retries pipeline via one-click skip-placement flow', () => {
     hydrateLearnOrchestrationProgress(7, {
       pipeline_active: true,
       current_phase: 'failed',
@@ -94,8 +100,9 @@ describe('PlanLearnPipelineStatusComponent', () => {
     ) as HTMLButtonElement;
     retryButton.click();
 
-    expect(router.navigate).toHaveBeenCalledWith(['/plans', 7], {
-      queryParams: { learningOrchestration: 'adjust' }
-    });
+    expect(oneClickUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 7 })
+    );
+    expect(router.navigate).toHaveBeenCalledWith(['/plans', 7, 'optimizing']);
   });
 });
