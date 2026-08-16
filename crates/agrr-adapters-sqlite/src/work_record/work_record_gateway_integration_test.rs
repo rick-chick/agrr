@@ -267,7 +267,7 @@ fn work_record_gateway_persists_fertilize_and_pesticide_ids() {
             seed.plan_id,
             created.id,
             &WorkRecordUpdateInput {
-                pesticide_id: Some(fertilize_id),
+                pesticide_id: Some(Some(fertilize_id)),
                 ..Default::default()
             },
             None,
