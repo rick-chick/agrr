@@ -2893,7 +2893,8 @@
         "title": "शीर्ष कार्य आवश्यक कार्य",
         "item": "{{farm}} · {{task}}",
         "open_work": "कार्य खोलें",
-        "open_learn": "अध्ययन खोलें"
+        "open_learn": "अध्ययन खोलें",
+        "weather_trigger_item": "{{farm}} · {{count}} मौसम ट्रिगर"
       }
     },
     "variance": {

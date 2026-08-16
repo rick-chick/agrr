@@ -6,7 +6,7 @@ use crate::state::AppState;
 use agrr_adapters_sqlite::{
     CultivationPlanPrivateReadSqliteGateway, CultivationPlanPrivateSnapshotReadSqliteGateway,
     CultivationPlanSqliteGateway, PlanVarianceLearningSqliteGateway, UserLookupSqliteGateway,
-    UserOrganizationScopeSqliteGateway,
+    UserOrganizationScopeSqliteGateway, WeatherRescheduleProposalReadSqliteGateway,
 };
 use agrr_domain::shared::dtos::Error;
 use agrr_domain::work_record::dtos::VariancePortfolioRow;
@@ -41,6 +41,7 @@ struct VariancePortfolioItem {
     threshold_exceeded_count: i64,
     days_threshold_exceeded_count: i64,
     carryover_not_imported: bool,
+    weather_trigger_count: i64,
 }
 
 struct ListPresenter {
@@ -62,6 +63,7 @@ impl VariancePortfolioOutputPort for ListPresenter {
                 threshold_exceeded_count: row.threshold_exceeded_count,
                 days_threshold_exceeded_count: row.days_threshold_exceeded_count,
                 carryover_not_imported: row.carryover_not_imported,
+                weather_trigger_count: row.weather_trigger_count,
             })
             .collect();
         self.body = Some(Ok(payload));
@@ -88,6 +90,10 @@ async fn list_variance_portfolio(
     let private_snapshot = CultivationPlanPrivateSnapshotReadSqliteGateway::new(pool.clone());
     let variance_learning = PlanVarianceLearningSqliteGateway::new(pool.clone());
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let weather_read = WeatherRescheduleProposalReadSqliteGateway::new(
+        pool.clone(),
+        state.predicted_weather.store.clone(),
+    );
     let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
 
@@ -104,6 +110,7 @@ async fn list_variance_portfolio(
         &logger,
         &user_lookup,
         &scope_gateway,
+        &weather_read,
     );
 
     interactor

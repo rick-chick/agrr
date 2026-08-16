@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { loadVariancePortfolioAttentionItems } from './load-variance-portfolio-attention-items';
 import type { VariancePortfolioRow } from '../../domain/work-variance-portfolio/variance-portfolio-row';
+import type { WorkHubVarianceAttentionItem } from '../../domain/work-hub/build-work-hub-attention-list';
 
 function row(overrides: Partial<VariancePortfolioRow> = {}): VariancePortfolioRow {
   return {
@@ -17,6 +18,7 @@ function row(overrides: Partial<VariancePortfolioRow> = {}): VariancePortfolioRo
     thresholdExceededCount: 0,
     daysThresholdExceededCount: 0,
     carryoverNotImported: false,
+    weatherTriggerCount: 0,
     ...overrides
   };
 }
@@ -74,8 +76,8 @@ describe('loadVariancePortfolioAttentionItems', () => {
 
     expect(planGateway.getPlanVsActualSummary).toHaveBeenCalledTimes(2);
     expect(attention.items).toHaveLength(2);
-    expect(attention.items[0]?.taskName).toBe('Plan B task');
-    expect(attention.items[1]?.taskName).toBe('Plan A task');
+    expect((attention.items[0] as WorkHubVarianceAttentionItem).taskName).toBe('Plan B task');
+    expect((attention.items[1] as WorkHubVarianceAttentionItem).taskName).toBe('Plan A task');
   });
 
   it('skips plan gateway calls when no rows need attention', async () => {

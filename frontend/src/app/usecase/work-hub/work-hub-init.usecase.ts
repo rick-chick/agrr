@@ -143,7 +143,11 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
                         otherCounts.get(farms[0].farmId) ?? 0
                       )
                     ];
-                    return loadHubFarmAttentionItems(farmsForSummary, this.planGateway).pipe(
+                    return loadHubFarmAttentionItems(
+                      farmsForSummary,
+                      this.planGateway,
+                      portfolioRows
+                    ).pipe(
                       map((attentionList) => ({
                         farms: enrichedFarms,
                         attentionList,
@@ -178,7 +182,11 @@ export class WorkHubInitUseCase implements WorkHubInitInputPort {
                   false
                 ),
                 varianceByFarmId: loadHubFarmPlanVarianceData(farmsForSummary, this.planGateway),
-                attentionList: loadHubFarmAttentionItems(farmsForSummary, this.planGateway)
+                attentionList: loadHubFarmAttentionItems(
+                  farmsForSummary,
+                  this.planGateway,
+                  portfolioRows
+                )
               }).pipe(
                 map(({ countsByFarmId, varianceByFarmId, attentionList }) => ({
                   farms: applyOtherVariancePlanCounts(

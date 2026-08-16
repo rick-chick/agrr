@@ -111,17 +111,19 @@ import {
           </h2>
           <ul class="work-variance__attention-list-items" role="list">
             @for (item of control.attentionList!.items; track item.itemId) {
-              <li class="work-variance__attention-list-item">
-                <a
-                  class="work-variance__attention-list-link"
-                  [routerLink]="['/plans', item.planId, item.linkTarget]"
-                >
-                  {{
-                    'work.variance.attention_list.item'
-                      | translate: { farm: item.farmName, task: item.taskName }
-                  }}
-                </a>
-              </li>
+              @if (item.kind === 'variance') {
+                <li class="work-variance__attention-list-item">
+                  <a
+                    class="work-variance__attention-list-link"
+                    [routerLink]="['/plans', item.planId, item.linkTarget]"
+                  >
+                    {{
+                      'work.variance.attention_list.item'
+                        | translate: { farm: item.farmName, task: item.taskName }
+                    }}
+                  </a>
+                </li>
+              }
             }
           </ul>
         </section>

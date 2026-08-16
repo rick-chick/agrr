@@ -3206,7 +3206,8 @@
         "title": "要対応タスク（上位）",
         "item": "{{farm}} · {{task}}",
         "open_work": "作業へ",
-        "open_learn": "振り返りへ"
+        "open_learn": "振り返りへ",
+        "weather_trigger_item": "{{farm}} · 天候トリガー {{count}} 件"
       }
     },
     "variance": {

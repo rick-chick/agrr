@@ -16,7 +16,8 @@ describe('WorkVarianceInitUseCase', () => {
         gddDelayCount: 0,
         thresholdExceededCount: 1,
         daysThresholdExceededCount: 1,
-        carryoverNotImported: false
+        carryoverNotImported: false,
+            weatherTriggerCount: 0
       }
     ];
     const outputPort = { present: vi.fn(), onError: vi.fn() };
@@ -69,7 +70,8 @@ describe('WorkVarianceInitUseCase', () => {
         gddDelayCount: 0,
         thresholdExceededCount: 0,
         daysThresholdExceededCount: 0,
-        carryoverNotImported: false
+        carryoverNotImported: false,
+            weatherTriggerCount: 0
       },
       {
         farmId: 2,
@@ -81,7 +83,8 @@ describe('WorkVarianceInitUseCase', () => {
         gddDelayCount: 0,
         thresholdExceededCount: 0,
         daysThresholdExceededCount: 0,
-        carryoverNotImported: false
+        carryoverNotImported: false,
+            weatherTriggerCount: 0
       }
     ];
     const outputPort = { present: vi.fn(), onError: vi.fn() };
