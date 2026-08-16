@@ -61,3 +61,39 @@
   margin: var(--space-md) 0 var(--space-sm);
   font-size: 1rem;
 }
+
+.crop-setup-proposal-import__handoff-notice {
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-accent-muted, #eef6ff);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.crop-setup-proposal-import__blueprint-preview {
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+  list-style: none;
+}
+
+.crop-setup-proposal-import__blueprint-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: baseline;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+
+.crop-setup-proposal-import__blueprint-row--highlight {
+  border-color: var(--color-primary, #2563eb);
+  background: var(--color-surface-accent-muted, #eef6ff);
+  font-weight: 600;
+}
+
+.crop-setup-proposal-import__blueprint-row-stage {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}

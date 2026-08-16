@@ -414,6 +414,18 @@ article.item-card.blueprint-card {
   align-items: start;
 }
 
+.blueprint-stage-lane--handoff-highlight .blueprint-stage-lane__label {
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-accent-muted, #eef6ff);
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.blueprint-stage-lane--handoff-highlight .blueprint-stage-lane__name {
+  font-weight: 600;
+}
+
 @media (min-width: 640px) {
   .blueprint-stage-lane {
     grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);

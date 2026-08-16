@@ -44,6 +44,9 @@ const translations = {
       preview_button: 'Preview',
       previewing: 'Validating…',
       preview_title: 'Normalized preview',
+      handoff_stage_highlight_notice: 'Stage {{stageOrder}} highlighted.',
+      handoff_stage_highlight_list_label: 'Blueprint rows',
+      handoff_stage_order_label: 'Stage order {{stageOrder}}',
       validation_errors_title: 'Validation errors',
       apply_button: 'Apply to crop',
       applying: 'Applying…',
@@ -172,6 +175,59 @@ describe('CropSetupProposalImportComponent', () => {
     expect(component.control.phase).toBe('preview');
     expect(fixture.nativeElement.textContent).toContain('Normalized preview');
     expect(fixture.nativeElement.querySelector('.crop-setup-proposal-import__preview')).toBeTruthy();
+  });
+
+  it('highlights handoff target stage_order blueprint rows in preview', () => {
+    storeLearnBpAmountApplyContext(7, {
+      planId: 7,
+      cropId: 42,
+      cropName: 'Tomato',
+      category: 'fertilizer',
+      taskType: 'fertilize',
+      stageOrder: 1
+    });
+    component.fromPlanId = 7;
+    component.handoffHighlightStageOrder = 1;
+    component.control = {
+      ...component.control,
+      loading: false,
+      cropName: 'Tomato',
+      jsonInput: JSON.stringify({
+        intent: 'blueprint_amount_patch',
+        stages: [],
+        agricultural_tasks: [],
+        task_schedule_blueprints: [
+          { blueprint_id: 10, stage_order: 1, stage_name: '育苗', task_type: 'fertilize' },
+          { blueprint_id: 11, stage_order: 2, stage_name: '定植', task_type: 'fertilize' }
+        ]
+      }),
+      phase: 'preview',
+      normalizedPreview: {
+        intent: 'blueprint_amount_patch',
+        stages: [],
+        agricultural_tasks: [],
+        task_schedule_blueprints: [
+          { blueprint_id: 10, stage_order: 1, stage_name: '育苗', task_type: 'fertilize' },
+          { blueprint_id: 11, stage_order: 2, stage_name: '定植', task_type: 'fertilize' }
+        ]
+      },
+      parsedProposal: {
+        intent: 'blueprint_amount_patch',
+        stages: [],
+        agricultural_tasks: [],
+        task_schedule_blueprints: [
+          { blueprint_id: 10, stage_order: 1, stage_name: '育苗', task_type: 'fertilize' },
+          { blueprint_id: 11, stage_order: 2, stage_name: '定植', task_type: 'fertilize' }
+        ]
+      }
+    };
+    fixture.detectChanges();
+
+    const highlighted = fixture.nativeElement.querySelectorAll(
+      '.crop-setup-proposal-import__blueprint-row--highlight'
+    );
+    expect(highlighted.length).toBe(1);
+    expect(fixture.nativeElement.textContent).toContain('Stage 1 highlighted.');
   });
 
   it('dry_run validation failure shows field errors', () => {
