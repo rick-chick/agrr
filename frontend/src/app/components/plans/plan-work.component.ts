@@ -54,6 +54,7 @@ import {
   type PestControlTaskKind,
   type WorkListSegment
 } from '../../domain/work-schedule/work-row-fertilizer';
+import { isHarvestWorkRow } from '../../domain/work-schedule/work-row-harvest';
 import type { WorkRecordAmountDiff } from '../../domain/work-schedule/work-record-amount-diff';
 
 const initialControl: PlanWorkViewState = {
@@ -380,6 +381,11 @@ const initialControl: PlanWorkViewState = {
               }}
             </span>
           }
+          @if (isHarvestRow(row)) {
+            <span class="plan-work__harvest-badge">
+              {{ 'plans.work.harvest_badge.label' | translate }}
+            </span>
+          }
           @if (amountDiffForRow(row); as amountDiff) {
             @if (amountDiffLabelForRow(amountDiff)) {
               <span
@@ -621,6 +627,10 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       return null;
     }
     return resolvePestControlTaskKind(row.item);
+  }
+
+  isHarvestRow(row: WorkDayListRowDto): boolean {
+    return isHarvestWorkRow(row);
   }
 
   amountDiffForRow(row: WorkDayListRowDto): WorkRecordAmountDiff | null {
