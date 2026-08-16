@@ -15,6 +15,7 @@ interface VariancePortfolioApiRow {
   threshold_exceeded_count: number;
   days_threshold_exceeded_count: number;
   carryover_not_imported: boolean;
+  weather_trigger_count: number;
 }
 
 @Injectable()
@@ -34,7 +35,8 @@ export class WorkVarianceApiGateway implements WorkVarianceGateway {
           gddDelayCount: row.gdd_delay_count,
           thresholdExceededCount: row.threshold_exceeded_count,
           daysThresholdExceededCount: row.days_threshold_exceeded_count,
-          carryoverNotImported: row.carryover_not_imported
+          carryoverNotImported: row.carryover_not_imported,
+          weatherTriggerCount: row.weather_trigger_count
         }))
       )
     );

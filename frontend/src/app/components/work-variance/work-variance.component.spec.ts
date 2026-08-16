@@ -120,7 +120,8 @@ describe('WorkVarianceComponent', () => {
             gddDelayCount: 0,
             thresholdExceededCount: 2,
             daysThresholdExceededCount: 2,
-            carryoverNotImported: false
+            carryoverNotImported: false,
+            weatherTriggerCount: 0
           }
         ],
         farmGroups: [
@@ -138,7 +139,8 @@ describe('WorkVarianceComponent', () => {
                 gddDelayCount: 0,
                 thresholdExceededCount: 2,
                 daysThresholdExceededCount: 2,
-                carryoverNotImported: false
+                carryoverNotImported: false,
+            weatherTriggerCount: 0
               }
             ]
           }
@@ -166,7 +168,7 @@ describe('WorkVarianceComponent', () => {
 
   it('applies farm filter via use case', () => {
     component.control = baseControl({
-      rows: [{ farmId: 1, farmName: 'Farm A', planId: 10, planYear: 2026, status: 'completed', unrecordedCount: 0, gddDelayCount: 0, thresholdExceededCount: 0, daysThresholdExceededCount: 0, carryoverNotImported: false }],
+      rows: [{ farmId: 1, farmName: 'Farm A', planId: 10, planYear: 2026, status: 'completed', unrecordedCount: 0, gddDelayCount: 0, thresholdExceededCount: 0, daysThresholdExceededCount: 0, carryoverNotImported: false, weatherTriggerCount: 0 }],
       filterOptions: { farms: [{ farmId: 1, farmName: 'Farm A' }], statuses: ['completed'], planYears: [2026] },
       portfolioSummary: {
         unrecordedCount: 0,

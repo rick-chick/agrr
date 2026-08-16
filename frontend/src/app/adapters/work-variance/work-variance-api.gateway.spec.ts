@@ -19,7 +19,8 @@ describe('WorkVarianceApiGateway', () => {
             gdd_delay_count: 1,
             threshold_exceeded_count: 3,
             days_threshold_exceeded_count: 4,
-            carryover_not_imported: true
+            carryover_not_imported: true,
+            weather_trigger_count: 2
           }
         ])
       )
@@ -40,7 +41,8 @@ describe('WorkVarianceApiGateway', () => {
         gddDelayCount: 1,
         thresholdExceededCount: 3,
         daysThresholdExceededCount: 4,
-        carryoverNotImported: true
+        carryoverNotImported: true,
+        weatherTriggerCount: 2
       }
     ]);
   });
