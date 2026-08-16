@@ -8,7 +8,8 @@ fn accepts_valid_statuses() {
     let mut updates = BTreeMap::new();
     updates.insert("stage_gdd:1:2".into(), "confirmed".into());
     updates.insert("bp_timing:3:general".into(), "dismissed".into());
-    updates.insert("bp_amount:42:fertilizer:fertilize".into(), "confirmed".into());
+    updates.insert("bp_amount:42:fertilizer:fertilize:1".into(), "confirmed".into());
+    updates.insert("bp_amount:42:fertilizer:fertilize:2".into(), "dismissed".into());
     assert!(validate_proposal_application_progress_updates(&updates).is_ok());
 }
 

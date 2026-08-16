@@ -5,9 +5,21 @@ use crate::cultivation_plan::policies::plan_variance_threshold_policy::amount_de
 /// Minimum recorded items required to emit a proposal.
 pub const MIN_RECORDED_ITEM_COUNT: i64 = 1;
 
-/// Proposal progress keys use the format `bp_amount:{crop_id}:{category}:{task_type}`.
-pub fn proposal_progress_key(crop_id: i64, category: &str, task_type: &str) -> String {
-    format!("bp_amount:{}:{}:{}", crop_id, category, task_type)
+/// Proposal progress keys use the format `bp_amount:{crop_id}:{category}:{task_type}:{stage_order}`.
+/// When `stage_order` is absent, the segment is `null` (aligned with frontend `bpAmountProposalProgressKey`).
+pub fn proposal_progress_key(
+    crop_id: i64,
+    category: &str,
+    task_type: &str,
+    stage_order: Option<i32>,
+) -> String {
+    let stage_segment = stage_order
+        .map(|order| order.to_string())
+        .unwrap_or_else(|| "null".to_string());
+    format!(
+        "bp_amount:{}:{}:{}:{}",
+        crop_id, category, task_type, stage_segment
+    )
 }
 
 /// Returns true when amount variance is large enough to suggest BP amount adjustment.
