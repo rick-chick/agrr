@@ -36,6 +36,7 @@ import {
   isAmountTrackedScheduleCategory,
   WorkRecordAmountDiff
 } from '../../domain/work-schedule/work-record-amount-diff';
+import { isHarvestTaskItem, isHarvestWorkRecord } from '../../domain/work-schedule/work-row-harvest';
 import {
   mapFormToCreateRequest,
   mapFormToUpdateRequest
@@ -91,6 +92,7 @@ const initialControl: WorkRecordSheetViewState = {
   form: emptyForm(),
   fieldOptions: [],
   scheduleCategory: null,
+  harvestContext: false,
   plannedAmount: '',
   plannedAmountUnit: '',
   climatePreview: emptyClimatePreview(),
@@ -282,13 +284,18 @@ const initialControl: WorkRecordSheetViewState = {
             </div>
           }
 
-          <div class="form-card__field form-card__field--row">
+          <div
+            class="form-card__field form-card__field--row"
+            [class.form-card__field--harvest-yield]="control.harvestContext"
+          >
             <div>
               <label for="wr-amount">
                 @if (isAmountTrackedScheduleCategory(control.scheduleCategory)) {
                   {{
                     'plans.work.sheet.' + control.scheduleCategory + '.actual_amount' | translate
                   }}
+                } @else if (control.harvestContext) {
+                  {{ 'plans.work.sheet.harvest.yield_amount' | translate }}
                 } @else {
                   {{ 'plans.work.sheet.amount' | translate }}
                 }
@@ -297,13 +304,28 @@ const initialControl: WorkRecordSheetViewState = {
                 id="wr-amount"
                 type="text"
                 name="amount"
+                class="work-record-sheet__yield-input"
+                [class.work-record-sheet__yield-input--emphasized]="control.harvestContext"
                 [(ngModel)]="control.form.amount"
                 (ngModelChange)="onAmountChanged()"
               />
             </div>
             <div>
-              <label for="wr-unit">{{ 'plans.work.sheet.amount_unit' | translate }}</label>
-              <input id="wr-unit" type="text" name="amount_unit" [(ngModel)]="control.form.amount_unit" />
+              <label for="wr-unit">
+                @if (control.harvestContext) {
+                  {{ 'plans.work.sheet.harvest.yield_unit' | translate }}
+                } @else {
+                  {{ 'plans.work.sheet.amount_unit' | translate }}
+                }
+              </label>
+              <input
+                id="wr-unit"
+                type="text"
+                name="amount_unit"
+                class="work-record-sheet__yield-input"
+                [class.work-record-sheet__yield-input--emphasized]="control.harvestContext"
+                [(ngModel)]="control.form.amount_unit"
+              />
             </div>
           </div>
 
@@ -527,13 +549,15 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   openFromItem(row: WorkDayListRowDto, options?: { fieldErrors?: Record<string, string[]> }): void {
     const { item, fieldName, cropName } = row;
     const scheduleCategory = resolveScheduleCategory(item.category);
+    const harvestContext = isHarvestTaskItem(item);
     const plannedAmount = item.amount ?? '';
     const plannedAmountUnit = item.amount_unit ?? '';
     this.control = {
       ...initialControl,
       mode: 'create-from-item',
-      showDetails: isAmountTrackedScheduleCategory(scheduleCategory),
+      showDetails: isAmountTrackedScheduleCategory(scheduleCategory) || harvestContext,
       scheduleCategory,
+      harvestContext,
       plannedAmount,
       plannedAmountUnit,
       fieldErrors: options?.fieldErrors ?? {},
@@ -581,6 +605,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       mode: 'edit',
       showDetails: true,
       scheduleCategory: null,
+      harvestContext: isHarvestWorkRecord(record),
       plannedAmount: '',
       plannedAmountUnit: '',
       existingPhotos: (record.photos ?? []).map((photo) => ({

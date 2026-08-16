@@ -1393,3 +1393,83 @@ describe('PlanWorkComponent pest control segment', () => {
     expect(fixture.nativeElement.textContent).toContain('天候: 低');
   });
 });
+
+describe('PlanWorkComponent harvest badge', () => {
+  let fixture: ComponentFixture<PlanWorkComponent>;
+  let component: PlanWorkComponent;
+
+  const harvestRow = mockRow({
+    item_id: 40,
+    name: '収穫',
+    category: 'general',
+    task_type: 'general',
+    details: {
+      stage: { name: '収穫期', order: 3 },
+      gdd: { trigger: '', tolerance: '' },
+      priority: 1,
+      weather_dependency: 'low',
+      time_per_sqm: '0',
+      amount: '',
+      amount_unit: '',
+      source: 'plan',
+      master: null,
+      history: { rescheduled_at: null, cancelled_at: null }
+    }
+  });
+
+  beforeEach(async () => {
+    const loadUseCase = { execute: vi.fn() };
+    const mockPresenter = {
+      setView: vi.fn(),
+      beginScheduleLoad: vi.fn(() => 1),
+      beginPageVarianceLoad: vi.fn(() => 2),
+      queueSaveImpactAfterSave: vi.fn(() => 1),
+      dismissSaveImpact: vi.fn()
+    };
+
+    TestBed.overrideComponent(PlanWorkComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
+          { provide: SkipTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: UpdateTaskScheduleItemUseCase, useValue: { execute: vi.fn() } },
+          { provide: CreateWorkRecordUseCase, useValue: { execute: vi.fn() } },
+          { provide: RegenerateTaskScheduleUseCase, useValue: { execute: vi.fn() } },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: { execute: vi.fn() } },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: { execute: vi.fn() } },
+          { provide: PlanWorkPresenter, useValue: mockPresenter },
+          { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanWorkComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([]), { provide: ActivatedRoute, useValue: createPlanRouteMock('7') }]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlanWorkComponent);
+    component = fixture.componentInstance;
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', ja as TranslationObject, true);
+    translate.use('ja');
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      overdue: [],
+      today: [harvestRow],
+      upcoming: []
+    };
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+  });
+
+  it('shows harvest badge on harvest task rows', () => {
+    const badge = fixture.nativeElement.querySelector('.plan-work__harvest-badge');
+    expect(badge?.textContent?.trim()).toBe('収穫');
+  });
+});

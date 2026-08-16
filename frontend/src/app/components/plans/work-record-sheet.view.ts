@@ -65,6 +65,8 @@ export interface WorkRecordSheetViewState {
   form: WorkRecordSheetFormState;
   fieldOptions: FieldSchedule[];
   scheduleCategory: WorkRecordScheduleCategory;
+  /** Harvest milestone v1: emphasize yield fields in the sheet. */
+  harvestContext: boolean;
   plannedAmount: string;
   plannedAmountUnit: string;
   climatePreview: WorkRecordClimatePreviewState;
