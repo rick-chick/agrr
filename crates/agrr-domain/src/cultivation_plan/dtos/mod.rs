@@ -38,6 +38,7 @@ pub(crate) mod regenerate_task_schedule_input;
 pub(crate) mod task_schedule_timeline;
 pub mod plan_vs_actual;
 pub mod weather_reschedule_proposal_context;
+pub mod weather_reschedule_proposal_preview_read;
 pub mod weather_reschedule_proposal_read;
 pub mod learn_handoff_state;
 pub mod plan_variance_learning_snapshot;
@@ -182,6 +183,9 @@ pub use plan_vs_actual::{
 };
 pub use weather_reschedule_proposal_read::{
     WeatherRescheduleProposalRead, WeatherRescheduleTriggerType,
+};
+pub use weather_reschedule_proposal_preview_read::{
+    WeatherRescheduleProposalAllocationSnapshot, WeatherRescheduleProposalPreviewRead,
 };
 pub use learn_handoff_state::{LearnHandoffStatePatch, LearnHandoffStateRead};
 pub use plan_variance_learning_snapshot::{
