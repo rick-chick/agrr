@@ -87,13 +87,13 @@ describe('resolveBpAmountProposalConfidence', () => {
     const highStage = resolveBpAmountProposalConfidence({
       planUnrecordedCount: 0,
       planActionRequiredCount: 0,
-      proposal: { ...bpAmountProposal, stageOrder: 1, recordedItemCount: 3 },
+      proposal: { ...bpAmountProposal, recordedItemCount: 3 },
       evidence: { exceedanceCount: 2, thresholdValue: 0.5, contributingRecords: [], totalRecordedCount: 3 }
     });
     const lowStage = resolveBpAmountProposalConfidence({
       planUnrecordedCount: 0,
       planActionRequiredCount: 0,
-      proposal: { ...bpAmountProposal, stageOrder: 2, recordedItemCount: 1 },
+      proposal: { ...bpAmountProposal, recordedItemCount: 1 },
       evidence: { exceedanceCount: 0, thresholdValue: 0.5, contributingRecords: [], totalRecordedCount: 1 }
     });
 
