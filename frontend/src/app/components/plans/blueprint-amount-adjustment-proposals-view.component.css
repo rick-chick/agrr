@@ -73,6 +73,12 @@
   font-weight: 600;
 }
 
+.blueprint-amount-adjustment__stage {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
 .blueprint-amount-adjustment__delta,
 .blueprint-amount-adjustment__meta {
   margin: var(--space-1) 0 0;

@@ -1660,7 +1660,8 @@
           "rationale": "{{count}} of {{total}} recorded tasks exceeded the amount threshold of {{threshold}}.",
           "records_title": "Contributing records (up to 5)",
           "record": "{{name}} — {{date}}"
-        }
+        },
+        "stage_label": "Stage {{order}} — {{name}}"
       },
       "application_progress": {
         "title": "Proposal application progress",
@@ -1835,6 +1836,19 @@
             "record": "{{name}} — {{date}}"
           }
         }
+      },
+      "amount_group_summaries": {
+        "title": "Stage amount summaries",
+        "lead": "Amount variance grouped by crop stage, category, and task type.",
+        "empty": "No amount summaries yet.",
+        "stage_column": "Stage",
+        "category_column": "Category",
+        "task_type_column": "Task type",
+        "delta_column": "Average delta",
+        "recorded_column": "Recorded",
+        "view_proposal": "View proposal",
+        "stage_label": "Stage {{order}} — {{name}}",
+        "stage_unassigned": "Unassigned stage"
       }
     },
     "work": {

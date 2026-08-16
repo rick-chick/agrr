@@ -2737,7 +2737,8 @@
           "rationale": "{{total}} 件の作業実績のうち {{count}} 件が量閾値 {{threshold}} を超過しています。",
           "records_title": "寄与実績（最大 5 件）",
           "record": "{{name}} — {{date}}"
-        }
+        },
+        "stage_label": "段階 {{order}} — {{name}}"
       },
       "application_progress": {
         "title": "提案適用の進捗",
@@ -2912,6 +2913,19 @@
             "record": "{{name}} — {{date}}"
           }
         }
+      },
+      "amount_group_summaries": {
+        "title": "段階別量サマリ",
+        "lead": "生育段階・カテゴリ・作業種別ごとの量乖離集計です。",
+        "empty": "量サマリはまだありません。",
+        "stage_column": "段階",
+        "category_column": "カテゴリ",
+        "task_type_column": "作業種別",
+        "delta_column": "平均乖離",
+        "recorded_column": "記録件数",
+        "view_proposal": "提案を見る",
+        "stage_label": "段階 {{order}} — {{name}}",
+        "stage_unassigned": "段階未割当"
       }
     },
     "work": {

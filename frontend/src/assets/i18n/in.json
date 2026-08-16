@@ -2087,7 +2087,8 @@
           "rationale": "{{total}} रिकॉर्ड में से {{count}} ने मात्रा सीमा {{threshold}} पार की।",
           "records_title": "योगदान रिकॉर्ड (अधिकतम 5)",
           "record": "{{name}} — {{date}}"
-        }
+        },
+        "stage_label": "चरण {{order}} — {{name}}"
       },
       "application_progress": {
         "title": "प्रस्ताव लागू करने की प्रगति",
@@ -2262,6 +2263,19 @@
             "record": "{{name}} — {{date}}"
           }
         }
+      },
+      "amount_group_summaries": {
+        "title": "चरण मात्रा सारांश",
+        "lead": "फसल चरण, श्रेणी और कार्य प्रकार के अनुसार मात्रा अंतर का सारांश।",
+        "empty": "अभी कोई मात्रा सारांश नहीं है।",
+        "stage_column": "चरण",
+        "category_column": "श्रेणी",
+        "task_type_column": "कार्य प्रकार",
+        "delta_column": "औसत अंतर",
+        "recorded_column": "रिकॉर्ड",
+        "view_proposal": "प्रस्ताव देखें",
+        "stage_label": "चरण {{order}} — {{name}}",
+        "stage_unassigned": "अनिर्दिष्ट चरण"
       }
     },
     "work": {
