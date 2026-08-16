@@ -30,6 +30,7 @@ mod plan_save_gateways;
 mod plan_save_persistence;
 mod plan_save_plan_copy;
 mod plan_variance_learning_gateway;
+mod weather_reschedule_proposals_gateway;
 mod plan_save_session;
 mod plan_save_support;
 
@@ -56,6 +57,7 @@ pub use plan_crop_gateway::CultivationPlanPlanCropSqliteGateway;
 pub use private_read_gateway::CultivationPlanPrivateReadSqliteGateway;
 pub use private_snapshot_read_gateway::CultivationPlanPrivateSnapshotReadSqliteGateway;
 pub use plan_variance_learning_gateway::PlanVarianceLearningSqliteGateway;
+pub use weather_reschedule_proposals_gateway::WeatherRescheduleProposalsSqliteGateway;
 pub use crop_rows_available_private_gateway::CropRowsAvailablePrivateSqliteGateway;
 pub use rest_plan_read::CultivationPlanRestPlanReadSqliteGateway;
 pub use rest_plan_read_domain_gateway::CultivationPlanRestPlanReadDomainSqliteGateway;

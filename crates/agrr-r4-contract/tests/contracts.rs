@@ -1052,6 +1052,50 @@ fn post_plan_variance_learning_import_other_user_returns_not_found() {
 }
 
 #[test]
+fn get_weather_reschedule_proposals_authenticated_returns_empty_array() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let path = format!("/api/v1/plans/{}/weather_reschedule_proposals", seed.plan_id);
+    let (status, body) = status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let proposals: Vec<serde_json::Value> =
+        serde_json::from_str(&body).expect("weather_reschedule_proposals JSON array");
+    assert!(proposals.is_empty(), "{body}");
+}
+
+#[test]
+fn get_weather_reschedule_proposals_unauthenticated_returns_401() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let path = format!("/api/v1/plans/{}/weather_reschedule_proposals", seed.plan_id);
+    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
+fn get_weather_reschedule_proposals_other_user_returns_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let seed = seed_work_record_plan(owner_id);
+
+    let path = format!("/api/v1/plans/{}/weather_reschedule_proposals", seed.plan_id);
+    let (owner_status, owner_body) =
+        status_and_body(client.get(&path, Some(&owner_session), &empty_headers()));
+    assert_eq!(200, owner_status, "{owner_body}");
+
+    let other_session = farmer_session_id(&client);
+    let (status, body) = status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
+    assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
 fn get_plan_variance_learning_includes_proposal_application_progress() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
