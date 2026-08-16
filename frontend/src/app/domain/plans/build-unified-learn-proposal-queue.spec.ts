@@ -1,4 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
+import type { BlueprintAmountAdjustmentProposal } from './blueprint-amount-adjustment-proposal';
+import { BLUEPRINT_AMOUNT_PATCH_INTENT } from './blueprint-amount-adjustment-proposal';
 import type { BlueprintTimingAdjustmentProposal } from './blueprint-timing-adjustment-proposal';
 import { BLUEPRINT_TIMING_PATCH_INTENT } from './blueprint-timing-adjustment-proposal';
 import {
@@ -16,7 +18,7 @@ import {
   clearLearnProposalApplicationProgressCache,
   markBpTimingProposalAppliedPending
 } from './learn-proposal-application-progress';
-import { DAYS_VARIANCE_THRESHOLD, GDD_VARIANCE_THRESHOLD } from './plan-variance-thresholds';
+import { DAYS_VARIANCE_THRESHOLD, FERTILIZER_AMOUNT_DELTA_THRESHOLD, GDD_VARIANCE_THRESHOLD } from './plan-variance-thresholds';
 import type { PlanVarianceActionItem } from './plan-vs-actual-summary';
 import type { StageGddCalibrationProposal } from './stage-gdd-calibration-proposal';
 
@@ -32,6 +34,28 @@ const stageGddProposal = (
   recordedItemCount: 3,
   currentRequiredGdd: 100,
   proposedRequiredGdd: 105,
+  ...overrides
+});
+
+const bpAmountProposal = (
+  overrides: Partial<BlueprintAmountAdjustmentProposal> = {}
+): BlueprintAmountAdjustmentProposal => ({
+  cropId: 1,
+  cropName: 'Tomato',
+  category: 'fertilizer',
+  taskType: 'fertilize',
+  stageOrder: 1,
+  stageName: 'Vegetative',
+  averageAmountDelta: 0.4,
+  recordedItemCount: 3,
+  amountUnit: 'kg',
+  affectedBlueprintCount: 1,
+  proposalBody: {
+    intent: BLUEPRINT_AMOUNT_PATCH_INTENT,
+    stages: [],
+    agricultural_tasks: [],
+    task_schedule_blueprints: [{ blueprint_id: 10, amount: 2.5, amount_unit: 'kg' }]
+  },
   ...overrides
 });
 
@@ -78,6 +102,30 @@ describe('build-unified-learn-proposal-queue', () => {
     clearLearnProposalApplicationProgressCache();
   });
 
+  it('categorizes bp_amount proposals as safe or requires_confirmation', () => {
+    const queue = buildUnifiedLearnProposalQueue(
+      planId,
+      [],
+      [],
+      [
+        bpAmountProposal({ averageAmountDelta: 0.4 }),
+        bpAmountProposal({
+          averageAmountDelta: FERTILIZER_AMOUNT_DELTA_THRESHOLD + 0.5,
+          taskType: 'topdress',
+          stageOrder: 2
+        })
+      ],
+      []
+    );
+
+    expect(queue.counts.safe).toBe(1);
+    expect(queue.counts.requires_confirmation).toBe(1);
+    expect(queue.items.find((item) => item.kind === 'bp_amount' && item.category === 'safe')).toBeTruthy();
+    expect(
+      queue.items.find((item) => item.kind === 'bp_amount' && item.category === 'requires_confirmation')
+    ).toBeTruthy();
+  });
+
   it('assigns safe, requires_confirmation, and requires_action categories with counts', () => {
     const queue = buildUnifiedLearnProposalQueue(
       planId,
@@ -86,6 +134,7 @@ describe('build-unified-learn-proposal-queue', () => {
         stageGddProposal({ stageId: 3, averageGddDelta: GDD_VARIANCE_THRESHOLD + 5 })
       ],
       [bpTimingProposal({ category: 'general', averageDeltaDays: 2 })],
+      [],
       [actionRequiredItem()]
     );
 
@@ -107,6 +156,7 @@ describe('build-unified-learn-proposal-queue', () => {
       planId,
       [stageGddProposal({ averageGddDelta: 5 })],
       [bpTimingProposal({ averageDeltaDays: DAYS_VARIANCE_THRESHOLD + 2 })],
+      [],
       [actionRequiredItem({ item_id: 1, name: 'Task A' })]
     );
 
@@ -116,7 +166,7 @@ describe('build-unified-learn-proposal-queue', () => {
   });
 
   it('returns empty queue when no proposals or action items exist', () => {
-    const queue = buildUnifiedLearnProposalQueue(planId, [], [], []);
+    const queue = buildUnifiedLearnProposalQueue(planId, [], [], [], []);
 
     expect(queue.items).toEqual([]);
     expect(queue.counts).toEqual({
@@ -130,6 +180,7 @@ describe('build-unified-learn-proposal-queue', () => {
     const queue = buildUnifiedLearnProposalQueue(
       planId,
       [stageGddProposal({ averageGddDelta: 5 })],
+      [],
       [],
       [actionRequiredItem()]
     );
@@ -148,6 +199,7 @@ describe('build-unified-learn-proposal-queue', () => {
         bpTimingProposal({ category: 'fertilizer', averageDeltaDays: 2 }),
         bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
       ],
+      [],
       []
     );
 
@@ -168,6 +220,7 @@ describe('build-unified-learn-proposal-queue', () => {
         bpTimingProposal({ category: 'fertilizer', averageDeltaDays: 2 }),
         bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
       ],
+      [],
       []
     );
 
@@ -187,6 +240,7 @@ describe('build-unified-learn-proposal-queue', () => {
         bpTimingProposal({ category: 'fertilizer', averageDeltaDays: 2 }),
         bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
       ],
+      [],
       []
     );
     const grouped = groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections(queue);
@@ -214,6 +268,7 @@ describe('build-unified-learn-proposal-queue', () => {
         bpTimingProposal({ category: 'pest_control', averageDeltaDays: 2 }),
         bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
       ],
+      [],
       []
     );
 
@@ -234,6 +289,7 @@ describe('build-unified-learn-proposal-queue', () => {
         bpTimingProposal({ category: 'pest_control', averageDeltaDays: 2 }),
         bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
       ],
+      [],
       []
     );
 
@@ -254,6 +310,7 @@ describe('build-unified-learn-proposal-queue', () => {
         bpTimingProposal({ category: 'pest_control', averageDeltaDays: 2 }),
         bpTimingProposal({ category: 'general', averageDeltaDays: 2 })
       ],
+      [],
       []
     );
     const grouped = groupUnifiedLearnProposalQueueExcludingDedicatedTimingSections(queue);

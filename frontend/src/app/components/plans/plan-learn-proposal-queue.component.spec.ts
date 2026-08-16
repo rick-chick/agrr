@@ -3,6 +3,8 @@ import { provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '../../../assets/i18n/en.json';
+import type { BlueprintAmountAdjustmentProposal } from '../../domain/plans/blueprint-amount-adjustment-proposal';
+import { BLUEPRINT_AMOUNT_PATCH_INTENT } from '../../domain/plans/blueprint-amount-adjustment-proposal';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import { BLUEPRINT_TIMING_PATCH_INTENT } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import {
@@ -17,6 +19,25 @@ import {
 import { clearLearnOrchestrationProgressCache } from '../../domain/plans/learn-master-update-orchestration';
 import { BulkApplySafeLearnProposalsUseCase } from '../../usecase/plans/bulk-apply-safe-learn-proposals.usecase';
 import { PlanLearnProposalQueueComponent } from './plan-learn-proposal-queue.component';
+
+const safeBpAmountProposal = (): BlueprintAmountAdjustmentProposal => ({
+  cropId: 1,
+  cropName: 'Tomato',
+  category: 'fertilizer',
+  taskType: 'fertilize',
+  stageOrder: 1,
+  stageName: 'Vegetative',
+  averageAmountDelta: 0.4,
+  recordedItemCount: 3,
+  amountUnit: 'kg',
+  affectedBlueprintCount: 1,
+  proposalBody: {
+    intent: BLUEPRINT_AMOUNT_PATCH_INTENT,
+    stages: [],
+    agricultural_tasks: [],
+    task_schedule_blueprints: [{ blueprint_id: 10, amount: 2.5, amount_unit: 'kg' }]
+  }
+});
 
 const fertilizerBpTimingProposal = (): BlueprintTimingAdjustmentProposal => ({
   cropId: 1,
@@ -147,6 +168,25 @@ describe('PlanLearnProposalQueueComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="queue-count-requires_action"]')?.textContent).toContain('1');
     expect(fixture.nativeElement.querySelector('[data-testid="queue-count-requires_confirmation"]')?.textContent).toContain('1');
     expect(fixture.nativeElement.querySelector('[data-testid="queue-count-safe"]')?.textContent).toContain('1');
+  });
+
+  it('passes blueprint amount proposals to bulk apply and counts them as safe', () => {
+    fixture.componentInstance.blueprintAmountProposals = [safeBpAmountProposal()];
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="queue-count-safe"]')?.textContent).toContain('1');
+
+    const applyButton = fixture.nativeElement.querySelector(
+      '.learn-proposal-queue__bulk-apply .btn-primary'
+    ) as HTMLButtonElement;
+    applyButton.click();
+    fixture.detectChanges();
+
+    expect(bulkApplyUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        blueprintAmountProposals: [safeBpAmountProposal()]
+      })
+    );
   });
 
   it('auto-starts reorganize pipeline after bulk apply without manual CTA', async () => {

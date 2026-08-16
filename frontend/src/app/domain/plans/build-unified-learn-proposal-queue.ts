@@ -1,9 +1,12 @@
+import type { BlueprintAmountAdjustmentProposal } from './blueprint-amount-adjustment-proposal';
 import type { BlueprintTimingAdjustmentProposal } from './blueprint-timing-adjustment-proposal';
 import {
+  isSafeBlueprintAmountProposal,
   isSafeBlueprintTimingProposal,
   isSafeStageGddProposal
 } from './classify-safe-learn-proposals';
 import {
+  bpAmountProposalProgressKey,
   bpTimingProposalProgressKey,
   resolveLearnProposalApplicationStatus,
   stageGddProposalProgressKey
@@ -13,7 +16,7 @@ import type { StageGddCalibrationProposal } from './stage-gdd-calibration-propos
 
 export type LearnProposalQueueCategory = 'safe' | 'requires_confirmation' | 'requires_action';
 
-export type LearnProposalQueueItemKind = 'stage_gdd' | 'bp_timing' | 'action_required';
+export type LearnProposalQueueItemKind = 'stage_gdd' | 'bp_timing' | 'bp_amount' | 'action_required';
 
 export interface UnifiedLearnProposalQueueItem {
   id: string;
@@ -58,6 +61,22 @@ function isRequiresConfirmationBpTiming(
   return !isSafeBlueprintTimingProposal(planId, proposal);
 }
 
+function isRequiresConfirmationBpAmount(
+  planId: number,
+  proposal: BlueprintAmountAdjustmentProposal
+): boolean {
+  const key = bpAmountProposalProgressKey(
+    proposal.cropId,
+    proposal.category,
+    proposal.taskType,
+    proposal.stageOrder
+  );
+  if (resolveLearnProposalApplicationStatus(planId, key) !== 'not_started') {
+    return false;
+  }
+  return !isSafeBlueprintAmountProposal(planId, proposal);
+}
+
 function magnitudePriority(value: number): number {
   return -Math.abs(value);
 }
@@ -66,6 +85,7 @@ export function buildUnifiedLearnProposalQueue(
   planId: number,
   stageGddProposals: ReadonlyArray<StageGddCalibrationProposal>,
   blueprintTimingProposals: ReadonlyArray<BlueprintTimingAdjustmentProposal>,
+  blueprintAmountProposals: ReadonlyArray<BlueprintAmountAdjustmentProposal> = [],
   actionRequiredItems: ReadonlyArray<PlanVarianceActionItem> = []
 ): UnifiedLearnProposalQueue {
   const items: UnifiedLearnProposalQueueItem[] = [];
@@ -125,6 +145,33 @@ export function buildUnifiedLearnProposalQueue(
         title: proposal.cropName,
         subtitle: proposal.category,
         bpTimingCategory: proposal.category
+      });
+    }
+  }
+
+  for (const proposal of blueprintAmountProposals) {
+    const title = proposal.stageName
+      ? `${proposal.cropName} — ${proposal.stageName}`
+      : proposal.cropName;
+    if (isSafeBlueprintAmountProposal(planId, proposal)) {
+      items.push({
+        id: `bp_amount:${proposal.cropId}:${proposal.category}:${proposal.taskType}:${proposal.stageOrder ?? 'null'}`,
+        kind: 'bp_amount',
+        category: 'safe',
+        priority: CATEGORY_PRIORITY.safe * 1000 + magnitudePriority(proposal.averageAmountDelta),
+        title,
+        subtitle: `${proposal.category} / ${proposal.taskType}`
+      });
+    } else if (isRequiresConfirmationBpAmount(planId, proposal)) {
+      items.push({
+        id: `bp_amount:${proposal.cropId}:${proposal.category}:${proposal.taskType}:${proposal.stageOrder ?? 'null'}`,
+        kind: 'bp_amount',
+        category: 'requires_confirmation',
+        priority:
+          CATEGORY_PRIORITY.requires_confirmation * 1000 +
+          magnitudePriority(proposal.averageAmountDelta),
+        title,
+        subtitle: `${proposal.category} / ${proposal.taskType}`
       });
     }
   }
