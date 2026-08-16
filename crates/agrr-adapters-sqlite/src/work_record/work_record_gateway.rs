@@ -25,7 +25,8 @@ impl WorkRecordSqliteGateway {
     }
 
     const SELECT_COLUMNS: &'static str = "wr.id, wr.cultivation_plan_id, wr.field_cultivation_id, \
-         wr.task_schedule_item_id, wr.agricultural_task_id, wr.name, wr.task_type, wr.actual_date, \
+         wr.task_schedule_item_id, wr.agricultural_task_id, wr.fertilize_id, wr.pesticide_id, \
+         wr.name, wr.task_type, wr.actual_date, \
          CAST(wr.amount AS TEXT), wr.amount_unit, wr.time_spent_minutes, wr.notes, \
          wr.gdd_at_actual, wr.weather_snapshot, \
          wr.created_at, wr.updated_at, \
@@ -53,24 +54,24 @@ impl WorkRecordSqliteGateway {
     }
 
     fn row_to_read(row: &rusqlite::Row<'_>) -> rusqlite::Result<WorkRecordRead> {
-        let actual_date_raw: String = row.get(7)?;
+        let actual_date_raw: String = row.get(9)?;
         let actual_date = parse_iso_date(&actual_date_raw).ok_or_else(|| {
             rusqlite::Error::InvalidColumnType(
-                7,
+                9,
                 "actual_date".into(),
                 rusqlite::types::Type::Text,
             )
         })?;
-        let created_at = Self::parse_datetime(&row.get::<_, String>(14)?);
-        let updated_at = Self::parse_datetime(&row.get::<_, String>(15)?);
-        let field_name: Option<String> = row.get(16)?;
-        let crop_name: Option<String> = row.get(17)?;
-        let item_id: Option<i64> = row.get(18)?;
+        let created_at = Self::parse_datetime(&row.get::<_, String>(16)?);
+        let updated_at = Self::parse_datetime(&row.get::<_, String>(17)?);
+        let field_name: Option<String> = row.get(18)?;
+        let crop_name: Option<String> = row.get(19)?;
+        let item_id: Option<i64> = row.get(20)?;
         let task_schedule_item = item_id.map(|id| {
-            let scheduled_date_raw: Option<String> = row.get(20).unwrap_or(None);
+            let scheduled_date_raw: Option<String> = row.get(22).unwrap_or(None);
             WorkRecordTaskScheduleItemSummary {
                 id,
-                name: row.get(19).unwrap_or_default(),
+                name: row.get(21).unwrap_or_default(),
                 scheduled_date: scheduled_date_raw.as_deref().and_then(parse_iso_date),
             }
         });
@@ -80,15 +81,17 @@ impl WorkRecordSqliteGateway {
             field_cultivation_id: row.get(2)?,
             task_schedule_item_id: row.get(3)?,
             agricultural_task_id: row.get(4)?,
-            name: row.get(5)?,
-            task_type: row.get(6)?,
+            fertilize_id: row.get(5)?,
+            pesticide_id: row.get(6)?,
+            name: row.get(7)?,
+            task_type: row.get(8)?,
             actual_date,
-            amount: Self::parse_decimal(row.get(8)?),
-            amount_unit: row.get(9)?,
-            time_spent_minutes: row.get(10)?,
-            notes: row.get(11)?,
-            gdd_at_actual: row.get(12)?,
-            weather_snapshot: Self::parse_weather_snapshot(row.get(13)?),
+            amount: Self::parse_decimal(row.get(10)?),
+            amount_unit: row.get(11)?,
+            time_spent_minutes: row.get(12)?,
+            notes: row.get(13)?,
+            gdd_at_actual: row.get(14)?,
+            weather_snapshot: Self::parse_weather_snapshot(row.get(15)?),
             created_at,
             updated_at,
             field_name,
@@ -134,14 +137,17 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
             conn.execute(
                 "INSERT INTO work_records (\
                  cultivation_plan_id, field_cultivation_id, task_schedule_item_id, \
-                 agricultural_task_id, name, task_type, actual_date, amount, amount_unit, \
-                 time_spent_minutes, notes, gdd_at_actual, weather_snapshot, created_at, updated_at) \
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+                 agricultural_task_id, fertilize_id, pesticide_id, name, task_type, actual_date, \
+                 amount, amount_unit, time_spent_minutes, notes, gdd_at_actual, weather_snapshot, \
+                 created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
                 params![
                     plan_id,
                     attrs.field_cultivation_id,
                     attrs.task_schedule_item_id,
                     attrs.agricultural_task_id,
+                    attrs.fertilize_id,
+                    attrs.pesticide_id,
                     attrs.name,
                     attrs.task_type,
                     Self::format_date(attrs.actual_date),
@@ -244,6 +250,20 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
         if let Some(notes) = &input.notes {
             sets.push(format!("notes = ?{}", values.len() + 1));
             values.push(Value::Text(notes.clone()));
+        }
+        if let Some(fertilize_id) = &input.fertilize_id {
+            sets.push(format!("fertilize_id = ?{}", values.len() + 1));
+            values.push(match fertilize_id {
+                Some(id) => Value::from(*id),
+                None => Value::Null,
+            });
+        }
+        if let Some(pesticide_id) = &input.pesticide_id {
+            sets.push(format!("pesticide_id = ?{}", values.len() + 1));
+            values.push(match pesticide_id {
+                Some(id) => Value::from(*id),
+                None => Value::Null,
+            });
         }
         if let Some(climate) = climate {
             sets.push(format!("gdd_at_actual = ?{}", values.len() + 1));

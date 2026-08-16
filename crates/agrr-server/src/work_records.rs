@@ -221,6 +221,8 @@ fn work_record_to_json(record: WorkRecordRead, photos: Vec<Value>) -> Value {
         "field_cultivation_id": record.field_cultivation_id,
         "task_schedule_item_id": record.task_schedule_item_id,
         "agricultural_task_id": record.agricultural_task_id,
+        "fertilize_id": record.fertilize_id,
+        "pesticide_id": record.pesticide_id,
         "name": record.name,
         "task_type": record.task_type,
         "actual_date": format_date(record.actual_date),

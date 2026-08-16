@@ -21,6 +21,8 @@ fn sample_create_attrs(
         field_cultivation_id: Some(seed.field_cultivation_id),
         task_schedule_item_id: Some(seed.task_schedule_item_id),
         agricultural_task_id: Some(seed.agricultural_task_id),
+        fertilize_id: None,
+        pesticide_id: None,
         name: "除草作業".into(),
         task_type: Some("field_work".into()),
         actual_date: Date::from_calendar_date(2026, time::Month::June, 12).unwrap(),
@@ -98,6 +100,37 @@ fn work_record_gateway_crud_roundtrip() {
             seed.plan_id,
             created.id,
             &WorkRecordUpdateInput {
+                fertilize_id: Some(Some(1)),
+                pesticide_id: Some(Some(2)),
+                ..Default::default()
+            },
+            None,
+            OffsetDateTime::now_utc(),
+        )
+        .expect("update fk ids");
+    assert_eq!(Some(1), updated.fertilize_id);
+    assert_eq!(Some(2), updated.pesticide_id);
+
+    let cleared = gateway
+        .update(
+            seed.plan_id,
+            created.id,
+            &WorkRecordUpdateInput {
+                fertilize_id: Some(None),
+                ..Default::default()
+            },
+            None,
+            OffsetDateTime::now_utc(),
+        )
+        .expect("clear fertilize_id");
+    assert!(cleared.fertilize_id.is_none());
+    assert_eq!(Some(2), cleared.pesticide_id);
+
+    let updated = gateway
+        .update(
+            seed.plan_id,
+            created.id,
+            &WorkRecordUpdateInput {
                 notes: Some("修正メモ".into()),
                 time_spent_minutes: Some(60),
                 ..Default::default()
@@ -140,6 +173,8 @@ fn work_record_gateway_list_omits_field_and_crop_name_without_field_cultivation(
                 field_cultivation_id: None,
                 task_schedule_item_id: None,
                 agricultural_task_id: Some(seed.agricultural_task_id),
+                fertilize_id: None,
+                pesticide_id: None,
                 name: "手入力作業".into(),
                 task_type: Some("field_work".into()),
                 actual_date: Date::from_calendar_date(2026, time::Month::June, 15).unwrap(),
