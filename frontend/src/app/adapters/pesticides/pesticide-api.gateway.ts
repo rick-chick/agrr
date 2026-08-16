@@ -13,6 +13,10 @@ export class PesticideApiGateway implements PesticideGateway {
     return this.client.get<Pesticide[]>('/pesticides');
   }
 
+  listForCrop(cropId: number): Observable<Pesticide[]> {
+    return this.client.get<Pesticide[]>(`/crops/${cropId}/pesticides`);
+  }
+
   show(pesticideId: number): Observable<Pesticide> {
     return this.client.get<Pesticide>(`/pesticides/${pesticideId}`);
   }

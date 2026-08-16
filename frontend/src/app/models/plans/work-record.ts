@@ -20,6 +20,8 @@ export interface WorkRecord {
   amount_unit: string | null;
   time_spent_minutes: number | null;
   notes: string | null;
+  fertilize_id?: number | null;
+  pesticide_id?: number | null;
   gdd_at_actual?: number | null;
   weather_snapshot?: ClimateTemperaturePoint | null;
   field_name?: string | null;
@@ -41,6 +43,8 @@ export interface WorkRecordCreateRequest {
   notes?: string;
   field_cultivation_id?: number;
   agricultural_task_id?: number;
+  fertilize_id?: number | null;
+  pesticide_id?: number | null;
 }
 
 export interface WorkRecordUpdateRequest {
@@ -50,6 +54,8 @@ export interface WorkRecordUpdateRequest {
   amount_unit?: string;
   time_spent_minutes?: number;
   notes?: string;
+  fertilize_id?: number | null;
+  pesticide_id?: number | null;
 }
 
 export interface WorkRecordsListResponse {

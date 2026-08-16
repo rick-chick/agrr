@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
 import { WorkRecordSheetPresenter } from '../../adapters/plans/work-record-sheet.presenter';
 import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
+import { LoadFertilizeListUseCase } from '../../usecase/fertilizes/load-fertilize-list.usecase';
+import { LoadCropPesticideListUseCase } from '../../usecase/pesticides/load-crop-pesticide-list.usecase';
 import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
 import { PreviewWorkRecordClimateUseCase } from '../../usecase/plans/preview-work-record-climate/preview-work-record-climate.usecase';
@@ -21,12 +23,18 @@ describe('WorkRecordSheetComponent', () => {
   let component: WorkRecordSheetComponent;
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
   let loadTaskListUseCase: { execute: ReturnType<typeof vi.fn> };
+  let loadFertilizeListUseCase: { execute: ReturnType<typeof vi.fn> };
+  let loadCropPesticideListUseCase: { execute: ReturnType<typeof vi.fn> };
   let previewClimateUseCase: { execute: ReturnType<typeof vi.fn> };
+  let saveUseCase: { execute: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     mockPresenter = { setView: vi.fn() };
     loadTaskListUseCase = { execute: vi.fn() };
+    loadFertilizeListUseCase = { execute: vi.fn() };
+    loadCropPesticideListUseCase = { execute: vi.fn() };
     previewClimateUseCase = { execute: vi.fn() };
+    saveUseCase = { execute: vi.fn() };
     HTMLDialogElement.prototype.showModal = vi.fn();
     HTMLDialogElement.prototype.close = vi.fn();
 
@@ -34,9 +42,11 @@ describe('WorkRecordSheetComponent', () => {
       set: {
         providers: [
           { provide: WorkRecordSheetPresenter, useValue: mockPresenter },
-          { provide: SaveWorkRecordSheetUseCase, useValue: { execute: vi.fn() } },
+          { provide: SaveWorkRecordSheetUseCase, useValue: saveUseCase },
           { provide: DeleteWorkRecordUseCase, useValue: { execute: vi.fn() } },
           { provide: LoadAgriculturalTaskListUseCase, useValue: loadTaskListUseCase },
+          { provide: LoadFertilizeListUseCase, useValue: loadFertilizeListUseCase },
+          { provide: LoadCropPesticideListUseCase, useValue: loadCropPesticideListUseCase },
           { provide: PreviewWorkRecordClimateUseCase, useValue: previewClimateUseCase },
           { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
         ]
@@ -68,9 +78,18 @@ describe('WorkRecordSheetComponent', () => {
       'plans.work.sheet.fertilizer.planned_amount': '予定用量',
       'plans.work.sheet.fertilizer.planned_amount_empty': '予定用量なし',
       'plans.work.sheet.fertilizer.actual_amount': '実施用量',
+      'plans.work.sheet.fertilizer.master_label': '使用肥料',
+      'plans.work.sheet.fertilizer.master_placeholder': '肥料を選択（任意）',
+      'plans.work.sheet.fertilizer.master_empty': '登録済みの肥料がありません',
+      'plans.work.sheet.fertilizer.master_add_link': '肥料マスタを登録する',
       'plans.work.sheet.pest_control.planned_amount': '予定散布量',
       'plans.work.sheet.pest_control.planned_amount_empty': '予定散布量なし',
       'plans.work.sheet.pest_control.actual_amount': '実施散布量',
+      'plans.work.sheet.pest_control.master_label': '使用農薬',
+      'plans.work.sheet.pest_control.master_placeholder': '農薬を選択（任意）',
+      'plans.work.sheet.pest_control.master_empty': 'この作物向けの登録農薬がありません',
+      'plans.work.sheet.pest_control.master_add_link': '農薬マスタを登録する',
+      'plans.work.sheet.pest_control.master_crop_required': '圃場を選択すると、この作物向けの農薬を選べます',
       'plans.work.sheet.harvest.yield_amount': '収量',
       'plans.work.sheet.harvest.yield_unit': '収量の単位',
       'plans.work.sheet.climate_preview.label': '記録時に保存される気象情報',
@@ -475,5 +494,109 @@ describe('WorkRecordSheetComponent', () => {
     expect(fixture.nativeElement.querySelector('#wr-amount')).toBeTruthy();
     expect(component.control.form.amount).toBe('50');
     expect(component.control.form.amount_unit).toBe('kg');
+  });
+
+  it('shows fertilizer master picker and sends fertilize_id on save for fertilizer items', () => {
+    component.openFromItem(
+      {
+        item: {
+          item_id: 10,
+          name: '追肥',
+          task_type: 'fertilizer',
+          category: 'fertilizer',
+          scheduled_date: '2026-06-12',
+          priority: 1,
+          source: 'plan',
+          weather_dependency: 'low',
+          time_per_sqm: '0',
+          amount: '10',
+          amount_unit: 'kg',
+          status: 'scheduled',
+          agricultural_task_id: 1,
+          field_cultivation_id: 5,
+          completed: false,
+          work_records: [],
+          details: {} as never,
+          badge: { type: 'fertilizer' }
+        },
+        fieldName: 'A圃場',
+        cropName: 'トマト',
+        recordedToday: false
+      },
+      { cropId: 42 }
+    );
+    component.control = {
+      ...component.control,
+      fertilizeOptions: [
+        { id: 7, name: '尿素' },
+        { id: 8, name: '堆肥' }
+      ],
+      form: {
+        ...component.control.form,
+        fertilize_id: 7
+      }
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="fertilize-master-picker"]')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('使用肥料');
+    expect(loadFertilizeListUseCase.execute).toHaveBeenCalled();
+
+    component.submit();
+    expect(saveUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        createBody: expect.objectContaining({ fertilize_id: 7, task_schedule_item_id: 10 })
+      })
+    );
+  });
+
+  it('shows crop-scoped pesticide picker for pest control items when cropId is known', () => {
+    component.openFromItem(
+      {
+        item: {
+          item_id: 20,
+          name: '予防散布',
+          task_type: 'preventive_spray',
+          category: 'pest_control',
+          scheduled_date: '2026-07-01',
+          priority: 1,
+          source: 'plan',
+          weather_dependency: 'low',
+          time_per_sqm: '0',
+          amount: '5',
+          amount_unit: 'L',
+          status: 'scheduled',
+          agricultural_task_id: 3,
+          field_cultivation_id: 8,
+          completed: false,
+          work_records: [],
+          details: {} as never,
+          badge: { type: 'pest_control' }
+        },
+        fieldName: 'C圃場',
+        cropName: 'ナス',
+        recordedToday: false
+      },
+      { cropId: 99 }
+    );
+    component.control = {
+      ...component.control,
+      pesticideOptions: [{ id: 3, name: '殺虫剤A' }],
+      form: {
+        ...component.control.form,
+        pesticide_id: 3
+      }
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="pesticide-master-picker"]')).toBeTruthy();
+    expect(loadCropPesticideListUseCase.execute).toHaveBeenCalledWith({ cropId: 99 });
+
+    component.submit();
+    expect(saveUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        createBody: expect.objectContaining({ pesticide_id: 3, task_schedule_item_id: 20 })
+      })
+    );
   });
 });

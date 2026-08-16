@@ -15,6 +15,7 @@ import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-sched
 import { UpdateTaskScheduleItemUseCase } from '../../usecase/plans/update-task-schedule-item.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
+import { resolveCropIdForFieldCultivation } from '../../domain/work-schedule/work-record-sheet-schedule';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import { PlanWorkView, PlanWorkViewState } from './plan-work.view';
@@ -851,7 +852,11 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
 
   openCompleteWithDetails(row: WorkDayListRowDto): void {
     this.openMenuItemId = null;
-    this.sheet.openFromItem(row);
+    const cropId = resolveCropIdForFieldCultivation(
+      this.control.fields,
+      row.item.field_cultivation_id
+    );
+    this.sheet.openFromItem(row, { cropId });
   }
 
   private findRowByItemId(itemId: number): WorkDayListRowDto | null {

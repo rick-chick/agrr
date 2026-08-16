@@ -1852,12 +1852,21 @@
         "fertilizer": {
           "planned_amount": "Planned amount",
           "planned_amount_empty": "No planned amount",
-          "actual_amount": "Actual amount"
+          "actual_amount": "Actual amount",
+          "master_label": "Fertilizer used",
+          "master_placeholder": "Select fertilizer (optional)",
+          "master_empty": "No fertilizers registered yet",
+          "master_add_link": "Register a fertilizer"
         },
         "pest_control": {
           "planned_amount": "Planned spray amount",
           "planned_amount_empty": "No planned spray amount",
-          "actual_amount": "Actual spray amount"
+          "actual_amount": "Actual spray amount",
+          "master_label": "Pesticide used",
+          "master_placeholder": "Select pesticide (optional)",
+          "master_empty": "No pesticides registered for this crop",
+          "master_add_link": "Register a pesticide",
+          "master_crop_required": "Select a field to choose pesticides for that crop"
         },
         "harvest": {
           "yield_amount": "Harvest yield",

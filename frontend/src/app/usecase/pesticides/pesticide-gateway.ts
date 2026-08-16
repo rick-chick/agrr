@@ -14,6 +14,7 @@ export interface PesticideCreatePayload {
 
 export interface PesticideGateway {
   list(): Observable<Pesticide[]>;
+  listForCrop(cropId: number): Observable<Pesticide[]>;
   show(pesticideId: number): Observable<Pesticide>;
   create(payload: PesticideCreatePayload): Observable<Pesticide>;
   update(pesticideId: number, payload: PesticideCreatePayload): Observable<Pesticide>;

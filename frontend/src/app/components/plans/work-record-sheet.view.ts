@@ -42,6 +42,11 @@ export interface WorkRecordSheetPendingPhoto {
   file: File;
 }
 
+export interface WorkRecordSheetMasterOption {
+  id: number;
+  name: string;
+}
+
 export interface WorkRecordSheetFormState {
   name: string;
   actual_date: string;
@@ -55,6 +60,8 @@ export interface WorkRecordSheetFormState {
   task_schedule_item_id: number | null;
   work_record_id: number | null;
   agricultural_task_id: number | null;
+  fertilize_id: number | null;
+  pesticide_id: number | null;
 }
 
 export interface WorkRecordSheetViewState {
@@ -65,6 +72,11 @@ export interface WorkRecordSheetViewState {
   form: WorkRecordSheetFormState;
   fieldOptions: FieldSchedule[];
   scheduleCategory: WorkRecordScheduleCategory;
+  cropId: number | null;
+  fertilizeOptions: WorkRecordSheetMasterOption[];
+  pesticideOptions: WorkRecordSheetMasterOption[];
+  loadingFertilizeOptions: boolean;
+  loadingPesticideOptions: boolean;
   /** Harvest milestone v1: emphasize yield fields in the sheet. */
   harvestContext: boolean;
   plannedAmount: string;
