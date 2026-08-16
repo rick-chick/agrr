@@ -329,6 +329,7 @@ export class PlanLearnProposalQueueComponent {
       this.planId,
       this.stageGddProposals,
       this.blueprintTimingProposals,
+      this.blueprintAmountProposals,
       this.actionRequiredItems
     );
   }
@@ -440,6 +441,7 @@ export class PlanLearnProposalQueueComponent {
       planId: this.planId,
       stageGddProposals: this.stageGddProposals,
       blueprintTimingProposals: this.blueprintTimingProposals,
+      blueprintAmountProposals: this.blueprintAmountProposals,
       onProgress: (progress) => {
         this.applyProgress = progress;
         this.cdr.markForCheck();

@@ -1,18 +1,27 @@
 import { describe, expect, it, beforeEach } from 'vitest';
+import type { BlueprintAmountAdjustmentProposal } from './blueprint-amount-adjustment-proposal';
+import { BLUEPRINT_AMOUNT_PATCH_INTENT } from './blueprint-amount-adjustment-proposal';
 import type { BlueprintTimingAdjustmentProposal } from './blueprint-timing-adjustment-proposal';
 import { BLUEPRINT_TIMING_PATCH_INTENT } from './blueprint-timing-adjustment-proposal';
 import {
   collectSafeLearnProposals,
+  isSafeBlueprintAmountProposal,
   isSafeBlueprintTimingProposal,
   isSafeStageGddProposal
 } from './classify-safe-learn-proposals';
 import {
+  bpAmountProposalProgressKey,
   clearLearnProposalApplicationProgressCache,
   markLearnProposalConfirmed,
   resolveLearnProposalApplicationStatus,
   stageGddProposalProgressKey
 } from './learn-proposal-application-progress';
-import { DAYS_VARIANCE_THRESHOLD, GDD_VARIANCE_THRESHOLD } from './plan-variance-thresholds';
+import {
+  DAYS_VARIANCE_THRESHOLD,
+  FERTILIZER_AMOUNT_DELTA_THRESHOLD,
+  GDD_VARIANCE_THRESHOLD,
+  PEST_CONTROL_AMOUNT_DELTA_THRESHOLD
+} from './plan-variance-thresholds';
 import type { StageGddCalibrationProposal } from './stage-gdd-calibration-proposal';
 
 const stageGddProposal = (
@@ -27,6 +36,28 @@ const stageGddProposal = (
   recordedItemCount: 3,
   currentRequiredGdd: 100,
   proposedRequiredGdd: 105,
+  ...overrides
+});
+
+const bpAmountProposal = (
+  overrides: Partial<BlueprintAmountAdjustmentProposal> = {}
+): BlueprintAmountAdjustmentProposal => ({
+  cropId: 1,
+  cropName: 'Tomato',
+  category: 'fertilizer',
+  taskType: 'fertilize',
+  stageOrder: 1,
+  stageName: 'Vegetative',
+  averageAmountDelta: 0.4,
+  recordedItemCount: 3,
+  amountUnit: 'kg',
+  affectedBlueprintCount: 1,
+  proposalBody: {
+    intent: BLUEPRINT_AMOUNT_PATCH_INTENT,
+    stages: [],
+    agricultural_tasks: [],
+    task_schedule_blueprints: [{ blueprint_id: 10, amount: 2.5, amount_unit: 'kg' }]
+  },
   ...overrides
 });
 
@@ -108,8 +139,79 @@ describe('classify-safe-learn-proposals', () => {
     });
   });
 
+  describe('isSafeBlueprintAmountProposal', () => {
+    it('is safe when not started and delta is within category threshold with patches', () => {
+      expect(
+        isSafeBlueprintAmountProposal(
+          planId,
+          bpAmountProposal({ averageAmountDelta: 0.4, category: 'fertilizer' })
+        )
+      ).toBe(true);
+      expect(
+        isSafeBlueprintAmountProposal(
+          planId,
+          bpAmountProposal({
+            averageAmountDelta: FERTILIZER_AMOUNT_DELTA_THRESHOLD,
+            category: 'fertilizer'
+          })
+        )
+      ).toBe(true);
+      expect(
+        isSafeBlueprintAmountProposal(
+          planId,
+          bpAmountProposal({
+            averageAmountDelta: PEST_CONTROL_AMOUNT_DELTA_THRESHOLD,
+            category: 'pest_control'
+          })
+        )
+      ).toBe(true);
+    });
+
+    it('is not safe when delta exceeds category threshold or patches are empty', () => {
+      expect(
+        isSafeBlueprintAmountProposal(
+          planId,
+          bpAmountProposal({
+            averageAmountDelta: FERTILIZER_AMOUNT_DELTA_THRESHOLD + 0.1,
+            category: 'fertilizer'
+          })
+        )
+      ).toBe(false);
+      expect(
+        isSafeBlueprintAmountProposal(
+          planId,
+          bpAmountProposal({
+            averageAmountDelta: PEST_CONTROL_AMOUNT_DELTA_THRESHOLD + 0.1,
+            category: 'pest_control'
+          })
+        )
+      ).toBe(false);
+      expect(
+        isSafeBlueprintAmountProposal(
+          planId,
+          bpAmountProposal({
+            proposalBody: {
+              intent: BLUEPRINT_AMOUNT_PATCH_INTENT,
+              stages: [],
+              agricultural_tasks: [],
+              task_schedule_blueprints: []
+            }
+          })
+        )
+      ).toBe(false);
+    });
+
+    it('is not safe when already confirmed', () => {
+      markLearnProposalConfirmed(
+        planId,
+        bpAmountProposalProgressKey(1, 'fertilizer', 'fertilize', 1)
+      );
+      expect(isSafeBlueprintAmountProposal(planId, bpAmountProposal())).toBe(false);
+    });
+  });
+
   describe('collectSafeLearnProposals', () => {
-    it('returns only safe not-started proposals from both kinds', () => {
+    it('returns only safe not-started proposals from all kinds', () => {
       const stageGdd = [
         stageGddProposal({ stageId: 2, averageGddDelta: 5 }),
         stageGddProposal({ stageId: 3, averageGddDelta: 50, cropId: 2 })
@@ -118,19 +220,25 @@ describe('classify-safe-learn-proposals', () => {
         bpTimingProposal({ category: 'general', averageDeltaDays: 2 }),
         bpTimingProposal({ category: 'fertilizer', averageDeltaDays: 10 })
       ];
+      const bpAmount = [
+        bpAmountProposal({ category: 'fertilizer', averageAmountDelta: 0.4 }),
+        bpAmountProposal({ category: 'fertilizer', averageAmountDelta: 2.5, taskType: 'topdress' })
+      ];
 
-      const result = collectSafeLearnProposals(planId, stageGdd, bpTiming);
+      const result = collectSafeLearnProposals(planId, stageGdd, bpTiming, bpAmount);
 
       expect(result.stageGdd).toHaveLength(1);
       expect(result.stageGdd[0].stageId).toBe(2);
       expect(result.bpTiming).toHaveLength(1);
       expect(result.bpTiming[0].category).toBe('general');
-      expect(result.totalCount).toBe(2);
+      expect(result.bpAmount).toHaveLength(1);
+      expect(result.bpAmount[0].taskType).toBe('fertilize');
+      expect(result.totalCount).toBe(3);
     });
 
     it('excludes proposals that are already confirmed', () => {
       markLearnProposalConfirmed(planId, stageGddProposalProgressKey(1, 2));
-      const result = collectSafeLearnProposals(planId, [stageGddProposal()], []);
+      const result = collectSafeLearnProposals(planId, [stageGddProposal()], [], []);
       expect(result.totalCount).toBe(0);
       expect(resolveLearnProposalApplicationStatus(planId, stageGddProposalProgressKey(1, 2))).toBe(
         'confirmed'

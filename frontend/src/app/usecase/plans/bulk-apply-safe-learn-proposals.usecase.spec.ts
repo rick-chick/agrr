@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { BLUEPRINT_AMOUNT_PATCH_INTENT } from '../../domain/plans/blueprint-amount-adjustment-proposal';
 import { BLUEPRINT_TIMING_PATCH_INTENT } from '../../domain/plans/blueprint-timing-adjustment-proposal';
 import { clearLearnProposalApplicationProgressCache } from '../../domain/plans/learn-proposal-application-progress';
+import { ApplyBpAmountProposalFromLearnUseCase } from './apply-bp-amount-proposal-from-learn.usecase';
 import { ApplyBpTimingProposalFromLearnUseCase } from './apply-bp-timing-proposal-from-learn.usecase';
 import { ApplyStageGddCalibrationFromLearnUseCase } from './apply-stage-gdd-calibration-from-learn.usecase';
 import { BulkApplySafeLearnProposalsUseCase } from './bulk-apply-safe-learn-proposals.usecase';
@@ -9,6 +11,7 @@ import { BulkApplySafeLearnProposalsUseCase } from './bulk-apply-safe-learn-prop
 describe('BulkApplySafeLearnProposalsUseCase', () => {
   let stageGddApply: { execute: ReturnType<typeof vi.fn> };
   let bpTimingApply: { execute: ReturnType<typeof vi.fn> };
+  let bpAmountApply: { execute: ReturnType<typeof vi.fn> };
   let useCase: BulkApplySafeLearnProposalsUseCase;
 
   beforeEach(() => {
@@ -19,12 +22,16 @@ describe('BulkApplySafeLearnProposalsUseCase', () => {
     bpTimingApply = {
       execute: vi.fn(({ onSuccess }: { onSuccess?: () => void }) => onSuccess?.())
     };
+    bpAmountApply = {
+      execute: vi.fn(({ onSuccess }: { onSuccess?: () => void }) => onSuccess?.())
+    };
 
     TestBed.configureTestingModule({
       providers: [
         BulkApplySafeLearnProposalsUseCase,
         { provide: ApplyStageGddCalibrationFromLearnUseCase, useValue: stageGddApply },
-        { provide: ApplyBpTimingProposalFromLearnUseCase, useValue: bpTimingApply }
+        { provide: ApplyBpTimingProposalFromLearnUseCase, useValue: bpTimingApply },
+        { provide: ApplyBpAmountProposalFromLearnUseCase, useValue: bpAmountApply }
       ]
     });
     useCase = TestBed.inject(BulkApplySafeLearnProposalsUseCase);
@@ -77,6 +84,7 @@ describe('BulkApplySafeLearnProposalsUseCase', () => {
           }
         }
       ],
+      blueprintAmountProposals: [],
       onProgress,
       onSuccess
     });
@@ -110,6 +118,7 @@ describe('BulkApplySafeLearnProposalsUseCase', () => {
         }
       ],
       blueprintTimingProposals: [],
+      blueprintAmountProposals: [],
       onError
     });
 
@@ -122,8 +131,70 @@ describe('BulkApplySafeLearnProposalsUseCase', () => {
       planId: 7,
       stageGddProposals: [],
       blueprintTimingProposals: [],
+      blueprintAmountProposals: [],
       onSuccess
     });
     expect(onSuccess).toHaveBeenCalledWith({ appliedCount: 0, totalSafeCount: 0 });
+  });
+
+  it('applies safe bp amount proposals in bulk', () => {
+    const onSuccess = vi.fn();
+
+    useCase.execute({
+      planId: 7,
+      stageGddProposals: [],
+      blueprintTimingProposals: [],
+      blueprintAmountProposals: [
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          category: 'fertilizer',
+          taskType: 'fertilize',
+          stageOrder: 1,
+          stageName: 'Vegetative',
+          averageAmountDelta: 0.4,
+          recordedItemCount: 3,
+          amountUnit: 'kg',
+          affectedBlueprintCount: 1,
+          proposalBody: {
+            intent: BLUEPRINT_AMOUNT_PATCH_INTENT,
+            stages: [],
+            agricultural_tasks: [],
+            task_schedule_blueprints: [{ blueprint_id: 10, amount: 2.5, amount_unit: 'kg' }]
+          }
+        },
+        {
+          cropId: 1,
+          cropName: 'Tomato',
+          category: 'fertilizer',
+          taskType: 'topdress',
+          stageOrder: 2,
+          stageName: 'Flowering',
+          averageAmountDelta: 2.5,
+          recordedItemCount: 3,
+          amountUnit: 'kg',
+          affectedBlueprintCount: 1,
+          proposalBody: {
+            intent: BLUEPRINT_AMOUNT_PATCH_INTENT,
+            stages: [],
+            agricultural_tasks: [],
+            task_schedule_blueprints: [{ blueprint_id: 11, amount: 3.0, amount_unit: 'kg' }]
+          }
+        }
+      ],
+      onSuccess
+    });
+
+    expect(bpAmountApply.execute).toHaveBeenCalledTimes(1);
+    expect(bpAmountApply.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planId: 7,
+        cropId: 1,
+        category: 'fertilizer',
+        taskType: 'fertilize',
+        stageOrder: 1
+      })
+    );
+    expect(onSuccess).toHaveBeenCalledWith({ appliedCount: 1, totalSafeCount: 1 });
   });
 });
