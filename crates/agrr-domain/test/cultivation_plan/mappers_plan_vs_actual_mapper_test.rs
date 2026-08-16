@@ -294,6 +294,78 @@ fn summary_includes_blueprint_amount_adjustment_proposals_per_crop_category_and_
 }
 
 #[test]
+fn blueprint_amount_proposals_separate_by_stage_order_for_same_crop_category_and_task_type() {
+    let snapshot = TaskScheduleTimelineSnapshot {
+        plan: sample_snapshot(vec![]).plan,
+        fields: vec![TaskScheduleTimelineFieldRead {
+            id: 10,
+            name: "F1".into(),
+            crop_name: "Tomato".into(),
+            area_sqm: 50.0,
+            field_cultivation_id: 100,
+            crop_id: 42,
+            cultivation_start_date: None,
+            cultivation_end_date: None,
+            task_options: vec![],
+            schedules: vec![TaskScheduleTimelineScheduleRead {
+                category: "fertilizer".into(),
+                items: vec![
+                    sample_item_with_amounts(
+                        1,
+                        "fertilizer",
+                        "fertilize",
+                        Some(1),
+                        Some("Vegetative"),
+                        Some(2.0),
+                        Some(3.0),
+                        Some("kg"),
+                    ),
+                    sample_item_with_amounts(
+                        2,
+                        "fertilizer",
+                        "fertilize",
+                        Some(2),
+                        Some("Flowering"),
+                        Some(2.0),
+                        Some(1.0),
+                        Some("kg"),
+                    ),
+                ],
+            }],
+        }],
+        scheduled_dates: vec![Date::parse(
+            "2026-06-02",
+            &time::format_description::well_known::Iso8601::DATE,
+        )
+        .expect("date")],
+    };
+
+    let summary = PlanVsActualMapper::summary_from_snapshot(&snapshot, 5);
+
+    assert_eq!(
+        2,
+        summary.blueprint_amount_adjustment_proposals.len(),
+        "same crop×category×task_type with different stage_order must yield separate proposals"
+    );
+    let vegetative = summary
+        .blueprint_amount_adjustment_proposals
+        .iter()
+        .find(|proposal| proposal.stage_order == Some(1))
+        .expect("vegetative stage proposal");
+    assert_eq!(42, vegetative.crop_id);
+    assert_eq!("fertilizer", vegetative.category);
+    assert_eq!("fertilize", vegetative.task_type);
+    assert!((vegetative.average_amount_delta - 1.0).abs() < f64::EPSILON);
+
+    let flowering = summary
+        .blueprint_amount_adjustment_proposals
+        .iter()
+        .find(|proposal| proposal.stage_order == Some(2))
+        .expect("flowering stage proposal");
+    assert!((flowering.average_amount_delta - (-1.0)).abs() < f64::EPSILON);
+}
+
+#[test]
 fn blueprint_amount_proposals_skip_small_variance() {
     let snapshot = TaskScheduleTimelineSnapshot {
         plan: sample_snapshot(vec![]).plan,
