@@ -72,6 +72,7 @@ describe('extractLearnProposalEvidenceSources', () => {
         actualDate: '2025-04-10',
         deltaDays: 5,
         gddDelta: 15,
+        amountUnit: null,
         status: 'completed'
       },
       {
@@ -83,6 +84,7 @@ describe('extractLearnProposalEvidenceSources', () => {
         actualDate: '2025-05-03',
         deltaDays: 2,
         gddDelta: 5,
+        amountUnit: null,
         status: 'completed'
       }
     ]);

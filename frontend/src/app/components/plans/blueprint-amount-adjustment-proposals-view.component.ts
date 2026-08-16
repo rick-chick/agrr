@@ -12,6 +12,11 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
 import { LearnProposalConfidenceBadgeComponent } from './learn-proposal-confidence-badge.component';
 import type { LearnProposalConfidence } from '../../domain/plans/resolve-learn-proposal-confidence';
 import {
+  detectBpAmountProposalUnitMismatch,
+  resolveBpAmountProposalConfidence
+} from '../../domain/plans/resolve-learn-proposal-confidence';
+import type { LearnProposalEvidenceSource } from '../../domain/plans/learn-proposal-evidence';
+import {
   bpAmountProposalProgressKey,
   markBpAmountProposalDismissed,
   resolveLearnProposalApplicationStatus,
@@ -69,7 +74,9 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                     </p>
                   }
                   <div class="blueprint-amount-adjustment__badges">
-                    <app-learn-proposal-confidence-badge [confidence]="proposalConfidence" />
+                    <app-learn-proposal-confidence-badge
+                      [confidence]="proposalConfidence(proposal)"
+                    />
                     <span
                       class="blueprint-amount-adjustment__status"
                       [class.blueprint-amount-adjustment__status--pending]="
@@ -180,7 +187,9 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
   @Input() loading = false;
   @Input() proposals: BlueprintAmountAdjustmentProposal[] = [];
   @Input() evidenceByKey: Record<string, LearnProposalEvidence> = {};
-  @Input() proposalConfidence: LearnProposalConfidence = 'high';
+  @Input() planUnrecordedCount = 0;
+  @Input() planActionRequiredCount = 0;
+  @Input() evidenceSources: LearnProposalEvidenceSource[] = [];
   @Output() progressChanged = new EventEmitter<void>();
 
   private refreshVersion = 0;
@@ -204,6 +213,16 @@ export class BlueprintAmountAdjustmentProposalsViewComponent {
 
   evidenceFor(proposal: BlueprintAmountAdjustmentProposal): LearnProposalEvidence | null {
     return this.evidenceByKey[this.proposalKey(proposal)] ?? null;
+  }
+
+  proposalConfidence(proposal: BlueprintAmountAdjustmentProposal): LearnProposalConfidence {
+    return resolveBpAmountProposalConfidence({
+      planUnrecordedCount: this.planUnrecordedCount,
+      planActionRequiredCount: this.planActionRequiredCount,
+      proposal,
+      evidence: this.evidenceFor(proposal),
+      hasUnitMismatch: detectBpAmountProposalUnitMismatch(proposal, this.evidenceSources)
+    });
   }
 
   categoryLabel(category: string): string {

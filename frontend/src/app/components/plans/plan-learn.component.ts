@@ -57,6 +57,7 @@ const initialControl: PlanLearnViewState = {
   blueprintAmountLoading: false,
   blueprintAmountProposals: [],
   blueprintAmountEvidenceByKey: {},
+  proposalEvidenceSources: [],
   stageGddProposalsLoading: false,
   stageGddProposals: [],
   stageGddEvidenceByKey: {},
@@ -240,7 +241,9 @@ const initialControl: PlanLearnViewState = {
             [loading]="control.blueprintAmountLoading"
             [proposals]="control.blueprintAmountProposals"
             [evidenceByKey]="control.blueprintAmountEvidenceByKey"
-            [proposalConfidence]="proposalConfidence"
+            [planUnrecordedCount]="control.varianceSummary?.unrecorded_count ?? 0"
+            [planActionRequiredCount]="control.varianceSummary?.action_required_items?.length ?? 0"
+            [evidenceSources]="control.proposalEvidenceSources"
             (progressChanged)="onProposalProgressChanged()"
           />
           <app-task-schedule-variance-view

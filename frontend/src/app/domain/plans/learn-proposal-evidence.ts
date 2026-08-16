@@ -30,6 +30,7 @@ export interface LearnProposalEvidenceSource {
   deltaDays: number | null;
   gddDelta: number | null;
   amountDelta?: number | null;
+  amountUnit?: string | null;
   status: string;
 }
 
