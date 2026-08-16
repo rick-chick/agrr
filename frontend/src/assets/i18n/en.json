@@ -2290,6 +2290,13 @@
         "manual_hint": "Review the proposals and adjust or re-optimize manually when ready.",
         "review_link": "Review proposals on the Review tab"
       },
+      "weather_reschedule_proposal": {
+        "title": "Weather reschedule proposal",
+        "delay_days": "Delay: {{days}} days",
+        "preview_loading": "Loading preview…",
+        "approve": "Approve and adjust",
+        "reject": "Dismiss"
+      },
       "reoptimization_banner": {
         "message": "Re-optimization recommended after master update",
         "hint": "Drag cultivations on the Gantt to adjust placement. Re-optimization starts automatically after you drop."

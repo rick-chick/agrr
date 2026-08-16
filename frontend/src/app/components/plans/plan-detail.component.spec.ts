@@ -73,7 +73,17 @@ describe('PlanDetailComponent', () => {
       error: null,
       plan: null,
       planData: null,
-      varianceActionItemsOnGantt: []
+      varianceActionItemsOnGantt: [],
+      weatherProposalsLoading: false,
+      weatherProposalsError: null,
+      weatherProposals: [],
+      activeWeatherProposalId: null,
+      weatherPreviewLoading: false,
+      weatherPreviewError: null,
+      weatherPreview: null,
+      weatherOverlayBars: [],
+      weatherApplyLoading: false,
+      weatherApplyError: null
     };
     const markForCheckSpy = vi.spyOn(cdr, 'markForCheck');
     component.control = state;
@@ -93,7 +103,17 @@ describe('PlanDetailComponent', () => {
         farm_id: 1
       },
       planData: null,
-      varianceActionItemsOnGantt: []
+      varianceActionItemsOnGantt: [],
+      weatherProposalsLoading: false,
+      weatherProposalsError: null,
+      weatherProposals: [],
+      activeWeatherProposalId: null,
+      weatherPreviewLoading: false,
+      weatherPreviewError: null,
+      weatherPreview: null,
+      weatherOverlayBars: [],
+      weatherApplyLoading: false,
+      weatherApplyError: null
     };
     fixture.detectChanges();
 
@@ -126,7 +146,17 @@ describe('PlanDetailComponent', () => {
         farm_id: 1
       },
       planData: null,
-      varianceActionItemsOnGantt: []
+      varianceActionItemsOnGantt: [],
+      weatherProposalsLoading: false,
+      weatherProposalsError: null,
+      weatherProposals: [],
+      activeWeatherProposalId: null,
+      weatherPreviewLoading: false,
+      weatherPreviewError: null,
+      weatherPreview: null,
+      weatherOverlayBars: [],
+      weatherApplyLoading: false,
+      weatherApplyError: null
     };
     fixture.detectChanges();
 

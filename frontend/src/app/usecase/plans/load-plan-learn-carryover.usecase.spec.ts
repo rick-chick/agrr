@@ -40,6 +40,7 @@ function createGateway(overrides: Partial<PlanGateway> = {}): PlanGateway {
     getTaskSchedule: () => of({} as never),
     getPlanVsActualSummary: () => of(summary),
     getWeatherRescheduleProposals: () => of([]),
+    previewWeatherRescheduleProposal: () => of({} as never),
     getVarianceLearning: () => of(snapshot),
     importVarianceLearning: () => of(snapshot),
     patchVarianceLearningProposalProgress: () => of(snapshot),

@@ -62,6 +62,24 @@ export class DemoGanttPlanGateway implements GanttPlanGateway {
     });
   }
 
+  adjustPlanMoves(input: {
+    planType: CultivationPlanContextType;
+    planId: number;
+    moves: import('../../domain/plans/weather-reschedule-proposal-preview').WeatherRescheduleAdjustMove[];
+  }): Observable<GanttPlanMutationCommandResult> {
+    if (input.planType !== 'demo' || input.moves.length === 0) {
+      return of(ganttMutationCommandFailure());
+    }
+    const move = input.moves[0];
+    return this.adjustCultivationMove({
+      planType: input.planType,
+      planId: input.planId,
+      cultivationId: move.allocation_id,
+      toFieldId: move.to_field_id,
+      newStartDate: new Date(move.to_start_date)
+    });
+  }
+
   addCrop(
     planType: CultivationPlanContextType,
     planId: number,

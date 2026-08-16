@@ -4,6 +4,7 @@ import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import { GanttPlanMutationCommandResult } from '../../domain/plans/gantt-plan-mutation';
 import { LandingDemoLabels } from '../../domain/plans/landing-demo-i18n.keys';
+import type { WeatherRescheduleAdjustMove } from '../../domain/plans/weather-reschedule-proposal-preview';
 import { GanttAddCropRequest, GanttAddFieldRequest } from './gantt-plan-mutation.dtos';
 
 export interface GanttPlanGateway {
@@ -18,6 +19,11 @@ export interface GanttPlanGateway {
     cultivationId: number;
     toFieldId: number;
     newStartDate: Date;
+  }): Observable<GanttPlanMutationCommandResult>;
+  adjustPlanMoves(input: {
+    planType: CultivationPlanContextType;
+    planId: number;
+    moves: WeatherRescheduleAdjustMove[];
   }): Observable<GanttPlanMutationCommandResult>;
   addCrop(
     planType: CultivationPlanContextType,
