@@ -355,7 +355,8 @@
     "language": "Language",
     "lang_ja": "日本語",
     "lang_en": "English",
-    "lang_in": "हिन्दी"
+    "lang_in": "हिन्दी",
+    "entry_schedule": "Sowing guide"
   },
   "footer": {
     "about": "About AGRR",
@@ -1069,24 +1070,29 @@
       "chart_title": "Climate Data and Crop Growth Analysis",
       "loading_data": "Loading data...",
       "private_value_preview": {
-        "title": "Features after you sign in",
-        "lead": "Save to My Plans to unlock these private features.",
+        "title": "Private features after you save",
+        "lead": "Saving to My Plans unlocks weather rescheduling, learning loops, and work GDD comparison in one flow.",
         "weather_reschedule": {
-          "title": "Weather reschedule",
-          "description": "Get automatic replanning proposals when weather shifts"
+          "title": "Weather reschedule proposals",
+          "description": "When weather turns unfavorable, preview cultivation date adjustments before applying them to your plan."
         },
         "learn_loop": {
           "title": "Learning loop",
-          "description": "Improve next season's plan from plan vs actual gaps"
+          "description": "Compare actuals with the plan to refine crop masters and task schedules for the next season."
         },
         "work_gdd_comparison": {
           "title": "Work GDD comparison",
           "description": "Compare planned and recorded GDD to spot delays"
+        },
+        "badge": "After login",
+        "work_gdd": {
+          "title": "Work GDD comparison",
+          "description": "Compare recorded work GDD with the plan to spot delays or early completion."
         }
       },
       "next_steps": {
         "title": "Next steps",
-        "lead": "After saving, follow this order.",
+        "lead": "Save this public plan to My Plans, then review the task schedule and record field work.",
         "step_label": {
           "1": "Step 1",
           "2": "Step 2",
@@ -1094,23 +1100,24 @@
         },
         "save": {
           "title": "Save to My Plans",
-          "description": "Import this plan into your account"
+          "description": "Import this public plan into your account as the foundation for ongoing work management.",
+          "hint": "Use the “Save to My Plans” button above"
         },
         "task_schedule": {
           "title": "Review task schedule",
-          "description": "Check work timing against the GDD schedule"
+          "description": "Check the saved plan’s work schedule and see what is planned for each field."
         },
         "work_record": {
-          "title": "Record field work",
-          "description": "Log work in the field and compare with the plan"
+          "title": "Record work",
+          "description": "Log completed work to feed GDD comparison and the learning loop."
         },
         "cta": {
           "login_save": "Sign in to save",
           "save": "Use the button above to save",
-          "task_schedule": "Open task schedule",
-          "work_record": "Open work records"
+          "task_schedule": "View task schedule",
+          "work_record": "Record work"
         },
-        "completed": "Completed",
+        "completed": "Done",
         "after_save_hint": "Available after save"
       },
       "chart": {
@@ -2167,7 +2174,8 @@
         "expand": "Expand",
         "collapse": "Collapse",
         "compare_variance": "Compare variance"
-      }
+      },
+      "initial_setup": "Initial setup wizard"
     },
     "new": {
       "breadcrumb": "New plan",
@@ -2194,7 +2202,21 @@
       "carryover_preview_title": "Learning data preview",
       "carryover_no_source_plans": "No previous plans found for this farm.",
       "carryover_preview_empty": "No category variance data available for the selected plan.",
-      "carryover_learn_cta": "Create and review on Learn"
+      "carryover_learn_cta": "Create and review on Learn",
+      "readiness": {
+        "title": "Setup readiness before creating a plan",
+        "fields_ready": "Fields registered ({{count}})",
+        "fields_missing": "No fields registered for this farm",
+        "fields_action": "Register fields",
+        "weather_ready": "Weather data ready",
+        "weather_missing": "Weather data not ready",
+        "weather_action": "Check weather on farm",
+        "crops_ready": "Crop task plans ready",
+        "crops_missing": "No crops registered yet",
+        "crops_incomplete": "Crop task plans need setup",
+        "crops_action": "Set up crops",
+        "crop_blueprint_action": "Edit task plans"
+      }
     },
     "select_crop": {
       "title": "🌾 Select Crops to Grow",
@@ -4141,5 +4163,30 @@
     "ctaSectionTitle": "Next steps",
     "ctaPublicPlan": "Create a free plan with this crop",
     "ctaCropSetup": "Improve crop master data"
+  },
+  "onboarding": {
+    "breadcrumb": "Initial setup",
+    "title": "Initial setup",
+    "subtitle": "Complete these steps before creating your first cultivation plan.",
+    "step_action": "Go to setup",
+    "create_plan_cta": "Create plan",
+    "steps": {
+      "farm": {
+        "title": "Register a farm",
+        "description": "Add your farm location so weather and planning can use the right region."
+      },
+      "fields": {
+        "title": "Register fields",
+        "description": "Add field areas on your farm. Plans need at least one field with area."
+      },
+      "crops": {
+        "title": "Set up crop task plans",
+        "description": "Configure growth stages and task schedule blueprints for crops you will grow."
+      },
+      "weather": {
+        "title": "Fetch weather data",
+        "description": "Weather history is fetched on the farm detail page. Wait until status is completed."
+      }
+    }
   }
 }

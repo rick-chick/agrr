@@ -57,24 +57,25 @@
 | 44 | `interaction_rules/:id` | `/interaction_rules/1` | yes | `interaction_rules_id.ja.png` | `interaction_rules_id.en.png` | `interaction_rules_id.in.png` |
 | 45 | `interaction_rules/:id/edit` | `/interaction_rules/1/edit` | yes | `interaction_rules_id_edit.ja.png` | `interaction_rules_id_edit.en.png` | `interaction_rules_id_edit.in.png` |
 | 46 | `interaction_rules/new` | `/interaction_rules/new` | yes | `interaction_rules_new.ja.png` | `interaction_rules_new.en.png` | `interaction_rules_new.in.png` |
-| 47 | `pesticides` | `/pesticides` | yes | `pesticides.ja.png` | `pesticides.en.png` | `pesticides.in.png` |
-| 48 | `pesticides/:id` | `/pesticides/1` | yes | `pesticides_id.ja.png` | `pesticides_id.en.png` | `pesticides_id.in.png` |
-| 49 | `pesticides/:id/edit` | `/pesticides/1/edit` | yes | `pesticides_id_edit.ja.png` | `pesticides_id_edit.en.png` | `pesticides_id_edit.in.png` |
-| 50 | `pesticides/new` | `/pesticides/new` | yes | `pesticides_new.ja.png` | `pesticides_new.en.png` | `pesticides_new.in.png` |
-| 51 | `pests` | `/pests` | yes | `pests.ja.png` | `pests.en.png` | `pests.in.png` |
-| 52 | `pests/:id` | `/pests/1` | yes | `pests_id.ja.png` | `pests_id.en.png` | `pests_id.in.png` |
-| 53 | `pests/:id/edit` | `/pests/1/edit` | yes | `pests_id_edit.ja.png` | `pests_id_edit.en.png` | `pests_id_edit.in.png` |
-| 54 | `pests/new` | `/pests/new` | yes | `pests_new.ja.png` | `pests_new.en.png` | `pests_new.in.png` |
-| 55 | `plans` | `/plans` | yes | `plans.ja.png` | `plans.en.png` | `plans.in.png` |
-| 56 | `plans/:id` | `/plans/1` | yes | `plans_id.ja.png` | `plans_id.en.png` | `plans_id.in.png` |
-| 57 | `plans/:id/learn` | `/plans/1/learn` | yes | `plans_id_learn.ja.png` | `plans_id_learn.en.png` | `plans_id_learn.in.png` |
-| 58 | `plans/:id/optimizing` | `/plans/1/optimizing` | yes | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` |
-| 59 | `plans/:id/task_schedule` | `/plans/1/task_schedule` | yes | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` |
-| 60 | `plans/:id/work` | `/plans/1/work` | yes | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` |
-| 61 | `plans/:id/work_records` | `/plans/1/work_records` | yes | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` |
-| 62 | `plans/new` | `/plans/new` | yes | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` |
-| 63 | `work` | `/work` | yes | `work.ja.png` | `work.en.png` | `work.in.png` |
-| 64 | `work/variance` | `/work/variance` | yes | `work_variance.ja.png` | `work_variance.en.png` | `work_variance.in.png` |
+| 47 | `onboarding` | `/onboarding` | yes | `onboarding.ja.png` | `onboarding.en.png` | `onboarding.in.png` |
+| 48 | `pesticides` | `/pesticides` | yes | `pesticides.ja.png` | `pesticides.en.png` | `pesticides.in.png` |
+| 49 | `pesticides/:id` | `/pesticides/1` | yes | `pesticides_id.ja.png` | `pesticides_id.en.png` | `pesticides_id.in.png` |
+| 50 | `pesticides/:id/edit` | `/pesticides/1/edit` | yes | `pesticides_id_edit.ja.png` | `pesticides_id_edit.en.png` | `pesticides_id_edit.in.png` |
+| 51 | `pesticides/new` | `/pesticides/new` | yes | `pesticides_new.ja.png` | `pesticides_new.en.png` | `pesticides_new.in.png` |
+| 52 | `pests` | `/pests` | yes | `pests.ja.png` | `pests.en.png` | `pests.in.png` |
+| 53 | `pests/:id` | `/pests/1` | yes | `pests_id.ja.png` | `pests_id.en.png` | `pests_id.in.png` |
+| 54 | `pests/:id/edit` | `/pests/1/edit` | yes | `pests_id_edit.ja.png` | `pests_id_edit.en.png` | `pests_id_edit.in.png` |
+| 55 | `pests/new` | `/pests/new` | yes | `pests_new.ja.png` | `pests_new.en.png` | `pests_new.in.png` |
+| 56 | `plans` | `/plans` | yes | `plans.ja.png` | `plans.en.png` | `plans.in.png` |
+| 57 | `plans/:id` | `/plans/1` | yes | `plans_id.ja.png` | `plans_id.en.png` | `plans_id.in.png` |
+| 58 | `plans/:id/learn` | `/plans/1/learn` | yes | `plans_id_learn.ja.png` | `plans_id_learn.en.png` | `plans_id_learn.in.png` |
+| 59 | `plans/:id/optimizing` | `/plans/1/optimizing` | yes | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` |
+| 60 | `plans/:id/task_schedule` | `/plans/1/task_schedule` | yes | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` |
+| 61 | `plans/:id/work` | `/plans/1/work` | yes | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` |
+| 62 | `plans/:id/work_records` | `/plans/1/work_records` | yes | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` |
+| 63 | `plans/new` | `/plans/new` | yes | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` |
+| 64 | `work` | `/work` | yes | `work.ja.png` | `work.en.png` | `work.in.png` |
+| 65 | `work/variance` | `/work/variance` | yes | `work_variance.ja.png` | `work_variance.en.png` | `work_variance.in.png` |
 
 ## キャプチャ前提
 

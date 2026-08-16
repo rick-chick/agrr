@@ -1956,24 +1956,29 @@
       "chart_title": "気象データと作物成長分析",
       "loading_data": "データを読み込んでいます...",
       "private_value_preview": {
-        "title": "ログイン後に使える機能",
-        "lead": "マイプランに保存すると、以下の機能が利用できます。",
+        "title": "保存後に使えるプライベート機能",
+        "lead": "マイプランに保存すると、天候変化への対応から学習・作業記録まで一気通貫で進められます。",
         "weather_reschedule": {
-          "title": "天候リスケ",
-          "description": "天候変化に合わせて作付け計画を自動提案します"
+          "title": "天候リスケ提案",
+          "description": "悪天候が続くとき、栽培期間の調整案をプレビューしてから計画に反映できます。"
         },
         "learn_loop": {
           "title": "学習ループ",
-          "description": "実績と計画の差分から次シーズンの計画を改善します"
+          "description": "実績と計画の差分から、次シーズン向けのマスタ更新と作業計画の見直しを支援します。"
         },
         "work_gdd_comparison": {
           "title": "作業 GDD 比較",
           "description": "計画と記録の GDD を比較して遅延を把握します"
+        },
+        "badge": "ログイン後",
+        "work_gdd": {
+          "title": "作業 GDD 比較",
+          "description": "作業実績の積算温度を計画と比較し、遅れや前倒しを気づきやすくします。"
         }
       },
       "next_steps": {
         "title": "次のステップ",
-        "lead": "保存後はこの順で進めましょう。",
+        "lead": "公開計画をマイプランに保存してから、作業予定の確認と記録へ進みましょう。",
         "step_label": {
           "1": "ステップ 1",
           "2": "ステップ 2",
@@ -1981,15 +1986,16 @@
         },
         "save": {
           "title": "マイプランに保存",
-          "description": "この計画を自分のアカウントに取り込みます"
+          "description": "この公開計画をアカウントに取り込み、以降の作業管理の土台にします。",
+          "hint": "上の「マイプランに保存」ボタンから進めます"
         },
         "task_schedule": {
           "title": "作業予定を確認",
-          "description": "作業スケジュールと GDD のタイミングを確認します"
+          "description": "保存した計画の作業スケジュールを確認し、圃場ごとの予定を把握します。"
         },
         "work_record": {
           "title": "作業を記録",
-          "description": "圃場での作業実績を記録し計画と比較します"
+          "description": "実際の作業を記録し、計画との GDD 比較や学習ループの材料にします。"
         },
         "cta": {
           "login_save": "ログインして保存",
@@ -2388,7 +2394,8 @@
         "expand": "展開",
         "collapse": "折りたたむ",
         "compare_variance": "乖離を比較"
-      }
+      },
+      "initial_setup": "初回セットアップ"
     },
     "new": {
       "breadcrumb": "新規作成",
@@ -2415,7 +2422,21 @@
       "carryover_preview_title": "学習データのプレビュー",
       "carryover_no_source_plans": "この農場の過去の計画が見つかりません。",
       "carryover_preview_empty": "選択した計画にカテゴリ別の実績差分データがありません。",
-      "carryover_learn_cta": "作成後に学習画面で確認"
+      "carryover_learn_cta": "作成後に学習画面で確認",
+      "readiness": {
+        "title": "計画作成前の準備状況",
+        "fields_ready": "圃場登録済み（{{count}}）",
+        "fields_missing": "この農場に圃場が登録されていません",
+        "fields_action": "圃場を登録",
+        "weather_ready": "天候データ取得済み",
+        "weather_missing": "天候データ未取得",
+        "weather_action": "農場で天候を確認",
+        "crops_ready": "作物の作業計画が準備完了",
+        "crops_missing": "作物が未登録です",
+        "crops_incomplete": "作物の作業計画の設定が必要です",
+        "crops_action": "作物を設定",
+        "crop_blueprint_action": "作業計画を編集"
+      }
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
@@ -3340,7 +3361,8 @@
     "language": "言語",
     "lang_ja": "日本語",
     "lang_en": "English",
-    "lang_in": "हिन्दी"
+    "lang_in": "हिन्दी",
+    "entry_schedule": "作付け時期の目安"
   },
   "footer": {
     "about": "AGRRについて",
@@ -4177,5 +4199,30 @@
     "ctaSectionTitle": "次のステップ",
     "ctaPublicPlan": "この作物で無料計画を作る",
     "ctaCropSetup": "作物マスタを整備する"
+  },
+  "onboarding": {
+    "breadcrumb": "初回セットアップ",
+    "title": "初回セットアップ",
+    "subtitle": "初めての作付け計画を作成する前に、次の準備を完了してください。",
+    "step_action": "設定画面へ",
+    "create_plan_cta": "計画を作成",
+    "steps": {
+      "farm": {
+        "title": "農場を登録",
+        "description": "天候や計画に使う地域のため、農場の位置を登録します。"
+      },
+      "fields": {
+        "title": "圃場を登録",
+        "description": "農場に圃場の面積を登録します。計画には面積のある圃場が必要です。"
+      },
+      "crops": {
+        "title": "作物の作業計画を設定",
+        "description": "栽培する作物の生育ステージと作業計画テンプレートを設定します。"
+      },
+      "weather": {
+        "title": "天候データを取得",
+        "description": "農場詳細画面で天候履歴を取得します。完了になるまでお待ちください。"
+      }
+    }
   }
 }
