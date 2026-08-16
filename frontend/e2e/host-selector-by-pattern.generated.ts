@@ -39,6 +39,7 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   'interaction_rules/:id/edit': 'app-interaction-rule-edit',
   'interaction_rules/new': 'app-interaction-rule-create',
   login: 'app-login',
+  onboarding: 'app-onboarding',
   pesticides: 'app-pesticide-list',
   'pesticides/:id': 'app-pesticide-detail',
   'pesticides/:id/edit': 'app-pesticide-edit',
