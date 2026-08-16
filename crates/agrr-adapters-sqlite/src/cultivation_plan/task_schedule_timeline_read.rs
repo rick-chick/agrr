@@ -442,7 +442,8 @@ CREATE TABLE task_schedule_items (
 );
 CREATE TABLE work_records (
   id INTEGER PRIMARY KEY, cultivation_plan_id INTEGER, task_schedule_item_id INTEGER,
-  actual_date TEXT, notes TEXT, gdd_at_actual REAL
+  actual_date TEXT, notes TEXT, gdd_at_actual REAL, fertilize_id INTEGER, pesticide_id INTEGER,
+  amount REAL, amount_unit TEXT
 );
 ";
 

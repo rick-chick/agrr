@@ -762,6 +762,16 @@ fn get_plan_vs_actual_summary_and_task_schedule_embed_variance_fields() {
         rusqlite::params![record_id],
     )
     .expect("set gdd_at_actual");
+    conn.execute(
+        "UPDATE task_schedule_items SET amount = 10.0, amount_unit = 'kg' WHERE id = ?1",
+        rusqlite::params![seed.task_schedule_item_id],
+    )
+    .expect("set planned amount");
+    conn.execute(
+        "UPDATE work_records SET amount = 12.0, amount_unit = 'kg' WHERE id = ?1",
+        rusqlite::params![record_id],
+    )
+    .expect("set actual amount");
 
     let summary_path = format!("/api/v1/plans/{}/plan_vs_actual/summary", seed.plan_id);
     let (summary_status, summary_body) = status_and_body(client.get(
@@ -783,6 +793,17 @@ fn get_plan_vs_actual_summary_and_task_schedule_embed_variance_fields() {
     assert_eq!(10, top_items[0]["delta_days"].as_i64().unwrap());
     assert!(top_items[0]["gdd_at_actual"].is_number());
     assert!(top_items[0]["gdd_delta"].is_number());
+    assert!(top_items[0].get("amount_planned").is_some());
+    assert!(top_items[0].get("amount_actual").is_some());
+    assert!(top_items[0].get("amount_delta").is_some());
+    assert_eq!(10.0, top_items[0]["amount_planned"].as_f64().unwrap());
+    assert_eq!(12.0, top_items[0]["amount_actual"].as_f64().unwrap());
+    assert_eq!(2.0, top_items[0]["amount_delta"].as_f64().unwrap());
+    assert_eq!("kg", top_items[0]["amount_unit"].as_str().unwrap());
+    let amount_summaries = summary["amount_delta_summaries"]
+        .as_array()
+        .expect("amount_delta_summaries");
+    assert!(amount_summaries.is_empty());
     let proposals = summary["stage_gdd_calibration_proposals"]
         .as_array()
         .expect("stage_gdd_calibration_proposals");
