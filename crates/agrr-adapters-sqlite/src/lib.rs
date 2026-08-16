@@ -67,7 +67,7 @@ pub use cultivation_plan::{
     CultivationPlanOptimizationSqliteGateway, CultivationPlanRestPlanReadSqliteGateway,
     CultivationPlanSqliteGateway, OptimizationPlanReadSqliteGateway,
     PlanAllocationAdjustDebugDumpFileGateway, PlanAllocationAdjustReadSqliteGateway,
-    PlanVarianceLearningSqliteGateway, WeatherRescheduleProposalsSqliteGateway,
+    PlanVarianceLearningSqliteGateway, WeatherRescheduleProposalReadSqliteGateway,
     PublicPlanSavePersistenceSqliteAdapter, PublicPlanSaveReadSqliteGateway,
     TaskScheduleGenerationReadSqliteGateway, TaskScheduleGenerationTransactionSqliteGateway,
     TaskScheduleItemMutationSqliteGateway, TaskScheduleSqliteGateway,

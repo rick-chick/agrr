@@ -4,7 +4,7 @@ use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
     CultivationPlanSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
-    WeatherRescheduleProposalsSqliteGateway,
+    WeatherRescheduleProposalReadSqliteGateway,
 };
 use agrr_domain::cultivation_plan::dtos::WeatherRescheduleProposalRead;
 use agrr_domain::cultivation_plan::interactors::WeatherRescheduleProposalsListInteractor;
@@ -53,7 +53,10 @@ async fn list_weather_reschedule_proposals(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
-    let proposals_gateway = WeatherRescheduleProposalsSqliteGateway::new();
+    let read_gateway = WeatherRescheduleProposalReadSqliteGateway::new(
+        pool.clone(),
+        state.predicted_weather.store.clone(),
+    );
     let user_lookup = UserLookupSqliteGateway::new(pool.clone());
     let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
 
@@ -64,7 +67,7 @@ async fn list_weather_reschedule_proposals(
         user_id,
         plan_id,
         &plan_gateway,
-        &proposals_gateway,
+        &read_gateway,
         &user_lookup,
         &scope_gateway,
     );
