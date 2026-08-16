@@ -204,6 +204,29 @@ describe('NavbarComponent', () => {
     expect(workLogLink.querySelector('.nav-link__badge')?.textContent?.trim()).toBe('3');
   });
 
+  it('shows entry schedule nav link for logged-out users', () => {
+    translate.setTranslation('en', {
+      nav: { entry_schedule: 'Planting schedule' }
+    });
+    translate.use('en');
+    component.user = null;
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector(
+      'a.nav-link[href="/entry-schedule"]'
+    ) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.textContent?.trim()).toBe('Planting schedule');
+  });
+
+  it('marks entry schedule nav active on entry-schedule routes', async () => {
+    await router.navigateByUrl('/work');
+    fixture.detectChanges();
+    component['currentPath'] = '/entry-schedule/crop/7';
+    expect(component.isEntryScheduleNavActive()).toBe(true);
+    expect(component.isPlanNavActive()).toBe(false);
+  });
+
   it('hides overdue badge when workLogOverdueCount is zero', () => {
     component.user = {
       id: 1,

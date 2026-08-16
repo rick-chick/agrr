@@ -27,11 +27,13 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
       selectedCrops: any[];
       planId: number | null;
       pendingCropSlug: string | null;
+      pendingCropId: number | null;
     };
     setSelectedCrops: ReturnType<typeof vi.fn>;
     setPlanId: ReturnType<typeof vi.fn>;
     setFarm: ReturnType<typeof vi.fn>;
     setPendingCropSlug: ReturnType<typeof vi.fn>;
+    setPendingCropId: ReturnType<typeof vi.fn>;
     syncFromSessionStorageIfFarmMissing: ReturnType<typeof vi.fn>;
   };
   let router: { navigate: ReturnType<typeof vi.fn> };
@@ -48,12 +50,14 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
         farmSize: { id: 'home_garden', name: 'Home Garden', area_sqm: 30 },
         selectedCrops: [],
         planId: null,
-        pendingCropSlug: null
+        pendingCropSlug: null,
+        pendingCropId: null
       },
       setSelectedCrops: vi.fn(),
       setPlanId: vi.fn(),
       setFarm: vi.fn(),
       setPendingCropSlug: vi.fn(),
+      setPendingCropId: vi.fn(),
       syncFromSessionStorageIfFarmMissing: vi.fn(),
     };
     router = { navigate: vi.fn() };
@@ -113,6 +117,17 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
+  it('ngOnInit preserves pending crop id across reset', () => {
+    publicPlanStore.state.pendingCropId = 11;
+    resetStateUseCase.execute = vi.fn(() => {
+      publicPlanStore.state.pendingCropId = null;
+    });
+
+    PublicPlanSelectCropComponent.prototype.ngOnInit.call(component);
+
+    expect(publicPlanStore.setPendingCropId).toHaveBeenCalledWith(11);
+  });
+
   it('ngOnInit preserves pending research crop slug across reset', () => {
     publicPlanStore.state.pendingCropSlug = 'tomato';
     resetStateUseCase.execute = vi.fn(() => {
@@ -130,7 +145,8 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
       farmSize: { id: 'home_garden', name: 'Home Garden', area_sqm: 30 },
       selectedCrops: [],
       planId: null,
-      pendingCropSlug: null
+      pendingCropSlug: null,
+      pendingCropId: null
     };
 
     PublicPlanSelectCropComponent.prototype.ngOnInit.call(component);
@@ -205,6 +221,31 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     PublicPlanSelectCropComponent.prototype.createPlan.call(component);
 
     expect(createPlanUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('preselects crop when pending crop id matches loaded crops', () => {
+    publicPlanStore.state.pendingCropId = 11;
+    component.selectedCropIds = new Set();
+    component.selectedCrops = [];
+    const crops = [
+      { id: 10, name: 'トマト' },
+      { id: 11, name: 'キュウリ' }
+    ];
+
+    const desc = Object.getOwnPropertyDescriptor(PublicPlanSelectCropComponent.prototype, 'control');
+    if (desc?.set) {
+      desc.set.call(component, {
+        loading: false,
+        error: null,
+        crops,
+        saving: false
+      });
+    }
+
+    expect(publicPlanStore.setPendingCropId).toHaveBeenCalledWith(null);
+    expect(component.selectedCropIds).toEqual(new Set([11]));
+    expect(component.selectedCrops).toEqual([{ id: 11, name: 'キュウリ' }]);
+    expect(publicPlanStore.setSelectedCrops).toHaveBeenCalledWith([{ id: 11, name: 'キュウリ' }]);
   });
 
   it('preselects crop when pending research slug matches loaded crops', () => {
@@ -295,12 +336,14 @@ describe('PublicPlanSelectCropComponent (template)', () => {
                   farm: { id: 1, name: 'Test Farm', region: 'jp' },
                   selectedCrops: [],
                   planId: null,
-                  pendingCropSlug: null
+                  pendingCropSlug: null,
+                  pendingCropId: null
                 },
                 setSelectedCrops: vi.fn(),
                 setPlanId: vi.fn(),
                 setFarm: vi.fn(),
                 setPendingCropSlug: vi.fn(),
+                setPendingCropId: vi.fn(),
                 syncFromSessionStorageIfFarmMissing: vi.fn(),
               }
             }
@@ -385,12 +428,14 @@ describe('PublicPlanSelectCropComponent (template)', () => {
                   },
                   selectedCrops: [],
                   planId: null,
-                  pendingCropSlug: null
+                  pendingCropSlug: null,
+                  pendingCropId: null
                 },
                 setSelectedCrops: vi.fn(),
                 setPlanId: vi.fn(),
                 setFarm: vi.fn(),
                 setPendingCropSlug: vi.fn(),
+                setPendingCropId: vi.fn(),
                 syncFromSessionStorageIfFarmMissing: vi.fn(),
               }
             }
@@ -471,12 +516,14 @@ describe('PublicPlanSelectCropComponent (template)', () => {
                   farm: { id: 1, name: 'Test Farm', region: 'jp' },
                   selectedCrops: [{ id: 1, name: 'Tomato' }],
                   planId: null,
-                  pendingCropSlug: null
+                  pendingCropSlug: null,
+                  pendingCropId: null
                 },
                 setSelectedCrops: vi.fn(),
                 setPlanId: vi.fn(),
                 setFarm: vi.fn(),
                 setPendingCropSlug: vi.fn(),
+                setPendingCropId: vi.fn(),
                 syncFromSessionStorageIfFarmMissing: vi.fn(),
               }
             }

@@ -331,6 +331,7 @@
     "work_log_overdue_aria": "Work log, {{count}} overdue",
     "menu_masters": "Master Data",
     "new_plan": "Create Crop Plan",
+    "entry_schedule": "Planting schedule guide",
     "reports": "Reports",
     "menu_more": "More",
     "home": "Home",
@@ -370,6 +371,7 @@
         "title": "🌱 Make Agriculture Smarter",
         "subtitle_html": "Visualize crop plans with weather and GDD.",
         "cta_scroll_demo": "Try it out",
+        "cta_entry_schedule": "View planting schedule guide",
         "cta_footer_link": "Create plan"
       },
       "demo": {
@@ -4091,6 +4093,9 @@
     "timeline": "Monthly timeline",
     "nextTask": "Next task",
     "nextTaskPlaceholder": "No next task candidate yet.",
-    "stages": "Growth stages"
+    "stages": "Growth stages",
+    "ctaSectionTitle": "Next steps",
+    "ctaFreePlan": "Create a free plan with this crop",
+    "ctaSetupProposal": "Refine crop master data"
   }
 }

@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { CommonModule, isPlatformServer } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { combineLatest } from 'rxjs';
@@ -19,11 +19,14 @@ import {
   findEntrySchedulePrerenderCrop,
 } from '../../core/seo/entry-schedule-prerender-catalog';
 import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedule-prerender-snapshot';
+import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { AuthService } from '../../services/auth.service';
+import { Farm } from '../../domain/farms/farm';
 
 @Component({
   selector: 'app-entry-schedule-detail',
   standalone: true,
-  imports: [CommonModule, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, TranslateModule, MasterContextHeaderComponent, RouterLink],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
@@ -198,6 +201,29 @@ import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedu
                 <li>{{ s.name }}</li>
               }
             </ol>
+
+            <section class="entry-schedule-cta mt-4" aria-labelledby="entry-schedule-cta-heading">
+              <h3 id="entry-schedule-cta-heading" class="subsection-title">
+                {{ 'entrySchedule.ctaSectionTitle' | translate }}
+              </h3>
+              <div class="entry-schedule-cta__actions">
+                <button
+                  type="button"
+                  class="btn btn-primary entry-schedule-cta__free-plan"
+                  (click)="startFreePlanWithCrop()"
+                >
+                  {{ 'entrySchedule.ctaFreePlan' | translate }}
+                </button>
+                @if (auth.user()) {
+                  <a
+                    class="btn btn-secondary entry-schedule-cta__setup-proposal"
+                    [routerLink]="['/crops', data()!.crop.id, 'setup_proposal']"
+                  >
+                    {{ 'entrySchedule.ctaSetupProposal' | translate }}
+                  </a>
+                }
+              </div>
+            </section>
           </section>
         }
       </div>
@@ -248,6 +274,12 @@ import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedu
       .ml-2 {
         margin-left: 0.5rem;
       }
+      .entry-schedule-cta__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+      }
     `
   ]
 })
@@ -259,6 +291,8 @@ export class EntryScheduleDetailComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly seo = inject(AppSeoMetaService);
   private readonly translate = inject(TranslateService);
+  private readonly publicPlanStore = inject(PublicPlanStore);
+  protected readonly auth = inject(AuthService);
 
   readonly monthTicks = [...MONTH_NUMBERS];
 
@@ -354,6 +388,24 @@ export class EntryScheduleDetailComponent implements OnInit {
 
   reload(): void {
     this.fetchFromRoute();
+  }
+
+  startFreePlanWithCrop(): void {
+    const response = this.data();
+    if (!response) {
+      return;
+    }
+    const farm: Farm = {
+      id: response.farm.id,
+      name: response.farm.name,
+      latitude: response.farm.latitude,
+      longitude: response.farm.longitude,
+      region: response.farm.region,
+      is_reference: true
+    };
+    this.publicPlanStore.setFarm(farm);
+    this.publicPlanStore.setPendingCropId(response.crop.id);
+    void this.router.navigate(['/public-plans/select-crop']);
   }
 
   private fetchFromRoute(): void {

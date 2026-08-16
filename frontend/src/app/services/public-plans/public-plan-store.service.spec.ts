@@ -3,6 +3,25 @@ import { PublicPlanStore } from './public-plan-store.service';
 
 const SESSION_STORAGE_KEY = 'agrr_public_plan_state';
 
+describe('PublicPlanStore pendingCropId', () => {
+  it('persists pendingCropId when setPendingCropId is called', () => {
+    const store = new PublicPlanStore();
+
+    store.setPendingCropId(42);
+
+    expect(store.state.pendingCropId).toBe(42);
+    const stored = JSON.parse(sessionStorage.getItem('agrr_public_plan_state') ?? '{}');
+    expect(stored.pendingCropId).toBe(42);
+  });
+
+  it('clears pendingCropId on reset', () => {
+    const store = new PublicPlanStore();
+    store.setPendingCropId(42);
+    store.reset();
+    expect(store.state.pendingCropId).toBeNull();
+  });
+});
+
 describe('PublicPlanStore pendingCropSlug', () => {
   beforeEach(() => {
     sessionStorage.clear();
