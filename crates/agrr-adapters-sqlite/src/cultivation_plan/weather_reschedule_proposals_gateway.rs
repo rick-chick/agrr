@@ -13,12 +13,6 @@ impl WeatherRescheduleProposalsSqliteGateway {
     }
 }
 
-impl Default for WeatherRescheduleProposalsSqliteGateway {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl WeatherRescheduleProposalsGateway for WeatherRescheduleProposalsSqliteGateway {
     fn list_by_plan_id(
         &self,

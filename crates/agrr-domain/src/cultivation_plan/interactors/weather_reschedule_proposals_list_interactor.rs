@@ -1,6 +1,5 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::WeatherRescheduleProposalsListInteractor`
 
-use crate::cultivation_plan::dtos::WeatherRescheduleProposalRead;
 use crate::cultivation_plan::gateways::{
     CultivationPlanGateway, WeatherRescheduleProposalsGateway,
 };
