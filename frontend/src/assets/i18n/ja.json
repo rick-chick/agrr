@@ -2148,6 +2148,31 @@
     "create_failed": "計画作成に失敗しました: {{errors}}",
     "invalid_farm_id": "農場IDが不正です。"
   },
+  "onboarding": {
+    "breadcrumb": "初回セットアップ",
+    "title": "初回セットアップ",
+    "subtitle": "初めての作付け計画を作成する前に、次の準備を完了してください。",
+    "step_action": "設定画面へ",
+    "create_plan_cta": "計画を作成",
+    "steps": {
+      "farm": {
+        "title": "農場を登録",
+        "description": "天候や計画に使う地域のため、農場の位置を登録します。"
+      },
+      "fields": {
+        "title": "圃場を登録",
+        "description": "農場に圃場の面積を登録します。計画には面積のある圃場が必要です。"
+      },
+      "crops": {
+        "title": "作物の作業計画を設定",
+        "description": "栽培する作物の生育ステージと作業計画テンプレートを設定します。"
+      },
+      "weather": {
+        "title": "天候データを取得",
+        "description": "農場詳細画面で天候履歴を取得します。完了になるまでお待ちください。"
+      }
+    }
+  },
   "plans": {
     "errors": {
       "field_not_found": "圃場が見つかりません。",
@@ -2312,6 +2337,7 @@
       "try_public_plans": "無料プランから始める",
       "no_plans": "まだ計画がありません",
       "no_plans_hint": "新しい計画を作成して栽培スケジュールを最適化しましょう。",
+      "initial_setup": "初回セットアップ",
       "retry": "再読み込み",
       "delete_confirm_message": "この作付け計画を削除します。計画内の圃場配置や作業記録への参照が失われます。削除後、しばらく「元に戻す」で取り消せます。",
       "year_label": "{{year}}年度",
@@ -2370,7 +2396,21 @@
       "carryover_preview_title": "学習データのプレビュー",
       "carryover_no_source_plans": "この農場の過去の計画が見つかりません。",
       "carryover_preview_empty": "選択した計画にカテゴリ別の実績差分データがありません。",
-      "carryover_learn_cta": "作成後に学習画面で確認"
+      "carryover_learn_cta": "作成後に学習画面で確認",
+      "readiness": {
+        "title": "計画作成前の準備状況",
+        "fields_ready": "圃場登録済み（{{count}}）",
+        "fields_missing": "この農場に圃場が登録されていません",
+        "fields_action": "圃場を登録",
+        "weather_ready": "天候データ取得済み",
+        "weather_missing": "天候データ未取得",
+        "weather_action": "農場で天候を確認",
+        "crops_ready": "作物の作業計画が準備完了",
+        "crops_missing": "作物が未登録です",
+        "crops_incomplete": "作物の作業計画の設定が必要です",
+        "crops_action": "作物を設定",
+        "crop_blueprint_action": "作業計画を編集"
+      }
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
