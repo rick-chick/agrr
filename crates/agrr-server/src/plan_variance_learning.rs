@@ -3,6 +3,7 @@
 //! `POST /api/v1/plans/:id/variance_learning/reoptimize` — enqueue optimization job chain.
 
 use crate::adapters::{NoopLogger, PassthroughTranslator};
+use crate::optimization_chain_phase::advance_phase;
 use crate::optimization_job_chain::enqueue_private_plan_optimization_chain;
 use crate::plan_vs_actual_json::summary_to_json_body;
 use crate::session_auth::user_id_from_session;
@@ -12,7 +13,7 @@ use agrr_adapters_sqlite::{
     PlanVarianceLearningSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::cultivation_plan::dtos::{
-    assemble_plan_variance_learning_snapshot, LearnHandoffStatePatch,
+    assemble_plan_variance_learning_snapshot, CultivationPlanPhaseName, LearnHandoffStatePatch,
     PlanVarianceLearningSnapshotRead, ReorganizeOrchestrationProgressPatch,
 };
 use agrr_domain::cultivation_plan::gateways::{
@@ -424,11 +425,16 @@ impl PrivatePlanOptimizationJobChainGateway for ReoptimizeJobChainAdapter<'_> {
         &self,
         cultivation_plan_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if enqueue_private_plan_optimization_chain(
-            cultivation_plan_id,
-            "OptimizationChannel",
+        const CHANNEL: &str = "OptimizationChannel";
+        advance_phase(
             self.state,
-        ) {
+            cultivation_plan_id,
+            CHANNEL,
+            CultivationPlanPhaseName::StartOptimizing,
+            None,
+        )?;
+
+        if enqueue_private_plan_optimization_chain(cultivation_plan_id, CHANNEL, self.state) {
             Ok(())
         } else {
             Err("optimization chain could not start".into())
