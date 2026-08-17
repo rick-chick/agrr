@@ -51,12 +51,20 @@ pub struct CropSetupProposalBlueprintPatchPlan {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct CropSetupProposalBlueprintAmountPatchPlan {
+    pub blueprint_id: i64,
+    pub amount: f64,
+    pub amount_unit: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct CropSetupProposalPlan {
     pub intent: Option<String>,
     pub stages: Vec<CropSetupProposalStagePlan>,
     pub agricultural_tasks: Vec<CropSetupProposalAgriculturalTaskPlan>,
     pub task_schedule_blueprints: Vec<CropSetupProposalBlueprintPlan>,
     pub blueprint_timing_patches: Vec<CropSetupProposalBlueprintPatchPlan>,
+    pub blueprint_amount_patches: Vec<CropSetupProposalBlueprintAmountPatchPlan>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -92,7 +92,8 @@ pub use masters_crop_task_schedule_blueprint_regenerate_input::{
 pub use crop_setup_proposal_input::{CropSetupProposalInput, CropSetupProposalMode};
 pub use crop_setup_proposal_validation::{
     CropSetupProposalApplyResult, CropSetupProposalAgriculturalTaskPlan,
-    CropSetupProposalBlueprintPatchPlan, CropSetupProposalBlueprintPlan, CropSetupProposalPlan,
+    CropSetupProposalBlueprintAmountPatchPlan, CropSetupProposalBlueprintPatchPlan,
+    CropSetupProposalBlueprintPlan, CropSetupProposalPlan,
     CropSetupProposalStagePlan, CropSetupProposalValidationError,
 };
 pub use masters_crop_task_schedule_blueprint_update_input::MastersCropTaskScheduleBlueprintUpdateInput;

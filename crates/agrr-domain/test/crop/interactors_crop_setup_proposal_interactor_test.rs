@@ -415,6 +415,15 @@ impl CropSetupProposalGateway for TestProposalGateway {
     ) -> Result<CropSetupProposalApplyResult, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!("patch apply should not run in dry_run test")
     }
+
+    fn apply_blueprint_amount_patch(
+        &self,
+        _: i64,
+        _: i64,
+        _: &crate::crop::dtos::CropSetupProposalPlan,
+    ) -> Result<CropSetupProposalApplyResult, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!("patch apply should not run in dry_run test")
+    }
 }
 
 struct TestUserLookup {
