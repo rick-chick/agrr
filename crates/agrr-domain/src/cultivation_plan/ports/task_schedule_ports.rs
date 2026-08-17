@@ -49,6 +49,11 @@ pub trait RegenerateTaskScheduleOutputPort {
     fn on_not_found(&mut self);
 }
 
+pub trait PlanVarianceLearningReoptimizeOutputPort {
+    fn on_success(&mut self, plan_id: i64);
+    fn on_not_found(&mut self);
+}
+
 pub trait PrivatePlanInitializeFromSelectionOutputPort {
     fn on_success(
         &mut self,

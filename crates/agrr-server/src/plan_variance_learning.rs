@@ -1,7 +1,9 @@
 //! `GET /api/v1/plans/:id/variance_learning` — persisted variance learning snapshot.
 //! `PATCH /api/v1/plans/:id/variance_learning` — proposal application progress updates.
+//! `POST /api/v1/plans/:id/variance_learning/reoptimize` — enqueue optimization job chain.
 
 use crate::adapters::{NoopLogger, PassthroughTranslator};
+use crate::optimization_job_chain::enqueue_private_plan_optimization_chain;
 use crate::plan_vs_actual_json::summary_to_json_body;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
@@ -9,6 +11,7 @@ use agrr_adapters_sqlite::{
     CultivationPlanPrivateSnapshotReadSqliteGateway, CultivationPlanSqliteGateway,
     PlanVarianceLearningSqliteGateway, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway,
 };
+use agrr_domain::cultivation_plan::dtos::PlanVarianceLearningReoptimizeInput;
 use agrr_domain::cultivation_plan::dtos::{
     assemble_plan_variance_learning_snapshot, LearnHandoffStatePatch,
     PlanVarianceLearningSnapshotRead, ReorganizeOrchestrationProgressPatch,
@@ -21,9 +24,11 @@ use agrr_domain::cultivation_plan::interactors::{
     PlanVarianceLearningHandoffUpdateInteractor,
     PlanVarianceLearningOrchestrationProgressUpdateInteractor,
     PlanVarianceLearningProposalProgressUpdateInteractor, PlanVarianceLearningReadInteractor,
+    PlanVarianceLearningReoptimizeInteractor,
 };
 use agrr_domain::cultivation_plan::ports::{
     PlanVarianceLearningProposalProgressUpdateOutputPort, PlanVarianceLearningReadOutputPort,
+    PlanVarianceLearningReoptimizeEnqueuePort, PlanVarianceLearningReoptimizeOutputPort,
 };
 use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::exceptions::RecordNotFoundError;
@@ -37,12 +42,17 @@ use serde_json::{json, Map, Value};
 use std::collections::BTreeMap;
 
 pub fn routes() -> Router<AppState> {
-    Router::new().route(
-        "/api/v1/plans/{id}/variance_learning",
-        get(show_variance_learning)
-            .post(import_variance_learning)
-            .patch(patch_variance_learning),
-    )
+    Router::new()
+        .route(
+            "/api/v1/plans/{id}/variance_learning",
+            get(show_variance_learning)
+                .post(import_variance_learning)
+                .patch(patch_variance_learning),
+        )
+        .route(
+            "/api/v1/plans/{id}/variance_learning/reoptimize",
+            post(reoptimize_variance_learning),
+        )
 }
 
 struct VarianceLearningPresenter {
@@ -492,6 +502,95 @@ async fn import_variance_learning(
     );
 
     Ok(Json(snapshot_to_json(&merged)))
+}
+
+struct VarianceLearningReoptimizeEnqueueAdapter {
+    state: AppState,
+}
+
+impl PlanVarianceLearningReoptimizeEnqueuePort for VarianceLearningReoptimizeEnqueueAdapter {
+    fn enqueue(
+        &self,
+        plan_id: i64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        if enqueue_private_plan_optimization_chain(
+            plan_id,
+            "PlansOptimizationChannel",
+            &self.state,
+        ) {
+            Ok(())
+        } else {
+            Err("optimization chain could not start".into())
+        }
+    }
+}
+
+struct VarianceLearningReoptimizePresenter {
+    body: Option<VarianceLearningReoptimizeOutcome>,
+}
+
+enum VarianceLearningReoptimizeOutcome {
+    Success { plan_id: i64 },
+    NotFound,
+}
+
+impl PlanVarianceLearningReoptimizeOutputPort for VarianceLearningReoptimizePresenter {
+    fn on_success(&mut self, plan_id: i64) {
+        self.body = Some(VarianceLearningReoptimizeOutcome::Success { plan_id });
+    }
+
+    fn on_not_found(&mut self) {
+        self.body = Some(VarianceLearningReoptimizeOutcome::NotFound);
+    }
+}
+
+async fn reoptimize_variance_learning(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(plan_id): Path<i64>,
+) -> Result<Json<Value>, (axum::http::StatusCode, Json<Value>)> {
+    let user_id = user_id_from_session(&state, &jar).map_err(|status| {
+        (
+            status,
+            Json(json!({"errors": ["unauthorized"]})),
+        )
+    })?;
+
+    let pool = state.sqlite.clone();
+    let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
+    let enqueue = VarianceLearningReoptimizeEnqueueAdapter {
+        state: state.clone(),
+    };
+    let mut presenter = VarianceLearningReoptimizePresenter { body: None };
+
+    let mut interactor = PlanVarianceLearningReoptimizeInteractor::new(
+        &mut presenter,
+        &plan_gateway,
+        &enqueue,
+        &scope_gateway,
+    );
+
+    match interactor.call(PlanVarianceLearningReoptimizeInput { user_id, plan_id }) {
+        Ok(()) => match presenter.body {
+            Some(VarianceLearningReoptimizeOutcome::Success { plan_id }) => Ok(Json(json!({
+                "success": true,
+                "plan_id": plan_id,
+                "optimization_enqueued": true,
+            }))),
+            Some(VarianceLearningReoptimizeOutcome::NotFound) | None => Err((
+                axum::http::StatusCode::NOT_FOUND,
+                Json(json!({"errors": ["not_found"]})),
+            )),
+        },
+        Err(err) => {
+            tracing::error!("variance_learning reoptimize failed: {err}");
+            Err((
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"errors": ["internal_error"]})),
+            ))
+        }
+    }
 }
 
 pub fn run_carryover_after_create(
