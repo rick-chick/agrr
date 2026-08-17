@@ -17,4 +17,11 @@ pub trait CropSetupProposalGateway: Send + Sync {
         crop_id: i64,
         plan: &CropSetupProposalPlan,
     ) -> Result<CropSetupProposalApplyResult, Box<dyn Error + Send + Sync>>;
+
+    fn apply_blueprint_amount_patch(
+        &self,
+        user_id: i64,
+        crop_id: i64,
+        plan: &CropSetupProposalPlan,
+    ) -> Result<CropSetupProposalApplyResult, Box<dyn Error + Send + Sync>>;
 }

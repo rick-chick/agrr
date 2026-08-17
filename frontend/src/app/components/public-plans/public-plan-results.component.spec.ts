@@ -197,6 +197,21 @@ describe('PublicPlanResultsComponent', () => {
 
       expect(saveUseCase.execute).toHaveBeenCalledTimes(1);
     });
+
+    it('saves pending plan id when fallback plan id differs after login', () => {
+      authService.user.mockReturnValue({ id: 1, name: 'Test User' });
+      authService.loadCurrentUser.mockReturnValue(of({ id: 1, name: 'Test User' }));
+      activatedRoute.snapshot.queryParamMap.get.mockReturnValue('456');
+      publicPlanStore.state.planId = 456;
+      sessionStorage.setItem(
+        'agrr_pending_public_plan_save',
+        JSON.stringify({ planId: 123, at: new Date().toISOString() })
+      );
+
+      component.ngOnInit();
+
+      expect(saveUseCase.execute).toHaveBeenCalledWith({ planId: 123 });
+    });
   });
 
   it('uses i18n restart key when planId is missing on init', () => {

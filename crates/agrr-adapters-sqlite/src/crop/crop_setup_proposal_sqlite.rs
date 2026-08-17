@@ -49,6 +49,17 @@ impl CropSetupProposalGateway for CropSetupProposalSqliteGateway {
             apply_blueprint_timing_patch_on_conn(conn, crop_id, plan)
         })
     }
+
+    fn apply_blueprint_amount_patch(
+        &self,
+        _user_id: i64,
+        crop_id: i64,
+        plan: &CropSetupProposalPlan,
+    ) -> Result<CropSetupProposalApplyResult, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_write_transaction_box(|conn| {
+            apply_blueprint_amount_patch_on_conn(conn, crop_id, plan)
+        })
+    }
 }
 
 fn apply_plan_on_conn(
@@ -143,6 +154,37 @@ fn apply_blueprint_timing_patch_on_conn(
         conn.execute(
             "UPDATE crop_task_schedule_blueprints SET gdd_trigger = ?1, updated_at = datetime('now') WHERE id = ?2 AND crop_id = ?3",
             params![patch.gdd_trigger, patch.blueprint_id, crop_id],
+        )?;
+        blueprint_ids.push(patch.blueprint_id);
+    }
+
+    Ok(CropSetupProposalApplyResult {
+        stage_ids: Vec::new(),
+        agricultural_task_ids: Vec::new(),
+        blueprint_ids,
+    })
+}
+
+fn apply_blueprint_amount_patch_on_conn(
+    conn: &Connection,
+    crop_id: i64,
+    plan: &CropSetupProposalPlan,
+) -> rusqlite::Result<CropSetupProposalApplyResult> {
+    let mut blueprint_ids = Vec::new();
+
+    for patch in &plan.blueprint_amount_patches {
+        let exists: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM crop_task_schedule_blueprints WHERE id = ?1 AND crop_id = ?2",
+            params![patch.blueprint_id, crop_id],
+            |row| row.get(0),
+        )?;
+        if exists == 0 {
+            return Err(invalid_apply_error("blueprint not found for crop"));
+        }
+
+        conn.execute(
+            "UPDATE crop_task_schedule_blueprints SET amount = ?1, amount_unit = COALESCE(?2, amount_unit), updated_at = datetime('now') WHERE id = ?3 AND crop_id = ?4",
+            params![patch.amount, patch.amount_unit, patch.blueprint_id, crop_id],
         )?;
         blueprint_ids.push(patch.blueprint_id);
     }

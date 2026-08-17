@@ -4,9 +4,9 @@ use crate::agricultural_task::constants::schedule_item_types::{
     BASAL_FERTILIZATION, CURATIVE_SPRAY, FIELD_WORK, PREVENTIVE_SPRAY, TOPDRESS_FERTILIZATION,
 };
 use crate::crop::dtos::{
-    CropSetupProposalAgriculturalTaskPlan, CropSetupProposalBlueprintPatchPlan,
-    CropSetupProposalBlueprintPlan, CropSetupProposalPlan, CropSetupProposalStagePlan,
-    CropSetupProposalValidationError, MastersCropTaskScheduleBlueprint,
+    CropSetupProposalAgriculturalTaskPlan, CropSetupProposalBlueprintAmountPatchPlan,
+    CropSetupProposalBlueprintPatchPlan, CropSetupProposalBlueprintPlan, CropSetupProposalPlan,
+    CropSetupProposalStagePlan, CropSetupProposalValidationError, MastersCropTaskScheduleBlueprint,
 };
 use crate::crop::entities::CropStageEntity;
 use serde_json::{json, Map, Value};
@@ -22,6 +22,7 @@ const ALLOWED_TASK_TYPES: &[&str] = &[
 ];
 
 const BLUEPRINT_TIMING_PATCH_INTENT: &str = "blueprint_timing_patch";
+const BLUEPRINT_AMOUNT_PATCH_INTENT: &str = "blueprint_amount_patch";
 
 pub fn validate_and_normalize(
     body: &Value,
@@ -30,6 +31,9 @@ pub fn validate_and_normalize(
 ) -> Result<(CropSetupProposalPlan, Value), Vec<CropSetupProposalValidationError>> {
     if body.get("intent").and_then(|v| v.as_str()) == Some(BLUEPRINT_TIMING_PATCH_INTENT) {
         return validate_blueprint_timing_patch(body, existing_blueprints);
+    }
+    if body.get("intent").and_then(|v| v.as_str()) == Some(BLUEPRINT_AMOUNT_PATCH_INTENT) {
+        return validate_blueprint_amount_patch(body, existing_blueprints);
     }
 
     let mut errors = Vec::new();
@@ -287,6 +291,7 @@ pub fn validate_and_normalize(
         agricultural_tasks,
         task_schedule_blueprints,
         blueprint_timing_patches: Vec::new(),
+        blueprint_amount_patches: Vec::new(),
     };
     Ok((plan.clone(), plan_to_normalized_json(&plan)))
 }
@@ -370,8 +375,114 @@ fn validate_blueprint_timing_patch(
         agricultural_tasks: Vec::new(),
         task_schedule_blueprints: Vec::new(),
         blueprint_timing_patches,
+        blueprint_amount_patches: Vec::new(),
     };
     Ok((plan.clone(), patch_plan_to_normalized_json(&plan)))
+}
+
+fn validate_blueprint_amount_patch(
+    body: &Value,
+    existing_blueprints: &[MastersCropTaskScheduleBlueprint],
+) -> Result<(CropSetupProposalPlan, Value), Vec<CropSetupProposalValidationError>> {
+    let mut errors = Vec::new();
+    let blueprints_raw = match body.get("task_schedule_blueprints").and_then(|v| v.as_array()) {
+        Some(items) if !items.is_empty() => items,
+        Some(_) => {
+            errors.push(CropSetupProposalValidationError::new(
+                "task_schedule_blueprints",
+                "must contain at least one blueprint patch",
+            ));
+            return Err(errors);
+        }
+        None => {
+            errors.push(CropSetupProposalValidationError::new(
+                "task_schedule_blueprints",
+                "is required",
+            ));
+            return Err(errors);
+        }
+    };
+
+    let mut blueprint_amount_patches = Vec::new();
+    let mut seen_ids = HashSet::new();
+
+    for (index, blueprint) in blueprints_raw.iter().enumerate() {
+        let prefix = format!("task_schedule_blueprints[{index}]");
+        let Some(obj) = blueprint.as_object() else {
+            errors.push(CropSetupProposalValidationError::new(
+                prefix,
+                "must be an object",
+            ));
+            continue;
+        };
+
+        let blueprint_id = required_i64(obj, "blueprint_id", &prefix, &mut errors);
+        let amount = required_f64(obj, "amount", &prefix, &mut errors);
+        let amount_unit = obj
+            .get("amount_unit")
+            .and_then(|v| v.as_str())
+            .map(str::to_string)
+            .filter(|value| !value.trim().is_empty());
+
+        if let Some(blueprint_id) = blueprint_id {
+            if !seen_ids.insert(blueprint_id) {
+                errors.push(CropSetupProposalValidationError::new(
+                    format!("{prefix}.blueprint_id"),
+                    "duplicate blueprint_id in proposal",
+                ));
+            }
+            if !existing_blueprints.iter().any(|row| row.id == blueprint_id) {
+                errors.push(CropSetupProposalValidationError::new(
+                    format!("{prefix}.blueprint_id"),
+                    "must reference an existing crop blueprint",
+                ));
+            }
+        }
+
+        if let (Some(blueprint_id), Some(amount)) = (blueprint_id, amount) {
+            if amount <= 0.0 {
+                errors.push(CropSetupProposalValidationError::new(
+                    format!("{prefix}.amount"),
+                    "must be greater than 0",
+                ));
+            } else {
+                blueprint_amount_patches.push(CropSetupProposalBlueprintAmountPatchPlan {
+                    blueprint_id,
+                    amount,
+                    amount_unit,
+                });
+            }
+        }
+    }
+
+    if !errors.is_empty() {
+        return Err(errors);
+    }
+
+    let plan = CropSetupProposalPlan {
+        intent: Some(BLUEPRINT_AMOUNT_PATCH_INTENT.to_string()),
+        stages: Vec::new(),
+        agricultural_tasks: Vec::new(),
+        task_schedule_blueprints: Vec::new(),
+        blueprint_timing_patches: Vec::new(),
+        blueprint_amount_patches,
+    };
+    Ok((plan.clone(), amount_patch_plan_to_normalized_json(&plan)))
+}
+
+fn amount_patch_plan_to_normalized_json(plan: &CropSetupProposalPlan) -> Value {
+    json!({
+        "intent": BLUEPRINT_AMOUNT_PATCH_INTENT,
+        "stages": [],
+        "agricultural_tasks": [],
+        "task_schedule_blueprints": plan.blueprint_amount_patches.iter().map(|bp| {
+            json!({
+                "blueprint_id": bp.blueprint_id,
+                "amount": bp.amount,
+                "amount_unit": bp.amount_unit,
+            })
+        }).collect::<Vec<_>>(),
+    })
 }
 
 fn patch_plan_to_normalized_json(plan: &CropSetupProposalPlan) -> Value {

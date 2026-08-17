@@ -168,3 +168,54 @@ fn validate_accepts_blueprint_timing_patch_intent() {
         normalized["intent"].as_str().unwrap()
     );
 }
+
+#[test]
+fn validate_accepts_blueprint_amount_patch_intent() {
+    use crate::crop::dtos::MastersCropTaskScheduleBlueprint;
+    use rust_decimal::Decimal;
+
+    let existing = vec![MastersCropTaskScheduleBlueprint {
+        id: 42,
+        crop_id: 1,
+        agricultural_task_id: Some(10),
+        source_agricultural_task_id: None,
+        stage_order: Some(1),
+        stage_name: Some("追肥".into()),
+        gdd_trigger: Some(Decimal::from(200)),
+        gdd_tolerance: None,
+        task_type: "topdress_fertilization".into(),
+        source: "manual".into(),
+        priority: 1,
+        amount: Some(Decimal::from(2)),
+        amount_unit: Some("kg".into()),
+        description: None,
+        weather_dependency: None,
+        time_per_sqm: None,
+        name: Some("追肥".into()),
+        created_at: None,
+        updated_at: None,
+    }];
+
+    let body = json!({
+        "intent": "blueprint_amount_patch",
+        "task_schedule_blueprints": [{
+            "blueprint_id": 42,
+            "amount": 2.5,
+            "amount_unit": "kg"
+        }]
+    });
+
+    let (plan, normalized) = validate_and_normalize(&body, &existing, &[]).expect("valid patch");
+    assert_eq!(Some("blueprint_amount_patch".to_string()), plan.intent);
+    assert_eq!(1, plan.blueprint_amount_patches.len());
+    assert_eq!(42, plan.blueprint_amount_patches[0].blueprint_id);
+    assert_eq!(2.5, plan.blueprint_amount_patches[0].amount);
+    assert_eq!(
+        Some("kg".to_string()),
+        plan.blueprint_amount_patches[0].amount_unit
+    );
+    assert_eq!(
+        "blueprint_amount_patch",
+        normalized["intent"].as_str().unwrap()
+    );
+}

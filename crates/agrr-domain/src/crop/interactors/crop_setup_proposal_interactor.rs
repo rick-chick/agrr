@@ -94,6 +94,9 @@ where
                 let result = if plan.intent.as_deref() == Some("blueprint_timing_patch") {
                     self.proposal_gateway
                         .apply_blueprint_timing_patch(input.user_id, input.crop_id, &plan)?
+                } else if plan.intent.as_deref() == Some("blueprint_amount_patch") {
+                    self.proposal_gateway
+                        .apply_blueprint_amount_patch(input.user_id, input.crop_id, &plan)?
                 } else {
                     self.proposal_gateway.apply_plan(input.user_id, input.crop_id, &plan)?
                 };

@@ -208,7 +208,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     this.saveUseCase.execute({ planId });
   }
 
-  private maybeRunPendingSave(fallbackPlanId: number): void {
+  private maybeRunPendingSave(_fallbackPlanId: number): void {
     if (!this.auth.user() || this.pendingSaveTriggered) {
       return;
     }
@@ -216,10 +216,8 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     if (!pending) {
       return;
     }
-    const planId =
-      pending.planId === fallbackPlanId ? pending.planId : fallbackPlanId;
     this.pendingSaveTriggered = true;
-    this.saveUseCase.execute({ planId });
+    this.saveUseCase.execute({ planId: pending.planId });
   }
 
   private resolvePlanId(): number {
