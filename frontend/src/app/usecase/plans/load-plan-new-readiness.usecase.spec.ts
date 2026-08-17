@@ -102,7 +102,7 @@ describe('LoadPlanNewReadinessUseCase', () => {
     };
 
     cropGateway = {
-      show: vi.fn((cropId: number) => of(userCrop)),
+      show: vi.fn((_cropId: number) => of(userCrop)),
       list: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
