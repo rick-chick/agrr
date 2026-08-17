@@ -26,6 +26,10 @@ import {
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
+import {
+  findBpTimingProposalForQueueItem,
+  findStageGddProposalForQueueItem
+} from '../../domain/plans/resolve-learn-queue-item-inline-apply';
 import { BulkApplySafeLearnProposalsUseCase } from '../../usecase/plans/bulk-apply-safe-learn-proposals.usecase';
 import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn-proposal-inline-apply.providers';
 import {
@@ -34,6 +38,7 @@ import {
 } from './plan-learn-application-progress-view.component';
 import { PlanLearnPostMasterConfirmationComponent } from './plan-learn-post-master-confirmation.component';
 import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-panel.component';
+import { PlanLearnProposalQueueItemConfirmationComponent } from './plan-learn-proposal-queue-item-confirmation.component';
 
 @Component({
   selector: 'app-plan-learn-proposal-queue',
@@ -43,7 +48,8 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
     TranslateModule,
     PlanLearnPostMasterConfirmationComponent,
     PlanLearnApplicationProgressViewComponent,
-    LearnProposalEvidencePanelComponent
+    LearnProposalEvidencePanelComponent,
+    PlanLearnProposalQueueItemConfirmationComponent
   ],
   providers: [BulkApplySafeLearnProposalsUseCase, ...LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS],
   template: `
@@ -120,13 +126,27 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
                       {{ statusLabel(dedicatedTimingItemStatus(item)) | translate }}
                     </span>
                   </div>
-                  <app-learn-proposal-evidence-panel
-                    [evidence]="dedicatedTimingEvidenceFor(item)"
-                    toggleLabelKey="plans.learn.proposal_queue.fertilizer_timing.evidence.toggle"
-                    rationaleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.rationale"
-                    recordsTitleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.records_title"
-                    recordLabelKey="plans.learn.proposal_queue.fertilizer_timing.evidence.record"
-                  />
+                  @if (item.category === 'requires_confirmation') {
+                    <app-plan-learn-proposal-queue-item-confirmation
+                      [planId]="planId"
+                      [item]="item"
+                      [bpTimingProposal]="bpTimingProposalFor(item)"
+                      [evidence]="dedicatedTimingEvidenceFor(item)"
+                      evidenceToggleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.toggle"
+                      evidenceRationaleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.rationale"
+                      evidenceRecordsTitleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.records_title"
+                      evidenceRecordLabelKey="plans.learn.proposal_queue.fertilizer_timing.evidence.record"
+                      (progressChanged)="onInlineConfirmationProgressChanged()"
+                    />
+                  } @else {
+                    <app-learn-proposal-evidence-panel
+                      [evidence]="dedicatedTimingEvidenceFor(item)"
+                      toggleLabelKey="plans.learn.proposal_queue.fertilizer_timing.evidence.toggle"
+                      rationaleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.rationale"
+                      recordsTitleKey="plans.learn.proposal_queue.fertilizer_timing.evidence.records_title"
+                      recordLabelKey="plans.learn.proposal_queue.fertilizer_timing.evidence.record"
+                    />
+                  }
                 </li>
               }
             </ul>
@@ -170,13 +190,27 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
                       {{ statusLabel(dedicatedTimingItemStatus(item)) | translate }}
                     </span>
                   </div>
-                  <app-learn-proposal-evidence-panel
-                    [evidence]="dedicatedTimingEvidenceFor(item)"
-                    toggleLabelKey="plans.learn.proposal_queue.pest_control_timing.evidence.toggle"
-                    rationaleKey="plans.learn.proposal_queue.pest_control_timing.evidence.rationale"
-                    recordsTitleKey="plans.learn.proposal_queue.pest_control_timing.evidence.records_title"
-                    recordLabelKey="plans.learn.proposal_queue.pest_control_timing.evidence.record"
-                  />
+                  @if (item.category === 'requires_confirmation') {
+                    <app-plan-learn-proposal-queue-item-confirmation
+                      [planId]="planId"
+                      [item]="item"
+                      [bpTimingProposal]="bpTimingProposalFor(item)"
+                      [evidence]="dedicatedTimingEvidenceFor(item)"
+                      evidenceToggleKey="plans.learn.proposal_queue.pest_control_timing.evidence.toggle"
+                      evidenceRationaleKey="plans.learn.proposal_queue.pest_control_timing.evidence.rationale"
+                      evidenceRecordsTitleKey="plans.learn.proposal_queue.pest_control_timing.evidence.records_title"
+                      evidenceRecordLabelKey="plans.learn.proposal_queue.pest_control_timing.evidence.record"
+                      (progressChanged)="onInlineConfirmationProgressChanged()"
+                    />
+                  } @else {
+                    <app-learn-proposal-evidence-panel
+                      [evidence]="dedicatedTimingEvidenceFor(item)"
+                      toggleLabelKey="plans.learn.proposal_queue.pest_control_timing.evidence.toggle"
+                      rationaleKey="plans.learn.proposal_queue.pest_control_timing.evidence.rationale"
+                      recordsTitleKey="plans.learn.proposal_queue.pest_control_timing.evidence.records_title"
+                      recordLabelKey="plans.learn.proposal_queue.pest_control_timing.evidence.record"
+                    />
+                  }
                 </li>
               }
             </ul>
@@ -204,6 +238,16 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
                     <span class="learn-proposal-queue__item-title">{{ item.title }}</span>
                     @if (item.subtitle) {
                       <span class="learn-proposal-queue__item-subtitle">{{ item.subtitle }}</span>
+                    }
+                    @if (category === 'requires_confirmation') {
+                      <app-plan-learn-proposal-queue-item-confirmation
+                        [planId]="planId"
+                        [item]="item"
+                        [stageGddProposal]="stageGddProposalFor(item)"
+                        [bpTimingProposal]="bpTimingProposalFor(item)"
+                        [evidence]="queueItemEvidenceFor(item)"
+                        (progressChanged)="onInlineConfirmationProgressChanged()"
+                      />
                     }
                   </li>
                 }
@@ -361,6 +405,27 @@ export class PlanLearnProposalQueueComponent {
 
   statusLabel(status: LearnProposalApplicationStatus): string {
     return `plans.learn.application_progress.status.${status}`;
+  }
+
+  stageGddProposalFor(item: UnifiedLearnProposalQueueItem) {
+    return findStageGddProposalForQueueItem(item, this.stageGddProposals);
+  }
+
+  bpTimingProposalFor(item: UnifiedLearnProposalQueueItem) {
+    return findBpTimingProposalForQueueItem(item, this.blueprintTimingProposals);
+  }
+
+  queueItemEvidenceFor(item: UnifiedLearnProposalQueueItem): LearnProposalEvidence | null {
+    const proposal = this.bpTimingProposalFor(item);
+    if (!proposal) {
+      return null;
+    }
+    return this.blueprintTimingEvidenceByKey[resolveBpTimingEvidenceKey(proposal)] ?? null;
+  }
+
+  onInlineConfirmationProgressChanged(): void {
+    this.progressChanged.emit();
+    this.cdr.markForCheck();
   }
 
   applyAllSafe(): void {
