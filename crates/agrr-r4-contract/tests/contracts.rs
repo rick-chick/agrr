@@ -1566,6 +1566,77 @@ fn patch_plan_variance_learning_invalid_status_returns_unprocessable() {
 }
 
 #[test]
+fn post_plan_variance_learning_reoptimize_enqueues_optimization_chain() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let source = seed_work_record_plan(user_id);
+
+    let sqlite_path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&sqlite_path).expect("open contract sqlite");
+    conn.execute(
+        "UPDATE cultivation_plans SET status = 'completed' WHERE id = ?1",
+        rusqlite::params![source.plan_id],
+    )
+    .expect("set plan completed");
+
+    let reoptimize_path = format!("/api/v1/plans/{}/variance_learning/reoptimize", source.plan_id);
+    let (status, body) = status_and_body(client.post(
+        &reoptimize_path,
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(202, status, "{body}");
+    let json: serde_json::Value =
+        serde_json::from_str(&body).expect("reoptimize JSON");
+    assert_eq!(source.plan_id, json["plan_id"].as_i64().unwrap());
+    assert!(json["enqueued"].as_bool().unwrap());
+
+    let mut optimization_phase: Option<String> = None;
+    for _ in 0..50 {
+        optimization_phase = conn
+            .query_row(
+                "SELECT optimization_phase FROM cultivation_plans WHERE id = ?1",
+                rusqlite::params![source.plan_id],
+                |row| row.get(0),
+            )
+            .expect("optimization phase");
+        if optimization_phase.is_some() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+    assert!(
+        optimization_phase.is_some(),
+        "optimization job chain should start and persist a phase for plan_id={}",
+        source.plan_id
+    );
+}
+
+#[test]
+fn post_plan_variance_learning_reoptimize_other_user_returns_not_found() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let owner_source = seed_work_record_plan(owner_id);
+
+    let other_session = farmer_session_id(&client);
+    let reoptimize_path =
+        format!("/api/v1/plans/{}/variance_learning/reoptimize", owner_source.plan_id);
+    let (status, body) = status_and_body(client.post(
+        &reoptimize_path,
+        Some(&other_session),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(404, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("error JSON");
+    assert!(json["errors"].as_array().is_some(), "{body}");
+}
+
+#[test]
 fn get_task_schedule_includes_compat_milestones_labels_and_week_days() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

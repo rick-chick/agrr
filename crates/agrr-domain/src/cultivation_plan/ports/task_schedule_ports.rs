@@ -23,6 +23,12 @@ pub trait PlanVarianceLearningProposalProgressUpdateOutputPort {
     fn on_not_found(&mut self);
 }
 
+pub trait PlanVarianceLearningReoptimizeOutputPort {
+    fn on_success(&mut self, plan_id: i64);
+    fn on_enqueue_failed(&mut self);
+    fn on_not_found(&mut self);
+}
+
 pub trait WeatherRescheduleProposalsListOutputPort {
     fn on_success(&mut self, proposals: Vec<crate::cultivation_plan::dtos::WeatherRescheduleProposalRead>);
 }

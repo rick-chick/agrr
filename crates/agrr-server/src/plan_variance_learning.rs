@@ -1,7 +1,9 @@
 //! `GET /api/v1/plans/:id/variance_learning` — persisted variance learning snapshot.
 //! `PATCH /api/v1/plans/:id/variance_learning` — proposal application progress updates.
+//! `POST /api/v1/plans/:id/variance_learning/reoptimize` — enqueue optimization job chain.
 
 use crate::adapters::{NoopLogger, PassthroughTranslator};
+use crate::optimization_job_chain::enqueue_private_plan_optimization_chain;
 use crate::plan_vs_actual_json::summary_to_json_body;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
@@ -21,9 +23,11 @@ use agrr_domain::cultivation_plan::interactors::{
     PlanVarianceLearningHandoffUpdateInteractor,
     PlanVarianceLearningOrchestrationProgressUpdateInteractor,
     PlanVarianceLearningProposalProgressUpdateInteractor, PlanVarianceLearningReadInteractor,
+    PlanVarianceLearningReoptimizeInteractor,
 };
 use agrr_domain::cultivation_plan::ports::{
     PlanVarianceLearningProposalProgressUpdateOutputPort, PlanVarianceLearningReadOutputPort,
+    PlanVarianceLearningReoptimizeOutputPort, PrivatePlanOptimizationJobChainGateway,
 };
 use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::exceptions::RecordNotFoundError;
@@ -37,12 +41,17 @@ use serde_json::{json, Map, Value};
 use std::collections::BTreeMap;
 
 pub fn routes() -> Router<AppState> {
-    Router::new().route(
-        "/api/v1/plans/{id}/variance_learning",
-        get(show_variance_learning)
-            .post(import_variance_learning)
-            .patch(patch_variance_learning),
-    )
+    Router::new()
+        .route(
+            "/api/v1/plans/{id}/variance_learning",
+            get(show_variance_learning)
+                .post(import_variance_learning)
+                .patch(patch_variance_learning),
+        )
+        .route(
+            "/api/v1/plans/{id}/variance_learning/reoptimize",
+            post(reoptimize_variance_learning),
+        )
 }
 
 struct VarianceLearningPresenter {
@@ -380,6 +389,103 @@ async fn patch_variance_learning(
     }
 
     finalize_patch_response(&presenter)
+}
+
+struct ReoptimizePresenter {
+    body: Option<ReoptimizeOutcome>,
+}
+
+enum ReoptimizeOutcome {
+    Success(i64),
+    EnqueueFailed,
+    NotFound,
+}
+
+impl PlanVarianceLearningReoptimizeOutputPort for ReoptimizePresenter {
+    fn on_success(&mut self, plan_id: i64) {
+        self.body = Some(ReoptimizeOutcome::Success(plan_id));
+    }
+
+    fn on_enqueue_failed(&mut self) {
+        self.body = Some(ReoptimizeOutcome::EnqueueFailed);
+    }
+
+    fn on_not_found(&mut self) {
+        self.body = Some(ReoptimizeOutcome::NotFound);
+    }
+}
+
+struct ReoptimizeJobChainAdapter<'a> {
+    state: &'a AppState,
+}
+
+impl PrivatePlanOptimizationJobChainGateway for ReoptimizeJobChainAdapter<'_> {
+    fn enqueue_after_create(
+        &self,
+        cultivation_plan_id: i64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        if enqueue_private_plan_optimization_chain(
+            cultivation_plan_id,
+            "OptimizationChannel",
+            self.state,
+        ) {
+            Ok(())
+        } else {
+            Err("optimization chain could not start".into())
+        }
+    }
+}
+
+async fn reoptimize_variance_learning(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(plan_id): Path<i64>,
+) -> Result<(axum::http::StatusCode, Json<Value>), (axum::http::StatusCode, Json<Value>)> {
+    let user_id = user_id_from_session(&state, &jar).map_err(|status| {
+        (
+            status,
+            Json(json!({"errors": ["unauthorized"]})),
+        )
+    })?;
+
+    let pool = state.sqlite.clone();
+    let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
+
+    let mut presenter = ReoptimizePresenter { body: None };
+    let job_chain = ReoptimizeJobChainAdapter { state: &state };
+    let mut interactor = PlanVarianceLearningReoptimizeInteractor::new(
+        &mut presenter,
+        &plan_gateway,
+        &job_chain,
+        &scope_gateway,
+    );
+
+    if let Err(err) = interactor.call(user_id, plan_id) {
+        tracing::error!("variance_learning reoptimize failed: {err}");
+        return Err((
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"errors": ["internal_error"]})),
+        ));
+    }
+
+    match presenter.body {
+        Some(ReoptimizeOutcome::Success(plan_id)) => Ok((
+            axum::http::StatusCode::ACCEPTED,
+            Json(json!({
+                "plan_id": plan_id,
+                "enqueued": true,
+            })),
+        )),
+        Some(ReoptimizeOutcome::NotFound) | None => Err((
+            axum::http::StatusCode::NOT_FOUND,
+            Json(json!({"errors": ["not_found"]})),
+        )),
+        Some(ReoptimizeOutcome::EnqueueFailed) => Err((
+            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"errors": ["optimization_chain_enqueue_failed"]})),
+        )),
+    }
 }
 
 async fn import_variance_learning(
