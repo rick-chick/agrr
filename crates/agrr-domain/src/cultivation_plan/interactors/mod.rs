@@ -33,6 +33,7 @@ pub(crate) mod task_schedule_item_update_interactor;
 pub(crate) mod plan_vs_actual_summary_interactor;
 pub(crate) mod plan_variance_carryover_interactor;
 pub(crate) mod plan_variance_learning_handoff_update_interactor;
+pub(crate) mod optimization_chain_orchestration_progress_update_interactor;
 pub(crate) mod plan_variance_learning_orchestration_progress_update_interactor;
 pub(crate) mod plan_variance_learning_proposal_progress_update_interactor;
 pub(crate) mod plan_variance_learning_read_interactor;
@@ -84,6 +85,7 @@ pub use plan_vs_actual_summary_interactor::PlanVsActualSummaryInteractor;
 pub use plan_variance_carryover_interactor::{
     PlanVarianceCarryoverInput, PlanVarianceCarryoverInteractor,
 };
+pub use optimization_chain_orchestration_progress_update_interactor::OptimizationChainOrchestrationProgressUpdateInteractor;
 pub use plan_variance_learning_handoff_update_interactor::PlanVarianceLearningHandoffUpdateInteractor;
 pub use plan_variance_learning_orchestration_progress_update_interactor::PlanVarianceLearningOrchestrationProgressUpdateInteractor;
 pub use plan_variance_learning_proposal_progress_update_interactor::PlanVarianceLearningProposalProgressUpdateInteractor;
