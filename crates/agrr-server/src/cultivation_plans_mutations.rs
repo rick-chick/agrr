@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 use crate::add_crop_support::{AddCropAdjustResultCollector, AddCropCropResolvePrivate};
 use crate::adapters::{
-    NoopOptimizationEventsGateway, PassthroughTranslator, StderrLogger, SystemClock,
+    cultivation_plan_optimization_events_adapter, NoopLogger, PassthroughTranslator, StderrLogger,
+    SystemClock,
 };
 use crate::adjust_weather_prediction::SqliteAdjustWeatherPredictionGateway;
 use crate::plan_allocation_candidates::PlanAllocationCandidatesService;
@@ -214,7 +215,7 @@ where
     let mut adjust_output = adjust_sink.output_adapter();
     let adjust_gateway = PlanAllocationAdjustAgrrDaemonGateway::from_env();
     let weather_prediction_gateway = SqliteAdjustWeatherPredictionGateway::from_state(&state);
-    let events = NoopOptimizationEventsGateway;
+    let events = cultivation_plan_optimization_events_adapter(state, &auth);
     let logger = StderrLogger;
     let translator = PassthroughTranslator;
     let clock = SystemClock;
@@ -381,10 +382,11 @@ pub(crate) async fn run_add_field(
     plan_id: i64,
     body: AddFieldBody,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let events = cultivation_plan_optimization_events_adapter(state, &auth);
+
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let field_mutation = CultivationPlanFieldMutationSqliteGateway::new(pool);
-    let events = NoopOptimizationEventsGateway;
     let logger = StderrLogger;
     let mut presenter = AddFieldPresenter { body: None };
     let mut interactor = AddFieldInteractor::new(
@@ -484,10 +486,11 @@ pub(crate) async fn run_remove_field(
     plan_id: i64,
     field_id: &str,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let events = cultivation_plan_optimization_events_adapter(state, &auth);
+
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let field_mutation = CultivationPlanFieldMutationSqliteGateway::new(pool);
-    let events = NoopOptimizationEventsGateway;
     let logger = StderrLogger;
     let mut presenter = RemoveFieldPresenter { body: None };
     let mut interactor = RemoveFieldInteractor::new(
@@ -638,6 +641,8 @@ pub(crate) async fn run_adjust_plan(
     plan_id: i64,
     body: AdjustBody,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let events = cultivation_plan_optimization_events_adapter(state, &auth);
+
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let read_gateway =
@@ -648,7 +653,6 @@ pub(crate) async fn run_adjust_plan(
         );
     let adjust_gateway = PlanAllocationAdjustAgrrDaemonGateway::from_env();
     let weather_prediction_gateway = SqliteAdjustWeatherPredictionGateway::from_state(&state);
-    let events = NoopOptimizationEventsGateway;
     let logger = StderrLogger;
     let translator = PassthroughTranslator;
     let clock = SystemClock;
