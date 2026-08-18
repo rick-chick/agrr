@@ -21,6 +21,16 @@
   margin: 0 0 0.75rem;
 }
 
+.learn-pipeline-status__steps {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.learn-pipeline-status__step--complete {
+  color: var(--color-text-muted, #57606a);
+  text-decoration: line-through;
+}
+
 .learn-pipeline-status__actions {
   display: flex;
   flex-wrap: wrap;

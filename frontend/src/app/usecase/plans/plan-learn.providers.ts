@@ -20,6 +20,7 @@ import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.useca
 import { loadMergedLearnProposals } from './load-merged-learn-proposals';
 import { GanttPlanApiGateway } from '../../adapters/plans/gantt-plan-api.gateway';
 import { GANTT_PLAN_GATEWAY } from './gantt-plan-gateway';
+import { StartLearnVarianceLearningReoptimizeUseCase } from './start-learn-variance-learning-reoptimize.usecase';
 import { StartLearnOneClickReoptimizeUseCase } from './start-learn-one-click-reoptimize.usecase';
 
 export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
@@ -31,6 +32,7 @@ export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
   LoadStageGddCalibrationProposalsUseCase,
   LoadPlanLearnCarryoverUseCase,
   StartLearnOneClickReoptimizeUseCase,
+  StartLearnVarianceLearningReoptimizeUseCase,
   GanttPlanApiGateway,
   { provide: GANTT_PLAN_GATEWAY, useClass: GanttPlanApiGateway },
   { provide: LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanLearnPresenter },

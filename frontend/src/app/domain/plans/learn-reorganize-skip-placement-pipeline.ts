@@ -2,6 +2,7 @@ import type { CultivationData } from './cultivation-plan-data';
 import { buildGanttAdjustMove } from './gantt-chart-layout';
 import {
   hasActiveLearnMasterUpdateFlow,
+  hasLearnReorganizePipelineFailure,
   readLearnOrchestrationPipelineActive
 } from './learn-master-update-orchestration';
 
@@ -16,7 +17,8 @@ export function buildCurrentPlacementAdjustMoves(
 export function shouldShowLearnOneClickReoptimizeCta(planId: number): boolean {
   return (
     hasActiveLearnMasterUpdateFlow(planId) &&
-    !readLearnOrchestrationPipelineActive(planId)
+    !readLearnOrchestrationPipelineActive(planId) &&
+    !hasLearnReorganizePipelineFailure(planId)
   );
 }
 

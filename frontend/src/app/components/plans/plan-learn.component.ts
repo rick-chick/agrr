@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter, interval, switchMap } from 'rxjs';
 import { TaskScheduleVarianceViewComponent } from './task-schedule-variance-view.component';
 import { StageGddCalibrationProposalsViewComponent } from './stage-gdd-calibration-proposals-view.component';
 import { BlueprintTimingAdjustmentProposalsViewComponent } from './blueprint-timing-adjustment-proposals-view.component';
@@ -41,7 +42,10 @@ import {
   parsePlanLearnFollowUp,
   readLearnPostMasterPayload
 } from '../../domain/plans/learn-proposal-application-progress';
-import { hasActiveLearnMasterUpdateFlow } from '../../domain/plans/learn-master-update-orchestration';
+import {
+  hasActiveLearnMasterUpdateFlow,
+  readLearnOrchestrationPipelineActive
+} from '../../domain/plans/learn-master-update-orchestration';
 
 const initialControl: PlanLearnViewState = {
   loading: true,
@@ -360,6 +364,19 @@ export class PlanLearnComponent implements PlanLearnView, OnInit {
     });
     this.syncPostMasterFollowUp();
     this.scrollToVarianceSectionIfRequested();
+    this.startOrchestrationProgressPolling();
+  }
+
+  private startOrchestrationProgressPolling(): void {
+    interval(5000)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter(() => readLearnOrchestrationPipelineActive(this.planId)),
+        switchMap(() => this.carryoverUseCase.loadLearningSnapshot(this.planId))
+      )
+      .subscribe(() => {
+        this.onProposalProgressChanged();
+      });
   }
 
   private syncPostMasterFollowUp(): void {

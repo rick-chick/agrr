@@ -2967,6 +2967,11 @@
           "adjust": "現在の段階: 配置調整",
           "optimizing": "現在の段階: 最適化",
           "task_schedule": "現在の段階: 作業予定"
+        },
+        "step": {
+          "placement": "配置調整",
+          "regenerate": "作業予定の再生成",
+          "sync_verify": "同期確認"
         }
       },
       "proposal_queue": {

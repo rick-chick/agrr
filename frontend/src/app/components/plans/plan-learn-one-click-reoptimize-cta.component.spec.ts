@@ -4,7 +4,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearLearnOrchestrationProgressCache } from '../../domain/plans/learn-master-update-orchestration';
 import { markStageGddProposalAppliedPending, clearLearnProposalApplicationProgressCache } from '../../domain/plans/learn-proposal-application-progress';
-import { StartLearnOneClickReoptimizeUseCase } from '../../usecase/plans/start-learn-one-click-reoptimize.usecase';
+import { StartLearnVarianceLearningReoptimizeUseCase } from '../../usecase/plans/start-learn-variance-learning-reoptimize.usecase';
 import { PlanLearnOneClickReoptimizeCtaComponent } from './plan-learn-one-click-reoptimize-cta.component';
 
 describe('PlanLearnOneClickReoptimizeCtaComponent', () => {
@@ -21,7 +21,7 @@ describe('PlanLearnOneClickReoptimizeCtaComponent', () => {
       imports: [PlanLearnOneClickReoptimizeCtaComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
-        { provide: StartLearnOneClickReoptimizeUseCase, useValue: useCase }
+        { provide: StartLearnVarianceLearningReoptimizeUseCase, useValue: useCase }
       ]
     }).compileComponents();
 

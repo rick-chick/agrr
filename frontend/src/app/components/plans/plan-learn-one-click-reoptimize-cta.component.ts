@@ -5,7 +5,7 @@ import {
   buildLearnReorganizeSkipPlacementOptimizingNavigation,
   shouldShowLearnOneClickReoptimizeCta
 } from '../../domain/plans/learn-reorganize-skip-placement-pipeline';
-import { StartLearnOneClickReoptimizeUseCase } from '../../usecase/plans/start-learn-one-click-reoptimize.usecase';
+import { StartLearnVarianceLearningReoptimizeUseCase } from '../../usecase/plans/start-learn-variance-learning-reoptimize.usecase';
 
 @Component({
   selector: 'app-plan-learn-one-click-reoptimize-cta',
@@ -45,7 +45,7 @@ import { StartLearnOneClickReoptimizeUseCase } from '../../usecase/plans/start-l
 })
 export class PlanLearnOneClickReoptimizeCtaComponent {
   private readonly router = inject(Router);
-  private readonly useCase = inject(StartLearnOneClickReoptimizeUseCase);
+  private readonly useCase = inject(StartLearnVarianceLearningReoptimizeUseCase);
   private readonly cdr = inject(ChangeDetectorRef);
 
   @Input({ required: true }) planId!: number;

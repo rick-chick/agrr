@@ -361,6 +361,20 @@ describe('PlanApiGateway', () => {
     });
   });
 
+  describe('reoptimizeVarianceLearning', () => {
+    it('calls POST /api/v1/plans/:id/variance_learning/reoptimize', async () => {
+      const response = { success: true, plan_id: 7, optimization_enqueued: true };
+      vi.mocked(apiClient.post).mockReturnValue(of(response));
+
+      const result = await firstValueFrom(gateway.reoptimizeVarianceLearning(7));
+      expect(result).toEqual(response);
+      expect(apiClient.post).toHaveBeenCalledWith(
+        '/api/v1/plans/7/variance_learning/reoptimize',
+        {}
+      );
+    });
+  });
+
   describe('regenerateTaskSchedule', () => {
     it('calls POST /api/v1/plans/:id/task_schedule/regenerate and returns sync state', async () => {
       const response = { success: true, task_schedule_sync_state: 'generating' };

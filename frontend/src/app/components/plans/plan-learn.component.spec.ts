@@ -13,6 +13,8 @@ import { PlanLearnPresenter } from '../../usecase/plans/plan-learn.providers';
 import { LoadStageGddCalibrationProposalsUseCase } from '../../usecase/plans/load-stage-gdd-calibration-proposals.usecase';
 import { LoadPlanLearnCarryoverUseCase } from '../../usecase/plans/load-plan-learn-carryover.usecase';
 import { StartLearnOneClickReoptimizeUseCase } from '../../usecase/plans/start-learn-one-click-reoptimize.usecase';
+import { StartLearnVarianceLearningReoptimizeUseCase } from '../../usecase/plans/start-learn-variance-learning-reoptimize.usecase';
+import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
 import { PlanLearnComponent } from './plan-learn.component';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import {
@@ -129,6 +131,18 @@ describe('PlanLearnComponent', () => {
           {
             provide: StartLearnOneClickReoptimizeUseCase,
             useValue: { execute: vi.fn() }
+          },
+          {
+            provide: StartLearnVarianceLearningReoptimizeUseCase,
+            useValue: { execute: vi.fn() }
+          },
+          {
+            provide: PLAN_GATEWAY,
+            useValue: {
+              reoptimizeVarianceLearning: vi.fn(() =>
+                of({ success: true, plan_id: 7, optimization_enqueued: true })
+              )
+            }
           },
           PlanLearnPresenter
         ]
@@ -727,6 +741,18 @@ describe('PlanLearnComponent post_master follow-up', () => {
           {
             provide: StartLearnOneClickReoptimizeUseCase,
             useValue: { execute: vi.fn() }
+          },
+          {
+            provide: StartLearnVarianceLearningReoptimizeUseCase,
+            useValue: { execute: vi.fn() }
+          },
+          {
+            provide: PLAN_GATEWAY,
+            useValue: {
+              reoptimizeVarianceLearning: vi.fn(() =>
+                of({ success: true, plan_id: 7, optimization_enqueued: true })
+              )
+            }
           },
           PlanLearnPresenter
         ]

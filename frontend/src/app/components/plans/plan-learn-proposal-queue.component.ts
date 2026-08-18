@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { BlueprintAmountAdjustmentProposal } from '../../domain/plans/blueprint-amount-adjustment-proposal';
 import type { BlueprintTimingAdjustmentProposal } from '../../domain/plans/blueprint-timing-adjustment-proposal';
@@ -20,10 +19,6 @@ import {
   type LearnProposalApplicationStatus
 } from '../../domain/plans/learn-proposal-application-progress';
 import type { LearnProposalEvidence } from '../../domain/plans/learn-proposal-evidence';
-import {
-  buildLearnReorganizePipelineStartNavigation,
-  storeLearnReorganizePipelineAutoChain
-} from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 import type { PlanVarianceActionItem } from '../../domain/plans/plan-vs-actual-summary';
 import type { StageGddCalibrationProposal } from '../../domain/plans/stage-gdd-calibration-proposal';
 import {
@@ -31,6 +26,7 @@ import {
   findStageGddProposalForQueueItem
 } from '../../domain/plans/resolve-learn-queue-item-inline-apply';
 import { BulkApplySafeLearnProposalsUseCase } from '../../usecase/plans/bulk-apply-safe-learn-proposals.usecase';
+import { StartLearnVarianceLearningReoptimizeUseCase } from '../../usecase/plans/start-learn-variance-learning-reoptimize.usecase';
 import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn-proposal-inline-apply.providers';
 import {
   buildLearnApplicationProgressItems,
@@ -51,7 +47,11 @@ import { PlanLearnProposalQueueItemConfirmationComponent } from './plan-learn-pr
     LearnProposalEvidencePanelComponent,
     PlanLearnProposalQueueItemConfirmationComponent
   ],
-  providers: [BulkApplySafeLearnProposalsUseCase, ...LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS],
+  providers: [
+    BulkApplySafeLearnProposalsUseCase,
+    StartLearnVarianceLearningReoptimizeUseCase,
+    ...LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS
+  ],
   template: `
     @if (hasQueueContent) {
       <section
@@ -298,7 +298,7 @@ import { PlanLearnProposalQueueItemConfirmationComponent } from './plan-learn-pr
 })
 export class PlanLearnProposalQueueComponent {
   private readonly bulkApplyUseCase = inject(BulkApplySafeLearnProposalsUseCase);
-  private readonly router = inject(Router);
+  private readonly reoptimizeUseCase = inject(StartLearnVarianceLearningReoptimizeUseCase);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly categoryOrder: LearnProposalQueueCategory[] = [
@@ -452,7 +452,7 @@ export class PlanLearnProposalQueueComponent {
         this.progressChanged.emit();
         this.cdr.markForCheck();
         if (result.appliedCount > 0) {
-          void this.startReorganizePipelineAfterBulkApply();
+          this.startReoptimizeAfterBulkApply();
         }
       },
       onError: (message) => {
@@ -464,22 +464,23 @@ export class PlanLearnProposalQueueComponent {
   }
 
   retryReorganizePipeline(): void {
-    void this.startReorganizePipelineAfterBulkApply();
+    this.startReoptimizeAfterBulkApply();
   }
 
-  private async startReorganizePipelineAfterBulkApply(): Promise<void> {
-    storeLearnReorganizePipelineAutoChain(this.planId);
-    const navigation = buildLearnReorganizePipelineStartNavigation(this.planId);
-    try {
-      const navigated = await this.router.navigate(navigation.commands, {
-        queryParams: navigation.queryParams
-      });
-      if (!navigated) {
-        throw new Error('navigation rejected');
+  private startReoptimizeAfterBulkApply(): void {
+    this.pipelineStartFailed = false;
+    this.reoptimizeUseCase.execute({
+      planId: this.planId,
+      onSuccess: () => {
+        this.pipelineStartFailed = false;
+        this.progressChanged.emit();
+        this.cdr.markForCheck();
+      },
+      onError: () => {
+        this.pipelineStartFailed = true;
+        this.progressChanged.emit();
+        this.cdr.markForCheck();
       }
-    } catch {
-      this.pipelineStartFailed = true;
-      this.cdr.markForCheck();
-    }
+    });
   }
 }
