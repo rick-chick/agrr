@@ -82,6 +82,69 @@ impl agrr_domain::cultivation_plan::gateways::CultivationPlanOptimizationEventsG
     }
 }
 
+/// Private plans use Cable; public plan mutations keep Noop (public Cable out of scope).
+pub enum CultivationPlanOptimizationEventsAdapter {
+    Cable(crate::cable::CableCultivationPlanOptimizationEventsGateway),
+    Noop(NoopOptimizationEventsGateway),
+}
+
+impl agrr_domain::cultivation_plan::gateways::CultivationPlanOptimizationEventsGateway
+    for CultivationPlanOptimizationEventsAdapter
+{
+    fn broadcast_field_added(
+        &self,
+        plan_id: i64,
+        plan_type: &str,
+        field_snapshot: &agrr_domain::cultivation_plan::dtos::CultivationPlanFieldSnapshot,
+        total_area: f64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        match self {
+            Self::Cable(gateway) => gateway.broadcast_field_added(plan_id, plan_type, field_snapshot, total_area),
+            Self::Noop(gateway) => gateway.broadcast_field_added(plan_id, plan_type, field_snapshot, total_area),
+        }
+    }
+
+    fn broadcast_field_removed(
+        &self,
+        plan_id: i64,
+        plan_type: &str,
+        field_id: i64,
+        total_area: f64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        match self {
+            Self::Cable(gateway) => gateway.broadcast_field_removed(plan_id, plan_type, field_id, total_area),
+            Self::Noop(gateway) => gateway.broadcast_field_removed(plan_id, plan_type, field_id, total_area),
+        }
+    }
+
+    fn broadcast_optimization_complete(
+        &self,
+        plan_id: i64,
+        status: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        match self {
+            Self::Cable(gateway) => gateway.broadcast_optimization_complete(plan_id, status),
+            Self::Noop(gateway) => gateway.broadcast_optimization_complete(plan_id, status),
+        }
+    }
+}
+
+pub fn cultivation_plan_optimization_events_adapter(
+    state: &crate::state::AppState,
+    auth: &agrr_domain::cultivation_plan::dtos::CultivationPlanRestAuth,
+) -> CultivationPlanOptimizationEventsAdapter {
+    if auth.is_private() {
+        CultivationPlanOptimizationEventsAdapter::Cable(
+            crate::cable::CableCultivationPlanOptimizationEventsGateway::new(
+                state.cable_hub.clone(),
+                state.sqlite.clone(),
+            ),
+        )
+    } else {
+        CultivationPlanOptimizationEventsAdapter::Noop(NoopOptimizationEventsGateway)
+    }
+}
+
 pub struct SystemClock;
 
 impl ClockPort for SystemClock {

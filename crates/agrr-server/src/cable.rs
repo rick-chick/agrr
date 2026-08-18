@@ -3,12 +3,16 @@
 //! Ruby: `ApplicationCable`, `OptimizationChannel`, `PlansOptimizationChannel`, `FarmChannel`
 
 use crate::state::AppState;
-use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, FarmSqliteGateway};
+use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, FarmSqliteGateway, SqlitePool};
 use agrr_domain::cultivation_plan::calculators::cultivation_plan_optimization_progress_calculator;
-use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
+use agrr_domain::cultivation_plan::dtos::CultivationPlanFieldSnapshot;
+use agrr_domain::cultivation_plan::gateways::{
+    CultivationPlanGateway, CultivationPlanOptimizationEventsGateway,
+};
 use agrr_domain::cultivation_plan::mappers::to_port_payload;
 use agrr_domain::farm::gateways::FarmGateway;
 use agrr_domain::shared::ports::FarmRefreshBroadcastPort;
+use rusqlite::params;
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -93,6 +97,106 @@ impl CableFarmRefreshBroadcast {
 impl FarmRefreshBroadcastPort for CableFarmRefreshBroadcast {
     fn broadcast_farm_weather_progress(&self, farm_id: i64, payload: &Value) {
         self.hub.broadcast_farm(farm_id, payload.clone());
+    }
+}
+
+/// ActionCable `PlansOptimizationChannel` / `OptimizationChannel` adapter for
+/// `CultivationPlanOptimizationEventsGateway` (adjust / field mutations).
+pub struct CableCultivationPlanOptimizationEventsGateway {
+    hub: Arc<CableHub>,
+    pool: SqlitePool,
+}
+
+impl CableCultivationPlanOptimizationEventsGateway {
+    pub fn new(hub: Arc<CableHub>, pool: SqlitePool) -> Self {
+        Self { hub, pool }
+    }
+
+    fn load_plan_financials(
+        &self,
+        plan_id: i64,
+    ) -> Option<(f64, f64, f64, i64)> {
+        self.pool
+            .with_read(|conn| {
+                let (profit, revenue, cost): (f64, f64, f64) = conn.query_row(
+                    "SELECT COALESCE(total_profit, 0), COALESCE(total_revenue, 0), COALESCE(total_cost, 0) \
+                     FROM cultivation_plans WHERE id = ?1",
+                    params![plan_id],
+                    |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+                )?;
+                let fc_count: i64 = conn.query_row(
+                    "SELECT COUNT(*) FROM field_cultivations WHERE cultivation_plan_id = ?1",
+                    params![plan_id],
+                    |row| row.get(0),
+                )?;
+                Ok((profit, revenue, cost, fc_count))
+            })
+            .ok()
+    }
+}
+
+impl CultivationPlanOptimizationEventsGateway for CableCultivationPlanOptimizationEventsGateway {
+    fn broadcast_field_added(
+        &self,
+        plan_id: i64,
+        _plan_type: &str,
+        field_snapshot: &CultivationPlanFieldSnapshot,
+        total_area: f64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.hub.broadcast_plan_message(
+            plan_id,
+            json!({
+                "type": "field_added",
+                "field": {
+                    "id": field_snapshot.id,
+                    "name": field_snapshot.name,
+                    "area": field_snapshot.area,
+                    "cultivation_count": field_snapshot.cultivation_count,
+                },
+                "total_area": total_area,
+            }),
+        );
+        Ok(())
+    }
+
+    fn broadcast_field_removed(
+        &self,
+        plan_id: i64,
+        _plan_type: &str,
+        field_id: i64,
+        total_area: f64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.hub.broadcast_plan_message(
+            plan_id,
+            json!({
+                "type": "field_removed",
+                "field_id": field_id,
+                "total_area": total_area,
+            }),
+        );
+        Ok(())
+    }
+
+    fn broadcast_optimization_complete(
+        &self,
+        plan_id: i64,
+        status: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let (total_profit, total_revenue, total_cost, field_cultivations_count) =
+            self.load_plan_financials(plan_id).unwrap_or((0.0, 0.0, 0.0, 0));
+        let message_key = format!("optimization.messages.{status}");
+        self.hub.broadcast_plan_message(
+            plan_id,
+            json!({
+                "status": status,
+                "message": message_key,
+                "total_profit": total_profit,
+                "total_revenue": total_revenue,
+                "total_cost": total_cost,
+                "field_cultivations_count": field_cultivations_count,
+            }),
+        );
+        Ok(())
     }
 }
 
@@ -462,5 +566,80 @@ mod cable_snapshot_tests {
         let parsed: Value = serde_json::from_str(&body).expect("json body");
         assert_eq!("fetching", parsed["weather_data_status"].as_str().unwrap());
         assert_eq!(40, parsed["weather_data_progress"].as_i64().unwrap());
+    }
+
+    #[tokio::test]
+    async fn cable_optimization_events_broadcast_optimization_complete_relays_to_subscriber() {
+        let file = tempfile::NamedTempFile::new().expect("temp sqlite");
+        let path = file.path().to_str().expect("utf8 path");
+        let pool = SqlitePool::new(path);
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "CREATE TABLE cultivation_plans (
+                   id INTEGER PRIMARY KEY,
+                   total_profit REAL,
+                   total_revenue REAL,
+                   total_cost REAL
+                 );
+                 CREATE TABLE field_cultivations (
+                   id INTEGER PRIMARY KEY,
+                   cultivation_plan_id INTEGER
+                 );
+                 INSERT INTO cultivation_plans (id, total_profit, total_revenue, total_cost)
+                 VALUES (5, 120.0, 200.0, 80.0);
+                 INSERT INTO field_cultivations (id, cultivation_plan_id) VALUES (1, 5);",
+            )?;
+            Ok(())
+        })
+        .expect("seed plan");
+
+        let hub = Arc::new(CableHub::default());
+        let mut rx = hub.subscribe_plan(5).await;
+        let gateway = CableCultivationPlanOptimizationEventsGateway::new(hub, pool);
+        gateway
+            .broadcast_optimization_complete(5, "adjusted")
+            .expect("broadcast");
+
+        let body = rx.recv().await.expect("broadcast payload");
+        let parsed: Value = serde_json::from_str(&body).expect("json body");
+        assert_eq!("adjusted", parsed["status"].as_str().unwrap());
+        assert_eq!(
+            "optimization.messages.adjusted",
+            parsed["message"].as_str().unwrap()
+        );
+        assert_eq!(120.0, parsed["total_profit"].as_f64().unwrap());
+        assert_eq!(200.0, parsed["total_revenue"].as_f64().unwrap());
+        assert_eq!(80.0, parsed["total_cost"].as_f64().unwrap());
+        assert_eq!(1, parsed["field_cultivations_count"].as_i64().unwrap());
+    }
+
+    #[tokio::test]
+    async fn cable_optimization_events_broadcast_field_added_relays_to_subscriber() {
+        let hub = Arc::new(CableHub::default());
+        let mut rx = hub.subscribe_plan(9).await;
+        let pool = SqlitePool::new(
+            tempfile::NamedTempFile::new()
+                .expect("tempfile")
+                .path()
+                .to_str()
+                .expect("utf8"),
+        );
+        let gateway = CableCultivationPlanOptimizationEventsGateway::new(hub, pool);
+        let field = CultivationPlanFieldSnapshot {
+            id: 3,
+            name: "North".into(),
+            area: 12.5,
+            cultivation_count: 2,
+        };
+        gateway
+            .broadcast_field_added(9, "private", &field, 42.0)
+            .expect("broadcast");
+
+        let body = rx.recv().await.expect("broadcast payload");
+        let parsed: Value = serde_json::from_str(&body).expect("json body");
+        assert_eq!("field_added", parsed["type"].as_str().unwrap());
+        assert_eq!(3, parsed["field"]["id"].as_i64().unwrap());
+        assert_eq!("North", parsed["field"]["name"].as_str().unwrap());
+        assert_eq!(42.0, parsed["total_area"].as_f64().unwrap());
     }
 }
