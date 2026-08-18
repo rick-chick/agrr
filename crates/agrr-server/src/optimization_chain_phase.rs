@@ -4,12 +4,15 @@ use crate::adapters::PassthroughTranslator;
 use crate::cable::CableHub;
 use crate::optimization_chain_telemetry::{StepOutcome, StepTimer};
 use crate::state::AppState;
-use agrr_adapters_sqlite::CultivationPlanSqliteGateway;
+use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, PlanVarianceLearningSqliteGateway};
 use agrr_domain::cultivation_plan::dtos::{
     AdvanceCultivationPlanPhaseInput, CultivationPlanPhaseName,
 };
 use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
-use agrr_domain::cultivation_plan::interactors::AdvanceCultivationPlanPhaseInteractor;
+use agrr_domain::cultivation_plan::interactors::{
+    AdvanceCultivationPlanPhaseInteractor, OptimizationChainOrchestrationProgressUpdateInteractor,
+};
+use agrr_domain::cultivation_plan::policies::optimization_chain_orchestration_progress_policy::OptimizationChainOrchestrationStep;
 use agrr_domain::shared::ports::CultivationPlanPhaseBroadcastPort;
 use rusqlite::params;
 use serde_json::{json, Value};
@@ -46,6 +49,7 @@ pub(crate) fn run_guarded_optimization_step(
     channel: &str,
     step_name: &'static str,
     failure_subphase: Option<&str>,
+    orchestration_step: Option<OptimizationChainOrchestrationStep>,
     step: impl FnOnce() -> Result<(), String>,
 ) -> bool {
     let pool = state.sqlite.clone();
@@ -57,10 +61,16 @@ pub(crate) fn run_guarded_optimization_step(
     match step() {
         Ok(()) => {
             timer.log(StepOutcome::Ok, None);
+            if let Some(chain_step) = orchestration_step {
+                notify_orchestration_on_success(state, plan_id, chain_step);
+            }
             true
         }
         Err(e) => {
             timer.log(StepOutcome::Failed, Some(&e));
+            if let Some(chain_step) = orchestration_step {
+                notify_orchestration_on_failure(state, plan_id, chain_step, &e);
+            }
             if let Some(subphase) = failure_subphase {
                 if let Err(phase_err) = advance_phase(
                     state,
@@ -87,6 +97,38 @@ pub(crate) fn run_guarded_optimization_step(
     }
 }
 
+fn notify_orchestration_on_success(
+    state: &AppState,
+    plan_id: i64,
+    step: OptimizationChainOrchestrationStep,
+) {
+    let gateway = PlanVarianceLearningSqliteGateway::new(state.sqlite.clone());
+    let interactor = OptimizationChainOrchestrationProgressUpdateInteractor::new(&gateway);
+    if let Err(err) = interactor.on_chain_step_success(plan_id, step) {
+        error!(
+            plan_id,
+            error = %err,
+            "optimization chain: orchestration progress update failed after step success"
+        );
+    }
+}
+
+fn notify_orchestration_on_failure(
+    state: &AppState,
+    plan_id: i64,
+    _step: OptimizationChainOrchestrationStep,
+    error: &str,
+) {
+    let gateway = PlanVarianceLearningSqliteGateway::new(state.sqlite.clone());
+    let interactor = OptimizationChainOrchestrationProgressUpdateInteractor::new(&gateway);
+    if let Err(err) = interactor.on_chain_step_failure(plan_id, error) {
+        error!(
+            plan_id,
+            error = %err,
+            "optimization chain: orchestration progress update failed after step failure"
+        );
+    }
+}
 
 pub(crate) fn advance_phase(
     state: &AppState,
@@ -228,6 +270,7 @@ mod tests {
             "PlansOptimizationChannel",
             "fetch_weather_data",
             Some("fetching_weather"),
+            None,
             || {
                 step_ran_in.store(true, Ordering::SeqCst);
                 Ok(())
@@ -249,6 +292,7 @@ mod tests {
             "PlansOptimizationChannel",
             "weather_prediction",
             Some("predicting_weather"),
+            None,
             || Ok(()),
         );
 
@@ -267,6 +311,7 @@ mod tests {
             "PlansOptimizationChannel",
             "optimization",
             Some("optimizing"),
+            Some(OptimizationChainOrchestrationStep::Optimization),
             || Err("daemon unavailable".into()),
         );
 

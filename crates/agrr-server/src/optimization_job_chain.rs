@@ -12,6 +12,7 @@
 
 use crate::jobs::JobStep;
 use crate::optimization_chain_phase::run_guarded_optimization_step;
+use agrr_domain::cultivation_plan::policies::optimization_chain_orchestration_progress_policy::OptimizationChainOrchestrationStep;
 use crate::optimization_chain_run::{
     new_bootstrap_slot, plan_exists_in_db, run_bootstrap_step, run_fetch_weather_step,
     run_optimization_step, run_plan_finalize_step, run_weather_prediction_step, BootstrapData,
@@ -81,6 +82,7 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
                         &channel,
                         "fetch_weather_data",
                         Some("fetching_weather"),
+                        None,
                         || run_fetch_weather_step(&state, plan_id, &channel, &ctx, start_date, end_date),
                     )
                 })
@@ -108,6 +110,7 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
                         &channel,
                         "weather_prediction",
                         Some("predicting_weather"),
+                        None,
                         || run_weather_prediction_step(&state, plan_id, &channel, end_date),
                     )
                 })
@@ -130,6 +133,7 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
                         &channel,
                         "optimization",
                         Some("optimizing"),
+                        Some(OptimizationChainOrchestrationStep::Optimization),
                         || run_optimization_step(&state, plan_id, &channel),
                     )
                 })
@@ -152,6 +156,7 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
                         &channel,
                         "task_schedule_generation",
                         None,
+                        Some(OptimizationChainOrchestrationStep::TaskScheduleGeneration),
                         || {
                             crate::task_schedule_generation::run_task_schedule_generation_step(
                                 &state, plan_id, &channel,
@@ -180,6 +185,7 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
                         &channel,
                         "plan_finalize",
                         None,
+                        Some(OptimizationChainOrchestrationStep::PlanFinalize),
                         || run_plan_finalize_step(&state, plan_id, &channel, &hub),
                     );
                     if ok {
@@ -259,6 +265,7 @@ pub fn enqueue_private_plan_weather_prep_chain(
                         &channel,
                         "fetch_weather_data",
                         Some("fetching_weather"),
+                        None,
                         || run_fetch_weather_step(&state, plan_id, &channel, &ctx, start_date, end_date),
                     )
                 })
@@ -286,6 +293,7 @@ pub fn enqueue_private_plan_weather_prep_chain(
                         &channel,
                         "weather_prediction",
                         Some("predicting_weather"),
+                        None,
                         || run_weather_prediction_step(&state, plan_id, &channel, end_date),
                     )
                 })
