@@ -1,5 +1,7 @@
 //! Optimization write/read helpers on cultivation plans (Ruby: `CultivationPlanGateway` optimize section).
 
+use std::collections::BTreeMap;
+
 use crate::cultivation_plan::dtos::{
     CultivationPlanCropWithAgrr, FieldCultivationCreateAttrs, OptimizationApplyAttrs,
 };
@@ -21,6 +23,12 @@ pub trait CultivationPlanOptimizationGateway: Send + Sync {
         &self,
         plan_id: i64,
     ) -> Result<Vec<CultivationPlanCropWithAgrr>, Box<dyn std::error::Error + Send + Sync>>;
+
+    /// Maps `(crop_id, crop_stage_id)` to `crop_stages.order` for Learn GDD proposal keys.
+    fn crop_stage_id_to_order_by_crop_ids(
+        &self,
+        crop_ids: &[i64],
+    ) -> Result<BTreeMap<(i64, i64), i32>, Box<dyn std::error::Error + Send + Sync>>;
 
     fn clear_field_cultivations(
         &self,
