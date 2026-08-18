@@ -1,10 +1,16 @@
 // Ruby: test/domain/cultivation_plan/interactors/cultivation_plan_optimize_interactor_test.rb
 
+use std::collections::BTreeMap;
+
 use super::CultivationPlanOptimizeInteractor;
-use crate::cultivation_plan::dtos::OptimizationPlanSnapshot;
+use crate::cultivation_plan::dtos::{
+    LearnHandoffStateRead, OptimizationPlanSnapshot, PlanVarianceLearningSnapshotRead,
+    PlanVsActualSummaryRead,
+};
 use crate::cultivation_plan::gateways::{
     AdjustWeatherPredictionGateway, CultivationPlanOptimizationGateway,
     InteractionRulePlanReadGateway, OptimizationPlanReadGateway, PlanAllocationAllocateGateway,
+    PlanVarianceLearningGateway,
 };
 use crate::cultivation_plan::ports::CultivationPlanOptimizeAdvancePhasePort;
 use crate::shared::ports::{ClockPort, LoggerPort};
@@ -51,6 +57,13 @@ impl CultivationPlanOptimizationGateway for StubOptimizationGateway {
     ) -> Result<Vec<crate::cultivation_plan::dtos::CultivationPlanCropWithAgrr>, Box<dyn std::error::Error + Send + Sync>>
     {
         Ok(vec![])
+    }
+
+    fn crop_stage_id_to_order_by_crop_ids(
+        &self,
+        _crop_ids: &[i64],
+    ) -> Result<BTreeMap<(i64, i64), i32>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(BTreeMap::new())
     }
 
     fn clear_field_cultivations(
@@ -186,6 +199,74 @@ impl AdjustWeatherPredictionGateway for PanicWeather {
     }
 }
 
+struct EmptyVarianceLearning;
+impl PlanVarianceLearningGateway for EmptyVarianceLearning {
+    fn save(
+        &self,
+        _: i64,
+        _: i64,
+        _: &PlanVsActualSummaryRead,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
+
+    fn find_by_plan_id(
+        &self,
+        _: i64,
+    ) -> Result<Option<PlanVarianceLearningSnapshotRead>, Box<dyn std::error::Error + Send + Sync>>
+    {
+        Ok(None)
+    }
+
+    fn find_proposal_application_progress_by_plan_id(
+        &self,
+        _: i64,
+    ) -> Result<BTreeMap<String, String>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(BTreeMap::new())
+    }
+
+    fn upsert_proposal_application_progress(
+        &self,
+        _: i64,
+        _: &BTreeMap<String, String>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
+
+    fn find_reorganize_orchestration_progress_by_plan_id(
+        &self,
+        _: i64,
+    ) -> Result<
+        crate::cultivation_plan::dtos::ReorganizeOrchestrationProgressRead,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
+        Ok(Default::default())
+    }
+
+    fn upsert_reorganize_orchestration_progress(
+        &self,
+        _: i64,
+        _: &crate::cultivation_plan::dtos::ReorganizeOrchestrationProgressPatch,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
+
+    fn find_learn_handoff_by_plan_id(
+        &self,
+        _: i64,
+    ) -> Result<LearnHandoffStateRead, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(Default::default())
+    }
+
+    fn patch_learn_handoff(
+        &self,
+        _: i64,
+        _: &crate::cultivation_plan::dtos::LearnHandoffStatePatch,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
+}
+
 #[test]
 fn calculate_planning_period_uses_prediction_target_end_for_public_plan_without_field_cultivations(
 ) {
@@ -219,6 +300,7 @@ fn calculate_planning_period_uses_prediction_target_end_for_public_plan_without_
         &PanicRules,
         &gateway,
         &PanicRead,
+        &EmptyVarianceLearning,
         &PanicAdvance,
         &PanicWeather,
         &SilentLogger,
