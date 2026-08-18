@@ -10,6 +10,7 @@ import type { WeatherRescheduleProposal } from '../../domain/plans/weather-resch
 import type { WeatherRescheduleProposalPreview } from '../../domain/plans/weather-reschedule-proposal-preview';
 import { PlanGateway, TaskScheduleQueryParams } from '../../usecase/plans/plan-gateway';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
+import { ReoptimizeVarianceLearningResponseDto } from '../../usecase/plans/reoptimize-variance-learning-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import {
   TaskScheduleItemCreateRequest,
@@ -101,6 +102,13 @@ export class PlanApiGateway implements PlanGateway {
     return this.apiClient.patch<PlanVarianceLearningSnapshot>(
       `/api/v1/plans/${planId}/variance_learning`,
       { proposal_application_progress: proposalApplicationProgress }
+    );
+  }
+
+  reoptimizeVarianceLearning(planId: number): Observable<ReoptimizeVarianceLearningResponseDto> {
+    return this.apiClient.post<ReoptimizeVarianceLearningResponseDto>(
+      `/api/v1/plans/${planId}/variance_learning/reoptimize`,
+      {}
     );
   }
 

@@ -29,6 +29,7 @@ describe('UpdateTaskScheduleItemUseCase', () => {
       getVarianceLearning: () => of({} as never),
       importVarianceLearning: () => of({} as never),
       patchVarianceLearningProposalProgress: () => of({} as never),
+      reoptimizeVarianceLearning: () => of({ success: true, plan_id: 0, optimization_enqueued: true }),
       regenerateTaskSchedule: () => of({} as never),
       createTaskScheduleItem: () => of({} as never),
       updateTaskScheduleItem: updateFn,

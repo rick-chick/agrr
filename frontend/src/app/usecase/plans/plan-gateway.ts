@@ -8,6 +8,7 @@ import type { WeatherRescheduleProposal } from '../../domain/plans/weather-resch
 import type { WeatherRescheduleProposalPreview } from '../../domain/plans/weather-reschedule-proposal-preview';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { RegenerateTaskScheduleResponseDto } from './regenerate-task-schedule-response.dtos';
+import { ReoptimizeVarianceLearningResponseDto } from './reoptimize-variance-learning-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import { TaskScheduleItemMutationResponse } from './task-schedule-item-mutation.dtos';
 
@@ -49,6 +50,7 @@ export interface PlanGateway {
     planId: number,
     proposalApplicationProgress: Record<string, string>
   ): Observable<PlanVarianceLearningSnapshot>;
+  reoptimizeVarianceLearning(planId: number): Observable<ReoptimizeVarianceLearningResponseDto>;
   regenerateTaskSchedule(planId: number): Observable<RegenerateTaskScheduleResponseDto>;
   createTaskScheduleItem(
     planId: number,

@@ -12,12 +12,10 @@ import {
   markBpTimingProposalAppliedPending,
   storeLearnPostMasterPayload
 } from '../../domain/plans/learn-proposal-application-progress';
-import {
-  clearLearnReorganizePipelineAutoChain,
-  readLearnReorganizePipelineAutoChain
-} from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
+import { clearLearnReorganizePipelineAutoChain } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 import { clearLearnOrchestrationProgressCache } from '../../domain/plans/learn-master-update-orchestration';
 import { BulkApplySafeLearnProposalsUseCase } from '../../usecase/plans/bulk-apply-safe-learn-proposals.usecase';
+import { StartLearnVarianceLearningReoptimizeUseCase } from '../../usecase/plans/start-learn-variance-learning-reoptimize.usecase';
 import { ApplyBpTimingProposalFromLearnUseCase } from '../../usecase/plans/apply-bp-timing-proposal-from-learn.usecase';
 import { ApplyStageGddCalibrationFromLearnUseCase } from '../../usecase/plans/apply-stage-gdd-calibration-from-learn.usecase';
 import { DryRunBpTimingProposalFromLearnUseCase } from '../../usecase/plans/dry-run-bp-timing-proposal-from-learn.usecase';
@@ -91,7 +89,7 @@ const inlineApplyProviderMocks = () => [
 describe('PlanLearnProposalQueueComponent', () => {
   let fixture: ComponentFixture<PlanLearnProposalQueueComponent>;
   let bulkApplyUseCase: { execute: ReturnType<typeof vi.fn> };
-  let router: Router;
+  let reoptimizeUseCase: { execute: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     sessionStorage.clear();
@@ -104,18 +102,25 @@ describe('PlanLearnProposalQueueComponent', () => {
         onSuccess?.({ appliedCount: 1, totalSafeCount: 1 });
       })
     };
+    reoptimizeUseCase = {
+      execute: vi.fn(({ onSuccess }: { onSuccess?: () => void }) => {
+        onSuccess?.();
+      })
+    };
 
     await TestBed.configureTestingModule({
       imports: [PlanLearnProposalQueueComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
-        { provide: BulkApplySafeLearnProposalsUseCase, useValue: bulkApplyUseCase }
+        { provide: BulkApplySafeLearnProposalsUseCase, useValue: bulkApplyUseCase },
+        { provide: StartLearnVarianceLearningReoptimizeUseCase, useValue: reoptimizeUseCase }
       ]
     })
       .overrideComponent(PlanLearnProposalQueueComponent, {
         set: {
           providers: [
             { provide: BulkApplySafeLearnProposalsUseCase, useValue: bulkApplyUseCase },
+            { provide: StartLearnVarianceLearningReoptimizeUseCase, useValue: reoptimizeUseCase },
             ...inlineApplyProviderMocks()
           ]
         }
@@ -129,8 +134,6 @@ describe('PlanLearnProposalQueueComponent', () => {
 
     fixture = TestBed.createComponent(PlanLearnProposalQueueComponent);
     fixture.componentInstance.planId = 7;
-    router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate').mockResolvedValue(true);
   });
 
   it('renders categorized proposal queue with observable counts', () => {
@@ -206,7 +209,7 @@ describe('PlanLearnProposalQueueComponent', () => {
     );
   });
 
-  it('auto-starts reorganize pipeline after bulk apply without manual CTA', async () => {
+  it('auto-starts server reoptimize after bulk apply without manual CTA', async () => {
     fixture.componentInstance.stageGddProposals = [
       {
         cropId: 1,
@@ -226,21 +229,20 @@ describe('PlanLearnProposalQueueComponent', () => {
       '.learn-proposal-queue__bulk-apply .btn-primary'
     ) as HTMLButtonElement;
     applyButton.click();
-    fixture.detectChanges();
-    await new Promise((resolve) => setTimeout(resolve, 0));
     fixture.detectChanges();
     await fixture.whenStable();
 
     expect(bulkApplyUseCase.execute).toHaveBeenCalled();
-    expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
-    expect(router.navigate).toHaveBeenCalledWith(['/plans', 7], {
-      queryParams: { learningOrchestration: 'adjust' }
-    });
+    expect(reoptimizeUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 7 })
+    );
     expect(fixture.nativeElement.querySelector('.learn-proposal-queue__post-apply')).toBeFalsy();
   });
 
-  it('shows manual retry CTA only when pipeline start navigation fails', async () => {
-    vi.mocked(router.navigate).mockRejectedValueOnce(new Error('navigation failed'));
+  it('shows manual retry CTA only when server reoptimize enqueue fails', async () => {
+    reoptimizeUseCase.execute.mockImplementation(({ onError }: { onError?: (message: string) => void }) => {
+      onError?.('plans.learn.one_click_reoptimize.error.adjust_failed');
+    });
     fixture.componentInstance.stageGddProposals = [
       {
         cropId: 1,
@@ -260,8 +262,6 @@ describe('PlanLearnProposalQueueComponent', () => {
       '.learn-proposal-queue__bulk-apply .btn-primary'
     ) as HTMLButtonElement;
     applyButton.click();
-    fixture.detectChanges();
-    await new Promise((resolve) => setTimeout(resolve, 0));
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -269,16 +269,17 @@ describe('PlanLearnProposalQueueComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Start reorganization pipeline');
     expect(fixture.nativeElement.textContent).toContain('1 safe proposal(s) applied');
 
-    vi.mocked(router.navigate).mockResolvedValueOnce(true);
+    reoptimizeUseCase.execute.mockImplementation(({ onSuccess }: { onSuccess?: () => void }) => {
+      onSuccess?.();
+    });
     const retryButton = fixture.nativeElement.querySelector(
       '.learn-proposal-queue__post-apply .btn-primary'
     ) as HTMLButtonElement;
     retryButton.click();
     await fixture.whenStable();
 
-    expect(router.navigate).toHaveBeenLastCalledWith(['/plans', 7], {
-      queryParams: { learningOrchestration: 'adjust' }
-    });
+    expect(reoptimizeUseCase.execute).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.querySelector('.learn-proposal-queue__post-apply')).toBeFalsy();
   });
 
   it('renders post_master confirmation within the queue when payload is set', () => {
@@ -475,6 +476,7 @@ describe('PlanLearnProposalQueueComponent inline stage_gdd apply', () => {
       set: {
         providers: [
           { provide: BulkApplySafeLearnProposalsUseCase, useValue: { execute: vi.fn() } },
+          { provide: StartLearnVarianceLearningReoptimizeUseCase, useValue: { execute: vi.fn() } },
           { provide: ApplyStageGddCalibrationFromLearnUseCase, useValue: applyUseCase },
           { provide: ApplyBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } },
           { provide: DryRunBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } }
@@ -544,6 +546,7 @@ describe('PlanLearnProposalQueueComponent inline fertilizer timing apply', () =>
       set: {
         providers: [
           { provide: BulkApplySafeLearnProposalsUseCase, useValue: { execute: vi.fn() } },
+          { provide: StartLearnVarianceLearningReoptimizeUseCase, useValue: { execute: vi.fn() } },
           { provide: ApplyStageGddCalibrationFromLearnUseCase, useValue: { execute: vi.fn() } },
           { provide: ApplyBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } },
           { provide: DryRunBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } }

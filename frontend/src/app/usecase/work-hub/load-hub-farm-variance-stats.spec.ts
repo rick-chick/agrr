@@ -87,6 +87,7 @@ describe('loadHubFarmVarianceStats', () => {
         }),
       patchVarianceLearningProposalProgress: () =>
         of({ plan_id: 0, proposal_application_progress: {} }),
+      reoptimizeVarianceLearning: () => of({ success: true, plan_id: 0, optimization_enqueued: true }),
       regenerateTaskSchedule: () => of(undefined),
       createTaskScheduleItem: () => of({} as never),
       updateTaskScheduleItem: () => of({} as never),
@@ -153,6 +154,7 @@ describe('loadHubFarmVarianceStats', () => {
         }),
       patchVarianceLearningProposalProgress: () =>
         of({ plan_id: 0, proposal_application_progress: {} }),
+      reoptimizeVarianceLearning: () => of({ success: true, plan_id: 0, optimization_enqueued: true }),
       regenerateTaskSchedule: () => of(undefined),
       createTaskScheduleItem: () => of({} as never),
       updateTaskScheduleItem: () => of({} as never),
@@ -192,6 +194,7 @@ describe('loadHubFarmVarianceStats', () => {
         }),
       patchVarianceLearningProposalProgress: () =>
         of({ plan_id: 0, proposal_application_progress: {} }),
+      reoptimizeVarianceLearning: () => of({ success: true, plan_id: 0, optimization_enqueued: true }),
       regenerateTaskSchedule: () => of(undefined),
       createTaskScheduleItem: () => of({} as never),
       updateTaskScheduleItem: () => of({} as never),

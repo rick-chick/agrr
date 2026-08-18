@@ -1,16 +1,17 @@
 import { Component, Input, inject, Output, EventEmitter } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import {
   buildLearnOrchestrationResumeNavigation,
   hasLearnReorganizePipelineFailure,
   readLearnOrchestrationCurrentPhase,
-  readLearnOrchestrationLastError
+  readLearnOrchestrationLastError,
+  readLearnOrchestrationStepComplete,
+  type LearnOrchestrationStepKey
 } from '../../domain/plans/learn-master-update-orchestration';
 import { clearLearnReorganizePipelineError } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
-import { buildLearnReorganizeSkipPlacementOptimizingNavigation } from '../../domain/plans/learn-reorganize-skip-placement-pipeline';
 import { resolveLearnReorganizePipelineStageLabelKey } from '../../domain/plans/resolve-learn-reorganize-pipeline-stage';
-import { StartLearnOneClickReoptimizeUseCase } from '../../usecase/plans/start-learn-one-click-reoptimize.usecase';
+import { StartLearnVarianceLearningReoptimizeUseCase } from '../../usecase/plans/start-learn-variance-learning-reoptimize.usecase';
 
 @Component({
   selector: 'app-plan-learn-pipeline-status',
@@ -43,6 +44,16 @@ import { StartLearnOneClickReoptimizeUseCase } from '../../usecase/plans/start-l
         @if (phaseLabelKey) {
           <p class="learn-pipeline-status__phase">{{ phaseLabelKey | translate }}</p>
         }
+        <ul class="learn-pipeline-status__steps" role="list">
+          @for (step of orchestrationSteps; track step.key) {
+            <li
+              class="learn-pipeline-status__step"
+              [class.learn-pipeline-status__step--complete]="step.complete"
+            >
+              {{ step.labelKey | translate }}
+            </li>
+          }
+        </ul>
         <p class="learn-pipeline-status__active-message">
           {{ 'plans.learn.pipeline_status.active_message' | translate }}
         </p>
@@ -61,8 +72,7 @@ import { StartLearnOneClickReoptimizeUseCase } from '../../usecase/plans/start-l
   styleUrls: ['./plan-learn-pipeline-status.component.css']
 })
 export class PlanLearnPipelineStatusComponent {
-  private readonly router = inject(Router);
-  private readonly oneClickReoptimizeUseCase = inject(StartLearnOneClickReoptimizeUseCase);
+  private readonly reoptimizeUseCase = inject(StartLearnVarianceLearningReoptimizeUseCase);
 
   @Input({ required: true }) planId!: number;
   @Input() refreshVersion = 0;
@@ -98,18 +108,33 @@ export class PlanLearnPipelineStatusComponent {
     return buildLearnOrchestrationResumeNavigation(this.planId);
   }
 
+  get orchestrationSteps(): { key: LearnOrchestrationStepKey; labelKey: string; complete: boolean }[] {
+    void this.refreshVersion;
+    return [
+      {
+        key: 'placement',
+        labelKey: 'plans.learn.pipeline_status.step.placement',
+        complete: readLearnOrchestrationStepComplete(this.planId, 'placement')
+      },
+      {
+        key: 'regenerate',
+        labelKey: 'plans.learn.pipeline_status.step.regenerate',
+        complete: readLearnOrchestrationStepComplete(this.planId, 'regenerate')
+      },
+      {
+        key: 'sync_verify',
+        labelKey: 'plans.learn.pipeline_status.step.sync_verify',
+        complete: readLearnOrchestrationStepComplete(this.planId, 'sync_verify')
+      }
+    ];
+  }
+
   retryPipeline(): void {
     clearLearnReorganizePipelineError(this.planId);
-    this.oneClickReoptimizeUseCase.execute({
+    this.reoptimizeUseCase.execute({
       planId: this.planId,
-      onSuccess: () => {
-        const navigation = buildLearnReorganizeSkipPlacementOptimizingNavigation(this.planId);
-        void this.router.navigate(navigation.commands);
-        this.progressChanged.emit();
-      },
-      onError: () => {
-        this.progressChanged.emit();
-      }
+      onSuccess: () => this.progressChanged.emit(),
+      onError: () => this.progressChanged.emit()
     });
   }
 }
