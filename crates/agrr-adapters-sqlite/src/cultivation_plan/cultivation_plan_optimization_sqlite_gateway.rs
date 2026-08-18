@@ -1,5 +1,7 @@
 //! Ruby: `CultivationPlanActiveRecordGateway` optimize section.
 
+use std::collections::BTreeMap;
+
 use crate::crop::agrr_requirement::build_crop_agrr_requirement;
 use crate::pool::SqlitePool;
 use agrr_domain::cultivation_plan::dtos::{
@@ -88,6 +90,36 @@ impl CultivationPlanOptimizationGateway for CultivationPlanOptimizationSqliteGat
             ));
         }
         Ok(out)
+    }
+
+    fn crop_stage_id_to_order_by_crop_ids(
+        &self,
+        crop_ids: &[i64],
+    ) -> Result<BTreeMap<(i64, i64), i32>, Box<dyn std::error::Error + Send + Sync>> {
+        if crop_ids.is_empty() {
+            return Ok(BTreeMap::new());
+        }
+        let placeholders = crop_ids
+            .iter()
+            .enumerate()
+            .map(|(index, _)| format!("?{}", index + 1))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let sql = format!(
+            "SELECT crop_id, id, \"order\" FROM crop_stages WHERE crop_id IN ({placeholders})"
+        );
+        self.pool.with_read_box(|conn| {
+            let mut stmt = conn.prepare(&sql)?;
+            let rows = stmt.query_map(rusqlite::params_from_iter(crop_ids.iter()), |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i32>(2)?))
+            })?;
+            let mut out = BTreeMap::new();
+            for row in rows {
+                let (crop_id, stage_id, order) = row?;
+                out.insert((crop_id, stage_id), order);
+            }
+            Ok(out)
+        })
     }
 
     fn clear_field_cultivations(
