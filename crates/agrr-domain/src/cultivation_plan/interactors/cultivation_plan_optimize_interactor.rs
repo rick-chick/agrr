@@ -9,7 +9,10 @@ use std::fmt;
 use serde_json::Value;
 use time::Date;
 
-use crate::cultivation_plan::calculators::OptimizationAllocationInputCalculator;
+use crate::cultivation_plan::calculators::{
+    OptimizationAllocationInputCalculator, OptimizationLearnDeltaCalculator,
+    OptimizationLearnDeltaContext,
+};
 use crate::cultivation_plan::dtos::{
     CultivationPlanPhaseName, FieldCultivationCreateAttrs, FieldCultivationOptimizationPersist,
     OptimizationApplyAttrs, OptimizationPlanSnapshot,
@@ -21,6 +24,7 @@ use crate::cultivation_plan::errors::{
 use crate::cultivation_plan::gateways::{
     AdjustWeatherPredictionGateway, CultivationPlanOptimizationGateway,
     InteractionRulePlanReadGateway, OptimizationPlanReadGateway, PlanAllocationAllocateGateway,
+    PlanVarianceLearningGateway,
 };
 use crate::cultivation_plan::mappers::{
     interaction_rule_agrr_mapper, optimization_plan_read_snapshot_mapper,
@@ -52,6 +56,7 @@ pub struct CultivationPlanOptimizeInteractor<'a> {
     interaction_rule_gateway: &'a dyn InteractionRulePlanReadGateway,
     optimization_gateway: &'a dyn CultivationPlanOptimizationGateway,
     optimization_plan_read_gateway: &'a dyn OptimizationPlanReadGateway,
+    variance_learning_gateway: &'a dyn PlanVarianceLearningGateway,
     advance_phase: &'a dyn CultivationPlanOptimizeAdvancePhasePort,
     weather_prediction_gateway: &'a dyn AdjustWeatherPredictionGateway,
     logger: &'a dyn LoggerPort,
@@ -67,6 +72,7 @@ impl<'a> CultivationPlanOptimizeInteractor<'a> {
         interaction_rule_gateway: &'a dyn InteractionRulePlanReadGateway,
         optimization_gateway: &'a dyn CultivationPlanOptimizationGateway,
         optimization_plan_read_gateway: &'a dyn OptimizationPlanReadGateway,
+        variance_learning_gateway: &'a dyn PlanVarianceLearningGateway,
         advance_phase: &'a dyn CultivationPlanOptimizeAdvancePhasePort,
         weather_prediction_gateway: &'a dyn AdjustWeatherPredictionGateway,
         logger: &'a dyn LoggerPort,
@@ -79,6 +85,7 @@ impl<'a> CultivationPlanOptimizeInteractor<'a> {
             interaction_rule_gateway,
             optimization_gateway,
             optimization_plan_read_gateway,
+            variance_learning_gateway,
             advance_phase,
             weather_prediction_gateway,
             logger,
@@ -157,6 +164,7 @@ impl<'a> CultivationPlanOptimizeInteractor<'a> {
         let plan_crops = self
             .optimization_gateway
             .cultivation_plan_crops_with_crop(self.plan_id)?;
+        let plan_crops = self.apply_learn_deltas_to_plan_crops(plan_crops)?;
 
         let (fields_data, crops_data) =
             OptimizationAllocationInputCalculator::build(total_area, &plan_crops, self.logger);
@@ -463,6 +471,43 @@ impl<'a> CultivationPlanOptimizeInteractor<'a> {
             phase_name,
             failure_subphase,
         );
+    }
+
+    fn apply_learn_deltas_to_plan_crops(
+        &self,
+        plan_crops: Vec<crate::cultivation_plan::dtos::CultivationPlanCropWithAgrr>,
+    ) -> Result<Vec<crate::cultivation_plan::dtos::CultivationPlanCropWithAgrr>, Box<dyn std::error::Error + Send + Sync>>
+    {
+        let proposal_application_progress = self
+            .variance_learning_gateway
+            .find_proposal_application_progress_by_plan_id(self.plan_id)?;
+        if proposal_application_progress.is_empty() {
+            return Ok(plan_crops);
+        }
+
+        let learn_handoff = self
+            .variance_learning_gateway
+            .find_learn_handoff_by_plan_id(self.plan_id)?;
+        let summary = self
+            .variance_learning_gateway
+            .find_by_plan_id(self.plan_id)?
+            .and_then(|snapshot| snapshot.summary);
+        let crop_ids: Vec<i64> = plan_crops.iter().map(|crop| crop.crop_id).collect();
+        let stage_id_to_order = self
+            .optimization_gateway
+            .crop_stage_id_to_order_by_crop_ids(&crop_ids)?;
+
+        let ctx = OptimizationLearnDeltaContext {
+            proposal_application_progress: &proposal_application_progress,
+            summary: summary.as_ref(),
+            learn_handoff: &learn_handoff,
+            stage_id_to_order: &stage_id_to_order,
+        };
+
+        Ok(OptimizationLearnDeltaCalculator::apply_to_plan_crops(
+            plan_crops,
+            &ctx,
+        ))
     }
 
     pub fn map_allocate_error(

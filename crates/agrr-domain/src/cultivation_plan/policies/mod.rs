@@ -4,6 +4,7 @@ pub mod cultivation_plan_allocate_allocation_policy;
 pub mod cultivation_plan_field_policy;
 pub mod cultivation_plan_optimization_complete_policy;
 pub mod cultivation_plan_phase_policy;
+pub mod optimization_learn_applied_proposal_policy;
 pub mod plan_variance_learning_handoff_policy;
 pub mod optimization_chain_orchestration_progress_policy;
 pub mod plan_variance_learning_orchestration_progress_policy;

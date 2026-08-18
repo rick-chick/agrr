@@ -14,7 +14,7 @@ use crate::state::AppState;
 use agrr_adapters_agrr::PlanAllocationAllocateAgrrDaemonGateway;
 use agrr_adapters_sqlite::{
     CultivationPlanOptimizationSqliteGateway, InteractionRulePlanReadSqliteGateway,
-    OptimizationPlanReadSqliteGateway,
+    OptimizationPlanReadSqliteGateway, PlanVarianceLearningSqliteGateway,
 };
 use agrr_domain::cultivation_plan::dtos::CultivationPlanPhaseName;
 use agrr_domain::cultivation_plan::interactors::CultivationPlanOptimizeInteractor;
@@ -55,6 +55,7 @@ pub fn run_cultivation_plan_optimize_interactor(
         state.predicted_weather.metadata.clone(),
     );
     let optimization = CultivationPlanOptimizationSqliteGateway::new(pool.clone());
+    let variance_learning = PlanVarianceLearningSqliteGateway::new(pool.clone());
     let rules = InteractionRulePlanReadSqliteGateway::new(pool.clone());
     let allocate = PlanAllocationAllocateAgrrDaemonGateway::from_env();
     let weather = SqliteAdjustWeatherPredictionGateway::from_state(state);
@@ -69,6 +70,7 @@ pub fn run_cultivation_plan_optimize_interactor(
         &rules,
         &optimization,
         &read,
+        &variance_learning,
         &advance,
         &weather,
         &logger,

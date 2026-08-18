@@ -10,6 +10,7 @@ pub(crate) mod private_plan_output_ports;
 pub(crate) mod public_plan_save_ports;
 pub(crate) mod retrieve_cultivation_plan_output_port;
 pub(crate) mod task_schedule_ports;
+pub(crate) mod plan_variance_learning_reoptimize_enqueue_port;
 pub(crate) mod task_schedule_regen_enqueue_port;
 
 pub use cultivation_plan_optimize_advance_phase_port::CultivationPlanOptimizeAdvancePhasePort;
@@ -36,10 +37,12 @@ pub use public_plan_save_ports::{
 pub use retrieve_cultivation_plan_output_port::RetrieveCultivationPlanOutputPort;
 pub use task_schedule_ports::{
     PlanVarianceLearningProposalProgressUpdateOutputPort, PlanVarianceLearningReadOutputPort,
+    PlanVarianceLearningReoptimizeOutputPort,
     PlanVsActualSummaryOutputPort, WeatherRescheduleProposalPreviewOutputPort,
     WeatherRescheduleProposalsListOutputPort,
     PrivatePlanInitializeFromSelectionOutputPort, RegenerateTaskScheduleOutputPort,
     TaskScheduleItemMutationOutputPort, TaskScheduleTimelineOutputPort,
     UserAgriculturalTaskMappingPort,
 };
+pub use plan_variance_learning_reoptimize_enqueue_port::PlanVarianceLearningReoptimizeEnqueuePort;
 pub use task_schedule_regen_enqueue_port::TaskScheduleRegenEnqueuePort;
