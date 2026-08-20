@@ -290,7 +290,9 @@ export class PlanLearnProposalQueueItemConfirmationComponent {
     this.applyStageGddUseCase.execute({
       planId: this.planId,
       cropId: this.stageGddProposal.cropId,
+      cropName: this.stageGddProposal.cropName,
       stageId: this.stageGddProposal.stageId,
+      stageName: this.stageGddProposal.stageName,
       proposedRequiredGdd: this.stageGddProposal.proposedRequiredGdd,
       onSuccess: () => {
         this.applying = false;

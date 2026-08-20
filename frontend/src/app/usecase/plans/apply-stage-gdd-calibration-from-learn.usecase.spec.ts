@@ -3,6 +3,7 @@ import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearLearnProposalApplicationProgressCache,
+  readLearnPostMasterPayload,
   resolveLearnProposalApplicationStatus,
   stageGddProposalProgressKey
 } from '../../domain/plans/learn-proposal-application-progress';
@@ -42,7 +43,9 @@ describe('ApplyStageGddCalibrationFromLearnUseCase', () => {
     useCase.execute({
       planId: PLAN_ID,
       cropId: 1,
+      cropName: 'Crop1',
       stageId: 2,
+      stageName: 'Stage1',
       proposedRequiredGdd: 150,
       onSuccess,
       onError
@@ -52,6 +55,14 @@ describe('ApplyStageGddCalibrationFromLearnUseCase', () => {
     expect(
       resolveLearnProposalApplicationStatus(PLAN_ID, stageGddProposalProgressKey(1, 2))
     ).toBe('confirmed');
+    expect(readLearnPostMasterPayload(PLAN_ID)).toEqual({
+      kind: 'stage_gdd',
+      cropId: 1,
+      cropName: 'Crop1',
+      stageId: 2,
+      stageName: 'Stage1',
+      appliedRequiredGdd: 150
+    });
     expect(onSuccess).toHaveBeenCalled();
     expect(onError).not.toHaveBeenCalled();
   });
@@ -67,7 +78,9 @@ describe('ApplyStageGddCalibrationFromLearnUseCase', () => {
     useCase.execute({
       planId: PLAN_ID,
       cropId: 1,
+      cropName: 'Crop1',
       stageId: 2,
+      stageName: 'Stage1',
       proposedRequiredGdd: 150,
       onSuccess,
       onError
@@ -85,7 +98,9 @@ describe('ApplyStageGddCalibrationFromLearnUseCase', () => {
     useCase.execute({
       planId: PLAN_ID,
       cropId: 1,
+      cropName: 'Crop1',
       stageId: 2,
+      stageName: 'Stage1',
       proposedRequiredGdd: 150,
       onSuccess,
       onError

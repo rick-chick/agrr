@@ -58,7 +58,9 @@ export class BulkApplySafeLearnProposalsUseCase {
         this.stageGddApplyUseCase.execute({
           planId: dto.planId,
           cropId: proposal.cropId,
+          cropName: proposal.cropName,
           stageId: proposal.stageId,
+          stageName: proposal.stageName,
           proposedRequiredGdd,
           onSuccess: () => advance(),
           onError: (message) => dto.onError?.(message)

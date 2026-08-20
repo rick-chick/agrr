@@ -106,9 +106,10 @@ impl OptimizationLearnDeltaCalculator {
         {
             return Some(applied);
         }
-        let delta = Self::stage_gdd_delta_from_summary(ctx.summary, crop_id, stage_order)?;
-        let current = Self::stage_required_gdd(requirement, stage_order)?;
-        Some(round_gdd(current + delta))
+        // Bulk/inline apply updates crop master before marking confirmed. Without a
+        // matching handoff absolute value, keep the live master requirement unchanged.
+        let _ = (stage_order, requirement, ctx);
+        None
     }
 
     fn handoff_applied_required_gdd(
@@ -130,19 +131,6 @@ impl OptimizationLearnDeltaCalculator {
             .get("appliedRequiredGdd")
             .and_then(|v| v.as_f64())
             .map(round_gdd)
-    }
-
-    fn stage_gdd_delta_from_summary(
-        summary: Option<&PlanVsActualSummaryRead>,
-        crop_id: i64,
-        stage_order: i32,
-    ) -> Option<f64> {
-        let summary = summary?;
-        summary
-            .stage_gdd_calibration_proposals
-            .iter()
-            .find(|p| p.crop_id == crop_id && p.stage_order == stage_order)
-            .map(|p| p.average_gdd_delta)
     }
 
     fn apply_bp_amount_for_crop(
@@ -331,7 +319,61 @@ mod calculators_optimization_learn_delta_calculator_test_inline {
     }
 
     #[test]
-    fn confirmed_stage_gdd_calibration_updates_required_gdd_in_allocate_input() {
+    fn confirmed_stage_gdd_calibration_updates_required_gdd_when_handoff_records_applied_value() {
+        let mut progress = BTreeMap::new();
+        progress.insert("stage_gdd:1:2".into(), "confirmed".into());
+
+        let mut stage_id_to_order = BTreeMap::new();
+        stage_id_to_order.insert((1, 2), 1);
+
+        let summary = PlanVsActualSummaryRead {
+            plan_id: 9,
+            unrecorded_count: 0,
+            structured_unrecorded_count: 0,
+            amount_variance_count: 0,
+            categories: vec![],
+            amount_group_summaries: vec![],
+            top_variance_items: vec![],
+            stage_gdd_calibration_proposals: vec![StageGddCalibrationProposalRead {
+                crop_id: 1,
+                crop_name: "Crop1".into(),
+                stage_order: 1,
+                stage_name: "Stage1".into(),
+                average_gdd_delta: 12.5,
+                recorded_item_count: 2,
+            }],
+            action_required_items: vec![],
+            blueprint_timing_adjustment_proposals: vec![],
+            blueprint_amount_adjustment_proposals: vec![],
+        };
+
+        let handoff = LearnHandoffStateRead {
+            post_master_payload: Some(json!({
+                "kind": "stage_gdd",
+                "cropId": 1,
+                "stageId": 2,
+                "appliedRequiredGdd": 112.5
+            })),
+            ..Default::default()
+        };
+
+        let ctx = OptimizationLearnDeltaContext {
+            proposal_application_progress: &progress,
+            summary: Some(&summary),
+            learn_handoff: &handoff,
+            stage_id_to_order: &stage_id_to_order,
+        };
+
+        let out =
+            OptimizationLearnDeltaCalculator::apply_to_plan_crops(vec![sample_crop(100.0)], &ctx);
+        let gdd = out[0].agrr_requirement["stage_requirements"][0]["thermal"]["required_gdd"]
+            .as_f64()
+            .unwrap();
+        assert!((gdd - 112.5).abs() < 0.001);
+    }
+
+    #[test]
+    fn confirmed_stage_gdd_without_handoff_keeps_live_master_requirement() {
         let mut progress = BTreeMap::new();
         progress.insert("stage_gdd:1:2".into(), "confirmed".into());
 
@@ -367,11 +409,14 @@ mod calculators_optimization_learn_delta_calculator_test_inline {
         };
 
         let out =
-            OptimizationLearnDeltaCalculator::apply_to_plan_crops(vec![sample_crop(100.0)], &ctx);
+            OptimizationLearnDeltaCalculator::apply_to_plan_crops(vec![sample_crop(112.5)], &ctx);
         let gdd = out[0].agrr_requirement["stage_requirements"][0]["thermal"]["required_gdd"]
             .as_f64()
             .unwrap();
-        assert!((gdd - 112.5).abs() < 0.001);
+        assert!(
+            (gdd - 112.5).abs() < 0.001,
+            "expected live master GDD without handoff double-apply (got {gdd})"
+        );
     }
 
     #[test]
@@ -462,6 +507,65 @@ mod calculators_optimization_learn_delta_calculator_test_inline {
             .as_f64()
             .unwrap();
         assert!((gdd - 100.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn handoff_applied_required_gdd_prevents_double_apply_when_master_already_updated() {
+        let mut progress = BTreeMap::new();
+        progress.insert("stage_gdd:1:2".into(), "confirmed".into());
+
+        let mut stage_id_to_order = BTreeMap::new();
+        stage_id_to_order.insert((1, 2), 1);
+
+        let summary = PlanVsActualSummaryRead {
+            plan_id: 9,
+            unrecorded_count: 0,
+            structured_unrecorded_count: 0,
+            amount_variance_count: 0,
+            categories: vec![],
+            amount_group_summaries: vec![],
+            top_variance_items: vec![],
+            stage_gdd_calibration_proposals: vec![StageGddCalibrationProposalRead {
+                crop_id: 1,
+                crop_name: "Crop1".into(),
+                stage_order: 1,
+                stage_name: "Stage1".into(),
+                average_gdd_delta: 12.5,
+                recorded_item_count: 2,
+            }],
+            action_required_items: vec![],
+            blueprint_timing_adjustment_proposals: vec![],
+            blueprint_amount_adjustment_proposals: vec![],
+        };
+
+        let handoff = LearnHandoffStateRead {
+            post_master_payload: Some(json!({
+                "kind": "stage_gdd",
+                "cropId": 1,
+                "stageId": 2,
+                "appliedRequiredGdd": 112.5
+            })),
+            ..Default::default()
+        };
+
+        let ctx = OptimizationLearnDeltaContext {
+            proposal_application_progress: &progress,
+            summary: Some(&summary),
+            learn_handoff: &handoff,
+            stage_id_to_order: &stage_id_to_order,
+        };
+
+        let out = OptimizationLearnDeltaCalculator::apply_to_plan_crops(
+            vec![sample_crop(112.5)],
+            &ctx,
+        );
+        let gdd = out[0].agrr_requirement["stage_requirements"][0]["thermal"]["required_gdd"]
+            .as_f64()
+            .unwrap();
+        assert!(
+            (gdd - 112.5).abs() < 0.001,
+            "expected handoff absolute value, not current+delta double apply (got {gdd})"
+        );
     }
 
     #[test]

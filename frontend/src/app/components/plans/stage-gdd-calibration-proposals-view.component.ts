@@ -250,7 +250,9 @@ export class StageGddCalibrationProposalsViewComponent {
     this.applyUseCase.execute({
       planId: this.planId,
       cropId: proposal.cropId,
+      cropName: proposal.cropName,
       stageId: proposal.stageId,
+      stageName: proposal.stageName,
       proposedRequiredGdd: proposal.proposedRequiredGdd,
       onSuccess: () => {
         this.applyingKeys.delete(key);
