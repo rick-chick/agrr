@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { BehaviorSubject, of } from 'rxjs';
 
 import en from '../../../assets/i18n/en.json';
@@ -24,6 +24,10 @@ import {
   stageGddProposalProgressKey,
   storeLearnPostMasterPayload
 } from '../../domain/plans/learn-proposal-application-progress';
+import {
+  clearLearnOrchestrationProgressCache,
+  hydrateLearnOrchestrationProgress
+} from '../../domain/plans/learn-master-update-orchestration';
 
 const loadedSchedule: TaskScheduleResponse = {
   plan: {
@@ -669,6 +673,117 @@ describe('PlanLearnComponent', () => {
         ]
       })
     );
+  });
+});
+
+describe('PlanLearnComponent orchestration polling', () => {
+  let fixture: ComponentFixture<PlanLearnComponent>;
+  let carryoverUseCase: {
+    loadFarmContext: ReturnType<typeof vi.fn>;
+    loadLearningSnapshot: ReturnType<typeof vi.fn>;
+    loadCarryoverPreview: ReturnType<typeof vi.fn>;
+    importLearning: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    vi.useFakeTimers();
+    sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
+    clearLearnOrchestrationProgressCache();
+
+    carryoverUseCase = {
+      loadFarmContext: vi.fn().mockReturnValue(of([])),
+      loadLearningSnapshot: vi.fn().mockReturnValue(of(null)),
+      loadCarryoverPreview: vi.fn(),
+      importLearning: vi.fn()
+    };
+
+    TestBed.overrideComponent(PlanLearnComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPlanTaskScheduleUseCase, useValue: { execute: vi.fn() } },
+          { provide: LoadPlanVsActualSummaryUseCase, useValue: { execute: vi.fn() } },
+          {
+            provide: LoadBlueprintTimingAdjustmentProposalsUseCase,
+            useValue: { execute: vi.fn() }
+          },
+          {
+            provide: LoadBlueprintAmountAdjustmentProposalsUseCase,
+            useValue: { execute: vi.fn() }
+          },
+          {
+            provide: LoadStageGddCalibrationProposalsUseCase,
+            useValue: { execute: vi.fn() }
+          },
+          { provide: LoadPlanLearnCarryoverUseCase, useValue: carryoverUseCase },
+          {
+            provide: StartLearnOneClickReoptimizeUseCase,
+            useValue: { execute: vi.fn() }
+          },
+          {
+            provide: StartLearnVarianceLearningReoptimizeUseCase,
+            useValue: { execute: vi.fn() }
+          },
+          {
+            provide: PLAN_GATEWAY,
+            useValue: {
+              reoptimizeVarianceLearning: vi.fn(() =>
+                of({ success: true, plan_id: 7, optimization_enqueued: true })
+              )
+            }
+          },
+          PlanLearnPresenter
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanLearnComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([{ path: 'plans/:id/learn', component: PlanLearnComponent }]),
+        { provide: ActivatedRoute, useValue: createRouteMock('7') }
+      ]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture = TestBed.createComponent(PlanLearnComponent);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('polls variance learning snapshot while orchestration pipeline is active', () => {
+    fixture.detectChanges();
+    const callsAfterInit = carryoverUseCase.loadLearningSnapshot.mock.calls.length;
+    expect(callsAfterInit).toBeGreaterThanOrEqual(1);
+
+    hydrateLearnOrchestrationProgress(7, {
+      pipeline_active: true,
+      current_phase: 'optimizing'
+    });
+
+    vi.advanceTimersByTime(5000);
+
+    expect(carryoverUseCase.loadLearningSnapshot.mock.calls.length).toBeGreaterThan(
+      callsAfterInit
+    );
+    expect(fixture.componentInstance.proposalProgressRefreshVersion).toBeGreaterThan(0);
+  });
+
+  it('does not poll variance learning snapshot when pipeline is idle', () => {
+    fixture.detectChanges();
+    const callsAfterInit = carryoverUseCase.loadLearningSnapshot.mock.calls.length;
+
+    vi.advanceTimersByTime(15000);
+
+    expect(carryoverUseCase.loadLearningSnapshot.mock.calls.length).toBe(callsAfterInit);
+    expect(fixture.componentInstance.proposalProgressRefreshVersion).toBe(0);
   });
 });
 
