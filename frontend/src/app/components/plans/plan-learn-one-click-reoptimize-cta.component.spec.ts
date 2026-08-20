@@ -4,6 +4,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearLearnOrchestrationProgressCache } from '../../domain/plans/learn-master-update-orchestration';
 import { markStageGddProposalAppliedPending, clearLearnProposalApplicationProgressCache } from '../../domain/plans/learn-proposal-application-progress';
+import {
+  setLearnReorganizePipelineError,
+  storeLearnReorganizePipelineAutoChainSkipPlacement
+} from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 import { StartLearnVarianceLearningReoptimizeUseCase } from '../../usecase/plans/start-learn-variance-learning-reoptimize.usecase';
 import { PlanLearnOneClickReoptimizeCtaComponent } from './plan-learn-one-click-reoptimize-cta.component';
 
@@ -72,6 +76,23 @@ describe('PlanLearnOneClickReoptimizeCtaComponent', () => {
 
   it('does not render when master update flow is inactive', () => {
     fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.learn-one-click-reoptimize')).toBeNull();
+  });
+
+  it('does not render when reorganization pipeline is active', () => {
+    markStageGddProposalAppliedPending(7, { cropId: 1, stageId: 2 });
+    storeLearnReorganizePipelineAutoChainSkipPlacement(7);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.learn-one-click-reoptimize')).toBeNull();
+  });
+
+  it('does not render when reorganization pipeline failed', () => {
+    markStageGddProposalAppliedPending(7, { cropId: 1, stageId: 2 });
+    storeLearnReorganizePipelineAutoChainSkipPlacement(7);
+    setLearnReorganizePipelineError(7, 'plans.learn.one_click_reoptimize.error.adjust_failed');
+    fixture.detectChanges();
+
     expect(fixture.nativeElement.querySelector('.learn-one-click-reoptimize')).toBeNull();
   });
 });
