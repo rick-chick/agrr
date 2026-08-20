@@ -6,6 +6,11 @@ import type { PlanSummary } from '../../domain/plans/plan-summary';
 import type { PlanVarianceLearningSnapshot } from '../../domain/plans/plan-variance-learning-snapshot';
 import type { PlanVsActualSummary } from '../../domain/plans/plan-vs-actual-summary';
 import {
+  clearLearnOrchestrationProgressCache,
+  readLearnOrchestrationCurrentPhase,
+  readLearnOrchestrationPipelineActive
+} from '../../domain/plans/learn-master-update-orchestration';
+import {
   clearLearnProposalApplicationProgressCache,
   readLearnProposalApplicationProgress,
   stageGddProposalProgressKey
@@ -84,6 +89,37 @@ describe('LoadPlanLearnCarryoverUseCase', () => {
     const useCase = new LoadPlanLearnCarryoverUseCase(createGateway());
 
     await expect(firstValueFrom(useCase.loadCarryoverPreview(PLAN_ID))).resolves.toEqual(summary);
+  });
+
+  it('loadLearningSnapshot hydrates orchestration progress from API', async () => {
+    clearLearnOrchestrationProgressCache();
+    const gateway = createGateway({
+      getVarianceLearning: () =>
+        of({
+          ...snapshot,
+          reorganize_orchestration_progress: {
+            placement: true,
+            regenerate: false,
+            sync_verify: false,
+            return_to_learn: false,
+            pipeline_active: true,
+            current_phase: 'optimizing',
+            last_error: null
+          }
+        })
+    });
+    const useCase = new LoadPlanLearnCarryoverUseCase(gateway);
+
+    await expect(firstValueFrom(useCase.loadLearningSnapshot(PLAN_ID))).resolves.toEqual(
+      expect.objectContaining({
+        reorganize_orchestration_progress: expect.objectContaining({
+          pipeline_active: true,
+          current_phase: 'optimizing'
+        })
+      })
+    );
+    expect(readLearnOrchestrationPipelineActive(PLAN_ID)).toBe(true);
+    expect(readLearnOrchestrationCurrentPhase(PLAN_ID)).toBe('optimizing');
   });
 
   it('loadLearningSnapshot hydrates proposal application progress from API', async () => {

@@ -6,6 +6,7 @@ import {
 import {
   clearLearnReorganizePipelineAutoChain,
   readLearnReorganizePipelineAutoChain,
+  setLearnReorganizePipelineError,
   storeLearnReorganizePipelineAutoChain,
   storeLearnReorganizePipelineAutoChainSkipPlacement
 } from './learn-reorganize-pipeline-auto-chain';
@@ -63,6 +64,13 @@ describe('learn-reorganize-skip-placement-pipeline', () => {
     it('is false when pipeline is active', () => {
       markStageGddProposalAppliedPending(7, { cropId: 1, stageId: 2 });
       storeLearnReorganizePipelineAutoChain(7);
+      expect(shouldShowLearnOneClickReoptimizeCta(7)).toBe(false);
+    });
+
+    it('is false when server reoptimize enqueue failed', () => {
+      markStageGddProposalAppliedPending(7, { cropId: 1, stageId: 2 });
+      storeLearnReorganizePipelineAutoChainSkipPlacement(7);
+      setLearnReorganizePipelineError(7, 'plans.learn.one_click_reoptimize.error.adjust_failed');
       expect(shouldShowLearnOneClickReoptimizeCta(7)).toBe(false);
     });
 
