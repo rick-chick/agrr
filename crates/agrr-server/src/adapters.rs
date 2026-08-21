@@ -156,3 +156,38 @@ impl ClockPort for SystemClock {
         OffsetDateTime::now_utc()
     }
 }
+
+#[cfg(test)]
+mod cultivation_plan_optimization_events_adapter_tests {
+    use super::*;
+    use crate::test_support::test_app_state;
+    use agrr_domain::cultivation_plan::dtos::CultivationPlanRestAuth;
+
+    #[test]
+    fn uses_cable_gateway_for_private_plan_mutations() {
+        let db = crate::test_support::test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+        let auth = CultivationPlanRestAuth::private(1);
+
+        let adapter = cultivation_plan_optimization_events_adapter(&state, &auth);
+
+        assert!(matches!(
+            adapter,
+            CultivationPlanOptimizationEventsAdapter::Cable(_)
+        ));
+    }
+
+    #[test]
+    fn uses_noop_gateway_for_public_plan_mutations() {
+        let db = crate::test_support::test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+        let auth = CultivationPlanRestAuth::public();
+
+        let adapter = cultivation_plan_optimization_events_adapter(&state, &auth);
+
+        assert!(matches!(
+            adapter,
+            CultivationPlanOptimizationEventsAdapter::Noop(_)
+        ));
+    }
+}

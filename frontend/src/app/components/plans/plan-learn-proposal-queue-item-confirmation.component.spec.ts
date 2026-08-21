@@ -26,6 +26,26 @@ const bpTimingItem: UnifiedLearnProposalQueueItem = {
   bpTimingCategory: 'fertilizer'
 };
 
+const stageGddItem: UnifiedLearnProposalQueueItem = {
+  id: 'stage_gdd:1:2',
+  kind: 'stage_gdd',
+  category: 'requires_confirmation',
+  priority: 1000,
+  title: 'Tomato — Vegetative'
+};
+
+const stageGddProposal = () => ({
+  cropId: 1,
+  cropName: 'Tomato',
+  stageId: 2,
+  stageOrder: 1,
+  stageName: 'Vegetative',
+  averageGddDelta: 50,
+  recordedItemCount: 2,
+  currentRequiredGdd: 100,
+  proposedRequiredGdd: 150
+});
+
 const bpTimingProposal = (): BlueprintTimingAdjustmentProposal => ({
   cropId: 1,
   cropName: 'Tomato',
@@ -177,5 +197,64 @@ describe('PlanLearnProposalQueueItemConfirmationComponent', () => {
         queryParams: expect.objectContaining({ fromPlan: 7, returnTo: 'learn' })
       })
     );
+  });
+});
+
+describe('PlanLearnProposalQueueItemConfirmationComponent stage_gdd inline apply', () => {
+  let fixture: ComponentFixture<PlanLearnProposalQueueItemConfirmationComponent>;
+  let applyStageGddUseCase: { execute: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    sessionStorage.clear();
+    clearLearnProposalApplicationProgressCache();
+
+    applyStageGddUseCase = {
+      execute: vi.fn(({ onSuccess }: { onSuccess?: () => void }) => onSuccess?.())
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [PlanLearnProposalQueueItemConfirmationComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        { provide: ApplyStageGddCalibrationFromLearnUseCase, useValue: applyStageGddUseCase },
+        { provide: ApplyBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } },
+        { provide: DryRunBpTimingProposalFromLearnUseCase, useValue: { execute: vi.fn() } }
+      ]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture = TestBed.createComponent(PlanLearnProposalQueueItemConfirmationComponent);
+    fixture.componentInstance.planId = 7;
+    fixture.componentInstance.item = stageGddItem;
+    fixture.componentInstance.stageGddProposal = stageGddProposal();
+    fixture.detectChanges();
+  });
+
+  it('passes crop and stage names so reoptimize handoff records appliedRequiredGdd', async () => {
+    const progressChanged = vi.fn();
+    fixture.componentInstance.progressChanged.subscribe(progressChanged);
+
+    const applyButton = fixture.nativeElement.querySelector(
+      '[data-testid="queue-inline-apply"]'
+    ) as HTMLButtonElement;
+    applyButton.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(applyStageGddUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planId: 7,
+        cropId: 1,
+        cropName: 'Tomato',
+        stageId: 2,
+        stageName: 'Vegetative',
+        proposedRequiredGdd: 150
+      })
+    );
+    expect(progressChanged).toHaveBeenCalled();
   });
 });
