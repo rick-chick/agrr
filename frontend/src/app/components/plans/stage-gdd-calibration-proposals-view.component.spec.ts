@@ -100,7 +100,16 @@ describe('StageGddCalibrationProposalsViewComponent inline apply', () => {
     applyButton.click();
     fixture.detectChanges();
 
-    expect(applyUseCase.execute).toHaveBeenCalled();
+    expect(applyUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planId: 7,
+        cropId: 1,
+        cropName: 'Tomato',
+        stageId: 2,
+        stageName: 'Vegetative',
+        proposedRequiredGdd: 150
+      })
+    );
     expect(
       resolveLearnProposalApplicationStatus(7, stageGddProposalProgressKey(1, 2))
     ).toBe('confirmed');
