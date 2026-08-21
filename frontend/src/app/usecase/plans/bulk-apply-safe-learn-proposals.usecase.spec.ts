@@ -90,6 +90,16 @@ describe('BulkApplySafeLearnProposalsUseCase', () => {
     });
 
     expect(stageGddApply.execute).toHaveBeenCalledTimes(1);
+    expect(stageGddApply.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planId: 7,
+        cropId: 1,
+        cropName: 'Tomato',
+        stageId: 2,
+        stageName: 'Vegetative',
+        proposedRequiredGdd: 105
+      })
+    );
     expect(bpTimingApply.execute).toHaveBeenCalledTimes(1);
     expect(onProgress).toHaveBeenCalledWith({ applied: 1, total: 2 });
     expect(onProgress).toHaveBeenCalledWith({ applied: 2, total: 2 });
