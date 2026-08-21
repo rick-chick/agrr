@@ -558,6 +558,7 @@ async fn reoptimize_variance_learning(
 
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let variance_gateway = PlanVarianceLearningSqliteGateway::new(pool.clone());
     let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
     let enqueue = VarianceLearningReoptimizeEnqueueAdapter {
         state: state.clone(),
@@ -568,6 +569,7 @@ async fn reoptimize_variance_learning(
         &mut presenter,
         &plan_gateway,
         &enqueue,
+        &variance_gateway,
         &scope_gateway,
     );
 
