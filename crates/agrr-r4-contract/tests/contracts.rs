@@ -1614,6 +1614,29 @@ fn post_plan_variance_learning_reoptimize_enqueues_optimization_chain() {
         "optimization job chain must start for plan {} (phase={optimization_phase:?})",
         seed.plan_id
     );
+
+    let learning_path = format!("/api/v1/plans/{}/variance_learning", seed.plan_id);
+    let (get_status, get_body) = status_and_body(client.get(
+        &learning_path,
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, get_status, "{get_body}");
+    let learning: serde_json::Value =
+        serde_json::from_str(&get_body).expect("variance learning JSON after reoptimize");
+    let orchestration = learning["reorganize_orchestration_progress"]
+        .as_object()
+        .expect("reorganize_orchestration_progress after reoptimize");
+    assert_eq!(
+        true,
+        orchestration["pipeline_active"].as_bool().unwrap(),
+        "reoptimize must persist pipeline_active server-side (#1107 regression)"
+    );
+    assert_eq!(
+        "optimizing",
+        orchestration["current_phase"].as_str().unwrap(),
+        "reoptimize must set current_phase=optimizing before chain steps run"
+    );
 }
 
 #[test]
