@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearLearnOrchestrationProgressCache,
   hasLearnReorganizePipelineFailure,
-  readLearnOrchestrationCurrentPhase
+  readLearnOrchestrationCurrentPhase,
+  registerLearnOrchestrationProgressPatchHandler
 } from '../../domain/plans/learn-master-update-orchestration';
 import { clearLearnReorganizePipelineAutoChain } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 import type { PlanGateway } from './plan-gateway';
@@ -28,11 +29,21 @@ describe('StartLearnVarianceLearningReoptimizeUseCase', () => {
     useCase = new StartLearnVarianceLearningReoptimizeUseCase(gateway);
   });
 
-  it('posts variance_learning reoptimize and starts optimizing-phase pipeline', () => {
+  it('posts variance_learning reoptimize without client orchestration activation PATCH', () => {
+    const patchHandler = vi.fn();
+    registerLearnOrchestrationProgressPatchHandler(patchHandler);
     const onSuccess = vi.fn();
     useCase.execute({ planId: 7, onSuccess });
 
     expect(gateway.reoptimizeVarianceLearning).toHaveBeenCalledWith(7);
+    expect(
+      patchHandler.mock.calls.some(
+        ([planId, updates]) =>
+          planId === 7 &&
+          updates.pipeline_active === true &&
+          updates.current_phase === 'optimizing'
+      )
+    ).toBe(false);
     expect(readLearnOrchestrationCurrentPhase(7)).toBe('optimizing');
     expect(onSuccess).toHaveBeenCalled();
   });

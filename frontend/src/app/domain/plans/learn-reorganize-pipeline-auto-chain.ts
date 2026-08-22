@@ -45,6 +45,7 @@ export function updateLearnReorganizePipelinePhase(
 
 export function setLearnReorganizePipelineError(planId: number, message: string): void {
   patchLearnOrchestrationProgress(planId, {
+    pipeline_active: true,
     current_phase: 'failed',
     last_error: message
   });
