@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@angular/core';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
+import { hydrateLearnOrchestrationProgress } from '../../domain/plans/learn-master-update-orchestration';
 import {
   clearLearnReorganizePipelineError,
-  setLearnReorganizePipelineError,
-  storeLearnReorganizePipelineAutoChainSkipPlacement
+  setLearnReorganizePipelineError
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
 
@@ -19,11 +19,15 @@ export class StartLearnVarianceLearningReoptimizeUseCase {
 
   execute(dto: StartLearnVarianceLearningReoptimizeInputDto): void {
     clearLearnReorganizePipelineError(dto.planId);
-    storeLearnReorganizePipelineAutoChainSkipPlacement(dto.planId);
 
     this.planGateway.reoptimizeVarianceLearning(dto.planId).subscribe({
       next: (response) => {
         if (response.optimization_enqueued) {
+          hydrateLearnOrchestrationProgress(dto.planId, {
+            pipeline_active: true,
+            current_phase: 'optimizing',
+            last_error: null
+          });
           dto.onSuccess?.();
           return;
         }
