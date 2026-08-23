@@ -39,6 +39,11 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
         return false;
     }
 
+    let Some(chain_guard) = state.plan_optimization_chain_locks.try_acquire(plan_id) else {
+        info!(plan_id, "optimization chain: already running for plan");
+        return false;
+    };
+
     let bootstrap_slot = new_bootstrap_slot();
     let mut steps: Vec<JobStep> = vec![];
 
@@ -199,7 +204,7 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
 
     info!(plan_id, steps = steps.len(), "optimization chain enqueued");
     let chain_span = crate::telemetry::optimization_chain_span(plan_id, &channel);
-    dispatcher.enqueue_chain_in_span(steps, chain_span);
+    dispatcher.enqueue_chain_in_span_with_hold(steps, chain_span, chain_guard);
     true
 }
 
@@ -221,6 +226,11 @@ pub fn enqueue_private_plan_weather_prep_chain(
         error!(plan_id, "weather prep chain: plan not found");
         return false;
     }
+
+    let Some(chain_guard) = state.plan_optimization_chain_locks.try_acquire(plan_id) else {
+        info!(plan_id, "weather prep chain: optimization chain already running for plan");
+        return false;
+    };
 
     let bootstrap_slot = new_bootstrap_slot();
     let mut steps: Vec<JobStep> = vec![];
@@ -303,7 +313,7 @@ pub fn enqueue_private_plan_weather_prep_chain(
 
     info!(plan_id, steps = steps.len(), "weather prep chain enqueued");
     let chain_span = crate::telemetry::optimization_chain_span(plan_id, &channel);
-    dispatcher.enqueue_chain_in_span(steps, chain_span);
+    dispatcher.enqueue_chain_in_span_with_hold(steps, chain_span, chain_guard);
     true
 }
 
@@ -399,6 +409,29 @@ mod tests {
             "pending",
             "phase persistence is unavailable; plan stays pending after bootstrap error"
         );
+    }
+
+    #[test]
+    fn returns_false_when_chain_already_running_for_plan() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+        let guard = state
+            .plan_optimization_chain_locks
+            .try_acquire(1)
+            .expect("hold plan lock");
+
+        assert!(!enqueue_private_plan_optimization_chain(
+            1,
+            "PlansOptimizationChannel",
+            &state
+        ));
+
+        drop(guard);
+        assert!(enqueue_private_plan_optimization_chain(
+            1,
+            "PlansOptimizationChannel",
+            &state
+        ));
     }
 
     #[test]
