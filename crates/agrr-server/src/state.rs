@@ -1,6 +1,7 @@
 use crate::cable::CableHub;
 use crate::masters_rate_limit::{MastersRateLimitConfig, MastersRateLimiter};
 use crate::farm_weather_fetch_locks::FarmWeatherFetchLocks;
+use crate::plan_optimization_chain_locks::PlanOptimizationChainLocks;
 use crate::plan_task_schedule_regen_locks::PlanTaskScheduleRegenLocks;
 use crate::jobs::JobChainDispatcher;
 use std::collections::HashMap;
@@ -40,6 +41,8 @@ pub struct AppState {
     pub task_schedule_regen_tokens: Arc<Mutex<HashMap<i64, u64>>>,
     /// Serializes task schedule regen jobs per `plan_id`.
     pub plan_task_schedule_regen_locks: PlanTaskScheduleRegenLocks,
+    /// Serializes optimization / weather-prep chains per `plan_id`.
+    pub plan_optimization_chain_locks: PlanOptimizationChainLocks,
     /// Serializes optimization-chain `fetch_weather` per `farm_id` (concurrent plans, same farm).
     pub farm_weather_fetch_locks: FarmWeatherFetchLocks,
     pub cable_hub: Arc<CableHub>,
@@ -104,6 +107,7 @@ impl AppState {
             task_schedule_regen_debounce: DEFAULT_TASK_SCHEDULE_REGEN_DEBOUNCE,
             task_schedule_regen_tokens: Arc::new(Mutex::new(HashMap::new())),
             plan_task_schedule_regen_locks: PlanTaskScheduleRegenLocks::new(),
+            plan_optimization_chain_locks: PlanOptimizationChainLocks::new(),
             farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),
             cable_hub: Arc::new(CableHub::default()),
             masters_rate_limit: Arc::new(MastersRateLimiter::new(MastersRateLimitConfig::from_env())),

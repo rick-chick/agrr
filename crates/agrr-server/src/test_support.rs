@@ -2,6 +2,7 @@
 
 use crate::cable::CableHub;
 use crate::farm_weather_fetch_locks::FarmWeatherFetchLocks;
+use crate::plan_optimization_chain_locks::PlanOptimizationChainLocks;
 use crate::plan_task_schedule_regen_locks::PlanTaskScheduleRegenLocks;
 use crate::jobs::JobChainDispatcher;
 use crate::state::{AppState, DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS, TEST_TASK_SCHEDULE_REGEN_DEBOUNCE};
@@ -247,6 +248,7 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
         task_schedule_regen_debounce: TEST_TASK_SCHEDULE_REGEN_DEBOUNCE,
         task_schedule_regen_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
         plan_task_schedule_regen_locks: PlanTaskScheduleRegenLocks::new(),
+        plan_optimization_chain_locks: PlanOptimizationChainLocks::new(),
         farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),
         cable_hub: Arc::new(CableHub::default()),
         locale_catalog: Arc::new(LocaleCatalog::from_pairs(

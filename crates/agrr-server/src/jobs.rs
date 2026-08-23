@@ -58,10 +58,21 @@ impl JobChainDispatcher {
     }
 
     pub fn enqueue_chain_in_span(&self, steps: Vec<JobStep>, parent_span: tracing::Span) {
+        self.enqueue_chain_in_span_with_hold(steps, parent_span, ());
+    }
+
+    /// Like [`Self::enqueue_chain_in_span`], but keeps `hold` alive until all steps finish.
+    pub fn enqueue_chain_in_span_with_hold<H: Send + 'static>(
+        &self,
+        steps: Vec<JobStep>,
+        parent_span: tracing::Span,
+        hold: H,
+    ) {
         let handle = self.handle.clone();
         let chain_semaphore = self.chain_semaphore.clone();
         handle.spawn(
             async move {
+                let _hold = hold;
                 let _permit = match chain_semaphore {
                     Some(sem) => Some(
                         sem.acquire_owned()
