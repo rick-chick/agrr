@@ -210,5 +210,18 @@ describe('learn-master-update-orchestration', () => {
 
       expect(handler).toHaveBeenCalledWith(5, { regenerate: true });
     });
+
+    it('does not invoke patch handler when hydrating local orchestration cache', () => {
+      const handler = vi.fn();
+      registerLearnOrchestrationProgressPatchHandler(handler);
+
+      hydrateLearnOrchestrationProgress(7, {
+        pipeline_active: true,
+        current_phase: 'optimizing',
+        last_error: null
+      });
+
+      expect(handler).not.toHaveBeenCalled();
+    });
   });
 });

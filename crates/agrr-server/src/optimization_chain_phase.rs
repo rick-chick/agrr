@@ -376,6 +376,66 @@ mod tests {
     }
 
     #[test]
+    fn run_guarded_optimization_step_persists_orchestration_failure_on_step_error() {
+        let db = test_pool_with_optimizing_plan(1);
+        let pool = db.pool.clone();
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "CREATE TABLE plan_variance_learning_orchestration_steps (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   plan_id INTEGER NOT NULL UNIQUE,
+                   placement_complete INTEGER NOT NULL DEFAULT 0,
+                   regenerate_complete INTEGER NOT NULL DEFAULT 0,
+                   sync_verify_complete INTEGER NOT NULL DEFAULT 0,
+                   return_to_learn INTEGER NOT NULL DEFAULT 0,
+                   pipeline_active INTEGER NOT NULL DEFAULT 0,
+                   current_phase TEXT NOT NULL DEFAULT 'idle',
+                   last_error TEXT,
+                   created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                 );",
+            )?;
+            conn.execute(
+                "INSERT INTO plan_variance_learning_orchestration_steps \
+                 (plan_id, pipeline_active, current_phase) VALUES (1, 1, 'optimizing')",
+                [],
+            )?;
+            Ok(())
+        })
+        .expect("seed orchestration");
+
+        let state = test_app_state(pool);
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "optimization",
+            Some("optimizing"),
+            Some(OptimizationChainOrchestrationStep::Optimization),
+            || Err("daemon unavailable".into()),
+        );
+
+        assert!(!continue_chain);
+        let (current_phase, last_error): (String, Option<String>) = state
+            .sqlite
+            .with_read(|conn| {
+                conn.query_row(
+                    "SELECT current_phase, last_error \
+                     FROM plan_variance_learning_orchestration_steps WHERE plan_id = 1",
+                    [],
+                    |row| Ok((row.get(0)?, row.get(1)?)),
+                )
+            })
+            .expect("read orchestration progress after failure");
+        assert_eq!("failed", current_phase);
+        assert_eq!(
+            Some("daemon unavailable".to_string()),
+            last_error,
+            "chain step failure must persist orchestration failed phase and error for Learn UI"
+        );
+    }
+
+    #[test]
     fn broadcast_completed_skips_when_field_cultivations_incomplete() {
         let db = test_pool_with_plan(1);
         let pool = db.pool.clone();

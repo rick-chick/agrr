@@ -3,11 +3,13 @@ import {
   clearLearnOrchestrationProgressCache,
   hydrateLearnOrchestrationProgress,
   readLearnOrchestrationCurrentPhase,
+  readLearnOrchestrationLastError,
   readLearnOrchestrationPipelineActive
 } from './learn-master-update-orchestration';
 import {
   buildLearnReorganizePipelineStartNavigation,
   clearLearnReorganizePipelineAutoChain,
+  clearLearnReorganizePipelineError,
   readLearnReorganizePipelineAutoChain,
   setLearnReorganizePipelineError,
   storeLearnReorganizePipelineAutoChain,
@@ -53,5 +55,16 @@ describe('learn-reorganize-pipeline-auto-chain', () => {
     storeLearnReorganizePipelineAutoChainSkipPlacement(7);
     expect(readLearnReorganizePipelineAutoChain(7)).toBe(true);
     expect(readLearnOrchestrationCurrentPhase(7)).toBe('optimizing');
+  });
+
+  it('clearLearnReorganizePipelineError clears last_error without changing phase', () => {
+    storeLearnReorganizePipelineAutoChain(7);
+    setLearnReorganizePipelineError(7, 'timeout');
+    expect(readLearnOrchestrationCurrentPhase(7)).toBe('failed');
+    expect(readLearnOrchestrationLastError(7)).toBe('timeout');
+
+    clearLearnReorganizePipelineError(7);
+    expect(readLearnOrchestrationCurrentPhase(7)).toBe('failed');
+    expect(readLearnOrchestrationLastError(7)).toBeNull();
   });
 });
