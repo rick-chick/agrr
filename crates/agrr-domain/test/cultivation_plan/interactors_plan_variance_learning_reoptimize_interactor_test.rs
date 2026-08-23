@@ -147,6 +147,21 @@
         }
     }
 
+    struct FailingEnqueue {
+        calls: Arc<Mutex<Vec<i64>>>,
+        message: String,
+    }
+
+    impl PlanVarianceLearningReoptimizeEnqueuePort for FailingEnqueue {
+        fn enqueue(
+            &self,
+            plan_id: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            self.calls.lock().unwrap().push(plan_id);
+            Err(self.message.clone().into())
+        }
+    }
+
     struct StubPlanGateway {
         plan: CultivationPlanEntity,
     }
@@ -315,4 +330,55 @@
         assert!(plan_ids.lock().unwrap().is_empty());
         assert!(enqueue_calls.lock().unwrap().is_empty());
         assert!(orchestration_patches.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn call_returns_enqueue_error_after_persisting_orchestration_activation() {
+        let events = Arc::new(Mutex::new(Vec::new()));
+        let plan_ids = Arc::new(Mutex::new(Vec::new()));
+        let enqueue_calls = Arc::new(Mutex::new(Vec::new()));
+        let mut output = SpyOutput {
+            events: events.clone(),
+            plan_ids: plan_ids.clone(),
+        };
+        let plan_gateway = StubPlanGateway {
+            plan: private_plan(1, 42),
+        };
+        let enqueue = FailingEnqueue {
+            calls: enqueue_calls.clone(),
+            message: "optimization chain could not start".into(),
+        };
+        let variance_gateway = SpyVarianceLearningGateway::new();
+        let orchestration_patches = Arc::clone(&variance_gateway.orchestration_patches);
+        let mut interactor = PlanVarianceLearningReoptimizeInteractor::new(
+            &mut output,
+            &plan_gateway,
+            &enqueue,
+            &variance_gateway,
+            &EmptyScopeGateway,
+        );
+
+        let err = interactor
+            .call(PlanVarianceLearningReoptimizeInput {
+                user_id: 1,
+                plan_id: 42,
+            })
+            .expect_err("enqueue failure must surface to caller");
+
+        assert!(
+            err.to_string().contains("optimization chain could not start"),
+            "unexpected error: {err}"
+        );
+        assert!(events.lock().unwrap().is_empty());
+        assert!(plan_ids.lock().unwrap().is_empty());
+        assert_eq!(vec![42], *enqueue_calls.lock().unwrap());
+        let patches = orchestration_patches.lock().unwrap();
+        assert_eq!(1, patches.len());
+        assert_eq!(42, patches[0].0);
+        assert_eq!(Some(true), patches[0].1.pipeline_active);
+        assert_eq!(
+            Some(PIPELINE_PHASE_OPTIMIZING.into()),
+            patches[0].1.current_phase
+        );
+        assert_eq!(Some(None), patches[0].1.last_error);
     }
