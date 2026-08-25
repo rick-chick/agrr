@@ -9,6 +9,13 @@ use agrr_domain::shared::policies::fertilize_policy;
 use agrr_domain::shared::user::User;
 use rusqlite::params;
 fn fertilize_test_pool() -> SqlitePool {
+    fertilize_test_pool_with_indexes(
+        "CREATE INDEX index_fertilizes_on_name ON fertilizes (name) WHERE is_reference = 1;
+         CREATE UNIQUE INDEX index_fertilizes_on_user_id_and_name ON fertilizes (user_id, name) WHERE is_reference = 0;",
+    )
+}
+
+fn fertilize_test_pool_with_indexes(index_ddl: &str) -> SqlitePool {
     let dir = std::env::temp_dir().join(format!("agrr_fertilize_gw_{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join(format!(
@@ -21,7 +28,7 @@ fn fertilize_test_pool() -> SqlitePool {
     ));
     let pool = SqlitePool::new(path.to_str().unwrap());
     pool.with_write(|conn| {
-        conn.execute_batch(
+        conn.execute_batch(&format!(
             "CREATE TABLE fertilizes (
               id INTEGER PRIMARY KEY,
               user_id INTEGER,
@@ -36,8 +43,8 @@ fn fertilize_test_pool() -> SqlitePool {
               created_at TEXT,
               updated_at TEXT
             );
-            CREATE UNIQUE INDEX index_fertilizes_on_name ON fertilizes (name);",
-        )
+            {index_ddl}",
+        ))
     })
     .unwrap();
     pool
@@ -88,6 +95,36 @@ fn update_for_user_persists_npk_from_string_attr_values() {
         })
         .unwrap();
     assert_eq!(row, (Some(15.5), Some(10.0), Some(5.25)));
+}
+
+// Issue #1114: global unique on name blocked E2E baseline POST for a second developer user.
+#[test]
+fn create_for_user_allows_same_name_for_different_users() {
+    let pool = fertilize_test_pool();
+    let user_a = User::new(1, false);
+    let user_b = User::new(2, false);
+    let gw = FertilizeSqliteGateway::new(pool);
+    let shared_name = "E2E Baseline Fertilize";
+    let attrs = |name: &str| {
+        attr_map_from_pairs([
+            ("name", AttrValue::from(name)),
+            ("n", AttrValue::Str("10".into())),
+            ("p", AttrValue::Str("5".into())),
+            ("k", AttrValue::Str("5".into())),
+            ("package_size", AttrValue::Str("25".into())),
+            ("is_reference", AttrValue::Bool(false)),
+        ])
+    };
+
+    let first = gw
+        .create_for_user(&user_a, attrs(shared_name))
+        .expect("first user create");
+    let second = gw
+        .create_for_user(&user_b, attrs(shared_name))
+        .expect("second user create with same name");
+
+    assert_ne!(first.id, second.id);
+    assert_eq!(first.name, second.name);
 }
 
 #[test]
