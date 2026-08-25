@@ -591,3 +591,204 @@
             other => panic!("expected failure, got {other:?}"),
         }
     }
+
+    struct IdempotentGateway {
+        existing: FertilizeEntity,
+    }
+
+    impl FertilizeGateway for IdempotentGateway {
+        fn find_by_id(
+            &self,
+            _: i64,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn list_index_for_filter(
+            &self,
+            _: &crate::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter,
+        ) -> Result<Vec<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn create_for_user(
+            &self,
+            _: &User,
+            _: AttrMap,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            panic!("create_for_user must not be called when global name already exists")
+        }
+
+        fn update_for_user(
+            &self,
+            _: &User,
+            _: i64,
+            _: AttrMap,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn soft_delete_with_undo(
+            &self,
+            _: &User,
+            _: i64,
+            _: i64,
+            _: &dyn TranslatorPort,
+        ) -> Result<
+            crate::fertilize::gateways::SoftDeleteWithUndoOutcome,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+
+        fn find_by_name(
+            &self,
+            _: i64,
+            _: &str,
+        ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn find_by_global_name(
+            &self,
+            _: &str,
+        ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(Some(self.existing.clone()))
+        }
+    }
+
+  // Returns existing row when global name is visible (idempotent create for E2E baseline).
+    #[test]
+    fn returns_existing_when_global_name_visible_to_user() {
+        let existing = sample_entity();
+        let gateway = IdempotentGateway {
+            existing: existing.clone(),
+        };
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let lookup = StubLookup(User::new(1, true));
+        let mut interactor = FertilizeCreateInteractor::new(
+            &mut output,
+            1,
+            &gateway,
+            &StubTranslator,
+            &lookup,
+        );
+        interactor
+            .call(FertilizeCreateInput::new("Test"))
+            .expect("handled");
+        assert_eq!(output.success.as_ref().and_then(|e| e.id), existing.id);
+        assert!(output.failure.is_none());
+    }
+
+    struct HiddenGlobalNameGateway {
+        existing: FertilizeEntity,
+    }
+
+    impl FertilizeGateway for HiddenGlobalNameGateway {
+        fn find_by_id(
+            &self,
+            _: i64,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn list_index_for_filter(
+            &self,
+            _: &crate::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter,
+        ) -> Result<Vec<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn create_for_user(
+            &self,
+            _: &User,
+            _: AttrMap,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            panic!("create_for_user must not be called when global name is taken")
+        }
+
+        fn update_for_user(
+            &self,
+            _: &User,
+            _: i64,
+            _: AttrMap,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn soft_delete_with_undo(
+            &self,
+            _: &User,
+            _: i64,
+            _: i64,
+            _: &dyn TranslatorPort,
+        ) -> Result<
+            crate::fertilize::gateways::SoftDeleteWithUndoOutcome,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+
+        fn find_by_name(
+            &self,
+            _: i64,
+            _: &str,
+        ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn find_by_global_name(
+            &self,
+            _: &str,
+        ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(Some(self.existing.clone()))
+        }
+    }
+
+    #[test]
+    fn fails_when_global_name_not_visible_to_non_admin() {
+        let existing = FertilizeEntity::new(FertilizeEntityAttrs {
+            id: Some(99),
+            user_id: Some(2),
+            name: "Taken".into(),
+            n: None,
+            p: None,
+            k: None,
+            description: None,
+            package_size: None,
+            region: None,
+            is_reference: false,
+            created_at: None,
+            updated_at: None,
+        })
+        .expect("valid");
+        let gateway = HiddenGlobalNameGateway { existing };
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let lookup = StubLookup(User::new(1, false));
+        let mut interactor = FertilizeCreateInteractor::new(
+            &mut output,
+            1,
+            &gateway,
+            &StubTranslator,
+            &lookup,
+        );
+        interactor
+            .call(FertilizeCreateInput::new("Taken"))
+            .expect("handled");
+        assert!(output.success.is_none());
+        match output.failure {
+            Some(CreateFailure::Error(e)) => {
+                assert_eq!(
+                    e.message,
+                    "t:activerecord.errors.models.fertilize.attributes.name.taken"
+                );
+            }
+            other => panic!("expected Error, got {other:?}"),
+        }
+    }

@@ -42,6 +42,15 @@ pub trait FertilizeGateway: Send + Sync {
         user_id: i64,
         name: &str,
     ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>>;
+
+    /// Global unique index on `fertilizes.name` — lookup without user scoping.
+    fn find_by_global_name(
+        &self,
+        name: &str,
+    ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        let _ = name;
+        Ok(None)
+    }
 }
 
 #[derive(Debug, Clone)]

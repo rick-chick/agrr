@@ -134,13 +134,52 @@ where
             return Ok(());
         }
 
+        if let Some(existing) = self.gateway.find_by_global_name(&input.name)? {
+            if fertilize_policy::view_allowed(&user, existing.is_reference, existing.user_id) {
+                self.output_port.on_success(existing);
+                return Ok(());
+            }
+            let message = self
+                .translator
+                .t("activerecord.errors.models.fertilize.attributes.name.taken", &opts);
+            self.output_port
+                .on_failure(CreateFailure::Error(Error::new(message)));
+            return Ok(());
+        }
+
         match self.gateway.create_for_user(&user, attrs) {
             Ok(entity) => {
                 self.output_port.on_success(entity);
                 Ok(())
             }
-            Err(err) => Self::handle_gateway_error(&mut self.output_port, err),
+            Err(err) => {
+                if Self::is_name_uniqueness_violation(&err) {
+                    if let Some(existing) = self.gateway.find_by_global_name(&input.name)? {
+                        if fertilize_policy::view_allowed(
+                            &user,
+                            existing.is_reference,
+                            existing.user_id,
+                        ) {
+                            self.output_port.on_success(existing);
+                            return Ok(());
+                        }
+                    }
+                }
+                Self::handle_gateway_error(&mut self.output_port, err)
+            }
         }
+    }
+
+    fn is_name_uniqueness_violation(err: &Box<dyn std::error::Error + Send + Sync>) -> bool {
+        if let Some(record_invalid) = err.downcast_ref::<RecordInvalidError>() {
+            let message = record_invalid
+                .detail_message()
+                .map(|m| m.to_string())
+                .unwrap_or_else(|| record_invalid.to_string());
+            let lower = message.to_lowercase();
+            return lower.contains("unique") || lower.contains("index_fertilizes_on_name");
+        }
+        false
     }
 
     fn handle_gateway_error(

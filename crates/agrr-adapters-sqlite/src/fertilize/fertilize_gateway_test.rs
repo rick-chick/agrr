@@ -4,6 +4,7 @@ use super::fertilize_gateway::FertilizeSqliteGateway;
 use crate::pool::SqlitePool;
 use agrr_domain::fertilize::gateways::FertilizeGateway;
 use agrr_domain::shared::attr::{attr_map_from_pairs, AttrValue};
+use agrr_domain::shared::exceptions::RecordInvalidError;
 use agrr_domain::shared::policies::fertilize_policy;
 use agrr_domain::shared::user::User;
 use rusqlite::params;
@@ -34,7 +35,8 @@ fn fertilize_test_pool() -> SqlitePool {
               region TEXT,
               created_at TEXT,
               updated_at TEXT
-            );",
+            );
+            CREATE UNIQUE INDEX index_fertilizes_on_name ON fertilizes (name);",
         )
     })
     .unwrap();
@@ -175,6 +177,37 @@ fn list_index_for_filter_returns_only_named_user_owned_non_reference_for_regular
     let mut expected = vec![a.id.expect("a"), b.id.expect("b")];
     expected.sort();
     assert_eq!(ids, expected);
+}
+
+#[test]
+fn create_for_user_duplicate_global_name_returns_record_invalid() {
+    let pool = fertilize_test_pool();
+    let user = User::new(1, false);
+    let gw = FertilizeSqliteGateway::new(pool);
+
+    gw.create_for_user(
+        &user,
+        attr_map_from_pairs([
+            ("name", AttrValue::from("E2E Baseline Fertilize")),
+            ("is_reference", AttrValue::Bool(false)),
+        ]),
+    )
+    .expect("first create");
+
+    let err = gw
+        .create_for_user(
+            &user,
+            attr_map_from_pairs([
+                ("name", AttrValue::from("E2E Baseline Fertilize")),
+                ("is_reference", AttrValue::Bool(false)),
+            ]),
+        )
+        .unwrap_err();
+    assert!(
+        err.downcast_ref::<RecordInvalidError>().is_some(),
+        "expected RecordInvalidError, got {:?}",
+        err
+    );
 }
 
 // Ruby: fertilize_active_record_gateway_test.rb — list_index_for_filter for admin includes reference and own user-owned rows
