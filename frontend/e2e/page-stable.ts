@@ -24,6 +24,11 @@ const MASTER_LOADING_SPIN_PROBE_TIMEOUT_MS = 2_000;
 const HOST_STABLE_CONTENT_SELECTOR =
   '.card-list, .item-card, .section-card__header-actions, .detail-card, .content-card, h1.compact-header-title, form, table, .hero-section, .features-section, .entry-schedule-controls, .plan-new-empty, select.form-control';
 
+/** Lazy-loaded prerender hosts (literal entry-schedule/crop/N) need attach wait before spin probe. */
+function needsLazyHostAttachWait(pattern: string): boolean {
+  return resolveHostLookupPattern(pattern) === 'entry-schedule/crop/:cropId';
+}
+
 function needsMasterLoadingSpinProbe(pattern: string): boolean {
   if (MASTER_LOADING_SPIN_PROBE_EXCLUDE.has(pattern)) return false;
   if (pattern.includes(':')) return true;
@@ -76,7 +81,9 @@ export async function waitForPageStable(page: Page, r: RouteRow): Promise<void> 
   const host = HOST_SELECTOR_BY_PATTERN[hostPattern];
   if (!host) return;
 
-  await page.locator(host).waitFor({ state: 'attached', timeout: 60_000 });
+  if (needsLazyHostAttachWait(hostPattern)) {
+    await page.locator(host).waitFor({ state: 'attached', timeout: 60_000 });
+  }
   await page.waitForTimeout(400);
   const loadingLine = page.locator(host).locator('.master-loading:not(.master-error)');
 

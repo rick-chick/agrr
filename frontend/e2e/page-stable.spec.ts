@@ -118,6 +118,56 @@ const entryScheduleCropRoute: RouteRow = {
   source: 'test',
 };
 
+const onboardingRoute: RouteRow = {
+  pattern: 'onboarding',
+  url: '/onboarding',
+  requiresAuth: true,
+  source: 'test',
+};
+
+const workRoute: RouteRow = {
+  pattern: 'work',
+  url: '/work',
+  requiresAuth: true,
+  source: 'test',
+};
+
+test.describe('waitForPageStable redirect routes', () => {
+  test('does not require app-onboarding when redirected to plan list', async ({ page }) => {
+    await page.setContent(`
+      <app-plan-list>
+        <ul class="card-list">
+          <li class="card-list__item"><article class="item-card">Plan</article></li>
+        </ul>
+      </app-plan-list>
+    `);
+
+    const start = Date.now();
+    await waitForPageStable(page, onboardingRoute);
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeLessThan(2_500);
+    await expect(page.locator('app-plan-list .card-list')).toBeVisible();
+  });
+
+  test('does not require app-work-hub when plan-work host is shown', async ({ page }) => {
+    await page.setContent(`
+      <app-plan-work>
+        <section class="section-card">
+          <div class="section-card__header-actions"><a class="btn-primary">Work</a></div>
+        </section>
+      </app-plan-work>
+    `);
+
+    const start = Date.now();
+    await waitForPageStable(page, workRoute);
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeLessThan(2_500);
+    await expect(page.locator('app-plan-work')).toBeVisible();
+  });
+});
+
 test.describe('waitForPageStable entry-schedule crop prerender paths', () => {
   test('waits for lazy-loaded detail host on literal crop path', async ({ page }) => {
     await page.setContent(`<div id="root"></div>`);
