@@ -23,6 +23,13 @@ const selectCropRoute: RouteRow = {
   source: 'test',
 };
 
+const entryScheduleCropPrerenderRoute: RouteRow = {
+  pattern: 'entry-schedule/crop/1',
+  url: '/entry-schedule/crop/1',
+  requiresAuth: false,
+  source: 'test',
+};
+
 test.describe('waitForPageStable spin probe', () => {
   test('skips long spin probe when stable content is already visible', async ({ page }) => {
     await page.setContent(`
@@ -108,6 +115,29 @@ test.describe('waitForPageStable spin probe', () => {
 
     await waitForPageStable(page, farmsRoute);
     await expect(page.locator('app-farm-list .card-list')).toBeVisible();
+  });
+});
+
+test.describe('waitForPageStable entry-schedule crop prerender', () => {
+  test('waits for level-one heading before axe smoke', async ({ page }) => {
+    await page.setContent('<app-entry-schedule-detail></app-entry-schedule-detail>');
+
+    await page.evaluate(() => {
+      setTimeout(() => {
+        const host = document.querySelector('app-entry-schedule-detail');
+        if (!host) return;
+        host.innerHTML = `
+          <h1 class="compact-header-title">
+            <span class="title-text">作物別の作付け時期</span>
+          </h1>
+        `;
+      }, 400);
+    });
+
+    const waitPromise = waitForPageStable(page, entryScheduleCropPrerenderRoute);
+    await expect(page.locator('app-entry-schedule-detail h1')).toBeHidden();
+    await waitPromise;
+    await expect(page.locator('app-entry-schedule-detail h1.compact-header-title')).toBeVisible();
   });
 });
 

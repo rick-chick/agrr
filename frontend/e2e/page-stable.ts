@@ -34,6 +34,11 @@ function needsMasterLoadingSpinProbe(pattern: string): boolean {
   return false;
 }
 
+/** Entry-schedule crop prerender paths use literal crop ids in a11y smoke (not :cropId). */
+function isEntryScheduleCropPrerenderPattern(pattern: string): boolean {
+  return pattern.startsWith('entry-schedule/crop/');
+}
+
 /**
  * 非同期取得中の UI を安定させてからアサートする（PNG キャプチャ・スモーク共通）。
  */
@@ -60,6 +65,17 @@ export async function waitForPageStable(page: Page, r: RouteRow): Promise<void> 
     await page
       .locator('app-public-plan-create .loading-state')
       .waitFor({ state: 'hidden', timeout: 60_000 });
+    return;
+  }
+
+  if (isEntryScheduleCropPrerenderPattern(r.pattern)) {
+    await expect(page.locator('app-entry-schedule-detail h1.compact-header-title')).toBeVisible({
+      timeout: 60_000,
+    });
+    const loadingLine = page
+      .locator('app-entry-schedule-detail')
+      .locator('.master-loading:not(.master-error)');
+    await expect(loadingLine).toBeHidden({ timeout: 60_000 });
     return;
   }
 
