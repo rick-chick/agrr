@@ -2,8 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
-  CONDITIONAL_REQUIRED_CI_CONTEXTS,
-  UNCONDITIONAL_REQUIRED_CI_CONTEXTS,
+  REQUIRED_CI_CONTEXTS,
+  REQUIRED_WHEN_PRESENT_CI_CONTEXTS,
+  RULESET_CI_CONTEXTS,
 } from './pr-agent-prep-lib.mjs';
 
 /**
@@ -12,7 +13,7 @@ import {
  */
 export function verifyRulesetContexts(actualContexts) {
   const actual = new Set(actualContexts);
-  const missing = UNCONDITIONAL_REQUIRED_CI_CONTEXTS.filter((context) => !actual.has(context));
+  const missing = RULESET_CI_CONTEXTS.filter((context) => !actual.has(context));
   return { ok: missing.length === 0, missing };
 }
 
@@ -36,8 +37,16 @@ export async function verifyRulesetCiContract(repoRoot) {
     errors.push('lint.yml must define run-architecture-guard job');
   }
 
-  if (!UNCONDITIONAL_REQUIRED_CI_CONTEXTS.includes('lint / run-architecture-guard')) {
-    errors.push('UNCONDITIONAL_REQUIRED_CI_CONTEXTS must include lint / run-architecture-guard');
+  if (!RULESET_CI_CONTEXTS.includes('lint / run-architecture-guard')) {
+    errors.push('RULESET_CI_CONTEXTS must include lint / run-architecture-guard');
+  }
+
+  if (!REQUIRED_CI_CONTEXTS.includes('frontend-e2e-smoke')) {
+    errors.push('REQUIRED_CI_CONTEXTS must include frontend-e2e-smoke');
+  }
+
+  if (!REQUIRED_WHEN_PRESENT_CI_CONTEXTS.includes('frontend-e2e-smoke')) {
+    errors.push('frontend-e2e-smoke must be required-when-present (path-filtered workflow)');
   }
 
   try {
@@ -47,10 +56,6 @@ export async function verifyRulesetCiContract(repoRoot) {
     }
   } catch {
     errors.push(`missing workflow: ${e2eSmokeWorkflowPath}`);
-  }
-
-  if (!CONDITIONAL_REQUIRED_CI_CONTEXTS.includes('frontend-e2e-smoke')) {
-    errors.push('CONDITIONAL_REQUIRED_CI_CONTEXTS must include frontend-e2e-smoke');
   }
 
   return { ok: errors.length === 0, errors };

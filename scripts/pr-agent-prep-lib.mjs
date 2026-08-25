@@ -1,20 +1,25 @@
 /** @typedef {{ name: string }} PrLabel */
 
-export const UNCONDITIONAL_REQUIRED_CI_CONTEXTS = [
+export const REQUIRED_CI_CONTEXTS = [
   'rails-test',
   'frontend-test',
   'lint / frontend-lint',
   'lint / run-architecture-guard',
+  'frontend-e2e-smoke',
 ];
 
-/** Path-filtered workflows: must pass when present on the PR; absent is OK. */
-export const CONDITIONAL_REQUIRED_CI_CONTEXTS = ['frontend-e2e-smoke'];
+/**
+ * Path-filtered workflows: must be SUCCESS when the check appears on the PR.
+ * Absence is OK (workflow did not run).
+ */
+export const REQUIRED_WHEN_PRESENT_CI_CONTEXTS = ['frontend-e2e-smoke'];
 
-/** All contexts evaluated by pr-agent-prep / merge worker required-CI helpers. */
-export const REQUIRED_CI_CONTEXTS = [
-  ...UNCONDITIONAL_REQUIRED_CI_CONTEXTS,
-  ...CONDITIONAL_REQUIRED_CI_CONTEXTS,
-];
+/**
+ * GitHub ruleset **master CI required** contexts (always-on checks only).
+ */
+export const RULESET_CI_CONTEXTS = REQUIRED_CI_CONTEXTS.filter(
+  (context) => !REQUIRED_WHEN_PRESENT_CI_CONTEXTS.includes(context),
+);
 
 /**
  * @param {string} headRefName
@@ -133,32 +138,34 @@ export function isNonFatalMarkReadyError(message) {
 const INCOMPLETE_CHECK_STATES = new Set(['PENDING', 'IN_PROGRESS', 'QUEUED', 'WAITING']);
 
 /**
- * @param {Array<{ name: string; state: string }>} checks
  * @param {string} context
+ * @param {Array<{ name: string; state: string }>} checks
  */
-function findCheck(checks, context) {
-  return checks.find((check) => check.name === context);
+function isRequiredContextGreen(context, checks) {
+  const match = checks.find((check) => check.name === context);
+  if (REQUIRED_WHEN_PRESENT_CI_CONTEXTS.includes(context)) {
+    return match == null || match.state === 'SUCCESS';
+  }
+  return match?.state === 'SUCCESS';
 }
 
 /**
- * @param {Array<{ name: string; state: string }>} checks
  * @param {string} context
+ * @param {Array<{ name: string; state: string }>} checks
  */
-function isConditionalRequiredContext(context) {
-  return CONDITIONAL_REQUIRED_CI_CONTEXTS.includes(context);
+function isRequiredContextComplete(context, checks) {
+  const match = checks.find((check) => check.name === context);
+  if (REQUIRED_WHEN_PRESENT_CI_CONTEXTS.includes(context)) {
+    return match == null || !INCOMPLETE_CHECK_STATES.has(match.state);
+  }
+  return match != null && !INCOMPLETE_CHECK_STATES.has(match.state);
 }
 
 /**
  * @param {Array<{ name: string; state: string }>} checks
  */
 export function areRequiredChecksGreen(checks) {
-  return REQUIRED_CI_CONTEXTS.every((context) => {
-    const match = findCheck(checks, context);
-    if (!match) {
-      return isConditionalRequiredContext(context);
-    }
-    return match.state === 'SUCCESS';
-  });
+  return REQUIRED_CI_CONTEXTS.every((context) => isRequiredContextGreen(context, checks));
 }
 
 /**
@@ -167,13 +174,7 @@ export function areRequiredChecksGreen(checks) {
  * @param {Array<{ name: string; state: string }>} checks
  */
 export function areRequiredChecksComplete(checks) {
-  return REQUIRED_CI_CONTEXTS.every((context) => {
-    const match = findCheck(checks, context);
-    if (!match) {
-      return isConditionalRequiredContext(context);
-    }
-    return !INCOMPLETE_CHECK_STATES.has(match.state);
-  });
+  return REQUIRED_CI_CONTEXTS.every((context) => isRequiredContextComplete(context, checks));
 }
 
 /**

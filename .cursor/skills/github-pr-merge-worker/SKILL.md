@@ -26,7 +26,7 @@ description: >-
 
 | 層 | 担当 | 本リポジトリ |
 |----|------|--------------|
-| **硬いゲート** | 必須 CI・ruleset | `rails-test` / `frontend-test` / `lint / frontend-lint` / `lint / run-architecture-guard`（ruleset **master CI required**） |
+| **硬いゲート** | 必須 CI・ruleset | `rails-test` / `frontend-test` / `lint / frontend-lint` / `lint / run-architecture-guard` / `frontend-e2e-smoke`（**when-present** — path-filter 付き workflow。PR に check が出たら必須） |
 | **軽いゲート** | 差分レビュー・影響調査・テスト補完 | 本 Worker（Cloud Agent） |
 
 **原則**
@@ -186,7 +186,7 @@ gh pr checks <N> --watch --interval 30   # 最大 45 分想定（Backend test �
 | `lint / frontend-lint` | Lint |
 | `lint / run-architecture-guard` | Lint |
 
-**追加（条件付き必須 — `pr-agent-prep-lib` の `CONDITIONAL_REQUIRED_CI_CONTEXTS`）**（check が PR に表示されているときは SUCCESS 必須。path filter で未実行の PR はブロックしない）:
+**追加（required-when-present — path-filter 付き workflow）**（check が PR に表示されているとき — Agent / pr-agent-prep が pass を確認。ruleset には載せない）:
 
 | context | workflow |
 |---------|----------|
@@ -476,6 +476,7 @@ gh pr edit <N> --remove-label agent-merge-in-progress
 | `frontend-test` | Frontend test |
 | `lint / frontend-lint` | Lint |
 | `lint / run-architecture-guard` | Lint (architecture guard) |
+| `frontend-e2e-smoke` | Frontend E2E smoke（**agent prep のみ**。path-filter 付き — PR に表示されたとき SUCCESS 必須。ruleset 未登録） |
 
 `strict_required_status_checks_policy: true`（head が最新 `master` より進んでいること）。
 

@@ -2,14 +2,14 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
+  REQUIRED_CI_CONTEXTS,
+  REQUIRED_WHEN_PRESENT_CI_CONTEXTS,
   areRequiredChecksComplete,
   areRequiredChecksGreen,
   classifyRequiredCiState,
   canMarkReady,
-  CONDITIONAL_REQUIRED_CI_CONTEXTS,
   isEligibleAgentPr,
   isNonFatalMarkReadyError,
-  REQUIRED_CI_CONTEXTS,
   resolveGhToken,
   selectDraftPrNumberToReady,
   shouldReceiveAgentMergeLabel,
@@ -169,11 +169,6 @@ test('isNonFatalMarkReadyError matches GITHUB_TOKEN integration permission error
   assert.equal(isNonFatalMarkReadyError('unexpected gh failure'), false);
 });
 
-test('REQUIRED_CI_CONTEXTS includes path-filtered frontend-e2e-smoke', () => {
-  assert.ok(REQUIRED_CI_CONTEXTS.includes('frontend-e2e-smoke'));
-  assert.ok(CONDITIONAL_REQUIRED_CI_CONTEXTS.includes('frontend-e2e-smoke'));
-});
-
 const BASE_REQUIRED_CHECKS = [
   { name: 'rails-test', state: 'SUCCESS' },
   { name: 'frontend-test', state: 'SUCCESS' },
@@ -181,8 +176,23 @@ const BASE_REQUIRED_CHECKS = [
   { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
 ];
 
+test('REQUIRED_CI_CONTEXTS includes frontend-e2e-smoke', () => {
+  assert.ok(REQUIRED_CI_CONTEXTS.includes('frontend-e2e-smoke'));
+});
+
+test('frontend-e2e-smoke is required only when present on PR', () => {
+  assert.deepEqual(REQUIRED_WHEN_PRESENT_CI_CONTEXTS, ['frontend-e2e-smoke']);
+});
+
 test('areRequiredChecksGreen requires ruleset contexts', () => {
   assert.equal(areRequiredChecksGreen(BASE_REQUIRED_CHECKS), true);
+  assert.equal(
+    areRequiredChecksGreen([
+      ...BASE_REQUIRED_CHECKS,
+      { name: 'frontend-e2e-smoke', state: 'SUCCESS' },
+    ]),
+    true,
+  );
   assert.equal(
     areRequiredChecksGreen([
       { name: 'rails-test', state: 'SUCCESS' },
@@ -194,18 +204,7 @@ test('areRequiredChecksGreen requires ruleset contexts', () => {
   );
 });
 
-test('areRequiredChecksGreen treats absent frontend-e2e-smoke as green when path filter skipped', () => {
-  assert.equal(areRequiredChecksGreen(BASE_REQUIRED_CHECKS), true);
-});
-
-test('areRequiredChecksGreen requires frontend-e2e-smoke when workflow ran', () => {
-  assert.equal(
-    areRequiredChecksGreen([
-      ...BASE_REQUIRED_CHECKS,
-      { name: 'frontend-e2e-smoke', state: 'SUCCESS' },
-    ]),
-    true,
-  );
+test('areRequiredChecksGreen fails when frontend-e2e-smoke failed', () => {
   assert.equal(
     areRequiredChecksGreen([
       ...BASE_REQUIRED_CHECKS,
@@ -213,6 +212,10 @@ test('areRequiredChecksGreen requires frontend-e2e-smoke when workflow ran', () 
     ]),
     false,
   );
+});
+
+test('areRequiredChecksGreen passes when frontend-e2e-smoke absent (path filter)', () => {
+  assert.equal(areRequiredChecksGreen(BASE_REQUIRED_CHECKS), true);
 });
 
 test('areRequiredChecksComplete is false while any required check is pending', () => {
@@ -236,6 +239,17 @@ test('areRequiredChecksComplete is false while any required check is pending', (
   );
 });
 
+test('areRequiredChecksComplete ignores absent frontend-e2e-smoke', () => {
+  assert.equal(areRequiredChecksComplete(BASE_REQUIRED_CHECKS), true);
+  assert.equal(
+    areRequiredChecksComplete([
+      ...BASE_REQUIRED_CHECKS,
+      { name: 'frontend-e2e-smoke', state: 'IN_PROGRESS' },
+    ]),
+    false,
+  );
+});
+
 test('classifyRequiredCiState maps checks to incomplete, failed, or green', () => {
   assert.equal(
     classifyRequiredCiState([
@@ -255,13 +269,9 @@ test('classifyRequiredCiState maps checks to incomplete, failed, or green', () =
     ]),
     'failed',
   );
-  assert.equal(classifyRequiredCiState(BASE_REQUIRED_CHECKS), 'green');
   assert.equal(
-    classifyRequiredCiState([
-      ...BASE_REQUIRED_CHECKS,
-      { name: 'frontend-e2e-smoke', state: 'IN_PROGRESS' },
-    ]),
-    'incomplete',
+    classifyRequiredCiState(BASE_REQUIRED_CHECKS),
+    'green',
   );
   assert.equal(
     classifyRequiredCiState([

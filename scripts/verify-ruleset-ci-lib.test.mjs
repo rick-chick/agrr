@@ -7,7 +7,7 @@ import { verifyRulesetCiContract, verifyRulesetContexts } from './verify-ruleset
 
 const REPO_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 
-test('verifyRulesetContexts requires unconditional REQUIRED_CI_CONTEXTS only', () => {
+test('verifyRulesetContexts requires RULESET_CI_CONTEXTS (not path-filtered checks)', () => {
   const complete = verifyRulesetContexts([
     'rails-test',
     'frontend-test',
@@ -26,14 +26,14 @@ test('verifyRulesetContexts requires unconditional REQUIRED_CI_CONTEXTS only', (
   assert.deepEqual(incomplete.missing, ['lint / run-architecture-guard']);
 });
 
-test('verifyRulesetContexts does not require path-filtered frontend-e2e-smoke in ruleset', () => {
-  const withoutSmoke = verifyRulesetContexts([
+test('verifyRulesetContexts does not require frontend-e2e-smoke in ruleset', () => {
+  const withoutE2e = verifyRulesetContexts([
     'rails-test',
     'frontend-test',
     'lint / frontend-lint',
     'lint / run-architecture-guard',
   ]);
-  assert.equal(withoutSmoke.ok, true);
+  assert.equal(withoutE2e.ok, true);
 });
 
 test('verifyRulesetCiContract passes on production repo', async () => {
