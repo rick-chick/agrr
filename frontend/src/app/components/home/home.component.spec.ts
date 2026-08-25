@@ -1,8 +1,20 @@
+import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { HomeComponent } from './home.component';
+import { LOAD_HOME_DEMO_GANTT_SHELL } from './home-demo-gantt-shell.loader';
+
+@Component({
+  selector: 'app-plan-gantt-climate-shell',
+  standalone: true,
+  template: ''
+})
+class StubPlanGanttClimateShellComponent {
+  @Input() data: unknown;
+  @Input() planType: 'private' | 'public' | 'demo' = 'demo';
+}
 
 describe('HomeComponent', () => {
   let fixture: ComponentFixture<HomeComponent>;
@@ -11,7 +23,13 @@ describe('HomeComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HomeComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([])]
+      providers: [
+        provideRouter([]),
+        {
+          provide: LOAD_HOME_DEMO_GANTT_SHELL,
+          useValue: () => Promise.resolve(StubPlanGanttClimateShellComponent)
+        }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);

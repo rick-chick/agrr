@@ -17,7 +17,7 @@ describe('FarmCreatePresenter', () => {
     lastControl = null;
     view = {
       get control(): FarmCreateViewState {
-        return lastControl ?? { saving: false, error: null, pendingErrorFlash: null, formData: { name: '', region: '', latitude: 0, longitude: 0 } };
+        return lastControl ?? { saving: false, error: null, pendingErrorFlash: null, limitCheckLoading: false, limitBlocked: false, formData: { name: '', region: '', latitude: 0, longitude: 0 } };
       },
       set control(value: FarmCreateViewState) {
         lastControl = value;
@@ -28,7 +28,7 @@ describe('FarmCreatePresenter', () => {
 
   describe('CreateFarmOutputPort', () => {
     it('does not update view.control on onSuccess(dto)', () => {
-      const initialControl: FarmCreateViewState = { saving: true, error: null, formData: { name: 'New Farm', region: 'Region', latitude: 35.0, longitude: 135.0 }, pendingErrorFlash: null };
+      const initialControl: FarmCreateViewState = { saving: true, error: null, formData: { name: 'New Farm', region: 'Region', latitude: 35.0, longitude: 135.0 }, pendingErrorFlash: null, limitCheckLoading: false, limitBlocked: false };
       lastControl = initialControl;
 
       const dto: CreateFarmSuccessDto = {
@@ -49,7 +49,7 @@ describe('FarmCreatePresenter', () => {
     });
 
     it('queues pending error flash and updates view.control on onError(dto)', () => {
-      const initialControl: FarmCreateViewState = { saving: true, error: null, formData: { name: 'New Farm', region: 'Region', latitude: 35.0, longitude: 135.0 }, pendingErrorFlash: null };
+      const initialControl: FarmCreateViewState = { saving: true, error: null, formData: { name: 'New Farm', region: 'Region', latitude: 35.0, longitude: 135.0 }, pendingErrorFlash: null, limitCheckLoading: false, limitBlocked: false };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Validation error' };
