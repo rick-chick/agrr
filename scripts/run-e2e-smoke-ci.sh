@@ -5,13 +5,16 @@
 # Usage:
 #   scripts/run-e2e-smoke-ci.sh           # full run (route-smoke)
 #   scripts/run-e2e-smoke-ci.sh --dry-run # validate files only
+#
+# Cache dir defaults to tmp/ (writable without root-owned .docker/). Override:
+#   CACHE_DIR=/path/to/cache scripts/run-e2e-smoke-ci.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 COMPOSE_FILES=(-f docker-compose.yml -f docker-compose.e2e-ci.yml)
-CACHE_DIR="${ROOT}/.docker/e2e_dev_db_cache"
+CACHE_DIR="${CACHE_DIR:-${ROOT}/tmp/e2e_dev_db_cache}"
 STORAGE_DIR="${ROOT}/storage"
 DB_PATH="${STORAGE_DIR}/development.sqlite3"
 HEALTH_URL="http://127.0.0.1:3000/up"
