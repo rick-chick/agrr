@@ -435,6 +435,104 @@ mod tests {
     }
 
     #[test]
+    fn weather_prep_returns_false_when_chain_already_running_for_plan() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+        let guard = state
+            .plan_optimization_chain_locks
+            .try_acquire(1)
+            .expect("hold plan lock");
+
+        assert!(!enqueue_private_plan_weather_prep_chain(
+            1,
+            "PlansOptimizationChannel",
+            &state
+        ));
+
+        drop(guard);
+        assert!(enqueue_private_plan_weather_prep_chain(
+            1,
+            "PlansOptimizationChannel",
+            &state
+        ));
+    }
+
+    #[test]
+    fn weather_prep_returns_false_while_optimization_chain_is_enqueued() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+
+        assert!(enqueue_private_plan_optimization_chain(
+            1,
+            "PlansOptimizationChannel",
+            &state
+        ));
+        assert!(
+            !enqueue_private_plan_weather_prep_chain(1, "PlansOptimizationChannel", &state),
+            "weather prep must not start while optimization chain holds plan lock (#1111)"
+        );
+    }
+
+    #[test]
+    fn optimization_returns_false_while_weather_prep_chain_is_enqueued() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+
+        assert!(enqueue_private_plan_weather_prep_chain(
+            1,
+            "PlansOptimizationChannel",
+            &state
+        ));
+        assert!(
+            !enqueue_private_plan_optimization_chain(1, "PlansOptimizationChannel", &state),
+            "optimization must not start while weather prep chain holds plan lock (#1111)"
+        );
+    }
+
+    #[test]
+    fn releases_plan_lock_after_enqueued_chain_finishes() {
+        use crate::jobs::JobChainDispatcher;
+        use crate::plan_optimization_chain_locks::PlanOptimizationChainLocks;
+        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::sync::Arc;
+
+        let locks = PlanOptimizationChainLocks::new();
+        let dispatcher = JobChainDispatcher::new();
+        let chain_done = Arc::new(AtomicBool::new(false));
+        let chain_done_in = chain_done.clone();
+
+        let guard = locks.try_acquire(1).expect("acquire plan lock");
+        dispatcher.enqueue_chain_in_span_with_hold(
+            vec![JobStep {
+                name: "slow_hold_step",
+                run: Arc::new(move || {
+                    let chain_done = chain_done_in.clone();
+                    Box::pin(async move {
+                        tokio::time::sleep(Duration::from_millis(200)).await;
+                        chain_done.store(true, Ordering::SeqCst);
+                        true
+                    })
+                }),
+            }],
+            tracing::Span::current(),
+            guard,
+        );
+
+        assert!(
+            locks.try_acquire(1).is_none(),
+            "plan lock must stay held while optimization chain runs (#1111)"
+        );
+        assert!(
+            wait_until(Duration::from_secs(2), || chain_done.load(Ordering::SeqCst)),
+            "chain step must complete"
+        );
+        assert!(
+            wait_until(Duration::from_secs(2), || locks.try_acquire(1).is_some()),
+            "plan lock must be released after chain finishes (#1111)"
+        );
+    }
+
+    #[test]
     fn returns_true_when_plan_exists() {
         let db = test_pool_with_plan(1);
         let state = test_app_state(db.pool);
