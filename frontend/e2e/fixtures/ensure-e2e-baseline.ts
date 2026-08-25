@@ -2,10 +2,7 @@ import { request, type APIRequestContext } from '@playwright/test';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildSegmentPostBody } from './ensure-e2e-baseline-bodies.mjs';
-import {
-  pickFarmIdWhenBaselineCreateSkipped,
-  shouldSkipFarmBaselineCreate,
-} from './ensure-e2e-baseline-lib.mjs';
+import { resolveFarmIdWhenUserAtLimit } from './ensure-e2e-baseline-lib.mjs';
 import {
   E2E_BASELINE_PREFIX,
   findBaselineIdInList,
@@ -66,18 +63,15 @@ async function ensureMasterSegment(
   if (existing != null) return existing;
 
   if (config.segment === 'farms') {
-    const ownedCount = countUserOwnedFarms(rows);
-    if (shouldSkipFarmBaselineCreate(ownedCount)) {
-      const reused = pickFarmIdWhenBaselineCreateSkipped(rows, config.segment, {
-        findBaselineIdInList,
-        firstIdFromList,
-      });
-      if (reused != null) {
-        console.warn(
-          `[ensureE2eBaseline] skip farms POST: user farm limit reached (${ownedCount}); reusing farm id ${reused}`,
-        );
-        return reused;
-      }
+    const reused = resolveFarmIdWhenUserAtLimit(rows, config.segment, {
+      findBaselineIdInList,
+      firstIdFromList,
+    });
+    if (reused != null) {
+      console.warn(
+        `[ensureE2eBaseline] skip farms POST: user farm limit reached; reusing farm id ${reused}`,
+      );
+      return reused;
     }
   }
 
