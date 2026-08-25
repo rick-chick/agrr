@@ -8,6 +8,8 @@ export interface ApplyWeatherRescheduleProposalDataDto {
 
 export interface ApplyWeatherRescheduleProposalOutputPort {
   present(dto: ApplyWeatherRescheduleProposalDataDto): void;
+  /** Adjust persisted; dismiss proposal before reload so reload failure cannot double-apply. */
+  onApplied(): void;
   onError(dto: ErrorDto): void;
 }
 

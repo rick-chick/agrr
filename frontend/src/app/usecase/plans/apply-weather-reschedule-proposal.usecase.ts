@@ -33,6 +33,7 @@ export class ApplyWeatherRescheduleProposalUseCase
             });
             return;
           }
+          this.outputPort.onApplied();
           this.ganttGateway.loadPlanData(dto.planType, dto.planId).subscribe({
             next: (planData) => {
               if (!planData) {
