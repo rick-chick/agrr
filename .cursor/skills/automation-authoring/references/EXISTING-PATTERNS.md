@@ -30,6 +30,21 @@
 | `scripts/pr-merge-worker-retry-dispatch.mjs` | reconcile・webhook 再送 |
 | `.cursor/skills/github-pr-merge-worker/SKILL.md` | Agent 側 |
 
+## 必須 CI（`pr-agent-prep-lib.mjs`）
+
+正本: `scripts/pr-agent-prep-lib.mjs` の `REQUIRED_CI_CONTEXTS` / `RULESET_CI_CONTEXTS` / `REQUIRED_WHEN_PRESENT_CI_CONTEXTS`。
+
+| context | 層 | 備考 |
+|---------|-----|------|
+| `rails-test` | ruleset + agent prep | 常時必須 |
+| `frontend-test` | ruleset + agent prep | 常時必須 |
+| `lint / frontend-lint` | ruleset + agent prep | 常時必須 |
+| `lint / run-architecture-guard` | agent prep | ruleset 未登録（prep が厳格） |
+| `frontend-e2e-smoke` | agent prep | **required-when-present**（`frontend-e2e-smoke.yml` は path-filter 付き。PR に check が出たら SUCCESS 必須。未実行は OK） |
+
+- **ruleset**（`master CI required`）は常時実行チェックのみ。path-filter 付き workflow は ruleset に載せない（非 frontend PR がブロックされるため）。
+- `pr-agent-prep` / Merge Worker の `classifyRequiredCiState` は `REQUIRED_CI_CONTEXTS` を参照。`verify-ruleset-ci-lib.mjs` は `RULESET_CI_CONTEXTS` と workflow 契約を検証。
+
 ## 監視・監査
 
 | 読むファイル | 内容 |
