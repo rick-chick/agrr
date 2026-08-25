@@ -828,6 +828,9 @@
     },
     "new": {
       "title": "नया खेत जोड़ें",
+      "limit_reached": "आप अधिकतम 4 Farm बना सकते हैं",
+      "limit_reached_hint": "नया खेत जोड़ने से पहले खेत सूची से मौजूदा खेत हटाएं।",
+      "manage_farms_link": "खेत सूची पर जाएं",
       "form": {
         "name_label": "खेत का नाम",
         "name_placeholder": "उदाहरण: तनाका खेत",
@@ -2631,6 +2634,9 @@
       "no_farms": "कोई खेत उपलब्ध नहीं",
       "no_farms_hint": "कृपया पहले एक खेत बनाएं",
       "create_farm_link": "खेत बनाएं",
+      "farm_limit_reached": "आप अधिकतम 4 Farm बना सकते हैं",
+      "farm_limit_hint": "नया खेत जोड़ने से पहले मौजूदा खेत हटाएं या खेत सूची प्रबंधित करें।",
+      "manage_farms_link": "खेत प्रबंधित करें",
       "create_button": "बनाएं",
       "farm_option_with_fields": "{{name}} ({{count}} खेत क्षेत्र · {{area}} वर्ग मी)",
       "farm_option_no_fields": "{{name}} (कोई खेत क्षेत्र नहीं)",

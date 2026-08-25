@@ -23,6 +23,7 @@ function defaultControl(overrides: Partial<PlanNewViewState> = {}): PlanNewViewS
     readinessLoading: false,
     readiness: null,
     noFieldsWarning: false,
+    farmLimitBlocked: false,
     carryoverEnabled: false,
     sourcePlans: [],
     selectedSourcePlanId: null,
@@ -135,6 +136,9 @@ describe('PlanNewComponent', () => {
       'plans.new.readiness.weather_ready': 'Weather data ready',
       'plans.new.readiness.crops_missing': 'No crops registered yet',
       'plans.new.readiness.crops_action': 'Set up crops',
+      'plans.new.farm_limit_reached': 'Farm limit reached',
+      'plans.new.farm_limit_hint': 'Delete an existing farm before creating a new one.',
+      'plans.new.manage_farms_link': 'Manage farms',
       'common.loading': 'Loading...'
     });
     translate.setDefaultLang('en');
@@ -147,6 +151,20 @@ describe('PlanNewComponent', () => {
     expect(mockFarmsPresenter.setView).toHaveBeenCalledWith(component);
     expect(mockCreatePresenter.setView).toHaveBeenCalledWith(component);
     expect(mockLoadUseCase.execute).toHaveBeenCalled();
+  });
+
+  it('shows farm limit block instead of create-farm link when limit reached with no farms', () => {
+    fixture.detectChanges();
+    component.control = defaultControl({ farmLimitBlocked: true });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-new-empty')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Farm limit reached');
+    const manageLink = fixture.nativeElement.querySelector(
+      'a.btn.btn-primary'
+    ) as HTMLAnchorElement;
+    expect(manageLink?.getAttribute('href')).toBe('/farms');
+    expect(fixture.nativeElement.textContent).not.toContain('Create Farm');
   });
 
   it('should call createUseCase on submit when farm has valid fields', () => {

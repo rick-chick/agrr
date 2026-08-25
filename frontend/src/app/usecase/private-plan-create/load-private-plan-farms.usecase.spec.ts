@@ -13,7 +13,7 @@ describe('LoadPrivatePlanFarmsUseCase', () => {
 
     const gateway: PrivatePlanCreateGateway = {
       fetchFarms: () => of([]),
-      fetchFarmsForPlanCreate: () => of(farms),
+      fetchFarmsForPlanCreate: () => of({ farms, farmCreateLimitReached: false }),
       fetchFarm: () => of({} as any),
       fetchCrops: () => of([]),
       createPlan: () => of({} as any)

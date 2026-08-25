@@ -74,7 +74,8 @@ export class OnboardingComponent implements OnInit {
     this.planCreateGateway
       .fetchFarmsForPlanCreate()
       .pipe(
-        switchMap((farms) => {
+        switchMap((context) => {
+          const farms = context.farms;
           const primaryFarm = farms.find((farm) => farm.hasValidFields) ?? farms[0];
           if (primaryFarm == null) {
             return of({ farms, readiness: null });

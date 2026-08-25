@@ -3,6 +3,7 @@ import { LoadPrivatePlanFarmsOutputPort } from '../../usecase/private-plan-creat
 import { PlanNewView } from '../../components/plans/plan-new.view';
 import { PrivatePlanFarmsDataDto } from '../../usecase/private-plan-create/load-private-plan-farms.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { isFarmLimitExceededMessage } from '../../domain/farms/farm-create-limit';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class PlanNewPresenter implements LoadPrivatePlanFarmsOutputPort {
 
   present(dto: PrivatePlanFarmsDataDto): void {
     if (this.view) {
+      const farmLimitBlocked = dto.farms.length === 0 && dto.farmCreateLimitReached;
       this.view.control = {
         ...this.view.control,
         loading: false,
@@ -22,6 +24,7 @@ export class PlanNewPresenter implements LoadPrivatePlanFarmsOutputPort {
         farms: dto.farms,
         selectedFarmId: null,
         noFieldsWarning: false,
+        farmLimitBlocked,
         pendingErrorFlash: null
       };
     }
@@ -29,11 +32,14 @@ export class PlanNewPresenter implements LoadPrivatePlanFarmsOutputPort {
 
   onError(dto: ErrorDto): void {
     if (this.view) {
+      const farmLimitBlocked = isFarmLimitExceededMessage(dto.message);
       this.view.control = {
         ...this.view.control,
         loading: false,
         error: null,
-        pendingErrorFlash: pendingErrorFlashFromError(dto)
+        farms: [],
+        farmLimitBlocked,
+        pendingErrorFlash: farmLimitBlocked ? null : pendingErrorFlashFromError(dto)
       };
     }
   }

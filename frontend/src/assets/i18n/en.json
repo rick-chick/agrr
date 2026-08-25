@@ -2207,6 +2207,9 @@
       "no_farms": "No farms available",
       "no_farms_hint": "Please create a farm first",
       "create_farm_link": "Create Farm",
+      "farm_limit_reached": "You have reached the maximum number of farms (4).",
+      "farm_limit_hint": "Delete an existing farm or manage your farms before creating a new one.",
+      "manage_farms_link": "Manage farms",
       "create_button": "Create",
       "farm_option_with_fields": "{{name}} ({{count}} fields · {{area}} m²)",
       "farm_option_no_fields": "{{name}} (no fields)",
@@ -3407,6 +3410,9 @@
     },
     "new": {
       "title": "Add New Farm",
+      "limit_reached": "You have reached the maximum number of farms (4).",
+      "limit_reached_hint": "Delete an existing farm from the farm list before adding another.",
+      "manage_farms_link": "Go to farm list",
       "form": {
         "name_label": "Farm Name",
         "name_placeholder": "e.g., Tanaka Farm",

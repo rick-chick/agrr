@@ -14,6 +14,7 @@ const emptyPlanNewControl = (): PlanNewViewState => ({
   readinessLoading: false,
   readiness: null,
   noFieldsWarning: false,
+  farmLimitBlocked: false,
   carryoverEnabled: false,
   sourcePlans: [],
   selectedSourcePlanId: null,
@@ -59,7 +60,7 @@ describe('PlanNewPresenter', () => {
       { id: 2, name: 'Farm 2', fieldCount: 0, totalArea: 0, hasValidFields: false }
     ];
 
-    presenter.present({ farms });
+    presenter.present({ farms, farmCreateLimitReached: false });
 
     expect(lastControl).not.toBeNull();
     expect(lastControl!.loading).toBe(false);
@@ -67,6 +68,14 @@ describe('PlanNewPresenter', () => {
     expect(lastControl!.farms).toEqual(farms);
     expect(lastControl!.selectedFarmId).toBeNull();
     expect(lastControl!.noFieldsWarning).toBe(false);
+    expect(lastControl!.pendingErrorFlash).toBeNull();
+  });
+
+  it('blocks farm limit without pending error flash when farms are empty at limit', () => {
+    presenter.present({ farms: [], farmCreateLimitReached: true });
+
+    expect(lastControl).not.toBeNull();
+    expect(lastControl!.farmLimitBlocked).toBe(true);
     expect(lastControl!.pendingErrorFlash).toBeNull();
   });
 
@@ -83,5 +92,15 @@ describe('PlanNewPresenter', () => {
     expect(lastControl!.error).toBeNull();
     expect(lastControl!.farms).toEqual([]);
     expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Failed to load farms' });
+  });
+
+  it('blocks farm limit on load error without pending error flash', () => {
+    const initialControl: PlanNewViewState = emptyPlanNewControl();
+    lastControl = initialControl;
+
+    presenter.onError({ message: 'activerecord.errors.models.farm.attributes.user.farm_limit_exceeded' });
+
+    expect(lastControl!.farmLimitBlocked).toBe(true);
+    expect(lastControl!.pendingErrorFlash).toBeNull();
   });
 });

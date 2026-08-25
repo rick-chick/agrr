@@ -3,6 +3,7 @@ import { ErrorDto } from '../../domain/shared/error.dto';
 import { FarmCreateView } from '../../components/masters/farms/farm-create.view';
 import { CreateFarmOutputPort } from '../../usecase/farms/create-farm.output-port';
 import { CreateFarmSuccessDto } from '../../usecase/farms/create-farm.dtos';
+import { isFarmLimitExceededMessage } from '../../domain/farms/farm-create-limit';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
@@ -19,11 +20,13 @@ export class FarmCreatePresenter implements CreateFarmOutputPort {
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const limitBlocked = isFarmLimitExceededMessage(dto.message);
     this.view.control = {
       ...this.view.control,
       saving: false,
       error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      limitBlocked,
+      pendingErrorFlash: limitBlocked ? null : pendingErrorFlashFromError(dto)
     };
   }
 }
