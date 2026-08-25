@@ -56,6 +56,7 @@ export function applyResolvedUrl(pattern, url, ids) {
     if (pattern === 'plans/:id/task_schedule') return `/plans/${p}/task_schedule`;
     if (pattern === 'plans/:id/work') return `/plans/${p}/work`;
     if (pattern === 'plans/:id/work_records') return `/plans/${p}/work_records`;
+    if (pattern === 'plans/:id/learn') return `/plans/${p}/learn`;
     return url;
   }
 
