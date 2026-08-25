@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
@@ -67,6 +68,66 @@ describe('EntryScheduleDetailComponent', () => {
     });
     translate.setDefaultLang('en');
     translate.use('en');
+  });
+
+  it('renders a visible level-one heading for page title', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const heading = fixture.nativeElement.querySelector(
+      'h1.compact-header-title .title-text',
+    ) as HTMLElement;
+    expect(heading).toBeTruthy();
+    expect(heading.textContent?.trim()).toBe('Crop schedule');
+  });
+
+  it('renders level-one heading during server prerender snapshot', async () => {
+    await TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [EntryScheduleDetailComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        { provide: PLATFORM_ID, useValue: 'server' },
+        {
+          provide: AuthService,
+          useValue: { user: () => null },
+        },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: { get: vi.fn().mockReturnValue('1') },
+              queryParamMap: { get: vi.fn().mockReturnValue(null) },
+            },
+            paramMap: of({ get: () => '1' }),
+            queryParamMap: of({ get: () => null }),
+          },
+        },
+        {
+          provide: ENTRY_SCHEDULE_GATEWAY,
+          useValue: { getEntryScheduleCrop: vi.fn() },
+        },
+      ],
+    }).compileComponents();
+
+    const prerenderFixture = TestBed.createComponent(EntryScheduleDetailComponent);
+    const prerenderTranslate = TestBed.inject(TranslateService);
+    prerenderTranslate.setTranslation('ja', {
+      'entrySchedule.detailTitle': '作物別の作付け時期',
+      'entrySchedule.title': '作付け時期の目安',
+    });
+    prerenderTranslate.setDefaultLang('ja');
+    prerenderTranslate.use('ja');
+    prerenderFixture.detectChanges();
+    await prerenderFixture.whenStable();
+    prerenderFixture.detectChanges();
+
+    const heading = prerenderFixture.nativeElement.querySelector(
+      'h1.compact-header-title .title-text',
+    ) as HTMLElement;
+    expect(heading?.textContent?.trim()).toBe('作物別の作付け時期');
+    expect(TestBed.inject(ENTRY_SCHEDULE_GATEWAY).getEntryScheduleCrop).not.toHaveBeenCalled();
   });
 
   it('renders breadcrumb with list link and crop name instead of inline back link', async () => {
