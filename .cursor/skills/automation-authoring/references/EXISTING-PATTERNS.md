@@ -10,8 +10,7 @@
 |--------------|------|
 | `.github/workflows/issue-worker-dispatch.yml` | primary dispatch・ゲート・webhook |
 | `.github/workflows/issue-worker-retry-dispatch.yml` | cancelled / cron / closed retry |
-| `scripts/issue-worker-dispatch-lib.mjs` | ゲート・候補選定（pure） |
-| `scripts/issue-worker-dispatch-lib.mjs` | Issue Worker 構造ゲート・reconcile 選定（依存判断なし） |
+| `scripts/issue-worker-dispatch-lib.mjs` | ゲート・候補選定（pure）・Issue Worker 構造ゲート・reconcile 選定（依存判断なし） |
 | `scripts/issue-worker-retry-dispatch.mjs` | reconcile・`postWebhook` |
 | `scripts/verify-issue-worker-dispatch-workflow-lib.mjs` | workflow 契約 |
 | `.cursor/skills/github-issue-worker/SKILL.md` | Agent 側手順 |
@@ -29,6 +28,21 @@
 | `scripts/pr-merge-worker-retry-dispatch-lib.mjs` | 候補選定（重複抑止・構造除外のみ。webhook は同一形） |
 | `scripts/pr-merge-worker-retry-dispatch.mjs` | reconcile・webhook 再送 |
 | `.cursor/skills/github-pr-merge-worker/SKILL.md` | Agent 側 |
+
+## 必須 CI（`pr-agent-prep-lib.mjs`）
+
+正本: `scripts/pr-agent-prep-lib.mjs` の `REQUIRED_CI_CONTEXTS` / `RULESET_CI_CONTEXTS` / `REQUIRED_WHEN_PRESENT_CI_CONTEXTS`。
+
+| context | 層 | 備考 |
+|---------|-----|------|
+| `rails-test` | ruleset + agent prep | 常時必須 |
+| `frontend-test` | ruleset + agent prep | 常時必須 |
+| `lint / frontend-lint` | ruleset + agent prep | 常時必須 |
+| `lint / run-architecture-guard` | agent prep | `RULESET_CI_CONTEXTS` に含む（live ruleset が未登録の場合あり） |
+| `frontend-e2e-smoke` | agent prep | **required-when-present**（`frontend-e2e-smoke.yml` は path-filter 付き。PR に check が出たら SUCCESS 必須。未実行は OK） |
+
+- **ruleset**（`master CI required`）は常時実行チェックのみ。path-filter 付き workflow は ruleset に載せない（非 frontend PR がブロックされるため）。
+- `pr-agent-prep` / Merge Worker の `classifyRequiredCiState` は `REQUIRED_CI_CONTEXTS` を参照。`verify-ruleset-ci-lib.mjs` は `RULESET_CI_CONTEXTS` と workflow 契約を検証。
 
 ## 監視・監査
 
