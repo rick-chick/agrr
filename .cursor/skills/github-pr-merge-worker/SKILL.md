@@ -186,6 +186,12 @@ gh pr checks <N> --watch --interval 30   # 最大 45 分想定（Backend test �
 | `lint / frontend-lint` | Lint |
 | `lint / run-architecture-guard` | Lint |
 
+**追加（条件付き必須 — `pr-agent-prep-lib` の `CONDITIONAL_REQUIRED_CI_CONTEXTS`）**（check が PR に表示されているときは SUCCESS 必須。path filter で未実行の PR はブロックしない）:
+
+| context | workflow |
+|---------|----------|
+| `frontend-e2e-smoke` | Frontend E2E smoke |
+
 **追加（軟ゲート — ruleset 未登録）**（diff に `crates/**` が含まれ、check が PR に表示されているとき — Agent が pass を確認。ruleset だけではマージはブロックされない）:
 
 | context | workflow |

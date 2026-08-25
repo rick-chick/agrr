@@ -1,10 +1,19 @@
 /** @typedef {{ name: string }} PrLabel */
 
-export const REQUIRED_CI_CONTEXTS = [
+export const UNCONDITIONAL_REQUIRED_CI_CONTEXTS = [
   'rails-test',
   'frontend-test',
   'lint / frontend-lint',
   'lint / run-architecture-guard',
+];
+
+/** Path-filtered workflows: must pass when present on the PR; absent is OK. */
+export const CONDITIONAL_REQUIRED_CI_CONTEXTS = ['frontend-e2e-smoke'];
+
+/** All contexts evaluated by pr-agent-prep / merge worker required-CI helpers. */
+export const REQUIRED_CI_CONTEXTS = [
+  ...UNCONDITIONAL_REQUIRED_CI_CONTEXTS,
+  ...CONDITIONAL_REQUIRED_CI_CONTEXTS,
 ];
 
 /**
@@ -121,17 +130,36 @@ export function isNonFatalMarkReadyError(message) {
   );
 }
 
+const INCOMPLETE_CHECK_STATES = new Set(['PENDING', 'IN_PROGRESS', 'QUEUED', 'WAITING']);
+
+/**
+ * @param {Array<{ name: string; state: string }>} checks
+ * @param {string} context
+ */
+function findCheck(checks, context) {
+  return checks.find((check) => check.name === context);
+}
+
+/**
+ * @param {Array<{ name: string; state: string }>} checks
+ * @param {string} context
+ */
+function isConditionalRequiredContext(context) {
+  return CONDITIONAL_REQUIRED_CI_CONTEXTS.includes(context);
+}
+
 /**
  * @param {Array<{ name: string; state: string }>} checks
  */
 export function areRequiredChecksGreen(checks) {
   return REQUIRED_CI_CONTEXTS.every((context) => {
-    const match = checks.find((check) => check.name === context);
-    return match?.state === 'SUCCESS';
+    const match = findCheck(checks, context);
+    if (!match) {
+      return isConditionalRequiredContext(context);
+    }
+    return match.state === 'SUCCESS';
   });
 }
-
-const INCOMPLETE_CHECK_STATES = new Set(['PENDING', 'IN_PROGRESS', 'QUEUED', 'WAITING']);
 
 /**
  * True when every ruleset context has a finished (non-pending) result.
@@ -140,8 +168,11 @@ const INCOMPLETE_CHECK_STATES = new Set(['PENDING', 'IN_PROGRESS', 'QUEUED', 'WA
  */
 export function areRequiredChecksComplete(checks) {
   return REQUIRED_CI_CONTEXTS.every((context) => {
-    const match = checks.find((check) => check.name === context);
-    return match != null && !INCOMPLETE_CHECK_STATES.has(match.state);
+    const match = findCheck(checks, context);
+    if (!match) {
+      return isConditionalRequiredContext(context);
+    }
+    return !INCOMPLETE_CHECK_STATES.has(match.state);
   });
 }
 

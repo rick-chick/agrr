@@ -6,8 +6,10 @@ import {
   areRequiredChecksGreen,
   classifyRequiredCiState,
   canMarkReady,
+  CONDITIONAL_REQUIRED_CI_CONTEXTS,
   isEligibleAgentPr,
   isNonFatalMarkReadyError,
+  REQUIRED_CI_CONTEXTS,
   resolveGhToken,
   selectDraftPrNumberToReady,
   shouldReceiveAgentMergeLabel,
@@ -167,22 +169,47 @@ test('isNonFatalMarkReadyError matches GITHUB_TOKEN integration permission error
   assert.equal(isNonFatalMarkReadyError('unexpected gh failure'), false);
 });
 
+test('REQUIRED_CI_CONTEXTS includes path-filtered frontend-e2e-smoke', () => {
+  assert.ok(REQUIRED_CI_CONTEXTS.includes('frontend-e2e-smoke'));
+  assert.ok(CONDITIONAL_REQUIRED_CI_CONTEXTS.includes('frontend-e2e-smoke'));
+});
+
+const BASE_REQUIRED_CHECKS = [
+  { name: 'rails-test', state: 'SUCCESS' },
+  { name: 'frontend-test', state: 'SUCCESS' },
+  { name: 'lint / frontend-lint', state: 'SUCCESS' },
+  { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
+];
+
 test('areRequiredChecksGreen requires ruleset contexts', () => {
-  assert.equal(
-    areRequiredChecksGreen([
-      { name: 'rails-test', state: 'SUCCESS' },
-      { name: 'frontend-test', state: 'SUCCESS' },
-      { name: 'lint / frontend-lint', state: 'SUCCESS' },
-      { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
-    ]),
-    true,
-  );
+  assert.equal(areRequiredChecksGreen(BASE_REQUIRED_CHECKS), true);
   assert.equal(
     areRequiredChecksGreen([
       { name: 'rails-test', state: 'SUCCESS' },
       { name: 'frontend-test', state: 'PENDING' },
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
       { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
+    ]),
+    false,
+  );
+});
+
+test('areRequiredChecksGreen treats absent frontend-e2e-smoke as green when path filter skipped', () => {
+  assert.equal(areRequiredChecksGreen(BASE_REQUIRED_CHECKS), true);
+});
+
+test('areRequiredChecksGreen requires frontend-e2e-smoke when workflow ran', () => {
+  assert.equal(
+    areRequiredChecksGreen([
+      ...BASE_REQUIRED_CHECKS,
+      { name: 'frontend-e2e-smoke', state: 'SUCCESS' },
+    ]),
+    true,
+  );
+  assert.equal(
+    areRequiredChecksGreen([
+      ...BASE_REQUIRED_CHECKS,
+      { name: 'frontend-e2e-smoke', state: 'FAILURE' },
     ]),
     false,
   );
@@ -228,13 +255,19 @@ test('classifyRequiredCiState maps checks to incomplete, failed, or green', () =
     ]),
     'failed',
   );
+  assert.equal(classifyRequiredCiState(BASE_REQUIRED_CHECKS), 'green');
   assert.equal(
     classifyRequiredCiState([
-      { name: 'rails-test', state: 'SUCCESS' },
-      { name: 'frontend-test', state: 'SUCCESS' },
-      { name: 'lint / frontend-lint', state: 'SUCCESS' },
-      { name: 'lint / run-architecture-guard', state: 'SUCCESS' },
+      ...BASE_REQUIRED_CHECKS,
+      { name: 'frontend-e2e-smoke', state: 'IN_PROGRESS' },
     ]),
-    'green',
+    'incomplete',
+  );
+  assert.equal(
+    classifyRequiredCiState([
+      ...BASE_REQUIRED_CHECKS,
+      { name: 'frontend-e2e-smoke', state: 'FAILURE' },
+    ]),
+    'failed',
   );
 });

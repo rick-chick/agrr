@@ -1,7 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { REQUIRED_CI_CONTEXTS } from './pr-agent-prep-lib.mjs';
+import {
+  CONDITIONAL_REQUIRED_CI_CONTEXTS,
+  UNCONDITIONAL_REQUIRED_CI_CONTEXTS,
+} from './pr-agent-prep-lib.mjs';
 
 /**
  * @param {string[]} actualContexts
@@ -9,7 +12,7 @@ import { REQUIRED_CI_CONTEXTS } from './pr-agent-prep-lib.mjs';
  */
 export function verifyRulesetContexts(actualContexts) {
   const actual = new Set(actualContexts);
-  const missing = REQUIRED_CI_CONTEXTS.filter((context) => !actual.has(context));
+  const missing = UNCONDITIONAL_REQUIRED_CI_CONTEXTS.filter((context) => !actual.has(context));
   return { ok: missing.length === 0, missing };
 }
 
@@ -20,6 +23,7 @@ export function verifyRulesetContexts(actualContexts) {
 export async function verifyRulesetCiContract(repoRoot) {
   const errors = [];
   const lintWorkflowPath = join(repoRoot, '.github/workflows/lint.yml');
+  const e2eSmokeWorkflowPath = join(repoRoot, '.github/workflows/frontend-e2e-smoke.yml');
 
   let lintWorkflowText = '';
   try {
@@ -32,8 +36,21 @@ export async function verifyRulesetCiContract(repoRoot) {
     errors.push('lint.yml must define run-architecture-guard job');
   }
 
-  if (!REQUIRED_CI_CONTEXTS.includes('lint / run-architecture-guard')) {
-    errors.push('REQUIRED_CI_CONTEXTS must include lint / run-architecture-guard');
+  if (!UNCONDITIONAL_REQUIRED_CI_CONTEXTS.includes('lint / run-architecture-guard')) {
+    errors.push('UNCONDITIONAL_REQUIRED_CI_CONTEXTS must include lint / run-architecture-guard');
+  }
+
+  try {
+    const e2eSmokeWorkflowText = await readFile(e2eSmokeWorkflowPath, 'utf8');
+    if (!e2eSmokeWorkflowText.includes('frontend-e2e-smoke:')) {
+      errors.push('frontend-e2e-smoke.yml must define frontend-e2e-smoke job');
+    }
+  } catch {
+    errors.push(`missing workflow: ${e2eSmokeWorkflowPath}`);
+  }
+
+  if (!CONDITIONAL_REQUIRED_CI_CONTEXTS.includes('frontend-e2e-smoke')) {
+    errors.push('CONDITIONAL_REQUIRED_CI_CONTEXTS must include frontend-e2e-smoke');
   }
 
   return { ok: errors.length === 0, errors };
