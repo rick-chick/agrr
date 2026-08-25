@@ -10,8 +10,7 @@
 |--------------|------|
 | `.github/workflows/issue-worker-dispatch.yml` | primary dispatch・ゲート・webhook |
 | `.github/workflows/issue-worker-retry-dispatch.yml` | cancelled / cron / closed retry |
-| `scripts/issue-worker-dispatch-lib.mjs` | ゲート・候補選定（pure） |
-| `scripts/issue-worker-dispatch-lib.mjs` | Issue Worker 構造ゲート・reconcile 選定（依存判断なし） |
+| `scripts/issue-worker-dispatch-lib.mjs` | ゲート・候補選定（pure）・Issue Worker 構造ゲート・reconcile 選定（依存判断なし） |
 | `scripts/issue-worker-retry-dispatch.mjs` | reconcile・`postWebhook` |
 | `scripts/verify-issue-worker-dispatch-workflow-lib.mjs` | workflow 契約 |
 | `.cursor/skills/github-issue-worker/SKILL.md` | Agent 側手順 |
@@ -39,7 +38,7 @@
 | `rails-test` | ruleset + agent prep | 常時必須 |
 | `frontend-test` | ruleset + agent prep | 常時必須 |
 | `lint / frontend-lint` | ruleset + agent prep | 常時必須 |
-| `lint / run-architecture-guard` | agent prep | ruleset 未登録（prep が厳格） |
+| `lint / run-architecture-guard` | agent prep | `RULESET_CI_CONTEXTS` に含む（live ruleset が未登録の場合あり） |
 | `frontend-e2e-smoke` | agent prep | **required-when-present**（`frontend-e2e-smoke.yml` は path-filter 付き。PR に check が出たら SUCCESS 必須。未実行は OK） |
 
 - **ruleset**（`master CI required`）は常時実行チェックのみ。path-filter 付き workflow は ruleset に載せない（非 frontend PR がブロックされるため）。

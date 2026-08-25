@@ -475,8 +475,9 @@ gh pr edit <N> --remove-label agent-merge-in-progress
 | `rails-test` | Backend test |
 | `frontend-test` | Frontend test |
 | `lint / frontend-lint` | Lint |
-| `lint / run-architecture-guard` | Lint (architecture guard) |
-| `frontend-e2e-smoke` | Frontend E2E smoke（**agent prep のみ**。path-filter 付き — PR に表示されたとき SUCCESS 必須。ruleset 未登録） |
+| `lint / run-architecture-guard` | Lint (architecture guard) — live ruleset が未登録の場合あり |
+
+`frontend-e2e-smoke` は **ruleset 未登録**（path-filter 付き workflow）。agent prep の `REQUIRED_WHEN_PRESENT_CI_CONTEXTS` で PR に check が出たとき SUCCESS 必須。詳細は §2。
 
 `strict_required_status_checks_policy: true`（head が最新 `master` より進んでいること）。
 
