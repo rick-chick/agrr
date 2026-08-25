@@ -264,16 +264,6 @@ import { Farm } from '../../domain/farms/farm';
         font-size: 0.85rem;
         margin: 0.5rem 0 0;
       }
-      .phase-list,
-      .timeline-list {
-        margin-left: 1.25rem;
-      }
-      .empty-reason {
-        color: var(--color-text-muted);
-      }
-      .ml-2 {
-        margin-left: 0.5rem;
-      }
       .es-detail-cta-actions {
         display: flex;
         flex-wrap: wrap;

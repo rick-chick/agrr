@@ -35,7 +35,6 @@ function needsMasterLoadingSpinProbe(pattern: string): boolean {
   if (
     pattern === 'entry-schedule' ||
     pattern === 'entry-schedule/crop/:cropId' ||
-    /^entry-schedule\/crop\/\d+$/.test(pattern) ||
     pattern === 'plans/new'
   ) {
     return true;

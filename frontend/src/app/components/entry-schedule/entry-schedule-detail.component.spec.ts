@@ -236,8 +236,7 @@ describe('EntryScheduleDetailComponent', () => {
         title: 'Entry schedule',
         detailTitle: 'Crop schedule',
         ctaCropSetup: 'Improve crop master'
-      },
-      crops: { setup_proposal_import: { action: 'Setup proposal' } }
+      }
     });
     translate.use('en');
     fixture.detectChanges();
