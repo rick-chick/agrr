@@ -18,12 +18,14 @@ describe('FarmCreateComponent', () => {
   let presenter: { setView: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
   let auth: { user: ReturnType<typeof vi.fn>; loadCurrentUser: ReturnType<typeof vi.fn> };
+  let farmGateway: { list: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     useCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
     auth = { user: vi.fn(() => null), loadCurrentUser: vi.fn(() => of(null)) };
+    farmGateway = { list: vi.fn(() => of([])) };
 
     await TestBed.configureTestingModule({
       imports: [FarmCreateComponent, TranslateModule.forRoot()],
@@ -35,7 +37,7 @@ describe('FarmCreateComponent', () => {
             { provide: CreateFarmUseCase, useValue: useCase },
             { provide: FarmCreatePresenter, useValue: presenter },
             { provide: CREATE_FARM_OUTPUT_PORT, useExisting: FarmCreatePresenter },
-            { provide: FARM_GATEWAY, useValue: {} },
+            { provide: FARM_GATEWAY, useValue: farmGateway },
             { provide: AuthService, useValue: auth }
           ]
         }
@@ -54,6 +56,8 @@ describe('FarmCreateComponent', () => {
       saving: false,
       error: null,
       pendingErrorFlash: null,
+      limitCheckLoading: false,
+      limitBlocked: false,
       formData: {
         name: 'Test Farm',
         region: 'Test Region',
@@ -70,6 +74,8 @@ describe('FarmCreateComponent', () => {
       saving: false,
       error: null,
       pendingErrorFlash: null,
+      limitCheckLoading: false,
+      limitBlocked: false,
       formData: {
         name: 'Test Farm',
         region: 'Test Region',

@@ -17,9 +17,14 @@ export interface FarmPlanCreateOption {
   hasValidFields: boolean;
 }
 
+export interface PlanCreateFarmsContext {
+  farms: FarmPlanCreateOption[];
+  farmCreateLimitReached: boolean;
+}
+
 export interface PrivatePlanCreateGateway {
   fetchFarms(): Observable<Farm[]>;
-  fetchFarmsForPlanCreate(): Observable<FarmPlanCreateOption[]>;
+  fetchFarmsForPlanCreate(): Observable<PlanCreateFarmsContext>;
   fetchFarm(farmId: number): Observable<FarmWithTotalAreaDto>;
   fetchCrops(): Observable<Crop[]>;
   createPlan(dto: CreatePrivatePlanInputDto): Observable<CreatePrivatePlanResponseDto>;

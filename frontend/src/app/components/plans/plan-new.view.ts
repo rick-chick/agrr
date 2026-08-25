@@ -15,6 +15,7 @@ export interface PlanNewViewState {
   readinessLoading: boolean;
   readiness: PlanCreateReadiness | null;
   noFieldsWarning: boolean;
+  farmLimitBlocked: boolean;
   carryoverEnabled: boolean;
   sourcePlans: PlanSummary[];
   selectedSourcePlanId: number | null;

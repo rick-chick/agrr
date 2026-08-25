@@ -12,7 +12,11 @@ export class LoadPrivatePlanFarmsUseCase implements LoadPrivatePlanFarmsInputPor
 
   execute(): void {
     this.gateway.fetchFarmsForPlanCreate().subscribe({
-      next: (farms) => this.outputPort.present({ farms }),
+      next: (context) =>
+        this.outputPort.present({
+          farms: context.farms,
+          farmCreateLimitReached: context.farmCreateLimitReached
+        }),
       error: (err) => this.outputPort.onError({ message: err.message })
     });
   }

@@ -10,7 +10,8 @@ export type FarmCreateViewState = {
   saving: boolean;
   error: string | null;
   formData: FarmCreateFormData;
-
+  limitCheckLoading: boolean;
+  limitBlocked: boolean;
   pendingErrorFlash: PendingErrorFlashRequest | null;
 };
 

@@ -1059,6 +1059,9 @@
     },
     "new": {
       "title": "新しい農場を追加",
+      "limit_reached": "作成できるFarmは4件までです",
+      "limit_reached_hint": "新しい農場を追加するには、農場一覧で既存の農場を削除してください。",
+      "manage_farms_link": "農場一覧へ",
       "form": {
         "name_label": "農場名",
         "region_label": "地域",
@@ -2410,6 +2413,9 @@
       "no_farms": "農場がありません",
       "no_farms_hint": "まず農場を作成してください",
       "create_farm_link": "農場を作成する",
+      "farm_limit_reached": "作成できるFarmは4件までです",
+      "farm_limit_hint": "新しい農場を追加するには、既存の農場を削除するか農場一覧で整理してください。",
+      "manage_farms_link": "農場一覧へ",
       "create_button": "作成",
       "farm_option_with_fields": "{{name}}（圃場{{count}}・{{area}}㎡）",
       "farm_option_no_fields": "{{name}}（圃場未登録）",

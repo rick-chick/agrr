@@ -4,9 +4,14 @@ import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
 import { Crop } from '../../domain/crops/crop';
 import {
+  countUserOwnedFarms,
+  isFarmCreateLimitReached
+} from '../../domain/farms/farm-create-limit';
+import {
   FarmPlanCreateOption,
   PrivatePlanCreateGateway,
-  FarmWithTotalAreaDto
+  FarmWithTotalAreaDto,
+  PlanCreateFarmsContext
 } from '../../usecase/private-plan-create/private-plan-create-gateway';
 import { CreatePrivatePlanInputDto, CreatePrivatePlanResponseDto } from '../../usecase/private-plan-create/create-private-plan.dtos';
 
@@ -30,11 +35,12 @@ export class PrivatePlanCreateApiGateway implements PrivatePlanCreateGateway {
     return this.apiClient.get<Farm[]>('/api/v1/masters/farms');
   }
 
-  fetchFarmsForPlanCreate(): Observable<FarmPlanCreateOption[]> {
+  fetchFarmsForPlanCreate(): Observable<PlanCreateFarmsContext> {
     return this.fetchFarms().pipe(
       switchMap((farms) => {
+        const farmCreateLimitReached = isFarmCreateLimitReached(countUserOwnedFarms(farms));
         if (farms.length === 0) {
-          return of([]);
+          return of({ farms: [], farmCreateLimitReached });
         }
         return forkJoin(
           farms.map((farm) =>
@@ -51,7 +57,7 @@ export class PrivatePlanCreateApiGateway implements PrivatePlanCreateGateway {
               })
             )
           )
-        );
+        ).pipe(map((options) => ({ farms: options, farmCreateLimitReached })));
       })
     );
   }
