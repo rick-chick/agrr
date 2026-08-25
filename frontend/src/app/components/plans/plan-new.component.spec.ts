@@ -32,6 +32,7 @@ function defaultControl(overrides: Partial<PlanNewViewState> = {}): PlanNewViewS
     pendingErrorFlash: null,
     pendingSuccessFlash: null,
     pendingNavigation: null,
+    farmLimitBlocked: false,
     ...overrides
   };
 }
@@ -111,6 +112,10 @@ describe('PlanNewComponent', () => {
       'plans.new.plan_name_label': 'Plan name',
       'plans.new.plan_name_placeholder': 'e.g. Main plan',
       'plans.new.create_button': 'Create',
+      'plans.new.farm_limit_blocked': 'You have reached the maximum number of farms (4).',
+      'plans.new.farm_limit_blocked_hint':
+        'Manage your existing farms or register fields before creating a plan.',
+      'plans.new.manage_farms_link': 'Manage farms',
       'plans.new.carryover_enabled_label': 'Carry over previous plan learning data',
       'plans.new.carryover_hint': 'Apply variance learning from a completed plan.',
       'plans.new.carryover_source_label': 'Source plan',
@@ -341,6 +346,26 @@ describe('PlanNewComponent', () => {
     expect(farmRows).toHaveLength(2);
     expect(farmRows[0]?.textContent).toContain('Empty Farm');
     expect(farmRows[1]?.textContent).toContain('Another Empty');
+  });
+
+  it('shows farm limit blocked UI with manage farms link instead of create farm CTA', () => {
+    fixture.detectChanges();
+    component.control = defaultControl({
+      farms: [],
+      farmLimitBlocked: true
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-new-empty')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain(
+      'You have reached the maximum number of farms (4).'
+    );
+    const manageLink = fixture.nativeElement.querySelector(
+      'a.btn-primary'
+    ) as HTMLAnchorElement;
+    expect(manageLink?.getAttribute('href')).toBe('/farms');
+    expect(manageLink?.textContent?.trim()).toBe('Manage farms');
+    expect(fixture.nativeElement.textContent).not.toContain('Create Farm');
   });
 
   it('should not submit when selected farm has no valid fields', () => {

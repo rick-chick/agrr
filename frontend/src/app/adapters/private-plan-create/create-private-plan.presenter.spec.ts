@@ -21,7 +21,8 @@ const emptyPlanNewControl = (): PlanNewViewState => ({
   carryoverPreview: null,
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
-  pendingNavigation: null
+  pendingNavigation: null,
+  farmLimitBlocked: false
 });
 
 describe('CreatePrivatePlanPresenter', () => {

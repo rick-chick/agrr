@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ACTIVERECORD_FARM_LIMIT_EXCEEDED_KEY,
+  isFarmLimitExceededErrorMessage,
   resolveActiverecordApiErrorI18nKey
 } from './resolve-activerecord-api-error-i18n-key';
 
@@ -25,5 +26,11 @@ describe('resolveActiverecordApiErrorI18nKey', () => {
     expect(resolveActiverecordApiErrorI18nKey(ACTIVERECORD_FARM_LIMIT_EXCEEDED_KEY)).toBe(
       ACTIVERECORD_FARM_LIMIT_EXCEEDED_KEY
     );
+  });
+
+  it('detects farm limit exceeded messages', () => {
+    expect(isFarmLimitExceededErrorMessage('作成できるFarmは4件までです')).toBe(true);
+    expect(isFarmLimitExceededErrorMessage(ACTIVERECORD_FARM_LIMIT_EXCEEDED_KEY)).toBe(true);
+    expect(isFarmLimitExceededErrorMessage('Validation failed')).toBe(false);
   });
 });

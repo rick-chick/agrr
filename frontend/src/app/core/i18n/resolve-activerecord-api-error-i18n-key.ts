@@ -13,3 +13,8 @@ export function resolveActiverecordApiErrorI18nKey(message: string): string {
   const trimmed = message.trim();
   return ACTIVERECORD_ERROR_LITERAL_TO_KEY[trimmed] ?? trimmed;
 }
+
+export function isFarmLimitExceededErrorMessage(message: string): boolean {
+  const normalized = resolveActiverecordApiErrorI18nKey(message);
+  return normalized === ACTIVERECORD_FARM_LIMIT_EXCEEDED_KEY;
+}

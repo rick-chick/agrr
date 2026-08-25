@@ -3,7 +3,7 @@ import { LoadPrivatePlanFarmsOutputPort } from '../../usecase/private-plan-creat
 import { PlanNewView } from '../../components/plans/plan-new.view';
 import { PrivatePlanFarmsDataDto } from '../../usecase/private-plan-create/load-private-plan-farms.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import { isFarmLimitExceededErrorMessage } from '../../core/i18n/resolve-activerecord-api-error-i18n-key';
 
 @Injectable()
 export class PlanNewPresenter implements LoadPrivatePlanFarmsOutputPort {
@@ -22,18 +22,21 @@ export class PlanNewPresenter implements LoadPrivatePlanFarmsOutputPort {
         farms: dto.farms,
         selectedFarmId: null,
         noFieldsWarning: false,
-        pendingErrorFlash: null
+        pendingErrorFlash: null,
+        farmLimitBlocked: false
       };
     }
   }
 
   onError(dto: ErrorDto): void {
     if (this.view) {
+      const farmLimitBlocked = isFarmLimitExceededErrorMessage(dto.message);
       this.view.control = {
         ...this.view.control,
         loading: false,
-        error: null,
-        pendingErrorFlash: pendingErrorFlashFromError(dto)
+        error: farmLimitBlocked ? null : dto.message,
+        farmLimitBlocked,
+        pendingErrorFlash: null
       };
     }
   }

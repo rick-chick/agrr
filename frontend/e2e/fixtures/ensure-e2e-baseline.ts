@@ -3,6 +3,10 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildSegmentPostBody } from './ensure-e2e-baseline-bodies.mjs';
 import {
+  resolveFarmBaselineIdFromList,
+  shouldSkipFarmBaselinePost,
+} from './ensure-e2e-baseline-lib.mjs';
+import {
   E2E_BASELINE_PREFIX,
   findBaselineIdInList,
   firstIdFromList,
@@ -60,6 +64,16 @@ async function ensureMasterSegment(
   const rows = await parseList(await api.get(listUrl));
   const existing = findBaselineIdInList(rows, config.segment);
   if (existing != null) return existing;
+
+  if (config.segment === 'farms' && shouldSkipFarmBaselinePost(rows)) {
+    const reused = resolveFarmBaselineIdFromList(rows);
+    if (reused != null) {
+      console.warn(
+        `[ensureE2eBaseline] skip farms POST: user farm limit reached; reusing farm id ${reused}`,
+      );
+      return reused;
+    }
+  }
 
   const postBody = buildSegmentPostBody(config.segment, ctx);
   if (config.segment === 'pesticides' && (ctx.cropId == null || ctx.pestId == null)) {

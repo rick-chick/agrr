@@ -40,7 +40,8 @@ const initialControl: PlanNewViewState = {
   carryoverPreview: null,
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
-  pendingNavigation: null
+  pendingNavigation: null,
+  farmLimitBlocked: false
 };
 
 @Component({
@@ -68,6 +69,12 @@ const initialControl: PlanNewViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
           <p class="plan-new-error">{{ control.error }}</p>
+        } @else if (control.farmLimitBlocked) {
+          <div class="plan-new-empty">
+            <p>{{ 'plans.new.farm_limit_blocked' | translate }}</p>
+            <p class="plan-new-empty-hint">{{ 'plans.new.farm_limit_blocked_hint' | translate }}</p>
+            <a routerLink="/farms" class="btn btn-primary">{{ 'plans.new.manage_farms_link' | translate }}</a>
+          </div>
         } @else if (control.farms.length === 0) {
           <div class="plan-new-empty">
             <p>{{ 'plans.new.no_farms' | translate }}</p>

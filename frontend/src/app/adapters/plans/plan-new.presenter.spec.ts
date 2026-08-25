@@ -4,6 +4,7 @@ import { PlanNewPresenter } from './plan-new.presenter';
 import { PlanNewView, PlanNewViewState } from '../../components/plans/plan-new.view';
 import { FarmPlanCreateOption } from '../../usecase/private-plan-create/private-plan-create-gateway';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { ACTIVERECORD_FARM_LIMIT_EXCEEDED_KEY } from '../../core/i18n/resolve-activerecord-api-error-i18n-key';
 
 const emptyPlanNewControl = (): PlanNewViewState => ({
   loading: true,
@@ -22,7 +23,8 @@ const emptyPlanNewControl = (): PlanNewViewState => ({
   carryoverPreview: null,
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
-  pendingNavigation: null
+  pendingNavigation: null,
+  farmLimitBlocked: false
 });
 
 describe('PlanNewPresenter', () => {
@@ -68,6 +70,7 @@ describe('PlanNewPresenter', () => {
     expect(lastControl!.selectedFarmId).toBeNull();
     expect(lastControl!.noFieldsWarning).toBe(false);
     expect(lastControl!.pendingErrorFlash).toBeNull();
+    expect(lastControl!.farmLimitBlocked).toBe(false);
   });
 
   it('queues pending error flash and updates view.control on onError(dto)', () => {
@@ -80,8 +83,21 @@ describe('PlanNewPresenter', () => {
 
     expect(lastControl).not.toBeNull();
     expect(lastControl!.loading).toBe(false);
-    expect(lastControl!.error).toBeNull();
+    expect(lastControl!.error).toBe('Failed to load farms');
     expect(lastControl!.farms).toEqual([]);
-    expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Failed to load farms' });
+    expect(lastControl!.pendingErrorFlash).toBeNull();
+    expect(lastControl!.farmLimitBlocked).toBe(false);
+  });
+
+  it('sets farmLimitBlocked without flash when farm limit error is returned', () => {
+    const initialControl: PlanNewViewState = emptyPlanNewControl();
+    lastControl = initialControl;
+
+    presenter.onError({ message: ACTIVERECORD_FARM_LIMIT_EXCEEDED_KEY });
+
+    expect(lastControl!.loading).toBe(false);
+    expect(lastControl!.error).toBeNull();
+    expect(lastControl!.farmLimitBlocked).toBe(true);
+    expect(lastControl!.pendingErrorFlash).toBeNull();
   });
 });

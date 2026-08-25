@@ -24,6 +24,7 @@ export interface PlanNewViewState {
   pendingErrorFlash: PendingErrorFlashRequest | null;
   pendingSuccessFlash: PendingSuccessFlashRequest | null;
   pendingNavigation: PendingNavigationRequest | null;
+  farmLimitBlocked: boolean;
 }
 
 export interface PlanNewView {
