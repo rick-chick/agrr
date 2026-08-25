@@ -34,7 +34,7 @@ import { Farm } from '../../domain/farms/farm';
         <div class="compact-header-card">
           <h1 class="compact-header-title">
             <span class="title-icon" aria-hidden="true">🌱</span>
-            <span class="title-text">{{ 'entrySchedule.detailTitle' | translate }}</span>
+            <span class="title-text">{{ pageHeading() }}</span>
           </h1>
         </div>
 
@@ -61,8 +61,8 @@ import { Farm } from '../../domain/farms/farm';
             }
           </section>
 
-          <section class="content-card mt-4" aria-labelledby="crop-name-heading">
-            <h2 id="crop-name-heading" class="es-detail-hero">{{ data()!.crop.name }}</h2>
+          <section class="content-card mt-4">
+            <p class="es-detail-hero">{{ data()!.crop.name }}</p>
             <p class="reason-summary">{{ data()!.crop.reason_summary }}</p>
             <details class="trust-expand mt-2">
               <summary>{{ 'entrySchedule.whyTitle' | translate }}</summary>
@@ -306,6 +306,14 @@ export class EntryScheduleDetailComponent implements OnInit {
       { labelKey: 'entrySchedule.title', routerLink: ['/entry-schedule'] },
       cropName ? { label: cropName } : { labelKey: 'entrySchedule.detailTitle' }
     ];
+  }
+
+  pageHeading(): string {
+    const cropName = this.data()?.crop.name;
+    if (cropName) {
+      return cropName;
+    }
+    return this.translate.instant('entrySchedule.detailTitle');
   }
 
   ngOnInit(): void {

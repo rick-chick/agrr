@@ -69,6 +69,17 @@ describe('EntryScheduleDetailComponent', () => {
     translate.use('en');
   });
 
+  it('renders crop name as the single page h1 when data is loaded', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const headings = fixture.nativeElement.querySelectorAll('h1');
+    expect(headings.length).toBe(1);
+    expect(headings[0].textContent?.trim()).toContain('Tomato');
+    expect(fixture.nativeElement.querySelector('h2#crop-name-heading')).toBeNull();
+  });
+
   it('renders breadcrumb with list link and crop name instead of inline back link', async () => {
     fixture.detectChanges();
     await fixture.whenStable();

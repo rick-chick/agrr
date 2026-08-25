@@ -111,6 +111,34 @@ test.describe('waitForPageStable spin probe', () => {
   });
 });
 
+const entryScheduleCropRoute: RouteRow = {
+  pattern: 'entry-schedule/crop/1',
+  url: '/entry-schedule/crop/1',
+  requiresAuth: false,
+  source: 'test',
+};
+
+test.describe('waitForPageStable entry-schedule crop prerender paths', () => {
+  test('waits for lazy-loaded detail host on literal crop path', async ({ page }) => {
+    await page.setContent(`<div id="root"></div>`);
+
+    await page.evaluate(() => {
+      setTimeout(() => {
+        const root = document.getElementById('root');
+        if (!root) return;
+        root.innerHTML = `
+          <app-entry-schedule-detail>
+            <h1 class="compact-header-title"><span class="title-text">トマト</span></h1>
+          </app-entry-schedule-detail>
+        `;
+      }, 300);
+    });
+
+    await waitForPageStable(page, entryScheduleCropRoute);
+    await expect(page.locator('app-entry-schedule-detail h1')).toBeVisible();
+  });
+});
+
 test.describe('waitForPageStable public-plans/select-crop', () => {
   test('resolves when step2 grid is empty (no crop-item)', async ({ page }) => {
     await page.setContent(`
