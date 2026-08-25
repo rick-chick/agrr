@@ -7,6 +7,7 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
   'agrr-server',
   'e2e_dev_db_cache',
   'lfs: false',
+  'CACHE_DIR',
 ];
 
 const REQUIRED_SCRIPT_SNIPPETS = [
@@ -18,6 +19,8 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'playwright install',
   'load-reference-data-container.sh',
   'mkdir -p lib/core',
+  'CACHE_DIR="${CACHE_DIR:-',
+  'tmp/e2e_dev_db_cache',
 ];
 
 const REQUIRED_README_SNIPPETS = [
