@@ -8,7 +8,6 @@ import {
   isFarmCreateLimitReached
 } from '../../domain/farms/farm-create-limit';
 import {
-  FarmPlanCreateOption,
   PrivatePlanCreateGateway,
   FarmWithTotalAreaDto,
   PlanCreateFarmsContext
