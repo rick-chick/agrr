@@ -20,6 +20,7 @@ test('applyResolvedUrl resolves all private plan sub-routes from baseline plan i
     ['plans/:id/task_schedule', '/plans/1/task_schedule', '/plans/12345/task_schedule'],
     ['plans/:id/work', '/plans/1/work', '/plans/12345/work'],
     ['plans/:id/work_records', '/plans/1/work_records', '/plans/12345/work_records'],
+    ['plans/:id/learn', '/plans/1/learn', '/plans/12345/learn'],
   ];
   for (const [pattern, url, expected] of cases) {
     assert.equal(applyResolvedUrl(pattern, url, baseIds), expected, pattern);
