@@ -210,6 +210,57 @@ fn schema_run_includes_v16_organizations_tables_and_tier1_organization_id() {
 }
 
 #[test]
+fn schema_run_replaces_global_fertilize_name_unique_with_per_user_index() {
+    let dir = tempdir().unwrap();
+    let primary = dir.path().join("primary.sqlite3");
+    let cache = dir.path().join("cache.sqlite3");
+    let paths = DbPaths {
+        app_root: std::env::current_dir()
+            .unwrap()
+            .ancestors()
+            .find(|p| p.join("Cargo.toml").exists())
+            .unwrap()
+            .to_path_buf(),
+        primary: primary.clone(),
+        cache: cache.clone(),
+    };
+    schema::run(&paths).expect("schema run");
+
+    let conn = Connection::open(&primary).unwrap();
+
+    let global_unique: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master
+             WHERE type = 'index' AND name = 'index_fertilizes_on_name'
+               AND sql LIKE '%UNIQUE%'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(
+        0, global_unique,
+        "global UNIQUE on fertilizes.name must be removed (issue #1114)"
+    );
+
+    let per_user_unique: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'index_fertilizes_on_user_id_and_name'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(
+        1, per_user_unique,
+        "per-user fertilize name uniqueness index should exist"
+    );
+
+    assert!(
+        schema::embedded_primary_latest_version() >= 24,
+        "embedded primary schema should be at least v24"
+    );
+}
+
+#[test]
 fn schema_run_on_empty_primary_and_cache() {
     let dir = tempdir().unwrap();
     let primary = dir.path().join("primary.sqlite3");

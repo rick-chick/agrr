@@ -7,7 +7,7 @@ use crate::soft_delete::{schedule_soft_delete_json, SoftDeleteJsonOutcome};
 use agrr_domain::fertilize::entities::{FertilizeEntity, FertilizeEntityAttrs};
 use agrr_domain::fertilize::gateways::{FertilizeGateway, SoftDeleteWithUndoOutcome};
 use agrr_domain::shared::attr::AttrMap;
-use agrr_domain::shared::exceptions::RecordNotFoundError;
+use agrr_domain::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use agrr_domain::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use agrr_domain::shared::user::User;
 use agrr_domain::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter;
@@ -20,6 +20,23 @@ pub struct FertilizeSqliteGateway {
 impl FertilizeSqliteGateway {
     pub fn new(pool: SqlitePool) -> Self {
         Self { pool }
+    }
+
+    fn map_fertilize_sqlite_boxed_err(
+        err: Box<dyn std::error::Error + Send + Sync>,
+    ) -> Box<dyn std::error::Error + Send + Sync> {
+        if let Some(sqlite_err) = err.downcast_ref::<rusqlite::Error>() {
+            if let rusqlite::Error::SqliteFailure(code, msg) = sqlite_err {
+                if code.code == rusqlite::ErrorCode::ConstraintViolation {
+                    let message = msg
+                        .as_deref()
+                        .unwrap_or("name has already been taken")
+                        .to_string();
+                    return Box::new(RecordInvalidError::new(Some(message), None));
+                }
+            }
+        }
+        err
     }
 
     fn row_to_entity(row: &rusqlite::Row<'_>) -> rusqlite::Result<FertilizeEntity> {
@@ -91,30 +108,32 @@ impl FertilizeGateway for FertilizeSqliteGateway {
         let name = require_str(&attrs, "name")?;
         let is_reference = attr_bool(&attrs, "is_reference").unwrap_or(false);
         let user_id = if is_reference { None } else { Some(user.id) };
-        self.pool.with_write_box(|conn| {
-            conn.execute(
-                "INSERT INTO fertilizes (name, n, p, k, description, package_size, is_reference, user_id, region, created_at, updated_at) \
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, datetime('now'), datetime('now'))",
-                params![
-                    name,
-                    attr_f64(&attrs, "n"),
-                    attr_f64(&attrs, "p"),
-                    attr_f64(&attrs, "k"),
-                    attr_str(&attrs, "description"),
-                    attr_f64(&attrs, "package_size"),
-                    if is_reference { 1 } else { 0 },
-                    user_id,
-                    attr_str(&attrs, "region"),
-                ],
-            )?;
-            let id = conn.last_insert_rowid();
-            conn.query_row(
-                "SELECT id, user_id, name, n, p, k, description, package_size, is_reference, region, created_at, updated_at \
-                 FROM fertilizes WHERE id = ?1",
-                params![id],
-                Self::row_to_entity,
-            )
-        })
+        self.pool
+            .with_write_box(|conn| {
+                conn.execute(
+                    "INSERT INTO fertilizes (name, n, p, k, description, package_size, is_reference, user_id, region, created_at, updated_at) \
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, datetime('now'), datetime('now'))",
+                    params![
+                        name,
+                        attr_f64(&attrs, "n"),
+                        attr_f64(&attrs, "p"),
+                        attr_f64(&attrs, "k"),
+                        attr_str(&attrs, "description"),
+                        attr_f64(&attrs, "package_size"),
+                        if is_reference { 1 } else { 0 },
+                        user_id,
+                        attr_str(&attrs, "region"),
+                    ],
+                )?;
+                let id = conn.last_insert_rowid();
+                conn.query_row(
+                    "SELECT id, user_id, name, n, p, k, description, package_size, is_reference, region, created_at, updated_at \
+                     FROM fertilizes WHERE id = ?1",
+                    params![id],
+                    Self::row_to_entity,
+                )
+            })
+            .map_err(Self::map_fertilize_sqlite_boxed_err)
     }
 
     fn update_for_user(
@@ -201,6 +220,27 @@ impl FertilizeGateway for FertilizeSqliteGateway {
                 "SELECT id, user_id, name, n, p, k, description, package_size, is_reference, region, created_at, updated_at \
                  FROM fertilizes WHERE name = ?1 AND is_reference = 0 AND user_id = ?2",
                 params![name, user_id],
+                Self::row_to_entity,
+            )
+        }) {
+            Ok(e) => Ok(Some(e)),
+            Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => Ok(None),
+            Err(err) => Err(err),
+        }
+    }
+
+    fn find_by_global_name(
+        &self,
+        name: &str,
+    ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        if name.is_empty() {
+            return Ok(None);
+        }
+        match self.pool.with_read_box(|conn| {
+            conn.query_row(
+                "SELECT id, user_id, name, n, p, k, description, package_size, is_reference, region, created_at, updated_at \
+                 FROM fertilizes WHERE name = ?1 LIMIT 1",
+                params![name],
                 Self::row_to_entity,
             )
         }) {

@@ -335,7 +335,7 @@ pub fn seed_masters_crop_with_manual_blueprint(user_id: i64) -> MastersCropBluep
 
 static SEED_SEQ: AtomicU64 = AtomicU64::new(0);
 
-fn seed_suffix() -> String {
+pub fn seed_suffix() -> String {
     let seq = SEED_SEQ.fetch_add(1, Ordering::Relaxed);
     format!(
         "{}_{}_{}",

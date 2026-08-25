@@ -85,7 +85,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -139,7 +139,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -281,7 +281,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -355,7 +355,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -434,7 +434,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -505,7 +505,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -590,4 +590,171 @@
             }
             other => panic!("expected failure, got {other:?}"),
         }
+    }
+
+    struct IdempotentGateway {
+        existing: FertilizeEntity,
+    }
+
+    impl FertilizeGateway for IdempotentGateway {
+        fn find_by_id(
+            &self,
+            _: i64,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn list_index_for_filter(
+            &self,
+            _: &crate::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter,
+        ) -> Result<Vec<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn create_for_user(
+            &self,
+            _: &User,
+            _: AttrMap,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            panic!("create_for_user must not be called when user-owned name already exists")
+        }
+
+        fn update_for_user(
+            &self,
+            _: &User,
+            _: i64,
+            _: AttrMap,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn soft_delete_with_undo(
+            &self,
+            _: &User,
+            _: i64,
+            _: i64,
+            _: &dyn TranslatorPort,
+        ) -> Result<
+            crate::fertilize::gateways::SoftDeleteWithUndoOutcome,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+
+        fn find_by_name(
+            &self,
+            _: i64,
+            _: &str,
+        ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(Some(self.existing.clone()))
+        }
+    }
+
+    // Returns existing row when same user already owns the name (idempotent create for E2E baseline).
+    #[test]
+    fn returns_existing_when_user_owned_name_already_exists() {
+        let existing = sample_entity();
+        let gateway = IdempotentGateway {
+            existing: existing.clone(),
+        };
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let lookup = StubLookup(User::new(1, true));
+        let mut interactor = FertilizeCreateInteractor::new(
+            &mut output,
+            1,
+            &gateway,
+            &StubTranslator,
+            &lookup,
+        );
+        interactor
+            .call(FertilizeCreateInput::new("Test"))
+            .expect("handled");
+        assert_eq!(output.success.as_ref().and_then(|e| e.id), existing.id);
+        assert!(output.failure.is_none());
+    }
+
+    struct OtherUserNameGateway {
+        created: FertilizeEntity,
+    }
+
+    impl FertilizeGateway for OtherUserNameGateway {
+        fn find_by_id(
+            &self,
+            _: i64,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn list_index_for_filter(
+            &self,
+            _: &crate::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter,
+        ) -> Result<Vec<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn create_for_user(
+            &self,
+            _: &User,
+            _: AttrMap,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self.created.clone())
+        }
+
+        fn update_for_user(
+            &self,
+            _: &User,
+            _: i64,
+            _: AttrMap,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn soft_delete_with_undo(
+            &self,
+            _: &User,
+            _: i64,
+            _: i64,
+            _: &dyn TranslatorPort,
+        ) -> Result<
+            crate::fertilize::gateways::SoftDeleteWithUndoOutcome,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+
+        fn find_by_name(
+            &self,
+            _: i64,
+            _: &str,
+        ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(None)
+        }
+    }
+
+    #[test]
+    fn creates_when_same_name_owned_by_another_user() {
+        let created = sample_entity();
+        let gateway = OtherUserNameGateway {
+            created: created.clone(),
+        };
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let lookup = StubLookup(User::new(1, false));
+        let mut interactor = FertilizeCreateInteractor::new(
+            &mut output,
+            1,
+            &gateway,
+            &StubTranslator,
+            &lookup,
+        );
+        interactor
+            .call(FertilizeCreateInput::new("Taken"))
+            .expect("handled");
+        assert_eq!(output.success.as_ref().and_then(|e| e.id), created.id);
+        assert!(output.failure.is_none());
     }

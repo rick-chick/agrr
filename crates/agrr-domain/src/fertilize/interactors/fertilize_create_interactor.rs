@@ -134,13 +134,40 @@ where
             return Ok(());
         }
 
+        if let Some(existing) = self.gateway.find_by_name(self.user_id, &input.name)? {
+            self.output_port.on_success(existing);
+            return Ok(());
+        }
+
         match self.gateway.create_for_user(&user, attrs) {
             Ok(entity) => {
                 self.output_port.on_success(entity);
                 Ok(())
             }
-            Err(err) => Self::handle_gateway_error(&mut self.output_port, err),
+            Err(err) => {
+                if Self::is_name_uniqueness_violation(&err) {
+                    if let Some(existing) = self.gateway.find_by_name(self.user_id, &input.name)? {
+                        self.output_port.on_success(existing);
+                        return Ok(());
+                    }
+                }
+                Self::handle_gateway_error(&mut self.output_port, err)
+            }
         }
+    }
+
+    fn is_name_uniqueness_violation(err: &Box<dyn std::error::Error + Send + Sync>) -> bool {
+        if let Some(record_invalid) = err.downcast_ref::<RecordInvalidError>() {
+            let message = record_invalid
+                .detail_message()
+                .map(|m| m.to_string())
+                .unwrap_or_else(|| record_invalid.to_string());
+            let lower = message.to_lowercase();
+            return lower.contains("unique")
+                || lower.contains("index_fertilizes_on_name")
+                || lower.contains("index_fertilizes_on_user_id_and_name");
+        }
+        false
     }
 
     fn handle_gateway_error(

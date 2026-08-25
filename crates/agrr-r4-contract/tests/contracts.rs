@@ -20,6 +20,7 @@ use support::{
     seed_weather_reschedule_frost_forecast_plan,
     seed_work_record_plan, set_plan_task_schedule_sync_failed,
     insert_contract_fertilize, insert_contract_pesticide,
+    seed_suffix,
     set_plan_task_schedule_sync_failed_raw_error, set_user_api_key_scopes, status_and_body,
     upload_ready_work_record_photo, user_id_for_session,
     seed_farm_temperature_chart_completed, seed_farm_temperature_chart_fetching,
@@ -2745,6 +2746,42 @@ fn post_crops_ai_create_returns_deprecation_metadata() {
     let (status, body) = status_and_body(response);
     assert_ne!(200, status, "empty crop name must not succeed: {body}");
     assert_builtin_generation_deprecated_headers(&headers, &body, "setup_proposal");
+}
+
+#[test]
+fn post_masters_fertilizes_allows_same_name_for_different_users() {
+    let client = ContractClient::from_env();
+    let farmer = farmer_session_id(&client);
+    let researcher = researcher_session_id(&client);
+    let shared_name = format!("E2E Baseline Fertilize {}", seed_suffix());
+    let body = serde_json::json!({
+        "fertilize": {
+            "name": shared_name,
+            "n": 10,
+            "p": 5,
+            "k": 5,
+            "package_size": 25
+        }
+    });
+
+    let (farmer_status, farmer_body) = status_and_body(client.post(
+        "/api/v1/masters/fertilizes",
+        Some(&farmer),
+        &empty_headers(),
+        Some(body.clone()),
+    ));
+    assert_eq!(201, farmer_status, "{farmer_body}");
+
+    let (researcher_status, researcher_body) = status_and_body(client.post(
+        "/api/v1/masters/fertilizes",
+        Some(&researcher),
+        &empty_headers(),
+        Some(body),
+    ));
+    assert_eq!(
+        201, researcher_status,
+        "same fertilize name must succeed for another user: {researcher_body}"
+    );
 }
 
 #[test]
