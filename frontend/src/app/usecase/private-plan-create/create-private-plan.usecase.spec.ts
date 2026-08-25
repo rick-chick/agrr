@@ -22,7 +22,7 @@ describe('CreatePrivatePlanUseCase', () => {
 
     const gateway: PrivatePlanCreateGateway = {
       fetchFarms: () => of([]),
-      fetchFarmsForPlanCreate: () => of([]),
+      fetchFarmsForPlanCreate: () => of({ farms: [], farmCreateLimitReached: false }),
       fetchFarm: () => of({} as any),
       fetchCrops: () => of([]),
       createPlan: () => of(response)
@@ -46,7 +46,7 @@ describe('CreatePrivatePlanUseCase', () => {
   it('maps 422 body.error to translated message on onError', () => {
     const gateway: PrivatePlanCreateGateway = {
       fetchFarms: () => of([]),
-      fetchFarmsForPlanCreate: () => of([]),
+      fetchFarmsForPlanCreate: () => of({ farms: [], farmCreateLimitReached: false }),
       fetchFarm: () => of({} as any),
       fetchCrops: () => of([]),
       createPlan: () =>

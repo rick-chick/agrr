@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { FarmCreateView, FarmCreateViewState, FarmCreateFormData } from './farm-create.view';
@@ -10,6 +10,11 @@ import {
   FarmCreatePresenter,
   FARM_CREATE_PROVIDERS
 } from '../../../usecase/farms/farm-create.providers';
+import { FARM_GATEWAY, FarmGateway } from '../../../usecase/farms/farm-gateway';
+import {
+  countUserOwnedFarms,
+  isFarmCreateLimitReached
+} from '../../../domain/farms/farm-create-limit';
 import { FarmMapComponent } from './farm-map.component';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { FormFieldComponent } from '../../shared/form-field/form-field.component';
@@ -41,21 +46,31 @@ import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pe
 const initialControl: FarmCreateViewState = {
   saving: false,
   error: null,
-  formData: initialFormData
-,
+  formData: initialFormData,
+  limitCheckLoading: true,
+  limitBlocked: false,
   pendingErrorFlash: null
 };
 
 @Component({
   selector: 'app-farm-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, FarmMapComponent, RegionSelectComponent, FormFieldComponent, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, FarmMapComponent, RegionSelectComponent, FormFieldComponent, TranslateModule, MasterContextHeaderComponent, RouterLink],
   providers: [...FARM_CREATE_PROVIDERS],
   template: `
     <div class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'farms.new.title' | translate }}</h2>
+        @if (control.limitCheckLoading) {
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.limitBlocked) {
+          <div class="plan-new-empty" role="status">
+            <p>{{ 'farms.new.limit_reached' | translate }}</p>
+            <p class="plan-new-empty-hint">{{ 'farms.new.limit_reached_hint' | translate }}</p>
+            <a routerLink="/farms" class="btn btn-primary">{{ 'farms.new.manage_farms_link' | translate }}</a>
+          </div>
+        } @else {
         <form (ngSubmit)="createFarm(farmForm)" #farmForm="ngForm" class="form-card__form">
           <app-form-field
             inputId="name"
@@ -138,6 +153,7 @@ const initialControl: FarmCreateViewState = {
             </button>
           </div>
         </form>
+        }
       </section>
     </div>
   `,
@@ -148,6 +164,7 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateFarmUseCase);
   private readonly presenter = inject(FarmCreatePresenter);
+  private readonly farmGateway = inject<FarmGateway>(FARM_GATEWAY);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
@@ -180,6 +197,23 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
     this.presenter.setView(this);
     this.applyUserRegion(this.auth.user());
     this.auth.loadCurrentUser().subscribe((user) => this.applyUserRegion(user));
+    this.farmGateway.list().subscribe({
+      next: (farms) => {
+        const limitBlocked = isFarmCreateLimitReached(countUserOwnedFarms(farms));
+        this.control = {
+          ...this.control,
+          limitCheckLoading: false,
+          limitBlocked
+        };
+      },
+      error: () => {
+        this.control = {
+          ...this.control,
+          limitCheckLoading: false,
+          limitBlocked: false
+        };
+      }
+    });
   }
 
   onNameChange(value: string | number | null): void {

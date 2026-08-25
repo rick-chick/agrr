@@ -32,6 +32,7 @@ const initialControl: PlanNewViewState = {
   readinessLoading: false,
   readiness: null,
   noFieldsWarning: false,
+  farmLimitBlocked: false,
   carryoverEnabled: false,
   sourcePlans: [],
   selectedSourcePlanId: null,
@@ -68,6 +69,12 @@ const initialControl: PlanNewViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
           <p class="plan-new-error">{{ control.error }}</p>
+        } @else if (control.farmLimitBlocked) {
+          <div class="plan-new-empty" role="status">
+            <p>{{ 'plans.new.farm_limit_reached' | translate }}</p>
+            <p class="plan-new-empty-hint">{{ 'plans.new.farm_limit_hint' | translate }}</p>
+            <a routerLink="/farms" class="btn btn-primary">{{ 'plans.new.manage_farms_link' | translate }}</a>
+          </div>
         } @else if (control.farms.length === 0) {
           <div class="plan-new-empty">
             <p>{{ 'plans.new.no_farms' | translate }}</p>
