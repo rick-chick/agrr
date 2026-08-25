@@ -64,6 +64,7 @@ jobs:
       - name: Run route-smoke E2E
         env:
           E2E_CI_HEALTH_WAIT_SECS: "240"
+          CACHE_DIR: ${{ github.workspace }}/.docker/e2e_dev_db_cache
         run: bash scripts/run-e2e-smoke-ci.sh
 
       - name: Upload Playwright report on failure
