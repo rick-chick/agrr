@@ -227,6 +227,45 @@ mod tests {
         );
     }
 
+    /// `hold` passed to [`JobChainDispatcher::enqueue_chain_in_span_with_hold`] stays alive until all steps finish.
+    #[test]
+    fn enqueue_chain_in_span_with_hold_keeps_hold_until_chain_finishes() {
+        let dispatcher = JobChainDispatcher::new();
+        let hold_alive = Arc::new(AtomicBool::new(true));
+        let hold = HoldProbe {
+            alive: hold_alive.clone(),
+        };
+
+        dispatcher.enqueue_chain_in_span_with_hold(
+            vec![sleep_step("slow_hold_step", 200)],
+            tracing::Span::current(),
+            hold,
+        );
+
+        assert!(
+            hold_alive.load(Ordering::SeqCst),
+            "hold must stay alive while chain steps are running"
+        );
+        assert!(
+            !wait_until(Duration::from_millis(50), || !hold_alive.load(Ordering::SeqCst)),
+            "hold must not drop before chain steps finish"
+        );
+        assert!(
+            wait_until(Duration::from_secs(2), || !hold_alive.load(Ordering::SeqCst)),
+            "hold must drop after all chain steps complete"
+        );
+    }
+
+    struct HoldProbe {
+        alive: Arc<AtomicBool>,
+    }
+
+    impl Drop for HoldProbe {
+        fn drop(&mut self) {
+            self.alive.store(false, Ordering::SeqCst);
+        }
+    }
+
     /// Steps enqueued in one `enqueue_chain` call run sequentially.
     #[test]
     fn blocking_first_step_delays_second_step() {
