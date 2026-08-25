@@ -85,7 +85,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -139,7 +139,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -281,7 +281,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -355,7 +355,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -434,7 +434,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -505,7 +505,7 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            Ok(None)
         }
     }
 
@@ -616,7 +616,7 @@
             _: &User,
             _: AttrMap,
         ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
-            panic!("create_for_user must not be called when global name already exists")
+            panic!("create_for_user must not be called when user-owned name already exists")
         }
 
         fn update_for_user(
@@ -646,20 +646,13 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
-        }
-
-        fn find_by_global_name(
-            &self,
-            _: &str,
-        ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
             Ok(Some(self.existing.clone()))
         }
     }
 
-  // Returns existing row when global name is visible (idempotent create for E2E baseline).
+    // Returns existing row when same user already owns the name (idempotent create for E2E baseline).
     #[test]
-    fn returns_existing_when_global_name_visible_to_user() {
+    fn returns_existing_when_user_owned_name_already_exists() {
         let existing = sample_entity();
         let gateway = IdempotentGateway {
             existing: existing.clone(),
@@ -683,11 +676,11 @@
         assert!(output.failure.is_none());
     }
 
-    struct HiddenGlobalNameGateway {
-        existing: FertilizeEntity,
+    struct OtherUserNameGateway {
+        created: FertilizeEntity,
     }
 
-    impl FertilizeGateway for HiddenGlobalNameGateway {
+    impl FertilizeGateway for OtherUserNameGateway {
         fn find_by_id(
             &self,
             _: i64,
@@ -707,7 +700,7 @@
             _: &User,
             _: AttrMap,
         ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
-            panic!("create_for_user must not be called when global name is taken")
+            Ok(self.created.clone())
         }
 
         fn update_for_user(
@@ -737,35 +730,16 @@
             _: i64,
             _: &str,
         ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
-        }
-
-        fn find_by_global_name(
-            &self,
-            _: &str,
-        ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            Ok(Some(self.existing.clone()))
+            Ok(None)
         }
     }
 
     #[test]
-    fn fails_when_global_name_not_visible_to_non_admin() {
-        let existing = FertilizeEntity::new(FertilizeEntityAttrs {
-            id: Some(99),
-            user_id: Some(2),
-            name: "Taken".into(),
-            n: None,
-            p: None,
-            k: None,
-            description: None,
-            package_size: None,
-            region: None,
-            is_reference: false,
-            created_at: None,
-            updated_at: None,
-        })
-        .expect("valid");
-        let gateway = HiddenGlobalNameGateway { existing };
+    fn creates_when_same_name_owned_by_another_user() {
+        let created = sample_entity();
+        let gateway = OtherUserNameGateway {
+            created: created.clone(),
+        };
         let mut output = SpyOutput {
             success: None,
             failure: None,
@@ -781,14 +755,6 @@
         interactor
             .call(FertilizeCreateInput::new("Taken"))
             .expect("handled");
-        assert!(output.success.is_none());
-        match output.failure {
-            Some(CreateFailure::Error(e)) => {
-                assert_eq!(
-                    e.message,
-                    "t:activerecord.errors.models.fertilize.attributes.name.taken"
-                );
-            }
-            other => panic!("expected Error, got {other:?}"),
-        }
+        assert_eq!(output.success.as_ref().and_then(|e| e.id), created.id);
+        assert!(output.failure.is_none());
     }

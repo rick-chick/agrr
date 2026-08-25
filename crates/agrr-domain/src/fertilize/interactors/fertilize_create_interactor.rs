@@ -134,16 +134,8 @@ where
             return Ok(());
         }
 
-        if let Some(existing) = self.gateway.find_by_global_name(&input.name)? {
-            if fertilize_policy::view_allowed(&user, existing.is_reference, existing.user_id) {
-                self.output_port.on_success(existing);
-                return Ok(());
-            }
-            let message = self
-                .translator
-                .t("activerecord.errors.models.fertilize.attributes.name.taken", &opts);
-            self.output_port
-                .on_failure(CreateFailure::Error(Error::new(message)));
+        if let Some(existing) = self.gateway.find_by_name(self.user_id, &input.name)? {
+            self.output_port.on_success(existing);
             return Ok(());
         }
 
@@ -154,15 +146,9 @@ where
             }
             Err(err) => {
                 if Self::is_name_uniqueness_violation(&err) {
-                    if let Some(existing) = self.gateway.find_by_global_name(&input.name)? {
-                        if fertilize_policy::view_allowed(
-                            &user,
-                            existing.is_reference,
-                            existing.user_id,
-                        ) {
-                            self.output_port.on_success(existing);
-                            return Ok(());
-                        }
+                    if let Some(existing) = self.gateway.find_by_name(self.user_id, &input.name)? {
+                        self.output_port.on_success(existing);
+                        return Ok(());
                     }
                 }
                 Self::handle_gateway_error(&mut self.output_port, err)
@@ -177,7 +163,9 @@ where
                 .map(|m| m.to_string())
                 .unwrap_or_else(|| record_invalid.to_string());
             let lower = message.to_lowercase();
-            return lower.contains("unique") || lower.contains("index_fertilizes_on_name");
+            return lower.contains("unique")
+                || lower.contains("index_fertilizes_on_name")
+                || lower.contains("index_fertilizes_on_user_id_and_name");
         }
         false
     }
