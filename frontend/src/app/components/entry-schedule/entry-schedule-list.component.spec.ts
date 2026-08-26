@@ -74,6 +74,7 @@ describe('EntryScheduleListComponent', () => {
         },
         error: 'Could not load crops',
         retry: 'Retry',
+        loadMore: 'Load more',
       },
       pages: {
         entry_schedule: {
@@ -334,5 +335,133 @@ describe('EntryScheduleListComponent', () => {
     const card = fixture.nativeElement.querySelector('.es-crop-card') as HTMLElement;
     expect(card.querySelector('.es-crop-card-empty')).toBeNull();
     expect(card.querySelector('.es-mini-chart[role="img"]')).toBeTruthy();
+  });
+
+  it('auto-selects and loads crops when the user has a single farm', async () => {
+    const gateway = TestBed.inject(ENTRY_SCHEDULE_GATEWAY) as unknown as {
+      getEntryScheduleFarms: ReturnType<typeof vi.fn>;
+    };
+    gateway.getEntryScheduleFarms.mockReturnValue(of([farms[0]]));
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(getEntryScheduleCrops).toHaveBeenCalledWith(1, expect.objectContaining({ limit: 20 }));
+    expect(fixture.nativeElement.querySelectorAll('.enhanced-selection-card').length).toBe(1);
+    expect(
+      (fixture.nativeElement.querySelector('.enhanced-selection-card') as HTMLElement).classList.contains(
+        'active',
+      ),
+    ).toBe(true);
+    expect(fixture.nativeElement.querySelector('.placeholder-block')).toBeNull();
+  });
+
+  it('does not show list empty when ineligible crops may exist on later pages', async () => {
+    getEntryScheduleCrops.mockReturnValue(
+      of({
+        farm: farms[0],
+        crops: [
+          {
+            id: 30,
+            name: 'Carrot',
+            eligible: false,
+            sowing_summary: null,
+            transplant_summary: null,
+            reason_summary: 'Out of season',
+            labels: { sowing: 'Sow', transplanting: 'Transplant' },
+          },
+        ],
+        prediction: { chart_calendar_year: 2026 },
+        meta: { has_more: true, next_cursor: 'page-2' },
+      }),
+    );
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const farmCards = fixture.nativeElement.querySelectorAll(
+      '.enhanced-selection-card',
+    ) as NodeListOf<HTMLElement>;
+    farmCards[0].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.es-list-empty')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.es-crop-card.ineligible')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('button.btn.btn-secondary')?.textContent).toContain(
+      'Load more',
+    );
+    expect(fixture.componentInstance.listEmptyKind()).toBeNull();
+  });
+
+  it('appends crops when load more is clicked', async () => {
+    const pageOneCrop: EntryScheduleCropListItem = {
+      id: 40,
+      name: 'Tomato',
+      eligible: true,
+      sowing_summary: { start_date: '2026-03-01', end_date: '2026-04-15' },
+      transplant_summary: null,
+      reason_summary: 'OK',
+      labels: { sowing: 'Sow', transplanting: 'Transplant' },
+    };
+    const pageTwoCrop: EntryScheduleCropListItem = {
+      id: 41,
+      name: 'Cucumber',
+      eligible: true,
+      sowing_summary: { start_date: '2026-05-01', end_date: '2026-06-01' },
+      transplant_summary: null,
+      reason_summary: 'OK',
+      labels: { sowing: 'Sow', transplanting: 'Transplant' },
+    };
+
+    getEntryScheduleCrops
+      .mockReturnValueOnce(
+        of({
+          farm: farms[0],
+          crops: [pageOneCrop],
+          prediction: { chart_calendar_year: 2026 },
+          meta: { has_more: true, next_cursor: 'page-2' },
+        }),
+      )
+      .mockReturnValueOnce(
+        of({
+          farm: farms[0],
+          crops: [pageTwoCrop],
+          prediction: { chart_calendar_year: 2026 },
+          meta: { has_more: false, next_cursor: null },
+        }),
+      );
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const farmCards = fixture.nativeElement.querySelectorAll(
+      '.enhanced-selection-card',
+    ) as NodeListOf<HTMLElement>;
+    farmCards[0].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.es-crop-card').length).toBe(1);
+
+    const loadMoreButton = fixture.nativeElement.querySelector(
+      'button.btn.btn-secondary',
+    ) as HTMLButtonElement;
+    loadMoreButton.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(getEntryScheduleCrops).toHaveBeenLastCalledWith(
+      1,
+      expect.objectContaining({ limit: 20, cursor: 'page-2' }),
+    );
+    const cropNames = Array.from(
+      fixture.nativeElement.querySelectorAll('.es-crop-name'),
+    ).map((node: Element) => node.textContent?.trim());
+    expect(cropNames).toEqual(['Tomato', 'Cucumber']);
+    expect(fixture.nativeElement.querySelector('button.btn.btn-secondary')).toBeNull();
   });
 });
