@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { catchError, of, timeout } from 'rxjs';
@@ -19,7 +18,7 @@ const PAGE_LIMIT = 20;
 @Component({
   selector: 'app-entry-schedule-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, RouterLink],
+  imports: [CommonModule, TranslateModule, RouterLink],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
@@ -32,7 +31,7 @@ const PAGE_LIMIT = 20;
         </div>
 
         <section class="content-card" aria-labelledby="entry-schedule-heading">
-          <h2 id="entry-schedule-heading" class="section-heading">
+          <h2 id="entry-schedule-heading" class="visually-hidden">
             {{ 'entrySchedule.selectFarm' | translate }}
           </h2>
           @if (farmsLoading()) {
@@ -45,29 +44,27 @@ const PAGE_LIMIT = 20;
           } @else if (farms().length === 0) {
             <p class="muted">{{ 'entrySchedule.noFarms' | translate }}</p>
           } @else {
-            <div class="entry-schedule-controls">
-              <label class="sr-only" for="entry-farm-select">{{ 'entrySchedule.selectFarm' | translate }}</label>
-              <select
-                id="entry-farm-select"
-                class="form-control entry-schedule-select"
-                [ngModel]="selectedFarmId()"
-                (ngModelChange)="onFarmChange($event)"
-                [compareWith]="compareFarmId"
-              >
-                <option [ngValue]="null" disabled>{{ 'entrySchedule.selectFarm' | translate }}</option>
+            <section class="selection-section" aria-labelledby="farm-heading">
+              <h3 id="farm-heading">{{ 'entrySchedule.selectFarm' | translate }}</h3>
+              <div class="enhanced-grid" role="list">
                 @for (f of farms(); track f.id) {
-                  <option [ngValue]="f.id">{{ f.name }}</option>
+                  <div
+                    class="enhanced-selection-card"
+                    [class.active]="selectedFarmId() === f.id"
+                    (click)="selectFarm(f)"
+                    (keydown.enter)="selectFarm(f)"
+                    (keydown.space)="selectFarm(f); $event.preventDefault()"
+                    tabindex="0"
+                    role="listitem button"
+                    [attr.aria-pressed]="selectedFarmId() === f.id"
+                    [attr.aria-label]="f.name"
+                  >
+                    <div class="enhanced-card-icon" aria-hidden="true">🌏</div>
+                    <div class="enhanced-card-title">{{ f.name }}</div>
+                  </div>
                 }
-              </select>
-              <button
-                type="button"
-                class="btn btn-primary"
-                [disabled]="selectedFarmId() == null || cropsLoading()"
-                (click)="loadCrops(false)"
-              >
-                {{ 'entrySchedule.show' | translate }}
-              </button>
-            </div>
+              </div>
+            </section>
           }
 
           @if (selectedFarmId() == null && farms().length > 0 && !farmsLoading()) {
@@ -215,15 +212,15 @@ const PAGE_LIMIT = 20;
   styleUrls: ['../public-plans/public-plan.component.css', './entry-schedule-visual.css'],
   styles: [
     `
-      .entry-schedule-controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        align-items: center;
-      }
-      .entry-schedule-select {
-        min-width: 14rem;
-        max-width: 100%;
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
       }
       .flow-detail-expanded {
         margin-top: 0.75rem;
@@ -235,20 +232,6 @@ const PAGE_LIMIT = 20;
       .reason-trust {
         margin-top: 0.5rem;
       }
-      .section-heading {
-        font-size: 1.1rem;
-        margin-bottom: 1rem;
-      }
-      .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        border: 0;
-      }
       .placeholder-block {
         padding: 1.5rem;
         border: 1px dashed var(--color-border);
@@ -257,10 +240,6 @@ const PAGE_LIMIT = 20;
       }
       .meta-line {
         display: block;
-      }
-      .flow-summary {
-        display: block;
-        font-size: 0.9rem;
       }
       .btn-link {
         background: none;
@@ -322,7 +301,7 @@ export class EntryScheduleListComponent implements OnInit {
         this.farms.set(rows);
         this.farmsLoading.set(false);
         if (rows.length === 1) {
-          this.selectedFarmId.set(rows[0].id);
+          this.selectFarm(rows[0]);
         }
       });
   }
@@ -332,14 +311,15 @@ export class EntryScheduleListComponent implements OnInit {
     this.loadFarmsList();
   }
 
-  compareFarmId(a: number | null, b: number | null): boolean {
-    return a === b;
-  }
-
-  onFarmChange(id: number | null): void {
-    this.selectedFarmId.set(id);
+  selectFarm(farm: Farm): void {
+    if (this.selectedFarmId() === farm.id) {
+      return;
+    }
+    this.selectedFarmId.set(farm.id);
     this.listResponse.set(null);
     this.loadCursor = null;
+    this.flowDetailOpen.set(new Set());
+    this.loadCrops(false);
   }
 
   detailQueryParams(): Record<string, string | number> {
@@ -405,13 +385,6 @@ export class EntryScheduleListComponent implements OnInit {
           this.listResponse.set(res);
         }
       });
-  }
-
-  formatRange(summary: { start_date: string; end_date: string } | null): string {
-    if (!summary) {
-      return '—';
-    }
-    return `${summary.start_date.slice(0, 10)} – ${summary.end_date.slice(0, 10)}`;
   }
 
   /** 横軸は chart_calendar_year（API・サーバの「今年」）の1/1〜12/31。帯の左端＝開始の目安 */

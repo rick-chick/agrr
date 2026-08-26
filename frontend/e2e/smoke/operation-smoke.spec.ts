@@ -140,17 +140,11 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await waitForPageStable(page, r);
     await assertHostHealthy(page, 'app-entry-schedule-list');
 
-    const farmSelect = page.locator('#entry-farm-select');
-    const farmOption = farmSelect.locator('option:not([disabled])').first();
-    if ((await farmOption.count()) === 0) {
+    const farmCard = page.locator('app-entry-schedule-list .enhanced-selection-card').first();
+    if ((await farmCard.count()) === 0) {
       test.skip(true, 'no farms for entry schedule');
     }
-    const farmLabel = (await farmOption.textContent())?.trim();
-    if (!farmLabel) {
-      test.skip(true, 'no farms for entry schedule');
-    }
-    await farmSelect.selectOption({ label: farmLabel });
-    await page.locator('app-entry-schedule-list button.btn-primary').click();
+    await farmCard.click();
     await expect(page.locator('app-entry-schedule-list .es-crop-grid')).toBeVisible({
       timeout: 60_000,
     });

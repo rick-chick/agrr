@@ -14,7 +14,7 @@ const MASTER_LOADING_SPIN_PROBE_TIMEOUT_MS = 2_000;
 
 /** ホスト内に実コンテンツが見えていれば出現待ちを省略する */
 const HOST_STABLE_CONTENT_SELECTOR =
-  '.card-list, .item-card, .section-card__header-actions, .detail-card, form, table, .hero-section, .features-section, .entry-schedule-controls, .plan-new-empty, select.form-control';
+  '.card-list, .item-card, .section-card__header-actions, .detail-card, form, table, .hero-section, .features-section, .enhanced-selection-card, .plan-new-empty, select.form-control';
 
 function needsMasterLoadingSpinProbe(pattern: string): boolean {
   if (MASTER_LOADING_SPIN_PROBE_EXCLUDE.has(pattern)) return false;
