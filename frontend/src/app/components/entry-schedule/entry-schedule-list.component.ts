@@ -66,6 +66,22 @@ const PAGE_LIMIT = 20;
               {{ 'entrySchedule.retry' | translate }}
             </button>
           } @else if (listResponse()) {
+            @if (listEmptyKind(); as emptyKind) {
+              <div class="es-list-empty" role="status">
+                <h3 class="es-list-empty-title">
+                  {{ 'entrySchedule.listEmpty.' + emptyKind + '.title' | translate }}
+                </h3>
+                <p class="es-list-empty-description">
+                  {{ 'entrySchedule.listEmpty.' + emptyKind + '.description' | translate }}
+                </p>
+                <p class="es-list-empty-hint">
+                  {{ 'entrySchedule.listEmpty.' + emptyKind + '.hint' | translate }}
+                </p>
+                <a routerLink="/crops" class="btn btn-primary es-list-empty-action">
+                  {{ 'entrySchedule.listEmpty.' + emptyKind + '.action' | translate }}
+                </a>
+              </div>
+            } @else {
             <div class="entry-schedule-meta muted mt-4" role="status">
               @if (listResponse()!.prediction.generated_at) {
                 <span class="meta-line"
@@ -199,6 +215,7 @@ const PAGE_LIMIT = 20;
               </div>
             }
             <p class="footer-disclaimer muted mt-4">{{ 'entrySchedule.listDisclaimer' | translate }}</p>
+            }
           }
         </section>
       </div>
@@ -414,6 +431,20 @@ export class EntryScheduleListComponent implements OnInit {
     const a = summary.start_date.slice(5, 10).replace('-', '/');
     const b = summary.end_date.slice(5, 10).replace('-', '/');
     return `${a} – ${b}`;
+  }
+
+  listEmptyKind(): 'noCrops' | 'allIneligible' | null {
+    const res = this.listResponse();
+    if (!res) {
+      return null;
+    }
+    if (res.crops.length === 0) {
+      return 'noCrops';
+    }
+    if (res.crops.every((crop) => !crop.eligible) && !res.meta?.has_more) {
+      return 'allIneligible';
+    }
+    return null;
   }
 
 }
