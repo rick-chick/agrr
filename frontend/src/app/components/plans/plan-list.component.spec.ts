@@ -226,10 +226,17 @@ describe('PlanListComponent', () => {
     expect(link.getAttribute('href')).toContain('/plans/new');
   });
 
-  it('shows detail and delete actions on plan cards', async () => {
+  it('shows detail and delete actions in overflow menu on plan cards', async () => {
     const nativeElement = await renderPlans([planWithGap()]);
-    const showLink = nativeElement.querySelector('.item-card__actions a[href*="/plans/1"]:not([href*="/work"]):not([href*="/learn"])');
-    const danger = nativeElement.querySelector('.item-card__actions .btn-danger');
+    const trigger = nativeElement.querySelector(
+      '[data-testid="plan-overflow-menu-trigger"]'
+    ) as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const showLink = nativeElement.querySelector('.plan-list__show-link');
+    const danger = nativeElement.querySelector('.plan-overflow-menu__item--danger');
     expect(showLink).toBeTruthy();
     expect(showLink.getAttribute('href')).toContain('/plans/1');
     expect(danger).toBeTruthy();
@@ -329,24 +336,36 @@ describe('PlanListComponent', () => {
     } as never;
     const deleteSpy = vi.spyOn(component, 'deletePlan');
 
-    const deleteButton = nativeElement.querySelector('.item-card__actions .btn-danger');
-    deleteButton.click();
+    const trigger = nativeElement.querySelector(
+      '[data-testid="plan-overflow-menu-trigger"]'
+    ) as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const deleteButton = nativeElement.querySelector('.plan-overflow-menu__item--danger');
+    (deleteButton as HTMLButtonElement).click();
 
     expect(deleteSpy).toHaveBeenCalledWith(1);
     expect(component.deleteConfirmDialogRef?.nativeElement.showModal).toHaveBeenCalled();
   });
 
-  it('delete button uses outline danger style (not filled red background)', async () => {
+  it('delete menu item uses danger text color', async () => {
     const nativeElement = await renderPlans([planWithGap()]);
+    const trigger = nativeElement.querySelector(
+      '[data-testid="plan-overflow-menu-trigger"]'
+    ) as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
     const deleteButton = nativeElement.querySelector(
-      '.item-card__actions .btn-danger'
+      '.plan-overflow-menu__item--danger'
     ) as HTMLElement;
     expect(deleteButton).toBeTruthy();
 
     const styles = getComputedStyle(deleteButton);
-    expect(styles.color).not.toBe('var(--color-text-on-primary)');
     expect(styles.color).toBe('var(--color-error)');
-    expect(styles.borderStyle).not.toBe('none');
   });
 
   it('shows amount variance in input gap summary when count is positive', async () => {
@@ -375,6 +394,14 @@ describe('PlanListComponent', () => {
     const gapSummary = nativeElement.querySelector('.plan-list__gap-summary');
     expect(gapSummary?.textContent).toContain('Unrecorded: 3');
     expect(gapSummary?.textContent).toContain('Action required: 2');
+
+    const trigger = nativeElement.querySelector(
+      '[data-testid="plan-overflow-menu-trigger"]'
+    ) as HTMLButtonElement;
+    expect(trigger).toBeTruthy();
+    trigger.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
 
     const workLink = nativeElement.querySelector('.plan-list__work-link');
     const learnLink = nativeElement.querySelector('.plan-list__learn-link');

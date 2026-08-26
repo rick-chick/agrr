@@ -12,6 +12,7 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
 
 const REQUIRED_SCRIPT_SNIPPETS = [
   'test:e2e:smoke:route',
+  'test:e2e:smoke:layout',
   'E2E_CAPTURE_DEV_SESSION',
   'E2E_STRANGLER',
   'docker compose',

@@ -9,6 +9,7 @@ import {
 } from '../route-validity';
 import { applyResolvedUrl, type ResolvedCaptureIds } from '../resolve-capture-urls';
 import { assertPublicPlanSelectCropStep2 } from '../assert-public-plan-select-crop-step2';
+import { assertRouteLayoutAfterStable } from '../smoke/assert-route-layout-after-stable';
 import { loadResolvedCaptureIdsWithBaseline, preparePublicPlanRoute } from '../smoke/smoke-helpers';
 import {
   CAPTURE_LOCALES,
@@ -95,6 +96,7 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
         if (r.pattern === 'public-plans/select-crop') {
           await assertPublicPlanSelectCropStep2(page);
         }
+        await assertRouteLayoutAfterStable(page, r);
         await captureForAgent(page, r, locale);
       }
     });

@@ -2619,6 +2619,9 @@
         "collapse": "समेटें",
         "compare_variance": "विचरण की तुलना करें"
       },
+      "menu": {
+        "more_actions": "अधिक क्रियाएँ"
+      },
       "initial_setup": "प्रारंभिक सेटअप",
       "public_plan_handoff": "अपनी सार्वजनिक योजना जारी रखें"
     },
