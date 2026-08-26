@@ -4222,7 +4222,9 @@
       "listChartIntro": "候補期間の概要",
       "listChartFoot": "詳しい期間は詳細画面で確認できます。",
       "sowBand": "播種",
-      "transplantBand": "定植"
+      "transplantBand": "定植",
+      "noWindowTitle": "作付けウィンドウなし",
+      "noWindowHint": "詳細画面でスケジュールの補足と理由を確認できます。"
     },
     "windows": "適期帯",
     "phases": "生育フェーズ",

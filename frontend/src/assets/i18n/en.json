@@ -4186,7 +4186,9 @@
       "listChartIntro": "Candidate window overview",
       "listChartFoot": "Open the detail view for exact windows.",
       "sowBand": "Sow",
-      "transplantBand": "Transplant"
+      "transplantBand": "Transplant",
+      "noWindowTitle": "No planting window",
+      "noWindowHint": "Open the detail view for schedule notes and reasons."
     },
     "windows": "Windows",
     "phases": "Growth phases",

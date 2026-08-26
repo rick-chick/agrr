@@ -3935,7 +3935,9 @@
       "listChartIntro": "उम्मीदवार अवधि का सारांश",
       "listChartFoot": "सटीक अवधि के लिए विवरण खोलें।",
       "sowBand": "बुवाई",
-      "transplantBand": "रोपाई"
+      "transplantBand": "रोपाई",
+      "noWindowTitle": "बुवाई की अवधि नहीं",
+      "noWindowHint": "अनुसूची नोट्स और कारणों के लिए विवरण दृश्य खोलें।"
     },
     "windows": "उपयुक्त अवधियां",
     "phases": "विकास चरण",
