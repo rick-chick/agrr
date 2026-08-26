@@ -11,6 +11,7 @@ import {
 } from '../../domain/entry-schedule/entry-schedule';
 import { detectBrowserRegion } from '../../core/browser-region';
 import { FarmSelectionCardsComponent } from '../shared/farm-selection-cards/farm-selection-cards.component';
+import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
 import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeline.util';
 
 const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
@@ -19,18 +20,16 @@ const PAGE_LIMIT = 20;
 @Component({
   selector: 'app-entry-schedule-list',
   standalone: true,
-  imports: [CommonModule, TranslateModule, RouterLink, FarmSelectionCardsComponent],
+  imports: [CommonModule, TranslateModule, RouterLink, FarmSelectionCardsComponent, FunnelShellComponent],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
-        <div class="compact-header-card">
-          <h1 class="compact-header-title">
-            <span class="title-icon" aria-hidden="true">📅</span>
-            <span class="title-text">{{ 'entrySchedule.title' | translate }}</span>
-          </h1>
-          <p class="page-intro muted">{{ 'pages.entry_schedule.description' | translate }}</p>
-        </div>
-
+        <app-funnel-shell
+          variant="hub"
+          titleKey="entrySchedule.title"
+          descriptionKey="pages.entry_schedule.description"
+          titleIcon="📅"
+        >
         <section class="content-card" aria-labelledby="entry-schedule-heading">
           <h2 id="entry-schedule-heading" class="visually-hidden">
             {{ 'entrySchedule.selectFarm' | translate }}
@@ -218,10 +217,11 @@ const PAGE_LIMIT = 20;
             }
           }
         </section>
+        </app-funnel-shell>
       </div>
     </div>
   `,
-  styleUrls: ['../public-plans/public-plan.component.css', './entry-schedule-visual.css'],
+  styleUrls: ['../shared/shells/funnel-shell.component.css', '../public-plans/public-plan.component.css', './entry-schedule-visual.css'],
   styles: [
     `
       .visually-hidden {

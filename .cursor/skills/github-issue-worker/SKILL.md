@@ -387,6 +387,7 @@ issue コメントに PR URL。`agent-in-progress` を外し、付いていれ�
 ## 関連
 
 - **UX/UI 起票の上流**: **`ux-issue-pipeline`**（キャプチャ・ビジュアルレビュー・`collect-ux-findings`）。デザイン系 issue の完了条件にキャプチャ再実行が含まれる場合は、実装後にパイプライン §6（フェーズ 1–2）を繰り返す。
+- **UI Conformance（Paved Road）**: user-facing 画面変更は **epic 配下**で `[L1]`–`[L4]` 子 issue に分割する（[UI-COMPOSITION-RULES.md](../../../docs/design/UI-COMPOSITION-RULES.md)）。`[L0][SEO-only]` はレイアウト変更を含めない。L0 単体クローズ後に L2 を別起票せず、最初から epic で子を分ける。
 
 ## セットアップ（Cursor Automation）
 

@@ -10,6 +10,7 @@ import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingSuccessFlashViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
 import { applyPendingNavigationViewEffects } from '../../core/view-effects/pending-navigation-view.effects';
 import { WorkHubView, WorkHubViewState } from './work-hub.view';
+import { AppShellComponent } from '../shared/shells/app-shell.component';
 
 const initialControl: WorkHubViewState = {
   loading: true,
@@ -26,19 +27,13 @@ const initialControl: WorkHubViewState = {
 @Component({
   selector: 'app-work-hub',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, AppShellComponent],
   providers: [...WORK_HUB_PROVIDERS],
   template: `
-    <div class="page-main">
-      <header class="page-header">
-        <h1 id="page-title" class="page-title">{{ 'work.hub.title' | translate }}</h1>
-        @if (control.error) {
-          <p class="page-description">{{ 'work.hub.error_subtitle' | translate }}</p>
-        } @else {
-          <p class="page-description">{{ 'work.hub.subtitle' | translate }}</p>
-        }
-      </header>
-
+    <app-app-shell
+      titleKey="work.hub.title"
+      [descriptionKey]="control.error ? 'work.hub.error_subtitle' : 'work.hub.subtitle'"
+    >
       @if (!control.loading && control.portfolioSummary && control.farms.length) {
         <section
           class="work-hub__portfolio-summary"
@@ -251,7 +246,7 @@ const initialControl: WorkHubViewState = {
           }
         }
       </section>
-    </div>
+    </app-app-shell>
   `,
   styleUrls: ['./work-hub.component.css']
 })

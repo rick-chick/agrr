@@ -39,12 +39,19 @@ jobs:
       - name: Layout contract coverage
         run: npm run e2e:layout-contract:check:enforce
 
+      - name: UI composition lint enforce
+        run: npm run check:ui-composition:enforce
+
+      - name: check-ui-composition unit tests
+        working-directory: frontend
+        run: node --test scripts/check-ui-composition.test.mjs
+
       - name: Visual review pattern freshness
         run: npm run e2e:visual-review:check
 
       - name: layout smoke lib unit tests
         working-directory: frontend
-        run: node --test e2e/smoke/layout-invariants-lib.test.mjs e2e/smoke/layout-smoke-lib.test.mjs e2e/smoke/layout-archetype-layout-lib.test.mjs e2e/smoke/layout-archetype-design-contract-lib.test.mjs e2e/smoke/verify-layout-contract-coverage-lib.test.mjs
+        run: node --test e2e/smoke/layout-invariants-lib.test.mjs e2e/smoke/layout-smoke-lib.test.mjs e2e/smoke/layout-archetype-layout-lib.test.mjs e2e/smoke/layout-archetype-design-contract-lib.test.mjs e2e/smoke/verify-layout-contract-coverage-lib.test.mjs e2e/smoke/layout-conformance-bindings.test.mjs
 
       - name: Unit tests
         run: npm test -- --watch=false

@@ -89,7 +89,7 @@ smokeDescribe('public plan create flow (free plan)', () => {
     await waitForPageStable(page, newRoute);
     await assertHostHealthy(page, 'app-public-plan-create');
 
-    const farmCard = page.locator('app-public-plan-create .enhanced-selection-card').first();
+    const farmCard = page.locator('app-public-plan-create [data-testid="farm-selection-cards"] .enhanced-selection-card').first();
     await expect(farmCard, 'public farms must load from API').toBeVisible({ timeout: 30_000 });
     await farmCard.click();
     await expect(page).toHaveURL(/\/public-plans\/select-crop/);
