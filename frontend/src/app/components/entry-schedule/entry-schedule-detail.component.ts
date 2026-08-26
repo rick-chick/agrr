@@ -13,6 +13,7 @@ import {
 import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeline.util';
 import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
+import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
 import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
 import {
   ENTRY_SCHEDULE_PRERENDER_CATALOG,
@@ -26,18 +27,17 @@ import { Farm } from '../../domain/farms/farm';
 @Component({
   selector: 'app-entry-schedule-detail',
   standalone: true,
-  imports: [CommonModule, TranslateModule, MasterContextHeaderComponent, RouterLink],
+  imports: [CommonModule, TranslateModule, MasterContextHeaderComponent, RouterLink, FunnelShellComponent],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
         <app-master-context-header [crumbs]="contextCrumbs" />
-        <div class="compact-header-card">
-          <h1 class="compact-header-title">
-            <span class="title-icon" aria-hidden="true">🌱</span>
-            <span class="title-text">{{ 'entrySchedule.detailTitle' | translate }}</span>
-          </h1>
-        </div>
-
+        <app-funnel-shell
+          variant="hub"
+          titleKey="entrySchedule.detailTitle"
+          descriptionKey="pages.entry_schedule.og_description"
+          titleIcon="🌱"
+        >
         @if (loading()) {
           <p class="muted mt-4 master-loading">{{ 'entrySchedule.loading' | translate }}</p>
         } @else if (errorKey()) {
@@ -226,10 +226,11 @@ import { Farm } from '../../domain/farms/farm';
             </section>
           </section>
         }
+        </app-funnel-shell>
       </div>
     </div>
   `,
-  styleUrls: ['../public-plans/public-plan.component.css', './entry-schedule-visual.css'],
+  styleUrls: ['../shared/shells/funnel-shell.component.css', '../public-plans/public-plan.component.css', './entry-schedule-visual.css'],
   styles: [
     `
       .subsection-title {

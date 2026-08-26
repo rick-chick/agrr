@@ -12,8 +12,9 @@ export { maxActionButtonRowsForViewport, countVisibleMatches };
  * @param {string} input.hostSelector
  * @param {number} input.viewportWidth
  * @param {import('./layout-archetype-design-contracts.mjs').LayoutArchetypeDesignContract} input.contract
+ * @param {string} [input.conformanceLevel]
  */
-export function checkContentBlockLayout({ html, hostSelector, viewportWidth, contract }) {
+export function checkContentBlockLayout({ html, hostSelector, viewportWidth, contract, conformanceLevel = 'L0' }) {
   return import('jsdom').then(({ JSDOM }) => {
     const dom = new JSDOM(`<!DOCTYPE html><html><body>${html}</body></html>`, {
       pretendToBeVisual: true,
@@ -50,7 +51,7 @@ export function checkContentBlockLayout({ html, hostSelector, viewportWidth, con
     });
 
     try {
-      return evaluateArchetypeDesignContract({ hostSelector, contract });
+      return evaluateArchetypeDesignContract({ hostSelector, contract, conformanceLevel });
     } finally {
       if (previousDocument === undefined) {
         delete globalThis.document;

@@ -18,6 +18,7 @@ import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-refe
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { FarmSelectionCardsPattern } from '../shared/patterns/farm-selection-cards.pattern';
 import {
   PUBLIC_PLAN_WIZARD_REDIRECT_MESSAGE_KEY,
   PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM,
@@ -33,7 +34,7 @@ const initialControl: PublicPlanCreateViewState = {
   selector: 'app-public-plan-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [CommonModule, FormsModule, TranslateModule, PublicPlanContextHeaderComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, PublicPlanContextHeaderComponent, FarmSelectionCardsPattern],
   providers: [...PUBLIC_PLAN_CREATE_PROVIDERS],
   template: `
     <div class="page-main public-plans-wrapper">
@@ -68,23 +69,16 @@ const initialControl: PublicPlanCreateViewState = {
           } @else {
             <section class="selection-section mt-6" aria-labelledby="farm-heading">
               <h3 id="farm-heading">{{ 'public_plans.select_farm.available_farms' | translate }}</h3>
-              <div class="enhanced-grid">
-                @for (farm of control.farms; track farm.id) {
-                  <div
-                    class="enhanced-selection-card"
-                    [class.active]="selectedFarmId === farm.id"
-                    (click)="selectFarm(farm)"
-                    (keydown.enter)="selectFarm(farm)"
-                    (keydown.space)="selectFarm(farm); $event.preventDefault()"
-                    tabindex="0"
-                    role="button"
-                  >
-                    <div class="enhanced-card-icon">🌏</div>
-                    <div class="enhanced-card-title">{{ displayFarmName(farm) }}</div>
-                    <!-- region subtitle intentionally removed: region is auto-detected and not shown to user -->
-                  </div>
-                }
-              </div>
+              <app-farm-selection-cards
+                [state]="farmCardsState()"
+                [farms]="control.farms"
+                [selectedFarmId]="selectedFarmId"
+                [errorText]="control.error"
+                [farmDisplayNames]="farmDisplayNameMap()"
+                loadingKey="common.loading"
+                (farmSelect)="selectFarm($event)"
+                (retry)="retryLoadFarms()"
+              />
             </section>
           }
         </section>
@@ -169,6 +163,34 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
 
   displayFarmName(farm: Farm): string {
     return localizePublicPlanReferenceFarmName(farm, (key) => this.translate.instant(key));
+  }
+
+  farmCardsState(): 'loading' | 'empty' | 'error' | 'ready' {
+    if (this.control.loading) {
+      return 'loading';
+    }
+    if (this.control.error) {
+      return 'error';
+    }
+    if (this.control.farms.length === 0) {
+      return 'empty';
+    }
+    return 'ready';
+  }
+
+  farmDisplayNameMap(): Record<number, string> {
+    const map: Record<number, string> = {};
+    for (const farm of this.control.farms) {
+      map[farm.id] = this.displayFarmName(farm);
+    }
+    return map;
+  }
+
+  retryLoadFarms(): void {
+    const region =
+      this.selectedFarm?.region ??
+      resolveReferenceFarmRegion(this.translate.currentLang || this.translate.defaultLang);
+    this.loadFarms(region);
   }
 
   private loadFarms(region: string): void {

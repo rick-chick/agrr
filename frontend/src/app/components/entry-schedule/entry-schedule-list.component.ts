@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { catchError, of, timeout } from 'rxjs';
@@ -12,6 +11,8 @@ import {
 } from '../../domain/entry-schedule/entry-schedule';
 import { detectBrowserRegion } from '../../core/browser-region';
 import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeline.util';
+import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
+import { FarmSelectionCardsPattern } from '../shared/patterns/farm-selection-cards.pattern';
 
 const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
 const PAGE_LIMIT = 20;
@@ -19,212 +20,192 @@ const PAGE_LIMIT = 20;
 @Component({
   selector: 'app-entry-schedule-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, RouterLink],
+  imports: [CommonModule, TranslateModule, RouterLink, FunnelShellComponent, FarmSelectionCardsPattern],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
-        <div class="compact-header-card">
-          <h1 class="compact-header-title">
-            <span class="title-icon" aria-hidden="true">📅</span>
-            <span class="title-text">{{ 'entrySchedule.title' | translate }}</span>
-          </h1>
-          <p class="page-intro muted">{{ 'pages.entry_schedule.description' | translate }}</p>
-        </div>
+        <app-funnel-shell
+          variant="hub"
+          titleKey="entrySchedule.title"
+          descriptionKey="pages.entry_schedule.description"
+          titleIcon="📅"
+        >
+          <section class="content-card" aria-labelledby="entry-schedule-heading">
+            <h2 id="entry-schedule-heading" class="section-heading">
+              {{ 'entrySchedule.selectFarm' | translate }}
+            </h2>
+            <app-farm-selection-cards
+              [state]="farmCardsState()"
+              [farms]="farms()"
+              [selectedFarmId]="selectedFarmId()"
+              [errorKey]="farmsError() ?? 'entrySchedule.error'"
+              (farmSelect)="onFarmSelected($event)"
+              (retry)="retryFarms()"
+            />
 
-        <section class="content-card" aria-labelledby="entry-schedule-heading">
-          <h2 id="entry-schedule-heading" class="section-heading">
-            {{ 'entrySchedule.selectFarm' | translate }}
-          </h2>
-          @if (farmsLoading()) {
-            <p class="muted master-loading">{{ 'entrySchedule.loading' | translate }}</p>
-          } @else if (farmsError()) {
-            <p class="error-message">{{ farmsError()! | translate }}</p>
-            <button type="button" class="btn btn-secondary mt-2" (click)="retryFarms()">
-              {{ 'entrySchedule.retry' | translate }}
-            </button>
-          } @else if (farms().length === 0) {
-            <p class="muted">{{ 'entrySchedule.noFarms' | translate }}</p>
-          } @else {
-            <div class="entry-schedule-controls">
-              <label class="sr-only" for="entry-farm-select">{{ 'entrySchedule.selectFarm' | translate }}</label>
-              <select
-                id="entry-farm-select"
-                class="form-control entry-schedule-select"
-                [ngModel]="selectedFarmId()"
-                (ngModelChange)="onFarmChange($event)"
-                [compareWith]="compareFarmId"
-              >
-                <option [ngValue]="null" disabled>{{ 'entrySchedule.selectFarm' | translate }}</option>
-                @for (f of farms(); track f.id) {
-                  <option [ngValue]="f.id">{{ f.name }}</option>
-                }
-              </select>
-              <button
-                type="button"
-                class="btn btn-primary"
-                [disabled]="selectedFarmId() == null || cropsLoading()"
-                (click)="loadCrops(false)"
-              >
-                {{ 'entrySchedule.show' | translate }}
+            @if (selectedFarmId() == null && farms().length > 0 && farmCardsState() === 'ready') {
+              <p class="placeholder-block mt-4">{{ 'entrySchedule.blockSelectFarm' | translate }}</p>
+            }
+
+            @if (cropsLoading()) {
+              <p class="muted mt-4 master-loading">{{ 'entrySchedule.loading' | translate }}</p>
+            } @else if (cropsError()) {
+              <p class="error-message mt-4">{{ cropsError()! | translate }}</p>
+              <button type="button" class="btn btn-secondary mt-2" (click)="loadCrops(false)">
+                {{ 'entrySchedule.retry' | translate }}
               </button>
-            </div>
-          }
-
-          @if (selectedFarmId() == null && farms().length > 0 && !farmsLoading()) {
-            <p class="placeholder-block mt-4">{{ 'entrySchedule.blockSelectFarm' | translate }}</p>
-          }
-
-          @if (cropsLoading()) {
-            <p class="muted mt-4 master-loading">{{ 'entrySchedule.loading' | translate }}</p>
-          } @else if (cropsError()) {
-            <p class="error-message mt-4">{{ cropsError()! | translate }}</p>
-            <button type="button" class="btn btn-secondary mt-2" (click)="loadCrops(false)">
-              {{ 'entrySchedule.retry' | translate }}
-            </button>
-          } @else if (listResponse()) {
-            <div class="entry-schedule-meta muted mt-4" role="status">
-              @if (listResponse()!.prediction.generated_at) {
-                <span class="meta-line"
-                  >{{ 'entrySchedule.predictionFresh' | translate }}:
-                  {{ listResponse()!.prediction.generated_at | slice: 0 : 16 }}</span
+            } @else if (listResponse()) {
+              <div class="entry-schedule-meta muted mt-4" role="status">
+                @if (listResponse()!.prediction.generated_at) {
+                  <span class="meta-line"
+                    >{{ 'entrySchedule.predictionFresh' | translate }}:
+                    {{ listResponse()!.prediction.generated_at | slice: 0 : 16 }}</span
+                  >
+                }
+                @if (listResponse()!.prediction.prediction_end_date) {
+                  <span class="meta-line">{{ 'entrySchedule.predictionUntil' | translate }}: {{ listResponse()!.prediction.prediction_end_date | slice: 0 : 10 }}</span>
+                }
+              </div>
+              @if (isAllIneligibleEmpty(listResponse()!)) {
+                <section
+                  class="es-all-ineligible-empty mt-4"
+                  data-testid="entry-schedule-all-ineligible"
+                  aria-labelledby="es-all-ineligible-title"
                 >
-              }
-              @if (listResponse()!.prediction.prediction_end_date) {
-                <span class="meta-line">{{ 'entrySchedule.predictionUntil' | translate }}: {{ listResponse()!.prediction.prediction_end_date | slice: 0 : 10 }}</span>
-              }
-            </div>
-            <div class="es-crop-grid" role="list">
-              @for (c of listResponse()!.crops; track c.id; let idx = $index) {
-                <article
-                  class="es-crop-card"
-                  [class.ineligible]="!c.eligible"
-                  role="listitem"
-                  [attr.aria-label]="c.name"
-                >
-                  <div class="es-crop-head">
-                    <span class="eligible-pill" [attr.data-state]="c.eligible ? 'ok' : 'no'">
-                      {{ c.eligible ? ('entrySchedule.eligibleYes' | translate) : ('entrySchedule.eligibleNo' | translate) }}
-                    </span>
-                    <span class="es-crop-name">{{ c.name }}</span>
-                  </div>
-                  <p class="es-flow-line">{{ c.schedule_flow_summary || '—' }}</p>
-
-                  @if (chartTimelineContext(c); as ctx) {
-                    <div
-                      class="es-mini-chart"
-                      role="img"
-                      [attr.aria-label]="'entrySchedule.viz.ganttAria' | translate: { name: c.name }"
-                    >
-                      <p class="es-mini-chart-intro">{{ 'entrySchedule.viz.listChartIntro' | translate }}</p>
-                      <div class="es-year-banner" aria-hidden="true">
-                        {{ 'entrySchedule.viz.axisYear' | translate: { year: ctx.year } }}
-                      </div>
-                      <div class="es-mini-rows">
-                        <div class="es-mini-row">
-                          <span class="es-mini-row-label">{{ 'entrySchedule.viz.sowBand' | translate }}</span>
-                          <div class="es-track">
-                            @if (c.sowing_summary) {
-                              <div
-                                class="es-seg sow"
-                                [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
-                                [ngStyle]="segmentStyle(c.sowing_summary.start_date, c.sowing_summary.end_date, ctx)"
-                              ></div>
-                            }
-                          </div>
-                        </div>
-                        <div class="es-mini-row">
-                          <span class="es-mini-row-label">{{ 'entrySchedule.viz.transplantBand' | translate }}</span>
-                          <div class="es-track">
-                            @if (c.transplant_summary) {
-                              <div
-                                class="es-seg transplant"
-                                [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
-                                [ngStyle]="segmentStyle(c.transplant_summary.start_date, c.transplant_summary.end_date, ctx)"
-                              ></div>
-                            }
-                          </div>
-                        </div>
-                      </div>
-                      <div class="es-month-ruler" aria-hidden="true">
-                        @for (m of monthTicks; track m) {
-                          <span class="es-month-tick">{{ 'entrySchedule.viz.monthTick' | translate: { n: m } }}</span>
-                        }
-                      </div>
-                      <p class="es-mini-chart-foot">{{ 'entrySchedule.viz.listChartFoot' | translate }}</p>
-                    </div>
-                  } @else {
-                    <div class="es-mini-chart muted" style="font-size: 0.85rem">{{ 'entrySchedule.viz.noWindow' | translate }}</div>
-                  }
-
-                  <div class="es-date-pills">
-                    @if (c.sowing_summary) {
-                      <span class="es-pill sow">{{ formatRangeShort(c.sowing_summary) }}</span>
-                    }
-                    @if (c.transplant_summary) {
-                      <span class="es-pill transplant">{{ formatRangeShort(c.transplant_summary) }}</span>
-                    }
-                  </div>
-
-                  @if (c.schedule_flow_detail) {
-                    <div class="es-expand-wrap">
-                      <button
-                        type="button"
-                        class="btn-link"
-                        (click)="toggleFlowDetail(idx)"
-                        [attr.aria-expanded]="flowDetailOpen().has(idx)"
-                      >
-                        {{ flowDetailOpen().has(idx) ? ('entrySchedule.collapse' | translate) : ('entrySchedule.expand' | translate) }}
-                      </button>
-                    </div>
-                  }
-                  @if (flowDetailOpen().has(idx) && c.schedule_flow_detail) {
-                    <div class="flow-detail-expanded">
-                      <p class="flow-detail">{{ c.schedule_flow_detail }}</p>
-                      <p class="reason-trust">
-                        <strong>{{ 'entrySchedule.whyTitle' | translate }}</strong>
-                        {{ c.reason_summary }}
-                      </p>
-                    </div>
-                  }
-
-                  <div class="es-card-actions">
-                    <a
-                      [routerLink]="['/entry-schedule/crop', c.id]"
-                      [queryParams]="detailQueryParams()"
-                      class="link-inline es-link-detail"
-                    >
-                      {{ 'entrySchedule.table.detail' | translate }} →
+                  <h3 id="es-all-ineligible-title">{{ 'entrySchedule.allIneligibleTitle' | translate }}</h3>
+                  <p>{{ 'entrySchedule.allIneligibleBody' | translate }}</p>
+                  <div class="es-all-ineligible-actions">
+                    <p class="muted">{{ 'entrySchedule.allIneligibleTryOtherFarm' | translate }}</p>
+                    <a routerLink="/public-plans/new" class="btn btn-primary">
+                      {{ 'entrySchedule.allIneligiblePublicPlanCta' | translate }}
                     </a>
                   </div>
-                </article>
-              }
-            </div>
-            @if (listResponse()!.meta.has_more) {
-              <div class="mt-4">
-                <button type="button" class="btn btn-secondary" [disabled]="cropsLoading()" (click)="loadCrops(true)">
-                  {{ 'entrySchedule.loadMore' | translate }}
-                </button>
+                </section>
+              } @else {
+              <div class="es-crop-grid" data-testid="entry-schedule-crop-grid" role="list">
+                @for (c of listResponse()!.crops; track c.id; let idx = $index) {
+                  <article
+                    class="es-crop-card"
+                    [class.ineligible]="!c.eligible"
+                    role="listitem"
+                    [attr.aria-label]="c.name"
+                  >
+                    <div class="es-crop-head">
+                      <span class="eligible-pill" [attr.data-state]="c.eligible ? 'ok' : 'no'">
+                        {{ c.eligible ? ('entrySchedule.eligibleYes' | translate) : ('entrySchedule.eligibleNo' | translate) }}
+                      </span>
+                      <span class="es-crop-name">{{ c.name }}</span>
+                    </div>
+                    <p class="es-flow-line">{{ c.schedule_flow_summary || '—' }}</p>
+
+                    @if (chartTimelineContext(c); as ctx) {
+                      <div
+                        class="es-mini-chart"
+                        role="img"
+                        [attr.aria-label]="'entrySchedule.viz.ganttAria' | translate: { name: c.name }"
+                      >
+                        <p class="es-mini-chart-intro">{{ 'entrySchedule.viz.listChartIntro' | translate }}</p>
+                        <div class="es-year-banner" aria-hidden="true">
+                          {{ 'entrySchedule.viz.axisYear' | translate: { year: ctx.year } }}
+                        </div>
+                        <div class="es-mini-rows">
+                          <div class="es-mini-row">
+                            <span class="es-mini-row-label">{{ 'entrySchedule.viz.sowBand' | translate }}</span>
+                            <div class="es-track">
+                              @if (c.sowing_summary) {
+                                <div
+                                  class="es-seg sow"
+                                  [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
+                                  [ngStyle]="segmentStyle(c.sowing_summary.start_date, c.sowing_summary.end_date, ctx)"
+                                ></div>
+                              }
+                            </div>
+                          </div>
+                          <div class="es-mini-row">
+                            <span class="es-mini-row-label">{{ 'entrySchedule.viz.transplantBand' | translate }}</span>
+                            <div class="es-track">
+                              @if (c.transplant_summary) {
+                                <div
+                                  class="es-seg transplant"
+                                  [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
+                                  [ngStyle]="segmentStyle(c.transplant_summary.start_date, c.transplant_summary.end_date, ctx)"
+                                ></div>
+                              }
+                            </div>
+                          </div>
+                        </div>
+                        <div class="es-month-ruler" aria-hidden="true">
+                          @for (m of monthTicks; track m) {
+                            <span class="es-month-tick">{{ 'entrySchedule.viz.monthTick' | translate: { n: m } }}</span>
+                          }
+                        </div>
+                        <p class="es-mini-chart-foot">{{ 'entrySchedule.viz.listChartFoot' | translate }}</p>
+                      </div>
+                    } @else {
+                      <div class="es-mini-chart muted" style="font-size: 0.85rem">{{ 'entrySchedule.viz.noWindow' | translate }}</div>
+                    }
+
+                    <div class="es-date-pills">
+                      @if (c.sowing_summary) {
+                        <span class="es-pill sow">{{ formatRangeShort(c.sowing_summary) }}</span>
+                      }
+                      @if (c.transplant_summary) {
+                        <span class="es-pill transplant">{{ formatRangeShort(c.transplant_summary) }}</span>
+                      }
+                    </div>
+
+                    @if (c.schedule_flow_detail) {
+                      <div class="es-expand-wrap">
+                        <button
+                          type="button"
+                          class="btn-link"
+                          (click)="toggleFlowDetail(idx)"
+                          [attr.aria-expanded]="flowDetailOpen().has(idx)"
+                        >
+                          {{ flowDetailOpen().has(idx) ? ('entrySchedule.collapse' | translate) : ('entrySchedule.expand' | translate) }}
+                        </button>
+                      </div>
+                    }
+                    @if (flowDetailOpen().has(idx) && c.schedule_flow_detail) {
+                      <div class="flow-detail-expanded">
+                        <p class="flow-detail">{{ c.schedule_flow_detail }}</p>
+                        <p class="reason-trust">
+                          <strong>{{ 'entrySchedule.whyTitle' | translate }}</strong>
+                          {{ c.reason_summary }}
+                        </p>
+                      </div>
+                    }
+
+                    <div class="es-card-actions">
+                      <a
+                        [routerLink]="['/entry-schedule/crop', c.id]"
+                        [queryParams]="detailQueryParams()"
+                        class="link-inline es-link-detail"
+                      >
+                        {{ 'entrySchedule.table.detail' | translate }} →
+                      </a>
+                    </div>
+                  </article>
+                }
               </div>
+              }
+              @if (listResponse()!.meta.has_more && !isAllIneligibleEmpty(listResponse()!)) {
+                <div class="mt-4">
+                  <button type="button" class="btn btn-secondary" [disabled]="cropsLoading()" (click)="loadCrops(true)">
+                    {{ 'entrySchedule.loadMore' | translate }}
+                  </button>
+                </div>
+              }
+              <p class="footer-disclaimer muted mt-4">{{ 'entrySchedule.listDisclaimer' | translate }}</p>
             }
-            <p class="footer-disclaimer muted mt-4">{{ 'entrySchedule.listDisclaimer' | translate }}</p>
-          }
-        </section>
+          </section>
+        </app-funnel-shell>
       </div>
     </div>
   `,
-  styleUrls: ['../public-plans/public-plan.component.css', './entry-schedule-visual.css'],
+  styleUrls: ['../shared/shells/funnel-shell.component.css', '../public-plans/public-plan.component.css', './entry-schedule-visual.css'],
   styles: [
     `
-      .entry-schedule-controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        align-items: center;
-      }
-      .entry-schedule-select {
-        min-width: 14rem;
-        max-width: 100%;
-      }
       .flow-detail-expanded {
         margin-top: 0.75rem;
         padding: 0.75rem;
@@ -239,16 +220,6 @@ const PAGE_LIMIT = 20;
         font-size: 1.1rem;
         margin-bottom: 1rem;
       }
-      .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        border: 0;
-      }
       .placeholder-block {
         padding: 1.5rem;
         border: 1px dashed var(--color-border);
@@ -257,10 +228,6 @@ const PAGE_LIMIT = 20;
       }
       .meta-line {
         display: block;
-      }
-      .flow-summary {
-        display: block;
-        font-size: 0.9rem;
       }
       .btn-link {
         background: none;
@@ -273,6 +240,22 @@ const PAGE_LIMIT = 20;
       }
       .footer-disclaimer {
         font-size: 0.85rem;
+      }
+      .es-all-ineligible-empty {
+        padding: 1.5rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        background: var(--color-surface);
+      }
+      .es-all-ineligible-empty h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.05rem;
+      }
+      .es-all-ineligible-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 1rem;
       }
     `
   ]
@@ -295,6 +278,19 @@ export class EntryScheduleListComponent implements OnInit {
   readonly flowDetailOpen = signal<Set<number>>(new Set());
 
   private loadCursor: string | null = null;
+
+  farmCardsState(): 'loading' | 'empty' | 'error' | 'ready' {
+    if (this.farmsLoading()) {
+      return 'loading';
+    }
+    if (this.farmsError()) {
+      return 'error';
+    }
+    if (this.farms().length === 0) {
+      return 'empty';
+    }
+    return 'ready';
+  }
 
   ngOnInit(): void {
     this.loadFarmsList();
@@ -323,6 +319,7 @@ export class EntryScheduleListComponent implements OnInit {
         this.farmsLoading.set(false);
         if (rows.length === 1) {
           this.selectedFarmId.set(rows[0].id);
+          this.loadCrops(false);
         }
       });
   }
@@ -332,14 +329,11 @@ export class EntryScheduleListComponent implements OnInit {
     this.loadFarmsList();
   }
 
-  compareFarmId(a: number | null, b: number | null): boolean {
-    return a === b;
-  }
-
-  onFarmChange(id: number | null): void {
-    this.selectedFarmId.set(id);
+  onFarmSelected(farm: Farm): void {
+    this.selectedFarmId.set(farm.id);
     this.listResponse.set(null);
     this.loadCursor = null;
+    this.loadCrops(false);
   }
 
   detailQueryParams(): Record<string, string | number> {
@@ -446,6 +440,15 @@ export class EntryScheduleListComponent implements OnInit {
     const a = summary.start_date.slice(5, 10).replace('-', '/');
     const b = summary.end_date.slice(5, 10).replace('-', '/');
     return `${a} – ${b}`;
+  }
+
+  isAllIneligibleEmpty(response: EntryScheduleCropsListResponse): boolean {
+    if (response.crops.length === 0) {
+      return false;
+    }
+    return response.crops.every(
+      (crop) => !crop.eligible && !crop.sowing_summary && !crop.transplant_summary,
+    );
   }
 
 }

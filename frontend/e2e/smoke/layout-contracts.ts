@@ -7,6 +7,7 @@ import { LAYOUT_ARCHETYPE_RUNNERS } from './layout-contract-archetypes';
 import {
   LAYOUT_CONTRACT_BY_PATTERN,
 } from './layout-contract-bindings.mjs';
+import { conformanceForPattern } from './layout-conformance-bindings.mjs';
 
 type LayoutArchetype =
   | 'master-list'
@@ -16,6 +17,7 @@ type LayoutArchetype =
   | 'plan-hub'
   | 'plan-form'
   | 'section-hub'
+  | 'funnel-hub'
   | 'settings-page'
   | 'static-page'
   | 'l1-only';
@@ -60,5 +62,6 @@ export async function runLayoutContract(page: Page, pattern: string): Promise<vo
     throw new Error(`[layout-contract] no L2 runner registered for archetype "${archetype}"`);
   }
 
-  await runner(page, hostSelector);
+  const conformanceLevel = conformanceForPattern(pattern);
+  await runner(page, hostSelector, conformanceLevel);
 }

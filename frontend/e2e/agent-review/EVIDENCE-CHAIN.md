@@ -8,6 +8,9 @@ PNG を根拠にする Issue 起票は **Capture Run ボンドル**で束ねる�
 |----|------|------------|
 | **機械** | `audit:css-tokens`、locale catalog spec、axe smoke 等 | CSS / 一部 i18n・a11y は PNG 不要 |
 | **視覚** | `tmp/agent-review/agent-review-bundle.json` + 同 runId の PNG | bundle に無い PNG は根拠にしない |
+| **Pattern カタログ** | `docs/design/pattern-manifest.json`（メタのみ、commit 可） | Pattern ID・routes・L2 レビュー日 |
+
+`visual-review.json` と PNG は **tmp のみ**（リポジトリに commit しない）。
 
 ## 必須パイプライン（視覚指摘 → Issue）
 

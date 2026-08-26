@@ -40,6 +40,7 @@ flowchart TD
 | `crates/agrr-server/src/` | Axum routes, composition, presenter wiring |
 | `crates/agrr-r4-contract/` | R4 contract fixtures and harness |
 | `frontend/src/app/` | Angular: `domain/`, `usecase/`, `adapters/`, `components/` |
+| `docs/design/UI-COMPOSITION-RULES.md` | Frontend page composition (Shell + Pattern, conformance L0–L4) |
 | `scripts/run-rust-contract-tests.sh` | Production-path contract tests |
 
 **Bounded contexts** (`crates/agrr-domain/src/`): `agricultural_task`, `api_keys`, `auth`, `backdoor`, `contact_messages`, `crop`, `cultivation_plan`, `deletion_undo`, `farm`, `fertilize`, `field`, `field_cultivation`, `interaction_rule`, `internal_jobs`, `organization`, `pest`, `pesticide`, `public_plan`, `shared`, `user_account`, `weather_data`, `work_record`.

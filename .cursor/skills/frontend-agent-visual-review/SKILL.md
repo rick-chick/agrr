@@ -41,6 +41,16 @@ description: >-
 | 3 言語の整合 | 同一画面で **ja だけ別言語・in/en だけキー表示**など、言語間で意味が明らかにずれていないか | | |
 
 - **layout / i18n** 列: それぞれ `OK` / `注意` / `要確認`（上記「言語・i18n」節に従う）。
+- **`layout: OK` でも `details` に必須**（Paved Road UI 5 項目チェック。問題なしは `note: "なし"` と明示）:
+
+| # | 観点 | 確認内容 |
+|---|------|----------|
+| 1 | Shell | `funnel-hub` / `section-hub` でヘッダー（title + description）が縦積みか、`page-intro` が `compact-header-card` 内にないか |
+| 2 | Pattern | 農場選択が `<select>` + ボタンではなくカード Pattern か |
+| 3 | Empty | 空状態が「空カード N 枚」ではなく 1 ブロック + 次アクションか |
+| 4 | Buttons | `btn-primary` / `btn-secondary` が `.btn` ベースか、ネイティブ `<button>` 直スタイルがないか |
+| 5 | Links | `link-inline` / `btn-link` が定義済みクラスか、未定義クラスを使っていないか |
+
 - **バッチ**: 1 バッチあたり 10〜15 **行（pattern）** × 3 言語。全件時は `routeToPngRange: { start: 1, end: N }` と 3 言語セットであることを明記。
 
 ## バッチ運用

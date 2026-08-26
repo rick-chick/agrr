@@ -10,6 +10,7 @@ export type LayoutArchetypeDesignContract = {
   maxItemCardVisibleActionButtons?: number;
   checkFormCardActionRows?: boolean;
   checkDetailCardActionOverlap?: boolean;
+  requiredShellSelectors?: string[];
 };
 
 /** Run L2 design contract (structure + viewport + density rules) inside the browser context. */
@@ -17,12 +18,14 @@ export async function assertArchetypeDesignContract(
   page: Page,
   hostSelector: string,
   contract: LayoutArchetypeDesignContract,
+  conformanceLevel = 'L0',
 ): Promise<void> {
   await expect(page.locator(hostSelector)).toBeVisible({ timeout: 10_000 });
 
   const violations = await page.evaluate(evaluateArchetypeDesignContract, {
     hostSelector,
     contract,
+    conformanceLevel,
   });
 
   if (violations.length === 0) {
