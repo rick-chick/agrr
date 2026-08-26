@@ -22,7 +22,7 @@ GitHub Actions workflow **`.github/workflows/frontend-e2e-smoke.yml`** が PR �
 |------|------|
 | 起動 | `docker compose` + `docker-compose.e2e-ci.yml`（`agrr-server` + `strangler-proxy`） |
 | 参照データ | 初回は `load-reference-data-container.sh`、以降は Actions cache（`.docker/e2e_dev_db_cache`） |
-| テスト | リポジトリ root で `bash scripts/run-e2e-smoke-ci.sh` → frontend で `npm run test:e2e:smoke:route` + `npm run test:e2e:smoke:a11y` |
+| テスト | リポジトリ root で `bash scripts/run-e2e-smoke-ci.sh` → frontend で `npm run test:e2e:smoke:route` + `npm run test:e2e:smoke:layout` + `npm run test:e2e:smoke:a11y` |
 | 環境変数 | `E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1`（`playwright.config.ts` の ng serve webServer 付き） |
 
 `ensureE2eBaseline()` は dev セッション付き smoke と同様、`route-smoke` の `beforeAll` から呼ばれる。CI でも idempotent に `E2E Baseline` マスタ行を確保する。
@@ -69,6 +69,9 @@ cd .. && bash scripts/run-e2e-smoke-ci.sh
 | ファイル | 内容 |
 |----------|------|
 | `route-smoke.spec.ts` | `route-manifest.json` 全ルート: 正しいホスト表示・ローディング解消・`.error-message` 非表示 |
+| `layout-smoke.spec.ts` | **全ルート × mobile/tablet/desktop**: L1 不変条件 + L2（`layout-contract-bindings.mjs` のアーキタイプ + 画面 override） |
+| `layout-contract-bindings.mjs` | 全 `pattern` のアーキタイプ分類（`master-list` / `wizard-step` / `l1-only`）または `LAYOUT_CONTRACT_EXEMPT` |
+| `npm run e2e:layout-contract:check:enforce` | マニフェストと bindings の突合（PR `frontend-test`） |
 | `locale-i18n-smoke.spec.ts` | `route-manifest.json` 全ルート × `ja` / `en` / `in`: 可視 DOM テキストに生キー・`%{...}` 残り・locale 不適切な文字列がないか（`locale-i18n-smoke-lib.mjs`） |
 | `operation-smoke.spec.ts` | ホーム CTA、ナビ、公開 wizard（farm-size → select-crop）、問い合わせ、**farms UI CRUD**、マスタ list/new/detail/edit、ガント UI、作業目安一覧→詳細、API キー、天気、作業予定 D&D など |
 | `gantt-mobile-drag.spec.ts` | **モバイル viewport** + **CDP touch** でガント作付バーを水平ドラッグ: しきい値未満では `adjust` しない、ホールド中のバー追従、指を離すまで POST しない、離したあと **4 日以上**の日付移動を commit（タッチジェスチャの振る舞いはここ。`gantt-chart.component.spec.ts` は配線・テンプレート・デスクトップ `pointercancel` / ゴミ箱のみ） |
@@ -83,6 +86,18 @@ locale i18n smoke のみ実行:
 ```bash
 npm run test:e2e:smoke:locale-i18n
 ```
+
+## レイアウト契約（L2）の追加手順
+
+新ルート追加時は `npm run e2e:manifest` のあと **`layout-contract-bindings.mjs` を更新**する（未更新だと `npm run e2e:layout-contract:check:enforce` が PR で RED）。
+
+1. `e2e/smoke/layout-contract-bindings.mjs` に `pattern` を追加  
+   - 一覧系 → `master-list`（8 マスタ一覧 + `plans`）  
+   - 公開プラン wizard → `wizard-step`  
+   - それ以外（詳細・フォーム・静的）→ `l1-only`（L1 のみ）  
+   - ログイン・意図的 404 のみ → `LAYOUT_CONTRACT_EXEMPT`（理由必須）
+2. 画面固有の追加検証が必要なら `layout-contracts.ts` の `LAYOUT_CONTRACT_OVERRIDES` に assert を登録（例: `plans`, `public-plans/select-crop`）
+3. 新アーキタイプを導入する場合は `layout-contract-archetype-keys.mjs` と `layout-contract-archetypes.ts` に runner を追加
 
 ## i18n 監査の役割分担
 

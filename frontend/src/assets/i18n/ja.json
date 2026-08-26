@@ -2398,6 +2398,9 @@
         "collapse": "折りたたむ",
         "compare_variance": "乖離を比較"
       },
+      "menu": {
+        "more_actions": "その他の操作"
+      },
       "initial_setup": "初回セットアップ",
       "public_plan_handoff": "公開プランの続きを見る"
     },

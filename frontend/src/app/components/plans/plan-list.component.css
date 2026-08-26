@@ -84,6 +84,72 @@
   color: var(--color-text-secondary);
 }
 
+.plan-overflow-menu {
+  position: relative;
+}
+
+.plan-overflow-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  padding-inline: var(--space-2);
+}
+
+.plan-overflow-menu__icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+.plan-overflow-menu__panel {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: 20;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.plan-overflow-menu__item {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-align: start;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.plan-overflow-menu__item:hover,
+.plan-overflow-menu__item:focus-visible {
+  background: var(--color-surface-alt);
+  color: var(--color-primary);
+  outline: none;
+}
+
+.plan-overflow-menu__item--danger {
+  color: var(--color-error);
+}
+
+.plan-overflow-menu__item--danger:hover,
+.plan-overflow-menu__item--danger:focus-visible {
+  color: var(--color-error-dark);
+}
+
 @media (max-width: 20rem) {
   .list-loading-skeleton {
     display: none;

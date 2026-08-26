@@ -99,10 +99,13 @@ export E2E_CAPTURE_DEV_SESSION=1
 export E2E_STRANGLER=1
 npm run test:e2e:smoke:route
 
+echo "==> Running layout smoke (invariants + route contracts × viewports)"
+npm run test:e2e:smoke:layout
+
 echo "==> Running a11y smoke (axe-core + gantt keyboard alternative)"
 npm run test:e2e:smoke:a11y
 
 echo "==> Running empty-state smoke (e2e_empty user)"
 npm run test:e2e:smoke:empty-state
 
-echo "==> route-smoke + a11y + empty-state smoke GREEN"
+echo "==> route-smoke + layout-smoke + a11y + empty-state smoke GREEN"

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef, ElementRef, ViewChild, signal } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ElementRef, ViewChild, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -146,29 +146,66 @@ const initialControl: PlanListViewState = {
                           }
                         </a>
                         <div class="item-card__actions">
-                          <a
-                            [routerLink]="['/plans', plan.id, 'work']"
-                            class="btn btn-secondary plan-list__work-link"
-                          >
-                            {{ 'plans.index.input_gap.work_link' | translate }}
-                          </a>
-                          <a
-                            [routerLink]="['/plans', plan.id, 'learn']"
-                            class="btn btn-secondary plan-list__learn-link"
-                          >
-                            {{ 'plans.index.input_gap.learn_link' | translate }}
-                          </a>
-                          <a [routerLink]="['/plans', plan.id]" class="btn btn-secondary">
-                            {{ 'common.show' | translate }}
-                          </a>
-                          <button
-                            type="button"
-                            class="btn btn-danger"
-                            (click)="deletePlan(plan.id)"
-                            [attr.aria-label]="'common.delete' | translate"
-                          >
-                            {{ 'common.delete' | translate }}
-                          </button>
+                          <div class="plan-overflow-menu" data-testid="plan-overflow-menu">
+                            <button
+                              type="button"
+                              class="btn btn-secondary btn-sm plan-overflow-menu__trigger"
+                              data-testid="plan-overflow-menu-trigger"
+                              [attr.aria-expanded]="openMenuPlanId === plan.id"
+                              [attr.aria-controls]="overflowMenuPanelId(plan.id)"
+                              aria-haspopup="menu"
+                              [attr.aria-label]="'plans.index.menu.more_actions' | translate"
+                              (click)="toggleOverflowMenu(plan.id, $event)"
+                            >
+                              <svg class="plan-overflow-menu__icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path
+                                  fill="currentColor"
+                                  d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
+                                />
+                              </svg>
+                            </button>
+                            @if (openMenuPlanId === plan.id) {
+                              <div
+                                class="plan-overflow-menu__panel"
+                                [id]="overflowMenuPanelId(plan.id)"
+                                role="menu"
+                                data-testid="plan-overflow-menu-panel"
+                              >
+                                <a
+                                  [routerLink]="['/plans', plan.id, 'work']"
+                                  class="plan-overflow-menu__item plan-list__work-link"
+                                  role="menuitem"
+                                  (click)="closeOverflowMenu()"
+                                >
+                                  {{ 'plans.index.input_gap.work_link' | translate }}
+                                </a>
+                                <a
+                                  [routerLink]="['/plans', plan.id, 'learn']"
+                                  class="plan-overflow-menu__item plan-list__learn-link"
+                                  role="menuitem"
+                                  (click)="closeOverflowMenu()"
+                                >
+                                  {{ 'plans.index.input_gap.learn_link' | translate }}
+                                </a>
+                                <a
+                                  [routerLink]="['/plans', plan.id]"
+                                  class="plan-overflow-menu__item plan-list__show-link"
+                                  role="menuitem"
+                                  (click)="closeOverflowMenu()"
+                                >
+                                  {{ 'common.show' | translate }}
+                                </a>
+                                <button
+                                  type="button"
+                                  class="plan-overflow-menu__item plan-overflow-menu__item--danger"
+                                  role="menuitem"
+                                  (click)="deletePlanFromMenu(plan.id)"
+                                >
+                                  {{ 'common.delete' | translate }}
+                                </button>
+                              </div>
+                            }
+                          </div>
                         </div>
                       </article>
                     </li>
@@ -215,6 +252,7 @@ export class PlanListComponent implements PlanListView, OnInit {
   @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
 
   pendingDeletePlanId: number | null = null;
+  openMenuPlanId: number | null = null;
 
   get publicPlanHandoffId(): number | null {
     const planId = this.publicPlanStore.state.planId;
@@ -275,8 +313,51 @@ export class PlanListComponent implements PlanListView, OnInit {
   }
 
   deletePlan(planId: number): void {
+    this.closeOverflowMenu();
     this.pendingDeletePlanId = planId;
     this.deleteConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  deletePlanFromMenu(planId: number): void {
+    this.closeOverflowMenu();
+    this.deletePlan(planId);
+  }
+
+  toggleOverflowMenu(planId: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openMenuPlanId = this.openMenuPlanId === planId ? null : planId;
+  }
+
+  closeOverflowMenu(): void {
+    this.openMenuPlanId = null;
+  }
+
+  overflowMenuPanelId(planId: number): string {
+    return `plan-overflow-menu-panel-${planId}`;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    this.dismissOverflowMenuIfOutside(event.target);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (this.openMenuPlanId === null || event.key !== 'Escape') {
+      return;
+    }
+    event.preventDefault();
+    this.closeOverflowMenu();
+  }
+
+  private dismissOverflowMenuIfOutside(target: EventTarget | null): void {
+    if (this.openMenuPlanId === null) {
+      return;
+    }
+    if (target instanceof Element && target.closest('[data-testid="plan-overflow-menu"]')) {
+      return;
+    }
+    this.closeOverflowMenu();
   }
 
   confirmDeletePlan(): void {

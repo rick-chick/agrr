@@ -2192,6 +2192,9 @@
         "collapse": "Collapse",
         "compare_variance": "Compare variance"
       },
+      "menu": {
+        "more_actions": "More actions"
+      },
       "initial_setup": "Initial setup wizard",
       "public_plan_handoff": "Continue your public plan"
     },
