@@ -4181,6 +4181,8 @@
       "axisYear": "{{year}}",
       "bandStartHint": "Guide start timing",
       "noWindow": "No window",
+      "noWindowTitle": "No planting window",
+      "noWindowHint": "Open the detail view for schedule notes and reasons.",
       "monthTick": "{{n}}",
       "detailGanttFoot": "Bands are guide windows based on forecast weather.",
       "listChartIntro": "Candidate window overview",

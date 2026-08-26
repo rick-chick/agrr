@@ -41,6 +41,8 @@ const ENTRY_SCHEDULE_UI_KEYS = [
   'entrySchedule.viz.axisYear',
   'entrySchedule.viz.bandStartHint',
   'entrySchedule.viz.noWindow',
+  'entrySchedule.viz.noWindowTitle',
+  'entrySchedule.viz.noWindowHint',
   'entrySchedule.viz.monthTick',
   'entrySchedule.viz.detailGanttFoot',
   'entrySchedule.viz.listChartIntro',
