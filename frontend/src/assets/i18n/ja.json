@@ -4217,6 +4217,8 @@
       "axisYear": "{{year}}年",
       "bandStartHint": "開始時期の目安",
       "noWindow": "期間なし",
+      "noWindowTitle": "作付けウィンドウなし",
+      "noWindowHint": "詳細画面でスケジュールの補足と理由を確認できます。",
       "monthTick": "{{n}}月",
       "detailGanttFoot": "帯は予測気象に基づく目安です。",
       "listChartIntro": "候補期間の概要",

@@ -150,7 +150,15 @@ const PAGE_LIMIT = 20;
                       <p class="es-mini-chart-foot">{{ 'entrySchedule.viz.listChartFoot' | translate }}</p>
                     </div>
                   } @else {
-                    <div class="es-mini-chart muted" style="font-size: 0.85rem">{{ 'entrySchedule.viz.noWindow' | translate }}</div>
+                    <div class="es-crop-card-empty" role="status">
+                      <span class="es-crop-card-empty-icon" aria-hidden="true">📅</span>
+                      <p class="es-crop-card-empty-message">
+                        {{ 'entrySchedule.viz.noWindowTitle' | translate }}
+                      </p>
+                      <p class="es-crop-card-empty-hint">
+                        {{ 'entrySchedule.viz.noWindowHint' | translate }}
+                      </p>
+                    </div>
                   }
 
                   <div class="es-date-pills">
