@@ -70,6 +70,7 @@ export async function collectLayoutInvariantSnapshot(
       'h2.form-card__title',
       '#page-title',
       'h1.compact-header-title',
+      'app-plan-optimizing h2',
     ];
     let levelOneHeadingVisible = false;
     for (const selector of headingSelectors) {

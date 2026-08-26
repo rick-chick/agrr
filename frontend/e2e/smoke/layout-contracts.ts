@@ -8,7 +8,17 @@ import {
   LAYOUT_CONTRACT_BY_PATTERN,
 } from './layout-contract-bindings.mjs';
 
-type LayoutArchetype = 'master-list' | 'master-detail' | 'master-form' | 'wizard-step' | 'l1-only';
+type LayoutArchetype =
+  | 'master-list'
+  | 'master-detail'
+  | 'master-form'
+  | 'wizard-step'
+  | 'plan-hub'
+  | 'plan-form'
+  | 'section-hub'
+  | 'settings-page'
+  | 'static-page'
+  | 'l1-only';
 
 export type LayoutContractOverride = (page: Page) => Promise<void>;
 

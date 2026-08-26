@@ -160,6 +160,8 @@ describe('PlanOptimizingComponent', () => {
 
     const alert = fixture.nativeElement.querySelector('.page-alert-error');
     expect(alert).not.toBeNull();
+    expect(alert.querySelector('h2')).not.toBeNull();
+    expect(alert.textContent).toContain('Optimizing');
     expect(alert.textContent).toContain('Process failed');
 
     const retry = fixture.nativeElement.querySelector('.plan-optimizing__retry');

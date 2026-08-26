@@ -49,6 +49,7 @@ const initialControl: PlanOptimizingViewState = {
       <section class="page">
         @if (isFailed) {
           <div class="page-alert-error plan-optimizing__error" role="alert">
+            <h2>{{ 'plans.optimizing_live.heading' | translate }}</h2>
             <p>{{ control.phaseMessage }}</p>
             @if (control.failureHint) {
               <p class="plan-optimizing__failure-hint">{{ control.failureHint }}</p>
