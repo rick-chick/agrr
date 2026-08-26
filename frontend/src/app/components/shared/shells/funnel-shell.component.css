@@ -1,0 +1,68 @@
+.funnel-shell-header {
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.funnel-shell-header--hub {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.funnel-shell-header--wizard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--space-4);
+}
+
+.funnel-shell-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  min-height: 40px;
+  overflow: visible;
+}
+
+.funnel-shell-title .title-icon {
+  font-size: var(--font-size-2xl);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.funnel-shell-header--hub .funnel-shell-title .title-text {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
+  line-height: 1.25;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.funnel-shell-description {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.funnel-shell-body {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .funnel-shell-header--wizard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

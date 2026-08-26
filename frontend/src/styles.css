@@ -2,6 +2,7 @@
 
 @import './app/components/shared/form-dialog-shared.css';
 @import './app/components/shared/_button-primitives.css';
+@import './app/components/shared/_form-primitives.css';
 
 /* ===== デザイントークン（一貫性担保・ハードコード禁止） ===== */
 :root {

@@ -86,12 +86,13 @@ describe('EntryScheduleListComponent', () => {
     translate.use('en');
   });
 
-  it('renders FunnelShell structure with compact header and content card', async () => {
+  it('renders FunnelShell with farm selection cards', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.compact-header-card h1.compact-header-title .title-text')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-funnel-shell')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-farm-selection-cards')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('section.content-card')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('#entry-farm-select')).toBeNull();
   });
