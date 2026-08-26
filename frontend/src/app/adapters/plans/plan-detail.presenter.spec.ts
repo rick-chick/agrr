@@ -2,6 +2,8 @@ import { PlanDetailPresenter } from './plan-detail.presenter';
 import { PlanDetailView, PlanDetailViewState } from '../../components/plans/plan-detail.view';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
+import type { WeatherRescheduleProposal } from '../../domain/plans/weather-reschedule-proposal';
+import { readDismissedWeatherRescheduleProposalIds } from '../../domain/plans/weather-reschedule-proposal-session';
 
 const emptyWeatherState = {
   weatherProposals: [],
@@ -92,5 +94,54 @@ describe('PlanDetailPresenter', () => {
     expect(lastControl!.error).toBe('boom');
     expect(lastControl!.plan).toBeNull();
     expect(lastControl!.planData).toBeNull();
+  });
+
+  it('onApplied dismisses active weather proposal without clearing plan data', () => {
+    const weatherProposal: WeatherRescheduleProposal = {
+      id: 'frost_forecast:10:1',
+      trigger_type: 'frost_forecast',
+      severity: 'high',
+      rationale: {},
+      moves: []
+    };
+    let lastControl: PlanDetailViewState = {
+      loading: false,
+      error: null,
+      plan,
+      planData,
+      varianceActionItemsOnGantt: [],
+      weatherProposals: [weatherProposal],
+      activeWeatherProposalId: weatherProposal.id,
+      weatherPreviewLoading: false,
+      weatherPreviewError: null,
+      weatherPreview: {
+        proposal_id: weatherProposal.id,
+        moves: [],
+        proposal: weatherProposal,
+        before: { field_schedules: [] },
+        after: { field_schedules: [] }
+      },
+      weatherOverlayBars: [],
+      weatherApplyLoading: true,
+      weatherApplyError: null
+    };
+    const view: PlanDetailView = {
+      get control(): PlanDetailViewState {
+        return lastControl;
+      },
+      set control(value: PlanDetailViewState) {
+        lastControl = value;
+      }
+    };
+
+    const presenter = new PlanDetailPresenter();
+    presenter.setView(view);
+    presenter.onApplied();
+
+    expect(lastControl.weatherProposals).toEqual([]);
+    expect(lastControl.activeWeatherProposalId).toBeNull();
+    expect(lastControl.weatherPreview).toBeNull();
+    expect(lastControl.planData).toBe(planData);
+    expect(readDismissedWeatherRescheduleProposalIds(plan.id)).toContain(weatherProposal.id);
   });
 });

@@ -52,6 +52,25 @@ export class PlanDetailPresenter
     this.presentPlanDetail(dto as PlanDetailDataDto);
   }
 
+  onApplied(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const appliedId = this.view.control.activeWeatherProposalId;
+    const planId = this.view.control.plan?.id;
+    if (appliedId && planId) {
+      dismissWeatherRescheduleProposal(planId, appliedId);
+    }
+    this.view.control = {
+      ...this.view.control,
+      activeWeatherProposalId: null,
+      weatherPreview: null,
+      weatherPreviewError: null,
+      weatherOverlayBars: [],
+      weatherProposals: appliedId
+        ? this.view.control.weatherProposals.filter((proposal) => proposal.id !== appliedId)
+        : this.view.control.weatherProposals
+    };
+  }
+
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (this.view.control.weatherPreviewLoading) {
