@@ -7,6 +7,7 @@ export const LAYOUT_ARCHETYPE_RUNNER_KEYS = /** @type {const} */ ([
   'plan-hub',
   'plan-form',
   'section-hub',
+  'funnel-hub',
   'settings-page',
   'static-page',
 ]);

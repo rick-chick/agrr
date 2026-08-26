@@ -79,6 +79,50 @@ test('checkContentBlockLayout enforces maxItemCardVisibleActionButtons', async (
   assert.ok(violations.some((v) => v.includes('maxItemCardVisibleActionButtons')));
 });
 
+test('checkContentBlockLayout enforces requiredShellSelectors for L1 conformance', async () => {
+  const html = `
+    <div id="host">
+      <section class="content-card" data-width="400" data-height="40" style="display: block;"></section>
+    </div>
+  `;
+
+  const violations = await checkContentBlockLayout({
+    html,
+    hostSelector: '#host',
+    viewportWidth: 1280,
+    conformanceLevel: 'L1',
+    contract: {
+      contentBlockSelectors: ['.content-card'],
+      requireAnyContentBlock: true,
+      requiredShellSelectors: ['app-funnel-shell'],
+    },
+  });
+
+  assert.ok(violations.some((v) => v.includes('requiredShellSelectors')));
+});
+
+test('checkContentBlockLayout skips requiredShellSelectors for L0 conformance', async () => {
+  const html = `
+    <div id="host">
+      <section class="content-card" data-width="400" data-height="40" style="display: block;"></section>
+    </div>
+  `;
+
+  const violations = await checkContentBlockLayout({
+    html,
+    hostSelector: '#host',
+    viewportWidth: 1280,
+    conformanceLevel: 'L0',
+    contract: {
+      contentBlockSelectors: ['.content-card'],
+      requireAnyContentBlock: true,
+      requiredShellSelectors: ['app-funnel-shell'],
+    },
+  });
+
+  assert.equal(violations.some((v) => v.includes('requiredShellSelectors')), false);
+});
+
 test('LAYOUT_ARCHETYPE_DESIGN_CONTRACTS covers every L2 runner key', () => {
   for (const key of LAYOUT_ARCHETYPE_RUNNER_KEYS) {
     assert.ok(

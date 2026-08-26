@@ -4,9 +4,9 @@
  */
 
 /**
- * @param {{ hostSelector: string; contract: import('./layout-archetype-design-contracts.mjs').LayoutArchetypeDesignContract }} input
+ * @param {{ hostSelector: string; contract: import('./layout-archetype-design-contracts.mjs').LayoutArchetypeDesignContract; conformanceLevel?: string }} input
  */
-export function evaluateArchetypeDesignContract({ hostSelector, contract }) {
+export function evaluateArchetypeDesignContract({ hostSelector, contract, conformanceLevel = 'L0' }) {
   function isElementVisible(el) {
     const rect = el.getBoundingClientRect();
     const style = el.ownerDocument.defaultView?.getComputedStyle(el);
@@ -183,6 +183,14 @@ export function evaluateArchetypeDesignContract({ hostSelector, contract }) {
 
   if (contract.checkDetailCardActionOverlap) {
     violations.push(...findDetailCardActionOverlapViolations(root));
+  }
+
+  if (conformanceLevel !== 'L0' && contract.requiredShellSelectors?.length) {
+    for (const selector of contract.requiredShellSelectors) {
+      if (countVisibleMatches(root, selector) === 0) {
+        violations.push(`requiredShellSelectors: "${selector}" not found or not visible`);
+      }
+    }
   }
 
   return violations;
