@@ -4174,6 +4174,20 @@
     },
     "loadMore": "Load more",
     "listDisclaimer": "These dates are guides. Adjust them for your region, variety, and actual weather.",
+    "listEmpty": {
+      "noCrops": {
+        "title": "No candidate crops",
+        "description": "This farm has no crops in the entry schedule yet.",
+        "hint": "Set up crop master data to add candidates.",
+        "action": "Set up crops"
+      },
+      "allIneligible": {
+        "title": "No crops in season now",
+        "description": "All candidate crops are outside the planting window. This is not missing data—they are marked not suitable for now.",
+        "hint": "Try another farm or review schedules and reasons in detail.",
+        "action": "Review crop master data"
+      }
+    },
     "viz": {
       "ganttTitle": "Entry schedule chart",
       "detailGanttIntro": "Guide windows are shown across January to December.",
