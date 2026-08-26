@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { EntryScheduleListComponent } from './entry-schedule-list.component';
 import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
@@ -58,6 +58,22 @@ describe('EntryScheduleListComponent', () => {
           noWindowHint: 'Open the detail view for schedule notes and reasons.',
           listChartIntro: 'Candidate window overview',
         },
+        listEmpty: {
+          noCrops: {
+            title: 'No candidate crops',
+            description: 'This farm has no crops in the entry schedule yet.',
+            hint: 'Set up crop master data to add candidates.',
+            action: 'Set up crops',
+          },
+          allIneligible: {
+            title: 'No crops in season now',
+            description: 'All candidate crops are outside the planting window.',
+            hint: 'Try another farm or review crop schedules in detail.',
+            action: 'Review crop master data',
+          },
+        },
+        error: 'Could not load crops',
+        retry: 'Retry',
       },
       pages: {
         entry_schedule: {
@@ -75,7 +91,7 @@ describe('EntryScheduleListComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-funnel-shell')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('[data-testid="farm-selection-cards"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-farm-selection-cards')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('section.content-card')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('#entry-farm-select')).toBeNull();
   });
@@ -158,7 +174,24 @@ describe('EntryScheduleListComponent', () => {
     expect(card.querySelector('.es-link-detail')).toBeTruthy();
   });
 
-  it('renders no-window empty pattern for ineligible crops independently', async () => {
+  it('renders list-level empty instead of crop cards when only one ineligible crop', async () => {
+    await selectFarmAndShowCrops([
+      {
+        id: 11,
+        name: 'Spinach',
+        eligible: false,
+        sowing_summary: null,
+        transplant_summary: null,
+        reason_summary: 'Out of season',
+        labels: { sowing: 'Sow', transplanting: 'Transplant' },
+      },
+    ]);
+
+    expect(fixture.nativeElement.querySelector('.es-list-empty')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.es-crop-card')).toBeNull();
+  });
+
+  it('renders no-window empty pattern for ineligible crops when eligible crops exist', async () => {
     await selectFarmAndShowCrops([
       {
         id: 12,
@@ -180,10 +213,110 @@ describe('EntryScheduleListComponent', () => {
       },
     ]);
 
-    const card = fixture.nativeElement.querySelector('.es-crop-card.ineligible') as HTMLElement;
-    expect(card).toBeTruthy();
-    expect(card.querySelector('.es-crop-card-empty')).toBeTruthy();
-    expect(card.querySelector('.es-mini-chart[role="img"]')).toBeNull();
+    const ineligibleCard = fixture.nativeElement.querySelector('.es-crop-card.ineligible') as HTMLElement;
+    expect(ineligibleCard).toBeTruthy();
+    expect(ineligibleCard.querySelector('.es-crop-card-empty')).toBeTruthy();
+    expect(ineligibleCard.querySelector('.es-mini-chart[role="img"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.es-list-empty')).toBeNull();
+  });
+
+  it('renders list empty block when crops response is empty', async () => {
+    await selectFarmAndShowCrops([]);
+
+    const empty = fixture.nativeElement.querySelector('.es-list-empty') as HTMLElement;
+    expect(empty).toBeTruthy();
+    expect(empty.getAttribute('role')).toBe('status');
+    expect(empty.querySelector('.es-list-empty-title')?.textContent).toContain(
+      'No candidate crops',
+    );
+    expect(empty.querySelector('.es-list-empty-description')?.textContent).toContain(
+      'no crops in the entry schedule',
+    );
+    expect(empty.querySelector('.es-list-empty-hint')?.textContent).toContain(
+      'Set up crop master data',
+    );
+    expect(empty.querySelector('.es-list-empty-action')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.es-crop-grid')).toBeNull();
+  });
+
+  it('renders list empty block when all crops are ineligible', async () => {
+    await selectFarmAndShowCrops([
+      {
+        id: 20,
+        name: 'Carrot',
+        eligible: false,
+        sowing_summary: { start_date: '2026-03-01', end_date: '2026-04-15' },
+        transplant_summary: null,
+        reason_summary: 'Out of season',
+        labels: { sowing: 'Sow', transplanting: 'Transplant' },
+      },
+      {
+        id: 21,
+        name: 'Spinach',
+        eligible: false,
+        sowing_summary: null,
+        transplant_summary: null,
+        reason_summary: 'Too cold',
+        labels: { sowing: 'Sow', transplanting: 'Transplant' },
+      },
+    ]);
+
+    const empty = fixture.nativeElement.querySelector('.es-list-empty') as HTMLElement;
+    expect(empty).toBeTruthy();
+    expect(empty.querySelector('.es-list-empty-title')?.textContent).toContain(
+      'No crops in season now',
+    );
+    expect(empty.querySelector('.es-list-empty-description')?.textContent).toContain(
+      'outside the planting window',
+    );
+    expect(fixture.nativeElement.querySelector('.es-crop-grid')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.es-crop-card')).toBeNull();
+  });
+
+  it('distinguishes loading, error, and list empty states visually', async () => {
+    const cropsSubject = new Subject<{
+      farm: Farm;
+      crops: EntryScheduleCropListItem[];
+      prediction: Record<string, unknown>;
+      meta: { has_more: boolean; next_cursor: null };
+    }>();
+    getEntryScheduleCrops.mockReturnValue(cropsSubject.asObservable());
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const farmCards = fixture.nativeElement.querySelectorAll(
+      '.enhanced-selection-card',
+    ) as NodeListOf<HTMLElement>;
+    farmCards[0].click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.master-loading')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.error-message')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.es-list-empty')).toBeNull();
+
+    cropsSubject.next({
+      farm: farms[0],
+      crops: [],
+      prediction: {},
+      meta: { has_more: false, next_cursor: null },
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.es-list-empty')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.error-message')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.master-loading')).toBeNull();
+
+    getEntryScheduleCrops.mockReturnValue(throwError(() => new Error('network')));
+    fixture.componentInstance.loadCrops(false);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.error-message')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.es-list-empty')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.master-loading')).toBeNull();
   });
 
   it('renders mini chart when crop has planting windows', async () => {

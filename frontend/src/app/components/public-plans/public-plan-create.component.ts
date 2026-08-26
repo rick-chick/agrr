@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PublicPlanCreateView, PublicPlanCreateViewState } from './public-plan-create.view';
@@ -16,9 +15,9 @@ import { resolveReferenceFarmRegion } from '../../core/browser-region';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
 import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
+import { FarmSelectionCardsComponent } from '../shared/farm-selection-cards/farm-selection-cards.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { FlashMessageService } from '../../services/flash-message.service';
-import { FarmSelectionCardsPattern } from '../shared/patterns/farm-selection-cards.pattern';
 import {
   PUBLIC_PLAN_WIZARD_REDIRECT_MESSAGE_KEY,
   PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM,
@@ -34,7 +33,7 @@ const initialControl: PublicPlanCreateViewState = {
   selector: 'app-public-plan-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [CommonModule, FormsModule, TranslateModule, PublicPlanContextHeaderComponent, FarmSelectionCardsPattern],
+  imports: [CommonModule, TranslateModule, PublicPlanContextHeaderComponent, FarmSelectionCardsComponent],
   providers: [...PUBLIC_PLAN_CREATE_PROVIDERS],
   template: `
     <div class="page-main public-plans-wrapper">
@@ -67,19 +66,15 @@ const initialControl: PublicPlanCreateViewState = {
           } @else if (control.error) {
             <p class="error-message">{{ control.error }}</p>
           } @else {
-            <section class="selection-section mt-6" aria-labelledby="farm-heading">
-              <h3 id="farm-heading">{{ 'public_plans.select_farm.available_farms' | translate }}</h3>
-              <app-farm-selection-cards
-                [state]="farmCardsState()"
-                [farms]="control.farms"
-                [selectedFarmId]="selectedFarmId"
-                [errorText]="control.error"
-                [farmDisplayNames]="farmDisplayNameMap()"
-                loadingKey="common.loading"
-                (farmSelect)="selectFarm($event)"
-                (retry)="retryLoadFarms()"
-              />
-            </section>
+            <app-farm-selection-cards
+              class="mt-6"
+              [farms]="control.farms"
+              [selectedFarmId]="selectedFarmId"
+              [heading]="'public_plans.select_farm.available_farms' | translate"
+              headingId="farm-heading"
+              [farmLabel]="displayFarmName.bind(this)"
+              (farmSelect)="selectFarm($event)"
+            />
           }
         </section>
       </div>
@@ -100,7 +95,6 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly flash = inject(FlashMessageService);
 
   selectedFarmId: number | null = null;
-  selectedFarm: Farm | null = null;
 
   get contextCrumbs(): MasterContextCrumb[] {
     return [{ labelKey: 'public_plans.breadcrumb_root' }];
@@ -137,7 +131,6 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     const state = this.publicPlanStore.state;
     if (state.farm) {
       this.selectedFarmId = state.farm.id;
-      this.selectedFarm = state.farm;
       // Load farms to allow re-selection and avoid stuck loading
       this.loadFarms(state.farm.region ?? resolveReferenceFarmRegion(
         this.translate.currentLang || this.translate.defaultLang
@@ -156,41 +149,12 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
       applyAppLang(this.translate, lang, { persist: false });
     }
     this.selectedFarmId = farm.id;
-    this.selectedFarm = farm;
     this.publicPlanStore.setFarm(farm);
     this.router.navigate(['/public-plans/select-crop']);
   }
 
   displayFarmName(farm: Farm): string {
     return localizePublicPlanReferenceFarmName(farm, (key) => this.translate.instant(key));
-  }
-
-  farmCardsState(): 'loading' | 'empty' | 'error' | 'ready' {
-    if (this.control.loading) {
-      return 'loading';
-    }
-    if (this.control.error) {
-      return 'error';
-    }
-    if (this.control.farms.length === 0) {
-      return 'empty';
-    }
-    return 'ready';
-  }
-
-  farmDisplayNameMap(): Record<number, string> {
-    const map: Record<number, string> = {};
-    for (const farm of this.control.farms) {
-      map[farm.id] = this.displayFarmName(farm);
-    }
-    return map;
-  }
-
-  retryLoadFarms(): void {
-    const region =
-      this.selectedFarm?.region ??
-      resolveReferenceFarmRegion(this.translate.currentLang || this.translate.defaultLang);
-    this.loadFarms(region);
   }
 
   private loadFarms(region: string): void {

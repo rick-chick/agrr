@@ -4210,6 +4210,20 @@
     },
     "loadMore": "さらに表示",
     "listDisclaimer": "表示は目安です。地域や品種、実際の天候に合わせて調整してください。",
+    "listEmpty": {
+      "noCrops": {
+        "title": "候補作物がありません",
+        "description": "この農場にはエントリースケジュールの候補作物がまだありません。",
+        "hint": "作物マスタを設定して候補を追加できます。",
+        "action": "作物マスタを設定"
+      },
+      "allIneligible": {
+        "title": "今は作付け適期外です",
+        "description": "候補作物はすべて作付け適期外です。データが無いのではなく、今の時期では適期外と判定されています。",
+        "hint": "別の農場を選ぶか、詳細画面でスケジュールと理由を確認してください。",
+        "action": "作物マスタを見直す"
+      }
+    },
     "viz": {
       "ganttTitle": "作付け時期チャート",
       "detailGanttIntro": "1月から12月までの目安期間を帯で示します。",
@@ -4217,14 +4231,14 @@
       "axisYear": "{{year}}年",
       "bandStartHint": "開始時期の目安",
       "noWindow": "期間なし",
+      "noWindowTitle": "作付けウィンドウなし",
+      "noWindowHint": "詳細画面でスケジュールの補足と理由を確認できます。",
       "monthTick": "{{n}}月",
       "detailGanttFoot": "帯は予測気象に基づく目安です。",
       "listChartIntro": "候補期間の概要",
       "listChartFoot": "詳しい期間は詳細画面で確認できます。",
       "sowBand": "播種",
-      "transplantBand": "定植",
-      "noWindowTitle": "作付けウィンドウなし",
-      "noWindowHint": "詳細画面でスケジュールの補足と理由を確認できます。"
+      "transplantBand": "定植"
     },
     "windows": "適期帯",
     "phases": "生育フェーズ",
