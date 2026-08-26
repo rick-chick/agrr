@@ -27,3 +27,21 @@ export function onboardingCapturePathnameOk(pathname) {
   const n = normalizePathname(pathname);
   return n === '/onboarding' || n === '/plans';
 }
+
+/**
+ * Redirect-aware host selector for layout smoke / capture.
+ * @param {string} pattern route-manifest pattern
+ * @param {string} pageUrl full page URL (onboarding redirect uses substring match)
+ * @param {Record<string, string>} hostByPattern
+ * @returns {string | undefined}
+ */
+export function resolveHostSelectorForPatternFromUrl(pattern, pageUrl, hostByPattern) {
+  if (pattern === 'onboarding') {
+    return pageUrl.includes('/onboarding') ? 'app-onboarding' : 'app-plan-list';
+  }
+  if (pattern === 'work') {
+    const pathname = normalizePathname(new URL(pageUrl).pathname);
+    return /^\/plans\/\d+\/work$/.test(pathname) ? 'app-plan-work' : 'app-work-hub';
+  }
+  return hostByPattern[pattern];
+}
