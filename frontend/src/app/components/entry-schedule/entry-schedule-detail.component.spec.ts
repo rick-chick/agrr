@@ -76,7 +76,7 @@ describe('EntryScheduleDetailComponent', () => {
     fixture.detectChanges();
 
     const heading = fixture.nativeElement.querySelector(
-      'h1.funnel-shell-title .title-text',
+      'h1.compact-header-title .title-text',
     ) as HTMLElement;
     expect(heading).toBeTruthy();
     expect(heading.textContent?.trim()).toBe('Crop schedule');
@@ -124,7 +124,7 @@ describe('EntryScheduleDetailComponent', () => {
     prerenderFixture.detectChanges();
 
     const heading = prerenderFixture.nativeElement.querySelector(
-      'h1.funnel-shell-title .title-text',
+      'h1.compact-header-title .title-text',
     ) as HTMLElement;
     expect(heading?.textContent?.trim()).toBe('作物別の作付け時期');
     expect(TestBed.inject(ENTRY_SCHEDULE_GATEWAY).getEntryScheduleCrop).not.toHaveBeenCalled();
