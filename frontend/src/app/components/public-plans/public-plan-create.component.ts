@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PublicPlanCreateView, PublicPlanCreateViewState } from './public-plan-create.view';
@@ -16,6 +15,7 @@ import { resolveReferenceFarmRegion } from '../../core/browser-region';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
 import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
+import { FarmSelectionCardsComponent } from '../shared/farm-selection-cards/farm-selection-cards.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { FlashMessageService } from '../../services/flash-message.service';
 import {
@@ -33,7 +33,7 @@ const initialControl: PublicPlanCreateViewState = {
   selector: 'app-public-plan-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [CommonModule, FormsModule, TranslateModule, PublicPlanContextHeaderComponent],
+  imports: [CommonModule, TranslateModule, PublicPlanContextHeaderComponent, FarmSelectionCardsComponent],
   providers: [...PUBLIC_PLAN_CREATE_PROVIDERS],
   template: `
     <div class="page-main public-plans-wrapper">
@@ -66,26 +66,15 @@ const initialControl: PublicPlanCreateViewState = {
           } @else if (control.error) {
             <p class="error-message">{{ control.error }}</p>
           } @else {
-            <section class="selection-section mt-6" aria-labelledby="farm-heading">
-              <h3 id="farm-heading">{{ 'public_plans.select_farm.available_farms' | translate }}</h3>
-              <div class="enhanced-grid">
-                @for (farm of control.farms; track farm.id) {
-                  <div
-                    class="enhanced-selection-card"
-                    [class.active]="selectedFarmId === farm.id"
-                    (click)="selectFarm(farm)"
-                    (keydown.enter)="selectFarm(farm)"
-                    (keydown.space)="selectFarm(farm); $event.preventDefault()"
-                    tabindex="0"
-                    role="button"
-                  >
-                    <div class="enhanced-card-icon">🌏</div>
-                    <div class="enhanced-card-title">{{ displayFarmName(farm) }}</div>
-                    <!-- region subtitle intentionally removed: region is auto-detected and not shown to user -->
-                  </div>
-                }
-              </div>
-            </section>
+            <app-farm-selection-cards
+              class="mt-6"
+              [farms]="control.farms"
+              [selectedFarmId]="selectedFarmId"
+              [heading]="'public_plans.select_farm.available_farms' | translate"
+              headingId="farm-heading"
+              [farmLabel]="displayFarmName.bind(this)"
+              (farmSelect)="selectFarm($event)"
+            />
           }
         </section>
       </div>
@@ -106,7 +95,6 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly flash = inject(FlashMessageService);
 
   selectedFarmId: number | null = null;
-  selectedFarm: Farm | null = null;
 
   get contextCrumbs(): MasterContextCrumb[] {
     return [{ labelKey: 'public_plans.breadcrumb_root' }];
@@ -143,7 +131,6 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     const state = this.publicPlanStore.state;
     if (state.farm) {
       this.selectedFarmId = state.farm.id;
-      this.selectedFarm = state.farm;
       // Load farms to allow re-selection and avoid stuck loading
       this.loadFarms(state.farm.region ?? resolveReferenceFarmRegion(
         this.translate.currentLang || this.translate.defaultLang
@@ -162,7 +149,6 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
       applyAppLang(this.translate, lang, { persist: false });
     }
     this.selectedFarmId = farm.id;
-    this.selectedFarm = farm;
     this.publicPlanStore.setFarm(farm);
     this.router.navigate(['/public-plans/select-crop']);
   }

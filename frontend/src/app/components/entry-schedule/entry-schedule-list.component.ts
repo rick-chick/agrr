@@ -10,6 +10,7 @@ import {
   EntryScheduleCropsListResponse
 } from '../../domain/entry-schedule/entry-schedule';
 import { detectBrowserRegion } from '../../core/browser-region';
+import { FarmSelectionCardsComponent } from '../shared/farm-selection-cards/farm-selection-cards.component';
 import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeline.util';
 
 const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
@@ -18,7 +19,7 @@ const PAGE_LIMIT = 20;
 @Component({
   selector: 'app-entry-schedule-list',
   standalone: true,
-  imports: [CommonModule, TranslateModule, RouterLink],
+  imports: [CommonModule, TranslateModule, RouterLink, FarmSelectionCardsComponent],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
@@ -44,27 +45,13 @@ const PAGE_LIMIT = 20;
           } @else if (farms().length === 0) {
             <p class="muted">{{ 'entrySchedule.noFarms' | translate }}</p>
           } @else {
-            <section class="selection-section" aria-labelledby="farm-heading">
-              <h3 id="farm-heading">{{ 'entrySchedule.selectFarm' | translate }}</h3>
-              <div class="enhanced-grid" role="list">
-                @for (f of farms(); track f.id) {
-                  <div
-                    class="enhanced-selection-card"
-                    [class.active]="selectedFarmId() === f.id"
-                    (click)="selectFarm(f)"
-                    (keydown.enter)="selectFarm(f)"
-                    (keydown.space)="selectFarm(f); $event.preventDefault()"
-                    tabindex="0"
-                    role="listitem button"
-                    [attr.aria-pressed]="selectedFarmId() === f.id"
-                    [attr.aria-label]="f.name"
-                  >
-                    <div class="enhanced-card-icon" aria-hidden="true">🌏</div>
-                    <div class="enhanced-card-title">{{ f.name }}</div>
-                  </div>
-                }
-              </div>
-            </section>
+            <app-farm-selection-cards
+              [farms]="farms()"
+              [selectedFarmId]="selectedFarmId()"
+              [heading]="'entrySchedule.selectFarm' | translate"
+              headingId="farm-heading"
+              (farmSelect)="selectFarm($event)"
+            />
           }
 
           @if (selectedFarmId() == null && farms().length > 0 && !farmsLoading()) {
