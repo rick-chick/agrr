@@ -5,7 +5,7 @@
  * CI: `npm run e2e:layout-contract:check:enforce`
  */
 
-/** @typedef {'master-list' | 'wizard-step' | 'l1-only'} LayoutArchetype */
+/** @typedef {'master-list' | 'master-detail' | 'master-form' | 'wizard-step' | 'l1-only'} LayoutArchetype */
 
 /** @type {Record<string, LayoutArchetype>} */
 export const LAYOUT_CONTRACT_BY_PATTERN = {
@@ -29,39 +29,39 @@ export const LAYOUT_CONTRACT_BY_PATTERN = {
   terms: 'l1-only',
   account: 'l1-only',
   agricultural_tasks: 'master-list',
-  'agricultural_tasks/:id': 'l1-only',
-  'agricultural_tasks/:id/edit': 'l1-only',
-  'agricultural_tasks/new': 'l1-only',
+  'agricultural_tasks/:id': 'master-detail',
+  'agricultural_tasks/:id/edit': 'master-form',
+  'agricultural_tasks/new': 'master-form',
   'api-keys': 'l1-only',
   crops: 'master-list',
-  'crops/:id': 'l1-only',
-  'crops/:id/edit': 'l1-only',
+  'crops/:id': 'master-detail',
+  'crops/:id/edit': 'master-form',
   'crops/:id/setup_proposal': 'l1-only',
   'crops/:id/stages': 'l1-only',
-  'crops/:id/stages/:stageId/edit': 'l1-only',
+  'crops/:id/stages/:stageId/edit': 'master-form',
   'crops/:id/task_schedule_blueprints': 'l1-only',
-  'crops/new': 'l1-only',
+  'crops/new': 'master-form',
   farms: 'master-list',
-  'farms/:id': 'l1-only',
-  'farms/:id/edit': 'l1-only',
-  'farms/new': 'l1-only',
+  'farms/:id': 'master-detail',
+  'farms/:id/edit': 'master-form',
+  'farms/new': 'master-form',
   fertilizes: 'master-list',
-  'fertilizes/:id': 'l1-only',
-  'fertilizes/:id/edit': 'l1-only',
-  'fertilizes/new': 'l1-only',
+  'fertilizes/:id': 'master-detail',
+  'fertilizes/:id/edit': 'master-form',
+  'fertilizes/new': 'master-form',
   interaction_rules: 'master-list',
-  'interaction_rules/:id': 'l1-only',
-  'interaction_rules/:id/edit': 'l1-only',
-  'interaction_rules/new': 'l1-only',
+  'interaction_rules/:id': 'master-detail',
+  'interaction_rules/:id/edit': 'master-form',
+  'interaction_rules/new': 'master-form',
   onboarding: 'l1-only',
   pesticides: 'master-list',
-  'pesticides/:id': 'l1-only',
-  'pesticides/:id/edit': 'l1-only',
-  'pesticides/new': 'l1-only',
+  'pesticides/:id': 'master-detail',
+  'pesticides/:id/edit': 'master-form',
+  'pesticides/new': 'master-form',
   pests: 'master-list',
-  'pests/:id': 'l1-only',
-  'pests/:id/edit': 'l1-only',
-  'pests/new': 'l1-only',
+  'pests/:id': 'master-detail',
+  'pests/:id/edit': 'master-form',
+  'pests/new': 'master-form',
   plans: 'master-list',
   'plans/:id': 'l1-only',
   'plans/:id/learn': 'l1-only',
@@ -75,7 +75,13 @@ export const LAYOUT_CONTRACT_BY_PATTERN = {
 };
 
 /** Patterns covered by L1 only; no L2 archetype runner (explicit classification). */
-export const LAYOUT_ARCHETYPES = /** @type {const} */ (['master-list', 'wizard-step', 'l1-only']);
+export const LAYOUT_ARCHETYPES = /** @type {const} */ ([
+  'master-list',
+  'master-detail',
+  'master-form',
+  'wizard-step',
+  'l1-only',
+]);
 
 /**
  * Patterns with no L2 contract. Reason is shown in CI when a new route is missing from both maps.

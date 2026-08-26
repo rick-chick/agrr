@@ -57,14 +57,34 @@ export async function collectLayoutInvariantSnapshot(
       },
     ).length;
 
-    const h1 = root.querySelector('h1') ?? document.querySelector('h1');
-    const levelOneHeadingVisible = h1
-      ? (() => {
-          const rect = h1.getBoundingClientRect();
-          const style = window.getComputedStyle(h1);
-          return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
-        })()
-      : false;
+    const isVisible = (el) => {
+      const rect = el.getBoundingClientRect();
+      const style = window.getComputedStyle(el);
+      return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
+    };
+
+    const headingSelectors = [
+      'h1',
+      'h1.page-title',
+      'h1.detail-card__title',
+      'h2.form-card__title',
+      '#page-title',
+      'h1.compact-header-title',
+    ];
+    let levelOneHeadingVisible = false;
+    for (const selector of headingSelectors) {
+      const candidate = root.querySelector(selector);
+      if (candidate && isVisible(candidate)) {
+        levelOneHeadingVisible = true;
+        break;
+      }
+    }
+    if (!levelOneHeadingVisible) {
+      const docH1 = document.querySelector('h1');
+      if (docH1 && isVisible(docH1)) {
+        levelOneHeadingVisible = true;
+      }
+    }
 
     const itemCardActionGroups: LayoutInvariantSnapshot['itemCardActionGroups'] = [];
     for (const group of root.querySelectorAll('.item-card__actions')) {
@@ -160,7 +180,7 @@ export async function assertPageLayoutInvariants(
   }
 
   if (options.requireLevelOneHeading !== false) {
-    expect(snapshot.levelOneHeadingVisible, 'level-1 heading (h1) should be visible').toBe(true);
+    expect(snapshot.levelOneHeadingVisible, 'page heading (h1 or master form/detail title) should be visible').toBe(true);
   }
 
   const maxRows = maxActionButtonRowsForViewport(snapshot.viewportWidth);

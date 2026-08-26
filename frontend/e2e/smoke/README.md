@@ -70,7 +70,7 @@ cd .. && bash scripts/run-e2e-smoke-ci.sh
 |----------|------|
 | `route-smoke.spec.ts` | `route-manifest.json` 全ルート: 正しいホスト表示・ローディング解消・`.error-message` 非表示 |
 | `layout-smoke.spec.ts` | **全ルート × mobile/tablet/desktop**: L1 不変条件 + L2（`layout-contract-bindings.mjs` のアーキタイプ + 画面 override） |
-| `layout-contract-bindings.mjs` | 全 `pattern` のアーキタイプ分類（`master-list` / `wizard-step` / `l1-only`）または `LAYOUT_CONTRACT_EXEMPT` |
+| `layout-contract-bindings.mjs` | 全 `pattern` のアーキタイプ分類（`master-list` / `master-detail` / `master-form` / `wizard-step` / `l1-only`）または `LAYOUT_CONTRACT_EXEMPT` |
 | `npm run e2e:layout-contract:check:enforce` | マニフェストと bindings の突合（PR `frontend-test`） |
 | `locale-i18n-smoke.spec.ts` | `route-manifest.json` 全ルート × `ja` / `en` / `in`: 可視 DOM テキストに生キー・`%{...}` 残り・locale 不適切な文字列がないか（`locale-i18n-smoke-lib.mjs`） |
 | `operation-smoke.spec.ts` | ホーム CTA、ナビ、公開 wizard（farm-size → select-crop）、問い合わせ、**farms UI CRUD**、マスタ list/new/detail/edit、ガント UI、作業目安一覧→詳細、API キー、天気、作業予定 D&D など |
@@ -93,6 +93,8 @@ npm run test:e2e:smoke:locale-i18n
 
 1. `e2e/smoke/layout-contract-bindings.mjs` に `pattern` を追加  
    - 一覧系 → `master-list`（8 マスタ一覧 + `plans`）  
+   - 詳細系 → `master-detail`（マスタ `/:id`）  
+   - 作成・編集系 → `master-form`（マスタ `/new`, `/:id/edit`, 生育ステージ編集）  
    - 公開プラン wizard → `wizard-step`  
    - それ以外（詳細・フォーム・静的）→ `l1-only`（L1 のみ）  
    - ログイン・意図的 404 のみ → `LAYOUT_CONTRACT_EXEMPT`（理由必須）

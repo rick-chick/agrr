@@ -77,3 +77,13 @@ export function maxActionButtonRowsForViewport(viewportWidth) {
   if (viewportWidth >= 768) return 3;
   return 4;
 }
+
+/** Selectors for primary page title (h1 or master CRUD h2 titles). */
+export const PAGE_HEADING_SELECTORS = [
+  'h1',
+  'h1.page-title',
+  'h1.detail-card__title',
+  'h2.form-card__title',
+  '#page-title',
+  'h1.compact-header-title',
+];

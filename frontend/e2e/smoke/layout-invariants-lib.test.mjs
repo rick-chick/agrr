@@ -47,3 +47,9 @@ test('maxActionButtonRowsForViewport tightens on wider viewports', () => {
   assert.equal(maxActionButtonRowsForViewport(768), 3);
   assert.equal(maxActionButtonRowsForViewport(1280), 2);
 });
+
+test('PAGE_HEADING_SELECTORS includes master form and detail titles', async () => {
+  const { PAGE_HEADING_SELECTORS } = await import('./layout-invariants-lib.mjs');
+  assert.ok(PAGE_HEADING_SELECTORS.includes('h2.form-card__title'));
+  assert.ok(PAGE_HEADING_SELECTORS.includes('h1.detail-card__title'));
+});

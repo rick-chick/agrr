@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test';
 
+import { assertMasterDetailLayout } from './assert-master-detail-layout';
+import { assertMasterFormLayout } from './assert-master-form-layout';
 import { assertMasterListLayout } from './assert-master-list-layout';
 import { assertWizardStepLayout } from './assert-wizard-step-layout';
 import { LAYOUT_ARCHETYPE_RUNNER_KEYS } from './layout-contract-archetype-keys.mjs';
@@ -11,5 +13,7 @@ export const LAYOUT_ARCHETYPE_RUNNERS: Record<
   LayoutContract
 > = {
   'master-list': assertMasterListLayout,
+  'master-detail': assertMasterDetailLayout,
+  'master-form': assertMasterFormLayout,
   'wizard-step': assertWizardStepLayout,
 };
