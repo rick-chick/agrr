@@ -44,7 +44,7 @@ jobs:
 
       - name: layout smoke lib unit tests
         working-directory: frontend
-        run: node --test e2e/smoke/layout-invariants-lib.test.mjs e2e/smoke/layout-smoke-lib.test.mjs e2e/smoke/layout-archetype-layout-lib.test.mjs e2e/smoke/verify-layout-contract-coverage-lib.test.mjs
+        run: node --test e2e/smoke/layout-invariants-lib.test.mjs e2e/smoke/layout-smoke-lib.test.mjs e2e/smoke/layout-archetype-layout-lib.test.mjs e2e/smoke/layout-archetype-design-contract-lib.test.mjs e2e/smoke/verify-layout-contract-coverage-lib.test.mjs
 
       - name: Unit tests
         run: npm test -- --watch=false

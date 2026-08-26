@@ -1,14 +1,24 @@
 import type { Page } from '@playwright/test';
 
 import { assertPublicPlanSelectCropStep2Layout } from '../assert-public-plan-select-crop-step2';
-import { resolveHostSelectorForPattern } from '../route-validity';
+import { HOST_SELECTOR_BY_PATTERN } from '../route-validity';
 import { assertPlanListLayout } from './assert-plan-list-layout';
 import { LAYOUT_ARCHETYPE_RUNNERS } from './layout-contract-archetypes';
 import {
   LAYOUT_CONTRACT_BY_PATTERN,
 } from './layout-contract-bindings.mjs';
 
-type LayoutArchetype = 'master-list' | 'master-detail' | 'master-form' | 'wizard-step' | 'l1-only';
+type LayoutArchetype =
+  | 'master-list'
+  | 'master-detail'
+  | 'master-form'
+  | 'wizard-step'
+  | 'plan-hub'
+  | 'plan-form'
+  | 'section-hub'
+  | 'settings-page'
+  | 'static-page'
+  | 'l1-only';
 
 export type LayoutContractOverride = (page: Page) => Promise<void>;
 
@@ -22,7 +32,10 @@ export const LAYOUT_CONTRACT_OVERRIDES: Partial<Record<string, LayoutContractOve
 };
 
 function resolveHostSelector(page: Page, pattern: string): string | undefined {
-  return resolveHostSelectorForPattern(page, pattern);
+  if (pattern === 'onboarding') {
+    return page.url().includes('/onboarding') ? 'app-onboarding' : 'app-plan-list';
+  }
+  return HOST_SELECTOR_BY_PATTERN[pattern];
 }
 
 export async function runLayoutContract(page: Page, pattern: string): Promise<void> {

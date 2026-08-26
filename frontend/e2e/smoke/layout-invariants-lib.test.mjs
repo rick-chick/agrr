@@ -52,4 +52,5 @@ test('PAGE_HEADING_SELECTORS includes master form and detail titles', async () =
   const { PAGE_HEADING_SELECTORS } = await import('./layout-invariants-lib.mjs');
   assert.ok(PAGE_HEADING_SELECTORS.includes('h2.form-card__title'));
   assert.ok(PAGE_HEADING_SELECTORS.includes('h1.detail-card__title'));
+  assert.ok(PAGE_HEADING_SELECTORS.includes('app-plan-optimizing h2'));
 });

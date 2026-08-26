@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-import { resolveHostSelectorForPattern, type RouteRow } from '../route-validity';
+import { HOST_SELECTOR_BY_PATTERN, type RouteRow } from '../route-validity';
 import {
   LAYOUT_ALLOW_DOCUMENT_HORIZONTAL_OVERFLOW,
   LAYOUT_ALLOW_VISIBLE_MASTER_LOADING,
@@ -11,7 +11,12 @@ import { runLayoutContract } from './layout-contracts';
 
 /** Run L1 invariants + L2 route contract after page is stable (capture + smoke shared). */
 export async function assertRouteLayoutAfterStable(page: Page, route: RouteRow): Promise<void> {
-  const hostSelector = resolveHostSelectorForPattern(page, route.pattern);
+  const hostSelector =
+    route.pattern === 'onboarding'
+      ? page.url().includes('/onboarding')
+        ? 'app-onboarding'
+        : 'app-plan-list'
+      : HOST_SELECTOR_BY_PATTERN[route.pattern];
 
   await assertPageLayoutInvariants(page, {
     hostSelector,

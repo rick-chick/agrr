@@ -1,10 +1,15 @@
 import { expect, type Page } from '@playwright/test';
 
-import { assertMasterListLayout } from './assert-master-list-layout';
+import { assertArchetypeDesignContract } from './layout-archetype-assertions';
+import { LAYOUT_ARCHETYPE_DESIGN_CONTRACTS } from './layout-archetype-design-contracts.mjs';
 
 /** L2 layout contract override: `/plans` (master-list + farm groups). */
 export async function assertPlanListLayout(page: Page): Promise<void> {
-  await assertMasterListLayout(page, 'app-plan-list');
+  await assertArchetypeDesignContract(
+    page,
+    'app-plan-list',
+    LAYOUT_ARCHETYPE_DESIGN_CONTRACTS['master-list'],
+  );
 
   const empty = page.locator('app-plan-list .plan-list-empty');
   if (await empty.isVisible().catch(() => false)) {
