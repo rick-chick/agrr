@@ -33,8 +33,7 @@
 | `wizard-step` | 公開プラン wizard シェル |
 | `plan-hub` | 計画コンテキスト配下（ガント・作業・最適化など） |
 | `plan-form` | 計画作成・オンボーディング |
-| `section-hub` | 作業ハブ・生育ステージ等（マスタ系シェル） |
-| `funnel-hub` | 公開ファネル面（entry-schedule 等）。`app-funnel-shell` |
+| `section-hub` | 作業ハブ・生育ステージ・エントリースケジュール等 |
 | `settings-page` | アカウント・API キー |
 | `static-page` | ホーム・静的ページ |
 
@@ -44,8 +43,6 @@
 2. 既存 archetype で足りなければ `layout-archetype-design-contracts.mjs` に契約を追加
 3. `layout-contract-archetype-keys.mjs` に runner key を追加
 4. `npm run e2e:layout-contract:check:enforce` が GREEN であること
-
-UI 組み立て規約（Shell / Pattern / Conformance L0–L4）: [UI-COMPOSITION-RULES.md](UI-COMPOSITION-RULES.md)
 
 ## 観点（レビュー・AI 診断用）
 

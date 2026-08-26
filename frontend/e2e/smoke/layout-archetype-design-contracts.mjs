@@ -12,7 +12,6 @@
  * @property {number} [maxItemCardVisibleActionButtons] Visible `.btn` count per `.item-card__actions`.
  * @property {boolean} [checkFormCardActionRows] Enforce viewport-tier row limits on `.form-card__actions`.
  * @property {boolean} [checkDetailCardActionOverlap] Forbid overlapping buttons in `.detail-card__actions`.
- * @property {string[]} [requiredShellSelectors] Host must contain selector when conformance is L1+.
  */
 
 /** @type {Record<import('./layout-contract-archetype-keys.mjs').LayoutArchetypeRunnerKey, LayoutArchetypeDesignContract>} */
@@ -65,18 +64,9 @@ export const LAYOUT_ARCHETYPE_DESIGN_CONTRACTS = {
       '.work-hub__portfolio-summary',
       '.work-hub-empty',
       '.content-card',
+      '.compact-header-card',
     ],
     requireAnyContentBlock: true,
-  },
-  'funnel-hub': {
-    contentBlockSelectors: [
-      '.content-card',
-      'app-funnel-shell',
-      '.free-plans-container',
-    ],
-    requireAnyContentBlock: true,
-    pageTitleSelectors: ['h1', '.compact-header-title'],
-    requiredShellSelectors: ['app-funnel-shell'],
   },
   'settings-page': {
     contentBlockSelectors: ['.info-box', '.page-content'],

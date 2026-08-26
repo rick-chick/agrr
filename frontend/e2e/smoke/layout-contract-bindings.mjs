@@ -5,7 +5,7 @@
  * CI: `npm run e2e:layout-contract:check:enforce`
  */
 
-/** @typedef {'master-list' | 'master-detail' | 'master-form' | 'wizard-step' | 'plan-hub' | 'plan-form' | 'section-hub' | 'funnel-hub' | 'settings-page' | 'static-page' | 'l1-only'} LayoutArchetype */
+/** @typedef {'master-list' | 'master-detail' | 'master-form' | 'wizard-step' | 'plan-hub' | 'plan-form' | 'section-hub' | 'settings-page' | 'static-page' | 'l1-only'} LayoutArchetype */
 
 /** @type {Record<string, LayoutArchetype>} */
 export const LAYOUT_CONTRACT_BY_PATTERN = {
@@ -18,8 +18,8 @@ export const LAYOUT_CONTRACT_BY_PATTERN = {
   'en/privacy': 'static-page',
   'en/public-plans/new': 'wizard-step',
   'en/terms': 'static-page',
-  'entry-schedule': 'funnel-hub',
-  'entry-schedule/crop/:cropId': 'funnel-hub',
+  'entry-schedule': 'section-hub',
+  'entry-schedule/crop/:cropId': 'section-hub',
   privacy: 'static-page',
   'public-plans/new': 'wizard-step',
   'public-plans/optimizing': 'wizard-step',
@@ -83,7 +83,6 @@ export const LAYOUT_ARCHETYPES = /** @type {const} */ ([
   'plan-hub',
   'plan-form',
   'section-hub',
-  'funnel-hub',
   'settings-page',
   'static-page',
   'l1-only',

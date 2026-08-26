@@ -10,10 +10,6 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  LAYOUT_CONFORMANCE_BY_PATTERN,
-  checkConformanceCoverage,
-} from './layout-conformance-bindings.mjs';
-import {
   LAYOUT_ARCHETYPES,
   LAYOUT_CONTRACT_BY_PATTERN,
   LAYOUT_CONTRACT_EXEMPT,
@@ -48,17 +44,7 @@ const missingDesignContracts = LAYOUT_ARCHETYPE_RUNNER_KEYS.filter(
   (key) => !LAYOUT_ARCHETYPE_DESIGN_CONTRACTS[key],
 );
 
-const conformanceCoverage = checkConformanceCoverage({
-  manifestPatterns: patterns,
-  conformanceMap: LAYOUT_CONFORMANCE_BY_PATTERN,
-  requireExplicit: process.argv.includes('--require-conformance-explicit'),
-});
-
-const ok =
-  coverage.ok &&
-  missingRunners.length === 0 &&
-  missingDesignContracts.length === 0 &&
-  conformanceCoverage.ok;
+const ok = coverage.ok && missingRunners.length === 0 && missingDesignContracts.length === 0;
 
 if (ok) {
   console.log(
@@ -106,22 +92,6 @@ if (missingDesignContracts.length > 0) {
   console.warn(
     `  missing design contracts (${missingDesignContracts.length}): ${missingDesignContracts.join(', ')}`,
   );
-}
-
-if (conformanceCoverage.missing.length > 0) {
-  console.warn(
-    `  missing conformance entries (${conformanceCoverage.missing.length}): ${conformanceCoverage.missing.join(', ')}`,
-  );
-}
-
-if (conformanceCoverage.extraConformance.length > 0) {
-  console.warn(
-    `  extra conformance keys (${conformanceCoverage.extraConformance.length}): ${conformanceCoverage.extraConformance.join(', ')}`,
-  );
-}
-
-if (conformanceCoverage.invalidLevels.length > 0) {
-  console.warn(`  invalid conformance levels (${conformanceCoverage.invalidLevels.length})`);
 }
 
 if (ENFORCE) {

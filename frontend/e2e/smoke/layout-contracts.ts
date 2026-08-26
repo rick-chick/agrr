@@ -1,13 +1,12 @@
 import type { Page } from '@playwright/test';
 
 import { assertPublicPlanSelectCropStep2Layout } from '../assert-public-plan-select-crop-step2';
-import { HOST_SELECTOR_BY_PATTERN } from '../route-validity';
+import { resolveHostSelectorForPattern } from '../route-validity';
 import { assertPlanListLayout } from './assert-plan-list-layout';
 import { LAYOUT_ARCHETYPE_RUNNERS } from './layout-contract-archetypes';
 import {
   LAYOUT_CONTRACT_BY_PATTERN,
 } from './layout-contract-bindings.mjs';
-import { conformanceForPattern } from './layout-conformance-bindings.mjs';
 
 type LayoutArchetype =
   | 'master-list'
@@ -17,7 +16,6 @@ type LayoutArchetype =
   | 'plan-hub'
   | 'plan-form'
   | 'section-hub'
-  | 'funnel-hub'
   | 'settings-page'
   | 'static-page'
   | 'l1-only';
@@ -33,13 +31,6 @@ export const LAYOUT_CONTRACT_OVERRIDES: Partial<Record<string, LayoutContractOve
   plans: assertPlanListLayout,
 };
 
-function resolveHostSelector(page: Page, pattern: string): string | undefined {
-  if (pattern === 'onboarding') {
-    return page.url().includes('/onboarding') ? 'app-onboarding' : 'app-plan-list';
-  }
-  return HOST_SELECTOR_BY_PATTERN[pattern];
-}
-
 export async function runLayoutContract(page: Page, pattern: string): Promise<void> {
   const override = LAYOUT_CONTRACT_OVERRIDES[pattern];
   if (override) {
@@ -52,7 +43,7 @@ export async function runLayoutContract(page: Page, pattern: string): Promise<vo
     return;
   }
 
-  const hostSelector = resolveHostSelector(page, pattern);
+  const hostSelector = resolveHostSelectorForPattern(page, pattern);
   if (!hostSelector) {
     throw new Error(`[layout-contract] no host selector for pattern "${pattern}"`);
   }
@@ -62,6 +53,5 @@ export async function runLayoutContract(page: Page, pattern: string): Promise<vo
     throw new Error(`[layout-contract] no L2 runner registered for archetype "${archetype}"`);
   }
 
-  const conformanceLevel = conformanceForPattern(pattern);
-  await runner(page, hostSelector, conformanceLevel);
+  await runner(page, hostSelector);
 }

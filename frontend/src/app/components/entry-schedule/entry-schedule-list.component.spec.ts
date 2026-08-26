@@ -5,28 +5,25 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { EntryScheduleListComponent } from './entry-schedule-list.component';
 import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
+import type { Farm } from '../../domain/farms/farm';
 
 describe('EntryScheduleListComponent', () => {
   let fixture: ComponentFixture<EntryScheduleListComponent>;
-  let getCrops: ReturnType<typeof vi.fn>;
+  let translate: TranslateService;
+  let getEntryScheduleCrops: ReturnType<typeof vi.fn>;
+
+  const farms: Farm[] = [
+    { id: 1, name: 'Farm A', latitude: 35, longitude: 139, region: 'jp' },
+    { id: 2, name: 'Farm B', latitude: 34, longitude: 135, region: 'jp' },
+  ];
 
   beforeEach(async () => {
-    getCrops = vi.fn(() =>
+    getEntryScheduleCrops = vi.fn(() =>
       of({
-        farm: { id: 1, name: 'Farm A', latitude: 0, longitude: 0, region: 'jp' },
-        prediction: { chart_calendar_year: 2026 },
+        farm: farms[0],
+        crops: [],
+        prediction: {},
         meta: { has_more: false, next_cursor: null },
-        crops: [
-          {
-            id: 10,
-            name: 'Crop A',
-            eligible: false,
-            sowing_summary: null,
-            transplant_summary: null,
-            schedule_flow_summary: '—',
-            reason_summary: 'Too cold',
-          },
-        ],
       }),
     );
 
@@ -37,51 +34,66 @@ describe('EntryScheduleListComponent', () => {
         {
           provide: ENTRY_SCHEDULE_GATEWAY,
           useValue: {
-            getEntryScheduleFarms: vi.fn(() =>
-              of([{ id: 1, name: 'Farm A', latitude: 0, longitude: 0, region: 'jp' }]),
-            ),
-            getEntryScheduleCrops: getCrops,
+            getEntryScheduleFarms: vi.fn(() => of(farms)),
+            getEntryScheduleCrops,
           },
         },
       ],
     }).compileComponents();
 
-    const translate = TestBed.inject(TranslateService);
+    fixture = TestBed.createComponent(EntryScheduleListComponent);
+    translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      entrySchedule: {
+        title: 'Entry schedule',
+        selectFarm: 'Select a farm',
+        loading: 'Loading…',
+        blockSelectFarm: 'Select a farm to view crops',
+      },
+      pages: {
+        entry_schedule: {
+          description: 'Browse crop planting windows by farm',
+        },
+      },
+    });
     translate.setDefaultLang('en');
     translate.use('en');
-    translate.setTranslation('en', {
-      'entrySchedule.title': 'Entry schedule',
-      'pages.entry_schedule.description': 'Description',
-      'entrySchedule.selectFarm': 'Select farm',
-      'entrySchedule.loading': 'Loading',
-      'entrySchedule.allIneligibleTitle': 'No in-season crops',
-      'entrySchedule.allIneligibleBody': 'No windows',
-      'entrySchedule.allIneligibleTryOtherFarm': 'Try another farm',
-      'entrySchedule.allIneligiblePublicPlanCta': 'Create plan',
-      'entrySchedule.listDisclaimer': 'Disclaimer',
-    });
-
-    fixture = TestBed.createComponent(EntryScheduleListComponent);
   });
 
-  it('mounts FunnelShell and farm selection cards', async () => {
+  it('renders FunnelShell structure with compact header and content card', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('app-funnel-shell')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('[data-testid="farm-selection-cards"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.compact-header-card h1.compact-header-title .title-text')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('section.content-card')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#entry-farm-select')).toBeNull();
   });
 
-  it('shows single empty block when all crops are ineligible without windows', async () => {
+  it('renders farm selection as enhanced selection cards', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
-    await vi.waitFor(() => {
-      expect(fixture.nativeElement.querySelector('[data-testid="entry-schedule-all-ineligible"]')).toBeTruthy();
-    });
 
-    expect(fixture.nativeElement.querySelector('[data-testid="entry-schedule-crop-grid"]')).toBeNull();
-    expect(fixture.nativeElement.querySelectorAll('.es-crop-card').length).toBe(0);
+    const cards = fixture.nativeElement.querySelectorAll('.enhanced-selection-card');
+    expect(cards.length).toBe(2);
+    expect(cards[0].textContent).toContain('Farm A');
+    expect(cards[1].textContent).toContain('Farm B');
+  });
+
+  it('loads crops when a farm card is selected', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const cards = fixture.nativeElement.querySelectorAll(
+      '.enhanced-selection-card',
+    ) as NodeListOf<HTMLElement>;
+    cards[0].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(getEntryScheduleCrops).toHaveBeenCalledWith(1, expect.objectContaining({ limit: 20 }));
+    expect(cards[0].classList.contains('active')).toBe(true);
   });
 });

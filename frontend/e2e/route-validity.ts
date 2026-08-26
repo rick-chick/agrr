@@ -8,6 +8,7 @@ import {
   normalizePathname as normalizePathnameLib,
   workCapturePathnameOk,
   onboardingCapturePathnameOk,
+  resolveHostSelectorForPatternFromUrl,
 } from './route-validity-lib.mjs';
 
 /** route-manifest.json の `pattern` をキーに、ルータ到達後に表示されるホストコンポーネントのルートセレクタ */
@@ -30,6 +31,11 @@ export function normalizePathname(path: string): string {
 /** @see ./route-validity-lib.mjs */
 export function expectedPathnameFromResolvedGoto(href: string): string {
   return expectedPathnameFromResolvedGotoLib(href);
+}
+
+/** WorkHubInit / onboardingGuard リダイレクト後のホスト（layout smoke / capture 共通） */
+export function resolveHostSelectorForPattern(page: Page, pattern: string): string | undefined {
+  return resolveHostSelectorForPatternFromUrl(pattern, page.url(), HOST_SELECTOR_BY_PATTERN);
 }
 
 /** スナップショット前に「意図した URL とホストコンポーネントに到達している」ことを保証する */

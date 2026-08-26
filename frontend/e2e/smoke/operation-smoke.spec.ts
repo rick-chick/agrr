@@ -77,7 +77,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await waitForPageStable(page, r);
     await assertHostHealthy(page, 'app-public-plan-create');
 
-    const farmCard = page.locator('app-public-plan-create [data-testid="farm-selection-cards"] .enhanced-selection-card').first();
+    const farmCard = page.locator('app-public-plan-create .enhanced-selection-card').first();
     if ((await farmCard.count()) === 0) {
       test.skip(true, 'no public farms in dev DB');
     }
@@ -140,12 +140,12 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await waitForPageStable(page, r);
     await assertHostHealthy(page, 'app-entry-schedule-list');
 
-    const farmCards = page.locator('[data-testid="farm-selection-cards"] .enhanced-selection-card');
-    if ((await farmCards.count()) === 0) {
+    const farmCard = page.locator('app-entry-schedule-list .enhanced-selection-card').first();
+    if ((await farmCard.count()) === 0) {
       test.skip(true, 'no farms for entry schedule');
     }
-    await farmCards.first().click();
-    await expect(page.locator('[data-testid="entry-schedule-crop-grid"]')).toBeVisible({
+    await farmCard.click();
+    await expect(page.locator('app-entry-schedule-list .es-crop-grid')).toBeVisible({
       timeout: 60_000,
     });
 

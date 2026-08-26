@@ -39,30 +39,34 @@ import { Farm } from '../../domain/farms/farm';
           titleIcon="🌱"
         >
         @if (loading()) {
-          <p class="muted mt-4 master-loading">{{ 'entrySchedule.loading' | translate }}</p>
+          <section class="content-card mt-4">
+            <p class="muted master-loading">{{ 'entrySchedule.loading' | translate }}</p>
+          </section>
         } @else if (errorKey()) {
-          <p class="error-message mt-4">{{ errorKey()! | translate }}</p>
-          <button type="button" class="btn btn-secondary mt-2" (click)="reload()">{{ 'entrySchedule.retry' | translate }}</button>
+          <section class="content-card mt-4">
+            <p class="error-message">{{ errorKey()! | translate }}</p>
+            <button type="button" class="btn btn-secondary mt-2" (click)="reload()">{{ 'entrySchedule.retry' | translate }}</button>
+          </section>
         } @else if (data()) {
-          <section class="disclaimer-banner" role="region" aria-label="disclaimer">
-            <p>{{ data()!.crop.entry_disclaimer }}</p>
-          </section>
-
-          <section class="prediction-strip es-meta-chips mt-4" role="status">
-            @if (data()!.prediction.generated_at) {
-              <span class="es-meta-chip"
-                >{{ 'entrySchedule.predictionFresh' | translate }}: {{ data()!.prediction.generated_at!.slice(0, 16) }}</span
-              >
-            }
-            @if (data()!.prediction.prediction_end_date) {
-              <span class="es-meta-chip"
-                >{{ 'entrySchedule.predictionUntil' | translate }}: {{ data()!.prediction.prediction_end_date!.slice(0, 10) }}</span
-              >
-            }
-          </section>
-
           <section class="content-card mt-4" aria-labelledby="crop-name-heading">
-            <h2 id="crop-name-heading" class="es-detail-hero">{{ data()!.crop.name }}</h2>
+            <div class="disclaimer-banner" role="region" aria-label="disclaimer">
+              <p>{{ data()!.crop.entry_disclaimer }}</p>
+            </div>
+
+            <div class="prediction-strip es-meta-chips mt-4" role="status">
+              @if (data()!.prediction.generated_at) {
+                <span class="es-meta-chip"
+                  >{{ 'entrySchedule.predictionFresh' | translate }}: {{ data()!.prediction.generated_at!.slice(0, 16) }}</span
+                >
+              }
+              @if (data()!.prediction.prediction_end_date) {
+                <span class="es-meta-chip"
+                  >{{ 'entrySchedule.predictionUntil' | translate }}: {{ data()!.prediction.prediction_end_date!.slice(0, 10) }}</span
+                >
+              }
+            </div>
+
+            <h2 id="crop-name-heading" class="es-detail-hero mt-4">{{ data()!.crop.name }}</h2>
             <p class="reason-summary">{{ data()!.crop.reason_summary }}</p>
             <details class="trust-expand mt-2">
               <summary>{{ 'entrySchedule.whyTitle' | translate }}</summary>
@@ -264,16 +268,6 @@ import { Farm } from '../../domain/farms/farm';
         white-space: pre-wrap;
         font-size: 0.85rem;
         margin: 0.5rem 0 0;
-      }
-      .phase-list,
-      .timeline-list {
-        margin-left: 1.25rem;
-      }
-      .empty-reason {
-        color: var(--color-text-muted);
-      }
-      .ml-2 {
-        margin-left: 0.5rem;
       }
       .es-detail-cta-actions {
         display: flex;
