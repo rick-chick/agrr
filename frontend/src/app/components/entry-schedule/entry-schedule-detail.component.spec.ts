@@ -130,6 +130,17 @@ describe('EntryScheduleDetailComponent', () => {
     expect(TestBed.inject(ENTRY_SCHEDULE_GATEWAY).getEntryScheduleCrop).not.toHaveBeenCalled();
   });
 
+  it('renders crop content inside a content card for section-hub layout', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const contentCard = fixture.nativeElement.querySelector('section.content-card');
+    expect(contentCard).toBeTruthy();
+    expect(contentCard.querySelector('.disclaimer-banner')).toBeTruthy();
+    expect(contentCard.querySelector('#crop-name-heading')).toBeTruthy();
+  });
+
   it('renders breadcrumb with list link and crop name instead of inline back link', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
@@ -286,8 +297,7 @@ describe('EntryScheduleDetailComponent', () => {
         title: 'Entry schedule',
         detailTitle: 'Crop schedule',
         ctaCropSetup: 'Improve crop master'
-      },
-      crops: { setup_proposal_import: { action: 'Setup proposal' } }
+      }
     });
     translate.use('en');
     fixture.detectChanges();
