@@ -19,6 +19,7 @@ import {
   findMissingArchetypeRunners,
 } from './verify-layout-contract-coverage-lib.mjs';
 import { LAYOUT_ARCHETYPE_RUNNER_KEYS } from './layout-contract-archetype-keys.mjs';
+import { LAYOUT_ARCHETYPE_DESIGN_CONTRACTS } from './layout-archetype-design-contracts.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const FRONTEND = join(__dirname, '..', '..');
@@ -39,7 +40,11 @@ const runnerPlaceholders = Object.fromEntries(
 );
 const missingRunners = findMissingArchetypeRunners(LAYOUT_CONTRACT_BY_PATTERN, runnerPlaceholders);
 
-const ok = coverage.ok && missingRunners.length === 0;
+const missingDesignContracts = LAYOUT_ARCHETYPE_RUNNER_KEYS.filter(
+  (key) => !LAYOUT_ARCHETYPE_DESIGN_CONTRACTS[key],
+);
+
+const ok = coverage.ok && missingRunners.length === 0 && missingDesignContracts.length === 0;
 
 if (ok) {
   console.log(
@@ -81,6 +86,12 @@ if (coverage.extraExempt.length > 0) {
 
 if (missingRunners.length > 0) {
   console.warn(`  missing archetype runners (${missingRunners.length}): ${missingRunners.join(', ')}`);
+}
+
+if (missingDesignContracts.length > 0) {
+  console.warn(
+    `  missing design contracts (${missingDesignContracts.length}): ${missingDesignContracts.join(', ')}`,
+  );
 }
 
 if (ENFORCE) {

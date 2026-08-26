@@ -1,6 +1,10 @@
 import { test } from '@playwright/test';
 import { waitForPageStable } from '../page-stable';
-import { assertPageValidity, expectedPathnameFromResolvedGoto, resolveHostSelectorForPattern } from '../route-validity';
+import {
+  assertPageValidity,
+  expectedPathnameFromResolvedGoto,
+  resolveHostSelectorForPattern,
+} from '../route-validity';
 import { assertRouteLayoutAfterStable } from './assert-route-layout-after-stable';
 import {
   LAYOUT_SMOKE_VIEWPORTS,
@@ -88,11 +92,7 @@ smokeDescribe('layout smoke (invariants + route contracts × viewports)', () => 
 
         const hostSelector = resolveHostSelectorForPattern(page, r.pattern);
         if (hostSelector && !HOST_HEALTH_ASSERT_EXCLUDE.has(r.pattern)) {
-          if (r.pattern === 'work') {
-            await page.locator('app-work-hub, app-plan-work').first().waitFor({ state: 'visible', timeout: 10_000 });
-          } else {
-            await page.locator(hostSelector).waitFor({ state: 'visible', timeout: 10_000 });
-          }
+          await page.locator(hostSelector).waitFor({ state: 'visible', timeout: 10_000 });
         }
 
         await assertRouteLayoutAfterStable(page, r);

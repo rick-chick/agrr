@@ -86,4 +86,5 @@ export const PAGE_HEADING_SELECTORS = [
   'h2.form-card__title',
   '#page-title',
   'h1.compact-header-title',
+  'app-plan-optimizing h2',
 ];

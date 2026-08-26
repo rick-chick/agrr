@@ -8,7 +8,17 @@ import {
   LAYOUT_CONTRACT_BY_PATTERN,
 } from './layout-contract-bindings.mjs';
 
-type LayoutArchetype = 'master-list' | 'master-detail' | 'master-form' | 'wizard-step' | 'l1-only';
+type LayoutArchetype =
+  | 'master-list'
+  | 'master-detail'
+  | 'master-form'
+  | 'wizard-step'
+  | 'plan-hub'
+  | 'plan-form'
+  | 'section-hub'
+  | 'settings-page'
+  | 'static-page'
+  | 'l1-only';
 
 export type LayoutContractOverride = (page: Page) => Promise<void>;
 
@@ -20,10 +30,6 @@ export const LAYOUT_CONTRACT_OVERRIDES: Partial<Record<string, LayoutContractOve
   'public-plans/select-crop': assertPublicPlanSelectCropStep2Layout,
   plans: assertPlanListLayout,
 };
-
-function resolveHostSelector(page: Page, pattern: string): string | undefined {
-  return resolveHostSelectorForPattern(page, pattern);
-}
 
 export async function runLayoutContract(page: Page, pattern: string): Promise<void> {
   const override = LAYOUT_CONTRACT_OVERRIDES[pattern];
@@ -37,7 +43,7 @@ export async function runLayoutContract(page: Page, pattern: string): Promise<vo
     return;
   }
 
-  const hostSelector = resolveHostSelector(page, pattern);
+  const hostSelector = resolveHostSelectorForPattern(page, pattern);
   if (!hostSelector) {
     throw new Error(`[layout-contract] no host selector for pattern "${pattern}"`);
   }

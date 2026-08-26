@@ -8,6 +8,7 @@ import {
   normalizePathname as normalizePathnameLib,
   workCapturePathnameOk,
   onboardingCapturePathnameOk,
+  resolveHostSelectorForPatternFromUrl,
 } from './route-validity-lib.mjs';
 
 /** route-manifest.json の `pattern` をキーに、ルータ到達後に表示されるホストコンポーネントのルートセレクタ */
@@ -30,6 +31,11 @@ export function normalizePathname(path: string): string {
 /** @see ./route-validity-lib.mjs */
 export function expectedPathnameFromResolvedGoto(href: string): string {
   return expectedPathnameFromResolvedGotoLib(href);
+}
+
+/** WorkHubInit / onboardingGuard リダイレクト後のホスト（layout smoke / capture 共通） */
+export function resolveHostSelectorForPattern(page: Page, pattern: string): string | undefined {
+  return resolveHostSelectorForPatternFromUrl(pattern, page.url(), HOST_SELECTOR_BY_PATTERN);
 }
 
 /** スナップショット前に「意図した URL とホストコンポーネントに到達している」ことを保証する */
@@ -78,18 +84,6 @@ export async function assertPageValidity(
     .toBe(want);
 
   await expect(page.locator(host)).toBeVisible({ timeout: 30_000 });
-}
-
-/** WorkHubInit リダイレクト後のホスト（layout smoke / capture 共通） */
-export function resolveHostSelectorForPattern(page: Page, pattern: string): string | undefined {
-  if (pattern === 'onboarding') {
-    return page.url().includes('/onboarding') ? 'app-onboarding' : 'app-plan-list';
-  }
-  if (pattern === 'work') {
-    const pathname = normalizePathname(new URL(page.url()).pathname);
-    return /\/plans\/\d+\/work$/.test(pathname) ? 'app-plan-work' : 'app-work-hub';
-  }
-  return HOST_SELECTOR_BY_PATTERN[pattern];
 }
 
 /** Agent キャプチャ用: `/work` の単一農場リダイレクトを許容する */

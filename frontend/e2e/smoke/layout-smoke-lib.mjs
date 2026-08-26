@@ -27,9 +27,7 @@ export const LAYOUT_ALLOW_DOCUMENT_HORIZONTAL_OVERFLOW = new Set([
 export const LAYOUT_ALLOW_VISIBLE_MASTER_LOADING = new Set(['plans/:id/optimizing']);
 
 /** Level-1 heading is not required (redirect shells, minimal pages). */
-export const LAYOUT_SKIP_LEVEL_ONE_HEADING = new Set([
-  'plans/:id/optimizing', // planName=null → no h1; live progress uses h2
-]);
+export const LAYOUT_SKIP_LEVEL_ONE_HEADING = new Set([]);
 
 /**
  * @param {string} pattern
