@@ -1,6 +1,6 @@
 import { test } from '@playwright/test';
 import { waitForPageStable } from '../page-stable';
-import { assertPageValidity, expectedPathnameFromResolvedGoto } from '../route-validity';
+import { assertPageValidity, expectedPathnameFromResolvedGoto, resolveHostSelectorForPattern } from '../route-validity';
 import { assertRouteLayoutAfterStable } from './assert-route-layout-after-stable';
 import {
   LAYOUT_SMOKE_VIEWPORTS,
@@ -16,7 +16,6 @@ import {
   smokeDescribe,
   smokeManifest,
 } from './smoke-helpers';
-import { HOST_SELECTOR_BY_PATTERN } from '../route-validity';
 import type { ResolvedCaptureIds } from '../resolve-capture-urls';
 
 function routeLabel(pattern: string): string {
@@ -87,11 +86,10 @@ smokeDescribe('layout smoke (invariants + route contracts × viewports)', () => 
         await assertPageValidity(page, r, pathnameExpect);
         await waitForPageStable(page, r);
 
-        const hostSelector = HOST_SELECTOR_BY_PATTERN[r.pattern];
+        const hostSelector = resolveHostSelectorForPattern(page, r.pattern);
         if (hostSelector && !HOST_HEALTH_ASSERT_EXCLUDE.has(r.pattern)) {
-          if (r.pattern === 'onboarding') {
-            const host = page.url().includes('/onboarding') ? 'app-onboarding' : 'app-plan-list';
-            await page.locator(host).waitFor({ state: 'visible', timeout: 10_000 });
+          if (r.pattern === 'work') {
+            await page.locator('app-work-hub, app-plan-work').first().waitFor({ state: 'visible', timeout: 10_000 });
           } else {
             await page.locator(hostSelector).waitFor({ state: 'visible', timeout: 10_000 });
           }

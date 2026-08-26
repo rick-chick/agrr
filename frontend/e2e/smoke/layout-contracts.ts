@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { assertPublicPlanSelectCropStep2Layout } from '../assert-public-plan-select-crop-step2';
-import { HOST_SELECTOR_BY_PATTERN } from '../route-validity';
+import { resolveHostSelectorForPattern } from '../route-validity';
 import { assertPlanListLayout } from './assert-plan-list-layout';
 import { LAYOUT_ARCHETYPE_RUNNERS } from './layout-contract-archetypes';
 import {
@@ -22,10 +22,7 @@ export const LAYOUT_CONTRACT_OVERRIDES: Partial<Record<string, LayoutContractOve
 };
 
 function resolveHostSelector(page: Page, pattern: string): string | undefined {
-  if (pattern === 'onboarding') {
-    return page.url().includes('/onboarding') ? 'app-onboarding' : 'app-plan-list';
-  }
-  return HOST_SELECTOR_BY_PATTERN[pattern];
+  return resolveHostSelectorForPattern(page, pattern);
 }
 
 export async function runLayoutContract(page: Page, pattern: string): Promise<void> {

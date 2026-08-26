@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import {
   LAYOUT_ALLOW_DOCUMENT_HORIZONTAL_OVERFLOW,
+  LAYOUT_SKIP_LEVEL_ONE_HEADING,
   LAYOUT_SMOKE_SKIP_PATTERNS,
   LAYOUT_SMOKE_VIEWPORTS,
   shouldRunLayoutSmoke,
@@ -31,4 +32,8 @@ test('gantt routes may allow document horizontal overflow', () => {
 
 test('login is in skip patterns', () => {
   assert.ok(LAYOUT_SMOKE_SKIP_PATTERNS.has('login'));
+});
+
+test('optimizing route skips level-one heading (plan context header without planName)', () => {
+  assert.ok(LAYOUT_SKIP_LEVEL_ONE_HEADING.has('plans/:id/optimizing'));
 });
