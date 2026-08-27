@@ -254,6 +254,17 @@ describe('PlanOptimizingComponent', () => {
     });
   });
 
+  it('redirects to plans list when plan id is invalid', () => {
+    (mockActivatedRoute.snapshot.paramMap.get as ReturnType<typeof vi.fn>).mockReturnValue('0');
+
+    component.ngOnInit();
+
+    expect(component.control.status).toBe('invalid_plan_id');
+    expect(router.navigate).toHaveBeenCalledWith(['/plans']);
+    expect(mockUseCase.execute).not.toHaveBeenCalled();
+    expect(mockHydrateUseCase.execute).not.toHaveBeenCalled();
+  });
+
   it('reloads optimization subscription when retry is clicked', () => {
     component.control = {
       status: 'failed',
