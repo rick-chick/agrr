@@ -7,6 +7,8 @@ use crate::plan_task_schedule_regen_locks::PlanTaskScheduleRegenLocks;
 use crate::jobs::JobChainDispatcher;
 use crate::state::{AppState, DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS, TEST_TASK_SCHEDULE_REGEN_DEBOUNCE};
 use crate::locale_catalog::LocaleCatalog;
+use crate::contact_message_rate_limit::{ContactMessageRateLimitConfig, ContactMessageRateLimiter};
+use crate::contact_message_recaptcha::RecaptchaVerifier;
 use crate::masters_rate_limit::{MastersRateLimitConfig, MastersRateLimiter};
 use agrr_adapters_sqlite::{PredictedWeatherGatewayBundle, SqlitePool};
 use agrr_domain::weather_data::gateways::WeatherDataGateway;
@@ -79,6 +81,31 @@ pub fn test_pool_with_plan(plan_id: i64) -> TestDb {
         Ok(())
     })
     .expect("seed");
+    TestDb { pool, _file: file }
+}
+
+pub fn test_pool_with_contact_messages() -> TestDb {
+    let file = NamedTempFile::new().expect("temp db");
+    let path = file.path().to_str().expect("utf8 path");
+    let pool = SqlitePool::new(path);
+    pool.with_write(|conn| {
+        conn.execute_batch(
+            "CREATE TABLE contact_messages (
+               id INTEGER PRIMARY KEY AUTOINCREMENT,
+               name TEXT,
+               email TEXT NOT NULL,
+               subject TEXT,
+               source TEXT,
+               message TEXT NOT NULL,
+               status TEXT NOT NULL DEFAULT 'queued',
+               sent_at TEXT,
+               created_at TEXT NOT NULL DEFAULT (datetime('now')),
+               updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+             );",
+        )?;
+        Ok(())
+    })
+    .expect("contact_messages schema");
     TestDb { pool, _file: file }
 }
 
@@ -259,6 +286,10 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
             )],
         )),
         masters_rate_limit: Arc::new(MastersRateLimiter::new(MastersRateLimitConfig::from_env())),
+        contact_message_rate_limit: Arc::new(ContactMessageRateLimiter::new(
+            ContactMessageRateLimitConfig { limit: 10, period_secs: 60 },
+        )),
+        recaptcha_verifier: Arc::new(RecaptchaVerifier::from_env()),
     }
 }
 

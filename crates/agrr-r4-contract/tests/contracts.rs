@@ -4227,3 +4227,100 @@ fn org_non_member_denied_team_plan() {
         status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
     assert_cross_user_access_denied(status, &body);
 }
+
+fn contact_message_payload(email_suffix: u128) -> serde_json::Value {
+    serde_json::json!({
+        "email": format!("contact-contract-{email_suffix}@example.com"),
+        "message": "contract test message"
+    })
+}
+
+#[test]
+fn post_contact_message_creates_queued_record() {
+    let client = ContractClient::from_env();
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let mut headers = empty_headers();
+    headers.insert(
+        "x-forwarded-for".to_string(),
+        format!("203.0.113.{suffix}"),
+    );
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/contact_messages",
+        None,
+        &headers,
+        Some(contact_message_payload(suffix)),
+    ));
+    assert_eq!(201, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("contact message JSON");
+    assert_eq!(Some("queued"), json["status"].as_str());
+    assert!(json["id"].as_i64().is_some());
+}
+
+#[test]
+fn post_contact_message_returns_429_when_rate_limit_exceeded() {
+    let client = ContractClient::from_env();
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let mut headers = empty_headers();
+    let ip_octet = (suffix % 200) as u8 + 1;
+    headers.insert(
+        "x-forwarded-for".to_string(),
+        format!("203.0.113.{ip_octet}"),
+    );
+    let payload = contact_message_payload(suffix);
+    for i in 0..10 {
+        let (status, body) = status_and_body(client.post(
+            "/api/v1/contact_messages",
+            None,
+            &headers,
+            Some(payload.clone()),
+        ));
+        assert_eq!(201, status, "request {i}: {body}");
+    }
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/contact_messages",
+        None,
+        &headers,
+        Some(payload),
+    ));
+    assert_eq!(429, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("rate limit JSON");
+    assert_eq!(Some("rate_limit"), json["error"].as_str());
+}
+
+#[test]
+fn post_contact_message_returns_422_when_recaptcha_fails() {
+    let secret = std::env::var("RECAPTCHA_SECRET_KEY").unwrap_or_default();
+    if secret.trim().is_empty() {
+        eprintln!("SKIP post_contact_message_returns_422_when_recaptcha_fails: RECAPTCHA_SECRET_KEY unset");
+        return;
+    }
+    let client = ContractClient::from_env();
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let mut headers = empty_headers();
+    headers.insert(
+        "x-forwarded-for".to_string(),
+        format!("203.0.113.{suffix}"),
+    );
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/contact_messages",
+        None,
+        &headers,
+        Some(serde_json::json!({
+            "email": format!("recaptcha-contract-{suffix}@example.com"),
+            "message": "contract recaptcha failure",
+            "recaptcha_token": "invalid-token-for-contract-test"
+        })),
+    ));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha failure JSON");
+    assert!(json["error"].as_str().unwrap_or("").contains("reCAPTCHA"));
+}
