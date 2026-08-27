@@ -1,0 +1,43 @@
+.offline-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  box-sizing: border-box;
+}
+
+.offline-banner--offline {
+  background: var(--color-danger);
+  color: var(--color-on-danger, #fff);
+}
+
+.offline-banner--reconnected {
+  background: var(--color-success-dark);
+  color: var(--color-on-success, #fff);
+}
+
+.offline-banner__message {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.offline-banner__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .offline-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .offline-banner__actions {
+    justify-content: flex-end;
+  }
+}

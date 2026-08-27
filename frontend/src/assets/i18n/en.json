@@ -4149,6 +4149,11 @@
       "jp": "Japan",
       "us": "United States",
       "in": "India"
+    },
+    "offline_banner": {
+      "message": "You are offline. Some actions may not work until your connection is restored.",
+      "reconnected": "Connection restored.",
+      "reload": "Reload"
     }
   },
   "entrySchedule": {
