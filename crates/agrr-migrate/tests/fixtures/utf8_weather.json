@@ -1,3 +1,7 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:5aadeabfd2317001a51bd78088f291b8ecc7e8c48a2d0cc9e36beadb9fb005cf
-size 100
+{
+  "北海道": {
+    "latitude": 43.0642,
+    "longitude": 141.3469,
+    "weather_data": []
+  }
+}
