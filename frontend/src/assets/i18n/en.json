@@ -4021,15 +4021,19 @@
         "content": "The Service implements appropriate security measures to protect personal information. However, we cannot guarantee the complete security of data transmission over the Internet."
       },
       "section7": {
-        "title": "7. Changes to Privacy Policy",
-        "content": "The Service may change this Privacy Policy as necessary. The revised Privacy Policy will take effect when posted on this page."
+        "title": "7. Account Deletion",
+        "content": "Users may delete their account and associated private data from the settings page. Account deletion cannot be undone. After deletion, the user's personal data is removed from the Service in a manner that cannot be restored."
       },
       "section8": {
-        "title": "8. Contact",
+        "title": "8. Changes to Privacy Policy",
+        "content": "The Service may change this Privacy Policy as necessary. The revised Privacy Policy will take effect when posted on this page."
+      },
+      "last_updated": "Last updated: October 17, 2025",
+      "section9": {
+        "title": "9. Contact",
         "content_html": "For inquiries regarding the Privacy Policy, please contact us via {{contact_link}}.",
         "contact_link_text": "Contact Page"
-      },
-      "last_updated": "Last updated: October 17, 2025"
+      }
     },
     "terms": {
       "title": "Terms of Service",

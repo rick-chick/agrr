@@ -15,9 +15,10 @@ const privacyTranslation = {
       section4: { title: '4', content_html: 'Content' },
       section5: { title: '5', content_html: 'Content' },
       section6: { title: '6', content: 'Content' },
-      section7: { title: '7', content: 'Content' },
-      section8: {
-        title: '8. Contact',
+      section7: { title: '7. Account deletion', content: 'Account deletion is irreversible.' },
+      section8: { title: '8. Policy changes', content: 'We may update this policy.' },
+      section9: {
+        title: '9. Contact',
         content_html: 'For inquiries, please contact us via {{contact_link}}.',
         contact_link_text: 'Contact Page'
       },
@@ -42,16 +43,16 @@ describe('PrivacyComponent', () => {
     fixture.detectChanges();
   });
 
-  it('renders section 8 contact link instead of raw {{contact_link}} placeholder', () => {
+  it('renders section 9 contact link instead of raw {{contact_link}} placeholder', () => {
     const root = fixture.nativeElement as HTMLElement;
-    const section8 = Array.from(root.querySelectorAll('.page-section-content')).find((el) =>
+    const section9 = Array.from(root.querySelectorAll('.page-section-content')).find((el) =>
       el.textContent?.includes('For inquiries')
     );
 
-    expect(section8).not.toBeUndefined();
-    const contactLink = section8?.querySelector('a[href="/contact"]');
+    expect(section9).not.toBeUndefined();
+    const contactLink = section9?.querySelector('a[href="/contact"]');
     expect(contactLink).not.toBeNull();
     expect(contactLink?.textContent).toContain('Contact Page');
-    expect(section8?.textContent).not.toContain('{{contact_link}}');
+    expect(section9?.textContent).not.toContain('{{contact_link}}');
   });
 });
