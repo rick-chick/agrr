@@ -218,6 +218,26 @@ describe('CropListComponent card actions', () => {
     expect(fixture.nativeElement.querySelector('.master-loading:not(.list-loading-text)')).toBeNull();
   });
 
+  it('shows error alert with retry button that calls load()', () => {
+    const component = fixture.componentInstance;
+    component.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      crops: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.page-alert-error[role="alert"]')).toBeTruthy();
+    const retryBtn = fixture.nativeElement.querySelector('.master-list__retry') as HTMLButtonElement;
+    expect(retryBtn).toBeTruthy();
+
+    const loadSpy = vi.spyOn(component, 'load');
+    retryBtn.click();
+    expect(loadSpy).toHaveBeenCalled();
+  });
+
   it('opens delete confirm dialog before deleting crop', () => {
     const component = fixture.componentInstance;
     component.deleteConfirmDialogRef = {

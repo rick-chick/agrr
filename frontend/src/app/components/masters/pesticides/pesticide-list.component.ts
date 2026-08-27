@@ -38,6 +38,13 @@ const initialControl: PesticideListViewState = {
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <div class="page-alert-error master-list__error" role="alert">
+            <p>{{ control.error | translate }}</p>
+            <button type="button" class="btn btn-secondary master-list__retry" (click)="load()">
+              {{ 'masters.load_error.retry' | translate }}
+            </button>
+          </div>
         } @else {
           <div class="section-card__header-actions">
             <a [routerLink]="['/pesticides', 'new']" class="btn btn-primary">{{ 'pesticides.form.submit_create' | translate }}</a>
