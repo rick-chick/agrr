@@ -9,6 +9,7 @@ import { FooterComponent } from './components/shared/footer/footer.component';
 import { FlashMessageComponent } from './components/shared/flash-message/flash-message.component';
 import { UndoToastComponent } from './components/shared/undo-toast/undo-toast.component';
 import { CookieConsentBannerComponent } from './components/shared/cookie-consent-banner/cookie-consent-banner.component';
+import { OfflineBannerComponent } from './components/shared/offline-banner/offline-banner.component';
 import { GoogleAnalyticsService } from './services/google-analytics.service';
 import { POST_LOGIN_QUERY_PARAM } from './core/auth/login-auth-urls';
 import { AuthService } from './services/auth.service';
@@ -29,7 +30,8 @@ import {
     FooterComponent,
     FlashMessageComponent,
     UndoToastComponent,
-    CookieConsentBannerComponent
+    CookieConsentBannerComponent,
+    OfflineBannerComponent
   ],
   providers: [...NAV_OVERDUE_BADGE_PROVIDERS],
   templateUrl: './app.html',
