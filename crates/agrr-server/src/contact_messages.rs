@@ -55,38 +55,42 @@ pub fn remote_ip_from_headers(headers: &HeaderMap) -> Option<String> {
         .map(str::to_string)
 }
 
+fn failure_response(failure: CreateContactMessageFailure) -> (StatusCode, Json<serde_json::Value>) {
+    use agrr_domain::contact_messages::dtos::CreateContactMessageFailureKind;
+    let (status, json) = match failure.kind {
+        CreateContactMessageFailureKind::RateLimit => (
+            StatusCode::TOO_MANY_REQUESTS,
+            serde_json::json!({"error": "rate_limit"}),
+        ),
+        CreateContactMessageFailureKind::Recaptcha => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            serde_json::json!({"error": failure.message.unwrap_or_default()}),
+        ),
+        CreateContactMessageFailureKind::Validation => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            serde_json::json!({"errors": failure.errors.map(|e| e.full_messages()).unwrap_or_default()}),
+        ),
+    };
+    (status, Json(json))
+}
+
 struct CreatePresenter {
-    body: Option<Result<(StatusCode, Json<serde_json::Value>), StatusCode>>,
+    body: Option<(StatusCode, Json<serde_json::Value>)>,
 }
 
 impl CreateContactMessageOutputPort for CreatePresenter {
     fn on_success(&mut self, success: CreateContactMessageSuccess) {
-        self.body = Some(Ok((
+        self.body = Some((
             StatusCode::CREATED,
             Json(serde_json::json!({
                 "id": success.contact_message.id,
                 "status": success.contact_message.status,
             })),
-        )));
+        ));
     }
 
     fn on_failure(&mut self, failure: CreateContactMessageFailure) {
-        use agrr_domain::contact_messages::dtos::CreateContactMessageFailureKind;
-        let (status, _json) = match failure.kind {
-            CreateContactMessageFailureKind::RateLimit => (
-                StatusCode::TOO_MANY_REQUESTS,
-                serde_json::json!({"error": "rate_limit"}),
-            ),
-            CreateContactMessageFailureKind::Recaptcha => (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                serde_json::json!({"error": failure.message.unwrap_or_default()}),
-            ),
-            CreateContactMessageFailureKind::Validation => (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                serde_json::json!({"errors": failure.errors.map(|e| e.full_messages()).unwrap_or_default()}),
-            ),
-        };
-        self.body = Some(Err(status));
+        self.body = Some(failure_response(failure));
     }
 }
 
@@ -119,8 +123,7 @@ async fn create(
         .call(input)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     match presenter.body {
-        Some(Ok(ok)) => Ok(ok),
-        Some(Err(status)) => Err(status),
+        Some(response) => Ok(response),
         None => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
@@ -129,6 +132,13 @@ async fn create(
 mod tests {
     use super::*;
     use axum::http::HeaderMap;
+
+    #[test]
+    fn failure_response_rate_limit_includes_json_body() {
+        let (status, Json(json)) = failure_response(CreateContactMessageFailure::rate_limit());
+        assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(json["error"], "rate_limit");
+    }
 
     #[test]
     fn remote_ip_prefers_x_forwarded_for_first_hop() {
