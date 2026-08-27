@@ -3,6 +3,7 @@ import { FarmWeatherUpdateDto } from './subscribe-farm-weather.dtos';
 
 export interface SubscribeFarmWeatherOutputPort {
   presentWeather(dto: FarmWeatherUpdateDto): void;
+  onConnectionLost(): void;
 }
 
 export const SUBSCRIBE_FARM_WEATHER_OUTPUT_PORT = new InjectionToken<SubscribeFarmWeatherOutputPort>(

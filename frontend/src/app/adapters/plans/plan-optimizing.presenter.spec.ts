@@ -112,4 +112,27 @@ describe('PlanOptimizingPresenter', () => {
 
     expect(onOptimizationCompleted).not.toHaveBeenCalled();
   });
+
+  it('sets failed state with connection lost message on onConnectionLost', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'plans.optimizing_live.error.connection_lost': 'Connection was lost.',
+        'plans.optimizing_live.error.hints.default': 'Reload the page.'
+      },
+      true
+    );
+    const harness = createView({ status: 'optimizing', progress: 25, phaseMessage: '' });
+    presenter.setView(harness.view);
+
+    presenter.onConnectionLost();
+
+    expect(harness.control).toEqual({
+      status: 'failed',
+      progress: 25,
+      phaseMessage: 'Connection was lost.',
+      failureHint: 'Reload the page.'
+    });
+  });
 });

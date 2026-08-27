@@ -5,14 +5,22 @@ import { OptimizationService } from '../../services/plans/optimization.service';
 describe('PlanOptimizationChannelGateway', () => {
   function createGateway() {
     let received: ((payload: Record<string, unknown>) => void) | undefined;
+    let disconnected: (() => void) | undefined;
+    let rejected: (() => void) | undefined;
     const optimizationService = {
       subscribe: vi.fn(
         (
           channel: string,
           params: Record<string, unknown>,
-          callbacks: { received: (payload: Record<string, unknown>) => void }
+          callbacks: {
+            received: (payload: Record<string, unknown>) => void;
+            disconnected?: () => void;
+            rejected?: () => void;
+          }
         ) => {
           received = callbacks.received;
+          disconnected = callbacks.disconnected;
+          rejected = callbacks.rejected;
           return { unsubscribe: vi.fn() };
         }
       )
@@ -20,7 +28,13 @@ describe('PlanOptimizationChannelGateway', () => {
     const gateway = new PlanOptimizationChannelGateway(
       optimizationService as unknown as OptimizationService
     );
-    return { gateway, optimizationService, getReceived: () => received };
+    return {
+      gateway,
+      optimizationService,
+      getReceived: () => received,
+      getDisconnected: () => disconnected,
+      getRejected: () => rejected
+    };
   }
 
   describe('subscribe', () => {
@@ -37,6 +51,27 @@ describe('PlanOptimizationChannelGateway', () => {
       );
       getReceived()?.({ status: 'optimizing', progress: 50 });
       expect(onReceived).toHaveBeenCalledWith({ status: 'optimizing', progress: 50 });
+    });
+
+    it('forwards disconnected and rejected callbacks to OptimizationService', () => {
+      const { gateway, optimizationService, getDisconnected, getRejected } = createGateway();
+      const onDisconnected = vi.fn();
+      const onRejected = vi.fn();
+
+      gateway.subscribe(7, { received: vi.fn(), disconnected: onDisconnected, rejected: onRejected });
+
+      expect(optimizationService.subscribe).toHaveBeenCalledWith(
+        'PlansOptimizationChannel',
+        { cultivation_plan_id: 7 },
+        expect.objectContaining({
+          disconnected: expect.any(Function),
+          rejected: expect.any(Function)
+        })
+      );
+      getDisconnected()?.();
+      getRejected()?.();
+      expect(onDisconnected).toHaveBeenCalledTimes(1);
+      expect(onRejected).toHaveBeenCalledTimes(1);
     });
   });
 

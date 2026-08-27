@@ -5,7 +5,11 @@ import { FarmWeatherUpdateDto } from './subscribe-farm-weather.dtos';
 export interface FarmWeatherGateway {
   subscribe(
     farmId: number,
-    callbacks: { received: (message: FarmWeatherUpdateDto) => void }
+    callbacks: {
+      received: (message: FarmWeatherUpdateDto) => void;
+      disconnected?: () => void;
+      rejected?: () => void;
+    }
   ): Channel;
 }
 

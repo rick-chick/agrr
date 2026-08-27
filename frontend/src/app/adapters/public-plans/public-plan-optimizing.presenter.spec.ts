@@ -36,7 +36,8 @@ const translationMap = new Map<string, string>([
   [
     'public_plans.optimizing.error.hints.default',
     '下のボタンから作物を変更するか、最初からやり直してください。'
-  ]
+  ],
+  ['public_plans.optimizing.error.connection_lost', '接続が切断されました。']
 ]);
 
 describe('PublicPlanOptimizingPresenter', () => {
@@ -207,5 +208,13 @@ describe('PublicPlanOptimizingPresenter', () => {
     expect(lastControl.failureHint).toBe(
       '気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。'
     );
+  });
+
+  it('sets failed state with connection lost message on onConnectionLost', () => {
+    presenter.onConnectionLost();
+
+    expect(lastControl.status).toBe('failed');
+    expect(lastControl.phaseMessage).toBe('接続が切断されました。');
+    expect(onCompletedSpy).not.toHaveBeenCalled();
   });
 });

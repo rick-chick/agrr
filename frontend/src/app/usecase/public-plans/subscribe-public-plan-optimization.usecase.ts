@@ -23,7 +23,9 @@ export class SubscribePublicPlanOptimizationUseCase
 
   execute(dto: SubscribePublicPlanOptimizationInputDto): void {
     const channel = this.optimizationGateway.subscribe(dto.planId, {
-      received: (message) => this.outputPort.present(message)
+      received: (message) => this.outputPort.present(message),
+      disconnected: () => this.outputPort.onConnectionLost(),
+      rejected: () => this.outputPort.onConnectionLost()
     });
     dto.onSubscribed?.(channel);
   }

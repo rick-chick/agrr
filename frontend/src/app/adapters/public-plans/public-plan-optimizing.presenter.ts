@@ -205,4 +205,21 @@ export class PublicPlanOptimizingPresenter
       this.view.onOptimizationCompleted?.();
     }
   }
+
+  onConnectionLost(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const prev = this.view.control;
+    if (prev.status === 'failed' || prev.status === 'completed') {
+      return;
+    }
+    this.view.control = {
+      status: 'failed',
+      progress: prev.progress,
+      phaseMessage:
+        this.translateKey('public_plans.optimizing.error.connection_lost') ??
+        this.translateKey('public_plans.optimizing.error.title') ??
+        prev.phaseMessage,
+      failureHint: this.translateKey('public_plans.optimizing.error.hints.default') ?? undefined
+    };
+  }
 }

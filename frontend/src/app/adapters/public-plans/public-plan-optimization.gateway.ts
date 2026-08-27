@@ -12,12 +12,16 @@ export class PublicPlanOptimizationChannelGateway
 
   subscribe(
     planId: number,
-    callbacks: { received: (message: PublicPlanOptimizationMessageDto) => void }
+    callbacks: {
+      received: (message: PublicPlanOptimizationMessageDto) => void;
+      disconnected?: () => void;
+      rejected?: () => void;
+    }
   ): Channel {
     return this.optimizationService.subscribe(
       'OptimizationChannel',
       { cultivation_plan_id: planId },
-      { received: callbacks.received }
+      callbacks
     );
   }
 }

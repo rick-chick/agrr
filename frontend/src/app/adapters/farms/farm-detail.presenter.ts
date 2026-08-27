@@ -80,6 +80,24 @@ export class FarmDetailPresenter
     };
   }
 
+  onConnectionLost(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const prev = this.view.control;
+    if (!prev.farm) return;
+    const status = prev.farm.weather_data_status;
+    if (status === 'completed' || status === 'failed') {
+      return;
+    }
+    this.view.control = {
+      ...prev,
+      farm: {
+        ...prev.farm,
+        weather_data_status: 'failed'
+      },
+      pendingErrorFlash: null
+    };
+  }
+
   onSuccess(dto: DeleteFarmSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (dto.undo) {

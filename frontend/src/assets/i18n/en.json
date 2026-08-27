@@ -1050,6 +1050,8 @@
       },
       "error": {
         "title": "Plan Creation Failed",
+        "retry": "Retry",
+        "connection_lost": "Connection was lost. Please try again.",
         "try_again": "Change crops and try again",
         "start_over": "Start over",
         "hints": {
@@ -1348,6 +1350,7 @@
       "default_message": "Preparing optimization...",
       "error": {
         "title": "Optimization failed",
+        "connection_lost": "Connection was lost. Please try again.",
         "retry": "Reload",
         "back_to_plan": "Back to plan",
         "hints": {

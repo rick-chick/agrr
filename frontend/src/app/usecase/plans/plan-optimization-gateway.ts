@@ -6,12 +6,20 @@ import { TaskScheduleSyncMessageDto } from './subscribe-task-schedule-sync.dtos'
 export interface PlanOptimizationGateway {
   subscribe(
     planId: number,
-    callbacks: { received: (message: PlanOptimizationMessageDto) => void }
+    callbacks: {
+      received: (message: PlanOptimizationMessageDto) => void;
+      disconnected?: () => void;
+      rejected?: () => void;
+    }
   ): Channel;
 
   subscribeTaskScheduleSync(
     planId: number,
-    callbacks: { received: (message: TaskScheduleSyncMessageDto) => void }
+    callbacks: {
+      received: (message: TaskScheduleSyncMessageDto) => void;
+      disconnected?: () => void;
+      rejected?: () => void;
+    }
   ): Channel;
 }
 

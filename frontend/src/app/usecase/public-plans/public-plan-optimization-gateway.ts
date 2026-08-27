@@ -5,7 +5,11 @@ import { PublicPlanOptimizationMessageDto } from './subscribe-public-plan-optimi
 export interface PublicPlanOptimizationGateway {
   subscribe(
     planId: number,
-    callbacks: { received: (message: PublicPlanOptimizationMessageDto) => void }
+    callbacks: {
+      received: (message: PublicPlanOptimizationMessageDto) => void;
+      disconnected?: () => void;
+      rejected?: () => void;
+    }
   ): Channel;
 }
 

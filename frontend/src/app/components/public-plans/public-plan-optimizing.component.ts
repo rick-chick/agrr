@@ -95,7 +95,10 @@ const initialControl: PublicPlanOptimizingViewState = {
                 <div class="error-hint">{{ control.failureHint }}</div>
               }
               <div class="error-actions">
-                <a [routerLink]="['/public-plans/select-crop']" class="btn btn-primary">
+                <button type="button" class="btn btn-primary public-plan-optimizing__retry" (click)="reload()">
+                  {{ 'public_plans.optimizing.error.retry' | translate }}
+                </button>
+                <a [routerLink]="['/public-plans/select-crop']" class="btn btn-secondary">
                   {{ 'public_plans.optimizing.error.try_again' | translate }}
                 </a>
                 <a [routerLink]="['/public-plans/new']" class="btn btn-secondary">
@@ -217,6 +220,22 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
 
   onOptimizationCompleted(): void {
     this.router.navigate(['/public-plans/results'], { queryParams: { planId: this.planId } });
+  }
+
+  reload(): void {
+    const pid = this.planId;
+    if (!pid) {
+      return;
+    }
+    this.channel?.unsubscribe();
+    this.channel = null;
+    this.control = { status: 'pending', progress: 0, phaseMessage: '', failureHint: undefined };
+    this.useCase.execute({
+      planId: pid,
+      onSubscribed: (ch) => {
+        this.channel = ch;
+      }
+    });
   }
 
   ngOnDestroy(): void {

@@ -149,4 +149,21 @@ export class PlanOptimizingPresenter implements SubscribePlanOptimizationOutputP
       this.view.onOptimizationCompleted?.();
     }
   }
+
+  onConnectionLost(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const prev = this.view.control;
+    if (prev.status === 'failed' || prev.status === 'completed') {
+      return;
+    }
+    this.view.control = {
+      status: 'failed',
+      progress: prev.progress,
+      phaseMessage:
+        this.translateKey('plans.optimizing_live.error.connection_lost') ??
+        this.translateKey('plans.optimizing_live.error.title') ??
+        prev.phaseMessage,
+      failureHint: this.translateKey('plans.optimizing_live.error.hints.default') ?? undefined
+    };
+  }
 }

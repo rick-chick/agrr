@@ -16,7 +16,9 @@ export class SubscribeFarmWeatherUseCase implements SubscribeFarmWeatherInputPor
 
   execute(dto: SubscribeFarmWeatherInputDto): void {
     const channel = this.weatherGateway.subscribe(dto.farmId, {
-      received: (message) => this.outputPort.presentWeather(message)
+      received: (message) => this.outputPort.presentWeather(message),
+      disconnected: () => this.outputPort.onConnectionLost(),
+      rejected: () => this.outputPort.onConnectionLost()
     });
     dto.onSubscribed?.(channel);
   }

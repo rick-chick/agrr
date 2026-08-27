@@ -1939,6 +1939,8 @@
       },
       "error": {
         "title": "計画作成に失敗しました",
+        "retry": "再試行",
+        "connection_lost": "接続が切断されました。しばらくしてからやり直してください。",
         "try_again": "作物を変更してもう一度試す",
         "start_over": "最初からやり直す",
         "hints": {
@@ -2251,6 +2253,7 @@
       "default_message": "最適化を準備しています...",
       "error": {
         "title": "最適化に失敗しました",
+        "connection_lost": "接続が切断されました。しばらくしてからやり直してください。",
         "retry": "再読み込み",
         "back_to_plan": "計画ハブへ戻る",
         "hints": {

@@ -17,7 +17,8 @@ describe('SubscribeFarmWeatherUseCase', () => {
       )
     } as unknown as FarmWeatherGateway;
     const outputPort: SubscribeFarmWeatherOutputPort = {
-      presentWeather: vi.fn()
+      presentWeather: vi.fn(),
+      onConnectionLost: vi.fn()
     };
     const useCase = new SubscribeFarmWeatherUseCase(outputPort, gateway);
     const onSubscribed = vi.fn();
@@ -36,5 +37,38 @@ describe('SubscribeFarmWeatherUseCase', () => {
     };
     received?.(dto);
     expect(outputPort.presentWeather).toHaveBeenCalledWith(dto);
+  });
+
+  it('forwards disconnected and rejected to output port onConnectionLost', () => {
+    let disconnected: (() => void) | undefined;
+    let rejected: (() => void) | undefined;
+    const channel = { unsubscribe: vi.fn() };
+    const gateway = {
+      subscribe: vi.fn(
+        (
+          _farmId: number,
+          callbacks: {
+            received: (message: FarmWeatherUpdateDto) => void;
+            disconnected?: () => void;
+            rejected?: () => void;
+          }
+        ) => {
+          disconnected = callbacks.disconnected;
+          rejected = callbacks.rejected;
+          return channel;
+        }
+      )
+    } as unknown as FarmWeatherGateway;
+    const outputPort: SubscribeFarmWeatherOutputPort = {
+      presentWeather: vi.fn(),
+      onConnectionLost: vi.fn()
+    };
+    const useCase = new SubscribeFarmWeatherUseCase(outputPort, gateway);
+
+    useCase.execute({ farmId: 42 });
+
+    disconnected?.();
+    rejected?.();
+    expect(outputPort.onConnectionLost).toHaveBeenCalledTimes(2);
   });
 });
