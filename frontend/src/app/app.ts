@@ -11,6 +11,7 @@ import { UndoToastComponent } from './components/shared/undo-toast/undo-toast.co
 import { CookieConsentBannerComponent } from './components/shared/cookie-consent-banner/cookie-consent-banner.component';
 import { I18nBootstrapErrorPanelComponent } from './components/shared/i18n-bootstrap-error-panel/i18n-bootstrap-error-panel.component';
 import { I18nBootstrapStateService } from './core/i18n/i18n-bootstrap-state.service';
+import { OfflineBannerComponent } from './components/shared/offline-banner/offline-banner.component';
 import { GoogleAnalyticsService } from './services/google-analytics.service';
 import { POST_LOGIN_QUERY_PARAM } from './core/auth/login-auth-urls';
 import { AuthService } from './services/auth.service';
@@ -32,7 +33,8 @@ import {
     FlashMessageComponent,
     UndoToastComponent,
     CookieConsentBannerComponent,
-    I18nBootstrapErrorPanelComponent
+    I18nBootstrapErrorPanelComponent,
+    OfflineBannerComponent
   ],
   providers: [...NAV_OVERDUE_BADGE_PROVIDERS],
   templateUrl: './app.html',

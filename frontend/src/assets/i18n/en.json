@@ -322,12 +322,6 @@
   "a11y": {
     "skip_to_main": "Skip to main content"
   },
-  "i18n": {
-    "bootstrap": {
-      "load_failed": "Could not load translations",
-      "retry": "Retry"
-    }
-  },
   "nav": {
     "main": "Main navigation",
     "open_menu": "Open menu",
@@ -4148,6 +4142,11 @@
       "accept": "Accept",
       "reject": "Reject"
     },
+    "offline_banner": {
+      "message": "You are offline. Some actions may not work until your connection is restored.",
+      "reconnected": "Connection restored.",
+      "reload": "Reload"
+    },
     "region_select": {
       "label": "Region",
       "blank": "Please select",
@@ -4247,6 +4246,12 @@
         "title": "Fetch weather data",
         "description": "Weather history is fetched on the farm detail page. Wait until status is completed."
       }
+    }
+  },
+  "i18n": {
+    "bootstrap": {
+      "load_failed": "Could not load translations",
+      "retry": "Retry"
     }
   }
 }
