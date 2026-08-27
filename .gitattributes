@@ -42,3 +42,5 @@ frontend/scripts/lighthouse-ci-routes.json -filter -diff -merge text eol=lf
 frontend/src/app/core/seo/entry-schedule-prerender-catalog.json -filter -diff -merge text eol=lf
 # Cloud Agent は environment.json を実体 JSON として読む（LFS ポインタ不可）
 .cursor/environment.json -filter -diff -merge text eol=lf
+# agrr-migrate test fixtures: small coords/weather JSON (CI checkout uses lfs: false)
+crates/agrr-migrate/tests/fixtures/*.json -filter -diff -merge text eol=lf
