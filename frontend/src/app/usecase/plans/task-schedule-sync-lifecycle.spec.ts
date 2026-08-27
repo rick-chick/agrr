@@ -16,6 +16,10 @@ describe('task-schedule-sync-lifecycle', () => {
     expect(resolveRegenerating('generating', initialTaskScheduleSyncLifecycleState())).toBe(true);
   });
 
+  it('resolveRegenerating is true when sync state is stale (pending auto-regen)', () => {
+    expect(resolveRegenerating('stale', initialTaskScheduleSyncLifecycleState())).toBe(true);
+  });
+
   it('resolveRegenerating is true while regenerate POST is in flight', () => {
     const lifecycle = markRegeneratePostInFlight(initialTaskScheduleSyncLifecycleState());
     expect(resolveRegenerating('ready', lifecycle)).toBe(true);
