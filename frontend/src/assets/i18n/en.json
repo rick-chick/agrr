@@ -1327,6 +1327,8 @@
       "no_candidates_found": "No optimal planting schedule found for this crop. Weather data range was extended but no candidates were found.",
       "prediction_data_incomplete": "Weather prediction data is incomplete. Please try again later.",
       "no_fields_in_farm": "Cannot create a plan for a farm without registered fields. Please add fields to the farm first.",
+      "weather_not_ready": "Weather data is not ready yet. Please wait until it completes before creating a plan.",
+      "crops_not_ready": "Plan setup is not complete. Please configure crops and task schedules first.",
       "invalid_id": "Invalid plan ID."
     },
     "messages": {

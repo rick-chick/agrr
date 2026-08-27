@@ -290,7 +290,10 @@ export class PlanNewComponent implements PlanNewView, OnInit {
 
   get canSubmit(): boolean {
     const farm = this.control.farms.find((f) => f.id === this.control.selectedFarmId);
-    return Boolean(farm?.hasValidFields);
+    if (!farm?.hasValidFields) {
+      return false;
+    }
+    return this.control.readiness?.allReady ?? false;
   }
 
   ngOnInit(): void {

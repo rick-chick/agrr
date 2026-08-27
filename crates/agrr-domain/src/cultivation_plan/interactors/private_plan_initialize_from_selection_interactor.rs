@@ -10,18 +10,20 @@ use crate::cultivation_plan::dtos::{
     PrivatePlanMasterFieldSeed,
 };
 use crate::cultivation_plan::policies::cultivation_plan_field_policy;
+use crate::cultivation_plan::policies::plan_create_readiness_policy;
 use crate::cultivation_plan::ports::{
-    PrivatePlanExistingPlanGateway, PrivatePlanFarmResolveGateway, PrivatePlanInitializeCallablePort,
-    PrivatePlanInitializeFromSelectionOutputPort, PrivatePlanOptimizationJobChainGateway,
-    PrivatePlanSessionIdGeneratorPort,
+    PrivatePlanCreateReadinessGateway, PrivatePlanExistingPlanGateway, PrivatePlanFarmResolveGateway,
+    PrivatePlanInitializeCallablePort, PrivatePlanInitializeFromSelectionOutputPort,
+    PrivatePlanOptimizationJobChainGateway, PrivatePlanSessionIdGeneratorPort,
 };
+use crate::farm::entities::FarmEntity;
 use crate::field::gateways::FieldGateway;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::helpers::date_calendar::beginning_of_year;
 use crate::shared::policies::farm_policy;
 use crate::shared::ports::{ClockPort, LoggerPort, TranslatorPort};
 
-pub struct PrivatePlanInitializeFromSelectionInteractor<'a, O, EP, F, FG, I, L, T, Ck, J> {
+pub struct PrivatePlanInitializeFromSelectionInteractor<'a, O, EP, F, FG, I, L, T, Ck, J, R> {
     output_port: &'a mut O,
     cultivation_plan_gateway: &'a EP,
     farm_gateway: &'a F,
@@ -32,10 +34,11 @@ pub struct PrivatePlanInitializeFromSelectionInteractor<'a, O, EP, F, FG, I, L, 
     clock: &'a Ck,
     session_id_generator: &'a dyn PrivatePlanSessionIdGeneratorPort,
     job_chain_enqueuer: &'a J,
+    readiness_gateway: &'a R,
 }
 
-impl<'a, O, EP, F, FG, I, L, T, Ck, J>
-    PrivatePlanInitializeFromSelectionInteractor<'a, O, EP, F, FG, I, L, T, Ck, J>
+impl<'a, O, EP, F, FG, I, L, T, Ck, J, R>
+    PrivatePlanInitializeFromSelectionInteractor<'a, O, EP, F, FG, I, L, T, Ck, J, R>
 where
     O: PrivatePlanInitializeFromSelectionOutputPort,
     EP: PrivatePlanExistingPlanGateway,
@@ -46,6 +49,7 @@ where
     T: TranslatorPort,
     Ck: ClockPort,
     J: PrivatePlanOptimizationJobChainGateway,
+    R: PrivatePlanCreateReadinessGateway,
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -59,6 +63,7 @@ where
         clock: &'a Ck,
         session_id_generator: &'a dyn PrivatePlanSessionIdGeneratorPort,
         job_chain_enqueuer: &'a J,
+        readiness_gateway: &'a R,
     ) -> Self {
         Self {
             output_port,
@@ -71,6 +76,7 @@ where
             clock,
             session_id_generator,
             job_chain_enqueuer,
+            readiness_gateway,
         }
     }
 
@@ -111,9 +117,32 @@ where
             }
         };
 
+        if !plan_create_readiness_policy::weather_ready(farm.weather_data_status.as_deref()) {
+            self.output_port.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
+                PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY,
+                self.translator
+                    .t("plans.errors.weather_not_ready", &Default::default()),
+            ));
+            return Ok(());
+        }
+
+        if !self.readiness_gateway.user_has_ready_crop(&input.user)? {
+            self.output_port.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
+                PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY,
+                self.translator
+                    .t("plans.errors.crops_not_ready", &Default::default()),
+            ));
+            return Ok(());
+        }
+
+        let init_farm = CultivationPlanInitFarm {
+            id: farm.id,
+            name: farm.name,
+        };
+
         if self
             .cultivation_plan_gateway
-            .find_existing(farm.id, input.user.id)?
+            .find_existing(init_farm.id, input.user.id)?
             .is_some()
         {
             self.output_port.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
@@ -123,7 +152,7 @@ where
             return Ok(());
         }
 
-        let master_fields = self.resolve_master_field_seeds(farm.id)?;
+        let master_fields = self.resolve_master_field_seeds(init_farm.id)?;
         if master_fields.is_empty() {
             self.output_port.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
                 PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY,
@@ -137,7 +166,7 @@ where
             .plan_name
             .as_deref()
             .filter(|n| !n.trim().is_empty())
-            .unwrap_or(&farm.name)
+            .unwrap_or(&init_farm.name)
             .to_string();
         let session_id = self.session_id_generator.generate();
         let today = self.clock.today();
@@ -146,7 +175,7 @@ where
             .expect("valid end of year");
 
         let result = self.plan_initializer.call(
-            &farm,
+            &init_farm,
             &master_fields,
             input.user.id,
             &session_id,
@@ -186,7 +215,7 @@ where
     fn resolve_owned_farm(
         &self,
         input: &PrivatePlanInitializeFromSelectionInput,
-    ) -> Result<Option<CultivationPlanInitFarm>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Option<FarmEntity>, Box<dyn std::error::Error + Send + Sync>> {
         let farm = match self.farm_gateway.find_by_id(input.farm_id) {
             Ok(farm) => farm,
             Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => return Ok(None),
@@ -197,10 +226,7 @@ where
             return Ok(None);
         }
 
-        Ok(Some(CultivationPlanInitFarm {
-            id: farm.id,
-            name: farm.name,
-        }))
+        Ok(Some(farm))
     }
 
     fn resolve_master_field_seeds(

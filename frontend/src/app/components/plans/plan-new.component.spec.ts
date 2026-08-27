@@ -12,6 +12,79 @@ import { LoadPlanNewCarryoverUseCase } from '../../usecase/plans/load-plan-new-c
 import { LoadPlanNewReadinessUseCase } from '../../usecase/plans/load-plan-new-readiness.usecase';
 import { PlanNewViewState } from './plan-new.view';
 import { buildPlanCreateReadiness } from '../../domain/plans/plan-create-readiness';
+import type { Crop } from '../../domain/crops/crop';
+import type { CropTaskScheduleBlueprint } from '../../domain/crops/crop-task-schedule-blueprint';
+
+const readyUserCrop: Crop = {
+  id: 1,
+  name: 'Tomato',
+  is_reference: false,
+  groups: [],
+  crop_stages: [
+    {
+      id: 10,
+      crop_id: 1,
+      name: 'Vegetative',
+      order: 1,
+      temperature_requirement: { id: 1, crop_stage_id: 10, base_temperature: 10 },
+      thermal_requirement: { id: 1, crop_stage_id: 10, required_gdd: 100 }
+    }
+  ]
+};
+
+const readyBlueprints: CropTaskScheduleBlueprint[] = [
+  {
+    id: 1,
+    crop_id: 1,
+    agricultural_task_id: 5,
+    source_agricultural_task_id: null,
+    stage_order: 1,
+    stage_name: 'Vegetative',
+    gdd_trigger: 100,
+    gdd_tolerance: null,
+    task_type: 'field_work',
+    source: 'manual',
+    priority: 1,
+    amount: null,
+    amount_unit: null,
+    description: null,
+    weather_dependency: null,
+    time_per_sqm: null,
+    name: 'Weeding',
+    agricultural_task: { id: 5, name: 'Weeding' }
+  },
+  {
+    id: 2,
+    crop_id: 1,
+    agricultural_task_id: 6,
+    source_agricultural_task_id: null,
+    stage_order: 1,
+    stage_name: 'Vegetative',
+    gdd_trigger: 100,
+    gdd_tolerance: null,
+    task_type: 'basal_fertilization',
+    source: 'manual',
+    priority: 1,
+    amount: null,
+    amount_unit: null,
+    description: null,
+    weather_dependency: null,
+    time_per_sqm: null,
+    name: 'Basal',
+    agricultural_task: { id: 6, name: 'Basal' }
+  }
+];
+
+function allReadyReadiness() {
+  return buildPlanCreateReadiness({
+    farmId: 1,
+    fieldCount: 1,
+    hasValidFields: true,
+    weatherStatus: 'completed',
+    crops: [readyUserCrop],
+    cropBlueprints: { 1: readyBlueprints }
+  });
+}
 
 function defaultControl(overrides: Partial<PlanNewViewState> = {}): PlanNewViewState {
   return {
@@ -167,10 +240,47 @@ describe('PlanNewComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Create Farm');
   });
 
+  it('should not submit when weather readiness is incomplete', () => {
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
+      selectedFarmId: 1,
+      readiness: buildPlanCreateReadiness({
+        farmId: 1,
+        fieldCount: 1,
+        hasValidFields: true,
+        weatherStatus: 'fetching',
+        crops: [],
+        cropBlueprints: {}
+      })
+    });
+
+    component.onSubmit(new Event('submit'));
+
+    expect(mockCreateUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('disables submit when readiness is not allReady even with valid fields', () => {
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
+      selectedFarmId: 1,
+      readiness: buildPlanCreateReadiness({
+        farmId: 1,
+        fieldCount: 1,
+        hasValidFields: true,
+        weatherStatus: 'completed',
+        crops: [],
+        cropBlueprints: {}
+      })
+    });
+
+    expect(component.canSubmit).toBe(false);
+  });
+
   it('should call createUseCase on submit when farm has valid fields', () => {
     component.control = defaultControl({
       farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
-      selectedFarmId: 1
+      selectedFarmId: 1,
+      readiness: allReadyReadiness()
     });
     component.planName = 'My Plan';
 
@@ -187,6 +297,7 @@ describe('PlanNewComponent', () => {
     component.control = defaultControl({
       farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
       selectedFarmId: 1,
+      readiness: allReadyReadiness(),
       carryoverEnabled: true,
       selectedSourcePlanId: 9
     });
@@ -204,6 +315,7 @@ describe('PlanNewComponent', () => {
     component.control = defaultControl({
       farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
       selectedFarmId: 1,
+      readiness: allReadyReadiness(),
       carryoverEnabled: true,
       selectedSourcePlanId: 9,
       carryoverPreview: {
