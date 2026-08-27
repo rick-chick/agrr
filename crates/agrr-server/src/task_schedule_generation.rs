@@ -133,6 +133,12 @@ fn regen_still_current(state: &AppState, plan_id: i64, generation: u64) -> bool 
         == Some(generation)
 }
 
+fn restore_stale_if_superseded(state: &AppState, plan_id: i64, generation: u64) {
+    if !regen_still_current(state, plan_id, generation) {
+        mark_task_schedule_stale(state, plan_id);
+    }
+}
+
 fn run_task_schedule_regen_if_current(
     state: &AppState,
     plan_id: i64,
@@ -144,7 +150,9 @@ fn run_task_schedule_regen_if_current(
             if !regen_still_current(state, plan_id, generation) {
                 return Ok(());
             }
-            run_task_schedule_generation_inner(state, plan_id)
+            let result = run_task_schedule_generation_inner(state, plan_id);
+            restore_stale_if_superseded(state, plan_id, generation);
+            result
         })
 }
 
@@ -459,6 +467,29 @@ mod tests {
             "generation step should wait for plan lock release"
         );
         assert!(step_done.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn superseded_regen_restores_stale_after_completion() {
+        let db = test_pool_with_sync_plan(7);
+        let state = test_app_state(db.pool.clone());
+        let generation = bump_regen_token(&state, 7);
+
+        let _ = run_task_schedule_generation_inner(&state, 7);
+        let after_inner = sync_state(&db.pool, 7);
+        assert!(
+            after_inner == sync_state::READY || after_inner == sync_state::FAILED,
+            "inner regen should settle sync state, got {after_inner}"
+        );
+
+        bump_regen_token(&state, 7);
+        restore_stale_if_superseded(&state, 7, generation);
+
+        assert_eq!(
+            sync_state(&db.pool, 7),
+            sync_state::STALE,
+            "superseded regen must not leave ready when a newer regen is pending"
+        );
     }
 
     #[test]
