@@ -14,6 +14,8 @@ struct FakeRevocationGateway {
 }
 
 impl UserSessionRevocationGateway for FakeRevocationGateway {
+    fn delete_session_by_session_id(&self, _session_id: &str) {}
+
     fn delete_all_sessions_for_user(&self, user_id: i64) {
         self.deleted_user_ids.lock().unwrap().push(user_id);
     }

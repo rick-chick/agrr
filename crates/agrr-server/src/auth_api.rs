@@ -57,12 +57,14 @@ async fn auth_logout(
     State(state): State<AppState>,
     jar: CookieJar,
 ) -> impl IntoResponse {
-    let user_id = crate::session_auth::user_id_from_session(&state, &jar).ok();
-    let authenticated = user_id.is_some();
+    let session_id = jar
+        .get("session_id")
+        .map(|c| c.value().to_string());
+    let authenticated = session_id.is_some();
     let gateway = UserSessionRevocationSqliteGateway::new(state.sqlite.clone());
     let mut presenter = LogoutPresenter;
     let mut interactor = AuthUserLogoutInteractor::new(&mut presenter, &gateway);
-    interactor.call(authenticated, user_id.unwrap_or(0));
+    interactor.call(authenticated, session_id.as_deref().unwrap_or(""));
     let jar = jar.remove(Cookie::from("session_id"));
     (
         jar,
