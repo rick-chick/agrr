@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PublicPlanStore } from './public-plan-store.service';
 import { PUBLIC_PLAN_STATE_STORAGE_KEY } from './public-plan-browser-storage';
 
@@ -6,6 +6,10 @@ describe('PublicPlanStore pendingCropSlug', () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('restores pendingCropSlug from localStorage on construction', () => {
@@ -87,14 +91,19 @@ describe('PublicPlanStore pendingCropSlug', () => {
   it('records persist failure when localStorage write fails', () => {
     const store = new PublicPlanStore();
     const originalSetItem = Storage.prototype.setItem;
-    Storage.prototype.setItem = function () {
-      throw new DOMException('quota', 'QuotaExceededError');
-    };
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string
+    ) {
+      if (key === PUBLIC_PLAN_STATE_STORAGE_KEY) {
+        throw new DOMException('quota', 'QuotaExceededError');
+      }
+      return originalSetItem.call(this, key, value);
+    });
 
     store.setPendingCropSlug('tomato');
 
     expect(store.hadPersistFailure).toBe(true);
-
-    Storage.prototype.setItem = originalSetItem;
   });
 });
