@@ -12,6 +12,15 @@ pub fn is_production() -> bool {
     runtime_env() == "production"
 }
 
+/// Whether `POST /api/v1/backdoor/db/clear` is allowed in the current environment.
+/// Production requires explicit break-glass `AGRR_BACKDOOR_ALLOW_DB_CLEAR=1`.
+pub fn backdoor_db_clear_allowed() -> bool {
+    if !is_production() {
+        return true;
+    }
+    std::env::var("AGRR_BACKDOOR_ALLOW_DB_CLEAR").as_deref() == Ok("1")
+}
+
 /// Mock login (`/auth/test/*`) and insecure session cookies in non-production.
 pub fn dev_environment_allowed() -> bool {
     if is_production() {
@@ -111,6 +120,54 @@ mod tests {
         restore_env("ENABLE_MOCK_AUTH", prev_mock);
         restore_env("AGRR_ENV", prev_env);
         restore_env("RAILS_ENV", prev_rails);
+    }
+
+    #[test]
+    fn backdoor_db_clear_allowed_in_non_production_without_break_glass() {
+        let prev_env = std::env::var("AGRR_ENV").ok();
+        let prev_rails = std::env::var("RAILS_ENV").ok();
+        let prev_break_glass = std::env::var("AGRR_BACKDOOR_ALLOW_DB_CLEAR").ok();
+
+        std::env::set_var("AGRR_ENV", "development");
+        std::env::remove_var("RAILS_ENV");
+        std::env::remove_var("AGRR_BACKDOOR_ALLOW_DB_CLEAR");
+        assert!(backdoor_db_clear_allowed());
+
+        restore_env("AGRR_ENV", prev_env);
+        restore_env("RAILS_ENV", prev_rails);
+        restore_env("AGRR_BACKDOOR_ALLOW_DB_CLEAR", prev_break_glass);
+    }
+
+    #[test]
+    fn backdoor_db_clear_blocked_in_production_without_break_glass() {
+        let prev_env = std::env::var("AGRR_ENV").ok();
+        let prev_rails = std::env::var("RAILS_ENV").ok();
+        let prev_break_glass = std::env::var("AGRR_BACKDOOR_ALLOW_DB_CLEAR").ok();
+
+        std::env::set_var("AGRR_ENV", "production");
+        std::env::remove_var("RAILS_ENV");
+        std::env::remove_var("AGRR_BACKDOOR_ALLOW_DB_CLEAR");
+        assert!(!backdoor_db_clear_allowed());
+
+        restore_env("AGRR_ENV", prev_env);
+        restore_env("RAILS_ENV", prev_rails);
+        restore_env("AGRR_BACKDOOR_ALLOW_DB_CLEAR", prev_break_glass);
+    }
+
+    #[test]
+    fn backdoor_db_clear_allowed_in_production_with_break_glass() {
+        let prev_env = std::env::var("AGRR_ENV").ok();
+        let prev_rails = std::env::var("RAILS_ENV").ok();
+        let prev_break_glass = std::env::var("AGRR_BACKDOOR_ALLOW_DB_CLEAR").ok();
+
+        std::env::set_var("AGRR_ENV", "production");
+        std::env::remove_var("RAILS_ENV");
+        std::env::set_var("AGRR_BACKDOOR_ALLOW_DB_CLEAR", "1");
+        assert!(backdoor_db_clear_allowed());
+
+        restore_env("AGRR_ENV", prev_env);
+        restore_env("RAILS_ENV", prev_rails);
+        restore_env("AGRR_BACKDOOR_ALLOW_DB_CLEAR", prev_break_glass);
     }
 
     fn restore_env(key: &str, value: Option<String>) {
