@@ -3967,6 +3967,11 @@
       "message": "The page you are looking for does not exist or may have been moved.",
       "backHome": "Back to Home"
     },
+    "errorFallback": {
+      "title": "Something went wrong",
+      "message": "A temporary problem may have occurred. Please reload the page and try again.",
+      "reload": "Reload"
+    },
     "privacy": {
       "title": "Privacy Policy",
       "description": "AGRR's privacy policy. Details on how we collect, use, and manage personal information.",

@@ -18,6 +18,8 @@ import {
   NAV_OVERDUE_BADGE_PROVIDERS,
   NavOverdueBadgePresenter
 } from './usecase/nav/nav-overdue-badge.providers';
+import { AppFatalErrorService } from './core/errors/app-fatal-error.service';
+import { ErrorFallbackComponent } from './components/shared/error-fallback/error-fallback.component';
 
 @Component({
   selector: 'app-root',
@@ -29,7 +31,8 @@ import {
     FooterComponent,
     FlashMessageComponent,
     UndoToastComponent,
-    CookieConsentBannerComponent
+    CookieConsentBannerComponent,
+    ErrorFallbackComponent
   ],
   providers: [...NAV_OVERDUE_BADGE_PROVIDERS],
   templateUrl: './app.html',
@@ -44,10 +47,12 @@ export class App implements OnInit, OnDestroy {
   private readonly googleAnalytics = inject(GoogleAnalyticsService);
   private readonly navOverdueBadgePresenter = inject(NavOverdueBadgePresenter);
   private readonly loadNavOverdueBadgeUseCase = inject(LoadNavOverdueBadgeUseCase);
+  private readonly fatalErrorService = inject(AppFatalErrorService);
   private routerSubscription?: Subscription;
   private langChangeSubscription?: Subscription;
 
   readonly workLogOverdueCount = this.navOverdueBadgePresenter.overdueCount;
+  readonly hasFatalError = this.fatalErrorService.hasFatalError;
 
   performUndo(): void {
     this.undoToastService.performUndo();

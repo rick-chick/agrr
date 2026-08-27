@@ -1,3 +1,6 @@
+@if (hasFatalError()) {
+  <app-error-fallback />
+} @else {
 <a class="skip-link" href="#main-content">{{ 'a11y.skip_to_main' | translate }}</a>
 
 <app-navbar
@@ -16,3 +19,4 @@
 <app-footer />
 <app-undo-toast (undo)="performUndo()" />
 <app-cookie-consent-banner />
+}
