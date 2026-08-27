@@ -3891,6 +3891,11 @@
       "accept": "Accept",
       "reject": "Reject"
     },
+    "offline_banner": {
+      "offline_message": "आप ऑफ़लाइन हैं। कनेक्शन बहाल होने तक कुछ क्रियाएँ काम नहीं कर सकतीं।",
+      "reconnect_message": "कनेक्शन बहाल हो गया। नवीनतम डेटा के लिए पुनः लोड करें।",
+      "reload": "पुनः लोड करें"
+    },
     "region_select": {
       "label": "क्षेत्र",
       "blank": "कृपया चुनें",

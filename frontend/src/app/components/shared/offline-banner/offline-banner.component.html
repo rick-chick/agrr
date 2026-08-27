@@ -1,0 +1,22 @@
+@if (!connectivity.isOnline()) {
+  <div class="offline-banner offline-banner--offline" role="alert">
+    <p class="offline-banner__message">{{ 'shared.offline_banner.offline_message' | translate }}</p>
+  </div>
+} @else if (connectivity.showReconnectCta()) {
+  <div class="offline-banner offline-banner--reconnect" role="status" aria-live="polite">
+    <p class="offline-banner__message">{{ 'shared.offline_banner.reconnect_message' | translate }}</p>
+    <div class="offline-banner__actions">
+      <button type="button" class="offline-banner__reload" (click)="reload()">
+        {{ 'shared.offline_banner.reload' | translate }}
+      </button>
+      <button
+        type="button"
+        class="offline-banner__dismiss"
+        [attr.aria-label]="'common.close' | translate"
+        (click)="dismissReconnect()"
+      >
+        {{ 'common.close' | translate }}
+      </button>
+    </div>
+  </div>
+}

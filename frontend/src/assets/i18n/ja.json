@@ -4178,6 +4178,11 @@
       "accept": "同意する",
       "reject": "拒否する"
     },
+    "offline_banner": {
+      "offline_message": "オフラインです。回線が復旧するまで一部の操作ができない場合があります。",
+      "reconnect_message": "回線が復旧しました。最新のデータを取得するには再読み込みしてください。",
+      "reload": "再読み込み"
+    },
     "region_select": {
       "label": "地域",
       "blank": "選択してください",
