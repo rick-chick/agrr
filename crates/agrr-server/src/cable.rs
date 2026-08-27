@@ -2,8 +2,10 @@
 //!
 //! Ruby: `ApplicationCable`, `OptimizationChannel`, `PlansOptimizationChannel`, `FarmChannel`
 
+use crate::cable_subscription_auth::{CableSessionContext, farm_subscription_denied, plan_subscription_denied};
+use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
-use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, FarmSqliteGateway, SqlitePool};
+use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, FarmSqliteGateway, SqlitePool, UserLookupSqliteGateway, UserOrganizationScopeSqliteGateway};
 use agrr_domain::cultivation_plan::calculators::cultivation_plan_optimization_progress_calculator;
 use agrr_domain::cultivation_plan::dtos::CultivationPlanFieldSnapshot;
 use agrr_domain::cultivation_plan::gateways::{
@@ -11,8 +13,10 @@ use agrr_domain::cultivation_plan::gateways::{
 };
 use agrr_domain::cultivation_plan::mappers::to_port_payload;
 use agrr_domain::farm::gateways::FarmGateway;
+use agrr_domain::shared::gateways::UserLookupGateway;
+use agrr_domain::shared::org_scope::member_organization_ids;
 use agrr_domain::shared::ports::FarmRefreshBroadcastPort;
-use rusqlite::params;
+use axum_extra::extract::cookie::CookieJar;
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -22,6 +26,7 @@ use axum::{
     routing::get,
     Router,
 };
+use rusqlite::params;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -382,14 +387,37 @@ async fn relay_subscription(
     }
 }
 
-async fn cable_ws(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl IntoResponse {
-    let hub = state.cable_hub.clone();
-    // actioncable-js は Sec-WebSocket-Protocol: actioncable-v1-json を送る。応答しないとハンドシェイク失敗。
-    ws.protocols(["actioncable-v1-json"])
-        .on_upgrade(move |socket| handle_socket(socket, hub, state))
+fn resolve_cable_session(state: &AppState, jar: &CookieJar) -> Option<CableSessionContext> {
+    let user_id = user_id_from_session(state, jar).ok()?;
+    let pool = state.sqlite.clone();
+    let user = UserLookupSqliteGateway::new(pool.clone()).find(user_id);
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool);
+    let member_organization_ids =
+        member_organization_ids(&scope_gateway, user_id).unwrap_or_default();
+    Some(CableSessionContext {
+        user_id,
+        member_organization_ids,
+        user,
+    })
 }
 
-async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppState) {
+async fn cable_ws(
+    ws: WebSocketUpgrade,
+    State(state): State<AppState>,
+    jar: CookieJar,
+) -> impl IntoResponse {
+    let hub = state.cable_hub.clone();
+    let session_ctx = resolve_cable_session(&state, &jar);
+    ws.protocols(["actioncable-v1-json"])
+        .on_upgrade(move |socket| handle_socket(socket, hub, state, session_ctx))
+}
+
+async fn handle_socket(
+    mut socket: WebSocket,
+    hub: Arc<CableHub>,
+    state: AppState,
+    session_ctx: Option<CableSessionContext>,
+) {
     // actioncable-js は welcome 受信後に subscribe を送る。未送信だと購読が開始されない。
     let welcome = json!({ "type": "welcome" });
     if socket
@@ -434,7 +462,14 @@ async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppStat
                 reject_subscription(&mut socket, identifier).await;
                 continue;
             };
-            if farm_gateway.find_by_id(farm_id).is_err() {
+            let farm = match farm_gateway.find_by_id(farm_id) {
+                Ok(farm) => farm,
+                Err(_) => {
+                    reject_subscription(&mut socket, identifier).await;
+                    continue;
+                }
+            };
+            if farm_subscription_denied(&farm, session_ctx.as_ref()) {
                 reject_subscription(&mut socket, identifier).await;
                 continue;
             }
@@ -459,10 +494,17 @@ async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppStat
             reject_subscription(&mut socket, identifier).await;
             continue;
         };
-        if plan_gateway.find_by_id(plan_id).is_err() {
+        let plan = match plan_gateway.find_by_id(plan_id) {
+            Ok(plan) => plan,
+            Err(_) => {
+                reject_subscription(&mut socket, identifier).await;
+                continue;
+            }
+        };
+        if plan_subscription_denied(channel, &plan, session_ctx.as_ref()) {
             reject_subscription(&mut socket, identifier).await;
             continue;
-        };
+        }
         if !confirm_subscription(&mut socket, identifier).await {
             return;
         }
