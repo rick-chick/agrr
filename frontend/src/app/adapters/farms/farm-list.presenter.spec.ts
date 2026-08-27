@@ -71,7 +71,7 @@ describe('FarmListPresenter', () => {
       expect(lastControl!.farms[1].is_reference).toBe(true);
     });
 
-    it('queues pending error flash and updates view.control on onError(dto)', () => {
+    it('sets control.error i18n key on load failure while loading', () => {
       const initialControl: FarmListViewState = {
         loading: true,
         error: null,
@@ -81,15 +81,39 @@ describe('FarmListPresenter', () => {
       };
       lastControl = initialControl;
 
-      const dto: ErrorDto = { message: 'Network error' };
+      const dto: ErrorDto = { message: 'Something went wrong' };
+
+      presenter.onError(dto);
+
+      expect(lastControl).not.toBeNull();
+      expect(lastControl!.loading).toBe(false);
+      expect(lastControl!.error).toBe('common.api_error.generic');
+      expect(lastControl!.farms).toEqual([]);
+      expect(lastControl!.pendingErrorFlash).toBeNull();
+    });
+
+    it('queues pending error flash without control.error when not loading', () => {
+      const initialFarms = [
+        { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0, weather_data_status: 'pending' as const }
+      ];
+      const initialControl: FarmListViewState = {
+        loading: false,
+        error: null,
+        farms: initialFarms,
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+      lastControl = initialControl;
+
+      const dto: ErrorDto = { message: 'Delete failed' };
 
       presenter.onError(dto);
 
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.error).toBeNull();
-      expect(lastControl!.farms).toEqual([]);
-      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Network error' });
+      expect(lastControl!.farms).toEqual(initialFarms);
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Delete failed' });
     });
   });
 
