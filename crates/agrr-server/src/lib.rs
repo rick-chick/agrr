@@ -101,6 +101,7 @@ use tracing::Level;
 
 pub async fn run_http_server() {
     runtime_env::ensure_default_runtime_env();
+    runtime_env::validate_runtime_env_for_startup();
 
     telemetry::init();
 
