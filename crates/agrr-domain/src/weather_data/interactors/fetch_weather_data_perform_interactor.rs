@@ -19,6 +19,7 @@ const ALLOWED_MISSING_RATIO: f64 = 0.05;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FetchWeatherDataPerformError {
+    DaemonUnavailable,
     InvalidWeatherApiResponse(String),
     InvalidWeatherDataArray,
     ExcessiveMissingWeatherDays,
@@ -30,6 +31,7 @@ pub enum FetchWeatherDataPerformError {
 impl std::fmt::Display for FetchWeatherDataPerformError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::DaemonUnavailable => write!(f, "daemon_unavailable"),
             Self::InvalidWeatherApiResponse(msg) | Self::WeatherDataStorageFailed(msg) => {
                 write!(f, "{msg}")
             }
@@ -252,7 +254,14 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
         let data_source = self.determine_data_source(farm_id, latitude, longitude);
         self.agrr_weather_gateway
             .fetch_by_date_range(latitude, longitude, start_date, end_date, &data_source)
-            .map_err(|e| FetchWeatherDataPerformError::InvalidWeatherApiResponse(e.to_string()))
+            .map_err(|e| {
+                let message = e.to_string();
+                if message == "daemon_unavailable" || message.contains("agrr daemon is not running") {
+                    FetchWeatherDataPerformError::DaemonUnavailable
+                } else {
+                    FetchWeatherDataPerformError::InvalidWeatherApiResponse(message)
+                }
+            })
     }
 
     /// agrr normal fetch exit 0 with no output file: keep existing store and continue the chain.

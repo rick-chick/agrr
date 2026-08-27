@@ -1567,7 +1567,8 @@
         "optimizing": "最適化に失敗しました",
         "task_schedule_generation": "作業計画の生成に失敗しました",
         "default": "処理に失敗しました",
-        "timeout": "処理がタイムアウトしました"
+        "timeout": "処理がタイムアウトしました",
+        "daemon_unavailable": "AGRR処理サービスに接続できません。しばらくしてから再試行してください。"
       },
       "default_plan_name": "メイン計画",
       "public_plan_name": "無料作付け計画"

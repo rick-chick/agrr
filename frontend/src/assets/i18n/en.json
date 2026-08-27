@@ -943,7 +943,8 @@
         "optimizing": "Optimization failed",
         "task_schedule_generation": "Task plan generation failed",
         "default": "Process failed",
-        "timeout": "The process timed out"
+        "timeout": "The process timed out",
+        "daemon_unavailable": "The AGRR processing service is unavailable. Please try again later."
       },
       "default_plan_name": "Main Plan",
       "public_plan_name": "Free Cultivation Plan"

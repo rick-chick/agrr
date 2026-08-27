@@ -290,6 +290,7 @@ en:
         location_required: "Location is required"
         weather_service_unavailable: "Weather service is temporarily unavailable"
         weather_fetch_failed: "Weather data fetch failed: %{message}"
+        daemon_unavailable: "The AGRR processing service is unavailable. Please try again later."
         forecast_fetch_failed: "Forecast fetch failed: %{message}"
         weather_invalid_response: "Invalid response from weather service"
         not_found: "Resource not found"
