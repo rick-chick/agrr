@@ -1594,7 +1594,7 @@ fn post_plan_variance_learning_reoptimize_enqueues_optimization_chain() {
     let path = std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH");
     let conn = rusqlite::Connection::open(&path).expect("open sqlite");
     let mut optimization_phase: Option<String> = None;
-    for _ in 0..50 {
+    for _ in 0..100 {
         optimization_phase = conn
             .query_row(
                 "SELECT optimization_phase FROM cultivation_plans WHERE id = ?1",

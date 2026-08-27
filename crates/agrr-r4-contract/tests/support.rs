@@ -1681,5 +1681,7 @@ pub async fn cable_subscribe_frame_type(
         .and_then(|v| v.as_str())
         .unwrap_or_default()
         .to_string();
-    CableFrameOutcome { frame_type }
+    let outcome = CableFrameOutcome { frame_type };
+    let _ = ws.close(None).await;
+    outcome
 }
