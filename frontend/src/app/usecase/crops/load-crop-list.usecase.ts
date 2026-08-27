@@ -14,7 +14,10 @@ export class LoadCropListUseCase implements LoadCropListInputPort {
     this.cropGateway.list().subscribe({
       next: (crops) => this.outputPort.present({ crops }),
       error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+        this.outputPort.onError({
+          message: err?.message ?? 'Unknown error',
+          scope: 'load-crop-list'
+        })
     });
   }
 }

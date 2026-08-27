@@ -14,7 +14,10 @@ export class LoadPestListUseCase implements LoadPestListInputPort {
     this.pestGateway.list().subscribe({
       next: (pests) => this.outputPort.present({ pests }),
       error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+        this.outputPort.onError({
+          message: err?.message ?? 'Unknown error',
+          scope: 'load-pest-list'
+        })
     });
   }
 }

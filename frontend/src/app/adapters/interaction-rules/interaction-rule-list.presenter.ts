@@ -8,6 +8,7 @@ import { DeleteInteractionRuleSuccessDto } from '../../usecase/interaction-rules
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import { masterListLoadErrorFromDto } from '../../core/view-effects/master-list-load-error-presenter.helpers';
 
 @Injectable()
 export class InteractionRuleListPresenter implements LoadInteractionRuleListOutputPort, DeleteInteractionRuleOutputPort {
@@ -33,7 +34,7 @@ export class InteractionRuleListPresenter implements LoadInteractionRuleListOutp
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null,
+      error: masterListLoadErrorFromDto(dto, 'load-interaction-rule-list'),
       pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }

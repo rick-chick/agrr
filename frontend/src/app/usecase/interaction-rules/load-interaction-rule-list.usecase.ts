@@ -22,7 +22,10 @@ export class LoadInteractionRuleListUseCase implements LoadInteractionRuleListIn
     this.interactionRuleGateway.list().subscribe({
       next: (rules) => this.outputPort.present({ rules }),
       error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+        this.outputPort.onError({
+          message: err?.message ?? 'Unknown error',
+          scope: 'load-interaction-rule-list'
+        })
     });
   }
 }

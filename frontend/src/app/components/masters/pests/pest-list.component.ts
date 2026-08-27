@@ -35,6 +35,13 @@ const initialControl: PestListViewState = {
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <div class="page-alert-error pest-list__error" role="alert">
+            <p>{{ control.error | translate }}</p>
+            <button type="button" class="btn btn-secondary pest-list__retry" (click)="load()">
+              {{ 'masters.load_error.retry' | translate }}
+            </button>
+          </div>
         } @else {
           <div class="section-card__header-actions">
             <a [routerLink]="['/pests', 'new']" class="btn btn-primary">{{ 'pests.index.new_pest' | translate }}</a>

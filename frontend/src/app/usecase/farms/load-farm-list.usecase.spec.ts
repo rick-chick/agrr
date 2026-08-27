@@ -1,9 +1,10 @@
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { LoadFarmListUseCase } from './load-farm-list.usecase';
 import { FarmGateway } from './farm-gateway';
 import { LoadFarmListOutputPort } from './load-farm-list.output-port';
 import { FarmListDataDto } from './load-farm-list.dtos';
 import { Farm } from '../../domain/farms/farm';
+import { ErrorDto } from '../../domain/shared/error.dto';
 
 describe('LoadFarmListUseCase', () => {
   it('calls outputPort.present with farms from gateway', () => {
@@ -53,4 +54,30 @@ describe('LoadFarmListUseCase', () => {
     expect(receivedDto!.farms).toEqual(farms);
   });
 
+  it('calls outputPort.onError with load-farm-list scope when gateway fails', () => {
+    const gateway: FarmGateway = {
+      list: () => throwError(() => new Error('Server error')),
+      show: () => of({} as Farm),
+      listFieldsByFarm: () => of([]),
+      create: () => of({} as Farm),
+      update: () => of({} as Farm),
+      destroy: () => of({} as any),
+      createField: () => of({} as any),
+      updateField: () => of({} as any),
+      destroyField: () => of({} as any)
+    };
+
+    let receivedError: ErrorDto | null = null;
+    const outputPort: LoadFarmListOutputPort = {
+      present: () => {},
+      onError: (dto) => {
+        receivedError = dto;
+      }
+    };
+
+    const useCase = new LoadFarmListUseCase(outputPort, gateway);
+    useCase.execute();
+
+    expect(receivedError).toEqual({ message: 'Server error', scope: 'load-farm-list' });
+  });
 });

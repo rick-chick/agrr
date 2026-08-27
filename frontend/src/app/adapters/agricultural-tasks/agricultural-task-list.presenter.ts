@@ -8,6 +8,7 @@ import { DeleteAgriculturalTaskSuccessDto } from '../../usecase/agricultural-tas
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import { masterListLoadErrorFromDto } from '../../core/view-effects/master-list-load-error-presenter.helpers';
 
 @Injectable()
 export class AgriculturalTaskListPresenter implements LoadAgriculturalTaskListOutputPort, DeleteAgriculturalTaskOutputPort {
@@ -33,7 +34,7 @@ export class AgriculturalTaskListPresenter implements LoadAgriculturalTaskListOu
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null,
+      error: masterListLoadErrorFromDto(dto, 'load-agricultural-task-list'),
       pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }

@@ -270,6 +270,34 @@ describe('FarmListComponent', () => {
     }
   });
 
+  it('shows error alert with retry button that reloads the farm list', async () => {
+    const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
+    try {
+      component.control = {
+        loading: false,
+        error: 'common.api_error.generic',
+        farms: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const alert = fixture.nativeElement.querySelector('.page-alert-error[role="alert"]');
+      expect(alert).toBeTruthy();
+      expect(alert.textContent).toContain('common.api_error.generic');
+
+      const retryBtn = fixture.nativeElement.querySelector('.farm-list__retry');
+      expect(retryBtn).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.card-list')).toBeNull();
+
+      retryBtn.click();
+      expect(loadSpy).toHaveBeenCalled();
+    } finally {
+      loadSpy.mockRestore();
+    }
+  });
+
   it('shows card-list skeleton while loading', () => {
     component.control = {
       loading: true,

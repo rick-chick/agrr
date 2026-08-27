@@ -17,7 +17,10 @@ export class LoadFertilizeListUseCase implements LoadFertilizeListInputPort {
     this.fertilizeGateway.list().subscribe({
       next: (fertilizes) => this.outputPort.present({ fertilizes }),
       error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+        this.outputPort.onError({
+          message: err?.message ?? 'Unknown error',
+          scope: 'load-fertilize-list'
+        })
     });
   }
 }

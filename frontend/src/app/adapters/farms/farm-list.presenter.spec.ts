@@ -71,7 +71,7 @@ describe('FarmListPresenter', () => {
       expect(lastControl!.farms[1].is_reference).toBe(true);
     });
 
-    it('queues pending error flash and updates view.control on onError(dto)', () => {
+    it('sets control.error i18n key and pending error flash on load-list onError(dto)', () => {
       const initialControl: FarmListViewState = {
         loading: true,
         error: null,
@@ -81,15 +81,28 @@ describe('FarmListPresenter', () => {
       };
       lastControl = initialControl;
 
-      const dto: ErrorDto = { message: 'Network error' };
+      const dto: ErrorDto = { message: 'Http failure response: 0 Unknown Error', scope: 'load-farm-list' };
 
       presenter.onError(dto);
 
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
-      expect(lastControl!.error).toBeNull();
+      expect(lastControl!.error).toBe('common.api_error.network');
       expect(lastControl!.farms).toEqual([]);
-      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Network error' });
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Http failure response: 0 Unknown Error' });
+    });
+
+    it('does not set control.error when scope is not load-farm-list', () => {
+      const initialFarms = [
+        { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0, weather_data_status: 'pending' as const }
+      ];
+      lastControl = { loading: false, error: null, farms: initialFarms, pendingUndoToast: null, pendingErrorFlash: null };
+
+      presenter.onError({ message: 'Delete failed', scope: 'delete-farm' });
+
+      expect(lastControl!.error).toBeNull();
+      expect(lastControl!.farms).toEqual(initialFarms);
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Delete failed' });
     });
   });
 

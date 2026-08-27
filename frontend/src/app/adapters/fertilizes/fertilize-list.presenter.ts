@@ -8,6 +8,7 @@ import { DeleteFertilizeSuccessDto } from '../../usecase/fertilizes/delete-ferti
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import { masterListLoadErrorFromDto } from '../../core/view-effects/master-list-load-error-presenter.helpers';
 
 @Injectable()
 export class FertilizeListPresenter
@@ -35,7 +36,7 @@ export class FertilizeListPresenter
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null,
+      error: masterListLoadErrorFromDto(dto, 'load-fertilize-list'),
       pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }

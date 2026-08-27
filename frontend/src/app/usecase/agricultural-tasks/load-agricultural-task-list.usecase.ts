@@ -22,7 +22,10 @@ export class LoadAgriculturalTaskListUseCase implements LoadAgriculturalTaskList
     this.agriculturalTaskGateway.list().subscribe({
       next: (tasks) => this.outputPort.present({ tasks }),
       error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+        this.outputPort.onError({
+          message: err?.message ?? 'Unknown error',
+          scope: 'load-agricultural-task-list'
+        })
     });
   }
 }

@@ -14,7 +14,10 @@ export class LoadFarmListUseCase implements LoadFarmListInputPort {
     this.farmGateway.list().subscribe({
       next: (farms) => this.outputPort.present({ farms }),
       error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+        this.outputPort.onError({
+          message: err?.message ?? 'Unknown error',
+          scope: 'load-farm-list'
+        })
     });
   }
 }

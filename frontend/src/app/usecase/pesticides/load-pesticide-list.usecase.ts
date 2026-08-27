@@ -17,7 +17,10 @@ export class LoadPesticideListUseCase implements LoadPesticideListInputPort {
     this.pesticideGateway.list().subscribe({
       next: (pesticides) => this.outputPort.present({ pesticides }),
       error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+        this.outputPort.onError({
+          message: err?.message ?? 'Unknown error',
+          scope: 'load-pesticide-list'
+        })
     });
   }
 }

@@ -8,6 +8,7 @@ import { DeleteCropSuccessDto } from '../../usecase/crops/delete-crop.dtos';
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import { masterListLoadErrorFromDto } from '../../core/view-effects/master-list-load-error-presenter.helpers';
 
 @Injectable()
 export class CropListPresenter implements LoadCropListOutputPort, DeleteCropOutputPort {
@@ -33,7 +34,7 @@ export class CropListPresenter implements LoadCropListOutputPort, DeleteCropOutp
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null,
+      error: masterListLoadErrorFromDto(dto, 'load-crop-list'),
       pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
