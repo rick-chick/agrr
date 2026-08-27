@@ -91,6 +91,70 @@ export function parseRows(data) {
 }
 
 /**
+ * @param {Record<string, unknown>[]} rows
+ * @returns {number | null}
+ */
+export function pickFarmIdWithCompletedWeather(rows) {
+  for (const row of rows) {
+    if (row['weather_data_status'] === 'completed' && row['id'] != null) {
+      return Number(row['id']);
+    }
+  }
+  return null;
+}
+
+/**
+ * Ensure a farm with completed weather exists for plan creation.
+ *
+ * @param {ApiTransport} transport
+ * @returns {Promise<number>}
+ */
+export async function ensureFarmReadyForPlanCreate(transport) {
+  const listPath = '/api/v1/masters/farms';
+  const listRes = await transport.get(listPath);
+  const rows = listRes.ok ? parseRows(await listRes.json()) : [];
+  const readyFarmId = pickFarmIdWithCompletedWeather(rows);
+  if (readyFarmId != null) {
+    return readyFarmId;
+  }
+
+  const suffix = Date.now();
+  const postRes = await transport.post(listPath, {
+    farm: {
+      name: `${PLAN_CREATE_READY_PREFIX} Farm ${suffix}`,
+      region: 'jp',
+      latitude: 35.6812 + (suffix % 900) / 10_000,
+      longitude: 139.7671 + (suffix % 900) / 10_000,
+    },
+  });
+  if (!postRes.ok) {
+    const body = await postRes.text();
+    throw new Error(`POST farms failed (${postRes.status}): ${body.slice(0, 300)}`);
+  }
+  let farmId = null;
+  try {
+    const created = /** @type {Record<string, unknown>} */ (await postRes.json());
+    if (created['id'] != null) {
+      farmId = Number(created['id']);
+    }
+  } catch {
+    /* fall through */
+  }
+  if (farmId == null) {
+    const afterRes = await transport.get(listPath);
+    const after = afterRes.ok ? parseRows(await afterRes.json()) : [];
+    farmId = pickFarmIdWithCompletedWeather(after) ?? after[after.length - 1]?.['id'];
+    if (farmId != null) farmId = Number(farmId);
+  }
+  if (farmId == null) {
+    throw new Error('cannot create farm for plan create readiness');
+  }
+
+  await pollFarmWeatherCompleted(transport, farmId);
+  return farmId;
+}
+
+/**
  * Poll farm show until weather_data_status is completed.
  *
  * @param {ApiTransport} transport
@@ -283,10 +347,25 @@ export async function ensureCropPlanCreateReady(transport, cropId) {
  * @param {number | null} cropId
  */
 export async function ensurePlanCreateReadiness(transport, farmId, cropId) {
-  if (farmId != null) {
-    await pollFarmWeatherCompleted(transport, farmId);
+  let readyFarmId = farmId;
+  if (readyFarmId != null) {
+    const farmRes = await transport.get(`/api/v1/masters/farms/${readyFarmId}`);
+    if (farmRes.ok) {
+      const farm = /** @type {Record<string, unknown>} */ (await farmRes.json());
+      if (farm['weather_data_status'] !== 'completed') {
+        readyFarmId = null;
+      }
+    } else {
+      readyFarmId = null;
+    }
+  }
+  if (readyFarmId == null) {
+    readyFarmId = await ensureFarmReadyForPlanCreate(transport);
+  } else {
+    await pollFarmWeatherCompleted(transport, readyFarmId);
   }
   if (cropId != null) {
     await ensureCropPlanCreateReady(transport, cropId);
   }
+  return readyFarmId;
 }

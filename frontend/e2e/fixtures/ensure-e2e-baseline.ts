@@ -171,12 +171,13 @@ async function ensurePlan(
   }
 
   await ensureFarmFieldForPlan(api, base, farmId);
-  await ensurePlanCreateReadiness(createPlaywrightTransport(api, base), farmId, cropId);
+  const transport = createPlaywrightTransport(api, base);
+  const readyFarmId = await ensurePlanCreateReadiness(transport, farmId, cropId);
 
   const postRes = await api.post(listUrl, {
     data: {
       plan: {
-        farm_id: farmId,
+        farm_id: readyFarmId,
         crop_ids: [cropId],
         plan_name: `${E2E_BASELINE_PREFIX} Plan`,
       },

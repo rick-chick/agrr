@@ -3,13 +3,18 @@ import { test } from 'node:test';
 
 import {
   createFetchTransport,
-  parseRows,
+  pickFarmIdWithCompletedWeather,
   pollFarmWeatherCompleted,
 } from './ensure-plan-create-ready-baseline-lib.mjs';
 
-test('parseRows accepts array payloads', () => {
-  assert.deepEqual(parseRows([{ id: 1 }]), [{ id: 1 }]);
-  assert.deepEqual(parseRows({}), []);
+test('pickFarmIdWithCompletedWeather prefers completed farms', () => {
+  assert.equal(
+    pickFarmIdWithCompletedWeather([
+      { id: 1, weather_data_status: 'failed' },
+      { id: 2, weather_data_status: 'completed' },
+    ]),
+    2,
+  );
 });
 
 test('pollFarmWeatherCompleted returns when weather_data_status is completed', async () => {
