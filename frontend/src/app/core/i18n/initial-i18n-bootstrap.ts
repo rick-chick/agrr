@@ -2,7 +2,6 @@ import { isPlatformBrowser } from '@angular/common';
 import { inject, PLATFORM_ID } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, firstValueFrom, of } from 'rxjs';
-import type { TranslationObject } from '@ngx-translate/core';
 import { applyAppLang, resolveInitialAppLang, type AppLang } from '../app-locale';
 import { getI18nBootstrapFallback } from './i18n-bootstrap-fallback';
 import type { I18nBootstrapStatePort } from './i18n-bootstrap-state.port';
@@ -10,7 +9,7 @@ import { I18nBootstrapStateService } from './i18n-bootstrap-state.service';
 
 const PRERENDER_DEFAULT_LANG: AppLang = 'ja';
 
-export type BootstrapAppI18nOptions = {
+type BootstrapAppI18nOptions = {
   lang?: AppLang;
   state?: I18nBootstrapStatePort;
 };

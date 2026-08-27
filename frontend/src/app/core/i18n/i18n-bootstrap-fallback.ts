@@ -2,7 +2,7 @@ import type { AppLang } from '../app-locale';
 import type { TranslationObject } from '@ngx-translate/core';
 
 /** Minimal translations so the shell can render when locale JSON fails to load. */
-export const I18N_BOOTSTRAP_FALLBACK: Record<AppLang, TranslationObject> = {
+const I18N_BOOTSTRAP_FALLBACK: Record<AppLang, TranslationObject> = {
   ja: {
     common: {
       i18n: {

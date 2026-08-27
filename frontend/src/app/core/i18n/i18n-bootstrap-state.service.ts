@@ -4,8 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { bootstrapAppI18n } from './initial-i18n-bootstrap';
 import type { I18nBootstrapStatePort } from './i18n-bootstrap-state.port';
 
-export type { I18nBootstrapStatePort } from './i18n-bootstrap-state.port';
-
 const PRERENDER_DEFAULT_LANG = 'ja' as const;
 
 @Injectable({ providedIn: 'root' })
