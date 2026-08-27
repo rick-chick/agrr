@@ -639,22 +639,26 @@ impl CropTaskScheduleBlueprintGateway for CropTaskScheduleBlueprintGw {
             )?;
             let rows = stmt.query_map(params![crop_id], |row| {
                 let stage_order: Option<i32> = row.get(2)?;
+                let stage_name: Option<String> = row.get(3)?;
                 let gdd_trigger: Option<f64> = row.get(4)?;
                 let gdd_tolerance: Option<f64> = row.get(5)?;
+                let task_type: Option<String> = row.get(6)?;
+                let source: Option<String> = row.get(7)?;
+                let priority: Option<i32> = row.get(8)?;
                 let amount: Option<f64> = row.get(9)?;
                 let time_per_sqm: Option<f64> = row.get(13)?;
                 Ok(CropTaskScheduleBlueprintRow {
                     agricultural_task_id: row.get(0)?,
                     source_agricultural_task_id: row.get(1)?,
                     stage_order: stage_order.unwrap_or(0),
-                    stage_name: row.get(3)?,
+                    stage_name: stage_name.unwrap_or_else(|| "Unknown".to_string()),
                     gdd_trigger: gdd_trigger
                         .and_then(|v| Decimal::from_str(&v.to_string()).ok()),
                     gdd_tolerance: gdd_tolerance
                         .and_then(|v| Decimal::from_str(&v.to_string()).ok()),
-                    task_type: row.get(6)?,
-                    source: row.get(7)?,
-                    priority: row.get(8)?,
+                    task_type: task_type.unwrap_or_default(),
+                    source: source.unwrap_or_else(|| "manual".to_string()),
+                    priority: priority.unwrap_or(0),
                     amount: amount.and_then(|v| Decimal::from_str(&v.to_string()).ok()),
                     amount_unit: row.get(10)?,
                     description: row.get(11)?,
