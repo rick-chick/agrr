@@ -214,10 +214,29 @@ fn deletes_account_when_confirmed() {
 }
 
 #[test]
-fn deletes_account_without_email_confirm_when_none() {
+fn rejects_when_email_confirm_missing_for_user_with_email() {
     let gateway = StubAccountGateway {
         photo_keys: vec![],
         email: Some("user@example.com".into()),
+        delete_calls: Mutex::new(vec![]),
+        delete_error: None,
+    };
+    let (port, sessions, photos, deletes) = run_delete(true, None, gateway);
+    assert_eq!(
+        port.failure_message.as_deref(),
+        Some("Email confirmation required")
+    );
+    assert_eq!(port.success, 0);
+    assert!(sessions.is_empty());
+    assert!(photos.is_empty());
+    assert!(deletes.is_empty());
+}
+
+#[test]
+fn deletes_account_without_email_confirm_when_user_has_no_email() {
+    let gateway = StubAccountGateway {
+        photo_keys: vec![],
+        email: None,
         delete_calls: Mutex::new(vec![]),
         delete_error: None,
     };

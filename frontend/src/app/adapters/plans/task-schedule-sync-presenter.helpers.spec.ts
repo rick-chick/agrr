@@ -38,9 +38,9 @@ describe('taskScheduleSyncViewPatch', () => {
     });
   });
 
-  it('marks stale state as banner-only update', () => {
+  it('marks stale state as in-flight regeneration while auto-regen is pending', () => {
     expect(taskScheduleSyncViewPatch('stale')).toEqual({
-      regenerating: false,
+      regenerating: true,
       toastI18nKey: null,
       requestReload: false
     });
