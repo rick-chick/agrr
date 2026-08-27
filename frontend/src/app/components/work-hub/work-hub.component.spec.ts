@@ -73,6 +73,7 @@ describe('WorkHubComponent', () => {
     translate.setDefaultLang('ja');
     translate.use('ja');
     translate.setTranslation('ja', {
+      'work.hub.title': '作業ハブ',
       'work.hub.no_farms': '農場がまだ登録されていません',
       'work.hub.select_farm': '農場を選択',
       'work.hub.no_fields_warning': '有効な圃場がありません',
@@ -114,6 +115,17 @@ describe('WorkHubComponent', () => {
     fixture.detectChanges();
     expect(initExecute).toHaveBeenCalled();
     expect(mockPresenter.setView).toHaveBeenCalledWith(component);
+  });
+
+  it('wraps content in AppShell with work hub title', () => {
+    fixture.detectChanges();
+    component.control = baseControl();
+    fixture.detectChanges();
+
+    const shell = fixture.nativeElement.querySelector('app-app-shell');
+    expect(shell).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('h1#page-title')?.textContent?.trim()).toBe('作業ハブ');
+    expect(fixture.nativeElement.querySelector('.page-main')).toBeTruthy();
   });
 
   it('does not render schedule review section', () => {

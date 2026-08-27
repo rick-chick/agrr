@@ -212,4 +212,112 @@ describe('PrivatePlanCreateApiGateway', () => {
       await expect(firstValueFrom(gateway.createPlan(input))).rejects.toThrow('network error');
     });
   });
+
+  describe('fetchFarmsForPlanCreate', () => {
+    it('returns empty farms with limit flag when user owns no farms but is at create limit', async () => {
+      const ownedFarms: Farm[] = [
+        { id: 1, name: 'Farm 1', latitude: 35, longitude: 135, region: 'jp', is_reference: false },
+        { id: 2, name: 'Farm 2', latitude: 35, longitude: 135, region: 'jp', is_reference: false },
+        { id: 3, name: 'Farm 3', latitude: 35, longitude: 135, region: 'jp', is_reference: false },
+        { id: 4, name: 'Farm 4', latitude: 35, longitude: 135, region: 'jp', is_reference: false },
+      ];
+      vi.mocked(apiClient.get).mockImplementation((url: string) => {
+        if (url === '/api/v1/masters/farms') {
+          return of(ownedFarms);
+        }
+        return of({
+          id: Number(url.split('/').pop()),
+          name: `Farm ${url.split('/').pop()}`,
+          latitude: 35,
+          longitude: 135,
+          region: 'jp',
+          fields: [{ area: 10 }],
+        });
+      });
+
+      const result = await firstValueFrom(gateway.fetchFarmsForPlanCreate());
+
+      expect(result.farmCreateLimitReached).toBe(true);
+      expect(result.farms).toHaveLength(4);
+      expect(result.farms[0]).toEqual({
+        id: 1,
+        name: 'Farm 1',
+        fieldCount: 1,
+        totalArea: 10,
+        hasValidFields: true,
+      });
+    });
+
+    it('returns empty list with limit reached when masters farms list is empty at limit', async () => {
+      vi.mocked(apiClient.get).mockReturnValue(of([]));
+
+      const result = await firstValueFrom(gateway.fetchFarmsForPlanCreate());
+
+      expect(result).toEqual({ farms: [], farmCreateLimitReached: false });
+      expect(apiClient.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not count reference farms toward the create limit', async () => {
+      const farms: Farm[] = [
+        { id: 1, name: 'Owned 1', latitude: 35, longitude: 135, region: 'jp', is_reference: false },
+        { id: 2, name: 'Owned 2', latitude: 35, longitude: 135, region: 'jp', is_reference: false },
+        { id: 3, name: 'Owned 3', latitude: 35, longitude: 135, region: 'jp', is_reference: false },
+        { id: 4, name: 'Ref', latitude: 35, longitude: 135, region: 'jp', is_reference: true },
+      ];
+      vi.mocked(apiClient.get).mockImplementation((url: string) => {
+        if (url === '/api/v1/masters/farms') {
+          return of(farms);
+        }
+        return of({
+          id: Number(url.split('/').pop()),
+          name: `Farm ${url.split('/').pop()}`,
+          latitude: 35,
+          longitude: 135,
+          region: 'jp',
+          fields: [{ area: 5 }],
+        });
+      });
+
+      const result = await firstValueFrom(gateway.fetchFarmsForPlanCreate());
+
+      expect(result.farmCreateLimitReached).toBe(false);
+      expect(result.farms).toHaveLength(4);
+    });
+
+    it('marks farms without positive field area as lacking valid fields', async () => {
+      const farms: Farm[] = [
+        { id: 7, name: 'Empty fields', latitude: 35, longitude: 135, region: 'jp' },
+      ];
+      vi.mocked(apiClient.get).mockImplementation((url: string) => {
+        if (url === '/api/v1/masters/farms') {
+          return of(farms);
+        }
+        return of({
+          id: 7,
+          name: 'Empty fields',
+          latitude: 35,
+          longitude: 135,
+          region: 'jp',
+          fields: [{ area: 0 }, { area: null }],
+        });
+      });
+
+      const result = await firstValueFrom(gateway.fetchFarmsForPlanCreate());
+
+      expect(result.farmCreateLimitReached).toBe(false);
+      expect(result.farms[0]).toEqual({
+        id: 7,
+        name: 'Empty fields',
+        fieldCount: 0,
+        totalArea: 0,
+        hasValidFields: false,
+      });
+    });
+
+    it('forwards error when farm list fetch fails', async () => {
+      vi.mocked(apiClient.get).mockReturnValue(throwError(() => new Error('network error')));
+
+      await expect(firstValueFrom(gateway.fetchFarmsForPlanCreate())).rejects.toThrow('network error');
+    });
+  });
 });
