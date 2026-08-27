@@ -2,6 +2,8 @@
 
 use crate::adapters::NoopLogger;
 use crate::backdoor::build_backdoor_status_json;
+use crate::runtime_env;
+use crate::security_audit_log::{log_backdoor_auth_failure, log_backdoor_operation};
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
     ApplicationDatabaseClearSqliteGateway, BackdoorCreateUserAttrs, BackdoorDiagnosticsSqliteGateway,
@@ -45,6 +47,7 @@ fn backdoor_auth(
     headers: &HeaderMap,
 ) -> Result<(), (StatusCode, Json<Value>)> {
     if !state.backdoor_enabled() {
+        log_backdoor_auth_failure("not_enabled");
         return Err((
             StatusCode::SERVICE_UNAVAILABLE,
             Json(json!({
@@ -57,6 +60,7 @@ fn backdoor_auth(
         .get("X-Backdoor-Token")
         .and_then(|v| v.to_str().ok());
     let Some(token) = token.filter(|t| !t.is_empty()) else {
+        log_backdoor_auth_failure("missing_token");
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(json!({
@@ -66,6 +70,7 @@ fn backdoor_auth(
         ));
     };
     if !state.backdoor_token_matches(token) {
+        log_backdoor_auth_failure("invalid_token");
         return Err((
             StatusCode::FORBIDDEN,
             Json(json!({
@@ -83,6 +88,7 @@ async fn status(
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     backdoor_auth(&state, &headers)?;
     let root = std::env::current_dir().unwrap_or_else(|_| ".".into());
+    log_backdoor_operation("status", "success", None);
     Ok(Json(build_backdoor_status_json(&root)))
 }
 
@@ -91,6 +97,7 @@ async fn health(
     headers: HeaderMap,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     backdoor_auth(&state, &headers)?;
+    log_backdoor_operation("health", "success", None);
     Ok(Json(json!({
         "status": "ok",
         "timestamp": timestamp_json(),
@@ -105,11 +112,13 @@ async fn users(
     backdoor_auth(&state, &headers)?;
     let gw = BackdoorDiagnosticsSqliteGateway::new(state.sqlite.clone());
     let payload = gw.users_list_payload().map_err(|_| {
+        log_backdoor_operation("users_list", "error", None);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"success": false, "error": "internal"})),
         )
     })?;
+    log_backdoor_operation("users_list", "success", None);
     Ok(Json(json!({
         "timestamp": timestamp_json(),
         "total_users": payload.total_users,
@@ -147,27 +156,34 @@ async fn create_user(
         admin: body.user.admin.unwrap_or(false),
     };
     match gw.create_user(attrs).map_err(|_| {
+        log_backdoor_operation("user_create", "error", None);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"success": false, "error": "internal"})),
         )
     })? {
-        agrr_adapters_sqlite::BackdoorCreateUserResult::Ok { user } => Ok((
-            StatusCode::CREATED,
-            Json(json!({
-                "timestamp": timestamp_json(),
-                "success": true,
-                "user": user
-            })),
-        )),
-        agrr_adapters_sqlite::BackdoorCreateUserResult::Invalid { errors } => Ok((
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({
-                "timestamp": timestamp_json(),
-                "success": false,
-                "errors": errors
-            })),
-        )),
+        agrr_adapters_sqlite::BackdoorCreateUserResult::Ok { user } => {
+            log_backdoor_operation("user_create", "success", Some(user.id));
+            Ok((
+                StatusCode::CREATED,
+                Json(json!({
+                    "timestamp": timestamp_json(),
+                    "success": true,
+                    "user": user
+                })),
+            ))
+        }
+        agrr_adapters_sqlite::BackdoorCreateUserResult::Invalid { errors } => {
+            log_backdoor_operation("user_create", "invalid", None);
+            Ok((
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(json!({
+                    "timestamp": timestamp_json(),
+                    "success": false,
+                    "errors": errors
+                })),
+            ))
+        }
     }
 }
 
@@ -187,35 +203,45 @@ async fn update_user(
         admin: body.user.admin,
     };
     match gw.update_user(id, attrs).map_err(|_| {
+        log_backdoor_operation("user_update", "error", Some(id));
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"success": false, "error": "internal"})),
         )
     })? {
-        agrr_adapters_sqlite::BackdoorUpdateUserResult::Ok { user } => Ok((
-            StatusCode::OK,
-            Json(json!({
-                "timestamp": timestamp_json(),
-                "success": true,
-                "user": user
-            })),
-        )),
-        agrr_adapters_sqlite::BackdoorUpdateUserResult::NotFound => Ok((
-            StatusCode::NOT_FOUND,
-            Json(json!({
-                "timestamp": timestamp_json(),
-                "success": false,
-                "error": "User not found"
-            })),
-        )),
-        agrr_adapters_sqlite::BackdoorUpdateUserResult::Invalid { errors } => Ok((
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({
-                "timestamp": timestamp_json(),
-                "success": false,
-                "errors": errors
-            })),
-        )),
+        agrr_adapters_sqlite::BackdoorUpdateUserResult::Ok { user } => {
+            log_backdoor_operation("user_update", "success", Some(id));
+            Ok((
+                StatusCode::OK,
+                Json(json!({
+                    "timestamp": timestamp_json(),
+                    "success": true,
+                    "user": user
+                })),
+            ))
+        }
+        agrr_adapters_sqlite::BackdoorUpdateUserResult::NotFound => {
+            log_backdoor_operation("user_update", "not_found", Some(id));
+            Ok((
+                StatusCode::NOT_FOUND,
+                Json(json!({
+                    "timestamp": timestamp_json(),
+                    "success": false,
+                    "error": "User not found"
+                })),
+            ))
+        }
+        agrr_adapters_sqlite::BackdoorUpdateUserResult::Invalid { errors } => {
+            log_backdoor_operation("user_update", "invalid", Some(id));
+            Ok((
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(json!({
+                    "timestamp": timestamp_json(),
+                    "success": false,
+                    "errors": errors
+                })),
+            ))
+        }
     }
 }
 
@@ -226,11 +252,13 @@ async fn db_stats(
     backdoor_auth(&state, &headers)?;
     let gw = BackdoorDiagnosticsSqliteGateway::new(state.sqlite.clone());
     let stats = gw.db_stats_counts().map_err(|_| {
+        log_backdoor_operation("db_stats", "error", None);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"success": false, "error": "internal"})),
         )
     })?;
+    log_backdoor_operation("db_stats", "success", None);
     Ok(Json(json!({
         "timestamp": timestamp_json(),
         "stats": stats,
@@ -290,7 +318,21 @@ async fn clear_db(
     Json(body): Json<ClearDbBody>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     backdoor_auth(&state, &headers)?;
+    if !runtime_env::backdoor_db_clear_allowed() {
+        log_backdoor_operation("db_clear", "blocked_production", None);
+        return Ok((
+            StatusCode::FORBIDDEN,
+            Json(json!({
+                "timestamp": timestamp_json(),
+                "success": false,
+                "error": "api.errors.backdoor.db_clear_disabled_in_production",
+                "error_key": "api.errors.backdoor.db_clear_disabled_in_production",
+                "warning": "db/clear is disabled in production unless AGRR_BACKDOOR_ALLOW_DB_CLEAR=1 is set for break-glass use"
+            })),
+        ));
+    }
     let Some(token) = body.confirmation_token.as_deref().filter(|t| !t.is_empty()) else {
+        log_backdoor_operation("db_clear", "missing_confirmation", None);
         return Ok((
             StatusCode::BAD_REQUEST,
             Json(json!({
@@ -302,6 +344,7 @@ async fn clear_db(
         ));
     };
     if !state.backdoor_token_matches(token) {
+        log_backdoor_operation("db_clear", "invalid_confirmation", None);
         return Ok((
             StatusCode::FORBIDDEN,
             Json(json!({
@@ -317,10 +360,17 @@ async fn clear_db(
     let mut presenter = ClearDbPresenter { response: None };
     let mut interactor = BackdoorClearDatabaseInteractor::new(&mut presenter, &gateway, &logger);
     interactor.call();
-    presenter.response.ok_or_else(|| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "error": "no response"})),
-        )
-    })
+    if let Some((status, ref body)) = presenter.response {
+        if status == StatusCode::OK {
+            log_backdoor_operation("db_clear", "success", None);
+        } else {
+            log_backdoor_operation("db_clear", "error", None);
+        }
+        return Ok((status, body.clone()));
+    }
+    log_backdoor_operation("db_clear", "error", None);
+    Err((
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(json!({"success": false, "error": "no response"})),
+    ))
 }

@@ -277,6 +277,7 @@ en:
         not_enabled: "Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable."
         missing_token: "Missing authentication token"
         invalid_token: "Invalid authentication token"
+        db_clear_disabled_in_production: "Database clear is disabled in production. Set AGRR_BACKDOOR_ALLOW_DB_CLEAR=1 for break-glass use only."
       pests:
         name_required: "Please enter a pest name"
         invalid_payload: "Invalid pest payload format"

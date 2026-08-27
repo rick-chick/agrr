@@ -4433,7 +4433,7 @@ fn logout_revokes_only_current_session_leaves_other_devices_authenticated() {
     let client = ContractClient::from_env();
     let session_a = developer_session_id(&client);
     let session_b = developer_session_id(&client);
-  assert_eq!(
+    assert_eq!(
         user_id_for_session(&client, &session_a),
         user_id_for_session(&client, &session_b),
         "both sessions must belong to the same developer user"
@@ -4455,4 +4455,51 @@ fn logout_revokes_only_current_session_leaves_other_devices_authenticated() {
         status_b,
         "other device session must remain valid after single-device logout: {body_b}"
     );
+}
+
+fn contract_backdoor_token() -> String {
+    std::env::var("AGRR_BACKDOOR_TOKEN").unwrap_or_else(|_| "contract-token".into())
+}
+
+fn backdoor_headers() -> std::collections::HashMap<String, String> {
+    let mut headers = empty_headers();
+    headers.insert(
+        "X-Backdoor-Token".to_string(),
+        contract_backdoor_token(),
+    );
+    headers
+}
+
+#[test]
+fn get_backdoor_health_requires_token() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.get("/api/v1/backdoor/health", None, &empty_headers()));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
+fn get_backdoor_health_succeeds_with_backdoor_token() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.get(
+        "/api/v1/backdoor/health",
+        None,
+        &backdoor_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("backdoor health JSON");
+    assert_eq!(Some("ok"), json["status"].as_str());
+}
+
+#[test]
+fn post_backdoor_db_clear_requires_confirmation_token() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/backdoor/db/clear",
+        None,
+        &backdoor_headers(),
+        Some(serde_json::json!({})),
+    ));
+    assert_eq!(400, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("db clear JSON");
+    assert_eq!(Some(false), json["success"].as_bool());
 }
