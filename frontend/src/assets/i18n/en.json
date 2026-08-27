@@ -1052,6 +1052,8 @@
         "title": "Plan Creation Failed",
         "try_again": "Change crops and try again",
         "start_over": "Start over",
+        "reload": "Reload",
+        "connection_lost": "Connection was lost. Please try again.",
         "hints": {
           "fetching_weather": "Check your region and farm settings, then try again in a few minutes.",
           "predicting_weather": "Weather data may still be preparing. Wait a moment and try again.",
@@ -1350,6 +1352,7 @@
         "title": "Optimization failed",
         "retry": "Reload",
         "back_to_plan": "Back to plan",
+        "connection_lost": "Connection was lost. Please try again.",
         "hints": {
           "fetching_weather": "Check your farm settings and try again in a moment.",
           "predicting_weather": "Weather data may still be preparing. Wait a moment and try again.",
@@ -2284,6 +2287,7 @@
         "title": "Optimization Failed",
         "try_again": "Try Again with Different Crops",
         "start_over": "Back to List",
+        "reload": "Reload",
         "connection_lost": "❌ Connection was lost. Please try again.",
         "unknown_error": "An unknown error occurred. Please try again later."
       },

@@ -6,14 +6,22 @@ import { FarmWeatherUpdateDto } from '../../usecase/farms/subscribe-farm-weather
 describe('FarmWeatherChannelGateway', () => {
   it('subscribes to FarmChannel and forwards weather progress messages', () => {
     let received: ((message: FarmWeatherUpdateDto) => void) | undefined;
+    let disconnected: (() => void) | undefined;
+    let rejected: (() => void) | undefined;
     const optimizationService = {
       subscribe: vi.fn(
         (
           channel: string,
           params: Record<string, unknown>,
-          callbacks: { received: (message: FarmWeatherUpdateDto) => void }
+          callbacks: {
+            received: (message: FarmWeatherUpdateDto) => void;
+            disconnected?: () => void;
+            rejected?: () => void;
+          }
         ) => {
           received = callbacks.received;
+          disconnected = callbacks.disconnected;
+          rejected = callbacks.rejected;
           return { unsubscribe: vi.fn() };
         }
       )
@@ -40,5 +48,39 @@ describe('FarmWeatherChannelGateway', () => {
     };
     received?.(payload);
     expect(onReceived).toHaveBeenCalledWith(payload);
+  });
+
+  it('forwards disconnected and rejected callbacks to OptimizationService', () => {
+    let disconnected: (() => void) | undefined;
+    let rejected: (() => void) | undefined;
+    const optimizationService = {
+      subscribe: vi.fn(
+        (
+          _channel: string,
+          _params: Record<string, unknown>,
+          callbacks: { received: () => void; disconnected?: () => void; rejected?: () => void }
+        ) => {
+          disconnected = callbacks.disconnected;
+          rejected = callbacks.rejected;
+          return { unsubscribe: vi.fn() };
+        }
+      )
+    };
+    const gateway = new FarmWeatherChannelGateway(
+      optimizationService as unknown as OptimizationService
+    );
+    const onDisconnected = vi.fn();
+    const onRejected = vi.fn();
+
+    gateway.subscribe(42, {
+      received: vi.fn(),
+      disconnected: onDisconnected,
+      rejected: onRejected
+    });
+
+    disconnected?.();
+    rejected?.();
+    expect(onDisconnected).toHaveBeenCalledTimes(1);
+    expect(onRejected).toHaveBeenCalledTimes(1);
   });
 });

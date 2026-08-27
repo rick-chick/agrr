@@ -3,6 +3,7 @@ import { PublicPlanOptimizationMessageDto } from './subscribe-public-plan-optimi
 
 export interface SubscribePublicPlanOptimizationOutputPort {
   present(dto: PublicPlanOptimizationMessageDto): void;
+  presentConnectionLost(): void;
 }
 
 export const SUBSCRIBE_PUBLIC_PLAN_OPTIMIZATION_OUTPUT_PORT =
