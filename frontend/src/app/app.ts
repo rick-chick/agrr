@@ -9,6 +9,8 @@ import { FooterComponent } from './components/shared/footer/footer.component';
 import { FlashMessageComponent } from './components/shared/flash-message/flash-message.component';
 import { UndoToastComponent } from './components/shared/undo-toast/undo-toast.component';
 import { CookieConsentBannerComponent } from './components/shared/cookie-consent-banner/cookie-consent-banner.component';
+import { I18nBootstrapErrorPanelComponent } from './components/shared/i18n-bootstrap-error-panel/i18n-bootstrap-error-panel.component';
+import { I18nBootstrapStateService } from './core/i18n/i18n-bootstrap-state.service';
 import { GoogleAnalyticsService } from './services/google-analytics.service';
 import { POST_LOGIN_QUERY_PARAM } from './core/auth/login-auth-urls';
 import { AuthService } from './services/auth.service';
@@ -29,7 +31,8 @@ import {
     FooterComponent,
     FlashMessageComponent,
     UndoToastComponent,
-    CookieConsentBannerComponent
+    CookieConsentBannerComponent,
+    I18nBootstrapErrorPanelComponent
   ],
   providers: [...NAV_OVERDUE_BADGE_PROVIDERS],
   templateUrl: './app.html',
@@ -44,6 +47,7 @@ export class App implements OnInit, OnDestroy {
   private readonly googleAnalytics = inject(GoogleAnalyticsService);
   private readonly navOverdueBadgePresenter = inject(NavOverdueBadgePresenter);
   private readonly loadNavOverdueBadgeUseCase = inject(LoadNavOverdueBadgeUseCase);
+  protected readonly i18nBootstrapState = inject(I18nBootstrapStateService);
   private routerSubscription?: Subscription;
   private langChangeSubscription?: Subscription;
 

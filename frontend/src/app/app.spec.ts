@@ -5,6 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { App } from './app';
 import { AuthService } from './services/auth.service';
+import { I18nBootstrapStateService } from './core/i18n/i18n-bootstrap-state.service';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -55,5 +56,17 @@ describe('App', () => {
     const main = compiled.querySelector('main.app-main');
     expect(main?.id).toBe('main-content');
     expect(main?.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('shows i18n bootstrap error panel instead of main content when load failed', () => {
+    const state = TestBed.inject(I18nBootstrapStateService);
+    state.markFailed('ja');
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('app-i18n-bootstrap-error-panel')).toBeTruthy();
+    expect(compiled.querySelector('main.app-main')).toBeNull();
   });
 });
