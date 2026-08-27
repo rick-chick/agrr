@@ -132,7 +132,7 @@ run_authenticated_lighthouse() {
     echo "==> Using existing dev DB at ${DB_PATH}"
   fi
 
-  bash scripts/ensure-dev-db-plan-create-baseline.sh "$DB_PATH"
+  bash "${ROOT}/scripts/ensure-dev-db-plan-create-baseline.sh" "$DB_PATH"
 
   echo "==> Starting ng serve (development proxy → :3000) for authenticated routes"
   npx ng serve --host 127.0.0.1 --port 4200 --configuration development >"${ROOT}/tmp/lighthouse-ng-serve.log" 2>&1 &

@@ -16,7 +16,15 @@ fi
 sqlite3 "$DB_PATH" <<'SQL'
 UPDATE farms
 SET weather_data_status = 'completed',
-    weather_data_progress = 100,
+    weather_data_fetched_years = CASE
+      WHEN weather_data_total_years > 0 THEN weather_data_total_years
+      ELSE 5
+    END,
+    weather_data_total_years = CASE
+      WHEN weather_data_total_years > 0 THEN weather_data_total_years
+      ELSE 5
+    END,
+    weather_data_last_error = NULL,
     updated_at = datetime('now')
 WHERE id = (
   SELECT id FROM farms
