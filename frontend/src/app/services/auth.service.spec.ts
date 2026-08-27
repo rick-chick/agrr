@@ -29,12 +29,6 @@ class AuthServiceLogic {
     );
   }
 
-  ensureApiKey(obs$: any) {
-    return this.loadCurrentUser().pipe(
-      () => obs$
-    );
-  }
-
   logout() {
     return this.api.logout().pipe(
       tap(() => {
