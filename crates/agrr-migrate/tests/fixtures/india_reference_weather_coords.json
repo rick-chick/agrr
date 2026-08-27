@@ -1,3 +1,202 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:3f72caa7821e2f9fbdb881dd37d099eaf9a939d8eb1c4c9090b417a2f3627c05
-size 4298
+{
+  "Ludhiana, Punjab": {
+    "latitude": "30.901",
+    "longitude": "75.8573"
+  },
+  "Amritsar, Punjab": {
+    "latitude": "31.634",
+    "longitude": "74.8723"
+  },
+  "Jalandhar, Punjab": {
+    "latitude": "31.326",
+    "longitude": "75.5762"
+  },
+  "Karnal, Haryana": {
+    "latitude": "29.6857",
+    "longitude": "76.9905"
+  },
+  "Hisar, Haryana": {
+    "latitude": "29.1492",
+    "longitude": "75.7217"
+  },
+  "Rohtak, Haryana": {
+    "latitude": "28.8955",
+    "longitude": "76.6066"
+  },
+  "Meerut, Uttar Pradesh": {
+    "latitude": "29.0176",
+    "longitude": "77.7065"
+  },
+  "Lucknow, Uttar Pradesh": {
+    "latitude": "26.8467",
+    "longitude": "80.9462"
+  },
+  "Kanpur, Uttar Pradesh": {
+    "latitude": "26.4499",
+    "longitude": "80.3319"
+  },
+  "Gorakhpur, Uttar Pradesh": {
+    "latitude": "26.7606",
+    "longitude": "83.3732"
+  },
+  "Varanasi, Uttar Pradesh": {
+    "latitude": "25.3176",
+    "longitude": "82.9739"
+  },
+  "Patna, Bihar": {
+    "latitude": "25.5941",
+    "longitude": "85.1376"
+  },
+  "Muzaffarpur, Bihar": {
+    "latitude": "26.1225",
+    "longitude": "85.3906"
+  },
+  "Kolkata, West Bengal": {
+    "latitude": "22.5726",
+    "longitude": "88.3639"
+  },
+  "Bardhaman, West Bengal": {
+    "latitude": "23.2324",
+    "longitude": "87.8615"
+  },
+  "Bhubaneswar, Odisha": {
+    "latitude": "20.2961",
+    "longitude": "85.8245"
+  },
+  "Cuttack, Odisha": {
+    "latitude": "20.4625",
+    "longitude": "85.883"
+  },
+  "Guwahati, Assam": {
+    "latitude": "26.1445",
+    "longitude": "91.7362"
+  },
+  "Raipur, Chhattisgarh": {
+    "latitude": "21.2514",
+    "longitude": "81.6296"
+  },
+  "Nagpur, Maharashtra": {
+    "latitude": "21.1458",
+    "longitude": "79.0882"
+  },
+  "Nashik, Maharashtra": {
+    "latitude": "19.9975",
+    "longitude": "73.7898"
+  },
+  "Aurangabad, Maharashtra": {
+    "latitude": "19.8762",
+    "longitude": "75.3433"
+  },
+  "Ahmednagar, Maharashtra": {
+    "latitude": "19.0948",
+    "longitude": "74.748"
+  },
+  "Ahmedabad, Gujarat": {
+    "latitude": "23.0225",
+    "longitude": "72.5714"
+  },
+  "Surat, Gujarat": {
+    "latitude": "21.1702",
+    "longitude": "72.8311"
+  },
+  "Rajkot, Gujarat": {
+    "latitude": "22.3039",
+    "longitude": "70.8022"
+  },
+  "Vadodara, Gujarat": {
+    "latitude": "22.3072",
+    "longitude": "73.1812"
+  },
+  "Jaipur, Rajasthan": {
+    "latitude": "26.9124",
+    "longitude": "75.7873"
+  },
+  "Jodhpur, Rajasthan": {
+    "latitude": "26.2389",
+    "longitude": "73.0243"
+  },
+  "Kota, Rajasthan": {
+    "latitude": "25.2138",
+    "longitude": "75.8648"
+  },
+  "Indore, Madhya Pradesh": {
+    "latitude": "22.7196",
+    "longitude": "75.8577"
+  },
+  "Bhopal, Madhya Pradesh": {
+    "latitude": "23.2599",
+    "longitude": "77.4126"
+  },
+  "Jabalpur, Madhya Pradesh": {
+    "latitude": "23.1815",
+    "longitude": "79.9864"
+  },
+  "Gwalior, Madhya Pradesh": {
+    "latitude": "26.2183",
+    "longitude": "78.1828"
+  },
+  "Hyderabad, Telangana": {
+    "latitude": "17.385",
+    "longitude": "78.4867"
+  },
+  "Warangal, Telangana": {
+    "latitude": "17.9784",
+    "longitude": "79.6005"
+  },
+  "Vijayawada, Andhra Pradesh": {
+    "latitude": "16.5062",
+    "longitude": "80.648"
+  },
+  "Visakhapatnam, Andhra Pradesh": {
+    "latitude": "17.6868",
+    "longitude": "83.2185"
+  },
+  "Guntur, Andhra Pradesh": {
+    "latitude": "16.3067",
+    "longitude": "80.4365"
+  },
+  "Bangalore, Karnataka": {
+    "latitude": "12.9716",
+    "longitude": "77.5946"
+  },
+  "Mysore, Karnataka": {
+    "latitude": "12.2958",
+    "longitude": "76.6394"
+  },
+  "Mangalore, Karnataka": {
+    "latitude": "12.9141",
+    "longitude": "74.856"
+  },
+  "Hubli, Karnataka": {
+    "latitude": "15.3647",
+    "longitude": "75.124"
+  },
+  "Chennai, Tamil Nadu": {
+    "latitude": "13.0827",
+    "longitude": "80.2707"
+  },
+  "Madurai, Tamil Nadu": {
+    "latitude": "9.9252",
+    "longitude": "78.1198"
+  },
+  "Coimbatore, Tamil Nadu": {
+    "latitude": "11.0168",
+    "longitude": "76.9558"
+  },
+  "Tiruchirappalli, Tamil Nadu": {
+    "latitude": "10.7905",
+    "longitude": "78.7047"
+  },
+  "Salem, Tamil Nadu": {
+    "latitude": "11.6643",
+    "longitude": "78.146"
+  },
+  "Kochi, Kerala": {
+    "latitude": "9.9312",
+    "longitude": "76.2673"
+  },
+  "Trivandrum, Kerala": {
+    "latitude": "8.5241",
+    "longitude": "76.9366"
+  }
+}

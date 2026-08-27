@@ -51,6 +51,9 @@ jobs:
       - name: cargo test agrr-domain
         run: cargo test -p agrr-domain
 
+      - name: cargo test agrr-migrate
+        run: cargo test -p agrr-migrate --quiet
+
       - name: cargo test agrr-adapters-sqlite gateway parity
         run: cargo test -p agrr-adapters-sqlite -- '_gateway_test'
 
