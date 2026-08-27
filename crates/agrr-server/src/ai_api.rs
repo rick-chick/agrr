@@ -5,7 +5,7 @@ use crate::builtin_generation_deprecation::{
     builtin_generation_deprecated_result, builtin_generation_deprecated_status_result,
     BuiltinGenerationEndpoint,
 };
-use crate::session_auth::{user_id_from_session, user_id_from_session_or_anonymous};
+use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use agrr_adapters_agrr::{
     CropAiQueryDaemonGateway, FertilizeAiQueryDaemonGateway, PestAiQueryDaemonGateway,
@@ -149,7 +149,7 @@ async fn crop_ai_create(
     Json(body): Json<CropAiBody>,
 ) -> Response {
     let result: Result<Json<Value>, (StatusCode, Json<Value>)> = (|| {
-        let user_id = user_id_from_session_or_anonymous(&state, &jar).map_err(|status| {
+        let user_id = user_id_from_session(&state, &jar).map_err(|status| {
             (status, Json(json!({"error": "unauthorized"})))
         })?;
         let pool = state.sqlite.clone();
@@ -236,7 +236,7 @@ async fn fertilize_ai_create(
     Json(body): Json<FertilizeAiBody>,
 ) -> Response {
     let result: Result<Json<Value>, (StatusCode, Json<Value>)> = (|| {
-        let user_id = user_id_from_session_or_anonymous(&state, &jar).map_err(|status| {
+        let user_id = user_id_from_session(&state, &jar).map_err(|status| {
             (status, Json(json!({"error": "unauthorized"})))
         })?;
         let pool = state.sqlite.clone();
