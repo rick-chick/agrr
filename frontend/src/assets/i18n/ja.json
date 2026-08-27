@@ -4003,11 +4003,6 @@
       "message": "お探しのページは存在しないか、移動した可能性があります。",
       "backHome": "ホームに戻る"
     },
-    "errorFallback": {
-      "title": "問題が発生しました",
-      "message": "一時的な問題が発生した可能性があります。ページを再読み込みしてお試しください。",
-      "reload": "再読み込み"
-    },
     "privacy": {
       "title": "プライバシーポリシー",
       "description": "AGRRのプライバシーポリシーです。個人情報の収集、利用、管理方法について詳しく説明しています。",
@@ -4140,6 +4135,11 @@
       "title": "{{planLabel}} — 作付け計画 | AGRR",
       "description": "{{cropLabels}}の栽培スケジュール（{{planYear}}年・{{totalArea}}㎡）。AGRRの無料作付け計画です。",
       "og_description": "{{planLabel}}の栽培スケジュール（{{cropLabels}}）"
+    },
+    "errorFallback": {
+      "title": "問題が発生しました",
+      "message": "一時的な問題が発生した可能性があります。ページを再読み込みしてお試しください。",
+      "reload": "再読み込み"
     }
   },
   "shared": {
@@ -4182,6 +4182,11 @@
       "privacy_link_text": "プライバシーポリシー",
       "accept": "同意する",
       "reject": "拒否する"
+    },
+    "offline_banner": {
+      "message": "オフラインです。回線が復帰するまで一部の操作ができない場合があります。",
+      "reconnected": "回線が復帰しました。",
+      "reload": "再読み込み"
     },
     "region_select": {
       "label": "地域",
