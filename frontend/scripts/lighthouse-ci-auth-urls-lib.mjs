@@ -1,5 +1,9 @@
 import { buildSegmentPostBody } from '../e2e/fixtures/ensure-e2e-baseline-bodies.mjs';
 import {
+  createFetchTransport,
+  ensurePlanCreateReadiness,
+} from '../e2e/fixtures/ensure-plan-create-ready-baseline-lib.mjs';
+import {
   E2E_BASELINE_PREFIX,
   findBaselineIdInList,
   firstIdFromList,
@@ -159,6 +163,7 @@ export async function ensureBaselinePlanForLighthouse(apiOrigin, sessionId) {
   }
 
   await ensureFarmFieldForPlan(base, headers, farmId);
+  await ensurePlanCreateReadiness(createFetchTransport(base, headers), farmId, cropId);
 
   const postRes = await fetch(`${base}/api/v1/plans`, {
     method: 'POST',

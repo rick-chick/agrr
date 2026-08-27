@@ -4,6 +4,10 @@ import { join } from 'node:path';
 import { buildSegmentPostBody } from './ensure-e2e-baseline-bodies.mjs';
 import { resolveFarmIdWhenUserAtLimit } from './ensure-e2e-baseline-lib.mjs';
 import {
+  createPlaywrightTransport,
+  ensurePlanCreateReadiness,
+} from './ensure-plan-create-ready-baseline-lib.mjs';
+import {
   E2E_BASELINE_PREFIX,
   findBaselineIdInList,
   firstIdFromList,
@@ -167,6 +171,7 @@ async function ensurePlan(
   }
 
   await ensureFarmFieldForPlan(api, base, farmId);
+  await ensurePlanCreateReadiness(createPlaywrightTransport(api, base), farmId, cropId);
 
   const postRes = await api.post(listUrl, {
     data: {
