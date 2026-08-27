@@ -293,3 +293,9 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
     }
 }
 
+pub fn test_app_state_with_backdoor(pool: SqlitePool, token: &str) -> AppState {
+    let mut state = test_app_state(pool);
+    state.backdoor_token = Arc::new(token.to_string());
+    state
+}
+

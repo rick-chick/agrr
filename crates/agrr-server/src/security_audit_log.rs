@@ -14,6 +14,8 @@ pub enum SecurityAuditEventType {
     ApiKeyGenerate,
     ApiKeyRegenerate,
     ReferenceMasterAdminChange,
+    BackdoorOperation,
+    BackdoorAuthFailure,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -118,6 +120,23 @@ pub fn log_reference_master_admin_change(
     );
 }
 
+pub fn log_backdoor_operation(operation: &str, outcome: &str, target_user_id: Option<i64>) {
+    let mut record = SecurityAuditRecord::new(SecurityAuditEventType::BackdoorOperation, None);
+    record.action = Some(format!("{operation}:{outcome}"));
+    if let Some(user_id) = target_user_id {
+        record.resource_type = Some("user".into());
+        record.resource_id = Some(user_id);
+    }
+    emit_security_audit_log(record);
+}
+
+pub fn log_backdoor_auth_failure(reason: &str) {
+    let mut record =
+        SecurityAuditRecord::new(SecurityAuditEventType::BackdoorAuthFailure, None);
+    record.action = Some(reason.into());
+    emit_security_audit_log(record);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -190,5 +209,39 @@ mod tests {
             SecurityAuditEventType::ApiKeyGenerate,
             SecurityAuditEventType::ApiKeyRegenerate
         );
+    }
+
+    #[test]
+    fn format_backdoor_operation_includes_operation_and_outcome_without_token() {
+        let mut record =
+            SecurityAuditRecord::new(SecurityAuditEventType::BackdoorOperation, None);
+        record.action = Some("user_update:success".into());
+        record.resource_type = Some("user".into());
+        record.resource_id = Some(42);
+        let line = format_security_audit_log(&record);
+        let json: serde_json::Value = serde_json::from_str(&line).expect("valid JSON");
+        assert_eq!(
+            "backdoor_operation",
+            json["event_type"].as_str().unwrap()
+        );
+        assert_eq!("user_update:success", json["action"].as_str().unwrap());
+        assert_eq!(42, json["resource_id"].as_i64().unwrap());
+        assert!(json.get("backdoor_token").is_none());
+        assert!(json.get("token").is_none());
+    }
+
+    #[test]
+    fn format_backdoor_auth_failure_records_reason_without_token() {
+        let mut record =
+            SecurityAuditRecord::new(SecurityAuditEventType::BackdoorAuthFailure, None);
+        record.action = Some("invalid_token".into());
+        let line = format_security_audit_log(&record);
+        let json: serde_json::Value = serde_json::from_str(&line).expect("valid JSON");
+        assert_eq!(
+            "backdoor_auth_failure",
+            json["event_type"].as_str().unwrap()
+        );
+        assert_eq!("invalid_token", json["action"].as_str().unwrap());
+        assert!(json.get("backdoor_token").is_none());
     }
 }
