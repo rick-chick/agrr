@@ -41,6 +41,7 @@ struct MeUser {
     email: Option<String>,
     avatar_url: Option<String>,
     admin: bool,
+    /// Masked preview only — full key is returned from generate/regenerate endpoints.
     api_key: Option<String>,
 }
 

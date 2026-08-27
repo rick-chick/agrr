@@ -76,7 +76,7 @@ describe('AuthService Logic Verification', () => {
     apiService.logout.mockReturnValue(of({ success: true }));
 
     await firstValueFrom(service.logout());
-    
+
     expect(apiKeyService.clearApiKey).toHaveBeenCalled();
     expect(service.user()).toBeNull();
   });
