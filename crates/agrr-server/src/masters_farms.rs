@@ -11,6 +11,8 @@ use agrr_adapters_sqlite::{
     UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::shared::gateways::UserLookupGateway;
+use agrr_domain::shared::ports::ClockPort;
+use agrr_domain::weather_data::gateways::StartFarmWeatherDataFetchPort;
 use agrr_domain::farm::dtos::{FarmCreateInput, FarmListInput, FarmUpdateInput};
 use agrr_domain::farm::entities::FarmEntity;
 use agrr_domain::farm::interactors::{
@@ -26,7 +28,7 @@ use agrr_domain::shared::policies::policy_permission_denied::PolicyPermissionDen
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use serde::Deserialize;
@@ -37,6 +39,10 @@ const FARM_REQUIRED_FIELDS_MSG: &str = "farms.validation.required_fields";
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/v1/masters/farms", get(list_farms).post(create_farm))
+        .route(
+            "/api/v1/masters/farms/{id}/fetch_weather_data",
+            post(start_farm_weather_fetch),
+        )
         .route(
             "/api/v1/masters/farms/{id}",
             get(show_farm)
@@ -210,6 +216,51 @@ async fn update_farm(
         Some(Err((status, body))) => Err((status, Json(body))),
         None => Err(internal_error()),
     }
+}
+
+async fn start_farm_weather_fetch(
+    State(state): State<AppState>,
+    auth: MastersUserId,
+    Path(id): Path<i64>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let user_id = auth_user(auth);
+    let pool = state.sqlite.clone();
+    let gateway = FarmSqliteGateway::new(pool.clone());
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
+    let mut detail_presenter = DetailPresenter { body: None };
+    let mut detail_interactor = FarmDetailInteractor::new(
+        &mut detail_presenter,
+        user_id,
+        &gateway,
+        &user_lookup,
+        &scope_gateway,
+    );
+    detail_interactor.call(id).map_err(internal)?;
+
+    let detail = match detail_presenter.body {
+        Some(Ok(detail)) => detail,
+        Some(Err((status, body))) => return Err((status, Json(body))),
+        None => return Err(internal_error()),
+    };
+
+    let mut entity = detail.farm;
+    if !entity.has_coordinates() {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"error": FARM_REQUIRED_FIELDS_MSG})),
+        ));
+    }
+
+    let weather_fetch = StartFarmWeatherFetchAdapter::new(state.clone());
+    let clock = SystemClock;
+    if let Some(snapshot) = weather_fetch.call(id, clock.today()) {
+        entity.weather_data_status = Some(snapshot.weather_data_status);
+        entity.weather_data_total_years = Some(snapshot.weather_data_total_years);
+        entity.weather_data_fetched_years = Some(0);
+    }
+
+    Ok(Json(farm_to_json(&entity)))
 }
 
 async fn destroy_farm(

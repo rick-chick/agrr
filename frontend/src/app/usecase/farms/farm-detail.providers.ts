@@ -19,6 +19,8 @@ import { SUBSCRIBE_FARM_WEATHER_OUTPUT_PORT } from './subscribe-farm-weather.out
 import { SubscribeFarmWeatherUseCase } from './subscribe-farm-weather.usecase';
 import { UPDATE_FIELD_OUTPUT_PORT } from './update-field.output-port';
 import { UpdateFieldUseCase } from './update-field.usecase';
+import { RetryFarmWeatherFetchUseCase } from './retry-farm-weather-fetch.usecase';
+import { RETRY_FARM_WEATHER_FETCH_OUTPUT_PORT } from './retry-farm-weather-fetch.output-port';
 
 export const FARM_DETAIL_PROVIDERS: readonly Provider[] = [
   FarmDetailPresenter,
@@ -31,12 +33,14 @@ export const FARM_DETAIL_PROVIDERS: readonly Provider[] = [
   UpdateFieldUseCase,
   DeleteFieldPresenter,
   DeleteFieldUseCase,
+  RetryFarmWeatherFetchUseCase,
   { provide: LOAD_FARM_DETAIL_OUTPUT_PORT, useExisting: FarmDetailPresenter },
   { provide: SUBSCRIBE_FARM_WEATHER_OUTPUT_PORT, useExisting: FarmDetailPresenter },
   { provide: DELETE_FARM_OUTPUT_PORT, useExisting: FarmDetailPresenter },
   { provide: CREATE_FIELD_OUTPUT_PORT, useExisting: CreateFieldPresenter },
   { provide: UPDATE_FIELD_OUTPUT_PORT, useExisting: UpdateFieldPresenter },
   { provide: DELETE_FIELD_OUTPUT_PORT, useExisting: DeleteFieldPresenter },
+  { provide: RETRY_FARM_WEATHER_FETCH_OUTPUT_PORT, useExisting: FarmDetailPresenter },
   { provide: FARM_GATEWAY, useClass: FarmApiGateway },
   { provide: FARM_WEATHER_GATEWAY, useClass: FarmWeatherChannelGateway }
 ];

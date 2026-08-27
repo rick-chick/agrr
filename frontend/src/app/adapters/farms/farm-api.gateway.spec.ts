@@ -227,4 +227,23 @@ describe('FarmApiGateway', () => {
     });
   });
 
+  describe('retryWeatherFetch', () => {
+    it('posts to fetch_weather_data and returns updated farm', async () => {
+      const farm: Farm = {
+        id: 9,
+        name: 'Farm 9',
+        latitude: 35.0,
+        longitude: 135.0,
+        region: 'jp',
+        weather_data_status: 'fetching',
+        weather_data_progress: 0
+      };
+      vi.mocked(client.post).mockReturnValue(of(farm));
+
+      const result = await firstValueFrom(gateway.retryWeatherFetch(9));
+      expect(result).toEqual(farm);
+      expect(client.post).toHaveBeenCalledWith('/farms/9/fetch_weather_data', {});
+    });
+  });
+
 });

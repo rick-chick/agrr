@@ -33,6 +33,7 @@ import { MasterContextCrumb } from '../master-context-header/master-context-crum
 import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { FarmTemperatureChartComponent } from './farm-temperature-chart.component';
 import { FarmTemperatureChartPeriod } from '../../../domain/farms/farm-temperature-chart';
+import { RetryFarmWeatherFetchUseCase } from '../../../usecase/farms/retry-farm-weather-fetch.usecase';
 import { DetailSkeletonComponent } from '../../shared/skeleton/detail-skeleton.component';
 
 const initialControl: FarmDetailViewState = {
@@ -103,6 +104,19 @@ const initialControl: FarmDetailViewState = {
             @if (control.farm.weather_data_status === 'fetching') {
               <p>{{ 'farms.show.weather_progress' | translate }}: {{ control.farm.weather_data_progress ?? 0 }}%</p>
               <progress class="progress-bar" [value]="control.farm.weather_data_progress ?? 0" max="100"></progress>
+            }
+            @if (weatherPollTimedOut) {
+              <p class="weather-recovery__timeout">{{ 'farms.show.weather_poll_timeout' | translate }}</p>
+            }
+            @if (control.farm.weather_data_status === 'failed' || weatherPollTimedOut) {
+              <button
+                type="button"
+                class="btn btn-secondary weather-recovery__retry"
+                [disabled]="weatherRetryInFlight"
+                (click)="retryWeatherFetch()"
+              >
+                {{ 'farms.show.retry_weather_fetch' | translate }}
+              </button>
             }
           </section>
         }
@@ -208,6 +222,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadFarmDetailUseCase);
   private readonly subscribeWeatherUseCase = inject(SubscribeFarmWeatherUseCase);
+  private readonly retryWeatherFetchUseCase = inject(RetryFarmWeatherFetchUseCase);
   private readonly deleteUseCase = inject(DeleteFarmUseCase);
   private readonly presenter = inject(FarmDetailPresenter);
   private readonly createFieldUseCase = inject(CreateFieldUseCase);
@@ -223,6 +238,8 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private channel: Channel | null = null;
   private weatherPollTimer: ReturnType<typeof setInterval> | null = null;
   private weatherPollAttempts = 0;
+  weatherPollTimedOut = false;
+  weatherRetryInFlight = false;
   private static readonly WEATHER_POLL_INTERVAL_MS = 3000;
   private static readonly WEATHER_POLL_MAX_ATTEMPTS = 40;
 
@@ -302,6 +319,21 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     if (farmId) this.load(farmId);
   }
 
+  clearWeatherPollTimeout(): void {
+    this.weatherPollTimedOut = false;
+  }
+
+  completeWeatherRetry(): void {
+    this.weatherRetryInFlight = false;
+  }
+
+  retryWeatherFetch(): void {
+    const farm = this.control.farm;
+    if (!farm || this.weatherRetryInFlight) return;
+    this.weatherRetryInFlight = true;
+    this.retryWeatherFetchUseCase.execute({ farmId: farm.id });
+  }
+
   private syncWeatherPolling(): void {
     const farm = this._control.farm;
     const status = farm?.weather_data_status;
@@ -312,6 +344,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
         this.weatherPollTimer = setInterval(() => {
           this.weatherPollAttempts += 1;
           if (this.weatherPollAttempts >= FarmDetailComponent.WEATHER_POLL_MAX_ATTEMPTS) {
+            this.weatherPollTimedOut = true;
             this.stopWeatherPolling();
             return;
           }

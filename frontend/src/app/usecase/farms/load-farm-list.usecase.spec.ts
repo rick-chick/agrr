@@ -32,6 +32,7 @@ describe('LoadFarmListUseCase', () => {
       listFieldsByFarm: () => of([]),
       create: () => of({} as Farm),
       update: () => of({} as Farm),
+      retryWeatherFetch: () => of({} as Farm),
       destroy: () => of({} as any),
       createField: () => of({} as any),
       updateField: () => of({} as any),

@@ -24,6 +24,7 @@ export interface FarmGateway {
   listFieldsByFarm(farmId: number): Observable<Field[]>;
   create(payload: FarmCreatePayload): Observable<Farm>;
   update(farmId: number, payload: FarmCreatePayload): Observable<Farm>;
+  retryWeatherFetch(farmId: number): Observable<Farm>;
   destroy(farmId: number): Observable<DeletionUndoResponse | undefined>;
   createField(farmId: number, payload: FieldCreatePayload): Observable<Field>;
   updateField(fieldId: number, payload: FieldCreatePayload): Observable<Field>;

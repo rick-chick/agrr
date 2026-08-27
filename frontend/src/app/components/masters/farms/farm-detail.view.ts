@@ -19,4 +19,8 @@ export interface FarmDetailView {
   load?(farmId: number): void;
   /** Reload detail (e.g. after undo restore). */
   reload(): void;
+  /** Clears poll-timeout UI after weather fetch retry starts. */
+  clearWeatherPollTimeout?(): void;
+  /** Clears retry button in-flight state after gateway completes. */
+  completeWeatherRetry?(): void;
 }

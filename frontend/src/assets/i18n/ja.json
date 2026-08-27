@@ -1125,6 +1125,8 @@
       "weather": "気象情報",
       "weather_status": "天気データ取得状況",
       "weather_progress": "進捗",
+      "weather_poll_timeout": "天気データの取得が完了しませんでした。時間をおいて再取得してください。",
+      "retry_weather_fetch": "天気データを再取得",
       "fields_list": "圃場一覧",
       "fields_list_title": "圃場一覧",
       "no_fields": "まだ圃場が登録されていません。",

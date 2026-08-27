@@ -17,6 +17,7 @@ describe('CreateFarmUseCase', () => {
           error: { errors: ['作成できるFarmは4件までです'] }
         })),
       update: () => throwError(() => new Error('unused')),
+      retryWeatherFetch: () => throwError(() => new Error('unused')),
       destroy: () => throwError(() => new Error('unused')),
       createField: () => throwError(() => new Error('unused')),
       updateField: () => throwError(() => new Error('unused')),

@@ -882,6 +882,8 @@
       "weather": "मौसम जानकारी",
       "weather_status": "मौसम डेटा स्थिति",
       "weather_progress": "प्रगति",
+      "weather_poll_timeout": "मौसम डेटा लोड पूरा नहीं हुआ। कृपया पुनः प्राप्त करें।",
+      "retry_weather_fetch": "मौसम डेटा पुनः प्राप्त करें",
       "fields_list": "खेत क्षेत्र",
       "fields_list_title": "खेत क्षेत्र सूची",
       "no_fields": "अभी तक कोई खेत क्षेत्र पंजीकृत नहीं।",

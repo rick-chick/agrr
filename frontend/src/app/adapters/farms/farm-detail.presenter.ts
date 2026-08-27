@@ -8,6 +8,8 @@ import { SubscribeFarmWeatherOutputPort } from '../../usecase/farms/subscribe-fa
 import { FarmWeatherUpdateDto } from '../../usecase/farms/subscribe-farm-weather.dtos';
 import { DeleteFarmOutputPort } from '../../usecase/farms/delete-farm.output-port';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
+import { RetryFarmWeatherFetchOutputPort } from '../../usecase/farms/retry-farm-weather-fetch.output-port';
+import { RetryFarmWeatherFetchSuccessDto } from '../../usecase/farms/retry-farm-weather-fetch.dtos';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
@@ -15,7 +17,11 @@ import { pendingErrorFlashFromError } from '../../core/view-effects/pending-erro
 
 @Injectable()
 export class FarmDetailPresenter
-  implements LoadFarmDetailOutputPort, SubscribeFarmWeatherOutputPort, DeleteFarmOutputPort
+  implements
+    LoadFarmDetailOutputPort,
+    SubscribeFarmWeatherOutputPort,
+    DeleteFarmOutputPort,
+    RetryFarmWeatherFetchOutputPort
 {
   private readonly listRefreshBus = inject(ListRefreshBus);
   private view: FarmDetailView | null = null;
@@ -91,5 +97,27 @@ export class FarmDetailPresenter
         )
       };
     }
+  }
+
+  presentRetryWeatherFetch(dto: RetryFarmWeatherFetchSuccessDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const prev = this.view.control;
+    if (!prev.farm) return;
+    this.view.control = {
+      ...prev,
+      farm: dto.farm,
+      pendingErrorFlash: null
+    };
+    this.view.clearWeatherPollTimeout?.();
+    this.view.completeWeatherRetry?.();
+  }
+
+  onRetryWeatherFetchError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.completeWeatherRetry?.();
+    this.view.control = {
+      ...this.view.control,
+      pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) })
+    };
   }
 }
