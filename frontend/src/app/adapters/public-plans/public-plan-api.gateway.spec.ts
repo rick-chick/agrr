@@ -13,7 +13,11 @@ describe('PublicPlanApiGateway', () => {
 
   beforeEach(() => {
     apiClient = { get: vi.fn(), post: vi.fn() };
-    gateway = new PublicPlanApiGateway(apiClient as unknown as ApiService);
+    const publicPlanSession = { setPlanId: vi.fn(), reset: vi.fn(), ensureSessionToken: () => 'test-session-token' };
+    gateway = new PublicPlanApiGateway(
+      apiClient as unknown as ApiService,
+      publicPlanSession
+    );
   });
 
   describe('createPlan', () => {
@@ -26,11 +30,15 @@ describe('PublicPlanApiGateway', () => {
       );
       expect(result).toEqual(response);
       expect(result.plan_id).toBe(123);
-      expect(apiClient.post).toHaveBeenCalledWith('/api/v1/public_plans/plans', {
-        farm_id: 1,
-        farm_size_id: 'home_garden',
-        crop_ids: [10, 20]
-      });
+      expect(apiClient.post).toHaveBeenCalledWith(
+        '/api/v1/public_plans/plans',
+        {
+          farm_id: 1,
+          farm_size_id: 'home_garden',
+          crop_ids: [10, 20]
+        },
+        { headers: { 'X-Public-Plan-Session': 'test-session-token' } }
+      );
     });
 
     it('returns different plan_id on subsequent calls', async () => {

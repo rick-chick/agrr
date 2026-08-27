@@ -9,7 +9,8 @@ describe('ResetPublicPlanCreationStateUseCase', () => {
     const resetSpy = vi.fn();
     const publicPlanSession: PublicPlanSessionPort = {
       reset: resetSpy,
-      setPlanId: vi.fn()
+      setPlanId: vi.fn(),
+      ensureSessionToken: () => 'test-session-token'
     };
 
     const outputPort: ResetPublicPlanCreationStateOutputPort = {};

@@ -83,7 +83,7 @@
             status: "completed".into(),
         };
         let gateway = StubGateway {
-            access: FieldCultivationPlanAccessSnapshot::new(42, true, false, None),
+            access: FieldCultivationPlanAccessSnapshot::new(42, true, false, None, None),
             summary: Some(summary.clone()),
             fail_not_found: false,
         };
@@ -100,7 +100,7 @@
     #[test]
     fn forbidden_for_private_plan_non_owner() {
         let gateway = StubGateway {
-            access: FieldCultivationPlanAccessSnapshot::new(7, false, true, Some(99)),
+            access: FieldCultivationPlanAccessSnapshot::new(7, false, true, Some(99), None),
             summary: Some(FieldCultivationApiSummary {
                 id: 7,
                 field_name: "F".into(),

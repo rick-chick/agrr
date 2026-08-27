@@ -4,6 +4,7 @@ pub struct FieldCultivationApiUpdateInput {
     pub start_date: String,
     pub completion_date: String,
     pub public_plan: bool,
+    pub public_session_id: Option<String>,
 }
 
 impl FieldCultivationApiUpdateInput {
@@ -18,6 +19,7 @@ impl FieldCultivationApiUpdateInput {
             start_date: start_date.into(),
             completion_date: completion_date.into(),
             public_plan,
+            public_session_id: None,
         }
     }
 

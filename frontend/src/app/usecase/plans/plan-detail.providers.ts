@@ -2,6 +2,8 @@ import { Provider } from '@angular/core';
 import { PlanApiGateway } from '../../adapters/plans/plan-api.gateway';
 import { GanttPlanApiGateway } from '../../adapters/plans/gantt-plan-api.gateway';
 import { PlanDetailPresenter } from '../../adapters/plans/plan-detail.presenter';
+import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { PUBLIC_PLAN_SESSION_PORT } from '../public-plans/public-plan-session.port';
 import { LOAD_PLAN_DETAIL_OUTPUT_PORT } from './load-plan-detail.output-port';
 import { LoadPlanDetailUseCase } from './load-plan-detail.usecase';
 import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.usecase';
@@ -30,6 +32,8 @@ export const PLAN_DETAIL_PROVIDERS: readonly Provider[] = [
     useExisting: PlanDetailPresenter
   },
   { provide: PLAN_GATEWAY, useClass: PlanApiGateway },
+  PublicPlanStore,
+  { provide: PUBLIC_PLAN_SESSION_PORT, useExisting: PublicPlanStore },
   { provide: GANTT_PLAN_GATEWAY, useClass: GanttPlanApiGateway }
 ];
 

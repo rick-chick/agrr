@@ -189,6 +189,7 @@ impl PlanAllocationAdjustOutputPort for AddCropAdjustOutputAdapter<'_> {
         let status = match failure.kind.as_str() {
             PlanAllocationAdjustFailure::KIND_NOT_FOUND
             | PlanAllocationAdjustFailure::KIND_NO_WEATHER_LOCATION => 404,
+            PlanAllocationAdjustFailure::KIND_FORBIDDEN => 403,
             PlanAllocationAdjustFailure::KIND_INVALID_DATE
             | PlanAllocationAdjustFailure::KIND_CROP_MISSING_GROWTH_STAGES => 400,
             _ => 500,

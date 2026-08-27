@@ -7,6 +7,7 @@ pub struct FieldCultivationPlanAccessSnapshot {
     pub plan_type_public: bool,
     pub plan_type_private: bool,
     pub plan_user_id: Option<i64>,
+    pub plan_session_id: Option<String>,
 }
 
 impl FieldCultivationPlanAccessSnapshot {
@@ -15,12 +16,14 @@ impl FieldCultivationPlanAccessSnapshot {
         plan_type_public: bool,
         plan_type_private: bool,
         plan_user_id: Option<i64>,
+        plan_session_id: Option<String>,
     ) -> Self {
         Self {
             field_cultivation_id,
             plan_type_public,
             plan_type_private,
             plan_user_id,
+            plan_session_id,
         }
     }
 

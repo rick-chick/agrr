@@ -12,6 +12,7 @@ import { PublicPlanResultsPresenter } from '../../usecase/public-plans/public-pl
 import { PublicPlanResultsViewState } from './public-plan-results.view';
 import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { PUBLIC_PLAN_SESSION_PORT } from '../../usecase/public-plans/public-plan-session.port';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
 import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
@@ -32,7 +33,12 @@ describe('PublicPlanResultsComponent', () => {
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
   let authService: { user: ReturnType<typeof vi.fn>; loadCurrentUser: ReturnType<typeof vi.fn> };
-  let publicPlanStore: { state: { planId: number | null; farm: { name: string } } };
+  let publicPlanStore: {
+    state: { planId: number | null; farm: { name: string } };
+    setPlanId: ReturnType<typeof vi.fn>;
+    reset: ReturnType<typeof vi.fn>;
+    ensureSessionToken: () => string;
+  };
   let activatedRoute: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
@@ -47,7 +53,12 @@ describe('PublicPlanResultsComponent', () => {
     loadUseCase = { execute: vi.fn(() => of(undefined)) };
     mockPresenter = { setView: vi.fn() };
     authService = { user: vi.fn(), loadCurrentUser: vi.fn(() => of(null)) };
-    publicPlanStore = { state: { planId: null, farm: { name: 'Test Farm' } } };
+    publicPlanStore = {
+      state: { planId: null, farm: { name: 'Test Farm' } },
+      setPlanId: vi.fn(),
+      reset: vi.fn(),
+      ensureSessionToken: () => 'test-session-token'
+    };
     activatedRoute = {
       snapshot: {
         queryParamMap: { get: vi.fn() }
@@ -74,6 +85,7 @@ describe('PublicPlanResultsComponent', () => {
         { provide: Router, useValue: router },
         { provide: AuthService, useValue: authService },
         { provide: PublicPlanStore, useValue: publicPlanStore },
+        { provide: PUBLIC_PLAN_SESSION_PORT, useValue: publicPlanStore },
         { provide: FlashMessageService, useValue: flashMessage },
         { provide: LoadPublicPlanResultsUseCase, useValue: loadUseCase },
         { provide: SavePublicPlanUseCase, useValue: saveUseCase },
@@ -246,6 +258,13 @@ describe('PublicPlanResultsComponent (template)', () => {
     const { of } = await import('rxjs');
     const { vi } = await import('vitest');
 
+    const publicPlanSessionMock = {
+      state: { planId: 1, farm: { name: 'Test Farm', region: 'jp' } },
+      setPlanId: vi.fn(),
+      reset: vi.fn(),
+      ensureSessionToken: () => 'test-session-token'
+    };
+
     await TestBed.configureTestingModule({
       imports: [PublicPlanResultsComponent, TranslateModule.forRoot()],
       providers: [
@@ -255,8 +274,9 @@ describe('PublicPlanResultsComponent (template)', () => {
         { provide: PublicPlanResultsPresenter, useValue: { setView: vi.fn() } },
         {
           provide: PublicPlanStore,
-          useValue: { state: { planId: 1, farm: { name: 'Test Farm', region: 'jp' } } }
+          useValue: publicPlanSessionMock
         },
+        { provide: PUBLIC_PLAN_SESSION_PORT, useValue: publicPlanSessionMock },
         { provide: FlashMessageService, useValue: { show: vi.fn() } },
         {
           provide: AuthService,
@@ -322,6 +342,13 @@ describe('PublicPlanResultsComponent (template)', () => {
     const { of } = await import('rxjs');
     const { vi } = await import('vitest');
 
+    const publicPlanSessionMock = {
+      state: { planId: 1, farm: { name: 'Test Farm', region: 'jp' } },
+      setPlanId: vi.fn(),
+      reset: vi.fn(),
+      ensureSessionToken: () => 'test-session-token'
+    };
+
     await TestBed.configureTestingModule({
       imports: [PublicPlanResultsComponent, TranslateModule.forRoot()],
       providers: [
@@ -331,8 +358,9 @@ describe('PublicPlanResultsComponent (template)', () => {
         { provide: PublicPlanResultsPresenter, useValue: { setView: vi.fn() } },
         {
           provide: PublicPlanStore,
-          useValue: { state: { planId: 1, farm: { name: 'Test Farm', region: 'jp' } } }
+          useValue: publicPlanSessionMock
         },
+        { provide: PUBLIC_PLAN_SESSION_PORT, useValue: publicPlanSessionMock },
         { provide: FlashMessageService, useValue: { show: vi.fn() } },
         {
           provide: AuthService,

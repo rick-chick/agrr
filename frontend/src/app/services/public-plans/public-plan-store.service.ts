@@ -27,6 +27,7 @@ const INITIAL_STATE: PublicPlanState = {
 };
 
 const SESSION_STORAGE_KEY = 'agrr_public_plan_state';
+const SESSION_TOKEN_KEY = 'agrr_public_plan_session_token';
 
 @Injectable({ providedIn: 'root' })
 export class PublicPlanStore implements PublicPlanSessionPort {
@@ -66,7 +67,27 @@ export class PublicPlanStore implements PublicPlanSessionPort {
     this.updateState(INITIAL_STATE);
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      sessionStorage.removeItem(SESSION_TOKEN_KEY);
     }
+  }
+
+  ensureSessionToken(): string {
+    if (typeof sessionStorage === 'undefined') {
+      return this.generateSessionToken();
+    }
+    const existing = sessionStorage.getItem(SESSION_TOKEN_KEY);
+    if (existing && existing.length > 0) {
+      return existing;
+    }
+    const token = this.generateSessionToken();
+    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+    return token;
+  }
+
+  private generateSessionToken(): string {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
 
   /** E2E シード等で sessionStorage が後から入ったとき、farm 未設定なら再読込する */

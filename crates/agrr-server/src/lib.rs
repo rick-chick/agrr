@@ -73,6 +73,7 @@ pub mod plan_vs_actual_json;
 pub mod plan_variance_learning;
 pub mod plans;
 pub mod public_plan_save;
+pub mod public_plan_session;
 pub mod public_plans;
 pub mod routes;
 pub mod security_audit_log;
