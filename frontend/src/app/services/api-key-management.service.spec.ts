@@ -42,18 +42,20 @@ describe('ApiKeyManagementService', () => {
     service = TestBed.inject(ApiKeyManagementService);
   });
 
-  it('returns api_key from current user after load', async () => {
-    authService.user.mockReturnValue({ id: 1, api_key: 'user-key' });
+  it('returns masked api_key from current user after load', async () => {
+    authService.user.mockReturnValue({ id: 1, api_key: 'agr_****7890' });
 
-    await expect(firstValueFrom(service.getCurrentKey())).resolves.toBe('user-key');
+    await expect(firstValueFrom(service.getCurrentKey())).resolves.toBe('agr_****7890');
     expect(authService.loadCurrentUser).toHaveBeenCalled();
+    expect(apiKeyService.getApiKey).not.toHaveBeenCalled();
   });
 
-  it('falls back to ApiKeyService when user has no api_key', async () => {
+  it('does not fall back to localStorage when user has no api_key', async () => {
     authService.user.mockReturnValue({ id: 1, api_key: null });
     apiKeyService.getApiKey.mockReturnValue('stored-key');
 
-    await expect(firstValueFrom(service.getCurrentKey())).resolves.toBe('stored-key');
+    await expect(firstValueFrom(service.getCurrentKey())).resolves.toBeNull();
+    expect(apiKeyService.getApiKey).not.toHaveBeenCalled();
   });
 
   it('generates a key via POST /api/v1/api_keys/generate and stores it', async () => {

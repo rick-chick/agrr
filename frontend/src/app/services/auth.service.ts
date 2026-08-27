@@ -30,11 +30,7 @@ export class AuthService {
     return this.api.getCurrentUser().pipe(
       map((response) => response.user),
       tap((user) => {
-        if (user.api_key) {
-          this.apiKeyService.setApiKey(user.api_key);
-        } else {
-          this.apiKeyService.clearApiKey();
-        }
+        this.apiKeyService.clearApiKey();
         user.region = user.region ?? detectBrowserRegion();
         this.userSignal.set(user);
         this.loaded = true;
