@@ -81,10 +81,7 @@ describe('PlanOptimizingComponent', () => {
         'plans.optimizing_live.duration_hint': 'Takes approximately 1 minute',
         'plans.optimizing_live.default_message': 'Preparing optimization...',
         'plans.optimizing_live.error.retry': 'Reload',
-        'plans.optimizing_live.error.back_to_plan': 'Back to plan',
-        'plans.task_schedules.orchestration.return_to_learn': 'Return to learning screen',
-        'models.cultivation_plan.phases.task_schedule_generating': 'Generating task plans...',
-        'models.cultivation_plan.phase_failed.default': 'Process failed'
+        'plans.optimizing_live.error.back_to_plan': 'Back to plan'
       },
       true
     );
@@ -252,6 +249,28 @@ describe('PlanOptimizingComponent', () => {
       planId: 13,
       onSubscribed: expect.any(Function)
     });
+  });
+
+  it('redirects to plans list when plan id is invalid on init', () => {
+    (mockActivatedRoute.snapshot.paramMap.get as ReturnType<typeof vi.fn>).mockReturnValue('0');
+
+    const invalidFixture = TestBed.createComponent(PlanOptimizingComponent);
+    const invalidComponent = invalidFixture.componentInstance;
+    invalidFixture.detectChanges();
+
+    expect(invalidComponent.control.status).toBe('invalid_plan_id');
+    expect(router.navigate).toHaveBeenCalledWith(['/plans']);
+    expect(mockUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('redirects to plans list when plan id param is not a number', () => {
+    (mockActivatedRoute.snapshot.paramMap.get as ReturnType<typeof vi.fn>).mockReturnValue('abc');
+
+    const invalidFixture = TestBed.createComponent(PlanOptimizingComponent);
+    invalidFixture.detectChanges();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/plans']);
+    expect(mockUseCase.execute).not.toHaveBeenCalled();
   });
 
   it('reloads optimization subscription when retry is clicked', () => {
