@@ -105,17 +105,23 @@ export function pickFarmIdWithCompletedWeather(rows) {
 
 /**
  * Ensure a farm with completed weather exists for plan creation.
+ * In CI, only reuses farms already marked completed (live weather fetch is unreliable).
  *
  * @param {ApiTransport} transport
- * @returns {Promise<number>}
+ * @param {{ allowCreate?: boolean }} [options]
+ * @returns {Promise<number | null>}
  */
-export async function ensureFarmReadyForPlanCreate(transport) {
+export async function ensureFarmReadyForPlanCreate(transport, options = {}) {
+  const allowCreate = options.allowCreate ?? process.env.CI !== 'true';
   const listPath = '/api/v1/masters/farms';
   const listRes = await transport.get(listPath);
   const rows = listRes.ok ? parseRows(await listRes.json()) : [];
   const readyFarmId = pickFarmIdWithCompletedWeather(rows);
   if (readyFarmId != null) {
     return readyFarmId;
+  }
+  if (!allowCreate) {
+    return null;
   }
 
   const suffix = Date.now();
@@ -129,7 +135,11 @@ export async function ensureFarmReadyForPlanCreate(transport) {
   });
   if (!postRes.ok) {
     const body = await postRes.text();
-    throw new Error(`POST farms failed (${postRes.status}): ${body.slice(0, 300)}`);
+    console.warn(
+      `[ensurePlanCreateReadiness] POST farms failed (${postRes.status}): ${body.slice(0, 200)}`,
+    );
+    const retryRes = await transport.get(listPath);
+    return pickFarmIdWithCompletedWeather(retryRes.ok ? parseRows(await retryRes.json()) : []);
   }
   let farmId = null;
   try {
@@ -143,15 +153,24 @@ export async function ensureFarmReadyForPlanCreate(transport) {
   if (farmId == null) {
     const afterRes = await transport.get(listPath);
     const after = afterRes.ok ? parseRows(await afterRes.json()) : [];
-    farmId = pickFarmIdWithCompletedWeather(after) ?? after[after.length - 1]?.['id'];
-    if (farmId != null) farmId = Number(farmId);
+    const picked = pickFarmIdWithCompletedWeather(after) ?? after[after.length - 1]?.['id'];
+    farmId = picked != null ? Number(picked) : null;
   }
   if (farmId == null) {
-    throw new Error('cannot create farm for plan create readiness');
+    return null;
   }
 
-  await pollFarmWeatherCompleted(transport, farmId);
-  return farmId;
+  try {
+    await pollFarmWeatherCompleted(transport, farmId);
+    return farmId;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`[ensurePlanCreateReadiness] farm weather not ready (farmId=${farmId}): ${message}`);
+    const retryList = await transport.get(listPath);
+    return pickFarmIdWithCompletedWeather(
+      retryList.ok ? parseRows(await retryList.json()) : [],
+    );
+  }
 }
 
 /**
@@ -345,6 +364,7 @@ export async function ensureCropPlanCreateReady(transport, cropId) {
  * @param {ApiTransport} transport
  * @param {number | null} farmId
  * @param {number | null} cropId
+ * @returns {Promise<number | null>} farm id ready for plan create, or null when unavailable
  */
 export async function ensurePlanCreateReadiness(transport, farmId, cropId) {
   let readyFarmId = farmId;
@@ -362,7 +382,18 @@ export async function ensurePlanCreateReadiness(transport, farmId, cropId) {
   if (readyFarmId == null) {
     readyFarmId = await ensureFarmReadyForPlanCreate(transport);
   } else {
-    await pollFarmWeatherCompleted(transport, readyFarmId);
+    try {
+      await pollFarmWeatherCompleted(transport, readyFarmId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `[ensurePlanCreateReadiness] existing farm weather not ready (farmId=${readyFarmId}): ${message}`,
+      );
+      readyFarmId = await ensureFarmReadyForPlanCreate(transport);
+    }
+  }
+  if (readyFarmId == null) {
+    return null;
   }
   if (cropId != null) {
     await ensureCropPlanCreateReady(transport, cropId);

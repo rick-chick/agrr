@@ -90,6 +90,8 @@ else
   echo "==> Using existing dev DB at ${DB_PATH}"
 fi
 
+bash scripts/ensure-dev-db-plan-create-baseline.sh "$DB_PATH"
+
 echo "==> Installing Playwright browsers"
 cd "$ROOT/frontend"
 npx playwright install --with-deps chromium

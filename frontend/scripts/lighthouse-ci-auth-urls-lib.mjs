@@ -164,6 +164,9 @@ export async function ensureBaselinePlanForLighthouse(apiOrigin, sessionId) {
 
   const transport = createFetchTransport(base, headers);
   const readyFarmId = await ensurePlanCreateReadiness(transport, farmId, cropId);
+  if (readyFarmId == null) {
+    throw new Error('cannot create baseline plan: no farm with completed weather');
+  }
 
   await ensureFarmFieldForPlan(base, headers, readyFarmId);
 

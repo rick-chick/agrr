@@ -173,6 +173,10 @@ async function ensurePlan(
   await ensureFarmFieldForPlan(api, base, farmId);
   const transport = createPlaywrightTransport(api, base);
   const readyFarmId = await ensurePlanCreateReadiness(transport, farmId, cropId);
+  if (readyFarmId == null) {
+    console.warn('[ensureE2eBaseline] skip plan POST: no farm with completed weather');
+    return;
+  }
 
   const postRes = await api.post(listUrl, {
     data: {
