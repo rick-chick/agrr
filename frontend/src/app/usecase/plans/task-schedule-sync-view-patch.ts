@@ -39,6 +39,13 @@ export function taskScheduleSyncViewPatch(syncState: string): TaskScheduleSyncVi
       requestReload: true
     };
   }
+  if (syncState === 'stale') {
+    return {
+      regenerating: true,
+      toastI18nKey: null,
+      requestReload: false
+    };
+  }
   if (syncState === 'failed') {
     return {
       regenerating: false,
