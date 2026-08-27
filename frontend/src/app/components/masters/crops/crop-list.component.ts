@@ -41,6 +41,13 @@ const initialControl: CropListViewState = {
         @if (control.loading) {
           <app-card-list-skeleton class="list-loading-skeleton" />
           <p class="master-loading list-loading-text">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <div class="page-alert-error master-list__error" role="alert">
+            <p>{{ control.error | translate }}</p>
+            <button type="button" class="btn btn-secondary master-list__retry" (click)="load()">
+              {{ 'masters.load_error.retry' | translate }}
+            </button>
+          </div>
         } @else {
           <div class="section-card__header-actions">
             <a [routerLink]="['/crops', 'new']" class="btn btn-primary">{{ 'crops.index.new_crop' | translate }}</a>
