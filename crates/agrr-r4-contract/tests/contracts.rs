@@ -34,6 +34,8 @@ use support::{
     seed_org_scoped_farm,
     seed_org_scoped_crop,
     seed_org_scoped_plan,
+    seed_public_cultivation_plan,
+    cable_subscribe_frame_type,
 };
 
 #[test]
@@ -4226,4 +4228,71 @@ fn org_non_member_denied_team_plan() {
     let (status, body) =
         status_and_body(client.get(&path, Some(&other_session), &empty_headers()));
     assert_cross_user_access_denied(status, &body);
+}
+
+#[test]
+fn cable_rejects_cross_user_private_plans_optimization_channel() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let attacker_session = farmer_session_id(&client);
+    let seed = seed_work_record_plan(owner_id);
+    let identifier = serde_json::json!({
+        "channel": "PlansOptimizationChannel",
+        "cultivation_plan_id": seed.plan_id
+    });
+
+    tokio::runtime::Runtime::new()
+        .expect("tokio runtime")
+        .block_on(async {
+            let rejected = cable_subscribe_frame_type(Some(&attacker_session), identifier.clone())
+                .await;
+            assert_eq!("reject_subscription", rejected.frame_type);
+
+            let confirmed = cable_subscribe_frame_type(Some(&owner_session), identifier).await;
+            assert_eq!("confirm_subscription", confirmed.frame_type);
+        });
+}
+
+#[test]
+fn cable_rejects_cross_user_non_reference_farm_channel() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let attacker_session = farmer_session_id(&client);
+    let seed = seed_work_record_plan(owner_id);
+    let identifier = serde_json::json!({
+        "channel": "FarmChannel",
+        "farm_id": seed.farm_id
+    });
+
+    tokio::runtime::Runtime::new()
+        .expect("tokio runtime")
+        .block_on(async {
+            let rejected = cable_subscribe_frame_type(Some(&attacker_session), identifier.clone())
+                .await;
+            assert_eq!("reject_subscription", rejected.frame_type);
+
+            let confirmed = cable_subscribe_frame_type(Some(&owner_session), identifier).await;
+            assert_eq!("confirm_subscription", confirmed.frame_type);
+        });
+}
+
+#[test]
+fn cable_allows_unauthenticated_public_optimization_channel() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let plan_id = seed_public_cultivation_plan(owner_id);
+    let identifier = serde_json::json!({
+        "channel": "OptimizationChannel",
+        "cultivation_plan_id": plan_id
+    });
+
+    tokio::runtime::Runtime::new()
+        .expect("tokio runtime")
+        .block_on(async {
+            let confirmed = cable_subscribe_frame_type(None, identifier).await;
+            assert_eq!("confirm_subscription", confirmed.frame_type);
+        });
 }

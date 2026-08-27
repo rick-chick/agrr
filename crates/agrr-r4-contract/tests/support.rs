@@ -1581,3 +1581,105 @@ pub fn scheduler_auth_headers() -> HashMap<String, String> {
     headers
 }
 
+/// Seeds a public cultivation plan for cable OptimizationChannel tests.
+pub fn seed_public_cultivation_plan(user_id: i64) -> i64 {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let farm_name = format!("Contract Public Cable Farm {suffix}");
+    conn.execute(
+        "INSERT INTO farms (user_id, name, latitude, longitude, created_at, updated_at, is_reference)
+         VALUES (?1, ?2, 35.0, 139.0, datetime('now'), datetime('now'), 0)",
+        params![user_id, farm_name],
+    )
+    .expect("insert farm");
+    let farm_id = conn.last_insert_rowid();
+    let plan_name = format!("Contract Public Cable Plan {suffix}");
+    conn.execute(
+        "INSERT INTO cultivation_plans (
+           farm_id, user_id, total_area, plan_type, plan_name, status, created_at, updated_at
+         ) VALUES (?1, ?2, 10.0, 'public', ?3, 'pending', datetime('now'), datetime('now'))",
+        params![farm_id, user_id, plan_name],
+    )
+    .expect("insert public plan");
+    conn.last_insert_rowid()
+}
+
+pub fn cable_ws_url() -> String {
+    let http = std::env::var("RUST_CONTRACT_BASE_URL")
+        .unwrap_or_else(|_| "http://127.0.0.1:8080".to_string())
+        .trim_end_matches('/')
+        .to_string();
+    if let Some(rest) = http.strip_prefix("https://") {
+        format!("wss://{rest}/cable")
+    } else if let Some(rest) = http.strip_prefix("http://") {
+        format!("ws://{rest}/cable")
+    } else {
+        format!("ws://{http}/cable")
+    }
+}
+
+pub struct CableFrameOutcome {
+    pub frame_type: String,
+}
+
+/// Connects to `/cable`, sends one ActionCable subscribe, returns the first post-welcome frame type.
+pub async fn cable_subscribe_frame_type(
+    session_id: Option<&str>,
+    identifier: serde_json::Value,
+) -> CableFrameOutcome {
+    use futures_util::{SinkExt, StreamExt};
+    use tokio_tungstenite::{
+        connect_async,
+        tungstenite::client::IntoClientRequest,
+        tungstenite::http::header::{COOKIE, SEC_WEBSOCKET_PROTOCOL},
+        tungstenite::http::HeaderValue,
+        tungstenite::Message,
+    };
+
+    let url = cable_ws_url();
+    let mut request = url
+        .into_client_request()
+        .expect("websocket request");
+    request
+        .headers_mut()
+        .insert(SEC_WEBSOCKET_PROTOCOL, HeaderValue::from_static("actioncable-v1-json"));
+    if let Some(session_id) = session_id {
+        request.headers_mut().insert(
+            COOKIE,
+            HeaderValue::from_str(&format!("session_id={session_id}"))
+                .expect("session cookie header"),
+        );
+    }
+
+    let (mut ws, _) = connect_async(request).await.expect("cable websocket connect");
+    let welcome = ws.next().await.expect("welcome frame").expect("welcome ok");
+    let welcome_text = welcome.into_text().expect("welcome text");
+    let welcome_json: serde_json::Value =
+        serde_json::from_str(&welcome_text).expect("welcome json");
+    assert_eq!(
+        "welcome",
+        welcome_json.get("type").and_then(|v| v.as_str()).unwrap_or_default(),
+        "expected welcome: {welcome_text}"
+    );
+
+    let identifier_str = serde_json::to_string(&identifier).expect("identifier json");
+    let subscribe = serde_json::json!({
+        "command": "subscribe",
+        "identifier": identifier_str
+    });
+    ws.send(Message::Text(subscribe.to_string().into()))
+        .await
+        .expect("subscribe send");
+
+    let next = ws.next().await.expect("subscription response frame");
+    let text = next.expect("subscription response ok").into_text().expect("text frame");
+    let json: serde_json::Value = serde_json::from_str(&text).expect("subscription json");
+    let frame_type = json
+        .get("type")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default()
+        .to_string();
+    CableFrameOutcome { frame_type }
+}
