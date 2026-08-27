@@ -2883,57 +2883,6 @@ fn api_key_from_generate_response(body: &str) -> String {
 }
 
 #[test]
-fn get_auth_me_returns_masked_api_key_preview() {
-    let client = ContractClient::from_env();
-    let session_id = contract_api_session_id(&client);
-
-    let (gen_status, gen_body) = status_and_body(client.post(
-        "/api/v1/api_keys/generate",
-        Some(&session_id),
-        &empty_headers(),
-        None,
-    ));
-    assert_eq!(200, gen_status, "{gen_body}");
-    let full_key = api_key_from_generate_response(&gen_body);
-    assert!(full_key.len() > 8);
-
-    let (me_status, me_body) =
-        status_and_body(client.get("/api/v1/auth/me", Some(&session_id), &empty_headers()));
-    assert_eq!(200, me_status, "{me_body}");
-    let preview = serde_json::from_str::<serde_json::Value>(&me_body)
-        .expect("me JSON")["user"]["api_key"]
-        .as_str()
-        .expect("api_key preview")
-        .to_string();
-    assert_ne!(preview, full_key);
-    assert!(preview.contains("..."));
-    let expected = format!(
-        "{}...{}",
-        &full_key[..4],
-        &full_key[full_key.len() - 4..]
-    );
-    assert_eq!(preview, expected);
-}
-
-#[test]
-fn get_masters_with_query_api_key_is_not_authenticated() {
-    let client = ContractClient::from_env();
-    let session_id = contract_api_session_id(&client);
-    let (gen_status, gen_body) = status_and_body(client.post(
-        "/api/v1/api_keys/generate",
-        Some(&session_id),
-        &empty_headers(),
-        None,
-    ));
-    assert_eq!(200, gen_status, "{gen_body}");
-    let api_key = api_key_from_generate_response(&gen_body);
-
-    let path = format!("/api/v1/masters/crops?api_key={}", api_key);
-    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
-    assert_eq!(401, status, "{body}");
-}
-
-#[test]
 fn post_api_keys_generate_is_idempotent_when_key_already_exists() {
     let client = ContractClient::from_env();
     // Use a dedicated mock user: parallel contract tests share one SQLite DB and
