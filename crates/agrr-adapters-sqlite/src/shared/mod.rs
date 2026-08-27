@@ -6,6 +6,7 @@ mod reference_index_test;
 mod session_cookie_principal_gateway;
 mod session_user_read;
 mod user_lookup;
+mod user_lookup_sqlite_gateway_test;
 mod user_organization_scope_sqlite_gateway;
 mod user_organization_scope_sqlite_gateway_test;
 
