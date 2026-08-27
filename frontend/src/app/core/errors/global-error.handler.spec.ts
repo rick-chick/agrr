@@ -1,26 +1,23 @@
 import { TestBed } from '@angular/core/testing';
 import { ErrorHandler } from '@angular/core';
 
-import { AppFatalErrorService } from './app-fatal-error.service';
 import { GlobalErrorHandler } from './global-error.handler';
 
 describe('GlobalErrorHandler', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        { provide: ErrorHandler, useClass: GlobalErrorHandler },
-        AppFatalErrorService
-      ]
+      providers: [{ provide: ErrorHandler, useClass: GlobalErrorHandler }]
     });
   });
 
-  it('records fatal errors for the app shell fallback', () => {
+  it('logs runtime errors without activating the shell overlay', () => {
     const handler = TestBed.inject(ErrorHandler) as GlobalErrorHandler;
-    const fatalErrorService = TestBed.inject(AppFatalErrorService);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const error = new Error('runtime boom');
 
     handler.handleError(error);
 
-    expect(fatalErrorService.hasFatalError()).toBe(true);
+    expect(consoleSpy).toHaveBeenCalledWith(error);
+    consoleSpy.mockRestore();
   });
 });
