@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, inject, provideAppInitializer, provideErrorHandler } from '@angular/core';
+import { ApplicationConfig, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { provideClientHydration } from '@angular/platform-browser';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
@@ -22,7 +22,7 @@ import { GlobalErrorHandler } from './core/errors/global-error.handler';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideErrorHandler(GlobalErrorHandler),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideClientHydration(),
     provideHttpClient(),
     { provide: ENTRY_SCHEDULE_GATEWAY, useExisting: EntryScheduleApiGateway },
