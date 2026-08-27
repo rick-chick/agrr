@@ -1383,6 +1383,11 @@
       "optimizing": "Optimizing...",
       "no_plan_data": "No plan data available.",
       "no_field_data": "No field data available.",
+      "empty_state": {
+        "reload": "Reload",
+        "add_field": "Add field",
+        "register_crop": "Register a crop"
+      },
       "no_data": "No data to display.",
       "adjust_failed": "Adjustment failed.",
       "trash_drop_label": "Remove cultivation",

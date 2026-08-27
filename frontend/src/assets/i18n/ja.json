@@ -2286,6 +2286,11 @@
       "optimizing": "最適化中...",
       "no_plan_data": "計画データがありません。",
       "no_field_data": "圃場データがありません。",
+      "empty_state": {
+        "reload": "再読み込み",
+        "add_field": "圃場を追加",
+        "register_crop": "作物を登録"
+      },
       "no_data": "表示するデータがありません。",
       "adjust_failed": "調整に失敗しました。",
       "trash_drop_label": "作付を削除",

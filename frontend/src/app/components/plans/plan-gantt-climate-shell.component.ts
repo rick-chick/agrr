@@ -28,6 +28,7 @@ export type CultivationSelectionEvent = {
         <app-gantt-chart
           [data]="data"
           [planType]="planType"
+          [planId]="planId"
           [selectedCultivationId]="selectedCultivationId"
           [learningOrchestrationAdjust]="learningOrchestrationAdjust"
           [proposalOverlayBars]="proposalOverlayBars"
