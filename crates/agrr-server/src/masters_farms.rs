@@ -228,36 +228,36 @@ async fn fetch_farm_weather_data(
     let gateway = FarmSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool.clone());
     let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
-    let mut detail_presenter = DetailPresenter { body: None };
-    let mut detail_interactor = FarmDetailInteractor::new(
-        &mut detail_presenter,
+    let mut presenter = DetailPresenter { body: None };
+    let mut interactor = FarmDetailInteractor::new(
+        &mut presenter,
         user_id,
         &gateway,
         &user_lookup,
         &scope_gateway,
     );
-    detail_interactor.call(id).map_err(internal)?;
+    interactor.call(id).map_err(internal)?;
 
-    match detail_presenter.body {
+    match presenter.body {
         Some(Err((status, body))) => Err((status, Json(body))),
         Some(Ok(_)) => {
-            let start_fetch = StartFarmWeatherFetchAdapter::new(state.clone());
+            let weather_fetch = StartFarmWeatherFetchAdapter::new(state.clone());
             let clock = SystemClock;
-            start_fetch.call(id, clock.today());
+            weather_fetch.call(id, clock.today());
 
             let gateway = FarmSqliteGateway::new(state.sqlite.clone());
             let user_lookup = UserLookupSqliteGateway::new(state.sqlite.clone());
             let scope_gateway = UserOrganizationScopeSqliteGateway::new(state.sqlite.clone());
-            let mut show_presenter = DetailPresenter { body: None };
-            let mut show_interactor = FarmDetailInteractor::new(
-                &mut show_presenter,
+            let mut presenter = DetailPresenter { body: None };
+            let mut interactor = FarmDetailInteractor::new(
+                &mut presenter,
                 user_id,
                 &gateway,
                 &user_lookup,
                 &scope_gateway,
             );
-            show_interactor.call(id).map_err(internal)?;
-            match show_presenter.body {
+            interactor.call(id).map_err(internal)?;
+            match presenter.body {
                 Some(Ok(detail)) => {
                     let mut farm_json = farm_to_json(&detail.farm);
                     if let Some(obj) = farm_json.as_object_mut() {
