@@ -21,6 +21,8 @@ pub mod auth_return_to;
 pub mod auth_test;
 pub mod cable;
 pub mod cable_subscription_auth;
+pub mod contact_message_rate_limit;
+pub mod contact_message_recaptcha;
 pub mod contact_messages;
 pub mod cultivation_plans;
 pub mod cultivation_plans_mutations;
