@@ -4412,3 +4412,32 @@ fn post_contact_message_returns_422_when_recaptcha_fails() {
     let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha failure JSON");
     assert!(json["error"].as_str().unwrap_or("").contains("reCAPTCHA"));
 }
+
+#[test]
+fn logout_revokes_only_current_session_leaves_other_devices_authenticated() {
+    let client = ContractClient::from_env();
+    let session_a = developer_session_id(&client);
+    let session_b = developer_session_id(&client);
+  assert_eq!(
+        user_id_for_session(&client, &session_a),
+        user_id_for_session(&client, &session_b),
+        "both sessions must belong to the same developer user"
+    );
+
+    let (logout_status, logout_body) = status_and_body(
+        client.delete("/api/v1/auth/logout", Some(&session_a), &empty_headers()),
+    );
+    assert_eq!(200, logout_status, "{logout_body}");
+
+    let (status_a, body_a) =
+        status_and_body(client.get("/api/v1/auth/me", Some(&session_a), &empty_headers()));
+    assert_eq!(401, status_a, "logged-out session must be unauthorized: {body_a}");
+
+    let (status_b, body_b) =
+        status_and_body(client.get("/api/v1/auth/me", Some(&session_b), &empty_headers()));
+    assert_eq!(
+        200,
+        status_b,
+        "other device session must remain valid after single-device logout: {body_b}"
+    );
+}
