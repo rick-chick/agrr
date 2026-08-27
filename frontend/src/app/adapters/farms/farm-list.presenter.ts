@@ -8,6 +8,7 @@ import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 
 @Injectable()
 export class FarmListPresenter implements LoadFarmListOutputPort, DeleteFarmOutputPort {
@@ -30,6 +31,15 @@ export class FarmListPresenter implements LoadFarmListOutputPort, DeleteFarmOutp
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (this.view.control.loading) {
+      this.view.control = {
+        ...this.view.control,
+        loading: false,
+        error: errorDtoI18nKey(dto),
+        pendingErrorFlash: null
+      };
+      return;
+    }
     this.view.control = {
       ...this.view.control,
       loading: false,
