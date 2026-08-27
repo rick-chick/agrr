@@ -2735,6 +2735,30 @@ fn post_masters_crop_setup_proposal_with_api_key_authenticates() {
 }
 
 #[test]
+fn post_crops_ai_create_unauthenticated_returns_401() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/crops/ai_create",
+        None,
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "tomato" })),
+    ));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
+fn post_fertilizes_ai_create_unauthenticated_returns_401() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/fertilizes/ai_create",
+        None,
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "urea" })),
+    ));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
 fn post_crops_ai_create_returns_deprecation_metadata() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
