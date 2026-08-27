@@ -43,19 +43,17 @@ export function resolveRegenerating(
   syncState: string | null | undefined,
   lifecycle: Pick<TaskScheduleSyncLifecycleState, 'regeneratePostInFlight'>
 ): boolean {
-  return lifecycle.regeneratePostInFlight || syncState === 'generating';
+  return (
+    lifecycle.regeneratePostInFlight ||
+    syncState === 'generating' ||
+    syncState === 'stale'
+  );
 }
 
 export function markRegeneratePostInFlight(
   lifecycle: TaskScheduleSyncLifecycleState
 ): TaskScheduleSyncLifecycleState {
   return { ...lifecycle, regeneratePostInFlight: true };
-}
-
-export function clearRegeneratePostInFlight(
-  lifecycle: TaskScheduleSyncLifecycleState
-): TaskScheduleSyncLifecycleState {
-  return { ...lifecycle, regeneratePostInFlight: false };
 }
 
 export function taskScheduleSyncMessageFromRegenerateResponse(
