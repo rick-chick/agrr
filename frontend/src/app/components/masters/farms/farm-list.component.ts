@@ -40,6 +40,13 @@ const initialControl: FarmListViewState = {
         @if (control.loading) {
           <app-card-list-skeleton class="list-loading-skeleton" />
           <p class="master-loading list-loading-text">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <div class="page-alert-error master-list__error" role="alert">
+            <p>{{ control.error | translate }}</p>
+            <button type="button" class="btn btn-secondary master-list__retry" (click)="load()">
+              {{ 'masters.load_error.retry' | translate }}
+            </button>
+          </div>
         } @else {
           <div class="section-card__header-actions">
             <a routerLink="/farms/new" class="btn btn-primary">{{ 'farms.index.new_farm' | translate }}</a>
@@ -139,6 +146,7 @@ export class FarmListComponent implements FarmListView, OnInit, OnDestroy {
   }
 
   load(): void {
+    this.control = { ...this.control, loading: true };
     this.loadUseCase.execute();
   }
 
