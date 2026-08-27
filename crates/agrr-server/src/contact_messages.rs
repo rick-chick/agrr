@@ -1,16 +1,17 @@
 //! `POST /api/v1/contact_messages` (anonymous).
 
+use crate::contact_message_rate_limit::ContactMessageRateLimiterAdapter;
 use crate::state::AppState;
 use agrr_adapters_sqlite::ContactMessageSqliteGateway;
 use agrr_domain::contact_messages::dtos::{
     CreateContactMessageFailure, CreateContactMessageInput, CreateContactMessageSuccess,
 };
 use agrr_domain::contact_messages::interactors::CreateContactMessageInteractor;
-use agrr_domain::contact_messages::ports::{
-    ContactMessageRateLimiterPort, CreateContactMessageOutputPort, RateLimitTrackResult,
-    RecaptchaVerifierPort, RecaptchaVerifyResult,
-};
-use axum::{extract::State, http::StatusCode, routing::post, Json, Router};
+use agrr_domain::contact_messages::ports::CreateContactMessageOutputPort;
+use axum::extract::State;
+use axum::http::{HeaderMap, StatusCode};
+use axum::routing::{get, post};
+use axum::{Json, Router};
 use serde::Deserialize;
 
 pub fn routes() -> Router<AppState> {
@@ -35,18 +36,23 @@ struct ContactMessageBody {
     recaptcha_token: Option<String>,
 }
 
-struct AllowAllRecaptcha;
-impl RecaptchaVerifierPort for AllowAllRecaptcha {
-    fn verify(&self, _token: Option<&str>, _remote_ip: Option<&str>) -> RecaptchaVerifyResult {
-        RecaptchaVerifyResult::Ok
+pub fn remote_ip_from_headers(headers: &HeaderMap) -> Option<String> {
+    if let Some(forwarded) = headers.get("x-forwarded-for").and_then(|v| v.to_str().ok()) {
+        let ip = forwarded
+            .split(',')
+            .next()
+            .map(str::trim)
+            .filter(|ip| !ip.is_empty());
+        if ip.is_some() {
+            return ip.map(str::to_string);
+        }
     }
-}
-
-struct AllowAllRateLimit;
-impl ContactMessageRateLimiterPort for AllowAllRateLimit {
-    fn track(&self) -> RateLimitTrackResult {
-        RateLimitTrackResult::Ok
-    }
+    headers
+        .get("x-real-ip")
+        .and_then(|v| v.to_str().ok())
+        .map(str::trim)
+        .filter(|ip| !ip.is_empty())
+        .map(str::to_string)
 }
 
 struct CreatePresenter {
@@ -67,9 +73,10 @@ impl CreateContactMessageOutputPort for CreatePresenter {
     fn on_failure(&mut self, failure: CreateContactMessageFailure) {
         use agrr_domain::contact_messages::dtos::CreateContactMessageFailureKind;
         let (status, _json) = match failure.kind {
-            CreateContactMessageFailureKind::RateLimit => {
-                (StatusCode::TOO_MANY_REQUESTS, serde_json::json!({"error": "rate_limit"}))
-            }
+            CreateContactMessageFailureKind::RateLimit => (
+                StatusCode::TOO_MANY_REQUESTS,
+                serde_json::json!({"error": "rate_limit"}),
+            ),
             CreateContactMessageFailureKind::Recaptcha => (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 serde_json::json!({"error": failure.message.unwrap_or_default()}),
@@ -85,11 +92,13 @@ impl CreateContactMessageOutputPort for CreatePresenter {
 
 async fn create(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(body): Json<ContactMessageBody>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), StatusCode> {
     let gateway = ContactMessageSqliteGateway::new(state.sqlite.clone());
-    let recaptcha = AllowAllRecaptcha;
-    let rate_limit = AllowAllRateLimit;
+    let remote_ip = remote_ip_from_headers(&headers).unwrap_or_else(|| "unknown".to_string());
+    let recaptcha = state.recaptcha_verifier.as_ref();
+    let rate_limit = ContactMessageRateLimiterAdapter::new(&state.contact_message_rate_limit, &remote_ip);
     let mut presenter = CreatePresenter { body: None };
     let input = CreateContactMessageInput::new(
         body.name,
@@ -98,18 +107,49 @@ async fn create(
         body.message,
         body.source,
         body.recaptcha_token,
-        None,
+        Some(remote_ip),
     );
     let mut interactor = CreateContactMessageInteractor::new(
         &mut presenter,
         &gateway,
-        &recaptcha,
+        recaptcha,
         &rate_limit,
     );
-    interactor.call(input).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    interactor
+        .call(input)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     match presenter.body {
         Some(Ok(ok)) => Ok(ok),
         Some(Err(status)) => Err(status),
         None => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::HeaderMap;
+
+    #[test]
+    fn remote_ip_prefers_x_forwarded_for_first_hop() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "x-forwarded-for",
+            "203.0.113.9, 198.51.100.2".parse().unwrap(),
+        );
+        assert_eq!(
+            remote_ip_from_headers(&headers).as_deref(),
+            Some("203.0.113.9")
+        );
+    }
+
+    #[test]
+    fn remote_ip_falls_back_to_x_real_ip() {
+        let mut headers = HeaderMap::new();
+        headers.insert("x-real-ip", "198.51.100.7".parse().unwrap());
+        assert_eq!(
+            remote_ip_from_headers(&headers).as_deref(),
+            Some("198.51.100.7")
+        );
     }
 }
