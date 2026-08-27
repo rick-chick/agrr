@@ -58,13 +58,14 @@ describe('App', () => {
     expect(main?.getAttribute('tabindex')).toBe('-1');
   });
 
-  it('should render error fallback instead of shell when a fatal error is recorded', () => {
+  it('should render error fallback overlay when a fatal error is recorded', () => {
     TestBed.inject(AppFatalErrorService).setFatalError(new Error('boom'));
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('app-error-fallback')).toBeTruthy();
-    expect(compiled.querySelector('app-navbar')).toBeFalsy();
+    expect(compiled.querySelector('app-error-fallback.app-error-fallback-overlay')).toBeTruthy();
+    expect(compiled.querySelector('app-navbar')).toBeTruthy();
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });
