@@ -178,7 +178,7 @@ async fn logout(State(state): State<AppState>, jar: CookieJar) -> impl IntoRespo
         {
             log_logout(record.user_id);
             agrr_adapters_sqlite::UserSessionRevocationSqliteGateway::new(state.sqlite.clone())
-                .delete_all_sessions_for_user(record.user_id);
+                .delete_session_by_session_id(session_cookie.value());
         }
     }
     let jar = jar.remove(Cookie::from("session_id"));
