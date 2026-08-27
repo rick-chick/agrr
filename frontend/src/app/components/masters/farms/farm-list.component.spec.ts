@@ -58,6 +58,7 @@ describe('FarmListComponent', () => {
 
     fixture = TestBed.createComponent(FarmListComponent);
     component = fixture.componentInstance;
+    fixture.detectChanges();
     const translateService = TestBed.inject(TranslateService);
     translateService.setTranslation('en', {
       farms: {
@@ -282,5 +283,28 @@ describe('FarmListComponent', () => {
 
     expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.master-loading:not(.list-loading-text)')).toBeNull();
+  });
+
+  it('shows error alert with retry button that reloads the farm list', () => {
+    component.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      farms: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('.page-alert-error[role="alert"]');
+    expect(alert).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.section-card__header-actions')).toBeNull();
+
+    const retryBtn = fixture.nativeElement.querySelector('.master-list__retry') as HTMLButtonElement;
+    expect(retryBtn).toBeTruthy();
+
+    loadUseCase.execute.mockClear();
+    retryBtn.click();
+    expect(loadUseCase.execute).toHaveBeenCalled();
   });
 });
