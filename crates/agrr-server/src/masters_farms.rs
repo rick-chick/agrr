@@ -23,10 +23,12 @@ use agrr_domain::farm::ports::{
     UpdateFailure,
 };
 use agrr_domain::shared::policies::policy_permission_denied::PolicyPermissionDenied;
+use agrr_domain::shared::ports::ClockPort;
+use agrr_domain::weather_data::gateways::StartFarmWeatherDataFetchPort;
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use serde::Deserialize;
@@ -43,6 +45,10 @@ pub fn routes() -> Router<AppState> {
                 .patch(update_farm)
                 .put(update_farm)
                 .delete(destroy_farm),
+        )
+        .route(
+            "/api/v1/masters/farms/{id}/fetch_weather_data",
+            post(fetch_farm_weather_data),
         )
 }
 
@@ -208,6 +214,68 @@ async fn update_farm(
     match presenter.body {
         Some(Ok(entity)) => Ok(Json(farm_to_json(&entity))),
         Some(Err((status, body))) => Err((status, Json(body))),
+        None => Err(internal_error()),
+    }
+}
+
+async fn fetch_farm_weather_data(
+    State(state): State<AppState>,
+    auth: MastersUserId,
+    Path(id): Path<i64>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let user_id = auth_user(auth);
+    let pool = state.sqlite.clone();
+    let gateway = FarmSqliteGateway::new(pool.clone());
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
+    let mut detail_presenter = DetailPresenter { body: None };
+    let mut detail_interactor = FarmDetailInteractor::new(
+        &mut detail_presenter,
+        user_id,
+        &gateway,
+        &user_lookup,
+        &scope_gateway,
+    );
+    detail_interactor.call(id).map_err(internal)?;
+
+    match detail_presenter.body {
+        Some(Err((status, body))) => Err((status, Json(body))),
+        Some(Ok(_)) => {
+            let start_fetch = StartFarmWeatherFetchAdapter::new(state.clone());
+            let clock = SystemClock;
+            start_fetch.call(id, clock.today());
+
+            let gateway = FarmSqliteGateway::new(state.sqlite.clone());
+            let user_lookup = UserLookupSqliteGateway::new(state.sqlite.clone());
+            let scope_gateway = UserOrganizationScopeSqliteGateway::new(state.sqlite.clone());
+            let mut show_presenter = DetailPresenter { body: None };
+            let mut show_interactor = FarmDetailInteractor::new(
+                &mut show_presenter,
+                user_id,
+                &gateway,
+                &user_lookup,
+                &scope_gateway,
+            );
+            show_interactor.call(id).map_err(internal)?;
+            match show_presenter.body {
+                Some(Ok(detail)) => {
+                    let mut farm_json = farm_to_json(&detail.farm);
+                    if let Some(obj) = farm_json.as_object_mut() {
+                        obj.insert(
+                            "fields".into(),
+                            json!(detail
+                                .fields
+                                .iter()
+                                .map(farm_field_to_json)
+                                .collect::<Vec<_>>()),
+                        );
+                    }
+                    Ok(Json(farm_json))
+                }
+                Some(Err((status, body))) => Err((status, Json(body))),
+                None => Err(internal_error()),
+            }
+        }
         None => Err(internal_error()),
     }
 }

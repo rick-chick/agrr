@@ -3467,6 +3467,8 @@
       "weather": "Weather Information",
       "weather_status": "Weather Data Status",
       "weather_progress": "Progress",
+      "weather_refetch": "Retry weather data fetch",
+      "weather_poll_timeout": "Weather data fetch did not complete in time. Please try again.",
       "fields_list": "Fields",
       "fields_list_title": "Fields List",
       "no_fields": "No fields registered yet.",
