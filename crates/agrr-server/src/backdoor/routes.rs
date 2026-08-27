@@ -2,6 +2,8 @@
 
 use crate::adapters::NoopLogger;
 use crate::backdoor::build_backdoor_status_json;
+use crate::runtime_env;
+use crate::security_audit_log::log_backdoor_operation;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
     ApplicationDatabaseClearSqliteGateway, BackdoorCreateUserAttrs, BackdoorDiagnosticsSqliteGateway,
@@ -77,11 +79,20 @@ fn backdoor_auth(
     Ok(())
 }
 
+fn audit_backdoor_success(action: &str, resource_id: Option<i64>) {
+    log_backdoor_operation(action, resource_id, "success");
+}
+
+fn audit_backdoor_blocked(action: &str, outcome: &str) {
+    log_backdoor_operation(action, None, outcome);
+}
+
 async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     backdoor_auth(&state, &headers)?;
+    audit_backdoor_success("status", None);
     let root = std::env::current_dir().unwrap_or_else(|_| ".".into());
     Ok(Json(build_backdoor_status_json(&root)))
 }
@@ -91,6 +102,7 @@ async fn health(
     headers: HeaderMap,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     backdoor_auth(&state, &headers)?;
+    audit_backdoor_success("health", None);
     Ok(Json(json!({
         "status": "ok",
         "timestamp": timestamp_json(),
@@ -110,6 +122,7 @@ async fn users(
             Json(json!({"success": false, "error": "internal"})),
         )
     })?;
+    audit_backdoor_success("users_list", None);
     Ok(Json(json!({
         "timestamp": timestamp_json(),
         "total_users": payload.total_users,
@@ -152,14 +165,17 @@ async fn create_user(
             Json(json!({"success": false, "error": "internal"})),
         )
     })? {
-        agrr_adapters_sqlite::BackdoorCreateUserResult::Ok { user } => Ok((
+        agrr_adapters_sqlite::BackdoorCreateUserResult::Ok { user } => {
+            audit_backdoor_success("user_create", Some(user.id));
+            Ok((
             StatusCode::CREATED,
             Json(json!({
                 "timestamp": timestamp_json(),
                 "success": true,
                 "user": user
             })),
-        )),
+        ))
+        }
         agrr_adapters_sqlite::BackdoorCreateUserResult::Invalid { errors } => Ok((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({
@@ -192,14 +208,17 @@ async fn update_user(
             Json(json!({"success": false, "error": "internal"})),
         )
     })? {
-        agrr_adapters_sqlite::BackdoorUpdateUserResult::Ok { user } => Ok((
+        agrr_adapters_sqlite::BackdoorUpdateUserResult::Ok { user } => {
+            audit_backdoor_success("user_update", Some(user.id));
+            Ok((
             StatusCode::OK,
             Json(json!({
                 "timestamp": timestamp_json(),
                 "success": true,
                 "user": user
             })),
-        )),
+        ))
+        }
         agrr_adapters_sqlite::BackdoorUpdateUserResult::NotFound => Ok((
             StatusCode::NOT_FOUND,
             Json(json!({
@@ -231,6 +250,7 @@ async fn db_stats(
             Json(json!({"success": false, "error": "internal"})),
         )
     })?;
+    audit_backdoor_success("db_stats", None);
     Ok(Json(json!({
         "timestamp": timestamp_json(),
         "stats": stats,
@@ -290,6 +310,19 @@ async fn clear_db(
     Json(body): Json<ClearDbBody>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     backdoor_auth(&state, &headers)?;
+    if !backdoor_db_clear_allowed() {
+        audit_backdoor_blocked("db_clear", "blocked_production");
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({
+                "timestamp": timestamp_json(),
+                "success": false,
+                "error": "api.errors.backdoor.db_clear_forbidden_in_production",
+                "error_key": "api.errors.backdoor.db_clear_forbidden_in_production",
+                "message": "db/clear is disabled in production. Use Litestream restore or a break-glass runbook instead."
+            })),
+        ));
+    }
     let Some(token) = body.confirmation_token.as_deref().filter(|t| !t.is_empty()) else {
         return Ok((
             StatusCode::BAD_REQUEST,
@@ -317,10 +350,50 @@ async fn clear_db(
     let mut presenter = ClearDbPresenter { response: None };
     let mut interactor = BackdoorClearDatabaseInteractor::new(&mut presenter, &gateway, &logger);
     interactor.call();
+    if let Some((status, _)) = presenter.response.as_ref() {
+        if *status == StatusCode::OK {
+            audit_backdoor_success("db_clear", None);
+        } else {
+            audit_backdoor_blocked("db_clear", "failure");
+        }
+    }
     presenter.response.ok_or_else(|| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"success": false, "error": "no response"})),
         )
     })
+}
+
+pub(crate) fn backdoor_db_clear_allowed() -> bool {
+    !runtime_env::is_production()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn backdoor_db_clear_allowed_respects_runtime_env() {
+        let prev_env = std::env::var("AGRR_ENV").ok();
+        let prev_rails = std::env::var("RAILS_ENV").ok();
+
+        std::env::set_var("AGRR_ENV", "production");
+        std::env::remove_var("RAILS_ENV");
+        assert!(!backdoor_db_clear_allowed());
+
+        std::env::set_var("AGRR_ENV", "development");
+        std::env::remove_var("RAILS_ENV");
+        assert!(backdoor_db_clear_allowed());
+
+        restore_env("AGRR_ENV", prev_env);
+        restore_env("RAILS_ENV", prev_rails);
+    }
+
+    fn restore_env(key: &str, value: Option<String>) {
+        match value {
+            Some(v) => std::env::set_var(key, v),
+            None => std::env::remove_var(key),
+        }
+    }
 }

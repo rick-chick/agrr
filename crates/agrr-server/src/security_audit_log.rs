@@ -14,6 +14,7 @@ pub enum SecurityAuditEventType {
     ApiKeyGenerate,
     ApiKeyRegenerate,
     ReferenceMasterAdminChange,
+    BackdoorOperation,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -28,6 +29,8 @@ pub struct SecurityAuditRecord {
     pub resource_id: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub action: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub outcome: Option<String>,
 }
 
 impl SecurityAuditRecord {
@@ -39,6 +42,7 @@ impl SecurityAuditRecord {
             resource_type: None,
             resource_id: None,
             action: None,
+            outcome: None,
         }
     }
 
@@ -51,6 +55,11 @@ impl SecurityAuditRecord {
         self.resource_type = Some(resource_type.into());
         self.resource_id = Some(resource_id);
         self.action = Some(action.into());
+        self
+    }
+
+    pub fn with_outcome(mut self, outcome: impl Into<String>) -> Self {
+        self.outcome = Some(outcome.into());
         self
     }
 }
@@ -71,8 +80,40 @@ pub fn format_security_audit_log(record: &SecurityAuditRecord) -> String {
 }
 
 pub fn emit_security_audit_log(record: SecurityAuditRecord) {
+    let line = format_security_audit_log(&record);
+    #[cfg(test)]
+    if let Ok(guard) = TEST_AUDIT_SINK.lock() {
+        if let Some(sink) = guard.as_ref() {
+            sink(line);
+            return;
+        }
+    }
     // Cloud Run surfaces stderr as textPayload; JSON per line is grep-friendly.
-    eprintln!("{}", format_security_audit_log(&record));
+    eprintln!("{line}");
+}
+
+#[cfg(test)]
+static TEST_AUDIT_SINK: std::sync::Mutex<Option<Box<dyn Fn(String) + Send + Sync>>> =
+    std::sync::Mutex::new(None);
+
+#[cfg(test)]
+pub fn set_test_audit_sink(
+    sink: Option<Box<dyn Fn(String) + Send + Sync>>,
+) -> TestAuditSinkGuard {
+    let mut guard = TEST_AUDIT_SINK.lock().expect("test audit sink lock");
+    *guard = sink;
+    TestAuditSinkGuard
+}
+
+#[cfg(test)]
+pub struct TestAuditSinkGuard;
+
+#[cfg(test)]
+impl Drop for TestAuditSinkGuard {
+    fn drop(&mut self) {
+        let mut guard = TEST_AUDIT_SINK.lock().expect("test audit sink lock");
+        *guard = None;
+    }
 }
 
 pub fn log_login_success(user_id: i64) {
@@ -118,6 +159,18 @@ pub fn log_reference_master_admin_change(
     );
 }
 
+/// Records a backdoor API operation without logging token material.
+pub fn log_backdoor_operation(action: &str, resource_id: Option<i64>, outcome: &str) {
+    let mut record = SecurityAuditRecord::new(SecurityAuditEventType::BackdoorOperation, None)
+        .with_outcome(outcome);
+    record.action = Some(action.into());
+    record.resource_type = Some("backdoor".into());
+    if let Some(id) = resource_id {
+        record.resource_id = Some(id);
+    }
+    emit_security_audit_log(record);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -131,6 +184,7 @@ mod tests {
             resource_type: None,
             resource_id: None,
             action: None,
+            outcome: None,
         });
         let json: serde_json::Value = serde_json::from_str(&line).expect("valid JSON");
         assert_eq!("login_success", json["event_type"].as_str().unwrap());
@@ -158,6 +212,43 @@ mod tests {
     }
 
     #[test]
+    fn format_backdoor_operation_includes_action_and_outcome() {
+        let mut record = SecurityAuditRecord::new(SecurityAuditEventType::BackdoorOperation, None)
+            .with_outcome("success");
+        record.action = Some("users_list".into());
+        record.resource_type = Some("backdoor".into());
+        let line = format_security_audit_log(&record);
+        let json: serde_json::Value = serde_json::from_str(&line).expect("valid JSON");
+        assert_eq!(
+            "backdoor_operation",
+            json["event_type"].as_str().unwrap()
+        );
+        assert_eq!("users_list", json["action"].as_str().unwrap());
+        assert_eq!("success", json["outcome"].as_str().unwrap());
+        assert_eq!("backdoor", json["resource_type"].as_str().unwrap());
+    }
+
+    #[test]
+    fn log_backdoor_operation_emits_structured_json_without_token() {
+        let captured = std::sync::Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+        let captured_clone = captured.clone();
+        let _guard = set_test_audit_sink(Some(Box::new(move |line| {
+            captured_clone.lock().expect("lock").push(line);
+        })));
+
+        log_backdoor_operation("users_list", None, "success");
+
+        let lines = captured.lock().expect("lock");
+        assert_eq!(1, lines.len(), "expected one audit line");
+        let json: serde_json::Value = serde_json::from_str(&lines[0]).expect("audit json");
+        assert_eq!("backdoor_operation", json["event_type"].as_str().unwrap());
+        assert_eq!("users_list", json["action"].as_str().unwrap());
+        assert_eq!("success", json["outcome"].as_str().unwrap());
+        assert_eq!("backdoor", json["resource_type"].as_str().unwrap());
+        assert!(json.get("backdoor_token").is_none());
+    }
+
+    #[test]
     fn format_never_includes_sensitive_value_fields() {
         let line = format_security_audit_log(&SecurityAuditRecord::new(
             SecurityAuditEventType::ApiKeyRegenerate,
@@ -170,7 +261,10 @@ mod tests {
             "oauth_token",
             "access_token",
             "backdoor_token",
+            "confirmation_token",
+            "token",
             "secret",
+            "X-Backdoor-Token",
         ] {
             assert!(
                 json.get(forbidden).is_none(),
