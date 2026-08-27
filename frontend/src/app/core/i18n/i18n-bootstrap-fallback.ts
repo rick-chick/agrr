@@ -39,7 +39,7 @@ const I18N_BOOTSTRAP_FALLBACK: Record<AppLang, TranslationObject> = {
       }
     },
     a11y: {
-      skip_to_main: 'मुख्य सामग्री पर जाएँ'
+      skip_to_main: 'मुख्य सामग्री पर जाएं'
     }
   }
 };

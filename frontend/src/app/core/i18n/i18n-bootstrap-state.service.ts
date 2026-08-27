@@ -2,9 +2,8 @@ import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { bootstrapAppI18n } from './initial-i18n-bootstrap';
+import { I18N_PRERENDER_DEFAULT_LANG } from './i18n-bootstrap.constants';
 import type { I18nBootstrapStatePort } from './i18n-bootstrap-state.port';
-
-const PRERENDER_DEFAULT_LANG = 'ja' as const;
 
 @Injectable({ providedIn: 'root' })
 export class I18nBootstrapStateService implements I18nBootstrapStatePort {
@@ -33,7 +32,7 @@ export class I18nBootstrapStateService implements I18nBootstrapStatePort {
 
   async retry(): Promise<void> {
     this.markRetrying();
-    const lang = isPlatformBrowser(this.platformId) ? undefined : PRERENDER_DEFAULT_LANG;
+    const lang = isPlatformBrowser(this.platformId) ? undefined : I18N_PRERENDER_DEFAULT_LANG;
     await bootstrapAppI18n(this.translate, { lang, state: this });
   }
 }

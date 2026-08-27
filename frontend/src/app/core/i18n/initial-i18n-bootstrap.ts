@@ -1,13 +1,8 @@
-import { isPlatformBrowser } from '@angular/common';
-import { inject, PLATFORM_ID } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { applyAppLang, resolveInitialAppLang, type AppLang } from '../app-locale';
 import { getI18nBootstrapFallback } from './i18n-bootstrap-fallback';
 import type { I18nBootstrapStatePort } from './i18n-bootstrap-state.port';
-import { I18nBootstrapStateService } from './i18n-bootstrap-state.service';
-
-const PRERENDER_DEFAULT_LANG: AppLang = 'ja';
 
 type BootstrapAppI18nOptions = {
   lang?: AppLang;
@@ -58,14 +53,4 @@ export async function bootstrapAppI18n(
   } else {
     state?.markSuccess();
   }
-}
-
-export function provideInitialI18nBootstrap() {
-  return () => {
-    const translate = inject(TranslateService);
-    const platformId = inject(PLATFORM_ID);
-    const state = inject(I18nBootstrapStateService);
-    const lang = isPlatformBrowser(platformId) ? undefined : PRERENDER_DEFAULT_LANG;
-    return bootstrapAppI18n(translate, { lang, state });
-  };
 }
