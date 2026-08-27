@@ -3,6 +3,7 @@ import { FarmCreatePresenter } from './farm-create.presenter';
 import { FarmCreateView, FarmCreateViewState } from '../../components/masters/farms/farm-create.view';
 import { CreateFarmSuccessDto } from '../../usecase/farms/create-farm.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { ACTIVERECORD_FARM_LIMIT_EXCEEDED_KEY } from '../../core/i18n/resolve-activerecord-api-error-i18n-key';
 
 describe('FarmCreatePresenter', () => {
   let presenter: FarmCreatePresenter;
@@ -61,6 +62,25 @@ describe('FarmCreatePresenter', () => {
       expect(lastControl!.saving).toBe(false);
       expect(lastControl!.error).toBeNull();
       expect(lastControl!.formData).toEqual(initialControl.formData); // formData preserved
+    });
+
+    it('blocks farm limit without pending error flash when server returns limit exceeded', () => {
+      const initialControl: FarmCreateViewState = {
+        saving: true,
+        error: null,
+        formData: { name: 'New Farm', region: 'Region', latitude: 35.0, longitude: 135.0 },
+        pendingErrorFlash: null,
+        limitCheckLoading: false,
+        limitBlocked: false,
+      };
+      lastControl = initialControl;
+
+      presenter.onError({ message: ACTIVERECORD_FARM_LIMIT_EXCEEDED_KEY });
+
+      expect(lastControl!.limitBlocked).toBe(true);
+      expect(lastControl!.pendingErrorFlash).toBeNull();
+      expect(lastControl!.saving).toBe(false);
+      expect(lastControl!.error).toBeNull();
     });
   });
 });
