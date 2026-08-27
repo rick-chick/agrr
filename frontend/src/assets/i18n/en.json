@@ -1383,11 +1383,6 @@
       "optimizing": "Optimizing...",
       "no_plan_data": "No plan data available.",
       "no_field_data": "No field data available.",
-      "empty_state": {
-        "reload": "Reload",
-        "add_field": "Add field",
-        "register_crop": "Register a crop"
-      },
       "no_data": "No data to display.",
       "adjust_failed": "Adjustment failed.",
       "trash_drop_label": "Remove cultivation",
@@ -1415,6 +1410,11 @@
         "field_row": "{{index}}. {{fieldName}} ({{cropCount}} cultivations)",
         "cultivation_bar": "{{cropName}} in {{fieldName}} ({{startDate}} – {{endDate}})",
         "chart_summary": "Cultivation schedule. {{fieldCount}} fields, {{cultivationCount}} cultivations"
+      },
+      "empty_state": {
+        "reload": "Reload",
+        "add_field": "Add field",
+        "register_crop": "Register a crop"
       }
     },
     "field_climate": {
@@ -4146,6 +4146,11 @@
       "privacy_link_text": "Privacy Policy",
       "accept": "Accept",
       "reject": "Reject"
+    },
+    "offline_banner": {
+      "message": "You are offline. Some actions may not work until your connection is restored.",
+      "reconnected": "Connection restored.",
+      "reload": "Reload"
     },
     "region_select": {
       "label": "Region",

@@ -2286,11 +2286,6 @@
       "optimizing": "最適化中...",
       "no_plan_data": "計画データがありません。",
       "no_field_data": "圃場データがありません。",
-      "empty_state": {
-        "reload": "再読み込み",
-        "add_field": "圃場を追加",
-        "register_crop": "作物を登録"
-      },
       "no_data": "表示するデータがありません。",
       "adjust_failed": "調整に失敗しました。",
       "trash_drop_label": "作付を削除",
@@ -2318,6 +2313,11 @@
         "field_row": "{{index}}. {{fieldName}}（作付 {{cropCount}} 件）",
         "cultivation_bar": "{{fieldName}}の{{cropName}}（{{startDate}}〜{{endDate}}）",
         "chart_summary": "栽培スケジュール。{{fieldCount}} 圃場、{{cultivationCount}} 件の作付"
+      },
+      "empty_state": {
+        "reload": "再読み込み",
+        "add_field": "圃場を追加",
+        "register_crop": "作物を登録"
       }
     },
     "field_climate": {
@@ -4182,6 +4182,11 @@
       "privacy_link_text": "プライバシーポリシー",
       "accept": "同意する",
       "reject": "拒否する"
+    },
+    "offline_banner": {
+      "message": "オフラインです。回線が復帰するまで一部の操作ができない場合があります。",
+      "reconnected": "回線が復帰しました。",
+      "reload": "再読み込み"
     },
     "region_select": {
       "label": "地域",

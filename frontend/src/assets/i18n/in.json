@@ -1810,11 +1810,6 @@
       "optimizing": "अनुकूलन जारी...",
       "no_plan_data": "कोई योजना डेटा नहीं।",
       "no_field_data": "कोई खेत क्षेत्र डेटा नहीं।",
-      "empty_state": {
-        "reload": "पुनः लोड करें",
-        "add_field": "खेत जोड़ें",
-        "register_crop": "फसल पंजीकृत करें"
-      },
       "no_data": "प्रदर्शित करने के लिए कोई डेटा नहीं।",
       "adjust_failed": "समायोजन विफल।",
       "trash_drop_label": "खेती हटाएं",
@@ -1842,6 +1837,11 @@
         "field_row": "{{index}}. {{fieldName}} ({{cropCount}} खेती)",
         "cultivation_bar": "{{fieldName}} में {{cropName}} ({{startDate}} – {{endDate}})",
         "chart_summary": "खेती अनुसूची। {{fieldCount}} खेत, {{cultivationCount}} खेती"
+      },
+      "empty_state": {
+        "reload": "पुनः लोड करें",
+        "add_field": "खेत जोड़ें",
+        "register_crop": "फसल पंजीकृत करें"
       }
     },
     "field_climate": {
@@ -3895,6 +3895,11 @@
       "privacy_link_text": "Privacy Policy",
       "accept": "Accept",
       "reject": "Reject"
+    },
+    "offline_banner": {
+      "message": "आप ऑफ़लाइन हैं। कनेक्शन बहाल होने तक कुछ क्रियाएँ काम नहीं कर सकतीं।",
+      "reconnected": "कनेक्शन बहाल हो गया।",
+      "reload": "पुनः लोड करें"
     },
     "region_select": {
       "label": "क्षेत्र",
