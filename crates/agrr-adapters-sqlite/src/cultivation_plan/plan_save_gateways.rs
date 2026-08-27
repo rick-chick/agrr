@@ -638,16 +638,18 @@ impl CropTaskScheduleBlueprintGateway for CropTaskScheduleBlueprintGw {
                  FROM crop_task_schedule_blueprints WHERE crop_id = ?1 ORDER BY stage_order",
             )?;
             let rows = stmt.query_map(params![crop_id], |row| {
-                let gdd_trigger: f64 = row.get(4)?;
+                let stage_order: Option<i32> = row.get(2)?;
+                let gdd_trigger: Option<f64> = row.get(4)?;
                 let gdd_tolerance: Option<f64> = row.get(5)?;
                 let amount: Option<f64> = row.get(9)?;
                 let time_per_sqm: Option<f64> = row.get(13)?;
                 Ok(CropTaskScheduleBlueprintRow {
                     agricultural_task_id: row.get(0)?,
                     source_agricultural_task_id: row.get(1)?,
-                    stage_order: row.get(2)?,
+                    stage_order: stage_order.unwrap_or(0),
                     stage_name: row.get(3)?,
-                    gdd_trigger: Decimal::from_str(&gdd_trigger.to_string()).ok(),
+                    gdd_trigger: gdd_trigger
+                        .and_then(|v| Decimal::from_str(&v.to_string()).ok()),
                     gdd_tolerance: gdd_tolerance
                         .and_then(|v| Decimal::from_str(&v.to_string()).ok()),
                     task_type: row.get(6)?,
