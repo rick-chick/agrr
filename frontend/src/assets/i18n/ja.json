@@ -2229,9 +2229,9 @@
       "invalid_field_params": "圃場の情報が不正です。",
       "no_candidates_found": "この作物の最適な作付け日程が見つかりませんでした。天気データの範囲を拡張しましたが、候補が得られませんでした。",
       "prediction_data_incomplete": "天気予測データが不足しているため処理を完了できません。しばらくしてから再度お試しください。",
-      "storage_unavailable": "ブラウザの保存領域を利用できないため、作業内容を保持できません。別のブラウザまたは通常モードで再度お試しください。",
       "no_fields_in_farm": "圃場が登録されていない農場では計画を作成できません。農場に圃場を登録してください。",
-      "invalid_id": "計画IDが不正です。"
+      "invalid_id": "計画IDが不正です。",
+      "storage_unavailable": "ブラウザの保存領域を利用できないため、作業内容を保持できません。別のブラウザまたは通常モードで再度お試しください。"
     },
     "messages": {
       "field_removed": "圃場を削除しました。",
@@ -4179,6 +4179,11 @@
       "privacy_link_text": "プライバシーポリシー",
       "accept": "同意する",
       "reject": "拒否する"
+    },
+    "offline_banner": {
+      "message": "オフラインです。回線が復帰するまで一部の操作ができない場合があります。",
+      "reconnected": "回線が復帰しました。",
+      "reload": "再読み込み"
     },
     "region_select": {
       "label": "地域",
