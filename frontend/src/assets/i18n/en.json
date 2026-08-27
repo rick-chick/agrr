@@ -445,54 +445,54 @@
       "short": "%m/%d",
       "long": "%B %d, %Y"
     },
-    "day_names": [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday"
-    ],
-    "abbr_day_names": [
-      "Sun",
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-      "Sat"
-    ],
-    "month_names": [
-      null,
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December"
-    ],
-    "abbr_month_names": [
-      null,
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec"
-    ]
+    "day_names": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "abbr_day_names": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    },
+    "month_names": {
+      "0": null,
+      "1": "January",
+      "2": "February",
+      "3": "March",
+      "4": "April",
+      "5": "May",
+      "6": "June",
+      "7": "July",
+      "8": "August",
+      "9": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    },
+    "abbr_month_names": {
+      "0": null,
+      "1": "Jan",
+      "2": "Feb",
+      "3": "Mar",
+      "4": "Apr",
+      "5": "May",
+      "6": "Jun",
+      "7": "Jul",
+      "8": "Aug",
+      "9": "Sep",
+      "10": "Oct",
+      "11": "Nov",
+      "12": "Dec"
+    }
   },
   "time": {
     "formats": {
@@ -1327,9 +1327,9 @@
       "no_candidates_found": "No optimal planting schedule found for this crop. Weather data range was extended but no candidates were found.",
       "prediction_data_incomplete": "Weather prediction data is incomplete. Please try again later.",
       "no_fields_in_farm": "Cannot create a plan for a farm without registered fields. Please add fields to the farm first.",
+      "invalid_id": "Invalid plan ID.",
       "weather_not_ready": "Weather data is not ready yet. Please wait until it completes before creating a plan.",
-      "crops_not_ready": "Plan setup is not complete. Please configure crops and task schedules first.",
-      "invalid_id": "Invalid plan ID."
+      "crops_not_ready": "Plan setup is not complete. Please configure crops and task schedules first."
     },
     "messages": {
       "field_removed": "Field removed.",
@@ -3860,39 +3860,39 @@
       },
       "features_section": {
         "title": "Main Features",
-        "items": [
-          {
+        "items": {
+          "0": {
             "icon": "🌾",
             "title": "Crop Plan Optimization",
             "description": "Automatically generates optimal crop plans considering field conditions, crop characteristics, and crop rotation issues."
           },
-          {
+          "1": {
             "icon": "📍",
             "title": "Field Management",
             "description": "Manage multiple fields on a map and record area, location information, and cultivation history for each field."
           },
-          {
+          "2": {
             "icon": "🌡️",
             "title": "Weather Data Utilization",
             "description": "Leverages historical weather data and future predictions to suggest optimal planting times suitable for the climate."
           },
-          {
+          "3": {
             "icon": "📊",
             "title": "Gantt Chart Display",
             "description": "Visually displays crop plans, allowing you to grasp the annual cultivation schedule at a glance."
           }
-        ]
+        }
       },
       "characteristics": {
         "title": "AGRR Characteristics",
         "intro": "AGRR supports farmers with the following features:",
-        "items": [
-          "<strong>Simple and Easy to Use</strong> - Anyone can easily create crop plans with intuitive operations",
-          "<strong>Data-Driven Recommendations</strong> - Proposes optimal plans based on weather data and scientific knowledge",
-          "<strong>Supports Sustainable Agriculture</strong> - Enables long-term cultivation planning considering crop rotation issues",
-          "<strong>Accessible Anytime, Anywhere</strong> - Can be accessed from smartphones and tablets with an internet connection",
-          "<strong>Free to Start</strong> - Basic features are available for free"
-        ]
+        "items": {
+          "0": "<strong>Simple and Easy to Use</strong> - Anyone can easily create crop plans with intuitive operations",
+          "1": "<strong>Data-Driven Recommendations</strong> - Proposes optimal plans based on weather data and scientific knowledge",
+          "2": "<strong>Supports Sustainable Agriculture</strong> - Enables long-term cultivation planning considering crop rotation issues",
+          "3": "<strong>Accessible Anytime, Anywhere</strong> - Can be accessed from smartphones and tablets with an internet connection",
+          "4": "<strong>Free to Start</strong> - Basic features are available for free"
+        }
       },
       "development": {
         "title": "Development & Operations",
@@ -3926,28 +3926,28 @@
       "email_intro": "Please contact us at the following email address:",
       "email_note": "* We typically respond within 1-3 business days.",
       "notes_title": "Notes for Inquiries",
-      "notes": [
-        "Please include your name (or handle name)",
-        "Please describe your inquiry in as much detail as possible",
-        "If an error occurred, it would be helpful to include error messages or screenshots",
-        "Please confirm your reply email address"
-      ],
+      "notes": {
+        "0": "Please include your name (or handle name)",
+        "1": "Please describe your inquiry in as much detail as possible",
+        "2": "If an error occurred, it would be helpful to include error messages or screenshots",
+        "3": "Please confirm your reply email address"
+      },
       "faq_title": "Frequently Asked Questions",
       "faq_intro": "Before contacting us, please check the following FAQ:",
-      "faq_items": [
-        {
+      "faq_items": {
+        "0": {
           "question": "Cannot log in",
           "answer": "Please check your Google authentication settings"
         },
-        {
+        "1": {
           "question": "Data not saving",
           "answer": "Please check if browser cookies are enabled"
         },
-        {
+        "2": {
           "question": "Weather data not displaying",
           "answer": "Please check if field location information is set correctly"
         }
-      ],
+      },
       "footer_message": "We look forward to your feedback and requests for service improvement."
     },
     "public_plans_new": {
@@ -3977,32 +3977,32 @@
       "section1": {
         "title": "1. Information We Collect",
         "intro": "The Service may collect the following information:",
-        "items": [
-          "Information obtained through Google OAuth authentication (email address, name, profile picture)",
-          "Field information, crop information, and cultivation plan data entered by users",
-          "Access logs, IP addresses, browser information",
-          "Information collected through cookies and similar technologies"
-        ]
+        "items": {
+          "0": "Information obtained through Google OAuth authentication (email address, name, profile picture)",
+          "1": "Field information, crop information, and cultivation plan data entered by users",
+          "2": "Access logs, IP addresses, browser information",
+          "3": "Information collected through cookies and similar technologies"
+        }
       },
       "section2": {
         "title": "2. Purpose of Use",
         "intro": "Collected information is used for the following purposes:",
-        "items": [
-          "Providing, operating, and improving the Service",
-          "Providing user support",
-          "Maintaining security",
-          "Creating and analyzing statistical data",
-          "Responding to legal requirements"
-        ]
+        "items": {
+          "0": "Providing, operating, and improving the Service",
+          "1": "Providing user support",
+          "2": "Maintaining security",
+          "3": "Creating and analyzing statistical data",
+          "4": "Responding to legal requirements"
+        }
       },
       "section3": {
         "title": "3. Third-Party Disclosure",
         "intro": "The Service will not provide users' personal information to third parties, except in the following cases:",
-        "items": [
-          "When user consent has been obtained",
-          "When required by law",
-          "When necessary to protect life, body, or property"
-        ]
+        "items": {
+          "0": "When user consent has been obtained",
+          "1": "When required by law",
+          "2": "When necessary to protect life, body, or property"
+        }
       },
       "section4": {
         "title": "4. Use of Google Analytics",
@@ -4039,13 +4039,13 @@
       "article2": {
         "title": "Article 2 (Service Content)",
         "intro": "The Service provides the following features:",
-        "items": [
-          "Assistance in creating agricultural crop plans",
-          "Field management functions",
-          "Crop information management",
-          "Weather data display",
-          "Cultivation plan optimization"
-        ]
+        "items": {
+          "0": "Assistance in creating agricultural crop plans",
+          "1": "Field management functions",
+          "2": "Crop information management",
+          "3": "Weather data display",
+          "4": "Cultivation plan optimization"
+        }
       },
       "article3": {
         "title": "Article 3 (Accounts)",
@@ -4054,14 +4054,14 @@
       "article4": {
         "title": "Article 4 (Prohibited Activities)",
         "intro": "Users must not engage in the following activities:",
-        "items": [
-          "Activities that violate laws or public order and morals",
-          "Activities that interfere with Service operations",
-          "Activities that infringe on the rights of other users or third parties",
-          "Using the Service through unauthorized access or other improper means",
-          "Activities that threaten Service security",
-          "Registering false information"
-        ]
+        "items": {
+          "0": "Activities that violate laws or public order and morals",
+          "1": "Activities that interfere with Service operations",
+          "2": "Activities that infringe on the rights of other users or third parties",
+          "3": "Using the Service through unauthorized access or other improper means",
+          "4": "Activities that threaten Service security",
+          "5": "Registering false information"
+        }
       },
       "article5": {
         "title": "Article 5 (Intellectual Property Rights)",
@@ -4070,12 +4070,12 @@
       "article6": {
         "title": "Article 6 (Disclaimer)",
         "intro": "The Service assumes no responsibility for the following:",
-        "items": [
-          "Accuracy, completeness, or usefulness of the Service",
-          "Damages arising from use of the Service",
-          "Accuracy of weather data or crop plans",
-          "Disputes between users or between users and third parties"
-        ],
+        "items": {
+          "0": "Accuracy, completeness, or usefulness of the Service",
+          "1": "Damages arising from use of the Service",
+          "2": "Accuracy of weather data or crop plans",
+          "3": "Disputes between users or between users and third parties"
+        },
         "note": "The Service provides reference information for agricultural planning and does not guarantee actual cultivation results."
       },
       "article7": {
@@ -4143,6 +4143,11 @@
       "privacy_link_text": "Privacy Policy",
       "accept": "Accept",
       "reject": "Reject"
+    },
+    "offline_banner": {
+      "message": "You are offline. Some actions may not work until your connection is restored.",
+      "reconnected": "Connection restored.",
+      "reload": "Reload"
     },
     "region_select": {
       "label": "Region",
