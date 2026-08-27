@@ -18,14 +18,14 @@ impl<'a> AuthUserLogoutInteractor<'a> {
         }
     }
 
-    pub fn call(&mut self, authenticated: bool, user_id: i64) {
+    pub fn call(&mut self, authenticated: bool, session_id: &str) {
         if !authenticated {
             self.output_port.on_not_logged_in();
             return;
         }
 
         self.session_revocation_gateway
-            .delete_all_sessions_for_user(user_id);
+            .delete_session_by_session_id(session_id);
         self.output_port.on_success();
     }
 }
