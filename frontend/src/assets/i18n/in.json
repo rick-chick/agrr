@@ -882,8 +882,6 @@
       "weather": "मौसम जानकारी",
       "weather_status": "मौसम डेटा स्थिति",
       "weather_progress": "प्रगति",
-      "weather_refetch": "मौसम डेटा पुनः प्राप्त करें",
-      "weather_poll_timeout": "मौसम डेटा प्राप्ति समय पर पूरी नहीं हुई। कृपया पुनः प्रयास करें।",
       "fields_list": "खेत क्षेत्र",
       "fields_list_title": "खेत क्षेत्र सूची",
       "no_fields": "अभी तक कोई खेत क्षेत्र पंजीकृत नहीं।",
@@ -904,7 +902,9 @@
         "daily_fixed_cost_placeholder": "उदाहरण: 5000",
         "submit_update": "अपडेट करें",
         "submit_create": "खेत क्षेत्र बनाएं"
-      }
+      },
+      "weather_refetch": "मौसम डेटा पुनः प्राप्त करें",
+      "weather_poll_timeout": "मौसम डेटा प्राप्ति समय पर पूरी नहीं हुई। कृपया पुनः प्रयास करें।"
     },
     "card": {
       "latitude": "अक्षांश",
@@ -3892,6 +3892,11 @@
       "privacy_link_text": "Privacy Policy",
       "accept": "Accept",
       "reject": "Reject"
+    },
+    "offline_banner": {
+      "message": "आप ऑफ़लाइन हैं। कनेक्शन बहाल होने तक कुछ क्रियाएँ काम नहीं कर सकतीं।",
+      "reconnected": "कनेक्शन बहाल हो गया।",
+      "reload": "पुनः लोड करें"
     },
     "region_select": {
       "label": "क्षेत्र",

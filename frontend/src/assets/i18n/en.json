@@ -3467,8 +3467,6 @@
       "weather": "Weather Information",
       "weather_status": "Weather Data Status",
       "weather_progress": "Progress",
-      "weather_refetch": "Retry weather data fetch",
-      "weather_poll_timeout": "Weather data fetch did not complete in time. Please try again.",
       "fields_list": "Fields",
       "fields_list_title": "Fields List",
       "no_fields": "No fields registered yet.",
@@ -3489,7 +3487,9 @@
         "daily_fixed_cost_placeholder": "e.g., 5000",
         "submit_update": "Update",
         "submit_create": "Create Field"
-      }
+      },
+      "weather_refetch": "Retry weather data fetch",
+      "weather_poll_timeout": "Weather data fetch did not complete in time. Please try again."
     },
     "card": {
       "latitude": "Latitude",
@@ -4143,6 +4143,11 @@
       "privacy_link_text": "Privacy Policy",
       "accept": "Accept",
       "reject": "Reject"
+    },
+    "offline_banner": {
+      "message": "You are offline. Some actions may not work until your connection is restored.",
+      "reconnected": "Connection restored.",
+      "reload": "Reload"
     },
     "region_select": {
       "label": "Region",
