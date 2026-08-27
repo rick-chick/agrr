@@ -151,8 +151,9 @@ async fn mock_login_impl(
 ) -> Result<Response, StatusCode> {
     if !dev_environment_allowed() {
         return Ok((
+            StatusCode::FORBIDDEN,
             [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
-            "<html><body><p>Mock login is only available when AGRR_ENV is development or test (or ENABLE_MOCK_AUTH=1).</p></body></html>",
+            "<html><body><p>Mock login is only available when AGRR_ENV is development or test (or ENABLE_MOCK_AUTH=1 in non-production).</p></body></html>",
         )
             .into_response());
     }
@@ -207,4 +208,52 @@ async fn mock_login_impl(
         format!("<html><body><p>{body}</p></body></html>"),
     )
         .into_response())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_support::test_app_state;
+    use crate::test_support::test_pool_with_plan;
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use tower::util::ServiceExt;
+
+    #[test]
+    fn mock_login_returns_forbidden_in_production_without_enable_mock_auth() {
+        let prev_env = std::env::var("AGRR_ENV").ok();
+        let prev_rails = std::env::var("RAILS_ENV").ok();
+        let prev_mock = std::env::var("ENABLE_MOCK_AUTH").ok();
+
+        std::env::set_var("AGRR_ENV", "production");
+        std::env::remove_var("RAILS_ENV");
+        std::env::remove_var("ENABLE_MOCK_AUTH");
+
+        let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+        let state = test_app_state(test_pool_with_plan(1).pool);
+        let app = routes().with_state(state);
+        let response = rt.block_on(async {
+            app.oneshot(
+                Request::builder()
+                    .uri("/auth/test/developer")
+                    .body(Body::empty())
+                    .expect("request"),
+            )
+            .await
+            .expect("response")
+        });
+
+        assert_eq!(StatusCode::FORBIDDEN, response.status());
+
+        restore_test_env("AGRR_ENV", prev_env);
+        restore_test_env("RAILS_ENV", prev_rails);
+        restore_test_env("ENABLE_MOCK_AUTH", prev_mock);
+    }
+
+    fn restore_test_env(key: &str, value: Option<String>) {
+        match value {
+            Some(v) => std::env::set_var(key, v),
+            None => std::env::remove_var(key),
+        }
+    }
 }
