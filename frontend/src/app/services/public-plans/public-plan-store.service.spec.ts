@@ -10,6 +10,7 @@ describe('PublicPlanStore pendingCropSlug', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('restores pendingCropSlug from localStorage on construction', () => {
@@ -90,16 +91,18 @@ describe('PublicPlanStore pendingCropSlug', () => {
 
   it('records persist failure when localStorage write fails', () => {
     const store = new PublicPlanStore();
-    const originalSetItem = Storage.prototype.setItem;
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
-      this: Storage,
-      key: string,
-      value: string
-    ) {
-      if (key === PUBLIC_PLAN_STATE_STORAGE_KEY) {
+    const originalLocalStorage = globalThis.localStorage;
+    vi.stubGlobal('localStorage', {
+      getItem: originalLocalStorage.getItem.bind(originalLocalStorage),
+      removeItem: originalLocalStorage.removeItem.bind(originalLocalStorage),
+      clear: originalLocalStorage.clear.bind(originalLocalStorage),
+      key: originalLocalStorage.key.bind(originalLocalStorage),
+      get length() {
+        return originalLocalStorage.length;
+      },
+      setItem: () => {
         throw new DOMException('quota', 'QuotaExceededError');
-      }
-      return originalSetItem.call(this, key, value);
+      },
     });
 
     store.setPendingCropSlug('tomato');
