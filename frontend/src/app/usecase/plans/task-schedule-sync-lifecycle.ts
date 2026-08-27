@@ -56,12 +56,6 @@ export function markRegeneratePostInFlight(
   return { ...lifecycle, regeneratePostInFlight: true };
 }
 
-export function clearRegeneratePostInFlight(
-  lifecycle: TaskScheduleSyncLifecycleState
-): TaskScheduleSyncLifecycleState {
-  return { ...lifecycle, regeneratePostInFlight: false };
-}
-
 export function taskScheduleSyncMessageFromRegenerateResponse(
   response: RegenerateTaskScheduleResponseDto
 ): TaskScheduleSyncMessageDto {
