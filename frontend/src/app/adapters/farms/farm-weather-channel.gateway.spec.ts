@@ -6,8 +6,6 @@ import { FarmWeatherUpdateDto } from '../../usecase/farms/subscribe-farm-weather
 describe('FarmWeatherChannelGateway', () => {
   it('subscribes to FarmChannel and forwards weather progress messages', () => {
     let received: ((message: FarmWeatherUpdateDto) => void) | undefined;
-    let disconnected: (() => void) | undefined;
-    let rejected: (() => void) | undefined;
     const optimizationService = {
       subscribe: vi.fn(
         (
@@ -20,8 +18,6 @@ describe('FarmWeatherChannelGateway', () => {
           }
         ) => {
           received = callbacks.received;
-          disconnected = callbacks.disconnected;
-          rejected = callbacks.rejected;
           return { unsubscribe: vi.fn() };
         }
       )
