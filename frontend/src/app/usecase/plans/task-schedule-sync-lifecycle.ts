@@ -43,7 +43,11 @@ export function resolveRegenerating(
   syncState: string | null | undefined,
   lifecycle: Pick<TaskScheduleSyncLifecycleState, 'regeneratePostInFlight'>
 ): boolean {
-  return lifecycle.regeneratePostInFlight || syncState === 'generating';
+  return (
+    lifecycle.regeneratePostInFlight ||
+    syncState === 'generating' ||
+    syncState === 'stale'
+  );
 }
 
 export function markRegeneratePostInFlight(
