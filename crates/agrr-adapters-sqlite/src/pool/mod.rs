@@ -1,14 +1,10 @@
 //! Shared SQLite access: busy timeout (Rails `SQLITE_BUSY_TIMEOUT_MS`) and write serialization.
 
+mod scope;
+
 use rusqlite::Connection;
-use std::cell::RefCell;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-
-thread_local! {
-    static SCOPED_WRITE: RefCell<Option<(Arc<String>, Connection)>> =
-        const { RefCell::new(None) };
-}
 
 pub const DEFAULT_BUSY_TIMEOUT_MS: u64 = 20_000;
 
@@ -42,8 +38,8 @@ impl SqlitePool {
     where
         F: FnOnce(&Connection) -> rusqlite::Result<T>,
     {
-        if self.scoped_write_matches() {
-            return Self::run_with_scoped_write(f);
+        if scope::is_active() {
+            return scope::with_borrow(f);
         }
         let conn = self.open_connection()?;
         f(&conn)
@@ -53,8 +49,8 @@ impl SqlitePool {
     where
         F: FnOnce(&Connection) -> rusqlite::Result<T>,
     {
-        if self.scoped_write_matches() {
-            return Self::run_with_scoped_write(f);
+        if scope::is_active() {
+            return scope::with_borrow(f);
         }
         let _guard = self
             .write_lock
@@ -69,33 +65,63 @@ impl SqlitePool {
     where
         F: FnOnce(&Connection) -> rusqlite::Result<T>,
     {
-        if self.scoped_write_matches() {
-            return Self::run_with_scoped_write(f);
+        if scope::is_active() {
+            return scope::with_borrow(f);
         }
-
         let _guard = self
             .write_lock
             .lock()
             .map_err(|_| rusqlite::Error::SqliteFailure(rusqlite::ffi::Error::new(5), None))?;
         let conn = self.open_connection()?;
         conn.execute_batch("BEGIN IMMEDIATE")?;
-        SCOPED_WRITE.with(|cell| {
-            *cell.borrow_mut() = Some((self.database_path.clone(), conn));
-        });
-
-        let result = Self::run_with_scoped_write(f);
-
-        let finish = SCOPED_WRITE.with(|cell| {
-            let (_, conn) = cell.borrow_mut().take().expect("scoped write connection");
-            match &result {
-                Ok(_) => conn.execute_batch("COMMIT"),
-                Err(_) => {
-                    let _ = conn.execute_batch("ROLLBACK");
-                    Ok(())
-                }
+        scope::enter(conn);
+        let result = scope::with_borrow(f);
+        let conn = scope::take();
+        match result {
+            Ok(value) => {
+                conn.execute_batch("COMMIT")?;
+                Ok(value)
             }
-        });
-        finish?;
+            Err(err) => {
+                let _ = conn.execute_batch("ROLLBACK");
+                Err(err)
+            }
+        }
+    }
+
+    /// Connection-scoped SQL transaction for gateway `within_transaction` blocks that call
+    /// other gateway methods on the same pool (no `&Connection` parameter required).
+    pub fn with_write_transaction_scoped<T, F>(
+        &self,
+        f: F,
+    ) -> Result<T, Box<dyn std::error::Error + Send + Sync>>
+    where
+        F: FnOnce() -> Result<T, Box<dyn std::error::Error + Send + Sync>>,
+    {
+        if scope::is_active() {
+            return f();
+        }
+        let _guard = self
+            .write_lock
+            .lock()
+            .map_err(|_| rusqlite::Error::SqliteFailure(rusqlite::ffi::Error::new(5), None))
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
+        let conn = self
+            .open_connection()
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
+        conn.execute_batch("BEGIN IMMEDIATE")
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
+        scope::enter(conn);
+        let result = f();
+        let conn = scope::take();
+        match &result {
+            Ok(_) => conn
+                .execute_batch("COMMIT")
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
+            Err(_) => {
+                let _ = conn.execute_batch("ROLLBACK");
+            }
+        }
         result
     }
 
@@ -107,60 +133,7 @@ impl SqlitePool {
     where
         F: FnOnce() -> Result<T, Box<dyn std::error::Error + Send + Sync>>,
     {
-        if self.scoped_write_matches() {
-            return f();
-        }
-
-        let _guard = self
-            .write_lock
-            .lock()
-            .map_err(|_| rusqlite::Error::SqliteFailure(rusqlite::ffi::Error::new(5), None))?;
-        let conn = self.open_connection()?;
-        conn.execute_batch("BEGIN IMMEDIATE")?;
-        SCOPED_WRITE.with(|cell| {
-            *cell.borrow_mut() = Some((self.database_path.clone(), conn));
-        });
-
-        let result = f();
-
-        let finish = SCOPED_WRITE.with(|cell| {
-            let (_, conn) = cell.borrow_mut().take().expect("scoped write connection");
-            match &result {
-                Ok(_) => conn.execute_batch("COMMIT"),
-                Err(_) => {
-                    let _ = conn.execute_batch("ROLLBACK");
-                    Ok(())
-                }
-            }
-        });
-        finish?;
-        result
-    }
-
-    fn scoped_write_matches(&self) -> bool {
-        SCOPED_WRITE.with(|cell| {
-            cell.borrow()
-                .as_ref()
-                .map(|(path, _)| path.as_str() == self.database_path.as_str())
-                .unwrap_or(false)
-        })
-    }
-
-    fn run_with_scoped_write<F, T>(f: F) -> rusqlite::Result<T>
-    where
-        F: FnOnce(&Connection) -> rusqlite::Result<T>,
-    {
-        let conn_ptr = SCOPED_WRITE.with(|cell| {
-            cell.borrow()
-                .as_ref()
-                .map(|(_, conn)| conn as *const Connection)
-                .expect("scoped write connection")
-        });
-        // SAFETY: `conn_ptr` points at the thread-local transaction connection, which
-        // outlives this call and is only used on the current thread while the write lock
-        // is held. Nested `with_write` calls reuse the same pointer without re-borrowing
-        // the `RefCell`, which would panic during reentrant plan-save persistence.
-        unsafe { f(&*conn_ptr) }
+        self.with_write_transaction_scoped(f)
     }
 
     fn open_connection(&self) -> rusqlite::Result<Connection> {
@@ -312,6 +285,41 @@ mod tests {
             .with_read(|conn| conn.query_row("SELECT COUNT(*) FROM t", [], |row| row.get(0)))
             .unwrap();
         assert_eq!(count, 1);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn with_write_transaction_scoped_rolls_back_nested_with_write() {
+        let dir = std::env::temp_dir().join(format!(
+            "agrr_sqlite_pool_scoped_txn_{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("test.sqlite3");
+        let pool = SqlitePool::new(path.to_str().unwrap());
+        pool.with_write(|conn| {
+            conn.execute_batch("CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT NOT NULL)")?;
+            Ok(())
+        })
+        .unwrap();
+
+        let result = pool.with_write_transaction_scoped(|| {
+            pool.with_write_box(|conn| {
+                conn.execute("INSERT INTO t (name) VALUES ('step1')", [])?;
+                Ok(())
+            })?;
+            pool.with_write_box(|conn| {
+                conn.execute("INSERT INTO t (name) VALUES (NULL)", [])?;
+                Ok(())
+            })?;
+            Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
+        });
+        assert!(result.is_err());
+
+        let count: i64 = pool
+            .with_read(|conn| conn.query_row("SELECT COUNT(*) FROM t", [], |row| row.get(0)))
+            .unwrap();
+        assert_eq!(count, 0);
         let _ = std::fs::remove_dir_all(dir);
     }
 }
