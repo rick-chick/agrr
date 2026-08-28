@@ -276,3 +276,42 @@
         assert!(received.recaptcha_kind());
         assert_eq!(received.message.as_deref(), Some("bad captcha"));
     }
+
+    #[test]
+    fn calls_on_failure_when_recaptcha_not_configured() {
+        struct UnconfiguredRecaptcha;
+
+        impl RecaptchaVerifierPort for UnconfiguredRecaptcha {
+            fn verify(
+                &self,
+                _token: Option<&str>,
+                _remote_ip: Option<&str>,
+            ) -> RecaptchaVerifyResult {
+                RecaptchaVerifyResult::NotConfigured
+            }
+        }
+
+        let gateway = MockGateway::unconfigured();
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+
+        let recaptcha = UnconfiguredRecaptcha;
+        let limiter = NoopRateLimiter;
+        let mut interactor = CreateContactMessageInteractor::new(
+            &mut output,
+            &gateway,
+            &recaptcha,
+            &limiter,
+        );
+
+        interactor.call(sample_input()).expect("call succeeds");
+
+        let received = output.failure.expect("on_failure called");
+        assert!(received.unavailable_kind());
+        assert_eq!(
+            received.message.as_deref(),
+            Some("reCAPTCHA is not configured")
+        );
+    }
