@@ -33,7 +33,7 @@ describe('UpdateWorkRecordUseCase', () => {
       deleteWorkRecord: () =>
         of({
           undo_token: 'stub',
-          undo_path: '/undo_deletion?undo_token=stub',
+          undo_path: '/undo_deletion',
           toast_message: 'stub',
           undo_deadline: '2026',
           auto_hide_after: 5000

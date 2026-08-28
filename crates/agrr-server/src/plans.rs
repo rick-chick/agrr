@@ -452,7 +452,7 @@ impl CultivationPlanDestroyOutputPort for DestroyPresenter {
             "undo_token": token,
             "undo_deadline": undo.get("undo_deadline"),
             "toast_message": undo.get("toast_message"),
-            "undo_path": format!("/undo_deletion?undo_token={token}"),
+            "undo_path": "/undo_deletion",
             "auto_hide_after": undo.get("auto_hide_after").and_then(|v| v.as_i64()).unwrap_or(5),
             "resource": undo.get("resource"),
             "redirect_path": "/plans",
