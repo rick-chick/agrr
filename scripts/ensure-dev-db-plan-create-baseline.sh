@@ -25,7 +25,7 @@ WHERE user_id = (
   SELECT id FROM users
   WHERE email = 'developer@agrr.dev' OR google_id = 'dev_user_001'
   LIMIT 1
-) AND is_reference = 0;
+);
 SELECT changes();
 SQL
 
