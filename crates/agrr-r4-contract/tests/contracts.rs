@@ -3405,6 +3405,16 @@ fn trigger_weather_update_backfills_pending_farm_weather_fetch() {
 }
 
 #[test]
+fn trigger_weather_update_query_token_returns_401() {
+    let client = ContractClient::from_env();
+    let token = std::env::var("SCHEDULER_AUTH_TOKEN")
+        .unwrap_or_else(|_| "test_scheduler_token_contract".into());
+    let path = format!("/api/v1/internal/jobs/trigger_weather_update?token={token}");
+    let (status, body) = status_and_body(client.post(&path, None, &empty_headers(), None));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
 fn get_account_export_unauthenticated_returns_401() {
     let client = ContractClient::from_env();
     let (status, body) = status_and_body(client.get("/api/v1/account/export", None, &empty_headers()));
@@ -4446,8 +4456,52 @@ fn public_plan_mutation_rejects_mismatched_session() {
 fn contact_message_payload(email_suffix: u128) -> serde_json::Value {
     serde_json::json!({
         "email": format!("contact-contract-{email_suffix}@example.com"),
-        "message": "contract test message"
+        "message": "contract test message",
+        "recaptcha_token": "contract-test-token"
     })
+}
+
+#[test]
+fn get_health_reports_recaptcha_configuration_status() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.get("/api/v1/health", None, &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("health JSON");
+    assert_eq!(Some(true), json["recaptcha_configured"].as_bool());
+    assert!(json["warnings"].as_array().unwrap_or(&vec![]).is_empty());
+}
+
+#[test]
+fn post_contact_message_returns_503_when_recaptcha_not_configured() {
+    let secret = std::env::var("RECAPTCHA_SECRET_KEY").unwrap_or_default();
+    if !secret.trim().is_empty() {
+        eprintln!(
+            "SKIP post_contact_message_returns_503_when_recaptcha_not_configured: RECAPTCHA_SECRET_KEY is set in contract runtime"
+        );
+        return;
+    }
+    let client = ContractClient::from_env();
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let mut headers = empty_headers();
+    headers.insert(
+        "x-forwarded-for".to_string(),
+        format!("203.0.113.{suffix}"),
+    );
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/contact_messages",
+        None,
+        &headers,
+        Some(contact_message_payload(suffix)),
+    ));
+    assert_eq!(503, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha unavailable JSON");
+    assert!(json["error"]
+        .as_str()
+        .unwrap_or("")
+        .contains("reCAPTCHA"));
 }
 
 #[test]
@@ -4614,6 +4668,30 @@ fn post_backdoor_db_clear_requires_confirmation_token() {
     assert_eq!(400, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("db clear JSON");
     assert_eq!(Some(false), json["success"].as_bool());
+}
+
+#[test]
+fn auth_failure_redirects_to_spa_login_with_error_code() {
+    let client = ContractClient::from_env();
+    let response = client.get("/auth/failure", None, &empty_headers());
+    assert!(
+        response.status().is_redirection(),
+        "expected redirect, got {}",
+        response.status()
+    );
+    let location = response
+        .headers()
+        .get("location")
+        .and_then(|v| v.to_str().ok())
+        .expect("Location header");
+    assert!(
+        location.contains("/login"),
+        "expected SPA login redirect, got {location}"
+    );
+    assert!(
+        location.contains("error=authentication_failed"),
+        "expected authentication_failed error code, got {location}"
+    );
 }
 
 #[test]

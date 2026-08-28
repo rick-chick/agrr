@@ -10,6 +10,7 @@ import {
   buildGoogleOAuthStartUrl,
   buildMockLoginUrl,
   DEV_MOCK_LOGIN_USERS,
+  loginErrorMessageKey,
   navigateTargetFromReturnTo,
   oauthLocationForLogin,
   type DevMockLoginUser
@@ -35,6 +36,11 @@ const DEV_MOCK_LOGIN_CSS: Record<DevMockLoginUser, string> = {
     <section class="login">
       <h1>{{ 'auth.login.title' | translate }}</h1>
       <p>{{ 'auth.login.subtitle' | translate }}</p>
+      @if (loginErrorMessageKey) {
+        <div class="login-error-banner" role="alert">
+          <p>{{ loginErrorMessageKey | translate }}</p>
+        </div>
+      }
       <form class="google-oauth-form" method="post" [action]="googleOAuthStartUrl">
         <button type="submit" class="login-button">
           {{ 'auth.login.google_button' | translate }}
@@ -69,6 +75,9 @@ export class LoginComponent implements OnInit, OnDestroy {
   /** `googleOAuthStartUrl` より先に初期化すること（OAuth return_to 算出に必要） */
   protected readonly oauthLocation = this.resolveOauthLocation();
   protected readonly googleOAuthStartUrl = this.buildGoogleOAuthStartUrl();
+  protected readonly loginErrorMessageKey = loginErrorMessageKey(
+    this.route.snapshot.queryParamMap.get('error')
+  );
 
   ngOnInit(): void {
     this.seoMeta.applyNoIndexMeta();

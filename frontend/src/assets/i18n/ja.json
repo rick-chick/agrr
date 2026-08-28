@@ -2663,7 +2663,8 @@
         "plan_context_link": "計画のほ場・気象を確認する",
         "crop_stages_link": "「{{cropName}}」の生育ステージを確認する",
         "generic_plan_link": "計画のほ場・作物を確認する",
-        "missing_field_crop": "作付計画のほ場に作物が未設定のため、作業計画を生成できません。"
+        "missing_field_crop": "作付計画のほ場に作物が未設定のため、作業計画を生成できません。",
+        "connection_lost": "接続が切断されました。しばらくしてからやり直してください。"
       },
       "detail": {
         "dialog_title": "{{task}} · {{crop}}",
@@ -3895,7 +3896,15 @@
       "dev_login_as_farmer": "農家太郎でログイン",
       "dev_login_as_researcher": "研究員花子でログイン",
       "dev_login_note": "開発環境でのみ利用可能",
-      "footer_note": "Secure authentication powered by Google OAuth 2.0"
+      "footer_note": "Secure authentication powered by Google OAuth 2.0",
+      "errors": {
+        "oauth_denied": "サインインがキャンセルまたは拒否されました。もう一度お試しください。",
+        "csrf_mismatch": "セキュリティ上の理由でサインインを完了できませんでした。もう一度お試しください。",
+        "token_exchange_failed": "サインインを完了できませんでした。もう一度お試しください。",
+        "authentication_failed": "認証に失敗しました。もう一度お試しください。",
+        "oauth_not_configured": "Googleサインインが設定されていません。管理者にお問い合わせください。",
+        "unknown": "サインインに失敗しました。もう一度お試しください。"
+      }
     },
     "api": {
       "login_required": "このリソースにアクセスするにはログインしてください。"

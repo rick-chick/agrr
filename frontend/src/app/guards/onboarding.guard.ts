@@ -10,6 +10,6 @@ export const onboardingGuard: CanActivateFn = () => {
 
   return api.get<PlanSummary[]>('/api/v1/plans').pipe(
     map((plans) => (plans.length > 0 ? router.createUrlTree(['/plans']) : true)),
-    catchError(() => of(true))
+    catchError(() => of(router.createUrlTree(['/plans'])))
   );
 };

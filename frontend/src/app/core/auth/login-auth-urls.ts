@@ -5,6 +5,21 @@ export type DevMockLoginUser = (typeof DEV_MOCK_LOGIN_USERS)[number];
 /** OAuth 後に `/` で受け取り、クライアントルータで遷移する認証必須パス用クエリ */
 export const POST_LOGIN_QUERY_PARAM = '_post_login';
 
+const LOGIN_ERROR_I18N_KEYS: Record<string, string> = {
+  oauth_denied: 'auth.login.errors.oauth_denied',
+  csrf_mismatch: 'auth.login.errors.csrf_mismatch',
+  token_exchange_failed: 'auth.login.errors.token_exchange_failed',
+  authentication_failed: 'auth.login.errors.authentication_failed',
+  oauth_not_configured: 'auth.login.errors.oauth_not_configured'
+};
+
+export function loginErrorMessageKey(errorCode: string | null | undefined): string | null {
+  if (!errorCode) {
+    return null;
+  }
+  return LOGIN_ERROR_I18N_KEYS[errorCode] ?? 'auth.login.errors.unknown';
+}
+
 export type LocationLike = Pick<Location, 'href' | 'pathname' | 'origin'>;
 
 /** Angular Router の `state.url` から LocationLike を組み立てる（authGuard 等）。 */
