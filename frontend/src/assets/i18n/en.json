@@ -985,7 +985,8 @@
       "schedule_generation_failed": "Failed to register work plan",
       "crop_not_found": "Crop not found.",
       "no_candidates_found": "No optimal planting schedule found for this crop. Weather data range was extended but no candidates were found.",
-      "prediction_data_incomplete": "Weather prediction data is incomplete. Please try again later."
+      "prediction_data_incomplete": "Weather prediction data is incomplete. Please try again later.",
+      "storage_unavailable": "Browser storage is unavailable, so your progress cannot be saved. Try again in a normal browser window or another browser."
     },
     "messages": {
       "field_removed": "Field removed.",
@@ -1336,7 +1337,8 @@
       "no_candidates_found": "No optimal planting schedule found for this crop. Weather data range was extended but no candidates were found.",
       "prediction_data_incomplete": "Weather prediction data is incomplete. Please try again later.",
       "no_fields_in_farm": "Cannot create a plan for a farm without registered fields. Please add fields to the farm first.",
-      "invalid_id": "Invalid plan ID."
+      "invalid_id": "Invalid plan ID.",
+      "storage_unavailable": "Browser storage is unavailable, so your progress cannot be saved. Try again in a normal browser window or another browser."
     },
     "messages": {
       "field_removed": "Field removed.",
