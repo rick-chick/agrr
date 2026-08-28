@@ -2315,6 +2315,11 @@
         "field_row": "{{index}}. {{fieldName}}（作付 {{cropCount}} 件）",
         "cultivation_bar": "{{fieldName}}の{{cropName}}（{{startDate}}〜{{endDate}}）",
         "chart_summary": "栽培スケジュール。{{fieldCount}} 圃場、{{cultivationCount}} 件の作付"
+      },
+      "empty_state": {
+        "reload": "再読み込み",
+        "add_field": "圃場を追加",
+        "register_crop": "作物を登録"
       }
     },
     "field_climate": {

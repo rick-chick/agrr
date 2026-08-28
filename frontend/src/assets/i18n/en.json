@@ -1412,6 +1412,11 @@
         "field_row": "{{index}}. {{fieldName}} ({{cropCount}} cultivations)",
         "cultivation_bar": "{{cropName}} in {{fieldName}} ({{startDate}} – {{endDate}})",
         "chart_summary": "Cultivation schedule. {{fieldCount}} fields, {{cultivationCount}} cultivations"
+      },
+      "empty_state": {
+        "reload": "Reload",
+        "add_field": "Add field",
+        "register_crop": "Register a crop"
       }
     },
     "field_climate": {

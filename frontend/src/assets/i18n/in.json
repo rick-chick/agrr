@@ -1839,6 +1839,11 @@
         "field_row": "{{index}}. {{fieldName}} ({{cropCount}} खेती)",
         "cultivation_bar": "{{fieldName}} में {{cropName}} ({{startDate}} – {{endDate}})",
         "chart_summary": "खेती अनुसूची। {{fieldCount}} खेत, {{cultivationCount}} खेती"
+      },
+      "empty_state": {
+        "reload": "पुनः लोड करें",
+        "add_field": "खेत जोड़ें",
+        "register_crop": "फसल पंजीकृत करें"
       }
     },
     "field_climate": {
