@@ -2261,7 +2261,9 @@
         "crops_missing": "No crops registered yet",
         "crops_incomplete": "Crop task plans need setup",
         "crops_action": "Set up crops",
-        "crop_blueprint_action": "Edit task plans"
+        "crop_blueprint_action": "Edit task plans",
+        "load_error": "Failed to load setup readiness",
+        "retry": "Retry"
       }
     },
     "select_crop": {

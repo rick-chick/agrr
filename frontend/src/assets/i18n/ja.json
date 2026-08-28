@@ -2467,7 +2467,9 @@
         "crops_missing": "作物が未登録です",
         "crops_incomplete": "作物の作業計画の設定が必要です",
         "crops_action": "作物を設定",
-        "crop_blueprint_action": "作業計画を編集"
+        "crop_blueprint_action": "作業計画を編集",
+        "load_error": "セットアップ状況の取得に失敗しました",
+        "retry": "再試行"
       }
     },
     "select_crop": {

@@ -2689,7 +2689,9 @@
         "crops_missing": "अभी तक कोई फसल पंजीकृत नहीं",
         "crops_incomplete": "फसल कार्य योजनाओं की सेटअप आवश्यक",
         "crops_action": "फसल सेटअप करें",
-        "crop_blueprint_action": "कार्य योजना संपादित करें"
+        "crop_blueprint_action": "कार्य योजना संपादित करें",
+        "load_error": "सेटअप तैयारी लोड करने में विफल",
+        "retry": "पुनः प्रयास करें"
       }
     },
     "select_crop": {
