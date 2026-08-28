@@ -111,7 +111,7 @@ describe('InteractionRuleDetailPresenter', () => {
         undo: {
           undo_token: 'token123',
           toast_message: 'Rule deleted',
-          undo_path: '/undo_deletion?undo_token=token123',
+          undo_path: '/undo_deletion',
           resource: 'legume → cereal'
         }
       };
@@ -120,7 +120,7 @@ describe('InteractionRuleDetailPresenter', () => {
 
       expect(lastControl!.pendingUndoToast).toEqual({
         message: 'Rule deleted',
-        undoPath: '/undo_deletion?undo_token=token123',
+        undoPath: '/undo_deletion',
         undoToken: 'token123',
         onRestored: expect.any(Function),
         resourceLabel: 'legume → cereal'
