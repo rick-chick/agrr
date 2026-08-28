@@ -173,6 +173,24 @@ describe('FarmApiGateway', () => {
     });
   });
 
+  describe('fetchWeatherData', () => {
+    it('posts to fetch_weather_data endpoint', async () => {
+      const farm: Farm = {
+        id: 1,
+        name: 'Farm 1',
+        latitude: 35.0,
+        longitude: 135.0,
+        region: 'Region 1',
+        weather_data_status: 'fetching'
+      };
+      vi.mocked(client.post).mockReturnValue(of(farm));
+
+      const result = await firstValueFrom(gateway.fetchWeatherData(1));
+      expect(result).toEqual(farm);
+      expect(client.post).toHaveBeenCalledWith('/farms/1/fetch_weather_data', {});
+    });
+  });
+
   describe('createField', () => {
     it('returns Observable<Field>', async () => {
       const payload = { name: 'New Field', area: 100, daily_fixed_cost: 50, region: 'Region 1' };

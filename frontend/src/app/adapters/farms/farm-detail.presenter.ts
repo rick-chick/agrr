@@ -8,6 +8,10 @@ import { SubscribeFarmWeatherOutputPort } from '../../usecase/farms/subscribe-fa
 import { FarmWeatherUpdateDto } from '../../usecase/farms/subscribe-farm-weather.dtos';
 import { DeleteFarmOutputPort } from '../../usecase/farms/delete-farm.output-port';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
+import {
+  RetryFarmWeatherFetchOutputPort,
+  RetryFarmWeatherFetchSuccessDto
+} from '../../usecase/farms/retry-farm-weather-fetch.output-port';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
@@ -15,7 +19,11 @@ import { pendingErrorFlashFromError } from '../../core/view-effects/pending-erro
 
 @Injectable()
 export class FarmDetailPresenter
-  implements LoadFarmDetailOutputPort, SubscribeFarmWeatherOutputPort, DeleteFarmOutputPort
+  implements
+    LoadFarmDetailOutputPort,
+    SubscribeFarmWeatherOutputPort,
+    DeleteFarmOutputPort,
+    RetryFarmWeatherFetchOutputPort
 {
   private readonly listRefreshBus = inject(ListRefreshBus);
   private view: FarmDetailView | null = null;
@@ -97,16 +105,31 @@ export class FarmDetailPresenter
     };
   }
 
-  onSuccess(dto: DeleteFarmSuccessDto): void {
+  onSuccess(dto: DeleteFarmSuccessDto | RetryFarmWeatherFetchSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    if (dto.undo) {
-      // 農場削除後は一覧へ遷移するため、Undo 時は一覧を再読込する（detail は破棄済みの可能性あり）
-      this.view.control = {
-        ...this.view.control,
-        pendingUndoToast: pendingUndoToastFromDeletion(dto.undo, () =>
-          this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.farms)
-        )
-      };
+    if ('deletedFarmId' in dto) {
+      if (dto.undo) {
+        // 農場削除後は一覧へ遷移するため、Undo 時は一覧を再読込する（detail は破棄済みの可能性あり）
+        this.view.control = {
+          ...this.view.control,
+          pendingUndoToast: pendingUndoToastFromDeletion(dto.undo, () =>
+            this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.farms)
+          )
+        };
+      }
+      return;
     }
+
+    const prev = this.view.control;
+    if (!prev.farm) return;
+    this.view.control = {
+      ...prev,
+      farm: {
+        ...prev.farm,
+        ...dto.farm
+      },
+      pendingErrorFlash: null
+    };
+    this.view.onWeatherFetchRetried?.();
   }
 }
