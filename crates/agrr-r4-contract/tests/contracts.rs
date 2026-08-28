@@ -22,6 +22,7 @@ use support::{
     insert_contract_fertilize, insert_contract_pesticide,
     seed_suffix,
     set_plan_task_schedule_sync_failed_raw_error, set_user_api_key_scopes, status_and_body,
+    api_key_from_generate_response, clear_user_api_key_credentials, regenerate_api_key,
     upload_ready_work_record_photo, user_id_for_session,
     seed_farm_temperature_chart_completed, seed_farm_temperature_chart_fetching,
     seed_farm_pending_weather, scheduler_auth_headers,
@@ -2760,18 +2761,7 @@ fn post_masters_crop_setup_proposal_with_api_key_authenticates() {
     let user_id = user_id_for_session(&client, &session_id);
     let seed = seed_masters_crop(user_id);
 
-    let (generate_status, generate_body) = status_and_body(client.post(
-        "/api/v1/api_keys/generate",
-        Some(&session_id),
-        &empty_headers(),
-        None,
-    ));
-    assert_eq!(200, generate_status, "{generate_body}");
-    let api_key = serde_json::from_str::<serde_json::Value>(&generate_body)
-        .expect("api key JSON")["api_key"]
-        .as_str()
-        .expect("api_key")
-        .to_string();
+    let api_key = regenerate_api_key(&client, &session_id);
 
     let mut headers = empty_headers();
     headers.insert("Authorization".into(), format!("Bearer {api_key}"));
@@ -2930,14 +2920,6 @@ fn post_pests_ai_update_returns_deprecation_metadata() {
     assert_builtin_generation_deprecated_headers(&headers, &body, "pests");
 }
 
-fn api_key_from_generate_response(body: &str) -> String {
-    serde_json::from_str::<serde_json::Value>(body)
-        .expect("api key JSON")["api_key"]
-        .as_str()
-        .expect("api_key")
-        .to_string()
-}
-
 #[test]
 fn post_api_keys_generate_is_idempotent_when_key_already_exists() {
     let client = ContractClient::from_env();
@@ -2945,14 +2927,7 @@ fn post_api_keys_generate_is_idempotent_when_key_already_exists() {
     // developer's api_key is mutated by other tests (generate/regenerate).
     let session_id = farmer_session_id(&client);
 
-    let (first_status, first_body) = status_and_body(client.post(
-        "/api/v1/api_keys/generate",
-        Some(&session_id),
-        &empty_headers(),
-        None,
-    ));
-    assert_eq!(200, first_status, "{first_body}");
-    let first_key = api_key_from_generate_response(&first_body);
+    let first_key = regenerate_api_key(&client, &session_id);
 
     let (second_status, second_body) = status_and_body(client.post(
         "/api/v1/api_keys/generate",
@@ -2961,8 +2936,22 @@ fn post_api_keys_generate_is_idempotent_when_key_already_exists() {
         None,
     ));
     assert_eq!(200, second_status, "{second_body}");
-    let second_key = api_key_from_generate_response(&second_body);
-    assert_eq!(first_key, second_key, "generate must not rotate an existing key");
+    let second_json: serde_json::Value =
+        serde_json::from_str(&second_body).expect("second generate JSON");
+    let second_key = second_json["api_key"].as_str().unwrap_or("");
+    assert!(
+        second_key.is_empty(),
+        "hashed storage cannot return the full key again; generate must not rotate"
+    );
+
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {first_key}"));
+    let (auth_status, auth_body) = status_and_body(client.get(
+        "/api/v1/masters/farms",
+        None,
+        &headers,
+    ));
+    assert_eq!(200, auth_status, "{auth_body}");
 }
 
 #[test]
@@ -2972,6 +2961,7 @@ fn post_api_keys_regenerate_invalidates_previous_key() {
     let session_id = contract_api_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
     let seed = seed_masters_crop(user_id);
+    clear_user_api_key_credentials(user_id);
 
     let (generate_status, generate_body) = status_and_body(client.post(
         "/api/v1/api_keys/generate",
@@ -2981,6 +2971,7 @@ fn post_api_keys_regenerate_invalidates_previous_key() {
     ));
     assert_eq!(200, generate_status, "{generate_body}");
     let old_key = api_key_from_generate_response(&generate_body);
+    assert!(!old_key.is_empty(), "generate must return a key when none exists");
 
     let mut old_headers = empty_headers();
     old_headers.insert("Authorization".into(), format!("Bearer {old_key}"));
@@ -3025,14 +3016,7 @@ fn masters_api_key_read_scope_allows_get_and_denies_post() {
     let user_id = user_id_for_session(&client, &session_id);
     let seed = seed_masters_crop(user_id);
 
-    let (generate_status, generate_body) = status_and_body(client.post(
-        "/api/v1/api_keys/generate",
-        Some(&session_id),
-        &empty_headers(),
-        None,
-    ));
-    assert_eq!(200, generate_status, "{generate_body}");
-    let api_key = api_key_from_generate_response(&generate_body);
+    let api_key = regenerate_api_key(&client, &session_id);
     set_user_api_key_scopes(user_id, r#"["masters:read"]"#);
 
     let mut headers = empty_headers();
@@ -3066,14 +3050,7 @@ fn masters_api_key_write_scope_allows_post() {
     let session_id = farmer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
 
-    let (generate_status, generate_body) = status_and_body(client.post(
-        "/api/v1/api_keys/generate",
-        Some(&session_id),
-        &empty_headers(),
-        None,
-    ));
-    assert_eq!(200, generate_status, "{generate_body}");
-    let api_key = api_key_from_generate_response(&generate_body);
+    let api_key = regenerate_api_key(&client, &session_id);
     set_user_api_key_scopes(user_id, r#"["masters:read","masters:write"]"#);
 
     let mut headers = empty_headers();
@@ -3095,14 +3072,7 @@ fn masters_api_key_read_scope_denies_setup_proposal_apply() {
     let user_id = user_id_for_session(&client, &session_id);
     let seed = seed_masters_crop(user_id);
 
-    let (generate_status, generate_body) = status_and_body(client.post(
-        "/api/v1/api_keys/generate",
-        Some(&session_id),
-        &empty_headers(),
-        None,
-    ));
-    assert_eq!(200, generate_status, "{generate_body}");
-    let api_key = api_key_from_generate_response(&generate_body);
+    let api_key = regenerate_api_key(&client, &session_id);
     set_user_api_key_scopes(user_id, r#"["masters:read"]"#);
 
     let mut headers = empty_headers();
@@ -3153,14 +3123,7 @@ fn get_auth_me_returns_masked_api_key_not_plaintext() {
     let client = ContractClient::from_env();
     let session_id = contract_api_session_id(&client);
 
-    let (gen_status, gen_body) = status_and_body(client.post(
-        "/api/v1/api_keys/generate",
-        Some(&session_id),
-        &empty_headers(),
-        None,
-    ));
-    assert_eq!(200, gen_status, "{gen_body}");
-    let full_key = api_key_from_generate_response(&gen_body);
+    let full_key = regenerate_api_key(&client, &session_id);
 
     let (me_status, me_body) =
         status_and_body(client.get("/api/v1/auth/me", Some(&session_id), &empty_headers()));
@@ -3178,14 +3141,7 @@ fn get_masters_with_query_api_key_is_rejected() {
     let client = ContractClient::from_env();
     let session_id = contract_api_session_id(&client);
 
-    let (gen_status, gen_body) = status_and_body(client.post(
-        "/api/v1/api_keys/generate",
-        Some(&session_id),
-        &empty_headers(),
-        None,
-    ));
-    assert_eq!(200, gen_status, "{gen_body}");
-    let api_key = api_key_from_generate_response(&gen_body);
+    let api_key = regenerate_api_key(&client, &session_id);
 
     let path = format!("/api/v1/masters/crops?api_key={api_key}");
     let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));

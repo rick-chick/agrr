@@ -130,6 +130,36 @@ pub fn set_user_api_key_scopes(user_id: i64, scopes_json: &str) {
     .expect("set api_key_scopes");
 }
 
+pub fn api_key_from_generate_response(body: &str) -> String {
+    serde_json::from_str::<serde_json::Value>(body)
+        .expect("api key JSON")["api_key"]
+        .as_str()
+        .expect("api_key")
+        .to_string()
+}
+
+/// Clears stored API key credentials so `generate` issues a fresh secret (parallel contract DB).
+pub fn clear_user_api_key_credentials(user_id: i64) {
+    let conn = contract_sqlite_conn();
+    conn.execute(
+        "UPDATE users SET api_key = NULL, api_key_hash = NULL, api_key_prefix = NULL WHERE id = ?1",
+        params![user_id],
+    )
+    .expect("clear user api key credentials");
+}
+
+/// Issues a fresh API key via regenerate (always returns the full secret).
+pub fn regenerate_api_key(client: &ContractClient, session_id: &str) -> String {
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/api_keys/regenerate",
+        Some(session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, status, "{body}");
+    api_key_from_generate_response(&body)
+}
+
 /// Frees a farm-create slot when earlier contract seeds filled the per-user non-reference limit.
 pub fn ensure_farm_create_capacity_via_api(client: &ContractClient, session_id: &str) {
     const MAX_NON_REFERENCE_FARMS_PER_USER: usize = 4;
