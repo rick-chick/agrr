@@ -3,6 +3,15 @@
 pub const OAUTH_RETURN_TO_COOKIE: &str = "oauth_return_to";
 pub const OAUTH_CSRF_STATE_COOKIE: &str = "oauth_csrf_state";
 
+/// Stable query param values for SPA `/login?error=…` (mapped to i18n on the client).
+pub mod login_error {
+    pub const OAUTH_DENIED: &str = "oauth_denied";
+    pub const CSRF_MISMATCH: &str = "csrf_mismatch";
+    pub const TOKEN_EXCHANGE_FAILED: &str = "token_exchange_failed";
+    pub const AUTHENTICATION_FAILED: &str = "authentication_failed";
+    pub const OAUTH_NOT_CONFIGURED: &str = "oauth_not_configured";
+}
+
 /// Google コールバックの `state` と開始時 Cookie の一致（OAuth CSRF 対策）。
 pub fn oauth_csrf_state_matches(stored: Option<&str>, returned: Option<&str>) -> bool {
     match (stored, returned) {
@@ -42,15 +51,26 @@ pub fn google_oauth_redirect_uri() -> String {
 }
 
 /// Angular `/login` へリダイレクト（Rust HTML ログイン画面は使わない）。
-pub fn spa_login_redirect_url(return_to: Option<&str>) -> String {
+pub fn spa_login_redirect_url(return_to: Option<&str>, error: Option<&str>) -> String {
     let home = default_frontend_home();
     let base = home.trim_end_matches('/');
-    match return_to.filter(|u| allowed_return_to(u)) {
-        Some(rt) => format!(
-            "{base}/login?return_to={}",
+    let mut params = Vec::new();
+    if let Some(rt) = return_to.filter(|u| allowed_return_to(u)) {
+        params.push(format!(
+            "return_to={}",
             url::form_urlencoded::byte_serialize(rt.as_bytes()).collect::<String>()
-        ),
-        None => format!("{base}/login"),
+        ));
+    }
+    if let Some(code) = error.filter(|e| !e.is_empty()) {
+        params.push(format!(
+            "error={}",
+            url::form_urlencoded::byte_serialize(code.as_bytes()).collect::<String>()
+        ));
+    }
+    if params.is_empty() {
+        format!("{base}/login")
+    } else {
+        format!("{base}/login?{}", params.join("&"))
     }
 }
 
@@ -247,10 +267,31 @@ mod tests {
         let _guard = env_test_lock();
         std::env::set_var("FRONTEND_URL", "http://127.0.0.1:4200");
         assert_eq!(
-            spa_login_redirect_url(Some("http://127.0.0.1:4200/plans")),
+            spa_login_redirect_url(Some("http://127.0.0.1:4200/plans"), None),
             "http://127.0.0.1:4200/login?return_to=http%3A%2F%2F127.0.0.1%3A4200%2Fplans"
         );
-        assert_eq!(spa_login_redirect_url(None), "http://127.0.0.1:4200/login");
+        assert_eq!(
+            spa_login_redirect_url(None, None),
+            "http://127.0.0.1:4200/login"
+        );
+        std::env::remove_var("FRONTEND_URL");
+    }
+
+    #[test]
+    fn spa_login_redirect_url_includes_error_code() {
+        let _guard = env_test_lock();
+        std::env::set_var("FRONTEND_URL", "http://127.0.0.1:4200");
+        assert_eq!(
+            spa_login_redirect_url(None, Some("oauth_denied")),
+            "http://127.0.0.1:4200/login?error=oauth_denied"
+        );
+        assert_eq!(
+            spa_login_redirect_url(
+                Some("http://127.0.0.1:4200/plans"),
+                Some("csrf_mismatch")
+            ),
+            "http://127.0.0.1:4200/login?return_to=http%3A%2F%2F127.0.0.1%3A4200%2Fplans&error=csrf_mismatch"
+        );
         std::env::remove_var("FRONTEND_URL");
     }
 

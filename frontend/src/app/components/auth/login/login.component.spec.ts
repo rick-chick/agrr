@@ -83,4 +83,26 @@ describe('LoginComponent', () => {
     fixture.destroy();
     expect(meta.getTag('name="robots"')).toBeNull();
   });
+
+  it('shows i18n error banner when error query param is present', () => {
+    authService.loadCurrentUser.mockReturnValue(of(null));
+    queryParamMap.get.mockImplementation((key: string) =>
+      key === 'error' ? 'oauth_denied' : null
+    );
+
+    createAndInit();
+
+    const banner = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(banner).toBeTruthy();
+    expect(banner.textContent).toContain('auth.login.errors.oauth_denied');
+  });
+
+  it('does not show error banner when error query param is absent', () => {
+    authService.loadCurrentUser.mockReturnValue(of(null));
+    queryParamMap.get.mockReturnValue(null);
+
+    createAndInit();
+
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+  });
 });

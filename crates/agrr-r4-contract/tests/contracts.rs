@@ -4599,3 +4599,27 @@ fn post_backdoor_db_clear_requires_confirmation_token() {
     let json: serde_json::Value = serde_json::from_str(&body).expect("db clear JSON");
     assert_eq!(Some(false), json["success"].as_bool());
 }
+
+#[test]
+fn auth_failure_redirects_to_spa_login_with_error_code() {
+    let client = ContractClient::from_env();
+    let response = client.get("/auth/failure", None, &empty_headers());
+    assert!(
+        response.status().is_redirection(),
+        "expected redirect, got {}",
+        response.status()
+    );
+    let location = response
+        .headers()
+        .get("location")
+        .and_then(|v| v.to_str().ok())
+        .expect("Location header");
+    assert!(
+        location.contains("/login"),
+        "expected SPA login redirect, got {location}"
+    );
+    assert!(
+        location.contains("error=authentication_failed"),
+        "expected authentication_failed error code, got {location}"
+    );
+}
