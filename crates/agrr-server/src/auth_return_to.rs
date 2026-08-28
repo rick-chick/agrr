@@ -100,11 +100,12 @@ fn host_matches_pattern(host: &str, pattern: &str) -> bool {
     if pattern.is_empty() {
         return false;
     }
-    if let Some(suffix) = pattern.strip_prefix('.') {
-        host.eq_ignore_ascii_case(suffix) || host.to_ascii_lowercase().ends_with(&format!(".{suffix}"))
-    } else {
-        host.eq_ignore_ascii_case(pattern)
+    // OAuth return_to must use exact host matches only. Dot-prefixed patterns (e.g. `.run.app`)
+    // would allow attacker-controlled subdomains on shared public suffixes.
+    if pattern.starts_with('.') {
+        return false;
     }
+    host.eq_ignore_ascii_case(pattern)
 }
 
 pub fn allowed_return_to(url: &str) -> bool {
@@ -264,20 +265,32 @@ mod tests {
     }
 
     #[test]
-    fn allowed_return_to_accepts_allowed_hosts() {
+    fn allowed_return_to_accepts_production_allowed_hosts() {
         let _guard = env_test_lock();
-        std::env::set_var("ALLOWED_HOSTS", "agrr.net,.run.app");
+        std::env::set_var("ALLOWED_HOSTS", "agrr.net,www.agrr.net");
         std::env::remove_var("FRONTEND_URL");
         assert!(allowed_return_to("https://agrr.net/dashboard"));
-        assert!(allowed_return_to("https://foo.run.app/plans"));
+        assert!(allowed_return_to("https://www.agrr.net/plans"));
         assert!(!allowed_return_to("https://evil.example/plans"));
         std::env::remove_var("ALLOWED_HOSTS");
     }
 
     #[test]
-    fn host_matches_pattern_supports_dot_prefix() {
-        assert!(host_matches_pattern("foo.run.app", ".run.app"));
+    fn allowed_return_to_rejects_run_app_suffix_hosts() {
+        let _guard = env_test_lock();
+        std::env::set_var("ALLOWED_HOSTS", "agrr.net,www.agrr.net,.run.app");
+        std::env::remove_var("FRONTEND_URL");
+        assert!(allowed_return_to("https://agrr.net/dashboard"));
+        assert!(!allowed_return_to("https://attacker.run.app/evil"));
+        assert!(!allowed_return_to("https://foo.run.app/plans"));
+        std::env::remove_var("ALLOWED_HOSTS");
+    }
+
+    #[test]
+    fn host_matches_pattern_rejects_dot_prefix_suffix() {
+        assert!(!host_matches_pattern("foo.run.app", ".run.app"));
         assert!(!host_matches_pattern("notrun.app", ".run.app"));
+        assert!(host_matches_pattern("agrr.net", "agrr.net"));
     }
 
     #[test]
