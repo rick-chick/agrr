@@ -20,6 +20,7 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'playwright install',
   'load-reference-data-container.sh',
   '--entrypoint /app/dev-docker-entrypoints/load-reference-data-container.sh',
+  'ensure-reference-fixtures.sh',
   'mkdir -p lib/core',
   'CACHE_DIR="${CACHE_DIR:-',
   'tmp/e2e_dev_db_cache',
