@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mark one developer-owned farm as weather-complete for E2E / Lighthouse plan baseline.
+# Mark JP reference farms weather-complete and assign to developer for E2E plan baseline.
 # Live agrr weather fetch is unreliable in CI; plan create readiness requires completed weather.
 set -euo pipefail
 

@@ -21,6 +21,10 @@
       {
         "ruleId": "aria-required-children",
         "reason": "Entry-schedule crop list region markup predates WCAG aria-required-children (#681 baseline)."
+      },
+      {
+        "ruleId": "landmark-unique",
+        "reason": "Entry-schedule marketing shell exposes sibling region landmarks (#681 baseline)."
       }
     ],
     "public-plans/new": [
