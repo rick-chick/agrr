@@ -7,6 +7,7 @@
 - **設計メモ**: [`design/`](design/)
   - [Organization データモデル案](design/organization-data-model.md) — 親 [#604](https://github.com/rick-chick/agrr/issues/604)
 - **コア API / 最適化 SLI・SLO・アラート**: [`ops/core-api-optimization-sli-slo.md`](ops/core-api-optimization-sli-slo.md)
+- **Litestream RPO / RTO・レプリケーション運用**: [`ops/litestream-rpo-rto-runbook.md`](ops/litestream-rpo-rto-runbook.md)
 - **マイグレーション・データ移行**: [`migration/`](migration/)
 - **Ruby→Rust ドメイン移行（完了）**: [`migration/lib-domain-rust/`](migration/lib-domain-rust/)（[`TRACKING.yaml`](migration/lib-domain-rust/TRACKING.yaml)）
 - **アプリ RUST 化（完了）**: [`migration/app-rust-stack/`](migration/app-rust-stack/)（本番: [`PRODUCTION-CUTOVER-STATUS.md`](migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)、P8: [`P8-RAILS-SHELL-REMOVAL.md`](migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)）
