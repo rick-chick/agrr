@@ -2661,7 +2661,8 @@
         "plan_context_link": "計画のほ場・気象を確認する",
         "crop_stages_link": "「{{cropName}}」の生育ステージを確認する",
         "generic_plan_link": "計画のほ場・作物を確認する",
-        "missing_field_crop": "作付計画のほ場に作物が未設定のため、作業計画を生成できません。"
+        "missing_field_crop": "作付計画のほ場に作物が未設定のため、作業計画を生成できません。",
+        "connection_lost": "接続が切断されました。しばらくしてからやり直してください。"
       },
       "detail": {
         "dialog_title": "{{task}} · {{crop}}",
