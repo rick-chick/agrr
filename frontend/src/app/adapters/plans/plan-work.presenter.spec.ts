@@ -385,6 +385,26 @@ describe('PlanWorkPresenter task schedule sync', () => {
     expect(view.control.syncReloadNonce).toBe(1);
   });
 
+  it('sets failed sync state with connection lost error on presentConnectionLost', () => {
+    view.control = {
+      ...view.control,
+      plan: {
+        ...view.control.plan!,
+        task_schedule_sync_state: 'generating'
+      },
+      regenerating: true
+    };
+
+    presenter.presentConnectionLost();
+
+    expect(view.control.plan?.task_schedule_sync_state).toBe('failed');
+    expect(view.control.plan?.task_schedule_sync_error).toBe(
+      'plans.task_schedules.sync_errors.connection_lost'
+    );
+    expect(view.control.regenerating).toBe(false);
+    expect(view.control.syncReloadNonce).toBe(1);
+  });
+
   it('sets recentAdHocRecord from loaded work day list data', () => {
     presenter.present({
       plan: view.control.plan!,
