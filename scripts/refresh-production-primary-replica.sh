@@ -45,7 +45,7 @@ gcs_bucket=${GCS_BUCKET}
 litestream_replica=${LITESTREAM_REPLICA}
 bytes=${BYTES}
 path=${OUT_DB}
-note=Read-only copy from Litestream; may lag live primary by sync-interval (30s). Not for Litestream replicate back to production without ops runbook.
+note=Read-only copy from Litestream; may lag live primary by sync-interval (10s). Not for Litestream replicate back to production without ops runbook.
 EOF
 
 # Ephemeral temp from query script (parent mktemp dir)
