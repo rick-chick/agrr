@@ -67,6 +67,18 @@ where
             }
         }
 
+        let expected_updated_at = match input.updated_at.as_deref().map(str::trim) {
+            Some(ts) if !ts.is_empty() => ts.to_string(),
+            _ => {
+                let message = self
+                    .translator
+                    .t("activerecord.errors.models.crop.attributes.updated_at.blank", &opts);
+                self.output_port
+                    .on_failure(UpdateFailure::Error(Error::new(message)));
+                return Ok(());
+            }
+        };
+
         let mut attrs = AttrMap::new();
         if let Some(name) = input.name { attrs.insert("name".into(), AttrValue::from(name.as_str())); }
         if let Some(variety) = input.variety { attrs.insert("variety".into(), AttrValue::from(variety.as_str())); }
@@ -83,7 +95,7 @@ where
         }
         if let Some(is_reference) = input.is_reference { attrs.insert("is_reference".into(), AttrValue::Bool(is_reference)); }
 
-        let normalized = crop_policy::normalize_attrs_for_update(
+        let mut normalized = crop_policy::normalize_attrs_for_update(
             &user,
             attr_map_from_pairs([("is_reference", AttrValue::Bool(current.reference()))]),
             attrs,
@@ -101,15 +113,29 @@ where
             return Ok(());
         }
 
+        normalized.insert(
+            "expected_updated_at".into(),
+            AttrValue::from(expected_updated_at.as_str()),
+        );
+
         match self.gateway.update_for_user(&user, input.crop_id, normalized) {
-            Ok(entity) => { self.output_port.on_success(entity); Ok(()) }
+            Ok(entity) => {
+                self.output_port.on_success(entity);
+                Ok(())
+            }
             Err(err) => match err.downcast::<RecordInvalidError>() {
                 Ok(record_invalid) => {
-                    self.output_port.on_failure(UpdateFailure::Error(Error::new(record_invalid.to_string())));
+                    self.output_port
+                        .on_failure(UpdateFailure::Error(Error::new(record_invalid.to_string())));
                     Ok(())
                 }
                 Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
-                    self.output_port.on_failure(UpdateFailure::Error(Error::new(err.to_string())));
+                    self.output_port
+                        .on_failure(UpdateFailure::Error(Error::new(err.to_string())));
+                    Ok(())
+                }
+                Err(err) if err.downcast_ref::<crate::shared::exceptions::RecordStaleUpdateError>().is_some() => {
+                    self.output_port.on_failure(UpdateFailure::StaleUpdate);
                     Ok(())
                 }
                 Err(err) => Err(err),
