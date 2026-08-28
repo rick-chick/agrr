@@ -42,6 +42,29 @@ fn timestamp_json() -> String {
         .unwrap_or_else(|_| OffsetDateTime::now_utc().to_string())
 }
 
+/// Returns true when a create-user request would grant admin privileges.
+fn create_user_requests_admin_grant(admin: Option<bool>) -> bool {
+    admin.unwrap_or(false)
+}
+
+/// Returns true when an update-user request includes an admin flag change.
+fn update_user_requests_admin_change(admin: Option<bool>) -> bool {
+    admin.is_some()
+}
+
+fn admin_change_denied_response() -> (StatusCode, Json<Value>) {
+    (
+        StatusCode::FORBIDDEN,
+        Json(json!({
+            "timestamp": timestamp_json(),
+            "success": false,
+            "error": "api.errors.backdoor.admin_change_disabled_in_production",
+            "error_key": "api.errors.backdoor.admin_change_disabled_in_production",
+            "warning": "Admin grant/revoke is disabled in production unless AGRR_BACKDOOR_ALLOW_ADMIN_CHANGES=1 is set for break-glass use"
+        })),
+    )
+}
+
 fn backdoor_auth(
     state: &AppState,
     headers: &HeaderMap,
@@ -147,6 +170,12 @@ async fn create_user(
     Json(body): Json<UserBody>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     backdoor_auth(&state, &headers)?;
+    if create_user_requests_admin_grant(body.user.admin)
+        && !runtime_env::backdoor_admin_changes_allowed()
+    {
+        log_backdoor_operation("user_create", "blocked_production_admin", None);
+        return Ok(admin_change_denied_response());
+    }
     let gw = BackdoorDiagnosticsSqliteGateway::new(state.sqlite.clone());
     let attrs = BackdoorCreateUserAttrs {
         email: body.user.email,
@@ -194,6 +223,12 @@ async fn update_user(
     Json(body): Json<UserBody>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     backdoor_auth(&state, &headers)?;
+    if update_user_requests_admin_change(body.user.admin)
+        && !runtime_env::backdoor_admin_changes_allowed()
+    {
+        log_backdoor_operation("user_update", "blocked_production_admin", Some(id));
+        return Ok(admin_change_denied_response());
+    }
     let gw = BackdoorDiagnosticsSqliteGateway::new(state.sqlite.clone());
     let attrs = BackdoorUpdateUserAttrs {
         email: body.user.email,
@@ -373,4 +408,34 @@ async fn clear_db(
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(json!({"success": false, "error": "no response"})),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_user_requests_admin_grant_only_when_admin_true() {
+        assert!(!create_user_requests_admin_grant(None));
+        assert!(!create_user_requests_admin_grant(Some(false)));
+        assert!(create_user_requests_admin_grant(Some(true)));
+    }
+
+    #[test]
+    fn update_user_requests_admin_change_when_admin_field_present() {
+        assert!(!update_user_requests_admin_change(None));
+        assert!(update_user_requests_admin_change(Some(false)));
+        assert!(update_user_requests_admin_change(Some(true)));
+    }
+
+    #[test]
+    fn admin_change_denied_response_uses_production_error_key() {
+        let (status, Json(body)) = admin_change_denied_response();
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(
+            Some("api.errors.backdoor.admin_change_disabled_in_production"),
+            body["error_key"].as_str()
+        );
+        assert_eq!(Some(false), body["success"].as_bool());
+    }
 }
