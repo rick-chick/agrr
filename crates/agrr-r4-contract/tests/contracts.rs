@@ -4623,3 +4623,25 @@ fn auth_failure_redirects_to_spa_login_with_error_code() {
         "expected authentication_failed error code, got {location}"
     );
 }
+
+#[test]
+fn get_auth_login_rejects_arbitrary_run_app_return_to() {
+    let client = ContractClient::from_env();
+    let return_to = "https%3A%2F%2Fattacker.run.app%2Foauth-callback";
+    let path = format!("/auth/login?return_to={return_to}");
+    let response = client.get(&path, None, &empty_headers());
+    let status = response.status().as_u16();
+    assert!(
+        status == 302 || status == 307 || status == 308,
+        "expected redirect, got {status}"
+    );
+    let location = response
+        .headers()
+        .get(reqwest::header::LOCATION)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    assert!(
+        !location.contains("attacker.run.app"),
+        "must not redirect to attacker-controlled run.app host: {location}"
+    );
+}
