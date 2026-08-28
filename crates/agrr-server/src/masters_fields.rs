@@ -263,7 +263,7 @@ impl FieldDestroyOutputPort for DestroyPresenter {
             "undo_token": undo_token,
             "undo_deadline": metadata.get("undo_deadline"),
             "toast_message": metadata.get("toast_message"),
-            "undo_path": format!("/undo_deletion?undo_token={undo_token}"),
+            "undo_path": "/undo_deletion",
             "auto_hide_after": metadata.get("auto_hide_after").unwrap_or(&json!(5000)),
             "resource": metadata.get("resource_label"),
             "redirect_path": format!("{origin}/farms/{farm_id}"),
