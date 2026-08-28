@@ -38,6 +38,7 @@ pub fn test_pool_with_plan(plan_id: i64) -> TestDb {
                id INTEGER PRIMARY KEY,
                farm_id INTEGER,
                user_id INTEGER,
+               organization_id INTEGER,
                total_area REAL,
                plan_type TEXT,
                plan_year INTEGER,
