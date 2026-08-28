@@ -329,17 +329,36 @@ HTTPServer(('127.0.0.1', 9191), Handler).serve_forever()
       WEATHER_DATA_LOCAL_ROOT="$WEATHER_DATA_LOCAL_ROOT" \
       agrr-server >/tmp/agrr-server-contract-unconfigured-recaptcha.log 2>&1 &
     UNCONFIGURED_SERVER_PID=$!
+    UNCONFIGURED_HEALTH_OK=0
     for _ in $(seq 1 50); do
       if curl -sf http://127.0.0.1:8089/health >/dev/null; then
+        UNCONFIGURED_HEALTH_OK=1
         break
       fi
       sleep 0.1
     done
-    UNCONFIGURED_STATUS=$(curl -s -o /tmp/contact-unconfigured-recaptcha.json -w "%{http_code}" \
-      -H "Content-Type: application/json" \
-      -H "x-forwarded-for: 203.0.113.250" \
-      -d '{"email":"unconfigured-recaptcha@example.com","message":"contract shell check","recaptcha_token":"token"}' \
-      http://127.0.0.1:8089/api/v1/contact_messages)
+    if [ "$UNCONFIGURED_HEALTH_OK" != "1" ]; then
+      echo "agrr-server (RECAPTCHA unset) failed to start; log:"
+      cat /tmp/agrr-server-contract-unconfigured-recaptcha.log
+      kill "$UNCONFIGURED_SERVER_PID" 2>/dev/null || true
+      exit 1
+    fi
+    printf '%s' '{"email":"unconfigured-recaptcha@example.com","message":"contract shell check","recaptcha_token":"token"}' \
+      >/tmp/contact-unconfigured-recaptcha-payload.json
+    UNCONFIGURED_STATUS=""
+    for _ in $(seq 1 5); do
+      UNCONFIGURED_STATUS=$(curl -sS -o /tmp/contact-unconfigured-recaptcha.json -w "%{http_code}" \
+        -X POST \
+        -H "Accept: application/json" \
+        -H "Content-Type: application/json" \
+        -H "x-forwarded-for: 203.0.113.250" \
+        --data-binary @/tmp/contact-unconfigured-recaptcha-payload.json \
+        http://127.0.0.1:8089/api/v1/contact_messages)
+      if [ "$UNCONFIGURED_STATUS" = "503" ]; then
+        break
+      fi
+      sleep 0.2
+    done
     kill "$UNCONFIGURED_SERVER_PID" 2>/dev/null || true
     if [ "$UNCONFIGURED_STATUS" != "503" ]; then
       echo "expected 503 when RECAPTCHA_SECRET_KEY unset, got $UNCONFIGURED_STATUS"
