@@ -44,4 +44,8 @@ export class WorkRecordPhotoApiGateway implements WorkRecordPhotoGateway {
       .delete<void>(`/api/v1/plans/${planId}/work_records/${recordId}/photos/${photoId}`)
       .pipe(map(() => undefined));
   }
+
+  downloadPhotoContent(contentUrl: string): Observable<Blob> {
+    return this.apiClient.getBlob(contentUrl);
+  }
 }
