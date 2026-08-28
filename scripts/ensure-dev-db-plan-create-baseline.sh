@@ -8,6 +8,10 @@ if [[ ! -f "$DB_PATH" ]]; then
   exit 0
 fi
 
+# Actions cache restore can leave the DB read-only; sqlite UPDATE needs write + journal.
+chmod u+w "$DB_PATH" 2>/dev/null || true
+chmod u+w "$(dirname "$DB_PATH")" 2>/dev/null || true
+
 if ! command -v sqlite3 >/dev/null 2>&1; then
   echo "WARN: sqlite3 not found; skipping plan-create baseline DB patch" >&2
   exit 0

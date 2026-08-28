@@ -66,6 +66,7 @@ restore_db_cache() {
   if [[ -f "${CACHE_DIR}/development.sqlite3" ]]; then
     echo "==> Restoring cached E2E dev DB"
     cp "${CACHE_DIR}/development.sqlite3" "$DB_PATH"
+    chmod u+w "$DB_PATH" 2>/dev/null || true
     [[ -f "${CACHE_DIR}/development_cache.sqlite3" ]] && \
       cp "${CACHE_DIR}/development_cache.sqlite3" "${STORAGE_DIR}/development_cache.sqlite3" || true
     return 0
