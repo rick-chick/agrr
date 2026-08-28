@@ -19,7 +19,9 @@ describe('App', () => {
           useValue: {
             user: () => null,
             loading: () => false,
+            sessionUnavailable: () => false,
             loadCurrentUser: () => of(null),
+            retryLoadCurrentUser: () => of(null),
             logout: () => of(undefined)
           }
         }
