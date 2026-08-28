@@ -71,7 +71,7 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
   private syncPhotos(
     dto: SaveWorkRecordSheetInputDto,
     workRecord: WorkRecord
-  ): Observable<WorkRecord> {
+  ): Observable<WorkRecord | null> {
     if (dto.pendingPhotoFiles.length === 0 && dto.photoIdsToDelete.length === 0) {
       return of(workRecord);
     }
@@ -92,7 +92,7 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
   private syncPhotosWithCompensation(
     dto: SaveWorkRecordSheetInputDto,
     workRecord: WorkRecord
-  ): Observable<WorkRecord> {
+  ): Observable<WorkRecord | null> {
     return this.fetchDeletedPhotoBackups(dto.deletedPhotoContentUrls).pipe(
       switchMap((backups) =>
         this.deleteMarked(dto, workRecord.id).pipe(
