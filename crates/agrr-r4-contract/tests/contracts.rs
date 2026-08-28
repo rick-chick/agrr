@@ -473,8 +473,14 @@ fn delete_work_record_returns_deletion_undo_payload() {
         .expect("undo_token must be a non-empty string");
     assert!(!undo_token.is_empty(), "{delete_body}");
     assert_eq!(
-        format!("/undo_deletion?undo_token={undo_token}"),
+        "/undo_deletion",
         undo["undo_path"].as_str().expect("undo_path")
+    );
+    assert!(
+        !undo["undo_path"]
+            .as_str()
+            .is_some_and(|p| p.contains("undo_token")),
+        "undo_path must not include undo_token query param: {delete_body}"
     );
     assert!(
         undo["toast_message"].as_str().is_some_and(|m| !m.is_empty()),
