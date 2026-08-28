@@ -104,6 +104,27 @@ describe('PlanOptimizingPresenter', () => {
     expect(harness.control.failureHint).toBe('Try reloading.');
   });
 
+  it('sets failed state with connection lost message on presentConnectionLost', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'plans.optimizing_live.error.connection_lost': 'Connection was lost.',
+        'plans.optimizing_live.error.hints.default': 'Try reloading.'
+      },
+      true
+    );
+    const harness = createView({ status: 'optimizing', progress: 12, phaseMessage: '' });
+    presenter.setView(harness.view);
+
+    presenter.presentConnectionLost();
+
+    expect(harness.control.status).toBe('failed');
+    expect(harness.control.progress).toBe(12);
+    expect(harness.control.phaseMessage).toBe('Connection was lost.');
+    expect(harness.control.failureHint).toBe('Try reloading.');
+  });
+
   it('does not call onOptimizationCompleted while still in progress', () => {
     const { view, onOptimizationCompleted } = createView({ status: 'optimizing', progress: 0, phaseMessage: '' });
     presenter.setView(view);
