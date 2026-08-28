@@ -5,6 +5,13 @@ import { Crop } from '../../domain/crops/crop';
 import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
 import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default-public-plan-farm-size';
 import { PublicPlanSessionPort } from '../../usecase/public-plans/public-plan-session.port';
+import {
+  PUBLIC_PLAN_SESSION_TOKEN_STORAGE_KEY,
+  PUBLIC_PLAN_STATE_STORAGE_KEY,
+  readBrowserStorageItem,
+  removeBrowserStorageItem,
+  writeBrowserStorageItem
+} from './public-plan-browser-storage';
 
 export interface PublicPlanState {
   farm: Farm | null;
@@ -26,16 +33,22 @@ const INITIAL_STATE: PublicPlanState = {
   pendingCropId: null
 };
 
-const SESSION_STORAGE_KEY = 'agrr_public_plan_state';
-const SESSION_TOKEN_KEY = 'agrr_public_plan_session_token';
-
 @Injectable({ providedIn: 'root' })
 export class PublicPlanStore implements PublicPlanSessionPort {
-  private stateSubject = new BehaviorSubject<PublicPlanState>(this.loadFromSession());
+  private stateSubject = new BehaviorSubject<PublicPlanState>(this.loadFromStorage());
   public state$: Observable<PublicPlanState> = this.stateSubject.asObservable();
+  private persistFailed = false;
 
   get state(): PublicPlanState {
     return this.stateSubject.value;
+  }
+
+  get hadPersistFailure(): boolean {
+    return this.persistFailed;
+  }
+
+  clearPersistFailure(): void {
+    this.persistFailed = false;
   }
 
   setFarm(farm: Farm): void {
@@ -65,22 +78,18 @@ export class PublicPlanStore implements PublicPlanSessionPort {
 
   reset(): void {
     this.updateState(INITIAL_STATE);
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.removeItem(SESSION_STORAGE_KEY);
-      sessionStorage.removeItem(SESSION_TOKEN_KEY);
-    }
+    removeBrowserStorageItem(PUBLIC_PLAN_STATE_STORAGE_KEY);
+    removeBrowserStorageItem(PUBLIC_PLAN_SESSION_TOKEN_STORAGE_KEY);
+    this.persistFailed = false;
   }
 
   ensureSessionToken(): string {
-    if (typeof sessionStorage === 'undefined') {
-      return this.generateSessionToken();
-    }
-    const existing = sessionStorage.getItem(SESSION_TOKEN_KEY);
+    const existing = readBrowserStorageItem(PUBLIC_PLAN_SESSION_TOKEN_STORAGE_KEY);
     if (existing && existing.length > 0) {
       return existing;
     }
     const token = this.generateSessionToken();
-    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+    writeBrowserStorageItem(PUBLIC_PLAN_SESSION_TOKEN_STORAGE_KEY, token);
     return token;
   }
 
@@ -90,42 +99,38 @@ export class PublicPlanStore implements PublicPlanSessionPort {
     return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
 
-  /** E2E シード等で sessionStorage が後から入ったとき、farm 未設定なら再読込する */
+  /** E2E シード等で storage が後から入ったとき、farm 未設定なら再読込する */
   syncFromSessionStorageIfFarmMissing(): void {
     const currentFarm = this.state.farm;
     if (currentFarm && typeof currentFarm.id === 'number' && currentFarm.id > 0) {
       return;
     }
-    const fromSession = this.loadFromSession();
-    if (!fromSession.farm || typeof fromSession.farm.id !== 'number' || fromSession.farm.id <= 0) {
+    const fromStorage = this.loadFromStorage();
+    if (!fromStorage.farm || typeof fromStorage.farm.id !== 'number' || fromStorage.farm.id <= 0) {
       return;
     }
-    this.stateSubject.next({ ...this.state, ...fromSession });
+    this.stateSubject.next({ ...this.state, ...fromStorage });
   }
 
   private updateState(patch: Partial<PublicPlanState>): void {
     const newState = { ...this.state, ...patch };
     this.stateSubject.next(newState);
-    this.saveToSession(newState);
+    this.persistState(newState);
   }
 
-  private saveToSession(state: PublicPlanState): void {
-    if (typeof sessionStorage === 'undefined') {
+  private persistState(state: PublicPlanState): void {
+    const result = writeBrowserStorageItem(PUBLIC_PLAN_STATE_STORAGE_KEY, JSON.stringify(state));
+    if (result.ok === false) {
+      this.persistFailed = true;
+      console.warn('Failed to save public plan state to browser storage', result.reason);
       return;
     }
-    try {
-      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.warn('Failed to save public plan state to session storage', e);
-    }
+    this.persistFailed = false;
   }
 
-  private loadFromSession(): PublicPlanState {
-    if (typeof sessionStorage === 'undefined') {
-      return INITIAL_STATE;
-    }
+  private loadFromStorage(): PublicPlanState {
     try {
-      const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      const stored = readBrowserStorageItem(PUBLIC_PLAN_STATE_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         // Ensure farm.id is a number (JSON.parse converts it to string)
@@ -141,7 +146,7 @@ export class PublicPlanStore implements PublicPlanSessionPort {
         };
       }
     } catch (e) {
-      console.warn('Failed to load public plan state from session storage', e);
+      console.warn('Failed to load public plan state from browser storage', e);
     }
     return INITIAL_STATE;
   }

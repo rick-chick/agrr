@@ -1,29 +1,32 @@
-const STORAGE_KEY = 'agrr_pending_public_plan_save';
+import {
+  PENDING_PUBLIC_PLAN_SAVE_STORAGE_KEY,
+  readBrowserStorageItem,
+  removeBrowserStorageItem,
+  writeBrowserStorageItem
+} from './public-plan-browser-storage';
 
 export interface PendingPublicPlanSave {
   planId: number;
   at: string;
 }
 
-export function setPendingPublicPlanSave(planId: number): void {
-  try {
-    const payload: PendingPublicPlanSave = {
-      planId,
-      at: new Date().toISOString()
-    };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  } catch {
-    /* sessionStorage unavailable */
-  }
+export function setPendingPublicPlanSave(planId: number): boolean {
+  const payload: PendingPublicPlanSave = {
+    planId,
+    at: new Date().toISOString()
+  };
+  return writeBrowserStorageItem(
+    PENDING_PUBLIC_PLAN_SAVE_STORAGE_KEY,
+    JSON.stringify(payload)
+  ).ok;
 }
 
-export function consumePendingPublicPlanSave(): PendingPublicPlanSave | null {
+export function peekPendingPublicPlanSave(): PendingPublicPlanSave | null {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = readBrowserStorageItem(PENDING_PUBLIC_PLAN_SAVE_STORAGE_KEY);
     if (!raw) {
       return null;
     }
-    sessionStorage.removeItem(STORAGE_KEY);
     const parsed = JSON.parse(raw) as PendingPublicPlanSave;
     if (typeof parsed.planId !== 'number' || parsed.planId <= 0) {
       return null;
@@ -32,4 +35,8 @@ export function consumePendingPublicPlanSave(): PendingPublicPlanSave | null {
   } catch {
     return null;
   }
+}
+
+export function clearPendingPublicPlanSave(): void {
+  removeBrowserStorageItem(PENDING_PUBLIC_PLAN_SAVE_STORAGE_KEY);
 }
