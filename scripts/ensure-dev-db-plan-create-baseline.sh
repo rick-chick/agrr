@@ -22,13 +22,18 @@ SET weather_data_status = 'completed',
     weather_data_last_error = NULL,
     updated_at = datetime('now')
 WHERE user_id = (
-  SELECT id FROM users WHERE email = 'developer@agrr.dev' LIMIT 1
+  SELECT id FROM users
+  WHERE email = 'developer@agrr.dev' OR google_id = 'dev_user_001'
+  LIMIT 1
 ) AND is_reference = 0;
+SELECT changes();
 SQL
 
 run_sqlite() {
   local target="$1"
-  sqlite3 "$target" "$SQL_BLOCK"
+  local changed
+  changed="$(sqlite3 "$target" "$SQL_BLOCK")"
+  echo "==> Plan-create baseline DB patch: updated ${changed:-0} farm row(s)"
 }
 
 if [[ "${ENSURE_DB_VIA_DOCKER:-}" == "1" ]]; then

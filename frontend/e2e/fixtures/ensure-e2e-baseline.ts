@@ -78,6 +78,13 @@ async function ensureMasterSegment(
       );
       return reused;
     }
+    const completedFarmId = pickFarmIdWithCompletedWeather(rows);
+    if (completedFarmId != null) {
+      console.warn(
+        `[ensureE2eBaseline] reuse farm id ${completedFarmId} with completed weather`,
+      );
+      return completedFarmId;
+    }
   }
 
   const postBody = buildSegmentPostBody(config.segment, ctx);

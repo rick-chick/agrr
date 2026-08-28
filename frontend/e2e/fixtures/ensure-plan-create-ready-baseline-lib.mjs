@@ -381,7 +381,7 @@ export async function ensurePlanCreateReadiness(transport, farmId, cropId) {
   }
   if (readyFarmId == null) {
     readyFarmId = await ensureFarmReadyForPlanCreate(transport);
-  } else {
+  } else if (process.env.CI !== 'true') {
     try {
       await pollFarmWeatherCompleted(transport, readyFarmId);
     } catch (error) {
