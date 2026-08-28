@@ -16,6 +16,7 @@ import {
   SubscribeTaskScheduleSyncOutputPort
 } from '../../usecase/plans/subscribe-task-schedule-sync.output-port';
 import { TaskScheduleSyncMessageDto } from '../../usecase/plans/subscribe-task-schedule-sync.dtos';
+import { TASK_SCHEDULE_SYNC_ERROR_CONNECTION_LOST } from '../../domain/plans/task-schedule-sync-error-keys';
 import {
   mergeCropBannerContext
 } from './task-schedule-sync-presenter.helpers';
@@ -146,6 +147,14 @@ export class PlanWorkPresenter
       ...this.view.control,
       ...applied
     };
+  }
+
+  presentConnectionLost(): void {
+    this.onTaskScheduleSync({
+      syncState: 'failed',
+      syncError: TASK_SCHEDULE_SYNC_ERROR_CONNECTION_LOST,
+      syncErrorCropId: null
+    });
   }
 
   onRegenerateError(dto: ErrorDto): void {

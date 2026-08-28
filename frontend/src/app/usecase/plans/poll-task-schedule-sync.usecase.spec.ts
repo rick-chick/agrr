@@ -47,7 +47,8 @@ describe('PollTaskScheduleSyncUseCase', () => {
       .mockReturnValue(of(scheduleWithSyncState('ready')));
     const gateway = { getTaskSchedule } as unknown as PlanGateway;
     const outputPort: SubscribeTaskScheduleSyncOutputPort = {
-      onTaskScheduleSync: vi.fn()
+      onTaskScheduleSync: vi.fn(),
+      presentConnectionLost: vi.fn()
     };
     const useCase = new PollTaskScheduleSyncUseCase(outputPort, gateway);
 
@@ -68,7 +69,8 @@ describe('PollTaskScheduleSyncUseCase', () => {
     const getTaskSchedule = vi.fn().mockReturnValue(of(scheduleWithSyncState('generating')));
     const gateway = { getTaskSchedule } as unknown as PlanGateway;
     const outputPort: SubscribeTaskScheduleSyncOutputPort = {
-      onTaskScheduleSync: vi.fn()
+      onTaskScheduleSync: vi.fn(),
+      presentConnectionLost: vi.fn()
     };
     const useCase = new PollTaskScheduleSyncUseCase(outputPort, gateway);
 
