@@ -346,6 +346,24 @@ async fn transmit_plan_snapshot(
     transmit_message(socket, identifier, payload).await
 }
 
+/// Await the next broadcast payload, skipping lagged messages so the relay stays alive.
+/// When multiple payloads are queued, returns the latest so slow clients catch up.
+async fn recv_broadcast_message(rx: &mut broadcast::Receiver<String>) -> Option<String> {
+    loop {
+        match rx.recv().await {
+            Ok(body) => {
+                let mut latest = body;
+                while let Ok(next) = rx.try_recv() {
+                    latest = next;
+                }
+                return Some(latest);
+            }
+            Err(broadcast::error::RecvError::Lagged(_)) => continue,
+            Err(broadcast::error::RecvError::Closed) => return None,
+        }
+    }
+}
+
 async fn relay_subscription(
     socket: &mut WebSocket,
     identifier: &str,
@@ -369,18 +387,16 @@ async fn relay_subscription(
                     _ => {}
                 }
             }
-            payload = rx.recv() => {
-                match payload {
-                    Ok(body) => {
-                        let message = json!({
-                            "identifier": identifier,
-                            "message": serde_json::from_str::<Value>(&body).unwrap_or(json!({}))
-                        });
-                        if socket.send(Message::Text(message.to_string().into())).await.is_err() {
-                            return;
-                        }
-                    }
-                    Err(_) => return,
+            body = recv_broadcast_message(&mut rx) => {
+                let Some(body) = body else {
+                    return;
+                };
+                let message = json!({
+                    "identifier": identifier,
+                    "message": serde_json::from_str::<Value>(&body).unwrap_or(json!({}))
+                });
+                if socket.send(Message::Text(message.to_string().into())).await.is_err() {
+                    return;
                 }
             }
         }
@@ -591,6 +607,34 @@ mod cable_snapshot_tests {
         assert_eq!(Some(7), parse_farm_id_from_identifier(&json!({ "farm_id": 7.0 })));
         assert_eq!(None, parse_farm_id_from_identifier(&json!({ "farm_id": "bad" })));
         assert_eq!(None, parse_farm_id_from_identifier(&json!({})));
+    }
+
+    #[tokio::test]
+    async fn recv_broadcast_message_continues_after_lag_and_receives_latest() {
+        let (tx, mut rx) = broadcast::channel(64);
+        for i in 0..70 {
+            let _ = tx.send(format!(r#"{{"progress":{i}}}"#));
+        }
+
+        let body = recv_broadcast_message(&mut rx)
+            .await
+            .expect("relay should survive lag and deliver a payload");
+        let parsed: Value = serde_json::from_str(&body).expect("json body");
+        assert_eq!(69, parsed["progress"].as_i64().unwrap());
+
+        let _ = tx.send(r#"{"progress":99}"#.to_string());
+        let body = recv_broadcast_message(&mut rx)
+            .await
+            .expect("relay should keep receiving after lag");
+        let parsed: Value = serde_json::from_str(&body).expect("json body");
+        assert_eq!(99, parsed["progress"].as_i64().unwrap());
+    }
+
+    #[tokio::test]
+    async fn recv_broadcast_message_returns_none_when_channel_closed() {
+        let (tx, mut rx) = broadcast::channel(4);
+        drop(tx);
+        assert!(recv_broadcast_message(&mut rx).await.is_none());
     }
 
     #[tokio::test]
