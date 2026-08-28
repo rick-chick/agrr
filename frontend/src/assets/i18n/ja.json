@@ -1823,8 +1823,8 @@
       "field_form_area_placeholder": "例: 100",
       "field_form_submit": "圃場を追加",
       "logs": {
-        "data_refetch_failed": "計画データの再取得に失敗しました。",
-        "data_refetch_api_error": "計画データの再取得中にエラーが発生しました。"
+        "data_refetch_failed": "計画データの再取得に失敗しました。変更はサーバーに反映された可能性があります。続行する前に画面を更新してください。",
+        "data_refetch_api_error": "計画データの再取得中にエラーが発生しました。変更はサーバーに反映された可能性があります。続行する前に画面を更新してください。"
       }
     },
     "crops": {
@@ -2335,6 +2335,10 @@
         "reload": "再読み込み",
         "add_field": "圃場を追加",
         "register_crop": "作物を登録"
+      },
+      "stale_lock": {
+        "message": "変更はサーバーに反映された可能性があります。二重操作を避けるため、画面を更新してから続行してください。",
+        "refresh": "画面を更新"
       }
     },
     "field_climate": {

@@ -385,6 +385,67 @@ describe('GanttChartComponent', () => {
     });
   });
 
+  describe('plan mutation stale lock', () => {
+    const cultivation = {
+      id: 33,
+      field_id: 1,
+      field_name: 'Field 1',
+      crop_name: 'Rice',
+      start_date: '2026-01-01',
+      completion_date: '2026-01-10'
+    } as CultivationData;
+
+    beforeEach(() => {
+      component.planType = 'private';
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, name: 'Field 1' }],
+          cultivations: [cultivation]
+        }
+      } as any;
+      component.selectedCrop = { id: 5, name: 'Tomato' } as any;
+      component.deleteConfirmDialogRef = {
+        nativeElement: {
+          showModal: HTMLDialogElement.prototype.showModal,
+          close: HTMLDialogElement.prototype.close
+        }
+      } as any;
+      component.engagePlanMutationStaleLock(7);
+    });
+
+    it('blocks add-crop mutation while stale lock is engaged', () => {
+      component.confirmAddCrop();
+      expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('blocks delete mutation while stale lock is engaged', () => {
+      component.confirmRemoveCultivation(cultivation);
+      component.confirmDeleteAction();
+      expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('requests plan refresh from stale lock without clearing until data loads', () => {
+      component.reloadPlanDataFromStaleLock();
+
+      expect(loadGanttPlanDataUseCase.execute).toHaveBeenCalledWith({
+        planType: 'private',
+        planId: 7,
+        purpose: 'refresh'
+      });
+      expect(component.planMutationStaleLocked).toBe(true);
+    });
+
+    it('clears stale lock when refreshed plan data is applied', () => {
+      component.engagePlanMutationStaleLock(7);
+      component.applyRefreshedPlanData(component.data!);
+
+      expect(component.planMutationStaleLocked).toBe(false);
+    });
+  });
+
   describe('pointer drag (desktop)', () => {
     const cultivation = {
       id: 33,

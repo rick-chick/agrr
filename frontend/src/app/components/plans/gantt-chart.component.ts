@@ -92,6 +92,17 @@ type GanttPendingDeleteAction =
         </div>
       </div>
     }
+    @if (planMutationStaleLocked) {
+      <div class="gantt-stale-lock-banner" role="alert" aria-live="assertive">
+        <p>{{ 'plans.gantt.stale_lock.message' | translate }}</p>
+        <button
+          type="button"
+          class="btn btn-secondary gantt-stale-lock-banner__refresh"
+          (click)="reloadPlanDataFromStaleLock()">
+          {{ 'plans.gantt.stale_lock.refresh' | translate }}
+        </button>
+      </div>
+    }
     <div class="gantt-page" [class.gantt-page--touch-drag]="isMobileLayout && draggedCultivation">
       <div class="gantt-action-bar">
         <div class="gantt-action-bar__leading">
@@ -637,6 +648,9 @@ export class GanttChartComponent
   private pendingDetectChanges = false;
   /** ドロップ後の最適化API完了までオーバーレイを表示する */
   showOptimizationLock = false;
+  /** mutation 成功後の refetch 失敗時は操作をロックし明示リフレッシュを促す */
+  planMutationStaleLocked = false;
+  private planMutationStalePlanId: number | null = null;
   private loadGanttPlanDataUseCase = inject(LoadGanttPlanDataUseCase);
   private runGanttPlanMutationUseCase = inject(RunGanttPlanMutationUseCase);
   private ganttPresenter = inject(GanttChartPresenter);
@@ -1532,6 +1546,26 @@ export class GanttChartComponent
     this.requestPlanRefresh(this.planId);
   }
 
+  reloadPlanDataFromStaleLock(): void {
+    if (!this.planMutationStaleLocked || this.planMutationStalePlanId == null) {
+      return;
+    }
+    this.requestPlanRefresh(this.planMutationStalePlanId);
+  }
+
+  engagePlanMutationStaleLock(planId: number): void {
+    this.planMutationStaleLocked = true;
+    this.planMutationStalePlanId = planId;
+    this.showOptimizationLock = false;
+    this.scheduleDetectChanges();
+  }
+
+  clearPlanMutationStaleLock(): void {
+    this.planMutationStaleLocked = false;
+    this.planMutationStalePlanId = null;
+    this.scheduleDetectChanges();
+  }
+
   applyBarResetPlanData(planData: CultivationPlanData): void {
     this.data = planData;
     this.updateChart();
@@ -1587,7 +1621,7 @@ export class GanttChartComponent
     newFieldIndex: number,
     newStartDate: Date
   ) {
-    if (!this.data) return;
+    if (!this.data || this.planMutationStaleLocked) return;
 
     const planId = this.data.data.id;
     const targetField = this.fieldGroups[newFieldIndex];
@@ -1620,7 +1654,7 @@ export class GanttChartComponent
   }
 
   confirmAddCrop() {
-    if (!this.data || !this.selectedCrop) return;
+    if (!this.data || !this.selectedCrop || this.planMutationStaleLocked) return;
     const planId = this.data.data.id;
     this.showOptimizationLock = true;
     const { start: planStart, end: planEnd } = parseGanttPlanBounds(
@@ -1683,7 +1717,7 @@ export class GanttChartComponent
     const action = this.pendingDeleteAction;
     this.deleteConfirmDialogRef?.nativeElement?.close();
     this.pendingDeleteAction = null;
-    if (!action || !this.data) {
+    if (!action || !this.data || this.planMutationStaleLocked) {
       return;
     }
 
@@ -1727,7 +1761,7 @@ export class GanttChartComponent
   }
 
   confirmAddField() {
-    if (!this.data || !this.newFieldName || !this.newFieldArea) return;
+    if (!this.data || !this.newFieldName || !this.newFieldArea || this.planMutationStaleLocked) return;
     const planId = this.data.data.id;
     this.isFieldFormLoading = true;
     this.showOptimizationLock = true;
@@ -1757,6 +1791,7 @@ export class GanttChartComponent
     this.data = planData;
     this.updateChart();
     this.showOptimizationLock = false;
+    this.clearPlanMutationStaleLock();
     this.scheduleDetectChanges();
   }
 

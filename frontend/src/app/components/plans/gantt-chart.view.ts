@@ -14,5 +14,7 @@ export interface GanttChartView {
   updateChartOnly(): void;
   resetBarPosition(): void;
   clearOptimizationLock(): void;
+  engagePlanMutationStaleLock(planId: number): void;
+  clearPlanMutationStaleLock(): void;
   setFieldFormLoading(loading: boolean): void;
 }

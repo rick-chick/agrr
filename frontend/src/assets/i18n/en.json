@@ -63,8 +63,8 @@
       "field_form_area_placeholder": "e.g. 100",
       "field_form_submit": "Add field",
       "logs": {
-        "data_refetch_failed": "Failed to reload plan data.",
-        "data_refetch_api_error": "An error occurred while reloading plan data."
+        "data_refetch_failed": "Failed to reload plan data. The change may have been saved on the server. Refresh the screen before continuing.",
+        "data_refetch_api_error": "An error occurred while reloading plan data. The change may have been saved on the server. Refresh the screen before continuing."
       }
     },
     "crop_ai": {
@@ -1430,6 +1430,10 @@
         "reload": "Reload",
         "add_field": "Add field",
         "register_crop": "Register a crop"
+      },
+      "stale_lock": {
+        "message": "The change may have been saved on the server. Refresh the screen before continuing to avoid duplicate actions.",
+        "refresh": "Refresh screen"
       }
     },
     "field_climate": {
