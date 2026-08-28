@@ -4251,5 +4251,11 @@
         "description": "Weather history is fetched on the farm detail page. Wait until status is completed."
       }
     }
+  },
+  "i18n": {
+    "bootstrap": {
+      "load_failed": "Could not load translations",
+      "retry": "Retry"
+    }
   }
 }
