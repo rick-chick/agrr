@@ -48,6 +48,7 @@ export interface WorkRecordCreateRequest {
 }
 
 export interface WorkRecordUpdateRequest {
+  updated_at: string;
   name?: string;
   actual_date?: string;
   amount?: string;
