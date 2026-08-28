@@ -35,7 +35,7 @@ describe('UndoToastService', () => {
   it('interpolates bare undo toast keys using resource label from API', () => {
     service.showWithUndo(
       'plans.undo.toast',
-      '/undo_deletion?undo_token=t',
+      '/undo_deletion',
       't',
       undefined,
       'My Plan'
