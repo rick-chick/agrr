@@ -13,6 +13,7 @@ use time::Date;
 
 use crate::agrr_daemon_debug_dump::copy_temp_file_to_debug;
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
+use crate::daemon_unavailable::agrr_daemon_error_message;
 use crate::daemon_response::parse_daemon_json_payload;
 use crate::daemon_temp_file::write_temp_json_path;
 
@@ -166,5 +167,5 @@ fn parse_allocate_result(raw: &Value) -> Result<Value, AllocationNoCandidatesErr
 }
 
 fn map_daemon_error(err: AgrrDaemonError) -> AllocationExecutionError {
-    AllocationExecutionError::new(err.to_string())
+    AllocationExecutionError::new(agrr_daemon_error_message(err))
 }

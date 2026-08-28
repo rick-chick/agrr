@@ -7,6 +7,7 @@ use time::Date;
 use std::path::Path;
 
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
+use crate::daemon_unavailable::map_agrr_daemon_error;
 use crate::daemon_response::{ensure_daemon_command_success, parse_daemon_json_payload};
 
 pub struct WeatherDaemonGateway {
@@ -98,7 +99,7 @@ fn resolve_weather_fetch_output(
 }
 
 fn map_daemon_err(error: AgrrDaemonError) -> Box<dyn std::error::Error + Send + Sync> {
-    Box::new(error)
+    map_agrr_daemon_error(error)
 }
 
 fn weather_payload_has_rows(payload: &Value) -> bool {

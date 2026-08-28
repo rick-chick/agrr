@@ -6,6 +6,7 @@ mod crop_ai_query_daemon_gateway;
 mod daemon_ai_query;
 mod agrr_daemon_debug_dump;
 mod daemon_client;
+mod daemon_unavailable;
 mod daemon_response;
 mod daemon_temp_file;
 mod fertilize_ai_query_daemon_gateway;
@@ -24,6 +25,10 @@ mod weather_daemon_gateway;
 
 pub use crop_ai_query_daemon_gateway::CropAiQueryDaemonGateway;
 pub use daemon_client::{AgrrDaemonClient, AgrrDaemonError};
+pub use daemon_unavailable::{
+    agrr_daemon_error_message, map_agrr_daemon_error, use_agrr_daemon_enabled, DaemonUnavailableError,
+    DAEMON_UNAVAILABLE_MESSAGE, is_daemon_unavailable_message,
+};
 pub use fertilize_ai_query_daemon_gateway::FertilizeAiQueryDaemonGateway;
 pub use fertilize_plan_daemon_gateway::CropFertilizePlanAiQueryDaemonGateway;
 pub use schedule_daemon_gateway::CropScheduleAiQueryDaemonGateway;
