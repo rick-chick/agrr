@@ -4286,8 +4286,18 @@ fn org_member_can_update_team_crop() {
     let crop_id = seed_org_scoped_crop(seed.organization_id, owner_id);
 
     let path = format!("/api/v1/masters/crops/{crop_id}");
+    let (get_status, get_body) =
+        status_and_body(client.get(&path, Some(&member_session), &empty_headers()));
+    assert_eq!(200, get_status, "{get_body}");
+    let crop_json: serde_json::Value =
+        serde_json::from_str(&get_body).expect("crop JSON");
+    let updated_at = crop_json["updated_at"].as_str().expect("updated_at");
+
     let payload = serde_json::json!({
-        "crop": { "name": format!("Updated Crop {suffix}") }
+        "crop": {
+            "name": format!("Updated Crop {suffix}"),
+            "updated_at": updated_at
+        }
     });
     let (status, body) = status_and_body(
         client.patch(&path, Some(&member_session), &empty_headers(), Some(payload)),
