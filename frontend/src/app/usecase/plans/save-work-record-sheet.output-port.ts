@@ -1,6 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import {
+  SaveWorkRecordSheetPhotoPartialFailureDto,
   SaveWorkRecordSheetSuccessDto,
   SaveWorkRecordSheetValidationErrorDto
 } from './save-work-record-sheet.dtos';
@@ -8,6 +9,7 @@ import {
 export interface SaveWorkRecordSheetOutputPort {
   onSuccess(dto: SaveWorkRecordSheetSuccessDto): void;
   onValidationError(dto: SaveWorkRecordSheetValidationErrorDto): void;
+  onPhotoPartialFailure(dto: SaveWorkRecordSheetPhotoPartialFailureDto): void;
   onError(dto: ErrorDto): void;
 }
 

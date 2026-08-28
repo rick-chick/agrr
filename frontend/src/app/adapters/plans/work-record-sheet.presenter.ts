@@ -13,6 +13,7 @@ import { LoadCropPesticideListOutputPort } from '../../usecase/pesticides/load-c
 import { DeleteWorkRecordOutputPort } from '../../usecase/plans/delete-work-record.output-port';
 import { DeleteWorkRecordSuccessDto } from '../../usecase/plans/delete-work-record.dtos';
 import {
+  SaveWorkRecordSheetPhotoPartialFailureDto,
   SaveWorkRecordSheetSuccessDto,
   SaveWorkRecordSheetValidationErrorDto
 } from '../../usecase/plans/save-work-record-sheet.dtos';
@@ -107,6 +108,18 @@ export class WorkRecordSheetPresenter
       submitting: false,
       fieldErrors: dto.fieldErrors,
       error: null
+    };
+  }
+
+  onPhotoPartialFailure(dto: SaveWorkRecordSheetPhotoPartialFailureDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      submitting: false,
+      fieldErrors: {},
+      error: null,
+      photoError: 'plans.work.sheet.photos.errors.partial_sync_failed',
+      pendingPhotoResyncWorkRecord: dto.workRecord
     };
   }
 

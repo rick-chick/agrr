@@ -143,6 +143,7 @@ const PLANS_WORK_KEYS = [
   'plans.work.sheet.photos.errors.limit_reached',
   'plans.work.sheet.photos.errors.invalid_type',
   'plans.work.sheet.photos.errors.upload_failed',
+  'plans.work.sheet.photos.errors.partial_sync_failed',
   'plans.work.errors.name_required',
   'plans.errors.invalid_id'
 ] as const;
