@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { mapFormToCreateRequest, mapFormToUpdateRequest } from './work-record-form.mapper';
 
 const baseForm = {
+  updated_at: '2026-06-12T00:00:00Z',
   name: '追肥',
   actual_date: '2026-06-12',
   amount: '1.5',
@@ -57,6 +58,7 @@ describe('work-record-form.mapper', () => {
   it('maps update request from form', () => {
     const body = mapFormToUpdateRequest(baseForm);
     expect(body).toEqual({
+      updated_at: '2026-06-12T00:00:00Z',
       name: '追肥',
       actual_date: '2026-06-12',
       amount: '1.5',
