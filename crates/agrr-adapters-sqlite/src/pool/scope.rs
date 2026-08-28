@@ -15,13 +15,17 @@ pub(crate) fn with_borrow<F, T>(f: F) -> rusqlite::Result<T>
 where
     F: FnOnce(&Connection) -> rusqlite::Result<T>,
 {
-    WRITE_SCOPE.with(|slot| {
-        let borrowed = slot.borrow();
-        let conn = borrowed
+    let conn_ptr = WRITE_SCOPE.with(|cell| {
+        cell.borrow()
             .as_ref()
-            .expect("write scope connection missing while scope is active");
-        f(conn)
-    })
+            .map(|conn| conn as *const Connection)
+            .expect("write scope connection missing while scope is active")
+    });
+    // SAFETY: `conn_ptr` points at the thread-local transaction connection, which
+    // outlives this call and is only used on the current thread while the write lock
+    // is held. Nested `with_write` calls reuse the same pointer without re-borrowing
+    // the `RefCell`, which would panic during reentrant plan-save persistence.
+    unsafe { f(&*conn_ptr) }
 }
 
 pub(crate) fn enter(conn: Connection) {

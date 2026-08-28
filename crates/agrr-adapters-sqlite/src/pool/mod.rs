@@ -125,6 +125,27 @@ impl SqlitePool {
         result
     }
 
+    /// Run `f` inside a single SQL transaction. Nested calls reuse the active transaction.
+    pub fn with_transaction_scope<F, T>(
+        &self,
+        f: F,
+    ) -> Result<T, Box<dyn std::error::Error + Send + Sync>>
+    where
+        F: FnOnce() -> Result<T, Box<dyn std::error::Error + Send + Sync>>,
+    {
+        self.with_write_transaction_scoped(f)
+    }
+
+    fn open_connection(&self) -> rusqlite::Result<Connection> {
+        let conn = Connection::open(self.database_path.as_str())?;
+        let ms = std::env::var("SQLITE_BUSY_TIMEOUT_MS")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(DEFAULT_BUSY_TIMEOUT_MS);
+        conn.busy_timeout(Duration::from_millis(ms))?;
+        Ok(conn)
+    }
+
     /// Map `with_read` to boxed errors; `QueryReturnedNoRows` becomes `RecordNotFoundError`.
     pub fn with_read_box<T, F>(&self, f: F) -> Result<T, Box<dyn std::error::Error + Send + Sync>>
     where
@@ -172,16 +193,6 @@ impl SqlitePool {
             Err(e) => Err(Box::new(e) as Box<dyn std::error::Error + Send + Sync>),
         }
     }
-
-    fn open_connection(&self) -> rusqlite::Result<Connection> {
-        let conn = Connection::open(self.database_path.as_str())?;
-        let ms = std::env::var("SQLITE_BUSY_TIMEOUT_MS")
-            .ok()
-            .and_then(|s| s.parse().ok())
-            .unwrap_or(DEFAULT_BUSY_TIMEOUT_MS);
-        conn.busy_timeout(Duration::from_millis(ms))?;
-        Ok(conn)
-    }
 }
 
 #[cfg(test)]
@@ -212,6 +223,38 @@ mod tests {
             Ok(())
         })
         .unwrap();
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn with_write_transaction_allows_nested_with_write_on_same_connection() {
+        let dir = std::env::temp_dir().join(format!(
+            "agrr_sqlite_pool_nested_{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("test.sqlite3");
+        let pool = SqlitePool::new(path.to_str().unwrap());
+        pool.with_write(|conn| {
+            conn.execute_batch("CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT NOT NULL)")?;
+            Ok(())
+        })
+        .unwrap();
+
+        pool.with_write_transaction(|conn| {
+            conn.execute("INSERT INTO t (name) VALUES ('outer')", [])?;
+            pool.with_write(|inner| {
+                inner.execute("INSERT INTO t (name) VALUES ('inner')", [])?;
+                Ok(())
+            })?;
+            Ok(())
+        })
+        .unwrap();
+
+        let count: i64 = pool
+            .with_read(|conn| conn.query_row("SELECT COUNT(*) FROM t", [], |row| row.get(0)))
+            .unwrap();
+        assert_eq!(count, 2);
         let _ = std::fs::remove_dir_all(dir);
     }
 
