@@ -3398,6 +3398,24 @@ fn delete_account_without_confirm_returns_422() {
 }
 
 #[test]
+fn delete_account_without_email_confirm_returns_422_for_email_user() {
+    let client = ContractClient::from_env();
+    let session_id = researcher_session_id(&client);
+    let (status, body) = status_and_body(client.delete_json(
+        "/api/v1/account",
+        Some(&session_id),
+        &empty_headers(),
+        serde_json::json!({ "confirm": true }),
+    ));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("delete JSON");
+    assert_eq!(
+        "Email confirmation required",
+        json["error"].as_str().unwrap()
+    );
+}
+
+#[test]
 fn delete_account_removes_access() {
     let client = ContractClient::from_env();
     let session_id = farmer_session_id(&client);
@@ -3406,7 +3424,10 @@ fn delete_account_removes_access() {
         "/api/v1/account",
         Some(&session_id),
         &empty_headers(),
-        serde_json::json!({ "confirm": true }),
+        serde_json::json!({
+            "confirm": true,
+            "email_confirm": "farmer@agrr.dev"
+        }),
     ));
     assert_eq!(200, delete_status, "{delete_body}");
 
