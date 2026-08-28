@@ -1,3 +1,7 @@
+@if (hasFatalError()) {
+  <app-error-fallback class="app-error-fallback-overlay" />
+}
+
 <a class="skip-link" href="#main-content">{{ 'a11y.skip_to_main' | translate }}</a>
 
 <app-i18n-bootstrap-error-banner />

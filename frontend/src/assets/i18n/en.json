@@ -4125,6 +4125,11 @@
       "title": "{{planLabel}} — Crop Plan | AGRR",
       "description": "Cultivation schedule for {{cropLabels}} ({{planYear}}, {{totalArea}} m²). Free crop plan by AGRR.",
       "og_description": "{{planLabel}} cultivation schedule ({{cropLabels}})"
+    },
+    "errorFallback": {
+      "title": "Something went wrong",
+      "message": "A temporary problem may have occurred. Please reload the page and try again.",
+      "reload": "Reload"
     }
   },
   "shared": {
