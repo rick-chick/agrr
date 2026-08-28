@@ -25,7 +25,7 @@ pub fn schedule_destroy(
     auto_hide_after: i64,
     extra_metadata: BTreeMap<String, Value>,
 ) -> Result<ScheduledUndo, Box<dyn std::error::Error + Send + Sync>> {
-    pool.with_write_box(|conn| {
+    pool.with_write_transaction_box(|conn| {
         let snapshot = build_snapshot(conn, resource_type, resource_id)?;
         let deferred_photo_keys = collect_deferred_photo_storage_keys(conn, resource_type, resource_id)?;
         let undo_token = new_uuid_v4();
