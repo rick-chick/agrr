@@ -154,7 +154,7 @@ describe('PlanListPresenter', () => {
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',
         toast_message: 'プラン Plan A を削除しました',
-        undo_path: '/undo_deletion?undo_token=token123',
+        undo_path: '/undo_deletion',
         undo_deadline: '2026-02-03T12:00:00Z',
         resource: 'Plan A',
         resource_dom_id: 'cultivation_plan_1',
@@ -221,7 +221,7 @@ describe('PlanListPresenter', () => {
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',
         toast_message: 'Deleted',
-        undo_path: '/undo_deletion?undo_token=token123'
+        undo_path: '/undo_deletion'
       };
 
       const dto: DeletePlanSuccessDto = {
