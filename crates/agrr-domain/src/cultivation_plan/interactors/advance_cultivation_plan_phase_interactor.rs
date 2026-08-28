@@ -54,6 +54,11 @@ where
             attrs.insert("optimization_phase_message".into(), message);
         }
 
+        let plan_before = self.cultivation_plan_gateway.find_by_id(input.plan_id)?;
+        if let Some(ref updated_at) = plan_before.updated_at {
+            attrs.insert("expected_updated_at".into(), updated_at.clone());
+        }
+
         let mut plan = self
             .cultivation_plan_gateway
             .update(input.plan_id, attrs)?;

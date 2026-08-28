@@ -30,5 +30,8 @@ pub fn apply<G: CultivationPlanGateway + ?Sized>(
 
     let mut attrs = HashMap::new();
     attrs.insert("status".into(), "completed".into());
+    if let Some(ref updated_at) = plan.updated_at {
+        attrs.insert("expected_updated_at".into(), updated_at.clone());
+    }
     gateway.update(plan_id, attrs)
 }
