@@ -1840,6 +1840,11 @@
         "field_row": "{{index}}. {{fieldName}} ({{cropCount}} खेती)",
         "cultivation_bar": "{{fieldName}} में {{cropName}} ({{startDate}} – {{endDate}})",
         "chart_summary": "खेती अनुसूची। {{fieldCount}} खेत, {{cultivationCount}} खेती"
+      },
+      "empty_state": {
+        "reload": "पुनः लोड करें",
+        "add_field": "खेत जोड़ें",
+        "register_crop": "फसल पंजीकृत करें"
       }
     },
     "field_climate": {
@@ -3773,9 +3778,9 @@
       },
       "section8": {
         "title": "8. गोपनीयता नीति में परिवर्तन",
+        "content": "सेवा आवश्यकतानुसार इस गोपनीयता नीति को बदल सकती है। संशोधित गोपनीयता नीति इस पृष्ठ पर पोस्ट होने पर प्रभावी होगी।",
         "content_html": "गोपनीयता नीति के संबंध में पूछताछ के लिए, कृपया {{contact_link}} के माध्यम से हमसे संपर्क करें।",
-        "contact_link_text": "संपर्क पृष्ठ",
-        "content": "सेवा आवश्यकतानुसार इस गोपनीयता नीति को बदल सकती है। संशोधित गोपनीयता नीति इस पृष्ठ पर पोस्ट होने पर प्रभावी होगी।"
+        "contact_link_text": "संपर्क पृष्ठ"
       },
       "last_updated": "अंतिम अद्यतन: 17 अक्टूबर 2025",
       "section9": {

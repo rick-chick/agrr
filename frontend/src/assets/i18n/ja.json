@@ -2316,6 +2316,11 @@
         "field_row": "{{index}}. {{fieldName}}（作付 {{cropCount}} 件）",
         "cultivation_bar": "{{fieldName}}の{{cropName}}（{{startDate}}〜{{endDate}}）",
         "chart_summary": "栽培スケジュール。{{fieldCount}} 圃場、{{cultivationCount}} 件の作付"
+      },
+      "empty_state": {
+        "reload": "再読み込み",
+        "add_field": "圃場を追加",
+        "register_crop": "作物を登録"
       }
     },
     "field_climate": {
@@ -4060,9 +4065,9 @@
       },
       "section8": {
         "title": "8. プライバシーポリシーの変更",
+        "content": "当サービスは、必要に応じて本プライバシーポリシーを変更することがあります。変更後のプライバシーポリシーは、本ページに掲載した時点で効力を生じます。",
         "content_html": "プライバシーポリシーに関するお問い合わせは、{{contact_link}}よりご連絡ください。",
-        "contact_link_text": "お問い合わせページ",
-        "content": "当サービスは、必要に応じて本プライバシーポリシーを変更することがあります。変更後のプライバシーポリシーは、本ページに掲載した時点で効力を生じます。"
+        "contact_link_text": "お問い合わせページ"
       },
       "last_updated": "最終更新日: 2025年10月17日",
       "section9": {
