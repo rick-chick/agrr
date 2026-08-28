@@ -1,10 +1,13 @@
 //! Parity: `test/integration/cultivation_plan/public_plan_save_test.rb`
 
 use super::plan_save_integration_fixture::{
-    count_private_plans, plan_save_integration_pool, seed_crop_stage_requirements_copy,
-    seed_plan_reuse, seed_task_schedule_copy, TEST_USER_ID,
+    count_private_plans, count_user_farms, plan_save_integration_pool,
+    seed_crop_stage_requirements_copy, seed_plan_reuse, seed_task_schedule_copy,
+    seed_task_schedule_invalid_gdd, TEST_USER_ID,
 };
 use super::plan_save_persistence::PublicPlanSavePersistenceSqliteAdapter;
+use super::cultivation_plan_gateway::CultivationPlanSqliteGateway;
+use agrr_domain::cultivation_plan::gateways::PublicPlanSaveTxnGateway;
 use agrr_domain::cultivation_plan::ports::PublicPlanSavePersistencePort;
 use rusqlite::params;
 
@@ -14,6 +17,18 @@ fn invoke_save(
 ) -> agrr_domain::cultivation_plan::dtos::PublicPlanSaveFromSessionOutput {
     let adapter = PublicPlanSavePersistenceSqliteAdapter::new(pool.clone());
     adapter.execute_save(workspace).unwrap()
+}
+
+fn invoke_save_in_transaction(
+    pool: &crate::pool::SqlitePool,
+    workspace: &agrr_domain::cultivation_plan::dtos::PublicPlanSaveWorkspace,
+) -> Result<
+    agrr_domain::cultivation_plan::dtos::PublicPlanSaveFromSessionOutput,
+    Box<dyn std::error::Error + Send + Sync>,
+> {
+    let txn_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let adapter = PublicPlanSavePersistenceSqliteAdapter::new(pool.clone());
+    txn_gateway.within_transaction(|| adapter.execute_save(workspace))
 }
 
 // Parity: test/integration/cultivation_plan/public_plan_save_test.rb — "reuses existing private plan when same public plan is saved twice"
@@ -175,4 +190,38 @@ fn plan_save_copies_crop_stage_temperature_and_thermal_requirements() {
         Ok(())
     })
     .unwrap();
+}
+
+// Mid-pipeline failure must roll back all writes when wrapped in PublicPlanSaveTxnGateway.
+#[test]
+fn plan_save_rolls_back_when_task_schedule_copy_fails() {
+    let pool = plan_save_integration_pool();
+    let seed = seed_task_schedule_invalid_gdd(&pool);
+    let farms_before = count_user_farms(&pool, TEST_USER_ID);
+    let crops_before: i64 = pool
+        .with_read(|conn| {
+            conn.query_row(
+                "SELECT COUNT(*) FROM crops WHERE user_id = ?1",
+                params![TEST_USER_ID],
+                |r| r.get(0),
+            )
+        })
+        .unwrap();
+    let plans_before = count_private_plans(&pool, TEST_USER_ID);
+
+    let result = invoke_save_in_transaction(&pool, &seed.workspace);
+    assert!(result.is_err(), "expected InvalidTaskScheduleItemError");
+
+    assert_eq!(farms_before, count_user_farms(&pool, TEST_USER_ID));
+    let crops_after: i64 = pool
+        .with_read(|conn| {
+            conn.query_row(
+                "SELECT COUNT(*) FROM crops WHERE user_id = ?1",
+                params![TEST_USER_ID],
+                |r| r.get(0),
+            )
+        })
+        .unwrap();
+    assert_eq!(crops_before, crops_after);
+    assert_eq!(plans_before, count_private_plans(&pool, TEST_USER_ID));
 }
