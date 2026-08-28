@@ -346,6 +346,16 @@ async fn transmit_plan_snapshot(
     transmit_message(socket, identifier, payload).await
 }
 
+async fn recv_broadcast_payload(rx: &mut broadcast::Receiver<String>) -> Option<String> {
+    loop {
+        match rx.recv().await {
+            Ok(body) => return Some(body),
+            Err(broadcast::error::RecvError::Lagged(_)) => continue,
+            Err(broadcast::error::RecvError::Closed) => return None,
+        }
+    }
+}
+
 async fn relay_subscription(
     socket: &mut WebSocket,
     identifier: &str,
@@ -369,9 +379,9 @@ async fn relay_subscription(
                     _ => {}
                 }
             }
-            payload = rx.recv() => {
+            payload = recv_broadcast_payload(&mut rx) => {
                 match payload {
-                    Ok(body) => {
+                    Some(body) => {
                         let message = json!({
                             "identifier": identifier,
                             "message": serde_json::from_str::<Value>(&body).unwrap_or(json!({}))
@@ -380,7 +390,7 @@ async fn relay_subscription(
                             return;
                         }
                     }
-                    Err(_) => return,
+                    None => return,
                 }
             }
         }
@@ -683,5 +693,45 @@ mod cable_snapshot_tests {
         assert_eq!(3, parsed["field"]["id"].as_i64().unwrap());
         assert_eq!("North", parsed["field"]["name"].as_str().unwrap());
         assert_eq!(42.0, parsed["total_area"].as_f64().unwrap());
+    }
+
+    #[tokio::test]
+    async fn broadcast_recv_continues_after_lag_and_receives_later_messages() {
+        let (tx, _) = broadcast::channel(64);
+        let mut rx = tx.subscribe();
+
+        for i in 0..100 {
+            tx.send(format!("msg{}", i)).expect("send");
+        }
+
+        let saw_lagged = loop {
+            match rx.recv().await {
+                Ok(_) => continue,
+                Err(broadcast::error::RecvError::Lagged(_)) => break true,
+                Err(broadcast::error::RecvError::Closed) => panic!("channel closed"),
+            }
+        };
+        assert!(saw_lagged, "expected lag after 100 messages on capacity-64 channel");
+
+        let body = recv_broadcast_payload(&mut rx)
+            .await
+            .expect("payload after lag");
+        let index = body
+            .strip_prefix("msg")
+            .expect("msg prefix")
+            .parse::<i32>()
+            .expect("numeric suffix");
+        assert!(
+            index >= 36,
+            "expected a recent post-lag message, got msg{index}"
+        );
+    }
+
+    #[tokio::test]
+    async fn broadcast_recv_returns_none_when_channel_closed() {
+        let (tx, _) = broadcast::channel(4);
+        let mut rx = tx.subscribe();
+        drop(tx);
+        assert_eq!(None, recv_broadcast_payload(&mut rx).await);
     }
 }
