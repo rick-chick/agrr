@@ -5,6 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { App } from './app';
 import { AuthService } from './services/auth.service';
+import { AppFatalErrorService } from './core/errors/app-fatal-error.service';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -55,5 +56,16 @@ describe('App', () => {
     const main = compiled.querySelector('main.app-main');
     expect(main?.id).toBe('main-content');
     expect(main?.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('should render error fallback overlay when a fatal error is recorded', () => {
+    TestBed.inject(AppFatalErrorService).setFatalError(new Error('boom'));
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('app-error-fallback.app-error-fallback-overlay')).toBeTruthy();
+    expect(compiled.querySelector('app-navbar')).toBeTruthy();
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });

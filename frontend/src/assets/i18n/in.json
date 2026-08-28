@@ -3874,6 +3874,11 @@
       "title": "{{planLabel}} — फसल योजना | AGRR",
       "description": "{{cropLabels}} की खेती अनुसूची ({{planYear}}, {{totalArea}} m²)। AGRR की मुफ्त फसल योजना।",
       "og_description": "{{planLabel}} की खेती अनुसूची ({{cropLabels}})"
+    },
+    "errorFallback": {
+      "title": "कुछ गलत हो गया",
+      "message": "एक अस्थायी समस्या हो सकती है। कृपया पृष्ठ को पुनः लोड करें और फिर से प्रयास करें।",
+      "reload": "पुनः लोड करें"
     }
   },
   "shared": {
