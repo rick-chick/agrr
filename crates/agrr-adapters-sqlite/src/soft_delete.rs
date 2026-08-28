@@ -45,7 +45,7 @@ pub fn schedule_soft_delete_json(
                 "undo_token": undo_token,
                 "undo_deadline": undo_deadline,
                 "toast_message": toast,
-                "undo_path": format!("/undo_deletion?undo_token={undo_token}"),
+                "undo_path": "/undo_deletion",
                 "auto_hide_after": meta_obj
                     .and_then(|m| m.get("auto_hide_after"))
                     .cloned()
@@ -123,10 +123,9 @@ mod tests {
             panic!("expected success");
         };
 
-        let undo_token = body["undo_token"].as_str().expect("undo_token");
         assert_eq!(
             body["undo_path"].as_str().expect("undo_path"),
-            format!("/undo_deletion?undo_token={undo_token}")
+            "/undo_deletion"
         );
         assert_eq!(body["toast_message"].as_str(), Some("toast"));
         assert_eq!(body["auto_hide_after"].as_i64(), Some(5000));

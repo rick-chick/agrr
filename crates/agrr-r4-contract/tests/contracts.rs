@@ -428,7 +428,7 @@ fn delete_work_record_returns_deletion_undo_payload() {
         .expect("undo_token must be a non-empty string");
     assert!(!undo_token.is_empty(), "{delete_body}");
     assert_eq!(
-        format!("/undo_deletion?undo_token={undo_token}"),
+        "/undo_deletion",
         undo["undo_path"].as_str().expect("undo_path")
     );
     assert!(
