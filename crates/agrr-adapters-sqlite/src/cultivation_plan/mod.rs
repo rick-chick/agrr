@@ -36,6 +36,8 @@ mod plan_save_session;
 mod plan_save_support;
 
 #[cfg(test)]
+mod cultivation_plan_initialize_integration_test;
+#[cfg(test)]
 mod task_schedule_generation_integration_test;
 #[cfg(test)]
 mod plan_save_integration_fixture;
