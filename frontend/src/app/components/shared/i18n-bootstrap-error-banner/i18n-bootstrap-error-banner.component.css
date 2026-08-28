@@ -1,0 +1,10 @@
+.i18n-bootstrap-error {
+  margin: var(--space-4) var(--space-5) 0;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.i18n-bootstrap-error__retry {
+  margin-top: var(--space-2);
+}
