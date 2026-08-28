@@ -31,6 +31,7 @@ pub mod weather_data;
 pub mod work_record;
 
 pub use api_keys::UserApiKeyRotationSqliteGateway;
+pub use api_keys::backfill_plaintext_api_keys;
 pub use backdoor::{
     ApplicationDatabaseClearSqliteGateway, BackdoorCreateUserAttrs, BackdoorCreateUserResult,
     BackdoorDbStatsCounts, BackdoorDiagnosticsSqliteGateway, BackdoorUpdateUserAttrs,
