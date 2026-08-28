@@ -4,6 +4,7 @@ import {
 } from '../../models/plans/work-record';
 
 export interface WorkRecordFormInput {
+  updated_at?: string;
   task_schedule_item_id: number | null;
   name: string;
   actual_date: string;
@@ -46,6 +47,7 @@ export function mapFormToCreateRequest(form: WorkRecordFormInput): WorkRecordCre
 
 export function mapFormToUpdateRequest(form: WorkRecordFormInput): WorkRecordUpdateRequest {
   return {
+    updated_at: form.updated_at ?? '',
     name: form.name,
     actual_date: form.actual_date,
     amount: form.amount || undefined,

@@ -10,6 +10,8 @@ mod cultivation_plan_snapshot_integration_test;
 #[cfg(test)]
 mod deletion_undo_gateway_integration_test;
 #[cfg(test)]
+mod schedule_destroy_transaction_integration_test;
+#[cfg(test)]
 mod work_record_photo_snapshot_integration_test;
 
 pub use deletion_undo_gateway::DeletionUndoSqliteGateway;
