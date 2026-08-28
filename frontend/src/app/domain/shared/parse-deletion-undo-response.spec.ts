@@ -3,7 +3,7 @@ import { parseDeletionUndoResponse } from './parse-deletion-undo-response';
 
 const sample = {
   undo_token: 'token-1',
-  undo_path: '/undo_deletion?undo_token=token-1',
+  undo_path: '/undo_deletion',
   toast_message: 'deleted'
 };
 
