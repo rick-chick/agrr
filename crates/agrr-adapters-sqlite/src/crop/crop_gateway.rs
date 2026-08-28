@@ -17,7 +17,7 @@ use agrr_domain::crop::entities::{
 use agrr_domain::crop::gateways::{CropGateway, SoftDeleteWithUndoOutcome};
 use agrr_domain::shared::attr::{AttrMap, AttrValue};
 use agrr_domain::shared::dtos::Error;
-use agrr_domain::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use agrr_domain::shared::exceptions::{RecordInvalidError, RecordNotFoundError, RecordStaleUpdateError};
 use agrr_domain::shared::user::User;
 use agrr_domain::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter;
 use rusqlite::params;
@@ -216,62 +216,96 @@ impl CropGateway for CropSqliteGateway {
         crop_id: i64,
         attrs: AttrMap,
     ) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> {
-        if !attrs.is_empty() {
-            self.pool.with_write_box(|conn| {
-                if let Some(name) = attrs.get("name").and_then(|v| match v {
-                    AttrValue::Str(s) => Some(s.as_str()),
-                    _ => None,
-                }) {
-                    conn.execute(
-                        "UPDATE crops SET name = ?1, updated_at = datetime('now') WHERE id = ?2",
-                        params![name, crop_id],
-                    )?;
-                }
-                if let Some(variety) = attrs.get("variety") {
-                    let v = match variety {
-                        AttrValue::Str(s) => Some(s.as_str()),
-                        AttrValue::Null => None,
-                        _ => None,
-                    };
-                    conn.execute(
-                        "UPDATE crops SET variety = ?1, updated_at = datetime('now') WHERE id = ?2",
-                        params![v, crop_id],
-                    )?;
-                }
-                if let Some(v) = attrs.get("area_per_unit").and_then(attr_as_f64) {
-                    conn.execute(
-                        "UPDATE crops SET area_per_unit = ?1, updated_at = datetime('now') WHERE id = ?2",
-                        params![v, crop_id],
-                    )?;
-                }
-                if let Some(v) = attrs.get("revenue_per_area").and_then(attr_as_f64) {
-                    conn.execute(
-                        "UPDATE crops SET revenue_per_area = ?1, updated_at = datetime('now') WHERE id = ?2",
-                        params![v, crop_id],
-                    )?;
-                }
-                if let Some(region) = attrs.get("region").and_then(|v| match v {
-                    AttrValue::Str(s) => Some(s.as_str()),
-                    _ => None,
-                }) {
-                    conn.execute(
-                        "UPDATE crops SET region = ?1, updated_at = datetime('now') WHERE id = ?2",
-                        params![region, crop_id],
-                    )?;
-                }
-                if let Some(groups) = attrs.get("groups").and_then(|v| match v {
-                    AttrValue::Str(s) => Some(s.as_str()),
-                    _ => None,
-                }) {
-                    conn.execute(
-                        "UPDATE crops SET groups = ?1, updated_at = datetime('now') WHERE id = ?2",
-                        params![groups, crop_id],
-                    )?;
-                }
-                Ok(())
-            })?;
+        if attrs.is_empty() {
+            return self.find_by_id(crop_id);
         }
-        self.find_by_id(crop_id)
+
+        let expected_updated_at = attrs
+            .get("expected_updated_at")
+            .and_then(|v| match v {
+                AttrValue::Str(s) => Some(s.as_str()),
+                _ => None,
+            })
+            .ok_or(RecordStaleUpdateError)?;
+
+        self.pool.with_write(|conn| -> rusqlite::Result<bool> {
+            let mut sets = vec!["updated_at = datetime('now')".to_string()];
+            let mut values: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
+
+            if let Some(name) = attrs.get("name").and_then(|v| match v {
+                AttrValue::Str(s) => Some(s.as_str()),
+                _ => None,
+            }) {
+                sets.push(format!("name = ?{}", values.len() + 1));
+                values.push(Box::new(name.to_string()));
+            }
+            if attrs.contains_key("variety") {
+                let variety = attrs.get("variety").and_then(|v| match v {
+                    AttrValue::Str(s) => Some(s.as_str()),
+                    AttrValue::Null => None,
+                    _ => None,
+                });
+                sets.push(format!("variety = ?{}", values.len() + 1));
+                values.push(Box::new(variety.map(str::to_string)));
+            }
+            if let Some(v) = attrs.get("area_per_unit").and_then(attr_as_f64) {
+                sets.push(format!("area_per_unit = ?{}", values.len() + 1));
+                values.push(Box::new(v));
+            }
+            if let Some(v) = attrs.get("revenue_per_area").and_then(attr_as_f64) {
+                sets.push(format!("revenue_per_area = ?{}", values.len() + 1));
+                values.push(Box::new(v));
+            }
+            if let Some(region) = attrs.get("region").and_then(|v| match v {
+                AttrValue::Str(s) => Some(s.as_str()),
+                _ => None,
+            }) {
+                sets.push(format!("region = ?{}", values.len() + 1));
+                values.push(Box::new(region.to_string()));
+            }
+            if let Some(groups) = attrs.get("groups").and_then(|v| match v {
+                AttrValue::Str(s) => Some(s.as_str()),
+                _ => None,
+            }) {
+                sets.push(format!("groups = ?{}", values.len() + 1));
+                values.push(Box::new(groups.to_string()));
+            }
+
+            if sets.len() == 1 {
+                return Ok(false);
+            }
+
+            let sql = format!(
+                "UPDATE crops SET {} WHERE id = ?{} AND updated_at = ?{}",
+                sets.join(", "),
+                values.len() + 1,
+                values.len() + 2,
+            );
+            values.push(Box::new(crop_id));
+            values.push(Box::new(expected_updated_at.to_string()));
+            let params: Vec<&dyn rusqlite::types::ToSql> =
+                values.iter().map(|v| v.as_ref()).collect();
+            let affected = conn.execute(&sql, params.as_slice())?;
+            Ok(affected > 0)
+        })
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+        .and_then(|updated| {
+            if updated {
+                return self.find_by_id(crop_id);
+            }
+            let exists = self.pool.with_read(|conn| {
+                conn.query_row(
+                    "SELECT 1 FROM crops WHERE id = ?1 LIMIT 1",
+                    params![crop_id],
+                    |_| Ok(true),
+                )
+            }).is_ok();
+            if exists {
+                Err(RecordStaleUpdateError.into())
+            } else {
+                Err(RecordNotFoundError.into())
+            }
+        })
     }
 
     fn find_delete_usage(
