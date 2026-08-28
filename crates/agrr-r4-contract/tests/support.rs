@@ -1583,6 +1583,13 @@ pub fn scheduler_auth_headers() -> HashMap<String, String> {
 
 /// Seeds a public cultivation plan for cable OptimizationChannel tests.
 pub fn seed_public_cultivation_plan(user_id: i64) -> i64 {
+    seed_public_cultivation_plan_with_session(user_id, None)
+}
+
+pub fn seed_public_cultivation_plan_with_session(
+    user_id: i64,
+    session_id: Option<&str>,
+) -> i64 {
     let path =
         std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
     let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
@@ -1598,9 +1605,9 @@ pub fn seed_public_cultivation_plan(user_id: i64) -> i64 {
     let plan_name = format!("Contract Public Cable Plan {suffix}");
     conn.execute(
         "INSERT INTO cultivation_plans (
-           farm_id, user_id, total_area, plan_type, plan_name, status, created_at, updated_at
-         ) VALUES (?1, ?2, 10.0, 'public', ?3, 'pending', datetime('now'), datetime('now'))",
-        params![farm_id, user_id, plan_name],
+           farm_id, user_id, total_area, plan_type, plan_name, status, session_id, created_at, updated_at
+         ) VALUES (?1, ?2, 10.0, 'public', ?3, 'pending', ?4, datetime('now'), datetime('now'))",
+        params![farm_id, user_id, plan_name, session_id],
     )
     .expect("insert public plan");
     conn.last_insert_rowid()

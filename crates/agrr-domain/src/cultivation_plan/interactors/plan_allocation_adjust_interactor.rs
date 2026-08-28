@@ -22,6 +22,7 @@ use crate::field_cultivation::errors::{
 };
 use crate::field_cultivation::ports::FieldCultivationSyncInputPort;
 use crate::shared::exceptions::RecordNotFoundError;
+use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::{ClockPort, LoggerPort, TranslatorPort};
 use crate::weather_data::dtos::WeatherLocation;
 use crate::weather_data::mappers::AdjustHistoricalPredictionMapper;
@@ -103,8 +104,14 @@ where
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(auth) = auth {
             let plan = self.plan_gateway.find_by_id(plan_id)?;
-            if rest_plan_access::access_denied(&plan, auth) {
-                return Err(Box::new(RecordNotFoundError));
+            match rest_plan_access::evaluate(&plan, auth) {
+                rest_plan_access::RestPlanAccessResult::Forbidden => {
+                    return Err(Box::new(PolicyPermissionDenied));
+                }
+                rest_plan_access::RestPlanAccessResult::NotFound => {
+                    return Err(Box::new(RecordNotFoundError));
+                }
+                rest_plan_access::RestPlanAccessResult::Allowed => {}
             }
         }
 
@@ -141,6 +148,16 @@ where
     fn pass_rest_adjust_preflight(&mut self, input: &PlanAllocationAdjustInput) -> bool {
         match self.load_adjust_read_context(input.plan_id, input.auth.as_ref()) {
             Ok(()) => {}
+            Err(err) if err.downcast_ref::<PolicyPermissionDenied>().is_some() => {
+                self.emit_failure(PlanAllocationAdjustFailure {
+                    kind: PlanAllocationAdjustFailure::KIND_FORBIDDEN.into(),
+                    message: self.translator.translate(
+                        "api.errors.common.forbidden",
+                        &crate::shared::ports::translator_port::TranslateOptions::new(),
+                    ),
+                });
+                return false;
+            }
             Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
                 self.emit_failure(PlanAllocationAdjustFailure {
                     kind: PlanAllocationAdjustFailure::KIND_NOT_FOUND.into(),

@@ -60,6 +60,10 @@ where
             Err(err) => return Err(err),
         };
 
+        if rest_plan_access::evaluate(&plan, auth) == rest_plan_access::RestPlanAccessResult::Forbidden {
+            self.output.on_forbidden();
+            return Ok(());
+        }
         if rest_plan_access::access_denied(&plan, auth) {
             self.output.on_not_found();
             return Ok(());

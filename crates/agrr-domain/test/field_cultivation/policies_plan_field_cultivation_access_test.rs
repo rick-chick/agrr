@@ -3,11 +3,11 @@
     use crate::field_cultivation::dtos::FieldCultivationPlanAccessSnapshot;
 
     fn public_snapshot(fc_id: i64) -> FieldCultivationPlanAccessSnapshot {
-        FieldCultivationPlanAccessSnapshot::new(fc_id, true, false, None)
+        FieldCultivationPlanAccessSnapshot::new(fc_id, true, false, None, None)
     }
 
     fn private_snapshot(fc_id: i64, plan_user_id: i64) -> FieldCultivationPlanAccessSnapshot {
-        FieldCultivationPlanAccessSnapshot::new(fc_id, false, true, Some(plan_user_id))
+        FieldCultivationPlanAccessSnapshot::new(fc_id, false, true, Some(plan_user_id), None)
     }
 
     #[test]

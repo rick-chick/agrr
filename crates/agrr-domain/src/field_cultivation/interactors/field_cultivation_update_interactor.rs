@@ -8,7 +8,7 @@ use crate::field_cultivation::dtos::{
 };
 use crate::field_cultivation::gateways::FieldCultivationGateway;
 use crate::field_cultivation::interactors::plan_field_cultivation_authorization::{
-    assert_field_cultivation_plan_access, assert_public_field_cultivation_plan_access,
+    assert_field_cultivation_plan_access, assert_public_field_cultivation_mutation_access,
 };
 use crate::field_cultivation::ports::{
     FieldCultivationApiUpdateOutputPort, FieldCultivationUpdateFailure,
@@ -84,15 +84,18 @@ where
                 }
                 return Err(err);
             }
-        } else if let Err(err) =
-            assert_public_field_cultivation_plan_access(&plan_access_snapshot)
-        {
-            if err.downcast_ref::<PolicyPermissionDenied>().is_some() {
-                self.output_port
-                    .on_failure(FieldCultivationUpdateFailure::Message(Error::new("Forbidden")));
-                return Ok(());
+        } else if input.public_plan() {
+            if let Err(err) = assert_public_field_cultivation_mutation_access(
+                &plan_access_snapshot,
+                input.public_session_id.as_deref(),
+            ) {
+                if err.downcast_ref::<PolicyPermissionDenied>().is_some() {
+                    self.output_port
+                        .on_failure(FieldCultivationUpdateFailure::Message(Error::new("Forbidden")));
+                    return Ok(());
+                }
+                return Err(err);
             }
-            return Err(err);
         }
 
         let cultivation_days = if input.public_plan() {

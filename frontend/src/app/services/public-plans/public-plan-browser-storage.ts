@@ -1,4 +1,5 @@
 export const PUBLIC_PLAN_STATE_STORAGE_KEY = 'agrr_public_plan_state';
+export const PUBLIC_PLAN_SESSION_TOKEN_STORAGE_KEY = 'agrr_public_plan_session_token';
 export const PENDING_PUBLIC_PLAN_SAVE_STORAGE_KEY = 'agrr_pending_public_plan_save';
 
 export type BrowserStorageWriteResult =

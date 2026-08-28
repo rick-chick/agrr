@@ -11,6 +11,7 @@ const createPublicPlanSessionMock = (
 ): PublicPlanSessionPort => ({
   setPlanId: vi.fn(),
   reset: vi.fn(),
+  ensureSessionToken: () => 'test-session-token',
   ...overrides
 });
 

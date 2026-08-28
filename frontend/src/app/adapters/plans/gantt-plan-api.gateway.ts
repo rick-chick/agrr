@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -27,12 +27,33 @@ import {
   GanttRemoveCultivationHttpResponse,
   GanttRemoveFieldHttpResponse
 } from './gantt-plan-http.types';
+import {
+  PUBLIC_PLAN_SESSION_PORT,
+  PublicPlanSessionPort
+} from '../../usecase/public-plans/public-plan-session.port';
+import { publicPlanSessionHeaders } from '../public-plans/public-plan-session-headers';
+
+type ApiRequestOptions = {
+  headers?: { [header: string]: string | string[] };
+};
 
 const DEMO_NOT_SUPPORTED = 'demo plan type is not supported by API gateway';
 
 @Injectable()
 export class GanttPlanApiGateway implements GanttPlanGateway {
-  constructor(private readonly apiClient: ApiService) {}
+  constructor(
+    private readonly apiClient: ApiService,
+    @Inject(PUBLIC_PLAN_SESSION_PORT) private readonly publicPlanSession: PublicPlanSessionPort
+  ) {}
+
+  private publicMutationOptions(planType: CultivationPlanContextType): ApiRequestOptions | undefined {
+    if (planType !== 'public') {
+      return undefined;
+    }
+    return {
+      headers: publicPlanSessionHeaders(this.publicPlanSession.ensureSessionToken())
+    };
+  }
 
   loadPlanData(
     planType: CultivationPlanContextType,
@@ -70,7 +91,11 @@ export class GanttPlanApiGateway implements GanttPlanGateway {
       return of(ganttMutationCommandFailure());
     }
 
-    return this.apiClient.post<GanttAdjustPlanHttpResponse>(endpoint, { moves: input.moves }).pipe(
+    return this.apiClient.post<GanttAdjustPlanHttpResponse>(
+      endpoint,
+      { moves: input.moves },
+      this.publicMutationOptions(input.planType) ?? {}
+    ).pipe(
       map((response) =>
         response.success
           ? ganttMutationCommandSuccess()
@@ -103,7 +128,11 @@ export class GanttPlanApiGateway implements GanttPlanGateway {
 
     const moves = [buildGanttAdjustMove(input.cultivationId, input.toFieldId, input.newStartDate)];
 
-    return this.apiClient.post<GanttAdjustPlanHttpResponse>(endpoint, { moves }).pipe(
+    return this.apiClient.post<GanttAdjustPlanHttpResponse>(
+      endpoint,
+      { moves },
+      this.publicMutationOptions(input.planType) ?? {}
+    ).pipe(
       map((response) =>
         response.success
           ? ganttMutationCommandSuccess()
@@ -128,7 +157,11 @@ export class GanttPlanApiGateway implements GanttPlanGateway {
       return of(ganttMutationCommandFailure());
     }
 
-    return this.apiClient.post<GanttAddCropHttpResponse>(endpoint, payload).pipe(
+    return this.apiClient.post<GanttAddCropHttpResponse>(
+      endpoint,
+      payload,
+      this.publicMutationOptions(planType) ?? {}
+    ).pipe(
       map((response) =>
         response.success
           ? ganttMutationCommandSuccess()
@@ -154,9 +187,13 @@ export class GanttPlanApiGateway implements GanttPlanGateway {
     }
 
     return this.apiClient
-      .post<GanttRemoveCultivationHttpResponse>(endpoint, {
-        moves: [{ allocation_id: cultivationId, action: 'remove' }]
-      })
+      .post<GanttRemoveCultivationHttpResponse>(
+        endpoint,
+        {
+          moves: [{ allocation_id: cultivationId, action: 'remove' }]
+        },
+        this.publicMutationOptions(planType) ?? {}
+      )
       .pipe(
         map((response) =>
           response.success
@@ -182,7 +219,11 @@ export class GanttPlanApiGateway implements GanttPlanGateway {
       return of(ganttMutationCommandFailure());
     }
 
-    return this.apiClient.post<GanttAddFieldHttpResponse>(endpoint, payload).pipe(
+    return this.apiClient.post<GanttAddFieldHttpResponse>(
+      endpoint,
+      payload,
+      this.publicMutationOptions(planType) ?? {}
+    ).pipe(
       map((response) =>
         response.success
           ? ganttMutationCommandSuccess()
@@ -212,7 +253,10 @@ export class GanttPlanApiGateway implements GanttPlanGateway {
       return of(ganttMutationCommandFailure());
     }
 
-    return this.apiClient.delete<GanttRemoveFieldHttpResponse>(endpoint).pipe(
+    return this.apiClient.delete<GanttRemoveFieldHttpResponse>(
+      endpoint,
+      this.publicMutationOptions(planType) ?? {}
+    ).pipe(
       map((response) =>
         response.success
           ? ganttMutationCommandSuccess()

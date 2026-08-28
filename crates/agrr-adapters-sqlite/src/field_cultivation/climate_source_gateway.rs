@@ -159,6 +159,7 @@ struct FieldCultivationClimateRow {
     plan_type_public: bool,
     plan_type_private: bool,
     plan_user_id: Option<i64>,
+    plan_session_id: Option<String>,
     field_name: String,
     crop_name: String,
     start_date: Option<time::Date>,
@@ -187,6 +188,7 @@ impl FieldCultivationClimateRow {
             self.plan_type_public,
             self.plan_type_private,
             self.plan_user_id,
+            self.plan_session_id.clone(),
         )
     }
 
@@ -239,6 +241,7 @@ fn load_field_cultivation_row(
           fc.id AS fc_id,
           cp.plan_type AS plan_type,
           cp.user_id AS plan_user_id,
+          cp.session_id AS plan_session_id,
           cpf.name AS field_name,
           cpc.name AS crop_name,
           cpc.variety AS crop_variety,
@@ -275,6 +278,7 @@ fn load_field_cultivation_row(
     let plan_type: String = row.get("plan_type")?;
     let plan_type_public = plan_type == "public";
     let plan_type_private = plan_type == "private";
+    let plan_session_id: Option<String> = row.get("plan_session_id")?;
 
     let crop_name = crop_display_name(
         row.get::<_, String>("crop_name")?,
@@ -292,6 +296,7 @@ fn load_field_cultivation_row(
         plan_type_public,
         plan_type_private,
         plan_user_id: row.get("plan_user_id")?,
+        plan_session_id,
         field_name: row.get("field_name")?,
         crop_name,
         start_date: parse_optional_date(row.get::<_, Option<String>>("start_date")?),

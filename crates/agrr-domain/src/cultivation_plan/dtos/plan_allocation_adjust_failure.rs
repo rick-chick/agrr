@@ -15,5 +15,6 @@ impl PlanAllocationAdjustFailure {
     pub const KIND_RESULT_EMPTY: &'static str = "result_empty";
     pub const KIND_CROP_MISSING_GROWTH_STAGES: &'static str = "crop_missing_growth_stages";
     pub const KIND_NOT_FOUND: &'static str = "not_found";
+    pub const KIND_FORBIDDEN: &'static str = "forbidden";
     pub const KIND_UNEXPECTED: &'static str = "unexpected";
 }

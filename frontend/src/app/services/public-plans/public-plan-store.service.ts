@@ -6,6 +6,7 @@ import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
 import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default-public-plan-farm-size';
 import { PublicPlanSessionPort } from '../../usecase/public-plans/public-plan-session.port';
 import {
+  PUBLIC_PLAN_SESSION_TOKEN_STORAGE_KEY,
   PUBLIC_PLAN_STATE_STORAGE_KEY,
   readBrowserStorageItem,
   removeBrowserStorageItem,
@@ -78,7 +79,24 @@ export class PublicPlanStore implements PublicPlanSessionPort {
   reset(): void {
     this.updateState(INITIAL_STATE);
     removeBrowserStorageItem(PUBLIC_PLAN_STATE_STORAGE_KEY);
+    removeBrowserStorageItem(PUBLIC_PLAN_SESSION_TOKEN_STORAGE_KEY);
     this.persistFailed = false;
+  }
+
+  ensureSessionToken(): string {
+    const existing = readBrowserStorageItem(PUBLIC_PLAN_SESSION_TOKEN_STORAGE_KEY);
+    if (existing && existing.length > 0) {
+      return existing;
+    }
+    const token = this.generateSessionToken();
+    writeBrowserStorageItem(PUBLIC_PLAN_SESSION_TOKEN_STORAGE_KEY, token);
+    return token;
+  }
+
+  private generateSessionToken(): string {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
 
   /** E2E シード等で storage が後から入ったとき、farm 未設定なら再読込する */

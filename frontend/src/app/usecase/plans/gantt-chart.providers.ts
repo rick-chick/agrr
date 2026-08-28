@@ -2,6 +2,8 @@ import { Provider } from '@angular/core';
 import { GanttPlanApiGateway } from '../../adapters/plans/gantt-plan-api.gateway';
 import { DemoGanttPlanGateway } from '../../adapters/plans/demo-gantt-plan.gateway';
 import { GanttChartPresenter } from '../../adapters/plans/gantt-chart.presenter';
+import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { PUBLIC_PLAN_SESSION_PORT } from '../public-plans/public-plan-session.port';
 import { GANTT_PLAN_GATEWAY } from './gantt-plan-gateway';
 import { LOAD_GANTT_PLAN_DATA_OUTPUT_PORT } from './load-gantt-plan-data.output-port';
 import { LoadGanttPlanDataUseCase } from './load-gantt-plan-data.usecase';
@@ -18,6 +20,8 @@ export const GANTT_CHART_SHARED_PROVIDERS: readonly Provider[] = [
 
 export const GANTT_CHART_API_PROVIDERS: readonly Provider[] = [
   ...GANTT_CHART_SHARED_PROVIDERS,
+  PublicPlanStore,
+  { provide: PUBLIC_PLAN_SESSION_PORT, useExisting: PublicPlanStore },
   GanttPlanApiGateway,
   { provide: GANTT_PLAN_GATEWAY, useClass: GanttPlanApiGateway }
 ];

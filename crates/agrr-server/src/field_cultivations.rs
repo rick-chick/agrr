@@ -1,5 +1,6 @@
 //! `GET /api/v1/plans/field_cultivations/{id}` — private plan field cultivation show (P6).
 
+use crate::public_plan_session::extract_public_plan_session;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{FieldCultivationClimateSourceSqliteGateway, UserLookupSqliteGateway};
@@ -16,6 +17,7 @@ use agrr_domain::field_cultivation::ports::{
 };
 use axum::{
     extract::{Path, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -152,6 +154,7 @@ struct UpdatePresenter {
 enum UpdateOutcome {
     Success(serde_json::Value),
     NotFound(String),
+    Forbidden,
     Invalid(Vec<String>),
 }
 
@@ -169,6 +172,9 @@ impl FieldCultivationApiUpdateOutputPort for UpdatePresenter {
 
     fn on_failure(&mut self, failure: FieldCultivationUpdateFailure) {
         self.body = match failure {
+            FieldCultivationUpdateFailure::Message(err) if err.message == "Forbidden" => {
+                Some(UpdateOutcome::Forbidden)
+            }
             FieldCultivationUpdateFailure::Message(err) => Some(UpdateOutcome::NotFound(err.message)),
             FieldCultivationUpdateFailure::RecordInvalid(invalid) => {
                 Some(UpdateOutcome::Invalid(invalid.flatten_error_messages()))
@@ -185,6 +191,10 @@ fn map_update_outcome(
         Some(UpdateOutcome::NotFound(msg)) => Err((
             axum::http::StatusCode::NOT_FOUND,
             Json(serde_json::json!({"error": msg})),
+        )),
+        Some(UpdateOutcome::Forbidden) => Err((
+            axum::http::StatusCode::FORBIDDEN,
+            Json(serde_json::json!({"success": false, "message": "forbidden"})),
         )),
         Some(UpdateOutcome::Invalid(errors)) => Err((
             axum::http::StatusCode::UNPROCESSABLE_ENTITY,
@@ -229,6 +239,7 @@ async fn update_field_cultivation(
         start_date: body.field_cultivation.start_date,
         completion_date: body.field_cultivation.completion_date,
         public_plan: false,
+        public_session_id: None,
     };
     interactor.call(input).map_err(|_| {
         (
@@ -283,6 +294,8 @@ async fn show_public_field_cultivation(
 
 async fn update_public_field_cultivation(
     State(state): State<AppState>,
+    headers: HeaderMap,
+    jar: CookieJar,
     Path(id): Path<i64>,
     Json(body): Json<UpdateFieldCultivationBody>,
 ) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
@@ -301,6 +314,7 @@ async fn update_public_field_cultivation(
         start_date: body.field_cultivation.start_date,
         completion_date: body.field_cultivation.completion_date,
         public_plan: true,
+        public_session_id: extract_public_plan_session(&headers, &jar),
     };
     interactor.call(input).map_err(|_| {
         (
