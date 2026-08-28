@@ -6,6 +6,7 @@ import { resolveFarmIdWhenUserAtLimit } from './ensure-e2e-baseline-lib.mjs';
 import {
   createPlaywrightTransport,
   ensurePlanCreateReadiness,
+  pickFarmIdWithCompletedWeather,
 } from './ensure-plan-create-ready-baseline-lib.mjs';
 import {
   E2E_BASELINE_PREFIX,
@@ -106,6 +107,12 @@ async function ensureMasterSegment(
   console.warn(
     `[ensureE2eBaseline] POST ${config.segment} failed (${status}): ${text.slice(0, 200)}`,
   );
+  if (config.segment === 'farms') {
+    const completedFarmId = pickFarmIdWithCompletedWeather(rows);
+    if (completedFarmId != null) {
+      return completedFarmId;
+    }
+  }
   return firstIdFromList(rows);
 }
 

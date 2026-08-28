@@ -21,12 +21,9 @@ SET weather_data_status = 'completed',
     END,
     weather_data_last_error = NULL,
     updated_at = datetime('now')
-WHERE id = (
-  SELECT id FROM farms
-  WHERE user_id = 1 AND is_reference = 0
-  ORDER BY id
-  LIMIT 1
-);
+WHERE user_id = (
+  SELECT id FROM users WHERE email = 'developer@agrr.dev' LIMIT 1
+) AND is_reference = 0;
 SQL
 
 run_sqlite() {
