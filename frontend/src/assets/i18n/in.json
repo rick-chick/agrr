@@ -902,7 +902,9 @@
         "daily_fixed_cost_placeholder": "उदाहरण: 5000",
         "submit_update": "अपडेट करें",
         "submit_create": "खेत क्षेत्र बनाएं"
-      }
+      },
+      "weather_refetch": "मौसम डेटा पुनः प्राप्त करें",
+      "weather_poll_timeout": "मौसम डेटा प्राप्ति समय पर पूरी नहीं हुई। कृपया पुनः प्रयास करें।"
     },
     "card": {
       "latitude": "अक्षांश",

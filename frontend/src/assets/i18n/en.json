@@ -3498,7 +3498,9 @@
         "daily_fixed_cost_placeholder": "e.g., 5000",
         "submit_update": "Update",
         "submit_create": "Create Field"
-      }
+      },
+      "weather_refetch": "Retry weather data fetch",
+      "weather_poll_timeout": "Weather data fetch did not complete in time. Please try again."
     },
     "card": {
       "latitude": "Latitude",
