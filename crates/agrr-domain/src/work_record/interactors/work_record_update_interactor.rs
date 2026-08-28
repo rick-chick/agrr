@@ -5,11 +5,12 @@ use std::collections::BTreeMap;
 use serde_json::Value;
 
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
-use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError, RecordStaleUpdateError};
 use crate::shared::gateways::UserOrganizationScopeGateway;
 use crate::shared::org_scope::member_organization_ids;
 use crate::shared::ports::ClockPort;
 use crate::shared::validation::{from_errors, ErrorsInput};
+use crate::work_record::dtos::work_record_create_input::record_invalid_field;
 use crate::work_record::dtos::WorkRecordUpdateInput;
 use crate::work_record::gateways::{
     WorkRecordClimatePersistFields, WorkRecordClimateSnapshotGateway, WorkRecordGateway,
@@ -67,6 +68,13 @@ where
         }
 
         let input = WorkRecordUpdateInput::from_params(params, self.clock)?;
+        if input.expected_updated_at.is_none() {
+            return Err(record_invalid_field(
+                "updated_at",
+                "activerecord.errors.models.work_record.attributes.updated_at.blank",
+            )
+            .into());
+        }
         let existing = self.gateway.find_for_plan(plan_id, record_id)?;
         let climate = if input.actual_date.is_some_and(|d| d != existing.actual_date) {
             existing.field_cultivation_id.and_then(|fc_id| {
@@ -110,6 +118,10 @@ where
             }
             Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
                 self.output_port.on_not_found();
+                Ok(())
+            }
+            Err(err) if err.downcast_ref::<RecordStaleUpdateError>().is_some() => {
+                self.output_port.on_stale_update();
                 Ok(())
             }
             Err(err) => Err(err),

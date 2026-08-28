@@ -279,6 +279,7 @@ fn post_and_patch_work_records_persist_fertilize_and_pesticide_ids() {
         serde_json::from_str(&create_body).expect("create work_record JSON");
     let record = &create_json["work_record"];
     let record_id = record["id"].as_i64().expect("record id");
+    let updated_at = record["updated_at"].as_str().expect("updated_at");
     assert_eq!(fertilize_id, record["fertilize_id"].as_i64().unwrap());
     assert_eq!(pesticide_id, record["pesticide_id"].as_i64().unwrap());
 
@@ -289,6 +290,7 @@ fn post_and_patch_work_records_persist_fertilize_and_pesticide_ids() {
         &empty_headers(),
         Some(serde_json::json!({
             "work_record": {
+                "updated_at": updated_at,
                 "fertilize_id": null,
                 "pesticide_id": pesticide_id
             }
@@ -300,6 +302,48 @@ fn post_and_patch_work_records_persist_fertilize_and_pesticide_ids() {
     let patched = &patch_json["work_record"];
     assert!(patched["fertilize_id"].is_null());
     assert_eq!(pesticide_id, patched["pesticide_id"].as_i64().unwrap());
+}
+
+#[test]
+fn patch_work_record_stale_updated_at_returns_409() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let create_path = format!("/api/v1/plans/{}/work_records", seed.plan_id);
+    let (create_status, create_body) = status_and_body(client.post(
+        &create_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "name": "競合テスト",
+                "actual_date": "2026-06-12"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create work_record JSON");
+    let record_id = create_json["work_record"]["id"].as_i64().expect("record id");
+
+    let patch_path = format!("/api/v1/plans/{}/work_records/{}", seed.plan_id, record_id);
+    let (patch_status, patch_body) = status_and_body(client.patch(
+        &patch_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "updated_at": "2000-01-01T00:00:00Z",
+                "notes": "stale"
+            }
+        })),
+    ));
+    assert_eq!(409, patch_status, "{patch_body}");
+    let patch_json: serde_json::Value =
+        serde_json::from_str(&patch_body).expect("stale patch JSON");
+    assert_eq!("stale_record", patch_json["error"].as_str().unwrap());
 }
 
 #[test]

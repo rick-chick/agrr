@@ -45,4 +45,5 @@ pub trait WorkRecordUpdateOutputPort {
         fallback_message: &str,
     );
     fn on_not_found(&mut self);
+    fn on_stale_update(&mut self);
 }

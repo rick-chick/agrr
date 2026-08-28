@@ -6,6 +6,7 @@ use agrr_domain::cultivation_plan::dtos::CultivationPlanCreateAttrs;
 use agrr_domain::cultivation_plan::entities::{CultivationPlanEntity, FieldCultivationEntity};
 use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
 use agrr_domain::cultivation_plan::ports::PrivatePlanExistingPlanGateway;
+use agrr_domain::shared::exceptions::{RecordNotFoundError, RecordStaleUpdateError};
 use agrr_domain::shared::user::User;
 use rusqlite::{params, OptionalExtension};
 use serde_json::{json, Value};
@@ -71,12 +72,13 @@ impl CultivationPlanGateway for CultivationPlanSqliteGateway {
     fn update(
         &self,
         plan_id: i64,
-        attrs: HashMap<String, String>,
+        mut attrs: HashMap<String, String>,
     ) -> Result<CultivationPlanEntity, Box<dyn std::error::Error + Send + Sync>> {
         if attrs.is_empty() {
             return self.find_by_id(plan_id);
         }
-        self.pool.with_write_box(|conn| {
+        let expected_updated_at = attrs.remove("expected_updated_at");
+        self.pool.with_write(|conn| -> rusqlite::Result<Option<CultivationPlanEntity>> {
             let mut sets = Vec::new();
             let mut values: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
             for (key, value) in &attrs {
@@ -89,18 +91,43 @@ impl CultivationPlanGateway for CultivationPlanSqliteGateway {
                 }
             }
             if sets.is_empty() {
-                return load_plan_entity(conn, plan_id);
+                return Ok(Some(load_plan_entity(conn, plan_id)?));
             }
             sets.push("updated_at = datetime('now')".into());
-            let sql = format!(
+            let mut sql = format!(
                 "UPDATE cultivation_plans SET {} WHERE id = ?",
                 sets.join(", ")
             );
             values.push(Box::new(plan_id));
+            if let Some(expected) = expected_updated_at.as_deref() {
+                sql.push_str(&format!(" AND updated_at = ?{}", values.len() + 1));
+                values.push(Box::new(expected.to_string()));
+            }
             let params: Vec<&dyn rusqlite::types::ToSql> =
                 values.iter().map(|v| v.as_ref()).collect();
-            conn.execute(&sql, params.as_slice())?;
-            load_plan_entity(conn, plan_id)
+            let affected = conn.execute(&sql, params.as_slice())?;
+            if affected > 0 || expected_updated_at.is_none() {
+                return Ok(Some(load_plan_entity(conn, plan_id)?));
+            }
+            Ok(None)
+        })
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+        .and_then(|maybe_plan| match maybe_plan {
+            Some(plan) => Ok(plan),
+            None => {
+                let exists = self.pool.with_read(|conn| {
+                    conn.query_row(
+                        "SELECT 1 FROM cultivation_plans WHERE id = ?1 LIMIT 1",
+                        params![plan_id],
+                        |_| Ok(true),
+                    )
+                }).is_ok();
+                if exists {
+                    Err(RecordStaleUpdateError.into())
+                } else {
+                    Err(RecordNotFoundError.into())
+                }
+            }
         })
     }
 
