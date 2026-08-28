@@ -148,6 +148,7 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     const planId = this.planId;
     if (!planId) {
       this.control = { status: 'invalid_plan_id', progress: 0, phaseMessage: '' };
+      void this.router.navigate(['/plans']);
       return;
     }
     this.hydrateOrchestrationUseCase.execute(planId).subscribe({
