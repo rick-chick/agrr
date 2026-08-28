@@ -29,6 +29,7 @@ alwaysApply: false
 | **git checkout / switch / reset / restore 禁止**（常時・明示許可のみ） | [`git-operational-constraints.mdc`](git-operational-constraints.mdc) |
 | **依頼とプロジェクト事実の整合**（着手前に依頼前提とコード・規約・契約等を照合・矛盾時は実装前にユーザーへ問い合わせ・依頼文だけを事実としない） | [`user-request-project-alignment.mdc`](user-request-project-alignment.mdc) |
 | **プロダクトギャップ調査〜Issue 起票**（競合比較・既存画面強化・G2/G3 ゲート・モック・Epic 起票。実装は `github-issue-worker`） | [`product-gap-to-issues` スキル](../skills/product-gap-to-issues/SKILL.md) |
+| **ユーザ致命的バグ監査〜Issue 起票**（重大度基準・subagent 再調査・再現性ゲート・`verified-findings.json`。実装は `github-issue-worker`） | [`critical-bug-audit-pipeline` スキル](../skills/critical-bug-audit-pipeline/SKILL.md) |
 | **設計・実装の根拠ゲート**（確実に説明できる／再現できるのいずれか未満では着手しない・未満なら調査継続・仮説段階で設計・実装しない） | [`evidence-before-design-and-implementation.mdc`](evidence-before-design-and-implementation.mdc) |
 | **プロジェクトに必要な成果物のみ**（コード・ドキュメント・スクリプト。依頼・根拠・規約に直結しない追加は禁止） | [`project-necessary-code-only.mdc`](project-necessary-code-only.mdc) |
 | **Automation / dispatch 新規追加・変更の設計規約** | [`automation-authoring` スキル](../skills/automation-authoring/SKILL.md) |
