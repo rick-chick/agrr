@@ -6,7 +6,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 thread_local! {
-    static SCOPED_WRITE: RefCell<Option<Connection>> = const { RefCell::new(None) };
+    static SCOPED_WRITE: RefCell<Option<(Arc<String>, Connection)>> =
+        const { RefCell::new(None) };
 }
 
 pub const DEFAULT_BUSY_TIMEOUT_MS: u64 = 20_000;
@@ -41,7 +42,7 @@ impl SqlitePool {
     where
         F: FnOnce(&Connection) -> rusqlite::Result<T>,
     {
-        if Self::scoped_write_active() {
+        if self.scoped_write_matches() {
             return Self::run_with_scoped_write(f);
         }
         let conn = self.open_connection()?;
@@ -52,7 +53,7 @@ impl SqlitePool {
     where
         F: FnOnce(&Connection) -> rusqlite::Result<T>,
     {
-        if Self::scoped_write_active() {
+        if self.scoped_write_matches() {
             return Self::run_with_scoped_write(f);
         }
         let _guard = self
@@ -68,7 +69,7 @@ impl SqlitePool {
     where
         F: FnOnce(&Connection) -> rusqlite::Result<T>,
     {
-        if Self::scoped_write_active() {
+        if self.scoped_write_matches() {
             return Self::run_with_scoped_write(f);
         }
 
@@ -79,13 +80,13 @@ impl SqlitePool {
         let conn = self.open_connection()?;
         conn.execute_batch("BEGIN IMMEDIATE")?;
         SCOPED_WRITE.with(|cell| {
-            *cell.borrow_mut() = Some(conn);
+            *cell.borrow_mut() = Some((self.database_path.clone(), conn));
         });
 
         let result = Self::run_with_scoped_write(f);
 
         let finish = SCOPED_WRITE.with(|cell| {
-            let conn = cell.borrow_mut().take().expect("scoped write connection");
+            let (_, conn) = cell.borrow_mut().take().expect("scoped write connection");
             match &result {
                 Ok(_) => conn.execute_batch("COMMIT"),
                 Err(_) => {
@@ -106,7 +107,7 @@ impl SqlitePool {
     where
         F: FnOnce() -> Result<T, Box<dyn std::error::Error + Send + Sync>>,
     {
-        if SCOPED_WRITE.with(|cell| cell.borrow().is_some()) {
+        if self.scoped_write_matches() {
             return f();
         }
 
@@ -117,13 +118,13 @@ impl SqlitePool {
         let conn = self.open_connection()?;
         conn.execute_batch("BEGIN IMMEDIATE")?;
         SCOPED_WRITE.with(|cell| {
-            *cell.borrow_mut() = Some(conn);
+            *cell.borrow_mut() = Some((self.database_path.clone(), conn));
         });
 
         let result = f();
 
         let finish = SCOPED_WRITE.with(|cell| {
-            let conn = cell.borrow_mut().take().expect("scoped write connection");
+            let (_, conn) = cell.borrow_mut().take().expect("scoped write connection");
             match &result {
                 Ok(_) => conn.execute_batch("COMMIT"),
                 Err(_) => {
@@ -136,8 +137,13 @@ impl SqlitePool {
         result
     }
 
-    fn scoped_write_active() -> bool {
-        SCOPED_WRITE.with(|cell| cell.borrow().is_some())
+    fn scoped_write_matches(&self) -> bool {
+        SCOPED_WRITE.with(|cell| {
+            cell.borrow()
+                .as_ref()
+                .map(|(path, _)| path.as_str() == self.database_path.as_str())
+                .unwrap_or(false)
+        })
     }
 
     fn run_with_scoped_write<F, T>(f: F) -> rusqlite::Result<T>
@@ -147,7 +153,7 @@ impl SqlitePool {
         let conn_ptr = SCOPED_WRITE.with(|cell| {
             cell.borrow()
                 .as_ref()
-                .map(|conn| conn as *const Connection)
+                .map(|(_, conn)| conn as *const Connection)
                 .expect("scoped write connection")
         });
         // SAFETY: `conn_ptr` points at the thread-local transaction connection, which

@@ -9,6 +9,7 @@ export interface UpdateCropInputDto {
   region: string | null;
   groups: string[];
   is_reference?: boolean;
+  updated_at?: string | null;
   onSuccess?: (crop: Crop) => void;
 }
 
