@@ -1145,7 +1145,9 @@
         "daily_fixed_cost_placeholder": "例: 5000",
         "submit_update": "更新",
         "submit_create": "圃場を作成"
-      }
+      },
+      "weather_refetch": "天気データを再取得",
+      "weather_poll_timeout": "天気データの取得が完了しませんでした。再取得をお試しください。"
     },
     "card": {
       "latitude": "緯度",

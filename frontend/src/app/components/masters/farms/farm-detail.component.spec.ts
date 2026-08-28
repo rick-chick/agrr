@@ -12,6 +12,7 @@ import { DeleteFarmUseCase } from '../../../usecase/farms/delete-farm.usecase';
 import { CreateFieldUseCase } from '../../../usecase/farms/create-field.usecase';
 import { UpdateFieldUseCase } from '../../../usecase/farms/update-field.usecase';
 import { DeleteFieldUseCase } from '../../../usecase/farms/delete-field.usecase';
+import { RetryFarmWeatherFetchUseCase } from '../../../usecase/farms/retry-farm-weather-fetch.usecase';
 import {
   CreateFieldPresenter,
   DeleteFieldPresenter,
@@ -39,6 +40,7 @@ describe('FarmDetailComponent', () => {
   let createFieldUseCase: { execute: ReturnType<typeof vi.fn> };
   let updateFieldUseCase: { execute: ReturnType<typeof vi.fn> };
   let deleteFieldUseCase: { execute: ReturnType<typeof vi.fn> };
+  let retryWeatherFetchUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: { setView: ReturnType<typeof vi.fn> };
   let createFieldPresenter: { setView: ReturnType<typeof vi.fn> };
   let updateFieldPresenter: { setView: ReturnType<typeof vi.fn> };
@@ -57,6 +59,7 @@ describe('FarmDetailComponent', () => {
     createFieldUseCase = { execute: vi.fn() };
     updateFieldUseCase = { execute: vi.fn() };
     deleteFieldUseCase = { execute: vi.fn() };
+    retryWeatherFetchUseCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
     createFieldPresenter = { setView: vi.fn() };
     updateFieldPresenter = { setView: vi.fn() };
@@ -80,6 +83,7 @@ describe('FarmDetailComponent', () => {
             { provide: CreateFieldUseCase, useValue: createFieldUseCase },
             { provide: UpdateFieldUseCase, useValue: updateFieldUseCase },
             { provide: DeleteFieldUseCase, useValue: deleteFieldUseCase },
+            { provide: RetryFarmWeatherFetchUseCase, useValue: retryWeatherFetchUseCase },
             { provide: FarmDetailPresenter, useValue: presenter },
             { provide: CreateFieldPresenter, useValue: createFieldPresenter },
             { provide: UpdateFieldPresenter, useValue: updateFieldPresenter },
@@ -587,6 +591,135 @@ describe('FarmDetailComponent', () => {
     const chart = fixture.debugElement.query(By.directive(FarmTemperatureChartComponent))
       .componentInstance as FarmTemperatureChartComponent;
     expect(chart.selectedPeriod).toBe('180d');
+  });
+
+  it('shows weather refetch button when weather status is failed', () => {
+    translate.setTranslation('ja', {
+      farms: {
+        index: { title: '農場一覧' },
+        show: {
+          location: '地域',
+          weather_status: '天気データ取得状況',
+          weather_refetch: '天気データを再取得'
+        },
+        form: { region_blank: '未選択' }
+      },
+      models: {
+        farm: {
+          weather_status: { failed: '失敗' }
+        }
+      }
+    });
+    component.control = {
+      loading: false,
+      error: null,
+      farm: {
+        id: 123,
+        name: 'Test Farm',
+        region: 'jp',
+        latitude: 35.0,
+        longitude: 139.0,
+        weather_data_status: 'failed'
+      },
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const retryButton = fixture.nativeElement.querySelector(
+      '[data-testid="farm-weather-refetch"]'
+    ) as HTMLButtonElement;
+    expect(retryButton).toBeTruthy();
+    expect(retryButton.textContent?.trim()).toContain('天気データを再取得');
+  });
+
+  it('shows poll timeout message and retry when polling limit is reached', async () => {
+    vi.useFakeTimers();
+    try {
+      translate.setTranslation('ja', {
+        farms: {
+          index: { title: '農場一覧' },
+          show: {
+            location: '地域',
+            weather_status: '天気データ取得状況',
+            weather_poll_timeout: '取得が完了しませんでした。再取得をお試しください。',
+            weather_refetch: '天気データを再取得'
+          },
+          form: { region_blank: '未選択' }
+        },
+        models: {
+          farm: {
+            weather_status: { fetching: '取得中 ({{progress}}%)' }
+          }
+        }
+      });
+      component.control = {
+        loading: false,
+        error: null,
+        farm: {
+          id: 123,
+          name: 'Test Farm',
+          region: 'jp',
+          latitude: 35.0,
+          longitude: 139.0,
+          weather_data_status: 'fetching',
+          weather_data_progress: 10
+        },
+        fields: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+
+      vi.advanceTimersByTime(3000 * 40);
+      await Promise.resolve();
+
+      expect(component.weatherPollTimedOut).toBe(true);
+      expect(component.showWeatherRetry()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('calls retryWeatherFetchUseCase when refetch button is clicked', () => {
+    translate.setTranslation('ja', {
+      farms: {
+        index: { title: '農場一覧' },
+        show: {
+          location: '地域',
+          weather_status: '天気データ取得状況',
+          weather_refetch: '天気データを再取得'
+        },
+        form: { region_blank: '未選択' }
+      },
+      models: {
+        farm: {
+          weather_status: { failed: '失敗' }
+        }
+      }
+    });
+    component.control = {
+      loading: false,
+      error: null,
+      farm: {
+        id: 123,
+        name: 'Test Farm',
+        region: 'jp',
+        latitude: 35.0,
+        longitude: 139.0,
+        weather_data_status: 'failed'
+      },
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('[data-testid="farm-weather-refetch"]')?.click();
+
+    expect(retryWeatherFetchUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ farmId: 123 })
+    );
   });
 
   it('syncs chartSelectedPeriod when temperature chart period changes', () => {
