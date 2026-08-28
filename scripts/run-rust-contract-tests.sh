@@ -264,24 +264,24 @@ from urllib.parse import parse_qs
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
-        length = int(self.headers.get('Content-Length', 0))
+        length = int(self.headers.get('"'"'Content-Length'"'"', 0))
         raw = self.rfile.read(length)
-        token = parse_qs(raw.decode()).get('response', [''])[0]
-        if token == 'invalid-token-for-contract-test':
-            payload = {'success': False, 'error-codes': ['invalid-input-response']}
+        token = parse_qs(raw.decode()).get('"'"'response'"'"', ['"'"''"'"'])[0]
+        if token == '"'"'invalid-token-for-contract-test'"'"':
+            payload = {'"'"'success'"'"': False, '"'"'error-codes'"'"': ['"'"'invalid-input-response'"'"']}
         else:
-            payload = {'success': True}
+            payload = {'"'"'success'"'"': True}
         body = json.dumps(payload).encode()
         self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Content-Length', str(len(body)))
+        self.send_header('"'"'Content-Type'"'"', '"'"'application/json'"'"')
+        self.send_header('"'"'Content-Length'"'"', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 
     def log_message(self, format, *args):
         pass
 
-HTTPServer(('127.0.0.1', 9191), Handler).serve_forever()
+HTTPServer(('"'"'127.0.0.1'"'"', 9191), Handler).serve_forever()
 " >/tmp/recaptcha-mock.log 2>&1 &
     RECAPTCHA_MOCK_PID=$!
     export RECAPTCHA_SECRET_KEY="${RECAPTCHA_SECRET_KEY:-contract-test-recaptcha-secret}"
@@ -343,8 +343,6 @@ HTTPServer(('127.0.0.1', 9191), Handler).serve_forever()
       kill "$UNCONFIGURED_SERVER_PID" 2>/dev/null || true
       exit 1
     fi
-    printf '%s' '{"email":"unconfigured-recaptcha@example.com","message":"contract shell check","recaptcha_token":"token"}' \
-      >/tmp/contact-unconfigured-recaptcha-payload.json
     UNCONFIGURED_STATUS=""
     for _ in $(seq 1 5); do
       UNCONFIGURED_STATUS=$(curl -sS -o /tmp/contact-unconfigured-recaptcha.json -w "%{http_code}" \
@@ -352,7 +350,7 @@ HTTPServer(('127.0.0.1', 9191), Handler).serve_forever()
         -H "Accept: application/json" \
         -H "Content-Type: application/json" \
         -H "x-forwarded-for: 203.0.113.250" \
-        --data-binary @/tmp/contact-unconfigured-recaptcha-payload.json \
+        --data-raw '"'"'{"email":"unconfigured-recaptcha@example.com","message":"contract shell check","recaptcha_token":"token"}'"'"' \
         http://127.0.0.1:8089/api/v1/contact_messages)
       if [ "$UNCONFIGURED_STATUS" = "503" ]; then
         break
