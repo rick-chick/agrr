@@ -18,6 +18,7 @@ disable-model-invocation: true
 |------|--------|
 | 汎用（機能・バグ・リファクタ・負債） | **本スキル** |
 | 競合・プロダクトギャップ調査〜Epic 起票 | **`product-gap-to-issues`** |
+| ユーザ致命的バグ監査の一括起票 | **`critical-bug-audit-pipeline`** |
 | visual-review / CSS 監査の一括起票 | **`ux-issue-creator`** |
 | 要件の深掘りのみ（起票前） | **`requirements-analysis`**（必要時） |
 
