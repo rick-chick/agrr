@@ -1,19 +1,34 @@
 //! Parity: `test/integration/cultivation_plan/public_plan_save_test.rb`
 
+use super::cultivation_plan_gateway::CultivationPlanSqliteGateway;
 use super::plan_save_integration_fixture::{
-    count_private_plans, plan_save_integration_pool, seed_crop_stage_requirements_copy,
-    seed_plan_reuse, seed_task_schedule_copy, TEST_USER_ID,
+    count_private_plans, count_user_crops, count_user_farms, plan_save_integration_pool,
+    seed_crop_stage_requirements_copy, seed_mid_failure_rollback, seed_plan_reuse,
+    seed_task_schedule_copy, TEST_USER_ID,
 };
 use super::plan_save_persistence::PublicPlanSavePersistenceSqliteAdapter;
+use agrr_domain::cultivation_plan::gateways::PublicPlanSaveTxnGateway;
 use agrr_domain::cultivation_plan::ports::PublicPlanSavePersistencePort;
+use agrr_domain::shared::exceptions::InvalidTaskScheduleItemError;
 use rusqlite::params;
 
 fn invoke_save(
     pool: &crate::pool::SqlitePool,
     workspace: &agrr_domain::cultivation_plan::dtos::PublicPlanSaveWorkspace,
 ) -> agrr_domain::cultivation_plan::dtos::PublicPlanSaveFromSessionOutput {
+    invoke_save_with_transaction(pool, workspace).unwrap()
+}
+
+fn invoke_save_with_transaction(
+    pool: &crate::pool::SqlitePool,
+    workspace: &agrr_domain::cultivation_plan::dtos::PublicPlanSaveWorkspace,
+) -> Result<
+    agrr_domain::cultivation_plan::dtos::PublicPlanSaveFromSessionOutput,
+    Box<dyn std::error::Error + Send + Sync>,
+> {
+    let txn_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let adapter = PublicPlanSavePersistenceSqliteAdapter::new(pool.clone());
-    adapter.execute_save(workspace).unwrap()
+    txn_gateway.within_transaction(|| adapter.execute_save(workspace))
 }
 
 // Parity: test/integration/cultivation_plan/public_plan_save_test.rb — "reuses existing private plan when same public plan is saved twice"
@@ -175,4 +190,25 @@ fn plan_save_copies_crop_stage_temperature_and_thermal_requirements() {
         Ok(())
     })
     .unwrap();
+}
+
+// Mid-pipeline failure must roll back all writes (farm, crops, private plan).
+#[test]
+fn plan_save_rolls_back_on_mid_pipeline_failure() {
+    let pool = plan_save_integration_pool();
+    let seed = seed_mid_failure_rollback(&pool);
+
+    let farms_before = count_user_farms(&pool, TEST_USER_ID);
+    let crops_before = count_user_crops(&pool, TEST_USER_ID);
+    let plans_before = count_private_plans(&pool, TEST_USER_ID);
+
+    let err = invoke_save_with_transaction(&pool, &seed.workspace).unwrap_err();
+    assert!(
+        err.downcast_ref::<InvalidTaskScheduleItemError>().is_some(),
+        "expected InvalidTaskScheduleItemError, got {err}"
+    );
+
+    assert_eq!(farms_before, count_user_farms(&pool, TEST_USER_ID));
+    assert_eq!(crops_before, count_user_crops(&pool, TEST_USER_ID));
+    assert_eq!(plans_before, count_private_plans(&pool, TEST_USER_ID));
 }

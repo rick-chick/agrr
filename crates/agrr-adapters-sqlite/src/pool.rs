@@ -1,8 +1,36 @@
 //! Shared SQLite access: busy timeout (Rails `SQLITE_BUSY_TIMEOUT_MS`) and write serialization.
 
 use rusqlite::Connection;
+use std::cell::RefCell;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+
+thread_local! {
+    /// Active write-transaction connection. Only valid during `with_write_transaction`.
+    static ACTIVE_TX_CONN: RefCell<Option<*const Connection>> = const { RefCell::new(None) };
+}
+
+fn with_active_tx_conn<F, T>(f: F) -> Option<T>
+where
+    F: FnOnce(&Connection) -> T,
+{
+    ACTIVE_TX_CONN.with(|cell| {
+        cell.borrow()
+            .map(|ptr| f(unsafe { &*ptr }))
+    })
+}
+
+fn set_active_tx_conn(conn: &Connection) {
+    ACTIVE_TX_CONN.with(|cell| {
+        *cell.borrow_mut() = Some(conn as *const Connection);
+    });
+}
+
+fn clear_active_tx_conn() {
+    ACTIVE_TX_CONN.with(|cell| {
+        *cell.borrow_mut() = None;
+    });
+}
 
 pub const DEFAULT_BUSY_TIMEOUT_MS: u64 = 20_000;
 
@@ -36,6 +64,10 @@ impl SqlitePool {
     where
         F: FnOnce(&Connection) -> rusqlite::Result<T>,
     {
+        if ACTIVE_TX_CONN.with(|cell| cell.borrow().is_some()) {
+            return with_active_tx_conn(|conn| f(conn))
+                .expect("active tx conn must be set");
+        }
         let conn = self.open_connection()?;
         f(&conn)
     }
@@ -44,6 +76,10 @@ impl SqlitePool {
     where
         F: FnOnce(&Connection) -> rusqlite::Result<T>,
     {
+        if ACTIVE_TX_CONN.with(|cell| cell.borrow().is_some()) {
+            return with_active_tx_conn(|conn| f(conn))
+                .expect("active tx conn must be set");
+        }
         let _guard = self
             .write_lock
             .lock()
@@ -53,6 +89,9 @@ impl SqlitePool {
     }
 
     /// Serialize writes and wrap `f` in `BEGIN IMMEDIATE` / `COMMIT` (or `ROLLBACK` on error).
+    ///
+    /// Nested `with_write` / `with_read` calls on the same thread reuse this connection so all
+    /// statements participate in the same SQL transaction.
     pub fn with_write_transaction<F, T>(&self, f: F) -> rusqlite::Result<T>
     where
         F: FnOnce(&Connection) -> rusqlite::Result<T>,
@@ -63,7 +102,10 @@ impl SqlitePool {
             .map_err(|_| rusqlite::Error::SqliteFailure(rusqlite::ffi::Error::new(5), None))?;
         let conn = self.open_connection()?;
         conn.execute_batch("BEGIN IMMEDIATE")?;
-        match f(&conn) {
+        set_active_tx_conn(&conn);
+        let result = f(&conn);
+        clear_active_tx_conn();
+        match result {
             Ok(value) => {
                 conn.execute_batch("COMMIT")?;
                 Ok(value)
@@ -192,6 +234,38 @@ mod tests {
             .with_read(|conn| conn.query_row("SELECT COUNT(*) FROM t", [], |row| row.get(0)))
             .unwrap();
         assert_eq!(count, 1);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn with_write_transaction_reuses_connection_for_nested_writes() {
+        let dir = std::env::temp_dir().join(format!(
+            "agrr_sqlite_pool_nested_{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("test.sqlite3");
+        let pool = SqlitePool::new(path.to_str().unwrap());
+        pool.with_write(|conn| {
+            conn.execute_batch("CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT NOT NULL)")?;
+            Ok(())
+        })
+        .unwrap();
+
+        pool.with_write_transaction(|conn| {
+            conn.execute("INSERT INTO t (name) VALUES ('outer')", [])?;
+            pool.with_write(|inner| {
+                inner.execute("INSERT INTO t (name) VALUES ('inner')", [])?;
+                Ok(())
+            })?;
+            Ok(())
+        })
+        .unwrap();
+
+        let count: i64 = pool
+            .with_read(|conn| conn.query_row("SELECT COUNT(*) FROM t", [], |row| row.get(0)))
+            .unwrap();
+        assert_eq!(count, 2);
         let _ = std::fs::remove_dir_all(dir);
     }
 }

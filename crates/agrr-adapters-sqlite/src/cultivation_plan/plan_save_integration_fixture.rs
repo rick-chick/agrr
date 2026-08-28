@@ -72,6 +72,7 @@ CREATE TABLE fields (
 CREATE TABLE crops (
   id INTEGER PRIMARY KEY,
   user_id INTEGER,
+  organization_id INTEGER,
   name TEXT NOT NULL,
   variety TEXT,
   is_reference INTEGER NOT NULL DEFAULT 0,
@@ -574,6 +575,112 @@ pub fn seed_crop_stage_requirements_copy(pool: &SqlitePool) -> CropStageRequirem
         reference_crop_id,
         reference_stage_name,
     }
+}
+
+pub struct MidFailureRollbackSeed {
+    pub workspace: PublicPlanSaveWorkspace,
+}
+
+/// Seed a public plan whose task schedule item has NULL `gdd_trigger`, causing
+/// `copy_task_schedules` to fail after farm/crop/plan rows would be written.
+pub fn seed_mid_failure_rollback(pool: &SqlitePool) -> MidFailureRollbackSeed {
+    let reference_farm_id = 3_i64;
+    let public_plan_id = 30_i64;
+    let reference_crop_id = 102_i64;
+    let reference_task_id = 51_i64;
+    let plan_field_id = 310_i64;
+    let plan_crop_id = 311_i64;
+    let field_cultivation_id = 410_i64;
+    let task_schedule_id = 510_i64;
+
+    pool.with_write(|conn| {
+        conn.execute(
+            "INSERT INTO farms (id, user_id, name, latitude, longitude, region, is_reference, created_at, updated_at)
+             VALUES (?1, NULL, 'Rollback JP Farm', 35.0, 139.0, 'jp', 1, datetime('now'), datetime('now'))",
+            params![reference_farm_id],
+        )?;
+        conn.execute(
+            "INSERT INTO crops (id, user_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at)
+             VALUES (?1, NULL, 'Rollback参照作物', 'RB1', 1, 1.0, 2000.0, 'jp', '[]', datetime('now'), datetime('now'))",
+            params![reference_crop_id],
+        )?;
+        conn.execute(
+            "INSERT INTO agricultural_tasks (id, user_id, name, description, time_per_sqm, weather_dependency, required_tools, skill_level, region, task_type, is_reference, created_at, updated_at)
+             VALUES (?1, NULL, 'ロールバック作業', '失敗検証用', 0.5, 'low', '[\"ホー\"]', 'beginner', 'jp', 'field_work', 1, datetime('now'), datetime('now'))",
+            params![reference_task_id],
+        )?;
+        conn.execute(
+            "INSERT INTO cultivation_plans (id, farm_id, user_id, total_area, plan_type, plan_year, plan_name, planning_start_date, planning_end_date, status, created_at, updated_at)
+             VALUES (?1, ?2, NULL, 50.0, 'public', 2026, 'ロールバック検証', '2026-01-01', '2026-12-31', 'completed', datetime('now'), datetime('now'))",
+            params![public_plan_id, reference_farm_id],
+        )?;
+        conn.execute(
+            "INSERT INTO cultivation_plan_fields (id, cultivation_plan_id, name, area, daily_fixed_cost, created_at, updated_at)
+             VALUES (?1, ?2, 'RB-F1', 50.0, 5.0, datetime('now'), datetime('now'))",
+            params![plan_field_id, public_plan_id],
+        )?;
+        conn.execute(
+            "INSERT INTO cultivation_plan_crops (id, cultivation_plan_id, crop_id, name, variety, area_per_unit, revenue_per_area, created_at, updated_at)
+             VALUES (?1, ?2, ?3, 'Rollback参照作物', 'RB1', 1.0, 2000.0, datetime('now'), datetime('now'))",
+            params![plan_crop_id, public_plan_id, reference_crop_id],
+        )?;
+        conn.execute(
+            "INSERT INTO field_cultivations (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, start_date, completion_date, status, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, 50.0, '2026-04-01', '2026-10-31', 'active', datetime('now'), datetime('now'))",
+            params![field_cultivation_id, public_plan_id, plan_field_id, plan_crop_id],
+        )?;
+        conn.execute(
+            "INSERT INTO task_schedules (id, cultivation_plan_id, field_cultivation_id, category, status, source, created_at, updated_at)
+             VALUES (?1, ?2, ?3, 'general', 'active', 'manual', datetime('now'), datetime('now'))",
+            params![task_schedule_id, public_plan_id, field_cultivation_id],
+        )?;
+        conn.execute(
+            "INSERT INTO task_schedule_items (task_schedule_id, task_type, name, gdd_trigger, source, status, agricultural_task_id, created_at, updated_at)
+             VALUES (?1, 'field_work', '無効作業', NULL, 'manual', 'planned', ?2, datetime('now'), datetime('now'))",
+            params![task_schedule_id, reference_task_id],
+        )?;
+        Ok(())
+    })
+    .unwrap();
+
+    let session = PublicPlanSaveSessionData::new(
+        public_plan_id,
+        Some(reference_farm_id),
+        vec![PublicPlanSaveFieldDatum::new(
+            Some("RB圃場"),
+            Some(50.0),
+            vec![],
+        )],
+        None,
+    );
+    MidFailureRollbackSeed {
+        workspace: PublicPlanSaveWorkspace {
+            user_id: TEST_USER_ID,
+            session_data: session,
+        },
+    }
+}
+
+pub fn count_user_farms(pool: &SqlitePool, user_id: i64) -> i64 {
+    pool.with_read(|conn| {
+        conn.query_row(
+            "SELECT COUNT(*) FROM farms WHERE user_id = ?1 AND is_reference = 0",
+            params![user_id],
+            |r| r.get(0),
+        )
+    })
+    .unwrap()
+}
+
+pub fn count_user_crops(pool: &SqlitePool, user_id: i64) -> i64 {
+    pool.with_read(|conn| {
+        conn.query_row(
+            "SELECT COUNT(*) FROM crops WHERE user_id = ?1 AND is_reference = 0",
+            params![user_id],
+            |r| r.get(0),
+        )
+    })
+    .unwrap()
 }
 
 pub fn count_private_plans(pool: &SqlitePool, user_id: i64) -> i64 {

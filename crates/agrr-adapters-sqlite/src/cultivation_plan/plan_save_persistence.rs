@@ -47,6 +47,12 @@ impl PublicPlanSaveTxnGateway for CultivationPlanSqliteGateway {
     where
         F: FnOnce() -> Result<T, Box<dyn std::error::Error + Send + Sync>>,
     {
-        block()
+        match self.pool().with_write_transaction(|_conn| {
+            block().map_err(rusqlite::Error::ToSqlConversionFailure)
+        }) {
+            Ok(value) => Ok(value),
+            Err(rusqlite::Error::ToSqlConversionFailure(err)) => Err(err),
+            Err(err) => Err(Box::new(err)),
+        }
     }
 }
