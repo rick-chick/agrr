@@ -17,7 +17,8 @@ describe('SubscribeTaskScheduleSyncUseCase', () => {
       )
     } as unknown as PlanOptimizationGateway;
     const outputPort: SubscribeTaskScheduleSyncOutputPort = {
-      onTaskScheduleSync: vi.fn()
+      onTaskScheduleSync: vi.fn(),
+      onError: vi.fn()
     };
     const useCase = new SubscribeTaskScheduleSyncUseCase(outputPort, gateway);
     const onSubscribed = vi.fn();

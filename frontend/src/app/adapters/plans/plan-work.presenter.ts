@@ -213,6 +213,10 @@ export class PlanWorkPresenter
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (this.view.control.regenerating) {
+      this.onRegenerateError(dto);
+      return;
+    }
     if (this.view.control.completingItemId != null) {
       this.view.control = {
         ...this.view.control,

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { PollTaskScheduleSyncUseCase } from './poll-task-schedule-sync.usecase';
 import { PlanGateway } from './plan-gateway';
 import { SubscribeTaskScheduleSyncOutputPort } from './subscribe-task-schedule-sync.output-port';
@@ -47,7 +47,8 @@ describe('PollTaskScheduleSyncUseCase', () => {
       .mockReturnValue(of(scheduleWithSyncState('ready')));
     const gateway = { getTaskSchedule } as unknown as PlanGateway;
     const outputPort: SubscribeTaskScheduleSyncOutputPort = {
-      onTaskScheduleSync: vi.fn()
+      onTaskScheduleSync: vi.fn(),
+      onError: vi.fn()
     };
     const useCase = new PollTaskScheduleSyncUseCase(outputPort, gateway);
 
@@ -57,6 +58,7 @@ describe('PollTaskScheduleSyncUseCase', () => {
     subscription.unsubscribe();
 
     expect(getTaskSchedule).toHaveBeenCalledWith(7);
+    expect(outputPort.onError).not.toHaveBeenCalled();
     expect(outputPort.onTaskScheduleSync).toHaveBeenCalledWith({
       syncState: 'ready',
       syncError: null,
@@ -68,7 +70,8 @@ describe('PollTaskScheduleSyncUseCase', () => {
     const getTaskSchedule = vi.fn().mockReturnValue(of(scheduleWithSyncState('generating')));
     const gateway = { getTaskSchedule } as unknown as PlanGateway;
     const outputPort: SubscribeTaskScheduleSyncOutputPort = {
-      onTaskScheduleSync: vi.fn()
+      onTaskScheduleSync: vi.fn(),
+      onError: vi.fn()
     };
     const useCase = new PollTaskScheduleSyncUseCase(outputPort, gateway);
 
@@ -76,11 +79,35 @@ describe('PollTaskScheduleSyncUseCase', () => {
     vi.advanceTimersByTime(TASK_SCHEDULE_SYNC_POLL_INTERVAL_MS * TASK_SCHEDULE_SYNC_POLL_MAX_ATTEMPTS);
     subscription.unsubscribe();
 
+    expect(outputPort.onError).not.toHaveBeenCalled();
     expect(outputPort.onTaskScheduleSync).toHaveBeenCalledWith({
       syncState: 'generating',
       syncError: null,
       syncErrorCropId: null,
       pollExhausted: true
     });
+  });
+
+  it('calls onError when getTaskSchedule fails during polling', () => {
+    const getTaskSchedule = vi
+      .fn()
+      .mockReturnValueOnce(of(scheduleWithSyncState('generating')))
+      .mockReturnValue(throwError(() => ({ status: 500 })));
+    const gateway = { getTaskSchedule } as unknown as PlanGateway;
+    const onError = vi.fn();
+    const outputPort: SubscribeTaskScheduleSyncOutputPort = {
+      onTaskScheduleSync: vi.fn(),
+      onError
+    };
+    const useCase = new PollTaskScheduleSyncUseCase(outputPort, gateway);
+
+    const subscription = useCase.execute({ planId: 7 });
+    vi.advanceTimersByTime(0);
+    vi.advanceTimersByTime(TASK_SCHEDULE_SYNC_POLL_INTERVAL_MS);
+    subscription.unsubscribe();
+
+    expect(getTaskSchedule).toHaveBeenCalledTimes(2);
+    expect(onError).toHaveBeenCalledWith({ message: 'common.api_error.generic' });
+    expect(outputPort.onTaskScheduleSync).not.toHaveBeenCalled();
   });
 });
