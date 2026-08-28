@@ -1,5 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { catchError, map, of, tap, switchMap, Observable } from 'rxjs';
+import { catchError, map, of, tap, Observable } from 'rxjs';
 import { ApiService, CurrentUser } from './api.service';
 import { ApiKeyService } from './api-key.service';
 import { detectBrowserRegion } from '../core/browser-region';
@@ -30,11 +30,7 @@ export class AuthService {
     return this.api.getCurrentUser().pipe(
       map((response) => response.user),
       tap((user) => {
-        if (user.api_key) {
-          this.apiKeyService.setApiKey(user.api_key);
-        } else {
-          this.apiKeyService.clearApiKey();
-        }
+        this.apiKeyService.clearApiKey();
         user.region = user.region ?? detectBrowserRegion();
         this.userSignal.set(user);
         this.loaded = true;
@@ -46,15 +42,6 @@ export class AuthService {
         this.loadingSignal.set(false);
         return of(null);
       })
-    );
-  }
-
-  /**
-   * APIキーが確実に利用可能であることを保証してから実行する
-   */
-  ensureApiKey<T>(obs$: Observable<T>): Observable<T> {
-    return this.loadCurrentUser().pipe(
-      switchMap(() => obs$)
     );
   }
 
