@@ -1,5 +1,6 @@
 //! Ruby: `Adapters::ApiKeys::Gateways::UserApiKeyRotationActiveRecordGateway`
 
+use super::api_key_storage::{api_key_prefix, hash_api_key};
 use crate::pool::SqlitePool;
 use agrr_domain::api_keys::dtos::{UserApiKeyRotationError, UserApiKeyRotationOutput};
 use agrr_domain::shared::dtos::default_api_key_scopes_json;
@@ -29,7 +30,7 @@ impl UserApiKeyRotationGateway for UserApiKeyRotationSqliteGateway {
             .pool
             .with_read(|conn| {
                 conn.query_row(
-                    "SELECT api_key FROM users WHERE id = ?1",
+                    "SELECT api_key_hash FROM users WHERE id = ?1",
                     params![user_id],
                     |row| row.get(0),
                 )
@@ -37,17 +38,20 @@ impl UserApiKeyRotationGateway for UserApiKeyRotationSqliteGateway {
             .ok()
             .flatten();
         if !regenerate && existing.as_ref().is_some_and(|k| !k.is_empty()) {
-            return UserApiKeyRotationOutput::new(true, existing, None);
+            return UserApiKeyRotationOutput::new(true, None, None);
         }
         let default_scopes = default_api_key_scopes_json();
         for _ in 0..10 {
             let key = Self::random_key();
+            let key_hash = hash_api_key(&key);
+            let prefix = api_key_prefix(&key);
             let updated = self
                 .pool
                 .with_write(|conn| {
                     conn.execute(
-                        "UPDATE users SET api_key = ?1, api_key_scopes = ?2, updated_at = datetime('now') WHERE id = ?3",
-                        params![key, default_scopes, user_id],
+                        "UPDATE users SET api_key = NULL, api_key_hash = ?1, api_key_prefix = ?2, \
+                         api_key_scopes = ?3, updated_at = datetime('now') WHERE id = ?4",
+                        params![key_hash, prefix, default_scopes, user_id],
                     )
                 })
                 .unwrap_or(0);
