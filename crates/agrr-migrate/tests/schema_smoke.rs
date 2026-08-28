@@ -255,9 +255,55 @@ fn schema_run_replaces_global_fertilize_name_unique_with_per_user_index() {
     );
 
     assert!(
-        schema::embedded_primary_latest_version() >= 24,
-        "embedded primary schema should be at least v24"
+        schema::embedded_primary_latest_version() >= 25,
+        "embedded primary schema should be at least v25"
     );
+}
+
+#[test]
+fn schema_run_includes_v25_api_key_hash_columns() {
+    let dir = tempdir().unwrap();
+    let primary = dir.path().join("primary.sqlite3");
+    let cache = dir.path().join("cache.sqlite3");
+    let paths = DbPaths {
+        app_root: std::env::current_dir()
+            .unwrap()
+            .ancestors()
+            .find(|p| p.join("Cargo.toml").exists())
+            .unwrap()
+            .to_path_buf(),
+        primary: primary.clone(),
+        cache: cache.clone(),
+    };
+    schema::run(&paths).expect("schema run");
+
+    let conn = Connection::open(&primary).unwrap();
+    let mut stmt = conn.prepare("PRAGMA table_info(users)").unwrap();
+    let columns: Vec<String> = stmt
+        .query_map([], |row| row.get::<_, String>(1))
+        .unwrap()
+        .map(|r| r.unwrap())
+        .collect();
+    assert!(columns.iter().any(|c| c == "api_key_hash"));
+    assert!(columns.iter().any(|c| c == "api_key_prefix"));
+
+    let hash_index: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'index_users_on_api_key_hash'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(hash_index, 1);
+
+    let plaintext_index: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'index_users_on_api_key'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(plaintext_index, 0, "plaintext api_key unique index must be removed");
 }
 
 #[test]

@@ -14,6 +14,7 @@ pub mod fertilize_ai_adapters;
 pub mod pest_ai_adapters;
 pub mod account;
 pub mod api_keys;
+mod api_key_hash_backfill;
 pub mod auth;
 pub mod backdoor;
 pub mod auth_api;
@@ -123,6 +124,11 @@ pub async fn run_http_server() {
     let org_backfill_state = state.clone();
     tokio::spawn(async move {
         personal_organization::run_personal_organization_backfill(&org_backfill_state);
+    });
+
+    let api_key_backfill_state = state.clone();
+    tokio::spawn(async move {
+        api_key_hash_backfill::run_api_key_hash_backfill(&api_key_backfill_state);
     });
 
     let cors = CorsLayer::new()
