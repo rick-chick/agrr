@@ -271,7 +271,7 @@ describe('SaveWorkRecordSheetUseCase', () => {
       planId: 5,
       mode: 'edit',
       workRecordId: 9,
-      updateBody: { name: '除草' },
+      updateBody: { updated_at: '2026-06-12T00:00:00Z', name: '除草' },
       pendingPhotoFiles: [file],
       photoIdsToDelete: [55],
       deletedPhotoContentUrls: [{ photoId: 55, contentUrl: '/photos/55.jpg' }]
@@ -376,7 +376,7 @@ describe('SaveWorkRecordSheetUseCase', () => {
       planId: 5,
       mode: 'edit',
       workRecordId: 9,
-      updateBody: { name: '除草' },
+      updateBody: { updated_at: '2026-06-12T00:00:00Z', name: '除草' },
       pendingPhotoFiles: [file],
       photoIdsToDelete: [1, 2],
       deletedPhotoContentUrls: [
