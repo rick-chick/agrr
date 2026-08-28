@@ -5,6 +5,7 @@ use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 pub enum UpdateFailure {
     Policy(PolicyPermissionDenied),
     ReferenceFlagChangeDenied(ReferenceFlagChangeDeniedFailure),
+    StaleUpdate,
     Error(Error),
 }
 

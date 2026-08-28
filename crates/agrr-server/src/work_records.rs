@@ -69,6 +69,7 @@ enum MutationOutcome<T> {
     Success(T),
     NotFound,
     RecordInvalid(BTreeMap<String, Vec<String>>),
+    Stale,
 }
 
 enum ListOutcome {
@@ -135,6 +136,10 @@ impl WorkRecordUpdateOutputPort for UpdatePresenter {
 
     fn on_not_found(&mut self) {
         self.body = Some(MutationOutcome::NotFound);
+    }
+
+    fn on_stale_update(&mut self) {
+        self.body = Some(MutationOutcome::Stale);
     }
 }
 
@@ -254,8 +259,16 @@ fn map_mutation_outcome<T>(
         Some(MutationOutcome::Success(record)) => Ok((success_status, Json(success(record)))),
         Some(MutationOutcome::NotFound) => Err(not_found()),
         Some(MutationOutcome::RecordInvalid(errors)) => Err(record_invalid(errors)),
+        Some(MutationOutcome::Stale) => Err(stale_conflict()),
         None => Err(internal_error()),
     }
+}
+
+fn stale_conflict() -> (StatusCode, Json<Value>) {
+    (
+        StatusCode::CONFLICT,
+        Json(json!({"error": "stale_record"})),
+    )
 }
 
 async fn create_work_record(

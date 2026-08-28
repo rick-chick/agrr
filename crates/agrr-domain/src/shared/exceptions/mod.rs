@@ -50,6 +50,10 @@ pub struct AssociationInUseError;
 #[error("invalid task schedule item")]
 pub struct InvalidTaskScheduleItemError;
 
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+#[error("stale record update")]
+pub struct RecordStaleUpdateError;
+
 /// Union of shared domain failures (Interactor `Result` boundary).
 #[derive(Debug, thiserror::Error)]
 pub enum SharedDomainError {
@@ -63,4 +67,6 @@ pub enum SharedDomainError {
     AssociationInUse(#[from] AssociationInUseError),
     #[error(transparent)]
     InvalidTaskScheduleItem(#[from] InvalidTaskScheduleItemError),
+    #[error(transparent)]
+    RecordStaleUpdate(#[from] RecordStaleUpdateError),
 }

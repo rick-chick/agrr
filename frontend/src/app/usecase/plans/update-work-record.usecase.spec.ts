@@ -55,10 +55,13 @@ describe('UpdateWorkRecordUseCase', () => {
     new UpdateWorkRecordUseCase(outputPort, gateway(updateWorkRecord)).execute({
       planId: 5,
       workRecordId: 1,
-      body: { notes: 'updated' }
+      body: { updated_at: '2026-06-12T00:00:00Z', notes: 'updated' }
     });
 
-    expect(updateWorkRecord).toHaveBeenCalledWith(5, 1, { notes: 'updated' });
+    expect(updateWorkRecord).toHaveBeenCalledWith(5, 1, {
+      updated_at: '2026-06-12T00:00:00Z',
+      notes: 'updated'
+    });
     expect(onSuccess).toHaveBeenCalledWith({ workRecord: sampleRecord });
   });
 
@@ -81,7 +84,7 @@ describe('UpdateWorkRecordUseCase', () => {
             })
         )
       )
-    ).execute({ planId: 5, workRecordId: 1, body: { name: '' } });
+    ).execute({ planId: 5, workRecordId: 1, body: { updated_at: '2026-06-12T00:00:00Z', name: '' } });
 
     expect(onValidationError).toHaveBeenCalled();
   });
