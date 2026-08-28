@@ -1,5 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+
+export const RECAPTCHA_CONTRACT_MOCK_SCRIPT = 'scripts/recaptcha-contract-mock.py';
 
 const DOCKER_BASH_C_MARKER = "test bash -c '";
 const HOST_SINGLE_QUOTE_ESCAPE = '\x27\x22\x27\x22\x27';
@@ -82,6 +84,32 @@ export function verifyContactShellContractQuoting(repoRoot) {
     }
   } catch (error) {
     errors.push(`contact payload is not valid JSON: ${error.message}`);
+  }
+
+  return { ok: errors.length === 0, errors };
+}
+
+export function verifyRecaptchaContractMockSetup(repoRoot) {
+  const errors = [];
+  const dockerfilePath = join(repoRoot, 'Dockerfile.test');
+  const contractScriptPath = join(repoRoot, 'scripts/run-rust-contract-tests.sh');
+  const mockScriptPath = join(repoRoot, RECAPTCHA_CONTRACT_MOCK_SCRIPT);
+
+  if (!existsSync(mockScriptPath)) {
+    errors.push(`missing ${RECAPTCHA_CONTRACT_MOCK_SCRIPT}`);
+  }
+
+  const dockerfile = readFileSync(dockerfilePath, 'utf8');
+  if (!/python3(?:-minimal)?/.test(dockerfile)) {
+    errors.push('Dockerfile.test must install python3 for reCAPTCHA contract mock');
+  }
+
+  const contractScript = readFileSync(contractScriptPath, 'utf8');
+  if (!contractScript.includes(RECAPTCHA_CONTRACT_MOCK_SCRIPT)) {
+    errors.push('run-rust-contract-tests.sh must start recaptcha-contract-mock.py');
+  }
+  if (!contractScript.includes('127.0.0.1:9191/siteverify')) {
+    errors.push('run-rust-contract-tests.sh must wait for reCAPTCHA mock readiness');
   }
 
   return { ok: errors.length === 0, errors };

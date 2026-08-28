@@ -257,35 +257,23 @@ docker compose --profile test run --rm \
     export GCS_BUCKET="${GCS_BUCKET:-test-bucket-contract}"
     export WEATHER_DATA_LOCAL_ROOT="${WEATHER_DATA_LOCAL_ROOT:-/tmp/agrr-weather-contract}"
     mkdir -p "$WEATHER_DATA_LOCAL_ROOT"
-    python3 -c "
-import json
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import parse_qs
-
-class Handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        length = int(self.headers.get('"'"'Content-Length'"'"', 0))
-        raw = self.rfile.read(length)
-        token = parse_qs(raw.decode()).get('"'"'response'"'"', ['"'"''"'"'])[0]
-        if token == '"'"'invalid-token-for-contract-test'"'"':
-            payload = {'"'"'success'"'"': False, '"'"'error-codes'"'"': ['"'"'invalid-input-response'"'"']}
-        else:
-            payload = {'"'"'success'"'"': True}
-        body = json.dumps(payload).encode()
-        self.send_response(200)
-        self.send_header('"'"'Content-Type'"'"', '"'"'application/json'"'"')
-        self.send_header('"'"'Content-Length'"'"', str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
-
-    def log_message(self, format, *args):
-        pass
-
-HTTPServer(('"'"'127.0.0.1'"'"', 9191), Handler).serve_forever()
-" >/tmp/recaptcha-mock.log 2>&1 &
+    python3 /app/scripts/recaptcha-contract-mock.py >/tmp/recaptcha-mock.log 2>&1 &
     RECAPTCHA_MOCK_PID=$!
     export RECAPTCHA_SECRET_KEY="${RECAPTCHA_SECRET_KEY:-contract-test-recaptcha-secret}"
     export RECAPTCHA_VERIFY_URL="${RECAPTCHA_VERIFY_URL:-http://127.0.0.1:9191/siteverify}"
+    RECAPTCHA_MOCK_READY=0
+    for _ in $(seq 1 50); do
+      if curl -sf -X POST -d "secret=x&response=contract-test-token" "$RECAPTCHA_VERIFY_URL" >/dev/null; then
+        RECAPTCHA_MOCK_READY=1
+        break
+      fi
+      sleep 0.1
+    done
+    if [ "$RECAPTCHA_MOCK_READY" != "1" ]; then
+      echo "reCAPTCHA contract mock failed to start; log:"
+      cat /tmp/recaptcha-mock.log
+      exit 1
+    fi
     AGRR_BIN="${AGRR_BIN_PATH:-/app/lib/core/agrr}"
     AGRR_SOCKET_PATH="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
     if [ -x "$AGRR_BIN" ]; then
