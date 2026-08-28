@@ -41,7 +41,16 @@ struct MeUser {
     email: Option<String>,
     avatar_url: Option<String>,
     admin: bool,
+    /// Masked preview only — full key is returned from generate/regenerate endpoints.
     api_key: Option<String>,
+}
+
+/// Mask API key for `/me` — full key is only returned on generate/regenerate.
+fn mask_api_key(raw: &str) -> String {
+    if raw.len() <= 8 {
+        return "****".to_string();
+    }
+    format!("{}****{}", &raw[..4], &raw[raw.len() - 4..])
 }
 
 async fn auth_logout(
@@ -87,7 +96,25 @@ async fn auth_me(
             email: row.email,
             avatar_url: row.avatar_url,
             admin: row.admin,
-            api_key: row.api_key,
+            api_key: row.api_key.as_deref().map(mask_api_key),
         },
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mask_api_key_hides_middle_of_long_key() {
+        let raw = "agr_test_key_1234567890";
+        let masked = mask_api_key(raw);
+        assert_eq!(masked, "agr_****7890");
+        assert_ne!(masked, raw);
+    }
+
+    #[test]
+    fn mask_api_key_short_key_is_fully_hidden() {
+        assert_eq!(mask_api_key("short"), "****");
+    }
 }

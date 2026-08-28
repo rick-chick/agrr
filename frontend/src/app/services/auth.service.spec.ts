@@ -16,11 +16,7 @@ class AuthServiceLogic {
     return this.api.getCurrentUser().pipe(
       map((response: any) => response.user),
       tap((user: any) => {
-        if (user.api_key) {
-          this.apiKeyService.setApiKey(user.api_key);
-        } else {
-          this.apiKeyService.clearApiKey();
-        }
+        this.apiKeyService.clearApiKey();
         user.region = user.region ?? detectBrowserRegion();
         this.userSignal = user;
         this.loaded = true;
@@ -30,12 +26,6 @@ class AuthServiceLogic {
         this.loaded = true;
         return of(null);
       })
-    );
-  }
-
-  ensureApiKey(obs$: any) {
-    return this.loadCurrentUser().pipe(
-      () => obs$
     );
   }
 
@@ -66,11 +56,11 @@ describe('AuthService Logic Verification', () => {
     service = new AuthServiceLogic(apiService, apiKeyService);
   });
 
-  it('should clear stale API key when current user has no api_key', async () => {
+  it('should clear stale API key when loading current user without persisting /me key', async () => {
     const mockUser = {
       id: 1,
       name: 'Test User',
-      api_key: null
+      api_key: 'agr_****7890'
     };
 
     apiService.getCurrentUser.mockReturnValue(of({ user: mockUser }));
@@ -79,20 +69,6 @@ describe('AuthService Logic Verification', () => {
 
     expect(apiKeyService.clearApiKey).toHaveBeenCalled();
     expect(apiKeyService.setApiKey).not.toHaveBeenCalled();
-  });
-
-  it('should set API key when loading current user', async () => {
-    const mockUser = {
-      id: 1,
-      name: 'Test User',
-      api_key: 'new-api-key'
-    };
-
-    apiService.getCurrentUser.mockReturnValue(of({ user: mockUser }));
-
-    await firstValueFrom(service.loadCurrentUser());
-    
-    expect(apiKeyService.setApiKey).toHaveBeenCalledWith('new-api-key');
     expect(service.user()).toEqual(mockUser);
   });
 
@@ -100,7 +76,7 @@ describe('AuthService Logic Verification', () => {
     apiService.logout.mockReturnValue(of({ success: true }));
 
     await firstValueFrom(service.logout());
-    
+
     expect(apiKeyService.clearApiKey).toHaveBeenCalled();
     expect(service.user()).toBeNull();
   });
