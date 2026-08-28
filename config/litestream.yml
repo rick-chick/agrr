@@ -9,7 +9,7 @@ dbs:
         bucket: ${GCS_BUCKET}
         path: production/primary.sqlite3
         retention: 24h
-        sync-interval: 30s
+        sync-interval: 10s
   
   # Solid Queue: excluded from replication to avoid database is locked (Litestream
   # checkpoint vs SolidQueue Worker/Dispatcher). Queue is ephemeral; jobs are
