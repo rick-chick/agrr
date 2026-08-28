@@ -4,13 +4,12 @@ use crate::scheduler_weather_update::trigger_scheduler_weather_update;
 use crate::state::AppState;
 use agrr_adapters_agrr::{use_agrr_daemon_enabled, AgrrDaemonClient};
 use axum::{
-    extract::{Query, State},
+    extract::State,
     http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
     routing::{get, post},
     Json, Router,
 };
-use serde::Deserialize;
 use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
 
@@ -67,12 +66,7 @@ async fn api_v1_ready() -> impl IntoResponse {
         .into_response()
 }
 
-#[derive(Debug, Deserialize)]
-struct SchedulerTokenQuery {
-    token: Option<String>,
-}
-
-fn extract_scheduler_token(headers: &HeaderMap, query: &SchedulerTokenQuery) -> Option<String> {
+fn extract_scheduler_token(headers: &HeaderMap) -> Option<String> {
     if let Some(token) = headers
         .get("X-Scheduler-Token")
         .and_then(|v| v.to_str().ok())
@@ -80,21 +74,16 @@ fn extract_scheduler_token(headers: &HeaderMap, query: &SchedulerTokenQuery) -> 
     {
         return Some(token);
     }
-    if let Some(token) = headers
+    headers
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.strip_prefix("Bearer "))
         .map(str::to_string)
-    {
-        return Some(token);
-    }
-    query.token.clone()
 }
 
 async fn trigger_weather_update(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(query): Query<SchedulerTokenQuery>,
 ) -> impl IntoResponse {
     if state.scheduler_auth_token.is_empty() {
         return (
@@ -104,7 +93,7 @@ async fn trigger_weather_update(
             .into_response();
     }
 
-    let Some(provided_token) = extract_scheduler_token(&headers, &query) else {
+    let Some(provided_token) = extract_scheduler_token(&headers) else {
         return (
             StatusCode::UNAUTHORIZED,
             Json(serde_json::json!({"error": "Missing authentication token"})),
@@ -121,4 +110,45 @@ async fn trigger_weather_update(
     }
 
     trigger_scheduler_weather_update(&state)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::HeaderValue;
+
+    #[test]
+    fn extract_scheduler_token_prefers_x_scheduler_token_header() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "X-Scheduler-Token",
+            HeaderValue::from_static("header-token"),
+        );
+        headers.insert(
+            header::AUTHORIZATION,
+            HeaderValue::from_static("Bearer bearer-token"),
+        );
+        assert_eq!(
+            Some("header-token".to_string()),
+            extract_scheduler_token(&headers)
+        );
+    }
+
+    #[test]
+    fn extract_scheduler_token_accepts_bearer_authorization() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            header::AUTHORIZATION,
+            HeaderValue::from_static("Bearer bearer-token"),
+        );
+        assert_eq!(
+            Some("bearer-token".to_string()),
+            extract_scheduler_token(&headers)
+        );
+    }
+
+    #[test]
+    fn extract_scheduler_token_rejects_query_only_auth() {
+        assert_eq!(None, extract_scheduler_token(&HeaderMap::new()));
+    }
 }
