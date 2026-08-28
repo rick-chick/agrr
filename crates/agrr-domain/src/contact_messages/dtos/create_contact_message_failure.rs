@@ -8,6 +8,7 @@ pub enum CreateContactMessageFailureKind {
     Validation,
     Recaptcha,
     RateLimit,
+    Unavailable,
 }
 
 /// Ruby: `Domain::ContactMessages::Dtos::CreateContactMessageFailure`
@@ -43,6 +44,14 @@ impl CreateContactMessageFailure {
         }
     }
 
+    pub fn unavailable(message: impl Into<String>) -> Self {
+        Self {
+            kind: CreateContactMessageFailureKind::Unavailable,
+            errors: None,
+            message: Some(message.into()),
+        }
+    }
+
     pub fn validation_kind(&self) -> bool {
         self.kind == CreateContactMessageFailureKind::Validation
     }
@@ -53,5 +62,9 @@ impl CreateContactMessageFailure {
 
     pub fn rate_limit_kind(&self) -> bool {
         self.kind == CreateContactMessageFailureKind::RateLimit
+    }
+
+    pub fn unavailable_kind(&self) -> bool {
+        self.kind == CreateContactMessageFailureKind::Unavailable
     }
 }
