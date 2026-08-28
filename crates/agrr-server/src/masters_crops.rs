@@ -57,6 +57,7 @@ struct CropAttrs {
     region: Option<String>,
     groups: Option<Vec<String>>,
     is_reference: Option<bool>,
+    updated_at: Option<String>,
 }
 
 async fn list_crops(
@@ -189,6 +190,7 @@ async fn update_crop(
     input.region = payload.crop.region.clone();
     input.groups = payload.crop.groups.clone();
     input.is_reference = payload.crop.is_reference;
+    input.updated_at = payload.crop.updated_at.clone();
     interactor.call(input).map_err(internal)?;
 
     match presenter.body {
@@ -302,6 +304,10 @@ impl agrr_domain::crop::ports::CropUpdateOutputPort for UpdatePresenter {
             UpdateFailure::ReferenceFlagChangeDenied(_) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 "crops.flash.reference_flag_denied".to_string(),
+            ),
+            UpdateFailure::StaleUpdate => (
+                StatusCode::CONFLICT,
+                "stale_record".to_string(),
             ),
             UpdateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
         };
