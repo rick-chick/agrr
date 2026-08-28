@@ -9,6 +9,7 @@ use time::Date;
 
 use crate::agrr_daemon_debug_dump::copy_temp_file_to_debug;
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
+use crate::daemon_unavailable::agrr_daemon_error_message;
 use crate::daemon_response::parse_daemon_json_payload;
 use crate::daemon_temp_file::write_temp_json_path;
 
@@ -135,7 +136,7 @@ impl PlanAllocationAdjustGateway for PlanAllocationAdjustAgrrDaemonGateway {
 }
 
 fn map_daemon_error(err: AgrrDaemonError) -> AdjustExecutionError {
-    AdjustExecutionError::new(err.to_string())
+    AdjustExecutionError::new(agrr_daemon_error_message(err))
 }
 
 fn parse_adjust_result(raw: &Value) -> Result<Value, AdjustExecutionError> {

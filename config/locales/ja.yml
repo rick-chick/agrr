@@ -96,6 +96,7 @@ ja:
         location_required: "位置情報を入力してください"
         weather_service_unavailable: "天気サービスは一時的に利用できません"
         weather_fetch_failed: "天気データの取得に失敗しました: %{message}"
+        daemon_unavailable: "AGRR処理サービスに接続できません。しばらくしてから再試行してください。"
         forecast_fetch_failed: "予報データの取得に失敗しました: %{message}"
         weather_invalid_response: "天気サービスからの応答が不正です"
         invalid_date_format: "日付形式が不正です: %{message}"

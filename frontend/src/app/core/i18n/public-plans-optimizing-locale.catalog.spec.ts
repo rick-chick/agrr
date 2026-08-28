@@ -29,7 +29,8 @@ const PUBLIC_PLANS_OPTIMIZING_KEYS = [
   'models.cultivation_plan.phase_failed.predicting_weather',
   'models.cultivation_plan.phase_failed.optimizing',
   'models.cultivation_plan.phase_failed.task_schedule_generation',
-  'models.cultivation_plan.phase_failed.timeout'
+  'models.cultivation_plan.phase_failed.timeout',
+  'models.cultivation_plan.phase_failed.daemon_unavailable'
 ] as const;
 
 describe('public-plans optimizing locale catalog (#19)', () => {
