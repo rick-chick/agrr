@@ -19,4 +19,6 @@ export interface FarmDetailView {
   load?(farmId: number): void;
   /** Reload detail (e.g. after undo restore). */
   reload(): void;
+  /** Called after weather fetch retry succeeds (reset polling state). */
+  onWeatherFetchRetried?(): void;
 }
