@@ -3,7 +3,9 @@
 use crate::adapters::{NoopLogger, SystemClock};
 use crate::state::AppState;
 use axum::http::HeaderMap;
-use agrr_adapters_agrr::{AgrrDaemonClient, EntryScheduleOptimizationAgrrDaemonGateway};
+use agrr_adapters_agrr::{
+    use_agrr_daemon_enabled, EntryScheduleOptimizationAgrrDaemonGateway,
+};
 use agrr_adapters_sqlite::{CropSqliteGateway, FarmSqliteGateway};
 use agrr_domain::crop::dtos::CropFindReferenceForEntryScheduleInput;
 use agrr_domain::crop::entities::CropEntity;
@@ -371,7 +373,7 @@ async fn entry_schedule_crop_show(
         )
             .into_response();
     };
-    let agrr_enabled = AgrrDaemonClient::from_env().daemon_running();
+    let agrr_enabled = use_agrr_daemon_enabled();
     let runner = OptimizeRunner {
         pool: pool.clone(),
         optimization: EntryScheduleOptimizationAgrrDaemonGateway::from_env(),
@@ -420,7 +422,7 @@ async fn entry_schedule_crops(
     let reference_crops = crop_gateway
         .list_by_is_reference(true, Some(&region))
         .unwrap_or_default();
-    let agrr_enabled = AgrrDaemonClient::from_env().daemon_running();
+    let agrr_enabled = use_agrr_daemon_enabled();
     let runner = OptimizeRunner {
         pool: pool.clone(),
         optimization: EntryScheduleOptimizationAgrrDaemonGateway::from_env(),

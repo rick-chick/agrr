@@ -17,6 +17,7 @@ import { DeleteFarmUseCase } from '../../../usecase/farms/delete-farm.usecase';
 import { CreateFieldUseCase } from '../../../usecase/farms/create-field.usecase';
 import { UpdateFieldUseCase } from '../../../usecase/farms/update-field.usecase';
 import { DeleteFieldUseCase } from '../../../usecase/farms/delete-field.usecase';
+import { RetryFarmWeatherFetchUseCase } from '../../../usecase/farms/retry-farm-weather-fetch.usecase';
 import {
   CreateFieldPresenter,
   DeleteFieldPresenter,
@@ -103,6 +104,22 @@ const initialControl: FarmDetailViewState = {
             @if (control.farm.weather_data_status === 'fetching') {
               <p>{{ 'farms.show.weather_progress' | translate }}: {{ control.farm.weather_data_progress ?? 0 }}%</p>
               <progress class="progress-bar" [value]="control.farm.weather_data_progress ?? 0" max="100"></progress>
+            }
+            @if (weatherPollTimedOut) {
+              <p class="weather-status-error" role="alert">
+                {{ 'farms.show.weather_poll_timeout' | translate }}
+              </p>
+            }
+            @if (showWeatherRetry()) {
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-testid="farm-weather-refetch"
+                [disabled]="weatherFetchRetrying"
+                (click)="retryWeatherFetch()"
+              >
+                {{ 'farms.show.weather_refetch' | translate }}
+              </button>
             }
           </section>
         }
@@ -213,6 +230,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private readonly createFieldUseCase = inject(CreateFieldUseCase);
   private readonly updateFieldUseCase = inject(UpdateFieldUseCase);
   private readonly deleteFieldUseCase = inject(DeleteFieldUseCase);
+  private readonly retryWeatherFetchUseCase = inject(RetryFarmWeatherFetchUseCase);
   private readonly createFieldPresenter = inject(CreateFieldPresenter);
   private readonly updateFieldPresenter = inject(UpdateFieldPresenter);
   private readonly deleteFieldPresenter = inject(DeleteFieldPresenter);
@@ -223,6 +241,8 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private channel: Channel | null = null;
   private weatherPollTimer: ReturnType<typeof setInterval> | null = null;
   private weatherPollAttempts = 0;
+  weatherPollTimedOut = false;
+  weatherFetchRetrying = false;
   private static readonly WEATHER_POLL_INTERVAL_MS = 3000;
   private static readonly WEATHER_POLL_MAX_ATTEMPTS = 40;
 
@@ -281,6 +301,31 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     this.load(farmId);
   }
 
+  onWeatherFetchRetried(): void {
+    this.weatherPollTimedOut = false;
+    this.stopWeatherPolling();
+    this.syncWeatherPolling();
+  }
+
+  showWeatherRetry(): boolean {
+    const status = this._control.farm?.weather_data_status;
+    return status === 'failed' || this.weatherPollTimedOut;
+  }
+
+  retryWeatherFetch(): void {
+    const farm = this._control.farm;
+    if (!farm || this.weatherFetchRetrying) return;
+    this.weatherFetchRetrying = true;
+    this.weatherPollTimedOut = false;
+    this.retryWeatherFetchUseCase.execute({
+      farmId: farm.id,
+      onSettled: () => {
+        this.weatherFetchRetrying = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   ngOnDestroy(): void {
     this.channel?.unsubscribe();
     this.stopWeatherPolling();
@@ -306,6 +351,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     const farm = this._control.farm;
     const status = farm?.weather_data_status;
     if (farm && (status === 'fetching' || status === 'pending')) {
+      this.weatherPollTimedOut = false;
       if (!this.weatherPollTimer) {
         const farmId = farm.id;
         this.weatherPollAttempts = 0;
@@ -313,6 +359,10 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
           this.weatherPollAttempts += 1;
           if (this.weatherPollAttempts >= FarmDetailComponent.WEATHER_POLL_MAX_ATTEMPTS) {
             this.stopWeatherPolling();
+            queueMicrotask(() => {
+              this.weatherPollTimedOut = true;
+              this.cdr.markForCheck();
+            });
             return;
           }
           this.loadUseCase.execute({ farmId });
