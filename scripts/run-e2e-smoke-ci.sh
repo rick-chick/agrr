@@ -71,8 +71,22 @@ trap cleanup EXIT
 
 restore_db_cache || true
 
+patch_plan_create_baseline_db() {
+  if [[ -f "$DB_PATH" ]]; then
+    echo "==> Patching plan-create baseline on dev DB"
+    bash scripts/ensure-dev-db-plan-create-baseline.sh "$DB_PATH"
+  fi
+}
+
 # Dockerfile.agrr-server COPY lib/core/ requires the directory in build context (binary is optional / gitignored).
 mkdir -p lib/core
+
+NEEDS_REFERENCE_LOAD=false
+if [[ ! -f "$DB_PATH" ]]; then
+  NEEDS_REFERENCE_LOAD=true
+else
+  patch_plan_create_baseline_db
+fi
 
 echo "==> Building agrr-server image"
 docker compose "${COMPOSE_FILES[@]}" build agrr-server
@@ -80,19 +94,20 @@ docker compose "${COMPOSE_FILES[@]}" build agrr-server
 echo "==> Starting agrr-server + strangler-proxy"
 docker compose "${COMPOSE_FILES[@]}" up -d agrr-server strangler-proxy
 
-wait_for_health
-
-if [[ ! -f "$DB_PATH" ]]; then
+if [[ "$NEEDS_REFERENCE_LOAD" == true ]]; then
+  wait_for_health
   echo "==> Loading reference data (first run or empty cache)"
   docker compose "${COMPOSE_FILES[@]}" run --rm agrr-server \
     /app/dev-docker-entrypoints/load-reference-data-container.sh
   save_db_cache
+  patch_plan_create_baseline_db
+  echo "==> Restarting agrr-server after baseline DB patch"
+  docker compose "${COMPOSE_FILES[@]}" restart agrr-server
 else
   echo "==> Using existing dev DB at ${DB_PATH}"
 fi
 
-export ENSURE_DB_VIA_DOCKER=1
-bash scripts/ensure-dev-db-plan-create-baseline.sh "$DB_PATH"
+wait_for_health
 
 echo "==> Installing Playwright browsers"
 cd "$ROOT/frontend"
