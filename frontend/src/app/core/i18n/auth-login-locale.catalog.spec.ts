@@ -22,7 +22,13 @@ const AUTH_LOGIN_KEYS = [
   'auth.login.dev_login_as_developer',
   'auth.login.dev_login_as_farmer',
   'auth.login.dev_login_as_researcher',
-  'auth.login.dev_login_note'
+  'auth.login.dev_login_note',
+  'auth.login.errors.oauth_denied',
+  'auth.login.errors.csrf_mismatch',
+  'auth.login.errors.token_exchange_failed',
+  'auth.login.errors.authentication_failed',
+  'auth.login.errors.oauth_not_configured',
+  'auth.login.errors.unknown'
 ] as const;
 
 /** in locale must not reuse English copy for these keys (visual-review #7). */
