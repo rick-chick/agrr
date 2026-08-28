@@ -16,7 +16,9 @@ export class SubscribePlanOptimizationUseCase implements SubscribePlanOptimizati
 
   execute(dto: SubscribePlanOptimizationInputDto): void {
     const channel = this.optimizationGateway.subscribe(dto.planId, {
-      received: (message) => this.outputPort.present(message)
+      received: (message) => this.outputPort.present(message),
+      disconnected: () => this.outputPort.presentConnectionLost(),
+      rejected: () => this.outputPort.presentConnectionLost()
     });
     dto.onSubscribed?.(channel);
   }

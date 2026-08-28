@@ -88,6 +88,23 @@ export class FarmDetailPresenter
     };
   }
 
+  presentWeatherConnectionLost(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const prev = this.view.control;
+    if (!prev.farm) return;
+    if (prev.farm.weather_data_status !== 'fetching' && prev.farm.weather_data_status !== 'pending') {
+      return;
+    }
+    this.view.control = {
+      ...prev,
+      farm: {
+        ...prev.farm,
+        weather_data_status: 'failed'
+      },
+      pendingErrorFlash: null
+    };
+  }
+
   onSuccess(dto: DeleteFarmSuccessDto | RetryFarmWeatherFetchSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if ('deletedFarmId' in dto) {
