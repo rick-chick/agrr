@@ -11,6 +11,7 @@ RUN apt-get update -qq && apt-get install -y \
     libsqlite3-0 \
     curl \
     ca-certificates \
+    python3-minimal \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

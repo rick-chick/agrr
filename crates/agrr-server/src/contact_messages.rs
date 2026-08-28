@@ -66,6 +66,10 @@ fn failure_response(failure: CreateContactMessageFailure) -> (StatusCode, Json<s
             StatusCode::UNPROCESSABLE_ENTITY,
             serde_json::json!({"error": failure.message.unwrap_or_default()}),
         ),
+        CreateContactMessageFailureKind::Unavailable => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            serde_json::json!({"error": failure.message.unwrap_or_default()}),
+        ),
         CreateContactMessageFailureKind::Validation => (
             StatusCode::UNPROCESSABLE_ENTITY,
             serde_json::json!({"errors": failure.errors.map(|e| e.full_messages()).unwrap_or_default()}),
@@ -132,6 +136,15 @@ async fn create(
 mod tests {
     use super::*;
     use axum::http::HeaderMap;
+
+    #[test]
+    fn failure_response_unavailable_returns_503() {
+        let (status, Json(json)) = failure_response(CreateContactMessageFailure::unavailable(
+            "reCAPTCHA is not configured",
+        ));
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(json["error"], "reCAPTCHA is not configured");
+    }
 
     #[test]
     fn failure_response_rate_limit_includes_json_body() {
