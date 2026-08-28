@@ -91,6 +91,7 @@ else
   echo "==> Using existing dev DB at ${DB_PATH}"
 fi
 
+export ENSURE_DB_VIA_DOCKER=1
 bash scripts/ensure-dev-db-plan-create-baseline.sh "$DB_PATH"
 
 echo "==> Installing Playwright browsers"

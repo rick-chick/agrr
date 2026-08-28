@@ -8,16 +8,7 @@ if [[ ! -f "$DB_PATH" ]]; then
   exit 0
 fi
 
-# Actions cache restore can leave the DB read-only; sqlite UPDATE needs write + journal.
-chmod u+w "$DB_PATH" 2>/dev/null || true
-chmod u+w "$(dirname "$DB_PATH")" 2>/dev/null || true
-
-if ! command -v sqlite3 >/dev/null 2>&1; then
-  echo "WARN: sqlite3 not found; skipping plan-create baseline DB patch" >&2
-  exit 0
-fi
-
-sqlite3 "$DB_PATH" <<'SQL'
+read -r -d '' SQL_BLOCK <<'SQL' || true
 UPDATE farms
 SET weather_data_status = 'completed',
     weather_data_fetched_years = CASE
@@ -37,3 +28,41 @@ WHERE id = (
   LIMIT 1
 );
 SQL
+
+run_sqlite() {
+  local target="$1"
+  sqlite3 "$target" "$SQL_BLOCK"
+}
+
+if [[ "${ENSURE_DB_VIA_DOCKER:-}" == "1" ]]; then
+  ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  COMPOSE_FILES=(-f docker-compose.yml -f docker-compose.e2e-ci.yml)
+  if [[ -n "${ENSURE_DB_DOCKER_COMPOSE_FILES:-}" ]]; then
+    # shellcheck disable=SC2206
+    COMPOSE_FILES=(${ENSURE_DB_DOCKER_COMPOSE_FILES})
+  fi
+  cd "$ROOT"
+  docker compose "${COMPOSE_FILES[@]}" exec -T agrr-server \
+    sqlite3 /app/storage/development.sqlite3 "$SQL_BLOCK"
+  exit 0
+fi
+
+if ! command -v sqlite3 >/dev/null 2>&1; then
+  echo "WARN: sqlite3 not found; skipping plan-create baseline DB patch" >&2
+  exit 0
+fi
+
+# Actions cache restore can leave the DB read-only; replace via tempfile when needed.
+chmod u+w "$DB_PATH" "$(dirname "$DB_PATH")" 2>/dev/null || true
+if [[ -w "$DB_PATH" ]]; then
+  run_sqlite "$DB_PATH"
+  exit 0
+fi
+
+PATCHED="$(mktemp)"
+cp -f "$DB_PATH" "$PATCHED"
+run_sqlite "$PATCHED"
+chmod u+w "$DB_PATH" "$(dirname "$DB_PATH")" 2>/dev/null || true
+rm -f "$DB_PATH"
+mv -f "$PATCHED" "$DB_PATH"
+chmod u+w "$DB_PATH" 2>/dev/null || true

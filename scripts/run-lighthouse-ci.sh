@@ -133,6 +133,7 @@ run_authenticated_lighthouse() {
     echo "==> Using existing dev DB at ${DB_PATH}"
   fi
 
+  export ENSURE_DB_VIA_DOCKER=1
   bash "${ROOT}/scripts/ensure-dev-db-plan-create-baseline.sh" "$DB_PATH"
 
   echo "==> Starting ng serve (development proxy → :3000) for authenticated routes"
