@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildGoogleOAuthStartUrl,
   buildMockLoginUrl,
+  loginErrorMessageKey,
   loginReturnQueryForLocation,
   locationLikeFromRouterUrl,
   navigateTargetFromReturnTo,
@@ -173,5 +174,31 @@ describe('login-auth-urls', () => {
     expect(buildMockLoginUrl('', 'researcher', loc)).toContain(
       '/auth/test/mock_login_as/researcher?return_to='
     );
+  });
+
+  describe('loginErrorMessageKey', () => {
+    it('maps known OAuth login error codes to i18n keys', () => {
+      expect(loginErrorMessageKey('oauth_denied')).toBe('auth.login.errors.oauth_denied');
+      expect(loginErrorMessageKey('csrf_mismatch')).toBe('auth.login.errors.csrf_mismatch');
+      expect(loginErrorMessageKey('token_exchange_failed')).toBe(
+        'auth.login.errors.token_exchange_failed'
+      );
+      expect(loginErrorMessageKey('authentication_failed')).toBe(
+        'auth.login.errors.authentication_failed'
+      );
+      expect(loginErrorMessageKey('oauth_not_configured')).toBe(
+        'auth.login.errors.oauth_not_configured'
+      );
+    });
+
+    it('returns null when error code is absent', () => {
+      expect(loginErrorMessageKey(null)).toBeNull();
+      expect(loginErrorMessageKey(undefined)).toBeNull();
+      expect(loginErrorMessageKey('')).toBeNull();
+    });
+
+    it('falls back to unknown key for unrecognized codes', () => {
+      expect(loginErrorMessageKey('unexpected')).toBe('auth.login.errors.unknown');
+    });
   });
 });
