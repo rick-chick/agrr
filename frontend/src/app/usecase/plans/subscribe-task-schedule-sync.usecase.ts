@@ -17,7 +17,9 @@ export class SubscribeTaskScheduleSyncUseCase implements SubscribeTaskScheduleSy
 
   execute(dto: SubscribeTaskScheduleSyncInputDto): void {
     const channel = this.cableGateway.subscribeTaskScheduleSync(dto.planId, {
-      received: (message) => this.outputPort.onTaskScheduleSync(message)
+      received: (message) => this.outputPort.onTaskScheduleSync(message),
+      disconnected: () => this.outputPort.presentConnectionLost(),
+      rejected: () => this.outputPort.presentConnectionLost()
     });
     dto.onSubscribed?.(channel);
   }
