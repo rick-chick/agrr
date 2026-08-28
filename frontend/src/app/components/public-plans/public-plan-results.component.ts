@@ -17,7 +17,7 @@ import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import {
-  consumePendingPublicPlanSave,
+  peekPendingPublicPlanSave,
   setPendingPublicPlanSave
 } from '../../services/public-plans/pending-public-plan-save';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
@@ -184,7 +184,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     this.auth
       .loadCurrentUser()
       .pipe(take(1))
-      .subscribe(() => this.maybeRunPendingSave(planId));
+      .subscribe(() => this.maybeRunPendingSave());
   }
 
   savePlan(): void {
@@ -198,7 +198,14 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     }
 
     if (!this.auth.user()) {
-      setPendingPublicPlanSave(planId);
+      const stored = setPendingPublicPlanSave(planId);
+      if (!stored) {
+        this.flashMessage.show({
+          type: 'error',
+          text: this.translate.instant('public_plans.errors.storage_unavailable')
+        });
+        return;
+      }
       void this.router.navigate(['/login'], {
         queryParams: { return_to: window.location.href }
       });
@@ -208,11 +215,11 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     this.saveUseCase.execute({ planId });
   }
 
-  private maybeRunPendingSave(_fallbackPlanId: number): void {
+  private maybeRunPendingSave(): void {
     if (!this.auth.user() || this.pendingSaveTriggered) {
       return;
     }
-    const pending = consumePendingPublicPlanSave();
+    const pending = peekPendingPublicPlanSave();
     if (!pending) {
       return;
     }

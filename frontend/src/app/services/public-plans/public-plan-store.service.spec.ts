@@ -1,16 +1,21 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PublicPlanStore } from './public-plan-store.service';
-
-const SESSION_STORAGE_KEY = 'agrr_public_plan_state';
+import { PUBLIC_PLAN_STATE_STORAGE_KEY } from './public-plan-browser-storage';
 
 describe('PublicPlanStore pendingCropSlug', () => {
   beforeEach(() => {
+    localStorage.clear();
     sessionStorage.clear();
   });
 
-  it('restores pendingCropSlug from session storage on construction', () => {
-    sessionStorage.setItem(
-      SESSION_STORAGE_KEY,
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('restores pendingCropSlug from localStorage on construction', () => {
+    localStorage.setItem(
+      PUBLIC_PLAN_STATE_STORAGE_KEY,
       JSON.stringify({ pendingCropSlug: 'tomato' })
     );
 
@@ -25,7 +30,7 @@ describe('PublicPlanStore pendingCropSlug', () => {
     store.setPendingCropSlug('bell_pepper');
 
     expect(store.state.pendingCropSlug).toBe('bell_pepper');
-    const stored = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!);
+    const stored = JSON.parse(localStorage.getItem(PUBLIC_PLAN_STATE_STORAGE_KEY)!);
     expect(stored.pendingCropSlug).toBe('bell_pepper');
   });
 
@@ -35,7 +40,7 @@ describe('PublicPlanStore pendingCropSlug', () => {
     store.setPendingCropId(42);
 
     expect(store.state.pendingCropId).toBe(42);
-    const stored = JSON.parse(sessionStorage.getItem('agrr_public_plan_state')!);
+    const stored = JSON.parse(localStorage.getItem(PUBLIC_PLAN_STATE_STORAGE_KEY)!);
     expect(stored.pendingCropId).toBe(42);
   });
 
@@ -46,15 +51,15 @@ describe('PublicPlanStore pendingCropSlug', () => {
     store.reset();
 
     expect(store.state.pendingCropSlug).toBeNull();
-    expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(PUBLIC_PLAN_STATE_STORAGE_KEY)).toBeNull();
   });
 
   it('syncFromSessionStorageIfFarmMissing restores farm seeded after construction', () => {
     const store = new PublicPlanStore();
     expect(store.state.farm).toBeNull();
 
-    sessionStorage.setItem(
-      SESSION_STORAGE_KEY,
+    localStorage.setItem(
+      PUBLIC_PLAN_STATE_STORAGE_KEY,
       JSON.stringify({
         farm: { id: 2, name: '東京', region: 'jp', latitude: 35.6, longitude: 139.7 },
         farmSize: { id: '300', area_sqm: 300, name: '300㎡', description: '' },
@@ -69,5 +74,39 @@ describe('PublicPlanStore pendingCropSlug', () => {
 
     expect(store.state.farm?.id).toBe(2);
     expect(store.state.farm?.name).toBe('東京');
+  });
+
+  it('migrates legacy sessionStorage state into localStorage on construction', () => {
+    sessionStorage.setItem(
+      PUBLIC_PLAN_STATE_STORAGE_KEY,
+      JSON.stringify({ pendingCropSlug: 'eggplant' })
+    );
+
+    const store = new PublicPlanStore();
+
+    expect(store.state.pendingCropSlug).toBe('eggplant');
+    expect(localStorage.getItem(PUBLIC_PLAN_STATE_STORAGE_KEY)).toContain('eggplant');
+    expect(sessionStorage.getItem(PUBLIC_PLAN_STATE_STORAGE_KEY)).toBeNull();
+  });
+
+  it('records persist failure when localStorage write fails', () => {
+    const store = new PublicPlanStore();
+    const originalLocalStorage = globalThis.localStorage;
+    vi.stubGlobal('localStorage', {
+      getItem: originalLocalStorage.getItem.bind(originalLocalStorage),
+      removeItem: originalLocalStorage.removeItem.bind(originalLocalStorage),
+      clear: originalLocalStorage.clear.bind(originalLocalStorage),
+      key: originalLocalStorage.key.bind(originalLocalStorage),
+      get length() {
+        return originalLocalStorage.length;
+      },
+      setItem: () => {
+        throw new DOMException('quota', 'QuotaExceededError');
+      },
+    });
+
+    store.setPendingCropSlug('tomato');
+
+    expect(store.hadPersistFailure).toBe(true);
   });
 });
