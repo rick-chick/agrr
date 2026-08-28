@@ -4,6 +4,11 @@ import { join } from 'node:path';
 import { buildSegmentPostBody } from './ensure-e2e-baseline-bodies.mjs';
 import { resolveFarmIdWhenUserAtLimit } from './ensure-e2e-baseline-lib.mjs';
 import {
+  createPlaywrightTransport,
+  ensurePlanCreateReadiness,
+  pickFarmIdWithCompletedWeather,
+} from './ensure-plan-create-ready-baseline-lib.mjs';
+import {
   E2E_BASELINE_PREFIX,
   findBaselineIdInList,
   firstIdFromList,
@@ -73,6 +78,13 @@ async function ensureMasterSegment(
       );
       return reused;
     }
+    const completedFarmId = pickFarmIdWithCompletedWeather(rows);
+    if (completedFarmId != null) {
+      console.warn(
+        `[ensureE2eBaseline] reuse farm id ${completedFarmId} with completed weather`,
+      );
+      return completedFarmId;
+    }
   }
 
   const postBody = buildSegmentPostBody(config.segment, ctx);
@@ -102,6 +114,12 @@ async function ensureMasterSegment(
   console.warn(
     `[ensureE2eBaseline] POST ${config.segment} failed (${status}): ${text.slice(0, 200)}`,
   );
+  if (config.segment === 'farms') {
+    const completedFarmId = pickFarmIdWithCompletedWeather(rows);
+    if (completedFarmId != null) {
+      return completedFarmId;
+    }
+  }
   return firstIdFromList(rows);
 }
 
@@ -167,11 +185,17 @@ async function ensurePlan(
   }
 
   await ensureFarmFieldForPlan(api, base, farmId);
+  const transport = createPlaywrightTransport(api, base);
+  const readyFarmId = await ensurePlanCreateReadiness(transport, farmId, cropId);
+  if (readyFarmId == null) {
+    console.warn('[ensureE2eBaseline] skip plan POST: no farm with completed weather');
+    return;
+  }
 
   const postRes = await api.post(listUrl, {
     data: {
       plan: {
-        farm_id: farmId,
+        farm_id: readyFarmId,
         crop_ids: [cropId],
         plan_name: `${E2E_BASELINE_PREFIX} Plan`,
       },

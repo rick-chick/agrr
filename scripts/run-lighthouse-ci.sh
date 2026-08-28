@@ -66,6 +66,7 @@ restore_db_cache() {
   if [[ -f "${CACHE_DIR}/development.sqlite3" ]]; then
     echo "==> Restoring cached E2E dev DB"
     cp "${CACHE_DIR}/development.sqlite3" "$DB_PATH"
+    chmod u+w "$DB_PATH" 2>/dev/null || true
     [[ -f "${CACHE_DIR}/development_cache.sqlite3" ]] && \
       cp "${CACHE_DIR}/development_cache.sqlite3" "${STORAGE_DIR}/development_cache.sqlite3" || true
     return 0
@@ -114,23 +115,43 @@ run_authenticated_lighthouse() {
   mkdir -p "$STORAGE_DIR" "$CACHE_DIR"
   restore_db_cache || true
 
+  patch_plan_create_baseline_db() {
+    if [[ -f "$DB_PATH" ]]; then
+      echo "==> Patching plan-create baseline on dev DB"
+      bash "${ROOT}/scripts/ensure-dev-db-plan-create-baseline.sh" "$DB_PATH"
+    fi
+  }
+
   mkdir -p "${ROOT}/lib/core"
+
+  NEEDS_REFERENCE_LOAD=false
+  if [[ ! -f "$DB_PATH" ]]; then
+    NEEDS_REFERENCE_LOAD=true
+  else
+    patch_plan_create_baseline_db
+  fi
 
   echo "==> Building agrr-server image for authenticated Lighthouse CI"
   docker compose "${COMPOSE_FILES[@]}" build agrr-server
 
   echo "==> Starting agrr-server + strangler-proxy"
   docker compose "${COMPOSE_FILES[@]}" up -d agrr-server strangler-proxy
-  wait_for_health
 
-  if [[ ! -f "$DB_PATH" ]]; then
+  if [[ "$NEEDS_REFERENCE_LOAD" == true ]]; then
+    wait_for_health
     echo "==> Loading reference data (first run or empty cache)"
-    docker compose "${COMPOSE_FILES[@]}" run --rm agrr-server \
-      /app/dev-docker-entrypoints/load-reference-data-container.sh
+    docker compose "${COMPOSE_FILES[@]}" run --rm \
+      --entrypoint /app/dev-docker-entrypoints/load-reference-data-container.sh \
+      agrr-server
     save_db_cache
+    patch_plan_create_baseline_db
+    echo "==> Restarting agrr-server after baseline DB patch"
+    docker compose "${COMPOSE_FILES[@]}" restart agrr-server
   else
     echo "==> Using existing dev DB at ${DB_PATH}"
   fi
+
+  wait_for_health
 
   echo "==> Starting ng serve (development proxy → :3000) for authenticated routes"
   npx ng serve --host 127.0.0.1 --port 4200 --configuration development >"${ROOT}/tmp/lighthouse-ng-serve.log" 2>&1 &

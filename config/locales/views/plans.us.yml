@@ -13,6 +13,8 @@ us:
       select_farm: "Please select a farm."
       select_crop: "Please select at least one crop."
       no_fields_in_farm: "Cannot create a plan for a farm without registered fields. Please add fields to the farm first."
+      weather_not_ready: "Weather data is not ready yet. Please wait until it completes before creating a plan."
+      crops_not_ready: "Plan setup is not complete. Please configure crops and task schedules first."
       restart: "Please start over."
       session_invalid: "Your session is invalid. Please sign in again."
       create_failed: "Failed to create plan: %{errors}"

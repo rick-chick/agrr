@@ -30,6 +30,7 @@ use support::{
     seed_user_organization,
     seed_organization_membership,
     run_personal_organization_ensure_for_user,
+    seed_plan_create_ready_farm,
     seed_user_farm_without_organization,
     seed_org_scoped_farm,
     seed_org_scoped_crop,
@@ -150,13 +151,7 @@ fn get_work_variance_portfolio_returns_farm_plan_rows_with_variance_stats() {
     )
     .expect("set gdd_at_actual");
 
-    let pending_farm_id = seed_user_farm_without_organization(user_id);
-    conn.execute(
-        "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
-         VALUES (?1, ?2, 'Portfolio Pending Field', 40.0, 0, datetime('now'), datetime('now'))",
-        rusqlite::params![pending_farm_id, user_id],
-    )
-    .expect("insert pending farm field");
+    let pending_farm_id = seed_plan_create_ready_farm(user_id);
 
     let (create_status, create_body) = status_and_body(client.post(
         "/api/v1/plans",
@@ -879,7 +874,7 @@ fn post_plan_create_with_carryover_persists_variance_learning_snapshot() {
     )
     .expect("set gdd_at_actual");
 
-    let target_farm_id = seed_user_farm_without_organization(user_id);
+    let target_farm_id = seed_plan_create_ready_farm(user_id);
     conn.execute(
         "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
          VALUES (?1, ?2, 'Carryover Target Field', 40.0, 0, datetime('now'), datetime('now'))",
@@ -961,7 +956,7 @@ fn post_plan_variance_learning_imports_snapshot_for_in_progress_plan() {
     )
     .expect("set gdd_at_actual");
 
-    let target_farm_id = seed_user_farm_without_organization(user_id);
+    let target_farm_id = seed_plan_create_ready_farm(user_id);
     conn.execute(
         "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
          VALUES (?1, ?2, 'In Progress Target Field', 40.0, 0, datetime('now'), datetime('now'))",
@@ -1025,7 +1020,7 @@ fn post_plan_variance_learning_import_other_user_returns_not_found() {
 
     let other_session = farmer_session_id(&client);
     let other_id = user_id_for_session(&client, &other_session);
-    let other_target_farm_id = seed_user_farm_without_organization(other_id);
+    let other_target_farm_id = seed_plan_create_ready_farm(other_id);
     let sqlite_path =
         std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
     let conn = rusqlite::Connection::open(&sqlite_path).expect("open contract sqlite");
@@ -1267,7 +1262,7 @@ fn get_plan_variance_learning_includes_proposal_application_progress() {
     )
     .expect("set gdd_at_actual");
 
-    let target_farm_id = seed_user_farm_without_organization(user_id);
+    let target_farm_id = seed_plan_create_ready_farm(user_id);
     conn.execute(
         "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
          VALUES (?1, ?2, 'Proposal Progress Field', 40.0, 0, datetime('now'), datetime('now'))",

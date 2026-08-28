@@ -10,6 +10,7 @@ mod plan_allocation_adjust_debug_dump_file_gateway;
 mod plan_allocation_adjust_read_gateway;
 mod field_mutation_gateway;
 mod plan_crop_gateway;
+mod private_plan_create_readiness_gateway;
 mod private_read_gateway;
 #[cfg(test)]
 mod private_read_gateway_test;
@@ -54,6 +55,7 @@ pub use plan_allocation_adjust_debug_dump_file_gateway::PlanAllocationAdjustDebu
 pub use plan_allocation_adjust_read_gateway::PlanAllocationAdjustReadSqliteGateway;
 pub use field_mutation_gateway::CultivationPlanFieldMutationSqliteGateway;
 pub use plan_crop_gateway::CultivationPlanPlanCropSqliteGateway;
+pub use private_plan_create_readiness_gateway::PrivatePlanCreateReadinessSqliteGateway;
 pub use private_read_gateway::CultivationPlanPrivateReadSqliteGateway;
 pub use private_snapshot_read_gateway::CultivationPlanPrivateSnapshotReadSqliteGateway;
 pub use plan_variance_learning_gateway::PlanVarianceLearningSqliteGateway;

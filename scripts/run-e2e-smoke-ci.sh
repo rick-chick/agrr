@@ -8,6 +8,7 @@
 #
 # Cache dir defaults to tmp/ (writable without root-owned .docker/). Override:
 #   CACHE_DIR=/path/to/cache scripts/run-e2e-smoke-ci.sh
+# Plan-create baseline DB patch: scripts/ensure-dev-db-plan-create-baseline.sh (JP reference farms)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -33,6 +34,7 @@ restore_db_cache() {
   if [[ -f "${CACHE_DIR}/development.sqlite3" ]]; then
     echo "==> Restoring cached E2E dev DB"
     cp "${CACHE_DIR}/development.sqlite3" "$DB_PATH"
+    chmod u+w "$DB_PATH" 2>/dev/null || true
     [[ -f "${CACHE_DIR}/development_cache.sqlite3" ]] && \
       cp "${CACHE_DIR}/development_cache.sqlite3" "${STORAGE_DIR}/development_cache.sqlite3" || true
     return 0
@@ -70,8 +72,22 @@ trap cleanup EXIT
 
 restore_db_cache || true
 
+patch_plan_create_baseline_db() {
+  if [[ -f "$DB_PATH" ]]; then
+    echo "==> Patching plan-create baseline on dev DB"
+    bash scripts/ensure-dev-db-plan-create-baseline.sh "$DB_PATH"
+  fi
+}
+
 # Dockerfile.agrr-server COPY lib/core/ requires the directory in build context (binary is optional / gitignored).
 mkdir -p lib/core
+
+NEEDS_REFERENCE_LOAD=false
+if [[ ! -f "$DB_PATH" ]]; then
+  NEEDS_REFERENCE_LOAD=true
+else
+  patch_plan_create_baseline_db
+fi
 
 echo "==> Building agrr-server image"
 docker compose "${COMPOSE_FILES[@]}" build agrr-server
@@ -79,16 +95,21 @@ docker compose "${COMPOSE_FILES[@]}" build agrr-server
 echo "==> Starting agrr-server + strangler-proxy"
 docker compose "${COMPOSE_FILES[@]}" up -d agrr-server strangler-proxy
 
-wait_for_health
-
-if [[ ! -f "$DB_PATH" ]]; then
+if [[ "$NEEDS_REFERENCE_LOAD" == true ]]; then
+  wait_for_health
   echo "==> Loading reference data (first run or empty cache)"
-  docker compose "${COMPOSE_FILES[@]}" run --rm agrr-server \
-    /app/dev-docker-entrypoints/load-reference-data-container.sh
+  docker compose "${COMPOSE_FILES[@]}" run --rm \
+    --entrypoint /app/dev-docker-entrypoints/load-reference-data-container.sh \
+    agrr-server
   save_db_cache
+  patch_plan_create_baseline_db
+  echo "==> Restarting agrr-server after baseline DB patch"
+  docker compose "${COMPOSE_FILES[@]}" restart agrr-server
 else
   echo "==> Using existing dev DB at ${DB_PATH}"
 fi
+
+wait_for_health
 
 echo "==> Installing Playwright browsers"
 cd "$ROOT/frontend"

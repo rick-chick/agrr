@@ -1338,6 +1338,8 @@
       "prediction_data_incomplete": "Weather prediction data is incomplete. Please try again later.",
       "no_fields_in_farm": "Cannot create a plan for a farm without registered fields. Please add fields to the farm first.",
       "invalid_id": "Invalid plan ID.",
+      "weather_not_ready": "Weather data is not ready yet. Please wait until it completes before creating a plan.",
+      "crops_not_ready": "Plan setup is not complete. Please configure crops and task schedules first.",
       "storage_unavailable": "Browser storage is unavailable, so your progress cannot be saved. Try again in a normal browser window or another browser."
     },
     "messages": {

@@ -1523,6 +1523,95 @@ pub fn seed_user_farm_without_organization(user_id: i64) -> i64 {
     conn.last_insert_rowid()
 }
 
+/// Ensures the user has a crop that satisfies private plan create readiness.
+pub fn ensure_plan_create_ready_crop(user_id: i64) {
+    let conn = contract_sqlite_conn();
+    let suffix = seed_suffix();
+    let crop_name = format!("Plan Create Ready Crop {suffix}");
+    conn.execute(
+        "INSERT INTO crops (user_id, name, variety, is_reference, created_at, updated_at)
+         VALUES (?1, ?2, 'V1', 0, datetime('now'), datetime('now'))",
+        params![user_id, crop_name],
+    )
+    .expect("insert plan-create-ready crop");
+    let crop_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO crop_stages (crop_id, name, \"order\", created_at, updated_at)
+         VALUES (?1, 'Vegetative', 1, datetime('now'), datetime('now'))",
+        params![crop_id],
+    )
+    .expect("insert plan-create-ready crop stage");
+    let crop_stage_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO temperature_requirements (crop_stage_id, base_temperature, optimal_min, optimal_max, max_temperature, created_at, updated_at)
+         VALUES (?1, 10.0, 18.0, 28.0, 35.0, datetime('now'), datetime('now'))",
+        params![crop_stage_id],
+    )
+    .expect("insert plan-create-ready temperature requirements");
+    conn.execute(
+        "INSERT INTO thermal_requirements (crop_stage_id, required_gdd, created_at, updated_at)
+         VALUES (?1, 200.0, datetime('now'), datetime('now'))",
+        params![crop_stage_id],
+    )
+    .expect("insert plan-create-ready thermal requirements");
+
+    let field_work_task = format!("Plan Create Field Work {suffix}");
+    conn.execute(
+        "INSERT INTO agricultural_tasks (name, is_reference, user_id, task_type, created_at, updated_at)
+         VALUES (?1, 0, ?2, 'field_work', datetime('now'), datetime('now'))",
+        params![field_work_task, user_id],
+    )
+    .expect("insert plan-create-ready field work task");
+    let field_work_task_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO crop_task_schedule_blueprints (
+            crop_id, agricultural_task_id, stage_order, stage_name, gdd_trigger, gdd_tolerance,
+            task_type, source, priority, created_at, updated_at
+         ) VALUES (?1, ?2, 1, 'Vegetative', 0.0, 5.0, 'field_work', 'manual', 1, datetime('now'), datetime('now'))",
+        params![crop_id, field_work_task_id],
+    )
+    .expect("insert plan-create-ready field work blueprint");
+
+    let fertilizer_task = format!("Plan Create Basal Fertilizer {suffix}");
+    conn.execute(
+        "INSERT INTO agricultural_tasks (name, is_reference, user_id, task_type, created_at, updated_at)
+         VALUES (?1, 0, ?2, 'basal_fertilization', datetime('now'), datetime('now'))",
+        params![fertilizer_task, user_id],
+    )
+    .expect("insert plan-create-ready fertilizer task");
+    let fertilizer_task_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO crop_task_schedule_blueprints (
+            crop_id, agricultural_task_id, stage_order, stage_name, gdd_trigger, gdd_tolerance,
+            task_type, source, priority, created_at, updated_at
+         ) VALUES (?1, ?2, 1, 'Vegetative', 0.0, 5.0, 'basal_fertilization', 'manual', 1, datetime('now'), datetime('now'))",
+        params![crop_id, fertilizer_task_id],
+    )
+    .expect("insert plan-create-ready fertilizer blueprint");
+}
+
+/// Farm with completed weather and a valid field for POST /api/v1/plans contract seeds.
+pub fn seed_plan_create_ready_farm(user_id: i64) -> i64 {
+    ensure_plan_create_ready_crop(user_id);
+    let conn = contract_sqlite_conn();
+    let suffix = seed_suffix();
+    conn.execute(
+        "INSERT INTO farms (user_id, name, latitude, longitude, weather_data_status, created_at, updated_at, is_reference)
+         VALUES (?1, ?2, 35.0, 139.0, 'completed', datetime('now'), datetime('now'), 0)",
+        params![user_id, format!("Plan Create Ready Farm {suffix}")],
+    )
+    .expect("insert plan-create-ready farm");
+    let farm_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
+         VALUES (?1, ?2, 'Plan Create Field', 40.0, 0, datetime('now'), datetime('now'))",
+        params![farm_id, user_id],
+    )
+    .expect("insert plan-create-ready field");
+    farm_id
+}
+
 /// Seeds a farm scoped to an organization for org-member authorization contract tests.
 pub fn seed_org_scoped_farm(organization_id: i64, user_id: i64) -> i64 {
     let conn = contract_sqlite_conn();

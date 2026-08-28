@@ -7,7 +7,8 @@ use crate::state::AppState;
 use agrr_adapters_sqlite::{
     CropSqliteGateway, CultivationPlanFieldMutationSqliteGateway,
     CultivationPlanPrivateReadSqliteGateway, CultivationPlanPrivateSnapshotReadSqliteGateway,
-    CultivationPlanSqliteGateway, FarmSqliteGateway, FieldSqliteGateway, UserLookupSqliteGateway,
+    CultivationPlanSqliteGateway, FarmSqliteGateway, FieldSqliteGateway,
+    PrivatePlanCreateReadinessSqliteGateway, UserLookupSqliteGateway,
     UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::shared::gateways::UserLookupGateway;
@@ -357,7 +358,8 @@ async fn create_plan(
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let farm_gateway = FarmSqliteGateway::new(pool.clone());
     let field_read_gateway = FieldSqliteGateway::new(pool.clone());
-    let field_mutation = CultivationPlanFieldMutationSqliteGateway::new(pool);
+    let field_mutation = CultivationPlanFieldMutationSqliteGateway::new(pool.clone());
+    let readiness_gateway = PrivatePlanCreateReadinessSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(state.sqlite.clone());
     let user = user_lookup.find(user_id);
     let translator = PassthroughTranslator;
@@ -381,6 +383,7 @@ async fn create_plan(
         &clock,
         &session_gen,
         &job_chain,
+        &readiness_gateway,
     );
     let input = PrivatePlanInitializeFromSelectionInput {
         farm_id: body.plan.farm_id,

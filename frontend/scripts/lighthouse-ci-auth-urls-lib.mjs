@@ -1,5 +1,9 @@
 import { buildSegmentPostBody } from '../e2e/fixtures/ensure-e2e-baseline-bodies.mjs';
 import {
+  createFetchTransport,
+  ensurePlanCreateReadiness,
+} from '../e2e/fixtures/ensure-plan-create-ready-baseline-lib.mjs';
+import {
   E2E_BASELINE_PREFIX,
   findBaselineIdInList,
   firstIdFromList,
@@ -154,18 +158,24 @@ export async function ensureBaselinePlanForLighthouse(apiOrigin, sessionId) {
 
   const farmId = await ensureMasterSegment(base, headers, 'farms', { cropId: null, pestId: null });
   const cropId = await ensureMasterSegment(base, headers, 'crops', { cropId: null, pestId: null });
-  if (farmId == null || cropId == null) {
-    throw new Error('cannot create baseline plan: missing farm_id or crop_id');
+  if (cropId == null) {
+    throw new Error('cannot create baseline plan: missing crop_id');
   }
 
-  await ensureFarmFieldForPlan(base, headers, farmId);
+  const transport = createFetchTransport(base, headers);
+  const readyFarmId = await ensurePlanCreateReadiness(transport, farmId, cropId);
+  if (readyFarmId == null) {
+    throw new Error('cannot create baseline plan: no farm with completed weather');
+  }
+
+  await ensureFarmFieldForPlan(base, headers, readyFarmId);
 
   const postRes = await fetch(`${base}/api/v1/plans`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
       plan: {
-        farm_id: farmId,
+        farm_id: readyFarmId,
         crop_ids: [cropId],
         plan_name: `${E2E_BASELINE_PREFIX} Plan`,
       },

@@ -5,6 +5,7 @@ pub(crate) mod deletion_undo_schedule_port;
 pub(crate) mod cultivation_plan_destroy_output_port;
 pub(crate) mod field_mutation_output_ports;
 pub(crate) mod plan_allocation_adjust_output_port;
+pub(crate) mod private_plan_create_readiness_ports;
 pub(crate) mod private_plan_initialize_ports;
 pub(crate) mod private_plan_output_ports;
 pub(crate) mod public_plan_save_ports;
@@ -23,6 +24,7 @@ pub use deletion_undo_schedule_port::DeletionUndoSchedulePort;
 pub use cultivation_plan_destroy_output_port::CultivationPlanDestroyOutputPort;
 pub use field_mutation_output_ports::{AddFieldOutputPort, RemoveFieldOutputPort};
 pub use plan_allocation_adjust_output_port::PlanAllocationAdjustOutputPort;
+pub use private_plan_create_readiness_ports::PrivatePlanCreateReadinessGateway;
 pub use private_plan_initialize_ports::{
     PrivatePlanCropListGateway, PrivatePlanExistingPlanGateway, PrivatePlanFarmResolveGateway,
     PrivatePlanInitializeCallablePort, PrivatePlanOptimizationJobChainGateway,

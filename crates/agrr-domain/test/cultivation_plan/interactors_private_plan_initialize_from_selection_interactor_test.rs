@@ -193,11 +193,27 @@
         }
     }
 
+    struct StubReadinessGateway {
+        crops_ready: bool,
+    }
+    impl crate::cultivation_plan::ports::PrivatePlanCreateReadinessGateway for StubReadinessGateway {
+        fn user_has_ready_crop(
+            &self,
+            _: &User,
+        ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self.crops_ready)
+        }
+    }
+
     fn user(id: i64) -> User {
         User::new(id, false)
     }
 
     fn owned_farm(user_id: i64) -> FarmEntity {
+        owned_farm_with_weather(user_id, Some("completed".into()))
+    }
+
+    fn owned_farm_with_weather(user_id: i64, weather_status: Option<String>) -> FarmEntity {
         FarmEntity {
             id: 1,
             name: "F".into(),
@@ -209,7 +225,7 @@
 is_reference: false,
             created_at: None,
             updated_at: None,
-            weather_data_status: None,
+            weather_data_status: weather_status,
             weather_data_fetched_years: None,
             weather_data_total_years: None,
             weather_data_last_error: None,
@@ -282,6 +298,7 @@ total_area: 1.0,
         let logger = FakeLogger;
         let translator = FakeTranslator;
         let clock = FakeClock;
+        let readiness_gateway = StubReadinessGateway { crops_ready: true };
         let mut interactor = PrivatePlanInitializeFromSelectionInteractor::new(
             &mut output,
             &existing_gateway,
@@ -293,6 +310,7 @@ total_area: 1.0,
             &clock,
             &session_gen,
             &job_chain,
+            &readiness_gateway,
         );
 
         let input = PrivatePlanInitializeFromSelectionInput {
@@ -345,6 +363,7 @@ total_area: 1.0,
         let translator = FakeTranslator;
         let clock = FakeClock;
         let session_gen = StubSessionGen;
+        let readiness_gateway = StubReadinessGateway { crops_ready: true };
         let mut interactor = PrivatePlanInitializeFromSelectionInteractor::new(
             &mut output,
             &existing_gateway,
@@ -356,6 +375,7 @@ total_area: 1.0,
             &clock,
             &session_gen,
             &job_chain,
+            &readiness_gateway,
         );
 
         let input = PrivatePlanInitializeFromSelectionInput {
@@ -404,6 +424,7 @@ total_area: 1.0,
         let translator = FakeTranslator;
         let clock = FakeClock;
         let session_gen = StubSessionGen;
+        let readiness_gateway = StubReadinessGateway { crops_ready: true };
         let mut interactor = PrivatePlanInitializeFromSelectionInteractor::new(
             &mut output,
             &existing_gateway,
@@ -415,6 +436,7 @@ total_area: 1.0,
             &clock,
             &session_gen,
             &job_chain,
+            &readiness_gateway,
         );
 
         let input = PrivatePlanInitializeFromSelectionInput {
@@ -424,5 +446,117 @@ total_area: 1.0,
         };
         let err = interactor.call(&input).unwrap_err();
         assert!(err.to_string().contains("queue down"));
+        assert!(success.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn on_failure_unprocessable_when_weather_not_ready() {
+        let success = Arc::new(Mutex::new(Vec::new()));
+        let failures = Arc::new(Mutex::new(Vec::new()));
+        let mut output = SpyOutput {
+            success: Arc::clone(&success),
+            failures: Arc::clone(&failures),
+        };
+        let existing_gateway = StubExistingGateway { existing: None };
+        let farm_gateway = StubFarmGateway {
+            farm: Ok(owned_farm_with_weather(1, Some("fetching".into()))),
+        };
+        let field_gateway = StubFieldGateway {
+            fields: vec![master_field("A", 10.0)],
+        };
+        let initializer = SpyInitializer {
+            result: CultivationPlanInitializeResult::success(plan_entity(42, 1)),
+            received_fields: Arc::new(Mutex::new(Vec::new())),
+        };
+        let readiness_gateway = StubReadinessGateway { crops_ready: true };
+        let job_chain = SpyJobChain {
+            enqueued: Arc::new(Mutex::new(Vec::new())),
+            fail: false,
+        };
+        let mut interactor = PrivatePlanInitializeFromSelectionInteractor::new(
+            &mut output,
+            &existing_gateway,
+            &farm_gateway,
+            &field_gateway,
+            &initializer,
+            &FakeLogger,
+            &FakeTranslator,
+            &FakeClock,
+            &StubSessionGen,
+            &job_chain,
+            &readiness_gateway,
+        );
+
+        interactor
+            .call(&PrivatePlanInitializeFromSelectionInput {
+                farm_id: 1,
+                user: user(1),
+                plan_name: None,
+            })
+            .unwrap();
+
+        let f = failures.lock().unwrap();
+        assert_eq!(f.len(), 1);
+        assert_eq!(
+            f[0].http_status,
+            PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY
+        );
+        assert_eq!(f[0].message, "plans.errors.weather_not_ready");
+        assert!(success.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn on_failure_unprocessable_when_crops_not_ready() {
+        let success = Arc::new(Mutex::new(Vec::new()));
+        let failures = Arc::new(Mutex::new(Vec::new()));
+        let mut output = SpyOutput {
+            success: Arc::clone(&success),
+            failures: Arc::clone(&failures),
+        };
+        let existing_gateway = StubExistingGateway { existing: None };
+        let farm_gateway = StubFarmGateway {
+            farm: Ok(owned_farm(1)),
+        };
+        let field_gateway = StubFieldGateway {
+            fields: vec![master_field("A", 10.0)],
+        };
+        let initializer = SpyInitializer {
+            result: CultivationPlanInitializeResult::success(plan_entity(42, 1)),
+            received_fields: Arc::new(Mutex::new(Vec::new())),
+        };
+        let readiness_gateway = StubReadinessGateway { crops_ready: false };
+        let job_chain = SpyJobChain {
+            enqueued: Arc::new(Mutex::new(Vec::new())),
+            fail: false,
+        };
+        let mut interactor = PrivatePlanInitializeFromSelectionInteractor::new(
+            &mut output,
+            &existing_gateway,
+            &farm_gateway,
+            &field_gateway,
+            &initializer,
+            &FakeLogger,
+            &FakeTranslator,
+            &FakeClock,
+            &StubSessionGen,
+            &job_chain,
+            &readiness_gateway,
+        );
+
+        interactor
+            .call(&PrivatePlanInitializeFromSelectionInput {
+                farm_id: 1,
+                user: user(1),
+                plan_name: None,
+            })
+            .unwrap();
+
+        let f = failures.lock().unwrap();
+        assert_eq!(f.len(), 1);
+        assert_eq!(
+            f[0].http_status,
+            PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY
+        );
+        assert_eq!(f[0].message, "plans.errors.crops_not_ready");
         assert!(success.lock().unwrap().is_empty());
     }
