@@ -8,6 +8,7 @@
 #
 # Cache dir defaults to tmp/ (writable without root-owned .docker/). Override:
 #   CACHE_DIR=/path/to/cache scripts/run-e2e-smoke-ci.sh
+# Plan-create baseline DB patch: scripts/ensure-dev-db-plan-create-baseline.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
