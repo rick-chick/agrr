@@ -120,7 +120,8 @@ const initialControl: WorkRecordSheetViewState = {
   pendingUndoToast: null,
   existingPhotos: [],
   pendingPhotos: [],
-  photoError: null
+  photoError: null,
+  pendingPhotoResyncWorkRecord: null
 };
 
 @Component({
@@ -608,7 +609,22 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
     return this._control;
   }
   set control(value: WorkRecordSheetViewState) {
-    this._control = applyWorkRecordSheetViewEffects(value, {
+    let next = value;
+    if (next.pendingPhotoResyncWorkRecord) {
+      const record = next.pendingPhotoResyncWorkRecord;
+      this.revokePendingPhotoUrls(next.pendingPhotos);
+      next = {
+        ...next,
+        pendingPhotoResyncWorkRecord: null,
+        pendingPhotos: [],
+        existingPhotos: (record.photos ?? []).map((photo) => ({
+          id: photo.id,
+          url: this.photoUrl(photo.url),
+          markedForDelete: false
+        }))
+      };
+    }
+    this._control = applyWorkRecordSheetViewEffects(next, {
       flash: this.flashMessage,
       toast: this.undoToast
     });
@@ -1026,6 +1042,9 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       .filter((photo) => photo.markedForDelete)
       .map((photo) => photo.id);
     const pendingPhotoFiles = this.control.pendingPhotos.map((photo) => photo.file);
+    const deletedPhotoContentUrls = this.control.existingPhotos
+      .filter((photo) => photo.markedForDelete)
+      .map((photo) => ({ photoId: photo.id, contentUrl: photo.url }));
 
     if (mode === 'edit' && form.work_record_id != null) {
       this.saveUseCase.execute({
@@ -1034,7 +1053,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
         workRecordId: form.work_record_id,
         updateBody: mapFormToUpdateRequest(formInput),
         pendingPhotoFiles,
-        photoIdsToDelete
+        photoIdsToDelete,
+        deletedPhotoContentUrls
       });
       return;
     }
@@ -1044,7 +1064,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       mode,
       createBody: mapFormToCreateRequest(formInput),
       pendingPhotoFiles,
-      photoIdsToDelete
+      photoIdsToDelete,
+      deletedPhotoContentUrls
     });
   }
 
