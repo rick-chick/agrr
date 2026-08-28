@@ -1507,7 +1507,13 @@
     "form": {
       "required_field": "この項目は必須です。"
     },
-    "breadcrumb_label": "パンくずリスト"
+    "breadcrumb_label": "パンくずリスト",
+    "i18n": {
+      "bootstrap": {
+        "load_failed": "翻訳を読み込めませんでした",
+        "retry": "再試行"
+      }
+    }
   },
   "masters": {
     "load_error": {

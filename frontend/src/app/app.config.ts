@@ -12,7 +12,7 @@ import { AgrrTranslateParser } from './core/i18n/agrr-translate.parser';
 import { routes } from './app.routes';
 import { appRouterFeatures } from './app-router-features';
 import { createTranslateLoader } from './core/i18n/translate-loader';
-import { provideInitialI18nBootstrap } from './core/i18n/initial-i18n-bootstrap';
+import { provideInitialI18nBootstrap } from './core/i18n/provide-initial-i18n-bootstrap';
 import { ENTRY_SCHEDULE_GATEWAY } from './usecase/entry-schedule/entry-schedule-gateway';
 import { EntryScheduleApiGateway } from './adapters/entry-schedule/entry-schedule-api.gateway';
 import { LearnProposalApplicationProgressSyncService } from './services/learn-proposal-application-progress-sync.service';

@@ -197,7 +197,13 @@
     "form": {
       "required_field": "This field is required."
     },
-    "breadcrumb_label": "Breadcrumb"
+    "breadcrumb_label": "Breadcrumb",
+    "i18n": {
+      "bootstrap": {
+        "load_failed": "Could not load translations",
+        "retry": "Retry"
+      }
+    }
   },
   "masters": {
     "load_error": {
