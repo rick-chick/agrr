@@ -143,11 +143,28 @@
   margin-bottom: var(--space-5);
 }
 
+.no-data-message__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding: var(--space-4);
+}
+
 .no-data-message p {
   color: var(--color-text-secondary);
   font-size: 16px;
   font-weight: 500;
   margin: 0;
+}
+
+.crop-palette__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
 }
 
 .gantt-page {

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
@@ -19,10 +20,12 @@ describe('GanttChartComponent', () => {
   let component: GanttChartComponent;
   let fixture: ComponentFixture<GanttChartComponent>;
   let runGanttPlanMutationUseCase: { execute: ReturnType<typeof vi.fn> };
+  let loadGanttPlanDataUseCase: { execute: ReturnType<typeof vi.fn> };
   let mobileLayoutMatches = false;
 
   beforeEach(async () => {
     runGanttPlanMutationUseCase = { execute: vi.fn() };
+    loadGanttPlanDataUseCase = { execute: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [
@@ -30,10 +33,11 @@ describe('GanttChartComponent', () => {
         TranslateModule.forRoot()
       ],
       providers: [
+        provideRouter([]),
         ...GANTT_CHART_API_PROVIDERS,
         { provide: GANTT_PLAN_GATEWAY, useValue: {} },
         { provide: RunGanttPlanMutationUseCase, useValue: runGanttPlanMutationUseCase },
-        { provide: LoadGanttPlanDataUseCase, useValue: { execute: vi.fn() } }
+        { provide: LoadGanttPlanDataUseCase, useValue: loadGanttPlanDataUseCase }
       ]
     })
       .overrideComponent(GanttChartComponent, { set: { providers: [] } })
@@ -50,6 +54,11 @@ describe('GanttChartComponent', () => {
         gantt: {
           no_field_data: '圃場データがありません。',
           no_plan_data: '計画データが読み込まれていません。',
+          empty_state: {
+            reload: '再読み込み',
+            add_field: '圃場を追加',
+            register_crop: '作物を登録'
+          },
           trash_drop_label: '作付を削除',
           range: {
             prev_month: '前月',
@@ -115,7 +124,8 @@ describe('GanttChartComponent', () => {
 
       const messageElement = fixture.nativeElement.querySelector('.no-data-message');
       expect(messageElement).toBeTruthy();
-      expect(messageElement.textContent?.trim()).toBe('圃場データがありません。');
+      expect(messageElement.textContent?.trim()).toContain('圃場データがありません。');
+      expect(fixture.nativeElement.querySelector('.no-data-message__add-field')).toBeTruthy();
     });
 
     it('should not display gantt chart when data is null', () => {
@@ -127,7 +137,52 @@ describe('GanttChartComponent', () => {
 
       const messageElement = fixture.nativeElement.querySelector('.no-data-message');
       expect(messageElement).toBeTruthy();
-      expect(messageElement.textContent?.trim()).toBe('計画データが読み込まれていません。');
+      expect(messageElement.textContent?.trim()).toContain('計画データが読み込まれていません。');
+    });
+
+    it('shows reload CTA when plan data is missing and planId is set', () => {
+      component.data = null;
+      component.planId = 7;
+      fixture.detectChanges();
+
+      const reloadButton = fixture.nativeElement.querySelector(
+        '.no-data-message__reload'
+      ) as HTMLButtonElement;
+      expect(reloadButton).toBeTruthy();
+      expect(reloadButton.textContent?.trim()).toBe('再読み込み');
+
+      reloadButton.click();
+      expect(loadGanttPlanDataUseCase.execute).toHaveBeenCalledWith({
+        planType: 'private',
+        planId: 7,
+        purpose: 'refresh'
+      });
+    });
+
+    it('shows add-field CTA in empty field state and opens the field form', () => {
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [],
+          cultivations: []
+        }
+      } as any;
+      component['updateChart']();
+      fixture.detectChanges();
+
+      const addFieldButton = fixture.nativeElement.querySelector(
+        '.no-data-message__add-field'
+      ) as HTMLButtonElement;
+      expect(addFieldButton).toBeTruthy();
+      expect(addFieldButton.textContent?.trim()).toBe('圃場を追加');
+      expect(fixture.nativeElement.querySelector('.field-form')).toBeFalsy();
+
+      addFieldButton.click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.field-form')).toBeTruthy();
     });
 
     it('should display gantt chart when data is valid', () => {
@@ -481,6 +536,32 @@ describe('GanttChartComponent', () => {
     it('exposes full field name for assistive technologies', () => {
       const title = fixture.nativeElement.querySelector('.field-label title');
       expect(title?.textContent?.trim()).toBe('Baseline Field');
+    });
+  });
+
+  describe('crop palette empty state', () => {
+    beforeEach(() => {
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, name: 'Field 1' }],
+          cultivations: [],
+          available_crops: []
+        }
+      } as any;
+      component.isCropPaletteOpen = true;
+      fixture.detectChanges();
+    });
+
+    it('shows crop master registration link when palette has no crops', () => {
+      const registerLink = fixture.nativeElement.querySelector(
+        '.crop-palette__register-crop'
+      ) as HTMLAnchorElement;
+      expect(registerLink).toBeTruthy();
+      expect(registerLink.textContent?.trim()).toBe('作物を登録');
+      expect(registerLink.getAttribute('href')).toBe('/crops/new');
     });
   });
 
