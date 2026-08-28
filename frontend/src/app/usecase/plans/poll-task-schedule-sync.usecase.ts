@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { last, map, switchMap, take, takeWhile } from 'rxjs/operators';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
 import {
   SUBSCRIBE_TASK_SCHEDULE_SYNC_OUTPUT_PORT,
@@ -37,12 +38,15 @@ export class PollTaskScheduleSyncUseCase {
           syncErrorCropId: schedule.plan.task_schedule_sync_error_crop_id
         }))
       )
-      .subscribe((message) => {
-        if (!isTaskScheduleSyncPollable(message.syncState)) {
-          this.outputPort.onTaskScheduleSync(message);
-          return;
-        }
-        this.outputPort.onTaskScheduleSync({ ...message, pollExhausted: true });
+      .subscribe({
+        next: (message) => {
+          if (!isTaskScheduleSyncPollable(message.syncState)) {
+            this.outputPort.onTaskScheduleSync(message);
+            return;
+          }
+          this.outputPort.onTaskScheduleSync({ ...message, pollExhausted: true });
+        },
+        error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
       });
   }
 }

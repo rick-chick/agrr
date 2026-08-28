@@ -202,6 +202,10 @@ export class PlanTaskSchedulePresenter
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (this.view.control.regenerating) {
+      this.onRegenerateError(dto);
+      return;
+    }
     this.view.control = {
       ...this.view.control,
       loading: false,
