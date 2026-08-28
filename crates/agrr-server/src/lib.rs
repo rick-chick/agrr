@@ -106,6 +106,7 @@ use tracing::Level;
 pub async fn run_http_server() {
     runtime_env::ensure_default_runtime_env();
     runtime_env::validate_runtime_env_for_startup();
+    contact_message_recaptcha::RecaptchaVerifier::warn_if_unconfigured_at_startup();
 
     telemetry::init();
 

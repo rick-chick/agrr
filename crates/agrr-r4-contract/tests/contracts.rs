@@ -50,6 +50,11 @@ fn get_api_v1_health_returns_ok_payload() {
     assert_eq!("sqlite3", json["database"].as_str().unwrap());
     assert!(json["timestamp"].as_str().is_some());
     assert!(json["version"].as_str().is_some());
+    assert_eq!(
+        false,
+        json["recaptcha_configured"].as_bool().unwrap_or_default(),
+        "{body}"
+    );
 }
 
 #[test]
@@ -4521,6 +4526,36 @@ fn post_contact_message_returns_422_when_recaptcha_fails() {
     ));
     assert_eq!(422, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha failure JSON");
+    assert!(json["error"].as_str().unwrap_or("").contains("reCAPTCHA"));
+}
+
+#[test]
+fn post_contact_message_returns_422_when_recaptcha_token_missing_and_secret_set() {
+    let secret = std::env::var("RECAPTCHA_SECRET_KEY").unwrap_or_default();
+    if secret.trim().is_empty() {
+        eprintln!(
+            "SKIP post_contact_message_returns_422_when_recaptcha_token_missing_and_secret_set: RECAPTCHA_SECRET_KEY unset"
+        );
+        return;
+    }
+    let client = ContractClient::from_env();
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let mut headers = empty_headers();
+    headers.insert(
+        "x-forwarded-for".to_string(),
+        format!("203.0.113.{suffix}"),
+    );
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/contact_messages",
+        None,
+        &headers,
+        Some(contact_message_payload(suffix)),
+    ));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("missing token JSON");
     assert!(json["error"].as_str().unwrap_or("").contains("reCAPTCHA"));
 }
 
