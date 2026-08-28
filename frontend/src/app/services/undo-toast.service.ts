@@ -34,7 +34,7 @@ export class UndoToastService {
   /**
    * 削除後のトーストを表示し、Undo実行時に復元APIを呼ぶように登録する。
    * @param message トーストに表示するメッセージ
-   * @param undoPath 復元APIのパス（例: /ja/undo_deletion?undo_token=xxx）
+   * @param undoPath 復元APIのパス（例: /undo_deletion）
    * @param undoToken 復元に必要なトークン
    * @param onRestored 復元成功時に呼ぶコールバック（例: 一覧の再読み込み）
    */
