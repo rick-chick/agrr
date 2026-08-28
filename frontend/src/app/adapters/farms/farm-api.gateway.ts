@@ -30,6 +30,10 @@ export class FarmApiGateway implements FarmGateway {
     return this.client.patch<Farm>(`/farms/${farmId}`, { farm: payload });
   }
 
+  fetchWeatherData(farmId: number): Observable<Farm> {
+    return this.client.post<Farm>(`/farms/${farmId}/fetch_weather_data`, {});
+  }
+
   destroy(farmId: number): Observable<DeletionUndoResponse | undefined> {
     return this.client.deleteWithUndo(`/farms/${farmId}`);
   }

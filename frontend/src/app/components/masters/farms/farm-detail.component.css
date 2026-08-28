@@ -24,6 +24,11 @@
   color: var(--color-error);
 }
 
+.weather-status-error {
+  color: var(--color-error);
+  margin: var(--space-2) 0;
+}
+
 .progress-bar {
   width: 100%;
   height: var(--space-2);

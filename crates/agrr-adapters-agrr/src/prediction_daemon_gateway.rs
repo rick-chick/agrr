@@ -4,7 +4,8 @@ use agrr_domain::weather_data::gateways::PredictionGateway;
 use rand::Rng;
 use serde_json::{json, Value};
 use crate::agrr_daemon_debug_dump::{copy_temp_file_to_debug, write_json_value_to_debug};
-use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
+use crate::daemon_client::AgrrDaemonClient;
+use crate::daemon_unavailable::agrr_daemon_error_message;
 use crate::daemon_response::{ensure_daemon_command_success, read_daemon_output_json_file};
 use std::path::Path;
 use crate::daemon_temp_file::{path_string, write_temp_json};
@@ -140,11 +141,11 @@ impl PredictionGateway for PredictionDaemonGateway {
         let wrapper = self
             .client
             .execute_daemon_args(&args)
-            .map_err(|e: AgrrDaemonError| e.to_string())?;
+            .map_err(agrr_daemon_error_message)?;
 
-        ensure_daemon_command_success(&wrapper).map_err(|e: AgrrDaemonError| e.to_string())?;
+        ensure_daemon_command_success(&wrapper).map_err(agrr_daemon_error_message)?;
         let payload = read_daemon_output_json_file(Path::new(&out_path))
-            .map_err(|e: AgrrDaemonError| e.to_string())?;
+            .map_err(agrr_daemon_error_message)?;
         write_json_value_to_debug("prediction_output", &payload);
         if payload.get("data").is_some() {
             write_json_value_to_debug("prediction_transformed", &payload);

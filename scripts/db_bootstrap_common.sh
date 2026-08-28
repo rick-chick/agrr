@@ -12,6 +12,12 @@
 #   agrr-server binds HTTP immediately; daemon start runs in parallel without readiness wait.
 #   Stale AGRR_SOCKET_PATH is removed before start so a dead listener cannot block a new daemon.
 #   Gateway calls retry socket connects at request time (AgrrDaemonClient); boot must not block.
+#
+# Monitoring / readiness (ops):
+#   GET /api/v1/ready — 503 when USE_AGRR_DAEMON=true and socket does not accept connections.
+#   GET /api/v1/backdoor/status — daemon.running + service_available for dashboards/alerts.
+#   Alert when service_available=false while USE_AGRR_DAEMON=true (sustained readiness failures).
+#   Tune AGRR_DAEMON_REQUEST_RETRIES (default 15 × 100ms) for cold-start absorption.
 
 # Set by start_agrr_server.sh before sourcing this file.
 db_bootstrap_scripts_dir() {

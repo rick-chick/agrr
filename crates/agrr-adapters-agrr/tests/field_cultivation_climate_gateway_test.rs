@@ -48,7 +48,7 @@ fn calculate_progress_trait_reports_not_running() {
     let err = gateway
         .calculate_progress(&crop, time::macros::date!(2026 - 01 - 01), &weather)
         .expect_err("daemon not running");
-    assert!(err.to_string().contains("not running"));
+    assert!(err.downcast_ref::<agrr_adapters_agrr::DaemonUnavailableError>().is_some());
     restore_env("AGRR_DAEMON_REQUEST_RETRIES", prev_retries);
     restore_env("AGRR_SOCKET_PATH", prev_socket);
 }

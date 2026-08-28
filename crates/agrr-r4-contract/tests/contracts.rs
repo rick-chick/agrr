@@ -52,6 +52,16 @@ fn get_api_v1_health_returns_ok_payload() {
 }
 
 #[test]
+fn get_api_v1_ready_returns_ok_when_daemon_available_or_disabled() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.get("/api/v1/ready", None, &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("ready JSON");
+    assert_eq!("ok", json["status"].as_str().unwrap());
+    assert_eq!(true, json["daemon"]["ready"].as_bool().unwrap());
+}
+
+#[test]
 fn cable_route_is_not_global_api_not_migrated_501() {
     let client = ContractClient::from_env();
     let (status, body) = status_and_body(client.get("/cable", None, &empty_headers()));
@@ -3088,6 +3098,50 @@ fn post_api_keys_generate_defaults_to_read_only_scopes() {
 }
 
 #[test]
+fn get_auth_me_returns_masked_api_key_not_plaintext() {
+    let client = ContractClient::from_env();
+    let session_id = contract_api_session_id(&client);
+
+    let (gen_status, gen_body) = status_and_body(client.post(
+        "/api/v1/api_keys/generate",
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, gen_status, "{gen_body}");
+    let full_key = api_key_from_generate_response(&gen_body);
+
+    let (me_status, me_body) =
+        status_and_body(client.get("/api/v1/auth/me", Some(&session_id), &empty_headers()));
+    assert_eq!(200, me_status, "{me_body}");
+    let me_json: serde_json::Value = serde_json::from_str(&me_body).expect("me JSON");
+    let me_key = me_json["user"]["api_key"]
+        .as_str()
+        .expect("api_key");
+    assert_ne!(me_key, full_key);
+    assert!(me_key.contains("****"), "expected masked api_key in /me: {me_key}");
+}
+
+#[test]
+fn get_masters_with_query_api_key_is_rejected() {
+    let client = ContractClient::from_env();
+    let session_id = contract_api_session_id(&client);
+
+    let (gen_status, gen_body) = status_and_body(client.post(
+        "/api/v1/api_keys/generate",
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, gen_status, "{gen_body}");
+    let api_key = api_key_from_generate_response(&gen_body);
+
+    let path = format!("/api/v1/masters/crops?api_key={api_key}");
+    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
 fn post_masters_crop_setup_proposal_apply_rate_limited_returns_429_with_retry_after() {
     let client = ContractClient::from_env();
     let session_id = farmer_session_id(&client);
@@ -3383,6 +3437,24 @@ fn delete_account_without_confirm_returns_422() {
 }
 
 #[test]
+fn delete_account_without_email_confirm_returns_422_for_email_user() {
+    let client = ContractClient::from_env();
+    let session_id = researcher_session_id(&client);
+    let (status, body) = status_and_body(client.delete_json(
+        "/api/v1/account",
+        Some(&session_id),
+        &empty_headers(),
+        serde_json::json!({ "confirm": true }),
+    ));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("delete JSON");
+    assert_eq!(
+        "Email confirmation required",
+        json["error"].as_str().unwrap()
+    );
+}
+
+#[test]
 fn delete_account_removes_access() {
     let client = ContractClient::from_env();
     let session_id = farmer_session_id(&client);
@@ -3391,7 +3463,10 @@ fn delete_account_removes_access() {
         "/api/v1/account",
         Some(&session_id),
         &empty_headers(),
-        serde_json::json!({ "confirm": true }),
+        serde_json::json!({
+            "confirm": true,
+            "email_confirm": "farmer@agrr.dev"
+        }),
     ));
     assert_eq!(200, delete_status, "{delete_body}");
 
