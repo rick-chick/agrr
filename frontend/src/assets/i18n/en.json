@@ -186,6 +186,7 @@
       "unauthorized": "Authentication required",
       "forbidden": "You do not have permission to access this resource",
       "not_found": "Resource not found",
+      "conflict": "Someone else updated this record. Reload and try again.",
       "network": "A network error occurred",
       "not_migrated": "This feature is not available yet",
       "service_unavailable": "Could not connect to the server",

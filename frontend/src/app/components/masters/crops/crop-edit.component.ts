@@ -32,7 +32,8 @@ const initialFormData: CropEditFormData = {
   region: null,
   groups: [],
   groupsDisplay: '',
-  is_reference: false
+  is_reference: false,
+  updated_at: null
 };
 
 function parseGroups(s: string): string[] {
@@ -223,6 +224,7 @@ export class CropEditComponent implements CropEditView, OnInit {
       region,
       groups: parseGroups(fd.groupsDisplay),
       is_reference: fd.is_reference,
+      updated_at: fd.updated_at,
       onSuccess: () => this.router.navigate(['/crops', this.cropId])
     });
   }
