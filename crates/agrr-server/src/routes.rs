@@ -2,6 +2,7 @@
 
 use crate::scheduler_weather_update::trigger_scheduler_weather_update;
 use crate::state::AppState;
+use agrr_adapters_agrr::{use_agrr_daemon_enabled, AgrrDaemonClient};
 use axum::{
     extract::{Query, State},
     http::{header, HeaderMap, StatusCode},
@@ -16,6 +17,7 @@ use time::OffsetDateTime;
 pub fn api_routes() -> Router<AppState> {
     Router::new()
         .route("/api/v1/health", get(api_v1_health))
+        .route("/api/v1/ready", get(api_v1_ready))
         .route(
             "/api/v1/internal/jobs/trigger_weather_update",
             post(trigger_weather_update),
@@ -37,6 +39,32 @@ async fn api_v1_health() -> Json<serde_json::Value> {
         "environment": environment,
         "version": "1.0.0"
     }))
+}
+
+/// Readiness probe: when `USE_AGRR_DAEMON=true`, requires agrr daemon socket accept.
+async fn api_v1_ready() -> impl IntoResponse {
+    if use_agrr_daemon_enabled() {
+        let client = AgrrDaemonClient::from_env();
+        if !client.daemon_running() {
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "status": "daemon_unavailable",
+                    "daemon": { "ready": false }
+                })),
+            )
+                .into_response();
+        }
+    }
+
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({
+            "status": "ok",
+            "daemon": { "ready": true }
+        })),
+    )
+        .into_response()
 }
 
 #[derive(Debug, Deserialize)]

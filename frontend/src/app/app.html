@@ -4,6 +4,8 @@
 
 <a class="skip-link" href="#main-content">{{ 'a11y.skip_to_main' | translate }}</a>
 
+<app-i18n-bootstrap-error-banner />
+
 <app-navbar
   [user]="authService.user()"
   [loading]="authService.loading()"

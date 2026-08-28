@@ -690,14 +690,6 @@ use serde_json::json;
         .with_skip_api_sleep();
 
         let err = interactor.call(sample_input()).expect_err("error");
-        assert_eq!(
-            err,
-            FetchWeatherDataPerformError::InvalidWeatherApiResponse(
-                "agrr daemon is not running at /tmp/agrr.sock".into()
-            )
-        );
-        assert_eq!(
-            err.to_string(),
-            "agrr daemon is not running at /tmp/agrr.sock"
-        );
+        assert_eq!(err, FetchWeatherDataPerformError::DaemonUnavailable);
+        assert_eq!(err.to_string(), "daemon_unavailable");
     }

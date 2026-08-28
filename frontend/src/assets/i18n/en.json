@@ -197,7 +197,13 @@
     "form": {
       "required_field": "This field is required."
     },
-    "breadcrumb_label": "Breadcrumb"
+    "breadcrumb_label": "Breadcrumb",
+    "i18n": {
+      "bootstrap": {
+        "load_failed": "Could not load translations",
+        "retry": "Retry"
+      }
+    }
   },
   "masters": {
     "load_error": {
@@ -943,7 +949,8 @@
         "optimizing": "Optimization failed",
         "task_schedule_generation": "Task plan generation failed",
         "default": "Process failed",
-        "timeout": "The process timed out"
+        "timeout": "The process timed out",
+        "daemon_unavailable": "The AGRR processing service is unavailable. Please try again later."
       },
       "default_plan_name": "Main Plan",
       "public_plan_name": "Free Cultivation Plan"
@@ -4031,9 +4038,9 @@
       },
       "section8": {
         "title": "8. Changes to Privacy Policy",
-        "content": "The Service may change this Privacy Policy as necessary. The revised Privacy Policy will take effect when posted on this page.",
         "content_html": "For inquiries regarding the Privacy Policy, please contact us via {{contact_link}}.",
-        "contact_link_text": "Contact Page"
+        "contact_link_text": "Contact Page",
+        "content": "The Service may change this Privacy Policy as necessary. The revised Privacy Policy will take effect when posted on this page."
       },
       "last_updated": "Last updated: October 17, 2025",
       "section9": {
@@ -4164,17 +4171,17 @@
       "accept": "Accept",
       "reject": "Reject"
     },
-    "offline_banner": {
-      "message": "You are offline. Some actions may not work until your connection is restored.",
-      "reconnected": "Connection restored.",
-      "reload": "Reload"
-    },
     "region_select": {
       "label": "Region",
       "blank": "Please select",
       "jp": "Japan",
       "us": "United States",
       "in": "India"
+    },
+    "offline_banner": {
+      "message": "You are offline. Some actions may not work until your connection is restored.",
+      "reconnected": "Connection restored.",
+      "reload": "Reload"
     }
   },
   "entrySchedule": {
