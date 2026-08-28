@@ -140,8 +140,9 @@ run_authenticated_lighthouse() {
   if [[ "$NEEDS_REFERENCE_LOAD" == true ]]; then
     wait_for_health
     echo "==> Loading reference data (first run or empty cache)"
-    docker compose "${COMPOSE_FILES[@]}" run --rm agrr-server \
-      /app/dev-docker-entrypoints/load-reference-data-container.sh
+    docker compose "${COMPOSE_FILES[@]}" run --rm \
+      --entrypoint /app/dev-docker-entrypoints/load-reference-data-container.sh \
+      agrr-server
     save_db_cache
     patch_plan_create_baseline_db
     echo "==> Restarting agrr-server after baseline DB patch"

@@ -19,6 +19,7 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'strangler-proxy',
   'playwright install',
   'load-reference-data-container.sh',
+  '--entrypoint /app/dev-docker-entrypoints/load-reference-data-container.sh',
   'mkdir -p lib/core',
   'CACHE_DIR="${CACHE_DIR:-',
   'tmp/e2e_dev_db_cache',

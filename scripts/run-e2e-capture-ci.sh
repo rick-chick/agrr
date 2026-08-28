@@ -81,8 +81,9 @@ wait_for_health
 
 if [[ ! -f "$DB_PATH" ]]; then
   echo "==> Loading reference data (first run or empty cache)"
-  docker compose "${COMPOSE_FILES[@]}" run --rm agrr-server \
-    /app/dev-docker-entrypoints/load-reference-data-container.sh
+  docker compose "${COMPOSE_FILES[@]}" run --rm \
+    --entrypoint /app/dev-docker-entrypoints/load-reference-data-container.sh \
+    agrr-server
   save_db_cache
 else
   echo "==> Using existing dev DB at ${DB_PATH}"

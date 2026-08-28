@@ -20,6 +20,7 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'strangler-proxy',
   'playwright install',
   'load-reference-data-container.sh',
+  '--entrypoint /app/dev-docker-entrypoints/load-reference-data-container.sh',
   'mkdir -p lib/core',
   'verify-capture-complete',
 ];
