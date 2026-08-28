@@ -16,6 +16,7 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CultivationPlanData, CultivationData, AvailableCropData } from '../../domain/plans/cultivation-plan-data';
 import type { WeatherRescheduleGanttOverlayBar } from '../../domain/plans/weather-reschedule-proposal-preview';
 import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
@@ -81,7 +82,7 @@ type GanttPendingDeleteAction =
 @Component({
   selector: 'app-gantt-chart',
   standalone: true,
-  imports: [CommonModule, TranslateModule, FormsModule, GanttMobileActionsMenuComponent],
+  imports: [CommonModule, TranslateModule, FormsModule, RouterLink, GanttMobileActionsMenuComponent],
   template: `
     @if (showOptimizationLock) {
       <div class="screen-lock-overlay" aria-live="polite">
@@ -206,7 +207,12 @@ type GanttPendingDeleteAction =
               }
             </div>
           } @else {
-            <p class="empty-state">{{ 'js.gantt.crop_palette_no_crops' | translate }}</p>
+            <div class="crop-palette__empty">
+              <p class="empty-state">{{ 'js.gantt.crop_palette_no_crops' | translate }}</p>
+              <a routerLink="/crops/new" class="btn btn-secondary crop-palette__register-crop">
+                {{ 'plans.gantt.empty_state.register_crop' | translate }}
+              </a>
+            </div>
           }
 
 
@@ -274,9 +280,27 @@ type GanttPendingDeleteAction =
         @if (!data || !data.data || !data.data.fields || data.data.fields.length === 0 || !data.data.cultivations) {
           <div class="no-data-message">
             @if (!data) {
-              <p>{{ 'plans.gantt.no_plan_data' | translate }}</p>
+              <div class="no-data-message__content">
+                <p>{{ 'plans.gantt.no_plan_data' | translate }}</p>
+                @if (planId) {
+                  <button
+                    type="button"
+                    class="btn btn-secondary no-data-message__reload"
+                    (click)="reloadPlanData()">
+                    {{ 'plans.gantt.empty_state.reload' | translate }}
+                  </button>
+                }
+              </div>
             } @else if (!data.data.fields || data.data.fields.length === 0) {
-              <p>{{ 'plans.gantt.no_field_data' | translate }}</p>
+              <div class="no-data-message__content">
+                <p>{{ 'plans.gantt.no_field_data' | translate }}</p>
+                <button
+                  type="button"
+                  class="btn btn-primary no-data-message__add-field"
+                  (click)="toggleFieldForm()">
+                  {{ 'plans.gantt.empty_state.add_field' | translate }}
+                </button>
+              </div>
             } @else {
               <p>{{ 'plans.gantt.no_data' | translate }}</p>
             }
@@ -523,6 +547,7 @@ export class GanttChartComponent
   readonly ganttCropStrokeColor = ganttCropStrokeColor;
   @Input() data: CultivationPlanData | null = null;
   @Input() planType: CultivationPlanContextType = 'private';
+  @Input() planId: number | null = null;
   @Input() selectedCultivationId: number | null = null;
   @Input() learningOrchestrationAdjust = false;
   @Input() proposalOverlayBars: WeatherRescheduleGanttOverlayBar[] = [];
@@ -1498,6 +1523,13 @@ export class GanttChartComponent
       planId,
       purpose: 'refresh'
     });
+  }
+
+  reloadPlanData(): void {
+    if (!this.planId) {
+      return;
+    }
+    this.requestPlanRefresh(this.planId);
   }
 
   applyBarResetPlanData(planData: CultivationPlanData): void {

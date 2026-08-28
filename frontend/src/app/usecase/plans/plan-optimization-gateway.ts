@@ -1,17 +1,18 @@
 import { InjectionToken } from '@angular/core';
 import { Channel } from 'actioncable';
+import { CableChannelCallbacks } from '../../domain/cable/cable-channel-callbacks';
 import { PlanOptimizationMessageDto } from './subscribe-plan-optimization.dtos';
 import { TaskScheduleSyncMessageDto } from './subscribe-task-schedule-sync.dtos';
 
 export interface PlanOptimizationGateway {
   subscribe(
     planId: number,
-    callbacks: { received: (message: PlanOptimizationMessageDto) => void }
+    callbacks: CableChannelCallbacks<PlanOptimizationMessageDto>
   ): Channel;
 
   subscribeTaskScheduleSync(
     planId: number,
-    callbacks: { received: (message: TaskScheduleSyncMessageDto) => void }
+    callbacks: CableChannelCallbacks<TaskScheduleSyncMessageDto>
   ): Channel;
 }
 

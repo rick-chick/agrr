@@ -1948,7 +1948,9 @@
           "task_schedule_generation": "最適化結果の処理中に問題が発生しました。再度お試しください。",
           "default": "下のボタンから作物を変更するか、最初からやり直してください。",
           "timeout": "処理に時間がかかりすぎました。しばらく待ってから再度お試しください。"
-        }
+        },
+        "reload": "再読み込み",
+        "connection_lost": "接続が切断されました。しばらくしてからやり直してください。"
       },
       "status_badge_failed": "作成失敗"
     },
@@ -2259,7 +2261,8 @@
           "optimizing": "選択した作物や栽培期間を見直し、再度お試しください。",
           "task_schedule_generation": "最適化結果の処理中に問題が発生しました。再度お試しください。",
           "default": "下のボタンから再読み込みするか、計画ハブへ戻ってください。"
-        }
+        },
+        "connection_lost": "接続が切断されました。しばらくしてからやり直してください。"
       }
     },
     "title": "個人計画",
@@ -2313,6 +2316,11 @@
         "field_row": "{{index}}. {{fieldName}}（作付 {{cropCount}} 件）",
         "cultivation_bar": "{{fieldName}}の{{cropName}}（{{startDate}}〜{{endDate}}）",
         "chart_summary": "栽培スケジュール。{{fieldCount}} 圃場、{{cultivationCount}} 件の作付"
+      },
+      "empty_state": {
+        "reload": "再読み込み",
+        "add_field": "圃場を追加",
+        "register_crop": "作物を登録"
       }
     },
     "field_climate": {
@@ -2491,7 +2499,8 @@
         "try_again": "作物を変更してもう一度試す",
         "start_over": "計画一覧に戻る",
         "connection_lost": "❌ 接続が切断されました。しばらくしてからやり直してください。",
-        "unknown_error": "不明なエラーが発生しました。時間をおいて再度お試しください。"
+        "unknown_error": "不明なエラーが発生しました。時間をおいて再度お試しください。",
+        "reload": "再読み込み"
       }
     },
     "show": {
@@ -4056,7 +4065,9 @@
       },
       "section8": {
         "title": "8. プライバシーポリシーの変更",
-        "content": "当サービスは、必要に応じて本プライバシーポリシーを変更することがあります。変更後のプライバシーポリシーは、本ページに掲載した時点で効力を生じます。"
+        "content": "当サービスは、必要に応じて本プライバシーポリシーを変更することがあります。変更後のプライバシーポリシーは、本ページに掲載した時点で効力を生じます。",
+        "content_html": "プライバシーポリシーに関するお問い合わせは、{{contact_link}}よりご連絡ください。",
+        "contact_link_text": "お問い合わせページ"
       },
       "last_updated": "最終更新日: 2025年10月17日",
       "section9": {
