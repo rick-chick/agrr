@@ -82,6 +82,7 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.sync_errors.gdd_date_not_found_wizard_link',
   'plans.task_schedules.sync_errors.missing_start_date',
   'plans.task_schedules.sync_errors.agrr_unavailable',
+  'plans.task_schedules.sync_errors.connection_lost',
   'plans.task_schedules.sync_errors.generic',
   'plans.task_schedules.sync_errors.generic_single',
   'plans.task_schedules.sync_errors.generic_multi',

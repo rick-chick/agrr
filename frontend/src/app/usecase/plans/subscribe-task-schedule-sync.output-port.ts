@@ -3,6 +3,7 @@ import { TaskScheduleSyncMessageDto } from './subscribe-task-schedule-sync.dtos'
 
 export interface SubscribeTaskScheduleSyncOutputPort {
   onTaskScheduleSync(message: TaskScheduleSyncMessageDto): void;
+  presentConnectionLost(): void;
 }
 
 export const SUBSCRIBE_TASK_SCHEDULE_SYNC_OUTPUT_PORT =
