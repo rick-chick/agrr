@@ -8,7 +8,6 @@ const VERIFY_URL: &str = "https://www.google.com/recaptcha/api/siteverify";
 
 pub struct RecaptchaVerifier {
     secret_key: String,
-    client: Option<Client>,
     verify_url: String,
 }
 
@@ -23,15 +22,8 @@ impl RecaptchaVerifier {
     }
 
     pub fn new(secret_key: impl Into<String>, verify_url: impl Into<String>) -> Self {
-        let secret_key = secret_key.into();
-        let client = if secret_key.trim().is_empty() {
-            None
-        } else {
-            Some(Client::new())
-        };
         Self {
-            secret_key,
-            client,
+            secret_key: secret_key.into(),
             verify_url: verify_url.into(),
         }
     }
@@ -83,6 +75,42 @@ impl RecaptchaVerifier {
                 .join(", ")
         )
     }
+
+    fn verify_on_blocking_thread(
+        secret_key: String,
+        verify_url: String,
+        token: String,
+        remote_ip: String,
+    ) -> RecaptchaVerifyResult {
+        let mut form = vec![
+            ("secret", secret_key.as_str()),
+            ("response", token.as_str()),
+        ];
+        if !remote_ip.is_empty() {
+            form.push(("remoteip", remote_ip.as_str()));
+        }
+
+        let client = Client::new();
+        let response = match client.post(&verify_url).form(&form).send() {
+            Ok(response) => response,
+            Err(err) => {
+                return RecaptchaVerifyResult::Error(format!(
+                    "reCAPTCHA verification error: {err}"
+                ));
+            }
+        };
+
+        let body = match response.text() {
+            Ok(body) => body,
+            Err(err) => {
+                return RecaptchaVerifyResult::Error(format!(
+                    "reCAPTCHA verification error: {err}"
+                ));
+            }
+        };
+
+        Self::parse_verify_response(&body)
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -102,40 +130,21 @@ impl RecaptchaVerifierPort for RecaptchaVerifier {
             return RecaptchaVerifyResult::Error("reCAPTCHA token is required".into());
         }
 
-        let token = token.unwrap();
-        let mut form = vec![
-            ("secret", self.secret_key.as_str()),
-            ("response", token),
-        ];
-        let remote_ip = remote_ip.unwrap_or_default();
-        if !remote_ip.is_empty() {
-            form.push(("remoteip", remote_ip));
-        }
+        let secret_key = self.secret_key.clone();
+        let verify_url = self.verify_url.clone();
+        let token = token.unwrap().to_string();
+        let remote_ip = remote_ip.unwrap_or_default().to_string();
 
-        let client = match &self.client {
-            Some(client) => client,
-            None => return RecaptchaVerifyResult::NotConfigured,
-        };
-
-        let response = match client.post(&self.verify_url).form(&form).send() {
-            Ok(response) => response,
-            Err(err) => {
-                return RecaptchaVerifyResult::Error(format!(
-                    "reCAPTCHA verification error: {err}"
-                ));
-            }
-        };
-
-        let body = match response.text() {
-            Ok(body) => body,
-            Err(err) => {
-                return RecaptchaVerifyResult::Error(format!(
-                    "reCAPTCHA verification error: {err}"
-                ));
-            }
-        };
-
-        Self::parse_verify_response(&body)
+        std::thread::Builder::new()
+            .name("recaptcha-verify".into())
+            .spawn(move || {
+                Self::verify_on_blocking_thread(secret_key, verify_url, token, remote_ip)
+            })
+            .expect("recaptcha verify thread spawn")
+            .join()
+            .unwrap_or(RecaptchaVerifyResult::Error(
+                "reCAPTCHA verification thread failed".into(),
+            ))
     }
 }
 
