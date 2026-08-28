@@ -135,15 +135,6 @@ pub fn classify_masters_request(
     None
 }
 
-fn query_api_key(query: Option<&str>) -> Option<&str> {
-    query.and_then(|q| {
-        q.split('&').find_map(|pair| {
-            let (k, v) = pair.split_once('=')?;
-            if k == "api_key" { Some(v) } else { None }
-        })
-    })
-}
-
 fn rate_limit_response(retry_after: u64) -> Response {
     let mut headers = HeaderMap::new();
     headers.insert(
@@ -169,8 +160,7 @@ pub async fn middleware(State(state): State<AppState>, request: Request, next: N
 
     let (parts, body) = request.into_parts();
     let jar = CookieJar::from_headers(&parts.headers);
-    let api_key = query_api_key(query.as_deref());
-    match resolve_masters_user_id(&state, &jar, &parts.headers, api_key) {
+    match resolve_masters_user_id(&state, &jar, &parts.headers, None) {
         Ok(user_id) => {
             if let Err(retry_after) = state.masters_rate_limit.check(user_id, tier) {
                 return rate_limit_response(retry_after);

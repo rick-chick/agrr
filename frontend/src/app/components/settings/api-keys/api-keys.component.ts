@@ -82,11 +82,6 @@ import { FlashMessageService } from '../../../services/flash-message.service';
           </div>
 
           <div class="usage-section">
-            <h3 class="usage-section-title">{{ 'api_keys.usage.query.heading' | translate }}</h3>
-            <pre class="api-key-code"><code>GET /api/v1/masters/crops?api_key={{ apiKey || 'YOUR_API_KEY' }}</code></pre>
-          </div>
-
-          <div class="usage-section">
             <h3 class="usage-section-title">{{ 'api_keys.usage.endpoints.heading' | translate }}</h3>
             <div
               class="usage-endpoints"

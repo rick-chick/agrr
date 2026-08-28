@@ -41,7 +41,7 @@ impl MastersApiCredentialsResolveOutputPort for ResolvePort {
     }
 }
 
-pub fn extract_api_key(headers: &HeaderMap, query: Option<&str>) -> Option<String> {
+pub fn extract_api_key(headers: &HeaderMap, _query: Option<&str>) -> Option<String> {
     if let Some(auth) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
         let auth = auth.trim();
         if let Some(rest) = auth.strip_prefix("Bearer ") {
@@ -57,22 +57,7 @@ pub fn extract_api_key(headers: &HeaderMap, query: Option<&str>) -> Option<Strin
             return Some(key.to_string());
         }
     }
-    if let Some(key) = query {
-        let key = key.trim();
-        if !key.is_empty() {
-            return Some(key.to_string());
-        }
-    }
     None
-}
-
-fn query_api_key_param(query: Option<&str>) -> Option<&str> {
-    query.and_then(|q| {
-        q.split('&').find_map(|pair| {
-            let (k, v) = pair.split_once('=')?;
-            if k == "api_key" { Some(v) } else { None }
-        })
-    })
 }
 
 pub fn resolve_masters_principal(
@@ -154,8 +139,7 @@ where
         let jar = CookieJar::from_request_parts(parts, state)
             .await
             .map_err(|_| unauthorized())?;
-        let query_key = query_api_key_param(parts.uri.query());
-        let principal = resolve_masters_principal(&app_state, &jar, &parts.headers, query_key)
+        let principal = resolve_masters_principal(&app_state, &jar, &parts.headers, None)
             .map_err(|_| unauthorized())?;
         enforce_api_key_scopes(
             &principal,
@@ -188,6 +172,12 @@ mod tests {
             None
         )
         .is_ok());
+    }
+
+    #[test]
+    fn extract_api_key_ignores_query_parameter() {
+        let headers = HeaderMap::new();
+        assert!(extract_api_key(&headers, Some("secret-key")).is_none());
     }
 
     #[test]

@@ -21,7 +21,7 @@ export class ApiKeyManagementService {
     return this.authService.loadCurrentUser().pipe(
       map(() => {
         const user = this.authService.user();
-        return user?.api_key ?? this.apiKeyService.getApiKey() ?? null;
+        return user?.api_key ?? null;
       })
     );
   }
