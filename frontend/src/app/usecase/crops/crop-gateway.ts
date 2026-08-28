@@ -11,6 +11,7 @@ export interface CropCreatePayload {
   region: string | null;
   groups: string[];
   is_reference?: boolean;
+  updated_at?: string;
 }
 
 export interface CropGateway {
