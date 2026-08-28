@@ -1060,7 +1060,9 @@
           "task_schedule_generation": "Something went wrong while preparing task plans. Please try again.",
           "default": "Use the buttons below to change crops or start over from the beginning.",
           "timeout": "The process took too long. Wait a moment and try again."
-        }
+        },
+        "reload": "Reload",
+        "connection_lost": "Connection was lost. Please try again."
       },
       "status_badge_failed": "Failed"
     },
@@ -1357,7 +1359,8 @@
           "optimizing": "Review your crops and cultivation periods, then try again.",
           "task_schedule_generation": "Something went wrong while processing results. Try again.",
           "default": "Reload the page or return to the plan hub using the buttons below."
-        }
+        },
+        "connection_lost": "Connection was lost. Please try again."
       }
     },
     "title": "Cultivation Plans",
@@ -2291,7 +2294,8 @@
         "try_again": "Try Again with Different Crops",
         "start_over": "Back to List",
         "connection_lost": "❌ Connection was lost. Please try again.",
-        "unknown_error": "An unknown error occurred. Please try again later."
+        "unknown_error": "An unknown error occurred. Please try again later.",
+        "reload": "Reload"
       },
       "show": {
         "back_to_list": "← Back to List",
@@ -4021,11 +4025,11 @@
         "content": "The Service implements appropriate security measures to protect personal information. However, we cannot guarantee the complete security of data transmission over the Internet."
       },
       "section7": {
-        "title": "7. Changes to Privacy Policy",
-        "content": "The Service may change this Privacy Policy as necessary. The revised Privacy Policy will take effect when posted on this page."
+        "title": "7. Account Deletion",
+        "content": "Users may delete their account and associated private data from the settings page. Account deletion cannot be undone. After deletion, the user's personal data is removed from the Service in a manner that cannot be restored."
       },
       "section8": {
-        "title": "8. Contact",
+        "title": "8. Changes to Privacy Policy",
         "content_html": "For inquiries regarding the Privacy Policy, please contact us via {{contact_link}}.",
         "contact_link_text": "Contact Page",
         "content": "The Service may change this Privacy Policy as necessary. The revised Privacy Policy will take effect when posted on this page."
