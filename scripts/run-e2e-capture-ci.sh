@@ -68,11 +68,6 @@ trap cleanup EXIT
 
 restore_db_cache || true
 
-ensure_reference_weather_fixtures() {
-  echo "==> Ensuring reference weather fixtures"
-  AGRR_FIXTURES_REQUIRED=1 bash scripts/ensure-reference-fixtures.sh
-}
-
 # Dockerfile.agrr-server COPY lib/core/ requires the directory in build context (binary is optional / gitignored).
 mkdir -p lib/core
 
@@ -85,7 +80,6 @@ docker compose "${COMPOSE_FILES[@]}" up -d agrr-server strangler-proxy
 wait_for_health
 
 if [[ ! -f "$DB_PATH" ]]; then
-  ensure_reference_weather_fixtures
   echo "==> Loading reference data (first run or empty cache)"
   docker compose "${COMPOSE_FILES[@]}" run --rm \
     --entrypoint /app/dev-docker-entrypoints/load-reference-data-container.sh \

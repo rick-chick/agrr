@@ -78,11 +78,6 @@ patch_plan_create_baseline_db() {
   fi
 }
 
-ensure_reference_weather_fixtures() {
-  echo "==> Ensuring reference weather fixtures"
-  AGRR_FIXTURES_REQUIRED=1 bash scripts/ensure-reference-fixtures.sh
-}
-
 # Dockerfile.agrr-server COPY lib/core/ requires the directory in build context (binary is optional / gitignored).
 mkdir -p lib/core
 
@@ -101,7 +96,6 @@ docker compose "${COMPOSE_FILES[@]}" up -d agrr-server strangler-proxy
 
 if [[ "$NEEDS_REFERENCE_LOAD" == true ]]; then
   wait_for_health
-  ensure_reference_weather_fixtures
   echo "==> Loading reference data (first run or empty cache)"
   docker compose "${COMPOSE_FILES[@]}" run --rm \
     --entrypoint /app/dev-docker-entrypoints/load-reference-data-container.sh \

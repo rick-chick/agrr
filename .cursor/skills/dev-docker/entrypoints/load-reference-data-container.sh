@@ -6,6 +6,7 @@ set -euo pipefail
 export AGRR_APP_ROOT="${AGRR_APP_ROOT:-/app}"
 export AGRR_SQLITE_PATH="${AGRR_SQLITE_PATH:-/app/storage/development.sqlite3}"
 M="${AGRR_APP_ROOT}/scripts/run-agrr-migrate.sh"
+FIXTURES="${AGRR_APP_ROOT}/db/fixtures"
 
 echo "==> Schema (refinery)"
 "$M" schema run
@@ -13,11 +14,19 @@ echo "==> Schema (refinery)"
 echo "==> Reference data (jp, in, us) — may take several minutes"
 "$M" data apply --region jp,in,us --kind base,nutrients,pests,tasks,templates
 
-echo "==> India reference repair"
-"$M" data apply --region in --kind repair
+if [[ -f "${FIXTURES}/india_reference_weather.json" ]]; then
+  echo "==> India reference repair"
+  "$M" data apply --region in --kind repair
+else
+  echo "==> Skipping India reference repair (missing ${FIXTURES}/india_reference_weather.json)"
+fi
 
-echo "==> US reference crops repair"
-"$M" data apply --region us --kind repair
+if [[ -f "${FIXTURES}/us_reference_weather.json" ]]; then
+  echo "==> US reference crops repair"
+  "$M" data apply --region us --kind repair
+else
+  echo "==> Skipping US reference crops repair (missing ${FIXTURES}/us_reference_weather.json)"
+fi
 
 echo "==> JP crop task templates"
 "$M" data apply --region jp --kind templates

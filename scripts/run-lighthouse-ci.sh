@@ -122,11 +122,6 @@ run_authenticated_lighthouse() {
     fi
   }
 
-  ensure_reference_weather_fixtures() {
-    echo "==> Ensuring reference weather fixtures"
-    AGRR_FIXTURES_REQUIRED=1 bash "${ROOT}/scripts/ensure-reference-fixtures.sh"
-  }
-
   mkdir -p "${ROOT}/lib/core"
 
   NEEDS_REFERENCE_LOAD=false
@@ -144,7 +139,6 @@ run_authenticated_lighthouse() {
 
   if [[ "$NEEDS_REFERENCE_LOAD" == true ]]; then
     wait_for_health
-    ensure_reference_weather_fixtures
     echo "==> Loading reference data (first run or empty cache)"
     docker compose "${COMPOSE_FILES[@]}" run --rm \
       --entrypoint /app/dev-docker-entrypoints/load-reference-data-container.sh \
