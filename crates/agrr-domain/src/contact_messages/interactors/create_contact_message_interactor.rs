@@ -55,6 +55,12 @@ where
             input.remote_ip.as_deref(),
         ) {
             RecaptchaVerifyResult::Ok => {}
+            RecaptchaVerifyResult::NotConfigured => {
+                self.output_port.on_failure(CreateContactMessageFailure::unavailable(
+                    "reCAPTCHA is not configured",
+                ));
+                return Ok(());
+            }
             RecaptchaVerifyResult::Error(msg) => {
                 self.output_port
                     .on_failure(CreateContactMessageFailure::recaptcha(msg));

@@ -23,20 +23,27 @@ pub fn api_routes() -> Router<AppState> {
         )
 }
 
-async fn api_v1_health() -> Json<serde_json::Value> {
+async fn api_v1_health(State(state): State<AppState>) -> Json<serde_json::Value> {
     let timestamp = OffsetDateTime::now_utc()
         .format(&Rfc3339)
         .unwrap_or_else(|_| OffsetDateTime::now_utc().to_string());
     let environment = std::env::var("RAILS_ENV")
         .or_else(|_| std::env::var("AGRR_ENV"))
         .unwrap_or_else(|_| "production".into());
+    let recaptcha_configured = state.recaptcha_verifier.is_configured();
+    let mut warnings = Vec::new();
+    if !recaptcha_configured {
+        warnings.push("RECAPTCHA_SECRET_KEY is unset; contact messages are rejected");
+    }
     Json(serde_json::json!({
         "status": "ok",
         "database": "sqlite3",
         "storage": "connected",
         "timestamp": timestamp,
         "environment": environment,
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "recaptcha_configured": recaptcha_configured,
+        "warnings": warnings,
     }))
 }
 
