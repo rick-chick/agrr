@@ -177,7 +177,7 @@ pub fn masters_destroy_undo_json(undo: &Value, toast_message: &str) -> Value {
     json!({
         "undo": {
             "undo_token": undo_token,
-            "undo_path": format!("/undo_deletion?undo_token={undo_token}"),
+            "undo_path": "/undo_deletion",
             "toast_message": toast_message,
             "undo_deadline": undo_deadline,
             "auto_hide_after": 5000
