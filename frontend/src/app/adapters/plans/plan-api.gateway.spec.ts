@@ -391,7 +391,7 @@ describe('PlanApiGateway', () => {
       const response: DeletionUndoResponse = {
         undo_token: 'abc123',
         toast_message: 'プラン Foo を削除しました',
-        undo_path: '/undo_deletion?undo_token=abc123',
+        undo_path: '/undo_deletion',
         undo_deadline: '2026-02-03T12:00:00Z',
         resource: 'Foo',
         resource_dom_id: 'cultivation_plan_8',
@@ -411,7 +411,7 @@ describe('PlanApiGateway', () => {
       const response: DeletionUndoResponse = {
         undo_token: 'token456',
         toast_message: 'Plan deleted',
-        undo_path: '/undo_deletion?undo_token=token456'
+        undo_path: '/undo_deletion'
       };
       vi.mocked(apiClient.delete).mockReturnValue(of(response));
 
@@ -430,7 +430,7 @@ describe('PlanApiGateway', () => {
       const response: DeletionUndoResponse = {
         undo_token: 'test',
         toast_message: 'Deleted',
-        undo_path: '/undo_deletion?undo_token=test'
+        undo_path: '/undo_deletion'
       };
       vi.mocked(apiClient.delete).mockReturnValue(of(response));
 
@@ -442,7 +442,7 @@ describe('PlanApiGateway', () => {
       const response: DeletionUndoResponse = {
         undo_token: 'contract-token',
         toast_message: '契約に基づく削除です',
-        undo_path: '/undo_deletion?undo_token=contract-token',
+        undo_path: '/undo_deletion',
         undo_deadline: '2026-02-03T12:00:00Z',
         resource: 'Foo Contract',
         resource_dom_id: 'cultivation_plan_contract',

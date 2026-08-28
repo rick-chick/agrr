@@ -101,7 +101,7 @@ describe('PesticideDetailPresenter', () => {
         undo: {
           undo_token: 'token123',
           toast_message: 'Pesticide deleted',
-          undo_path: '/undo_deletion?undo_token=token123',
+          undo_path: '/undo_deletion',
           resource: 'Spray A'
         }
       };
@@ -110,7 +110,7 @@ describe('PesticideDetailPresenter', () => {
 
       expect(lastControl!.pendingUndoToast).toEqual({
         message: 'Pesticide deleted',
-        undoPath: '/undo_deletion?undo_token=token123',
+        undoPath: '/undo_deletion',
         undoToken: 'token123',
         onRestored: expect.any(Function),
         resourceLabel: 'Spray A'
