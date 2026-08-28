@@ -3365,6 +3365,23 @@ fn post_masters_farm_create_weather_fetch_reaches_completed() {
 }
 
 #[test]
+fn trigger_weather_update_query_token_returns_401() {
+    let client = ContractClient::from_env();
+    let token = std::env::var("SCHEDULER_AUTH_TOKEN")
+        .unwrap_or_else(|_| "test_scheduler_token_contract".into());
+    let path = format!(
+        "/api/v1/internal/jobs/trigger_weather_update?token={token}"
+    );
+    let (status, body) = status_and_body(client.post(&path, None, &empty_headers(), None));
+    assert_eq!(401, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("trigger weather JSON");
+    assert_eq!(
+        "Missing authentication token",
+        json["error"].as_str().unwrap()
+    );
+}
+
+#[test]
 fn trigger_weather_update_backfills_pending_farm_weather_fetch() {
     let client = ContractClient::from_env();
     let session_id = farmer_session_id(&client);
