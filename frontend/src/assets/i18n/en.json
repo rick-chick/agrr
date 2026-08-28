@@ -1534,6 +1534,7 @@
         "gdd_date_not_found_wizard_link": "Review task plan templates for {{cropName}}",
         "missing_start_date": "Task plans could not be generated because the cultivation start date is missing.",
         "agrr_unavailable": "Could not reach the AGRR processing service. Please try again later.",
+        "connection_lost": "Connection was lost. Please try again.",
         "generic": "Task plans could not be created.",
         "generic_single": "Check settings for \"{{cropName}}\", or retry if setup is already complete.",
         "generic_multi": "Task plans could not be created. Check the crops below, or retry if setup is already complete.",
