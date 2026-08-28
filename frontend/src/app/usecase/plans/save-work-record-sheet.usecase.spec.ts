@@ -140,7 +140,7 @@ describe('SaveWorkRecordSheetUseCase', () => {
       planId: 5,
       mode: 'edit',
       workRecordId: 9,
-      updateBody: { name: '除草' },
+      updateBody: { updated_at: '2026-06-12T00:00:00Z', name: '除草' },
       pendingPhotoFiles: [],
       photoIdsToDelete: [55, 56]
     });
