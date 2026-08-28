@@ -4022,10 +4022,16 @@
       },
       "section8": {
         "title": "8. Contact",
+        "content": "The Service may change this Privacy Policy as necessary. The revised Privacy Policy will take effect when posted on this page.",
         "content_html": "For inquiries regarding the Privacy Policy, please contact us via {{contact_link}}.",
         "contact_link_text": "Contact Page"
       },
-      "last_updated": "Last updated: October 17, 2025"
+      "last_updated": "Last updated: October 17, 2025",
+      "section9": {
+        "title": "9. Contact",
+        "content_html": "For inquiries regarding the Privacy Policy, please contact us via {{contact_link}}.",
+        "contact_link_text": "Contact Page"
+      }
     },
     "terms": {
       "title": "Terms of Service",
