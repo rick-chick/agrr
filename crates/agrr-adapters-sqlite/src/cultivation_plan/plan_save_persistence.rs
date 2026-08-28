@@ -47,6 +47,6 @@ impl PublicPlanSaveTxnGateway for CultivationPlanSqliteGateway {
     where
         F: FnOnce() -> Result<T, Box<dyn std::error::Error + Send + Sync>>,
     {
-        block()
+        self.pool().with_transaction_scope(block)
     }
 }
