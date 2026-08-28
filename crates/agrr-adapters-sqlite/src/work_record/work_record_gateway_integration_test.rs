@@ -3,7 +3,7 @@
 use super::task_schedule_item_lookup_gateway::TaskScheduleItemLookupSqliteGateway;
 use super::work_record_gateway::WorkRecordSqliteGateway;
 use super::work_record_integration_fixture::{seed_work_record_crud, work_record_integration_pool};
-use agrr_domain::shared::exceptions::RecordNotFoundError;
+use agrr_domain::shared::exceptions::{RecordNotFoundError, RecordStaleUpdateError};
 use agrr_domain::work_record::dtos::{WorkRecordListInput, WorkRecordUpdateInput};
 use agrr_domain::work_record::gateways::{
     TaskScheduleItemLookupGateway, WorkRecordCreatePersistAttrs, WorkRecordDestroyGatewayOutcome,
@@ -100,6 +100,12 @@ fn work_record_gateway_crud_roundtrip() {
             seed.plan_id,
             created.id,
             &WorkRecordUpdateInput {
+                expected_updated_at: Some(
+                    created
+                        .updated_at
+                        .format(&time::format_description::well_known::Iso8601::DEFAULT)
+                        .unwrap_or_else(|_| created.updated_at.to_string()),
+                ),
                 fertilize_id: Some(Some(1)),
                 pesticide_id: Some(Some(2)),
                 ..Default::default()
@@ -116,6 +122,12 @@ fn work_record_gateway_crud_roundtrip() {
             seed.plan_id,
             created.id,
             &WorkRecordUpdateInput {
+                expected_updated_at: Some(
+                    updated
+                        .updated_at
+                        .format(&time::format_description::well_known::Iso8601::DEFAULT)
+                        .unwrap_or_else(|_| updated.updated_at.to_string()),
+                ),
                 fertilize_id: Some(None),
                 ..Default::default()
             },
@@ -131,6 +143,12 @@ fn work_record_gateway_crud_roundtrip() {
             seed.plan_id,
             created.id,
             &WorkRecordUpdateInput {
+                expected_updated_at: Some(
+                    cleared
+                        .updated_at
+                        .format(&time::format_description::well_known::Iso8601::DEFAULT)
+                        .unwrap_or_else(|_| cleared.updated_at.to_string()),
+                ),
                 notes: Some("修正メモ".into()),
                 time_spent_minutes: Some(60),
                 ..Default::default()
@@ -208,4 +226,47 @@ fn work_record_gateway_list_omits_field_and_crop_name_without_field_cultivation(
         .expect("ad-hoc record in list");
     assert!(record.field_name.is_none());
     assert!(record.crop_name.is_none());
+}
+
+#[test]
+fn work_record_gateway_update_rejects_stale_updated_at() {
+    let pool = work_record_integration_pool();
+    let seed = seed_work_record_crud(&pool);
+    let gateway = WorkRecordSqliteGateway::new(pool.clone());
+
+    let created = gateway
+        .create(seed.plan_id, sample_create_attrs(&seed))
+        .expect("create");
+    let stale_token = "2000-01-01T00:00:00Z".to_string();
+    let err = gateway
+        .update(
+            seed.plan_id,
+            created.id,
+            &WorkRecordUpdateInput {
+                expected_updated_at: Some(stale_token),
+                notes: Some("競合".into()),
+                ..Default::default()
+            },
+            None,
+            OffsetDateTime::now_utc(),
+        )
+        .expect_err("stale updated_at should fail");
+    assert!(err.downcast_ref::<RecordStaleUpdateError>().is_some());
+
+    let expected = created.updated_at.format(&time::format_description::well_known::Iso8601::DEFAULT)
+        .unwrap_or_else(|_| created.updated_at.to_string());
+    let updated = gateway
+        .update(
+            seed.plan_id,
+            created.id,
+            &WorkRecordUpdateInput {
+                expected_updated_at: Some(expected),
+                notes: Some("成功".into()),
+                ..Default::default()
+            },
+            None,
+            OffsetDateTime::now_utc(),
+        )
+        .expect("matching updated_at should succeed");
+    assert_eq!(Some("成功".into()), updated.notes);
 }

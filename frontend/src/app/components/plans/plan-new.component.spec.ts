@@ -679,4 +679,63 @@ describe('PlanNewComponent', () => {
     expect(localComponent.control.selectedFarmId).toBe(10);
     expect(localComponent.control.selectedSourcePlanId).toBe(7);
   });
+
+  it('loads readiness and enables submit when carryover preset selects farm', () => {
+    const sourcePlan = { id: 7, name: 'Source Plan', farm_id: 10 };
+    mockCarryoverUseCase.loadSourcePlan = vi.fn(() => of(sourcePlan));
+    mockCarryoverUseCase.loadSourcePlans.mockReturnValue(of([sourcePlan]));
+    mockCarryoverUseCase.loadCarryoverPreview.mockReturnValue(
+      of({
+        plan_id: 7,
+        unrecorded_count: 0,
+        categories: [],
+        top_variance_items: []
+      })
+    );
+    mockReadinessUseCase.execute.mockReturnValue(
+      of(
+        buildPlanCreateReadiness({
+          farmId: 10,
+          fieldCount: 1,
+          hasValidFields: true,
+          weatherStatus: 'completed',
+          crops: [readyUserCrop],
+          cropBlueprints: { 1: readyBlueprints }
+        })
+      )
+    );
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [PlanNewComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: { get: (key: string) => (key === 'carryoverFrom' ? '7' : null) } }
+          }
+        },
+        { provide: LoadPrivatePlanFarmsUseCase, useValue: mockLoadUseCase },
+        { provide: CreatePrivatePlanUseCase, useValue: mockCreateUseCase },
+        { provide: PlanNewPresenter, useValue: mockFarmsPresenter },
+        { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter },
+        { provide: LoadPlanNewCarryoverUseCase, useValue: mockCarryoverUseCase },
+        { provide: LoadPlanNewReadinessUseCase, useValue: mockReadinessUseCase }
+      ]
+    })
+      .overrideComponent(PlanNewComponent, { set: { providers: [] } })
+      .compileComponents();
+
+    const localFixture = TestBed.createComponent(PlanNewComponent);
+    const localComponent = localFixture.componentInstance;
+    localComponent.control = defaultControl({
+      farms: [{ id: 10, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }]
+    });
+
+    localComponent.applyCarryoverFromQueryPreset();
+
+    expect(mockReadinessUseCase.execute).toHaveBeenCalledWith(10, 1, true);
+    expect(localComponent.canSubmit).toBe(true);
+  });
 });
