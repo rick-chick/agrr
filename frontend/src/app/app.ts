@@ -75,6 +75,12 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
+  retrySession(): void {
+    this.authService.retryLoadCurrentUser().pipe(take(1)).subscribe(() => {
+      this.refreshNavOverdueBadge();
+    });
+  }
+
   ngOnInit(): void {
     this.seoMeta.refreshDefaultMeta();
 

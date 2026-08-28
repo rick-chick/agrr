@@ -9,8 +9,10 @@
 <app-navbar
   [user]="authService.user()"
   [loading]="authService.loading()"
+  [sessionUnavailable]="authService.sessionUnavailable()"
   [workLogOverdueCount]="workLogOverdueCount()"
   (logout)="logout()"
+  (retrySession)="retrySession()"
 />
 
 <app-offline-banner />

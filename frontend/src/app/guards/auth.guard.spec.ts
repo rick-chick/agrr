@@ -8,13 +8,18 @@ import { AuthService } from '../services/auth.service';
 const origin = 'http://localhost:4200';
 
 describe('authGuard', () => {
-  let authService: { user: ReturnType<typeof vi.fn>; loadCurrentUser: ReturnType<typeof vi.fn> };
+  let authService: {
+    user: ReturnType<typeof vi.fn>;
+    loadCurrentUser: ReturnType<typeof vi.fn>;
+    sessionUnavailable: ReturnType<typeof vi.fn>;
+  };
   let createUrlTree: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     authService = {
       user: vi.fn(() => null),
-      loadCurrentUser: vi.fn(() => of(null))
+      loadCurrentUser: vi.fn(() => of(null)),
+      sessionUnavailable: vi.fn(() => false)
     };
     createUrlTree = vi.fn((_commands: string[], extras?: { queryParams?: Record<string, string> }) => {
       const tree = new UrlTree();
@@ -69,5 +74,14 @@ describe('authGuard', () => {
       }
     });
     expect(result).toBeInstanceOf(UrlTree);
+  });
+
+  it('blocks navigation without login redirect when session is unavailable', async () => {
+    authService.sessionUnavailable.mockReturnValue(true);
+
+    const result = await runGuard('/plans/123');
+
+    expect(result).toBe(false);
+    expect(createUrlTree).not.toHaveBeenCalled();
   });
 });
