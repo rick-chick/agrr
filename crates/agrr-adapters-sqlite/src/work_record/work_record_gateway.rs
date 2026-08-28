@@ -1,6 +1,7 @@
 //! Ruby: `WorkRecordActiveRecordGateway`
 
 use crate::pool::SqlitePool;
+use agrr_domain::shared::exceptions::{RecordNotFoundError, RecordStaleUpdateError};
 use crate::soft_delete::{schedule_soft_delete_json, SoftDeleteJsonOutcome};
 use agrr_domain::cultivation_plan::helpers::parse_iso_date;
 use agrr_domain::work_record::dtos::{
@@ -278,21 +279,46 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
             });
         }
 
+        let expected_updated_at = input
+            .expected_updated_at
+            .as_deref()
+            .expect("validated by interactor");
+
         let sql = format!(
-            "UPDATE work_records SET {} WHERE cultivation_plan_id = ?{} AND id = ?{}",
+            "UPDATE work_records SET {} WHERE cultivation_plan_id = ?{} AND id = ?{} AND updated_at = ?{}",
             sets.join(", "),
             values.len() + 1,
             values.len() + 2,
+            values.len() + 3,
         );
         values.push(Value::from(plan_id));
         values.push(Value::from(record_id));
+        values.push(Value::Text(expected_updated_at.to_string()));
 
-        self.pool.with_write_box(|conn| {
+        self.pool.with_write(|conn| -> rusqlite::Result<Option<WorkRecordRead>> {
             let affected = conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
-            if affected == 0 {
-                return Err(rusqlite::Error::QueryReturnedNoRows);
+            if affected > 0 {
+                return Ok(Some(Self::load_read(conn, plan_id, record_id)?));
             }
-            Self::load_read(conn, plan_id, record_id)
+            Ok(None)
+        })
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+        .and_then(|maybe_record| match maybe_record {
+            Some(record) => Ok(record),
+            None => {
+                let exists = self.pool.with_read(|conn| {
+                    conn.query_row(
+                        "SELECT 1 FROM work_records WHERE cultivation_plan_id = ?1 AND id = ?2 LIMIT 1",
+                        params![plan_id, record_id],
+                        |_| Ok(true),
+                    )
+                }).is_ok();
+                if exists {
+                    Err(RecordStaleUpdateError.into())
+                } else {
+                    Err(RecordNotFoundError.into())
+                }
+            }
         })
     }
 
