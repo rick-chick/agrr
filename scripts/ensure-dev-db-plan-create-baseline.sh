@@ -20,12 +20,13 @@ SET weather_data_status = 'completed',
       ELSE 5
     END,
     weather_data_last_error = NULL,
+    user_id = (
+      SELECT id FROM users
+      WHERE email = 'developer@agrr.dev' OR google_id = 'dev_user_001'
+      LIMIT 1
+    ),
     updated_at = datetime('now')
-WHERE user_id = (
-  SELECT id FROM users
-  WHERE email = 'developer@agrr.dev' OR google_id = 'dev_user_001'
-  LIMIT 1
-);
+WHERE region = 'jp' AND is_reference = 1;
 SELECT changes();
 SQL
 
