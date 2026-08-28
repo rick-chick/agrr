@@ -47,6 +47,7 @@ import {
   type TaskScheduleSyncLifecycleState
 } from '../../usecase/plans/task-schedule-sync-lifecycle';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
+import { TASK_SCHEDULE_SYNC_ERROR_CONNECTION_LOST } from '../../domain/plans/task-schedule-sync-error-keys';
 
 type DerivedViewFields = Pick<
   PlanTaskScheduleViewState,
@@ -260,6 +261,14 @@ export class PlanTaskSchedulePresenter
       ...applied,
       ...derived
     };
+  }
+
+  presentConnectionLost(): void {
+    this.onTaskScheduleSync({
+      syncState: 'failed',
+      syncError: TASK_SCHEDULE_SYNC_ERROR_CONNECTION_LOST,
+      syncErrorCropId: null
+    });
   }
 
   private applyTaskScheduleSync(message: TaskScheduleSyncMessageDto): Partial<PlanTaskScheduleViewState> & {

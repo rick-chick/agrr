@@ -5,6 +5,38 @@ import { SubscribeTaskScheduleSyncOutputPort } from './subscribe-task-schedule-s
 import { TaskScheduleSyncMessageDto } from './subscribe-task-schedule-sync.dtos';
 
 describe('SubscribeTaskScheduleSyncUseCase', () => {
+  function createHarness() {
+    let disconnected: (() => void) | undefined;
+    let rejected: (() => void) | undefined;
+    const channel = { unsubscribe: vi.fn() };
+    const gateway = {
+      subscribeTaskScheduleSync: vi.fn(
+        (
+          _planId: number,
+          callbacks: { received: () => void; disconnected?: () => void; rejected?: () => void }
+        ) => {
+          disconnected = callbacks.disconnected;
+          rejected = callbacks.rejected;
+          return channel;
+        }
+      )
+    } as unknown as PlanOptimizationGateway;
+    const outputPort: SubscribeTaskScheduleSyncOutputPort = {
+      onTaskScheduleSync: vi.fn(),
+      onError: vi.fn(),
+      presentConnectionLost: vi.fn()
+    };
+    const useCase = new SubscribeTaskScheduleSyncUseCase(outputPort, gateway);
+    return {
+      useCase,
+      gateway,
+      outputPort,
+      channel,
+      getDisconnected: () => disconnected,
+      getRejected: () => rejected
+    };
+  }
+
   it('subscribes via gateway and forwards DTO to output port', () => {
     let received: ((message: TaskScheduleSyncMessageDto) => void) | undefined;
     const channel = { unsubscribe: vi.fn() };
@@ -18,7 +50,8 @@ describe('SubscribeTaskScheduleSyncUseCase', () => {
     } as unknown as PlanOptimizationGateway;
     const outputPort: SubscribeTaskScheduleSyncOutputPort = {
       onTaskScheduleSync: vi.fn(),
-      onError: vi.fn()
+      onError: vi.fn(),
+      presentConnectionLost: vi.fn()
     };
     const useCase = new SubscribeTaskScheduleSyncUseCase(outputPort, gateway);
     const onSubscribed = vi.fn();
@@ -35,5 +68,23 @@ describe('SubscribeTaskScheduleSyncUseCase', () => {
     };
     received?.(dto);
     expect(outputPort.onTaskScheduleSync).toHaveBeenCalledWith(dto);
+  });
+
+  it('forwards disconnected to presentConnectionLost', () => {
+    const { useCase, outputPort, getDisconnected } = createHarness();
+
+    useCase.execute({ planId: 7 });
+    getDisconnected()?.();
+
+    expect(outputPort.presentConnectionLost).toHaveBeenCalledTimes(1);
+  });
+
+  it('forwards rejected to presentConnectionLost', () => {
+    const { useCase, outputPort, getRejected } = createHarness();
+
+    useCase.execute({ planId: 7 });
+    getRejected()?.();
+
+    expect(outputPort.presentConnectionLost).toHaveBeenCalledTimes(1);
   });
 });

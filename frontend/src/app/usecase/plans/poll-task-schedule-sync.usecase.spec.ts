@@ -48,7 +48,8 @@ describe('PollTaskScheduleSyncUseCase', () => {
     const gateway = { getTaskSchedule } as unknown as PlanGateway;
     const outputPort: SubscribeTaskScheduleSyncOutputPort = {
       onTaskScheduleSync: vi.fn(),
-      onError: vi.fn()
+      onError: vi.fn(),
+      presentConnectionLost: vi.fn()
     };
     const useCase = new PollTaskScheduleSyncUseCase(outputPort, gateway);
 
@@ -71,7 +72,8 @@ describe('PollTaskScheduleSyncUseCase', () => {
     const gateway = { getTaskSchedule } as unknown as PlanGateway;
     const outputPort: SubscribeTaskScheduleSyncOutputPort = {
       onTaskScheduleSync: vi.fn(),
-      onError: vi.fn()
+      onError: vi.fn(),
+      presentConnectionLost: vi.fn()
     };
     const useCase = new PollTaskScheduleSyncUseCase(outputPort, gateway);
 
@@ -97,7 +99,8 @@ describe('PollTaskScheduleSyncUseCase', () => {
     const onError = vi.fn();
     const outputPort: SubscribeTaskScheduleSyncOutputPort = {
       onTaskScheduleSync: vi.fn(),
-      onError
+      onError,
+      presentConnectionLost: vi.fn()
     };
     const useCase = new PollTaskScheduleSyncUseCase(outputPort, gateway);
 
