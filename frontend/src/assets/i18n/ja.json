@@ -2650,6 +2650,7 @@
         "gdd_date_not_found_wizard_link": "「{{cropName}}」の作業計画を確認する",
         "missing_start_date": "栽培開始日が未設定のため作業計画を生成できません。",
         "agrr_unavailable": "AGRR処理サービスに接続できません。しばらくしてから再試行してください。",
+        "connection_lost": "接続が切断されました。しばらくしてからやり直してください。",
         "generic": "作業計画を作れませんでした。",
         "generic_single": "「{{cropName}}」の設定を確認してください。問題がなければ再試行してください。",
         "generic_multi": "作業計画を作れませんでした。次の作物の設定を確認するか、問題がなければ再試行してください。",

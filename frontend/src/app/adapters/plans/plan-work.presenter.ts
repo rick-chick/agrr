@@ -31,6 +31,7 @@ import {
   type TaskScheduleSyncLifecycleState
 } from '../../usecase/plans/task-schedule-sync-lifecycle';
 import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
+import { TASK_SCHEDULE_SYNC_ERROR_CONNECTION_LOST } from '../../domain/plans/task-schedule-sync-error-keys';
 import { buildWorkRecordSaveToast, WorkRecordSaveToastContext } from '../../domain/plans/work-record-save-toast';
 import {
   applyPlanSaveImpactSummary,
@@ -146,6 +147,14 @@ export class PlanWorkPresenter
       ...this.view.control,
       ...applied
     };
+  }
+
+  presentConnectionLost(): void {
+    this.onTaskScheduleSync({
+      syncState: 'failed',
+      syncError: TASK_SCHEDULE_SYNC_ERROR_CONNECTION_LOST,
+      syncErrorCropId: null
+    });
   }
 
   onRegenerateError(dto: ErrorDto): void {

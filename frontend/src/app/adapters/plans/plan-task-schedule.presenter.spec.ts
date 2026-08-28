@@ -426,6 +426,26 @@ describe('PlanTaskSchedulePresenter task schedule sync', () => {
     expect(view.control.syncReloadNonce).toBe(1);
   });
 
+  it('sets failed state with connection lost error on presentConnectionLost', () => {
+    view.control = {
+      ...view.control,
+      schedule: {
+        ...scheduleWithFields,
+        plan: { ...planInfo, task_schedule_sync_state: 'generating' }
+      },
+      regenerating: true
+    };
+
+    presenter.presentConnectionLost();
+
+    expect(view.control.schedule?.plan.task_schedule_sync_state).toBe('failed');
+    expect(view.control.schedule?.plan.task_schedule_sync_error).toBe(
+      'plans.task_schedules.sync_errors.connection_lost'
+    );
+    expect(view.control.regenerating).toBe(false);
+    expect(view.control.syncReloadNonce).toBe(1);
+  });
+
   it('queues pending sync when schedule is not loaded and merges on present', () => {
     view.control = { ...view.control, schedule: null };
 
