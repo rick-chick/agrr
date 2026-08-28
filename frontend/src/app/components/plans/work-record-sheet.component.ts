@@ -89,7 +89,8 @@ function emptyForm(): WorkRecordSheetFormState {
     work_record_id: null,
     agricultural_task_id: null,
     fertilize_id: null,
-    pesticide_id: null
+    pesticide_id: null,
+    updated_at: ''
   };
 }
 
@@ -733,7 +734,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
         work_record_id: record.id,
         agricultural_task_id: record.agricultural_task_id,
         fertilize_id: record.fertilize_id ?? null,
-        pesticide_id: record.pesticide_id ?? null
+        pesticide_id: record.pesticide_id ?? null,
+        updated_at: record.updated_at
       },
       fieldOptions: []
     };
@@ -1032,7 +1034,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       field_cultivation_id: form.field_cultivation_id,
       agricultural_task_id: form.agricultural_task_id,
       fertilize_id: form.fertilize_id,
-      pesticide_id: form.pesticide_id
+      pesticide_id: form.pesticide_id,
+      updated_at: form.updated_at
     };
 
     const photoIdsToDelete = this.control.existingPhotos

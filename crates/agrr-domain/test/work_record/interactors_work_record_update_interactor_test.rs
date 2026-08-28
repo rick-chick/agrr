@@ -62,6 +62,10 @@ impl WorkRecordUpdateOutputPort for SpyUpdateOutput {
     fn on_not_found(&mut self) {
         self.events.lock().unwrap().push("not_found".into());
     }
+
+    fn on_stale_update(&mut self) {
+        self.events.lock().unwrap().push("stale".into());
+    }
 }
 
 struct StubPlanGateway {

@@ -14,6 +14,8 @@ use crate::work_record::dtos::work_record_create_input::record_invalid_field;
 /// Partial update payload for an existing work record.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct WorkRecordUpdateInput {
+    /// Client-supplied `updated_at` from the loaded record (optimistic lock token).
+    pub expected_updated_at: Option<String>,
     pub name: Option<String>,
     pub actual_date: Option<Date>,
     pub amount: Option<Decimal>,
@@ -62,8 +64,20 @@ impl WorkRecordUpdateInput {
         } else {
             None
         };
+        let expected_updated_at = match params.get("updated_at") {
+            None | Some(Value::Null) => None,
+            Some(Value::String(s)) if s.trim().is_empty() => None,
+            Some(Value::String(s)) => Some(s.clone()),
+            Some(_) => {
+                return Err(record_invalid_field(
+                    "updated_at",
+                    "activerecord.errors.models.work_record.attributes.updated_at.invalid",
+                ));
+            }
+        };
 
         Ok(Self {
+            expected_updated_at,
             name,
             actual_date,
             amount,

@@ -64,10 +64,15 @@ describe('WorkRecordApiGateway', () => {
   it('updates work record', async () => {
     vi.mocked(apiClient.patch).mockReturnValue(of({ work_record: { ...sampleRecord, notes: 'updated' } }));
 
-    const result = await firstValueFrom(gateway.updateWorkRecord(5, 1, { notes: 'updated' }));
+    const result = await firstValueFrom(
+      gateway.updateWorkRecord(5, 1, {
+        updated_at: '2026-06-12T00:00:00Z',
+        notes: 'updated'
+      })
+    );
     expect(result.work_record.notes).toBe('updated');
     expect(apiClient.patch).toHaveBeenCalledWith('/api/v1/plans/5/work_records/1', {
-      work_record: { notes: 'updated' }
+      work_record: { updated_at: '2026-06-12T00:00:00Z', notes: 'updated' }
     });
   });
 
