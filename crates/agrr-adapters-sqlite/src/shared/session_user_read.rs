@@ -29,7 +29,7 @@ impl SessionUserReadSqliteGateway {
         self.pool.with_read_box(|conn| {
             let row = conn
                 .query_row(
-                    "SELECT id, name, email, avatar_url, COALESCE(admin, 0), api_key \
+                    "SELECT id, name, email, avatar_url, COALESCE(admin, 0), api_key_prefix \
                      FROM users WHERE id = ?1 LIMIT 1",
                     params![user_id],
                     |row| {
