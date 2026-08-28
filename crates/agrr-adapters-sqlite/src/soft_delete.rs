@@ -123,9 +123,16 @@ mod tests {
             panic!("expected success");
         };
 
+        let _undo_token = body["undo_token"].as_str().expect("undo_token");
         assert_eq!(
             body["undo_path"].as_str().expect("undo_path"),
             "/undo_deletion"
+        );
+        assert!(
+            !body["undo_path"]
+                .as_str()
+                .is_some_and(|p| p.contains("undo_token")),
+            "undo_path must not include undo_token"
         );
         assert_eq!(body["toast_message"].as_str(), Some("toast"));
         assert_eq!(body["auto_hide_after"].as_i64(), Some(5000));

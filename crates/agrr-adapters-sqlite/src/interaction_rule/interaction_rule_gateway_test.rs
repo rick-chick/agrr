@@ -386,6 +386,10 @@ fn soft_delete_with_undo_returns_flat_undo_path_and_restores_row() {
         .expect("undo_token");
     let undo_path = undo.get("undo_path").and_then(|v| v.as_str()).expect("undo_path");
     assert_eq!(undo_path, "/undo_deletion");
+    assert!(
+        !undo_path.contains("undo_token"),
+        "undo_path must not include undo_token query param"
+    );
     assert!(undo.get("toast_message").is_some());
 
     let count_after_delete: i64 = pool
