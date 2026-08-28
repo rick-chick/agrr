@@ -420,8 +420,11 @@ export class PlanNewComponent implements PlanNewView, OnInit {
             sourcePlans: [],
             carryoverPreview: null,
             carryoverPreviewError: null,
-            carryoverPreviewLoading: true
+            carryoverPreviewLoading: true,
+            readinessLoading: true,
+            readiness: null
           };
+          this.loadReadiness(plan.farm_id);
           this.loadSourcePlans(plan.farm_id);
           this.loadCarryoverPreview(planId);
           this.cdr.markForCheck();
