@@ -32,7 +32,7 @@ describe('DeletePlanUseCase', () => {
     const undoResponse: DeletionUndoResponse = {
       undo_token: 'token-1',
       toast_message: 'プラン Foo を削除しました',
-      undo_path: '/undo_deletion?undo_token=token-1',
+      undo_path: '/undo_deletion',
       undo_deadline: '2026-02-03T12:00:00Z',
       resource: 'Foo',
       resource_dom_id: 'cultivation_plan_8',

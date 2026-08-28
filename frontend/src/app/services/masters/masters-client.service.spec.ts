@@ -47,7 +47,7 @@ describe('MastersClientService', () => {
       apiClient.delete.mockReturnValue(
         of({
           undo_token: 'flat-token',
-          undo_path: '/undo_deletion?undo_token=flat-token',
+          undo_path: '/undo_deletion',
           toast_message: 'deleted'
         })
       );
