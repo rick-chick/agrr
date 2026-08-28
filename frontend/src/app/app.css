@@ -32,6 +32,14 @@
   box-sizing: border-box;
 }
 
+.app-error-fallback-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  overflow: auto;
+  background: var(--color-gray-50);
+}
+
 /* page-main / 静的ページは自前の余白を持つため、モバイルでは二重 padding を避ける */
 @media (max-width: 768px) {
   .app-main {

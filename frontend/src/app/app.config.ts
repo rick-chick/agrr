@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
+import { ApplicationConfig, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { provideClientHydration } from '@angular/platform-browser';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
@@ -18,9 +18,11 @@ import { EntryScheduleApiGateway } from './adapters/entry-schedule/entry-schedul
 import { LearnProposalApplicationProgressSyncService } from './services/learn-proposal-application-progress-sync.service';
 import { LearnOrchestrationProgressSyncService } from './services/learn-orchestration-progress-sync.service';
 import { LearnHandoffSyncService } from './services/learn-handoff-sync.service';
+import { GlobalErrorHandler } from './core/errors/global-error.handler';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideClientHydration(),
     provideHttpClient(),
     { provide: ENTRY_SCHEDULE_GATEWAY, useExisting: EntryScheduleApiGateway },
