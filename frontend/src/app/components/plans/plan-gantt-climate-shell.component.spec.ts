@@ -13,12 +13,13 @@ import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-da
 
 @Component({
   selector: 'app-gantt-chart',
-  template: '',
+  template: '<span class="stub-gantt-plan-id">{{ planId }}</span>',
   standalone: true
 })
 class StubGanttChartComponent {
   @Input({ required: true }) data!: CultivationPlanData;
   @Input() planType: 'private' | 'public' | 'demo' = 'private';
+  @Input() planId: number | null = null;
   @Input() selectedCultivationId: number | null = null;
   @Input() learningOrchestrationAdjust = false;
   @Input() proposalOverlayBars: unknown[] = [];
@@ -141,6 +142,34 @@ describe('PlanGanttClimateShellComponent', () => {
       });
 
       expect(component.selectedCultivationId).toBe(42);
+    });
+
+    it('passes planId to the gantt chart', async () => {
+      await TestBed.configureTestingModule({
+        imports: [PlanGanttClimateShellComponent, TranslateModule.forRoot()],
+        providers: [...GANTT_CHART_API_PROVIDERS, ...PLAN_FIELD_CLIMATE_API_PROVIDERS]
+      })
+        .overrideComponent(PlanGanttClimateShellComponent, {
+          set: {
+            imports: [
+              CommonModule,
+              StubGanttChartComponent,
+              StubPlanFieldClimateComponent,
+              TranslateModule
+            ],
+            providers: []
+          }
+        })
+        .compileComponents();
+
+      const shellFixture = TestBed.createComponent(PlanGanttClimateShellComponent);
+      shellFixture.componentInstance.data = sampleData;
+      shellFixture.componentInstance.planId = 99;
+      shellFixture.detectChanges();
+
+      expect(
+        shellFixture.nativeElement.querySelector('.stub-gantt-plan-id')?.textContent?.trim()
+      ).toBe('99');
     });
 
     it('passes planId to the climate panel when a cultivation is selected', async () => {
