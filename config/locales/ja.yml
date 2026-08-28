@@ -91,6 +91,7 @@ ja:
         missing_token: "認証トークンが指定されていません"
         invalid_token: "認証トークンが無効です"
         db_clear_disabled_in_production: "本番環境ではデータベースの全削除は無効です。break-glass 時のみ AGRR_BACKDOOR_ALLOW_DB_CLEAR=1 を設定してください。"
+        admin_change_disabled_in_production: "本番環境では管理者権限の付与・剥奪は無効です。break-glass 時のみ AGRR_BACKDOOR_ALLOW_ADMIN_CHANGES=1 を設定してください。"
       internal_server_error: "サーバーエラーが発生しました"
       common:
         location_required: "位置情報を入力してください"
