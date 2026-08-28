@@ -51,6 +51,16 @@ fn get_api_v1_health_returns_ok_payload() {
 }
 
 #[test]
+fn get_api_v1_ready_returns_ok_when_daemon_available_or_disabled() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.get("/api/v1/ready", None, &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("ready JSON");
+    assert_eq!("ok", json["status"].as_str().unwrap());
+    assert_eq!(true, json["daemon"]["ready"].as_bool().unwrap());
+}
+
+#[test]
 fn cable_route_is_not_global_api_not_migrated_501() {
     let client = ContractClient::from_env();
     let (status, body) = status_and_body(client.get("/cable", None, &empty_headers()));

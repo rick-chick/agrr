@@ -6,6 +6,7 @@ use serde_json::Value;
 
 use crate::daemon_ai_query::{execute_daemon_json_with_retry, DEFAULT_MAX_RETRIES};
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
+use crate::daemon_unavailable::DAEMON_UNAVAILABLE_MESSAGE;
 
 pub struct CropAiQueryDaemonGateway {
     client: AgrrDaemonClient,
@@ -43,11 +44,10 @@ impl CropAiQueryGateway for CropAiQueryDaemonGateway {
 }
 
 fn map_agrr_error(err: AgrrDaemonError) -> CropAiCreateFailure {
-    let message = match &err {
-        AgrrDaemonError::NotRunning(path) => {
-            format!("AGRR daemon is not running at {path}")
-        }
-        AgrrDaemonError::CommandFailed(_) | AgrrDaemonError::Io(_) => err.to_string(),
+    let message = if matches!(err, AgrrDaemonError::NotRunning(_)) {
+        DAEMON_UNAVAILABLE_MESSAGE.to_string()
+    } else {
+        err.to_string()
     };
     let status = if matches!(err, AgrrDaemonError::NotRunning(_)) {
         HttpStatus::ServiceUnavailable
@@ -71,6 +71,6 @@ mod tests {
         let gw = CropAiQueryDaemonGateway::new(client);
         let err = gw.fetch_crop_json("tomato").unwrap_err();
         assert_eq!(err.http_status, HttpStatus::ServiceUnavailable);
-        assert!(err.message.contains("not running"));
+        assert_eq!(err.message, DAEMON_UNAVAILABLE_MESSAGE);
     }
 }
