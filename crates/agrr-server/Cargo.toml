@@ -51,3 +51,5 @@ saphyr = "0.0.6"
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
+tokio-tungstenite = "0.26"
+futures-util = "0.3"
