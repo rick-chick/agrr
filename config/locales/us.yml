@@ -48,6 +48,7 @@ us:
         missing_token: "Missing authentication token"
         invalid_token: "Invalid authentication token"
         db_clear_disabled_in_production: "Database clear is disabled in production. Set AGRR_BACKDOOR_ALLOW_DB_CLEAR=1 for break-glass use only."
+        admin_change_disabled_in_production: "Admin grant/revoke is disabled in production. Set AGRR_BACKDOOR_ALLOW_ADMIN_CHANGES=1 for break-glass use only."
       crop_not_found: "Crop information not found"
       no_weather_data: "No weather data available"
       no_cultivation_period: "Cultivation period not set"
