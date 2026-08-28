@@ -15,8 +15,8 @@ function getNested(obj: JsonRecord, path: string): unknown {
 
 /** Keys rendered with contact_link interpolation on privacy/terms pages. */
 const PAGES_PRIVACY_TERMS_KEYS = [
-  'pages.privacy.section8.content_html',
-  'pages.privacy.section8.contact_link_text',
+  'pages.privacy.section9.content_html',
+  'pages.privacy.section9.contact_link_text',
   'pages.terms.article10.content_html',
   'pages.terms.article10.contact_link_text'
 ] as const;
@@ -39,7 +39,7 @@ describe('pages.privacy / pages.terms contact_link i18n catalog', () => {
       }
 
       it('uses {{contact_link}} placeholder in content_html keys', () => {
-        const privacyHtml = getNested(catalog, 'pages.privacy.section8.content_html') as string;
+        const privacyHtml = getNested(catalog, 'pages.privacy.section9.content_html') as string;
         const termsHtml = getNested(catalog, 'pages.terms.article10.content_html') as string;
         expect(privacyHtml).toContain('{{contact_link}}');
         expect(termsHtml).toContain('{{contact_link}}');
