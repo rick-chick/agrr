@@ -1575,7 +1575,8 @@
         "optimizing": "最適化に失敗しました",
         "task_schedule_generation": "作業計画の生成に失敗しました",
         "default": "処理に失敗しました",
-        "timeout": "処理がタイムアウトしました"
+        "timeout": "処理がタイムアウトしました",
+        "daemon_unavailable": "AGRR処理サービスに接続できません。しばらくしてから再試行してください。"
       },
       "default_plan_name": "メイン計画",
       "public_plan_name": "無料作付け計画"
@@ -4073,9 +4074,9 @@
       },
       "section8": {
         "title": "8. プライバシーポリシーの変更",
-        "content": "当サービスは、必要に応じて本プライバシーポリシーを変更することがあります。変更後のプライバシーポリシーは、本ページに掲載した時点で効力を生じます。",
         "content_html": "プライバシーポリシーに関するお問い合わせは、{{contact_link}}よりご連絡ください。",
-        "contact_link_text": "お問い合わせページ"
+        "contact_link_text": "お問い合わせページ",
+        "content": "当サービスは、必要に応じて本プライバシーポリシーを変更することがあります。変更後のプライバシーポリシーは、本ページに掲載した時点で効力を生じます。"
       },
       "last_updated": "最終更新日: 2025年10月17日",
       "section9": {
@@ -4201,17 +4202,17 @@
       "accept": "同意する",
       "reject": "拒否する"
     },
-    "offline_banner": {
-      "message": "オフラインです。回線が復帰するまで一部の操作ができない場合があります。",
-      "reconnected": "回線が復帰しました。",
-      "reload": "再読み込み"
-    },
     "region_select": {
       "label": "地域",
       "blank": "選択してください",
       "jp": "日本",
       "us": "米国",
       "in": "インド"
+    },
+    "offline_banner": {
+      "message": "オフラインです。回線が復帰するまで一部の操作ができない場合があります。",
+      "reconnected": "回線が復帰しました。",
+      "reload": "再読み込み"
     }
   },
   "entrySchedule": {

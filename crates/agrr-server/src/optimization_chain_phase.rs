@@ -1,5 +1,6 @@
 //! Cultivation-plan optimization phase updates and Cable broadcasts (edge adapter).
 
+use agrr_adapters_agrr::is_daemon_unavailable_message;
 use crate::adapters::PassthroughTranslator;
 use crate::cable::CableHub;
 use crate::optimization_chain_telemetry::{StepOutcome, StepTimer};
@@ -72,12 +73,17 @@ pub(crate) fn run_guarded_optimization_step(
                 notify_orchestration_on_failure(state, plan_id, chain_step, &e);
             }
             if let Some(subphase) = failure_subphase {
+                let effective_subphase = if is_daemon_unavailable_message(&e) {
+                    "daemon_unavailable"
+                } else {
+                    subphase
+                };
                 if let Err(phase_err) = advance_phase(
                     state,
                     plan_id,
                     channel,
                     CultivationPlanPhaseName::PhaseFailed,
-                    Some(subphase),
+                    Some(effective_subphase),
                 ) {
                     eprintln!(
                         "optimization_chain phase_persist_failed plan_id={plan_id} step={step_name} \
@@ -211,6 +217,39 @@ mod tests {
             )
         })
         .expect("read status")
+    }
+
+    fn plan_phase_message(pool: &agrr_adapters_sqlite::SqlitePool, plan_id: i64) -> Option<String> {
+        pool.with_read(|conn| {
+            conn.query_row(
+                "SELECT optimization_phase_message FROM cultivation_plans WHERE id = ?1",
+                rusqlite::params![plan_id],
+                |row| row.get(0),
+            )
+        })
+        .ok()
+    }
+
+    #[test]
+    fn run_guarded_optimization_step_uses_daemon_unavailable_subphase_for_daemon_errors() {
+        let db = test_pool_with_optimizing_plan(1);
+        let state = test_app_state(db.pool.clone());
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "fetch_weather",
+            Some("fetching_weather"),
+            None,
+            || Err("fetch weather perform: daemon_unavailable".into()),
+        );
+
+        assert!(!continue_chain);
+        assert_eq!(
+            plan_phase_message(&state.sqlite, 1).as_deref(),
+            Some("models.cultivation_plan.phase_failed.daemon_unavailable")
+        );
     }
 
     #[test]

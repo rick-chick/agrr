@@ -91,6 +91,7 @@ in:
       weather_data_invalid_format: "मौसम डेटा का प्रारूप अमान्य है। कृपया अनुकूलन दोबारा चलाएं।"
       common:
         invalid_date_format: "तिथि प्रारूप अमान्य है: %{message}"
+        daemon_unavailable: "AGRR प्रसंस्करण सेवा उपलब्ध नहीं है। कृपया बाद में फिर प्रयास करें।"
       optimization:
         calculate_period_failed: "योजना अवधि की गणना विफल: %{message}"
         result_empty: "समायोजन परिणाम खाली है"
