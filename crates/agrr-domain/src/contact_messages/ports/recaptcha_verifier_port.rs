@@ -5,6 +5,8 @@
 pub enum RecaptchaVerifyResult {
     Ok,
     Error(String),
+    /// Server misconfiguration (e.g. `RECAPTCHA_SECRET_KEY` unset).
+    NotConfigured,
 }
 
 /// Ruby: `Adapters::ContactMessages::Services::RecaptchaVerifier` (injected at edge).

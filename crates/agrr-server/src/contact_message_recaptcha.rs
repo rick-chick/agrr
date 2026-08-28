@@ -14,25 +14,15 @@ pub struct RecaptchaVerifier {
 
 impl RecaptchaVerifier {
     pub fn from_env() -> Self {
-        Self::new(std::env::var("RECAPTCHA_SECRET_KEY").unwrap_or_default())
+        let verifier = Self::new(
+            std::env::var("RECAPTCHA_SECRET_KEY").unwrap_or_default(),
+            std::env::var("RECAPTCHA_VERIFY_URL").unwrap_or_else(|_| VERIFY_URL.to_string()),
+        );
+        verifier.warn_if_unconfigured();
+        verifier
     }
 
-    pub fn new(secret_key: impl Into<String>) -> Self {
-        let secret_key = secret_key.into();
-        let client = if secret_key.trim().is_empty() {
-            None
-        } else {
-            Some(Client::new())
-        };
-        Self {
-            secret_key,
-            client,
-            verify_url: VERIFY_URL.to_string(),
-        }
-    }
-
-    #[cfg(test)]
-    pub fn with_verify_url(secret_key: impl Into<String>, verify_url: impl Into<String>) -> Self {
+    pub fn new(secret_key: impl Into<String>, verify_url: impl Into<String>) -> Self {
         let secret_key = secret_key.into();
         let client = if secret_key.trim().is_empty() {
             None
@@ -46,8 +36,21 @@ impl RecaptchaVerifier {
         }
     }
 
-    fn verification_disabled(&self, token: Option<&str>) -> bool {
-        self.secret_key.trim().is_empty() || token.unwrap_or("").trim().is_empty()
+    pub fn is_configured(&self) -> bool {
+        !self.secret_key.trim().is_empty()
+    }
+
+    pub fn warn_if_unconfigured(&self) {
+        if !self.is_configured() {
+            tracing::warn!(
+                "RECAPTCHA_SECRET_KEY is unset; contact message submissions will be rejected"
+            );
+        }
+    }
+
+    #[cfg(test)]
+    pub fn with_verify_url(secret_key: impl Into<String>, verify_url: impl Into<String>) -> Self {
+        Self::new(secret_key, verify_url)
     }
 
     fn parse_verify_response(body: &str) -> RecaptchaVerifyResult {
@@ -91,11 +94,15 @@ struct VerifyResponse {
 
 impl RecaptchaVerifierPort for RecaptchaVerifier {
     fn verify(&self, token: Option<&str>, remote_ip: Option<&str>) -> RecaptchaVerifyResult {
-        if self.verification_disabled(token) {
-            return RecaptchaVerifyResult::Ok;
+        if !self.is_configured() {
+            return RecaptchaVerifyResult::NotConfigured;
         }
 
-        let token = token.unwrap_or_default();
+        if token.unwrap_or("").trim().is_empty() {
+            return RecaptchaVerifyResult::Error("reCAPTCHA token is required".into());
+        }
+
+        let token = token.unwrap();
         let mut form = vec![
             ("secret", self.secret_key.as_str()),
             ("response", token),
@@ -107,7 +114,7 @@ impl RecaptchaVerifierPort for RecaptchaVerifier {
 
         let client = match &self.client {
             Some(client) => client,
-            None => return RecaptchaVerifyResult::Ok,
+            None => return RecaptchaVerifyResult::NotConfigured,
         };
 
         let response = match client.post(&self.verify_url).form(&form).send() {
@@ -135,21 +142,68 @@ impl RecaptchaVerifierPort for RecaptchaVerifier {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::{Read, Write};
+    use std::net::TcpListener;
+    use std::sync::mpsc;
+    use std::thread;
+    use std::time::Duration;
+
+    fn spawn_mock_verify_server(response_body: &str) -> (String, thread::JoinHandle<()>) {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock verify server");
+        let addr = listener.local_addr().expect("mock verify addr");
+        let body = response_body.to_string();
+        let (ready_tx, ready_rx) = mpsc::channel();
+        let handle = thread::spawn(move || {
+            ready_tx.send(()).ok();
+            if let Ok((mut stream, _)) = listener.accept() {
+                let mut buf = [0u8; 4096];
+                let _ = stream.read(&mut buf);
+                let response = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: application/json\r\n\r\n{}",
+                    body.len(),
+                    body
+                );
+                let _ = stream.write_all(response.as_bytes());
+            }
+        });
+        ready_rx
+            .recv_timeout(Duration::from_secs(1))
+            .expect("mock verify server ready");
+        (format!("http://{addr}/siteverify"), handle)
+    }
 
     #[test]
-    fn verify_skips_when_secret_or_token_missing() {
-        let verifier = RecaptchaVerifier::new("");
+    fn verify_rejects_when_secret_missing() {
+        let verifier = RecaptchaVerifier::new("", "http://example.test/verify");
+        assert_eq!(
+            verifier.verify(Some("token"), Some("203.0.113.1")),
+            RecaptchaVerifyResult::NotConfigured
+        );
+    }
+
+    #[test]
+    fn verify_rejects_when_token_missing() {
+        let verifier = RecaptchaVerifier::new("secret", "http://example.test/verify");
+        assert_eq!(
+            verifier.verify(None, Some("203.0.113.1")),
+            RecaptchaVerifyResult::Error("reCAPTCHA token is required".into())
+        );
+        assert_eq!(
+            verifier.verify(Some(""), Some("203.0.113.1")),
+            RecaptchaVerifyResult::Error("reCAPTCHA token is required".into())
+        );
+    }
+
+    #[test]
+    fn verify_calls_siteverify_when_secret_and_token_present() {
+        let (verify_url, handle) =
+            spawn_mock_verify_server(r#"{"success":true,"error-codes":[]}"#);
+        let verifier = RecaptchaVerifier::with_verify_url("secret", verify_url);
         assert_eq!(
             verifier.verify(Some("token"), Some("203.0.113.1")),
             RecaptchaVerifyResult::Ok
         );
-
-        let verifier = RecaptchaVerifier::new("secret");
-        assert_eq!(verifier.verify(None, Some("203.0.113.1")), RecaptchaVerifyResult::Ok);
-        assert_eq!(
-            verifier.verify(Some(""), Some("203.0.113.1")),
-            RecaptchaVerifyResult::Ok
-        );
+        handle.join().expect("mock verify server thread");
     }
 
     #[test]

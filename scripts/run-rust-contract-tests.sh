@@ -257,6 +257,29 @@ docker compose --profile test run --rm \
     export GCS_BUCKET="${GCS_BUCKET:-test-bucket-contract}"
     export WEATHER_DATA_LOCAL_ROOT="${WEATHER_DATA_LOCAL_ROOT:-/tmp/agrr-weather-contract}"
     mkdir -p "$WEATHER_DATA_LOCAL_ROOT"
+    python3 -c "
+import json
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+class Handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        length = int(self.headers.get('Content-Length', 0))
+        self.rfile.read(length)
+        body = json.dumps({'success': True}).encode()
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format, *args):
+        pass
+
+HTTPServer(('127.0.0.1', 9191), Handler).serve_forever()
+" >/tmp/recaptcha-mock.log 2>&1 &
+    RECAPTCHA_MOCK_PID=$!
+    export RECAPTCHA_SECRET_KEY="${RECAPTCHA_SECRET_KEY:-contract-test-recaptcha-secret}"
+    export RECAPTCHA_VERIFY_URL="${RECAPTCHA_VERIFY_URL:-http://127.0.0.1:9191/siteverify}"
     AGRR_BIN="${AGRR_BIN_PATH:-/app/lib/core/agrr}"
     AGRR_SOCKET_PATH="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
     if [ -x "$AGRR_BIN" ]; then
@@ -271,7 +294,10 @@ docker compose --profile test run --rm \
     fi
     agrr-server >/tmp/agrr-server-contract.log 2>&1 &
     SERVER_PID=$!
-    cleanup() { kill "$SERVER_PID" 2>/dev/null || true; }
+    cleanup() {
+      kill "$SERVER_PID" 2>/dev/null || true
+      kill "$RECAPTCHA_MOCK_PID" 2>/dev/null || true
+    }
     trap cleanup EXIT
     for _ in $(seq 1 50); do
       if curl -sf http://127.0.0.1:8080/health >/dev/null; then
@@ -282,6 +308,37 @@ docker compose --profile test run --rm \
     if ! curl -sf http://127.0.0.1:8080/health >/dev/null; then
       echo "agrr-server failed to start; log:"
       cat /tmp/agrr-server-contract.log
+      exit 1
+    fi
+    echo "==> contact_messages fail-closed when RECAPTCHA_SECRET_KEY unset (shell contract)"
+    env -u RECAPTCHA_SECRET_KEY -u RECAPTCHA_VERIFY_URL \
+      AGRR_APP_ROOT=/app \
+      AGRR_SQLITE_PATH=/app/storage/test.sqlite3 \
+      AGRR_CACHE_SQLITE_PATH=/app/storage/test_cache.sqlite3 \
+      PORT=8089 \
+      SCHEDULER_AUTH_TOKEN="$SCHEDULER_AUTH_TOKEN" \
+      AGRR_BACKDOOR_TOKEN="$AGRR_BACKDOOR_TOKEN" \
+      WEATHER_DATA_STORAGE=gcs \
+      GCS_BUCKET="$GCS_BUCKET" \
+      WEATHER_DATA_LOCAL_ROOT="$WEATHER_DATA_LOCAL_ROOT" \
+      agrr-server >/tmp/agrr-server-contract-unconfigured-recaptcha.log 2>&1 &
+    UNCONFIGURED_SERVER_PID=$!
+    for _ in $(seq 1 50); do
+      if curl -sf http://127.0.0.1:8089/health >/dev/null; then
+        break
+      fi
+      sleep 0.1
+    done
+    UNCONFIGURED_STATUS=$(curl -s -o /tmp/contact-unconfigured-recaptcha.json -w "%{http_code}" \
+      -H "Content-Type: application/json" \
+      -H "x-forwarded-for: 203.0.113.250" \
+      -d '{"email":"unconfigured-recaptcha@example.com","message":"contract shell check","recaptcha_token":"token"}' \
+      http://127.0.0.1:8089/api/v1/contact_messages)
+    kill "$UNCONFIGURED_SERVER_PID" 2>/dev/null || true
+    if [ "$UNCONFIGURED_STATUS" != "503" ]; then
+      echo "expected 503 when RECAPTCHA_SECRET_KEY unset, got $UNCONFIGURED_STATUS"
+      cat /tmp/contact-unconfigured-recaptcha.json
+      cat /tmp/agrr-server-contract-unconfigured-recaptcha.log
       exit 1
     fi
     echo "==> R4 contract (agrr-r4-contract)"
