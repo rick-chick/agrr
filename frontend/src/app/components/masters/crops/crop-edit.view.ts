@@ -10,6 +10,7 @@ export type CropEditFormData = {
   groups: string[];
   groupsDisplay: string;
   is_reference: boolean;
+  updated_at?: string | null;
 };
 
 export type CropEditViewState = {
