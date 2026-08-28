@@ -96,7 +96,8 @@ describe('WorkRecordSheetPresenter', () => {
         pendingUndoToast: null,
         existingPhotos: [],
         pendingPhotos: [],
-        photoError: null
+        photoError: null,
+        pendingPhotoResyncWorkRecord: null
       },
       close: vi.fn()
     };
@@ -206,5 +207,29 @@ describe('WorkRecordSheetPresenter', () => {
       gddDelta: 45.3,
       loading: false
     });
+  });
+
+  it('resyncs photos and shows partial failure message', () => {
+    const reloaded: WorkRecord = {
+      ...workRecord,
+      photos: [
+        {
+          id: 3,
+          work_record_id: 42,
+          position: 0,
+          content_type: 'image/jpeg',
+          byte_size: 10,
+          url: '/photos/3.jpg',
+          created_at: '2026-06-26'
+        }
+      ]
+    };
+
+    presenter.onPhotoPartialFailure({ workRecord: reloaded });
+
+    expect(view.control.submitting).toBe(false);
+    expect(view.control.photoError).toBe('plans.work.sheet.photos.errors.partial_sync_failed');
+    expect(view.control.pendingPhotoResyncWorkRecord).toEqual(reloaded);
+    expect(view.close).not.toHaveBeenCalled();
   });
 });

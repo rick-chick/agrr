@@ -36,6 +36,11 @@ import { LoadFertilizeListUseCase } from '../../usecase/fertilizes/load-fertiliz
 import { LoadCropPesticideListUseCase } from '../../usecase/pesticides/load-crop-pesticide-list.usecase';
 import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
+import {
+  WORK_RECORD_PHOTO_GATEWAY
+} from '../../usecase/plans/work-record-photo-gateway';
+import { DeletedWorkRecordPhotoBackup } from '../../usecase/plans/save-work-record-sheet.dtos';
+import { firstValueFrom } from 'rxjs';
 import { PreviewWorkRecordClimateUseCase } from '../../usecase/plans/preview-work-record-climate/preview-work-record-climate.usecase';
 import { formatVarianceGddDelta } from '../../domain/plans/work-record-variance';
 import {
@@ -119,7 +124,8 @@ const initialControl: WorkRecordSheetViewState = {
   pendingUndoToast: null,
   existingPhotos: [],
   pendingPhotos: [],
-  photoError: null
+  photoError: null,
+  pendingPhotoResyncWorkRecord: null
 };
 
 @Component({
@@ -601,13 +607,29 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly undoToast = inject(UndoToastService);
+  private readonly photoGateway = inject(WORK_RECORD_PHOTO_GATEWAY);
 
   private _control: WorkRecordSheetViewState = initialControl;
   get control(): WorkRecordSheetViewState {
     return this._control;
   }
   set control(value: WorkRecordSheetViewState) {
-    this._control = applyWorkRecordSheetViewEffects(value, {
+    let next = value;
+    if (next.pendingPhotoResyncWorkRecord) {
+      const record = next.pendingPhotoResyncWorkRecord;
+      this.revokePendingPhotoUrls(next.pendingPhotos);
+      next = {
+        ...next,
+        pendingPhotoResyncWorkRecord: null,
+        pendingPhotos: [],
+        existingPhotos: (record.photos ?? []).map((photo) => ({
+          id: photo.id,
+          url: this.photoUrl(photo.url),
+          markedForDelete: false
+        }))
+      };
+    }
+    this._control = applyWorkRecordSheetViewEffects(next, {
       flash: this.flashMessage,
       toast: this.undoToast
     });
@@ -1001,7 +1023,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
     return errors?.[0] ?? null;
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     const { form, mode } = this.control;
     this.control = { ...this.control, submitting: true, fieldErrors: {}, error: null, photoError: null };
 
@@ -1023,6 +1045,10 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       .filter((photo) => photo.markedForDelete)
       .map((photo) => photo.id);
     const pendingPhotoFiles = this.control.pendingPhotos.map((photo) => photo.file);
+    const deletedPhotoBackups = await this.buildDeletedPhotoBackups(
+      photoIdsToDelete,
+      pendingPhotoFiles.length > 0
+    );
 
     if (mode === 'edit' && form.work_record_id != null) {
       this.saveUseCase.execute({
@@ -1031,7 +1057,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
         workRecordId: form.work_record_id,
         updateBody: mapFormToUpdateRequest(formInput),
         pendingPhotoFiles,
-        photoIdsToDelete
+        photoIdsToDelete,
+        deletedPhotoBackups
       });
       return;
     }
@@ -1041,8 +1068,28 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       mode,
       createBody: mapFormToCreateRequest(formInput),
       pendingPhotoFiles,
-      photoIdsToDelete
+      photoIdsToDelete,
+      deletedPhotoBackups
     });
+  }
+
+  private async buildDeletedPhotoBackups(
+    photoIdsToDelete: number[],
+    hasPendingUploads: boolean
+  ): Promise<DeletedWorkRecordPhotoBackup[]> {
+    if (!hasPendingUploads || photoIdsToDelete.length === 0) {
+      return [];
+    }
+
+    const marked = this.control.existingPhotos.filter((photo) =>
+      photoIdsToDelete.includes(photo.id)
+    );
+    return Promise.all(
+      marked.map(async (photo) => ({
+        photoId: photo.id,
+        blob: await firstValueFrom(this.photoGateway.downloadPhotoContent(photo.url))
+      }))
+    );
   }
 
   confirmDelete(): void {

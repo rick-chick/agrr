@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
-import { concatMap, forkJoin, from, Observable, of } from 'rxjs';
+import { concatMap, forkJoin, from, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
+import { MAX_WORK_RECORD_PHOTOS } from '../../domain/plans/work-record-photo.constants';
 import { WORK_RECORD_PHOTO_RESIZER } from '../../domain/plans/work-record-photo-resizer.token';
 import { WorkRecord } from '../../models/plans/work-record';
 import {
@@ -44,7 +45,10 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
     save$
       .pipe(
         switchMap((workRecord) =>
-          this.syncPhotos(dto, workRecord).pipe(map(() => workRecord))
+          this.syncPhotos(dto, workRecord).pipe(
+            map((syncedRecord) => syncedRecord),
+            catchError((err: unknown) => this.handlePhotoSyncError(dto, workRecord, err))
+          )
         ),
         catchError((err: unknown) => {
           if (err instanceof HttpErrorResponse && err.status === 422) {
@@ -65,29 +69,122 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
       });
   }
 
-  private syncPhotos(dto: SaveWorkRecordSheetInputDto, workRecord: WorkRecord): Observable<void> {
-    const delete$ =
-      dto.photoIdsToDelete.length === 0
-        ? of(undefined)
-        : forkJoin(
-            dto.photoIdsToDelete.map((photoId) =>
-              this.photoGateway.deletePhoto(dto.planId, workRecord.id, photoId)
+  private syncPhotos(
+    dto: SaveWorkRecordSheetInputDto,
+    workRecord: WorkRecord
+  ): Observable<WorkRecord> {
+    if (dto.pendingPhotoFiles.length === 0 && dto.photoIdsToDelete.length === 0) {
+      return of(workRecord);
+    }
+
+    const uploadFirst = this.shouldUploadBeforeDelete(workRecord, dto);
+
+    if (uploadFirst) {
+      return this.uploadPending(dto, workRecord.id).pipe(
+        switchMap(() => this.deleteMarked(dto, workRecord.id)),
+        map(() => workRecord)
+      );
+    }
+
+    return this.deleteMarked(dto, workRecord.id).pipe(
+      switchMap(() => this.uploadPending(dto, workRecord.id)),
+      map(() => workRecord)
+    );
+  }
+
+  private shouldUploadBeforeDelete(
+    workRecord: WorkRecord,
+    dto: SaveWorkRecordSheetInputDto
+  ): boolean {
+    if (dto.pendingPhotoFiles.length === 0) {
+      return false;
+    }
+    if (dto.photoIdsToDelete.length === 0) {
+      return true;
+    }
+
+    const serverPhotoCount = workRecord.photos?.length ?? 0;
+    return serverPhotoCount + dto.pendingPhotoFiles.length <= MAX_WORK_RECORD_PHOTOS;
+  }
+
+  private handlePhotoSyncError(
+    dto: SaveWorkRecordSheetInputDto,
+    workRecord: WorkRecord,
+    err: unknown
+  ): Observable<WorkRecord | null> {
+    const uploadFirst = this.shouldUploadBeforeDelete(workRecord, dto);
+    const needsCompensation = !uploadFirst && dto.deletedPhotoBackups.length > 0;
+    const needsPartialFailure =
+      needsCompensation ||
+      (uploadFirst && dto.photoIdsToDelete.length > 0 && dto.pendingPhotoFiles.length > 0);
+
+    if (!needsPartialFailure) {
+      this.outputPort.onError({ message: apiErrorI18nKey(err) });
+      return of(null);
+    }
+
+    const compensate$ =
+      needsCompensation
+        ? forkJoin(
+            dto.deletedPhotoBackups.map((backup) =>
+              this.uploadBlob(dto.planId, workRecord.id, backup.blob)
             )
-          ).pipe(map(() => undefined));
+          ).pipe(map(() => undefined))
+        : of(undefined);
 
-    const upload$ =
-      dto.pendingPhotoFiles.length === 0
-        ? of(undefined)
-        : from(dto.pendingPhotoFiles).pipe(
-            concatMap((file) =>
-              from(this.resizePhoto(file)).pipe(
-                switchMap((blob) => this.uploadBlob(dto.planId, workRecord.id, blob))
-              )
-            ),
-            map(() => undefined)
-          );
+    return compensate$.pipe(
+      switchMap(() => this.reloadWorkRecord(dto, workRecord.id)),
+      map((reloaded) => {
+        this.outputPort.onPhotoPartialFailure({ workRecord: reloaded });
+        return null;
+      }),
+      catchError(() => {
+        this.outputPort.onError({ message: apiErrorI18nKey(err) });
+        return of(null);
+      })
+    );
+  }
 
-    return delete$.pipe(switchMap(() => upload$));
+  private reloadWorkRecord(
+    dto: SaveWorkRecordSheetInputDto,
+    workRecordId: number
+  ): Observable<WorkRecord> {
+    return this.workRecordGateway.listWorkRecords(dto.planId).pipe(
+      switchMap((response) => {
+        const found = response.work_records.find((record) => record.id === workRecordId);
+        if (!found) {
+          return throwError(() => new Error('plans.work_records.errors.not_found'));
+        }
+        return of(found);
+      })
+    );
+  }
+
+  private deleteMarked(dto: SaveWorkRecordSheetInputDto, workRecordId: number): Observable<void> {
+    if (dto.photoIdsToDelete.length === 0) {
+      return of(undefined);
+    }
+
+    return forkJoin(
+      dto.photoIdsToDelete.map((photoId) =>
+        this.photoGateway.deletePhoto(dto.planId, workRecordId, photoId)
+      )
+    ).pipe(map(() => undefined));
+  }
+
+  private uploadPending(dto: SaveWorkRecordSheetInputDto, workRecordId: number): Observable<void> {
+    if (dto.pendingPhotoFiles.length === 0) {
+      return of(undefined);
+    }
+
+    return from(dto.pendingPhotoFiles).pipe(
+      concatMap((file) =>
+        from(this.resizePhoto(file)).pipe(
+          switchMap((blob) => this.uploadBlob(dto.planId, workRecordId, blob))
+        )
+      ),
+      map(() => undefined)
+    );
   }
 
   private uploadBlob(planId: number, workRecordId: number, blob: Blob) {

@@ -2038,7 +2038,8 @@
           "errors": {
             "limit_reached": "You can attach up to 3 photos per work record",
             "invalid_type": "Choose a JPEG, PNG, or WebP image",
-            "upload_failed": "Photo upload failed"
+            "upload_failed": "Photo upload failed",
+            "partial_sync_failed": "Some photo changes could not be saved. The sheet now shows the latest photos from the server."
           }
         }
       },

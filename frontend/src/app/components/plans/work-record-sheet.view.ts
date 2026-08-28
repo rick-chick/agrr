@@ -93,6 +93,7 @@ export interface WorkRecordSheetViewState {
   existingPhotos: WorkRecordSheetExistingPhoto[];
   pendingPhotos: WorkRecordSheetPendingPhoto[];
   photoError: string | null;
+  pendingPhotoResyncWorkRecord: WorkRecord | null;
 }
 
 export interface WorkRecordSheetView {

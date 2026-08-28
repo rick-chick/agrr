@@ -100,6 +100,16 @@ export class ApiService {
     });
   }
 
+  getBlob(pathOrUrl: string): Observable<Blob> {
+    const path = pathOrUrl.startsWith(this.baseUrl)
+      ? pathOrUrl.slice(this.baseUrl.length)
+      : pathOrUrl;
+    return this.http.get(`${this.baseUrl}${path}`, {
+      responseType: 'blob',
+      withCredentials: true
+    });
+  }
+
   delete<T>(path: string, options: RequestOptions = {}): Observable<T> {
     let headers =
       options.headers instanceof HttpHeaders ? options.headers : new HttpHeaders(options.headers);
