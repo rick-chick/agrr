@@ -3405,6 +3405,16 @@ fn trigger_weather_update_backfills_pending_farm_weather_fetch() {
 }
 
 #[test]
+fn trigger_weather_update_query_token_returns_401() {
+    let client = ContractClient::from_env();
+    let token = std::env::var("SCHEDULER_AUTH_TOKEN")
+        .unwrap_or_else(|_| "test_scheduler_token_contract".into());
+    let path = format!("/api/v1/internal/jobs/trigger_weather_update?token={token}");
+    let (status, body) = status_and_body(client.post(&path, None, &empty_headers(), None));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
 fn get_account_export_unauthenticated_returns_401() {
     let client = ContractClient::from_env();
     let (status, body) = status_and_body(client.get("/api/v1/account/export", None, &empty_headers()));
