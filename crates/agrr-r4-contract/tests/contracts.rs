@@ -4671,6 +4671,30 @@ fn post_backdoor_db_clear_requires_confirmation_token() {
 }
 
 #[test]
+fn auth_failure_redirects_to_spa_login_with_error_code() {
+    let client = ContractClient::from_env();
+    let response = client.get("/auth/failure", None, &empty_headers());
+    assert!(
+        response.status().is_redirection(),
+        "expected redirect, got {}",
+        response.status()
+    );
+    let location = response
+        .headers()
+        .get("location")
+        .and_then(|v| v.to_str().ok())
+        .expect("Location header");
+    assert!(
+        location.contains("/login"),
+        "expected SPA login redirect, got {location}"
+    );
+    assert!(
+        location.contains("error=authentication_failed"),
+        "expected authentication_failed error code, got {location}"
+    );
+}
+
+#[test]
 fn get_auth_login_rejects_arbitrary_run_app_return_to() {
     let client = ContractClient::from_env();
     let return_to = "https%3A%2F%2Fattacker.run.app%2Foauth-callback";
