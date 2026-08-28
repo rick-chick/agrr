@@ -178,7 +178,7 @@ describe('FarmDetailPresenter', () => {
         undo: {
           undo_token: 'token123',
           toast_message: 'Farm deleted',
-          undo_path: '/undo_deletion?undo_token=token123',
+          undo_path: '/undo_deletion',
           resource: 'Farm A'
         }
       };
@@ -187,7 +187,7 @@ describe('FarmDetailPresenter', () => {
 
       expect(lastControl!.pendingUndoToast).toEqual({
         message: 'Farm deleted',
-        undoPath: '/undo_deletion?undo_token=token123',
+        undoPath: '/undo_deletion',
         undoToken: 'token123',
         onRestored: expect.any(Function),
         resourceLabel: 'Farm A'

@@ -24,7 +24,7 @@ const workRecord: WorkRecord = {
 
 const undoResponse = {
   undo_token: 'token123',
-  undo_path: '/undo_deletion?undo_token=token123',
+  undo_path: '/undo_deletion',
   toast_message: 'plans.work_records.undo.toast:除草',
   undo_deadline: '2026-02-03T12:00:00Z',
   auto_hide_after: 5000
