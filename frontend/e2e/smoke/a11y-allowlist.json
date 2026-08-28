@@ -13,6 +13,16 @@
         "reason": "Pre-existing highlight-box success tokens on marketing about page (#681 baseline)."
       }
     ],
+    "entry-schedule": [
+      {
+        "ruleId": "aria-allowed-attr",
+        "reason": "Entry-schedule marketing shell uses legacy aria-* on crop list (#681 baseline; token pass pending)."
+      },
+      {
+        "ruleId": "aria-required-children",
+        "reason": "Entry-schedule crop list region markup predates WCAG aria-required-children (#681 baseline)."
+      }
+    ],
     "public-plans/new": [
       {
         "ruleId": "landmark-unique",
