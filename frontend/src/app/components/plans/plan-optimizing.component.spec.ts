@@ -174,17 +174,21 @@ describe('PlanOptimizingComponent', () => {
     expect(backLink.textContent).toContain('Back to plan');
   });
 
-  it('shows phase message from cable when present', () => {
+  it('shows connection lost message when subscription disconnects', () => {
     component.control = {
-      status: 'optimizing',
-      progress: 90,
-      phaseMessage: 'Generating task plans...'
+      status: 'failed',
+      progress: 0,
+      phaseMessage: 'Connection was lost. Please try again.'
     };
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Generating task plans...');
+
+    const alert = fixture.nativeElement.querySelector('.page-alert-error');
+    expect(alert).not.toBeNull();
+    expect(alert.textContent).toContain('Connection was lost. Please try again.');
+    expect(fixture.nativeElement.querySelector('.plan-optimizing__retry')).not.toBeNull();
   });
 
-  it('shows completed heading when progress reaches 100%', () => {
+  it('shows phase message from cable when present', () => {
     component.control = { status: 'optimizing', progress: 100, phaseMessage: '' };
     fixture.detectChanges();
 

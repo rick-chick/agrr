@@ -21,6 +21,7 @@ const translationMap = new Map<string, string>([
   ['models.cultivation_plan.phase_failed.default', '処理に失敗しました'],
   ['models.cultivation_plan.phase_failed.timeout', '処理がタイムアウトしました'],
   ['public_plans.optimizing.error.title', '計画作成に失敗しました'],
+  ['public_plans.optimizing.error.connection_lost', '接続が切断されました。しばらくしてからやり直してください。'],
   [
     'public_plans.optimizing.error.hints.predicting_weather',
     '気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。'
@@ -207,5 +208,13 @@ describe('PublicPlanOptimizingPresenter', () => {
     expect(lastControl.failureHint).toBe(
       '気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。'
     );
+  });
+
+  it('sets failed state with connection lost message on presentConnectionLost', () => {
+    presenter.presentConnectionLost();
+
+    expect(lastControl.status).toBe('failed');
+    expect(lastControl.phaseMessage).toContain('接続が切断されました');
+    expect(onCompletedSpy).not.toHaveBeenCalled();
   });
 });

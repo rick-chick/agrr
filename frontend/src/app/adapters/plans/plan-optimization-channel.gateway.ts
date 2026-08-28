@@ -12,18 +12,22 @@ export class PlanOptimizationChannelGateway implements PlanOptimizationGateway {
 
   subscribe(
     planId: number,
-    callbacks: { received: (message: PlanOptimizationMessageDto) => void }
+    callbacks: { received: (message: PlanOptimizationMessageDto) => void; disconnected?: () => void; rejected?: () => void }
   ): Channel {
     return this.optimizationService.subscribe(
       'PlansOptimizationChannel',
       { cultivation_plan_id: planId },
-      { received: callbacks.received }
+      {
+        received: callbacks.received,
+        disconnected: callbacks.disconnected,
+        rejected: callbacks.rejected
+      }
     );
   }
 
   subscribeTaskScheduleSync(
     planId: number,
-    callbacks: { received: (message: TaskScheduleSyncMessageDto) => void }
+    callbacks: { received: (message: TaskScheduleSyncMessageDto) => void; disconnected?: () => void; rejected?: () => void }
   ): Channel {
     return this.optimizationService.subscribe(
       'PlansOptimizationChannel',
@@ -34,7 +38,9 @@ export class PlanOptimizationChannelGateway implements PlanOptimizationGateway {
           if (message) {
             callbacks.received(message);
           }
-        }
+        },
+        disconnected: callbacks.disconnected,
+        rejected: callbacks.rejected
       }
     );
   }
