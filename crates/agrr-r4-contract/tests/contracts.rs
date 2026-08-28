@@ -2903,6 +2903,7 @@ fn post_api_keys_generate_is_idempotent_when_key_already_exists() {
     ));
     assert_eq!(200, first_status, "{first_body}");
     let first_key = api_key_from_generate_response(&first_body);
+    assert!(!first_key.is_empty(), "first generate must return a key");
 
     let (second_status, second_body) = status_and_body(client.post(
         "/api/v1/api_keys/generate",
@@ -2911,8 +2912,22 @@ fn post_api_keys_generate_is_idempotent_when_key_already_exists() {
         None,
     ));
     assert_eq!(200, second_status, "{second_body}");
-    let second_key = api_key_from_generate_response(&second_body);
-    assert_eq!(first_key, second_key, "generate must not rotate an existing key");
+    let second_json: serde_json::Value =
+        serde_json::from_str(&second_body).expect("second generate JSON");
+    let second_key = second_json["api_key"].as_str().unwrap_or("");
+    assert!(
+        second_key.is_empty(),
+        "hashed storage cannot return the full key again; generate must not rotate"
+    );
+
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {first_key}"));
+    let (auth_status, auth_body) = status_and_body(client.get(
+        "/api/v1/masters/farms",
+        None,
+        &headers,
+    ));
+    assert_eq!(200, auth_status, "{auth_body}");
 }
 
 #[test]
