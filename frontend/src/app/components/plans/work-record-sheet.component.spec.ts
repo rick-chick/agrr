@@ -11,6 +11,8 @@ import { LoadCropPesticideListUseCase } from '../../usecase/pesticides/load-crop
 import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
 import { PreviewWorkRecordClimateUseCase } from '../../usecase/plans/preview-work-record-climate/preview-work-record-climate.usecase';
+import { WORK_RECORD_PHOTO_GATEWAY } from '../../usecase/plans/work-record-photo-gateway';
+import { of } from 'rxjs';
 import {
   WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO,
   WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET,
@@ -48,6 +50,16 @@ describe('WorkRecordSheetComponent', () => {
           { provide: LoadFertilizeListUseCase, useValue: loadFertilizeListUseCase },
           { provide: LoadCropPesticideListUseCase, useValue: loadCropPesticideListUseCase },
           { provide: PreviewWorkRecordClimateUseCase, useValue: previewClimateUseCase },
+          {
+            provide: WORK_RECORD_PHOTO_GATEWAY,
+            useValue: {
+              uploadInit: vi.fn(() => of(undefined)),
+              uploadContent: vi.fn(() => of(undefined)),
+              uploadComplete: vi.fn(() => of(undefined)),
+              deletePhoto: vi.fn(() => of(undefined)),
+              downloadPhotoContent: vi.fn(() => of(new Blob()))
+            }
+          },
           { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
         ]
       }
@@ -496,7 +508,7 @@ describe('WorkRecordSheetComponent', () => {
     expect(component.control.form.amount_unit).toBe('kg');
   });
 
-  it('shows fertilizer master picker and sends fertilize_id on save for fertilizer items', () => {
+  it('shows fertilizer master picker and sends fertilize_id on save for fertilizer items', async () => {
     component.openFromItem(
       {
         item: {
@@ -542,15 +554,16 @@ describe('WorkRecordSheetComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('使用肥料');
     expect(loadFertilizeListUseCase.execute).toHaveBeenCalled();
 
-    component.submit();
+    await component.submit();
     expect(saveUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({
-        createBody: expect.objectContaining({ fertilize_id: 7, task_schedule_item_id: 10 })
+        createBody: expect.objectContaining({ fertilize_id: 7, task_schedule_item_id: 10 }),
+        deletedPhotoBackups: []
       })
     );
   });
 
-  it('shows crop-scoped pesticide picker for pest control items when cropId is known', () => {
+  it('shows crop-scoped pesticide picker for pest control items when cropId is known', async () => {
     component.openFromItem(
       {
         item: {
@@ -592,10 +605,11 @@ describe('WorkRecordSheetComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="pesticide-master-picker"]')).toBeTruthy();
     expect(loadCropPesticideListUseCase.execute).toHaveBeenCalledWith({ cropId: 99 });
 
-    component.submit();
+    await component.submit();
     expect(saveUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({
-        createBody: expect.objectContaining({ pesticide_id: 3, task_schedule_item_id: 20 })
+        createBody: expect.objectContaining({ pesticide_id: 3, task_schedule_item_id: 20 }),
+        deletedPhotoBackups: []
       })
     );
   });
