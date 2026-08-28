@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanNewComponent } from './plan-new.component';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
@@ -95,6 +95,7 @@ function defaultControl(overrides: Partial<PlanNewViewState> = {}): PlanNewViewS
     selectedFarmId: null,
     readinessLoading: false,
     readiness: null,
+    readinessError: null,
     noFieldsWarning: false,
     farmLimitBlocked: false,
     carryoverEnabled: false,
@@ -209,6 +210,8 @@ describe('PlanNewComponent', () => {
       'plans.new.readiness.weather_ready': 'Weather data ready',
       'plans.new.readiness.crops_missing': 'No crops registered yet',
       'plans.new.readiness.crops_action': 'Set up crops',
+      'plans.new.readiness.load_error': 'Failed to load setup readiness',
+      'plans.new.readiness.retry': 'Retry',
       'plans.new.farm_limit_reached': 'Farm limit reached',
       'plans.new.farm_limit_hint': 'Delete an existing farm before creating a new one.',
       'plans.new.manage_farms_link': 'Manage farms',
@@ -554,6 +557,78 @@ describe('PlanNewComponent', () => {
     expect(fixture.nativeElement.querySelector('.plan-create-readiness')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Setup readiness');
     expect(fixture.nativeElement.textContent).toContain('Fields registered (1)');
+  });
+
+  it('shows load error with retry when readiness fetch fails', () => {
+    mockReadinessUseCase.execute.mockReturnValue(throwError(() => new Error('network')));
+    fixture.detectChanges();
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }]
+    });
+    component.onFarmChange(1);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-new-readiness-error')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Failed to load setup readiness');
+    expect(fixture.nativeElement.querySelector('.plan-create-readiness')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.plan-new-readiness-error__retry')).toBeTruthy();
+  });
+
+  it('retries readiness load when retry is clicked after fetch failure', () => {
+    mockReadinessUseCase.execute
+      .mockReturnValueOnce(throwError(() => new Error('network')))
+      .mockReturnValueOnce(
+        of(
+          buildPlanCreateReadiness({
+            farmId: 1,
+            fieldCount: 1,
+            hasValidFields: true,
+            weatherStatus: 'completed',
+            crops: [],
+            cropBlueprints: {}
+          })
+        )
+      );
+    fixture.detectChanges();
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }]
+    });
+    component.onFarmChange(1);
+    fixture.detectChanges();
+
+    const retryButton = fixture.nativeElement.querySelector(
+      '.plan-new-readiness-error__retry'
+    ) as HTMLButtonElement;
+    retryButton.click();
+    fixture.detectChanges();
+
+    expect(mockReadinessUseCase.execute).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.querySelector('.plan-create-readiness')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.plan-new-readiness-error')).toBeFalsy();
+  });
+
+  it('shows not-ready readiness instead of load error when crops are empty', () => {
+    mockReadinessUseCase.execute.mockReturnValue(
+      of(
+        buildPlanCreateReadiness({
+          farmId: 1,
+          fieldCount: 1,
+          hasValidFields: true,
+          weatherStatus: 'completed',
+          crops: [],
+          cropBlueprints: {}
+        })
+      )
+    );
+    fixture.detectChanges();
+    component.control = defaultControl({
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }]
+    });
+    component.onFarmChange(1);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-new-readiness-error')).toBeFalsy();
+    expect(fixture.nativeElement.textContent).toContain('No crops registered yet');
   });
 
   it('presets carryover from carryoverFrom query param after farms load', () => {

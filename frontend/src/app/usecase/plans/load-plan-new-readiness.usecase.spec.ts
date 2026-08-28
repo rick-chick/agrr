@@ -158,8 +158,44 @@ describe('LoadPlanNewReadinessUseCase', () => {
     expect(blueprintGateway.list).not.toHaveBeenCalled();
   });
 
-  it('degrades gracefully when farm fetch fails', () => {
+  it('propagates farm fetch failure instead of treating it as missing weather data', () => {
     vi.mocked(planCreateGateway.fetchFarm).mockReturnValue(throwError(() => new Error('network')));
+
+    let error: unknown;
+    useCase.execute(1, 2, true).subscribe({
+      next: () => {
+        throw new Error('expected farm fetch failure');
+      },
+      error: (err) => {
+        error = err;
+      }
+    });
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('network');
+  });
+
+  it('propagates crops fetch failure instead of treating it as no crops registered', () => {
+    vi.mocked(planCreateGateway.fetchCrops).mockReturnValue(throwError(() => new Error('network')));
+
+    let error: unknown;
+    useCase.execute(1, 2, true).subscribe({
+      next: () => {
+        throw new Error('expected crops fetch failure');
+      },
+      error: (err) => {
+        error = err;
+      }
+    });
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('network');
+  });
+
+  it('returns not-ready readiness when farm weather is pending without API failure', () => {
+    vi.mocked(planCreateGateway.fetchFarm).mockReturnValue(
+      of({ farm: { ...farm, weather_data_status: 'pending' }, totalArea: 100 })
+    );
 
     let result: { weatherReady: boolean; weatherStatus: Farm['weather_data_status'] } | undefined;
     useCase.execute(1, 2, true).subscribe((readiness) => {
@@ -167,19 +203,7 @@ describe('LoadPlanNewReadinessUseCase', () => {
     });
 
     expect(result!.weatherReady).toBe(false);
-    expect(result!.weatherStatus).toBeUndefined();
-  });
-
-  it('degrades gracefully when crops fetch fails', () => {
-    vi.mocked(planCreateGateway.fetchCrops).mockReturnValue(throwError(() => new Error('network')));
-
-    let result: { cropsReady: boolean; cropSummaries: unknown[] } | undefined;
-    useCase.execute(1, 2, true).subscribe((readiness) => {
-      result = readiness;
-    });
-
-    expect(result!.cropsReady).toBe(false);
-    expect(result!.cropSummaries).toEqual([]);
+    expect(result!.weatherStatus).toBe('pending');
   });
 
   it('falls back to list crop when crop detail fetch fails', () => {
