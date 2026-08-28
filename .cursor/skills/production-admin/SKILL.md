@@ -53,6 +53,17 @@
 2. 作業完了後 **必ず** 当該 env を削除して再デプロイ
 3. 操作は `backdoor_operation` 監査ログ（`db_clear:success` 等）に記録される
 
+### 本番 admin 昇格・剥奪（break-glass）
+
+本番では `POST /api/v1/backdoor/users`（`admin: true`）および `PATCH /api/v1/backdoor/users/{id}`（`admin` フィールド指定）は **既定で無効**。管理者権限の変更が必要な場合のみ:
+
+1. Cloud Run に一時的に `AGRR_BACKDOOR_ALLOW_ADMIN_CHANGES=1` を設定してデプロイ
+2. `set_user_admin.sh` 等で操作
+3. 作業完了後 **必ず** 当該 env を削除して再デプロイ
+4. 操作は `backdoor_operation` 監査ログに記録される（ブロック時は `blocked_production_admin`）
+
+脅威モデルと GCP アラート設定: [`docs/ops/backdoor-threat-model.md`](../../../docs/ops/backdoor-threat-model.md)、[`docs/ops/backdoor-audit-alerts.md`](../../../docs/ops/backdoor-audit-alerts.md)
+
 予測チェーン調査との併用: [`prediction-investigation`](../prediction-investigation/SKILL.md)、本番 DB: [`production-primary-sqlite-query`](../production-primary-sqlite-query/SKILL.md)。
 
 **注意**: 本番に直接影響する操作。実行前に意図を確認する。
