@@ -10,12 +10,16 @@ export class FarmWeatherChannelGateway implements FarmWeatherGateway {
 
   subscribe(
     farmId: number,
-    callbacks: { received: (message: FarmWeatherUpdateDto) => void }
+    callbacks: { received: (message: FarmWeatherUpdateDto) => void; disconnected?: () => void; rejected?: () => void }
   ): Channel {
     return this.optimizationService.subscribe(
       'FarmChannel',
       { farm_id: farmId },
-      { received: callbacks.received }
+      {
+        received: callbacks.received,
+        disconnected: callbacks.disconnected,
+        rejected: callbacks.rejected
+      }
     );
   }
 }
