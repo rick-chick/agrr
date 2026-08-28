@@ -95,7 +95,7 @@ describe('AgriculturalTaskDetailPresenter', () => {
         undo: {
           undo_token: 'token123',
           toast_message: 'Task deleted',
-          undo_path: '/undo_deletion?undo_token=token123',
+          undo_path: '/undo_deletion',
           resource: 'Task A'
         }
       };
@@ -104,7 +104,7 @@ describe('AgriculturalTaskDetailPresenter', () => {
 
       expect(lastControl!.pendingUndoToast).toEqual({
         message: 'Task deleted',
-        undoPath: '/undo_deletion?undo_token=token123',
+        undoPath: '/undo_deletion',
         undoToken: 'token123',
         onRestored: expect.any(Function),
         resourceLabel: 'Task A'
