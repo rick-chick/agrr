@@ -20,6 +20,8 @@ import { LoadPlanLearnCarryoverUseCase } from './load-plan-learn-carryover.useca
 import { loadMergedLearnProposals } from './load-merged-learn-proposals';
 import { GanttPlanApiGateway } from '../../adapters/plans/gantt-plan-api.gateway';
 import { GANTT_PLAN_GATEWAY } from './gantt-plan-gateway';
+import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { PUBLIC_PLAN_SESSION_PORT } from '../public-plans/public-plan-session.port';
 import { StartLearnVarianceLearningReoptimizeUseCase } from './start-learn-variance-learning-reoptimize.usecase';
 import { StartLearnOneClickReoptimizeUseCase } from './start-learn-one-click-reoptimize.usecase';
 
@@ -33,6 +35,8 @@ export const PLAN_LEARN_PROVIDERS: readonly Provider[] = [
   LoadPlanLearnCarryoverUseCase,
   StartLearnOneClickReoptimizeUseCase,
   StartLearnVarianceLearningReoptimizeUseCase,
+  PublicPlanStore,
+  { provide: PUBLIC_PLAN_SESSION_PORT, useExisting: PublicPlanStore },
   GanttPlanApiGateway,
   { provide: GANTT_PLAN_GATEWAY, useClass: GanttPlanApiGateway },
   { provide: LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanLearnPresenter },

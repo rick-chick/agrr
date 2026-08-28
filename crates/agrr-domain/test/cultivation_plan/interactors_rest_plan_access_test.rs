@@ -55,3 +55,24 @@ total_area: 0.0,
         assert!(!access_denied(&public_plan, &auth));
         assert!(access_denied(&private_plan, &auth));
     }
+
+    // Ruby: test "public mutation auth rejects mismatched session"
+    #[test]
+    fn public_mutation_auth_rejects_mismatched_session() {
+        let mut public_plan = plan_entity(1, 1, "public");
+        public_plan.session_id = Some("owner-session".into());
+        let auth = CultivationPlanRestAuth::public_mutation("attacker-session");
+        assert_eq!(
+            RestPlanAccessResult::Forbidden,
+            evaluate(&public_plan, &auth)
+        );
+    }
+
+    // Ruby: test "public mutation auth allows matching session"
+    #[test]
+    fn public_mutation_auth_allows_matching_session() {
+        let mut public_plan = plan_entity(1, 1, "public");
+        public_plan.session_id = Some("owner-session".into());
+        let auth = CultivationPlanRestAuth::public_mutation("owner-session");
+        assert_eq!(RestPlanAccessResult::Allowed, evaluate(&public_plan, &auth));
+    }

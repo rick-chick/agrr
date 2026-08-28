@@ -150,6 +150,13 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     }
     this.selectedFarmId = farm.id;
     this.publicPlanStore.setFarm(farm);
+    if (this.publicPlanStore.hadPersistFailure) {
+      this.flash.show({
+        type: 'error',
+        text: this.translate.instant('public_plans.errors.storage_unavailable')
+      });
+      this.publicPlanStore.clearPersistFailure();
+    }
     this.router.navigate(['/public-plans/select-crop']);
   }
 

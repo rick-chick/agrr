@@ -36,6 +36,7 @@ use support::{
     seed_org_scoped_crop,
     seed_org_scoped_plan,
     seed_public_cultivation_plan,
+    seed_public_cultivation_plan_with_session,
     cable_subscribe_frame_type,
 };
 
@@ -4389,6 +4390,41 @@ fn cable_allows_unauthenticated_public_optimization_channel() {
             let confirmed = cable_subscribe_frame_type(None, identifier).await;
             assert_eq!("confirm_subscription", confirmed.frame_type);
         });
+}
+
+#[test]
+fn public_plan_mutation_rejects_mismatched_session() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let plan_session = "contract-public-plan-owner-session";
+    let plan_id = seed_public_cultivation_plan_with_session(owner_id, Some(plan_session));
+
+    let mut wrong_headers = empty_headers();
+    wrong_headers.insert("X-Public-Plan-Session".into(), "attacker-session".into());
+    let (wrong_status, wrong_body) = status_and_body(client.post(
+        &format!("/api/v1/public_plans/cultivation_plans/{plan_id}/add_field"),
+        None,
+        &wrong_headers,
+        Some(serde_json::json!({
+            "field_name": "contract-test-field",
+            "field_area": 10.0
+        })),
+    ));
+    assert_eq!(403, wrong_status, "{wrong_body}");
+
+    let mut owner_headers = empty_headers();
+    owner_headers.insert("X-Public-Plan-Session".into(), plan_session.into());
+    let (owner_status, owner_body) = status_and_body(client.post(
+        &format!("/api/v1/public_plans/cultivation_plans/{plan_id}/add_field"),
+        None,
+        &owner_headers,
+        Some(serde_json::json!({
+            "field_name": "contract-test-field-ok",
+            "field_area": 10.0
+        })),
+    ));
+    assert_ne!(403, owner_status, "{owner_body}");
 }
 
 fn contact_message_payload(email_suffix: u128) -> serde_json::Value {

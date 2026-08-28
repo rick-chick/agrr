@@ -7,6 +7,7 @@ use crate::cultivation_plans_mutations::{
     AdjustBody,
 };
 use crate::optimization_job_chain::enqueue_private_plan_optimization_chain;
+use crate::public_plan_session::public_mutation_auth;
 use crate::state::AppState;
 use crate::workbench_payload;
 use agrr_adapters_sqlite::{
@@ -46,6 +47,7 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
+use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::HashSet;
@@ -85,6 +87,8 @@ pub fn routes() -> Router<AppState> {
 
 async fn public_add_crop(
     State(state): State<AppState>,
+    headers: HeaderMap,
+    jar: CookieJar,
     Path(plan_id): Path<i64>,
     Json(body): Json<AddCropBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
@@ -93,7 +97,7 @@ async fn public_add_crop(
     let crop_resolve = AddCropCropResolvePublic::new(&crop_gateway);
     run_add_crop(
         &state,
-        CultivationPlanRestAuth::public(),
+        public_mutation_auth(&headers, &jar),
         plan_id,
         body,
         crop_resolve,
@@ -103,12 +107,14 @@ async fn public_add_crop(
 
 async fn public_add_field(
     State(state): State<AppState>,
+    headers: HeaderMap,
+    jar: CookieJar,
     Path(plan_id): Path<i64>,
     Json(body): Json<AddFieldBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     run_add_field(
         &state,
-        CultivationPlanRestAuth::public(),
+        public_mutation_auth(&headers, &jar),
         plan_id,
         body,
     )
@@ -117,11 +123,13 @@ async fn public_add_field(
 
 async fn public_remove_field(
     State(state): State<AppState>,
+    headers: HeaderMap,
+    jar: CookieJar,
     Path((plan_id, field_id)): Path<(i64, String)>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     run_remove_field(
         &state,
-        CultivationPlanRestAuth::public(),
+        public_mutation_auth(&headers, &jar),
         plan_id,
         &field_id,
     )
@@ -619,12 +627,14 @@ async fn entry_schedule_farms(
 
 async fn public_adjust_plan(
     State(state): State<AppState>,
+    headers: HeaderMap,
+    jar: CookieJar,
     Path(plan_id): Path<i64>,
     Json(body): Json<AdjustBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     run_adjust_plan(
         &state,
-        CultivationPlanRestAuth::public(),
+        public_mutation_auth(&headers, &jar),
         plan_id,
         body,
     )

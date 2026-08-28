@@ -16,6 +16,9 @@ describe('GanttPlanApiGateway', () => {
     delete: ReturnType<typeof vi.fn>;
   };
   let gateway: GanttPlanApiGateway;
+  const publicSessionRequestOptions = {
+    headers: { 'X-Public-Plan-Session': 'test-session-token' }
+  };
 
   const planData = (): CultivationPlanData =>
     ({
@@ -34,7 +37,10 @@ describe('GanttPlanApiGateway', () => {
       post: vi.fn(),
       delete: vi.fn()
     };
-    gateway = new GanttPlanApiGateway(apiClient as unknown as ApiService);
+    gateway = new GanttPlanApiGateway(
+      apiClient as unknown as ApiService,
+      { setPlanId: vi.fn(), reset: vi.fn(), ensureSessionToken: () => 'test-session-token' }
+    );
   });
 
   describe('syncLandingDemoPlan', () => {
@@ -68,7 +74,7 @@ describe('GanttPlanApiGateway', () => {
             action: 'move'
           })
         ]
-      });
+      }, {});
       expect(apiClient.get).not.toHaveBeenCalled();
       expect(result).toEqual(ganttMutationCommandSuccess());
     });
@@ -94,7 +100,7 @@ describe('GanttPlanApiGateway', () => {
             action: 'move'
           })
         ]
-      });
+      }, publicSessionRequestOptions);
       expect(apiClient.get).not.toHaveBeenCalled();
       expect(result).toEqual(ganttMutationCommandSuccess());
     });
@@ -133,7 +139,7 @@ describe('GanttPlanApiGateway', () => {
         crop_id: 99,
         display_start_date: '2026-02-01',
         display_end_date: '2026-08-31'
-      });
+      }, {});
       expect(apiClient.get).not.toHaveBeenCalled();
       expect(result).toEqual(ganttMutationCommandSuccess());
     });
@@ -147,7 +153,7 @@ describe('GanttPlanApiGateway', () => {
 
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans/cultivation_plans/7/adjust', {
         moves: [{ allocation_id: 33, action: 'remove' }]
-      });
+      }, {});
       expect(apiClient.get).not.toHaveBeenCalled();
       expect(result).toEqual(ganttMutationCommandSuccess());
     });
@@ -164,7 +170,7 @@ describe('GanttPlanApiGateway', () => {
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans/cultivation_plans/7/add_field', {
         field_name: 'New Patch',
         field_area: 1.2
-      });
+      }, {});
       expect(apiClient.get).not.toHaveBeenCalled();
       expect(result).toEqual(ganttMutationCommandSuccess());
     });
@@ -177,7 +183,8 @@ describe('GanttPlanApiGateway', () => {
       const result = await firstValueFrom(gateway.removeField('private', 7, 88));
 
       expect(apiClient.delete).toHaveBeenCalledWith(
-        '/api/v1/plans/cultivation_plans/7/remove_field/88'
+        '/api/v1/plans/cultivation_plans/7/remove_field/88',
+        {}
       );
       expect(apiClient.get).not.toHaveBeenCalled();
       expect(result).toEqual(ganttMutationCommandSuccess());

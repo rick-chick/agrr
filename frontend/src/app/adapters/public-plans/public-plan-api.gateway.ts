@@ -8,10 +8,16 @@ import {
   CreatePublicPlanResponse,
   SavePublicPlanResponse
 } from '../../usecase/public-plans/public-plan-gateway';
+import { PUBLIC_PLAN_SESSION_PORT, PublicPlanSessionPort } from '../../usecase/public-plans/public-plan-session.port';
+import { Inject } from '@angular/core';
+import { publicPlanSessionHeaders } from './public-plan-session-headers';
 
 @Injectable()
 export class PublicPlanApiGateway implements PublicPlanGateway {
-  constructor(private readonly apiClient: ApiService) {}
+  constructor(
+    private readonly apiClient: ApiService,
+    @Inject(PUBLIC_PLAN_SESSION_PORT) private readonly publicPlanSession: PublicPlanSessionPort
+  ) {}
 
   getFarms(region?: string): Observable<Farm[]> {
     const params = region ? { region } : undefined;
@@ -31,7 +37,8 @@ export class PublicPlanApiGateway implements PublicPlanGateway {
     const requestBody = { farm_id: farmId, farm_size_id: farmSizeId, crop_ids: cropIds };
     return this.apiClient.post<CreatePublicPlanResponse>(
       '/api/v1/public_plans/plans',
-      requestBody
+      requestBody,
+      { headers: publicPlanSessionHeaders(this.publicPlanSession.ensureSessionToken()) }
     );
   }
 

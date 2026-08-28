@@ -82,6 +82,7 @@ struct AddCropPresenter {
 pub(crate) enum AddCropOutcome {
     Success(serde_json::Value),
     NotFound(&'static str),
+    Forbidden,
     CropNotFound,
     PredictionIncomplete(String),
     NoCandidates,
@@ -104,6 +105,10 @@ impl AddCropOutputPort for AddCropPresenter {
 
     fn on_not_found(&mut self) {
         self.body = Some(AddCropOutcome::NotFound("plans.errors.not_found"));
+    }
+
+    fn on_forbidden(&mut self) {
+        self.body = Some(AddCropOutcome::Forbidden);
     }
 
     fn on_crop_not_found(&mut self) {
@@ -139,6 +144,10 @@ pub(crate) fn map_add_crop_outcome(
         Some(AddCropOutcome::NotFound(msg)) => Err((
             StatusCode::NOT_FOUND,
             Json(json!({"success": false, "message": msg})),
+        )),
+        Some(AddCropOutcome::Forbidden) => Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({"success": false, "message": "forbidden"})),
         )),
         Some(AddCropOutcome::CropNotFound) => Err((
             StatusCode::NOT_FOUND,
@@ -334,6 +343,7 @@ struct AddFieldPresenter {
 pub(crate) enum AddFieldOutcome {
     Success(Value),
     NotFound,
+    Forbidden,
     InvalidParams,
     MaxFields,
     RecordInvalid(String),
@@ -357,6 +367,10 @@ impl AddFieldOutputPort for AddFieldPresenter {
 
     fn on_not_found(&mut self) {
         self.body = Some(AddFieldOutcome::NotFound);
+    }
+
+    fn on_forbidden(&mut self) {
+        self.body = Some(AddFieldOutcome::Forbidden);
     }
 
     fn on_invalid_field_params(&mut self) {
@@ -437,6 +451,7 @@ struct RemoveFieldPresenter {
 pub(crate) enum RemoveFieldOutcome {
     Success(Value),
     NotFound,
+    Forbidden,
     FieldNotFound,
     RecordInvalid(String),
     Unexpected(String),
@@ -453,6 +468,10 @@ impl RemoveFieldOutputPort for RemoveFieldPresenter {
 
     fn on_not_found(&mut self) {
         self.body = Some(RemoveFieldOutcome::NotFound);
+    }
+
+    fn on_forbidden(&mut self) {
+        self.body = Some(RemoveFieldOutcome::Forbidden);
     }
 
     fn on_field_not_found(&mut self) {
@@ -540,6 +559,10 @@ pub(crate) fn map_add_field_outcome(
             StatusCode::NOT_FOUND,
             Json(json!({"success": false, "message": "plans.errors.not_found"})),
         )),
+        Some(AddFieldOutcome::Forbidden) => Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({"success": false, "message": "forbidden"})),
+        )),
         Some(AddFieldOutcome::InvalidParams) => Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({"success": false, "message": "plans.errors.invalid_field_params"})),
@@ -607,6 +630,7 @@ fn adjust_failure_status(kind: &str) -> StatusCode {
     match kind {
         PlanAllocationAdjustFailure::KIND_NO_WEATHER_LOCATION
         | PlanAllocationAdjustFailure::KIND_NOT_FOUND => StatusCode::NOT_FOUND,
+        PlanAllocationAdjustFailure::KIND_FORBIDDEN => StatusCode::FORBIDDEN,
         PlanAllocationAdjustFailure::KIND_INVALID_DATE
         | PlanAllocationAdjustFailure::KIND_CROP_MISSING_GROWTH_STAGES => StatusCode::BAD_REQUEST,
         _ => StatusCode::INTERNAL_SERVER_ERROR,
@@ -739,6 +763,10 @@ pub(crate) fn map_remove_field_outcome(
         Some(RemoveFieldOutcome::NotFound) => Err((
             StatusCode::NOT_FOUND,
             Json(json!({"success": false, "message": "plans.errors.not_found"})),
+        )),
+        Some(RemoveFieldOutcome::Forbidden) => Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({"success": false, "message": "forbidden"})),
         )),
         Some(RemoveFieldOutcome::FieldNotFound) => Err((
             StatusCode::NOT_FOUND,

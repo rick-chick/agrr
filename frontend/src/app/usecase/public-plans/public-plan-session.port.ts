@@ -7,6 +7,8 @@ import { InjectionToken } from '@angular/core';
 export interface PublicPlanSessionPort {
   setPlanId(planId: number): void;
   reset(): void;
+  /** Client token sent as `X-Public-Plan-Session` for public plan mutations. */
+  ensureSessionToken(): string;
 }
 
 export const PUBLIC_PLAN_SESSION_PORT = new InjectionToken<PublicPlanSessionPort>(

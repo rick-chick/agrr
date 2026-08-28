@@ -25,3 +25,22 @@ pub fn assert_public_field_cultivation_plan_access(
         Err(Box::new(PolicyPermissionDenied))
     }
 }
+
+pub fn assert_public_field_cultivation_mutation_access(
+    access_snapshot: &FieldCultivationPlanAccessSnapshot,
+    requested_session_id: Option<&str>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    use crate::cultivation_plan::policies::public_plan_session_authorization;
+
+    if !access_snapshot.plan_type_public() {
+        return Err(Box::new(PolicyPermissionDenied));
+    }
+    let session = requested_session_id.unwrap_or_default();
+    if !public_plan_session_authorization::session_matches(
+        access_snapshot.plan_session_id.as_deref(),
+        session,
+    ) {
+        return Err(Box::new(PolicyPermissionDenied));
+    }
+    Ok(())
+}

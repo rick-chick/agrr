@@ -12,6 +12,7 @@ import { PublicPlanResultsPresenter } from '../../usecase/public-plans/public-pl
 import { PublicPlanResultsViewState } from './public-plan-results.view';
 import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { PUBLIC_PLAN_SESSION_PORT } from '../../usecase/public-plans/public-plan-session.port';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
 import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
@@ -32,7 +33,12 @@ describe('PublicPlanResultsComponent', () => {
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
   let authService: { user: ReturnType<typeof vi.fn>; loadCurrentUser: ReturnType<typeof vi.fn> };
-  let publicPlanStore: { state: { planId: number | null; farm: { name: string } } };
+  let publicPlanStore: {
+    state: { planId: number | null; farm: { name: string } };
+    setPlanId: ReturnType<typeof vi.fn>;
+    reset: ReturnType<typeof vi.fn>;
+    ensureSessionToken: () => string;
+  };
   let activatedRoute: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
@@ -47,7 +53,12 @@ describe('PublicPlanResultsComponent', () => {
     loadUseCase = { execute: vi.fn(() => of(undefined)) };
     mockPresenter = { setView: vi.fn() };
     authService = { user: vi.fn(), loadCurrentUser: vi.fn(() => of(null)) };
-    publicPlanStore = { state: { planId: null, farm: { name: 'Test Farm' } } };
+    publicPlanStore = {
+      state: { planId: null, farm: { name: 'Test Farm' } },
+      setPlanId: vi.fn(),
+      reset: vi.fn(),
+      ensureSessionToken: () => 'test-session-token'
+    };
     activatedRoute = {
       snapshot: {
         queryParamMap: { get: vi.fn() }
@@ -60,6 +71,9 @@ describe('PublicPlanResultsComponent', () => {
       instant: vi.fn((key: string) => {
         if (key === 'public_plans.errors.restart') {
           return 'Please start over.';
+        }
+        if (key === 'public_plans.errors.storage_unavailable') {
+          return 'Browser storage is unavailable.';
         }
         return key;
       }),
@@ -74,6 +88,7 @@ describe('PublicPlanResultsComponent', () => {
         { provide: Router, useValue: router },
         { provide: AuthService, useValue: authService },
         { provide: PublicPlanStore, useValue: publicPlanStore },
+        { provide: PUBLIC_PLAN_SESSION_PORT, useValue: publicPlanStore },
         { provide: FlashMessageService, useValue: flashMessage },
         { provide: LoadPublicPlanResultsUseCase, useValue: loadUseCase },
         { provide: SavePublicPlanUseCase, useValue: saveUseCase },
@@ -92,6 +107,7 @@ describe('PublicPlanResultsComponent', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    localStorage.clear();
     sessionStorage.clear();
   });
 
@@ -127,7 +143,7 @@ describe('PublicPlanResultsComponent', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/login'], {
         queryParams: { return_to: 'http://localhost:4200/public-plans/results?planId=123' }
       });
-      expect(sessionStorage.getItem('agrr_pending_public_plan_save')).toContain('"planId":123');
+      expect(localStorage.getItem('agrr_pending_public_plan_save')).toContain('"planId":123');
       expect(saveUseCase.execute).not.toHaveBeenCalled();
     });
 
@@ -150,6 +166,30 @@ describe('PublicPlanResultsComponent', () => {
       expect(saveUseCase.execute).toHaveBeenCalledWith({ planId: 456 });
     });
 
+    it('shows flash when pending save cannot be stored', () => {
+      authService.user.mockReturnValue(null);
+      activatedRoute.snapshot.queryParamMap.get.mockReturnValue('123');
+      const originalLocalStorage = globalThis.localStorage;
+      Object.defineProperty(globalThis, 'localStorage', {
+        configurable: true,
+        value: undefined
+      });
+
+      component.savePlan();
+
+      expect(router.navigate).not.toHaveBeenCalled();
+      expect(mockTranslate.instant).toHaveBeenCalledWith('public_plans.errors.storage_unavailable');
+      expect(flashMessage.show).toHaveBeenCalledWith({
+        type: 'error',
+        text: 'Browser storage is unavailable.'
+      });
+
+      Object.defineProperty(globalThis, 'localStorage', {
+        configurable: true,
+        value: originalLocalStorage
+      });
+    });
+
     it('shows flash when planId is not available', () => {
       authService.user.mockReturnValue({ id: 1, name: 'Test User' });
       activatedRoute.snapshot.queryParamMap.get.mockReturnValue(null);
@@ -167,11 +207,11 @@ describe('PublicPlanResultsComponent', () => {
   });
 
   describe('pending save after login', () => {
-    it('runs save once when pending exists after loadCurrentUser', () => {
+    it('runs save once when pending exists after loadCurrentUser without clearing pending storage', () => {
       authService.user.mockReturnValue({ id: 1, name: 'Test User' });
       authService.loadCurrentUser.mockReturnValue(of({ id: 1, name: 'Test User' }));
       activatedRoute.snapshot.queryParamMap.get.mockReturnValue('123');
-      sessionStorage.setItem(
+      localStorage.setItem(
         'agrr_pending_public_plan_save',
         JSON.stringify({ planId: 123, at: new Date().toISOString() })
       );
@@ -180,14 +220,14 @@ describe('PublicPlanResultsComponent', () => {
 
       expect(saveUseCase.execute).toHaveBeenCalledTimes(1);
       expect(saveUseCase.execute).toHaveBeenCalledWith({ planId: 123 });
-      expect(sessionStorage.getItem('agrr_pending_public_plan_save')).toBeNull();
+      expect(localStorage.getItem('agrr_pending_public_plan_save')).toContain('"planId":123');
     });
 
     it('does not run pending save twice on repeated ngOnInit', () => {
       authService.user.mockReturnValue({ id: 1, name: 'Test User' });
       authService.loadCurrentUser.mockReturnValue(of({ id: 1, name: 'Test User' }));
       activatedRoute.snapshot.queryParamMap.get.mockReturnValue('123');
-      sessionStorage.setItem(
+      localStorage.setItem(
         'agrr_pending_public_plan_save',
         JSON.stringify({ planId: 123, at: new Date().toISOString() })
       );
@@ -203,7 +243,7 @@ describe('PublicPlanResultsComponent', () => {
       authService.loadCurrentUser.mockReturnValue(of({ id: 1, name: 'Test User' }));
       activatedRoute.snapshot.queryParamMap.get.mockReturnValue('456');
       publicPlanStore.state.planId = 456;
-      sessionStorage.setItem(
+      localStorage.setItem(
         'agrr_pending_public_plan_save',
         JSON.stringify({ planId: 123, at: new Date().toISOString() })
       );
@@ -246,6 +286,13 @@ describe('PublicPlanResultsComponent (template)', () => {
     const { of } = await import('rxjs');
     const { vi } = await import('vitest');
 
+    const publicPlanSessionMock = {
+      state: { planId: 1, farm: { name: 'Test Farm', region: 'jp' } },
+      setPlanId: vi.fn(),
+      reset: vi.fn(),
+      ensureSessionToken: () => 'test-session-token'
+    };
+
     await TestBed.configureTestingModule({
       imports: [PublicPlanResultsComponent, TranslateModule.forRoot()],
       providers: [
@@ -255,8 +302,9 @@ describe('PublicPlanResultsComponent (template)', () => {
         { provide: PublicPlanResultsPresenter, useValue: { setView: vi.fn() } },
         {
           provide: PublicPlanStore,
-          useValue: { state: { planId: 1, farm: { name: 'Test Farm', region: 'jp' } } }
+          useValue: publicPlanSessionMock
         },
+        { provide: PUBLIC_PLAN_SESSION_PORT, useValue: publicPlanSessionMock },
         { provide: FlashMessageService, useValue: { show: vi.fn() } },
         {
           provide: AuthService,
@@ -322,6 +370,13 @@ describe('PublicPlanResultsComponent (template)', () => {
     const { of } = await import('rxjs');
     const { vi } = await import('vitest');
 
+    const publicPlanSessionMock = {
+      state: { planId: 1, farm: { name: 'Test Farm', region: 'jp' } },
+      setPlanId: vi.fn(),
+      reset: vi.fn(),
+      ensureSessionToken: () => 'test-session-token'
+    };
+
     await TestBed.configureTestingModule({
       imports: [PublicPlanResultsComponent, TranslateModule.forRoot()],
       providers: [
@@ -331,8 +386,9 @@ describe('PublicPlanResultsComponent (template)', () => {
         { provide: PublicPlanResultsPresenter, useValue: { setView: vi.fn() } },
         {
           provide: PublicPlanStore,
-          useValue: { state: { planId: 1, farm: { name: 'Test Farm', region: 'jp' } } }
+          useValue: publicPlanSessionMock
         },
+        { provide: PUBLIC_PLAN_SESSION_PORT, useValue: publicPlanSessionMock },
         { provide: FlashMessageService, useValue: { show: vi.fn() } },
         {
           provide: AuthService,

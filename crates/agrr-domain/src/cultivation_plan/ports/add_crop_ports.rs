@@ -12,6 +12,7 @@ use crate::cultivation_plan::dtos::{
 pub trait AddCropOutputPort {
     fn on_success(&mut self, plan_crop_id: i64, plan_crop_display_name: &str);
     fn on_not_found(&mut self);
+    fn on_forbidden(&mut self);
     fn on_crop_not_found(&mut self);
     fn on_prediction_incomplete(&mut self, technical_details: &str);
     fn on_no_candidates(&mut self);
