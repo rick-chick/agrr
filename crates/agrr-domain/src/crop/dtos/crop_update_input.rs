@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, PartialEq)]
 pub struct CropUpdateInput {
     pub crop_id: i64,
+    pub updated_at: Option<String>,
     pub name: Option<String>,
     pub variety: Option<String>,
     pub area_per_unit: Option<f64>,
@@ -12,6 +13,6 @@ pub struct CropUpdateInput {
 
 impl CropUpdateInput {
     pub fn new(crop_id: i64) -> Self {
-        Self { crop_id, name: None, variety: None, area_per_unit: None, revenue_per_area: None, region: None, groups: None, is_reference: None }
+        Self { crop_id, updated_at: None, name: None, variety: None, area_per_unit: None, revenue_per_area: None, region: None, groups: None, is_reference: None }
     }
 }

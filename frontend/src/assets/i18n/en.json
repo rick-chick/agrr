@@ -186,6 +186,7 @@
       "unauthorized": "Authentication required",
       "forbidden": "You do not have permission to access this resource",
       "not_found": "Resource not found",
+      "conflict": "Someone else updated this record. Reload and try again.",
       "network": "A network error occurred",
       "not_migrated": "This feature is not available yet",
       "service_unavailable": "Could not connect to the server",
@@ -1534,7 +1535,6 @@
         "gdd_date_not_found_wizard_link": "Review task plan templates for {{cropName}}",
         "missing_start_date": "Task plans could not be generated because the cultivation start date is missing.",
         "agrr_unavailable": "Could not reach the AGRR processing service. Please try again later.",
-        "connection_lost": "Connection was lost. Please try again.",
         "generic": "Task plans could not be created.",
         "generic_single": "Check settings for \"{{cropName}}\", or retry if setup is already complete.",
         "generic_multi": "Task plans could not be created. Check the crops below, or retry if setup is already complete.",
@@ -1543,7 +1543,8 @@
         "plan_context_link": "Review plan fields and weather",
         "crop_stages_link": "Review growth stages for \"{{cropName}}\"",
         "generic_plan_link": "Open plan fields and crops",
-        "missing_field_crop": "Task plans could not be generated because a field in this plan has no crop assigned."
+        "missing_field_crop": "Task plans could not be generated because a field in this plan has no crop assigned.",
+        "connection_lost": "Connection was lost. Please try again."
       },
       "detail": {
         "dialog_title": "{{task}} · {{crop}}",

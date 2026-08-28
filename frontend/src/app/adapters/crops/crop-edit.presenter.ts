@@ -34,7 +34,8 @@ export class CropEditPresenter implements LoadCropForEditOutputPort, UpdateCropO
         region: crop.region ?? null,
         groups: crop.groups ?? [],
         groupsDisplay: (crop.groups ?? []).join(', '),
-        is_reference: crop.is_reference ?? false
+        is_reference: crop.is_reference ?? false,
+        updated_at: crop.updated_at ?? null
       }
     };
   }

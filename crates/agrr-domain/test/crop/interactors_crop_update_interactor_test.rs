@@ -96,6 +96,7 @@
         let mut i = CropUpdateInteractor::new(&mut out, 10, &gw, &StubTranslator, &user_lookup, &EmptyScopeGateway);
         let mut input = CropUpdateInput::new(5);
         input.name = Some("更新された名前".into());
+        input.updated_at = Some("2026-06-12T10:00:00Z".into());
         i.call(input).unwrap();
         assert_eq!(out.success, Some(updated));
     }
