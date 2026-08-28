@@ -44,8 +44,16 @@ where
             return Ok(());
         }
 
-        if let Some(email_confirm) = &input.email_confirm {
-            let stored_email = self.account_gateway.user_email(input.user_id)?;
+        let stored_email = self.account_gateway.user_email(input.user_id)?;
+        if stored_email.is_some() {
+            let email_confirm = match &input.email_confirm {
+                Some(value) => value,
+                None => {
+                    self.output_port
+                        .on_failure("Email confirmation required".into());
+                    return Ok(());
+                }
+            };
             let matches = stored_email
                 .as_deref()
                 .is_some_and(|email| email == email_confirm.as_str());
