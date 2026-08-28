@@ -30,7 +30,8 @@ use rusqlite::params;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::{broadcast, mpsc, RwLock};
+use tokio::task::JoinHandle;
 
 pub fn routes() -> Router<AppState> {
     Router::new().route("/cable", get(cable_ws))
@@ -357,43 +358,40 @@ async fn recv_broadcast_payload(rx: &mut broadcast::Receiver<String>) -> Option<
 }
 
 async fn relay_subscription(
-    socket: &mut WebSocket,
-    identifier: &str,
+    identifier: String,
     mut rx: broadcast::Receiver<String>,
+    out_tx: mpsc::UnboundedSender<Message>,
 ) {
     loop {
-        tokio::select! {
-            incoming = socket.recv() => {
-                match incoming {
-                    None | Some(Err(_)) => return,
-                    Some(Ok(Message::Close(_))) => return,
-                    Some(Ok(Message::Text(text))) => {
-                        if let Ok(frame) = serde_json::from_str::<Value>(&text) {
-                            if frame.get("type").and_then(|t| t.as_str()) == Some("ping") {
-                                if !send_pong(socket).await {
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
+        match recv_broadcast_payload(&mut rx).await {
+            Some(body) => {
+                let message = json!({
+                    "identifier": identifier,
+                    "message": serde_json::from_str::<Value>(&body).unwrap_or(json!({}))
+                });
+                if out_tx
+                    .send(Message::Text(message.to_string().into()))
+                    .is_err()
+                {
+                    return;
                 }
             }
-            payload = recv_broadcast_payload(&mut rx) => {
-                match payload {
-                    Some(body) => {
-                        let message = json!({
-                            "identifier": identifier,
-                            "message": serde_json::from_str::<Value>(&body).unwrap_or(json!({}))
-                        });
-                        if socket.send(Message::Text(message.to_string().into())).await.is_err() {
-                            return;
-                        }
-                    }
-                    None => return,
-                }
-            }
+            None => return,
         }
+    }
+}
+
+fn spawn_subscription_relay(
+    identifier: String,
+    rx: broadcast::Receiver<String>,
+    out_tx: mpsc::UnboundedSender<Message>,
+) -> JoinHandle<()> {
+    tokio::spawn(relay_subscription(identifier, rx, out_tx))
+}
+
+fn stop_subscription(relay_handles: &mut HashMap<String, JoinHandle<()>>, identifier: &str) {
+    if let Some(handle) = relay_handles.remove(identifier) {
+        handle.abort();
     }
 }
 
@@ -422,6 +420,85 @@ async fn cable_ws(
         .on_upgrade(move |socket| handle_socket(socket, hub, state, session_ctx))
 }
 
+async fn handle_subscribe(
+    socket: &mut WebSocket,
+    hub: &Arc<CableHub>,
+    plan_gateway: &CultivationPlanSqliteGateway,
+    farm_gateway: &FarmSqliteGateway,
+    session_ctx: Option<&CableSessionContext>,
+    identifier: &str,
+    id_json: &Value,
+    relay_handles: &mut HashMap<String, JoinHandle<()>>,
+    out_tx: &mpsc::UnboundedSender<Message>,
+) -> bool {
+    let channel = id_json.get("channel").and_then(|c| c.as_str()).unwrap_or("");
+    if channel == "FarmChannel" {
+        let Some(farm_id) = parse_farm_id_from_identifier(id_json) else {
+            reject_subscription(socket, identifier).await;
+            return true;
+        };
+        let farm = match farm_gateway.find_by_id(farm_id) {
+            Ok(farm) => farm,
+            Err(_) => {
+                reject_subscription(socket, identifier).await;
+                return true;
+            }
+        };
+        if farm_subscription_denied(&farm, session_ctx) {
+            reject_subscription(socket, identifier).await;
+            return true;
+        }
+        if !confirm_subscription(socket, identifier).await {
+            return false;
+        }
+        if let Some(payload) = farm_snapshot_payload(farm_gateway, farm_id) {
+            if !transmit_message(socket, identifier, payload).await {
+                return false;
+            }
+        }
+        stop_subscription(relay_handles, identifier);
+        let rx = hub.subscribe_farm(farm_id).await;
+        relay_handles.insert(
+            identifier.to_string(),
+            spawn_subscription_relay(identifier.to_string(), rx, out_tx.clone()),
+        );
+        return true;
+    }
+
+    if channel != "OptimizationChannel" && channel != "PlansOptimizationChannel" {
+        return true;
+    }
+    let plan_id = parse_plan_id_from_identifier(id_json);
+    let Some(plan_id) = plan_id else {
+        reject_subscription(socket, identifier).await;
+        return true;
+    };
+    let plan = match plan_gateway.find_by_id(plan_id) {
+        Ok(plan) => plan,
+        Err(_) => {
+            reject_subscription(socket, identifier).await;
+            return true;
+        }
+    };
+    if plan_subscription_denied(channel, &plan, session_ctx) {
+        reject_subscription(socket, identifier).await;
+        return true;
+    }
+    if !confirm_subscription(socket, identifier).await {
+        return false;
+    }
+    if !transmit_plan_snapshot(socket, identifier, plan_gateway, plan_id).await {
+        return false;
+    }
+    stop_subscription(relay_handles, identifier);
+    let rx = hub.subscribe_plan(plan_id).await;
+    relay_handles.insert(
+        identifier.to_string(),
+        spawn_subscription_relay(identifier.to_string(), rx, out_tx.clone()),
+    );
+    true
+}
+
 async fn handle_socket(
     mut socket: WebSocket,
     hub: Arc<CableHub>,
@@ -440,90 +517,80 @@ async fn handle_socket(
 
     let plan_gateway = CultivationPlanSqliteGateway::new(state.sqlite.clone());
     let farm_gateway = FarmSqliteGateway::new(state.sqlite.clone());
-    while let Some(Ok(msg)) = socket.recv().await {
-        let Message::Text(text) = msg else {
-            continue;
-        };
-        let Ok(frame): Result<Value, _> = serde_json::from_str(&text) else {
-            continue;
-        };
-        if frame.get("type").and_then(|t| t.as_str()) == Some("ping") {
-            if !send_pong(&mut socket).await {
-                return;
+    let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Message>();
+    let mut relay_handles: HashMap<String, JoinHandle<()>> = HashMap::new();
+
+    loop {
+        tokio::select! {
+            out_msg = out_rx.recv() => {
+                match out_msg {
+                    Some(msg) => {
+                        if socket.send(msg).await.is_err() {
+                            break;
+                        }
+                    }
+                    None => break,
+                }
             }
-            continue;
-        }
-        if frame.get("command").and_then(|c| c.as_str()) == Some("pong") {
-            continue;
-        }
-        if frame.get("command").and_then(|c| c.as_str()) != Some("subscribe") {
-            continue;
-        }
-        let identifier = frame
-            .get("identifier")
-            .and_then(|i| i.as_str())
-            .unwrap_or("");
-        let Ok(id_json): Result<Value, _> = serde_json::from_str(identifier) else {
-            continue;
-        };
-        let channel = id_json.get("channel").and_then(|c| c.as_str()).unwrap_or("");
-        if channel == "FarmChannel" {
-            let Some(farm_id) = parse_farm_id_from_identifier(&id_json) else {
-                reject_subscription(&mut socket, identifier).await;
-                continue;
-            };
-            let farm = match farm_gateway.find_by_id(farm_id) {
-                Ok(farm) => farm,
-                Err(_) => {
-                    reject_subscription(&mut socket, identifier).await;
+            incoming = socket.recv() => {
+                let msg = match incoming {
+                    None => break,
+                    Some(Err(_)) => break,
+                    Some(Ok(Message::Close(_))) => break,
+                    Some(Ok(msg)) => msg,
+                };
+                let Message::Text(text) = msg else {
+                    continue;
+                };
+                let Ok(frame): Result<Value, _> = serde_json::from_str(&text) else {
+                    continue;
+                };
+                if frame.get("type").and_then(|t| t.as_str()) == Some("ping") {
+                    if !send_pong(&mut socket).await {
+                        break;
+                    }
                     continue;
                 }
-            };
-            if farm_subscription_denied(&farm, session_ctx.as_ref()) {
-                reject_subscription(&mut socket, identifier).await;
-                continue;
-            }
-            if !confirm_subscription(&mut socket, identifier).await {
-                return;
-            }
-            if let Some(payload) = farm_snapshot_payload(&farm_gateway, farm_id) {
-                if !transmit_message(&mut socket, identifier, payload).await {
-                    return;
+                if frame.get("command").and_then(|c| c.as_str()) == Some("pong") {
+                    continue;
+                }
+                let identifier = frame
+                    .get("identifier")
+                    .and_then(|i| i.as_str())
+                    .unwrap_or("");
+                match frame.get("command").and_then(|c| c.as_str()) {
+                    Some("unsubscribe") => {
+                        stop_subscription(&mut relay_handles, identifier);
+                        continue;
+                    }
+                    Some("subscribe") => {
+                        let Ok(id_json): Result<Value, _> = serde_json::from_str(identifier) else {
+                            continue;
+                        };
+                        if !handle_subscribe(
+                            &mut socket,
+                            &hub,
+                            &plan_gateway,
+                            &farm_gateway,
+                            session_ctx.as_ref(),
+                            identifier,
+                            &id_json,
+                            &mut relay_handles,
+                            &out_tx,
+                        )
+                        .await
+                        {
+                            break;
+                        }
+                    }
+                    _ => {}
                 }
             }
-            let rx = hub.subscribe_farm(farm_id).await;
-            relay_subscription(&mut socket, identifier, rx).await;
-            return;
         }
+    }
 
-        if channel != "OptimizationChannel" && channel != "PlansOptimizationChannel" {
-            continue;
-        }
-        let plan_id = parse_plan_id_from_identifier(&id_json);
-        let Some(plan_id) = plan_id else {
-            reject_subscription(&mut socket, identifier).await;
-            continue;
-        };
-        let plan = match plan_gateway.find_by_id(plan_id) {
-            Ok(plan) => plan,
-            Err(_) => {
-                reject_subscription(&mut socket, identifier).await;
-                continue;
-            }
-        };
-        if plan_subscription_denied(channel, &plan, session_ctx.as_ref()) {
-            reject_subscription(&mut socket, identifier).await;
-            continue;
-        }
-        if !confirm_subscription(&mut socket, identifier).await {
-            return;
-        }
-        if !transmit_plan_snapshot(&mut socket, identifier, &plan_gateway, plan_id).await {
-            return;
-        }
-        let rx = hub.subscribe_plan(plan_id).await;
-        relay_subscription(&mut socket, identifier, rx).await;
-        return;
+    for (_, handle) in relay_handles.drain() {
+        handle.abort();
     }
 }
 
@@ -564,6 +631,7 @@ mod cable_snapshot_tests {
                    longitude REAL,
                    region TEXT,
                    user_id INTEGER,
+                   organization_id INTEGER,
                    is_reference INTEGER NOT NULL DEFAULT 0,
                    created_at TEXT,
                    updated_at TEXT,
@@ -733,5 +801,263 @@ mod cable_snapshot_tests {
         let mut rx = tx.subscribe();
         drop(tx);
         assert_eq!(None, recv_broadcast_payload(&mut rx).await);
+    }
+}
+
+#[cfg(test)]
+mod cable_multi_subscription_tests {
+    use super::*;
+    use crate::test_support::test_app_state;
+    use axum::Router;
+    use futures_util::{SinkExt, StreamExt};
+    use std::net::SocketAddr;
+    use tokio::net::TcpListener;
+    use tokio_tungstenite::{
+        connect_async,
+        tungstenite::client::IntoClientRequest,
+        tungstenite::http::header::SEC_WEBSOCKET_PROTOCOL,
+        tungstenite::http::HeaderValue,
+        tungstenite::Message as WsMessage,
+        MaybeTlsStream, WebSocketStream,
+    };
+    use tokio::net::TcpStream;
+
+    type TestCableWs = WebSocketStream<MaybeTlsStream<TcpStream>>;
+
+    fn test_pool_with_reference_farm_and_public_plan() -> (SqlitePool, tempfile::NamedTempFile, i64, i64) {
+        let file = tempfile::NamedTempFile::new().expect("temp db");
+        let path = file.path().to_str().expect("utf8 path");
+        let pool = SqlitePool::new(path);
+        pool.with_write(|conn| {
+                    conn.execute_batch(
+                        "CREATE TABLE farms (
+                           id INTEGER PRIMARY KEY,
+                           name TEXT,
+                           latitude REAL NOT NULL,
+                           longitude REAL NOT NULL,
+                           region TEXT,
+                           user_id INTEGER,
+                           organization_id INTEGER,
+                           is_reference INTEGER NOT NULL DEFAULT 0,
+                           created_at TEXT,
+                           updated_at TEXT,
+                           weather_data_status TEXT,
+                           weather_data_fetched_years INTEGER,
+                           weather_data_total_years INTEGER,
+                           weather_data_last_error TEXT,
+                           weather_location_id INTEGER,
+                           last_broadcast_at REAL
+                         );
+                         CREATE TABLE cultivation_plans (
+                           id INTEGER PRIMARY KEY,
+                           farm_id INTEGER,
+                           user_id INTEGER,
+                           organization_id INTEGER,
+                           total_area REAL,
+                   plan_type TEXT,
+                   plan_year INTEGER,
+                   plan_name TEXT,
+                   planning_start_date TEXT,
+                   planning_end_date TEXT,
+                   status TEXT,
+                   session_id TEXT,
+                   optimization_phase TEXT,
+                   optimization_phase_message TEXT,
+                   task_schedule_sync_state TEXT NOT NULL DEFAULT 'never',
+                   task_schedule_sync_error TEXT,
+                   task_schedule_sync_error_crop_id INTEGER,
+                   created_at TEXT DEFAULT (datetime('now')),
+                   updated_at TEXT DEFAULT (datetime('now'))
+                 );
+                 CREATE TABLE cultivation_plan_crops (
+                   id INTEGER PRIMARY KEY, cultivation_plan_id INTEGER
+                 );
+                 CREATE TABLE cultivation_plan_fields (
+                   id INTEGER PRIMARY KEY, cultivation_plan_id INTEGER
+                 );
+                 CREATE TABLE field_cultivations (
+                   id INTEGER PRIMARY KEY,
+                   cultivation_plan_id INTEGER,
+                   cultivation_plan_field_id INTEGER,
+                   cultivation_plan_crop_id INTEGER,
+                   area REAL,
+                   status TEXT
+                 );",
+            )?;
+            conn.execute(
+                "INSERT INTO farms (id, name, latitude, longitude, is_reference, weather_data_status,
+                 weather_data_fetched_years, weather_data_total_years)
+                 VALUES (7, 'Ref Farm', 35.0, 139.0, 1, 'completed', 5, 5)",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO cultivation_plans (id, farm_id, user_id, plan_type, status, total_area)
+                 VALUES (11, 7, NULL, 'public', 'optimizing', 100.0)",
+                [],
+            )?;
+            Ok(())
+        })
+        .expect("seed");
+        (pool, file, 7, 11)
+    }
+
+    async fn spawn_cable_server(state: AppState) -> SocketAddr {
+        let app = Router::new().merge(routes()).with_state(state);
+        let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+        let addr = listener.local_addr().expect("local addr");
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.expect("serve cable");
+        });
+        addr
+    }
+
+    async fn connect_cable(addr: SocketAddr) -> TestCableWs {
+        let url = format!("ws://{addr}/cable");
+        let mut request = url.into_client_request().expect("ws request");
+        request.headers_mut().insert(
+            SEC_WEBSOCKET_PROTOCOL,
+            HeaderValue::from_static("actioncable-v1-json"),
+        );
+        let (ws, _) = connect_async(request).await.expect("connect");
+        ws
+    }
+
+    async fn expect_welcome(ws: &mut TestCableWs) {
+        let welcome = ws.next().await.expect("welcome frame").expect("welcome ok");
+        let text = welcome.into_text().expect("welcome text");
+        let json: Value = serde_json::from_str(&text).expect("welcome json");
+        assert_eq!("welcome", json.get("type").and_then(|v| v.as_str()).unwrap_or_default());
+    }
+
+    async fn send_subscribe(ws: &mut TestCableWs, identifier: Value) {
+        let identifier_str = serde_json::to_string(&identifier).expect("identifier json");
+        let subscribe = json!({
+            "command": "subscribe",
+            "identifier": identifier_str
+        });
+        ws.send(WsMessage::Text(subscribe.to_string().into()))
+            .await
+            .expect("subscribe send");
+    }
+
+    async fn send_unsubscribe(ws: &mut TestCableWs, identifier: Value) {
+        let identifier_str = serde_json::to_string(&identifier).expect("identifier json");
+        let unsubscribe = json!({
+            "command": "unsubscribe",
+            "identifier": identifier_str
+        });
+        ws.send(WsMessage::Text(unsubscribe.to_string().into()))
+            .await
+            .expect("unsubscribe send");
+    }
+
+    async fn expect_frame_type(ws: &mut TestCableWs, expected: &str) -> Value {
+        let frame = ws.next().await.expect("frame").expect("frame ok");
+        let text = frame.into_text().expect("text frame");
+        let json: Value = serde_json::from_str(&text).expect("json frame");
+        assert_eq!(
+            expected,
+            json.get("type").and_then(|v| v.as_str()).unwrap_or_default(),
+            "unexpected frame: {text}"
+        );
+        json
+    }
+
+    async fn expect_data_message(ws: &mut TestCableWs, identifier: &Value) -> Value {
+        let frame = ws.next().await.expect("frame").expect("frame ok");
+        let text = frame.into_text().expect("text frame");
+        let json: Value = serde_json::from_str(&text).expect("json frame");
+        assert!(
+            json.get("message").is_some(),
+            "expected data message frame: {text}"
+        );
+        assert_eq!(
+            identifier.to_string(),
+            json.get("identifier").and_then(|v| v.as_str()).unwrap_or_default(),
+            "unexpected identifier in frame: {text}"
+        );
+        json
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn cable_supports_farm_then_plan_subscription_on_one_connection() {
+        let (pool, _file, farm_id, plan_id) = test_pool_with_reference_farm_and_public_plan();
+        let state = tokio::task::spawn_blocking(move || test_app_state(pool))
+            .await
+            .expect("app state");
+        let hub = state.cable_hub.clone();
+        let addr = spawn_cable_server(state).await;
+
+        let mut ws = connect_cable(addr).await;
+        expect_welcome(&mut ws).await;
+
+        let farm_identifier = json!({ "channel": "FarmChannel", "farm_id": farm_id });
+        send_subscribe(&mut ws, farm_identifier.clone()).await;
+        expect_frame_type(&mut ws, "confirm_subscription").await;
+        expect_data_message(&mut ws, &farm_identifier).await;
+
+        let plan_identifier = json!({
+            "channel": "OptimizationChannel",
+            "cultivation_plan_id": plan_id
+        });
+        send_subscribe(&mut ws, plan_identifier.clone()).await;
+        expect_frame_type(&mut ws, "confirm_subscription").await;
+        expect_data_message(&mut ws, &plan_identifier).await;
+
+        hub.broadcast_plan_message(
+            plan_id,
+            json!({ "status": "optimizing", "progress": 42, "phase": "allocating" }),
+        );
+
+        let update = expect_data_message(&mut ws, &plan_identifier).await;
+        assert_eq!(42, update["message"]["progress"].as_i64().unwrap());
+        assert_eq!(
+            plan_identifier.to_string(),
+            update.get("identifier").and_then(|v| v.as_str()).unwrap_or_default()
+        );
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn cable_unsubscribe_stops_farm_relay_before_plan_subscription() {
+        let (pool, _file, farm_id, plan_id) = test_pool_with_reference_farm_and_public_plan();
+        let state = tokio::task::spawn_blocking(move || test_app_state(pool))
+            .await
+            .expect("app state");
+        let hub = state.cable_hub.clone();
+        let addr = spawn_cable_server(state).await;
+
+        let mut ws = connect_cable(addr).await;
+        expect_welcome(&mut ws).await;
+
+        let farm_identifier = json!({ "channel": "FarmChannel", "farm_id": farm_id });
+        send_subscribe(&mut ws, farm_identifier.clone()).await;
+        expect_frame_type(&mut ws, "confirm_subscription").await;
+        expect_data_message(&mut ws, &farm_identifier).await;
+
+        send_unsubscribe(&mut ws, farm_identifier).await;
+
+        let plan_identifier = json!({
+            "channel": "OptimizationChannel",
+            "cultivation_plan_id": plan_id
+        });
+        send_subscribe(&mut ws, plan_identifier.clone()).await;
+        expect_frame_type(&mut ws, "confirm_subscription").await;
+        expect_data_message(&mut ws, &plan_identifier).await;
+
+        hub.broadcast_farm(
+            farm_id,
+            json!({ "id": farm_id, "weather_data_status": "fetching", "weather_data_progress": 99 }),
+        );
+        hub.broadcast_plan_message(
+            plan_id,
+            json!({ "status": "optimizing", "progress": 77, "phase": "allocating" }),
+        );
+
+        let update = expect_data_message(&mut ws, &plan_identifier).await;
+        assert_eq!(77, update["message"]["progress"].as_i64().unwrap());
+        assert_eq!(
+            plan_identifier.to_string(),
+            update.get("identifier").and_then(|v| v.as_str()).unwrap_or_default()
+        );
     }
 }
