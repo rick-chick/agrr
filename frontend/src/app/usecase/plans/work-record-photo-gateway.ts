@@ -19,6 +19,7 @@ export interface WorkRecordPhotoGateway {
     byteSize: number
   ): Observable<WorkRecordPhotoCompleteResponse>;
   deletePhoto(planId: number, recordId: number, photoId: number): Observable<void>;
+  downloadPhotoContent(contentUrl: string): Observable<Blob>;
 }
 
 export const WORK_RECORD_PHOTO_GATEWAY = new InjectionToken<WorkRecordPhotoGateway>(
