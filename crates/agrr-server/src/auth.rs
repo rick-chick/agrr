@@ -6,6 +6,7 @@ use crate::security_audit_log::log_login_success;
 use crate::security_audit_log::log_logout;
 use crate::auth_return_to::{
     allowed_return_to, append_oauth_conversion_query, default_frontend_home,
+    login_error,
     normalize_oauth_return_to,
     google_oauth_configured, oauth_csrf_state_matches, spa_login_redirect_url,
     OAUTH_CSRF_STATE_COOKIE, OAUTH_RETURN_TO_COOKIE,
@@ -46,7 +47,7 @@ struct LoginQuery {
 }
 
 async fn login_page(Query(query): Query<LoginQuery>) -> Redirect {
-    Redirect::temporary(&spa_login_redirect_url(query.return_to.as_deref()))
+    Redirect::temporary(&spa_login_redirect_url(query.return_to.as_deref(), None))
 }
 
 async fn start_google_oauth(
@@ -56,7 +57,11 @@ async fn start_google_oauth(
 ) -> Result<Response, StatusCode> {
     if !google_oauth_configured(&state.google_client_id, &state.google_client_secret) {
         tracing::warn!("Google OAuth not configured — redirecting to SPA login");
-        return Ok(Redirect::temporary(&spa_login_redirect_url(query.return_to.as_deref())).into_response());
+        return Ok(Redirect::temporary(&spa_login_redirect_url(
+            query.return_to.as_deref(),
+            Some(login_error::OAUTH_NOT_CONFIGURED),
+        ))
+        .into_response());
     }
 
     let jar = if let Some(ref url) = query.return_to.filter(|u| allowed_return_to(u)) {
@@ -93,32 +98,67 @@ async fn google_callback(
     jar: CookieJar,
 ) -> Result<Response, StatusCode> {
     if query.error.is_some() || query.code.is_none() {
-        return Ok(Redirect::temporary(&spa_login_redirect_url(None)).into_response());
+        return Ok(Redirect::temporary(&spa_login_redirect_url(
+            None,
+            Some(login_error::OAUTH_DENIED),
+        ))
+        .into_response());
     }
     let stored_csrf = jar
         .get(OAUTH_CSRF_STATE_COOKIE)
         .map(|c| c.value().to_string());
     if !oauth_csrf_state_matches(stored_csrf.as_deref(), query.state.as_deref()) {
         tracing::warn!("OAuth callback rejected: CSRF state mismatch");
-        return Ok(Redirect::temporary(&spa_login_redirect_url(None)).into_response());
+        return Ok(Redirect::temporary(&spa_login_redirect_url(
+            None,
+            Some(login_error::CSRF_MISMATCH),
+        ))
+        .into_response());
     }
     let jar = jar.remove(Cookie::from(OAUTH_CSRF_STATE_COOKIE));
     let client = google_oauth_client(&state)?;
-    let token = client
+    let token = match client
         .exchange_code(AuthorizationCode::new(query.code.unwrap()))
         .request_async(oauth2::reqwest::async_http_client)
         .await
-        .map_err(|_| StatusCode::BAD_GATEWAY)?;
+    {
+        Ok(token) => token,
+        Err(err) => {
+            tracing::warn!("OAuth token exchange failed: {err}");
+            return Ok(Redirect::temporary(&spa_login_redirect_url(
+                None,
+                Some(login_error::TOKEN_EXCHANGE_FAILED),
+            ))
+            .into_response());
+        }
+    };
 
-    let userinfo: serde_json::Value = reqwest::Client::new()
+    let userinfo: serde_json::Value = match reqwest::Client::new()
         .get("https://www.googleapis.com/oauth2/v2/userinfo")
         .bearer_auth(token.access_token().secret())
         .send()
         .await
-        .map_err(|_| StatusCode::BAD_GATEWAY)?
-        .json()
-        .await
-        .map_err(|_| StatusCode::BAD_GATEWAY)?;
+    {
+        Ok(response) => match response.json().await {
+            Ok(json) => json,
+            Err(err) => {
+                tracing::warn!("OAuth userinfo JSON parse failed: {err}");
+                return Ok(Redirect::temporary(&spa_login_redirect_url(
+                    None,
+                    Some(login_error::TOKEN_EXCHANGE_FAILED),
+                ))
+                .into_response());
+            }
+        },
+        Err(err) => {
+            tracing::warn!("OAuth userinfo request failed: {err}");
+            return Ok(Redirect::temporary(&spa_login_redirect_url(
+                None,
+                Some(login_error::TOKEN_EXCHANGE_FAILED),
+            ))
+            .into_response());
+        }
+    };
 
     let info = GoogleOAuthUserInfo {
         google_id: userinfo["id"].as_str().unwrap_or("").to_string(),
@@ -130,7 +170,11 @@ async fn google_callback(
     let gateway = AuthOmniauthSessionSqliteGateway::new(state.sqlite.clone());
     let result = gateway.process_google_callback(&info);
     if result.status != OmniauthCallbackStatus::Success {
-        return Ok(Redirect::temporary(&spa_login_redirect_url(None)).into_response());
+        return Ok(Redirect::temporary(&spa_login_redirect_url(
+            None,
+            Some(login_error::AUTHENTICATION_FAILED),
+        ))
+        .into_response());
     }
 
     if let Some(user_id) = result.user_id {
@@ -168,7 +212,10 @@ async fn google_callback(
 }
 
 async fn auth_failure() -> Redirect {
-    Redirect::temporary(&spa_login_redirect_url(None))
+    Redirect::temporary(&spa_login_redirect_url(
+        None,
+        Some(login_error::AUTHENTICATION_FAILED),
+    ))
 }
 
 async fn logout(State(state): State<AppState>, jar: CookieJar) -> impl IntoResponse {
@@ -182,7 +229,7 @@ async fn logout(State(state): State<AppState>, jar: CookieJar) -> impl IntoRespo
         }
     }
     let jar = jar.remove(Cookie::from("session_id"));
-    (jar, Redirect::temporary(&spa_login_redirect_url(None)))
+    (jar, Redirect::temporary(&spa_login_redirect_url(None, None)))
 }
 
 fn jar_with_oauth_csrf(jar: CookieJar, csrf_secret: &str) -> CookieJar {
