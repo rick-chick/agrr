@@ -1,5 +1,6 @@
 //! Builds `GET /api/v1/backdoor/status` JSON (Ruby `BackdoorController#status`).
 
+use agrr_adapters_agrr::AgrrDaemonClient;
 use agrr_adapters_sqlite::ShellStdoutCaptureCliGateway;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -11,7 +12,8 @@ const DEFAULT_SOCKET_PATH: &str = "/tmp/agrr.sock";
 /// Probe AGRR daemon + binary state for the backdoor status endpoint.
 pub fn build_backdoor_status_json(agrr_root: &Path) -> Value {
     let agrr_bin = agrr_root.join("lib").join("core").join("agrr");
-    let socket_path = std::env::var("AGRR_DAEMON_SOCKET")
+    let socket_path = std::env::var("AGRR_SOCKET_PATH")
+        .or_else(|_| std::env::var("AGRR_DAEMON_SOCKET"))
         .map(PathBuf::from)
         .unwrap_or_else(|_| PathBuf::from(DEFAULT_SOCKET_PATH));
 
@@ -33,7 +35,7 @@ pub fn build_backdoor_status_json(agrr_root: &Path) -> Value {
             .unwrap_or(false);
 
     let socket_exists = socket_path.exists();
-    let daemon_running = socket_exists && path_is_socket(&socket_path);
+    let daemon_running = AgrrDaemonClient::new(&socket_path).daemon_running();
 
     let shell = ShellStdoutCaptureCliGateway::new();
     let mut daemon_status_output: Option<String> = None;
@@ -71,21 +73,6 @@ pub fn build_backdoor_status_json(agrr_root: &Path) -> Value {
         "process": process,
         "service_available": service_available,
     })
-}
-
-fn path_is_socket(path: &Path) -> bool {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::FileTypeExt;
-        std::fs::metadata(path)
-            .map(|m| m.file_type().is_socket())
-            .unwrap_or(false)
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = path;
-        false
-    }
 }
 
 fn parse_daemon_pid(output: &str) -> Option<i64> {

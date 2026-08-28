@@ -74,6 +74,7 @@ fn failure_message_key(failure_subphase: Option<&str>) -> &'static str {
         "predicting_weather" => "models.cultivation_plan.phase_failed.predicting_weather",
         "optimizing" => "models.cultivation_plan.phase_failed.optimizing",
         "task_schedule_generation" => "models.cultivation_plan.phase_failed.task_schedule_generation",
+        "daemon_unavailable" => "models.cultivation_plan.phase_failed.daemon_unavailable",
         "timeout" => "models.cultivation_plan.phase_failed.timeout",
         _ => "models.cultivation_plan.phase_failed.default",
     }
