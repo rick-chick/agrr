@@ -1,9 +1,9 @@
 import { WorkRecordCreateRequest, WorkRecordUpdateRequest } from '../../models/plans/work-record';
 import { WorkRecordSheetMode } from '../../components/plans/work-record-sheet.view';
 
-export interface DeletedWorkRecordPhotoBackup {
+export interface DeletedWorkRecordPhotoSource {
   photoId: number;
-  blob: Blob;
+  contentUrl: string;
 }
 
 export interface SaveWorkRecordSheetInputDto {
@@ -14,8 +14,8 @@ export interface SaveWorkRecordSheetInputDto {
   updateBody?: WorkRecordUpdateRequest;
   pendingPhotoFiles: File[];
   photoIdsToDelete: number[];
-  /** Blobs of photos marked for delete; used to compensate when upload fails after delete. */
-  deletedPhotoBackups: DeletedWorkRecordPhotoBackup[];
+  /** URLs for photos marked delete; used to compensate when upload fails after delete. */
+  deletedPhotoContentUrls: DeletedWorkRecordPhotoSource[];
 }
 
 export interface SaveWorkRecordSheetSuccessDto {

@@ -111,7 +111,7 @@ describe('SaveWorkRecordSheetUseCase', () => {
       createBody: { name: '除草', actual_date: '2026-06-12' },
       pendingPhotoFiles: [file],
       photoIdsToDelete: [],
-      deletedPhotoBackups: []
+      deletedPhotoContentUrls: []
     });
 
     await vi.waitFor(() => {
@@ -150,7 +150,7 @@ describe('SaveWorkRecordSheetUseCase', () => {
       updateBody: { name: '除草' },
       pendingPhotoFiles: [],
       photoIdsToDelete: [55, 56],
-      deletedPhotoBackups: []
+      deletedPhotoContentUrls: []
     });
 
     await vi.waitFor(() => {
@@ -189,7 +189,7 @@ describe('SaveWorkRecordSheetUseCase', () => {
         new File([new Uint8Array([1])], 'a.jpg', { type: 'image/jpeg' })
       ],
       photoIdsToDelete: [],
-      deletedPhotoBackups: []
+      deletedPhotoContentUrls: []
     });
 
     await vi.waitFor(() => {
@@ -274,7 +274,7 @@ describe('SaveWorkRecordSheetUseCase', () => {
       updateBody: { name: '除草' },
       pendingPhotoFiles: [file],
       photoIdsToDelete: [55],
-      deletedPhotoBackups: [{ photoId: 55, blob: new Blob([new Uint8Array([1])]) }]
+      deletedPhotoContentUrls: [{ photoId: 55, contentUrl: '/photos/55.jpg' }]
     });
 
     await vi.waitFor(() => {
@@ -335,7 +335,9 @@ describe('SaveWorkRecordSheetUseCase', () => {
         }
       });
     });
+    const backupBlob = new Blob([new Uint8Array([9])], { type: 'image/jpeg' });
     const photoGateway = photoGatewayStub({
+      downloadPhotoContent: vi.fn(() => of(backupBlob)),
       uploadInit,
       uploadContent: vi.fn(() => of(undefined)),
       uploadComplete: vi.fn(() =>
@@ -362,7 +364,6 @@ describe('SaveWorkRecordSheetUseCase', () => {
       updateTaskScheduleItem: () => of({} as never)
     };
     const outputPort = outputPortStub();
-    const backupBlob = new Blob([new Uint8Array([9])], { type: 'image/jpeg' });
     const useCase = new SaveWorkRecordSheetUseCase(
       outputPort,
       workRecordGateway,
@@ -378,14 +379,15 @@ describe('SaveWorkRecordSheetUseCase', () => {
       updateBody: { name: '除草' },
       pendingPhotoFiles: [file],
       photoIdsToDelete: [1, 2],
-      deletedPhotoBackups: [
-        { photoId: 1, blob: backupBlob },
-        { photoId: 2, blob: backupBlob }
+      deletedPhotoContentUrls: [
+        { photoId: 1, contentUrl: '/photos/1.jpg' },
+        { photoId: 2, contentUrl: '/photos/2.jpg' }
       ]
     });
 
     await vi.waitFor(() => {
       expect(photoGateway.deletePhoto).toHaveBeenCalledTimes(2);
+      expect(photoGateway.downloadPhotoContent).toHaveBeenCalledTimes(2);
       expect(uploadInit).toHaveBeenCalledTimes(3);
       expect(outputPort.onPhotoPartialFailure).toHaveBeenCalledWith({
         workRecord: reloadedRecord

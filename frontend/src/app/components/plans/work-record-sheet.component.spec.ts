@@ -508,7 +508,7 @@ describe('WorkRecordSheetComponent', () => {
     expect(component.control.form.amount_unit).toBe('kg');
   });
 
-  it('shows fertilizer master picker and sends fertilize_id on save for fertilizer items', async () => {
+  it('shows fertilizer master picker and sends fertilize_id on save for fertilizer items', () => {
     component.openFromItem(
       {
         item: {
@@ -554,16 +554,16 @@ describe('WorkRecordSheetComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('使用肥料');
     expect(loadFertilizeListUseCase.execute).toHaveBeenCalled();
 
-    await component.submit();
+    component.submit();
     expect(saveUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({
         createBody: expect.objectContaining({ fertilize_id: 7, task_schedule_item_id: 10 }),
-        deletedPhotoBackups: []
+        deletedPhotoContentUrls: []
       })
     );
   });
 
-  it('shows crop-scoped pesticide picker for pest control items when cropId is known', async () => {
+  it('shows crop-scoped pesticide picker for pest control items when cropId is known', () => {
     component.openFromItem(
       {
         item: {
@@ -605,11 +605,11 @@ describe('WorkRecordSheetComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="pesticide-master-picker"]')).toBeTruthy();
     expect(loadCropPesticideListUseCase.execute).toHaveBeenCalledWith({ cropId: 99 });
 
-    await component.submit();
+    component.submit();
     expect(saveUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({
         createBody: expect.objectContaining({ pesticide_id: 3, task_schedule_item_id: 20 }),
-        deletedPhotoBackups: []
+        deletedPhotoContentUrls: []
       })
     );
   });

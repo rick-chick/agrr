@@ -46,8 +46,7 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
       .pipe(
         switchMap((workRecord) =>
           this.syncPhotos(dto, workRecord).pipe(
-            map((syncedRecord) => syncedRecord),
-            catchError((err: unknown) => this.handlePhotoSyncError(dto, workRecord, err))
+            catchError((err: unknown) => this.handlePhotoSyncError(dto, workRecord, err, []))
           )
         ),
         catchError((err: unknown) => {
@@ -82,13 +81,42 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
     if (uploadFirst) {
       return this.uploadPending(dto, workRecord.id).pipe(
         switchMap(() => this.deleteMarked(dto, workRecord.id)),
-        map(() => workRecord)
+        map(() => workRecord),
+        catchError((err: unknown) => this.handlePhotoSyncError(dto, workRecord, err, []))
       );
     }
 
-    return this.deleteMarked(dto, workRecord.id).pipe(
-      switchMap(() => this.uploadPending(dto, workRecord.id)),
-      map(() => workRecord)
+    return this.syncPhotosWithCompensation(dto, workRecord);
+  }
+
+  private syncPhotosWithCompensation(
+    dto: SaveWorkRecordSheetInputDto,
+    workRecord: WorkRecord
+  ): Observable<WorkRecord> {
+    return this.fetchDeletedPhotoBackups(dto.deletedPhotoContentUrls).pipe(
+      switchMap((backups) =>
+        this.deleteMarked(dto, workRecord.id).pipe(
+          switchMap(() => this.uploadPending(dto, workRecord.id)),
+          map(() => workRecord),
+          catchError((err: unknown) => this.handlePhotoSyncError(dto, workRecord, err, backups))
+        )
+      )
+    );
+  }
+
+  private fetchDeletedPhotoBackups(
+    sources: SaveWorkRecordSheetInputDto['deletedPhotoContentUrls']
+  ): Observable<Array<{ photoId: number; blob: Blob }>> {
+    if (sources.length === 0) {
+      return of([]);
+    }
+
+    return forkJoin(
+      sources.map((source) =>
+        this.photoGateway.downloadPhotoContent(source.contentUrl).pipe(
+          map((blob) => ({ photoId: source.photoId, blob }))
+        )
+      )
     );
   }
 
@@ -110,10 +138,11 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
   private handlePhotoSyncError(
     dto: SaveWorkRecordSheetInputDto,
     workRecord: WorkRecord,
-    err: unknown
+    err: unknown,
+    backups: Array<{ photoId: number; blob: Blob }>
   ): Observable<WorkRecord | null> {
     const uploadFirst = this.shouldUploadBeforeDelete(workRecord, dto);
-    const needsCompensation = !uploadFirst && dto.deletedPhotoBackups.length > 0;
+    const needsCompensation = !uploadFirst && backups.length > 0;
     const needsPartialFailure =
       needsCompensation ||
       (uploadFirst && dto.photoIdsToDelete.length > 0 && dto.pendingPhotoFiles.length > 0);
@@ -126,7 +155,7 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
     const compensate$ =
       needsCompensation
         ? forkJoin(
-            dto.deletedPhotoBackups.map((backup) =>
+            backups.map((backup) =>
               this.uploadBlob(dto.planId, workRecord.id, backup.blob)
             )
           ).pipe(map(() => undefined))
