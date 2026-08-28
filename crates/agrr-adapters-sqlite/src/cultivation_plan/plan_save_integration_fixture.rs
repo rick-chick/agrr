@@ -23,6 +23,10 @@ pub struct TaskScheduleCopySeed {
     pub reference_agricultural_task_id: i64,
 }
 
+pub struct TaskScheduleInvalidGddSeed {
+    pub workspace: PublicPlanSaveWorkspace,
+}
+
 pub struct CropStageRequirementsCopySeed {
     pub workspace: PublicPlanSaveWorkspace,
     pub reference_crop_id: i64,
@@ -72,6 +76,7 @@ CREATE TABLE fields (
 CREATE TABLE crops (
   id INTEGER PRIMARY KEY,
   user_id INTEGER,
+  organization_id INTEGER,
   name TEXT NOT NULL,
   variety TEXT,
   is_reference INTEGER NOT NULL DEFAULT 0,
@@ -585,4 +590,90 @@ pub fn count_private_plans(pool: &SqlitePool, user_id: i64) -> i64 {
         )
     })
     .unwrap()
+}
+
+pub fn count_user_farms(pool: &SqlitePool, user_id: i64) -> i64 {
+    pool.with_read(|conn| {
+        conn.query_row(
+            "SELECT COUNT(*) FROM farms WHERE user_id = ?1 AND is_reference = 0",
+            params![user_id],
+            |r| r.get(0),
+        )
+    })
+    .unwrap()
+}
+
+/// Seed a public plan whose task schedule item has NULL gdd_trigger to fail late in plan copy.
+pub fn seed_task_schedule_invalid_gdd(pool: &SqlitePool) -> TaskScheduleInvalidGddSeed {
+    let reference_farm_id = 4_i64;
+    let public_plan_id = 40_i64;
+    let reference_crop_id = 103_i64;
+    let reference_task_id = 51_i64;
+    let plan_field_id = 310_i64;
+    let plan_crop_id = 311_i64;
+    let field_cultivation_id = 410_i64;
+    let task_schedule_id = 510_i64;
+
+    pool.with_write(|conn| {
+        conn.execute(
+            "INSERT INTO farms (id, user_id, name, latitude, longitude, region, is_reference, created_at, updated_at)
+             VALUES (?1, NULL, 'Invalid GDD Farm', 35.0, 139.0, 'jp', 1, datetime('now'), datetime('now'))",
+            params![reference_farm_id],
+        )?;
+        conn.execute(
+            "INSERT INTO crops (id, user_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at)
+             VALUES (?1, NULL, 'Invalid GDD Crop', 'IG1', 1, 1.0, 2000.0, 'jp', '[]', datetime('now'), datetime('now'))",
+            params![reference_crop_id],
+        )?;
+        conn.execute(
+            "INSERT INTO agricultural_tasks (id, user_id, name, description, time_per_sqm, weather_dependency, required_tools, skill_level, region, task_type, is_reference, created_at, updated_at)
+             VALUES (?1, NULL, '無効GDD作業', 'gdd なし', 0.5, 'low', '[\"ホー\"]', 'beginner', 'jp', 'field_work', 1, datetime('now'), datetime('now'))",
+            params![reference_task_id],
+        )?;
+        conn.execute(
+            "INSERT INTO cultivation_plans (id, farm_id, user_id, total_area, plan_type, plan_year, plan_name, planning_start_date, planning_end_date, status, created_at, updated_at)
+             VALUES (?1, ?2, NULL, 50.0, 'public', 2026, '無効GDD検証', '2026-01-01', '2026-12-31', 'completed', datetime('now'), datetime('now'))",
+            params![public_plan_id, reference_farm_id],
+        )?;
+        conn.execute(
+            "INSERT INTO cultivation_plan_fields (id, cultivation_plan_id, name, area, daily_fixed_cost, created_at, updated_at)
+             VALUES (?1, ?2, 'F1', 50.0, 5.0, datetime('now'), datetime('now'))",
+            params![plan_field_id, public_plan_id],
+        )?;
+        conn.execute(
+            "INSERT INTO cultivation_plan_crops (id, cultivation_plan_id, crop_id, name, variety, area_per_unit, revenue_per_area, created_at, updated_at)
+             VALUES (?1, ?2, ?3, 'Invalid GDD Crop', 'IG1', 1.0, 2000.0, datetime('now'), datetime('now'))",
+            params![plan_crop_id, public_plan_id, reference_crop_id],
+        )?;
+        conn.execute(
+            "INSERT INTO field_cultivations (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, start_date, completion_date, cultivation_days, estimated_cost, status, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, 50.0, '2026-05-30', '2026-06-04', 6, 500.0, 'completed', datetime('now'), datetime('now'))",
+            params![field_cultivation_id, public_plan_id, plan_field_id, plan_crop_id],
+        )?;
+        conn.execute(
+            "INSERT INTO task_schedules (id, cultivation_plan_id, field_cultivation_id, category, status, source, generated_at, created_at, updated_at)
+             VALUES (?1, ?2, ?3, 'general', 'active', 'reference_generator', datetime('now', '-1 day'), datetime('now'), datetime('now'))",
+            params![task_schedule_id, public_plan_id, field_cultivation_id],
+        )?;
+        conn.execute(
+            "INSERT INTO task_schedule_items (task_schedule_id, task_type, name, stage_name, stage_order, gdd_trigger, gdd_tolerance, scheduled_date, priority, source, weather_dependency, time_per_sqm, amount, amount_unit, agricultural_task_id, source_agricultural_task_id, status, created_at, updated_at)
+             VALUES (?1, 'field_work', '無効GDD作業', '初期', 1, NULL, 10.0, '2026-06-02', 1, 'reference', 'no_rain_24h', 0.5, 2.5, 'kg', ?2, ?2, 'planned', datetime('now'), datetime('now'))",
+            params![task_schedule_id, reference_task_id],
+        )?;
+        Ok(())
+    })
+    .unwrap();
+
+    let session = PublicPlanSaveSessionData::new(
+        public_plan_id,
+        Some(reference_farm_id),
+        vec![PublicPlanSaveFieldDatum::new(Some("F1"), Some(50.0), vec![35.0, 139.0])],
+        None,
+    );
+    TaskScheduleInvalidGddSeed {
+        workspace: PublicPlanSaveWorkspace {
+            user_id: TEST_USER_ID,
+            session_data: session,
+        },
+    }
 }
