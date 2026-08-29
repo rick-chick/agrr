@@ -14,7 +14,7 @@ use rusqlite::{params, types::Value};
 use rust_decimal::Decimal;
 use serde_json::Value as JsonValue;
 use std::str::FromStr;
-use time::{format_description::well_known::Iso8601, Date, OffsetDateTime};
+use time::{format_description::well_known::Iso8601, Date, OffsetDateTime, PrimitiveDateTime};
 
 pub struct WorkRecordSqliteGateway {
     pool: SqlitePool,
@@ -42,8 +42,39 @@ impl WorkRecordSqliteGateway {
          LEFT JOIN crops cr ON cr.id = cpc.crop_id \
          LEFT JOIN task_schedule_items tsi ON tsi.id = wr.task_schedule_item_id";
 
+    fn parse_stored_datetime(s: &str) -> Option<OffsetDateTime> {
+        if let Ok(dt) = OffsetDateTime::parse(s, &Iso8601::DEFAULT) {
+            return Some(dt);
+        }
+        const SQLITE_FORMATS: &[&[time::format_description::FormatItem<'_>]] = &[
+            time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"),
+            time::macros::format_description!(
+                "[year]-[month]-[day] [hour]:[minute]:[second].[subsecond]"
+            ),
+        ];
+        for format in SQLITE_FORMATS {
+            if let Ok(dt) = PrimitiveDateTime::parse(s, format) {
+                return Some(dt.assume_utc());
+            }
+        }
+        None
+    }
+
     fn parse_datetime(s: &str) -> OffsetDateTime {
-        OffsetDateTime::parse(s, &Iso8601::DEFAULT).unwrap_or_else(|_| OffsetDateTime::now_utc())
+        Self::parse_stored_datetime(s).unwrap_or(OffsetDateTime::UNIX_EPOCH)
+    }
+
+    fn updated_at_tokens_match(stored_raw: &str, client_token: &str) -> bool {
+        if stored_raw == client_token {
+            return true;
+        }
+        match (
+            Self::parse_stored_datetime(stored_raw),
+            Self::parse_stored_datetime(client_token),
+        ) {
+            (Some(stored), Some(client)) => stored == client,
+            _ => false,
+        }
     }
 
     fn parse_decimal(raw: Option<String>) -> Option<Decimal> {
@@ -284,24 +315,43 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
             .as_deref()
             .expect("validated by interactor");
 
-        let sql = format!(
-            "UPDATE work_records SET {} WHERE cultivation_plan_id = ?{} AND id = ?{} AND updated_at = ?{}",
-            sets.join(", "),
-            values.len() + 1,
-            values.len() + 2,
-            values.len() + 3,
-        );
-        values.push(Value::from(plan_id));
-        values.push(Value::from(record_id));
-        values.push(Value::Text(expected_updated_at.to_string()));
+        let plan_id_param = plan_id;
+        let record_id_param = record_id;
+        let expected_token = expected_updated_at.to_string();
 
-        self.pool.with_write(|conn| -> rusqlite::Result<Option<WorkRecordRead>> {
-            let affected = conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
-            if affected > 0 {
-                return Ok(Some(Self::load_read(conn, plan_id, record_id)?));
-            }
-            Ok(None)
-        })
+        self.pool
+            .with_write_transaction(|conn| -> rusqlite::Result<Option<WorkRecordRead>> {
+                let stored_raw: String = match conn.query_row(
+                    "SELECT updated_at FROM work_records WHERE cultivation_plan_id = ?1 AND id = ?2",
+                    params![plan_id_param, record_id_param],
+                    |row| row.get(0),
+                ) {
+                    Ok(raw) => raw,
+                    Err(rusqlite::Error::QueryReturnedNoRows) => return Ok(None),
+                    Err(err) => return Err(err),
+                };
+
+                if !Self::updated_at_tokens_match(&stored_raw, &expected_token) {
+                    return Ok(None);
+                }
+
+                let sql = format!(
+                    "UPDATE work_records SET {} WHERE cultivation_plan_id = ?{} AND id = ?{} AND updated_at = ?{}",
+                    sets.join(", "),
+                    values.len() + 1,
+                    values.len() + 2,
+                    values.len() + 3,
+                );
+                values.push(Value::from(plan_id_param));
+                values.push(Value::from(record_id_param));
+                values.push(Value::Text(stored_raw));
+
+                let affected = conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
+                if affected > 0 {
+                    return Ok(Some(Self::load_read(conn, plan_id_param, record_id_param)?));
+                }
+                Ok(None)
+            })
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
         .and_then(|maybe_record| match maybe_record {
             Some(record) => Ok(record),

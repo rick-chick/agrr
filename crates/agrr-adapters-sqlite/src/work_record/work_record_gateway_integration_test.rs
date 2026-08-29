@@ -9,6 +9,7 @@ use agrr_domain::work_record::gateways::{
     TaskScheduleItemLookupGateway, WorkRecordCreatePersistAttrs, WorkRecordDestroyGatewayOutcome,
     WorkRecordGateway,
 };
+use rusqlite::params;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 use time::{Date, OffsetDateTime};
@@ -269,4 +270,47 @@ fn work_record_gateway_update_rejects_stale_updated_at() {
         )
         .expect("matching updated_at should succeed");
     assert_eq!(Some("成功".into()), updated.notes);
+}
+
+#[test]
+fn work_record_gateway_update_accepts_legacy_sqlite_updated_at_token() {
+    let pool = work_record_integration_pool();
+    let seed = seed_work_record_crud(&pool);
+    let gateway = WorkRecordSqliteGateway::new(pool.clone());
+
+    let created = gateway
+        .create(seed.plan_id, sample_create_attrs(&seed))
+        .expect("create");
+
+    let legacy_updated_at = "2026-06-12 10:00:00";
+    pool.with_write(|conn| {
+        conn.execute(
+            "UPDATE work_records SET updated_at = ?1 WHERE id = ?2",
+            params![legacy_updated_at, created.id],
+        )
+    })
+    .expect("seed legacy updated_at");
+
+    let loaded = gateway
+        .find_for_plan(seed.plan_id, created.id)
+        .expect("load legacy record");
+    let client_token = loaded.updated_at.format(
+        &time::format_description::well_known::Iso8601::DEFAULT,
+    )
+    .unwrap_or_else(|_| loaded.updated_at.to_string());
+
+    let updated = gateway
+        .update(
+            seed.plan_id,
+            created.id,
+            &WorkRecordUpdateInput {
+                expected_updated_at: Some(client_token),
+                notes: Some("legacy lock ok".into()),
+                ..Default::default()
+            },
+            None,
+            OffsetDateTime::now_utc(),
+        )
+        .expect("legacy updated_at token should match after API round-trip");
+    assert_eq!(Some("legacy lock ok".into()), updated.notes);
 }
