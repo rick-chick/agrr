@@ -70,6 +70,11 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
         <app-language-switcher />
         @if (loading) {
           <span class="status">{{ 'status.checking' | translate }}</span>
+        } @else if (sessionUnavailable) {
+          <span class="status status--unavailable">{{ 'status.session_unavailable' | translate }}</span>
+          <button class="retry-button" type="button" (click)="retrySession.emit()">
+            {{ 'status.retry' | translate }}
+          </button>
         } @else if (user) {
           <span class="user-name">{{ displayUserName(user) }}</span>
           <button class="logout-button" type="button" (click)="logout.emit()">
@@ -93,8 +98,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   @Input() user: CurrentUser | null = null;
   @Input() loading = false;
+  @Input() sessionUnavailable = false;
   @Input() workLogOverdueCount = 0;
   @Output() logout = new EventEmitter<void>();
+  @Output() retrySession = new EventEmitter<void>();
 
   /** 画面完結: どれか一つだけ開く（interactor 不要） */
   openDropdownId: 'masters' | 'more' | null = null;

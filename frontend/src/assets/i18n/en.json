@@ -324,7 +324,9 @@
     }
   },
   "status": {
-    "checking": "Checking..."
+    "checking": "Checking...",
+    "session_unavailable": "Could not verify your session",
+    "retry": "Retry"
   },
   "a11y": {
     "skip_to_main": "Skip to main content"
@@ -2044,7 +2046,8 @@
           "errors": {
             "limit_reached": "You can attach up to 3 photos per work record",
             "invalid_type": "Choose a JPEG, PNG, or WebP image",
-            "upload_failed": "Photo upload failed"
+            "upload_failed": "Photo upload failed",
+            "partial_sync_failed": "Some photo changes could not be saved. The sheet now shows the latest photos from the server."
           }
         }
       },
@@ -2264,7 +2267,9 @@
         "crops_missing": "No crops registered yet",
         "crops_incomplete": "Crop task plans need setup",
         "crops_action": "Set up crops",
-        "crop_blueprint_action": "Edit task plans"
+        "crop_blueprint_action": "Edit task plans",
+        "load_error": "Failed to load setup readiness",
+        "retry": "Retry"
       }
     },
     "select_crop": {

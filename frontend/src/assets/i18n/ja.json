@@ -2471,7 +2471,9 @@
         "crops_missing": "作物が未登録です",
         "crops_incomplete": "作物の作業計画の設定が必要です",
         "crops_action": "作物を設定",
-        "crop_blueprint_action": "作業計画を編集"
+        "crop_blueprint_action": "作業計画を編集",
+        "load_error": "セットアップ状況の取得に失敗しました",
+        "retry": "再試行"
       }
     },
     "select_crop": {
@@ -3160,7 +3162,8 @@
           "errors": {
             "limit_reached": "写真は1件の作業記録につき最大3枚までです",
             "invalid_type": "JPEG、PNG、WebP形式の画像を選択してください",
-            "upload_failed": "写真のアップロードに失敗しました"
+            "upload_failed": "写真のアップロードに失敗しました",
+            "partial_sync_failed": "写真の一部を保存できませんでした。サーバー上の最新の写真に戻しました。"
           }
         }
       },
@@ -3385,7 +3388,9 @@
     }
   },
   "status": {
-    "checking": "確認中..."
+    "checking": "確認中...",
+    "session_unavailable": "セッションを確認できません",
+    "retry": "再試行"
   },
   "a11y": {
     "skip_to_main": "メインコンテンツへ"

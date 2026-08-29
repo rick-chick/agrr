@@ -70,12 +70,12 @@ where
         let photo_keys = self
             .account_gateway
             .list_photo_storage_keys(input.user_id)?;
-        for key in photo_keys {
-            self.photo_object_store.delete_object(&key)?;
-        }
 
         match self.account_gateway.delete_account(input.user_id) {
             Ok(()) => {
+                for key in photo_keys {
+                    self.photo_object_store.delete_object(&key)?;
+                }
                 self.output_port.on_success();
                 Ok(())
             }

@@ -31,6 +31,7 @@ const initialControl: PlanNewViewState = {
   selectedFarmId: null,
   readinessLoading: false,
   readiness: null,
+  readinessError: null,
   noFieldsWarning: false,
   farmLimitBlocked: false,
   carryoverEnabled: false,
@@ -136,6 +137,17 @@ const initialControl: PlanNewViewState = {
             @if (control.selectedFarmId != null) {
               @if (control.readinessLoading) {
                 <p class="master-loading">{{ 'common.loading' | translate }}</p>
+              } @else if (control.readinessError) {
+                <div class="page-alert-error plan-new-readiness-error" role="alert">
+                  <p>{{ control.readinessError | translate }}</p>
+                  <button
+                    type="button"
+                    class="btn btn-secondary plan-new-readiness-error__retry"
+                    (click)="retryReadinessLoad()"
+                  >
+                    {{ 'plans.new.readiness.retry' | translate }}
+                  </button>
+                </div>
               } @else {
                 <app-plan-create-readiness-summary [readiness]="control.readiness" />
               }
@@ -313,6 +325,7 @@ export class PlanNewComponent implements PlanNewView, OnInit {
       selectedFarmId: farmId,
       readinessLoading: farmId != null,
       readiness: null,
+      readinessError: null,
       selectedSourcePlanId: null,
       carryoverPreview: null,
       carryoverPreviewError: null,
@@ -432,11 +445,26 @@ export class PlanNewComponent implements PlanNewView, OnInit {
       });
   }
 
+  retryReadinessLoad(): void {
+    const farmId = this.control.selectedFarmId;
+    if (farmId == null) {
+      return;
+    }
+    this.loadReadiness(farmId);
+  }
+
   private loadReadiness(farmId: number): void {
     const farm = this.control.farms.find((candidate) => candidate.id === farmId);
     if (farm == null) {
       return;
     }
+
+    this.control = {
+      ...this.control,
+      readinessLoading: true,
+      readiness: null,
+      readinessError: null
+    };
 
     this.readinessUseCase
       .execute(farmId, farm.fieldCount, farm.hasValidFields)
@@ -449,7 +477,8 @@ export class PlanNewComponent implements PlanNewView, OnInit {
           this.control = {
             ...this.control,
             readinessLoading: false,
-            readiness
+            readiness,
+            readinessError: null
           };
         },
         error: () => {
@@ -459,7 +488,8 @@ export class PlanNewComponent implements PlanNewView, OnInit {
           this.control = {
             ...this.control,
             readinessLoading: false,
-            readiness: null
+            readiness: null,
+            readinessError: 'plans.new.readiness.load_error'
           };
         }
       });

@@ -114,3 +114,72 @@ fn parse_optional_i64(value: Option<&Value>) -> Result<Option<i64>, RecordInvali
         _ => Err(record_invalid_field("base", "invalid number")),
     }
 }
+
+#[cfg(test)]
+mod work_record_update_input_test {
+    use super::*;
+    use crate::shared::ports::ClockPort;
+    use serde_json::json;
+    use time::macros::{date, datetime};
+    use time::{Date, OffsetDateTime};
+
+    struct FakeClock;
+
+    impl ClockPort for FakeClock {
+        fn today(&self) -> Date {
+            date!(2026-06-12)
+        }
+
+        fn now(&self) -> OffsetDateTime {
+            datetime!(2026-06-12 10:00 UTC)
+        }
+    }
+
+    #[test]
+    fn from_params_parses_updated_at_for_optimistic_locking() {
+        let mut params = BTreeMap::new();
+        params.insert("updated_at".into(), json!("2026-06-12T00:00:00Z"));
+        params.insert("name".into(), json!("追肥"));
+
+        let input = WorkRecordUpdateInput::from_params(&params, &FakeClock).expect("parse");
+        assert_eq!(
+            input.expected_updated_at.as_deref(),
+            Some("2026-06-12T00:00:00Z")
+        );
+        assert_eq!(input.name.as_deref(), Some("追肥"));
+    }
+
+    #[test]
+    fn from_params_rejects_missing_or_blank_updated_at() {
+        let clock = FakeClock;
+        let empty = WorkRecordUpdateInput::from_params(&BTreeMap::new(), &clock).expect("parse");
+        assert!(empty.expected_updated_at.is_none());
+
+        let mut blank = BTreeMap::new();
+        blank.insert("updated_at".into(), json!("   "));
+        let blank_input = WorkRecordUpdateInput::from_params(&blank, &clock).expect("parse");
+        assert!(blank_input.expected_updated_at.is_none());
+    }
+
+    #[test]
+    fn from_params_rejects_non_string_updated_at() {
+        let mut params = BTreeMap::new();
+        params.insert("updated_at".into(), json!(123));
+
+        let err = WorkRecordUpdateInput::from_params(&params, &FakeClock)
+            .expect_err("non-string updated_at");
+        let errors = err.errors.expect("validation errors");
+        assert!(!errors.get("updated_at").is_empty());
+    }
+
+    #[test]
+    fn from_params_rejects_immutable_task_schedule_item_id() {
+        let mut params = BTreeMap::new();
+        params.insert("task_schedule_item_id".into(), json!(99));
+
+        let err = WorkRecordUpdateInput::from_params(&params, &FakeClock)
+            .expect_err("immutable task_schedule_item_id");
+        let errors = err.errors.expect("validation errors");
+        assert!(!errors.get("task_schedule_item_id").is_empty());
+    }
+}

@@ -46,6 +46,8 @@ const NAV_KEYS = [
   'nav.lang_en',
   'nav.lang_in',
   'status.checking',
+  'status.session_unavailable',
+  'status.retry',
   'footer.about',
   'footer.terms',
   'footer.privacy',

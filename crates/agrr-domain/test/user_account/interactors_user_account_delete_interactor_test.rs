@@ -259,3 +259,131 @@ fn emits_failure_when_delete_account_errors() {
     assert_eq!(port.success, 0);
     assert_eq!(sessions, vec![42]);
 }
+
+#[test]
+fn preserves_gcs_photos_when_delete_account_errors() {
+    let gateway = StubAccountGateway {
+        photo_keys: vec![
+            "photos/u42/p1.jpg".into(),
+            "photos/u42/p2.jpg".into(),
+        ],
+        email: None,
+        delete_calls: Mutex::new(vec![]),
+        delete_error: Some("db error".into()),
+    };
+    let (port, sessions, photos, deletes) = run_delete(true, None, gateway);
+    assert_eq!(port.failure_message.as_deref(), Some("db error"));
+    assert_eq!(port.success, 0);
+    assert_eq!(sessions, vec![42]);
+    assert!(photos.is_empty(), "GCS photos must not be deleted when DB delete fails");
+    assert_eq!(deletes, vec![42]);
+}
+
+#[test]
+fn deletes_gcs_photos_only_after_db_delete_succeeds() {
+    struct OrderedGateway {
+        photo_keys: Vec<String>,
+        events: Mutex<Vec<&'static str>>,
+    }
+
+    impl UserAccountGateway for OrderedGateway {
+        fn export_data(
+            &self,
+            _: i64,
+        ) -> Result<
+            crate::user_account::dtos::UserDataExport,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+
+        fn list_photo_storage_keys(
+            &self,
+            _: i64,
+        ) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self.photo_keys.clone())
+        }
+
+        fn delete_account(
+            &self,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            self.events.lock().unwrap().push("db_delete");
+            Ok(())
+        }
+
+        fn user_email(
+            &self,
+            _: i64,
+        ) -> Result<Option<String>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(None)
+        }
+    }
+
+    struct OrderedObjectStore {
+        events: Mutex<Vec<&'static str>>,
+    }
+
+    impl WorkRecordPhotoObjectStoreGateway for OrderedObjectStore {
+        fn write_object(
+            &self,
+            _: &str,
+            _: &str,
+            _: &[u8],
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn read_object(
+            &self,
+            _: &str,
+        ) -> Result<Option<Vec<u8>>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn delete_object(
+            &self,
+            _: &str,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            self.events.lock().unwrap().push("gcs_delete");
+            Ok(())
+        }
+    }
+
+    let gateway = OrderedGateway {
+        photo_keys: vec!["photos/u42/p1.jpg".into()],
+        events: Mutex::new(vec![]),
+    };
+    let object_store = OrderedObjectStore {
+        events: Mutex::new(vec![]),
+    };
+    let revocation = FakeRevocationGateway {
+        deleted_user_ids: Mutex::new(vec![]),
+    };
+    let mut port = RecordingPort::default();
+    let mut interactor = UserAccountDeleteInteractor::new(
+        &mut port,
+        &gateway,
+        &revocation,
+        &object_store,
+    );
+    interactor
+        .call(UserAccountDeleteInput {
+            user_id: 42,
+            confirm: true,
+            email_confirm: None,
+        })
+        .unwrap();
+
+    assert_eq!(port.success, 1);
+    assert_eq!(
+        *gateway.events.lock().unwrap(),
+        vec!["db_delete"],
+        "DB delete must run before GCS delete"
+    );
+    assert_eq!(
+        *object_store.events.lock().unwrap(),
+        vec!["gcs_delete"],
+        "GCS delete must run after DB delete succeeds"
+    );
+}

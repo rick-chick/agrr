@@ -46,7 +46,9 @@ const PLAN_NEW_I18N_KEYS = [
   'plans.new.readiness.crops_missing',
   'plans.new.readiness.crops_incomplete',
   'plans.new.readiness.crops_action',
-  'plans.new.readiness.crop_blueprint_action'
+  'plans.new.readiness.crop_blueprint_action',
+  'plans.new.readiness.load_error',
+  'plans.new.readiness.retry'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

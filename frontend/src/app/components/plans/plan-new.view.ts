@@ -14,6 +14,7 @@ export interface PlanNewViewState {
   selectedFarmId: number | null;
   readinessLoading: boolean;
   readiness: PlanCreateReadiness | null;
+  readinessError: string | null;
   noFieldsWarning: boolean;
   farmLimitBlocked: boolean;
   carryoverEnabled: boolean;
