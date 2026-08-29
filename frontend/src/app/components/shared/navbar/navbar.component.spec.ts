@@ -181,6 +181,24 @@ describe('NavbarComponent', () => {
     expect(component.moreItems.some((item) => item.link === '/api-keys')).toBe(false);
   });
 
+  it('shows session unavailable status and retry instead of login link', () => {
+    translate.setTranslation('en', {
+      status: {
+        session_unavailable: 'Could not verify your session',
+        retry: 'Retry'
+      },
+      nav: { login: 'Login' }
+    });
+    translate.use('en');
+    component.user = null;
+    component.sessionUnavailable = true;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Could not verify your session');
+    expect(fixture.nativeElement.querySelector('.retry-button')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.login-link')).toBeNull();
+  });
+
   it('shows overdue badge when workLogOverdueCount is positive', () => {
     translate.setTranslation('ja', {
       nav: { work_log: '作業記録', work_log_overdue_aria: '作業記録、期限超過 {{count}} 件' }

@@ -3384,7 +3384,9 @@
     }
   },
   "status": {
-    "checking": "確認中..."
+    "checking": "確認中...",
+    "session_unavailable": "セッションを確認できません",
+    "retry": "再試行"
   },
   "a11y": {
     "skip_to_main": "メインコンテンツへ"

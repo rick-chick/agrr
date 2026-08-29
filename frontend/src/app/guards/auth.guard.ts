@@ -20,6 +20,9 @@ export const authGuard: CanActivateFn = (_route, state: RouterStateSnapshot) => 
       if (user) {
         return true;
       }
+      if (authService.sessionUnavailable()) {
+        return false;
+      }
       const queryParams =
         typeof window !== 'undefined'
           ? loginReturnQueryForLocation(

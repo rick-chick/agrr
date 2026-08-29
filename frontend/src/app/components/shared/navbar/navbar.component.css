@@ -126,7 +126,32 @@
 }
 
 .status {
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.status--unavailable {
+  color: var(--color-warning, var(--color-text-muted));
+}
+
+.retry-button {
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: inherit;
+  border-radius: var(--radius-sm, 4px);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.retry-button:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 /* ハンバーガーメニューボタン */
