@@ -21,6 +21,12 @@ describe('apiErrorI18nKey', () => {
     );
   });
 
+  it('maps 409 to conflict key', () => {
+    expect(apiErrorI18nKey(new HttpErrorResponse({ status: 409, statusText: 'Conflict' }))).toBe(
+      'common.api_error.conflict'
+    );
+  });
+
   it('maps status 0 to network key', () => {
     expect(apiErrorI18nKey(new HttpErrorResponse({ status: 0, statusText: 'Unknown Error' }))).toBe(
       'common.api_error.network'
