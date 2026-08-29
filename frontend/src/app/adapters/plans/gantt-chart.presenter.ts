@@ -52,6 +52,7 @@ export class GanttChartPresenter implements LoadGanttPlanDataOutputPort, RunGant
     }
     if (dto.purpose === 'refresh') {
       this.view.clearOptimizationLock();
+      this.view.clearPlanMutationStaleLock();
     }
   }
 
@@ -72,20 +73,15 @@ export class GanttChartPresenter implements LoadGanttPlanDataOutputPort, RunGant
       const action = resolveGanttPlanMutationFailureAction(outcome.failure, options);
       switch (action.kind) {
         case 'refetch_failed':
-          this.showOperationError(GANTT_I18N_KEYS.js.logs.dataRefetchFailed);
+          this.showRefetchFailureError(GANTT_I18N_KEYS.js.logs.dataRefetchFailed);
+          this.view.engagePlanMutationStaleLock(planId);
           if (action.recovery === 'update_chart') {
             this.view.updateChartOnly();
-          } else {
-            this.view.requestPlanRefresh(planId);
           }
           return;
         case 'refetch_error':
-          this.showOperationError(GANTT_I18N_KEYS.js.logs.dataRefetchApiError);
-          if (action.recovery === 'update_chart') {
-            this.view.updateChartOnly();
-          } else {
-            this.view.requestPlanRefresh(planId);
-          }
+          this.showRefetchFailureError(GANTT_I18N_KEYS.js.logs.dataRefetchApiError);
+          this.view.engagePlanMutationStaleLock(planId);
           return;
         case 'message':
           this.showOperationError(action.message);
@@ -98,6 +94,19 @@ export class GanttChartPresenter implements LoadGanttPlanDataOutputPort, RunGant
 
     const onSuccess = options.onSuccess ?? ((data) => this.view!.applyRefreshedPlanData(data));
     onSuccess(outcome.data);
+  }
+
+  private showRefetchFailureError(message?: string): void {
+    if (!this.view) {
+      throw new Error('GanttChartPresenter: view not set');
+    }
+
+    const text = this.formatErrorText(message);
+    this.view.control = {
+      ...this.view.control,
+      pendingErrorFlash: pendingErrorFlashFromError({ message: text })
+    };
+    this.view.setFieldFormLoading(false);
   }
 
   private showOperationError(message?: string): void {

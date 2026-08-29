@@ -13,6 +13,10 @@ export const GANTT_I18N_KEYS = {
     addField: 'plans.gantt.empty_state.add_field',
     registerCrop: 'plans.gantt.empty_state.register_crop'
   },
+  staleLock: {
+    message: 'plans.gantt.stale_lock.message',
+    refresh: 'plans.gantt.stale_lock.refresh'
+  },
   adjustFailed: 'plans.gantt.adjust_failed',
   trashDropLabel: 'plans.gantt.trash_drop_label',
   a11y: {
@@ -69,6 +73,8 @@ export const GANTT_I18N_KEY_PATHS: readonly string[] = [
   GANTT_I18N_KEYS.emptyState.reload,
   GANTT_I18N_KEYS.emptyState.addField,
   GANTT_I18N_KEYS.emptyState.registerCrop,
+  GANTT_I18N_KEYS.staleLock.message,
+  GANTT_I18N_KEYS.staleLock.refresh,
   GANTT_I18N_KEYS.adjustFailed,
   GANTT_I18N_KEYS.trashDropLabel,
   GANTT_I18N_KEYS.a11y.fieldRow,

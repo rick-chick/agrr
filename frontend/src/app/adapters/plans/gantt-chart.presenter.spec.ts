@@ -37,6 +37,8 @@ describe('GanttChartPresenter', () => {
       updateChartOnly: vi.fn(),
       resetBarPosition: vi.fn(),
       clearOptimizationLock: vi.fn(),
+      engagePlanMutationStaleLock: vi.fn(),
+      clearPlanMutationStaleLock: vi.fn(),
       setFieldFormLoading: vi.fn()
     };
     translate = {
@@ -47,7 +49,7 @@ describe('GanttChartPresenter', () => {
     presenter.setView(view);
   });
 
-  it('shows translated refetch_failed and updates chart when configured', () => {
+  it('shows server-may-have-succeeded message and engages stale lock on refetch_failed', () => {
     presenter.onMutationOutcome(
       { status: 'failure', failure: { refetchFailed: true } },
       { planId: 7, presentation: { onRefetchFailure: 'update_chart' } }
@@ -59,16 +61,21 @@ describe('GanttChartPresenter', () => {
       text: `t:${GANTT_I18N_KEYS.js.logs.dataRefetchFailed}`
     });
     expect(view.updateChartOnly).toHaveBeenCalled();
-    expect(view.clearOptimizationLock).toHaveBeenCalled();
+    expect(view.engagePlanMutationStaleLock).toHaveBeenCalledWith(7);
+    expect(view.clearOptimizationLock).not.toHaveBeenCalled();
+    expect(view.requestPlanRefresh).not.toHaveBeenCalled();
   });
 
-  it('requests plan refresh on refetch_error by default', () => {
+  it('engages stale lock on refetch_error without auto refresh', () => {
     presenter.onMutationOutcome(
       { status: 'failure', failure: { refetchError: true } },
       { planId: 7 }
     );
 
-    expect(view.requestPlanRefresh).toHaveBeenCalledWith(7);
+    expect(translate.instant).toHaveBeenCalledWith(GANTT_I18N_KEYS.js.logs.dataRefetchApiError);
+    expect(view.engagePlanMutationStaleLock).toHaveBeenCalledWith(7);
+    expect(view.requestPlanRefresh).not.toHaveBeenCalled();
+    expect(view.clearOptimizationLock).not.toHaveBeenCalled();
   });
 
   it('shows API message and reverts bar on message failure', () => {
