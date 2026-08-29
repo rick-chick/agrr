@@ -3405,6 +3405,16 @@ fn trigger_weather_update_backfills_pending_farm_weather_fetch() {
 }
 
 #[test]
+fn trigger_weather_update_query_token_returns_401() {
+    let client = ContractClient::from_env();
+    let token = std::env::var("SCHEDULER_AUTH_TOKEN")
+        .unwrap_or_else(|_| "test_scheduler_token_contract".into());
+    let path = format!("/api/v1/internal/jobs/trigger_weather_update?token={token}");
+    let (status, body) = status_and_body(client.post(&path, None, &empty_headers(), None));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
 fn get_account_export_unauthenticated_returns_401() {
     let client = ContractClient::from_env();
     let (status, body) = status_and_body(client.get("/api/v1/account/export", None, &empty_headers()));
@@ -4658,6 +4668,30 @@ fn post_backdoor_db_clear_requires_confirmation_token() {
     assert_eq!(400, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("db clear JSON");
     assert_eq!(Some(false), json["success"].as_bool());
+}
+
+#[test]
+fn auth_failure_redirects_to_spa_login_with_error_code() {
+    let client = ContractClient::from_env();
+    let response = client.get("/auth/failure", None, &empty_headers());
+    assert!(
+        response.status().is_redirection(),
+        "expected redirect, got {}",
+        response.status()
+    );
+    let location = response
+        .headers()
+        .get("location")
+        .and_then(|v| v.to_str().ok())
+        .expect("Location header");
+    assert!(
+        location.contains("/login"),
+        "expected SPA login redirect, got {location}"
+    );
+    assert!(
+        location.contains("error=authentication_failed"),
+        "expected authentication_failed error code, got {location}"
+    );
 }
 
 #[test]

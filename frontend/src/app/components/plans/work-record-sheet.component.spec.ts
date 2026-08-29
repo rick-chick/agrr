@@ -11,6 +11,8 @@ import { LoadCropPesticideListUseCase } from '../../usecase/pesticides/load-crop
 import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
 import { PreviewWorkRecordClimateUseCase } from '../../usecase/plans/preview-work-record-climate/preview-work-record-climate.usecase';
+import { WORK_RECORD_PHOTO_GATEWAY } from '../../usecase/plans/work-record-photo-gateway';
+import { of } from 'rxjs';
 import {
   WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO,
   WORK_RECORD_PHOTO_THUMB_HEIGHT_PX_SHEET,
@@ -48,6 +50,16 @@ describe('WorkRecordSheetComponent', () => {
           { provide: LoadFertilizeListUseCase, useValue: loadFertilizeListUseCase },
           { provide: LoadCropPesticideListUseCase, useValue: loadCropPesticideListUseCase },
           { provide: PreviewWorkRecordClimateUseCase, useValue: previewClimateUseCase },
+          {
+            provide: WORK_RECORD_PHOTO_GATEWAY,
+            useValue: {
+              uploadInit: vi.fn(() => of(undefined)),
+              uploadContent: vi.fn(() => of(undefined)),
+              uploadComplete: vi.fn(() => of(undefined)),
+              deletePhoto: vi.fn(() => of(undefined)),
+              downloadPhotoContent: vi.fn(() => of(new Blob()))
+            }
+          },
           { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }
         ]
       }
@@ -545,7 +557,8 @@ describe('WorkRecordSheetComponent', () => {
     component.submit();
     expect(saveUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({
-        createBody: expect.objectContaining({ fertilize_id: 7, task_schedule_item_id: 10 })
+        createBody: expect.objectContaining({ fertilize_id: 7, task_schedule_item_id: 10 }),
+        deletedPhotoContentUrls: []
       })
     );
   });
@@ -595,7 +608,8 @@ describe('WorkRecordSheetComponent', () => {
     component.submit();
     expect(saveUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({
-        createBody: expect.objectContaining({ pesticide_id: 3, task_schedule_item_id: 20 })
+        createBody: expect.objectContaining({ pesticide_id: 3, task_schedule_item_id: 20 }),
+        deletedPhotoContentUrls: []
       })
     );
   });

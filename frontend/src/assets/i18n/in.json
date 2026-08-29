@@ -2468,7 +2468,8 @@
           "errors": {
             "limit_reached": "प्रति कार्य अधिकतम 3 फ़ोटो जोड़ सकते हैं",
             "invalid_type": "JPEG, PNG या WebP छवि चुनें",
-            "upload_failed": "फ़ोटो अपलोड विफल"
+            "upload_failed": "फ़ोटो अपलोड विफल",
+            "partial_sync_failed": "कुछ फ़ोटो परिवर्तन सहेजे नहीं जा सके। शीट अब सर्वर की नवीनतम फ़ोटो दिखाती है।"
           }
         }
       },
@@ -2688,7 +2689,9 @@
         "crops_missing": "अभी तक कोई फसल पंजीकृत नहीं",
         "crops_incomplete": "फसल कार्य योजनाओं की सेटअप आवश्यक",
         "crops_action": "फसल सेटअप करें",
-        "crop_blueprint_action": "कार्य योजना संपादित करें"
+        "crop_blueprint_action": "कार्य योजना संपादित करें",
+        "load_error": "सेटअप तैयारी लोड करने में विफल",
+        "retry": "पुनः प्रयास करें"
       }
     },
     "select_crop": {
@@ -3564,7 +3567,15 @@
       "dev_login_as_farmer": "किसान तारो के रूप में लॉगिन",
       "dev_login_as_researcher": "शोधकर्ता हनाको के रूप में लॉगिन",
       "dev_login_note": "केवल विकास वातावरण में उपलब्ध",
-      "footer_note": "Secure authentication powered by Google OAuth 2.0"
+      "footer_note": "Secure authentication powered by Google OAuth 2.0",
+      "errors": {
+        "oauth_denied": "साइन-इन रद्द या अस्वीकृत किया गया। कृपया पुनः प्रयास करें।",
+        "csrf_mismatch": "सुरक्षा कारणों से साइन-इन पूरा नहीं हो सका। कृपया पुनः प्रयास करें।",
+        "token_exchange_failed": "साइन-इन पूरा नहीं हो सका। कृपया पुनः प्रयास करें।",
+        "authentication_failed": "प्रमाणीकरण विफल रहा। कृपया पुनः प्रयास करें।",
+        "oauth_not_configured": "Google साइन-इन कॉन्फ़िगर नहीं किया गया है। कृपया व्यवस्थापक से संपर्क करें।",
+        "unknown": "साइन-इन विफल रहा। कृपया पुनः प्रयास करें।"
+      }
     },
     "api": {
       "login_required": "इस संसाधन तक पहुंचने के लिए कृपया लॉगिन करें।"

@@ -170,9 +170,7 @@ impl CultivationPlanGateway for CultivationPlanSqliteGateway {
     where
         F: FnOnce() -> Result<T, Box<dyn std::error::Error + Send + Sync>>,
     {
-        // P6: nested `with_write` from gateway methods would deadlock on the pool mutex;
-        // run the block without an explicit SQL transaction until a connection-scoped API exists.
-        block()
+        self.pool.with_write_transaction_scoped(block)
     }
 
     fn private_owned_plan_display_name(

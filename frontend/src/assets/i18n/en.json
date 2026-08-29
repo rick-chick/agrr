@@ -2042,7 +2042,8 @@
           "errors": {
             "limit_reached": "You can attach up to 3 photos per work record",
             "invalid_type": "Choose a JPEG, PNG, or WebP image",
-            "upload_failed": "Photo upload failed"
+            "upload_failed": "Photo upload failed",
+            "partial_sync_failed": "Some photo changes could not be saved. The sheet now shows the latest photos from the server."
           }
         }
       },
@@ -2262,7 +2263,9 @@
         "crops_missing": "No crops registered yet",
         "crops_incomplete": "Crop task plans need setup",
         "crops_action": "Set up crops",
-        "crop_blueprint_action": "Edit task plans"
+        "crop_blueprint_action": "Edit task plans",
+        "load_error": "Failed to load setup readiness",
+        "retry": "Retry"
       }
     },
     "select_crop": {
@@ -3858,7 +3861,15 @@
       "dev_login_as_farmer": "Login as Farmer Taro",
       "dev_login_as_researcher": "Login as Researcher Hanako",
       "dev_login_note": "Available only in development environment",
-      "footer_note": "Secure authentication powered by Google OAuth 2.0"
+      "footer_note": "Secure authentication powered by Google OAuth 2.0",
+      "errors": {
+        "oauth_denied": "Sign-in was cancelled or denied. Please try again.",
+        "csrf_mismatch": "Sign-in could not be completed for security reasons. Please try again.",
+        "token_exchange_failed": "Sign-in could not be completed. Please try again.",
+        "authentication_failed": "Authentication failed. Please try again.",
+        "oauth_not_configured": "Google sign-in is not configured. Please contact the administrator.",
+        "unknown": "Sign-in failed. Please try again."
+      }
     },
     "api": {
       "login_required": "Please log in to access this resource."

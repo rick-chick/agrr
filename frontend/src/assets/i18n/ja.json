@@ -2467,7 +2467,9 @@
         "crops_missing": "作物が未登録です",
         "crops_incomplete": "作物の作業計画の設定が必要です",
         "crops_action": "作物を設定",
-        "crop_blueprint_action": "作業計画を編集"
+        "crop_blueprint_action": "作業計画を編集",
+        "load_error": "セットアップ状況の取得に失敗しました",
+        "retry": "再試行"
       }
     },
     "select_crop": {
@@ -3156,7 +3158,8 @@
           "errors": {
             "limit_reached": "写真は1件の作業記録につき最大3枚までです",
             "invalid_type": "JPEG、PNG、WebP形式の画像を選択してください",
-            "upload_failed": "写真のアップロードに失敗しました"
+            "upload_failed": "写真のアップロードに失敗しました",
+            "partial_sync_failed": "写真の一部を保存できませんでした。サーバー上の最新の写真に戻しました。"
           }
         }
       },
@@ -3894,7 +3897,15 @@
       "dev_login_as_farmer": "農家太郎でログイン",
       "dev_login_as_researcher": "研究員花子でログイン",
       "dev_login_note": "開発環境でのみ利用可能",
-      "footer_note": "Secure authentication powered by Google OAuth 2.0"
+      "footer_note": "Secure authentication powered by Google OAuth 2.0",
+      "errors": {
+        "oauth_denied": "サインインがキャンセルまたは拒否されました。もう一度お試しください。",
+        "csrf_mismatch": "セキュリティ上の理由でサインインを完了できませんでした。もう一度お試しください。",
+        "token_exchange_failed": "サインインを完了できませんでした。もう一度お試しください。",
+        "authentication_failed": "認証に失敗しました。もう一度お試しください。",
+        "oauth_not_configured": "Googleサインインが設定されていません。管理者にお問い合わせください。",
+        "unknown": "サインインに失敗しました。もう一度お試しください。"
+      }
     },
     "api": {
       "login_required": "このリソースにアクセスするにはログインしてください。"

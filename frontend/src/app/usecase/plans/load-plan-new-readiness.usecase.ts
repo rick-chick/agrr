@@ -23,8 +23,8 @@ export class LoadPlanNewReadinessUseCase {
 
   execute(farmId: number, fieldCount: number, hasValidFields: boolean): Observable<PlanCreateReadiness> {
     return forkJoin({
-      farm: this.planCreateGateway.fetchFarm(farmId).pipe(catchError(() => of(null))),
-      crops: this.planCreateGateway.fetchCrops().pipe(catchError(() => of([])))
+      farm: this.planCreateGateway.fetchFarm(farmId),
+      crops: this.planCreateGateway.fetchCrops()
     }).pipe(
       switchMap(({ farm, crops }) => {
         const userCrops = crops.filter((crop) => !crop.is_reference);
