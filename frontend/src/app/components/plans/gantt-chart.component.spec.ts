@@ -427,6 +427,11 @@ describe('GanttChartComponent', () => {
       expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
     });
 
+    it('blocks drag adjust mutation while stale lock is engaged', () => {
+      (component as any).adjustCultivation(33, 'Field 1', 0, new Date('2026-02-01'));
+      expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
+    });
+
     it('requests plan refresh from stale lock without clearing until data loads', () => {
       component.reloadPlanDataFromStaleLock();
 

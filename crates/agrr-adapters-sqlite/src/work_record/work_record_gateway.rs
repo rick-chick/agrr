@@ -397,3 +397,66 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
         }
     }
 }
+
+#[cfg(test)]
+mod work_record_updated_at_token_tests {
+    use super::WorkRecordSqliteGateway;
+
+    #[test]
+    fn parse_stored_datetime_accepts_iso8601_and_sqlite_formats() {
+        let iso = "2026-06-12T10:00:00Z";
+        let sqlite = "2026-06-12 10:00:00";
+        let sqlite_subsec = "2026-06-12 10:00:00.123";
+
+        assert!(WorkRecordSqliteGateway::parse_stored_datetime(iso).is_some());
+        assert!(WorkRecordSqliteGateway::parse_stored_datetime(sqlite).is_some());
+        assert!(WorkRecordSqliteGateway::parse_stored_datetime(sqlite_subsec).is_some());
+    }
+
+    #[test]
+    fn parse_stored_datetime_rejects_garbage() {
+        assert!(WorkRecordSqliteGateway::parse_stored_datetime("not-a-date").is_none());
+    }
+
+    #[test]
+    fn updated_at_tokens_match_exact_strings() {
+        let token = "2026-06-12T10:00:00Z";
+        assert!(WorkRecordSqliteGateway::updated_at_tokens_match(token, token));
+    }
+
+    #[test]
+    fn updated_at_tokens_match_iso_client_token_to_sqlite_stored_value() {
+        assert!(WorkRecordSqliteGateway::updated_at_tokens_match(
+            "2026-06-12 10:00:00",
+            "2026-06-12T10:00:00Z"
+        ));
+    }
+
+    #[test]
+    fn updated_at_tokens_match_sqlite_subsecond_to_iso_without_fraction() {
+        assert!(WorkRecordSqliteGateway::updated_at_tokens_match(
+            "2026-06-12 10:00:00.500",
+            "2026-06-12T10:00:00.500Z"
+        ));
+    }
+
+    #[test]
+    fn updated_at_tokens_reject_different_timestamps() {
+        assert!(!WorkRecordSqliteGateway::updated_at_tokens_match(
+            "2026-06-12 10:00:00",
+            "2026-06-12T10:00:01Z"
+        ));
+    }
+
+    #[test]
+    fn updated_at_tokens_reject_when_either_side_unparseable() {
+        assert!(!WorkRecordSqliteGateway::updated_at_tokens_match(
+            "not-a-date",
+            "2026-06-12T10:00:00Z"
+        ));
+        assert!(!WorkRecordSqliteGateway::updated_at_tokens_match(
+            "2026-06-12 10:00:00",
+            "still-not-a-date"
+        ));
+    }
+}
