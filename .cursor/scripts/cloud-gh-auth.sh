@@ -60,3 +60,40 @@ REAL_GH="$(<"${BIN_DIR}/.gh-real")"
 echo "$AGRR_GH_PAT" | "$REAL_GH" auth login --with-token
 "$REAL_GH" auth setup-git
 "$REAL_GH" auth status >&2 || true
+
+_ensure_gcloud_on_path() {
+  if command -v gcloud >/dev/null 2>&1; then
+    return 0
+  fi
+  local bundled="${HOME}/google-cloud-sdk/google-cloud-sdk/bin"
+  if [[ -x "${bundled}/gcloud" ]]; then
+    export PATH="${bundled}:${PATH}"
+    return 0
+  fi
+  if ! command -v curl >/dev/null 2>&1; then
+    echo "cloud-gh-auth: gcloud missing and curl unavailable (skip GCP)" >&2
+    return 1
+  fi
+  echo "cloud-gh-auth: installing gcloud SDK (non-interactive)" >&2
+  curl -fsSL https://sdk.cloud.google.com | bash -s -- --disable-prompts --install-dir="${HOME}/google-cloud-sdk" >/dev/null
+  export PATH="${HOME}/google-cloud-sdk/google-cloud-sdk/bin:${PATH}"
+}
+
+_activate_gcp_service_account() {
+  if [[ -z "${GCP_SA_KEY:-}" ]]; then
+    echo "cloud-gh-auth: GCP_SA_KEY unset; gcloud Secret Manager / Scheduler ops unavailable" >&2
+    return 0
+  fi
+  if ! _ensure_gcloud_on_path; then
+    return 0
+  fi
+  local keyfile="${HOME}/.config/gcloud/agrr-sa-key.json"
+  mkdir -p "$(dirname "$keyfile")"
+  printf '%s' "$GCP_SA_KEY" >"$keyfile"
+  chmod 600 "$keyfile"
+  gcloud auth activate-service-account --key-file="$keyfile" --quiet
+  gcloud config set project "${GCP_PROJECT_ID:-agrr-475323}" --quiet
+  gcloud auth list >&2 || true
+}
+
+_activate_gcp_service_account
