@@ -1,0 +1,71 @@
+name: Update weather scheduler auth
+
+# Ops workflow for issue #1209 / #1240: move Cloud Scheduler from query token to X-Scheduler-Token header.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: update-weather-scheduler-auth
+  cancel-in-progress: false
+
+jobs:
+  check-secrets:
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          if [ -n "$GCP_SA_KEY" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::error::GCP_SA_KEY secret is not configured."
+            exit 1
+          fi
+
+  update:
+    runs-on: ubuntu-latest
+    needs: check-secrets
+    if: needs.check-secrets.outputs.configured == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          export_default_credentials: true
+
+      - name: Update Cloud Scheduler job
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          chmod +x ./.cursor/skills/deploy-server/scripts/update-weather-scheduler-auth.sh
+          ./.cursor/skills/deploy-server/scripts/update-weather-scheduler-auth.sh
+
+      - name: Verify scheduler configuration
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          JOB_NAME="${WEATHER_SCHEDULER_JOB_NAME:-trigger-weather-update}"
+          REGION="${REGION:-asia-northeast1}"
+          PROJECT_ID="${PROJECT_ID:-agrr-475323}"
+          DESC="$(gcloud scheduler jobs describe "${JOB_NAME}" \
+            --location="${REGION}" \
+            --project="${PROJECT_ID}" \
+            --format=json)"
+          echo "${DESC}"
+          echo "${DESC}" | jq -e '.httpTarget.uri | test("\\?token=") | not' >/dev/null
+          echo "${DESC}" | jq -e '.httpTarget.headers["X-Scheduler-Token"] != null' >/dev/null
+          echo "Scheduler job uses header auth (no query token)."
