@@ -122,6 +122,18 @@ describe('GanttChartPresenter', () => {
     });
   });
 
+  it('keeps stale lock and surfaces error when refresh returns empty plan data', () => {
+    presenter.onPlanDataEmpty({ purpose: 'refresh' });
+
+    expect(view.clearOptimizationLock).toHaveBeenCalled();
+    expect(view.clearPlanMutationStaleLock).not.toHaveBeenCalled();
+    expect(translate.instant).toHaveBeenCalledWith(GANTT_I18N_KEYS.js.logs.dataRefetchFailed);
+    expect(lastControl.pendingErrorFlash).toEqual({
+      type: 'error',
+      text: `t:${GANTT_I18N_KEYS.js.logs.dataRefetchFailed}`
+    });
+  });
+
   it('onMutationOutcome clears field form loading before applying outcome', () => {
     presenter.onMutationOutcome(
       { status: 'success', data: planData() },

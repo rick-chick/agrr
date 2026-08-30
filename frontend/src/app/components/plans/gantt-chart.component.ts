@@ -986,7 +986,7 @@ export class GanttChartComponent
   }
 
   onPointerDown(event: PointerEvent, cultivation: CultivationData) {
-    if (event.button !== 0) return;
+    if (event.button !== 0 || this.planMutationStaleLocked) return;
     event.preventDefault();
 
     this.capturePointerOnSvg(event.pointerId);
@@ -1356,31 +1356,35 @@ export class GanttChartComponent
 
     if (this.isDragging) {
       if (commit.shouldCommit && this.data) {
-        const cultivation = this.data.data.cultivations.find((c) => c.id === cultivationId);
-        if (cultivation) {
-          applyGanttCultivationMove({
-            cultivation,
-            fieldGroups: this.fieldGroups,
-            newFieldName: commit.newFieldName,
-            newFieldIndex: commit.newFieldIndex,
-            newStartDate: commit.newStartDate
-          });
-          this.updateChart();
-        }
+        if (this.planMutationStaleLocked) {
+          this.resetBarPosition();
+        } else {
+          const cultivation = this.data.data.cultivations.find((c) => c.id === cultivationId);
+          if (cultivation) {
+            applyGanttCultivationMove({
+              cultivation,
+              fieldGroups: this.fieldGroups,
+              newFieldName: commit.newFieldName,
+              newFieldIndex: commit.newFieldIndex,
+              newStartDate: commit.newStartDate
+            });
+            this.updateChart();
+          }
 
-        // ドロップ後、最適化完了までスクリーンロックを表示
-        this.showOptimizationLock = true;
-        if (this.learningOrchestrationAdjust) {
-          this.adjustOrchestrationStarted.emit();
+          // ドロップ後、最適化完了までスクリーンロックを表示
+          this.showOptimizationLock = true;
+          if (this.learningOrchestrationAdjust) {
+            this.adjustOrchestrationStarted.emit();
+          }
+          this.scheduleDetectChanges();
+          // API呼び出し
+          this.adjustCultivation(
+            cultivationId,
+            commit.newFieldName,
+            commit.newFieldIndex,
+            commit.newStartDate
+          );
         }
-        this.scheduleDetectChanges();
-        // API呼び出し
-        this.adjustCultivation(
-          cultivationId,
-          commit.newFieldName,
-          commit.newFieldIndex,
-          commit.newStartDate
-        );
       } else {
         this.resetBarPosition();
       }
