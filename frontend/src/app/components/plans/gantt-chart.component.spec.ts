@@ -449,6 +449,41 @@ describe('GanttChartComponent', () => {
 
       expect(component.planMutationStaleLocked).toBe(false);
     });
+
+    it('does not start drag while stale lock is engaged', () => {
+      component.engagePlanMutationStaleLock(7);
+
+      component['onPointerDown'](
+        new PointerEvent('pointerdown', { clientX: 100, clientY: 100, pointerId: 1, button: 0 }),
+        cultivation
+      );
+
+      expect(component.draggedCultivation).toBeNull();
+      expect(component.showOptimizationLock).toBe(false);
+    });
+
+    it('does not enable optimization overlay when drag would commit during stale lock', () => {
+      component.engagePlanMutationStaleLock(7);
+      vi.spyOn(component as any, 'resetBarPosition').mockImplementation(() => undefined);
+      vi.spyOn(component as any, 'resetVisualState').mockImplementation(() => undefined);
+      component['isDragging'] = true;
+      component.draggedCultivation = cultivation;
+      component['originalFieldIndex'] = 0;
+      component['cachedBarBg'] = {
+        getAttribute: (attr: string) => {
+          if (attr === 'x') return '200';
+          if (attr === 'y') return String(component.config.barPadding);
+          if (attr === 'data-original-y') return String(component.config.barPadding);
+          return '0';
+        },
+        setAttribute: vi.fn()
+      } as unknown as SVGRectElement;
+
+      component['finishPointerDrag'](200, 100);
+
+      expect(component.showOptimizationLock).toBe(false);
+      expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
+    });
   });
 
   describe('pointer drag (desktop)', () => {

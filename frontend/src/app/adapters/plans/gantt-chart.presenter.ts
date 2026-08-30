@@ -52,7 +52,7 @@ export class GanttChartPresenter implements LoadGanttPlanDataOutputPort, RunGant
     }
     if (dto.purpose === 'refresh') {
       this.view.clearOptimizationLock();
-      this.view.clearPlanMutationStaleLock();
+      this.showRefetchFailureError(GANTT_I18N_KEYS.js.logs.dataRefetchFailed);
     }
   }
 
