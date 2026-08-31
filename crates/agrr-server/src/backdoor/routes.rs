@@ -65,6 +65,19 @@ fn admin_change_denied_response() -> (StatusCode, Json<Value>) {
     )
 }
 
+fn db_clear_denied_response() -> (StatusCode, Json<Value>) {
+    (
+        StatusCode::FORBIDDEN,
+        Json(json!({
+            "timestamp": timestamp_json(),
+            "success": false,
+            "error": "api.errors.backdoor.db_clear_disabled_in_production",
+            "error_key": "api.errors.backdoor.db_clear_disabled_in_production",
+            "warning": "db/clear is disabled in production unless AGRR_BACKDOOR_ALLOW_DB_CLEAR=1 is set for break-glass use"
+        })),
+    )
+}
+
 fn backdoor_auth(
     state: &AppState,
     headers: &HeaderMap,
@@ -355,16 +368,7 @@ async fn clear_db(
     backdoor_auth(&state, &headers)?;
     if !runtime_env::backdoor_db_clear_allowed() {
         log_backdoor_operation("db_clear", "blocked_production", None);
-        return Ok((
-            StatusCode::FORBIDDEN,
-            Json(json!({
-                "timestamp": timestamp_json(),
-                "success": false,
-                "error": "api.errors.backdoor.db_clear_disabled_in_production",
-                "error_key": "api.errors.backdoor.db_clear_disabled_in_production",
-                "warning": "db/clear is disabled in production unless AGRR_BACKDOOR_ALLOW_DB_CLEAR=1 is set for break-glass use"
-            })),
-        ));
+        return Ok(db_clear_denied_response());
     }
     let Some(token) = body.confirmation_token.as_deref().filter(|t| !t.is_empty()) else {
         log_backdoor_operation("db_clear", "missing_confirmation", None);
@@ -434,6 +438,17 @@ mod tests {
         assert_eq!(status, StatusCode::FORBIDDEN);
         assert_eq!(
             Some("api.errors.backdoor.admin_change_disabled_in_production"),
+            body["error_key"].as_str()
+        );
+        assert_eq!(Some(false), body["success"].as_bool());
+    }
+
+    #[test]
+    fn db_clear_denied_response_uses_production_error_key() {
+        let (status, Json(body)) = db_clear_denied_response();
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(
+            Some("api.errors.backdoor.db_clear_disabled_in_production"),
             body["error_key"].as_str()
         );
         assert_eq!(Some(false), body["success"].as_bool());

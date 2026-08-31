@@ -91,4 +91,33 @@ mod tests {
         assert!(plaintext.is_none() || plaintext.as_deref() == Some(""));
         assert!(hash.is_some());
     }
+
+    #[test]
+    fn backfill_skips_users_with_existing_hash() {
+        let pool = backfill_test_pool();
+        pool.with_write(|conn| {
+            conn.execute(
+                "UPDATE users SET api_key = NULL, api_key_hash = 'existing-hash', api_key_prefix = 'abcd' WHERE id = 1",
+                [],
+            )?;
+            Ok(())
+        })
+        .unwrap();
+
+        let migrated = backfill_plaintext_api_keys(&pool).expect("backfill");
+        assert_eq!(migrated, 0);
+    }
+
+    #[test]
+    fn backfill_skips_empty_plaintext_api_key() {
+        let pool = backfill_test_pool();
+        pool.with_write(|conn| {
+            conn.execute("UPDATE users SET api_key = '' WHERE id = 1", [])?;
+            Ok(())
+        })
+        .unwrap();
+
+        let migrated = backfill_plaintext_api_keys(&pool).expect("backfill");
+        assert_eq!(migrated, 0);
+    }
 }
