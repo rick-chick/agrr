@@ -464,7 +464,9 @@ describe('GanttChartComponent', () => {
 
     it('does not enable optimization overlay when drag would commit during stale lock', () => {
       component.engagePlanMutationStaleLock(7);
-      vi.spyOn(component as any, 'resetBarPosition').mockImplementation(() => undefined);
+      const resetBarPosition = vi
+        .spyOn(component as any, 'resetBarPosition')
+        .mockImplementation(() => undefined);
       vi.spyOn(component as any, 'resetVisualState').mockImplementation(() => undefined);
       component['isDragging'] = true;
       component.draggedCultivation = cultivation;
@@ -481,6 +483,7 @@ describe('GanttChartComponent', () => {
 
       component['finishPointerDrag'](200, 100);
 
+      expect(resetBarPosition).toHaveBeenCalled();
       expect(component.showOptimizationLock).toBe(false);
       expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
     });
