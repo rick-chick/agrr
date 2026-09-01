@@ -1,14 +1,14 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-
-export interface PublicPlanResultsNextStep {
-  stepKey: 'save' | 'task_schedule' | 'work_record';
-  stepNumber: 1 | 2 | 3;
-  titleKey: string;
-  descriptionKey: string;
-  commands?: (string | number)[];
-}
+import {
+  PUBLIC_PLAN_SAVE_NEXT_STEPS,
+  buildPublicPlanSaveNextStepRoute,
+  isPublicPlanSaveStepComplete,
+  isPublicPlanSaveStepCurrent,
+  type PublicPlanSaveNextStep,
+  type PublicPlanSaveNextStepKey
+} from '../../domain/public-plans/public-plan-results-upsell.content';
 
 @Component({
   selector: 'app-public-plan-results-next-steps',
@@ -47,21 +47,25 @@ export interface PublicPlanResultsNextStep {
               <span class="public-plan-results-next-steps__completed-badge">{{
                 'public_plans.results.next_steps.completed' | translate
               }}</span>
-            } @else if (step.commands) {
+            } @else if (stepRoute(step.stepKey); as route) {
               <a
                 class="btn-secondary public-plan-results-next-steps__cta"
-                [routerLink]="step.commands"
+                [routerLink]="route"
               >
                 {{ ctaKey(step.stepKey) | translate }}
               </a>
             } @else if (isStepCurrent(step.stepKey)) {
-              <span class="public-plan-results-next-steps__hint">{{
-                currentStepHint(step.stepKey) | translate
-              }}</span>
+              <button
+                type="button"
+                class="btn-primary public-plan-results-next-steps__cta"
+                (click)="saveRequest.emit()"
+              >
+                {{ currentStepCtaKey(step.stepKey) | translate }}
+              </button>
             } @else {
-              <span class="public-plan-results-next-steps__hint">{{
-                'public_plans.results.next_steps.after_save_hint' | translate
-              }}</span>
+              <span class="public-plan-results-next-steps__locked" aria-disabled="true">
+                {{ 'public_plans.results.next_steps.after_save_hint' | translate }}
+              </span>
             }
           </li>
         }
@@ -73,67 +77,36 @@ export interface PublicPlanResultsNextStep {
 export class PublicPlanResultsNextStepsComponent {
   @Input({ required: true }) isLoggedIn!: boolean;
   @Input() savedPrivatePlanId: number | null = null;
+  @Output() saveRequest = new EventEmitter<void>();
 
-  get steps(): PublicPlanResultsNextStep[] {
-    return buildPublicPlanResultsNextSteps(this.savedPrivatePlanId);
-  }
+  readonly steps = PUBLIC_PLAN_SAVE_NEXT_STEPS;
 
   stepLabel(stepNumber: 1 | 2 | 3): string {
     return `public_plans.results.next_steps.step_label.${stepNumber}`;
   }
 
-  ctaKey(stepKey: PublicPlanResultsNextStep['stepKey']): string {
+  ctaKey(stepKey: PublicPlanSaveNextStepKey): string {
     return `public_plans.results.next_steps.cta.${stepKey}`;
   }
 
-  currentStepHint(stepKey: PublicPlanResultsNextStep['stepKey']): string {
+  currentStepCtaKey(stepKey: PublicPlanSaveNextStepKey): string {
     if (stepKey === 'save' && !this.isLoggedIn) {
       return 'public_plans.results.next_steps.cta.login_save';
     }
     return 'public_plans.results.next_steps.cta.save';
   }
 
-  isStepComplete(stepKey: PublicPlanResultsNextStep['stepKey']): boolean {
-    if (stepKey === 'save') {
-      return this.savedPrivatePlanId !== null;
-    }
-    return false;
+  stepRoute(stepKey: PublicPlanSaveNextStepKey): (string | number)[] | null {
+    return buildPublicPlanSaveNextStepRoute(stepKey, this.savedPrivatePlanId);
   }
 
-  isStepCurrent(stepKey: PublicPlanResultsNextStep['stepKey']): boolean {
-    if (stepKey === 'save') {
-      return !this.isStepComplete('save') && (this.isLoggedIn || !this.savedPrivatePlanId);
-    }
-    return false;
+  isStepComplete(stepKey: PublicPlanSaveNextStepKey): boolean {
+    return isPublicPlanSaveStepComplete(stepKey, this.savedPrivatePlanId);
+  }
+
+  isStepCurrent(stepKey: PublicPlanSaveNextStepKey): boolean {
+    return isPublicPlanSaveStepCurrent(stepKey, this.savedPrivatePlanId);
   }
 }
 
-export function buildPublicPlanResultsNextSteps(
-  savedPrivatePlanId: number | null
-): PublicPlanResultsNextStep[] {
-  const planBase =
-    savedPrivatePlanId !== null ? (['/plans', savedPrivatePlanId] as (string | number)[]) : null;
-
-  return [
-    {
-      stepKey: 'save',
-      stepNumber: 1,
-      titleKey: 'public_plans.results.next_steps.save.title',
-      descriptionKey: 'public_plans.results.next_steps.save.description'
-    },
-    {
-      stepKey: 'task_schedule',
-      stepNumber: 2,
-      titleKey: 'public_plans.results.next_steps.task_schedule.title',
-      descriptionKey: 'public_plans.results.next_steps.task_schedule.description',
-      commands: planBase ? [...planBase, 'task_schedule'] : undefined
-    },
-    {
-      stepKey: 'work_record',
-      stepNumber: 3,
-      titleKey: 'public_plans.results.next_steps.work_record.title',
-      descriptionKey: 'public_plans.results.next_steps.work_record.description',
-      commands: planBase ? [...planBase, 'work_records'] : undefined
-    }
-  ];
-}
+export type { PublicPlanSaveNextStep };

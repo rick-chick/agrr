@@ -1,11 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  buildPublicPlanResultsNextSteps,
-  PublicPlanResultsNextStepsComponent
-} from './public-plan-results-next-steps.component';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PublicPlanResultsNextStepsComponent } from './public-plan-results-next-steps.component';
 
 const nextStepsTranslations = {
   'public_plans.results.next_steps.title': '次のステップ',
@@ -22,28 +19,12 @@ const nextStepsTranslations = {
   'public_plans.results.next_steps.work_record.description':
     '圃場での作業実績を記録し計画と比較',
   'public_plans.results.next_steps.cta.login_save': 'ログインして保存',
-  'public_plans.results.next_steps.cta.save': '上のボタンで保存',
+  'public_plans.results.next_steps.cta.save': 'マイプランに保存',
   'public_plans.results.next_steps.cta.task_schedule': '作業予定を見る',
   'public_plans.results.next_steps.cta.work_record': '作業記録へ',
   'public_plans.results.next_steps.completed': '完了',
   'public_plans.results.next_steps.after_save_hint': '保存後に利用できます'
 };
-
-describe('buildPublicPlanResultsNextSteps', () => {
-  it('builds three steps without links before save', () => {
-    const steps = buildPublicPlanResultsNextSteps(null);
-    expect(steps).toHaveLength(3);
-    expect(steps[0].stepKey).toBe('save');
-    expect(steps[1].commands).toBeUndefined();
-    expect(steps[2].commands).toBeUndefined();
-  });
-
-  it('builds navigation commands after save', () => {
-    const steps = buildPublicPlanResultsNextSteps(42);
-    expect(steps[1].commands).toEqual(['/plans', 42, 'task_schedule']);
-    expect(steps[2].commands).toEqual(['/plans', 42, 'work_records']);
-  });
-});
 
 describe('PublicPlanResultsNextStepsComponent', () => {
   let fixture: ComponentFixture<PublicPlanResultsNextStepsComponent>;
@@ -62,23 +43,45 @@ describe('PublicPlanResultsNextStepsComponent', () => {
     fixture = TestBed.createComponent(PublicPlanResultsNextStepsComponent);
   });
 
-  it('shows login hint on step 1 when guest', () => {
+  it('shows login save button on step 1 when guest', () => {
     fixture.componentInstance.isLoggedIn = false;
     fixture.componentInstance.savedPrivatePlanId = null;
     fixture.detectChanges();
 
-    const hints = fixture.nativeElement.querySelectorAll('.public-plan-results-next-steps__hint');
-    expect(hints.length).toBeGreaterThan(0);
-    expect(fixture.nativeElement.textContent).toContain('ログインして保存');
-    expect(fixture.nativeElement.textContent).toContain('保存後に利用できます');
+    const saveButtons = fixture.nativeElement.querySelectorAll(
+      'button.public-plan-results-next-steps__cta'
+    );
+    expect(saveButtons).toHaveLength(1);
+    expect(saveButtons[0].textContent).toContain('ログインして保存');
+    expect(fixture.nativeElement.querySelectorAll('.public-plan-results-next-steps__locked')).toHaveLength(
+      2
+    );
   });
 
-  it('shows save hint on step 1 when logged in before save', () => {
+  it('emits saveRequest when guest clicks login save button', () => {
+    fixture.componentInstance.isLoggedIn = false;
+    fixture.componentInstance.savedPrivatePlanId = null;
+    fixture.detectChanges();
+
+    const emitSpy = vi.spyOn(fixture.componentInstance.saveRequest, 'emit');
+    const saveButton = fixture.nativeElement.querySelector(
+      'button.public-plan-results-next-steps__cta'
+    ) as HTMLButtonElement;
+    saveButton.click();
+
+    expect(emitSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows save button on step 1 when logged in before save', () => {
     fixture.componentInstance.isLoggedIn = true;
     fixture.componentInstance.savedPrivatePlanId = null;
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('上のボタンで保存');
+    const saveButtons = fixture.nativeElement.querySelectorAll(
+      'button.public-plan-results-next-steps__cta'
+    );
+    expect(saveButtons).toHaveLength(1);
+    expect(saveButtons[0].textContent).toContain('マイプランに保存');
     expect(fixture.nativeElement.querySelectorAll('a.public-plan-results-next-steps__cta')).toHaveLength(
       0
     );

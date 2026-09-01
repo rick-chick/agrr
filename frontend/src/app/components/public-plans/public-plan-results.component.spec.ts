@@ -416,7 +416,7 @@ describe('PublicPlanResultsComponent (template)', () => {
       'public_plans.title': '計画',
       'public_plans.breadcrumb_root': '無料作付け計画',
       'public_plans.results.breadcrumb': '結果',
-      'public_plans.results.private_value_preview.title': 'ログイン後に使える機能',
+      'public_plans.results.private_value_preview.summary': 'ログイン後に使える機能（{{count}}）',
       'public_plans.results.private_value_preview.lead': 'マイプランに保存すると利用できます。',
       'public_plans.results.private_value_preview.weather_reschedule.title': '天候リスケ',
       'public_plans.results.private_value_preview.weather_reschedule.description': '天候提案',
@@ -436,8 +436,8 @@ describe('PublicPlanResultsComponent (template)', () => {
       'public_plans.results.next_steps.work_record.title': '作業を記録',
       'public_plans.results.next_steps.work_record.description': '記録',
       'public_plans.results.next_steps.cta.login_save': 'ログインして保存',
-      'public_plans.results.next_steps.after_save_hint': '保存後に利用できます',
-      'public_plans.save.button': 'マイプランに保存'
+      'public_plans.results.next_steps.cta.save': 'マイプランに保存',
+      'public_plans.results.next_steps.after_save_hint': '保存後に利用できます'
     });
     translate.setDefaultLang('ja');
     translate.use('ja');
@@ -488,8 +488,17 @@ describe('PublicPlanResultsComponent (template)', () => {
 
     expect(fixture.nativeElement.querySelector('app-public-plan-private-value-preview')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-public-plan-results-next-steps')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('ログイン後に使える機能');
-    expect(fixture.nativeElement.textContent).toContain('次のステップ');
-    expect(fixture.nativeElement.textContent).toContain('天候リスケ');
+
+    const gantt = fixture.nativeElement.querySelector('app-plan-gantt-climate-shell');
+    const nextSteps = fixture.nativeElement.querySelector('app-public-plan-results-next-steps');
+    const privatePreview = fixture.nativeElement.querySelector('app-public-plan-private-value-preview');
+    expect(gantt?.compareDocumentPosition(nextSteps!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(nextSteps?.compareDocumentPosition(privatePreview!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    const details = fixture.nativeElement.querySelector(
+      'details.public-plan-private-value-preview'
+    ) as HTMLDetailsElement;
+    expect(details?.open).toBe(false);
+    expect(fixture.nativeElement.querySelector('.public-plan-results__gantt-prefix button')).toBeNull();
   });
 });

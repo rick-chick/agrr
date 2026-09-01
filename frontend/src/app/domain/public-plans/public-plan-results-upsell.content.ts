@@ -26,8 +26,8 @@ export const PUBLIC_PLAN_PRIVATE_VALUE_ITEMS: PublicPlanPrivateValueItem[] = [
   },
   {
     icon: '📊',
-    titleKey: 'public_plans.results.private_value_preview.work_gdd.title',
-    descriptionKey: 'public_plans.results.private_value_preview.work_gdd.description'
+    titleKey: 'public_plans.results.private_value_preview.work_gdd_comparison.title',
+    descriptionKey: 'public_plans.results.private_value_preview.work_gdd_comparison.description'
   }
 ];
 
@@ -74,6 +74,19 @@ export function isPublicPlanSaveStepComplete(
   savedPlanId: number | null
 ): boolean {
   if (stepKey === 'save') {
+    return savedPlanId !== null;
+  }
+  return false;
+}
+
+export function isPublicPlanSaveStepCurrent(
+  stepKey: PublicPlanSaveNextStepKey,
+  savedPlanId: number | null
+): boolean {
+  if (stepKey === 'save') {
+    return savedPlanId === null;
+  }
+  if (stepKey === 'task_schedule') {
     return savedPlanId !== null;
   }
   return false;

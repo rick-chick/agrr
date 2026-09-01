@@ -68,19 +68,9 @@ const initialControl: PublicPlanResultsViewState = {
         } @else if (control.error) {
           <p class="error-message">{{ control.error | translate }}</p>
         } @else if (control.data) {
-          <app-public-plan-private-value-preview />
-          <app-public-plan-results-next-steps
-            [isLoggedIn]="auth.user() !== null"
-            [savedPrivatePlanId]="control.savedPrivatePlanId"
-          />
-
           <div class="public-plan-results__body plan-detail-surface">
             <app-plan-gantt-climate-shell [data]="control.data" [planType]="planType">
               <div ganttActionPrefix class="public-plan-results__gantt-prefix">
-                <button type="button" class="btn btn-primary" (click)="savePlan()">
-                  {{ 'public_plans.save.button' | translate }}
-                </button>
-
                 @if (auth.user()) {
                   <a [routerLink]="['/plans']" class="btn btn-white">
                     {{ 'public_plans.results.view_my_plans' | translate }}
@@ -89,6 +79,14 @@ const initialControl: PublicPlanResultsViewState = {
               </div>
             </app-plan-gantt-climate-shell>
           </div>
+
+          <app-public-plan-results-next-steps
+            [isLoggedIn]="auth.user() !== null"
+            [savedPrivatePlanId]="control.savedPrivatePlanId"
+            (saveRequest)="savePlan()"
+          />
+
+          <app-public-plan-private-value-preview />
         }
       </div>
     </div>
