@@ -68,4 +68,17 @@ describe('FarmSelectionCardsComponent', () => {
     const cards = fixture.nativeElement.querySelectorAll('.enhanced-selection-card');
     expect(cards[0].textContent).toContain('Label:Farm A');
   });
+
+  it('applies enhanced-grid card layout styles from public-plan.component.css', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="farm-selection-cards"]')).toBeTruthy();
+
+    const grid = fixture.nativeElement.querySelector('.enhanced-grid') as HTMLElement;
+    expect(grid).toBeTruthy();
+    expect(getComputedStyle(grid).display).toBe('grid');
+
+    const card = fixture.nativeElement.querySelector('.enhanced-selection-card') as HTMLElement;
+    expect(getComputedStyle(card).borderRadius).not.toBe('0px');
+  });
 });
