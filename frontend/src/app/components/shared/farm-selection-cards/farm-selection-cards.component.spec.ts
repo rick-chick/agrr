@@ -68,4 +68,20 @@ describe('FarmSelectionCardsComponent', () => {
     const cards = fixture.nativeElement.querySelectorAll('.enhanced-selection-card');
     expect(cards[0].textContent).toContain('Label:Farm A');
   });
+
+  it('exposes data-testid for E2E farm selection cards', () => {
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="farm-selection-cards"]'),
+    ).toBeTruthy();
+  });
+
+  it('applies enhanced-grid card layout styles from public-plan CSS', () => {
+    fixture.detectChanges();
+
+    const grid = fixture.nativeElement.querySelector('.enhanced-grid') as HTMLElement;
+    expect(grid).toBeTruthy();
+    expect(getComputedStyle(grid).display).toBe('grid');
+  });
 });

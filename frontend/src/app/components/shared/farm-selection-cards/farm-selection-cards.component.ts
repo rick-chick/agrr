@@ -5,8 +5,13 @@ import { Farm } from '../../../domain/farms/farm';
   selector: 'app-farm-selection-cards',
   standalone: true,
   imports: [],
+  styleUrls: ['../../public-plans/public-plan.component.css'],
   template: `
-    <section class="selection-section" [attr.aria-labelledby]="headingId">
+    <section
+      class="selection-section farm-selection-cards"
+      data-testid="farm-selection-cards"
+      [attr.aria-labelledby]="headingId"
+    >
       <h3 [id]="headingId">{{ heading }}</h3>
       <div class="enhanced-grid" role="list">
         @for (farm of farms; track farm.id) {
