@@ -2422,7 +2422,8 @@
       "farm_group": {
         "expand": "展開",
         "collapse": "折りたたむ",
-        "compare_variance": "乖離を比較"
+        "compare_variance": "乖離を比較",
+        "plan_count": "{{count}}件"
       },
       "menu": {
         "more_actions": "その他の操作"
