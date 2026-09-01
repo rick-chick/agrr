@@ -5,7 +5,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { WorkVariancePresenter } from '../../adapters/work-variance/work-variance.presenter';
 import { WORK_VARIANCE_PROVIDERS } from '../../usecase/work-variance/work-variance.providers';
 import { WorkVarianceInitUseCase } from '../../usecase/work-variance/work-variance-init.usecase';
-import type { VariancePortfolioFilters } from '../../domain/work-variance-portfolio/variance-portfolio-filters';
+import {
+  EMPTY_VARIANCE_PORTFOLIO_FILTERS,
+  type VariancePortfolioFilters
+} from '../../domain/work-variance-portfolio/variance-portfolio-filters';
 import {
   initialWorkVarianceViewState,
   WorkVarianceView,
@@ -28,10 +31,132 @@ import {
         }
       </header>
 
+      @if (!control.loading && control.rows.length) {
+        <section class="section-card work-variance__filters" aria-labelledby="work-variance-filters-title">
+          <h2 id="work-variance-filters-title" class="work-variance__filters-title">
+            {{ 'work.variance.filters.title' | translate }}
+          </h2>
+          <div class="work-variance__filters-toolbar">
+            <div
+              class="work-variance__status-filters"
+              role="group"
+              aria-labelledby="work-variance-status-label"
+            >
+              <span id="work-variance-status-label" class="work-variance__filter-label">{{
+                'work.variance.filters.status' | translate
+              }}</span>
+              <div class="work-variance__status-chips">
+                <button
+                  type="button"
+                  class="work-variance__status-chip"
+                  [class.work-variance__status-chip--selected]="statusFilterValue === ''"
+                  (click)="onStatusChipSelect(null)"
+                >
+                  {{ 'work.variance.filters.all' | translate }}
+                </button>
+                @for (status of control.filterOptions.statuses; track status) {
+                  <button
+                    type="button"
+                    class="work-variance__status-chip"
+                    [class.work-variance__status-chip--selected]="statusFilterValue === status"
+                    (click)="onStatusChipSelect(status)"
+                  >
+                    {{ statusLabel(status) | translate }}
+                  </button>
+                }
+              </div>
+            </div>
+            <label class="work-variance__filter">
+              <span class="work-variance__filter-label">{{ 'work.variance.filters.farm' | translate }}</span>
+              <select
+                class="work-variance__filter-select"
+                [value]="farmFilterValue"
+                (change)="onFarmFilterChange($event)"
+              >
+                <option value="">{{ 'work.variance.filters.all' | translate }}</option>
+                @for (farm of control.filterOptions.farms; track farm.farmId) {
+                  <option [value]="farm.farmId">{{ farm.farmName }}</option>
+                }
+              </select>
+            </label>
+            <label class="work-variance__filter">
+              <span class="work-variance__filter-label">{{ 'work.variance.filters.year' | translate }}</span>
+              <select
+                class="work-variance__filter-select"
+                [value]="yearFilterValue"
+                (change)="onYearFilterChange($event)"
+              >
+                <option value="">{{ 'work.variance.filters.all' | translate }}</option>
+                @for (year of control.filterOptions.planYears; track year) {
+                  <option [value]="year">{{ year }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          @if (hasActiveFilters) {
+            <div class="work-variance__active-filters">
+              <div class="work-variance__active-filter-chips">
+                @if (control.filters.farmId != null) {
+                  <button
+                    type="button"
+                    class="work-variance__active-filter-chip"
+                    (click)="removeFarmFilter()"
+                  >
+                    {{
+                      'work.variance.filters.active_chip'
+                        | translate: { label: ('work.variance.filters.farm' | translate), value: activeFarmName }
+                    }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                }
+                @if (control.filters.status) {
+                  <button
+                    type="button"
+                    class="work-variance__active-filter-chip"
+                    (click)="removeStatusFilter()"
+                  >
+                    {{
+                      'work.variance.filters.active_chip'
+                        | translate
+                          : {
+                              label: ('work.variance.filters.status' | translate),
+                              value: (statusLabel(control.filters.status) | translate)
+                            }
+                    }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                }
+                @if (control.filters.planYear != null) {
+                  <button
+                    type="button"
+                    class="work-variance__active-filter-chip"
+                    (click)="removeYearFilter()"
+                  >
+                    {{
+                      'work.variance.filters.active_chip'
+                        | translate
+                          : {
+                              label: ('work.variance.filters.year' | translate),
+                              value: control.filters.planYear
+                            }
+                    }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                }
+              </div>
+              <button type="button" class="work-variance__clear-filters" (click)="clearFilters()">
+                {{ 'work.variance.filters.clear' | translate }}
+              </button>
+            </div>
+          }
+        </section>
+      }
+
       @if (!control.loading && control.portfolioSummary && control.rows.length) {
         <section
           class="work-variance__portfolio-summary"
           role="status"
+          aria-live="polite"
           aria-labelledby="work-variance-portfolio-summary-title"
         >
           <h2 id="work-variance-portfolio-summary-title" class="work-variance__portfolio-summary-title">
@@ -55,52 +180,6 @@ import {
               <dd>{{ control.portfolioSummary.daysThresholdExceededCount }}</dd>
             </div>
           </dl>
-        </section>
-      }
-
-      @if (!control.loading && control.rows.length) {
-        <section class="work-variance__filters" aria-labelledby="work-variance-filters-title">
-          <h2 id="work-variance-filters-title" class="work-variance__filters-title">
-            {{ 'work.variance.filters.title' | translate }}
-          </h2>
-          <div class="work-variance__filters-grid">
-            <label class="work-variance__filter">
-              <span>{{ 'work.variance.filters.farm' | translate }}</span>
-              <select
-                [value]="farmFilterValue"
-                (change)="onFarmFilterChange($event)"
-              >
-                <option value="">{{ 'work.variance.filters.all' | translate }}</option>
-                @for (farm of control.filterOptions.farms; track farm.farmId) {
-                  <option [value]="farm.farmId">{{ farm.farmName }}</option>
-                }
-              </select>
-            </label>
-            <label class="work-variance__filter">
-              <span>{{ 'work.variance.filters.status' | translate }}</span>
-              <select
-                [value]="statusFilterValue"
-                (change)="onStatusFilterChange($event)"
-              >
-                <option value="">{{ 'work.variance.filters.all' | translate }}</option>
-                @for (status of control.filterOptions.statuses; track status) {
-                  <option [value]="status">{{ statusLabel(status) | translate }}</option>
-                }
-              </select>
-            </label>
-            <label class="work-variance__filter">
-              <span>{{ 'work.variance.filters.year' | translate }}</span>
-              <select
-                [value]="yearFilterValue"
-                (change)="onYearFilterChange($event)"
-              >
-                <option value="">{{ 'work.variance.filters.all' | translate }}</option>
-                @for (year of control.filterOptions.planYears; track year) {
-                  <option [value]="year">{{ year }}</option>
-                }
-              </select>
-            </label>
-          </div>
         </section>
       }
 
@@ -146,7 +225,14 @@ import {
             <a routerLink="/plans/new" class="btn btn-primary">{{ 'work.variance.create_plan_link' | translate }}</a>
           </div>
         } @else if (!control.farmGroups.length) {
-          <p class="work-variance__no-results">{{ 'work.variance.no_filter_results' | translate }}</p>
+          <div class="work-variance__no-results">
+            <p>{{ 'work.variance.no_filter_results' | translate }}</p>
+            @if (hasActiveFilters) {
+              <button type="button" class="work-variance__clear-filters" (click)="clearFilters()">
+                {{ 'work.variance.filters.clear' | translate }}
+              </button>
+            }
+          </div>
         } @else {
           @for (group of control.farmGroups; track group.farmId) {
             <section class="work-variance__farm-group" [attr.aria-label]="group.farmName">
@@ -230,6 +316,21 @@ export class WorkVarianceComponent implements WorkVarianceView, OnInit {
     return this.control.filters.planYear?.toString() ?? '';
   }
 
+  get hasActiveFilters(): boolean {
+    const { farmId, status, planYear } = this.control.filters;
+    return farmId != null || status != null || planYear != null;
+  }
+
+  get activeFarmName(): string {
+    const farmId = this.control.filters.farmId;
+    if (farmId == null) {
+      return '';
+    }
+    return (
+      this.control.filterOptions.farms.find((farm) => farm.farmId === farmId)?.farmName ?? String(farmId)
+    );
+  }
+
   ngOnInit(): void {
     this.presenter.setView(this);
     this.reload();
@@ -252,11 +353,10 @@ export class WorkVarianceComponent implements WorkVarianceView, OnInit {
     });
   }
 
-  onStatusFilterChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  onStatusChipSelect(status: string | null): void {
     this.applyFilters({
       ...this.control.filters,
-      status: value || null
+      status
     });
   }
 
@@ -265,6 +365,31 @@ export class WorkVarianceComponent implements WorkVarianceView, OnInit {
     this.applyFilters({
       ...this.control.filters,
       planYear: value ? Number(value) : null
+    });
+  }
+
+  clearFilters(): void {
+    this.applyFilters({ ...EMPTY_VARIANCE_PORTFOLIO_FILTERS });
+  }
+
+  removeFarmFilter(): void {
+    this.applyFilters({
+      ...this.control.filters,
+      farmId: null
+    });
+  }
+
+  removeStatusFilter(): void {
+    this.applyFilters({
+      ...this.control.filters,
+      status: null
+    });
+  }
+
+  removeYearFilter(): void {
+    this.applyFilters({
+      ...this.control.filters,
+      planYear: null
     });
   }
 

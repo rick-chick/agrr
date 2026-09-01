@@ -250,7 +250,7 @@
       "today_summary": "{{count}} today",
       "open_work": "Open work",
       "start_recording": "Start recording",
-      "no_fields_warning": "This farm has no registered fields.",
+      "no_fields_warning": "No valid fields on this farm.",
       "register_fields_link": "Register fields",
       "retry": "Reload",
       "gdd_delay_summary": "{{count}} GDD delayed",
@@ -298,7 +298,9 @@
         "farm": "Farm",
         "status": "Status",
         "year": "Year",
-        "all": "All"
+        "all": "All",
+        "clear": "Clear filters",
+        "active_chip": "{{label}}: {{value}}"
       },
       "attention_list": {
         "title": "Action-required tasks (multiple plans per farm)",
