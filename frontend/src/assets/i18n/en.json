@@ -2218,7 +2218,8 @@
       "farm_group": {
         "expand": "Expand",
         "collapse": "Collapse",
-        "compare_variance": "Compare variance"
+        "compare_variance": "Compare variance",
+        "plan_count": "{{count}} plans"
       },
       "menu": {
         "more_actions": "More actions"

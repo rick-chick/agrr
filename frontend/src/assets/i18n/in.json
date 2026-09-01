@@ -2644,7 +2644,8 @@
       "farm_group": {
         "expand": "विस्तार करें",
         "collapse": "समेटें",
-        "compare_variance": "विचरण की तुलना करें"
+        "compare_variance": "विचरण की तुलना करें",
+        "plan_count": "{{count}} योजनाएँ"
       },
       "menu": {
         "more_actions": "अधिक क्रियाएँ"
