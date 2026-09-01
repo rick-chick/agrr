@@ -76,7 +76,10 @@ describe('WorkHubComponent', () => {
       'work.hub.title': '作業ハブ',
       'work.hub.no_farms': '農場がまだ登録されていません',
       'work.hub.select_farm': '農場を選択',
-      'work.hub.no_fields_warning': '有効な圃場がありません',
+      'work.hub.no_fields_warning': 'この農場には圃場が登録されていません。',
+      'work.hub.register_fields_link': '圃場を登録する',
+      'work.hub.open_work': '作業へ',
+      'work.hub.start_recording': '記録を始める',
       'work.hub.creating_plan': '計画を準備しています…',
       'work.hub.creating_plan_for': '「{{name}}」の計画を準備しています…',
       'work.hub.subtitle': '農場を選んで今日の作業を記録します',
@@ -102,9 +105,6 @@ describe('WorkHubComponent', () => {
       'work.hub.attention_list.title': '要対応タスク（上位）',
       'work.hub.attention_list.item': '{{farm}} · {{task}}',
       'work.hub.attention_list.weather_trigger_item': '{{farm}} · 天候トリガー {{count}} 件',
-      'work.hub.start_recording': '記録を始める',
-      'work.hub.open_work': '作業へ',
-      'work.hub.register_fields_link': '圃場を登録する',
       'plans.work.today_attention.weather_trigger.frost_forecast': '霜予報',
       'plans.work.today_attention.weather_trigger.gdd_trajectory_delay': 'GDD軌道遅延',
       'common.api_error.generic': 'エラーが発生しました'
@@ -247,8 +247,18 @@ describe('WorkHubComponent', () => {
     });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('有効な圃場がありません');
+    const card = fixture.nativeElement.querySelector('article.item-card');
+    const warning = card?.querySelector('.work-hub__warning[role="status"]');
+
+    expect(fixture.nativeElement.textContent).toContain('この農場には圃場が登録されていません。');
+    expect(card).not.toBeNull();
+    expect(warning).not.toBeNull();
+    expect(warning?.textContent).toContain('圃場を登録する');
+    expect(card?.querySelector('a.work-hub__warning__link')?.getAttribute('href')).toContain('/farms/1');
     expect(fixture.nativeElement.querySelector('.work-hub__farm-btn')?.disabled).toBe(true);
+    expect(card?.querySelector('.work-hub__summary')).toBeNull();
+    expect(card?.querySelector('.work-hub__cta')).toBeNull();
+    expect(card?.classList.contains('work-hub__farm-card--blocked')).toBe(true);
   });
 
   it('keeps no-fields warning inside the farm card with role=status (layout regression)', () => {

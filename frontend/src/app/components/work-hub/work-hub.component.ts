@@ -2,9 +2,10 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { WORK_HUB_PROVIDERS, WorkHubPresenter } from '../../usecase/work-hub/work-hub.providers';
+import { WorkHubPresenter } from '../../adapters/work-hub/work-hub.presenter';
 import { EnsurePlanForFarmUseCase } from '../../usecase/work-hub/ensure-plan-for-farm.usecase';
 import { WorkHubInitUseCase } from '../../usecase/work-hub/work-hub-init.usecase';
+import { WORK_HUB_PROVIDERS } from '../../usecase/work-hub/work-hub.providers';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingSuccessFlashViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
 import { applyPendingNavigationViewEffects } from '../../core/view-effects/pending-navigation-view.effects';
@@ -157,7 +158,10 @@ const initialControl: WorkHubViewState = {
             <ul class="card-list" role="list">
               @for (farm of control.farms; track farm.farmId) {
                 <li class="card-list__item">
-                  <article class="item-card">
+                  <article
+                    class="item-card work-hub__farm-card"
+                    [class.work-hub__farm-card--blocked]="!farm.hasValidFields"
+                  >
                     <button
                       type="button"
                       class="item-card__body work-hub__farm-btn"
@@ -198,33 +202,33 @@ const initialControl: WorkHubViewState = {
                             | translate: { count: farm.fieldCount, area: farm.totalArea }
                         }}
                       </span>
-                      <span class="work-hub__summary">
-                        {{
-                          'work.hub.overdue_summary'
-                            | translate: { count: farm.overdueCount }
-                        }}
-                        ·
-                        {{
-                          'work.hub.today_summary'
-                            | translate: { count: farm.todayCount }
-                        }}
-                        ·
-                        {{
-                          'work.hub.unrecorded_summary'
-                            | translate: { count: farm.unrecordedCount }
-                        }}
-                        ·
-                        {{
-                          'work.hub.gdd_delay_summary'
-                            | translate: { count: farm.gddDelayCount }
-                        }}
-                        ·
-                        {{
-                          'work.hub.threshold_exceeded_summary'
-                            | translate: { count: farm.thresholdExceededCount }
-                        }}
-                      </span>
                       @if (farm.hasValidFields) {
+                        <span class="work-hub__summary">
+                          {{
+                            'work.hub.overdue_summary'
+                              | translate: { count: farm.overdueCount }
+                          }}
+                          ·
+                          {{
+                            'work.hub.today_summary'
+                              | translate: { count: farm.todayCount }
+                          }}
+                          ·
+                          {{
+                            'work.hub.unrecorded_summary'
+                              | translate: { count: farm.unrecordedCount }
+                          }}
+                          ·
+                          {{
+                            'work.hub.gdd_delay_summary'
+                              | translate: { count: farm.gddDelayCount }
+                          }}
+                          ·
+                          {{
+                            'work.hub.threshold_exceeded_summary'
+                              | translate: { count: farm.thresholdExceededCount }
+                          }}
+                        </span>
                         <span class="work-hub__cta">
                           {{
                             farm.planId
@@ -235,12 +239,17 @@ const initialControl: WorkHubViewState = {
                       }
                     </button>
                     @if (!farm.hasValidFields) {
-                      <p class="work-hub__warning" role="status">
-                        {{ 'work.hub.no_fields_warning' | translate }}
-                        <a class="work-hub__warning-link" [routerLink]="['/farms', farm.farmId]">{{
-                          'work.hub.register_fields_link' | translate
-                        }}</a>
-                      </p>
+                      <footer class="work-hub__no-fields-footer">
+                        <p class="work-hub__warning" role="status">
+                          {{ 'work.hub.no_fields_warning' | translate }}
+                          <a
+                            class="work-hub__warning__link btn btn-primary"
+                            [routerLink]="['/farms', farm.farmId]"
+                          >
+                            {{ 'work.hub.register_fields_link' | translate }}
+                          </a>
+                        </p>
+                      </footer>
                     }
                   </article>
                 </li>
