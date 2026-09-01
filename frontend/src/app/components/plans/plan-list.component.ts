@@ -76,22 +76,39 @@ const initialControl: PlanListViewState = {
             <section class="plan-list__farm-group" [attr.aria-labelledby]="'plan-list-farm-' + group.farmId">
               <header class="plan-list__farm-group-header">
                 <div class="plan-list__farm-group-heading">
-                  <button
-                    type="button"
-                    class="btn-link plan-list__farm-group-toggle"
-                    (click)="toggleFarmGroup(group.farmId)"
-                    [attr.aria-expanded]="isFarmGroupExpanded(group.farmId)"
-                    [attr.aria-controls]="'plan-list-farm-plans-' + group.farmId"
-                  >
-                    {{
-                      isFarmGroupExpanded(group.farmId)
-                        ? ('plans.index.farm_group.collapse' | translate)
-                        : ('plans.index.farm_group.expand' | translate)
-                    }}
-                  </button>
-                  <h2 id="plan-list-farm-{{ group.farmId }}" class="plan-list__farm-group-title">
-                    {{ group.farmName }}
-                  </h2>
+                  @if (showFarmGroupToggle()) {
+                    <button
+                      type="button"
+                      class="plan-list__farm-group-accordion-btn"
+                      (click)="toggleFarmGroup(group.farmId)"
+                      [attr.aria-expanded]="isFarmGroupExpanded(group.farmId)"
+                      [attr.aria-controls]="'plan-list-farm-plans-' + group.farmId"
+                      [attr.aria-label]="
+                        (isFarmGroupExpanded(group.farmId)
+                          ? 'plans.index.farm_group.collapse'
+                          : 'plans.index.farm_group.expand') | translate
+                      "
+                    >
+                      <span class="plan-list__farm-group-chevron" aria-hidden="true">
+                        {{ isFarmGroupExpanded(group.farmId) ? '▼' : '▶' }}
+                      </span>
+                      <h2 id="plan-list-farm-{{ group.farmId }}" class="plan-list__farm-group-title">
+                        {{ group.farmName }}
+                      </h2>
+                      @if (!isFarmGroupExpanded(group.farmId)) {
+                        <span class="plan-list__farm-group-plan-count">
+                          {{
+                            'plans.index.farm_group.plan_count'
+                              | translate: { count: group.plans.length }
+                          }}
+                        </span>
+                      }
+                    </button>
+                  } @else {
+                    <h2 id="plan-list-farm-{{ group.farmId }}" class="plan-list__farm-group-title">
+                      {{ group.farmName }}
+                    </h2>
+                  }
                 </div>
                 <a
                   class="btn btn-secondary plan-list__variance-link"
@@ -286,6 +303,10 @@ export class PlanListComponent implements PlanListView, OnInit {
 
   farmGroups(): PlanListFarmGroup[] {
     return buildPlanListFarmGroups(this.control.plans);
+  }
+
+  showFarmGroupToggle(): boolean {
+    return this.farmGroups().length > 1;
   }
 
   isFarmGroupExpanded(farmId: number): boolean {
