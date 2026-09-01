@@ -3001,7 +3001,7 @@
       "today_summary": "आज {{count}}",
       "open_work": "कार्य खोलें",
       "start_recording": "दर्ज करना शुरू करें",
-      "no_fields_warning": "इस खेत पर कोई मान्य खेत क्षेत्र नहीं है।",
+      "no_fields_warning": "इस खेत पर कोई पंजीकृत खेत क्षेत्र नहीं है।",
       "register_fields_link": "खेत क्षेत्र पंजीकृत करें",
       "retry": "पुनः लोड करें",
       "gdd_delay_summary": "{{count}} GDD विलंब",
