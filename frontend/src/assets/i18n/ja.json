@@ -2023,6 +2023,7 @@
       },
       "private_value_preview": {
         "title": "保存後に使えるプライベート機能",
+        "toggle_summary": "ログイン後に使える機能（3）",
         "lead": "マイプランに保存すると、天候変化への対応から学習・作業記録まで一気通貫で進められます。",
         "weather_reschedule": {
           "title": "天候リスケ提案",
@@ -2065,12 +2066,13 @@
         },
         "cta": {
           "login_save": "ログインして保存",
-          "save": "上のボタンで保存",
+          "save": "マイプランに保存",
           "task_schedule": "作業予定を見る",
           "work_record": "作業記録へ"
         },
         "completed": "完了",
-        "after_save_hint": "保存後に利用できます"
+        "after_save_hint": "保存後に利用できます",
+        "locked_hint": "保存後に利用できます"
       }
     },
     "show": {

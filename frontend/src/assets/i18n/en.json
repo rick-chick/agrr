@@ -1162,6 +1162,7 @@
       },
       "private_value_preview": {
         "title": "Private features after you save",
+        "toggle_summary": "Features after login (3)",
         "lead": "Saving to My Plans unlocks weather rescheduling, learning loops, and work GDD comparison in one flow.",
         "weather_reschedule": {
           "title": "Weather reschedule proposals",
@@ -1204,12 +1205,13 @@
         },
         "cta": {
           "login_save": "Sign in to save",
-          "save": "Use the button above to save",
+          "save": "Save to My Plans",
           "task_schedule": "View task schedule",
           "work_record": "Record work"
         },
         "completed": "Done",
-        "after_save_hint": "Available after save"
+        "after_save_hint": "Available after save",
+        "locked_hint": "Available after save"
       }
     },
     "reference_farms": {

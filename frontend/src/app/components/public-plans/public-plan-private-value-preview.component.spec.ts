@@ -32,7 +32,7 @@ describe('PublicPlanPrivateValuePreviewComponent', () => {
     translate.setTranslation(
       'ja',
       {
-        'public_plans.results.private_value_preview.title': 'ログイン後に使える機能',
+        'public_plans.results.private_value_preview.toggle_summary': 'ログイン後に使える機能（3）',
         'public_plans.results.private_value_preview.lead': 'マイプランに保存すると利用できます。',
         'public_plans.results.private_value_preview.weather_reschedule.title': '天候リスケ',
         'public_plans.results.private_value_preview.weather_reschedule.description':
@@ -50,18 +50,22 @@ describe('PublicPlanPrivateValuePreviewComponent', () => {
     fixture = TestBed.createComponent(PublicPlanPrivateValuePreviewComponent);
   });
 
-  it('renders private value preview band with three features', () => {
+  it('renders collapsed details with three features inside', () => {
     fixture.detectChanges();
 
-    const text = fixture.nativeElement.textContent;
-    expect(text).toContain('ログイン後に使える機能');
-    expect(text).toContain('天候リスケ');
-    expect(text).toContain('学習ループ');
-    expect(text).toContain('作業 GDD 比較');
+    const details = fixture.nativeElement.querySelector(
+      'details.public-plan-private-value-preview'
+    );
+    expect(details).not.toBeNull();
+    expect(details.open).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('ログイン後に使える機能（3）');
 
     const items = fixture.nativeElement.querySelectorAll(
       '.public-plan-private-value-preview__item'
     );
     expect(items).toHaveLength(3);
+    expect(fixture.nativeElement.textContent).toContain('天候リスケ');
+    expect(fixture.nativeElement.textContent).toContain('学習ループ');
+    expect(fixture.nativeElement.textContent).toContain('作業 GDD 比較');
   });
 });

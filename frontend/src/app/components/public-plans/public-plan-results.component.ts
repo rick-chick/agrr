@@ -68,27 +68,26 @@ const initialControl: PublicPlanResultsViewState = {
         } @else if (control.error) {
           <p class="error-message">{{ control.error | translate }}</p>
         } @else if (control.data) {
-          <app-public-plan-private-value-preview />
-          <app-public-plan-results-next-steps
-            [isLoggedIn]="auth.user() !== null"
-            [savedPrivatePlanId]="control.savedPrivatePlanId"
-          />
-
           <div class="public-plan-results__body plan-detail-surface">
             <app-plan-gantt-climate-shell [data]="control.data" [planType]="planType">
-              <div ganttActionPrefix class="public-plan-results__gantt-prefix">
-                <button type="button" class="btn btn-primary" (click)="savePlan()">
-                  {{ 'public_plans.save.button' | translate }}
-                </button>
-
-                @if (auth.user()) {
+              @if (auth.user()) {
+                <div ganttActionPrefix class="public-plan-results__gantt-prefix">
                   <a [routerLink]="['/plans']" class="btn btn-white">
                     {{ 'public_plans.results.view_my_plans' | translate }}
                   </a>
-                }
-              </div>
+                </div>
+              }
             </app-plan-gantt-climate-shell>
           </div>
+
+          <app-public-plan-results-next-steps
+            [isLoggedIn]="auth.user() !== null"
+            [savedPrivatePlanId]="control.savedPrivatePlanId"
+            [loginReturnTo]="loginReturnTo"
+            (saveRequest)="savePlan()"
+          />
+
+          <app-public-plan-private-value-preview />
         }
       </div>
     </div>
@@ -114,6 +113,10 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   protected readonly auth = inject(AuthService);
 
   readonly planType: 'private' | 'public' = 'public';
+
+  get loginReturnTo(): string {
+    return typeof window !== 'undefined' ? window.location.href : '';
+  }
 
   get contextCrumbs(): MasterContextCrumb[] {
     return [
