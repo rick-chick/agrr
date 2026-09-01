@@ -60,6 +60,53 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
+  min-width: 0;
+}
+
+.plan-list__farm-group-accordion-btn {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.plan-list__farm-group-accordion-btn:hover .plan-list__farm-group-title {
+  color: var(--color-primary);
+}
+
+.plan-list__farm-group-accordion-btn:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+  border-radius: var(--radius-sm);
+}
+
+.plan-list__farm-group-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-50);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.plan-list__farm-group-plan-count {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
 }
 
 .plan-list__farm-group-title {

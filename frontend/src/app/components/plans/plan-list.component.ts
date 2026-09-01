@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef, ElementRef, ViewChild, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { PlanListView, PlanListViewState } from './plan-list.view';
 import { LoadPlanListUseCase } from '../../usecase/plans/load-plan-list.usecase';
@@ -76,22 +76,34 @@ const initialControl: PlanListViewState = {
             <section class="plan-list__farm-group" [attr.aria-labelledby]="'plan-list-farm-' + group.farmId">
               <header class="plan-list__farm-group-header">
                 <div class="plan-list__farm-group-heading">
-                  <button
-                    type="button"
-                    class="btn-link plan-list__farm-group-toggle"
-                    (click)="toggleFarmGroup(group.farmId)"
-                    [attr.aria-expanded]="isFarmGroupExpanded(group.farmId)"
-                    [attr.aria-controls]="'plan-list-farm-plans-' + group.farmId"
-                  >
-                    {{
-                      isFarmGroupExpanded(group.farmId)
-                        ? ('plans.index.farm_group.collapse' | translate)
-                        : ('plans.index.farm_group.expand' | translate)
-                    }}
-                  </button>
-                  <h2 id="plan-list-farm-{{ group.farmId }}" class="plan-list__farm-group-title">
-                    {{ group.farmName }}
-                  </h2>
+                  @if (hasMultipleFarmGroups()) {
+                    <button
+                      type="button"
+                      class="plan-list__farm-group-accordion-btn"
+                      data-testid="plan-list-farm-group-accordion"
+                      (click)="toggleFarmGroup(group.farmId)"
+                      [attr.aria-expanded]="isFarmGroupExpanded(group.farmId)"
+                      [attr.aria-controls]="'plan-list-farm-plans-' + group.farmId"
+                      [attr.aria-label]="farmGroupToggleAriaLabel(group)"
+                    >
+                      <span class="plan-list__farm-group-chevron" aria-hidden="true">{{ isFarmGroupExpanded(group.farmId) ? '▼' : '▶' }}</span>
+                      <span id="plan-list-farm-{{ group.farmId }}" class="plan-list__farm-group-title">
+                        {{ group.farmName }}
+                      </span>
+                      @if (!isFarmGroupExpanded(group.farmId)) {
+                        <span class="plan-list__farm-group-plan-count">
+                          {{
+                            'plans.index.farm_group.plan_count'
+                              | translate: { count: group.plans.length }
+                          }}
+                        </span>
+                      }
+                    </button>
+                  } @else {
+                    <h2 id="plan-list-farm-{{ group.farmId }}" class="plan-list__farm-group-title">
+                      {{ group.farmName }}
+                    </h2>
+                  }
                 </div>
                 <a
                   class="btn btn-secondary plan-list__variance-link"
@@ -101,7 +113,7 @@ const initialControl: PlanListViewState = {
                   {{ 'plans.index.farm_group.compare_variance' | translate }}
                 </a>
               </header>
-              @if (isFarmGroupExpanded(group.farmId)) {
+              @if (!hasMultipleFarmGroups() || isFarmGroupExpanded(group.farmId)) {
                 <ul
                   id="plan-list-farm-plans-{{ group.farmId }}"
                   class="card-list"
@@ -248,6 +260,7 @@ export class PlanListComponent implements PlanListView, OnInit {
   private readonly flashMessage = inject(FlashMessageService);
   private readonly publicPlanStore = inject(PublicPlanStore);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
 
@@ -286,6 +299,17 @@ export class PlanListComponent implements PlanListView, OnInit {
 
   farmGroups(): PlanListFarmGroup[] {
     return buildPlanListFarmGroups(this.control.plans);
+  }
+
+  hasMultipleFarmGroups(): boolean {
+    return this.farmGroups().length > 1;
+  }
+
+  farmGroupToggleAriaLabel(group: PlanListFarmGroup): string {
+    const key = this.isFarmGroupExpanded(group.farmId)
+      ? 'plans.index.farm_group.collapse_aria'
+      : 'plans.index.farm_group.expand_aria';
+    return this.translate.instant(key, { farmName: group.farmName });
   }
 
   isFarmGroupExpanded(farmId: number): boolean {
