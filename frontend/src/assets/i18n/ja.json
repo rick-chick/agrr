@@ -2420,9 +2420,10 @@
         "learn_link": "学習を確認"
       },
       "farm_group": {
-        "expand": "展開",
-        "collapse": "折りたたむ",
-        "compare_variance": "乖離を比較"
+        "compare_variance": "乖離を比較",
+        "plan_count": "{{count}}件",
+        "expand_aria": "{{farmName}}を展開",
+        "collapse_aria": "{{farmName}}を折りたたむ"
       },
       "menu": {
         "more_actions": "その他の操作"

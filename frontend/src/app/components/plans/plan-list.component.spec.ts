@@ -86,9 +86,10 @@ describe('PlanListComponent', () => {
             learn_link: 'Review learning'
           },
           farm_group: {
-            expand: 'Expand',
-            collapse: 'Collapse',
-            compare_variance: 'Compare variance'
+            compare_variance: 'Compare variance',
+            plan_count: '{{count}} plans',
+            expand_aria: 'Expand {{farmName}}',
+            collapse_aria: 'Collapse {{farmName}}'
           },
           year_label: 'Year {{year}}',
           status: {
@@ -295,11 +296,73 @@ describe('PlanListComponent', () => {
     expect(nativeElement.querySelector('#plan-list-farm-1')?.textContent).toContain('Farm A');
     expect(nativeElement.querySelector('#plan-list-farm-2')?.textContent).toContain('Farm B');
 
-    component.toggleFarmGroup(1);
+    const toggle = nativeElement.querySelector(
+      '.plan-list__farm-group-accordion-btn'
+    ) as HTMLButtonElement;
+    toggle.click();
     fixture.detectChanges();
 
     expect(nativeElement.querySelector('#plan-list-farm-plans-1')).toBeNull();
     expect(nativeElement.querySelector('#plan-list-farm-plans-2')).toBeTruthy();
+  });
+
+  it('uses chevron accordion trigger with farm name instead of expand/collapse text', async () => {
+    const nativeElement = await renderPlans([
+      planWithGap({ id: 1, farm_id: 1, farm_name: 'Farm A' }),
+      planWithGap({ id: 2, farm_id: 2, farm_name: 'Farm B', name: 'Plan B' })
+    ]);
+
+    expect(nativeElement.querySelector('.plan-list__farm-group-toggle')).toBeNull();
+    expect(nativeElement.textContent).not.toMatch(/\bExpand\b/);
+    expect(nativeElement.textContent).not.toMatch(/\bCollapse\b/);
+
+    const accordionButtons = nativeElement.querySelectorAll('.plan-list__farm-group-accordion-btn');
+    expect(accordionButtons).toHaveLength(2);
+    expect(accordionButtons[0].querySelector('.plan-list__farm-group-chevron')?.textContent).toBe('▼');
+    expect(accordionButtons[0].textContent).toContain('Farm A');
+  });
+
+  it('shows plan count when farm group is collapsed', async () => {
+    const nativeElement = await renderPlans([
+      planWithGap({ id: 1, farm_id: 1, farm_name: 'Farm A' }),
+      planWithGap({ id: 2, farm_id: 2, farm_name: 'Farm B', name: 'Plan B' })
+    ]);
+
+    component.toggleFarmGroup(1);
+    fixture.detectChanges();
+
+    const collapsedButton = nativeElement.querySelector(
+      '.plan-list__farm-group-accordion-btn[aria-controls="plan-list-farm-plans-1"]'
+    );
+    expect(collapsedButton?.textContent).toContain('1 plans');
+    expect(collapsedButton?.querySelector('.plan-list__farm-group-chevron')?.textContent).toBe('▶');
+  });
+
+  it('hides accordion toggle when only one farm group exists', async () => {
+    const nativeElement = await renderPlans([planWithGap({ id: 1, farm_id: 1, farm_name: 'Farm A' })]);
+
+    expect(nativeElement.querySelector('.plan-list__farm-group-accordion-btn')).toBeNull();
+    expect(nativeElement.querySelector('#plan-list-farm-1')?.textContent).toContain('Farm A');
+    expect(nativeElement.querySelector('#plan-list-farm-plans-1')).toBeTruthy();
+  });
+
+  it('accordion trigger exposes aria-label and aria-expanded', async () => {
+    const nativeElement = await renderPlans([
+      planWithGap({ id: 1, farm_id: 1, farm_name: 'Farm A' }),
+      planWithGap({ id: 2, farm_id: 2, farm_name: 'Farm B', name: 'Plan B' })
+    ]);
+
+    const expandedToggle = nativeElement.querySelector(
+      '.plan-list__farm-group-accordion-btn[aria-controls="plan-list-farm-plans-1"]'
+    ) as HTMLButtonElement;
+    expect(expandedToggle.getAttribute('aria-expanded')).toBe('true');
+    expect(expandedToggle.getAttribute('aria-label')).toBe('Collapse Farm A');
+
+    expandedToggle.click();
+    fixture.detectChanges();
+
+    expect(expandedToggle.getAttribute('aria-expanded')).toBe('false');
+    expect(expandedToggle.getAttribute('aria-label')).toBe('Expand Farm A');
   });
 
   it('shows plan_year and status on each plan card', async () => {
