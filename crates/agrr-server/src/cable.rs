@@ -1060,4 +1060,89 @@ mod cable_multi_subscription_tests {
             update.get("identifier").and_then(|v| v.as_str()).unwrap_or_default()
         );
     }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn cable_duplicate_subscribe_replaces_relay_without_duplicate_broadcasts() {
+        let (pool, _file, farm_id, _plan_id) = test_pool_with_reference_farm_and_public_plan();
+        let state = tokio::task::spawn_blocking(move || test_app_state(pool))
+            .await
+            .expect("app state");
+        let hub = state.cable_hub.clone();
+        let addr = spawn_cable_server(state).await;
+
+        let mut ws = connect_cable(addr).await;
+        expect_welcome(&mut ws).await;
+
+        let farm_identifier = json!({ "channel": "FarmChannel", "farm_id": farm_id });
+        send_subscribe(&mut ws, farm_identifier.clone()).await;
+        expect_frame_type(&mut ws, "confirm_subscription").await;
+        expect_data_message(&mut ws, &farm_identifier).await;
+
+        send_subscribe(&mut ws, farm_identifier.clone()).await;
+        expect_frame_type(&mut ws, "confirm_subscription").await;
+        expect_data_message(&mut ws, &farm_identifier).await;
+
+        hub.broadcast_farm(
+            farm_id,
+            json!({ "id": farm_id, "weather_data_status": "fetching", "weather_data_progress": 33 }),
+        );
+
+        let update = expect_data_message(&mut ws, &farm_identifier).await;
+        assert_eq!(33, update["message"]["weather_data_progress"].as_i64().unwrap());
+
+        let next = tokio::time::timeout(std::time::Duration::from_millis(200), ws.next()).await;
+        assert!(
+            next.is_err(),
+            "duplicate relay must not deliver a second copy of the same broadcast"
+        );
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn cable_close_stops_subscription_delivery() {
+        let (pool, _file, farm_id, plan_id) = test_pool_with_reference_farm_and_public_plan();
+        let state = tokio::task::spawn_blocking(move || test_app_state(pool))
+            .await
+            .expect("app state");
+        let hub = state.cable_hub.clone();
+        let addr = spawn_cable_server(state).await;
+
+        let mut ws = connect_cable(addr).await;
+        expect_welcome(&mut ws).await;
+
+        let farm_identifier = json!({ "channel": "FarmChannel", "farm_id": farm_id });
+        send_subscribe(&mut ws, farm_identifier.clone()).await;
+        expect_frame_type(&mut ws, "confirm_subscription").await;
+        expect_data_message(&mut ws, &farm_identifier).await;
+
+        ws.close(None).await.expect("close websocket");
+
+        hub.broadcast_farm(
+            farm_id,
+            json!({ "id": farm_id, "weather_data_status": "completed", "weather_data_progress": 100 }),
+        );
+        hub.broadcast_plan_message(
+            plan_id,
+            json!({ "status": "optimizing", "progress": 99, "phase": "allocating" }),
+        );
+
+        let deadline = tokio::time::Instant::now() + std::time::Duration::from_millis(300);
+        while tokio::time::Instant::now() < deadline {
+            let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
+            let next = tokio::time::timeout(remaining, ws.next()).await;
+            match next {
+                Err(_) => break,
+                Ok(None) => break,
+                Ok(Some(Err(_))) => break,
+                Ok(Some(Ok(WsMessage::Close(_)))) => continue,
+                Ok(Some(Ok(WsMessage::Text(text)))) => {
+                    let json: Value = serde_json::from_str(&text).expect("json frame");
+                    assert!(
+                        json.get("message").is_none(),
+                        "closed websocket must not receive relayed broadcasts: {text}"
+                    );
+                }
+                Ok(Some(Ok(_))) => {}
+            }
+        }
+    }
 }

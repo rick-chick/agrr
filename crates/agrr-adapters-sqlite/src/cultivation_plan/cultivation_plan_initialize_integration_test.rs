@@ -210,3 +210,72 @@ fn plan_initialize_commits_plan_crops_and_fields_on_success() {
     assert_eq!(crop_count, 1);
     assert!(field_count >= 1);
 }
+
+#[test]
+fn plan_initialize_rolls_back_plan_and_crops_on_field_insert_failure() {
+    let pool = plan_init_integration_pool();
+    pool.with_write(|conn| {
+        conn.execute("INSERT INTO crops (id, name) VALUES (10, 'Tomato')", [])?;
+        conn.execute_batch(
+            "CREATE TRIGGER reject_field_insert BEFORE INSERT ON cultivation_plan_fields
+             BEGIN
+               SELECT RAISE(FAIL, 'field insert rejected for test');
+             END;",
+        )?;
+        Ok(())
+    })
+    .unwrap();
+
+    let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let plan_crop_gateway = CultivationPlanPlanCropSqliteGateway::new(pool.clone());
+    let field_gateway = CultivationPlanFieldMutationSqliteGateway::new(pool.clone());
+    let logger = TestLogger;
+    let clock = TestClock;
+
+    let interactor = CultivationPlanInitializeInteractor::new(
+        CultivationPlanInitFarm {
+            id: 1,
+            name: "Farm".into(),
+        },
+        100.0,
+        vec![CultivationPlanInitCrop {
+            id: 10,
+            name: "Tomato".into(),
+            variety: Some("A".into()),
+            area_per_unit: 1.0,
+            revenue_per_area: 100.0,
+        }],
+        &plan_gateway,
+        &plan_crop_gateway,
+        &field_gateway,
+        &clock,
+        &logger,
+    );
+
+    let result = interactor.call().unwrap();
+    assert!(
+        !result.is_success(),
+        "expected failure when field insert is rejected"
+    );
+
+    let (plan_count, crop_count, field_count): (i64, i64, i64) = pool
+        .with_read(|conn| {
+            let plan_count: i64 =
+                conn.query_row("SELECT COUNT(*) FROM cultivation_plans", [], |r| r.get(0))?;
+            let crop_count: i64 = conn.query_row(
+                "SELECT COUNT(*) FROM cultivation_plan_crops",
+                [],
+                |r| r.get(0),
+            )?;
+            let field_count: i64 = conn.query_row(
+                "SELECT COUNT(*) FROM cultivation_plan_fields",
+                [],
+                |r| r.get(0),
+            )?;
+            Ok((plan_count, crop_count, field_count))
+        })
+        .unwrap();
+    assert_eq!(plan_count, 0, "plan row must roll back when fields fail");
+    assert_eq!(crop_count, 0, "crop rows must roll back when fields fail");
+    assert_eq!(field_count, 0);
+}
