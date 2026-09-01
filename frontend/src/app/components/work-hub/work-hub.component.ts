@@ -225,21 +225,25 @@ const initialControl: WorkHubViewState = {
                             | translate: { count: farm.thresholdExceededCount }
                         }}
                       </span>
-                      <span class="work-hub__cta">
-                        {{
-                          farm.planId
-                            ? ('work.hub.open_work' | translate)
-                            : ('work.hub.start_recording' | translate)
-                        }}
-                      </span>
+                      @if (farm.hasValidFields) {
+                        <span class="work-hub__cta">
+                          {{
+                            farm.planId
+                              ? ('work.hub.open_work' | translate)
+                              : ('work.hub.start_recording' | translate)
+                          }}
+                        </span>
+                      }
                     </button>
+                    @if (!farm.hasValidFields) {
+                      <p class="work-hub__warning" role="status">
+                        {{ 'work.hub.no_fields_warning' | translate }}
+                        <a class="work-hub__warning-link" [routerLink]="['/farms', farm.farmId]">{{
+                          'work.hub.register_fields_link' | translate
+                        }}</a>
+                      </p>
+                    }
                   </article>
-                  @if (!farm.hasValidFields) {
-                    <p class="work-hub__warning">
-                      {{ 'work.hub.no_fields_warning' | translate }}
-                      <a [routerLink]="['/farms', farm.farmId]">{{ 'work.hub.register_fields_link' | translate }}</a>
-                    </p>
-                  }
                 </li>
               }
             </ul>

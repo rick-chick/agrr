@@ -29,6 +29,7 @@ function baseControl(
 describe('WorkHubComponent', () => {
   let fixture: ComponentFixture<WorkHubComponent>;
   let component: WorkHubComponent;
+  let translate: TranslateService;
   let initExecute: ReturnType<typeof vi.fn>;
   let ensureExecute: ReturnType<typeof vi.fn>;
   let mockPresenter: WorkHubPresenter & {
@@ -69,7 +70,7 @@ describe('WorkHubComponent', () => {
     fixture = TestBed.createComponent(WorkHubComponent);
     component = fixture.componentInstance;
 
-    const translate = TestBed.inject(TranslateService);
+    translate = TestBed.inject(TranslateService);
     translate.setDefaultLang('ja');
     translate.use('ja');
     translate.setTranslation('ja', {
@@ -104,6 +105,9 @@ describe('WorkHubComponent', () => {
       'work.hub.attention_list.weather_trigger_item': '{{farm}} · 天候トリガー {{count}} 件',
       'work.hub.attention_list.open_work': '作業へ',
       'work.hub.attention_list.open_learn': '振り返りへ',
+      'work.hub.start_recording': '記録を始める',
+      'work.hub.open_work': '作業へ',
+      'work.hub.register_fields_link': '圃場を登録する',
       'plans.work.today_attention.weather_trigger.frost_forecast': '霜予報',
       'plans.work.today_attention.weather_trigger.gdd_trajectory_delay': 'GDD軌道遅延',
       'plans.work.today_attention.weather_trigger.forecast_sudden_change': '予報急変',
@@ -277,6 +281,87 @@ describe('WorkHubComponent', () => {
 
     expect(fixture.nativeElement.textContent).toContain('有効な圃場がありません');
     expect(fixture.nativeElement.querySelector('.work-hub__farm-btn')?.disabled).toBe(true);
+  });
+
+  it('keeps no-fields warning inside the farm card with role=status (layout regression)', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm Without Fields',
+          fieldCount: 0,
+          totalArea: 0,
+          hasValidFields: false,
+          planId: null,
+          overdueCount: 0,
+          todayCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
+          unrecordedCount: 0
+        },
+        {
+          farmId: 2,
+          farmName: 'Farm With Fields',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
+          unrecordedCount: 0
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const listItem = fixture.nativeElement.querySelector(
+      '.card-list__item:has(.work-hub__warning)'
+    ) as HTMLElement;
+    expect(listItem).toBeTruthy();
+
+    const card = listItem.querySelector('.item-card');
+    const warning = listItem.querySelector('.work-hub__warning');
+    expect(card?.contains(warning)).toBe(true);
+    expect(warning?.getAttribute('role')).toBe('status');
+
+    const siblings = Array.from(listItem.children);
+    expect(siblings).toHaveLength(1);
+    expect(siblings[0]?.classList.contains('item-card')).toBe(true);
+  });
+
+  it('hides start-recording CTA when farm has no valid fields', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm Solo',
+          fieldCount: 0,
+          totalArea: 0,
+          hasValidFields: false,
+          planId: null,
+          overdueCount: 0,
+          todayCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
+          unrecordedCount: 0
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('.item-card');
+    expect(card?.querySelector('.work-hub__cta')).toBeNull();
+    expect(card?.textContent).not.toContain('記録を始める');
   });
 
   it('shows creating plan message while submitting and keeps farm list visible', () => {

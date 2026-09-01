@@ -189,6 +189,15 @@
 }
 
 .work-hub__warning {
-  margin: 0.5rem 0 0;
+  flex: 0 0 100%;
+  width: 100%;
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
   font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.work-hub__warning-link {
+  margin-left: var(--space-1);
 }
