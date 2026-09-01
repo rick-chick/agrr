@@ -250,7 +250,7 @@
       "today_summary": "{{count}} today",
       "open_work": "Open work",
       "start_recording": "Start recording",
-      "no_fields_warning": "No valid fields on this farm.",
+      "no_fields_warning": "This farm has no registered fields.",
       "register_fields_link": "Register fields",
       "retry": "Reload",
       "gdd_delay_summary": "{{count}} GDD delayed",
