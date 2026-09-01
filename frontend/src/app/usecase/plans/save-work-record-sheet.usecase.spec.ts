@@ -394,4 +394,292 @@ describe('SaveWorkRecordSheetUseCase', () => {
       });
     });
   });
+
+  it('calls onError when backup fetch fails before delete-first sync', async () => {
+    const recordWithPhoto: WorkRecord = {
+      ...sampleRecord,
+      photos: [
+        {
+          id: 55,
+          work_record_id: 9,
+          position: 0,
+          content_type: 'image/jpeg',
+          byte_size: 100,
+          url: '/photos/55.jpg',
+          created_at: '2026-06-12T00:00:00Z'
+        }
+      ]
+    };
+    const photoGateway = photoGatewayStub({
+      downloadPhotoContent: vi.fn(() =>
+        throwError(() => new Error('backup download failed'))
+      )
+    });
+    const workRecordGateway: WorkRecordGateway = {
+      listWorkRecords: vi.fn(),
+      createWorkRecord: vi.fn(),
+      updateWorkRecord: vi.fn(() => of({ work_record: recordWithPhoto })),
+      deleteWorkRecord: vi.fn(),
+      skipTaskScheduleItem: vi.fn(),
+      unskipTaskScheduleItem: vi.fn(),
+      updateTaskScheduleItem: () => of({} as never)
+    };
+    const outputPort = outputPortStub();
+    const useCase = new SaveWorkRecordSheetUseCase(
+      outputPort,
+      workRecordGateway,
+      photoGateway,
+      resizePhoto
+    );
+
+    useCase.execute({
+      planId: 5,
+      mode: 'edit',
+      workRecordId: 9,
+      updateBody: { updated_at: '2026-06-12T00:00:00Z', name: '除草' },
+      pendingPhotoFiles: [
+        new File([new Uint8Array([1])], 'new.jpg', { type: 'image/jpeg' })
+      ],
+      photoIdsToDelete: [55],
+      deletedPhotoContentUrls: [{ photoId: 55, contentUrl: '/photos/55.jpg' }]
+    });
+
+    await vi.waitFor(() => {
+      expect(outputPort.onError).toHaveBeenCalled();
+      expect(outputPort.onPhotoPartialFailure).not.toHaveBeenCalled();
+      expect(photoGateway.deletePhoto).not.toHaveBeenCalled();
+    });
+  });
+
+  it('calls onError when compensation re-upload fails after delete-first upload error', async () => {
+    const recordAtLimit: WorkRecord = {
+      ...sampleRecord,
+      photos: [
+        {
+          id: 1,
+          work_record_id: 9,
+          position: 0,
+          content_type: 'image/jpeg',
+          byte_size: 100,
+          url: '/photos/1.jpg',
+          created_at: '2026-06-12T00:00:00Z'
+        },
+        {
+          id: 2,
+          work_record_id: 9,
+          position: 1,
+          content_type: 'image/jpeg',
+          byte_size: 100,
+          url: '/photos/2.jpg',
+          created_at: '2026-06-12T00:00:00Z'
+        },
+        {
+          id: 3,
+          work_record_id: 9,
+          position: 2,
+          content_type: 'image/jpeg',
+          byte_size: 100,
+          url: '/photos/3.jpg',
+          created_at: '2026-06-12T00:00:00Z'
+        }
+      ]
+    };
+    const uploadInit = vi.fn(() => throwError(() => new Error('upload failed')));
+    const photoGateway = photoGatewayStub({
+      downloadPhotoContent: vi.fn(() =>
+        of(new Blob([new Uint8Array([9])], { type: 'image/jpeg' }))
+      ),
+      uploadInit
+    });
+    const workRecordGateway: WorkRecordGateway = {
+      listWorkRecords: vi.fn(),
+      createWorkRecord: vi.fn(),
+      updateWorkRecord: vi.fn(() => of({ work_record: recordAtLimit })),
+      deleteWorkRecord: vi.fn(),
+      skipTaskScheduleItem: vi.fn(),
+      unskipTaskScheduleItem: vi.fn(),
+      updateTaskScheduleItem: () => of({} as never)
+    };
+    const outputPort = outputPortStub();
+    const useCase = new SaveWorkRecordSheetUseCase(
+      outputPort,
+      workRecordGateway,
+      photoGateway,
+      resizePhoto
+    );
+
+    useCase.execute({
+      planId: 5,
+      mode: 'edit',
+      workRecordId: 9,
+      updateBody: { updated_at: '2026-06-12T00:00:00Z', name: '除草' },
+      pendingPhotoFiles: [
+        new File([new Uint8Array([1])], 'new.jpg', { type: 'image/jpeg' })
+      ],
+      photoIdsToDelete: [1],
+      deletedPhotoContentUrls: [{ photoId: 1, contentUrl: '/photos/1.jpg' }]
+    });
+
+    await vi.waitFor(() => {
+      expect(photoGateway.deletePhoto).toHaveBeenCalled();
+      expect(outputPort.onError).toHaveBeenCalled();
+      expect(outputPort.onPhotoPartialFailure).not.toHaveBeenCalled();
+    });
+  });
+
+  it('reports partial failure when upload-first path upload fails with pending deletes', async () => {
+    const recordWithPhoto: WorkRecord = {
+      ...sampleRecord,
+      photos: [
+        {
+          id: 55,
+          work_record_id: 9,
+          position: 0,
+          content_type: 'image/jpeg',
+          byte_size: 100,
+          url: '/photos/55.jpg',
+          created_at: '2026-06-12T00:00:00Z'
+        }
+      ]
+    };
+    const reloadedRecord: WorkRecord = { ...recordWithPhoto };
+    const photoGateway = photoGatewayStub({
+      uploadInit: vi.fn(() => throwError(() => new Error('upload failed')))
+    });
+    const workRecordGateway: WorkRecordGateway = {
+      listWorkRecords: vi.fn(() => of({ work_records: [reloadedRecord] })),
+      createWorkRecord: vi.fn(),
+      updateWorkRecord: vi.fn(() => of({ work_record: recordWithPhoto })),
+      deleteWorkRecord: vi.fn(),
+      skipTaskScheduleItem: vi.fn(),
+      unskipTaskScheduleItem: vi.fn(),
+      updateTaskScheduleItem: () => of({} as never)
+    };
+    const outputPort = outputPortStub();
+    const useCase = new SaveWorkRecordSheetUseCase(
+      outputPort,
+      workRecordGateway,
+      photoGateway,
+      resizePhoto
+    );
+
+    useCase.execute({
+      planId: 5,
+      mode: 'edit',
+      workRecordId: 9,
+      updateBody: { updated_at: '2026-06-12T00:00:00Z', name: '除草' },
+      pendingPhotoFiles: [
+        new File([new Uint8Array([1])], 'new.jpg', { type: 'image/jpeg' })
+      ],
+      photoIdsToDelete: [55],
+      deletedPhotoContentUrls: [{ photoId: 55, contentUrl: '/photos/55.jpg' }]
+    });
+
+    await vi.waitFor(() => {
+      expect(photoGateway.deletePhoto).not.toHaveBeenCalled();
+      expect(outputPort.onPhotoPartialFailure).toHaveBeenCalledWith({
+        workRecord: reloadedRecord
+      });
+      expect(outputPort.onError).not.toHaveBeenCalled();
+    });
+  });
+
+  it('reports partial failure when upload-first path delete fails after successful upload', async () => {
+    const recordWithPhoto: WorkRecord = {
+      ...sampleRecord,
+      photos: [
+        {
+          id: 55,
+          work_record_id: 9,
+          position: 0,
+          content_type: 'image/jpeg',
+          byte_size: 100,
+          url: '/photos/55.jpg',
+          created_at: '2026-06-12T00:00:00Z'
+        }
+      ]
+    };
+    const reloadedRecord: WorkRecord = {
+      ...recordWithPhoto,
+      photos: [
+        ...(recordWithPhoto.photos ?? []),
+        {
+          id: 101,
+          work_record_id: 9,
+          position: 1,
+          content_type: 'image/jpeg',
+          byte_size: 4,
+          url: '/photos/101.jpg',
+          created_at: '2026-06-12T00:00:00Z'
+        }
+      ]
+    };
+    const deletePhoto = vi.fn(() =>
+      throwError(() => new Error('delete failed'))
+    );
+    const photoGateway = photoGatewayStub({
+      uploadInit: vi.fn(() =>
+        of({
+          photo: {
+            id: 101,
+            upload_url: '/upload',
+            upload_method: 'PUT',
+            upload_expires_at: '2026-06-12T00:10:00Z',
+            content_type: 'image/jpeg'
+          }
+        })
+      ),
+      uploadContent: vi.fn(() => of(undefined)),
+      uploadComplete: vi.fn(() =>
+        of({
+          photo: {
+            id: 101,
+            work_record_id: 9,
+            position: 1,
+            content_type: 'image/jpeg',
+            byte_size: 4,
+            url: '/photos/101.jpg',
+            created_at: '2026-06-12T00:00:00Z'
+          }
+        })
+      ),
+      deletePhoto
+    });
+    const workRecordGateway: WorkRecordGateway = {
+      listWorkRecords: vi.fn(() => of({ work_records: [reloadedRecord] })),
+      createWorkRecord: vi.fn(),
+      updateWorkRecord: vi.fn(() => of({ work_record: recordWithPhoto })),
+      deleteWorkRecord: vi.fn(),
+      skipTaskScheduleItem: vi.fn(),
+      unskipTaskScheduleItem: vi.fn(),
+      updateTaskScheduleItem: () => of({} as never)
+    };
+    const outputPort = outputPortStub();
+    const useCase = new SaveWorkRecordSheetUseCase(
+      outputPort,
+      workRecordGateway,
+      photoGateway,
+      resizePhoto
+    );
+
+    useCase.execute({
+      planId: 5,
+      mode: 'edit',
+      workRecordId: 9,
+      updateBody: { updated_at: '2026-06-12T00:00:00Z', name: '除草' },
+      pendingPhotoFiles: [
+        new File([new Uint8Array([1])], 'new.jpg', { type: 'image/jpeg' })
+      ],
+      photoIdsToDelete: [55],
+      deletedPhotoContentUrls: [{ photoId: 55, contentUrl: '/photos/55.jpg' }]
+    });
+
+    await vi.waitFor(() => {
+      expect(deletePhoto).toHaveBeenCalledWith(5, 9, 55);
+      expect(outputPort.onPhotoPartialFailure).toHaveBeenCalledWith({
+        workRecord: reloadedRecord
+      });
+      expect(outputPort.onError).not.toHaveBeenCalled();
+    });
+  });
 });
