@@ -3316,7 +3316,7 @@
       "today_summary": "今日 {{count}} 件",
       "open_work": "作業へ",
       "start_recording": "記録を始める",
-      "no_fields_warning": "この農場には圃場が登録されていません。",
+      "no_fields_warning": "有効な圃場がありません。",
       "register_fields_link": "圃場を登録する",
       "retry": "再読み込み",
       "gdd_delay_summary": "GDD遅延 {{count}} 件",
@@ -3364,7 +3364,9 @@
         "farm": "農場",
         "status": "ステータス",
         "year": "年度",
-        "all": "すべて"
+        "all": "すべて",
+        "clear": "条件をクリア",
+        "active_chip": "{{label}}: {{value}}"
       },
       "attention_list": {
         "title": "要対応タスク（農場内複数計画）",
