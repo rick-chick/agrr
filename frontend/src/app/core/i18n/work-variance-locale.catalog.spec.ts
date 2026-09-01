@@ -32,6 +32,8 @@ const WORK_VARIANCE_I18N_KEYS = [
   'work.variance.filters.status',
   'work.variance.filters.year',
   'work.variance.filters.all',
+  'work.variance.filters.clear',
+  'work.variance.filters.active_chip',
   'work.variance.attention_list.title',
   'work.variance.attention_list.item',
   'work.variance.table.year',

@@ -3365,7 +3365,9 @@
         "farm": "農場",
         "status": "ステータス",
         "year": "年度",
-        "all": "すべて"
+        "all": "すべて",
+        "clear": "条件をクリア",
+        "active_chip": "{{label}}: {{value}}"
       },
       "attention_list": {
         "title": "要対応タスク（農場内複数計画）",

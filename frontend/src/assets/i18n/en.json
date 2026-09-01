@@ -298,7 +298,9 @@
         "farm": "Farm",
         "status": "Status",
         "year": "Year",
-        "all": "All"
+        "all": "All",
+        "clear": "Clear filters",
+        "active_chip": "{{label}}: {{value}}"
       },
       "attention_list": {
         "title": "Action-required tasks (multiple plans per farm)",

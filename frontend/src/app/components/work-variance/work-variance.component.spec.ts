@@ -79,6 +79,8 @@ describe('WorkVarianceComponent', () => {
       'work.variance.filters.status': 'ステータス',
       'work.variance.filters.year': '年度',
       'work.variance.filters.all': 'すべて',
+      'work.variance.filters.clear': '条件をクリア',
+      'work.variance.filters.active_chip': '{{label}}: {{value}}',
       'work.variance.attention_list.title': '要対応タスク',
       'work.variance.attention_list.item': '{{farm}} · {{task}}',
       'work.variance.no_plans': '計画がありません',
@@ -95,9 +97,20 @@ describe('WorkVarianceComponent', () => {
       'work.variance.table.learn_link': '学習',
       'work.variance.table.plan_link': '計画',
       'work.variance.status.completed': '完了',
+      'work.variance.status.pending': '保留',
       'common.loading': '読み込み中'
     });
   });
+
+  function withControl(overrides: Partial<WorkVarianceViewState> = {}): void {
+    const reloadSpy = vi.spyOn(component, 'reload').mockImplementation(() => {});
+    try {
+      component.control = baseControl(overrides);
+      fixture.detectChanges();
+    } finally {
+      reloadSpy.mockRestore();
+    }
+  }
 
   it('loads portfolio data on init', () => {
     fixture.detectChanges();
@@ -186,5 +199,107 @@ describe('WorkVarianceComponent', () => {
       status: null,
       planYear: null
     });
+  });
+
+  function portfolioFixtureData() {
+    return {
+      rows: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          planId: 10,
+          planYear: 2026,
+          status: 'completed',
+          unrecordedCount: 0,
+          gddDelayCount: 0,
+          thresholdExceededCount: 0,
+          daysThresholdExceededCount: 0,
+          carryoverNotImported: false,
+          weatherTriggerCount: 0
+        }
+      ],
+      filterOptions: {
+        farms: [{ farmId: 1, farmName: 'Farm A' }],
+        statuses: ['completed', 'pending'],
+        planYears: [2026]
+      },
+      portfolioSummary: {
+        unrecordedCount: 0,
+        actionRequiredCount: 0,
+        gddDelayCount: 0,
+        daysThresholdExceededCount: 0
+      }
+    };
+  }
+
+  it('renders filter toolbar before portfolio summary in DOM order', () => {
+    withControl(portfolioFixtureData());
+
+    const html = fixture.nativeElement as HTMLElement;
+    const filters = html.querySelector('.work-variance__filters');
+    const summary = html.querySelector('.work-variance__portfolio-summary');
+    expect(filters).toBeTruthy();
+    expect(summary).toBeTruthy();
+    expect(
+      filters!.compareDocumentPosition(summary!) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it('renders status filter as chip buttons instead of select', () => {
+    withControl(portfolioFixtureData());
+
+    const html = fixture.nativeElement as HTMLElement;
+    const statusGroup = html.querySelector('.work-variance__status-chips');
+    expect(statusGroup).toBeTruthy();
+    expect(html.querySelector('.work-variance__status-select')).toBeNull();
+    expect(statusGroup!.querySelectorAll('.work-variance__status-chip').length).toBeGreaterThan(1);
+  });
+
+  it('applies status filter when a chip is selected', () => {
+    withControl(portfolioFixtureData());
+
+    component.onStatusChipSelect('pending');
+
+    expect(applyFilters).toHaveBeenCalledWith({
+      farmId: null,
+      status: 'pending',
+      planYear: null
+    });
+  });
+
+  it('shows active filter chips and clear control when filters are applied', () => {
+    withControl({
+      ...portfolioFixtureData(),
+      filters: { farmId: 1, status: 'completed', planYear: 2026 }
+    });
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('.work-variance__active-filters')).toBeTruthy();
+    expect(html.textContent).toContain('条件をクリア');
+    expect(html.querySelectorAll('.work-variance__active-filter-chip').length).toBe(3);
+  });
+
+  it('clears all filters via clear control', () => {
+    withControl({
+      ...portfolioFixtureData(),
+      filters: { farmId: 1, status: 'completed', planYear: 2026 }
+    });
+
+    component.clearFilters();
+
+    expect(applyFilters).toHaveBeenCalledWith({
+      farmId: null,
+      status: null,
+      planYear: null
+    });
+  });
+
+  it('exposes aria-live polite on portfolio summary', () => {
+    withControl(portfolioFixtureData());
+
+    const summary = (fixture.nativeElement as HTMLElement).querySelector(
+      '.work-variance__portfolio-summary'
+    );
+    expect(summary?.getAttribute('aria-live')).toBe('polite');
   });
 });
