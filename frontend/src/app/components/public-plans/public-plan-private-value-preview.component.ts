@@ -34,29 +34,28 @@ export function buildPublicPlanPrivateValueFeatures(): PublicPlanPrivateValueFea
   standalone: true,
   imports: [TranslateModule],
   template: `
-    <section
-      class="public-plan-private-value-preview"
-      aria-labelledby="public-plan-private-value-preview-heading"
-    >
-      <h2 id="public-plan-private-value-preview-heading" class="public-plan-private-value-preview__title">
-        {{ 'public_plans.results.private_value_preview.title' | translate }}
-      </h2>
-      <p class="public-plan-private-value-preview__lead">
-        {{ 'public_plans.results.private_value_preview.lead' | translate }}
-      </p>
-      <ul class="public-plan-private-value-preview__list" role="list">
-        @for (feature of features; track feature.featureKey) {
-          <li class="public-plan-private-value-preview__item">
-            <h3 class="public-plan-private-value-preview__item-title">
-              {{ feature.titleKey | translate }}
-            </h3>
-            <p class="public-plan-private-value-preview__item-description">
-              {{ feature.descriptionKey | translate }}
-            </p>
-          </li>
-        }
-      </ul>
-    </section>
+    <details class="public-plan-private-value-preview">
+      <summary class="public-plan-private-value-preview__summary">
+        {{ 'public_plans.results.private_value_preview.toggle_summary' | translate }}
+      </summary>
+      <div class="public-plan-private-value-preview__content">
+        <p class="public-plan-private-value-preview__lead">
+          {{ 'public_plans.results.private_value_preview.lead' | translate }}
+        </p>
+        <ul class="public-plan-private-value-preview__list" role="list">
+          @for (feature of features; track feature.featureKey) {
+            <li class="public-plan-private-value-preview__item">
+              <h3 class="public-plan-private-value-preview__item-title">
+                {{ feature.titleKey | translate }}
+              </h3>
+              <p class="public-plan-private-value-preview__item-description">
+                {{ feature.descriptionKey | translate }}
+              </p>
+            </li>
+          }
+        </ul>
+      </div>
+    </details>
   `,
   styleUrls: ['./public-plan-private-value-preview.component.css']
 })

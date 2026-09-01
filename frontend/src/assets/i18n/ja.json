@@ -2040,7 +2040,8 @@
         "work_gdd": {
           "title": "作業 GDD 比較",
           "description": "作業実績の積算温度を計画と比較し、遅れや前倒しを気づきやすくします。"
-        }
+        },
+        "toggle_summary": "ログイン後に使える機能（3）"
       },
       "next_steps": {
         "title": "次のステップ",
@@ -2065,12 +2066,13 @@
         },
         "cta": {
           "login_save": "ログインして保存",
-          "save": "上のボタンで保存",
+          "save": "マイプランに保存",
           "task_schedule": "作業予定を見る",
           "work_record": "作業記録へ"
         },
         "completed": "完了",
-        "after_save_hint": "保存後に利用できます"
+        "after_save_hint": "保存後に利用できます",
+        "locked_hint": "保存後に利用できます"
       }
     },
     "show": {

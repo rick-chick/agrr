@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildPublicPlanResultsNextSteps,
   PublicPlanResultsNextStepsComponent
@@ -22,11 +22,11 @@ const nextStepsTranslations = {
   'public_plans.results.next_steps.work_record.description':
     '圃場での作業実績を記録し計画と比較',
   'public_plans.results.next_steps.cta.login_save': 'ログインして保存',
-  'public_plans.results.next_steps.cta.save': '上のボタンで保存',
+  'public_plans.results.next_steps.cta.save': 'マイプランに保存',
   'public_plans.results.next_steps.cta.task_schedule': '作業予定を見る',
   'public_plans.results.next_steps.cta.work_record': '作業記録へ',
   'public_plans.results.next_steps.completed': '完了',
-  'public_plans.results.next_steps.after_save_hint': '保存後に利用できます'
+  'public_plans.results.next_steps.locked_hint': '保存後に利用できます'
 };
 
 describe('buildPublicPlanResultsNextSteps', () => {
@@ -62,26 +62,56 @@ describe('PublicPlanResultsNextStepsComponent', () => {
     fixture = TestBed.createComponent(PublicPlanResultsNextStepsComponent);
   });
 
-  it('shows login hint on step 1 when guest', () => {
+  it('shows login CTA link on step 1 when guest', () => {
     fixture.componentInstance.isLoggedIn = false;
     fixture.componentInstance.savedPrivatePlanId = null;
+    fixture.componentInstance.loginReturnTo =
+      'http://localhost:4200/public-plans/results?planId=1';
     fixture.detectChanges();
 
-    const hints = fixture.nativeElement.querySelectorAll('.public-plan-results-next-steps__hint');
-    expect(hints.length).toBeGreaterThan(0);
-    expect(fixture.nativeElement.textContent).toContain('ログインして保存');
-    expect(fixture.nativeElement.textContent).toContain('保存後に利用できます');
+    const loginLink = fixture.nativeElement.querySelector(
+      'a.public-plan-results-next-steps__cta--primary'
+    );
+    expect(loginLink).not.toBeNull();
+    expect(loginLink.textContent).toContain('ログインして保存');
+    expect(loginLink.getAttribute('href')).toContain('/login');
+    expect(fixture.nativeElement.textContent).not.toContain('上のボタンで保存');
+
+    const locked = fixture.nativeElement.querySelectorAll(
+      '.public-plan-results-next-steps__locked'
+    );
+    expect(locked).toHaveLength(2);
   });
 
-  it('shows save hint on step 1 when logged in before save', () => {
+  it('shows save button on step 1 when logged in before save', () => {
     fixture.componentInstance.isLoggedIn = true;
     fixture.componentInstance.savedPrivatePlanId = null;
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('上のボタンで保存');
+    const saveButton = fixture.nativeElement.querySelector(
+      'button.public-plan-results-next-steps__cta--primary'
+    );
+    expect(saveButton).not.toBeNull();
+    expect(saveButton.textContent).toContain('マイプランに保存');
+    expect(fixture.nativeElement.textContent).not.toContain('上のボタンで保存');
     expect(fixture.nativeElement.querySelectorAll('a.public-plan-results-next-steps__cta')).toHaveLength(
       0
     );
+  });
+
+  it('emits saveRequest when logged-in save button is clicked', () => {
+    fixture.componentInstance.isLoggedIn = true;
+    fixture.componentInstance.savedPrivatePlanId = null;
+    fixture.detectChanges();
+
+    const saveSpy = vi.fn();
+    fixture.componentInstance.saveRequest.subscribe(saveSpy);
+    const saveButton = fixture.nativeElement.querySelector(
+      'button.public-plan-results-next-steps__cta--primary'
+    );
+    saveButton.click();
+
+    expect(saveSpy).toHaveBeenCalledTimes(1);
   });
 
   it('marks step 1 completed and links steps 2-3 after save', () => {

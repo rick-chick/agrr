@@ -350,7 +350,7 @@ describe('PublicPlanResultsComponent (template)', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Http failure');
   });
 
-  it('shows private value preview and next steps when plan data is loaded', async () => {
+  it('places gantt before next steps and collapsible private preview after next steps', async () => {
     const { TestBed } = await import('@angular/core/testing');
     const { provideRouter } = await import('@angular/router');
     const { TranslateModule, TranslateService } = await import('@ngx-translate/core');
@@ -416,7 +416,7 @@ describe('PublicPlanResultsComponent (template)', () => {
       'public_plans.title': '計画',
       'public_plans.breadcrumb_root': '無料作付け計画',
       'public_plans.results.breadcrumb': '結果',
-      'public_plans.results.private_value_preview.title': 'ログイン後に使える機能',
+      'public_plans.results.private_value_preview.toggle_summary': 'ログイン後に使える機能（3）',
       'public_plans.results.private_value_preview.lead': 'マイプランに保存すると利用できます。',
       'public_plans.results.private_value_preview.weather_reschedule.title': '天候リスケ',
       'public_plans.results.private_value_preview.weather_reschedule.description': '天候提案',
@@ -436,8 +436,9 @@ describe('PublicPlanResultsComponent (template)', () => {
       'public_plans.results.next_steps.work_record.title': '作業を記録',
       'public_plans.results.next_steps.work_record.description': '記録',
       'public_plans.results.next_steps.cta.login_save': 'ログインして保存',
-      'public_plans.results.next_steps.after_save_hint': '保存後に利用できます',
-      'public_plans.save.button': 'マイプランに保存'
+      'public_plans.results.next_steps.cta.save': 'マイプランに保存',
+      'public_plans.results.next_steps.locked_hint': '保存後に利用できます',
+      'public_plans.results.view_my_plans': 'マイプラン一覧'
     });
     translate.setDefaultLang('ja');
     translate.use('ja');
@@ -486,10 +487,17 @@ describe('PublicPlanResultsComponent (template)', () => {
     };
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('app-public-plan-private-value-preview')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-public-plan-results-next-steps')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('ログイン後に使える機能');
+    const gantt = fixture.nativeElement.querySelector('app-plan-gantt-climate-shell');
+    const nextSteps = fixture.nativeElement.querySelector('app-public-plan-results-next-steps');
+    const preview = fixture.nativeElement.querySelector('app-public-plan-private-value-preview');
+    expect(gantt).not.toBeNull();
+    expect(nextSteps).not.toBeNull();
+    expect(preview).not.toBeNull();
+    expect(gantt.compareDocumentPosition(nextSteps) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(nextSteps.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    expect(fixture.nativeElement.querySelector('.public-plan-results__gantt-prefix')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('次のステップ');
-    expect(fixture.nativeElement.textContent).toContain('天候リスケ');
+    expect(fixture.nativeElement.querySelector('details.public-plan-private-value-preview')).not.toBeNull();
   });
 });

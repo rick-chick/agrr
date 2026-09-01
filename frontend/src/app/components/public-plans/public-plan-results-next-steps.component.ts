@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -47,6 +47,24 @@ export interface PublicPlanResultsNextStep {
               <span class="public-plan-results-next-steps__completed-badge">{{
                 'public_plans.results.next_steps.completed' | translate
               }}</span>
+            } @else if (step.stepKey === 'save') {
+              @if (!isLoggedIn) {
+                <a
+                  class="btn-primary public-plan-results-next-steps__cta public-plan-results-next-steps__cta--primary"
+                  [routerLink]="['/login']"
+                  [queryParams]="loginQueryParams"
+                >
+                  {{ 'public_plans.results.next_steps.cta.login_save' | translate }}
+                </a>
+              } @else {
+                <button
+                  type="button"
+                  class="btn-primary public-plan-results-next-steps__cta public-plan-results-next-steps__cta--primary"
+                  (click)="saveRequest.emit()"
+                >
+                  {{ 'public_plans.results.next_steps.cta.save' | translate }}
+                </button>
+              }
             } @else if (step.commands) {
               <a
                 class="btn-secondary public-plan-results-next-steps__cta"
@@ -54,14 +72,14 @@ export interface PublicPlanResultsNextStep {
               >
                 {{ ctaKey(step.stepKey) | translate }}
               </a>
-            } @else if (isStepCurrent(step.stepKey)) {
-              <span class="public-plan-results-next-steps__hint">{{
-                currentStepHint(step.stepKey) | translate
-              }}</span>
             } @else {
-              <span class="public-plan-results-next-steps__hint">{{
-                'public_plans.results.next_steps.after_save_hint' | translate
-              }}</span>
+              <span
+                class="public-plan-results-next-steps__locked"
+                aria-disabled="true"
+              >
+                <span class="public-plan-results-next-steps__locked-icon" aria-hidden="true">🔒</span>
+                {{ 'public_plans.results.next_steps.locked_hint' | translate }}
+              </span>
             }
           </li>
         }
@@ -73,6 +91,12 @@ export interface PublicPlanResultsNextStep {
 export class PublicPlanResultsNextStepsComponent {
   @Input({ required: true }) isLoggedIn!: boolean;
   @Input() savedPrivatePlanId: number | null = null;
+  @Input() loginReturnTo = '';
+  @Output() readonly saveRequest = new EventEmitter<void>();
+
+  get loginQueryParams(): { return_to: string } | undefined {
+    return this.loginReturnTo ? { return_to: this.loginReturnTo } : undefined;
+  }
 
   get steps(): PublicPlanResultsNextStep[] {
     return buildPublicPlanResultsNextSteps(this.savedPrivatePlanId);
@@ -86,13 +110,6 @@ export class PublicPlanResultsNextStepsComponent {
     return `public_plans.results.next_steps.cta.${stepKey}`;
   }
 
-  currentStepHint(stepKey: PublicPlanResultsNextStep['stepKey']): string {
-    if (stepKey === 'save' && !this.isLoggedIn) {
-      return 'public_plans.results.next_steps.cta.login_save';
-    }
-    return 'public_plans.results.next_steps.cta.save';
-  }
-
   isStepComplete(stepKey: PublicPlanResultsNextStep['stepKey']): boolean {
     if (stepKey === 'save') {
       return this.savedPrivatePlanId !== null;
@@ -102,7 +119,10 @@ export class PublicPlanResultsNextStepsComponent {
 
   isStepCurrent(stepKey: PublicPlanResultsNextStep['stepKey']): boolean {
     if (stepKey === 'save') {
-      return !this.isStepComplete('save') && (this.isLoggedIn || !this.savedPrivatePlanId);
+      return !this.isStepComplete('save');
+    }
+    if (stepKey === 'task_schedule') {
+      return this.isStepComplete('save');
     }
     return false;
   }

@@ -1181,7 +1181,8 @@
         "work_gdd": {
           "title": "Work GDD comparison",
           "description": "Compare recorded work GDD with the plan to spot delays or early completion."
-        }
+        },
+        "toggle_summary": "Features after login (3)"
       },
       "next_steps": {
         "title": "Next steps",
@@ -1206,12 +1207,13 @@
         },
         "cta": {
           "login_save": "Sign in to save",
-          "save": "Use the button above to save",
+          "save": "Save to My Plans",
           "task_schedule": "View task schedule",
           "work_record": "Record work"
         },
         "completed": "Done",
-        "after_save_hint": "Available after save"
+        "after_save_hint": "Available after save",
+        "locked_hint": "Available after save"
       }
     },
     "reference_farms": {
