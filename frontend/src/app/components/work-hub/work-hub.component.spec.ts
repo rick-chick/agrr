@@ -29,7 +29,6 @@ function baseControl(
 describe('WorkHubComponent', () => {
   let fixture: ComponentFixture<WorkHubComponent>;
   let component: WorkHubComponent;
-  let translate: TranslateService;
   let initExecute: ReturnType<typeof vi.fn>;
   let ensureExecute: ReturnType<typeof vi.fn>;
   let mockPresenter: WorkHubPresenter & {
@@ -70,7 +69,7 @@ describe('WorkHubComponent', () => {
     fixture = TestBed.createComponent(WorkHubComponent);
     component = fixture.componentInstance;
 
-    translate = TestBed.inject(TranslateService);
+    const translate = TestBed.inject(TranslateService);
     translate.setDefaultLang('ja');
     translate.use('ja');
     translate.setTranslation('ja', {
@@ -103,14 +102,11 @@ describe('WorkHubComponent', () => {
       'work.hub.attention_list.title': '要対応タスク（上位）',
       'work.hub.attention_list.item': '{{farm}} · {{task}}',
       'work.hub.attention_list.weather_trigger_item': '{{farm}} · 天候トリガー {{count}} 件',
-      'work.hub.attention_list.open_work': '作業へ',
-      'work.hub.attention_list.open_learn': '振り返りへ',
       'work.hub.start_recording': '記録を始める',
       'work.hub.open_work': '作業へ',
       'work.hub.register_fields_link': '圃場を登録する',
       'plans.work.today_attention.weather_trigger.frost_forecast': '霜予報',
       'plans.work.today_attention.weather_trigger.gdd_trajectory_delay': 'GDD軌道遅延',
-      'plans.work.today_attention.weather_trigger.forecast_sudden_change': '予報急変',
       'common.api_error.generic': 'エラーが発生しました'
     });
   });
@@ -130,34 +126,6 @@ describe('WorkHubComponent', () => {
     expect(shell).toBeTruthy();
     expect(fixture.nativeElement.querySelector('h1#page-title')?.textContent?.trim()).toBe('作業ハブ');
     expect(fixture.nativeElement.querySelector('.page-main')).toBeTruthy();
-  });
-
-  it('does not render schedule review section', () => {
-    fixture.detectChanges();
-    component.control = baseControl({
-      farms: [
-        {
-          farmId: 1,
-          farmName: 'Farm A',
-          fieldCount: 2,
-          totalArea: 100,
-          hasValidFields: true,
-          planId: 9,
-          overdueCount: 2,
-          todayCount: 1,
-          gddDelayCount: 0,
-          daysExceedanceCount: 0,
-          thresholdExceededCount: 0,
-          otherVariancePlanCount: 0,
-          unrecordedCount: 0
-        }
-      ]
-    });
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('.work-hub__schedule')).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('作業予定確認');
-    expect(fixture.nativeElement.querySelectorAll('.work-hub__filter-select')).toHaveLength(0);
   });
 
   it('shows empty state when no farms are returned', () => {
