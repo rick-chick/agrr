@@ -2023,7 +2023,6 @@
       },
       "private_value_preview": {
         "title": "保存後に使えるプライベート機能",
-        "toggle_summary": "ログイン後に使える機能（3）",
         "lead": "マイプランに保存すると、天候変化への対応から学習・作業記録まで一気通貫で進められます。",
         "weather_reschedule": {
           "title": "天候リスケ提案",
@@ -2041,7 +2040,8 @@
         "work_gdd": {
           "title": "作業 GDD 比較",
           "description": "作業実績の積算温度を計画と比較し、遅れや前倒しを気づきやすくします。"
-        }
+        },
+        "toggle_summary": "ログイン後に使える機能（3）"
       },
       "next_steps": {
         "title": "次のステップ",
@@ -2424,7 +2424,8 @@
       "farm_group": {
         "expand": "展開",
         "collapse": "折りたたむ",
-        "compare_variance": "乖離を比較"
+        "compare_variance": "乖離を比較",
+        "plan_count": "{{count}}件"
       },
       "menu": {
         "more_actions": "その他の操作"
