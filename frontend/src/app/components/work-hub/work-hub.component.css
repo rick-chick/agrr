@@ -188,7 +188,34 @@
   vertical-align: middle;
 }
 
+.work-hub__farm-card {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.work-hub__farm-card--blocked {
+  background: var(--color-surface-muted);
+}
+
+.work-hub__farm-card--blocked .work-hub__farm-btn:disabled {
+  opacity: 1;
+}
+
+.work-hub__no-fields-footer {
+  flex: 1 1 100%;
+  width: 100%;
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
 .work-hub__warning {
-  margin: 0.5rem 0 0;
-  font-size: 0.875rem;
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.work-hub__warning__link {
+  display: inline-block;
+  margin-top: var(--space-2);
 }

@@ -3314,7 +3314,7 @@
       "today_summary": "今日 {{count}} 件",
       "open_work": "作業へ",
       "start_recording": "記録を始める",
-      "no_fields_warning": "有効な圃場がありません。",
+      "no_fields_warning": "この農場には圃場が登録されていません。",
       "register_fields_link": "圃場を登録する",
       "retry": "再読み込み",
       "gdd_delay_summary": "GDD遅延 {{count}} 件",
