@@ -251,6 +251,25 @@ total_area: 0.0,
                 }]
             }))
         }
+
+        fn get_existing_location_prediction(&self, _: time::Date) -> Option<serde_json::Value> {
+            None
+        }
+
+        fn predict_for_location(
+            &self,
+            _: time::Date,
+        ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(serde_json::json!({
+                "data": [{
+                    "time": "2026-01-01",
+                    "temperature_2m_max": 20.0,
+                    "temperature_2m_min": 10.0,
+                    "temperature_2m_mean": 15.0,
+                    "precipitation_sum": 0.0
+                }]
+            }))
+        }
     }
 
     struct StubAdjustGateway;

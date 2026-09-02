@@ -272,6 +272,15 @@ impl WeatherPredictionService for StubWeatherService {
     ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
         Ok(serde_json::json!({"data": []}))
     }
+    fn get_existing_location_prediction(&self, _: Date) -> Option<serde_json::Value> {
+        None
+    }
+    fn predict_for_location(
+        &self,
+        _: Date,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(serde_json::json!({"data": []}))
+    }
 }
 
 struct StubFieldCultivationSync;

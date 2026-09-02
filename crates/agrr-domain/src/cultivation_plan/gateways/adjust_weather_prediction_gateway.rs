@@ -17,6 +17,14 @@ pub trait WeatherPredictionService: Send + Sync {
         cultivation_plan_weather: &CultivationPlanWeather,
         target_end_date: Option<Date>,
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>>;
+
+    /// Location-scoped cache (entry schedule / public flows without a cultivation plan).
+    fn get_existing_location_prediction(&self, target_end_date: Date) -> Option<Value>;
+
+    fn predict_for_location(
+        &self,
+        target_end_date: Date,
+    ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>>;
 }
 
 pub trait AdjustWeatherPredictionGateway: Send + Sync {

@@ -9,6 +9,29 @@ use agrr_domain::weather_data::gateways::PredictedWeatherMetadataGateway;
 use std::sync::Arc;
 use time::OffsetDateTime;
 
+pub(crate) fn load_weather_location_by_id(
+    pool: &SqlitePool,
+    weather_location_id: i64,
+) -> Result<WeatherLocation, String> {
+    pool.with_read(|conn| {
+        conn.query_row(
+            "SELECT id, latitude, longitude, elevation, timezone \
+             FROM weather_locations WHERE id = ?1",
+            rusqlite::params![weather_location_id],
+            |row| {
+                Ok(WeatherLocation::new(
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                ))
+            },
+        )
+    })
+    .map_err(|e| e.to_string())
+}
+
 pub(crate) fn load_weather_location(
     pool: &SqlitePool,
     plan_id: i64,

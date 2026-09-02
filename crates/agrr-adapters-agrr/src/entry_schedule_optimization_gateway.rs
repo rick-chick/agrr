@@ -8,6 +8,7 @@ use time::Date;
 
 use crate::agrr_daemon_debug_dump::copy_temp_file_to_debug;
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
+use crate::daemon_response::parse_daemon_json_payload;
 use crate::daemon_unavailable::DAEMON_UNAVAILABLE_MESSAGE;
 
 pub struct EntryScheduleOptimizationAgrrDaemonGateway {
@@ -88,7 +89,16 @@ impl EntryScheduleOptimizationGateway for EntryScheduleOptimizationAgrrDaemonGat
             args.push(crop_name.to_string());
         }
         match self.client.execute_daemon_args(&args) {
-            Ok(v) => Ok(v),
+            Ok(wrapper) => parse_daemon_json_payload(&wrapper).map_err(|e| match e {
+                AgrrDaemonError::NotRunning(_) => Box::new(EntryScheduleOptimizationError::new(
+                    "daemon_unavailable",
+                    DAEMON_UNAVAILABLE_MESSAGE,
+                )) as Box<dyn std::error::Error + Send + Sync>,
+                other => Box::new(EntryScheduleOptimizationError::new(
+                    "execution_failed",
+                    other.to_string(),
+                )) as Box<dyn std::error::Error + Send + Sync>,
+            }),
             Err(AgrrDaemonError::NotRunning(_)) => Err(Box::new(
                 EntryScheduleOptimizationError::new(
                     "daemon_unavailable",
