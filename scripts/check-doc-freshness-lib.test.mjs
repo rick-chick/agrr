@@ -12,6 +12,7 @@ import {
   checkCommandTableSync,
   checkDocInternalLinks,
   checkDocStalePaths,
+  checkDomainFallbackPolicy,
 } from './check-doc-freshness-lib.mjs';
 
 const REPO_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -145,4 +146,24 @@ test('checkAgentsCommandSync fails when AGENTS.md references missing script', ()
   const result = checkAgentsCommandSync(root);
   assert.equal(result.ok, false);
   assert.match(result.errors.join('\n'), /missing-agents-script\.sh/);
+});
+
+test('checkDomainFallbackPolicy passes on production repo tree', () => {
+  const result = checkDomainFallbackPolicy(REPO_ROOT);
+  assert.equal(result.ok, true, result.errors.join('\n'));
+});
+
+test('checkDomainFallbackPolicy fails when fallback.mdc is missing', () => {
+  const root = mkdtempSync(join(tmpdir(), 'domain-fallback-'));
+  writeFileSync(join(root, 'ARCHITECTURE.md'), '## Domain fallback policy\n\nsee fallback.mdc\n');
+  mkdirSync(join(root, '.cursor/skills/error-investigation/references'), {
+    recursive: true,
+  });
+  writeFileSync(
+    join(root, '.cursor/skills/error-investigation/references/CHECKLIST.md'),
+    '- 根本原因優先: [fallback.mdc](../../../rules/fallback.mdc)\n',
+  );
+  const result = checkDomainFallbackPolicy(root);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /fallback\.mdc: missing/);
 });
