@@ -16,6 +16,11 @@ import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
 import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { FarmSelectionCardsComponent } from '../shared/farm-selection-cards/farm-selection-cards.component';
+import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
+import {
+  WizardProgressPattern,
+  WizardProgressStepConfig,
+} from '../shared/patterns/wizard-progress.pattern';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { FlashMessageService } from '../../services/flash-message.service';
 import {
@@ -33,31 +38,22 @@ const initialControl: PublicPlanCreateViewState = {
   selector: 'app-public-plan-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [CommonModule, TranslateModule, PublicPlanContextHeaderComponent, FarmSelectionCardsComponent],
+  imports: [
+    CommonModule,
+    TranslateModule,
+    PublicPlanContextHeaderComponent,
+    FarmSelectionCardsComponent,
+    FunnelShellComponent,
+    WizardProgressPattern,
+  ],
   providers: [...PUBLIC_PLAN_CREATE_PROVIDERS],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
         <app-public-plan-context-header [crumbs]="contextCrumbs" />
-        <div class="compact-header-card">
-          <div class="compact-header-title">
-            <span class="title-icon" aria-hidden="true">🌱</span>
-            <h1 class="title-text">{{ 'public_plans.title' | translate }}</h1>
-          </div>
-          <div class="compact-progress">
-            <div class="compact-step active">
-              <div class="step-number">1</div>
-              <span class="step-label">{{ 'public_plans.steps.region' | translate }}</span>
-            </div>
-            <div class="compact-step-divider"></div>
-            <div class="compact-step">
-              <div class="step-number">2</div>
-              <span class="step-label">{{ 'public_plans.steps.crop' | translate }}</span>
-            </div>
-          </div>
-        </div>
-
-        <section class="content-card" aria-labelledby="create-heading">
+        <app-funnel-shell variant="wizard" titleKey="public_plans.title" titleIcon="🌱">
+          <app-wizard-progress [steps]="wizardSteps" />
+          <section class="content-card" aria-labelledby="create-heading">
           <h2 id="create-heading" class="visually-hidden">{{ 'public_plans.select_farm.available_farms' | translate }}</h2>
           @if (control.loading) {
             <div class="loading-state">
@@ -76,7 +72,8 @@ const initialControl: PublicPlanCreateViewState = {
               (farmSelect)="selectFarm($event)"
             />
           }
-        </section>
+          </section>
+        </app-funnel-shell>
       </div>
     </div>
   `,
@@ -98,6 +95,13 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
 
   get contextCrumbs(): MasterContextCrumb[] {
     return [{ labelKey: 'public_plans.breadcrumb_root' }];
+  }
+
+  get wizardSteps(): WizardProgressStepConfig[] {
+    return [
+      { labelKey: 'public_plans.steps.region', status: 'active' },
+      { labelKey: 'public_plans.steps.crop', status: 'pending' },
+    ];
   }
 
   // Note: region selection UI removed. Region is auto-detected and not exposed to the user.
