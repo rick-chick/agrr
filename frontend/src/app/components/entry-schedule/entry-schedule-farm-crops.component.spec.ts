@@ -95,6 +95,13 @@ describe('EntryScheduleFarmCropsComponent', () => {
         error: 'Could not load crops',
         retry: 'Retry',
         loadMore: 'Load more',
+        steps: {
+          farm: 'Farm',
+          crop: 'Crop',
+        },
+        summary: {
+          farm: 'Selected farm',
+        },
       },
       pages: {
         entry_schedule: {
@@ -131,6 +138,55 @@ describe('EntryScheduleFarmCropsComponent', () => {
     expect(getEntryScheduleCrops).toHaveBeenCalledWith(1, expect.objectContaining({ limit: 20 }));
     expect(fixture.nativeElement.querySelector('.es-crop-grid')).toBeNull();
     expect(fixture.nativeElement.querySelector('.es-list-empty')).toBeTruthy();
+  });
+
+  it('renders wizard progress with crop step active and farm step link', async () => {
+    await showCrops([
+      {
+        id: 10,
+        name: 'Carrot',
+        eligible: true,
+        sowing_summary: null,
+        transplant_summary: null,
+        reason_summary: 'No window',
+        labels: { sowing: 'Sow', transplanting: 'Transplant' },
+      },
+    ]);
+
+    expect(fixture.nativeElement.querySelector('.funnel-shell-header--wizard')).toBeTruthy();
+    const farmLink = fixture.nativeElement.querySelector('a.step-label-link') as HTMLAnchorElement;
+    expect(farmLink?.getAttribute('href')).toBe('/entry-schedule');
+    expect(fixture.nativeElement.querySelector('.compact-step.active .step-label')?.textContent?.trim()).toBe(
+      'Crop',
+    );
+  });
+
+  it('renders breadcrumb and selected farm summary card', async () => {
+    await showCrops([
+      {
+        id: 10,
+        name: 'Carrot',
+        eligible: true,
+        sowing_summary: null,
+        transplant_summary: null,
+        reason_summary: 'No window',
+        labels: { sowing: 'Sow', transplanting: 'Transplant' },
+      },
+    ]);
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back',
+    ) as HTMLAnchorElement;
+    expect(backLink?.getAttribute('href')).toBe('/entry-schedule');
+    expect(backLink?.textContent?.trim()).toBe('Entry schedule');
+
+    const current = fixture.nativeElement.querySelector('[aria-current="page"]');
+    expect(current?.textContent?.trim()).toBe('Farm A');
+
+    const summary = fixture.nativeElement.querySelector('.enhanced-summary-card');
+    expect(summary).toBeTruthy();
+    expect(summary?.textContent).toContain('Selected farm');
+    expect(summary?.textContent).toContain('Farm A');
   });
 
   it('redirects to entry-schedule with flash when farm id is invalid', async () => {

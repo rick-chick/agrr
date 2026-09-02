@@ -141,17 +141,53 @@ describe('EntryScheduleDetailComponent', () => {
     expect(contentCard.querySelector('#crop-name-heading')).toBeTruthy();
   });
 
-  it('renders breadcrumb with list link and crop name instead of inline back link', async () => {
+  it('renders breadcrumb with farm list link and crop name instead of inline back link', async () => {
+    const gateway = TestBed.inject(ENTRY_SCHEDULE_GATEWAY);
+    vi.mocked(gateway.getEntryScheduleCrop).mockReturnValue(
+      of({
+        farm: { id: 3, name: 'Farm A', latitude: 35, longitude: 139, region: 'jp' },
+        crop: {
+          id: 7,
+          name: 'Tomato',
+          eligible: true,
+          sowing_summary: null,
+          transplant_summary: null,
+          entry_disclaimer: 'Disclaimer',
+          reason_summary: 'Summary',
+          reason_parts: {},
+          labels: { sowing: 'Sow', transplanting: 'Transplant' },
+          sowing_windows: [],
+          transplant_windows: [],
+          sowing_stage_id: null,
+          transplant_stage_id: null,
+          crop_stages: [],
+        },
+        prediction: {},
+      }),
+    );
+
+    fixture = TestBed.createComponent(EntryScheduleDetailComponent);
+    translate.setTranslation('en', {
+      'entrySchedule.title': 'Entry schedule',
+      'entrySchedule.detailTitle': 'Crop schedule',
+    });
+    translate.use('en');
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
     const backLink = fixture.nativeElement.querySelector(
-      'a.master-context-header__back'
+      'a.master-context-header__back',
     ) as HTMLAnchorElement;
     expect(backLink).toBeTruthy();
-    expect(backLink.getAttribute('href')).toBe('/entry-schedule');
+    expect(backLink.getAttribute('href')).toBe('/entry-schedule/farm/3');
     expect(backLink.textContent?.trim()).toBe('Entry schedule');
+
+    const farmLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__link',
+    ) as HTMLAnchorElement;
+    expect(farmLink?.getAttribute('href')).toBe('/entry-schedule/farm/3');
+    expect(farmLink?.textContent?.trim()).toBe('Farm A');
 
     const current = fixture.nativeElement.querySelector('[aria-current="page"]');
     expect(current?.textContent?.trim()).toBe('Tomato');
