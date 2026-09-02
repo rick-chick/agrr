@@ -1,6 +1,7 @@
 // Tests for `interactors/entry_schedule_optimize_interactor.rs` (Ruby parity under test/domain/cultivation_plan/).
 
     use crate::cultivation_plan::interactors::entry_schedule::crop_stage_snapshot::CropStageSnapshot;
+    use crate::cultivation_plan::interactors::entry_schedule::temperature_requirement_snapshot::TemperatureRequirementSnapshot;
     
     use serde_json::json;
     use std::sync::{Arc, Mutex};
@@ -224,6 +225,74 @@
             .filter_map(|s| s["thermal"]["required_gdd"].as_f64())
             .sum();
         assert!(total <= 2000.01);
+    }
+
+    fn sowing_transplant_stages() -> Vec<CropStageSnapshot> {
+        let tr = TemperatureRequirementSnapshot {
+            frost_threshold: Some(0.0),
+            optimal_min: Some(10.0),
+            optimal_max: Some(30.0),
+            base_temperature: None,
+        };
+        vec![
+            CropStageSnapshot {
+                id: 1,
+                name: "播種".into(),
+                order: 1,
+                temperature_requirement: Some(tr.clone()),
+            },
+            CropStageSnapshot {
+                id: 2,
+                name: "定植".into(),
+                order: 2,
+                temperature_requirement: Some(tr),
+            },
+        ]
+    }
+
+    // Ruby: test "does not fall back to temperature windows when optimize fails"
+    #[test]
+    fn does_not_fall_back_to_temperature_windows_when_optimize_fails() {
+        let crop = TestCrop {
+            id: 1,
+            name: "かぼちゃ".into(),
+            variety: None,
+        };
+        let crop_gateway = StubCropGateway {
+            rows: sowing_transplant_stages(),
+        };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Err(EntryScheduleOptimizationError::new(
+                "execution_failed",
+                "FILE_ERROR: Missing required field(s): field_id",
+            )),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("source").and_then(|v| v.as_str()),
+            Some("agrr_failed")
+        );
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("execution_failed")
+        );
+        assert!(result.sowing_windows.is_empty());
+        assert!(result.transplant_windows.is_empty());
     }
 
     // Ruby: test "maps EntryScheduleOptimizationError to failed result"

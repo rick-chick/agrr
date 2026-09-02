@@ -10,7 +10,7 @@ use crate::cultivation_plan::gateways::{
     EntryScheduleCropGateway, EntryScheduleOptimizationGateway,
 };
 use crate::cultivation_plan::interactors::entry_schedule::{
-    stage_role_resolver::StageRoleResolver, DateRange, WindowService, WindowServiceResult,
+    stage_role_resolver::StageRoleResolver, DateRange, WindowServiceResult,
 };
 use crate::cultivation_plan::normalizers::entry_schedule_weather_payload_normalizer;
 use crate::shared::hash::present;
@@ -65,15 +65,15 @@ where
 
     pub fn call(&self) -> WindowServiceResult {
         if !self.agrr_enabled {
-            return self.window_service_fallback_or_failed("disabled");
+            return self.failed_result("disabled");
         }
 
         let Some((eval_start, eval_end)) = self.evaluation_range() else {
-            return self.window_service_fallback_or_failed("insufficient_weather");
+            return self.failed_result("insufficient_weather");
         };
 
         let Some(weather_for_file) = self.weather_hash_for_agrr() else {
-            return self.window_service_fallback_or_failed("insufficient_weather");
+            return self.failed_result("insufficient_weather");
         };
 
         let requirement = self.crop_agrr_requirement_builder.build_from(self.crop);
@@ -92,31 +92,13 @@ where
             Err(err) if err.downcast_ref::<EntryScheduleOptimizationError>().is_some() => {
                 let e = err.downcast_ref::<EntryScheduleOptimizationError>().unwrap();
                 self.log_warn(&format!("optimize: {}", e.message));
-                self.window_service_fallback_or_failed(&e.error_key)
+                self.failed_result(&e.error_key)
             }
             Err(err) => {
                 self.log_error(&err.to_string());
-                self.window_service_fallback_or_failed("crop_requirement_error")
+                self.failed_result("crop_requirement_error")
             }
         }
-    }
-
-    fn window_service_fallback_or_failed(&self, error_key: &str) -> WindowServiceResult {
-        let stage_rows = self
-            .crop_gateway
-            .entry_schedule_ordered_stage_rows(self.crop.crop_id())
-            .unwrap_or_default();
-        if stage_rows.is_empty() {
-            return self.failed_result(error_key);
-        }
-        let fallback = WindowService::call(stage_rows, self.weather_payload.clone());
-        if fallback.eligible {
-            self.log_warn(&format!(
-                "optimize failed ({error_key}); using temperature window fallback"
-            ));
-            return fallback;
-        }
-        self.failed_result(error_key)
     }
 
     pub fn evaluation_range(&self) -> Option<(time::Date, time::Date)> {

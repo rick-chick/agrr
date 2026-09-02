@@ -55,6 +55,7 @@ impl EntryScheduleOptimizationGateway for EntryScheduleOptimizationAgrrDaemonGat
         let crop_file = Self::write_temp_json(crop_requirement, "entry_crop")?;
         let weather_file = Self::write_temp_json(weather_data, "entry_weather")?;
         let field = serde_json::json!({
+            "field_id": "entry_field",
             "name": "entry_field",
             "area": 1.0,
             "daily_fixed_cost": 0.01
