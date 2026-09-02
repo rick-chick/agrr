@@ -51,6 +51,9 @@ smokeDescribe('route smoke (Angular + agrr-server session)', () => {
           test.skip(true, 'no entry schedule crop resolved');
         }
       }
+      if (r.pattern === 'entry-schedule/farm/:farmId' && resolvedCaptureIds?.farmId == null) {
+        test.skip(true, 'no entry schedule farm resolved');
+      }
       if (r.pattern === 'public-plans/results' && resolvedCaptureIds?.publicPlanId == null) {
         test.skip(true, 'no publicPlanId resolved');
       }
