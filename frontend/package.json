@@ -17,6 +17,8 @@
     "check:btn-base-class:enforce": "node scripts/check-btn-base-class.mjs --enforce",
     "check:ui-composition": "node scripts/check-ui-composition.mjs",
     "check:ui-composition:enforce": "node scripts/check-ui-composition.mjs --enforce",
+    "check:wizard-style-scope": "node scripts/check-wizard-style-scope.mjs",
+    "check:wizard-style-scope:enforce": "node scripts/check-wizard-style-scope.mjs --enforce",
     "verify:design-system-guide": "node --test scripts/check-design-system-guide.test.mjs",
     "verify:primary-color-tokens": "node --test scripts/check-primary-color-tokens.test.mjs",
     "verify:fluid-typography-tokens": "node --test scripts/check-fluid-typography-tokens.test.mjs",

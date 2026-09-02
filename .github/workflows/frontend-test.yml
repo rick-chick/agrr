@@ -46,6 +46,10 @@ jobs:
         working-directory: frontend
         run: node --test scripts/check-ui-composition.test.mjs
 
+      - name: check-wizard-style-scope unit tests
+        working-directory: frontend
+        run: node --test scripts/check-wizard-style-scope.test.mjs
+
       - name: Visual review pattern freshness
         run: npm run e2e:visual-review:check
 

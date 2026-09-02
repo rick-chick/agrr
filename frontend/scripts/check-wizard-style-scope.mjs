@@ -1,44 +1,42 @@
 #!/usr/bin/env node
 /**
- * UI composition checks for Paved Road UI.
+ * Wizard style scope checks for Paved Road UI.
  *
- *   node scripts/check-ui-composition.mjs
- *   node scripts/check-ui-composition.mjs --enforce
+ *   node scripts/check-wizard-style-scope.mjs
+ *   node scripts/check-wizard-style-scope.mjs --enforce
+ *
+ * UI composition rules (R1/R4) are enforced by check:ui-composition:enforce only.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { checkUiCompositionFiles } from './check-ui-composition-lib.mjs';
+import { checkWizardStyleScopeFiles } from './check-wizard-style-scope-lib.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const FRONTEND_ROOT = join(__dirname, '..');
 const ENFORCE = process.argv.includes('--enforce');
 
+/** Scan dirs aligned with docs/design/UI-COMPOSITION-RULES.md L1 wizard routes. */
 const SCAN_DIRS = [
   join(FRONTEND_ROOT, 'src/app/components/entry-schedule'),
   join(FRONTEND_ROOT, 'src/app/components/public-plans'),
   join(FRONTEND_ROOT, 'src/app/components/shared/shells'),
 ];
 
-const GLOBAL_CSS_FILES = [
-  join(FRONTEND_ROOT, 'src/styles.css'),
-  join(FRONTEND_ROOT, 'src/app/components/shared/_form-primitives.css'),
-];
-
 /**
  * @param {string} dir
  * @returns {Promise<string[]>}
  */
-async function listTsFiles(dir) {
+async function listComponentTsFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
   /** @type {string[]} */
   const files = [];
   for (const entry of entries) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
-      files.push(...(await listTsFiles(full)));
-    } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts')) {
+      files.push(...(await listComponentTsFiles(full)));
+    } else if (entry.name.endsWith('.component.ts')) {
       files.push(full);
     }
   }
@@ -48,24 +46,19 @@ async function listTsFiles(dir) {
 /** @type {Record<string, string>} */
 const files = {};
 for (const dir of SCAN_DIRS) {
-  for (const file of await listTsFiles(dir)) {
+  for (const file of await listComponentTsFiles(dir)) {
     files[file.replace(`${FRONTEND_ROOT}/`, '')] = await readFile(file, 'utf8');
   }
 }
 
-let globalCss = '';
-for (const cssPath of GLOBAL_CSS_FILES) {
-  globalCss += await readFile(cssPath, 'utf8');
-}
-
-const violations = checkUiCompositionFiles(files, globalCss);
+const violations = checkWizardStyleScopeFiles(files);
 
 if (violations.length === 0) {
-  console.log(`check-ui-composition: OK (${Object.keys(files).length} files scanned)`);
+  console.log(`check-wizard-style-scope: OK (${Object.keys(files).length} files scanned)`);
   process.exit(0);
 }
 
-console.warn(`check-ui-composition: ${violations.length} violation(s)`);
+console.warn(`check-wizard-style-scope: ${violations.length} violation(s)`);
 for (const v of violations) {
   console.warn(`  [${v.id}] ${v.file}: ${v.message}`);
 }
@@ -74,5 +67,5 @@ if (ENFORCE) {
   process.exit(1);
 }
 
-console.warn('check-ui-composition: warn only (pass --enforce to fail CI)');
+console.warn('check-wizard-style-scope: warn only (pass --enforce to fail CI)');
 process.exit(0);
