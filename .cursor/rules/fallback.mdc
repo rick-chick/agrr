@@ -1,0 +1,51 @@
+---
+description: ドメイン判定・ビジネスロジックにおけるフォールバック禁止（fail-closed）。別アルゴリズムでの成功表示を許さない。
+alwaysApply: false
+---
+
+# フォールバック禁止（fail-closed）
+
+## 適用範囲
+
+本ルールは **ドメイン判定・ビジネスロジック**（`agrr-domain` の Interactor / Policy、フロントの usecase / domain、最適化・適期・天候などの農業判断）に適用する。
+
+**インフラ層**のフォールバック禁止（未移行 API を Rails へ落とさない、`501` + `api_not_migrated`）は [`docs/migration/archive/P6-COMPLETION-CRITERIA.md`](../../docs/migration/archive/P6-COMPLETION-CRITERIA.md) および [`crates/agrr-server/src/fallback.rs`](../../crates/agrr-server/src/fallback.rs) が先例である。**製品ロジックにも同趣旨を適用する** — 別経路で「それっぽい正解」を出さない。
+
+[`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc) の「便宜による規約違反禁止」と整合する。根本原因未確認のフォールバック実装は技術負債であり残置しない。
+
+## 原則
+
+| # | 原則 | 意味 |
+|---|------|------|
+| 1 | **安易なフォールバックを置かない** | 主経路（最適化・契約 API・ドメイン Policy）が失敗・未実装のとき、別アルゴリズムへ silently 切り替えない |
+| 2 | **fail-closed のみ許容** | 代替は `eligible: false`、明示エラー、または `501` 型の未実装応答に限る |
+| 3 | **別アルゴリズムで成功表示しない** | 温度しきい値走査など別手法で「適期あり」「eligible: true」を出さない（ユーザーに誤った農業判断を与える） |
+| 4 | **根本原因を先に** | バグ調査・修正では [error-investigation](../skills/error-investigation/SKILL.md) に従い、フォールバックで症状を隠さない |
+
+## 許容される応答パターン
+
+- **明示エラー**: Interactor の `on_failure`、API の 4xx/5xx と明確な `error` コード
+- **非 eligible**: ドメイン結果で `eligible: false`（または同等の「利用不可」）と理由を返す
+- **未実装（インフラ先例）**: `501` + `api_not_migrated`（[`fallback.rs`](../../crates/agrr-server/src/fallback.rs)）
+
+## 禁止例
+
+- 最適化 API 失敗時に、別サービス（例: 温度ウィンドウ走査）へ切り替えて `eligible: true` を返す
+- Gateway / Adapter で例外を握りつぶし、デフォルト値で「成功っぽく」見せる
+- 「とりあえず動く」暫定経路を本番に残し、後で直す前提でマージする
+
+## 実装時のチェック
+
+- [ ] 主経路失敗時、ユーザーに誤解を与える**別アルゴリズムの成功表示**がないか
+- [ ] 代替は `eligible: false` / 明示エラー / `501` のいずれかか
+- [ ] 調査・修正でフォールバックを「回避策」として入れていないか（[investigation-verification](../skills/investigation-verification/references/CHECKLIST.md) 項目 5）
+
+## 参照
+
+| 参照 | 内容 |
+|------|------|
+| [`ARCHITECTURE.md`](../../ARCHITECTURE.md) | システム概要・レイヤ規約（本節へのリンク） |
+| [`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc) | 便宜による規約違反・技術負債の禁止 |
+| [P6 完了条件 — フォールバック禁止](../../docs/migration/archive/P6-COMPLETION-CRITERIA.md) | インフラ層の終着方針 |
+| [`fallback.rs`](../../crates/agrr-server/src/fallback.rs) | `501` fail-closed の実装先例 |
+| [error-investigation](../skills/error-investigation/SKILL.md) | バグ調査（フォールバック実装禁止） |
