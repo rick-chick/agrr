@@ -4023,7 +4023,14 @@
     "stages": "विकास अवस्थाएँ",
     "ctaSectionTitle": "अगले कदम",
     "ctaPublicPlan": "इस फसल से मुफ्त योजना बनाएं",
-    "ctaCropSetup": "फसल मास्टर डेटा सुधारें"
+    "ctaCropSetup": "फसल मास्टर डेटा सुधारें",
+    "steps": {
+      "farm": "Kebun",
+      "crop": "Tanaman"
+    },
+    "summary": {
+      "farm": "Kebun terpilih"
+    }
   },
   "onboarding": {
     "breadcrumb": "प्रारंभिक सेटअप",

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { catchError, of, timeout } from 'rxjs';
 import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
 import { Farm } from '../../domain/farms/farm';
@@ -12,6 +12,10 @@ import {
 import { detectBrowserRegion } from '../../core/browser-region';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
+import { EntryScheduleWizardProgressComponent } from './entry-schedule-wizard-progress.component';
+import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
+import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
 import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeline.util';
 
 /** entry_schedule crops API は参照作物ごとに最適化するため CI でも数十秒かかる */
@@ -21,16 +25,38 @@ const PAGE_LIMIT = 20;
 @Component({
   selector: 'app-entry-schedule-farm-crops',
   standalone: true,
-  imports: [CommonModule, TranslateModule, RouterLink, FunnelShellComponent],
+  imports: [
+    CommonModule,
+    TranslateModule,
+    RouterLink,
+    FunnelShellComponent,
+    EntryScheduleWizardProgressComponent,
+    MasterContextHeaderComponent,
+  ],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
+        <app-master-context-header [crumbs]="contextCrumbs" />
         <app-funnel-shell
-          variant="hub"
+          variant="wizard"
           titleKey="entrySchedule.title"
           descriptionKey="pages.entry_schedule.description"
           titleIcon="📅"
         >
+          <app-entry-schedule-wizard-progress activeStep="crop" />
+          @if (selectedFarm(); as farm) {
+            <div class="enhanced-summary-card enhanced-summary-card--single-row">
+              <div class="enhanced-summary-items">
+                <div class="enhanced-summary-row">
+                  <div class="enhanced-summary-icon">🌏</div>
+                  <div class="enhanced-summary-content">
+                    <div class="enhanced-summary-label">{{ 'entrySchedule.summary.farm' | translate }}</div>
+                    <div class="enhanced-summary-value">{{ displayFarmName(farm) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
           <section class="content-card" aria-labelledby="entry-schedule-crops-heading">
             <h2 id="entry-schedule-crops-heading" class="visually-hidden">
               {{ 'entrySchedule.selectFarm' | translate }}
@@ -280,11 +306,13 @@ export class EntryScheduleFarmCropsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly flash = inject(FlashMessageService);
+  private readonly translate = inject(TranslateService);
 
   readonly monthTicks = [...MONTH_NUMBERS];
 
   readonly farmLoading = signal(true);
   readonly selectedFarmId = signal<number | null>(null);
+  readonly selectedFarm = signal<Farm | null>(null);
 
   readonly listResponse = signal<EntryScheduleCropsListResponse | null>(null);
   readonly cropsLoading = signal(false);
@@ -292,6 +320,20 @@ export class EntryScheduleFarmCropsComponent implements OnInit {
   readonly flowDetailOpen = signal<Set<number>>(new Set());
 
   private loadCursor: string | null = null;
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const farm = this.selectedFarm();
+    return [
+      { labelKey: 'entrySchedule.title', routerLink: ['/entry-schedule'] },
+      farm
+        ? { label: this.displayFarmName(farm) }
+        : { labelKey: 'entrySchedule.steps.crop' },
+    ];
+  }
+
+  displayFarmName(farm: Farm): string {
+    return displayEntryScheduleFarmName(farm, this.translate);
+  }
 
   ngOnInit(): void {
     const rawFarmId = this.route.snapshot.paramMap.get('farmId');
@@ -325,6 +367,7 @@ export class EntryScheduleFarmCropsComponent implements OnInit {
           return;
         }
         this.selectedFarmId.set(farm.id);
+        this.selectedFarm.set(farm);
         this.loadCrops(false);
       });
   }

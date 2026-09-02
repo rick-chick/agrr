@@ -22,6 +22,7 @@ import { buildEntrySchedulePrerenderSnapshot } from '../../core/seo/entry-schedu
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { AuthService } from '../../services/auth.service';
 import { Farm } from '../../domain/farms/farm';
+import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
 
 @Component({
   selector: 'app-entry-schedule-detail',
@@ -295,11 +296,41 @@ export class EntryScheduleDetailComponent implements OnInit {
   readonly errorKey = signal<string | null>(null);
 
   get contextCrumbs(): MasterContextCrumb[] {
+    const farm = this.data()?.farm;
+    const farmId = farm?.id ?? this.resolvedFarmId();
     const cropName = this.data()?.crop.name;
-    return [
-      { labelKey: 'entrySchedule.title', routerLink: ['/entry-schedule'] },
-      cropName ? { label: cropName } : { labelKey: 'entrySchedule.detailTitle' }
+    const crumbs: MasterContextCrumb[] = [
+      {
+        labelKey: 'entrySchedule.title',
+        routerLink:
+          farmId != null ? ['/entry-schedule/farm', farmId] : ['/entry-schedule'],
+      },
     ];
+    if (farm) {
+      crumbs.push({
+        label: this.displayFarmName(farm),
+        routerLink: ['/entry-schedule/farm', farm.id],
+      });
+    }
+    crumbs.push(cropName ? { label: cropName } : { labelKey: 'entrySchedule.detailTitle' });
+    return crumbs;
+  }
+
+  displayFarmName(farm: Farm): string {
+    return displayEntryScheduleFarmName(farm, this.translate);
+  }
+
+  private resolvedFarmId(): number | null {
+    const fromResponse = this.data()?.farm?.id;
+    if (fromResponse != null) {
+      return fromResponse;
+    }
+    const raw = this.route.snapshot.queryParamMap.get('farmId');
+    if (raw == null) {
+      return null;
+    }
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   ngOnInit(): void {
