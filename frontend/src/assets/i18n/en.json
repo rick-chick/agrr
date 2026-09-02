@@ -4221,9 +4221,9 @@
     "error": "Could not load the entry schedule.",
     "timeout": "Loading is taking too long. Please try again.",
     "noFarms": "No farms are available.",
+    "invalid_farm_id": "Invalid farm ID.",
     "selectFarm": "Select a farm",
     "show": "Show",
-    "blockSelectFarm": "Select a farm to show candidate crops.",
     "predictionFresh": "Forecast updated",
     "predictionUntil": "Forecast until",
     "eligibleYes": "Suitable",
@@ -4274,11 +4274,7 @@
     "stages": "Growth stages",
     "ctaSectionTitle": "Next steps",
     "ctaPublicPlan": "Create a free plan with this crop",
-    "ctaCropSetup": "Improve crop master data",
-    "allIneligibleTitle": "No in-season crops for this farm",
-    "allIneligibleBody": "None of the candidate crops for the selected farm have sowing or transplant windows we can show.",
-    "allIneligibleTryOtherFarm": "Try another farm, or start from a crop with a free planting plan.",
-    "allIneligiblePublicPlanCta": "Create a free planting plan"
+    "ctaCropSetup": "Improve crop master data"
   },
   "onboarding": {
     "breadcrumb": "Initial setup",

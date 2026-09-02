@@ -64,6 +64,21 @@ test('applyResolvedUrl leaves public plan url unchanged when publicPlanId is nul
   assert.equal(applyResolvedUrl('public-plans/results', url, ids), url);
 });
 
+test('applyResolvedUrl builds entry-schedule farm url when farmId is known', () => {
+  assert.equal(
+    applyResolvedUrl('entry-schedule/farm/:farmId', '/entry-schedule/farm/1', baseIds),
+    '/entry-schedule/farm/42',
+  );
+});
+
+test('applyResolvedUrl leaves entry-schedule farm url unchanged when farmId is null', () => {
+  const url = '/entry-schedule/farm/1';
+  assert.equal(
+    applyResolvedUrl('entry-schedule/farm/:farmId', url, { ...baseIds, farmId: null }),
+    url,
+  );
+});
+
 test('applyResolvedUrl builds entry-schedule crop url when cropId is known', () => {
   assert.equal(
     applyResolvedUrl('entry-schedule/crop/:cropId', '/entry-schedule/crop/1?farmId=1', baseIds),
@@ -71,15 +86,28 @@ test('applyResolvedUrl builds entry-schedule crop url when cropId is known', () 
   );
 });
 
-test('applyResolvedUrl leaves entry-schedule url unchanged when ids are missing', () => {
-  const url = '/entry-schedule/crop/1?farmId=1';
+test('applyResolvedUrl builds entry-schedule farm url when farmId is known', () => {
   assert.equal(
-    applyResolvedUrl('entry-schedule/crop/:cropId', url, { ...baseIds, cropId: null }),
-    url,
+    applyResolvedUrl('entry-schedule/farm/:farmId', '/entry-schedule/farm/1', baseIds),
+    '/entry-schedule/farm/42',
+  );
+});
+
+test('applyResolvedUrl leaves entry-schedule url unchanged when ids are missing', () => {
+  const cropUrl = '/entry-schedule/crop/1?farmId=1';
+  assert.equal(
+    applyResolvedUrl('entry-schedule/crop/:cropId', cropUrl, { ...baseIds, cropId: null }),
+    cropUrl,
   );
   assert.equal(
-    applyResolvedUrl('entry-schedule/crop/:cropId', url, { ...baseIds, farmId: null }),
-    url,
+    applyResolvedUrl('entry-schedule/crop/:cropId', cropUrl, { ...baseIds, farmId: null }),
+    cropUrl,
+  );
+
+  const farmUrl = '/entry-schedule/farm/1';
+  assert.equal(
+    applyResolvedUrl('entry-schedule/farm/:farmId', farmUrl, { ...baseIds, farmId: null }),
+    farmUrl,
   );
 });
 

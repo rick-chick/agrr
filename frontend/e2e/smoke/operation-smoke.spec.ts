@@ -145,11 +145,12 @@ smokeDescribe('operation smoke (key user flows)', () => {
       test.skip(true, 'no farms for entry schedule');
     }
     await farmCard.click();
-    await expect(page.locator('app-entry-schedule-list .es-crop-grid')).toBeVisible({
+    await expect(page).toHaveURL(/\/entry-schedule\/farm\/\d+/, { timeout: 30_000 });
+    await expect(page.locator('app-entry-schedule-farm-crops .es-crop-grid')).toBeVisible({
       timeout: 60_000,
     });
 
-    const detailLink = page.locator('app-entry-schedule-list .es-link-detail').first();
+    const detailLink = page.locator('app-entry-schedule-farm-crops .es-link-detail').first();
     if ((await detailLink.count()) === 0) {
       test.skip(true, 'no entry schedule crops in grid');
     }

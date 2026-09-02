@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-16T21:53:32.612Z",
+  "generatedAt": "2026-09-02T02:46:09.883Z",
   "note": "path の :param は URL では 1 に置換。`**` は意図的な 404 用パス。Agent 用 PNG は `npm run e2e:capture-for-agent`（Rails development + AuthTest モックログインで付与したセッション、`e2e/.auth/dev-session.json`）で全ルートを ja/en/in の3言語キャプチャする。requiresAuth はルート定義上のフラグ。",
   "routes": [
     {
@@ -71,6 +71,12 @@
     {
       "pattern": "entry-schedule/crop/:cropId",
       "url": "/entry-schedule/crop/1?farmId=1",
+      "requiresAuth": false,
+      "source": "entry-schedule.routes.ts"
+    },
+    {
+      "pattern": "entry-schedule/farm/:farmId",
+      "url": "/entry-schedule/farm/1",
       "requiresAuth": false,
       "source": "entry-schedule.routes.ts"
     },

@@ -34,9 +34,19 @@ function shouldSkipA11yRoute(
   pattern: string,
   resolvedCaptureIds: ResolvedCaptureIds | null,
 ): string | null {
+  if (pattern === 'entry-schedule/farm/:farmId') {
+    if (resolvedCaptureIds?.entryScheduleFarm == null) {
+      return 'no entry schedule farm resolved';
+    }
+  }
   if (pattern === 'entry-schedule/crop/:cropId') {
     if (resolvedCaptureIds?.cropId == null || resolvedCaptureIds?.farmId == null) {
       return 'no entry schedule crop resolved';
+    }
+  }
+  if (pattern === 'entry-schedule/farm/:farmId') {
+    if (resolvedCaptureIds?.farmId == null || resolvedCaptureIds?.cropId == null) {
+      return 'no entry schedule farm/crop resolved';
     }
   }
   if (pattern === 'public-plans/results' && resolvedCaptureIds?.publicPlanId == null) {

@@ -30,6 +30,13 @@ const entryScheduleCropPrerenderRoute: RouteRow = {
   source: 'test',
 };
 
+const entryScheduleFarmCropsRoute: RouteRow = {
+  pattern: 'entry-schedule/farm/:farmId',
+  url: '/entry-schedule/farm/1',
+  requiresAuth: false,
+  source: 'test',
+};
+
 test.describe('waitForPageStable spin probe', () => {
   test('skips long spin probe when stable content is already visible', async ({ page }) => {
     await page.setContent(`
@@ -138,6 +145,31 @@ test.describe('waitForPageStable entry-schedule crop prerender', () => {
     await expect(page.locator('app-entry-schedule-detail h1')).toBeHidden();
     await waitPromise;
     await expect(page.locator('app-entry-schedule-detail h1.compact-header-title')).toBeVisible();
+  });
+});
+
+test.describe('waitForPageStable entry-schedule farm crops', () => {
+  test('waits for crop grid or empty state', async ({ page }) => {
+    await page.setContent(`
+      <app-entry-schedule-farm-crops>
+        <p class="master-loading">Loading…</p>
+      </app-entry-schedule-farm-crops>
+    `);
+
+    await page.evaluate(() => {
+      setTimeout(() => {
+        const host = document.querySelector('app-entry-schedule-farm-crops');
+        if (!host) return;
+        host.innerHTML = `
+          <div class="es-list-empty" role="status">
+            <h3 class="es-list-empty-title">No candidate crops</h3>
+          </div>
+        `;
+      }, 400);
+    });
+
+    await waitForPageStable(page, entryScheduleFarmCropsRoute);
+    await expect(page.locator('app-entry-schedule-farm-crops .es-list-empty')).toBeVisible();
   });
 });
 

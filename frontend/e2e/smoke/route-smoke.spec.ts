@@ -41,6 +41,15 @@ smokeDescribe('route smoke (Angular + agrr-server session)', () => {
         test.skip(true, 'login routes need logged-out session');
       }
 
+      if (r.pattern === 'entry-schedule/farm/:farmId') {
+        if (
+          resolvedCaptureIds?.entryScheduleFarm == null ||
+          resolvedCaptureIds?.farmId == null ||
+          resolvedCaptureIds?.entryScheduleCropsListOk === false
+        ) {
+          test.skip(true, 'no entry schedule farm or crops API unavailable');
+        }
+      }
       if (r.pattern === 'entry-schedule/crop/:cropId') {
         if (resolvedCaptureIds?.cropId == null || resolvedCaptureIds?.farmId == null) {
           test.skip(true, 'no entry schedule crop resolved');

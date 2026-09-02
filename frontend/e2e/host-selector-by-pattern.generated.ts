@@ -26,6 +26,7 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   'en/terms': 'app-terms',
   'entry-schedule': 'app-entry-schedule-list',
   'entry-schedule/crop/:cropId': 'app-entry-schedule-detail',
+  'entry-schedule/farm/:farmId': 'app-entry-schedule-farm-crops',
   farms: 'app-farm-list',
   'farms/:id': 'app-farm-detail',
   'farms/:id/edit': 'app-farm-edit',

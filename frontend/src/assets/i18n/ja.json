@@ -4257,9 +4257,9 @@
     "error": "作付け時期を読み込めませんでした。",
     "timeout": "読み込みに時間がかかっています。もう一度お試しください。",
     "noFarms": "利用できる農場がありません。",
+    "invalid_farm_id": "農場IDが不正です。",
     "selectFarm": "農場を選択",
     "show": "表示",
-    "blockSelectFarm": "農場を選択すると候補作物を表示します。",
     "predictionFresh": "予測更新",
     "predictionUntil": "予測期限",
     "eligibleYes": "適期あり",
@@ -4310,11 +4310,7 @@
     "stages": "成長段階",
     "ctaSectionTitle": "次のステップ",
     "ctaPublicPlan": "この作物で無料計画を作る",
-    "ctaCropSetup": "作物マスタを整備する",
-    "allIneligibleTitle": "この農場では適期の作物がありません",
-    "allIneligibleBody": "選択した農場の候補作物は、いずれも播種・定植の適期帯を示せませんでした。",
-    "allIneligibleTryOtherFarm": "別の農場を選ぶか、無料作付け計画で作物から始めてください。",
-    "allIneligiblePublicPlanCta": "無料作付け計画を作成"
+    "ctaCropSetup": "作物マスタを整備する"
   },
   "onboarding": {
     "breadcrumb": "初回セットアップ",
