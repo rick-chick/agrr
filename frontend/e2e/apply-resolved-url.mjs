@@ -41,11 +41,6 @@ export function applyResolvedUrl(pattern, url, ids) {
     return `/entry-schedule/crop/${ids.cropId}?farmId=${ids.farmId}`;
   }
 
-  if (pattern === 'entry-schedule/farm/:farmId') {
-    if (ids.farmId == null) return url;
-    return `/entry-schedule/farm/${ids.farmId}`;
-  }
-
   if (pattern === 'crops/:id/stages') {
     const target = ids.cropStageEdit;
     if (target == null) return url;

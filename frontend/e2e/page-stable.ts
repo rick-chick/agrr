@@ -79,6 +79,14 @@ export async function waitForPageStable(page: Page, r: RouteRow): Promise<void> 
     return;
   }
 
+  if (r.pattern === 'entry-schedule/farm/:farmId') {
+    const host = page.locator('app-entry-schedule-farm-crops');
+    const loadingLine = host.locator('.master-loading:not(.master-error)');
+    await expect(loadingLine).toBeHidden({ timeout: 60_000 });
+    await expect(host.locator('.es-crop-grid, .es-list-empty')).toBeVisible({ timeout: 60_000 });
+    return;
+  }
+
   const host = HOST_SELECTOR_BY_PATTERN[r.pattern];
   if (!host) return;
 

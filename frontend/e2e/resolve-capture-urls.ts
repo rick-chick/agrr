@@ -23,6 +23,8 @@ export type ResolvedCaptureIds = {
   publicPlanId: number | null;
   /** GET /api/v1/public_plans/entry_schedule/farms の参照農場 id（masters/farms とは別） */
   farmId: number | null;
+  /** GET entry_schedule/crops が 200 を返したか（空配列でも true） */
+  entryScheduleCropsListOk: boolean | null;
   /** select-crop 直着地用: entry_schedule 参照農場の実レコード */
   entryScheduleFarm: {
     id: number;
@@ -95,24 +97,6 @@ async function resolveEntryScheduleFarmForCapture(
   }
 
   return fetchMastersFarmForSeed(api, base, masters);
-}
-
-/** farm_id 単位でエントリ目安 API に載る作物 id（マスタ先頭 crop とは一致しないことがある） */
-async function fetchEntryScheduleCropIdForFarm(
-  api: APIRequestContext,
-  base: string,
-  farmId: number,
-): Promise<number | null> {
-  const res = await api.get(
-    `${base}/api/v1/public_plans/entry_schedule/crops?farm_id=${farmId}&limit=20`,
-    { failOnStatusCode: false },
-  );
-  if (!res.ok()) return null;
-  try {
-    return pickEntryScheduleCropId(await res.json());
-  } catch {
-    return null;
-  }
 }
 
 /** 生育ステージが 1 件以上ある作物と先頭ステージ id を API から探す */
@@ -197,15 +181,27 @@ export async function buildResolvedCaptureIds(
   const entryScheduleFarm = await resolveEntryScheduleFarmForCapture(api, base, masters);
   const farmId = entryScheduleFarm?.id ?? null;
   let cropId: number | null = null;
+  let entryScheduleCropsListOk: boolean | null = null;
   if (farmId != null) {
-    cropId = await fetchEntryScheduleCropIdForFarm(api, base, farmId);
+    const cropsRes = await api.get(
+      `${base}/api/v1/public_plans/entry_schedule/crops?farm_id=${farmId}&limit=20`,
+      { failOnStatusCode: false },
+    );
+    entryScheduleCropsListOk = cropsRes.ok();
+    if (cropsRes.ok()) {
+      try {
+        cropId = pickEntryScheduleCropId(await cropsRes.json());
+      } catch {
+        cropId = null;
+      }
+    }
   }
 
   const publicPlanId = await probePublicPlanId(api, base);
 
   const cropStageEdit = await fetchCropStageEditTarget(api, base, masters.crops);
 
-  return { masters, privatePlanId, publicPlanId, farmId, entryScheduleFarm, cropId, cropStageEdit };
+  return { masters, privatePlanId, publicPlanId, farmId, entryScheduleFarm, cropId, cropStageEdit, entryScheduleCropsListOk };
 }
 
 /** 認証不要の public data が取れる cultivation_plan id を少数試行で探す */

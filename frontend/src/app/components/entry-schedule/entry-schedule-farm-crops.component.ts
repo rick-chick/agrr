@@ -14,7 +14,8 @@ import { FlashMessageService } from '../../services/flash-message.service';
 import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
 import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeline.util';
 
-const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
+/** entry_schedule crops API は参照作物ごとに最適化するため CI でも数十秒かかる */
+const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 60_000;
 const PAGE_LIMIT = 20;
 
 @Component({

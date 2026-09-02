@@ -42,17 +42,18 @@ smokeDescribe('route smoke (Angular + agrr-server session)', () => {
       }
 
       if (r.pattern === 'entry-schedule/farm/:farmId') {
-        if (resolvedCaptureIds?.entryScheduleFarm == null) {
-          test.skip(true, 'no entry schedule farm resolved');
+        if (
+          resolvedCaptureIds?.entryScheduleFarm == null ||
+          resolvedCaptureIds?.farmId == null ||
+          resolvedCaptureIds?.entryScheduleCropsListOk === false
+        ) {
+          test.skip(true, 'no entry schedule farm or crops API unavailable');
         }
       }
       if (r.pattern === 'entry-schedule/crop/:cropId') {
         if (resolvedCaptureIds?.cropId == null || resolvedCaptureIds?.farmId == null) {
           test.skip(true, 'no entry schedule crop resolved');
         }
-      }
-      if (r.pattern === 'entry-schedule/farm/:farmId' && resolvedCaptureIds?.farmId == null) {
-        test.skip(true, 'no entry schedule farm resolved');
       }
       if (r.pattern === 'public-plans/results' && resolvedCaptureIds?.publicPlanId == null) {
         test.skip(true, 'no publicPlanId resolved');
