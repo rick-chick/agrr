@@ -89,6 +89,16 @@ describe('EntryScheduleListComponent', () => {
     expect(fixture.nativeElement.querySelector('a.step-label-link')).toBeNull();
   });
 
+  it('renders wizard progress bar with flex layout contract', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const progress = fixture.nativeElement.querySelector('.compact-progress') as HTMLElement | null;
+    expect(progress).toBeTruthy();
+    expect(getComputedStyle(progress!).display).toBe('flex');
+  });
+
   it('renders farm selection as enhanced selection cards', async () => {
     fixture.detectChanges();
     await fixture.whenStable();

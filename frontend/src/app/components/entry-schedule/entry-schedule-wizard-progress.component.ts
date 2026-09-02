@@ -6,6 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-entry-schedule-wizard-progress',
   standalone: true,
   imports: [RouterLink, TranslateModule],
+  styleUrls: ['../public-plans/public-plan.component.css'],
   host: {
     wizardProgress: ''
   },
