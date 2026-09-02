@@ -130,6 +130,29 @@ impl WeatherPredictionService for OwnedWeatherPredictionService {
         .and_then(|r| r)
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
     }
+
+    fn get_existing_location_prediction(&self, target_end_date: Date) -> Option<Value> {
+        self.with_interactor(|interactor| {
+            interactor
+                .get_existing_prediction(Some(target_end_date), None)
+                .map(|result| normalize_nested_weather_data(result.data))
+        })
+        .ok()
+        .flatten()
+    }
+
+    fn predict_for_location(
+        &self,
+        target_end_date: Date,
+    ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+        self.with_interactor(|interactor| {
+            interactor
+                .predict_for_location(Some(target_end_date))
+                .map(|info| normalize_nested_weather_data(info.data))
+        })
+        .and_then(|r| r)
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+    }
 }
 
 /// Rails optimize: `get_existing_prediction` → `weather_info[:data]` (+ normalize).
@@ -160,6 +183,58 @@ pub fn existing_prediction_weather_for_allocate(
         );
     }
     Ok(weather)
+}
+
+fn parse_entry_schedule_target_end_date(
+    reference_date: Date,
+    prediction_end_date_raw: Option<&str>,
+) -> Result<Date, WeatherPredictionError> {
+    if let Some(raw) = prediction_end_date_raw.map(str::trim).filter(|s| !s.is_empty()) {
+        return agrr_domain::cultivation_plan::helpers::parse_iso_date(raw).ok_or_else(|| {
+            WeatherPredictionError::InsufficientPredictionData(format!(
+                "invalid prediction_end_date: {raw}"
+            ))
+        });
+    }
+    Date::from_calendar_date(reference_date.year() + 1, time::Month::December, 31).map_err(|_| {
+        WeatherPredictionError::InsufficientPredictionData(
+            "failed to derive entry schedule target end date".into(),
+        )
+    })
+}
+
+/// Entry schedule: load or predict location-scoped weather (no cultivation plan).
+pub(crate) fn resolve_weather_for_entry_schedule(
+    state: &AppState,
+    weather_location: &WeatherLocation,
+    reference_date: Date,
+    prediction_end_date_raw: Option<&str>,
+) -> Result<Value, WeatherPredictionError> {
+    let target_end =
+        parse_entry_schedule_target_end_date(reference_date, prediction_end_date_raw)?;
+    let logger = StderrLogger;
+    let gateway = SqliteAdjustWeatherPredictionGateway::from_state(state);
+    let service = gateway
+        .prediction_service(weather_location)
+        .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?;
+
+    let mut weather_data = if let Some(existing) =
+        service.get_existing_location_prediction(target_end)
+    {
+        logger.info(&format!(
+            "📡 [EntrySchedule] Weather cache hit (target_end_date={target_end})"
+        ));
+        existing
+    } else {
+        logger.info(&format!(
+            "📡 [EntrySchedule] Weather cache miss - invoking prediction (target_end_date={target_end})"
+        ));
+        service
+            .predict_for_location(target_end)
+            .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?
+    };
+
+    normalize_weather_payload_for_agrr(&mut weather_data, &logger)
 }
 
 /// Ruby CompositionRoot `weather_for_candidates` lambda (add_crop candidates).
