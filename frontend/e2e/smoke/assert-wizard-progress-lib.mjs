@@ -1,64 +1,74 @@
 /**
- * Wizard progress flex contract — E2E / cross-route comparison only.
+ * Wizard progress layout contract — single source for flex + density checks.
+ * Used by layout-archetype design contracts, E2E smoke, and cross-route comparison.
  *
  * Responsibility split: docs/design/UI-COMPOSITION-RULES.md § Wizard progress flex.
  * Do not duplicate these assertions in *.component.spec.ts (DOM wiring only).
- * Layout contract smoke checks display:flex only — see layout-contracts.md.
  */
 
-/** Root selector for the shared compact wizard progress bar. */
-export const WIZARD_PROGRESS_ROOT_SELECTOR = '.compact-progress';
+/** @typedef {{ display: string; minHeightPx: number }} WizardProgressLayoutSnapshot */
 
-/**
- * Minimum min-height (px) for wizard progress bars.
- * Matches `.compact-progress` in public-plan.component.css (44px).
- */
+export const WIZARD_PROGRESS_SELECTORS = ['.compact-progress'];
+export const WIZARD_PROGRESS_REQUIRED_DISPLAY = 'flex';
 export const WIZARD_PROGRESS_MIN_HEIGHT_PX = 40;
 
 /**
- * @typedef {{ display: string; minHeightPx: number }} WizardProgressLayoutSnapshot
+ * @param {{ selector: string; display: string; heightPx: number; minHeightPx?: number }} input
+ * @returns {string[]}
  */
-
-/**
- * @param {{ display?: string; minHeight?: string }} style getComputedStyle-like snapshot
- * @returns {string[]} violations (empty when valid)
- */
-export function evaluateWizardProgressFlexStyle(style) {
+export function checkWizardProgressElementLayout({
+  selector,
+  display,
+  heightPx,
+  minHeightPx = WIZARD_PROGRESS_MIN_HEIGHT_PX,
+}) {
   /** @type {string[]} */
   const violations = [];
-
-  if (style.display !== 'flex') {
-    violations.push(`display expected flex, got ${style.display ?? '(missing)'}`);
-  }
-
-  const minHeight = Number.parseFloat(style.minHeight ?? '');
-  if (!Number.isFinite(minHeight) || minHeight < WIZARD_PROGRESS_MIN_HEIGHT_PX) {
+  if (display !== WIZARD_PROGRESS_REQUIRED_DISPLAY) {
     violations.push(
-      `min-height expected >= ${WIZARD_PROGRESS_MIN_HEIGHT_PX}px, got ${style.minHeight ?? '(missing)'}`,
+      `wizardProgressSelectors: "${selector}" display=${display} (expected ${WIZARD_PROGRESS_REQUIRED_DISPLAY})`,
     );
   }
-
+  if (heightPx < minHeightPx) {
+    violations.push(
+      `wizardProgressSelectors: "${selector}" height=${heightPx.toFixed(1)}px < ${minHeightPx}px`,
+    );
+  }
   return violations;
 }
 
 /**
- * Cross-route layout comparison for wizard progress bars (E2E smoke).
- *
- * @param {WizardProgressLayoutSnapshot} a
- * @param {WizardProgressLayoutSnapshot} b
- * @returns {string[]} violations (empty when layouts match)
+ * @param {{ display: string; heightPx: number }} input
+ * @returns {WizardProgressLayoutSnapshot}
  */
-export function compareWizardProgressLayouts(a, b) {
+export function normalizeWizardProgressLayout({ display, heightPx }) {
+  return { display, minHeightPx: heightPx };
+}
+
+/**
+ * @param {WizardProgressLayoutSnapshot} left
+ * @param {WizardProgressLayoutSnapshot} right
+ * @returns {string[]}
+ */
+export function compareWizardProgressLayouts(left, right) {
   /** @type {string[]} */
   const violations = [];
-
-  if (a.display !== b.display) {
-    violations.push(`display mismatch: ${a.display} vs ${b.display}`);
+  if (left.display !== right.display) {
+    violations.push(`display mismatch: ${left.display} vs ${right.display}`);
   }
-
-  if (a.minHeightPx !== b.minHeightPx) {
-    violations.push(`min-height mismatch: ${a.minHeightPx}px vs ${b.minHeightPx}px`);
+  if (left.minHeightPx !== right.minHeightPx) {
+    violations.push(`minHeight mismatch: ${left.minHeightPx}px vs ${right.minHeightPx}px`);
   }
-
   return violations;
+}
+
+/**
+ * @param {WizardProgressLayoutSnapshot} left
+ * @param {WizardProgressLayoutSnapshot} right
+ */
+export function expectWizardProgressLayoutsMatch(left, right) {
+  const violations = compareWizardProgressLayouts(left, right);
+  if (violations.length > 0) {
+    throw new Error(violations.join('; '));
+  }
 }

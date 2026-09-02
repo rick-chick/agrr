@@ -68,20 +68,20 @@ Scanned directories: `entry-schedule`, `public-plans`, `shared/shells` (see scri
 | 層 | ファイル / ゲート | 観測するもの | 観測しないもの（他層へ委譲） |
 |----|-------------------|--------------|------------------------------|
 | **Component unit** | `entry-schedule-*.component.spec.ts`, `funnel-shell.component.spec.ts` | DOM 構造（`.funnel-shell-header--wizard`, `.compact-progress` の存在）、`activeStep` バインディング、完了ステップの `routerLink` | `getComputedStyle(display:flex)`、`min-height`、viewport 折り返し |
-| **E2E smoke** | `wizard-progress-style.spec.ts` + [`assert-wizard-progress-lib.mjs`](../../frontend/e2e/smoke/assert-wizard-progress-lib.mjs) | 実ブラウザの `display: flex` と `min-height >= 40px`（`.compact-progress`）、ルート間 `compareWizardProgressLayouts` | UseCase 分岐、i18n キー網羅 |
-| **Layout contract** | `layout-archetype-design-contract-browser-eval.mjs` の `wizardProgressSelectors`（`funnel-hub` / `wizard-step`） | スモーク経路での `display: flex` のみ（構造ゲート） | `min-height` 閾値（E2E lib が正本。粒度統一は #1286） |
+| **E2E smoke** | `wizard-progress-smoke.spec.ts` + [`assert-wizard-progress-lib.mjs`](../../frontend/e2e/smoke/assert-wizard-progress-lib.mjs) | 実ブラウザの `display: flex` と `min-height >= 40px`（`.compact-progress`）、ルート間 `compareWizardProgressLayouts` / `expectWizardProgressLayoutsMatch` | UseCase 分岐、i18n キー網羅 |
+| **Layout contract** | `layout-archetype-design-contract-browser-eval.mjs` の `wizardProgressSelectors`（`funnel-hub` / `wizard-step`） | スモーク経路での `display: flex` + 最小高さ（`assert-wizard-progress-lib.mjs` 経由） | ルート間クロス比較（E2E へ委譲） |
 
 ### 方針
 
 1. **`*.component.spec.ts` に `getComputedStyle` による flex 断言を追加しない** — jsdom は CSS 適用が不完全で、#1273 系の再発防止には E2E / layout contract の方が信頼できる。
-2. **E2E が flex + 密度（min-height）の正本** — 契約定数は `assert-wizard-progress-lib.mjs` に集約し、Playwright spec は lib を呼ぶだけにする。
-3. **Layout contract は横断スモークの薄いゲート** — `display:flex` のみ。`min-height` を layout contract に持ち込む場合は #1286 で lib と単一ソース化してから行う。
+2. **契約定数の単一ソースは `assert-wizard-progress-lib.mjs`** — layout contract と E2E smoke の両方が lib を参照する。Playwright spec は lib を呼ぶだけにする。
+3. **Layout contract は横断スモークの構造ゲート** — 個別ルートのレンダリングを jsdom/Playwright で検証。ルート間の一貫性比較は E2E のみ。
 4. **`funnel-shell.component.spec.ts` の `getComputedStyle`** — overflow/ellipsis（hub タイトル）のみ許容。wizard flex には使わない。
 
 ### frontend-test 高速ゲートとして component.spec を維持しない理由
 
 component.spec で flex を見ても **スタイルの単一ソース（`public-plan.component.css` の `.compact-progress`）を検証できない**（entry-schedule は同クラスを共有参照）。  
-高速フィードバックが必要なのは **スロット投影とステップ状態** であり、CSS レイアウトは E2E smoke（`npm run test:e2e:smoke:wizard-progress`、#1286 で追加予定）に委譲する。
+高速フィードバックが必要なのは **スロット投影とステップ状態** であり、CSS レイアウトは E2E smoke（`npm run test:e2e:smoke:wizard-progress`）に委譲する。
 
 ## Related
 

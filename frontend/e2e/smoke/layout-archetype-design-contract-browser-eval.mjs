@@ -193,6 +193,28 @@ export function evaluateArchetypeDesignContract({ hostSelector, contract, confor
     }
   }
 
+  if (contract.wizardProgressSelectors?.length) {
+    const minHeightPx = contract.wizardProgressMinHeightPx ?? 40;
+    for (const selector of contract.wizardProgressSelectors) {
+      for (const el of root.querySelectorAll(selector)) {
+        if (!isElementVisible(el)) continue;
+        const style = el.ownerDocument.defaultView?.getComputedStyle(el);
+        const display = style?.display ?? '';
+        const heightPx = el.getBoundingClientRect().height;
+        if (display !== 'flex') {
+          violations.push(
+            `wizardProgressSelectors: "${selector}" display=${display} (expected flex)`,
+          );
+        }
+        if (heightPx < minHeightPx) {
+          violations.push(
+            `wizardProgressSelectors: "${selector}" height=${heightPx.toFixed(1)}px < ${minHeightPx}px`,
+          );
+        }
+      }
+    }
+  }
+
   return violations;
 }
 
