@@ -43,8 +43,10 @@ function shouldSkipRoute(
       return 'no entry schedule crop resolved';
     }
   }
-  if (pattern === 'entry-schedule/farm/:farmId' && resolvedCaptureIds?.farmId == null) {
-    return 'no entry schedule farm resolved';
+  if (pattern === 'entry-schedule/farm/:farmId') {
+    if (resolvedCaptureIds?.farmId == null || resolvedCaptureIds?.cropId == null) {
+      return 'no entry schedule farm/crop resolved';
+    }
   }
   if (pattern === 'public-plans/results' && resolvedCaptureIds?.publicPlanId == null) {
     return 'no publicPlanId resolved';

@@ -80,10 +80,14 @@ export async function waitForPageStable(page: Page, r: RouteRow): Promise<void> 
   }
 
   if (r.pattern === 'entry-schedule/farm/:farmId') {
-    const host = page.locator('app-entry-schedule-farm-crops');
-    const loadingLine = host.locator('.master-loading:not(.master-error)');
-    await expect(loadingLine).toBeHidden({ timeout: 60_000 });
-    await expect(host.locator('.es-crop-grid, .es-list-empty')).toBeVisible({ timeout: 60_000 });
+    const host = 'app-entry-schedule-farm-crops';
+    await expect(page.locator(host)).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator(`${host} .master-loading:not(.master-error)`)).toBeHidden({
+      timeout: 60_000,
+    });
+    await expect(
+      page.locator(`${host} .es-crop-grid, ${host} .es-list-empty`),
+    ).toBeVisible({ timeout: 60_000 });
     return;
   }
 
