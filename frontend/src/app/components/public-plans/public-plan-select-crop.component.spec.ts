@@ -455,6 +455,10 @@ describe('PublicPlanSelectCropComponent (template)', () => {
     };
     fixture.detectChanges();
 
+    expect(fixture.nativeElement.querySelector('app-funnel-shell')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-public-plan-wizard-progress')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.compact-header-card')).toBeNull();
+
     const activeStep = fixture.nativeElement.querySelector('.compact-step.active .step-label');
     expect(activeStep?.textContent?.trim()).toBe('作物');
     expect(fixture.nativeElement.querySelector('.enhanced-grid .crop-item')).toBeTruthy();

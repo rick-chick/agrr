@@ -43,4 +43,21 @@ describe('PublicPlanCreateComponent farm selection cards', () => {
       'Tokyo Farm',
     );
   });
+
+  it('renders funnel shell with shared wizard progress instead of inline compact-progress', () => {
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [{ id: 10, name: 'Tokyo Farm', latitude: 35.6, longitude: 139.6, region: 'jp' }],
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-funnel-shell')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-public-plan-wizard-progress')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.funnel-shell-header--wizard')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.compact-header-card')).toBeNull();
+    expect(fixture.nativeElement.innerHTML).not.toMatch(/<div class="compact-progress"/);
+  });
 });
