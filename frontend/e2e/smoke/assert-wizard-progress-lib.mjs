@@ -18,11 +18,14 @@ export {
 
 /**
  * Browser-safe wizard progress layout collection (Playwright page.evaluate).
- * Self-contained — helpers nested for serialization.
+ * Self-contained — no module imports (Playwright serializes this function into the page).
  *
  * @param {{ hostSelector: string; selectors?: string[] }} input
  */
-export function collectWizardProgressLayouts({ hostSelector, selectors = DEFAULT_WIZARD_PROGRESS_SELECTORS }) {
+export function collectWizardProgressLayouts({
+  hostSelector,
+  selectors = ['.compact-progress'],
+}) {
   function isElementVisible(el) {
     const rect = el.getBoundingClientRect();
     const style = el.ownerDocument.defaultView?.getComputedStyle(el);
