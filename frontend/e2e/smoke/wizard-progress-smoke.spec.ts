@@ -1,6 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { waitForPageStable } from '../page-stable';
-import { expectedPathnameFromResolvedGoto, resolveHostSelectorForPattern } from '../route-validity';
+import { expectedPathnameFromResolvedGoto, resolveHostSelectorForPattern, type RouteRow } from '../route-validity';
 import {
   collectWizardProgressLayouts,
   expectWizardProgressLayoutsMatch,
@@ -43,7 +43,20 @@ function findRoute(pattern: string) {
   return route;
 }
 
+/** Wizard progress is in the shell header; farm crops API can exceed default test timeout. */
+async function waitForWizardProgressRouteStable(page: Page, route: RouteRow): Promise<void> {
+  if (route.pattern === 'entry-schedule/farm/:farmId') {
+    await expect(page.locator('app-entry-schedule-farm-crops')).toBeVisible({ timeout: 30_000 });
+    await expect(
+      page.locator('app-entry-schedule-wizard-progress .compact-progress'),
+    ).toBeVisible({ timeout: 30_000 });
+    return;
+  }
+  await waitForPageStable(page, route);
+}
+
 smokeDescribe('wizard progress layout smoke', () => {
+  test.setTimeout(120_000);
   let resolvedCaptureIds: ResolvedCaptureIds | null = null;
 
   test.beforeAll(async () => {
@@ -74,7 +87,7 @@ smokeDescribe('wizard progress layout smoke', () => {
       }
 
       await page.goto(url);
-      await waitForPageStable(page, route);
+      await waitForWizardProgressRouteStable(page, route);
       const pathnameExpect = expectedPathnameFromResolvedGoto(url);
       expect(page.url()).toContain(pathnameExpect.replace(/^\//, ''));
 
@@ -108,7 +121,7 @@ smokeDescribe('wizard progress layout smoke', () => {
       }
 
       await page.goto(url);
-      await waitForPageStable(page, route);
+      await waitForWizardProgressRouteStable(page, route);
 
       const hostSelector = resolveHostSelectorForPattern(page, route.pattern);
       if (!hostSelector) {
