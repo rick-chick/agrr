@@ -103,6 +103,12 @@ Enforced in **domain policies**; DB constraints are safety net only.
 
 Do not run `rails test` (removed P8.6). Use [test-common SKILL](.cursor/skills/test-common/SKILL.md).
 
+## Domain fallback policy (fail-closed)
+
+**Domain judgment（ドメイン判定） and business logic must not use convenience fallbacks** that produce plausible-looking success when the primary path fails. Allowed outcomes are **`eligible: false`**, explicit errors (`ErrorDto`), or infrastructure-style **fail-closed** (`501` / `api_not_migrated` — see [`crates/agrr-server/src/fallback.rs`](crates/agrr-server/src/fallback.rs)).
+
+Do **not** switch to an alternate algorithm (threshold scan, fuzzy match, fixed defaults, etc.) and show “suitable period found” or optimization success. This extends the P6 **no infrastructure fallback** rule ([`docs/migration/archive/P6-COMPLETION-CRITERIA.md`](docs/migration/archive/P6-COMPLETION-CRITERIA.md)) to **product logic**. Full norm: [`.cursor/rules/fallback.mdc`](.cursor/rules/fallback.mdc) (cross-ref [`no-convenience-tech-debt.mdc`](.cursor/rules/no-convenience-tech-debt.mdc)).
+
 ## Additional Resources
 
 | Reference | Role |
