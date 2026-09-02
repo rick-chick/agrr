@@ -1,6 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 import { waitForPageStable } from '../page-stable';
+<<<<<<< HEAD
 import { expectedPathnameFromResolvedGoto, resolveHostSelectorForPattern, type RouteRow } from '../route-validity';
+=======
+import {
+  assertPageValidity,
+  expectedPathnameFromResolvedGoto,
+  resolveHostSelectorForPattern,
+} from '../route-validity';
+>>>>>>> ee845b832 (fix(e2e): align wizard-progress-smoke with layout-smoke stability)
 import {
   collectWizardProgressLayouts,
   expectWizardProgressLayoutsMatch,
@@ -24,8 +32,15 @@ const WIZARD_PROGRESS_ROUTES: WizardProgressRoute[] = [
   { pattern: 'entry-schedule' },
   {
     pattern: 'entry-schedule/farm/:farmId',
-    skip: (ids) =>
-      ids?.farmId == null ? 'no entry schedule farm resolved' : null,
+    skip: (ids) => {
+      if (ids?.entryScheduleFarm == null) {
+        return 'no entry schedule farm resolved';
+      }
+      if (ids?.farmId == null || ids?.cropId == null) {
+        return 'no entry schedule farm/crop resolved';
+      }
+      return null;
+    },
   },
   { pattern: 'public-plans/new' },
   {
@@ -59,6 +74,8 @@ smokeDescribe('wizard progress layout smoke', () => {
   test.setTimeout(120_000);
   let resolvedCaptureIds: ResolvedCaptureIds | null = null;
 
+  test.describe.configure({ timeout: 180_000 });
+
   test.beforeAll(async () => {
     resolvedCaptureIds = await loadResolvedCaptureIdsWithBaseline();
   });
@@ -87,8 +104,13 @@ smokeDescribe('wizard progress layout smoke', () => {
       }
 
       await page.goto(url);
+<<<<<<< HEAD
       await waitForWizardProgressRouteStable(page, route);
+=======
+>>>>>>> ee845b832 (fix(e2e): align wizard-progress-smoke with layout-smoke stability)
       const pathnameExpect = expectedPathnameFromResolvedGoto(url);
+      await assertPageValidity(page, route, pathnameExpect);
+      await waitForPageStable(page, route);
       expect(page.url()).toContain(pathnameExpect.replace(/^\//, ''));
 
       const hostSelector = resolveHostSelectorForPattern(page, route.pattern);
@@ -121,7 +143,13 @@ smokeDescribe('wizard progress layout smoke', () => {
       }
 
       await page.goto(url);
+<<<<<<< HEAD
       await waitForWizardProgressRouteStable(page, route);
+=======
+      const pathnameExpect = expectedPathnameFromResolvedGoto(url);
+      await assertPageValidity(page, route, pathnameExpect);
+      await waitForPageStable(page, route);
+>>>>>>> ee845b832 (fix(e2e): align wizard-progress-smoke with layout-smoke stability)
 
       const hostSelector = resolveHostSelectorForPattern(page, route.pattern);
       if (!hostSelector) {
