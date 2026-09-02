@@ -1,29 +1,38 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { catchError, of, timeout } from 'rxjs';
 import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
 import { Farm } from '../../domain/farms/farm';
 import { detectBrowserRegion } from '../../core/browser-region';
 import { FarmSelectionCardsComponent } from '../shared/farm-selection-cards/farm-selection-cards.component';
 import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
+import { EntryScheduleWizardProgressComponent } from './entry-schedule-wizard-progress.component';
+import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
 
 const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
 
 @Component({
   selector: 'app-entry-schedule-list',
   standalone: true,
-  imports: [CommonModule, TranslateModule, FarmSelectionCardsComponent, FunnelShellComponent],
+  imports: [
+    CommonModule,
+    TranslateModule,
+    FarmSelectionCardsComponent,
+    FunnelShellComponent,
+    EntryScheduleWizardProgressComponent,
+  ],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
         <app-funnel-shell
-          variant="hub"
+          variant="wizard"
           titleKey="entrySchedule.title"
           descriptionKey="pages.entry_schedule.description"
           titleIcon="📅"
         >
+          <app-entry-schedule-wizard-progress activeStep="farm" />
           <section class="content-card" aria-labelledby="entry-schedule-heading">
             <h2 id="entry-schedule-heading" class="visually-hidden">
               {{ 'entrySchedule.selectFarm' | translate }}
@@ -43,6 +52,7 @@ const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
                 [selectedFarmId]="null"
                 [heading]="'entrySchedule.selectFarm' | translate"
                 headingId="farm-heading"
+                [farmLabel]="displayFarmName.bind(this)"
                 (farmSelect)="selectFarm($event)"
               />
             }
@@ -70,10 +80,15 @@ const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
 export class EntryScheduleListComponent implements OnInit {
   private readonly gateway = inject(ENTRY_SCHEDULE_GATEWAY);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   readonly farms = signal<Farm[]>([]);
   readonly farmsLoading = signal(true);
   readonly farmsError = signal<string | null>(null);
+
+  displayFarmName(farm: Farm): string {
+    return displayEntryScheduleFarmName(farm, this.translate);
+  }
 
   ngOnInit(): void {
     this.loadFarmsList();

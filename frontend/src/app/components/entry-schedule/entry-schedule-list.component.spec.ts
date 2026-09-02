@@ -49,6 +49,10 @@ describe('EntryScheduleListComponent', () => {
         noFarms: 'No farms available',
         retry: 'Retry',
         error: 'Could not load farms',
+        steps: {
+          farm: 'Farm',
+          crop: 'Crop',
+        },
       },
       pages: {
         entry_schedule: {
@@ -70,6 +74,19 @@ describe('EntryScheduleListComponent', () => {
     expect(fixture.nativeElement.querySelector('section.content-card')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.es-crop-grid')).toBeNull();
     expect(fixture.nativeElement.querySelector('.placeholder-block')).toBeNull();
+  });
+
+  it('renders wizard funnel shell with farm step active', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const shell = fixture.nativeElement.querySelector('.funnel-shell-header--wizard');
+    expect(shell).toBeTruthy();
+
+    const activeStep = fixture.nativeElement.querySelector('.compact-step.active .step-label');
+    expect(activeStep?.textContent?.trim()).toBe('Farm');
+    expect(fixture.nativeElement.querySelector('a.step-label-link')).toBeNull();
   });
 
   it('renders farm selection as enhanced selection cards', async () => {
