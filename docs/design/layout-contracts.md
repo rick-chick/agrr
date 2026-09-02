@@ -23,7 +23,7 @@
 | `checkFormCardActionRows` | `.form-card__actions` の折り返し行数上限 |
 | `checkDetailCardActionOverlap` | `.detail-card__actions` のボタン重なり禁止 |
 | `requiredShellSelectors` | L1+ でホスト内に必須のシェル要素 |
-| `wizardProgressSelectors` | wizard 進捗バー（`display: flex` + `min-height >= 40px`） |
+| `wizardProgressSelectors` | wizard 進捗バーが DOM にあるとき `display: flex` + `min-height >= 40px`（欠如時はスキップ） |
 
 ## archetype 一覧
 

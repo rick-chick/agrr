@@ -13,7 +13,7 @@
  * @property {boolean} [checkFormCardActionRows] Enforce viewport-tier row limits on `.form-card__actions`.
  * @property {boolean} [checkDetailCardActionOverlap] Forbid overlapping buttons in `.detail-card__actions`.
  * @property {string[]} [requiredShellSelectors] Host must contain selector when conformance is L1+.
- * @property {string[]} [wizardProgressSelectors] Wizard step progress bars: flex + min-height density.
+ * @property {string[]} [wizardProgressSelectors] Wizard progress bars: when present in host, enforce flex + min-height density.
  */
 
 import { DEFAULT_WIZARD_PROGRESS_SELECTORS } from './wizard-progress-contract.mjs';
