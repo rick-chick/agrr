@@ -193,6 +193,40 @@ export function evaluateArchetypeDesignContract({ hostSelector, contract, confor
     }
   }
 
+  if (contract.wizardProgressSelectors?.length) {
+    const WIZARD_PROGRESS_MIN_HEIGHT_PX = 40;
+    for (const selector of contract.wizardProgressSelectors) {
+      const matches = [...root.querySelectorAll(selector)];
+      if (matches.length === 0) {
+        violations.push(`wizardProgressSelectors: "${selector}" not found in host`);
+        continue;
+      }
+      const visible = matches.filter((el) => isElementVisible(el));
+      if (visible.length === 0) {
+        violations.push(`wizardProgressSelectors: "${selector}" present but not visible`);
+        continue;
+      }
+      const el = visible[0];
+      const style = el.ownerDocument.defaultView?.getComputedStyle(el);
+      const display = style?.display ?? '';
+      const parsedMinHeight = style ? Number.parseFloat(style.minHeight) : Number.NaN;
+      const minHeightPx =
+        Number.isFinite(parsedMinHeight) && parsedMinHeight > 0
+          ? parsedMinHeight
+          : el.getBoundingClientRect().height;
+      if (display !== 'flex') {
+        violations.push(
+          `wizardProgressSelectors: "${selector}" display must be flex (got "${display}")`,
+        );
+      }
+      if (!Number.isFinite(minHeightPx) || minHeightPx < WIZARD_PROGRESS_MIN_HEIGHT_PX) {
+        violations.push(
+          `wizardProgressSelectors: "${selector}" min-height must be >= ${WIZARD_PROGRESS_MIN_HEIGHT_PX}px (got ${minHeightPx}px)`,
+        );
+      }
+    }
+  }
+
   return violations;
 }
 

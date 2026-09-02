@@ -137,3 +137,26 @@ test('maxActionButtonRowsForViewport matches layout invariant tiers', () => {
   assert.equal(maxActionButtonRowsForViewport(768), 3);
   assert.equal(maxActionButtonRowsForViewport(1280), 2);
 });
+
+test('checkContentBlockLayout enforces wizardProgressSelectors flex and min-height', async () => {
+  const html = `
+    <div id="host">
+      <div class="compact-progress" style="display: block; width: 200px; height: 20px; min-height: 20px;"></div>
+    </div>
+  `;
+
+  const violations = await checkContentBlockLayout({
+    html,
+    hostSelector: '#host',
+    viewportWidth: 1280,
+    contract: {
+      contentBlockSelectors: ['.section-card'],
+      requireAnyContentBlock: false,
+      wizardProgressSelectors: ['.compact-progress'],
+    },
+  });
+
+  assert.ok(violations.some((v) => v.includes('wizardProgressSelectors')));
+  assert.ok(violations.some((v) => v.includes('display')));
+  assert.ok(violations.some((v) => v.includes('min-height')));
+});

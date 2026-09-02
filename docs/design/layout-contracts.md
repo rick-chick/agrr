@@ -22,6 +22,8 @@
 | `maxItemCardVisibleActionButtons` | カード上の可視 `.btn` 上限（溢れは overflow menu へ） |
 | `checkFormCardActionRows` | `.form-card__actions` の折り返し行数上限 |
 | `checkDetailCardActionOverlap` | `.detail-card__actions` のボタン重なり禁止 |
+| `requiredShellSelectors` | L1+ でホスト内に必須のシェル要素 |
+| `wizardProgressSelectors` | wizard 進捗バー（`display: flex` + `min-height >= 40px`） |
 
 ## archetype 一覧
 

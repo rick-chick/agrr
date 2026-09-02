@@ -29,6 +29,7 @@
     "test:e2e:smoke:locale-i18n": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/locale-i18n-smoke.spec.ts",
     "test:e2e:smoke:a11y": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/a11y-smoke.spec.ts e2e/smoke/gantt-keyboard-alternative.spec.ts e2e/smoke/cookie-consent-focus.spec.ts e2e/smoke/skip-link.spec.ts",
     "test:e2e:smoke:empty-state": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/empty-state-smoke.spec.ts",
+    "test:e2e:smoke:wizard-progress": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/wizard-progress-smoke.spec.ts",
     "test:e2e:research-cta": "playwright test --config=playwright.research.config.ts",
     "test:e2e:ui": "playwright test --ui",
     "e2e:capture-for-agent": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/visual/route-manifest-visual.spec.ts e2e/visual/login-capture-for-agent.spec.ts e2e/visual/empty-state-capture-for-agent.spec.ts && node e2e/agent-review/verify-capture-complete.mjs && node e2e/agent-review/verify-empty-state-capture.mjs",

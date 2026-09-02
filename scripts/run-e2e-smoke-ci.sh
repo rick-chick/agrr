@@ -123,10 +123,13 @@ npm run test:e2e:smoke:route
 echo "==> Running layout smoke (invariants + route contracts × viewports)"
 npm run test:e2e:smoke:layout
 
+echo "==> Running wizard progress smoke (flex + min-height contract)"
+npm run test:e2e:smoke:wizard-progress
+
 echo "==> Running a11y smoke (axe-core + gantt keyboard alternative)"
 npm run test:e2e:smoke:a11y
 
 echo "==> Running empty-state smoke (e2e_empty user)"
 npm run test:e2e:smoke:empty-state
 
-echo "==> route-smoke + layout-smoke + a11y + empty-state smoke GREEN"
+echo "==> route-smoke + layout-smoke + wizard-progress + a11y + empty-state smoke GREEN"

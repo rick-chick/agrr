@@ -13,7 +13,10 @@
  * @property {boolean} [checkFormCardActionRows] Enforce viewport-tier row limits on `.form-card__actions`.
  * @property {boolean} [checkDetailCardActionOverlap] Forbid overlapping buttons in `.detail-card__actions`.
  * @property {string[]} [requiredShellSelectors] Host must contain selector when conformance is L1+.
+ * @property {string[]} [wizardProgressSelectors] Wizard step progress bars: flex + min-height density.
  */
+
+import { DEFAULT_WIZARD_PROGRESS_SELECTORS } from './wizard-progress-contract.mjs';
 
 /** @type {Record<import('./layout-contract-archetype-keys.mjs').LayoutArchetypeRunnerKey, LayoutArchetypeDesignContract>} */
 export const LAYOUT_ARCHETYPE_DESIGN_CONTRACTS = {
@@ -42,6 +45,7 @@ export const LAYOUT_ARCHETYPE_DESIGN_CONTRACTS = {
     ],
     requireAnyContentBlock: true,
     pageTitleSelectors: ['h1', 'h2', '.page-title'],
+    wizardProgressSelectors: [...DEFAULT_WIZARD_PROGRESS_SELECTORS],
   },
   'plan-hub': {
     contentBlockSelectors: [
@@ -77,6 +81,7 @@ export const LAYOUT_ARCHETYPE_DESIGN_CONTRACTS = {
     requireAnyContentBlock: true,
     pageTitleSelectors: ['h1', '.compact-header-title'],
     requiredShellSelectors: ['app-funnel-shell'],
+    wizardProgressSelectors: [...DEFAULT_WIZARD_PROGRESS_SELECTORS],
   },
   'settings-page': {
     contentBlockSelectors: ['.info-box', '.page-content'],
