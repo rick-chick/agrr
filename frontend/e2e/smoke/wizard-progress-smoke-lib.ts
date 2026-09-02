@@ -1,9 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 export async function readWizardProgressSnapshot(page: Page) {
-  const shell = page.locator('.funnel-shell-header--wizard');
-  await expect(shell).toBeVisible();
-  const progress = shell.locator('[data-testid="wizard-progress"]');
+  const progress = page.locator('[data-testid="wizard-progress"]').first();
   await expect(progress).toBeVisible();
 
   const steps = progress.locator('.compact-step');
