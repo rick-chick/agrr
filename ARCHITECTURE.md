@@ -66,6 +66,12 @@ Full normative text: [`docs/architecture/LAYER-RULES.md`](docs/architecture/LAYE
 
 **Vertical slice:** one JSON action → one interactor call + one output port (presenter). Sub-steps use **input ports** injected at the edge.
 
+## Fail-closed and fallback policy
+
+**Domain and business logic must not silently fall back to alternate algorithms** that present a misleading success (e.g. showing `eligible: true` when the primary optimization path failed). Allowed responses: explicit errors, `eligible: false`, or infrastructure-style `501` fail-closed ([`crates/agrr-server/src/fallback.rs`](crates/agrr-server/src/fallback.rs)).
+
+This extends the P6 **infrastructure** no-fallback rule ([`docs/migration/archive/P6-COMPLETION-CRITERIA.md`](docs/migration/archive/P6-COMPLETION-CRITERIA.md)) to product logic. Full normative text: [`.cursor/rules/fallback.mdc`](.cursor/rules/fallback.mdc). Aligns with [`.cursor/rules/no-convenience-tech-debt.mdc`](.cursor/rules/no-convenience-tech-debt.mdc) (convenience fallbacks are prohibited tech debt).
+
 ## Frontend
 
 Dependency: `components → usecase → domain`; `adapters → gateway tokens`.
@@ -105,5 +111,6 @@ Do not run `rails test` (removed P8.6). Use [test-common SKILL](.cursor/skills/t
 | [`.cursor/rules/agent-conventions.mdc`](.cursor/rules/agent-conventions.mdc) | Workflow terminology and ownership table |
 | [`.cursor/skills/clean-architecture-violation-fix-workflow/SKILL.md`](.cursor/skills/clean-architecture-violation-fix-workflow/SKILL.md) | CA violation fix loop (sections 0–6) |
 | [`.cursor/rules/ca-violation-fix-architecture-gate.mdc`](.cursor/rules/ca-violation-fix-architecture-gate.mdc) | ARCHITECTURE gate (1st / 2nd pass) |
+| [`.cursor/rules/fallback.mdc`](.cursor/rules/fallback.mdc) | Domain fail-closed — no silent alternate-algorithm success |
 | [docs/README.md](docs/README.md) | Supplementary docs index |
 | [docs/migration/archive/](docs/migration/archive/) | Historical migration docs (not current norm) |
