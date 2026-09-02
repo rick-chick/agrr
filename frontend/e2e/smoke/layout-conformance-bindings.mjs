@@ -35,6 +35,7 @@ export const LAYOUT_CONFORMANCE_BY_PATTERN = {
   'en/terms': 'L0',
   'entry-schedule': 'L1',
   'entry-schedule/crop/:cropId': 'L1',
+  'entry-schedule/farm/:farmId': 'L1',
   'farms': 'L0',
   'farms/:id': 'L0',
   'farms/:id/edit': 'L0',

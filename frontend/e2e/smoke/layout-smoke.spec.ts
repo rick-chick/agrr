@@ -33,6 +33,11 @@ function shouldSkipRoute(
   if (SKIP_ROUTES_WITH_DEV_SESSION.has(pattern)) {
     return 'login routes need logged-out session';
   }
+  if (pattern === 'entry-schedule/farm/:farmId') {
+    if (resolvedCaptureIds?.entryScheduleFarm == null) {
+      return 'no entry schedule farm resolved';
+    }
+  }
   if (pattern === 'entry-schedule/crop/:cropId') {
     if (resolvedCaptureIds?.cropId == null || resolvedCaptureIds?.farmId == null) {
       return 'no entry schedule crop resolved';

@@ -20,6 +20,7 @@ export const LAYOUT_CONTRACT_BY_PATTERN = {
   'en/terms': 'static-page',
   'entry-schedule': 'funnel-hub',
   'entry-schedule/crop/:cropId': 'funnel-hub',
+  'entry-schedule/farm/:farmId': 'funnel-hub',
   privacy: 'static-page',
   'public-plans/new': 'wizard-step',
   'public-plans/optimizing': 'wizard-step',

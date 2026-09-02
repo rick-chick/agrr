@@ -31,6 +31,11 @@ export function applyResolvedUrl(pattern, url, ids) {
     return url.replace(/planId=\d+/, `planId=${ids.publicPlanId}`);
   }
 
+  if (pattern === 'entry-schedule/farm/:farmId') {
+    if (ids.farmId == null) return url;
+    return `/entry-schedule/farm/${ids.farmId}`;
+  }
+
   if (pattern === 'entry-schedule/crop/:cropId') {
     if (ids.cropId == null || ids.farmId == null) return url;
     return `/entry-schedule/crop/${ids.cropId}?farmId=${ids.farmId}`;

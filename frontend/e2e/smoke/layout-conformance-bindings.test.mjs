@@ -47,6 +47,7 @@ test('checkConformanceCoverage requireExplicit flags missing patterns', () => {
 test('entry-schedule patterns have conformance overrides', () => {
   assert.equal(LAYOUT_CONFORMANCE_BY_PATTERN['entry-schedule'], 'L1');
   assert.equal(LAYOUT_CONFORMANCE_BY_PATTERN['entry-schedule/crop/:cropId'], 'L1');
+  assert.equal(LAYOUT_CONFORMANCE_BY_PATTERN['entry-schedule/farm/:farmId'], 'L1');
 });
 
 test('CONFORMANCE_LEVELS includes L0 through L4', () => {
@@ -57,6 +58,7 @@ test('funnel-hub archetype is registered for entry-schedule routes', async () =>
   const { LAYOUT_CONTRACT_BY_PATTERN } = await import('./layout-contract-bindings.mjs');
   assert.equal(LAYOUT_CONTRACT_BY_PATTERN['entry-schedule'], 'funnel-hub');
   assert.equal(LAYOUT_CONTRACT_BY_PATTERN['entry-schedule/crop/:cropId'], 'funnel-hub');
+  assert.equal(LAYOUT_CONTRACT_BY_PATTERN['entry-schedule/farm/:farmId'], 'funnel-hub');
 });
 
 test('funnel-hub has design contract and runner key', async () => {
