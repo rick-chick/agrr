@@ -51,7 +51,7 @@ const initialControl: PublicPlanSelectCropViewState = {
       <div class="free-plans-container">
         <app-public-plan-context-header [crumbs]="contextCrumbs" />
         <app-funnel-shell variant="wizard" titleKey="public_plans.title" titleIcon="🌱">
-          <app-wizard-progress [steps]="wizardSteps" />
+          <app-wizard-progress ngProjectAs="[wizardProgress]" [steps]="wizardSteps" />
           @if (farm) {
           <div class="enhanced-summary-card enhanced-summary-card--single-row">
           <div class="enhanced-summary-items">

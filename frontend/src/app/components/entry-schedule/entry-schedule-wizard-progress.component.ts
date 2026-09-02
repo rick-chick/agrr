@@ -9,7 +9,7 @@ import {
   standalone: true,
   imports: [WizardProgressPattern],
   host: {
-    wizardProgress: '',
+    'attr.wizardProgress': '',
   },
   template: `<app-wizard-progress [steps]="steps" />`,
 })

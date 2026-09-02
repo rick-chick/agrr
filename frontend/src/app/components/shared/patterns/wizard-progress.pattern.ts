@@ -15,7 +15,7 @@ export interface WizardProgressStepConfig {
   standalone: true,
   imports: [RouterLink, TranslateModule],
   host: {
-    wizardProgress: '',
+    'attr.wizardProgress': '',
   },
   template: `
     <div class="compact-progress" data-testid="wizard-progress">

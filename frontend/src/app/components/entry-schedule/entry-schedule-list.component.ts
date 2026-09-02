@@ -32,7 +32,7 @@ const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
           descriptionKey="pages.entry_schedule.description"
           titleIcon="📅"
         >
-          <app-entry-schedule-wizard-progress activeStep="farm" />
+          <app-entry-schedule-wizard-progress ngProjectAs="[wizardProgress]" activeStep="farm" />
           <section class="content-card" aria-labelledby="entry-schedule-heading">
             <h2 id="entry-schedule-heading" class="visually-hidden">
               {{ 'entrySchedule.selectFarm' | translate }}
