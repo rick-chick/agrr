@@ -64,8 +64,10 @@ smokeDescribe('locale i18n smoke (manifest × ja/en/in)', () => {
             test.skip(true, 'no entry schedule crop resolved');
           }
         }
-        if (r.pattern === 'entry-schedule/farm/:farmId' && resolvedCaptureIds?.farmId == null) {
-          test.skip(true, 'no entry schedule farm resolved');
+        if (r.pattern === 'entry-schedule/farm/:farmId') {
+          if (resolvedCaptureIds?.farmId == null || resolvedCaptureIds?.cropId == null) {
+            test.skip(true, 'no entry schedule farm/crop resolved');
+          }
         }
         if (r.pattern === 'public-plans/results' && resolvedCaptureIds?.publicPlanId == null) {
           test.skip(true, 'no publicPlanId resolved');
