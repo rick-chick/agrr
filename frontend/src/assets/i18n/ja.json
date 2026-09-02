@@ -4310,7 +4310,14 @@
     "stages": "成長段階",
     "ctaSectionTitle": "次のステップ",
     "ctaPublicPlan": "この作物で無料計画を作る",
-    "ctaCropSetup": "作物マスタを整備する"
+    "ctaCropSetup": "作物マスタを整備する",
+    "steps": {
+      "farm": "農場",
+      "crop": "作物"
+    },
+    "summary": {
+      "farm": "選択中の農場"
+    }
   },
   "onboarding": {
     "breadcrumb": "初回セットアップ",
