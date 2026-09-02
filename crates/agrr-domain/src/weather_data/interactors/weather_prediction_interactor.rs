@@ -177,6 +177,32 @@ impl<'a> WeatherPredictionInteractor<'a> {
         None
     }
 
+    /// Predict (or return cached) weather for a location without a cultivation plan.
+    pub fn predict_for_location(
+        &self,
+        target_end_date: Option<Date>,
+    ) -> Result<PreparedWeatherInfo, WeatherPredictionError> {
+        let target = self.normalize_target_end_date(target_end_date);
+        if let Some(existing) = self.get_existing_prediction(Some(target), None) {
+            return Ok(PreparedWeatherInfo {
+                data: existing.data,
+                target_end_date: existing.target_end_date,
+                prediction_start_date: existing.prediction_start_date,
+                prediction_days: existing.prediction_days as usize,
+            });
+        }
+
+        let weather_info = self.prepare_weather_data(target)?;
+        let payload = self.build_prediction_payload(&weather_info, target);
+        self.persist_scoped_prediction(
+            PredictedWeatherScope::Location,
+            self.weather_location.id,
+            &payload,
+            target,
+        )?;
+        Ok(weather_info)
+    }
+
     pub fn predict_for_cultivation_plan(
         &self,
         plan_weather: &CultivationPlanWeather,

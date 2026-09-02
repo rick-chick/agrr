@@ -1,6 +1,8 @@
 //! Public entry schedule (`/api/v1/public_plans/entry_schedule/crops*`).
 
 use crate::adapters::{NoopLogger, SystemClock};
+use crate::adjust_weather_prediction::resolve_weather_for_entry_schedule;
+use crate::cultivation_plan_weather_load::load_weather_location_by_id;
 use crate::state::AppState;
 use axum::http::HeaderMap;
 use agrr_adapters_agrr::{
@@ -27,6 +29,9 @@ use agrr_domain::public_plan::interactors::{
 use agrr_domain::farm::entities::FarmEntity;
 use agrr_domain::farm::gateways::FarmGateway;
 use agrr_domain::public_plan::dtos::{EntryScheduleFailure, EntryScheduleShowOutput};
+use agrr_domain::public_plan::exceptions::{
+    PredictionPayloadMissingError, WeatherLocationMissingError, WeatherPredictionFailedError,
+};
 use agrr_domain::public_plan::interactors::EntryScheduleShowInteractor;
 use agrr_domain::public_plan::mappers::entry_schedule_crop_mapper::{
     self, CropStageRow, EntryScheduleWindowResult,
@@ -36,6 +41,7 @@ use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::ports::{
     ClockPort, CropAgrrRequirementBuilderPort, CropAgrrRequirementSource,
 };
+use agrr_domain::weather_data::WeatherPredictionError;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -143,6 +149,7 @@ impl EntryScheduleCropGateway for SqliteShowCropGateway {
 }
 
 struct SqliteOptimizeCropGateway {
+    pool: agrr_adapters_sqlite::SqlitePool,
     crop_gateway: CropSqliteGateway,
 }
 
@@ -151,37 +158,103 @@ impl CultivationEntryScheduleCropGateway for SqliteOptimizeCropGateway {
         &self,
         crop_id: i64,
     ) -> Result<Vec<CropStageSnapshot>, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(self
-            .crop_gateway
-            .list_by_crop_id(crop_id)?
-            .into_iter()
-            .map(|s| CropStageSnapshot {
+        let stages = self.crop_gateway.list_by_crop_id(crop_id)?;
+        let mut rows = Vec::with_capacity(stages.len());
+        for s in stages {
+            let temperature_requirement = self
+                .pool
+                .with_read(|conn| load_entry_schedule_temperature(conn, s.id))
+                .ok()
+                .flatten();
+            rows.push(CropStageSnapshot {
                 id: s.id,
                 name: s.name,
                 order: s.order,
-                temperature_requirement: None,
-            })
-            .collect())
+                temperature_requirement,
+            });
+        }
+        Ok(rows)
     }
 }
 
-struct StubWeatherLoader;
+fn load_entry_schedule_temperature(
+    conn: &rusqlite::Connection,
+    crop_stage_id: i64,
+) -> rusqlite::Result<Option<agrr_domain::cultivation_plan::interactors::entry_schedule::TemperatureRequirementSnapshot>> {
+    use agrr_domain::cultivation_plan::interactors::entry_schedule::TemperatureRequirementSnapshot;
+    use rusqlite::OptionalExtension;
+    conn.query_row(
+        "SELECT frost_threshold, optimal_min, optimal_max, base_temperature \
+         FROM temperature_requirements WHERE crop_stage_id = ?1",
+        rusqlite::params![crop_stage_id],
+        |row| {
+            Ok(TemperatureRequirementSnapshot {
+                frost_threshold: row.get(0)?,
+                optimal_min: row.get(1)?,
+                optimal_max: row.get(2)?,
+                base_temperature: row.get(3)?,
+            })
+        },
+    )
+    .optional()
+}
 
-impl EntryScheduleWeatherLoaderPort for StubWeatherLoader {
+struct EntryScheduleWeatherLoader<'a> {
+    state: &'a AppState,
+}
+
+fn map_weather_prediction_error(
+    err: WeatherPredictionError,
+) -> Box<dyn std::error::Error + Send + Sync> {
+    match err {
+        WeatherPredictionError::WeatherLocationRequired => {
+            Box::new(WeatherLocationMissingError)
+        }
+        WeatherPredictionError::InsufficientPredictionData(msg)
+        | WeatherPredictionError::WeatherDataNotFound(msg)
+        | WeatherPredictionError::WeatherDataStorageFailed(msg) => {
+            if msg.contains("no data rows") {
+                Box::new(PredictionPayloadMissingError)
+            } else {
+                Box::new(WeatherPredictionFailedError(msg))
+            }
+        }
+        other => Box::new(WeatherPredictionFailedError(other.to_string())),
+    }
+}
+
+impl EntryScheduleWeatherLoaderPort for EntryScheduleWeatherLoader<'_> {
     fn load_prediction_payload(
         &self,
         farm: &dyn EntryScheduleShowFarm,
-        _prediction_end_date_raw: Option<&str>,
+        prediction_end_date_raw: Option<&str>,
         reference_date: Date,
     ) -> Result<BTreeMap<String, Value>, Box<dyn std::error::Error + Send + Sync>> {
-        let mut map = BTreeMap::new();
-        map.insert("prediction_start_date".into(), json!(reference_date.to_string()));
-        map.insert(
-            "prediction_end_date".into(),
-            json!(format!("{}-12-31", reference_date.year() + 1)),
-        );
-        if let Some(wl) = farm.weather_location_id() {
-            map.insert("weather_location_id".into(), json!(wl));
+        let weather_location_id = farm
+            .weather_location_id()
+            .ok_or_else(|| Box::new(WeatherLocationMissingError) as Box<dyn std::error::Error + Send + Sync>)?;
+        let weather_location = load_weather_location_by_id(&self.state.sqlite, weather_location_id)
+            .map_err(|_| Box::new(WeatherLocationMissingError) as Box<dyn std::error::Error + Send + Sync>)?;
+
+        let weather_value = resolve_weather_for_entry_schedule(
+            self.state,
+            &weather_location,
+            reference_date,
+            prediction_end_date_raw,
+        )
+        .map_err(map_weather_prediction_error)?;
+
+        let map = match weather_value {
+            Value::Object(obj) => obj.into_iter().collect::<BTreeMap<String, Value>>(),
+            _ => BTreeMap::new(),
+        };
+        let weather_data_len = map
+            .get("data")
+            .and_then(|v| v.as_array())
+            .map(|a| a.len())
+            .unwrap_or(0);
+        if weather_data_len == 0 {
+            return Err(Box::new(PredictionPayloadMissingError));
         }
         Ok(map)
     }
@@ -203,6 +276,7 @@ impl EntryScheduleOptimizationRunnerPort for OptimizeRunner {
         let entity = CropEntity::new(crop.id(), crop.name(), None, true).unwrap();
         let wrap = CropWrap(entity);
         let crop_gw = SqliteOptimizeCropGateway {
+            pool: self.pool.clone(),
             crop_gateway: CropSqliteGateway::new(self.pool.clone()),
         };
         let builder = AgrrCropBuilder {
@@ -383,10 +457,11 @@ async fn entry_schedule_crop_show(
         crop_gateway: CropSqliteGateway::new(state.sqlite.clone()),
     };
     let mut presenter = ShowPresenter { out: None };
+    let weather_loader = EntryScheduleWeatherLoader { state: &state };
     let mut interactor = EntryScheduleShowInteractor::new(
         &mut presenter,
         &crop_gw,
-        &StubWeatherLoader,
+        &weather_loader,
         &runner,
         &translator,
         &SystemClock,
@@ -428,9 +503,39 @@ async fn entry_schedule_crops(
         optimization: EntryScheduleOptimizationAgrrDaemonGateway::from_env(),
         agrr_enabled,
     };
-    let weather = StubWeatherLoader
-        .load_prediction_payload(&FarmWrap(farm.clone()), query.prediction_end_date.as_deref(), SystemClock.today())
-        .unwrap_or_default();
+    let weather_loader = EntryScheduleWeatherLoader { state: &state };
+    let weather = match weather_loader.load_prediction_payload(
+        &FarmWrap(farm.clone()),
+        query.prediction_end_date.as_deref(),
+        SystemClock.today(),
+    ) {
+        Ok(w) => w,
+        Err(err) => {
+            if err.downcast_ref::<WeatherLocationMissingError>().is_some() {
+                return (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({"error": "weather_location_required"})),
+                )
+                    .into_response();
+            }
+            if err.downcast_ref::<PredictionPayloadMissingError>().is_some() {
+                return (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(json!({"error": "prediction_payload_missing"})),
+                )
+                    .into_response();
+            }
+            let message = err
+                .downcast_ref::<WeatherPredictionFailedError>()
+                .map(|e| e.0.clone())
+                .unwrap_or_else(|| err.to_string());
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({"error": message})),
+            )
+                .into_response();
+        }
+    };
     let translator = state.locale_translator(&headers);
     let mut items = Vec::new();
     for crop in reference_crops {
