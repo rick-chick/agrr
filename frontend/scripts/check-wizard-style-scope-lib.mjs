@@ -8,6 +8,7 @@
 /** @type {readonly string[]} */
 export const WIZARD_PROGRESS_COMPONENT_SUFFIXES = [
   'entry-schedule-wizard-progress.component.ts',
+  'wizard-progress.pattern.ts',
 ];
 
 /**

@@ -455,8 +455,14 @@ describe('PublicPlanSelectCropComponent (template)', () => {
     };
     fixture.detectChanges();
 
-    const activeStep = fixture.nativeElement.querySelector('.compact-step.active .step-label');
-    expect(activeStep?.textContent?.trim()).toBe('作物');
+    expect(instance.wizardSteps).toEqual([
+      {
+        labelKey: 'public_plans.steps.region',
+        status: 'completed',
+        routerLink: '/public-plans/new',
+      },
+      { labelKey: 'public_plans.steps.crop', status: 'active' },
+    ]);
     expect(fixture.nativeElement.querySelector('.enhanced-grid .crop-item')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.enhanced-selection-card')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('東京');

@@ -28,6 +28,7 @@
     "test:e2e:smoke": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/",
     "test:e2e:smoke:route": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/route-smoke.spec.ts",
     "test:e2e:smoke:layout": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/layout-smoke.spec.ts",
+    "test:e2e:smoke:wizard-progress": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/wizard-progress-smoke.spec.ts",
     "test:e2e:smoke:locale-i18n": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/locale-i18n-smoke.spec.ts",
     "test:e2e:smoke:a11y": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/a11y-smoke.spec.ts e2e/smoke/gantt-keyboard-alternative.spec.ts e2e/smoke/cookie-consent-focus.spec.ts e2e/smoke/skip-link.spec.ts",
     "test:e2e:smoke:empty-state": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/empty-state-smoke.spec.ts",
