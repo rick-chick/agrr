@@ -198,7 +198,6 @@ export function evaluateArchetypeDesignContract({ hostSelector, contract, confor
     for (const selector of contract.wizardProgressSelectors) {
       const matches = [...root.querySelectorAll(selector)];
       if (matches.length === 0) {
-        violations.push(`wizardProgressSelectors: "${selector}" not found in host`);
         continue;
       }
       const visible = matches.filter((el) => isElementVisible(el));

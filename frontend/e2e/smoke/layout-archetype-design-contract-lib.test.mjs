@@ -138,6 +138,31 @@ test('maxActionButtonRowsForViewport matches layout invariant tiers', () => {
   assert.equal(maxActionButtonRowsForViewport(1280), 2);
 });
 
+test('checkContentBlockLayout skips wizardProgressSelectors when progress UI is absent', async () => {
+  const html = `
+    <div id="host">
+      <section class="content-card" data-width="400" data-height="40" style="display: block;"></section>
+    </div>
+  `;
+
+  const violations = await checkContentBlockLayout({
+    html,
+    hostSelector: '#host',
+    viewportWidth: 1280,
+    contract: {
+      contentBlockSelectors: ['.content-card'],
+      requireAnyContentBlock: true,
+      wizardProgressSelectors: ['.compact-progress'],
+    },
+  });
+
+  assert.equal(
+    violations.filter((v) => v.includes('wizardProgressSelectors')).length,
+    0,
+    'wizard progress is optional on routes that may omit the bar',
+  );
+});
+
 test('checkContentBlockLayout enforces wizardProgressSelectors flex and min-height', async () => {
   const html = `
     <div id="host">
