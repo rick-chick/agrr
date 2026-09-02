@@ -4,6 +4,11 @@
  * Human-readable overview: docs/design/layout-contracts.md
  */
 
+import {
+  WIZARD_PROGRESS_MIN_HEIGHT_PX,
+  WIZARD_PROGRESS_SELECTORS,
+} from './assert-wizard-progress-lib.mjs';
+
 /** @typedef {object} LayoutArchetypeDesignContract
  * @property {string[]} contentBlockSelectors Blocks checked for presence and horizontal overflow.
  * @property {boolean} requireAnyContentBlock Fail when zero visible blocks match contentBlockSelectors.
@@ -13,6 +18,8 @@
  * @property {boolean} [checkFormCardActionRows] Enforce viewport-tier row limits on `.form-card__actions`.
  * @property {boolean} [checkDetailCardActionOverlap] Forbid overlapping buttons in `.detail-card__actions`.
  * @property {string[]} [requiredShellSelectors] Host must contain selector when conformance is L1+.
+ * @property {string[]} [wizardProgressSelectors] Wizard step progress bars checked for flex + min-height.
+ * @property {number} [wizardProgressMinHeightPx] Minimum rendered height for wizardProgressSelectors (default 40).
  */
 
 /** @type {Record<import('./layout-contract-archetype-keys.mjs').LayoutArchetypeRunnerKey, LayoutArchetypeDesignContract>} */
@@ -42,6 +49,8 @@ export const LAYOUT_ARCHETYPE_DESIGN_CONTRACTS = {
     ],
     requireAnyContentBlock: true,
     pageTitleSelectors: ['h1', 'h2', '.page-title'],
+    wizardProgressSelectors: WIZARD_PROGRESS_SELECTORS,
+    wizardProgressMinHeightPx: WIZARD_PROGRESS_MIN_HEIGHT_PX,
   },
   'plan-hub': {
     contentBlockSelectors: [
@@ -77,6 +86,8 @@ export const LAYOUT_ARCHETYPE_DESIGN_CONTRACTS = {
     requireAnyContentBlock: true,
     pageTitleSelectors: ['h1', '.compact-header-title'],
     requiredShellSelectors: ['app-funnel-shell'],
+    wizardProgressSelectors: WIZARD_PROGRESS_SELECTORS,
+    wizardProgressMinHeightPx: WIZARD_PROGRESS_MIN_HEIGHT_PX,
   },
   'settings-page': {
     contentBlockSelectors: ['.info-box', '.page-content'],
