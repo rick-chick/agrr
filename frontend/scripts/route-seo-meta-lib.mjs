@@ -41,5 +41,8 @@ export function resolveSeoKeyPrefix(pathname) {
   if (path.startsWith('/entry-schedule/crop/')) {
     return 'pages.entry_schedule_detail';
   }
+  if (path.startsWith('/entry-schedule/farm/')) {
+    return 'pages.entry_schedule';
+  }
   return ROUTE_SEO_KEY_MAP[path] ?? 'meta.default';
 }

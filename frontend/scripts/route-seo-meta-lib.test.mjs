@@ -24,6 +24,7 @@ describe('route-seo-meta-lib.mjs', () => {
     assert.equal(resolveSeoKeyPrefix('/public-plans/new'), 'pages.public_plans_new');
     assert.equal(resolveSeoKeyPrefix('/public-plans/results'), 'pages.public_plans_new');
     assert.equal(resolveSeoKeyPrefix('/entry-schedule'), 'pages.entry_schedule');
+    assert.equal(resolveSeoKeyPrefix('/entry-schedule/farm/1'), 'pages.entry_schedule');
     assert.equal(resolveSeoKeyPrefix('/entry-schedule/crop/42'), 'pages.entry_schedule_detail');
   });
 
