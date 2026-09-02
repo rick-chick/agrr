@@ -341,3 +341,82 @@ export function checkAgentsCommandSync(rootDir) {
   const errors = verifyScriptPaths(rootDir, paths, 'AGENTS.md');
   return { ok: errors.length === 0, errors };
 }
+
+const FALLBACK_RULE = '.cursor/rules/fallback.mdc';
+const ERROR_INVESTIGATION_CHECKLIST =
+  '.cursor/skills/error-investigation/references/CHECKLIST.md';
+
+const DOMAIN_FALLBACK_REQUIRED_PHRASES = [
+  { name: 'domain judgment scope', regex: /ドメイン判定/ },
+  { name: 'fail-closed', regex: /fail-closed/i },
+  { name: 'eligible: false', regex: /eligible:\s*false/i },
+  { name: 'alternate algorithm prohibition', regex: /別アルゴリズム/ },
+  { name: 'no-convenience-tech-debt cross-ref', regex: /no-convenience-tech-debt\.mdc/ },
+  { name: 'P6 infrastructure cross-ref', regex: /P6/ },
+];
+
+export function checkDomainFallbackPolicy(rootDir) {
+  const errors = [];
+  const fallbackPath = join(rootDir, FALLBACK_RULE);
+  if (!existsSync(fallbackPath)) {
+    errors.push(`${FALLBACK_RULE}: missing`);
+    return { ok: false, errors };
+  }
+
+  const fallbackContent = readFileSync(fallbackPath, 'utf8');
+  for (const { name, regex } of DOMAIN_FALLBACK_REQUIRED_PHRASES) {
+    if (!regex.test(fallbackContent)) {
+      errors.push(`${FALLBACK_RULE}: missing required phrase (${name})`);
+    }
+  }
+
+  const archPath = join(rootDir, 'ARCHITECTURE.md');
+  if (!existsSync(archPath)) {
+    errors.push('ARCHITECTURE.md: missing');
+  } else {
+    const archContent = readFileSync(archPath, 'utf8');
+    if (!/## Domain fallback policy/i.test(archContent)) {
+      errors.push('ARCHITECTURE.md: missing ## Domain fallback policy section');
+    }
+    if (!/fallback\.mdc/.test(archContent)) {
+      errors.push('ARCHITECTURE.md: missing link to fallback.mdc');
+    }
+    if (!/ドメイン判定/.test(archContent)) {
+      errors.push('ARCHITECTURE.md: domain fallback section must mention ドメイン判定');
+    }
+  }
+
+  const checklistPath = join(rootDir, ERROR_INVESTIGATION_CHECKLIST);
+  if (!existsSync(checklistPath)) {
+    errors.push(`${ERROR_INVESTIGATION_CHECKLIST}: missing`);
+  } else {
+    const checklistContent = readFileSync(checklistPath, 'utf8');
+    const linkMatch = checklistContent.match(
+      /根本原因優先:\s*\[[^\]]*\]\(([^)]+)\)/,
+    );
+    if (!linkMatch) {
+      errors.push(
+        `${ERROR_INVESTIGATION_CHECKLIST}: missing resolvable fallback.mdc link after 根本原因優先`,
+      );
+    } else {
+      const resolved = resolveLink(
+        ERROR_INVESTIGATION_CHECKLIST,
+        linkMatch[1].trim(),
+        rootDir,
+      );
+      if (!resolved || !existsSync(resolved.target)) {
+        errors.push(
+          `${ERROR_INVESTIGATION_CHECKLIST}: broken fallback.mdc link (${linkMatch[1]})`,
+        );
+      } else if (
+        relative(rootDir, resolved.target).replace(/\\/g, '/') !== FALLBACK_RULE
+      ) {
+        errors.push(
+          `${ERROR_INVESTIGATION_CHECKLIST}: fallback link must target ${FALLBACK_RULE}`,
+        );
+      }
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}

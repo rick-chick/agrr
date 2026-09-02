@@ -76,5 +76,5 @@ SKILL.md で参照する進捗チェックリスト・RED 省略の根拠にし�
 - 本 SKILL のワークフロー・各ステップの実施内容: [../SKILL.md](../SKILL.md)
 - 検証フェーズ: [investigation-verification](../../investigation-verification/SKILL.md)
 - 修正・GREEN 確認: [error-fix-red-green](../../error-fix-red-green/SKILL.md)
-- 根本原因優先: [fallback.mdc]
+- 根本原因優先: [fallback.mdc](../../../rules/fallback.mdc)
 - コード調査・データフロー: [code_read.mdc]
