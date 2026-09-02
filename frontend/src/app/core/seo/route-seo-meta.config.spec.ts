@@ -23,6 +23,7 @@ describe('route-seo-meta.config', () => {
     expect(resolveSeoKeyPrefix('/public-plans/new')).toBe('pages.public_plans_new');
     expect(resolveSeoKeyPrefix('/public-plans/results')).toBe('pages.public_plans_new');
     expect(resolveSeoKeyPrefix('/entry-schedule')).toBe('pages.entry_schedule');
+    expect(resolveSeoKeyPrefix('/entry-schedule/farm/42')).toBe('pages.entry_schedule');
     expect(resolveSeoKeyPrefix('/entry-schedule/crop/42')).toBe('pages.entry_schedule_detail');
   });
 
