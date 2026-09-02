@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { collectWizardProgressLayouts } from './assert-wizard-progress-lib.mjs';
 import {
   expectWizardProgressLayoutsMatch,
   resolveWizardProgressMinHeightPx,
@@ -45,6 +46,30 @@ test('expectWizardProgressLayoutsMatch detects display mismatch across routes', 
   ]);
 
   assert.ok(violations.some((v) => v.includes('display=block')));
+});
+
+test('collectWizardProgressLayouts defaults selectors for Playwright serialization', async () => {
+  const { JSDOM } = await import('jsdom');
+  const dom = new JSDOM(
+    `<!DOCTYPE html><html><body><div id="host"><div class="compact-progress" style="display:flex;min-height:44px;width:200px;height:44px;"></div></div></body></html>`,
+    { pretendToBeVisual: true },
+  );
+  const previousDocument = globalThis.document;
+  globalThis.document = dom.window.document;
+  Object.defineProperty(dom.window.HTMLElement.prototype, 'getBoundingClientRect', {
+    configurable: true,
+    value() {
+      return { width: 200, height: 44, top: 0, left: 0, right: 200, bottom: 44, x: 0, y: 0 };
+    },
+  });
+
+  try {
+    const result = collectWizardProgressLayouts({ hostSelector: '#host' });
+    assert.equal(result.violations.length, 0);
+    assert.equal(result.layouts.length, 1);
+  } finally {
+    globalThis.document = previousDocument;
+  }
 });
 
 test('resolveWizardProgressMinHeightPx prefers computed min-height over bounding rect', () => {
