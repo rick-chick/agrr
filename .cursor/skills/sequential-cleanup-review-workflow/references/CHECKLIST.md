@@ -63,7 +63,7 @@
 | `*.usecase.spec.ts` | UseCase の分岐・Output Port への DTO・Fake Gateway 状態 |
 | `*presenter*.spec.ts` | Presenter が View 状態へ写すこと（分岐の網羅は UseCase） |
 | `*gateway*.spec.ts` | HTTP マッピング・エラー変換（ユースケース分岐は UseCase） |
-| `*.component.spec.ts` | View バインディング・ユーザー操作の委譲（UseCase 分岐を網羅しない） |
+| `*.component.spec.ts` | View バインディング・ユーザー操作の委譲（UseCase 分岐を網羅しない）。wizard flex は [UI-COMPOSITION-RULES § Wizard progress flex](../../../docs/design/UI-COMPOSITION-RULES.md#wizard-progress-flex--test-layer-matrix) に従い `getComputedStyle(display:flex)` を使わない |
 
 ### 層の早見（サーバー）
 
