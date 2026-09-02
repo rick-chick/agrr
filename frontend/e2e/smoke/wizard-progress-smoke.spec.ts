@@ -13,6 +13,7 @@ import { expectWizardProgressLayoutsMatch } from './assert-wizard-progress-lib.m
 import {
   disableCookieBanner,
   loadResolvedCaptureIdsWithBaseline,
+  preparePublicPlanRoute,
   resolveGotoUrl,
   smokeDescribe,
   type Manifest,
@@ -56,6 +57,10 @@ smokeDescribe('wizard progress layout smoke', () => {
 
       const manifestRoute = { pattern: route.pattern, url: route.url } as Manifest['routes'][number];
       const url = resolveGotoUrl(manifestRoute, resolvedCaptureIds);
+      const seeded = await preparePublicPlanRoute(page, route.pattern, resolvedCaptureIds);
+      if (!seeded) {
+        test.skip(true, 'public plan session seed unavailable');
+      }
       await page.goto(url);
 
       const pathnameExpect = expectedPathnameFromResolvedGoto(url);
