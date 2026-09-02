@@ -308,3 +308,59 @@ fn normalize_weather_payload_for_agrr(
 
     Ok(weather_data.clone())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    use time::macros::date;
+
+    #[test]
+    fn entry_schedule_target_end_defaults_to_next_year_december31() {
+        let end = parse_entry_schedule_target_end_date(date!(2026-06-15), None).unwrap();
+        assert_eq!(end, date!(2027-12-31));
+    }
+
+    #[test]
+    fn entry_schedule_target_end_parses_explicit_iso_date() {
+        let end =
+            parse_entry_schedule_target_end_date(date!(2026-06-15), Some("2028-03-31")).unwrap();
+        assert_eq!(end, date!(2028-03-31));
+    }
+
+    #[test]
+    fn entry_schedule_target_end_rejects_invalid_iso_date() {
+        let err =
+            parse_entry_schedule_target_end_date(date!(2026-06-15), Some("not-a-date")).unwrap_err();
+        assert!(matches!(
+            err,
+            WeatherPredictionError::InsufficientPredictionData(_)
+        ));
+        assert!(err.to_string().contains("invalid prediction_end_date"));
+    }
+
+    #[test]
+    fn entry_schedule_target_end_treats_blank_as_default() {
+        let end = parse_entry_schedule_target_end_date(date!(2026-01-01), Some("  ")).unwrap();
+        assert_eq!(end, date!(2027-12-31));
+    }
+
+    #[test]
+    fn normalize_weather_payload_rejects_empty_data_rows() {
+        let mut payload = json!({ "data": [] });
+        let err = normalize_weather_payload_for_agrr(&mut payload, &StderrLogger).unwrap_err();
+        assert!(matches!(
+            err,
+            WeatherPredictionError::InsufficientPredictionData(ref msg) if msg.contains("no data rows")
+        ));
+    }
+
+    #[test]
+    fn normalize_weather_payload_accepts_non_empty_data() {
+        let mut payload = json!({
+            "data": [{ "time": "2026-05-01", "temperature_2m_mean": 15.0 }]
+        });
+        let normalized = normalize_weather_payload_for_agrr(&mut payload, &StderrLogger).unwrap();
+        assert_eq!(normalized["data"].as_array().unwrap().len(), 1);
+    }
+}
