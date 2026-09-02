@@ -1,29 +1,23 @@
-<<<<<<< HEAD
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { waitForPageStable } from '../page-stable';
 import {
   assertPageValidity,
   expectedPathnameFromResolvedGoto,
   resolveHostSelectorForPattern,
+  type RouteRow,
 } from '../route-validity';
 import {
   collectWizardProgressLayouts,
   expectWizardProgressLayoutsMatch,
 } from './assert-wizard-progress-lib.mjs';
-=======
-import { test } from '@playwright/test';
-import { waitForPageStable } from '../page-stable';
-import type { RouteRow } from '../route-validity';
 import {
   assertWizardProgressParity,
   readWizardProgressSnapshot,
 } from './wizard-progress-smoke-lib';
->>>>>>> origin/master
 import {
   disableCookieBanner,
   loadResolvedCaptureIdsWithBaseline,
   preparePublicPlanRoute,
-<<<<<<< HEAD
   resolveGotoUrl,
   smokeDescribe,
   smokeManifest,
@@ -44,28 +38,6 @@ const WIZARD_PROGRESS_ROUTES: WizardProgressRoute[] = [
       ids?.entryScheduleFarm == null ? 'no entry schedule farm resolved' : null,
   },
 ];
-
-function findRoute(pattern: string) {
-  const route = smokeManifest.routes.find((row) => row.pattern === pattern);
-  if (!route) {
-    throw new Error(`route-manifest missing pattern: ${pattern}`);
-  }
-  return route;
-}
-
-smokeDescribe('wizard progress layout smoke', () => {
-  test.setTimeout(120_000);
-  let resolvedCaptureIds: ResolvedCaptureIds | null = null;
-
-  test.describe.configure({ timeout: 180_000 });
-
-  test.beforeAll(async () => {
-    resolvedCaptureIds = await loadResolvedCaptureIdsWithBaseline();
-  });
-
-=======
-  smokeDescribe,
-} from './smoke-helpers';
 
 const publicPlanCreateRoute: RouteRow = {
   pattern: 'public-plans/new',
@@ -88,91 +60,30 @@ const publicPlanSelectCropRoute: RouteRow = {
   source: 'wizard-progress-smoke',
 };
 
+function findRoute(pattern: string) {
+  const route = smokeManifest.routes.find((row) => row.pattern === pattern);
+  if (!route) {
+    throw new Error(`route-manifest missing pattern: ${pattern}`);
+  }
+  return route;
+}
+
+async function waitForWizardProgressRouteStable(page: Page, route: RouteRow): Promise<void> {
+  if (route.pattern === 'entry-schedule/farm/:farmId') {
+    await expect(page.locator('app-entry-schedule-farm-crops')).toBeVisible({ timeout: 30_000 });
+    await expect(
+      page.locator('app-entry-schedule-wizard-progress [data-testid="wizard-progress"]'),
+    ).toBeVisible({ timeout: 30_000 });
+    return;
+  }
+  await waitForPageStable(page, route);
+}
+
 smokeDescribe('wizard progress funnel parity', () => {
->>>>>>> origin/master
   test.beforeEach(async ({ page }) => {
     await disableCookieBanner(page);
   });
 
-<<<<<<< HEAD
-  test('wizard progress flex + min-height contract on each route', async ({ page }) => {
-    for (const entry of WIZARD_PROGRESS_ROUTES) {
-      const skipReason = entry.skip?.(resolvedCaptureIds) ?? null;
-      if (skipReason) {
-        test.info().annotations.push({ type: 'skip-route', description: `${entry.pattern}: ${skipReason}` });
-        continue;
-      }
-
-      const route = findRoute(entry.pattern);
-      const url = resolveGotoUrl(route, resolvedCaptureIds);
-      const seeded = await preparePublicPlanRoute(page, route.pattern, resolvedCaptureIds);
-      if (!seeded) {
-        test.info().annotations.push({
-          type: 'skip-route',
-          description: `${entry.pattern}: public plan session seed unavailable`,
-        });
-        continue;
-      }
-
-      await page.goto(url);
-      const pathnameExpect = expectedPathnameFromResolvedGoto(url);
-      await assertPageValidity(page, route, pathnameExpect);
-      await waitForPageStable(page, route);
-      expect(page.url()).toContain(pathnameExpect.replace(/^\//, ''));
-
-      const hostSelector = resolveHostSelectorForPattern(page, route.pattern);
-      expect(hostSelector, `host selector for ${entry.pattern}`).toBeTruthy();
-
-      const result = await page.evaluate(collectWizardProgressLayouts, {
-        hostSelector: hostSelector!,
-      });
-
-      expect(result.violations, `${entry.pattern} wizard progress violations`).toEqual([]);
-      expect(result.layouts.length, `${entry.pattern} wizard progress layouts`).toBeGreaterThan(0);
-    }
-  });
-
-  test('wizard progress layouts match across routes', async ({ page }) => {
-    /** @type {import('./wizard-progress-contract.mjs').WizardProgressLayout[]} */
-    const collected = [];
-
-    for (const entry of WIZARD_PROGRESS_ROUTES) {
-      const skipReason = entry.skip?.(resolvedCaptureIds) ?? null;
-      if (skipReason) {
-        continue;
-      }
-
-      const route = findRoute(entry.pattern);
-      const url = resolveGotoUrl(route, resolvedCaptureIds);
-      const seeded = await preparePublicPlanRoute(page, route.pattern, resolvedCaptureIds);
-      if (!seeded) {
-        continue;
-      }
-
-      await page.goto(url);
-      const pathnameExpect = expectedPathnameFromResolvedGoto(url);
-      await assertPageValidity(page, route, pathnameExpect);
-      await waitForPageStable(page, route);
-
-      const hostSelector = resolveHostSelectorForPattern(page, route.pattern);
-      if (!hostSelector) {
-        continue;
-      }
-
-      const result = await page.evaluate(collectWizardProgressLayouts, {
-        hostSelector,
-      });
-      expect(result.violations, `${entry.pattern} wizard progress violations`).toEqual([]);
-      if (result.layouts.length > 0) {
-        collected.push({ ...result.layouts[0], route: entry.pattern });
-      }
-    }
-
-    test.skip(collected.length < 2, 'need at least two wizard routes with progress UI');
-
-    const crossRouteViolations = expectWizardProgressLayoutsMatch(collected);
-    expect(crossRouteViolations, 'wizard progress cross-route layout mismatch').toEqual([]);
-=======
   test('public-plan create and entry-schedule share wizard shell progress structure', async ({
     browser,
   }) => {
@@ -215,6 +126,98 @@ smokeDescribe('wizard progress funnel parity', () => {
     expect(snapshot.activeIndex).toBe(1);
     expect(snapshot.completedCount).toBe(1);
     expect(snapshot.linkHrefs).toContain('/public-plans/new');
->>>>>>> origin/master
+  });
+});
+
+smokeDescribe('wizard progress layout smoke', () => {
+  test.setTimeout(120_000);
+
+  let resolvedCaptureIds: ResolvedCaptureIds | null = null;
+
+  test.beforeAll(async () => {
+    resolvedCaptureIds = await loadResolvedCaptureIdsWithBaseline();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await disableCookieBanner(page);
+  });
+
+  test('wizard progress flex + min-height contract on each route', async ({ page }) => {
+    for (const entry of WIZARD_PROGRESS_ROUTES) {
+      const skipReason = entry.skip?.(resolvedCaptureIds) ?? null;
+      if (skipReason) {
+        test.info().annotations.push({ type: 'skip-route', description: `${entry.pattern}: ${skipReason}` });
+        continue;
+      }
+
+      const route = findRoute(entry.pattern);
+      const url = resolveGotoUrl(route, resolvedCaptureIds);
+      const seeded = await preparePublicPlanRoute(page, route.pattern, resolvedCaptureIds);
+      if (!seeded) {
+        test.info().annotations.push({
+          type: 'skip-route',
+          description: `${entry.pattern}: public plan session seed unavailable`,
+        });
+        continue;
+      }
+
+      await page.goto(url);
+      const pathnameExpect = expectedPathnameFromResolvedGoto(url);
+      await assertPageValidity(page, route, pathnameExpect);
+      await waitForWizardProgressRouteStable(page, route);
+      expect(page.url()).toContain(pathnameExpect.replace(/^\//, ''));
+
+      const hostSelector = resolveHostSelectorForPattern(page, route.pattern);
+      expect(hostSelector, `host selector for ${entry.pattern}`).toBeTruthy();
+
+      const result = await page.evaluate(collectWizardProgressLayouts, {
+        hostSelector: hostSelector!,
+      });
+
+      expect(result.violations, `${entry.pattern} wizard progress violations`).toEqual([]);
+      expect(result.layouts.length, `${entry.pattern} wizard progress layouts`).toBeGreaterThan(0);
+    }
+  });
+
+  test('wizard progress layouts match across routes', async ({ page }) => {
+    /** @type {import('./wizard-progress-contract.mjs').WizardProgressLayout[]} */
+    const collected = [];
+
+    for (const entry of WIZARD_PROGRESS_ROUTES) {
+      const skipReason = entry.skip?.(resolvedCaptureIds) ?? null;
+      if (skipReason) {
+        continue;
+      }
+
+      const route = findRoute(entry.pattern);
+      const url = resolveGotoUrl(route, resolvedCaptureIds);
+      const seeded = await preparePublicPlanRoute(page, route.pattern, resolvedCaptureIds);
+      if (!seeded) {
+        continue;
+      }
+
+      await page.goto(url);
+      const pathnameExpect = expectedPathnameFromResolvedGoto(url);
+      await assertPageValidity(page, route, pathnameExpect);
+      await waitForWizardProgressRouteStable(page, route);
+
+      const hostSelector = resolveHostSelectorForPattern(page, route.pattern);
+      if (!hostSelector) {
+        continue;
+      }
+
+      const result = await page.evaluate(collectWizardProgressLayouts, {
+        hostSelector,
+      });
+      expect(result.violations, `${entry.pattern} wizard progress violations`).toEqual([]);
+      if (result.layouts.length > 0) {
+        collected.push({ ...result.layouts[0], route: entry.pattern });
+      }
+    }
+
+    test.skip(collected.length < 2, 'need at least two wizard routes with progress UI');
+
+    const crossRouteViolations = expectWizardProgressLayoutsMatch(collected);
+    expect(crossRouteViolations, 'wizard progress cross-route layout mismatch').toEqual([]);
   });
 });

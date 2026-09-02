@@ -7,12 +7,7 @@ import {
 @Component({
   selector: 'app-entry-schedule-wizard-progress',
   standalone: true,
-<<<<<<< HEAD
-  imports: [RouterLink, TranslateModule],
-  styleUrls: ['../public-plans/public-plan.component.css'],
-=======
   imports: [WizardProgressPattern],
->>>>>>> origin/master
   host: {
     wizardProgress: '',
   },
