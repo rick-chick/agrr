@@ -3970,9 +3970,9 @@
     "error": "प्रवेश शेड्यूल लोड नहीं हो सका।",
     "timeout": "लोड होने में अधिक समय लग रहा है। कृपया फिर प्रयास करें।",
     "noFarms": "कोई खेत उपलब्ध नहीं है।",
+    "invalid_farm_id": "अमान्य खेत ID।",
     "selectFarm": "खेत चुनें",
     "show": "दिखाएँ",
-    "blockSelectFarm": "उम्मीदवार फसलें दिखाने के लिए खेत चुनें।",
     "predictionFresh": "पूर्वानुमान अपडेट",
     "predictionUntil": "पूर्वानुमान तक",
     "eligibleYes": "उपयुक्त",
@@ -4023,11 +4023,7 @@
     "stages": "विकास अवस्थाएँ",
     "ctaSectionTitle": "अगले कदम",
     "ctaPublicPlan": "इस फसल से मुफ्त योजना बनाएं",
-    "ctaCropSetup": "फसल मास्टर डेटा सुधारें",
-    "allIneligibleTitle": "इस खेत के लिए कोई उपयुक्त फसल नहीं",
-    "allIneligibleBody": "चयनित खेत की उम्मीदवार फसलों में से किसी की भी बुवाई या रोपाई की अवधि नहीं दिखाई जा सकती।",
-    "allIneligibleTryOtherFarm": "दूसरा खेत चुनें, या मुफ़्त योजना से फसल चुनकर शुरू करें।",
-    "allIneligiblePublicPlanCta": "मुफ़्त बुवाई योजना बनाएं"
+    "ctaCropSetup": "फसल मास्टर डेटा सुधारें"
   },
   "onboarding": {
     "breadcrumb": "प्रारंभिक सेटअप",

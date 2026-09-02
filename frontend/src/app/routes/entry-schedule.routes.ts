@@ -9,6 +9,13 @@ export const entryScheduleRoutes: Routes = [
       )
   },
   {
+    path: 'entry-schedule/farm/:farmId',
+    loadComponent: () =>
+      import('../components/entry-schedule/entry-schedule-farm-crops.component').then(
+        (m) => m.EntryScheduleFarmCropsComponent
+      )
+  },
+  {
     path: 'entry-schedule',
     loadComponent: () =>
       import('../components/entry-schedule/entry-schedule-list.component').then(
