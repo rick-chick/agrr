@@ -18,6 +18,7 @@ const ENFORCE = process.argv.includes('--enforce');
 const SCAN_DIRS = [
   join(FRONTEND_ROOT, 'src/app/components/entry-schedule'),
   join(FRONTEND_ROOT, 'src/app/components/public-plans'),
+  join(FRONTEND_ROOT, 'src/app/components/shared/shells'),
 ];
 
 const GLOBAL_CSS_FILES = [

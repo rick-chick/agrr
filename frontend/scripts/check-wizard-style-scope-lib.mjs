@@ -1,33 +1,59 @@
 /**
- * Wizard progress markup must live in shared pattern / wizard-progress components only.
- * Page templates must not inline `.compact-progress`.
+ * Wizard style scope lint. See docs/design/UI-COMPOSITION-RULES.md
+ *
+ * Detects inline wizard progress markup in page templates.
+ * UI composition rules (R1/R4) live in check-ui-composition-lib.mjs.
  */
 
-const WIZARD_PROGRESS_ALLOWLIST = [
-  'src/app/components/shared/patterns/wizard-progress.pattern.ts',
-  'src/app/components/entry-schedule/entry-schedule-wizard-progress.component.ts',
-  'src/app/components/public-plans/public-plan-wizard-progress.component.ts',
+/** @type {readonly string[]} */
+export const WIZARD_PROGRESS_COMPONENT_SUFFIXES = [
+  'entry-schedule-wizard-progress.component.ts',
+  'public-plan-wizard-progress.component.ts',
 ];
 
 /**
- * @param {Record<string, string>} files path -> content
+ * @param {string} filePath
+ * @returns {boolean}
  */
-export function findWizardStyleScopeViolations(files) {
-  /** @type {{ file: string, message: string }[]} */
+export function isDedicatedWizardProgressComponent(filePath) {
+  return WIZARD_PROGRESS_COMPONENT_SUFFIXES.some((suffix) => filePath.endsWith(suffix));
+}
+
+/**
+ * @param {string} content
+ * @param {string} filePath
+ * @returns {{ id: string, message: string }[]}
+ */
+export function findWizardInlineProgressViolations(content, filePath) {
+  if (isDedicatedWizardProgressComponent(filePath)) {
+    return [];
+  }
+
+  /** @type {{ id: string, message: string }[]} */
   const violations = [];
 
-  for (const [file, content] of Object.entries(files)) {
-    if (WIZARD_PROGRESS_ALLOWLIST.includes(file)) {
-      continue;
-    }
-    if (/<div\s+class="compact-progress"/.test(content)) {
-      violations.push({
-        file,
-        message:
-          'inline compact-progress markup is forbidden in page templates; use wizard-progress pattern/component',
-      });
-    }
+  if (/class=["']compact-progress["']/.test(content)) {
+    violations.push({
+      id: 'UI-R3-wizard-inline-progress',
+      message:
+        'Inline compact-progress in page templates is forbidden (use shared wizard progress via FunnelShell wizardProgress slot)',
+    });
   }
 
   return violations;
+}
+
+/**
+ * @param {Record<string, string>} files path -> content
+ * @returns {{ file: string, id: string, message: string }[]}
+ */
+export function checkWizardStyleScopeFiles(files) {
+  /** @type {{ file: string, id: string, message: string }[]} */
+  const all = [];
+  for (const [file, content] of Object.entries(files)) {
+    for (const v of findWizardInlineProgressViolations(content, file)) {
+      all.push({ file, ...v });
+    }
+  }
+  return all;
 }

@@ -6,6 +6,32 @@
  * @param {string} content
  * @returns {{ id: string, message: string }[]}
  */
+export function findWizardShellProgressViolations(content) {
+  /** @type {{ id: string, message: string }[]} */
+  const violations = [];
+
+  const usesWizardShell = /app-funnel-shell[\s\S]*?variant=["']wizard["']/.test(content);
+  if (!usesWizardShell) {
+    return violations;
+  }
+
+  const hasProgressProjection =
+    /app-entry-schedule-wizard-progress|wizardProgress|\[wizardProgress\]/.test(content);
+  if (!hasProgressProjection) {
+    violations.push({
+      id: 'UI-R4-wizard-shell-progress',
+      message:
+        'FunnelShell variant="wizard" must project wizard progress (wizardProgress slot or shared progress component)',
+    });
+  }
+
+  return violations;
+}
+
+/**
+ * @param {string} content
+ * @returns {{ id: string, message: string }[]}
+ */
 export function findUiCompositionViolations(content) {
   /** @type {{ id: string, message: string }[]} */
   const violations = [];
@@ -16,6 +42,8 @@ export function findUiCompositionViolations(content) {
       message: 'page-intro must not appear inside compact-header-card (use FunnelShell description slot)',
     });
   }
+
+  violations.push(...findWizardShellProgressViolations(content));
 
   return violations;
 }
