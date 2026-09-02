@@ -22,6 +22,11 @@
 | `maxItemCardVisibleActionButtons` | カード上の可視 `.btn` 上限（溢れは overflow menu へ） |
 | `checkFormCardActionRows` | `.form-card__actions` の折り返し行数上限 |
 | `checkDetailCardActionOverlap` | `.detail-card__actions` のボタン重なり禁止 |
+| `requiredShellSelectors` | Host must contain selector when conformance is L1+ |
+| `wizardProgressSelectors` | Wizard 進捗バー（`.compact-progress` 等）の `display:flex` と最小高さ |
+| `wizardProgressMinHeightPx` | `wizardProgressSelectors` の最小レンダリング高さ（既定 40px。正本は `assert-wizard-progress-lib.mjs`） |
+
+責務分担の全体像（component / E2E / layout contract の役割分担）は [UI-COMPOSITION-RULES.md § Wizard progress flex](UI-COMPOSITION-RULES.md#wizard-progress-flex--test-layer-matrix) を参照。`*.component.spec.ts` では flex を観測しない。
 
 ## archetype 一覧
 

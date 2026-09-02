@@ -132,8 +132,61 @@ test('LAYOUT_ARCHETYPE_DESIGN_CONTRACTS covers every L2 runner key', () => {
   }
 });
 
+test('wizard-step and funnel-hub share wizardProgressSelectors from assert-wizard-progress-lib', () => {
+  const wizardStep = LAYOUT_ARCHETYPE_DESIGN_CONTRACTS['wizard-step'];
+  const funnelHub = LAYOUT_ARCHETYPE_DESIGN_CONTRACTS['funnel-hub'];
+  assert.deepEqual(wizardStep.wizardProgressSelectors, ['.compact-progress']);
+  assert.deepEqual(funnelHub.wizardProgressSelectors, ['.compact-progress']);
+  assert.equal(wizardStep.wizardProgressMinHeightPx, 40);
+  assert.equal(funnelHub.wizardProgressMinHeightPx, 40);
+});
+
 test('maxActionButtonRowsForViewport matches layout invariant tiers', () => {
   assert.equal(maxActionButtonRowsForViewport(390), 4);
   assert.equal(maxActionButtonRowsForViewport(768), 3);
   assert.equal(maxActionButtonRowsForViewport(1280), 2);
+});
+
+test('checkContentBlockLayout enforces wizardProgressSelectors flex and min-height', async () => {
+  const html = `
+    <div id="host">
+      <div class="compact-progress" style="display: block; width: 200px; height: 44px;"></div>
+    </div>
+  `;
+
+  const violations = await checkContentBlockLayout({
+    html,
+    hostSelector: '#host',
+    viewportWidth: 1280,
+    contract: {
+      contentBlockSelectors: ['.content-card'],
+      requireAnyContentBlock: false,
+      wizardProgressSelectors: ['.compact-progress'],
+      wizardProgressMinHeightPx: 40,
+    },
+  });
+
+  assert.ok(violations.some((v) => v.includes('display=block')));
+});
+
+test('checkContentBlockLayout reports wizardProgressSelectors below min-height', async () => {
+  const html = `
+    <div id="host">
+      <div class="compact-progress" style="display: flex; width: 200px; height: 32px;"></div>
+    </div>
+  `;
+
+  const violations = await checkContentBlockLayout({
+    html,
+    hostSelector: '#host',
+    viewportWidth: 1280,
+    contract: {
+      contentBlockSelectors: ['.content-card'],
+      requireAnyContentBlock: false,
+      wizardProgressSelectors: ['.compact-progress'],
+      wizardProgressMinHeightPx: 40,
+    },
+  });
+
+  assert.ok(violations.some((v) => v.includes('height=32.0px < 40px')));
 });

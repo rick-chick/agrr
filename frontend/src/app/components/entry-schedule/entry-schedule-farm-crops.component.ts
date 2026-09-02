@@ -43,7 +43,7 @@ const PAGE_LIMIT = 20;
           descriptionKey="pages.entry_schedule.description"
           titleIcon="📅"
         >
-          <app-entry-schedule-wizard-progress activeStep="crop" />
+          <app-entry-schedule-wizard-progress ngProjectAs="[wizardProgress]" activeStep="crop" />
           @if (selectedFarm(); as farm) {
             <div class="enhanced-summary-card enhanced-summary-card--single-row">
               <div class="enhanced-summary-items">

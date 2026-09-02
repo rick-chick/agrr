@@ -123,6 +123,9 @@ npm run test:e2e:smoke:route
 echo "==> Running layout smoke (invariants + route contracts × viewports)"
 npm run test:e2e:smoke:layout
 
+echo "==> Running wizard progress layout smoke (flex contract + cross-route match)"
+npm run test:e2e:smoke:wizard-progress
+
 echo "==> Running a11y smoke (axe-core + gantt keyboard alternative)"
 npm run test:e2e:smoke:a11y
 

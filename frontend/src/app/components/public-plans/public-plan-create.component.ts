@@ -52,7 +52,7 @@ const initialControl: PublicPlanCreateViewState = {
       <div class="free-plans-container">
         <app-public-plan-context-header [crumbs]="contextCrumbs" />
         <app-funnel-shell variant="wizard" titleKey="public_plans.title" titleIcon="🌱">
-          <app-wizard-progress [steps]="wizardSteps" />
+          <app-wizard-progress ngProjectAs="[wizardProgress]" [steps]="wizardSteps" />
           <section class="content-card" aria-labelledby="create-heading">
           <h2 id="create-heading" class="visually-hidden">{{ 'public_plans.select_farm.available_farms' | translate }}</h2>
           @if (control.loading) {

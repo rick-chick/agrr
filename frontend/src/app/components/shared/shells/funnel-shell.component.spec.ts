@@ -1,15 +1,36 @@
+import { Component } from '@angular/core';
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach } from 'vitest';
 import ja from '../../../../assets/i18n/ja.json';
 import { FunnelShellComponent } from './funnel-shell.component';
+import { WizardProgressPattern } from '../patterns/wizard-progress.pattern';
+
+@Component({
+  standalone: true,
+  imports: [FunnelShellComponent, WizardProgressPattern],
+  template: `
+    <app-funnel-shell variant="wizard" titleKey="entrySchedule.title" titleIcon="📅">
+      <app-wizard-progress ngProjectAs="[wizardProgress]" [steps]="steps" />
+      <section class="content-card">body</section>
+    </app-funnel-shell>
+  `,
+})
+class WizardShellHostComponent {
+  steps = [
+    { labelKey: 'entrySchedule.steps.farm', status: 'active' as const },
+    { labelKey: 'entrySchedule.steps.crop', status: 'pending' as const },
+  ];
+}
 
 describe('FunnelShellComponent', () => {
   let fixture: ComponentFixture<FunnelShellComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FunnelShellComponent, TranslateModule.forRoot()],
+      imports: [FunnelShellComponent, WizardShellHostComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])],
     }).compileComponents();
 
     const translate = TestBed.inject(TranslateService);
@@ -46,11 +67,18 @@ describe('FunnelShellComponent', () => {
     expect(style.textOverflow).not.toBe('ellipsis');
   });
 
-  it('projects wizard progress slot in wizard variant', () => {
-    fixture.componentInstance.variant = 'wizard';
-    fixture.detectChanges();
+  it('projects wizard progress into header via wizardProgress attribute', async () => {
+    const hostFixture = TestBed.createComponent(WizardShellHostComponent);
+    hostFixture.detectChanges();
+    await hostFixture.whenStable();
 
-    const host = fixture.nativeElement as HTMLElement;
-    expect(host.querySelector('.funnel-shell-header--wizard')).toBeTruthy();
+    const root = hostFixture.nativeElement as HTMLElement;
+    const header = root.querySelector('.funnel-shell-header--wizard');
+    const bodyProgress = root.querySelector('.funnel-shell-body [data-testid="wizard-progress"]');
+    const headerProgress = header?.querySelector('[data-testid="wizard-progress"]');
+    expect(header).toBeTruthy();
+    expect(headerProgress ?? bodyProgress).toBeTruthy();
+    expect(headerProgress).toBeTruthy();
+    expect(hostFixture.nativeElement.querySelector('.funnel-shell-body .content-card')).toBeTruthy();
   });
 });

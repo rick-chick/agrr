@@ -11,6 +11,8 @@ export type LayoutArchetypeDesignContract = {
   checkFormCardActionRows?: boolean;
   checkDetailCardActionOverlap?: boolean;
   requiredShellSelectors?: string[];
+  wizardProgressSelectors?: string[];
+  wizardProgressMinHeightPx?: number;
 };
 
 /** Run L2 design contract (structure + viewport + density rules) inside the browser context. */
