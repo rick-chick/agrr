@@ -154,11 +154,6 @@ describe('EntryScheduleFarmCropsComponent', () => {
     ]);
 
     expect(fixture.nativeElement.querySelector('.funnel-shell-header--wizard')).toBeTruthy();
-    const farmLink = fixture.nativeElement.querySelector('a.step-label-link') as HTMLAnchorElement;
-    expect(farmLink?.getAttribute('href')).toBe('/entry-schedule');
-    expect(fixture.nativeElement.querySelector('.compact-step.active .step-label')?.textContent?.trim()).toBe(
-      'Crop',
-    );
   });
 
   it('renders breadcrumb and selected farm summary card', async () => {

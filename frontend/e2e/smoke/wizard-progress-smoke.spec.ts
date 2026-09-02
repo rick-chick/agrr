@@ -1,100 +1,84 @@
 import { test } from '@playwright/test';
 import { waitForPageStable } from '../page-stable';
+import type { RouteRow } from '../route-validity';
 import {
-  assertPageValidity,
-  expectedPathnameFromResolvedGoto,
-  HOST_SELECTOR_BY_PATTERN,
-} from '../route-validity';
-import {
-  expectWizardProgressLayoutContract,
-  readWizardProgressLayoutSnapshot,
-} from './assert-wizard-progress';
-import { expectWizardProgressLayoutsMatch } from './assert-wizard-progress-lib.mjs';
+  assertWizardProgressParity,
+  readWizardProgressSnapshot,
+} from './wizard-progress-smoke-lib';
 import {
   disableCookieBanner,
   loadResolvedCaptureIdsWithBaseline,
   preparePublicPlanRoute,
-  resolveGotoUrl,
   smokeDescribe,
-  type Manifest,
 } from './smoke-helpers';
-import type { ResolvedCaptureIds } from '../resolve-capture-urls';
 
-type WizardProgressRoute = {
-  pattern: string;
-  url: string;
+const publicPlanCreateRoute: RouteRow = {
+  pattern: 'public-plans/new',
+  url: '/public-plans/new',
+  requiresAuth: false,
+  source: 'wizard-progress-smoke',
 };
 
-const WIZARD_PROGRESS_ROUTES: WizardProgressRoute[] = [
-  { pattern: 'entry-schedule', url: '/entry-schedule' },
-  { pattern: 'public-plans/new', url: '/public-plans/new' },
-  { pattern: 'public-plans/select-crop', url: '/public-plans/select-crop' },
-];
+const entryScheduleRoute: RouteRow = {
+  pattern: 'entry-schedule',
+  url: '/entry-schedule',
+  requiresAuth: false,
+  source: 'wizard-progress-smoke',
+};
 
-function routeLabel(pattern: string): string {
-  return pattern === '' ? '(home)' : pattern;
-}
+const publicPlanSelectCropRoute: RouteRow = {
+  pattern: 'public-plans/select-crop',
+  url: '/public-plans/select-crop',
+  requiresAuth: false,
+  source: 'wizard-progress-smoke',
+};
 
-smokeDescribe('wizard progress layout smoke', () => {
-  let resolvedCaptureIds: ResolvedCaptureIds | null = null;
-
-  test.describe.configure({ timeout: 180_000 });
-
-  test.beforeAll(async () => {
-    resolvedCaptureIds = await loadResolvedCaptureIdsWithBaseline();
-  });
-
+smokeDescribe('wizard progress funnel parity', () => {
   test.beforeEach(async ({ page }) => {
     await disableCookieBanner(page);
-    await page.setViewportSize({ width: 1280, height: 720 });
   });
 
-  for (const route of WIZARD_PROGRESS_ROUTES) {
-    test(`${routeLabel(route.pattern)} wizard progress satisfies flex contract`, async ({ page }) => {
-      if (route.pattern === 'public-plans/select-crop' && resolvedCaptureIds?.entryScheduleFarm == null) {
-        test.skip(true, 'no entry schedule farm resolved for select-crop seed');
-      }
+  test('public-plan create and entry-schedule share wizard shell progress structure', async ({
+    browser,
+  }) => {
+    const publicPlanContext = await browser.newContext();
+    const entryScheduleContext = await browser.newContext();
+    const publicPlanPage = await publicPlanContext.newPage();
+    const entrySchedulePage = await entryScheduleContext.newPage();
 
-      const manifestRoute = { pattern: route.pattern, url: route.url } as Manifest['routes'][number];
-      const url = resolveGotoUrl(manifestRoute, resolvedCaptureIds);
-      const seeded = await preparePublicPlanRoute(page, route.pattern, resolvedCaptureIds);
-      if (!seeded) {
-        test.skip(true, 'public plan session seed unavailable');
-      }
-      await page.goto(url);
+    await disableCookieBanner(publicPlanPage);
+    await disableCookieBanner(entrySchedulePage);
 
-      const pathnameExpect = expectedPathnameFromResolvedGoto(url);
-      await assertPageValidity(page, manifestRoute, pathnameExpect);
-      await waitForPageStable(page, manifestRoute);
+    await publicPlanPage.goto(publicPlanCreateRoute.url);
+    await waitForPageStable(publicPlanPage, publicPlanCreateRoute);
+    await entrySchedulePage.goto(entryScheduleRoute.url);
+    await waitForPageStable(entrySchedulePage, entryScheduleRoute);
 
-      const hostSelector = HOST_SELECTOR_BY_PATTERN[route.pattern] ?? 'body';
-      await expectWizardProgressLayoutContract(page, hostSelector);
+    await assertWizardProgressParity(publicPlanPage, entrySchedulePage, {
+      publicPlanActiveIndex: 0,
+      entryScheduleActiveIndex: 0,
     });
-  }
 
-  test('entry-schedule and public-plans/new wizard progress layouts match', async ({ page }) => {
-    const snapshots = [];
+    await publicPlanContext.close();
+    await entryScheduleContext.close();
+  });
 
-    for (const route of [
-      { pattern: 'entry-schedule', url: '/entry-schedule' },
-      { pattern: 'public-plans/new', url: '/public-plans/new' },
-    ]) {
-      const manifestRoute = { pattern: route.pattern, url: route.url } as Manifest['routes'][number];
-      const url = resolveGotoUrl(manifestRoute, resolvedCaptureIds);
-      await page.goto(url);
-
-      const pathnameExpect = expectedPathnameFromResolvedGoto(url);
-      await assertPageValidity(page, manifestRoute, pathnameExpect);
-      await waitForPageStable(page, manifestRoute);
-
-      const hostSelector = HOST_SELECTOR_BY_PATTERN[route.pattern] ?? 'body';
-      const raw = await readWizardProgressLayoutSnapshot(page, hostSelector);
-      if (raw == null) {
-        throw new Error(`wizard progress missing on ${route.pattern}`);
-      }
-      snapshots.push({ pattern: route.pattern, layout: { display: raw.display, minHeightPx: raw.heightPx } });
+  test('public-plan select-crop shows completed region step with link', async ({ page }) => {
+    const ids = await loadResolvedCaptureIdsWithBaseline();
+    if (ids?.entryScheduleFarm == null) {
+      test.skip(true, 'no entry schedule farm resolved');
+    }
+    const seeded = await preparePublicPlanRoute(page, publicPlanSelectCropRoute.pattern, ids);
+    if (!seeded) {
+      test.skip(true, 'public plan session seed unavailable');
     }
 
-    expectWizardProgressLayoutsMatch(snapshots[0].layout, snapshots[1].layout);
+    await page.goto(publicPlanSelectCropRoute.url);
+    await waitForPageStable(page, publicPlanSelectCropRoute);
+
+    const snapshot = await readWizardProgressSnapshot(page);
+    expect(snapshot.activeIndex).toBe(1);
+    expect(snapshot.completedCount).toBe(1);
+    expect(snapshot.linkHrefs).toContain('/public-plans/new');
   });
 });

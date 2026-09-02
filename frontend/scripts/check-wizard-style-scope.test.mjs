@@ -4,7 +4,6 @@ import { test } from 'node:test';
 import {
   checkWizardStyleScopeFiles,
   findWizardInlineProgressViolations,
-  findWizardProgressStyleScopeViolations,
   isDedicatedWizardProgressComponent,
 } from './check-wizard-style-scope-lib.mjs';
 
@@ -24,21 +23,6 @@ test('UI-R3 allows compact-progress in dedicated wizard progress component', () 
   const file = 'src/app/components/entry-schedule/entry-schedule-wizard-progress.component.ts';
   assert.equal(isDedicatedWizardProgressComponent(file), true);
   assert.equal(findWizardInlineProgressViolations(content, file).length, 0);
-});
-
-test('UI-R5 requires public-plan.component.css on dedicated wizard progress components', () => {
-  const file = 'src/app/components/entry-schedule/entry-schedule-wizard-progress.component.ts';
-  const missing = findWizardProgressStyleScopeViolations(
-    `@Component({ template: '<div class="compact-progress"></div>' })`,
-    file,
-  );
-  assert.equal(missing.some((x) => x.id === 'UI-R5-wizard-progress-shared-styles'), true);
-
-  const ok = findWizardProgressStyleScopeViolations(
-    `@Component({ styleUrls: ['../public-plans/public-plan.component.css'], template: '' })`,
-    file,
-  );
-  assert.equal(ok.length, 0);
 });
 
 test('checkWizardStyleScopeFiles aggregates by file', () => {

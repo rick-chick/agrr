@@ -16,7 +16,9 @@ export function findWizardShellProgressViolations(content) {
   }
 
   const hasProgressProjection =
-    /app-entry-schedule-wizard-progress|wizardProgress|\[wizardProgress\]/.test(content);
+    /app-entry-schedule-wizard-progress|app-wizard-progress|wizardProgress|\[wizardProgress\]/.test(
+      content,
+    );
   if (!hasProgressProjection) {
     violations.push({
       id: 'UI-R4-wizard-shell-progress',

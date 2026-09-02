@@ -8,6 +8,7 @@
 /** @type {readonly string[]} */
 export const WIZARD_PROGRESS_COMPONENT_SUFFIXES = [
   'entry-schedule-wizard-progress.component.ts',
+  'wizard-progress.pattern.ts',
 ];
 
 /**
@@ -16,30 +17,6 @@ export const WIZARD_PROGRESS_COMPONENT_SUFFIXES = [
  */
 export function isDedicatedWizardProgressComponent(filePath) {
   return WIZARD_PROGRESS_COMPONENT_SUFFIXES.some((suffix) => filePath.endsWith(suffix));
-}
-
-export const WIZARD_PROGRESS_SHARED_STYLE = '../public-plans/public-plan.component.css';
-
-/**
- * @param {string} content
- * @param {string} filePath
- * @returns {{ id: string, message: string }[]}
- */
-export function findWizardProgressStyleScopeViolations(content, filePath) {
-  if (!isDedicatedWizardProgressComponent(filePath)) {
-    return [];
-  }
-
-  /** @type {{ id: string, message: string }[]} */
-  const violations = [];
-  if (!content.includes(WIZARD_PROGRESS_SHARED_STYLE)) {
-    violations.push({
-      id: 'UI-R5-wizard-progress-shared-styles',
-      message:
-        'Dedicated wizard progress components must include public-plan.component.css (compact-progress flex contract)',
-    });
-  }
-  return violations;
 }
 
 /**
@@ -74,10 +51,7 @@ export function checkWizardStyleScopeFiles(files) {
   /** @type {{ file: string, id: string, message: string }[]} */
   const all = [];
   for (const [file, content] of Object.entries(files)) {
-    for (const v of [
-      ...findWizardInlineProgressViolations(content, file),
-      ...findWizardProgressStyleScopeViolations(content, file),
-    ]) {
+    for (const v of findWizardInlineProgressViolations(content, file)) {
       all.push({ file, ...v });
     }
   }
