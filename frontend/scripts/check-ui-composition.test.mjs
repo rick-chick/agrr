@@ -71,6 +71,15 @@ test('UI-R4 passes when wizard progress component is projected', () => {
   assert.equal(v.length, 0);
 });
 
+test('UI-R4 passes when public-plan wizard progress component is projected', () => {
+  const content = `
+    <app-funnel-shell variant="wizard" titleKey="public_plans.title">
+      <app-public-plan-wizard-progress activeStep="region" />
+    </app-funnel-shell>`;
+  const v = findWizardShellProgressViolations(content);
+  assert.equal(v.length, 0);
+});
+
 test('UI-R4 passes for hub variant without wizard progress', () => {
   const content = `
     <app-funnel-shell variant="hub" titleKey="entrySchedule.title">
