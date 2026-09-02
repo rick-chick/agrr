@@ -599,3 +599,52 @@ async fn entry_schedule_crops(
     )
         .into_response()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::public_plan::exceptions::{
+        PredictionPayloadMissingError, WeatherLocationMissingError, WeatherPredictionFailedError,
+    };
+    use agrr_domain::weather_data::WeatherPredictionError;
+
+    #[test]
+    fn map_weather_prediction_error_maps_location_required() {
+        let err = map_weather_prediction_error(WeatherPredictionError::WeatherLocationRequired);
+        assert!(err.downcast_ref::<WeatherLocationMissingError>().is_some());
+    }
+
+    #[test]
+    fn map_weather_prediction_error_maps_no_data_rows_to_payload_missing() {
+        let err = map_weather_prediction_error(WeatherPredictionError::InsufficientPredictionData(
+            "weather payload has no data rows".into(),
+        ));
+        assert!(err.downcast_ref::<PredictionPayloadMissingError>().is_some());
+    }
+
+    #[test]
+    fn map_weather_prediction_error_maps_weather_data_not_found_no_data_rows() {
+        let err = map_weather_prediction_error(WeatherPredictionError::WeatherDataNotFound(
+            "no data rows in cache".into(),
+        ));
+        assert!(err.downcast_ref::<PredictionPayloadMissingError>().is_some());
+    }
+
+    #[test]
+    fn map_weather_prediction_error_maps_other_insufficient_data_to_failed() {
+        let err = map_weather_prediction_error(WeatherPredictionError::InsufficientPredictionData(
+            "daemon timeout".into(),
+        ));
+        let failed = err.downcast_ref::<WeatherPredictionFailedError>().unwrap();
+        assert_eq!(failed.0, "daemon timeout");
+    }
+
+    #[test]
+    fn map_weather_prediction_error_maps_storage_failed_to_failed() {
+        let err = map_weather_prediction_error(WeatherPredictionError::WeatherDataStorageFailed(
+            "disk full".into(),
+        ));
+        let failed = err.downcast_ref::<WeatherPredictionFailedError>().unwrap();
+        assert_eq!(failed.0, "disk full");
+    }
+}
