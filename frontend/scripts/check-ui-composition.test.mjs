@@ -5,6 +5,7 @@ import {
   checkUiCompositionFiles,
   findLinkInlineViolations,
   findUiCompositionViolations,
+  findWizardShellProgressViolations,
 } from './check-ui-composition-lib.mjs';
 
 test('R1 flags page-intro inside compact-header-card', () => {
@@ -50,4 +51,31 @@ test('checkUiCompositionFiles aggregates by file', () => {
   );
   assert.equal(result.length, 1);
   assert.equal(result[0].file, 'a.ts');
+});
+
+test('UI-R4 flags FunnelShell wizard variant without wizard progress projection', () => {
+  const content = `
+    <app-funnel-shell variant="wizard" titleKey="entrySchedule.title">
+      <section class="content-card"></section>
+    </app-funnel-shell>`;
+  const v = findWizardShellProgressViolations(content);
+  assert.equal(v.some((x) => x.id === 'UI-R4-wizard-shell-progress'), true);
+});
+
+test('UI-R4 passes when wizard progress component is projected', () => {
+  const content = `
+    <app-funnel-shell variant="wizard" titleKey="entrySchedule.title">
+      <app-entry-schedule-wizard-progress activeStep="farm" />
+    </app-funnel-shell>`;
+  const v = findWizardShellProgressViolations(content);
+  assert.equal(v.length, 0);
+});
+
+test('UI-R4 passes for hub variant without wizard progress', () => {
+  const content = `
+    <app-funnel-shell variant="hub" titleKey="entrySchedule.title">
+      <section class="content-card"></section>
+    </app-funnel-shell>`;
+  const v = findWizardShellProgressViolations(content);
+  assert.equal(v.length, 0);
 });

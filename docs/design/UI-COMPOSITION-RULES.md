@@ -52,6 +52,13 @@ Levels are recorded in [`layout-conformance-bindings.mjs`](../../frontend/e2e/sm
 1. `page-intro` inside `compact-header-card`
 2. `link-inline` without a defined style in shared CSS
 3. `public-plans-wrapper` + raw `form-control` + `btn-primary` for farm selection (use `FarmSelectionCardsPattern`)
+4. `app-funnel-shell` with `variant="wizard"` without wizard progress projection (`UI-R4`)
+
+## Wizard style scope (CI `check:wizard-style-scope`)
+
+1. Inline `compact-progress` markup in page templates (`UI-R3`) — use a dedicated wizard progress component via FunnelShell `wizardProgress` slot
+
+Scanned directories: `entry-schedule`, `public-plans`, `shared/shells` (see script `SCAN_DIRS`).
 
 ## Related
 
