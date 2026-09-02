@@ -64,31 +64,14 @@ impl EntryScheduleOptimizationGateway for EntryScheduleOptimizationAgrrDaemonGat
         copy_temp_file_to_debug(weather_file.path(), "optimization_weather");
         copy_temp_file_to_debug(field_file.path(), "optimization_field");
         copy_temp_file_to_debug(crop_file.path(), "optimization_crop");
-        let mut args = vec![
-            "optimize".into(),
-            "period".into(),
-            "--crop-file".into(),
-            crop_file.path().to_string_lossy().into_owned(),
-            "--weather-file".into(),
-            weather_file.path().to_string_lossy().into_owned(),
-            "--field-file".into(),
-            field_file.path().to_string_lossy().into_owned(),
-            "--evaluation-start".into(),
-            evaluation_start.to_string(),
-            "--evaluation-end".into(),
-            evaluation_end.to_string(),
-            "--format".into(),
-            "json".into(),
-        ];
-        if let Some(v) = crop_variety.filter(|s| !s.is_empty()) {
-            args.push("--crop-name".into());
-            args.push(crop_name.to_string());
-            args.push("--crop-variety".into());
-            args.push(v.to_string());
-        } else {
-            args.push("--crop-name".into());
-            args.push(crop_name.to_string());
-        }
+        let args = build_optimize_period_args(
+            crop_file.path(),
+            weather_file.path(),
+            field_file.path(),
+            evaluation_start,
+            evaluation_end,
+        );
+        let _ = (crop_name, crop_variety);
         match self.client.execute_daemon_args(&args) {
             Ok(wrapper) => parse_daemon_json_payload(&wrapper).map_err(|e| match e {
                 AgrrDaemonError::NotRunning(_) => Box::new(EntryScheduleOptimizationError::new(
@@ -111,5 +94,68 @@ impl EntryScheduleOptimizationGateway for EntryScheduleOptimizationAgrrDaemonGat
                 e.to_string(),
             ))),
         }
+    }
+}
+
+fn build_optimize_period_args(
+    crop_file: &std::path::Path,
+    weather_file: &std::path::Path,
+    field_file: &std::path::Path,
+    evaluation_start: Date,
+    evaluation_end: Date,
+) -> Vec<String> {
+    vec![
+        "optimize".into(),
+        "period".into(),
+        "--crop-file".into(),
+        crop_file.to_string_lossy().into_owned(),
+        "--weather-file".into(),
+        weather_file.to_string_lossy().into_owned(),
+        "--field-file".into(),
+        field_file.to_string_lossy().into_owned(),
+        "--evaluation-start".into(),
+        evaluation_start.to_string(),
+        "--evaluation-end".into(),
+        evaluation_end.to_string(),
+        "--format".into(),
+        "json".into(),
+    ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use time::macros::date;
+
+    #[test]
+    fn build_optimize_period_args_omits_crop_name_and_variety() {
+        let args = build_optimize_period_args(
+            std::path::Path::new("/tmp/crop.json"),
+            std::path::Path::new("/tmp/weather.json"),
+            std::path::Path::new("/tmp/field.json"),
+            date!(2025-08-28),
+            date!(2027-06-30),
+        );
+        assert!(!args.contains(&"--crop-name".to_string()));
+        assert!(!args.contains(&"--crop-variety".to_string()));
+        assert_eq!(
+            args,
+            vec![
+                "optimize",
+                "period",
+                "--crop-file",
+                "/tmp/crop.json",
+                "--weather-file",
+                "/tmp/weather.json",
+                "--field-file",
+                "/tmp/field.json",
+                "--evaluation-start",
+                "2025-08-28",
+                "--evaluation-end",
+                "2027-06-30",
+                "--format",
+                "json",
+            ]
+        );
     }
 }

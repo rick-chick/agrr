@@ -133,7 +133,8 @@ where
         weather_for_file: &Value,
     ) -> WindowServiceResult {
         let start_d = parsed
-            .get("start_date")
+            .get("optimal_start_date")
+            .or_else(|| parsed.get("start_date"))
             .and_then(parse_date_value);
         let end_d = parsed
             .get("completion_date")
@@ -162,13 +163,19 @@ where
         reason_parts.insert("rule".into(), json!("agrr_optimize_period"));
         reason_parts.insert("optimal_start_date".into(), json!(start_d.to_string()));
         reason_parts.insert("completion_date".into(), json!(end_d.to_string()));
-        if let Some(days) = parsed.get("days") {
+        if let Some(days) = parsed
+            .get("growth_days")
+            .or_else(|| parsed.get("days"))
+        {
             reason_parts.insert("growth_days".into(), days.clone());
         }
         if let Some(gdd) = parsed.get("gdd") {
             reason_parts.insert("gdd".into(), gdd.clone());
         }
-        if let Some(cost) = parsed.get("cost") {
+        if let Some(cost) = parsed
+            .get("total_cost")
+            .or_else(|| parsed.get("cost"))
+        {
             reason_parts.insert("total_cost".into(), cost.clone());
         }
         reason_parts.insert("days_evaluated".into(), json!(daily_count));

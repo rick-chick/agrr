@@ -295,6 +295,66 @@
         assert!(result.transplant_windows.is_empty());
     }
 
+    // Ruby: test "maps agrr optimize period response with optimal_start_date to eligible result"
+    #[test]
+    fn maps_agrr_optimize_period_response_with_optimal_start_date() {
+        let crop = TestCrop {
+            id: 1,
+            name: "Almonds".into(),
+            variety: Some("Nonpareil".into()),
+        };
+        let crop_gateway = StubCropGateway {
+            rows: sowing_transplant_stages(),
+        };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06",
+                "growth_days": 125,
+                "total_cost": 12.5,
+                "crop_name": "Almonds",
+                "variety": "Nonpareil",
+                "candidates": 224
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(result.eligible);
+        assert_eq!(
+            result.reason_parts.get("optimal_start_date").and_then(|v| v.as_str()),
+            Some("2026-03-04")
+        );
+        assert_eq!(
+            result.reason_parts.get("completion_date").and_then(|v| v.as_str()),
+            Some("2026-07-06")
+        );
+        assert_eq!(
+            result.reason_parts.get("growth_days").and_then(|v| v.as_i64()),
+            Some(125)
+        );
+        assert_eq!(
+            result.reason_parts.get("total_cost").and_then(|v| v.as_f64()),
+            Some(12.5)
+        );
+        assert_eq!(result.sowing_windows[0].start_date, date!(2026-03-04));
+        assert_eq!(result.sowing_windows[0].end_date, date!(2026-07-06));
+        assert_eq!(result.transplant_windows[0].start_date, date!(2026-03-04));
+        assert_eq!(result.transplant_windows[0].end_date, date!(2026-07-06));
+    }
+
     // Ruby: test "maps EntryScheduleOptimizationError to failed result"
     #[test]
     fn maps_entry_schedule_optimization_error_to_failed_result() {
