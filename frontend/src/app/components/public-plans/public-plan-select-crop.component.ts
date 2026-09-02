@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PublicPlanSelectCropView, PublicPlanSelectCropViewState } from './public-plan-select-crop.view';
 import { LoadPublicPlanCropsUseCase } from '../../usecase/public-plans/load-public-plan-crops.usecase';
@@ -16,6 +16,11 @@ import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default
 import { findCropByResearchSlug } from '../../domain/public-plans/research-crop-slug';
 import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
+import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
+import {
+  WizardProgressPattern,
+  WizardProgressStepConfig,
+} from '../shared/patterns/wizard-progress.pattern';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import {
   PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM,
@@ -32,33 +37,23 @@ const initialControl: PublicPlanSelectCropViewState = {
 @Component({
   selector: 'app-public-plan-select-crop',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, PublicPlanContextHeaderComponent],
+  imports: [
+    CommonModule,
+    TranslateModule,
+    PublicPlanContextHeaderComponent,
+    FunnelShellComponent,
+    WizardProgressPattern,
+  ],
   providers: [...PUBLIC_PLAN_SELECT_CROP_PROVIDERS],
   template: `
     <div class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
         <app-public-plan-context-header [crumbs]="contextCrumbs" />
-        <div class="compact-header-card">
-          <div class="compact-header-title">
-            <span class="title-icon" aria-hidden="true">🌱</span>
-            <span class="title-text">{{ 'public_plans.title' | translate }}</span>
-          </div>
-          <div class="compact-progress">
-            <div class="compact-step completed">
-              <div class="step-number">1</div>
-              <a routerLink="/public-plans/new" class="step-label step-label-link">{{ 'public_plans.steps.region' | translate }}</a>
-            </div>
-            <div class="compact-step-divider completed"></div>
-            <div class="compact-step active">
-              <div class="step-number">2</div>
-              <span class="step-label">{{ 'public_plans.steps.crop' | translate }}</span>
-            </div>
-          </div>
-        </div>
-
-        @if (farm) {
-        <div class="enhanced-summary-card enhanced-summary-card--single-row">
+        <app-funnel-shell variant="wizard" titleKey="public_plans.title" titleIcon="🌱">
+          <app-wizard-progress [steps]="wizardSteps" />
+          @if (farm) {
+          <div class="enhanced-summary-card enhanced-summary-card--single-row">
           <div class="enhanced-summary-items">
             <div class="enhanced-summary-row">
               <div class="enhanced-summary-icon">🌍</div>
@@ -104,6 +99,7 @@ const initialControl: PublicPlanSelectCropViewState = {
             <div class="bottom-spacer"></div>
           }
         </section>
+        </app-funnel-shell>
       </div>
 
       @if (!control.error) {
@@ -155,6 +151,17 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
     return [
       { labelKey: 'public_plans.breadcrumb_root', routerLink: ['/public-plans/new'] },
       { labelKey: 'public_plans.steps.crop' }
+    ];
+  }
+
+  get wizardSteps(): WizardProgressStepConfig[] {
+    return [
+      {
+        labelKey: 'public_plans.steps.region',
+        status: 'completed',
+        routerLink: '/public-plans/new',
+      },
+      { labelKey: 'public_plans.steps.crop', status: 'active' },
     ];
   }
 
