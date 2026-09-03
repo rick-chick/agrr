@@ -1212,16 +1212,32 @@ pub fn upload_ready_work_record_photo(
 fn write_contract_observed_weather_gcs_fixture(weather_location_id: i64) {
     let local_root = std::env::var("WEATHER_DATA_LOCAL_ROOT")
         .unwrap_or_else(|_| "/tmp/agrr-weather-contract".to_string());
-    let object_path = format!("{local_root}/weather_data/{weather_location_id}/2026.json");
+    // Align GCS mirror dates with SQLite seed (`date('now', -offset days)`) so
+    // temperature_chart period queries always include fixture rows.
+    let conn = rusqlite::Connection::open_in_memory().expect("open in-memory sqlite for dates");
+    let mut entries = Vec::new();
+    for offset in 0..4 {
+        let date: String = conn
+            .query_row(
+                "SELECT date('now', printf('-%d days', ?1))",
+                params![offset],
+                |row| row.get(0),
+            )
+            .expect("relative contract weather date");
+        entries.push(format!(
+            r#""{date}": {{"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0}}"#,
+        ));
+    }
+    let year: i32 = conn
+        .query_row("SELECT CAST(strftime('%Y', 'now') AS INTEGER)", [], |row| {
+            row.get(0)
+        })
+        .expect("current year for gcs fixture path");
+    let object_path = format!("{local_root}/weather_data/{weather_location_id}/{year}.json");
     if let Some(parent) = std::path::Path::new(&object_path).parent() {
         std::fs::create_dir_all(parent).expect("create weather gcs mirror dir");
     }
-    let payload = r#"{
-      "2026-08-01": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-08-02": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-08-03": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0},
-      "2026-08-04": {"temperature_max": 21.0, "temperature_min": 8.0, "temperature_mean": 14.0}
-    }"#;
+    let payload = format!("{{\n      {}\n    }}", entries.join(",\n      "));
     std::fs::write(&object_path, payload).expect("write observed weather gcs fixture");
 }
 
