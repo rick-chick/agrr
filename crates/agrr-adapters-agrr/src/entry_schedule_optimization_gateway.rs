@@ -50,12 +50,7 @@ impl EntryScheduleOptimizationGateway for EntryScheduleOptimizationAgrrDaemonGat
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
         let crop_path = Self::write_temp_json_path(crop_requirement, "entry_crop")?;
         let weather_path = Self::write_temp_json_path(weather_data, "entry_weather")?;
-        let field = serde_json::json!({
-            "field_id": "entry_field",
-            "name": "entry_field",
-            "area": 1.0,
-            "daily_fixed_cost": 0.01
-        });
+        let field = build_entry_field_payload();
         let field_path = Self::write_temp_json_path(&field, "entry_field")?;
         copy_temp_file_to_debug(&weather_path, "optimization_weather");
         copy_temp_file_to_debug(&field_path, "optimization_field");
@@ -95,6 +90,15 @@ impl EntryScheduleOptimizationGateway for EntryScheduleOptimizationAgrrDaemonGat
         Self::remove_temp_path(&field_path);
         result
     }
+}
+
+fn build_entry_field_payload() -> Value {
+    serde_json::json!({
+        "field_id": "entry_field",
+        "name": "entry_field",
+        "area": 1.0,
+        "daily_fixed_cost": 0.01
+    })
 }
 
 fn build_optimize_period_args(
@@ -140,6 +144,18 @@ mod tests {
         );
         EntryScheduleOptimizationAgrrDaemonGateway::remove_temp_path(&path);
         assert!(!path.exists());
+    }
+
+    #[test]
+    fn build_entry_field_payload_includes_field_id_required_by_agrr() {
+        let field = build_entry_field_payload();
+        assert_eq!(
+            field.get("field_id").and_then(|v| v.as_str()),
+            Some("entry_field")
+        );
+        assert!(field.get("name").is_some());
+        assert!(field.get("area").is_some());
+        assert!(field.get("daily_fixed_cost").is_some());
     }
 
     #[test]
