@@ -355,6 +355,204 @@
         assert_eq!(result.transplant_windows[0].end_date, date!(2026-07-06));
     }
 
+    // Ruby: test "returns insufficient_weather when payload has no data rows"
+    #[test]
+    fn returns_insufficient_weather_when_payload_has_no_data_rows() {
+        let crop = TestCrop {
+            id: 1,
+            name: "トマト".into(),
+            variety: None,
+        };
+        let crop_gateway = StubCropGateway { rows: vec![] };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({})),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            json!({ "latitude": 35.0, "longitude": 139.0, "data": [] }),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("insufficient_weather")
+        );
+        assert!(optimization_gateway.captured_requirement.lock().unwrap().is_none());
+    }
+
+    // Ruby: test "returns insufficient_weather when latitude or longitude is missing"
+    #[test]
+    fn returns_insufficient_weather_when_coordinates_are_missing() {
+        let crop = TestCrop {
+            id: 1,
+            name: "トマト".into(),
+            variety: None,
+        };
+        let crop_gateway = StubCropGateway { rows: vec![] };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({})),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            json!({
+                "data": [
+                    { "time": "2026-05-01", "temperature_2m_mean": 15.0 }
+                ]
+            }),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("insufficient_weather")
+        );
+    }
+
+    // Ruby: test "returns invalid_response when optimize response omits required dates"
+    #[test]
+    fn returns_invalid_response_when_optimize_dates_are_missing() {
+        let crop = TestCrop {
+            id: 1,
+            name: "トマト".into(),
+            variety: None,
+        };
+        let crop_gateway = StubCropGateway { rows: vec![] };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({ "growth_days": 10 })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("invalid_response")
+        );
+        assert!(result.sowing_windows.is_empty());
+    }
+
+    // Ruby: test "returns invalid_response when completion_date is before start_date"
+    #[test]
+    fn returns_invalid_response_when_completion_before_start() {
+        let crop = TestCrop {
+            id: 1,
+            name: "トマト".into(),
+            variety: None,
+        };
+        let crop_gateway = StubCropGateway { rows: vec![] };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-07-10",
+                "completion_date": "2026-05-01"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("invalid_response")
+        );
+    }
+
+    // Ruby: test "maps non-domain optimize errors to crop_requirement_error"
+    #[test]
+    fn maps_non_domain_optimize_errors_to_crop_requirement_error() {
+        let crop = TestCrop {
+            id: 1,
+            name: "トマト".into(),
+            variety: None,
+        };
+        let crop_gateway = StubCropGateway { rows: vec![] };
+        #[derive(Debug)]
+        struct GenericErr;
+        impl std::fmt::Display for GenericErr {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "unexpected")
+            }
+        }
+        impl std::error::Error for GenericErr {}
+        struct GenericOptimizationGateway;
+        impl EntryScheduleOptimizationGateway for GenericOptimizationGateway {
+            fn optimize_period(
+                &self,
+                _: &str,
+                _: Option<&str>,
+                _: &Value,
+                _: time::Date,
+                _: time::Date,
+                _: &Value,
+                _: &Value,
+            ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+                Err(Box::new(GenericErr))
+            }
+        }
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &GenericOptimizationGateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("crop_requirement_error")
+        );
+    }
+
     // Ruby: test "maps EntryScheduleOptimizationError to failed result"
     #[test]
     fn maps_entry_schedule_optimization_error_to_failed_result() {
