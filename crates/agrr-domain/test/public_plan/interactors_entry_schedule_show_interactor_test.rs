@@ -1,5 +1,9 @@
 // Tests for `interactors/entry_schedule_show_interactor.rs` (Ruby parity under test/domain/public_plan/).
 
+    use crate::public_plan::dtos::{EntryScheduleFailure, EntryScheduleFailureKind, EntryScheduleShowOutput};
+    use crate::public_plan::exceptions::{
+        PredictionPayloadMissingError, WeatherLocationMissingError, WeatherPredictionFailedError,
+    };
     use crate::public_plan::mappers::entry_schedule_crop_mapper::CropStageRow;
     use crate::shared::ports::TranslateOptions;
     use serde_json::json;
@@ -91,6 +95,7 @@
 
     struct SpyOutput {
         success: Option<EntryScheduleShowOutput>,
+        failure: Option<EntryScheduleFailure>,
     }
 
     impl EntryScheduleShowOutputPort for SpyOutput {
@@ -98,7 +103,9 @@
             self.success = Some(dto);
         }
 
-        fn on_failure(&mut self, _failure: EntryScheduleFailure) {}
+        fn on_failure(&mut self, failure: EntryScheduleFailure) {
+            self.failure = Some(failure);
+        }
     }
 
     struct MockCropGateway;
@@ -182,7 +189,10 @@
             },
         };
 
-        let mut output = SpyOutput { success: None };
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
         let translator = EmptyTranslator;
         let clock = FixedClock { today: ref_date };
         let mut interactor = EntryScheduleShowInteractor::new(
@@ -217,4 +227,148 @@
             received.crop_fragment.get("id"),
             Some(&json!(1))
         );
+    }
+
+    struct WeatherLocationMissingLoader;
+
+    impl EntryScheduleWeatherLoaderPort for WeatherLocationMissingLoader {
+        fn load_prediction_payload(
+            &self,
+            _farm: &dyn EntryScheduleShowFarm,
+            _prediction_end_date_raw: Option<&str>,
+            _reference_date: Date,
+        ) -> Result<BTreeMap<String, Value>, Box<dyn std::error::Error + Send + Sync>> {
+            Err(Box::new(WeatherLocationMissingError))
+        }
+    }
+
+    struct PredictionPayloadMissingLoader;
+
+    impl EntryScheduleWeatherLoaderPort for PredictionPayloadMissingLoader {
+        fn load_prediction_payload(
+            &self,
+            _farm: &dyn EntryScheduleShowFarm,
+            _prediction_end_date_raw: Option<&str>,
+            _reference_date: Date,
+        ) -> Result<BTreeMap<String, Value>, Box<dyn std::error::Error + Send + Sync>> {
+            Err(Box::new(PredictionPayloadMissingError))
+        }
+    }
+
+    struct WeatherPredictionFailedLoader {
+        message: String,
+    }
+
+    impl EntryScheduleWeatherLoaderPort for WeatherPredictionFailedLoader {
+        fn load_prediction_payload(
+            &self,
+            _farm: &dyn EntryScheduleShowFarm,
+            _prediction_end_date_raw: Option<&str>,
+            _reference_date: Date,
+        ) -> Result<BTreeMap<String, Value>, Box<dyn std::error::Error + Send + Sync>> {
+            Err(Box::new(WeatherPredictionFailedError(self.message.clone())))
+        }
+    }
+
+    struct GenericErrorLoader;
+
+    impl EntryScheduleWeatherLoaderPort for GenericErrorLoader {
+        fn load_prediction_payload(
+            &self,
+            _farm: &dyn EntryScheduleShowFarm,
+            _prediction_end_date_raw: Option<&str>,
+            _reference_date: Date,
+        ) -> Result<BTreeMap<String, Value>, Box<dyn std::error::Error + Send + Sync>> {
+            #[derive(Debug)]
+            struct GenericErr;
+            impl std::fmt::Display for GenericErr {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f, "unexpected")
+                }
+            }
+            impl std::error::Error for GenericErr {}
+            Err(Box::new(GenericErr))
+        }
+    }
+
+    struct NoopRunner;
+
+    impl EntryScheduleOptimizationRunnerPort for NoopRunner {
+        fn call(
+            &self,
+            _crop: &dyn EntryScheduleShowCrop,
+            _weather_payload: &BTreeMap<String, Value>,
+            _farm: &dyn EntryScheduleShowFarm,
+        ) -> EntryScheduleWindowResult {
+            panic!("optimization runner must not be called when weather load fails")
+        }
+    }
+
+    fn run_with_loader<W: EntryScheduleWeatherLoaderPort>(loader: &W) -> EntryScheduleFailure {
+        let farm = TestFarm {
+            id: 1,
+            weather_location_id: 1,
+        };
+        let crop = TestCrop { id: 1 };
+        let ref_date = Date::from_calendar_date(2026, Month::May, 1).unwrap();
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let translator = EmptyTranslator;
+        let clock = FixedClock { today: ref_date };
+        let mut interactor = EntryScheduleShowInteractor::new(
+            &mut output,
+            &MockCropGateway,
+            loader,
+            &NoopRunner,
+            &translator,
+            &clock,
+        );
+
+        interactor.call(&farm, &crop, ref_date, None);
+
+        assert!(output.success.is_none());
+        output.failure.expect("on_failure")
+    }
+
+    // Ruby: test "maps WeatherLocationMissingError to weather_location_required failure"
+    #[test]
+    fn maps_weather_location_missing_to_weather_location_required() {
+        let failure = run_with_loader(&WeatherLocationMissingLoader);
+        assert_eq!(
+            failure.kind,
+            EntryScheduleFailureKind::WeatherLocationRequired
+        );
+    }
+
+    // Ruby: test "maps PredictionPayloadMissingError to prediction_payload_missing failure"
+    #[test]
+    fn maps_prediction_payload_missing_to_prediction_payload_missing() {
+        let failure = run_with_loader(&PredictionPayloadMissingLoader);
+        assert_eq!(
+            failure.kind,
+            EntryScheduleFailureKind::PredictionPayloadMissing
+        );
+    }
+
+    // Ruby: test "maps WeatherPredictionFailedError to weather_prediction_failed failure"
+    #[test]
+    fn maps_weather_prediction_failed_to_weather_prediction_failed() {
+        let failure = run_with_loader(&WeatherPredictionFailedLoader {
+            message: "daemon timeout".into(),
+        });
+        assert_eq!(
+            failure.kind,
+            EntryScheduleFailureKind::WeatherPredictionFailed
+        );
+        assert_eq!(failure.detail_message.as_deref(), Some("daemon timeout"));
+    }
+
+    // Ruby: test "maps unknown loader errors to internal_error failure"
+    #[test]
+    fn maps_unknown_loader_errors_to_internal_error() {
+        let failure = run_with_loader(&GenericErrorLoader);
+        assert_eq!(failure.kind, EntryScheduleFailureKind::InternalError);
+        assert_eq!(failure.detail_message.as_deref(), Some("unexpected"));
     }
