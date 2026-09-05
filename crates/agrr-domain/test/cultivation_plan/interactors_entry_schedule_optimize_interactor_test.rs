@@ -178,6 +178,49 @@
         assert_eq!(range.1, date!(2026-05-03));
     }
 
+    // Ruby: test "evaluation_range returns None when weather dates do not overlap ideal window"
+    #[test]
+    fn evaluation_range_returns_none_when_weather_dates_do_not_overlap_ideal_window() {
+        let crop = TestCrop {
+            id: 1,
+            name: "トマト".into(),
+            variety: None,
+        };
+        let crop_gateway = StubCropGateway { rows: vec![] };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({})),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            json!({
+                "latitude": 35.0,
+                "longitude": 139.0,
+                "data": [
+                    { "time": "2024-01-01", "temperature_2m_mean": 15.0 },
+                    { "time": "2024-12-31", "temperature_2m_mean": 15.0 }
+                ]
+            }),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        assert!(interactor.evaluation_range().is_none());
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("insufficient_weather")
+        );
+        assert!(optimization_gateway.captured_requirement.lock().unwrap().is_none());
+    }
+
     // Ruby: test "scales crop requirement via EntryScheduleStageGddScaler before optimize_period"
     #[test]
     fn scales_crop_requirement_before_optimize_period() {
