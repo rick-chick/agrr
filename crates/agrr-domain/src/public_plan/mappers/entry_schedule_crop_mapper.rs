@@ -209,3 +209,12 @@ fn reason_summary_text(result: &EntryScheduleWindowResult, translator: &dyn Tran
 fn empty_options() -> TranslateOptions {
     BTreeMap::new()
 }
+
+#[cfg(test)]
+mod mappers_entry_schedule_crop_mapper_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/public_plan/mappers_entry_schedule_crop_mapper_test.rs"
+    ));
+}
