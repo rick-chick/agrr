@@ -186,19 +186,35 @@ where
             reason_parts.insert("transplant_stage_name".into(), json!(t.name.clone()));
         }
 
+        let window = DateRange {
+            start_date: start_d,
+            end_date: end_d,
+        };
+        let transplant_cultivation = StageRoleResolver::has_transplant_stage(&stage_rows);
+        let (sowing_windows, transplant_windows, sowing_stage_id, transplant_stage_id) =
+            if transplant_cultivation {
+                (
+                    vec![],
+                    vec![window],
+                    None,
+                    tr_st.map(|s| s.id),
+                )
+            } else {
+                (
+                    vec![window],
+                    vec![],
+                    sow_st.map(|s| s.id),
+                    None,
+                )
+            };
+
         WindowServiceResult {
             eligible: true,
-            sowing_windows: vec![DateRange {
-                start_date: start_d,
-                end_date: end_d,
-            }],
-            transplant_windows: vec![DateRange {
-                start_date: start_d,
-                end_date: end_d,
-            }],
+            sowing_windows,
+            transplant_windows,
             reason_parts,
-            sowing_stage_id: sow_st.map(|s| s.id),
-            transplant_stage_id: tr_st.map(|s| s.id),
+            sowing_stage_id,
+            transplant_stage_id,
             weather_end_date: self.extract_weather_end(),
         }
     }

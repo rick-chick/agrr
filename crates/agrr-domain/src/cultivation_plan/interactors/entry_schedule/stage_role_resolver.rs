@@ -9,6 +9,11 @@ fn transplant_name_match(name: &str) -> bool {
 pub struct StageRoleResolver;
 
 impl StageRoleResolver {
+    /// Crop master with a transplant-named stage is transplant cultivation; otherwise direct sow.
+    pub fn has_transplant_stage(stages: &[CropStageSnapshot]) -> bool {
+        stages.iter().any(|s| transplant_name_match(&s.name))
+    }
+
     pub fn sowing_stage(stages: &[CropStageSnapshot]) -> Option<CropStageSnapshot> {
         let mut ordered: Vec<_> = stages.to_vec();
         ordered.sort_by_key(|s| s.order);

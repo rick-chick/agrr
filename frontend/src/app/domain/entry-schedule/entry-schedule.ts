@@ -5,7 +5,7 @@ export interface EntrySchedulePredictionMeta {
   prediction_start_date?: string;
   prediction_end_date?: string;
   weather_location_id?: number;
-  /** チャート横軸「1〜12月」の暦年（サーバの今日基準） */
+  /** API メタ（サーバの今日基準）。一覧ミニチャートの横軸は候補期間の実データ年を優先し、本フィールドは参照しない */
   chart_calendar_year?: number;
 }
 
