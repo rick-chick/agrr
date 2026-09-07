@@ -647,4 +647,96 @@ mod tests {
         let failed = err.downcast_ref::<WeatherPredictionFailedError>().unwrap();
         assert_eq!(failed.0, "disk full");
     }
+
+    #[test]
+    fn map_weather_prediction_error_maps_clock_required_to_failed() {
+        let err = map_weather_prediction_error(WeatherPredictionError::ClockRequired);
+        let failed = err.downcast_ref::<WeatherPredictionFailedError>().unwrap();
+        assert!(failed.0.contains("clock"));
+    }
+
+    #[test]
+    fn show_presenter_maps_weather_location_required_to_422() {
+        let mut presenter = ShowPresenter { out: None };
+        presenter.on_failure(EntryScheduleFailure::weather_location_required());
+        let out = presenter.out.expect("response");
+        assert_eq!(out.status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            out.body.get("error_key").and_then(|v| v.as_str()),
+            Some("WeatherLocationRequired")
+        );
+    }
+
+    #[test]
+    fn show_presenter_maps_prediction_payload_missing_to_503() {
+        let mut presenter = ShowPresenter { out: None };
+        presenter.on_failure(EntryScheduleFailure::prediction_payload_missing());
+        let out = presenter.out.expect("response");
+        assert_eq!(out.status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(
+            out.body.get("error_key").and_then(|v| v.as_str()),
+            Some("PredictionPayloadMissing")
+        );
+    }
+
+    #[test]
+    fn show_presenter_maps_weather_prediction_failed_to_503_with_message() {
+        let mut presenter = ShowPresenter { out: None };
+        presenter.on_failure(EntryScheduleFailure::weather_prediction_failed("daemon timeout"));
+        let out = presenter.out.expect("response");
+        assert_eq!(out.status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(
+            out.body.get("error").and_then(|v| v.as_str()),
+            Some("daemon timeout")
+        );
+        assert_eq!(
+            out.body.get("error_key").and_then(|v| v.as_str()),
+            Some("WeatherPredictionFailed")
+        );
+    }
+
+    #[test]
+    fn show_presenter_maps_record_not_found_to_404() {
+        let mut presenter = ShowPresenter { out: None };
+        presenter.on_failure(EntryScheduleFailure::record_not_found("crop not found"));
+        let out = presenter.out.expect("response");
+        assert_eq!(out.status, StatusCode::NOT_FOUND);
+        assert_eq!(
+            out.body.get("error").and_then(|v| v.as_str()),
+            Some("crop not found")
+        );
+    }
+
+    #[test]
+    fn show_presenter_maps_internal_error_to_500() {
+        let mut presenter = ShowPresenter { out: None };
+        presenter.on_failure(EntryScheduleFailure::internal_error("unexpected"));
+        let out = presenter.out.expect("response");
+        assert_eq!(out.status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            out.body.get("error").and_then(|v| v.as_str()),
+            Some("unexpected")
+        );
+    }
+
+    #[test]
+    fn show_presenter_maps_success_to_ok_with_farm_prediction_crop() {
+        let mut presenter = ShowPresenter { out: None };
+        presenter.on_success(EntryScheduleShowOutput::new(
+            BTreeMap::from([("id".into(), json!(1))]),
+            BTreeMap::from([("chart_calendar_year".into(), json!(2026))]),
+            BTreeMap::from([("id".into(), json!(2)), ("eligible".into(), json!(true))]),
+        ));
+        let out = presenter.out.expect("response");
+        assert_eq!(out.status, StatusCode::OK);
+        assert_eq!(out.body.get("farm").and_then(|v| v.get("id")).and_then(|v| v.as_i64()), Some(1));
+        assert!(
+            out.body
+                .get("prediction")
+                .and_then(|v| v.get("chart_calendar_year"))
+                .and_then(|v| v.as_i64())
+                .is_some()
+        );
+        assert_eq!(out.body.get("crop").and_then(|v| v.get("id")).and_then(|v| v.as_i64()), Some(2));
+    }
 }

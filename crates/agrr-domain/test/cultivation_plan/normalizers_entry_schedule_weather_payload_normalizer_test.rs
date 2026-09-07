@@ -53,3 +53,33 @@
         let lat = obj.get("latitude").unwrap().as_f64().unwrap();
         assert!((lat - 35.0).abs() < 0.001);
     }
+
+    // Ruby: test "returns empty object when raw payload is absent"
+    #[test]
+    fn returns_empty_object_when_raw_payload_is_absent() {
+        let out = call(None);
+        let obj = out.as_object().expect("object");
+        assert!(obj.is_empty());
+    }
+
+    // Ruby: test "preserves outer coordinates when already present during flatten"
+    #[test]
+    fn preserves_outer_coordinates_when_already_present_during_flatten() {
+        let rows = sample_rows();
+        let nested = json!({
+            "latitude": 36.0,
+            "longitude": 140.0,
+            "data": {
+                "data": rows,
+                "latitude": 35.5,
+                "longitude": 139.7
+            }
+        });
+
+        let out = call(Some(&nested));
+        let obj = out.as_object().expect("object");
+        let lat = obj.get("latitude").unwrap().as_f64().unwrap();
+        let lon = obj.get("longitude").unwrap().as_f64().unwrap();
+        assert!((lat - 36.0).abs() < 0.001);
+        assert!((lon - 140.0).abs() < 0.001);
+    }

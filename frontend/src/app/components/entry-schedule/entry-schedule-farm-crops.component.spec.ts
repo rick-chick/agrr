@@ -293,6 +293,63 @@ describe('EntryScheduleFarmCropsComponent', () => {
     expect(cropNames).toEqual(['Tomato', 'Cucumber']);
   });
 
+  it('shows allIneligible empty state when every crop is ineligible and there is no next page', async () => {
+    await showCrops([
+      {
+        id: 10,
+        name: 'Carrot',
+        eligible: false,
+        sowing_summary: null,
+        transplant_summary: null,
+        reason_summary: 'Out of season',
+        labels: { sowing: 'Sow', transplanting: 'Transplant' },
+      },
+      {
+        id: 11,
+        name: 'Tomato',
+        eligible: false,
+        sowing_summary: null,
+        transplant_summary: null,
+        reason_summary: 'Out of season',
+        labels: { sowing: 'Sow', transplanting: 'Transplant' },
+      },
+    ]);
+
+    const empty = fixture.nativeElement.querySelector('.es-list-empty') as HTMLElement;
+    expect(empty).toBeTruthy();
+    expect(empty.textContent).toContain('No crops in season now');
+    expect(fixture.nativeElement.querySelector('.es-crop-grid')).toBeNull();
+  });
+
+  it('does not show allIneligible empty state while more pages may contain eligible crops', async () => {
+    getEntryScheduleCrops.mockReturnValue(
+      of({
+        farm: farms[0],
+        crops: [
+          {
+            id: 10,
+            name: 'Carrot',
+            eligible: false,
+            sowing_summary: null,
+            transplant_summary: null,
+            reason_summary: 'Out of season',
+            labels: { sowing: 'Sow', transplanting: 'Transplant' },
+          },
+        ],
+        prediction: { chart_calendar_year: 2026 },
+        meta: { has_more: true, next_cursor: 'page-2' },
+      }),
+    );
+
+    await initComponent();
+
+    expect(fixture.nativeElement.querySelector('.es-list-empty')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.es-crop-grid')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('button.btn.btn-secondary')?.textContent?.trim()).toBe(
+      'Load more',
+    );
+  });
+
   it('distinguishes loading, error, and list empty states visually', async () => {
     const cropsSubject = new Subject<{
       farm: Farm;
