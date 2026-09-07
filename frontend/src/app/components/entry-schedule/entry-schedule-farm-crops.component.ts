@@ -16,7 +16,11 @@ import { EntryScheduleWizardProgressComponent } from './entry-schedule-wizard-pr
 import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
-import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeline.util';
+import {
+  MONTH_NUMBERS,
+  timelineBoundsFromSummaries,
+} from '../../domain/entry-schedule/entry-schedule-timeline-bounds';
+import { segmentStyleForRange } from '../../domain/entry-schedule/entry-schedule-timeline-segment';
 
 /** entry_schedule crops API は参照作物ごとに最適化するため CI でも数十秒かかる */
 const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 60_000;
@@ -130,43 +134,47 @@ const PAGE_LIMIT = 20;
                         >
                           <p class="es-mini-chart-intro">{{ 'entrySchedule.viz.listChartIntro' | translate }}</p>
                           <div class="es-year-banner" aria-hidden="true">
-                            {{ 'entrySchedule.viz.axisYear' | translate: { year: ctx.year } }}
+                            {{ 'entrySchedule.viz.axisYear' | translate: { year: ctx.yearLabel } }}
                           </div>
                           <div class="es-mini-rows">
-                            <div class="es-mini-row">
-                              <span class="es-mini-row-label">{{ 'entrySchedule.viz.sowBand' | translate }}</span>
-                              <div class="es-track">
-                                @if (c.sowing_summary) {
+                            @if (c.sowing_summary) {
+                              <div class="es-mini-row">
+                                <span class="es-mini-row-label">{{ 'entrySchedule.viz.sowBand' | translate }}</span>
+                                <div class="es-track">
                                   <div
                                     class="es-seg sow"
                                     [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
                                     [ngStyle]="
-                                      segmentStyle(c.sowing_summary.start_date, c.sowing_summary.end_date, ctx)
+                                      segmentStyleForRange(
+                                        c.sowing_summary.start_date,
+                                        c.sowing_summary.end_date,
+                                        ctx
+                                      )
                                     "
                                   ></div>
-                                }
+                                </div>
                               </div>
-                            </div>
-                            <div class="es-mini-row">
-                              <span class="es-mini-row-label">{{
-                                'entrySchedule.viz.transplantBand' | translate
-                              }}</span>
-                              <div class="es-track">
-                                @if (c.transplant_summary) {
+                            }
+                            @if (c.transplant_summary) {
+                              <div class="es-mini-row">
+                                <span class="es-mini-row-label">{{
+                                  'entrySchedule.viz.transplantBand' | translate
+                                }}</span>
+                                <div class="es-track">
                                   <div
                                     class="es-seg transplant"
                                     [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
                                     [ngStyle]="
-                                      segmentStyle(
+                                      segmentStyleForRange(
                                         c.transplant_summary.start_date,
                                         c.transplant_summary.end_date,
                                         ctx
                                       )
                                     "
                                   ></div>
-                                }
+                                </div>
                               </div>
-                            </div>
+                            }
                           </div>
                           <div class="es-month-ruler" aria-hidden="true">
                             @for (m of monthTicks; track m) {
@@ -309,6 +317,7 @@ export class EntryScheduleFarmCropsComponent implements OnInit {
   private readonly translate = inject(TranslateService);
 
   readonly monthTicks = [...MONTH_NUMBERS];
+  readonly segmentStyleForRange = segmentStyleForRange;
 
   readonly farmLoading = signal(true);
   readonly selectedFarmId = signal<number | null>(null);
@@ -437,30 +446,8 @@ export class EntryScheduleFarmCropsComponent implements OnInit {
       });
   }
 
-  chartTimelineContext(c: EntryScheduleCropListItem): { min: number; max: number; year: number } | null {
-    if (!c.sowing_summary && !c.transplant_summary) {
-      return null;
-    }
-    const y = this.listResponse()?.prediction?.chart_calendar_year ?? new Date().getFullYear();
-    return calendarYearJanDecBounds(y);
-  }
-
-  segmentStyle(startIso: string, endIso: string, ctx: { min: number; max: number }): Record<string, string> {
-    const t0 = Date.parse(startIso);
-    const t1 = Date.parse(endIso);
-    const span = ctx.max - ctx.min;
-    if (!Number.isFinite(t0) || !Number.isFinite(t1) || !Number.isFinite(span) || span <= 0) {
-      return { display: 'none' };
-    }
-    const leftRaw = ((t0 - ctx.min) / span) * 100;
-    const rightRaw = ((t1 - ctx.min) / span) * 100;
-    const left = Math.max(0, Math.min(100, leftRaw));
-    const right = Math.max(0, Math.min(100, rightRaw));
-    const width = Math.max(0.5, right - left);
-    return {
-      left: `${left}%`,
-      width: `${width}%`
-    };
+  chartTimelineContext(c: EntryScheduleCropListItem): { min: number; max: number; yearLabel: string } | null {
+    return timelineBoundsFromSummaries([c.sowing_summary, c.transplant_summary]);
   }
 
   formatRangeShort(summary: { start_date: string; end_date: string }): string {

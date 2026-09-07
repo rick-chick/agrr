@@ -7,10 +7,13 @@ import { combineLatest } from 'rxjs';
 import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
 import {
   EntryScheduleCropShowResponse,
-  EntryScheduleDateRangeSummary,
   EntrySchedulePhaseSegment
 } from '../../domain/entry-schedule/entry-schedule';
-import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeline.util';
+import {
+  MONTH_NUMBERS,
+  timelineBoundsFromSummaries,
+} from '../../domain/entry-schedule/entry-schedule-timeline-bounds';
+import { segmentStyleForRange } from '../../domain/entry-schedule/entry-schedule-timeline-segment';
 import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
@@ -84,7 +87,7 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
                   [attr.aria-label]="'entrySchedule.viz.ganttAria' | translate: { name: data()!.crop.name }"
                 >
                   <div class="es-year-banner" aria-hidden="true">
-                    {{ 'entrySchedule.viz.axisYear' | translate: { year: gctx.year } }}
+                    {{ 'entrySchedule.viz.axisYear' | translate: { year: gctx.yearLabel } }}
                   </div>
                   <div class="es-gantt-row">
                     <div class="es-gantt-row-label">
@@ -96,7 +99,7 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
                         <div
                           class="es-gantt-seg sow"
                           [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
-                          [ngStyle]="barSeg(w, gctx)"
+                          [ngStyle]="segmentStyleForRange(w.start_date, w.end_date, gctx)"
                         ></div>
                       }
                       @if (data()!.crop.sowing_windows.length === 0) {
@@ -114,7 +117,7 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
                         <div
                           class="es-gantt-seg transplant"
                           [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
-                          [ngStyle]="barSeg(w, gctx)"
+                          [ngStyle]="segmentStyleForRange(w.start_date, w.end_date, gctx)"
                         ></div>
                       }
                       @if (data()!.crop.transplant_windows.length === 0) {
@@ -290,6 +293,7 @@ export class EntryScheduleDetailComponent implements OnInit {
   private readonly auth = inject(AuthService);
 
   readonly monthTicks = [...MONTH_NUMBERS];
+  readonly segmentStyleForRange = segmentStyleForRange;
 
   readonly data = signal<EntryScheduleCropShowResponse | null>(null);
   readonly loading = signal(true);
@@ -351,45 +355,21 @@ export class EntryScheduleDetailComponent implements OnInit {
     }
   }
 
-  detailGanttContext(): { min: number; max: number; year: number } | null {
+  detailGanttContext(): { min: number; max: number; yearLabel: string } | null {
     const crop = this.data()?.crop;
     if (!crop) {
       return null;
     }
-    const hasBand =
-      crop.sowing_windows.length > 0 ||
-      crop.transplant_windows.length > 0 ||
-      (crop.phase_segments?.some((p) => p.start_date && p.end_date) ?? false);
-    if (!hasBand) {
-      return null;
-    }
-    const y = this.data()?.prediction?.chart_calendar_year ?? new Date().getFullYear();
-    return calendarYearJanDecBounds(y);
-  }
-
-  barSeg(w: EntryScheduleDateRangeSummary, ctx: { min: number; max: number }): Record<string, string> {
-    const start = Date.parse(w.start_date);
-    const end = Date.parse(w.end_date);
-    const span = ctx.max - ctx.min;
-    if (
-      !Number.isFinite(start) ||
-      !Number.isFinite(end) ||
-      !Number.isFinite(ctx.min) ||
-      !Number.isFinite(ctx.max) ||
-      !Number.isFinite(span) ||
-      span <= 0
-    ) {
-      return { display: 'none' };
-    }
-    const leftRaw = ((start - ctx.min) / span) * 100;
-    const rightRaw = ((end - ctx.min) / span) * 100;
-    const leftPct = Math.max(0, Math.min(100, leftRaw));
-    const rightPct = Math.max(0, Math.min(100, rightRaw));
-    const widthPct = Math.max(0.4, rightPct - leftPct);
-    return {
-      left: `${leftPct}%`,
-      width: `${widthPct}%`
-    };
+    const phaseRanges =
+      crop.phase_segments
+        ?.filter((p) => p.start_date && p.end_date)
+        .map((p) => ({ start_date: p.start_date!, end_date: p.end_date! })) ?? [];
+    const bounds = timelineBoundsFromSummaries([
+      ...crop.sowing_windows,
+      ...crop.transplant_windows,
+      ...phaseRanges,
+    ]);
+    return bounds;
   }
 
   phaseAccentClass(phaseKey: string): 'sowing' | 'nursery' | 'transplant' | 'harvest' {

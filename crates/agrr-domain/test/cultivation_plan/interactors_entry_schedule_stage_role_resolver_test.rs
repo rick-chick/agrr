@@ -46,3 +46,15 @@ fn transplant_stage_falls_back_to_second_stage() {
     let tr = StageRoleResolver::transplant_stage(&stages).unwrap();
     assert_eq!(tr.id, 2);
 }
+
+#[test]
+fn has_transplant_stage_is_true_when_named_stage_exists() {
+    let stages = vec![stage(1, "播種", 1), stage(2, "定植", 2)];
+    assert!(StageRoleResolver::has_transplant_stage(&stages));
+}
+
+#[test]
+fn has_transplant_stage_is_false_for_direct_sow_stages() {
+    let stages = vec![stage(1, "播種〜発芽", 1), stage(2, "発芽〜生育", 2)];
+    assert!(!StageRoleResolver::has_transplant_stage(&stages));
+}

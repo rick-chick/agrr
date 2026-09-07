@@ -392,10 +392,75 @@
             result.reason_parts.get("total_cost").and_then(|v| v.as_f64()),
             Some(12.5)
         );
-        assert_eq!(result.sowing_windows[0].start_date, date!(2026-03-04));
-        assert_eq!(result.sowing_windows[0].end_date, date!(2026-07-06));
+        assert!(result.sowing_windows.is_empty());
+        assert_eq!(result.transplant_windows.len(), 1);
         assert_eq!(result.transplant_windows[0].start_date, date!(2026-03-04));
         assert_eq!(result.transplant_windows[0].end_date, date!(2026-07-06));
+        assert!(result.sowing_stage_id.is_none());
+        assert_eq!(result.transplant_stage_id, Some(2));
+    }
+
+    fn direct_sow_stages() -> Vec<CropStageSnapshot> {
+        let tr = TemperatureRequirementSnapshot {
+            frost_threshold: Some(0.0),
+            optimal_min: Some(10.0),
+            optimal_max: Some(30.0),
+            base_temperature: None,
+        };
+        vec![
+            CropStageSnapshot {
+                id: 11,
+                name: "播種〜発芽".into(),
+                order: 1,
+                temperature_requirement: Some(tr.clone()),
+            },
+            CropStageSnapshot {
+                id: 12,
+                name: "発芽〜生育".into(),
+                order: 2,
+                temperature_requirement: Some(tr),
+            },
+        ]
+    }
+
+    #[test]
+    fn maps_optimize_period_to_sowing_only_for_direct_sow_crop() {
+        let crop = TestCrop {
+            id: 1,
+            name: "ほうれん草".into(),
+            variety: None,
+        };
+        let crop_gateway = StubCropGateway {
+            rows: direct_sow_stages(),
+        };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(result.eligible);
+        assert_eq!(result.sowing_windows.len(), 1);
+        assert!(result.transplant_windows.is_empty());
+        assert_eq!(result.sowing_windows[0].start_date, date!(2026-03-04));
+        assert_eq!(result.sowing_windows[0].end_date, date!(2026-07-06));
+        assert_eq!(result.sowing_stage_id, Some(11));
+        assert!(result.transplant_stage_id.is_none());
     }
 
     // Ruby: test "returns insufficient_weather when payload has no data rows"

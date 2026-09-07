@@ -77,6 +77,11 @@ describe('EntryScheduleFarmCropsComponent', () => {
           noWindowTitle: 'No planting window',
           noWindowHint: 'Open the detail view for schedule notes and reasons.',
           listChartIntro: 'Candidate window overview',
+          axisYear: '{{year}}',
+          sowBand: 'Sow',
+          transplantBand: 'Transplant',
+          listChartFoot: 'See detail for full windows.',
+          monthTick: '{{n}}',
         },
         listEmpty: {
           noCrops: {
@@ -124,7 +129,7 @@ describe('EntryScheduleFarmCropsComponent', () => {
       of({
         farm: farms[0],
         crops,
-        prediction: { chart_calendar_year: 2026 },
+        prediction: {},
         meta: { has_more: false, next_cursor: null },
       }),
     );
@@ -261,7 +266,7 @@ describe('EntryScheduleFarmCropsComponent', () => {
         of({
           farm: farms[0],
           crops: [pageOneCrop],
-          prediction: { chart_calendar_year: 2026 },
+          prediction: {},
           meta: { has_more: true, next_cursor: 'page-2' },
         }),
       )
@@ -269,7 +274,7 @@ describe('EntryScheduleFarmCropsComponent', () => {
         of({
           farm: farms[0],
           crops: [pageTwoCrop],
-          prediction: { chart_calendar_year: 2026 },
+          prediction: {},
           meta: { has_more: false, next_cursor: null },
         }),
       );
@@ -336,7 +341,7 @@ describe('EntryScheduleFarmCropsComponent', () => {
             labels: { sowing: 'Sow', transplanting: 'Transplant' },
           },
         ],
-        prediction: { chart_calendar_year: 2026 },
+        prediction: {},
         meta: { has_more: true, next_cursor: 'page-2' },
       }),
     );
@@ -384,5 +389,25 @@ describe('EntryScheduleFarmCropsComponent', () => {
 
     expect(fixture.nativeElement.querySelector('.error-message')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.es-list-empty')).toBeNull();
+  });
+
+  it('renders mini-chart year banner from candidate period year not API chart_calendar_year', async () => {
+    await showCrops([
+      {
+        id: 4,
+        name: 'Spinach',
+        eligible: true,
+        sowing_summary: { start_date: '2027-04-17', end_date: '2027-06-03' },
+        transplant_summary: { start_date: '2027-04-17', end_date: '2027-06-03' },
+        reason_summary: 'OK',
+        labels: { sowing: 'Sow', transplanting: 'Transplant' },
+      },
+    ]);
+
+    const yearBanner = fixture.nativeElement.querySelector('.es-year-banner') as HTMLElement;
+    expect(yearBanner?.textContent?.trim()).toBe('2027');
+    const segments = fixture.nativeElement.querySelectorAll('.es-seg');
+    expect(segments.length).toBe(2);
+    expect((segments[0] as HTMLElement).style.width).not.toBe('0.5%');
   });
 });
