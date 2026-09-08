@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Farm } from '../../domain/farms/farm';
 import { EntryScheduleCropListItem } from '../../domain/entry-schedule/entry-schedule';
 import { EntryScheduleFarmCropsView } from '../../components/entry-schedule/entry-schedule-farm-crops.view';
 import { LoadEntryScheduleCropsOutputPort } from '../../usecase/entry-schedule/load-entry-schedule-crops.output-port';
