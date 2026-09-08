@@ -55,16 +55,22 @@ const initialControl: FarmListViewState = {
             @for (farm of control.farms; track farm.id) {
               <li class="card-list__item">
                 <article class="item-card">
-                  <a [routerLink]="['/farms', farm.id]" class="item-card__body">
-                    <span class="item-card__title">
-                      {{ farm.name }}
+                  <a
+                    [routerLink]="['/farms', farm.id]"
+                    class="item-card__body item-card__body--uniform farm-list__card-body"
+                    [attr.title]="farmCardTitle(farm)"
+                  >
+                    <span class="item-card__title item-card__title--single-line">{{ farm.name }}</span>
+                    <span class="item-card__meta--single-line farm-list__reference-badge">
                       @if (farm.is_reference) {
-                        <span>({{ 'farms.index.reference_badge' | translate }})</span>
+                        {{ 'farms.index.reference_badge' | translate }}
                       }
                     </span>
-                    @if (farm.region) {
-                      <span class="item-card__meta">{{ 'farms.form.region_' + farm.region | translate }}</span>
-                    }
+                    <span class="item-card__meta--single-line farm-list__region">
+                      @if (farm.region) {
+                        {{ 'farms.form.region_' + farm.region | translate }}
+                      }
+                    </span>
                   </a>
                   <div class="item-card__actions">
                     <a [routerLink]="['/farms', farm.id, 'edit']" class="btn btn-secondary">
@@ -148,6 +154,10 @@ export class FarmListComponent implements FarmListView, OnInit, OnDestroy {
   load(): void {
     this.control = { ...this.control, loading: true };
     this.loadUseCase.execute();
+  }
+
+  farmCardTitle(farm: { name: string }): string {
+    return farm.name;
   }
 
   /** UNDO 後の再取得。ローディング表示にせず一覧を更新する。 */

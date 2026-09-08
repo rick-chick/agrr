@@ -13,6 +13,8 @@ export type LayoutArchetypeDesignContract = {
   requiredShellSelectors?: string[];
   wizardProgressSelectors?: string[];
   wizardProgressMinHeightPx?: number;
+  checkItemCardRowHeightUniformity?: boolean;
+  maxItemCardRowHeightDeltaPx?: number;
 };
 
 /** Run L2 design contract (structure + viewport + density rules) inside the browser context. */

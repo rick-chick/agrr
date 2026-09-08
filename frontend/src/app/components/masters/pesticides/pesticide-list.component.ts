@@ -53,11 +53,13 @@ const initialControl: PesticideListViewState = {
             @for (pesticide of control.pesticides; track pesticide.id) {
               <li class="card-list__item">
                 <article class="item-card">
-                  <a [routerLink]="['/pesticides', pesticide.id]" class="item-card__body">
-                    <span class="item-card__title">{{ pesticide.name }}</span>
-                    @if (pesticide.active_ingredient) {
-                      <span class="item-card__meta">{{ pesticide.active_ingredient }}</span>
-                    }
+                  <a [routerLink]="['/pesticides', pesticide.id]" class="item-card__body item-card__body--uniform">
+                    <span class="item-card__title item-card__title--single-line">{{ pesticide.name }}</span>
+                    <span class="item-card__meta--single-line pesticide-list__active-ingredient">
+                      @if (pesticide.active_ingredient) {
+                        {{ pesticide.active_ingredient }}
+                      }
+                    </span>
                   </a>
                   <div class="item-card__actions">
                     <a [routerLink]="['/pesticides', pesticide.id, 'edit']" class="btn btn-secondary">{{ 'pesticides.index.actions.edit' | translate }}</a>

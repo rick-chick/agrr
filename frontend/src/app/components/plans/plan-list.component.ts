@@ -82,11 +82,11 @@ const initialControl: PlanListViewState = {
                 <article class="item-card plan-list__card">
                   <a
                     [routerLink]="['/plans', plan.id]"
-                    class="item-card__body plan-list__card-body"
+                    class="item-card__body item-card__body--uniform plan-list__card-body"
                     [attr.title]="cardTitle(plan)"
                   >
-                    <span class="item-card__title plan-list__card-title">{{ cardTitle(plan) }}</span>
-                    <span class="plan-list__plan-meta">
+                    <span class="item-card__title item-card__title--single-line plan-list__card-title">{{ cardTitle(plan) }}</span>
+                    <span class="item-card__meta--single-line plan-list__plan-meta">
                       @if (plan.plan_year != null) {
                         <span class="plan-list__plan-year">
                           {{ 'plans.index.year_label' | translate: { year: plan.plan_year } }}
@@ -98,7 +98,7 @@ const initialControl: PlanListViewState = {
                         </span>
                       }
                     </span>
-                    <span class="plan-list__gap-summary">
+                    <span class="item-card__meta--single-line plan-list__gap-summary">
                       @if (plan.inputGap) {
                         {{
                           'plans.index.input_gap.unrecorded_summary'
@@ -118,7 +118,7 @@ const initialControl: PlanListViewState = {
                         }
                       }
                     </span>
-                    <span class="plan-list__custom-plan-name">
+                    <span class="item-card__meta--single-line plan-list__custom-plan-name">
                       @if (showCustomPlanName(plan)) {
                         {{
                           'plans.index.custom_plan_name'

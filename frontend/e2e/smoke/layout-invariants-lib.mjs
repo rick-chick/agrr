@@ -78,6 +78,53 @@ export function maxActionButtonRowsForViewport(viewportWidth) {
   return 4;
 }
 
+/**
+ * Group visible item-cards by grid row and flag height deltas within the same row.
+ * @param {Rect[]} cardRects
+ * @param {number} [rowTolerancePx]
+ * @param {number} [maxHeightDeltaPx]
+ * @returns {string[]}
+ */
+export function findItemCardRowHeightViolations(
+  cardRects,
+  rowTolerancePx = 8,
+  maxHeightDeltaPx = 4,
+) {
+  if (cardRects.length < 2) return [];
+
+  const sorted = [...cardRects].sort((a, b) => a.top - b.top || a.left - b.left);
+  /** @type {Rect[][]} */
+  const rows = [];
+
+  for (const rect of sorted) {
+    let placed = false;
+    for (const row of rows) {
+      if (Math.abs(rect.top - row[0].top) <= rowTolerancePx) {
+        row.push(rect);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      rows.push([rect]);
+    }
+  }
+
+  /** @type {string[]} */
+  const violations = [];
+  for (const row of rows) {
+    if (row.length < 2) continue;
+    const heights = row.map((rect) => rect.height);
+    const delta = Math.max(...heights) - Math.min(...heights);
+    if (delta > maxHeightDeltaPx) {
+      violations.push(
+        `item-card row height delta ${delta.toFixed(1)}px (max ${maxHeightDeltaPx}px, ${row.length} cards)`,
+      );
+    }
+  }
+  return violations;
+}
+
 /** Selectors for primary page title (h1 or master CRUD h2 titles). */
 export const PAGE_HEADING_SELECTORS = [
   'h1',

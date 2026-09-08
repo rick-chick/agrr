@@ -1,9 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import ja from '../../../../assets/i18n/ja.json';
 import { FarmSelectionCardsPattern } from './farm-selection-cards.pattern';
 import { Farm } from '../../../domain/farms/farm';
+
+const publicPlanComponentCss = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../public-plans/public-plan.component.css'),
+  'utf8',
+);
 
 const mockFarms: Farm[] = [
   { id: 1, name: 'Farm A', latitude: 0, longitude: 0, region: 'jp' },
@@ -69,5 +77,34 @@ describe('FarmSelectionCardsPattern', () => {
 
     const active = fixture.nativeElement.querySelector('.enhanced-selection-card.active');
     expect(active?.textContent).toContain('Farm B');
+  });
+
+  it('applies uniform card height and single-line title ellipsis styles in ready state', () => {
+    fixture.componentInstance.state = 'ready';
+    fixture.componentInstance.farms = mockFarms;
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('.enhanced-selection-card') as HTMLElement;
+    const title = fixture.nativeElement.querySelector('.enhanced-card-title') as HTMLElement;
+    expect(card).toBeTruthy();
+    expect(title).toBeTruthy();
+    expect(parseFloat(getComputedStyle(card).minHeight)).toBeGreaterThan(0);
+    expect(getComputedStyle(title).whiteSpace).toBe('nowrap');
+    expect(getComputedStyle(title).overflow).toBe('hidden');
+    expect(getComputedStyle(title).textOverflow).toBe('ellipsis');
+  });
+});
+
+describe('public-plan.component.css (farm selection cards pattern)', () => {
+  it('defines uniform min-height and single-line ellipsis for enhanced selection cards', () => {
+    expect(publicPlanComponentCss).toMatch(
+      /\.enhanced-selection-card\s*\{[\s\S]*min-height:\s*[\d.]+rem/,
+    );
+    expect(publicPlanComponentCss).toMatch(
+      /\.enhanced-card-title\s*\{[\s\S]*white-space:\s*nowrap/,
+    );
+    expect(publicPlanComponentCss).toMatch(
+      /\.enhanced-card-title\s*\{[\s\S]*text-overflow:\s*ellipsis/,
+    );
   });
 });

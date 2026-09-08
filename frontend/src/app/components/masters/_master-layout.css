@@ -253,6 +253,34 @@ article.item-card:hover {
   color: var(--color-text-secondary);
 }
 
+/* Uniform card rows (opt-in for master-list / work-hub) */
+.item-card__body--uniform {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.item-card__title--single-line {
+  margin-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.item-card__meta--single-line,
+.item-card__badge-row--single-line {
+  display: block;
+  min-height: 1.25rem;
+  margin-top: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* カード内アクション（編集・削除等） */
 .item-card__actions {
   display: flex;

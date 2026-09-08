@@ -210,13 +210,91 @@ describe('FarmListComponent', () => {
 
     fixture.detectChanges();
 
-    const meta = fixture.nativeElement.querySelector('.item-card__meta') as HTMLElement;
-    expect(meta?.textContent?.trim()).toBe('Japan');
+    const regionRow = fixture.nativeElement.querySelector('.farm-list__region') as HTMLElement;
+    expect(regionRow?.textContent?.trim()).toBe('Japan');
     expect(fixture.nativeElement.textContent).not.toContain('region_jp');
     expect(fixture.nativeElement.textContent).not.toMatch(/\bjp\b/);
   });
 
-  it('displays reference farms with (参照) indicator', () => {
+  it('uses uniform card layout classes for single-line rows', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [
+        {
+          id: 1,
+          name: 'User Farm',
+          region: 'jp',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          weather_data_status: 'completed' as const,
+          is_reference: false
+        }
+      ],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const body = fixture.nativeElement.querySelector('.farm-list__card-body') as HTMLElement;
+    const title = fixture.nativeElement.querySelector('.item-card__title--single-line') as HTMLElement;
+    expect(body?.classList.contains('item-card__body--uniform')).toBe(true);
+    expect(title).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.farm-list__reference-badge.item-card__meta--single-line')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.farm-list__region.item-card__meta--single-line')).toBeTruthy();
+  });
+
+  it('keeps region row in DOM when region is absent for consistent card height', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [
+        {
+          id: 1,
+          name: 'No Region Farm',
+          region: null,
+          latitude: 35.6895,
+          longitude: 139.6917,
+          weather_data_status: 'completed' as const,
+          is_reference: false
+        }
+      ],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const regionRow = fixture.nativeElement.querySelector('.farm-list__region') as HTMLElement;
+    expect(regionRow).toBeTruthy();
+    expect(regionRow.textContent?.trim()).toBe('');
+  });
+
+  it('keeps reference badge row in DOM when farm is not reference', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [
+        {
+          id: 1,
+          name: 'User Farm',
+          region: 'jp',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          weather_data_status: 'completed' as const,
+          is_reference: false
+        }
+      ],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const badgeRow = fixture.nativeElement.querySelector('.farm-list__reference-badge') as HTMLElement;
+    expect(badgeRow).toBeTruthy();
+    expect(badgeRow.textContent?.trim()).toBe('');
+  });
+
+  it('displays reference badge in separate meta row, not inline in title', () => {
     const farms = [
       { id: 1, name: 'User Farm', region: 'jp', latitude: 35.6895, longitude: 139.6917, weather_data_status: 'completed' as const, is_reference: false },
       { id: 2, name: 'Reference Farm', region: 'jp', latitude: 43.0642, longitude: 141.3468, weather_data_status: 'pending' as const, is_reference: true }
@@ -234,9 +312,36 @@ describe('FarmListComponent', () => {
 
     const farmTitles = fixture.nativeElement.querySelectorAll('.item-card__title');
     expect(farmTitles).toHaveLength(2);
-    const normalizeText = (value: string | null) => value?.replace(/\s+/g, ' ').trim() ?? '';
-    expect(normalizeText(farmTitles[0].textContent)).toBe('User Farm');
-    expect(normalizeText(farmTitles[1].textContent)).toBe('Reference Farm (Reference)');
+    expect(farmTitles[0].textContent?.trim()).toBe('User Farm');
+    expect(farmTitles[1].textContent?.trim()).toBe('Reference Farm');
+
+    const badgeRows = fixture.nativeElement.querySelectorAll('.farm-list__reference-badge');
+    expect(badgeRows[0].textContent?.trim()).toBe('');
+    expect(badgeRows[1].textContent?.trim()).toBe('Reference');
+  });
+
+  it('sets title attribute on card body link for full farm name', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [
+        {
+          id: 1,
+          name: 'User Farm',
+          region: 'jp',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          weather_data_status: 'completed' as const,
+          is_reference: false
+        }
+      ],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const bodyLink = fixture.nativeElement.querySelector('.farm-list__card-body') as HTMLAnchorElement;
+    expect(bodyLink.getAttribute('title')).toBe('User Farm');
   });
 
   it('action buttons use .btn base class with variant modifiers', () => {

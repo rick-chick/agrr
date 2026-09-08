@@ -110,6 +110,12 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: var(--shadow-card);
+  min-height: 6.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .enhanced-selection-card:hover {
@@ -141,6 +147,10 @@
   font-size: var(--font-size-lg);
   margin-bottom: var(--space-1);
   color: var(--color-text);
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .enhanced-card-subtitle {
@@ -245,6 +255,8 @@
   position: relative;
   display: block;
   box-shadow: var(--shadow-card);
+  min-height: 8rem;
+  box-sizing: border-box;
 }
 
 .crop-card:hover {
@@ -270,11 +282,20 @@
 
 .crop-name {
   font-weight: bold;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .crop-variety {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  display: block;
+  min-height: 1.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .check-mark {
