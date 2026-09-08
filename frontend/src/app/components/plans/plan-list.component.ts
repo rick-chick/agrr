@@ -79,9 +79,13 @@ const initialControl: PlanListViewState = {
           <ul class="card-list" role="list">
             @for (plan of sortedPlans(); track plan.id) {
               <li class="card-list__item">
-                <article class="item-card">
-                  <a [routerLink]="['/plans', plan.id]" class="item-card__body">
-                    <span class="item-card__title">{{ cardTitle(plan) }}</span>
+                <article class="item-card plan-list__card">
+                  <a
+                    [routerLink]="['/plans', plan.id]"
+                    class="item-card__body plan-list__card-body"
+                    [attr.title]="cardTitle(plan)"
+                  >
+                    <span class="item-card__title plan-list__card-title">{{ cardTitle(plan) }}</span>
                     <span class="plan-list__plan-meta">
                       @if (plan.plan_year != null) {
                         <span class="plan-list__plan-year">
@@ -94,8 +98,8 @@ const initialControl: PlanListViewState = {
                         </span>
                       }
                     </span>
-                    @if (plan.inputGap) {
-                      <span class="plan-list__gap-summary">
+                    <span class="plan-list__gap-summary">
+                      @if (plan.inputGap) {
                         {{
                           'plans.index.input_gap.unrecorded_summary'
                             | translate: { count: plan.inputGap.unrecordedCount }
@@ -112,18 +116,18 @@ const initialControl: PlanListViewState = {
                               | translate: { count: plan.inputGap.amountVarianceCount }
                           }}
                         }
-                      </span>
-                    }
-                    @if (showCustomPlanName(plan)) {
-                      <span class="plan-list__custom-plan-name">
+                      }
+                    </span>
+                    <span class="plan-list__custom-plan-name">
+                      @if (showCustomPlanName(plan)) {
                         {{
                           'plans.index.custom_plan_name'
                             | translate: { name: plan.name | planDisplayName }
                         }}
-                      </span>
-                    }
+                      }
+                    </span>
                   </a>
-                  <div class="item-card__actions">
+                  <div class="item-card__actions plan-list__card-actions">
                     <a
                       class="btn btn-secondary btn-sm plan-list__variance-link"
                       routerLink="/work/variance"

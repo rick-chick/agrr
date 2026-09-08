@@ -328,7 +328,9 @@ describe('PlanListComponent', () => {
       planWithGap({ id: 1, farm_id: 1, farm_name: 'test', name: 'test' })
     ]);
 
-    expect(nativeElement.querySelector('.plan-list__custom-plan-name')).toBeNull();
+    const customNameRow = nativeElement.querySelector('.plan-list__custom-plan-name');
+    expect(customNameRow).toBeTruthy();
+    expect(customNameRow?.textContent?.trim()).toBe('');
     expect(nativeElement.querySelector('.item-card__title')?.textContent?.trim()).toBe('test');
   });
 
@@ -441,10 +443,21 @@ describe('PlanListComponent', () => {
     expect(learnLink.getAttribute('href')).toContain('/plans/1/learn');
   });
 
-  it('hides input gap summary when inputGap is null', async () => {
-    const nativeElement = await renderPlans([planWithGap({ inputGap: null })]);
+  it('uses plan-list card layout classes for uniform single-line rows', async () => {
+    const nativeElement = await renderPlans([planWithGap()]);
+    const card = nativeElement.querySelector('.plan-list__card');
+    expect(card?.classList.contains('item-card')).toBe(true);
+    expect(nativeElement.querySelector('.plan-list__card-body')).toBeTruthy();
+    expect(nativeElement.querySelector('.plan-list__card-title')).toBeTruthy();
+    expect(nativeElement.querySelector('.plan-list__gap-summary')).toBeTruthy();
+    expect(nativeElement.querySelector('.plan-list__custom-plan-name')).toBeTruthy();
+  });
 
-    expect(nativeElement.querySelector('.plan-list__gap-summary')).toBeNull();
+  it('keeps gap summary row in DOM when inputGap is null for consistent card height', async () => {
+    const nativeElement = await renderPlans([planWithGap({ inputGap: null })]);
+    const gapRow = nativeElement.querySelector('.plan-list__gap-summary');
+    expect(gapRow).toBeTruthy();
+    expect(gapRow?.textContent?.trim()).toBe('');
   });
 
   it('shows card-list skeleton while loading instead of text-only spinner', async () => {
