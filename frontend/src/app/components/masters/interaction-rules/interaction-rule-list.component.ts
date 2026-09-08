@@ -56,9 +56,17 @@ const initialControl: InteractionRuleListViewState = {
             @for (rule of control.rules; track rule.id) {
               <li class="card-list__item">
                 <article class="item-card">
-                  <a [routerLink]="['/interaction_rules', rule.id]" class="item-card__body">
-                    <span class="item-card__title">{{ rule.source_group }} → {{ rule.target_group }}</span>
-                    <span class="item-card__meta">{{ ruleTypeLabel(rule.rule_type) }} ({{ rule.impact_ratio }})</span>
+                  <a
+                    [routerLink]="['/interaction_rules', rule.id]"
+                    class="item-card__body item-card__body--uniform interaction-rule-list__card-body"
+                    [attr.title]="interactionRuleCardTitle(rule)"
+                  >
+                    <span class="item-card__title item-card__title--single-line">
+                      {{ rule.source_group }} → {{ rule.target_group }}
+                    </span>
+                    <span class="item-card__meta--single-line interaction-rule-list__meta">
+                      {{ ruleTypeLabel(rule.rule_type) }} ({{ rule.impact_ratio }})
+                    </span>
                   </a>
                   <div class="item-card__actions">
                     <a [routerLink]="['/interaction_rules', rule.id, 'edit']" class="btn btn-secondary">{{ 'common.edit' | translate }}</a>
@@ -132,5 +140,9 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
     const key = `interaction_rules.form.rule_type_codes.${code}`;
     const t = this.translate.instant(key);
     return t !== key ? t : code;
+  }
+
+  interactionRuleCardTitle(rule: { source_group: string; target_group: string }): string {
+    return `${rule.source_group} → ${rule.target_group}`;
   }
 }

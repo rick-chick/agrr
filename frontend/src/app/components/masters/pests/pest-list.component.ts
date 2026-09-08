@@ -50,11 +50,13 @@ const initialControl: PestListViewState = {
             @for (pest of control.pests; track pest.id) {
               <li class="card-list__item">
                 <article class="item-card">
-                  <a [routerLink]="['/pests', pest.id]" class="item-card__body">
-                    <span class="item-card__title">{{ pest.name }}</span>
-                    @if (pest.name_scientific) {
-                      <span class="item-card__meta">{{ pest.name_scientific }}</span>
-                    }
+                  <a [routerLink]="['/pests', pest.id]" class="item-card__body item-card__body--uniform">
+                    <span class="item-card__title item-card__title--single-line">{{ pest.name }}</span>
+                    <span class="item-card__meta--single-line pest-list__scientific-name">
+                      @if (pest.name_scientific) {
+                        {{ pest.name_scientific }}
+                      }
+                    </span>
                   </a>
                   <div class="item-card__actions">
                     <a [routerLink]="['/pests', pest.id, 'edit']" class="btn btn-secondary">

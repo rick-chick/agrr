@@ -154,107 +154,130 @@ const initialControl: WorkHubViewState = {
               <a routerLink="/farms/new" class="btn btn-primary">{{ 'work.hub.create_farm_link' | translate }}</a>
             </div>
           } @else if (control.farms.length) {
-            <h2 class="work-hub__section-title">{{ 'work.hub.select_farm' | translate }}</h2>
-            <ul class="card-list" role="list">
-              @for (farm of control.farms; track farm.farmId) {
-                <li class="card-list__item">
-                  <article
-                    class="item-card work-hub__farm-card"
-                    [class.work-hub__farm-card--blocked]="!farm.hasValidFields"
-                  >
-                    <button
-                      type="button"
-                      class="item-card__body work-hub__farm-btn"
-                      [disabled]="!farm.hasValidFields || control.submitting"
-                      (click)="selectFarm(farm)"
-                    >
-                      <span class="item-card__title">
-                        {{ farm.farmName }}
-                        @if (farm.thresholdExceededCount > 0) {
+            @if (readyFarms().length) {
+              <section class="work-hub__ready-farms" aria-labelledby="work-hub-ready-farms-title">
+                <h2 id="work-hub-ready-farms-title" class="work-hub__section-title">
+                  {{ 'work.hub.ready_farms' | translate }}
+                </h2>
+                <ul class="card-list" role="list">
+                  @for (farm of readyFarms(); track farm.farmId) {
+                    <li class="card-list__item">
+                      <article class="item-card work-hub__farm-card">
+                        <button
+                          type="button"
+                          class="item-card__body item-card__body--uniform work-hub__farm-btn"
+                          [disabled]="control.submitting"
+                          (click)="selectFarm(farm)"
+                        >
                           <span
-                            class="work-hub__context-badge"
-                            [attr.aria-label]="
-                              'work.hub.context_attention_badge_aria'
-                                | translate: { count: farm.thresholdExceededCount }
-                            "
+                            class="item-card__title item-card__title--single-line"
+                            [attr.title]="farm.farmName"
                           >
-                            {{ 'work.hub.context_attention_badge' | translate }}
+                            {{ farm.farmName }}
                           </span>
-                        }
-                        @if (farm.otherVariancePlanCount > 0) {
-                          <span
-                            class="work-hub__other-plans-badge"
-                            [attr.aria-label]="
-                              'work.hub.other_plans_badge_aria'
-                                | translate: { count: farm.otherVariancePlanCount }
-                            "
-                          >
+                          <span class="item-card__meta--single-line work-hub__meta">
                             {{
-                              'work.hub.other_plans_badge'
-                                | translate: { count: farm.otherVariancePlanCount }
+                              'work.hub.farm_meta'
+                                | translate: { count: farm.fieldCount, area: farm.totalArea }
+                            }}
+                            @if (farm.thresholdExceededCount > 0) {
+                              <span
+                                class="work-hub__context-badge"
+                                [attr.aria-label]="
+                                  'work.hub.context_attention_badge_aria'
+                                    | translate: { count: farm.thresholdExceededCount }
+                                "
+                              >
+                                {{ 'work.hub.context_attention_badge' | translate }}
+                              </span>
+                            }
+                            @if (farm.otherVariancePlanCount > 0) {
+                              <span
+                                class="work-hub__other-plans-badge"
+                                [attr.aria-label]="
+                                  'work.hub.other_plans_badge_aria'
+                                    | translate: { count: farm.otherVariancePlanCount }
+                                "
+                              >
+                                {{
+                                  'work.hub.other_plans_badge'
+                                    | translate: { count: farm.otherVariancePlanCount }
+                                }}
+                              </span>
+                            }
+                          </span>
+                          <span class="item-card__meta--single-line work-hub__summary">
+                            {{
+                              'work.hub.overdue_summary'
+                                | translate: { count: farm.overdueCount }
+                            }}
+                            ·
+                            {{
+                              'work.hub.today_summary'
+                                | translate: { count: farm.todayCount }
+                            }}
+                            ·
+                            {{
+                              'work.hub.unrecorded_summary'
+                                | translate: { count: farm.unrecordedCount }
+                            }}
+                            ·
+                            {{
+                              'work.hub.gdd_delay_summary'
+                                | translate: { count: farm.gddDelayCount }
+                            }}
+                            ·
+                            {{
+                              'work.hub.threshold_exceeded_summary'
+                                | translate: { count: farm.thresholdExceededCount }
                             }}
                           </span>
-                        }
-                      </span>
-                      <span class="work-hub__meta">
-                        {{
-                          'work.hub.farm_meta'
-                            | translate: { count: farm.fieldCount, area: farm.totalArea }
-                        }}
-                      </span>
-                      @if (farm.hasValidFields) {
-                        <span class="work-hub__summary">
-                          {{
-                            'work.hub.overdue_summary'
-                              | translate: { count: farm.overdueCount }
-                          }}
-                          ·
-                          {{
-                            'work.hub.today_summary'
-                              | translate: { count: farm.todayCount }
-                          }}
-                          ·
-                          {{
-                            'work.hub.unrecorded_summary'
-                              | translate: { count: farm.unrecordedCount }
-                          }}
-                          ·
-                          {{
-                            'work.hub.gdd_delay_summary'
-                              | translate: { count: farm.gddDelayCount }
-                          }}
-                          ·
-                          {{
-                            'work.hub.threshold_exceeded_summary'
-                              | translate: { count: farm.thresholdExceededCount }
-                          }}
-                        </span>
-                        <span class="work-hub__cta">
-                          {{
-                            farm.planId
-                              ? ('work.hub.open_work' | translate)
-                              : ('work.hub.start_recording' | translate)
-                          }}
-                        </span>
-                      }
-                    </button>
-                    @if (!farm.hasValidFields) {
-                      <footer class="work-hub__no-fields-footer">
-                        <p class="work-hub__warning" role="status">
-                          {{ 'work.hub.no_fields_warning' | translate }}
+                          <span class="item-card__meta--single-line work-hub__cta">
+                            {{
+                              farm.planId
+                                ? ('work.hub.open_work' | translate)
+                                : ('work.hub.start_recording' | translate)
+                            }}
+                          </span>
+                        </button>
+                      </article>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+            @if (blockedFarms().length) {
+              <section class="work-hub__blocked-farms" aria-labelledby="work-hub-blocked-farms-title">
+                <h2 id="work-hub-blocked-farms-title" class="work-hub__section-title">
+                  {{ 'work.hub.needs_attention' | translate }}
+                </h2>
+                <ul class="card-list" role="list">
+                  @for (farm of blockedFarms(); track farm.farmId) {
+                    <li class="card-list__item">
+                      <article class="item-card work-hub__farm-card work-hub__farm-card--blocked">
+                        <div class="item-card__body work-hub__blocked-card-body">
+                          <span
+                            class="item-card__title item-card__title--single-line"
+                            [attr.title]="farm.farmName"
+                          >
+                            {{ farm.farmName }}
+                          </span>
+                          <p class="work-hub__warning item-card__meta--single-line" role="status">
+                            {{ 'work.hub.no_fields_warning' | translate }}
+                          </p>
                           <a
                             class="work-hub__warning__link btn btn-primary"
                             [routerLink]="['/farms', farm.farmId]"
                           >
                             {{ 'work.hub.register_fields_link' | translate }}
                           </a>
-                        </p>
-                      </footer>
-                    }
-                  </article>
-                </li>
-              }
-            </ul>
+                        </div>
+                      </article>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
           }
         }
       </section>
@@ -306,6 +329,14 @@ export class WorkHubComponent implements WorkHubView, OnInit {
       error: null
     };
     this.initUseCase.execute();
+  }
+
+  readyFarms(): WorkHubViewState['farms'] {
+    return this.control.farms.filter((farm) => farm.hasValidFields);
+  }
+
+  blockedFarms(): WorkHubViewState['farms'] {
+    return this.control.farms.filter((farm) => !farm.hasValidFields);
   }
 
   selectFarm(farm: WorkHubViewState['farms'][number]): void {

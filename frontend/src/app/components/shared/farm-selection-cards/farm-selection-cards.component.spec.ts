@@ -1,7 +1,15 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { FarmSelectionCardsComponent } from './farm-selection-cards.component';
 import type { Farm } from '../../../domain/farms/farm';
+
+const publicPlanComponentCss = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../public-plans/public-plan.component.css'),
+  'utf8',
+);
 
 describe('FarmSelectionCardsComponent', () => {
   let fixture: ComponentFixture<FarmSelectionCardsComponent>;
@@ -83,5 +91,32 @@ describe('FarmSelectionCardsComponent', () => {
     const grid = fixture.nativeElement.querySelector('.enhanced-grid') as HTMLElement;
     expect(grid).toBeTruthy();
     expect(getComputedStyle(grid).display).toBe('grid');
+  });
+
+  it('applies uniform card height and single-line title ellipsis styles', () => {
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('.enhanced-selection-card') as HTMLElement;
+    const title = fixture.nativeElement.querySelector('.enhanced-card-title') as HTMLElement;
+    expect(card).toBeTruthy();
+    expect(title).toBeTruthy();
+    expect(parseFloat(getComputedStyle(card).minHeight)).toBeGreaterThan(0);
+    expect(getComputedStyle(title).whiteSpace).toBe('nowrap');
+    expect(getComputedStyle(title).overflow).toBe('hidden');
+    expect(getComputedStyle(title).textOverflow).toBe('ellipsis');
+  });
+});
+
+describe('public-plan.component.css (farm selection cards)', () => {
+  it('defines uniform min-height and single-line ellipsis for enhanced selection cards', () => {
+    expect(publicPlanComponentCss).toMatch(
+      /\.enhanced-selection-card\s*\{[\s\S]*min-height:\s*[\d.]+rem/,
+    );
+    expect(publicPlanComponentCss).toMatch(
+      /\.enhanced-card-title\s*\{[\s\S]*white-space:\s*nowrap/,
+    );
+    expect(publicPlanComponentCss).toMatch(
+      /\.enhanced-card-title\s*\{[\s\S]*text-overflow:\s*ellipsis/,
+    );
   });
 });

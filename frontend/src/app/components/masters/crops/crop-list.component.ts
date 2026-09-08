@@ -56,14 +56,18 @@ const initialControl: CropListViewState = {
             @for (crop of control.crops; track crop.id) {
               <li class="card-list__item">
                 <article class="item-card">
-                  <a [routerLink]="['/crops', crop.id]" class="item-card__body">
-                    <span class="item-card__title">{{ crop.name }}</span>
-                    @if (crop.variety) {
-                      <span class="item-card__meta">{{ crop.variety }}</span>
-                    }
-                    @if (auth.user()?.admin && crop.is_reference) {
-                      <span class="item-card__badge">{{ 'crops.show.reference_crop' | translate }}</span>
-                    }
+                  <a [routerLink]="['/crops', crop.id]" class="item-card__body item-card__body--uniform">
+                    <span class="item-card__title item-card__title--single-line">{{ crop.name }}</span>
+                    <span class="item-card__meta--single-line crop-list__variety">
+                      @if (crop.variety) {
+                        {{ crop.variety }}
+                      }
+                    </span>
+                    <span class="item-card__badge-row--single-line crop-list__reference-badge">
+                      @if (auth.user()?.admin && crop.is_reference) {
+                        <span class="item-card__badge">{{ 'crops.show.reference_crop' | translate }}</span>
+                      }
+                    </span>
                   </a>
                   <div class="item-card__actions">
                     <a [routerLink]="['/crops', crop.id, 'edit']" class="btn btn-secondary">{{ 'common.edit' | translate }}</a>

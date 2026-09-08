@@ -58,9 +58,11 @@ const initialControl: FertilizeListViewState = {
             @for (item of control.fertilizes; track item.id) {
               <li class="card-list__item">
                 <article class="item-card">
-                  <a [routerLink]="['/fertilizes', item.id]" class="item-card__body">
-                    <span class="item-card__title">{{ item.name }}</span>
-                    <span class="item-card__meta">{{ 'fertilizes.show.npk_summary' | translate }}: {{ formatNpk(item) }}</span>
+                  <a [routerLink]="['/fertilizes', item.id]" class="item-card__body item-card__body--uniform">
+                    <span class="item-card__title item-card__title--single-line">{{ item.name }}</span>
+                    <span class="item-card__meta--single-line fertilize-list__npk">
+                      {{ 'fertilizes.show.npk_summary' | translate }}: {{ formatNpk(item) }}
+                    </span>
                   </a>
                   <div class="item-card__actions">
                     <a [routerLink]="['/fertilizes', item.id, 'edit']" class="btn btn-secondary">

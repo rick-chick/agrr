@@ -129,6 +129,46 @@ export function evaluateArchetypeDesignContract({ hostSelector, contract, confor
     return violations;
   }
 
+  function findItemCardRowHeightViolations(root, maxHeightDeltaPx) {
+    const violations = [];
+    for (const list of root.querySelectorAll('.card-list')) {
+      const cards = [...list.querySelectorAll('.item-card')].filter((el) => isElementVisible(el));
+      if (cards.length < 2) continue;
+
+      const sorted = cards
+        .map((el) => el.getBoundingClientRect())
+        .sort((a, b) => a.top - b.top || a.left - b.left);
+
+      /** @type {DOMRect[][]} */
+      const rows = [];
+      for (const rect of sorted) {
+        let placed = false;
+        for (const row of rows) {
+          if (Math.abs(rect.top - row[0].top) <= 8) {
+            row.push(rect);
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          rows.push([rect]);
+        }
+      }
+
+      for (const row of rows) {
+        if (row.length < 2) continue;
+        const heights = row.map((rect) => rect.height);
+        const delta = Math.max(...heights) - Math.min(...heights);
+        if (delta > maxHeightDeltaPx) {
+          violations.push(
+            `item-card row height delta ${delta.toFixed(1)}px (max ${maxHeightDeltaPx}px, ${row.length} cards)`,
+          );
+        }
+      }
+    }
+    return violations;
+  }
+
   const violations = [];
   const doc = globalThis.document;
   if (!doc) {
@@ -183,6 +223,11 @@ export function evaluateArchetypeDesignContract({ hostSelector, contract, confor
 
   if (contract.checkDetailCardActionOverlap) {
     violations.push(...findDetailCardActionOverlapViolations(root));
+  }
+
+  if (contract.checkItemCardRowHeightUniformity) {
+    const maxDelta = contract.maxItemCardRowHeightDeltaPx ?? 4;
+    violations.push(...findItemCardRowHeightViolations(root, maxDelta));
   }
 
   if (conformanceLevel !== 'L0' && contract.requiredShellSelectors?.length) {

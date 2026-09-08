@@ -20,6 +20,8 @@ import {
  * @property {string[]} [requiredShellSelectors] Host must contain selector when conformance is L1+.
  * @property {string[]} [wizardProgressSelectors] Wizard step progress bars checked for flex + min-height.
  * @property {number} [wizardProgressMinHeightPx] Minimum rendered height for wizardProgressSelectors (default 40).
+ * @property {boolean} [checkItemCardRowHeightUniformity] Same `.card-list` row must have uniform `.item-card` heights.
+ * @property {number} [maxItemCardRowHeightDeltaPx] Max height delta within a grid row (default 4).
  */
 
 /** @type {Record<import('./layout-contract-archetype-keys.mjs').LayoutArchetypeRunnerKey, LayoutArchetypeDesignContract>} */
@@ -28,6 +30,8 @@ export const LAYOUT_ARCHETYPE_DESIGN_CONTRACTS = {
     contentBlockSelectors: ['.item-card'],
     requireAnyContentBlock: false,
     maxItemCardVisibleActionButtons: 3,
+    checkItemCardRowHeightUniformity: true,
+    maxItemCardRowHeightDeltaPx: 4,
   },
   'master-detail': {
     contentBlockSelectors: ['.detail-card'],
@@ -76,6 +80,8 @@ export const LAYOUT_ARCHETYPE_DESIGN_CONTRACTS = {
       '.content-card',
     ],
     requireAnyContentBlock: true,
+    checkItemCardRowHeightUniformity: true,
+    maxItemCardRowHeightDeltaPx: 4,
   },
   'funnel-hub': {
     contentBlockSelectors: [

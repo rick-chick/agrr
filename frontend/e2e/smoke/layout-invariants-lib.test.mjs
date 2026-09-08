@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import {
   countDistinctRows,
+  findItemCardRowHeightViolations,
   findOverlappingRectPairs,
   hasHorizontalDocumentOverflow,
   hasSignificantOverlap,
@@ -46,6 +47,20 @@ test('maxActionButtonRowsForViewport tightens on wider viewports', () => {
   assert.equal(maxActionButtonRowsForViewport(390), 4);
   assert.equal(maxActionButtonRowsForViewport(768), 3);
   assert.equal(maxActionButtonRowsForViewport(1280), 2);
+});
+
+test('findItemCardRowHeightViolations flags uneven grid rows', () => {
+  const short = { top: 10, left: 0, right: 200, bottom: 90, width: 200, height: 80 };
+  const tall = { top: 12, left: 220, right: 420, bottom: 142, width: 200, height: 130 };
+  assert.deepEqual(findItemCardRowHeightViolations([short, tall]), [
+    'item-card row height delta 50.0px (max 4px, 2 cards)',
+  ]);
+});
+
+test('findItemCardRowHeightViolations accepts uniform grid rows', () => {
+  const a = { top: 10, left: 0, right: 200, bottom: 90, width: 200, height: 80 };
+  const b = { top: 11, left: 220, right: 420, bottom: 91, width: 200, height: 80 };
+  assert.deepEqual(findItemCardRowHeightViolations([a, b]), []);
 });
 
 test('PAGE_HEADING_SELECTORS includes master form and detail titles', async () => {
