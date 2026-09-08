@@ -1,14 +1,19 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { catchError, of, timeout } from 'rxjs';
-import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
-import { Farm } from '../../domain/farms/farm';
 import {
-  EntryScheduleCropListItem,
-  EntryScheduleCropsListResponse
-} from '../../domain/entry-schedule/entry-schedule';
+  EntryScheduleFarmCropsView,
+  EntryScheduleFarmCropsViewState
+} from './entry-schedule-farm-crops.view';
+import { LoadEntryScheduleCropsUseCase } from '../../usecase/entry-schedule/load-entry-schedule-crops.usecase';
+import { ResolveEntryScheduleFarmUseCase } from '../../usecase/entry-schedule/resolve-entry-schedule-farm.usecase';
+import {
+  EntryScheduleFarmCropsPresenter,
+  ENTRY_SCHEDULE_FARM_CROPS_PROVIDERS
+} from '../../adapters/entry-schedule/entry-schedule-farm-crops.providers';
+import { Farm } from '../../domain/farms/farm';
+import { EntryScheduleCropListItem } from '../../domain/entry-schedule/entry-schedule';
 import { detectBrowserRegion } from '../../core/browser-region';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
@@ -20,11 +25,19 @@ import {
   MONTH_NUMBERS,
   timelineBoundsFromSummaries,
 } from '../../domain/entry-schedule/entry-schedule-timeline-bounds';
-import { segmentStyleForRange } from '../../domain/entry-schedule/entry-schedule-timeline-segment';
+import { segmentStylesForRange } from '../../domain/entry-schedule/entry-schedule-timeline-segment';
 
-/** entry_schedule crops API は参照作物ごとに最適化するため CI でも数十秒かかる */
-const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 60_000;
 const PAGE_LIMIT = 20;
+
+const initialControl: EntryScheduleFarmCropsViewState = {
+  farmLoading: true,
+  selectedFarmId: null,
+  selectedFarm: null,
+  listResponse: null,
+  cropsLoading: false,
+  cropsError: null,
+  loadCursor: null
+};
 
 @Component({
   selector: 'app-entry-schedule-farm-crops',
@@ -37,6 +50,7 @@ const PAGE_LIMIT = 20;
     EntryScheduleWizardProgressComponent,
     MasterContextHeaderComponent,
   ],
+  providers: [...ENTRY_SCHEDULE_FARM_CROPS_PROVIDERS],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
@@ -47,7 +61,7 @@ const PAGE_LIMIT = 20;
           titleIcon="📅"
         >
           <app-entry-schedule-wizard-progress ngProjectAs="[wizardProgress]" activeStep="crop" />
-          @if (selectedFarm(); as farm) {
+          @if (control.selectedFarm; as farm) {
             <div class="enhanced-summary-card enhanced-summary-card--single-row">
               <div class="enhanced-summary-items">
                 <div class="enhanced-summary-row">
@@ -65,16 +79,16 @@ const PAGE_LIMIT = 20;
               {{ 'entrySchedule.selectFarm' | translate }}
             </h2>
 
-            @if (farmLoading()) {
+            @if (control.farmLoading) {
               <p class="muted master-loading">{{ 'entrySchedule.loading' | translate }}</p>
-            } @else if (cropsLoading()) {
+            } @else if (control.cropsLoading) {
               <p class="muted mt-4 master-loading">{{ 'entrySchedule.loading' | translate }}</p>
-            } @else if (cropsError()) {
-              <p class="error-message mt-4">{{ cropsError()! | translate }}</p>
+            } @else if (control.cropsError) {
+              <p class="error-message mt-4">{{ control.cropsError | translate }}</p>
               <button type="button" class="btn btn-secondary mt-2" (click)="loadCrops(false)">
                 {{ 'entrySchedule.retry' | translate }}
               </button>
-            } @else if (listResponse()) {
+            } @else if (control.listResponse) {
               @if (listEmptyKind(); as emptyKind) {
                 <div class="es-list-empty" role="status">
                   <h3 class="es-list-empty-title">
@@ -92,21 +106,21 @@ const PAGE_LIMIT = 20;
                 </div>
               } @else {
                 <div class="entry-schedule-meta muted mt-4" role="status">
-                  @if (listResponse()!.prediction.generated_at) {
+                  @if (control.listResponse!.prediction.generated_at) {
                     <span class="meta-line"
                       >{{ 'entrySchedule.predictionFresh' | translate }}:
-                      {{ listResponse()!.prediction.generated_at | slice: 0 : 16 }}</span
+                      {{ control.listResponse!.prediction.generated_at | slice: 0 : 16 }}</span
                     >
                   }
-                  @if (listResponse()!.prediction.prediction_end_date) {
+                  @if (control.listResponse!.prediction.prediction_end_date) {
                     <span class="meta-line"
                       >{{ 'entrySchedule.predictionUntil' | translate }}:
-                      {{ listResponse()!.prediction.prediction_end_date | slice: 0 : 10 }}</span
+                      {{ control.listResponse!.prediction.prediction_end_date | slice: 0 : 10 }}</span
                     >
                   }
                 </div>
                 <div class="es-crop-grid" role="list">
-                  @for (c of listResponse()!.crops; track c.id; let idx = $index) {
+                  @for (c of control.listResponse!.crops; track c.id; let idx = $index) {
                     <article
                       class="es-crop-card"
                       [class.ineligible]="!c.eligible"
@@ -140,17 +154,20 @@ const PAGE_LIMIT = 20;
                               <div class="es-mini-row">
                                 <span class="es-mini-row-label">{{ 'entrySchedule.viz.sowBand' | translate }}</span>
                                 <div class="es-track">
-                                  <div
-                                    class="es-seg sow"
-                                    [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
-                                    [ngStyle]="
-                                      segmentStyleForRange(
-                                        c.sowing_summary.start_date,
-                                        c.sowing_summary.end_date,
-                                        ctx
-                                      )
-                                    "
-                                  ></div>
+                                  @for (
+                                    seg of segmentStylesForRange(
+                                      c.sowing_summary.start_date,
+                                      c.sowing_summary.end_date,
+                                      ctx
+                                    );
+                                    track $index
+                                  ) {
+                                    <div
+                                      class="es-seg sow"
+                                      [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
+                                      [ngStyle]="seg"
+                                    ></div>
+                                  }
                                 </div>
                               </div>
                             }
@@ -160,17 +177,20 @@ const PAGE_LIMIT = 20;
                                   'entrySchedule.viz.transplantBand' | translate
                                 }}</span>
                                 <div class="es-track">
-                                  <div
-                                    class="es-seg transplant"
-                                    [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
-                                    [ngStyle]="
-                                      segmentStyleForRange(
-                                        c.transplant_summary.start_date,
-                                        c.transplant_summary.end_date,
-                                        ctx
-                                      )
-                                    "
-                                  ></div>
+                                  @for (
+                                    seg of segmentStylesForRange(
+                                      c.transplant_summary.start_date,
+                                      c.transplant_summary.end_date,
+                                      ctx
+                                    );
+                                    track $index
+                                  ) {
+                                    <div
+                                      class="es-seg transplant"
+                                      [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
+                                      [ngStyle]="seg"
+                                    ></div>
+                                  }
                                 </div>
                               </div>
                             }
@@ -243,12 +263,12 @@ const PAGE_LIMIT = 20;
                     </article>
                   }
                 </div>
-                @if (listResponse()!.meta.has_more) {
+                @if (control.listResponse!.meta.has_more) {
                   <div class="mt-4">
                     <button
                       type="button"
                       class="btn btn-secondary"
-                      [disabled]="cropsLoading()"
+                      [disabled]="control.cropsLoading"
                       (click)="loadCrops(true)"
                     >
                       {{ 'entrySchedule.loadMore' | translate }}
@@ -308,29 +328,31 @@ const PAGE_LIMIT = 20;
     `
   ]
 })
-export class EntryScheduleFarmCropsComponent implements OnInit {
-  private readonly gateway = inject(ENTRY_SCHEDULE_GATEWAY);
+export class EntryScheduleFarmCropsComponent implements EntryScheduleFarmCropsView, OnInit {
+  private readonly resolveFarmUseCase = inject(ResolveEntryScheduleFarmUseCase);
+  private readonly loadCropsUseCase = inject(LoadEntryScheduleCropsUseCase);
+  private readonly presenter = inject(EntryScheduleFarmCropsPresenter);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly flash = inject(FlashMessageService);
   private readonly translate = inject(TranslateService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly monthTicks = [...MONTH_NUMBERS];
-  readonly segmentStyleForRange = segmentStyleForRange;
-
-  readonly farmLoading = signal(true);
-  readonly selectedFarmId = signal<number | null>(null);
-  readonly selectedFarm = signal<Farm | null>(null);
-
-  readonly listResponse = signal<EntryScheduleCropsListResponse | null>(null);
-  readonly cropsLoading = signal(false);
-  readonly cropsError = signal<string | null>(null);
+  readonly segmentStylesForRange = segmentStylesForRange;
   readonly flowDetailOpen = signal<Set<number>>(new Set());
 
-  private loadCursor: string | null = null;
+  private _control: EntryScheduleFarmCropsViewState = initialControl;
+  get control(): EntryScheduleFarmCropsViewState {
+    return this._control;
+  }
+  set control(value: EntryScheduleFarmCropsViewState) {
+    this._control = value;
+    this.cdr.detectChanges();
+  }
 
   get contextCrumbs(): MasterContextCrumb[] {
-    const farm = this.selectedFarm();
+    const farm = this.control.selectedFarm;
     return [
       { labelKey: 'entrySchedule.title', routerLink: ['/entry-schedule'] },
       farm
@@ -344,6 +366,7 @@ export class EntryScheduleFarmCropsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.presenter.setView(this);
     const rawFarmId = this.route.snapshot.paramMap.get('farmId');
     const farmId = rawFarmId != null ? Number(rawFarmId) : NaN;
     if (!Number.isFinite(farmId) || farmId <= 0) {
@@ -353,6 +376,14 @@ export class EntryScheduleFarmCropsComponent implements OnInit {
     this.resolveFarm(farmId);
   }
 
+  afterFarmResolved(_farm: Farm): void {
+    this.loadCrops(false);
+  }
+
+  onInvalidFarm(): void {
+    this.redirectInvalidFarm();
+  }
+
   private redirectInvalidFarm(): void {
     this.flash.show({ type: 'warning', text: 'entrySchedule.invalid_farm_id' });
     void this.router.navigate(['/entry-schedule'], { replaceUrl: true });
@@ -360,28 +391,15 @@ export class EntryScheduleFarmCropsComponent implements OnInit {
 
   private resolveFarm(farmId: number): void {
     const region = detectBrowserRegion();
-    this.farmLoading.set(true);
-    this.gateway
-      .getEntryScheduleFarms(region)
-      .pipe(
-        timeout(ENTRY_SCHEDULE_HTTP_TIMEOUT_MS),
-        catchError(() => of([] as Farm[]))
-      )
-      .subscribe((rows) => {
-        this.farmLoading.set(false);
-        const farm = rows.find((row) => row.id === farmId);
-        if (!farm) {
-          this.redirectInvalidFarm();
-          return;
-        }
-        this.selectedFarmId.set(farm.id);
-        this.selectedFarm.set(farm);
-        this.loadCrops(false);
-      });
+    this.control = {
+      ...this.control,
+      farmLoading: true
+    };
+    this.resolveFarmUseCase.execute({ region, farmId });
   }
 
   detailQueryParams(): Record<string, string | number> {
-    const farmId = this.listResponse()?.farm.id ?? this.selectedFarmId();
+    const farmId = this.control.listResponse?.farm.id ?? this.control.selectedFarmId;
     const q: Record<string, string | number> = {};
     if (farmId != null) {
       q['farmId'] = farmId;
@@ -400,49 +418,22 @@ export class EntryScheduleFarmCropsComponent implements OnInit {
   }
 
   loadCrops(append: boolean): void {
-    const farmId = this.selectedFarmId();
+    const farmId = this.control.selectedFarmId;
     if (farmId == null) {
       return;
     }
-    this.cropsLoading.set(true);
-    this.cropsError.set(null);
-    if (!append) {
-      this.listResponse.set(null);
-      this.loadCursor = null;
-    }
-    this.gateway
-      .getEntryScheduleCrops(farmId, {
-        limit: PAGE_LIMIT,
-        cursor: append ? this.loadCursor : undefined
-      })
-      .pipe(
-        timeout(ENTRY_SCHEDULE_HTTP_TIMEOUT_MS),
-        catchError((err: unknown) => {
-          const name = err && typeof err === 'object' && 'name' in err ? String((err as { name: string }).name) : '';
-          this.cropsError.set(name === 'TimeoutError' ? 'entrySchedule.timeout' : 'entrySchedule.error');
-          return of(null as EntryScheduleCropsListResponse | null);
-        })
-      )
-      .subscribe((res) => {
-        this.cropsLoading.set(false);
-        if (!res) {
-          return;
-        }
-        this.loadCursor = res.meta?.next_cursor ?? null;
-        if (append && this.listResponse()) {
-          const prev = this.listResponse()!;
-          const merged: EntryScheduleCropListItem[] = [...prev.crops, ...res.crops];
-          this.listResponse.set({
-            ...res,
-            crops: merged,
-            farm: res.farm,
-            prediction: res.prediction,
-            meta: res.meta
-          });
-        } else {
-          this.listResponse.set(res);
-        }
-      });
+    this.control = {
+      ...this.control,
+      cropsLoading: true,
+      cropsError: null,
+      ...(append ? {} : { listResponse: null, loadCursor: null })
+    };
+    this.loadCropsUseCase.execute({
+      farmId,
+      append,
+      limit: PAGE_LIMIT,
+      cursor: append ? this.control.loadCursor : undefined
+    });
   }
 
   chartTimelineContext(c: EntryScheduleCropListItem): { min: number; max: number; yearLabel: string } | null {
@@ -456,7 +447,7 @@ export class EntryScheduleFarmCropsComponent implements OnInit {
   }
 
   listEmptyKind(): 'noCrops' | 'allIneligible' | null {
-    const res = this.listResponse();
+    const res = this.control.listResponse;
     if (!res) {
       return null;
     }

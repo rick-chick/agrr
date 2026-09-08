@@ -123,7 +123,7 @@ const initialControl: PlanWorkViewState = {
         } @else if (control.error) {
           <div class="page-alert-error plan-work__error" role="alert">
             <p>{{ control.error | translate }}</p>
-            <button type="button" class="btn-secondary plan-work__retry" (click)="reload()">
+            <button type="button" class="btn btn-secondary plan-work__retry" (click)="reload()">
               {{ 'plans.work.retry' | translate }}
             </button>
           </div>
@@ -247,7 +247,7 @@ const initialControl: PlanWorkViewState = {
                 >{{ 'plans.work.recent_adhoc_history_link' | translate }}</a>
                 <button
                   type="button"
-                  class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                  class="btn btn-primary plan-work__empty-cta plan-work__cta--constrained"
                   (click)="openAdHoc()"
                 >
                   {{ 'plans.work.add_record' | translate }}
@@ -283,7 +283,7 @@ const initialControl: PlanWorkViewState = {
                 }
                 <button
                   type="button"
-                  class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                  class="btn btn-primary plan-work__empty-cta plan-work__cta--constrained"
                   (click)="openAdHoc()"
                 >
                   {{ 'plans.work.add_record' | translate }}
@@ -307,7 +307,7 @@ const initialControl: PlanWorkViewState = {
             <footer class="plan-work__fab">
               <button
                 type="button"
-                class="btn-primary plan-work__fab-btn plan-work__cta--constrained"
+                class="btn btn-primary plan-work__fab-btn plan-work__cta--constrained"
                 (click)="openAdHoc()"
               >
                 {{ 'plans.work.add_record' | translate }}
@@ -465,7 +465,7 @@ const initialControl: PlanWorkViewState = {
           @if (!row.recordedToday && row.item.status !== 'skipped') {
             <button
               type="button"
-              class="btn-primary plan-work__complete-btn"
+              class="btn btn-primary plan-work__complete-btn"
               [disabled]="control.completingItemId === row.item.item_id"
               (click)="quickComplete(row)"
             >
@@ -530,10 +530,10 @@ const initialControl: PlanWorkViewState = {
           />
         </label>
         <div class="confirm-dialog__actions">
-          <button type="button" class="btn-secondary" (click)="closeChangeDateDialog()">
+          <button type="button" class="btn btn-secondary" (click)="closeChangeDateDialog()">
             {{ 'common.cancel' | translate }}
           </button>
-          <button type="button" class="btn-primary" (click)="submitChangeDate()">
+          <button type="button" class="btn btn-primary" (click)="submitChangeDate()">
             {{ 'plans.work.change_date_submit' | translate }}
           </button>
         </div>

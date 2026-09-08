@@ -18,7 +18,6 @@ fn stage(id: i64, name: &str, order: i32) -> CropStageSnapshot {
     }
 }
 
-// Ruby R0: sowing_stage returns minimum order
 #[test]
 fn sowing_stage_returns_minimum_order() {
     let stages = vec![stage(2, "生育", 2), stage(1, "播種", 1)];
@@ -27,24 +26,36 @@ fn sowing_stage_returns_minimum_order() {
     assert_eq!(sow.name, "播種");
 }
 
-// Ruby R0: transplant_stage prefers name match
 #[test]
-fn transplant_stage_prefers_name_with_transplant_pattern() {
+fn entry_stage_for_transplant_returns_order_two_regardless_of_name() {
     let stages = vec![
-        stage(1, "播種", 1),
-        stage(2, "定植", 2),
-        stage(3, "収穫", 3),
+        stage(1, "Seedling Stage", 1),
+        stage(2, "Transplanting Stage", 2),
+        stage(3, "Harvest", 3),
     ];
-    let tr = StageRoleResolver::transplant_stage(&stages).unwrap();
+    let tr = StageRoleResolver::entry_stage_for_transplant(&stages).unwrap();
+    assert_eq!(tr.id, 2);
+    assert_eq!(tr.name, "Transplanting Stage");
+}
+
+#[test]
+fn entry_stage_for_transplant_returns_second_ordered_stage_for_hindi_names() {
+    let stages = vec![
+        stage(1, "पौध अवस्था", 1),
+        stage(2, "रोपाई अवस्था", 2),
+    ];
+    let tr = StageRoleResolver::entry_stage_for_transplant(&stages).unwrap();
     assert_eq!(tr.id, 2);
 }
 
-// Ruby R0: transplant_stage falls back to second ordered stage
 #[test]
-fn transplant_stage_falls_back_to_second_stage() {
-    let stages = vec![stage(1, "播種", 1), stage(2, "生育", 2)];
-    let tr = StageRoleResolver::transplant_stage(&stages).unwrap();
-    assert_eq!(tr.id, 2);
+fn entry_stage_for_direct_sow_returns_minimum_order() {
+    let stages = vec![
+        stage(1, "Planting to Germination", 1),
+        stage(2, "Germination to Growth", 2),
+    ];
+    let sow = StageRoleResolver::entry_stage_for_direct_sow(&stages).unwrap();
+    assert_eq!(sow.id, 1);
 }
 
 #[test]

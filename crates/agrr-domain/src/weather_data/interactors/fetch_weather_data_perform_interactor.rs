@@ -8,14 +8,16 @@ use crate::weather_data::dtos::{FetchWeatherDataPerformInput, WeatherData};
 use crate::weather_data::gateways::{
     AgrrWeatherGateway, WeatherDataFarmGateway, WeatherDataGateway,
 };
-use crate::weather_data::helpers::parse_iso_date;
+use crate::weather_data::mappers::OpenMeteoWeatherMapper;
 use crate::weather_data::ports::{
     FetchWeatherAdvancePhasePort, FetchWeatherDataJobPresenterPort, FetchWeatherPhase,
     RecordFarmWeatherBlockCompletedPort,
 };
+use crate::weather_data::policies::IncompleteGapFillContinuePolicy;
 
 const SUFFICIENT_DATA_RATIO: f64 = 0.8;
 const ALLOWED_MISSING_RATIO: f64 = 0.05;
+const MAX_TRAILING_GAP_DAYS: i64 = 7;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FetchWeatherDataPerformError {
@@ -24,7 +26,6 @@ pub enum FetchWeatherDataPerformError {
     InvalidWeatherDataArray,
     ExcessiveMissingWeatherDays,
     MissingOrInvalidWeatherLocation,
-    InvalidDateParameters,
     WeatherDataStorageFailed(String),
 }
 
@@ -109,7 +110,15 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
                 })?;
             let threshold_days = (expected_days as f64 * SUFFICIENT_DATA_RATIO).ceil() as i64;
 
-            if existing_count >= threshold_days {
+            if existing_count >= threshold_days
+                && Self::existing_data_covers_block_end(
+                    self.weather_data_gateway.latest_date(location.id).map_err(|e| {
+                        FetchWeatherDataPerformError::WeatherDataStorageFailed(e.to_string())
+                    })?,
+                    input.end_date,
+                    expected_days,
+                )
+            {
                 if let Some(farm_id) = input.farm_id {
                     let _ = self
                         .farm_gateway
@@ -147,6 +156,15 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
         let allowed_missing_days = (expected_days as f64 * ALLOWED_MISSING_RATIO).ceil() as i64;
 
         if missing_days > allowed_missing_days {
+            let should_continue = self.should_continue_after_incomplete_gap_fill(
+                input.latitude,
+                input.longitude,
+                input.end_date,
+            );
+            if should_continue {
+                self.presenter.warn("gap-fill weather incomplete; continuing with existing store");
+                return self.complete_fetch_without_new_data(&input);
+            }
             return Err(FetchWeatherDataPerformError::ExcessiveMissingWeatherDays);
         } else if missing_days > 0 {
             self.presenter.warn("weather data incomplete");
@@ -183,7 +201,7 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
 
         let dtos: Vec<WeatherData> = data_points
             .iter()
-            .filter_map(|daily| parse_weather_dto(daily))
+            .filter_map(|daily| OpenMeteoWeatherMapper::from_agrr_daily_json(daily))
             .collect();
 
         if !dtos.is_empty() {
@@ -264,6 +282,48 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
             })
     }
 
+    fn should_continue_after_incomplete_gap_fill(
+        &self,
+        latitude: f64,
+        longitude: f64,
+        end_date: Date,
+    ) -> bool {
+        let Some(location) = self
+            .weather_data_gateway
+            .find_by_coordinates(latitude, longitude)
+        else {
+            return false;
+        };
+        let latest_date = self
+            .weather_data_gateway
+            .latest_date(location.id)
+            .ok()
+            .flatten();
+        let baseline_count = self
+            .weather_data_gateway
+            .weather_data_count(location.id, None, None)
+            .unwrap_or(0);
+        IncompleteGapFillContinuePolicy::should_continue(
+            latest_date,
+            end_date,
+            baseline_count,
+        )
+    }
+
+    fn existing_data_covers_block_end(
+        latest_date: Option<Date>,
+        end_date: Date,
+        expected_days: i64,
+    ) -> bool {
+        let Some(latest) = latest_date else {
+            return false;
+        };
+        let trailing_gap = (end_date - latest).whole_days().max(0);
+        let ratio_based = (expected_days as f64 * ALLOWED_MISSING_RATIO).ceil() as i64;
+        let allowed_trailing = ratio_based.min(MAX_TRAILING_GAP_DAYS);
+        trailing_gap <= allowed_trailing
+    }
+
     /// agrr normal fetch exit 0 with no output file: keep existing store and continue the chain.
     fn complete_fetch_without_new_data(
         &self,
@@ -287,24 +347,6 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
 
 fn japan_location(latitude: f64, longitude: f64) -> bool {
     (24.0..=46.0).contains(&latitude) && (130.0..=146.0).contains(&longitude)
-}
-
-fn parse_weather_dto(daily: &Value) -> Option<WeatherData> {
-    let date_str = daily.get("time")?.as_str()?;
-    let date = parse_iso_date(date_str)?;
-    Some(WeatherData::new(
-        date,
-        daily.get("temperature_2m_max").and_then(|v| v.as_f64()),
-        daily.get("temperature_2m_min").and_then(|v| v.as_f64()),
-        daily.get("temperature_2m_mean").and_then(|v| v.as_f64()),
-        daily.get("precipitation_sum").and_then(|v| v.as_f64()),
-        daily.get("sunshine_hours").and_then(|v| v.as_f64()),
-        daily.get("wind_speed_10m").and_then(|v| v.as_f64()),
-        daily
-            .get("weather_code")
-            .and_then(|v| v.as_i64())
-            .map(|v| v as i32),
-    ))
 }
 
 #[cfg(test)]

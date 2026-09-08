@@ -239,8 +239,6 @@
       "title": "Work log",
       "subtitle": "Choose a farm to record today's work",
       "error_subtitle": "Could not load farms. Try reloading.",
-      "ready_farms": "Farms ready for work",
-      "needs_attention": "Needs attention",
       "no_farms": "No farms registered yet",
       "no_farms_hint": "Register a farm and fields before recording work.",
       "create_farm_link": "Register a farm",
@@ -276,7 +274,9 @@
         "open_work": "Open work",
         "open_learn": "Open learn",
         "weather_trigger_item": "{{farm}} · {{count}} weather triggers"
-      }
+      },
+      "ready_farms": "Farms ready for work",
+      "needs_attention": "Needs attention"
     },
     "variance": {
       "title": "Variance portfolio",

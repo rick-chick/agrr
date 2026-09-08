@@ -582,7 +582,7 @@ mod tests {
                    user_id INTEGER, name TEXT NOT NULL, variety TEXT,
                    is_reference INTEGER NOT NULL DEFAULT 0,
                    area_per_unit REAL, revenue_per_area REAL,
-                   region TEXT, groups TEXT,
+                   region TEXT, groups TEXT, cultivation_method TEXT,
                    created_at TEXT, updated_at TEXT
                  );
                  CREATE TABLE crop_stages (

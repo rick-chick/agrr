@@ -1,9 +1,13 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { catchError, of, timeout } from 'rxjs';
-import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
+import { EntryScheduleListView, EntryScheduleListViewState } from './entry-schedule-list.view';
+import { LoadEntryScheduleFarmsUseCase } from '../../usecase/entry-schedule/load-entry-schedule-farms.usecase';
+import {
+  EntryScheduleListPresenter,
+  ENTRY_SCHEDULE_LIST_PROVIDERS
+} from '../../adapters/entry-schedule/entry-schedule-list.providers';
 import { Farm } from '../../domain/farms/farm';
 import { detectBrowserRegion } from '../../core/browser-region';
 import { FarmSelectionCardsComponent } from '../shared/farm-selection-cards/farm-selection-cards.component';
@@ -11,7 +15,11 @@ import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
 import { EntryScheduleWizardProgressComponent } from './entry-schedule-wizard-progress.component';
 import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
 
-const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
+const initialControl: EntryScheduleListViewState = {
+  farmsLoading: true,
+  farmsError: null,
+  farms: []
+};
 
 @Component({
   selector: 'app-entry-schedule-list',
@@ -23,6 +31,7 @@ const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
     FunnelShellComponent,
     EntryScheduleWizardProgressComponent,
   ],
+  providers: [...ENTRY_SCHEDULE_LIST_PROVIDERS],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
@@ -31,23 +40,24 @@ const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
           titleKey="entrySchedule.title"
           titleIcon="📅"
         >
+          <p class="visually-hidden">{{ 'pages.entry_schedule.description' | translate }}</p>
           <app-entry-schedule-wizard-progress ngProjectAs="[wizardProgress]" activeStep="farm" />
           <section class="content-card" aria-labelledby="entry-schedule-heading">
             <h2 id="entry-schedule-heading" class="visually-hidden">
               {{ 'entrySchedule.selectFarm' | translate }}
             </h2>
-            @if (farmsLoading()) {
+            @if (control.farmsLoading) {
               <p class="muted master-loading">{{ 'entrySchedule.loading' | translate }}</p>
-            } @else if (farmsError()) {
-              <p class="error-message">{{ farmsError()! | translate }}</p>
+            } @else if (control.farmsError) {
+              <p class="error-message">{{ control.farmsError | translate }}</p>
               <button type="button" class="btn btn-secondary mt-2" (click)="retryFarms()">
                 {{ 'entrySchedule.retry' | translate }}
               </button>
-            } @else if (farms().length === 0) {
+            } @else if (control.farms.length === 0) {
               <p class="muted">{{ 'entrySchedule.noFarms' | translate }}</p>
             } @else {
               <app-farm-selection-cards
-                [farms]="farms()"
+                [farms]="control.farms"
                 [selectedFarmId]="null"
                 [heading]="'entrySchedule.selectFarm' | translate"
                 headingId="farm-heading"
@@ -76,52 +86,46 @@ const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
     `
   ]
 })
-export class EntryScheduleListComponent implements OnInit {
-  private readonly gateway = inject(ENTRY_SCHEDULE_GATEWAY);
+export class EntryScheduleListComponent implements EntryScheduleListView, OnInit {
+  private readonly useCase = inject(LoadEntryScheduleFarmsUseCase);
+  private readonly presenter = inject(EntryScheduleListPresenter);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  readonly farms = signal<Farm[]>([]);
-  readonly farmsLoading = signal(true);
-  readonly farmsError = signal<string | null>(null);
+  private _control: EntryScheduleListViewState = initialControl;
+  get control(): EntryScheduleListViewState {
+    return this._control;
+  }
+  set control(value: EntryScheduleListViewState) {
+    this._control = value;
+    this.cdr.detectChanges();
+    if (!value.farmsLoading && !value.farmsError && value.farms.length === 1) {
+      void this.router.navigate(['/entry-schedule/farm', value.farms[0].id]);
+    }
+  }
 
   displayFarmName(farm: Farm): string {
     return displayEntryScheduleFarmName(farm, this.translate);
   }
 
   ngOnInit(): void {
+    this.presenter.setView(this);
     this.loadFarmsList();
   }
 
   private loadFarmsList(): void {
     const region = detectBrowserRegion();
-    this.farmsError.set(null);
-    this.farmsLoading.set(true);
-    this.gateway
-      .getEntryScheduleFarms(region)
-      .pipe(
-        timeout(ENTRY_SCHEDULE_HTTP_TIMEOUT_MS),
-        catchError((err: unknown) => {
-          const name = err && typeof err === 'object' && 'name' in err ? String((err as { name: string }).name) : '';
-          if (name === 'TimeoutError') {
-            this.farmsError.set('entrySchedule.timeout');
-          } else {
-            this.farmsError.set('entrySchedule.error');
-          }
-          return of([] as Farm[]);
-        })
-      )
-      .subscribe((rows) => {
-        this.farms.set(rows);
-        this.farmsLoading.set(false);
-        if (rows.length === 1) {
-          void this.router.navigate(['/entry-schedule/farm', rows[0].id]);
-        }
-      });
+    this.control = {
+      ...this.control,
+      farmsError: null,
+      farmsLoading: true,
+      farms: []
+    };
+    this.useCase.execute({ region });
   }
 
   retryFarms(): void {
-    this.farmsLoading.set(true);
     this.loadFarmsList();
   }
 

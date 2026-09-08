@@ -73,7 +73,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "अरहर (तूर दाल)": {
     "name": "अरहर (तूर दाल)",
@@ -170,7 +171,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "आम (अल्फांसो)": {
     "name": "आम (अल्फांसो)",
@@ -267,7 +269,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "आलू (कुफरी)": {
     "name": "आलू (कुफरी)",
@@ -364,7 +367,8 @@
           "required_gdd": 150.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "इलायची (मालाबार)": {
     "name": "इलायची (मालाबार)",
@@ -461,7 +465,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "कपास (बीटी कपास)": {
     "name": "कपास (बीटी कपास)",
@@ -558,7 +563,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "कॉफी (अरेबिका)": {
     "name": "कॉफी (अरेबिका)",
@@ -655,7 +661,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "गन्ना (CoC671)": {
     "name": "गन्ना (CoC671)",
@@ -752,7 +759,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "गेहूं (HD2967)": {
     "name": "गेहूं (HD2967)",
@@ -849,7 +857,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "चना (देसी)": {
     "name": "चना (देसी)",
@@ -946,7 +955,8 @@
           "required_gdd": 150.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "चाय (असम)": {
     "name": "चाय (असम)",
@@ -1022,7 +1032,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "चावल (बासमती)": {
     "name": "चावल (बासमती)",
@@ -1119,7 +1130,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "चावल (IR64)": {
     "name": "चावल (IR64)",
@@ -1216,7 +1228,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "जूट (JRO524)": {
     "name": "जूट (JRO524)",
@@ -1292,7 +1305,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "ज्वार (ज्वार अनाज)": {
     "name": "ज्वार (ज्वार अनाज)",
@@ -1389,7 +1403,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "टमाटर (पूसा रूबी)": {
     "name": "टमाटर (पूसा रूबी)",
@@ -1486,7 +1501,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "नारियल (लंबा)": {
     "name": "नारियल (लंबा)",
@@ -1583,7 +1599,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "पत्ता गोभी (गोल्डन एकर)": {
     "name": "पत्ता गोभी (गोल्डन एकर)",
@@ -1680,7 +1697,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "प्याज (नासिक लाल)": {
     "name": "प्याज (नासिक लाल)",
@@ -1777,7 +1795,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "फूल गोभी (स्नोबॉल)": {
     "name": "फूल गोभी (स्नोबॉल)",
@@ -1874,7 +1893,8 @@
           "required_gdd": 300.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "बाजरा (मोती बाजरा)": {
     "name": "बाजरा (मोती बाजरा)",
@@ -1971,7 +1991,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "बैंगन (बैंगन)": {
     "name": "बैंगन (बैंगन)",
@@ -2068,7 +2089,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "मक्का (संकर)": {
     "name": "मक्का (संकर)",
@@ -2165,7 +2187,8 @@
           "required_gdd": 250.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "मसूर (मसूर दाल)": {
     "name": "मसूर (मसूर दाल)",
@@ -2262,7 +2285,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "मिर्च (गुंटूर)": {
     "name": "मिर्च (गुंटूर)",
@@ -2359,7 +2383,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "मूंगफली (TMV2)": {
     "name": "मूंगफली (TMV2)",
@@ -2456,7 +2481,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "सरसों (पूसा बोल्ड)": {
     "name": "सरसों (पूसा बोल्ड)",
@@ -2553,7 +2579,8 @@
           "required_gdd": 700.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "सूरजमुखी (KBSH44)": {
     "name": "सूरजमुखी (KBSH44)",
@@ -2650,7 +2677,8 @@
           "required_gdd": 300.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "सोयाबीन (JS335)": {
     "name": "सोयाबीन (JS335)",
@@ -2747,7 +2775,8 @@
           "required_gdd": 900.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "हल्दी (अल्लेप्पी)": {
     "name": "हल्दी (अल्लेप्पी)",
@@ -2823,6 +2852,7 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   }
 }

@@ -70,7 +70,7 @@ describe('PublicPlanResultsNextStepsComponent', () => {
     fixture.detectChanges();
 
     const loginLink = fixture.nativeElement.querySelector(
-      'a.public-plan-results-next-steps__cta--primary'
+      'a.btn.btn-primary.public-plan-results-next-steps__cta'
     );
     expect(loginLink).not.toBeNull();
     expect(loginLink.textContent).toContain('ログインして保存');
@@ -89,7 +89,7 @@ describe('PublicPlanResultsNextStepsComponent', () => {
     fixture.detectChanges();
 
     const saveButton = fixture.nativeElement.querySelector(
-      'button.public-plan-results-next-steps__cta--primary'
+      'button.btn.btn-primary.public-plan-results-next-steps__cta'
     );
     expect(saveButton).not.toBeNull();
     expect(saveButton.textContent).toContain('マイプランに保存');
@@ -107,7 +107,7 @@ describe('PublicPlanResultsNextStepsComponent', () => {
     const saveSpy = vi.fn();
     fixture.componentInstance.saveRequest.subscribe(saveSpy);
     const saveButton = fixture.nativeElement.querySelector(
-      'button.public-plan-results-next-steps__cta--primary'
+      'button.btn.btn-primary.public-plan-results-next-steps__cta'
     );
     saveButton.click();
 

@@ -154,6 +154,8 @@ fn request_time_recoverable(error: &AgrrDaemonError) -> bool {
                 | std::io::ErrorKind::ConnectionRefused
                 | std::io::ErrorKind::ConnectionReset
                 | std::io::ErrorKind::BrokenPipe
+                | std::io::ErrorKind::WouldBlock
+                | std::io::ErrorKind::Interrupted
         ),
         AgrrDaemonError::CommandFailed(_) => false,
     }
@@ -191,6 +193,12 @@ mod tests {
         )));
         assert!(request_time_recoverable(&AgrrDaemonError::Io(
             std::io::Error::from(std::io::ErrorKind::ConnectionRefused)
+        )));
+        assert!(request_time_recoverable(&AgrrDaemonError::Io(
+            std::io::Error::from_raw_os_error(11)
+        )));
+        assert!(request_time_recoverable(&AgrrDaemonError::Io(
+            std::io::Error::from(std::io::ErrorKind::Interrupted)
         )));
         assert!(!request_time_recoverable(&AgrrDaemonError::CommandFailed(
             "exit 1".into()

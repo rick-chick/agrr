@@ -489,6 +489,7 @@
             updated_at: None,
             is_reference: true,
             groups: vec![],
+            cultivation_method: None,
         }
     }
 
