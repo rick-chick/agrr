@@ -92,21 +92,45 @@ const INITIAL_STATE: FarmTemperatureChartViewState = {
             {{ 'farms.weather_section.retry_load' | translate }}
           </button>
         } @else if (control.chartData) {
-          <div class="farm-temperature-chart__canvas-wrap">
-            @if (control.loading) {
-              <p class="farm-temperature-chart__loading-overlay" aria-live="polite">
-                {{ 'farms.weather_section.chart_loading' | translate }}
+          @if (!hasObservedPoints) {
+            @if (weatherStatus === 'fetching' || weatherStatus === 'pending') {
+              <p class="farm-temperature-chart__status">
+                {{
+                  'farms.weather_section.fetching_progress'
+                    | translate: { progress: weatherProgress ?? 0 }
+                }}
+              </p>
+            } @else {
+              <p class="farm-temperature-chart__status">
+                {{ 'farms.weather_data.no_weather_data' | translate }}
+              </p>
+              <button
+                type="button"
+                class="btn btn-secondary farm-temperature-chart__retry"
+                data-testid="farm-temperature-chart-refetch"
+                [disabled]="weatherRefetching"
+                (click)="requestWeatherRefetch()"
+              >
+                {{ 'farms.show.weather_refetch' | translate }}
+              </button>
+            }
+          } @else {
+            <div class="farm-temperature-chart__canvas-wrap">
+              @if (control.loading) {
+                <p class="farm-temperature-chart__loading-overlay" aria-live="polite">
+                  {{ 'farms.weather_section.chart_loading' | translate }}
+                </p>
+              }
+              <canvas #temperatureCanvas aria-hidden="true"></canvas>
+            </div>
+            @if (control.chartData.data_quality.missing_days > 0) {
+              <p class="farm-temperature-chart__gap-notice">
+                {{
+                  'farms.weather_section.data_gap_notice'
+                    | translate: { count: control.chartData.data_quality.missing_days }
+                }}
               </p>
             }
-            <canvas #temperatureCanvas aria-hidden="true"></canvas>
-          </div>
-          @if (control.chartData.data_quality.missing_days > 0) {
-            <p class="farm-temperature-chart__gap-notice">
-              {{
-                'farms.weather_section.data_gap_notice'
-                  | translate: { count: control.chartData.data_quality.missing_days }
-              }}
-            </p>
           }
           <p class="farm-temperature-chart__hint">
             {{ 'farms.weather_section.plan_chart_hint' | translate }}
@@ -123,8 +147,10 @@ export class FarmTemperatureChartComponent
   @Input({ required: true }) farmId!: number;
   @Input() weatherStatus: Farm['weather_data_status'] | undefined;
   @Input() weatherProgress: number | undefined;
+  @Input() weatherRefetching = false;
   @Input() selectedPeriod: FarmTemperatureChartPeriod = '90d';
   @Output() selectedPeriodChange = new EventEmitter<FarmTemperatureChartPeriod>();
+  @Output() weatherRefetch = new EventEmitter<void>();
 
   readonly periods = PERIODS;
   weatherChartEnabled = false;
@@ -170,6 +196,10 @@ export class FarmTemperatureChartComponent
     return this.periodButtonKey(this.selectedPeriod);
   }
 
+  get hasObservedPoints(): boolean {
+    return (this.control.chartData?.data_quality.present_days ?? 0) > 0;
+  }
+
   ngOnInit(): void {
     this.presenter.setView(this);
     this.syncWeatherChartEnabled();
@@ -190,7 +220,7 @@ export class FarmTemperatureChartComponent
       statusChange.previousValue !== undefined &&
       statusChange.previousValue !== 'completed'
     ) {
-      this.maybeLoadChart();
+      this.reload();
     }
   }
 
@@ -231,6 +261,10 @@ export class FarmTemperatureChartComponent
     this.pendingLoadPeriod = this.selectedPeriod;
     this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ farmId: this.farmId, period: this.selectedPeriod });
+  }
+
+  requestWeatherRefetch(): void {
+    this.weatherRefetch.emit();
   }
 
   private syncWeatherChartEnabled(): void {

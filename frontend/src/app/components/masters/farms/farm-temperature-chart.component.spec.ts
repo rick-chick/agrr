@@ -186,4 +186,64 @@ describe('FarmTemperatureChartComponent', () => {
       true
     );
   });
+
+  it('shows weather refetch when chart has no observed points', () => {
+    fixture.componentRef.setInput('weatherStatus', 'completed');
+    fixture.detectChanges();
+
+    presenter.present({
+      ...sampleChartData('90d'),
+      data_quality: { expected_days: 30, present_days: 0, missing_days: 30 },
+      points: []
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('canvas')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="farm-temperature-chart-refetch"]')
+    ).toBeTruthy();
+  });
+
+  it('reloads chart after weather refetch completes with empty prior data', () => {
+    fixture.componentRef.setInput('weatherStatus', 'completed');
+    fixture.detectChanges();
+
+    presenter.present({
+      ...sampleChartData('90d'),
+      data_quality: { expected_days: 30, present_days: 0, missing_days: 30 },
+      points: []
+    });
+    fixture.detectChanges();
+    loadSpy.execute.mockClear();
+
+    fixture.componentRef.setInput('weatherStatus', 'fetching');
+    fixture.componentRef.setInput('weatherProgress', 50);
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('weatherStatus', 'completed');
+    fixture.detectChanges();
+
+    expect(loadSpy.execute).toHaveBeenCalledWith({ farmId: 1, period: '90d' });
+  });
+
+  it('shows fetching progress instead of refetch button while weather refetch runs', () => {
+    fixture.componentRef.setInput('weatherStatus', 'completed');
+    fixture.detectChanges();
+
+    presenter.present({
+      ...sampleChartData('90d'),
+      data_quality: { expected_days: 30, present_days: 0, missing_days: 30 },
+      points: []
+    });
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('weatherStatus', 'fetching');
+    fixture.componentRef.setInput('weatherProgress', 42);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="farm-temperature-chart-refetch"]')
+    ).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('farms.weather_section.fetching_progress');
+  });
 });

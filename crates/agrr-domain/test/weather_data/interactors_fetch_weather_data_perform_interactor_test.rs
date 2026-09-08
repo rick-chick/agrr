@@ -47,6 +47,7 @@ use serde_json::json;
     struct MockWeatherGateway {
         find_coords: Option<WeatherLocationRecord>,
         weather_count: i64,
+        latest_date: Option<Date>,
         upsert_called: Arc<Mutex<bool>>,
         count_fails: bool,
         upsert_fails: bool,
@@ -73,6 +74,8 @@ use serde_json::json;
             }
             if start.is_some() && end.is_some() {
                 Ok(self.weather_count)
+            } else if start.is_none() && end.is_none() {
+                Ok(self.weather_count)
             } else {
                 Ok(0)
             }
@@ -92,7 +95,7 @@ use serde_json::json;
         }
 
         fn latest_date(&self, _: i64) -> Result<Option<Date>, WeatherDataStorageError> {
-            Ok(None)
+            Ok(self.latest_date)
         }
 
         fn upsert_weather_data(
@@ -256,11 +259,36 @@ use serde_json::json;
             count_fails: bool,
             upsert_fails: bool,
         ) -> Self {
+            Self::with_latest_date(
+                find_coords,
+                weather_count,
+                None,
+                upsert_called,
+                region,
+                find_raises,
+                agrr_response,
+                count_fails,
+                upsert_fails,
+            )
+        }
+
+        fn with_latest_date(
+            find_coords: Option<WeatherLocationRecord>,
+            weather_count: i64,
+            latest_date: Option<Date>,
+            upsert_called: Arc<Mutex<bool>>,
+            region: Option<String>,
+            find_raises: bool,
+            agrr_response: Option<Value>,
+            count_fails: bool,
+            upsert_fails: bool,
+        ) -> Self {
             let location_updates = Arc::new(Mutex::new(Vec::new()));
             Self {
                 weather: MockWeatherGateway {
                     find_coords,
                     weather_count,
+                    latest_date,
                     upsert_called,
                     count_fails,
                     upsert_fails,
@@ -310,17 +338,48 @@ use serde_json::json;
 
     #[test]
     fn sufficient_data_exists_skips_fetch() {
-        let harness = PerformHarness::new(
+        let harness = PerformHarness::with_latest_date(
             Some(WeatherLocationRecord { id: 1 }),
             6,
+            Some(Date::from_calendar_date(2025, Month::January, 7).expect("valid")),
             Arc::new(Mutex::new(false)),
             Some("jp".into()),
             false,
             None,
+            false,
+            false,
         );
         harness.interactor().call(sample_input()).expect("ok");
         let updates = harness.location_updates.lock().expect("lock");
         assert_eq!(vec![(1, 1)], *updates);
+    }
+
+    #[test]
+    fn sufficient_count_but_stale_latest_date_fetches_to_refresh_tail() {
+        let upsert_called = Arc::new(Mutex::new(false));
+        let data: Vec<Value> = (1..=7).map(weather_point).collect();
+        let weather_data = json!({
+            "location": {
+                "latitude": 35.6762,
+                "longitude": 139.6503,
+                "elevation": 50.0,
+                "timezone": "Asia/Tokyo"
+            },
+            "data": data
+        });
+        let harness = PerformHarness::with_latest_date(
+            Some(WeatherLocationRecord { id: 1 }),
+            6,
+            Some(Date::from_calendar_date(2025, Month::January, 1).expect("valid")),
+            upsert_called.clone(),
+            Some("jp".into()),
+            false,
+            Some(weather_data),
+            false,
+            false,
+        );
+        harness.interactor().call(sample_input()).expect("ok");
+        assert!(*upsert_called.lock().expect("lock"));
     }
 
     #[test]
@@ -543,6 +602,37 @@ use serde_json::json;
             err,
             FetchWeatherDataPerformError::MissingOrInvalidWeatherLocation
         );
+    }
+
+    #[test]
+    fn continues_after_excessive_missing_data_when_baseline_store_is_sufficient() {
+        let insufficient = json!({
+            "location": {
+                "latitude": 34.6901,
+                "longitude": 135.1955,
+                "elevation": 50.0,
+                "timezone": "Asia/Tokyo"
+            },
+            "data": [weather_point(30)]
+        });
+        let harness = PerformHarness::with_latest_date(
+            Some(WeatherLocationRecord { id: 30 }),
+            9681,
+            Some(Date::from_calendar_date(2026, Month::July, 4).expect("valid")),
+            Arc::new(Mutex::new(false)),
+            Some("jp".into()),
+            false,
+            Some(insufficient),
+            false,
+            false,
+        );
+        let mut input = sample_input();
+        input.latitude = 34.6901;
+        input.longitude = 135.1955;
+        input.start_date = Date::from_calendar_date(2026, Month::July, 5).expect("valid");
+        input.end_date = Date::from_calendar_date(2026, Month::September, 6).expect("valid");
+
+        harness.interactor().call(input).expect("baseline gap-fill continues");
     }
 
     #[test]

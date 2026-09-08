@@ -26,7 +26,7 @@
         fn on_not_found(&mut self) { self.not_found.set(true); }
     }
     fn crop(user_id: i64) -> CropEntity {
-        CropEntity { id: 42, user_id: Some(user_id), organization_id: None, name: "Foo".into(), variety: None, is_reference: false, area_per_unit: None, revenue_per_area: None, region: None, groups: vec![], created_at: None, updated_at: None }
+        CropEntity { id: 42, user_id: Some(user_id), organization_id: None, name: "Foo".into(), variety: None, is_reference: false, area_per_unit: None, revenue_per_area: None, region: None, groups: vec![], cultivation_method: None, created_at: None, updated_at: None }
     }
     struct Gw(CropEntity);
     impl CropGateway for Gw {

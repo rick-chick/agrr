@@ -786,17 +786,6 @@
   font-weight: var(--font-weight-medium);
 }
 
-.error-container {
-  margin-top: var(--space-8);
-}
-
-.error-actions {
-  display: flex;
-  gap: var(--space-4);
-  justify-content: center;
-  margin-top: var(--space-4);
-}
-
 /* ============================================
    最適化画面: 固定下部バー（Rails 同様）
    ============================================ */
@@ -806,6 +795,75 @@
 
 .spacer-for-fixed-bar {
   height: 100px;
+}
+
+.spacer-for-fixed-bar--hidden {
+  height: 0;
+}
+
+/* 最適化失敗: page-alert-error パターン（plan-optimizing / COMPONENT-GUIDE 準拠） */
+.page-alert-error.public-plan-optimizing__error {
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-error-border-soft);
+  background: var(--color-error-bg);
+  color: var(--color-error-dark);
+}
+
+.page-alert-error.public-plan-optimizing__error p {
+  margin: 0;
+}
+
+.public-plan-optimizing__error-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.public-plan-optimizing__failure-hint {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.public-plan-optimizing__error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.public-plan-optimizing__error-actions .btn {
+  text-decoration: none;
+}
+
+.public-plan-optimizing__error-secondary {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-sm);
+}
+
+.public-plan-optimizing__error-secondary a {
+  color: var(--color-link);
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.public-plan-optimizing__error-secondary a:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 480px) {
+  .public-plan-optimizing__error-actions .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
 }
 
 .fixed-progress-bar {
@@ -858,10 +916,6 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.fixed-progress-bar .progress-phase-message.error {
-  color: var(--color-error);
-}
-
 .fixed-progress-bar .progress-duration-hint {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
@@ -878,64 +932,6 @@
   width: 24px;
   height: 24px;
   border-width: 2px;
-}
-
-.spinner.hidden {
-  display: none;
-}
-
-.fixed-progress-bar .error-message-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
-}
-
-.fixed-progress-bar .error-icon {
-  font-size: var(--font-size-2xl);
-  margin-bottom: var(--space-2);
-}
-
-.fixed-progress-bar .error-content {
-  width: 100%;
-  max-width: 480px;
-}
-
-.fixed-progress-bar .error-content .error-title {
-  font-weight: var(--font-weight-bold);
-  margin-bottom: var(--space-2);
-  font-size: var(--font-size-base);
-}
-
-.fixed-progress-bar .error-detail {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-3);
-}
-
-.fixed-progress-bar .error-hint {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-3);
-}
-
-.fixed-progress-bar .error-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  justify-content: center;
-  margin-top: var(--space-2);
-}
-
-.fixed-progress-bar .error-actions .btn {
-  text-decoration: none;
-  border-radius: var(--radius-md);
-  font-weight: var(--font-weight-semibold);
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--font-size-sm);
 }
 
 @media (max-width: 768px) {

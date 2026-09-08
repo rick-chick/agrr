@@ -239,6 +239,21 @@ pub fn repair_us_reference_crops(conn: &mut Connection, app_root: &Path) -> anyh
     Ok(())
 }
 
+/// Re-upserts Japan reference crops from `db/fixtures/reference_crops.json` (e.g. `cultivation_method`).
+pub fn repair_jp_reference_crops(conn: &mut Connection, app_root: &Path) -> anyhow::Result<()> {
+    let crops_path = fixtures_dir(app_root).join("reference_crops.json");
+    if !crops_path.is_file() {
+        anyhow::bail!(
+            "repair/jp: missing fixture {} (required for Japan reference crops)",
+            crops_path.display()
+        );
+    }
+
+    seed_crops(conn, app_root, "jp", "reference_crops.json")?;
+    println!("  repair/jp: Japan reference crops repair completed");
+    Ok(())
+}
+
 fn remove_india_legacy_stub_farm(conn: &mut Connection) -> anyhow::Result<usize> {
     let n = conn.execute(
         "DELETE FROM farms
@@ -379,6 +394,7 @@ struct CropFixture {
     area_per_unit: f64,
     revenue_per_area: f64,
     groups: Option<Vec<String>>,
+    cultivation_method: String,
     crop_stages: Vec<CropStageFixture>,
 }
 
@@ -438,6 +454,7 @@ fn seed_crops(conn: &mut Connection, app_root: &Path, region: &str, crops_file: 
                 crop_data.area_per_unit,
                 crop_data.revenue_per_area,
                 &groups_json,
+                &crop_data.cultivation_method,
                 &now,
             )?;
             for stage in &crop_data.crop_stages {
@@ -472,6 +489,7 @@ fn upsert_crop(
     area_per_unit: f64,
     revenue_per_area: f64,
     groups_json: &str,
+    cultivation_method: &str,
     now: &str,
 ) -> anyhow::Result<i64> {
     if let Ok(id) = tx.query_row(
@@ -480,15 +498,15 @@ fn upsert_crop(
         |r| r.get(0),
     ) {
         tx.execute(
-            "UPDATE crops SET groups = ?1, area_per_unit = ?2, revenue_per_area = ?3, updated_at = ?4 WHERE id = ?5",
-            params![groups_json, area_per_unit, revenue_per_area, now, id],
+            "UPDATE crops SET groups = ?1, area_per_unit = ?2, revenue_per_area = ?3, cultivation_method = ?4, updated_at = ?5 WHERE id = ?6",
+            params![groups_json, area_per_unit, revenue_per_area, cultivation_method, now, id],
         )?;
         return Ok(id);
     }
     tx.execute(
-        "INSERT INTO crops (name, variety, is_reference, user_id, region, groups, area_per_unit, revenue_per_area, created_at, updated_at)
-         VALUES (?1, ?2, 1, NULL, ?3, ?4, ?5, ?6, ?7, ?7)",
-        params![name, variety, region, groups_json, area_per_unit, revenue_per_area, now],
+        "INSERT INTO crops (name, variety, is_reference, user_id, region, groups, area_per_unit, revenue_per_area, cultivation_method, created_at, updated_at)
+         VALUES (?1, ?2, 1, NULL, ?3, ?4, ?5, ?6, ?7, ?8, ?8)",
+        params![name, variety, region, groups_json, area_per_unit, revenue_per_area, cultivation_method, now],
     )?;
     Ok(tx.last_insert_rowid())
 }

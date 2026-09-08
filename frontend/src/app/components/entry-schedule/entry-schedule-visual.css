@@ -347,15 +347,6 @@
   background: linear-gradient(180deg, var(--es-transplant-soft), var(--es-transplant));
 }
 
-.es-gantt-empty {
-  position: absolute;
-  left: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.75rem;
-  color: var(--color-accent);
-}
-
 .es-detail-hero {
   font-size: 1.35rem;
   font-weight: 800;

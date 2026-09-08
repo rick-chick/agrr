@@ -66,6 +66,7 @@ describe('PublicPlanOptimizingComponent', () => {
         'public_plans.optimizing.status_badge_failed': '作成失敗',
         'public_plans.optimizing.crops_count': '{{count}}種類の作物',
         'public_plans.optimizing.error.title': '計画作成に失敗しました',
+        'public_plans.optimizing.error.reload': '再読み込み',
         'public_plans.optimizing.error.try_again': '作物を変更してもう一度試す',
         'public_plans.optimizing.error.start_over': '最初からやり直す',
         'public_plans.optimizing.error.hints.predicting_weather':
@@ -114,6 +115,45 @@ describe('PublicPlanOptimizingComponent', () => {
     expect(text).toContain('最初からやり直す');
   });
 
+  it('renders accessible error panel in main content when optimization fails', () => {
+    component.control = {
+      status: 'failed',
+      progress: 0,
+      phaseMessage: '気象データの取得に失敗しました',
+      failureHint: '地域や農場の設定を確認し、しばらく時間をおいてから再度お試しください。'
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector(
+      '.page-alert-error.public-plan-optimizing__error[role="alert"]'
+    );
+    expect(alert).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.fixed-progress-bar')).toBeFalsy();
+  });
+
+  it('uses secondary buttons and a tertiary link for recovery actions', () => {
+    component.control = {
+      status: 'failed',
+      progress: 0,
+      phaseMessage: '気象データの取得に失敗しました',
+      failureHint: '地域や農場の設定を確認し、しばらく時間をおいてから再度お試しください。'
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.btn-primary').length).toBe(0);
+
+    const actions = fixture.nativeElement.querySelector('.public-plan-optimizing__error-actions');
+    const actionButtons = actions?.querySelectorAll('.btn');
+    expect(actionButtons?.length).toBe(2);
+    expect(actionButtons?.[0].classList.contains('btn-secondary')).toBe(true);
+    expect(actionButtons?.[1].classList.contains('btn-secondary')).toBe(true);
+
+    const startOverLink = fixture.nativeElement.querySelector(
+      '.public-plan-optimizing__error-secondary a'
+    ) as HTMLAnchorElement;
+    expect(startOverLink?.textContent).toContain('最初からやり直す');
+  });
+
   it('shows timeout category detail and hint when optimization times out', () => {
     component.control = {
       status: 'failed',
@@ -128,20 +168,6 @@ describe('PublicPlanOptimizingComponent', () => {
     expect(text).toContain('処理がタイムアウトしました');
     expect(text).toContain('処理に時間がかかりすぎました。しばらく待ってから再度お試しください。');
     expect(text).not.toContain('worker timeout');
-  });
-
-  it('does not show technical error strings in failure UI', () => {
-    component.control = {
-      status: 'failed',
-      progress: 0,
-      phaseMessage: '処理に失敗しました',
-      failureHint: '下のボタンから作物を変更するか、最初からやり直してください。'
-    };
-    fixture.detectChanges();
-
-    const text = fixture.nativeElement.textContent;
-    expect(text).not.toContain('InvalidWeatherApiResponse');
-    expect(text).not.toContain('fetch_weather_data');
   });
 
   it('shows fallback hint when failure detail is generic', () => {

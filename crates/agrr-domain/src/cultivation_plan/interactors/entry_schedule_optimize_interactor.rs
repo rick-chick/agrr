@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 
 use serde_json::{json, Value};
 
+use crate::crop::entities::CropCultivationMethod;
 use crate::cultivation_plan::calculators::entry_schedule_stage_gdd_scaler;
 use crate::cultivation_plan::errors::EntryScheduleOptimizationError;
 use crate::cultivation_plan::gateways::{
@@ -20,6 +21,7 @@ pub trait EntryScheduleOptimizeCrop: CropAgrrRequirementSource {
     fn crop_id(&self) -> i64;
     fn crop_name(&self) -> &str;
     fn crop_variety(&self) -> Option<&str>;
+    fn cultivation_method(&self) -> Option<CropCultivationMethod>;
 }
 
 pub struct EntryScheduleOptimizeInteractor<'a, CG, B, G, Cl, L> {
@@ -146,12 +148,15 @@ where
             return self.failed_result("invalid_response");
         }
 
-        let stage_rows = self
+        let stage_rows = match self
             .crop_gateway
             .entry_schedule_ordered_stage_rows(self.crop.crop_id())
-            .unwrap_or_default();
-        let sow_st = StageRoleResolver::sowing_stage(&stage_rows);
-        let tr_st = StageRoleResolver::transplant_stage(&stage_rows);
+        {
+            Ok(rows) => rows,
+            Err(_) => return self.failed_result("crop_stage_load_failed"),
+        };
+        let sow_st = StageRoleResolver::entry_stage_for_direct_sow(&stage_rows);
+        let tr_st = StageRoleResolver::entry_stage_for_transplant(&stage_rows);
         let daily_count = weather_for_file
             .get("data")
             .and_then(|v| v.as_array())
@@ -190,20 +195,30 @@ where
             start_date: start_d,
             end_date: end_d,
         };
-        let transplant_cultivation = StageRoleResolver::has_transplant_stage(&stage_rows);
+        let cultivation_method = match self.crop.cultivation_method() {
+            Some(method) => method,
+            None => return self.failed_result("missing_cultivation_method"),
+        };
+        let transplant_cultivation = cultivation_method.is_transplant();
         let (sowing_windows, transplant_windows, sowing_stage_id, transplant_stage_id) =
             if transplant_cultivation {
+                let Some(tr_entry) = tr_st else {
+                    return self.failed_result("missing_transplant_stage");
+                };
                 (
                     vec![],
                     vec![window],
                     None,
-                    tr_st.map(|s| s.id),
+                    Some(tr_entry.id),
                 )
             } else {
+                let Some(sow_entry) = sow_st else {
+                    return self.failed_result("missing_sowing_stage");
+                };
                 (
                     vec![window],
                     vec![],
-                    sow_st.map(|s| s.id),
+                    Some(sow_entry.id),
                     None,
                 )
             };

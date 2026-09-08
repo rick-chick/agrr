@@ -67,12 +67,6 @@
   white-space: nowrap;
 }
 
-.public-plan-results-next-steps__cta--primary {
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-}
-
 .public-plan-results-next-steps__locked {
   display: inline-flex;
   align-items: center;

@@ -61,7 +61,7 @@ import type { PlanWizardReturnTab } from '../../domain/crops/plan-wizard-context
         @if (vm.showRetry) {
           <button
             type="button"
-            class="btn-secondary task-schedule-sync-banner__retry"
+            class="btn btn-secondary task-schedule-sync-banner__retry"
             [disabled]="regenerating"
             (click)="retry.emit()"
           >

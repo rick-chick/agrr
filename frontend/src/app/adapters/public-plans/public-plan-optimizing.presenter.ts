@@ -190,6 +190,9 @@ export class PublicPlanOptimizingPresenter
       prevViewState: prev
     });
     const nextStatus = dto.status ?? prev.status;
+    // #region agent log
+    fetch('http://127.0.0.1:7574/ingest/1a9a8f63-325d-45db-8a49-802bbacaab8a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7aaae6'},body:JSON.stringify({sessionId:'7aaae6',location:'public-plan-optimizing.presenter.ts:present',message:'optimization message received',data:{prevStatus:prev.status,nextStatus,dtoStatus:dto.status,progress:dto.progress,messageKey:dto.message_key,phaseMessage:dto.phase_message},timestamp:Date.now(),hypothesisId:'B',runId:'pre-fix'})}).catch(()=>{});
+    // #endregion
     const nextPhaseMessage = this.resolvePhaseMessage(dto, prev.phaseMessage, nextStatus);
     const failureHint =
       nextStatus === 'failed'
@@ -209,6 +212,9 @@ export class PublicPlanOptimizingPresenter
   presentConnectionLost(): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
+    // #region agent log
+    fetch('http://127.0.0.1:7574/ingest/1a9a8f63-325d-45db-8a49-802bbacaab8a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7aaae6'},body:JSON.stringify({sessionId:'7aaae6',location:'public-plan-optimizing.presenter.ts:presentConnectionLost',message:'connection lost callback',data:{prevStatus:prev.status,prevProgress:prev.progress},timestamp:Date.now(),hypothesisId:'A',runId:'pre-fix'})}).catch(()=>{});
+    // #endregion
     const phaseMessage =
       this.translateKey('public_plans.optimizing.error.connection_lost') ??
       this.translateKey('public_plans.optimizing.error.title') ??

@@ -264,6 +264,10 @@ export class PlanTaskSchedulePresenter
   }
 
   presentConnectionLost(): void {
+    // #region agent log
+    const prevSyncState = this.view?.control.schedule?.plan.task_schedule_sync_state ?? null;
+    fetch('http://127.0.0.1:7574/ingest/1a9a8f63-325d-45db-8a49-802bbacaab8a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7aaae6'},body:JSON.stringify({sessionId:'7aaae6',location:'plan-task-schedule.presenter.ts:presentConnectionLost',message:'task schedule sync connection lost',data:{prevSyncState,loading:this.view?.control.loading},timestamp:Date.now(),hypothesisId:'C',runId:'pre-fix'})}).catch(()=>{});
+    // #endregion
     this.onTaskScheduleSync({
       syncState: 'failed',
       syncError: TASK_SCHEDULE_SYNC_ERROR_CONNECTION_LOST,

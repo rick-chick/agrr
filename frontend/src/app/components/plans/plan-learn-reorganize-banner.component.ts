@@ -19,7 +19,7 @@ export type PlanLearnReorganizeBannerContext = 'placement' | 'optimizing';
           {{ hintKey | translate }}
         </p>
         <app-plan-learn-loop-progress-strip [planId]="planId" />
-        <a class="btn-primary learn-reorganize-banner__learn-link" [routerLink]="learnLink">
+        <a class="btn btn-primary learn-reorganize-banner__learn-link" [routerLink]="learnLink">
           {{ 'plans.learn.reorganize.return_to_learn' | translate }}
         </a>
       </div>

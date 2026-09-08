@@ -2,33 +2,23 @@
 
 use super::crop_stage_snapshot::CropStageSnapshot;
 
-fn transplant_name_match(name: &str) -> bool {
-    name.contains("定植") || name.contains("植え付")
-}
-
 pub struct StageRoleResolver;
 
 impl StageRoleResolver {
-    /// Crop master with a transplant-named stage is transplant cultivation; otherwise direct sow.
-    pub fn has_transplant_stage(stages: &[CropStageSnapshot]) -> bool {
-        stages.iter().any(|s| transplant_name_match(&s.name))
-    }
-
     pub fn sowing_stage(stages: &[CropStageSnapshot]) -> Option<CropStageSnapshot> {
         let mut ordered: Vec<_> = stages.to_vec();
         ordered.sort_by_key(|s| s.order);
         ordered.into_iter().next()
     }
 
-    pub fn transplant_stage(stages: &[CropStageSnapshot]) -> Option<CropStageSnapshot> {
+    pub fn entry_stage_for_direct_sow(stages: &[CropStageSnapshot]) -> Option<CropStageSnapshot> {
+        Self::sowing_stage(stages)
+    }
+
+    /// Field transplant entry stage: order=2 across reference fixtures (jp/us/in).
+    pub fn entry_stage_for_transplant(stages: &[CropStageSnapshot]) -> Option<CropStageSnapshot> {
         let mut ordered: Vec<_> = stages.to_vec();
         ordered.sort_by_key(|s| s.order);
-        if ordered.is_empty() {
-            return None;
-        }
-        if let Some(by_name) = ordered.iter().find(|s| transplant_name_match(&s.name)) {
-            return Some(by_name.clone());
-        }
         ordered.get(1).cloned()
     }
 }

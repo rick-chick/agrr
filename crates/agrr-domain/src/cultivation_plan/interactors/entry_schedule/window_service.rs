@@ -49,7 +49,7 @@ impl WindowService {
 
     fn run(self) -> WindowServiceResult {
         let sow_st = StageRoleResolver::sowing_stage(&self.ordered_crop_stages);
-        let tr_st = StageRoleResolver::transplant_stage(&self.ordered_crop_stages);
+        let tr_st = StageRoleResolver::entry_stage_for_transplant(&self.ordered_crop_stages);
 
         let (sow_tr, sow_temp, tr_temp) = match (sow_st.as_ref(), tr_st.as_ref()) {
             (Some(s), Some(t)) => (
