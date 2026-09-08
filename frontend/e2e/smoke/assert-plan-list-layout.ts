@@ -3,7 +3,7 @@ import { expect, type Page } from '@playwright/test';
 import { assertArchetypeDesignContract } from './layout-archetype-assertions';
 import { LAYOUT_ARCHETYPE_DESIGN_CONTRACTS } from './layout-archetype-design-contracts.mjs';
 
-/** L2 layout contract override: `/plans` (master-list + farm groups). */
+/** L2 layout contract override: `/plans` (master-list flat cards). */
 export async function assertPlanListLayout(page: Page): Promise<void> {
   await assertArchetypeDesignContract(
     page,
@@ -16,7 +16,7 @@ export async function assertPlanListLayout(page: Page): Promise<void> {
     return;
   }
 
-  await expect(page.locator('app-plan-list .plan-list__farm-group').first()).toBeVisible({
+  await expect(page.locator('app-plan-list .card-list').first()).toBeVisible({
     timeout: 10_000,
   });
 

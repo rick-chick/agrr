@@ -76,6 +76,14 @@ describe('EntryScheduleListComponent', () => {
     expect(fixture.nativeElement.querySelector('.placeholder-block')).toBeNull();
   });
 
+  it('omits funnel shell description on the farm selection step', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.funnel-shell-description')).toBeNull();
+  });
+
   it('renders wizard funnel shell with farm step active', async () => {
     fixture.detectChanges();
     await fixture.whenStable();

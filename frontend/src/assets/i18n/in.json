@@ -1421,8 +1421,8 @@
       "crop_added": "फसल जोड़ी गई।",
       "field_added": "खेत जोड़ा गया।"
     },
-    "title": "खेती योजना",
-    "breadcrumb_root": "मुफ्त खेती योजना",
+    "title": "फसल योजना बनाएं",
+    "breadcrumb_root": "फसल योजना बनाएं",
     "steps": {
       "region": "क्षेत्र",
       "crop": "फसल",
@@ -1449,7 +1449,7 @@
       "error": "योजना सहेजने में विफल।"
     },
     "select_farm": {
-      "available_farms": "उपलब्ध खेत"
+      "available_farms": "खेत चुनें"
     },
     "select_crop": {
       "title": "🌾 उगाई जाने वाली फसलें चुनें",
@@ -2611,7 +2611,7 @@
     },
     "index": {
       "title": "खेती योजनाएँ",
-      "description": "वार्षिक योजनाओं का प्रबंधन करें",
+      "description": "प्रत्येक खेत की खेती योजना की समीक्षा और प्रबंधन करें",
       "new_plan": "नई योजना जोड़ें",
       "try_public_plans": "मुफ्त योजनाओं से शुरू करें",
       "no_plans": "अभी तक कोई योजना नहीं",
@@ -2625,17 +2625,6 @@
         "completed": "पूर्ण",
         "failed": "विफल"
       },
-      "plan_card": {
-        "farm": "खेत",
-        "total_area": "कुल क्षेत्रफल",
-        "crops_count": "{{count}} फसलें",
-        "fields_count": "{{count}} खेत",
-        "view": "विवरण देखें",
-        "copy": "अगले वर्ष में कॉपी करें",
-        "delete": "हटाएं",
-        "delete_confirm": "क्या आप वाकई इस योजना को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
-        "created_at": "बनाया गया"
-      },
       "input_gap": {
         "unrecorded_summary": "अदर्ज नहीं: {{count}}",
         "action_required_summary": "कार्रवाई आवश्यक: {{count}}",
@@ -2643,12 +2632,9 @@
         "work_link": "कार्य अभिलेखित करें",
         "learn_link": "सीख की समीक्षा करें"
       },
-      "farm_group": {
-        "expand": "विस्तार करें",
-        "collapse": "समेटें",
-        "compare_variance": "विचरण की तुलना करें",
-        "plan_count": "{{count}} योजनाएँ"
-      },
+      "compare_variance": "विचरण की तुलना करें",
+      "custom_plan_name": "योजना: {{name}}",
+      "farm_fallback": "खेत #{{id}}",
       "menu": {
         "more_actions": "अधिक क्रियाएँ"
       },
@@ -2659,7 +2645,7 @@
       "breadcrumb": "नई योजना",
       "title": "📅 खेत चुनें",
       "subtitle": "अपनी खेती योजना बनाने के लिए खेत चुनें",
-      "plan_name_label": "योजना नाम",
+      "plan_name_label": "योजना नाम (वैकल्पिक)",
       "plan_name_placeholder": "उदाहरण: मुख्य योजना",
       "farm_label": "खेत",
       "farm_hint": "कृपया एक खेत चुनें",

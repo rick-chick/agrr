@@ -159,6 +159,7 @@ describe('EntryScheduleFarmCropsComponent', () => {
     ]);
 
     expect(fixture.nativeElement.querySelector('.funnel-shell-header--wizard')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.funnel-shell-description')).toBeNull();
   });
 
   it('renders breadcrumb and selected farm summary card', async () => {

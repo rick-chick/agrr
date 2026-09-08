@@ -85,12 +85,9 @@ describe('PlanListComponent', () => {
             work_link: 'Record work',
             learn_link: 'Review learning'
           },
-          farm_group: {
-            expand: 'Expand',
-            collapse: 'Collapse',
-            compare_variance: 'Compare variance',
-            plan_count: '{{count}} plans'
-          },
+          compare_variance: 'Compare variance',
+          custom_plan_name: 'Plan: {{name}}',
+          farm_fallback: 'Farm #{{id}}',
           year_label: 'Year {{year}}',
           status: {
             pending: 'Pending',
@@ -273,92 +270,66 @@ describe('PlanListComponent', () => {
     expect(setupLink.getAttribute('href')).toBe('/onboarding');
   });
 
-  it('displays plans in the list', async () => {
+  it('displays plans in a flat list with farm name as card title', async () => {
     const plans: PlanListPlan[] = [
-      planWithGap({ id: 1, name: 'Plan A' }),
+      planWithGap({ id: 1, name: 'Plan A', farm_name: 'Farm A' }),
       planWithGap({ id: 2, name: 'Plan B', status: 'completed', farm_id: 2, farm_name: 'Farm B' })
     ];
 
     const planTitles = (await renderPlans(plans)).querySelectorAll('.item-card__title');
     expect(planTitles).toHaveLength(2);
-    expect(planTitles[0].textContent.trim()).toBe('Plan A');
-    expect(planTitles[1].textContent.trim()).toBe('Plan B');
+    expect(planTitles[0].textContent.trim()).toBe('Farm A');
+    expect(planTitles[1].textContent.trim()).toBe('Farm B');
   });
 
-  it('groups plans by farm with collapsible sections', async () => {
+  it('renders a flat card-list without farm group sections', async () => {
     const nativeElement = await renderPlans([
       planWithGap({ id: 1, farm_id: 1, farm_name: 'Farm A' }),
       planWithGap({ id: 2, farm_id: 2, farm_name: 'Farm B', name: 'Plan B' })
     ]);
 
-    const groups = nativeElement.querySelectorAll('.plan-list__farm-group');
-    expect(groups).toHaveLength(2);
-    expect(nativeElement.querySelector('#plan-list-farm-1')?.textContent).toContain('Farm A');
-    expect(nativeElement.querySelector('#plan-list-farm-2')?.textContent).toContain('Farm B');
-
-    const toggle = nativeElement.querySelector(
-      '.plan-list__farm-group-accordion-btn'
-    ) as HTMLButtonElement;
-    toggle.click();
-    fixture.detectChanges();
-
-    expect(nativeElement.querySelector('#plan-list-farm-plans-1')).toBeNull();
-    expect(nativeElement.querySelector('#plan-list-farm-plans-2')).toBeTruthy();
+    expect(nativeElement.querySelector('.card-list')).toBeTruthy();
+    expect(nativeElement.querySelector('.plan-list__farm-group')).toBeNull();
+    expect(nativeElement.querySelectorAll('.item-card')).toHaveLength(2);
   });
 
-  it('uses chevron accordion trigger instead of visible expand/collapse text', async () => {
+  it('shows custom plan name when it differs from the farm default', async () => {
     const nativeElement = await renderPlans([
-      planWithGap({ id: 1, farm_id: 1, farm_name: 'Farm A' }),
-      planWithGap({ id: 2, farm_id: 2, farm_name: 'Farm B', name: 'Plan B' })
+      planWithGap({ id: 1, farm_id: 1, farm_name: '和歌山', name: 'メイン計画' })
     ]);
 
-    const toggles = nativeElement.querySelectorAll('.plan-list__farm-group-accordion-btn');
-    expect(toggles).toHaveLength(2);
-    expect(nativeElement.textContent).not.toContain('Expand');
-    expect(nativeElement.textContent).not.toContain('Collapse');
-
-    const chevron = toggles[0].querySelector('.plan-list__farm-group-chevron');
-    expect(chevron?.textContent?.trim()).toBe('▼');
+    expect(nativeElement.querySelector('.plan-list__custom-plan-name')?.textContent).toContain(
+      'メイン計画'
+    );
   });
 
-  it('provides aria-label and aria-controls on farm group accordion toggle', async () => {
+  it('renders plan cards sorted by farm name', async () => {
     const nativeElement = await renderPlans([
-      planWithGap({ id: 1, farm_id: 1, farm_name: 'Farm A' }),
-      planWithGap({ id: 2, farm_id: 2, farm_name: 'Farm B', name: 'Plan B' })
+      planWithGap({ id: 1, farm_id: 2, farm_name: 'Z Farm' }),
+      planWithGap({ id: 2, farm_id: 1, farm_name: 'A Farm' })
     ]);
 
-    const toggle = nativeElement.querySelector(
-      '.plan-list__farm-group-accordion-btn'
-    ) as HTMLButtonElement;
-    expect(toggle.getAttribute('aria-label')).toBe('Collapse');
-    expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(toggle.getAttribute('aria-controls')).toBe('plan-list-farm-plans-1');
+    const titles = [...nativeElement.querySelectorAll('.item-card__title')].map((el) =>
+      el.textContent?.trim()
+    );
+    expect(titles).toEqual(['A Farm', 'Z Farm']);
   });
 
-  it('shows plan count on collapsed farm group header', async () => {
+  it('shows farm fallback label when farm_name is missing', async () => {
     const nativeElement = await renderPlans([
-      planWithGap({ id: 1, farm_id: 1, farm_name: 'Farm A' }),
-      planWithGap({ id: 2, farm_id: 1, farm_name: 'Farm A', name: 'Plan B' }),
-      planWithGap({ id: 3, farm_id: 2, farm_name: 'Farm B', name: 'Plan C' })
+      planWithGap({ id: 1, farm_id: 7, farm_name: undefined, name: 'Plan' })
     ]);
 
-    const toggle = nativeElement.querySelector(
-      '.plan-list__farm-group-accordion-btn'
-    ) as HTMLButtonElement;
-    toggle.click();
-    fixture.detectChanges();
-
-    const count = nativeElement.querySelector('.plan-list__farm-group-plan-count');
-    expect(count?.textContent?.trim()).toBe('2 plans');
-    expect(toggle.querySelector('.plan-list__farm-group-chevron')?.textContent?.trim()).toBe('▶');
+    expect(nativeElement.querySelector('.item-card__title')?.textContent?.trim()).toBe('Farm #7');
   });
 
-  it('hides accordion toggle when only one farm group', async () => {
-    const nativeElement = await renderPlans([planWithGap({ id: 1, farm_id: 1, farm_name: 'Farm A' })]);
+  it('hides custom plan name when plan name matches farm name', async () => {
+    const nativeElement = await renderPlans([
+      planWithGap({ id: 1, farm_id: 1, farm_name: 'test', name: 'test' })
+    ]);
 
-    expect(nativeElement.querySelector('.plan-list__farm-group-accordion-btn')).toBeNull();
-    expect(nativeElement.querySelector('#plan-list-farm-1')?.textContent).toContain('Farm A');
-    expect(nativeElement.querySelector('#plan-list-farm-plans-1')).toBeTruthy();
+    expect(nativeElement.querySelector('.plan-list__custom-plan-name')).toBeNull();
+    expect(nativeElement.querySelector('.item-card__title')?.textContent?.trim()).toBe('test');
   });
 
   it('shows plan_year and status on each plan card', async () => {
@@ -379,10 +350,10 @@ describe('PlanListComponent', () => {
     expect(styles.color).toBe('var(--color-text-secondary)');
   });
 
-  it('links compare variance to /work/variance with farm filter', async () => {
+  it('links compare variance on each plan card to /work/variance with farm filter', async () => {
     const nativeElement = await renderPlans([planWithGap({ farm_id: 42, farm_name: 'Farm A' })]);
 
-    const link = nativeElement.querySelector('.plan-list__variance-link') as HTMLAnchorElement;
+    const link = nativeElement.querySelector('.item-card__actions .plan-list__variance-link') as HTMLAnchorElement;
     expect(link).toBeTruthy();
     expect(link.getAttribute('href')).toContain('/work/variance');
     expect(link.getAttribute('href')).toContain('farm_id=42');

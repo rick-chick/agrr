@@ -29,7 +29,6 @@ const ENTRY_SCHEDULE_HTTP_TIMEOUT_MS = 25_000;
         <app-funnel-shell
           variant="wizard"
           titleKey="entrySchedule.title"
-          descriptionKey="pages.entry_schedule.description"
           titleIcon="📅"
         >
           <app-entry-schedule-wizard-progress ngProjectAs="[wizardProgress]" activeStep="farm" />

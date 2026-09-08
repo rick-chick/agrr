@@ -433,9 +433,9 @@ describe('PublicPlanSelectCropComponent (template)', () => {
     const instance = fixture.componentInstance;
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('ja', {
-      'public_plans.breadcrumb_root': '無料作付け計画',
+      'public_plans.breadcrumb_root': '作付け計画を作成',
       'public_plans.steps.crop': '作物',
-      'public_plans.title': '計画',
+      'public_plans.title': '作付け計画を作成',
       'public_plans.steps.region': '地域',
       'public_plans.select_crop.summary.region': '地域',
       'public_plans.reference_farms.jp_35p6762_139p6503': '東京',

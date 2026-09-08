@@ -14,14 +14,12 @@ import { Farm } from '../../domain/farms/farm';
 import { resolveReferenceFarmRegion } from '../../core/browser-region';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
 import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
-import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { FarmSelectionCardsComponent } from '../shared/farm-selection-cards/farm-selection-cards.component';
 import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
 import {
   WizardProgressPattern,
   WizardProgressStepConfig,
 } from '../shared/patterns/wizard-progress.pattern';
-import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { FlashMessageService } from '../../services/flash-message.service';
 import {
   PUBLIC_PLAN_WIZARD_REDIRECT_MESSAGE_KEY,
@@ -41,7 +39,6 @@ const initialControl: PublicPlanCreateViewState = {
   imports: [
     CommonModule,
     TranslateModule,
-    PublicPlanContextHeaderComponent,
     FarmSelectionCardsComponent,
     FunnelShellComponent,
     WizardProgressPattern,
@@ -50,7 +47,6 @@ const initialControl: PublicPlanCreateViewState = {
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
-        <app-public-plan-context-header [crumbs]="contextCrumbs" />
         <app-funnel-shell variant="wizard" titleKey="public_plans.title" titleIcon="🌱">
           <app-wizard-progress ngProjectAs="[wizardProgress]" [steps]="wizardSteps" />
           <section class="content-card" aria-labelledby="create-heading">
@@ -92,10 +88,6 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly flash = inject(FlashMessageService);
 
   selectedFarmId: number | null = null;
-
-  get contextCrumbs(): MasterContextCrumb[] {
-    return [{ labelKey: 'public_plans.breadcrumb_root' }];
-  }
 
   get wizardSteps(): WizardProgressStepConfig[] {
     return [

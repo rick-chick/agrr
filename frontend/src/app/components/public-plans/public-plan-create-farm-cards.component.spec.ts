@@ -26,6 +26,12 @@ describe('PublicPlanCreateComponent farm selection cards', () => {
     fixture = TestBed.createComponent(PublicPlanCreateComponent);
   });
 
+  it('omits breadcrumb context header on the wizard start page', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-public-plan-context-header')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeNull();
+  });
+
   it('renders shared farm selection cards when farms are loaded', async () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
