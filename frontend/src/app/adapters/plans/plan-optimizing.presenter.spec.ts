@@ -133,4 +133,53 @@ describe('PlanOptimizingPresenter', () => {
 
     expect(onOptimizationCompleted).not.toHaveBeenCalled();
   });
+
+  it('ignores stale failed messages after optimization completed', () => {
+    const harness = createView({
+      status: 'completed',
+      progress: 100,
+      phaseMessage: 'Done'
+    });
+    presenter.setView(harness.view);
+
+    presenter.present({
+      status: 'failed',
+      progress: 40,
+      message_key: 'models.cultivation_plan.phase_failed.default'
+    });
+
+    expect(harness.control.status).toBe('completed');
+    expect(harness.control.progress).toBe(100);
+    expect(harness.control.phaseMessage).toBe('Done');
+  });
+
+  it('ignores connection lost after optimization completed', () => {
+    const harness = createView({
+      status: 'completed',
+      progress: 100,
+      phaseMessage: 'Done'
+    });
+    presenter.setView(harness.view);
+
+    presenter.presentConnectionLost();
+
+    expect(harness.control.status).toBe('completed');
+    expect(harness.control.progress).toBe(100);
+    expect(harness.control.phaseMessage).toBe('Done');
+  });
+
+  it('ignores connection lost when progress already reached 100', () => {
+    const harness = createView({
+      status: 'optimizing',
+      progress: 100,
+      phaseMessage: 'Almost done'
+    });
+    presenter.setView(harness.view);
+
+    presenter.presentConnectionLost();
+
+    expect(harness.control.status).toBe('optimizing');
+    expect(harness.control.progress).toBe(100);
+    expect(harness.control.phaseMessage).toBe('Almost done');
+  });
 });

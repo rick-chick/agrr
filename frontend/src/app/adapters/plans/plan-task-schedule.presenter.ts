@@ -264,6 +264,11 @@ export class PlanTaskSchedulePresenter
   }
 
   presentConnectionLost(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const current = this.view.control;
+    if (!current.schedule || current.schedule.plan.task_schedule_sync_state === 'ready') {
+      return;
+    }
     this.onTaskScheduleSync({
       syncState: 'failed',
       syncError: TASK_SCHEDULE_SYNC_ERROR_CONNECTION_LOST,

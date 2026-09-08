@@ -20,7 +20,6 @@ const translationMap = new Map<string, string>([
   ],
   ['models.cultivation_plan.phase_failed.default', '処理に失敗しました'],
   ['models.cultivation_plan.phase_failed.timeout', '処理がタイムアウトしました'],
-  ['public_plans.optimizing.error.title', '計画作成に失敗しました'],
   ['public_plans.optimizing.error.connection_lost', '接続が切断されました。しばらくしてからやり直してください。'],
   [
     'public_plans.optimizing.error.hints.predicting_weather',
@@ -215,6 +214,57 @@ describe('PublicPlanOptimizingPresenter', () => {
 
     expect(lastControl.status).toBe('failed');
     expect(lastControl.phaseMessage).toContain('接続が切断されました');
+    expect(lastControl.failureHint).toBe(
+      '下のボタンから作物を変更するか、最初からやり直してください。'
+    );
+    expect(onCompletedSpy).not.toHaveBeenCalled();
+  });
+
+  it('ignores stale failed messages after optimization completed', () => {
+    presenter.present({
+      status: 'completed',
+      progress: 100,
+      message_key: 'models.cultivation_plan.phases.completed'
+    });
+
+    presenter.present({
+      status: 'failed',
+      progress: 0,
+      message_key: 'models.cultivation_plan.phase_failed.predicting_weather'
+    });
+
+    expect(lastControl.status).toBe('completed');
+    expect(lastControl.progress).toBe(100);
+    expect(lastControl.phaseMessage).toBe('最適化が完了しました');
+    expect(onCompletedSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores connection lost after optimization completed', () => {
+    presenter.present({
+      status: 'completed',
+      progress: 100,
+      message_key: 'models.cultivation_plan.phases.completed'
+    });
+
+    presenter.presentConnectionLost();
+
+    expect(lastControl.status).toBe('completed');
+    expect(lastControl.progress).toBe(100);
+    expect(lastControl.phaseMessage).toBe('最適化が完了しました');
+    expect(onCompletedSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores connection lost when progress already reached 100', () => {
+    presenter.present({
+      status: 'optimizing',
+      progress: 100,
+      message_key: 'models.cultivation_plan.phases.optimizing'
+    });
+
+    presenter.presentConnectionLost();
+
+    expect(lastControl.status).toBe('optimizing');
+    expect(lastControl.progress).toBe(100);
     expect(onCompletedSpy).not.toHaveBeenCalled();
   });
 });

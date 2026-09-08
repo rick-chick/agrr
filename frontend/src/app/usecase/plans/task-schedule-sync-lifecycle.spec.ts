@@ -129,4 +129,36 @@ describe('task-schedule-sync-lifecycle', () => {
     expect(result.syncReloadNonce).toBe(5);
     expect(result.appliedToEntity).toBe(true);
   });
+
+  it('finishTaskScheduleLoad discards stale pending failed when loaded sync is ready', () => {
+    const lifecycle = {
+      ...initialTaskScheduleSyncLifecycleState(),
+      pendingSyncMessage: {
+        syncState: 'failed',
+        syncError: 'plans.task_schedules.sync_errors.connection_lost',
+        syncErrorCropId: null
+      }
+    };
+
+    const result = finishTaskScheduleLoad(lifecycle, 'ready');
+
+    expect(result.pendingMerge).toBeNull();
+    expect(result.regenerating).toBe(false);
+  });
+
+  it('finishTaskScheduleLoad keeps pending failed when loaded sync is still generating', () => {
+    const lifecycle = {
+      ...initialTaskScheduleSyncLifecycleState(),
+      pendingSyncMessage: {
+        syncState: 'failed',
+        syncError: 'plans.task_schedules.sync_errors.connection_lost',
+        syncErrorCropId: null
+      }
+    };
+
+    const result = finishTaskScheduleLoad(lifecycle, 'generating');
+
+    expect(result.pendingMerge).toEqual(lifecycle.pendingSyncMessage);
+    expect(result.regenerating).toBe(false);
+  });
 });
