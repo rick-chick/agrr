@@ -2,6 +2,10 @@
 
 use super::crop_stage_snapshot::CropStageSnapshot;
 
+fn transplant_name_match(name: &str) -> bool {
+    name.contains("定植") || name.contains("植え付")
+}
+
 pub struct StageRoleResolver;
 
 impl StageRoleResolver {
