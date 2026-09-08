@@ -446,6 +446,31 @@ describe('PlanTaskSchedulePresenter task schedule sync', () => {
     expect(view.control.syncReloadNonce).toBe(1);
   });
 
+  it('ignores connection lost before schedule entity is loaded', () => {
+    view.control = { ...view.control, schedule: null, loading: true };
+
+    presenter.presentConnectionLost();
+
+    expect(view.control.schedule).toBeNull();
+    expect(view.control.syncReloadNonce).toBe(0);
+  });
+
+  it('ignores connection lost when sync state is already ready', () => {
+    view.control = {
+      ...view.control,
+      schedule: {
+        ...scheduleWithFields,
+        plan: { ...planInfo, task_schedule_sync_state: 'ready' }
+      }
+    };
+
+    presenter.presentConnectionLost();
+
+    expect(view.control.schedule?.plan.task_schedule_sync_state).toBe('ready');
+    expect(view.control.schedule?.plan.task_schedule_sync_error).toBeNull();
+    expect(view.control.syncReloadNonce).toBe(0);
+  });
+
   it('queues pending sync when schedule is not loaded and merges on present', () => {
     view.control = { ...view.control, schedule: null };
 

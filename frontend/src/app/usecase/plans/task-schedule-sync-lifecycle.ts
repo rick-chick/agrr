@@ -104,7 +104,12 @@ export function finishTaskScheduleLoad(
   toastI18nKey: string | null;
   requestReload: boolean;
 } {
-  const pending = lifecycle.pendingSyncMessage;
+  const pending =
+    lifecycle.pendingSyncMessage &&
+    loadedSyncState === 'ready' &&
+    lifecycle.pendingSyncMessage.syncState !== 'ready'
+      ? null
+      : lifecycle.pendingSyncMessage;
   const nextLifecycle: TaskScheduleSyncLifecycleState = {
     pendingSyncMessage: null,
     regeneratePostInFlight: false,
