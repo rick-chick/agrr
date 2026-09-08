@@ -276,7 +276,10 @@ impl EntryScheduleOptimizationRunnerPort for OptimizeRunner {
         weather_payload: &BTreeMap<String, Value>,
         _farm: &dyn EntryScheduleShowFarm,
     ) -> EntryScheduleWindowResult {
-        let entity = CropEntity::new(crop.id(), crop.name(), None, true).unwrap();
+        let crop_gateway = CropSqliteGateway::new(self.pool.clone());
+        let entity = crop_gateway
+            .find_by_id(crop.id())
+            .unwrap_or_else(|_| CropEntity::new(crop.id(), crop.name(), None, true).unwrap());
         let wrap = CropWrap(entity);
         let crop_gw = SqliteOptimizeCropGateway {
             pool: self.pool.clone(),
