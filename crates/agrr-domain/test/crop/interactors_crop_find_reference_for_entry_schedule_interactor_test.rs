@@ -17,7 +17,7 @@
         fn on_failure(&mut self, _: Error) { self.fail = true; }
     }
     fn ref_crop(region: &str) -> CropEntity {
-        CropEntity { id: 1, user_id: None, organization_id: None, name: "R".into(), variety: None, is_reference: true, area_per_unit: None, revenue_per_area: None, region: Some(region.into()), groups: vec![], created_at: None, updated_at: None }
+        CropEntity { id: 1, user_id: None, organization_id: None, name: "R".into(), variety: None, is_reference: true, area_per_unit: None, revenue_per_area: None, region: Some(region.into()), groups: vec![], cultivation_method: None, created_at: None, updated_at: None }
     }
     struct G(CropEntity);
     impl CropGateway for G {

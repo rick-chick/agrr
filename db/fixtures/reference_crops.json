@@ -86,7 +86,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "ジャガイモ": {
     "name": "ジャガイモ",
@@ -155,7 +156,8 @@
           "required_gdd": 750.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "玉ねぎ": {
     "name": "玉ねぎ",
@@ -224,7 +226,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "キャベツ": {
     "name": "キャベツ",
@@ -313,7 +316,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "ニンジン": {
     "name": "ニンジン",
@@ -382,7 +386,8 @@
           "required_gdd": 500.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "レタス": {
     "name": "レタス",
@@ -471,7 +476,8 @@
           "required_gdd": 200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "ほうれん草": {
     "name": "ほうれん草",
@@ -540,7 +546,8 @@
           "required_gdd": 500.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "ナス": {
     "name": "ナス",
@@ -629,7 +636,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "キュウリ": {
     "name": "キュウリ",
@@ -718,7 +726,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "ピーマン": {
     "name": "ピーマン",
@@ -807,7 +816,8 @@
           "required_gdd": 1000.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "大根": {
     "name": "大根",
@@ -876,7 +886,8 @@
           "required_gdd": 300.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "ブロッコリー": {
     "name": "ブロッコリー",
@@ -965,7 +976,8 @@
           "required_gdd": 300.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "白菜": {
     "name": "白菜",
@@ -1054,7 +1066,8 @@
           "required_gdd": 300.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "とうもろこし": {
     "name": "とうもろこし",
@@ -1143,7 +1156,8 @@
           "required_gdd": 300.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "かぼちゃ": {
     "name": "かぼちゃ",
@@ -1212,6 +1226,7 @@
           "required_gdd": 600.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   }
 }

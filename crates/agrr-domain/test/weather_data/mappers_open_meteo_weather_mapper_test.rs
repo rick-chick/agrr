@@ -1,6 +1,46 @@
 // Tests for `mappers/open_meteo_weather_mapper.rs` (Ruby parity under test/domain/weather_data/).
 
+    use serde_json::json;
     use time::{Date, Month};
+
+    #[test]
+    fn from_agrr_daily_json_parses_weather_data() {
+        let daily = json!({
+            "time": "2025-01-15",
+            "temperature_2m_max": 20.0,
+            "temperature_2m_min": 10.0,
+            "temperature_2m_mean": 15.0,
+            "precipitation_sum": 2.5,
+            "sunshine_hours": 6.0,
+            "wind_speed_10m": 3.0,
+            "weather_code": 0
+        });
+
+        let result = OpenMeteoWeatherMapper::from_agrr_daily_json(&daily);
+
+        assert_eq!(
+            result,
+            Some(WeatherData::new(
+                Date::from_calendar_date(2025, Month::January, 15).expect("valid"),
+                Some(20.0),
+                Some(10.0),
+                Some(15.0),
+                Some(2.5),
+                Some(6.0),
+                Some(3.0),
+                Some(0),
+            ))
+        );
+    }
+
+    #[test]
+    fn from_agrr_daily_json_returns_none_without_time() {
+        let daily = json!({
+            "temperature_2m_max": 20.0
+        });
+
+        assert_eq!(OpenMeteoWeatherMapper::from_agrr_daily_json(&daily), None);
+    }
 
     #[test]
     fn format_for_agrr_builds_agrr_hash() {

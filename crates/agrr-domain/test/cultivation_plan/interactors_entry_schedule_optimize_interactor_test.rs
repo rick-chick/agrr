@@ -1,5 +1,6 @@
 // Tests for `interactors/entry_schedule_optimize_interactor.rs` (Ruby parity under test/domain/cultivation_plan/).
 
+    use crate::crop::entities::CropCultivationMethod;
     use crate::cultivation_plan::interactors::entry_schedule::crop_stage_snapshot::CropStageSnapshot;
     use crate::cultivation_plan::interactors::entry_schedule::temperature_requirement_snapshot::TemperatureRequirementSnapshot;
     
@@ -11,6 +12,7 @@
         id: i64,
         name: String,
         variety: Option<String>,
+        cultivation_method: Option<CropCultivationMethod>,
     }
 
     impl CropAgrrRequirementSource for TestCrop {}
@@ -23,6 +25,18 @@
         }
         fn crop_variety(&self) -> Option<&str> {
             self.variety.as_deref()
+        }
+        fn cultivation_method(&self) -> Option<CropCultivationMethod> {
+            self.cultivation_method
+        }
+    }
+
+    fn test_crop(id: i64, name: &str, variety: Option<&str>, method: Option<CropCultivationMethod>) -> TestCrop {
+        TestCrop {
+            id,
+            name: name.into(),
+            variety: variety.map(str::to_string),
+            cultivation_method: method,
         }
     }
 
@@ -116,11 +130,7 @@
     // Ruby: test "returns disabled result when agrr is not enabled"
     #[test]
     fn returns_disabled_result_when_agrr_is_not_enabled() {
-        let crop = TestCrop {
-            id: 1,
-            name: "トマト".into(),
-            variety: Some("general".into()),
-        };
+        let crop = test_crop(1, "トマト", Some("general"), None);
         let crop_gateway = StubCropGateway { rows: vec![] };
         let optimization_gateway = StubOptimizationGateway {
             outcome: StubOptimizeOutcome::Ok(json!({})),
@@ -150,11 +160,7 @@
     // Ruby: test "evaluation_range intersects last-june through next-june with weather dates"
     #[test]
     fn evaluation_range_intersects_weather_dates() {
-        let crop = TestCrop {
-            id: 1,
-            name: "トマト".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "トマト", None, None);
         let crop_gateway = StubCropGateway { rows: vec![] };
         let optimization_gateway = StubOptimizationGateway {
             outcome: StubOptimizeOutcome::Ok(json!({})),
@@ -181,11 +187,7 @@
     // Ruby: test "evaluation_range returns None when weather dates do not overlap ideal window"
     #[test]
     fn evaluation_range_returns_none_when_weather_dates_do_not_overlap_ideal_window() {
-        let crop = TestCrop {
-            id: 1,
-            name: "トマト".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "トマト", None, None);
         let crop_gateway = StubCropGateway { rows: vec![] };
         let optimization_gateway = StubOptimizationGateway {
             outcome: StubOptimizeOutcome::Ok(json!({})),
@@ -224,13 +226,11 @@
     // Ruby: test "scales crop requirement via EntryScheduleStageGddScaler before optimize_period"
     #[test]
     fn scales_crop_requirement_before_optimize_period() {
-        let crop = TestCrop {
-            id: 1,
-            name: "トマト".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "トマト", None, Some(CropCultivationMethod::DirectSow));
         let captured = Arc::new(Mutex::new(None));
-        let crop_gateway = StubCropGateway { rows: vec![] };
+        let crop_gateway = StubCropGateway {
+            rows: direct_sow_stages(),
+        };
         let optimization_gateway = StubOptimizationGateway {
             outcome: StubOptimizeOutcome::Ok(json!({
                 "start_date": "2026-05-01",
@@ -296,11 +296,7 @@
     // Ruby: test "does not fall back to temperature windows when optimize fails"
     #[test]
     fn does_not_fall_back_to_temperature_windows_when_optimize_fails() {
-        let crop = TestCrop {
-            id: 1,
-            name: "かぼちゃ".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "かぼちゃ", None, None);
         let crop_gateway = StubCropGateway {
             rows: sowing_transplant_stages(),
         };
@@ -341,11 +337,7 @@
     // Ruby: test "maps agrr optimize period response with optimal_start_date to eligible result"
     #[test]
     fn maps_agrr_optimize_period_response_with_optimal_start_date() {
-        let crop = TestCrop {
-            id: 1,
-            name: "Almonds".into(),
-            variety: Some("Nonpareil".into()),
-        };
+        let crop = test_crop(1, "Almonds", Some("Nonpareil"), Some(CropCultivationMethod::Transplant));
         let crop_gateway = StubCropGateway {
             rows: sowing_transplant_stages(),
         };
@@ -400,6 +392,96 @@
         assert_eq!(result.transplant_stage_id, Some(2));
     }
 
+    fn us_transplant_stages() -> Vec<CropStageSnapshot> {
+        let tr = TemperatureRequirementSnapshot {
+            frost_threshold: Some(0.0),
+            optimal_min: Some(10.0),
+            optimal_max: Some(30.0),
+            base_temperature: None,
+        };
+        vec![
+            CropStageSnapshot {
+                id: 101,
+                name: "Seedling Stage".into(),
+                order: 1,
+                temperature_requirement: Some(tr.clone()),
+            },
+            CropStageSnapshot {
+                id: 102,
+                name: "Transplanting Stage".into(),
+                order: 2,
+                temperature_requirement: Some(tr),
+            },
+        ]
+    }
+
+    #[test]
+    fn maps_optimize_period_to_transplant_only_for_us_transplant_crop() {
+        let crop = test_crop(1, "Bell Peppers", None, Some(CropCultivationMethod::Transplant));
+        let crop_gateway = StubCropGateway {
+            rows: us_transplant_stages(),
+        };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(result.eligible);
+        assert!(result.sowing_windows.is_empty());
+        assert_eq!(result.transplant_windows.len(), 1);
+        assert_eq!(result.transplant_stage_id, Some(102));
+    }
+
+    #[test]
+    fn returns_missing_cultivation_method_when_crop_has_no_method() {
+        let crop = test_crop(1, "トマト", None, None);
+        let crop_gateway = StubCropGateway {
+            rows: sowing_transplant_stages(),
+        };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("missing_cultivation_method")
+        );
+    }
+
     fn direct_sow_stages() -> Vec<CropStageSnapshot> {
         let tr = TemperatureRequirementSnapshot {
             frost_threshold: Some(0.0),
@@ -425,11 +507,7 @@
 
     #[test]
     fn maps_optimize_period_to_sowing_only_for_direct_sow_crop() {
-        let crop = TestCrop {
-            id: 1,
-            name: "ほうれん草".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "ほうれん草", None, Some(CropCultivationMethod::DirectSow));
         let crop_gateway = StubCropGateway {
             rows: direct_sow_stages(),
         };
@@ -466,11 +544,7 @@
     // Ruby: test "returns insufficient_weather when payload has no data rows"
     #[test]
     fn returns_insufficient_weather_when_payload_has_no_data_rows() {
-        let crop = TestCrop {
-            id: 1,
-            name: "トマト".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "トマト", None, None);
         let crop_gateway = StubCropGateway { rows: vec![] };
         let optimization_gateway = StubOptimizationGateway {
             outcome: StubOptimizeOutcome::Ok(json!({})),
@@ -501,11 +575,7 @@
     // Ruby: test "returns insufficient_weather when latitude or longitude is missing"
     #[test]
     fn returns_insufficient_weather_when_coordinates_are_missing() {
-        let crop = TestCrop {
-            id: 1,
-            name: "トマト".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "トマト", None, None);
         let crop_gateway = StubCropGateway { rows: vec![] };
         let optimization_gateway = StubOptimizationGateway {
             outcome: StubOptimizeOutcome::Ok(json!({})),
@@ -539,11 +609,7 @@
     // Ruby: test "returns invalid_response when optimize response omits required dates"
     #[test]
     fn returns_invalid_response_when_optimize_dates_are_missing() {
-        let crop = TestCrop {
-            id: 1,
-            name: "トマト".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "トマト", None, None);
         let crop_gateway = StubCropGateway { rows: vec![] };
         let optimization_gateway = StubOptimizationGateway {
             outcome: StubOptimizeOutcome::Ok(json!({ "growth_days": 10 })),
@@ -574,11 +640,7 @@
     // Ruby: test "returns invalid_response when completion_date is before start_date"
     #[test]
     fn returns_invalid_response_when_completion_before_start() {
-        let crop = TestCrop {
-            id: 1,
-            name: "トマト".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "トマト", None, None);
         let crop_gateway = StubCropGateway { rows: vec![] };
         let optimization_gateway = StubOptimizationGateway {
             outcome: StubOptimizeOutcome::Ok(json!({
@@ -611,11 +673,7 @@
     // Ruby: test "maps non-domain optimize errors to crop_requirement_error"
     #[test]
     fn maps_non_domain_optimize_errors_to_crop_requirement_error() {
-        let crop = TestCrop {
-            id: 1,
-            name: "トマト".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "トマト", None, None);
         let crop_gateway = StubCropGateway { rows: vec![] };
         #[derive(Debug)]
         struct GenericErr;
@@ -664,11 +722,7 @@
     // Ruby: test "maps EntryScheduleOptimizationError to failed result"
     #[test]
     fn maps_entry_schedule_optimization_error_to_failed_result() {
-        let crop = TestCrop {
-            id: 1,
-            name: "トマト".into(),
-            variety: None,
-        };
+        let crop = test_crop(1, "トマト", None, None);
         let crop_gateway = StubCropGateway { rows: vec![] };
         let optimization_gateway = StubOptimizationGateway {
             outcome: StubOptimizeOutcome::Err(EntryScheduleOptimizationError::new(

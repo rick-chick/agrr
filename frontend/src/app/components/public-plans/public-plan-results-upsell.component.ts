@@ -75,7 +75,7 @@ import {
                   'public_plans.results.next_steps.completed' | translate
                 }}</span>
               } @else if (stepRoute(step.stepKey); as route) {
-                <a class="btn-secondary public-plan-results-upsell__step-cta" [routerLink]="route">
+                <a class="btn btn-secondary public-plan-results-upsell__step-cta" [routerLink]="route">
                   {{ stepCtaKey(step.stepKey) | translate }}
                 </a>
               } @else if (step.stepKey === 'save') {

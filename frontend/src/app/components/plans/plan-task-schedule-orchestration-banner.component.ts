@@ -19,12 +19,12 @@ import { PlanLearnLoopProgressStripComponent } from './plan-learn-loop-progress-
         </p>
         <app-plan-learn-loop-progress-strip [planId]="planId" />
         @if (showWorkRetryLink) {
-          <a class="btn-secondary learn-orchestration-banner__work-link" [routerLink]="workLink">
+          <a class="btn btn-secondary learn-orchestration-banner__work-link" [routerLink]="workLink">
             {{ 'plans.task_schedules.orchestration.work_retry' | translate }}
           </a>
         }
         @if (showReturnToLearnLink) {
-          <a class="btn-primary learn-orchestration-banner__learn-link" [routerLink]="learnLink">
+          <a class="btn btn-primary learn-orchestration-banner__learn-link" [routerLink]="learnLink">
             {{ 'plans.task_schedules.orchestration.return_to_learn' | translate }}
           </a>
         }

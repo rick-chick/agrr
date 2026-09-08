@@ -28,7 +28,7 @@ import { StartLearnVarianceLearningReoptimizeUseCase } from '../../usecase/plans
         }
         <button
           type="button"
-          class="btn-primary learn-one-click-reoptimize__cta"
+          class="btn btn-primary learn-one-click-reoptimize__cta"
           [disabled]="starting"
           (click)="startReoptimize()"
         >

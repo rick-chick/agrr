@@ -166,7 +166,7 @@ const initialControl: CropStagesViewState = {
                 }
               </ul>
             }
-            <a [routerLink]="planReturnPath" class="btn-secondary crop-stages__return-to-plan">
+            <a [routerLink]="planReturnPath" class="btn btn-secondary crop-stages__return-to-plan">
               {{ returnLabelKey | translate }}
             </a>
           </div>

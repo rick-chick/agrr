@@ -108,7 +108,7 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                 @if (canDismiss(proposal)) {
                   <button
                     type="button"
-                    class="btn-secondary blueprint-timing-adjustment__dismiss"
+                    class="btn btn-secondary blueprint-timing-adjustment__dismiss"
                     (click)="dismissProposal(proposal)"
                   >
                     {{ 'plans.learn.proposal.dismiss' | translate }}
@@ -117,7 +117,7 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                 @if (canApply(proposal)) {
                   <button
                     type="button"
-                    class="btn-secondary blueprint-timing-adjustment__preview"
+                    class="btn btn-secondary blueprint-timing-adjustment__preview"
                     [disabled]="isDryRunning(proposal)"
                     (click)="runDryRunPreview(proposal)"
                   >
@@ -129,7 +129,7 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                   </button>
                   <button
                     type="button"
-                    class="btn-primary blueprint-timing-adjustment__apply"
+                    class="btn btn-primary blueprint-timing-adjustment__apply"
                     [disabled]="isApplying(proposal)"
                     (click)="applyProposal(proposal)"
                   >
@@ -141,7 +141,7 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                   </button>
                   <button
                     type="button"
-                    class="btn-secondary blueprint-timing-adjustment__detail-edit"
+                    class="btn btn-secondary blueprint-timing-adjustment__detail-edit"
                     (click)="openDetailEdit(proposal)"
                   >
                     {{ 'plans.learn.bp_timing_adjustment.detail_edit' | translate }}

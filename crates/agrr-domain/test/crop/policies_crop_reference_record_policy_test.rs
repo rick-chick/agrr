@@ -44,6 +44,7 @@ name: "Tomato".into(),
             revenue_per_area: None,
             region: Some("jp".into()),
             groups: vec![],
+            cultivation_method: None,
             created_at: None,
             updated_at: None,
         };

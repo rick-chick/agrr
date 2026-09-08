@@ -17,15 +17,26 @@ describe('timelineBoundsFromSummaries', () => {
     expect(bounds!.max).toBe(calendarYearJanDecBounds(2027).max);
   });
 
-  it('returns padded range bounds when summaries span multiple years', () => {
+  it('returns padded range bounds when summaries span multiple years without seasonal wrap', () => {
+    const bounds = timelineBoundsFromSummaries([
+      { start_date: '2026-03-01', end_date: '2027-08-31' },
+    ]);
+
+    expect(bounds).not.toBeNull();
+    expect(bounds!.yearLabel).toBe('2026–2027');
+    expect(bounds!.min).toBeLessThan(Date.parse('2026-03-01'));
+    expect(bounds!.max).toBeGreaterThan(Date.parse('2027-08-31'));
+  });
+
+  it('returns jan-dec bounds for cross-year seasonal wrap windows', () => {
     const bounds = timelineBoundsFromSummaries([
       { start_date: '2026-10-10', end_date: '2027-06-30' },
     ]);
 
     expect(bounds).not.toBeNull();
     expect(bounds!.yearLabel).toBe('2026–2027');
-    expect(bounds!.min).toBeLessThan(Date.parse('2026-10-10'));
-    expect(bounds!.max).toBeGreaterThan(Date.parse('2027-06-30'));
+    expect(bounds!.min).toBe(calendarYearJanDecBounds(2026).min);
+    expect(bounds!.max).toBe(calendarYearJanDecBounds(2026).max);
   });
 
   it('returns null when no valid summaries are provided', () => {

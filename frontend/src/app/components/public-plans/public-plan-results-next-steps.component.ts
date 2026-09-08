@@ -50,7 +50,7 @@ export interface PublicPlanResultsNextStep {
             } @else if (step.stepKey === 'save') {
               @if (!isLoggedIn) {
                 <a
-                  class="btn-primary public-plan-results-next-steps__cta public-plan-results-next-steps__cta--primary"
+                  class="btn btn-primary public-plan-results-next-steps__cta"
                   [routerLink]="['/login']"
                   [queryParams]="loginQueryParams"
                 >
@@ -59,7 +59,7 @@ export interface PublicPlanResultsNextStep {
               } @else {
                 <button
                   type="button"
-                  class="btn-primary public-plan-results-next-steps__cta public-plan-results-next-steps__cta--primary"
+                  class="btn btn-primary public-plan-results-next-steps__cta"
                   (click)="saveRequest.emit()"
                 >
                   {{ 'public_plans.results.next_steps.cta.save' | translate }}
@@ -67,7 +67,7 @@ export interface PublicPlanResultsNextStep {
               }
             } @else if (step.commands) {
               <a
-                class="btn-secondary public-plan-results-next-steps__cta"
+                class="btn btn-secondary public-plan-results-next-steps__cta"
                 [routerLink]="step.commands"
               >
                 {{ ctaKey(step.stepKey) | translate }}

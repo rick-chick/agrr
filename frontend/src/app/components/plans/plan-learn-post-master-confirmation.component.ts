@@ -53,7 +53,7 @@ import { buildPlanDetailAdjustNavigation } from '../../domain/plans/learn-master
           }
         </dl>
         <a
-          class="btn-primary learn-post-master__cta"
+          class="btn btn-primary learn-post-master__cta"
           [routerLink]="workbenchLink.commands"
           [queryParams]="workbenchLink.queryParams"
         >

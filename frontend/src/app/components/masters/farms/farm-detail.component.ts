@@ -137,7 +137,9 @@ const initialControl: FarmDetailViewState = {
           [farmId]="control.farm.id"
           [weatherStatus]="control.farm.weather_data_status"
           [weatherProgress]="control.farm.weather_data_progress"
+          [weatherRefetching]="weatherFetchRetrying"
           [(selectedPeriod)]="chartSelectedPeriod"
+          (weatherRefetch)="retryWeatherFetch()"
         />
 
         <section class="section-card" aria-labelledby="fields-heading">

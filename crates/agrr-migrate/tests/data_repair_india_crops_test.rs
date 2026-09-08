@@ -56,6 +56,17 @@ fn data_repair_india_reference_crops_restores_stages_from_fixture() {
         cotton_stages >= 3,
         "cotton reference crop should have growth stages"
     );
+
+    let without_method = count_query(
+        &conn,
+        "SELECT COUNT(*) FROM crops
+         WHERE region = 'in' AND is_reference = 1 AND cultivation_method IS NULL",
+    );
+    assert_eq!(
+        0,
+        without_method,
+        "every in reference crop must have cultivation_method after repair"
+    );
 }
 
 #[test]

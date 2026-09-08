@@ -5,6 +5,11 @@ import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { EntryScheduleFarmCropsComponent } from './entry-schedule-farm-crops.component';
 import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
+import { LoadEntryScheduleCropsUseCase } from '../../usecase/entry-schedule/load-entry-schedule-crops.usecase';
+import { ResolveEntryScheduleFarmUseCase } from '../../usecase/entry-schedule/resolve-entry-schedule-farm.usecase';
+import { EntryScheduleFarmCropsPresenter } from '../../adapters/entry-schedule/entry-schedule-farm-crops.presenter';
+import { LOAD_ENTRY_SCHEDULE_CROPS_OUTPUT_PORT } from '../../usecase/entry-schedule/load-entry-schedule-crops.output-port';
+import { RESOLVE_ENTRY_SCHEDULE_FARM_OUTPUT_PORT } from '../../usecase/entry-schedule/resolve-entry-schedule-farm.output-port';
 import { FlashMessageService } from '../../services/flash-message.service';
 import type { Farm } from '../../domain/farms/farm';
 import type { EntryScheduleCropListItem } from '../../domain/entry-schedule/entry-schedule';
@@ -50,16 +55,29 @@ describe('EntryScheduleFarmCropsComponent', () => {
             },
           },
         },
-        {
-          provide: ENTRY_SCHEDULE_GATEWAY,
-          useValue: {
-            getEntryScheduleFarms,
-            getEntryScheduleCrops,
-          },
-        },
         { provide: FlashMessageService, useValue: flash },
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(EntryScheduleFarmCropsComponent, {
+        set: {
+          providers: [
+            EntryScheduleFarmCropsPresenter,
+            LoadEntryScheduleCropsUseCase,
+            ResolveEntryScheduleFarmUseCase,
+            { provide: LOAD_ENTRY_SCHEDULE_CROPS_OUTPUT_PORT, useExisting: EntryScheduleFarmCropsPresenter },
+            { provide: RESOLVE_ENTRY_SCHEDULE_FARM_OUTPUT_PORT, useExisting: EntryScheduleFarmCropsPresenter },
+            {
+              provide: ENTRY_SCHEDULE_GATEWAY,
+              useValue: {
+                getEntryScheduleFarms,
+                getEntryScheduleCrops,
+                getEntryScheduleCrop: vi.fn(),
+              },
+            },
+          ],
+        },
+      })
+      .compileComponents();
 
     router = TestBed.inject(Router);
     fixture = TestBed.createComponent(EntryScheduleFarmCropsComponent);
@@ -158,8 +176,15 @@ describe('EntryScheduleFarmCropsComponent', () => {
       },
     ]);
 
-    expect(fixture.nativeElement.querySelector('.funnel-shell-header--wizard')).toBeTruthy();
+    const shell = fixture.nativeElement.querySelector('.funnel-shell-header--wizard');
+    expect(shell).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.funnel-shell-description')).toBeNull();
+
+    const farmLink = fixture.nativeElement.querySelector('a.step-label-link') as HTMLAnchorElement;
+    expect(farmLink?.getAttribute('href')).toBe('/entry-schedule');
+
+    const activeStep = fixture.nativeElement.querySelector('.compact-step.active .step-label');
+    expect(activeStep?.textContent?.trim()).toBe('Crop');
   });
 
   it('renders breadcrumb and selected farm summary card', async () => {

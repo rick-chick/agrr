@@ -115,7 +115,7 @@ smokeDescribe('public plan create flow (free plan)', () => {
     expect(planId).toBeTruthy();
     test.info().attach('planId', { body: planId ?? '', contentType: 'text/plain' });
 
-    await expect(page.locator('app-public-plan-optimizing .error-message-container')).toBeHidden({
+    await expect(page.locator('app-public-plan-optimizing .public-plan-optimizing__error')).toBeHidden({
       timeout: 5_000,
     });
 
@@ -125,7 +125,7 @@ smokeDescribe('public plan create flow (free plan)', () => {
     } catch {
       const dbStatus = planId ? await fetchPublicPlanStatus(planId) : '';
       if (dbStatus === 'failed') {
-        await expect(page.locator('app-public-plan-optimizing .error-message-container')).toBeVisible();
+        await expect(page.locator('app-public-plan-optimizing .public-plan-optimizing__error')).toBeVisible();
         throw new Error(`Rust optimization failed for planId=${planId} (see rust.log)`);
       }
       if (dbStatus === 'pending' || dbStatus === 'optimizing') {
