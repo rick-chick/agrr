@@ -964,7 +964,7 @@
   }
 
   .fixed-progress-bar .progress-duration-hint {
-    font-size: 0.65rem;
+    font-size: var(--font-size-xs);
   }
 
   .fixed-progress-bar .progress-elapsed-time {

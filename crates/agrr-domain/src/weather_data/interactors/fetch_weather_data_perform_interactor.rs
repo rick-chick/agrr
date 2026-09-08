@@ -13,7 +13,7 @@ use crate::weather_data::ports::{
     FetchWeatherAdvancePhasePort, FetchWeatherDataJobPresenterPort, FetchWeatherPhase,
     RecordFarmWeatherBlockCompletedPort,
 };
-use crate::weather_data::policies::MINIMUM_TRAINING_DAYS;
+use crate::weather_data::policies::IncompleteGapFillContinuePolicy;
 
 const SUFFICIENT_DATA_RATIO: f64 = 0.8;
 const ALLOWED_MISSING_RATIO: f64 = 0.05;
@@ -299,14 +299,15 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
             .latest_date(location.id)
             .ok()
             .flatten();
-        if !latest_date.is_some_and(|latest| latest < end_date) {
-            return false;
-        }
         let baseline_count = self
             .weather_data_gateway
             .weather_data_count(location.id, None, None)
             .unwrap_or(0);
-        baseline_count >= MINIMUM_TRAINING_DAYS
+        IncompleteGapFillContinuePolicy::should_continue(
+            latest_date,
+            end_date,
+            baseline_count,
+        )
     }
 
     fn existing_data_covers_block_end(

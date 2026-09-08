@@ -197,6 +197,9 @@ mod tests {
         assert!(request_time_recoverable(&AgrrDaemonError::Io(
             std::io::Error::from_raw_os_error(11)
         )));
+        assert!(request_time_recoverable(&AgrrDaemonError::Io(
+            std::io::Error::from(std::io::ErrorKind::Interrupted)
+        )));
         assert!(!request_time_recoverable(&AgrrDaemonError::CommandFailed(
             "exit 1".into()
         )));

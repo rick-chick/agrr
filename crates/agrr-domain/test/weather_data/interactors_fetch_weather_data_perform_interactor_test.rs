@@ -12,11 +12,14 @@ use serde_json::json;
 
     struct MockPresenter {
         errors: Arc<Mutex<Vec<String>>>,
+        warns: Arc<Mutex<Vec<String>>>,
     }
 
     impl FetchWeatherDataJobPresenterPort for MockPresenter {
         fn info(&self, _: &str) {}
-        fn warn(&self, _: &str) {}
+        fn warn(&self, message: &str) {
+            self.warns.lock().expect("lock").push(message.to_string());
+        }
         fn error(&self, message: &str) {
             self.errors.lock().expect("lock").push(message.to_string());
         }
@@ -307,6 +310,7 @@ use serde_json::json;
                 },
                 presenter: MockPresenter {
                     errors: Arc::new(Mutex::new(vec![])),
+                    warns: Arc::new(Mutex::new(vec![])),
                 },
                 location_updates,
             }
@@ -615,11 +619,12 @@ use serde_json::json;
             },
             "data": [weather_point(30)]
         });
+        let upsert_called = Arc::new(Mutex::new(false));
         let harness = PerformHarness::with_latest_date(
             Some(WeatherLocationRecord { id: 30 }),
             9681,
             Some(Date::from_calendar_date(2026, Month::July, 4).expect("valid")),
-            Arc::new(Mutex::new(false)),
+            upsert_called.clone(),
             Some("jp".into()),
             false,
             Some(insufficient),
@@ -633,6 +638,15 @@ use serde_json::json;
         input.end_date = Date::from_calendar_date(2026, Month::September, 6).expect("valid");
 
         harness.interactor().call(input).expect("baseline gap-fill continues");
+        assert!(
+            !*upsert_called.lock().expect("lock"),
+            "continue path must not upsert incomplete gap-fill data"
+        );
+        let warns = harness.presenter.warns.lock().expect("lock");
+        assert!(
+            warns.iter().any(|m| m.contains("gap-fill weather incomplete")),
+            "expected gap-fill incomplete warn, got: {warns:?}"
+        );
     }
 
     #[test]

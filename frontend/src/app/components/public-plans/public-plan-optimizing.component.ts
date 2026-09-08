@@ -177,11 +177,6 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
     return this._control;
   }
   set control(value: PublicPlanOptimizingViewState) {
-    // #region agent log
-    if (value.status === 'failed' || this._control.status !== value.status) {
-      fetch('http://127.0.0.1:7574/ingest/1a9a8f63-325d-45db-8a49-802bbacaab8a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7aaae6'},body:JSON.stringify({sessionId:'7aaae6',location:'public-plan-optimizing.component.ts:control',message:'view state update',data:{prevStatus:this._control.status,nextStatus:value.status,progress:value.progress,phaseMessage:value.phaseMessage},timestamp:Date.now(),hypothesisId:'A',runId:'pre-fix'})}).catch(()=>{});
-    }
-    // #endregion
     this._control = value;
     this.cdr.markForCheck();
   }
