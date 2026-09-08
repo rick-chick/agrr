@@ -60,8 +60,8 @@ describe('PublicPlanOptimizingComponent', () => {
     translate.setTranslation(
       'ja',
       {
-        'public_plans.title': '無料作付け計画',
-        'public_plans.breadcrumb_root': '新規',
+        'public_plans.title': '作付け計画を作成',
+        'public_plans.breadcrumb_root': '作付け計画を作成',
         'public_plans.optimizing.breadcrumb': '最適化中',
         'public_plans.optimizing.status_badge_failed': '作成失敗',
         'public_plans.optimizing.crops_count': '{{count}}種類の作物',

@@ -35,93 +35,65 @@
   display: none;
 }
 
+.plan-list__card {
+  align-items: center;
+}
+
+.plan-list__card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.plan-list__card-title {
+  margin-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
 .plan-list__gap-summary {
   display: block;
-  margin-top: var(--space-1);
+  min-height: 1.25rem;
+  margin-top: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.plan-list__farm-group + .plan-list__farm-group {
-  margin-top: var(--space-5);
-}
-
-.plan-list__farm-group-header {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
-}
-
-.plan-list__farm-group-heading {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.plan-list__farm-group-accordion-btn {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.plan-list__farm-group-accordion-btn:hover .plan-list__farm-group-title {
-  color: var(--color-primary);
-}
-
-.plan-list__farm-group-accordion-btn:focus-visible {
-  outline: var(--focus-outline);
-  outline-offset: var(--focus-outline-offset);
-  border-radius: var(--radius-sm);
-}
-
-.plan-list__farm-group-chevron {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.75rem;
-  min-height: 1.75rem;
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-sm);
-  background: var(--color-gray-50);
-  color: var(--color-text-secondary);
-  font-size: 0.75rem;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.plan-list__farm-group-plan-count {
+.plan-list__custom-plan-name {
+  display: block;
+  min-height: 1.25rem;
+  margin-top: 0;
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-normal);
   color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.plan-list__farm-group-title {
-  margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+.plan-list__card-actions {
+  flex-wrap: nowrap;
+  gap: var(--space-2);
 }
 
 .plan-list__plan-meta {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--space-2);
-  margin-top: var(--space-1);
+  min-height: 1.25rem;
+  margin-top: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .plan-list__plan-status {

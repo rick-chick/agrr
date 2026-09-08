@@ -32,11 +32,6 @@ export type LayoutInvariantSnapshot = {
       height: number;
     }>;
   }>;
-  farmGroupHeaderOverlaps: Array<{
-    farmTitle: string;
-    pair: [number, number];
-    labels: [string, string];
-  }>;
 };
 
 /** Collect layout signals from the live DOM (browser context). */
@@ -117,37 +112,6 @@ export async function collectLayoutInvariantSnapshot(
       });
     }
 
-    const farmGroupHeaderOverlaps: LayoutInvariantSnapshot['farmGroupHeaderOverlaps'] = [];
-    for (const header of root.querySelectorAll('.plan-list__farm-group-header')) {
-      const interactives = [
-        ...header.querySelectorAll('button, a.btn, a.btn-link, a.btn-primary, a.btn-secondary'),
-      ].filter((el) => {
-        const rect = el.getBoundingClientRect();
-        const style = window.getComputedStyle(el);
-        return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
-      });
-      const rects = interactives.map((el) => el.getBoundingClientRect());
-      const labels = interactives.map((el) => el.textContent?.trim() || '(control)');
-      const farmTitle =
-        header.querySelector('.plan-list__farm-group-title')?.textContent?.trim() || '(farm group)';
-      for (let i = 0; i < rects.length; i++) {
-        for (let j = i + 1; j < rects.length; j++) {
-          const xOverlap = Math.max(0, Math.min(rects[i].right, rects[j].right) - Math.max(rects[i].left, rects[j].left));
-          const yOverlap = Math.max(
-            0,
-            Math.min(rects[i].bottom, rects[j].bottom) - Math.max(rects[i].top, rects[j].top),
-          );
-          if (xOverlap * yOverlap >= 16) {
-            farmGroupHeaderOverlaps.push({
-              farmTitle,
-              pair: [i, j],
-              labels: [labels[i], labels[j]],
-            });
-          }
-        }
-      }
-    }
-
     return {
       viewportWidth: window.innerWidth,
       scrollWidth: doc.scrollWidth,
@@ -155,7 +119,6 @@ export async function collectLayoutInvariantSnapshot(
       visibleMasterLoadingCount,
       levelOneHeadingVisible,
       itemCardActionGroups,
-      farmGroupHeaderOverlaps,
     };
   }, hostSelector ?? null);
 }
@@ -199,9 +162,4 @@ export async function assertPageLayoutInvariants(
       `overlapping action buttons in "${group.title}": ${JSON.stringify(overlaps)} labels=${group.buttonLabels.join(', ')}`,
     ).toEqual([]);
   }
-
-  expect(
-    snapshot.farmGroupHeaderOverlaps,
-    `overlapping farm group header controls: ${JSON.stringify(snapshot.farmGroupHeaderOverlaps)}`,
-  ).toEqual([]);
 }

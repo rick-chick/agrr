@@ -1,7 +1,7 @@
-import { Component, OnInit, inject, ChangeDetectorRef, ElementRef, ViewChild, signal, HostListener } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { PlanListView, PlanListViewState } from './plan-list.view';
 import { LoadPlanListUseCase } from '../../usecase/plans/load-plan-list.usecase';
@@ -12,8 +12,12 @@ import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingUndoToastViewEffects } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { applyPendingErrorFlashViewEffects } from '../../core/view-effects/pending-error-flash-view.effects';
 import { CardListSkeletonComponent } from '../shared/skeleton/card-list-skeleton.component';
-import { buildPlanListFarmGroups } from '../../domain/plans/build-plan-list-farm-groups';
-import type { PlanListFarmGroup } from '../../domain/plans/plan-list-farm-group';
+import {
+  planListCardTitle,
+  shouldShowCustomPlanName,
+  sortPlansForList
+} from '../../domain/plans/plan-list-display';
+import type { PlanListPlan } from '../../domain/plans/plan-list-plan';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 
 const initialControl: PlanListViewState = {
@@ -72,165 +76,130 @@ const initialControl: PlanListViewState = {
           <div class="section-card__header-actions">
             <a routerLink="/plans/new" class="btn btn-primary">{{ 'plans.index.new_plan' | translate }}</a>
           </div>
-          @for (group of farmGroups(); track group.farmId) {
-            <section class="plan-list__farm-group" [attr.aria-labelledby]="'plan-list-farm-' + group.farmId">
-              <header class="plan-list__farm-group-header">
-                <div class="plan-list__farm-group-heading">
-                  @if (showFarmGroupToggle()) {
-                    <button
-                      type="button"
-                      class="plan-list__farm-group-accordion-btn"
-                      (click)="toggleFarmGroup(group.farmId)"
-                      [attr.aria-expanded]="isFarmGroupExpanded(group.farmId)"
-                      [attr.aria-controls]="'plan-list-farm-plans-' + group.farmId"
-                      [attr.aria-label]="
-                        (isFarmGroupExpanded(group.farmId)
-                          ? 'plans.index.farm_group.collapse'
-                          : 'plans.index.farm_group.expand') | translate
-                      "
-                    >
-                      <span class="plan-list__farm-group-chevron" aria-hidden="true">
-                        {{ isFarmGroupExpanded(group.farmId) ? '▼' : '▶' }}
-                      </span>
-                      <h2 id="plan-list-farm-{{ group.farmId }}" class="plan-list__farm-group-title">
-                        {{ group.farmName }}
-                      </h2>
-                      @if (!isFarmGroupExpanded(group.farmId)) {
-                        <span class="plan-list__farm-group-plan-count">
-                          {{
-                            'plans.index.farm_group.plan_count'
-                              | translate: { count: group.plans.length }
-                          }}
+          <ul class="card-list" role="list">
+            @for (plan of sortedPlans(); track plan.id) {
+              <li class="card-list__item">
+                <article class="item-card plan-list__card">
+                  <a
+                    [routerLink]="['/plans', plan.id]"
+                    class="item-card__body plan-list__card-body"
+                    [attr.title]="cardTitle(plan)"
+                  >
+                    <span class="item-card__title plan-list__card-title">{{ cardTitle(plan) }}</span>
+                    <span class="plan-list__plan-meta">
+                      @if (plan.plan_year != null) {
+                        <span class="plan-list__plan-year">
+                          {{ 'plans.index.year_label' | translate: { year: plan.plan_year } }}
                         </span>
                       }
-                    </button>
-                  } @else {
-                    <h2 id="plan-list-farm-{{ group.farmId }}" class="plan-list__farm-group-title">
-                      {{ group.farmName }}
-                    </h2>
-                  }
-                </div>
-                <a
-                  class="btn btn-secondary plan-list__variance-link"
-                  routerLink="/work/variance"
-                  [queryParams]="{ farm_id: group.farmId }"
-                >
-                  {{ 'plans.index.farm_group.compare_variance' | translate }}
-                </a>
-              </header>
-              @if (isFarmGroupExpanded(group.farmId)) {
-                <ul
-                  id="plan-list-farm-plans-{{ group.farmId }}"
-                  class="card-list"
-                  role="list"
-                >
-                  @for (plan of group.plans; track plan.id) {
-                    <li class="card-list__item">
-                      <article class="item-card">
-                        <a [routerLink]="['/plans', plan.id]" class="item-card__body">
-                          <span class="item-card__title">{{ plan.name | planDisplayName }}</span>
-                          <span class="plan-list__plan-meta">
-                            @if (plan.plan_year != null) {
-                              <span class="plan-list__plan-year">
-                                {{ 'plans.index.year_label' | translate: { year: plan.plan_year } }}
-                              </span>
-                            }
-                            @if (plan.status) {
-                              <span class="plan-list__plan-status">
-                                {{ planStatusKey(plan.status) | translate }}
-                              </span>
-                            }
-                          </span>
-                          @if (plan.inputGap) {
-                            <span class="plan-list__gap-summary">
-                              {{
-                                'plans.index.input_gap.unrecorded_summary'
-                                  | translate: { count: plan.inputGap.unrecordedCount }
-                              }}
-                              ·
-                              {{
-                                'plans.index.input_gap.action_required_summary'
-                                  | translate: { count: plan.inputGap.actionRequiredCount }
-                              }}
-                              @if (plan.inputGap.amountVarianceCount > 0) {
-                                ·
-                                {{
-                                  'plans.index.input_gap.amount_variance_summary'
-                                    | translate: { count: plan.inputGap.amountVarianceCount }
-                                }}
-                              }
-                            </span>
-                          }
-                        </a>
-                        <div class="item-card__actions">
-                          <div class="plan-overflow-menu" data-testid="plan-overflow-menu">
-                            <button
-                              type="button"
-                              class="btn btn-secondary btn-sm plan-overflow-menu__trigger"
-                              data-testid="plan-overflow-menu-trigger"
-                              [attr.aria-expanded]="openMenuPlanId === plan.id"
-                              [attr.aria-controls]="overflowMenuPanelId(plan.id)"
-                              aria-haspopup="menu"
-                              [attr.aria-label]="'plans.index.menu.more_actions' | translate"
-                              (click)="toggleOverflowMenu(plan.id, $event)"
-                            >
-                              <svg class="plan-overflow-menu__icon" viewBox="0 0 24 24" aria-hidden="true">
-                                <path
-                                  fill="currentColor"
-                                  d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-                                />
-                              </svg>
-                            </button>
-                            @if (openMenuPlanId === plan.id) {
-                              <div
-                                class="plan-overflow-menu__panel"
-                                [id]="overflowMenuPanelId(plan.id)"
-                                role="menu"
-                                data-testid="plan-overflow-menu-panel"
-                              >
-                                <a
-                                  [routerLink]="['/plans', plan.id, 'work']"
-                                  class="plan-overflow-menu__item plan-list__work-link"
-                                  role="menuitem"
-                                  (click)="closeOverflowMenu()"
-                                >
-                                  {{ 'plans.index.input_gap.work_link' | translate }}
-                                </a>
-                                <a
-                                  [routerLink]="['/plans', plan.id, 'learn']"
-                                  class="plan-overflow-menu__item plan-list__learn-link"
-                                  role="menuitem"
-                                  (click)="closeOverflowMenu()"
-                                >
-                                  {{ 'plans.index.input_gap.learn_link' | translate }}
-                                </a>
-                                <a
-                                  [routerLink]="['/plans', plan.id]"
-                                  class="plan-overflow-menu__item plan-list__show-link"
-                                  role="menuitem"
-                                  (click)="closeOverflowMenu()"
-                                >
-                                  {{ 'common.show' | translate }}
-                                </a>
-                                <button
-                                  type="button"
-                                  class="plan-overflow-menu__item plan-overflow-menu__item--danger"
-                                  role="menuitem"
-                                  (click)="deletePlanFromMenu(plan.id)"
-                                >
-                                  {{ 'common.delete' | translate }}
-                                </button>
-                              </div>
-                            }
-                          </div>
+                      @if (plan.status) {
+                        <span class="plan-list__plan-status">
+                          {{ planStatusKey(plan.status) | translate }}
+                        </span>
+                      }
+                    </span>
+                    <span class="plan-list__gap-summary">
+                      @if (plan.inputGap) {
+                        {{
+                          'plans.index.input_gap.unrecorded_summary'
+                            | translate: { count: plan.inputGap.unrecordedCount }
+                        }}
+                        ·
+                        {{
+                          'plans.index.input_gap.action_required_summary'
+                            | translate: { count: plan.inputGap.actionRequiredCount }
+                        }}
+                        @if (plan.inputGap.amountVarianceCount > 0) {
+                          ·
+                          {{
+                            'plans.index.input_gap.amount_variance_summary'
+                              | translate: { count: plan.inputGap.amountVarianceCount }
+                          }}
+                        }
+                      }
+                    </span>
+                    <span class="plan-list__custom-plan-name">
+                      @if (showCustomPlanName(plan)) {
+                        {{
+                          'plans.index.custom_plan_name'
+                            | translate: { name: plan.name | planDisplayName }
+                        }}
+                      }
+                    </span>
+                  </a>
+                  <div class="item-card__actions plan-list__card-actions">
+                    <a
+                      class="btn btn-secondary btn-sm plan-list__variance-link"
+                      routerLink="/work/variance"
+                      [queryParams]="{ farm_id: plan.farm_id }"
+                    >
+                      {{ 'plans.index.compare_variance' | translate }}
+                    </a>
+                    <div class="plan-overflow-menu" data-testid="plan-overflow-menu">
+                      <button
+                        type="button"
+                        class="btn btn-secondary btn-sm plan-overflow-menu__trigger"
+                        data-testid="plan-overflow-menu-trigger"
+                        [attr.aria-expanded]="openMenuPlanId === plan.id"
+                        [attr.aria-controls]="overflowMenuPanelId(plan.id)"
+                        aria-haspopup="menu"
+                        [attr.aria-label]="'plans.index.menu.more_actions' | translate"
+                        (click)="toggleOverflowMenu(plan.id, $event)"
+                      >
+                        <svg class="plan-overflow-menu__icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            fill="currentColor"
+                            d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
+                          />
+                        </svg>
+                      </button>
+                      @if (openMenuPlanId === plan.id) {
+                        <div
+                          class="plan-overflow-menu__panel"
+                          [id]="overflowMenuPanelId(plan.id)"
+                          role="menu"
+                          data-testid="plan-overflow-menu-panel"
+                        >
+                          <a
+                            [routerLink]="['/plans', plan.id, 'work']"
+                            class="plan-overflow-menu__item plan-list__work-link"
+                            role="menuitem"
+                            (click)="closeOverflowMenu()"
+                          >
+                            {{ 'plans.index.input_gap.work_link' | translate }}
+                          </a>
+                          <a
+                            [routerLink]="['/plans', plan.id, 'learn']"
+                            class="plan-overflow-menu__item plan-list__learn-link"
+                            role="menuitem"
+                            (click)="closeOverflowMenu()"
+                          >
+                            {{ 'plans.index.input_gap.learn_link' | translate }}
+                          </a>
+                          <a
+                            [routerLink]="['/plans', plan.id]"
+                            class="plan-overflow-menu__item plan-list__show-link"
+                            role="menuitem"
+                            (click)="closeOverflowMenu()"
+                          >
+                            {{ 'common.show' | translate }}
+                          </a>
+                          <button
+                            type="button"
+                            class="plan-overflow-menu__item plan-overflow-menu__item--danger"
+                            role="menuitem"
+                            (click)="deletePlanFromMenu(plan.id)"
+                          >
+                            {{ 'common.delete' | translate }}
+                          </button>
                         </div>
-                      </article>
-                    </li>
-                  }
-                </ul>
-              }
-            </section>
-          }
+                      }
+                    </div>
+                  </div>
+                </article>
+              </li>
+            }
+          </ul>
         }
       </section>
     </div>
@@ -264,6 +233,7 @@ export class PlanListComponent implements PlanListView, OnInit {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly publicPlanStore = inject(PublicPlanStore);
+  private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
@@ -271,12 +241,15 @@ export class PlanListComponent implements PlanListView, OnInit {
   pendingDeletePlanId: number | null = null;
   openMenuPlanId: number | null = null;
 
+  readonly showCustomPlanName = shouldShowCustomPlanName;
+
+  private sortedPlansCache: PlanListPlan[] | null = null;
+  private sortedPlansSource: PlanListPlan[] | null = null;
+
   get publicPlanHandoffId(): number | null {
     const planId = this.publicPlanStore.state.planId;
     return planId != null && planId > 0 ? planId : null;
   }
-
-  private readonly collapsedFarmGroupIds = signal<ReadonlySet<number>>(new Set());
 
   private _control: PlanListViewState = initialControl;
   get control(): PlanListViewState {
@@ -301,28 +274,21 @@ export class PlanListComponent implements PlanListView, OnInit {
     this.loadUseCase.execute();
   }
 
-  farmGroups(): PlanListFarmGroup[] {
-    return buildPlanListFarmGroups(this.control.plans);
+  sortedPlans(): PlanListPlan[] {
+    const plans = this.control.plans;
+    if (this.sortedPlansSource === plans && this.sortedPlansCache) {
+      return this.sortedPlansCache;
+    }
+    this.sortedPlansSource = plans;
+    this.sortedPlansCache = sortPlansForList(plans);
+    return this.sortedPlansCache;
   }
 
-  showFarmGroupToggle(): boolean {
-    return this.farmGroups().length > 1;
-  }
-
-  isFarmGroupExpanded(farmId: number): boolean {
-    return !this.collapsedFarmGroupIds().has(farmId);
-  }
-
-  toggleFarmGroup(farmId: number): void {
-    this.collapsedFarmGroupIds.update((collapsed) => {
-      const next = new Set(collapsed);
-      if (next.has(farmId)) {
-        next.delete(farmId);
-      } else {
-        next.add(farmId);
-      }
-      return next;
-    });
+  cardTitle(plan: PlanListPlan): string {
+    return planListCardTitle(
+      plan,
+      this.translate.instant('plans.index.farm_fallback', { id: plan.farm_id })
+    );
   }
 
   planStatusKey(status: string): string {

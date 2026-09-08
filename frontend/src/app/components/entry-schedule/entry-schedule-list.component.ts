@@ -38,9 +38,9 @@ const initialControl: EntryScheduleListViewState = {
         <app-funnel-shell
           variant="wizard"
           titleKey="entrySchedule.title"
-          descriptionKey="pages.entry_schedule.description"
           titleIcon="📅"
         >
+          <p class="visually-hidden">{{ 'pages.entry_schedule.description' | translate }}</p>
           <app-entry-schedule-wizard-progress ngProjectAs="[wizardProgress]" activeStep="farm" />
           <section class="content-card" aria-labelledby="entry-schedule-heading">
             <h2 id="entry-schedule-heading" class="visually-hidden">

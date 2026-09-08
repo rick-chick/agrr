@@ -178,6 +178,7 @@ describe('EntryScheduleFarmCropsComponent', () => {
 
     const shell = fixture.nativeElement.querySelector('.funnel-shell-header--wizard');
     expect(shell).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.funnel-shell-description')).toBeNull();
 
     const farmLink = fixture.nativeElement.querySelector('a.step-label-link') as HTMLAnchorElement;
     expect(farmLink?.getAttribute('href')).toBe('/entry-schedule');

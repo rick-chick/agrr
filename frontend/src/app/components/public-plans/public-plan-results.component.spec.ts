@@ -324,8 +324,8 @@ describe('PublicPlanResultsComponent (template)', () => {
     const fixture = TestBed.createComponent(PublicPlanResultsComponent);
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('ja', {
-      'public_plans.title': '計画',
-      'public_plans.breadcrumb_root': '無料作付け計画',
+      'public_plans.title': '作付け計画を作成',
+      'public_plans.breadcrumb_root': '作付け計画を作成',
       'public_plans.results.breadcrumb': '結果',
       'common.api_error.not_found': 'リソースが見つかりません'
     });
@@ -413,8 +413,8 @@ describe('PublicPlanResultsComponent (template)', () => {
     const fixture = TestBed.createComponent(PublicPlanResultsComponent);
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('ja', {
-      'public_plans.title': '計画',
-      'public_plans.breadcrumb_root': '無料作付け計画',
+      'public_plans.title': '作付け計画を作成',
+      'public_plans.breadcrumb_root': '作付け計画を作成',
       'public_plans.results.breadcrumb': '結果',
       'public_plans.results.private_value_preview.toggle_summary': 'ログイン後に使える機能（3）',
       'public_plans.results.private_value_preview.lead': 'マイプランに保存すると利用できます。',

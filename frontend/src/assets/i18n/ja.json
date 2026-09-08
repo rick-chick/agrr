@@ -1886,8 +1886,8 @@
     "messages": {
       "field_removed": "圃場を削除しました。"
     },
-    "title": "計画",
-    "breadcrumb_root": "無料作付け計画",
+    "title": "作付け計画を作成",
+    "breadcrumb_root": "作付け計画を作成",
     "steps": {
       "region": "地域",
       "crop": "作物",
@@ -1914,7 +1914,7 @@
       "error": "計画の保存に失敗しました。"
     },
     "select_farm": {
-      "available_farms": "利用可能な農場"
+      "available_farms": "農場を選択"
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
@@ -2389,7 +2389,7 @@
     },
     "index": {
       "title": "計画一覧",
-      "description": "農場別の計画を管理",
+      "description": "各農場の栽培計画を確認・管理",
       "new_plan": "新しい計画を追加",
       "try_public_plans": "無料プランから始める",
       "no_plans": "まだ計画がありません",
@@ -2403,17 +2403,6 @@
         "completed": "完成",
         "failed": "失敗"
       },
-      "plan_card": {
-        "farm": "農場",
-        "total_area": "総面積",
-        "crops_count": "{{count}}作物",
-        "fields_count": "{{count}}圃場",
-        "view": "詳細を見る",
-        "copy": "次年度にコピー",
-        "delete": "削除",
-        "delete_confirm": "本当にこの計画を削除しますか？この操作は取り消せません。",
-        "created_at": "作成日"
-      },
       "input_gap": {
         "unrecorded_summary": "未記録: {{count}}件",
         "action_required_summary": "要対応: {{count}}件",
@@ -2421,12 +2410,9 @@
         "work_link": "作業を記録",
         "learn_link": "学習を確認"
       },
-      "farm_group": {
-        "expand": "展開",
-        "collapse": "折りたたむ",
-        "compare_variance": "乖離を比較",
-        "plan_count": "{{count}}件"
-      },
+      "compare_variance": "乖離を比較",
+      "custom_plan_name": "計画名: {{name}}",
+      "farm_fallback": "農場 #{{id}}",
       "menu": {
         "more_actions": "その他の操作"
       },
@@ -2437,7 +2423,7 @@
       "breadcrumb": "新規作成",
       "title": "📅 農場を選択してください",
       "subtitle": "計画を作成する農場を選択してください",
-      "plan_name_label": "計画名（将来的に複数計画を管理できます）",
+      "plan_name_label": "計画名（任意）",
       "plan_name_placeholder": "例: メイン計画",
       "farm_label": "農場",
       "farm_hint": "農場を選択してください",

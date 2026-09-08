@@ -998,8 +998,8 @@
       "crop_added": "Crop added.",
       "field_added": "Field added."
     },
-    "title": "Crop Planning",
-    "breadcrumb_root": "Free Crop Plans",
+    "title": "Create Crop Plan",
+    "breadcrumb_root": "Create Crop Plan",
     "steps": {
       "region": "Region",
       "crop": "Crop",
@@ -1026,7 +1026,7 @@
       "error": "Failed to save plan."
     },
     "select_farm": {
-      "available_farms": "Available Farms"
+      "available_farms": "Select a farm"
     },
     "select_crop": {
       "title": "🌾 Select Crops to Grow",
@@ -2187,7 +2187,7 @@
     },
     "index": {
       "title": "Cultivation Plans",
-      "description": "Manage your yearly cultivation plans",
+      "description": "Review and manage each farm's cultivation plan",
       "new_plan": "Add New Plan",
       "try_public_plans": "Try Free Plans",
       "no_plans": "No plans yet",
@@ -2201,17 +2201,6 @@
         "completed": "Completed",
         "failed": "Failed"
       },
-      "plan_card": {
-        "farm": "Farm",
-        "total_area": "Total Area",
-        "crops_count": "{{count}} crops",
-        "fields_count": "{{count}} fields",
-        "view": "View Details",
-        "copy": "Copy to Next Year",
-        "delete": "Delete",
-        "delete_confirm": "Are you sure you want to delete this plan? This action cannot be undone.",
-        "created_at": "Created"
-      },
       "input_gap": {
         "unrecorded_summary": "Unrecorded: {{count}}",
         "action_required_summary": "Action required: {{count}}",
@@ -2219,12 +2208,9 @@
         "work_link": "Record work",
         "learn_link": "Review learning"
       },
-      "farm_group": {
-        "expand": "Expand",
-        "collapse": "Collapse",
-        "compare_variance": "Compare variance",
-        "plan_count": "{{count}} plans"
-      },
+      "compare_variance": "Compare variance",
+      "custom_plan_name": "Plan: {{name}}",
+      "farm_fallback": "Farm #{{id}}",
       "menu": {
         "more_actions": "More actions"
       },
@@ -2235,7 +2221,7 @@
       "breadcrumb": "New plan",
       "title": "📅 Select a Farm",
       "subtitle": "Select the farm for your cultivation plan",
-      "plan_name_label": "Plan Name",
+      "plan_name_label": "Plan name (optional)",
       "plan_name_placeholder": "e.g. Main Plan",
       "farm_label": "Farm",
       "farm_hint": "Please select a farm",
