@@ -66,7 +66,6 @@ export class PublicPlanOptimizingPresenter
       const inferredKey = `${PHASE_FAILED_PREFIX}${inferredCategory}`;
       const translated = this.translateKey(inferredKey);
       if (translated) {
-        this.logSuppressedTechnicalPhaseMessage(phaseMessage, inferredKey);
         return translated;
       }
     }
@@ -82,25 +81,15 @@ export class PublicPlanOptimizingPresenter
     if (key?.startsWith('models.cultivation_plan.phases.')) {
       const translated = this.translateKey(PHASE_FAILED_DEFAULT_KEY);
       if (translated) {
-        this.logSuppressedTechnicalPhaseMessage(phaseMessage, PHASE_FAILED_DEFAULT_KEY);
         return translated;
       }
     }
-
-    this.logSuppressedTechnicalPhaseMessage(phaseMessage, PHASE_FAILED_DEFAULT_KEY);
 
     return (
       this.translateKey(PHASE_FAILED_DEFAULT_KEY) ??
       this.translateKey('public_plans.optimizing.error.title') ??
       prevMessage
     );
-  }
-
-  private logSuppressedTechnicalPhaseMessage(
-    _phaseMessage: string | undefined,
-    _resolvedKey: string
-  ): void {
-    /* intentional no-op: technical messages are mapped to i18n before display */
   }
 
   private inferFailureCategoryFromTechnicalMessage(
@@ -180,6 +169,9 @@ export class PublicPlanOptimizingPresenter
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
     const nextStatus = dto.status ?? prev.status;
+    if (prev.status === 'completed' && nextStatus !== 'completed') {
+      return;
+    }
     const nextPhaseMessage = this.resolvePhaseMessage(dto, prev.phaseMessage, nextStatus);
     const failureHint =
       nextStatus === 'failed'
@@ -199,11 +191,15 @@ export class PublicPlanOptimizingPresenter
   presentConnectionLost(): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
+    if (prev.status === 'completed' || prev.progress >= 100) {
+      return;
+    }
     const phaseMessage =
       this.translateKey('public_plans.optimizing.error.connection_lost') ??
       this.translateKey('public_plans.optimizing.error.title') ??
       prev.phaseMessage;
-    const failureHint = this.resolveFailureHint(undefined, undefined);
+    const failureHint =
+      this.translateKey('public_plans.optimizing.error.hints.default') ?? undefined;
     this.view.control = {
       status: 'failed',
       progress: prev.progress,

@@ -57,3 +57,15 @@ fn entry_stage_for_direct_sow_returns_minimum_order() {
     let sow = StageRoleResolver::entry_stage_for_direct_sow(&stages).unwrap();
     assert_eq!(sow.id, 1);
 }
+
+#[test]
+fn has_transplant_stage_is_true_when_named_stage_exists() {
+    let stages = vec![stage(1, "播種", 1), stage(2, "定植", 2)];
+    assert!(StageRoleResolver::has_transplant_stage(&stages));
+}
+
+#[test]
+fn has_transplant_stage_is_false_for_direct_sow_stages() {
+    let stages = vec![stage(1, "播種〜発芽", 1), stage(2, "発芽〜生育", 2)];
+    assert!(!StageRoleResolver::has_transplant_stage(&stages));
+}
