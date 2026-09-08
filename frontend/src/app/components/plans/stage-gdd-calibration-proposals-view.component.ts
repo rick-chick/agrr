@@ -111,7 +111,7 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                 @if (canDismiss(proposal)) {
                   <button
                     type="button"
-                    class="btn-secondary stage-gdd-calibration__dismiss"
+                    class="btn btn-secondary stage-gdd-calibration__dismiss"
                     (click)="dismissProposal(proposal)"
                   >
                     {{ 'plans.learn.proposal.dismiss' | translate }}
@@ -120,14 +120,14 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                 @if (canApply(proposal)) {
                   <button
                     type="button"
-                    class="btn-secondary stage-gdd-calibration__preview"
+                    class="btn btn-secondary stage-gdd-calibration__preview"
                     (click)="togglePreview(proposal)"
                   >
                     {{ 'plans.learn.stage_gdd_calibration.preview' | translate }}
                   </button>
                   <button
                     type="button"
-                    class="btn-primary stage-gdd-calibration__apply"
+                    class="btn btn-primary stage-gdd-calibration__apply"
                     [disabled]="isApplying(proposal)"
                     (click)="applyProposal(proposal)"
                   >
@@ -138,7 +138,7 @@ import { LEARN_PROPOSAL_INLINE_APPLY_PROVIDERS } from '../../usecase/plans/learn
                     }}
                   </button>
                   <a
-                    class="btn-secondary stage-gdd-calibration__detail-edit"
+                    class="btn btn-secondary stage-gdd-calibration__detail-edit"
                     [routerLink]="stageEditLink(proposal)"
                     [queryParams]="stageEditQueryParams(proposal)"
                   >

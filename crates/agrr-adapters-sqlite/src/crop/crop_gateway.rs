@@ -11,8 +11,8 @@ use agrr_domain::crop::dtos::{
     ThermalRequirementUpdateInput,
 };
 use agrr_domain::crop::entities::{
-    CropEntity, CropStageEntity, NutrientRequirementEntity, SunshineRequirementEntity,
-    TemperatureRequirementEntity, ThermalRequirementEntity,
+    CropCultivationMethod, CropEntity, CropStageEntity, NutrientRequirementEntity,
+    SunshineRequirementEntity, TemperatureRequirementEntity, ThermalRequirementEntity,
 };
 use agrr_domain::crop::gateways::{CropGateway, SoftDeleteWithUndoOutcome};
 use agrr_domain::shared::attr::{AttrMap, AttrValue};
@@ -54,6 +54,7 @@ fn map_crop_stage_sqlite_boxed_err(
 fn map_crop_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CropEntity> {
     let is_reference: i64 = row.get(5)?;
     let groups_text: Option<String> = row.get(9)?;
+    let cultivation_method: Option<String> = row.get(10)?;
     Ok(CropEntity {
         id: row.get(0)?,
         user_id: row.get(1)?,
@@ -65,12 +66,15 @@ fn map_crop_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CropEntity> {
         revenue_per_area: row.get(7)?,
         region: row.get(8)?,
         groups: parse_groups(groups_text),
-        created_at: row.get(10)?,
-        updated_at: row.get(11)?,
+        cultivation_method: cultivation_method
+            .as_deref()
+            .and_then(CropCultivationMethod::parse_db_str),
+        created_at: row.get(11)?,
+        updated_at: row.get(12)?,
     })
 }
 
-const CROP_SELECT: &str = "SELECT id, user_id, organization_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at";
+const CROP_SELECT: &str = "SELECT id, user_id, organization_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, cultivation_method, created_at, updated_at";
 
 fn parse_groups(raw: Option<String>) -> Vec<String> {
     raw.and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok())
@@ -191,8 +195,8 @@ impl CropGateway for CropSqliteGateway {
 
         let new_id = self.pool.with_write_box(|conn| {
             conn.execute(
-                "INSERT INTO crops (user_id, organization_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, created_at, updated_at) \
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, datetime('now'), datetime('now'))",
+                "INSERT INTO crops (user_id, organization_id, name, variety, is_reference, area_per_unit, revenue_per_area, region, groups, cultivation_method, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, datetime('now'), datetime('now'))",
                 params![
                     user.id,
                     organization_id,
@@ -203,6 +207,7 @@ impl CropGateway for CropSqliteGateway {
                     revenue_per_area,
                     region,
                     groups,
+                    Option::<String>::None,
                 ],
             )?;
             Ok(conn.last_insert_rowid())

@@ -53,27 +53,52 @@ const initialControl: PublicPlanOptimizingViewState = {
           </div>
         </div>
 
-        <div class="spacer-for-fixed-bar"></div>
+        @if (control.status === 'failed') {
+          <div
+            class="page-alert-error public-plan-optimizing__error"
+            role="alert"
+          >
+            <h2 class="public-plan-optimizing__error-title">
+              {{ 'public_plans.optimizing.error.title' | translate }}
+            </h2>
+            <p>{{ control.phaseMessage }}</p>
+            @if (control.failureHint) {
+              <p class="public-plan-optimizing__failure-hint">{{ control.failureHint }}</p>
+            }
+            <div class="public-plan-optimizing__error-actions">
+              <button type="button" class="btn btn-secondary public-plan-optimizing__retry" (click)="reload()">
+                {{ 'public_plans.optimizing.error.reload' | translate }}
+              </button>
+              <a [routerLink]="['/public-plans/select-crop']" class="btn btn-secondary">
+                {{ 'public_plans.optimizing.error.try_again' | translate }}
+              </a>
+            </div>
+            <p class="public-plan-optimizing__error-secondary">
+              <a [routerLink]="['/public-plans/new']">
+                {{ 'public_plans.optimizing.error.start_over' | translate }}
+              </a>
+            </p>
+          </div>
+        }
+
+        <div class="spacer-for-fixed-bar" [class.spacer-for-fixed-bar--hidden]="control.status === 'failed'"></div>
       </div>
     </div>
 
+    @if (control.status !== 'failed') {
     <div class="fixed-progress-bar">
       <div class="fixed-progress-container">
         <div class="progress-header">
           <div class="progress-label-with-spinner">
-            <span class="spinner spinner-sm" [class.hidden]="control.status === 'failed'"></span>
+            <span class="spinner spinner-sm"></span>
             <div class="progress-info">
-              <div class="progress-phase-message" [class.error]="control.status === 'failed'">
-                @if (control.status !== 'failed') {
-                  {{
-                    control.phaseMessage ||
-                      ('public_plans.optimizing.progress.default_message' | translate)
-                  }}
-                }
+              <div class="progress-phase-message">
+                {{
+                  control.phaseMessage ||
+                    ('public_plans.optimizing.progress.default_message' | translate)
+                }}
               </div>
-              @if (control.status !== 'failed') {
-                <div class="progress-duration-hint">{{ 'public_plans.optimizing.progress.duration_hint' | translate }}</div>
-              }
+              <div class="progress-duration-hint">{{ 'public_plans.optimizing.progress.duration_hint' | translate }}</div>
             </div>
           </div>
           <div class="progress-elapsed-time">
@@ -84,32 +109,9 @@ const initialControl: PublicPlanOptimizingViewState = {
             }
           </div>
         </div>
-
-        @if (control.status === 'failed') {
-          <div class="error-message-container">
-            <div class="error-icon" aria-hidden="true">⚠️</div>
-            <div class="error-content">
-              <div class="error-title">{{ 'public_plans.optimizing.error.title' | translate }}</div>
-              <div class="error-detail">{{ control.phaseMessage }}</div>
-              @if (control.failureHint) {
-                <div class="error-hint">{{ control.failureHint }}</div>
-              }
-              <div class="error-actions">
-                <button type="button" class="btn btn-primary public-plan-optimizing__retry" (click)="reload()">
-                  {{ 'public_plans.optimizing.error.reload' | translate }}
-                </button>
-                <a [routerLink]="['/public-plans/select-crop']" class="btn btn-secondary">
-                  {{ 'public_plans.optimizing.error.try_again' | translate }}
-                </a>
-                <a [routerLink]="['/public-plans/new']" class="btn btn-secondary">
-                  {{ 'public_plans.optimizing.error.start_over' | translate }}
-                </a>
-              </div>
-            </div>
-          </div>
-        }
       </div>
     </div>
+    }
   `,
   styleUrls: ['./public-plan.component.css']
 })

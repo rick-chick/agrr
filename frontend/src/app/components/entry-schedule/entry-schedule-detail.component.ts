@@ -1,19 +1,21 @@
-import { Component, DestroyRef, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, PLATFORM_ID, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformServer } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { combineLatest } from 'rxjs';
-import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
+import { EntryScheduleDetailView, EntryScheduleDetailViewState } from './entry-schedule-detail.view';
+import { LoadEntryScheduleCropUseCase } from '../../usecase/entry-schedule/load-entry-schedule-crop.usecase';
 import {
-  EntryScheduleCropShowResponse,
-  EntrySchedulePhaseSegment
-} from '../../domain/entry-schedule/entry-schedule';
+  EntryScheduleDetailPresenter,
+  ENTRY_SCHEDULE_DETAIL_PROVIDERS
+} from '../../adapters/entry-schedule/entry-schedule-detail.providers';
+import { EntrySchedulePhaseSegment } from '../../domain/entry-schedule/entry-schedule';
 import {
   MONTH_NUMBERS,
   timelineBoundsFromSummaries,
 } from '../../domain/entry-schedule/entry-schedule-timeline-bounds';
-import { segmentStyleForRange } from '../../domain/entry-schedule/entry-schedule-timeline-segment';
+import { segmentStylesForRange } from '../../domain/entry-schedule/entry-schedule-timeline-segment';
 import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
@@ -27,10 +29,17 @@ import { AuthService } from '../../services/auth.service';
 import { Farm } from '../../domain/farms/farm';
 import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
 
+const initialControl: EntryScheduleDetailViewState = {
+  loading: true,
+  errorKey: null,
+  data: null
+};
+
 @Component({
   selector: 'app-entry-schedule-detail',
   standalone: true,
   imports: [CommonModule, TranslateModule, MasterContextHeaderComponent, RouterLink],
+  providers: [...ENTRY_SCHEDULE_DETAIL_PROVIDERS],
   template: `
     <div class="page-main public-plans-wrapper">
       <div class="free-plans-container">
@@ -42,36 +51,36 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
           </h1>
         </div>
 
-        @if (loading()) {
+        @if (control.loading) {
           <section class="content-card mt-4">
             <p class="muted master-loading">{{ 'entrySchedule.loading' | translate }}</p>
           </section>
-        } @else if (errorKey()) {
+        } @else if (control.errorKey) {
           <section class="content-card mt-4">
-            <p class="error-message">{{ errorKey()! | translate }}</p>
+            <p class="error-message">{{ control.errorKey | translate }}</p>
             <button type="button" class="btn btn-secondary mt-2" (click)="reload()">{{ 'entrySchedule.retry' | translate }}</button>
           </section>
-        } @else if (data()) {
+        } @else if (control.data) {
           <section class="content-card mt-4" aria-labelledby="crop-name-heading">
             <div class="disclaimer-banner" role="region" aria-label="disclaimer">
-              <p>{{ data()!.crop.entry_disclaimer }}</p>
+              <p>{{ control.data.crop.entry_disclaimer }}</p>
             </div>
 
             <div class="prediction-strip es-meta-chips mt-4" role="status">
-              @if (data()!.prediction.generated_at) {
+              @if (control.data.prediction.generated_at) {
                 <span class="es-meta-chip"
-                  >{{ 'entrySchedule.predictionFresh' | translate }}: {{ data()!.prediction.generated_at!.slice(0, 16) }}</span
+                  >{{ 'entrySchedule.predictionFresh' | translate }}: {{ control.data.prediction.generated_at!.slice(0, 16) }}</span
                 >
               }
-              @if (data()!.prediction.prediction_end_date) {
+              @if (control.data.prediction.prediction_end_date) {
                 <span class="es-meta-chip"
-                  >{{ 'entrySchedule.predictionUntil' | translate }}: {{ data()!.prediction.prediction_end_date!.slice(0, 10) }}</span
+                  >{{ 'entrySchedule.predictionUntil' | translate }}: {{ control.data.prediction.prediction_end_date!.slice(0, 10) }}</span
                 >
               }
             </div>
 
-            <h2 id="crop-name-heading" class="es-detail-hero mt-4">{{ data()!.crop.name }}</h2>
-            <p class="reason-summary">{{ data()!.crop.reason_summary }}</p>
+            <h2 id="crop-name-heading" class="es-detail-hero mt-4">{{ control.data.crop.name }}</h2>
+            <p class="reason-summary">{{ control.data.crop.reason_summary }}</p>
             <details class="trust-expand mt-2">
               <summary>{{ 'entrySchedule.whyTitle' | translate }}</summary>
               <pre class="reason-parts">{{ reasonPartsJson() }}</pre>
@@ -84,47 +93,49 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
                 <div
                   class="es-gantt-track-wrap"
                   role="img"
-                  [attr.aria-label]="'entrySchedule.viz.ganttAria' | translate: { name: data()!.crop.name }"
+                  [attr.aria-label]="'entrySchedule.viz.ganttAria' | translate: { name: control.data.crop.name }"
                 >
                   <div class="es-year-banner" aria-hidden="true">
                     {{ 'entrySchedule.viz.axisYear' | translate: { year: gctx.yearLabel } }}
                   </div>
-                  <div class="es-gantt-row">
-                    <div class="es-gantt-row-label">
-                      <span class="es-dot sow" aria-hidden="true"></span>
-                      {{ data()!.crop.labels.sowing }}
+                  @if (control.data.crop.sowing_windows.length > 0) {
+                    <div class="es-gantt-row">
+                      <div class="es-gantt-row-label">
+                        <span class="es-dot sow" aria-hidden="true"></span>
+                        {{ control.data.crop.labels.sowing }}
+                      </div>
+                      <div class="es-gantt-track">
+                        @for (w of control.data.crop.sowing_windows; track w.start_date + w.end_date) {
+                          @for (seg of segmentStylesForRange(w.start_date, w.end_date, gctx); track $index) {
+                            <div
+                              class="es-gantt-seg sow"
+                              [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
+                              [ngStyle]="seg"
+                            ></div>
+                          }
+                        }
+                      </div>
                     </div>
-                    <div class="es-gantt-track">
-                      @for (w of data()!.crop.sowing_windows; track w.start_date + w.end_date) {
-                        <div
-                          class="es-gantt-seg sow"
-                          [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
-                          [ngStyle]="segmentStyleForRange(w.start_date, w.end_date, gctx)"
-                        ></div>
-                      }
-                      @if (data()!.crop.sowing_windows.length === 0) {
-                        <span class="es-gantt-empty">{{ 'entrySchedule.viz.noWindow' | translate }}</span>
-                      }
+                  }
+                  @if (control.data.crop.transplant_windows.length > 0) {
+                    <div class="es-gantt-row">
+                      <div class="es-gantt-row-label">
+                        <span class="es-dot transplant" aria-hidden="true"></span>
+                        {{ control.data.crop.labels.transplanting }}
+                      </div>
+                      <div class="es-gantt-track">
+                        @for (w of control.data.crop.transplant_windows; track w.start_date + w.end_date) {
+                          @for (seg of segmentStylesForRange(w.start_date, w.end_date, gctx); track $index) {
+                            <div
+                              class="es-gantt-seg transplant"
+                              [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
+                              [ngStyle]="seg"
+                            ></div>
+                          }
+                        }
+                      </div>
                     </div>
-                  </div>
-                  <div class="es-gantt-row">
-                    <div class="es-gantt-row-label">
-                      <span class="es-dot transplant" aria-hidden="true"></span>
-                      {{ data()!.crop.labels.transplanting }}
-                    </div>
-                    <div class="es-gantt-track">
-                      @for (w of data()!.crop.transplant_windows; track w.start_date + w.end_date) {
-                        <div
-                          class="es-gantt-seg transplant"
-                          [attr.title]="'entrySchedule.viz.bandStartHint' | translate"
-                          [ngStyle]="segmentStyleForRange(w.start_date, w.end_date, gctx)"
-                        ></div>
-                      }
-                      @if (data()!.crop.transplant_windows.length === 0) {
-                        <span class="es-gantt-empty">{{ 'entrySchedule.viz.noWindow' | translate }}</span>
-                      }
-                    </div>
-                  </div>
+                  }
                   <div class="es-month-ruler es-month-ruler--detail" aria-hidden="true">
                     @for (m of monthTicks; track m) {
                       <span class="es-month-tick">{{ 'entrySchedule.viz.monthTick' | translate: { n: m } }}</span>
@@ -136,33 +147,33 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
             } @else {
               <h3 class="subsection-title">{{ 'entrySchedule.windows' | translate }}</h3>
               <div class="window-block">
-                <h4>{{ data()!.crop.labels.sowing }}</h4>
+                <h4>{{ control.data.crop.labels.sowing }}</h4>
                 <ul>
-                  @for (w of data()!.crop.sowing_windows; track w.start_date + w.end_date) {
+                  @for (w of control.data.crop.sowing_windows; track w.start_date + w.end_date) {
                     <li>{{ w.start_date.slice(0, 10) }} – {{ w.end_date.slice(0, 10) }}</li>
                   }
-                  @if (data()!.crop.sowing_windows.length === 0) {
+                  @if (control.data.crop.sowing_windows.length === 0) {
                     <li>—</li>
                   }
                 </ul>
               </div>
               <div class="window-block">
-                <h4>{{ data()!.crop.labels.transplanting }}</h4>
+                <h4>{{ control.data.crop.labels.transplanting }}</h4>
                 <ul>
-                  @for (w of data()!.crop.transplant_windows; track w.start_date + w.end_date) {
+                  @for (w of control.data.crop.transplant_windows; track w.start_date + w.end_date) {
                     <li>{{ w.start_date.slice(0, 10) }} – {{ w.end_date.slice(0, 10) }}</li>
                   }
-                  @if (data()!.crop.transplant_windows.length === 0) {
+                  @if (control.data.crop.transplant_windows.length === 0) {
                     <li>—</li>
                   }
                 </ul>
               </div>
             }
 
-            @if (data()!.crop.phase_segments?.length) {
+            @if (control.data.crop.phase_segments?.length) {
               <h3 class="subsection-title">{{ 'entrySchedule.phases' | translate }}</h3>
               <div class="es-phase-rail" role="list">
-                @for (p of data()!.crop.phase_segments!; track p.phase_key) {
+                @for (p of control.data.crop.phase_segments!; track p.phase_key) {
                   <div class="es-phase-card" role="listitem">
                     <div [ngClass]="['es-phase-card-top', phaseAccentClass(p.phase_key)]"></div>
                     <div class="es-phase-title">{{ p.label }}</div>
@@ -176,10 +187,10 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
               </div>
             }
 
-            @if (data()!.crop.rough_timeline?.length) {
+            @if (control.data.crop.rough_timeline?.length) {
               <h3 class="subsection-title">{{ 'entrySchedule.timeline' | translate }}</h3>
               <ul class="es-month-vtimeline">
-                @for (t of data()!.crop.rough_timeline!; track t.month) {
+                @for (t of control.data.crop.rough_timeline!; track t.month) {
                   <li>
                     <span class="es-month-chip">{{ t.month }}</span>
                     <div class="es-month-body">{{ t.summary }}</div>
@@ -190,7 +201,7 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
 
             <section class="next-task mt-4" aria-labelledby="next-task-h">
               <h3 id="next-task-h" class="subsection-title">{{ 'entrySchedule.nextTask' | translate }}</h3>
-              @if (data()!.crop.next_task; as nt) {
+              @if (control.data.crop.next_task; as nt) {
                 @if (nt.available && nt.summary) {
                   <p>{{ nt.summary }}</p>
                 } @else if (!nt.available && nt.summary) {
@@ -205,7 +216,7 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
 
             <h3 class="subsection-title">{{ 'entrySchedule.stages' | translate }}</h3>
             <ol class="stage-list">
-              @for (s of data()!.crop.crop_stages; track s.id) {
+              @for (s of control.data.crop.crop_stages; track s.id) {
                 <li>{{ s.name }}</li>
               }
             </ol>
@@ -225,7 +236,7 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
                 @if (isLoggedIn()) {
                   <a
                     class="btn btn-secondary es-detail-cta-setup"
-                    [routerLink]="['/crops', data()!.crop.id, 'setup_proposal']"
+                    [routerLink]="['/crops', control.data.crop.id, 'setup_proposal']"
                   >
                     {{ 'entrySchedule.ctaCropSetup' | translate }}
                   </a>
@@ -281,8 +292,9 @@ import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
     `
   ]
 })
-export class EntryScheduleDetailComponent implements OnInit {
-  private readonly gateway = inject(ENTRY_SCHEDULE_GATEWAY);
+export class EntryScheduleDetailComponent implements EntryScheduleDetailView, OnInit {
+  private readonly loadCropUseCase = inject(LoadEntryScheduleCropUseCase);
+  private readonly presenter = inject(EntryScheduleDetailPresenter);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -291,18 +303,24 @@ export class EntryScheduleDetailComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly publicPlanStore = inject(PublicPlanStore);
   private readonly auth = inject(AuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly monthTicks = [...MONTH_NUMBERS];
-  readonly segmentStyleForRange = segmentStyleForRange;
+  readonly segmentStylesForRange = segmentStylesForRange;
 
-  readonly data = signal<EntryScheduleCropShowResponse | null>(null);
-  readonly loading = signal(true);
-  readonly errorKey = signal<string | null>(null);
+  private _control: EntryScheduleDetailViewState = initialControl;
+  get control(): EntryScheduleDetailViewState {
+    return this._control;
+  }
+  set control(value: EntryScheduleDetailViewState) {
+    this._control = value;
+    this.cdr.detectChanges();
+  }
 
   get contextCrumbs(): MasterContextCrumb[] {
-    const farm = this.data()?.farm;
+    const farm = this.control.data?.farm;
     const farmId = farm?.id ?? this.resolvedFarmId();
-    const cropName = this.data()?.crop.name;
+    const cropName = this.control.data?.crop.name;
     const crumbs: MasterContextCrumb[] = [
       {
         labelKey: 'entrySchedule.title',
@@ -325,7 +343,7 @@ export class EntryScheduleDetailComponent implements OnInit {
   }
 
   private resolvedFarmId(): number | null {
-    const fromResponse = this.data()?.farm?.id;
+    const fromResponse = this.control.data?.farm?.id;
     if (fromResponse != null) {
       return fromResponse;
     }
@@ -338,13 +356,22 @@ export class EntryScheduleDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.presenter.setView(this);
     combineLatest([this.route.paramMap, this.route.queryParamMap])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.fetchFromRoute());
   }
 
+  onCropLoaded(cropId: number, cropName: string): void {
+    this.seo.refreshEntryScheduleDetailMeta(cropId, cropName);
+  }
+
+  onCropLoadFailed(): void {
+    this.seo.refreshEntryScheduleDetailMeta(null, null);
+  }
+
   reasonPartsJson(): string {
-    const parts = this.data()?.crop.reason_parts;
+    const parts = this.control.data?.crop.reason_parts;
     if (!parts) {
       return '';
     }
@@ -356,7 +383,7 @@ export class EntryScheduleDetailComponent implements OnInit {
   }
 
   detailGanttContext(): { min: number; max: number; yearLabel: string } | null {
-    const crop = this.data()?.crop;
+    const crop = this.control.data?.crop;
     if (!crop) {
       return null;
     }
@@ -400,7 +427,7 @@ export class EntryScheduleDetailComponent implements OnInit {
   }
 
   startPublicPlanWithCrop(): void {
-    const response = this.data();
+    const response = this.control.data;
     if (!response) {
       return;
     }
@@ -441,33 +468,26 @@ export class EntryScheduleDetailComponent implements OnInit {
     }
 
     if (catalogCrop && isPlatformServer(this.platformId)) {
-      this.loading.set(false);
-      this.errorKey.set(null);
-      this.data.set(
-        buildEntrySchedulePrerenderSnapshot(
-          catalogCrop,
-          this.translate.currentLang || this.translate.defaultLang || undefined
-        )
+      const snapshot = buildEntrySchedulePrerenderSnapshot(
+        catalogCrop,
+        this.translate.currentLang || this.translate.defaultLang || undefined
       );
+      this.control = {
+        loading: false,
+        errorKey: null,
+        data: snapshot
+      };
       this.seo.refreshEntryScheduleDetailMeta(cId, catalogCrop.name);
       return;
     }
 
-    this.loading.set(true);
-    this.errorKey.set(null);
-    this.data.set(null);
+    this.control = {
+      ...this.control,
+      loading: true,
+      errorKey: null,
+      data: null
+    };
 
-    this.gateway.getEntryScheduleCrop(farmId, cId).subscribe({
-      next: (res) => {
-        this.data.set(res);
-        this.loading.set(false);
-        this.seo.refreshEntryScheduleDetailMeta(cId, res.crop.name);
-      },
-      error: () => {
-        this.errorKey.set('entrySchedule.error');
-        this.loading.set(false);
-        this.seo.refreshEntryScheduleDetailMeta(null, null);
-      }
-    });
+    this.loadCropUseCase.execute({ farmId, cropId: cId });
   }
 }

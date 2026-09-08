@@ -10,7 +10,7 @@ use agrr_adapters_agrr::{
 };
 use agrr_adapters_sqlite::{CropSqliteGateway, FarmSqliteGateway};
 use agrr_domain::crop::dtos::CropFindReferenceForEntryScheduleInput;
-use agrr_domain::crop::entities::CropEntity;
+use agrr_domain::crop::entities::{CropCultivationMethod, CropEntity};
 use agrr_domain::crop::gateways::CropGateway;
 use agrr_domain::crop::interactors::crop_find_reference_for_entry_schedule_interactor::{
     CropFindReferenceForEntryScheduleInteractor, CropFindReferenceForEntryScheduleOutputPort,
@@ -118,6 +118,9 @@ impl EntryScheduleOptimizeCrop for CropWrap {
     }
     fn crop_variety(&self) -> Option<&str> {
         self.0.variety.as_deref()
+    }
+    fn cultivation_method(&self) -> Option<CropCultivationMethod> {
+        self.0.cultivation_method
     }
 }
 

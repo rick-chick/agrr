@@ -30,7 +30,10 @@ export const smokeDescribe =
 export const SKIP_ROUTES_WITH_DEV_SESSION = new Set(['login']);
 
 /** WebSocket 最適化画面は CI で失敗 UI（page-alert-error + 再試行）が正しい UX になりうる */
-export const HOST_HEALTH_ASSERT_EXCLUDE = new Set<string>(['plans/:id/optimizing']);
+export const HOST_HEALTH_ASSERT_EXCLUDE = new Set<string>([
+  'plans/:id/optimizing',
+  'public-plans/optimizing',
+]);
 
 export async function disableCookieBanner(page: Page): Promise<void> {
   await page.addInitScript(() => {

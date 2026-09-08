@@ -5,6 +5,9 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { EntryScheduleListComponent } from './entry-schedule-list.component';
 import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
+import { LoadEntryScheduleFarmsUseCase } from '../../usecase/entry-schedule/load-entry-schedule-farms.usecase';
+import { EntryScheduleListPresenter } from '../../adapters/entry-schedule/entry-schedule-list.presenter';
+import { LOAD_ENTRY_SCHEDULE_FARMS_OUTPUT_PORT } from '../../usecase/entry-schedule/load-entry-schedule-farms.output-port';
 import type { Farm } from '../../domain/farms/farm';
 
 describe('EntryScheduleListComponent', () => {
@@ -28,15 +31,26 @@ describe('EntryScheduleListComponent', () => {
           { path: 'entry-schedule', component: EntryScheduleListComponent },
           { path: 'entry-schedule/farm/:farmId', component: EntryScheduleListComponent },
         ]),
-        {
-          provide: ENTRY_SCHEDULE_GATEWAY,
-          useValue: {
-            getEntryScheduleFarms,
-            getEntryScheduleCrops: vi.fn(),
-          },
-        },
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(EntryScheduleListComponent, {
+        set: {
+          providers: [
+            LoadEntryScheduleFarmsUseCase,
+            EntryScheduleListPresenter,
+            { provide: LOAD_ENTRY_SCHEDULE_FARMS_OUTPUT_PORT, useExisting: EntryScheduleListPresenter },
+            {
+              provide: ENTRY_SCHEDULE_GATEWAY,
+              useValue: {
+                getEntryScheduleFarms,
+                getEntryScheduleCrops: vi.fn(),
+                getEntryScheduleCrop: vi.fn(),
+              },
+            },
+          ],
+        },
+      })
+      .compileComponents();
 
     router = TestBed.inject(Router);
     fixture = TestBed.createComponent(EntryScheduleListComponent);

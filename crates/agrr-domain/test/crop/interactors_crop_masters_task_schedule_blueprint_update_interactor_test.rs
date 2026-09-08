@@ -57,6 +57,7 @@ name: "Foo".into(),
         revenue_per_area: None,
         region: None,
         groups: vec![],
+            cultivation_method: None,
         created_at: None,
         updated_at: None,
     }

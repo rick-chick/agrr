@@ -35,7 +35,7 @@ export interface LearnMasterUpdateNextStep {
         </p>
         @if (resumeNavigation) {
           <a
-            class="btn-primary learn-next-steps__continue"
+            class="btn btn-primary learn-next-steps__continue"
             [routerLink]="resumeNavigation.commands"
             [queryParams]="resumeNavigation.queryParams"
           >
@@ -63,7 +63,7 @@ export interface LearnMasterUpdateNextStep {
                 }}</span>
               } @else {
                 <a
-                  class="btn-secondary learn-next-steps__cta"
+                  class="btn btn-secondary learn-next-steps__cta"
                   [routerLink]="step.commands"
                   [queryParams]="step.queryParams"
                 >

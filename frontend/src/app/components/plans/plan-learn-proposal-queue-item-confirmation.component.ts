@@ -92,17 +92,17 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
         }
         <div class="learn-proposal-queue__inline-actions">
           @if (canDismiss) {
-            <button type="button" class="btn-secondary" (click)="dismiss()">
+            <button type="button" class="btn btn-secondary" (click)="dismiss()">
               {{ 'plans.learn.proposal.dismiss' | translate }}
             </button>
           }
           @if (inlineApplyMode === 'stage_gdd') {
-            <button type="button" class="btn-secondary" (click)="togglePreview()">
+            <button type="button" class="btn btn-secondary" (click)="togglePreview()">
               {{ 'plans.learn.stage_gdd_calibration.preview' | translate }}
             </button>
             <button
               type="button"
-              class="btn-primary"
+              class="btn btn-primary"
               data-testid="queue-inline-apply"
               [disabled]="applying"
               (click)="applyStageGdd()"
@@ -114,7 +114,7 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
               }}
             </button>
             <a
-              class="btn-secondary"
+              class="btn btn-secondary"
               data-testid="queue-inline-detail-edit"
               [routerLink]="stageEditLink()"
               [queryParams]="stageEditQueryParams()"
@@ -124,7 +124,7 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
           } @else if (inlineApplyMode === 'bp_timing') {
             <button
               type="button"
-              class="btn-secondary"
+              class="btn btn-secondary"
               [disabled]="dryRunning"
               (click)="runDryRun()"
             >
@@ -136,7 +136,7 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
             </button>
             <button
               type="button"
-              class="btn-primary"
+              class="btn btn-primary"
               data-testid="queue-inline-apply"
               [disabled]="applying"
               (click)="applyBpTiming()"
@@ -149,7 +149,7 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
             </button>
             <button
               type="button"
-              class="btn-secondary"
+              class="btn btn-secondary"
               data-testid="queue-inline-detail-edit"
               (click)="openBpTimingDetailEdit()"
             >
@@ -158,7 +158,7 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
           } @else {
             @if (stageGddProposal) {
               <a
-                class="btn-primary"
+                class="btn btn-primary"
                 data-testid="queue-inline-detail-edit"
                 [routerLink]="stageEditLink()"
                 [queryParams]="stageEditQueryParams()"
@@ -169,7 +169,7 @@ import { LearnProposalEvidencePanelComponent } from './learn-proposal-evidence-p
             @if (bpTimingProposal) {
               <button
                 type="button"
-                class="btn-primary"
+                class="btn btn-primary"
                 data-testid="queue-inline-detail-edit"
                 (click)="openBpTimingDetailEdit()"
               >

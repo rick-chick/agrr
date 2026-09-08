@@ -157,8 +157,15 @@ impl<'a, T: TranslatorPort> EntrySchedulePhaseTimeline<'a, T> {
         h
     }
 
+    fn primary_window(result: &WindowServiceResult) -> Option<&DateRange> {
+        result
+            .sowing_windows
+            .first()
+            .or_else(|| result.transplant_windows.first())
+    }
+
     fn agrr_ratio_phase_segments(&self, result: &WindowServiceResult) -> Vec<PhaseSegment> {
-        let w = match result.sowing_windows.first() {
+        let w = match Self::primary_window(result) {
             Some(w) if result.eligible => w,
             _ => {
                 return ["sowing", "nursery", "transplant", "harvest"]
@@ -228,25 +235,25 @@ impl<'a, T: TranslatorPort> EntrySchedulePhaseTimeline<'a, T> {
     }
 
     pub fn sort_meta(&self, result: &WindowServiceResult) -> BTreeMap<String, Value> {
-        let sow_first = result.sowing_windows.first();
+        let primary = Self::primary_window(result);
         let mut meta = BTreeMap::new();
         meta.insert("eligible".into(), Value::Bool(result.eligible));
         meta.insert(
             "sowing_proximity_days".into(),
-            Value::Number(self.sowing_proximity_days(sow_first, result.eligible).into()),
+            Value::Number(self.sowing_proximity_days(primary, result.eligible).into()),
         );
         meta.insert(
             "sowing_window_width_days".into(),
-            Value::Number(self.window_width_days(sow_first).into()),
+            Value::Number(self.window_width_days(primary).into()),
         );
         meta
     }
 
-    fn sowing_proximity_days(&self, sow_first: Option<&DateRange>, eligible: bool) -> i64 {
+    fn sowing_proximity_days(&self, window: Option<&DateRange>, eligible: bool) -> i64 {
         if !eligible {
             return 999_999;
         }
-        let Some(sow) = sow_first else {
+        let Some(sow) = window else {
             return 999_999;
         };
         let today = self.clock.today();
@@ -259,8 +266,8 @@ impl<'a, T: TranslatorPort> EntrySchedulePhaseTimeline<'a, T> {
         (today - sow.end_date).whole_days() + 1000
     }
 
-    fn window_width_days(&self, sow_first: Option<&DateRange>) -> i64 {
-        let Some(sow) = sow_first else {
+    fn window_width_days(&self, window: Option<&DateRange>) -> i64 {
+        let Some(sow) = window else {
             return 999_999;
         };
         (sow.end_date - sow.start_date).whole_days() + 1

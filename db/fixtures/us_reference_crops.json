@@ -94,7 +94,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Apples": {
     "name": "Apples",
@@ -191,7 +192,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Barley": {
     "name": "Barley",
@@ -288,7 +290,8 @@
           "required_gdd": 700.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Bell Peppers": {
     "name": "Bell Peppers",
@@ -385,7 +388,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "Blueberries": {
     "name": "Blueberries",
@@ -482,7 +486,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "Broccoli": {
     "name": "Broccoli",
@@ -579,7 +584,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "Cabbage": {
     "name": "Cabbage",
@@ -676,7 +682,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "Carrots": {
     "name": "Carrots",
@@ -752,7 +759,8 @@
           "required_gdd": 500.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Corn": {
     "name": "Corn",
@@ -849,7 +857,8 @@
           "required_gdd": 1000.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Cotton": {
     "name": "Cotton",
@@ -946,7 +955,8 @@
           "required_gdd": 1500.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Cucumbers": {
     "name": "Cucumbers",
@@ -1043,7 +1053,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "Grapes": {
     "name": "Grapes",
@@ -1140,7 +1151,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Lettuce": {
     "name": "Lettuce",
@@ -1237,7 +1249,8 @@
           "required_gdd": 700.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Oats": {
     "name": "Oats",
@@ -1334,7 +1347,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Onions": {
     "name": "Onions",
@@ -1431,7 +1445,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Oranges": {
     "name": "Oranges",
@@ -1528,7 +1543,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Peanuts": {
     "name": "Peanuts",
@@ -1625,7 +1641,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Pistachios": {
     "name": "Pistachios",
@@ -1722,7 +1739,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Potatoes": {
     "name": "Potatoes",
@@ -1819,7 +1837,8 @@
           "required_gdd": 150.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Rice": {
     "name": "Rice",
@@ -1916,7 +1935,8 @@
           "required_gdd": 1000.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Rye": {
     "name": "Rye",
@@ -2013,7 +2033,8 @@
           "required_gdd": 200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Sorghum": {
     "name": "Sorghum",
@@ -2110,7 +2131,8 @@
           "required_gdd": 150.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Soybeans": {
     "name": "Soybeans",
@@ -2207,7 +2229,8 @@
           "required_gdd": 900.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Strawberries": {
     "name": "Strawberries",
@@ -2304,7 +2327,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "Sugar Beets": {
     "name": "Sugar Beets",
@@ -2401,7 +2425,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Sugarcane": {
     "name": "Sugarcane",
@@ -2498,7 +2523,8 @@
           "required_gdd": 1200.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Tomatoes": {
     "name": "Tomatoes",
@@ -2595,7 +2621,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "transplant"
   },
   "Walnuts": {
     "name": "Walnuts",
@@ -2692,7 +2719,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Watermelon": {
     "name": "Watermelon",
@@ -2768,7 +2796,8 @@
           "required_gdd": 800.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   },
   "Wheat": {
     "name": "Wheat",
@@ -2865,6 +2894,7 @@
           "required_gdd": 900.0
         }
       }
-    ]
+    ],
+    "cultivation_method": "direct_sow"
   }
 }

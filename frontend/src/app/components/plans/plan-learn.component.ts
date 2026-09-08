@@ -115,7 +115,7 @@ const initialControl: PlanLearnViewState = {
         } @else if (control.error) {
           <div class="page-alert-error plan-work__error" role="alert">
             <p>{{ control.error | translate }}</p>
-            <button type="button" class="btn-secondary plan-work__retry" (click)="reload()">
+            <button type="button" class="btn btn-secondary plan-work__retry" (click)="reload()">
               {{ 'plans.work.retry' | translate }}
             </button>
           </div>

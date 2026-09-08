@@ -68,6 +68,17 @@ fn data_repair_us_reference_crops_restores_stages_from_fixture() {
         wheat_stages >= 3,
         "wheat reference crop should have growth stages"
     );
+
+    let without_method = count_query(
+        &conn,
+        "SELECT COUNT(*) FROM crops
+         WHERE region = 'us' AND is_reference = 1 AND cultivation_method IS NULL",
+    );
+    assert_eq!(
+        0,
+        without_method,
+        "every us reference crop must have cultivation_method after repair"
+    );
 }
 
 #[test]

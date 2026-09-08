@@ -6,6 +6,9 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { EntryScheduleDetailComponent } from './entry-schedule-detail.component';
 import { ENTRY_SCHEDULE_GATEWAY } from '../../usecase/entry-schedule/entry-schedule-gateway';
+import { LoadEntryScheduleCropUseCase } from '../../usecase/entry-schedule/load-entry-schedule-crop.usecase';
+import { EntryScheduleDetailPresenter } from '../../adapters/entry-schedule/entry-schedule-detail.presenter';
+import { LOAD_ENTRY_SCHEDULE_CROP_OUTPUT_PORT } from '../../usecase/entry-schedule/load-entry-schedule-crop.output-port';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { AuthService } from '../../services/auth.service';
 import type { CurrentUser } from '../../services/api.service';
@@ -14,9 +17,25 @@ describe('EntryScheduleDetailComponent', () => {
   let fixture: ComponentFixture<EntryScheduleDetailComponent>;
   let translate: TranslateService;
   let authUser: CurrentUser | null = null;
+  let getEntryScheduleCrop: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     authUser = null;
+    getEntryScheduleCrop = vi.fn(() =>
+      of({
+        crop: {
+          name: 'Tomato',
+          entry_disclaimer: 'Disclaimer',
+          reason_summary: 'Summary',
+          labels: { sowing: 'Sow', transplanting: 'Transplant' },
+          sowing_windows: [],
+          transplant_windows: [],
+          crop_stages: []
+        },
+        prediction: {}
+      })
+    );
+
     await TestBed.configureTestingModule({
       imports: [EntryScheduleDetailComponent, TranslateModule.forRoot()],
       providers: [
@@ -38,27 +57,26 @@ describe('EntryScheduleDetailComponent', () => {
             queryParamMap: of({ get: () => '3' })
           }
         },
-        {
-          provide: ENTRY_SCHEDULE_GATEWAY,
-          useValue: {
-            getEntryScheduleCrop: vi.fn(() =>
-              of({
-                crop: {
-                  name: 'Tomato',
-                  entry_disclaimer: 'Disclaimer',
-                  reason_summary: 'Summary',
-                  labels: { sowing: 'Sow', transplanting: 'Transplant' },
-                  sowing_windows: [],
-                  transplant_windows: [],
-                  crop_stages: []
-                },
-                prediction: {}
-              })
-            )
-          }
-        }
       ]
-    }).compileComponents();
+    })
+      .overrideComponent(EntryScheduleDetailComponent, {
+        set: {
+          providers: [
+            LoadEntryScheduleCropUseCase,
+            EntryScheduleDetailPresenter,
+            { provide: LOAD_ENTRY_SCHEDULE_CROP_OUTPUT_PORT, useExisting: EntryScheduleDetailPresenter },
+            {
+              provide: ENTRY_SCHEDULE_GATEWAY,
+              useValue: {
+                getEntryScheduleFarms: vi.fn(),
+                getEntryScheduleCrops: vi.fn(),
+                getEntryScheduleCrop,
+              },
+            },
+          ],
+        },
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(EntryScheduleDetailComponent);
     translate = TestBed.inject(TranslateService);
@@ -104,12 +122,26 @@ describe('EntryScheduleDetailComponent', () => {
             queryParamMap: of({ get: () => null }),
           },
         },
-        {
-          provide: ENTRY_SCHEDULE_GATEWAY,
-          useValue: { getEntryScheduleCrop: vi.fn() },
-        },
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(EntryScheduleDetailComponent, {
+        set: {
+          providers: [
+            LoadEntryScheduleCropUseCase,
+            EntryScheduleDetailPresenter,
+            { provide: LOAD_ENTRY_SCHEDULE_CROP_OUTPUT_PORT, useExisting: EntryScheduleDetailPresenter },
+            {
+              provide: ENTRY_SCHEDULE_GATEWAY,
+              useValue: {
+                getEntryScheduleFarms: vi.fn(),
+                getEntryScheduleCrops: vi.fn(),
+                getEntryScheduleCrop: vi.fn(),
+              },
+            },
+          ],
+        },
+      })
+      .compileComponents();
 
     const prerenderFixture = TestBed.createComponent(EntryScheduleDetailComponent);
     const prerenderTranslate = TestBed.inject(TranslateService);
@@ -127,7 +159,7 @@ describe('EntryScheduleDetailComponent', () => {
       'h1.compact-header-title .title-text',
     ) as HTMLElement;
     expect(heading?.textContent?.trim()).toBe('作物別の作付け時期');
-    expect(TestBed.inject(ENTRY_SCHEDULE_GATEWAY).getEntryScheduleCrop).not.toHaveBeenCalled();
+    expect(getEntryScheduleCrop).not.toHaveBeenCalled();
   });
 
   it('renders crop content inside a content card for section-hub layout', async () => {
@@ -142,8 +174,7 @@ describe('EntryScheduleDetailComponent', () => {
   });
 
   it('renders breadcrumb with farm list link and crop name instead of inline back link', async () => {
-    const gateway = TestBed.inject(ENTRY_SCHEDULE_GATEWAY);
-    vi.mocked(gateway.getEntryScheduleCrop).mockReturnValue(
+    getEntryScheduleCrop.mockReturnValue(
       of({
         farm: { id: 3, name: 'Farm A', latitude: 35, longitude: 139, region: 'jp' },
         crop: {
@@ -196,8 +227,7 @@ describe('EntryScheduleDetailComponent', () => {
   });
 
   it('renders growth stages without duplicate list numbering', async () => {
-    const gateway = TestBed.inject(ENTRY_SCHEDULE_GATEWAY);
-    vi.mocked(gateway.getEntryScheduleCrop).mockReturnValue(
+    getEntryScheduleCrop.mockReturnValue(
       of({
         farm: { id: 3, name: 'Farm', latitude: 0, longitude: 0, region: 'jp' },
         crop: {
@@ -245,8 +275,7 @@ describe('EntryScheduleDetailComponent', () => {
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate');
     const publicPlanStore = TestBed.inject(PublicPlanStore);
-    const gateway = TestBed.inject(ENTRY_SCHEDULE_GATEWAY);
-    vi.mocked(gateway.getEntryScheduleCrop).mockReturnValue(
+    getEntryScheduleCrop.mockReturnValue(
       of({
         farm: { id: 3, name: 'Farm', latitude: 35, longitude: 139, region: 'jp' },
         crop: {
@@ -303,8 +332,7 @@ describe('EntryScheduleDetailComponent', () => {
       admin: false
     };
 
-    const gateway = TestBed.inject(ENTRY_SCHEDULE_GATEWAY);
-    vi.mocked(gateway.getEntryScheduleCrop).mockReturnValue(
+    getEntryScheduleCrop.mockReturnValue(
       of({
         farm: { id: 3, name: 'Farm', latitude: 35, longitude: 139, region: 'jp' },
         crop: {

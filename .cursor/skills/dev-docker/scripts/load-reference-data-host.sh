@@ -25,6 +25,9 @@ echo "==> US reference crops repair (growth stages from us_reference_crops.json)
 echo "    Production: agrr-migrate data apply --region us --kind repair"
 cargo run -p agrr-migrate -- data apply --region us --kind repair
 
+echo "==> JP reference crops repair (cultivation_method from reference_crops.json)"
+cargo run -p agrr-migrate -- data apply --region jp --kind repair
+
 echo "==> JP crop task templates"
 cargo run -p agrr-migrate -- data apply --region jp --kind templates
 

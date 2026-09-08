@@ -32,7 +32,7 @@
         fn on_failure(&mut self, e: UpdateFailure) { self.failure = Some(e); }
     }
     fn crop(user_id: i64) -> CropEntity {
-        CropEntity { id: 5, user_id: Some(user_id), organization_id: None, name: "n".into(), variety: None, is_reference: false, area_per_unit: None, revenue_per_area: None, region: None, groups: vec![], created_at: None, updated_at: None }
+        CropEntity { id: 5, user_id: Some(user_id), organization_id: None, name: "n".into(), variety: None, is_reference: false, area_per_unit: None, revenue_per_area: None, region: None, groups: vec![], cultivation_method: None, created_at: None, updated_at: None }
     }
     struct UpdateGw { current: CropEntity, updated: CropEntity, deny_edit: bool }
     impl CropGateway for UpdateGw {

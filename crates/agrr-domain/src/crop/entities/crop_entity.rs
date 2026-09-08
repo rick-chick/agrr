@@ -1,3 +1,4 @@
+use crate::crop::entities::CropCultivationMethod;
 use crate::shared::record_ref::RecordRef;
 
 /// Ruby: `Domain::Crop::Entities::CropEntity`
@@ -13,6 +14,7 @@ pub struct CropEntity {
     pub revenue_per_area: Option<f64>,
     pub region: Option<String>,
     pub groups: Vec<String>,
+    pub cultivation_method: Option<CropCultivationMethod>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 }
@@ -39,6 +41,7 @@ impl CropEntity {
             revenue_per_area: None,
             region: None,
             groups: vec![],
+            cultivation_method: None,
             created_at: None,
             updated_at: None,
         })

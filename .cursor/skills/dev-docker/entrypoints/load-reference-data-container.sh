@@ -28,6 +28,9 @@ else
   echo "==> Skipping US reference crops repair (missing ${FIXTURES}/us_reference_weather.json)"
 fi
 
+echo "==> JP reference crops repair (cultivation_method from reference_crops.json)"
+"$M" data apply --region jp --kind repair
+
 echo "==> JP crop task templates"
 "$M" data apply --region jp --kind templates
 
