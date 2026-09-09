@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { CropDetailView } from '../../components/masters/crops/crop-detail.view';
 import { LoadCropDetailOutputPort } from '../../usecase/crops/load-crop-detail.output-port';

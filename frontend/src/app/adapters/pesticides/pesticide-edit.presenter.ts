@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { PesticideEditView } from '../../components/masters/pesticides/pesticide-edit.view';
 import { LoadPesticideForEditOutputPort } from '../../usecase/pesticides/load-pesticide-for-edit.output-port';

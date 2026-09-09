@@ -8,7 +8,6 @@ import { DeleteFertilizeSuccessDto } from '../../usecase/fertilizes/delete-ferti
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
-import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 
 @Injectable()

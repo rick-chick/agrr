@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
 import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { FertilizeEditView } from '../../components/masters/fertilizes/fertilize-edit.view';
 import { LoadFertilizeForEditOutputPort } from '../../usecase/fertilizes/load-fertilize-for-edit.output-port';
