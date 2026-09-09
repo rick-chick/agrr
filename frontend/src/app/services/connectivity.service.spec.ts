@@ -39,6 +39,27 @@ describe('ConnectivityService', () => {
     expect(service.showReconnectedCta()).toBe(false);
   });
 
+  it('starts online even when navigator.onLine is false', () => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: false
+    });
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(ConnectivityService);
+
+    expect(service.isOffline()).toBe(false);
+    expect(service.showReconnectedCta()).toBe(false);
+  });
+
+  it('does not show reconnected CTA on startup online event without prior offline', () => {
+    dispatchWindowEvent('online');
+
+    expect(service.isOffline()).toBe(false);
+    expect(service.showReconnectedCta()).toBe(false);
+  });
+
   it('reflects offline when window offline fires', () => {
     dispatchWindowEvent('offline');
 
