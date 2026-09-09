@@ -2,22 +2,24 @@ import { Injectable, OnDestroy, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class ConnectivityService implements OnDestroy {
-  private readonly offlineSignal = signal(
-    typeof navigator !== 'undefined' ? !navigator.onLine : false
-  );
+  private readonly offlineSignal = signal(false);
   private readonly reconnectedSignal = signal(false);
+  private wasOfflineDuringSession = false;
 
   readonly isOffline = this.offlineSignal.asReadonly();
   readonly showReconnectedCta = this.reconnectedSignal.asReadonly();
 
   private readonly onOffline = () => {
+    this.wasOfflineDuringSession = true;
     this.offlineSignal.set(true);
     this.reconnectedSignal.set(false);
   };
 
   private readonly onOnline = () => {
     this.offlineSignal.set(false);
-    this.reconnectedSignal.set(true);
+    if (this.wasOfflineDuringSession) {
+      this.reconnectedSignal.set(true);
+    }
   };
 
   constructor() {
