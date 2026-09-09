@@ -1,4 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { getApiBaseUrl } from '../core/api-base-url';
@@ -29,6 +30,7 @@ export interface MeResponse {
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly baseUrl = getApiBaseUrl();
 
   getCurrentUser(): Observable<MeResponse> {
@@ -49,7 +51,9 @@ export class ApiService {
       ...options,
       headers,
       withCredentials: true
-    }).pipe(retryOnBackendWarmup());
+    }).pipe(
+      retryOnBackendWarmup({ enabled: isPlatformBrowser(this.platformId) })
+    );
   }
 
   post<T>(path: string, body: unknown, options: RequestOptions = {}): Observable<T> {

@@ -24,6 +24,21 @@ describe('retryOnBackendWarmup', () => {
     vi.useRealTimers();
   });
 
+  it('passes through without retry when disabled for SSR prerender', async () => {
+    let attempts = 0;
+
+    await expect(
+      firstValueFrom(
+        defer(() => {
+          attempts += 1;
+          return throwError(() => new HttpErrorResponse({ status: 503 }));
+        }).pipe(retryOnBackendWarmup({ enabled: false }))
+      )
+    ).rejects.toBeTruthy();
+
+    expect(attempts).toBe(1);
+  });
+
   it('does not retry non-warmup errors', async () => {
     let attempts = 0;
 
