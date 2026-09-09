@@ -49,6 +49,40 @@ describe('OfflineBannerComponent', () => {
     expect(fixture.nativeElement.querySelector('.offline-banner')).toBeNull();
   });
 
+  it('does not render when navigator.onLine is false at startup', async () => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: false
+    });
+
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [OfflineBannerComponent, TranslateModule.forRoot()]
+    }).compileComponents();
+
+    translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      shared: {
+        offline_banner: {
+          message: 'You are offline.',
+          reconnected: 'Connection restored.',
+          reload: 'Reload'
+        }
+      },
+      common: {
+        close: 'Close'
+      }
+    });
+    translate.use('en');
+
+    connectivity = TestBed.inject(ConnectivityService);
+    fixture = TestBed.createComponent(OfflineBannerComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.offline-banner')).toBeNull();
+  });
+
   it('renders offline banner with role=alert when offline', () => {
     connectivity.setOfflineForTest(true);
     fixture.detectChanges();
