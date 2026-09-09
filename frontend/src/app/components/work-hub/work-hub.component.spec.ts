@@ -15,8 +15,7 @@ function baseControl(
   return {
     loading: false,
     submitting: false,
-    error: null,
-    farms: [],
+    error: null, farms: [],
     portfolioSummary: null,
     varianceCoverage: null,
     attentionList: null,

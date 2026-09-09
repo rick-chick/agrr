@@ -90,8 +90,7 @@ function defaultControl(overrides: Partial<PlanNewViewState> = {}): PlanNewViewS
   return {
     loading: false,
     submitting: false,
-    error: null,
-    farms: [],
+    error: null, farms: [],
     selectedFarmId: null,
     readinessLoading: false,
     readiness: null,

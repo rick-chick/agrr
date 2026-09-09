@@ -75,7 +75,8 @@ describe('PesticideDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pesticide: {
         id: 1,
         name: 'Spray A',
@@ -101,7 +102,8 @@ describe('PesticideDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pesticide: {
         id: 1,
         name: 'Spray A',
@@ -127,7 +129,8 @@ describe('PesticideDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pesticide: {
         id: 1,
         name: 'Spray A',
@@ -165,7 +168,8 @@ describe('PesticideDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pesticide: {
         id: 1,
         name: 'Spray A',
@@ -202,7 +206,8 @@ describe('PesticideDetailComponent', () => {
     component.control = {
       loading: false,
       error: 'common.api_error.generic',
-      pendingErrorFlash: null,
+      errorIsWarmup: false,
+        pendingErrorFlash: null,
       pesticide: null,
       pendingUndoToast: null
     };
@@ -224,7 +229,8 @@ describe('PesticideDetailComponent', () => {
     component.control = {
       loading: false,
       error: 'common.api_error.generic',
-      pendingErrorFlash: null,
+      errorIsWarmup: false,
+        pendingErrorFlash: null,
       pesticide: null,
       pendingUndoToast: null
     };

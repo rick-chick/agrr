@@ -127,8 +127,7 @@ describe('PlanWorkRecordsComponent', () => {
     const state: PlanWorkRecordsViewState = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: null,
+      error: null, plan: null,
       groups: []
     
     };
@@ -141,8 +140,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: []
     };
     fixture.detectChanges();
@@ -158,8 +156,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -201,8 +198,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -243,8 +239,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: []
     };
     fixture.detectChanges();
@@ -325,8 +320,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -386,8 +380,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-07',
@@ -427,8 +420,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -469,8 +461,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -547,8 +538,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -607,8 +597,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -646,8 +635,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -701,8 +689,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -769,8 +756,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -858,8 +844,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',
@@ -939,8 +924,7 @@ describe('PlanWorkRecordsComponent', () => {
     component.control = {
       ...SAVE_IMPACT_DEFAULTS,
       loading: false,
-      error: null,
-      plan: { id: 7, name: 'Field plan' },
+      error: null, plan: { id: 7, name: 'Field plan' },
       groups: [
         {
           monthLabel: '2026-06',

@@ -55,6 +55,7 @@ where
     ) -> Self {
         Self {
             crop,
+            // Defensive idempotent normalize: server path already calls `entry_schedule_weather_preparer`.
             weather_payload: entry_schedule_weather_payload_normalizer::call(Some(&weather_payload)),
             crop_gateway,
             crop_agrr_requirement_builder,
@@ -197,7 +198,13 @@ where
         };
         let cultivation_method = match self.crop.cultivation_method() {
             Some(method) => method,
-            None => return self.failed_result("missing_cultivation_method"),
+            None if stage_rows.is_empty() => {
+                return self.failed_result("missing_cultivation_method");
+            }
+            None if StageRoleResolver::has_transplant_stage(&stage_rows) => {
+                CropCultivationMethod::Transplant
+            }
+            None => CropCultivationMethod::DirectSow,
         };
         let transplant_cultivation = cultivation_method.is_transplant();
         let (sowing_windows, transplant_windows, sowing_stage_id, transplant_stage_id) =

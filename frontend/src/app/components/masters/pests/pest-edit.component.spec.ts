@@ -89,7 +89,8 @@ describe('PestEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Aphid',
         name_scientific: null,

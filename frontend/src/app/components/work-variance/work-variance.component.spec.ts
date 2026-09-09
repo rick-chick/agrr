@@ -11,8 +11,7 @@ import type { WorkVarianceViewState } from './work-variance.view';
 function baseControl(overrides: Partial<WorkVarianceViewState> = {}): WorkVarianceViewState {
   return {
     loading: false,
-    error: null,
-    rows: [],
+    error: null, rows: [],
     filters: { farmId: null, status: null, planYear: null },
     filterOptions: { farms: [], statuses: [], planYears: [] },
     farmGroups: [],

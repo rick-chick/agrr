@@ -30,7 +30,8 @@ describe('InteractionRuleDetailPresenter', () => {
     lastControl = null;
     const view: InteractionRuleDetailView = {
       get control(): InteractionRuleDetailViewState {
-        return lastControl ?? { loading: true, error: null, rule: null, pendingUndoToast: null, pendingErrorFlash: null };
+        return lastControl ?? { loading: true, error: null,errorIsWarmup: false,
+        rule: null, pendingUndoToast: null, pendingErrorFlash: null };
       },
       set control(value: InteractionRuleDetailViewState) {
         lastControl = value;
@@ -41,7 +42,8 @@ describe('InteractionRuleDetailPresenter', () => {
   });
 
   it('sets inline error key on onError(dto) while loading', () => {
-    lastControl = { loading: true, error: null, rule: null, pendingUndoToast: null, pendingErrorFlash: null };
+    lastControl = { loading: true, error: null,errorIsWarmup: false,
+        rule: null, pendingUndoToast: null, pendingErrorFlash: null };
     const dto: ErrorDto = { message: 'common.api_error.not_found' };
 
     presenter.onError(dto);
@@ -52,7 +54,8 @@ describe('InteractionRuleDetailPresenter', () => {
   });
 
   it('maps raw HTTP error text to i18n key on onError(dto) while loading', () => {
-    lastControl = { loading: true, error: null, rule: null, pendingUndoToast: null, pendingErrorFlash: null };
+    lastControl = { loading: true, error: null,errorIsWarmup: false,
+        rule: null, pendingUndoToast: null, pendingErrorFlash: null };
 
     presenter.onError({
       message:
@@ -67,7 +70,8 @@ describe('InteractionRuleDetailPresenter', () => {
     lastControl = {
       loading: false,
       error: null,
-      rule: {
+   errorIsWarmup: false,
+        rule: {
         id: 1,
         rule_type: 'competition',
         source_group: 'legume',
@@ -92,6 +96,7 @@ describe('InteractionRuleDetailPresenter', () => {
       lastControl = {
         loading: false,
         error: null,
+     errorIsWarmup: false,
         rule: {
           id: 1,
           rule_type: 'competition',

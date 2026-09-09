@@ -37,8 +37,7 @@ describe('PublicPlanCreateComponent farm selection cards', () => {
     const component = fixture.componentInstance;
     component.control = {
       loading: false,
-      error: null,
-      farms: [
+      error: null, farms: [
         { id: 10, name: 'Tokyo Farm', latitude: 35.6, longitude: 139.6, region: 'jp' },
       ],
     };

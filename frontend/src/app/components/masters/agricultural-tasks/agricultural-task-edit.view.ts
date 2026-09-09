@@ -7,6 +7,7 @@ export type AgriculturalTaskEditViewState = {
   loading: boolean;
   saving: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   formData: AgriculturalTaskEditFormData;
 
   pendingErrorFlash: PendingErrorFlashRequest | null;

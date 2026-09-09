@@ -4,6 +4,7 @@ import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-err
 export type FertilizeDetailViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   fertilize: Fertilize | null;
 
   pendingErrorFlash: PendingErrorFlashRequest | null;

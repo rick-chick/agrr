@@ -40,8 +40,7 @@ const loadedSchedule: TaskScheduleResponse = {
     timeline_generated_at: '2026-06-01T00:00:00Z',
     timeline_generated_at_display: '2026-06-01',
     task_schedule_sync_state: 'ready',
-    task_schedule_sync_error: null,
-    task_schedule_sync_error_crop_id: null
+    task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
   },
   week: {
     start_date: '2026-06-01',
@@ -63,8 +62,7 @@ const loadedSchedule: TaskScheduleResponse = {
 
 const loadedState: PlanTaskScheduleViewState = {
   loading: false,
-  error: null,
-  schedule: loadedSchedule,
+  error: null, schedule: loadedSchedule,
   regenerating: false,
   regenerateError: null,
   pendingSyncToastKey: null,
@@ -279,8 +277,7 @@ describe('PlanTaskScheduleComponent', () => {
   it('implements View control getter/setter', () => {
     const state: PlanTaskScheduleViewState = {
       loading: false,
-      error: null,
-      schedule: null,
+      error: null, schedule: null,
       regenerating: false,
       regenerateError: null,
       pendingSyncToastKey: null,
@@ -614,8 +611,7 @@ describe('PlanTaskScheduleComponent', () => {
         plan: {
           ...loadedSchedule.plan,
           task_schedule_sync_state: 'never',
-          task_schedule_sync_error: null,
-          task_schedule_sync_error_crop_id: null
+          task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
         }
       }
     };
@@ -683,8 +679,7 @@ describe('PlanTaskScheduleComponent', () => {
         plan: {
           ...loadedSchedule.plan,
           task_schedule_sync_state: 'never',
-          task_schedule_sync_error: null,
-    task_schedule_sync_error_crop_id: null
+          task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
         }
       }
     };
@@ -760,8 +755,7 @@ describe('PlanTaskScheduleComponent', () => {
         plan: {
           ...loadedSchedule.plan,
           task_schedule_sync_state: 'never',
-          task_schedule_sync_error: null,
-          task_schedule_sync_error_crop_id: null
+          task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
         }
       }
     };

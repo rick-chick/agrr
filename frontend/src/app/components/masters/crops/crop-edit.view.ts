@@ -17,6 +17,7 @@ export type CropEditViewState = {
   loading: boolean;
   saving: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   formData: CropEditFormData;
 
   pendingErrorFlash: PendingErrorFlashRequest | null;

@@ -105,7 +105,8 @@ describe('CropListComponent card actions', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      crops: [userCrop, referenceCrop],
+errorIsWarmup: false,
+        crops: [userCrop, referenceCrop],
       pendingUndoToast: null,
       pendingErrorFlash: null
     };
@@ -208,7 +209,8 @@ describe('CropListComponent card actions', () => {
     fixture.componentInstance.control = {
       loading: true,
       error: null,
-      crops: [],
+errorIsWarmup: false,
+        crops: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
     };
@@ -223,7 +225,8 @@ describe('CropListComponent card actions', () => {
     component.control = {
       loading: false,
       error: 'common.api_error.generic',
-      crops: [],
+      errorIsWarmup: false,
+        crops: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
     };

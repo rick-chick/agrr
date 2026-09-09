@@ -24,7 +24,7 @@ import type { CropTaskScheduleBlueprint } from '../../../domain/crops/crop-task-
 const loadedState: CropTaskScheduleBlueprintsViewState = withCropBlueprintDisplayState({
   loading: false,
   error: null,
-  crop: {
+crop: {
     id: 3,
     name: 'Tomato',
     variety: null,

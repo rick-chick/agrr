@@ -107,7 +107,8 @@ describe('InteractionRuleEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: { ...initialFormData, region: 'jp' },
     };
 
@@ -124,7 +125,8 @@ describe('InteractionRuleEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: { ...initialFormData, region: 'jp' },
     };
 
@@ -140,7 +142,8 @@ describe('InteractionRuleEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: { ...initialFormData, region: 'jp' },
     };
 
@@ -167,7 +170,8 @@ describe('InteractionRuleEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         ...initialFormData,
         source_group: 'Tomato',

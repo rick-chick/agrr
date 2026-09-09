@@ -29,7 +29,8 @@ describe('PestEditPresenter', () => {
             loading: true,
             saving: false,
             error: null,
-            pendingErrorFlash: null,
+         errorIsWarmup: false,
+        pendingErrorFlash: null,
             formData: emptyFormData
           }
         );
@@ -46,7 +47,8 @@ describe('PestEditPresenter', () => {
       loading: true,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+   errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: emptyFormData
     };
 

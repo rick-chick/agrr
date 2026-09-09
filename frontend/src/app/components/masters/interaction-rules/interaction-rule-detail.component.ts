@@ -21,6 +21,7 @@ import { DetailSkeletonComponent } from '../../shared/skeleton/detail-skeleton.c
 const initialControl: InteractionRuleDetailViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   rule: null,
   pendingUndoToast: null,
   pendingErrorFlash: null
@@ -46,6 +47,7 @@ const initialControl: InteractionRuleDetailViewState = {
         <p class="master-loading detail-loading-text">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <app-master-load-error-panel
+            [isWarmupError]="control.errorIsWarmup"
           [errorKey]="control.error"
           [listLink]="['/interaction_rules']"
           backLabelKey="interaction_rules.index.title"

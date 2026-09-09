@@ -6,6 +6,7 @@ import { CropStagesFormData } from './crop-stages.view';
 export type CropStageEditViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   formData: CropStagesFormData;
   taskScheduleBlueprints: CropTaskScheduleBlueprint[];
   pendingErrorFlash: PendingErrorFlashRequest | null;

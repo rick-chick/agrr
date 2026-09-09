@@ -56,7 +56,8 @@ describe('InteractionRuleDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      rule: {
+errorIsWarmup: false,
+        rule: {
         id: 1,
         rule_type: 'continuous_cultivation',
         source_group: 'Solanaceae',
@@ -81,7 +82,8 @@ describe('InteractionRuleDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      rule: {
+errorIsWarmup: false,
+        rule: {
         id: 1,
         rule_type: 'continuous_cultivation',
         source_group: 'A',
@@ -124,7 +126,8 @@ describe('InteractionRuleDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      rule: {
+errorIsWarmup: false,
+        rule: {
         id: 1,
         rule_type: 'continuous_cultivation',
         source_group: 'Solanaceae',
@@ -178,7 +181,8 @@ describe('InteractionRuleDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      rule: {
+errorIsWarmup: false,
+        rule: {
         id: 1,
         rule_type: 'continuous_cultivation',
         source_group: 'A',
@@ -206,7 +210,8 @@ describe('InteractionRuleDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: true,
       error: null,
-      rule: null,
+errorIsWarmup: false,
+        rule: null,
       pendingUndoToast: null,
       pendingErrorFlash: null
     };

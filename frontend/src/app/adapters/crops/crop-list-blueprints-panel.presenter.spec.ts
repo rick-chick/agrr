@@ -14,7 +14,7 @@ describe('CropListBlueprintsPanelPresenter', () => {
   const initialControl: CropListBlueprintsPanelViewState = {
     loading: true,
     error: null,
-    crop: null,
+crop: null,
     blueprintsLoading: true,
     blueprintCount: 0,
     blueprintReadiness: defaultBlueprintReadiness(),

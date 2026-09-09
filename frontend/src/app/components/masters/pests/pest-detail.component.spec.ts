@@ -55,7 +55,8 @@ describe('PestDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pest: {
         id: 1,
         name: 'Aphid',
@@ -99,7 +100,8 @@ describe('PestDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pest: {
         id: 1,
         name: 'Aphid',
@@ -122,7 +124,8 @@ describe('PestDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: true,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pest: null,
       pendingUndoToast: null
     };
@@ -146,7 +149,8 @@ describe('PestDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: 'common.api_error.not_found',
-      pendingErrorFlash: null,
+      errorIsWarmup: false,
+        pendingErrorFlash: null,
       pest: null,
       pendingUndoToast: null
     };

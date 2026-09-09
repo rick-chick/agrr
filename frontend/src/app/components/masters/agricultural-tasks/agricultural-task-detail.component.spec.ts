@@ -52,7 +52,8 @@ describe('AgriculturalTaskDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       agriculturalTask: {
         id: 1,
         name: 'Tilling',
@@ -84,7 +85,8 @@ describe('AgriculturalTaskDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       agriculturalTask: {
         id: 1,
         name: 'Tilling',
@@ -113,7 +115,8 @@ describe('AgriculturalTaskDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       agriculturalTask: {
         id: 1,
         name: 'Tilling',
@@ -151,7 +154,8 @@ describe('AgriculturalTaskDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       agriculturalTask: {
         id: 1,
         name: 'Tilling',

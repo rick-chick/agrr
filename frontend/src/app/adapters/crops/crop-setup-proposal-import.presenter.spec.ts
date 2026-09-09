@@ -11,7 +11,7 @@ const initialControl: CropSetupProposalImportViewState = {
   submitting: false,
   applying: false,
   error: null,
-  cropName: null,
+cropName: null,
   jsonInput: '',
   phase: 'input',
   validationErrors: [],

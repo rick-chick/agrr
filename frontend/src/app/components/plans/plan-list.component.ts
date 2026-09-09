@@ -20,14 +20,12 @@ import {
 import type { PlanListPlan } from '../../domain/plans/plan-list-plan';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { BackendWarmupLoadingComponent } from '../shared/backend-warmup-loading/backend-warmup-loading.component';
-import {
-  BACKEND_WARMUP_I18N,
-  isBackendWarmupI18nKey
-} from '../../core/backend-warmup/backend-warmup';
 
 const initialControl: PlanListViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
+  warmupMessageKey: null,
   plans: [],
   pendingUndoToast: null,
   pendingErrorFlash: null
@@ -45,9 +43,11 @@ const initialControl: PlanListViewState = {
         <p class="page-description">{{ 'plans.index.description' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
-        @if (isWarmupState()) {
+        @if (control.loading || control.errorIsWarmup) {
           <app-card-list-skeleton class="list-loading-skeleton" />
-          <app-backend-warmup-loading [messageKey]="warmupMessageKey()" />
+          <app-backend-warmup-loading
+            [messageKey]="control.warmupMessageKey ?? 'common.backend_warmup.database'"
+          />
         } @else if (control.error) {
           <div class="page-alert-error plan-list__error" role="alert">
             <p>{{ control.error | translate }}</p>
@@ -377,14 +377,4 @@ export class PlanListComponent implements PlanListView, OnInit {
     }
   }
 
-  protected isWarmupState(): boolean {
-    return this.control.loading || isBackendWarmupI18nKey(this.control.error);
-  }
-
-  protected warmupMessageKey(): string {
-    if (isBackendWarmupI18nKey(this.control.error)) {
-      return this.control.error;
-    }
-    return BACKEND_WARMUP_I18N.database;
-  }
 }

@@ -84,7 +84,8 @@ describe('AgriculturalTaskEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Task',
         description: 'Test Description',
@@ -102,7 +103,8 @@ describe('AgriculturalTaskEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Task',
         description: 'Test Description',
@@ -137,7 +139,8 @@ describe('AgriculturalTaskEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Task',
         description: 'Test Description',
@@ -153,7 +156,8 @@ describe('AgriculturalTaskEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Task',
         description: 'Test Description',
@@ -191,7 +195,8 @@ describe('AgriculturalTaskEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Weeding',
         description: null,

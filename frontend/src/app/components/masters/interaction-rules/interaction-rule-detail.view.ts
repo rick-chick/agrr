@@ -5,6 +5,7 @@ import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-err
 export type InteractionRuleDetailViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   rule: InteractionRule | null;
   pendingUndoToast: PendingUndoToastRequest | null;
 

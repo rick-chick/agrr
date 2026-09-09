@@ -5,8 +5,8 @@ import type { CropDetailViewState } from '../../components/masters/crops/crop-de
 
 const baseControl: CropDetailViewState = {
   loading: false,
-  error: null,
-  crop: {
+  error: null,errorIsWarmup: false,
+        crop: {
     id: 3,
     name: 'Tomato',
     is_reference: false,

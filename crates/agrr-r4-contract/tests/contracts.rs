@@ -38,6 +38,7 @@ use support::{
     seed_org_scoped_plan,
     seed_public_cultivation_plan,
     seed_public_cultivation_plan_with_session,
+    seed_entry_schedule_contract_assets,
     cable_subscribe_frame_type,
 };
 
@@ -4713,5 +4714,72 @@ fn get_auth_login_rejects_arbitrary_run_app_return_to() {
     assert!(
         !location.contains("attacker.run.app"),
         "must not redirect to attacker-controlled run.app host: {location}"
+    );
+}
+
+#[test]
+fn get_entry_schedule_farms_returns_reference_farms_for_region() {
+    let client = ContractClient::from_env();
+    let seed = seed_entry_schedule_contract_assets();
+    let (status, body) = status_and_body(client.get(
+        "/api/v1/public_plans/entry_schedule/farms?region=jp",
+        None,
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let farms: Vec<serde_json::Value> = serde_json::from_str(&body).expect("entry schedule farms JSON");
+    assert!(
+        farms
+            .iter()
+            .any(|farm| farm["id"].as_i64() == Some(seed.farm_id)),
+        "expected seeded reference farm id {} in {body}",
+        seed.farm_id
+    );
+}
+
+#[test]
+fn get_entry_schedule_crops_returns_crop_list_for_farm() {
+    let client = ContractClient::from_env();
+    let seed = seed_entry_schedule_contract_assets();
+    let path = format!(
+        "/api/v1/public_plans/entry_schedule/crops?farm_id={}",
+        seed.farm_id
+    );
+    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("entry schedule crops JSON");
+    let crops = json
+        .get("crops")
+        .and_then(|value| value.as_array())
+        .expect("crops array in entry schedule list response");
+    let crop = crops
+        .iter()
+        .find(|item| item["id"].as_i64() == Some(seed.crop_id))
+        .unwrap_or_else(|| panic!("expected seeded crop id {} in {body}", seed.crop_id));
+    assert!(
+        crop.get("eligible").is_some(),
+        "expected eligible field on crop list item: {body}"
+    );
+}
+
+#[test]
+fn get_entry_schedule_crop_show_returns_crop_detail() {
+    let client = ContractClient::from_env();
+    let seed = seed_entry_schedule_contract_assets();
+    let path = format!(
+        "/api/v1/public_plans/entry_schedule/crops/{}?farm_id={}",
+        seed.crop_id, seed.farm_id
+    );
+    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("entry schedule crop show JSON");
+    assert_eq!(
+        json["crop"]["id"].as_i64(),
+        Some(seed.crop_id),
+        "{body}"
+    );
+    assert!(
+        json["crop"].get("entry_disclaimer").is_some(),
+        "expected entry_disclaimer on crop detail: {body}"
     );
 }

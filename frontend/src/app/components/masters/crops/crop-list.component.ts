@@ -21,6 +21,7 @@ import { CardListSkeletonComponent } from '../../shared/skeleton/card-list-skele
 const initialControl: CropListViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   crops: [],
   pendingUndoToast: null,
   pendingErrorFlash: null

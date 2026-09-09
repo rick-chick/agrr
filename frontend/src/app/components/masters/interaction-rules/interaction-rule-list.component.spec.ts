@@ -57,6 +57,7 @@ describe('InteractionRuleListComponent uniform card rows', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       rules: [rule],
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -80,6 +81,7 @@ describe('InteractionRuleListComponent uniform card rows', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       rules: [rule],
       pendingUndoToast: null,
       pendingErrorFlash: null

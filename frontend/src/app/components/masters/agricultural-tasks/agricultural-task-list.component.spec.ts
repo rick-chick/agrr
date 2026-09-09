@@ -56,6 +56,7 @@ describe('AgriculturalTaskListComponent uniform card rows', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       tasks,
       pendingUndoToast: null,
       pendingErrorFlash: null

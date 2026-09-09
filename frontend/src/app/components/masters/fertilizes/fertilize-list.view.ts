@@ -5,6 +5,7 @@ import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-err
 export type FertilizeListViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   fertilizes: Fertilize[];
   pendingUndoToast: PendingUndoToastRequest | null;
 

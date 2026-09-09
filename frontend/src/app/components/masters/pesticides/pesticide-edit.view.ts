@@ -12,6 +12,7 @@ export type PesticideEditViewState = {
   loading: boolean;
   saving: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   formData: PesticideEditFormData;
 
   pendingErrorFlash: PendingErrorFlashRequest | null;

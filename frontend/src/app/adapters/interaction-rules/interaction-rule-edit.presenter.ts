@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { InteractionRuleEditView } from '../../components/masters/interaction-rules/interaction-rule-edit.view';
 import { LoadInteractionRuleForEditOutputPort } from '../../usecase/interaction-rules/load-interaction-rule-for-edit.output-port';
 import { LoadInteractionRuleForEditDataDto } from '../../usecase/interaction-rules/load-interaction-rule-for-edit.dtos';
@@ -23,6 +24,7 @@ export class InteractionRuleEditPresenter implements LoadInteractionRuleForEditO
       ...this.view.control,
       loading: false,
       error: null,
+      errorIsWarmup: false,
       formData: {
         rule_type: interactionRule.rule_type,
         source_group: interactionRule.source_group,
@@ -40,11 +42,13 @@ export class InteractionRuleEditPresenter implements LoadInteractionRuleForEditO
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (this.view.control.loading) {
+      const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
       this.view.control = {
         ...this.view.control,
         loading: false,
         saving: false,
-        error: errorDtoI18nKey(dto),
+        error: errorKey,
+        errorIsWarmup: isWarmupError,
         pendingErrorFlash: null
       };
       return;
@@ -54,6 +58,7 @@ export class InteractionRuleEditPresenter implements LoadInteractionRuleForEditO
       loading: false,
       saving: false,
       error: null,
+      errorIsWarmup: false,
       pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) })
     };
   }

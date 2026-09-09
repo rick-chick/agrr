@@ -31,14 +31,18 @@ echo "==> Litestream replicate started"
 
 echo "==> un-stamp repair migrations for re-apply"
 sqlite3 "$AGRR_SQLITE_PATH" \
-  "DELETE FROM data_migration_history WHERE version IN ('20260531120000','20260531130100','20260531130200');"
+  "DELETE FROM data_migration_history WHERE version IN ('20260531120000','20260531130100','20260531130200','20260908120000');"
 
 echo "==> data apply in repair"
 "$M" data apply --region in --kind repair
 echo "==> data apply us repair (crop_stages from us_reference_crops.json)"
 "$M" data apply --region us --kind repair
+echo "==> data apply jp repair (cultivation_method from reference_crops.json)"
+"$M" data apply --region jp --kind repair
 
 echo "==> post-check"
+sqlite3 "$AGRR_SQLITE_PATH" \
+  "SELECT 'jp_without_cultivation_method', COUNT(*) FROM crops c WHERE c.region='jp' AND c.is_reference=1 AND c.cultivation_method IS NULL;"
 sqlite3 "$AGRR_SQLITE_PATH" \
   "SELECT 'us_without_stages', COUNT(*) FROM crops c WHERE c.region='us' AND c.is_reference=1 AND NOT EXISTS (SELECT 1 FROM crop_stages cs WHERE cs.crop_id=c.id);"
 sqlite3 "$AGRR_SQLITE_PATH" \

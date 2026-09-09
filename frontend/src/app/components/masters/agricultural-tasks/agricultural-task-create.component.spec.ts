@@ -73,8 +73,7 @@ describe('AgriculturalTaskCreateComponent', () => {
     // Set component control without triggering template rendering
     component.control = {
       saving: false,
-      error: null,
-      pendingErrorFlash: null,
+      error: null, pendingErrorFlash: null,
       formData: {
         name: 'New Task',
         description: 'New Description',
@@ -90,8 +89,7 @@ describe('AgriculturalTaskCreateComponent', () => {
     // Directly set _control to ensure it's not saving
     (component as any)._control = {
       saving: false,
-      error: null,
-      pendingErrorFlash: null,
+      error: null, pendingErrorFlash: null,
       formData: {
         name: 'New Task',
         description: 'New Description',
@@ -123,8 +121,7 @@ describe('AgriculturalTaskCreateComponent', () => {
     mockAuthService.user.mockReturnValue({ admin: false, region: 'jp' });
     component.control = {
       saving: false,
-      error: null,
-      pendingErrorFlash: null,
+      error: null, pendingErrorFlash: null,
       formData: {
         name: 'New Task',
         description: 'New Description',
@@ -138,8 +135,7 @@ describe('AgriculturalTaskCreateComponent', () => {
     };
     (component as any)._control = {
       saving: false,
-      error: null,
-      pendingErrorFlash: null,
+      error: null, pendingErrorFlash: null,
       formData: {
         name: 'New Task',
         description: 'New Description',

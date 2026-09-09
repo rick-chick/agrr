@@ -31,7 +31,8 @@ describe('PesticideEditPresenter', () => {
             loading: true,
             saving: false,
             error: null,
-            pendingErrorFlash: null,
+         errorIsWarmup: false,
+        pendingErrorFlash: null,
             formData: emptyFormData
           }
         );
@@ -48,7 +49,8 @@ describe('PesticideEditPresenter', () => {
       loading: true,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+   errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: emptyFormData
     };
 

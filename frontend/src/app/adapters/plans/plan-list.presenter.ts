@@ -8,6 +8,7 @@ import { DeletePlanSuccessDto } from '../../usecase/plans/delete-plan.dtos';
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 
 @Injectable()
 export class PlanListPresenter implements LoadPlanListOutputPort, DeletePlanOutputPort {
@@ -22,6 +23,8 @@ export class PlanListPresenter implements LoadPlanListOutputPort, DeletePlanOutp
     this.view.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
+      warmupMessageKey: null,
       plans: dto.plans,
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -30,10 +33,24 @@ export class PlanListPresenter implements LoadPlanListOutputPort, DeletePlanOutp
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (dto.scope === 'load-plan-list') {
+      const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
+      this.view.control = {
+        ...this.view.control,
+        loading: false,
+        error: errorKey,
+        errorIsWarmup: isWarmupError,
+        warmupMessageKey: isWarmupError ? errorKey : null,
+        pendingErrorFlash: pendingErrorFlashFromError(dto)
+      };
+      return;
+    }
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: dto.scope === 'load-plan-list' ? dto.message : null,
+      error: null,
+      errorIsWarmup: false,
+      warmupMessageKey: null,
       pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }

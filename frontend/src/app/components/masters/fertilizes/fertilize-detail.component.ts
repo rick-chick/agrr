@@ -18,6 +18,7 @@ import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master
 const initialControl: FertilizeDetailViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   fertilize: null,
   pendingErrorFlash: null
 };
@@ -34,6 +35,7 @@ const initialControl: FertilizeDetailViewState = {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <app-master-load-error-panel
+            [isWarmupError]="control.errorIsWarmup"
           [errorKey]="control.error"
           [listLink]="['/fertilizes']"
           backLabelKey="fertilizes.index.title"

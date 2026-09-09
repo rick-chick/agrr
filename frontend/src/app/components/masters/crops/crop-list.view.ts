@@ -5,6 +5,7 @@ import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-err
 export type CropListViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   crops: Crop[];
   pendingUndoToast: PendingUndoToastRequest | null;
 

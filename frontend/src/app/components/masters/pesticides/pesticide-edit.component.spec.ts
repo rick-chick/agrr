@@ -76,7 +76,8 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+  errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Pesticide',
         active_ingredient: 'Test Ingredient',
@@ -109,7 +110,8 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+  errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Pesticide',
         active_ingredient: 'Test Ingredient',
@@ -139,7 +141,8 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+  errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: '',
         active_ingredient: 'Test Ingredient',
@@ -160,7 +163,8 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+  errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Pesticide',
         active_ingredient: 'Test Ingredient',
@@ -186,7 +190,8 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+  errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Spray A',
         active_ingredient: null,
@@ -217,7 +222,8 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: 'common.api_error.not_found',
-      pendingErrorFlash: null,
+     errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: '',
         active_ingredient: null,
@@ -250,7 +256,8 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+  errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: '',
         active_ingredient: null,
@@ -280,7 +287,8 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: 'common.api_error.generic',
-      pendingErrorFlash: null,
+     errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: '',
         active_ingredient: null,
@@ -314,7 +322,8 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: 'common.api_error.not_found',
-      pendingErrorFlash: null,
+     errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: '',
         active_ingredient: null,

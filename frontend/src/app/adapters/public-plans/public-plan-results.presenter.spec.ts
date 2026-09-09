@@ -23,7 +23,7 @@ describe('PublicPlanResultsPresenter', () => {
         return lastControl ?? {
           loading: true,
           error: null,
-          data: null,
+data: null,
           savedPrivatePlanId: null,
           pendingErrorFlash: null,
           pendingSuccessFlash: null,
@@ -88,7 +88,7 @@ describe('PublicPlanResultsPresenter', () => {
       lastControl = {
         loading: false,
         error: null,
-        data: { id: 1 } as never,
+data: { id: 1 } as never,
         savedPrivatePlanId: null,
         pendingErrorFlash: null,
         pendingSuccessFlash: null,

@@ -16,6 +16,7 @@ export type CropStagesFormData = {
 export type CropStagesViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   formData: CropStagesFormData;
   taskScheduleBlueprints: CropTaskScheduleBlueprint[];
   pendingErrorFlash: PendingErrorFlashRequest | null;

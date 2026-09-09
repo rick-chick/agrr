@@ -66,8 +66,7 @@ const planInfo: PlanInfo = {
   timeline_generated_at: '2026-06-01T00:00:00Z',
   timeline_generated_at_display: '2026-06-01',
   task_schedule_sync_state: 'ready',
-  task_schedule_sync_error: null,
-  task_schedule_sync_error_crop_id: null
+  task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
 };
 
 const scheduleWithFields: TaskScheduleResponse = {
@@ -112,8 +111,7 @@ function createView(overrides: Partial<PlanTaskScheduleView['control']> = {}): P
   return {
     control: {
       loading: true,
-      error: null,
-      schedule: null,
+      error: null, schedule: null,
       regenerating: false,
       regenerateError: null,
       pendingSyncToastKey: null,

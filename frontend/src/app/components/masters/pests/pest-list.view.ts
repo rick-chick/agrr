@@ -5,6 +5,7 @@ import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-err
 export type PestListViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   pests: Pest[];
   pendingUndoToast: PendingUndoToastRequest | null;
 

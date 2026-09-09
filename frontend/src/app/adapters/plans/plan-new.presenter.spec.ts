@@ -9,7 +9,7 @@ const emptyPlanNewControl = (): PlanNewViewState => ({
   loading: true,
   submitting: false,
   error: null,
-  farms: [],
+farms: [],
   selectedFarmId: null,
   readinessLoading: false,
   readiness: null,

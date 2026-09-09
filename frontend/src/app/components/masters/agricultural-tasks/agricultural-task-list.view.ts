@@ -5,6 +5,7 @@ import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-err
 export type AgriculturalTaskListViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   tasks: AgriculturalTask[];
   pendingUndoToast: PendingUndoToastRequest | null;
 

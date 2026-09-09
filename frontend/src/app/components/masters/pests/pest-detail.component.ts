@@ -18,6 +18,7 @@ import { DetailSkeletonComponent } from '../../shared/skeleton/detail-skeleton.c
 const initialControl: PestDetailViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   pest: null,
   pendingUndoToast: null,
   pendingErrorFlash: null
@@ -43,6 +44,7 @@ const initialControl: PestDetailViewState = {
         <p class="master-loading detail-loading-text">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <app-master-load-error-panel
+            [isWarmupError]="control.errorIsWarmup"
           [errorKey]="control.error"
           [listLink]="['/pests']"
           backLabelKey="pests.index.title"

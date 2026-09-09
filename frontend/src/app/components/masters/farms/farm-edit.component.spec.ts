@@ -65,7 +65,8 @@ describe('FarmEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+   errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Farm',
         region: 'Test Region',
@@ -82,7 +83,8 @@ describe('FarmEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+   errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Farm',
         region: 'Test Region',
@@ -120,7 +122,8 @@ describe('FarmEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+   errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Farm',
         region: 'Test Region',
@@ -239,7 +242,8 @@ describe('FarmEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+   errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'Test Farm',
         region: 'jp',

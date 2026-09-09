@@ -1,1 +1,3 @@
+pub mod entry_schedule_weather_location_enricher;
 pub mod entry_schedule_weather_payload_normalizer;
+pub mod entry_schedule_weather_preparer;

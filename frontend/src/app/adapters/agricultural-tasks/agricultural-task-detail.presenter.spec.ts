@@ -30,7 +30,8 @@ describe('AgriculturalTaskDetailPresenter', () => {
     lastControl = null;
     view = {
       get control(): AgriculturalTaskDetailViewState {
-        return lastControl ?? { loading: true, error: null, agriculturalTask: null, pendingUndoToast: null, pendingErrorFlash: null };
+        return lastControl ?? { loading: true, error: null,errorIsWarmup: false,
+        agriculturalTask: null, pendingUndoToast: null, pendingErrorFlash: null };
       },
       set control(value: AgriculturalTaskDetailViewState) {
         lastControl = value;
@@ -45,6 +46,7 @@ describe('AgriculturalTaskDetailPresenter', () => {
       const initialControl: AgriculturalTaskDetailViewState = {
         loading: true,
         error: null,
+     errorIsWarmup: false,
         agriculturalTask: null,
         pendingUndoToast: null,
         pendingErrorFlash: null
@@ -62,6 +64,7 @@ describe('AgriculturalTaskDetailPresenter', () => {
       const initialControl: AgriculturalTaskDetailViewState = {
         loading: false,
         error: null,
+     errorIsWarmup: false,
         agriculturalTask: { id: 1, name: 'Task', required_tools: [], is_reference: false },
         pendingUndoToast: null,
         pendingErrorFlash: null
@@ -80,6 +83,7 @@ describe('AgriculturalTaskDetailPresenter', () => {
       lastControl = {
         loading: false,
         error: null,
+     errorIsWarmup: false,
         agriculturalTask: {
           id: 1,
           name: 'Task A',

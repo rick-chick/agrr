@@ -30,7 +30,8 @@ describe('FarmDetailPresenter', () => {
     lastControl = null;
     view = {
       get control(): FarmDetailViewState {
-        return lastControl ?? { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
+        return lastControl ?? { loading: true, error: null,errorIsWarmup: false,
+        farm: null, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
       },
       set control(value: FarmDetailViewState) {
         lastControl = value;
@@ -69,7 +70,8 @@ describe('FarmDetailPresenter', () => {
     });
 
     it('queues pending error flash and updates view.control on onError(dto) when not loading', () => {
-      const initialControl: FarmDetailViewState = { loading: false, error: null, farm: { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0 }, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
+      const initialControl: FarmDetailViewState = { loading: false, error: null,errorIsWarmup: false,
+        farm: { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0 }, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Not found' };
@@ -83,7 +85,8 @@ describe('FarmDetailPresenter', () => {
     });
 
     it('sets i18n load error on onError(dto) while loading', () => {
-      const initialControl: FarmDetailViewState = { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
+      const initialControl: FarmDetailViewState = { loading: true, error: null,errorIsWarmup: false,
+        farm: null, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
       lastControl = initialControl;
 
       presenter.onError({ message: 'Http failure response for http://localhost:3000/api/v1/farms/999: 404 Not Found' });
@@ -104,7 +107,8 @@ describe('FarmDetailPresenter', () => {
         longitude: 135.0,
         weather_data_status: 'pending' as const
       };
-      lastControl = { loading: false, error: null, farm: initialFarm, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
+      lastControl = { loading: false, error: null,errorIsWarmup: false,
+        farm: initialFarm, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
 
       const dto: FarmWeatherUpdateDto = {
         id: 1,
@@ -132,7 +136,8 @@ describe('FarmDetailPresenter', () => {
         longitude: 135.0,
         weather_data_status: 'pending' as const
       };
-      lastControl = { loading: false, error: null, farm: initialFarm, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
+      lastControl = { loading: false, error: null,errorIsWarmup: false,
+        farm: initialFarm, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
 
       const dto: FarmWeatherUpdateDto = {
         id: 2,
@@ -154,7 +159,8 @@ describe('FarmDetailPresenter', () => {
         weather_data_status: 'fetching' as const,
         weather_data_progress: 40
       };
-      lastControl = { loading: false, error: null, farm: initialFarm, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
+      lastControl = { loading: false, error: null,errorIsWarmup: false,
+        farm: initialFarm, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
 
       presenter.presentWeatherConnectionLost();
 
@@ -167,6 +173,7 @@ describe('FarmDetailPresenter', () => {
       lastControl = {
         loading: false,
         error: null,
+     errorIsWarmup: false,
         farm: { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0, weather_data_status: 'completed' },
         fields: [],
         pendingUndoToast: null,

@@ -49,7 +49,7 @@ describe('PlanWorkRecordsPresenter', () => {
             ...SAVE_IMPACT_DEFAULTS,
             loading: true,
             error: null,
-            plan: null,
+plan: null,
             groups: []
           }
         );

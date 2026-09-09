@@ -205,8 +205,7 @@ describe('PlanApiGateway', () => {
           timeline_generated_at: '2025-01-02T12:00:00Z',
           timeline_generated_at_display: 'Jan 2, 2025',
           task_schedule_sync_state: 'ready',
-          task_schedule_sync_error: null,
-          task_schedule_sync_error_crop_id: null
+          task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
         },
         week: {
           start_date: '2025-01-01',

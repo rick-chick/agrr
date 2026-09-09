@@ -30,8 +30,7 @@ async function flushChartMicrotasks(): Promise<void> {
 function climateControl(climateData: FieldCultivationClimateData | null) {
   return {
     loading: false,
-    error: null,
-    climateData,
+    error: null, climateData,
     workDayMarkers: [],
     latestImplementation: null
   };

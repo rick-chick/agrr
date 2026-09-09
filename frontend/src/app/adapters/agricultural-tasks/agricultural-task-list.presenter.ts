@@ -8,7 +8,7 @@ import { DeleteAgriculturalTaskSuccessDto } from '../../usecase/agricultural-tas
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
-import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 
 @Injectable()
 export class AgriculturalTaskListPresenter implements LoadAgriculturalTaskListOutputPort, DeleteAgriculturalTaskOutputPort {
@@ -23,6 +23,7 @@ export class AgriculturalTaskListPresenter implements LoadAgriculturalTaskListOu
     this.view.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       tasks: dto.tasks,
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -32,10 +33,12 @@ export class AgriculturalTaskListPresenter implements LoadAgriculturalTaskListOu
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (this.view.control.loading) {
+      const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
       this.view.control = {
         ...this.view.control,
         loading: false,
-        error: errorDtoI18nKey(dto),
+        error: errorKey,
+        errorIsWarmup: isWarmupError,
         pendingErrorFlash: null
       };
       return;
@@ -44,6 +47,7 @@ export class AgriculturalTaskListPresenter implements LoadAgriculturalTaskListOu
       ...this.view.control,
       loading: false,
       error: null,
+      errorIsWarmup: false,
       pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }

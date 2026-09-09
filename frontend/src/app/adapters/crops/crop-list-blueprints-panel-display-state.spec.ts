@@ -6,7 +6,7 @@ import type { CropListBlueprintsPanelViewState } from '../../components/masters/
 const baseControl: CropListBlueprintsPanelViewState = {
   loading: false,
   error: null,
-  crop: {
+crop: {
     id: 3,
     name: 'Tomato',
     is_reference: false,

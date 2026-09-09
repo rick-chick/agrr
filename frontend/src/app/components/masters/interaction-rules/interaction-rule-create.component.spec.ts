@@ -95,8 +95,7 @@ describe('InteractionRuleCreateComponent', () => {
     currentUser = { admin: false, region: 'jp' };
     component.control = {
       saving: false,
-      error: null,
-      pendingErrorFlash: null,
+      error: null, pendingErrorFlash: null,
       formData: {
         rule_type: 'continuous_cultivation',
         source_group: 'A',
@@ -121,8 +120,7 @@ describe('InteractionRuleCreateComponent', () => {
     currentUser = { admin: true, region: 'jp' };
     component.control = {
       saving: false,
-      error: null,
-      pendingErrorFlash: null,
+      error: null, pendingErrorFlash: null,
       formData: {
         rule_type: 'continuous_cultivation',
         source_group: 'A',

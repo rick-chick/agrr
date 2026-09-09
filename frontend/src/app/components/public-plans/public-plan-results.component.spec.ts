@@ -114,8 +114,7 @@ describe('PublicPlanResultsComponent', () => {
   it('implements View control getter/setter', () => {
     const state: PublicPlanResultsViewState = {
       loading: false,
-      error: null,
-      data: null,
+      error: null, data: null,
       savedPrivatePlanId: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
@@ -445,8 +444,7 @@ describe('PublicPlanResultsComponent (template)', () => {
 
     fixture.componentInstance.control = {
       loading: false,
-      error: null,
-      data: {
+      error: null, data: {
         success: true,
         data: {
           id: 1,

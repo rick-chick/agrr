@@ -37,7 +37,8 @@ describe('CropStageEditPresenter', () => {
   ): CropStageEditViewState => ({
     loading: false,
     error: null,
-    pendingErrorFlash: null,
+ errorIsWarmup: false,
+        pendingErrorFlash: null,
     pendingSuccessFlash: null,
     pendingResyncPanelDraft: false,
     pendingNavigateToList: false,
@@ -57,7 +58,8 @@ describe('CropStageEditPresenter', () => {
         return lastControl ?? {
           loading: true,
           error: null,
-          pendingErrorFlash: null,
+       errorIsWarmup: false,
+        pendingErrorFlash: null,
           pendingSuccessFlash: null,
           pendingResyncPanelDraft: false,
           pendingNavigateToList: false,

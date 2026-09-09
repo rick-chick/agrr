@@ -449,11 +449,9 @@
     }
 
     #[test]
-    fn returns_missing_cultivation_method_when_crop_has_no_method() {
+    fn returns_missing_cultivation_method_when_crop_has_no_method_and_no_stages() {
         let crop = test_crop(1, "トマト", None, None);
-        let crop_gateway = StubCropGateway {
-            rows: sowing_transplant_stages(),
-        };
+        let crop_gateway = StubCropGateway { rows: vec![] };
         let optimization_gateway = StubOptimizationGateway {
             outcome: StubOptimizeOutcome::Ok(json!({
                 "optimal_start_date": "2026-03-04",
@@ -480,6 +478,72 @@
             result.reason_parts.get("error_key").and_then(|v| v.as_str()),
             Some("missing_cultivation_method")
         );
+    }
+
+    #[test]
+    fn infers_transplant_cultivation_from_stage_names_when_method_missing() {
+        let crop = test_crop(1, "トマト", None, None);
+        let crop_gateway = StubCropGateway {
+            rows: sowing_transplant_stages(),
+        };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(result.eligible);
+        assert!(result.sowing_windows.is_empty());
+        assert_eq!(result.transplant_windows.len(), 1);
+        assert_eq!(result.transplant_stage_id, Some(2));
+    }
+
+    #[test]
+    fn infers_direct_sow_cultivation_from_stage_names_when_method_missing() {
+        let crop = test_crop(1, "ほうれん草", None, None);
+        let crop_gateway = StubCropGateway {
+            rows: direct_sow_stages(),
+        };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(result.eligible);
+        assert_eq!(result.sowing_windows.len(), 1);
+        assert!(result.transplant_windows.is_empty());
+        assert_eq!(result.sowing_stage_id, Some(11));
     }
 
     fn direct_sow_stages() -> Vec<CropStageSnapshot> {

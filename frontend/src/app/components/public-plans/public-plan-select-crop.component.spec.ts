@@ -76,8 +76,7 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     component.selectedCrops = [];
     component._control = {
       loading: true,
-      error: null,
-      crops: [],
+      error: null, crops: [],
       saving: false
     };
   });
@@ -85,8 +84,7 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
   it('implements View control getter/setter and triggers change detection', () => {
     const state: PublicPlanSelectCropViewState = {
       loading: false,
-      error: null,
-      crops: [],
+      error: null, crops: [],
       saving: false
     
     };
@@ -153,8 +151,7 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     component.selectedCropIds = new Set([1, 2, 3]);
     component._control = {
       loading: false,
-      error: null,
-      crops: [],
+      error: null, crops: [],
       saving: false
     };
 
@@ -188,8 +185,7 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     component.selectedCropIds = new Set([1]);
     component._control = {
       loading: false,
-      error: null,
-      crops: [],
+      error: null, crops: [],
       saving: true
     };
 
@@ -202,8 +198,7 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     component.selectedCropIds = new Set();
     component._control = {
       loading: false,
-      error: null,
-      crops: [],
+      error: null, crops: [],
       saving: false
     };
 
@@ -225,8 +220,7 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     if (desc?.set) {
       desc.set.call(component, {
         loading: false,
-        error: null,
-        crops,
+        error: null, crops,
         saving: false
       });
     }
@@ -250,8 +244,7 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     if (desc?.set) {
       desc.set.call(component, {
         loading: false,
-        error: null,
-        crops,
+        error: null, crops,
         saving: false
       });
     }
@@ -358,8 +351,7 @@ describe('PublicPlanSelectCropComponent (template)', () => {
 
     instance.control = {
       loading: false,
-      error: null,
-      crops: [{ id: 1, name: 'Tomato', is_reference: false, groups: [] }],
+      error: null, crops: [{ id: 1, name: 'Tomato', is_reference: false, groups: [] }],
       saving: false
     };
     fixture.detectChanges();
@@ -449,8 +441,7 @@ describe('PublicPlanSelectCropComponent (template)', () => {
 
     instance.control = {
       loading: false,
-      error: null,
-      crops: [{ id: 1, name: 'トマト', is_reference: false, groups: [] }],
+      error: null, crops: [{ id: 1, name: 'トマト', is_reference: false, groups: [] }],
       saving: false
     };
     fixture.detectChanges();
@@ -540,8 +531,7 @@ describe('PublicPlanSelectCropComponent (template)', () => {
 
     instance.control = {
       loading: false,
-      error: null,
-      crops: [{ id: 1, name: 'Tomato', is_reference: false, groups: [] }],
+      error: null, crops: [{ id: 1, name: 'Tomato', is_reference: false, groups: [] }],
       saving: false
     };
     instance.selectedCropIds = new Set([1]);

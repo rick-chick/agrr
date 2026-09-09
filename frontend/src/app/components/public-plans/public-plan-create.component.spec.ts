@@ -45,16 +45,14 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     component.flash = flash;
     component._control = {
       loading: true,
-      error: null,
-      farms: []
+      error: null, farms: []
     };
   });
 
   it('implements View control getter/setter and triggers change detection', () => {
     const state: PublicPlanCreateViewState = {
       loading: false,
-      error: null,
-      farms: []
+      error: null, farms: []
     
     };
 

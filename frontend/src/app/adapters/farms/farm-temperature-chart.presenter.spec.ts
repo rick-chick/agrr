@@ -40,7 +40,7 @@ describe('FarmTemperatureChartPresenter', () => {
     lastControl = {
       loading: true,
       error: null,
-      chartData: null
+chartData: null
     };
     view = {
       get control(): FarmTemperatureChartViewState {
@@ -59,7 +59,7 @@ describe('FarmTemperatureChartPresenter', () => {
     expect(lastControl).toEqual({
       loading: false,
       error: null,
-      chartData: sampleData
+chartData: sampleData
     });
   });
 
@@ -69,7 +69,7 @@ describe('FarmTemperatureChartPresenter', () => {
     expect(lastControl).toEqual({
       loading: false,
       error: 'farms.weather_section.chart_fetching',
-      chartData: null
+chartData: null
     });
   });
 

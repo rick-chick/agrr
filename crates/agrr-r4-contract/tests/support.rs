@@ -633,6 +633,200 @@ pub fn seed_predicted_weather_for_plan(plan_id: i64) {
     std::fs::write(&object_path, CONTRACT_PREDICTED_WEATHER_JSON).expect("write predicted weather");
 }
 
+pub struct EntryScheduleContractSeed {
+    pub farm_id: i64,
+    pub crop_id: i64,
+    pub weather_location_id: i64,
+}
+
+fn contract_entry_schedule_location_weather_dates(
+    conn: &rusqlite::Connection,
+) -> (String, String, String, String) {
+    let prediction_start: String = conn
+        .query_row("SELECT '2026-01-01'", [], |row| row.get(0))
+        .expect("prediction start");
+    let metadata_target: String = conn
+        .query_row("SELECT date('now', '+2 years', '-1 day')", [], |row| row.get(0))
+        .expect("metadata target end");
+    let entry_schedule_target: String = conn
+        .query_row(
+            "SELECT printf('%d-12-31', CAST(strftime('%Y', 'now') AS INTEGER) + 1)",
+            [],
+            |row| row.get(0),
+        )
+        .expect("entry schedule target end");
+    let prediction_end = if metadata_target.as_str() >= entry_schedule_target.as_str() {
+        metadata_target
+    } else {
+        entry_schedule_target.clone()
+    };
+    (prediction_start, prediction_end.clone(), entry_schedule_target, prediction_end)
+}
+
+fn contract_entry_schedule_location_weather_json(
+    conn: &rusqlite::Connection,
+) -> (String, String, String, String, String) {
+    let (prediction_start, prediction_end, metadata_target, data_end) =
+        contract_entry_schedule_location_weather_dates(conn);
+    let mut stmt = conn
+        .prepare(
+            "WITH RECURSIVE months(m) AS (
+               SELECT ?1
+               UNION ALL
+               SELECT date(m, '+1 month') FROM months WHERE date(m, '+1 month') <= ?2
+             )
+             SELECT m FROM months",
+        )
+        .expect("monthly weather dates");
+    let month_dates: Vec<String> = stmt
+        .query_map(params![prediction_start, prediction_end], |row| row.get(0))
+        .expect("month rows")
+        .collect::<Result<Vec<_>, _>>()
+        .expect("month date list");
+    assert!(
+        month_dates.len() >= 6,
+        "entry schedule contract weather fixture must cover at least six months"
+    );
+    let data: Vec<serde_json::Value> = month_dates
+        .iter()
+        .map(|date| {
+            serde_json::json!({
+                "time": date,
+                "temperature_2m_mean": 15.0
+            })
+        })
+        .collect();
+    let payload = serde_json::json!({
+        "data": data,
+        "prediction_start_date": prediction_start,
+        "prediction_end_date": prediction_end,
+        "target_end_date": metadata_target,
+    });
+    (
+        payload["prediction_start_date"]
+            .as_str()
+            .expect("prediction_start_date")
+            .to_string(),
+        payload["prediction_end_date"]
+            .as_str()
+            .expect("prediction_end_date")
+            .to_string(),
+        payload["target_end_date"]
+            .as_str()
+            .expect("target_end_date")
+            .to_string(),
+        data_end,
+        payload.to_string(),
+    )
+}
+
+/// Seeds location-scoped predicted weather metadata + GCS mirror for entry schedule contracts.
+pub fn seed_predicted_weather_for_location(weather_location_id: i64) {
+    let conn = contract_sqlite_conn();
+    let (prediction_start, prediction_end, target_end, data_end, payload_json) =
+        contract_entry_schedule_location_weather_json(&conn);
+    conn.execute(
+        "INSERT INTO predicted_weather_metadata \
+         (scope, scope_id, prediction_start_date, prediction_end_date, target_end_date, data_end_date, generated_at) \
+         VALUES ('location', ?1, ?2, ?3, ?4, ?5, datetime('now')) \
+         ON CONFLICT(scope, scope_id) DO UPDATE SET \
+         prediction_start_date = excluded.prediction_start_date, \
+         prediction_end_date = excluded.prediction_end_date, \
+         target_end_date = excluded.target_end_date, \
+         data_end_date = excluded.data_end_date, \
+         generated_at = excluded.generated_at",
+        params![
+            weather_location_id,
+            prediction_start,
+            prediction_end,
+            target_end,
+            data_end
+        ],
+    )
+    .expect("upsert location predicted weather metadata");
+
+    let local_root = std::env::var("WEATHER_DATA_LOCAL_ROOT")
+        .unwrap_or_else(|_| "/tmp/agrr-weather-contract".to_string());
+    let object_path = format!("{local_root}/predicted_weather/location/{weather_location_id}.json");
+    if let Some(parent) = std::path::Path::new(&object_path).parent() {
+        std::fs::create_dir_all(parent).expect("create weather mirror dir");
+    }
+    std::fs::write(&object_path, payload_json).expect("write location predicted weather");
+}
+
+/// Seeds reference farm/crop + location weather for entry schedule public API contracts.
+pub fn seed_entry_schedule_contract_assets() -> EntryScheduleContractSeed {
+    let conn = contract_sqlite_conn();
+    let suffix = seed_suffix();
+
+    conn.execute(
+        "INSERT INTO weather_locations (latitude, longitude, elevation, timezone, created_at, updated_at)
+         VALUES (35.6895, 139.6917, 40.0, 'Asia/Tokyo', datetime('now'), datetime('now'))",
+        [],
+    )
+    .expect("insert weather_location");
+    let weather_location_id = conn.last_insert_rowid();
+    seed_predicted_weather_for_location(weather_location_id);
+
+    let owner_user_id: i64 = conn
+        .query_row("SELECT id FROM users ORDER BY id ASC LIMIT 1", [], |row| row.get(0))
+        .expect("contract sqlite must have at least one user for reference farm seed");
+
+    let farm_name = format!("Contract Entry Schedule Farm {suffix}");
+    conn.execute(
+        "INSERT INTO farms (
+           user_id, name, latitude, longitude, region, created_at, updated_at, is_reference,
+           weather_data_status, weather_data_fetched_years, weather_data_total_years,
+           weather_location_id
+         ) VALUES (
+           ?1, ?2, 35.6895, 139.6917, 'jp', datetime('now'), datetime('now'), 1,
+           'completed', 5, 5, ?3
+         )",
+        params![owner_user_id, farm_name, weather_location_id],
+    )
+    .expect("insert reference farm");
+    let farm_id = conn.last_insert_rowid();
+
+    let crop_name = format!("Contract Entry Schedule Crop {suffix}");
+    conn.execute(
+        "INSERT INTO crops (
+           user_id, name, variety, is_reference, region, cultivation_method, created_at, updated_at
+         ) VALUES (
+           NULL, ?1, 'V1', 1, 'jp', 'transplant', datetime('now'), datetime('now')
+         )",
+        params![crop_name],
+    )
+    .expect("insert reference crop");
+    let crop_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO crop_stages (crop_id, name, \"order\", created_at, updated_at)
+         VALUES (?1, 'Contract Stage', 1, datetime('now'), datetime('now'))",
+        params![crop_id],
+    )
+    .expect("insert crop stage");
+    let crop_stage_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO temperature_requirements (
+           crop_stage_id, base_temperature, optimal_min, optimal_max, max_temperature, created_at, updated_at
+         ) VALUES (?1, 10.0, 18.0, 28.0, 35.0, datetime('now'), datetime('now'))",
+        params![crop_stage_id],
+    )
+    .expect("insert temperature requirements");
+    conn.execute(
+        "INSERT INTO thermal_requirements (crop_stage_id, required_gdd, created_at, updated_at)
+         VALUES (?1, 200.0, datetime('now'), datetime('now'))",
+        params![crop_stage_id],
+    )
+    .expect("insert thermal requirements");
+
+    EntryScheduleContractSeed {
+        farm_id,
+        crop_id,
+        weather_location_id,
+    }
+}
+
 /// Seeds a plan with blueprints, weather, and mixed schedule items for regeneration tests.
 pub fn seed_task_schedule_regeneration_plan(user_id: i64) -> TaskScheduleRegenerationSeed {
     let conn = contract_sqlite_conn();

@@ -1,93 +1,22 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { of, firstValueFrom, tap, map, catchError, throwError } from 'rxjs';
-import { detectBrowserRegion } from '../core/browser-region';
-import {
-  isAuthMeSessionUnavailableError,
-  isAuthMeUnauthenticatedError
-} from '../core/auth/auth-me-error';
-import { isBackendWarmupHttpError } from '../core/backend-warmup/backend-warmup';
+import { of, firstValueFrom, throwError } from 'rxjs';
 
-// Logic from auth.service.ts
-class AuthServiceLogic {
-  private userSignal: any = null;
-  private sessionUnavailableSignal = false;
-  private databaseWarmingSignal = false;
-  private loaded = false;
+import { ApiService } from './api.service';
+import { ApiKeyService } from './api-key.service';
+import { AuthService } from './auth.service';
 
-  constructor(private api: any, private apiKeyService: any) {}
-
-  user() {
-    return this.userSignal;
-  }
-
-  sessionUnavailable() {
-    return this.sessionUnavailableSignal;
-  }
-
-  databaseWarming() {
-    return this.databaseWarmingSignal;
-  }
-
-  loadCurrentUser() {
-    if (this.loaded) return of(this.userSignal);
-    return this.api.getCurrentUser().pipe(
-      map((response: any) => response.user),
-      tap((user: any) => {
-        this.apiKeyService.clearApiKey();
-        user.region = user.region ?? detectBrowserRegion();
-        this.userSignal = user;
-        this.sessionUnavailableSignal = false;
-        this.databaseWarmingSignal = false;
-        this.loaded = true;
-      }),
-      catchError((error: unknown) => {
-        if (isAuthMeSessionUnavailableError(error)) {
-          if (isBackendWarmupHttpError(error)) {
-            this.databaseWarmingSignal = true;
-            this.sessionUnavailableSignal = false;
-          } else {
-            this.databaseWarmingSignal = false;
-            this.sessionUnavailableSignal = true;
-          }
-        } else if (isAuthMeUnauthenticatedError(error)) {
-          this.userSignal = null;
-          this.sessionUnavailableSignal = false;
-          this.databaseWarmingSignal = false;
-        } else {
-          this.userSignal = null;
-          this.sessionUnavailableSignal = false;
-          this.databaseWarmingSignal = false;
-        }
-        this.loaded = true;
-        return of(null);
-      })
-    );
-  }
-
-  retryLoadCurrentUser() {
-    this.loaded = false;
-    this.sessionUnavailableSignal = false;
-    this.databaseWarmingSignal = false;
-    return this.loadCurrentUser();
-  }
-
-  logout() {
-    return this.api.logout().pipe(
-      tap(() => {
-        this.apiKeyService.clearApiKey();
-        this.userSignal = null;
-        this.sessionUnavailableSignal = false;
-        this.databaseWarmingSignal = false;
-      })
-    );
-  }
-}
-
-describe('AuthService Logic Verification', () => {
-  let service: AuthServiceLogic;
-  let apiService: any;
-  let apiKeyService: any;
+describe('AuthService', () => {
+  let service: AuthService;
+  let apiService: {
+    getCurrentUser: ReturnType<typeof vi.fn>;
+    logout: ReturnType<typeof vi.fn>;
+  };
+  let apiKeyService: {
+    setApiKey: ReturnType<typeof vi.fn>;
+    clearApiKey: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     apiService = {
@@ -98,7 +27,16 @@ describe('AuthService Logic Verification', () => {
       setApiKey: vi.fn(),
       clearApiKey: vi.fn()
     };
-    service = new AuthServiceLogic(apiService, apiKeyService);
+
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { provide: ApiService, useValue: apiService },
+        { provide: ApiKeyService, useValue: apiKeyService }
+      ]
+    });
+
+    service = TestBed.inject(AuthService);
   });
 
   it('should clear stale API key when loading current user without persisting /me key', async () => {

@@ -4,7 +4,6 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MasterLoadErrorPanelComponent } from './master-load-error-panel.component';
-import { BACKEND_WARMUP_I18N } from '../../../core/backend-warmup/backend-warmup';
 
 describe('MasterLoadErrorPanelComponent', () => {
   let fixture: ComponentFixture<MasterLoadErrorPanelComponent>;
@@ -71,8 +70,9 @@ describe('MasterLoadErrorPanelComponent', () => {
     expect(fixture.nativeElement.querySelector('.master-load-error[role="alert"]')).toBeTruthy();
   });
 
-  it('shows warmup loading instead of error alert for backend warmup keys', () => {
-    fixture.componentRef.setInput('errorKey', BACKEND_WARMUP_I18N.database);
+  it('shows warmup loading when isWarmupError input is true', () => {
+    fixture.componentRef.setInput('errorKey', 'common.backend_warmup.database');
+    fixture.componentRef.setInput('isWarmupError', true);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.master-load-error')).toBeNull();
