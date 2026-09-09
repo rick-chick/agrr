@@ -56,6 +56,7 @@ describe('PesticideListComponent uniform card rows', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       pesticides,
       pendingUndoToast: null,
       pendingErrorFlash: null

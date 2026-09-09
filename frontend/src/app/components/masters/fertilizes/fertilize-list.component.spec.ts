@@ -51,6 +51,7 @@ describe('FertilizeListComponent uniform card rows', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       fertilizes: [fertilize],
       pendingUndoToast: null,
       pendingErrorFlash: null
