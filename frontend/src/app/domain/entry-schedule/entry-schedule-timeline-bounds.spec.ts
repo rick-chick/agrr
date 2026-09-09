@@ -42,4 +42,17 @@ describe('timelineBoundsFromSummaries', () => {
   it('returns null when no valid summaries are provided', () => {
     expect(timelineBoundsFromSummaries([null, undefined])).toBeNull();
   });
+
+  it('ignores null summaries and uses valid date ranges', () => {
+    const bounds = timelineBoundsFromSummaries([
+      null,
+      { start_date: '2027-04-17', end_date: '2027-06-03' },
+      undefined,
+    ]);
+
+    expect(bounds).not.toBeNull();
+    expect(bounds!.yearLabel).toBe('2027');
+    expect(bounds!.min).toBe(calendarYearJanDecBounds(2027).min);
+    expect(bounds!.max).toBe(calendarYearJanDecBounds(2027).max);
+  });
 });
