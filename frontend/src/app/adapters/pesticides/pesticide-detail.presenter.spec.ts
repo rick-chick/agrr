@@ -28,7 +28,8 @@ describe('PesticideDetailPresenter', () => {
     lastControl = null;
     const view: PesticideDetailView = {
       get control(): PesticideDetailViewState {
-        return lastControl ?? { loading: true, error: null, pesticide: null, pendingUndoToast: null, pendingErrorFlash: null };
+        return lastControl ?? { loading: true, error: null,errorIsWarmup: false,
+        pesticide: null, pendingUndoToast: null, pendingErrorFlash: null };
       },
       set control(value: PesticideDetailViewState) {
         lastControl = value;
@@ -59,7 +60,8 @@ describe('PesticideDetailPresenter', () => {
   });
 
   it('sets inline error key on onError(dto)', () => {
-    lastControl = { loading: true, error: null, pesticide: null, pendingUndoToast: null, pendingErrorFlash: null };
+    lastControl = { loading: true, error: null,errorIsWarmup: false,
+        pesticide: null, pendingUndoToast: null, pendingErrorFlash: null };
     const dto: ErrorDto = { message: 'common.api_error.not_found' };
 
     presenter.onError(dto);
@@ -70,7 +72,8 @@ describe('PesticideDetailPresenter', () => {
   });
 
   it('maps raw HTTP error text to i18n key on onError(dto)', () => {
-    lastControl = { loading: true, error: null, pesticide: null, pendingUndoToast: null, pendingErrorFlash: null };
+    lastControl = { loading: true, error: null,errorIsWarmup: false,
+        pesticide: null, pendingUndoToast: null, pendingErrorFlash: null };
 
     presenter.onError({
       message: 'Http failure response for https://agrr.local/api/v1/masters/pesticides/999: 404 Not Found'
@@ -85,6 +88,7 @@ describe('PesticideDetailPresenter', () => {
       lastControl = {
         loading: false,
         error: null,
+     errorIsWarmup: false,
         pesticide: {
           id: 1,
           name: 'Spray A',

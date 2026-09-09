@@ -37,6 +37,7 @@ import { DetailSkeletonComponent } from '../../shared/skeleton/detail-skeleton.c
 const initialControl: CropDetailViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   crop: null,
   pendingUndoToast: null,
   pendingErrorFlash: null,
@@ -69,6 +70,7 @@ const initialControl: CropDetailViewState = {
         <p class="master-loading detail-loading-text">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <app-master-load-error-panel
+            [isWarmupError]="control.errorIsWarmup"
           [errorKey]="control.error"
           [listLink]="['/crops']"
           backLabelKey="crops.index.title"

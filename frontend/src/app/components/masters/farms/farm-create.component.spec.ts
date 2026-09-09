@@ -55,7 +55,7 @@ describe('FarmCreateComponent', () => {
     const state: FarmCreateViewState = {
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+pendingErrorFlash: null,
       limitCheckLoading: false,
       limitBlocked: false,
       formData: {
@@ -73,7 +73,7 @@ describe('FarmCreateComponent', () => {
     const state: FarmCreateViewState = {
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+pendingErrorFlash: null,
       limitCheckLoading: false,
       limitBlocked: false,
       formData: {

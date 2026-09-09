@@ -5,6 +5,8 @@ import { PendingErrorFlashRequest } from '../../core/view-effects/pending-error-
 export type PlanListViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
+  warmupMessageKey: string | null;
   plans: PlanListPlan[];
   pendingUndoToast: PendingUndoToastRequest | null;
 

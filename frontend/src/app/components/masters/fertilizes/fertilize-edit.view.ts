@@ -13,6 +13,7 @@ export type FertilizeEditViewState = {
   loading: boolean;
   saving: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   formData: FertilizeEditFormData;
 
   pendingErrorFlash: PendingErrorFlashRequest | null;

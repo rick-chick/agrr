@@ -9,6 +9,7 @@ import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-to
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 
 @Injectable()
 export class FertilizeListPresenter
@@ -25,6 +26,7 @@ export class FertilizeListPresenter
     this.view.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       fertilizes: dto.fertilizes,
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -34,10 +36,12 @@ export class FertilizeListPresenter
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (this.view.control.loading) {
+      const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
       this.view.control = {
         ...this.view.control,
         loading: false,
-        error: errorDtoI18nKey(dto),
+        error: errorKey,
+        errorIsWarmup: isWarmupError,
         pendingErrorFlash: null
       };
       return;
@@ -46,6 +50,7 @@ export class FertilizeListPresenter
       ...this.view.control,
       loading: false,
       error: null,
+      errorIsWarmup: false,
       pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }

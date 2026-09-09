@@ -59,7 +59,8 @@ describe('FertilizeEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: 'NPK',
         n: null,
@@ -94,7 +95,8 @@ describe('FertilizeEditComponent', () => {
       loading: false,
       saving: false,
       error: 'common.api_error.not_found',
-      pendingErrorFlash: null,
+      errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: '',
         n: null,
@@ -130,7 +132,8 @@ describe('FertilizeEditComponent', () => {
       loading: false,
       saving: false,
       error: 'common.api_error.generic',
-      pendingErrorFlash: null,
+      errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: '',
         n: null,
@@ -164,7 +167,8 @@ describe('FertilizeEditComponent', () => {
       loading: false,
       saving: false,
       error: 'common.api_error.not_found',
-      pendingErrorFlash: null,
+      errorIsWarmup: false,
+        pendingErrorFlash: null,
       formData: {
         name: '',
         n: null,

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { CropStagesView, CropStagesViewState } from '../../components/masters/crops/crop-stages.view';
 import { LoadCropForEditOutputPort } from '../../usecase/crops/load-crop-for-edit.output-port';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
@@ -51,6 +52,7 @@ export class CropStagesPresenter implements
         ...this.view.control,
         loading: false,
         error: null,
+        errorIsWarmup: false,
         pendingSuccessFlash: null,
         pendingErrorFlash: null,
         pendingReorderCropStagesSnapshot: null,
@@ -76,10 +78,12 @@ export class CropStagesPresenter implements
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (this.view.control.loading) {
+      const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
       this.view.control = {
         ...this.view.control,
         loading: false,
-        error: errorDtoI18nKey(dto),
+        error: errorKey,
+        errorIsWarmup: isWarmupError,
         pendingSuccessFlash: null,
         pendingErrorFlash: null,
         pendingReorderCropStagesSnapshot: null
@@ -92,6 +96,7 @@ export class CropStagesPresenter implements
       ...this.view.control,
       loading: false,
       error: null,
+      errorIsWarmup: false,
       pendingSuccessFlash: null,
       pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) }),
       pendingReorderCropStagesSnapshot: null,

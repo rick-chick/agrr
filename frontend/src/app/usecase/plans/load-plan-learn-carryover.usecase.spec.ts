@@ -104,8 +104,7 @@ describe('LoadPlanLearnCarryoverUseCase', () => {
             return_to_learn: false,
             pipeline_active: true,
             current_phase: 'optimizing',
-            last_error: null
-          }
+            last_error: null, }
         })
     });
     const useCase = new LoadPlanLearnCarryoverUseCase(gateway);

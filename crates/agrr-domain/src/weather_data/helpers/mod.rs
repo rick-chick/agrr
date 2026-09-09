@@ -1,9 +1,13 @@
 pub mod date_arithmetic;
+pub mod finalize_weather_payload_for_agrr;
 pub mod nested_weather_payload_normalizer;
 pub mod payload_immutable;
 pub mod predicted_weather_cache;
 
 pub use date_arithmetic::{parse_iso_date, subtract_days, subtract_months};
+pub use finalize_weather_payload_for_agrr::{
+    finalize_weather_payload_for_agrr, FinalizeWeatherPayloadError,
+};
 pub use nested_weather_payload_normalizer::normalize_nested_weather_data;
 pub use payload_immutable::copy_and_deep_freeze;
 pub use predicted_weather_cache::{

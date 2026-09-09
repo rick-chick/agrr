@@ -130,7 +130,8 @@ describe('FarmDetailComponent', () => {
     const state: FarmDetailViewState = {
       loading: false,
       error: null,
-      farm: null,
+  errorIsWarmup: false,
+        farm: null,
       fields: [],
       pendingUndoToast: null,
         pendingErrorFlash: null
@@ -143,7 +144,8 @@ describe('FarmDetailComponent', () => {
     const state: FarmDetailViewState = {
       loading: false,
       error: null,
-      farm: null,
+  errorIsWarmup: false,
+        farm: null,
       fields: [],
       pendingUndoToast: null,
         pendingErrorFlash: null
@@ -282,7 +284,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farm: { id: 123, name: 'テスト', region: null, latitude: 35.0, longitude: 139.0 },
+  errorIsWarmup: false,
+        farm: { id: 123, name: 'テスト', region: null, latitude: 35.0, longitude: 139.0 },
       fields: [],
       pendingUndoToast: null,
         pendingErrorFlash: null
@@ -298,7 +301,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farm: { id: 123, name: 'テスト', region: 'jp', latitude: 35.0, longitude: 139.0 },
+  errorIsWarmup: false,
+        farm: { id: 123, name: 'テスト', region: 'jp', latitude: 35.0, longitude: 139.0 },
       fields: [],
       pendingUndoToast: null,
         pendingErrorFlash: null
@@ -375,6 +379,7 @@ describe('FarmDetailComponent', () => {
       component.control = {
         loading: false,
         error: null,
+    errorIsWarmup: false,
         farm: {
           id: 123,
           name: 'Test Farm',
@@ -463,7 +468,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farm: { id: 123, name: 'テスト農場', region: null, latitude: 35.0, longitude: 139.0 },
+  errorIsWarmup: false,
+        farm: { id: 123, name: 'テスト農場', region: null, latitude: 35.0, longitude: 139.0 },
       fields: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -490,7 +496,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: true,
       error: null,
-      farm: null,
+  errorIsWarmup: false,
+        farm: null,
       fields: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -513,7 +520,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: false,
       error: 'common.api_error.not_found',
-      farm: null,
+     errorIsWarmup: false,
+        farm: null,
       fields: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -532,7 +540,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: false,
       error: 'common.api_error.not_found',
-      farm: null,
+     errorIsWarmup: false,
+        farm: null,
       fields: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -553,7 +562,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: false,
       error: 'common.api_error.generic',
-      farm: null,
+     errorIsWarmup: false,
+        farm: null,
       fields: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -573,7 +583,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farm: {
+  errorIsWarmup: false,
+        farm: {
         id: 123,
         name: 'Test Farm',
         region: 'jp',
@@ -613,7 +624,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farm: {
+  errorIsWarmup: false,
+        farm: {
         id: 123,
         name: 'Test Farm',
         region: 'jp',
@@ -657,6 +669,7 @@ describe('FarmDetailComponent', () => {
       component.control = {
         loading: false,
         error: null,
+    errorIsWarmup: false,
         farm: {
           id: 123,
           name: 'Test Farm',
@@ -701,7 +714,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farm: {
+  errorIsWarmup: false,
+        farm: {
         id: 123,
         name: 'Test Farm',
         region: 'jp',
@@ -726,7 +740,8 @@ describe('FarmDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farm: {
+  errorIsWarmup: false,
+        farm: {
         id: 123,
         name: 'Test Farm',
         region: 'jp',

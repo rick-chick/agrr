@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { CropEditView } from '../../components/masters/crops/crop-edit.view';
 import { LoadCropForEditOutputPort } from '../../usecase/crops/load-crop-for-edit.output-port';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
@@ -24,6 +25,7 @@ export class CropEditPresenter implements LoadCropForEditOutputPort, UpdateCropO
       ...this.view.control,
       loading: false,
       error: null,
+      errorIsWarmup: false,
       pendingSuccessFlash: null,
       pendingErrorFlash: null,
       formData: {
@@ -43,11 +45,13 @@ export class CropEditPresenter implements LoadCropForEditOutputPort, UpdateCropO
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (this.view.control.loading) {
+      const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
       this.view.control = {
         ...this.view.control,
         loading: false,
         saving: false,
-        error: errorDtoI18nKey(dto),
+        error: errorKey,
+        errorIsWarmup: isWarmupError,
         pendingSuccessFlash: null,
         pendingErrorFlash: null
       };
@@ -58,6 +62,7 @@ export class CropEditPresenter implements LoadCropForEditOutputPort, UpdateCropO
       loading: false,
       saving: false,
       error: null,
+      errorIsWarmup: false,
       pendingSuccessFlash: null,
       pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) })
     };

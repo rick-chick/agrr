@@ -8,7 +8,7 @@ function baseControl(overrides: Partial<WorkHubViewState> = {}): WorkHubViewStat
     loading: true,
     submitting: false,
     error: null,
-    farms: [],
+farms: [],
     portfolioSummary: null,
     varianceCoverage: null,
     attentionList: null,

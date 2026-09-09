@@ -21,7 +21,8 @@ describe('FarmListPresenter', () => {
     lastControl = null;
     view = {
       get control(): FarmListViewState {
-        return lastControl ?? { loading: true, error: null, farms: [], pendingUndoToast: null, pendingErrorFlash: null };
+        return lastControl ?? { loading: true, error: null,
+farms: [], pendingUndoToast: null, pendingErrorFlash: null };
       },
       set control(value: FarmListViewState) {
         lastControl = value;
@@ -75,7 +76,7 @@ describe('FarmListPresenter', () => {
       const initialControl: FarmListViewState = {
         loading: true,
         error: null,
-        farms: [],
+farms: [],
         pendingUndoToast: null,
         pendingErrorFlash: null
       };
@@ -99,7 +100,7 @@ describe('FarmListPresenter', () => {
       const initialControl: FarmListViewState = {
         loading: false,
         error: null,
-        farms: initialFarms,
+farms: initialFarms,
         pendingUndoToast: null,
         pendingErrorFlash: null
       };
@@ -123,7 +124,8 @@ describe('FarmListPresenter', () => {
         { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0, weather_data_status: 'pending' as const },
         { id: 2, name: 'Farm B', region: 'Region B', latitude: 36.0, longitude: 136.0, weather_data_status: 'completed' as const }
       ];
-      lastControl = { loading: false, error: null, farms: initialFarms, pendingUndoToast: null, pendingErrorFlash: null };
+      lastControl = { loading: false, error: null,
+farms: initialFarms, pendingUndoToast: null, pendingErrorFlash: null };
 
       const dto: DeleteFarmSuccessDto = { deletedFarmId: 1 };
 
@@ -141,7 +143,8 @@ describe('FarmListPresenter', () => {
         { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0, weather_data_status: 'pending' as const },
         { id: 2, name: 'Farm B', region: 'Region B', latitude: 36.0, longitude: 136.0, weather_data_status: 'completed' as const }
       ];
-      lastControl = { loading: false, error: null, farms: initialFarms, pendingUndoToast: null, pendingErrorFlash: null };
+      lastControl = { loading: false, error: null,
+farms: initialFarms, pendingUndoToast: null, pendingErrorFlash: null };
 
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',

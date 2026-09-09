@@ -13,6 +13,7 @@ export type PestEditViewState = {
   loading: boolean;
   saving: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   formData: PestEditFormData;
 
   pendingErrorFlash: PendingErrorFlashRequest | null;

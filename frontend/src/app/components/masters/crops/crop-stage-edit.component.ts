@@ -75,6 +75,7 @@ const initialFormData: CropStagesFormData = {
 const initialControl: CropStageEditViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   formData: initialFormData,
   taskScheduleBlueprints: [],
   pendingErrorFlash: null,
@@ -101,6 +102,7 @@ const initialControl: CropStageEditViewState = {
       } @else if (control.error) {
         <app-master-context-header [crumbs]="contextCrumbs" />
         <app-master-load-error-panel
+            [isWarmupError]="control.errorIsWarmup"
           [errorKey]="control.error"
           [listLink]="stagesListLink"
           backLabelKey="crops.edit.stages_title"

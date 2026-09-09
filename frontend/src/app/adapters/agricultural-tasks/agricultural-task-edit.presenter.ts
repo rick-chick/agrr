@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { AgriculturalTaskEditView } from '../../components/masters/agricultural-tasks/agricultural-task-edit.view';
 import { LoadAgriculturalTaskForEditOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-for-edit.output-port';
 import { LoadAgriculturalTaskForEditDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-for-edit.dtos';
@@ -23,6 +24,7 @@ export class AgriculturalTaskEditPresenter implements LoadAgriculturalTaskForEdi
       ...this.view.control,
       loading: false,
       error: null,
+      errorIsWarmup: false,
       formData: {
         name: agriculturalTask.name,
         description: agriculturalTask.description ?? null,
@@ -41,11 +43,13 @@ export class AgriculturalTaskEditPresenter implements LoadAgriculturalTaskForEdi
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (this.view.control.loading) {
+      const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
       this.view.control = {
         ...this.view.control,
         loading: false,
         saving: false,
-        error: errorDtoI18nKey(dto),
+        error: errorKey,
+        errorIsWarmup: isWarmupError,
         pendingErrorFlash: null
       };
       return;
@@ -55,6 +59,7 @@ export class AgriculturalTaskEditPresenter implements LoadAgriculturalTaskForEdi
       loading: false,
       saving: false,
       error: null,
+      errorIsWarmup: false,
       pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) })
     };
   }

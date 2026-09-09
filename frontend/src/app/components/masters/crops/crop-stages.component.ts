@@ -44,6 +44,7 @@ const initialFormData: CropStagesFormData = {
 const initialControl: CropStagesViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   formData: initialFormData,
   taskScheduleBlueprints: [],
   pendingErrorFlash: null,
@@ -80,6 +81,7 @@ const initialControl: CropStagesViewState = {
           forwardLabelKey="crops.show.blueprint_readiness.stages_next_step_action"
         />
         <app-master-load-error-panel
+            [isWarmupError]="control.errorIsWarmup"
           [errorKey]="control.error"
           [listLink]="['/crops']"
           backLabelKey="crops.index.title"

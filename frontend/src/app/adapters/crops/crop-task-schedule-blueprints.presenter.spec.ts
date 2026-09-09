@@ -36,7 +36,7 @@ function blueprint(
 const baseControl: CropTaskScheduleBlueprintsViewState = withCropBlueprintDisplayState({
   loading: false,
   error: null,
-  crop: {
+crop: {
     id: 1,
     name: 'Tomato',
     variety: null,

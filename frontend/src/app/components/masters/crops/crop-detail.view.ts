@@ -10,6 +10,7 @@ import { PendingSuccessFlashRequest } from '../../../core/view-effects/pending-s
 export type CropDetailViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   crop: Crop | null;
   pendingUndoToast: PendingUndoToastRequest | null;
   pendingErrorFlash: PendingErrorFlashRequest | null;

@@ -7,8 +7,8 @@ const baseControl = (
   overrides: Partial<CropStagesViewState> = {}
 ): CropStagesViewState => ({
   loading: false,
-  error: null,
-  pendingErrorFlash: null,
+  error: null,errorIsWarmup: false,
+        pendingErrorFlash: null,
   pendingSuccessFlash: null,
   pendingReorderCropStagesSnapshot: null,
   pendingResyncPanelDraft: false,

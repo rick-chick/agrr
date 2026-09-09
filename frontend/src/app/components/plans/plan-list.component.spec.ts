@@ -12,6 +12,7 @@ import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
 import { PlanListViewState } from './plan-list.view';
 import { PlanListPlan } from '../../domain/plans/plan-list-plan';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { BACKEND_WARMUP_I18N } from '../../core/backend-warmup/backend-warmup';
 
 describe('PlanListComponent', () => {
   let component: PlanListComponent;
@@ -28,6 +29,8 @@ describe('PlanListComponent', () => {
       component.control = {
         loading: false,
         error: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
         plans,
         pendingUndoToast: null,
         pendingErrorFlash: null
@@ -119,9 +122,11 @@ describe('PlanListComponent', () => {
     const state: PlanListViewState = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
+      warmupMessageKey: null,
       plans: [],
       pendingUndoToast: null,
-        pendingErrorFlash: null
+      pendingErrorFlash: null
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -139,9 +144,11 @@ describe('PlanListComponent', () => {
     const state: PlanListViewState = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
+      warmupMessageKey: null,
       plans: [],
       pendingUndoToast: null,
-        pendingErrorFlash: null
+      pendingErrorFlash: null
     };
     component.control = state;
     expect(cdr.markForCheck).toHaveBeenCalled();
@@ -202,6 +209,8 @@ describe('PlanListComponent', () => {
       component.control = {
         loading: false,
         error: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
         plans: [planWithGap()],
         pendingUndoToast: null,
         pendingErrorFlash: null
@@ -467,6 +476,8 @@ describe('PlanListComponent', () => {
       component.control = {
         loading: true,
         error: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
         plans: [],
         pendingUndoToast: null,
         pendingErrorFlash: null
@@ -481,12 +492,37 @@ describe('PlanListComponent', () => {
     }
   });
 
+  it('shows warmup loading UI when presenter sets errorIsWarmup', async () => {
+    const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
+    try {
+      component.control = {
+        loading: false,
+        error: BACKEND_WARMUP_I18N.database,
+        errorIsWarmup: true,
+        warmupMessageKey: BACKEND_WARMUP_I18N.database,
+        plans: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('app-backend-warmup-loading')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.page-alert-error')).toBeNull();
+    } finally {
+      loadSpy.mockRestore();
+    }
+  });
+
   it('shows error alert with retry button that reloads the plan list', async () => {
     const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
     try {
       component.control = {
         loading: false,
         error: 'common.api_error.generic',
+        errorIsWarmup: false,
+        warmupMessageKey: null,
         plans: [],
         pendingUndoToast: null,
         pendingErrorFlash: null

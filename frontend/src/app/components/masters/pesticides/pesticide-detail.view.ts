@@ -5,6 +5,7 @@ import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-err
 export type PesticideDetailViewState = {
   loading: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   pesticide: Pesticide | null;
   pendingUndoToast: PendingUndoToastRequest | null;
 

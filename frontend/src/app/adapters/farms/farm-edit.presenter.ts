@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { FarmEditView } from '../../components/masters/farms/farm-edit.view';
 import { LoadFarmForEditOutputPort } from '../../usecase/farms/load-farm-for-edit.output-port';
 import { LoadFarmForEditDataDto } from '../../usecase/farms/load-farm-for-edit.dtos';
@@ -21,6 +22,7 @@ export class FarmEditPresenter implements LoadFarmForEditOutputPort, UpdateFarmO
     this.view.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       saving: false,
       formData: {
         name: dto.farm.name,
@@ -36,11 +38,13 @@ export class FarmEditPresenter implements LoadFarmForEditOutputPort, UpdateFarmO
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (this.view.control.loading) {
+      const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
       this.view.control = {
         ...this.view.control,
         loading: false,
         saving: false,
-        error: errorDtoI18nKey(dto),
+        error: errorKey,
+        errorIsWarmup: isWarmupError,
         pendingErrorFlash: null
       };
       return;

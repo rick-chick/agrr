@@ -23,8 +23,7 @@ import { TaskScheduleItem } from '../../models/plans/task-schedule';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
-  error: null,
-  plan: null,
+  error: null, plan: null,
   fields: [],
   overdue: [],
   today: [],
@@ -129,8 +128,7 @@ function mockRow(
 
 const loadedState: PlanWorkViewState = {
   loading: false,
-  error: null,
-  plan: {
+  error: null, plan: {
     id: 7,
     name: 'テスト計画',
     status: 'completed',
@@ -139,8 +137,7 @@ const loadedState: PlanWorkViewState = {
     timeline_generated_at: '2026-06-01T00:00:00Z',
     timeline_generated_at_display: '2026-06-01',
     task_schedule_sync_state: 'ready',
-    task_schedule_sync_error: null,
-    task_schedule_sync_error_crop_id: null
+    task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
   },
   fields: [],
   overdue: [mockRow({ item_id: 10, name: '遅延作業', scheduled_date: '2026-06-08' }, { overdueDays: 4 })],

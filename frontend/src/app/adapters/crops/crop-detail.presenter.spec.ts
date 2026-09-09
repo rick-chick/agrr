@@ -10,8 +10,8 @@ import {
 
 const baseControl: CropDetailViewState = withCropDetailSummaryState({
   loading: false,
-  error: null,
-  crop: { id: 3, name: 'Tomato', is_reference: false, groups: [] },
+  error: null,errorIsWarmup: false,
+        crop: { id: 3, name: 'Tomato', is_reference: false, groups: [] },
   pendingUndoToast: null,
   pendingErrorFlash: null,
   pendingSuccessFlash: null,

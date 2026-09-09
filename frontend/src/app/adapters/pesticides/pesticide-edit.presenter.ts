@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { PesticideEditView } from '../../components/masters/pesticides/pesticide-edit.view';
 import { LoadPesticideForEditOutputPort } from '../../usecase/pesticides/load-pesticide-for-edit.output-port';
 import { LoadPesticideForEditDataDto } from '../../usecase/pesticides/load-pesticide-for-edit.dtos';
@@ -22,6 +23,7 @@ export class PesticideEditPresenter implements LoadPesticideForEditOutputPort, U
       ...this.view.control,
       loading: false,
       error: null,
+      errorIsWarmup: false,
       formData: {
         name: pesticide.name,
         active_ingredient: pesticide.active_ingredient ?? null,
@@ -37,11 +39,13 @@ export class PesticideEditPresenter implements LoadPesticideForEditOutputPort, U
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
     this.view.control = {
       ...this.view.control,
       loading: false,
       saving: false,
-      error: errorDtoI18nKey(dto),
+      error: errorKey,
+      errorIsWarmup: isWarmupError,
       pendingErrorFlash: null
     };
   }

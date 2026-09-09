@@ -24,7 +24,8 @@ const initialFormData = {
 const loadedControlBase = {
   loading: false,
   error: null,
-  pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
   pendingSuccessFlash: null,
   pendingReorderCropStagesSnapshot: null,
   pendingResyncPanelDraft: false,

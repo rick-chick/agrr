@@ -218,8 +218,7 @@ describe('learn-master-update-orchestration', () => {
       hydrateLearnOrchestrationProgress(7, {
         pipeline_active: true,
         current_phase: 'optimizing',
-        last_error: null
-      });
+        last_error: null, });
 
       expect(handler).not.toHaveBeenCalled();
     });

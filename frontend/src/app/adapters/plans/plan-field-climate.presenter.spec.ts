@@ -16,7 +16,7 @@ const createViewFixture = (): ViewFixture => {
   let currentState: PlanFieldClimateViewState = {
     loading: true,
     error: null,
-    climateData: null,
+climateData: null,
     workDayMarkers: [],
     latestImplementation: null
   };

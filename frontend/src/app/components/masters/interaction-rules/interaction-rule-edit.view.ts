@@ -13,6 +13,7 @@ export type InteractionRuleEditViewState = {
   loading: boolean;
   saving: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   formData: InteractionRuleEditFormData;
 
   pendingErrorFlash: PendingErrorFlashRequest | null;

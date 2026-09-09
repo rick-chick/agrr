@@ -52,8 +52,7 @@ describe('applySyncFieldsToPlan', () => {
       id: 7,
       name: 'Plan A',
       task_schedule_sync_state: 'ready',
-      task_schedule_sync_error: null,
-      task_schedule_sync_error_crop_id: null
+      task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
     };
 
     const patched = applySyncFieldsToPlan(plan, {

@@ -559,8 +559,7 @@ describe('applySyncFieldsToPlan', () => {
     const plan = {
       id: 7,
       task_schedule_sync_state: 'ready',
-      task_schedule_sync_error: null,
-      task_schedule_sync_error_crop_id: null
+      task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
     };
 
     expect(
@@ -581,8 +580,7 @@ describe('applySyncFieldsToPlan', () => {
     const plan = {
       id: 7,
       task_schedule_sync_state: 'ready',
-      task_schedule_sync_error: null,
-      task_schedule_sync_error_crop_id: null
+      task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
     };
 
     expect(

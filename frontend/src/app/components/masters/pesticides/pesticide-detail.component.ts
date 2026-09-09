@@ -21,6 +21,7 @@ import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master
 const initialControl: PesticideDetailViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   pesticide: null,
   pendingUndoToast: null,
   pendingErrorFlash: null
@@ -38,6 +39,7 @@ const initialControl: PesticideDetailViewState = {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <app-master-load-error-panel
+            [isWarmupError]="control.errorIsWarmup"
           [errorKey]="control.error"
           [listLink]="['/pesticides']"
           backLabelKey="pesticides.index.title"

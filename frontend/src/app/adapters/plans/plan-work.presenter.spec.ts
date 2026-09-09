@@ -27,7 +27,7 @@ const workRecord: WorkRecord = {
 const baseControl: PlanWorkViewState = {
   loading: false,
   error: null,
-  plan: null,
+plan: null,
   fields: [],
   overdue: [],
   today: [],
@@ -94,7 +94,7 @@ describe('PlanWorkPresenter quick complete', () => {
           timeline_generated_at_display: '2026-06-01',
           task_schedule_sync_state: 'ready',
           task_schedule_sync_error: null,
-          task_schedule_sync_error_crop_id: null
+task_schedule_sync_error_crop_id: null
         },
         today: [
           {
@@ -215,7 +215,7 @@ describe('PlanWorkPresenter quick complete', () => {
         timeline_generated_at_display: '2026-06-01',
         task_schedule_sync_state: 'stale',
         task_schedule_sync_error: null,
-        task_schedule_sync_error_crop_id: null
+task_schedule_sync_error_crop_id: null
       },
       regenerating: true,
       regenerateError: 'plans.task_schedules.sync_errors.generic'
@@ -319,7 +319,7 @@ describe('PlanWorkPresenter task schedule sync', () => {
           timeline_generated_at_display: '2026-06-01',
           task_schedule_sync_state: 'stale',
           task_schedule_sync_error: null,
-          task_schedule_sync_error_crop_id: null
+task_schedule_sync_error_crop_id: null
         }
       }
     };
@@ -345,7 +345,7 @@ describe('PlanWorkPresenter task schedule sync', () => {
         timeline_generated_at_display: '2026-06-01',
         task_schedule_sync_state: 'generating',
         task_schedule_sync_error: null,
-        task_schedule_sync_error_crop_id: null
+task_schedule_sync_error_crop_id: null
       },
       fields: [],
       overdue: [],
@@ -453,7 +453,7 @@ describe('PlanWorkPresenter crop banner context', () => {
     timeline_generated_at_display: '2026-06-01',
     task_schedule_sync_state: 'ready' as const,
     task_schedule_sync_error: null,
-    task_schedule_sync_error_crop_id: null
+task_schedule_sync_error_crop_id: null
   };
 
   beforeEach(() => {

@@ -98,8 +98,7 @@ describe('PlanOptimizationChannelGateway', () => {
       getReceived()?.({
         type: 'task_schedule_sync',
         task_schedule_sync_state: 'ready',
-        task_schedule_sync_error: null
-      });
+        task_schedule_sync_error: null, });
       expect(onReceived).toHaveBeenCalledWith({
         syncState: 'ready',
         syncError: null,

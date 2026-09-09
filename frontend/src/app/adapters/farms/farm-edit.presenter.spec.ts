@@ -4,6 +4,7 @@ import { FarmEditView, FarmEditViewState } from '../../components/masters/farms/
 import { LoadFarmForEditDataDto } from '../../usecase/farms/load-farm-for-edit.dtos';
 import { UpdateFarmSuccessDto } from '../../usecase/farms/update-farm.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { BACKEND_WARMUP_I18N } from '../../core/backend-warmup/backend-warmup';
 
 describe('FarmEditPresenter', () => {
   let presenter: FarmEditPresenter;
@@ -18,7 +19,8 @@ describe('FarmEditPresenter', () => {
     lastControl = null;
     view = {
       get control(): FarmEditViewState {
-        return lastControl ?? { loading: true, saving: false, error: null, pendingErrorFlash: null, formData: { name: '', region: '', latitude: 0, longitude: 0 } };
+        return lastControl ?? { loading: true, saving: false, error: null,errorIsWarmup: false,
+        pendingErrorFlash: null, formData: { name: '', region: '', latitude: 0, longitude: 0 } };
       },
       set control(value: FarmEditViewState) {
         lastControl = value;
@@ -56,7 +58,8 @@ describe('FarmEditPresenter', () => {
     });
 
     it('sets i18n load error on onError(dto) while loading', () => {
-      const initialControl: FarmEditViewState = { loading: true, saving: false, error: null, formData: { name: '', region: '', latitude: 0, longitude: 0 }, pendingErrorFlash: null };
+      const initialControl: FarmEditViewState = { loading: true, saving: false, error: null,errorIsWarmup: false,
+        formData: { name: '', region: '', latitude: 0, longitude: 0 }, pendingErrorFlash: null };
       lastControl = initialControl;
 
       presenter.onError({ message: 'Not found' });
@@ -67,8 +70,32 @@ describe('FarmEditPresenter', () => {
       expect(lastControl!.saving).toBe(false);
     });
 
+    it('sets errorIsWarmup true on onError(dto) while loading for warmup failure', () => {
+      const initialControl: FarmEditViewState = {
+        loading: true,
+        saving: false,
+        error: null,
+     errorIsWarmup: false,
+        formData: { name: '', region: '', latitude: 0, longitude: 0 },
+        pendingErrorFlash: null
+      };
+      lastControl = initialControl;
+
+      presenter.onError({
+        message:
+          'Http failure response for https://agrr.local/api/v1/masters/farms/1: 503 Service Unavailable'
+      });
+
+      expect(lastControl!.error).toBe(BACKEND_WARMUP_I18N.database);
+      expect(lastControl!.errorIsWarmup).toBe(true);
+      expect(lastControl!.pendingErrorFlash).toBeNull();
+      expect(lastControl!.loading).toBe(false);
+      expect(lastControl!.saving).toBe(false);
+    });
+
     it('queues pending error flash on onError(dto) when not loading', () => {
-      const initialControl: FarmEditViewState = { loading: false, saving: true, error: null, formData: { name: 'Farm', region: 'jp', latitude: 0, longitude: 0 }, pendingErrorFlash: null };
+      const initialControl: FarmEditViewState = { loading: false, saving: true, error: null,errorIsWarmup: false,
+        formData: { name: 'Farm', region: 'jp', latitude: 0, longitude: 0 }, pendingErrorFlash: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Not found' };
@@ -86,6 +113,7 @@ describe('FarmEditPresenter', () => {
         loading: false,
         saving: true,
         error: null,
+     errorIsWarmup: false,
         pendingErrorFlash: null,
         formData: { name: 'Updated Farm', region: 'Updated Region', latitude: 36.0, longitude: 136.0 }
       };

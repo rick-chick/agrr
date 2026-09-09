@@ -52,8 +52,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
         timeline_generated_at: '2026-06-01T00:00:00Z',
         timeline_generated_at_display: '2026-06-01',
         task_schedule_sync_state: 'ready',
-        task_schedule_sync_error: null,
-        task_schedule_sync_error_crop_id: null
+        task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
       },
       week: { start_date: '2026-06-01', end_date: '2026-06-07', label: '2026-06-01' },
       milestones: [],
@@ -132,8 +131,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
         timeline_generated_at: '2026-06-01T00:00:00Z',
         timeline_generated_at_display: '2026-06-01',
         task_schedule_sync_state: 'ready',
-        task_schedule_sync_error: null,
-        task_schedule_sync_error_crop_id: null
+        task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
       },
       week: { start_date: '2026-06-01', end_date: '2026-06-07', label: '2026-06-01' },
       milestones: [],
@@ -205,8 +203,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
         timeline_generated_at: '2026-06-01T00:00:00Z',
         timeline_generated_at_display: '2026-06-01',
         task_schedule_sync_state: 'ready',
-        task_schedule_sync_error: null,
-        task_schedule_sync_error_crop_id: null
+        task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
       },
       week: { start_date: '2026-06-01', end_date: '2026-06-07', label: '2026-06-01' },
       milestones: [],
@@ -256,8 +253,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
         timeline_generated_at: '2026-06-01T00:00:00Z',
         timeline_generated_at_display: '2026-06-01',
         task_schedule_sync_state: 'ready',
-        task_schedule_sync_error: null,
-        task_schedule_sync_error_crop_id: null
+        task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
       },
       week: { start_date: '2026-06-01', end_date: '2026-06-07', label: '2026-06-01' },
       milestones: [],
@@ -413,7 +409,6 @@ function planInfoFromTest(): TaskScheduleResponse['plan'] {
     timeline_generated_at: '2026-06-01T00:00:00Z',
     timeline_generated_at_display: '2026-06-01',
     task_schedule_sync_state: 'ready',
-    task_schedule_sync_error: null,
-    task_schedule_sync_error_crop_id: null
+    task_schedule_sync_error: null, task_schedule_sync_error_crop_id: null
   };
 }

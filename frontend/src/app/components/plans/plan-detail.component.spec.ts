@@ -79,8 +79,7 @@ describe('PlanDetailComponent', () => {
   it('implements View control getter/setter', () => {
     const state: PlanDetailViewState = {
       loading: false,
-      error: null,
-      plan: null,
+      error: null, plan: null,
       planData: null,
       varianceActionItemsOnGantt: [],
       weatherProposals: [],
@@ -102,8 +101,7 @@ describe('PlanDetailComponent', () => {
     fixture.detectChanges();
     component.control = {
       loading: false,
-      error: null,
-      plan: {
+      error: null, plan: {
         id: 1,
         name: 'Plan A',
         status: 'completed',
@@ -143,8 +141,7 @@ describe('PlanDetailComponent', () => {
     fixture.detectChanges();
     component.control = {
       loading: false,
-      error: null,
-      plan: {
+      error: null, plan: {
         id: 1,
         name: 'Plan A',
         status: 'completed',
@@ -207,8 +204,7 @@ describe('PlanDetailComponent', () => {
     fixture.detectChanges();
     component.control = {
       loading: false,
-      error: null,
-      plan: {
+      error: null, plan: {
         id: 1,
         name: 'Plan A',
         status: 'completed',
@@ -235,8 +231,7 @@ describe('PlanDetailComponent', () => {
     fixture.detectChanges();
     component.control = {
       loading: false,
-      error: null,
-      plan: {
+      error: null, plan: {
         id: 1,
         name: 'Plan A',
         status: 'completed',

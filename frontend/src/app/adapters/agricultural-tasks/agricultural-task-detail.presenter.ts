@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { AgriculturalTaskDetailView } from '../../components/masters/agricultural-tasks/agricultural-task-detail.view';
 import { LoadAgriculturalTaskDetailOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-detail.output-port';
 import { LoadAgriculturalTaskDetailDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-detail.dtos';
@@ -25,6 +26,7 @@ export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDeta
     this.view.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       agriculturalTask: dto.agriculturalTask,
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -34,10 +36,12 @@ export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDeta
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (this.view.control.loading) {
+      const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
       this.view.control = {
         ...this.view.control,
         loading: false,
-        error: errorDtoI18nKey(dto),
+        error: errorKey,
+        errorIsWarmup: isWarmupError,
         pendingErrorFlash: null
       };
       return;
@@ -46,6 +50,7 @@ export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDeta
       ...this.view.control,
       loading: false,
       error: null,
+      errorIsWarmup: false,
       pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) })
     };
   }

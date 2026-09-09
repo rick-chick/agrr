@@ -22,6 +22,7 @@ import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pe
 const initialControl: AgriculturalTaskListViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   tasks: [],
   pendingUndoToast: null,
   pendingErrorFlash: null

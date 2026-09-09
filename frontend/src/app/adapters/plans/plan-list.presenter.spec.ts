@@ -7,6 +7,7 @@ import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeletePlanSuccessDto } from '../../usecase/plans/delete-plan.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import { PlanListPlan } from '../../domain/plans/plan-list-plan';
+import { BACKEND_WARMUP_I18N } from '../../core/backend-warmup/backend-warmup';
 
 describe('PlanListPresenter', () => {
   let presenter: PlanListPresenter;
@@ -22,7 +23,15 @@ describe('PlanListPresenter', () => {
     lastControl = null;
     view = {
       get control(): PlanListViewState {
-        return lastControl ?? { loading: true, error: null, plans: [], pendingUndoToast: null, pendingErrorFlash: null };
+        return lastControl ?? {
+          loading: true,
+          error: null,
+          errorIsWarmup: false,
+          warmupMessageKey: null,
+          plans: [],
+          pendingUndoToast: null,
+          pendingErrorFlash: null
+        };
       },
       set control(value: PlanListViewState) {
         lastControl = value;
@@ -60,11 +69,21 @@ describe('PlanListPresenter', () => {
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.error).toBeNull();
+      expect(lastControl!.errorIsWarmup).toBe(false);
+      expect(lastControl!.warmupMessageKey).toBeNull();
       expect(lastControl!.plans).toEqual(plans);
     });
 
     it('queues pending error flash and updates view.control on onError(dto)', () => {
-      const initialControl: PlanListViewState = { loading: true, error: null, plans: [], pendingUndoToast: null, pendingErrorFlash: null };
+      const initialControl: PlanListViewState = {
+        loading: true,
+        error: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
+        plans: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Network error', scope: 'load-plan-list' };
@@ -74,8 +93,33 @@ describe('PlanListPresenter', () => {
       expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Network error' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
-      expect(lastControl!.error).toBe('Network error');
+      expect(lastControl!.error).toBe('common.api_error.generic');
+      expect(lastControl!.errorIsWarmup).toBe(false);
+      expect(lastControl!.warmupMessageKey).toBeNull();
       expect(lastControl!.plans).toEqual([]);
+    });
+
+    it('sets errorIsWarmup true on warmup load failure for load-plan-list scope', () => {
+      const initialControl: PlanListViewState = {
+        loading: true,
+        error: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
+        plans: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
+      lastControl = initialControl;
+
+      presenter.onError({
+        message: 'Http failure response for https://agrr.local/api/v1/plans: 503 Service Unavailable',
+        scope: 'load-plan-list'
+      });
+
+      expect(lastControl!.loading).toBe(false);
+      expect(lastControl!.error).toBe(BACKEND_WARMUP_I18N.database);
+      expect(lastControl!.errorIsWarmup).toBe(true);
+      expect(lastControl!.warmupMessageKey).toBe(BACKEND_WARMUP_I18N.database);
     });
 
     it('does not set error in view.control when scope is not load-plan-list', () => {
@@ -88,7 +132,15 @@ describe('PlanListPresenter', () => {
           inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
-      const initialControl: PlanListViewState = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
+      const initialControl: PlanListViewState = {
+        loading: false,
+        error: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
+        plans: initialPlans,
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Delete error', scope: 'delete-plan' };
@@ -120,7 +172,15 @@ describe('PlanListPresenter', () => {
           inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
+      lastControl = {
+        loading: false,
+        error: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
+        plans: initialPlans,
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
 
       const dto: DeletePlanSuccessDto = { deletedPlanId: 1 };
 
@@ -149,7 +209,15 @@ describe('PlanListPresenter', () => {
           inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
+      lastControl = {
+        loading: false,
+        error: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
+        plans: initialPlans,
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
 
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',
@@ -193,7 +261,15 @@ describe('PlanListPresenter', () => {
           inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
+      lastControl = {
+        loading: false,
+        error: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
+        plans: initialPlans,
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
 
       const dto: DeletePlanSuccessDto = {
         deletedPlanId: 1,
@@ -216,7 +292,15 @@ describe('PlanListPresenter', () => {
           inputGap: { unrecordedCount: 0, actionRequiredCount: 0, structuredUnrecordedCount: 0, amountVarianceCount: 0 }
         }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
+      lastControl = {
+        loading: false,
+        error: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
+        plans: initialPlans,
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
 
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',

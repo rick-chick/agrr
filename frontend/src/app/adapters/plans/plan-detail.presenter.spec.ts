@@ -44,7 +44,7 @@ describe('PlanDetailPresenter', () => {
         return lastControl ?? {
           loading: true,
           error: null,
-          plan: null,
+plan: null,
           planData: null,
           varianceActionItemsOnGantt: [],
           ...emptyWeatherState
@@ -74,7 +74,7 @@ describe('PlanDetailPresenter', () => {
         return lastControl ?? {
           loading: true,
           error: null,
-          plan: null,
+plan: null,
           planData: null,
           varianceActionItemsOnGantt: [],
           ...emptyWeatherState
@@ -107,7 +107,7 @@ describe('PlanDetailPresenter', () => {
     let lastControl: PlanDetailViewState = {
       loading: false,
       error: null,
-      plan,
+plan,
       planData,
       varianceActionItemsOnGantt: [],
       weatherProposals: [weatherProposal],

@@ -17,7 +17,8 @@ import { AuthService } from '../../../services/auth.service';
 const loadedControlBase = {
   loading: false,
   error: null,
-  pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
   pendingSuccessFlash: null,
   pendingResyncPanelDraft: false,
   pendingNavigateToList: false,

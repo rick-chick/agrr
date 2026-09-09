@@ -83,7 +83,7 @@ describe('FarmListComponent', () => {
     const state: FarmListViewState = {
       loading: false,
       error: null,
-      farms: [],
+farms: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
     };
@@ -95,7 +95,7 @@ describe('FarmListComponent', () => {
     const state: FarmListViewState = {
       loading: false,
       error: null,
-      farms: [],
+farms: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
     };
@@ -113,7 +113,7 @@ describe('FarmListComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farms: [
+farms: [
         {
           id: farmId,
           name: 'User Farm',
@@ -162,7 +162,7 @@ describe('FarmListComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farms: [
+farms: [
         {
           id: 1,
           name: 'User Farm',
@@ -193,7 +193,7 @@ describe('FarmListComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farms: [
+farms: [
         {
           id: 1,
           name: 'User Farm',
@@ -303,7 +303,7 @@ describe('FarmListComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farms,
+farms,
       pendingUndoToast: null,
       pendingErrorFlash: null
     };
@@ -348,7 +348,7 @@ describe('FarmListComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farms: [
+farms: [
         {
           id: 1,
           name: 'User Farm',
@@ -380,7 +380,7 @@ describe('FarmListComponent', () => {
     component.control = {
       loading: true,
       error: null,
-      farms: [],
+farms: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
     };
@@ -394,7 +394,7 @@ describe('FarmListComponent', () => {
     component.control = {
       loading: false,
       error: 'common.api_error.generic',
-      farms: [],
+farms: [],
       pendingUndoToast: null,
       pendingErrorFlash: null
     };

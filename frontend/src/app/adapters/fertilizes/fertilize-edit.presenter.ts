@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { FertilizeEditView } from '../../components/masters/fertilizes/fertilize-edit.view';
 import { LoadFertilizeForEditOutputPort } from '../../usecase/fertilizes/load-fertilize-for-edit.output-port';
 import { LoadFertilizeForEditDataDto } from '../../usecase/fertilizes/load-fertilize-for-edit.dtos';
@@ -23,6 +24,7 @@ export class FertilizeEditPresenter
     this.view.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       saving: false,
       formData: {
         name: f.name,
@@ -40,11 +42,13 @@ export class FertilizeEditPresenter
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
     this.view.control = {
       ...this.view.control,
       loading: false,
       saving: false,
-      error: errorDtoI18nKey(dto),
+      error: errorKey,
+      errorIsWarmup: isWarmupError,
       pendingErrorFlash: null
     };
   }

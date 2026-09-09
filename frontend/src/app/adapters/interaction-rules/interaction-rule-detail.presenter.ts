@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { errorDtoI18nKey } from '../../core/error-dto-i18n-key';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 import { InteractionRuleDetailView } from '../../components/masters/interaction-rules/interaction-rule-detail.view';
 import { LoadInteractionRuleDetailOutputPort } from '../../usecase/interaction-rules/load-interaction-rule-detail.output-port';
 import { InteractionRuleDetailDataDto } from '../../usecase/interaction-rules/load-interaction-rule-detail.dtos';
@@ -25,6 +26,7 @@ export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetail
     this.view.control = {
       loading: false,
       error: null,
+      errorIsWarmup: false,
       rule: dto.rule,
       pendingUndoToast: null,
       pendingErrorFlash: null
@@ -34,10 +36,12 @@ export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetail
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (this.view.control.loading) {
+      const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
       this.view.control = {
         ...this.view.control,
         loading: false,
-        error: errorDtoI18nKey(dto),
+        error: errorKey,
+        errorIsWarmup: isWarmupError,
         pendingErrorFlash: null
       };
       return;
@@ -46,6 +50,7 @@ export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetail
       ...this.view.control,
       loading: false,
       error: null,
+      errorIsWarmup: false,
       pendingErrorFlash: pendingErrorFlashFromError({ message: errorDtoI18nKey(dto) })
     };
   }

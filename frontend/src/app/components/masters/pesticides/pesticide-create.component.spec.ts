@@ -126,8 +126,7 @@ describe('PesticideCreateComponent', () => {
   it('uses user region for non-admin submissions', () => {
     component.control = {
       saving: false,
-      error: null,
-      pendingErrorFlash: null,
+      error: null, pendingErrorFlash: null,
       formData: {
         name: 'Test',
         active_ingredient: null,
@@ -146,8 +145,7 @@ describe('PesticideCreateComponent', () => {
     mockAuth.user.mockReturnValue({ admin: true, region: 'jp' });
     component.control = {
       saving: false,
-      error: null,
-      pendingErrorFlash: null,
+      error: null, pendingErrorFlash: null,
       formData: {
         name: 'Test',
         active_ingredient: null,

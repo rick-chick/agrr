@@ -55,7 +55,8 @@ describe('FertilizeDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       fertilize: {
         id: 1,
         name: 'NPK 10-10-10',
@@ -85,7 +86,8 @@ describe('FertilizeDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       fertilize: {
         id: 1,
         name: 'NPK 10-10-10',
@@ -118,7 +120,8 @@ describe('FertilizeDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: 'common.api_error.not_found',
-      pendingErrorFlash: null,
+      errorIsWarmup: false,
+        pendingErrorFlash: null,
       fertilize: null
     };
     fixture.detectChanges();
@@ -142,7 +145,8 @@ describe('FertilizeDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: 'common.api_error.generic',
-      pendingErrorFlash: null,
+      errorIsWarmup: false,
+        pendingErrorFlash: null,
       fertilize: null
     };
     fixture.detectChanges();

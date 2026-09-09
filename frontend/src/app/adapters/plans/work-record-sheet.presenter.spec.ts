@@ -49,8 +49,7 @@ describe('WorkRecordSheetPresenter', () => {
       control: {
         mode: 'create-adhoc',
         submitting: true,
-        error: null,
-        fieldErrors: {},
+        error: null, fieldErrors: {},
         form: {
           name: '除草',
           actual_date: '2026-06-26',

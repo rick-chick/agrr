@@ -99,7 +99,8 @@ describe('CropEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pendingSuccessFlash: null,
       formData: {
         ...initialFormData,
@@ -121,7 +122,8 @@ describe('CropEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pendingSuccessFlash: null,
       formData: {
         ...initialFormData,
@@ -156,7 +158,8 @@ describe('CropEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pendingSuccessFlash: null,
       formData: {
         ...initialFormData,
@@ -193,7 +196,8 @@ describe('CropEditComponent', () => {
       loading: true,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pendingSuccessFlash: null,
       formData: initialFormData
     };
@@ -227,7 +231,8 @@ describe('CropEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      pendingErrorFlash: null,
+errorIsWarmup: false,
+        pendingErrorFlash: null,
       pendingSuccessFlash: null,
       formData: { ...initialFormData, name: '' }
     };

@@ -1,7 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { isBackendWarmupI18nKey } from '../../../core/backend-warmup/backend-warmup';
 import { BackendWarmupLoadingComponent } from '../../shared/backend-warmup-loading/backend-warmup-loading.component';
 
 @Component({
@@ -38,9 +37,6 @@ export class MasterLoadErrorPanelComponent {
   readonly errorKey = input.required<string>();
   readonly listLink = input.required<string | readonly (string | number)[]>();
   readonly backLabelKey = input.required<string>();
+  readonly isWarmupError = input(false);
   readonly retry = output<void>();
-
-  protected isWarmupError(): boolean {
-    return isBackendWarmupI18nKey(this.errorKey());
-  }
 }

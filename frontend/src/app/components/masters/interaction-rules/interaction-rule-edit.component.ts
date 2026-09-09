@@ -33,6 +33,7 @@ const initialControl: InteractionRuleEditViewState = {
   loading: true,
   saving: false,
   error: null,
+  errorIsWarmup: false,
   formData: initialFormData
 ,
   pendingErrorFlash: null
@@ -52,6 +53,7 @@ const initialControl: InteractionRuleEditViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
           <app-master-load-error-panel
+            [isWarmupError]="control.errorIsWarmup"
             [errorKey]="control.error"
             [listLink]="['/interaction_rules']"
             backLabelKey="interaction_rules.index.title"

@@ -19,7 +19,8 @@ const loadedState: CropDetailViewState = withCropDetailSummaryState(
   {
     loading: false,
     error: null,
-    crop: {
+ errorIsWarmup: false,
+        crop: {
       id: 3,
       name: 'Tomato',
       variety: null,
@@ -168,7 +169,8 @@ describe('CropDetailComponent', () => {
       ...loadedState,
       loading: false,
       error: 'common.api_error.not_found',
-      crop: null,
+     errorIsWarmup: false,
+        crop: null,
       blueprintsLoading: false
     };
     fixture.detectChanges();
@@ -193,7 +195,8 @@ describe('CropDetailComponent', () => {
       ...loadedState,
       loading: false,
       error: 'common.api_error.generic',
-      crop: null,
+     errorIsWarmup: false,
+        crop: null,
       blueprintsLoading: false
     };
     fixture.detectChanges();
@@ -872,7 +875,8 @@ describe('CropDetailComponent', () => {
     component.control = {
       loading: true,
       error: null,
-      crop: null,
+   errorIsWarmup: false,
+        crop: null,
       pendingUndoToast: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,

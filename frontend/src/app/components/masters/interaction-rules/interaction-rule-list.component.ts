@@ -22,6 +22,7 @@ import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pe
 const initialControl: InteractionRuleListViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   rules: [],
   pendingUndoToast: null,
   pendingErrorFlash: null

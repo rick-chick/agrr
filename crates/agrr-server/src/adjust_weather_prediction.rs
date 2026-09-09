@@ -10,7 +10,11 @@ use agrr_domain::shared::ports::LoggerPort;
 use agrr_domain::weather_data::gateways::{
     PredictedWeatherMetadataGateway, PredictedWeatherStoreGateway,
 };
-use agrr_domain::weather_data::helpers::normalize_nested_weather_data;
+use agrr_domain::cultivation_plan::normalizers::entry_schedule_weather_preparer;
+use agrr_domain::shared::hash::present;
+use agrr_domain::weather_data::helpers::{
+    finalize_weather_payload_for_agrr, normalize_nested_weather_data,
+};
 use agrr_domain::weather_data::interactors::WeatherPredictionInteractor;
 use agrr_domain::weather_data::WeatherPredictionError;
 use serde_json::Value;
@@ -218,7 +222,7 @@ pub(crate) fn resolve_weather_for_entry_schedule(
         .prediction_service(weather_location)
         .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?;
 
-    let mut weather_data = if let Some(existing) =
+    let weather_data = if let Some(existing) =
         service.get_existing_location_prediction(target_end)
     {
         logger.info(&format!(
@@ -234,7 +238,29 @@ pub(crate) fn resolve_weather_for_entry_schedule(
             .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?
     };
 
-    normalize_weather_payload_for_agrr(&mut weather_data, &logger)
+    let normalized = entry_schedule_weather_preparer::prepare(weather_data, weather_location)
+        .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?;
+    log_entry_schedule_weather_payload(&normalized, &logger);
+    Ok(normalized)
+}
+
+fn log_entry_schedule_weather_payload(weather_data: &Value, logger: &StderrLogger) {
+    let days = weather_data
+        .get("data")
+        .and_then(|d| d.as_array())
+        .map(|a| a.len())
+        .unwrap_or(0);
+    let has_lat = weather_data
+        .get("latitude")
+        .map(present)
+        .unwrap_or(false);
+    let has_lon = weather_data
+        .get("longitude")
+        .map(present)
+        .unwrap_or(false);
+    logger.info(&format!(
+        "📡 [EntrySchedule] Weather payload ready: days={days} latitude_present={has_lat} longitude_present={has_lon}"
+    ));
 }
 
 /// Ruby CompositionRoot `weather_for_candidates` lambda (add_crop candidates).
@@ -282,31 +308,26 @@ pub(crate) fn resolve_weather_for_candidates(
             })?
     };
 
-    normalize_weather_payload_for_agrr(&mut weather_data, logger)
-}
+    let days_before = weather_data
+        .get("data")
+        .and_then(|d| d.as_array())
+        .map(|a| a.len())
+        .unwrap_or(0);
 
-fn normalize_weather_payload_for_agrr(
-    weather_data: &mut Value,
-    logger: &StderrLogger,
-) -> Result<Value, WeatherPredictionError> {
-    *weather_data = normalize_nested_weather_data(weather_data.clone());
+    let normalized = finalize_weather_payload_for_agrr(weather_data).map_err(|e| {
+        WeatherPredictionError::InsufficientPredictionData(e.to_string())
+    })?;
 
-    let days = weather_data
+    let days_after = normalized
         .get("data")
         .and_then(|d| d.as_array())
         .map(|a| a.len())
         .unwrap_or(0);
     logger.info(&format!(
-        "📡 [Candidates] WeatherPredictionInteractor result: days={days}"
+        "📡 [Candidates] WeatherPredictionInteractor result: days_before={days_before} days_after={days_after}"
     ));
 
-    if days == 0 {
-        return Err(WeatherPredictionError::InsufficientPredictionData(
-            "weather payload has no data rows".into(),
-        ));
-    }
-
-    Ok(weather_data.clone())
+    Ok(normalized)
 }
 
 #[cfg(test)]
@@ -345,22 +366,4 @@ mod tests {
         assert_eq!(end, date!(2027-12-31));
     }
 
-    #[test]
-    fn normalize_weather_payload_rejects_empty_data_rows() {
-        let mut payload = json!({ "data": [] });
-        let err = normalize_weather_payload_for_agrr(&mut payload, &StderrLogger).unwrap_err();
-        assert!(matches!(
-            err,
-            WeatherPredictionError::InsufficientPredictionData(ref msg) if msg.contains("no data rows")
-        ));
-    }
-
-    #[test]
-    fn normalize_weather_payload_accepts_non_empty_data() {
-        let mut payload = json!({
-            "data": [{ "time": "2026-05-01", "temperature_2m_mean": 15.0 }]
-        });
-        let normalized = normalize_weather_payload_for_agrr(&mut payload, &StderrLogger).unwrap();
-        assert_eq!(normalized["data"].as_array().unwrap().len(), 1);
-    }
 }

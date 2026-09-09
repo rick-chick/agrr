@@ -21,7 +21,8 @@ describe('FertilizeDetailPresenter', () => {
           lastControl ?? {
             loading: true,
             error: null,
-            fertilize: null,
+         errorIsWarmup: false,
+        fertilize: null,
             pendingErrorFlash: null
           }
         );
@@ -34,7 +35,8 @@ describe('FertilizeDetailPresenter', () => {
   });
 
   it('sets inline error key on onError(dto)', () => {
-    lastControl = { loading: true, error: null, fertilize: null, pendingErrorFlash: null };
+    lastControl = { loading: true, error: null,errorIsWarmup: false,
+        fertilize: null, pendingErrorFlash: null };
 
     presenter.onError({ message: 'common.api_error.not_found' });
 
@@ -43,7 +45,8 @@ describe('FertilizeDetailPresenter', () => {
   });
 
   it('maps raw HTTP error text to i18n key on onError(dto)', () => {
-    lastControl = { loading: true, error: null, fertilize: null, pendingErrorFlash: null };
+    lastControl = { loading: true, error: null,errorIsWarmup: false,
+        fertilize: null, pendingErrorFlash: null };
 
     presenter.onError({
       message:

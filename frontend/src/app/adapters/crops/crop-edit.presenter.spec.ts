@@ -33,7 +33,8 @@ describe('CropEditPresenter', () => {
           loading: true,
           saving: false,
           error: null,
-          pendingErrorFlash: null,
+       errorIsWarmup: false,
+        pendingErrorFlash: null,
           pendingSuccessFlash: null,
           formData: emptyFormData
         };
@@ -84,6 +85,7 @@ describe('CropEditPresenter', () => {
         loading: false,
         saving: true,
         error: null,
+     errorIsWarmup: false,
         pendingErrorFlash: null,
         pendingSuccessFlash: null,
         formData: {
@@ -124,6 +126,7 @@ describe('CropEditPresenter', () => {
         loading: false,
         saving: true,
         error: null,
+     errorIsWarmup: false,
         pendingErrorFlash: null,
         pendingSuccessFlash: null,
         formData: {

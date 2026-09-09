@@ -19,6 +19,7 @@ import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pe
 const initialControl: PesticideListViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   pesticides: [],
   pendingUndoToast: null,
   pendingErrorFlash: null

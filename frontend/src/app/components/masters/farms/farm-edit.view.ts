@@ -10,6 +10,7 @@ export type FarmEditViewState = {
   loading: boolean;
   saving: boolean;
   error: string | null;
+  errorIsWarmup: boolean;
   formData: FarmEditFormData;
 
   pendingErrorFlash: PendingErrorFlashRequest | null;

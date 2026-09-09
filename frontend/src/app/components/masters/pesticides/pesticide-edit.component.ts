@@ -36,6 +36,7 @@ const initialControl: PesticideEditViewState = {
   loading: true,
   saving: false,
   error: null,
+  errorIsWarmup: false,
   formData: initialFormData
 ,
   pendingErrorFlash: null
@@ -61,6 +62,7 @@ const initialControl: PesticideEditViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
           <app-master-load-error-panel
+            [isWarmupError]="control.errorIsWarmup"
             [errorKey]="control.error"
             [listLink]="['/pesticides']"
             backLabelKey="pesticides.index.title"

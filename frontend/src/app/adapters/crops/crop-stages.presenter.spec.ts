@@ -25,7 +25,8 @@ describe('CropStagesPresenter', () => {
   ): CropStagesViewState => ({
     loading: false,
     error: null,
-    pendingErrorFlash: null,
+ errorIsWarmup: false,
+        pendingErrorFlash: null,
     pendingSuccessFlash: null,
     pendingReorderCropStagesSnapshot: null,
     pendingResyncPanelDraft: false,
@@ -49,7 +50,8 @@ describe('CropStagesPresenter', () => {
         return lastControl ?? {
           loading: true,
           error: null,
-          pendingErrorFlash: null,
+       errorIsWarmup: false,
+        pendingErrorFlash: null,
           pendingSuccessFlash: null,
           pendingReorderCropStagesSnapshot: null,
           pendingResyncPanelDraft: false,

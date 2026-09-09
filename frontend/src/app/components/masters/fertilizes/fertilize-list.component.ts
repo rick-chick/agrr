@@ -18,6 +18,7 @@ import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pe
 const initialControl: FertilizeListViewState = {
   loading: true,
   error: null,
+  errorIsWarmup: false,
   fertilizes: [],
   pendingUndoToast: null,
   pendingErrorFlash: null

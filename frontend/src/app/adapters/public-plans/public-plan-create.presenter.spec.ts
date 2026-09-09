@@ -10,8 +10,7 @@ describe('PublicPlanCreatePresenter', () => {
     viewMock = {
       control: {
         loading: true,
-        error: null,
-        farms: []
+        error: null, farms: []
       }
     };
 
@@ -43,8 +42,7 @@ describe('PublicPlanCreatePresenter', () => {
     Object.defineProperty(viewMock, 'control', {
       get: () => ({
         loading: true,
-        error: null,
-        farms: []
+        error: null, farms: []
       }),
       set: vi.fn((value) => {
         setControlValue = value;
@@ -55,8 +53,7 @@ describe('PublicPlanCreatePresenter', () => {
 
     expect(setControlValue).toEqual({
       loading: false,
-      error: null,
-      farms
+      error: null, farms
     });
   });
 });

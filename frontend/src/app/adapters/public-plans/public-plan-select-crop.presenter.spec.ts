@@ -20,7 +20,8 @@ describe('PublicPlanSelectCropPresenter', () => {
     lastControl = null;
     view = {
       get control(): PublicPlanSelectCropViewState {
-        return lastControl ?? { loading: true, error: null, crops: [], saving: false };
+        return lastControl ?? { loading: true, error: null,
+crops: [], saving: false };
       },
       set control(value: PublicPlanSelectCropViewState) {
         lastControl = value;
@@ -60,7 +61,7 @@ describe('PublicPlanSelectCropPresenter', () => {
         const initialControl: PublicPlanSelectCropViewState = {
           loading: false,
           error: null,
-          crops: [{ id: 1, name: 'Crop 1', is_reference: false, groups: [] }],
+crops: [{ id: 1, name: 'Crop 1', is_reference: false, groups: [] }],
           saving: true
         };
         lastControl = initialControl;
@@ -78,7 +79,7 @@ describe('PublicPlanSelectCropPresenter', () => {
         const initialControl: PublicPlanSelectCropViewState = {
           loading: false,
           error: 'Previous error',
-          crops: [],
+crops: [],
           saving: true
         };
         lastControl = initialControl;
@@ -103,7 +104,7 @@ describe('PublicPlanSelectCropPresenter', () => {
         const initialControl: PublicPlanSelectCropViewState = {
           loading: false,
           error: null,
-          crops: [{ id: 1, name: 'Crop 1', is_reference: false, groups: [] }],
+crops: [{ id: 1, name: 'Crop 1', is_reference: false, groups: [] }],
           saving: true
         };
         lastControl = initialControl;
@@ -122,7 +123,7 @@ describe('PublicPlanSelectCropPresenter', () => {
         const initialControl: PublicPlanSelectCropViewState = {
           loading: true,
           error: null,
-          crops: [{ id: 1, name: 'Crop 1', is_reference: false, groups: [] }],
+crops: [{ id: 1, name: 'Crop 1', is_reference: false, groups: [] }],
           saving: false
         };
         lastControl = initialControl;
@@ -142,7 +143,7 @@ describe('PublicPlanSelectCropPresenter', () => {
         const initialControl: PublicPlanSelectCropViewState = {
           loading: false,
           error: null,
-          crops,
+crops,
           saving: true
         };
         lastControl = initialControl;
