@@ -20,6 +20,7 @@ describe('App', () => {
             user: () => null,
             loading: () => false,
             sessionUnavailable: () => false,
+            databaseWarming: () => false,
             loadCurrentUser: () => of(null),
             retryLoadCurrentUser: () => of(null),
             logout: () => of(undefined)

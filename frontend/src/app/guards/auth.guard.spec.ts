@@ -12,6 +12,7 @@ describe('authGuard', () => {
     user: ReturnType<typeof vi.fn>;
     loadCurrentUser: ReturnType<typeof vi.fn>;
     sessionUnavailable: ReturnType<typeof vi.fn>;
+    databaseWarming: ReturnType<typeof vi.fn>;
   };
   let createUrlTree: ReturnType<typeof vi.fn>;
 
@@ -19,7 +20,8 @@ describe('authGuard', () => {
     authService = {
       user: vi.fn(() => null),
       loadCurrentUser: vi.fn(() => of(null)),
-      sessionUnavailable: vi.fn(() => false)
+      sessionUnavailable: vi.fn(() => false),
+      databaseWarming: vi.fn(() => false)
     };
     createUrlTree = vi.fn((_commands: string[], extras?: { queryParams?: Record<string, string> }) => {
       const tree = new UrlTree();
@@ -78,6 +80,15 @@ describe('authGuard', () => {
 
   it('blocks navigation without login redirect when session is unavailable', async () => {
     authService.sessionUnavailable.mockReturnValue(true);
+
+    const result = await runGuard('/plans/123');
+
+    expect(result).toBe(false);
+    expect(createUrlTree).not.toHaveBeenCalled();
+  });
+
+  it('blocks navigation without login redirect when database is warming', async () => {
+    authService.databaseWarming.mockReturnValue(true);
 
     const result = await runGuard('/plans/123');
 

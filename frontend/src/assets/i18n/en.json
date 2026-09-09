@@ -204,6 +204,11 @@
         "load_failed": "Could not load translations",
         "retry": "Retry"
       }
+    },
+    "backend_warmup": {
+      "database": "Starting database…",
+      "compute_engine": "Starting compute engine…",
+      "reload": "Reload"
     }
   },
   "masters": {
@@ -276,7 +281,8 @@
         "weather_trigger_item": "{{farm}} · {{count}} weather triggers"
       },
       "ready_farms": "Farms ready for work",
-      "needs_attention": "Needs attention"
+      "needs_attention": "Needs attention",
+      "select_farm": "Select a farm"
     },
     "variance": {
       "title": "Variance portfolio",

@@ -1514,6 +1514,11 @@
         "load_failed": "翻訳を読み込めませんでした",
         "retry": "再試行"
       }
+    },
+    "backend_warmup": {
+      "database": "データベースを起動中",
+      "compute_engine": "計算エンジンを起動中",
+      "reload": "もう一度読み込む"
     }
   },
   "masters": {
@@ -3329,7 +3334,8 @@
         "weather_trigger_item": "{{farm}} · 天候トリガー {{count}} 件"
       },
       "ready_farms": "作業可能な農場",
-      "needs_attention": "要対応"
+      "needs_attention": "要対応",
+      "select_farm": "農場を選択"
     },
     "variance": {
       "title": "乖離ポートフォリオ",

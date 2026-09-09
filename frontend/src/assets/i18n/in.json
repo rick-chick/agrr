@@ -1277,6 +1277,11 @@
         "load_failed": "अनुवाद लोड नहीं हो सके",
         "retry": "पुनः प्रयास करें"
       }
+    },
+    "backend_warmup": {
+      "database": "डेटाबेस प्रारंभ हो रहा है",
+      "compute_engine": "गणना इंजन प्रारंभ हो रहा है",
+      "reload": "पुनः लोड करें"
     }
   },
   "masters": {
@@ -3015,7 +3020,8 @@
         "weather_trigger_item": "{{farm}} · {{count}} मौसम ट्रिगर"
       },
       "ready_farms": "कार्य के लिए तैयार खेत",
-      "needs_attention": "ध्यान देने की आवश्यकता"
+      "needs_attention": "ध्यान देने की आवश्यकता",
+      "select_farm": "खेत चुनें"
     },
     "variance": {
       "title": "विचलन पोर्टफोलियो",

@@ -4,6 +4,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MasterLoadErrorPanelComponent } from './master-load-error-panel.component';
+import { BACKEND_WARMUP_I18N } from '../../../core/backend-warmup/backend-warmup';
 
 describe('MasterLoadErrorPanelComponent', () => {
   let fixture: ComponentFixture<MasterLoadErrorPanelComponent>;
@@ -20,6 +21,8 @@ describe('MasterLoadErrorPanelComponent', () => {
     translate.setTranslation('en', {
       'common.api_error.not_found': 'Resource not found',
       'common.api_error.generic': 'An error occurred',
+      'common.backend_warmup.database': 'Starting database…',
+      'common.backend_warmup.reload': 'Reload',
       'masters.load_error.retry': 'Reload',
       'fertilizes.index.title': 'Fertilizers'
     });
@@ -65,6 +68,18 @@ describe('MasterLoadErrorPanelComponent', () => {
   it('exposes role=alert on the error panel', () => {
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.master-load-error[role="alert"]')).toBeTruthy();
+  });
+
+  it('shows warmup loading instead of error alert for backend warmup keys', () => {
+    fixture.componentRef.setInput('errorKey', BACKEND_WARMUP_I18N.database);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.master-load-error')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.master-load-warmup')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Starting database…');
+    expect(fixture.nativeElement.querySelector('.master-load-warmup__retry')?.textContent?.trim()).toBe(
+      'Reload'
+    );
   });
 });

@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { describe, expect, it } from 'vitest';
+import { BACKEND_WARMUP_I18N } from './backend-warmup/backend-warmup';
 import { apiErrorI18nKey } from './api-error-i18n-key';
 
 describe('apiErrorI18nKey', () => {
@@ -27,9 +28,9 @@ describe('apiErrorI18nKey', () => {
     );
   });
 
-  it('maps status 0 to network key', () => {
+  it('maps status 0 to database warmup key', () => {
     expect(apiErrorI18nKey(new HttpErrorResponse({ status: 0, statusText: 'Unknown Error' }))).toBe(
-      'common.api_error.network'
+      BACKEND_WARMUP_I18N.database
     );
   });
 
@@ -39,13 +40,21 @@ describe('apiErrorI18nKey', () => {
     );
   });
 
-  it('maps 502 and 503 to service_unavailable key', () => {
+  it('maps 502 and 503 to backend warmup keys', () => {
     expect(apiErrorI18nKey(new HttpErrorResponse({ status: 502, statusText: 'Bad Gateway' }))).toBe(
-      'common.api_error.service_unavailable'
+      BACKEND_WARMUP_I18N.database
     );
     expect(
       apiErrorI18nKey(new HttpErrorResponse({ status: 503, statusText: 'Service Unavailable' }))
-    ).toBe('common.api_error.service_unavailable');
+    ).toBe(BACKEND_WARMUP_I18N.database);
+    expect(
+      apiErrorI18nKey(
+        new HttpErrorResponse({
+          status: 503,
+          error: { status: 'daemon_unavailable' }
+        })
+      )
+    ).toBe(BACKEND_WARMUP_I18N.computeEngine);
   });
 
   it('maps other HTTP errors to generic key', () => {

@@ -199,6 +199,29 @@ describe('NavbarComponent', () => {
     expect(fixture.nativeElement.querySelector('.login-link')).toBeNull();
   });
 
+  it('shows database warmup loading and retry instead of session unavailable', () => {
+    translate.setTranslation('en', {
+      common: {
+        backend_warmup: {
+          database: 'Starting database…'
+        }
+      },
+      status: {
+        retry: 'Retry'
+      },
+      nav: { login: 'Login' }
+    });
+    translate.use('en');
+    component.user = null;
+    component.databaseWarming = true;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Starting database…');
+    expect(fixture.nativeElement.querySelector('.backend-warmup-loading__spinner')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.retry-button')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).not.toContain('Could not verify your session');
+  });
+
   it('shows overdue badge when workLogOverdueCount is positive', () => {
     translate.setTranslation('ja', {
       nav: { work_log: '作業記録', work_log_overdue_aria: '作業記録、期限超過 {{count}} 件' }

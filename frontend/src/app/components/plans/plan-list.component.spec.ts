@@ -475,7 +475,7 @@ describe('PlanListComponent', () => {
       await fixture.whenStable();
 
       expect(fixture.nativeElement.querySelector('app-card-list-skeleton')).toBeTruthy();
-      expect(fixture.nativeElement.querySelector('.master-loading:not(.list-loading-text)')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-backend-warmup-loading')).toBeTruthy();
     } finally {
       loadSpy.mockRestore();
     }

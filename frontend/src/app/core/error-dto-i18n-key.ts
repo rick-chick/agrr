@@ -1,4 +1,5 @@
 import { ErrorDto } from '../domain/shared/error.dto';
+import { backendWarmupI18nKeyFromMessage } from './backend-warmup/backend-warmup';
 
 const TRANSLATION_KEY_PATTERN = /^[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+$/;
 
@@ -18,6 +19,11 @@ export function errorDtoI18nKey(dto: ErrorDto | { message: string }): string {
     return message;
   }
 
+  const warmupKey = backendWarmupI18nKeyFromMessage(message);
+  if (warmupKey) {
+    return warmupKey;
+  }
+
   const lowered = message.toLowerCase();
   if (lowered.includes('not found') || /\b404\b/.test(lowered)) {
     return 'common.api_error.not_found';
@@ -27,12 +33,6 @@ export function errorDtoI18nKey(dto: ErrorDto | { message: string }): string {
   }
   if (lowered.includes('forbidden') || /\b403\b/.test(lowered)) {
     return 'common.api_error.forbidden';
-  }
-  if (/\b503\b/.test(lowered) || /\b502\b/.test(lowered) || lowered.includes('service unavailable')) {
-    return 'common.api_error.service_unavailable';
-  }
-  if (/\b0 unknown error\b/.test(lowered) || /: 0 /.test(lowered)) {
-    return 'common.api_error.network';
   }
   return 'common.api_error.generic';
 }

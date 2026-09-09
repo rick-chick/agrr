@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import type { PlanListPlan } from '../../domain/plans/plan-list-plan';
 import { LoadPlanListInputPort } from './load-plan-list.input-port';
 import { LoadPlanListOutputPort, LOAD_PLAN_LIST_OUTPUT_PORT } from './load-plan-list.output-port';
@@ -35,9 +36,9 @@ export class LoadPlanListUseCase implements LoadPlanListInputPort {
       )
       .subscribe({
         next: (dto) => this.outputPort.present(dto),
-        error: (err: Error) =>
+        error: (err: unknown) =>
           this.outputPort.onError({
-            message: err?.message ?? 'Unknown error',
+            message: apiErrorI18nKey(err),
             scope: 'load-plan-list'
           })
       });

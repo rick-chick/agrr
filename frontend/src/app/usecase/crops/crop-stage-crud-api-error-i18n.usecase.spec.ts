@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
+import { BACKEND_WARMUP_I18N } from '../../core/backend-warmup/backend-warmup';
 import { CropStage } from '../../domain/crops/crop';
 import { CropStageGateway } from './crop-stage-gateway';
 import { CreateCropStageOutputPort } from './create-crop-stage.output-port';
@@ -61,7 +62,7 @@ describe('crop stage CRUD use cases api error i18n', () => {
     const useCase = new CreateCropStageUseCase(outputPort, stageGateway);
     useCase.execute({ cropId: 1, payload: { name: 'Stage 2', order: 2 } });
 
-    expect(errorMessage).toBe('common.api_error.network');
+    expect(errorMessage).toBe(BACKEND_WARMUP_I18N.database);
   });
 
   it('ReorderCropStagesUseCase passes apiErrorI18nKey to onError on gateway failure', () => {
@@ -79,7 +80,7 @@ describe('crop stage CRUD use cases api error i18n', () => {
     const useCase = new ReorderCropStagesUseCase(outputPort, stageGateway);
     useCase.execute({ cropId: 1, entries: [{ id: 1, order: 1 }] });
 
-    expect(errorMessage).toBe('common.api_error.network');
+    expect(errorMessage).toBe(BACKEND_WARMUP_I18N.database);
   });
 
   it('DeleteCropStageUseCase passes apiErrorI18nKey to onError on gateway failure', () => {
@@ -97,6 +98,6 @@ describe('crop stage CRUD use cases api error i18n', () => {
     const useCase = new DeleteCropStageUseCase(outputPort, stageGateway);
     useCase.execute({ cropId: 1, stageId: 1 });
 
-    expect(errorMessage).toBe('common.api_error.network');
+    expect(errorMessage).toBe(BACKEND_WARMUP_I18N.database);
   });
 });
