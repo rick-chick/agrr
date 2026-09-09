@@ -75,7 +75,8 @@ describe('WorkHubComponent', () => {
     translate.setTranslation('ja', {
       'work.hub.title': '作業ハブ',
       'work.hub.no_farms': '農場がまだ登録されていません',
-      'work.hub.select_farm': '農場を選択',
+      'work.hub.ready_farms': '作業可能な農場',
+      'work.hub.needs_attention': '要対応',
       'work.hub.no_fields_warning': 'この農場には圃場が登録されていません。',
       'work.hub.register_fields_link': '圃場を登録する',
       'work.hub.open_work': '作業へ',
@@ -224,6 +225,186 @@ describe('WorkHubComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.work-hub__farm-btn')).toHaveLength(1);
   });
 
+  it('splits farms into ready and needs-attention sections', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm Ready',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
+          unrecordedCount: 0
+        },
+        {
+          farmId: 2,
+          farmName: 'Farm Blocked',
+          fieldCount: 0,
+          totalArea: 0,
+          hasValidFields: false,
+          planId: null,
+          overdueCount: 0,
+          todayCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
+          unrecordedCount: 0
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const sectionTitles = Array.from(
+      fixture.nativeElement.querySelectorAll('.work-hub__section-title')
+    ).map((el: Element) => el.textContent?.trim());
+    expect(sectionTitles).toContain('作業可能な農場');
+    expect(sectionTitles).toContain('要対応');
+
+    const readySection = fixture.nativeElement.querySelector('.work-hub__ready-farms');
+    const blockedSection = fixture.nativeElement.querySelector('.work-hub__blocked-farms');
+    expect(readySection?.querySelectorAll('.work-hub__farm-btn')).toHaveLength(1);
+    expect(blockedSection?.querySelectorAll('.work-hub__farm-btn')).toHaveLength(0);
+    expect(blockedSection?.textContent).toContain('Farm Blocked');
+    expect(readySection?.textContent).toContain('Farm Ready');
+  });
+
+  it('hides needs-attention section when no blocked farms exist', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm Ready',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
+          unrecordedCount: 0
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.work-hub__ready-farms')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.work-hub__blocked-farms')).toBeNull();
+    const sectionTitles = Array.from(
+      fixture.nativeElement.querySelectorAll('.work-hub__section-title')
+    ).map((el: Element) => el.textContent?.trim());
+    expect(sectionTitles).toContain('作業可能な農場');
+    expect(sectionTitles).not.toContain('要対応');
+  });
+
+  it('uses uniform card layout with four always-present rows on ready farms', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9,
+          overdueCount: 0,
+          todayCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
+          unrecordedCount: 0
+        },
+        {
+          farmId: 2,
+          farmName: 'Farm B',
+          fieldCount: 1,
+          totalArea: 50,
+          hasValidFields: true,
+          planId: 10,
+          overdueCount: 0,
+          todayCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
+          unrecordedCount: 0
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('.work-hub__ready-farms .item-card') as HTMLElement;
+    const body = card.querySelector('.item-card__body') as HTMLElement;
+    expect(body.classList.contains('item-card__body--uniform')).toBe(true);
+    expect(card.querySelector('.item-card__title--single-line')).toBeTruthy();
+    expect(card.querySelector('.work-hub__meta.item-card__meta--single-line')).toBeTruthy();
+    expect(card.querySelector('.work-hub__summary.item-card__meta--single-line')).toBeTruthy();
+    expect(card.querySelector('.work-hub__cta.item-card__meta--single-line')).toBeTruthy();
+
+    const zeroCountCard = fixture.nativeElement.querySelectorAll('.work-hub__ready-farms .item-card')[1] as HTMLElement;
+    const summaryRow = zeroCountCard.querySelector('.work-hub__summary') as HTMLElement;
+    expect(summaryRow).toBeTruthy();
+    expect(summaryRow.textContent).toContain('期限超過 0 件');
+    expect(summaryRow.textContent).toContain('今日 0 件');
+  });
+
+  it('readyFarms and blockedFarms partition control.farms by hasValidFields', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Ready',
+          fieldCount: 1,
+          totalArea: 10,
+          hasValidFields: true,
+          planId: 1,
+          overdueCount: 0,
+          todayCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
+          unrecordedCount: 0
+        },
+        {
+          farmId: 2,
+          farmName: 'Blocked',
+          fieldCount: 0,
+          totalArea: 0,
+          hasValidFields: false,
+          planId: null,
+          overdueCount: 0,
+          todayCount: 0,
+          gddDelayCount: 0,
+          daysExceedanceCount: 0,
+          thresholdExceededCount: 0,
+          otherVariancePlanCount: 0,
+          unrecordedCount: 0
+        }
+      ]
+    });
+
+    expect(component.readyFarms()).toHaveLength(1);
+    expect(component.readyFarms()[0]?.farmName).toBe('Ready');
+    expect(component.blockedFarms()).toHaveLength(1);
+    expect(component.blockedFarms()[0]?.farmName).toBe('Blocked');
+  });
+
   it('shows field warning for a single farm without valid fields', () => {
     fixture.detectChanges();
     component.control = baseControl({
@@ -247,17 +428,18 @@ describe('WorkHubComponent', () => {
     });
     fixture.detectChanges();
 
-    const card = fixture.nativeElement.querySelector('article.item-card');
+    const card = fixture.nativeElement.querySelector('.work-hub__blocked-farms .item-card');
     const warning = card?.querySelector('.work-hub__warning[role="status"]');
 
     expect(fixture.nativeElement.textContent).toContain('この農場には圃場が登録されていません。');
     expect(card).not.toBeNull();
     expect(warning).not.toBeNull();
-    expect(warning?.textContent).toContain('圃場を登録する');
+    expect(warning?.textContent).toContain('この農場には圃場が登録されていません。');
     expect(card?.querySelector('a.work-hub__warning__link')?.getAttribute('href')).toContain('/farms/1');
-    expect(fixture.nativeElement.querySelector('.work-hub__farm-btn')?.disabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('.work-hub__farm-btn')).toBeNull();
     expect(card?.querySelector('.work-hub__summary')).toBeNull();
     expect(card?.querySelector('.work-hub__cta')).toBeNull();
+    expect(card?.querySelector('.work-hub__no-fields-footer')).toBeNull();
     expect(card?.classList.contains('work-hub__farm-card--blocked')).toBe(true);
   });
 
@@ -299,19 +481,14 @@ describe('WorkHubComponent', () => {
     });
     fixture.detectChanges();
 
-    const listItem = fixture.nativeElement.querySelector(
-      '.card-list__item:has(.work-hub__warning)'
-    ) as HTMLElement;
-    expect(listItem).toBeTruthy();
+    const blockedSection = fixture.nativeElement.querySelector('.work-hub__blocked-farms') as HTMLElement;
+    expect(blockedSection).toBeTruthy();
 
-    const card = listItem.querySelector('.item-card');
-    const warning = listItem.querySelector('.work-hub__warning');
+    const card = blockedSection.querySelector('.item-card');
+    const warning = blockedSection.querySelector('.work-hub__warning');
     expect(card?.contains(warning)).toBe(true);
     expect(warning?.getAttribute('role')).toBe('status');
-
-    const siblings = Array.from(listItem.children);
-    expect(siblings).toHaveLength(1);
-    expect(siblings[0]?.classList.contains('item-card')).toBe(true);
+    expect(blockedSection.querySelector('.work-hub__no-fields-footer')).toBeNull();
   });
 
   it('hides start-recording CTA when farm has no valid fields', () => {

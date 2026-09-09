@@ -263,6 +263,16 @@ impl EntryScheduleWeatherLoaderPort for EntryScheduleWeatherLoader<'_> {
     }
 }
 
+/// Loads the full crop row for optimize — `EntryScheduleShowCrop` does not carry `cultivation_method`.
+fn load_crop_entity_for_optimize(
+    crop_gateway: &CropSqliteGateway,
+    crop: &dyn EntryScheduleShowCrop,
+) -> CropEntity {
+    crop_gateway
+        .find_by_id(crop.id())
+        .unwrap_or_else(|_| CropEntity::new(crop.id(), crop.name(), None, true).unwrap())
+}
+
 struct OptimizeRunner {
     pool: agrr_adapters_sqlite::SqlitePool,
     optimization: EntryScheduleOptimizationAgrrDaemonGateway,
@@ -277,9 +287,7 @@ impl EntryScheduleOptimizationRunnerPort for OptimizeRunner {
         _farm: &dyn EntryScheduleShowFarm,
     ) -> EntryScheduleWindowResult {
         let crop_gateway = CropSqliteGateway::new(self.pool.clone());
-        let entity = crop_gateway
-            .find_by_id(crop.id())
-            .unwrap_or_else(|_| CropEntity::new(crop.id(), crop.name(), None, true).unwrap());
+        let entity = load_crop_entity_for_optimize(&crop_gateway, crop);
         let wrap = CropWrap(entity);
         let crop_gw = SqliteOptimizeCropGateway {
             pool: self.pool.clone(),
@@ -609,10 +617,59 @@ async fn entry_schedule_crops(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use agrr_adapters_sqlite::SqlitePool;
     use agrr_domain::public_plan::exceptions::{
         PredictionPayloadMissingError, WeatherLocationMissingError, WeatherPredictionFailedError,
     };
+    use agrr_domain::public_plan::mappers::entry_schedule_crop_mapper::EntryScheduleCropLike;
     use agrr_domain::weather_data::WeatherPredictionError;
+    use tempfile::NamedTempFile;
+
+    struct StubShowCrop {
+        id: i64,
+        name: &'static str,
+    }
+
+    impl EntryScheduleCropLike for StubShowCrop {
+        fn id(&self) -> i64 {
+            self.id
+        }
+        fn name(&self) -> &str {
+            self.name
+        }
+    }
+
+    impl EntryScheduleShowCrop for StubShowCrop {}
+
+    fn crop_test_pool() -> (SqlitePool, NamedTempFile) {
+        let file = NamedTempFile::new().expect("temp db");
+        let path = file.path().to_str().expect("utf8 path");
+        let pool = SqlitePool::new(path);
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "CREATE TABLE crops (
+                  id INTEGER PRIMARY KEY, user_id INTEGER, organization_id INTEGER, name TEXT NOT NULL, variety TEXT,
+                  is_reference INTEGER NOT NULL DEFAULT 0, area_per_unit REAL, revenue_per_area REAL,
+                  region TEXT, groups TEXT, cultivation_method TEXT, created_at TEXT, updated_at TEXT
+                );",
+            )?;
+            Ok(())
+        })
+        .expect("schema");
+        (pool, file)
+    }
+
+    fn insert_crop_with_method(pool: &SqlitePool, id: i64, name: &str, method: &str) {
+        pool.with_write(|conn| {
+            conn.execute(
+                "INSERT INTO crops (id, name, is_reference, groups, cultivation_method, created_at, updated_at)
+                 VALUES (?1, ?2, 1, '[]', ?3, datetime('now'), datetime('now'))",
+                rusqlite::params![id, name, method],
+            )?;
+            Ok(())
+        })
+        .expect("insert crop");
+    }
 
     #[test]
     fn map_weather_prediction_error_maps_location_required() {
@@ -744,5 +801,58 @@ mod tests {
                 .is_some()
         );
         assert_eq!(out.body.get("crop").and_then(|v| v.get("id")).and_then(|v| v.as_i64()), Some(2));
+    }
+
+    #[test]
+    fn load_crop_entity_for_optimize_preserves_cultivation_method_from_sqlite() {
+        let (pool, _file) = crop_test_pool();
+        insert_crop_with_method(&pool, 7, "ほうれん草", "direct_sow");
+        let gateway = CropSqliteGateway::new(pool);
+        let show_crop = StubShowCrop {
+            id: 7,
+            name: "ほうれん草",
+        };
+
+        let entity = load_crop_entity_for_optimize(&gateway, &show_crop);
+        let wrap = CropWrap(entity);
+
+        assert_eq!(
+            wrap.cultivation_method(),
+            Some(CropCultivationMethod::DirectSow)
+        );
+    }
+
+    #[test]
+    fn load_crop_entity_for_optimize_loads_transplant_method_for_optimize_runner() {
+        let (pool, _file) = crop_test_pool();
+        insert_crop_with_method(&pool, 3, "トマト", "transplant");
+        let gateway = CropSqliteGateway::new(pool);
+        let show_crop = StubShowCrop {
+            id: 3,
+            name: "トマト",
+        };
+
+        let entity = load_crop_entity_for_optimize(&gateway, &show_crop);
+
+        assert_eq!(
+            entity.cultivation_method,
+            Some(CropCultivationMethod::Transplant)
+        );
+    }
+
+    #[test]
+    fn load_crop_entity_for_optimize_falls_back_without_db_row() {
+        let (pool, _file) = crop_test_pool();
+        let gateway = CropSqliteGateway::new(pool);
+        let show_crop = StubShowCrop {
+            id: 99,
+            name: "missing",
+        };
+
+        let entity = load_crop_entity_for_optimize(&gateway, &show_crop);
+
+        assert_eq!(entity.id, 99);
+        assert_eq!(entity.name, "missing");
+        assert_eq!(entity.cultivation_method, None);
     }
 }

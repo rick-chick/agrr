@@ -39,43 +39,10 @@
   align-items: center;
 }
 
-.plan-list__card-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-  overflow: hidden;
-}
-
-.plan-list__card-title {
-  margin-bottom: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-break: normal;
-  overflow-wrap: normal;
-}
-
-.plan-list__gap-summary {
-  display: block;
-  min-height: 1.25rem;
-  margin-top: 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+.plan-list__gap-summary,
 .plan-list__custom-plan-name {
-  display: block;
-  min-height: 1.25rem;
-  margin-top: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .plan-list__card-actions {
@@ -87,13 +54,8 @@
   display: flex;
   flex-wrap: nowrap;
   gap: var(--space-2);
-  min-height: 1.25rem;
-  margin-top: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .plan-list__plan-status {

@@ -446,11 +446,12 @@ describe('PlanListComponent', () => {
   it('uses plan-list card layout classes for uniform single-line rows', async () => {
     const nativeElement = await renderPlans([planWithGap()]);
     const card = nativeElement.querySelector('.plan-list__card');
+    const body = nativeElement.querySelector('.plan-list__card-body') as HTMLElement;
     expect(card?.classList.contains('item-card')).toBe(true);
-    expect(nativeElement.querySelector('.plan-list__card-body')).toBeTruthy();
-    expect(nativeElement.querySelector('.plan-list__card-title')).toBeTruthy();
-    expect(nativeElement.querySelector('.plan-list__gap-summary')).toBeTruthy();
-    expect(nativeElement.querySelector('.plan-list__custom-plan-name')).toBeTruthy();
+    expect(body.classList.contains('item-card__body--uniform')).toBe(true);
+    expect(nativeElement.querySelector('.item-card__title--single-line.plan-list__card-title')).toBeTruthy();
+    expect(nativeElement.querySelector('.item-card__meta--single-line.plan-list__gap-summary')).toBeTruthy();
+    expect(nativeElement.querySelector('.item-card__meta--single-line.plan-list__custom-plan-name')).toBeTruthy();
   });
 
   it('keeps gap summary row in DOM when inputGap is null for consistent card height', async () => {

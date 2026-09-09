@@ -58,14 +58,14 @@ const initialControl: AgriculturalTaskListViewState = {
             @for (task of control.tasks; track task.id) {
               <li class="card-list__item">
                 <article class="item-card">
-                  <a [routerLink]="['/agricultural_tasks', task.id]" class="item-card__body">
-                    <span class="item-card__title">{{ task.name }}</span>
-                    @if (task.skill_level) {
-                      <span class="item-card__meta">
+                  <a [routerLink]="['/agricultural_tasks', task.id]" class="item-card__body item-card__body--uniform">
+                    <span class="item-card__title item-card__title--single-line">{{ task.name }}</span>
+                    <span class="item-card__meta--single-line agricultural-task-list__skill-level">
+                      @if (task.skill_level) {
                         {{ 'agricultural_tasks.index.skill_label' | translate }}:
                         {{ ('agricultural_tasks.show.skill_level_' + task.skill_level) | translate }}
-                      </span>
-                    }
+                      }
+                    </span>
                   </a>
                   <div class="item-card__actions">
                     <a [routerLink]="['/agricultural_tasks', task.id, 'edit']" class="btn btn-secondary">

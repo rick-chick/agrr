@@ -238,6 +238,30 @@ describe('CropListComponent card actions', () => {
     expect(loadSpy).toHaveBeenCalled();
   });
 
+  it('uses uniform card layout with single-line title and meta rows', () => {
+    const card = firstCropCard();
+    const body = card.querySelector('.item-card__body') as HTMLElement;
+    const title = card.querySelector('.item-card__title') as HTMLElement;
+    expect(body.classList.contains('item-card__body--uniform')).toBe(true);
+    expect(title.classList.contains('item-card__title--single-line')).toBe(true);
+    expect(card.querySelector('.crop-list__variety.item-card__meta--single-line')).toBeTruthy();
+    expect(card.querySelector('.crop-list__reference-badge.item-card__badge-row--single-line')).toBeTruthy();
+  });
+
+  it('keeps variety row in DOM when variety is absent for consistent card height', () => {
+    const cards = fixture.nativeElement.querySelectorAll('.card-list__item');
+    const referenceCard = cards[1] as HTMLElement;
+    const varietyRow = referenceCard.querySelector('.crop-list__variety') as HTMLElement;
+    expect(varietyRow).toBeTruthy();
+    expect(varietyRow.textContent?.trim()).toBe('');
+  });
+
+  it('keeps reference badge row in DOM when crop is not reference', () => {
+    const badgeRow = firstCropCard().querySelector('.crop-list__reference-badge') as HTMLElement;
+    expect(badgeRow).toBeTruthy();
+    expect(badgeRow.textContent?.trim()).toBe('');
+  });
+
   it('opens delete confirm dialog before deleting crop', () => {
     const component = fixture.componentInstance;
     component.deleteConfirmDialogRef = {

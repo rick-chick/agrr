@@ -192,11 +192,6 @@
       "service_unavailable": "Could not connect to the server",
       "generic": "An error occurred"
     },
-    "backend_warmup": {
-      "database": "Starting database…",
-      "compute_engine": "Starting compute engine…",
-      "reload": "Reload"
-    },
     "creating": "Creating...",
     "sending": "Sending...",
     "updating": "Updating...",
@@ -209,6 +204,11 @@
         "load_failed": "Could not load translations",
         "retry": "Retry"
       }
+    },
+    "backend_warmup": {
+      "database": "Starting database…",
+      "compute_engine": "Starting compute engine…",
+      "reload": "Reload"
     }
   },
   "masters": {
@@ -244,7 +244,6 @@
       "title": "Work log",
       "subtitle": "Choose a farm to record today's work",
       "error_subtitle": "Could not load farms. Try reloading.",
-      "select_farm": "Select a farm",
       "no_farms": "No farms registered yet",
       "no_farms_hint": "Register a farm and fields before recording work.",
       "create_farm_link": "Register a farm",
@@ -280,7 +279,10 @@
         "open_work": "Open work",
         "open_learn": "Open learn",
         "weather_trigger_item": "{{farm}} · {{count}} weather triggers"
-      }
+      },
+      "ready_farms": "Farms ready for work",
+      "needs_attention": "Needs attention",
+      "select_farm": "Select a farm"
     },
     "variance": {
       "title": "Variance portfolio",

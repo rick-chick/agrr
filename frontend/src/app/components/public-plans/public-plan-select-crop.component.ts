@@ -90,7 +90,7 @@ const initialControl: PublicPlanSelectCropViewState = {
                   <label [for]="'crop_' + crop.id" class="crop-card">
                     <div class="crop-emoji">🥬</div>
                     <div class="crop-name">{{ crop.name }}</div>
-                    @if (crop.variety) { <div class="crop-variety">{{ crop.variety }}</div> }
+                    <div class="crop-variety">{{ crop.variety }}</div>
                     <div class="check-mark">✓</div>
                   </label>
                 </div>
