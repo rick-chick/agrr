@@ -192,6 +192,11 @@
       "service_unavailable": "Could not connect to the server",
       "generic": "An error occurred"
     },
+    "backend_warmup": {
+      "database": "Starting database…",
+      "compute_engine": "Starting compute engine…",
+      "reload": "Reload"
+    },
     "creating": "Creating...",
     "sending": "Sending...",
     "updating": "Updating...",

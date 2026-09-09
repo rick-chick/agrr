@@ -20,7 +20,7 @@ export const authGuard: CanActivateFn = (_route, state: RouterStateSnapshot) => 
       if (user) {
         return true;
       }
-      if (authService.sessionUnavailable()) {
+      if (authService.sessionUnavailable() || authService.databaseWarming()) {
         return false;
       }
       const queryParams =

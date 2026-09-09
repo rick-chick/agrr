@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { backendWarmupI18nKey, isBackendWarmupHttpError } from './backend-warmup/backend-warmup';
 
 /**
  * HTTP 失敗を画面用の ngx-translate キーへ正規化する（レスポンス本文の生表示を避ける）。
@@ -20,11 +21,8 @@ export function apiErrorI18nKey(error: unknown): string {
     if (error.status === 501) {
       return 'common.api_error.not_migrated';
     }
-    if (error.status === 502 || error.status === 503) {
-      return 'common.api_error.service_unavailable';
-    }
-    if (error.status === 0) {
-      return 'common.api_error.network';
+    if (isBackendWarmupHttpError(error)) {
+      return backendWarmupI18nKey(error);
     }
     return 'common.api_error.generic';
   }

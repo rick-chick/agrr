@@ -1502,6 +1502,11 @@
       "service_unavailable": "サーバーに接続できませんでした",
       "generic": "エラーが発生しました"
     },
+    "backend_warmup": {
+      "database": "データベースを起動中",
+      "compute_engine": "計算エンジンを起動中",
+      "reload": "もう一度読み込む"
+    },
     "creating": "作成中...",
     "sending": "送信中...",
     "updating": "更新中...",

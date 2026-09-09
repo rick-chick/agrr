@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { BACKEND_WARMUP_I18N } from './backend-warmup/backend-warmup';
 import { errorDtoI18nKey, isTranslationKey } from './error-dto-i18n-key';
 
 describe('isTranslationKey', () => {
@@ -43,12 +44,12 @@ describe('errorDtoI18nKey', () => {
     ).toBe('common.api_error.generic');
   });
 
-  it('maps network failures to network key', () => {
+  it('maps network failures to database warmup key', () => {
     expect(
       errorDtoI18nKey({
         message: 'Http failure response for https://agrr.local/api/v1/masters/crops/1: 0 Unknown Error'
       })
-    ).toBe('common.api_error.network');
+    ).toBe(BACKEND_WARMUP_I18N.database);
   });
 
   it('maps raw 401 HTTP text to unauthorized key', () => {
@@ -71,20 +72,35 @@ describe('errorDtoI18nKey', () => {
     ).toBe('common.api_error.forbidden');
   });
 
-  it('maps raw 502/503 HTTP text to service_unavailable key', () => {
+  it('maps raw 502/503 HTTP text to backend warmup keys', () => {
     expect(
       errorDtoI18nKey({
         message: 'Http failure response for https://agrr.local/api/v1/masters/crops/1: 502 Bad Gateway'
       })
-    ).toBe('common.api_error.service_unavailable');
+    ).toBe(BACKEND_WARMUP_I18N.database);
     expect(
       errorDtoI18nKey({
         message: 'Http failure response for https://agrr.local/api/v1/masters/crops/1: 503 Service Unavailable'
       })
-    ).toBe('common.api_error.service_unavailable');
-    expect(errorDtoI18nKey({ message: 'Service Unavailable' })).toBe(
-      'common.api_error.service_unavailable'
-    );
+    ).toBe(BACKEND_WARMUP_I18N.database);
+    expect(
+      errorDtoI18nKey({
+        message: 'Http failure response daemon_unavailable for /api/v1/plans/1/optimize'
+      })
+    ).toBe(BACKEND_WARMUP_I18N.computeEngine);
+  });
+
+  it('maps daemon_not_running and agrr daemon strings to compute engine warmup key', () => {
+    expect(
+      errorDtoI18nKey({
+        message: 'Http failure response for /api/v1/plans/1/optimize: daemon_not_running'
+      })
+    ).toBe(BACKEND_WARMUP_I18N.computeEngine);
+    expect(
+      errorDtoI18nKey({
+        message: 'agrr daemon is not running on compute engine'
+      })
+    ).toBe(BACKEND_WARMUP_I18N.computeEngine);
   });
 
   it('maps unknown raw text to generic key', () => {

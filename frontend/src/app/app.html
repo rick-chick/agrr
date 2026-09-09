@@ -10,6 +10,7 @@
   [user]="authService.user()"
   [loading]="authService.loading()"
   [sessionUnavailable]="authService.sessionUnavailable()"
+  [databaseWarming]="authService.databaseWarming()"
   [workLogOverdueCount]="workLogOverdueCount()"
   (logout)="logout()"
   (retrySession)="retrySession()"

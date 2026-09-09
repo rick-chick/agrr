@@ -19,6 +19,11 @@ import {
 } from '../../domain/plans/plan-list-display';
 import type { PlanListPlan } from '../../domain/plans/plan-list-plan';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { BackendWarmupLoadingComponent } from '../shared/backend-warmup-loading/backend-warmup-loading.component';
+import {
+  BACKEND_WARMUP_I18N,
+  isBackendWarmupI18nKey
+} from '../../core/backend-warmup/backend-warmup';
 
 const initialControl: PlanListViewState = {
   loading: true,
@@ -31,7 +36,7 @@ const initialControl: PlanListViewState = {
 @Component({
   selector: 'app-plan-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, PlanDisplayNamePipe, CardListSkeletonComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, PlanDisplayNamePipe, CardListSkeletonComponent, BackendWarmupLoadingComponent],
   providers: [...PLAN_LIST_PROVIDERS],
   template: `
     <div class="page-main">
@@ -40,9 +45,9 @@ const initialControl: PlanListViewState = {
         <p class="page-description">{{ 'plans.index.description' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
-        @if (control.loading) {
+        @if (isWarmupState()) {
           <app-card-list-skeleton class="list-loading-skeleton" />
-          <p class="master-loading list-loading-text">{{ 'common.loading' | translate }}</p>
+          <app-backend-warmup-loading [messageKey]="warmupMessageKey()" />
         } @else if (control.error) {
           <div class="page-alert-error plan-list__error" role="alert">
             <p>{{ control.error | translate }}</p>
@@ -370,5 +375,16 @@ export class PlanListComponent implements PlanListView, OnInit {
     if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
       this.cancelDeleteConfirmDialog();
     }
+  }
+
+  protected isWarmupState(): boolean {
+    return this.control.loading || isBackendWarmupI18nKey(this.control.error);
+  }
+
+  protected warmupMessageKey(): string {
+    if (isBackendWarmupI18nKey(this.control.error)) {
+      return this.control.error;
+    }
+    return BACKEND_WARMUP_I18N.database;
   }
 }

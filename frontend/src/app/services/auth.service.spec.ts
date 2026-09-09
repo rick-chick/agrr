@@ -6,11 +6,13 @@ import {
   isAuthMeSessionUnavailableError,
   isAuthMeUnauthenticatedError
 } from '../core/auth/auth-me-error';
+import { isBackendWarmupHttpError } from '../core/backend-warmup/backend-warmup';
 
 // Logic from auth.service.ts
 class AuthServiceLogic {
   private userSignal: any = null;
   private sessionUnavailableSignal = false;
+  private databaseWarmingSignal = false;
   private loaded = false;
 
   constructor(private api: any, private apiKeyService: any) {}
@@ -23,6 +25,10 @@ class AuthServiceLogic {
     return this.sessionUnavailableSignal;
   }
 
+  databaseWarming() {
+    return this.databaseWarmingSignal;
+  }
+
   loadCurrentUser() {
     if (this.loaded) return of(this.userSignal);
     return this.api.getCurrentUser().pipe(
@@ -32,17 +38,26 @@ class AuthServiceLogic {
         user.region = user.region ?? detectBrowserRegion();
         this.userSignal = user;
         this.sessionUnavailableSignal = false;
+        this.databaseWarmingSignal = false;
         this.loaded = true;
       }),
       catchError((error: unknown) => {
         if (isAuthMeSessionUnavailableError(error)) {
-          this.sessionUnavailableSignal = true;
+          if (isBackendWarmupHttpError(error)) {
+            this.databaseWarmingSignal = true;
+            this.sessionUnavailableSignal = false;
+          } else {
+            this.databaseWarmingSignal = false;
+            this.sessionUnavailableSignal = true;
+          }
         } else if (isAuthMeUnauthenticatedError(error)) {
           this.userSignal = null;
           this.sessionUnavailableSignal = false;
+          this.databaseWarmingSignal = false;
         } else {
           this.userSignal = null;
           this.sessionUnavailableSignal = false;
+          this.databaseWarmingSignal = false;
         }
         this.loaded = true;
         return of(null);
@@ -53,6 +68,7 @@ class AuthServiceLogic {
   retryLoadCurrentUser() {
     this.loaded = false;
     this.sessionUnavailableSignal = false;
+    this.databaseWarmingSignal = false;
     return this.loadCurrentUser();
   }
 
@@ -62,6 +78,7 @@ class AuthServiceLogic {
         this.apiKeyService.clearApiKey();
         this.userSignal = null;
         this.sessionUnavailableSignal = false;
+        this.databaseWarmingSignal = false;
       })
     );
   }
@@ -133,14 +150,15 @@ describe('AuthService Logic Verification', () => {
     expect(service.sessionUnavailable()).toBe(true);
   });
 
-  it('treats 503 as session unavailable', async () => {
+  it('treats 503 as database warming instead of session unavailable', async () => {
     apiService.getCurrentUser.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 503, statusText: 'Service Unavailable' }))
     );
 
     await firstValueFrom(service.loadCurrentUser());
 
-    expect(service.sessionUnavailable()).toBe(true);
+    expect(service.databaseWarming()).toBe(true);
+    expect(service.sessionUnavailable()).toBe(false);
     expect(service.user()).toBeNull();
   });
 

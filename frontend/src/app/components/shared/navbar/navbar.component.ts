@@ -7,12 +7,14 @@ import { researchReportPathForAppLang } from '../../../core/app-locale';
 import { type CurrentUser } from '../../../services/api.service';
 import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+import { BackendWarmupLoadingComponent } from '../backend-warmup-loading/backend-warmup-loading.component';
+import { BACKEND_WARMUP_I18N } from '../../../core/backend-warmup/backend-warmup';
 
 /** 画面完結のドロップダウンは app-nav-dropdown に委譲。ここは認証・リンク構成だけ。 */
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, TranslateModule, NavDropdownComponent, LanguageSwitcherComponent],
+  imports: [RouterLink, RouterLinkActive, TranslateModule, NavDropdownComponent, LanguageSwitcherComponent, BackendWarmupLoadingComponent],
   template: `
     <nav class="app-nav" [attr.aria-label]="'nav.main' | translate" [attr.data-menu-open]="isMenuOpen">
       <a class="brand" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">AGRR</a>
@@ -70,6 +72,14 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
         <app-language-switcher />
         @if (loading) {
           <span class="status">{{ 'status.checking' | translate }}</span>
+        } @else if (databaseWarming) {
+          <app-backend-warmup-loading
+            [messageKey]="databaseWarmupMessageKey"
+            [compact]="true"
+          />
+          <button class="retry-button" type="button" (click)="retrySession.emit()">
+            {{ 'status.retry' | translate }}
+          </button>
         } @else if (sessionUnavailable) {
           <span class="status status--unavailable">{{ 'status.session_unavailable' | translate }}</span>
           <button class="retry-button" type="button" (click)="retrySession.emit()">
@@ -99,9 +109,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
   @Input() user: CurrentUser | null = null;
   @Input() loading = false;
   @Input() sessionUnavailable = false;
+  @Input() databaseWarming = false;
   @Input() workLogOverdueCount = 0;
   @Output() logout = new EventEmitter<void>();
   @Output() retrySession = new EventEmitter<void>();
+
+  protected readonly databaseWarmupMessageKey = BACKEND_WARMUP_I18N.database;
 
   /** 画面完結: どれか一つだけ開く（interactor 不要） */
   openDropdownId: 'masters' | 'more' | null = null;

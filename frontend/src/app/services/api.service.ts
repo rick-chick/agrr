@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { getApiBaseUrl } from '../core/api-base-url';
+import { retryOnBackendWarmup } from '../core/backend-warmup/retry-backend-warmup';
 
 type RequestOptions = {
   headers?: HttpHeaders | { [header: string]: string | string[] };
@@ -48,7 +49,7 @@ export class ApiService {
       ...options,
       headers,
       withCredentials: true
-    });
+    }).pipe(retryOnBackendWarmup());
   }
 
   post<T>(path: string, body: unknown, options: RequestOptions = {}): Observable<T> {

@@ -7,12 +7,14 @@ import {
   isAuthMeSessionUnavailableError,
   isAuthMeUnauthenticatedError
 } from '../core/auth/auth-me-error';
+import { isBackendWarmupHttpError } from '../core/backend-warmup/backend-warmup';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly userSignal = signal<CurrentUser | null>(null);
   private readonly loadingSignal = signal(false);
   private readonly sessionUnavailableSignal = signal(false);
+  private readonly databaseWarmingSignal = signal(false);
   private loaded = false;
 
   private readonly api = inject(ApiService);
@@ -30,6 +32,10 @@ export class AuthService {
     return this.sessionUnavailableSignal();
   }
 
+  databaseWarming() {
+    return this.databaseWarmingSignal();
+  }
+
   loadCurrentUser(): Observable<CurrentUser | null> {
     if (this.loaded) {
       return of(this.userSignal());
@@ -43,18 +49,27 @@ export class AuthService {
         user.region = user.region ?? detectBrowserRegion();
         this.userSignal.set(user);
         this.sessionUnavailableSignal.set(false);
+        this.databaseWarmingSignal.set(false);
         this.loaded = true;
         this.loadingSignal.set(false);
       }),
       catchError((error: unknown) => {
         if (isAuthMeSessionUnavailableError(error)) {
-          this.sessionUnavailableSignal.set(true);
+          if (isBackendWarmupHttpError(error)) {
+            this.databaseWarmingSignal.set(true);
+            this.sessionUnavailableSignal.set(false);
+          } else {
+            this.databaseWarmingSignal.set(false);
+            this.sessionUnavailableSignal.set(true);
+          }
         } else if (isAuthMeUnauthenticatedError(error)) {
           this.userSignal.set(null);
           this.sessionUnavailableSignal.set(false);
+          this.databaseWarmingSignal.set(false);
         } else {
           this.userSignal.set(null);
           this.sessionUnavailableSignal.set(false);
+          this.databaseWarmingSignal.set(false);
         }
         this.loaded = true;
         this.loadingSignal.set(false);
@@ -66,6 +81,7 @@ export class AuthService {
   retryLoadCurrentUser(): Observable<CurrentUser | null> {
     this.loaded = false;
     this.sessionUnavailableSignal.set(false);
+    this.databaseWarmingSignal.set(false);
     return this.loadCurrentUser();
   }
 
@@ -75,6 +91,7 @@ export class AuthService {
         this.apiKeyService.clearApiKey();
         this.userSignal.set(null);
         this.sessionUnavailableSignal.set(false);
+        this.databaseWarmingSignal.set(false);
       })
     );
   }
