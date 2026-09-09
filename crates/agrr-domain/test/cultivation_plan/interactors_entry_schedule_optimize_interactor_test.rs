@@ -3,7 +3,9 @@
     use crate::crop::entities::CropCultivationMethod;
     use crate::cultivation_plan::interactors::entry_schedule::crop_stage_snapshot::CropStageSnapshot;
     use crate::cultivation_plan::interactors::entry_schedule::temperature_requirement_snapshot::TemperatureRequirementSnapshot;
-    
+    use crate::cultivation_plan::normalizers::entry_schedule_weather_preparer;
+    use crate::weather_data::dtos::WeatherLocation;
+
     use serde_json::json;
     use std::sync::{Arc, Mutex};
     use time::macros::date;
@@ -634,6 +636,65 @@
             Some("insufficient_weather")
         );
         assert!(optimization_gateway.captured_requirement.lock().unwrap().is_none());
+    }
+
+    #[test]
+    fn accepts_coordinate_less_gcs_cache_after_weather_preparer_enriches_location() {
+        let gcs_cache_payload = json!({
+            "data": [
+                { "time": "2026-05-01", "temperature_2m_min": 8.0, "temperature_2m_max": 22.0, "temperature_2m_mean": 15.0 },
+                { "time": "2026-05-02", "temperature_2m_min": 8.0, "temperature_2m_max": 22.0, "temperature_2m_mean": 15.0 },
+                { "time": "2026-05-03", "temperature_2m_min": 8.0, "temperature_2m_max": 22.0, "temperature_2m_mean": 15.0 }
+            ],
+            "prediction_start_date": "2026-01-01",
+            "prediction_end_date": "2027-12-31"
+        });
+        let location =
+            WeatherLocation::new(28, 35.6895, 139.6917, Some(40.0), Some("Asia/Tokyo".into()));
+        let prepared =
+            entry_schedule_weather_preparer::prepare(gcs_cache_payload, &location).unwrap();
+
+        let crop = test_crop(
+            1,
+            "トマト",
+            None,
+            Some(CropCultivationMethod::Transplant),
+        );
+        let crop_gateway = StubCropGateway {
+            rows: sowing_transplant_stages(),
+        };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            prepared,
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+
+        assert!(
+            result
+                .reason_parts
+                .get("error_key")
+                .and_then(|v| v.as_str())
+                != Some("insufficient_weather"),
+            "GCS cache hits must be enriched before optimize; got {:?}",
+            result.reason_parts
+        );
+        assert!(result.eligible);
     }
 
     // Ruby: test "returns insufficient_weather when latitude or longitude is missing"

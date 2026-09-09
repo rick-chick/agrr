@@ -35,6 +35,27 @@
     }
 
     #[test]
+    fn prepare_enriches_contract_gcs_cache_seed_shape_without_coordinates() {
+        let payload = json!({
+            "data": [
+                { "time": "2026-09-09", "temperature_2m_mean": 15.0 },
+                { "time": "2026-10-09", "temperature_2m_mean": 16.0 }
+            ],
+            "prediction_start_date": "2026-01-01",
+            "prediction_end_date": "2027-12-31",
+            "target_end_date": "2027-12-31"
+        });
+        let location =
+            WeatherLocation::new(28, 35.6895, 139.6917, Some(40.0), Some("Asia/Tokyo".into()));
+
+        let prepared = entry_schedule_weather_preparer::prepare(payload, &location).unwrap();
+
+        assert_eq!(prepared.get("latitude").and_then(|v| v.as_f64()), Some(35.6895));
+        assert_eq!(prepared.get("longitude").and_then(|v| v.as_f64()), Some(139.6917));
+        assert_eq!(prepared["data"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
     fn prepare_rejects_empty_data_rows() {
         let payload = json!({ "data": [] });
         let location = WeatherLocation::new(28, 34.7303, 136.5086, None, None);

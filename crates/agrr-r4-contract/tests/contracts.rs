@@ -4782,4 +4782,13 @@ fn get_entry_schedule_crop_show_returns_crop_detail() {
         json["crop"].get("entry_disclaimer").is_some(),
         "expected entry_disclaimer on crop detail: {body}"
     );
+    let error_key = json["crop"]
+        .get("reason_parts")
+        .and_then(|value| value.get("error_key"))
+        .and_then(|value| value.as_str());
+    assert_ne!(
+        error_key,
+        Some("insufficient_weather"),
+        "coordinate-less GCS cache must be enriched before optimize: {body}"
+    );
 }
