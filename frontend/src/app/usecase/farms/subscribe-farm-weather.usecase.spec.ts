@@ -64,4 +64,31 @@ describe('SubscribeFarmWeatherUseCase', () => {
 
     expect(outputPort.presentWeatherConnectionLost).toHaveBeenCalledTimes(1);
   });
+
+  it('forwards rejected subscription to presentWeatherConnectionLost', () => {
+    let rejected: (() => void) | undefined;
+    const channel = { unsubscribe: vi.fn() };
+    const gateway = {
+      subscribe: vi.fn(
+        (
+          _farmId: number,
+          callbacks: { received: () => void; rejected?: () => void }
+        ) => {
+          rejected = callbacks.rejected;
+          return channel;
+        }
+      )
+    } as unknown as FarmWeatherGateway;
+    const outputPort: SubscribeFarmWeatherOutputPort = {
+      presentWeather: vi.fn(),
+      presentWeatherConnectionLost: vi.fn()
+    };
+    const useCase = new SubscribeFarmWeatherUseCase(outputPort, gateway);
+
+    useCase.execute({ farmId: 42 });
+    rejected?.();
+
+    expect(outputPort.presentWeatherConnectionLost).toHaveBeenCalledTimes(1);
+    expect(outputPort.presentWeather).not.toHaveBeenCalled();
+  });
 });

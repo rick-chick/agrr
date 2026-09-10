@@ -273,3 +273,11 @@ impl<'a, T: TranslatorPort> EntrySchedulePhaseTimeline<'a, T> {
         (sow.end_date - sow.start_date).whole_days() + 1
     }
 }
+
+#[cfg(test)]
+mod interactors_entry_schedule_phase_timeline_test_inline {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/interactors_entry_schedule_phase_timeline_test.rs"
+    ));
+}
