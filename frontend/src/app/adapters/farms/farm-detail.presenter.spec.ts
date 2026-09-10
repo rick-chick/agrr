@@ -166,6 +166,40 @@ describe('FarmDetailPresenter', () => {
 
       expect(lastControl!.farm!.weather_data_status).toBe('failed');
     });
+
+    it('marks weather fetch as failed on presentWeatherConnectionLost while pending', () => {
+      const initialFarm = {
+        id: 1,
+        name: 'Farm A',
+        region: 'Region A',
+        latitude: 35.0,
+        longitude: 135.0,
+        weather_data_status: 'pending' as const
+      };
+      lastControl = { loading: false, error: null, errorIsWarmup: false,
+        farm: initialFarm, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
+
+      presenter.presentWeatherConnectionLost();
+
+      expect(lastControl!.farm!.weather_data_status).toBe('failed');
+    });
+
+    it('ignores presentWeatherConnectionLost when weather fetch already completed', () => {
+      const initialFarm = {
+        id: 1,
+        name: 'Farm A',
+        region: 'Region A',
+        latitude: 35.0,
+        longitude: 135.0,
+        weather_data_status: 'completed' as const
+      };
+      lastControl = { loading: false, error: null, errorIsWarmup: false,
+        farm: initialFarm, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
+
+      presenter.presentWeatherConnectionLost();
+
+      expect(lastControl!.farm!.weather_data_status).toBe('completed');
+    });
   });
 
   describe('DeleteFarmOutputPort', () => {
