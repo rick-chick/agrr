@@ -209,8 +209,12 @@ use serde_json::json;
     }
 
     fn weather_point(day: u8) -> Value {
+        weather_point_on_date(Date::from_calendar_date(2025, Month::January, day).expect("valid"))
+    }
+
+    fn weather_point_on_date(date: Date) -> Value {
         json!({
-            "time": format!("2025-01-{day:02}"),
+            "time": date.to_string(),
             "temperature_2m_max": 20.0,
             "temperature_2m_min": 10.0,
             "temperature_2m_mean": 15.0,
@@ -356,6 +360,73 @@ use serde_json::json;
         harness.interactor().call(sample_input()).expect("ok");
         let updates = harness.location_updates.lock().expect("lock");
         assert_eq!(vec![(1, 1)], *updates);
+    }
+
+    fn long_block_input() -> FetchWeatherDataPerformInput {
+        let start = Date::from_calendar_date(2025, Month::January, 1).expect("valid");
+        let end = start + time::Duration::days(140);
+        FetchWeatherDataPerformInput {
+            latitude: 35.6762,
+            longitude: 139.6503,
+            start_date: start,
+            end_date: end,
+            farm_id: Some(1),
+            cultivation_plan_id: Some(1),
+            channel_class: Some("test".into()),
+            executions: 1,
+            current_time: OffsetDateTime::new_utc(start, Time::MIDNIGHT),
+        }
+    }
+
+    #[test]
+    fn skips_fetch_when_trailing_gap_equals_max_allowed_for_long_blocks() {
+        let input = long_block_input();
+        let latest = input.end_date - time::Duration::days(7);
+        let harness = PerformHarness::with_latest_date(
+            Some(WeatherLocationRecord { id: 1 }),
+            113,
+            Some(latest),
+            Arc::new(Mutex::new(false)),
+            Some("jp".into()),
+            false,
+            None,
+            false,
+            false,
+        );
+        harness.interactor().call(input).expect("ok");
+        assert!(!*harness.weather.upsert_called.lock().expect("lock"));
+    }
+
+    #[test]
+    fn refetches_when_trailing_gap_exceeds_max_allowed_for_long_blocks() {
+        let input = long_block_input();
+        let latest = input.end_date - time::Duration::days(8);
+        let upsert_called = Arc::new(Mutex::new(false));
+        let data: Vec<Value> = (0..141)
+            .map(|offset| weather_point_on_date(input.start_date + time::Duration::days(offset)))
+            .collect();
+        let weather_data = json!({
+            "location": {
+                "latitude": 35.6762,
+                "longitude": 139.6503,
+                "elevation": 50.0,
+                "timezone": "Asia/Tokyo"
+            },
+            "data": data
+        });
+        let harness = PerformHarness::with_latest_date(
+            Some(WeatherLocationRecord { id: 1 }),
+            113,
+            Some(latest),
+            upsert_called.clone(),
+            Some("jp".into()),
+            false,
+            Some(weather_data),
+            false,
+            false,
+        );
+        harness.interactor().call(input).expect("ok");
+        assert!(*upsert_called.lock().expect("lock"));
     }
 
     #[test]
