@@ -6,6 +6,7 @@ use agrr_domain::crop::dtos::{
     CropStageCreateInput, CropStageUpdateInput, TemperatureRequirementUpdateInput,
     ThermalRequirementUpdateInput,
 };
+use agrr_domain::crop::entities::CropCultivationMethod;
 use agrr_domain::crop::gateways::CropGateway;
 use agrr_domain::cultivation_plan::ports::PrivatePlanCropListGateway;
 use agrr_domain::shared::user::User;
@@ -75,11 +76,26 @@ fn crop_test_pool() -> SqlitePool {
 }
 
 fn insert_crop(pool: &SqlitePool, user_id: i64, name: &str, is_reference: bool) -> i64 {
+    insert_crop_with_cultivation_method(pool, user_id, name, is_reference, None)
+}
+
+fn insert_crop_with_cultivation_method(
+    pool: &SqlitePool,
+    user_id: i64,
+    name: &str,
+    is_reference: bool,
+    cultivation_method: Option<&str>,
+) -> i64 {
     pool.with_write(|conn| {
         conn.execute(
-            "INSERT INTO crops (user_id, name, is_reference, groups, created_at, updated_at) \
-             VALUES (?1, ?2, ?3, '[]', datetime('now'), datetime('now'))",
-            params![user_id, name, if is_reference { 1 } else { 0 }],
+            "INSERT INTO crops (user_id, name, is_reference, groups, cultivation_method, created_at, updated_at) \
+             VALUES (?1, ?2, ?3, '[]', ?4, datetime('now'), datetime('now'))",
+            params![
+                user_id,
+                name,
+                if is_reference { 1 } else { 0 },
+                cultivation_method
+            ],
         )?;
         Ok(conn.last_insert_rowid())
     })
@@ -89,6 +105,35 @@ fn insert_crop(pool: &SqlitePool, user_id: i64, name: &str, is_reference: bool) 
 fn seed_crop(pool: &SqlitePool) -> (CropSqliteGateway, i64) {
     let crop_id = insert_crop(pool, 1, "Tomato", false);
     (CropSqliteGateway::new(pool.clone()), crop_id)
+}
+
+#[test]
+fn find_by_id_maps_cultivation_method_from_sqlite() {
+    let pool = crop_test_pool();
+    let gw = CropSqliteGateway::new(pool.clone());
+
+    let direct_sow_id =
+        insert_crop_with_cultivation_method(&pool, 1, "Spinach", false, Some("direct_sow"));
+    let transplant_id =
+        insert_crop_with_cultivation_method(&pool, 1, "Tomato", false, Some("transplant"));
+    let unknown_id =
+        insert_crop_with_cultivation_method(&pool, 1, "Legacy", false, Some("unknown"));
+    let missing_id = insert_crop(&pool, 1, "NoMethod", false);
+
+    assert_eq!(
+        gw.find_by_id(direct_sow_id)
+            .unwrap()
+            .cultivation_method,
+        Some(CropCultivationMethod::DirectSow)
+    );
+    assert_eq!(
+        gw.find_by_id(transplant_id)
+            .unwrap()
+            .cultivation_method,
+        Some(CropCultivationMethod::Transplant)
+    );
+    assert_eq!(gw.find_by_id(unknown_id).unwrap().cultivation_method, None);
+    assert_eq!(gw.find_by_id(missing_id).unwrap().cultivation_method, None);
 }
 
 // Ruby: create_crop_stage creates a new crop stage

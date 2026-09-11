@@ -130,6 +130,39 @@ fn phase_segments_marks_all_phases_ineligible_when_crop_is_not_eligible() {
 }
 
 #[test]
+fn phase_segments_reports_missing_weather_end_for_harvest_phase() {
+    let translator = KeyTranslator;
+    let clock = FixedClock {
+        today: date!(2026-06-15),
+    };
+    let timeline = EntrySchedulePhaseTimeline::new(&translator, &clock);
+    let result = window_result(
+        true,
+        "window_service",
+        vec![DateRange {
+            start_date: date!(2026-03-01),
+            end_date: date!(2026-04-15),
+        }],
+        vec![DateRange {
+            start_date: date!(2026-04-20),
+            end_date: date!(2026-05-10),
+        }],
+        None,
+    );
+
+    let segments = timeline.phase_segments(&json!({}), &result);
+    let harvest = &segments[3];
+
+    assert_eq!(harvest.phase_key, "harvest");
+    assert_eq!(
+        harvest.empty_reason.as_deref(),
+        Some("api.entry_schedule.phase.empty.no_weather_end")
+    );
+    assert!(harvest.start_date.is_none());
+    assert!(harvest.end_date.is_none());
+}
+
+#[test]
 fn phase_segments_reports_nursery_gap_when_transplant_window_is_missing() {
     let translator = KeyTranslator;
     let clock = FixedClock {
