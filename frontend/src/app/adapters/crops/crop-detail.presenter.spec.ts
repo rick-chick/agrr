@@ -3,6 +3,7 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { CropDetailPresenter } from './crop-detail.presenter';
 import { CropDetailView, CropDetailViewState } from '../../components/masters/crops/crop-detail.view';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
+import { BACKEND_WARMUP_I18N } from '../../core/backend-warmup/backend-warmup';
 import {
   defaultBlueprintReadiness,
   withCropDetailSummaryState
@@ -103,6 +104,21 @@ describe('CropDetailPresenter', () => {
 
     expect(lastControl.error).toBe('common.api_error.not_found');
     expect(lastControl.error).not.toContain('Http failure');
+  });
+
+  it('sets errorIsWarmup true on onError while loading for warmup failure', () => {
+    lastControl = { ...baseControl, loading: true, blueprintsLoading: true };
+
+    presenter.onError({
+      message:
+        'Http failure response for https://agrr.local/api/v1/masters/crops/3: 503 Service Unavailable'
+    });
+
+    expect(lastControl.error).toBe(BACKEND_WARMUP_I18N.database);
+    expect(lastControl.errorIsWarmup).toBe(true);
+    expect(lastControl.pendingErrorFlash).toBeNull();
+    expect(lastControl.loading).toBe(false);
+    expect(lastControl.blueprintsLoading).toBe(false);
   });
 
   it('uses flash for errors after load completes', () => {
