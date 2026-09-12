@@ -25,6 +25,10 @@ describe('planListCardTitle', () => {
   it('falls back to provided label when farm_name is missing', () => {
     expect(planListCardTitle(plan({ farm_id: 7, farm_name: undefined }), '農場 #7')).toBe('農場 #7');
   });
+
+  it('falls back to provided label when farm_name is whitespace-only', () => {
+    expect(planListCardTitle(plan({ farm_id: 7, farm_name: '   ' }), '農場 #7')).toBe('農場 #7');
+  });
 });
 
 describe('shouldShowCustomPlanName', () => {
@@ -53,6 +57,18 @@ describe('shouldShowCustomPlanName', () => {
   it('returns false when plan name is empty', () => {
     expect(shouldShowCustomPlanName(plan({ farm_name: 'Farm A', name: '' }))).toBe(false);
   });
+
+  it('returns true when farm_name is missing but plan name is non-empty', () => {
+    expect(
+      shouldShowCustomPlanName(plan({ farm_name: undefined, name: 'Custom Plan' }))
+    ).toBe(true);
+  });
+
+  it('returns true when farm_name is whitespace-only and plan name is non-empty', () => {
+    expect(
+      shouldShowCustomPlanName(plan({ farm_name: '   ', name: 'Custom Plan' }))
+    ).toBe(true);
+  });
 });
 
 describe('sortPlansForList', () => {
@@ -77,5 +93,14 @@ describe('sortPlansForList', () => {
 
   it('returns empty array for no plans', () => {
     expect(sortPlansForList([])).toEqual([]);
+  });
+
+  it('groups plans with whitespace-only farm_name under Farm #id bucket', () => {
+    const sorted = sortPlansForList([
+      plan({ id: 1, farm_id: 5, farm_name: '   ', plan_year: 2026 }),
+      plan({ id: 2, farm_id: 5, farm_name: '   ', plan_year: 2025 })
+    ]);
+
+    expect(sorted.map((p) => p.id)).toEqual([1, 2]);
   });
 });

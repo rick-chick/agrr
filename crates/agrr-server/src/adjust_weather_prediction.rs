@@ -12,9 +12,7 @@ use agrr_domain::weather_data::gateways::{
 };
 use agrr_domain::cultivation_plan::normalizers::entry_schedule_weather_preparer;
 use agrr_domain::shared::hash::present;
-use agrr_domain::weather_data::helpers::{
-    finalize_weather_payload_for_agrr, normalize_nested_weather_data,
-};
+use agrr_domain::weather_data::helpers::normalize_nested_weather_data;
 use agrr_domain::weather_data::interactors::WeatherPredictionInteractor;
 use agrr_domain::weather_data::WeatherPredictionError;
 use serde_json::Value;
@@ -263,6 +261,16 @@ fn log_entry_schedule_weather_payload(weather_data: &Value, logger: &StderrLogge
     ));
 }
 
+/// Normalizes cached weather for add-crop candidates: same enrich→validate path as entry schedule.
+fn prepare_candidates_weather_payload(
+    weather_data: Value,
+    weather_location: &WeatherLocation,
+) -> Result<Value, WeatherPredictionError> {
+    entry_schedule_weather_preparer::prepare(weather_data, weather_location).map_err(|e| {
+        WeatherPredictionError::InsufficientPredictionData(e.to_string())
+    })
+}
+
 /// Ruby CompositionRoot `weather_for_candidates` lambda (add_crop candidates).
 pub(crate) fn resolve_weather_for_candidates(
     state: &AppState,
@@ -286,7 +294,7 @@ pub(crate) fn resolve_weather_for_candidates(
         "🔍 [Candidates] Weather target end date: {target_end_date}"
     ));
 
-    let mut weather_data = if let Some(existing) =
+    let weather_data = if let Some(existing) =
         service.get_existing_prediction(target_end_date, plan_weather)
     {
         logger.info(&format!(
@@ -314,9 +322,7 @@ pub(crate) fn resolve_weather_for_candidates(
         .map(|a| a.len())
         .unwrap_or(0);
 
-    let normalized = finalize_weather_payload_for_agrr(weather_data).map_err(|e| {
-        WeatherPredictionError::InsufficientPredictionData(e.to_string())
-    })?;
+    let normalized = prepare_candidates_weather_payload(weather_data, &weather_location)?;
 
     let days_after = normalized
         .get("data")
@@ -364,6 +370,45 @@ mod tests {
     fn entry_schedule_target_end_treats_blank_as_default() {
         let end = parse_entry_schedule_target_end_date(date!(2026-01-01), Some("  ")).unwrap();
         assert_eq!(end, date!(2027-12-31));
+    }
+
+    #[test]
+    fn prepare_candidates_weather_payload_enriches_coordinate_less_gcs_cache() {
+        let payload = json!({
+            "data": [
+                { "time": "2026-09-09", "temperature_2m_mean": 20.0 },
+                { "time": "2026-09-10", "temperature_2m_mean": 21.0 }
+            ],
+            "prediction_start_date": "2026-01-01",
+            "prediction_end_date": "2027-12-31",
+            "target_end_date": "2027-12-31"
+        });
+        let location = WeatherLocation::new(28, 35.6895, 139.6917, Some(40.0), Some("Asia/Tokyo".into()));
+
+        let prepared = prepare_candidates_weather_payload(payload, &location).unwrap();
+
+        assert_eq!(prepared.get("latitude").and_then(|v| v.as_f64()), Some(35.6895));
+        assert_eq!(prepared.get("longitude").and_then(|v| v.as_f64()), Some(139.6917));
+        assert_eq!(prepared.get("elevation").and_then(|v| v.as_f64()), Some(40.0));
+        assert_eq!(
+            prepared.get("timezone").and_then(|v| v.as_str()),
+            Some("Asia/Tokyo")
+        );
+        assert_eq!(prepared["data"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn prepare_candidates_weather_payload_rejects_empty_data_rows() {
+        let payload = json!({ "data": [] });
+        let location = WeatherLocation::new(28, 35.6895, 139.6917, None, None);
+
+        let err = prepare_candidates_weather_payload(payload, &location).unwrap_err();
+
+        assert!(matches!(
+            err,
+            WeatherPredictionError::InsufficientPredictionData(_)
+        ));
+        assert!(err.to_string().contains("no data rows"));
     }
 
 }
