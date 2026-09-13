@@ -323,6 +323,49 @@ describe('EntryScheduleDetailComponent', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/public-plans/select-crop']);
   });
 
+  it('derives gantt bounds from phase_segments when sow and transplant windows are empty', () => {
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.control = {
+      loading: false,
+      errorKey: null,
+      data: {
+        farm: { id: 3, name: 'Farm', latitude: 35, longitude: 139, region: 'jp' },
+        prediction: {},
+        crop: {
+          id: 7,
+          name: 'Tomato',
+          eligible: true,
+          sowing_summary: null,
+          transplant_summary: null,
+          entry_disclaimer: 'Disclaimer',
+          reason_summary: 'Summary',
+          labels: { sowing: 'Sow', transplanting: 'Transplant' },
+          sowing_windows: [],
+          transplant_windows: [],
+          phase_segments: [
+            {
+              phase_key: 'harvest',
+              start_date: '2026-05-11',
+              end_date: '2026-09-07',
+              label: 'Harvest',
+              empty_reason: null
+            }
+          ],
+          reason_parts: {},
+          sowing_stage_id: null,
+          transplant_stage_id: null,
+          crop_stages: []
+        }
+      }
+    };
+
+    const bounds = component.detailGanttContext();
+
+    expect(bounds).not.toBeNull();
+    expect(bounds?.yearLabel).toBe('2026');
+  });
+
   it('shows crop setup link when user is logged in', async () => {
     authUser = {
       id: 1,
