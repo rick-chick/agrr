@@ -168,6 +168,56 @@ describe('PlanOptimizingPresenter', () => {
     expect(harness.control.phaseMessage).toBe('Done');
   });
 
+  it('does not surface technical phase_message as primary failure text', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'models.cultivation_plan.phase_failed.fetching_weather': 'Failed to fetch weather data.',
+        'plans.optimizing_live.error.hints.fetching_weather': 'Check farm location and try again.'
+      },
+      true
+    );
+    const harness = createView({ status: 'optimizing', progress: 40, phaseMessage: '' });
+    presenter.setView(harness.view);
+
+    presenter.present({
+      status: 'failed',
+      progress: 40,
+      message_key: 'models.cultivation_plan.phase_failed.default',
+      phase_message: 'fetch_weather_data failed: InvalidWeatherApiResponse'
+    });
+
+    expect(harness.control.phaseMessage).toBe('Failed to fetch weather data.');
+    expect(harness.control.phaseMessage).not.toContain('InvalidWeatherApiResponse');
+    expect(harness.control.failureHint).toBe('Check farm location and try again.');
+  });
+
+  it('uses i18n default category instead of raw phase_message text', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'models.cultivation_plan.phase_failed.default': 'Process failed',
+        'plans.optimizing_live.error.hints.default': 'Try reloading.'
+      },
+      true
+    );
+    const harness = createView({ status: 'optimizing', progress: 40, phaseMessage: '' });
+    presenter.setView(harness.view);
+
+    presenter.present({
+      status: 'failed',
+      progress: 40,
+      message_key: 'models.cultivation_plan.phase_failed.default',
+      phase_message: 'Unexpected backend failure'
+    });
+
+    expect(harness.control.phaseMessage).toBe('Process failed');
+    expect(harness.control.phaseMessage).not.toBe('Unexpected backend failure');
+    expect(harness.control.failureHint).toBe('Try reloading.');
+  });
+
   it('ignores connection lost when progress already reached 100', () => {
     const harness = createView({
       status: 'optimizing',

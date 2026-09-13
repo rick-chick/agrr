@@ -451,6 +451,83 @@
     }
 
     #[test]
+    fn returns_missing_transplant_stage_when_transplant_method_has_only_one_stage() {
+        let tr = TemperatureRequirementSnapshot {
+            frost_threshold: Some(0.0),
+            optimal_min: Some(10.0),
+            optimal_max: Some(30.0),
+            base_temperature: None,
+        };
+        let crop = test_crop(1, "Bell Peppers", None, Some(CropCultivationMethod::Transplant));
+        let crop_gateway = StubCropGateway {
+            rows: vec![CropStageSnapshot {
+                id: 101,
+                name: "Seedling Stage".into(),
+                order: 1,
+                temperature_requirement: Some(tr),
+            }],
+        };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("missing_transplant_stage")
+        );
+    }
+
+    #[test]
+    fn returns_missing_sowing_stage_when_direct_sow_method_has_no_stages() {
+        let crop = test_crop(1, "ほうれん草", None, Some(CropCultivationMethod::DirectSow));
+        let crop_gateway = StubCropGateway { rows: vec![] };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("missing_sowing_stage")
+        );
+    }
+
+    #[test]
     fn returns_missing_cultivation_method_when_crop_has_no_method_and_no_stages() {
         let crop = test_crop(1, "トマト", None, None);
         let crop_gateway = StubCropGateway { rows: vec![] };
