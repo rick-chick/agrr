@@ -232,4 +232,33 @@ describe('PlanOptimizingPresenter', () => {
     expect(harness.control.progress).toBe(100);
     expect(harness.control.phaseMessage).toBe('Almost done');
   });
+
+  it('ignores stale failed messages when progress already reached 100', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'models.cultivation_plan.phase_failed.default': 'Process failed',
+        'plans.optimizing_live.error.hints.default': 'Try reloading.'
+      },
+      true
+    );
+    const harness = createView({
+      status: 'optimizing',
+      progress: 100,
+      phaseMessage: 'Almost done'
+    });
+    presenter.setView(harness.view);
+
+    presenter.present({
+      status: 'failed',
+      progress: 40,
+      message_key: 'models.cultivation_plan.phase_failed.default'
+    });
+
+    expect(harness.control.status).toBe('optimizing');
+    expect(harness.control.progress).toBe(100);
+    expect(harness.control.phaseMessage).toBe('Almost done');
+    expect(harness.onOptimizationCompleted).not.toHaveBeenCalled();
+  });
 });

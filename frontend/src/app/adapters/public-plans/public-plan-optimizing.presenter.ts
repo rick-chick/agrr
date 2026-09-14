@@ -172,6 +172,9 @@ export class PublicPlanOptimizingPresenter
     if (prev.status === 'completed' && nextStatus !== 'completed') {
       return;
     }
+    if (prev.progress >= 100 && nextStatus === 'failed') {
+      return;
+    }
     const nextPhaseMessage = this.resolvePhaseMessage(dto, prev.phaseMessage, nextStatus);
     const failureHint =
       nextStatus === 'failed'

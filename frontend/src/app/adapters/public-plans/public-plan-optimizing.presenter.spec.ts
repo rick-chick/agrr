@@ -267,4 +267,23 @@ describe('PublicPlanOptimizingPresenter', () => {
     expect(lastControl.progress).toBe(100);
     expect(onCompletedSpy).not.toHaveBeenCalled();
   });
+
+  it('ignores stale failed messages when progress already reached 100', () => {
+    presenter.present({
+      status: 'optimizing',
+      progress: 100,
+      message_key: 'models.cultivation_plan.phases.optimizing'
+    });
+
+    presenter.present({
+      status: 'failed',
+      progress: 0,
+      message_key: 'models.cultivation_plan.phase_failed.predicting_weather'
+    });
+
+    expect(lastControl.status).toBe('optimizing');
+    expect(lastControl.progress).toBe(100);
+    expect(lastControl.phaseMessage).toBe('最適化処理中...');
+    expect(onCompletedSpy).not.toHaveBeenCalled();
+  });
 });

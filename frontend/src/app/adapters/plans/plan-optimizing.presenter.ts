@@ -169,6 +169,9 @@ export class PlanOptimizingPresenter implements SubscribePlanOptimizationOutputP
     if (prev.status === 'completed' && nextStatus !== 'completed') {
       return;
     }
+    if (prev.progress >= 100 && nextStatus === 'failed') {
+      return;
+    }
     const nextProgress = typeof dto.progress === 'number' ? dto.progress : prev.progress;
     const nextPhaseMessage = this.resolvePhaseMessage(dto, prev.phaseMessage, nextStatus);
     const failureHint =
