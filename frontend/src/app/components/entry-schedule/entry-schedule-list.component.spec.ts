@@ -98,6 +98,15 @@ describe('EntryScheduleListComponent', () => {
     expect(fixture.nativeElement.querySelector('.funnel-shell-description')).toBeNull();
   });
 
+  it('renders visually-hidden SEO description for prerender body text', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const hiddenDescription = fixture.nativeElement.querySelector('p.visually-hidden');
+    expect(hiddenDescription?.textContent?.trim()).toBe('Browse crop planting windows by farm');
+  });
+
   it('renders wizard funnel shell with farm step active', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
