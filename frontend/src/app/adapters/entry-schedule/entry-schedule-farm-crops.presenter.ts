@@ -6,6 +6,7 @@ import { EntryScheduleCropsDataDto } from '../../usecase/entry-schedule/load-ent
 import { ResolveEntryScheduleFarmOutputPort } from '../../usecase/entry-schedule/resolve-entry-schedule-farm.output-port';
 import { ResolveEntryScheduleFarmDataDto } from '../../usecase/entry-schedule/resolve-entry-schedule-farm.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 
 @Injectable()
 export class EntryScheduleFarmCropsPresenter
@@ -49,6 +50,8 @@ export class EntryScheduleFarmCropsPresenter
         ...this.view.control,
         cropsLoading: false,
         cropsError: null,
+        cropsErrorIsWarmup: false,
+        cropsWarmupMessageKey: null,
         listResponse: {
           ...response,
           crops: merged,
@@ -63,6 +66,8 @@ export class EntryScheduleFarmCropsPresenter
         ...this.view.control,
         cropsLoading: false,
         cropsError: null,
+        cropsErrorIsWarmup: false,
+        cropsWarmupMessageKey: null,
         listResponse: response,
         loadCursor
       };
@@ -71,10 +76,13 @@ export class EntryScheduleFarmCropsPresenter
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
     this.view.control = {
       ...this.view.control,
       cropsLoading: false,
-      cropsError: dto.message
+      cropsError: errorKey,
+      cropsErrorIsWarmup: isWarmupError,
+      cropsWarmupMessageKey: isWarmupError ? errorKey : null
     };
   }
 }

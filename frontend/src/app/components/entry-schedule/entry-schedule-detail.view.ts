@@ -3,6 +3,8 @@ import { EntryScheduleCropShowResponse } from '../../domain/entry-schedule/entry
 export interface EntryScheduleDetailViewState {
   loading: boolean;
   errorKey: string | null;
+  errorIsWarmup: boolean;
+  warmupMessageKey: string | null;
   data: EntryScheduleCropShowResponse | null;
 }
 

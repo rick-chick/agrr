@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { catchError, EMPTY, timeout } from 'rxjs';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadEntryScheduleCropsInputDto } from './load-entry-schedule-crops.dtos';
 import { LoadEntryScheduleCropsInputPort } from './load-entry-schedule-crops.input-port';
 import {
@@ -35,7 +36,7 @@ export class LoadEntryScheduleCropsUseCase implements LoadEntryScheduleCropsInpu
           if (name === 'TimeoutError') {
             this.outputPort.onError({ message: 'entrySchedule.timeout' });
           } else {
-            this.outputPort.onError({ message: 'entrySchedule.error' });
+            this.outputPort.onError({ message: apiErrorI18nKey(err) });
           }
           return EMPTY;
         })

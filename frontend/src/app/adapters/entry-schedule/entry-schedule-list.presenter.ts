@@ -3,6 +3,7 @@ import { EntryScheduleListView } from '../../components/entry-schedule/entry-sch
 import { LoadEntryScheduleFarmsOutputPort } from '../../usecase/entry-schedule/load-entry-schedule-farms.output-port';
 import { EntryScheduleFarmsDataDto } from '../../usecase/entry-schedule/load-entry-schedule-farms.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 
 @Injectable()
 export class EntryScheduleListPresenter implements LoadEntryScheduleFarmsOutputPort {
@@ -18,16 +19,21 @@ export class EntryScheduleListPresenter implements LoadEntryScheduleFarmsOutputP
       ...this.view.control,
       farmsLoading: false,
       farmsError: null,
+      farmsErrorIsWarmup: false,
+      farmsWarmupMessageKey: null,
       farms: dto.farms
     };
   }
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
     this.view.control = {
       ...this.view.control,
       farmsLoading: false,
-      farmsError: dto.message,
+      farmsError: errorKey,
+      farmsErrorIsWarmup: isWarmupError,
+      farmsWarmupMessageKey: isWarmupError ? errorKey : null,
       farms: []
     };
   }

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadEntryScheduleCropInputDto } from './load-entry-schedule-crop.dtos';
 import { LoadEntryScheduleCropInputPort } from './load-entry-schedule-crop.input-port';
 import {
@@ -20,8 +21,8 @@ export class LoadEntryScheduleCropUseCase implements LoadEntryScheduleCropInputP
       next: (data) => {
         this.outputPort.present({ data });
       },
-      error: () => {
-        this.outputPort.onError({ message: 'entrySchedule.error' });
+      error: (err: unknown) => {
+        this.outputPort.onError({ message: apiErrorI18nKey(err) });
       }
     });
   }

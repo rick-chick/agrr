@@ -14,10 +14,13 @@ import { FarmSelectionCardsComponent } from '../shared/farm-selection-cards/farm
 import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
 import { EntryScheduleWizardProgressComponent } from './entry-schedule-wizard-progress.component';
 import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
+import { BackendWarmupLoadingComponent } from '../shared/backend-warmup-loading/backend-warmup-loading.component';
 
 const initialControl: EntryScheduleListViewState = {
   farmsLoading: true,
   farmsError: null,
+  farmsErrorIsWarmup: false,
+  farmsWarmupMessageKey: null,
   farms: []
 };
 
@@ -30,6 +33,7 @@ const initialControl: EntryScheduleListViewState = {
     FarmSelectionCardsComponent,
     FunnelShellComponent,
     EntryScheduleWizardProgressComponent,
+    BackendWarmupLoadingComponent,
   ],
   providers: [...ENTRY_SCHEDULE_LIST_PROVIDERS],
   template: `
@@ -46,8 +50,11 @@ const initialControl: EntryScheduleListViewState = {
             <h2 id="entry-schedule-heading" class="visually-hidden">
               {{ 'entrySchedule.selectFarm' | translate }}
             </h2>
-            @if (control.farmsLoading) {
+            @if (control.farmsLoading || control.farmsErrorIsWarmup) {
               <p class="muted master-loading">{{ 'entrySchedule.loading' | translate }}</p>
+              <app-backend-warmup-loading
+                [messageKey]="control.farmsWarmupMessageKey ?? 'common.backend_warmup.database'"
+              />
             } @else if (control.farmsError) {
               <p class="error-message">{{ control.farmsError | translate }}</p>
               <button type="button" class="btn btn-secondary mt-2" (click)="retryFarms()">

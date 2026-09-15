@@ -26,6 +26,7 @@ import {
   timelineBoundsFromSummaries,
 } from '../../domain/entry-schedule/entry-schedule-timeline-bounds';
 import { segmentStylesForRange } from '../../domain/entry-schedule/entry-schedule-timeline-segment';
+import { BackendWarmupLoadingComponent } from '../shared/backend-warmup-loading/backend-warmup-loading.component';
 
 const PAGE_LIMIT = 20;
 
@@ -36,6 +37,8 @@ const initialControl: EntryScheduleFarmCropsViewState = {
   listResponse: null,
   cropsLoading: false,
   cropsError: null,
+  cropsErrorIsWarmup: false,
+  cropsWarmupMessageKey: null,
   loadCursor: null
 };
 
@@ -49,6 +52,7 @@ const initialControl: EntryScheduleFarmCropsViewState = {
     FunnelShellComponent,
     EntryScheduleWizardProgressComponent,
     MasterContextHeaderComponent,
+    BackendWarmupLoadingComponent,
   ],
   providers: [...ENTRY_SCHEDULE_FARM_CROPS_PROVIDERS],
   template: `
@@ -81,8 +85,11 @@ const initialControl: EntryScheduleFarmCropsViewState = {
 
             @if (control.farmLoading) {
               <p class="muted master-loading">{{ 'entrySchedule.loading' | translate }}</p>
-            } @else if (control.cropsLoading) {
+            } @else if (control.cropsLoading || control.cropsErrorIsWarmup) {
               <p class="muted mt-4 master-loading">{{ 'entrySchedule.loading' | translate }}</p>
+              <app-backend-warmup-loading
+                [messageKey]="control.cropsWarmupMessageKey ?? 'common.backend_warmup.database'"
+              />
             } @else if (control.cropsError) {
               <p class="error-message mt-4">{{ control.cropsError | translate }}</p>
               <button type="button" class="btn btn-secondary mt-2" (click)="loadCrops(false)">
