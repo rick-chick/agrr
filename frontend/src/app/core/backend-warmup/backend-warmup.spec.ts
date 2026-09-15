@@ -46,6 +46,18 @@ describe('backendWarmup', () => {
     ).toBe(true);
   });
 
+  it('does not throw when error body has circular references', () => {
+    const circular: Record<string, unknown> = {};
+    circular['self'] = circular;
+
+    expect(() =>
+      isComputeEngineWarmupHttpError(new HttpErrorResponse({ status: 500, error: circular }))
+    ).not.toThrow();
+    expect(
+      isComputeEngineWarmupHttpError(new HttpErrorResponse({ status: 500, error: circular }))
+    ).toBe(false);
+  });
+
   it('recognizes backend warmup i18n keys', () => {
     expect(isBackendWarmupI18nKey(BACKEND_WARMUP_I18N.database)).toBe(true);
     expect(isBackendWarmupI18nKey('common.api_error.generic')).toBe(false);

@@ -19,7 +19,11 @@ function errorBodyText(error: HttpErrorResponse): string {
     return body.toLowerCase();
   }
   if (body != null && typeof body === 'object') {
-    return JSON.stringify(body).toLowerCase();
+    try {
+      return JSON.stringify(body).toLowerCase();
+    } catch {
+      return '';
+    }
   }
   return '';
 }
