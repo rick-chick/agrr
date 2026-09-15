@@ -3,6 +3,7 @@ import { EntryScheduleDetailView } from '../../components/entry-schedule/entry-s
 import { LoadEntryScheduleCropOutputPort } from '../../usecase/entry-schedule/load-entry-schedule-crop.output-port';
 import { EntryScheduleCropDataDto } from '../../usecase/entry-schedule/load-entry-schedule-crop.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { masterLoadErrorFromDto } from '../masters/master-load-error-presenter.helpers';
 
 @Injectable()
 export class EntryScheduleDetailPresenter implements LoadEntryScheduleCropOutputPort {
@@ -18,6 +19,8 @@ export class EntryScheduleDetailPresenter implements LoadEntryScheduleCropOutput
       ...this.view.control,
       loading: false,
       errorKey: null,
+      errorIsWarmup: false,
+      warmupMessageKey: null,
       data: dto.data
     };
     this.view.onCropLoaded(dto.data.crop.id, dto.data.crop.name);
@@ -25,10 +28,13 @@ export class EntryScheduleDetailPresenter implements LoadEntryScheduleCropOutput
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const { errorKey, isWarmupError } = masterLoadErrorFromDto(dto);
     this.view.control = {
       ...this.view.control,
       loading: false,
-      errorKey: dto.message,
+      errorKey,
+      errorIsWarmup: isWarmupError,
+      warmupMessageKey: isWarmupError ? errorKey : null,
       data: null
     };
     this.view.onCropLoadFailed();

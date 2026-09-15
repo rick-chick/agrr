@@ -8,6 +8,8 @@ export interface EntryScheduleFarmCropsViewState {
   listResponse: EntryScheduleCropsListResponse | null;
   cropsLoading: boolean;
   cropsError: string | null;
+  cropsErrorIsWarmup: boolean;
+  cropsWarmupMessageKey: string | null;
   loadCursor: string | null;
 }
 

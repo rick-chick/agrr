@@ -13,6 +13,7 @@ import { RESOLVE_ENTRY_SCHEDULE_FARM_OUTPUT_PORT } from '../../usecase/entry-sch
 import { FlashMessageService } from '../../services/flash-message.service';
 import type { Farm } from '../../domain/farms/farm';
 import type { EntryScheduleCropListItem } from '../../domain/entry-schedule/entry-schedule';
+import { BACKEND_WARMUP_I18N } from '../../core/backend-warmup/backend-warmup';
 
 describe('EntryScheduleFarmCropsComponent', () => {
   let fixture: ComponentFixture<EntryScheduleFarmCropsComponent>;
@@ -415,6 +416,27 @@ describe('EntryScheduleFarmCropsComponent', () => {
 
     expect(fixture.nativeElement.querySelector('.error-message')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.es-list-empty')).toBeNull();
+  });
+
+  it('shows warmup loading UI when cropsErrorIsWarmup is set', async () => {
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.control = {
+      farmLoading: false,
+      selectedFarmId: 1,
+      selectedFarm: farms[0],
+      listResponse: null,
+      cropsLoading: false,
+      cropsError: BACKEND_WARMUP_I18N.database,
+      cropsErrorIsWarmup: true,
+      cropsWarmupMessageKey: BACKEND_WARMUP_I18N.database,
+      loadCursor: null
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-backend-warmup-loading')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.error-message')).toBeNull();
   });
 
   it('renders mini-chart year banner from candidate period year not API chart_calendar_year', async () => {

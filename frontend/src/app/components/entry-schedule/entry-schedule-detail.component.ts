@@ -28,17 +28,20 @@ import { PublicPlanStore } from '../../services/public-plans/public-plan-store.s
 import { AuthService } from '../../services/auth.service';
 import { Farm } from '../../domain/farms/farm';
 import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
+import { BackendWarmupLoadingComponent } from '../shared/backend-warmup-loading/backend-warmup-loading.component';
 
 const initialControl: EntryScheduleDetailViewState = {
   loading: true,
   errorKey: null,
+  errorIsWarmup: false,
+  warmupMessageKey: null,
   data: null
 };
 
 @Component({
   selector: 'app-entry-schedule-detail',
   standalone: true,
-  imports: [CommonModule, TranslateModule, MasterContextHeaderComponent, RouterLink],
+  imports: [CommonModule, TranslateModule, MasterContextHeaderComponent, RouterLink, BackendWarmupLoadingComponent],
   providers: [...ENTRY_SCHEDULE_DETAIL_PROVIDERS],
   template: `
     <div class="page-main public-plans-wrapper">
@@ -51,9 +54,12 @@ const initialControl: EntryScheduleDetailViewState = {
           </h1>
         </div>
 
-        @if (control.loading) {
+        @if (control.loading || control.errorIsWarmup) {
           <section class="content-card mt-4">
             <p class="muted master-loading">{{ 'entrySchedule.loading' | translate }}</p>
+            <app-backend-warmup-loading
+              [messageKey]="control.warmupMessageKey ?? 'common.backend_warmup.database'"
+            />
           </section>
         } @else if (control.errorKey) {
           <section class="content-card mt-4">
@@ -475,6 +481,8 @@ export class EntryScheduleDetailComponent implements EntryScheduleDetailView, On
       this.control = {
         loading: false,
         errorKey: null,
+        errorIsWarmup: false,
+        warmupMessageKey: null,
         data: snapshot
       };
       this.seo.refreshEntryScheduleDetailMeta(cId, catalogCrop.name);
@@ -485,6 +493,8 @@ export class EntryScheduleDetailComponent implements EntryScheduleDetailView, On
       ...this.control,
       loading: true,
       errorKey: null,
+      errorIsWarmup: false,
+      warmupMessageKey: null,
       data: null
     };
 

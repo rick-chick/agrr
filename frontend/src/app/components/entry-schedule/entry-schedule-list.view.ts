@@ -3,6 +3,8 @@ import { Farm } from '../../domain/farms/farm';
 export interface EntryScheduleListViewState {
   farmsLoading: boolean;
   farmsError: string | null;
+  farmsErrorIsWarmup: boolean;
+  farmsWarmupMessageKey: string | null;
   farms: Farm[];
 }
 

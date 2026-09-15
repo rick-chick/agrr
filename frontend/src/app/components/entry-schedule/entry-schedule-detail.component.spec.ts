@@ -12,6 +12,7 @@ import { LOAD_ENTRY_SCHEDULE_CROP_OUTPUT_PORT } from '../../usecase/entry-schedu
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { AuthService } from '../../services/auth.service';
 import type { CurrentUser } from '../../services/api.service';
+import { BACKEND_WARMUP_I18N } from '../../core/backend-warmup/backend-warmup';
 
 describe('EntryScheduleDetailComponent', () => {
   let fixture: ComponentFixture<EntryScheduleDetailComponent>;
@@ -329,6 +330,8 @@ describe('EntryScheduleDetailComponent', () => {
     component.control = {
       loading: false,
       errorKey: null,
+      errorIsWarmup: false,
+      warmupMessageKey: null,
       data: {
         farm: { id: 3, name: 'Farm', latitude: 35, longitude: 139, region: 'jp' },
         prediction: {},
@@ -417,5 +420,22 @@ describe('EntryScheduleDetailComponent', () => {
     expect(link).toBeTruthy();
     expect(link.getAttribute('href')).toBe('/crops/7/setup_proposal');
     expect(link.textContent?.trim()).toBe('Improve crop master');
+  });
+
+  it('shows warmup loading UI when errorIsWarmup is set', async () => {
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.control = {
+      loading: false,
+      errorKey: BACKEND_WARMUP_I18N.database,
+      errorIsWarmup: true,
+      warmupMessageKey: BACKEND_WARMUP_I18N.database,
+      data: null
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-backend-warmup-loading')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.error-message')).toBeNull();
   });
 });

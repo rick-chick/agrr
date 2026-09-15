@@ -1,5 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError, TimeoutError } from 'rxjs';
+import { BACKEND_WARMUP_I18N } from '../../core/backend-warmup/backend-warmup';
 import { LoadEntryScheduleFarmsUseCase } from './load-entry-schedule-farms.usecase';
 import { LoadEntryScheduleFarmsOutputPort } from './load-entry-schedule-farms.output-port';
 import { EntryScheduleGateway } from './entry-schedule-gateway';
@@ -35,7 +37,7 @@ describe('LoadEntryScheduleFarmsUseCase', () => {
     expect(outputPort.onError).not.toHaveBeenCalled();
   });
 
-  it('calls onError with entrySchedule.error when getEntryScheduleFarms fails', async () => {
+  it('calls onError with apiErrorI18nKey when getEntryScheduleFarms fails', async () => {
     vi.mocked(gateway.getEntryScheduleFarms).mockReturnValue(
       throwError(() => new Error('Network error'))
     );
@@ -44,7 +46,20 @@ describe('LoadEntryScheduleFarmsUseCase', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    expect(outputPort.onError).toHaveBeenCalledWith({ message: 'entrySchedule.error' });
+    expect(outputPort.onError).toHaveBeenCalledWith({ message: 'common.api_error.generic' });
+    expect(outputPort.present).not.toHaveBeenCalled();
+  });
+
+  it('calls onError with warmup i18n key when getEntryScheduleFarms returns 503', async () => {
+    vi.mocked(gateway.getEntryScheduleFarms).mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 503, statusText: 'Service Unavailable' }))
+    );
+
+    useCase.execute({ region: 'jp' });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(outputPort.onError).toHaveBeenCalledWith({ message: BACKEND_WARMUP_I18N.database });
     expect(outputPort.present).not.toHaveBeenCalled();
   });
 

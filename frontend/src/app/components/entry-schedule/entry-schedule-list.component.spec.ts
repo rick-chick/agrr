@@ -9,6 +9,7 @@ import { LoadEntryScheduleFarmsUseCase } from '../../usecase/entry-schedule/load
 import { EntryScheduleListPresenter } from '../../adapters/entry-schedule/entry-schedule-list.presenter';
 import { LOAD_ENTRY_SCHEDULE_FARMS_OUTPUT_PORT } from '../../usecase/entry-schedule/load-entry-schedule-farms.output-port';
 import type { Farm } from '../../domain/farms/farm';
+import { BACKEND_WARMUP_I18N } from '../../core/backend-warmup/backend-warmup';
 
 describe('EntryScheduleListComponent', () => {
   let fixture: ComponentFixture<EntryScheduleListComponent>;
@@ -145,6 +146,23 @@ describe('EntryScheduleListComponent', () => {
     await fixture.whenStable();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/entry-schedule/farm', 1]);
+  });
+
+  it('shows warmup loading UI when farmsErrorIsWarmup is set', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.componentInstance.control = {
+      farmsLoading: false,
+      farmsError: BACKEND_WARMUP_I18N.database,
+      farmsErrorIsWarmup: true,
+      farmsWarmupMessageKey: BACKEND_WARMUP_I18N.database,
+      farms: []
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-backend-warmup-loading')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.error-message')).toBeNull();
   });
 
   it('auto-navigates to farm crops route when the user has a single farm', async () => {

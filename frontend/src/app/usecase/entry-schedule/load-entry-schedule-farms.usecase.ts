@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { catchError, EMPTY, timeout } from 'rxjs';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadEntryScheduleFarmsInputDto } from './load-entry-schedule-farms.dtos';
 import { LoadEntryScheduleFarmsInputPort } from './load-entry-schedule-farms.input-port';
 import {
@@ -31,7 +32,7 @@ export class LoadEntryScheduleFarmsUseCase implements LoadEntryScheduleFarmsInpu
           if (name === 'TimeoutError') {
             this.outputPort.onError({ message: 'entrySchedule.timeout' });
           } else {
-            this.outputPort.onError({ message: 'entrySchedule.error' });
+            this.outputPort.onError({ message: apiErrorI18nKey(err) });
           }
           return EMPTY;
         })
