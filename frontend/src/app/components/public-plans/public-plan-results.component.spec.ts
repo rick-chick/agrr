@@ -262,10 +262,30 @@ describe('PublicPlanResultsComponent', () => {
     expect(component.control.error).toBe('public_plans.errors.restart');
     expect(component.control.loading).toBe(false);
   });
+
+  it('reloads results when retry is requested after load failure', () => {
+    activatedRoute.snapshot.queryParamMap.get.mockReturnValue('42');
+    component.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      data: null,
+      savedPrivatePlanId: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
+    };
+
+    component.reload();
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 42 });
+    expect(component.control.loading).toBe(true);
+    expect(component.control.error).toBeNull();
+    expect(component.control.data).toBeNull();
+  });
 });
 
 describe('PublicPlanResultsComponent (template)', () => {
-  it('shows a single translated error message on load failure', async () => {
+  it('shows recovery actions when results load fails', async () => {
     const { TestBed } = await import('@angular/core/testing');
     const { provideRouter } = await import('@angular/router');
     const { TranslateModule, TranslateService } = await import('@ngx-translate/core');
@@ -326,6 +346,10 @@ describe('PublicPlanResultsComponent (template)', () => {
       'public_plans.title': '作付け計画を作成',
       'public_plans.breadcrumb_root': '作付け計画を作成',
       'public_plans.results.breadcrumb': '結果',
+      'public_plans.results.error.title': '結果の読み込みに失敗しました',
+      'public_plans.optimizing.error.reload': '再読み込み',
+      'public_plans.optimizing.error.try_again': '作物を変更してもう一度試す',
+      'public_plans.optimizing.error.start_over': '最初からやり直す',
       'common.api_error.not_found': 'リソースが見つかりません'
     });
     translate.setDefaultLang('ja');
@@ -342,11 +366,33 @@ describe('PublicPlanResultsComponent (template)', () => {
     };
     fixture.detectChanges();
 
-    const errors = fixture.nativeElement.querySelectorAll('.error-message');
-    expect(errors.length).toBe(1);
-    expect(errors[0].textContent).toContain('リソースが見つかりません');
-    expect(fixture.nativeElement.textContent).not.toContain('404');
-    expect(fixture.nativeElement.textContent).not.toContain('Http failure');
+    const alert = fixture.nativeElement.querySelector(
+      '.page-alert-error.public-plan-optimizing__error[role="alert"]'
+    );
+    expect(alert).toBeTruthy();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('結果の読み込みに失敗しました');
+    expect(text).toContain('リソースが見つかりません');
+    expect(text).toContain('再読み込み');
+    expect(text).toContain('作物を変更してもう一度試す');
+    expect(text).toContain('最初からやり直す');
+    expect(text).not.toContain('404');
+    expect(text).not.toContain('Http failure');
+
+    const actions = fixture.nativeElement.querySelector('.public-plan-optimizing__error-actions');
+    const actionButtons = actions?.querySelectorAll('.btn');
+    expect(actionButtons?.length).toBe(2);
+    expect(actionButtons?.[0].classList.contains('btn-secondary')).toBe(true);
+    expect(actionButtons?.[1].classList.contains('btn-secondary')).toBe(true);
+
+    const selectCropLink = actionButtons?.[1] as HTMLAnchorElement;
+    expect(selectCropLink.getAttribute('href')).toContain('/public-plans/select-crop');
+
+    const startOverLink = fixture.nativeElement.querySelector(
+      '.public-plan-optimizing__error-secondary a'
+    ) as HTMLAnchorElement;
+    expect(startOverLink?.getAttribute('href')).toContain('/public-plans/new');
   });
 
   it('places gantt before next steps and collapsible private preview after next steps', async () => {

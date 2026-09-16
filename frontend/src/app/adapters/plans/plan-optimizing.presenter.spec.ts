@@ -3,6 +3,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 import { PlanOptimizingPresenter } from './plan-optimizing.presenter';
 import { PlanOptimizingView, PlanOptimizingViewState } from '../../components/plans/plan-optimizing.view';
+import { UxAnalyticsService } from '../../services/ux-analytics.service';
 
 function createView(initial: PlanOptimizingViewState = { status: 'pending', progress: 0, phaseMessage: '' }) {
   let control = initial;
@@ -21,11 +22,16 @@ function createView(initial: PlanOptimizingViewState = { status: 'pending', prog
 
 describe('PlanOptimizingPresenter', () => {
   let presenter: PlanOptimizingPresenter;
+  let uxAnalytics: { trackOptimizationLifecycle: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    uxAnalytics = { trackOptimizationLifecycle: vi.fn() };
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot()],
-      providers: [PlanOptimizingPresenter]
+      providers: [
+        PlanOptimizingPresenter,
+        { provide: UxAnalyticsService, useValue: uxAnalytics }
+      ]
     });
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
@@ -69,6 +75,11 @@ describe('PlanOptimizingPresenter', () => {
     presenter.present({ status: 'completed', progress: 100 });
 
     expect(onOptimizationCompleted).toHaveBeenCalledTimes(1);
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'completed',
+      flow: 'plans',
+      job_scenario: 'J3'
+    });
   });
 
   it('calls onOptimizationCompleted when progress reaches 100', () => {
@@ -102,6 +113,13 @@ describe('PlanOptimizingPresenter', () => {
     expect(harness.control.status).toBe('failed');
     expect(harness.control.phaseMessage).toBe('Process failed');
     expect(harness.control.failureHint).toBe('Try reloading.');
+    expect(harness.control.failureCategory).toBe('default');
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'plans',
+      job_scenario: 'J3',
+      failure_category: 'default'
+    });
   });
 
   it('sets failed state with connection lost message on presentConnectionLost', () => {
@@ -123,6 +141,13 @@ describe('PlanOptimizingPresenter', () => {
     expect(harness.control.progress).toBe(12);
     expect(harness.control.phaseMessage).toBe('Connection was lost.');
     expect(harness.control.failureHint).toBe('Try reloading.');
+    expect(harness.control.failureCategory).toBe('connection_lost');
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'plans',
+      job_scenario: 'J3',
+      failure_category: 'connection_lost'
+    });
   });
 
   it('does not call onOptimizationCompleted while still in progress', () => {
@@ -191,6 +216,13 @@ describe('PlanOptimizingPresenter', () => {
     expect(harness.control.phaseMessage).toBe('Failed to fetch weather data.');
     expect(harness.control.phaseMessage).not.toContain('InvalidWeatherApiResponse');
     expect(harness.control.failureHint).toBe('Check farm location and try again.');
+    expect(harness.control.failureCategory).toBe('fetching_weather');
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'plans',
+      job_scenario: 'J3',
+      failure_category: 'fetching_weather'
+    });
   });
 
   it('uses i18n default category instead of raw phase_message text', () => {

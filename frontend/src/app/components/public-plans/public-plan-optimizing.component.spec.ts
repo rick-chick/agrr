@@ -8,16 +8,19 @@ import { PublicPlanOptimizingViewState } from './public-plan-optimizing.view';
 import { SubscribePublicPlanOptimizationUseCase } from '../../usecase/public-plans/subscribe-public-plan-optimization.usecase';
 import { PublicPlanOptimizingPresenter } from '../../usecase/public-plans/public-plan-optimizing.providers';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { UxAnalyticsService } from '../../services/ux-analytics.service';
 
 describe('PublicPlanOptimizingComponent', () => {
   let fixture: ComponentFixture<PublicPlanOptimizingComponent>;
   let component: PublicPlanOptimizingComponent;
   let mockUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
+  let uxAnalytics: { trackRecoveryAction: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     mockUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
+    uxAnalytics = { trackRecoveryAction: vi.fn() };
 
     TestBed.overrideComponent(PublicPlanOptimizingComponent, {
       set: {
@@ -48,7 +51,7 @@ describe('PublicPlanOptimizingComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [PublicPlanOptimizingComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), { provide: UxAnalyticsService, useValue: uxAnalytics }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(PublicPlanOptimizingComponent);
@@ -168,6 +171,47 @@ describe('PublicPlanOptimizingComponent', () => {
     expect(text).toContain('処理がタイムアウトしました');
     expect(text).toContain('処理に時間がかかりすぎました。しばらく待ってから再度お試しください。');
     expect(text).not.toContain('worker timeout');
+  });
+
+  it('tracks reload recovery action when retry is clicked', () => {
+    component.control = {
+      status: 'failed',
+      progress: 0,
+      phaseMessage: '処理がタイムアウトしました',
+      failureCategory: 'timeout'
+    };
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.public-plan-optimizing__retry')?.click();
+
+    expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
+      recovery_action: 'reload',
+      failure_category: 'timeout',
+      flow: 'public_plans'
+    });
+  });
+
+  it('tracks try_again and start_over recovery actions from failed state', () => {
+    component.control = {
+      status: 'failed',
+      progress: 0,
+      phaseMessage: '処理がタイムアウトしました',
+      failureCategory: 'timeout'
+    };
+
+    component.onRecoveryAction('try_again');
+    expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
+      recovery_action: 'try_again',
+      failure_category: 'timeout',
+      flow: 'public_plans'
+    });
+
+    component.onRecoveryAction('start_over');
+    expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
+      recovery_action: 'start_over',
+      failure_category: 'timeout',
+      flow: 'public_plans'
+    });
   });
 
   it('shows fallback hint when failure detail is generic', () => {
