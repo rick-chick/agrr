@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { PublicPlanOptimizingView } from '../../components/public-plans/public-plan-optimizing.view';
+import { OptimizationFailureCategory } from '../../services/ux-analytics.events';
+import { UxAnalyticsService } from '../../services/ux-analytics.service';
 import { SubscribePublicPlanOptimizationOutputPort } from '../../usecase/public-plans/subscribe-public-plan-optimization.output-port';
 import { PublicPlanOptimizationMessageDto } from '../../usecase/public-plans/subscribe-public-plan-optimization.dtos';
 
@@ -15,6 +17,7 @@ export class PublicPlanOptimizingPresenter
   private view: PublicPlanOptimizingView | null = null;
 
   private readonly translate = inject(TranslateService);
+  private readonly uxAnalytics = inject(UxAnalyticsService);
 
   setView(view: PublicPlanOptimizingView): void {
     this.view = view;
@@ -165,6 +168,40 @@ export class PublicPlanOptimizingPresenter
     return undefined;
   }
 
+  private resolveFailureCategory(
+    key: string | undefined,
+    phaseMessage: string | undefined
+  ): OptimizationFailureCategory {
+    const category =
+      this.extractFailureCategory(key, phaseMessage) ??
+      this.inferFailureCategoryFromTechnicalMessage(phaseMessage);
+    return (category ?? 'default') as OptimizationFailureCategory;
+  }
+
+  private trackOptimizationLifecycle(
+    prevStatus: string,
+    nextStatus: string,
+    failureCategory?: OptimizationFailureCategory
+  ): void {
+    if (nextStatus === 'completed' && prevStatus !== 'completed') {
+      this.uxAnalytics.trackOptimizationLifecycle({
+        phase: 'completed',
+        flow: 'public_plans',
+        job_scenario: 'J3'
+      });
+      return;
+    }
+
+    if (nextStatus === 'failed' && prevStatus !== 'failed') {
+      this.uxAnalytics.trackOptimizationLifecycle({
+        phase: 'failed',
+        flow: 'public_plans',
+        job_scenario: 'J3',
+        failure_category: failureCategory ?? 'default'
+      });
+    }
+  }
+
   present(dto: PublicPlanOptimizationMessageDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
@@ -176,15 +213,21 @@ export class PublicPlanOptimizingPresenter
       return;
     }
     const nextPhaseMessage = this.resolvePhaseMessage(dto, prev.phaseMessage, nextStatus);
+    const failureCategory =
+      nextStatus === 'failed'
+        ? this.resolveFailureCategory(dto.message_key, dto.phase_message)
+        : undefined;
     const failureHint =
       nextStatus === 'failed'
         ? this.resolveFailureHint(dto.message_key, dto.phase_message)
         : undefined;
+    this.trackOptimizationLifecycle(prev.status, nextStatus, failureCategory);
     this.view.control = {
       status: nextStatus,
       progress: typeof dto.progress === 'number' ? dto.progress : prev.progress,
       phaseMessage: nextPhaseMessage,
-      failureHint
+      failureHint,
+      failureCategory
     };
     if (nextStatus === 'completed') {
       this.view.onOptimizationCompleted?.();
@@ -203,11 +246,13 @@ export class PublicPlanOptimizingPresenter
       prev.phaseMessage;
     const failureHint =
       this.translateKey('public_plans.optimizing.error.hints.default') ?? undefined;
+    this.trackOptimizationLifecycle(prev.status, 'failed', 'connection_lost');
     this.view.control = {
       status: 'failed',
       progress: prev.progress,
       phaseMessage,
-      failureHint
+      failureHint,
+      failureCategory: 'connection_lost'
     };
   }
 }

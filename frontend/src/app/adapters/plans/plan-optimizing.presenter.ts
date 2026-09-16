@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { PlanOptimizingView } from '../../components/plans/plan-optimizing.view';
+import { OptimizationFailureCategory } from '../../services/ux-analytics.events';
+import { UxAnalyticsService } from '../../services/ux-analytics.service';
 import { SubscribePlanOptimizationOutputPort } from '../../usecase/plans/subscribe-plan-optimization.output-port';
 import { PlanOptimizationMessageDto } from '../../usecase/plans/subscribe-plan-optimization.dtos';
 
@@ -13,6 +15,7 @@ export class PlanOptimizingPresenter implements SubscribePlanOptimizationOutputP
   private view: PlanOptimizingView | null = null;
 
   private readonly translate = inject(TranslateService);
+  private readonly uxAnalytics = inject(UxAnalyticsService);
 
   setView(view: PlanOptimizingView): void {
     this.view = view;
@@ -162,6 +165,46 @@ export class PlanOptimizingPresenter implements SubscribePlanOptimizationOutputP
     return undefined;
   }
 
+  private resolveFailureCategory(
+    key: string | undefined,
+    phaseMessage: string | undefined
+  ): OptimizationFailureCategory {
+    const category =
+      this.extractFailureCategory(key, phaseMessage) ??
+      this.inferFailureCategoryFromTechnicalMessage(phaseMessage);
+    return (category ?? 'default') as OptimizationFailureCategory;
+  }
+
+  private trackOptimizationLifecycle(
+    prevStatus: string,
+    prevProgress: number,
+    nextStatus: string,
+    nextProgress: number,
+    failureCategory?: OptimizationFailureCategory
+  ): void {
+    const becameCompleted =
+      (nextStatus === 'completed' || nextProgress >= 100) &&
+      prevStatus !== 'completed' &&
+      prevProgress < 100;
+    if (becameCompleted) {
+      this.uxAnalytics.trackOptimizationLifecycle({
+        phase: 'completed',
+        flow: 'plans',
+        job_scenario: 'J3'
+      });
+      return;
+    }
+
+    if (nextStatus === 'failed' && prevStatus !== 'failed') {
+      this.uxAnalytics.trackOptimizationLifecycle({
+        phase: 'failed',
+        flow: 'plans',
+        job_scenario: 'J3',
+        failure_category: failureCategory ?? 'default'
+      });
+    }
+  }
+
   present(dto: PlanOptimizationMessageDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
@@ -174,15 +217,27 @@ export class PlanOptimizingPresenter implements SubscribePlanOptimizationOutputP
     }
     const nextProgress = typeof dto.progress === 'number' ? dto.progress : prev.progress;
     const nextPhaseMessage = this.resolvePhaseMessage(dto, prev.phaseMessage, nextStatus);
+    const failureCategory =
+      nextStatus === 'failed'
+        ? this.resolveFailureCategory(dto.message_key, dto.phase_message)
+        : undefined;
     const failureHint =
       nextStatus === 'failed'
         ? this.resolveFailureHint(dto.message_key, dto.phase_message)
         : undefined;
+    this.trackOptimizationLifecycle(
+      prev.status,
+      prev.progress,
+      nextStatus,
+      nextProgress,
+      failureCategory
+    );
     this.view.control = {
       status: nextStatus,
       progress: nextProgress,
       phaseMessage: nextPhaseMessage,
-      failureHint
+      failureHint,
+      failureCategory
     };
     if (nextStatus === 'completed' || nextProgress >= 100) {
       this.view.onOptimizationCompleted?.();
@@ -201,11 +256,13 @@ export class PlanOptimizingPresenter implements SubscribePlanOptimizationOutputP
       prev.phaseMessage;
     const failureHint =
       this.translateKey('plans.optimizing_live.error.hints.default') ?? undefined;
+    this.trackOptimizationLifecycle(prev.status, prev.progress, 'failed', prev.progress, 'connection_lost');
     this.view.control = {
       status: 'failed',
       progress: prev.progress,
       phaseMessage,
-      failureHint
+      failureHint,
+      failureCategory: 'connection_lost'
     };
   }
 }
