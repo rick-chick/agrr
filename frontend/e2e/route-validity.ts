@@ -8,6 +8,7 @@ import {
   normalizePathname as normalizePathnameLib,
   workCapturePathnameOk,
   onboardingCapturePathnameOk,
+  entryScheduleCapturePathnameOk,
   resolveHostSelectorForPatternFromUrl,
 } from './route-validity-lib.mjs';
 
@@ -79,6 +80,18 @@ export async function assertPageValidity(
     return;
   }
 
+  if (r.pattern === 'entry-schedule') {
+    await expect
+      .poll(() => entryScheduleCapturePathnameOk(normalizePathname(new URL(page.url()).pathname)), {
+        timeout: 30_000,
+      })
+      .toBe(true);
+    await expect(
+      page.locator('app-entry-schedule-list, app-entry-schedule-farm-crops').first(),
+    ).toBeVisible({ timeout: 30_000 });
+    return;
+  }
+
   await expect
     .poll(() => normalizePathname(new URL(page.url()).pathname), { timeout: 30_000 })
     .toBe(want);
@@ -110,6 +123,18 @@ export async function assertCapturePageValidity(
       })
       .toBe(true);
     await expect(page.locator('app-onboarding, app-plan-list').first()).toBeVisible({ timeout: 30_000 });
+    return;
+  }
+
+  if (r.pattern === 'entry-schedule') {
+    await expect
+      .poll(() => entryScheduleCapturePathnameOk(normalizePathname(new URL(page.url()).pathname)), {
+        timeout: 30_000,
+      })
+      .toBe(true);
+    await expect(
+      page.locator('app-entry-schedule-list, app-entry-schedule-farm-crops').first(),
+    ).toBeVisible({ timeout: 30_000 });
     return;
   }
 

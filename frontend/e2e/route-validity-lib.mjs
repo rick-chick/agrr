@@ -28,6 +28,12 @@ export function onboardingCapturePathnameOk(pathname) {
   return n === '/onboarding' || n === '/plans';
 }
 
+/** `/entry-schedule` — リージョン内の参照農場が 1 件のとき一覧から farm へ自動遷移する */
+export function entryScheduleCapturePathnameOk(pathname) {
+  const n = normalizePathname(pathname);
+  return n === '/entry-schedule' || /^\/entry-schedule\/farm\/\d+$/.test(n);
+}
+
 /**
  * Redirect-aware host selector for layout smoke / capture.
  * @param {string} pattern route-manifest pattern
@@ -42,6 +48,11 @@ export function resolveHostSelectorForPatternFromUrl(pattern, pageUrl, hostByPat
   if (pattern === 'work') {
     const pathname = normalizePathname(new URL(pageUrl).pathname);
     return /^\/plans\/\d+\/work$/.test(pathname) ? 'app-plan-work' : 'app-work-hub';
+  }
+  if (pattern === 'entry-schedule') {
+    return pageUrl.includes('/entry-schedule/farm/')
+      ? 'app-entry-schedule-farm-crops'
+      : 'app-entry-schedule-list';
   }
   return hostByPattern[pattern];
 }
