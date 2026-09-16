@@ -22,6 +22,8 @@ import {
   setLearnReorganizePipelineError,
   updateLearnReorganizePipelinePhase
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
+import { RecoveryAction } from '../../services/ux-analytics.events';
+import { UxAnalyticsService } from '../../services/ux-analytics.service';
 
 const initialControl: PlanOptimizingViewState = {
   status: 'pending',
@@ -58,7 +60,11 @@ const initialControl: PlanOptimizingViewState = {
               <button type="button" class="btn btn-secondary plan-optimizing__retry" (click)="reload()">
                 {{ 'plans.optimizing_live.error.retry' | translate }}
               </button>
-              <a [routerLink]="['/plans', planId]" class="btn btn-secondary plan-optimizing__back">
+              <a
+                [routerLink]="['/plans', planId]"
+                class="btn btn-secondary plan-optimizing__back"
+                (click)="onRecoveryAction('back_to_plan')"
+              >
                 {{ 'plans.optimizing_live.error.back_to_plan' | translate }}
               </a>
             </div>
@@ -101,6 +107,7 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
   private readonly hydrateOrchestrationUseCase = inject(HydrateReorganizeOrchestrationUseCase);
   private readonly presenter = inject(PlanOptimizingPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly uxAnalytics = inject(UxAnalyticsService);
 
   private channel: Channel | null = null;
 
@@ -164,7 +171,19 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     this.subscribeOptimization(planId);
   }
 
+  onRecoveryAction(recoveryAction: RecoveryAction): void {
+    if (!this.isFailed) {
+      return;
+    }
+    this.uxAnalytics.trackRecoveryAction({
+      recovery_action: recoveryAction,
+      failure_category: this.control.failureCategory ?? 'default',
+      flow: 'plans'
+    });
+  }
+
   reload(): void {
+    this.onRecoveryAction('reload');
     const planId = this.planId;
     if (!planId) {
       return;

@@ -6,6 +6,7 @@ import {
   PublicPlanOptimizingView,
   PublicPlanOptimizingViewState
 } from '../../components/public-plans/public-plan-optimizing.view';
+import { UxAnalyticsService } from '../../services/ux-analytics.service';
 
 const translationMap = new Map<string, string>([
   ['models.cultivation_plan.phases.completed', '最適化が完了しました'],
@@ -44,8 +45,10 @@ describe('PublicPlanOptimizingPresenter', () => {
   let lastControl: PublicPlanOptimizingViewState;
   let onCompletedSpy: ReturnType<typeof vi.fn<() => void>>;
   let view: PublicPlanOptimizingView;
+  let uxAnalytics: { trackOptimizationLifecycle: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    uxAnalytics = { trackOptimizationLifecycle: vi.fn() };
     onCompletedSpy = vi.fn<() => void>();
     lastControl = { status: 'pending', progress: 0, phaseMessage: '' };
     view = {
@@ -69,7 +72,8 @@ describe('PublicPlanOptimizingPresenter', () => {
           useValue: {
             instant: vi.fn((key: string) => translationMap.get(key) ?? key)
           }
-        }
+        },
+        { provide: UxAnalyticsService, useValue: uxAnalytics }
       ]
     });
 
@@ -100,6 +104,11 @@ describe('PublicPlanOptimizingPresenter', () => {
     expect(lastControl.status).toBe('completed');
     expect(lastControl.phaseMessage).toBe('最適化が完了しました');
     expect(onCompletedSpy).toHaveBeenCalledTimes(1);
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'completed',
+      flow: 'public_plans',
+      job_scenario: 'J3'
+    });
   });
 
   it('uses phase_failed message when status is failed', () => {
@@ -111,7 +120,14 @@ describe('PublicPlanOptimizingPresenter', () => {
 
     expect(lastControl.status).toBe('failed');
     expect(lastControl.phaseMessage).toBe('気象データの予測に失敗しました');
+    expect(lastControl.failureCategory).toBe('predicting_weather');
     expect(onCompletedSpy).not.toHaveBeenCalled();
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'public_plans',
+      job_scenario: 'J3',
+      failure_category: 'predicting_weather'
+    });
   });
 
   it('does not surface raw models.* keys when failed with phases.completed key', () => {
@@ -217,7 +233,14 @@ describe('PublicPlanOptimizingPresenter', () => {
     expect(lastControl.failureHint).toBe(
       '下のボタンから作物を変更するか、最初からやり直してください。'
     );
+    expect(lastControl.failureCategory).toBe('connection_lost');
     expect(onCompletedSpy).not.toHaveBeenCalled();
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'public_plans',
+      job_scenario: 'J3',
+      failure_category: 'connection_lost'
+    });
   });
 
   it('ignores stale failed messages after optimization completed', () => {
