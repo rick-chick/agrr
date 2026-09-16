@@ -651,12 +651,50 @@ mod tests {
                   id INTEGER PRIMARY KEY, user_id INTEGER, organization_id INTEGER, name TEXT NOT NULL, variety TEXT,
                   is_reference INTEGER NOT NULL DEFAULT 0, area_per_unit REAL, revenue_per_area REAL,
                   region TEXT, groups TEXT, cultivation_method TEXT, created_at TEXT, updated_at TEXT
+                );
+                CREATE TABLE crop_stages (
+                  id INTEGER PRIMARY KEY, crop_id INTEGER NOT NULL, name TEXT, \"order\" INTEGER,
+                  created_at TEXT, updated_at TEXT
+                );
+                CREATE TABLE temperature_requirements (
+                  id INTEGER PRIMARY KEY, crop_stage_id INTEGER NOT NULL,
+                  base_temperature REAL, optimal_min REAL, optimal_max REAL,
+                  frost_threshold REAL, max_temperature REAL,
+                  created_at TEXT, updated_at TEXT
                 );",
             )?;
             Ok(())
         })
         .expect("schema");
         (pool, file)
+    }
+
+    fn insert_stage_with_temperature(
+        pool: &SqlitePool,
+        crop_id: i64,
+        stage_name: &str,
+        frost: f64,
+        optimal_min: f64,
+        optimal_max: f64,
+        base: f64,
+    ) -> i64 {
+        pool.with_write(|conn| {
+            conn.execute(
+                "INSERT INTO crop_stages (crop_id, name, \"order\", created_at, updated_at)
+                 VALUES (?1, ?2, 1, datetime('now'), datetime('now'))",
+                rusqlite::params![crop_id, stage_name],
+            )?;
+            let stage_id = conn.last_insert_rowid();
+            conn.execute(
+                "INSERT INTO temperature_requirements (
+                   crop_stage_id, frost_threshold, optimal_min, optimal_max, base_temperature,
+                   created_at, updated_at
+                 ) VALUES (?1, ?2, ?3, ?4, ?5, datetime('now'), datetime('now'))",
+                rusqlite::params![stage_id, frost, optimal_min, optimal_max, base],
+            )?;
+            Ok(stage_id)
+        })
+        .expect("insert stage with temperature")
     }
 
     fn insert_crop_with_method(pool: &SqlitePool, id: i64, name: &str, method: &str) {
@@ -801,6 +839,56 @@ mod tests {
                 .is_some()
         );
         assert_eq!(out.body.get("crop").and_then(|v| v.get("id")).and_then(|v| v.as_i64()), Some(2));
+    }
+
+    #[test]
+    fn load_entry_schedule_temperature_maps_sqlite_row_to_snapshot() {
+        let (pool, _file) = crop_test_pool();
+        insert_crop_with_method(&pool, 1, "トマト", "transplant");
+        let stage_id = insert_stage_with_temperature(&pool, 1, "生育", -2.0, 18.0, 28.0, 10.0);
+
+        let snapshot = pool
+            .with_read(|conn| load_entry_schedule_temperature(conn, stage_id))
+            .expect("read temperature")
+            .expect("temperature row");
+
+        assert_eq!(snapshot.frost_threshold, Some(-2.0));
+        assert_eq!(snapshot.optimal_min, Some(18.0));
+        assert_eq!(snapshot.optimal_max, Some(28.0));
+        assert_eq!(snapshot.base_temperature, Some(10.0));
+    }
+
+    #[test]
+    fn load_entry_schedule_temperature_returns_none_without_row() {
+        let (pool, _file) = crop_test_pool();
+
+        let snapshot = pool
+            .with_read(|conn| load_entry_schedule_temperature(conn, 999))
+            .expect("read temperature");
+
+        assert!(snapshot.is_none());
+    }
+
+    #[test]
+    fn entry_schedule_ordered_stage_rows_attaches_temperature_requirement_from_sqlite() {
+        let (pool, _file) = crop_test_pool();
+        insert_crop_with_method(&pool, 5, "ほうれん草", "direct_sow");
+        insert_stage_with_temperature(&pool, 5, "Contract Stage", 0.0, 15.0, 25.0, 8.0);
+        let gateway = SqliteOptimizeCropGateway {
+            pool: pool.clone(),
+            crop_gateway: CropSqliteGateway::new(pool),
+        };
+
+        let rows = gateway.entry_schedule_ordered_stage_rows(5).expect("stage rows");
+
+        assert_eq!(rows.len(), 1);
+        let temp = rows[0]
+            .temperature_requirement
+            .as_ref()
+            .expect("temperature requirement must be loaded for optimize");
+        assert_eq!(temp.base_temperature, Some(8.0));
+        assert_eq!(temp.optimal_min, Some(15.0));
+        assert_eq!(temp.optimal_max, Some(25.0));
     }
 
     #[test]
