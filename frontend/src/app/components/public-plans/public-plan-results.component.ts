@@ -66,7 +66,28 @@ const initialControl: PublicPlanResultsViewState = {
             <p>{{ 'public_plans.results.loading_data' | translate }}</p>
           </div>
         } @else if (control.error) {
-          <p class="error-message">{{ control.error | translate }}</p>
+          <div
+            class="page-alert-error public-plan-optimizing__error"
+            role="alert"
+          >
+            <h2 class="public-plan-optimizing__error-title">
+              {{ 'public_plans.results.error.title' | translate }}
+            </h2>
+            <p>{{ control.error | translate }}</p>
+            <div class="public-plan-optimizing__error-actions">
+              <button type="button" class="btn btn-secondary public-plan-optimizing__retry" (click)="reload()">
+                {{ 'public_plans.optimizing.error.reload' | translate }}
+              </button>
+              <a [routerLink]="['/public-plans/select-crop']" class="btn btn-secondary">
+                {{ 'public_plans.optimizing.error.try_again' | translate }}
+              </a>
+            </div>
+            <p class="public-plan-optimizing__error-secondary">
+              <a [routerLink]="['/public-plans/new']">
+                {{ 'public_plans.optimizing.error.start_over' | translate }}
+              </a>
+            </p>
+          </div>
         } @else if (control.data) {
           <div class="public-plan-results__body plan-detail-surface">
             <app-plan-gantt-climate-shell [data]="control.data" [planType]="planType">
@@ -188,6 +209,20 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
       .loadCurrentUser()
       .pipe(take(1))
       .subscribe(() => this.maybeRunPendingSave());
+  }
+
+  reload(): void {
+    const planId = this.resolvePlanId();
+    if (!planId) {
+      return;
+    }
+    this.control = {
+      ...this.control,
+      loading: true,
+      error: null,
+      data: null
+    };
+    this.useCase.execute({ planId });
   }
 
   savePlan(): void {

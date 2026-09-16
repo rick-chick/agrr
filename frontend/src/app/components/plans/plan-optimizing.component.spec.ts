@@ -20,6 +20,7 @@ import {
   clearLearnReorganizePipelineAutoChain,
   storeLearnReorganizePipelineAutoChain
 } from '../../domain/plans/learn-reorganize-pipeline-auto-chain';
+import { UxAnalyticsService } from '../../services/ux-analytics.service';
 
 describe('PlanOptimizingComponent', () => {
   let component: PlanOptimizingComponent;
@@ -30,8 +31,10 @@ describe('PlanOptimizingComponent', () => {
   let mockCdr: ChangeDetectorRef;
   let mockActivatedRoute: ActivatedRoute;
   let router: Router;
+  let uxAnalytics: { trackRecoveryAction: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    uxAnalytics = { trackRecoveryAction: vi.fn() };
     mockUseCase = { execute: vi.fn() };
     mockHydrateUseCase = { execute: vi.fn(() => of(null)) };
     mockPresenter = { setView: vi.fn() } as unknown as PlanOptimizingPresenter;
@@ -59,7 +62,7 @@ describe('PlanOptimizingComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [PlanOptimizingComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), { provide: UxAnalyticsService, useValue: uxAnalytics }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(PlanOptimizingComponent);
@@ -281,7 +284,8 @@ describe('PlanOptimizingComponent', () => {
     component.control = {
       status: 'failed',
       progress: 40,
-      phaseMessage: 'Process failed'
+      phaseMessage: 'Process failed',
+      failureCategory: 'timeout'
     };
     fixture.detectChanges();
 
@@ -295,6 +299,28 @@ describe('PlanOptimizingComponent', () => {
     });
     expect(component.control.status).toBe('pending');
     expect(component.control.progress).toBe(0);
+    expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
+      recovery_action: 'reload',
+      failure_category: 'timeout',
+      flow: 'plans'
+    });
+  });
+
+  it('tracks back_to_plan recovery action from failed state', () => {
+    component.control = {
+      status: 'failed',
+      progress: 40,
+      phaseMessage: 'Process failed',
+      failureCategory: 'fetching_weather'
+    };
+
+    component.onRecoveryAction('back_to_plan');
+
+    expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
+      recovery_action: 'back_to_plan',
+      failure_category: 'fetching_weather',
+      flow: 'plans'
+    });
   });
 
   it('renders plan context header without redundant breadcrumb links while optimizing', () => {

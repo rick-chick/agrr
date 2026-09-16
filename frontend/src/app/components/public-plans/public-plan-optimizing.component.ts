@@ -20,6 +20,8 @@ import { PublicPlanStore } from '../../services/public-plans/public-plan-store.s
 import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
+import { RecoveryAction } from '../../services/ux-analytics.events';
+import { UxAnalyticsService } from '../../services/ux-analytics.service';
 
 const initialControl: PublicPlanOptimizingViewState = {
   status: 'pending',
@@ -69,12 +71,16 @@ const initialControl: PublicPlanOptimizingViewState = {
               <button type="button" class="btn btn-secondary public-plan-optimizing__retry" (click)="reload()">
                 {{ 'public_plans.optimizing.error.reload' | translate }}
               </button>
-              <a [routerLink]="['/public-plans/select-crop']" class="btn btn-secondary">
+              <a
+                [routerLink]="['/public-plans/select-crop']"
+                class="btn btn-secondary"
+                (click)="onRecoveryAction('try_again')"
+              >
                 {{ 'public_plans.optimizing.error.try_again' | translate }}
               </a>
             </div>
             <p class="public-plan-optimizing__error-secondary">
-              <a [routerLink]="['/public-plans/new']">
+              <a [routerLink]="['/public-plans/new']" (click)="onRecoveryAction('start_over')">
                 {{ 'public_plans.optimizing.error.start_over' | translate }}
               </a>
             </p>
@@ -124,6 +130,7 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
   private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
+  private readonly uxAnalytics = inject(UxAnalyticsService);
 
   elapsedTime = 0;
   private channel: Channel | null = null;
@@ -224,7 +231,19 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
     this.router.navigate(['/public-plans/results'], { queryParams: { planId: this.planId } });
   }
 
+  onRecoveryAction(recoveryAction: RecoveryAction): void {
+    if (this.control.status !== 'failed') {
+      return;
+    }
+    this.uxAnalytics.trackRecoveryAction({
+      recovery_action: recoveryAction,
+      failure_category: this.control.failureCategory ?? 'default',
+      flow: 'public_plans'
+    });
+  }
+
   reload(): void {
+    this.onRecoveryAction('reload');
     const pid = this.planId;
     if (!pid) {
       return;
