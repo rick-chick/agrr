@@ -7,6 +7,7 @@ import {
   normalizePathname,
   workCapturePathnameOk,
   onboardingCapturePathnameOk,
+  entryScheduleCapturePathnameOk,
   resolveHostSelectorForPatternFromUrl,
 } from './route-validity-lib.mjs';
 
@@ -14,6 +15,7 @@ const HOST_BY_PATTERN = {
   work: 'app-work-hub',
   onboarding: 'app-onboarding',
   plans: 'app-plan-list',
+  'entry-schedule': 'app-entry-schedule-list',
 };
 
 test('expectedPathname strips query and trailing slash', () => {
@@ -49,6 +51,12 @@ test('onboardingCapturePathnameOk accepts wizard and saved-plan redirect', () =>
   assert.equal(onboardingCapturePathnameOk('/plans/new'), false);
 });
 
+test('entryScheduleCapturePathnameOk accepts list and single-farm auto-redirect', () => {
+  assert.equal(entryScheduleCapturePathnameOk('/entry-schedule'), true);
+  assert.equal(entryScheduleCapturePathnameOk('/entry-schedule/farm/2'), true);
+  assert.equal(entryScheduleCapturePathnameOk('/entry-schedule/crop/1'), false);
+});
+
 test('resolveHostSelectorForPatternFromUrl handles work and onboarding redirects', () => {
   assert.equal(
     resolveHostSelectorForPatternFromUrl('work', 'http://127.0.0.1:3000/work', HOST_BY_PATTERN),
@@ -69,5 +77,21 @@ test('resolveHostSelectorForPatternFromUrl handles work and onboarding redirects
   assert.equal(
     resolveHostSelectorForPatternFromUrl('plans', 'http://127.0.0.1:3000/plans', HOST_BY_PATTERN),
     'app-plan-list',
+  );
+  assert.equal(
+    resolveHostSelectorForPatternFromUrl(
+      'entry-schedule',
+      'http://127.0.0.1:3000/entry-schedule',
+      HOST_BY_PATTERN,
+    ),
+    'app-entry-schedule-list',
+  );
+  assert.equal(
+    resolveHostSelectorForPatternFromUrl(
+      'entry-schedule',
+      'http://127.0.0.1:3000/entry-schedule/farm/2',
+      HOST_BY_PATTERN,
+    ),
+    'app-entry-schedule-farm-crops',
   );
 });

@@ -4,7 +4,7 @@ import {
   PUBLIC_PLAN_SELECT_CROP_STEP2_ACTIVE_STEP,
   PUBLIC_PLAN_SELECT_CROP_STEP2_NUMBER,
 } from './assert-public-plan-select-crop-step2-lib.mjs';
-import { HOST_SELECTOR_BY_PATTERN, type RouteRow } from './route-validity';
+import { HOST_SELECTOR_BY_PATTERN, normalizePathname, type RouteRow } from './route-validity';
 
 /** `.master-loading` が DOM に無いまま `toBeHidden` すると即成功しうる。スピナー出現を短時間待ってから消滅待ちする。 */
 const MASTER_LOADING_SPIN_PROBE_EXCLUDE = new Set<string>(['plans/:id/optimizing']);
@@ -37,6 +37,13 @@ function needsMasterLoadingSpinProbe(pattern: string): boolean {
 /** Entry-schedule crop prerender paths use literal crop ids in a11y smoke (not :cropId). */
 function isEntryScheduleCropPrerenderPattern(pattern: string): boolean {
   return pattern.startsWith('entry-schedule/crop/');
+}
+
+/** `/entry-schedule` から単一農場の farm 画面へ自動遷移したキャプチャ */
+function isEntryScheduleFarmRedirect(page: Page, pattern: string): boolean {
+  if (pattern !== 'entry-schedule') return false;
+  const pathname = normalizePathname(new URL(page.url()).pathname);
+  return /^\/entry-schedule\/farm\/\d+$/.test(pathname);
 }
 
 /**
@@ -79,14 +86,14 @@ export async function waitForPageStable(page: Page, r: RouteRow): Promise<void> 
     return;
   }
 
-  if (r.pattern === 'entry-schedule/farm/:farmId') {
+  if (r.pattern === 'entry-schedule/farm/:farmId' || isEntryScheduleFarmRedirect(page, r.pattern)) {
     const host = 'app-entry-schedule-farm-crops';
     await expect(page.locator(host)).toBeVisible({ timeout: 30_000 });
     await expect(page.locator(`${host} .master-loading:not(.master-error)`)).toBeHidden({
       timeout: 60_000,
     });
     await expect(
-      page.locator(`${host} .es-crop-grid, ${host} .es-list-empty`),
+      page.locator(`${host} .es-crop-grid, ${host} .es-list-empty, ${host} .error-message`),
     ).toBeVisible({ timeout: 60_000 });
     return;
   }

@@ -10,4 +10,7 @@ test('expectedDocumentHtmlLangForCapture uses app locale except /en mirror', () 
   assert.equal(expectedDocumentHtmlLangForCapture('en', 'ja'), 'en');
   assert.equal(expectedDocumentHtmlLangForCapture('en', 'en'), 'en');
   assert.equal(expectedDocumentHtmlLangForCapture('en', 'in'), 'en');
+  assert.equal(expectedDocumentHtmlLangForCapture('en/about', 'ja'), 'en');
+  assert.equal(expectedDocumentHtmlLangForCapture('en/contact', 'in'), 'en');
+  assert.equal(expectedDocumentHtmlLangForCapture('en/public-plans/new', 'ja'), 'en');
 });
