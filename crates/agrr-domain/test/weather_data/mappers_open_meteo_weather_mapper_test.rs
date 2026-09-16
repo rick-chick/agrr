@@ -61,3 +61,23 @@
         assert_eq!(result["timezone"], "UTC");
         assert_eq!(result["data"].as_array().map(|a| a.len()), Some(1));
     }
+
+    #[test]
+    fn format_for_agrr_converts_sunshine_hours_to_seconds_for_agrr_ingest() {
+        let dto = WeatherData::new(
+            Date::from_calendar_date(2023, Month::January, 1).expect("valid"),
+            Some(10.0),
+            None,
+            None,
+            None,
+            Some(6.0),
+            None,
+            None,
+        );
+        let result = OpenMeteoWeatherMapper::format_for_agrr(&[dto], 35.0, 139.0, None, "UTC");
+        assert_eq!(
+            result["data"][0]["sunshine_duration"].as_f64(),
+            Some(21_600.0),
+            "agrr expects sunshine_duration in seconds, not hours"
+        );
+    }

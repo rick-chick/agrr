@@ -278,6 +278,7 @@ docker compose --profile test run --rm \
     AGRR_SOCKET_PATH="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
     if [ -x "$AGRR_BIN" ]; then
       echo "==> Starting agrr daemon for contract regeneration tests"
+      export USE_AGRR_DAEMON=true
       "$AGRR_BIN" daemon start || true
       for _ in $(seq 1 100); do
         if [ -S "$AGRR_SOCKET_PATH" ] || [ -e "$AGRR_SOCKET_PATH" ]; then
