@@ -1972,6 +1972,9 @@
     },
     "results": {
       "breadcrumb": "結果",
+      "error": {
+        "title": "結果の読み込みに失敗しました"
+      },
       "create_new_plan": "← 新しい計画を作成",
       "view_my_plans": "マイプランを見る",
       "chart_title": "気象データと作物成長分析",
