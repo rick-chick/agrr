@@ -37,6 +37,13 @@ const entryScheduleFarmCropsRoute: RouteRow = {
   source: 'test',
 };
 
+const entryScheduleListRoute: RouteRow = {
+  pattern: 'entry-schedule',
+  url: '/entry-schedule',
+  requiresAuth: false,
+  source: 'test',
+};
+
 test.describe('waitForPageStable spin probe', () => {
   test('skips long spin probe when stable content is already visible', async ({ page }) => {
     await page.setContent(`
@@ -149,6 +156,45 @@ test.describe('waitForPageStable entry-schedule crop prerender', () => {
 });
 
 test.describe('waitForPageStable entry-schedule farm crops', () => {
+  test('treats entry-schedule list auto-redirect to farm as farm crops stable', async ({ page }) => {
+    await page.route('http://127.0.0.1/entry-schedule/farm/2', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: `<!DOCTYPE html><html><body>
+          <app-entry-schedule-farm-crops>
+            <div class="es-list-empty" role="status">
+              <h3 class="es-list-empty-title">No candidate crops</h3>
+            </div>
+          </app-entry-schedule-farm-crops>
+        </body></html>`
+      });
+    });
+    await page.goto('http://127.0.0.1/entry-schedule/farm/2');
+
+    await waitForPageStable(page, entryScheduleListRoute);
+    await expect(page.locator('app-entry-schedule-farm-crops .es-list-empty')).toBeVisible();
+  });
+
+  test('accepts error-message as terminal state for farm crops capture', async ({ page }) => {
+    await page.setContent(`
+      <app-entry-schedule-farm-crops>
+        <p class="master-loading">Loading…</p>
+      </app-entry-schedule-farm-crops>
+    `);
+
+    await page.evaluate(() => {
+      setTimeout(() => {
+        const host = document.querySelector('app-entry-schedule-farm-crops');
+        if (!host) return;
+        host.innerHTML = `<p class="error-message">Failed to load crops</p>`;
+      }, 400);
+    });
+
+    await waitForPageStable(page, entryScheduleFarmCropsRoute);
+    await expect(page.locator('app-entry-schedule-farm-crops .error-message')).toBeVisible();
+  });
+
   test('waits for crop grid or empty state', async ({ page }) => {
     await page.setContent(`
       <app-entry-schedule-farm-crops>

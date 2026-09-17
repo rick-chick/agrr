@@ -110,5 +110,13 @@ data: { id: 1 } as never,
       expect(lastControl!.data).toBeNull();
       expect(lastControl!.pendingErrorFlash).toBeNull();
     });
+
+    it('surfaces backend warmup i18n key on load error for recovery CTAs', () => {
+      presenter.onError({ message: 'common.backend_warmup.database' });
+
+      expect(lastControl!.loading).toBe(false);
+      expect(lastControl!.error).toBe('common.backend_warmup.database');
+      expect(lastControl!.data).toBeNull();
+    });
   });
 });
