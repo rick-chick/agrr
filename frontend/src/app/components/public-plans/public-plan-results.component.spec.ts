@@ -282,6 +282,25 @@ describe('PublicPlanResultsComponent', () => {
     expect(component.control.error).toBeNull();
     expect(component.control.data).toBeNull();
   });
+
+  it('does not reload when planId is unavailable', () => {
+    activatedRoute.snapshot.queryParamMap.get.mockReturnValue(null);
+    publicPlanStore.state.planId = null;
+    component.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      data: null,
+      savedPrivatePlanId: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
+    };
+
+    component.reload();
+
+    expect(loadUseCase.execute).not.toHaveBeenCalled();
+    expect(component.control.error).toBe('common.api_error.not_found');
+  });
 });
 
 describe('PublicPlanResultsComponent (template)', () => {

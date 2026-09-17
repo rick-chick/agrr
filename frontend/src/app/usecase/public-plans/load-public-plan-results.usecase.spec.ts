@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
+import { BACKEND_WARMUP_I18N } from '../../core/backend-warmup/backend-warmup';
 import { LoadPublicPlanResultsUseCase } from './load-public-plan-results.usecase';
 import { LoadPublicPlanResultsOutputPort } from './load-public-plan-results.output-port';
 import { PlanGateway } from '../plans/plan-gateway';
@@ -62,6 +63,36 @@ describe('LoadPublicPlanResultsUseCase', () => {
 
     expect(outputPort.onError).toHaveBeenCalledWith({
       message: 'common.api_error.not_found'
+    });
+    expect(outputPort.present).not.toHaveBeenCalled();
+  });
+
+  it('maps HTTP 503 to backend warmup i18n key on load failure', async () => {
+    vi.mocked(gateway.getPublicPlanData).mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 503, statusText: 'Service Unavailable' }))
+    );
+
+    useCase.execute({ planId: 99 });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(outputPort.onError).toHaveBeenCalledWith({
+      message: BACKEND_WARMUP_I18N.database
+    });
+    expect(outputPort.present).not.toHaveBeenCalled();
+  });
+
+  it('maps non-HTTP failures to generic i18n key on load failure', async () => {
+    vi.mocked(gateway.getPublicPlanData).mockReturnValue(
+      throwError(() => new Error('Network error'))
+    );
+
+    useCase.execute({ planId: 99 });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(outputPort.onError).toHaveBeenCalledWith({
+      message: 'common.api_error.generic'
     });
     expect(outputPort.present).not.toHaveBeenCalled();
   });
