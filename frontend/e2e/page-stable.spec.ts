@@ -44,6 +44,20 @@ const entryScheduleListRoute: RouteRow = {
   source: 'test',
 };
 
+const publicPlanResultsRoute: RouteRow = {
+  pattern: 'public-plans/results',
+  url: '/public-plans/results?planId=1',
+  requiresAuth: false,
+  source: 'test',
+};
+
+const publicPlanNewRoute: RouteRow = {
+  pattern: 'public-plans/new',
+  url: '/public-plans/new',
+  requiresAuth: false,
+  source: 'test',
+};
+
 test.describe('waitForPageStable spin probe', () => {
   test('skips long spin probe when stable content is already visible', async ({ page }) => {
     await page.setContent(`
@@ -216,6 +230,90 @@ test.describe('waitForPageStable entry-schedule farm crops', () => {
 
     await waitForPageStable(page, entryScheduleFarmCropsRoute);
     await expect(page.locator('app-entry-schedule-farm-crops .es-list-empty')).toBeVisible();
+  });
+});
+
+test.describe('waitForPageStable public-plans/results', () => {
+  test('resolves when loading-state hides and error recovery panel is shown', async ({ page }) => {
+    await page.setContent(`
+      <app-public-plan-results>
+        <p class="loading-state">Loading...</p>
+      </app-public-plan-results>
+    `);
+
+    await page.evaluate(() => {
+      setTimeout(() => {
+        const host = document.querySelector('app-public-plan-results');
+        if (!host) return;
+        host.innerHTML = `
+          <div class="page-alert-error public-plan-optimizing__error" role="alert">
+            <h2 class="public-plan-optimizing__error-title">Failed to load results</h2>
+            <p>Resource not found</p>
+            <div class="public-plan-optimizing__error-actions">
+              <button type="button" class="btn btn-secondary public-plan-optimizing__retry">Reload</button>
+              <a class="btn btn-secondary" href="/public-plans/select-crop">Try again</a>
+            </div>
+          </div>
+        `;
+      }, 400);
+    });
+
+    await waitForPageStable(page, publicPlanResultsRoute);
+    await expect(
+      page.locator('app-public-plan-results .page-alert-error.public-plan-optimizing__error'),
+    ).toBeVisible();
+  });
+
+  test('resolves when loading-state hides and gantt shell is shown', async ({ page }) => {
+    await page.setContent(`
+      <app-public-plan-results>
+        <p class="loading-state">Loading...</p>
+      </app-public-plan-results>
+    `);
+
+    await page.evaluate(() => {
+      setTimeout(() => {
+        const host = document.querySelector('app-public-plan-results');
+        if (!host) return;
+        host.innerHTML = `
+          <div class="public-plan-results__body plan-detail-surface">
+            <app-plan-gantt-climate-shell>
+              <div class="gantt-chart">Plan results</div>
+            </app-plan-gantt-climate-shell>
+          </div>
+        `;
+      }, 400);
+    });
+
+    await waitForPageStable(page, publicPlanResultsRoute);
+    await expect(page.locator('app-public-plan-results app-plan-gantt-climate-shell')).toBeVisible();
+  });
+});
+
+test.describe('waitForPageStable public-plans/new', () => {
+  test('resolves when loading-state hides and farm selection cards appear', async ({ page }) => {
+    await page.setContent(`
+      <app-public-plan-create>
+        <p class="loading-state">Loading...</p>
+      </app-public-plan-create>
+    `);
+
+    await page.evaluate(() => {
+      setTimeout(() => {
+        const host = document.querySelector('app-public-plan-create');
+        if (!host) return;
+        host.innerHTML = `
+          <div data-testid="farm-selection-cards">
+            <article class="enhanced-selection-card">Farm A</article>
+          </div>
+        `;
+      }, 400);
+    });
+
+    await waitForPageStable(page, publicPlanNewRoute);
+    await expect(
+      page.locator('app-public-plan-create [data-testid="farm-selection-cards"] .enhanced-selection-card'),
+    ).toBeVisible();
   });
 });
 
