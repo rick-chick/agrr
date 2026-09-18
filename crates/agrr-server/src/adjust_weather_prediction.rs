@@ -205,21 +205,12 @@ fn parse_entry_schedule_target_end_date(
     })
 }
 
-/// Entry schedule: load or predict location-scoped weather (no cultivation plan).
-pub(crate) fn resolve_weather_for_entry_schedule(
-    state: &AppState,
+fn resolve_entry_schedule_weather_data(
+    service: &dyn WeatherPredictionService,
     weather_location: &WeatherLocation,
-    reference_date: Date,
-    prediction_end_date_raw: Option<&str>,
+    target_end: Date,
+    logger: &StderrLogger,
 ) -> Result<Value, WeatherPredictionError> {
-    let target_end =
-        parse_entry_schedule_target_end_date(reference_date, prediction_end_date_raw)?;
-    let logger = StderrLogger;
-    let gateway = SqliteAdjustWeatherPredictionGateway::from_state(state);
-    let service = gateway
-        .prediction_service(weather_location)
-        .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?;
-
     let weather_data = if let Some(existing) =
         service.get_existing_location_prediction(target_end)
     {
@@ -238,8 +229,26 @@ pub(crate) fn resolve_weather_for_entry_schedule(
 
     let normalized = entry_schedule_weather_preparer::prepare(weather_data, weather_location)
         .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?;
-    log_entry_schedule_weather_payload(&normalized, &logger);
+    log_entry_schedule_weather_payload(&normalized, logger);
     Ok(normalized)
+}
+
+/// Entry schedule: load or predict location-scoped weather (no cultivation plan).
+pub(crate) fn resolve_weather_for_entry_schedule(
+    state: &AppState,
+    weather_location: &WeatherLocation,
+    reference_date: Date,
+    prediction_end_date_raw: Option<&str>,
+) -> Result<Value, WeatherPredictionError> {
+    let target_end =
+        parse_entry_schedule_target_end_date(reference_date, prediction_end_date_raw)?;
+    let logger = StderrLogger;
+    let gateway = SqliteAdjustWeatherPredictionGateway::from_state(state);
+    let service = gateway
+        .prediction_service(weather_location)
+        .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?;
+
+    resolve_entry_schedule_weather_data(service.as_ref(), weather_location, target_end, &logger)
 }
 
 fn log_entry_schedule_weather_payload(weather_data: &Value, logger: &StderrLogger) {
@@ -403,6 +412,152 @@ mod tests {
         let location = WeatherLocation::new(28, 35.6895, 139.6917, None, None);
 
         let err = prepare_candidates_weather_payload(payload, &location).unwrap_err();
+
+        assert!(matches!(
+            err,
+            WeatherPredictionError::InsufficientPredictionData(_)
+        ));
+        assert!(err.to_string().contains("no data rows"));
+    }
+
+    struct MockEntrySchedulePredictionService {
+        existing: Option<Value>,
+        predict_payload: Value,
+        predict_should_fail: bool,
+        predict_called: std::sync::atomic::AtomicBool,
+    }
+
+    impl MockEntrySchedulePredictionService {
+        fn cache_hit(payload: Value) -> Self {
+            Self {
+                existing: Some(payload),
+                predict_payload: json!({}),
+                predict_should_fail: false,
+                predict_called: std::sync::atomic::AtomicBool::new(false),
+            }
+        }
+
+        fn cache_miss(payload: Value) -> Self {
+            Self {
+                existing: None,
+                predict_payload: payload,
+                predict_should_fail: false,
+                predict_called: std::sync::atomic::AtomicBool::new(false),
+            }
+        }
+
+        fn predict_was_called(&self) -> bool {
+            self.predict_called
+                .load(std::sync::atomic::Ordering::SeqCst)
+        }
+    }
+
+    impl WeatherPredictionService for MockEntrySchedulePredictionService {
+        fn get_existing_prediction(
+            &self,
+            _: Date,
+            _: &CultivationPlanWeather,
+        ) -> Option<Value> {
+            None
+        }
+
+        fn predict_for_cultivation_plan(
+            &self,
+            _: &CultivationPlanWeather,
+            _: Option<Date>,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            Err("not used in entry schedule tests".into())
+        }
+
+        fn get_existing_location_prediction(&self, _: Date) -> Option<Value> {
+            self.existing.clone()
+        }
+
+        fn predict_for_location(
+            &self,
+            _: Date,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            self.predict_called
+                .store(true, std::sync::atomic::Ordering::SeqCst);
+            if self.predict_should_fail {
+                return Err("predict_for_location failed".into());
+            }
+            Ok(self.predict_payload.clone())
+        }
+    }
+
+    fn coordinate_less_gcs_cache_payload() -> Value {
+        json!({
+            "data": [
+                { "time": "2026-09-09", "temperature_2m_mean": 20.0 },
+                { "time": "2026-09-10", "temperature_2m_mean": 21.0 }
+            ],
+            "prediction_start_date": "2026-01-01",
+            "prediction_end_date": "2027-12-31",
+            "target_end_date": "2027-12-31"
+        })
+    }
+
+    #[test]
+    fn resolve_entry_schedule_weather_data_enriches_coordinate_less_cache_hit() {
+        let location =
+            WeatherLocation::new(28, 35.6895, 139.6917, Some(40.0), Some("Asia/Tokyo".into()));
+        let service = MockEntrySchedulePredictionService::cache_hit(coordinate_less_gcs_cache_payload());
+        let logger = StderrLogger;
+
+        let prepared = resolve_entry_schedule_weather_data(
+            &service,
+            &location,
+            date!(2027-12-31),
+            &logger,
+        )
+        .unwrap();
+
+        assert!(!service.predict_was_called());
+        assert_eq!(prepared.get("latitude").and_then(|v| v.as_f64()), Some(35.6895));
+        assert_eq!(prepared.get("longitude").and_then(|v| v.as_f64()), Some(139.6917));
+        assert_eq!(prepared.get("elevation").and_then(|v| v.as_f64()), Some(40.0));
+        assert_eq!(
+            prepared.get("timezone").and_then(|v| v.as_str()),
+            Some("Asia/Tokyo")
+        );
+        assert_eq!(prepared["data"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn resolve_entry_schedule_weather_data_predicts_on_cache_miss_and_enriches() {
+        let location =
+            WeatherLocation::new(28, 35.6895, 139.6917, Some(40.0), Some("Asia/Tokyo".into()));
+        let service =
+            MockEntrySchedulePredictionService::cache_miss(coordinate_less_gcs_cache_payload());
+        let logger = StderrLogger;
+
+        let prepared = resolve_entry_schedule_weather_data(
+            &service,
+            &location,
+            date!(2027-12-31),
+            &logger,
+        )
+        .unwrap();
+
+        assert!(service.predict_was_called());
+        assert_eq!(prepared.get("latitude").and_then(|v| v.as_f64()), Some(35.6895));
+        assert_eq!(prepared.get("longitude").and_then(|v| v.as_f64()), Some(139.6917));
+    }
+
+    #[test]
+    fn resolve_entry_schedule_weather_data_rejects_empty_data_rows_after_prepare() {
+        let location = WeatherLocation::new(28, 35.6895, 139.6917, None, None);
+        let service = MockEntrySchedulePredictionService::cache_hit(json!({ "data": [] }));
+        let logger = StderrLogger;
+
+        let err = resolve_entry_schedule_weather_data(
+            &service,
+            &location,
+            date!(2027-12-31),
+            &logger,
+        )
+        .unwrap_err();
 
         assert!(matches!(
             err,
