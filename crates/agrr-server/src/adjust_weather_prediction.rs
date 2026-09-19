@@ -446,6 +446,15 @@ mod tests {
             }
         }
 
+        fn cache_miss_failing() -> Self {
+            Self {
+                existing: None,
+                predict_payload: json!({}),
+                predict_should_fail: true,
+                predict_called: std::sync::atomic::AtomicBool::new(false),
+            }
+        }
+
         fn predict_was_called(&self) -> bool {
             self.predict_called
                 .load(std::sync::atomic::Ordering::SeqCst)
@@ -543,6 +552,28 @@ mod tests {
         assert!(service.predict_was_called());
         assert_eq!(prepared.get("latitude").and_then(|v| v.as_f64()), Some(35.6895));
         assert_eq!(prepared.get("longitude").and_then(|v| v.as_f64()), Some(139.6917));
+    }
+
+    #[test]
+    fn resolve_entry_schedule_weather_data_propagates_predict_failure_on_cache_miss() {
+        let location = WeatherLocation::new(28, 35.6895, 139.6917, None, None);
+        let service = MockEntrySchedulePredictionService::cache_miss_failing();
+        let logger = StderrLogger;
+
+        let err = resolve_entry_schedule_weather_data(
+            &service,
+            &location,
+            date!(2027-12-31),
+            &logger,
+        )
+        .unwrap_err();
+
+        assert!(service.predict_was_called());
+        assert!(matches!(
+            err,
+            WeatherPredictionError::InsufficientPredictionData(_)
+        ));
+        assert!(err.to_string().contains("predict_for_location failed"));
     }
 
     #[test]

@@ -193,6 +193,75 @@ describe('PlanOptimizingPresenter', () => {
     expect(harness.control.phaseMessage).toBe('Done');
   });
 
+  it('infers task_schedule_generation category from technical phase_message', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'models.cultivation_plan.phase_failed.task_schedule_generation':
+          'Task plan generation failed.',
+        'plans.optimizing_live.error.hints.task_schedule_generation':
+          'Something went wrong while processing results. Try again.'
+      },
+      true
+    );
+    const harness = createView({ status: 'optimizing', progress: 40, phaseMessage: '' });
+    presenter.setView(harness.view);
+
+    presenter.present({
+      status: 'failed',
+      progress: 40,
+      message_key: 'models.cultivation_plan.phase_failed.default',
+      phase_message: 'task_schedule worker crashed'
+    });
+
+    expect(harness.control.phaseMessage).toBe('Task plan generation failed.');
+    expect(harness.control.failureHint).toBe(
+      'Something went wrong while processing results. Try again.'
+    );
+    expect(harness.control.failureCategory).toBe('task_schedule_generation');
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'plans',
+      job_scenario: 'J3',
+      failure_category: 'task_schedule_generation'
+    });
+  });
+
+  it('infers optimizing category from technical phase_message', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'models.cultivation_plan.phase_failed.optimizing': 'Optimization failed.',
+        'plans.optimizing_live.error.hints.optimizing':
+          'Review your crops and cultivation periods, then try again.'
+      },
+      true
+    );
+    const harness = createView({ status: 'optimizing', progress: 40, phaseMessage: '' });
+    presenter.setView(harness.view);
+
+    presenter.present({
+      status: 'failed',
+      progress: 40,
+      message_key: 'models.cultivation_plan.phase_failed.default',
+      phase_message: 'optimizer subprocess failed'
+    });
+
+    expect(harness.control.phaseMessage).toBe('Optimization failed.');
+    expect(harness.control.failureHint).toBe(
+      'Review your crops and cultivation periods, then try again.'
+    );
+    expect(harness.control.failureCategory).toBe('optimizing');
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'plans',
+      job_scenario: 'J3',
+      failure_category: 'optimizing'
+    });
+  });
+
   it('does not surface technical phase_message as primary failure text', () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(

@@ -37,6 +37,22 @@ const translationMap = new Map<string, string>([
   [
     'public_plans.optimizing.error.hints.default',
     '下のボタンから作物を変更するか、最初からやり直してください。'
+  ],
+  [
+    'models.cultivation_plan.phase_failed.task_schedule_generation',
+    '作業計画の生成に失敗しました'
+  ],
+  [
+    'models.cultivation_plan.phase_failed.optimizing',
+    '最適化に失敗しました'
+  ],
+  [
+    'public_plans.optimizing.error.hints.task_schedule_generation',
+    '最適化結果の処理中に問題が発生しました。再度お試しください。'
+  ],
+  [
+    'public_plans.optimizing.error.hints.optimizing',
+    '作物と栽培期間を確認してから、もう一度お試しください。'
   ]
 ]);
 
@@ -196,6 +212,46 @@ describe('PublicPlanOptimizingPresenter', () => {
     expect(lastControl.failureHint).toBe(
       '処理に時間がかかりすぎました。しばらく待ってから再度お試しください。'
     );
+  });
+
+  it('infers task_schedule_generation category from technical phase_message', () => {
+    presenter.present({
+      status: 'failed',
+      progress: 0,
+      message_key: 'models.cultivation_plan.phase_failed.default',
+      phase_message: 'task_schedule_generation worker exited with code 1'
+    });
+
+    expect(lastControl.phaseMessage).toBe('作業計画の生成に失敗しました');
+    expect(lastControl.failureHint).toBe(
+      '最適化結果の処理中に問題が発生しました。再度お試しください。'
+    );
+    expect(lastControl.failureCategory).toBe('task_schedule_generation');
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'public_plans',
+      job_scenario: 'J3',
+      failure_category: 'task_schedule_generation'
+    });
+  });
+
+  it('infers optimizing category from technical phase_message', () => {
+    presenter.present({
+      status: 'failed',
+      progress: 0,
+      message_key: 'models.cultivation_plan.phase_failed.default',
+      phase_message: 'allocate optimizer failed: infeasible constraints'
+    });
+
+    expect(lastControl.phaseMessage).toBe('最適化に失敗しました');
+    expect(lastControl.failureHint).toBe('作物と栽培期間を確認してから、もう一度お試しください。');
+    expect(lastControl.failureCategory).toBe('optimizing');
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'public_plans',
+      job_scenario: 'J3',
+      failure_category: 'optimizing'
+    });
   });
 
   it('infers timeout category from technical phase_message', () => {
