@@ -109,6 +109,23 @@ describe('OfflineBannerComponent', () => {
     expect(reloadButton.textContent).toContain('Reload');
   });
 
+  it('dismiss button hides reconnected CTA without reloading', () => {
+    const reloadSpy = vi.spyOn(connectivity, 'reload').mockImplementation(() => undefined);
+    const dismissSpy = vi.spyOn(connectivity, 'dismissReconnectedCta');
+
+    connectivity.setOfflineForTest(false);
+    connectivity.setReconnectedCtaForTest(true);
+    fixture.detectChanges();
+
+    const dismissButton = fixture.nativeElement.querySelector(
+      '.offline-banner__dismiss'
+    ) as HTMLButtonElement;
+    dismissButton.click();
+
+    expect(dismissSpy).toHaveBeenCalledTimes(1);
+    expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
   it('reload button triggers page reload', () => {
     const reloadSpy = vi.spyOn(connectivity, 'reload').mockImplementation(() => undefined);
 
