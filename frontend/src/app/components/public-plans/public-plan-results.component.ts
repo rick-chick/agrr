@@ -28,6 +28,8 @@ import { PublicPlanContextHeaderComponent } from './public-plan-context-header.c
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 import { PublicPlanPrivateValuePreviewComponent } from './public-plan-private-value-preview.component';
 import { PublicPlanResultsNextStepsComponent } from './public-plan-results-next-steps.component';
+import { UxAnalyticsService } from '../../services/ux-analytics.service';
+import { RecoveryAction } from '../../services/ux-analytics.events';
 
 const initialControl: PublicPlanResultsViewState = {
   loading: true,
@@ -78,12 +80,16 @@ const initialControl: PublicPlanResultsViewState = {
               <button type="button" class="btn btn-secondary public-plan-optimizing__retry" (click)="reload()">
                 {{ 'public_plans.optimizing.error.reload' | translate }}
               </button>
-              <a [routerLink]="['/public-plans/select-crop']" class="btn btn-secondary">
+              <a
+                [routerLink]="['/public-plans/select-crop']"
+                class="btn btn-secondary"
+                (click)="onRecoveryAction('try_again')"
+              >
                 {{ 'public_plans.optimizing.error.try_again' | translate }}
               </a>
             </div>
             <p class="public-plan-optimizing__error-secondary">
-              <a [routerLink]="['/public-plans/new']">
+              <a [routerLink]="['/public-plans/new']" (click)="onRecoveryAction('start_over')">
                 {{ 'public_plans.optimizing.error.start_over' | translate }}
               </a>
             </p>
@@ -126,6 +132,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   private readonly flashMessage = inject(FlashMessageService);
   private readonly translate = inject(TranslateService);
   private readonly seoMeta = inject(AppSeoMetaService);
+  private readonly uxAnalytics = inject(UxAnalyticsService);
 
   private langChangeSubscription?: Subscription;
   private seoPlanId: number | null = null;
@@ -211,7 +218,19 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
       .subscribe(() => this.maybeRunPendingSave());
   }
 
+  onRecoveryAction(recoveryAction: RecoveryAction): void {
+    if (!this.control.error) {
+      return;
+    }
+    this.uxAnalytics.trackRecoveryAction({
+      recovery_action: recoveryAction,
+      failure_category: 'default',
+      flow: 'public_plans'
+    });
+  }
+
   reload(): void {
+    this.onRecoveryAction('reload');
     const planId = this.resolvePlanId();
     if (!planId) {
       return;

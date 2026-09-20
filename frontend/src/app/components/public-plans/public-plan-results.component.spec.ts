@@ -16,6 +16,7 @@ import { PUBLIC_PLAN_SESSION_PORT } from '../../usecase/public-plans/public-plan
 import { FlashMessageService } from '../../services/flash-message.service';
 import { AppSeoMetaService } from '../../core/seo/app-seo-meta.service';
 import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
+import { UxAnalyticsService } from '../../services/ux-analytics.service';
 
 @Component({
   selector: 'app-plan-gantt-climate-shell',
@@ -47,6 +48,7 @@ describe('PublicPlanResultsComponent', () => {
     instant: ReturnType<typeof vi.fn>;
     onLangChange: Observable<unknown>;
   };
+  let uxAnalytics: { trackRecoveryAction: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     saveUseCase = { execute: vi.fn(() => of(undefined)) };
@@ -79,6 +81,7 @@ describe('PublicPlanResultsComponent', () => {
       }),
       onLangChange: of({ lang: 'ja', translations: {} })
     };
+    uxAnalytics = { trackRecoveryAction: vi.fn() };
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -98,7 +101,8 @@ describe('PublicPlanResultsComponent', () => {
         {
           provide: AppSeoMetaService,
           useValue: { refreshPublicPlanResultsMeta: vi.fn() }
-        }
+        },
+        { provide: UxAnalyticsService, useValue: uxAnalytics }
       ]
     });
 
@@ -277,10 +281,57 @@ describe('PublicPlanResultsComponent', () => {
 
     component.reload();
 
+    expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
+      recovery_action: 'reload',
+      failure_category: 'default',
+      flow: 'public_plans'
+    });
     expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 42 });
     expect(component.control.loading).toBe(true);
     expect(component.control.error).toBeNull();
     expect(component.control.data).toBeNull();
+  });
+
+  it('tracks try_again and start_over recovery actions from failed state', () => {
+    component.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      data: null,
+      savedPrivatePlanId: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
+    };
+
+    component.onRecoveryAction('try_again');
+    expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
+      recovery_action: 'try_again',
+      failure_category: 'default',
+      flow: 'public_plans'
+    });
+
+    component.onRecoveryAction('start_over');
+    expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
+      recovery_action: 'start_over',
+      failure_category: 'default',
+      flow: 'public_plans'
+    });
+  });
+
+  it('does not track recovery action when results are not in error state', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      data: null,
+      savedPrivatePlanId: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
+    };
+
+    component.onRecoveryAction('reload');
+
+    expect(uxAnalytics.trackRecoveryAction).not.toHaveBeenCalled();
   });
 
   it('does not reload when planId is unavailable', () => {
@@ -320,6 +371,7 @@ describe('PublicPlanResultsComponent (template)', () => {
     const { FlashMessageService } = await import('../../services/flash-message.service');
     const { AuthService } = await import('../../services/auth.service');
     const { AppSeoMetaService } = await import('../../core/seo/app-seo-meta.service');
+    const { UxAnalyticsService } = await import('../../services/ux-analytics.service');
     const { ActivatedRoute } = await import('@angular/router');
     const { of } = await import('rxjs');
     const { vi } = await import('vitest');
@@ -330,6 +382,7 @@ describe('PublicPlanResultsComponent (template)', () => {
       reset: vi.fn(),
       ensureSessionToken: () => 'test-session-token'
     };
+    const uxAnalytics = { trackRecoveryAction: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [PublicPlanResultsComponent, TranslateModule.forRoot()],
@@ -352,6 +405,7 @@ describe('PublicPlanResultsComponent (template)', () => {
           provide: AppSeoMetaService,
           useValue: { refreshPublicPlanResultsMeta: vi.fn() }
         },
+        { provide: UxAnalyticsService, useValue: uxAnalytics },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { queryParamMap: { get: vi.fn().mockReturnValue('1') } } }
@@ -412,6 +466,13 @@ describe('PublicPlanResultsComponent (template)', () => {
       '.public-plan-optimizing__error-secondary a'
     ) as HTMLAnchorElement;
     expect(startOverLink?.getAttribute('href')).toContain('/public-plans/new');
+
+    fixture.nativeElement.querySelector('.public-plan-optimizing__retry')?.click();
+    expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
+      recovery_action: 'reload',
+      failure_category: 'default',
+      flow: 'public_plans'
+    });
   });
 
   it('places gantt before next steps and collapsible private preview after next steps', async () => {
