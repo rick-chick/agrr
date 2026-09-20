@@ -206,6 +206,31 @@ struct EntryScheduleWeatherLoader<'a> {
     state: &'a AppState,
 }
 
+fn entry_schedule_crops_weather_error(
+    err: Box<dyn std::error::Error + Send + Sync>,
+) -> (StatusCode, serde_json::Value) {
+    if err.downcast_ref::<WeatherLocationMissingError>().is_some() {
+        return (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({"error": "weather_location_required"}),
+        );
+    }
+    if err.downcast_ref::<PredictionPayloadMissingError>().is_some() {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            json!({"error": "prediction_payload_missing"}),
+        );
+    }
+    let message = err
+        .downcast_ref::<WeatherPredictionFailedError>()
+        .map(|e| e.0.clone())
+        .unwrap_or_else(|| err.to_string());
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        json!({"error": message}),
+    )
+}
+
 fn map_weather_prediction_error(
     err: WeatherPredictionError,
 ) -> Box<dyn std::error::Error + Send + Sync> {
@@ -525,29 +550,8 @@ async fn entry_schedule_crops(
     ) {
         Ok(w) => w,
         Err(err) => {
-            if err.downcast_ref::<WeatherLocationMissingError>().is_some() {
-                return (
-                    StatusCode::UNPROCESSABLE_ENTITY,
-                    Json(json!({"error": "weather_location_required"})),
-                )
-                    .into_response();
-            }
-            if err.downcast_ref::<PredictionPayloadMissingError>().is_some() {
-                return (
-                    StatusCode::SERVICE_UNAVAILABLE,
-                    Json(json!({"error": "prediction_payload_missing"})),
-                )
-                    .into_response();
-            }
-            let message = err
-                .downcast_ref::<WeatherPredictionFailedError>()
-                .map(|e| e.0.clone())
-                .unwrap_or_else(|| err.to_string());
-            return (
-                StatusCode::SERVICE_UNAVAILABLE,
-                Json(json!({"error": message})),
-            )
-                .into_response();
+            let (status, body) = entry_schedule_crops_weather_error(err);
+            return (status, Json(body)).into_response();
         }
     };
     let translator = state.locale_translator(&headers);
@@ -794,6 +798,40 @@ mod tests {
             out.body.get("error_key").and_then(|v| v.as_str()),
             Some("WeatherPredictionFailed")
         );
+    }
+
+    #[test]
+    fn entry_schedule_crops_weather_error_maps_location_required_to_422() {
+        let err = Box::new(WeatherLocationMissingError);
+        let (status, body) = entry_schedule_crops_weather_error(err);
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            body.get("error").and_then(|v| v.as_str()),
+            Some("weather_location_required")
+        );
+    }
+
+    #[test]
+    fn entry_schedule_crops_weather_error_maps_payload_missing_to_503() {
+        let err = Box::new(PredictionPayloadMissingError);
+        let (status, body) = entry_schedule_crops_weather_error(err);
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(
+            body.get("error").and_then(|v| v.as_str()),
+            Some("prediction_payload_missing")
+        );
+    }
+
+    #[test]
+    fn entry_schedule_crops_weather_error_maps_prediction_failed_to_503_with_message() {
+        let err = Box::new(WeatherPredictionFailedError("daemon timeout".into()));
+        let (status, body) = entry_schedule_crops_weather_error(err);
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(
+            body.get("error").and_then(|v| v.as_str()),
+            Some("daemon timeout")
+        );
+        assert!(!body.as_object().unwrap().contains_key("error_key"));
     }
 
     #[test]
