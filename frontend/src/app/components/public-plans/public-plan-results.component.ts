@@ -29,7 +29,10 @@ import { MasterContextCrumb } from '../masters/master-context-header/master-cont
 import { PublicPlanPrivateValuePreviewComponent } from './public-plan-private-value-preview.component';
 import { PublicPlanResultsNextStepsComponent } from './public-plan-results-next-steps.component';
 import { UxAnalyticsService } from '../../services/ux-analytics.service';
-import { RecoveryAction } from '../../services/ux-analytics.events';
+import {
+  RecoveryAction,
+  recoveryFailureCategoryFromLoadError
+} from '../../services/ux-analytics.events';
 
 const initialControl: PublicPlanResultsViewState = {
   loading: true,
@@ -224,7 +227,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     }
     this.uxAnalytics.trackRecoveryAction({
       recovery_action: recoveryAction,
-      failure_category: 'default',
+      failure_category: recoveryFailureCategoryFromLoadError(this.control.error),
       flow: 'public_plans'
     });
   }

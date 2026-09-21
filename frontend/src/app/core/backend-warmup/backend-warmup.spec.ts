@@ -38,6 +38,33 @@ describe('backendWarmup', () => {
     expect(isBackendWarmupHttpError(new HttpErrorResponse({ status: 500 }))).toBe(false);
   });
 
+  it('does not treat entry-schedule weather errors as warmup HTTP errors', () => {
+    expect(
+      isBackendWarmupHttpError(
+        new HttpErrorResponse({
+          status: 503,
+          error: { error: 'prediction_payload_missing' }
+        })
+      )
+    ).toBe(false);
+    expect(
+      isBackendWarmupHttpError(
+        new HttpErrorResponse({
+          status: 503,
+          error: { error: 'daemon timeout' }
+        })
+      )
+    ).toBe(false);
+    expect(
+      isBackendWarmupHttpError(
+        new HttpErrorResponse({
+          status: 422,
+          error: { error: 'weather_location_required' }
+        })
+      )
+    ).toBe(false);
+  });
+
   it('detects compute engine warmup errors', () => {
     expect(
       isComputeEngineWarmupHttpError(

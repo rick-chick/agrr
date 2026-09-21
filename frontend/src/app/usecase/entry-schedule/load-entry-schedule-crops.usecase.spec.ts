@@ -70,7 +70,7 @@ describe('LoadEntryScheduleCropsUseCase', () => {
     expect(outputPort.present).not.toHaveBeenCalled();
   });
 
-  it('calls onError with warmup i18n key when getEntryScheduleCrops returns 503', async () => {
+  it('calls onError with warmup i18n key when getEntryScheduleCrops returns bare 503', async () => {
     vi.mocked(gateway.getEntryScheduleCrops).mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 503, statusText: 'Service Unavailable' }))
     );
@@ -80,6 +80,48 @@ describe('LoadEntryScheduleCropsUseCase', () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(outputPort.onError).toHaveBeenCalledWith({ message: BACKEND_WARMUP_I18N.database });
+    expect(outputPort.present).not.toHaveBeenCalled();
+  });
+
+  it('calls onError with prediction_failed when crops API returns 503 prediction_payload_missing', async () => {
+    vi.mocked(gateway.getEntryScheduleCrops).mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 503,
+            error: { error: 'prediction_payload_missing' }
+          })
+      )
+    );
+
+    useCase.execute({ farmId: 1, append: false, limit: 20 });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(outputPort.onError).toHaveBeenCalledWith({
+      message: 'api.entry_schedule.errors.prediction_failed'
+    });
+    expect(outputPort.present).not.toHaveBeenCalled();
+  });
+
+  it('calls onError with weather_location_required when crops API returns 422', async () => {
+    vi.mocked(gateway.getEntryScheduleCrops).mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: { error: 'weather_location_required' }
+          })
+      )
+    );
+
+    useCase.execute({ farmId: 1, append: false, limit: 20 });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(outputPort.onError).toHaveBeenCalledWith({
+      message: 'api.entry_schedule.errors.weather_location_required'
+    });
     expect(outputPort.present).not.toHaveBeenCalled();
   });
 

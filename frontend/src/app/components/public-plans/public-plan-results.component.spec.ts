@@ -283,7 +283,7 @@ describe('PublicPlanResultsComponent', () => {
 
     expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
       recovery_action: 'reload',
-      failure_category: 'default',
+      failure_category: 'not_found',
       flow: 'public_plans'
     });
     expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 42 });
@@ -306,14 +306,34 @@ describe('PublicPlanResultsComponent', () => {
     component.onRecoveryAction('try_again');
     expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
       recovery_action: 'try_again',
-      failure_category: 'default',
+      failure_category: 'not_found',
       flow: 'public_plans'
     });
 
     component.onRecoveryAction('start_over');
     expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
       recovery_action: 'start_over',
-      failure_category: 'default',
+      failure_category: 'not_found',
+      flow: 'public_plans'
+    });
+  });
+
+  it('tracks backend_warmup failure_category when results fail during warmup', () => {
+    component.control = {
+      loading: false,
+      error: 'common.backend_warmup.database',
+      data: null,
+      savedPrivatePlanId: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
+    };
+
+    component.onRecoveryAction('reload');
+
+    expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
+      recovery_action: 'reload',
+      failure_category: 'backend_warmup',
       flow: 'public_plans'
     });
   });
@@ -470,7 +490,7 @@ describe('PublicPlanResultsComponent (template)', () => {
     fixture.nativeElement.querySelector('.public-plan-optimizing__retry')?.click();
     expect(uxAnalytics.trackRecoveryAction).toHaveBeenCalledWith({
       recovery_action: 'reload',
-      failure_category: 'default',
+      failure_category: 'not_found',
       flow: 'public_plans'
     });
   });

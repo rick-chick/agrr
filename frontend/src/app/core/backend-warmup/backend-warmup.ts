@@ -71,8 +71,46 @@ export function isComputeEngineWarmupHttpError(error: unknown): boolean {
   return isComputeEngineWarmupMessage(text);
 }
 
+function httpErrorBodyCode(error: HttpErrorResponse): string | null {
+  const body = error.error;
+  if (body == null || typeof body !== 'object') {
+    return null;
+  }
+  const code = (body as { error?: unknown }).error;
+  return typeof code === 'string' && code.length > 0 ? code : null;
+}
+
+/** Entry-schedule weather failures return explicit JSON error codes — not backend warmup. */
+export function isEntryScheduleWeatherHttpError(error: unknown): boolean {
+  if (!(error instanceof HttpErrorResponse)) {
+    return false;
+  }
+
+  const code = httpErrorBodyCode(error);
+  if (!code) {
+    return false;
+  }
+
+  if (error.status === 422 && code === 'weather_location_required') {
+    return true;
+  }
+
+  if (error.status === 503) {
+    if (code === 'prediction_payload_missing') {
+      return true;
+    }
+    return !isComputeEngineWarmupMessage(code);
+  }
+
+  return false;
+}
+
 export function isBackendWarmupHttpError(error: unknown): boolean {
   if (!(error instanceof HttpErrorResponse)) {
+    return false;
+  }
+
+  if (isEntryScheduleWeatherHttpError(error)) {
     return false;
   }
 
