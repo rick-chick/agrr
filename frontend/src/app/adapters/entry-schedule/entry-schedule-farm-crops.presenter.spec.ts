@@ -50,4 +50,22 @@ describe('EntryScheduleFarmCropsPresenter', () => {
     expect(lastControl.cropsWarmupMessageKey).toBe(BACKEND_WARMUP_I18N.database);
     expect(lastControl.cropsLoading).toBe(false);
   });
+
+  it('sets cropsErrorIsWarmup false on entry-schedule prediction failure', () => {
+    presenter.onError({ message: 'api.entry_schedule.errors.prediction_failed' });
+
+    expect(lastControl.cropsError).toBe('api.entry_schedule.errors.prediction_failed');
+    expect(lastControl.cropsErrorIsWarmup).toBe(false);
+    expect(lastControl.cropsWarmupMessageKey).toBeNull();
+    expect(lastControl.cropsLoading).toBe(false);
+  });
+
+  it('sets cropsErrorIsWarmup false on weather_location_required', () => {
+    presenter.onError({ message: 'api.entry_schedule.errors.weather_location_required' });
+
+    expect(lastControl.cropsError).toBe('api.entry_schedule.errors.weather_location_required');
+    expect(lastControl.cropsErrorIsWarmup).toBe(false);
+    expect(lastControl.cropsWarmupMessageKey).toBeNull();
+    expect(lastControl.cropsLoading).toBe(false);
+  });
 });

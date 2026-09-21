@@ -40,7 +40,7 @@ describe('apiErrorI18nKey', () => {
     );
   });
 
-  it('maps 502 and 503 to backend warmup keys', () => {
+  it('maps 502 and bare 503 to backend warmup keys', () => {
     expect(apiErrorI18nKey(new HttpErrorResponse({ status: 502, statusText: 'Bad Gateway' }))).toBe(
       BACKEND_WARMUP_I18N.database
     );
@@ -55,6 +55,39 @@ describe('apiErrorI18nKey', () => {
         })
       )
     ).toBe(BACKEND_WARMUP_I18N.computeEngine);
+  });
+
+  it('maps entry-schedule weather_location_required 422 to dedicated i18n key', () => {
+    expect(
+      apiErrorI18nKey(
+        new HttpErrorResponse({
+          status: 422,
+          error: { error: 'weather_location_required' }
+        })
+      )
+    ).toBe('api.entry_schedule.errors.weather_location_required');
+  });
+
+  it('maps entry-schedule prediction_payload_missing 503 to prediction_failed key', () => {
+    expect(
+      apiErrorI18nKey(
+        new HttpErrorResponse({
+          status: 503,
+          error: { error: 'prediction_payload_missing' }
+        })
+      )
+    ).toBe('api.entry_schedule.errors.prediction_failed');
+  });
+
+  it('maps entry-schedule weather prediction failure 503 to prediction_failed key', () => {
+    expect(
+      apiErrorI18nKey(
+        new HttpErrorResponse({
+          status: 503,
+          error: { error: 'daemon timeout' }
+        })
+      )
+    ).toBe('api.entry_schedule.errors.prediction_failed');
   });
 
   it('maps other HTTP errors to generic key', () => {

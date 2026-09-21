@@ -1,11 +1,38 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { backendWarmupI18nKey, isBackendWarmupHttpError } from './backend-warmup/backend-warmup';
+import {
+  backendWarmupI18nKey,
+  isBackendWarmupHttpError,
+  isEntryScheduleWeatherHttpError
+} from './backend-warmup/backend-warmup';
+
+function entryScheduleWeatherApiErrorI18nKey(error: HttpErrorResponse): string | null {
+  if (!isEntryScheduleWeatherHttpError(error)) {
+    return null;
+  }
+
+  const body = error.error;
+  const code =
+    body != null && typeof body === 'object'
+      ? (body as { error?: string }).error
+      : undefined;
+
+  if (error.status === 422 && code === 'weather_location_required') {
+    return 'api.entry_schedule.errors.weather_location_required';
+  }
+
+  return 'api.entry_schedule.errors.prediction_failed';
+}
 
 /**
  * HTTP 失敗を画面用の ngx-translate キーへ正規化する（レスポンス本文の生表示を避ける）。
  */
 export function apiErrorI18nKey(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
+    const entryScheduleKey = entryScheduleWeatherApiErrorI18nKey(error);
+    if (entryScheduleKey) {
+      return entryScheduleKey;
+    }
+
     if (error.status === 401) {
       return 'common.api_error.unauthorized';
     }

@@ -14,6 +14,8 @@ export type OptimizationFailureCategory =
   | 'task_schedule_generation'
   | 'optimizing'
   | 'connection_lost'
+  | 'not_found'
+  | 'backend_warmup'
   | 'default';
 
 export type RecoveryAction = 'reload' | 'back_to_plan' | 'try_again' | 'start_over';
@@ -30,3 +32,19 @@ export type RecoveryActionParams = {
   failure_category: OptimizationFailureCategory;
   flow: OptimizationFlow;
 };
+
+/** Maps load-error i18n keys on results/recovery screens to J3 failure_category. */
+export function recoveryFailureCategoryFromLoadError(
+  errorKey: string | null | undefined
+): OptimizationFailureCategory {
+  if (!errorKey) {
+    return 'default';
+  }
+  if (errorKey === 'common.api_error.not_found') {
+    return 'not_found';
+  }
+  if (errorKey.startsWith('common.backend_warmup.')) {
+    return 'backend_warmup';
+  }
+  return 'default';
+}
