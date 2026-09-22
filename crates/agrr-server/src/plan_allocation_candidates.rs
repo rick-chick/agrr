@@ -354,4 +354,109 @@ mod tests {
         assert_eq!(window.candidates_end, d(2027, 12, 31));
         assert_eq!(window.weather_target_end, d(2027, 12, 31));
     }
+
+    fn candidate(field_id: i64, start_date: &str, profit: Option<f64>) -> Value {
+        match profit {
+            Some(p) => serde_json::json!({
+                "field_id": field_id,
+                "start_date": start_date,
+                "profit": p
+            }),
+            None => serde_json::json!({
+                "field_id": field_id,
+                "start_date": start_date
+            }),
+        }
+    }
+
+    #[test]
+    fn select_best_candidate_filters_before_lower_bound() {
+        let logger = StderrLogger;
+        let candidates = vec![
+            candidate(1, "2026-01-01", Some(100.0)),
+            candidate(2, "2026-06-01", Some(50.0)),
+        ];
+
+        let best = select_best_candidate(&candidates, "", d(2026, 3, 1), &logger).unwrap();
+
+        assert_eq!(best.field_id, "2");
+        assert_eq!(best.start_date, "2026-06-01");
+    }
+
+    #[test]
+    fn select_best_candidate_prefers_highest_profit_in_preferred_field() {
+        let logger = StderrLogger;
+        let candidates = vec![
+            candidate(10, "2026-06-01", Some(200.0)),
+            candidate(20, "2026-06-01", Some(50.0)),
+            candidate(20, "2026-07-01", Some(150.0)),
+        ];
+
+        let best = select_best_candidate(&candidates, "20", d(2026, 3, 1), &logger).unwrap();
+
+        assert_eq!(best.field_id, "20");
+        assert_eq!(best.start_date, "2026-07-01");
+    }
+
+    #[test]
+    fn select_best_candidate_falls_back_to_global_best_when_preferred_field_empty() {
+        let logger = StderrLogger;
+        let candidates = vec![
+            candidate(10, "2026-06-01", Some(80.0)),
+            candidate(11, "2026-06-01", Some(120.0)),
+        ];
+
+        let best = select_best_candidate(&candidates, "99", d(2026, 3, 1), &logger).unwrap();
+
+        assert_eq!(best.field_id, "11");
+    }
+
+    #[test]
+    fn select_best_candidate_uses_expected_profit_when_profit_missing() {
+        let logger = StderrLogger;
+        let candidates = vec![
+            serde_json::json!({
+                "field_id": 1,
+                "start_date": "2026-06-01",
+                "expected_profit": 90.0
+            }),
+            serde_json::json!({
+                "field_id": 2,
+                "start_date": "2026-06-01",
+                "expected_profit": 120.0
+            }),
+        ];
+
+        let best = select_best_candidate(&candidates, "", d(2026, 3, 1), &logger).unwrap();
+
+        assert_eq!(best.field_id, "2");
+    }
+
+    #[test]
+    fn select_best_candidate_returns_none_when_all_dates_before_lower_bound() {
+        let logger = StderrLogger;
+        let candidates = vec![
+            candidate(1, "2026-01-01", Some(100.0)),
+            candidate(2, "2026-02-01", Some(200.0)),
+        ];
+
+        assert!(select_best_candidate(&candidates, "", d(2026, 6, 1), &logger).is_none());
+    }
+
+    #[test]
+    fn select_best_candidate_excludes_malformed_start_dates() {
+        let logger = StderrLogger;
+        let candidates = vec![
+            serde_json::json!({
+                "field_id": 1,
+                "start_date": "not-a-date",
+                "profit": 999.0
+            }),
+            candidate(2, "2026-06-01", Some(10.0)),
+        ];
+
+        let best = select_best_candidate(&candidates, "", d(2026, 3, 1), &logger).unwrap();
+
+        assert_eq!(best.field_id, "2");
+    }
 }
