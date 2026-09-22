@@ -593,6 +593,40 @@
     }
 
     #[test]
+    fn honors_direct_sow_method_over_transplant_stage_names() {
+        let crop = test_crop(1, "トマト", None, Some(CropCultivationMethod::DirectSow));
+        let crop_gateway = StubCropGateway {
+            rows: sowing_transplant_stages(),
+        };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(result.eligible);
+        assert_eq!(result.sowing_windows.len(), 1);
+        assert!(result.transplant_windows.is_empty());
+        assert_eq!(result.sowing_stage_id, Some(1));
+        assert_eq!(result.transplant_stage_id, None);
+    }
+
+    #[test]
     fn infers_direct_sow_cultivation_from_stage_names_when_method_missing() {
         let crop = test_crop(1, "ほうれん草", None, None);
         let crop_gateway = StubCropGateway {
