@@ -231,6 +231,13 @@ fn log_candidate_window(
     logger.info(&format!("📋 [Candidates] UI filters: {filters}"));
 }
 
+fn candidate_field_id(value: &Value) -> Option<i64> {
+    value.get("field_id").and_then(|v| {
+        v.as_i64()
+            .or_else(|| v.as_str().and_then(|s| s.parse().ok()))
+    })
+}
+
 fn select_best_candidate(
     candidates: &[Value],
     preferred_field_id: &str,
@@ -263,7 +270,7 @@ fn select_best_candidate(
     if let Some(fid) = preferred {
         let field_pool: Vec<_> = valid
             .iter()
-            .filter(|c| c.get("field_id").and_then(|v| v.as_i64()) == Some(fid))
+            .filter(|c| candidate_field_id(c) == Some(fid))
             .copied()
             .collect();
         if !field_pool.is_empty() {
@@ -285,14 +292,7 @@ fn select_best_candidate(
         pa.partial_cmp(&pb).unwrap_or(std::cmp::Ordering::Equal)
     })?;
 
-    let field_id = best
-        .get("field_id")
-        .map(|v| {
-            v.as_i64()
-                .map(|n| n.to_string())
-                .or_else(|| v.as_str().map(|s| s.to_string()))
-        })
-        .flatten()?;
+    let field_id = candidate_field_id(best).map(|n| n.to_string())?;
     let start_date = best
         .get("start_date")
         .and_then(|v| v.as_str())
@@ -441,6 +441,33 @@ mod tests {
         ];
 
         assert!(select_best_candidate(&candidates, "", d(2026, 6, 1), &logger).is_none());
+    }
+
+    #[test]
+    fn select_best_candidate_matches_string_field_id_for_preferred_field() {
+        let logger = StderrLogger;
+        let candidates = vec![
+            serde_json::json!({
+                "field_id": "10",
+                "start_date": "2026-06-01",
+                "profit": 200.0
+            }),
+            serde_json::json!({
+                "field_id": "20",
+                "start_date": "2026-06-01",
+                "profit": 50.0
+            }),
+            serde_json::json!({
+                "field_id": "20",
+                "start_date": "2026-07-01",
+                "profit": 150.0
+            }),
+        ];
+
+        let best = select_best_candidate(&candidates, "20", d(2026, 3, 1), &logger).unwrap();
+
+        assert_eq!(best.field_id, "20");
+        assert_eq!(best.start_date, "2026-07-01");
     }
 
     #[test]
