@@ -521,6 +521,37 @@ async fn entry_schedule_crop_show(
     }
 }
 
+struct EntryScheduleCropsPage<T> {
+    page: Vec<T>,
+    total: usize,
+    limit: usize,
+    next_cursor: Option<String>,
+    has_more: bool,
+}
+
+fn paginate_entry_schedule_crops<T>(
+    items: Vec<T>,
+    limit: Option<i32>,
+    cursor: Option<&str>,
+) -> EntryScheduleCropsPage<T> {
+    let limit = limit.unwrap_or(20).clamp(1, 50) as usize;
+    let offset = cursor.and_then(|c| c.parse::<usize>().ok()).unwrap_or(0);
+    let total = items.len();
+    let page: Vec<_> = items.into_iter().skip(offset).take(limit).collect();
+    let next_offset = offset + page.len();
+    EntryScheduleCropsPage {
+        page,
+        total,
+        limit,
+        next_cursor: if next_offset < total {
+            Some(next_offset.to_string())
+        } else {
+            None
+        },
+        has_more: next_offset < total,
+    }
+}
+
 async fn entry_schedule_crops(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -582,14 +613,7 @@ async fn entry_schedule_crops(
         list_item.remove("rough_timeline");
         items.push(Value::Object(list_item.into_iter().collect()));
     }
-    let limit = query.limit.unwrap_or(20).clamp(1, 50) as usize;
-    let offset = query
-        .cursor
-        .and_then(|c| c.parse::<usize>().ok())
-        .unwrap_or(0);
-    let total = items.len();
-    let page: Vec<_> = items.into_iter().skip(offset).take(limit).collect();
-    let next_offset = offset + page.len();
+    let page = paginate_entry_schedule_crops(items, query.limit, query.cursor.as_deref());
     let prediction_meta = entry_schedule_crop_mapper::prediction_meta(
         &FarmWrap(farm.clone()),
         &weather,
@@ -607,12 +631,12 @@ async fn entry_schedule_crops(
             },
             "prediction": prediction_meta,
             "meta": {
-                "total_count": total,
-                "limit": limit,
-                "next_cursor": if next_offset < total { Some(next_offset.to_string()) } else { None::<String> },
-                "has_more": next_offset < total,
+                "total_count": page.total,
+                "limit": page.limit,
+                "next_cursor": page.next_cursor,
+                "has_more": page.has_more,
             },
-            "crops": page,
+            "crops": page.page,
         })),
     )
         .into_response()
@@ -980,5 +1004,48 @@ mod tests {
         assert_eq!(entity.id, 99);
         assert_eq!(entity.name, "missing");
         assert_eq!(entity.cultivation_method, None);
+    }
+
+    #[test]
+    fn paginate_entry_schedule_crops_clamps_limit_between_1_and_50() {
+        let items = vec![1, 2, 3];
+        let page = paginate_entry_schedule_crops(items, Some(0), None);
+        assert_eq!(page.limit, 1);
+        assert_eq!(page.page, vec![1]);
+
+        let items = (1..=60).collect::<Vec<_>>();
+        let page = paginate_entry_schedule_crops(items, Some(100), None);
+        assert_eq!(page.limit, 50);
+        assert_eq!(page.page.len(), 50);
+        assert!(page.has_more);
+        assert_eq!(page.next_cursor.as_deref(), Some("50"));
+    }
+
+    #[test]
+    fn paginate_entry_schedule_crops_returns_next_cursor_until_exhausted() {
+        let items = vec!["a", "b", "c", "d", "e"];
+        let first = paginate_entry_schedule_crops(items.clone(), Some(2), None);
+        assert_eq!(first.page, vec!["a", "b"]);
+        assert_eq!(first.total, 5);
+        assert!(first.has_more);
+        assert_eq!(first.next_cursor.as_deref(), Some("2"));
+
+        let second = paginate_entry_schedule_crops(items, Some(2), Some("2"));
+        assert_eq!(second.page, vec!["c", "d"]);
+        assert!(second.has_more);
+        assert_eq!(second.next_cursor.as_deref(), Some("4"));
+
+        let third = paginate_entry_schedule_crops(vec!["a", "b", "c", "d", "e"], Some(2), Some("4"));
+        assert_eq!(third.page, vec!["e"]);
+        assert!(!third.has_more);
+        assert!(third.next_cursor.is_none());
+    }
+
+    #[test]
+    fn paginate_entry_schedule_crops_ignores_invalid_cursor() {
+        let items = vec![1, 2, 3];
+        let page = paginate_entry_schedule_crops(items, Some(2), Some("not-a-number"));
+        assert_eq!(page.page, vec![1, 2]);
+        assert_eq!(page.next_cursor.as_deref(), Some("2"));
     }
 }
