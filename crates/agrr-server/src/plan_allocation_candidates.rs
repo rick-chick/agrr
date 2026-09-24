@@ -486,4 +486,28 @@ mod tests {
 
         assert_eq!(best.field_id, "2");
     }
+
+    #[test]
+    fn candidates_end_uses_planning_horizon_when_display_end_is_earlier() {
+        let window = resolve_candidates_planning_window(
+            Some(d(2026, 1, 1)),
+            Some(d(2026, 6, 30)),
+            Some(d(2026, 1, 1)),
+            Some(d(2027, 12, 31)),
+            Some(d(2027, 12, 31)),
+            d(2026, 3, 1),
+        );
+        assert_eq!(window.candidates_end, d(2027, 12, 31));
+        assert_eq!(window.weather_target_end, d(2027, 12, 31));
+    }
+
+    #[test]
+    fn select_best_candidate_returns_none_when_best_row_lacks_field_id() {
+        let logger = StderrLogger;
+        let candidates = vec![serde_json::json!({
+            "start_date": "2026-06-01",
+            "profit": 100.0
+        })];
+        assert!(select_best_candidate(&candidates, "", d(2026, 3, 1), &logger).is_none());
+    }
 }
