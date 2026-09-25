@@ -262,6 +262,96 @@ describe('PlanOptimizingPresenter', () => {
     });
   });
 
+  it('resolves timeout category from message_key', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'models.cultivation_plan.phase_failed.timeout': 'The process timed out.',
+        'plans.optimizing_live.error.hints.timeout': 'Wait a moment and try again.'
+      },
+      true
+    );
+    const harness = createView({ status: 'optimizing', progress: 40, phaseMessage: '' });
+    presenter.setView(harness.view);
+
+    presenter.present({
+      status: 'failed',
+      progress: 40,
+      message_key: 'models.cultivation_plan.phase_failed.timeout'
+    });
+
+    expect(harness.control.phaseMessage).toBe('The process timed out.');
+    expect(harness.control.failureHint).toBe('Wait a moment and try again.');
+    expect(harness.control.failureCategory).toBe('timeout');
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'plans',
+      job_scenario: 'J3',
+      failure_category: 'timeout'
+    });
+  });
+
+  it('infers timeout category from technical phase_message', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'models.cultivation_plan.phase_failed.timeout': 'The process timed out.',
+        'plans.optimizing_live.error.hints.timeout': 'Wait a moment and try again.'
+      },
+      true
+    );
+    const harness = createView({ status: 'optimizing', progress: 40, phaseMessage: '' });
+    presenter.setView(harness.view);
+
+    presenter.present({
+      status: 'failed',
+      progress: 40,
+      message_key: 'models.cultivation_plan.phase_failed.default',
+      phase_message: 'worker timed out after 120s'
+    });
+
+    expect(harness.control.phaseMessage).toBe('The process timed out.');
+    expect(harness.control.failureCategory).toBe('timeout');
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'plans',
+      job_scenario: 'J3',
+      failure_category: 'timeout'
+    });
+  });
+
+  it('sets category-specific failure hint for predicting_weather message_key', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'models.cultivation_plan.phase_failed.predicting_weather': 'Weather prediction failed.',
+        'plans.optimizing_live.error.hints.predicting_weather': 'Check farm settings and retry.'
+      },
+      true
+    );
+    const harness = createView({ status: 'optimizing', progress: 40, phaseMessage: '' });
+    presenter.setView(harness.view);
+
+    presenter.present({
+      status: 'failed',
+      progress: 40,
+      message_key: 'models.cultivation_plan.phase_failed.predicting_weather'
+    });
+
+    expect(harness.control.phaseMessage).toBe('Weather prediction failed.');
+    expect(harness.control.failureHint).toBe('Check farm settings and retry.');
+    expect(harness.control.failureCategory).toBe('predicting_weather');
+    expect(uxAnalytics.trackOptimizationLifecycle).toHaveBeenCalledWith({
+      phase: 'failed',
+      flow: 'plans',
+      job_scenario: 'J3',
+      failure_category: 'predicting_weather'
+    });
+  });
+
   it('does not surface technical phase_message as primary failure text', () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
