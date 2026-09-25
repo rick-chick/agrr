@@ -136,3 +136,45 @@
         assert!(result.eligible);
         assert_eq!(result.sowing_windows.len(), 1);
     }
+
+    #[test]
+    fn populates_transplant_windows_independently_from_sowing_windows() {
+        let stages = vec![
+            CropStageSnapshot {
+                id: 1,
+                name: "播種".into(),
+                order: 1,
+                temperature_requirement: Some(TemperatureRequirementSnapshot {
+                    frost_threshold: Some(0.0),
+                    optimal_min: Some(20.0),
+                    optimal_max: Some(30.0),
+                    base_temperature: None,
+                }),
+            },
+            CropStageSnapshot {
+                id: 2,
+                name: "定植".into(),
+                order: 2,
+                temperature_requirement: Some(TemperatureRequirementSnapshot {
+                    frost_threshold: Some(0.0),
+                    optimal_min: Some(10.0),
+                    optimal_max: Some(30.0),
+                    base_temperature: None,
+                }),
+            },
+        ];
+        let rows = vec![serde_json::json!({
+            "time": "2026-04-02",
+            "temperature_2m_min": 5.0,
+            "temperature_2m_max": 28.0,
+            "temperature_2m_mean": 19.0
+        })];
+        let result = WindowService::call(stages, serde_json::json!({ "data": rows }));
+        assert!(result.eligible);
+        assert!(result.sowing_windows.is_empty());
+        assert_eq!(result.transplant_windows.len(), 1);
+        assert_eq!(
+            result.transplant_windows[0].start_date,
+            Date::from_calendar_date(2026, time::Month::April, 2).unwrap()
+        );
+    }

@@ -510,4 +510,25 @@ mod tests {
         })];
         assert!(select_best_candidate(&candidates, "", d(2026, 3, 1), &logger).is_none());
     }
+
+    #[test]
+    fn planning_window_falls_back_to_today_and_two_year_horizon_without_planning_bounds() {
+        let today = d(2026, 3, 15);
+        let window = resolve_candidates_planning_window(None, None, None, None, None, today);
+        assert_eq!(window.candidates_start, today);
+        assert_eq!(window.candidates_end, d(2028, 12, 31));
+        assert_eq!(window.weather_target_end, d(2028, 12, 31));
+    }
+
+    #[test]
+    fn select_best_candidate_truncates_iso_datetime_start_date_to_date_only() {
+        let logger = StderrLogger;
+        let candidates = vec![serde_json::json!({
+            "field_id": 1,
+            "start_date": "2026-06-15T08:30:00Z",
+            "profit": 10.0
+        })];
+        let best = select_best_candidate(&candidates, "", d(2026, 3, 1), &logger).unwrap();
+        assert_eq!(best.start_date, "2026-06-15");
+    }
 }
