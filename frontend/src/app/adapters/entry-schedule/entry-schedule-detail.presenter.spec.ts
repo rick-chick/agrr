@@ -51,4 +51,22 @@ describe('EntryScheduleDetailPresenter', () => {
     expect(lastControl.errorIsWarmup).toBe(false);
     expect(lastControl.warmupMessageKey).toBeNull();
   });
+
+  it('sets errorIsWarmup false on entry-schedule prediction failure', () => {
+    presenter.onError({ message: 'api.entry_schedule.errors.prediction_failed' });
+
+    expect(lastControl.errorKey).toBe('api.entry_schedule.errors.prediction_failed');
+    expect(lastControl.errorIsWarmup).toBe(false);
+    expect(lastControl.warmupMessageKey).toBeNull();
+    expect(lastControl.loading).toBe(false);
+  });
+
+  it('sets errorIsWarmup false on weather_location_required', () => {
+    presenter.onError({ message: 'api.entry_schedule.errors.weather_location_required' });
+
+    expect(lastControl.errorKey).toBe('api.entry_schedule.errors.weather_location_required');
+    expect(lastControl.errorIsWarmup).toBe(false);
+    expect(lastControl.warmupMessageKey).toBeNull();
+    expect(lastControl.loading).toBe(false);
+  });
 });
