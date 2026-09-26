@@ -512,6 +512,20 @@ mod tests {
     }
 
     #[test]
+    fn planning_window_uses_display_start_when_ui_range_extends_before_planning_start() {
+        let window = resolve_candidates_planning_window(
+            Some(d(2025, 6, 1)),
+            Some(d(2026, 12, 31)),
+            Some(d(2026, 1, 1)),
+            Some(d(2026, 12, 31)),
+            None,
+            d(2026, 3, 1),
+        );
+        assert_eq!(window.candidates_start, d(2025, 6, 1));
+        assert_eq!(window.candidates_end, d(2026, 12, 31));
+    }
+
+    #[test]
     fn planning_window_falls_back_to_today_and_two_year_horizon_without_planning_bounds() {
         let today = d(2026, 3, 15);
         let window = resolve_candidates_planning_window(None, None, None, None, None, today);
