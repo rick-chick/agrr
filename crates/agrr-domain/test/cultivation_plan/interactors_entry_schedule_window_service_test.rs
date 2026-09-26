@@ -138,6 +138,41 @@
     }
 
     #[test]
+    fn excludes_days_when_daily_min_is_below_frost_threshold_even_if_mean_is_optimal() {
+        let rows = vec![
+            serde_json::json!({
+                "time": "2026-04-01",
+                "temperature_2m_min": 5.0,
+                "temperature_2m_max": 28.0,
+                "temperature_2m_mean": 19.0
+            }),
+            serde_json::json!({
+                "time": "2026-04-02",
+                "temperature_2m_min": -1.0,
+                "temperature_2m_max": 28.0,
+                "temperature_2m_mean": 19.0
+            }),
+            serde_json::json!({
+                "time": "2026-04-03",
+                "temperature_2m_min": 5.0,
+                "temperature_2m_max": 28.0,
+                "temperature_2m_mean": 19.0
+            }),
+        ];
+        let result = WindowService::call(ordered_stages(), serde_json::json!({ "data": rows }));
+        assert!(result.eligible);
+        assert_eq!(result.sowing_windows.len(), 2);
+        assert_eq!(
+            result.sowing_windows[0].end_date,
+            Date::from_calendar_date(2026, time::Month::April, 1).unwrap()
+        );
+        assert_eq!(
+            result.sowing_windows[1].start_date,
+            Date::from_calendar_date(2026, time::Month::April, 3).unwrap()
+        );
+    }
+
+    #[test]
     fn populates_transplant_windows_independently_from_sowing_windows() {
         let stages = vec![
             CropStageSnapshot {

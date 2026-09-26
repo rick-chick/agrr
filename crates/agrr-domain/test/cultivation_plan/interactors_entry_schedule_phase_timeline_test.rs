@@ -269,6 +269,57 @@ fn sort_meta_returns_days_until_start_when_today_is_before_sowing_window() {
 }
 
 #[test]
+fn phase_segments_reports_missing_sowing_window_when_sowing_windows_are_empty() {
+    let translator = KeyTranslator;
+    let clock = FixedClock {
+        today: date!(2026-06-15),
+    };
+    let timeline = EntrySchedulePhaseTimeline::new(&translator, &clock);
+    let result = window_result(
+        true,
+        "window_service",
+        vec![],
+        vec![DateRange {
+            start_date: date!(2026-04-20),
+            end_date: date!(2026-05-10),
+        }],
+        Some(date!(2026-12-31)),
+    );
+
+    let segments = timeline.phase_segments(&json!({}), &result);
+    let sowing = &segments[0];
+
+    assert_eq!(sowing.phase_key, "sowing");
+    assert_eq!(
+        sowing.empty_reason.as_deref(),
+        Some("api.entry_schedule.phase.empty.no_sowing_window")
+    );
+    assert!(sowing.start_date.is_none());
+}
+
+#[test]
+fn sort_meta_returns_large_proximity_when_crop_is_ineligible() {
+    let translator = KeyTranslator;
+    let clock = FixedClock {
+        today: date!(2026-04-01),
+    };
+    let timeline = EntrySchedulePhaseTimeline::new(&translator, &clock);
+    let result = window_result(false, "window_service", vec![], vec![], None);
+
+    let meta = timeline.sort_meta(&result);
+
+    assert_eq!(meta.get("eligible").and_then(|v| v.as_bool()), Some(false));
+    assert_eq!(
+        meta.get("sowing_proximity_days").and_then(|v| v.as_i64()),
+        Some(999_999)
+    );
+    assert_eq!(
+        meta.get("sowing_window_width_days").and_then(|v| v.as_i64()),
+        Some(999_999)
+    );
+}
+
+#[test]
 fn sort_meta_penalizes_past_sowing_windows_for_list_ordering() {
     let translator = KeyTranslator;
     let clock = FixedClock {
