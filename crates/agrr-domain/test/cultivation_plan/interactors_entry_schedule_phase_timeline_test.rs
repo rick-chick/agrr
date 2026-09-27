@@ -320,6 +320,36 @@ fn sort_meta_returns_large_proximity_when_crop_is_ineligible() {
 }
 
 #[test]
+fn sort_meta_uses_transplant_window_when_sowing_windows_are_empty() {
+    let translator = KeyTranslator;
+    let clock = FixedClock {
+        today: date!(2026-04-25),
+    };
+    let timeline = EntrySchedulePhaseTimeline::new(&translator, &clock);
+    let result = window_result(
+        true,
+        "agrr_optimize_period",
+        vec![],
+        vec![DateRange {
+            start_date: date!(2026-04-20),
+            end_date: date!(2026-05-10),
+        }],
+        Some(date!(2026-12-31)),
+    );
+
+    let meta = timeline.sort_meta(&result);
+
+    assert_eq!(
+        meta.get("sowing_proximity_days").and_then(|v| v.as_i64()),
+        Some(0)
+    );
+    assert_eq!(
+        meta.get("sowing_window_width_days").and_then(|v| v.as_i64()),
+        Some(21)
+    );
+}
+
+#[test]
 fn sort_meta_penalizes_past_sowing_windows_for_list_ordering() {
     let translator = KeyTranslator;
     let clock = FixedClock {

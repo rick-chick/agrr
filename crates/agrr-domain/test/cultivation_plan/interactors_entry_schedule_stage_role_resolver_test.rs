@@ -69,3 +69,9 @@ fn has_transplant_stage_is_false_for_direct_sow_stages() {
     let stages = vec![stage(1, "播種〜発芽", 1), stage(2, "発芽〜生育", 2)];
     assert!(!StageRoleResolver::has_transplant_stage(&stages));
 }
+
+#[test]
+fn has_transplant_stage_is_true_for_uetsuke_variant_name() {
+    let stages = vec![stage(1, "育苗", 1), stage(2, "植え付", 2)];
+    assert!(StageRoleResolver::has_transplant_stage(&stages));
+}
