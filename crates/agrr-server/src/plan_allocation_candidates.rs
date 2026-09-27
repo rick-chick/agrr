@@ -545,4 +545,33 @@ mod tests {
         let best = select_best_candidate(&candidates, "", d(2026, 3, 1), &logger).unwrap();
         assert_eq!(best.start_date, "2026-06-15");
     }
+
+    #[test]
+    fn planning_window_reads_rails_symbol_style_display_date_keys() {
+        let mut display_range: HashMap<String, Value> = HashMap::new();
+        display_range.insert(":start_date".into(), Value::String("2025-06-01".into()));
+        display_range.insert(":end_date".into(), Value::String("2026-12-31".into()));
+
+        let display_start = display_range
+            .get("start_date")
+            .or_else(|| display_range.get(":start_date"))
+            .and_then(|v| v.as_str())
+            .and_then(parse_iso_date);
+        let display_end = display_range
+            .get("end_date")
+            .or_else(|| display_range.get(":end_date"))
+            .and_then(|v| v.as_str())
+            .and_then(parse_iso_date);
+
+        let window = resolve_candidates_planning_window(
+            display_start,
+            display_end,
+            Some(d(2026, 1, 1)),
+            Some(d(2026, 12, 31)),
+            None,
+            d(2026, 3, 1),
+        );
+        assert_eq!(window.candidates_start, d(2025, 6, 1));
+        assert_eq!(window.candidates_end, d(2026, 12, 31));
+    }
 }
