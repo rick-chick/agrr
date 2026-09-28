@@ -271,3 +271,106 @@
             Date::from_calendar_date(2026, time::Month::April, 2).unwrap()
         );
     }
+
+    #[test]
+    fn accepts_days_when_only_optimal_min_is_configured_without_max() {
+        let tr = TemperatureRequirementSnapshot {
+            frost_threshold: None,
+            optimal_min: Some(15.0),
+            optimal_max: None,
+            base_temperature: None,
+        };
+        let stages = vec![
+            CropStageSnapshot {
+                id: 1,
+                name: "播種".into(),
+                order: 1,
+                temperature_requirement: Some(tr.clone()),
+            },
+            CropStageSnapshot {
+                id: 2,
+                name: "定植".into(),
+                order: 2,
+                temperature_requirement: Some(tr),
+            },
+        ];
+        let rows = vec![
+            serde_json::json!({
+                "time": "2026-04-01",
+                "temperature_2m_min": 10.0,
+                "temperature_2m_max": 20.0,
+                "temperature_2m_mean": 16.0
+            }),
+            serde_json::json!({
+                "time": "2026-04-02",
+                "temperature_2m_min": 10.0,
+                "temperature_2m_max": 20.0,
+                "temperature_2m_mean": 14.0
+            }),
+        ];
+        let result = WindowService::call(stages, serde_json::json!({ "data": rows }));
+        assert!(result.eligible);
+        assert_eq!(result.sowing_windows.len(), 1);
+        assert_eq!(
+            result.sowing_windows[0].start_date,
+            Date::from_calendar_date(2026, time::Month::April, 1).unwrap()
+        );
+        assert_eq!(
+            result.sowing_windows[0].end_date,
+            Date::from_calendar_date(2026, time::Month::April, 1).unwrap()
+        );
+        assert_eq!(result.transplant_windows.len(), 1);
+        assert_eq!(
+            result.transplant_windows[0].start_date,
+            Date::from_calendar_date(2026, time::Month::April, 1).unwrap()
+        );
+    }
+
+    #[test]
+    fn returns_missing_stages_or_temperature_when_requirements_are_absent() {
+        let stages = vec![
+            CropStageSnapshot {
+                id: 1,
+                name: "播種".into(),
+                order: 1,
+                temperature_requirement: None,
+            },
+            CropStageSnapshot {
+                id: 2,
+                name: "定植".into(),
+                order: 2,
+                temperature_requirement: None,
+            },
+        ];
+        let result = WindowService::call(stages, serde_json::json!({ "data": [] }));
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error").and_then(|v| v.as_str()),
+            Some("missing_stages_or_temperature")
+        );
+    }
+
+    #[test]
+    fn deduplicates_duplicate_weather_dates_before_evaluating_windows() {
+        let rows = vec![
+            serde_json::json!({
+                "time": "2026-04-01",
+                "temperature_2m_min": 5.0,
+                "temperature_2m_max": 28.0,
+                "temperature_2m_mean": 19.0
+            }),
+            serde_json::json!({
+                "time": "2026-04-01",
+                "temperature_2m_min": -5.0,
+                "temperature_2m_max": 28.0,
+                "temperature_2m_mean": 3.0
+            }),
+        ];
+        let result = WindowService::call(ordered_stages(), serde_json::json!({ "data": rows }));
+        assert!(result.eligible);
+        assert_eq!(result.sowing_windows.len(), 1);
+        assert_eq!(
+            result.sowing_windows[0].start_date,
+            Date::from_calendar_date(2026, time::Month::April, 1).unwrap()
+        );
+    }

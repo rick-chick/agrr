@@ -80,6 +80,17 @@
         }
     }
 
+    struct FailingCropGateway;
+
+    impl EntryScheduleCropGateway for FailingCropGateway {
+        fn entry_schedule_ordered_stage_rows(
+            &self,
+            _: i64,
+        ) -> Result<Vec<CropStageSnapshot>, Box<dyn std::error::Error + Send + Sync>> {
+            Err("db unavailable".into())
+        }
+    }
+
     enum StubOptimizeOutcome {
         Ok(Value),
         Err(EntryScheduleOptimizationError),
@@ -871,6 +882,38 @@
             Some("invalid_response")
         );
         assert!(result.sowing_windows.is_empty());
+    }
+
+    #[test]
+    fn returns_crop_stage_load_failed_when_stage_gateway_errors_after_optimize() {
+        let crop = test_crop(1, "トマト", None, Some(CropCultivationMethod::DirectSow));
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "optimal_start_date": "2026-03-04",
+                "completion_date": "2026-07-06"
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &FailingCropGateway,
+            &StubBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("crop_stage_load_failed")
+        );
+        assert_eq!(result.reason_parts.get("source").and_then(|v| v.as_str()), Some("agrr_failed"));
     }
 
     // Ruby: test "returns invalid_response when completion_date is before start_date"
