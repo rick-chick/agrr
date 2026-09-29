@@ -1,5 +1,6 @@
 # ドキュメント索引
 
+- **プロダクト方向性・ロードマップ**: [`ROADMAP.md`](ROADMAP.md)
 - **アーキテクチャ（規約本体）**: ルート [`ARCHITECTURE.md`](../ARCHITECTURE.md)（L1）・[`architecture/LAYER-RULES.md`](architecture/LAYER-RULES.md)（L2 詳細）
 - **ADR（Architecture Decision Records）**: [`adr/`](adr/)
   - [ADR-001: 生成は外・計算は agrr デーモン（内蔵 AI 廃止方針）](adr/ADR-001-external-skill-generation-agrr-daemon-calculation.md) — 親 [#316](https://github.com/rick-chick/agrr/issues/316)
