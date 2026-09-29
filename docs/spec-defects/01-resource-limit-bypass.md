@@ -1,6 +1,6 @@
 # 01: Farm / Crop 作成上限が経路ごとにスコープが異なりすり抜ける
 
-- 状態: 対応計画（本書はドキュメントのみ。コード・テスト・マイグレーションは未変更）。上限のスコープは組織単位（案 A）で確定済み（§0）。未決は §3.5 の U1〜U3
+- 状態: 対応計画（本書はドキュメントのみ。コード・テスト・マイグレーションは未変更）。上限のスコープは組織単位（案 A）で確定済み（§0 第 1 回決定）。複数所属は本課題のスコープ外（§0 第 2 回決定、旧 U2）。未決は §3.5 の U1・U3
 - 対象: Farm(非参照)最大 4 件 / Crop(非参照)最大 20 件の上限
 - 根拠ゲート: 本書の「確認済み」記述はすべて実コードを読んで再確認した file:line 付き。読んでいない・実行していないものは「未確認」と明記する（[`evidence-before-design-and-implementation.mdc`](../../.cursor/rules/evidence-before-design-and-implementation.mdc)）。
 - 用語: 「Masters」= `POST /api/v1/masters/farms|crops` 系の作成経路（`FarmCreateInteractor` / `CropCreateInteractor`）。「plan-save」= 公開プランのユーザー保存経路（`PublicPlanSaveInteractor` → `PlanSaveEnsureUserFarm/CropsInteractor`）。
@@ -9,18 +9,34 @@
 
 ## 0. 決定事項
 
+### 第 1 回決定（上限スコープ = 組織単位）
+
 | # | 決定 | 状態 |
 |---|---|---|
 | D-1 | Farm（非参照 最大 4 件）/ Crop（非参照 最大 20 件）の上限は **組織（`organization_id`）単位に統一**する（本書 §3.2 の案 A） | **確定** |
 | D-2 | **ユーザー単位カウントは廃止**する。plan-save が使う `count_non_reference_farms(user_id)`（`crates/agrr-domain/src/cultivation_plan/interactors/plan_save_ensure_user_farm_interactor.rs:82`）と `count_user_owned_non_reference_crops(user_id)`（`plan_save_ensure_user_crops_interactor.rs:122`）を組織単位の件数取得に置き換える | **確定** |
 | D-3 | plan-save も **作成先組織を解決**して組織単位で上限を判定し、Farm / Crop の **INSERT に `organization_id` を設定**する（現状は INSERT に無い: `plan_save_gateways.rs:112-137`、Crop 属性に無い: `plan_save_ensure_user_crops_interactor.rs:139-178`。§2.3） | **確定** |
 
-- 由来: ユーザー指示の語「**組織**」からの**解釈**である。指示は上限のスコープの単位を「組織」とする一語であり、次の点までは指示していない。したがって決定の範囲は D-1〜D-3 に限り、以下は §3.5 で未決のまま扱う。
+- 由来: ユーザー指示の語「**組織**」からの**解釈**である。指示は上限のスコープの単位を「組織」とする一語であり、次の点までは指示していない。したがって第 1 回決定の範囲は D-1〜D-3 に限り、以下は §3.5 で未決のまま扱う（複数所属の作成先組織の規則は第 2 回決定でスコープ外にした）。
   - 複数メンバー組織で枠を共有するか（U1）
-  - 複数組織所属ユーザーの作成先組織の規則（U2）
   - `ARCHITECTURE.md` の「per user」文言をどこで直すか（U3）
 - D-1 は Masters の現行挙動（組織単位: §2.2）と同じ向きであり、Masters の挙動は変えない。変わるのは plan-save のみ（§5、§10-5）。
 - ユーザー単位カウントの残骸: Masters 側の `FarmGateway::count_user_owned_non_reference_farms`（`crates/agrr-domain/src/farm/gateways/farm_gateway.rs:39-43`）/ `CropGateway::count_user_owned_non_reference_crops`（`crates/agrr-domain/src/crop/gateways/crop_gateway.rs:17`）は、プロダクションコードの呼び出し元が無い（`rg '\.count_user_owned_non_reference' crates` のヒットは plan-save の 1 箇所 `plan_save_ensure_user_crops_interactor.rs:122` のみで、これは plan-save 専用トレイト `plan_save_crop_limit_gateway.rs:4` 経由）。D-2 に従い §7 で除去する。
+
+### 第 2 回決定（複数所属はスコープ外）
+
+| # | 決定 | 状態 |
+|---|---|---|
+| D-4 | **複数の組織に所属するユーザーの扱いは本課題の範囲外**とし、別課題にする（旧 U2: 複数所属ユーザーの作成先組織の規則、および複数所属時の枠の扱い。§3.5「スコープ外」、§12、§13）。上限判定は**単一所属（個人組織）を前提**に設計する | **確定** |
+
+- 由来: ユーザー指示「複数所属はスコープアウト」からの**解釈**である。指示は「複数所属を扱わない」旨の一言であり、次の点までは指示していない。したがって決定の範囲は D-4 に限る。
+  - 範囲外とした内容は「複数所属ユーザーの作成先組織の規則」と「複数所属時の枠の扱い」と解釈した。
+  - 「複数メンバー組織で枠を共有するか（U1）」は複数所属とは別論点と解釈し、範囲外にしない（§3.5 で独立に整理: 単一所属前提でも残り得る）。
+  - 「単一所属前提」は設計上の前提であり、システムが単一所属を強制するわけではない（実装上は複数所属が作られ得る: §12-1）。したがって複数所属ユーザーの挙動は「保証しない」が、Masters の既存挙動は変更しない。
+- 帰結（詳細は §5.2 手順 9 / §12 / §13）:
+  - 作成先組織の解決規則は現状維持（変更しない）。plan-save が使う組織解決関数を Masters / crop AI と同一にするのみ（経路間の不一致を作らない最小限の扱い）。
+  - 複数所属ユーザーで上限が期待通りにならない点は「既知の制限」（§12）として残す。
+  - 複数所属を前提とするテストは TDD 計画（§6）から外し、受け入れ条件（§10）に「複数所属は対象外」を明記する。
 
 ---
 
@@ -153,22 +169,38 @@ Farm / Crop の作成上限は、Masters 経路では「所属組織（`organiza
 ### 3.4 実装前に調査で埋める項目（ユーザー質問にしない）
 
 - 本番で NULL `organization_id` の非参照 Farm / Crop が実在するか、上限超過ユーザー / 組織が実在するか（§4.3 のクエリで `production-primary-sqlite-query` スキルにより確認する。**未実施・未確認**）。
-- 複数組織に所属するユーザー / 非 personal org が本番に実在するか（同上）。存在しなければ U1（共有枠）・U2（作成先組織）は現時点で実害が無い。
+- 複数メンバーを持つ組織が本番に実在するか（同上、§4.3 クエリ 4）。存在しなければ U1（共有枠）は現時点で実害が無い。複数所属ユーザーの実在は、別課題（§13）の優先度判断の材料であり、本課題の設計・合否には影響しない（D-4）。
 - plan-save 経路で Farm 作成時に気象取得が起動されるか（`plan_save_*.rs` を読んで確認する。**未確認**）。
 
 ### 3.5 ユーザー確認事項
 
 解消済み:
 
-- 案の選択（旧 §3.5-1: A / B / C のどれを正とするか）→ **案 A で確定**（§0）。
+- 案の選択（旧 §3.5-1: A / B / C のどれを正とするか）→ **案 A で確定**（§0 第 1 回決定）。
+
+スコープ外（第 2 回決定 D-4。未決ではなく、本課題では決めない）:
+
+| # | 事項 | 本課題での扱い |
+|---|---|---|
+| ~~U2~~ | 複数組織所属ユーザーの **作成先組織の規則**、および複数所属時の枠の扱い。現行 Masters は所属の先頭（`organization_memberships` の `ORDER BY id` 昇順の先頭: `organization_membership_sqlite_gateway.rs:85-99` → `user_organization_scope_sqlite_gateway.rs:20-30` → `org_scope.rs:6-11` → 各経路の `org_ids.first()`）。先頭が personal org でない場合の意図は文書化されていない（`docs` を rg しても明記なし。**未確認**）。backfill 先は personal org（`personal_organization_sqlite_gateway.rs:50-59,114-136`）で食い違い得る（§8.2） | **別課題**（§13 の起票メモ）。規則は現状維持（変更しない）。plan-save の組織解決関数を Masters と同一にするのみ（§5.2 手順 9）。複数所属で上限が期待通りにならない点は既知の制限（§12） |
 
 未決（決定事項ではない。推奨案を添えるが、ユーザー回答があるまで確定として扱わない）:
 
 | # | 未決事項 | 推奨案 | 推奨の根拠 | 回答が推奨と異なる場合の影響 |
 |---|---|---|---|---|
-| U1 | 複数メンバー組織で Farm 4 / Crop 20 を **組織全体で共有**するか。ADR-002 は法人 org の上限を「契約プランに応じて フェーズ 2 で定義」としており数値は未確定（`organization-data-model.md:103-104`） | 当面は現行 Masters と同じ数値（4 / 20）・同じ組織共有枠を維持する。法人 org のプラン別上限は本課題に含めない | 組織単位 COUNT は同一組織の全メンバーの行を数える（`farm_gateway.rs:297-309`, `crop_gateway.rs:138-150`）。Masters を変えずに plan-save を揃えられる | メンバー別枠や数値変更を選ぶ場合は Masters の判定も変わり、§5 の設計・§6 A1 の共有枠テストが変わる |
-| U2 | 複数組織所属ユーザーの **作成先組織の規則**。現行 Masters は所属の先頭（`organization_memberships` の `ORDER BY id` の `first()`: `organization_membership_sqlite_gateway.rs:85-99`, `org_scope.rs:6-11`）。先頭が personal org でない場合の意図は文書化されていない（`docs` を rg しても明記なし。**未確認**）。backfill 先は personal org（`personal_organization_sqlite_gateway.rs:50-59,114-136`）で食い違い得る（§8.2） | 現行どおり「所属の先頭」を Masters / crop AI / plan-save の全経路で共通にする（§5.2 手順 9 の共通ヘルパ） | 経路ごとに規則が分かれると、経路 Y（§4.1）と同種のすり抜けが再発する。Masters の挙動を変えない | personal org 優先などに変える場合は Masters の既存挙動も変わり、新規の仕様変更になる（ADR-002 の判断: `09-stale-design-docs.md:209-211`） |
-| U3 | `ARCHITECTURE.md:90-91` の「per user」文言を、どの課題で更新するか | 課題 09 の Q1・Q2（`09-stale-design-docs.md:246-247`）で実施する。09 は 01 のマージ後に実施する前提（`09-stale-design-docs.md:242,254,396`）。01 では書き換えない | 09 が文書側の是正を一括で持つ。01 の未決 U1・U2 が確定してから書けば手戻りが無い（Q1 は複数所属時の所属先規則の明記を求める: `:246`） | 01 で更新する場合は §7 ステップ 9 で実施し、09 の Q1〜Q7 との重複を調整する |
+| U1 | 複数メンバー組織で Farm 4 / Crop 20 を **組織全体で共有**するか。ADR-002 は法人 org の上限を「契約プランに応じて フェーズ 2 で定義」としており数値は未確定（`organization-data-model.md:103-104`）。**複数所属（D-4 でスコープ外）とは独立に残る**（下の整理を参照） | 当面は現行 Masters と同じ数値（4 / 20）・同じ組織共有枠を維持する。法人 org のプラン別上限は本課題に含めない | 組織単位 COUNT は同一組織の全メンバーの行を数える（`farm_gateway.rs:297-309`, `crop_gateway.rs:138-150`）。Masters を変えずに plan-save を揃えられる | メンバー別枠や数値変更を選ぶ場合は Masters の判定も変わり、§5 の設計・§6 A1 の共有枠テストが変わる |
+| U3 | `ARCHITECTURE.md:90-91` の「per user」文言を、どの課題で更新するか | 課題 09 の Q1・Q2（`09-stale-design-docs.md:246-247`）で実施する。09 は 01 のマージ後に実施する前提（`09-stale-design-docs.md:242,254,396`）。01 では書き換えない | 09 が文書側の是正を一括で持つ。01 の未決 U1 が確定してから書けば手戻りが無い。Q1 が求める複数所属時の所属先規則の明記（`:246`）は、本課題では規則を決めない（D-4）ため「別課題で未規定」と書くか、別課題（§13）の後に回す | 01 で更新する場合は §7 ステップ 9 で実施し、09 の Q1〜Q7 との重複を調整する |
+
+**U1 の整理（複数所属との関係。コードで確認した事実）**
+
+- 組織単位の件数は、その組織の行を全メンバー分数える（`farm_gateway.rs:297-309`, `crop_gateway.rs:138-150`。行の `user_id` は条件に無い）。したがって組織に複数メンバーがいれば、Masters は現状すでに枠共有である。plan-save を組織単位に揃える（D-1〜D-3）と plan-save も同じ共有枠になる。**U1 は D-1 を採る限り残る**。
+- 共有が起きる条件は「組織のメンバーが 2 人以上」であり、各メンバーの所属数とは別軸である。同一組織の別メンバー 2 人が、どちらも所属がその組織 1 件だけでも共有は成立する。よって U1 は複数所属の扱い（D-4）と独立に残る。
+- 一方、単一所属（各ユーザーが自分の個人組織 1 件のみ、その組織のメンバーは本人のみ）という運用前提の下では、共有の相手がいないため U1 は**発生しない**（個人組織ではユーザー単位と組織単位が一致する: §3.3-3）。
+- ただしシステムはこの前提を強制していない。次を確認済み。
+  - 任意のログインユーザーが非 personal 組織を作成でき、作成者は Owner になる（`organization_create_interactor.rs:54-59`、ルート `crates/agrr-server/src/organizations.rs:44`）。
+  - 組織のメンバー追加は操作者の役割（Owner / Admin: `organization_access_policy.rs:38-40`）で制御され、対象組織が personal かどうかの判定は無い（`organization_membership_create_interactor.rs:48-108`、`personal` の判定が現れるのは削除側のみ: `organization_delete_interactor.rs:63,82`、ルート `organizations.rs:54`）。
+  - よって「個人組織に他ユーザーを追加する」「他組織にメンバーとして追加される」ことが API 上可能で、その時点で共有枠（U1）と複数所属（D-4 の範囲外）が同時に発生し得る。実運用でそうなっているかは**未確認**（本番未照会: §4.3 クエリ 4）。
+- 帰結: U1 は本課題で回答を求める未決として残す。推奨（現行の共有枠を維持）は、複数所属を扱わない設計でも成立する。
 
 ---
 
@@ -180,7 +212,7 @@ Farm / Crop の作成上限は、Masters 経路では「所属組織（`organiza
 
 - **経路 X（主因）**: plan-save で Farm を作る → `organization_id = NULL`（§2.3）→ Masters の `count_non_reference_farms_for_organization` は NULL 行を数えない（§2.2）→ Masters でさらに 4 件まで作成可能。plan-save 側の判定は `user_id` 単位で Masters 作成分も含めて数えるため（`plan_save_gateways.rs:102-110`）、逆方向（Masters 先 → plan-save）は正しく拒否される。合計の理論上限は Farm で 4（plan-save 由来 NULL）+ 4（Masters）= 8、Crop で 20 + 20 = 40。
 - NULL 行は次回 OAuth ログインの `ensure_personal_organization` で personal org に付く（§2.4）ため、backfill 後は組織単位カウントに入り、以降の作成は拒否される。つまりすり抜けは「plan-save で作成 → 次回ログインまで」の間に限られる（**実際に発生したかは未確認**）。
-- **経路 Y（複数所属）**: Masters は所属の先頭 1 組織だけを数える。他組織に `user_id` が自分の行があってもカウントされない。plan-save は `user_id` で全組織分を数える。両者の食い違いにより、同一ユーザーの上限が経路で異なる。
+- **経路 Y（複数所属。本課題のスコープ外: D-4）**: Masters は所属の先頭 1 組織だけを数える。他組織に `user_id` が自分の行があってもカウントされない。plan-save は `user_id` で全組織分を数える。両者の食い違いにより、同一ユーザーの上限が経路で異なる。本課題は単一所属を前提に設計するため解消対象にしない（既知の制限: §12）。
 - **経路 Z（共有 org）**: 同一 org の他メンバーが作った行は Masters では自分の枠を消費するが、plan-save では消費しない（`user_id` 単位）。
 - **フロント表示**: Farm 一覧に NULL 行が出ない（§2.4）ため、フロントの事前チェック（§2.5）は NULL 行を数えず、UI 上は「まだ作れる」と見える。
 
@@ -189,7 +221,7 @@ Farm / Crop の作成上限は、Masters 経路では「所属組織（`organiza
 | 経路 | 案 A（D-1〜D-3）での扱い |
 |---|---|
 | X（NULL 行のすり抜け） | 書き込みで `organization_id` を必ず設定（D-3）し、既存 NULL 行は backfill で消す（§8）ことで解消 |
-| Y（複数所属の食い違い） | plan-save も Masters と同じ作成先組織 1 つだけを数えるため、経路間の差は解消。他組織にある自分の行を数えない点は設計上の帰結で、規則自体は U2 で確認 |
+| Y（複数所属の食い違い。スコープ外: D-4） | 本課題の対象外。plan-save も Masters と同じ作成先組織 1 つだけを数えるようになるため、「plan-save は全組織分、Masters は先頭 1 組織」という経路間の差は結果として縮まるが、他組織にある自分の行を数えない点など複数所属固有の挙動は残る（§12）。作成先組織の規則は別課題（§13） |
 | Z（共有 org） | plan-save も同一組織の他メンバーの行で枠を消費する共有枠に揃う。共有枠を維持するかは U1 で確認 |
 
 ### 4.2 影響する表・コード
@@ -232,7 +264,8 @@ SELECT user_id, COUNT(*) FROM crops WHERE is_reference = 0 GROUP BY user_id HAVI
 SELECT organization_id, COUNT(*) FROM farms WHERE is_reference = 0 AND organization_id IS NOT NULL GROUP BY organization_id HAVING COUNT(*) > 4;
 SELECT organization_id, COUNT(*) FROM crops WHERE is_reference = 0 AND organization_id IS NOT NULL GROUP BY organization_id HAVING COUNT(*) > 20;
 
--- 4) 複数所属 / 非 personal org の実在
+-- 4) 複数メンバー組織（U1）/ 複数所属（別課題 §13 の材料。本課題の合否には使わない）の実在
+SELECT organization_id, COUNT(*) FROM organization_memberships GROUP BY organization_id HAVING COUNT(*) > 1;
 SELECT user_id, COUNT(*) FROM organization_memberships GROUP BY user_id HAVING COUNT(*) > 1;
 SELECT COUNT(*) FROM organizations WHERE is_personal = 0;
 ```
@@ -246,7 +279,7 @@ SELECT COUNT(*) FROM organizations WHERE is_personal = 0;
 
 ## 5. 対応方針（設計）
 
-案 A（組織単位に統一）は確定済み（§0）。設計は U1・U2 の推奨案（現行 Masters の共有枠・所属の先頭を維持）を前提に書く。U1・U2 に推奨と異なる回答があった場合は §3.5 の「影響」欄に従い、本章を見直してから着手する。U3（文書の更新先）は文書のみで、着手を止めない。
+案 A（組織単位に統一）は確定済み（§0 第 1 回決定）。複数所属はスコープ外で、上限判定は単一所属（個人組織）を前提に設計する（§0 第 2 回決定）。設計は U1 の推奨案（現行 Masters の共有枠を維持）を前提に書く。U1 に推奨と異なる回答があった場合は §3.5 の「影響」欄に従い、本章を見直してから着手する。U3（文書の更新先）は文書のみで、着手を止めない。作成先組織の解決規則（所属の先頭、無ければ personal org）は現状維持で、本課題では変更しない。
 
 ### 5.1 設計原則（LAYER-RULES との照合）
 
@@ -267,14 +300,19 @@ SELECT COUNT(*) FROM organizations WHERE is_personal = 0;
 **ドメイン (`crates/agrr-domain/src/`)**
 
 1. `cultivation_plan/dtos/public_plan_save_workspace.rs`: `PublicPlanSaveWorkspace` に `organization_id: i64` を追加。
-2. `cultivation_plan/interactors/public_plan_save_interactor.rs`: コンストラクタに `UserOrganizationScopeGateway` と `PersonalOrganizationGateway` を追加し、`FarmCreateInteractor` と同じ規則（所属の先頭、無ければ `ensure_personal_organization`）で `organization_id` を解決して `PublicPlanSaveWorkspace` に入れる（現状の生成箇所: `:79-82`）。解決失敗は `?` で伝播（フォールバック禁止）。
+2. `cultivation_plan/interactors/public_plan_save_interactor.rs`: コンストラクタに `UserOrganizationScopeGateway` と `PersonalOrganizationGateway` を追加し、`FarmCreateInteractor` と同じ規則（所属の先頭、無ければ `ensure_personal_organization`。複数所属の規則は変えない: D-4。共通関数化は手順 9）で `organization_id` を解決して `PublicPlanSaveWorkspace` に入れる（現状の生成箇所: `:79-82`）。解決失敗は `?` で伝播（フォールバック禁止）。
 3. `cultivation_plan/dtos/plan_save_farm.rs`: `PlanSaveEnsureUserFarmInput` に `organization_id` を追加。`cultivation_plan/interactors/plan_save_persist_orchestrator.rs`（`ensure_user_farm`）が `PlanSaveSessionRef` 経由で受け取った値を詰める（現状 `user_id` のみ: `:37-40`。組織 ID の受け渡し経路は要設計。**Orchestrator 呼び出し側 `plan_save_session.rs:123-131` の引数変更を伴う**）。
 4. `cultivation_plan/gateways/plan_save_farm_gateway.rs`: `count_non_reference_farms(user_id)` を `count_non_reference_farms_for_organization(organization_id)` に置換。`create_user_farm_from_reference` に `organization_id` を追加。`find_user_farm_by_source`（再利用判定）は `user_id` のまま（再利用は所有者単位の同一性であり上限ではない）。
 5. `cultivation_plan/interactors/plan_save_ensure_user_farm_interactor.rs`: `:82` の件数取得を組織単位に変更。`:96-101` の作成呼び出しに `organization_id` を渡す。再利用分岐（`:67-80`）は件数チェックの前に return する現行順序を維持。
 6. `cultivation_plan/dtos/plan_save_crops.rs`: `PlanSaveEnsureUserCropsInput` に `organization_id` を追加。
 7. `cultivation_plan/gateways/plan_save_crop_limit_gateway.rs`: `count_user_owned_non_reference_crops(user_id)` を `count_non_reference_crops_for_organization(organization_id)` に置換（`CropGateway` と同名にして「subset of CropGateway」（`:1`）の実態を揃える）。
 8. `cultivation_plan/interactors/plan_save_ensure_user_crops_interactor.rs`: `enforce_crop_create_limit` の件数取得を組織単位に。`crop_attributes_from_row`（`:139-178`）に `("organization_id", AttrValue::Int(organization_id))` を追加（`CropCreateInteractor` の `attrs.insert("organization_id", ...)`、`crop_create_interactor.rs:139` と同じ形）。
-9. （U2 の推奨案を採る場合。別コミット）組織解決の重複を共通化: 現在 3 か所（`farm_create_interactor.rs:70-77`, `crop_create_interactor.rs:59-66`, `crop_ai_upsert_sqlite_persistence.rs:166-173`）に同一ロジックが複製されており、`PublicPlanSaveInteractor` で 4 か所目になる。`shared/org_scope.rs`（既に `member_organization_ids` がある: `:6-11`）に解決ヘルパを 1 つ置き、4 か所から使う。**振る舞い不変リファクタ**なので既存テストが GREEN のまま通ることで確認する（TDD 例外規定）。
+9. 組織解決関数を plan-save と Masters で同一にする（別コミット。複数所属のスコープ外化 D-4 に伴う**推奨**）。現在 3 か所（確認済み: `farm_create_interactor.rs:70-77`, `crop_create_interactor.rs:59-66`, `crop_ai_upsert_sqlite_persistence.rs:166-173`）が同一ロジック（`member_organization_ids` の `first()`、無ければ `ensure_personal_organization(user.id, "", "")`）を複製しており、手順 2 のままだと `PublicPlanSaveInteractor` が 4 か所目の複製になる。
+   - 選択肢と推奨:
+     - (i) 現状維持: plan-save に同一ロジックを 4 か所目として複製する。経路間で規則が将来ずれ得る（複数所属の規則を別課題で変える際に 1 か所直し漏れる）。
+     - (ii) **推奨（最小限）**: `shared/org_scope.rs`（既に `member_organization_ids` がある: `:6-11`）に、上記と同一の規則をそのまま返す解決ヘルパを 1 つ置き、plan-save・Farm・Crop・crop AI preflight の 4 か所から呼ぶ。**規則自体は変えない**ので Masters の観測可能な挙動は不変。既存テストが GREEN のまま通ることで確認する（振る舞い不変リファクタ: TDD 例外規定）。
+     - (iii) 不採用: 「所属の先頭」以外（personal org 優先など）への規則変更、および全経路での規則の再設計。複数所属の仕様変更であり別課題（§13）。
+   - 単一所属（個人組織 1 件のみ）では、(i)(ii) のどちらでも解決結果は同じ（先頭 = 個人組織）。(ii) は複数所属でも plan-save と Masters が同じ組織を選ぶことを保証するための最小限の措置で、複数所属時の枠の正しさ（§12）までは保証しない。
 10. `organization/gateways/personal_organization_gateway.rs`: `list_users_needing_personal_organization` とは別に、`Tier1 の organization_id が NULL の行を持つユーザー` を返すメソッド（例: `list_users_with_unassigned_organization_rows`）を追加（§8）。`organization/interactors/personal_organization_backfill_interactor.rs`: 両方の一覧を処理する（`ensure_personal_organization` は冪等: `personal_organization_gateway.rs:14`）。
 
 **アダプタ (`crates/agrr-adapters-sqlite/src/`)**
@@ -325,6 +363,8 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 
 凡例: ファイルは既存ファイルへの追記を基本とする（`agrr-domain/test/**` は各 `src/**` から `include!` される: 例 `plan_save_ensure_user_farm_interactor.rs:131-135`）。Rust では DTO へのフィールド追加が先にテストで参照されると**コンパイルエラーが RED** になる。その場合、「意図した理由 = 該当フィールド/メソッドが存在しない」ことをログで確認し、最小のスタブ（型・シグネチャのみ）を追加してから、**値が誤っていることによる失敗**に RED を進める。
 
+対象外: 複数所属（同一ユーザーが 2 組織以上に所属）を前提とするテストは本課題では書かない（D-4、§10-13）。テストの given は、ユーザーの所属が 1 組織のみ、または 0 組織（個人組織を新規作成する経路）に限る。
+
 **D1: plan-save Farm を組織単位で判定する**
 - ファイル: `crates/agrr-domain/test/cultivation_plan/interactors_plan_save_ensure_user_farm_interactor_test.rs`
 - `counts_non_reference_farms_by_organization_not_by_user`
@@ -355,8 +395,8 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 
 **D3: PublicPlanSaveInteractor が作成先組織を解決する**
 - ファイル: `crates/agrr-domain/test/cultivation_plan/interactors_public_plan_save_interactor_test.rs`（既存。`:302`, `:344` の `new(...)` 呼び出しを新コンストラクタに更新）
-- `resolves_first_member_organization_into_workspace`
-  - given: スコープ Gateway が `[11, 12]` を返す
+- `resolves_member_organization_into_workspace`
+  - given: スコープ Gateway が単一所属 `[11]` を返す（複数所属のケースは D-4 によりテストしない）
   - then: 永続化ポートに渡された `PublicPlanSaveWorkspace.organization_id == 11`、`ensure_personal_organization` は呼ばれない
 - `ensures_personal_organization_when_user_has_no_membership`
   - given: スコープ Gateway が `[]`、`ensure_personal_organization` が `21` を返す
@@ -365,9 +405,9 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
   - given: スコープ Gateway が `Err`
   - then: 永続化ポートが呼ばれない（フォールバック禁止の担保）
 
-**D4: 組織解決ヘルパ（§5.2 手順 9 を実施する場合）**
+**D4: 組織解決ヘルパ（§5.2 手順 9 (ii) を実施する場合）**
 - ファイル: 既存の `shared` 配下のテスト配置に合わせる（`crates/agrr-domain/test/shared/` に `org_scope` 用ファイルがあるかは未確認。無ければ新規に `helpers_org_scope_test.rs` を追加し `test/shared/mod.rs` に登録）
-- 上記 D3 と同じ 2 ケースをヘルパ単体で。**既存の Masters / crop AI のテストは変更せず GREEN のまま**を確認（振る舞い不変）
+- 上記 D3 と同じ 2 ケース（単一所属 / 所属なし）をヘルパ単体で。複数所属のケースは追加しない（D-4）。**既存の Masters / crop AI のテストは変更せず GREEN のまま**を確認（振る舞い不変）
 
 **D5: backfill Interactor が「personal org 既存だが NULL 行あり」のユーザーも処理する**
 - ファイル: `crates/agrr-domain/test/organization/interactors_personal_organization_backfill_interactor_test.rs`
@@ -389,9 +429,9 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
   - given: ユーザー U（組織 O）。異なる参照 Farm 4 件に対して plan-save を 4 回実行
   - when: `FarmSqliteGateway::count_non_reference_farms_for_organization(O)`
   - then: `4`（現状は `0` で RED = すり抜けの直接の再現）
-- `plan_save_rejects_farm_when_organization_already_has_four_farms_from_other_member`（U1 の推奨案＝組織共有枠のとき。U1 が別回答なら削除または逆転する）
-  - given: 組織 O に別メンバー U2 の非参照 Farm が 4 件（`organization_id = O`）。U1 も O 所属
-  - then: U1 の plan-save は上限超過で失敗（現状は `user_id` 単位で 0 件のため成功 = RED）
+- `plan_save_rejects_farm_when_organization_already_has_four_farms_from_other_member`（未決 U1 の推奨案＝組織共有枠のとき。U1 が別回答なら削除または逆転する。複数所属のテストではない）
+  - given: 組織 O に別メンバー M の非参照 Farm が 4 件（`organization_id = O`）。ユーザー U と M の所属はどちらも O の 1 件のみ（単一所属）
+  - then: U の plan-save は上限超過で失敗（現状は `user_id` 単位で 0 件のため成功 = RED）
 - `plan_save_rejects_crop_when_organization_has_twenty_crops`
   - given: 組織 O に非参照 Crop 20 件
   - then: 失敗
@@ -423,7 +463,7 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 
 ## 7. 実装ステップ
 
-前提: 案 A は確定済み（§0）。U1・U2（§3.5）は推奨案どおりなら実装差分は本表のとおり（推奨と異なる回答の場合は §5 を見直してから着手）。各ステップは「テスト（RED 確認）＋最小実装（GREEN）」を 1 コミットとし、コミットごとに `agrr-domain` が GREEN を維持する（CI を赤にしない）。git 操作（checkout / switch / reset / restore は許可なしに禁止: `git-operational-constraints.mdc`）は本書の範囲外。
+前提: 案 A は確定済み（§0 第 1 回決定）。複数所属はスコープ外（§0 第 2 回決定）で、各ステップのテストは単一所属を前提にする。U1（§3.5）は推奨案どおりなら実装差分は本表のとおり（推奨と異なる回答の場合は §5 を見直してから着手）。各ステップは「テスト（RED 確認）＋最小実装（GREEN）」を 1 コミットとし、コミットごとに `agrr-domain` が GREEN を維持する（CI を赤にしない）。git 操作（checkout / switch / reset / restore は許可なしに禁止: `git-operational-constraints.mdc`）は本書の範囲外。
 
 | # | 内容 | 主な変更 | コミット粒度の目安 |
 |---|---|---|---|
@@ -434,9 +474,9 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 | 4 | plan-save Farm: Interactor（D1）+ `PlanSaveFarmGw` の COUNT / INSERT（A1 の Farm 部分） | domain + adapters-sqlite | 1 |
 | 5 | plan-save Crop: Interactor（D2）+ `CropLimitGw` + 属性へ `organization_id`（A1 の Crop 部分） | domain + adapters-sqlite | 1 |
 | 6 | backfill 拡張: トレイト追加・Interactor（D5）・SQLite 実装（A2） | domain + adapters-sqlite | 1 |
-| 7 | 組織解決ヘルパの共通化（D4。U2 の推奨案を採る場合に実施）。振る舞い不変。既存テスト GREEN で確認 | `org_scope.rs` + 4 呼び出し元 | 1 |
+| 7 | 組織解決関数を plan-save と Masters で同一にする（D4、§5.2 手順 9 (ii)。規則は変えない）。振る舞い不変。既存テスト GREEN で確認 | `org_scope.rs` + 4 呼び出し元 | 1 |
 | 8 | 未使用ユーザー単位カウントの除去（§5.2 手順 16、D-2）。振る舞い不変。既存テスト GREEN で確認 | domain（trait / stub / モック）+ adapters-sqlite | 1 |
-| 9 | 文書整合（依存: 課題 09）: `ARCHITECTURE.md:90-91` / `organization-data-model.md:94-104` / ADR-002 `:17,55` は 09 の Q1〜Q7 で更新する（U3 の推奨案）。本課題では内容（案 A・U1・U2 の最終回答）を 09 に引き渡すのみ。U3 が別回答なら本ステップで更新し、09 と範囲を分担 | docs（09 側） | 09 で 1 |
+| 9 | 文書整合（依存: 課題 09）: `ARCHITECTURE.md:90-91` / `organization-data-model.md:94-104` / ADR-002 `:17,55` は 09 の Q1〜Q7 で更新する（U3 の推奨案）。本課題では内容（案 A・U1 の最終回答、および複数所属は別課題で規則未規定である旨）を 09 に引き渡すのみ。U3 が別回答なら本ステップで更新し、09 と範囲を分担 | docs（09 側） | 09 で 1 |
 | 10 | Docker 検証: `crates/agrr-server/**` / `crates/agrr-domain/**` / `crates/agrr-adapters-*/**` を変更するため、検証前に `.cursor/skills/dev-docker/scripts/rebuild-restart.sh`（`docker compose restart agrr-server` だけでは不十分: `docker-dev-agrr-server-rebuild.mdc`） | 実行のみ | なし |
 | 11 | 全体回帰: `run-test-rust-domain.sh` → `run-rust-contract-tests.sh` → `run-test-frontend.sh` → `test-slow-detection` | 実行のみ | なし |
 | 12 | 本番反映後のデータ確認（§8）と、`ensure_personal_organization` の再実行が必要なユーザーの残存確認 | 運用 | なし |
@@ -457,7 +497,7 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
   - 利点: コードで再現可能・テスト可能（D5/A2）・デプロイと同時に自動実行・冪等。
   - 欠点: 起動時に非同期実行（`lib.rs:124-127` の `tokio::spawn`）のため、デプロイ直後にごく短時間、修復前の状態が残る。
 - 代替（単発 SQL を本番に直接実行）: 確認手順・ロールバックの再現性が乏しく、Litestream レプリカ経由の復元確認が前提になるため採らない。やむを得ず行う場合は `production-admin` スキルの手順に従う（本書では手順を定めない。**同スキルは未読**）。
-- 多重所属ユーザーの扱い: `backfill_tier1_organization_ids` は personal org へ割り当てる（`personal_organization_sqlite_gateway.rs:50-59,114-136`）。一方 Masters は「所属の先頭」に作成する（`org_scope.rs` + `ORDER BY id`）。先頭が personal org でないユーザーは、backfill 先と作成先が食い違う。実在性は §4.3 クエリ 4 で確認し、実在する場合の割り当て規則は未決 U2（§3.5）。
+- 複数所属ユーザーの扱い（スコープ外: D-4）: `backfill_tier1_organization_ids` は personal org へ割り当てる（`personal_organization_sqlite_gateway.rs:50-59,114-136`）。一方 Masters は「所属の先頭」に作成する（`org_scope.rs` + `ORDER BY id`）。先頭が personal org でないユーザーは、backfill 先と作成先が食い違う。本課題では割り当て規則を決めず、既知の制限（§12-3）として別課題（§13）に送る。単一所属（個人組織のみ）では両者は一致する。
 
 ### 8.3 順序
 
@@ -478,7 +518,7 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 |---|---|---|
 | R1 | 仕様の正（案 A/B/C） | **解消済み**: 案 A で確定（§0、§3.2） |
 | R2 | 共有 org の枠を org 全体共有にするか（数値・契約プランはフェーズ 2 で未定義: `organization-data-model.md:103-104`） | 未決 U1（§3.5。推奨: 現行 Masters の共有枠・数値を維持） |
-| R3 | 複数組織所属ユーザーの作成先組織（所属の先頭）と backfill 先（personal org）が食い違い得る | 本番での実在性は未確認（§4.3 クエリ 4）。規則は未決 U2（§3.5。推奨: 所属の先頭を全経路で共通化） |
+| R3 | 複数組織所属ユーザーの作成先組織（所属の先頭）と backfill 先（personal org）が食い違い得る | **スコープ外**（D-4）。既知の制限（§12）、別課題（§13）。本番での実在性は未確認（§4.3 クエリ 4） |
 | R4 | 既に上限超過のデータがある場合の扱い（新規作成のみ拒否・既存は保持、が想定） | 本番データ未照会。ユーザー確認 |
 | R5 | コードのデプロイと backfill の間の短い窓で、旧 NULL 行が組織カウントに入らない | 同一リリース＋起動時 backfill で最小化。完全排除は不可（受容するか、カウントに `organization_id IS NULL AND user_id = ?` を暫定 OR する案 §5.3 は採らない） |
 | R6 | 件数取得と INSERT が別接続（`with_read_box` / `with_write_box`）で、同時リクエストにより上限を超え得る（TOCTOU）。プール実装が直列化するか未読 | **未確認**（`crates/agrr-adapters-sqlite` の `SqlitePool` 実装未読）。本課題の範囲外候補。確認結果次第で別課題化 |
@@ -496,9 +536,9 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 
 ## 10. 受け入れ条件（観測可能な振る舞い）
 
-§0 の決定（案 A）に基づく。U1・U2 は推奨案どおりの場合の条件（推奨と異なる回答があれば見直す）。
+§0 の決定（第 1 回: 案 A、第 2 回: 複数所属はスコープ外）に基づく。すべての条件は**単一所属（個人組織）を前提**とし、複数所属は対象外（条件 13）。U1 は推奨案どおりの場合の条件（推奨と異なる回答があれば見直す）。
 
-1. plan-save（公開プラン保存）で作成された非参照 Farm / Crop 行の `organization_id` は、保存したユーザーの作成先組織（所属の先頭、無ければ personal org）になる（A1: `plan_save_sets_organization_id_on_created_farm_and_crops`）。
+1. plan-save（公開プラン保存）で作成された非参照 Farm / Crop 行の `organization_id` は、保存したユーザーの作成先組織（所属の先頭、無ければ personal org。単一所属では個人組織）になる（A1: `plan_save_sets_organization_id_on_created_farm_and_crops`）。
 2. 同一組織内の非参照 Farm が 4 件に達している状態で plan-save が新規 Farm を作ろうとすると、上限超過（`RecordInvalidError`、メッセージは `activerecord.errors.models.farm.attributes.user.farm_limit_exceeded`）で失敗する。再利用（既存の `source_farm_id` 付き Farm）の場合は失敗しない（D1）。
 3. 同一組織内の非参照 Crop が 20 件に達している状態で plan-save が新規 Crop を作ろうとすると、上限超過で失敗する。再利用は失敗しない（D2）。
 4. plan-save で 4 件の Farm を作成した後の `count_non_reference_farms_for_organization(O)` は 4 になる（バイパス再現テストが GREEN: A1）。すなわち plan-save → Masters の順でも合計が 4 を超えない。
@@ -510,6 +550,7 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 10. plan-save にユーザー単位の上限件数取得が残らない（D-2）。`rg 'count_user_owned_non_reference|count_non_reference_farms\(' crates` のヒットが無い（`count_non_reference_farms_for_organization(` は別名でヒットしない）。
 11. `crates/*` 変更後に `rebuild-restart.sh` で再ビルドした Docker 環境で、plan-save → Masters の作成順序に依らず Farm が 4 件を超えて作れない（手動確認: 個人ユーザーで公開プラン保存を 4 回行った後、Farm 作成が上限エラーになる）。
 12. （依存条件。本課題のコード変更の合否には含めない）課題 09 の Q1〜Q7 が完了し、`ARCHITECTURE.md:90-91` の `per user` が組織単位の記述に、`organization-data-model.md:96-104` と ADR-002 `:55` が実装状況に沿った記述になる（§11）。
+13. **複数所属は対象外**（D-4）。複数組織に所属するユーザーについて、作成先組織の規則・上限の枠の期待値・テストは本課題の合否に含めない。テストの given に複数所属を含めない。作成先組織の解決規則（所属の先頭、無ければ personal org）は本課題の前後で変わらず、plan-save・Farm・Crop・crop AI preflight が同一の解決関数を使う（§5.2 手順 9 (ii)）。複数所属で上限が期待通りにならない点は既知の制限（§12）として残り、別課題（§13）で扱う。
 
 ---
 
@@ -526,8 +567,40 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 | 06 | fail-closed-suspected | 同上（未作成・未確認） |
 | 07 | frontend-error-contract | 関連の可能性: 上限超過エラーの i18n キー解決（`resolve-activerecord-api-error-i18n-key.ts`）。本課題ではキー・契約を変えない。07 の内容は未確認 |
 | 08 | openapi-gaps | 関連: `08-openapi-gaps.md:97,1046` は Masters `POST /crops` の 422（作成上限超過を含む）を記載し、01 で挙動が変わる場合に追随するとしている。案 A では Masters の挙動は不変（§10-5）のため変更は不要の見込み。plan-save 側の上限超過レスポンスの OpenAPI 記載は未調査（未確認） |
-| 09 | stale-design-docs | **依存（クォータ文書の更新が必要）**: 案 A 確定により、`ARCHITECTURE.md:90-91` の `per user` は実装（組織単位）と食い違う文書になる。09 は 01 のマージ後に Q1〜Q7 を実施する前提（`09-stale-design-docs.md:242,254,337,396`）。09 側で必要な更新（内容は案 A 前提。U1・U2 の最終回答が確定してから書く）: Q1・Q2（`ARCHITECTURE.md:90-91`）は集計単位を organization に書き換え、複数所属時の作成先組織の規則（U2）を 1 行明記（`09:246`）。Q3（`organization-data-model.md:96-99`）は「ユーザーあたり」を組織単位へ更新。Q4（`:101-104`）は「masters 経路は既に org 単位」に加え plan-save 統一後の状態を反映し、契約プラン別上限は未定義と明記（`09:249`）。Q5（ADR-002 `:17`）は起票時点の記述として保持。Q6（`:55`）は「実装済み」を書き分け（`09:250-251`）。ADR-002 のクォータ行は既に org 集約を規定している（`:55`）ため、決定は ADR の向きと一致する。ただし複数所属時の org 選択規則を新設する場合は Decision の追加として新 ADR の要否を再判定する（`09:209-211`）。§7 ステップ 9 のとおり、文書更新の帰属は U3。ADR-002 の `V15` 表記は 09 の範囲（R13）。なお `frontend/e2e/smoke/README.md:121`（「ユーザー農場 4 件上限」）は 09 の Q1〜Q7 に載っていないため、更新対象に含めるかは 09 側で判断する |
+| 09 | stale-design-docs | **依存（クォータ文書の更新が必要）**: 案 A 確定により、`ARCHITECTURE.md:90-91` の `per user` は実装（組織単位）と食い違う文書になる。09 は 01 のマージ後に Q1〜Q7 を実施する前提（`09-stale-design-docs.md:242,254,337,396`）。09 側で必要な更新（内容は案 A 前提。U1 の最終回答が確定してから書く）: Q1・Q2（`ARCHITECTURE.md:90-91`）は集計単位を organization に書き換える。複数所属時の作成先組織の規則を 1 行明記する件（`09:246`）は、本課題では複数所属をスコープ外にした（D-4）ため規則を決めておらず、「複数所属時の規則は別課題で未規定」と書くか、別課題（§13）の完了後に回す。Q3（`organization-data-model.md:96-99`）は「ユーザーあたり」を組織単位へ更新。Q4（`:101-104`）は「masters 経路は既に org 単位」に加え plan-save 統一後の状態を反映し、契約プラン別上限は未定義と明記（`09:249`）。Q5（ADR-002 `:17`）は起票時点の記述として保持。Q6（`:55`）は「実装済み」を書き分け（`09:250-251`）。ADR-002 のクォータ行は既に org 集約を規定している（`:55`）ため、決定は ADR の向きと一致する。ただし複数所属時の org 選択規則を新設する場合は Decision の追加として新 ADR の要否を再判定する（`09:209-211`）。この判断は別課題（§13）の範囲で、本課題では規則を新設しない。§7 ステップ 9 のとおり、文書更新の帰属は U3。ADR-002 の `V15` 表記は 09 の範囲（R13）。なお `frontend/e2e/smoke/README.md:121`（「ユーザー農場 4 件上限」）は 09 の Q1〜Q7 に載っていないため、更新対象に含めるかは 09 側で判断する |
 | 10 | authorization-consistency | **関連**: plan-save が NULL `organization_id` で作る他表（R10）、Farm / Crop 一覧の NULL 扱いの非対称（R11）は認可・スコープ整合の課題。01 の書き込み側是正（Farm / Crop）が入った後に、他表の書き込み是正を 10 で扱うのが自然 |
 | 11 | low-priority-misc | R6（TOCTOU）、R14（命名）など、優先度が低く本課題の受け入れに不要な項目の受け皿候補（未作成・未確認） |
 
-順序上の前提: 01 のコード変更は他課題の完了を待たずに着手できる（前提は §3.5 の U1・U2 の回答のみ。推奨案どおりなら本書の設計のまま）。09 のクォータ文書更新（Q1〜Q7）は 01 のマージ後に実施する。案 A の確定自体は §0 で済んでおり、09 が待つのは U1・U2 の最終回答とコードの実装結果。
+順序上の前提: 01 のコード変更は他課題の完了を待たずに着手できる（前提は §3.5 の U1 の回答のみ。推奨案どおりなら本書の設計のまま）。09 のクォータ文書更新（Q1〜Q7）は 01 のマージ後に実施する。案 A の確定自体は §0 で済んでおり、09 が待つのは U1 の最終回答とコードの実装結果。複数所属の別課題（§13）は、01 で組織解決関数を共通化（§5.2 手順 9 (ii)）した後に着手すると、規則の変更が 1 か所で全経路に効く。
+
+---
+
+## 12. 既知の制限（複数所属は対象外: D-4）
+
+本課題は単一所属（個人組織のみ）を前提に上限判定を設計する。次の点は複数の組織に所属するユーザーで上限が期待通りにならない既知の制限であり、本課題では解消しない。いずれも下記の根拠を実コードで確認済み。実運用で該当ユーザーが実在するかは**未確認**（本番未照会: §4.3 クエリ 4）。
+
+1. 複数所属は API 上作成できる。任意のログインユーザーが非 personal 組織を作成でき（`organization_create_interactor.rs:54-59`、ルート `crates/agrr-server/src/organizations.rs:44`）、組織の Owner / Admin は対象組織が personal かを問わずメンバーを追加できる（`organization_membership_create_interactor.rs:48-108`、`organization_access_policy.rs:38-40`、ルート `organizations.rs:54`）。単一所属はシステムが強制する前提ではない。
+2. Farm / Crop の上限は、作成先として解決した 1 組織の件数だけで判定する。他の所属組織にある行は数えない（Masters: `farm_create_interactor.rs:70-77,122-135`, `crop_create_interactor.rs:59-66,138-153`、COUNT は組織 ID 1 件で条件付け: `farm_gateway.rs:297-309`, `crop_gateway.rs:138-150`）。そのため 2 組織以上に所属するユーザーの上限は「ユーザー全体で 4 / 20」ではなく「作成先組織ごとに 4 / 20」に見える（作成先が固定なら実質は先頭組織の枠のみ）。plan-save も D-3 により同じ規則になる。
+3. 作成先組織は「所属の先頭」（`organization_memberships` の `ORDER BY id` 昇順の先頭: `organization_membership_sqlite_gateway.rs:85-99`, `user_organization_scope_sqlite_gateway.rs:20-30`）。先頭が個人組織であることはコード上保証されていない（個人組織の所属行は `ensure_personal_organization` が作成時に挿入するだけ: `personal_organization_sqlite_gateway.rs:61-79`。他組織の所属行が先に作られる経路の有無は**未確認**）。先頭が個人組織でない場合、作成先（先頭）と NULL 行 backfill 先（個人組織: `personal_organization_sqlite_gateway.rs:50-59,114-136`）が食い違う。
+4. 画面の事前チェックとの不一致。Farm 一覧は所属する全組織の非参照 Farm を返し（`farm_list_interactor.rs:46-63`）、フロントはその全件数で `>= 4` を判定して作成ボタンを止める（`farm-create-limit.ts:7-16`, `farm-create.component.ts:200-202`）。バックエンドは作成先 1 組織の件数のみで判定するため、複数所属ユーザーではバックエンドが作成を許す状態でもフロントが止め得る（フロントの判定のほうが厳しい方向）。Crop 側のフロント判定は本書では未読（**未確認**）。
+5. plan-save の再利用判定は `user_id` と `source_farm_id` のみで組織を見ない（`plan_save_ensure_user_farm_interactor.rs:67-70`, `plan_save_gateways.rs:80-87`）。複数所属ユーザーでは、解決した作成先とは別の組織にある既存 Farm が再利用される（再利用は件数チェックの前に return: `:67-80`）。
+
+単一所属では上記 2〜5 はいずれも発生しない（作成先 = 唯一の所属 = 個人組織）。複数メンバー組織の枠共有（U1）は別論点で、複数所属とは独立に残る（§3.5）。
+
+---
+
+## 13. 別課題の起票メモ（複数所属ユーザーの上限と作成先組織）
+
+本書の範囲外（D-4）とした内容を別課題として切り出す場合のメモ。起票は依頼があるまで行わない。
+
+- タイトル案: 「複数の組織に所属するユーザーの Farm / Crop 作成先組織と上限の枠の規則を定める」
+- 論点:
+  - 作成先組織の規則: 所属の先頭（現状） / 個人組織優先 / リクエストで組織を明示指定。規則変更は Masters の既存挙動を変える仕様変更で、ADR-002 の Decision 追加になり得る（新 ADR の要否: `09-stale-design-docs.md:209-211`）。
+  - 上限の枠: 作成先組織のみで数える（現状） / ユーザーの全所属を合算 / 組織別。U1（複数メンバー組織の共有枠）との整合。
+  - フロントの事前チェック（全所属組織の Farm 件数）とバックエンド判定組織の不一致の解消（§12-4）。
+  - 先頭組織と backfill 先（個人組織）の食い違いの解消（§12-3, §8.2）。
+  - plan-save の再利用判定（`user_id` + `source_farm_id`）と作成先組織の関係（§12-5）。
+  - `ARCHITECTURE.md:90-91` / `organization-data-model.md` / ADR-002 への規則の明記（課題 09 Q1 が求める 1 行: `09-stale-design-docs.md:246`）。
+  - 本番での複数所属ユーザー・複数メンバー組織の実在確認（§4.3 クエリ 4）による優先度判断。
+- 前提条件: 本課題（01）で組織解決関数を共通化済みであること（§5.2 手順 9 (ii)）。規則変更をその 1 か所に閉じるため。
+- 関連: 本書 U1（§3.5）、課題 09（§11）、課題 10（authorization-consistency）。
