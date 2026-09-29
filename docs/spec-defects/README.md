@@ -7,7 +7,7 @@
 | # | 文書 | 重大度 | 要点 |
 |---|------|--------|------|
 | 01 | [resource-limit-bypass](01-resource-limit-bypass.md) | 高 | Farm 4 / Crop 20 の上限が経路ごとにスコープ違い（組織/ユーザー）。plan-save が `organization_id` を書かず上限をすり抜ける |
-| 02 | [contact-recaptcha](02-contact-recaptcha.md) | 高 | サーバーは reCAPTCHA 必須、フロントは token を送らず問い合わせが常に失敗 |
+| 02 | [contact-recaptcha](02-contact-recaptcha.md) | 高 | サーバーは reCAPTCHA 必須、フロントは token を送らず問い合わせが常に失敗。**Cloudflare Turnstile へ方針変更**（ファイル名は据え置き） |
 | 03 | [api-key-scope-docs](03-api-key-scope-docs.md) | 高 | `getting-started.md` のスコープ記述が実装と逆。書き込みスコープ付与手段も無い |
 | 04 | [api-key-query-auth](04-api-key-query-auth.md) | 中 | `?api_key=` は文書にあるが #1165 で意図的に削除済み。文書のみ更新漏れ |
 | 05 | [fail-closed-critical](05-fail-closed-critical.md) | 高 | climate の progress 失敗が手計算 GDD の成功応答に化ける／entry-schedule の作物要件が `{}` で続行 |
@@ -17,6 +17,18 @@
 | 09 | [stale-design-docs](09-stale-design-docs.md) | 低〜中 | ADR-002・設計文書の陳腐化、docs のリンク切れ 20 件 |
 | 10 | [authorization-consistency](10-authorization-consistency.md) | 中（D5 は最優先で要検証） | R0 違反、`private()` と `private_with_scope` の不整合、公開 Plan の扱い |
 | 11 | [low-priority-misc](11-low-priority-misc.md) | 低 | route manifest、`farm_sizes` API 未使用、contact レスポンス型、未使用 i18n |
+
+## 決定事項（ユーザー指示の反映）
+
+ユーザーからの指示「組織、Cloudflare、する、厳格、統合、与えない」を、各課題の未決事項へ次のとおり対応づけた。**この対応づけは文脈からの解釈**であり、誤りがあれば該当文書の「0. 決定事項」を差し替える。
+
+| 指示 | 解釈 | 反映先 |
+|------|------|--------|
+| 組織 | Farm/Crop 上限は**組織単位に統一**する（案 A）。ユーザー単位カウントは廃止し、plan-save も組織経由にする | 01（関連: 09 のクォータ文書） |
+| Cloudflare、する | 問い合わせフォームの CAPTCHA は reCAPTCHA ではなく **Cloudflare Turnstile を採用する** | 02 |
+| 厳格 | fail-closed を**厳格に適用**する。疑い項目（06）も許容せず、握りつぶし・代替値・代替アルゴリズムを残さない | 05, 06 |
+| 統合 | フロントとサーバーのエラー契約を**単一形式に統合**する（`error` / `errors` の混在を解消） | 07（関連: 08） |
+| 与えない | (a) API キーに**書き込みスコープを付与しない**（付与手段を作らない）、(b) 組織メンバーに Plan の**編集権限を与えない**（閲覧のみ） | 03, 10 |
 
 ## 着手順の推奨
 
@@ -30,15 +42,19 @@
 
 ## ユーザー判断が必要な主な事項（各文書の「仕様の確定」章に詳細）
 
-- 01: 上限のスコープを組織単位に統一するか、ユーザー単位にするか。複数メンバー組織の枠共有、複数所属時の作成先。
-- 02: reCAPTCHA の種別、キー発行と Secret Manager 登録、プライバシー表記。
-- 03: 書き込みスコープの付与手段を提供するか。再生成で read のみに降格する挙動は意図か。
-- 05: climate 失敗時の HTTP ステータス、`progress_records` 0 件の扱い。
-- 07: サーバー側でエラー形式を統一するか、フロントが両形式を許容するか。
+- 01: （組織単位で確定）複数メンバー組織の枠共有、複数所属時の作成先組織の規則、`ARCHITECTURE.md` の文言更新先。
+- 02: Turnstile のサイト登録・キー発行と Secret Manager 登録、ウィジェットモード、プライバシー表記、旧 `RECAPTCHA_SECRET_KEY` の撤去時期。
+- 03: （付与しないで確定）V15 以前の既存キーの read+write を移行するか、MCP `apply_crop_setup` の削除、OpenAPI write operation の `security` 上書き。
+- 05: （厳格で確定）HTTP ステータスのコード値、作業記録で progress 不可のときの扱い、port 形状。
+- 07: （統合で確定）統合先を `error`（推奨）か `errors[]` か、旧キー削除の実施可否（外部 API キー利用者の依存確認）。
 - 08: `error_code` を enum にするか、not found を 404 か 422 か。
-- 10: 組織メンバーへ Plan 編集権限まで許すか。undo 認可の削除か組織対応か。
+- 10: （編集権限は与えないで確定）組織メンバーへ閲覧のみを許すか、admin の扱い、Farm/Crop の組織編集も縮小するか、縮小前の本番実績確認。
 
 ## テスト実行に関する共通の制約（各文書で確認された事項）
 
 - `agrr-server` / `agrr-adapters-sqlite` のインラインテストには `test-common` 上の専用入口が無く、CI も一部を実行していない。RED は原則ドメインテストと R4 契約テストに置く計画。
 - `run-test-frontend.sh` の単一ファイル指定、および `node --test` 系テスト（route manifest 等）を `test-common` 経路で実行できるかは未確認。規約上の障害として扱う方針は各文書を参照。
+
+## 更新履歴
+
+- 決定事項（組織 / Cloudflare / 厳格 / 統合 / 与えない）を 01, 02, 03, 05, 06, 07, 10 に反映。06 §9 と 08, 09, 11 の一部記述は、この決定（特に 02 の reCAPTCHA→Turnstile）への追随が未実施。
