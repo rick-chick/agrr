@@ -351,6 +351,40 @@
     }
 
     #[test]
+    fn marks_no_days_viable_when_only_optimal_max_is_configured_without_min() {
+        let tr = TemperatureRequirementSnapshot {
+            frost_threshold: None,
+            optimal_min: None,
+            optimal_max: Some(25.0),
+            base_temperature: None,
+        };
+        let stages = vec![
+            CropStageSnapshot {
+                id: 1,
+                name: "播種".into(),
+                order: 1,
+                temperature_requirement: Some(tr.clone()),
+            },
+            CropStageSnapshot {
+                id: 2,
+                name: "定植".into(),
+                order: 2,
+                temperature_requirement: Some(tr),
+            },
+        ];
+        let rows = vec![serde_json::json!({
+            "time": "2026-04-01",
+            "temperature_2m_min": 10.0,
+            "temperature_2m_max": 22.0,
+            "temperature_2m_mean": 20.0
+        })];
+        let result = WindowService::call(stages, serde_json::json!({ "data": rows }));
+        assert!(result.eligible);
+        assert!(result.sowing_windows.is_empty());
+        assert!(result.transplant_windows.is_empty());
+    }
+
+    #[test]
     fn deduplicates_duplicate_weather_dates_before_evaluating_windows() {
         let rows = vec![
             serde_json::json!({
