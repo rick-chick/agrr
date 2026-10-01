@@ -638,3 +638,12 @@ fn filter_gdd_data(data: &[Value], range_start: Date, range_end: Date) -> Vec<Va
 fn parse_date(value: &str) -> Option<Date> {
     parse_iso_date(value)
 }
+
+#[cfg(test)]
+mod interactors_field_cultivation_climate_data_interactor_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/field_cultivation/interactors_field_cultivation_climate_data_interactor_test.rs"
+    ));
+}
