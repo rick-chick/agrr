@@ -6,8 +6,10 @@ use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::shared::ports::ClockPort;
 use crate::work_record::dtos::{WorkRecordClimateSnapshot, WorkRecordListInput, WorkRecordRead};
 use crate::work_record::gateways::{
-    WorkRecordClimateSnapshotGateway, WorkRecordCreatePersistAttrs, WorkRecordGateway,
+    WorkRecordClimatePersistFields, WorkRecordClimateSnapshotGateway,
+    WorkRecordCreatePersistAttrs, WorkRecordGateway,
 };
+use rust_decimal::Decimal;
 use crate::work_record::ports::WorkRecordUpdateOutputPort;
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -139,6 +141,74 @@ impl WorkRecordClimateSnapshotGateway for EmptyClimateSnapshot {
         _: Date,
     ) -> Result<WorkRecordClimateSnapshot, Box<dyn std::error::Error + Send + Sync>> {
         Ok(WorkRecordClimateSnapshot::empty())
+    }
+}
+
+struct FailingClimateSnapshot;
+
+impl WorkRecordClimateSnapshotGateway for FailingClimateSnapshot {
+    fn lookup(
+        &self,
+        _: i64,
+        _: Date,
+    ) -> Result<WorkRecordClimateSnapshot, Box<dyn std::error::Error + Send + Sync>> {
+        Err("climate_progress_unavailable".into())
+    }
+}
+
+struct RecordingUpdateGateway {
+    existing: WorkRecordRead,
+    climate_at_update: Arc<Mutex<Option<Option<WorkRecordClimatePersistFields>>>>,
+}
+
+impl WorkRecordGateway for RecordingUpdateGateway {
+    fn create(
+        &self,
+        _: i64,
+        _: WorkRecordCreatePersistAttrs,
+    ) -> Result<WorkRecordRead, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn list_for_plan(
+        &self,
+        _: i64,
+        _: &WorkRecordListInput,
+    ) -> Result<Vec<WorkRecordRead>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn find_for_plan(
+        &self,
+        _: i64,
+        _: i64,
+    ) -> Result<WorkRecordRead, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(self.existing.clone())
+    }
+
+    fn update(
+        &self,
+        _: i64,
+        _: i64,
+        _: &crate::work_record::dtos::WorkRecordUpdateInput,
+        climate: Option<&WorkRecordClimatePersistFields>,
+        _: OffsetDateTime,
+    ) -> Result<WorkRecordRead, Box<dyn std::error::Error + Send + Sync>> {
+        *self.climate_at_update.lock().unwrap() = Some(climate.map(|c| WorkRecordClimatePersistFields {
+            gdd_at_actual: c.gdd_at_actual,
+            weather_snapshot: c.weather_snapshot.clone(),
+        }));
+        Ok(self.existing.clone())
+    }
+
+    fn destroy(
+        &self,
+        _: i64,
+        _: i64,
+        _: i64,
+        _: &str,
+    ) -> Result<crate::work_record::gateways::WorkRecordDestroyGatewayOutcome, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
     }
 }
 
@@ -285,4 +355,74 @@ fn dispatches_not_found_when_private_plan_access_denied() {
         .unwrap();
 
     assert_eq!(&*events.lock().unwrap(), &["not_found".to_string()]);
+}
+
+fn sample_existing_work_record() -> WorkRecordRead {
+    WorkRecordRead {
+        id: 10,
+        cultivation_plan_id: 2,
+        field_cultivation_id: Some(45),
+        task_schedule_item_id: Some(123),
+        agricultural_task_id: Some(7),
+        fertilize_id: None,
+        pesticide_id: None,
+        name: "除草".into(),
+        task_type: Some("field_work".into()),
+        actual_date: date!(2026-06-10),
+        amount: Some(Decimal::new(15, 1)),
+        amount_unit: Some("kg".into()),
+        time_spent_minutes: None,
+        notes: Some("雨上がり".into()),
+        gdd_at_actual: Some(99.0),
+        weather_snapshot: Some(serde_json::json!({ "date": "2026-06-10" })),
+        created_at: datetime!(2026-06-10 10:00 UTC),
+        updated_at: datetime!(2026-06-10 10:00 UTC),
+        field_name: Some("F1".into()),
+        crop_name: Some("トマト".into()),
+        task_schedule_item: None,
+    }
+}
+
+#[test]
+fn update_omits_climate_refresh_when_snapshot_lookup_fails() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let mut output = SpyUpdateOutput {
+        events: Arc::clone(&events),
+        errors: Arc::new(Mutex::new(None)),
+    };
+    let clock = FakeClock {
+        today_val: date!(2026-06-12),
+        now_val: datetime!(2026-06-12 10:00 UTC),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: private_plan(1),
+    };
+    let climate_slot = Arc::new(Mutex::new(None));
+    let gateway = RecordingUpdateGateway {
+        existing: sample_existing_work_record(),
+        climate_at_update: Arc::clone(&climate_slot),
+    };
+    let mut interactor = WorkRecordUpdateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &gateway,
+        &FailingClimateSnapshot,
+        &clock,
+        &EmptyScopeGateway,
+    );
+
+    let mut params = BTreeMap::new();
+    params.insert(
+        "actual_date".into(),
+        Value::String("2026-06-12".into()),
+    );
+    params.insert(
+        "updated_at".into(),
+        Value::String("2026-06-10T10:00:00Z".into()),
+    );
+
+    interactor.call_rescuing(1, 2, 10, &params).unwrap();
+
+    assert_eq!(&*events.lock().unwrap(), &["success".to_string()]);
+    assert_eq!(climate_slot.lock().unwrap().as_ref(), Some(&None));
 }

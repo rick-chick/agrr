@@ -28,6 +28,8 @@
     use crate::weather_data::gateways::PredictedWeatherStoreGateway;
     use crate::weather_data::gateways::WeatherDataStorageError;
     use crate::field_cultivation::dtos::ClimateObservedWeatherDatum;
+    use crate::field_cultivation::errors::WeatherPayloadInvalidError;
+    use crate::shared::exceptions::RecordNotFoundError;
 
     struct StubTranslator;
     impl TranslatorPort for StubTranslator {
@@ -73,6 +75,7 @@
     struct StubClimateSourceGateway {
         access: FieldCultivationPlanAccessSnapshot,
         source: FieldCultivationClimateSourceSnapshot,
+        missing_source_snapshot: bool,
     }
     impl FieldCultivationClimateSourceGateway for StubClimateSourceGateway {
         fn find_plan_access_snapshot_by_field_cultivation_id(
@@ -86,6 +89,9 @@
             _: i64,
         ) -> Result<FieldCultivationClimateSourceSnapshot, Box<dyn std::error::Error + Send + Sync>>
         {
+            if self.missing_source_snapshot {
+                return Err(Box::new(RecordNotFoundError));
+            }
             Ok(self.source.clone())
         }
         fn find_weather_prediction_targets_by_plan_id(
@@ -278,6 +284,7 @@
         start_date: Option<Date>,
         completion_date: Option<Date>,
         plan_type_public: bool,
+        plan_crop_crop_id: Option<i64>,
     ) -> FieldCultivationClimateSourceSnapshot {
         FieldCultivationClimateSourceSnapshot {
             field_cultivation_id: 1,
@@ -296,7 +303,7 @@
             prediction_target_end_date: None,
             calculated_planning_end_date: None,
             plan_metadata: Some(sample_plan_metadata()),
-            plan_crop_crop_id: Some(2),
+            plan_crop_crop_id,
         }
     }
 
@@ -323,6 +330,7 @@
         progress: Arc<dyn FieldCultivationClimateProgressGateway>,
         weather_payload: Option<Value>,
         input: FieldCultivationClimateDataInput,
+        missing_source_snapshot: bool,
     ) -> SpyClimateOutput {
         let access = FieldCultivationPlanAccessSnapshot::new(
             source.field_cultivation_id,
@@ -334,6 +342,7 @@
         let climate_source = StubClimateSourceGateway {
             access,
             source,
+            missing_source_snapshot,
         };
         let crop_gateway = StubCropGateway {
             crop: sample_crop(),
@@ -382,6 +391,7 @@
             Some(date!(2027 - 01 - 01)),
             Some(date!(2027 - 01 - 10)),
             true,
+            Some(2),
         );
         let output = run_interactor(
             source,
@@ -395,6 +405,7 @@
                 display_start_date: None,
                 display_end_date: None,
             },
+            false,
         );
         assert!(output.success.is_none());
         assert_eq!(
@@ -410,6 +421,7 @@
             None,
             Some(date!(2027 - 01 - 10)),
             true,
+            Some(2),
         );
         let output = run_interactor(
             source,
@@ -423,6 +435,7 @@
                 display_start_date: None,
                 display_end_date: None,
             },
+            false,
         );
         assert!(output.success.is_none());
         assert_eq!(
@@ -438,6 +451,7 @@
             Some(date!(2027 - 01 - 01)),
             Some(date!(2027 - 01 - 10)),
             false,
+            Some(2),
         );
         let output = run_interactor(
             source,
@@ -451,6 +465,7 @@
                 display_start_date: None,
                 display_end_date: None,
             },
+            false,
         );
         assert!(output.success.is_none());
         assert_eq!(output.failure.unwrap().message, "Forbidden");
@@ -463,6 +478,7 @@
             Some(date!(2027 - 01 - 01)),
             Some(date!(2027 - 01 - 02)),
             true,
+            Some(2),
         );
         let progress = json!({
             "progress_records": [
@@ -479,6 +495,7 @@
                 display_start_date: None,
                 display_end_date: None,
             },
+            false,
         );
         let dto = output.success.expect("climate data presented");
         assert_eq!(dto.debug_info["using_agrr_progress"], true);
@@ -493,6 +510,7 @@
             Some(date!(2027 - 01 - 01)),
             Some(date!(2027 - 01 - 02)),
             true,
+            Some(2),
         );
         let output = run_interactor(
             source,
@@ -504,6 +522,7 @@
                 display_start_date: None,
                 display_end_date: None,
             },
+            false,
         );
         let dto = output.success.expect("climate data still presented on progress failure");
         assert_eq!(dto.debug_info["using_agrr_progress"], false);
@@ -519,6 +538,7 @@
             Some(date!(2027 - 01 - 01)),
             Some(date!(2027 - 01 - 05)),
             true,
+            Some(2),
         );
         let progress = json!({
             "progress_records": [
@@ -537,6 +557,7 @@
                 display_start_date: Some("2027-01-02".into()),
                 display_end_date: Some("2027-01-02".into()),
             },
+            false,
         );
         let dto = output.success.expect("climate data presented");
         assert_eq!(dto.weather_data.len(), 1);
@@ -550,4 +571,136 @@
         assert_eq!(display_range["effective_end"], "2027-01-02");
         assert_eq!(display_range["weather_records"], 1);
         assert_eq!(display_range["gdd_records"], 1);
+    }
+
+    #[test]
+    fn on_error_when_plan_crop_is_unlinked() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            None,
+        );
+        let output = run_interactor(
+            source,
+            true,
+            Arc::new(OkProgressGateway {
+                result: json!({ "progress_records": [] }),
+            }),
+            Some(sample_weather_payload()),
+            FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            },
+            false,
+        );
+        assert!(output.success.is_none());
+        assert_eq!(
+            output.failure.unwrap().message,
+            "api.errors.crop_not_found"
+        );
+    }
+
+    #[test]
+    fn on_error_when_climate_source_snapshot_is_missing() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            Some(2),
+        );
+        let output = run_interactor(
+            source,
+            true,
+            Arc::new(OkProgressGateway {
+                result: json!({ "progress_records": [] }),
+            }),
+            Some(sample_weather_payload()),
+            FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            },
+            true,
+        );
+        assert!(output.success.is_none());
+        assert_eq!(
+            output.failure.unwrap().message,
+            "record not found"
+        );
+    }
+
+    #[test]
+    fn returns_weather_payload_invalid_error_when_cached_payload_has_no_data() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            Some(2),
+        );
+        let access = FieldCultivationPlanAccessSnapshot::new(
+            source.field_cultivation_id,
+            true,
+            false,
+            Some(99),
+            None,
+        );
+        let climate_source = StubClimateSourceGateway {
+            access,
+            source,
+            missing_source_snapshot: false,
+        };
+        let crop_gateway = StubCropGateway {
+            crop: sample_crop(),
+        };
+        let store = StubWeatherStore {
+            payload: Some(json!({})),
+        };
+        let mut output = SpyClimateOutput {
+            success: None,
+            failure: None,
+        };
+        let logger = NoopLogger;
+        let clock = FixedClock(date!(2026 - 10 - 01));
+        let translator = StubTranslator;
+        let weather_data = UnreachableWeatherDataGateway;
+        let weather_prediction = UnreachableWeatherPredictionGateway;
+        let prediction = UnreachablePredictionGateway;
+        let plan_predicted = UnreachablePlanPredictedWeatherGateway;
+        let anchors = FixedAnchors;
+        let progress = Arc::new(OkProgressGateway {
+            result: json!({ "progress_records": [] }),
+        });
+
+        let mut interactor = FieldCultivationClimateDataInteractor::new(
+            &mut output,
+            &logger,
+            None,
+            None,
+            &climate_source,
+            &crop_gateway,
+            &weather_data,
+            &weather_prediction,
+            &prediction,
+            &plan_predicted,
+            &store,
+            &anchors,
+            progress.as_ref(),
+            &clock,
+            &translator,
+        );
+        let err = interactor
+            .call(FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            })
+            .expect_err("invalid cached weather payload should fail closed");
+        assert!(err.downcast_ref::<WeatherPayloadInvalidError>().is_some());
+        assert!(output.success.is_none());
+        assert!(output.failure.is_none());
     }

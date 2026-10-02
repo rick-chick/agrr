@@ -176,6 +176,18 @@ impl WorkRecordClimateSnapshotGateway for EmptyClimateSnapshot {
     }
 }
 
+struct FailingClimateSnapshot;
+
+impl WorkRecordClimateSnapshotGateway for FailingClimateSnapshot {
+    fn lookup(
+        &self,
+        _: i64,
+        _: Date,
+    ) -> Result<WorkRecordClimateSnapshot, Box<dyn std::error::Error + Send + Sync>> {
+        Err("climate_progress_unavailable".into())
+    }
+}
+
 struct StubWorkRecordGateway {
     create_calls: Arc<Mutex<Vec<(i64, WorkRecordCreatePersistAttrs)>>>,
     create_result: WorkRecordRead,
@@ -351,6 +363,67 @@ fn creates_scheduled_record_with_item_prefill() {
     assert_eq!(calls[0].1.amount, Some(Decimal::new(15, 1)));
     assert_eq!(calls[0].1.notes.as_deref(), Some("雨上がり"));
     assert!(record_slot.lock().unwrap().is_some());
+}
+
+#[test]
+fn create_omits_climate_fields_when_snapshot_lookup_fails() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let record_slot = Arc::new(Mutex::new(None));
+    let mut output = SpyCreateOutput {
+        events: Arc::clone(&events),
+        record: Arc::clone(&record_slot),
+        errors: Arc::new(Mutex::new(None)),
+    };
+    let create_calls = Arc::new(Mutex::new(Vec::new()));
+    let gateway = StubWorkRecordGateway {
+        create_calls: Arc::clone(&create_calls),
+        create_result: sample_read(),
+    };
+    let item_lookup = StubItemLookup {
+        snapshot: Some(TaskScheduleItemPrefillSnapshot {
+            cultivation_plan_id: 2,
+            field_cultivation_id: Some(45),
+            agricultural_task_id: Some(7),
+            name: "除草".into(),
+            task_type: Some("field_work".into()),
+            scheduled_date: Some(date!(2026-06-10)),
+            amount: None,
+            amount_unit: None,
+        }),
+    };
+    let clock = FakeClock {
+        today_val: date!(2026-06-12),
+        now_val: datetime!(2026-06-12 10:00 UTC),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: private_plan(1),
+    };
+    let mut interactor = WorkRecordCreateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &gateway,
+        &item_lookup,
+        &FailingClimateSnapshot,
+        &clock,
+        &EmptyScopeGateway,
+    );
+
+    let mut params = BTreeMap::new();
+    params.insert(
+        "task_schedule_item_id".into(),
+        Value::Number(123.into()),
+    );
+    params.insert(
+        "actual_date".into(),
+        Value::String("2026-06-12".into()),
+    );
+
+    interactor.call_rescuing(1, 2, &params).unwrap();
+
+    let calls = create_calls.lock().unwrap();
+    assert!(calls[0].1.gdd_at_actual.is_none());
+    assert!(calls[0].1.weather_snapshot.is_none());
+    assert_eq!(&*events.lock().unwrap(), &["success".to_string()]);
 }
 
 #[test]
