@@ -230,6 +230,41 @@ fn work_record_gateway_list_omits_field_and_crop_name_without_field_cultivation(
 }
 
 #[test]
+fn work_record_gateway_update_preserves_gdd_when_climate_refresh_omitted() {
+    let pool = work_record_integration_pool();
+    let seed = seed_work_record_crud(&pool);
+    let gateway = WorkRecordSqliteGateway::new(pool.clone());
+
+    let created = gateway
+        .create(seed.plan_id, sample_create_attrs(&seed))
+        .expect("create");
+    assert_eq!(Some(120.0), created.gdd_at_actual);
+
+    let new_actual_date = Date::from_calendar_date(2026, time::Month::June, 15).unwrap();
+    let updated = gateway
+        .update(
+            seed.plan_id,
+            created.id,
+            &WorkRecordUpdateInput {
+                expected_updated_at: Some(
+                    created
+                        .updated_at
+                        .format(&time::format_description::well_known::Iso8601::DEFAULT)
+                        .unwrap_or_else(|_| created.updated_at.to_string()),
+                ),
+                actual_date: Some(new_actual_date),
+                ..Default::default()
+            },
+            None,
+            OffsetDateTime::now_utc(),
+        )
+        .expect("update without climate refresh");
+    assert_eq!(new_actual_date, updated.actual_date);
+    assert_eq!(Some(120.0), updated.gdd_at_actual);
+    assert!(updated.weather_snapshot.is_some());
+}
+
+#[test]
 fn work_record_gateway_update_rejects_stale_updated_at() {
     let pool = work_record_integration_pool();
     let seed = seed_work_record_crud(&pool);

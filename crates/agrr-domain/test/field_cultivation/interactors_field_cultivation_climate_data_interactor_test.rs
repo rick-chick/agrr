@@ -504,6 +504,37 @@
     }
 
     #[test]
+    fn presents_manual_gdd_when_progress_gateway_returns_empty_records() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            Some(2),
+        );
+        let output = run_interactor(
+            source,
+            true,
+            Arc::new(OkProgressGateway {
+                result: json!({ "progress_records": [] }),
+            }),
+            Some(sample_weather_payload()),
+            FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            },
+            false,
+        );
+        let dto = output
+            .success
+            .expect("empty agrr progress still yields success-shaped climate data");
+        assert_eq!(dto.debug_info["using_agrr_progress"], false);
+        assert_eq!(dto.gdd_data.len(), 2);
+        assert_eq!(dto.gdd_data[0]["gdd"], 5.0);
+    }
+
+    #[test]
     fn presents_manual_gdd_when_progress_gateway_fails() {
         let source = sample_source(
             Some(1),
@@ -631,6 +662,76 @@
             output.failure.unwrap().message,
             "record not found"
         );
+    }
+
+    #[test]
+    fn returns_weather_payload_invalid_error_when_cached_plan_prediction_is_absent() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            Some(2),
+        );
+        let access = FieldCultivationPlanAccessSnapshot::new(
+            source.field_cultivation_id,
+            true,
+            false,
+            Some(99),
+            None,
+        );
+        let climate_source = StubClimateSourceGateway {
+            access,
+            source,
+            missing_source_snapshot: false,
+        };
+        let crop_gateway = StubCropGateway {
+            crop: sample_crop(),
+        };
+        let store = StubWeatherStore { payload: None };
+        let mut output = SpyClimateOutput {
+            success: None,
+            failure: None,
+        };
+        let logger = NoopLogger;
+        let clock = FixedClock(date!(2026 - 10 - 01));
+        let translator = StubTranslator;
+        let weather_data = UnreachableWeatherDataGateway;
+        let weather_prediction = UnreachableWeatherPredictionGateway;
+        let prediction = UnreachablePredictionGateway;
+        let plan_predicted = UnreachablePlanPredictedWeatherGateway;
+        let anchors = FixedAnchors;
+        let progress = Arc::new(OkProgressGateway {
+            result: json!({ "progress_records": [] }),
+        });
+
+        let mut interactor = FieldCultivationClimateDataInteractor::new(
+            &mut output,
+            &logger,
+            None,
+            None,
+            &climate_source,
+            &crop_gateway,
+            &weather_data,
+            &weather_prediction,
+            &prediction,
+            &plan_predicted,
+            &store,
+            &anchors,
+            progress.as_ref(),
+            &clock,
+            &translator,
+        );
+        let err = interactor
+            .call(FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            })
+            .expect_err("missing cached prediction should fail closed");
+        assert!(err.downcast_ref::<WeatherPayloadInvalidError>().is_some());
+        assert!(output.success.is_none());
+        assert!(output.failure.is_none());
     }
 
     #[test]
