@@ -1030,3 +1030,49 @@
             Some("daemon_unavailable")
         );
     }
+
+    struct EmptyCropRequirementBuilder;
+    impl CropAgrrRequirementBuilderPort for EmptyCropRequirementBuilder {
+        fn build_from(&self, _: &dyn CropAgrrRequirementSource) -> Value {
+            json!({})
+        }
+    }
+
+    #[test]
+    fn forwards_empty_crop_requirement_when_builder_swallows_missing_requirement() {
+        let crop = test_crop(1, "トマト", None, None);
+        let crop_gateway = StubCropGateway { rows: vec![] };
+        let captured_requirement = Arc::new(Mutex::new(None));
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Err(EntryScheduleOptimizationError::new(
+                "crop_requirement_error",
+                "missing stages",
+            )),
+            captured_requirement: Arc::clone(&captured_requirement),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &EmptyCropRequirementBuilder,
+            &optimization_gateway,
+            &clock,
+            None::<&FakeLogger>,
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        let requirement = captured_requirement
+            .lock()
+            .unwrap()
+            .clone()
+            .expect("optimize should receive crop requirement from builder");
+        assert_eq!(requirement, json!({}));
+        assert_eq!(
+            result.reason_parts.get("error_key").and_then(|v| v.as_str()),
+            Some("crop_requirement_error")
+        );
+    }
