@@ -301,6 +301,44 @@
     }
 
     #[test]
+    fn build_output_treats_null_cumulative_gdd_as_zero_in_agrr_progress_path() {
+        let context = FieldCultivationClimateContextSnapshot {
+            field_cultivation_id: 1,
+            field_name: "A".into(),
+            crop_name: "Tomato".into(),
+            start_date: date!(2026 - 03 - 01),
+            completion_date: date!(2026 - 03 - 02),
+            farm_id: 10,
+            farm_name: "Farm".into(),
+            farm_latitude: 35.0,
+            farm_longitude: 139.0,
+            plan_id: 5,
+            plan_type_public: false,
+            plan_predicted_weather_present: true,
+            prediction_target_end_date: None,
+            calculated_planning_end_date: None,
+            plan_metadata: None,
+            crop_id: 2,
+            base_temperature: 10.0,
+            optimal_temperature_range: None,
+            stages: vec![],
+        };
+        let progress_result = json!({
+            "progress_records": [
+                { "date": "2026-03-01", "cumulative_gdd": null, "stage_name": "S1" },
+                { "date": "2026-03-02", "cumulative_gdd": 12.0, "stage_name": "S1" }
+            ]
+        });
+        let dto = build_output(&context, &[], &progress_result);
+        assert_eq!(dto.debug_info["using_agrr_progress"], true);
+        assert_eq!(dto.gdd_data.len(), 2);
+        assert_eq!(dto.gdd_data[0]["gdd"], 0.0);
+        assert_eq!(dto.gdd_data[0]["cumulative_gdd"], 0.0);
+        assert_eq!(dto.gdd_data[1]["gdd"], 12.0);
+        assert_eq!(dto.gdd_data[1]["cumulative_gdd"], 12.0);
+    }
+
+    #[test]
     fn extract_weather_records_filters_by_period() {
         let payload = json!({
             "data": [
