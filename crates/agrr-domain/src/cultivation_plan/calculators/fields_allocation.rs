@@ -76,3 +76,12 @@ impl<'a> FieldsAllocation<'a> {
         sorted.into_iter().take(field_count).collect()
     }
 }
+
+#[cfg(test)]
+mod calculators_fields_allocation_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/calculators_fields_allocation_test.rs"
+    ));
+}
