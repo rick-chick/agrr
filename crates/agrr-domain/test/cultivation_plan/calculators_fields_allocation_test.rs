@@ -32,6 +32,14 @@
     }
 
     #[test]
+    fn allocate_uses_minimum_area_of_100_when_total_area_is_negative() {
+        let crops = [crop(1, "Tomato", 10.0)];
+        let allocations = FieldsAllocation::new(-25.0, &crops).allocate();
+        assert_eq!(allocations.len(), 1);
+        assert_eq!(allocations[0].area, 100.0);
+    }
+
+    #[test]
     fn allocate_splits_area_by_prioritized_crops_when_inputs_valid() {
         let crops = [
             crop(1, "Small plot crop", 10.0),
