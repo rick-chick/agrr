@@ -121,6 +121,32 @@
         }
     }
 
+    struct ErrWeatherStore;
+    impl PredictedWeatherStoreGateway for ErrWeatherStore {
+        fn read_payload(
+            &self,
+            _: PredictedWeatherScope,
+            _: i64,
+        ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+            Err("predicted_weather_store_unavailable".into())
+        }
+        fn write_payload(
+            &self,
+            _: PredictedWeatherScope,
+            _: i64,
+            _: &Value,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            unreachable!()
+        }
+        fn copy_plan_payload(
+            &self,
+            _: i64,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            unreachable!()
+        }
+    }
+
     struct StubWeatherStore {
         payload: Option<Value>,
     }
@@ -667,6 +693,77 @@
             output.failure.unwrap().message,
             "record not found"
         );
+    }
+
+    #[test]
+    fn propagates_error_when_plan_prediction_store_read_fails() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            Some(2),
+        );
+        let access = FieldCultivationPlanAccessSnapshot::new(
+            source.field_cultivation_id,
+            true,
+            false,
+            Some(99),
+            None,
+        );
+        let climate_source = StubClimateSourceGateway {
+            access,
+            source,
+            missing_source_snapshot: false,
+            missing_plan_access_snapshot: false,
+        };
+        let crop_gateway = StubCropGateway {
+            crop: sample_crop(),
+        };
+        let store = ErrWeatherStore;
+        let mut output = SpyClimateOutput {
+            success: None,
+            failure: None,
+        };
+        let logger = NoopLogger;
+        let clock = FixedClock(date!(2026 - 10 - 01));
+        let translator = StubTranslator;
+        let weather_data = UnreachableWeatherDataGateway;
+        let weather_prediction = UnreachableWeatherPredictionGateway;
+        let prediction = UnreachablePredictionGateway;
+        let plan_predicted = UnreachablePlanPredictedWeatherGateway;
+        let anchors = FixedAnchors;
+        let progress = Arc::new(OkProgressGateway {
+            result: json!({ "progress_records": [] }),
+        });
+
+        let mut interactor = FieldCultivationClimateDataInteractor::new(
+            &mut output,
+            &logger,
+            None,
+            None,
+            &climate_source,
+            &crop_gateway,
+            &weather_data,
+            &weather_prediction,
+            &prediction,
+            &plan_predicted,
+            &store,
+            &anchors,
+            progress.as_ref(),
+            &clock,
+            &translator,
+        );
+        let err = interactor
+            .call(FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            })
+            .expect_err("store read failure must propagate");
+        assert!(err.to_string().contains("predicted_weather_store_unavailable"));
+        assert!(output.success.is_none());
+        assert!(output.failure.is_none());
     }
 
     #[test]

@@ -40,3 +40,18 @@ use serde_json::json;
         assert_eq!(result[0]["crop"]["name"], "Tomato");
         assert_eq!(logger.messages.borrow().len(), 1);
     }
+
+    // Locks fail-open behavior (docs/spec-defects/06 H1) until requirement-less crops are rejected.
+    #[test]
+    fn build_injects_crop_id_when_requirement_is_none_but_growth_stages_exist() {
+        let entries = vec![AgrrCropConfigEntry {
+            crop_id: "42".into(),
+            crop_name: "Pepper".into(),
+            has_growth_stages: true,
+            requirement: None,
+        }];
+        let result = build(&entries, None);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0]["crop"]["crop_id"], "42");
+        assert!(result[0].get("stages").is_none());
+    }

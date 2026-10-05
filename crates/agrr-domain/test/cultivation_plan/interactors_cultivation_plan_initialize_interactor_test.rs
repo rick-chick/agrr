@@ -136,6 +136,7 @@ total_area: 100.0,
 
     struct SpyFieldMutationGateway {
         create_count: Arc<Mutex<usize>>,
+        created_areas: Arc<Mutex<Vec<f64>>>,
     }
     impl CultivationPlanFieldMutationGateway for SpyFieldMutationGateway {
         fn count_fields(&self, _: i64) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
@@ -153,12 +154,13 @@ total_area: 100.0,
             &self,
             _: i64,
             _: &str,
-            _: f64,
+            area: f64,
             _: Option<f64>,
         ) -> Result<crate::cultivation_plan::dtos::CultivationPlanFieldSnapshot, Box<dyn std::error::Error + Send + Sync>>
         {
             *self.create_count.lock().unwrap() += 1;
-            Ok(crate::cultivation_plan::dtos::CultivationPlanFieldSnapshot::new(1, "1", 1.0))
+            self.created_areas.lock().unwrap().push(area);
+            Ok(crate::cultivation_plan::dtos::CultivationPlanFieldSnapshot::new(1, "1", area))
         }
         fn delete_field(&self, _: i64, _: i64) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             Ok(())
@@ -179,6 +181,7 @@ total_area: 100.0,
         };
         let field_gateway = SpyFieldMutationGateway {
             create_count: Arc::new(Mutex::new(0)),
+            created_areas: Arc::new(Mutex::new(vec![])),
         };
         let clock = FakeClock;
         let logger = FakeLogger;
@@ -221,6 +224,7 @@ total_area: 100.0,
         };
         let field_gateway = SpyFieldMutationGateway {
             create_count: Arc::clone(&field_count),
+            created_areas: Arc::new(Mutex::new(vec![])),
         };
         let clock = FakeClock;
         let logger = FakeLogger;
@@ -250,4 +254,46 @@ total_area: 100.0,
         assert!(*in_txn.lock().unwrap());
         assert!(*crop_created.lock().unwrap());
         assert!(*field_count.lock().unwrap() >= 1);
+    }
+
+    // Characterizes fail-open FieldsAllocation path (docs/spec-defects/06 §3.5) until invalid input is rejected.
+    #[test]
+    fn creates_default_field_without_plan_crops_when_crop_list_is_empty() {
+        let in_txn = Arc::new(Mutex::new(false));
+        let crop_created = Arc::new(Mutex::new(false));
+        let field_count = Arc::new(Mutex::new(0));
+        let field_areas = Arc::new(Mutex::new(vec![]));
+        let plan_gateway = StubPlanGateway {
+            created_id: 99,
+            in_txn: Arc::clone(&in_txn),
+        };
+        let plan_crop_gateway = SpyPlanCropGateway {
+            created: Arc::clone(&crop_created),
+        };
+        let field_gateway = SpyFieldMutationGateway {
+            create_count: Arc::clone(&field_count),
+            created_areas: Arc::clone(&field_areas),
+        };
+        let clock = FakeClock;
+        let logger = FakeLogger;
+        let interactor = CultivationPlanInitializeInteractor::new(
+            CultivationPlanInitFarm {
+                id: 1,
+                name: "Farm".into(),
+            },
+            50.0,
+            vec![],
+            &plan_gateway,
+            &plan_crop_gateway,
+            &field_gateway,
+            &clock,
+            &logger,
+        );
+
+        let result = interactor.call().unwrap();
+        assert!(result.is_success());
+        assert!(*in_txn.lock().unwrap());
+        assert!(!*crop_created.lock().unwrap());
+        assert_eq!(*field_count.lock().unwrap(), 1);
+        assert_eq!(field_areas.lock().unwrap().as_slice(), &[100.0]);
     }
