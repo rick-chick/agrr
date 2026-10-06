@@ -1,5 +1,6 @@
 // Tests for `interactors/field_cultivation_climate_data_interactor.rs`.
 
+    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
 
     use serde_json::{json, Value};
@@ -239,6 +240,13 @@
         }
     }
 
+    struct NullPredictionGateway;
+    impl FieldCultivationPredictionGateway for NullPredictionGateway {
+        fn predict(&self, _: &Value, _: i64, _: &str) -> Option<Value> {
+            None
+        }
+    }
+
     struct UnreachablePlanPredictedWeatherGateway;
     impl FieldCultivationPlanPredictedWeatherGateway for UnreachablePlanPredictedWeatherGateway {
         fn find_plan_metadata(
@@ -265,6 +273,79 @@
                 training_start_date: date!(2020 - 01 - 01),
                 training_end_date: date!(2025 - 12 - 31),
             }
+        }
+    }
+
+    struct CountingWeatherPredictionGateway {
+        calls: AtomicUsize,
+    }
+    impl FieldCultivationWeatherPredictionServiceGateway for CountingWeatherPredictionGateway {
+        fn predict_for_cultivation_plan(
+            &self,
+            _: &Value,
+            _: &Value,
+            _: &crate::field_cultivation::dtos::CultivationPlanWeatherInput,
+        ) -> Option<Value> {
+            self.calls.fetch_add(1, Ordering::SeqCst);
+            None
+        }
+    }
+
+    struct ObservedOnlyFallbackWeatherDataGateway;
+    impl FieldCultivationWeatherDataGateway for ObservedOnlyFallbackWeatherDataGateway {
+        fn weather_data_for_period(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<Vec<ClimateObservedWeatherDatum>, WeatherDataStorageError> {
+            Ok(vec![ClimateObservedWeatherDatum {
+                date: date!(2025 - 06 - 01),
+                temperature_max: Some(20.0),
+                temperature_min: Some(10.0),
+                temperature_mean: Some(15.0),
+                precipitation: None,
+                sunshine_hours: None,
+                wind_speed: None,
+                weather_code: None,
+            }])
+        }
+
+        fn format_for_agrr(&self, records: &[ClimateObservedWeatherDatum], _: &Value) -> Value {
+            let data: Vec<Value> = records
+                .iter()
+                .map(|row| {
+                    json!({
+                        "time": row.date.to_string(),
+                        "temperature_2m_max": row.temperature_max,
+                        "temperature_2m_min": row.temperature_min,
+                    })
+                })
+                .collect();
+            json!({ "data": data })
+        }
+    }
+
+    struct RecordingPlanPredictedWeatherGateway {
+        persist_calls: AtomicUsize,
+    }
+    impl FieldCultivationPlanPredictedWeatherGateway for RecordingPlanPredictedWeatherGateway {
+        fn find_plan_metadata(
+            &self,
+            _: i64,
+        ) -> Result<Option<PredictedWeatherMetadata>, Box<dyn std::error::Error + Send + Sync>>
+        {
+            Ok(None)
+        }
+
+        fn persist_plan_prediction(
+            &self,
+            _: i64,
+            _: &Value,
+            _: Date,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            self.persist_calls.fetch_add(1, Ordering::SeqCst);
+            Ok(())
         }
     }
 
@@ -335,6 +416,24 @@
             plan_metadata: Some(sample_plan_metadata()),
             plan_crop_crop_id,
         }
+    }
+
+    fn sample_source_without_plan_metadata(
+        weather_location_id: Option<i64>,
+        start_date: Option<Date>,
+        completion_date: Option<Date>,
+        plan_type_public: bool,
+        plan_crop_crop_id: Option<i64>,
+    ) -> FieldCultivationClimateSourceSnapshot {
+        let mut source = sample_source(
+            weather_location_id,
+            start_date,
+            completion_date,
+            plan_type_public,
+            plan_crop_crop_id,
+        );
+        source.plan_metadata = None;
+        source
     }
 
     fn sample_weather_payload() -> Value {
@@ -1013,4 +1112,135 @@
         assert_eq!(dto.weather_data.len(), 2);
         assert_eq!(dto.gdd_data.len(), 2);
         assert!(dto.debug_info.get("display_range").is_none());
+    }
+
+    // Locks on-the-fly prediction path (docs/spec-defects/06 item 3) before fallback removal.
+    #[test]
+    fn invokes_plan_prediction_when_plan_has_no_cached_metadata() {
+        let source = sample_source_without_plan_metadata(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 10)),
+            true,
+            Some(2),
+        );
+        let weather_prediction = CountingWeatherPredictionGateway {
+            calls: AtomicUsize::new(0),
+        };
+        let access = FieldCultivationPlanAccessSnapshot::new(1, true, false, Some(99), None);
+        let climate_source = StubClimateSourceGateway {
+            access,
+            source,
+            missing_source_snapshot: false,
+            missing_plan_access_snapshot: false,
+        };
+        let crop_gateway = StubCropGateway {
+            crop: sample_crop(),
+        };
+        let mut output = SpyClimateOutput {
+            success: None,
+            failure: None,
+        };
+        let weather_data = ObservedOnlyFallbackWeatherDataGateway;
+        let prediction = NullPredictionGateway;
+        let plan_predicted = RecordingPlanPredictedWeatherGateway {
+            persist_calls: AtomicUsize::new(0),
+        };
+        let store = StubWeatherStore { payload: None };
+        let mut interactor = FieldCultivationClimateDataInteractor::new(
+            &mut output,
+            &NoopLogger,
+            None,
+            None,
+            &climate_source,
+            &crop_gateway,
+            &weather_data,
+            &weather_prediction,
+            &prediction,
+            &plan_predicted,
+            &store,
+            &FixedAnchors,
+            &FailingProgressGateway,
+            &FixedClock(date!(2026 - 10 - 01)),
+            &StubTranslator,
+        );
+        interactor
+            .call(FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            })
+            .expect("interactor call");
+        assert_eq!(weather_prediction.calls.load(Ordering::SeqCst), 1);
+        assert!(output.success.is_none());
+        assert_eq!(
+            output.failure.unwrap().message,
+            "Field cultivation climate data not found"
+        );
+    }
+
+    #[test]
+    fn presents_climate_via_observed_fallback_when_plan_has_no_cached_metadata() {
+        let source = sample_source_without_plan_metadata(
+            Some(1),
+            Some(date!(2025 - 06 - 01)),
+            Some(date!(2025 - 06 - 15)),
+            true,
+            Some(2),
+        );
+        let weather_prediction = CountingWeatherPredictionGateway {
+            calls: AtomicUsize::new(0),
+        };
+        let access = FieldCultivationPlanAccessSnapshot::new(1, true, false, Some(99), None);
+        let climate_source = StubClimateSourceGateway {
+            access,
+            source,
+            missing_source_snapshot: false,
+            missing_plan_access_snapshot: false,
+        };
+        let crop_gateway = StubCropGateway {
+            crop: sample_crop(),
+        };
+        let mut output = SpyClimateOutput {
+            success: None,
+            failure: None,
+        };
+        let weather_data = ObservedOnlyFallbackWeatherDataGateway;
+        let prediction = NullPredictionGateway;
+        let plan_predicted = RecordingPlanPredictedWeatherGateway {
+            persist_calls: AtomicUsize::new(0),
+        };
+        let store = StubWeatherStore { payload: None };
+        let progress = Arc::new(OkProgressGateway {
+            result: json!({ "progress_records": [] }),
+        });
+        let mut interactor = FieldCultivationClimateDataInteractor::new(
+            &mut output,
+            &NoopLogger,
+            None,
+            None,
+            &climate_source,
+            &crop_gateway,
+            &weather_data,
+            &weather_prediction,
+            &prediction,
+            &plan_predicted,
+            &store,
+            &FixedAnchors,
+            progress.as_ref(),
+            &FixedClock(date!(2026 - 10 - 01)),
+            &StubTranslator,
+        );
+        interactor
+            .call(FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            })
+            .expect("interactor call");
+        assert_eq!(weather_prediction.calls.load(Ordering::SeqCst), 1);
+        assert_eq!(plan_predicted.persist_calls.load(Ordering::SeqCst), 1);
+        let dto = output.success.expect("climate data presented via fallback");
+        assert_eq!(dto.weather_data.len(), 1);
+        assert!(!dto.gdd_data.is_empty());
     }

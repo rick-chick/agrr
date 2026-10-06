@@ -55,3 +55,17 @@ use serde_json::json;
         assert_eq!(result[0]["crop"]["crop_id"], "42");
         assert!(result[0].get("stages").is_none());
     }
+
+    #[test]
+    fn build_treats_non_object_requirement_as_empty_object_with_crop_id() {
+        let entries = vec![AgrrCropConfigEntry {
+            crop_id: "7".into(),
+            crop_name: "Eggplant".into(),
+            has_growth_stages: true,
+            requirement: Some(json!([])),
+        }];
+        let result = build(&entries, None);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0]["crop"]["crop_id"], "7");
+        assert!(result[0].as_object().unwrap().len() <= 1);
+    }
