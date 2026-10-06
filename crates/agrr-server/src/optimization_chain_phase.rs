@@ -296,6 +296,22 @@ mod tests {
         assert!(!plan_still_optimizing(&pool, 1));
     }
 
+    // Locks DB error swallowing (docs/spec-defects/06 item 4) until plan_still_optimizing returns Result.
+    #[test]
+    fn plan_still_optimizing_returns_false_when_status_query_fails() {
+        let db = test_pool_with_plan(1);
+        let pool = db.pool.clone();
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE cultivation_plans", [])?;
+            Ok(())
+        })
+        .expect("drop cultivation_plans");
+        assert!(
+            !plan_still_optimizing(&pool, 1),
+            "DB errors must not be treated as optimizing"
+        );
+    }
+
     #[test]
     fn run_guarded_optimization_step_skips_when_plan_not_optimizing() {
         let db = test_pool_with_plan(1);
