@@ -48,9 +48,7 @@ describe('ContactFormPresenter', () => {
   it('publishes a success message with polite live region', () => {
     const successDto: SendContactMessageSuccessDto = {
       id: 42,
-      status: 'sent',
-      created_at: '2026-01-01T00:00:00.000Z',
-      sent_at: '2026-01-01T00:00:10.000Z'
+      status: 'queued'
     };
 
     presenter.onSuccess(successDto);

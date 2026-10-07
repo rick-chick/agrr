@@ -8,7 +8,7 @@ pub struct CreateContactMessageInput {
     pub subject: Option<String>,
     pub message: String,
     pub source: Option<String>,
-    pub recaptcha_token: Option<String>,
+    pub captcha_token: Option<String>,
     pub remote_ip: Option<String>,
 }
 
@@ -19,7 +19,7 @@ impl CreateContactMessageInput {
         subject: Option<String>,
         message: impl Into<String>,
         source: Option<String>,
-        recaptcha_token: Option<String>,
+        captcha_token: Option<String>,
         remote_ip: Option<String>,
     ) -> Self {
         Self {
@@ -28,7 +28,7 @@ impl CreateContactMessageInput {
             subject,
             message: message.into(),
             source,
-            recaptcha_token,
+            captcha_token,
             remote_ip,
         }
     }

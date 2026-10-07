@@ -9,5 +9,7 @@ export const environment = {
   /** Google Ads のコンバージョンタグ ID（例: AW-123456789）。本番は deploy の window 注入を推奨。 */
   googleAdsId: '',
   /** ログイン完了時のサイトコンバージョン send_to（例: AW-123456789/XyZ）。空なら転換イベントは送らない。 */
-  googleAdsLoginConversionSendTo: ''
+  googleAdsLoginConversionSendTo: '',
+  /** Cloudflare Turnstile site key (official dummy for local dev). */
+  turnstileSiteKey: '1x00000000000000000000AA'
 };
