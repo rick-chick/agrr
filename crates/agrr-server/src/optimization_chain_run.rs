@@ -27,7 +27,9 @@ use time::{Date, OffsetDateTime};
 use tracing::{error, warn};
 
 use crate::cable::CableHub;
-use crate::optimization_chain_phase::{advance_phase, broadcast_completed, plan_still_optimizing};
+use crate::optimization_chain_phase::{
+    advance_phase, broadcast_completed, ensure_plan_still_optimizing, plan_still_optimizing,
+};
 use crate::optimization_chain_telemetry::{StepOutcome, StepTimer};
 
 #[derive(Clone)]
@@ -431,9 +433,7 @@ pub fn run_plan_finalize_step(
     hub: &CableHub,
 ) -> Result<(), String> {
     let pool = state.sqlite.clone();
-    if !plan_still_optimizing(&pool, plan_id) {
-        return Ok(());
-    }
+    ensure_plan_still_optimizing(&pool, plan_id)?;
 
     let gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let plan = gateway.find_by_id(plan_id).map_err(|e| e.to_string())?;
@@ -442,7 +442,10 @@ pub fn run_plan_finalize_step(
         .iter()
         .filter_map(|fc| fc.status.clone())
         .collect();
-    let plan_status = plan.status.as_deref().unwrap_or("optimizing");
+    let plan_status = plan
+        .status
+        .as_deref()
+        .ok_or_else(|| "plan status missing".to_string())?;
 
     if field_cultivations.is_empty()
         || !cultivation_plan_optimization_complete_policy::should_mark_plan_completed(

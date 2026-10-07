@@ -95,12 +95,16 @@ fn preview_failure_status(kind: &str) -> axum::http::StatusCode {
     }
 }
 
-fn proposals_to_json(proposals: Vec<WeatherRescheduleProposalRead>) -> Value {
-    serde_json::to_value(proposals).unwrap_or_else(|_| json!([]))
+fn proposals_to_json(
+    proposals: Vec<WeatherRescheduleProposalRead>,
+) -> Result<Value, serde_json::Error> {
+    serde_json::to_value(proposals)
 }
 
-fn preview_to_json(preview: WeatherRescheduleProposalPreviewRead) -> Value {
-    serde_json::to_value(preview).unwrap_or_else(|_| json!({}))
+fn preview_to_json(
+    preview: WeatherRescheduleProposalPreviewRead,
+) -> Result<Value, serde_json::Error> {
+    serde_json::to_value(preview)
 }
 
 async fn list_weather_reschedule_proposals(
@@ -138,8 +142,23 @@ async fn list_weather_reschedule_proposals(
 
     match interactor.call() {
         Ok(()) => {
-            let proposals = presenter.body.unwrap_or_default();
-            Ok(Json(proposals_to_json(proposals)))
+            let Some(proposals) = presenter.body else {
+                tracing::error!("weather_reschedule_proposals list: presenter missing on_success");
+                return Err((
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({"errors": ["internal_error"]})),
+                ));
+            };
+            match proposals_to_json(proposals) {
+                Ok(json) => Ok(Json(json)),
+                Err(err) => {
+                    tracing::error!("weather_reschedule_proposals list serialize failed: {err}");
+                    Err((
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(json!({"errors": ["internal_error"]})),
+                    ))
+                }
+            }
         }
         Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => Err((
             axum::http::StatusCode::NOT_FOUND,
@@ -223,7 +242,16 @@ async fn preview_weather_reschedule_proposal(
 
     match interactor.call() {
         Ok(()) => match presenter.body {
-            Some(PreviewOutcome::Success(preview)) => Ok(Json(preview_to_json(preview))),
+            Some(PreviewOutcome::Success(preview)) => match preview_to_json(preview) {
+                Ok(json) => Ok(Json(json)),
+                Err(err) => {
+                    tracing::error!("weather_reschedule_proposals preview serialize failed: {err}");
+                    Err((
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(json!({"errors": ["internal_error"]})),
+                    ))
+                }
+            },
             Some(PreviewOutcome::Failure(payload)) => Err((payload.status, Json(payload.body))),
             None => Err((
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
