@@ -103,11 +103,11 @@ const initialControl: ContactFormViewState = {
           ></textarea>
         </label>
 
-        <div class="form-card__field">
+        <div class="form-card__field" role="group" aria-labelledby="contact-captcha-label">
           <span class="form-card__field-label" id="contact-captcha-label">
             {{ 'contact_form.captcha.aria_label' | translate }}
           </span>
-          <div #turnstileHost aria-labelledby="contact-captcha-label"></div>
+          <div #turnstileHost></div>
         </div>
       </div>
 
@@ -156,6 +156,8 @@ const initialControl: ContactFormViewState = {
   styleUrls: ['../masters/_master-layout.css', './contact-form.component.css']
 })
 export class ContactFormComponent implements ContactFormView, OnInit, AfterViewInit {
+  readonly captchaGroupLabelId = 'contact-turnstile-label';
+
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly useCase = inject(SendContactMessageUseCase);
   private readonly presenter = inject(ContactFormPresenter);
