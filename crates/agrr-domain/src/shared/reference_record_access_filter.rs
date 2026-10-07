@@ -7,6 +7,11 @@ use crate::shared::user::User;
 pub trait RecordAccessPolicy {
     fn view_allowed(user: &User, is_reference: bool, record_user_id: Option<i64>) -> bool;
     fn edit_allowed(user: &User, is_reference: bool, record_user_id: Option<i64>) -> bool;
+
+    /// When true, same-organization members may edit non-reference records they do not own.
+    fn organization_member_edit_allowed() -> bool {
+        true
+    }
 }
 
 /// Ruby: `Domain::Shared::ReferenceRecordAccessFilter`
@@ -58,6 +63,9 @@ impl<P: RecordAccessPolicy> ReferenceRecordAccessFilter<P> {
     ) -> bool {
         if P::edit_allowed(&self.user, is_reference, record_user_id) {
             return true;
+        }
+        if !P::organization_member_edit_allowed() {
+            return false;
         }
         organization_member_access(
             &self.member_organization_ids,

@@ -1,5 +1,6 @@
 //! Nested crop task schedule blueprints — `/api/v1/masters/crops/{crop_id}/task_schedule_blueprints`.
 
+use crate::api_error::{single_failure, single_failure_with_code};
 use crate::builtin_generation_deprecation::{
     builtin_generation_deprecated_json, BuiltinGenerationEndpoint,
 };
@@ -391,33 +392,36 @@ fn create_failure_response(
     match failure.reason {
         MissingAgriculturalTaskId => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"error": "agricultural_task_id is required", "error_code": "missing_agricultural_task_id"})),
+            Json(single_failure_with_code(
+                "agricultural_task_id is required",
+                "missing_agricultural_task_id",
+            )),
         ),
         MissingGddTrigger => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"error": "gdd_trigger is required", "error_code": "missing_gdd_trigger"})),
+            Json(single_failure_with_code("gdd_trigger is required", "missing_gdd_trigger")),
         ),
         InvalidStageOrder => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"error": "stage_order is required", "error_code": "invalid_stage_order"})),
+            Json(single_failure_with_code("stage_order is required", "invalid_stage_order")),
         ),
         CropNotFound => (
             StatusCode::NOT_FOUND,
-            Json(json!({"error": "Crop not found", "error_code": "crop_not_found"})),
+            Json(single_failure_with_code("Crop not found", "crop_not_found")),
         ),
         AgriculturalTaskNotFound => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({
-                "error": "Agricultural task not found",
-                "error_code": "agricultural_task_not_found"
-            })),
+            Json(single_failure_with_code(
+                "Agricultural task not found",
+                "agricultural_task_not_found",
+            )),
         ),
         Duplicate => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({
-                "error": "A task plan for this stage, task, and GDD timing already exists",
-                "error_code": "duplicate_blueprint"
-            })),
+            Json(single_failure_with_code(
+                "A task plan for this stage, task, and GDD timing already exists",
+                "duplicate_blueprint",
+            )),
         ),
         ValidationFailed => (
             StatusCode::UNPROCESSABLE_ENTITY,
@@ -442,10 +446,7 @@ fn regenerate_failure_response(
     };
     (
         status,
-        Json(json!({
-            "error": failure.message,
-            "error_code": error_code
-        })),
+        Json(single_failure_with_code(&failure.message, error_code)),
     )
 }
 

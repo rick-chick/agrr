@@ -16,7 +16,7 @@
 | **開発** | [dev-docker](../../../.cursor/skills/dev-docker/SKILL.md)（`up.sh` / `host-rust-stack.sh`）が標準 |
 | **契約 CI 正** | [`scripts/run-rust-contract-tests.sh`](../../../scripts/run-rust-contract-tests.sh) |
 
-[`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md) の「未移行は Rails 既定」は**移行期の暫定**のみ。終着像は本節と P7 と一致させる。
+[`ADR-strangler-lb-url-map.md`](../app-rust-stack/ADR-strangler-lb-url-map.md) の「未移行は Rails 既定」は**移行期の暫定**のみ。終着像は本節と P7 と一致させる。
 
 ---
 
@@ -28,7 +28,7 @@
 | **BC 1 件の切替完了** | その BC のルートが Rust + R4 rust GREEN + 単一ライター | 他 BC は **Rails 必須** |
 | **P6 プログラム完了** | [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) のクリティカルパス + wave がすべて `phase: done` | **API は Rust のみ**（`AGRR_RUST_API=1` / strangler nginx） |
 | **ストラングラー完了（P7 入口）** | 本番 URL map に **Rails 向け API ルールが残っていない** | 開発も **Rust 単体**（dev-docker）で SPA |
-| **Rails 廃止（P7 完了）** | [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md) P7 出口チェックリスト | **本番で Rails API 不要** |
+| **Rails 廃止（P7 完了）** | [`PRODUCTION-CUTOVER-STATUS.md`](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md) P7 出口チェックリスト | **本番で Rails API 不要** |
 
 **「Rust を起動お願い」≠「Rails 移行が終わった」**。移行期の開発は意図的に **Rails + Rust + 振分（nginx / URL map）** である。
 
@@ -52,7 +52,7 @@
 
 - 既存 `test/controllers/api/v1/**`（または channels 等）から **観測可能振る舞いを写した** `test/contract/**` がある。
 - **同じアサーション**が `CONTRACT_RUNTIME=rust` かつ **Rails テストと同一 SQLite**（`run-rust-contract-tests.sh`）でも通る。
-- 新規シナリオの invent は禁止（[`PROVISIONAL-STACK.md`](./PROVISIONAL-STACK.md) R4 節）。
+- 新規シナリオの invent は禁止（[`PROVISIONAL-STACK.md`](../app-rust-stack/PROVISIONAL-STACK.md) R4 節）。
 
 ---
 
@@ -94,13 +94,13 @@ P6 TRACKING 完了より **厳しい**条件。ローカルで次をすべて満
 | E | WebSocket 最適化が Rust `/cable` で本番同等 |
 | F | `COVERAGE=false ./scripts/run-rust-contract-tests.sh` が **全** contract を含み GREEN |
 
-**現状（P6 TRACKING 完了）**: dev-docker + [`docker/nginx-strangler-host.conf`](../../../docker/nginx-strangler-host.conf) で `/api/` は Rust のみ（未実装は 501）。レベル 3 は **`run-rust-contract-tests.sh` 全 GREEN + Rails 未起動 E2E**。本番は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
+**現状（P6 TRACKING 完了）**: dev-docker + [`docker/nginx-strangler-host.conf`](../../../docker/nginx-strangler-host.conf) で `/api/` は Rust のみ（未実装は 501）。レベル 3 は **`run-rust-contract-tests.sh` 全 GREEN + Rails 未起動 E2E**。本番は [`PRODUCTION-CUTOVER-STATUS.md`](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)。
 
 ---
 
 ## レベル 4 — 本番ストラングラー完了（P7 の入口）
 
-[`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md) に従い:
+[`ADR-strangler-lb-url-map.md`](../app-rust-stack/ADR-strangler-lb-url-map.md) に従い:
 
 | # | 条件 |
 |---|------|
@@ -115,7 +115,7 @@ P6 TRACKING 完了より **厳しい**条件。ローカルで次をすべて満
 
 ## レベル 5 — Rails 廃止（P7 完了）
 
-[`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md) を参照。P6 完了とは別ゲート。
+[`PRODUCTION-CUTOVER-STATUS.md`](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md) を参照。P6 完了とは別ゲート。
 
 ---
 
@@ -168,7 +168,7 @@ flowchart TD
 |------|------|
 | [README.md](./README.md) | 索引 |
 | [TRACKING-P6.yaml](./TRACKING-P6.yaml) | BC ごとの `phase` |
-| [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | 本番観測・P7 削除順 |
-| [ADR-strangler-lb-url-map.md](./ADR-strangler-lb-url-map.md) | 本番振分 |
-| [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | 本番クローズ・P7 出口 |
+| [PRODUCTION-CUTOVER-STATUS.md](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md) | 本番観測・P7 削除順 |
+| [ADR-strangler-lb-url-map.md](../app-rust-stack/ADR-strangler-lb-url-map.md) | 本番振分 |
+| [PRODUCTION-CUTOVER-STATUS.md](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md) | 本番クローズ・P7 出口 |
 | [test/README.md](../../../test/README.md) | 現行テスト（Ruby `test/contract` は P8.6 で削除） |

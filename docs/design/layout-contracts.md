@@ -1,7 +1,7 @@
 # Layout Design Contracts
 
 レイアウト smoke の **L2 設計契約**（意味の単一ソース）です。  
-機械可読な定義は [`frontend/e2e/smoke/layout-archetype-design-contracts.mjs`](../frontend/e2e/smoke/layout-archetype-design-contracts.mjs) を正とします。
+機械可読な定義は [`frontend/e2e/smoke/layout-archetype-design-contracts.mjs`](../../frontend/e2e/smoke/layout-archetype-design-contracts.mjs) を正とします。
 
 ## 層の役割
 
