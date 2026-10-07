@@ -66,10 +66,10 @@ total_area: 100.0,
     }
 
     #[test]
-    fn access_denied_false_when_org_member_matches_plan_organization() {
+    fn access_denied_true_when_org_member_matches_plan_organization() {
         let mut plan = private_plan_entity(5);
         plan.organization_id = Some(42);
-        assert!(!access_denied(&plan, 99, &[42]));
+        assert!(access_denied(&plan, 99, &[42]));
     }
 
     #[test]
@@ -86,9 +86,9 @@ total_area: 100.0,
     }
 
     #[test]
-    fn assert_private_owned_allows_org_member_with_matching_organization() {
+    fn assert_private_owned_denies_org_member_with_matching_organization() {
         let user = User::new(99, false);
         let mut plan = private_plan_entity(5);
         plan.organization_id = Some(42);
-        assert_eq!(assert_private_owned(&user, &plan, &[42]), Ok(()));
+        assert_eq!(assert_private_owned(&user, &plan, &[42]), Err(PolicyPermissionDenied));
     }

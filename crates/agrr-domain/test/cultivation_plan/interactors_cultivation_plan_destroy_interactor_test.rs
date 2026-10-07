@@ -18,6 +18,18 @@
             Ok(vec![])
         }
     }
+
+    struct MemberScopeGateway {
+        org_ids: Vec<i64>,
+    }
+    impl crate::shared::gateways::UserOrganizationScopeGateway for MemberScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self.org_ids.clone())
+        }
+    }
     struct FakeTranslator;
     impl TranslatorPort for FakeTranslator {
         fn translate(&self, key: &str, options: &TranslateOptions) -> String {
@@ -189,6 +201,43 @@ total_area: 0.0,
         interactor.call(1).unwrap();
         assert!(success.lock().unwrap().is_some());
         assert!(failure.lock().unwrap().is_none());
+    }
+
+    #[test]
+    fn returns_not_found_when_org_member_deletes_other_users_plan() {
+        let success = Arc::new(Mutex::new(None));
+        let failure = Arc::new(Mutex::new(None));
+        let mut output = SpyOutput {
+            success: Arc::clone(&success),
+            failure: Arc::clone(&failure),
+        };
+        let mut plan = private_plan(1, 5);
+        plan.organization_id = Some(42);
+        let gateway = StubGateway {
+            plan: Some(plan),
+            display_name: "N".into(),
+            delete_outcome: DeleteOutcome::Ok(json!({"undo": true})),
+        };
+        let user_lookup = StubUserLookup {
+            user: User::new(99, false),
+        };
+        let scope = MemberScopeGateway {
+            org_ids: vec![42],
+        };
+        let mut interactor = CultivationPlanDestroyInteractor::new(
+            &mut output,
+            99,
+            &gateway,
+            &FakeTranslator,
+            &user_lookup,
+            &scope,
+        );
+        interactor.call(1).unwrap();
+        assert!(success.lock().unwrap().is_none());
+        assert_eq!(
+            failure.lock().unwrap().as_ref().map(|e| e.message.as_str()),
+            Some("plans.errors.not_found")
+        );
     }
 
     // Ruby: test "returns not found error when plan missing"
