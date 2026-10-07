@@ -78,8 +78,29 @@
 - `agrr-server` / `agrr-adapters-sqlite` のインラインテストには `test-common` 上の専用入口が無く、CI も一部を実行していない。RED は原則ドメインテストと R4 契約テストに置く計画。
 - `run-test-frontend.sh` の単一ファイル指定、および `node --test` 系テスト（route manifest 等）を `test-common` 経路で実行できるかは未確認。規約上の障害として扱う方針は各文書を参照。
 
+## 決定済み範囲の Issue
+
+未決の項目は起票していない。親は #1359。
+
+| Issue | 範囲 |
+|-------|------|
+| [#1346](https://github.com/rick-chick/agrr/issues/1346) | 公開 Plan の圃場栽培を非所有者が更新できる |
+| [#1347](https://github.com/rick-chick/agrr/issues/1347) | Plan は所有者のみ（閲覧も編集も不可） |
+| [#1348](https://github.com/rick-chick/agrr/issues/1348) | Farm/Crop の編集を所有者のみ（一覧は変えない） |
+| [#1352](https://github.com/rick-chick/agrr/issues/1352) | 上限を組織単位に統一（#1348 の後） |
+| [#1349](https://github.com/rick-chick/agrr/issues/1349) | API キーは読み取り専用、既存キー移行、MCP apply 削除 |
+| [#1350](https://github.com/rick-chick/agrr/issues/1350) | 失敗応答を `errors` 配列へ |
+| [#1354](https://github.com/rick-chick/agrr/issues/1354) | フロントの読み取りを `errors` へ |
+| [#1357](https://github.com/rick-chick/agrr/issues/1357) | 旧キー `error` / `message` の削除 |
+| [#1353](https://github.com/rick-chick/agrr/issues/1353) | climate と entry-schedule の fail-closed |
+| [#1355](https://github.com/rick-chick/agrr/issues/1355) | fail-closed の残り 8 項目 |
+| [#1356](https://github.com/rick-chick/agrr/issues/1356) | 問い合わせを Turnstile に |
+| [#1351](https://github.com/rick-chick/agrr/issues/1351) | docs のリンク切れ |
+| [#1358](https://github.com/rick-chick/agrr/issues/1358) | ARCHITECTURE と ADR-002 |
+
 ## 更新履歴
 
 - 決定事項（組織 / Cloudflare / 厳格 / 統合 / 与えない）を 01, 02, 03, 05, 06, 07, 10 に反映。
 - 第 2 回決定（複数所属スコープ外 / 移行する / 削除 / errors / 閲覧も許さない）を 01, 03, 07, 10 に反映。
 - 第 3 回決定（共有 / 移行する=V27 の本番実施を承認 / 削除=旧キー削除 / 縮小=Farm・Crop の編集も所有者のみ）を 01, 03, 07, 10 に反映。02, 05, 06, 08, 09, 11 は `errors` 契約・Turnstile・縮小への追随を実施済み。01 と 10 の相互参照（枠は組織共有、編集は所有者のみ、閲覧は C1 / P14）は突き合わせ済み。
+- 決定済み範囲を GitHub issue #1346〜#1359（親 #1359）にした。未決は起票していない。
