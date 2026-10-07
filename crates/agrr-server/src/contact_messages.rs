@@ -1,5 +1,6 @@
 //! `POST /api/v1/contact_messages` (anonymous).
 
+use crate::api_error::single_failure;
 use crate::contact_message_rate_limit::ContactMessageRateLimiterAdapter;
 use crate::state::AppState;
 use agrr_adapters_sqlite::ContactMessageSqliteGateway;
@@ -60,16 +61,22 @@ fn failure_response(failure: CreateContactMessageFailure) -> (StatusCode, Json<s
     let (status, json) = match failure.kind {
         CreateContactMessageFailureKind::RateLimit => (
             StatusCode::TOO_MANY_REQUESTS,
-            serde_json::json!({"error": "rate_limit"}),
+            single_failure("rate_limit"),
         ),
-        CreateContactMessageFailureKind::Recaptcha => (
-            StatusCode::UNPROCESSABLE_ENTITY,
-            serde_json::json!({"error": failure.message.unwrap_or_default()}),
-        ),
-        CreateContactMessageFailureKind::Unavailable => (
-            StatusCode::SERVICE_UNAVAILABLE,
-            serde_json::json!({"error": failure.message.unwrap_or_default()}),
-        ),
+        CreateContactMessageFailureKind::Recaptcha => {
+            let message = failure.message.unwrap_or_default();
+            (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                single_failure(&message),
+            )
+        }
+        CreateContactMessageFailureKind::Unavailable => {
+            let message = failure.message.unwrap_or_default();
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                single_failure(&message),
+            )
+        }
         CreateContactMessageFailureKind::Validation => (
             StatusCode::UNPROCESSABLE_ENTITY,
             serde_json::json!({"errors": failure.errors.map(|e| e.full_messages()).unwrap_or_default()}),
@@ -143,6 +150,7 @@ mod tests {
             "reCAPTCHA is not configured",
         ));
         assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(json["errors"][0], "reCAPTCHA is not configured");
         assert_eq!(json["error"], "reCAPTCHA is not configured");
     }
 
