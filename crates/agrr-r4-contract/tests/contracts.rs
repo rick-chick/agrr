@@ -8,7 +8,9 @@ use agrr_domain::cultivation_plan::dtos::{
 };
 use agrr_r4_contract::http::ContractClient;
 use support::{
-    agrr_regeneration_contract_available,     assert_builtin_generation_deprecated_headers,
+    agrr_regeneration_contract_available,
+    assert_api_failure_errors_array, assert_api_failure_errors_contain,
+    assert_api_failure_errors_include, assert_builtin_generation_deprecated_headers,
     assert_cross_user_access_denied,
     assert_crop_task_template_api_removed,
     clear_plan_task_schedules, contract_api_session_id, developer_session_id, empty_headers,
@@ -347,6 +349,7 @@ fn patch_work_record_stale_updated_at_returns_409() {
     assert_eq!(409, patch_status, "{patch_body}");
     let patch_json: serde_json::Value =
         serde_json::from_str(&patch_body).expect("stale patch JSON");
+    assert_api_failure_errors_include(&patch_json, "stale_record", &patch_body);
     assert_eq!("stale_record", patch_json["error"].as_str().unwrap());
 }
 
@@ -2122,6 +2125,7 @@ fn post_masters_crop_task_schedule_blueprints_regenerate_without_blueprints_retu
         Some("missing_blueprints"),
         "{body}"
     );
+    assert_api_failure_errors_array(&json, &body);
     assert!(json.get("error").is_some(), "{body}");
 }
 
@@ -3191,6 +3195,7 @@ fn post_masters_crop_setup_proposal_apply_rate_limited_returns_429_with_retry_af
     );
     let response_body = response.text().expect("rate limit body");
     let json: serde_json::Value = serde_json::from_str(&response_body).expect("rate limit JSON");
+    assert_api_failure_errors_include(&json, "rate_limit", &response_body);
     assert_eq!("rate_limit", json["error"].as_str().unwrap());
 }
 
@@ -3279,6 +3284,7 @@ fn get_farm_temperature_chart_fetching_returns_409() {
     let (status, body) = status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
     assert_eq!(409, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("409 JSON");
+    assert_api_failure_errors_include(&json, "weather_data_not_ready", &body);
     assert_eq!("weather_data_not_ready", json["error"].as_str().unwrap());
     assert_eq!("fetching", json["weather_data_status"].as_str().unwrap());
 }
@@ -4590,6 +4596,7 @@ fn post_contact_message_returns_503_when_recaptcha_not_configured() {
     ));
     assert_eq!(503, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha unavailable JSON");
+    assert_api_failure_errors_contain(&json, "reCAPTCHA", &body);
     assert!(json["error"]
         .as_str()
         .unwrap_or("")
@@ -4651,6 +4658,7 @@ fn post_contact_message_returns_429_when_rate_limit_exceeded() {
     ));
     assert_eq!(429, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("rate limit JSON");
+    assert_api_failure_errors_include(&json, "rate_limit", &body);
     assert_eq!(Some("rate_limit"), json["error"].as_str());
 }
 
@@ -4683,6 +4691,7 @@ fn post_contact_message_returns_422_when_recaptcha_fails() {
     ));
     assert_eq!(422, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha failure JSON");
+    assert_api_failure_errors_contain(&json, "reCAPTCHA", &body);
     assert!(json["error"].as_str().unwrap_or("").contains("reCAPTCHA"));
 }
 

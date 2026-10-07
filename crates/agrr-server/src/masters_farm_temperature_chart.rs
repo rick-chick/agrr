@@ -1,5 +1,6 @@
 //! `GET /api/v1/masters/farms/{id}/temperature_chart`
 
+use crate::api_error::{extend_failure, single_failure};
 use crate::adapters::SystemClock;
 use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
@@ -123,27 +124,29 @@ fn temperature_chart_failure(error: TemperatureChartFailure) -> (StatusCode, Val
     match error {
         TemperatureChartFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::NOT_FOUND,
-            json!({"error": "not_found"}),
+            single_failure("not_found"),
         ),
         TemperatureChartFailure::NotFound(e) => (
             StatusCode::NOT_FOUND,
-            json!({"error": e.message}),
+            single_failure(&e.message),
         ),
         TemperatureChartFailure::WeatherNotReady { status, progress } => (
             StatusCode::CONFLICT,
-            json!({
-                "error": "weather_data_not_ready",
-                "weather_data_status": status,
-                "weather_data_progress": progress,
-            }),
+            extend_failure(
+                single_failure("weather_data_not_ready"),
+                json!({
+                    "weather_data_status": status,
+                    "weather_data_progress": progress,
+                }),
+            ),
         ),
         TemperatureChartFailure::MissingWeatherLocation(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": e.message}),
+            single_failure(&e.message),
         ),
         TemperatureChartFailure::Storage(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            json!({"error": e.message}),
+            single_failure(&e.message),
         ),
     }
 }
@@ -156,6 +159,6 @@ fn internal(error: Box<dyn std::error::Error + Send + Sync>) -> (StatusCode, Jso
 fn internal_error() -> (StatusCode, Json<Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(json!({"error": "internal"})),
+        Json(single_failure("internal")),
     )
 }
