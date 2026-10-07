@@ -336,6 +336,44 @@ fn dispatches_record_invalid_when_task_schedule_item_id_is_submitted() {
     );
 }
 
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn dispatches_not_found_when_org_member_updates_other_users_plan() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let mut output = SpyUpdateOutput {
+        events: Arc::clone(&events),
+        errors: Arc::new(Mutex::new(None)),
+    };
+    let clock = FakeClock {
+        today_val: date!(2026-06-12),
+        now_val: datetime!(2026-06-12 10:00 UTC),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: org_scoped_private_plan(2, 5, 42),
+    };
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+    let mut interactor = WorkRecordUpdateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &StubWorkRecordGateway,
+        &EmptyClimateSnapshot,
+        &clock,
+        &scope,
+    );
+
+    interactor
+        .call_rescuing(99, 2, 10, &BTreeMap::new())
+        .unwrap();
+
+    assert_eq!(&*events.lock().unwrap(), &["not_found".to_string()]);
+}
+
 #[test]
 fn dispatches_not_found_when_private_plan_access_denied() {
     let events = Arc::new(Mutex::new(Vec::new()));

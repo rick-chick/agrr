@@ -5,5 +5,6 @@ use crate::shared::dtos::Error;
 
 pub trait CultivationPlanDestroyOutputPort {
     fn on_success(&mut self, dto: CultivationPlanDestroyOutput);
+    fn on_not_found(&mut self);
     fn on_failure(&mut self, error: Error);
 }

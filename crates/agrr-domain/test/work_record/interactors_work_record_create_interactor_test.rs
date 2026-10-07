@@ -707,6 +707,53 @@ fn dispatches_record_invalid_when_ad_hoc_name_missing() {
     );
 }
 
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn dispatches_not_found_when_org_member_creates_on_other_users_plan() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let mut output = SpyCreateOutput {
+        events: Arc::clone(&events),
+        record: Arc::new(Mutex::new(None)),
+        errors: Arc::new(Mutex::new(None)),
+        climate_failure: Arc::new(Mutex::new(None)),
+    };
+    let create_calls = Arc::new(Mutex::new(Vec::new()));
+    let gateway = StubWorkRecordGateway {
+        create_calls: Arc::clone(&create_calls),
+        create_result: sample_read(),
+    };
+    let item_lookup = StubItemLookup { snapshot: None };
+    let clock = FakeClock {
+        today_val: date!(2026-06-12),
+        now_val: datetime!(2026-06-12 10:00 UTC),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: org_scoped_private_plan(2, 5, 42),
+    };
+    let climate_snapshot = EmptyClimateSnapshot;
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+    let mut interactor = WorkRecordCreateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &gateway,
+        &item_lookup,
+        &climate_snapshot,
+        &clock,
+        &scope,
+    );
+
+    interactor.call_rescuing(99, 2, &BTreeMap::new()).unwrap();
+
+    assert_eq!(&*events.lock().unwrap(), &["not_found".to_string()]);
+    assert!(create_calls.lock().unwrap().is_empty());
+}
+
 #[test]
 fn dispatches_not_found_when_private_plan_access_denied() {
     let events = Arc::new(Mutex::new(Vec::new()));
