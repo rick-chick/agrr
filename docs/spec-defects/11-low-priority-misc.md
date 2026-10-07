@@ -6,6 +6,30 @@
 
 表記: 「確認済み」はコードを実際に読んだ事実（`file:line`）。「未確認」は読解のみ・未実行・入手不能な事実で、設計・実装の前提にしない。
 
+更新: [`README.md`](README.md) の決定事項（第 1〜3 回）を反映した。02 の Turnstile への方針変更と 07 の `errors` 契約への統合により、項目 3 とその依存が変わる（§0、§2.3、§3.3、§9）。項目 1・2・5 への影響は §0.2 で確認した。確認時点のコードは `3de664648`（`master`）。初版（`e3d739ce4`）以降にコードが変わったのは、`crates/` の climate・work record・cultivation_plan 系（テストと `field_cultivation_climate_data_interactor.rs`、`fields_allocation.rs`）と `optimization_chain_phase.rs` のみで、`frontend/`・`scripts/`・`.github/` と、本書が引用する他の `crates/` ファイルは無変更（`git diff --name-only e3d739ce4 HEAD` で確認）。変更のあった `field_cultivation_climate_data_interactor.rs` の引用行（`:232`）は `HEAD` で再確認済み。
+
+---
+
+## 0. 決定事項の反映
+
+### 0.1 本書に関係する決定
+
+| 決定 | 出典 | 本書に関係する内容 |
+|------|------|--------------------|
+| 02: CAPTCHA は Cloudflare Turnstile | [02](02-contact-recaptcha.md) §0 D-1〜D-6、§3.3.2、§5.2、§7 | 問い合わせ POST の CAPTCHA は reCAPTCHA ではなく Turnstile。旧 `recaptcha_token` は受け付けない。02 の最新案では、フロントのペイロードは中立名 `captcha_token` を持ち、ゲートウェイがワイヤ名へ写像する。ワイヤ名は 02 の Q8 が**未回答**（案 A `cf-turnstile-response`（推奨）/ 案 B `captcha_token`）。成功レスポンス型の縮小（`{ id, status }`）は 02 §5.2 と §7 手順 1（テスト F2・F4）が同じ範囲を既に計画している |
+| 07: エラー契約を `errors` に統合し、旧キーを削除 | [07](07-frontend-error-contract.md) §0.2、§0.3、§3.3、§3.5.1、§10 | 失敗本文は `errors: string[]`（任意で `error_code` / `field_errors`）。旧キー `error` / `message` は S1 で併記し、P1〜P6 を満たして S2 で削除する。02 は 07 の契約に合わせて更新済み（02 D-4〜D-6）: CAPTCHA 拒否は 422 `{"errors": [...], "error_code": "captcha_failed"}`、利用不可は 503 `"captcha_unavailable"`（新規キー `code` は導入しない。02 の Q10 は解消）。429 は `{"errors": ["rate_limit"]}`、入力検証 422 は `errors` に `field_errors` を加える（07 §10 の 02 行）。429 の専用文言の担当（02 Q15）と、着手順・旧キー併記の扱い（02 Q16）は未確定 |
+| 10: 閲覧も許さない / 縮小 | [10](10-authorization-consistency.md) §2.4（D4）、P8、README 第 2・3 回 | Plan・Farm・Crop の組織メンバーの閲覧・編集を所有者のみへ縮小する。公開 Plan の無認証読み取り（D4）の扱い（P8）は未決 |
+| 01 共有枠 / 03 移行・MCP 削除 / 05・06 厳格 | 各文書 §0 | 本書の項目に直接の変更は無い（§0.2 の確認を除く） |
+
+### 0.2 項目別の影響確認
+
+| 項目 | 決定の影響 | 根拠 |
+|------|-----------|------|
+| 1（manifest のリダイレクト行） | なし | 01〜10 の本文に `select-farm-size` / `route-manifest` / `public-plans.routes` の言及が無い（`grep` 0 件）。02 の E2E 変更は `operation-smoke.spec.ts` で、項目 1 が触る `layout-contract-bindings.mjs` / `layout-conformance-bindings.mjs` / `a11y-allowlist.json` とは別ファイル |
+| 2（`farm_sizes` API） | 3 点で影響あり。(a) 削除後の本文（501 `api_not_migrated` または 410）の表明を 07 の契約に合わせる（§3.2、§5.2）。(b) 同一ファイルの競合（§7）。(c) 認可は 10 の決定の影響なし | (a) `fallback.rs:15-19` の 501 本文は `error` + `message` + `path` で、07 §2.7 #19 の区分 A（`error` を `errors` に変える対象）。`gone`（`masters_crop_agricultural_tasks.rs:25-33`）は `error` + `error_code` で、07 §3.2.1 は `error_code` を維持する。(b) `public_plans.rs` は 07 S1（`error` 9・`message` 4）と 06 H3（`:375-376`、`:405-412`）も編集する。(c) `farm_sizes` はカタログを返すだけで、認証情報を引数に取らず（`public_plans.rs:271`）、10 の対象（D4 は `public_plan_data`）と別 |
+| 3（問い合わせレスポンス型） | あり（本文全体）。02 の手順 1 と同一変更、CAPTCHA トークン追加、失敗本文の形は 07 | §2.3、§3.3、§5.3、§9 |
+| 5（i18n キー偏り） | あり。件数の変動要因と、補完の担当が 07 と重なる | §2.5、§3.4 |
+
 ---
 
 ## 1. 概要と重大度
@@ -14,11 +38,11 @@
 |---|------|--------|-----------|------|
 | 1 | route-manifest に載るリダイレクト専用ルート `public-plans/select-farm-size` | 低（開発・CI 品質） | なし（E2E / capture のみ） | リダイレクト先 `/public-plans/new` に到達するため、URL 一致を要求する E2E 検証と噛み合わない（静的読解。実行は未確認） |
 | 2 | フロント未使用の `GET /api/v1/public_plans/farm_sizes` と関連 i18n | 低（デッドコード） | なし | サイズ選択ステップは意図的に廃止済み。API・i18n・E2E 設定に残骸がある |
-| 3 | 問い合わせ POST 成功レスポンスの型不整合 | 低（型の嘘） | 現状なし | サーバーは `id` / `status` のみ返すが、フロントは `email` / `message` / `created_at` / `sent_at` を読む型で受ける |
-| 4 | 公開プラン API が認証なしでデータを返す点 | 本書の対象外 | — | [課題 10](10-authorization-consistency.md) 項目 4 で扱う。本書は参照のみ |
+| 3 | 問い合わせ POST 成功レスポンスの型不整合 | 低（型の嘘） | 現状なし | サーバーは `id` / `status` のみ返すが、フロントは `email` / `message` / `created_at` / `sent_at` を読む型で受ける。同じ型・ファイルを 02（Turnstile）が変更するため、実装は 02 §7 手順 1 と同一変更単位（§0.1、§6） |
+| 4 | 公開プラン API が認証なしでデータを返す点 | 本書の対象外 | — | [課題 10](10-authorization-consistency.md) の D4（§2.4、P8 は未決）で扱う。本書は参照のみ |
 | 5 | i18n キー偏り（ja のみ 104 / en のみ 80）の実態と判断基準 | 低（衛生） | 現状なし | 偏りキーはすべてフロントから未参照。削除・保持の基準と代表例のみ提示。全件削除は範囲外 |
 
-全項目が低優先度で、項目 1・2 は同じ「サイズ選択ステップ廃止の後始末」であり、同一変更単位で扱うのが自然。項目 3 は独立。項目 5 は判断基準の文書化のみ。
+全項目が低優先度で、項目 1・2 は同じ「サイズ選択ステップ廃止の後始末」であり、同一変更単位で扱うのが自然。項目 3 は項目 1・2 とは独立だが、02 の手順 1 と同一変更単位になる。項目 5 は判断基準の文書化のみ。
 
 ---
 
@@ -86,20 +110,21 @@ i18n（確認済み）:
 
 - 成功レスポンスは 201 で `{ "id": ..., "status": ... }` のみ（`crates/agrr-server/src/contact_messages.rs:85-94`）。
 - R4 契約もこれを固定: `post_contact_message_creates_queued_record` は `status == "queued"` と `id` の存在だけを検証（`crates/agrr-r4-contract/tests/contracts.rs:4509-4530`）。他フィールドは契約外。
-- 失敗系は別形状: 429 `{"error":"rate_limit"}`、422 `{"error": ...}` / `{"errors": [...]}`、503 `{"error": ...}`（`contact_messages.rs:58-79`）。
+- 失敗系は別形状（現状）: 429 `{"error":"rate_limit"}`、422（CAPTCHA）`{"error": ...}`、422（入力検証）`{"errors": [...]}`、503 `{"error": ...}`（`contact_messages.rs:58-79`。CAPTCHA 失敗は `Recaptcha` 種別、`:65-68`）。**この形は 07 の統合で変わる**（§0.1）。失敗本文の最終形は 07 が決め（`errors` + 任意の `error_code` / `field_errors`。S2 で `error` を削除）、CAPTCHA 失敗の `error_code` 値は 02 が `captcha_failed` / `captcha_unavailable` と確定している（02 D-5）。本書は失敗本文の形を決めない。
+- CAPTCHA トークンの受け口は、現状 `ContactMessageBody.recaptcha_token: Option<String>`（`contact_messages.rs:36`）。02 の決定で Turnstile のトークンに置き換わる（ワイヤ名は 02 の Q8。§0.1）。成功レスポンスの形（`id` / `status`）は 02・07 の変更で変わらない（07 の契約は 4xx / 5xx の失敗本文が対象: 07 §0.2、§3.3 C1）。
 
 フロント（確認済み）:
 
-- `HttpContactGateway.postMessage` は `post<any>` で受け、`email` / `message` / `created_at` を必須として読み、`name` / `subject` / `source` / `sent_at` は `?? null` で補完して `ContactMessageRecord` を組み立てる（`frontend/src/app/adapters/contact/http-contact-gateway.service.ts:16-33`、特に `:19-29`）。
+- `HttpContactGateway.postMessage` は `post<any>` で受け、`email` / `message` / `created_at` を必須として読み、`name` / `subject` / `source` / `sent_at` は `?? null` で補完して `ContactMessageRecord` を組み立てる（`frontend/src/app/adapters/contact/http-contact-gateway.service.ts:16-33`、特に `:20-30`）。
 - `ContactMessageRecord`（`frontend/src/app/domain/contact/contact-message.model.ts:11-21`）は `email: string` / `message: string` / `created_at: string` を必須と宣言。実レスポンスでは `undefined`（型の嘘）。`name` / `subject` / `source` / `sent_at` は `null` になる。
 - spec は実サーバーに存在しないフィールドを持つモックを使う（`http-contact-gateway.service.spec.ts:28-38, 50-57`）ため、不整合を検出できない。
 - 利用側: `SendContactMessageUseCase` が使うのは `record.status`（`'failed'` 分岐と DTO 変換）と `record.id`（`send-contact-message.usecase.ts:32, 40-46`）。`toSuccessDto` は `created_at` / `sent_at` を DTO に詰める（`:40-46`、`SendContactMessageSuccessDto` は `send-contact-message.dtos.ts:5-10`）が、`ContactFormPresenter.onSuccess` は DTO を使わない（引数名 `_dto`、`contact-form.presenter.ts:28-37`）。したがって現状は実害なし（`created_at` は実行時 `undefined`）。
-- `status === 'failed'` 分岐（`send-contact-message.usecase.ts:32`）は、サーバーが失敗を 4xx/5xx で返す設計（`failure_response`）なので 201 応答では通常到達しないはず。ただしドメイン側に 201 で `failed` を返す経路が無いことの網羅確認は未実施（未確認）。
-- 参考（課題 02 の領域）: フロントの問い合わせ関連ファイルに `recaptcha` は現れない（`frontend/src/app/{domain,usecase}/contact`、`components/contact-form` を `grep`、0 件）。ペイロード型 `ContactMessagePayload`（`contact-message.model.ts:1-7`）は課題 02 側で変更される可能性が高く、同ファイルの編集競合に注意（§9）。
+- `status === 'failed'` 分岐（`send-contact-message.usecase.ts:32`）は、201 応答では到達しない（静的読解で確認）。作成の INSERT は `status` を固定値 `'queued'` で書き（`crates/agrr-adapters-sqlite/src/contact_messages/contact_message_gateway.rs:73`）、応答は同じ書き込みクロージャ内で直後に読み戻した行から作る（同 `:70-115`、読み戻しは `:82-84`）。`contact_messages` に対するトリガー・`UPDATE` は `crates/` の `.rs` にも `V1__baseline.sql` にも無い（`grep`。`status` 列の既定も `'queued'`: `V1__baseline.sql:12`）。エンティティの `failed()`（`entities/contact_message.rs:52`）を `'failed'` に設定する書き込み経路も無い。したがって従来の未確認事項は解消した。実機での再現は未実施。
+- 参考（課題 02 の領域）: フロントの問い合わせ関連ファイルに `recaptcha` / `turnstile` / `captcha` は現れない（`frontend/src/app` 全体を大文字小文字を区別せず `grep`、0 件）。ペイロード型 `ContactMessagePayload`（`contact-message.model.ts:1-7`）は 02 が `captcha_token` を追加し、`validatePayload`・`ContactMessageRecord` の縮小も同じファイルで行う（02 §5.2 の domain 行）。本書の項目 3 も同じ `ContactMessageRecord` を縮小するため、変更は 02 手順 1 と重複する（§0.1、§6、§9）。
 
 ### 2.4 項目 4: 公開プラン API の無認証応答
 
-本書では扱わない。[課題 10](10-authorization-consistency.md) 項目 4 を参照。`GET /api/v1/public_plans/farm_sizes` のハンドラは認証情報を引数に取らない（`public_plans.rs:271`）が、他の公開プラン API の認証要否は本書では未確認。課題 10 の結論が出るまで、本書の項目 2 で認証方針を変更しない。
+本書では扱わない。[課題 10](10-authorization-consistency.md) の D4（§2.4。公開 Plan の無認証読み取り。対象は `public_plan_data`: `public_plans.rs:62-65,578-590`）を参照。扱い（P8）は 10 でも未決で、10 は「設計どおりの可能性が高い」と判定している。`GET /api/v1/public_plans/farm_sizes` のハンドラは認証情報を引数に取らない（`public_plans.rs:271`）。これは Plan のデータではなく固定カタログを返すだけで、10 の D4 とは別の API である。10 の縮小決定（所有者のみ）は Plan・Farm・Crop の組織メンバーの権限が対象で、`farm_sizes` には及ばない。10 の P8 の結論が出るまで、本書の項目 2 で認証方針を変更しない。
 
 ### 2.5 項目 5: i18n キー偏りの実態（軽い集計）
 
@@ -113,6 +138,8 @@ i18n（確認済み）:
 | en | 3045 |
 | in | 2838 |
 
+上表と下の差集合は、`3de664648` でカタログ 3 本をリーフに平坦化して再集計し、初版と一致することを確認した（`ja−en` 104、`en−ja` 80、`ja−in` 343、`in−ja` 112、`en−in` 246、`in−en` 39）。**これは他課題の実装前のスナップショット**で、§3.4 の「件数の変動要因」のとおり、02・05・07 の実装と本書の項目 2 で変わる。
+
 差集合: ja のみ（en に無い）104、en のみ（ja に無い）80（依頼文の「104 / 80 程度」と一致）。`in` との差は ja−in 343、in−ja 112、en−in 246、in−en 39。**依頼は ja/en の偏りだが、`in`（ヒンディー語・インド向け）も第 3 ロケールとして存在する**（`initial-i18n-bootstrap.ts:35` の `addLangs(['ja','en','in'])`）。
 
 判定結果:
@@ -121,7 +148,10 @@ i18n（確認済み）:
 - ただし `crates` に同名キー文字列が現れるものが 9 件ある（ja のみ 4、en のみ 5）:
   - ja のみ: `api.messages.fertilizes.updated_by_ai`（`fertilize_ai_update_interactor.rs`）、`crops.flash.cannot_delete_in_use.other` / `.plan`（`crop_destroy_interactor.rs`）、`models.cultivation_plan.phases.weather_data_fetched`（`cultivation_plan_phase_policy.rs`）
   - en のみ: `api.errors.no_cultivation_period`（`field_cultivation_climate_data_interactor.rs:232`）、`api.errors.pests.fetch_failed` / `.invalid_affected_crops` / `.invalid_payload` / `.name_required`（`pest_ai_*` 系）
-  - サーバーには `PassthroughTranslator`（例: `masters_pests.rs:3, 140`）を注入する経路と、`config/locales/**/*.yml` を読む `LocaleCatalog`（`locale_catalog.rs:24-35`）で解決する経路がある。キーがクライアントに届くかは経路ごとに異なり、**この 9 件がフロントで翻訳されうるかは未確認**。
+  - サーバーには `PassthroughTranslator`（`adapters.rs:39-44`。例: `masters_pests.rs:3, 140`）を注入する経路と、`config/locales/**/*.yml` を読む `LocaleCatalog`（`locale_catalog.rs:24-35`）で解決する経路がある。キーがクライアントに届くかは経路ごとに異なり、**この 9 件がフロントで翻訳されうるかは未確認**。ただし他課題の確認と重なる部分がある（07 の `errors[]` 契約の要素は「i18n キー、または人間可読メッセージ」: 07 §3.3。キー文字列が本文に載ること自体は 07 §2.6 が `PassthroughTranslator` について確認している）。
+  - 07 §5.6（Q14 既定）が `crops.flash.cannot_delete_in_use.plan` / `.other` を **en・in に追加**する計画を持つ。ja のみ 4 件のうちこの 2 件は、07 の実施後は 3 ロケールに揃う。残る 2 件（`api.messages.fertilizes.updated_by_ai`、`models.cultivation_plan.phases.weather_data_fetched`）は ja のみのまま（前者は AI 生成系で 07 の Q14 既定の範囲外、後者は 07・05 の対象外）。
+  - en のみ 5 件のうち `api.errors.no_cultivation_period` は、`in` には既にある（確認済み。欠落は ja のみ）。サーバーが参照するのは `api.errors.no_cultivation_period`（`field_cultivation_climate_data_interactor.rs:232`）で、ja にあるのは別パスの `api.messages.no_cultivation_period`（`ja.json:1722`）だけである。後者はコード・YAML のどこからも参照されない（`grep` 0 件）。05 §2 はこのキー文字列が 500 になる点を扱うが、翻訳の追加は 05 §4 の新規 4 キー（`api.errors.climate_*`）に含まれない。補完の担当は本書（§3.4）のまま。
+  - en のみ 5 件のうち `api.errors.pests.{fetch_failed,invalid_affected_crops,invalid_payload,name_required}` は ja・in に無い（確認済み）。AI 生成系で、07 Q14 既定の範囲外。
 - 残り（ja のみ 100 / en のみ 75）は参照ゼロ。内訳の上位グループ:
   - ja のみ 100: `public_plans.show.*` 29、`fields.edit.*` 9、`plans.show.*` 9、`api.messages.*` 7、`fields.show.*` 7、`farms.edit.*` 6、`farms.new.*` 6、`controllers.plans.*` 4、`farms.flash.*` 4、`public_plans.results.*` 4 ほか
   - en のみ 75: `plans.optimizing.*` 38、`public_plans.results.*`（`detail_temp` / `info` / `stages`）28、`api.errors.*` 4 ほか（サーバー参照の 5 件を除く）
@@ -133,7 +163,7 @@ i18n（確認済み）:
 
 サーバールート（`crates/agrr-server/src` の `.route(` 119 件）のうち、フロントの `/api/v1/...` リテラルに現れないものを粗く洗った結果、大半は次の系統でフロント未使用が正常:
 
-- `/api/v1/masters/*` — API キー利用の外部 API（`docs/api/getting-started.md:38-45` にスコープ `masters:read` / `masters:write` とレート制限の記載）
+- `/api/v1/masters/*` — API キー利用の外部 API（`docs/api/getting-started.md:32-41` にスコープ `masters:read` / `masters:write`、`:43-52` にレート制限の記載）。03 の決定（API キーに書き込みスコープを付与しない）で `getting-started.md` §3 は書き換わるが、外部向け API である点は変わらない。行番号は 03・07 の文書更新でずれる
 - `/api/v1/backdoor/*`、`/api/v1/internal/*`、`/health`、`/up`、`/api/v1/ready` — 運用系
 - `/auth/*`、`/cable` — ブラウザ遷移・WebSocket で、`/api/v1` リテラルとして現れない
 - `/api/v1/{crops,fertilizes,pests}/ai_*` — 内蔵 AI 廃止方針（`docs/api/builtin-generation-sunset.md`）下で `builtin_generation_deprecated_*` を返す（`ai_api.rs:4-6`）
@@ -168,8 +198,8 @@ i18n（確認済み）:
 | 案 | 内容 | 評価 |
 |----|------|------|
 | A | 現状維持（API・i18n を残す） | 未使用コードが残る。契約テストも無く（`crates/agrr-r4-contract` に 0 件）、仕様として保証されていない状態が続く。`project-necessary-code-only` に反する |
-| **B（推奨）** | `GET /api/v1/public_plans/farm_sizes` を削除。`farm_size_catalog_json` / `wizard_farm_sizes` / `FarmSizeCatalog::all()` とそのテスト、`R7_EXEMPT_HANDLERS` の `wizard_farm_sizes`、i18n `public_plans.farm_sizes.*` / `public_plans.errors.select_farm_size` / `public_plans.errors.invalid_farm_size`（ja/en/in と Rails YAML `farm_sizes`）を削除。`FarmSizeCatalog::find_by_id`、`POST` の `farm_size_id`、フロントの `DEFAULT_PUBLIC_PLAN_FARM_SIZE` は保持 | 廃止の後始末として完結。R7 例外が 1 件減る。削除後の当該パスは `fallback::api_not_migrated`（501）になる（`fallback.rs:11-18`、`lib.rs:183`） |
-| B' | B と同じだが、削除ではなく 410 Gone で返す（先例: `masters_crop_agricultural_tasks.rs:25-33` の `gone`） | 外部利用者が確認された場合のみ。501 `api_not_migrated`（「未実装」の意味）より廃止の意図が明確。ただしコードが残る |
+| **B（推奨）** | `GET /api/v1/public_plans/farm_sizes` を削除。`farm_size_catalog_json` / `wizard_farm_sizes` / `FarmSizeCatalog::all()` とそのテスト、`R7_EXEMPT_HANDLERS` の `wizard_farm_sizes`、i18n `public_plans.farm_sizes.*` / `public_plans.errors.select_farm_size` / `public_plans.errors.invalid_farm_size`（ja/en/in と Rails YAML `farm_sizes`）を削除。`FarmSizeCatalog::find_by_id`、`POST` の `farm_size_id`、フロントの `DEFAULT_PUBLIC_PLAN_FARM_SIZE` は保持 | 廃止の後始末として完結。R7 例外が 1 件減る。削除後の当該パスは `fallback::api_not_migrated`（501）になる（`fallback.rs:11-18`、`lib.rs:183`）。本文は現状 `error` + `message` + `path` で、07 の統合後は `errors` に `api_not_migrated` が入る（S1 の間は `error` を併記、S2 で削除。`message` の扱いは 07 に明記が無く未確定）。本書は 501 の状態コードだけを表明し、本文は 07 の共通アサート（`assert_error_envelope`）に任せる（§5.2） |
+| B' | B と同じだが、削除ではなく 410 Gone で返す（先例: `masters_crop_agricultural_tasks.rs:25-33` の `gone`） | 外部利用者が確認された場合のみ。501 `api_not_migrated`（「未実装」の意味）より廃止の意図が明確。ただしコードが残る。本文は 07 の契約に従い `errors` + `error_code`（先例の `error_code: crop_task_template_api_removed` は 07 §3.3 C6 で維持される）で書く。先例の共通アサート `assert_crop_task_template_api_removed`（`support.rs:65-74`）は `error` の存在を表明しているため、S2 後は通らなくなる（07 は `support.rs` のこのヘルパーを更新対象に挙げていない。読んだ範囲。07 側の追加事項として §9 に記す） |
 | C | サイズ選択 UI を復活 | 製品判断。UI 復活には `UI-COMPOSITION-RULES`（ウィザード: Funnel Shell + wizard progress、`check:ui-composition` の禁止パターン 3・4）に沿った再実装が必要で、廃止コミットの意図に反する。本書の範囲外 |
 
 **ユーザー確認事項:** (a) B（削除）か B'（410 Gone）か。判断材料は本番アクセスログでの外部利用有無（未確認。`gcloud` で確認可）。(b) `DEFAULT_PUBLIC_PLAN_FARM_SIZE`（`"300"`）とサーバーカタログの暗黙結合を、今回は保持のまま許容するか。将来の解消案として `farm_size_id` 自体を API から外してサーバー既定にする選択肢があるが、API 契約変更を伴うため本書では扱わない。
@@ -178,10 +208,10 @@ i18n（確認済み）:
 
 | 案 | 内容 | 評価 |
 |----|------|------|
-| **A（推奨）** | フロントの型をサーバー契約（`id` / `status`）に合わせる。ゲートウェイの戻り型を `{ id: number; status: ContactMessageStatus }` 相当に狭め、`SendContactMessageSuccessDto` から `created_at` / `sent_at` を除く。spec のモックを実レスポンス形状に直す | サーバー契約は R4 で既に固定済み（`contracts.rs:4509-4530`）で、フロントが未使用のフィールドを捏造する必要がない。個人情報（`email` / `message`）をレスポンスに載せ直さずに済む |
+| **A（推奨）** | フロントの型をサーバー契約（`id` / `status`）に合わせる。ゲートウェイの戻り型を `{ id: number; status: ContactMessageStatus }` 相当に狭め、`SendContactMessageSuccessDto` から `created_at` / `sent_at` を除く。spec のモックを実レスポンス形状に直す | サーバー契約は R4 で既に固定済み（`contracts.rs:4509-4530`）で、フロントが未使用のフィールドを捏造する必要がない。個人情報（`email` / `message`）をレスポンスに載せ直さずに済む。**02 の計画（§5.2 の domain 行、§7 手順 1）は同じ案 A を既に採っている**（`ContactMessageRecord` を `{ id, status }` のみへ縮小し、`created_at` / `sent_at` と到達不能な `failed` 分岐を削除）。02・07 の決定は成功レスポンスの形を変えないため、案 A の前提は変わらない |
 | B | サーバーが `email` / `message` / `created_at` / `sent_at` も返す | R4 契約と OpenAPI（課題 08）の拡張が必要。フロントは使っていないので不要な契約追加。入力内容のエコーバックも増える。非推奨 |
 
-命名の確認事項: 型 `ContactMessageRecord` は「完全なレコード」を示唆する。狭めた後の名前を `ContactMessageRecord` のまま残すか、別名（例: 受付結果を表す名前）にするかは `implementation-consistency-with-existing` に従い既存の命名を確認して決める。**ユーザー確認事項:** 案 A の採用可否と型名。
+命名の確認事項: 型 `ContactMessageRecord` は「完全なレコード」を示唆する。狭めた後の名前を `ContactMessageRecord` のまま残すか、別名（例: 受付結果を表す名前）にするかは `implementation-consistency-with-existing` に従い既存の命名を確認して決める。**ユーザー確認事項:** 案 A の採用可否と型名。02 は型名を `ContactMessageRecord` のまま縮小する書き方で、改名は扱っていない。02 手順 1 を実施すると型が先に縮小されるため、改名する場合は 02 手順 1 の前にこの回答を得る。
 
 ### 3.4 項目 5: 判断基準（削除 / 保持）
 
@@ -192,6 +222,15 @@ i18n（確認済み）:
 3. **保持（動的）:** `plans.learn.*`、`work.variance.status.*` 等、動的接頭辞で組み立てられるグループ（§2.5 の集計では 30 個の接頭辞）。個別キーの参照ゼロ判定は使えない。
 4. **保持（外部由来）:** Rails YAML / API エラー翻訳（`activerecord.errors.*` など）は `resolve-activerecord-api-error-i18n-key` など別経路で解決されうる（未確認）。経路を特定するまで削除しない。
 5. **削除の実施単位:** 機能単位（例: `public_plans.show.*` 29 件のように接頭辞ごと）。ロケール間の偏りだけを理由に 1 キーずつ削らない。削除前に対応する `*.catalog.spec.ts` を確認する。
+6. **他課題が追加・補完するキーは本書で重複させない:** 02（`contact_form.captcha.*` / `contact_form.errors.captcha_*` / `contact_form.validation.captcha_required`）、05（`api.errors.climate_*` の 4 キー）、07（Crop 上限 UI の `crops.new.limit_reached*`、`in` の `crop_limit_exceeded`、サーバー送出キー、コード参照で欠落する 7 件、`crops.flash.cannot_delete_in_use.plan` / `.other` の en・in）は、3 ロケールへの同時追加か `in` のみの補完で、ja / en の偏りを増やさない（`crops.flash.cannot_delete_in_use.plan` / `.other` は ja のみ側を減らす）。追加されるキーはコードから参照されるため、削除候補（基準 1）にも入らない。本書は補完・削除の対象からこれらを除く。
+7. **件数は実施時に再集計する:** 本書の件数（§2.5）は `3de664648` のスナップショット。変動要因は次の表のとおりで、削除タスクを起票するときに §2.5 の集計方法を再実行して確定する。
+
+| 変動要因 | ja のみ（104） | en のみ（80） | 備考 |
+|----------|---------------|---------------|------|
+| 項目 2 案 B の実施（`public_plans.errors.invalid_farm_size` は ja のみ、`select_farm_size` と `farm_sizes.*` は 3 ロケールにある。確認済み） | −1 | 0 | 3 ロケールの総数は ja −8（`farm_sizes` 6 + `select_farm_size` + `invalid_farm_size`）、en −7、in −7 |
+| 07 §5.6（Q14 既定）の `crops.flash.cannot_delete_in_use.plan` / `.other` を en・in に追加 | −2 | 0 | ja のみ側の 2 件が揃う |
+| 02・05・07 のその他の追加 | 0 | 0 | 3 ロケール同時追加のため偏りは変わらない（総数は増える） |
+| 本書の `api.errors.no_cultivation_period` の ja 補完（§3.4 の補完候補。実施する場合） | 0 | −1 | `api.errors.no_cultivation_period` は en のみ側 |
 
 代表例:
 
@@ -200,8 +239,8 @@ i18n（確認済み）:
 | 削除候補（機能廃止済み、参照ゼロ） | `public_plans.farm_sizes.*`、`public_plans.errors.select_farm_size`、`public_plans.errors.invalid_farm_size`（項目 2 と同一変更で） | 項目 2 案 B に含める |
 | 削除候補（参照ゼロ、機能単位） | ja のみ `public_plans.show.*`（29 件）、`fields.edit.form.*` / `fields.show.*` | 廃止画面の確認後に機能単位で別タスク |
 | 削除候補（参照ゼロ、en のみ） | `plans.optimizing.*`（38 件）、`public_plans.results.detail_temp.*` | 同上 |
-| 保持・補完 | `api.errors.no_cultivation_period`（en のみ、サーバー参照あり） | ja / in への補完を検討 |
-| 保持・補完 | `crops.flash.cannot_delete_in_use.plan`（ja のみ、`crop_destroy_interactor.rs` 参照） | en / in への補完を検討 |
+| 保持・補完 | `api.errors.no_cultivation_period`（en のみ、サーバー参照あり。`in` には既にある） | ja への補完を検討。ja にある同名の別パス `api.messages.no_cultivation_period` は参照ゼロで、機能単位の削除候補（`api.messages.*`） |
+| 保持・補完（他課題が担当） | `crops.flash.cannot_delete_in_use.plan`（ja のみ、`crop_destroy_interactor.rs:80-82` 参照） | 07 §5.6（Q14 既定）が en / in に追加する。本書では追加しない |
 
 ---
 
@@ -211,9 +250,11 @@ i18n（確認済み）:
 
 ### 4.1 フロントエンド（`frontend/`）
 
-- **domain** (`src/app/domain/contact/contact-message.model.ts`): 項目 3 案 A で `ContactMessageRecord` を契約形状に合わせる（`id` / `status`）。`ContactMessageStatus`・`validatePayload` 等は変更しない。
-- **usecase** (`src/app/usecase/contact/`): `contact-gateway.ts` の戻り型、`send-contact-message.dtos.ts` の `SendContactMessageSuccessDto`（`created_at` / `sent_at` 削除）、`send-contact-message.usecase.ts` の `toSuccessDto` を同期。`'failed'` 分岐の要否は §7 未確定事項。
-- **adapters** (`src/app/adapters/contact/http-contact-gateway.service.ts`): `post<any>` をやめ、実レスポンス型で受ける。捏造していたフィールドの補完（`?? null`）を削除。
+項目 3 の変更（以下 4 層）は **02 §5.2 / §7 手順 1 と同一の変更**で、二重に実装しない（§6）。02 の他の変更（`captcha_token` の追加、`validatePayload` の token 検査、ウィジェットのポート・アダプタ、`toErrorDto` の `error_code` 判別）は本書の範囲外。
+
+- **domain** (`src/app/domain/contact/contact-message.model.ts`): 項目 3 案 A で `ContactMessageRecord` を契約形状に合わせる（`id` / `status`）。`ContactMessageStatus` は変更しない。`ContactMessagePayload`（`:1-7`）への `captcha_token` 追加と `validatePayload` の変更は 02 が行う。
+- **usecase** (`src/app/usecase/contact/`): `contact-gateway.ts` の戻り型、`send-contact-message.dtos.ts` の `SendContactMessageSuccessDto`（`created_at` / `sent_at` 削除）、`send-contact-message.usecase.ts` の `toSuccessDto` を同期。`'failed'` 分岐（`:32-35`）は 201 応答で到達しないことを確認済み（§2.3）で、02 R12 も削除を計画しているため、削除する。失敗側の `toErrorDto`（`:49-58`）は本書では変更しない（02 と 07 の契約で置き換わる）。
+- **adapters** (`src/app/adapters/contact/http-contact-gateway.service.ts`): `post<any>` をやめ、実レスポンス型で受ける。捏造していたフィールドの補完（`?? null`）を削除。ペイロードのワイヤ名への写像は 02 が追加する。
 - **components:** 変更なし（`ContactFormPresenter.onSuccess` は DTO のフィールドを使わない: `contact-form.presenter.ts:28`）。ただし presenter の spec の DTO 生成（`contact-form.presenter.spec.ts:49-54`）は新形状に合わせる。
 - **routes** (`src/app/routes/public-plans.routes.ts`): 変更なし（リダイレクト保持の場合）。固定用の spec を追加。
 - **i18n** (`src/assets/i18n/{ja,en,in}.json`): 項目 2 案 B に含まれるキーのみ削除。それ以外の偏りキーは本計画で削除しない。
@@ -224,13 +265,14 @@ i18n（確認済み）:
 - **agrr-server (edge):** `public_plans.rs` から `wizard_farm_sizes` とルート登録（`:59`）、`farm_size_catalog_json`（`:196-208`）、不要になる `FarmSizeCatalog` import（`:31`）を削除（項目 2 案 B）。`POST` ハンドラ・`CreatePlanBody` は変更しない。
 - **agrr-domain:** `FarmSizeCatalog::all()` と `all_returns_three_farm_sizes` を削除（利用者が無くなるため）。`find_by_id` / `FarmSizeRecord` / interactor は変更しない。
 - **agrr-adapters-\*:** 変更なし。
-- **contract:** 項目 2 の削除を R4 契約で固定（RED → GREEN、§5.2）。項目 3 の R4 契約は既存のまま（案 A ではサーバー変更なし）。
+- **contract:** 項目 2 の削除を R4 契約で固定（RED → GREEN、§5.2）。項目 3 の成功レスポンスの R4 契約（`contracts.rs:4509-4530`）は既存のまま（案 A ではサーバー変更なし）。ただし同じテストの入力（`contact_message_payload`）は 02 が Turnstile のワイヤ名へ変更する（02 §5.7、C5）。
+- **同一ファイルの競合（項目 2）:** `crates/agrr-server/src/public_plans.rs` は、07 S1（Plans / 公開プラン系の `error` 9・`message` 4 の変更。07 §2.7 #8・#9）と 06 H3（`:375-376`）・06 の else 分岐削除（`:405-412`）も編集する。本書の削除箇所（`:31`、`:59`、`:196-208`、`:271-273`）は 06 の編集箇所より手前にあり、06 の変更は本書の削除位置に影響しない（引用のみの `:153`、`:527-532` は 06 の削除で上へずれる）。逆に本書の削除は、06・10 が引用する行番号（`:375-376`、`:405-412`、`:578-590`）を上へずらす。07 S1 の `error` → `errors` 変更も行番号を動かしうる。どの順で実装しても、行番号は実装時に再確認する。
 - **R10（実装順）:** 今回は新ポートの追加が無いため対象外。削除は handler → domain の順（利用者側から先に消し、コンパイラで未使用を検出）。
 
 ### 4.3 ドキュメント・設定・ガード
 
-- `scripts/run-architecture-guard-lib.mjs:40` の `'wizard_farm_sizes'` を削除（項目 2 案 B と同一変更）。
-- `docs/api/openapi.yaml` は本計画で変更しない（`public_plans` は現状未記載。課題 08 で扱う）。
+- `scripts/run-architecture-guard-lib.mjs:40` の `'wizard_farm_sizes'` を削除（項目 2 案 B と同一変更）。同ファイルには 07 Q9（失敗本文への `error` / `message` キー直書きを禁止する機械ゲートの追加。既定は「足す」）も編集が入るため、競合に注意する（編集箇所は別: 本書は `R7_EXEMPT_HANDLERS`（`:34-41`）、07 は新規ルール）。
+- `docs/api/openapi.yaml` は本計画で変更しない。同ファイルは「AGRR Masters API」の公開サブセット（`openapi.yaml:3-7`、パスは `/api/v1/masters/*` の 9 件）で、`public_plans` / `contact_messages` は載っていない（`grep` 0 件）。08 の対象は Masters API で、未掲載エンドポイント（contact・public_plans ほか）の扱いは 08 の D-10 の回答待ち（subset 維持の推奨 (a) なら追加しない。08 §0.2、§3.3 の確認事項 3、§4.10）。
 - `docs/README.md` への索引追記は本書の依頼範囲外（`docs/spec-defects/` の索引は取りまとめ側で判断）。
 
 ---
@@ -256,11 +298,11 @@ i18n（確認済み）:
 
 | 種別 | パス | Given / When / Then | 現状 |
 |------|------|--------------------|------|
-| R4 契約 | `crates/agrr-r4-contract/tests/contracts.rs`（`get_entry_schedule_farms_returns_reference_farms_for_region` 付近に追加） | Given 起動済み agrr-server / When `GET /api/v1/public_plans/farm_sizes`（認証なし） / Then 501 かつ `error == "api_not_migrated"`（B' を選ぶなら 410 と `error_code` を先例 `assert_crop_task_template_api_removed` に倣って検証） | RED（現在は 200 でカタログ配列を返す） |
+| R4 契約 | `crates/agrr-r4-contract/tests/contracts.rs`（`get_entry_schedule_farms_returns_reference_farms_for_region` 付近に追加） | Given 起動済み agrr-server / When `GET /api/v1/public_plans/farm_sizes`（認証なし） / Then 状態コードが 501（B' を選ぶなら 410 と、廃止を示す `error_code`。先例 `assert_crop_task_template_api_removed` と同形だが、その `error` の表明は 07 の S2 後に通らないため、そのまま流用しない）。本文は 07 の `assert_error_envelope`（07 §6.3 S-T0）があればそれで検査し、無い段階では状態コードのみとする。`error == "api_not_migrated"` は表明しない（07 S2 で `error` が消えるため） | RED（現在は 200 でカタログ配列を返す） |
 | R4 契約 | 同上（既存の POST 契約が無い場合の特性化） | Given 参照農場と作物 / When `POST /api/v1/public_plans/plans` に `farm_size_id: "300"` / Then 200 で `plan_id` が返る | GREEN のまま維持すべき回帰確認。R4 に該当テストは無い（確認済み: `contracts.rs` に `public_plans/plans` / `farm_size_id` の出現 0 件。`public_plans` は entry_schedule / add_field のみ）。追加し、「削除で POST が壊れない」ことを固定する（暗黙結合 §2.2 の保護にもなる） |
 | Domain | `crates/agrr-domain/test/public_plan/catalog_farm_size_catalog_test.rs` | `all_returns_three_farm_sizes` を削除。`find_by_id_*` は維持 | 削除は GREEN の一部 |
 | Angular spec | `frontend/src/app/services/public-plans/public-plan-store.service` の既存 spec（有無は未確認） | Given `setFarm(farm)` / When 呼ぶ / Then `state.farmSize?.id === '300'` | 特性化。フロント固定値が消えないことの保護 |
-| 静的検査 | `scripts/run-architecture-guard.sh` | Given `wizard_farm_sizes` を `R7_EXEMPT_HANDLERS` から除去し、ハンドラも削除 / When 実行 / Then 違反なし | ハンドラだけ削除して例外リストを残しても通る可能性がある（未確認）。リストの掃除は目視確認 |
+| 静的検査 | `scripts/run-architecture-guard.sh` | Given `wizard_farm_sizes` を `R7_EXEMPT_HANDLERS` から除去し、ハンドラも削除 / When 実行 / Then 違反なし | ハンドラだけ削除して例外リストを残しても通る（`run-architecture-guard-lib.mjs:192-193`。`R7_EXEMPT_HANDLERS.has(handler)` で `continue` し、ハンドラが存在しないときも `functions.has` で `continue` するだけで、未使用の例外を検出しない。読解で確認）。リストの掃除は目視確認。CI は `./scripts/run-architecture-guard.sh` と `node --test scripts/run-architecture-guard-lib.test.mjs` の両方を実行する（`.github/workflows/lint.yml:25-29`）。`wizard_farm_sizes` を名指しするテストは無い（`grep` 0 件） |
 
 実行:
 
@@ -274,10 +316,12 @@ i18n キー削除は、キーの有無を固定する既存 `*.catalog.spec.ts`�
 
 ### 5.3 項目 3（問い合わせレスポンス型）
 
+下表の 1・2 行目は 02 §6.4 の F2・F4 と同一のテストで、実装時はどちらか一方の ID に統合する（二重に書かない）。02 が追加する Turnstile 関連のテスト（F1・F3・F5〜F14）と、失敗本文（`errors` + `error_code`）のテストは本書の範囲外。02 の F3 により、1 行目の spec が持つ `toHaveBeenCalledWith('/api/v1/contact_messages', payload)`（`http-contact-gateway.service.spec.ts:44`）の期待は、ワイヤ名への写像後の本文に変わる（02 と順序を合わせる）。
+
 | 種別 | パス | Given / When / Then | 現状 |
 |------|------|--------------------|------|
-| Angular spec | `frontend/src/app/adapters/contact/http-contact-gateway.service.spec.ts` | Given `apiClient.post` が実サーバー形状 `{ id: 1, status: 'queued' }` を返す / When `postMessage` / Then 結果は `{ id: 1, status: 'queued' }` と等しく、`email` / `message` / `created_at` などサーバーが返さないキーを持たない | RED（現状は `name: null` 等を補完して返す） |
-| Angular spec | `frontend/src/app/usecase/contact/send-contact-message.usecase.spec.ts` | Given ゲートウェイが `{ id: 1, status: 'queued' }` を返す / When `execute` / Then `onSuccess` が `{ id: 1, status: 'queued' }` で呼ばれる | RED（現状は `created_at` / `sent_at` キーを付けて呼ぶ。`toHaveBeenCalledWith` は `undefined` 値を厳密扱いしない場合があるため、`toStrictEqual` 相当の厳密比較で書く） |
+| Angular spec（02 の F2） | `frontend/src/app/adapters/contact/http-contact-gateway.service.spec.ts` | Given `apiClient.post` が実サーバー形状 `{ id: 1, status: 'queued' }` を返す / When `postMessage` / Then 結果は `{ id: 1, status: 'queued' }` と等しく（`toStrictEqual`。`toEqual` は `undefined` 値のキーを区別しない）、`email` / `message` / `created_at` などサーバーが返さないキーを持たない | RED（現状は `name: null` 等を補完して返す） |
+| Angular spec（02 の F4） | `frontend/src/app/usecase/contact/send-contact-message.usecase.spec.ts` | Given ゲートウェイが `{ id: 1, status: 'queued' }` を返す / When `execute` / Then `onSuccess` が `{ id: 1, status: 'queued' }` で呼ばれる | RED（現状は `created_at` / `sent_at` キーを付けて呼ぶ。`toHaveBeenCalledWith` は `undefined` 値を厳密扱いしない場合があるため、`toStrictEqual` 相当の厳密比較で書く） |
 | Angular spec | `frontend/src/app/adapters/contact/contact-form.presenter.spec.ts` | DTO を `{ id: 42, status: 'queued' }` に更新し、既存の成功メッセージ表示の断言が通る | 型変更後のコンパイル追従（振る舞い不変） |
 | R4 契約 | 既存 `post_contact_message_creates_queued_record`（`contracts.rs:4509-4530`） | サーバー契約の維持を確認 | GREEN のまま（案 A ではサーバー変更なし） |
 
@@ -315,31 +359,34 @@ i18n キー削除は、キーの有無を固定する既存 `*.catalog.spec.ts`�
 11. i18n: `public_plans.farm_sizes.*`、`public_plans.errors.select_farm_size`、`public_plans.errors.invalid_farm_size` を ja/en/in と `config/locales/views/public_plans.{ja,us,in}.yml` から削除。既存の catalog spec を実行して GREEN を確認。
 12. 全体スイート（cargo domain → R4 → frontend）と遅延検知。
 
-**変更単位 Z（項目 3）**
+**変更単位 Z（項目 3。02 §7 手順 1 と同一）**
+
+Z は 02 の手順 1（`fix(frontend): align contact gateway types with API contract`、テスト F2・F4）と同じ変更である。02 の実装に含めて 1 回で行い、本書では別に実装しない。着手時期は 02 §7 冒頭の前提（手順 1〜2 の前に Q1〜Q4 の回答を得る）に従う。型の縮小自体は Turnstile のキー発行・モード・プライバシー表記の内容に依存しないように読めるが、02 の記述を優先する（未確認）。手順 13〜15 は 02 の手順 1 としてそのまま使える。
 
 13. RED: §5.3 の gateway / usecase spec を更新。
-14. GREEN: `ContactMessageRecord` → gateway → DTO → usecase → presenter spec の順に型を絞る。
+14. GREEN: `ContactMessageRecord` → gateway → DTO → usecase（`'failed'` 分岐の削除を含む）→ presenter spec の順に型を絞る。
 15. フロント全体スイート。
 
 **項目 5:** 追加の実装ステップなし（本書が成果物）。
 
-X・Y・Z は互いに独立してマージ可能。X と Y を分けると、Y の前に X だけで CI の E2E 整合が取れる。
+X・Y・Z は互いに独立してマージ可能（Z は 02 手順 1 として実施する）。X と Y を分けると、Y の前に X だけで CI の E2E 整合が取れる。Y は、`public_plans.rs`・`run-architecture-guard-lib.mjs`・`contracts.rs` を 06・07・02 も編集するため、先にマージされた側へ後続が追従する（§4.2、§4.3、§9）。
 
 ---
 
 ## 7. リスク・未確定事項
 
 - **E2E の不整合は静的読解のみ（未確認）。** 実際に `select-farm-size` の smoke / capture が失敗しているか、CI で実行されているかは未確認。
-- **`test-common` に `node --test`（`.mjs`）の経路が無い。** 項目 1 の RED は `frontend-test.yml:90` と同じ `node --test scripts/generate-e2e-route-manifest.test.mjs` で実行するのが実質唯一。`npm test` 直接実行は禁止（`test-common-entry.mdc`）だが、`node --test` の扱いは規約に明記がない。例外として認めるか、ラッパースクリプトを別途追加するか（スクリプト追加は `project-necessary-code-only` の確認対象）、ユーザー判断が必要。
-- **外部利用者の有無が未確認**（`farm_sizes` API、`/public-plans/select-farm-size` の URL）。本番アクセスログ確認が必要（`gcp-available.mdc`）。削除後は 501 `api_not_migrated`（`fallback.rs`）になり、廃止の意図が伝わりにくい。B'（410 Gone）が代替。
+- **`test-common` に `node --test`（`.mjs`）の経路が無い。** 項目 1 の RED は `frontend-test.yml:90` と同じ `node --test scripts/generate-e2e-route-manifest.test.mjs` で実行するのが実質唯一。`npm test` 直接実行は禁止（`test-common-entry.mdc`）だが、`node --test` の扱いは規約に明記がない。例外として認めるか、ラッパースクリプトを別途追加するか（スクリプト追加は `project-necessary-code-only` の確認対象）、ユーザー判断が必要。同じ問題を 02（R11、B6）が挙げ、03・09 は「CI の経路と同じ `node --test` で実行する」を前提にしている（03 の MCP テスト、09 の doc-freshness テスト）。判断は 1 回にまとめる。項目 2 では `node --test scripts/run-architecture-guard-lib.test.mjs` も同じ扱いになる（CI は `lint.yml:28-29` で実行）。
+- **外部利用者の有無が未確認**（`farm_sizes` API、`/public-plans/select-farm-size` の URL）。本番アクセスログ確認が必要（`gcp-available.mdc`）。削除後は 501 `api_not_migrated`（`fallback.rs`）になり、廃止の意図が伝わりにくい。B'（410 Gone）が代替。どちらでも本文の形は 07 の契約（`errors` + 任意の `error_code`）に従い、本書は本文を決めない（§3.2）。
 - **暗黙結合:** フロントの `"300"` とサーバーカタログの `rental_farm`（300㎡）（§2.2）。今回は温存するが、R4 の POST 回帰テストで保護する。
-- **i18n の 9 件（サーバー参照あり）** がクライアントに届くかは未確認。削除候補から外し、別途補完可否を検討する。
+- **i18n の 9 件（サーバー参照あり）** がクライアントに届くかは未確認。削除候補から外し、別途補完可否を検討する。うち 2 件（`crops.flash.cannot_delete_in_use.plan` / `.other`）は 07 が en・in に追加する計画で、本書では補完しない（§3.4）。07 の Q14 既定（AI 生成系を範囲外）が変わると、`api.messages.fertilizes.updated_by_ai` と `api.errors.pests.*` の担当も 07 へ移る。
+- **他課題との実装順:** 02・06・07 が `contracts.rs`・`public_plans.rs` などを編集するため、先にマージされた側へ後続が追従する（§9）。特に 07 の S1〜S2 が完了する前後で、項目 2 の R4 契約が表明してよい本文の形が変わる（§5.2 は状態コードのみを表明して回避する）。
 - **i18n 集計の精度:** 静的一致のみ。動的キー・サーバー由来キー・Rails YAML 由来は取りこぼしうる。全体の約 1450 件（ja）という参照ゼロ数は削除根拠にしない。
 - **`in` ロケール:** 依頼は ja/en の偏りだが、`in` にも偏りがある（§2.5）。判断基準は 3 ロケールを対象にする前提とした。
 - **生成物の差分:** `npm run e2e:manifest` は `generatedAt` を更新する。`e2e:manifest:check` は `generatedAt` を無視して比較する（`normalizeManifestJson`）ので CI は通るが、レビュー時のノイズになる。
 - **`public/` の追跡ビルド成果物**に `farm_sizes` 文字列が残る（旧バンドル）。ソースではないため対象外とするが、削除の網羅確認では除外条件を明記する。
 - **`FarmSizeOption` 型の名前**（`name` が固定日本語 `'300㎡'`）。表示に使われていないため放置するが、将来表示するなら i18n 化が必要（今回は範囲外）。
-- 項目 3 の `'failed'` 分岐削除可否（§2.3）は、ドメインが 201 で `failed` を返す経路が無いことを確認するまで分岐を残す（本計画は型の整合のみで分岐は変更しない）。
+- 項目 3 の `'failed'` 分岐は、201 応答で到達しないことを静的読解で確認した（§2.3）ため、削除する（02 R12 と同じ判断。将来「作成応答で `failed` を返す」設計を採るなら残す。R4 契約は `queued` のみ固定: `contracts.rs:4509-4530`）。実機での再現は未実施。
 
 ---
 
@@ -353,19 +400,20 @@ X・Y・Z は互いに独立してマージ可能。X と Y を分けると、Y 
 - （保持の場合）`/public-plans/select-farm-size` → `/public-plans/new` のリダイレクトが spec で固定されている。
 
 項目 2:
-- `GET /api/v1/public_plans/farm_sizes` の期待（501 または 410）が R4 契約で固定され、`scripts/run-rust-contract-tests.sh` が GREEN。
+- `GET /api/v1/public_plans/farm_sizes` の期待（501 または 410。本文は 07 の `errors` 契約に従い、旧キー `error` の存在を表明しない）が R4 契約で固定され、`scripts/run-rust-contract-tests.sh` が GREEN。
 - `POST /api/v1/public_plans/plans`（`farm_size_id: "300"`）が引き続き成功する回帰テストが存在し GREEN。
 - `wizard_farm_sizes`・`farm_size_catalog_json`・`FarmSizeCatalog::all()` と `R7_EXEMPT_HANDLERS` の該当エントリが存在しない。
 - `public_plans.farm_sizes.*`・`public_plans.errors.select_farm_size`・`public_plans.errors.invalid_farm_size` が 3 ロケールと Rails YAML から削除され、既存の i18n catalog spec が GREEN。
 - ウィザード（農場選択 → 作物選択 → 作成）が動作する（Docker 上で `rebuild-restart.sh` 後に確認）。
 
 項目 3:
-- ゲートウェイ / ユースケース / DTO の型に `email` / `message` / `created_at` / `sent_at` 等サーバーが返さないフィールドが無い。
-- 更新した spec が GREEN。既存の R4 契約（`post_contact_message_creates_queued_record`）が GREEN のまま。
+- ゲートウェイ / ユースケース / DTO の型に `email` / `message` / `created_at` / `sent_at` 等サーバーが返さないフィールドが無い。到達不能な `status === 'failed'` 分岐が無い。
+- 更新した spec が GREEN。既存の R4 契約（`post_contact_message_creates_queued_record`。入力は 02 が Turnstile のワイヤ名へ更新する）が GREEN のまま。
+- 02 手順 1（F2・F4）と同一の変更で満たされ、二重実装・二重テストが無い。
 - 問い合わせフォームの成功メッセージ表示（presenter spec）が従来どおり。
 
 項目 5:
-- 本書 §3.4 の判断基準が承認されている。実際の一括削除は別タスクとして、機能単位の計画を伴って起票される。
+- 本書 §3.4 の判断基準（他課題が追加するキーを重複させない基準 6、件数を実施時に再集計する基準 7 を含む）が承認されている。実際の一括削除は別タスクとして、機能単位の計画を伴って起票される。
 
 共通: 全体スイートと遅延検知が完了し、`test-common` 以外の経路でテストを実行していない（`node --test` の扱いはユーザー判断に従う）。
 
@@ -375,13 +423,25 @@ X・Y・Z は互いに独立してマージ可能。X と Y を分けると、Y 
 
 | 課題 | 関係 | 調整点 |
 |------|------|--------|
-| [01 resource-limit-bypass](01-resource-limit-bypass.md) | 依存なし | — |
-| [02 contact-recaptcha](02-contact-recaptcha.md) | 項目 3 と同一ファイル・同一エンドポイント | `contact-message.model.ts` / `http-contact-gateway.service.ts` / 契約 `contracts.rs` の問い合わせテストが両方の変更対象。02 が `recaptcha_token` をペイロードに追加する変更と、本書の受信側型の絞り込みは論理的に独立だが、先にマージされた側にもう一方が追従する。サーバーのエラー形状（`error` / `errors`）は 02 が決める |
-| [03 api-key-scope-docs](03-api-key-scope-docs.md) | 弱い関連 | §2.6 で `/api/v1/masters/*` を外部 API と分類した根拠（`getting-started.md`）が 03 の文書と一致すること |
-| [04 api-key-query-auth](04-api-key-query-auth.md) | 依存なし | — |
-| [05 fail-closed-critical](05-fail-closed-critical.md) | 弱い関連 | 項目 2 の削除後 501 `api_not_migrated` は既存の fail-closed 規約（`fallback.rs`）に沿う動作 |
-| [06 fail-closed-suspected](06-fail-closed-suspected.md) | 依存なし | — |
-| [07 frontend-error-contract](07-frontend-error-contract.md) | 項目 3 と近接 | 問い合わせのエラー処理（`isValidationError` が 422 のみ、`send-contact-message.usecase.ts:56-58`）は 07 の範囲。本書は成功レスポンス型のみ。`send-contact-message.usecase.ts` を両方が編集する可能性があるため順序調整 |
-| [08 openapi-gaps](08-openapi-gaps.md) | 項目 2・3 と関連 | `docs/api/openapi.yaml` に `public_plans` / `contact_messages` の記載が無い（`grep` 0 件）。項目 2 の削除後は farm_sizes を 08 に記載しない。項目 3 の最終形（`id` / `status`）は 08 が契約として記載するときの正 |
-| [09 stale-design-docs](09-stale-design-docs.md) | 弱い関連 | `docs/design/organization-data-model.md:80` に `farm_sizes` テーブルの記載がある（テナント非スコープ）。テーブル自体（`V1__baseline.sql:15`）は本計画で削除しない。09 が設計文書の陳腐化を扱う際に参照 |
-| [10 authorization-consistency](10-authorization-consistency.md) | 項目 4 は 10 の項目 4 | 公開プラン API（`public_plan_data` / 公開 field cultivation）の無認証応答は 10 で扱う。本書は認証方針を変更しない |
+| [01 resource-limit-bypass](01-resource-limit-bypass.md) | 依存なし（決定: 組織単位・共有枠） | 本書の項目と対象が重ならない。01 が変えるのは Farm / Crop の上限判定と、上限超過ヒントの文言（値のみ。`farms.new.limit_reached_hint` など。キーは増減しない: 01 C2）で、§2.5 の件数に影響しない。01 は 11 を「優先度が低く本課題の受け入れに不要な項目の受け皿候補」としている（§9.1） |
+| [02 contact-recaptcha](02-contact-recaptcha.md) | **項目 3 と同一の変更を含む（強い関連）**。決定: reCAPTCHA → Turnstile | (1) 項目 3 の型縮小（`ContactMessageRecord`、ゲートウェイ、DTO、`'failed'` 分岐の削除）は 02 §5.2・§7 手順 1・テスト F2/F4 と同一。**実装は 02 手順 1 に統合し、本書は別に実装しない**（§6、§5.3）。(2) 両方が編集するファイル: `contact-message.model.ts`（02: `captcha_token` 追加と `validatePayload`、本書: `ContactMessageRecord`）、`http-contact-gateway.service.ts`（02: ワイヤ名写像、本書: 応答の型）、`send-contact-message.usecase.ts`（02: `toErrorDto`、本書: `toSuccessDto`・`failed` 分岐）、`http-contact-gateway.service.spec.ts`、`contracts.rs` の問い合わせテスト（02: 入力ペイロードとヘルスキー、本書: 成功契約は不変）。(3) **本書は `recaptcha_token` を前提にしない**。ワイヤ名は 02 の Q8 が未回答（案 A `cf-turnstile-response` 推奨 / 案 B `captcha_token`）で、フロントのペイロード名は `captcha_token`。(4) 失敗本文の形は 07 の契約（`errors` + `error_code`）で、CAPTCHA 失敗の `error_code`（`captcha_failed` / `captcha_unavailable`）は 02 が確定済み（02 D-4〜D-6、T9。Q10 解消）。本書の旧記述「エラー形状は 02 が決める」は、**形は 07、識別子の値は 02** に改めた。(5) 02 は 11 側の次の 2 点を未確定として残している: 429 専用文言の担当（02 Q15。07 と相互委譲）、成功応答型の是正を 02 と 11 のどちらで実施するか（02 Q17 (b)。02 の既定は 02 手順 1）。本書は後者に**02 手順 1 で実施**と答える（§6）。(6) 02 の事実記述に、本書の確認と食い違う箇所がある: 02 §2.4 と §6.4（02 の本文 `:57`、`:126`）が引用する `contact-form.presenter.ts:102-111` は存在しない（同ファイルは 60 行で、`onSuccess` は `:28-37`）。02 側の修正事項 |
+| [03 api-key-scope-docs](03-api-key-scope-docs.md) | 弱い関連（決定: 書き込みスコープを付与しない・移行する・MCP ツール削除） | §2.6 が `/api/v1/masters/*` を外部 API と分類した根拠（`getting-started.md` §3 スコープ・§4 レート制限）は 03 が書き換える。外部向けである点は変わらないが、`masters:write` の記述は消えるため、03 の公開後に §2.6 の引用行（`:32-41`、`:43-52`）を再確認する。03 §10 は 11 を「依存なし」としている |
+| [04 api-key-query-auth](04-api-key-query-auth.md) | 依存なし | 04 は別課題の置き場として 10 / 11 を候補にしている（§9.1） |
+| [05 fail-closed-critical](05-fail-closed-critical.md) | 弱い関連（決定: 厳格） | (1) 項目 2 の削除後 501 `api_not_migrated` は既存の fail-closed 規約（`fallback.rs`）に沿う動作。(2) 05 は `api.errors.climate_*` の 4 キーを ja / en / in に追加する（05 §4 の翻訳キー行）。偏りは増えず、本書の補完候補 `api.errors.no_cultivation_period`（ja の補完）は含まれない（§2.5）。(3) 05 §2 は `"api.errors.no_cultivation_period"` が状態コード推定で 500 になることを扱う。本書はこのキーの翻訳追加のみを候補とする |
+| [06 fail-closed-suspected](06-fail-closed-suspected.md) | 同一ファイルのみ競合（決定: 厳格） | 06 H3（`public_plans.rs:375-376`）と、06 項目 6 の else 分岐削除（`:405-412`）が項目 2 と同じ `public_plans.rs` を編集する（§4.2）。機能の依存は無い。06 §9 は 11 を「依存なし」とし、項目 5・6・8 は 11 へ回さないとしている |
+| [07 frontend-error-contract](07-frontend-error-contract.md) | **項目 2・3・5 に影響（強い関連）**。決定: `errors` に統合・旧キー削除 | (1) 項目 3: 失敗本文（`isValidationError` が 422 のみ、`send-contact-message.usecase.ts:56-58`、`toErrorDto` `:49-58`）は 07 と 02 が決め、本書は成功レスポンス型のみ。(2) 項目 2: 501/410 の本文は 07 の契約に従う。`fallback.rs` の `message` と、`support.rs:65-74` の `assert_crop_task_template_api_removed`（`error` を表明）の扱いは 07 に明記が無く、**07 側の追加事項**（S2 の更新対象への追加）として残る。`public_plans.rs`・`run-architecture-guard-lib.mjs`（07 Q9）・`contracts.rs` が同一ファイル。(3) 項目 5: 07 §5.6 の追加キーと Q14 既定が §2.5・§3.4 の補完候補と重なる（`crops.flash.cannot_delete_in_use.plan` / `.other`）。(4) 07 §10 は 11 に、Crop 更新の `updated_at` 必須（R7）、`in.json` のルート直下の孤立ブロックと日本語値、`check-hardcoded-i18n` の検出範囲（R9）を引き継ぎ候補として挙げる（§9.1）。(5) 順序: 07 の手順 2（`api_error.rs`）を先に入れ、02 はヘルパー経由で実装する（07 R19）。本書の項目 3 は成功レスポンスのみで、この順序に影響されない |
+| [08 openapi-gaps](08-openapi-gaps.md) | 項目 2・3 の契約文書への記載は **08 の D-10 の回答待ち**（前版の記述を訂正） | `docs/api/openapi.yaml` は「AGRR Masters API」の公開サブセット（`:3-7`、`/api/v1/masters/*` の 9 パス）で、`public_plans` / `contact_messages` の記載は無い（`grep` 0 件）。08 の最新版の責務境界（08 §0.2）は、contact・public_plans を含む未掲載エンドポイントを「D-10 の決定（確認事項 3）に従い、subset 維持（推奨 (a)）なら追加しない」とし、02・05・06・11 が 08 へ渡すとした契約は (a) では `openapi.yaml` に載せないとしている。(b)（全 Masters を網羅）でも対象は Masters で、非 Masters の本エンドポイントは載らない（08 D-10 の案の記述）。したがって本書は `openapi.yaml` を変更せず、項目 3 の最終形（`id` / `status`）も、項目 2 の削除後の farm_sizes も契約文書へ渡さない。08 §10 の 02・11 行は §0.2 より前の記述（「Masters API と無関係」「依存なし」）のまま残っており、08 側の更新待ち |
+| [09 stale-design-docs](09-stale-design-docs.md) | 弱い関連 | `docs/design/organization-data-model.md:80` に `farm_sizes` テーブルの記載がある（テナント非スコープ。確認済み）。テーブル自体（`V1__baseline.sql:15`）は本計画で削除しない。09 と 10 が同ファイルの他の行（`:39-41`、`:51`、`:114` など）を更新するため、`:80` の行番号は動きうる。09 は `/api/v1/health` の `recaptcha_configured` に言及し（09 の ヘルスの記述）、02 の Q7（`captcha_configured`）に追随が必要。09 は 11 へ引き継ぎ候補を挙げる（§9.1） |
+| [10 authorization-consistency](10-authorization-consistency.md) | 項目 4 は 10 の D4（P8 は未決）。決定（閲覧も許さない・縮小）の影響なし | 公開 Plan の無認証読み取り（`public_plan_data`: `public_plans.rs:62-65,578-590`）は 10 §2.4 で扱う。`farm_sizes` はカタログを返す別 API で、10 の縮小決定（Plan・Farm・Crop の組織メンバー権限）の対象外。本書は認証方針を変更しない。10 は D4 を低優先度として 11 へ移す判断もありうるとしつつ、本書（10）では P8 の確認対象とした（10 §10）。**11 は D4 を項目化していない**（§9.1）。10 が D4 を移管するなら、項目 4 を参照のみから実項目へ改める。10 は D5 でフィールド栽培の policy / interactor を変更するが、`public_plans.rs` の `farm_sizes` 周辺とは別（読んだ範囲） |
+
+### 9.1 他課題が 11 を受け皿候補としている項目
+
+他課題の記述に基づく一覧。**本書の項目 1〜5 には含めておらず**、採否はユーザー判断（本書は日時見積りを置かない）。「確認」欄は、本書がコードで確認できたものだけを記す。
+
+| 出典 | 項目 | 確認 |
+|------|------|------|
+| 02 §10 | `ContactMessage::validate()` が本番経路で未使用。`X-Forwarded-For` の先頭要素の採用。`GET /api/v1/contact_messages` が常に空配列 | 確認済み（`contact_messages.rs:24-27`、`:39-56`）。`validate()` の非テストの呼び出しはエンティティ内の `valid()`（`entities/contact_message.rs:44-46`）のみで、`contact` 関連の本番コードに `.valid()` / `.validate()` の呼び出しは無い（`grep`。読んだ範囲） |
+| 07 §10 | Crop 更新の `updated_at` 必須（R7）、`in.json` のルート直下の孤立ブロックと日本語値、`check-hardcoded-i18n` の検出範囲（R9） | `updated_at` 必須は確認済み（`crop_update_interactor.rs:68-77`）。孤立ブロックは本書の項目 5 の基準で扱える（`in−en` の 39 件と同一: 07 付録 C-3。件数は確認済み）。R9 は未確認 |
+| 09 §9 | `crates/` の `Ruby:` コメント（901 ファイル・1483 件）、`.cursor/` 側の `composition.rs` 参照、`dev-docker/SKILL.md` の存在しない `rails-up.sh` 参照 | 901 / 1483 は確認済み（`rg`）。`rails-up.sh` は `scripts/` に無く、`SKILL.md:80,94` が参照（確認済み）。`composition.rs` 参照は未確認 |
+| 01 §11、04 §6・§10 | 01: TOCTOU（R6）・命名（R14）。04: `TraceLayer` のクエリ出力の置き場（10 か 11。04 §6）、未使用引数の削除（04 §10） | 本書では未確認 |
+| 10 §10 | D4（公開 Plan の列挙可能性）を低優先度として 11 へ移す判断もありうる（10 は P8 で確認対象にとどめた） | 項目 4 の参照先（§1、§2.4）。移管された場合のみ項目化する |
