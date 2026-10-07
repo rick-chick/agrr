@@ -1,6 +1,7 @@
 //! Ruby: `Domain::WorkRecord`
 
 pub mod dtos;
+pub mod errors;
 pub mod entities;
 pub mod gateways;
 pub mod mappers;

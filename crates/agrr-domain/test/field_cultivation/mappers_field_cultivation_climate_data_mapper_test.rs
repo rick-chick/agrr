@@ -42,7 +42,6 @@
         assert_eq!(dto.farm["id"], 10);
         assert_eq!(dto.weather_data.len(), 1);
         assert_eq!(dto.gdd_data[0]["gdd"], 5.0);
-        assert_eq!(dto.debug_info["using_agrr_progress"], true);
     }
 
     #[test]
@@ -145,7 +144,7 @@
     }
 
     #[test]
-    fn build_output_uses_manual_gdd_when_progress_records_are_empty() {
+    fn build_output_leaves_gdd_empty_when_progress_records_are_empty() {
         let context = FieldCultivationClimateContextSnapshot {
             field_cultivation_id: 1,
             field_name: "A".into(),
@@ -183,48 +182,7 @@
         ];
         let progress_result = json!({ "progress_records": [] });
         let dto = build_output(&context, &weather_records, &progress_result);
-        assert_eq!(dto.debug_info["using_agrr_progress"], false);
-        assert_eq!(dto.gdd_data.len(), 2);
-        assert_eq!(dto.gdd_data[0]["gdd"], 5.0);
-        assert_eq!(dto.gdd_data[0]["cumulative_gdd"], 5.0);
-        assert_eq!(dto.gdd_data[1]["gdd"], 2.0);
-        assert_eq!(dto.gdd_data[1]["cumulative_gdd"], 7.0);
-        assert!(dto.gdd_data[0]["current_stage"].is_null());
-    }
-
-    #[test]
-    fn build_output_manual_gdd_derives_mean_from_max_and_min_when_mean_is_absent() {
-        let context = FieldCultivationClimateContextSnapshot {
-            field_cultivation_id: 1,
-            field_name: "A".into(),
-            crop_name: "Tomato".into(),
-            start_date: date!(2026 - 03 - 01),
-            completion_date: date!(2026 - 03 - 01),
-            farm_id: 10,
-            farm_name: "Farm".into(),
-            farm_latitude: 35.0,
-            farm_longitude: 139.0,
-            plan_id: 5,
-            plan_type_public: false,
-            plan_predicted_weather_present: true,
-            prediction_target_end_date: None,
-            calculated_planning_end_date: None,
-            plan_metadata: None,
-            crop_id: 2,
-            base_temperature: 10.0,
-            optimal_temperature_range: None,
-            stages: vec![],
-        };
-        let weather_records = vec![json!({
-            "date": "2026-03-01",
-            "temperature_max": 25.0,
-            "temperature_min": 15.0
-        })];
-        let progress_result = json!({ "progress_records": [] });
-        let dto = build_output(&context, &weather_records, &progress_result);
-        assert_eq!(dto.gdd_data.len(), 1);
-        assert_eq!(dto.gdd_data[0]["gdd"], 10.0);
-        assert_eq!(dto.gdd_data[0]["temperature"], 20.0);
+        assert!(dto.gdd_data.is_empty());
     }
 
     #[test]
@@ -258,84 +216,12 @@
             ]
         });
         let dto = build_output(&context, &[], &progress_result);
-        assert_eq!(dto.debug_info["using_agrr_progress"], true);
         assert_eq!(dto.gdd_data.len(), 2);
         assert_eq!(dto.gdd_data[0]["date"], "2026-03-02");
         assert_eq!(dto.gdd_data[0]["gdd"], 10.0);
         assert_eq!(dto.gdd_data[0]["cumulative_gdd"], 10.0);
         assert_eq!(dto.gdd_data[1]["gdd"], 15.0);
         assert_eq!(dto.gdd_data[1]["cumulative_gdd"], 25.0);
-    }
-
-    #[test]
-    fn build_output_leaves_gdd_empty_when_progress_dates_are_outside_cultivation_period() {
-        let context = FieldCultivationClimateContextSnapshot {
-            field_cultivation_id: 1,
-            field_name: "A".into(),
-            crop_name: "Tomato".into(),
-            start_date: date!(2026 - 03 - 01),
-            completion_date: date!(2026 - 03 - 02),
-            farm_id: 10,
-            farm_name: "Farm".into(),
-            farm_latitude: 35.0,
-            farm_longitude: 139.0,
-            plan_id: 5,
-            plan_type_public: false,
-            plan_predicted_weather_present: true,
-            prediction_target_end_date: None,
-            calculated_planning_end_date: None,
-            plan_metadata: None,
-            crop_id: 2,
-            base_temperature: 10.0,
-            optimal_temperature_range: None,
-            stages: vec![],
-        };
-        let progress_result = json!({
-            "progress_records": [
-                { "date": "2026-03-10", "cumulative_gdd": 40.0, "stage_name": "S1" }
-            ]
-        });
-        let dto = build_output(&context, &[], &progress_result);
-        assert_eq!(dto.debug_info["using_agrr_progress"], true);
-        assert!(dto.gdd_data.is_empty());
-    }
-
-    #[test]
-    fn build_output_treats_null_cumulative_gdd_as_zero_in_agrr_progress_path() {
-        let context = FieldCultivationClimateContextSnapshot {
-            field_cultivation_id: 1,
-            field_name: "A".into(),
-            crop_name: "Tomato".into(),
-            start_date: date!(2026 - 03 - 01),
-            completion_date: date!(2026 - 03 - 02),
-            farm_id: 10,
-            farm_name: "Farm".into(),
-            farm_latitude: 35.0,
-            farm_longitude: 139.0,
-            plan_id: 5,
-            plan_type_public: false,
-            plan_predicted_weather_present: true,
-            prediction_target_end_date: None,
-            calculated_planning_end_date: None,
-            plan_metadata: None,
-            crop_id: 2,
-            base_temperature: 10.0,
-            optimal_temperature_range: None,
-            stages: vec![],
-        };
-        let progress_result = json!({
-            "progress_records": [
-                { "date": "2026-03-01", "cumulative_gdd": null, "stage_name": "S1" },
-                { "date": "2026-03-02", "cumulative_gdd": 12.0, "stage_name": "S1" }
-            ]
-        });
-        let dto = build_output(&context, &[], &progress_result);
-        assert_eq!(dto.debug_info["using_agrr_progress"], true);
-        assert_eq!(dto.gdd_data.len(), 2);
-        assert_eq!(dto.gdd_data[0]["gdd"], 0.0);
-        assert_eq!(dto.gdd_data[0]["cumulative_gdd"], 0.0);
-        assert_eq!(dto.gdd_data[1]["gdd"], 12.0);
-        assert_eq!(dto.gdd_data[1]["cumulative_gdd"], 12.0);
     }
 
     #[test]

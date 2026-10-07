@@ -43,8 +43,25 @@ use support::{
     seed_public_plan_field_cultivation,
     field_cultivation_schedule_dates,
     seed_entry_schedule_contract_assets,
+    seed_entry_schedule_crop_missing_thermal_requirement,
+    seed_public_field_cultivation_climate_complete,
+    seed_public_field_cultivation_climate_incomplete_crop,
     cable_subscribe_frame_type,
 };
+
+fn assert_climate_error_envelope(json: &serde_json::Value, body: &str) {
+    assert_eq!(json.get("success").and_then(|v| v.as_bool()), Some(false), "{body}");
+    assert!(json.get("error").is_none(), "legacy error key present: {body}");
+    assert!(json.get("message").is_none(), "legacy message key present: {body}");
+    let errors = json
+        .get("errors")
+        .and_then(|v| v.as_array())
+        .expect("errors array");
+    assert!(!errors.is_empty(), "{body}");
+    for item in errors {
+        assert!(item.as_str().is_some_and(|s| !s.is_empty()), "{body}");
+    }
+}
 
 #[test]
 fn get_api_v1_health_returns_ok_payload() {
@@ -4971,5 +4988,103 @@ fn get_entry_schedule_crop_show_returns_crop_detail() {
             .and_then(|value| value.as_str()),
         Some("agrr_optimize_period"),
         "successful optimize must expose agrr_optimize_period source: {body}"
+    );
+}
+
+#[test]
+fn get_public_field_cultivation_climate_data_returns_422_when_crop_requirement_incomplete() {
+    let client = ContractClient::from_env();
+    let seed = seed_public_field_cultivation_climate_incomplete_crop();
+    let path = format!(
+        "/api/v1/public_plans/field_cultivations/{}/climate_data",
+        seed.field_cultivation_id
+    );
+    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("climate error JSON");
+    assert_climate_error_envelope(&json, &body);
+    assert_eq!(
+        json.get("errors").and_then(|v| v.as_array()),
+        Some(&vec![
+            serde_json::Value::String(
+                "api.errors.climate_crop_requirement_incomplete".to_string(),
+            )
+        ]),
+        "{body}"
+    );
+    assert_eq!(
+        json.get("error_code").and_then(|v| v.as_str()),
+        Some("crop_requirement_incomplete"),
+        "{body}"
+    );
+}
+
+#[test]
+fn get_public_field_cultivation_climate_data_returns_503_when_progress_daemon_unavailable() {
+    if agrr_regeneration_contract_available() {
+        eprintln!(
+            "skip: agrr binary available; cannot deterministically assert daemon-unavailable climate_data"
+        );
+        return;
+    }
+    let client = ContractClient::from_env();
+    let seed = seed_public_field_cultivation_climate_complete();
+    let path = format!(
+        "/api/v1/public_plans/field_cultivations/{}/climate_data",
+        seed.field_cultivation_id
+    );
+    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
+    assert_eq!(503, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("climate error JSON");
+    assert_climate_error_envelope(&json, &body);
+    let errors = json
+        .get("errors")
+        .and_then(|v| v.as_array())
+        .expect("errors array");
+    assert_eq!(errors.len(), 1, "{body}");
+    assert_eq!(
+        errors[0].as_str(),
+        Some("api.errors.climate_progress_daemon_unavailable"),
+        "{body}"
+    );
+    assert_eq!(
+        json.get("error_code").and_then(|v| v.as_str()),
+        Some("progress_daemon_unavailable"),
+        "{body}"
+    );
+}
+
+#[test]
+fn get_entry_schedule_crop_show_returns_crop_requirement_error_for_incomplete_crop() {
+    if !agrr_regeneration_contract_available() {
+        eprintln!("skip: agrr binary unavailable; entry schedule optimize would return disabled");
+        return;
+    }
+    if agrr_regeneration_contract_available() {
+        ensure_agrr_daemon_for_contract();
+    }
+    let client = ContractClient::from_env();
+    let seed = seed_entry_schedule_contract_assets();
+    let incomplete = seed_entry_schedule_crop_missing_thermal_requirement(seed.farm_id);
+    let path = format!(
+        "/api/v1/public_plans/entry_schedule/crops/{}?farm_id={}",
+        incomplete.crop_id,
+        incomplete.farm_id
+    );
+    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("entry schedule crop show JSON");
+    assert_eq!(
+        json["crop"].get("eligible").and_then(|v| v.as_bool()),
+        Some(false),
+        "{body}"
+    );
+    assert_eq!(
+        json["crop"]
+            .get("reason_parts")
+            .and_then(|v| v.get("error_key"))
+            .and_then(|v| v.as_str()),
+        Some("crop_requirement_error"),
+        "{body}"
     );
 }
