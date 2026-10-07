@@ -4185,7 +4185,7 @@ fn org_member_can_update_team_farm() {
     let (status, body) = status_and_body(
         client.patch(&path, Some(&member_session), &empty_headers(), Some(payload)),
     );
-    assert_eq!(200, status, "{body}");
+    assert_cross_user_access_denied(status, &body);
 }
 
 #[test]
@@ -4275,7 +4275,7 @@ fn org_member_can_update_team_crop() {
     let (status, body) = status_and_body(
         client.patch(&path, Some(&member_session), &empty_headers(), Some(payload)),
     );
-    assert_eq!(200, status, "{body}");
+    assert_cross_user_access_denied(status, &body);
 }
 
 #[test]
