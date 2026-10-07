@@ -4,8 +4,9 @@ use crate::adapters::{NoopLogger, PassthroughTranslator};
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
-    CultivationPlanSqliteGateway, FarmSqliteGateway, PublicPlanSavePersistenceSqliteAdapter,
-    PublicPlanSaveReadSqliteGateway,
+    CultivationPlanSqliteGateway, FarmSqliteGateway, PersonalOrganizationSqliteGateway,
+    PublicPlanSavePersistenceSqliteAdapter, PublicPlanSaveReadSqliteGateway,
+    UserOrganizationScopeSqliteGateway,
 };
 use agrr_domain::cultivation_plan::dtos::{
     PublicPlanSaveFailure, PublicPlanSaveInput, PublicPlanSaveSuccess,
@@ -82,6 +83,8 @@ async fn save_plan(
     let pool = state.sqlite.clone();
     let read_gateway = PublicPlanSaveReadSqliteGateway::new(pool.clone());
     let farm_gateway = FarmSqliteGateway::new(pool.clone());
+    let scope_gateway = UserOrganizationScopeSqliteGateway::new(pool.clone());
+    let personal_org_gateway = PersonalOrganizationSqliteGateway::new(pool.clone());
     let txn_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let persistence = PublicPlanSavePersistenceSqliteAdapter::new(pool);
     let logger = NoopLogger;
@@ -103,6 +106,8 @@ async fn save_plan(
         &persistence,
         &logger,
         &translator,
+        &scope_gateway,
+        &personal_org_gateway,
     );
     if interactor.call(&input).is_err() {
         return (
