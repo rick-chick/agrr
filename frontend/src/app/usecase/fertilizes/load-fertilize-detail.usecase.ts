@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadFertilizeDetailInputDto } from './load-fertilize-detail.dtos';
 import { LoadFertilizeDetailInputPort } from './load-fertilize-detail.input-port';

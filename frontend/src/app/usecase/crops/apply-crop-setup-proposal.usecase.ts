@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import {
   CROP_SETUP_PROPOSAL_GATEWAY,

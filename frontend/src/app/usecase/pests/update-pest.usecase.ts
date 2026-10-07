@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { UpdatePestInputDto } from './update-pest.dtos';
 import { UpdatePestInputPort } from './update-pest.input-port';
 import {
@@ -32,7 +33,7 @@ export class UpdatePestUseCase implements UpdatePestInputPort {
         },
         error: (err: Error & { error?: { errors?: string[] } }) =>
           this.outputPort.onError({
-            message: err.error?.errors?.join(', ') ?? err?.message ?? 'Unknown error'
+            message: apiErrorMessage(err)
           })
       });
   }

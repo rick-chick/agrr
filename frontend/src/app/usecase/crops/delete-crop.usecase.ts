@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { DeleteCropInputDto } from './delete-crop.dtos';
 import { DeleteCropInputPort } from './delete-crop.input-port';
 import {
@@ -24,14 +25,8 @@ export class DeleteCropUseCase implements DeleteCropInputPort {
         });
         dto.onSuccess?.();
       },
-      error: (err: Error & { error?: { error?: string; errors?: string[] } }) =>
-        this.outputPort.onError({
-          message:
-            err?.error?.error ??
-            err?.error?.errors?.join(', ') ??
-            err?.message ??
-            'Unknown error'
-        })
+      error: (err: unknown) =>
+        this.outputPort.onError({ message: apiErrorMessage(err) })
     });
   }
 }

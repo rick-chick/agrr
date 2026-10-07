@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../../core/api-error-message';
 import {
   buildWorkRowMiniClimateSummary,
   computeWorkRowMiniClimateDateRange

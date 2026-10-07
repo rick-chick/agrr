@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { firstApiErrorMessageFromBody } from '../api-error-body';
 
 export const BACKEND_WARMUP_I18N = {
   database: 'common.backend_warmup.database',
@@ -72,12 +73,7 @@ export function isComputeEngineWarmupHttpError(error: unknown): boolean {
 }
 
 function httpErrorBodyCode(error: HttpErrorResponse): string | null {
-  const body = error.error;
-  if (body == null || typeof body !== 'object') {
-    return null;
-  }
-  const code = (body as { error?: unknown }).error;
-  return typeof code === 'string' && code.length > 0 ? code : null;
+  return firstApiErrorMessageFromBody(error.error);
 }
 
 /** Entry-schedule weather failures return explicit JSON error codes — not backend warmup. */

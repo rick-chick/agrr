@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { catchError, of, timeout } from 'rxjs';
 import { Farm } from '../../domain/farms/farm';
 import { ResolveEntryScheduleFarmInputDto } from './resolve-entry-schedule-farm.dtos';

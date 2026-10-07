@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { LoadInteractionRuleDetailInputPort } from './load-interaction-rule-detail.input-port';
 import { LoadInteractionRuleDetailOutputPort, LOAD_INTERACTION_RULE_DETAIL_OUTPUT_PORT } from './load-interaction-rule-detail.output-port';
 import { INTERACTION_RULE_GATEWAY, InteractionRuleGateway } from './interaction-rule-gateway';

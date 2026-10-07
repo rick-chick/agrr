@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { LoadPesticideListInputPort } from './load-pesticide-list.input-port';
 import {
   LoadPesticideListOutputPort,

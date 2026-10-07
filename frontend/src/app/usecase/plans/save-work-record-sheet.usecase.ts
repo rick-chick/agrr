@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { concatMap, forkJoin, from, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
+import { apiErrorMessage, apiValidationFieldErrors } from '../../core/api-error-message';
 import { MAX_WORK_RECORD_PHOTOS } from '../../domain/plans/work-record-photo.constants';
 import { WORK_RECORD_PHOTO_RESIZER } from '../../domain/plans/work-record-photo-resizer.token';
 import { WorkRecord } from '../../models/plans/work-record';
@@ -17,10 +17,6 @@ import {
   SAVE_WORK_RECORD_SHEET_OUTPUT_PORT,
   SaveWorkRecordSheetOutputPort
 } from './save-work-record-sheet.output-port';
-
-type ValidationErrorBody = {
-  errors?: Record<string, string[]>;
-};
 
 @Injectable()
 export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort {
@@ -50,14 +46,12 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
           )
         ),
         catchError((err: unknown) => {
-          if (err instanceof HttpErrorResponse && err.status === 422) {
-            const body = err.error as ValidationErrorBody | null;
-            if (body?.errors && Object.keys(body.errors).length > 0) {
-              this.outputPort.onValidationError({ fieldErrors: body.errors });
-              return of(null);
-            }
+          const fieldErrors = apiValidationFieldErrors(err);
+          if (fieldErrors) {
+            this.outputPort.onValidationError({ fieldErrors });
+            return of(null);
           }
-          this.outputPort.onError({ message: apiErrorI18nKey(err) });
+          this.outputPort.onError({ message: apiErrorMessage(err) });
           return of(null);
         })
       )
@@ -148,7 +142,7 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
       (uploadFirst && dto.photoIdsToDelete.length > 0 && dto.pendingPhotoFiles.length > 0);
 
     if (!needsPartialFailure) {
-      this.outputPort.onError({ message: apiErrorI18nKey(err) });
+      this.outputPort.onError({ message: apiErrorMessage(err) });
       return of(null);
     }
 
@@ -168,7 +162,7 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
         return null;
       }),
       catchError(() => {
-        this.outputPort.onError({ message: apiErrorI18nKey(err) });
+        this.outputPort.onError({ message: apiErrorMessage(err) });
         return of(null);
       })
     );

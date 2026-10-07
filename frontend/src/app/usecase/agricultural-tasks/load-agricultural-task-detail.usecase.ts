@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { LoadAgriculturalTaskDetailInputDto } from './load-agricultural-task-detail.dtos';
 import { LoadAgriculturalTaskDetailInputPort } from './load-agricultural-task-detail.input-port';
 import {

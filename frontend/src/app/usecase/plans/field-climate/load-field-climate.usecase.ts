@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../../core/api-error-message';
 import { forkJoin, of } from 'rxjs';
 import { ErrorDto } from '../../../domain/shared/error.dto';
 import { FieldClimateGateway, FIELD_CLIMATE_GATEWAY } from './field-climate.gateway';
@@ -83,15 +84,8 @@ export class LoadFieldClimateUseCase implements LoadFieldClimateInputPort {
           latestImplementation
         });
       },
-      error: (err: Error & { error?: { error?: string; errors?: string[] } }) => {
-        const errorDto: ErrorDto = {
-          message:
-            err?.error?.error ??
-            err?.error?.errors?.join(', ') ??
-            err?.message ??
-            'plans.field_climate.load_unknown'
-        };
-
+      error: (err: unknown) => {
+        const errorDto: ErrorDto = { message: apiErrorMessage(err) };
         this.outputPort.onError(errorDto);
       }
     });

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { DeletePestInputDto } from './delete-pest.dtos';
 import { DeletePestInputPort } from './delete-pest.input-port';
 import {
@@ -24,14 +25,8 @@ export class DeletePestUseCase implements DeletePestInputPort {
         });
         dto.onSuccess?.();
       },
-      error: (err: Error & { error?: { error?: string; errors?: string[] } }) =>
-        this.outputPort.onError({
-          message:
-            err?.error?.error ??
-            err?.error?.errors?.join(', ') ??
-            err?.message ??
-            'Unknown error'
-        })
+      error: (err: unknown) =>
+        this.outputPort.onError({ message: apiErrorMessage(err) })
     });
   }
 }
