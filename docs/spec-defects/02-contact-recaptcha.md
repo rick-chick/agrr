@@ -2,8 +2,9 @@
 
 > **Turnstile へ方針変更**: 本書は当初「reCAPTCHA v2/v3/Enterprise のどれを実装するか」を比較していた。ユーザー指示により **CAPTCHA は reCAPTCHA ではなく Cloudflare Turnstile を採用する**（§0）。ファイル名 `02-contact-recaptcha.md` は他文書のリンク維持のため変更しない。
 
-- 状態: 対応計画（本書はドキュメントのみ。コード・設定・他文書は未変更）。CAPTCHA の採用サービスは Turnstile で確定（§0）。未決は §3.4 の Q1〜Q14。
+- 状態: 対応計画（本書はドキュメントのみ。コード・設定・他文書は未変更）。CAPTCHA の採用サービスは Turnstile で確定（§0）。エラー応答の契約は課題 07 の最新契約（`errors` 配列 + `error_code`）に従う（§0 の D-4〜D-6）。未決は §3.4 の Q1〜Q9 と Q11〜Q17（Q10 は 07 に従う形で解消）。
 - 基準コミット: `cdfd21ac6`（2026-09-29 時点のリポジトリを実際に読んだ事実だけを `file:line` 付きで記載）。
+- 整合更新（2026-10-07）: README の決定事項（第 1〜3 回）と課題 07 の最新版（§0.2・§0.3・§3.3・§3.6・§3.7・§10）に合わせ、エラー形状・`code` 提案・依存欄（§10）を更新した。本更新で読み直した行（`contact_messages.rs:58-79`、`contact_message_recaptcha.rs:15-22, 124-131`、`create_contact_message_interactor.rs:53-69`、`contracts.rs:4502, 4563, 4595`、`send-contact-message.usecase.ts:49-58`、同 spec `:87-93`）は、更新時点の作業ツリーで内容が本書の記述と一致することを確認した。それ以外の行番号は基準時点のまま（再確認していない）。`crates/agrr-server/src/api_error.rs` と `frontend/src/app/core/api-error-message.ts` は更新時点で**未作成**（`ls` で確認）。
 - 記載ルール: 読んでいない・実行していないものは「未確認」と明記する。Cloudflare Turnstile の仕様は、記憶ではなく**この環境から公式ドキュメントを取得して確認した内容**（取得日 2026-09-29、§3.1 に URL と各ページの Last updated）と、ダミーキーでの `siteverify` 実測（§3.1.2）に限って断定する。確認できなかった点は §3.1.3 に列挙し、実装着手前に公式ドキュメントで再確認する。
 
 参照した規約: [`ARCHITECTURE.md`](../../ARCHITECTURE.md)、[`docs/architecture/LAYER-RULES.md`](../architecture/LAYER-RULES.md)、[`tdd-on-edit`](../../.cursor/skills/tdd-on-edit/SKILL.md)、[`test-common`](../../.cursor/skills/test-common/SKILL.md)、[`evidence-before-design-and-implementation.mdc`](../../.cursor/rules/evidence-before-design-and-implementation.mdc)、[`naming-ules.mdc`](../../.cursor/rules/naming-ules.mdc)、[`docs/design/UI-COMPOSITION-RULES.md`](../design/UI-COMPOSITION-RULES.md)（フロント変更のため）。
@@ -17,8 +18,12 @@
 | D-1 | 問い合わせフォーム（`POST /api/v1/contact_messages`）の CAPTCHA は **Cloudflare Turnstile を採用**する。reCAPTCHA（v2 / v3 / Enterprise のいずれも）は採用しない | **確定** |
 | D-2 | サーバー側の検証は Turnstile の `siteverify`（`https://challenges.cloudflare.com/turnstile/v0/siteverify`）へ**置換**する。reCAPTCHA との併用・切替機構は作らない（旧コードは撤去する） | **確定** |
 | D-3 | fail-closed 方針は維持する（secret 未設定→503、フロントの site key 未設定・スクリプト読み込み失敗→送信不可）。CAPTCHA を外す・素通しする経路は作らない | **確定**（現行方針の継続） |
+| D-4 | 問い合わせ API のエラー応答は、課題 07 の統合契約に従う。失敗本文は `errors`（非空文字列の配列）を必須とし、単数の `error` 文字列は新規応答に書かない。本書は新規キー `code` を**導入しない** | **確定**（README 第 2 回「errors」・第 3 回「削除」の帰結。07 §0.2・§0.3） |
+| D-5 | CAPTCHA 失敗の識別子は、既存の `error_code` に置く。422（拒否・トークン欠落）は `{"errors":["<文言>"],"error_code":"captcha_failed"}`、503（secret 未設定・一時利用不可）は `{"errors":["<文言>"],"error_code":"captcha_unavailable"}`。値の名称は本書で確定する（07 §10 が確定を 02 に委ねている） | **確定**（名称は本書。形は 07） |
+| D-6 | 失敗応答はエッジの共通ヘルパー（07 §3.6 の `crates/agrr-server/src/api_error.rs`）経由で組み立てる。入力検証の 422 は従来どおり `errors` で、`error_code` を持たない（CAPTCHA 失敗と `error_code` の有無・値で区別する） | **確定**（形は 07）。ヘルパーは未作成。着手順と旧キー併記の要否は未確定（Q16） |
 
 - 由来: ユーザー指示は「Cloudflare、する」（`docs/spec-defects/README.md` の決定事項表と同一）。指示中の語は「claudflawer」と表記ゆれしており、**「Cloudflare」の意味と解釈**した。さらに、本課題（問い合わせフォームの CAPTCHA）の文脈で Cloudflare の CAPTCHA 製品である **Turnstile を指す**と解釈した。**この2段の解釈は文脈からの推定**であり、誤りがあれば本節を差し替える（Cloudflare の他製品、たとえば WAF / Bot Management、DNS プロキシの採用を意味する場合は方針が変わる。§3.4 Q6）。
+- D-4〜D-6 の由来: README の決定事項（第 2 回「errors」: エラー契約の統合先を `errors` 配列に確定、第 3 回「削除」: 旧キー `error` / `message` を削除）と、それを受けた課題 07 の確定（`errors` 必須、任意で `error_code` / `field_errors`。07 §0.2・§0.3・§3.3）。07 §10 は 02 の旧案（`error` を維持して新規 `code` を追加）を「`code` ではなく既存の `error_code` を使う。名称は 02 で確定する」と読み替えており、本書はこれに合わせた。`error_code` は `masters_auth.rs:98` とフロントの `crop-blueprint-regenerate-error-i18n.ts:19-26` が同名で使用済みで、2 つ目の名前を作らない。この対応づけは README の文言と 07 の記述からの**解釈**である。
 - Cloudflare / Turnstile は**リポジトリ内で未使用**である（確認済み）:
   - `rg -i 'cloudflare|turnstile' --hidden -g '!node_modules' -g '!target' -g '!.git' .` のヒットは本書更新前の時点で `docs/spec-defects/README.md`（決定事項表の 2 行）のみ。コード・スクリプト・設定・フロント・ドキュメントに 0 件。
   - `rg -il 'cf-connecting|cf-turnstile|challenges\.cloudflare|cf_clearance|cdn-cgi' --hidden -g '!node_modules' -g '!target' -g '!.git' .` は 0 件。
@@ -239,7 +244,7 @@
 | T6 | クライアント側 fail-closed | site key 未設定・`api.js` のロード失敗・`error-callback` 発火時は、**トークンなしで送信させず**、送信ボタンを無効化して利用不可のメッセージを出す。`expired-callback` でトークンを破棄し、再取得まで送信不可にする | 推奨 |
 | T7 | テスト用 secret の本番混入ガード | 公式のダミー secret は実測で任意トークンを通した（§3.1.2 #4）。本番で誤設定すると CAPTCHA が無効化される。**`AGRR_ENV` が本番のとき、既知のダミー secret（3.1.1 の 13 の 3 値）を「未設定」として扱う**案（`NotConfigured` → 503）。`routes.rs:30-33` は `RAILS_ENV` / `AGRR_ENV` が無いと `"production"` を返す（環境判定の既定が本番）点に注意。ローカル compose（`AGRR_ENV=development`）では許可する | 提案（Q11） |
 | T8 | 旧 reCAPTCHA との併用 | しない（D-2）。互換モード `?compat=recaptcha`（3.1.1 の 14）は使わない。理由: 新規実装で互換の必要が無く、`grecaptcha` グローバルを再定義する副作用を避けるため | 確定 |
-| T9 | CAPTCHA 失敗 → フロントの区別 | サーバー応答に安定した `code`（`captcha_failed` / `captcha_unavailable`）を**追加**する（既存の `error` は維持）。フロントは `code` で文言を分ける。課題 07（エラー契約の統合）の形式と合わせる | 提案（Q10） |
+| T9 | CAPTCHA 失敗 → フロントの区別 | 新規キー `code` は**追加しない**（D-4〜D-6）。課題 07 の契約に従い、CAPTCHA 拒否（422。トークン欠落を含む）は `{"errors":["Turnstile failure: <error-codes>"],"error_code":"captcha_failed"}`、利用不可（503。secret 未設定・一時利用不可）は `{"errors":["CAPTCHA is not configured"],"error_code":"captcha_unavailable"}`（文言は §3.3.1 の中立化後。`errors[0]` はフロントでは表示せず、`error_code` で文言キーを決める）とする。入力検証の 422 は従来どおり `errors` のみ（`error_code` なし）で、同じ 422 でも `error_code` の有無・値で区別できる。フロントは 07 §3.7 の `apiErrorCode(err)` で判別し、本文の形状（`error` 文字列 vs `errors` 配列）には依存しない。応答の組み立ては 07 §3.6 の `api_error.rs` のヘルパー（`api_error_with_code`）経由 | 確定（Q10 解消。旧キー併記の要否と着手順は Q16） |
 
 ### 3.3 名称の決定
 
@@ -260,7 +265,7 @@
 
 - ヘルスの JSON キー `recaptcha_configured`（`routes.rs:45`）→ `captcha_configured`。R4 `contracts.rs:4466-4473` を追随。リポジトリ内の他の消費者は `docs/spec-defects/09` の記述のみ（フロントに 0 件）。外部監視が旧キーを参照していないかは**未確認**。旧キーを併記する互換は作らない（`no-convenience-tech-debt.mdc`）。
 - ヘルスの警告文 `"RECAPTCHA_SECRET_KEY is unset; contact messages are rejected"`（`routes.rs:36`）→ `"TURNSTILE_SECRET_KEY is unset; contact messages are rejected"`（環境変数名は具象なので Turnstile 固有でよい）。
-- エラー本文の文言 `"reCAPTCHA ..."`: ドメイン由来（`"reCAPTCHA is not configured"`）は `"CAPTCHA is not configured"`、エッジ由来（`"reCAPTCHA failure: ..."`）は `"Turnstile failure: <error-codes>"` とする。R4 が `contains("reCAPTCHA")` で断言している（`contracts.rs:4505, 4595`）ため、断言は `code`（T9）へ移すのが望ましい。
+- エラー本文の文言 `"reCAPTCHA ..."`: ドメイン由来（`"reCAPTCHA is not configured"`）は `"CAPTCHA is not configured"`、エッジ由来（`"reCAPTCHA failure: ..."`）は `"Turnstile failure: <error-codes>"` とする。R4 が `json["error"]` の `contains("reCAPTCHA")` で断言している（`contracts.rs:4502-4506, 4595`）ため、断言は `error_code`（T9）と `errors[0]` へ移す（`error` は 07 の S2 で撤去されるため、新規・改修する断言は `error` を読まない）。
 
 #### 3.3.2 リクエストフィールド名とサーバー側 DTO 名
 
@@ -297,11 +302,14 @@ Turnstile の隠し入力の既定名は `cf-turnstile-response`（3.1.1 の 7�
 | Q7 | ドメインの port・失敗種別・入力フィールド・ヘルスキー・文言を**中立名へ改める**か（推奨: する。§3.3.1） | 公開面（ヘルスの `captcha_configured`、エラー文言）が変わる。外部監視の参照は未確認 |
 | Q8 | リクエストのワイヤ名: A `cf-turnstile-response`（推奨・ユーザー指定の名前）か B `captcha_token`（§3.3.2） | API 契約の追加。課題 08 の OpenAPI に反映 |
 | Q9 | 検証結果を**三分類**（拒否 422 / 一時利用不可 503 / 未設定 503）に改めてよいか（§3.2 T3）。現行は障害も 422 | ドメインの結果型に 1 種類増える。fail-closed は変わらない |
-| Q10 | エラー応答に安定した `code`（`captcha_failed` / `captcha_unavailable`）を**追加**してよいか（後方互換。§5.1） | API 契約の追加。課題 07（エラー契約の統合）と整合が必要 |
+| Q10 | **解消（07 に従う）**: 新規 `code` は追加せず、07 の契約（`errors` 配列 + 既存の `error_code`）に合わせる。値は `captcha_failed` / `captcha_unavailable`（§3.2 T9、D-4〜D-6、§5.1） | README 第 2 回「errors」・第 3 回「削除」、07 §0.2・§0.3・§10。旧キー併記の要否と着手順は Q16 に分離 |
 | Q11 | テスト用 secret の本番混入ガード（§3.2 T7）を入れるか | 実測で任意トークンが通った（§3.1.2）。入れない場合は運用手順（§6.6）のみで担保 |
 | Q12 | 本番 LB へ CSP ヘッダーを適用する作業（`scripts/apply-lb-security-response-headers.sh`）の実施者とタイミング | 本番操作。CSP は Report-Only のため適用が遅れても送信は阻害されない（§5.5） |
 | Q13 | E2E スモーク（`operation-smoke.spec.ts`）を CI スクリプトに含めるか。含める場合の Turnstile との接続方針（スタブか公式ダミーキーの実通信か） | 現状 CI に含まれない（§2.5）。CI からの外部通信の可否は未確認 |
 | Q14 | 問い合わせ受信後の運営側の受信経路（`queued` 行を誰がどう読むか） | §2.8。送信が成功しても運営に届かない状態が残る可能性。本課題に含めるか別課題にするか |
+| Q15 | **429 `rate_limit` の専用文言をどちらの課題で扱うか**。07 §10 は「専用文言は本書の契約の上で 02 が扱う」とし、本書 §5.4 は「07 で扱う」としており、**相互に委譲して担当が決まっていない**。現状、フロントは 429 を `send_failed`（「送信に失敗しました。」）に丸める（`send-contact-message.usecase.ts:49-58` は 422 以外を区別しない）。07 の適用後、429 の本文は `{"errors":["rate_limit"]}`（`error_code` なし。07 §10 (5)、A5） | 既定: 本課題では追加しない（現行の `send_failed` を維持。§5.4 のとおり）。追加する場合の案: 状態コード 429 を判別して `contact_form.errors.rate_limited` を ja / en / in に追加（i18n の範囲が広がる） |
+| Q16 | **着手順と旧キー併記（`Legacy`）**。07 §10 (6) は「02 を 07 の手順 2（`api_error.rs`）の後に実装し、初めから `errors` + `error_code` で書く」ことを推奨する。一方 07 §10 (2) は「S1 の間は `Legacy::Error` により `error` も併記される」としており、02 が書き換える CAPTCHA 失敗・503 は現行も `error` を返す既存の応答（`contact_messages.rs:65-72`）なので、併記対象になるか 02 が最終形で上書きするかが**未確定**。外部の非ブラウザクライアントが問い合わせ API の `error` を読んでいるかは未確認（07 §3.5.2 の外部依存確認は Masters を対象とし、認証不要の `contact_messages` はログでしか確認できないと 07 が述べている） | 既定: 07 §10 (6) の推奨に従い、`api_error.rs` の後に最終形（旧キー併記なし）で実装する。これにより 02 の新規応答は S2 の撤去対象に加わらない。07 側が contact を P6（外部依存確認）の対象に含めるかは 07 の判断。02 のフロント変更（手順 5）は 07 の手順 7（`core/api-error-message.ts`）の後 |
+| Q17 | **`contact_messages` の契約（OpenAPI）と成功応答型の是正の担当**。(a) `docs/api/openapi.yaml` に `contact` の記載が無い（§4）。08 は 02 を「Masters API と無関係・依存なし」と記載し（`08-openapi-gaps.md:1047`）、08 に contact の記述は見当たらない一方、07 の `Error` スキーマ更新は 08 側で行う前提（07 §10）で、11 は 08 が契約として記載する前提（`11-low-priority-misc.md:385`）。誰が `contact_messages` を OpenAPI に載せるかが決まっていない。(b) 成功応答型の是正（本書 §7 手順 1）は、11 の項目 3 案 A と同一の変更（`ContactMessageRecord` の縮小）で、11 側は案 A の採否が確認事項のまま（`11-low-priority-misc.md:181, 184`）。どちらで実施するか決まっていない | 既定: (a) 本課題では OpenAPI を追加せず、確定契約を 08 に渡すのみ（§10）。(b) 本書の手順 1 で実施し、11 の項目 3 は 02 の完了後に不要化する（先にマージされた側にもう一方が追従する） |
 
 ---
 
@@ -311,7 +319,7 @@ Turnstile の隠し入力の既定名は `cf-turnstile-response`（3.1.1 の 7�
 |---|---|
 | ユーザー向け画面 | `/contact`、`/en/contact`（`frontend/src/app/routes/pages.routes.ts`、`locale-en.routes.ts`）。About / Terms / Privacy / footer / navbar から同ページへ誘導されている（`grep contact` で確認したファイル群。個別の挙動は未読） |
 | 事前レンダリング | `contact` は prerender 対象（`public-prerender-routes.ts:5`）。ウィジェットの初期化は**ブラウザ限定**にする必要がある |
-| API 契約 | `POST /api/v1/contact_messages` のリクエスト（旧 `recaptcha_token` → Turnstile トークン。名前は Q8）、エラー応答（`code` 追加案）、`GET /api/v1/health` のキー（`recaptcha_configured` → 中立名。Q7）。`docs/api/openapi.yaml` に `contact` の記載が無い（`grep -c contact` = 0）ので契約文書は存在しない → 課題 08 |
+| API 契約 | `POST /api/v1/contact_messages` のリクエスト（旧 `recaptcha_token` → Turnstile トークン。名前は Q8）、エラー応答（`errors` + `error_code`。07 の契約。D-4〜D-6）、`GET /api/v1/health` のキー（`recaptcha_configured` → 中立名。Q7）。`docs/api/openapi.yaml` に `contact` の記載が無い（`grep -c contact` = 0）ので契約文書は存在しない → 課題 08 |
 | バックエンド | ドメイン（port・失敗種別・入力・interactor の名前変更と結果分類）、エッジ（検証器の置換・DTO・ヘルス・状態）。詳細は §5.1 |
 | デプロイ | サーバー: `_agrr-server-cloud-run.sh`（`TURNSTILE_SECRET_KEY` の secret 注入）。フロント: `gcp-frontend-deploy.sh`（site key 注入）。Docker 開発: `docker-compose.yml`、`env.example` |
 | セキュリティヘッダー | CSP Report-Only の更新（§5.5） |
@@ -323,7 +331,7 @@ Turnstile の隠し入力の既定名は `cf-turnstile-response`（3.1.1 の 7�
 
 ## 5. 対応方針
 
-前提: 実装は Q1〜Q4（キー発行・Secret Manager・モード・プライバシー）の回答後に着手する（根拠ゲート）。以下は §3.2 の推奨案（T1〜T9、Q7=中立化、Q8=案 A、Q9=三分類、Q10=`code` 追加）を前提とした変更点である。回答が異なる場合は該当行を読み替える。
+前提: 実装は Q1〜Q4（キー発行・Secret Manager・モード・プライバシー）の回答後に着手する（根拠ゲート）。以下は §3.2 の推奨案（T1〜T9、Q7=中立化、Q8=案 A、Q9=三分類）と、07 の契約（D-4〜D-6。`errors` + `error_code`）を前提とした変更点である。回答が異なる場合は該当行を読み替える。
 
 ### 5.1 バックエンド（層ごとの変更）
 
@@ -338,11 +346,11 @@ Turnstile の隠し入力の既定名は `cf-turnstile-response`（3.1.1 の 7�
 | edge: 状態・合成 | `state.rs:3, 54, 119`、`test_support.rs:11, 293` | フィールド `recaptcha_verifier: Arc<RecaptchaVerifier>` → `captcha_verifier: Arc<TurnstileVerifier>`（`from_env()` は維持） |
 | edge: ヘルス | `routes.rs:33-46` | `recaptcha_configured` → `captcha_configured`（Q7）、警告文 `"TURNSTILE_SECRET_KEY is unset; contact messages are rejected"` |
 | edge: ハンドラ・DTO | `contact_messages.rs:29-37, 101-133` | `ContactMessageBody` に Turnstile トークンのフィールド（Q8: 案 A なら `#[serde(rename = "cf-turnstile-response")] cf_turnstile_response`）。入力 DTO の `captcha_token` へ詰め替え。`remote_ip` の詰め方（`:107`）は維持し、検証器側で IP として解釈できない値を送らない |
-| edge: presenter（HTTP 形状） | `contact_messages.rs:58-79`（`failure_response`） | `Captcha` 失敗 → 422 `{"error": msg, "code":"captcha_failed"}`、`Unavailable` → 503 `{"error": msg, "code":"captcha_unavailable"}`（`code` は Q10。`error` は維持）。プレゼンタは HTTP 形状のみを決める（R6）ので層違反にならない |
+| edge: presenter（HTTP 形状） | `contact_messages.rs:58-79`（`failure_response`） | `Captcha` 失敗 → 422 `{"errors":[msg],"error_code":"captcha_failed"}`、`Unavailable` → 503 `{"errors":[msg],"error_code":"captcha_unavailable"}`。07 §3.6 の `api_error_with_code`（`crates/agrr-server/src/api_error.rs`）経由で組み立て、単数の `error` と新規 `code` は書かない（D-4〜D-6。旧キー併記の要否は Q16）。`RateLimit`（現行 `{"error":"rate_limit"}`）と `Validation`（`errors` のまま）は 07 の変更範囲で、本書は変更しない。プレゼンタは HTTP 形状のみを決める（R6）ので層違反にならない |
 | edge: 本番混入ガード | `contact_message_turnstile.rs` | 既知のダミー secret を本番で `NotConfigured` とする（Q11 を採用する場合。T7） |
 | 契約・スクリプト | `scripts/recaptcha-contract-mock.py` → `captcha-contract-mock.py`、`run-rust-contract-tests.sh:260-274, 294, 308-354`、`run-rust-contract-contact-shell-lib.mjs`（+ `.test.mjs`）、`crates/agrr-r4-contract/tests/contracts.rs` | §5.7 の一覧と §6 の RED |
 
-理由（`code` の追加）: 現状 422 は CAPTCHA 失敗とバリデーション失敗の両方で使われ、`error`（英語の可変文字列）と `errors`（配列）で見分けるしかない。503 も Cloud Run 基盤起因と区別できない。文字列一致で判別するのは脆いので、安定した `code` を足す。**Q10・課題 07 の回答次第**で、追加しない場合はフロントを本文の形状（`error` 文字列 vs `errors` 配列）と HTTP ステータスで判別する暫定実装になる（この場合は課題 07 の契約決定後に置換）。
+理由（識別子に `error_code` を使う）: 現状 422 は CAPTCHA 失敗とバリデーション失敗の両方で使われ、`error`（英語の可変文字列）と `errors`（配列）の形状で見分けるしかない（`contact_messages.rs:65-76`）。503 も Cloud Run 基盤起因と区別できない。文字列一致や本文の形状で判別するのは脆い。07 の契約では失敗本文が常に `errors` 配列になり、形状では区別できなくなるため、機械可読な識別子を `error_code` に置く。識別子の名前を新規の `code` にすると、既存の `error_code`（`masters_auth.rs:98`、blueprint 系）との 2 系統になるため、既存名に統一する（D-4〜D-6。Q10 は解消）。
 
 ### 5.2 フロントエンド（`frontend/src/app`）
 
@@ -352,7 +360,7 @@ Turnstile の隠し入力の既定名は `cf-turnstile-response`（3.1.1 の 7�
 |---|---|---|
 | domain | `domain/contact/contact-message.model.ts` | ペイロードに `captcha_token` を追加。`validatePayload` が空 token を `contact_form.validation.captcha_required` で拒否。`ContactMessageRecord` を**サーバー契約に合わせて** `{ id: number; status }` のみの作成結果型へ縮小（案 a）。`email` / `message` / `created_at` / `sent_at` を除去 |
 | usecase | `usecase/contact/contact-gateway.ts`、`send-contact-message.dtos.ts` | 戻り値型と成功 DTO を縮小型へ。`created_at` / `sent_at` を除去 |
-| usecase | `usecase/contact/send-contact-message.usecase.ts` | `toErrorDto`（`:49-58`）を、`code` で `captcha_failed` → `contact_form.errors.captcha_failed`、`captcha_unavailable` → `contact_form.errors.captcha_unavailable`、`errors` 配列付き 422 → `validation_failed`、それ以外 → `send_failed` に。到達不能な `status === 'failed'` 分岐（`:32-35`）を削除 |
+| usecase | `usecase/contact/send-contact-message.usecase.ts` | `toErrorDto`（`:49-58`）を、07 §3.7 の `apiErrorCode(err)`（`core/api-error-message.ts`。未作成）で判別する形に: `error_code` が `captcha_failed` → `contact_form.errors.captcha_failed`、`captcha_unavailable` → `contact_form.errors.captcha_unavailable`、`error_code` なしの 422 → `validation_failed`、それ以外 → `send_failed`。本文の形状（`error` / `errors`）や旧キーは読まない。到達不能な `status === 'failed'` 分岐（`:32-35`）を削除。着手は 07 の手順 7（共通関数の導入）の後（Q16） |
 | usecase | `usecase/contact/captcha-widget.port.ts`（新規） | ウィジェットの描画・リセット・破棄・利用可否のポートと `InjectionToken`。コンポーネントがアダプタを直接 import しないための境界（既存の `contact-form.providers.ts:1-12` の束ね方に従う） |
 | usecase | `usecase/contact/contact-form.providers.ts` | ポートの実装を提供 |
 | adapters | `adapters/contact/http-contact-gateway.service.ts` | 応答マッピング（`:19-31`）を `{ id, status }` のみに。ペイロードの `captcha_token` をワイヤ名（Q8。案 A は `cf-turnstile-response`）へ写像して POST |
@@ -391,10 +399,10 @@ UI 構成規約（`docs/design/UI-COMPOSITION-RULES.md`）への適合:
 |---|---|
 | `contact_form.captcha.aria_label` | ウィジェット領域のラベル（a11y） |
 | `contact_form.validation.captcha_required` | 検証未完了のまま送信 |
-| `contact_form.errors.captcha_failed` | サーバーが検証失敗（422 + `captcha_failed`）。再確認を促す |
-| `contact_form.errors.captcha_unavailable` | site key 未設定 / スクリプト読み込み失敗 / サーバー未設定・一時利用不可（503 + `captcha_unavailable`）。時間をおく旨または別手段の案内 |
+| `contact_form.errors.captcha_failed` | サーバーが検証失敗（422 + `error_code: "captcha_failed"`）。再確認を促す |
+| `contact_form.errors.captcha_unavailable` | site key 未設定 / スクリプト読み込み失敗 / サーバー未設定・一時利用不可（503 + `error_code: "captcha_unavailable"`）。時間をおく旨または別手段の案内 |
 
-429（`rate_limit`）専用文言はエラー契約（課題 07）で扱う。本課題では追加しない。
+429（`rate_limit`）専用文言は、本書の既定では追加しない（担当が 07 と相互委譲になっているため未確定: Q15）。
 
 `frontend/src/app/core/i18n/contact-form-locale.catalog.spec.ts` の `CONTACT_FORM_KEYS`（`:17-33`）へ同キーを追加して 3 ロケールを網羅する。プライバシーポリシーへの追記（Q4 が「追記する」の場合）は `privacy` ブロック（`ja.json:4048-4106`、`en.json:4012`、`in.json:3761`）に節を追加し、`last_updated` を更新する（節番号の振り直しが要る。`section9` が「お問い合わせ」）。
 
@@ -443,8 +451,8 @@ Turnstile 向けの変更（公式の要件: 3.1.1 の 10。公式ドキュメ�
 | `RecaptchaVerifier`、`RECAPTCHA_SECRET_KEY`、`RECAPTCHA_VERIFY_URL`、既定 URL、`"reCAPTCHA ..."` 文言、スレッド名 `recaptcha-verify`、単体テスト | `TurnstileVerifier`、`TURNSTILE_SECRET_KEY`、`TURNSTILE_VERIFY_URL`、Turnstile の `siteverify` URL、`"Turnstile ..."` 文言、`turnstile-verify`、テストを Turnstile 応答（`error-codes` の分類）へ | `crates/agrr-server/src/contact_message_recaptcha.rs`（37）→ `contact_message_turnstile.rs`、`lib.rs:26`（1） |
 | `state.recaptcha_verifier` | `state.captcha_verifier` | `state.rs`（3）、`test_support.rs`（2） |
 | ヘルス `recaptcha_configured` と警告文 | `captcha_configured` と `TURNSTILE_SECRET_KEY is unset; ...` | `routes.rs:33-46`（4） |
-| リクエスト DTO の `recaptcha_token`、`failure_response` の `Recaptcha` 分岐、単体テスト内の `"reCAPTCHA is not configured"` | Turnstile トークンのフィールド（Q8）、`Captcha` 分岐と `code`、文言更新 | `crates/agrr-server/src/contact_messages.rs`（7。`:36, :62, :117, :143-146`） |
-| R4 契約: `contact_message_payload` の `recaptcha_token`、`get_health_reports_recaptcha_configuration_status`、`post_contact_message_returns_503_when_recaptcha_not_configured`、`..._422_when_recaptcha_fails`、`RECAPTCHA_SECRET_KEY` 参照、`contains("reCAPTCHA")` 断言 | Turnstile / captcha 名へ改名、`captcha_configured`、`code` 断言、`TURNSTILE_SECRET_KEY` | `crates/agrr-r4-contract/tests/contracts.rs`（16。`:4457-4473, :4476-4506, :4567-4596`） |
+| リクエスト DTO の `recaptcha_token`、`failure_response` の `Recaptcha` 分岐、単体テスト内の `"reCAPTCHA is not configured"` | Turnstile トークンのフィールド（Q8）、`Captcha` 分岐と `errors` + `error_code`（D-4〜D-6）、文言更新 | `crates/agrr-server/src/contact_messages.rs`（7。`:36, :62, :117, :143-146`） |
+| R4 契約: `contact_message_payload` の `recaptcha_token`、`get_health_reports_recaptcha_configuration_status`、`post_contact_message_returns_503_when_recaptcha_not_configured`、`..._422_when_recaptcha_fails`、`RECAPTCHA_SECRET_KEY` 参照、`contains("reCAPTCHA")` 断言 | Turnstile / captcha 名へ改名、`captcha_configured`、`errors[0]` / `error_code` 断言（旧 `json["error"]` は読まない）、`TURNSTILE_SECRET_KEY` | `crates/agrr-r4-contract/tests/contracts.rs`（16。`:4457-4473, :4476-4506, :4567-4596`） |
 | 契約用モック | `captcha-contract-mock.py`（Turnstile 応答形式。トークンで分岐） | `scripts/recaptcha-contract-mock.py`（1） |
 | 契約ランタイム: モック起動、`RECAPTCHA_SECRET_KEY` / `RECAPTCHA_VERIFY_URL` / `RECAPTCHA_MOCK_*`、ログ名、未設定シェル契約 | `TURNSTILE_*`、モック名、ログ名 | `scripts/run-rust-contract-tests.sh`（21。`:260-274, :294, :308-354`） |
 | モック配線検査（`verifyRecaptchaContractMockSetup`、`RECAPTCHA_CONTRACT_MOCK_SCRIPT`、`unconfigured-recaptcha@example.com`、`recaptcha_token` の検査） | 名称とペイロード検査を Turnstile 版へ | `scripts/run-rust-contract-contact-shell-lib.mjs`（12）、`.test.mjs`（3） |
@@ -498,7 +506,7 @@ Turnstile 向けの変更（公式の要件: 3.1.1 の 10。公式ドキュメ�
 | V7 | 同 | given JSON でない本文（HTTP 405 相当）/ 接続失敗 / then `Unavailable` | 同 |
 | V8 | 同 | given 既定の検証 URL / then `https://challenges.cloudflare.com/turnstile/v0/siteverify` と一致（`TURNSTILE_VERIFY_URL` の上書きも検証） | 新規 |
 | V9 | 同 | given `AGRR_ENV` が本番かつ secret が既知のダミー値（`1x…AA` 等 3 値）/ then `NotConfigured`。非本番では許可 | T7（Q11 採用時） |
-| B4 | `contact_messages.rs` の `mod tests`（`:135-178`） | `failure_response(captcha("bad"))` → 422・`error=="bad"`・`code=="captcha_failed"`。`failure_response(unavailable(..))` → 503・`code=="captcha_unavailable"`。既存 `failure_response_unavailable_returns_503`（`:141-147`）を文言変更に追随 | Q10 |
+| B4 | `contact_messages.rs` の `mod tests`（`:135-178`） | `failure_response(captcha("bad"))` → 422・`errors==["bad"]`・`error_code=="captcha_failed"`。`failure_response(unavailable(..))` → 503・`errors[0]` が文言・`error_code=="captcha_unavailable"`。いずれも単数 `error` キーと `code` キーを持たない（Q16 の既定）。既存 `failure_response_unavailable_returns_503`（`:141-147`）は `json["error"]` を読むため、`errors[0]` と `error_code` の断言へ書き換える。`failure_response_rate_limit_includes_json_body`（`:150-154`）は 07 の変更範囲で、本書は変更しない | D-4〜D-6 |
 | B5 | `security_headers.rs` の `mod tests`（`:52-`） | given `CONTENT_SECURITY_POLICY_REPORT_ONLY` / then `script-src` と `frame-src` の双方に `https://challenges.cloudflare.com` を含む | §5.5 |
 | B6 | `scripts/verify-security-response-headers-lib.mjs` ＋ `.test.mjs` | given `agrr-security-response-headers.yaml` / then CSP に同じ `https://challenges.cloudflare.com` を含む（Rust 定数との重複は値ではなく契約として検証） | CI は `node --test`（`.github/workflows/frontend-test.yml:155`）。`test-common` に対応スクリプトが無く、実行経路はユーザーに確認 |
 
@@ -507,12 +515,14 @@ Turnstile 向けの変更（公式の要件: 3.1.1 の 10。公式ドキュメ�
 | ID | 場所 | given / when / then | 備考 |
 |---|---|---|---|
 | C1 | `crates/agrr-r4-contract/tests/contracts.rs`（既存 `:4466` を改名） | given secret 設定済み / when `GET /api/v1/health` / then `captcha_configured == true`、`warnings` が空 | RED: 旧キー名 |
-| C2 | 同（既存 `:4476` を改名。シェル契約 `run-rust-contract-tests.sh:308-354` も追随） | given secret 未設定 / when POST / then 503、`code == "captcha_unavailable"`、`error` に `CAPTCHA` を含む | RED: `code` が無い。契約ランタイムでは secret 設定済みのためテスト本体はスキップされ、シェル契約が担う（§2.1） |
-| C3 | 同（既存 `:4567` を拡張） | given 設定済みで無効トークン（モックが `invalid-input-response`）/ when POST / then 422、`code == "captcha_failed"` | RED: `code` が無い |
-| C4 | 同（新規 `post_contact_message_returns_422_when_captcha_token_missing`） | given 設定済み / when トークンのフィールドを省略して POST / then 422、`code == "captcha_failed"` | **現行フロントが実際に踏む経路**の契約化 |
+| C2 | 同（既存 `:4476` を改名。シェル契約 `run-rust-contract-tests.sh:308-354` も追随） | given secret 未設定 / when POST / then 503、`error_code == "captcha_unavailable"`、`errors[0]` に `CAPTCHA` を含む | RED: `error_code` が無く、`errors` が無い（現行は `error` のみ）。契約ランタイムでは secret 設定済みのためテスト本体はスキップされ、シェル契約が担う（§2.1） |
+| C3 | 同（既存 `:4567` を拡張） | given 設定済みで無効トークン（モックが `invalid-input-response`）/ when POST / then 422、`error_code == "captcha_failed"`、`errors[0]` に `Turnstile` を含む | RED: `error_code` が無い。`errors` が無い（現行は `error` のみ） |
+| C4 | 同（新規 `post_contact_message_returns_422_when_captcha_token_missing`） | given 設定済み / when トークンのフィールドを省略して POST / then 422、`error_code == "captcha_failed"`、`errors` が非空の文字列配列 | **現行フロントが実際に踏む経路**の契約化 |
 | C5 | 同（既存 `:4509` の入力を Turnstile のワイヤ名へ） | given 有効トークン / when POST / then 201、`{id, status:"queued"}` | RED: 新ワイヤ名（Q8） |
-| C6 | 同（新規） | given モックが一時利用不可（`internal-error`）を返すトークン / when POST / then 503、`code == "captcha_unavailable"` | Q9 採用時。モックに分岐を追加 |
+| C6 | 同（新規） | given モックが一時利用不可（`internal-error`）を返すトークン / when POST / then 503、`error_code == "captcha_unavailable"`、`errors` が非空の文字列配列 | Q9 採用時。モックに分岐を追加 |
 | C7 | `run-rust-contract-contact-shell-lib.test.mjs`（既存を改名） | given 改名後のモック / then 配線検査（Dockerfile.test の python3、起動、readiness、ペイロードのフィールド名）が通る | RED: 旧名を見て失敗 |
+
+R4 の失敗本文の断言のうち、本書が書き換えるのは CAPTCHA 系の 2 箇所（`contracts.rs:4502-4506` の 503、`:4595` の 422。C2・C3）だけである。429 の断言（`:4563` の `json["error"] == "rate_limit"`）は 07 の S2 更新対象（07 の「S2 で変更が必要な 12 箇所」に含まれる）で、本書は変更しない。本書が 07 の S1・S2 より先に入る場合は現行のまま、後に入る場合は 07 の更新後の断言に従う（Q16）。
 
 ### 6.4 フロントエンド（`.cursor/skills/test-common/scripts/run-test-frontend.sh`）
 
@@ -522,9 +532,10 @@ Turnstile 向けの変更（公式の要件: 3.1.1 の 10。公式ドキュメ�
 | F2 | `adapters/contact/http-contact-gateway.service.spec.ts` | given サーバー応答 `{id:7,status:'queued'}` / when `postMessage` / then 結果が **`toStrictEqual({id:7,status:'queued'})`**（`email` 等のキーが無い） | 現行は `email:undefined` などのキーを持つオブジェクトを返す（`toEqual` は undefined を無視するため `toStrictEqual` を使う） |
 | F3 | 同上 | given ペイロードに `captcha_token:'tok'` / when `postMessage` / then `apiClient.post` が `('/api/v1/contact_messages', body)` で呼ばれ、body にワイヤ名（Q8: 案 A は `'cf-turnstile-response': 'tok'`）を含み、ペイロードの中立名 `captcha_token` は含まない | ペイロード型に無く、写像も無い |
 | F4 | `usecase/contact/send-contact-message.usecase.spec.ts` | given ゲートウェイが `{id:1,status:'queued'}` / when `execute` / then `onSuccess({id:1,status:'queued'})` のみで呼ばれ、`created_at` / `sent_at` を含まない | 現行は `sent_at:null` を付与する（`:40-47`） |
-| F5 | 同上 | given ゲートウェイが `{status:422,error:{error:'Turnstile failure: invalid-input-response',code:'captcha_failed'}}` で失敗 / then `onError({message:'contact_form.errors.captcha_failed'})` | 現行は 422 を一律 `validation_failed` |
-| F6 | 同上 | given `{status:503,error:{error:'CAPTCHA is not configured',code:'captcha_unavailable'}}` / then `onError({message:'contact_form.errors.captcha_unavailable'})` | 現行は `send_failed` |
-| F7 | 同上 | given `{status:422,error:{errors:["Email is invalid"]}}`（実サーバーの本文形状に修正した fixture）/ then `validation_failed`（回帰防止） | 既存テストの fixture が `field_errors` という実在しない形状（`:87-93`）。fixture 修正と同時に維持を確認 |
+| F5 | 同上 | given ゲートウェイが `{status:422,error:{errors:['Turnstile failure: invalid-input-response'],error_code:'captcha_failed'}}` で失敗 / then `onError({message:'contact_form.errors.captcha_failed'})` | 現行は 422 を一律 `validation_failed` |
+| F6 | 同上 | given `{status:503,error:{errors:['CAPTCHA is not configured'],error_code:'captcha_unavailable'}}` / then `onError({message:'contact_form.errors.captcha_unavailable'})` | 現行は `send_failed` |
+| F7 | 同上 | given `{status:422,error:{errors:["Email is invalid"],field_errors:{email:["is invalid"]}}}`（07 適用後の入力検証 422 の本文形状に修正した fixture。`error_code` なし）/ then `validation_failed`（回帰防止。CAPTCHA 失敗と `error_code` の有無で区別される） | 既存テストの fixture は `{ field_errors: {...} }` のみで `errors` を持たない（`:87-93`）。07 §2.7 #16 は入力検証 422 に `errors`（現行どおり）と `field_errors` の両方を載せるとしているため、fixture を合わせて維持を確認 |
+| F7b | 同上 | given `{status:429,error:{errors:["rate_limit"]}}` / then `send_failed`（本課題の既定。Q15 で専用文言を追加する場合は RED の対象に変わる） | 現行の挙動の固定（characterization） |
 | F8 | `components/contact-form/contact-form.component.spec.ts` | given ウィジェットが token `'tok'` を通知し入力が有効 / when `submit()` / then `useCase.execute` が `captcha_token:'tok'` 付きペイロードで 1 回呼ばれる | 現行は token を持たない（`:176-184`） |
 | F9 | 同上 | given token 未取得 / when `submit()` / then `useCase.execute` が呼ばれず、`control.message` が `contact_form.validation.captcha_required` の validation 種別 | 同上 |
 | F10 | 同上 | given `execute` の完了（成功・失敗の両方）/ then ウィジェットの `reset` が呼ばれる | 機能なし |
@@ -562,8 +573,8 @@ RED の確認: 上記を追加し、`test-common` で **意図した理由で失
 | 1 | 成功レスポンス型の是正（`ContactMessageRecord` を縮小、ゲートウェイ / ユースケース / DTO / 既存テスト fixture の修正、到達不能な `failed` 分岐の削除） | F2, F4 | `fix(frontend): align contact gateway types with API contract` |
 | 2 | ドメインの名称中立化（振る舞い不変。Q7）と三分類の追加（Q9） | D1〜D5 | `refactor(domain): neutralize contact captcha port naming` |
 | 3 | エッジの検証器を Turnstile へ置換（`contact_message_turnstile.rs`、状態・ヘルス・ハンドラ DTO、R4 モックと契約ランタイム、旧 reCAPTCHA 名称の撤去） | V1〜V9, C1〜C7 | `feat(server): verify contact messages with Cloudflare Turnstile`。`crates/*` 変更のため `rebuild-restart.sh` 後に R4 |
-| 4 | サーバーのエラー応答に `code` を追加（Q10） | B4, C2, C3 | `feat(server): add code to contact captcha error responses` |
-| 5 | ユースケースのエラー写像（CAPTCHA 失敗 / 利用不可 / バリデーションを区別） | F5〜F7 | `fix(frontend): map contact captcha errors distinctly`（4 に依存） |
+| 4 | CAPTCHA 失敗・利用不可の応答を `errors` + `error_code` にする（`api_error.rs` のヘルパー経由。D-4〜D-6。着手は 07 の手順 2 の後: Q16） | B4, C2, C3, C4, C6 | `feat(server): return errors and error_code for contact captcha failures` |
+| 5 | ユースケースのエラー写像（`error_code` で CAPTCHA 失敗 / 利用不可 / 入力検証を区別）。着手は 07 の手順 7（`core/api-error-message.ts`）の後 | F5〜F7, F7b | `fix(frontend): map contact captcha errors by error_code`（4 に依存） |
 | 6 | site key ランタイム設定 + ウィジェットポート / アダプタ + ドメインのトークン検証 + ゲートウェイのワイヤ名写像 | F1, F3, F12, F13 | `feat(frontend): add Turnstile widget port and adapter` |
 | 7 | コンポーネント統合（ホスト要素、token 送信、リセット、利用不可時の fail-closed）+ i18n（ja/en/in）+ カタログ spec（+ Q4 の回答次第でプライバシー文言） | F8〜F11, F14 | `feat(frontend): require Turnstile in contact form` |
 | 8 | CSP（`security_headers.rs` と `agrr-security-response-headers.yaml` を同期。`script-src` と `frame-src`） | B5, B6 | `chore(security): allow Turnstile origin in CSP report-only` |
@@ -572,6 +583,8 @@ RED の確認: 上記を追加し、`test-common` で **意図した理由で失
 | 11 | 手動確認（E3）と本番展開（ユーザー作業） | §6.6 | なし |
 
 本番展開の順序: (1) Cloudflare でウィジェット作成・キー発行（Q1）→ (2) secret 登録（Q2）→ (3) サーバーをデプロイ（フォームは引き続き失敗するが現状と同じで悪化しない）→ (4) フロントを `TURNSTILE_SITE_KEY` 付きでデプロイ → (5) LB の CSP 反映（Q12）→ (6) 動作確認（§6.6）後に旧 `RECAPTCHA_*` を撤去（Q5）。
+
+07 との順序（07 §3.5.1・§7・§10 に基づく。07 のコミット番号は 07 の「実装ステップ」表の順）: (a) 07 の手順 2（`api_error.rs` の導入。S0）→ 本書の手順 3〜4。`api_error.rs` が無い状態で先に実装すると、`json!` で `error` / `code` を直書きすることになり、07 の S2・機械ゲート（S-T6）の撤去対象を増やす。(b) 本書の手順 5 は 07 の手順 7（`core/api-error-message.ts`）の後。(c) 現行フロントは 422 の本文を読まず状態コードだけで判定する（`send-contact-message.usecase.ts:49-58`）ため、サーバーの本文形状を先に変えても現行フロントは退行しない。本番展開の (3)（サーバー）を (4)（フロント）より先にする順序と整合する。(d) 07 の手順 5（contact の区分 A の変換と `field_errors` 追加）と本書の手順 3〜4 は同じ `contact_messages.rs` を触るため、同一 PR か連続した PR で調整する。順序が逆転した場合の旧キー併記の扱いは Q16。
 
 ---
 
@@ -588,7 +601,7 @@ RED の確認: 上記を追加し、`test-common` で **意図した理由で失
 | R7 | CI で `challenges.cloudflare.com` への外部通信が可能か | 未確認（Q13）。不可ならスタブ / モックで統一（§5.8） |
 | R8 | 送信成功後の運営側の受信経路が不明（`queued` 行の消費者が見当たらない） | Q14。本課題で直すと範囲が拡大する |
 | R9 | Cookie / プライバシー表記の追記要否（Managed での表記義務は未確認） | Q4 |
-| R10 | `code` 追加は API 契約の追加。課題 07 の決定と名称・形式が食い違うと二重改修になる | 課題 07 の方針を先に確認 |
+| R10 | 識別子の名称・形式が課題 07 とずれると二重改修になる | **解消方針**: 新規 `code` をやめ、07 の契約（`errors` + `error_code`）に合わせた（D-4〜D-6）。残る調整は着手順と旧キー併記（Q16、R21） |
 | R11 | `test-common` にサーバークレート単体テスト・スクリプトテスト（`node --test`）の入口が無い | V1〜V9、B4〜B6 の実行経路をユーザーに確認。使えない場合、サーバー側の RED は R4（C1〜C7）で代替 |
 | R12 | 到達不能な `failed` 分岐と関連テストの削除は、将来「作成応答で `failed` を返す」設計を想定していないという判断を含む | R4 契約は `queued` のみ固定（§2.4）。異議があれば分岐を残す |
 | R13 | 実機（Docker 起動 / 本番 / 実ブラウザ）での再現は未実施 | 本書の失敗経路は、単体テスト・R4 契約・フロントのコード読みの組合せに基づく |
@@ -598,7 +611,9 @@ RED の確認: 上記を追加し、`test-common` で **意図した理由で失
 | R17 | CSP `connect-src` の要否は公式要件として確認できていない | Report-Only の違反を実ブラウザで確認して判断（3.1.3） |
 | R18 | `remoteip` の元である `X-Forwarded-For` 先頭要素は偽装の余地がある（§2.8） | `remoteip` は任意・補助情報として扱い、判定根拠にしない（T4） |
 | R19 | `frontend-deploy.yml` の CI 経路は env ファイルを用意せず、スクリプトが停止する可能性（§5.3） | この経路が実際に使われているかは未確認。使う場合は workflow への `TURNSTILE_SITE_KEY` 追加を別途判断 |
-| R20 | 他課題文書・README の 02 行の説明が reCAPTCHA のまま | 本書の編集範囲外。追随が必要（§4、§10） |
+| R20 | 他課題文書・README に、現状と食い違う記述が残る（2026-10-07 時点。§10 に一覧） | 本書の編集範囲外。追随が必要（§4、§10） |
+| R21 | 07 の `api_error.rs`（S0）とフロントの `core/api-error-message.ts` は未作成（`ls` で確認）。本書の手順 4・5 は 07 の手順 2・7 に依存する。07 が先に進まない場合、本書の失敗応答は `json!` の直書き（`error` / `code` 系の新規実装）になり、07 の撤去対象を増やす | 着手順を 07 の手順に合わせる（§7）。やむを得ず先行する場合の扱いは Q16 |
+| R22 | 07 §10 は 02 の旧案（`error` + 新規 `code`）を前提にした読み替えを書いており、本書の更新後は「読み替えが済んだ」状態になる。07 側の記述（「02 の現状は `error` と `code` の案のまま」）は本書の範囲外で、07 が読み直すまで食い違って見える | 07 側の更新を待つ。本書は 07 の読み替え（§10 (1)〜(5)）と一致させてある |
 
 ---
 
@@ -606,7 +621,7 @@ RED の確認: 上記を追加し、`test-common` で **意図した理由で失
 
 1. 有効な Turnstile の site key・secret（公式ダミーペアで可）を設定した環境で、`/contact` のフォームに入力しウィジェットを完了して送信すると、サーバーが 201 `{id,status:"queued"}` を返し、画面に成功メッセージが表示される。
 2. ウィジェット未完了（トークン未取得）で送信すると、`useCase.execute` を呼ばずに `contact_form.validation.captcha_required` が表示される（F9）。
-3. サーバーが Turnstile 検証失敗（422）を返したとき、`contact_form.errors.captcha_failed` が表示され、入力エラー文言（`validation_failed`）にならない。ウィジェットがリセットされる（F5, F10）。
+3. サーバーが Turnstile 検証失敗（422。本文は `{"errors":[..],"error_code":"captcha_failed"}`）を返したとき、`contact_form.errors.captcha_failed` が表示され、入力エラー文言（`validation_failed`）にならない。ウィジェットがリセットされる（F5, F10）。
 4. サーバー側 secret 未設定または Turnstile 側の一時利用不可（503）、あるいは site key 未設定・`api.js` 読み込み失敗のとき、送信は行われず（フロント起因の場合）または送信が拒否され、`contact_form.errors.captcha_unavailable` が表示される（F6, F11, F12, C2, C6）。
 5. サーバーは、`missing-input-response` / `invalid-input-response` / `timeout-or-duplicate` を 422、`missing-input-secret` / `invalid-input-secret` / `bad-request` / `internal-error` と通信失敗・不正応答を 503 に分類する（V5〜V7。Q9 を不採用にした場合は本項を、全失敗が 422 であることに読み替える）。
 6. `frontend` の `ContactMessageRecord` 相当の型とゲートウェイ / ユースケースのテストが、サーバーの実応答 `{id, status}` と一致する（F2, F4）。
@@ -617,22 +632,34 @@ RED の確認: 上記を追加し、`test-common` で **意図した理由で失
 11. CSP（Report-Only）の `script-src` と `frame-src` に `https://challenges.cloudflare.com` が含まれ、Rust 定数と YAML の内容が一致する（B5, B6）。
 12. `/contact` の a11y / layout スモークと `check:ui-composition` が GREEN（E2）。
 13. E2E スモークの問い合わせテストが新仕様と矛盾しない（E1）。CI に含めるかは Q13 の回答による。
+14. CAPTCHA 失敗・利用不可の応答本文は、07 の契約に合わせて `errors`（非空の文字列配列）と `error_code`（`captcha_failed` / `captcha_unavailable`）を持ち、新規キー `code` と、本書が新規に書く単数 `error` を持たない（B4, C2〜C4, C6。旧キー併記の扱いは Q16）。入力検証の 422 は `error_code` を持たず、フロントは `validation_failed` を表示する（F7）。
 
 ---
 
 ## 10. 関連課題との依存
 
-`docs/spec-defects/` の他文書（01・03〜11 と `README.md`）は本書の編集範囲外で、**その内容を本書のために再読していない**（本書作成時に確認したのは `README.md` の決定事項表、`01` の §0 の書式、`07` の冒頭のみ）。以下は課題名と本書の調査結果からの見立てである（未確認）。
+2026-10-07 の整合更新で読んだもの: `README.md` 全文（決定事項の第 1〜3 回を含む）、課題 07 の §0・§3.3・§3.5.1・§3.6〜§3.8・§7・§10 と、07 内の contact・captcha・`error_code` の該当箇所、03 §10 の 02 行、05 §0 と §10 の 02 行、および 01 / 04 / 05 / 06 / 08 / 09 / 10 / 11 の「02」「contact」「captcha」「recaptcha」に関する記述（検索で抽出した行）。01・04〜06・08〜11 は**全文を精読していない**。他文書は並行して更新されうるため、下の行番号・節番号は更新時点（作業ツリー）のもの。
 
 | 課題 | 関係 | 内容 |
 |---|---|---|
-| 01 resource-limit-bypass | 弱い関連 | 本課題は匿名エンドポイントで農場・作物の上限と無関係。ただし §2.8 のレート制限（IP 取得・プロセス内メモリ・単一インスタンス前提）が制限回避の議論と重なる可能性がある。重複の有無は 01 を確認してから判断 |
-| 03 api-key-scope-docs | 依存なし | 認証つき API 用。問い合わせは匿名 |
-| 04 api-key-query-auth | 依存なし | 同上 |
-| 05 fail-closed-critical / 06 fail-closed-suspected | 方針が整合 | secret 未設定→503 は fail-closed の実例（`ARCHITECTURE.md` の fail-closed 節）。フロントの「site key 未設定なら送信しない」も同方針。§3.2 T7（ダミー secret の本番混入）は fail-closed の観点で 05 / 06 の列挙対象になりうる（両課題の列挙対象に本件が含まれるかは未確認） |
-| **07 frontend-error-contract** | **強い依存** | エラー判別（`code`）とユースケースのエラー写像を本課題で導入する。07 が共通エラー契約を定めるなら、名称・形式を先に合わせる（R10、Q10）。429 専用文言も 07 側で扱う |
-| 08 openapi-gaps | 依存（入力提供） | `docs/api/openapi.yaml` に `contact_messages` の記載が無い（§4）。本課題の確定契約（Turnstile トークンのワイヤ名（Q8。案 A ではハイフン付きキーのクォート記述）、201 / 422 / 429 / 503、`code`）と、ヘルスの `captcha_configured`（Q7）を 08 に渡す。本課題で OpenAPI を追加するか 08 に委ねるかは 08 の範囲次第 |
-| 09 stale-design-docs | 関連 | 問い合わせの旧契約文書は履歴上削除済み（`a40a3b87c`）で、現行の契約文書が無い。今回の環境変数追加（`TURNSTILE_*`）とヘルスキー変更を反映する docs の所在も含め、09 と重複しないよう調整。09 はヘルスの `recaptcha_configured` を記述している（`docs/spec-defects/09-stale-design-docs.md:92`）ため、Q7 の名称変更に追随が必要 |
-| 10 authorization-consistency | 依存なし（未確認） | 匿名エンドポイントのため対象外の見立て。`GET /api/v1/contact_messages` は常に空配列を返す実装（`crates/agrr-server/src/contact_messages.rs:24-27`）で、データは出ない |
-| 11 low-priority-misc | 移管候補 | §2.8 の「`ContactMessage::validate()` が本番経路で未使用」「X-Forwarded-For 先頭要素の採用」「`GET` ダミー」は本課題の範囲外。11 または新規課題へ。11 は `contact-message.model.ts` の型絞り込みを扱い、本書のペイロード変更（`captcha_token` 追加）と同一ファイルで競合しうる |
-| README | 追随が必要 | `docs/spec-defects/README.md` の 02 行（説明と「ユーザー判断が必要な主な事項」の 02）は reCAPTCHA の種別選択のままで、Turnstile 採用（決定事項表には反映済み）と整合しない。本書の編集範囲外 |
+| 01 resource-limit-bypass | 依存なし（01 側も同じ判断） | 01 は 02 を「依存なし（未作成・未確認）」としている（`01-resource-limit-bypass.md:671`）。01 に問い合わせのレート制限・匿名エンドポイントの記述は無い（`レート制限` `rate_limit` `匿名` の検索で 0 件）。本書 §2.8 のレート制限（IP 取得・プロセス内メモリ・単一インスタンス前提）と 01 の上限判定は別の仕組みで、現時点で重なる議論は見当たらない |
+| 03 api-key-scope-docs | 機能の依存なし。**デプロイの同乗のみ** | 03 は認証つき API 用で、問い合わせは匿名。03 §10 は 02 を「機能の依存なし。デプロイの同乗のみ関係する」とし（`03-api-key-scope-docs.md:1175`）、V27 と Turnstile の導入を**別リリースにできるなら別にする**、分けられない場合は V27 の適用確認（DB）と Turnstile の確認（実送信）を独立に行うとしている。03 は本書の §6.6 の手順 2〜4 と §8 R16 を参照しているため、**これらの節・項番号は変更しない**。03 の V27 移行後の 403 の本文形式は 07 が扱い、本書の対象外 |
+| 04 api-key-query-auth | 依存なし | 同上。04 側も 02 を「依存なし」としている（`04-api-key-query-auth.md:289`） |
+| 05 fail-closed-critical | 依存なし。方針は整合 | 05 側は 02 を「依存なし（対象コードが重ならない）」とする（`05-fail-closed-critical.md:450`）。本書の secret 未設定→503（D-3）は fail-closed の実例で、README 第 1 回「厳格」（05 / 06 に反映）と矛盾しない。05 の失敗本文（`error_key` と `message` を含む暫定案）の `errors` への読み替えは 07 の領域で、本書は関与しない |
+| 06 fail-closed-suspected | **突合の依頼あり（本書側の確認結果）** | 06 は、秘密値の `unwrap_or_default()`（`state.rs:97-104`、`contact_message_recaptcha.rs:17`）を「02・04 と突合してから扱う」としている（`06-fail-closed-suspected.md:560, 619`）。本書側のコード確認: `contact_message_recaptcha.rs:17` は `RECAPTCHA_SECRET_KEY` 未設定を空文字にするが、空（空白のみを含む）は `is_configured()` が偽（`:31-33`）となり `NotConfigured`（`:124-126`）を返し、interactor が `unavailable`（503）にする（`create_contact_message_interactor.rs:58-63`）。空の secret が検証を**素通しにする経路は無く**、明示的な失敗になる。なお `state.rs:97-104` の `unwrap_or_default()` は Google OAuth・スケジューラ・backdoor の値で、CAPTCHA の secret ではない（CAPTCHA の検証器は `state.rs:54, 119` で別に生成される）。06 の分類は 06 側の判断。06 が列挙する 8 項目と追加対象に問い合わせの CAPTCHA は含まれていない（読んだ範囲）。§3.2 T7（ダミー secret の本番混入ガード。Q11）は、06 の列挙対象に加える候補になりうる（未確認） |
+| **07 frontend-error-contract** | **強い依存（形は 07 に従属。本書は名称を確定）** | 本書は 07 の最新契約（README 第 2 回「errors」・第 3 回「削除」。07 §0.2・§0.3）に合わせた（D-4〜D-6、§3.2 T9、§5.1・§5.2、Q10 解消）。対応づけ（07 §10 の (1)〜(5) と一致させた）: (1) 識別子は新規 `code` ではなく既存 `error_code`。値 `captcha_failed` / `captcha_unavailable` は本書で確定。(2) CAPTCHA 拒否 422 は `{"errors":["<文言>"],"error_code":"captcha_failed"}`、利用不可 503 は `{"errors":["<文言>"],"error_code":"captcha_unavailable"}`。(3) 入力検証 422 は `errors`（`full_messages`）のままで、`field_errors`（`validation_errors.rs:45-51`）を 07 が追加する。CAPTCHA 失敗とは `error_code` の有無で区別する（本文の形状では区別しない）。(4) フロントの `toErrorDto` は `apiErrorCode(err)` を使う（07 §3.7。本書のテスト F5〜F7 の fixture は `{errors:[..],error_code:..}` に更新済み）。(5) 429 `rate_limit` は 07 により `{"errors":["rate_limit"]}`（`error_code` なし）。専用文言の担当は 07 と本書で相互委譲になっており**未確定**（Q15）。**着手順**（07 §10 (6)・§7 に基づく）: 07 の手順 2（`api_error.rs`）→ 本書の手順 3〜4、07 の手順 7（`core/api-error-message.ts`）→ 本書の手順 5（§7）。いずれも未作成（R21）。**旧キー併記の要否と 07 の S1 / S2・P6 との関係は未確定**（Q16）。R4 の `contracts.rs:4502-4506, 4595` は本書が書き換え、`:4563`（429）は 07 の S2 に委ねる（§6.3）。07 側の §10 は 02 を「`error` + 新規 `code` の案のまま」と記述しており、本書の更新で読み替え済みになる（R22） |
+| 08 openapi-gaps | 依存（入力提供）。**担当は未確定** | `docs/api/openapi.yaml` に `contact_messages` の記載が無い（§4）。08 は 02 を「Masters API と無関係・依存なし」とし（`08-openapi-gaps.md:1047`）、08 に contact の記述は見当たらない。07 は 08 の `Error` スキーマを `errors` 必須・`error_code`・`field_errors` に更新する前提（07 §10）。本書の確定契約（Turnstile トークンのワイヤ名（Q8。案 A ではハイフン付きキーのクォート記述）、201 / 422 / 429 / 503、`errors` + `error_code`）と、ヘルスの `captcha_configured`（Q7）を 08 に渡す。誰が `contact_messages` を OpenAPI に載せるかは決まっていない（Q17 (a)） |
+| 09 stale-design-docs | 関連 | 問い合わせの旧契約文書は履歴上削除済み（`a40a3b87c`）で、現行の契約文書が無い。今回の環境変数追加（`TURNSTILE_*`）とヘルスキー変更を反映する docs の所在も含め、09 と重複しないよう調整。09 はヘルスの `recaptcha_configured` を現行の事実として記述している（`09-stale-design-docs.md:92`）。現行コードの記述としては正しく、Q7 の名称変更を実施する際に追随が必要。09 側は 02 を「依存なし」としている（同 `:397`） |
+| 10 authorization-consistency | 依存なし | 10 側も 02 を「依存なし」としている（`10-authorization-consistency.md:1258`）。匿名エンドポイントのため認可の対象外。`GET /api/v1/contact_messages` は常に空配列を返す実装（`crates/agrr-server/src/contact_messages.rs:24-27`）で、データは出ない |
+| 11 low-priority-misc | 移管候補 + **同一変更の重複** | §2.8 の「`ContactMessage::validate()` が本番経路で未使用」「X-Forwarded-For 先頭要素の採用」「`GET` ダミー」は本課題の範囲外。11 または新規課題へ。11 の項目 3（案 A: `ContactMessageRecord` を `{id, status}` に縮小）は本書の手順 1 と**同一の変更**で、11 側は案 A の採否が確認事項のまま（`11-low-priority-misc.md:181, 184`）。どちらで実施するかは未確定（Q17 (b)）。11 は `contact-message.model.ts` を扱い、本書のペイロード変更（`captcha_token` 追加）と同一ファイルで競合しうる（同 `:98, :379`）。11 の「サーバーのエラー形状（`error` / `errors`）は 02 が決める」（同 `:379`）は、07 が決める形（`errors` + `error_code`）に更新が必要（11 側の記述。本書の範囲外） |
+| README | 一部追随済み・一部が古い | `docs/spec-defects/README.md` の 02 行と「ユーザー判断が必要な主な事項」の 02 は Turnstile に更新済み。一方、(a) 着手順 4 は「02（reCAPTCHA の種別・キー発行はユーザー判断が先）」のまま、(b) 更新履歴の「02 の `code` 提案（07 では `error_code` に読み替え）…追随が未実施」は、本書の更新で 02 側が追随済みになる。README は本書の編集範囲外 |
+
+### 10.1 本更新で未確定のまま残る事項
+
+§3.4 の Q15〜Q17 に集約している。Q1〜Q9・Q11〜Q14 は本更新の対象外で、状態は変わっていない（Q10 のみ解消）。
+
+| # | 内容 | 担当・次の一手 |
+|---|---|---|
+| Q15 | 429 `rate_limit` の専用文言を 02 と 07 のどちらで扱うか（相互に委譲） | ユーザー判断。既定は「追加しない」 |
+| Q16 | 着手順（07 の手順 2・7 が先か）と、CAPTCHA 失敗・503 の旧キー（`error`）併記の要否。外部の非ブラウザクライアントの有無は未確認 | 07 側の S1 / S2・P6 の運用方針に依存。既定は 07 §10 (6) の推奨（`api_error.rs` の後に最終形で実装） |
+| Q17 | (a) `contact_messages` を OpenAPI に載せる担当（08 は範囲外と読める）、(b) 成功応答型の是正を 02 と 11 のどちらで実施するか | 08 / 11 の範囲確認。既定は (a) 本課題では追加せず 08 に契約を渡す、(b) 本書の手順 1 |
