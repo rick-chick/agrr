@@ -1,6 +1,6 @@
 # 01: Farm / Crop 作成上限が経路ごとにスコープが異なりすり抜ける
 
-- 状態: 対応計画（本書はドキュメントのみ。コード・テスト・マイグレーションは未変更）。上限のスコープは組織単位（案 A）で確定済み（§0 第 1 回決定）。複数所属は本課題のスコープ外（§0 第 2 回決定、旧 U2）。未決は §3.5 の U1・U3
+- 状態: 対応計画（本書はドキュメントのみ。コード・テスト・マイグレーションは未変更）。上限のスコープは組織単位（案 A）で確定済み（§0 第 1 回決定）。複数所属は本課題のスコープ外（§0 第 2 回決定、旧 U2）。複数メンバー組織の枠は組織で共有（§0 第 3 回決定、旧 U1 を確定）。未決は §3.5 の U3 と、課題 10 の縮小との整合で残る確認事項 §3.6.5（C1〜C4）
 - 対象: Farm(非参照)最大 4 件 / Crop(非参照)最大 20 件の上限
 - 根拠ゲート: 本書の「確認済み」記述はすべて実コードを読んで再確認した file:line 付き。読んでいない・実行していないものは「未確認」と明記する（[`evidence-before-design-and-implementation.mdc`](../../.cursor/rules/evidence-before-design-and-implementation.mdc)）。
 - 用語: 「Masters」= `POST /api/v1/masters/farms|crops` 系の作成経路（`FarmCreateInteractor` / `CropCreateInteractor`）。「plan-save」= 公開プランのユーザー保存経路（`PublicPlanSaveInteractor` → `PlanSaveEnsureUserFarm/CropsInteractor`）。
@@ -17,9 +17,9 @@
 | D-2 | **ユーザー単位カウントは廃止**する。plan-save が使う `count_non_reference_farms(user_id)`（`crates/agrr-domain/src/cultivation_plan/interactors/plan_save_ensure_user_farm_interactor.rs:82`）と `count_user_owned_non_reference_crops(user_id)`（`plan_save_ensure_user_crops_interactor.rs:122`）を組織単位の件数取得に置き換える | **確定** |
 | D-3 | plan-save も **作成先組織を解決**して組織単位で上限を判定し、Farm / Crop の **INSERT に `organization_id` を設定**する（現状は INSERT に無い: `plan_save_gateways.rs:112-137`、Crop 属性に無い: `plan_save_ensure_user_crops_interactor.rs:139-178`。§2.3） | **確定** |
 
-- 由来: ユーザー指示の語「**組織**」からの**解釈**である。指示は上限のスコープの単位を「組織」とする一語であり、次の点までは指示していない。したがって第 1 回決定の範囲は D-1〜D-3 に限り、以下は §3.5 で未決のまま扱う（複数所属の作成先組織の規則は第 2 回決定でスコープ外にした）。
-  - 複数メンバー組織で枠を共有するか（U1）
-  - `ARCHITECTURE.md` の「per user」文言をどこで直すか（U3）
+- 由来: ユーザー指示の語「**組織**」からの**解釈**である。指示は上限のスコープの単位を「組織」とする一語であり、次の点までは指示していない。したがって第 1 回決定の範囲は D-1〜D-3 に限り、以下は第 1 回の時点では未決とした（複数所属の作成先組織の規則は第 2 回決定でスコープ外にした。U1 は第 3 回決定で確定した）。
+  - 複数メンバー組織で枠を共有するか（U1。第 3 回決定 D-5 で確定）
+  - `ARCHITECTURE.md` の「per user」文言をどこで直すか（U3。§3.5 で未決のまま）
 - D-1 は Masters の現行挙動（組織単位: §2.2）と同じ向きであり、Masters の挙動は変えない。変わるのは plan-save のみ（§5、§10-5）。
 - ユーザー単位カウントの残骸: Masters 側の `FarmGateway::count_user_owned_non_reference_farms`（`crates/agrr-domain/src/farm/gateways/farm_gateway.rs:39-43`）/ `CropGateway::count_user_owned_non_reference_crops`（`crates/agrr-domain/src/crop/gateways/crop_gateway.rs:17`）は、プロダクションコードの呼び出し元が無い（`rg '\.count_user_owned_non_reference' crates` のヒットは plan-save の 1 箇所 `plan_save_ensure_user_crops_interactor.rs:122` のみで、これは plan-save 専用トレイト `plan_save_crop_limit_gateway.rs:4` 経由）。D-2 に従い §7 で除去する。
 
@@ -31,12 +31,28 @@
 
 - 由来: ユーザー指示「複数所属はスコープアウト」からの**解釈**である。指示は「複数所属を扱わない」旨の一言であり、次の点までは指示していない。したがって決定の範囲は D-4 に限る。
   - 範囲外とした内容は「複数所属ユーザーの作成先組織の規則」と「複数所属時の枠の扱い」と解釈した。
-  - 「複数メンバー組織で枠を共有するか（U1）」は複数所属とは別論点と解釈し、範囲外にしない（§3.5 で独立に整理: 単一所属前提でも残り得る）。
+  - 「複数メンバー組織で枠を共有するか（U1）」は複数所属とは別論点と解釈し、範囲外にしない（§3.5 で独立に整理: 単一所属前提でも残り得る）。第 3 回決定 D-5 で確定した。
   - 「単一所属前提」は設計上の前提であり、システムが単一所属を強制するわけではない（実装上は複数所属が作られ得る: §12-1）。したがって複数所属ユーザーの挙動は「保証しない」が、Masters の既存挙動は変更しない。
 - 帰結（詳細は §5.2 手順 9 / §12 / §13）:
   - 作成先組織の解決規則は現状維持（変更しない）。plan-save が使う組織解決関数を Masters / crop AI と同一にするのみ（経路間の不一致を作らない最小限の扱い）。
   - 複数所属ユーザーで上限が期待通りにならない点は「既知の制限」（§12）として残す。
   - 複数所属を前提とするテストは TDD 計画（§6）から外し、受け入れ条件（§10）に「複数所属は対象外」を明記する。
+
+### 第 3 回決定（複数メンバー組織の枠は組織で共有）
+
+| # | 決定 | 状態 |
+|---|---|---|
+| D-5 | 複数メンバーを持つ組織では、Farm（非参照 4 件）/ Crop（非参照 20 件）の上限を**組織で枠共有**する。現行 Masters の挙動（同一組織の全メンバーの行を数える: `farm_gateway.rs:297-309`, `crop_gateway.rs:138-150`）を維持し、plan-save も D-1〜D-3 により同じ共有枠に揃える。旧 U1 は「共有維持」で確定（推奨 → 確定） | **確定** |
+
+- 由来: ユーザー指示「**共有**」の**解釈**である。指示は一語であり、次の点までは指示していない。したがって決定の範囲は D-5 に限る。
+  - 「共有」の対象を「Farm / Crop の**上限の枠**」と解釈した（旧 U1 の設問「複数メンバー組織で枠を共有するか」への回答）。「共有」を「他メンバーの Farm / Crop の**閲覧・編集の共有**」まで含む意味に読むと、同時に決まった課題 10 の縮小（編集は所有者のみ）と矛盾するため、後者は含めない。
+  - 枠の数値（4 / 20）は現行どおりとし、法人 org のプラン別上限（`organization-data-model.md:103-104`）は決めていない。メンバー別枠は採らない。
+  - 閲覧（一覧・詳細）を組織単位のまま残すかは指示に含まれない。§3.6 で整合を分析し、ユーザー確認（§3.6.5 C1）に残す。
+- 同時に決まった課題 10 の縮小（Farm / Crop の組織スコープ編集も所有者のみ。閲覧は P14）との整合は §3.6 に記載する。課題 10 の現行版（`10-authorization-consistency.md` §0 第 3 回、D8、§2.10）は縮小を反映済みで、本書 §3.6 の設計（`edit_allows` から組織分岐を外し、`view_allows` は残す）と一致する。閲覧を組織単位のまま残すかは 10 の P14 と本書 §3.6.5 C1 で、同じ推奨（残す）である。
+- 帰結（詳細は §3.6 / §5 / §6 / §10）:
+  - 設計（§5）は U1 の推奨案から**確定案**になる。判定は引き続き「作成先組織の件数」であり、他メンバーの行も数える。
+  - §6 A1 の共有枠テストは「推奨案どおりのとき」の条件付きから確定のテストになる。
+  - 枠は組織共有・編集は所有者のみ、の組合せで生じる UX / 仕様上の帰結は §3.6 で整理する。
 
 ---
 
@@ -169,7 +185,7 @@ Farm / Crop の作成上限は、Masters 経路では「所属組織（`organiza
 ### 3.4 実装前に調査で埋める項目（ユーザー質問にしない）
 
 - 本番で NULL `organization_id` の非参照 Farm / Crop が実在するか、上限超過ユーザー / 組織が実在するか（§4.3 のクエリで `production-primary-sqlite-query` スキルにより確認する。**未実施・未確認**）。
-- 複数メンバーを持つ組織が本番に実在するか（同上、§4.3 クエリ 4）。存在しなければ U1（共有枠）は現時点で実害が無い。複数所属ユーザーの実在は、別課題（§13）の優先度判断の材料であり、本課題の設計・合否には影響しない（D-4）。
+- 複数メンバーを持つ組織が本番に実在するか（同上、§4.3 クエリ 4）。存在しなければ D-5（共有枠）および §3.6 の帰結は現時点で実害が無い（共有枠の確定自体は実在に依らない）。複数所属ユーザーの実在は、別課題（§13）の優先度判断の材料であり、本課題の設計・合否には影響しない（D-4）。
 - plan-save 経路で Farm 作成時に気象取得が起動されるか（`plan_save_*.rs` を読んで確認する。**未確認**）。
 
 ### 3.5 ユーザー確認事項
@@ -177,6 +193,7 @@ Farm / Crop の作成上限は、Masters 経路では「所属組織（`organiza
 解消済み:
 
 - 案の選択（旧 §3.5-1: A / B / C のどれを正とするか）→ **案 A で確定**（§0 第 1 回決定）。
+- 旧 U1（複数メンバー組織で Farm 4 / Crop 20 を組織全体で共有するか）→ **共有維持で確定**（§0 第 3 回決定 D-5）。推奨（現行 Masters と同じ数値・同じ組織共有枠を維持。法人 org のプラン別上限は本課題に含めない）がそのまま確定になった。メンバー別枠・数値変更は採らない。確定による設計・テストの変更は無く、条件付きだった記述（§4.1 経路 Z、§5 冒頭、§6 A1、§7、§9 R2、§10）を確定扱いに更新した。
 
 スコープ外（第 2 回決定 D-4。未決ではなく、本課題では決めない）:
 
@@ -188,19 +205,93 @@ Farm / Crop の作成上限は、Masters 経路では「所属組織（`organiza
 
 | # | 未決事項 | 推奨案 | 推奨の根拠 | 回答が推奨と異なる場合の影響 |
 |---|---|---|---|---|
-| U1 | 複数メンバー組織で Farm 4 / Crop 20 を **組織全体で共有**するか。ADR-002 は法人 org の上限を「契約プランに応じて フェーズ 2 で定義」としており数値は未確定（`organization-data-model.md:103-104`）。**複数所属（D-4 でスコープ外）とは独立に残る**（下の整理を参照） | 当面は現行 Masters と同じ数値（4 / 20）・同じ組織共有枠を維持する。法人 org のプラン別上限は本課題に含めない | 組織単位 COUNT は同一組織の全メンバーの行を数える（`farm_gateway.rs:297-309`, `crop_gateway.rs:138-150`）。Masters を変えずに plan-save を揃えられる | メンバー別枠や数値変更を選ぶ場合は Masters の判定も変わり、§5 の設計・§6 A1 の共有枠テストが変わる |
-| U3 | `ARCHITECTURE.md:90-91` の「per user」文言を、どの課題で更新するか | 課題 09 の Q1・Q2（`09-stale-design-docs.md:246-247`）で実施する。09 は 01 のマージ後に実施する前提（`09-stale-design-docs.md:242,254,396`）。01 では書き換えない | 09 が文書側の是正を一括で持つ。01 の未決 U1 が確定してから書けば手戻りが無い。Q1 が求める複数所属時の所属先規則の明記（`:246`）は、本課題では規則を決めない（D-4）ため「別課題で未規定」と書くか、別課題（§13）の後に回す | 01 で更新する場合は §7 ステップ 9 で実施し、09 の Q1〜Q7 との重複を調整する |
+| U3 | `ARCHITECTURE.md:90-91` の「per user」文言を、どの課題で更新するか | 課題 09 の Q1・Q2（`09-stale-design-docs.md:246-247`）で実施する。09 は 01 のマージ後に実施する前提（`09-stale-design-docs.md:242,254,396`）。01 では書き換えない | 09 が文書側の是正を一括で持つ。U1 は第 3 回決定で確定済みのため、この点の手戻りは無い。Q1 が求める複数所属時の所属先規則の明記（`:246`）は、本課題では規則を決めない（D-4）ため「別課題で未規定」と書くか、別課題（§13）の後に回す | 01 で更新する場合は §7 ステップ 9 で実施し、09 の Q1〜Q7 との重複を調整する |
 
-**U1 の整理（複数所属との関係。コードで確認した事実）**
+課題 10 の縮小（Farm / Crop の組織スコープ編集も所有者のみ）との整合で残る確認事項は §3.6.5（C1〜C4）に分けて記載する（U1 の確定とは別の論点）。
 
-- 組織単位の件数は、その組織の行を全メンバー分数える（`farm_gateway.rs:297-309`, `crop_gateway.rs:138-150`。行の `user_id` は条件に無い）。したがって組織に複数メンバーがいれば、Masters は現状すでに枠共有である。plan-save を組織単位に揃える（D-1〜D-3）と plan-save も同じ共有枠になる。**U1 は D-1 を採る限り残る**。
-- 共有が起きる条件は「組織のメンバーが 2 人以上」であり、各メンバーの所属数とは別軸である。同一組織の別メンバー 2 人が、どちらも所属がその組織 1 件だけでも共有は成立する。よって U1 は複数所属の扱い（D-4）と独立に残る。
-- 一方、単一所属（各ユーザーが自分の個人組織 1 件のみ、その組織のメンバーは本人のみ）という運用前提の下では、共有の相手がいないため U1 は**発生しない**（個人組織ではユーザー単位と組織単位が一致する: §3.3-3）。
+**D-5（旧 U1）の整理（複数所属との関係。コードで確認した事実）**
+
+- 組織単位の件数は、その組織の行を全メンバー分数える（`farm_gateway.rs:297-309`, `crop_gateway.rs:138-150`。行の `user_id` は条件に無い）。したがって組織に複数メンバーがいれば、Masters は現状すでに枠共有である。plan-save を組織単位に揃える（D-1〜D-3）と plan-save も同じ共有枠になる。D-1 を採る限り共有枠は避けられず、D-5 はこの現行挙動の維持を確定したものである。
+- 共有が起きる条件は「組織のメンバーが 2 人以上」であり、各メンバーの所属数とは別軸である。同一組織の別メンバー 2 人が、どちらも所属がその組織 1 件だけでも共有は成立する。よって D-5 は複数所属の扱い（D-4）と独立に適用される。
+- 一方、単一所属（各ユーザーが自分の個人組織 1 件のみ、その組織のメンバーは本人のみ）という運用前提の下では、共有の相手がいないため共有枠は**実質発生しない**（個人組織ではユーザー単位と組織単位が一致する: §3.3-3）。
 - ただしシステムはこの前提を強制していない。次を確認済み。
   - 任意のログインユーザーが非 personal 組織を作成でき、作成者は Owner になる（`organization_create_interactor.rs:54-59`、ルート `crates/agrr-server/src/organizations.rs:44`）。
   - 組織のメンバー追加は操作者の役割（Owner / Admin: `organization_access_policy.rs:38-40`）で制御され、対象組織が personal かどうかの判定は無い（`organization_membership_create_interactor.rs:48-108`、`personal` の判定が現れるのは削除側のみ: `organization_delete_interactor.rs:63,82`、ルート `organizations.rs:54`）。
-  - よって「個人組織に他ユーザーを追加する」「他組織にメンバーとして追加される」ことが API 上可能で、その時点で共有枠（U1）と複数所属（D-4 の範囲外）が同時に発生し得る。実運用でそうなっているかは**未確認**（本番未照会: §4.3 クエリ 4）。
-- 帰結: U1 は本課題で回答を求める未決として残す。推奨（現行の共有枠を維持）は、複数所属を扱わない設計でも成立する。
+  - よって「個人組織に他ユーザーを追加する」「他組織にメンバーとして追加される」ことが API 上可能で、その時点で共有枠（D-5）と複数所属（D-4 の範囲外）が同時に発生し得る。実運用でそうなっているかは**未確認**（本番未照会: §4.3 クエリ 4）。
+- 帰結: 共有枠の維持（D-5）は、複数所属を扱わない設計でも成立する。共有枠と課題 10 の縮小（編集は所有者のみ）の組合せで生じる帰結は §3.6 で扱う。
+
+### 3.6 共有枠（D-5）と課題 10 の縮小（Farm / Crop の編集は所有者のみ）の整合
+
+第 3 回で同時に決まった課題 10 の縮小は、Farm / Crop の組織スコープ編集も所有者のみにする（`README.md` 第 3 回決定。閲覧は「組織単位のカウント・一覧の扱いを別途整理」）。枠は組織共有（D-5）のまま、編集は所有者のみ、という組合せになるため、他メンバーの Farm / Crop が自分の枠を消費するのに、編集・削除できない（場合によっては見えない）状況が生じ得る。以下は実コードで確認した事実（§3.6.2）、そこから導く帰結（§3.6.3）、整合のとれた設計案（§3.6.4）、ユーザー確認事項（§3.6.5）の順に整理する。
+
+#### 3.6.1 10 側の前提
+
+- 課題 10 の現行版（`10-authorization-consistency.md` §0 第 3 回、D8、§2.10）は P9 を縮小で確定し、縮小対象の全数（E1〜E13）と判定の分離（`edit_allows` から組織分岐を外す）を書いている。本書は件数・枠の側であり、認可の設計は 10 が決める。
+- 縮小が必要になる箇所の構造（コードで確認）: Farm / Crop のポリシーは `ReferenceRecordAccessFilter` の `view_allows` と `edit_allows` が、どちらも `organization_member_access` を最後の分岐として呼ぶ（`reference_record_access_filter.rs:37-51`, `:53-67`、`org_scope.rs:13-23`）。所有者のみの判定は各ポリシーの `edit_allowed` / `view_allowed` が既に持つ（`farm_policy.rs:30-32,39-41`, `crop_policy.rs:49-55`）。したがって「編集のみ所有者」は `edit_allows` から組織分岐を外し、`view_allows` は残す、という非対称な変更になる（閲覧を残す場合。§3.6.5 C1）。
+
+#### 3.6.2 現状（確認済み事実）
+
+| 項目 | 事実 | 根拠 |
+|---|---|---|
+| 枠の数え方 | 作成先組織の非参照行を、`user_id` を問わず全メンバー分数える | `farm_create_interactor.rs:122-135`, `crop_create_interactor.rs:138-153`, `farm_gateway.rs:297-309`, `crop_gateway.rs:138-150` |
+| 閲覧（Farm） | 一覧は所属組織の非参照 Farm（`organization_id IN (...)`）。詳細・気温チャートは組織一致で許可 | `farm_list_interactor.rs:44-63`, `farm_gateway.rs:117-128,311-330`, `farm_detail_interactor.rs:49-54`, `farm_temperature_chart_interactor.rs:68-77` |
+| 閲覧（Crop） | 非管理者の一覧は「組織一致、または `organization_id IS NULL` かつ自分の行」の非参照 Crop。詳細は組織一致で許可 | `crop_list_interactor.rs:44`, `reference_index.rs:47-66`, `crop_detail_interactor.rs:48-65` |
+| 編集・削除（現状） | Farm の更新・削除、Crop の更新・削除・ネストの一部（blueprint・setup proposal・stage 取得の一部）は `assert_edit_allowed` で組織メンバーにも許可される。R4 は組織メンバーによる Farm / Crop の更新成功を固定している | `farm_update_interactor.rs:94-99`, `farm_destroy_interactor.rs:58-76`, `crop_update_interactor.rs:41-55`, `crop_destroy_interactor.rs:53-70`, `crop_masters_task_schedule_blueprint_*_interactor.rs`, `crop_setup_proposal_interactor.rs:57-68`, R4 `contracts.rs:4157`（`org_member_can_update_team_farm`）, `:4242`（`org_member_can_update_team_crop`） |
+| 拒否時の応答（Farm） | 更新・削除・詳細の権限拒否は 403 `{"error": "farms.flash.no_permission"}` | `masters_farms.rs:412-447` |
+| 他メンバー行の利用（Plan 作成） | Plan 作成は Farm の `user_id` 一致（または admin）のみ許可し、他メンバーの Farm は「見つからない」（`plans.errors.not_found`）。**縮小の有無に関わらず現状から所有者のみ**。一方、Plan 作成画面の Farm 選択肢は組織スコープの一覧（`/api/v1/masters/farms`）から作られる | `private_plan_initialize_from_selection_interactor.rs:109-117,215-228`, `farm_policy.rs:35-37`, `private-plan-create-api.gateway.ts:33-35` |
+| 他メンバー行の利用（Plan 作成の Crop 判定） | 「使える Crop があるか」の判定は組織スコープの非参照 Crop 一覧で行う（他メンバーの Crop も数える） | `private_plan_create_readiness_gateway.rs:34-44` |
+| 他メンバー行の利用（add_crop） | Plan への作物追加の Crop 解決は `assert_edit_allowed`（組織メンバー許可）。縮小で他メンバーの Crop は追加不可になる | `crop_find_private_plan_add_crop_record_interactor.rs:78-79` |
+| 他メンバー行の利用（Field） | Field は農場所有者のみ（空スコープ） | `field_create_interactor.rs:48`, `field/policies/field_access.rs:21` |
+| フロントの件数判定（Farm） | 一覧（組織スコープ）の `is_reference !== true` の件数を数えて `>= 4` で作成を止める。関数名 `countUserOwnedFarms` に反し、他メンバーの行も数える。使用箇所は Farm 作成画面と Plan 作成の Farm 取得 | `farm-create-limit.ts:7-16`, `farm-create.component.ts:200-206`, `private-plan-create-api.gateway.ts:36-41` |
+| フロントの件数判定（Crop） | 事前判定のコードは無い（`frontend/src/app` の非テストに Crop 上限の参照なし）。課題 07 §5.3 が新設を計画し、`CROP_GATEWAY.list()` の件数を数える設計 | `07-frontend-error-contract.md` §5.3（`load-crop-create-limit` が `CROP_GATEWAY.list()` の件数を数える） |
+| 一覧 UI | Farm 一覧は全行に編集・削除ボタンを無条件で出す。Farm / Crop の JSON は `user_id` を返し、フロントは現ユーザーの `id` を持つ | `farm-list.component.ts:76-87`, `masters_json.rs:15,106`, `farm.ts`（`user_id`）, `api.service.ts:13-14` |
+| 上限超過の文言 | 本文は主語なし。作成画面のヒントは「農場一覧で既存の農場を削除してください」、Plan 作成画面のヒントは「既存の農場を削除するか農場一覧で整理してください」 | `ja.json:3539,3557`（本文）, `:1062-1063`（作成画面）, `:2442-2443`（Plan 作成）、表示箇所 `farm-create.component.ts:67-71`, `plan-new.component.ts:75-76` |
+| メンバー削除と行の扱い | メンバー削除は `organization_memberships` の行を消すだけで、その人の Farm / Crop の `organization_id` / `user_id` は変えない（メンバー削除 interactor・gateway に farms / crops の参照が無い） | `organization_membership_sqlite_gateway.rs:149-160`, `organization_membership_delete_interactor.rs`（`rg -i 'farm|crop'` でヒット無し） |
+
+#### 3.6.3 帰結（コードから導く。実行での再現は未実施）
+
+単一所属・共有枠・縮小後を前提に、閲覧を組織単位のまま残す場合（C1 の (a)）と所有者のみにする場合（(b)）を分けて書く。
+
+- **E1 見えるが操作できない行（(a) の場合）**: 他メンバーの Farm / Crop は一覧・詳細に出るが、更新・削除は拒否され（Farm は 403、`masters_farms.rs:433-447`）、Plan 作成にも使えない（Farm は現状から: `private_plan_initialize_from_selection_interactor.rs:225`。Crop の Plan への追加は縮小で新たに不可: `crop_find_private_plan_add_crop_record_interactor.rs:79`）。一覧 UI は全行に編集・削除ボタンを出すため（`farm-list.component.ts:76-87`）、押すと拒否される。Plan 作成画面は他メンバーの Farm を選択肢に出すが、選ぶと「見つからない」になる（現状から存在する不整合。縮小では悪化も改善もしない）。
+- **E2 見えない枠消費（(b) の場合）**: 一覧が所有者のみになると、他メンバーの行が枠を消費しても自分の一覧に出ない。フロントの件数判定は一覧の件数に依存するため（`farm-create-limit.ts:7-16`）、バックエンドは拒否するのにフロントは「まだ作れる」と見せる（上限到達に気付くのは送信後のエラーのみ）。バックエンドが件数の唯一の権威という現在の前提（§2.5）は保てるが、事前判定の価値が下がり、原因（他メンバーの行）をどの画面にも示せない。
+- **E3 上限エラー時の説明不足**: 本文は主語なしの「作成できるFarmは4件まで」で、共有枠でも文意は誤らない。しかしヒントは「農場一覧で既存の農場を削除してください」（`ja.json:1063`, `:2443`）で、縮小後は他メンバー分の Farm を削除できないため、(a)・(b) のどちらでも誤誘導になり得る（自分が 1 件・他メンバーが 3 件の場合など）。plan-save の上限超過は課題 07 のとおり翻訳されない文字列で出る点も同様に説明を欠く（§11 の 07 の行）。
+- **E4 枠を解放できない行**: 縮小後は、枠を空けられるのは行の所有者だけになる。メンバー削除は行を移管しないため（`organization_membership_sqlite_gateway.rs:149-160`）、組織から外れた人の Farm / Crop は組織の枠を消費し続ける。外れた人の一覧は所属組織で絞られるため、その行は一覧に出ない（`farm_gateway.rs:311-330`。詳細・更新は `user_id` 一致で直接 ID 指定すれば可能なはずだが、実行未確認）。残ったメンバーは編集・削除できない。縮小前は残ったメンバーが削除できたため、枠の回収手段が縮小で消える。単一メンバー組織（個人組織）では発生しない。複数メンバー組織の実在は未確認（§4.3 クエリ 4）。
+- **E5 01 の書き込み是正と可視性**: plan-save が作る NULL 行は、Farm 一覧に出ない（`farm_gateway.rs:320`。§2.4）。D-3 の書き込み是正と backfill（§8）で `organization_id` が付くと、同じ組織の他メンバーの一覧に現れ、枠も消費する。縮小（編集は所有者のみ）が先に入っていなければ、他メンバーがそれらを編集・削除できる期間ができる。したがって 10 の Farm / Crop 縮小は、01 の plan-save 書き込み是正・backfill より先、または同時に出す（§7、§11）。Plan に対する 10 §3.3 の順序制約と同型。
+- **E6 縮小で失われる機能**: 他メンバーの Crop を自分の Plan に追加することが、縮小で不可になる（`crop_find_private_plan_add_crop_record_interactor.rs:78-79`）。課題 10 はこれを D8 の E12 とし、扱いは P15（本書 §3.6.5 C4 と同じ論点）に残している。
+
+#### 3.6.4 整合のとれた設計案
+
+原則: **「枠と可視性は組織、操作は所有者」**を一貫させる。
+
+| 項目 | 設計 | 担当 |
+|---|---|---|
+| 枠（件数） | 組織全体で数える。判定は `count_non_reference_*_for_organization`（D-5。Masters は変更なし、plan-save を揃える: §5.2） | 01（本書） |
+| 閲覧 | 組織単位のまま残す（推奨。C1 の (a)、10 の P14 と同じ推奨）。一覧・詳細・気温チャートは現行の組織スコープ。**一覧のスコープを狭めると、フロントの件数判定（`farm-create-limit.ts`）とバックエンドの件数が食い違う**ため、件数に使う一覧は「バックエンドが数える集合と同じ（組織）」を契約として保つ（§3.6.3 E2） | 10（P14）／01（契約として固定: §6 F1） |
+| 編集・削除 | 所有者のみ（10 の縮小）。`edit_allows` から組織分岐を外し `view_allows` は残す（§3.6.1） | 10 |
+| 一覧 UI | 自分の行（`farm.user_id === 現ユーザー id`）にだけ編集・削除を出し、他メンバーの行は閲覧のみの表示にする（`user_id` は JSON に既にある: `masters_json.rs:15,106`）。バックエンド変更は不要 | 10 または別 issue（01 では実装しない） |
+| 上限超過の説明 | 本文（主語なし）とキー名は変えない（R14）。ヒントを共有枠の実態に合わせる（組織全体で数えること、他メンバーの Farm / Crop は所有者のみ削除できること）。C2 | 01 の関連文言（07 の Crop 文言 Q11 と調整） |
+| 件数判定の命名 | `countUserOwnedFarms` / `MAX_NON_REFERENCE_FARMS_PER_USER`（フロント・サーバー）は実態（組織の非参照件数）と食い違う。リネームは振る舞い不変で任意（§7 ステップ 14） | 01（任意） |
+| 枠の回収 | 本課題では手段を足さない。既知の制限として §12 に記録し、複数メンバー組織の実在確認後に別課題で判断（C3） | 別課題 |
+| Crop の事前判定 | 課題 07 が新設する Crop の件数判定も、Farm と同じく**組織スコープの一覧の件数**を数える設計を前提にする。一覧のスコープ（`reference_index.rs:47-66`）は NULL 組織の自分の行も含むため、バックエンドの数え方（NULL 行は数えない: `crop_gateway.rs:138-150`）と、backfill 前は 1 件ずれ得る（§8 で NULL が消えれば一致） | 07（前提を渡すのみ） |
+
+代替案（不採用の理由つき）:
+
+| 案 | 内容 | 不採用の理由 |
+|---|---|---|
+| B1 | 閲覧も所有者のみ（C1 の (b)）。件数は一覧件数ではなく API の件数（一覧 JSON への件数追加か専用エンドポイント）で判定する | 枠の消費者が画面のどこにも出ず、原因を説明できない（E2）。API 追加で OpenAPI（課題 08）とフロントの件数判定の差し替えが要る。推奨より変更が大きい |
+| B2 | 組織の Owner / Admin ロールに、枠回収目的で他メンバーの Farm / Crop の削除を許す | 10 の「編集も所有者のみ」と矛盾する。`organization_member_access` は役割を見ない（10 §2.8）ため、ロール判定の新設が要る。決定の範囲を超える |
+| B3 | メンバー削除時に行を所有者へ移管または削除する | 新機能で別課題（データの意味が変わる）。本課題の範囲外 |
+
+#### 3.6.5 ユーザー確認事項（第 3 回決定との整合で新たに生じた論点）
+
+| # | 確認事項 | 推奨 | 推奨の根拠 | 回答が推奨と異なる場合の影響 |
+|---|---|---|---|---|
+| C1 | Farm / Crop の**閲覧**（一覧・詳細）を組織単位のまま残すか | (a) 残す（編集のみ所有者に縮小）。UI で自分の行と他メンバーの行を区別する | 枠が組織共有（D-5）なので、枠を消費する行が見えないと上限エラーの原因を示せない（E2）。フロントの件数判定は一覧の件数に依存し（`farm-create-limit.ts:7-16`）、一覧を組織のまま保てば追加の API 変更が要らない | (b) 閲覧も所有者のみにする場合は B1（件数 API の追加、OpenAPI・フロント変更、文言）が必要で、§6 F1 の契約が変わる |
+| C2 | 上限超過時のヒント文言を共有枠に合わせて変えるか | 変える。本文とキーは不変、ヒントのみ「組織全体で数えること」「他メンバーの行は所有者のみ削除できること」を示す。状況別の分岐（自分の件数による出し分け）は採らない | 現行ヒントは縮小後に誤誘導になる（E3）。分岐を入れるとフロントの判定が増える | 変えない場合は E3 の誤誘導が残る。分岐を採る場合はフロントが自分の件数（`user_id` 一致）を数える実装が増える。文言は ja / en / in の 3 言語（`ja.json:1062-1063,2442-2443` と同パス）で、課題 07 の Crop 文言（Q11）と同じ確認者の確認が要る |
+| C3 | 所有者が不在（組織から外れた等）のとき、他メンバーの Farm / Crop が占める枠を誰がどう回収するか | 本課題では対応せず既知の制限として記録する。複数メンバー組織の実在（§4.3 クエリ 4）を確認してから別課題で判断する | 縮小と枠共有の組合せで生じる（E4）が、回収手段（B2 のロール削除、B3 の移管）は 10 の決定や新機能に踏み込む | 対応する場合は B2（10 の決定との調整）か B3（新機能）の起票が要る。放置すると該当組織で枠が回復しない |
+| C4 | 縮小により、他メンバーの Crop を自分の Plan に追加できなくなってよいか（E6） | 縮小の決定どおり不可とする（所有者の Crop のみ）。10 は同じ論点を P15 に残している | 決定は Farm / Crop の組織編集を所有者のみにするもの。add_crop の解決は同じ編集判定を使う | 可とする場合は、add_crop 用に「閲覧可能な Crop の利用」を編集と分けた判定が要り、10 の縮小設計が複雑になる |
+
+C1〜C4 のいずれも、D-5（枠は組織共有）の確定は変えない。回答により変わるのは 10 側の縮小設計、フロントの表示、文言、および本書の §6 F1 / §10 の一部である。
 
 ---
 
@@ -222,7 +313,7 @@ Farm / Crop の作成上限は、Masters 経路では「所属組織（`organiza
 |---|---|
 | X（NULL 行のすり抜け） | 書き込みで `organization_id` を必ず設定（D-3）し、既存 NULL 行は backfill で消す（§8）ことで解消 |
 | Y（複数所属の食い違い。スコープ外: D-4） | 本課題の対象外。plan-save も Masters と同じ作成先組織 1 つだけを数えるようになるため、「plan-save は全組織分、Masters は先頭 1 組織」という経路間の差は結果として縮まるが、他組織にある自分の行を数えない点など複数所属固有の挙動は残る（§12）。作成先組織の規則は別課題（§13） |
-| Z（共有 org） | plan-save も同一組織の他メンバーの行で枠を消費する共有枠に揃う。共有枠を維持するかは U1 で確認 |
+| Z（共有 org） | plan-save も同一組織の他メンバーの行で枠を消費する共有枠に揃う。共有枠の維持は D-5 で確定。共有枠と課題 10 の縮小（編集は所有者のみ）の組合せの帰結は §3.6 |
 
 ### 4.2 影響する表・コード
 
@@ -264,7 +355,7 @@ SELECT user_id, COUNT(*) FROM crops WHERE is_reference = 0 GROUP BY user_id HAVI
 SELECT organization_id, COUNT(*) FROM farms WHERE is_reference = 0 AND organization_id IS NOT NULL GROUP BY organization_id HAVING COUNT(*) > 4;
 SELECT organization_id, COUNT(*) FROM crops WHERE is_reference = 0 AND organization_id IS NOT NULL GROUP BY organization_id HAVING COUNT(*) > 20;
 
--- 4) 複数メンバー組織（U1）/ 複数所属（別課題 §13 の材料。本課題の合否には使わない）の実在
+-- 4) 複数メンバー組織（D-5）/ 複数所属（別課題 §13 の材料。本課題の合否には使わない）の実在
 SELECT organization_id, COUNT(*) FROM organization_memberships GROUP BY organization_id HAVING COUNT(*) > 1;
 SELECT user_id, COUNT(*) FROM organization_memberships GROUP BY user_id HAVING COUNT(*) > 1;
 SELECT COUNT(*) FROM organizations WHERE is_personal = 0;
@@ -279,7 +370,7 @@ SELECT COUNT(*) FROM organizations WHERE is_personal = 0;
 
 ## 5. 対応方針（設計）
 
-案 A（組織単位に統一）は確定済み（§0 第 1 回決定）。複数所属はスコープ外で、上限判定は単一所属（個人組織）を前提に設計する（§0 第 2 回決定）。設計は U1 の推奨案（現行 Masters の共有枠を維持）を前提に書く。U1 に推奨と異なる回答があった場合は §3.5 の「影響」欄に従い、本章を見直してから着手する。U3（文書の更新先）は文書のみで、着手を止めない。作成先組織の解決規則（所属の先頭、無ければ personal org）は現状維持で、本課題では変更しない。
+案 A（組織単位に統一）は確定済み（§0 第 1 回決定）。複数所属はスコープ外で、上限判定は単一所属（個人組織）を前提に設計する（§0 第 2 回決定）。設計は D-5（現行 Masters の共有枠を維持。旧 U1 の確定）に基づく。共有枠と課題 10 の縮小の整合で残る確認事項（§3.6.5 C1〜C4）は、本章の件数・作成先組織の設計を変えない（回答で変わるのは 10 側の縮小設計・フロント表示・文言）。U3（文書の更新先）は文書のみで、着手を止めない。作成先組織の解決規則（所属の先頭、無ければ personal org）は現状維持で、本課題では変更しない。
 
 ### 5.1 設計原則（LAYER-RULES との照合）
 
@@ -330,7 +421,7 @@ SELECT COUNT(*) FROM organizations WHERE is_personal = 0;
 
 **フロント**
 
-15. 変更なしの見込み。NULL 行が backfill されれば Farm 一覧に出て件数に入る。`farm-create-limit.ts:6` の `PER_USER` 命名は必須の変更ではない（範囲外なら触らない）。
+15. 件数判定のロジックは変更なし。Farm 一覧（組織スコープ）の非参照件数が、D-5 の枠（組織の非参照件数）と一致するため（`farm-create-limit.ts:7-16`、バックエンド `farm_gateway.rs:297-309`）。NULL 行は backfill されれば Farm 一覧に出て件数に入る。**一覧のスコープを組織から狭めない**ことが前提（§3.6.4。狭める場合は C1 の (b) の件数 API が必要）。`countUserOwnedFarms` / `MAX_NON_REFERENCE_FARMS_PER_USER`（`farm-create-limit.ts:6-12`）は、D-5 確定により「組織の非参照件数」を指すため命名が実態とずれる。リネームは振る舞い不変の別コミットで任意（必須の変更ではない。i18n キー名は変えない: R14）。ヒント文言の差し替えは §3.6.5 C2 の回答後。
 
 **ユーザー単位カウントの除去（D-2）**
 
@@ -429,12 +520,12 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
   - given: ユーザー U（組織 O）。異なる参照 Farm 4 件に対して plan-save を 4 回実行
   - when: `FarmSqliteGateway::count_non_reference_farms_for_organization(O)`
   - then: `4`（現状は `0` で RED = すり抜けの直接の再現）
-- `plan_save_rejects_farm_when_organization_already_has_four_farms_from_other_member`（未決 U1 の推奨案＝組織共有枠のとき。U1 が別回答なら削除または逆転する。複数所属のテストではない）
+- `plan_save_rejects_farm_when_organization_already_has_four_farms_from_other_member`（D-5 の共有枠の確定テスト。複数所属のテストではない）
   - given: 組織 O に別メンバー M の非参照 Farm が 4 件（`organization_id = O`）。ユーザー U と M の所属はどちらも O の 1 件のみ（単一所属）
   - then: U の plan-save は上限超過で失敗（現状は `user_id` 単位で 0 件のため成功 = RED）
-- `plan_save_rejects_crop_when_organization_has_twenty_crops`
-  - given: 組織 O に非参照 Crop 20 件
-  - then: 失敗
+- `plan_save_rejects_crop_when_organization_has_twenty_crops_from_other_member`（D-5 の共有枠の確定テスト）
+  - given: 組織 O に別メンバー M の非参照 Crop 20 件（`organization_id = O`）。ユーザー U と M の所属はどちらも O の 1 件のみ
+  - then: U の plan-save は上限超過で失敗（現状は `user_id` 単位で 0 件のため成功 = RED）
 
 **A2: backfill アダプタ**
 - ファイル: `crates/agrr-adapters-sqlite/src/organization/personal_organization_sqlite_gateway_test.rs`（既存。モジュール名に `_gateway_test` を含み CI フィルタに拾われる: `organization/mod.rs:12`）
@@ -448,8 +539,18 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 **R4（任意・実装可能性は未確認）**
 - ファイル: `crates/agrr-r4-contract/tests/contracts.rs`
 - `masters_farm_create_returns_422_after_limit_reached_via_personal_org`: ヘルパ `ensure_farm_create_capacity_via_api`（`support.rs:164-187`）の逆で、4 件作成後の 5 件目が上限超過エラーになること。現状カバーが無い上限自体の回帰防止。plan-save を R4 から叩けるか（保存に必要な公開プランの seed）は未確認のため、plan-save 併用のシナリオは A1 で担保し、R4 では Masters 上限の観測のみを対象とする。
+- `masters_farm_create_returns_422_when_other_member_farms_fill_organization_limit`（D-5 の共有枠の特性化。Masters の現行挙動の固定で、現状 GREEN の見込み。未実行のため**未確認**）
+  - given: 組織 O に U と M がメンバー（`seed_user_organization` / `seed_organization_membership`: `support.rs:1697,1721`）。M の非参照 Farm を `seed_org_scoped_farm(O, M)`（`support.rs:1856`）で 4 件
+  - when: U が `POST /api/v1/masters/farms`
+  - then: 422 で `errors` に上限超過メッセージ（`masters_farms.rs:425-429`）。U の `user_id` の Farm は 0 件でも拒否される
+  - 注意: 作成先組織は「所属の先頭」（`organization_memberships` の `ORDER BY id`）であるため、U の既存セッションに個人組織の所属が先に有ると O が作成先にならない。U の所属が O のみになるユーザーを使う。そのようなユーザーを作る seed ヘルパの有無は**未確認**
+- `masters_crop_create_returns_422_when_other_member_crops_fill_organization_limit`: 上と同型。`seed_org_scoped_crop(O, M)`（`support.rs:1869`）20 件。`masters_crops.rs:339-343` が上限超過メッセージを返す
+- `masters_farm_list_includes_other_member_farms_counted_toward_limit`（**C1 の (a) が確定した場合のみ**）: 同じ given で U の `GET /api/v1/masters/farms` が M の 4 件を含み、件数が枠の判定対象と一致する。一覧の件数 = 枠の件数、という契約（§3.6.4）を固定する。C1 が (b) なら削除し、件数 API のテストに置き換える
+- 既存ヘルパ `ensure_farm_create_capacity_via_api`（`support.rs:164-187`）は、一覧の非参照 Farm のうち最小 id を削除して枠を空ける。「一覧の件数 = 枠」かつ「一覧の行を削除できる」ことを前提にしている。課題 10 の縮小（編集は所有者のみ）後に、同じ組織に他メンバーの Farm が混ざるセッションで使うと、他メンバー分の削除が 403 になりヘルパが失敗する。現行の R4 では、組織に他メンバーの Farm を持たせるシナリオ（`seed_org_scoped_farm` を別ユーザーで使う）と併用していないか、縮小時に確認する（併用の有無は**未確認**）
 
-**F（フロント）**: 変更が無ければ追加テスト無し。`run-test-frontend.sh` で回帰のみ確認（`farm-create-limit.spec.ts` は不変の見込み）。
+**F（フロント）**
+- F1 `frontend/src/app/domain/farms/farm-create-limit.spec.ts`（特性化。現状 GREEN の見込み。`run-test-frontend.sh` の単一ファイル実行可否は**未確認**: README の共通制約）: `countUserOwnedFarms` が `user_id` の異なる非参照 Farm（他メンバー分）も数え、4 件で `isFarmCreateLimitReached` が true になる。既存の件数テスト（`:12-20`）は `is_reference` のみを持ち `user_id` を持たないため、他メンバー分も数えることはどのテストにも固定されていない。一覧のスコープ（組織）とバックエンドの枠が一致する契約（§3.6.4）の回帰防止になる。命名（`countUserOwnedFarms`）の変更を行う場合は、このテストと同時に更新する
+- それ以外は変更が無ければ追加テスト無し。`run-test-frontend.sh` で回帰のみ確認
 
 ### 6.3 RED → GREEN の確認手順
 
@@ -463,7 +564,7 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 
 ## 7. 実装ステップ
 
-前提: 案 A は確定済み（§0 第 1 回決定）。複数所属はスコープ外（§0 第 2 回決定）で、各ステップのテストは単一所属を前提にする。U1（§3.5）は推奨案どおりなら実装差分は本表のとおり（推奨と異なる回答の場合は §5 を見直してから着手）。各ステップは「テスト（RED 確認）＋最小実装（GREEN）」を 1 コミットとし、コミットごとに `agrr-domain` が GREEN を維持する（CI を赤にしない）。git 操作（checkout / switch / reset / restore は許可なしに禁止: `git-operational-constraints.mdc`）は本書の範囲外。
+前提: 案 A は確定済み（§0 第 1 回決定）。複数所属はスコープ外（§0 第 2 回決定）で、各ステップのテストは単一所属を前提にする。複数メンバー組織の共有枠は確定済み（§0 第 3 回決定 D-5）で、実装差分は本表のとおり。課題 10 の Farm / Crop 縮小（編集は所有者のみ）との順序は §3.6.3 E5 のとおり（ステップ 4・5・6 より先、または同時）。各ステップは「テスト（RED 確認）＋最小実装（GREEN）」を 1 コミットとし、コミットごとに `agrr-domain` が GREEN を維持する（CI を赤にしない）。git 操作（checkout / switch / reset / restore は許可なしに禁止: `git-operational-constraints.mdc`）は本書の範囲外。
 
 | # | 内容 | 主な変更 | コミット粒度の目安 |
 |---|---|---|---|
@@ -476,10 +577,13 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 | 6 | backfill 拡張: トレイト追加・Interactor（D5）・SQLite 実装（A2） | domain + adapters-sqlite | 1 |
 | 7 | 組織解決関数を plan-save と Masters で同一にする（D4、§5.2 手順 9 (ii)。規則は変えない）。振る舞い不変。既存テスト GREEN で確認 | `org_scope.rs` + 4 呼び出し元 | 1 |
 | 8 | 未使用ユーザー単位カウントの除去（§5.2 手順 16、D-2）。振る舞い不変。既存テスト GREEN で確認 | domain（trait / stub / モック）+ adapters-sqlite | 1 |
-| 9 | 文書整合（依存: 課題 09）: `ARCHITECTURE.md:90-91` / `organization-data-model.md:94-104` / ADR-002 `:17,55` は 09 の Q1〜Q7 で更新する（U3 の推奨案）。本課題では内容（案 A・U1 の最終回答、および複数所属は別課題で規則未規定である旨）を 09 に引き渡すのみ。U3 が別回答なら本ステップで更新し、09 と範囲を分担 | docs（09 側） | 09 で 1 |
+| 9 | 文書整合（依存: 課題 09）: `ARCHITECTURE.md:90-91` / `organization-data-model.md:94-104` / ADR-002 `:17,55` は 09 の Q1〜Q7 で更新する（U3 の推奨案）。本課題では内容（案 A・D-5 の共有枠の確定、および複数所属は別課題で規則未規定である旨）を 09 に引き渡すのみ。U3 が別回答なら本ステップで更新し、09 と範囲を分担 | docs（09 側） | 09 で 1 |
 | 10 | Docker 検証: `crates/agrr-server/**` / `crates/agrr-domain/**` / `crates/agrr-adapters-*/**` を変更するため、検証前に `.cursor/skills/dev-docker/scripts/rebuild-restart.sh`（`docker compose restart agrr-server` だけでは不十分: `docker-dev-agrr-server-rebuild.mdc`） | 実行のみ | なし |
 | 11 | 全体回帰: `run-test-rust-domain.sh` → `run-rust-contract-tests.sh` → `run-test-frontend.sh` → `test-slow-detection` | 実行のみ | なし |
 | 12 | 本番反映後のデータ確認（§8）と、`ensure_personal_organization` の再実行が必要なユーザーの残存確認 | 運用 | なし |
+| 13 | 共有枠の特性化テスト（§6 の R4 の共有枠 2 件と F1）。Masters の現行挙動の固定で、現状 GREEN の見込み。ステップ 1 より前に追加してよい（plan-save の変更や課題 10 の縮小で、共有枠・一覧と件数の一致が崩れないことの回帰防止）。R4 の一覧テストは C1 の回答後 | R4 / frontend spec | 1 |
+| 14 | 任意: `countUserOwnedFarms` / `MAX_NON_REFERENCE_FARMS_PER_USER`（フロント・サーバー）の命名を実態（組織の非参照件数）に合わせる。振る舞い不変。i18n キー名は変えない（R14） | frontend / domain | 1（別コミット） |
+| 15 | 上限超過ヒント文言の差し替え（§3.6.5 C2。回答後）。ja / en / in の 3 言語。課題 07 の Crop 文言（Q11）と調整 | i18n | 1 |
 
 技術的難易度: 中。層をまたぐが個々の変更は小さい（DTO 1 フィールド + トレイト 2 メソッドの差し替え + SQL 3 か所 + 配線 1 か所）。難所は (a) Rust のトレイト変更に伴う大量のモック更新（`count_*` を実装するテストモックは `agrr-domain/test/**` に多数ある: 前述の rg 結果。ただし `PlanSaveFarmGateway` / `PlanSaveCropLimitGateway` の実装モックは plan-save 系テストに限られる見込み。数は未確認）、(b) アダプタテストの実行経路（§6.1）。
 
@@ -517,7 +621,7 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 | # | 内容 | 状態 |
 |---|---|---|
 | R1 | 仕様の正（案 A/B/C） | **解消済み**: 案 A で確定（§0、§3.2） |
-| R2 | 共有 org の枠を org 全体共有にするか（数値・契約プランはフェーズ 2 で未定義: `organization-data-model.md:103-104`） | 未決 U1（§3.5。推奨: 現行 Masters の共有枠・数値を維持） |
+| R2 | 共有 org の枠を org 全体共有にするか（数値・契約プランはフェーズ 2 で未定義: `organization-data-model.md:103-104`） | **解消済み**: 組織共有・現行数値（4 / 20）で確定（§0 D-5）。契約プラン別上限は本課題に含めない |
 | R3 | 複数組織所属ユーザーの作成先組織（所属の先頭）と backfill 先（personal org）が食い違い得る | **スコープ外**（D-4）。既知の制限（§12）、別課題（§13）。本番での実在性は未確認（§4.3 クエリ 4） |
 | R4 | 既に上限超過のデータがある場合の扱い（新規作成のみ拒否・既存は保持、が想定） | 本番データ未照会。ユーザー確認 |
 | R5 | コードのデプロイと backfill の間の短い窓で、旧 NULL 行が組織カウントに入らない | 同一リリース＋起動時 backfill で最小化。完全排除は不可（受容するか、カウントに `organization_id IS NULL AND user_id = ?` を暫定 OR する案 §5.3 は採らない） |
@@ -536,11 +640,11 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 
 ## 10. 受け入れ条件（観測可能な振る舞い）
 
-§0 の決定（第 1 回: 案 A、第 2 回: 複数所属はスコープ外）に基づく。すべての条件は**単一所属（個人組織）を前提**とし、複数所属は対象外（条件 13）。U1 は推奨案どおりの場合の条件（推奨と異なる回答があれば見直す）。
+§0 の決定（第 1 回: 案 A、第 2 回: 複数所属はスコープ外）に基づく。すべての条件は**単一所属（個人組織）を前提**とし、複数所属は対象外（条件 13）。複数メンバー組織の共有枠（D-5）は確定済みで、条件 2・3・14 に含める。課題 10 の縮小との整合で残る確認事項（§3.6.5 C1〜C4）の回答待ちの条件は、条件 15・16 に分けて記載する（回答により見直す）。
 
 1. plan-save（公開プラン保存）で作成された非参照 Farm / Crop 行の `organization_id` は、保存したユーザーの作成先組織（所属の先頭、無ければ personal org。単一所属では個人組織）になる（A1: `plan_save_sets_organization_id_on_created_farm_and_crops`）。
-2. 同一組織内の非参照 Farm が 4 件に達している状態で plan-save が新規 Farm を作ろうとすると、上限超過（`RecordInvalidError`、メッセージは `activerecord.errors.models.farm.attributes.user.farm_limit_exceeded`）で失敗する。再利用（既存の `source_farm_id` 付き Farm）の場合は失敗しない（D1）。
-3. 同一組織内の非参照 Crop が 20 件に達している状態で plan-save が新規 Crop を作ろうとすると、上限超過で失敗する。再利用は失敗しない（D2）。
+2. 同一組織内（他メンバーの行を含む。D-5）の非参照 Farm が 4 件に達している状態で plan-save が新規 Farm を作ろうとすると、上限超過（`RecordInvalidError`、メッセージは `activerecord.errors.models.farm.attributes.user.farm_limit_exceeded`）で失敗する。再利用（既存の `source_farm_id` 付き Farm）の場合は失敗しない（D1）。
+3. 同一組織内（他メンバーの行を含む。D-5）の非参照 Crop が 20 件に達している状態で plan-save が新規 Crop を作ろうとすると、上限超過で失敗する。再利用は失敗しない（D2）。
 4. plan-save で 4 件の Farm を作成した後の `count_non_reference_farms_for_organization(O)` は 4 になる（バイパス再現テストが GREEN: A1）。すなわち plan-save → Masters の順でも合計が 4 を超えない。
 5. Masters の作成（`FarmCreateInteractor` / `CropCreateInteractor` / crop AI preflight）の既存挙動は変わらず、既存テストが GREEN のまま。
 6. 組織解決に失敗した plan-save は永続化を行わずに失敗する（D3: フォールバックなし）。
@@ -552,26 +656,30 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 12. （依存条件。本課題のコード変更の合否には含めない）課題 09 の Q1〜Q7 が完了し、`ARCHITECTURE.md:90-91` の `per user` が組織単位の記述に、`organization-data-model.md:96-104` と ADR-002 `:55` が実装状況に沿った記述になる（§11）。
 13. **複数所属は対象外**（D-4）。複数組織に所属するユーザーについて、作成先組織の規則・上限の枠の期待値・テストは本課題の合否に含めない。テストの given に複数所属を含めない。作成先組織の解決規則（所属の先頭、無ければ personal org）は本課題の前後で変わらず、plan-save・Farm・Crop・crop AI preflight が同一の解決関数を使う（§5.2 手順 9 (ii)）。複数所属で上限が期待通りにならない点は既知の制限（§12）として残り、別課題（§13）で扱う。
 
+14. **共有枠（D-5）**: 組織 O の非参照 Farm が他メンバー M の行だけで 4 件（Crop は 20 件）に達しているとき、O のみに所属するユーザー U（自分の行は 0 件）は、Masters の作成（`POST /api/v1/masters/farms|crops`）でも plan-save でも上限超過で拒否される。メンバー別枠にはならない。Masters は現行どおり 422、`errors` に上限超過メッセージ（R4 の共有枠 2 件、A1。ただし R4 の U を O のみ所属にできる seed の有無は未確認）。
+15. （C1 の (a) が確定した場合）Farm 一覧の件数が枠の判定対象（組織の非参照 Farm）と一致する。フロントの件数判定（`farm-create-limit.ts`）は他メンバーの行を数え、4 件で作成を止める（R4 の一覧テスト、F1）。C1 が (b) の場合は、件数 API の条件に置き換える（回答で見直す）。
+16. （C2 の回答後）上限超過時のヒント文言が、共有枠の実態（組織全体で数えること、他メンバーの行は所有者のみ削除できること）と矛盾しない。本文とキーは不変（R14）。
+
 ---
 
 ## 11. 関連課題との依存
 
-`docs/spec-defects/` の作成済みファイル（本書作成時点で `03-api-key-scope-docs.md`, `04-api-key-query-auth.md` を確認）と、依頼文に挙がった番号との関係。未作成の番号は内容を確認できていないため、関係は本書側の想定として書く。
+`docs/spec-defects/` の 01〜11 はすべて存在する。下表の「未作成」は初版時点の注記で、第 3 回時点では各文書の該当節を読んで関係を更新している（02・05・06・11 の本文全体の再精読はしていない）。
 
 | 番号 | 課題 | 依存・関係 |
 |---|---|---|
-| 02 | contact-recaptcha | 依存なし（未作成・未確認） |
+| 02 | contact-recaptcha | 依存なし。CAPTCHA は Turnstile、失敗本文は 07 の `errors` + `error_code`（02 の D-4〜D-6） |
 | 03 | api-key-scope-docs | 依存なし。`03-api-key-scope-docs.md` は本課題（01）を「依存なし」としている（同ファイル依存表） |
 | 04 | api-key-query-auth | 依存なし。同様に `04-api-key-query-auth.md` が 01 を「依存なし」としている |
 | 05 | fail-closed-critical | 関連: R9（`ensure_personal_organization` 失敗の握りつぶし）。本課題は組織解決失敗を fail-closed にする点で方針一致。05 側の対象範囲は未作成のため未確認 |
 | 06 | fail-closed-suspected | 同上（未作成・未確認） |
-| 07 | frontend-error-contract | 関連の可能性: 上限超過エラーの i18n キー解決（`resolve-activerecord-api-error-i18n-key.ts`）。本課題ではキー・契約を変えない。07 の内容は未確認 |
+| 07 | frontend-error-contract | 関連の可能性: 上限超過エラーの i18n キー解決（`resolve-activerecord-api-error-i18n-key.ts`）。本課題ではキー・契約を変えない。07 §5.3 が計画する Crop 上限の事前判定は、Farm と同じく組織スコープの一覧の件数を数える設計で、D-5（組織共有枠）と整合する（Crop 一覧は NULL 組織の自分の行も含むため、backfill 前は 1 件ずれ得る: §3.6.4）。上限超過のヒント文言は §3.6.5 C2 で 07 の Q11 と調整する。07 のその他の内容は未確認 |
 | 08 | openapi-gaps | 関連: `08-openapi-gaps.md:97,1046` は Masters `POST /crops` の 422（作成上限超過を含む）を記載し、01 で挙動が変わる場合に追随するとしている。案 A では Masters の挙動は不変（§10-5）のため変更は不要の見込み。plan-save 側の上限超過レスポンスの OpenAPI 記載は未調査（未確認） |
-| 09 | stale-design-docs | **依存（クォータ文書の更新が必要）**: 案 A 確定により、`ARCHITECTURE.md:90-91` の `per user` は実装（組織単位）と食い違う文書になる。09 は 01 のマージ後に Q1〜Q7 を実施する前提（`09-stale-design-docs.md:242,254,337,396`）。09 側で必要な更新（内容は案 A 前提。U1 の最終回答が確定してから書く）: Q1・Q2（`ARCHITECTURE.md:90-91`）は集計単位を organization に書き換える。複数所属時の作成先組織の規則を 1 行明記する件（`09:246`）は、本課題では複数所属をスコープ外にした（D-4）ため規則を決めておらず、「複数所属時の規則は別課題で未規定」と書くか、別課題（§13）の完了後に回す。Q3（`organization-data-model.md:96-99`）は「ユーザーあたり」を組織単位へ更新。Q4（`:101-104`）は「masters 経路は既に org 単位」に加え plan-save 統一後の状態を反映し、契約プラン別上限は未定義と明記（`09:249`）。Q5（ADR-002 `:17`）は起票時点の記述として保持。Q6（`:55`）は「実装済み」を書き分け（`09:250-251`）。ADR-002 のクォータ行は既に org 集約を規定している（`:55`）ため、決定は ADR の向きと一致する。ただし複数所属時の org 選択規則を新設する場合は Decision の追加として新 ADR の要否を再判定する（`09:209-211`）。この判断は別課題（§13）の範囲で、本課題では規則を新設しない。§7 ステップ 9 のとおり、文書更新の帰属は U3。ADR-002 の `V15` 表記は 09 の範囲（R13）。なお `frontend/e2e/smoke/README.md:121`（「ユーザー農場 4 件上限」）は 09 の Q1〜Q7 に載っていないため、更新対象に含めるかは 09 側で判断する |
-| 10 | authorization-consistency | **関連**: plan-save が NULL `organization_id` で作る他表（R10）、Farm / Crop 一覧の NULL 扱いの非対称（R11）は認可・スコープ整合の課題。01 の書き込み側是正（Farm / Crop）が入った後に、他表の書き込み是正を 10 で扱うのが自然 |
-| 11 | low-priority-misc | R6（TOCTOU）、R14（命名）など、優先度が低く本課題の受け入れに不要な項目の受け皿候補（未作成・未確認） |
+| 09 | stale-design-docs | **依存（クォータ文書の更新が必要）**: 案 A 確定により、`ARCHITECTURE.md:90-91` の `per user` は実装（組織単位）と食い違う文書になる。09 は 01 のマージ後に Q1〜Q7 を実施する前提（`09-stale-design-docs.md:242,254,337,396`）。09 側で必要な更新（内容は案 A・D-5 前提。D-5 は確定済みのため、この点で書き始めを待つ必要は無い）: Q1・Q2（`ARCHITECTURE.md:90-91`）は集計単位を organization に書き換える。複数所属時の作成先組織の規則を 1 行明記する件（`09:246`）は、本課題では複数所属をスコープ外にした（D-4）ため規則を決めておらず、「複数所属時の規則は別課題で未規定」と書くか、別課題（§13）の完了後に回す。Q3（`organization-data-model.md:96-99`）は「ユーザーあたり」を組織単位へ更新。Q4（`:101-104`）は「masters 経路は既に org 単位」に加え plan-save 統一後の状態を反映し、契約プラン別上限は未定義と明記（`09:249`）。Q5（ADR-002 `:17`）は起票時点の記述として保持。Q6（`:55`）は「実装済み」を書き分け（`09:250-251`）。ADR-002 のクォータ行は既に org 集約を規定している（`:55`）ため、決定は ADR の向きと一致する。ただし複数所属時の org 選択規則を新設する場合は Decision の追加として新 ADR の要否を再判定する（`09:209-211`）。この判断は別課題（§13）の範囲で、本課題では規則を新設しない。§7 ステップ 9 のとおり、文書更新の帰属は U3。ADR-002 の `V15` 表記は 09 の範囲（R13）。なお `frontend/e2e/smoke/README.md:121`（「ユーザー農場 4 件上限」）は 09 の Q1〜Q7 に載っていないため、更新対象に含めるかは 09 側で判断する |
+| 10 | authorization-consistency | **関連**: plan-save が NULL `organization_id` で作る他表（R10）、Farm / Crop 一覧の NULL 扱いの非対称（R11）は認可・スコープ整合の課題。01 の書き込み側是正（Farm / Crop）が入った後に、他表の書き込み是正を 10 で扱うのが自然。**第 3 回決定で 10 の P9 は縮小に確定し、10 の現行版（D8、§2.10）に反映済み**。枠は組織共有（D-5）・編集は所有者のみ、という組合せの帰結は §3.6 と 10 §2.10.4 で一致する。**順序（§3.6.3 E5）**: 10 の Farm / Crop 縮小を、01 の plan-save 書き込み是正・backfill より先、または同時に出す（先に 01 が入ると、plan-save 由来 NULL 行が組織に付いて他メンバーに見え、縮小が無ければ他メンバーが編集・削除できる期間ができる）。10 側へ渡す事項: (1) 縮小は `edit_allows` のみで `view_allows` は C1 / 10 の P14 の回答まで残す、(2) 他メンバーの Crop の add_crop 経路は 10 の E12 / P15（本書 C4）、(3) R4 ヘルパ `ensure_farm_create_capacity_via_api` の前提（§6 R4） |
+| 11 | low-priority-misc | R6（TOCTOU）、R14（命名）など、優先度が低く本課題の受け入れに不要な項目の受け皿候補 |
 
-順序上の前提: 01 のコード変更は他課題の完了を待たずに着手できる（前提は §3.5 の U1 の回答のみ。推奨案どおりなら本書の設計のまま）。09 のクォータ文書更新（Q1〜Q7）は 01 のマージ後に実施する。案 A の確定自体は §0 で済んでおり、09 が待つのは U1 の最終回答とコードの実装結果。複数所属の別課題（§13）は、01 で組織解決関数を共通化（§5.2 手順 9 (ii)）した後に着手すると、規則の変更が 1 か所で全経路に効く。
+順序上の前提: 01 のコード変更は他課題の完了を待たずに着手できる（前提は無い。ただし課題 10 の Farm / Crop 縮小との順序は §3.6.3 E5 のとおり、10 の縮小を先または同時にする）。09 のクォータ文書更新（Q1〜Q7）は 01 のマージ後に実施する。案 A の確定自体は §0 で済んでおり、09 が待つのはコードの実装結果（D-5 は確定済み）。複数所属の別課題（§13）は、01 で組織解決関数を共通化（§5.2 手順 9 (ii)）した後に着手すると、規則の変更が 1 か所で全経路に効く。
 
 ---
 
@@ -585,7 +693,7 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 4. 画面の事前チェックとの不一致。Farm 一覧は所属する全組織の非参照 Farm を返し（`farm_list_interactor.rs:46-63`）、フロントはその全件数で `>= 4` を判定して作成ボタンを止める（`farm-create-limit.ts:7-16`, `farm-create.component.ts:200-202`）。バックエンドは作成先 1 組織の件数のみで判定するため、複数所属ユーザーではバックエンドが作成を許す状態でもフロントが止め得る（フロントの判定のほうが厳しい方向）。Crop 側のフロント判定は本書では未読（**未確認**）。
 5. plan-save の再利用判定は `user_id` と `source_farm_id` のみで組織を見ない（`plan_save_ensure_user_farm_interactor.rs:67-70`, `plan_save_gateways.rs:80-87`）。複数所属ユーザーでは、解決した作成先とは別の組織にある既存 Farm が再利用される（再利用は件数チェックの前に return: `:67-80`）。
 
-単一所属では上記 2〜5 はいずれも発生しない（作成先 = 唯一の所属 = 個人組織）。複数メンバー組織の枠共有（U1）は別論点で、複数所属とは独立に残る（§3.5）。
+単一所属では上記 2〜5 はいずれも発生しない（作成先 = 唯一の所属 = 個人組織）。複数メンバー組織の枠共有（D-5）は別論点で、複数所属とは独立に適用される（§3.5）。共有枠と課題 10 の縮小の組合せ（§3.6.3 E1〜E4: 他メンバーの行が枠を消費するが編集できない、組織から外れた人の行が枠を占有し続ける、など）は、単一所属でも複数メンバー組織で発生するため複数所属の制限（本章）には含めず、§3.6 で扱う。
 
 ---
 
@@ -596,11 +704,12 @@ CI フィルタ `_gateway_test` に拾わせるため、アダプタの新規テ
 - タイトル案: 「複数の組織に所属するユーザーの Farm / Crop 作成先組織と上限の枠の規則を定める」
 - 論点:
   - 作成先組織の規則: 所属の先頭（現状） / 個人組織優先 / リクエストで組織を明示指定。規則変更は Masters の既存挙動を変える仕様変更で、ADR-002 の Decision 追加になり得る（新 ADR の要否: `09-stale-design-docs.md:209-211`）。
-  - 上限の枠: 作成先組織のみで数える（現状） / ユーザーの全所属を合算 / 組織別。U1（複数メンバー組織の共有枠）との整合。
+  - 上限の枠: 作成先組織のみで数える（現状） / ユーザーの全所属を合算 / 組織別。D-5（複数メンバー組織の共有枠。確定済み）との整合。D-1・D-2（ユーザー単位カウント廃止）と食い違う「ユーザーの全所属を合算」は選択肢として残るかを別課題で再確認する。
   - フロントの事前チェック（全所属組織の Farm 件数）とバックエンド判定組織の不一致の解消（§12-4）。
   - 先頭組織と backfill 先（個人組織）の食い違いの解消（§12-3, §8.2）。
   - plan-save の再利用判定（`user_id` + `source_farm_id`）と作成先組織の関係（§12-5）。
   - `ARCHITECTURE.md:90-91` / `organization-data-model.md` / ADR-002 への規則の明記（課題 09 Q1 が求める 1 行: `09-stale-design-docs.md:246`）。
   - 本番での複数所属ユーザー・複数メンバー組織の実在確認（§4.3 クエリ 4）による優先度判断。
 - 前提条件: 本課題（01）で組織解決関数を共通化済みであること（§5.2 手順 9 (ii)）。規則変更をその 1 か所に閉じるため。
-- 関連: 本書 U1（§3.5）、課題 09（§11）、課題 10（authorization-consistency）。
+- 本メモと §3.6 の関係: 本メモは複数所属（1 人が複数組織に所属）を扱う。§3.6 の共有枠と縮小の整合（複数メンバー組織の枠の見え方・編集・回収）は単一所属でも生じるため、本メモには含めず 01 と課題 10 で扱う。ただし枠の回収（§3.6.5 C3）の別課題化は、複数メンバー組織の実在確認（§4.3 クエリ 4）を本メモの優先度判断と共有できる。フロントの事前チェックの見直し（§12-4）を行う場合は、C1 の回答（一覧のスコープ）と整合させる。
+- 関連: 本書 D-5（§0 第 3 回決定）・§3.6、課題 09（§11）、課題 10（authorization-consistency）。
