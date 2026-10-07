@@ -117,6 +117,7 @@ where
         result: &mut PlanSaveSessionResult,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user_id = self.workspace.user_id;
+        let organization_id = self.workspace.organization_id;
         let session = &self.workspace.session_data;
         let plan_id = session.plan_id;
 
@@ -126,6 +127,7 @@ where
         let orchestrator = PlanSavePersistOrchestrator::new(&farm_interactor);
         let farm_output = orchestrator.ensure_user_farm(
             user_id,
+            organization_id,
             PlanSaveSessionRef::Dto(session),
         )?;
 
@@ -172,6 +174,7 @@ where
         );
         let crop_output = crops_interactor.call(PlanSaveEnsureUserCropsInput {
             user_id,
+            organization_id,
             plan_id,
             region: farm_region.clone(),
         })?;

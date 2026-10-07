@@ -10,7 +10,7 @@ use crate::shared::attr::{attr_map_from_pairs, AttrValue};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
-use crate::shared::org_scope::member_organization_ids;
+use crate::shared::org_scope::resolve_creation_organization_id;
 use crate::shared::policies::farm_policy;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use crate::shared::ports::ClockPort;
@@ -68,13 +68,11 @@ where
         input: FarmCreateInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let user = self.user_lookup.find(self.user_id);
-        let org_ids = member_organization_ids(self.scope_gateway, user.id)?;
-        let organization_id = if let Some(&id) = org_ids.first() {
-            id
-        } else {
-            self.personal_org_gateway
-                .ensure_personal_organization(user.id, "", "")?
-        };
+        let organization_id = resolve_creation_organization_id(
+            self.scope_gateway,
+            self.personal_org_gateway,
+            user.id,
+        )?;
         let mut attrs = farm_policy::normalize_attrs_for_create(
             &user,
             attr_map_from_pairs([

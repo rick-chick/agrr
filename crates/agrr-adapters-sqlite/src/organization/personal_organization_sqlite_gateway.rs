@@ -109,6 +109,43 @@ impl PersonalOrganizationGateway for PersonalOrganizationSqliteGateway {
             Ok(rows)
         })
     }
+
+    fn list_users_with_unassigned_organization_rows(
+        &self,
+    ) -> Result<Vec<PersonalOrganizationUserRow>, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_read_box(|conn| {
+            let mut user_ids: Vec<i64> = Vec::new();
+            for table in TIER1_TABLES {
+                let sql = format!(
+                    "SELECT DISTINCT user_id FROM {table} \
+                     WHERE organization_id IS NULL AND user_id IS NOT NULL"
+                );
+                let mut stmt = conn.prepare(&sql)?;
+                let ids = stmt
+                    .query_map([], |row| row.get::<_, i64>(0))?
+                    .collect::<Result<Vec<_>, _>>()?;
+                user_ids.extend(ids);
+            }
+            user_ids.sort_unstable();
+            user_ids.dedup();
+            let mut rows = Vec::new();
+            for user_id in user_ids {
+                let row = conn.query_row(
+                    "SELECT id, COALESCE(email, ''), COALESCE(name, '') FROM users WHERE id = ?1",
+                    params![user_id],
+                    |row| {
+                        Ok(PersonalOrganizationUserRow {
+                            user_id: row.get(0)?,
+                            email: row.get(1)?,
+                            name: row.get(2)?,
+                        })
+                    },
+                )?;
+                rows.push(row);
+            }
+            Ok(rows)
+        })
+    }
 }
 
 fn backfill_tier1_organization_ids(
