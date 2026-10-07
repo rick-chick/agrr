@@ -29,7 +29,7 @@ import {
 } from '../../domain/contact/contact-message.model';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyContactFormViewEffects } from './contact-form-view.effects';
-import { CAPTCHA_WIDGET_PORT, CaptchaWidgetPort } from '../../usecase/contact/captcha-widget.port';
+import { CAPTCHA_WIDGET_PORT } from '../../usecase/contact/captcha-widget.port';
 import { AppLang, documentHtmlLang } from '../../core/app-locale';
 
 const initialControl: ContactFormViewState = {
