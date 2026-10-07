@@ -54,6 +54,7 @@ const PLAN_SAVE_INTEGRATION_DDL: &str = "
 CREATE TABLE farms (
   id INTEGER PRIMARY KEY,
   user_id INTEGER,
+  organization_id INTEGER,
   name TEXT,
   latitude REAL,
   longitude REAL,
@@ -84,6 +85,7 @@ CREATE TABLE crops (
   revenue_per_area REAL,
   region TEXT,
   groups TEXT,
+  cultivation_method TEXT,
   source_crop_id INTEGER,
   created_at TEXT,
   updated_at TEXT
@@ -427,6 +429,7 @@ pub fn seed_plan_reuse(pool: &SqlitePool) -> PlanReuseSeed {
     PlanReuseSeed {
         workspace: PublicPlanSaveWorkspace {
             user_id: TEST_USER_ID,
+            organization_id: 1,
             session_data: session,
         },
     }
@@ -507,6 +510,7 @@ pub fn seed_task_schedule_copy(pool: &SqlitePool) -> TaskScheduleCopySeed {
     TaskScheduleCopySeed {
         workspace: PublicPlanSaveWorkspace {
             user_id: TEST_USER_ID,
+            organization_id: 1,
             session_data: session,
         },
         reference_agricultural_task_id: reference_task_id,
@@ -574,6 +578,7 @@ pub fn seed_crop_stage_requirements_copy(pool: &SqlitePool) -> CropStageRequirem
     CropStageRequirementsCopySeed {
         workspace: PublicPlanSaveWorkspace {
             user_id: TEST_USER_ID,
+            organization_id: 1,
             session_data: session,
         },
         reference_crop_id,
@@ -673,6 +678,7 @@ pub fn seed_task_schedule_invalid_gdd(pool: &SqlitePool) -> TaskScheduleInvalidG
     TaskScheduleInvalidGddSeed {
         workspace: PublicPlanSaveWorkspace {
             user_id: TEST_USER_ID,
+            organization_id: 1,
             session_data: session,
         },
     }

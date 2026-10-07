@@ -6,6 +6,7 @@ use std::sync::Mutex;
 
 struct BackfillRecordingGateway {
     users: Vec<PersonalOrganizationUserRow>,
+    unassigned: Vec<PersonalOrganizationUserRow>,
     ensured: Mutex<Vec<i64>>,
 }
 
@@ -13,6 +14,15 @@ impl BackfillRecordingGateway {
     fn new(users: Vec<PersonalOrganizationUserRow>) -> Self {
         Self {
             users,
+            unassigned: vec![],
+            ensured: Mutex::new(Vec::new()),
+        }
+    }
+
+    fn with_unassigned(users: Vec<PersonalOrganizationUserRow>, unassigned: Vec<PersonalOrganizationUserRow>) -> Self {
+        Self {
+            users,
+            unassigned,
             ensured: Mutex::new(Vec::new()),
         }
     }
@@ -33,6 +43,12 @@ impl PersonalOrganizationGateway for BackfillRecordingGateway {
         &self,
     ) -> Result<Vec<PersonalOrganizationUserRow>, Box<dyn std::error::Error + Send + Sync>> {
         Ok(self.users.clone())
+    }
+
+    fn list_users_with_unassigned_organization_rows(
+        &self,
+    ) -> Result<Vec<PersonalOrganizationUserRow>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(self.unassigned.clone())
     }
 }
 
@@ -61,4 +77,19 @@ fn backfill_no_users_returns_zero() {
     let gateway = BackfillRecordingGateway::new(vec![]);
     let interactor = PersonalOrganizationBackfillInteractor::new(&gateway);
     assert_eq!(0, interactor.call().expect("backfill"));
+}
+
+#[test]
+fn backfill_includes_users_with_unassigned_tier1_rows() {
+    let gateway = BackfillRecordingGateway::with_unassigned(
+        vec![],
+        vec![PersonalOrganizationUserRow {
+            user_id: 9,
+            email: "c@example.com".into(),
+            name: "C".into(),
+        }],
+    );
+    let interactor = PersonalOrganizationBackfillInteractor::new(&gateway);
+    assert_eq!(1, interactor.call().expect("backfill"));
+    assert_eq!(vec![9], *gateway.ensured.lock().unwrap());
 }

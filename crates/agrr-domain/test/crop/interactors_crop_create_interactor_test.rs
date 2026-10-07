@@ -36,6 +36,12 @@
         ) -> Result<Vec<crate::organization::gateways::PersonalOrganizationUserRow>, Box<dyn std::error::Error + Send + Sync>> {
             Ok(vec![])
         }
+
+        fn list_users_with_unassigned_organization_rows(
+            &self,
+        ) -> Result<Vec<crate::organization::gateways::PersonalOrganizationUserRow>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
     }
     struct StubLookup(User);
     impl UserLookupGateway for StubLookup {
