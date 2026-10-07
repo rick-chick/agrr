@@ -219,7 +219,7 @@ describe('GanttPlanApiGateway', () => {
 
     it('propagates HttpErrorResponse instead of swallowing to null', async () => {
       apiClient.get.mockReturnValue(
-        throwError(() => new HttpErrorResponse({ error: { message: 'server error' }, status: 500 }))
+        throwError(() => new HttpErrorResponse({ error: { errors: ['server error'] }, status: 500 }))
       );
 
       await expect(firstValueFrom(gateway.loadPlanData('private', 7))).rejects.toBeInstanceOf(
@@ -230,7 +230,7 @@ describe('GanttPlanApiGateway', () => {
 
   it('maps HttpErrorResponse to command failure on adjust', async () => {
     apiClient.post.mockReturnValue(
-      throwError(() => new HttpErrorResponse({ error: { message: 'server error' }, status: 500 }))
+      throwError(() => new HttpErrorResponse({ error: { errors: ['server error'] }, status: 500 }))
     );
 
     const result = await firstValueFrom(

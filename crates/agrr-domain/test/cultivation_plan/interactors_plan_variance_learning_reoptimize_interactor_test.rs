@@ -294,6 +294,52 @@
         assert_eq!(Some(None), patches[0].1.last_error);
     }
 
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+    ));
+
+    #[test]
+    fn call_reports_not_found_for_org_member_non_owner() {
+        let events = Arc::new(Mutex::new(Vec::new()));
+        let plan_ids = Arc::new(Mutex::new(Vec::new()));
+        let enqueue_calls = Arc::new(Mutex::new(Vec::new()));
+        let mut output = SpyOutput {
+            events: events.clone(),
+            plan_ids: plan_ids.clone(),
+        };
+        let plan_gateway = StubPlanGateway {
+            plan: org_scoped_private_plan(42, 5, 42),
+        };
+        let enqueue = SpyEnqueue {
+            calls: enqueue_calls.clone(),
+        };
+        let variance_gateway = SpyVarianceLearningGateway::new();
+        let orchestration_patches = Arc::clone(&variance_gateway.orchestration_patches);
+        let scope = MemberScopeGateway {
+            org_ids: vec![42],
+        };
+        let mut interactor = PlanVarianceLearningReoptimizeInteractor::new(
+            &mut output,
+            &plan_gateway,
+            &enqueue,
+            &variance_gateway,
+            &scope,
+        );
+
+        interactor
+            .call(PlanVarianceLearningReoptimizeInput {
+                user_id: 99,
+                plan_id: 42,
+            })
+            .expect("call");
+
+        assert_eq!(vec!["not_found"], *events.lock().unwrap());
+        assert!(plan_ids.lock().unwrap().is_empty());
+        assert!(enqueue_calls.lock().unwrap().is_empty());
+        assert!(orchestration_patches.lock().unwrap().is_empty());
+    }
+
     #[test]
     fn call_reports_not_found_for_other_users_plan() {
         let events = Arc::new(Mutex::new(Vec::new()));

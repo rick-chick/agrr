@@ -122,3 +122,12 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod interactors_private_owned_plan_detail_interactor_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/interactors_private_owned_plan_detail_interactor_test.rs"
+    ));
+}

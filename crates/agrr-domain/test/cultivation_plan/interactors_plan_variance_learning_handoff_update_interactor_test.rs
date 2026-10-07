@@ -255,6 +255,52 @@ fn on_not_found_when_user_cannot_access_plan() {
     assert!(handoff_patches.lock().unwrap().is_empty());
 }
 
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn on_not_found_when_org_member_updates_other_users_plan() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let snapshot = Arc::new(Mutex::new(None));
+    let mut output = SpyOutput {
+        events: Arc::clone(&events),
+        snapshot: Arc::clone(&snapshot),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: org_scoped_private_plan(7, 5, 42),
+    };
+    let handoff_patches = Arc::new(Mutex::new(Vec::new()));
+    let variance_gateway = SpyVarianceLearningGateway {
+        handoff_patches: Arc::clone(&handoff_patches),
+    };
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+
+    let mut interactor = PlanVarianceLearningHandoffUpdateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &variance_gateway,
+        &scope,
+    );
+
+    interactor
+        .call(
+            99,
+            7,
+            LearnHandoffStatePatch {
+                post_master_payload: Some(Some(json!({"kind": "stage_gdd"}))),
+                ..Default::default()
+            },
+        )
+        .expect("interactor returns Ok after on_not_found");
+
+    assert_eq!(vec!["not_found"], *events.lock().unwrap());
+    assert!(handoff_patches.lock().unwrap().is_empty());
+}
+
 #[test]
 fn on_record_invalid_for_empty_patch() {
     let events = Arc::new(Mutex::new(Vec::new()));

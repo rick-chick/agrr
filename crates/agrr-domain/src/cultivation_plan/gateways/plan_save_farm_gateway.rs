@@ -15,14 +15,15 @@ pub trait PlanSaveFarmGateway: Send + Sync {
         source_farm_id: i64,
     ) -> Result<Option<PlanSaveUserFarmSnapshot>, Box<dyn std::error::Error + Send + Sync>>;
 
-    fn count_non_reference_farms(
+    fn count_non_reference_farms_for_organization(
         &self,
-        user_id: i64,
+        organization_id: i64,
     ) -> Result<i64, Box<dyn std::error::Error + Send + Sync>>;
 
     fn create_user_farm_from_reference(
         &self,
         user_id: i64,
+        organization_id: i64,
         reference_farm_id: i64,
         copy_name_suffix: &str,
     ) -> Result<PlanSaveUserFarmSnapshot, Box<dyn std::error::Error + Send + Sync>>;

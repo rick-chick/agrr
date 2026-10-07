@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 import { FarmTemperatureChartData } from '../../domain/farms/farm-temperature-chart';
@@ -49,10 +50,13 @@ describe('LoadFarmTemperatureChartUseCase', () => {
   it('maps HTTP error body to outputPort.onError', () => {
     const gateway: FarmTemperatureChartGateway = {
       load: () =>
-        throwError(() => ({
-          status: 409,
-          error: { error: 'farms.weather_section.chart_fetching' }
-        }))
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 422,
+              error: { errors: ['farms.weather_section.chart_fetching'] }
+            })
+        )
     };
 
     let receivedError: { message: string } | null = null;

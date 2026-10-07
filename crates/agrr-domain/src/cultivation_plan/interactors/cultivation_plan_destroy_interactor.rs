@@ -57,7 +57,7 @@ where
         let plan = match self.gateway.find_by_id(plan_id) {
             Ok(plan) => plan,
             Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
-                self.handle_failure(self.translator.t("plans.errors.not_found", &opts));
+                self.output_port.on_not_found();
                 return Ok(());
             }
             Err(err) => return Err(err),
@@ -68,7 +68,7 @@ where
         if let Err(PolicyPermissionDenied) =
             private_cultivation_plan_access_policy::assert_private_owned(&user, &plan, &org_ids)
         {
-            self.handle_failure(self.translator.t("plans.errors.not_found", &opts));
+            self.output_port.on_not_found();
             return Ok(());
         }
 
@@ -100,7 +100,7 @@ where
                 Ok(())
             }
             Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
-                self.handle_failure(self.translator.t("plans.errors.not_found", &opts));
+                self.output_port.on_not_found();
                 Ok(())
             }
             Err(err) if err.downcast_ref::<RecordInvalidError>().is_some() => {

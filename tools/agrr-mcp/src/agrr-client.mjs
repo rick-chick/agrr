@@ -50,15 +50,6 @@ export class AgrrClient {
     );
   }
 
-  /** @param {number} cropId @param {object} proposal */
-  async applyCropSetup(cropId, proposal) {
-    return this.#request(
-      'POST',
-      `/api/v1/masters/crops/${cropId}/setup_proposal?mode=apply`,
-      proposal,
-    );
-  }
-
   /** @param {'GET'|'POST'} method @param {string} path @param {object} [body] */
   async #request(method, path, body) {
     const url = `${this.baseUrl}${path}`;

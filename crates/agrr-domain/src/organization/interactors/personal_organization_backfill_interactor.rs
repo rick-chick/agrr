@@ -14,7 +14,13 @@ impl<'a> PersonalOrganizationBackfillInteractor<'a> {
 
     /// Returns the number of users that were processed (including already-complete re-runs).
     pub fn call(&self) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
-        let users = self.gateway.list_users_needing_personal_organization()?;
+        let mut users = self.gateway.list_users_needing_personal_organization()?;
+        let unassigned = self.gateway.list_users_with_unassigned_organization_rows()?;
+        for row in unassigned {
+            if !users.iter().any(|u| u.user_id == row.user_id) {
+                users.push(row);
+            }
+        }
         let mut processed = 0usize;
         for row in users {
             self.gateway
@@ -27,7 +33,6 @@ impl<'a> PersonalOrganizationBackfillInteractor<'a> {
 
 #[cfg(test)]
 mod interactors_personal_organization_backfill_interactor_test_inline {
-    use super::*;
     include!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/test/organization/interactors_personal_organization_backfill_interactor_test.rs"

@@ -17,6 +17,7 @@ use crate::work_record::gateways::{
     TaskScheduleItemLookupGateway, WorkRecordClimateSnapshotGateway, WorkRecordCreatePersistAttrs,
     WorkRecordGateway,
 };
+use crate::work_record::errors::WorkRecordClimateSnapshotUnavailableError;
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::ports::WorkRecordCreateOutputPort;
 
@@ -83,7 +84,10 @@ where
         &self,
         plan_id: i64,
         input: &WorkRecordCreateInput,
-    ) -> Result<WorkRecordCreatePersistAttrs, RecordInvalidError> {
+    ) -> Result<
+        WorkRecordCreatePersistAttrs,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
         let now = self.clock.now();
         let prefill = match input.task_schedule_item_id {
             Some(item_id) => {
@@ -92,19 +96,19 @@ where
                     .find_item_for_plan(plan_id, item_id)
                     .map_err(|err| {
                         if err.downcast_ref::<RecordNotFoundError>().is_some() {
-                            record_invalid_field(
+                            Box::new(record_invalid_field(
                                 "task_schedule_item_id",
                                 "activerecord.errors.models.work_record.attributes.task_schedule_item_id.not_found",
-                            )
+                            )) as Box<dyn std::error::Error + Send + Sync>
                         } else {
-                            record_invalid_field("base", "lookup failed")
+                            Box::new(record_invalid_field("base", "lookup failed"))
                         }
                     })?;
                 if snapshot.cultivation_plan_id != plan_id {
-                    return Err(record_invalid_field(
+                    return Err(Box::new(record_invalid_field(
                         "task_schedule_item_id",
                         "activerecord.errors.models.work_record.attributes.task_schedule_item_id.wrong_plan",
-                    ));
+                    )));
                 }
                 Some(snapshot)
             }
@@ -113,19 +117,19 @@ where
 
         let name = pick_string(input.name.as_deref(), prefill.as_ref().map(|p| p.name.as_str()))
             .ok_or_else(|| {
-                record_invalid_field(
+                Box::new(record_invalid_field(
                     "name",
                     "activerecord.errors.models.work_record.attributes.name.blank",
-                )
+                )) as Box<dyn std::error::Error + Send + Sync>
             })?;
         WorkRecordEntity::validate_name(&name).map_err(|_| {
-            record_invalid_field(
+            Box::new(record_invalid_field(
                 "name",
                 "activerecord.errors.models.work_record.attributes.name.blank",
-            )
+            )) as Box<dyn std::error::Error + Send + Sync>
         })?;
 
-        Ok(WorkRecordCreatePersistAttrs {
+        let mut attrs = WorkRecordCreatePersistAttrs {
             field_cultivation_id: input
                 .field_cultivation_id
                 .or_else(|| prefill.as_ref().and_then(|p| p.field_cultivation_id)),
@@ -152,19 +156,15 @@ where
             weather_snapshot: None,
             created_at: now,
             updated_at: now,
-        })
-        .map(|mut attrs| {
-            if let Some(fc_id) = attrs.field_cultivation_id {
-                if let Ok(snapshot) = self
-                    .climate_snapshot_gateway
-                    .lookup(fc_id, attrs.actual_date)
-                {
-                    attrs.gdd_at_actual = snapshot.gdd_at_actual;
-                    attrs.weather_snapshot = snapshot.weather_snapshot;
-                }
-            }
-            attrs
-        })
+        };
+        if let Some(fc_id) = attrs.field_cultivation_id {
+            let snapshot = self
+                .climate_snapshot_gateway
+                .lookup(fc_id, attrs.actual_date)?;
+            attrs.gdd_at_actual = snapshot.gdd_at_actual;
+            attrs.weather_snapshot = snapshot.weather_snapshot;
+        }
+        Ok(attrs)
     }
 
     pub fn call_rescuing(
@@ -187,6 +187,19 @@ where
             }
             Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
                 self.output_port.on_not_found();
+                Ok(())
+            }
+            Err(err)
+                if err
+                    .downcast_ref::<WorkRecordClimateSnapshotUnavailableError>()
+                    .is_some() =>
+            {
+                let failure = err
+                    .downcast_ref::<WorkRecordClimateSnapshotUnavailableError>()
+                    .unwrap()
+                    .failure
+                    .clone();
+                self.output_port.on_climate_snapshot_unavailable(failure);
                 Ok(())
             }
             Err(err) => Err(err),

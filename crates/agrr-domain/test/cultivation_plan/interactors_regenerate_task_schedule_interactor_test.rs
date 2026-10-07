@@ -168,6 +168,45 @@ total_area: 0.0,
         assert_eq!(vec![42], *enqueue_calls.lock().unwrap());
     }
 
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+    ));
+
+    #[test]
+    fn call_reports_not_found_for_org_member_non_owner() {
+        let events = Arc::new(Mutex::new(Vec::new()));
+        let enqueue_calls = Arc::new(Mutex::new(Vec::new()));
+        let mut output = SpyOutput {
+            events: events.clone(),
+        };
+        let plan_gateway = StubPlanGateway {
+            plan: org_scoped_private_plan(42, 5, 42),
+        };
+        let enqueue = SpyEnqueue {
+            calls: enqueue_calls.clone(),
+        };
+        let scope = MemberScopeGateway {
+            org_ids: vec![42],
+        };
+        let mut interactor = RegenerateTaskScheduleInteractor::new(
+            &mut output,
+            &plan_gateway,
+            &enqueue,
+            &scope,
+        );
+
+        interactor
+            .call(RegenerateTaskScheduleInput {
+                user_id: 99,
+                plan_id: 42,
+            })
+            .expect("call");
+
+        assert_eq!(vec!["not_found"], *events.lock().unwrap());
+        assert!(enqueue_calls.lock().unwrap().is_empty());
+    }
+
     #[test]
     fn call_reports_not_found_for_other_users_plan() {
         let events = Arc::new(Mutex::new(Vec::new()));

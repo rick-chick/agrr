@@ -227,6 +227,39 @@ fn lists_records_with_date_range_filter() {
     assert!(records_slot.lock().unwrap().is_some());
 }
 
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn dispatches_not_found_when_org_member_lists_other_users_plan() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let mut output = SpyListOutput {
+        events: Arc::clone(&events),
+        records: Arc::new(Mutex::new(None)),
+        errors: Arc::new(Mutex::new(None)),
+    };
+    let list_calls = Arc::new(Mutex::new(Vec::new()));
+    let gateway = StubWorkRecordGateway {
+        list_calls: Arc::clone(&list_calls),
+        list_result: vec![],
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: org_scoped_private_plan(2, 5, 42),
+    };
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+    let mut interactor =
+        WorkRecordListInteractor::new(&mut output, &plan_gateway, &gateway, &scope);
+
+    interactor.call_rescuing(99, 2, &BTreeMap::new()).unwrap();
+
+    assert_eq!(&*events.lock().unwrap(), &["not_found".to_string()]);
+    assert!(list_calls.lock().unwrap().is_empty());
+}
+
 #[test]
 fn dispatches_not_found_when_private_plan_access_denied() {
     let events = Arc::new(Mutex::new(Vec::new()));

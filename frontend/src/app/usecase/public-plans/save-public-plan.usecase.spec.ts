@@ -21,6 +21,9 @@ describe('SavePublicPlanUseCase', () => {
       if (key === 'common.api_error.unauthorized') {
         return 'Please log in';
       }
+      if (key === 'activerecord.errors.models.farm.attributes.user.farm_limit_exceeded') {
+        return 'You can create up to 4 Farms';
+      }
       return key;
     })
   } as unknown as TranslateService;
@@ -87,8 +90,11 @@ describe('SavePublicPlanUseCase', () => {
     expect(receivedDto!.cultivation_plan_id).toBe(42);
   });
 
-  it('calls outputPort.onError with error message when gateway returns failure', () => {
-    const response: SavePublicPlanResponse = { success: false, error: 'Plan already exists' };
+  it('calls outputPort.onError with translated errors when gateway returns failure', () => {
+    const response: SavePublicPlanResponse = {
+      success: false,
+      errors: ['activerecord.errors.models.farm.attributes.user.farm_limit_exceeded']
+    };
 
     const gateway: PublicPlanGateway = {
       getFarms: vi.fn(() => of([])),
@@ -109,10 +115,10 @@ describe('SavePublicPlanUseCase', () => {
     useCase.execute({ planId: 123 });
 
     expect(receivedError).not.toBeNull();
-    expect(receivedError!.message).toBe('Plan already exists');
+    expect(receivedError!.message).toBe('You can create up to 4 Farms');
   });
 
-  it('calls outputPort.onError with server error from 422 HttpErrorResponse', () => {
+  it('calls outputPort.onError with translated errors from 422 HttpErrorResponse', () => {
     const gateway: PublicPlanGateway = {
       getFarms: vi.fn(() => of([])),
       getCrops: vi.fn(() => of([])),
@@ -122,7 +128,10 @@ describe('SavePublicPlanUseCase', () => {
           () =>
             new HttpErrorResponse({
               status: 422,
-              error: { success: false, error: 'Crop limit exceeded' }
+              error: {
+                success: false,
+                errors: ['activerecord.errors.models.farm.attributes.user.farm_limit_exceeded']
+              }
             })
         )
       )
@@ -139,7 +148,7 @@ describe('SavePublicPlanUseCase', () => {
     const useCase = new SavePublicPlanUseCase(outputPort, gateway, mockTranslate);
     useCase.execute({ planId: 123 });
 
-    expect(receivedError!.message).toBe('Crop limit exceeded');
+    expect(receivedError!.message).toBe('You can create up to 4 Farms');
   });
 
   it('calls outputPort.onError with i18n key for 401 HttpErrorResponse without body error', () => {

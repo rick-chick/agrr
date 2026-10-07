@@ -10,12 +10,53 @@
     use std::sync::{Arc, Mutex};
 
 
-    struct EmptyScopeGateway;
-    impl crate::shared::gateways::UserOrganizationScopeGateway for EmptyScopeGateway {
+    struct ScopeGatewayWithIds(Vec<i64>);
+    impl crate::shared::gateways::UserOrganizationScopeGateway for ScopeGatewayWithIds {
         fn organization_ids_for_user(
             &self,
             _: i64,
         ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self.0.clone())
+        }
+    }
+
+    struct FailingScopeGateway;
+    impl crate::shared::gateways::UserOrganizationScopeGateway for FailingScopeGateway {
+        fn organization_ids_for_user(
+            &self,
+            _: i64,
+        ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
+            Err("scope failure".into())
+        }
+    }
+
+    struct PersonalOrgStub {
+        return_id: i64,
+        ensure_called: Arc<Mutex<bool>>,
+    }
+
+    impl crate::organization::gateways::PersonalOrganizationGateway for PersonalOrgStub {
+        fn ensure_personal_organization(
+            &self,
+            _: i64,
+            _: &str,
+            _: &str,
+        ) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+            *self.ensure_called.lock().unwrap() = true;
+            Ok(self.return_id)
+        }
+
+        fn list_users_needing_personal_organization(
+            &self,
+        ) -> Result<Vec<crate::organization::gateways::PersonalOrganizationUserRow>, Box<dyn std::error::Error + Send + Sync>>
+        {
+            Ok(vec![])
+        }
+
+        fn list_users_with_unassigned_organization_rows(
+            &self,
+        ) -> Result<Vec<crate::organization::gateways::PersonalOrganizationUserRow>, Box<dyn std::error::Error + Send + Sync>>
+        {
             Ok(vec![])
         }
     }
@@ -240,17 +281,45 @@
 
     struct StubPersistence {
         output: Result<PublicPlanSaveFromSessionOutput, Box<dyn std::error::Error + Send + Sync>>,
+        saved_org_id: Arc<Mutex<Option<i64>>>,
+        save_called: Arc<Mutex<bool>>,
     }
+
+    impl StubPersistence {
+        fn success() -> Self {
+            Self {
+                output: Ok(PublicPlanSaveFromSessionOutput::success_with(
+                    Some(1),
+                    Default::default(),
+                )),
+                saved_org_id: Arc::new(Mutex::new(None)),
+                save_called: Arc::new(Mutex::new(false)),
+            }
+        }
+    }
+
     impl PublicPlanSavePersistencePort for StubPersistence {
         fn execute_save(
             &self,
-            _: &PublicPlanSaveWorkspace,
+            workspace: &PublicPlanSaveWorkspace,
         ) -> Result<PublicPlanSaveFromSessionOutput, Box<dyn std::error::Error + Send + Sync>> {
+            *self.save_called.lock().unwrap() = true;
+            *self.saved_org_id.lock().unwrap() = Some(workspace.organization_id);
             match &self.output {
                 Ok(v) => Ok(v.clone()),
                 Err(_) => Err(Box::new(InvalidTaskScheduleItemError) as _),
             }
         }
+    }
+
+    fn default_scope_and_personal() -> (ScopeGatewayWithIds, PersonalOrgStub) {
+        (
+            ScopeGatewayWithIds(vec![11]),
+            PersonalOrgStub {
+                return_id: 21,
+                ensure_called: Arc::new(Mutex::new(false)),
+            },
+        )
     }
 
     fn header() -> PublicPlanSaveHeaderSnapshot {
@@ -291,14 +360,10 @@ created_at: None,
             fields: vec![],
         };
         let farm_gw = StubFarm { farm: Some(farm()) };
-        let persistence = StubPersistence {
-            output: Ok(PublicPlanSaveFromSessionOutput::success_with(
-                Some(1),
-                Default::default(),
-            )),
-        };
+        let persistence = StubPersistence::success();
         let logger = FakeLogger;
         let translator = FakeTranslator;
+        let (scope, personal) = default_scope_and_personal();
         let mut interactor = PublicPlanSaveInteractor::new(
             &mut output,
             &StubTxn,
@@ -307,6 +372,8 @@ created_at: None,
             &persistence,
             &logger,
             &translator,
+            &scope,
+            &personal,
         );
         interactor
             .call(&PublicPlanSaveInput {
@@ -333,14 +400,10 @@ created_at: None,
             fields: vec![],
         };
         let farm_gw = StubFarm { farm: Some(farm()) };
-        let persistence = StubPersistence {
-            output: Ok(PublicPlanSaveFromSessionOutput::success_with(
-                Some(1),
-                Default::default(),
-            )),
-        };
+        let persistence = StubPersistence::success();
         let logger = FakeLogger;
         let translator = FakeTranslator;
+        let (scope, personal) = default_scope_and_personal();
         let mut interactor = PublicPlanSaveInteractor::new(
             &mut output,
             &StubTxn,
@@ -349,6 +412,8 @@ created_at: None,
             &persistence,
             &logger,
             &translator,
+            &scope,
+            &personal,
         );
         interactor
             .call(&PublicPlanSaveInput {
@@ -359,4 +424,126 @@ created_at: None,
             .unwrap();
         assert!(*success.lock().unwrap());
         assert!(failure.lock().unwrap().is_none());
+        assert_eq!(*persistence.saved_org_id.lock().unwrap(), Some(11));
+        assert!(!*personal.ensure_called.lock().unwrap());
+    }
+
+    #[test]
+    fn resolves_member_organization_into_workspace() {
+        let success = Arc::new(Mutex::new(false));
+        let failure = Arc::new(Mutex::new(None));
+        let mut output = SpyOutput {
+            success: Arc::clone(&success),
+            failure: Arc::clone(&failure),
+        };
+        let read = StubRead {
+            header: Some(header()),
+            fields: vec![],
+        };
+        let farm_gw = StubFarm { farm: Some(farm()) };
+        let persistence = StubPersistence::success();
+        let scope = ScopeGatewayWithIds(vec![11]);
+        let personal = PersonalOrgStub {
+            return_id: 21,
+            ensure_called: Arc::new(Mutex::new(false)),
+        };
+        let mut interactor = PublicPlanSaveInteractor::new(
+            &mut output,
+            &StubTxn,
+            &read,
+            &farm_gw,
+            &persistence,
+            &FakeLogger,
+            &FakeTranslator,
+            &scope,
+            &personal,
+        );
+        interactor
+            .call(&PublicPlanSaveInput {
+                plan_id: Some(99),
+                user_id: 42,
+                session_data: None,
+            })
+            .unwrap();
+        assert_eq!(*persistence.saved_org_id.lock().unwrap(), Some(11));
+        assert!(!*personal.ensure_called.lock().unwrap());
+    }
+
+    #[test]
+    fn ensures_personal_organization_when_user_has_no_membership() {
+        let success = Arc::new(Mutex::new(false));
+        let failure = Arc::new(Mutex::new(None));
+        let mut output = SpyOutput {
+            success: Arc::clone(&success),
+            failure: Arc::clone(&failure),
+        };
+        let read = StubRead {
+            header: Some(header()),
+            fields: vec![],
+        };
+        let farm_gw = StubFarm { farm: Some(farm()) };
+        let persistence = StubPersistence::success();
+        let scope = ScopeGatewayWithIds(vec![]);
+        let personal = PersonalOrgStub {
+            return_id: 21,
+            ensure_called: Arc::new(Mutex::new(false)),
+        };
+        PublicPlanSaveInteractor::new(
+            &mut output,
+            &StubTxn,
+            &read,
+            &farm_gw,
+            &persistence,
+            &FakeLogger,
+            &FakeTranslator,
+            &scope,
+            &personal,
+        )
+        .call(&PublicPlanSaveInput {
+            plan_id: Some(99),
+            user_id: 42,
+            session_data: None,
+        })
+        .unwrap();
+        assert_eq!(*persistence.saved_org_id.lock().unwrap(), Some(21));
+        assert!(*personal.ensure_called.lock().unwrap());
+    }
+
+    #[test]
+    fn fails_without_saving_when_organization_resolution_errors() {
+        let success = Arc::new(Mutex::new(false));
+        let failure = Arc::new(Mutex::new(None));
+        let mut output = SpyOutput {
+            success: Arc::clone(&success),
+            failure: Arc::clone(&failure),
+        };
+        let read = StubRead {
+            header: Some(header()),
+            fields: vec![],
+        };
+        let farm_gw = StubFarm { farm: Some(farm()) };
+        let persistence = StubPersistence::success();
+        let personal = PersonalOrgStub {
+            return_id: 21,
+            ensure_called: Arc::new(Mutex::new(false)),
+        };
+        let err = PublicPlanSaveInteractor::new(
+            &mut output,
+            &StubTxn,
+            &read,
+            &farm_gw,
+            &persistence,
+            &FakeLogger,
+            &FakeTranslator,
+            &FailingScopeGateway,
+            &personal,
+        )
+        .call(&PublicPlanSaveInput {
+            plan_id: Some(99),
+            user_id: 42,
+            session_data: None,
+        })
+        .unwrap_err();
+        assert!(err.to_string().contains("scope failure"));
+        assert!(!*persistence.save_called.lock().unwrap());
     }

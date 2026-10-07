@@ -5,6 +5,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AccountManagementService } from '../../../services/account-management.service';
 import { ApiService } from '../../../services/api.service';
 import { FlashMessageService } from '../../../services/flash-message.service';
+import { apiErrorMessage } from '../../../core/api-error-message';
 
 @Component({
   selector: 'app-account',
@@ -177,9 +178,7 @@ export class AccountComponent implements OnInit {
           void this.router.navigate(['/login']);
         },
         error: (err) => {
-          const body = err?.error;
-          this.errorMessage =
-            body?.message || body?.error || this.translate.instant('account.delete.failure');
+          this.errorMessage = this.translate.instant(apiErrorMessage(err));
           this.deleting = false;
           this.cdr.markForCheck();
         }

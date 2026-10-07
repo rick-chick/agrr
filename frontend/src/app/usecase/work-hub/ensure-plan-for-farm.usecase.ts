@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { catchError, of, switchMap, throwError } from 'rxjs';
-import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
+import { apiErrorHasMessage, apiErrorMessage } from '../../core/api-error-message';
 import { PLAN_GATEWAY, PlanGateway } from '../plans/plan-gateway';
 import {
   PRIVATE_PLAN_CREATE_GATEWAY,
@@ -68,17 +68,12 @@ export class EnsurePlanForFarmUseCase implements EnsurePlanForFarmInputPort {
     if (!(err instanceof HttpErrorResponse) || err.status !== 422) {
       return false;
     }
-    const body = err.error as { error?: string } | undefined;
-    return body?.error === PLAN_ALREADY_EXISTS_KEY;
+    return apiErrorHasMessage(err, PLAN_ALREADY_EXISTS_KEY);
   }
 
   private resolveErrorMessage(err: unknown): string {
     if (err instanceof HttpErrorResponse) {
-      const serverKey = (err.error as { error?: string } | undefined)?.error?.trim();
-      if (serverKey) {
-        return serverKey;
-      }
-      return apiErrorI18nKey(err);
+      return apiErrorMessage(err);
     }
     if (err instanceof Error) {
       return err.message;
