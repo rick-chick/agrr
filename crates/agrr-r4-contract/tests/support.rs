@@ -210,6 +210,7 @@ pub fn regenerate_api_key(client: &ContractClient, session_id: &str) -> String {
 /// Frees a farm-create slot when earlier contract seeds filled the per-user non-reference limit.
 pub fn ensure_farm_create_capacity_via_api(client: &ContractClient, session_id: &str) {
     const MAX_NON_REFERENCE_FARMS_PER_USER: usize = 4;
+    let session_user_id = user_id_for_session(client, session_id);
 
     loop {
         let (status, body) =
@@ -219,6 +220,7 @@ pub fn ensure_farm_create_capacity_via_api(client: &ContractClient, session_id: 
         let non_reference: Vec<i64> = farms
             .iter()
             .filter(|farm| farm["is_reference"].as_bool() == Some(false))
+            .filter(|farm| farm["user_id"].as_i64() == Some(session_user_id))
             .filter_map(|farm| farm["id"].as_i64())
             .collect();
         if non_reference.len() < MAX_NON_REFERENCE_FARMS_PER_USER {

@@ -24,6 +24,10 @@ impl RecordAccessPolicy for CropRecordAccessPolicy {
     fn edit_allowed(user: &User, is_reference: bool, record_user_id: Option<i64>) -> bool {
         edit_allowed(user, is_reference, record_user_id)
     }
+
+    fn organization_member_edit_allowed() -> bool {
+        false
+    }
 }
 
 pub fn record_access_filter(
