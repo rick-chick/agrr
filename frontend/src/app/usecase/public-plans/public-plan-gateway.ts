@@ -9,7 +9,7 @@ export interface CreatePublicPlanResponse {
 
 export interface SavePublicPlanResponse {
   success: boolean;
-  error?: string;
+  errors?: string[];
   cultivation_plan_id?: number;
   plan_reused?: boolean;
 }

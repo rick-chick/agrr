@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import type { Farm } from '../../domain/farms/farm';
@@ -49,15 +50,18 @@ describe('RetryFarmWeatherFetchUseCase', () => {
     expect(onSettled).toHaveBeenCalledOnce();
   });
 
-  it('maps API error body to onError message', () => {
+  it('maps API errors array to onError message', () => {
     const onError = vi.fn();
     const useCase = createUseCase(
       {
         fetchWeatherData: vi.fn(() =>
-          throwError(() => ({
-            message: 'Http failure',
-            error: { error: 'Weather fetch already in progress' }
-          }))
+          throwError(
+            () =>
+              new HttpErrorResponse({
+                status: 422,
+                error: { errors: ['Weather fetch already in progress'] }
+              })
+          )
         )
       },
       { onSuccess: vi.fn(), onError }
@@ -75,10 +79,13 @@ describe('RetryFarmWeatherFetchUseCase', () => {
     const useCase = createUseCase(
       {
         fetchWeatherData: vi.fn(() =>
-          throwError(() => ({
-            message: 'Http failure',
-            error: { errors: ['Farm not found', 'Permission denied'] }
-          }))
+          throwError(
+            () =>
+              new HttpErrorResponse({
+                status: 422,
+                error: { errors: ['Farm not found', 'Permission denied'] }
+              })
+          )
         )
       },
       { onSuccess: vi.fn(), onError }
@@ -96,9 +103,7 @@ describe('RetryFarmWeatherFetchUseCase', () => {
     const useCase = createUseCase(
       {
         fetchWeatherData: vi.fn(() =>
-          throwError(() => ({
-            message: 'Network timeout'
-          }))
+          throwError(() => new Error('Network timeout'))
         )
       },
       { onSuccess: vi.fn(), onError }

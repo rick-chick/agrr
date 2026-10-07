@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { DeleteAgriculturalTaskInputDto } from './delete-agricultural-task.dtos';
 import { DeleteAgriculturalTaskInputPort } from './delete-agricultural-task.input-port';
 import {
@@ -24,8 +25,8 @@ export class DeleteAgriculturalTaskUseCase implements DeleteAgriculturalTaskInpu
         });
         dto.onSuccess?.();
       },
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) =>
+        this.outputPort.onError({ message: apiErrorMessage(err) })
     });
   }
 }

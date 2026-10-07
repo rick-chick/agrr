@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { LoadFarmTemperatureChartInputDto } from './load-farm-temperature-chart.dtos';
 import { LoadFarmTemperatureChartInputPort } from './load-farm-temperature-chart.input-port';
@@ -23,13 +24,8 @@ export class LoadFarmTemperatureChartUseCase implements LoadFarmTemperatureChart
   execute(dto: LoadFarmTemperatureChartInputDto): void {
     this.gateway.load(dto.farmId, dto.period).subscribe({
       next: (data) => this.outputPort.present(data),
-      error: (err: Error & { status?: number; error?: { error?: string } }) => {
-        const errorDto: ErrorDto = {
-          message:
-            err?.error?.error ??
-            err?.message ??
-            'farms.weather_section.chart_load_failed'
-        };
+      error: (err: unknown) => {
+        const errorDto: ErrorDto = { message: apiErrorMessage(err) };
         this.outputPort.onError(errorDto);
       }
     });

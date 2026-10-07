@@ -43,7 +43,7 @@ describe('backendWarmup', () => {
       isBackendWarmupHttpError(
         new HttpErrorResponse({
           status: 503,
-          error: { error: 'prediction_payload_missing' }
+          error: { errors: ['prediction_payload_missing'] }
         })
       )
     ).toBe(false);
@@ -51,7 +51,7 @@ describe('backendWarmup', () => {
       isBackendWarmupHttpError(
         new HttpErrorResponse({
           status: 503,
-          error: { error: 'daemon timeout' }
+          error: { errors: ['daemon timeout'] }
         })
       )
     ).toBe(false);
@@ -59,7 +59,7 @@ describe('backendWarmup', () => {
       isBackendWarmupHttpError(
         new HttpErrorResponse({
           status: 422,
-          error: { error: 'weather_location_required' }
+          error: { errors: ['weather_location_required'] }
         })
       )
     ).toBe(false);
@@ -68,7 +68,7 @@ describe('backendWarmup', () => {
   it('detects compute engine warmup errors', () => {
     expect(
       isComputeEngineWarmupHttpError(
-        new HttpErrorResponse({ status: 503, error: { error: 'agrr_daemon_not_running' } })
+        new HttpErrorResponse({ status: 503, error: { errors: ['agrr_daemon_not_running'] } })
       )
     ).toBe(true);
   });

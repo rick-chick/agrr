@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { CreateFarmUseCase } from './create-farm.usecase';
@@ -12,10 +13,13 @@ describe('CreateFarmUseCase', () => {
       show: () => throwError(() => new Error('unused')),
       listFieldsByFarm: () => throwError(() => new Error('unused')),
       create: () =>
-        throwError(() => ({
-          message: 'Http failure',
-          error: { errors: ['作成できるFarmは4件までです'] }
-        })),
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 422,
+              error: { errors: ['作成できるFarmは4件までです'] }
+            })
+        ),
       update: () => throwError(() => new Error('unused')),
       fetchWeatherData: () => throwError(() => new Error('unused')),
       destroy: () => throwError(() => new Error('unused')),

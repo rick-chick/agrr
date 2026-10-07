@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { UpdateCropInputDto } from './update-crop.dtos';
 import { UpdateCropInputPort } from './update-crop.input-port';
 import {
@@ -33,7 +34,7 @@ export class UpdateCropUseCase implements UpdateCropInputPort {
         },
         error: (err: Error & { error?: { errors?: string[] } }) =>
           this.outputPort.onError({
-            message: err.error?.errors?.join(', ') ?? err?.message ?? 'Unknown error'
+            message: apiErrorMessage(err)
           })
       });
   }
