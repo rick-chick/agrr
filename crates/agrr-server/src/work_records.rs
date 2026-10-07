@@ -2,6 +2,7 @@
 
 use std::collections::BTreeMap;
 
+use crate::api_error::single_failure;
 use crate::adapters::SystemClock;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
@@ -317,7 +318,7 @@ fn map_mutation_outcome<T>(
 fn stale_conflict() -> (StatusCode, Json<Value>) {
     (
         StatusCode::CONFLICT,
-        Json(json!({"error": "stale_record"})),
+        Json(single_failure("stale_record")),
     )
 }
 

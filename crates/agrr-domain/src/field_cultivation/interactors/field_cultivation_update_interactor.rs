@@ -156,6 +156,15 @@ fn parse_date(value: &str) -> Option<Date> {
     parse_iso_date(value)
 }
 
+#[cfg(test)]
+mod interactors_field_cultivation_update_interactor_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/field_cultivation/interactors_field_cultivation_update_interactor_test.rs"
+    ));
+}
+
 fn public_plan_update_message<T: TranslatorPort>(translator: Option<&T>) -> String {
     const DEFAULT: &str = "栽培期間を更新しました";
     let Some(translator) = translator else {

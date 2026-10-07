@@ -8,7 +8,9 @@ use agrr_domain::cultivation_plan::dtos::{
 };
 use agrr_r4_contract::http::ContractClient;
 use support::{
-    agrr_regeneration_contract_available,     assert_builtin_generation_deprecated_headers,
+    agrr_regeneration_contract_available,
+    assert_api_failure_errors_array, assert_api_failure_errors_contain,
+    assert_api_failure_errors_include, assert_builtin_generation_deprecated_headers,
     assert_cross_user_access_denied,
     assert_crop_task_template_api_removed,
     clear_plan_task_schedules, contract_api_session_id, developer_session_id, empty_headers,
@@ -38,6 +40,8 @@ use support::{
     seed_org_scoped_plan,
     seed_public_cultivation_plan,
     seed_public_cultivation_plan_with_session,
+    seed_public_plan_field_cultivation,
+    field_cultivation_schedule_dates,
     seed_entry_schedule_contract_assets,
     seed_entry_schedule_crop_missing_thermal_requirement,
     seed_public_field_cultivation_climate_complete,
@@ -362,6 +366,7 @@ fn patch_work_record_stale_updated_at_returns_409() {
     assert_eq!(409, patch_status, "{patch_body}");
     let patch_json: serde_json::Value =
         serde_json::from_str(&patch_body).expect("stale patch JSON");
+    assert_api_failure_errors_include(&patch_json, "stale_record", &patch_body);
     assert_eq!("stale_record", patch_json["error"].as_str().unwrap());
 }
 
@@ -2137,6 +2142,7 @@ fn post_masters_crop_task_schedule_blueprints_regenerate_without_blueprints_retu
         Some("missing_blueprints"),
         "{body}"
     );
+    assert_api_failure_errors_array(&json, &body);
     assert!(json.get("error").is_some(), "{body}");
 }
 
@@ -3063,6 +3069,67 @@ fn masters_api_key_read_scope_allows_get_and_denies_post() {
 }
 
 #[test]
+fn masters_api_key_after_regenerate_denies_post_without_scope_override() {
+    let client = ContractClient::from_env();
+    let session_id = researcher_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let _seed = seed_masters_crop(user_id);
+
+    let api_key = regenerate_api_key(&client, &session_id);
+
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {api_key}"));
+
+    let (post_status, post_body) = status_and_body(client.post(
+        "/api/v1/masters/crops",
+        None,
+        &headers,
+        Some(serde_json::json!({ "crop": { "name": "default-scope-deny-crop" } })),
+    ));
+    assert_eq!(403, post_status, "{post_body}");
+    let post_json: serde_json::Value = serde_json::from_str(&post_body).expect("forbidden JSON");
+    assert_eq!(
+        Some("insufficient_scope"),
+        post_json["error_code"].as_str(),
+        "{post_body}"
+    );
+}
+
+#[test]
+fn masters_api_key_regenerate_demotes_write_scope_to_read_only() {
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+
+    set_user_api_key_scopes(user_id, r#"["masters:read","masters:write"]"#);
+    let api_key = regenerate_api_key(&client, &session_id);
+
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {api_key}"));
+
+    let (post_status, post_body) = status_and_body(client.post(
+        "/api/v1/masters/crops",
+        None,
+        &headers,
+        Some(serde_json::json!({ "crop": { "name": "regenerate-demote-crop" } })),
+    ));
+    assert_eq!(403, post_status, "{post_body}");
+
+    let conn = rusqlite::Connection::open(
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH"),
+    )
+    .expect("open sqlite");
+    let scopes: String = conn
+        .query_row(
+            "SELECT api_key_scopes FROM users WHERE id = ?1",
+            rusqlite::params![user_id],
+            |row| row.get(0),
+        )
+        .expect("api_key_scopes");
+    assert_eq!(r#"["masters:read"]"#, scopes);
+}
+
+#[test]
 fn masters_api_key_write_scope_allows_post() {
     let client = ContractClient::from_env();
     let session_id = farmer_session_id(&client);
@@ -3206,6 +3273,7 @@ fn post_masters_crop_setup_proposal_apply_rate_limited_returns_429_with_retry_af
     );
     let response_body = response.text().expect("rate limit body");
     let json: serde_json::Value = serde_json::from_str(&response_body).expect("rate limit JSON");
+    assert_api_failure_errors_include(&json, "rate_limit", &response_body);
     assert_eq!("rate_limit", json["error"].as_str().unwrap());
 }
 
@@ -3294,6 +3362,7 @@ fn get_farm_temperature_chart_fetching_returns_409() {
     let (status, body) = status_and_body(client.get(&path, Some(&session_id), &empty_headers()));
     assert_eq!(409, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("409 JSON");
+    assert_api_failure_errors_include(&json, "weather_data_not_ready", &body);
     assert_eq!("weather_data_not_ready", json["error"].as_str().unwrap());
     assert_eq!("fetching", json["weather_data_status"].as_str().unwrap());
 }
@@ -4202,7 +4271,7 @@ fn org_member_can_update_team_farm() {
     let (status, body) = status_and_body(
         client.patch(&path, Some(&member_session), &empty_headers(), Some(payload)),
     );
-    assert_eq!(200, status, "{body}");
+    assert_cross_user_access_denied(status, &body);
 }
 
 #[test]
@@ -4292,7 +4361,7 @@ fn org_member_can_update_team_crop() {
     let (status, body) = status_and_body(
         client.patch(&path, Some(&member_session), &empty_headers(), Some(payload)),
     );
-    assert_eq!(200, status, "{body}");
+    assert_cross_user_access_denied(status, &body);
 }
 
 #[test]
@@ -4320,7 +4389,7 @@ fn org_non_member_denied_team_crop() {
 }
 
 #[test]
-fn org_member_can_view_team_plan() {
+fn org_member_cannot_view_team_plan() {
     let client = ContractClient::from_env();
     let owner_session = developer_session_id(&client);
     let owner_id = user_id_for_session(&client, &owner_session);
@@ -4342,7 +4411,7 @@ fn org_member_can_view_team_plan() {
     let path = format!("/api/v1/plans/{plan_id}");
     let (member_status, member_body) =
         status_and_body(client.get(&path, Some(&member_session), &empty_headers()));
-    assert_eq!(200, member_status, "{member_body}");
+    assert_cross_user_access_denied(member_status, &member_body);
 }
 
 #[test]
@@ -4437,6 +4506,95 @@ fn cable_allows_unauthenticated_public_optimization_channel() {
 }
 
 #[test]
+#[test]
+fn private_route_patch_public_plan_field_cultivation_rejects_non_owner() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let attacker_session = farmer_session_id(&client);
+    let plan_session = "contract-public-fc-owner-session";
+    let seed = seed_public_plan_field_cultivation(owner_id, Some(plan_session));
+
+    let path = format!(
+        "/api/v1/plans/field_cultivations/{}",
+        seed.field_cultivation_id
+    );
+    let (status, body) = status_and_body(client.patch(
+        &path,
+        Some(&attacker_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "field_cultivation": {
+                "start_date": "2026-05-01",
+                "completion_date": "2026-09-30"
+            }
+        })),
+    ));
+    assert!(
+        status == 403 || status == 404,
+        "expected forbidden or not found, got {status}: {body}"
+    );
+    let (start, completion) = field_cultivation_schedule_dates(seed.field_cultivation_id);
+    assert_eq!(Some(seed.start_date.clone()), start);
+    assert_eq!(Some(seed.completion_date.clone()), completion);
+}
+
+#[test]
+fn public_route_patch_public_plan_field_cultivation_allows_matching_session() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let plan_session = "contract-public-fc-patch-session";
+    let seed = seed_public_plan_field_cultivation(owner_id, Some(plan_session));
+
+    let path = format!(
+        "/api/v1/public_plans/field_cultivations/{}",
+        seed.field_cultivation_id
+    );
+    let mut headers = empty_headers();
+    headers.insert("X-Public-Plan-Session".into(), plan_session.into());
+    let (status, body) = status_and_body(client.patch(
+        &path,
+        None,
+        &headers,
+        Some(serde_json::json!({
+            "field_cultivation": {
+                "start_date": "2026-05-01",
+                "completion_date": "2026-09-30"
+            }
+        })),
+    ));
+    assert_eq!(200, status, "{body}");
+    let (start, completion) = field_cultivation_schedule_dates(seed.field_cultivation_id);
+    assert_eq!(Some("2026-05-01".to_string()), start);
+    assert_eq!(Some("2026-09-30".to_string()), completion);
+}
+
+#[test]
+fn private_route_patch_private_plan_field_cultivation_allows_owner() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let path = format!(
+        "/api/v1/plans/field_cultivations/{}",
+        seed.field_cultivation_id
+    );
+    let (status, body) = status_and_body(client.patch(
+        &path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "field_cultivation": {
+                "start_date": "2026-05-01",
+                "completion_date": "2026-09-30"
+            }
+        })),
+    ));
+    assert_eq!(200, status, "{body}");
+}
+
 fn public_plan_mutation_rejects_mismatched_session() {
     let client = ContractClient::from_env();
     let owner_session = developer_session_id(&client);
@@ -4516,6 +4674,7 @@ fn post_contact_message_returns_503_when_recaptcha_not_configured() {
     ));
     assert_eq!(503, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha unavailable JSON");
+    assert_api_failure_errors_contain(&json, "reCAPTCHA", &body);
     assert!(json["error"]
         .as_str()
         .unwrap_or("")
@@ -4577,6 +4736,7 @@ fn post_contact_message_returns_429_when_rate_limit_exceeded() {
     ));
     assert_eq!(429, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("rate limit JSON");
+    assert_api_failure_errors_include(&json, "rate_limit", &body);
     assert_eq!(Some("rate_limit"), json["error"].as_str());
 }
 
@@ -4609,6 +4769,7 @@ fn post_contact_message_returns_422_when_recaptcha_fails() {
     ));
     assert_eq!(422, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha failure JSON");
+    assert_api_failure_errors_contain(&json, "reCAPTCHA", &body);
     assert!(json["error"].as_str().unwrap_or("").contains("reCAPTCHA"));
 }
 

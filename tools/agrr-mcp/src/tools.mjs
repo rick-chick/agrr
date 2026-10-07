@@ -55,28 +55,5 @@ export function createAgrrMcpToolHandlers(client) {
         };
       },
     },
-    apply_crop_setup: {
-      description:
-        'Apply a validated crop setup proposal via POST .../setup_proposal?mode=apply.',
-      inputSchema: {
-        crop_id: z.number().int().positive().describe('Target crop id'),
-        proposal: cropSetupProposalSchema.describe(
-          'CropSetupProposal JSON (stages, agricultural_tasks, task_schedule_blueprints)',
-        ),
-      },
-      handler: async ({ crop_id, proposal }) => {
-        const result = await client.applyCropSetup(crop_id, proposal);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      },
-    },
   };
 }
-
-export const AGRR_MCP_TOOL_NAMES = [
-  'list_reference_crops',
-  'get_crop_detail',
-  'propose_crop_setup',
-  'apply_crop_setup',
-];

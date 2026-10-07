@@ -452,13 +452,31 @@ components:
   schemas:
     Error:
       type: object
+      required:
+        - errors
       properties:
-        error:
-          type: string
         errors:
           type: array
+          minItems: 1
           items:
-            type: object
+            type: string
+            minLength: 1
+        error_code:
+          type: string
+        field_errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        error:
+          type: string
+          deprecated: true
+          description: Legacy single-message key; duplicated from errors[0] during migration.
+        message:
+          type: string
+          deprecated: true
+          description: Legacy key for {success:false} bodies; duplicated from errors[0] during migration.
 
     Crop:
       type: object

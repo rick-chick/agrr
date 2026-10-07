@@ -1,5 +1,6 @@
 //! Per-user rate limits for Masters API (`/api/v1/masters/*`).
 
+use crate::api_error::single_failure;
 use axum::{
     body::Body,
     extract::{Request, State},
@@ -144,7 +145,7 @@ fn rate_limit_response(retry_after: u64) -> Response {
     (
         StatusCode::TOO_MANY_REQUESTS,
         headers,
-        Json(json!({"error": "rate_limit"})),
+        Json(single_failure("rate_limit")),
     )
         .into_response()
 }

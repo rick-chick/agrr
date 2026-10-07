@@ -70,7 +70,7 @@ Gateway trait は **`agrr-domain` 内**、実装は上記 adapter クレート�
 
 ### `agrr-server` 配線（確定 — `CompositionRoot` 写経）
 
-Ruby の [`lib/composition_root.rb`](../../../lib/composition_root.rb) と同型とする。
+Ruby の `lib/composition_root.rb`（P8 で削除済み）と同型とする。
 
 | 項目 | 選定 |
 |------|------|

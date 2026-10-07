@@ -79,3 +79,43 @@ fn list_private_plan_index_rows_includes_farm_id() {
     assert_eq!(20, rows[0].id);
     assert_eq!(Some(2026), rows[0].plan_year);
 }
+
+#[test]
+fn list_private_plan_index_rows_excludes_other_members_org_scoped_plans() {
+    let pool = private_read_test_pool();
+    let owner_id = 3_i64;
+    let member_id = 7_i64;
+    let org_id = 42_i64;
+    pool.with_write(|conn| {
+        conn.execute(
+            "INSERT INTO farms (id, user_id, name, latitude, longitude, region, is_reference, created_at, updated_at)
+             VALUES (10, ?1, 'Farm X', 35.0, 139.0, 'jp', 0, datetime('now'), datetime('now'))",
+            params![owner_id],
+        )?;
+        conn.execute(
+            "INSERT INTO organization_memberships (organization_id, user_id, role, created_at, updated_at)
+             VALUES (?1, ?2, 'owner', datetime('now'), datetime('now')),
+                    (?1, ?3, 'member', datetime('now'), datetime('now'))",
+            params![org_id, owner_id, member_id],
+        )?;
+        conn.execute(
+            "INSERT INTO cultivation_plans (id, farm_id, user_id, organization_id, total_area, plan_type, plan_name, plan_year, status, created_at, updated_at)
+             VALUES (20, 10, ?1, ?2, 50.0, 'private', 'Team Plan', 2026, 'pending', datetime('now'), datetime('now'))",
+            params![owner_id, org_id],
+        )?;
+        Ok(())
+    })
+    .unwrap();
+
+    let gw = CultivationPlanPrivateReadSqliteGateway::new(pool);
+    let member_rows = gw
+        .list_private_plan_index_rows_by_user_id(member_id)
+        .unwrap();
+    assert!(member_rows.is_empty());
+
+    let owner_rows = gw
+        .list_private_plan_index_rows_by_user_id(owner_id)
+        .unwrap();
+    assert_eq!(1, owner_rows.len());
+    assert_eq!(20, owner_rows[0].id);
+}
