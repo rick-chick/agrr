@@ -9,12 +9,9 @@ use crate::state::AppState;
 use agrr_adapters_agrr::FieldCultivationClimateAgrrGateway;
 use agrr_adapters_sqlite::{
     FieldCultivationClimateSourceSqliteGateway, FieldCultivationCropSqliteGateway,
-    FieldCultivationPlanPredictedWeatherSqliteGateway,
     FieldCultivationWeatherDataFromStorageGateway, UserLookupSqliteGateway,
     WeatherDataGatewayBundle,
 };
-use agrr_domain::weather_data::dtos::PredictedWeatherScope;
-use agrr_domain::weather_data::gateways::PredictedWeatherStoreGateway;
 use agrr_domain::field_cultivation::dtos::{
     FieldCultivationClimateDataInput, FieldCultivationClimateDataOutput,
 };
@@ -22,12 +19,7 @@ use agrr_domain::field_cultivation::interactors::FieldCultivationClimateDataInte
 use agrr_domain::field_cultivation::ports::{
     FieldCultivationClimateDataInputPort, FieldCultivationClimateDataOutputPort,
 };
-use agrr_domain::field_cultivation::gateways::FieldCultivationWeatherPredictionServiceGateway;
-use agrr_domain::field_cultivation::dtos::CultivationPlanWeatherInput;
 use agrr_domain::shared::dtos::Error;
-use agrr_domain::field_cultivation::ports::{
-    WeatherPredictionAnchors, WeatherPredictionAnchorsPort,
-};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -36,7 +28,6 @@ use axum::{
 use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use serde_json::{json, Value};
-use time::Date;
 
 struct ClimatePresenter {
     body: Option<ClimateOutcome>,
@@ -95,45 +86,6 @@ fn climate_failure_response(
             "error_code": error_code,
         })),
     )
-}
-
-struct FixedAnchors;
-
-impl WeatherPredictionAnchorsPort for FixedAnchors {
-    fn anchors_for(&self, reference_calendar_day: Date) -> WeatherPredictionAnchors {
-        let training_end = reference_calendar_day;
-        let training_start = Date::from_calendar_date(
-            training_end.year().saturating_sub(20),
-            time::Month::January,
-            1,
-        )
-        .unwrap_or(training_end);
-        WeatherPredictionAnchors {
-            training_start_date: training_start,
-            training_end_date: training_end,
-        }
-    }
-}
-
-struct StoreBackedWeatherPredictionService<'a> {
-    store: &'a dyn PredictedWeatherStoreGateway,
-}
-
-impl FieldCultivationWeatherPredictionServiceGateway for StoreBackedWeatherPredictionService<'_> {
-    fn predict_for_cultivation_plan(
-        &self,
-        _weather_location: &Value,
-        _farm: &Value,
-        plan_weather: &CultivationPlanWeatherInput,
-    ) -> Option<Value> {
-        if plan_weather.plan_metadata.is_none() {
-            return None;
-        }
-        self.store
-            .read_payload(PredictedWeatherScope::Plan, plan_weather.id)
-            .ok()
-            .flatten()
-    }
 }
 
 #[derive(Deserialize)]
@@ -225,20 +177,11 @@ async fn run_climate_data(
         FieldCultivationWeatherDataFromStorageGateway::new(&weather_bundle);
     let climate_source = FieldCultivationClimateSourceSqliteGateway::new(db_path);
     let crop_gateway = FieldCultivationCropSqliteGateway::new(pool.clone());
-    let plan_weather = FieldCultivationPlanPredictedWeatherSqliteGateway::from_bundle(
-        pool.clone(),
-        &state.predicted_weather,
-    );
     let agrr = FieldCultivationClimateAgrrGateway::from_env();
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let logger = StderrLogger;
     let translator = PassthroughTranslator;
     let clock = SystemClock;
-    let anchors = FixedAnchors;
-    let prediction_service = StoreBackedWeatherPredictionService {
-        store: state.predicted_weather.store.as_ref(),
-    };
-
     let mut presenter = ClimatePresenter { body: None };
     let mut interactor = FieldCultivationClimateDataInteractor::new(
         &mut presenter,
@@ -252,11 +195,7 @@ async fn run_climate_data(
         &climate_source,
         &crop_gateway,
         &weather_data,
-        &prediction_service,
-        &agrr,
-        &plan_weather,
         state.predicted_weather.store.as_ref(),
-        &anchors,
         &agrr,
         &clock,
         &translator,
