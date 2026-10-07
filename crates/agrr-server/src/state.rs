@@ -1,6 +1,6 @@
 use crate::cable::CableHub;
 use crate::contact_message_rate_limit::ContactMessageRateLimiter;
-use crate::contact_message_recaptcha::RecaptchaVerifier;
+use crate::contact_message_turnstile::TurnstileVerifier;
 use crate::masters_rate_limit::{MastersRateLimitConfig, MastersRateLimiter};
 use crate::farm_weather_fetch_locks::FarmWeatherFetchLocks;
 use crate::plan_optimization_chain_locks::PlanOptimizationChainLocks;
@@ -51,7 +51,7 @@ pub struct AppState {
     pub locale_catalog: Arc<LocaleCatalog>,
     pub masters_rate_limit: Arc<MastersRateLimiter>,
     pub contact_message_rate_limit: Arc<ContactMessageRateLimiter>,
-    pub recaptcha_verifier: Arc<RecaptchaVerifier>,
+    pub turnstile_verifier: Arc<TurnstileVerifier>,
 }
 
 /// Default matches `RAILS_MAX_THREADS` in `docs/migration/app-rust-stack/PROVISIONAL-STACK.md`.
@@ -116,7 +116,7 @@ impl AppState {
             cable_hub: Arc::new(CableHub::default()),
             masters_rate_limit: Arc::new(MastersRateLimiter::new(MastersRateLimitConfig::from_env())),
             contact_message_rate_limit: Arc::new(ContactMessageRateLimiter::from_env()),
-            recaptcha_verifier: Arc::new(RecaptchaVerifier::from_env()),
+            turnstile_verifier: Arc::new(TurnstileVerifier::from_env()),
         }
     }
 }

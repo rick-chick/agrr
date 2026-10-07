@@ -30,10 +30,10 @@ async fn api_v1_health(State(state): State<AppState>) -> Json<serde_json::Value>
     let environment = std::env::var("RAILS_ENV")
         .or_else(|_| std::env::var("AGRR_ENV"))
         .unwrap_or_else(|_| "production".into());
-    let recaptcha_configured = state.recaptcha_verifier.is_configured();
+    let captcha_configured = state.turnstile_verifier.is_configured();
     let mut warnings = Vec::new();
-    if !recaptcha_configured {
-        warnings.push("RECAPTCHA_SECRET_KEY is unset; contact messages are rejected");
+    if !captcha_configured {
+        warnings.push("TURNSTILE_SECRET_KEY is unset; contact messages are rejected");
     }
     Json(serde_json::json!({
         "status": "ok",
@@ -42,7 +42,7 @@ async fn api_v1_health(State(state): State<AppState>) -> Json<serde_json::Value>
         "timestamp": timestamp,
         "environment": environment,
         "version": "1.0.0",
-        "recaptcha_configured": recaptcha_configured,
+        "captcha_configured": captcha_configured,
         "warnings": warnings,
     }))
 }

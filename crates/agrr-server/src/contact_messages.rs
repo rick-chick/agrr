@@ -1,6 +1,6 @@
 //! `POST /api/v1/contact_messages` (anonymous).
 
-use crate::api_error::single_failure;
+use crate::api_error::{single_failure, single_failure_with_code};
 use crate::contact_message_rate_limit::ContactMessageRateLimiterAdapter;
 use crate::state::AppState;
 use agrr_adapters_sqlite::ContactMessageSqliteGateway;
@@ -34,7 +34,7 @@ struct ContactMessageBody {
     subject: Option<String>,
     message: String,
     source: Option<String>,
-    recaptcha_token: Option<String>,
+    captcha_token: Option<String>,
 }
 
 pub fn remote_ip_from_headers(headers: &HeaderMap) -> Option<String> {
@@ -63,18 +63,18 @@ fn failure_response(failure: CreateContactMessageFailure) -> (StatusCode, Json<s
             StatusCode::TOO_MANY_REQUESTS,
             single_failure("rate_limit"),
         ),
-        CreateContactMessageFailureKind::Recaptcha => {
+        CreateContactMessageFailureKind::Captcha => {
             let message = failure.message.unwrap_or_default();
             (
                 StatusCode::UNPROCESSABLE_ENTITY,
-                single_failure(&message),
+                single_failure_with_code(&message, "captcha_failed"),
             )
         }
         CreateContactMessageFailureKind::Unavailable => {
             let message = failure.message.unwrap_or_default();
             (
                 StatusCode::SERVICE_UNAVAILABLE,
-                single_failure(&message),
+                single_failure_with_code(&message, "captcha_unavailable"),
             )
         }
         CreateContactMessageFailureKind::Validation => (
@@ -112,7 +112,7 @@ async fn create(
 ) -> Result<(StatusCode, Json<serde_json::Value>), StatusCode> {
     let gateway = ContactMessageSqliteGateway::new(state.sqlite.clone());
     let remote_ip = remote_ip_from_headers(&headers).unwrap_or_else(|| "unknown".to_string());
-    let recaptcha = state.recaptcha_verifier.as_ref();
+    let captcha = state.turnstile_verifier.as_ref();
     let rate_limit = ContactMessageRateLimiterAdapter::new(&state.contact_message_rate_limit, &remote_ip);
     let mut presenter = CreatePresenter { body: None };
     let input = CreateContactMessageInput::new(
@@ -121,13 +121,13 @@ async fn create(
         body.subject,
         body.message,
         body.source,
-        body.recaptcha_token,
+        body.captcha_token,
         Some(remote_ip),
     );
     let mut interactor = CreateContactMessageInteractor::new(
         &mut presenter,
         &gateway,
-        recaptcha,
+        captcha,
         &rate_limit,
     );
     interactor
@@ -145,13 +145,23 @@ mod tests {
     use axum::http::HeaderMap;
 
     #[test]
-    fn failure_response_unavailable_returns_503() {
+    fn failure_response_captcha_returns_422_with_error_code() {
+        let (status, Json(json)) =
+            failure_response(CreateContactMessageFailure::captcha("Turnstile failure: bad"));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(json["errors"][0], "Turnstile failure: bad");
+        assert_eq!(json["error_code"], "captcha_failed");
+        assert!(json.get("code").is_none());
+    }
+
+    #[test]
+    fn failure_response_unavailable_returns_503_with_error_code() {
         let (status, Json(json)) = failure_response(CreateContactMessageFailure::unavailable(
-            "reCAPTCHA is not configured",
+            "CAPTCHA is not configured",
         ));
         assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
-        assert_eq!(json["errors"][0], "reCAPTCHA is not configured");
-        assert_eq!(json["error"], "reCAPTCHA is not configured");
+        assert_eq!(json["errors"][0], "CAPTCHA is not configured");
+        assert_eq!(json["error_code"], "captcha_unavailable");
     }
 
     #[test]

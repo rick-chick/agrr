@@ -5,8 +5,8 @@ use crate::contact_messages::dtos::{
 };
 use crate::contact_messages::gateways::ContactMessageGateway;
 use crate::contact_messages::ports::{
-    ContactMessageRateLimiterPort, CreateContactMessageOutputPort, RateLimitTrackResult,
-    RecaptchaVerifierPort, RecaptchaVerifyResult,
+    CaptchaVerifierPort, CaptchaVerifyResult, ContactMessageRateLimiterPort,
+    CreateContactMessageOutputPort, RateLimitTrackResult,
 };
 use crate::shared::exceptions::RecordInvalidError;
 
@@ -14,7 +14,7 @@ use crate::shared::exceptions::RecordInvalidError;
 pub struct CreateContactMessageInteractor<'a, G, O, R, L> {
     output_port: &'a mut O,
     gateway: &'a G,
-    recaptcha_verifier: &'a R,
+    captcha_verifier: &'a R,
     rate_limiter: &'a L,
 }
 
@@ -22,19 +22,19 @@ impl<'a, G, O, R, L> CreateContactMessageInteractor<'a, G, O, R, L>
 where
     G: ContactMessageGateway,
     O: CreateContactMessageOutputPort,
-    R: RecaptchaVerifierPort,
+    R: CaptchaVerifierPort,
     L: ContactMessageRateLimiterPort,
 {
     pub fn new(
         output_port: &'a mut O,
         gateway: &'a G,
-        recaptcha_verifier: &'a R,
+        captcha_verifier: &'a R,
         rate_limiter: &'a L,
     ) -> Self {
         Self {
             output_port,
             gateway,
-            recaptcha_verifier,
+            captcha_verifier,
             rate_limiter,
         }
     }
@@ -50,20 +50,25 @@ where
             return Ok(());
         }
 
-        match self.recaptcha_verifier.verify(
-            input.recaptcha_token.as_deref(),
+        match self.captcha_verifier.verify(
+            input.captcha_token.as_deref(),
             input.remote_ip.as_deref(),
         ) {
-            RecaptchaVerifyResult::Ok => {}
-            RecaptchaVerifyResult::NotConfigured => {
+            CaptchaVerifyResult::Ok => {}
+            CaptchaVerifyResult::NotConfigured => {
                 self.output_port.on_failure(CreateContactMessageFailure::unavailable(
-                    "reCAPTCHA is not configured",
+                    "CAPTCHA is not configured",
                 ));
                 return Ok(());
             }
-            RecaptchaVerifyResult::Error(msg) => {
+            CaptchaVerifyResult::Unavailable(msg) => {
                 self.output_port
-                    .on_failure(CreateContactMessageFailure::recaptcha(msg));
+                    .on_failure(CreateContactMessageFailure::unavailable(msg));
+                return Ok(());
+            }
+            CaptchaVerifyResult::Rejected(msg) => {
+                self.output_port
+                    .on_failure(CreateContactMessageFailure::captcha(msg));
                 return Ok(());
             }
         }

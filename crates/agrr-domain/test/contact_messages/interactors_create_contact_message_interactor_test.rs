@@ -3,11 +3,11 @@
     use crate::contact_messages::entities::{ContactMessage, ContactMessageAttrs};
     use crate::shared::validation::{ErrorsLike, ValidationErrors};
 
-    struct NoopRecaptcha;
+    struct NoopCaptcha;
 
-    impl RecaptchaVerifierPort for NoopRecaptcha {
-        fn verify(&self, _token: Option<&str>, _remote_ip: Option<&str>) -> RecaptchaVerifyResult {
-            RecaptchaVerifyResult::Ok
+    impl CaptchaVerifierPort for NoopCaptcha {
+        fn verify(&self, _token: Option<&str>, _remote_ip: Option<&str>) -> CaptchaVerifyResult {
+            CaptchaVerifyResult::Ok
         }
     }
 
@@ -122,12 +122,12 @@
             failure: None,
         };
 
-        let recaptcha = NoopRecaptcha;
+        let captcha = NoopCaptcha;
         let limiter = NoopRateLimiter;
         let mut interactor = CreateContactMessageInteractor::new(
             &mut output,
             &gateway,
-            &recaptcha,
+            &captcha,
             &limiter,
         );
 
@@ -152,12 +152,12 @@
             failure: None,
         };
 
-        let recaptcha = NoopRecaptcha;
+        let captcha = NoopCaptcha;
         let limiter = NoopRateLimiter;
         let mut interactor = CreateContactMessageInteractor::new(
             &mut output,
             &gateway,
-            &recaptcha,
+            &captcha,
             &limiter,
         );
 
@@ -192,12 +192,12 @@
             failure: None,
         };
 
-        let recaptcha = NoopRecaptcha;
+        let captcha = NoopCaptcha;
         let limiter = NoopRateLimiter;
         let mut interactor = CreateContactMessageInteractor::new(
             &mut output,
             &gateway,
-            &recaptcha,
+            &captcha,
             &limiter,
         );
 
@@ -225,12 +225,12 @@
             failure: None,
         };
 
-        let recaptcha = NoopRecaptcha;
+        let captcha = NoopCaptcha;
         let limiter = RateLimited;
         let mut interactor = CreateContactMessageInteractor::new(
             &mut output,
             &gateway,
-            &recaptcha,
+            &captcha,
             &limiter,
         );
 
@@ -240,18 +240,17 @@
         assert!(received.rate_limit_kind());
     }
 
-    // Ruby: test "calls on_failure when recaptcha fails"
     #[test]
-    fn calls_on_failure_when_recaptcha_fails() {
-        struct BadRecaptcha;
+    fn calls_on_failure_when_captcha_rejected() {
+        struct RejectingCaptcha;
 
-        impl RecaptchaVerifierPort for BadRecaptcha {
+        impl CaptchaVerifierPort for RejectingCaptcha {
             fn verify(
                 &self,
                 _token: Option<&str>,
                 _remote_ip: Option<&str>,
-            ) -> RecaptchaVerifyResult {
-                RecaptchaVerifyResult::Error("bad captcha".into())
+            ) -> CaptchaVerifyResult {
+                CaptchaVerifyResult::Rejected("bad captcha".into())
             }
         }
 
@@ -261,33 +260,33 @@
             failure: None,
         };
 
-        let recaptcha = BadRecaptcha;
+        let captcha = RejectingCaptcha;
         let limiter = NoopRateLimiter;
         let mut interactor = CreateContactMessageInteractor::new(
             &mut output,
             &gateway,
-            &recaptcha,
+            &captcha,
             &limiter,
         );
 
         interactor.call(sample_input()).expect("call succeeds");
 
         let received = output.failure.expect("on_failure called");
-        assert!(received.recaptcha_kind());
+        assert!(received.captcha_kind());
         assert_eq!(received.message.as_deref(), Some("bad captcha"));
     }
 
     #[test]
-    fn calls_on_failure_when_recaptcha_not_configured() {
-        struct UnconfiguredRecaptcha;
+    fn calls_on_failure_when_captcha_unavailable() {
+        struct UnavailableCaptcha;
 
-        impl RecaptchaVerifierPort for UnconfiguredRecaptcha {
+        impl CaptchaVerifierPort for UnavailableCaptcha {
             fn verify(
                 &self,
                 _token: Option<&str>,
                 _remote_ip: Option<&str>,
-            ) -> RecaptchaVerifyResult {
-                RecaptchaVerifyResult::NotConfigured
+            ) -> CaptchaVerifyResult {
+                CaptchaVerifyResult::Unavailable("upstream down".into())
             }
         }
 
@@ -297,12 +296,48 @@
             failure: None,
         };
 
-        let recaptcha = UnconfiguredRecaptcha;
+        let captcha = UnavailableCaptcha;
         let limiter = NoopRateLimiter;
         let mut interactor = CreateContactMessageInteractor::new(
             &mut output,
             &gateway,
-            &recaptcha,
+            &captcha,
+            &limiter,
+        );
+
+        interactor.call(sample_input()).expect("call succeeds");
+
+        let received = output.failure.expect("on_failure called");
+        assert!(received.unavailable_kind());
+        assert_eq!(received.message.as_deref(), Some("upstream down"));
+    }
+
+    #[test]
+    fn calls_on_failure_when_captcha_not_configured() {
+        struct UnconfiguredCaptcha;
+
+        impl CaptchaVerifierPort for UnconfiguredCaptcha {
+            fn verify(
+                &self,
+                _token: Option<&str>,
+                _remote_ip: Option<&str>,
+            ) -> CaptchaVerifyResult {
+                CaptchaVerifyResult::NotConfigured
+            }
+        }
+
+        let gateway = MockGateway::unconfigured();
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+
+        let captcha = UnconfiguredCaptcha;
+        let limiter = NoopRateLimiter;
+        let mut interactor = CreateContactMessageInteractor::new(
+            &mut output,
+            &gateway,
+            &captcha,
             &limiter,
         );
 
@@ -312,6 +347,49 @@
         assert!(received.unavailable_kind());
         assert_eq!(
             received.message.as_deref(),
-            Some("reCAPTCHA is not configured")
+            Some("CAPTCHA is not configured")
         );
+    }
+
+    #[test]
+    fn rate_limit_prevents_captcha_verification() {
+        struct SpyCaptcha {
+            called: std::sync::Mutex<bool>,
+        }
+
+        impl CaptchaVerifierPort for SpyCaptcha {
+            fn verify(&self, _token: Option<&str>, _remote_ip: Option<&str>) -> CaptchaVerifyResult {
+                *self.called.lock().expect("lock") = true;
+                CaptchaVerifyResult::Ok
+            }
+        }
+
+        struct RateLimited;
+
+        impl ContactMessageRateLimiterPort for RateLimited {
+            fn track(&self) -> RateLimitTrackResult {
+                RateLimitTrackResult::RateLimited
+            }
+        }
+
+        let gateway = MockGateway::unconfigured();
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+
+        let captcha = SpyCaptcha {
+            called: std::sync::Mutex::new(false),
+        };
+        let limiter = RateLimited;
+        let mut interactor = CreateContactMessageInteractor::new(
+            &mut output,
+            &gateway,
+            &captcha,
+            &limiter,
+        );
+
+        interactor.call(sample_input()).expect("call succeeds");
+
+        assert!(!*captcha.called.lock().expect("lock"));
     }

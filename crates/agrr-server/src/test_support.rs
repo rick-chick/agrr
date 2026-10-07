@@ -8,7 +8,7 @@ use crate::jobs::JobChainDispatcher;
 use crate::state::{AppState, DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS, TEST_TASK_SCHEDULE_REGEN_DEBOUNCE};
 use crate::locale_catalog::LocaleCatalog;
 use crate::contact_message_rate_limit::{ContactMessageRateLimitConfig, ContactMessageRateLimiter};
-use crate::contact_message_recaptcha::RecaptchaVerifier;
+use crate::contact_message_turnstile::TurnstileVerifier;
 use crate::masters_rate_limit::{MastersRateLimitConfig, MastersRateLimiter};
 use agrr_adapters_sqlite::{PredictedWeatherGatewayBundle, SqlitePool};
 use agrr_domain::weather_data::gateways::WeatherDataGateway;
@@ -290,7 +290,7 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
         contact_message_rate_limit: Arc::new(ContactMessageRateLimiter::new(
             ContactMessageRateLimitConfig { limit: 10, period_secs: 60 },
         )),
-        recaptcha_verifier: Arc::new(RecaptchaVerifier::from_env()),
+        turnstile_verifier: Arc::new(TurnstileVerifier::from_env()),
     }
 }
 
