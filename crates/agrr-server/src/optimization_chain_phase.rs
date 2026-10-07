@@ -389,6 +389,54 @@ mod tests {
     }
 
     #[test]
+    fn ensure_plan_still_optimizing_err_when_status_query_fails() {
+        let db = test_pool_with_optimizing_plan(1);
+        let pool = db.pool.clone();
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE cultivation_plans", [])?;
+            Ok(())
+        })
+        .expect("drop cultivation_plans");
+        assert!(
+            ensure_plan_still_optimizing(&pool, 1).is_err(),
+            "inner chain steps must not treat DB errors as a normal stop"
+        );
+    }
+
+    #[test]
+    fn run_guarded_optimization_step_skips_step_when_status_query_fails() {
+        let db = test_pool_with_optimizing_plan(1);
+        let pool = db.pool.clone();
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE cultivation_plans", [])?;
+            Ok(())
+        })
+        .expect("drop cultivation_plans");
+        let state = test_app_state(pool);
+        let step_ran = Arc::new(AtomicBool::new(false));
+        let step_ran_in = step_ran.clone();
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "fetch_weather_data",
+            Some("fetching_weather"),
+            None,
+            || {
+                step_ran_in.store(true, Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(!continue_chain);
+        assert!(
+            !step_ran.load(Ordering::SeqCst),
+            "step must not run when plan status cannot be read"
+        );
+    }
+
+    #[test]
     fn run_guarded_optimization_step_skips_when_plan_not_optimizing() {
         let db = test_pool_with_plan(1);
         let state = test_app_state(db.pool);

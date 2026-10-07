@@ -636,6 +636,7 @@ mod tests {
     };
     use agrr_domain::public_plan::mappers::entry_schedule_crop_mapper::EntryScheduleCropLike;
     use agrr_domain::weather_data::WeatherPredictionError;
+    use std::collections::BTreeMap;
     use tempfile::NamedTempFile;
 
     struct StubShowCrop {
@@ -950,6 +951,61 @@ mod tests {
         };
 
         assert!(load_crop_entity_for_optimize(&gateway, &show_crop).is_err());
+    }
+
+    #[test]
+    fn optimize_runner_returns_crop_load_failed_when_crop_row_missing() {
+        let (pool, _file) = crop_test_pool();
+        let runner = OptimizeRunner {
+            pool,
+            optimization: EntryScheduleOptimizationAgrrDaemonGateway::from_env(),
+            agrr_enabled: false,
+        };
+        let show_crop = StubShowCrop {
+            id: 99,
+            name: "missing",
+        };
+        let farm = FarmWrap(FarmEntity {
+            id: 1,
+            name: "Farm".into(),
+            latitude: Some(35.0),
+            longitude: Some(139.0),
+            region: Some("jp".into()),
+            user_id: None,
+            organization_id: None,
+            created_at: None,
+            updated_at: None,
+            is_reference: false,
+            weather_data_status: None,
+            weather_data_fetched_years: None,
+            weather_data_total_years: None,
+            weather_data_last_error: None,
+            weather_location_id: Some(1),
+            last_broadcast_at: None,
+        });
+        let result = runner.call(&show_crop, &BTreeMap::new(), &farm);
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error").and_then(|v| v.as_str()),
+            Some("crop_load_failed")
+        );
+    }
+
+    // Locks fail-open behavior (docs/spec-defects/06 item D) until stage list errors propagate.
+    #[test]
+    fn stage_rows_returns_empty_when_crop_stages_query_fails() {
+        let (pool, _file) = crop_test_pool();
+        insert_crop_with_method(&pool, 1, "Tomato", "transplant");
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE crop_stages", [])?;
+            Ok(())
+        })
+        .expect("drop crop_stages");
+        let gateway = CropSqliteGateway::new(pool);
+        assert!(
+            stage_rows(&gateway, 1).is_empty(),
+            "DB read errors must not be confused with an empty stage list in API responses"
+        );
     }
 
     #[test]
