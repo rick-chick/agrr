@@ -92,7 +92,23 @@ test('proposeCropSetup posts dry_run mode', async () => {
   assert.equal(result.errors?.length ?? 0, 0);
 });
 
-test('request surfaces API errors', async () => {
+test('request surfaces API errors from errors array', async () => {
+  const client = new AgrrClient({
+    baseUrl: 'http://localhost:3000',
+    apiKey: 'test-key',
+    fetch: mockFetch(() => ({
+      status: 422,
+      body: { errors: ['a', 'b'] },
+    })),
+  });
+
+  await assert.rejects(
+    () => client.listReferenceCrops(),
+    (err) => err.status === 422 && err.message === 'a, b',
+  );
+});
+
+test('request ignores legacy error-only bodies', async () => {
   const client = new AgrrClient({
     baseUrl: 'http://localhost:3000',
     apiKey: 'test-key',
@@ -101,6 +117,8 @@ test('request surfaces API errors', async () => {
 
   await assert.rejects(
     () => client.listReferenceCrops(),
-    (err) => err.status === 401,
+    (err) =>
+      err.status === 401 &&
+      err.message === 'AGRR API 401 for /api/v1/masters/crops',
   );
 });

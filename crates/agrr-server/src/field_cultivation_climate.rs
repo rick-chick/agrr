@@ -145,7 +145,7 @@ async fn private_climate_data(
     let user_id = user_id_from_session(&state, &jar).map_err(|status| {
         (
             status,
-            Json(json!({"success": false, "message": "unauthorized"})),
+            Json(json!({"success": false, "errors": ["unauthorized"]})),
         )
     })?;
     run_climate_data(&state, Some(user_id), id, query).await
@@ -170,7 +170,7 @@ async fn run_climate_data(
     let weather_bundle = WeatherDataGatewayBundle::resolve(pool.clone()).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": e.to_string()})),
+            Json(json!({"success": false, "errors": [e.to_string()]})),
         )
     })?;
     let weather_data =
@@ -209,7 +209,7 @@ async fn run_climate_data(
     interactor.call(input).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": e.to_string()})),
+            Json(json!({"success": false, "errors": [e.to_string()]})),
         )
     })?;
 
@@ -217,12 +217,12 @@ async fn run_climate_data(
         Some(ClimateOutcome::Success(dto)) => Ok(Json(success_json(dto))),
         Some(ClimateOutcome::Error(msg)) => Err((
             status_for_message(&msg),
-            Json(json!({"success": false, "message": msg})),
+            Json(json!({"success": false, "errors": [msg]})),
         )),
         Some(ClimateOutcome::Failure(failure)) => Err(climate_failure_response(failure)),
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": "no response"})),
+            Json(json!({"success": false, "errors": ["no response"]})),
         )),
     }
 }

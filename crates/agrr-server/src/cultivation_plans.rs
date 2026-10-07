@@ -59,7 +59,7 @@ async fn private_plan_data(
     let user_id = user_id_from_session(&state, &jar).map_err(|status| {
         (
             status,
-            Json(json!({"success": false, "message": "unauthorized"})),
+            Json(json!({"success": false, "errors": ["unauthorized"]})),
         )
     })?;
 
@@ -86,7 +86,7 @@ async fn private_plan_data(
         .map_err(|e| {
             (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"success": false, "message": e.to_string()})),
+                Json(json!({"success": false, "errors": [e.to_string()]})),
             )
         })?;
 
@@ -94,15 +94,15 @@ async fn private_plan_data(
         Some(DataOutcome::Success(body)) => Ok(Json(body)),
         Some(DataOutcome::NotFound) => Err((
             axum::http::StatusCode::NOT_FOUND,
-            Json(json!({"success": false, "message": "not found"})),
+            Json(json!({"success": false, "errors": ["not found"]})),
         )),
         Some(DataOutcome::Unexpected(msg)) => Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": msg})),
+            Json(json!({"success": false, "errors": [msg]})),
         )),
         None => Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": "no response"})),
+            Json(json!({"success": false, "errors": ["no response"]})),
         )),
     }
 }

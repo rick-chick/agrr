@@ -62,7 +62,7 @@ async fn index(
         fn on_not_found(&mut self) {
             self.body = Some(Err((
                 StatusCode::NOT_FOUND,
-                Json(json!({"error": "Crop not found"})),
+                Json(json!({"errors": ["Crop not found"]})),
             )));
         }
     }

@@ -64,7 +64,7 @@ async fn list_work_hub(
     let user_id = user_id_from_session(&state, &jar).map_err(|status| {
         (
             status,
-            Json(json!({ "error": "unauthorized" })),
+            Json(json!({ "errors": ["unauthorized"] })),
         )
     })?;
 
@@ -81,7 +81,7 @@ async fn list_work_hub(
         Some(Ok(rows)) => Ok(Json(json!(rows))),
         Some(Err((message, status))) => Err((
             StatusCode::from_u16(status).unwrap_or(StatusCode::UNPROCESSABLE_ENTITY),
-            Json(json!({ "error": message })),
+            Json(json!({ "errors": [message]})),
         )),
         None => Err(internal_error()),
     }
@@ -90,6 +90,6 @@ async fn list_work_hub(
 fn internal_error() -> (StatusCode, Json<Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(json!({ "error": "Internal server error" })),
+        Json(json!({ "errors": ["Internal server error"] })),
     )
 }

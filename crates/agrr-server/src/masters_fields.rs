@@ -280,7 +280,7 @@ fn list_failure(error: ListFailure) -> (StatusCode, Value) {
     match error {
         ListFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "fields.flash.no_permission"}),
+            json!({"errors": ["fields.flash.no_permission"]}),
         ),
         ListFailure::Error(e) => {
             let status = match e.message.as_str() {
@@ -288,7 +288,7 @@ fn list_failure(error: ListFailure) -> (StatusCode, Value) {
                 "User not found" => StatusCode::UNAUTHORIZED,
                 _ => StatusCode::UNPROCESSABLE_ENTITY,
             };
-            (status, json!({"error": e.message}))
+            (status, json!({"errors": [e.message]}))
         }
     }
 }
@@ -297,7 +297,7 @@ fn detail_failure(error: DetailFailure) -> (StatusCode, Value) {
     match error {
         DetailFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "fields.flash.no_permission"}),
+            json!({"errors": ["fields.flash.no_permission"]}),
         ),
         DetailFailure::FieldDetail(e) => {
             let status = if e.message == "Field not found" {
@@ -305,7 +305,7 @@ fn detail_failure(error: DetailFailure) -> (StatusCode, Value) {
             } else {
                 StatusCode::UNPROCESSABLE_ENTITY
             };
-            (status, json!({"error": e.message}))
+            (status, json!({"errors": [e.message]}))
         }
     }
 }
@@ -314,9 +314,9 @@ fn create_failure(error: CreateFailure) -> (StatusCode, Value) {
     match error {
         CreateFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "fields.flash.no_permission"}),
+            json!({"errors": ["fields.flash.no_permission"]}),
         ),
-        CreateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"error": e.message})),
+        CreateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"errors": [e.message]})),
     }
 }
 
@@ -324,9 +324,9 @@ fn update_failure(error: UpdateFailure) -> (StatusCode, Value) {
     match error {
         UpdateFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "fields.flash.no_permission"}),
+            json!({"errors": ["fields.flash.no_permission"]}),
         ),
-        UpdateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"error": e.message})),
+        UpdateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"errors": [e.message]})),
     }
 }
 
@@ -334,7 +334,7 @@ fn destroy_failure(error: DestroyFailure) -> (StatusCode, Value) {
     match error {
         DestroyFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "fields.flash.no_permission"}),
+            json!({"errors": ["fields.flash.no_permission"]}),
         ),
         DestroyFailure::Error(e) => {
             let status = if e.message == "Field not found" {
@@ -342,7 +342,7 @@ fn destroy_failure(error: DestroyFailure) -> (StatusCode, Value) {
             } else {
                 StatusCode::UNPROCESSABLE_ENTITY
             };
-            (status, json!({"error": e.message}))
+            (status, json!({"errors": [e.message]}))
         }
     }
 }
@@ -358,6 +358,6 @@ fn internal(_: Box<dyn std::error::Error + Send + Sync>) -> (StatusCode, Json<Va
 fn internal_error() -> (StatusCode, Json<Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(json!({"error": "internal"})),
+        Json(json!({"errors": ["internal"]})),
     )
 }

@@ -13,8 +13,7 @@ pub async fn api_not_migrated(request: Request) -> impl IntoResponse {
   (
         StatusCode::NOT_IMPLEMENTED,
         Json(json!({
-            "error": "api_not_migrated",
-            "message": "This API path is not implemented on agrr-server yet",
+            "errors": ["api_not_migrated"],
             "path": path
         })),
     )
