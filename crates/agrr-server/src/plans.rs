@@ -439,6 +439,13 @@ enum DestroyOutcome {
 }
 
 impl CultivationPlanDestroyOutputPort for DestroyPresenter {
+    fn on_not_found(&mut self) {
+        self.body = Some(DestroyOutcome::Failure {
+            status: StatusCode::NOT_FOUND,
+            message: "Plan not found".into(),
+        });
+    }
+
     fn on_success(
         &mut self,
         dto: agrr_domain::cultivation_plan::dtos::CultivationPlanDestroyOutput,
@@ -461,19 +468,10 @@ impl CultivationPlanDestroyOutputPort for DestroyPresenter {
     }
 
     fn on_failure(&mut self, error: Error) {
-        let is_not_found = error.message.contains("not_found")
-            || error.message == "Plan not found";
-        let status = if is_not_found {
-            StatusCode::NOT_FOUND
-        } else {
-            StatusCode::UNPROCESSABLE_ENTITY
-        };
-        let message = if is_not_found {
-            "Plan not found".into()
-        } else {
-            error.message
-        };
-        self.body = Some(DestroyOutcome::Failure { status, message });
+        self.body = Some(DestroyOutcome::Failure {
+            status: StatusCode::UNPROCESSABLE_ENTITY,
+            message: error.message,
+        });
     }
 }
 
