@@ -4,20 +4,14 @@ export interface ContactMessagePayload {
   subject?: string | null;
   message: string;
   source?: string | null;
+  captcha_token?: string | null;
 }
 
 export type ContactMessageStatus = 'sent' | 'failed' | 'queued';
 
 export interface ContactMessageRecord {
   id: number;
-  name?: string | null;
-  email: string;
-  subject?: string | null;
-  message: string;
-  source?: string | null;
   status: ContactMessageStatus;
-  created_at: string;
-  sent_at?: string | null;
 }
 
 // Basic validation helpers used by frontend unit tests / presenters.
@@ -68,6 +62,8 @@ export function validatePayload(payload: ContactMessagePayload): ContactMessageV
   if (!validateEmail(email)) {
     return { valid: false, message: 'contact_form.validation.email_invalid' };
   }
+  if (!payload.captcha_token || payload.captcha_token.trim().length === 0) {
+    return { valid: false, message: 'contact_form.validation.captcha_required' };
+  }
   return { valid: true };
 }
-

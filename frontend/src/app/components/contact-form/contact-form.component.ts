@@ -2,8 +2,12 @@ import {
   Component,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  ElementRef,
+  Inject,
   inject,
-  OnInit
+  OnInit,
+  AfterViewInit,
+  ViewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +30,8 @@ import {
 } from '../../domain/contact/contact-message.model';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyContactFormViewEffects } from './contact-form-view.effects';
+import { CAPTCHA_WIDGET_PORT, CaptchaWidgetPort } from '../../usecase/contact/captcha-widget.port';
+import { SendContactMessageOutputPort } from '../../usecase/contact/send-contact-message.output-port';
 
 const initialControl: ContactFormViewState = {
   loading: false,
@@ -97,13 +103,27 @@ const initialControl: ContactFormViewState = {
             maxlength="5000"
           ></textarea>
         </label>
+
+        <div
+          class="form-card__field contact-form__captcha"
+          #captchaHost
+          role="group"
+          [attr.aria-label]="'contact_form.captcha.aria_label' | translate"
+        ></div>
+        <p
+          *ngIf="captchaUnavailable"
+          class="contact-form__message contact-form__message--error"
+          role="alert"
+        >
+          {{ 'contact_form.errors.captcha_unavailable_ui' | translate }}
+        </p>
       </div>
 
       <div class="form-card__actions">
         <button
           type="submit"
           class="btn btn-primary"
-          [disabled]="control.sending"
+          [disabled]="control.sending || captchaUnavailable || !captchaToken"
         >
           {{ control.sending ? ('common.sending' | translate) : ('contact_form.submit' | translate) }}
         </button>
@@ -134,18 +154,24 @@ const initialControl: ContactFormViewState = {
   `,
   styleUrls: ['../masters/_master-layout.css', './contact-form.component.css']
 })
-export class ContactFormComponent implements ContactFormView, OnInit {
+export class ContactFormComponent implements ContactFormView, OnInit, AfterViewInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly useCase = inject(SendContactMessageUseCase);
   private readonly presenter = inject(ContactFormPresenter);
   private readonly translate = inject(TranslateService);
   private readonly flashMessage = inject(FlashMessageService);
 
+  @ViewChild('captchaHost') captchaHost?: ElementRef<HTMLElement>;
+
+  constructor(@Inject(CAPTCHA_WIDGET_PORT) private readonly captchaWidget: CaptchaWidgetPort) {}
+
   name: string | null = null;
   email = '';
   subject: string | null = null;
   message = '';
   source: string | null = null;
+  captchaToken: string | null = null;
+  captchaUnavailable = false;
 
   private _control: ContactFormViewState = initialControl;
   get control(): ContactFormViewState {
@@ -160,6 +186,30 @@ export class ContactFormComponent implements ContactFormView, OnInit {
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    if (!this.captchaWidget.isConfigured()) {
+      this.captchaUnavailable = true;
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if (this.captchaUnavailable || !this.captchaHost) {
+      return;
+    }
+    this.captchaWidget.render(this.captchaHost.nativeElement, {
+      onToken: (token) => {
+        this.captchaToken = token;
+        this.cdr.markForCheck();
+      },
+      onExpired: () => {
+        this.captchaToken = null;
+        this.cdr.markForCheck();
+      },
+      onUnavailable: () => {
+        this.captchaUnavailable = true;
+        this.captchaToken = null;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   private createMessage(
@@ -173,14 +223,32 @@ export class ContactFormComponent implements ContactFormView, OnInit {
     };
   }
 
+  private resetCaptchaAfterSend(): void {
+    this.captchaToken = null;
+    this.captchaWidget.reset();
+  }
+
+  private buildOutputPort(): SendContactMessageOutputPort {
+    return {
+      onSuccess: (dto) => {
+        this.resetCaptchaAfterSend();
+        this.presenter.onSuccess(dto);
+      },
+      onError: (dto) => {
+        this.resetCaptchaAfterSend();
+        this.presenter.onError(dto);
+      }
+    };
+  }
+
   submit(): void {
-    // Build payload and perform basic client-side validation using domain helpers
     const payload: ContactMessagePayload = {
       name: this.name,
       email: this.email,
       subject: this.subject,
       message: this.message,
-      source: this.source
+      source: this.source,
+      captcha_token: this.captchaToken
     };
 
     const validation = validatePayload(payload);
@@ -200,7 +268,6 @@ export class ContactFormComponent implements ContactFormView, OnInit {
       loading: true,
       message: null
     };
-    this.useCase.execute(payload, this.presenter);
+    this.useCase.execute(payload, this.buildOutputPort());
   }
 }
-

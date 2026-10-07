@@ -1538,7 +1538,13 @@
     },
     "errors": {
       "send_failed": "送信に失敗しました。",
-      "validation_failed": "入力内容を確認してください。"
+      "validation_failed": "入力内容を確認してください。",
+      "captcha_failed": "認証に失敗しました。もう一度お試しください。",
+      "captcha_unavailable": "認証サービスを利用できません。しばらくしてから再度お試しください。",
+      "captcha_unavailable_ui": "認証を読み込めませんでした。ページを再読み込みするか、時間をおいてお試しください。"
+    },
+    "captcha": {
+      "aria_label": "ボット対策の認証"
     },
     "validation": {
       "message_required": "メッセージは必須です。",
@@ -1546,7 +1552,8 @@
       "name_too_long": "お名前は255文字以内で入力してください。",
       "subject_too_long": "件名は255文字以内で入力してください。",
       "email_required": "メールアドレスは必須です。",
-      "email_invalid": "メールアドレスの形式が正しくありません。"
+      "email_invalid": "メールアドレスの形式が正しくありません。",
+      "captcha_required": "認証を完了してから送信してください。"
     }
   },
   "models": {
