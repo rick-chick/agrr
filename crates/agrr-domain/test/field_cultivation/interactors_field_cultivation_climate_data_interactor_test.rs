@@ -1469,7 +1469,7 @@
         assert!(dto.debug_info.get("display_range").is_none());
     }
 
-    // Locks on-the-fly prediction path (docs/spec-defects/06 item 3) before fallback removal.
+    // Locks fail-closed when plan prediction metadata is absent (docs/spec-defects/06 item 3).
     #[test]
     fn fails_when_plan_has_no_cached_metadata() {
         let source = sample_source_without_plan_metadata(
