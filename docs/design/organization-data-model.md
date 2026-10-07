@@ -36,9 +36,9 @@ B2B 法人・チーム共有の土台として、`organizations` と `organizati
 
 | ロール | 権限 |
 |--------|------|
-| `owner` | org 削除（personal 除く）、メンバー管理、設定変更、リソース CRUD |
-| `admin` | メンバー管理（owner 除名不可）、設定変更、リソース CRUD |
-| `member` | org 内リソースの CRUD（メンバー管理不可） |
+| `owner` | org 削除（personal 除く）、メンバー管理、設定変更。リソースの**編集**は自分が作成した行に限る（他メンバーの Farm / Crop / Plan は編集不可。[ADR-003](../adr/ADR-003-organization-sharing-owner-only.md)） |
+| `admin` | メンバー管理（owner 除名不可）、設定変更。リソースの**編集**は自分が作成した行に限る（`organization_member_access` はロールを見ない） |
+| `member` | org 内リソースの作成・自分の行の編集（メンバー管理不可。他メンバーの行は編集不可） |
 
 ## 既存テーブルへの `organization_id` 付与
 
@@ -48,7 +48,7 @@ B2B 法人・チーム共有の土台として、`organizations` と `organizati
 |----------|----------|------|
 | `farms` | `user_id NOT NULL` | 主要アンカー |
 | `crops` | `user_id` nullable | 参照作物は `organization_id` も NULL |
-| `cultivation_plans` | `user_id` nullable | 公開計画は別軸（`session_id`） |
+| `cultivation_plans` | `user_id` nullable | `organization_id` 列は持つが組織では共有しない（所有者のみ。[ADR-003](../adr/ADR-003-organization-sharing-owner-only.md)）。公開計画は別軸（`session_id`） |
 | `fields` | `user_id` nullable | `farm_id` 経由でも到達 |
 | `agricultural_tasks` | `user_id` nullable | ユーザー複製のみ |
 | `fertilizes` | `user_id` nullable | 同上 |
@@ -91,17 +91,15 @@ FOR EACH user IN users:
 
 **冪等性**: バックフィルスクリプトは `is_personal = 1` の org が既に存在するユーザーはスキップ。
 
-## クォータ移行（フェーズ 2 — 参考）
+## クォータ（組織単位）
 
-現行:
+上限は組織単位で、組織の全メンバーが同じ枠を共有する（メンバー別の枠は持たない）。判定は作成先組織の非参照件数（`organization_id = ?` かつ `is_reference = 0`）で行い、Masters・Crop AI upsert・公開計画保存のどの経路でも同じ。
 
-- Farm: ユーザーあたり非参照最大 4 件（`FarmCreateLimitPolicy`）
-- Crop: ユーザーあたり非参照最大 20 件（`CropCreateLimitPolicy`）
-
-移行後:
-
-- personal org: 現行と同等の上限
-- 法人 org: 契約プランに応じた org 単位上限（フェーズ 2 で定義）
+- Farm: 組織あたり非参照最大 4 件（`FarmCreateLimitPolicy`）
+- Crop: 組織あたり非参照最大 20 件（`crop_create_limit_policy`）
+- personal org（1 ユーザー 1 組織）: ユーザー単位の上限と一致する
+- 法人 org: 契約プラン別の上限は未定義（現行は全組織で定数 4 / 20 のみ）
+- 複数の組織に所属するユーザーの作成先組織と枠の扱いは本設計の範囲外（現行は所属の先頭に作成する。規則は別課題で定める）
 
 ## ER 図（フェーズ 1）
 

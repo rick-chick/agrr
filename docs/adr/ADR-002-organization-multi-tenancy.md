@@ -4,19 +4,21 @@
 
 Accepted (2026-08-06)
 
+Plan の組織共有、および Farm / Crop の**編集**の組織共有は [ADR-003](ADR-003-organization-sharing-owner-only.md) で撤回された（ADR-002 の Status は Accepted のまま）。
+
 親エピック: [#604](https://github.com/rick-chick/agrr/issues/604)（Organization モデル — B2B 法人・チーム共有の土台）。
 
 ## Context
 
-AGRR は現状 **ユーザー単位のテナント分離** のみを持つ。農場・作物・計画などの所有リソースは `user_id` でスコープされ、ドメインポリシー（例: `farm_policy.rs`）も `user_id` 一致または `admin` / `is_reference` で判定する。
+AGRR は起票時点（2026-08-06）で **ユーザー単位のテナント分離** のみを持っていた。農場・作物・計画などの所有リソースは `user_id` でスコープされ、ドメインポリシー（例: `farm_policy.rs`）も `user_id` 一致または `admin` / `is_reference` で判定していた。現在は organization 単位のアクセス制御が併存する（下記「実装状況」）。
 
 | 課題 | 内容 |
 |------|------|
 | 法人利用不可 | 1 組織・複数ユーザー・委任管理（管理者がメンバー招待、組織単位で計画共有）のモデルがない |
 | 後付けコスト | エンタープライズ SSO / SCIM を後から足す場合、Organization なしでは全面リファクタが必要（CIAM Compass / WorkOS 等の B2B SaaS パターンと非整合） |
-| クォータ境界 | Farm / Crop 作成上限は `user_id` 単位（`FarmCreateLimitPolicy` / `CropCreateLimitPolicy`）。法人契約では組織単位の制限が自然 |
+| クォータ境界 | （起票時点）Farm / Crop 作成上限は `user_id` 単位（`FarmCreateLimitPolicy` / `crop_create_limit_policy`）。法人契約では組織単位の制限が自然（現在は組織単位に統一済み。下記「実装状況」） |
 
-現状の参照実装:
+起票時点の参照実装:
 
 | 領域 | 根拠 |
 |------|------|
@@ -24,6 +26,15 @@ AGRR は現状 **ユーザー単位のテナント分離** のみを持つ。農
 | アクセス制御 | `crates/agrr-domain/src/shared/policies/farm_policy.rs` — `user_id == Some(user.id)` |
 | 一覧フィルタ | `crates/agrr-adapters-sqlite/src/shared/reference_index.rs` — `user_id = ?` |
 | 認証 | `crates/agrr-server/src/session_auth.rs` — セッション / API キー → `User` |
+
+実装状況（2026-10-07 時点）:
+
+| 領域 | 根拠 |
+|------|------|
+| 一覧フィルタ | `reference_index.rs` — org 所属時は `organization_id IN (...)`、未所属時は `user_id` |
+| Farm / Crop 認可 | `ReferenceRecordAccessFilter` — **閲覧**: policy または org メンバーシップ。**編集**: policy（所有者・admin）のみ（[ADR-003](ADR-003-organization-sharing-owner-only.md)） |
+| Plan 認可 | 所有者のみ（組織スコープなし。[ADR-003](ADR-003-organization-sharing-owner-only.md)） |
+| クォータ | 全経路が組織単位で、メンバー全員で枠を共有。Masters / AI upsert / plan-save は `organization_id` かつ `is_reference = 0` で数える |
 
 **Organization**（Schema.org JSON-LD の `Organization` 型）とは無関係。本 ADR の Organization は **B2B テナント（法人・チーム）** を指す。
 
@@ -52,7 +63,9 @@ AGRR は現状 **ユーザー単位のテナント分離** のみを持つ。農
 |------|--------------------------------|----------|
 | **RBAC** | メンバーシップロール（`owner` / `admin` / `member`） | 1 |
 | **リソース共有** | 同一 `organization_id` 内の Farm / Crop / Plan 共有 | 1 |
-| **クォータ** | Farm / Crop 上限を org 単位に集約（personal org は現行と同等） | 2 |
+| **クォータ** | Farm / Crop 上限を org 単位に集約。組織の全メンバーで枠を共有（personal org は現行と同等）。契約プラン別上限は未定義 | 1（集計単位）/ 2（プラン別上限） |
+
+Plan は組織で共有しない。Farm / Crop の**編集**も組織メンバーシップでは許可しない（閲覧・枠は [ADR-003](ADR-003-organization-sharing-owner-only.md)）。
 | **SSO** | IdP 連携・ドメイン検証（SAML / OIDC） | 3+ |
 | **SCIM** | ユーザー・グループプロビジョニング | 3+ |
 | **監査** | org 単位の操作ログエクスポート | 3+ |
@@ -63,8 +76,8 @@ AGRR は現状 **ユーザー単位のテナント分離** のみを持つ。農
 
 ドメイン層（`crates/agrr-domain`）では:
 
-1. **新規**: `OrganizationAccessPolicy`（仮称）— メンバーシップ + ロール + `organization_id` 一致
-2. **既存ポリシー**: `FarmPolicy` 等は `organization_id` チェックを追加し、`user_id` 単独判定を段階的に縮小
+1. **新規**: `OrganizationAccessPolicy`（`crates/agrr-domain/src/organization/policies/organization_access_policy.rs`）— メンバーシップ + ロール + `organization_id` 一致
+2. **既存ポリシー**: Farm / Crop 等の org 対応は `ReferenceRecordAccessFilter`（`reference_record_access_filter.rs`）を介する。`user_id` 単独判定は policy 側に残る。**編集**は組織メンバーシップでは許可しない（[ADR-003](ADR-003-organization-sharing-owner-only.md)）
 3. **admin**: システム管理者は全 org を横断可能（現行 `user.admin` と同等）
 4. **Clean Architecture**: 判断は Interactor + policy。Gateway は `organization_id` による狭い永続化クエリのみ
 
@@ -99,7 +112,7 @@ AGRR は現状 **ユーザー単位のテナント分離** のみを持つ。農
 
 | 領域 | 対象 |
 |------|------|
-| マイグレーション | `crates/agrr-migrate/migrations/schema/V15__organizations.sql`（新規） |
+| マイグレーション | `crates/agrr-migrate/migrations/schema/V16__organizations.sql` |
 | ドメイン | `agrr-domain` — `organization` コンテキスト新設、既存 `*_policy.rs` 拡張 |
 | アダプター | `agrr-adapters-sqlite` — org gateway、Tier 1 テーブルの `organization_id` 列 |
 | HTTP | `agrr-server` — Organization / Membership API、既存 Masters の org コンテキスト |
@@ -114,17 +127,17 @@ AGRR は現状 **ユーザー単位のテナント分離** のみを持つ。農
 
 ## Migration phases
 
-実装順はエピック [#604](https://github.com/rick-chick/agrr/issues/604) の子 issue に従う。起票後に issue 番号を本表へ追記する。
+実装順はエピック [#604](https://github.com/rick-chick/agrr/issues/604) の子 issue に従う。
 
-| フェーズ | Issue | 内容 |
-|----------|-------|------|
-| 1. 方針固定 | [#606](https://github.com/rick-chick/agrr/issues/606) | ADR-002 Accepted 確定 |
-| 2. スキーマ | [#607](https://github.com/rick-chick/agrr/issues/607) | `organizations` / `organization_memberships` + Tier 1 `organization_id` |
-| 3. ドメイン | [#608](https://github.com/rick-chick/agrr/issues/608) | Organization entity / gateway / membership policy |
-| 4. API | [#609](https://github.com/rick-chick/agrr/issues/609) | Organization CRUD API |
-| 4b. API | [#610](https://github.com/rick-chick/agrr/issues/610) | organization_memberships API |
-| 5. バックフィル | [#611](https://github.com/rick-chick/agrr/issues/611) | personal org 作成 + 既存データ移行 |
-| 6. ポリシー移行 | [#612](https://github.com/rick-chick/agrr/issues/612) | Farm / Crop / Plan の org スコープ認可 |
+| ステップ | Issue | 内容 | 状態 |
+|----------|-------|------|------|
+| 1. 方針固定 | [#606](https://github.com/rick-chick/agrr/issues/606) | ADR-002 Accepted 確定 | 完了（2026-08-06） |
+| 2. スキーマ | [#607](https://github.com/rick-chick/agrr/issues/607) | `organizations` / `organization_memberships` + Tier 1 `organization_id` | 完了（2026-08-06） |
+| 3. ドメイン | [#608](https://github.com/rick-chick/agrr/issues/608) | Organization entity / gateway / membership policy | 完了（2026-08-06） |
+| 4. API | [#609](https://github.com/rick-chick/agrr/issues/609) | Organization CRUD API | 完了（2026-08-06） |
+| 4b. API | [#610](https://github.com/rick-chick/agrr/issues/610) | organization_memberships API | 完了（2026-08-06） |
+| 5. バックフィル | [#611](https://github.com/rick-chick/agrr/issues/611) | personal org 作成 + 既存データ移行 | 完了（2026-08-06） |
+| 6. ポリシー移行 | [#612](https://github.com/rick-chick/agrr/issues/612) | Farm / Crop / Plan の org スコープ認可（Plan の組織共有と Farm / Crop の組織編集は [ADR-003](ADR-003-organization-sharing-owner-only.md) で撤回） | 完了（2026-08-06） |
 
 完了条件（エピック全体）は [#604](https://github.com/rick-chick/agrr/issues/604) を参照。
 
