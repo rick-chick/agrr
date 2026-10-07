@@ -22,11 +22,22 @@ pub fn assert_view_allowed(
     }
 }
 
+pub fn edit_allowed(user: &User, context: &FieldCultivationPlanAccessSnapshot) -> bool {
+    if context.plan_type_public() {
+        return false;
+    }
+    user.admin || (context.plan_type_private() && context.plan_user_id == Some(user.id))
+}
+
 pub fn assert_edit_allowed(
     user: &User,
     context: &FieldCultivationPlanAccessSnapshot,
 ) -> Result<(), PolicyPermissionDenied> {
-    assert_view_allowed(user, context)
+    if edit_allowed(user, context) {
+        Ok(())
+    } else {
+        Err(PolicyPermissionDenied)
+    }
 }
 
 #[cfg(test)]

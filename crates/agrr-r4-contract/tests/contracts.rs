@@ -38,6 +38,8 @@ use support::{
     seed_org_scoped_plan,
     seed_public_cultivation_plan,
     seed_public_cultivation_plan_with_session,
+    seed_public_plan_field_cultivation,
+    field_cultivation_schedule_dates,
     seed_entry_schedule_contract_assets,
     cable_subscribe_frame_type,
 };
@@ -4420,6 +4422,95 @@ fn cable_allows_unauthenticated_public_optimization_channel() {
 }
 
 #[test]
+#[test]
+fn private_route_patch_public_plan_field_cultivation_rejects_non_owner() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let attacker_session = farmer_session_id(&client);
+    let plan_session = "contract-public-fc-owner-session";
+    let seed = seed_public_plan_field_cultivation(owner_id, Some(plan_session));
+
+    let path = format!(
+        "/api/v1/plans/field_cultivations/{}",
+        seed.field_cultivation_id
+    );
+    let (status, body) = status_and_body(client.patch(
+        &path,
+        Some(&attacker_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "field_cultivation": {
+                "start_date": "2026-05-01",
+                "completion_date": "2026-09-30"
+            }
+        })),
+    ));
+    assert!(
+        status == 403 || status == 404,
+        "expected forbidden or not found, got {status}: {body}"
+    );
+    let (start, completion) = field_cultivation_schedule_dates(seed.field_cultivation_id);
+    assert_eq!(Some(seed.start_date.clone()), start);
+    assert_eq!(Some(seed.completion_date.clone()), completion);
+}
+
+#[test]
+fn public_route_patch_public_plan_field_cultivation_allows_matching_session() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let plan_session = "contract-public-fc-patch-session";
+    let seed = seed_public_plan_field_cultivation(owner_id, Some(plan_session));
+
+    let path = format!(
+        "/api/v1/public_plans/field_cultivations/{}",
+        seed.field_cultivation_id
+    );
+    let mut headers = empty_headers();
+    headers.insert("X-Public-Plan-Session".into(), plan_session.into());
+    let (status, body) = status_and_body(client.patch(
+        &path,
+        None,
+        &headers,
+        Some(serde_json::json!({
+            "field_cultivation": {
+                "start_date": "2026-05-01",
+                "completion_date": "2026-09-30"
+            }
+        })),
+    ));
+    assert_eq!(200, status, "{body}");
+    let (start, completion) = field_cultivation_schedule_dates(seed.field_cultivation_id);
+    assert_eq!(Some("2026-05-01".to_string()), start);
+    assert_eq!(Some("2026-09-30".to_string()), completion);
+}
+
+#[test]
+fn private_route_patch_private_plan_field_cultivation_allows_owner() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let path = format!(
+        "/api/v1/plans/field_cultivations/{}",
+        seed.field_cultivation_id
+    );
+    let (status, body) = status_and_body(client.patch(
+        &path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "field_cultivation": {
+                "start_date": "2026-05-01",
+                "completion_date": "2026-09-30"
+            }
+        })),
+    ));
+    assert_eq!(200, status, "{body}");
+}
+
 fn public_plan_mutation_rejects_mismatched_session() {
     let client = ContractClient::from_env();
     let owner_session = developer_session_id(&client);
