@@ -10,9 +10,10 @@
     use crate::field_cultivation::dtos::{
         ClimateCropEntity, ClimateCropStage, ClimateTemperatureRequirement, ClimateThermalRequirement,
         FieldCultivationClimateDataInput, FieldCultivationClimateDataOutput,
-        FieldCultivationClimateSourceSnapshot, FieldCultivationPlanAccessSnapshot,
-        WeatherPredictionTargets,
+        FieldCultivationClimateFailureReason, FieldCultivationClimateSourceSnapshot,
+        FieldCultivationPlanAccessSnapshot, WeatherPredictionTargets,
     };
+    use crate::field_cultivation::errors::ClimateProgressGatewayError;
     use crate::field_cultivation::gateways::{
         FieldCultivationClimateProgressGateway, FieldCultivationClimateSourceGateway,
         FieldCultivationCropGateway, FieldCultivationPlanPredictedWeatherGateway,
@@ -63,6 +64,7 @@
     struct SpyClimateOutput {
         success: Option<FieldCultivationClimateDataOutput>,
         failure: Option<Error>,
+        climate_failure: Option<crate::field_cultivation::dtos::FieldCultivationClimateFailure>,
     }
     impl FieldCultivationClimateDataOutputPort for SpyClimateOutput {
         fn present(&mut self, data: FieldCultivationClimateDataOutput) {
@@ -70,6 +72,12 @@
         }
         fn on_error(&mut self, error: Error) {
             self.failure = Some(error);
+        }
+        fn on_failure(
+            &mut self,
+            failure: crate::field_cultivation::dtos::FieldCultivationClimateFailure,
+        ) {
+            self.climate_failure = Some(failure);
         }
     }
 
@@ -189,6 +197,32 @@
             _: &Value,
         ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
             Err("daemon_unavailable".into())
+        }
+    }
+
+    struct DaemonUnavailableProgressGateway;
+    impl FieldCultivationClimateProgressGateway for DaemonUnavailableProgressGateway {
+        fn calculate_progress(
+            &self,
+            _: &Value,
+            _: Date,
+            _: &Value,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            Err(Box::new(ClimateProgressGatewayError::DaemonUnavailable))
+        }
+    }
+
+    struct ExecutionFailedProgressGateway;
+    impl FieldCultivationClimateProgressGateway for ExecutionFailedProgressGateway {
+        fn calculate_progress(
+            &self,
+            _: &Value,
+            _: Date,
+            _: &Value,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            Err(Box::new(ClimateProgressGatewayError::ExecutionFailed(
+                "agrr exit 1".into(),
+            )))
         }
     }
 
@@ -453,13 +487,14 @@
         })
     }
 
-    fn run_interactor(
+    fn run_interactor_with_crop(
         source: FieldCultivationClimateSourceSnapshot,
         plan_type_public: bool,
         progress: Arc<dyn FieldCultivationClimateProgressGateway>,
         weather_payload: Option<Value>,
         input: FieldCultivationClimateDataInput,
         missing_source_snapshot: bool,
+        crop: ClimateCropEntity,
     ) -> SpyClimateOutput {
         let access = FieldCultivationPlanAccessSnapshot::new(
             source.field_cultivation_id,
@@ -474,15 +509,14 @@
             missing_source_snapshot,
             missing_plan_access_snapshot: false,
         };
-        let crop_gateway = StubCropGateway {
-            crop: sample_crop(),
-        };
+        let crop_gateway = StubCropGateway { crop };
         let store = StubWeatherStore {
             payload: weather_payload,
         };
         let mut output = SpyClimateOutput {
             success: None,
             failure: None,
+            climate_failure: None,
         };
         let logger = NoopLogger;
         let clock = FixedClock(date!(2026 - 10 - 01));
@@ -512,6 +546,87 @@
         );
         interactor.call(input).expect("interactor call");
         output
+    }
+
+    fn run_interactor(
+        source: FieldCultivationClimateSourceSnapshot,
+        plan_type_public: bool,
+        progress: Arc<dyn FieldCultivationClimateProgressGateway>,
+        weather_payload: Option<Value>,
+        input: FieldCultivationClimateDataInput,
+        missing_source_snapshot: bool,
+    ) -> SpyClimateOutput {
+        run_interactor_with_crop(
+            source,
+            plan_type_public,
+            progress,
+            weather_payload,
+            input,
+            missing_source_snapshot,
+            sample_crop(),
+        )
+    }
+
+    fn run_interactor_result(
+        source: FieldCultivationClimateSourceSnapshot,
+        plan_type_public: bool,
+        progress: Arc<dyn FieldCultivationClimateProgressGateway>,
+        weather_payload: Option<Value>,
+        input: FieldCultivationClimateDataInput,
+        missing_source_snapshot: bool,
+    ) -> (SpyClimateOutput, Result<(), Box<dyn std::error::Error + Send + Sync>>) {
+        let access = FieldCultivationPlanAccessSnapshot::new(
+            source.field_cultivation_id,
+            plan_type_public,
+            !plan_type_public,
+            Some(99),
+            None,
+        );
+        let climate_source = StubClimateSourceGateway {
+            access,
+            source,
+            missing_source_snapshot,
+            missing_plan_access_snapshot: false,
+        };
+        let crop_gateway = StubCropGateway {
+            crop: sample_crop(),
+        };
+        let store = StubWeatherStore {
+            payload: weather_payload,
+        };
+        let mut output = SpyClimateOutput {
+            success: None,
+            failure: None,
+            climate_failure: None,
+        };
+        let logger = NoopLogger;
+        let clock = FixedClock(date!(2026 - 10 - 01));
+        let translator = StubTranslator;
+        let weather_data = UnreachableWeatherDataGateway;
+        let weather_prediction = UnreachableWeatherPredictionGateway;
+        let prediction = UnreachablePredictionGateway;
+        let plan_predicted = UnreachablePlanPredictedWeatherGateway;
+        let anchors = FixedAnchors;
+
+        let mut interactor = FieldCultivationClimateDataInteractor::new(
+            &mut output,
+            &logger,
+            None,
+            None,
+            &climate_source,
+            &crop_gateway,
+            &weather_data,
+            &weather_prediction,
+            &prediction,
+            &plan_predicted,
+            &store,
+            &anchors,
+            progress.as_ref(),
+            &clock,
+            &translator,
+        );
+        let call_result = interactor.call(input);
+        (output, call_result)
     }
 
     #[test]
@@ -628,13 +743,13 @@
             false,
         );
         let dto = output.success.expect("climate data presented");
-        assert_eq!(dto.debug_info["using_agrr_progress"], true);
         assert_eq!(dto.gdd_data.len(), 1);
         assert_eq!(dto.gdd_data[0]["gdd"], 5.0);
+        assert!(output.climate_failure.is_none());
     }
 
     #[test]
-    fn presents_manual_gdd_when_progress_gateway_returns_empty_records() {
+    fn on_failure_when_progress_gateway_returns_empty_records() {
         let source = sample_source(
             Some(1),
             Some(date!(2027 - 01 - 01)),
@@ -656,16 +771,17 @@
             },
             false,
         );
-        let dto = output
-            .success
-            .expect("empty agrr progress still yields success-shaped climate data");
-        assert_eq!(dto.debug_info["using_agrr_progress"], false);
-        assert_eq!(dto.gdd_data.len(), 2);
-        assert_eq!(dto.gdd_data[0]["gdd"], 5.0);
+        assert!(output.success.is_none());
+        let failure = output.climate_failure.expect("typed climate failure");
+        assert_eq!(
+            failure.reason,
+            FieldCultivationClimateFailureReason::ProgressResultInvalid
+        );
+        assert!(failure.message.contains("in_period_weather_rows=2"));
     }
 
     #[test]
-    fn presents_manual_gdd_when_progress_gateway_fails() {
+    fn propagates_untyped_error_when_progress_gateway_fails() {
         let source = sample_source(
             Some(1),
             Some(date!(2027 - 01 - 01)),
@@ -673,7 +789,7 @@
             true,
             Some(2),
         );
-        let output = run_interactor(
+        let (output, call_result) = run_interactor_result(
             source,
             true,
             Arc::new(FailingProgressGateway),
@@ -685,11 +801,67 @@
             },
             false,
         );
-        let dto = output.success.expect("climate data still presented on progress failure");
-        assert_eq!(dto.debug_info["using_agrr_progress"], false);
-        assert_eq!(dto.gdd_data.len(), 2);
-        assert_eq!(dto.gdd_data[0]["gdd"], 5.0);
-        assert_eq!(dto.gdd_data[0]["cumulative_gdd"], 5.0);
+        assert!(call_result.is_err());
+        assert!(output.success.is_none());
+        assert!(output.climate_failure.is_none());
+    }
+
+    #[test]
+    fn on_failure_when_progress_gateway_reports_daemon_unavailable() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            Some(2),
+        );
+        let output = run_interactor(
+            source,
+            true,
+            Arc::new(DaemonUnavailableProgressGateway),
+            Some(sample_weather_payload()),
+            FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            },
+            false,
+        );
+        assert!(output.success.is_none());
+        let failure = output.climate_failure.expect("daemon failure");
+        assert_eq!(
+            failure.reason,
+            FieldCultivationClimateFailureReason::ProgressDaemonUnavailable
+        );
+    }
+
+    #[test]
+    fn on_failure_when_progress_gateway_reports_execution_failed() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            Some(2),
+        );
+        let output = run_interactor(
+            source,
+            true,
+            Arc::new(ExecutionFailedProgressGateway),
+            Some(sample_weather_payload()),
+            FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            },
+            false,
+        );
+        assert!(output.success.is_none());
+        let failure = output.climate_failure.expect("execution failure");
+        assert_eq!(
+            failure.reason,
+            FieldCultivationClimateFailureReason::ProgressExecutionFailed
+        );
     }
 
     #[test]
@@ -823,6 +995,7 @@
         let mut output = SpyClimateOutput {
             success: None,
             failure: None,
+            climate_failure: None,
         };
         let logger = NoopLogger;
         let clock = FixedClock(date!(2026 - 10 - 01));
@@ -894,6 +1067,7 @@
         let mut output = SpyClimateOutput {
             success: None,
             failure: None,
+            climate_failure: None,
         };
         let logger = NoopLogger;
         let clock = FixedClock(date!(2026 - 10 - 01));
@@ -967,6 +1141,7 @@
         let mut output = SpyClimateOutput {
             success: None,
             failure: None,
+            climate_failure: None,
         };
         let logger = NoopLogger;
         let clock = FixedClock(date!(2026 - 10 - 01));
@@ -1040,6 +1215,7 @@
         let mut output = SpyClimateOutput {
             success: None,
             failure: None,
+            climate_failure: None,
         };
         let logger = NoopLogger;
         let clock = FixedClock(date!(2026 - 10 - 01));
@@ -1140,6 +1316,7 @@
         let mut output = SpyClimateOutput {
             success: None,
             failure: None,
+            climate_failure: None,
         };
         let weather_data = ObservedOnlyFallbackWeatherDataGateway;
         let prediction = NullPredictionGateway;
@@ -1204,6 +1381,7 @@
         let mut output = SpyClimateOutput {
             success: None,
             failure: None,
+            climate_failure: None,
         };
         let weather_data = ObservedOnlyFallbackWeatherDataGateway;
         let prediction = NullPredictionGateway;
@@ -1212,7 +1390,11 @@
         };
         let store = StubWeatherStore { payload: None };
         let progress = Arc::new(OkProgressGateway {
-            result: json!({ "progress_records": [] }),
+            result: json!({
+                "progress_records": [
+                    { "date": "2025-06-01", "cumulative_gdd": 5.0, "stage_name": "Stage1" }
+                ]
+            }),
         });
         let mut interactor = FieldCultivationClimateDataInteractor::new(
             &mut output,

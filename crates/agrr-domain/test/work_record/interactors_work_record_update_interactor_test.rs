@@ -68,6 +68,14 @@ impl WorkRecordUpdateOutputPort for SpyUpdateOutput {
     fn on_stale_update(&mut self) {
         self.events.lock().unwrap().push("stale".into());
     }
+
+    fn on_climate_snapshot_unavailable(
+        &mut self,
+        failure: crate::field_cultivation::dtos::FieldCultivationClimateFailure,
+    ) {
+        self.events.lock().unwrap().push("climate_unavailable".into());
+        let _ = failure;
+    }
 }
 
 struct StubPlanGateway {
@@ -384,7 +392,7 @@ fn sample_existing_work_record() -> WorkRecordRead {
 }
 
 #[test]
-fn update_omits_climate_refresh_when_snapshot_lookup_fails() {
+fn update_fails_when_snapshot_lookup_returns_untyped_error() {
     let events = Arc::new(Mutex::new(Vec::new()));
     let mut output = SpyUpdateOutput {
         events: Arc::clone(&events),
@@ -421,8 +429,7 @@ fn update_omits_climate_refresh_when_snapshot_lookup_fails() {
         Value::String("2026-06-10T10:00:00Z".into()),
     );
 
-    interactor.call_rescuing(1, 2, 10, &params).unwrap();
-
-    assert_eq!(&*events.lock().unwrap(), &["success".to_string()]);
-    assert_eq!(climate_slot.lock().unwrap().as_ref(), Some(&None));
+    assert!(interactor.call_rescuing(1, 2, 10, &params).is_err());
+    assert!(climate_slot.lock().unwrap().is_none());
+    assert!(events.lock().unwrap().is_empty());
 }

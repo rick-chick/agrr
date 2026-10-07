@@ -1,0 +1,3 @@
+pub(crate) mod work_record_climate_snapshot_unavailable_error;
+
+pub use work_record_climate_snapshot_unavailable_error::WorkRecordClimateSnapshotUnavailableError;

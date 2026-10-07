@@ -2,6 +2,7 @@
 
 use std::collections::BTreeMap;
 
+use crate::field_cultivation::dtos::FieldCultivationClimateFailure;
 use crate::work_record::dtos::WorkRecordRead;
 
 pub(crate) mod variance_portfolio_output_port;
@@ -25,6 +26,7 @@ pub trait WorkRecordCreateOutputPort {
         fallback_message: &str,
     );
     fn on_not_found(&mut self);
+    fn on_climate_snapshot_unavailable(&mut self, failure: FieldCultivationClimateFailure);
 }
 
 pub trait WorkRecordListOutputPort {
@@ -46,4 +48,5 @@ pub trait WorkRecordUpdateOutputPort {
     );
     fn on_not_found(&mut self);
     fn on_stale_update(&mut self);
+    fn on_climate_snapshot_unavailable(&mut self, failure: FieldCultivationClimateFailure);
 }

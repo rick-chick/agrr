@@ -61,7 +61,7 @@
                 ),
             }],
         };
-        let ctx = to_context_snapshot(&source, &crop);
+        let ctx = to_context_snapshot(&source, &crop).expect("context snapshot");
         assert_eq!(ctx.crop_id, 2);
         assert_eq!(ctx.stages.len(), 1);
     }
@@ -89,7 +89,7 @@
     }
 
     #[test]
-    fn defaults_base_temperature_to_ten_when_lowest_order_stage_has_no_temperature() {
+    fn errors_when_lowest_order_stage_has_no_temperature() {
         let crop = ClimateCropEntity {
             id: 2,
             name: "Tomato".into(),
@@ -110,10 +110,11 @@
                 ),
             }],
         };
-        let ctx = to_context_snapshot(&minimal_source(), &crop);
-        assert_eq!(ctx.base_temperature, 10.0);
-        assert!(ctx.optimal_temperature_range.is_none());
-        assert!(ctx.stages.is_empty());
+        let err = to_context_snapshot(&minimal_source(), &crop).expect_err("incomplete crop");
+        assert_eq!(
+            err.0.reason,
+            crate::field_cultivation::dtos::FieldCultivationClimateFailureReason::CropRequirementIncomplete
+        );
     }
 
     #[test]
@@ -166,7 +167,7 @@
                 },
             ],
         };
-        let ctx = to_context_snapshot(&minimal_source(), &crop);
+        let ctx = to_context_snapshot(&minimal_source(), &crop).expect("context snapshot");
         assert_eq!(ctx.stages.len(), 2);
         assert_eq!(ctx.stages[0]["order"], 1);
         assert_eq!(ctx.stages[0]["cumulative_gdd_required"], 30.0);

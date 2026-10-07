@@ -8,7 +8,10 @@ use crate::field_cultivation::dtos::{
     FieldCultivationClimateDataInput, FieldCultivationClimateDataOutput,
     FieldCultivationClimateSourceSnapshot,
 };
-use crate::field_cultivation::errors::WeatherPayloadInvalidError;
+use crate::field_cultivation::dtos::FieldCultivationClimateFailureReason;
+use crate::field_cultivation::errors::{
+    ClimateProgressGatewayError, FieldCultivationClimateFailureError, WeatherPayloadInvalidError,
+};
 use crate::field_cultivation::gateways::{
     FieldCultivationClimateProgressGateway, FieldCultivationClimateSourceGateway,
     FieldCultivationCropGateway, FieldCultivationPlanPredictedWeatherGateway,
@@ -29,6 +32,7 @@ use crate::field_cultivation::mappers::{
 use crate::field_cultivation::policies::{
     climate_crop_view_allowed, missing_cultivation_period, missing_weather_location,
     prediction_days, resolve_observed_merge_range, use_prediction_branch,
+    validate_crop_requirement_for_climate, validate_progress_result,
 };
 use crate::field_cultivation::ports::{
     FieldCultivationClimateDataInputPort, FieldCultivationClimateDataOutputPort,
@@ -195,7 +199,28 @@ impl FieldCultivationClimateDataInputPort for FieldCultivationClimateDataInterac
             Err(err) => return Err(err),
         };
 
-        let context = to_context_snapshot(&source, &crop_entity);
+        if let Err(FieldCultivationClimateFailureError(failure)) =
+            validate_crop_requirement_for_climate(&crop_entity)
+        {
+            self.logger.warn(&format!(
+                "[FieldCultivationClimateDataInteractor] Crop requirement incomplete: {}",
+                failure.message
+            ));
+            self.output_port.on_failure(failure);
+            return Ok(());
+        }
+
+        let context = match to_context_snapshot(&source, &crop_entity) {
+            Ok(ctx) => ctx,
+            Err(FieldCultivationClimateFailureError(failure)) => {
+                self.logger.warn(&format!(
+                    "[FieldCultivationClimateDataInteractor] Crop requirement incomplete: {}",
+                    failure.message
+                ));
+                self.output_port.on_failure(failure);
+                return Ok(());
+            }
+        };
 
         let climate_data = match assemble_climate_data(self, &source, &context, &crop_entity) {
             Ok(Some(data)) => data,
@@ -205,6 +230,19 @@ impl FieldCultivationClimateDataInputPort for FieldCultivationClimateDataInterac
                     input.field_cultivation_id
                 ));
                 self.handle_domain_error("Field cultivation climate data not found");
+                return Ok(());
+            }
+            Err(err) if err.downcast_ref::<FieldCultivationClimateFailureError>().is_some() => {
+                let failure = err
+                    .downcast_ref::<FieldCultivationClimateFailureError>()
+                    .unwrap()
+                    .0
+                    .clone();
+                self.logger.warn(&format!(
+                    "[FieldCultivationClimateDataInteractor] Climate progress failure: {}",
+                    failure.message
+                ));
+                self.output_port.on_failure(failure);
                 return Ok(());
             }
             Err(err) => return Err(err),
@@ -271,7 +309,7 @@ fn assemble_climate_data(
         context,
         crop_entity,
         &weather_payload,
-    )))
+    )?))
 }
 
 fn assemble_climate_data_from_fallback(
@@ -290,7 +328,7 @@ fn assemble_climate_data_from_fallback(
         context,
         crop_entity,
         &weather_payload,
-    )))
+    )?))
 }
 
 fn build_climate_output(
@@ -298,18 +336,54 @@ fn build_climate_output(
     context: &crate::field_cultivation::dtos::FieldCultivationClimateContextSnapshot,
     crop_entity: &crate::field_cultivation::dtos::ClimateCropEntity,
     weather_payload: &Value,
-) -> FieldCultivationClimateDataOutput {
+) -> Result<FieldCultivationClimateDataOutput, Box<dyn std::error::Error + Send + Sync>> {
     let weather_records = extract_weather_records(
         Some(weather_payload),
         context.start_date,
         context.completion_date,
     );
+    let in_period_weather_rows = weather_records.len();
     let crop_requirement = climate_crop_agrr_requirement_from_entity(crop_entity);
-    let progress_result = interactor
+    let progress_result = match interactor
         .climate_progress_gateway
         .calculate_progress(&crop_requirement, context.start_date, weather_payload)
-        .unwrap_or_else(|_| json!({ "progress_records": [] }));
-    build_output(context, &weather_records, &progress_result)
+    {
+        Ok(value) => value,
+        Err(err) if err.downcast_ref::<ClimateProgressGatewayError>().is_some() => {
+            let gateway_err = err.downcast_ref::<ClimateProgressGatewayError>().unwrap();
+            let failure = match gateway_err {
+                ClimateProgressGatewayError::DaemonUnavailable => {
+                    interactor.logger.warn(
+                        "[FieldCultivationClimateDataInteractor] agrr progress daemon unavailable",
+                    );
+                    crate::field_cultivation::dtos::FieldCultivationClimateFailure::new(
+                        FieldCultivationClimateFailureReason::ProgressDaemonUnavailable,
+                        "daemon_unavailable",
+                    )
+                }
+                ClimateProgressGatewayError::ExecutionFailed(message) => {
+                    interactor.logger.error(&format!(
+                        "[FieldCultivationClimateDataInteractor] agrr progress failed: {message}"
+                    ));
+                    crate::field_cultivation::dtos::FieldCultivationClimateFailure::new(
+                        FieldCultivationClimateFailureReason::ProgressExecutionFailed,
+                        message.clone(),
+                    )
+                }
+            };
+            return Err(Box::new(FieldCultivationClimateFailureError(failure)));
+        }
+        Err(err) => return Err(err),
+    };
+
+    validate_progress_result(
+        &progress_result,
+        context.start_date,
+        context.completion_date,
+        in_period_weather_rows,
+    )?;
+
+    Ok(build_output(context, &weather_records, &progress_result))
 }
 
 fn fetch_primary_weather_payload(
