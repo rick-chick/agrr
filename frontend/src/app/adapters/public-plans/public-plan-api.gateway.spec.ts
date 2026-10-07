@@ -82,13 +82,13 @@ describe('PublicPlanApiGateway', () => {
     });
 
     it('returns Observable<SavePublicPlanResponse> with error on failure', async () => {
-      const response: SavePublicPlanResponse = { success: false, error: 'Save failed' };
+      const response: SavePublicPlanResponse = { success: false, errors: ['Save failed'] };
       vi.mocked(apiClient.post).mockReturnValue(of(response));
 
       const result = await firstValueFrom(gateway.savePlan(123));
       expect(result).toEqual(response);
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Save failed');
+      expect(result.errors).toEqual(['Save failed']);
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/public_plans/save_plan', { plan_id: 123 });
     });
 

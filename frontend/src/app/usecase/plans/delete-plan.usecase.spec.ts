@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
 import { DeletePlanUseCase } from './delete-plan.usecase';
@@ -87,13 +88,15 @@ describe('DeletePlanUseCase', () => {
     expect(receivedError!.scope).toBe('delete-plan');
   });
 
-  it('calls outputPort.onError with err.error.error when API returns 422 with body.error (server message)', () => {
-    const serverMessage = 'このプランは削除できません。';
+  it('calls outputPort.onError with generic key when API returns legacy body.error only', () => {
     const gateway: PlanGateway = createGateway((_planId: number) =>
-      throwError(() => ({
-        message: 'Http failure response for ...: 422 Unprocessable Content',
-        error: { error: serverMessage }
-      }))
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: { error: 'a' }
+          })
+      )
     );
 
     let receivedError: { message: string; scope?: string } | null = null;
@@ -108,17 +111,20 @@ describe('DeletePlanUseCase', () => {
     useCase.execute({ planId: 8 });
 
     expect(receivedError).not.toBeNull();
-    expect(receivedError!.message).toBe(serverMessage);
+    expect(receivedError!.message).toBe('common.api_error.generic');
     expect(receivedError!.scope).toBe('delete-plan');
   });
 
   it('calls outputPort.onError with err.error.errors when API returns 422 with body.errors array', () => {
     const serverErrors = ['Error 1', 'Error 2'];
     const gateway: PlanGateway = createGateway((_planId: number) =>
-      throwError(() => ({
-        message: 'Http failure response for ...: 422 Unprocessable Content',
-        error: { errors: serverErrors }
-      }))
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: { errors: serverErrors }
+          })
+      )
     );
 
     let receivedError: { message: string; scope?: string } | null = null;
