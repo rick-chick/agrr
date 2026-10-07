@@ -23,7 +23,6 @@ type TurnstileApi = {
 declare global {
   interface Window {
     turnstile?: TurnstileApi;
-    onTurnstileLoad?: () => void;
   }
 }
 
@@ -117,7 +116,6 @@ export class TurnstileWidgetAdapter implements CaptchaWidgetPort {
         });
         return;
       }
-      window.onTurnstileLoad = () => resolve();
       const script = document.createElement('script');
       script.src = TURNSTILE_SCRIPT_URL;
       script.async = true;

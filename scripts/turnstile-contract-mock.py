@@ -10,7 +10,6 @@ from urllib.parse import parse_qs
 HOST = "127.0.0.1"
 PORT = 9191
 INVALID_TOKEN = "invalid-token-for-contract-test"
-UNAVAILABLE_TOKEN = "unavailable-token-for-contract-test"
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -20,8 +19,6 @@ class Handler(BaseHTTPRequestHandler):
         token = parse_qs(raw.decode()).get("response", [""])[0]
         if token == INVALID_TOKEN:
             payload = {"success": False, "error-codes": ["invalid-input-response"]}
-        elif token == UNAVAILABLE_TOKEN:
-            payload = {"success": False, "error-codes": ["internal-error"]}
         else:
             payload = {"success": True, "error-codes": []}
         body = json.dumps(payload).encode()
