@@ -125,3 +125,16 @@ total_area: 0.0,
         };
         assert!(!access_allowed(&gateway, 2, 1, &[]));
     }
+
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+    ));
+
+    #[test]
+    fn access_allowed_false_for_org_member_non_owner() {
+        let gateway = StubGateway {
+            plan: Ok(org_scoped_private_plan(2, 5, 42)),
+        };
+        assert!(!access_allowed(&gateway, 2, 99, &[42]));
+    }

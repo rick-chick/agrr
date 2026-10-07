@@ -260,6 +260,50 @@ fn on_not_found_when_user_cannot_access_plan() {
     assert!(orchestration_patches.lock().unwrap().is_empty());
 }
 
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn on_not_found_when_org_member_updates_other_users_plan() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let mut output = SpyOutput {
+        events: Arc::clone(&events),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: org_scoped_private_plan(7, 5, 42),
+    };
+    let orchestration_patches = Arc::new(Mutex::new(Vec::new()));
+    let variance_gateway = SpyVarianceLearningGateway {
+        orchestration_patches: Arc::clone(&orchestration_patches),
+    };
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+
+    let mut interactor = PlanVarianceLearningOrchestrationProgressUpdateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &variance_gateway,
+        &scope,
+    );
+
+    interactor
+        .call(
+            99,
+            7,
+            crate::cultivation_plan::dtos::ReorganizeOrchestrationProgressPatch {
+                regenerate: Some(true),
+                ..Default::default()
+            },
+        )
+        .expect("interactor returns Ok after on_not_found");
+
+    assert_eq!(vec!["not_found"], *events.lock().unwrap());
+    assert!(orchestration_patches.lock().unwrap().is_empty());
+}
+
 #[test]
 fn on_record_invalid_for_empty_patch() {
     let events = Arc::new(Mutex::new(Vec::new()));

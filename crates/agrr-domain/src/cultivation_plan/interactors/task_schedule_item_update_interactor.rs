@@ -127,3 +127,12 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod interactors_task_schedule_item_update_interactor_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/interactors_task_schedule_item_update_interactor_test.rs"
+    ));
+}

@@ -67,3 +67,12 @@ where
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod interactors_weather_reschedule_proposals_list_interactor_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/interactors_weather_reschedule_proposals_list_interactor_test.rs"
+    ));
+}

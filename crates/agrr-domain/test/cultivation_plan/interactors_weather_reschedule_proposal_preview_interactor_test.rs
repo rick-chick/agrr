@@ -227,7 +227,18 @@ impl PlanAllocationAdjustReadGateway for StubAdjustReadGateway {
     }
 }
 
-struct StubAdjustGateway;
+struct StubAdjustGateway {
+    adjust_calls: Arc<Mutex<u32>>,
+}
+
+impl StubAdjustGateway {
+    fn with_counter() -> Self {
+        Self {
+            adjust_calls: Arc::new(Mutex::new(0)),
+        }
+    }
+}
+
 impl PlanAllocationAdjustGateway for StubAdjustGateway {
     fn adjust(
         &self,
@@ -243,6 +254,7 @@ impl PlanAllocationAdjustGateway for StubAdjustGateway {
         _: Option<i64>,
         _: bool,
     ) -> Result<serde_json::Value, crate::cultivation_plan::errors::AdjustExecutionError> {
+        *self.adjust_calls.lock().unwrap() += 1;
         unimplemented!("preview not_found tests should not reach adjust gateway")
     }
 }
@@ -381,6 +393,7 @@ fn call_returns_not_found_for_unknown_proposal_id() {
         user: User::new(1, false),
     };
     let mut field_cultivation_sync = StubFieldCultivationSync;
+    let adjust_gateway = StubAdjustGateway::with_counter();
     let mut interactor = WeatherRescheduleProposalPreviewInteractor::new(
         &mut output,
         &FakeLogger,
@@ -392,7 +405,7 @@ fn call_returns_not_found_for_unknown_proposal_id() {
         &plan_gateway,
         &weather_read_gateway,
         &adjust_read_gateway,
-        &StubAdjustGateway,
+        &adjust_gateway,
         &StubEventsGateway,
         &PlanAllocationAdjustDebugDumpNullGateway,
         &StubWeatherGateway,
@@ -429,6 +442,7 @@ fn call_returns_not_found_when_private_plan_owned_by_another_user() {
         user: User::new(1, false),
     };
     let mut field_cultivation_sync = StubFieldCultivationSync;
+    let adjust_gateway = StubAdjustGateway::with_counter();
     let mut interactor = WeatherRescheduleProposalPreviewInteractor::new(
         &mut output,
         &FakeLogger,
@@ -440,7 +454,7 @@ fn call_returns_not_found_when_private_plan_owned_by_another_user() {
         &plan_gateway,
         &weather_read_gateway,
         &adjust_read_gateway,
-        &StubAdjustGateway,
+        &adjust_gateway,
         &StubEventsGateway,
         &PlanAllocationAdjustDebugDumpNullGateway,
         &StubWeatherGateway,
@@ -452,4 +466,62 @@ fn call_returns_not_found_when_private_plan_owned_by_another_user() {
 
     let err = interactor.call().unwrap_err();
     assert!(err.downcast_ref::<RecordNotFoundError>().is_some());
+}
+
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn call_returns_not_found_when_org_member_previews_other_users_plan_without_adjust() {
+    let previews = Arc::new(Mutex::new(Vec::new()));
+    let failures = Arc::new(Mutex::new(Vec::new()));
+    let mut output = SpyPreviewOutput {
+        previews: Arc::clone(&previews),
+        failures: Arc::clone(&failures),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: org_scoped_private_plan(2, 5, 42),
+    };
+    let weather_read_gateway = StubWeatherProposalReadGateway {
+        context: frost_proposal_context(),
+    };
+    let adjust_read_gateway = StubAdjustReadGateway {
+        snapshot: PlanAllocationAdjustReadSnapshot::minimal_for_tests(2, "Tomato", true),
+    };
+    let user_lookup = FakeUserLookup {
+        user: User::new(99, false),
+    };
+    let adjust_gateway = StubAdjustGateway::with_counter();
+    let adjust_calls = Arc::clone(&adjust_gateway.adjust_calls);
+    let mut field_cultivation_sync = StubFieldCultivationSync;
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+    let mut interactor = WeatherRescheduleProposalPreviewInteractor::new(
+        &mut output,
+        &FakeLogger,
+        &FakeTranslator,
+        &FakeClock,
+        99,
+        2,
+        "frost_forecast:100:42".into(),
+        &plan_gateway,
+        &weather_read_gateway,
+        &adjust_read_gateway,
+        &adjust_gateway,
+        &StubEventsGateway,
+        &PlanAllocationAdjustDebugDumpNullGateway,
+        &StubWeatherGateway,
+        &mut field_cultivation_sync,
+        "abcd1234",
+        &user_lookup,
+        &scope,
+    );
+
+    let err = interactor.call().unwrap_err();
+    assert!(err.downcast_ref::<RecordNotFoundError>().is_some());
+    assert_eq!(0, *adjust_calls.lock().unwrap());
+    assert!(previews.lock().unwrap().is_empty());
 }
