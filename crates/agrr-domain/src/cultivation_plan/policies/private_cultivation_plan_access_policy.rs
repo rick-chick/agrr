@@ -1,26 +1,18 @@
 //! Ruby: `Domain::CultivationPlan::Policies::PrivateCultivationPlanAccessPolicy`
 
 use crate::cultivation_plan::entities::CultivationPlanEntity;
-use crate::shared::org_scope::organization_member_access;
 use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::user::User;
 
 pub fn access_denied(
     plan: &CultivationPlanEntity,
     user_id: i64,
-    member_organization_ids: &[i64],
+    _member_organization_ids: &[i64],
 ) -> bool {
     if !plan.plan_type_private() {
         return true;
     }
-    if plan.user_id == user_id {
-        return false;
-    }
-    !organization_member_access(
-        member_organization_ids,
-        false,
-        plan.organization_id,
-    )
+    plan.user_id != user_id
 }
 
 pub fn assert_private_owned(
