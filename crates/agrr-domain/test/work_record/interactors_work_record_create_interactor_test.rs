@@ -719,6 +719,7 @@ fn dispatches_not_found_when_org_member_creates_on_other_users_plan() {
         events: Arc::clone(&events),
         record: Arc::new(Mutex::new(None)),
         errors: Arc::new(Mutex::new(None)),
+        climate_failure: Arc::new(Mutex::new(None)),
     };
     let create_calls = Arc::new(Mutex::new(Vec::new()));
     let gateway = StubWorkRecordGateway {
