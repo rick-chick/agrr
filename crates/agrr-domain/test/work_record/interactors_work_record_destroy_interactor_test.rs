@@ -249,6 +249,44 @@ total_area: 0.0,
     }
 }
 
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn dispatches_not_found_when_org_member_destroys_on_other_users_plan() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let mut output = SpyDestroyOutput {
+        events: Arc::clone(&events),
+        undo: Arc::new(Mutex::new(None)),
+    };
+    let destroy_calls = Arc::new(Mutex::new(Vec::new()));
+    let gateway = StubWorkRecordGateway {
+        destroy_outcome: DestroyOutcome::Ok(json!({"undo_token": "abc123"})),
+        destroy_calls: Arc::clone(&destroy_calls),
+        record: sample_record(),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: org_scoped_private_plan(2, 5, 42),
+    };
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+    let mut interactor = WorkRecordDestroyInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &gateway,
+        &StubTranslator,
+        &scope,
+    );
+
+    interactor.call_rescuing(99, 2, 10).unwrap();
+
+    assert_eq!(&*events.lock().unwrap(), &["not_found".to_string()]);
+    assert!(destroy_calls.lock().unwrap().is_empty());
+}
+
 #[test]
 fn destroys_record_after_private_plan_access_check() {
     let events = Arc::new(Mutex::new(Vec::new()));

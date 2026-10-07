@@ -253,6 +253,47 @@ fn on_not_found_when_user_cannot_access_plan() {
     assert!(progress_updates.lock().unwrap().is_empty());
 }
 
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn on_not_found_when_org_member_updates_other_users_plan() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let snapshot = Arc::new(Mutex::new(None));
+    let mut output = SpyOutput {
+        events: Arc::clone(&events),
+        snapshot: Arc::clone(&snapshot),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: org_scoped_private_plan(7, 5, 42),
+    };
+    let progress_updates = Arc::new(Mutex::new(Vec::new()));
+    let variance_gateway = SpyVarianceLearningGateway {
+        progress_updates: Arc::clone(&progress_updates),
+        stored_progress: BTreeMap::new(),
+    };
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+    let mut interactor = PlanVarianceLearningProposalProgressUpdateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &variance_gateway,
+        &scope,
+    );
+    let mut updates = BTreeMap::new();
+    updates.insert("stage_gdd:1:2".into(), "confirmed".into());
+
+    interactor
+        .call(99, 7, updates)
+        .expect("interactor returns Ok after on_not_found");
+
+    assert_eq!(vec!["not_found"], *events.lock().unwrap());
+    assert!(progress_updates.lock().unwrap().is_empty());
+}
+
 #[test]
 fn on_record_invalid_for_empty_updates() {
     let events = Arc::new(Mutex::new(Vec::new()));

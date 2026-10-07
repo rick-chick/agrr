@@ -168,3 +168,12 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod interactors_work_record_photo_upload_complete_interactor_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/work_record/interactors_work_record_photo_upload_complete_interactor_test.rs"
+    ));
+}

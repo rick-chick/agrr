@@ -354,6 +354,46 @@ total_area: 0.0,
     }
 
     #[test]
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+    ));
+
+    #[test]
+    fn dispatches_not_found_when_org_member_skips_other_users_plan() {
+        let events = Arc::new(Mutex::new(Vec::new()));
+        let mut output = SpyOutput {
+            events: Arc::clone(&events),
+            payload: Arc::new(Mutex::new(None)),
+        };
+        let skip_calls = Arc::new(Mutex::new(Vec::new()));
+        let gateway = StubMutationGateway {
+            skip_payload: Value::Null,
+            unskip_payload: Value::Null,
+            skip_calls: Arc::clone(&skip_calls),
+            unskip_calls: Arc::new(Mutex::new(Vec::new())),
+            skip_err: None,
+            unskip_err: None,
+        };
+        let clock = FakeClock {
+            now_val: datetime!(2026-03-01 12:00 UTC),
+        };
+        let plan_gateway = StubPlanGateway {
+            plan: org_scoped_private_plan(2, 5, 42),
+        };
+        let scope = MemberScopeGateway {
+            org_ids: vec![42],
+        };
+        let mut interactor =
+            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock, &scope);
+
+        interactor.call_skip_rescuing(99, 2, 9).unwrap();
+
+        assert_eq!(&*events.lock().unwrap(), &["not_found".to_string()]);
+        assert!(skip_calls.lock().unwrap().is_empty());
+    }
+
+    #[test]
     fn dispatches_not_found_when_gateway_skip_raises_record_not_found() {
         let events = Arc::new(Mutex::new(Vec::new()));
         let mut output = SpyOutput {

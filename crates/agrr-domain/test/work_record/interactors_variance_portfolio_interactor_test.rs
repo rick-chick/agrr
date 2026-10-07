@@ -411,3 +411,103 @@ fn includes_weather_trigger_count_from_proposals_per_plan() {
     assert_eq!(1, plan_9.weather_trigger_count);
     assert_eq!(0, plan_10.weather_trigger_count);
 }
+
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn excludes_other_org_members_plan_from_portfolio_rows() {
+    let user = User::new(99, false);
+    let mut contexts = std::collections::HashMap::new();
+    contexts.insert(9, empty_weather_context());
+
+    let mut output = SpyOutput {
+        rows: Arc::new(Mutex::new(None)),
+    };
+    let private_read = StubPrivateReadGateway {
+        rows: vec![plan_row(9, 5)],
+    };
+    let private_snapshot = StubPrivateSnapshotGateway;
+    let variance_learning = StubVarianceLearningGateway;
+    struct OtherOwnerPlanGateway;
+    impl CultivationPlanGateway for OtherOwnerPlanGateway {
+        fn find_by_id(
+            &self,
+            id: i64,
+        ) -> Result<CultivationPlanEntity, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(org_scoped_private_plan(id, 5, 42))
+        }
+        fn create(
+            &self,
+            _: &CultivationPlanCreateAttrs,
+        ) -> Result<CultivationPlanEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn update(
+            &self,
+            _: i64,
+            _: std::collections::HashMap<String, String>,
+        ) -> Result<CultivationPlanEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn list_by_plan_id(
+            &self,
+            _: i64,
+        ) -> Result<Vec<FieldCultivationEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn within_transaction<F, T>(
+            &self,
+            block: F,
+        ) -> Result<T, Box<dyn std::error::Error + Send + Sync>>
+        where
+            F: FnOnce() -> Result<T, Box<dyn std::error::Error + Send + Sync>>,
+        {
+            block()
+        }
+        fn private_owned_plan_display_name(
+            &self,
+            _: &User,
+            _: i64,
+        ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn delete(
+            &self,
+            _: i64,
+            _: &User,
+            _: &str,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+    }
+    let plan_gateway = OtherOwnerPlanGateway;
+    let weather_read = StubWeatherReadGateway { contexts };
+    let translator = FakeTranslator;
+    let logger = FakeLogger;
+    let user_lookup = StubUserLookup { user };
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+
+    let mut interactor = VariancePortfolioInteractor::new(
+        &mut output,
+        user.id,
+        &private_read,
+        &private_snapshot,
+        &variance_learning,
+        &plan_gateway,
+        &translator,
+        &logger,
+        &user_lookup,
+        &scope,
+        &weather_read,
+    );
+
+    interactor.call().expect("interactor succeeds");
+
+    let rows = output.rows.lock().unwrap().clone().expect("rows emitted");
+    assert!(rows.is_empty());
+}
