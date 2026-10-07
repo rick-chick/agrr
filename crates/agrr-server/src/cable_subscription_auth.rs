@@ -116,9 +116,13 @@ mod tests {
     }
 
     fn session(user_id: i64) -> CableSessionContext {
+        session_with_orgs(user_id, vec![])
+    }
+
+    fn session_with_orgs(user_id: i64, org_ids: Vec<i64>) -> CableSessionContext {
         CableSessionContext {
             user_id,
-            member_organization_ids: vec![],
+            member_organization_ids: org_ids,
             user: User::new(user_id, false),
         }
     }
@@ -137,6 +141,18 @@ mod tests {
             "PlansOptimizationChannel",
             &plan,
             Some(&attacker)
+        ));
+    }
+
+    #[test]
+    fn plans_optimization_channel_denies_org_member_non_owner() {
+        let mut plan = private_plan(1);
+        plan.organization_id = Some(42);
+        let org_member = session_with_orgs(2, vec![42]);
+        assert!(plan_subscription_denied(
+            "PlansOptimizationChannel",
+            &plan,
+            Some(&org_member)
         ));
     }
 
@@ -162,6 +178,14 @@ mod tests {
         let plan = private_plan(1);
         let attacker = session(2);
         assert!(plan_subscription_denied("OptimizationChannel", &plan, Some(&attacker)));
+    }
+
+    #[test]
+    fn optimization_channel_denies_org_member_non_owner() {
+        let mut plan = private_plan(1);
+        plan.organization_id = Some(42);
+        let org_member = session_with_orgs(2, vec![42]);
+        assert!(plan_subscription_denied("OptimizationChannel", &plan, Some(&org_member)));
     }
 
     #[test]
