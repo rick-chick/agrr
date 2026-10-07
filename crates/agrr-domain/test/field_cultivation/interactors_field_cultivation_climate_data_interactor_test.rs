@@ -546,10 +546,6 @@
         let clock = FixedClock(date!(2026 - 10 - 01));
         let translator = StubTranslator;
         let weather_data = UnreachableWeatherDataGateway;
-        let weather_prediction = UnreachableWeatherPredictionGateway;
-        let prediction = UnreachablePredictionGateway;
-        let plan_predicted = UnreachablePlanPredictedWeatherGateway;
-        let anchors = FixedAnchors;
 
         let mut interactor = FieldCultivationClimateDataInteractor::new(
             &mut output,
@@ -559,11 +555,7 @@
             &climate_source,
             &crop_gateway,
             &weather_data,
-            &weather_prediction,
-            &prediction,
-            &plan_predicted,
             &store,
-            &anchors,
             progress.as_ref(),
             &clock,
             &translator,
