@@ -153,7 +153,6 @@ impl EntryScheduleCropGateway for SqliteShowCropGateway {
 }
 
 struct SqliteOptimizeCropGateway {
-    pool: agrr_adapters_sqlite::SqlitePool,
     crop_gateway: CropSqliteGateway,
 }
 
@@ -163,44 +162,16 @@ impl CultivationEntryScheduleCropGateway for SqliteOptimizeCropGateway {
         crop_id: i64,
     ) -> Result<Vec<CropStageSnapshot>, Box<dyn std::error::Error + Send + Sync>> {
         let stages = self.crop_gateway.list_by_crop_id(crop_id)?;
-        let mut rows = Vec::with_capacity(stages.len());
-        for s in stages {
-            let temperature_requirement = self
-                .pool
-                .with_read(|conn| load_entry_schedule_temperature(conn, s.id))
-                .ok()
-                .flatten();
-            rows.push(CropStageSnapshot {
+        let rows = stages
+            .into_iter()
+            .map(|s| CropStageSnapshot {
                 id: s.id,
                 name: s.name,
                 order: s.order,
-                temperature_requirement,
-            });
-        }
+            })
+            .collect();
         Ok(rows)
     }
-}
-
-fn load_entry_schedule_temperature(
-    conn: &rusqlite::Connection,
-    crop_stage_id: i64,
-) -> rusqlite::Result<Option<agrr_domain::cultivation_plan::interactors::entry_schedule::TemperatureRequirementSnapshot>> {
-    use agrr_domain::cultivation_plan::interactors::entry_schedule::TemperatureRequirementSnapshot;
-    use rusqlite::OptionalExtension;
-    conn.query_row(
-        "SELECT frost_threshold, optimal_min, optimal_max, base_temperature \
-         FROM temperature_requirements WHERE crop_stage_id = ?1",
-        rusqlite::params![crop_stage_id],
-        |row| {
-            Ok(TemperatureRequirementSnapshot {
-                frost_threshold: row.get(0)?,
-                optimal_min: row.get(1)?,
-                optimal_max: row.get(2)?,
-                base_temperature: row.get(3)?,
-            })
-        },
-    )
-    .optional()
 }
 
 struct EntryScheduleWeatherLoader<'a> {
@@ -213,13 +184,13 @@ fn entry_schedule_crops_weather_error(
     if err.downcast_ref::<WeatherLocationMissingError>().is_some() {
         return (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": "weather_location_required"}),
+            json!({"errors": ["weather_location_required"]}),
         );
     }
     if err.downcast_ref::<PredictionPayloadMissingError>().is_some() {
         return (
             StatusCode::SERVICE_UNAVAILABLE,
-            json!({"error": "prediction_payload_missing"}),
+            json!({"errors": ["prediction_payload_missing"]}),
         );
     }
     let message = err
@@ -228,7 +199,7 @@ fn entry_schedule_crops_weather_error(
         .unwrap_or_else(|| err.to_string());
     (
         StatusCode::SERVICE_UNAVAILABLE,
-        json!({"error": message}),
+        json!({"errors": [message]}),
     )
 }
 
@@ -293,10 +264,8 @@ impl EntryScheduleWeatherLoaderPort for EntryScheduleWeatherLoader<'_> {
 fn load_crop_entity_for_optimize(
     crop_gateway: &CropSqliteGateway,
     crop: &dyn EntryScheduleShowCrop,
-) -> CropEntity {
-    crop_gateway
-        .find_by_id(crop.id())
-        .unwrap_or_else(|_| CropEntity::new(crop.id(), crop.name(), None, true).unwrap())
+) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> {
+    crop_gateway.find_by_id(crop.id())
 }
 
 struct OptimizeRunner {
@@ -313,10 +282,25 @@ impl EntryScheduleOptimizationRunnerPort for OptimizeRunner {
         _farm: &dyn EntryScheduleShowFarm,
     ) -> EntryScheduleWindowResult {
         let crop_gateway = CropSqliteGateway::new(self.pool.clone());
-        let entity = load_crop_entity_for_optimize(&crop_gateway, crop);
+        let entity = match load_crop_entity_for_optimize(&crop_gateway, crop) {
+            Ok(entity) => entity,
+            Err(_) => {
+                return EntryScheduleWindowResult {
+                    eligible: false,
+                    sowing_windows: vec![],
+                    transplant_windows: vec![],
+                    reason_parts: BTreeMap::from([(
+                        "error".into(),
+                        json!("crop_load_failed"),
+                    )]),
+                    sowing_stage_id: None,
+                    transplant_stage_id: None,
+                    weather_end_date: None,
+                };
+            }
+        };
         let wrap = CropWrap(entity);
         let crop_gw = SqliteOptimizeCropGateway {
-            pool: self.pool.clone(),
             crop_gateway: CropSqliteGateway::new(self.pool.clone()),
         };
         let builder = AgrrCropBuilder {
@@ -399,7 +383,7 @@ impl EntryScheduleShowOutputPort for ShowPresenter {
         self.out = Some(ShowOut {
             status,
             body: json!({
-                "error": failure.detail_message,
+                "errors": [failure.detail_message],
                 "error_key": format!("{:?}", failure.kind),
             }),
         });
@@ -438,7 +422,7 @@ async fn load_farm(state: &AppState, farm_id: i64) -> Result<FarmEntity, (Status
         .map_err(|_| {
             (
                 StatusCode::NOT_FOUND,
-                Json(json!({"error": "farm not found"})),
+                Json(json!({"errors": ["farm not found"]})),
             )
         })
 }
@@ -483,7 +467,7 @@ async fn entry_schedule_crop_show(
     let Some(crop) = resolve.crop else {
         return (
             StatusCode::NOT_FOUND,
-            Json(json!({"error": "crop not found"})),
+            Json(json!({"errors": ["crop not found"]})),
         )
             .into_response();
     };
@@ -516,7 +500,7 @@ async fn entry_schedule_crop_show(
         Some(ShowOut { status, body }) => (status, Json(body)).into_response(),
         None => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "no response"})),
+            Json(json!({"errors": ["no response"]})),
         )
             .into_response(),
     }
@@ -816,7 +800,7 @@ mod tests {
         let out = presenter.out.expect("response");
         assert_eq!(out.status, StatusCode::SERVICE_UNAVAILABLE);
         assert_eq!(
-            out.body.get("error").and_then(|v| v.as_str()),
+            out.body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("daemon timeout")
         );
         assert_eq!(
@@ -831,7 +815,7 @@ mod tests {
         let (status, body) = entry_schedule_crops_weather_error(err);
         assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
         assert_eq!(
-            body.get("error").and_then(|v| v.as_str()),
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("weather_location_required")
         );
     }
@@ -842,7 +826,7 @@ mod tests {
         let (status, body) = entry_schedule_crops_weather_error(err);
         assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
         assert_eq!(
-            body.get("error").and_then(|v| v.as_str()),
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("prediction_payload_missing")
         );
     }
@@ -853,7 +837,7 @@ mod tests {
         let (status, body) = entry_schedule_crops_weather_error(err);
         assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
         assert_eq!(
-            body.get("error").and_then(|v| v.as_str()),
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("daemon timeout")
         );
         assert!(!body.as_object().unwrap().contains_key("error_key"));
@@ -866,7 +850,7 @@ mod tests {
         let out = presenter.out.expect("response");
         assert_eq!(out.status, StatusCode::NOT_FOUND);
         assert_eq!(
-            out.body.get("error").and_then(|v| v.as_str()),
+            out.body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("crop not found")
         );
     }
@@ -878,7 +862,7 @@ mod tests {
         let out = presenter.out.expect("response");
         assert_eq!(out.status, StatusCode::INTERNAL_SERVER_ERROR);
         assert_eq!(
-            out.body.get("error").and_then(|v| v.as_str()),
+            out.body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("unexpected")
         );
     }
@@ -905,53 +889,18 @@ mod tests {
     }
 
     #[test]
-    fn load_entry_schedule_temperature_maps_sqlite_row_to_snapshot() {
-        let (pool, _file) = crop_test_pool();
-        insert_crop_with_method(&pool, 1, "トマト", "transplant");
-        let stage_id = insert_stage_with_temperature(&pool, 1, "生育", -2.0, 18.0, 28.0, 10.0);
-
-        let snapshot = pool
-            .with_read(|conn| load_entry_schedule_temperature(conn, stage_id))
-            .expect("read temperature")
-            .expect("temperature row");
-
-        assert_eq!(snapshot.frost_threshold, Some(-2.0));
-        assert_eq!(snapshot.optimal_min, Some(18.0));
-        assert_eq!(snapshot.optimal_max, Some(28.0));
-        assert_eq!(snapshot.base_temperature, Some(10.0));
-    }
-
-    #[test]
-    fn load_entry_schedule_temperature_returns_none_without_row() {
-        let (pool, _file) = crop_test_pool();
-
-        let snapshot = pool
-            .with_read(|conn| load_entry_schedule_temperature(conn, 999))
-            .expect("read temperature");
-
-        assert!(snapshot.is_none());
-    }
-
-    #[test]
-    fn entry_schedule_ordered_stage_rows_attaches_temperature_requirement_from_sqlite() {
+    fn entry_schedule_ordered_stage_rows_lists_stages_without_temperature_requirements() {
         let (pool, _file) = crop_test_pool();
         insert_crop_with_method(&pool, 5, "ほうれん草", "direct_sow");
         insert_stage_with_temperature(&pool, 5, "Contract Stage", 0.0, 15.0, 25.0, 8.0);
         let gateway = SqliteOptimizeCropGateway {
-            pool: pool.clone(),
             crop_gateway: CropSqliteGateway::new(pool),
         };
 
         let rows = gateway.entry_schedule_ordered_stage_rows(5).expect("stage rows");
 
         assert_eq!(rows.len(), 1);
-        let temp = rows[0]
-            .temperature_requirement
-            .as_ref()
-            .expect("temperature requirement must be loaded for optimize");
-        assert_eq!(temp.base_temperature, Some(8.0));
-        assert_eq!(temp.optimal_min, Some(15.0));
-        assert_eq!(temp.optimal_max, Some(25.0));
+        assert_eq!(rows[0].name, "Contract Stage");
     }
 
     #[test]
@@ -964,7 +913,7 @@ mod tests {
             name: "ほうれん草",
         };
 
-        let entity = load_crop_entity_for_optimize(&gateway, &show_crop);
+        let entity = load_crop_entity_for_optimize(&gateway, &show_crop).expect("crop row");
         let wrap = CropWrap(entity);
 
         assert_eq!(
@@ -983,7 +932,7 @@ mod tests {
             name: "トマト",
         };
 
-        let entity = load_crop_entity_for_optimize(&gateway, &show_crop);
+        let entity = load_crop_entity_for_optimize(&gateway, &show_crop).expect("crop row");
 
         assert_eq!(
             entity.cultivation_method,
@@ -992,7 +941,7 @@ mod tests {
     }
 
     #[test]
-    fn load_crop_entity_for_optimize_falls_back_without_db_row() {
+    fn load_crop_entity_for_optimize_err_without_db_row() {
         let (pool, _file) = crop_test_pool();
         let gateway = CropSqliteGateway::new(pool);
         let show_crop = StubShowCrop {
@@ -1000,11 +949,7 @@ mod tests {
             name: "missing",
         };
 
-        let entity = load_crop_entity_for_optimize(&gateway, &show_crop);
-
-        assert_eq!(entity.id, 99);
-        assert_eq!(entity.name, "missing");
-        assert_eq!(entity.cultivation_method, None);
+        assert!(load_crop_entity_for_optimize(&gateway, &show_crop).is_err());
     }
 
     #[test]

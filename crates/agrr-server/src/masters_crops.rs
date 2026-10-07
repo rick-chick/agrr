@@ -249,7 +249,7 @@ impl CropListOutputPort for ListPresenter {
     fn on_failure(&mut self, error: ListFailure) {
         self.body = Some(Err((
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": error_message(&error)}),
+            json!({"errors": [error_message(&error)]}),
         )));
     }
 }
@@ -311,7 +311,7 @@ impl agrr_domain::crop::ports::CropUpdateOutputPort for UpdatePresenter {
             ),
             UpdateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
         };
-        self.body = Some(Err((status, json!({"error": msg}))));
+        self.body = Some(Err((status, json!({"errors": [msg]}))));
     }
 }
 
@@ -346,7 +346,7 @@ fn detail_failure(error: DetailFailure) -> (StatusCode, Value) {
     match error {
         DetailFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "crops.flash.no_permission"}),
+            json!({"errors": ["crops.flash.no_permission"]}),
         ),
         DetailFailure::Error(e) => {
             let status = if e.message == "Crop not found" {
@@ -354,7 +354,7 @@ fn detail_failure(error: DetailFailure) -> (StatusCode, Value) {
             } else {
                 StatusCode::UNPROCESSABLE_ENTITY
             };
-            (status, json!({"error": e.message}))
+            (status, json!({"errors": [e.message]}))
         }
     }
 }
@@ -363,9 +363,9 @@ fn destroy_failure(error: DestroyFailure) -> (StatusCode, Value) {
     match error {
         DestroyFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "crops.flash.no_permission"}),
+            json!({"errors": ["crops.flash.no_permission"]}),
         ),
-        DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"error": e.message})),
+        DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"errors": [e.message]})),
     }
 }
 
@@ -380,6 +380,6 @@ fn internal(_: Box<dyn std::error::Error + Send + Sync>) -> (StatusCode, Json<Va
 fn internal_error() -> (StatusCode, Json<Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(json!({"error": "internal"})),
+        Json(json!({"errors": ["internal"]})),
     )
 }

@@ -45,7 +45,7 @@ impl DeletionUndoRestoreOutputPort for RestorePresenter {
         let msg = error.message;
         let (status, display) = classify_restore_error(&msg);
         self.status = status;
-        self.body = json!({ "status": "error", "error": display });
+        self.body = json!({ "status": "error", "errors": [display] });
     }
 }
 
@@ -73,7 +73,7 @@ async fn restore(
     let clock = SystemClock;
     let mut presenter = RestorePresenter {
         status: StatusCode::INTERNAL_SERVER_ERROR,
-        body: json!({"status": "error", "error": "no response"}),
+        body: json!({"status": "error", "errors": ["no response"]}),
     };
     let undo_token = body.undo_token.clone();
     let input = DeletionUndoRestoreInput::new(body.undo_token);

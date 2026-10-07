@@ -182,7 +182,7 @@ mod tests {
         );
 
         let err = builtin_generation_deprecated_result(
-            Err((StatusCode::UNPROCESSABLE_ENTITY, Json(json!({"error": "invalid"})))),
+            Err((StatusCode::UNPROCESSABLE_ENTITY, Json(json!({"errors": ["invalid"]})))),
             BuiltinGenerationEndpoint::PestAiUpdate,
         );
         assert_eq!(err.status(), StatusCode::UNPROCESSABLE_ENTITY);

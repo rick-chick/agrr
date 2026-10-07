@@ -1,20 +1,12 @@
 // Tests for `interactors/entry_schedule/stage_role_resolver.rs` (Ruby parity under test/domain/cultivation_plan/).
 
-use crate::cultivation_plan::interactors::entry_schedule::{
-    CropStageSnapshot, StageRoleResolver, TemperatureRequirementSnapshot,
-};
+use crate::cultivation_plan::interactors::entry_schedule::{CropStageSnapshot, StageRoleResolver};
 
 fn stage(id: i64, name: &str, order: i32) -> CropStageSnapshot {
     CropStageSnapshot {
         id,
         name: name.into(),
         order,
-        temperature_requirement: Some(TemperatureRequirementSnapshot {
-            frost_threshold: None,
-            optimal_min: Some(10.0),
-            optimal_max: Some(20.0),
-            base_temperature: Some(5.0),
-        }),
     }
 }
 

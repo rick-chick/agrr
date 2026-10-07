@@ -131,25 +131,25 @@ async fn create(
         fn on_pest_id_missing(&mut self) {
             *self.0.lock().unwrap() = Some(Err((
                 StatusCode::UNPROCESSABLE_ENTITY,
-                Json(json!({"error": "pest_id is required"})),
+                Json(json!({"errors": ["pest_id is required"]})),
             )));
         }
         fn on_pest_not_found(&mut self) {
             *self.0.lock().unwrap() = Some(Err((
                 StatusCode::NOT_FOUND,
-                Json(json!({"error": "Pest not found"})),
+                Json(json!({"errors": ["Pest not found"]})),
             )));
         }
         fn on_forbidden(&mut self) {
             *self.0.lock().unwrap() = Some(Err((
                 StatusCode::FORBIDDEN,
-                Json(json!({"error": "Permission denied"})),
+                Json(json!({"errors": ["Permission denied"]})),
             )));
         }
         fn on_already_associated(&mut self) {
             *self.0.lock().unwrap() = Some(Err((
                 StatusCode::UNPROCESSABLE_ENTITY,
-                Json(json!({"error": "Pest is already associated with this crop"})),
+                Json(json!({"errors": ["Pest is already associated with this crop"]})),
             )));
         }
     }
@@ -190,19 +190,19 @@ async fn destroy(
         fn on_crop_not_found(&mut self) {
             self.status = Some(Err((
                 StatusCode::NOT_FOUND,
-                Json(json!({"error": "Crop not found"})),
+                Json(json!({"errors": ["Crop not found"]})),
             )));
         }
         fn on_pest_not_found(&mut self) {
             self.status = Some(Err((
                 StatusCode::NOT_FOUND,
-                Json(json!({"error": "Pest not found"})),
+                Json(json!({"errors": ["Pest not found"]})),
             )));
         }
         fn on_not_associated(&mut self) {
             self.status = Some(Err((
                 StatusCode::NOT_FOUND,
-                Json(json!({"error": "Pest is not associated with this crop"})),
+                Json(json!({"errors": ["Pest is not associated with this crop"]})),
             )));
         }
     }

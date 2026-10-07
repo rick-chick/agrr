@@ -132,7 +132,7 @@ impl CropAiCreateOutputPort for CropAiPresenter {
     fn on_failure(&mut self, failure: CropAiCreateFailure) {
         self.response = Some(Err((
             crop_http_status(failure.http_status),
-            Json(json!({ "error": failure.message })),
+            Json(json!({ "errors": [failure.message]})),
         )));
     }
 }
@@ -150,7 +150,7 @@ async fn crop_ai_create(
 ) -> Response {
     let result: Result<Json<Value>, (StatusCode, Json<Value>)> = (|| {
         let user_id = user_id_from_session(&state, &jar).map_err(|status| {
-            (status, Json(json!({"error": "unauthorized"})))
+            (status, Json(json!({"errors": ["unauthorized"]})))
         })?;
         let pool = state.sqlite.clone();
         let user_lookup = UserLookupSqliteGateway::new(pool.clone());
@@ -185,13 +185,13 @@ async fn crop_ai_create(
             .map_err(|_| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({"error": "internal"})),
+                    Json(json!({"errors": ["internal"]})),
                 )
             })?;
         presenter.response.unwrap_or_else(|| {
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "no response"})),
+                Json(json!({"errors": ["no response"]})),
             ))
         })
     })();
@@ -220,7 +220,7 @@ impl FertilizeAiCreateOutputPort for FertilizeAiCreatePresenter {
     fn on_failure(&mut self, failure: FertilizeAiCreateFailure) {
         self.response = Some(Err((
             fertilize_http_status(failure.http_status),
-            Json(json!({ "error": failure.message })),
+            Json(json!({ "errors": [failure.message]})),
         )));
     }
 }
@@ -237,7 +237,7 @@ async fn fertilize_ai_create(
 ) -> Response {
     let result: Result<Json<Value>, (StatusCode, Json<Value>)> = (|| {
         let user_id = user_id_from_session(&state, &jar).map_err(|status| {
-            (status, Json(json!({"error": "unauthorized"})))
+            (status, Json(json!({"errors": ["unauthorized"]})))
         })?;
         let pool = state.sqlite.clone();
         let gateway = FertilizeSqliteGateway::new(pool.clone());
@@ -266,13 +266,13 @@ async fn fertilize_ai_create(
             .map_err(|_| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({"error": "internal"})),
+                    Json(json!({"errors": ["internal"]})),
                 )
             })?;
         presenter.response.unwrap_or_else(|| {
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "no response"})),
+                Json(json!({"errors": ["no response"]})),
             ))
         })
     })();
@@ -287,7 +287,7 @@ async fn fertilize_ai_update(
 ) -> Response {
     let result: Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> = (|| {
         let user_id = user_id_from_session(&state, &jar).map_err(|status| {
-            (status, Json(json!({"error": "unauthorized"})))
+            (status, Json(json!({"errors": ["unauthorized"]})))
         })?;
         let pool = state.sqlite.clone();
         let gateway = FertilizeSqliteGateway::new(pool.clone());
@@ -311,7 +311,7 @@ async fn fertilize_ai_update(
             .map_err(|_| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({"error": "internal"})),
+                    Json(json!({"errors": ["internal"]})),
                 )
             })?;
         Ok((
@@ -348,7 +348,7 @@ impl PestAiCreateOutputPort for PestAiCreatePresenter {
     fn on_failure(&mut self, failure: PestAiCreateFailure) {
         self.response = Some(Err((
             pest_http_status(failure.http_status),
-            Json(json!({ "error": failure.message })),
+            Json(json!({ "errors": [failure.message]})),
         )));
     }
 }
@@ -365,7 +365,7 @@ async fn pest_ai_create(
 ) -> Response {
     let result: Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> = (|| {
         let user_id = user_id_from_session(&state, &jar).map_err(|status| {
-            (status, Json(json!({"error": "unauthorized"})))
+            (status, Json(json!({"errors": ["unauthorized"]})))
         })?;
         let pool = state.sqlite.clone();
         let gateway = PestSqliteGateway::new(pool.clone());
@@ -418,7 +418,7 @@ async fn pest_ai_create(
             .map_err(|_| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({"error": "internal"})),
+                    Json(json!({"errors": ["internal"]})),
                 )
             })?;
         match presenter.response {
@@ -426,7 +426,7 @@ async fn pest_ai_create(
             Some(Err(e)) => Err(e),
             None => Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": "no response"})),
+                Json(json!({"errors": ["no response"]})),
             )),
         }
     })();
@@ -441,7 +441,7 @@ async fn pest_ai_update(
 ) -> Response {
     let result: Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> = (|| {
         let user_id = user_id_from_session(&state, &jar).map_err(|status| {
-            (status, Json(json!({"error": "unauthorized"})))
+            (status, Json(json!({"errors": ["unauthorized"]})))
         })?;
         let pool = state.sqlite.clone();
         let gateway = PestSqliteGateway::new(pool.clone());
@@ -474,7 +474,7 @@ async fn pest_ai_update(
             .map_err(|_| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({"error": "internal"})),
+                    Json(json!({"errors": ["internal"]})),
                 )
             })?;
         Ok((pest_http_status(envelope.status), Json(envelope.body)))

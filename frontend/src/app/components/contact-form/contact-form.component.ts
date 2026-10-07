@@ -156,8 +156,6 @@ const initialControl: ContactFormViewState = {
   styleUrls: ['../masters/_master-layout.css', './contact-form.component.css']
 })
 export class ContactFormComponent implements ContactFormView, OnInit, AfterViewInit {
-  readonly captchaGroupLabelId = 'contact-turnstile-label';
-
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly useCase = inject(SendContactMessageUseCase);
   private readonly presenter = inject(ContactFormPresenter);

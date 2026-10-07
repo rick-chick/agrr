@@ -1,6 +1,6 @@
 //! Nested crop task schedule blueprints — `/api/v1/masters/crops/{crop_id}/task_schedule_blueprints`.
 
-use crate::api_error::{single_failure, single_failure_with_code};
+use crate::api_error::single_failure_with_code;
 use crate::builtin_generation_deprecation::{
     builtin_generation_deprecated_json, BuiltinGenerationEndpoint,
 };
@@ -16,8 +16,8 @@ use agrr_adapters_sqlite::{
 use agrr_domain::crop::dtos::{
     CropBlueprintRegenerateFailureReason, MastersCropTaskScheduleBlueprint,
     MastersCropTaskScheduleBlueprintCreateFailure, MastersCropTaskScheduleBlueprintCreateFailureReason,
-    MastersCropTaskScheduleBlueprintCreateInput, MastersCropTaskScheduleBlueprintDestroyInput,
-    MastersCropTaskScheduleBlueprintFailure, MastersCropTaskScheduleBlueprintFailureReason,
+    MastersCropTaskScheduleBlueprintCreateInput,     MastersCropTaskScheduleBlueprintDestroyInput,
+    MastersCropTaskScheduleBlueprintFailureReason,
     MastersCropTaskScheduleBlueprintIndexInput, MastersCropTaskScheduleBlueprintRegenerateInput,
     MastersCropTaskScheduleBlueprintUpdateInput,
 };
@@ -111,7 +111,7 @@ async fn index(
         fn on_failure(&mut self, _: agrr_domain::crop::dtos::MastersCropTaskScheduleBlueprintFailure) {
             self.body = Some(Err((
                 StatusCode::NOT_FOUND,
-                Json(json!({"error": "Crop not found"})),
+                Json(json!({"errors": ["Crop not found"]})),
             )));
         }
     }
@@ -244,7 +244,7 @@ async fn regenerate(
     {
         return builtin_generation_deprecated_json(
             StatusCode::INTERNAL_SERVER_ERROR,
-            json!({"error": "internal"}),
+            json!({"errors": ["internal"]}),
             BuiltinGenerationEndpoint::TaskScheduleBlueprintRegenerate,
         );
     }
@@ -261,7 +261,7 @@ async fn regenerate(
         ),
         None => builtin_generation_deprecated_json(
             StatusCode::INTERNAL_SERVER_ERROR,
-            json!({"error": "internal"}),
+            json!({"errors": ["internal"]}),
             BuiltinGenerationEndpoint::TaskScheduleBlueprintRegenerate,
         ),
     }
@@ -457,16 +457,16 @@ fn blueprint_failure_response(
     match failure.reason {
         CropNotFound => (
             StatusCode::NOT_FOUND,
-            Json(json!({"error": "Crop not found"})),
+            Json(json!({"errors": ["Crop not found"]})),
         ),
         BlueprintNotFound => (
             StatusCode::NOT_FOUND,
-            Json(json!({"error": "Blueprint not found"})),
+            Json(json!({"errors": ["Blueprint not found"]})),
         ),
         Duplicate => (
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({
-                "error": "A task plan for this stage, task, and GDD timing already exists",
+                "errors": ["A task plan for this stage, task, and GDD timing already exists"],
                 "error_code": "duplicate_blueprint"
             })),
         ),

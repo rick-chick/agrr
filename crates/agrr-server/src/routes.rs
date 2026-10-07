@@ -95,7 +95,7 @@ async fn trigger_weather_update(
     if state.scheduler_auth_token.is_empty() {
         return (
             StatusCode::SERVICE_UNAVAILABLE,
-            Json(serde_json::json!({"error": "Authentication not configured"})),
+            Json(serde_json::json!({"errors": ["Authentication not configured"]})),
         )
             .into_response();
     }
@@ -103,7 +103,7 @@ async fn trigger_weather_update(
     let Some(provided_token) = extract_scheduler_token(&headers) else {
         return (
             StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({"error": "Missing authentication token"})),
+            Json(serde_json::json!({"errors": ["Missing authentication token"]})),
         )
             .into_response();
     };
@@ -111,7 +111,7 @@ async fn trigger_weather_update(
     if provided_token != state.scheduler_auth_token.as_str() {
         return (
             StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Invalid authentication token"})),
+            Json(serde_json::json!({"errors": ["Invalid authentication token"]})),
         )
             .into_response();
     }

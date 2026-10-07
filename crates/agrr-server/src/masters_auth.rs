@@ -1,5 +1,6 @@
 //! Masters API authentication (API key or session cookie) — Rails `BaseController` parity.
 
+use crate::api_error::{single_failure, single_failure_with_code};
 use crate::state::AppState;
 use agrr_adapters_sqlite::{ApiKeyPrincipalSqliteGateway, SessionCookiePrincipalSqliteGateway};
 use agrr_domain::shared::dtos::{
@@ -95,14 +96,14 @@ pub fn resolve_masters_user_id(
 fn scope_denied() -> (StatusCode, axum::Json<serde_json::Value>) {
     (
         StatusCode::FORBIDDEN,
-        axum::Json(serde_json::json!({"error": "forbidden", "error_code": "insufficient_scope"})),
+        axum::Json(single_failure_with_code("forbidden", "insufficient_scope")),
     )
 }
 
 fn unauthorized() -> (StatusCode, axum::Json<serde_json::Value>) {
     (
         StatusCode::UNAUTHORIZED,
-        axum::Json(serde_json::json!({"error": "unauthorized"})),
+        axum::Json(single_failure("unauthorized")),
     )
 }
 

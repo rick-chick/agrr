@@ -11,7 +11,7 @@ use agrr_domain::contact_messages::interactors::CreateContactMessageInteractor;
 use agrr_domain::contact_messages::ports::CreateContactMessageOutputPort;
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
-use axum::routing::{get, post};
+use axum::routing::post;
 use axum::{Json, Router};
 use serde::Deserialize;
 
@@ -168,7 +168,7 @@ mod tests {
     fn failure_response_rate_limit_includes_json_body() {
         let (status, Json(json)) = failure_response(CreateContactMessageFailure::rate_limit());
         assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
-        assert_eq!(json["error"], "rate_limit");
+        assert_eq!(json["errors"][0], "rate_limit");
     }
 
     #[test]

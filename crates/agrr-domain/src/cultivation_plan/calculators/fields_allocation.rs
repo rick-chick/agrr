@@ -19,26 +19,20 @@ impl<'a> FieldsAllocation<'a> {
         Self { total_area, crops }
     }
 
-    pub fn allocate(&self) -> Vec<FieldAllocation> {
-        if self.total_area <= 0.0 || self.crops.is_empty() {
-            let crop = self.crops.first().cloned().unwrap_or(CultivationPlanInitCrop {
-                id: 0,
-                name: "デフォルト作物".into(),
-                variety: None,
-                area_per_unit: 1.0,
-                revenue_per_area: 0.0,
-            });
-            return vec![FieldAllocation {
-                crop,
-                area: self.total_area.max(100.0),
-            }];
+    pub fn allocate(&self) -> Result<Vec<FieldAllocation>, &'static str> {
+        if self.total_area <= 0.0 {
+            return Err("invalid_total_area");
+        }
+        if self.crops.is_empty() {
+            return Err("no_crops");
         }
 
         let field_count = self.field_count();
         let base_area = (self.total_area / field_count as f64).floor();
         let remainder = (self.total_area - base_area * field_count as f64).round() as i32;
 
-        self.prioritized_crops(field_count)
+        let allocations = self
+            .prioritized_crops(field_count)
             .into_iter()
             .enumerate()
             .map(|(index, crop)| {
@@ -48,7 +42,8 @@ impl<'a> FieldsAllocation<'a> {
                     area: base_area + additional,
                 }
             })
-            .collect()
+            .collect();
+        Ok(allocations)
     }
 
     pub fn field_count(&self) -> usize {

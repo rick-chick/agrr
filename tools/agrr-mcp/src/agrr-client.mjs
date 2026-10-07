@@ -76,11 +76,16 @@ export class AgrrClient {
     }
 
     if (!response.ok) {
-      const err = new Error(
-        typeof payload === 'object' && payload?.error
-          ? String(payload.error)
-          : `AGRR API ${response.status} for ${path}`,
-      );
+      let message = `AGRR API ${response.status} for ${path}`;
+      if (payload && typeof payload === 'object' && Array.isArray(payload.errors)) {
+        const parts = payload.errors
+          .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+          .filter((entry) => entry.length > 0);
+        if (parts.length > 0) {
+          message = parts.join(', ');
+        }
+      }
+      const err = new Error(message);
       err.status = response.status;
       err.body = payload;
       throw err;
