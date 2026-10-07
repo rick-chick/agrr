@@ -51,7 +51,12 @@ const LINK_SCAN_FILES = [
 ];
 
 function listLinkCheckFiles(rootDir) {
-  return LINK_SCAN_FILES.filter((rel) => existsSync(join(rootDir, rel)));
+  const files = LINK_SCAN_FILES.filter((rel) => existsSync(join(rootDir, rel)));
+  const docsDir = join(rootDir, 'docs');
+  if (existsSync(docsDir)) {
+    walkMarkdown(docsDir, 'docs', files);
+  }
+  return [...new Set(files)];
 }
 
 function isHistoricalBlock(content) {
