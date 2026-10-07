@@ -39,7 +39,7 @@ impl UserApiKeyRotateOutputPort for RotatePresenter {
         } else {
             StatusCode::UNPROCESSABLE_ENTITY
         };
-        *self.body.lock().unwrap() = Some((status, Json(serde_json::json!({ "error": message }))));
+        *self.body.lock().unwrap() = Some((status, Json(serde_json::json!({ "errors": [message]}))));
     }
 }
 
@@ -65,7 +65,7 @@ async fn rotate(
     let user_id = user_id_from_session(&state, &jar).map_err(|status| {
         (
             status,
-            Json(serde_json::json!({"error": "unauthorized"})),
+            Json(serde_json::json!({"errors": ["unauthorized"]})),
         )
     })?;
     let gateway = UserApiKeyRotationSqliteGateway::new(state.sqlite.clone());
@@ -78,7 +78,7 @@ async fn rotate(
     let mut guard = body.lock().unwrap();
     let response = guard.take().ok_or((
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(serde_json::json!({"error": "internal"})),
+        Json(serde_json::json!({"errors": ["internal"]})),
     ))?;
     if response.0 == StatusCode::OK {
         if regenerate {

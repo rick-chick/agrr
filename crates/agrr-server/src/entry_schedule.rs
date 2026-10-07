@@ -184,13 +184,13 @@ fn entry_schedule_crops_weather_error(
     if err.downcast_ref::<WeatherLocationMissingError>().is_some() {
         return (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": "weather_location_required"}),
+            json!({"errors": ["weather_location_required"]}),
         );
     }
     if err.downcast_ref::<PredictionPayloadMissingError>().is_some() {
         return (
             StatusCode::SERVICE_UNAVAILABLE,
-            json!({"error": "prediction_payload_missing"}),
+            json!({"errors": ["prediction_payload_missing"]}),
         );
     }
     let message = err
@@ -199,7 +199,7 @@ fn entry_schedule_crops_weather_error(
         .unwrap_or_else(|| err.to_string());
     (
         StatusCode::SERVICE_UNAVAILABLE,
-        json!({"error": message}),
+        json!({"errors": [message]}),
     )
 }
 
@@ -383,7 +383,7 @@ impl EntryScheduleShowOutputPort for ShowPresenter {
         self.out = Some(ShowOut {
             status,
             body: json!({
-                "error": failure.detail_message,
+                "errors": [failure.detail_message],
                 "error_key": format!("{:?}", failure.kind),
             }),
         });
@@ -422,7 +422,7 @@ async fn load_farm(state: &AppState, farm_id: i64) -> Result<FarmEntity, (Status
         .map_err(|_| {
             (
                 StatusCode::NOT_FOUND,
-                Json(json!({"error": "farm not found"})),
+                Json(json!({"errors": ["farm not found"]})),
             )
         })
 }
@@ -467,7 +467,7 @@ async fn entry_schedule_crop_show(
     let Some(crop) = resolve.crop else {
         return (
             StatusCode::NOT_FOUND,
-            Json(json!({"error": "crop not found"})),
+            Json(json!({"errors": ["crop not found"]})),
         )
             .into_response();
     };
@@ -500,7 +500,7 @@ async fn entry_schedule_crop_show(
         Some(ShowOut { status, body }) => (status, Json(body)).into_response(),
         None => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "no response"})),
+            Json(json!({"errors": ["no response"]})),
         )
             .into_response(),
     }
@@ -800,7 +800,7 @@ mod tests {
         let out = presenter.out.expect("response");
         assert_eq!(out.status, StatusCode::SERVICE_UNAVAILABLE);
         assert_eq!(
-            out.body.get("error").and_then(|v| v.as_str()),
+            out.body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("daemon timeout")
         );
         assert_eq!(
@@ -815,7 +815,7 @@ mod tests {
         let (status, body) = entry_schedule_crops_weather_error(err);
         assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
         assert_eq!(
-            body.get("error").and_then(|v| v.as_str()),
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("weather_location_required")
         );
     }
@@ -826,7 +826,7 @@ mod tests {
         let (status, body) = entry_schedule_crops_weather_error(err);
         assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
         assert_eq!(
-            body.get("error").and_then(|v| v.as_str()),
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("prediction_payload_missing")
         );
     }
@@ -837,7 +837,7 @@ mod tests {
         let (status, body) = entry_schedule_crops_weather_error(err);
         assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
         assert_eq!(
-            body.get("error").and_then(|v| v.as_str()),
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("daemon timeout")
         );
         assert!(!body.as_object().unwrap().contains_key("error_key"));
@@ -850,7 +850,7 @@ mod tests {
         let out = presenter.out.expect("response");
         assert_eq!(out.status, StatusCode::NOT_FOUND);
         assert_eq!(
-            out.body.get("error").and_then(|v| v.as_str()),
+            out.body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("crop not found")
         );
     }
@@ -862,7 +862,7 @@ mod tests {
         let out = presenter.out.expect("response");
         assert_eq!(out.status, StatusCode::INTERNAL_SERVER_ERROR);
         assert_eq!(
-            out.body.get("error").and_then(|v| v.as_str()),
+            out.body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
             Some("unexpected")
         );
     }

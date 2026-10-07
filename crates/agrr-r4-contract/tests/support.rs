@@ -63,6 +63,14 @@ pub fn assert_builtin_generation_deprecated_headers(
 
 /// Asserts a 4xx/5xx JSON body follows the `errors: string[]` contract (non-empty strings).
 pub fn assert_api_failure_errors_array(json: &serde_json::Value, body: &str) {
+    assert!(
+        json.get("error").is_none(),
+        "legacy error key present: {body}"
+    );
+    assert!(
+        json.get("message").is_none(),
+        "legacy message key present: {body}"
+    );
     let errors = json
         .get("errors")
         .and_then(|v| v.as_array())
@@ -77,7 +85,7 @@ pub fn assert_api_failure_errors_array(json: &serde_json::Value, body: &str) {
     }
 }
 
-/// Asserts `errors` contains an element equal to `expected` (legacy `error` may still be present).
+/// Asserts `errors` contains an element equal to `expected`.
 pub fn assert_api_failure_errors_include(
     json: &serde_json::Value,
     expected: &str,
@@ -117,7 +125,6 @@ pub fn assert_crop_task_template_api_removed(status: u16, body: &str) {
         "{body}"
     );
     assert_api_failure_errors_array(&json, body);
-    assert!(json.get("error").is_some(), "{body}");
 }
 
 fn session_id_from_mock_login_response(response: reqwest::blocking::Response, route: &str) -> String {

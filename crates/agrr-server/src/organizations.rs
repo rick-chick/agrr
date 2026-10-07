@@ -296,7 +296,7 @@ async fn create_membership(
     if target_user_id <= 0 {
         return Err((
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"error": "user_id is required"})),
+            Json(json!({"errors": ["user_id is required"]})),
         ));
     }
     let role = if role_str.trim().is_empty() {
@@ -307,7 +307,7 @@ async fn create_membership(
             None => {
                 return Err((
                     StatusCode::UNPROCESSABLE_ENTITY,
-                    Json(json!({"error": "invalid role"})),
+                    Json(json!({"errors": ["invalid role"]})),
                 ));
             }
         }
@@ -354,7 +354,7 @@ async fn update_membership(
         None => {
             return Err((
                 StatusCode::UNPROCESSABLE_ENTITY,
-                Json(json!({"error": "invalid role"})),
+                Json(json!({"errors": ["invalid role"]})),
             ));
         }
     };
@@ -412,7 +412,7 @@ fn session_user_id(state: &AppState, jar: &CookieJar) -> Result<i64, (StatusCode
     user_id_from_session(state, jar).map_err(|status| {
         (
             status,
-            Json(json!({"error": "unauthorized"})),
+            Json(json!({"errors": ["unauthorized"]})),
         )
     })
 }
@@ -550,7 +550,7 @@ fn internal(_: Box<dyn std::error::Error + Send + Sync>) -> (StatusCode, Json<Va
 fn internal_error() -> (StatusCode, Json<Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(json!({"error": "internal"})),
+        Json(json!({"errors": ["internal"]})),
     )
 }
 
@@ -558,11 +558,11 @@ fn list_failure(error: OrganizationListFailure) -> (StatusCode, Value) {
     match error {
         OrganizationListFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "organizations.flash.no_permission"}),
+            json!({"errors": ["organizations.flash.no_permission"]}),
         ),
         OrganizationListFailure::Error(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": e.message}),
+            json!({"errors": [e.message]}),
         ),
     }
 }
@@ -571,15 +571,15 @@ fn find_failure(error: OrganizationFindFailure) -> (StatusCode, Value) {
     match error {
         OrganizationFindFailure::NotFound => (
             StatusCode::NOT_FOUND,
-            json!({"error": "organization not found"}),
+            json!({"errors": ["organization not found"]}),
         ),
         OrganizationFindFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "organizations.flash.no_permission"}),
+            json!({"errors": ["organizations.flash.no_permission"]}),
         ),
         OrganizationFindFailure::Error(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": e.message}),
+            json!({"errors": [e.message]}),
         ),
     }
 }
@@ -588,7 +588,7 @@ fn create_failure(error: CreateFailure) -> (StatusCode, Value) {
     match error {
         CreateFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "organizations.flash.no_permission"}),
+            json!({"errors": ["organizations.flash.no_permission"]}),
         ),
         CreateFailure::Error(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
@@ -601,15 +601,15 @@ fn update_failure(error: UpdateFailure) -> (StatusCode, Value) {
     match error {
         UpdateFailure::NotFound => (
             StatusCode::NOT_FOUND,
-            json!({"error": "organization not found"}),
+            json!({"errors": ["organization not found"]}),
         ),
         UpdateFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "organizations.flash.no_permission"}),
+            json!({"errors": ["organizations.flash.no_permission"]}),
         ),
         UpdateFailure::Error(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": e.message}),
+            json!({"errors": [e.message]}),
         ),
     }
 }
@@ -618,19 +618,19 @@ fn delete_failure(error: OrganizationDeleteFailure) -> (StatusCode, Value) {
     match error {
         OrganizationDeleteFailure::PersonalOrgForbidden => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": "organizations.personal_delete_forbidden"}),
+            json!({"errors": ["organizations.personal_delete_forbidden"]}),
         ),
         OrganizationDeleteFailure::NotFound => (
             StatusCode::NOT_FOUND,
-            json!({"error": "organization not found"}),
+            json!({"errors": ["organization not found"]}),
         ),
         OrganizationDeleteFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "organizations.flash.no_permission"}),
+            json!({"errors": ["organizations.flash.no_permission"]}),
         ),
         OrganizationDeleteFailure::Error(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": e.message}),
+            json!({"errors": [e.message]}),
         ),
     }
 }
@@ -639,15 +639,15 @@ fn membership_list_failure(error: OrganizationMembershipListFailure) -> (StatusC
     match error {
         OrganizationMembershipListFailure::NotFound => (
             StatusCode::NOT_FOUND,
-            json!({"error": "organization not found"}),
+            json!({"errors": ["organization not found"]}),
         ),
         OrganizationMembershipListFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "organizations.flash.no_permission"}),
+            json!({"errors": ["organizations.flash.no_permission"]}),
         ),
         OrganizationMembershipListFailure::Error(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": e.message}),
+            json!({"errors": [e.message]}),
         ),
     }
 }
@@ -656,19 +656,19 @@ fn membership_create_failure(error: OrganizationMembershipCreateFailure) -> (Sta
     match error {
         OrganizationMembershipCreateFailure::AlreadyMember => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": "organizations.memberships.already_member"}),
+            json!({"errors": ["organizations.memberships.already_member"]}),
         ),
         OrganizationMembershipCreateFailure::NotFound => (
             StatusCode::NOT_FOUND,
-            json!({"error": "user or organization not found"}),
+            json!({"errors": ["user or organization not found"]}),
         ),
         OrganizationMembershipCreateFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "organizations.flash.no_permission"}),
+            json!({"errors": ["organizations.flash.no_permission"]}),
         ),
         OrganizationMembershipCreateFailure::Error(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": e.message}),
+            json!({"errors": [e.message]}),
         ),
     }
 }
@@ -677,19 +677,19 @@ fn membership_update_failure(error: OrganizationMembershipUpdateFailure) -> (Sta
     match error {
         OrganizationMembershipUpdateFailure::LastOwnerForbidden => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": "organizations.memberships.last_owner_forbidden"}),
+            json!({"errors": ["organizations.memberships.last_owner_forbidden"]}),
         ),
         OrganizationMembershipUpdateFailure::NotFound => (
             StatusCode::NOT_FOUND,
-            json!({"error": "membership not found"}),
+            json!({"errors": ["membership not found"]}),
         ),
         OrganizationMembershipUpdateFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "organizations.flash.no_permission"}),
+            json!({"errors": ["organizations.flash.no_permission"]}),
         ),
         OrganizationMembershipUpdateFailure::Error(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": e.message}),
+            json!({"errors": [e.message]}),
         ),
     }
 }
@@ -698,19 +698,19 @@ fn membership_delete_failure(error: OrganizationMembershipDeleteFailure) -> (Sta
     match error {
         OrganizationMembershipDeleteFailure::LastOwnerForbidden => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": "organizations.memberships.last_owner_forbidden"}),
+            json!({"errors": ["organizations.memberships.last_owner_forbidden"]}),
         ),
         OrganizationMembershipDeleteFailure::NotFound => (
             StatusCode::NOT_FOUND,
-            json!({"error": "membership not found"}),
+            json!({"errors": ["membership not found"]}),
         ),
         OrganizationMembershipDeleteFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "organizations.flash.no_permission"}),
+            json!({"errors": ["organizations.flash.no_permission"]}),
         ),
         OrganizationMembershipDeleteFailure::Error(e) => (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({"error": e.message}),
+            json!({"errors": [e.message]}),
         ),
     }
 }

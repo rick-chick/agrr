@@ -38,16 +38,16 @@ pub(crate) async fn load_user_non_reference_crop(
         CropLoadUserNonReferenceForMastersInteractor::new(&mut port, user_id, &gateway, &user_lookup);
     interactor
         .call(crop_id)
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     match port.crop {
         Some(crop) => Ok(crop),
-        None => Err((StatusCode::NOT_FOUND, Json(json!({"error": "not found"})))),
+        None => Err((StatusCode::NOT_FOUND, Json(json!({"errors": ["not found"]})))),
     }
 }
 
 pub(crate) fn internal_error() -> (StatusCode, Json<Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(json!({"error": "internal"})),
+        Json(json!({"errors": ["internal"]})),
     )
 }

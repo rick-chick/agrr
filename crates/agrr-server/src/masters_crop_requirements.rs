@@ -157,11 +157,11 @@ async fn temperature_show(
         }
         fn on_not_found(&mut self) {
             self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"error": "TemperatureRequirement not found"});
+            self.body = json!({"errors": ["TemperatureRequirement not found"]});
         }
         fn on_already_exists(&mut self) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"error": "TemperatureRequirement already exists"});
+            self.body = json!({"errors": ["TemperatureRequirement already exists"]});
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
@@ -177,7 +177,7 @@ async fn temperature_show(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     Ok((port.status, Json(port.body)))
 }
 
@@ -229,11 +229,11 @@ async fn temperature_write(
         fn on_destroy_success(&mut self) {}
         fn on_not_found(&mut self) {
             self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"error": "not found"});
+            self.body = json!({"errors": ["not found"]});
         }
         fn on_already_exists(&mut self) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"error": "already exists"});
+            self.body = json!({"errors": ["already exists"]});
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
@@ -250,13 +250,13 @@ async fn temperature_write(
             MastersTemperatureRequirementCreateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     } else {
         let mut interactor =
             MastersTemperatureRequirementUpdateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     }
     Ok((port.status, Json(port.body)))
 }
@@ -294,7 +294,7 @@ async fn temperature_destroy(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     Ok(port.status)
 }
 
@@ -329,11 +329,11 @@ async fn thermal_show(
         }
         fn on_not_found(&mut self) {
             self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"error": "ThermalRequirement not found"});
+            self.body = json!({"errors": ["ThermalRequirement not found"]});
         }
         fn on_already_exists(&mut self) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"error": "already exists"});
+            self.body = json!({"errors": ["already exists"]});
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
@@ -349,7 +349,7 @@ async fn thermal_show(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     Ok((port.status, Json(port.body)))
 }
 
@@ -401,11 +401,11 @@ async fn thermal_write(
         fn on_destroy_success(&mut self) {}
         fn on_not_found(&mut self) {
             self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"error": "not found"});
+            self.body = json!({"errors": ["not found"]});
         }
         fn on_already_exists(&mut self) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"error": "already exists"});
+            self.body = json!({"errors": ["already exists"]});
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
@@ -422,13 +422,13 @@ async fn thermal_write(
             MastersThermalRequirementCreateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     } else {
         let mut interactor =
             MastersThermalRequirementUpdateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     }
     Ok((port.status, Json(port.body)))
 }
@@ -466,7 +466,7 @@ async fn thermal_destroy(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     Ok(port.status)
 }
 
@@ -501,11 +501,11 @@ async fn sunshine_show(
         }
         fn on_not_found(&mut self) {
             self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"error": "not found"});
+            self.body = json!({"errors": ["not found"]});
         }
         fn on_already_exists(&mut self) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"error": "already exists"});
+            self.body = json!({"errors": ["already exists"]});
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
@@ -521,7 +521,7 @@ async fn sunshine_show(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     Ok((port.status, Json(port.body)))
 }
 
@@ -573,11 +573,11 @@ async fn sunshine_write(
         fn on_destroy_success(&mut self) {}
         fn on_not_found(&mut self) {
             self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"error": "not found"});
+            self.body = json!({"errors": ["not found"]});
         }
         fn on_already_exists(&mut self) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"error": "already exists"});
+            self.body = json!({"errors": ["already exists"]});
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
@@ -594,13 +594,13 @@ async fn sunshine_write(
             MastersSunshineRequirementCreateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     } else {
         let mut interactor =
             MastersSunshineRequirementUpdateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     }
     Ok((port.status, Json(port.body)))
 }
@@ -638,7 +638,7 @@ async fn sunshine_destroy(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     Ok(port.status)
 }
 
@@ -673,11 +673,11 @@ async fn nutrient_show(
         }
         fn on_not_found(&mut self) {
             self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"error": "not found"});
+            self.body = json!({"errors": ["not found"]});
         }
         fn on_already_exists(&mut self) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"error": "already exists"});
+            self.body = json!({"errors": ["already exists"]});
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
@@ -693,7 +693,7 @@ async fn nutrient_show(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     Ok((port.status, Json(port.body)))
 }
 
@@ -745,11 +745,11 @@ async fn nutrient_write(
         fn on_destroy_success(&mut self) {}
         fn on_not_found(&mut self) {
             self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"error": "not found"});
+            self.body = json!({"errors": ["not found"]});
         }
         fn on_already_exists(&mut self) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"error": "already exists"});
+            self.body = json!({"errors": ["already exists"]});
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
             self.status = StatusCode::UNPROCESSABLE_ENTITY;
@@ -766,13 +766,13 @@ async fn nutrient_write(
             MastersNutrientRequirementCreateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     } else {
         let mut interactor =
             MastersNutrientRequirementUpdateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     }
     Ok((port.status, Json(port.body)))
 }
@@ -810,6 +810,6 @@ async fn nutrient_destroy(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     Ok(port.status)
 }

@@ -96,7 +96,7 @@ async fn show_field_cultivation(
     let user_id = user_id_from_session(&state, &jar).map_err(|status| {
         (
             status,
-            Json(serde_json::json!({"error": "unauthorized"})),
+            Json(serde_json::json!({"errors": ["unauthorized"]})),
         )
     })?;
 
@@ -114,12 +114,12 @@ async fn show_field_cultivation(
         {
             return Err((
                 axum::http::StatusCode::NOT_FOUND,
-                Json(serde_json::json!({"error": "not found"})),
+                Json(serde_json::json!({"errors": ["not found"]})),
             ));
         }
         return Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "internal"})),
+            Json(serde_json::json!({"errors": ["internal"]})),
         ));
     }
 
@@ -127,11 +127,11 @@ async fn show_field_cultivation(
         Some(ShowOutcome::Success(item)) => Ok(Json(item)),
         Some(ShowOutcome::NotFound) => Err((
             axum::http::StatusCode::NOT_FOUND,
-            Json(serde_json::json!({"error": "not found"})),
+            Json(serde_json::json!({"errors": ["not found"]})),
         )),
         None => Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "no response"})),
+            Json(serde_json::json!({"errors": ["no response"]})),
         )),
     }
 }
@@ -190,11 +190,11 @@ fn map_update_outcome(
         Some(UpdateOutcome::Success(json)) => Ok(Json(json)),
         Some(UpdateOutcome::NotFound(msg)) => Err((
             axum::http::StatusCode::NOT_FOUND,
-            Json(serde_json::json!({"error": msg})),
+            Json(serde_json::json!({"errors": [msg]})),
         )),
         Some(UpdateOutcome::Forbidden) => Err((
             axum::http::StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"success": false, "message": "forbidden"})),
+            Json(serde_json::json!({"success": false, "errors": ["forbidden"]})),
         )),
         Some(UpdateOutcome::Invalid(errors)) => Err((
             axum::http::StatusCode::UNPROCESSABLE_ENTITY,
@@ -202,7 +202,7 @@ fn map_update_outcome(
         )),
         None => Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "no response"})),
+            Json(serde_json::json!({"errors": ["no response"]})),
         )),
     }
 }
@@ -216,7 +216,7 @@ async fn update_field_cultivation(
     let user_id = user_id_from_session(&state, &jar).map_err(|status| {
         (
             status,
-            Json(serde_json::json!({"error": "unauthorized"})),
+            Json(serde_json::json!({"errors": ["unauthorized"]})),
         )
     })?;
 
@@ -244,7 +244,7 @@ async fn update_field_cultivation(
     interactor.call(input).map_err(|_| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "internal"})),
+            Json(serde_json::json!({"errors": ["internal"]})),
         )
     })?;
 
@@ -270,12 +270,12 @@ async fn show_public_field_cultivation(
         {
             return Err((
                 axum::http::StatusCode::NOT_FOUND,
-                Json(serde_json::json!({"error": "not found"})),
+                Json(serde_json::json!({"errors": ["not found"]})),
             ));
         }
         return Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "internal"})),
+            Json(serde_json::json!({"errors": ["internal"]})),
         ));
     }
 
@@ -283,11 +283,11 @@ async fn show_public_field_cultivation(
         Some(ShowOutcome::Success(item)) => Ok(Json(item)),
         Some(ShowOutcome::NotFound) => Err((
             axum::http::StatusCode::NOT_FOUND,
-            Json(serde_json::json!({"error": "not found"})),
+            Json(serde_json::json!({"errors": ["not found"]})),
         )),
         None => Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "no response"})),
+            Json(serde_json::json!({"errors": ["no response"]})),
         )),
     }
 }
@@ -319,7 +319,7 @@ async fn update_public_field_cultivation(
     interactor.call(input).map_err(|_| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "internal"})),
+            Json(serde_json::json!({"errors": ["internal"]})),
         )
     })?;
 

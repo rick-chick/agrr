@@ -28,6 +28,30 @@ test('runArchitectureGuard passes on production repo tree', () => {
   assert.equal(result.ok, true, result.violations.join('\n'));
 });
 
+test('S-T6 fails when server handler uses legacy error key outside backdoor', () => {
+  const root = mkdtempSync(join(tmpdir(), 'arch-guard-st6-'));
+  writeMinimalArchGuardTree(root);
+  writeFileSync(
+    join(root, 'crates/agrr-server/src/bad_handler.rs'),
+    'let x = json!({"error": "forbidden"});\n',
+  );
+  const result = runArchitectureGuard(root);
+  assert.equal(result.ok, false);
+  assert.ok(result.violations.some((v) => v.ruleId === 'S-T6' && v.file.includes('bad_handler.rs')));
+});
+
+test('S-T6 allows backdoor legacy error keys', () => {
+  const root = mkdtempSync(join(tmpdir(), 'arch-guard-st6-backdoor-'));
+  writeMinimalArchGuardTree(root);
+  mkdirSync(join(root, 'crates/agrr-server/src/backdoor'), { recursive: true });
+  writeFileSync(
+    join(root, 'crates/agrr-server/src/backdoor/routes.rs'),
+    'let x = json!({"error": "forbidden"});\n',
+  );
+  const result = runArchitectureGuard(root);
+  assert.ok(!result.violations.some((v) => v.ruleId === 'S-T6'));
+});
+
 test('R1 fails when domain imports axum', () => {
   const root = mkdtempSync(join(tmpdir(), 'arch-guard-r1-'));
   mkdirSync(join(root, 'crates/agrr-domain/src'), { recursive: true });

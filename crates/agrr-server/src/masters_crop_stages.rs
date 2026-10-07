@@ -72,7 +72,7 @@ pub(crate) async fn ensure_crop_visible(
     let mut p = P { ok: false };
     let mut interactor = CropDetailInteractor::new(&mut p, user_id, &gateway, &user_lookup, &scope_gateway);
     if interactor.call(crop_id).is_err() || !p.ok {
-        return Err((StatusCode::NOT_FOUND, Json(json!({"error": "not found"}))));
+        return Err((StatusCode::NOT_FOUND, Json(json!({"errors": ["not found"]}))));
     }
     Ok(())
 }
@@ -115,11 +115,11 @@ pub(crate) async fn ensure_authorized_crop_stage(
         .call(CropLoadAuthorizedCropStageInput::new(
             crop_id, stage_id, for_edit,
         ))
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
 
     match context {
         Some(ctx) => Ok(ctx),
-        None => Err((StatusCode::NOT_FOUND, Json(json!({"error": "not found"})))),
+        None => Err((StatusCode::NOT_FOUND, Json(json!({"errors": ["not found"]})))),
     }
 }
 
@@ -151,7 +151,7 @@ async fn index(
     let mut interactor = CropStageListInteractor::new(&mut p, &gateway);
     interactor
         .call(CropStageListInput { crop_id })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     Ok(Json(json!(p.body.unwrap_or_default())))
 }
 
@@ -181,13 +181,13 @@ fn stage_payload_from_attrs(attrs: &StageAttrs) -> Result<Value, (StatusCode, Js
     if name.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(json!({"error": "Invalid parameters"})),
+            Json(json!({"errors": ["Invalid parameters"]})),
         ));
     }
     let order = attrs.order.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
-            Json(json!({"error": "Invalid parameters"})),
+            Json(json!({"errors": ["Invalid parameters"]})),
         )
     })?;
     Ok(json!({
@@ -202,13 +202,13 @@ fn stage_update_payload_from_attrs(attrs: &StageAttrs) -> Result<Value, (StatusC
     if !has_name && !has_order {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(json!({"error": "Invalid parameters"})),
+            Json(json!({"errors": ["Invalid parameters"]})),
         ));
     }
     if has_name && attrs.name.as_deref().unwrap_or("").trim().is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(json!({"error": "Invalid parameters"})),
+            Json(json!({"errors": ["Invalid parameters"]})),
         ));
     }
     let mut payload = serde_json::Map::new();
@@ -221,7 +221,7 @@ fn stage_update_payload_from_attrs(attrs: &StageAttrs) -> Result<Value, (StatusC
     if payload.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(json!({"error": "Invalid parameters"})),
+            Json(json!({"errors": ["Invalid parameters"]})),
         ));
     }
     Ok(Value::Object(payload))
@@ -259,10 +259,10 @@ async fn create(
     let mut interactor = CropStageCreateInteractor::new(&mut p, &gateway);
     interactor
         .call(CropStageCreateInput::new(crop_id, payload))
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     p.resp.unwrap_or(Err((
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(json!({"error": "internal"})),
+        Json(json!({"errors": ["internal"]})),
     )))
 }
 
@@ -296,7 +296,7 @@ async fn reorder(
     let mut interactor = CropStageReorderInteractor::new(&mut p, &gateway);
     interactor
         .call(CropStageReorderInput { crop_id, entries })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     match p.body {
         Some(v) => Ok(Json(json!(v))),
         None => Err((
@@ -323,7 +323,7 @@ fn reorder_entries_from_body(
     if body.crop_stages.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(json!({"error": "Invalid parameters"})),
+            Json(json!({"errors": ["Invalid parameters"]})),
         ));
     }
     Ok(body
@@ -363,7 +363,7 @@ async fn update(
             crop_stage_id: id,
             payload,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     match p.body {
         Some(v) => Ok(Json(v)),
         None => Err((
@@ -395,10 +395,10 @@ async fn destroy(
     let mut interactor = CropStageDeleteInteractor::new(&mut p, &gateway);
     interactor
         .call(CropStageDeleteInput { crop_stage_id: id })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     if p.ok {
         Ok(StatusCode::NO_CONTENT)
     } else {
-        Err((StatusCode::NOT_FOUND, Json(json!({"error": "not found"}))))
+        Err((StatusCode::NOT_FOUND, Json(json!({"errors": ["not found"]}))))
     }
 }

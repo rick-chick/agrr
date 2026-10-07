@@ -51,7 +51,7 @@ API キーごとにスコープを保存し、Masters API（`/api/v1/masters/*`�
 書き込み系のリクエストを API キーで送ったときのレスポンス:
 
 ```json
-{ "error": "forbidden", "error_code": "insufficient_scope" }
+{ "errors": ["forbidden"], "error_code": "insufficient_scope" }
 ```
 
 ## 4. レート制限
@@ -68,7 +68,7 @@ API キーごとにスコープを保存し、Masters API（`/api/v1/masters/*`�
 超過時は **HTTP 429** と **`Retry-After`** ヘッダー（秒）が返ります。
 
 ```json
-{ "error": "rate_limit" }
+{ "errors": ["rate_limit"] }
 ```
 
 ## 5. 典型的なフロー（setup_proposal）

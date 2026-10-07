@@ -394,7 +394,7 @@ fn internal(_: Box<dyn std::error::Error + Send + Sync>) -> (StatusCode, Json<Va
 fn internal_error() -> (StatusCode, Json<Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(json!({"error": "internal"})),
+        Json(json!({"errors": ["internal"]})),
     )
 }
 
@@ -402,9 +402,9 @@ fn list_failure(error: ListFailure) -> (StatusCode, Value) {
     match error {
         ListFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "farms.flash.no_permission"}),
+            json!({"errors": ["farms.flash.no_permission"]}),
         ),
-        ListFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"error": e.message})),
+        ListFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"errors": [e.message]})),
     }
 }
 
@@ -412,11 +412,11 @@ fn detail_failure(error: DetailFailure) -> (StatusCode, Value) {
     match error {
         DetailFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "farms.flash.no_permission"}),
+            json!({"errors": ["farms.flash.no_permission"]}),
         ),
         DetailFailure::Error(e) => (
             StatusCode::NOT_FOUND,
-            json!({"error": e.message}),
+            json!({"errors": [e.message]}),
         ),
     }
 }
@@ -433,9 +433,9 @@ fn update_failure(error: UpdateFailure) -> (StatusCode, Value) {
     match error {
         UpdateFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "farms.flash.no_permission"}),
+            json!({"errors": ["farms.flash.no_permission"]}),
         ),
-        UpdateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"error": e.message})),
+        UpdateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"errors": [e.message]})),
     }
 }
 
@@ -443,8 +443,8 @@ fn destroy_failure(error: DestroyFailure) -> (StatusCode, Value) {
     match error {
         DestroyFailure::Policy(PolicyPermissionDenied) => (
             StatusCode::FORBIDDEN,
-            json!({"error": "farms.flash.no_permission"}),
+            json!({"errors": ["farms.flash.no_permission"]}),
         ),
-        DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"error": e.message})),
+        DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"errors": [e.message]})),
     }
 }
