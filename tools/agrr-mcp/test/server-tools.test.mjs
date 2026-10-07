@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { AGRR_MCP_TOOL_NAMES, createAgrrMcpToolHandlers } from '../src/tools.mjs';
+import { createAgrrMcpToolHandlers } from '../src/tools.mjs';
 import { tomatoJpSetupProposal } from '../src/fixtures.mjs';
 
 function createMockClient() {
@@ -20,20 +20,19 @@ function createMockClient() {
       calls.push(['proposeCropSetup', id, proposal]);
       return { mode: 'dry_run', valid: true, normalized: proposal };
     },
-    applyCropSetup: async (id, proposal) => {
-      calls.push(['applyCropSetup', id, proposal]);
-      return {
-        mode: 'apply',
-        valid: true,
-        result: { stage_ids: [1], blueprint_ids: [2] },
-      };
-    },
   };
 }
 
-test('MCP tool handlers expose four crop setup tools', () => {
+const EXPECTED_MCP_TOOL_NAMES = [
+  'get_crop_detail',
+  'list_reference_crops',
+  'propose_crop_setup',
+];
+
+test('MCP tool handlers expose three crop setup tools (read-only API key)', () => {
   const tools = createAgrrMcpToolHandlers(createMockClient());
-  assert.deepEqual(Object.keys(tools).sort(), [...AGRR_MCP_TOOL_NAMES].sort());
+  assert.deepEqual(Object.keys(tools).sort(), [...EXPECTED_MCP_TOOL_NAMES].sort());
+  assert.equal(tools.apply_crop_setup, undefined);
 });
 
 test('list_reference_crops delegates to client', async () => {
@@ -58,12 +57,4 @@ test('propose_crop_setup delegates dry_run to client', async () => {
   await tools.propose_crop_setup.handler({ crop_id: 9, proposal });
   assert.equal(client.calls[0][0], 'proposeCropSetup');
   assert.equal(client.calls[0][1], 9);
-});
-
-test('apply_crop_setup delegates apply to client', async () => {
-  const client = createMockClient();
-  const tools = createAgrrMcpToolHandlers(client);
-  const proposal = tomatoJpSetupProposal();
-  await tools.apply_crop_setup.handler({ crop_id: 9, proposal });
-  assert.equal(client.calls[0][0], 'applyCropSetup');
 });
