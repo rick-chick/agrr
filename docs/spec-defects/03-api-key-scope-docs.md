@@ -390,7 +390,7 @@ After:
 
 #### 5.1.3 `docs/api/builtin-generation-sunset.md`
 
-- 代替表(`:9-13`)の `POST` / `PATCH /api/v1/masters/...` は、API キーでは使えない旨を表の直後に 1 行追記する(「Masters の書き込みはログインセッション(画面)経由。API キーは読み取り専用: [getting-started.md §3](./getting-started.md)」)。
+- 代替表(`:9-13`)の `POST` / `PATCH /api/v1/masters/...` は、API キーでは使えない旨を表の直後に 1 行追記する(「Masters の書き込みはログインセッション(画面)経由。API キーは読み取り専用: [getting-started.md §3](../api/getting-started.md)」)。
 - 「### 2. `setup_proposal` で検証・投入」(`:36-49`)は、見出しを「検証(API キー)」と「投入(画面)」に分けるか、`apply` の箇条書き(`:47`)に「API キーでは実行できない。画面から」と追記する。
 - 「### 3. UI からインポート」(`:51-53`)を、**apply の唯一の経路**として位置づける文に直す。
 - 「肥料・害虫マスタ」(`:61`)の「外部スクリプトで `POST` / `PATCH` を呼び出してください」を、「画面(Masters CRUD)で登録してください。API キーは読み取り専用のため、外部スクリプトから書き込むことはできません」に直す。
