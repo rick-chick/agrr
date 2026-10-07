@@ -2,8 +2,8 @@
 
 **目的**: ユーザー影響ベースの信頼性目標（SLI / SLO）を定義し、アラートとインシデント対応の根拠を明文化する。  
 **対象サービス**: Cloud Run `agrr-production`（`agrr-475323` / `asia-northeast1`）  
-**関連**: [deploy-server スキル](../.cursor/skills/deploy-server/SKILL.md)、[production-admin スキル](../.cursor/skills/production-admin/SKILL.md)、[production-primary-sqlite-query スキル](../.cursor/skills/production-primary-sqlite-query/SKILL.md)  
-**ヘルスエンドポイント**: `/health`, `/up`, `/api/v1/health`（`crates/agrr-server/src/lib.rs`）
+**関連**: [deploy-server スキル](../../.cursor/skills/deploy-server/SKILL.md)、[production-admin スキル](../../.cursor/skills/production-admin/SKILL.md)、[production-primary-sqlite-query スキル](../../.cursor/skills/production-primary-sqlite-query/SKILL.md)  
+**ヘルスエンドポイント**: `/health`, `/up`（`crates/agrr-server/src/lib.rs`）、`/api/v1/health`（`crates/agrr-server/src/routes.rs`）
 
 本番の目視確認・デプロイ後の手動チェックは **Automation 受け入れ対象外**。ランブック記載で運用する。
 
@@ -51,7 +51,7 @@ gcloud logging read \
 |------|------|
 | **ログベース指標（推奨）** | `textPayload` のプレーン文字列: `optimization chain enqueued`（分母）と `optimization chain finalized`（分子）。失敗は `optimization_chain` + `outcome=failed` または `optimization failed plan_id=`。 |
 | **構造化テレメトリ** | `optimization_chain step=<name> plan_id=<id> ... outcome=ok|failed`（`crates/agrr-server/src/optimization_chain_telemetry.rs`） |
-| **DB 補助** | 長期トレンド: Litestream レプリカで `cultivation_plans.status` / `optimization_phase`（[production-primary-sqlite-query スキル](../.cursor/skills/production-primary-sqlite-query/SKILL.md)） |
+| **DB 補助** | 長期トレンド: Litestream レプリカで `cultivation_plans.status` / `optimization_phase`（[production-primary-sqlite-query スキル](../../.cursor/skills/production-primary-sqlite-query/SKILL.md)） |
 
 ```bash
 # 直近 24h: enqueue vs finalize 件数（手動 SLI 試算）
@@ -132,13 +132,13 @@ gcloud logging metrics create optimization_chain_failed_count \
 
 1. **確認**: [§測定方法 — API 可用性](#api-可用性sli-1) の `gcloud logging read` で 5xx URL・時刻を特定。
 2. **直近デプロイ**: `gcloud run revisions list --service=agrr-production --region=asia-northeast1 --project=agrr-475323 --limit=3`
-3. **ロールバック判断**: 新 revision 直後の 5xx なら前 revision へトラフィック切替（[deploy-server スキル](../.cursor/skills/deploy-server/SKILL.md) §緊急復旧）。
+3. **ロールバック判断**: 新 revision 直後の 5xx なら前 revision へトラフィック切替（[deploy-server スキル](../../.cursor/skills/deploy-server/SKILL.md) §緊急復旧）。
 4. **エスカレーション**: 認証・DB・agrr デーモン起因を切り分け。`session` / SQLite / `AGRR_DAEMON` ログを確認。
 
 ### Runbook: 最適化失敗率上昇
 
 1. **確認**: Cloud Logging で `fetch_weather_data failed` / `optimization failed` / enqueue のみ等の失敗パターンを分類（[`production-primary-sqlite-query` スキル](../../.cursor/skills/production-primary-sqlite-query/SKILL.md) と併用）。
-2. **サンプル plan_id**: 失敗ログから `plan_id=` を抽出し DB と突合（[production-primary-sqlite-query スキル](../.cursor/skills/production-primary-sqlite-query/SKILL.md)）。
+2. **サンプル plan_id**: 失敗ログから `plan_id=` を抽出し DB と突合（[production-primary-sqlite-query スキル](../../.cursor/skills/production-primary-sqlite-query/SKILL.md)）。
 3. **典型原因**: 気象 API / GCS 読み取り、agrr デーモン未応答、作物ステージ未設定、Cloud Run 再起動によるインメモリキュー喪失。
 4. **緩和**: 単一 plan の再 enqueue は backdoor / 管理 API 経路があれば利用。 widespread ならデプロイ・デーモン・参照 fixture を確認。
 

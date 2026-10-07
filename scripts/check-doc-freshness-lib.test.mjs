@@ -31,6 +31,18 @@ test('checkDocInternalLinks fails on broken relative link', () => {
   assert.match(result.errors.join('\n'), /missing\.md/);
 });
 
+test('checkDocInternalLinks scans docs/**/*.md for broken relative links', () => {
+  const root = mkdtempSync(join(tmpdir(), 'doc-link-docs-'));
+  mkdirSync(join(root, 'docs', 'ops'), { recursive: true });
+  writeFileSync(
+    join(root, 'docs', 'ops', 'x.md'),
+    '[bad](../missing-from-docs.md)\n',
+  );
+  const result = checkDocInternalLinks(root);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /missing-from-docs\.md/);
+});
+
 test('checkDocStalePaths passes on production repo tree', () => {
   const result = checkDocStalePaths(REPO_ROOT);
   assert.equal(result.ok, true, result.errors.join('\n'));

@@ -9,7 +9,7 @@ P6–P8 完了後、**現行のテスト・開発の正**は次を参照する�
 | 本番 API / 切替 | [`../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md`](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md) |
 | Rails シェル削除 | [`../app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](../app-rust-stack/P8-RAILS-SHELL-REMOVAL.md) |
 | ドメイン・adapter テスト | [`../lib-domain-rust/TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md) |
-| 実行 | [`.cursor/skills/test-common/SKILL.md`](../../.cursor/skills/test-common/SKILL.md)、[`../../test/README.md`](../../test/README.md) |
+| 実行 | [`.cursor/skills/test-common/SKILL.md`](../../../.cursor/skills/test-common/SKILL.md)、[`../../../test/README.md`](../../../test/README.md) |
 
 ## 本ディレクトリのファイル
 
