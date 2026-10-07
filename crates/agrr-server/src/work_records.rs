@@ -8,6 +8,9 @@ use crate::state::AppState;
 use crate::work_record_photos::load_photos_json_for_records;
 use crate::work_record_climate_snapshot::WorkRecordClimateSnapshotService;
 use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, TaskScheduleItemLookupSqliteGateway, UserOrganizationScopeSqliteGateway, WorkRecordPhotoSqliteGateway, WorkRecordSqliteGateway};
+use agrr_domain::field_cultivation::dtos::{
+    FieldCultivationClimateFailure, FieldCultivationClimateFailureReason,
+};
 use agrr_domain::work_record::dtos::{WorkRecordDestroyOutput, WorkRecordRead};
 use agrr_domain::work_record::interactors::{
     WorkRecordCreateInteractor, WorkRecordDestroyInteractor, WorkRecordListInteractor,
@@ -70,6 +73,7 @@ enum MutationOutcome<T> {
     NotFound,
     RecordInvalid(BTreeMap<String, Vec<String>>),
     Stale,
+    SnapshotUnavailable(FieldCultivationClimateFailure),
 }
 
 enum ListOutcome {
@@ -100,6 +104,10 @@ impl WorkRecordCreateOutputPort for CreatePresenter {
 
     fn on_not_found(&mut self) {
         self.body = Some(MutationOutcome::NotFound);
+    }
+
+    fn on_climate_snapshot_unavailable(&mut self, failure: FieldCultivationClimateFailure) {
+        self.body = Some(MutationOutcome::SnapshotUnavailable(failure));
     }
 }
 
@@ -140,6 +148,10 @@ impl WorkRecordUpdateOutputPort for UpdatePresenter {
 
     fn on_stale_update(&mut self) {
         self.body = Some(MutationOutcome::Stale);
+    }
+
+    fn on_climate_snapshot_unavailable(&mut self, failure: FieldCultivationClimateFailure) {
+        self.body = Some(MutationOutcome::SnapshotUnavailable(failure));
     }
 }
 
@@ -194,6 +206,41 @@ fn internal_error() -> (StatusCode, Json<Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(json!({"errors": ["internal"]})),
+    )
+}
+
+fn climate_snapshot_unavailable_response(
+    failure: FieldCultivationClimateFailure,
+) -> (StatusCode, Json<Value>) {
+    let (status, error_key, error_code) = match failure.reason {
+        FieldCultivationClimateFailureReason::ProgressDaemonUnavailable => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            "api.errors.climate_progress_daemon_unavailable",
+            "progress_daemon_unavailable",
+        ),
+        FieldCultivationClimateFailureReason::ProgressExecutionFailed => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api.errors.climate_progress_execution_failed",
+            "progress_execution_failed",
+        ),
+        FieldCultivationClimateFailureReason::ProgressResultInvalid => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api.errors.climate_progress_result_invalid",
+            "progress_result_invalid",
+        ),
+        FieldCultivationClimateFailureReason::CropRequirementIncomplete => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "api.errors.climate_crop_requirement_incomplete",
+            "crop_requirement_incomplete",
+        ),
+    };
+    (
+        status,
+        Json(json!({
+            "success": false,
+            "errors": [error_key],
+            "error_code": error_code,
+        })),
     )
 }
 
@@ -260,6 +307,9 @@ fn map_mutation_outcome<T>(
         Some(MutationOutcome::NotFound) => Err(not_found()),
         Some(MutationOutcome::RecordInvalid(errors)) => Err(record_invalid(errors)),
         Some(MutationOutcome::Stale) => Err(stale_conflict()),
+        Some(MutationOutcome::SnapshotUnavailable(failure)) => {
+            Err(climate_snapshot_unavailable_response(failure))
+        }
         None => Err(internal_error()),
     }
 }
