@@ -3955,7 +3955,11 @@ fn delete_organizations_personal_org_forbidden() {
         status_and_body(client.delete(&path, Some(&session_id), &empty_headers()));
     assert_eq!(422, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("personal delete JSON");
-    assert!(json.get("error").is_some(), "{body}");
+    assert_api_failure_errors_include(
+        &json,
+        "organizations.personal_delete_forbidden",
+        &body,
+    );
 }
 
 #[test]

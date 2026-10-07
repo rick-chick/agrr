@@ -125,7 +125,6 @@ pub fn assert_crop_task_template_api_removed(status: u16, body: &str) {
         "{body}"
     );
     assert_api_failure_errors_array(&json, body);
-    assert!(json.get("error").is_some(), "{body}");
 }
 
 fn session_id_from_mock_login_response(response: reqwest::blocking::Response, route: &str) -> String {
