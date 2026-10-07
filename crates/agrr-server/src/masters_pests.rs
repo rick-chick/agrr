@@ -60,7 +60,7 @@ fn take_response(
         Some(Err(e)) => Err(e),
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "internal"})),
+            Json(json!({"errors": ["internal"]})),
         )),
     }
 }
@@ -86,7 +86,7 @@ impl PestListOutputPort for ListPort {
         };
         *self.0.lock().unwrap() = Some(Err((
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"error": msg})),
+            Json(json!({"errors": [msg]})),
         )));
     }
 }
@@ -105,7 +105,7 @@ async fn index(
         PestListInteractor::new(&mut port, user_id, &gateway, &user_lookup);
     interactor
         .call()
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     take_response(&out)
 }
 
@@ -123,7 +123,7 @@ impl PestDetailOutputPort for DetailPort {
             DetailFailure::Error(e) => (StatusCode::NOT_FOUND, e.message),
             DetailFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
         };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"error": msg})))));
+        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
     }
 }
 
@@ -148,7 +148,7 @@ async fn show(
     );
     interactor
         .call(id)
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     take_response(&out)
 }
 
@@ -227,7 +227,7 @@ async fn create(
     );
     interactor
         .call(input)
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     match take_response(&out) {
         Ok((status, body)) => {
             maybe_log_pest_reference_master_change(user_id, &body, "create");
@@ -299,7 +299,7 @@ async fn update(
     );
     interactor
         .call(input)
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     match take_response(&out) {
         Ok((status, body)) => {
             maybe_log_pest_reference_master_change(user_id, &body, "update");
@@ -319,7 +319,7 @@ impl PestDestroyOutputPort for DestroyPort {
             DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
             DestroyFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
         };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"error": msg})))));
+        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
     }
 }
 
@@ -345,7 +345,7 @@ async fn destroy(
     );
     interactor
         .call(id)
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     take_response(&out)
 }
 

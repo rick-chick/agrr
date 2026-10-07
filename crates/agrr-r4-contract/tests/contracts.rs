@@ -367,7 +367,6 @@ fn patch_work_record_stale_updated_at_returns_409() {
     let patch_json: serde_json::Value =
         serde_json::from_str(&patch_body).expect("stale patch JSON");
     assert_api_failure_errors_include(&patch_json, "stale_record", &patch_body);
-    assert_eq!("stale_record", patch_json["error"].as_str().unwrap());
 }
 
 #[test]
@@ -2143,7 +2142,6 @@ fn post_masters_crop_task_schedule_blueprints_regenerate_without_blueprints_retu
         "{body}"
     );
     assert_api_failure_errors_array(&json, &body);
-    assert!(json.get("error").is_some(), "{body}");
 }
 
 #[test]
@@ -3274,7 +3272,6 @@ fn post_masters_crop_setup_proposal_apply_rate_limited_returns_429_with_retry_af
     let response_body = response.text().expect("rate limit body");
     let json: serde_json::Value = serde_json::from_str(&response_body).expect("rate limit JSON");
     assert_api_failure_errors_include(&json, "rate_limit", &response_body);
-    assert_eq!("rate_limit", json["error"].as_str().unwrap());
 }
 
 #[test]
@@ -3363,7 +3360,6 @@ fn get_farm_temperature_chart_fetching_returns_409() {
     assert_eq!(409, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("409 JSON");
     assert_api_failure_errors_include(&json, "weather_data_not_ready", &body);
-    assert_eq!("weather_data_not_ready", json["error"].as_str().unwrap());
     assert_eq!("fetching", json["weather_data_status"].as_str().unwrap());
 }
 
@@ -3537,7 +3533,7 @@ fn delete_account_without_confirm_returns_422() {
     ));
     assert_eq!(422, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("delete JSON");
-    assert_eq!("confirmation_required", json["error"].as_str().unwrap());
+    assert_api_failure_errors_include(&json, "confirmation_required", &body);
 }
 
 #[test]
@@ -3552,10 +3548,7 @@ fn delete_account_without_email_confirm_returns_422_for_email_user() {
     ));
     assert_eq!(422, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("delete JSON");
-    assert_eq!(
-        "Email confirmation required",
-        json["error"].as_str().unwrap()
-    );
+    assert_api_failure_errors_include(&json, "Email confirmation required", &body);
 }
 
 #[test]
@@ -3962,7 +3955,11 @@ fn delete_organizations_personal_org_forbidden() {
         status_and_body(client.delete(&path, Some(&session_id), &empty_headers()));
     assert_eq!(422, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("personal delete JSON");
-    assert!(json.get("error").is_some(), "{body}");
+    assert_api_failure_errors_include(
+        &json,
+        "organizations.personal_delete_forbidden",
+        &body,
+    );
 }
 
 #[test]
@@ -4966,10 +4963,6 @@ fn post_contact_message_returns_503_when_recaptcha_not_configured() {
     assert_eq!(503, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha unavailable JSON");
     assert_api_failure_errors_contain(&json, "reCAPTCHA", &body);
-    assert!(json["error"]
-        .as_str()
-        .unwrap_or("")
-        .contains("reCAPTCHA"));
 }
 
 #[test]
@@ -5028,7 +5021,6 @@ fn post_contact_message_returns_429_when_rate_limit_exceeded() {
     assert_eq!(429, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("rate limit JSON");
     assert_api_failure_errors_include(&json, "rate_limit", &body);
-    assert_eq!(Some("rate_limit"), json["error"].as_str());
 }
 
 #[test]
@@ -5061,7 +5053,6 @@ fn post_contact_message_returns_422_when_recaptcha_fails() {
     assert_eq!(422, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha failure JSON");
     assert_api_failure_errors_contain(&json, "reCAPTCHA", &body);
-    assert!(json["error"].as_str().unwrap_or("").contains("reCAPTCHA"));
 }
 
 #[test]

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::add_crop_support::{AddCropAdjustResultCollector, AddCropCropResolvePrivate};
 use crate::adapters::{
-    cultivation_plan_optimization_events_adapter, NoopLogger, PassthroughTranslator, StderrLogger,
+    cultivation_plan_optimization_events_adapter, PassthroughTranslator, StderrLogger,
     SystemClock,
 };
 use crate::adjust_weather_prediction::SqliteAdjustWeatherPredictionGateway;
@@ -143,27 +143,27 @@ pub(crate) fn map_add_crop_outcome(
         Some(AddCropOutcome::Success(v)) => Ok(Json(v)),
         Some(AddCropOutcome::NotFound(msg)) => Err((
             StatusCode::NOT_FOUND,
-            Json(json!({"success": false, "message": msg})),
+            Json(json!({"success": false, "errors": [msg]})),
         )),
         Some(AddCropOutcome::Forbidden) => Err((
             StatusCode::FORBIDDEN,
-            Json(json!({"success": false, "message": "forbidden"})),
+            Json(json!({"success": false, "errors": ["forbidden"]})),
         )),
         Some(AddCropOutcome::CropNotFound) => Err((
             StatusCode::NOT_FOUND,
-            Json(json!({"success": false, "message": "plans.errors.crop_not_found"})),
+            Json(json!({"success": false, "errors": ["plans.errors.crop_not_found"]})),
         )),
         Some(AddCropOutcome::PredictionIncomplete(details)) => Err((
             StatusCode::SERVICE_UNAVAILABLE,
             Json(json!({
                 "success": false,
-                "message": "plans.errors.prediction_data_incomplete",
+                "errors": ["plans.errors.prediction_data_incomplete"],
                 "technical_details": details
             })),
         )),
         Some(AddCropOutcome::NoCandidates) => Err((
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"success": false, "message": "plans.errors.no_candidates_found"})),
+            Json(json!({"success": false, "errors": ["plans.errors.no_candidates_found"]})),
         )),
         Some(AddCropOutcome::AdjustFailed(adjust)) => {
             let status = adjust
@@ -175,22 +175,22 @@ pub(crate) fn map_add_crop_outcome(
                 status,
                 Json(json!({
                     "success": false,
-                    "message": "plans.gantt.adjust_failed",
+                    "errors": ["plans.gantt.adjust_failed"],
                     "technical_details": technical_details
                 })),
             ))
         }
         Some(AddCropOutcome::RecordInvalid(msg)) => Err((
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"success": false, "message": msg})),
+            Json(json!({"success": false, "errors": [msg]})),
         )),
         Some(AddCropOutcome::Unexpected(msg)) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": msg})),
+            Json(json!({"success": false, "errors": [msg]})),
         )),
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": "no response"})),
+            Json(json!({"success": false, "errors": ["no response"]})),
         )),
     }
 }
@@ -294,7 +294,7 @@ where
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"success": false, "message": e.to_string()})),
+                Json(json!({"success": false, "errors": [e.to_string()]})),
             )
         })?;
     let outcome = map_add_crop_outcome(presenter.body);
@@ -311,7 +311,7 @@ async fn add_crop(
     Json(body): Json<AddCropBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = user_id_from_session(&state, &jar)
-        .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
+        .map_err(|status| (status, Json(json!({"success": false, "errors": ["unauthorized"]}))))?;
     let pool = state.sqlite.clone();
     let crop_gateway = CropSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool.clone());
@@ -421,7 +421,7 @@ pub(crate) async fn run_add_field(
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"success": false, "message": e.to_string()})),
+                Json(json!({"success": false, "errors": [e.to_string()]})),
             )
         })?;
     map_add_field_outcome(presenter.body)
@@ -434,7 +434,7 @@ async fn add_field(
     Json(body): Json<AddFieldBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = user_id_from_session(&state, &jar)
-        .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
+        .map_err(|status| (status, Json(json!({"success": false, "errors": ["unauthorized"]}))))?;
     run_add_field(
         &state,
         CultivationPlanRestAuth::private(user_id),
@@ -524,7 +524,7 @@ pub(crate) async fn run_remove_field(
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"success": false, "message": e.to_string()})),
+                Json(json!({"success": false, "errors": [e.to_string()]})),
             )
         })?;
     let outcome = map_remove_field_outcome(presenter.body);
@@ -540,7 +540,7 @@ async fn remove_field(
     Path((plan_id, field_id)): Path<(i64, String)>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = user_id_from_session(&state, &jar)
-        .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
+        .map_err(|status| (status, Json(json!({"success": false, "errors": ["unauthorized"]}))))?;
     run_remove_field(
         &state,
         CultivationPlanRestAuth::private(user_id),
@@ -557,31 +557,31 @@ pub(crate) fn map_add_field_outcome(
         Some(AddFieldOutcome::Success(v)) => Ok(Json(v)),
         Some(AddFieldOutcome::NotFound) => Err((
             StatusCode::NOT_FOUND,
-            Json(json!({"success": false, "message": "plans.errors.not_found"})),
+            Json(json!({"success": false, "errors": ["plans.errors.not_found"]})),
         )),
         Some(AddFieldOutcome::Forbidden) => Err((
             StatusCode::FORBIDDEN,
-            Json(json!({"success": false, "message": "forbidden"})),
+            Json(json!({"success": false, "errors": ["forbidden"]})),
         )),
         Some(AddFieldOutcome::InvalidParams) => Err((
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"success": false, "message": "plans.errors.invalid_field_params"})),
+            Json(json!({"success": false, "errors": ["plans.errors.invalid_field_params"]})),
         )),
         Some(AddFieldOutcome::MaxFields) => Err((
             StatusCode::BAD_REQUEST,
-            Json(json!({"success": false, "message": "plans.errors.max_fields_limit"})),
+            Json(json!({"success": false, "errors": ["plans.errors.max_fields_limit"]})),
         )),
         Some(AddFieldOutcome::RecordInvalid(msg)) => Err((
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"success": false, "message": msg})),
+            Json(json!({"success": false, "errors": [msg]})),
         )),
         Some(AddFieldOutcome::Unexpected(msg)) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": msg})),
+            Json(json!({"success": false, "errors": [msg]})),
         )),
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": "no response"})),
+            Json(json!({"success": false, "errors": ["no response"]})),
         )),
     }
 }
@@ -621,7 +621,7 @@ impl PlanAllocationAdjustOutputPort for AdjustPresenter {
         let status = adjust_failure_status(&failure.kind);
         self.body = Some(AdjustOutcome::Failure(
             status,
-            json!({ "success": false, "message": failure.message }),
+            json!({"success": false, "errors": [failure.message] }),
         ));
     }
 }
@@ -721,7 +721,7 @@ pub(crate) async fn run_adjust_plan(
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"success": false, "message": e.to_string()})),
+                Json(json!({"success": false, "errors": [e.to_string()]})),
             )
         })?;
 
@@ -733,7 +733,7 @@ pub(crate) async fn run_adjust_plan(
         Some(AdjustOutcome::Failure(status, v)) => Err((status, Json(v))),
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": "no response"})),
+            Json(json!({"success": false, "errors": ["no response"]})),
         )),
     }
 }
@@ -745,7 +745,7 @@ async fn adjust_plan(
     Json(body): Json<AdjustBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = user_id_from_session(&state, &jar)
-        .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
+        .map_err(|status| (status, Json(json!({"success": false, "errors": ["unauthorized"]}))))?;
     run_adjust_plan(
         &state,
         CultivationPlanRestAuth::private(user_id),
@@ -762,27 +762,27 @@ pub(crate) fn map_remove_field_outcome(
         Some(RemoveFieldOutcome::Success(v)) => Ok(Json(v)),
         Some(RemoveFieldOutcome::NotFound) => Err((
             StatusCode::NOT_FOUND,
-            Json(json!({"success": false, "message": "plans.errors.not_found"})),
+            Json(json!({"success": false, "errors": ["plans.errors.not_found"]})),
         )),
         Some(RemoveFieldOutcome::Forbidden) => Err((
             StatusCode::FORBIDDEN,
-            Json(json!({"success": false, "message": "forbidden"})),
+            Json(json!({"success": false, "errors": ["forbidden"]})),
         )),
         Some(RemoveFieldOutcome::FieldNotFound) => Err((
             StatusCode::NOT_FOUND,
-            Json(json!({"success": false, "message": "plans.errors.field_not_found"})),
+            Json(json!({"success": false, "errors": ["plans.errors.field_not_found"]})),
         )),
         Some(RemoveFieldOutcome::RecordInvalid(msg)) => Err((
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"success": false, "message": msg})),
+            Json(json!({"success": false, "errors": [msg]})),
         )),
         Some(RemoveFieldOutcome::Unexpected(msg)) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": msg})),
+            Json(json!({"success": false, "errors": [msg]})),
         )),
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": "no response"})),
+            Json(json!({"success": false, "errors": ["no response"]})),
         )),
     }
 }

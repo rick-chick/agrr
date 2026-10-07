@@ -249,7 +249,7 @@ async fn wizard_farms(
     if interactor.call(&region).is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "internal"})),
+            Json(json!({"errors": ["internal"]})),
         );
     }
     match presenter.body {
@@ -259,11 +259,11 @@ async fn wizard_farms(
         }
         Some(FarmsOutcome::Failure(msg)) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": msg})),
+            Json(json!({"errors": [msg]})),
         ),
         None => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "no response"})),
+            Json(json!({"errors": ["no response"]})),
         ),
     }
 }
@@ -314,7 +314,7 @@ async fn wizard_crops(
     if interactor.call(query.farm_id).is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "internal"})),
+            Json(json!({"errors": ["internal"]})),
         );
     }
     match presenter.body {
@@ -325,17 +325,17 @@ async fn wizard_crops(
         Some(WizardCropsOutcome::FarmNotFound) => (
             StatusCode::NOT_FOUND,
             Json(json!({
-                "error": "api.errors.common.farm_not_found",
+                "errors": ["api.errors.common.farm_not_found"],
                 "error_key": "api.errors.common.farm_not_found"
             })),
         ),
         Some(WizardCropsOutcome::Failure(msg)) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": msg})),
+            Json(json!({"errors": [msg]})),
         ),
         None => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "no response"})),
+            Json(json!({"errors": ["no response"]})),
         ),
     }
 }
@@ -539,11 +539,11 @@ async fn wizard_create_plan(
             (StatusCode::OK, Json(json!({"plan_id": plan_id})))
         }
         Some(CreatePlanOutcome::Failure { message, status }) => {
-            (status, Json(json!({"error": message})))
+            (status, Json(json!({"errors": [message]})))
         }
         None => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "no response"})),
+            Json(json!({"errors": ["no response"]})),
         ),
     }
 }
@@ -598,22 +598,22 @@ async fn public_plan_data(
     interactor.call_catch_all(&auth, plan_id).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": e.to_string()})),
+            Json(json!({"success": false, "errors": [e.to_string()]})),
         )
     })?;
     match presenter.body {
         Some(DataOutcome::Success(body)) => Ok(Json(body)),
         Some(DataOutcome::NotFound) => Err((
             StatusCode::NOT_FOUND,
-            Json(json!({"success": false, "message": "not found"})),
+            Json(json!({"success": false, "errors": ["not found"]})),
         )),
         Some(DataOutcome::Unexpected(msg)) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": msg})),
+            Json(json!({"success": false, "errors": [msg]})),
         )),
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "message": "no response"})),
+            Json(json!({"success": false, "errors": ["no response"]})),
         )),
     }
 }
@@ -640,4 +640,3 @@ async fn public_adjust_plan(
     )
     .await
 }
-

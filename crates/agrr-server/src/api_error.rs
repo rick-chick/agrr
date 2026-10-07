@@ -1,25 +1,22 @@
 //! HTTP failure JSON helpers for the API edge (4xx/5xx).
 //!
-//! Contract: `errors` is a non-empty `string[]`. During migration, legacy `error` (and
-//! `message` for `{success:false}` bodies) are duplicated alongside `errors`.
+//! Contract: `errors` is a non-empty `string[]`.
 
 use serde_json::{json, Map, Value};
 
-/// Single-message failure with legacy `error` key for transitional clients.
+/// Single-message failure body (`errors` array only).
 pub fn single_failure(message: &str) -> Value {
     json!({
         "errors": [message],
-        "error": message,
     })
 }
 
 /// Like [`single_failure`] with an `error_code`.
 pub fn single_failure_with_code(message: &str, error_code: &str) -> Value {
-    let mut body = single_failure(message);
-    if let Some(obj) = body.as_object_mut() {
-        obj.insert("error_code".into(), json!(error_code));
-    }
-    body
+    json!({
+        "errors": [message],
+        "error_code": error_code,
+    })
 }
 
 /// Merges `extra` object fields into a failure body (e.g. weather metadata).
@@ -36,13 +33,11 @@ pub fn extend_failure(base: Value, extra: Value) -> Value {
     Value::Object(merged)
 }
 
-/// `{success:false}` style body with `errors` + legacy `error` / `message`.
+/// `{success:false}` style body with non-empty `errors` (no legacy `message` key).
 pub fn success_false(message: &str) -> Value {
     json!({
         "success": false,
         "errors": [message],
-        "error": message,
-        "message": message,
     })
 }
 
@@ -56,7 +51,8 @@ mod tests {
         let errors = body["errors"].as_array().expect("errors array");
         assert_eq!(1, errors.len());
         assert_eq!("rate_limit", errors[0].as_str().unwrap());
-        assert_eq!("rate_limit", body["error"].as_str().unwrap());
+        assert!(body.get("error").is_none());
+        assert!(body.get("message").is_none());
     }
 
     #[test]
@@ -64,6 +60,16 @@ mod tests {
         let body = single_failure_with_code("missing", "missing_blueprints");
         assert_eq!("missing", body["errors"][0].as_str().unwrap());
         assert_eq!("missing_blueprints", body["error_code"].as_str().unwrap());
+        assert!(body.get("error").is_none());
+    }
+
+    #[test]
+    fn success_false_omits_legacy_keys() {
+        let body = success_false("nope");
+        assert_eq!(false, body["success"].as_bool().unwrap());
+        assert_eq!("nope", body["errors"][0].as_str().unwrap());
+        assert!(body.get("error").is_none());
+        assert!(body.get("message").is_none());
     }
 
     #[test]
