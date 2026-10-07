@@ -79,7 +79,9 @@ where
             });
         }
 
-        let existing_count = self.gateway.count_non_reference_farms(input.user_id)? as i32;
+        let existing_count = self
+            .gateway
+            .count_non_reference_farms_for_organization(input.organization_id)? as i32;
         if FarmCreateLimitPolicy::limit_exceeded(existing_count) {
             return Err(Box::new(RecordInvalidError::new(
                 Some(
@@ -96,6 +98,7 @@ where
         let suffix = copy_name_suffix(self.clock.now());
         let new_farm = self.gateway.create_user_farm_from_reference(
             input.user_id,
+            input.organization_id,
             reference_farm.id,
             &suffix,
         )?;

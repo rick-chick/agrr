@@ -27,6 +27,7 @@ impl<'a, I> PlanSavePersistOrchestrator<'a, I> {
     pub fn ensure_user_farm(
         &self,
         user_id: i64,
+        organization_id: i64,
         session_data: PlanSaveSessionRef<'_>,
     ) -> Result<PlanSaveEnsureUserFarmOutput, Box<dyn std::error::Error + Send + Sync>>
     where
@@ -36,6 +37,7 @@ impl<'a, I> PlanSavePersistOrchestrator<'a, I> {
             .ok_or_else(|| "missing farm_id".to_string())?;
         self.ensure_user_farm_interactor.execute(PlanSaveEnsureUserFarmInput {
             user_id,
+            organization_id,
             reference_farm_id,
         })
     }

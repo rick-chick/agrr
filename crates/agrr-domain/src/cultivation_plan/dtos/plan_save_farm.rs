@@ -20,6 +20,7 @@ pub struct PlanSaveUserFarmSnapshot {
 #[derive(Debug, Clone)]
 pub struct PlanSaveEnsureUserFarmInput {
     pub user_id: i64,
+    pub organization_id: i64,
     pub reference_farm_id: i64,
 }
 
