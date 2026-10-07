@@ -5,7 +5,7 @@ use std::sync::Arc;
 use crate::adapters::SystemClock;
 use crate::cable::CableHub;
 use crate::jobs::JobStep;
-use crate::optimization_chain_phase::{advance_phase, plan_still_optimizing};
+use crate::optimization_chain_phase::{advance_phase, ensure_plan_still_optimizing};
 use crate::state::AppState;
 use agrr_adapters_agrr::TaskScheduleProgressAgrrGateway;
 use agrr_adapters_sqlite::{
@@ -215,9 +215,7 @@ pub fn run_task_schedule_generation_step(
     plan_id: i64,
     channel: &str,
 ) -> Result<(), String> {
-    if !plan_still_optimizing(&state.sqlite, plan_id) {
-        return Ok(());
-    }
+    ensure_plan_still_optimizing(&state.sqlite, plan_id)?;
     let _ = advance_phase(
         state,
         plan_id,

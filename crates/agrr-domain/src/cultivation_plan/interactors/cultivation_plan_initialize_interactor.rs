@@ -138,6 +138,20 @@ where
             return Ok(CultivationPlanInitializeResult::failure(error_msg));
         }
 
+        if self.crops.is_empty() {
+            let error_msg = "作物が指定されていません";
+            self.logger.error(&format!("❌ CultivationPlan creation failed: {error_msg}"));
+            return Ok(CultivationPlanInitializeResult::failure(error_msg));
+        }
+
+        if self.plan_type == "private"
+            && (self.planning_start_date.is_none() || self.planning_end_date.is_none())
+        {
+            let error_msg = "計画期間の開始日と終了日が必要です";
+            self.logger.error(&format!("❌ CultivationPlan creation failed: {error_msg}"));
+            return Ok(CultivationPlanInitializeResult::failure(error_msg));
+        }
+
         match self
             .cultivation_plan_gateway
             .within_transaction(|| self.create_plan_and_relations())
@@ -194,8 +208,8 @@ where
     fn resolve_planning_dates(&self) -> PlanningDateRange {
         if self.plan_type == "private" {
             return PlanningDateRange {
-                start_date: self.planning_start_date.unwrap_or_else(|| self.clock.today()),
-                end_date: self.planning_end_date.unwrap_or_else(|| self.clock.today()),
+                start_date: self.planning_start_date.expect("validated in call"),
+                end_date: self.planning_end_date.expect("validated in call"),
             };
         }
         if let (Some(start), Some(end)) = (self.planning_start_date, self.planning_end_date) {
@@ -231,19 +245,13 @@ where
     }
 
     fn create_plan_fields(&self, plan_id: i64) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if self.total_area <= 0.0 || self.crops.is_empty() {
-            self.logger.warn(&format!(
-                "⚠️ [FieldsAllocation] Invalid parameters detected (total_area: {}, crops: {}). Creating default field.",
-                self.total_area,
-                self.crops.len()
-            ));
-        }
-
-        let allocations = FieldsAllocation::new(self.total_area, &self.crops).allocate();
+        let allocations = FieldsAllocation::new(self.total_area, &self.crops)
+            .allocate()
+            .map_err(|code| format!("FieldsAllocation: {code}"))?;
         for (index, allocation) in allocations.iter().enumerate() {
             let area = allocation.area;
             if cultivation_plan_field_policy::invalid_field_area(area) {
-                continue;
+                return Err(format!("invalid field area: {area}").into());
             }
             let daily_cost = area * 1.0;
             self.field_mutation_gateway.create_field(

@@ -10,13 +10,12 @@ use crate::field_cultivation::dtos::{
 };
 use crate::field_cultivation::dtos::FieldCultivationClimateFailureReason;
 use crate::field_cultivation::errors::{
-    ClimateProgressGatewayError, FieldCultivationClimateFailureError, WeatherPayloadInvalidError,
+    ClimateProgressGatewayError, FieldCultivationClimateFailureError,
+    PlanPredictionNotGeneratedError, PredictionPayloadMissingError, WeatherPayloadInvalidError,
 };
 use crate::field_cultivation::gateways::{
     FieldCultivationClimateProgressGateway, FieldCultivationClimateSourceGateway,
-    FieldCultivationCropGateway, FieldCultivationPlanPredictedWeatherGateway,
-    FieldCultivationPredictionGateway, FieldCultivationWeatherDataGateway,
-    FieldCultivationWeatherPredictionServiceGateway,
+    FieldCultivationCropGateway, FieldCultivationWeatherDataGateway,
 };
 use crate::weather_data::dtos::PredictedWeatherScope;
 use crate::weather_data::gateways::PredictedWeatherStoreGateway;
@@ -24,19 +23,16 @@ use crate::field_cultivation::interactors::plan_field_cultivation_authorization:
     assert_field_cultivation_plan_access, assert_public_field_cultivation_plan_access,
 };
 use crate::field_cultivation::mappers::{
-    build_observed_agrr_payload, build_observed_agrr_payload_simple, build_output,
-    climate_crop_agrr_requirement_from_entity, extract_weather_records, merge_cached_with_observed,
-    merge_training_and_future, to_context_snapshot, to_cultivation_plan_weather, valid_weather_payload,
+    build_observed_agrr_payload, build_output, climate_crop_agrr_requirement_from_entity,
+    extract_weather_records, merge_cached_with_observed, to_context_snapshot, valid_weather_payload,
     weather_location_meta_from_source,
 };
 use crate::field_cultivation::policies::{
     climate_crop_view_allowed, missing_cultivation_period, missing_weather_location,
-    prediction_days, resolve_observed_merge_range, use_prediction_branch,
-    validate_crop_requirement_for_climate, validate_progress_result,
+    resolve_observed_merge_range, validate_crop_requirement_for_climate, validate_progress_result,
 };
 use crate::field_cultivation::ports::{
     FieldCultivationClimateDataInputPort, FieldCultivationClimateDataOutputPort,
-    WeatherPredictionAnchorsPort,
 };
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::RecordNotFoundError;
@@ -54,11 +50,7 @@ pub struct FieldCultivationClimateDataInteractor<'a> {
     climate_source_gateway: &'a dyn FieldCultivationClimateSourceGateway,
     crop_gateway: &'a dyn FieldCultivationCropGateway,
     weather_data_gateway: &'a dyn FieldCultivationWeatherDataGateway,
-    weather_prediction_gateway: &'a dyn FieldCultivationWeatherPredictionServiceGateway,
-    prediction_gateway: &'a dyn FieldCultivationPredictionGateway,
-    plan_predicted_weather_gateway: &'a dyn FieldCultivationPlanPredictedWeatherGateway,
     predicted_weather_store_gateway: &'a dyn PredictedWeatherStoreGateway,
-    anchors_resolver: &'a dyn WeatherPredictionAnchorsPort,
     climate_progress_gateway: &'a dyn FieldCultivationClimateProgressGateway,
     clock: &'a dyn ClockPort,
     translator: &'a dyn TranslatorPort,
@@ -74,11 +66,7 @@ impl<'a> FieldCultivationClimateDataInteractor<'a> {
         climate_source_gateway: &'a dyn FieldCultivationClimateSourceGateway,
         crop_gateway: &'a dyn FieldCultivationCropGateway,
         weather_data_gateway: &'a dyn FieldCultivationWeatherDataGateway,
-        weather_prediction_gateway: &'a dyn FieldCultivationWeatherPredictionServiceGateway,
-        prediction_gateway: &'a dyn FieldCultivationPredictionGateway,
-        plan_predicted_weather_gateway: &'a dyn FieldCultivationPlanPredictedWeatherGateway,
         predicted_weather_store_gateway: &'a dyn PredictedWeatherStoreGateway,
-        anchors_resolver: &'a dyn WeatherPredictionAnchorsPort,
         climate_progress_gateway: &'a dyn FieldCultivationClimateProgressGateway,
         clock: &'a dyn ClockPort,
         translator: &'a dyn TranslatorPort,
@@ -91,11 +79,7 @@ impl<'a> FieldCultivationClimateDataInteractor<'a> {
             climate_source_gateway,
             crop_gateway,
             weather_data_gateway,
-            weather_prediction_gateway,
-            prediction_gateway,
-            plan_predicted_weather_gateway,
             predicted_weather_store_gateway,
-            anchors_resolver,
             climate_progress_gateway,
             clock,
             translator,
@@ -223,11 +207,16 @@ impl FieldCultivationClimateDataInputPort for FieldCultivationClimateDataInterac
         };
 
         let climate_data = match assemble_climate_data(self, &source, &context, &crop_entity) {
-            Ok(Some(data)) => data,
-            Ok(None) => {
+            Ok(data) => data,
+            Err(err)
+                if err.downcast_ref::<PlanPredictionNotGeneratedError>().is_some()
+                    || err.downcast_ref::<PredictionPayloadMissingError>().is_some()
+                    || err.downcast_ref::<WeatherPayloadInvalidError>().is_some() =>
+            {
                 self.logger.warn(&format!(
-                    "[FieldCultivationClimateDataInteractor] Missing climate data for field_cultivation_id={}",
-                    input.field_cultivation_id
+                    "[FieldCultivationClimateDataInteractor] Missing climate data for field_cultivation_id={}: {:?}",
+                    input.field_cultivation_id,
+                    err
                 ));
                 self.handle_domain_error("Field cultivation climate data not found");
                 return Ok(());
@@ -298,37 +287,14 @@ fn assemble_climate_data(
     source: &FieldCultivationClimateSourceSnapshot,
     context: &crate::field_cultivation::dtos::FieldCultivationClimateContextSnapshot,
     crop_entity: &crate::field_cultivation::dtos::ClimateCropEntity,
-) -> Result<Option<FieldCultivationClimateDataOutput>, Box<dyn std::error::Error + Send + Sync>> {
-    let weather_payload = fetch_primary_weather_payload(interactor, source, context)?;
-    if weather_payload.is_none() {
-        return assemble_climate_data_from_fallback(interactor, source, context, crop_entity);
-    }
-    let weather_payload = weather_payload.unwrap();
-    Ok(Some(build_climate_output(
+) -> Result<FieldCultivationClimateDataOutput, Box<dyn std::error::Error + Send + Sync>> {
+    let weather_payload = fetch_plan_weather_payload(interactor, source, context)?;
+    Ok(build_climate_output(
         interactor,
         context,
         crop_entity,
         &weather_payload,
-    )?))
-}
-
-fn assemble_climate_data_from_fallback(
-    interactor: &FieldCultivationClimateDataInteractor<'_>,
-    source: &FieldCultivationClimateSourceSnapshot,
-    context: &crate::field_cultivation::dtos::FieldCultivationClimateContextSnapshot,
-    crop_entity: &crate::field_cultivation::dtos::ClimateCropEntity,
-) -> Result<Option<FieldCultivationClimateDataOutput>, Box<dyn std::error::Error + Send + Sync>> {
-    let weather_payload = fetch_fallback_weather_payload(interactor, source)?;
-    let Some(weather_payload) = weather_payload else {
-        return Ok(None);
-    };
-    persist_predicted_weather_if_absent(interactor, source, &weather_payload)?;
-    Ok(Some(build_climate_output(
-        interactor,
-        context,
-        crop_entity,
-        &weather_payload,
-    )?))
+    )?)
 }
 
 fn build_climate_output(
@@ -386,61 +352,49 @@ fn build_climate_output(
     Ok(build_output(context, &weather_records, &progress_result))
 }
 
-fn fetch_primary_weather_payload(
+fn fetch_plan_weather_payload(
     interactor: &FieldCultivationClimateDataInteractor<'_>,
     source: &FieldCultivationClimateSourceSnapshot,
     context: &crate::field_cultivation::dtos::FieldCultivationClimateContextSnapshot,
-) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    let weather_payload = if context.plan_predicted_weather_present {
-        merge_cached_prediction_with_observed(interactor, source, context)?
-    } else {
+) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+    if !context.plan_predicted_weather_present {
         interactor.logger.warn(&format!(
-            "⚠️ [FieldCultivationClimateDataInteractor] No cached prediction for CultivationPlan#{}, generating",
+            "⚠️ [FieldCultivationClimateDataInteractor] No cached prediction for CultivationPlan#{}",
             context.plan_id
         ));
-        invoke_plan_prediction(interactor, source)?
+        return Err(Box::new(PlanPredictionNotGeneratedError));
+    }
+    interactor.logger.info(&format!(
+        "✅ [FieldCultivationClimateDataInteractor] Using saved prediction for CultivationPlan#{}, merging with observed data",
+        context.plan_id
+    ));
+    let cached = load_plan_prediction_payload(interactor, context)?;
+    let Some(cached) = cached else {
+        return Err(Box::new(PredictionPayloadMissingError));
     };
-    let Some(ref payload) = weather_payload else {
-        return Ok(None);
-    };
-    assert_valid_weather_payload(interactor, context.plan_id, payload)?;
+    let weather_payload = merge_cached_prediction_with_observed(
+        interactor,
+        source,
+        context,
+        cached,
+    )?;
+    assert_valid_weather_payload(interactor, context.plan_id, &weather_payload)?;
     Ok(weather_payload)
-}
-
-fn invoke_plan_prediction(
-    interactor: &FieldCultivationClimateDataInteractor<'_>,
-    source: &FieldCultivationClimateSourceSnapshot,
-) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    let targets = interactor
-        .climate_source_gateway
-        .find_weather_prediction_targets_by_plan_id(source.plan_id)?;
-    let plan_weather = to_cultivation_plan_weather(source);
-    let prediction_info = interactor.weather_prediction_gateway.predict_for_cultivation_plan(
-        &targets.weather_location,
-        &targets.farm,
-        &plan_weather,
-    );
-    Ok(prediction_info)
 }
 
 fn merge_cached_prediction_with_observed(
     interactor: &FieldCultivationClimateDataInteractor<'_>,
     source: &FieldCultivationClimateSourceSnapshot,
     context: &crate::field_cultivation::dtos::FieldCultivationClimateContextSnapshot,
-) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    interactor.logger.info(&format!(
-        "✅ [FieldCultivationClimateDataInteractor] Using saved prediction for CultivationPlan#{}, merging with observed data",
-        context.plan_id
-    ));
-    let cached = load_plan_prediction_payload(interactor, context)?
-        .unwrap_or(json!({}));
+    cached: Value,
+) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
     let decision = resolve_observed_merge_range(
         Some(context.start_date),
         Some(context.completion_date),
         interactor.clock.today(),
     );
     if decision.skip_merge() {
-        return Ok(Some(cached));
+        return Ok(cached);
     }
     let start = decision.start_date.unwrap();
     let end = decision.end_date.unwrap();
@@ -450,94 +404,7 @@ fn merge_cached_prediction_with_observed(
         .weather_data_for_period(weather_location_id, start, end)?;
     let meta = weather_location_meta_from_source(source);
     let observed_formatted = build_observed_agrr_payload(&meta, &observed_dtos);
-    Ok(Some(merge_cached_with_observed(&cached, &observed_formatted)))
-}
-
-fn fetch_fallback_weather_payload(
-    interactor: &FieldCultivationClimateDataInteractor<'_>,
-    source: &FieldCultivationClimateSourceSnapshot,
-) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    interactor.logger.info(&format!(
-        "Fallback to on-the-fly prediction for field_cultivation_id={}",
-        source.field_cultivation_id
-    ));
-    let anchors = interactor.anchors_resolver.anchors_for(interactor.clock.today());
-    let training_start_date = anchors.training_start_date;
-    let training_end_date = anchors.training_end_date;
-    let prediction_targets = interactor
-        .climate_source_gateway
-        .find_weather_prediction_targets_by_plan_id(source.plan_id)?;
-    let weather_location = prediction_targets.weather_location;
-    let meta = weather_location_meta_from_source(source);
-    let weather_location_id = source.weather_location_id.unwrap();
-
-    let training_data = interactor.weather_data_gateway.weather_data_for_period(
-        weather_location_id,
-        training_start_date,
-        training_end_date,
-    )?;
-    let training_formatted =
-        build_observed_agrr_payload_simple(&meta, &training_data);
-
-    let start_date = source.start_date.unwrap();
-    let completion_date = source.completion_date.unwrap();
-    let pred_days = prediction_days(completion_date, training_end_date);
-
-    if use_prediction_branch(pred_days) {
-        let future = interactor.prediction_gateway.predict(
-            &training_formatted,
-            pred_days,
-            "lightgbm",
-        );
-        let Some(future) = future else {
-            return Ok(None);
-        };
-
-        let decision = resolve_observed_merge_range(
-            Some(start_date),
-            Some(completion_date),
-            interactor.clock.today(),
-        );
-
-        let (observed_start, observed_end) = if decision.skip_merge() {
-            (
-                Date::from_calendar_date(
-                    interactor.clock.today().year(),
-                    time::Month::January,
-                    1,
-                )
-                .unwrap(),
-                training_end_date,
-            )
-        } else {
-            (
-                decision.start_date.unwrap(),
-                decision.end_date.unwrap(),
-            )
-        };
-
-        let current_year_data = interactor.weather_data_gateway.weather_data_for_period(
-            weather_location_id,
-            observed_start,
-            observed_end,
-        )?;
-        let current_year_formatted =
-            build_observed_agrr_payload_simple(&meta, &current_year_data);
-        Ok(Some(merge_training_and_future(
-            &current_year_formatted,
-            &future,
-        )))
-    } else {
-        let period_data = interactor.weather_data_gateway.weather_data_for_period(
-            weather_location_id,
-            start_date,
-            completion_date,
-        )?;
-        Ok(Some(interactor.weather_data_gateway.format_for_agrr(
-            &period_data,
-            &weather_location,
-        )))
-    }
+    Ok(merge_cached_with_observed(&cached, &observed_formatted))
 }
 
 fn load_plan_prediction_payload(
@@ -550,28 +417,6 @@ fn load_plan_prediction_payload(
     interactor
         .predicted_weather_store_gateway
         .read_payload(PredictedWeatherScope::Plan, context.plan_id)
-}
-
-fn persist_predicted_weather_if_absent(
-    interactor: &FieldCultivationClimateDataInteractor<'_>,
-    source: &FieldCultivationClimateSourceSnapshot,
-    weather_payload: &Value,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    if source.plan_metadata.is_some() {
-        return Ok(());
-    }
-    let target_end_date = source
-        .prediction_target_end_date
-        .or(source.calculated_planning_end_date)
-        .unwrap_or_else(|| interactor.clock.today());
-    interactor
-        .plan_predicted_weather_gateway
-        .persist_plan_prediction(source.plan_id, weather_payload, target_end_date)?;
-    interactor.logger.info(&format!(
-        "💾 [FieldCultivationClimateDataInteractor] Saved prediction data to CultivationPlan#{}",
-        source.plan_id
-    ));
-    Ok(())
 }
 
 fn assert_valid_weather_payload(
