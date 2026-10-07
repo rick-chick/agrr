@@ -103,11 +103,12 @@ const initialControl: ContactFormViewState = {
           ></textarea>
         </label>
 
-        <div
-          class="form-card__field"
-          #turnstileHost
-          [attr.aria-label]="'contact_form.captcha.aria_label' | translate"
-        ></div>
+        <div class="form-card__field">
+          <span class="form-card__field-label" id="contact-captcha-label">
+            {{ 'contact_form.captcha.aria_label' | translate }}
+          </span>
+          <div #turnstileHost aria-labelledby="contact-captcha-label"></div>
+        </div>
       </div>
 
       <div class="form-card__actions">
