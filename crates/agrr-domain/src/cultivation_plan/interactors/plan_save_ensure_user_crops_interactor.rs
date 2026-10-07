@@ -82,9 +82,9 @@ where
                 continue;
             }
 
-            self.enforce_crop_create_limit(input.user_id)?;
+            self.enforce_crop_create_limit(input.organization_id)?;
 
-            let attributes = crop_attributes_from_row(&row);
+            let attributes = crop_attributes_from_row(&row, input.organization_id);
             let created = self
                 .user_crop_gateway
                 .create(input.user_id, attributes)?;
@@ -115,11 +115,11 @@ where
 
     fn enforce_crop_create_limit(
         &self,
-        user_id: i64,
+        organization_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let existing_count = self
             .crop_gateway
-            .count_user_owned_non_reference_crops(user_id)?;
+            .count_non_reference_crops_for_organization(organization_id)?;
         if crop_create_limit_policy::limit_exceeded(existing_count, false) {
             return Err(Box::new(RecordInvalidError::new(
                 Some(
@@ -136,7 +136,10 @@ where
     }
 }
 
-fn crop_attributes_from_row(row: &PublicPlanSaveCropReferenceRow) -> crate::shared::attr::AttrMap {
+fn crop_attributes_from_row(
+    row: &PublicPlanSaveCropReferenceRow,
+    organization_id: i64,
+) -> crate::shared::attr::AttrMap {
     attr_map_from_pairs([
         ("name", AttrValue::from(row.name.clone().unwrap_or_default())),
         (
@@ -174,6 +177,7 @@ fn crop_attributes_from_row(row: &PublicPlanSaveCropReferenceRow) -> crate::shar
                 .unwrap_or(AttrValue::Null),
         ),
         ("source_crop_id", AttrValue::Int(row.reference_crop_id)),
+        ("organization_id", AttrValue::Int(organization_id)),
     ])
 }
 
