@@ -4364,7 +4364,7 @@ fn org_non_member_denied_team_crop() {
 }
 
 #[test]
-fn org_member_can_view_team_plan() {
+fn org_member_cannot_view_team_plan() {
     let client = ContractClient::from_env();
     let owner_session = developer_session_id(&client);
     let owner_id = user_id_for_session(&client, &owner_session);
@@ -4386,7 +4386,7 @@ fn org_member_can_view_team_plan() {
     let path = format!("/api/v1/plans/{plan_id}");
     let (member_status, member_body) =
         status_and_body(client.get(&path, Some(&member_session), &empty_headers()));
-    assert_eq!(200, member_status, "{member_body}");
+    assert_cross_user_access_denied(member_status, &member_body);
 }
 
 #[test]
