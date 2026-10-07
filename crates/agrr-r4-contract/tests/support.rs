@@ -827,6 +827,179 @@ pub fn seed_entry_schedule_contract_assets() -> EntryScheduleContractSeed {
     }
 }
 
+pub struct EntryScheduleIncompleteCropSeed {
+    pub farm_id: i64,
+    pub crop_id: i64,
+}
+
+/// Reference crop with a stage but no thermal requirements (entry schedule crop_requirement_error).
+pub fn seed_entry_schedule_crop_missing_thermal_requirement(
+    farm_id: i64,
+) -> EntryScheduleIncompleteCropSeed {
+    let conn = contract_sqlite_conn();
+    let suffix = seed_suffix();
+    let crop_name = format!("Contract Entry Schedule Incomplete Crop {suffix}");
+    conn.execute(
+        "INSERT INTO crops (
+           user_id, name, variety, is_reference, region, cultivation_method, created_at, updated_at
+         ) VALUES (
+           NULL, ?1, 'V1', 1, 'jp', 'transplant', datetime('now'), datetime('now')
+         )",
+        params![crop_name],
+    )
+    .expect("insert incomplete reference crop");
+    let crop_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO crop_stages (crop_id, name, \"order\", created_at, updated_at)
+         VALUES (?1, 'Stage without thermal', 1, datetime('now'), datetime('now'))",
+        params![crop_id],
+    )
+    .expect("insert crop stage");
+    let crop_stage_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO temperature_requirements (
+           crop_stage_id, base_temperature, optimal_min, optimal_max, max_temperature, created_at, updated_at
+         ) VALUES (?1, 10.0, 18.0, 28.0, 35.0, datetime('now'), datetime('now'))",
+        params![crop_stage_id],
+    )
+    .expect("insert temperature requirements");
+
+    EntryScheduleIncompleteCropSeed { farm_id, crop_id }
+}
+
+pub struct FieldCultivationClimateContractSeed {
+    pub field_cultivation_id: i64,
+}
+
+fn seed_public_field_cultivation_climate_plan(
+    complete_crop_requirements: bool,
+) -> FieldCultivationClimateContractSeed {
+    let conn = contract_sqlite_conn();
+    let suffix = seed_suffix();
+
+    conn.execute(
+        "INSERT INTO weather_locations (latitude, longitude, elevation, timezone, created_at, updated_at)
+         VALUES (35.6895, 139.6917, 40.0, 'Asia/Tokyo', datetime('now'), datetime('now'))",
+        [],
+    )
+    .expect("insert weather_location");
+    let weather_location_id = conn.last_insert_rowid();
+
+    let owner_user_id: i64 = conn
+        .query_row("SELECT id FROM users ORDER BY id ASC LIMIT 1", [], |row| row.get(0))
+        .expect("contract sqlite must have at least one user");
+
+    let farm_name = format!("Contract Climate Farm {suffix}");
+    conn.execute(
+        "INSERT INTO farms (
+           user_id, name, latitude, longitude, region, created_at, updated_at, is_reference,
+           weather_data_status, weather_data_fetched_years, weather_data_total_years,
+           weather_location_id
+         ) VALUES (
+           ?1, ?2, 35.6895, 139.6917, 'jp', datetime('now'), datetime('now'), 0,
+           'completed', 5, 5, ?3
+         )",
+        params![owner_user_id, farm_name, weather_location_id],
+    )
+    .expect("insert farm");
+    let farm_id = conn.last_insert_rowid();
+
+    let crop_name = format!("Contract Climate Crop {suffix}");
+    conn.execute(
+        "INSERT INTO crops (
+           user_id, name, variety, is_reference, region, area_per_unit, revenue_per_area,
+           groups, created_at, updated_at
+         ) VALUES (
+           NULL, ?1, 'V1', 1, 'jp', 0.25, 5000.0, '[]', datetime('now'), datetime('now')
+         )",
+        params![crop_name],
+    )
+    .expect("insert reference crop");
+    let crop_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO crop_stages (crop_id, name, \"order\", created_at, updated_at)
+         VALUES (?1, 'Contract Stage', 1, datetime('now'), datetime('now'))",
+        params![crop_id],
+    )
+    .expect("insert crop stage");
+    let crop_stage_id = conn.last_insert_rowid();
+    if complete_crop_requirements {
+        conn.execute(
+            "INSERT INTO temperature_requirements (
+               crop_stage_id, base_temperature, optimal_min, optimal_max, max_temperature, created_at, updated_at
+             ) VALUES (?1, 10.0, 18.0, 28.0, 35.0, datetime('now'), datetime('now'))",
+            params![crop_stage_id],
+        )
+        .expect("insert temperature requirements");
+        conn.execute(
+            "INSERT INTO thermal_requirements (crop_stage_id, required_gdd, created_at, updated_at)
+             VALUES (?1, 200.0, datetime('now'), datetime('now'))",
+            params![crop_stage_id],
+        )
+        .expect("insert thermal requirements");
+    }
+
+    let plan_name = format!("Contract Public Climate Plan {suffix}");
+    conn.execute(
+        "INSERT INTO cultivation_plans (
+           farm_id, user_id, total_area, plan_type, plan_year, plan_name,
+           planning_start_date, planning_end_date, status, created_at, updated_at
+         ) VALUES (
+           ?1, ?2, 50.0, 'public', 2026, ?3,
+           '2026-01-01', '2026-12-31', 'completed', datetime('now'), datetime('now')
+         )",
+        params![farm_id, owner_user_id, plan_name],
+    )
+    .expect("insert public plan");
+    let plan_id = conn.last_insert_rowid();
+    seed_predicted_weather_for_plan(plan_id);
+
+    conn.execute(
+        "INSERT INTO cultivation_plan_fields (cultivation_plan_id, name, area, created_at, updated_at)
+         VALUES (?1, 'F1', 50.0, datetime('now'), datetime('now'))",
+        params![plan_id],
+    )
+    .expect("insert plan field");
+    let plan_field_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO cultivation_plan_crops (cultivation_plan_id, crop_id, name, created_at, updated_at)
+         VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+        params![plan_id, crop_id, crop_name],
+    )
+    .expect("insert plan crop");
+    let plan_crop_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO field_cultivations (
+           cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id,
+           area, status, start_date, completion_date, created_at, updated_at
+         ) VALUES (
+           ?1, ?2, ?3, 50.0, 'completed', '2026-05-01', '2026-09-30',
+           datetime('now'), datetime('now')
+         )",
+        params![plan_id, plan_field_id, plan_crop_id],
+    )
+    .expect("insert field_cultivation");
+    let field_cultivation_id = conn.last_insert_rowid();
+
+    FieldCultivationClimateContractSeed {
+        field_cultivation_id,
+    }
+}
+
+/// Public plan field cultivation with complete reference crop requirements.
+pub fn seed_public_field_cultivation_climate_complete() -> FieldCultivationClimateContractSeed {
+    seed_public_field_cultivation_climate_plan(true)
+}
+
+/// Public plan field cultivation whose reference crop has no valid requirement stages.
+pub fn seed_public_field_cultivation_climate_incomplete_crop(
+) -> FieldCultivationClimateContractSeed {
+    seed_public_field_cultivation_climate_plan(false)
+}
+
 /// Seeds a plan with blueprints, weather, and mixed schedule items for regeneration tests.
 pub fn seed_task_schedule_regeneration_plan(user_id: i64) -> TaskScheduleRegenerationSeed {
     let conn = contract_sqlite_conn();
