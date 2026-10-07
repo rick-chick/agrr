@@ -99,11 +99,14 @@ impl PlanSaveFarmGateway for PlanSaveFarmGw {
         })
     }
 
-    fn count_non_reference_farms(&self, user_id: i64) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+    fn count_non_reference_farms_for_organization(
+        &self,
+        organization_id: i64,
+    ) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
         self.pool.with_read_box(|conn| {
             conn.query_row(
-                "SELECT COUNT(*) FROM farms WHERE user_id = ?1 AND is_reference = 0",
-                params![user_id],
+                "SELECT COUNT(*) FROM farms WHERE organization_id = ?1 AND is_reference = 0",
+                params![organization_id],
                 |r| r.get(0),
             )
         })
@@ -112,6 +115,7 @@ impl PlanSaveFarmGateway for PlanSaveFarmGw {
     fn create_user_farm_from_reference(
         &self,
         user_id: i64,
+        organization_id: i64,
         reference_farm_id: i64,
         copy_name_suffix: &str,
     ) -> Result<PlanSaveUserFarmSnapshot, Box<dyn std::error::Error + Send + Sync>> {
@@ -120,10 +124,11 @@ impl PlanSaveFarmGateway for PlanSaveFarmGw {
             .ok_or_else(|| format!("reference farm {reference_farm_id} not found"))?;
         self.pool.with_write_box(|conn| {
             conn.execute(
-                "INSERT INTO farms (user_id, name, latitude, longitude, region, is_reference, weather_location_id, source_farm_id, created_at, updated_at) \
-                 VALUES (?1, ?2, ?3, ?4, ?5, 0, ?6, ?7, datetime('now'), datetime('now'))",
+                "INSERT INTO farms (user_id, organization_id, name, latitude, longitude, region, is_reference, weather_location_id, source_farm_id, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7, ?8, datetime('now'), datetime('now'))",
                 params![
                     user_id,
+                    organization_id,
                     format!(
                         "{} (コピー {copy_name_suffix})",
                         reference.name.as_deref().unwrap_or("")
@@ -274,14 +279,14 @@ impl PlanSaveUserCropGateway for PlanSaveUserCropGw {
 }
 
 impl PlanSaveCropLimitGateway for CropLimitGw {
-    fn count_user_owned_non_reference_crops(
+    fn count_non_reference_crops_for_organization(
         &self,
-        user_id: i64,
+        organization_id: i64,
     ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         self.pool.with_read_box(|conn| {
             conn.query_row(
-                "SELECT COUNT(*) FROM crops WHERE user_id = ?1 AND is_reference = 0",
-                params![user_id],
+                "SELECT COUNT(*) FROM crops WHERE organization_id = ?1 AND is_reference = 0",
+                params![organization_id],
                 |r| r.get(0),
             )
         })

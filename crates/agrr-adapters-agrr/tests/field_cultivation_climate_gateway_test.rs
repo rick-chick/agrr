@@ -1,6 +1,7 @@
 //! Progress gateway parity with Rails (`DaemonClient#progress` args + normalized response).
 
 use agrr_adapters_agrr::FieldCultivationClimateAgrrGateway;
+use agrr_domain::field_cultivation::errors::ClimateProgressGatewayError;
 use agrr_domain::field_cultivation::gateways::FieldCultivationClimateProgressGateway;
 use serde_json::json;
 
@@ -48,7 +49,11 @@ fn calculate_progress_trait_reports_not_running() {
     let err = gateway
         .calculate_progress(&crop, time::macros::date!(2026 - 01 - 01), &weather)
         .expect_err("daemon not running");
-    assert!(err.downcast_ref::<agrr_adapters_agrr::DaemonUnavailableError>().is_some());
+    assert!(err.downcast_ref::<ClimateProgressGatewayError>().is_some());
+    assert!(matches!(
+        err.downcast_ref::<ClimateProgressGatewayError>(),
+        Some(ClimateProgressGatewayError::DaemonUnavailable)
+    ));
     restore_env("AGRR_DAEMON_REQUEST_RETRIES", prev_retries);
     restore_env("AGRR_SOCKET_PATH", prev_socket);
 }

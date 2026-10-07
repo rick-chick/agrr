@@ -53,7 +53,7 @@ describe('EnsurePlanForFarmUseCase', () => {
         () =>
           new HttpErrorResponse({
             status: 422,
-            error: { error: 'plans.errors.plan_already_exists_annual' }
+            error: { errors: ['plans.errors.plan_already_exists_annual'] }
           })
       )
     );
@@ -82,7 +82,7 @@ describe('EnsurePlanForFarmUseCase', () => {
         () =>
           new HttpErrorResponse({
             status: 422,
-            error: { error: 'plans.errors.no_fields_in_farm' }
+            error: { errors: ['plans.errors.no_fields_in_farm'] }
           })
       )
     );
@@ -109,7 +109,7 @@ describe('EnsurePlanForFarmUseCase', () => {
         () =>
           new HttpErrorResponse({
             status: 422,
-            error: { error: 'plans.errors.plan_already_exists_annual' }
+            error: { errors: ['plans.errors.plan_already_exists_annual'] }
           })
       )
     );

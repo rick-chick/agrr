@@ -73,9 +73,12 @@
         }
     }
 
+    use std::sync::Mutex;
+
     struct MockUserCrop {
         existing: Option<i64>,
         created_id: i64,
+        last_attrs: Mutex<Option<crate::shared::attr::AttrMap>>,
     }
 
     impl PlanSaveUserCropGateway for MockUserCrop {
@@ -90,8 +93,9 @@
         fn create(
             &self,
             _: i64,
-            _: crate::shared::attr::AttrMap,
+            attrs: crate::shared::attr::AttrMap,
         ) -> Result<PlanSaveUserCropSnapshot, Box<dyn std::error::Error + Send + Sync>> {
+            *self.last_attrs.lock().unwrap() = Some(attrs);
             Ok(PlanSaveUserCropSnapshot {
                 id: self.created_id,
             })
@@ -100,14 +104,23 @@
 
     struct MockCropLimit {
         count: i32,
+        org_called: Mutex<Option<i64>>,
     }
 
     impl PlanSaveCropLimitGateway for MockCropLimit {
-        fn count_user_owned_non_reference_crops(
+        fn count_non_reference_crops_for_organization(
             &self,
-            _: i64,
+            organization_id: i64,
         ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            *self.org_called.lock().unwrap() = Some(organization_id);
             Ok(self.count)
+        }
+    }
+
+    fn crop_limit(count: i32) -> MockCropLimit {
+        MockCropLimit {
+            count,
+            org_called: Mutex::new(None),
         }
     }
 
@@ -132,8 +145,9 @@
         let user_crop = MockUserCrop {
             existing: Some(77),
             created_id: 0,
+            last_attrs: Mutex::new(None),
         };
-        let crop_gw = MockCropLimit { count: 0 };
+        let crop_gw = crop_limit(0);
         let logger = CapturingLogger::new();
         let interactor = PlanSaveEnsureUserCropsInteractor::new(
             &read, &user_crop, &crop_gw, &logger, &FakeTranslator,
@@ -141,6 +155,7 @@
         let out = interactor
             .call(PlanSaveEnsureUserCropsInput {
                 user_id: 1,
+                organization_id: 7,
                 plan_id: 5,
                 region: Some("jp".into()),
             })
@@ -160,19 +175,23 @@
         let user_crop = MockUserCrop {
             existing: None,
             created_id: 88,
+            last_attrs: Mutex::new(None),
         };
-        let crop_gw = MockCropLimit { count: 2 };
+        let crop_gw = crop_limit(2);
         let logger = CapturingLogger::new();
         let out = PlanSaveEnsureUserCropsInteractor::new(
             &read, &user_crop, &crop_gw, &logger, &FakeTranslator,
         )
         .call(PlanSaveEnsureUserCropsInput {
             user_id: 1,
+            organization_id: 7,
             plan_id: 5,
             region: Some("jp".into()),
         })
         .unwrap();
         assert_eq!(out.user_crop_ids, vec![88]);
+        let attrs = user_crop.last_attrs.lock().unwrap().clone().unwrap();
+        assert_eq!(attrs.get("organization_id"), Some(&crate::shared::attr::AttrValue::Int(7)));
         assert!(out.skipped_crop_ids.is_empty());
         assert_eq!(out.stage_copy_pairs.len(), 1);
         assert_eq!(out.stage_copy_pairs[0].reference_crop_id, 10);
@@ -199,13 +218,15 @@
             &MockUserCrop {
                 existing: None,
                 created_id: 55,
+                last_attrs: Mutex::new(None),
             },
-            &MockCropLimit { count: 0 },
+            &crop_limit(0),
             &CapturingLogger::new(),
             &FakeTranslator,
         )
         .call(PlanSaveEnsureUserCropsInput {
             user_id: 1,
+            organization_id: 7,
             plan_id: 5,
             region: Some("jp".into()),
         })
@@ -215,7 +236,8 @@
     }
 
     #[test]
-    fn raises_record_invalid_when_crop_limit_exceeded() {
+    fn raises_record_invalid_when_organization_crop_count_reaches_limit() {
+        let crop_gw = crop_limit(20);
         let err = PlanSaveEnsureUserCropsInteractor::new(
             &MockRead {
                 rows: vec![reference_row()],
@@ -223,16 +245,46 @@
             &MockUserCrop {
                 existing: None,
                 created_id: 0,
+                last_attrs: Mutex::new(None),
             },
-            &MockCropLimit { count: 20 },
+            &crop_gw,
             &CapturingLogger::new(),
             &FakeTranslator,
         )
         .call(PlanSaveEnsureUserCropsInput {
             user_id: 1,
+            organization_id: 7,
             plan_id: 5,
             region: Some("jp".into()),
         })
         .unwrap_err();
         assert!(err.downcast_ref::<RecordInvalidError>().is_some());
+        assert_eq!(*crop_gw.org_called.lock().unwrap(), Some(7));
+    }
+
+    #[test]
+    fn reused_crop_does_not_consume_limit() {
+        let crop_gw = crop_limit(20);
+        let out = PlanSaveEnsureUserCropsInteractor::new(
+            &MockRead {
+                rows: vec![reference_row()],
+            },
+            &MockUserCrop {
+                existing: Some(77),
+                created_id: 0,
+                last_attrs: Mutex::new(None),
+            },
+            &crop_gw,
+            &CapturingLogger::new(),
+            &FakeTranslator,
+        )
+        .call(PlanSaveEnsureUserCropsInput {
+            user_id: 1,
+            organization_id: 7,
+            plan_id: 5,
+            region: Some("jp".into()),
+        })
+        .unwrap();
+        assert_eq!(out.skipped_crop_ids, vec![77]);
+        assert_eq!(*crop_gw.org_called.lock().unwrap(), None);
     }

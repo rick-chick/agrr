@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { UpdateFieldInputPort } from './update-field.input-port';
 import { UpdateFieldOutputPort, UPDATE_FIELD_OUTPUT_PORT } from './update-field.output-port';
 import { FARM_GATEWAY, FarmGateway } from './farm-gateway';
@@ -14,7 +15,7 @@ export class UpdateFieldUseCase implements UpdateFieldInputPort {
   execute(dto: UpdateFieldInputDto): void {
     this.farmGateway.updateField(dto.fieldId, dto.payload).subscribe({
       next: (field) => this.outputPort.present({ field }),
-      error: (err) => this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) => this.outputPort.onError({ message: apiErrorMessage(err) })
     });
   }
 }

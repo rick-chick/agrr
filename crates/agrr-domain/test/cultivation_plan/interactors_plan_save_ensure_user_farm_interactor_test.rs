@@ -1,5 +1,7 @@
 // Tests for `interactors/plan_save_ensure_user_farm_interactor.rs` (Ruby parity under test/domain/cultivation_plan/).
 
+    use std::sync::Mutex;
+
     use crate::cultivation_plan::dtos::{PlanSaveReferenceFarmSnapshot, PlanSaveUserFarmSnapshot};
     use crate::cultivation_plan::interactors::plan_save_test_support::{
         fixed_clock_utc_2026_05_25_12_34_56, CapturingLogger, FakeTranslator,
@@ -11,6 +13,8 @@
         existing: Option<PlanSaveUserFarmSnapshot>,
         count: i64,
         created: Option<PlanSaveUserFarmSnapshot>,
+        count_org_called: Mutex<Option<i64>>,
+        create_org_called: Mutex<Option<i64>>,
     }
 
     impl PlanSaveFarmGateway for MockGateway {
@@ -31,19 +35,22 @@
             Ok(self.existing.clone())
         }
 
-        fn count_non_reference_farms(
+        fn count_non_reference_farms_for_organization(
             &self,
-            _user_id: i64,
+            organization_id: i64,
         ) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+            *self.count_org_called.lock().unwrap() = Some(organization_id);
             Ok(self.count)
         }
 
         fn create_user_farm_from_reference(
             &self,
             _user_id: i64,
+            organization_id: i64,
             _reference_farm_id: i64,
             _copy_name_suffix: &str,
         ) -> Result<PlanSaveUserFarmSnapshot, Box<dyn std::error::Error + Send + Sync>> {
+            *self.create_org_called.lock().unwrap() = Some(organization_id);
             Ok(self.created.clone().unwrap())
         }
 
@@ -64,6 +71,22 @@
         }
     }
 
+    fn mock_gateway(
+        reference: Option<PlanSaveReferenceFarmSnapshot>,
+        existing: Option<PlanSaveUserFarmSnapshot>,
+        count: i64,
+        created: Option<PlanSaveUserFarmSnapshot>,
+    ) -> MockGateway {
+        MockGateway {
+            reference,
+            existing,
+            count,
+            created,
+            count_org_called: Mutex::new(None),
+            create_org_called: Mutex::new(None),
+        }
+    }
+
     fn reference_farm() -> PlanSaveReferenceFarmSnapshot {
         PlanSaveReferenceFarmSnapshot {
             id: 10,
@@ -77,16 +100,16 @@
 
     #[test]
     fn reuses_existing_user_farm_linked_to_reference() {
-        let gateway = MockGateway {
-            reference: Some(reference_farm()),
-            existing: Some(PlanSaveUserFarmSnapshot {
+        let gateway = mock_gateway(
+            Some(reference_farm()),
+            Some(PlanSaveUserFarmSnapshot {
                 id: 77,
                 name: Some("参照農場 (既存)".into()),
                 region: Some("kanto".into()),
             }),
-            count: 0,
-            created: None,
-        };
+            0,
+            None,
+        );
         let clock = fixed_clock_utc_2026_05_25_12_34_56();
         let logger = CapturingLogger::new();
         let interactor =
@@ -94,6 +117,7 @@
         let out = interactor
             .call(PlanSaveEnsureUserFarmInput {
                 user_id: 1,
+                organization_id: 7,
                 reference_farm_id: 10,
             })
             .unwrap();
@@ -104,16 +128,16 @@
 
     #[test]
     fn creates_user_farm_from_reference_when_none_exists() {
-        let gateway = MockGateway {
-            reference: Some(reference_farm()),
-            existing: None,
-            count: 2,
-            created: Some(PlanSaveUserFarmSnapshot {
+        let gateway = mock_gateway(
+            Some(reference_farm()),
+            None,
+            2,
+            Some(PlanSaveUserFarmSnapshot {
                 id: 88,
                 name: Some("参照農場 (コピー 20260525_123456)".into()),
                 region: Some("kanto".into()),
             }),
-        };
+        );
         let clock = fixed_clock_utc_2026_05_25_12_34_56();
         let logger = CapturingLogger::new();
         let interactor =
@@ -121,21 +145,18 @@
         let out = interactor
             .call(PlanSaveEnsureUserFarmInput {
                 user_id: 1,
+                organization_id: 7,
                 reference_farm_id: 10,
             })
             .unwrap();
         assert_eq!(out.farm_id, 88);
         assert!(!out.farm_reused);
+        assert_eq!(*gateway.create_org_called.lock().unwrap(), Some(7));
     }
 
     #[test]
-    fn raises_record_invalid_when_farm_create_limit_exceeded() {
-        let gateway = MockGateway {
-            reference: Some(reference_farm()),
-            existing: None,
-            count: 4,
-            created: None,
-        };
+    fn counts_non_reference_farms_by_organization_not_by_user() {
+        let gateway = mock_gateway(Some(reference_farm()), None, 4, None);
         let clock = fixed_clock_utc_2026_05_25_12_34_56();
         let err = PlanSaveEnsureUserFarmInteractor::new(
             &gateway,
@@ -145,6 +166,56 @@
         )
         .call(PlanSaveEnsureUserFarmInput {
             user_id: 1,
+            organization_id: 7,
+            reference_farm_id: 10,
+        })
+        .unwrap_err();
+        assert!(err.downcast_ref::<RecordInvalidError>().is_some());
+        assert_eq!(*gateway.count_org_called.lock().unwrap(), Some(7));
+    }
+
+    #[test]
+    fn does_not_check_limit_when_existing_user_farm_is_reused() {
+        let gateway = mock_gateway(
+            Some(reference_farm()),
+            Some(PlanSaveUserFarmSnapshot {
+                id: 77,
+                name: Some("既存".into()),
+                region: Some("kanto".into()),
+            }),
+            4,
+            None,
+        );
+        let clock = fixed_clock_utc_2026_05_25_12_34_56();
+        let out = PlanSaveEnsureUserFarmInteractor::new(
+            &gateway,
+            &CapturingLogger::new(),
+            &FakeTranslator,
+            &clock,
+        )
+        .call(PlanSaveEnsureUserFarmInput {
+            user_id: 1,
+            organization_id: 7,
+            reference_farm_id: 10,
+        })
+        .unwrap();
+        assert!(out.farm_reused);
+        assert_eq!(*gateway.count_org_called.lock().unwrap(), None);
+    }
+
+    #[test]
+    fn raises_record_invalid_when_farm_create_limit_exceeded() {
+        let gateway = mock_gateway(Some(reference_farm()), None, 4, None);
+        let clock = fixed_clock_utc_2026_05_25_12_34_56();
+        let err = PlanSaveEnsureUserFarmInteractor::new(
+            &gateway,
+            &CapturingLogger::new(),
+            &FakeTranslator,
+            &clock,
+        )
+        .call(PlanSaveEnsureUserFarmInput {
+            user_id: 1,
+            organization_id: 7,
             reference_farm_id: 10,
         })
         .unwrap_err();
@@ -153,12 +224,7 @@
 
     #[test]
     fn raises_record_not_found_when_reference_farm_is_missing() {
-        let gateway = MockGateway {
-            reference: None,
-            existing: None,
-            count: 0,
-            created: None,
-        };
+        let gateway = mock_gateway(None, None, 0, None);
         let clock = fixed_clock_utc_2026_05_25_12_34_56();
         let err = PlanSaveEnsureUserFarmInteractor::new(
             &gateway,
@@ -168,6 +234,7 @@
         )
         .call(PlanSaveEnsureUserFarmInput {
             user_id: 1,
+            organization_id: 7,
             reference_farm_id: 10,
         })
         .unwrap_err();

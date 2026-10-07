@@ -6,5 +6,8 @@ pub trait CropAgrrRequirementSource: Send + Sync {}
 /// Ruby: `Domain::Shared::Ports::CropAgrrRequirementBuilderPort`
 pub trait CropAgrrRequirementBuilderPort: Send + Sync {
     /// Ruby: `#build_from(crop_source)` — agrr CLI crop-requirement-file shape (string keys).
-    fn build_from(&self, crop_source: &dyn CropAgrrRequirementSource) -> Value;
+    fn build_from(
+        &self,
+        crop_source: &dyn CropAgrrRequirementSource,
+    ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>>;
 }

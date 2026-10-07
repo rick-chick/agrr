@@ -4,8 +4,9 @@ pub(crate) mod field_cultivation_sync_empty_error;
 pub(crate) mod field_cultivation_sync_reference_error;
 
 pub use climate_errors::{
-    NoCultivationPeriodError, NoWeatherLocationError, PlanPredictionNotGeneratedError,
-    PredictionPayloadMissingError, WeatherPayloadInvalidError,
+    ClimateProgressGatewayError, FieldCultivationClimateFailureError, NoCultivationPeriodError,
+    NoWeatherLocationError, PlanPredictionNotGeneratedError, PredictionPayloadMissingError,
+    WeatherPayloadInvalidError,
 };
 pub use field_cultivation_sync_duplicate_allocation_error::FieldCultivationSyncDuplicateAllocationError;
 pub use field_cultivation_sync_empty_error::FieldCultivationSyncEmptyError;

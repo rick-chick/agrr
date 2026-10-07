@@ -1,6 +1,5 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
+import { apiErrorMessage, apiValidationFieldErrors } from '../../core/api-error-message';
 import { WORK_RECORD_GATEWAY, WorkRecordGateway } from './work-record-gateway';
 import { UpdateWorkRecordInputDto } from './update-work-record.dtos';
 import { UpdateWorkRecordInputPort } from './update-work-record.input-port';
@@ -8,10 +7,6 @@ import {
   UPDATE_WORK_RECORD_OUTPUT_PORT,
   UpdateWorkRecordOutputPort
 } from './update-work-record.output-port';
-
-type ValidationErrorBody = {
-  errors?: Record<string, string[]>;
-};
 
 @Injectable()
 export class UpdateWorkRecordUseCase implements UpdateWorkRecordInputPort {
@@ -27,14 +22,12 @@ export class UpdateWorkRecordUseCase implements UpdateWorkRecordInputPort {
         dto.onSuccess?.();
       },
       error: (err: unknown) => {
-        if (err instanceof HttpErrorResponse && err.status === 422) {
-          const body = err.error as ValidationErrorBody | null;
-          if (body?.errors && Object.keys(body.errors).length > 0) {
-            this.outputPort.onValidationError({ fieldErrors: body.errors });
-            return;
-          }
+        const fieldErrors = apiValidationFieldErrors(err);
+        if (fieldErrors) {
+          this.outputPort.onValidationError({ fieldErrors });
+          return;
         }
-        this.outputPort.onError({ message: apiErrorI18nKey(err) });
+        this.outputPort.onError({ message: apiErrorMessage(err) });
       }
     });
   }

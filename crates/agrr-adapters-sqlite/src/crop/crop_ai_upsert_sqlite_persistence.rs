@@ -13,7 +13,6 @@ use agrr_domain::crop::ports::{CreateFailure, CropAiUpsertPersistencePort, CropC
 use agrr_domain::organization::gateways::PersonalOrganizationGateway;
 use agrr_domain::shared::attr::{attr_map_from_pairs, AttrValue};
 use agrr_domain::shared::gateways::{UserLookupGateway, UserOrganizationScopeGateway};
-use agrr_domain::shared::org_scope::member_organization_ids;
 use agrr_domain::shared::policies::crop_policy;
 use agrr_domain::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use agrr_domain::shared::reference_record_access_filter::ReferenceRecordAccessFilter;
@@ -163,14 +162,12 @@ where
     P: PersonalOrganizationGateway,
     T: TranslatorPort,
 {
-    let org_ids = member_organization_ids(scope_gateway, user.id).map_err(|e| e.to_string())?;
-    let organization_id = if let Some(&id) = org_ids.first() {
-        id
-    } else {
-        personal_org_gateway
-            .ensure_personal_organization(user.id, "", "")
-            .map_err(|e| e.to_string())?
-    };
+    let organization_id = agrr_domain::shared::org_scope::resolve_creation_organization_id(
+        scope_gateway,
+        personal_org_gateway,
+        user.id,
+    )
+    .map_err(|e| e.to_string())?;
     let count = gateway
         .count_non_reference_crops_for_organization(organization_id)
         .map_err(|e| e.to_string())?;
@@ -555,6 +552,15 @@ mod tests {
         }
 
         fn list_users_needing_personal_organization(
+            &self,
+        ) -> Result<
+            Vec<agrr_domain::organization::gateways::PersonalOrganizationUserRow>,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            Ok(vec![])
+        }
+
+        fn list_users_with_unassigned_organization_rows(
             &self,
         ) -> Result<
             Vec<agrr_domain::organization::gateways::PersonalOrganizationUserRow>,

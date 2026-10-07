@@ -10,10 +10,13 @@ use crate::cultivation_plan::ports::{
     PublicPlanSaveFromSessionOutputPort, PublicPlanSavePersistencePort,
 };
 use crate::farm::gateways::FarmGateway;
+use crate::organization::gateways::PersonalOrganizationGateway;
 use crate::shared::exceptions::{InvalidTaskScheduleItemError, RecordInvalidError};
+use crate::shared::gateways::UserOrganizationScopeGateway;
+use crate::shared::org_scope::resolve_creation_organization_id;
 use crate::shared::ports::{LoggerPort, TranslatorPort};
 
-pub struct PublicPlanSaveInteractor<'a, O, TX, R, F, P, L, T> {
+pub struct PublicPlanSaveInteractor<'a, O, TX, R, F, P, L, T, S, PO> {
     output_port: &'a mut O,
     txn_gateway: &'a TX,
     read_gateway: &'a R,
@@ -21,9 +24,11 @@ pub struct PublicPlanSaveInteractor<'a, O, TX, R, F, P, L, T> {
     persistence_port: &'a P,
     logger: &'a L,
     translator: &'a T,
+    scope_gateway: &'a S,
+    personal_org_gateway: &'a PO,
 }
 
-impl<'a, O, TX, R, F, P, L, T> PublicPlanSaveInteractor<'a, O, TX, R, F, P, L, T>
+impl<'a, O, TX, R, F, P, L, T, S, PO> PublicPlanSaveInteractor<'a, O, TX, R, F, P, L, T, S, PO>
 where
     O: PublicPlanSaveFromSessionOutputPort,
     TX: PublicPlanSaveTxnGateway,
@@ -32,6 +37,8 @@ where
     P: PublicPlanSavePersistencePort,
     L: LoggerPort,
     T: TranslatorPort,
+    S: UserOrganizationScopeGateway,
+    PO: PersonalOrganizationGateway,
 {
     pub fn new(
         output_port: &'a mut O,
@@ -41,6 +48,8 @@ where
         persistence_port: &'a P,
         logger: &'a L,
         translator: &'a T,
+        scope_gateway: &'a S,
+        personal_org_gateway: &'a PO,
     ) -> Self {
         Self {
             output_port,
@@ -50,6 +59,8 @@ where
             persistence_port,
             logger,
             translator,
+            scope_gateway,
+            personal_org_gateway,
         }
     }
 
@@ -76,8 +87,15 @@ where
             }
         };
 
+        let organization_id = resolve_creation_organization_id(
+            self.scope_gateway,
+            self.personal_org_gateway,
+            input.user_id,
+        )?;
+
         let workspace = PublicPlanSaveWorkspace {
             user_id: input.user_id,
+            organization_id,
             session_data,
         };
 

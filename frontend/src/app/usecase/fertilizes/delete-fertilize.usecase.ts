@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { DeleteFertilizeInputDto } from './delete-fertilize.dtos';
 import { DeleteFertilizeInputPort } from './delete-fertilize.input-port';
 import {
@@ -22,8 +23,8 @@ export class DeleteFertilizeUseCase implements DeleteFertilizeInputPort {
           undo,
           refresh: dto.onAfterUndo
         }),
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) =>
+        this.outputPort.onError({ message: apiErrorMessage(err) })
     });
   }
 }

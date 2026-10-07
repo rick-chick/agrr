@@ -1,16 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { apiErrorMessagesFromBody } from '../../core/api-error-body';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
+import { apiErrorMessages } from '../../core/api-error-message';
 import { SavePublicPlanInputPort } from './save-public-plan.input-port';
 import { SavePublicPlanOutputPort, SAVE_PUBLIC_PLAN_OUTPUT_PORT } from './save-public-plan.output-port';
 import { PUBLIC_PLAN_GATEWAY, PublicPlanGateway } from './public-plan-gateway';
 import { SavePublicPlanInputDto } from './save-public-plan.dtos';
-
-type ApiErrorBody = {
-  error?: string;
-  errors?: string[];
-};
+import { SavePublicPlanResponse } from './public-plan-gateway';
 
 @Injectable()
 export class SavePublicPlanUseCase implements SavePublicPlanInputPort {
@@ -35,31 +33,44 @@ export class SavePublicPlanUseCase implements SavePublicPlanInputPort {
           return;
         }
         this.outputPort.onError({
-          message:
-            response.error?.trim() ||
-            this.translate.instant('public_plans.save.error')
+          message: this.translateResponseErrorKeys(response)
         });
       },
-      error: (err: Error & { error?: ApiErrorBody }) =>
+      error: (err: unknown) =>
         this.outputPort.onError({
-          message: this.resolveErrorMessage(err)
+          message: this.resolveHttpErrorMessage(err)
         })
     });
   }
 
-  private resolveErrorMessage(err: Error & { error?: ApiErrorBody }): string {
-    const fromBody =
-      err?.error?.error?.trim() ||
-      err?.error?.errors?.filter((e) => e?.trim()).join(', ');
-    if (fromBody) {
-      return fromBody;
+  private translateResponseErrorKeys(response: SavePublicPlanResponse): string {
+    const keys = apiErrorMessagesFromBody(response);
+    if (keys.length > 0) {
+      return this.translateErrorKeys(keys);
     }
-    if (err instanceof HttpErrorResponse || (err as HttpErrorResponse).status !== undefined) {
+    return this.translate.instant('public_plans.save.error');
+  }
+
+  private resolveHttpErrorMessage(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      const keys = apiErrorMessages(err);
+      if (keys.length > 0) {
+        return this.translateErrorKeys(keys);
+      }
       return this.translate.instant(apiErrorI18nKey(err));
     }
-    if (err?.message?.trim()) {
+    if (err instanceof Error && err.message.trim().length > 0) {
       return err.message;
     }
     return this.translate.instant('public_plans.save.error');
+  }
+
+  private translateErrorKeys(keys: string[]): string {
+    return keys
+      .map((key) => {
+        const translated = this.translate.instant(key);
+        return translated !== key ? translated : key;
+      })
+      .join(', ');
   }
 }

@@ -20,7 +20,7 @@ use support::{
     seed_masters_crop_with_stages_and_blueprints, seed_reference_crop_with_stage,
     ensure_agrr_daemon_for_contract, seed_task_schedule_regeneration_plan,
     seed_weather_reschedule_frost_forecast_plan,
-    seed_work_record_plan, set_plan_task_schedule_sync_failed,
+    seed_work_record_plan, set_plan_task_schedule_sync_failed, WorkRecordPlanSeed,
     insert_contract_fertilize, insert_contract_pesticide,
     seed_suffix,
     set_plan_task_schedule_sync_failed_raw_error, set_user_api_key_scopes, status_and_body,
@@ -43,8 +43,25 @@ use support::{
     seed_public_plan_field_cultivation,
     field_cultivation_schedule_dates,
     seed_entry_schedule_contract_assets,
+    seed_entry_schedule_crop_missing_thermal_requirement,
+    seed_public_field_cultivation_climate_complete,
+    seed_public_field_cultivation_climate_incomplete_crop,
     cable_subscribe_frame_type,
 };
+
+fn assert_climate_error_envelope(json: &serde_json::Value, body: &str) {
+    assert_eq!(json.get("success").and_then(|v| v.as_bool()), Some(false), "{body}");
+    assert!(json.get("error").is_none(), "legacy error key present: {body}");
+    assert!(json.get("message").is_none(), "legacy message key present: {body}");
+    let errors = json
+        .get("errors")
+        .and_then(|v| v.as_array())
+        .expect("errors array");
+    assert!(!errors.is_empty(), "{body}");
+    for item in errors {
+        assert!(item.as_str().is_some_and(|s| !s.is_empty()), "{body}");
+    }
+}
 
 #[test]
 fn get_api_v1_health_returns_ok_payload() {
@@ -3052,6 +3069,67 @@ fn masters_api_key_read_scope_allows_get_and_denies_post() {
 }
 
 #[test]
+fn masters_api_key_after_regenerate_denies_post_without_scope_override() {
+    let client = ContractClient::from_env();
+    let session_id = researcher_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let _seed = seed_masters_crop(user_id);
+
+    let api_key = regenerate_api_key(&client, &session_id);
+
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {api_key}"));
+
+    let (post_status, post_body) = status_and_body(client.post(
+        "/api/v1/masters/crops",
+        None,
+        &headers,
+        Some(serde_json::json!({ "crop": { "name": "default-scope-deny-crop" } })),
+    ));
+    assert_eq!(403, post_status, "{post_body}");
+    let post_json: serde_json::Value = serde_json::from_str(&post_body).expect("forbidden JSON");
+    assert_eq!(
+        Some("insufficient_scope"),
+        post_json["error_code"].as_str(),
+        "{post_body}"
+    );
+}
+
+#[test]
+fn masters_api_key_regenerate_demotes_write_scope_to_read_only() {
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+
+    set_user_api_key_scopes(user_id, r#"["masters:read","masters:write"]"#);
+    let api_key = regenerate_api_key(&client, &session_id);
+
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {api_key}"));
+
+    let (post_status, post_body) = status_and_body(client.post(
+        "/api/v1/masters/crops",
+        None,
+        &headers,
+        Some(serde_json::json!({ "crop": { "name": "regenerate-demote-crop" } })),
+    ));
+    assert_eq!(403, post_status, "{post_body}");
+
+    let conn = rusqlite::Connection::open(
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH"),
+    )
+    .expect("open sqlite");
+    let scopes: String = conn
+        .query_row(
+            "SELECT api_key_scopes FROM users WHERE id = ?1",
+            rusqlite::params![user_id],
+            |row| row.get(0),
+        )
+        .expect("api_key_scopes");
+    assert_eq!(r#"["masters:read"]"#, scopes);
+}
+
+#[test]
 fn masters_api_key_write_scope_allows_post() {
     let client = ContractClient::from_env();
     let session_id = farmer_session_id(&client);
@@ -4360,6 +4438,297 @@ fn org_non_member_denied_team_plan() {
     assert_cross_user_access_denied(status, &body);
 }
 
+fn assign_org_scope_to_work_record_plan(seed: &WorkRecordPlanSeed, organization_id: i64) {
+    let sqlite_path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&sqlite_path).expect("open contract sqlite");
+    conn.execute(
+        "UPDATE farms SET organization_id = ?1 WHERE id = ?2",
+        rusqlite::params![organization_id, seed.farm_id],
+    )
+    .expect("scope farm to organization");
+    conn.execute(
+        "UPDATE cultivation_plans SET organization_id = ?1 WHERE id = ?2",
+        rusqlite::params![organization_id, seed.plan_id],
+    )
+    .expect("scope plan to organization");
+}
+
+struct OrgTeamPlanAuthFixture {
+    organization_id: i64,
+    plan_id: i64,
+    owner_session: String,
+    member_session: String,
+    work: WorkRecordPlanSeed,
+}
+
+fn seed_org_team_plan_auth_fixture(client: &ContractClient) -> OrgTeamPlanAuthFixture {
+    let owner_session = developer_session_id(client);
+    let owner_id = user_id_for_session(client, &owner_session);
+    let member_session = farmer_session_id(client);
+    let member_id = user_id_for_session(client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Plan Auth Org {suffix}"),
+        &format!("team-plan-auth-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+    let work = seed_work_record_plan(owner_id);
+    assign_org_scope_to_work_record_plan(&work, seed.organization_id);
+    OrgTeamPlanAuthFixture {
+        organization_id: seed.organization_id,
+        plan_id: work.plan_id,
+        owner_session,
+        member_session,
+        work,
+    }
+}
+
+#[test]
+fn org_member_denied_plan_mutations() {
+    let client = ContractClient::from_env();
+    let fixture = seed_org_team_plan_auth_fixture(&client);
+    let plan_id = fixture.plan_id;
+    let member_session = &fixture.member_session;
+    let owner_session = &fixture.owner_session;
+
+    let delete_path = format!("/api/v1/plans/{plan_id}");
+    let (delete_status, delete_body) = status_and_body(
+        client.delete(&delete_path, Some(member_session), &empty_headers()),
+    );
+    assert_cross_user_access_denied(delete_status, &delete_body);
+    let (owner_show_status, _) =
+        status_and_body(client.get(&delete_path, Some(owner_session), &empty_headers()));
+    assert_eq!(200, owner_show_status);
+
+    let work_records_path = format!("/api/v1/plans/{plan_id}/work_records");
+    let (create_wr_status, create_wr_body) = status_and_body(client.post(
+        &work_records_path,
+        Some(member_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": fixture.work.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "org member mutation attempt"
+            }
+        })),
+    ));
+    assert_cross_user_access_denied(create_wr_status, &create_wr_body);
+
+    let create_item_path = format!("/api/v1/plans/{plan_id}/task_schedule/items");
+    let (create_item_status, create_item_body) = status_and_body(client.post(
+        &create_item_path,
+        Some(member_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "task_schedule_item": {
+                "field_cultivation_id": fixture.work.field_cultivation_id,
+                "agricultural_task_id": fixture.work.agricultural_task_id,
+                "scheduled_date": "2026-07-01"
+            }
+        })),
+    ));
+    assert_cross_user_access_denied(create_item_status, &create_item_body);
+
+    let skip_path = format!(
+        "/api/v1/plans/{plan_id}/task_schedule/items/{}/skip",
+        fixture.work.task_schedule_item_id
+    );
+    let (skip_status, skip_body) = status_and_body(
+        client.patch(&skip_path, Some(member_session), &empty_headers(), None),
+    );
+    assert_cross_user_access_denied(skip_status, &skip_body);
+
+    let regenerate_path = format!("/api/v1/plans/{plan_id}/task_schedule/regenerate");
+    let (regen_status, regen_body) = status_and_body(
+        client.post(&regenerate_path, Some(member_session), &empty_headers(), None),
+    );
+    assert_cross_user_access_denied(regen_status, &regen_body);
+
+    let variance_path = format!("/api/v1/plans/{plan_id}/variance_learning");
+    let (patch_vl_status, patch_vl_body) = status_and_body(client.patch(
+        &variance_path,
+        Some(member_session),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "proposal_application_progress": {
+                "stage_gdd:1:2": "confirmed"
+            }
+        })),
+    ));
+    assert_cross_user_access_denied(patch_vl_status, &patch_vl_body);
+
+    let reoptimize_path = format!("/api/v1/plans/{plan_id}/variance_learning/reoptimize");
+    let (reopt_status, reopt_body) = status_and_body(
+        client.post(&reoptimize_path, Some(member_session), &empty_headers(), None),
+    );
+    assert_cross_user_access_denied(reopt_status, &reopt_body);
+}
+
+#[test]
+fn org_member_denied_plan_reads() {
+    let client = ContractClient::from_env();
+    let fixture = seed_org_team_plan_auth_fixture(&client);
+    let plan_id = fixture.plan_id;
+    let member_session = &fixture.member_session;
+
+    let task_schedule_path = format!("/api/v1/plans/{plan_id}/task_schedule");
+    let (ts_status, ts_body) = status_and_body(
+        client.get(&task_schedule_path, Some(member_session), &empty_headers()),
+    );
+    assert_cross_user_access_denied(ts_status, &ts_body);
+
+    let work_records_path = format!("/api/v1/plans/{plan_id}/work_records");
+    let (wr_status, wr_body) = status_and_body(
+        client.get(&work_records_path, Some(member_session), &empty_headers()),
+    );
+    assert_cross_user_access_denied(wr_status, &wr_body);
+
+    let summary_path = format!("/api/v1/plans/{plan_id}/plan_vs_actual/summary");
+    let (summary_status, summary_body) = status_and_body(
+        client.get(&summary_path, Some(member_session), &empty_headers()),
+    );
+    assert_cross_user_access_denied(summary_status, &summary_body);
+
+    let variance_path = format!("/api/v1/plans/{plan_id}/variance_learning");
+    let (vl_status, vl_body) = status_and_body(
+        client.get(&variance_path, Some(member_session), &empty_headers()),
+    );
+    assert_cross_user_access_denied(vl_status, &vl_body);
+
+    let proposals_path = format!("/api/v1/plans/{plan_id}/weather_reschedule_proposals");
+    let (prop_status, prop_body) = status_and_body(
+        client.get(&proposals_path, Some(member_session), &empty_headers()),
+    );
+    assert_cross_user_access_denied(prop_status, &prop_body);
+}
+
+#[test]
+fn org_member_plan_list_and_variance_portfolio_excludes_other_member_plan() {
+    let client = ContractClient::from_env();
+    let fixture = seed_org_team_plan_auth_fixture(&client);
+    let member_session = &fixture.member_session;
+    let owner_session = &fixture.owner_session;
+    let plan_id = fixture.plan_id;
+
+    let (member_list_status, member_list_body) =
+        status_and_body(client.get("/api/v1/plans", Some(member_session), &empty_headers()));
+    assert_eq!(200, member_list_status, "{member_list_body}");
+    let member_plans: Vec<serde_json::Value> =
+        serde_json::from_str(&member_list_body).expect("plans list JSON");
+    assert!(
+        !member_plans
+            .iter()
+            .any(|row| row["id"].as_i64() == Some(plan_id)),
+        "{member_list_body}"
+    );
+
+    let (owner_list_status, owner_list_body) =
+        status_and_body(client.get("/api/v1/plans", Some(owner_session), &empty_headers()));
+    assert_eq!(200, owner_list_status, "{owner_list_body}");
+    let owner_plans: Vec<serde_json::Value> =
+        serde_json::from_str(&owner_list_body).expect("owner plans list JSON");
+    assert!(
+        owner_plans
+            .iter()
+            .any(|row| row["id"].as_i64() == Some(plan_id)),
+        "{owner_list_body}"
+    );
+
+    let (portfolio_status, portfolio_body) = status_and_body(client.get(
+        "/api/v1/work/variance_portfolio",
+        Some(member_session),
+        &empty_headers(),
+    ));
+    assert_eq!(200, portfolio_status, "{portfolio_body}");
+    let portfolio_rows: Vec<serde_json::Value> =
+        serde_json::from_str(&portfolio_body).expect("variance portfolio JSON");
+    assert!(
+        !portfolio_rows
+            .iter()
+            .any(|row| row["plan_id"].as_i64() == Some(plan_id)),
+        "{portfolio_body}"
+    );
+}
+
+#[test]
+fn cable_rejects_org_member_private_plans_optimization_channel() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Plan Cable Org {suffix}"),
+        &format!("team-plan-cable-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+    let plan_id = seed_org_scoped_plan(seed.organization_id, owner_id);
+    let identifier = serde_json::json!({
+        "channel": "PlansOptimizationChannel",
+        "cultivation_plan_id": plan_id
+    });
+
+    tokio::runtime::Runtime::new()
+        .expect("tokio runtime")
+        .block_on(async {
+            let rejected = cable_subscribe_frame_type(Some(&member_session), identifier.clone())
+                .await;
+            assert_eq!("reject_subscription", rejected.frame_type);
+
+            let confirmed = cable_subscribe_frame_type(Some(&owner_session), identifier).await;
+            assert_eq!("confirm_subscription", confirmed.frame_type);
+        });
+}
+
+#[test]
+fn cable_rejects_org_member_private_optimization_channel() {
+    let client = ContractClient::from_env();
+    let owner_session = developer_session_id(&client);
+    let owner_id = user_id_for_session(&client, &owner_session);
+    let member_session = farmer_session_id(&client);
+    let member_id = user_id_for_session(&client, &member_session);
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = seed_user_organization(
+        owner_id,
+        &format!("Team Plan Opt Cable Org {suffix}"),
+        &format!("team-plan-opt-cable-org-{suffix}"),
+        false,
+    );
+    seed_organization_membership(seed.organization_id, member_id, "member");
+    let plan_id = seed_org_scoped_plan(seed.organization_id, owner_id);
+    let identifier = serde_json::json!({
+        "channel": "OptimizationChannel",
+        "cultivation_plan_id": plan_id
+    });
+
+    tokio::runtime::Runtime::new()
+        .expect("tokio runtime")
+        .block_on(async {
+            let rejected = cable_subscribe_frame_type(Some(&member_session), identifier.clone())
+                .await;
+            assert_eq!("reject_subscription", rejected.frame_type);
+
+            let confirmed = cable_subscribe_frame_type(Some(&owner_session), identifier).await;
+            assert_eq!("confirm_subscription", confirmed.frame_type);
+        });
+}
+
 #[test]
 fn cable_rejects_cross_user_private_plans_optimization_channel() {
     let client = ContractClient::from_env();
@@ -4910,5 +5279,103 @@ fn get_entry_schedule_crop_show_returns_crop_detail() {
             .and_then(|value| value.as_str()),
         Some("agrr_optimize_period"),
         "successful optimize must expose agrr_optimize_period source: {body}"
+    );
+}
+
+#[test]
+fn get_public_field_cultivation_climate_data_returns_422_when_crop_requirement_incomplete() {
+    let client = ContractClient::from_env();
+    let seed = seed_public_field_cultivation_climate_incomplete_crop();
+    let path = format!(
+        "/api/v1/public_plans/field_cultivations/{}/climate_data",
+        seed.field_cultivation_id
+    );
+    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("climate error JSON");
+    assert_climate_error_envelope(&json, &body);
+    assert_eq!(
+        json.get("errors").and_then(|v| v.as_array()),
+        Some(&vec![
+            serde_json::Value::String(
+                "api.errors.climate_crop_requirement_incomplete".to_string(),
+            )
+        ]),
+        "{body}"
+    );
+    assert_eq!(
+        json.get("error_code").and_then(|v| v.as_str()),
+        Some("crop_requirement_incomplete"),
+        "{body}"
+    );
+}
+
+#[test]
+fn get_public_field_cultivation_climate_data_returns_503_when_progress_daemon_unavailable() {
+    if agrr_regeneration_contract_available() {
+        eprintln!(
+            "skip: agrr binary available; cannot deterministically assert daemon-unavailable climate_data"
+        );
+        return;
+    }
+    let client = ContractClient::from_env();
+    let seed = seed_public_field_cultivation_climate_complete();
+    let path = format!(
+        "/api/v1/public_plans/field_cultivations/{}/climate_data",
+        seed.field_cultivation_id
+    );
+    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
+    assert_eq!(503, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("climate error JSON");
+    assert_climate_error_envelope(&json, &body);
+    let errors = json
+        .get("errors")
+        .and_then(|v| v.as_array())
+        .expect("errors array");
+    assert_eq!(errors.len(), 1, "{body}");
+    assert_eq!(
+        errors[0].as_str(),
+        Some("api.errors.climate_progress_daemon_unavailable"),
+        "{body}"
+    );
+    assert_eq!(
+        json.get("error_code").and_then(|v| v.as_str()),
+        Some("progress_daemon_unavailable"),
+        "{body}"
+    );
+}
+
+#[test]
+fn get_entry_schedule_crop_show_returns_crop_requirement_error_for_incomplete_crop() {
+    if !agrr_regeneration_contract_available() {
+        eprintln!("skip: agrr binary unavailable; entry schedule optimize would return disabled");
+        return;
+    }
+    if agrr_regeneration_contract_available() {
+        ensure_agrr_daemon_for_contract();
+    }
+    let client = ContractClient::from_env();
+    let seed = seed_entry_schedule_contract_assets();
+    let incomplete = seed_entry_schedule_crop_missing_thermal_requirement(seed.farm_id);
+    let path = format!(
+        "/api/v1/public_plans/entry_schedule/crops/{}?farm_id={}",
+        incomplete.crop_id,
+        incomplete.farm_id
+    );
+    let (status, body) = status_and_body(client.get(&path, None, &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("entry schedule crop show JSON");
+    assert_eq!(
+        json["crop"].get("eligible").and_then(|v| v.as_bool()),
+        Some(false),
+        "{body}"
+    );
+    assert_eq!(
+        json["crop"]
+            .get("reason_parts")
+            .and_then(|v| v.get("error_key"))
+            .and_then(|v| v.as_str()),
+        Some("crop_requirement_error"),
+        "{body}"
     );
 }

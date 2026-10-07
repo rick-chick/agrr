@@ -43,7 +43,7 @@ describe('CreatePrivatePlanUseCase', () => {
     expect(receivedDto!.id).toEqual(123);
   });
 
-  it('maps 422 body.error to translated message on onError', () => {
+  it('maps 422 body.errors to translated message on onError', () => {
     const gateway: PrivatePlanCreateGateway = {
       fetchFarms: () => of([]),
       fetchFarmsForPlanCreate: () => of({ farms: [], farmCreateLimitReached: false }),
@@ -54,7 +54,7 @@ describe('CreatePrivatePlanUseCase', () => {
           () =>
             new HttpErrorResponse({
               status: 422,
-              error: { error: 'plans.errors.no_fields_in_farm' }
+              error: { errors: ['plans.errors.no_fields_in_farm'] }
             })
         )
     };

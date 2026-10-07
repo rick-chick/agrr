@@ -1,6 +1,6 @@
 //! Public entry schedule (`/api/v1/public_plans/entry_schedule/crops*`).
 
-use crate::adapters::{NoopLogger, SystemClock};
+use crate::adapters::{NoopLogger, StderrLogger, SystemClock};
 use crate::adjust_weather_prediction::resolve_weather_for_entry_schedule;
 use crate::cultivation_plan_weather_load::load_weather_location_by_id;
 use crate::state::AppState;
@@ -130,14 +130,15 @@ struct AgrrCropBuilder {
 }
 
 impl CropAgrrRequirementBuilderPort for AgrrCropBuilder {
-    fn build_from(&self, _source: &dyn CropAgrrRequirementSource) -> Value {
+    fn build_from(
+        &self,
+        _source: &dyn CropAgrrRequirementSource,
+    ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
         agrr_adapters_sqlite::crop::agrr_requirement::build_crop_agrr_requirement(
             &self.pool,
             self.crop_id,
-        )
-        .ok()
-        .flatten()
-        .unwrap_or(json!({}))
+        )?
+        .ok_or_else(|| format!("crop #{} has no agrr requirement", self.crop_id).into())
     }
 }
 
@@ -313,7 +314,7 @@ impl EntryScheduleOptimizationRunnerPort for OptimizeRunner {
             &builder,
             &self.optimization,
             &SystemClock,
-            Some(&NoopLogger),
+            Some(&StderrLogger),
             self.agrr_enabled,
         );
         let r = interactor.call();

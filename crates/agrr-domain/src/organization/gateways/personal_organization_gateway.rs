@@ -23,4 +23,9 @@ pub trait PersonalOrganizationGateway: Send + Sync {
     fn list_users_needing_personal_organization(
         &self,
     ) -> Result<Vec<PersonalOrganizationUserRow>, Box<dyn std::error::Error + Send + Sync>>;
+
+    /// Users with Tier-1 rows still missing `organization_id` (personal org may already exist).
+    fn list_users_with_unassigned_organization_rows(
+        &self,
+    ) -> Result<Vec<PersonalOrganizationUserRow>, Box<dyn std::error::Error + Send + Sync>>;
 }

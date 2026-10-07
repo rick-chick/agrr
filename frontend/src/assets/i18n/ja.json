@@ -1621,6 +1621,10 @@
       },
       "crop_not_found": "作物情報が見つかりません",
       "no_weather_data": "気象データがありません",
+      "climate_progress_daemon_unavailable": "AGRR処理サービスに接続できません。しばらくしてから再試行してください。",
+      "climate_progress_execution_failed": "積算温度の計算に失敗しました。",
+      "climate_progress_result_invalid": "積算温度の結果が不正です。",
+      "climate_crop_requirement_incomplete": "作物マスタの生育要件が不十分です。",
       "weather_data_invalid_format": "気象データの形式が不正です。最適化を再実行してください。",
       "crops": {
         "name_required": "作物名を入力してください",
