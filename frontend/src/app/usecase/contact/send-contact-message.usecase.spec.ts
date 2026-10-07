@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { SendContactMessageUseCase } from './send-contact-message.usecase';
@@ -7,24 +8,18 @@ import { SendContactMessageInputDto } from './send-contact-message.dtos';
 import { ContactMessageRecord } from '../../domain/contact/contact-message.model';
 
 describe('SendContactMessageUseCase', () => {
-  it('forwards gateway response when status is sent', () => {
+  it('forwards gateway response on success', () => {
     const dto: SendContactMessageInputDto = {
       name: 'contact',
       email: 'a@b.com',
       subject: 'Greetings',
       message: 'hello',
-      source: 'landing-page'
+      source: 'landing-page',
+      captcha_token: 'tok'
     };
     const record: ContactMessageRecord = {
       id: 1,
-      name: dto.name,
-      email: dto.email,
-      subject: dto.subject,
-      message: dto.message,
-      source: dto.source,
-      status: 'sent',
-      created_at: '2026-02-10T00:00:00Z',
-      sent_at: '2026-02-10T00:00:01Z'
+      status: 'queued'
     };
     const postMessage = vi.fn(() => of(record));
     const gateway: ContactGateway = { postMessage };
@@ -38,42 +33,66 @@ describe('SendContactMessageUseCase', () => {
     expect(postMessage).toHaveBeenCalledWith(dto);
     expect(onSuccess).toHaveBeenCalledWith({
       id: record.id,
-      status: record.status,
-      created_at: record.created_at,
-      sent_at: record.sent_at
+      status: record.status
     });
     expect(onError).not.toHaveBeenCalled();
   });
 
-  it('calls onError when gateway returns a failed status', () => {
+  it('maps captcha_failed error_code', () => {
     const dto: SendContactMessageInputDto = {
-      name: 'contact',
-      email: 'fail@example.com',
-      subject: 'Oops',
-      message: 'issue',
-      source: null
+      email: 'a@b.com',
+      message: 'hello',
+      captcha_token: 'tok'
     };
-    const record: ContactMessageRecord = {
-      id: 2,
-      name: dto.name,
-      email: dto.email,
-      subject: dto.subject,
-      message: dto.message,
-      source: null,
-      status: 'failed',
-      created_at: '2026-02-10T00:00:00Z',
-      sent_at: null
+    const gateway: ContactGateway = {
+      postMessage: () =>
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 422,
+              error: {
+                errors: ['Turnstile failure: invalid-input-response'],
+                error_code: 'captcha_failed'
+              }
+            })
+        )
     };
-    const gateway: ContactGateway = { postMessage: () => of(record) };
     const onSuccess = vi.fn();
     const onError = vi.fn();
-    const outputPort: SendContactMessageOutputPort = { onSuccess, onError };
 
     const uc = new SendContactMessageUseCase(gateway);
-    uc.execute(dto, outputPort);
+    uc.execute(dto, { onSuccess, onError });
 
-    expect(onError).toHaveBeenCalledWith({ message: 'contact_form.errors.send_failed' });
+    expect(onError).toHaveBeenCalledWith({ message: 'contact_form.errors.captcha_failed' });
     expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('maps captcha_unavailable error_code', () => {
+    const dto: SendContactMessageInputDto = {
+      email: 'a@b.com',
+      message: 'hello',
+      captcha_token: 'tok'
+    };
+    const gateway: ContactGateway = {
+      postMessage: () =>
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 503,
+              error: {
+                errors: ['CAPTCHA is not configured'],
+                error_code: 'captcha_unavailable'
+              }
+            })
+        )
+    };
+    const onSuccess = vi.fn();
+    const onError = vi.fn();
+
+    const uc = new SendContactMessageUseCase(gateway);
+    uc.execute(dto, { onSuccess, onError });
+
+    expect(onError).toHaveBeenCalledWith({ message: 'contact_form.errors.captcha_unavailable' });
   });
 
   it('maps validation error responses to translation keys', () => {
@@ -81,15 +100,22 @@ describe('SendContactMessageUseCase', () => {
       name: null,
       email: 'invalid',
       subject: null,
-      message: '',
-      source: null
+      message: 'x',
+      source: null,
+      captcha_token: 'tok'
     };
     const gateway: ContactGateway = {
       postMessage: () =>
-        throwError(() => ({
-          status: 422,
-          error: { field_errors: { email: ['is invalid'], message: ["can't be blank"] } }
-        }))
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 422,
+              error: {
+                errors: ['Email is invalid'],
+                field_errors: { email: ['is invalid'], message: ["can't be blank"] }
+              }
+            })
+        )
     };
     const onSuccess = vi.fn();
     const onError = vi.fn();
@@ -101,5 +127,26 @@ describe('SendContactMessageUseCase', () => {
     expect(onError).toHaveBeenCalledWith({ message: 'contact_form.errors.validation_failed' });
     expect(onSuccess).not.toHaveBeenCalled();
   });
-});
 
+  it('maps rate limit to send_failed', () => {
+    const dto: SendContactMessageInputDto = {
+      email: 'a@b.com',
+      message: 'hello',
+      captcha_token: 'tok'
+    };
+    const gateway: ContactGateway = {
+      postMessage: () =>
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 429,
+              error: { errors: ['rate_limit'] }
+            })
+        )
+    };
+    const onError = vi.fn();
+    const uc = new SendContactMessageUseCase(gateway);
+    uc.execute(dto, { onSuccess: vi.fn(), onError });
+    expect(onError).toHaveBeenCalledWith({ message: 'contact_form.errors.send_failed' });
+  });
+});

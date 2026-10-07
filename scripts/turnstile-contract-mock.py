@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Minimal reCAPTCHA siteverify mock for R4 contract tests."""
+"""Minimal Turnstile siteverify mock for R4 contract tests."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ class Handler(BaseHTTPRequestHandler):
         if token == INVALID_TOKEN:
             payload = {"success": False, "error-codes": ["invalid-input-response"]}
         else:
-            payload = {"success": True}
+            payload = {"success": True, "error-codes": []}
         body = json.dumps(payload).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")

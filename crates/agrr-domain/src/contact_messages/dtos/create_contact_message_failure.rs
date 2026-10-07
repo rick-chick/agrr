@@ -6,7 +6,7 @@ use crate::shared::validation::ValidationErrors;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CreateContactMessageFailureKind {
     Validation,
-    Recaptcha,
+    Captcha,
     RateLimit,
     Unavailable,
 }
@@ -28,9 +28,9 @@ impl CreateContactMessageFailure {
         }
     }
 
-    pub fn recaptcha(message: impl Into<String>) -> Self {
+    pub fn captcha(message: impl Into<String>) -> Self {
         Self {
-            kind: CreateContactMessageFailureKind::Recaptcha,
+            kind: CreateContactMessageFailureKind::Captcha,
             errors: None,
             message: Some(message.into()),
         }
@@ -56,8 +56,8 @@ impl CreateContactMessageFailure {
         self.kind == CreateContactMessageFailureKind::Validation
     }
 
-    pub fn recaptcha_kind(&self) -> bool {
-        self.kind == CreateContactMessageFailureKind::Recaptcha
+    pub fn captcha_kind(&self) -> bool {
+        self.kind == CreateContactMessageFailureKind::Captcha
     }
 
     pub fn rate_limit_kind(&self) -> bool {

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import {
@@ -10,11 +11,14 @@ import { SendContactMessageOutputPort } from './send-contact-message.output-port
 import { CONTACT_GATEWAY, ContactGateway } from './contact-gateway';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { ContactMessageRecord } from '../../domain/contact/contact-message.model';
+import { apiErrorCode } from '../../core/api-error-message';
 
 @Injectable()
 export class SendContactMessageUseCase implements SendContactMessageInputPort {
   private static readonly validationErrorMessage = 'contact_form.errors.validation_failed';
   private static readonly sendFailedMessage = 'contact_form.errors.send_failed';
+  private static readonly captchaFailedMessage = 'contact_form.errors.captcha_failed';
+  private static readonly captchaUnavailableMessage = 'contact_form.errors.captcha_unavailable';
 
   constructor(@Inject(CONTACT_GATEWAY) private readonly gateway: ContactGateway) {}
 
@@ -29,10 +33,6 @@ export class SendContactMessageUseCase implements SendContactMessageInputPort {
       )
       .subscribe((record) => {
         if (!record) return;
-        if (record.status === 'failed') {
-          outputPort.onError({ message: SendContactMessageUseCase.sendFailedMessage });
-          return;
-        }
         outputPort.onSuccess(this.toSuccessDto(record));
       });
   }
@@ -40,21 +40,29 @@ export class SendContactMessageUseCase implements SendContactMessageInputPort {
   private toSuccessDto(record: ContactMessageRecord): SendContactMessageSuccessDto {
     return {
       id: record.id,
-      status: record.status,
-      created_at: record.created_at,
-      sent_at: record.sent_at ?? null
+      status: record.status
     };
   }
 
-  private toErrorDto(error: any): ErrorDto {
+  private toErrorDto(error: unknown): ErrorDto {
+    const code = apiErrorCode(error);
+    if (code === 'captcha_failed') {
+      return { message: SendContactMessageUseCase.captchaFailedMessage };
+    }
+    if (code === 'captcha_unavailable') {
+      return { message: SendContactMessageUseCase.captchaUnavailableMessage };
+    }
     if (this.isValidationError(error)) {
       return { message: SendContactMessageUseCase.validationErrorMessage };
     }
     return { message: SendContactMessageUseCase.sendFailedMessage };
   }
 
-  private isValidationError(error: any): boolean {
-    return error?.status === 422;
+  private isValidationError(error: unknown): boolean {
+    if (error instanceof HttpErrorResponse) {
+      return error.status === 422 && apiErrorCode(error) == null;
+    }
+    const status = (error as { status?: number })?.status;
+    return status === 422 && apiErrorCode(error) == null;
   }
 }
-

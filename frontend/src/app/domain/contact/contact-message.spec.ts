@@ -33,8 +33,14 @@ describe('ContactMessage domain validation', () => {
       expect(res2.message).toBe('contact_form.validation.message_too_long');
     }
 
-    const ok = validatePayload({ ...base, message: 'hello' } as any);
+    const ok = validatePayload({ ...base, message: 'hello', captcha_token: 'tok' } as any);
     expect(ok.valid).toBe(true);
+
+    const missingCaptcha = validatePayload({ ...base, message: 'hello' } as any);
+    expect(missingCaptcha.valid).toBe(false);
+    if (isValidationFailure(missingCaptcha)) {
+      expect(missingCaptcha.message).toBe('contact_form.validation.captcha_required');
+    }
   });
 });
 

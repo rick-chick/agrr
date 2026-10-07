@@ -5,5 +5,6 @@ export const environment = {
   enableGoogleAnalytics: false,
   googleAnalyticsMeasurementId: 'G-WNLSL6W4ZT',
   googleAdsId: '',
-  googleAdsLoginConversionSendTo: ''
+  googleAdsLoginConversionSendTo: '',
+  turnstileSiteKey: '1x00000000000000000000AA'
 };

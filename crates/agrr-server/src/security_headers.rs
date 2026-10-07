@@ -11,10 +11,11 @@ pub const REFERRER_POLICY: &str = "strict-origin-when-cross-origin";
 pub const X_FRAME_OPTIONS: &str = "SAMEORIGIN";
 pub const CONTENT_SECURITY_POLICY_REPORT_ONLY: &str = concat!(
     "default-src 'self'; ",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; ",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://challenges.cloudflare.com; ",
     "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com; ",
     "img-src 'self' data: https:; ",
     "style-src 'self' 'unsafe-inline'; ",
+    "frame-src https://challenges.cloudflare.com; ",
     "frame-ancestors 'self'"
 );
 

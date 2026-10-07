@@ -257,21 +257,21 @@ docker compose --profile test run --rm \
     export GCS_BUCKET="${GCS_BUCKET:-test-bucket-contract}"
     export WEATHER_DATA_LOCAL_ROOT="${WEATHER_DATA_LOCAL_ROOT:-/tmp/agrr-weather-contract}"
     mkdir -p "$WEATHER_DATA_LOCAL_ROOT"
-    python3 /app/scripts/recaptcha-contract-mock.py >/tmp/recaptcha-mock.log 2>&1 &
-    RECAPTCHA_MOCK_PID=$!
-    export RECAPTCHA_SECRET_KEY="${RECAPTCHA_SECRET_KEY:-contract-test-recaptcha-secret}"
-    export RECAPTCHA_VERIFY_URL="${RECAPTCHA_VERIFY_URL:-http://127.0.0.1:9191/siteverify}"
-    RECAPTCHA_MOCK_READY=0
+    python3 /app/scripts/turnstile-contract-mock.py >/tmp/turnstile-mock.log 2>&1 &
+    TURNSTILE_MOCK_PID=$!
+    export TURNSTILE_SECRET_KEY="${TURNSTILE_SECRET_KEY:-contract-test-turnstile-secret}"
+    export TURNSTILE_VERIFY_URL="${TURNSTILE_VERIFY_URL:-http://127.0.0.1:9191/siteverify}"
+    TURNSTILE_MOCK_READY=0
     for _ in $(seq 1 50); do
-      if curl -sf -X POST -d "secret=x&response=contract-test-token" "$RECAPTCHA_VERIFY_URL" >/dev/null; then
-        RECAPTCHA_MOCK_READY=1
+      if curl -sf -X POST -d "secret=x&response=contract-test-token" "$TURNSTILE_VERIFY_URL" >/dev/null; then
+        TURNSTILE_MOCK_READY=1
         break
       fi
       sleep 0.1
     done
-    if [ "$RECAPTCHA_MOCK_READY" != "1" ]; then
-      echo "reCAPTCHA contract mock failed to start; log:"
-      cat /tmp/recaptcha-mock.log
+    if [ "$TURNSTILE_MOCK_READY" != "1" ]; then
+      echo "Turnstile contract mock failed to start; log:"
+      cat /tmp/turnstile-mock.log
       exit 1
     fi
     AGRR_BIN="${AGRR_BIN_PATH:-/app/lib/core/agrr}"
@@ -291,7 +291,7 @@ docker compose --profile test run --rm \
     SERVER_PID=$!
     cleanup() {
       kill "$SERVER_PID" 2>/dev/null || true
-      kill "$RECAPTCHA_MOCK_PID" 2>/dev/null || true
+      kill "$TURNSTILE_MOCK_PID" 2>/dev/null || true
     }
     trap cleanup EXIT
     for _ in $(seq 1 50); do
@@ -305,8 +305,8 @@ docker compose --profile test run --rm \
       cat /tmp/agrr-server-contract.log
       exit 1
     fi
-    echo "==> contact_messages fail-closed when RECAPTCHA_SECRET_KEY unset (shell contract)"
-    env -u RECAPTCHA_SECRET_KEY -u RECAPTCHA_VERIFY_URL \
+    echo "==> contact_messages fail-closed when TURNSTILE_SECRET_KEY unset (shell contract)"
+    env -u TURNSTILE_SECRET_KEY -u TURNSTILE_VERIFY_URL \
       AGRR_APP_ROOT=/app \
       AGRR_SQLITE_PATH=/app/storage/test.sqlite3 \
       AGRR_CACHE_SQLITE_PATH=/app/storage/test_cache.sqlite3 \
@@ -316,7 +316,7 @@ docker compose --profile test run --rm \
       WEATHER_DATA_STORAGE=gcs \
       GCS_BUCKET="$GCS_BUCKET" \
       WEATHER_DATA_LOCAL_ROOT="$WEATHER_DATA_LOCAL_ROOT" \
-      agrr-server >/tmp/agrr-server-contract-unconfigured-recaptcha.log 2>&1 &
+      agrr-server >/tmp/agrr-server-contract-unconfigured-turnstile.log 2>&1 &
     UNCONFIGURED_SERVER_PID=$!
     UNCONFIGURED_HEALTH_OK=0
     for _ in $(seq 1 50); do
@@ -327,19 +327,19 @@ docker compose --profile test run --rm \
       sleep 0.1
     done
     if [ "$UNCONFIGURED_HEALTH_OK" != "1" ]; then
-      echo "agrr-server (RECAPTCHA unset) failed to start; log:"
-      cat /tmp/agrr-server-contract-unconfigured-recaptcha.log
+      echo "agrr-server (TURNSTILE unset) failed to start; log:"
+      cat /tmp/agrr-server-contract-unconfigured-turnstile.log
       kill "$UNCONFIGURED_SERVER_PID" 2>/dev/null || true
       exit 1
     fi
     UNCONFIGURED_STATUS=""
     for _ in $(seq 1 5); do
-      UNCONFIGURED_STATUS=$(curl -sS -o /tmp/contact-unconfigured-recaptcha.json -w "%{http_code}" \
+      UNCONFIGURED_STATUS=$(curl -sS -o /tmp/contact-unconfigured-turnstile.json -w "%{http_code}" \
         -X POST \
         -H "Accept: application/json" \
         -H "Content-Type: application/json" \
         -H "x-forwarded-for: 203.0.113.250" \
-        --data-raw '"'"'{"email":"unconfigured-recaptcha@example.com","message":"contract shell check","recaptcha_token":"token"}'"'"' \
+        --data-raw '"'"'{"email":"unconfigured-turnstile@example.com","message":"contract shell check","captcha_token":"token"}'"'"' \
         http://127.0.0.1:8089/api/v1/contact_messages)
       if [ "$UNCONFIGURED_STATUS" = "503" ]; then
         break
@@ -348,9 +348,9 @@ docker compose --profile test run --rm \
     done
     kill "$UNCONFIGURED_SERVER_PID" 2>/dev/null || true
     if [ "$UNCONFIGURED_STATUS" != "503" ]; then
-      echo "expected 503 when RECAPTCHA_SECRET_KEY unset, got $UNCONFIGURED_STATUS"
-      cat /tmp/contact-unconfigured-recaptcha.json
-      cat /tmp/agrr-server-contract-unconfigured-recaptcha.log
+      echo "expected 503 when TURNSTILE_SECRET_KEY unset, got $UNCONFIGURED_STATUS"
+      cat /tmp/contact-unconfigured-turnstile.json
+      cat /tmp/agrr-server-contract-unconfigured-turnstile.log
       exit 1
     fi
     echo "==> R4 contract (agrr-r4-contract)"
