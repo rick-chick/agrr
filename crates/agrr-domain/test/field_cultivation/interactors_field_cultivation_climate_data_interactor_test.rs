@@ -51,6 +51,30 @@
         fn debug(&self, _: &str) {}
     }
 
+    struct RecordingLogger {
+        warnings: std::sync::Mutex<Vec<String>>,
+    }
+    impl LoggerPort for RecordingLogger {
+        fn info(&self, _: &str) {}
+        fn warn(&self, message: &str) {
+            self.warnings.lock().unwrap().push(message.to_string());
+        }
+        fn error(&self, _: &str) {}
+        fn debug(&self, _: &str) {}
+    }
+
+    struct UncallableProgressGateway;
+    impl FieldCultivationClimateProgressGateway for UncallableProgressGateway {
+        fn calculate_progress(
+            &self,
+            _: &Value,
+            _: Date,
+            _: &Value,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            panic!("progress gateway must not be called when crop requirement is incomplete");
+        }
+    }
+
     struct FixedClock(Date);
     impl ClockPort for FixedClock {
         fn today(&self) -> Date {
@@ -487,7 +511,7 @@
         })
     }
 
-    fn run_interactor_with_crop(
+    fn run_interactor_with_crop_and_logger(
         source: FieldCultivationClimateSourceSnapshot,
         plan_type_public: bool,
         progress: Arc<dyn FieldCultivationClimateProgressGateway>,
@@ -495,6 +519,7 @@
         input: FieldCultivationClimateDataInput,
         missing_source_snapshot: bool,
         crop: ClimateCropEntity,
+        logger: &dyn LoggerPort,
     ) -> SpyClimateOutput {
         let access = FieldCultivationPlanAccessSnapshot::new(
             source.field_cultivation_id,
@@ -518,7 +543,6 @@
             failure: None,
             climate_failure: None,
         };
-        let logger = NoopLogger;
         let clock = FixedClock(date!(2026 - 10 - 01));
         let translator = StubTranslator;
         let weather_data = UnreachableWeatherDataGateway;
@@ -529,7 +553,7 @@
 
         let mut interactor = FieldCultivationClimateDataInteractor::new(
             &mut output,
-            &logger,
+            logger,
             None,
             None,
             &climate_source,
@@ -546,6 +570,27 @@
         );
         interactor.call(input).expect("interactor call");
         output
+    }
+
+    fn run_interactor_with_crop(
+        source: FieldCultivationClimateSourceSnapshot,
+        plan_type_public: bool,
+        progress: Arc<dyn FieldCultivationClimateProgressGateway>,
+        weather_payload: Option<Value>,
+        input: FieldCultivationClimateDataInput,
+        missing_source_snapshot: bool,
+        crop: ClimateCropEntity,
+    ) -> SpyClimateOutput {
+        run_interactor_with_crop_and_logger(
+            source,
+            plan_type_public,
+            progress,
+            weather_payload,
+            input,
+            missing_source_snapshot,
+            crop,
+            &NoopLogger,
+        )
     }
 
     fn run_interactor(
@@ -714,6 +759,164 @@
         );
         assert!(output.success.is_none());
         assert_eq!(output.failure.unwrap().message, "Forbidden");
+    }
+
+    fn crop_without_valid_stages() -> ClimateCropEntity {
+        ClimateCropEntity {
+            id: 2,
+            name: "Incomplete".into(),
+            variety: None,
+            area_per_unit: None,
+            revenue_per_area: None,
+            groups: json!([]),
+            is_reference: true,
+            user_id: None,
+            crop_stages: vec![ClimateCropStage {
+                name: "Stage1".into(),
+                order: 1,
+                temperature_requirement: None,
+                thermal_requirement: None,
+            }],
+        }
+    }
+
+    fn crop_with_missing_temperature_on_lowest_order_stage() -> ClimateCropEntity {
+        ClimateCropEntity {
+            id: 2,
+            name: "Incomplete".into(),
+            variety: None,
+            area_per_unit: None,
+            revenue_per_area: None,
+            groups: json!([]),
+            is_reference: true,
+            user_id: None,
+            crop_stages: vec![
+                ClimateCropStage {
+                    name: "Early".into(),
+                    order: 1,
+                    temperature_requirement: None,
+                    thermal_requirement: Some(ClimateThermalRequirement {
+                        required_gdd: 100.0,
+                    }),
+                },
+                ClimateCropStage {
+                    name: "Late".into(),
+                    order: 2,
+                    temperature_requirement: Some(ClimateTemperatureRequirement {
+                        base_temperature: 10.0,
+                        optimal_min: Some(15.0),
+                        optimal_max: Some(25.0),
+                        low_stress_threshold: None,
+                        high_stress_threshold: None,
+                        frost_threshold: None,
+                        max_temperature: Some(50.0),
+                    }),
+                    thermal_requirement: Some(ClimateThermalRequirement {
+                        required_gdd: 200.0,
+                    }),
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn on_failure_when_crop_has_no_valid_stages_without_calling_progress() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            Some(2),
+        );
+        let output = run_interactor_with_crop(
+            source,
+            true,
+            Arc::new(UncallableProgressGateway),
+            Some(sample_weather_payload()),
+            FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            },
+            false,
+            crop_without_valid_stages(),
+        );
+        assert!(output.success.is_none());
+        let failure = output.climate_failure.expect("typed climate failure");
+        assert_eq!(
+            failure.reason,
+            FieldCultivationClimateFailureReason::CropRequirementIncomplete
+        );
+    }
+
+    #[test]
+    fn on_failure_when_lowest_order_stage_lacks_temperature_requirement() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            Some(2),
+        );
+        let output = run_interactor_with_crop(
+            source,
+            true,
+            Arc::new(UncallableProgressGateway),
+            Some(sample_weather_payload()),
+            FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            },
+            false,
+            crop_with_missing_temperature_on_lowest_order_stage(),
+        );
+        assert!(output.success.is_none());
+        let failure = output.climate_failure.expect("typed climate failure");
+        assert_eq!(
+            failure.reason,
+            FieldCultivationClimateFailureReason::CropRequirementIncomplete
+        );
+    }
+
+    #[test]
+    fn logs_crop_requirement_incomplete_before_on_failure() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2027 - 01 - 01)),
+            Some(date!(2027 - 01 - 02)),
+            true,
+            Some(2),
+        );
+        let logger = RecordingLogger {
+            warnings: std::sync::Mutex::new(Vec::new()),
+        };
+        let output = run_interactor_with_crop_and_logger(
+            source,
+            true,
+            Arc::new(UncallableProgressGateway),
+            Some(sample_weather_payload()),
+            FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            },
+            false,
+            crop_without_valid_stages(),
+            &logger,
+        );
+        assert!(output.success.is_none());
+        assert_eq!(
+            output
+                .climate_failure
+                .expect("failure")
+                .reason,
+            FieldCultivationClimateFailureReason::CropRequirementIncomplete
+        );
+        let warnings = logger.warnings.lock().unwrap();
+        assert_eq!(warnings.len(), 1);
+        assert!(warnings[0].contains("Crop requirement incomplete"));
+        assert!(warnings[0].contains("no stages with temperature and thermal requirements"));
     }
 
     #[test]

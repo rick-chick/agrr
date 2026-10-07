@@ -38,3 +38,12 @@ pub fn validate_crop_requirement_for_climate(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod policies_field_cultivation_climate_crop_requirement_policy_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/field_cultivation/policies_field_cultivation_climate_crop_requirement_policy_test.rs"
+    ));
+}

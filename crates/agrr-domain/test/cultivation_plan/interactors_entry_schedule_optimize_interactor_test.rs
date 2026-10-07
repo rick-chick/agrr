@@ -143,6 +143,18 @@
         fn debug(&self, _: &str) {}
     }
 
+    struct RecordingLogger {
+        errors: std::sync::Mutex<Vec<String>>,
+    }
+    impl LoggerPort for RecordingLogger {
+        fn info(&self, _: &str) {}
+        fn warn(&self, _: &str) {}
+        fn error(&self, message: &str) {
+            self.errors.lock().unwrap().push(message.to_string());
+        }
+        fn debug(&self, _: &str) {}
+    }
+
     // Ruby: test "returns disabled result when agrr is not enabled"
     #[test]
     fn returns_disabled_result_when_agrr_is_not_enabled() {
@@ -1042,6 +1054,40 @@
         ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
             Err("no requirement".into())
         }
+    }
+
+    #[test]
+    fn logs_error_when_crop_requirement_builder_fails() {
+        let crop = test_crop(1, "トマト", None, None);
+        let crop_gateway = StubCropGateway { rows: vec![] };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "sowing_windows": [],
+                "transplant_windows": []
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let logger = RecordingLogger {
+            errors: std::sync::Mutex::new(Vec::new()),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &ErrCropRequirementBuilder,
+            &optimization_gateway,
+            &clock,
+            Some(&logger),
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        let errors = logger.errors.lock().unwrap();
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].contains("no requirement"));
     }
 
     #[test]
