@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { SendContactMessageUseCase } from './send-contact-message.usecase';
@@ -41,13 +42,16 @@ describe('SendContactMessageUseCase', () => {
   it('maps validation error responses to translation keys', () => {
     const gateway: ContactGateway = {
       postMessage: () =>
-        throwError(() => ({
-          status: 422,
-          error: {
-            errors: ['Email is invalid'],
-            field_errors: { email: ['is invalid'], message: ["can't be blank"] }
-          }
-        }))
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 422,
+              error: {
+                errors: ['Email is invalid'],
+                field_errors: { email: ['is invalid'], message: ["can't be blank"] }
+              }
+            })
+        )
     };
     const onSuccess = vi.fn();
     const onError = vi.fn();
@@ -63,13 +67,16 @@ describe('SendContactMessageUseCase', () => {
   it('maps captcha_failed by error_code', () => {
     const gateway: ContactGateway = {
       postMessage: () =>
-        throwError(() => ({
-          status: 422,
-          error: {
-            errors: ['Turnstile failure: invalid-input-response'],
-            error_code: 'captcha_failed'
-          }
-        }))
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 422,
+              error: {
+                errors: ['Turnstile failure: invalid-input-response'],
+                error_code: 'captcha_failed'
+              }
+            })
+        )
     };
     const onError = vi.fn();
     const uc = new SendContactMessageUseCase(gateway);
@@ -81,13 +88,16 @@ describe('SendContactMessageUseCase', () => {
   it('maps captcha_unavailable by error_code', () => {
     const gateway: ContactGateway = {
       postMessage: () =>
-        throwError(() => ({
-          status: 503,
-          error: {
-            errors: ['CAPTCHA is not configured'],
-            error_code: 'captcha_unavailable'
-          }
-        }))
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 503,
+              error: {
+                errors: ['CAPTCHA is not configured'],
+                error_code: 'captcha_unavailable'
+              }
+            })
+        )
     };
     const onError = vi.fn();
     const uc = new SendContactMessageUseCase(gateway);
@@ -99,10 +109,13 @@ describe('SendContactMessageUseCase', () => {
   it('maps 429 to send_failed', () => {
     const gateway: ContactGateway = {
       postMessage: () =>
-        throwError(() => ({
-          status: 429,
-          error: { errors: ['rate_limit'] }
-        }))
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 429,
+              error: { errors: ['rate_limit'] }
+            })
+        )
     };
     const onError = vi.fn();
     const uc = new SendContactMessageUseCase(gateway);
