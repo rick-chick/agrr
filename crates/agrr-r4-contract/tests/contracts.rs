@@ -4471,10 +4471,8 @@ fn org_member_denied_plan_mutations() {
         Some(member_session),
         &empty_headers(),
         Some(serde_json::json!({
-            "variance_learning": {
-                "proposal_application_progress": {
-                    "stage_gdd:1:2": "confirmed"
-                }
+            "proposal_application_progress": {
+                "stage_gdd:1:2": "confirmed"
             }
         })),
     ));
