@@ -47,6 +47,7 @@ struct SpyCreateOutput {
     events: Arc<Mutex<Vec<String>>>,
     record: Arc<Mutex<Option<WorkRecordRead>>>,
     errors: Arc<Mutex<Option<BTreeMap<String, Vec<String>>>>>,
+    climate_failure: Arc<Mutex<Option<crate::field_cultivation::dtos::FieldCultivationClimateFailure>>>,
 }
 
 impl WorkRecordCreateOutputPort for SpyCreateOutput {
@@ -66,6 +67,14 @@ impl WorkRecordCreateOutputPort for SpyCreateOutput {
 
     fn on_not_found(&mut self) {
         self.events.lock().unwrap().push("not_found".into());
+    }
+
+    fn on_climate_snapshot_unavailable(
+        &mut self,
+        failure: crate::field_cultivation::dtos::FieldCultivationClimateFailure,
+    ) {
+        self.events.lock().unwrap().push("climate_unavailable".into());
+        *self.climate_failure.lock().unwrap() = Some(failure);
     }
 }
 
@@ -188,6 +197,25 @@ impl WorkRecordClimateSnapshotGateway for FailingClimateSnapshot {
     }
 }
 
+struct TypedFailingClimateSnapshot;
+
+impl WorkRecordClimateSnapshotGateway for TypedFailingClimateSnapshot {
+    fn lookup(
+        &self,
+        _: i64,
+        _: Date,
+    ) -> Result<WorkRecordClimateSnapshot, Box<dyn std::error::Error + Send + Sync>> {
+        Err(Box::new(
+            crate::work_record::errors::WorkRecordClimateSnapshotUnavailableError::new(
+                crate::field_cultivation::dtos::FieldCultivationClimateFailure::new(
+                    crate::field_cultivation::dtos::FieldCultivationClimateFailureReason::ProgressDaemonUnavailable,
+                    "daemon_unavailable",
+                ),
+            ),
+        ))
+    }
+}
+
 struct StubWorkRecordGateway {
     create_calls: Arc<Mutex<Vec<(i64, WorkRecordCreatePersistAttrs)>>>,
     create_result: WorkRecordRead,
@@ -303,6 +331,7 @@ fn creates_scheduled_record_with_item_prefill() {
         events: Arc::clone(&events),
         record: Arc::clone(&record_slot),
         errors: Arc::new(Mutex::new(None)),
+        climate_failure: Arc::new(Mutex::new(None)),
     };
     let create_calls = Arc::new(Mutex::new(Vec::new()));
     let gateway = StubWorkRecordGateway {
@@ -366,13 +395,14 @@ fn creates_scheduled_record_with_item_prefill() {
 }
 
 #[test]
-fn create_omits_climate_fields_when_snapshot_lookup_fails() {
+fn create_fails_when_snapshot_lookup_returns_untyped_error() {
     let events = Arc::new(Mutex::new(Vec::new()));
     let record_slot = Arc::new(Mutex::new(None));
     let mut output = SpyCreateOutput {
         events: Arc::clone(&events),
         record: Arc::clone(&record_slot),
         errors: Arc::new(Mutex::new(None)),
+        climate_failure: Arc::new(Mutex::new(None)),
     };
     let create_calls = Arc::new(Mutex::new(Vec::new()));
     let gateway = StubWorkRecordGateway {
@@ -418,12 +448,68 @@ fn create_omits_climate_fields_when_snapshot_lookup_fails() {
         Value::String("2026-06-12".into()),
     );
 
-    interactor.call_rescuing(1, 2, &params).unwrap();
+    assert!(interactor.call_rescuing(1, 2, &params).is_err());
+    assert!(create_calls.lock().unwrap().is_empty());
+    assert!(events.lock().unwrap().is_empty());
+}
 
-    let calls = create_calls.lock().unwrap();
-    assert!(calls[0].1.gdd_at_actual.is_none());
-    assert!(calls[0].1.weather_snapshot.is_none());
-    assert_eq!(&*events.lock().unwrap(), &["success".to_string()]);
+#[test]
+fn create_notifies_climate_unavailable_when_snapshot_lookup_returns_typed_error() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let record_slot = Arc::new(Mutex::new(None));
+    let mut output = SpyCreateOutput {
+        events: Arc::clone(&events),
+        record: Arc::clone(&record_slot),
+        errors: Arc::new(Mutex::new(None)),
+        climate_failure: Arc::new(Mutex::new(None)),
+    };
+    let create_calls = Arc::new(Mutex::new(Vec::new()));
+    let gateway = StubWorkRecordGateway {
+        create_calls: Arc::clone(&create_calls),
+        create_result: sample_read(),
+    };
+    let item_lookup = StubItemLookup {
+        snapshot: Some(TaskScheduleItemPrefillSnapshot {
+            cultivation_plan_id: 2,
+            field_cultivation_id: Some(45),
+            agricultural_task_id: Some(7),
+            name: "除草".into(),
+            task_type: Some("field_work".into()),
+            scheduled_date: Some(date!(2026-06-10)),
+            amount: None,
+            amount_unit: None,
+        }),
+    };
+    let clock = FakeClock {
+        today_val: date!(2026-06-12),
+        now_val: datetime!(2026-06-12 10:00 UTC),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: private_plan(1),
+    };
+    let mut interactor = WorkRecordCreateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &gateway,
+        &item_lookup,
+        &TypedFailingClimateSnapshot,
+        &clock,
+        &EmptyScopeGateway,
+    );
+
+    let mut params = BTreeMap::new();
+    params.insert(
+        "task_schedule_item_id".into(),
+        Value::Number(123.into()),
+    );
+    params.insert(
+        "actual_date".into(),
+        Value::String("2026-06-12".into()),
+    );
+
+    interactor.call_rescuing(1, 2, &params).unwrap();
+    assert_eq!(&*events.lock().unwrap(), &["climate_unavailable".to_string()]);
+    assert!(create_calls.lock().unwrap().is_empty());
 }
 
 #[test]
@@ -434,6 +520,7 @@ fn create_persists_climate_snapshot_when_field_cultivation_present() {
         events: Arc::clone(&events),
         record: Arc::clone(&record_slot),
         errors: Arc::new(Mutex::new(None)),
+        climate_failure: Arc::new(Mutex::new(None)),
     };
     let create_calls = Arc::new(Mutex::new(Vec::new()));
     let gateway = StubWorkRecordGateway {
@@ -513,6 +600,7 @@ fn dispatches_record_invalid_when_item_belongs_to_other_plan() {
         events: Arc::clone(&events),
         record: Arc::new(Mutex::new(None)),
         errors: Arc::clone(&errors),
+        climate_failure: Arc::new(Mutex::new(None)),
     };
     let gateway = StubWorkRecordGateway {
         create_calls: Arc::new(Mutex::new(Vec::new())),
@@ -575,6 +663,7 @@ fn dispatches_record_invalid_when_ad_hoc_name_missing() {
         events: Arc::clone(&events),
         record: Arc::new(Mutex::new(None)),
         errors: Arc::clone(&errors),
+        climate_failure: Arc::new(Mutex::new(None)),
     };
     let gateway = StubWorkRecordGateway {
         create_calls: Arc::new(Mutex::new(Vec::new())),
@@ -670,6 +759,7 @@ fn dispatches_not_found_when_private_plan_access_denied() {
     let mut output = SpyCreateOutput {
         events: Arc::clone(&events), record: Arc::new(Mutex::new(None)),
         errors: Arc::new(Mutex::new(None)),
+        climate_failure: Arc::new(Mutex::new(None)),
     };
     let create_calls = Arc::new(Mutex::new(Vec::new()));
     let gateway = StubWorkRecordGateway {
@@ -709,6 +799,7 @@ fn creates_ad_hoc_record_with_fertilize_and_pesticide_ids() {
         events: Arc::clone(&events),
         record: Arc::clone(&record_slot),
         errors: Arc::new(Mutex::new(None)),
+        climate_failure: Arc::new(Mutex::new(None)),
     };
     let create_calls = Arc::new(Mutex::new(Vec::new()));
     let gateway = StubWorkRecordGateway {

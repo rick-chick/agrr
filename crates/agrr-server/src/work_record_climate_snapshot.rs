@@ -16,7 +16,9 @@ use agrr_domain::field_cultivation::ports::{
     FieldCultivationClimateDataInputPort, FieldCultivationClimateDataOutputPort,
     WeatherPredictionAnchors, WeatherPredictionAnchorsPort,
 };
+use agrr_domain::field_cultivation::dtos::FieldCultivationClimateFailure;
 use agrr_domain::shared::dtos::Error;
+use agrr_domain::work_record::errors::WorkRecordClimateSnapshotUnavailableError;
 use agrr_domain::weather_data::dtos::PredictedWeatherScope;
 use agrr_domain::weather_data::gateways::PredictedWeatherStoreGateway;
 use agrr_domain::work_record::dtos::WorkRecordClimateSnapshot;
@@ -24,11 +26,12 @@ use agrr_domain::work_record::gateways::WorkRecordClimateSnapshotGateway;
 use agrr_domain::work_record::mappers::snapshot_from_climate_output;
 use time::Date;
 
-use crate::adapters::{NoopLogger, PassthroughTranslator, SystemClock};
+use crate::adapters::{PassthroughTranslator, StderrLogger, SystemClock};
 use crate::state::AppState;
 
 struct CaptureClimatePresenter {
     output: Option<FieldCultivationClimateDataOutput>,
+    failure: Option<FieldCultivationClimateFailure>,
 }
 
 impl FieldCultivationClimateDataOutputPort for CaptureClimatePresenter {
@@ -37,6 +40,10 @@ impl FieldCultivationClimateDataOutputPort for CaptureClimatePresenter {
     }
 
     fn on_error(&mut self, _error: Error) {}
+
+    fn on_failure(&mut self, failure: FieldCultivationClimateFailure) {
+        self.failure = Some(failure);
+    }
 }
 
 struct FixedAnchors;
@@ -110,7 +117,7 @@ impl WorkRecordClimateSnapshotGateway for WorkRecordClimateSnapshotService {
                 &self.predicted_weather,
             );
         let agrr = FieldCultivationClimateAgrrGateway::from_env();
-        let logger = NoopLogger;
+        let logger = StderrLogger;
         let translator = PassthroughTranslator;
         let clock = SystemClock;
         let anchors = FixedAnchors;
@@ -118,7 +125,10 @@ impl WorkRecordClimateSnapshotGateway for WorkRecordClimateSnapshotService {
             store: self.predicted_weather.store.as_ref(),
         };
 
-        let mut presenter = CaptureClimatePresenter { output: None };
+        let mut presenter = CaptureClimatePresenter {
+            output: None,
+            failure: None,
+        };
         let mut interactor = FieldCultivationClimateDataInteractor::new(
             &mut presenter,
             &logger,
@@ -143,6 +153,10 @@ impl WorkRecordClimateSnapshotGateway for WorkRecordClimateSnapshotService {
             display_end_date: None,
         };
         interactor.call(input)?;
+
+        if let Some(failure) = presenter.failure {
+            return Err(Box::new(WorkRecordClimateSnapshotUnavailableError::new(failure)));
+        }
 
         if let Some(output) = presenter.output {
             return Ok(snapshot_from_climate_output(&output, actual_date));

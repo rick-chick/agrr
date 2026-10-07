@@ -8,16 +8,25 @@ use crate::field_cultivation::dtos::{
 pub fn to_context_snapshot(
     source: &FieldCultivationClimateSourceSnapshot,
     crop: &ClimateCropEntity,
-) -> FieldCultivationClimateContextSnapshot {
+) -> Result<FieldCultivationClimateContextSnapshot, crate::field_cultivation::errors::FieldCultivationClimateFailureError> {
     let stages = build_stage_requirements(crop);
     let first_stage = crop
         .crop_stages
         .iter()
         .min_by_key(|st| st.order);
-    let temp_req = first_stage.and_then(|st| st.temperature_requirement.as_ref());
-    let base_temperature = temp_req.map(|t| t.base_temperature).unwrap_or(10.0);
+    let temp_req = first_stage
+        .and_then(|st| st.temperature_requirement.as_ref())
+        .ok_or_else(|| {
+            crate::field_cultivation::errors::FieldCultivationClimateFailureError(
+                crate::field_cultivation::dtos::FieldCultivationClimateFailure::new(
+                    crate::field_cultivation::dtos::FieldCultivationClimateFailureReason::CropRequirementIncomplete,
+                    "lowest-order stage has no temperature requirement",
+                ),
+            )
+        })?;
+    let base_temperature = temp_req.base_temperature;
 
-    FieldCultivationClimateContextSnapshot {
+    Ok(FieldCultivationClimateContextSnapshot {
         field_cultivation_id: source.field_cultivation_id,
         field_name: source.field_name.clone(),
         crop_name: source.crop_name.clone(),
@@ -37,9 +46,9 @@ pub fn to_context_snapshot(
         plan_metadata: source.plan_metadata.clone(),
         crop_id: crop.id,
         base_temperature,
-        optimal_temperature_range: temp_req.map(build_optimal_temperature_range),
+        optimal_temperature_range: Some(build_optimal_temperature_range(temp_req)),
         stages,
-    }
+    })
 }
 
 fn build_optimal_temperature_range(temp_req: &ClimateTemperatureRequirement) -> Value {

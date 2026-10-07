@@ -273,6 +273,10 @@ en:
         prediction_failed: "Failed to fetch weather prediction."
     errors:
       no_cultivation_period: "Cultivation period is not set"
+      climate_progress_daemon_unavailable: "The AGRR processing service is unavailable. Please try again later."
+      climate_progress_execution_failed: "Failed to calculate growing degree days."
+      climate_progress_result_invalid: "Growing degree day progress data is invalid."
+      climate_crop_requirement_incomplete: "Crop master data is incomplete for climate calculations."
       backdoor:
         not_enabled: "Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable."
         missing_token: "Missing authentication token"
