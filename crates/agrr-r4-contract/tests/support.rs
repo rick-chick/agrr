@@ -61,6 +61,52 @@ pub fn assert_builtin_generation_deprecated_headers(
     );
 }
 
+/// Asserts a 4xx/5xx JSON body follows the `errors: string[]` contract (non-empty strings).
+pub fn assert_api_failure_errors_array(json: &serde_json::Value, body: &str) {
+    let errors = json
+        .get("errors")
+        .and_then(|v| v.as_array())
+        .filter(|arr| !arr.is_empty())
+        .expect(&format!("expected non-empty errors array: {body}"));
+    for entry in errors {
+        let msg = entry
+            .as_str()
+            .filter(|s| !s.is_empty())
+            .expect(&format!("errors elements must be non-empty strings: {body}"));
+        let _ = msg;
+    }
+}
+
+/// Asserts `errors` contains an element equal to `expected` (legacy `error` may still be present).
+pub fn assert_api_failure_errors_include(
+    json: &serde_json::Value,
+    expected: &str,
+    body: &str,
+) {
+    assert_api_failure_errors_array(json, body);
+    let found = json["errors"]
+        .as_array()
+        .expect("errors array")
+        .iter()
+        .any(|v| v.as_str() == Some(expected));
+    assert!(found, "expected errors to include {expected}: {body}");
+}
+
+/// Asserts some `errors` element contains `fragment` (case-sensitive substring).
+pub fn assert_api_failure_errors_contain(
+    json: &serde_json::Value,
+    fragment: &str,
+    body: &str,
+) {
+    assert_api_failure_errors_array(json, body);
+    let found = json["errors"]
+        .as_array()
+        .expect("errors array")
+        .iter()
+        .any(|v| v.as_str().unwrap_or("").contains(fragment));
+    assert!(found, "expected errors to contain {fragment}: {body}");
+}
+
 /// Asserts deprecated crop agricultural_tasks API returns 410 Gone.
 pub fn assert_crop_task_template_api_removed(status: u16, body: &str) {
     assert_eq!(410, status, "{body}");
@@ -70,6 +116,7 @@ pub fn assert_crop_task_template_api_removed(status: u16, body: &str) {
         Some("crop_task_template_api_removed"),
         "{body}"
     );
+    assert_api_failure_errors_array(&json, body);
     assert!(json.get("error").is_some(), "{body}");
 }
 
