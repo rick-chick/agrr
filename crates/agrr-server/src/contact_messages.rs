@@ -11,7 +11,7 @@ use agrr_domain::contact_messages::interactors::CreateContactMessageInteractor;
 use agrr_domain::contact_messages::ports::CreateContactMessageOutputPort;
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
-use axum::routing::{get, post};
+use axum::routing::post;
 use axum::{Json, Router};
 use serde::Deserialize;
 

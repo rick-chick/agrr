@@ -1,6 +1,6 @@
 //! Nested crop task schedule blueprints — `/api/v1/masters/crops/{crop_id}/task_schedule_blueprints`.
 
-use crate::api_error::{single_failure, single_failure_with_code};
+use crate::api_error::single_failure_with_code;
 use crate::builtin_generation_deprecation::{
     builtin_generation_deprecated_json, BuiltinGenerationEndpoint,
 };
@@ -16,8 +16,8 @@ use agrr_adapters_sqlite::{
 use agrr_domain::crop::dtos::{
     CropBlueprintRegenerateFailureReason, MastersCropTaskScheduleBlueprint,
     MastersCropTaskScheduleBlueprintCreateFailure, MastersCropTaskScheduleBlueprintCreateFailureReason,
-    MastersCropTaskScheduleBlueprintCreateInput, MastersCropTaskScheduleBlueprintDestroyInput,
-    MastersCropTaskScheduleBlueprintFailure, MastersCropTaskScheduleBlueprintFailureReason,
+    MastersCropTaskScheduleBlueprintCreateInput,     MastersCropTaskScheduleBlueprintDestroyInput,
+    MastersCropTaskScheduleBlueprintFailureReason,
     MastersCropTaskScheduleBlueprintIndexInput, MastersCropTaskScheduleBlueprintRegenerateInput,
     MastersCropTaskScheduleBlueprintUpdateInput,
 };

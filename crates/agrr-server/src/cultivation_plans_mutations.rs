@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::add_crop_support::{AddCropAdjustResultCollector, AddCropCropResolvePrivate};
 use crate::adapters::{
-    cultivation_plan_optimization_events_adapter, NoopLogger, PassthroughTranslator, StderrLogger,
+    cultivation_plan_optimization_events_adapter, PassthroughTranslator, StderrLogger,
     SystemClock,
 };
 use crate::adjust_weather_prediction::SqliteAdjustWeatherPredictionGateway;
