@@ -62,7 +62,7 @@ describe('apiErrorI18nKey', () => {
       apiErrorI18nKey(
         new HttpErrorResponse({
           status: 422,
-          error: { error: 'weather_location_required' }
+          error: { errors: ['weather_location_required'] }
         })
       )
     ).toBe('api.entry_schedule.errors.weather_location_required');
@@ -73,7 +73,7 @@ describe('apiErrorI18nKey', () => {
       apiErrorI18nKey(
         new HttpErrorResponse({
           status: 503,
-          error: { error: 'prediction_payload_missing' }
+          error: { errors: ['prediction_payload_missing'] }
         })
       )
     ).toBe('api.entry_schedule.errors.prediction_failed');
@@ -84,7 +84,7 @@ describe('apiErrorI18nKey', () => {
       apiErrorI18nKey(
         new HttpErrorResponse({
           status: 503,
-          error: { error: 'daemon timeout' }
+          error: { errors: ['daemon timeout'] }
         })
       )
     ).toBe('api.entry_schedule.errors.prediction_failed');

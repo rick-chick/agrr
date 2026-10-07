@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { CreateInteractionRuleInputPort } from './create-interaction-rule.input-port';
 import { CreateInteractionRuleOutputPort, CREATE_INTERACTION_RULE_OUTPUT_PORT } from './create-interaction-rule.output-port';
 import { INTERACTION_RULE_GATEWAY, InteractionRuleGateway } from './interaction-rule-gateway';
@@ -29,7 +30,7 @@ export class CreateInteractionRuleUseCase implements CreateInteractionRuleInputP
       },
       error: (err) =>
         this.outputPort.onError({
-          message: err.error?.errors?.join(', ') ?? err.error?.error ?? err?.message ?? 'Unknown error'
+          message: apiErrorMessage(err)
         })
     });
   }

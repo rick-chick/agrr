@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { RetryFarmWeatherFetchInputDto } from './retry-farm-weather-fetch.dtos';
 import { RetryFarmWeatherFetchInputPort } from './retry-farm-weather-fetch.input-port';
 import {
@@ -21,14 +22,8 @@ export class RetryFarmWeatherFetchUseCase implements RetryFarmWeatherFetchInputP
         this.outputPort.onSuccess({ farm });
         dto.onSettled?.();
       },
-      error: (err: Error & { error?: { error?: string; errors?: string[] } }) => {
-        this.outputPort.onError({
-          message:
-            err.error?.error ??
-            err.error?.errors?.join(', ') ??
-            err?.message ??
-            'Unknown error'
-        });
+      error: (err: unknown) => {
+        this.outputPort.onError({ message: apiErrorMessage(err) });
         dto.onSettled?.();
       }
     });

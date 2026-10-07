@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { CreateFarmInputDto } from './create-farm.dtos';
 import { CreateFarmInputPort } from './create-farm.input-port';
 import { CreateFarmOutputPort, CREATE_FARM_OUTPUT_PORT } from './create-farm.output-port';
@@ -25,13 +26,10 @@ export class CreateFarmUseCase implements CreateFarmInputPort {
           this.outputPort.onSuccess({ farm });
           dto.onSuccess?.(farm);
         },
-        error: (err: Error & { error?: { errors?: string[] } }) => {
-          const rawMessage =
-            err.error?.errors?.join(', ') ?? err?.message ?? 'Unknown error';
+        error: (err: unknown) =>
           this.outputPort.onError({
-            message: resolveActiverecordApiErrorI18nKey(rawMessage)
-          });
-        }
+            message: resolveActiverecordApiErrorI18nKey(apiErrorMessage(err))
+          })
       });
   }
 }

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { DeleteFarmInputDto } from './delete-farm.dtos';
 import { DeleteFarmInputPort } from './delete-farm.input-port';
 import { DeleteFarmOutputPort, DELETE_FARM_OUTPUT_PORT } from './delete-farm.output-port';
@@ -22,8 +23,8 @@ export class DeleteFarmUseCase implements DeleteFarmInputPort {
         this.outputPort.onSuccess(successDto);
         dto.onSuccess?.();
       },
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) =>
+        this.outputPort.onError({ message: apiErrorMessage(err) })
     });
   }
 }

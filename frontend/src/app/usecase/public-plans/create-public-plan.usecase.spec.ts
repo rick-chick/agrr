@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { throwError, of } from 'rxjs';
 import { vi } from 'vitest';
 import { CreatePublicPlanUseCase } from './create-public-plan.usecase';
@@ -49,12 +50,17 @@ describe('CreatePublicPlanUseCase', () => {
    * そのメッセージが onError に渡ることを断言（RED→GREEN で原因特定用）。
    */
   it('passes single error message from 422 response to onError', () => {
-    const railsErrorBody = { error: '作物を1つ以上選択してください。' };
     const gateway: PublicPlanGateway = {
       getFarms: () => of([]),
       getCrops: () => of([]),
       createPlan: () =>
-        throwError(() => ({ status: 422, error: railsErrorBody })),
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 422,
+              error: { errors: ['作物を1つ以上選択してください。'] }
+            })
+        ),
       savePlan: () => of({} as any)
     };
     const publicPlanSession = createPublicPlanSessionMock();

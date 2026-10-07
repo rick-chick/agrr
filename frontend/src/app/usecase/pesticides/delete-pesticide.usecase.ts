@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { DeletePesticideInputDto } from './delete-pesticide.dtos';
 import { DeletePesticideInputPort } from './delete-pesticide.input-port';
 import {
@@ -24,14 +25,8 @@ export class DeletePesticideUseCase implements DeletePesticideInputPort {
         });
         dto.onSuccess?.();
       },
-      error: (err: Error & { error?: { error?: string; errors?: string[] } }) =>
-        this.outputPort.onError({
-          message:
-            err?.error?.error ??
-            err?.error?.errors?.join(', ') ??
-            err?.message ??
-            'Unknown error'
-        })
+      error: (err: unknown) =>
+        this.outputPort.onError({ message: apiErrorMessage(err) })
     });
   }
 }

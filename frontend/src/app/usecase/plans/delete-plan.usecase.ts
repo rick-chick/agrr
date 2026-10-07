@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { DeletePlanInputPort } from './delete-plan.input-port';
 import { DeletePlanInputDto } from './delete-plan.dtos';
 import {
@@ -24,13 +25,9 @@ export class DeletePlanUseCase implements DeletePlanInputPort {
         });
         dto.onSuccess?.();
       },
-      error: (err: Error & { error?: { error?: string; errors?: string[] } }) =>
+      error: (err: unknown) =>
         this.outputPort.onError({
-          message:
-            err?.error?.error ??
-            err?.error?.errors?.join(', ') ??
-            err?.message ??
-            'Unknown error',
+          message: apiErrorMessage(err),
           scope: 'delete-plan'
         })
     });

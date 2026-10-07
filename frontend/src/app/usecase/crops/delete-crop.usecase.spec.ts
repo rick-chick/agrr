@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
 import { DeleteCropUseCase } from './delete-crop.usecase';
@@ -61,18 +62,20 @@ describe('DeleteCropUseCase', () => {
     expect(receivedError!.message).toContain('network error');
   });
 
-  it('calls outputPort.onError with err.error.error when API returns 422 with body.error (server message)', () => {
-    const serverMessage = 'この作物は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。';
+  it('calls outputPort.onError with generic key when API returns legacy body.error only', () => {
     const gateway: CropGateway = {
       list: () => of([]),
       show: () => of({} as never),
       create: () => of({} as never),
       update: () => of({} as never),
       destroy: () =>
-        throwError(() => ({
-          message: 'Http failure response for ...: 422 Unprocessable Content',
-          error: { error: serverMessage }
-        }))
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 422,
+              error: { error: 'a' }
+            })
+        )
     };
 
     let receivedError: { message: string } | null = null;
@@ -87,6 +90,6 @@ describe('DeleteCropUseCase', () => {
     useCase.execute({ cropId: 2 });
 
     expect(receivedError).not.toBeNull();
-    expect(receivedError!.message).toBe(serverMessage);
+    expect(receivedError!.message).toBe('common.api_error.generic');
   });
 });
