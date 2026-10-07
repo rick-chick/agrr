@@ -1964,6 +1964,97 @@ pub fn seed_public_cultivation_plan(user_id: i64) -> i64 {
     seed_public_cultivation_plan_with_session(user_id, None)
 }
 
+pub struct PublicPlanFieldCultivationSeed {
+    pub plan_id: i64,
+    pub field_cultivation_id: i64,
+    pub start_date: String,
+    pub completion_date: String,
+}
+
+/// Public plan with one field cultivation row (for field_cultivation PATCH contract tests).
+pub fn seed_public_plan_field_cultivation(
+    user_id: i64,
+    session_id: Option<&str>,
+) -> PublicPlanFieldCultivationSeed {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let farm_name = format!("Contract Public FC Farm {suffix}");
+    conn.execute(
+        "INSERT INTO farms (user_id, name, latitude, longitude, created_at, updated_at, is_reference)
+         VALUES (?1, ?2, 35.0, 139.0, datetime('now'), datetime('now'), 0)",
+        params![user_id, farm_name],
+    )
+    .expect("insert farm");
+    let farm_id = conn.last_insert_rowid();
+    let plan_name = format!("Contract Public FC Plan {suffix}");
+    conn.execute(
+        "INSERT INTO cultivation_plans (
+           farm_id, user_id, total_area, plan_type, plan_name, status, session_id, created_at, updated_at
+         ) VALUES (?1, ?2, 10.0, 'public', ?3, 'pending', ?4, datetime('now'), datetime('now'))",
+        params![farm_id, user_id, plan_name, session_id],
+    )
+    .expect("insert public plan");
+    let plan_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO cultivation_plan_fields (cultivation_plan_id, name, area, created_at, updated_at)
+         VALUES (?1, 'F1', 10.0, datetime('now'), datetime('now'))",
+        params![plan_id],
+    )
+    .expect("insert plan field");
+    let plan_field_id = conn.last_insert_rowid();
+
+    let crop_name = format!("Contract Public FC Crop {suffix}");
+    conn.execute(
+        "INSERT INTO crops (user_id, name, variety, is_reference, created_at, updated_at)
+         VALUES (?1, ?2, 'V1', 0, datetime('now'), datetime('now'))",
+        params![user_id, crop_name],
+    )
+    .expect("insert crop");
+    let crop_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO cultivation_plan_crops (cultivation_plan_id, crop_id, name, created_at, updated_at)
+         VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+        params![plan_id, crop_id, crop_name],
+    )
+    .expect("insert plan crop");
+    let plan_crop_id = conn.last_insert_rowid();
+
+    let start_date = "2026-04-01".to_string();
+    let completion_date = "2026-08-31".to_string();
+    conn.execute(
+        "INSERT INTO field_cultivations (
+           cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id,
+           area, status, start_date, completion_date, created_at, updated_at
+         ) VALUES (?1, ?2, ?3, 10.0, 'completed', ?4, ?5, datetime('now'), datetime('now'))",
+        params![plan_id, plan_field_id, plan_crop_id, &start_date, &completion_date],
+    )
+    .expect("insert field_cultivation");
+    let field_cultivation_id = conn.last_insert_rowid();
+
+    PublicPlanFieldCultivationSeed {
+        plan_id,
+        field_cultivation_id,
+        start_date,
+        completion_date,
+    }
+}
+
+pub fn field_cultivation_schedule_dates(
+    field_cultivation_id: i64,
+) -> (Option<String>, Option<String>) {
+    let conn = contract_sqlite_conn();
+    conn.query_row(
+        "SELECT start_date, completion_date FROM field_cultivations WHERE id = ?1",
+        params![field_cultivation_id],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )
+    .expect("field_cultivation dates")
+}
+
 pub fn seed_public_cultivation_plan_with_session(
     user_id: i64,
     session_id: Option<&str>,
