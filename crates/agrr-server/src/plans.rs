@@ -461,15 +461,19 @@ impl CultivationPlanDestroyOutputPort for DestroyPresenter {
     }
 
     fn on_failure(&mut self, error: Error) {
-        let status = if error.message.contains("not_found") {
+        let is_not_found = error.message.contains("not_found")
+            || error.message == "Plan not found";
+        let status = if is_not_found {
             StatusCode::NOT_FOUND
         } else {
             StatusCode::UNPROCESSABLE_ENTITY
         };
-        self.body = Some(DestroyOutcome::Failure {
-            status,
-            message: "Plan not found".into(),
-        });
+        let message = if is_not_found {
+            "Plan not found".into()
+        } else {
+            error.message
+        };
+        self.body = Some(DestroyOutcome::Failure { status, message });
     }
 }
 
