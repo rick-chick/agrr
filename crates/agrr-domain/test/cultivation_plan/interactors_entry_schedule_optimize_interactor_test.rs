@@ -57,13 +57,16 @@
 
     struct StubBuilder;
     impl CropAgrrRequirementBuilderPort for StubBuilder {
-        fn build_from(&self, _: &dyn CropAgrrRequirementSource) -> Value {
-            json!({
+        fn build_from(
+            &self,
+            _: &dyn CropAgrrRequirementSource,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(json!({
                 "stage_requirements": [
                     { "thermal": { "required_gdd": 800.0 } },
                     { "thermal": { "required_gdd": 800.0 } }
                 ]
-            })
+            }))
         }
     }
 
@@ -137,6 +140,18 @@
         fn info(&self, _: &str) {}
         fn warn(&self, _: &str) {}
         fn error(&self, _: &str) {}
+        fn debug(&self, _: &str) {}
+    }
+
+    struct RecordingLogger {
+        errors: std::sync::Mutex<Vec<String>>,
+    }
+    impl LoggerPort for RecordingLogger {
+        fn info(&self, _: &str) {}
+        fn warn(&self, _: &str) {}
+        fn error(&self, message: &str) {
+            self.errors.lock().unwrap().push(message.to_string());
+        }
         fn debug(&self, _: &str) {}
     }
 
@@ -1031,23 +1046,60 @@
         );
     }
 
-    struct EmptyCropRequirementBuilder;
-    impl CropAgrrRequirementBuilderPort for EmptyCropRequirementBuilder {
-        fn build_from(&self, _: &dyn CropAgrrRequirementSource) -> Value {
-            json!({})
+    struct ErrCropRequirementBuilder;
+    impl CropAgrrRequirementBuilderPort for ErrCropRequirementBuilder {
+        fn build_from(
+            &self,
+            _: &dyn CropAgrrRequirementSource,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            Err("no requirement".into())
         }
     }
 
     #[test]
-    fn forwards_empty_crop_requirement_when_builder_swallows_missing_requirement() {
+    fn logs_error_when_crop_requirement_builder_fails() {
+        let crop = test_crop(1, "トマト", None, None);
+        let crop_gateway = StubCropGateway { rows: vec![] };
+        let optimization_gateway = StubOptimizationGateway {
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "sowing_windows": [],
+                "transplant_windows": []
+            })),
+            captured_requirement: Arc::new(Mutex::new(None)),
+        };
+        let clock = FakeClock {
+            today_val: date!(2026-06-15),
+        };
+        let logger = RecordingLogger {
+            errors: std::sync::Mutex::new(Vec::new()),
+        };
+        let interactor = EntryScheduleOptimizeInteractor::new(
+            &crop,
+            weather_rows(),
+            &crop_gateway,
+            &ErrCropRequirementBuilder,
+            &optimization_gateway,
+            &clock,
+            Some(&logger),
+            true,
+        );
+        let result = interactor.call();
+        assert!(!result.eligible);
+        let errors = logger.errors.lock().unwrap();
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].contains("no requirement"));
+    }
+
+    #[test]
+    fn returns_crop_requirement_error_when_builder_fails_without_calling_optimize() {
         let crop = test_crop(1, "トマト", None, None);
         let crop_gateway = StubCropGateway { rows: vec![] };
         let captured_requirement = Arc::new(Mutex::new(None));
         let optimization_gateway = StubOptimizationGateway {
-            outcome: StubOptimizeOutcome::Err(EntryScheduleOptimizationError::new(
-                "crop_requirement_error",
-                "missing stages",
-            )),
+            outcome: StubOptimizeOutcome::Ok(json!({
+                "sowing_windows": [],
+                "transplant_windows": []
+            })),
             captured_requirement: Arc::clone(&captured_requirement),
         };
         let clock = FakeClock {
@@ -1057,7 +1109,7 @@
             &crop,
             weather_rows(),
             &crop_gateway,
-            &EmptyCropRequirementBuilder,
+            &ErrCropRequirementBuilder,
             &optimization_gateway,
             &clock,
             None::<&FakeLogger>,
@@ -1065,12 +1117,7 @@
         );
         let result = interactor.call();
         assert!(!result.eligible);
-        let requirement = captured_requirement
-            .lock()
-            .unwrap()
-            .clone()
-            .expect("optimize should receive crop requirement from builder");
-        assert_eq!(requirement, json!({}));
+        assert!(captured_requirement.lock().unwrap().is_none());
         assert_eq!(
             result.reason_parts.get("error_key").and_then(|v| v.as_str()),
             Some("crop_requirement_error")

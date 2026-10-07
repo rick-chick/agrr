@@ -5,7 +5,7 @@ Official thin MCP wrapper for AGRR Masters crop `setup_proposal` API. No busines
 ## Prerequisites
 
 - Node.js 20+
-- AGRR API key with Masters access
+- AGRR API key (read-only `masters:read`). Writes including `setup_proposal?mode=apply` must be done in the AGRR UI while logged in.
 - Running `agrr-server` (local Docker: `http://127.0.0.1:3000`)
 
 ## Environment
@@ -51,9 +51,10 @@ Add to `.cursor/mcp.json` (or Cursor Settings → MCP):
 | `list_reference_crops` | `GET /api/v1/masters/crops` (client filters `is_reference=true`) |
 | `get_crop_detail` | `GET /api/v1/masters/crops/{id}` |
 | `propose_crop_setup` | `POST /api/v1/masters/crops/{id}/setup_proposal?mode=dry_run` |
-| `apply_crop_setup` | `POST /api/v1/masters/crops/{id}/setup_proposal?mode=apply` |
 
 Request/response schema: [`docs/api/setup_proposal-openapi-snippet.yaml`](../../docs/api/setup_proposal-openapi-snippet.yaml).
+
+To persist a validated proposal, use the AGRR UI (**提案 JSON をインポート** on the crop setup screen). API keys cannot call `mode=apply`.
 
 ## Tests
 
@@ -78,10 +79,6 @@ const r = await c.proposeCropSetup(CROP_ID, tomatoJpSetupProposal());
 console.log(r);
 "
 ```
-
-## Apply idempotency
-
-`apply` is **not** idempotent. Re-applying the same proposal to a crop that already has stages/blueprints may fail validation or create duplicates. Workflow: always `propose_crop_setup` (dry_run) → user confirmation → single `apply_crop_setup`.
 
 ## Sample skill
 

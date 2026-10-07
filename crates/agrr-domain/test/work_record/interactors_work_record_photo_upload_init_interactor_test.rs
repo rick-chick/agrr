@@ -339,6 +339,51 @@ fn upload_init_rejects_when_photo_limit_exceeded() {
     assert!(errs.contains_key("photos"));
 }
 
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn upload_init_not_found_when_org_member_on_other_users_plan() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let output = Arc::new(Mutex::new(None));
+    let errors = Arc::new(Mutex::new(None));
+    let mut presenter = SpyInitOutput {
+        events: events.clone(),
+        output,
+        errors,
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: org_scoped_private_plan(1, 5, 42),
+    };
+    let photo_gateway = StubPhotoGateway {
+        record_exists: true,
+        photo_count: 0,
+        next_id: 55,
+    };
+    let clock = FakeClock {
+        today_val: date!(2026-06-12),
+        now_val: datetime!(2026-06-12 12:00 UTC),
+    };
+    let upload_url_builder = |_: i64, _: i64, _: i64| "/upload".into();
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+    let mut interactor = super::WorkRecordPhotoUploadInitInteractor::new(
+        &mut presenter,
+        &plan_gateway,
+        &photo_gateway,
+        &clock,
+        &upload_url_builder,
+        &scope,
+    );
+    interactor
+        .call_rescuing(99, 1, 42, "image/png")
+        .expect("call");
+    assert_eq!(vec!["not_found"], *events.lock().unwrap());
+}
+
 #[test]
 fn upload_init_success_returns_upload_metadata() {
     let events = Arc::new(Mutex::new(Vec::new()));

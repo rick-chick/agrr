@@ -403,6 +403,59 @@ fn denies_carryover_when_user_cannot_access_target_plan() {
     assert!(saved.lock().unwrap().is_empty());
 }
 
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn denies_carryover_when_org_member_cannot_read_source_plan() {
+    let saved = Arc::new(Mutex::new(Vec::new()));
+    let mut source = org_scoped_private_plan(10, 5, 42);
+    source.farm_id = 99;
+    let mut target = org_scoped_private_plan(20, 99, 42);
+    target.farm_id = 7;
+    let plan_gateway = StubPlanGateway {
+        plans: vec![source, target],
+    };
+    let snapshot_gateway = StubSnapshotGateway {
+        snapshot: sample_snapshot(),
+    };
+    let variance_gateway = SpyVarianceLearningGateway {
+        saved: Arc::clone(&saved),
+    };
+    let user_lookup = StubUserLookup {
+        user: User::new(99, false),
+    };
+    let translator = FakeTranslator;
+    let logger = FakeLogger;
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+
+    let interactor = PlanVarianceCarryoverInteractor::new(
+        &plan_gateway,
+        &snapshot_gateway,
+        &variance_gateway,
+        &user_lookup,
+        &scope,
+        &translator,
+        &logger,
+    );
+
+    let err = interactor
+        .call(PlanVarianceCarryoverInput {
+            new_plan_id: 20,
+            source_plan_id: 10,
+            target_farm_id: 7,
+            user_id: 99,
+        })
+        .expect_err("org member cannot read owner's source plan");
+
+    assert!(err.downcast_ref::<crate::shared::exceptions::RecordInvalidError>().is_some());
+    assert!(saved.lock().unwrap().is_empty());
+}
+
 #[test]
 fn allows_carryover_from_source_on_different_farm_when_accessible() {
     let saved = Arc::new(Mutex::new(Vec::new()));

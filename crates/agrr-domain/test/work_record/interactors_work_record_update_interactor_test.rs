@@ -68,6 +68,14 @@ impl WorkRecordUpdateOutputPort for SpyUpdateOutput {
     fn on_stale_update(&mut self) {
         self.events.lock().unwrap().push("stale".into());
     }
+
+    fn on_climate_snapshot_unavailable(
+        &mut self,
+        failure: crate::field_cultivation::dtos::FieldCultivationClimateFailure,
+    ) {
+        self.events.lock().unwrap().push("climate_unavailable".into());
+        let _ = failure;
+    }
 }
 
 struct StubPlanGateway {
@@ -328,6 +336,44 @@ fn dispatches_record_invalid_when_task_schedule_item_id_is_submitted() {
     );
 }
 
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/test/cultivation_plan/member_scope_test_fixtures.inc.rs"
+));
+
+#[test]
+fn dispatches_not_found_when_org_member_updates_other_users_plan() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let mut output = SpyUpdateOutput {
+        events: Arc::clone(&events),
+        errors: Arc::new(Mutex::new(None)),
+    };
+    let clock = FakeClock {
+        today_val: date!(2026-06-12),
+        now_val: datetime!(2026-06-12 10:00 UTC),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: org_scoped_private_plan(2, 5, 42),
+    };
+    let scope = MemberScopeGateway {
+        org_ids: vec![42],
+    };
+    let mut interactor = WorkRecordUpdateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &StubWorkRecordGateway,
+        &EmptyClimateSnapshot,
+        &clock,
+        &scope,
+    );
+
+    interactor
+        .call_rescuing(99, 2, 10, &BTreeMap::new())
+        .unwrap();
+
+    assert_eq!(&*events.lock().unwrap(), &["not_found".to_string()]);
+}
+
 #[test]
 fn dispatches_not_found_when_private_plan_access_denied() {
     let events = Arc::new(Mutex::new(Vec::new()));
@@ -384,7 +430,7 @@ fn sample_existing_work_record() -> WorkRecordRead {
 }
 
 #[test]
-fn update_omits_climate_refresh_when_snapshot_lookup_fails() {
+fn update_fails_when_snapshot_lookup_returns_untyped_error() {
     let events = Arc::new(Mutex::new(Vec::new()));
     let mut output = SpyUpdateOutput {
         events: Arc::clone(&events),
@@ -421,8 +467,7 @@ fn update_omits_climate_refresh_when_snapshot_lookup_fails() {
         Value::String("2026-06-10T10:00:00Z".into()),
     );
 
-    interactor.call_rescuing(1, 2, 10, &params).unwrap();
-
-    assert_eq!(&*events.lock().unwrap(), &["success".to_string()]);
-    assert_eq!(climate_slot.lock().unwrap().as_ref(), Some(&None));
+    assert!(interactor.call_rescuing(1, 2, 10, &params).is_err());
+    assert!(climate_slot.lock().unwrap().is_none());
+    assert!(events.lock().unwrap().is_empty());
 }

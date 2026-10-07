@@ -105,3 +105,12 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod interactors_plan_vs_actual_summary_interactor_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/interactors_plan_vs_actual_summary_interactor_test.rs"
+    ));
+}

@@ -137,12 +137,16 @@
 
     struct SpyOutput {
         success: Arc<Mutex<Option<CultivationPlanDestroyOutput>>>,
+        not_found: Arc<Mutex<bool>>,
         failure: Arc<Mutex<Option<Error>>>,
     }
 
     impl CultivationPlanDestroyOutputPort for SpyOutput {
         fn on_success(&mut self, dto: CultivationPlanDestroyOutput) {
             *self.success.lock().unwrap() = Some(dto);
+        }
+        fn on_not_found(&mut self) {
+            *self.not_found.lock().unwrap() = true;
         }
         fn on_failure(&mut self, error: Error) {
             *self.failure.lock().unwrap() = Some(error);
@@ -177,9 +181,11 @@ total_area: 0.0,
     #[test]
     fn calls_on_success_when_deletion_schedules_undo() {
         let success = Arc::new(Mutex::new(None));
+        let not_found = Arc::new(Mutex::new(false));
         let failure = Arc::new(Mutex::new(None));
         let mut output = SpyOutput {
             success: Arc::clone(&success),
+            not_found: Arc::clone(&not_found),
             failure: Arc::clone(&failure),
         };
         let gateway = StubGateway {
@@ -206,9 +212,11 @@ total_area: 0.0,
     #[test]
     fn returns_not_found_when_org_member_deletes_other_users_plan() {
         let success = Arc::new(Mutex::new(None));
+        let not_found = Arc::new(Mutex::new(false));
         let failure = Arc::new(Mutex::new(None));
         let mut output = SpyOutput {
             success: Arc::clone(&success),
+            not_found: Arc::clone(&not_found),
             failure: Arc::clone(&failure),
         };
         let mut plan = private_plan(1, 5);
@@ -234,19 +242,19 @@ total_area: 0.0,
         );
         interactor.call(1).unwrap();
         assert!(success.lock().unwrap().is_none());
-        assert_eq!(
-            failure.lock().unwrap().as_ref().map(|e| e.message.as_str()),
-            Some("plans.errors.not_found")
-        );
+        assert!(*not_found.lock().unwrap());
+        assert!(failure.lock().unwrap().is_none());
     }
 
     // Ruby: test "returns not found error when plan missing"
     #[test]
     fn returns_not_found_error_when_plan_missing() {
         let success = Arc::new(Mutex::new(None));
+        let not_found = Arc::new(Mutex::new(false));
         let failure = Arc::new(Mutex::new(None));
         let mut output = SpyOutput {
             success: Arc::clone(&success),
+            not_found: Arc::clone(&not_found),
             failure: Arc::clone(&failure),
         };
         let gateway = StubGateway {
@@ -267,19 +275,19 @@ total_area: 0.0,
         );
         interactor.call(1).unwrap();
         assert!(success.lock().unwrap().is_none());
-        assert_eq!(
-            failure.lock().unwrap().as_ref().map(|e| e.message.as_str()),
-            Some("plans.errors.not_found")
-        );
+        assert!(*not_found.lock().unwrap());
+        assert!(failure.lock().unwrap().is_none());
     }
 
     // Ruby: test "returns delete failed error when restrictions prevent deletion"
     #[test]
     fn returns_delete_failed_error_when_restrictions_prevent_deletion() {
         let success = Arc::new(Mutex::new(None));
+        let not_found = Arc::new(Mutex::new(false));
         let failure = Arc::new(Mutex::new(None));
         let mut output = SpyOutput {
             success: Arc::clone(&success),
+            not_found: Arc::clone(&not_found),
             failure: Arc::clone(&failure),
         };
         let gateway = StubGateway {
@@ -309,9 +317,11 @@ total_area: 0.0,
     #[test]
     fn returns_delete_error_when_undo_scheduling_fails() {
         let success = Arc::new(Mutex::new(None));
+        let not_found = Arc::new(Mutex::new(false));
         let failure = Arc::new(Mutex::new(None));
         let mut output = SpyOutput {
             success: Arc::clone(&success),
+            not_found: Arc::clone(&not_found),
             failure: Arc::clone(&failure),
         };
         let gateway = StubGateway {
@@ -341,9 +351,11 @@ total_area: 0.0,
     #[test]
     fn propagates_standard_error_from_gateway() {
         let success = Arc::new(Mutex::new(None));
+        let not_found = Arc::new(Mutex::new(false));
         let failure = Arc::new(Mutex::new(None));
         let mut output = SpyOutput {
             success: Arc::clone(&success),
+            not_found: Arc::clone(&not_found),
             failure: Arc::clone(&failure),
         };
         struct FailingNameGateway {

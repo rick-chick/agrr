@@ -1299,9 +1299,6 @@
       "message": "आपकी पूछताछ प्राप्त हो गई है।",
       "toast": "संपर्क करने के लिए धन्यवाद।"
     },
-    "captcha": {
-      "aria_label": "सुरक्षा जाँच"
-    },
     "errors": {
       "send_failed": "संदेश भेजने में विफल।",
       "validation_failed": "कृपया अपना इनपुट जांचें।",
@@ -1316,6 +1313,9 @@
       "email_required": "ईमेल आवश्यक है।",
       "email_invalid": "ईमेल प्रारूप अमान्य है।",
       "captcha_required": "कृपया सुरक्षा जाँच पूरी करें।"
+    },
+    "captcha": {
+      "aria_label": "सुरक्षा जाँच"
     }
   },
   "optimization": {
@@ -1329,6 +1329,10 @@
     "errors": {
       "crop_not_found": "फसल जानकारी नहीं मिली",
       "no_weather_data": "कोई मौसम डेटा उपलब्ध नहीं है",
+      "climate_progress_daemon_unavailable": "AGRR प्रोसेसिंग सेवा उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें।",
+      "climate_progress_execution_failed": "संचयी GDD की गणना विफल रही।",
+      "climate_progress_result_invalid": "संचयी GDD प्रगति डेटा अमान्य है।",
+      "climate_crop_requirement_incomplete": "जलवायु गणना के लिए फसल मास्टर डेटा अपूर्ण है।",
       "no_cultivation_period": "खेती की अवधि निर्धारित नहीं है",
       "weather_forecast_failed": "मौसम पूर्वानुमान डेटा प्राप्त करने में विफल",
       "data_fetch_failed": "डेटा प्राप्त करने में विफल",
