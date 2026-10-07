@@ -29,9 +29,7 @@ impl CultivationPlanPrivateReadGateway for CultivationPlanPrivateReadSqliteGatew
                  FROM cultivation_plans cp \
                  LEFT JOIN farms f ON f.id = cp.farm_id \
                  WHERE cp.plan_type = 'private' \
-                 AND (cp.user_id = ?1 OR cp.organization_id IN ( \
-                   SELECT organization_id FROM organization_memberships WHERE user_id = ?1 \
-                 )) \
+                 AND cp.user_id = ?1 \
                  ORDER BY cp.updated_at DESC",
             )?;
             let rows = stmt.query_map(params![user_id], |row| {
