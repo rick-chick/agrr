@@ -43,4 +43,27 @@
         let context = private_snapshot(1, 5);
         let admin = User::new(99, true);
         assert!(view_allowed(&admin, &context));
+        assert!(assert_edit_allowed(&admin, &context).is_ok());
+    }
+
+    #[test]
+    fn denies_edit_for_public_plan_even_for_plan_owner() {
+        let context = public_snapshot(1);
+        let owner = User::new(5, false);
+        assert!(view_allowed(&owner, &context));
+        assert!(!edit_allowed(&owner, &context));
+        assert_eq!(
+            assert_edit_allowed(&owner, &context),
+            Err(PolicyPermissionDenied)
+        );
+    }
+
+    #[test]
+    fn denies_edit_for_public_plan_for_non_owner() {
+        let context = public_snapshot(1);
+        let user = User::new(99, false);
+        assert_eq!(
+            assert_edit_allowed(&user, &context),
+            Err(PolicyPermissionDenied)
+        );
     }

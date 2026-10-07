@@ -24,4 +24,4 @@
 ## 関連
 
 - ドメイン移行（完了）: [`../lib-domain-rust/`](../lib-domain-rust/)
-- テスト: [`../../test/README.md`](../../test/README.md)、[`../lib-domain-rust/TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md)
+- テスト: [`../../../test/README.md`](../../../test/README.md)、[`../lib-domain-rust/TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md)

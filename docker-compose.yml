@@ -64,7 +64,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
-      network: host
     extra_hosts:
       - "host.docker.internal:host-gateway"
     entrypoint: ["bash", "/app/scripts/docker-entrypoint-test.sh"]

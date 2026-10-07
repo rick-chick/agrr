@@ -1,6 +1,7 @@
 //! P6 `agrr-server` — strangler edge (Axum).
 
 pub mod adapters;
+pub mod api_error;
 pub mod locale_catalog;
 pub mod locale_translator;
 pub mod request_locale;
