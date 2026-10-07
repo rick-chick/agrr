@@ -15,7 +15,7 @@ disable-model-invocation: false
 ## 前提
 
 - MCP サーバー [`tools/agrr-mcp`](../../../tools/agrr-mcp/README.md) が Cursor に接続済み
-- 環境変数 `AGRR_API_KEY` / `AGRR_API_BASE_URL` が MCP 設定に渡されている
+- 環境変数 `AGRR_API_KEY` / `AGRR_API_BASE_URL` が MCP 設定に渡されている（**API キーは読み取り専用**。apply は UI で行う）
 - 対象は **ユーザー所有の作物**（`is_reference: false`）。リファレンス作物は参照のみ
 
 ## 入力（ユーザーから取得）
@@ -33,7 +33,7 @@ disable-model-invocation: false
 2. **LLM で提案 JSON を組み立て** — スキーマは [`docs/api/setup_proposal-openapi-snippet.yaml`](../../../docs/api/setup_proposal-openapi-snippet.yaml) に従う。`agricultural_tasks[].ref` と `task_schedule_blueprints[].agricultural_task_ref` を整合させる
 3. **dry_run** — MCP `propose_crop_setup`（`crop_id` + `proposal`）。`valid: false` なら `errors` を修正して再試行
 4. **ユーザー確認** — `normalized` の内容を提示し、適用の明示的な承認を得る
-5. **apply** — MCP `apply_crop_setup`（同一 `proposal`）。成功後 `result.stage_ids` / `blueprint_ids` を報告
+5. **apply（画面）** — 利用者が AGRR にログインし、作物の **提案 JSON をインポート**（`/crops/{crop_id}/setup_proposal`）で `normalized` と同内容の JSON を適用する。API キーでは `mode=apply` は 403 になる
 
 ## 禁止
 
